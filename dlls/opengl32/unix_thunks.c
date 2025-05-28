@@ -106,6 +106,7 @@ static NTSTATUS gl_glAccum( void *args )
     struct glAccum_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glAccum( params->op, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -114,6 +115,7 @@ static NTSTATUS gl_glAlphaFunc( void *args )
     struct glAlphaFunc_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glAlphaFunc( params->func, params->ref );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -130,6 +132,7 @@ static NTSTATUS gl_glArrayElement( void *args )
     struct glArrayElement_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glArrayElement( params->i );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -138,6 +141,7 @@ static NTSTATUS gl_glBegin( void *args )
     struct glBegin_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBegin( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -146,6 +150,7 @@ static NTSTATUS gl_glBindTexture( void *args )
     struct glBindTexture_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindTexture( params->target, params->texture );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -154,6 +159,7 @@ static NTSTATUS gl_glBitmap( void *args )
     struct glBitmap_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBitmap( params->width, params->height, params->xorig, params->yorig, params->xmove, params->ymove, params->bitmap );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -162,6 +168,7 @@ static NTSTATUS gl_glBlendFunc( void *args )
     struct glBlendFunc_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendFunc( params->sfactor, params->dfactor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -170,6 +177,7 @@ static NTSTATUS gl_glCallList( void *args )
     struct glCallList_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCallList( params->list );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -178,6 +186,7 @@ static NTSTATUS gl_glCallLists( void *args )
     struct glCallLists_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCallLists( params->n, params->type, params->lists );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -186,6 +195,7 @@ static NTSTATUS gl_glClear( void *args )
     struct glClear_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClear( params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -194,6 +204,7 @@ static NTSTATUS gl_glClearAccum( void *args )
     struct glClearAccum_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearAccum( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -202,6 +213,7 @@ static NTSTATUS gl_glClearColor( void *args )
     struct glClearColor_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearColor( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -210,6 +222,7 @@ static NTSTATUS gl_glClearDepth( void *args )
     struct glClearDepth_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearDepth( params->depth );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -218,6 +231,7 @@ static NTSTATUS gl_glClearIndex( void *args )
     struct glClearIndex_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearIndex( params->c );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -226,6 +240,7 @@ static NTSTATUS gl_glClearStencil( void *args )
     struct glClearStencil_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearStencil( params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -234,6 +249,7 @@ static NTSTATUS gl_glClipPlane( void *args )
     struct glClipPlane_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClipPlane( params->plane, params->equation );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -242,6 +258,7 @@ static NTSTATUS gl_glColor3b( void *args )
     struct glColor3b_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3b( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -250,6 +267,7 @@ static NTSTATUS gl_glColor3bv( void *args )
     struct glColor3bv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3bv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -258,6 +276,7 @@ static NTSTATUS gl_glColor3d( void *args )
     struct glColor3d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3d( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -266,6 +285,7 @@ static NTSTATUS gl_glColor3dv( void *args )
     struct glColor3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3dv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -274,6 +294,7 @@ static NTSTATUS gl_glColor3f( void *args )
     struct glColor3f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3f( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -282,6 +303,7 @@ static NTSTATUS gl_glColor3fv( void *args )
     struct glColor3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3fv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -290,6 +312,7 @@ static NTSTATUS gl_glColor3i( void *args )
     struct glColor3i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3i( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -298,6 +321,7 @@ static NTSTATUS gl_glColor3iv( void *args )
     struct glColor3iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3iv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -306,6 +330,7 @@ static NTSTATUS gl_glColor3s( void *args )
     struct glColor3s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3s( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -314,6 +339,7 @@ static NTSTATUS gl_glColor3sv( void *args )
     struct glColor3sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3sv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -322,6 +348,7 @@ static NTSTATUS gl_glColor3ub( void *args )
     struct glColor3ub_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3ub( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -330,6 +357,7 @@ static NTSTATUS gl_glColor3ubv( void *args )
     struct glColor3ubv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3ubv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -338,6 +366,7 @@ static NTSTATUS gl_glColor3ui( void *args )
     struct glColor3ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3ui( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -346,6 +375,7 @@ static NTSTATUS gl_glColor3uiv( void *args )
     struct glColor3uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3uiv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -354,6 +384,7 @@ static NTSTATUS gl_glColor3us( void *args )
     struct glColor3us_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3us( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -362,6 +393,7 @@ static NTSTATUS gl_glColor3usv( void *args )
     struct glColor3usv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3usv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -370,6 +402,7 @@ static NTSTATUS gl_glColor4b( void *args )
     struct glColor4b_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4b( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -378,6 +411,7 @@ static NTSTATUS gl_glColor4bv( void *args )
     struct glColor4bv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4bv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -386,6 +420,7 @@ static NTSTATUS gl_glColor4d( void *args )
     struct glColor4d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4d( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -394,6 +429,7 @@ static NTSTATUS gl_glColor4dv( void *args )
     struct glColor4dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4dv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -402,6 +438,7 @@ static NTSTATUS gl_glColor4f( void *args )
     struct glColor4f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4f( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -410,6 +447,7 @@ static NTSTATUS gl_glColor4fv( void *args )
     struct glColor4fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4fv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -418,6 +456,7 @@ static NTSTATUS gl_glColor4i( void *args )
     struct glColor4i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4i( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -426,6 +465,7 @@ static NTSTATUS gl_glColor4iv( void *args )
     struct glColor4iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4iv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -434,6 +474,7 @@ static NTSTATUS gl_glColor4s( void *args )
     struct glColor4s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4s( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -442,6 +483,7 @@ static NTSTATUS gl_glColor4sv( void *args )
     struct glColor4sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4sv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -450,6 +492,7 @@ static NTSTATUS gl_glColor4ub( void *args )
     struct glColor4ub_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4ub( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -458,6 +501,7 @@ static NTSTATUS gl_glColor4ubv( void *args )
     struct glColor4ubv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4ubv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -466,6 +510,7 @@ static NTSTATUS gl_glColor4ui( void *args )
     struct glColor4ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4ui( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -474,6 +519,7 @@ static NTSTATUS gl_glColor4uiv( void *args )
     struct glColor4uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4uiv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -482,6 +528,7 @@ static NTSTATUS gl_glColor4us( void *args )
     struct glColor4us_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4us( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -490,6 +537,7 @@ static NTSTATUS gl_glColor4usv( void *args )
     struct glColor4usv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4usv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -498,6 +546,7 @@ static NTSTATUS gl_glColorMask( void *args )
     struct glColorMask_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorMask( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -506,6 +555,7 @@ static NTSTATUS gl_glColorMaterial( void *args )
     struct glColorMaterial_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorMaterial( params->face, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -514,6 +564,7 @@ static NTSTATUS gl_glColorPointer( void *args )
     struct glColorPointer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorPointer( params->size, params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -522,6 +573,7 @@ static NTSTATUS gl_glCopyPixels( void *args )
     struct glCopyPixels_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyPixels( params->x, params->y, params->width, params->height, params->type );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -530,6 +582,7 @@ static NTSTATUS gl_glCopyTexImage1D( void *args )
     struct glCopyTexImage1D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTexImage1D( params->target, params->level, params->internalformat, params->x, params->y, params->width, params->border );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -538,6 +591,7 @@ static NTSTATUS gl_glCopyTexImage2D( void *args )
     struct glCopyTexImage2D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTexImage2D( params->target, params->level, params->internalformat, params->x, params->y, params->width, params->height, params->border );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -546,6 +600,7 @@ static NTSTATUS gl_glCopyTexSubImage1D( void *args )
     struct glCopyTexSubImage1D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTexSubImage1D( params->target, params->level, params->xoffset, params->x, params->y, params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -554,6 +609,7 @@ static NTSTATUS gl_glCopyTexSubImage2D( void *args )
     struct glCopyTexSubImage2D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTexSubImage2D( params->target, params->level, params->xoffset, params->yoffset, params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -562,6 +618,7 @@ static NTSTATUS gl_glCullFace( void *args )
     struct glCullFace_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCullFace( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -570,6 +627,7 @@ static NTSTATUS gl_glDeleteLists( void *args )
     struct glDeleteLists_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteLists( params->list, params->range );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -578,6 +636,7 @@ static NTSTATUS gl_glDeleteTextures( void *args )
     struct glDeleteTextures_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteTextures( params->n, params->textures );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -586,6 +645,7 @@ static NTSTATUS gl_glDepthFunc( void *args )
     struct glDepthFunc_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDepthFunc( params->func );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -594,6 +654,7 @@ static NTSTATUS gl_glDepthMask( void *args )
     struct glDepthMask_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDepthMask( params->flag );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -602,6 +663,7 @@ static NTSTATUS gl_glDepthRange( void *args )
     struct glDepthRange_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDepthRange( params->n, params->f );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -610,6 +672,7 @@ static NTSTATUS gl_glDisable( void *args )
     struct glDisable_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDisable( params->cap );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -618,6 +681,7 @@ static NTSTATUS gl_glDisableClientState( void *args )
     struct glDisableClientState_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDisableClientState( params->array );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -626,6 +690,7 @@ static NTSTATUS gl_glDrawArrays( void *args )
     struct glDrawArrays_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawArrays( params->mode, params->first, params->count );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -634,6 +699,7 @@ static NTSTATUS gl_glDrawBuffer( void *args )
     struct glDrawBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawBuffer( params->buf );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -642,6 +708,7 @@ static NTSTATUS gl_glDrawElements( void *args )
     struct glDrawElements_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawElements( params->mode, params->count, params->type, params->indices );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -650,6 +717,7 @@ static NTSTATUS gl_glDrawPixels( void *args )
     struct glDrawPixels_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawPixels( params->width, params->height, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -658,6 +726,7 @@ static NTSTATUS gl_glEdgeFlag( void *args )
     struct glEdgeFlag_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEdgeFlag( params->flag );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -666,6 +735,7 @@ static NTSTATUS gl_glEdgeFlagPointer( void *args )
     struct glEdgeFlagPointer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEdgeFlagPointer( params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -674,6 +744,7 @@ static NTSTATUS gl_glEdgeFlagv( void *args )
     struct glEdgeFlagv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEdgeFlagv( params->flag );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -682,6 +753,7 @@ static NTSTATUS gl_glEnable( void *args )
     struct glEnable_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEnable( params->cap );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -690,6 +762,7 @@ static NTSTATUS gl_glEnableClientState( void *args )
     struct glEnableClientState_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEnableClientState( params->array );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -698,6 +771,7 @@ static NTSTATUS gl_glEnd( void *args )
     struct glEnd_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEnd();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -706,6 +780,7 @@ static NTSTATUS gl_glEndList( void *args )
     struct glEndList_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEndList();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -714,6 +789,7 @@ static NTSTATUS gl_glEvalCoord1d( void *args )
     struct glEvalCoord1d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalCoord1d( params->u );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -722,6 +798,7 @@ static NTSTATUS gl_glEvalCoord1dv( void *args )
     struct glEvalCoord1dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalCoord1dv( params->u );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -730,6 +807,7 @@ static NTSTATUS gl_glEvalCoord1f( void *args )
     struct glEvalCoord1f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalCoord1f( params->u );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -738,6 +816,7 @@ static NTSTATUS gl_glEvalCoord1fv( void *args )
     struct glEvalCoord1fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalCoord1fv( params->u );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -746,6 +825,7 @@ static NTSTATUS gl_glEvalCoord2d( void *args )
     struct glEvalCoord2d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalCoord2d( params->u, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -754,6 +834,7 @@ static NTSTATUS gl_glEvalCoord2dv( void *args )
     struct glEvalCoord2dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalCoord2dv( params->u );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -762,6 +843,7 @@ static NTSTATUS gl_glEvalCoord2f( void *args )
     struct glEvalCoord2f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalCoord2f( params->u, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -770,6 +852,7 @@ static NTSTATUS gl_glEvalCoord2fv( void *args )
     struct glEvalCoord2fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalCoord2fv( params->u );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -778,6 +861,7 @@ static NTSTATUS gl_glEvalMesh1( void *args )
     struct glEvalMesh1_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalMesh1( params->mode, params->i1, params->i2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -786,6 +870,7 @@ static NTSTATUS gl_glEvalMesh2( void *args )
     struct glEvalMesh2_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalMesh2( params->mode, params->i1, params->i2, params->j1, params->j2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -794,6 +879,7 @@ static NTSTATUS gl_glEvalPoint1( void *args )
     struct glEvalPoint1_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalPoint1( params->i );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -802,6 +888,7 @@ static NTSTATUS gl_glEvalPoint2( void *args )
     struct glEvalPoint2_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalPoint2( params->i, params->j );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -810,6 +897,7 @@ static NTSTATUS gl_glFeedbackBuffer( void *args )
     struct glFeedbackBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFeedbackBuffer( params->size, params->type, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -818,6 +906,7 @@ static NTSTATUS gl_glFinish( void *args )
     struct glFinish_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFinish();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -826,6 +915,7 @@ static NTSTATUS gl_glFlush( void *args )
     struct glFlush_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFlush();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -834,6 +924,7 @@ static NTSTATUS gl_glFogf( void *args )
     struct glFogf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogf( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -842,6 +933,7 @@ static NTSTATUS gl_glFogfv( void *args )
     struct glFogfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogfv( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -850,6 +942,7 @@ static NTSTATUS gl_glFogi( void *args )
     struct glFogi_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogi( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -858,6 +951,7 @@ static NTSTATUS gl_glFogiv( void *args )
     struct glFogiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogiv( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -866,6 +960,7 @@ static NTSTATUS gl_glFrontFace( void *args )
     struct glFrontFace_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFrontFace( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -874,6 +969,7 @@ static NTSTATUS gl_glFrustum( void *args )
     struct glFrustum_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFrustum( params->left, params->right, params->bottom, params->top, params->zNear, params->zFar );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -882,6 +978,7 @@ static NTSTATUS gl_glGenLists( void *args )
     struct glGenLists_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glGenLists( params->range );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -890,6 +987,7 @@ static NTSTATUS gl_glGenTextures( void *args )
     struct glGenTextures_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenTextures( params->n, params->textures );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1128,6 +1226,7 @@ static NTSTATUS gl_glHint( void *args )
     struct glHint_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glHint( params->target, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1136,6 +1235,7 @@ static NTSTATUS gl_glIndexMask( void *args )
     struct glIndexMask_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexMask( params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1144,6 +1244,7 @@ static NTSTATUS gl_glIndexPointer( void *args )
     struct glIndexPointer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexPointer( params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1152,6 +1253,7 @@ static NTSTATUS gl_glIndexd( void *args )
     struct glIndexd_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexd( params->c );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1160,6 +1262,7 @@ static NTSTATUS gl_glIndexdv( void *args )
     struct glIndexdv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexdv( params->c );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1168,6 +1271,7 @@ static NTSTATUS gl_glIndexf( void *args )
     struct glIndexf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexf( params->c );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1176,6 +1280,7 @@ static NTSTATUS gl_glIndexfv( void *args )
     struct glIndexfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexfv( params->c );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1184,6 +1289,7 @@ static NTSTATUS gl_glIndexi( void *args )
     struct glIndexi_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexi( params->c );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1192,6 +1298,7 @@ static NTSTATUS gl_glIndexiv( void *args )
     struct glIndexiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexiv( params->c );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1200,6 +1307,7 @@ static NTSTATUS gl_glIndexs( void *args )
     struct glIndexs_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexs( params->c );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1208,6 +1316,7 @@ static NTSTATUS gl_glIndexsv( void *args )
     struct glIndexsv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexsv( params->c );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1216,6 +1325,7 @@ static NTSTATUS gl_glIndexub( void *args )
     struct glIndexub_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexub( params->c );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1224,6 +1334,7 @@ static NTSTATUS gl_glIndexubv( void *args )
     struct glIndexubv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexubv( params->c );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1232,6 +1343,7 @@ static NTSTATUS gl_glInitNames( void *args )
     struct glInitNames_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glInitNames();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1240,6 +1352,7 @@ static NTSTATUS gl_glInterleavedArrays( void *args )
     struct glInterleavedArrays_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glInterleavedArrays( params->format, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1272,6 +1385,7 @@ static NTSTATUS gl_glLightModelf( void *args )
     struct glLightModelf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightModelf( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1280,6 +1394,7 @@ static NTSTATUS gl_glLightModelfv( void *args )
     struct glLightModelfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightModelfv( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1288,6 +1403,7 @@ static NTSTATUS gl_glLightModeli( void *args )
     struct glLightModeli_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightModeli( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1296,6 +1412,7 @@ static NTSTATUS gl_glLightModeliv( void *args )
     struct glLightModeliv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightModeliv( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1304,6 +1421,7 @@ static NTSTATUS gl_glLightf( void *args )
     struct glLightf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightf( params->light, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1312,6 +1430,7 @@ static NTSTATUS gl_glLightfv( void *args )
     struct glLightfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightfv( params->light, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1320,6 +1439,7 @@ static NTSTATUS gl_glLighti( void *args )
     struct glLighti_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLighti( params->light, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1328,6 +1448,7 @@ static NTSTATUS gl_glLightiv( void *args )
     struct glLightiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightiv( params->light, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1336,6 +1457,7 @@ static NTSTATUS gl_glLineStipple( void *args )
     struct glLineStipple_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLineStipple( params->factor, params->pattern );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1344,6 +1466,7 @@ static NTSTATUS gl_glLineWidth( void *args )
     struct glLineWidth_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLineWidth( params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1352,6 +1475,7 @@ static NTSTATUS gl_glListBase( void *args )
     struct glListBase_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glListBase( params->base );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1360,6 +1484,7 @@ static NTSTATUS gl_glLoadIdentity( void *args )
     struct glLoadIdentity_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLoadIdentity();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1368,6 +1493,7 @@ static NTSTATUS gl_glLoadMatrixd( void *args )
     struct glLoadMatrixd_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLoadMatrixd( params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1376,6 +1502,7 @@ static NTSTATUS gl_glLoadMatrixf( void *args )
     struct glLoadMatrixf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLoadMatrixf( params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1384,6 +1511,7 @@ static NTSTATUS gl_glLoadName( void *args )
     struct glLoadName_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLoadName( params->name );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1392,6 +1520,7 @@ static NTSTATUS gl_glLogicOp( void *args )
     struct glLogicOp_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLogicOp( params->opcode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1400,6 +1529,7 @@ static NTSTATUS gl_glMap1d( void *args )
     struct glMap1d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMap1d( params->target, params->u1, params->u2, params->stride, params->order, params->points );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1408,6 +1538,7 @@ static NTSTATUS gl_glMap1f( void *args )
     struct glMap1f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMap1f( params->target, params->u1, params->u2, params->stride, params->order, params->points );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1416,6 +1547,7 @@ static NTSTATUS gl_glMap2d( void *args )
     struct glMap2d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMap2d( params->target, params->u1, params->u2, params->ustride, params->uorder, params->v1, params->v2, params->vstride, params->vorder, params->points );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1424,6 +1556,7 @@ static NTSTATUS gl_glMap2f( void *args )
     struct glMap2f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMap2f( params->target, params->u1, params->u2, params->ustride, params->uorder, params->v1, params->v2, params->vstride, params->vorder, params->points );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1432,6 +1565,7 @@ static NTSTATUS gl_glMapGrid1d( void *args )
     struct glMapGrid1d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMapGrid1d( params->un, params->u1, params->u2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1440,6 +1574,7 @@ static NTSTATUS gl_glMapGrid1f( void *args )
     struct glMapGrid1f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMapGrid1f( params->un, params->u1, params->u2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1448,6 +1583,7 @@ static NTSTATUS gl_glMapGrid2d( void *args )
     struct glMapGrid2d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMapGrid2d( params->un, params->u1, params->u2, params->vn, params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1456,6 +1592,7 @@ static NTSTATUS gl_glMapGrid2f( void *args )
     struct glMapGrid2f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMapGrid2f( params->un, params->u1, params->u2, params->vn, params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1464,6 +1601,7 @@ static NTSTATUS gl_glMaterialf( void *args )
     struct glMaterialf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMaterialf( params->face, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1472,6 +1610,7 @@ static NTSTATUS gl_glMaterialfv( void *args )
     struct glMaterialfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMaterialfv( params->face, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1480,6 +1619,7 @@ static NTSTATUS gl_glMateriali( void *args )
     struct glMateriali_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMateriali( params->face, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1488,6 +1628,7 @@ static NTSTATUS gl_glMaterialiv( void *args )
     struct glMaterialiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMaterialiv( params->face, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1496,6 +1637,7 @@ static NTSTATUS gl_glMatrixMode( void *args )
     struct glMatrixMode_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixMode( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1504,6 +1646,7 @@ static NTSTATUS gl_glMultMatrixd( void *args )
     struct glMultMatrixd_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultMatrixd( params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1512,6 +1655,7 @@ static NTSTATUS gl_glMultMatrixf( void *args )
     struct glMultMatrixf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultMatrixf( params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1520,6 +1664,7 @@ static NTSTATUS gl_glNewList( void *args )
     struct glNewList_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNewList( params->list, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1528,6 +1673,7 @@ static NTSTATUS gl_glNormal3b( void *args )
     struct glNormal3b_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormal3b( params->nx, params->ny, params->nz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1536,6 +1682,7 @@ static NTSTATUS gl_glNormal3bv( void *args )
     struct glNormal3bv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormal3bv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1544,6 +1691,7 @@ static NTSTATUS gl_glNormal3d( void *args )
     struct glNormal3d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormal3d( params->nx, params->ny, params->nz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1552,6 +1700,7 @@ static NTSTATUS gl_glNormal3dv( void *args )
     struct glNormal3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormal3dv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1560,6 +1709,7 @@ static NTSTATUS gl_glNormal3f( void *args )
     struct glNormal3f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormal3f( params->nx, params->ny, params->nz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1568,6 +1718,7 @@ static NTSTATUS gl_glNormal3fv( void *args )
     struct glNormal3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormal3fv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1576,6 +1727,7 @@ static NTSTATUS gl_glNormal3i( void *args )
     struct glNormal3i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormal3i( params->nx, params->ny, params->nz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1584,6 +1736,7 @@ static NTSTATUS gl_glNormal3iv( void *args )
     struct glNormal3iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormal3iv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1592,6 +1745,7 @@ static NTSTATUS gl_glNormal3s( void *args )
     struct glNormal3s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormal3s( params->nx, params->ny, params->nz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1600,6 +1754,7 @@ static NTSTATUS gl_glNormal3sv( void *args )
     struct glNormal3sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormal3sv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1608,6 +1763,7 @@ static NTSTATUS gl_glNormalPointer( void *args )
     struct glNormalPointer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalPointer( params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1616,6 +1772,7 @@ static NTSTATUS gl_glOrtho( void *args )
     struct glOrtho_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glOrtho( params->left, params->right, params->bottom, params->top, params->zNear, params->zFar );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1624,6 +1781,7 @@ static NTSTATUS gl_glPassThrough( void *args )
     struct glPassThrough_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPassThrough( params->token );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1632,6 +1790,7 @@ static NTSTATUS gl_glPixelMapfv( void *args )
     struct glPixelMapfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelMapfv( params->map, params->mapsize, params->values );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1640,6 +1799,7 @@ static NTSTATUS gl_glPixelMapuiv( void *args )
     struct glPixelMapuiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelMapuiv( params->map, params->mapsize, params->values );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1648,6 +1808,7 @@ static NTSTATUS gl_glPixelMapusv( void *args )
     struct glPixelMapusv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelMapusv( params->map, params->mapsize, params->values );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1656,6 +1817,7 @@ static NTSTATUS gl_glPixelStoref( void *args )
     struct glPixelStoref_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelStoref( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1664,6 +1826,7 @@ static NTSTATUS gl_glPixelStorei( void *args )
     struct glPixelStorei_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelStorei( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1672,6 +1835,7 @@ static NTSTATUS gl_glPixelTransferf( void *args )
     struct glPixelTransferf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelTransferf( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1680,6 +1844,7 @@ static NTSTATUS gl_glPixelTransferi( void *args )
     struct glPixelTransferi_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelTransferi( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1688,6 +1853,7 @@ static NTSTATUS gl_glPixelZoom( void *args )
     struct glPixelZoom_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelZoom( params->xfactor, params->yfactor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1696,6 +1862,7 @@ static NTSTATUS gl_glPointSize( void *args )
     struct glPointSize_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPointSize( params->size );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1704,6 +1871,7 @@ static NTSTATUS gl_glPolygonMode( void *args )
     struct glPolygonMode_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPolygonMode( params->face, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1712,6 +1880,7 @@ static NTSTATUS gl_glPolygonOffset( void *args )
     struct glPolygonOffset_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPolygonOffset( params->factor, params->units );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1720,6 +1889,7 @@ static NTSTATUS gl_glPolygonStipple( void *args )
     struct glPolygonStipple_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPolygonStipple( params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1728,6 +1898,7 @@ static NTSTATUS gl_glPopAttrib( void *args )
     struct glPopAttrib_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPopAttrib();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1736,6 +1907,7 @@ static NTSTATUS gl_glPopClientAttrib( void *args )
     struct glPopClientAttrib_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPopClientAttrib();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1744,6 +1916,7 @@ static NTSTATUS gl_glPopMatrix( void *args )
     struct glPopMatrix_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPopMatrix();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1752,6 +1925,7 @@ static NTSTATUS gl_glPopName( void *args )
     struct glPopName_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPopName();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1760,6 +1934,7 @@ static NTSTATUS gl_glPrioritizeTextures( void *args )
     struct glPrioritizeTextures_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPrioritizeTextures( params->n, params->textures, params->priorities );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1768,6 +1943,7 @@ static NTSTATUS gl_glPushAttrib( void *args )
     struct glPushAttrib_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPushAttrib( params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1776,6 +1952,7 @@ static NTSTATUS gl_glPushClientAttrib( void *args )
     struct glPushClientAttrib_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPushClientAttrib( params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1784,6 +1961,7 @@ static NTSTATUS gl_glPushMatrix( void *args )
     struct glPushMatrix_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPushMatrix();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1792,6 +1970,7 @@ static NTSTATUS gl_glPushName( void *args )
     struct glPushName_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPushName( params->name );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1800,6 +1979,7 @@ static NTSTATUS gl_glRasterPos2d( void *args )
     struct glRasterPos2d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos2d( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1808,6 +1988,7 @@ static NTSTATUS gl_glRasterPos2dv( void *args )
     struct glRasterPos2dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos2dv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1816,6 +1997,7 @@ static NTSTATUS gl_glRasterPos2f( void *args )
     struct glRasterPos2f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos2f( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1824,6 +2006,7 @@ static NTSTATUS gl_glRasterPos2fv( void *args )
     struct glRasterPos2fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos2fv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1832,6 +2015,7 @@ static NTSTATUS gl_glRasterPos2i( void *args )
     struct glRasterPos2i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos2i( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1840,6 +2024,7 @@ static NTSTATUS gl_glRasterPos2iv( void *args )
     struct glRasterPos2iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos2iv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1848,6 +2033,7 @@ static NTSTATUS gl_glRasterPos2s( void *args )
     struct glRasterPos2s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos2s( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1856,6 +2042,7 @@ static NTSTATUS gl_glRasterPos2sv( void *args )
     struct glRasterPos2sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos2sv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1864,6 +2051,7 @@ static NTSTATUS gl_glRasterPos3d( void *args )
     struct glRasterPos3d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos3d( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1872,6 +2060,7 @@ static NTSTATUS gl_glRasterPos3dv( void *args )
     struct glRasterPos3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos3dv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1880,6 +2069,7 @@ static NTSTATUS gl_glRasterPos3f( void *args )
     struct glRasterPos3f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos3f( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1888,6 +2078,7 @@ static NTSTATUS gl_glRasterPos3fv( void *args )
     struct glRasterPos3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos3fv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1896,6 +2087,7 @@ static NTSTATUS gl_glRasterPos3i( void *args )
     struct glRasterPos3i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos3i( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1904,6 +2096,7 @@ static NTSTATUS gl_glRasterPos3iv( void *args )
     struct glRasterPos3iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos3iv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1912,6 +2105,7 @@ static NTSTATUS gl_glRasterPos3s( void *args )
     struct glRasterPos3s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos3s( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1920,6 +2114,7 @@ static NTSTATUS gl_glRasterPos3sv( void *args )
     struct glRasterPos3sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos3sv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1928,6 +2123,7 @@ static NTSTATUS gl_glRasterPos4d( void *args )
     struct glRasterPos4d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos4d( params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1936,6 +2132,7 @@ static NTSTATUS gl_glRasterPos4dv( void *args )
     struct glRasterPos4dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos4dv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1944,6 +2141,7 @@ static NTSTATUS gl_glRasterPos4f( void *args )
     struct glRasterPos4f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos4f( params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1952,6 +2150,7 @@ static NTSTATUS gl_glRasterPos4fv( void *args )
     struct glRasterPos4fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos4fv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1960,6 +2159,7 @@ static NTSTATUS gl_glRasterPos4i( void *args )
     struct glRasterPos4i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos4i( params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1968,6 +2168,7 @@ static NTSTATUS gl_glRasterPos4iv( void *args )
     struct glRasterPos4iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos4iv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1976,6 +2177,7 @@ static NTSTATUS gl_glRasterPos4s( void *args )
     struct glRasterPos4s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos4s( params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1984,6 +2186,7 @@ static NTSTATUS gl_glRasterPos4sv( void *args )
     struct glRasterPos4sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos4sv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -1992,6 +2195,7 @@ static NTSTATUS gl_glReadBuffer( void *args )
     struct glReadBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReadBuffer( params->src );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2000,6 +2204,7 @@ static NTSTATUS gl_glReadPixels( void *args )
     struct glReadPixels_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReadPixels( params->x, params->y, params->width, params->height, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2008,6 +2213,7 @@ static NTSTATUS gl_glRectd( void *args )
     struct glRectd_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRectd( params->x1, params->y1, params->x2, params->y2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2016,6 +2222,7 @@ static NTSTATUS gl_glRectdv( void *args )
     struct glRectdv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRectdv( params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2024,6 +2231,7 @@ static NTSTATUS gl_glRectf( void *args )
     struct glRectf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRectf( params->x1, params->y1, params->x2, params->y2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2032,6 +2240,7 @@ static NTSTATUS gl_glRectfv( void *args )
     struct glRectfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRectfv( params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2040,6 +2249,7 @@ static NTSTATUS gl_glRecti( void *args )
     struct glRecti_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRecti( params->x1, params->y1, params->x2, params->y2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2048,6 +2258,7 @@ static NTSTATUS gl_glRectiv( void *args )
     struct glRectiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRectiv( params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2056,6 +2267,7 @@ static NTSTATUS gl_glRects( void *args )
     struct glRects_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRects( params->x1, params->y1, params->x2, params->y2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2064,6 +2276,7 @@ static NTSTATUS gl_glRectsv( void *args )
     struct glRectsv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRectsv( params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2072,6 +2285,7 @@ static NTSTATUS gl_glRenderMode( void *args )
     struct glRenderMode_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glRenderMode( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2080,6 +2294,7 @@ static NTSTATUS gl_glRotated( void *args )
     struct glRotated_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRotated( params->angle, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2088,6 +2303,7 @@ static NTSTATUS gl_glRotatef( void *args )
     struct glRotatef_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRotatef( params->angle, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2096,6 +2312,7 @@ static NTSTATUS gl_glScaled( void *args )
     struct glScaled_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glScaled( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2104,6 +2321,7 @@ static NTSTATUS gl_glScalef( void *args )
     struct glScalef_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glScalef( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2112,6 +2330,7 @@ static NTSTATUS gl_glScissor( void *args )
     struct glScissor_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glScissor( params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2120,6 +2339,7 @@ static NTSTATUS gl_glSelectBuffer( void *args )
     struct glSelectBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSelectBuffer( params->size, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2128,6 +2348,7 @@ static NTSTATUS gl_glShadeModel( void *args )
     struct glShadeModel_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glShadeModel( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2136,6 +2357,7 @@ static NTSTATUS gl_glStencilFunc( void *args )
     struct glStencilFunc_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilFunc( params->func, params->ref, params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2144,6 +2366,7 @@ static NTSTATUS gl_glStencilMask( void *args )
     struct glStencilMask_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilMask( params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2152,6 +2375,7 @@ static NTSTATUS gl_glStencilOp( void *args )
     struct glStencilOp_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilOp( params->fail, params->zfail, params->zpass );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2160,6 +2384,7 @@ static NTSTATUS gl_glTexCoord1d( void *args )
     struct glTexCoord1d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord1d( params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2168,6 +2393,7 @@ static NTSTATUS gl_glTexCoord1dv( void *args )
     struct glTexCoord1dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord1dv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2176,6 +2402,7 @@ static NTSTATUS gl_glTexCoord1f( void *args )
     struct glTexCoord1f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord1f( params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2184,6 +2411,7 @@ static NTSTATUS gl_glTexCoord1fv( void *args )
     struct glTexCoord1fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord1fv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2192,6 +2420,7 @@ static NTSTATUS gl_glTexCoord1i( void *args )
     struct glTexCoord1i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord1i( params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2200,6 +2429,7 @@ static NTSTATUS gl_glTexCoord1iv( void *args )
     struct glTexCoord1iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord1iv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2208,6 +2438,7 @@ static NTSTATUS gl_glTexCoord1s( void *args )
     struct glTexCoord1s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord1s( params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2216,6 +2447,7 @@ static NTSTATUS gl_glTexCoord1sv( void *args )
     struct glTexCoord1sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord1sv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2224,6 +2456,7 @@ static NTSTATUS gl_glTexCoord2d( void *args )
     struct glTexCoord2d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2d( params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2232,6 +2465,7 @@ static NTSTATUS gl_glTexCoord2dv( void *args )
     struct glTexCoord2dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2dv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2240,6 +2474,7 @@ static NTSTATUS gl_glTexCoord2f( void *args )
     struct glTexCoord2f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2f( params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2248,6 +2483,7 @@ static NTSTATUS gl_glTexCoord2fv( void *args )
     struct glTexCoord2fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2fv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2256,6 +2492,7 @@ static NTSTATUS gl_glTexCoord2i( void *args )
     struct glTexCoord2i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2i( params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2264,6 +2501,7 @@ static NTSTATUS gl_glTexCoord2iv( void *args )
     struct glTexCoord2iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2iv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2272,6 +2510,7 @@ static NTSTATUS gl_glTexCoord2s( void *args )
     struct glTexCoord2s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2s( params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2280,6 +2519,7 @@ static NTSTATUS gl_glTexCoord2sv( void *args )
     struct glTexCoord2sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2sv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2288,6 +2528,7 @@ static NTSTATUS gl_glTexCoord3d( void *args )
     struct glTexCoord3d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord3d( params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2296,6 +2537,7 @@ static NTSTATUS gl_glTexCoord3dv( void *args )
     struct glTexCoord3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord3dv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2304,6 +2546,7 @@ static NTSTATUS gl_glTexCoord3f( void *args )
     struct glTexCoord3f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord3f( params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2312,6 +2555,7 @@ static NTSTATUS gl_glTexCoord3fv( void *args )
     struct glTexCoord3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord3fv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2320,6 +2564,7 @@ static NTSTATUS gl_glTexCoord3i( void *args )
     struct glTexCoord3i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord3i( params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2328,6 +2573,7 @@ static NTSTATUS gl_glTexCoord3iv( void *args )
     struct glTexCoord3iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord3iv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2336,6 +2582,7 @@ static NTSTATUS gl_glTexCoord3s( void *args )
     struct glTexCoord3s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord3s( params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2344,6 +2591,7 @@ static NTSTATUS gl_glTexCoord3sv( void *args )
     struct glTexCoord3sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord3sv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2352,6 +2600,7 @@ static NTSTATUS gl_glTexCoord4d( void *args )
     struct glTexCoord4d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4d( params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2360,6 +2609,7 @@ static NTSTATUS gl_glTexCoord4dv( void *args )
     struct glTexCoord4dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4dv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2368,6 +2618,7 @@ static NTSTATUS gl_glTexCoord4f( void *args )
     struct glTexCoord4f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4f( params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2376,6 +2627,7 @@ static NTSTATUS gl_glTexCoord4fv( void *args )
     struct glTexCoord4fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4fv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2384,6 +2636,7 @@ static NTSTATUS gl_glTexCoord4i( void *args )
     struct glTexCoord4i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4i( params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2392,6 +2645,7 @@ static NTSTATUS gl_glTexCoord4iv( void *args )
     struct glTexCoord4iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4iv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2400,6 +2654,7 @@ static NTSTATUS gl_glTexCoord4s( void *args )
     struct glTexCoord4s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4s( params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2408,6 +2663,7 @@ static NTSTATUS gl_glTexCoord4sv( void *args )
     struct glTexCoord4sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4sv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2416,6 +2672,7 @@ static NTSTATUS gl_glTexCoordPointer( void *args )
     struct glTexCoordPointer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoordPointer( params->size, params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2424,6 +2681,7 @@ static NTSTATUS gl_glTexEnvf( void *args )
     struct glTexEnvf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexEnvf( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2432,6 +2690,7 @@ static NTSTATUS gl_glTexEnvfv( void *args )
     struct glTexEnvfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexEnvfv( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2440,6 +2699,7 @@ static NTSTATUS gl_glTexEnvi( void *args )
     struct glTexEnvi_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexEnvi( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2448,6 +2708,7 @@ static NTSTATUS gl_glTexEnviv( void *args )
     struct glTexEnviv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexEnviv( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2456,6 +2717,7 @@ static NTSTATUS gl_glTexGend( void *args )
     struct glTexGend_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexGend( params->coord, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2464,6 +2726,7 @@ static NTSTATUS gl_glTexGendv( void *args )
     struct glTexGendv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexGendv( params->coord, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2472,6 +2735,7 @@ static NTSTATUS gl_glTexGenf( void *args )
     struct glTexGenf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexGenf( params->coord, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2480,6 +2744,7 @@ static NTSTATUS gl_glTexGenfv( void *args )
     struct glTexGenfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexGenfv( params->coord, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2488,6 +2753,7 @@ static NTSTATUS gl_glTexGeni( void *args )
     struct glTexGeni_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexGeni( params->coord, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2496,6 +2762,7 @@ static NTSTATUS gl_glTexGeniv( void *args )
     struct glTexGeniv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexGeniv( params->coord, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2504,6 +2771,7 @@ static NTSTATUS gl_glTexImage1D( void *args )
     struct glTexImage1D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexImage1D( params->target, params->level, params->internalformat, params->width, params->border, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2512,6 +2780,7 @@ static NTSTATUS gl_glTexImage2D( void *args )
     struct glTexImage2D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexImage2D( params->target, params->level, params->internalformat, params->width, params->height, params->border, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2520,6 +2789,7 @@ static NTSTATUS gl_glTexParameterf( void *args )
     struct glTexParameterf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexParameterf( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2528,6 +2798,7 @@ static NTSTATUS gl_glTexParameterfv( void *args )
     struct glTexParameterfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexParameterfv( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2536,6 +2807,7 @@ static NTSTATUS gl_glTexParameteri( void *args )
     struct glTexParameteri_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexParameteri( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2544,6 +2816,7 @@ static NTSTATUS gl_glTexParameteriv( void *args )
     struct glTexParameteriv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexParameteriv( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2552,6 +2825,7 @@ static NTSTATUS gl_glTexSubImage1D( void *args )
     struct glTexSubImage1D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexSubImage1D( params->target, params->level, params->xoffset, params->width, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2560,6 +2834,7 @@ static NTSTATUS gl_glTexSubImage2D( void *args )
     struct glTexSubImage2D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexSubImage2D( params->target, params->level, params->xoffset, params->yoffset, params->width, params->height, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2568,6 +2843,7 @@ static NTSTATUS gl_glTranslated( void *args )
     struct glTranslated_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTranslated( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2576,6 +2852,7 @@ static NTSTATUS gl_glTranslatef( void *args )
     struct glTranslatef_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTranslatef( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2584,6 +2861,7 @@ static NTSTATUS gl_glVertex2d( void *args )
     struct glVertex2d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex2d( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2592,6 +2870,7 @@ static NTSTATUS gl_glVertex2dv( void *args )
     struct glVertex2dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex2dv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2600,6 +2879,7 @@ static NTSTATUS gl_glVertex2f( void *args )
     struct glVertex2f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex2f( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2608,6 +2888,7 @@ static NTSTATUS gl_glVertex2fv( void *args )
     struct glVertex2fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex2fv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2616,6 +2897,7 @@ static NTSTATUS gl_glVertex2i( void *args )
     struct glVertex2i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex2i( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2624,6 +2906,7 @@ static NTSTATUS gl_glVertex2iv( void *args )
     struct glVertex2iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex2iv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2632,6 +2915,7 @@ static NTSTATUS gl_glVertex2s( void *args )
     struct glVertex2s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex2s( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2640,6 +2924,7 @@ static NTSTATUS gl_glVertex2sv( void *args )
     struct glVertex2sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex2sv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2648,6 +2933,7 @@ static NTSTATUS gl_glVertex3d( void *args )
     struct glVertex3d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex3d( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2656,6 +2942,7 @@ static NTSTATUS gl_glVertex3dv( void *args )
     struct glVertex3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex3dv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2664,6 +2951,7 @@ static NTSTATUS gl_glVertex3f( void *args )
     struct glVertex3f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex3f( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2672,6 +2960,7 @@ static NTSTATUS gl_glVertex3fv( void *args )
     struct glVertex3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex3fv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2680,6 +2969,7 @@ static NTSTATUS gl_glVertex3i( void *args )
     struct glVertex3i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex3i( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2688,6 +2978,7 @@ static NTSTATUS gl_glVertex3iv( void *args )
     struct glVertex3iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex3iv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2696,6 +2987,7 @@ static NTSTATUS gl_glVertex3s( void *args )
     struct glVertex3s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex3s( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2704,6 +2996,7 @@ static NTSTATUS gl_glVertex3sv( void *args )
     struct glVertex3sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex3sv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2712,6 +3005,7 @@ static NTSTATUS gl_glVertex4d( void *args )
     struct glVertex4d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex4d( params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2720,6 +3014,7 @@ static NTSTATUS gl_glVertex4dv( void *args )
     struct glVertex4dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex4dv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2728,6 +3023,7 @@ static NTSTATUS gl_glVertex4f( void *args )
     struct glVertex4f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex4f( params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2736,6 +3032,7 @@ static NTSTATUS gl_glVertex4fv( void *args )
     struct glVertex4fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex4fv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2744,6 +3041,7 @@ static NTSTATUS gl_glVertex4i( void *args )
     struct glVertex4i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex4i( params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2752,6 +3050,7 @@ static NTSTATUS gl_glVertex4iv( void *args )
     struct glVertex4iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex4iv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2760,6 +3059,7 @@ static NTSTATUS gl_glVertex4s( void *args )
     struct glVertex4s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex4s( params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2768,6 +3068,7 @@ static NTSTATUS gl_glVertex4sv( void *args )
     struct glVertex4sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex4sv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2776,6 +3077,7 @@ static NTSTATUS gl_glVertexPointer( void *args )
     struct glVertexPointer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexPointer( params->size, params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2784,6 +3086,7 @@ static NTSTATUS gl_glViewport( void *args )
     struct glViewport_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glViewport( params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2792,6 +3095,7 @@ static NTSTATUS ext_glAccumxOES( void *args )
     struct glAccumxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glAccumxOES( params->op, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2800,6 +3104,7 @@ static NTSTATUS ext_glAcquireKeyedMutexWin32EXT( void *args )
     struct glAcquireKeyedMutexWin32EXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glAcquireKeyedMutexWin32EXT( params->memory, params->key, params->timeout );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2808,6 +3113,7 @@ static NTSTATUS ext_glActiveProgramEXT( void *args )
     struct glActiveProgramEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glActiveProgramEXT( params->program );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2816,6 +3122,7 @@ static NTSTATUS ext_glActiveShaderProgram( void *args )
     struct glActiveShaderProgram_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glActiveShaderProgram( params->pipeline, params->program );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2824,6 +3131,7 @@ static NTSTATUS ext_glActiveStencilFaceEXT( void *args )
     struct glActiveStencilFaceEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glActiveStencilFaceEXT( params->face );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2832,6 +3140,7 @@ static NTSTATUS ext_glActiveTexture( void *args )
     struct glActiveTexture_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glActiveTexture( params->texture );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2840,6 +3149,7 @@ static NTSTATUS ext_glActiveTextureARB( void *args )
     struct glActiveTextureARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glActiveTextureARB( params->texture );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2848,6 +3158,7 @@ static NTSTATUS ext_glActiveVaryingNV( void *args )
     struct glActiveVaryingNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glActiveVaryingNV( params->program, params->name );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2856,6 +3167,7 @@ static NTSTATUS ext_glAlphaFragmentOp1ATI( void *args )
     struct glAlphaFragmentOp1ATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glAlphaFragmentOp1ATI( params->op, params->dst, params->dstMod, params->arg1, params->arg1Rep, params->arg1Mod );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2864,6 +3176,7 @@ static NTSTATUS ext_glAlphaFragmentOp2ATI( void *args )
     struct glAlphaFragmentOp2ATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glAlphaFragmentOp2ATI( params->op, params->dst, params->dstMod, params->arg1, params->arg1Rep, params->arg1Mod, params->arg2, params->arg2Rep, params->arg2Mod );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2872,6 +3185,7 @@ static NTSTATUS ext_glAlphaFragmentOp3ATI( void *args )
     struct glAlphaFragmentOp3ATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glAlphaFragmentOp3ATI( params->op, params->dst, params->dstMod, params->arg1, params->arg1Rep, params->arg1Mod, params->arg2, params->arg2Rep, params->arg2Mod, params->arg3, params->arg3Rep, params->arg3Mod );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2880,6 +3194,7 @@ static NTSTATUS ext_glAlphaFuncxOES( void *args )
     struct glAlphaFuncxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glAlphaFuncxOES( params->func, params->ref );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2888,6 +3203,7 @@ static NTSTATUS ext_glAlphaToCoverageDitherControlNV( void *args )
     struct glAlphaToCoverageDitherControlNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glAlphaToCoverageDitherControlNV( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2896,6 +3212,7 @@ static NTSTATUS ext_glApplyFramebufferAttachmentCMAAINTEL( void *args )
     struct glApplyFramebufferAttachmentCMAAINTEL_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glApplyFramebufferAttachmentCMAAINTEL();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2904,6 +3221,7 @@ static NTSTATUS ext_glApplyTextureEXT( void *args )
     struct glApplyTextureEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glApplyTextureEXT( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2928,6 +3246,7 @@ static NTSTATUS ext_glArrayElementEXT( void *args )
     struct glArrayElementEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glArrayElementEXT( params->i );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2936,6 +3255,7 @@ static NTSTATUS ext_glArrayObjectATI( void *args )
     struct glArrayObjectATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glArrayObjectATI( params->array, params->size, params->type, params->stride, params->buffer, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2944,6 +3264,7 @@ static NTSTATUS ext_glAsyncCopyBufferSubDataNVX( void *args )
     struct glAsyncCopyBufferSubDataNVX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glAsyncCopyBufferSubDataNVX( params->waitSemaphoreCount, params->waitSemaphoreArray, params->fenceValueArray, params->readGpu, params->writeGpuMask, params->readBuffer, params->writeBuffer, params->readOffset, params->writeOffset, params->size, params->signalSemaphoreCount, params->signalSemaphoreArray, params->signalValueArray );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2952,6 +3273,7 @@ static NTSTATUS ext_glAsyncCopyImageSubDataNVX( void *args )
     struct glAsyncCopyImageSubDataNVX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glAsyncCopyImageSubDataNVX( params->waitSemaphoreCount, params->waitSemaphoreArray, params->waitValueArray, params->srcGpu, params->dstGpuMask, params->srcName, params->srcTarget, params->srcLevel, params->srcX, params->srcY, params->srcZ, params->dstName, params->dstTarget, params->dstLevel, params->dstX, params->dstY, params->dstZ, params->srcWidth, params->srcHeight, params->srcDepth, params->signalSemaphoreCount, params->signalSemaphoreArray, params->signalValueArray );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2960,6 +3282,7 @@ static NTSTATUS ext_glAsyncMarkerSGIX( void *args )
     struct glAsyncMarkerSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glAsyncMarkerSGIX( params->marker );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2968,6 +3291,7 @@ static NTSTATUS ext_glAttachObjectARB( void *args )
     struct glAttachObjectARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glAttachObjectARB( params->containerObj, params->obj );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2976,6 +3300,7 @@ static NTSTATUS ext_glAttachShader( void *args )
     struct glAttachShader_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glAttachShader( params->program, params->shader );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2984,6 +3309,7 @@ static NTSTATUS ext_glBeginConditionalRender( void *args )
     struct glBeginConditionalRender_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBeginConditionalRender( params->id, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2992,6 +3318,7 @@ static NTSTATUS ext_glBeginConditionalRenderNV( void *args )
     struct glBeginConditionalRenderNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBeginConditionalRenderNV( params->id, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3000,6 +3327,7 @@ static NTSTATUS ext_glBeginConditionalRenderNVX( void *args )
     struct glBeginConditionalRenderNVX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBeginConditionalRenderNVX( params->id );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3008,6 +3336,7 @@ static NTSTATUS ext_glBeginFragmentShaderATI( void *args )
     struct glBeginFragmentShaderATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBeginFragmentShaderATI();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3016,6 +3345,7 @@ static NTSTATUS ext_glBeginOcclusionQueryNV( void *args )
     struct glBeginOcclusionQueryNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBeginOcclusionQueryNV( params->id );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3024,6 +3354,7 @@ static NTSTATUS ext_glBeginPerfMonitorAMD( void *args )
     struct glBeginPerfMonitorAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBeginPerfMonitorAMD( params->monitor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3032,6 +3363,7 @@ static NTSTATUS ext_glBeginPerfQueryINTEL( void *args )
     struct glBeginPerfQueryINTEL_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBeginPerfQueryINTEL( params->queryHandle );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3040,6 +3372,7 @@ static NTSTATUS ext_glBeginQuery( void *args )
     struct glBeginQuery_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBeginQuery( params->target, params->id );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3048,6 +3381,7 @@ static NTSTATUS ext_glBeginQueryARB( void *args )
     struct glBeginQueryARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBeginQueryARB( params->target, params->id );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3056,6 +3390,7 @@ static NTSTATUS ext_glBeginQueryIndexed( void *args )
     struct glBeginQueryIndexed_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBeginQueryIndexed( params->target, params->index, params->id );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3064,6 +3399,7 @@ static NTSTATUS ext_glBeginTransformFeedback( void *args )
     struct glBeginTransformFeedback_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBeginTransformFeedback( params->primitiveMode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3072,6 +3408,7 @@ static NTSTATUS ext_glBeginTransformFeedbackEXT( void *args )
     struct glBeginTransformFeedbackEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBeginTransformFeedbackEXT( params->primitiveMode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3080,6 +3417,7 @@ static NTSTATUS ext_glBeginTransformFeedbackNV( void *args )
     struct glBeginTransformFeedbackNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBeginTransformFeedbackNV( params->primitiveMode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3088,6 +3426,7 @@ static NTSTATUS ext_glBeginVertexShaderEXT( void *args )
     struct glBeginVertexShaderEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBeginVertexShaderEXT();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3096,6 +3435,7 @@ static NTSTATUS ext_glBeginVideoCaptureNV( void *args )
     struct glBeginVideoCaptureNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBeginVideoCaptureNV( params->video_capture_slot );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3104,6 +3444,7 @@ static NTSTATUS ext_glBindAttribLocation( void *args )
     struct glBindAttribLocation_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindAttribLocation( params->program, params->index, params->name );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3112,6 +3453,7 @@ static NTSTATUS ext_glBindAttribLocationARB( void *args )
     struct glBindAttribLocationARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindAttribLocationARB( params->programObj, params->index, params->name );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3120,6 +3462,7 @@ static NTSTATUS ext_glBindBuffer( void *args )
     struct glBindBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindBuffer( params->target, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3128,6 +3471,7 @@ static NTSTATUS ext_glBindBufferARB( void *args )
     struct glBindBufferARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindBufferARB( params->target, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3136,6 +3480,7 @@ static NTSTATUS ext_glBindBufferBase( void *args )
     struct glBindBufferBase_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindBufferBase( params->target, params->index, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3144,6 +3489,7 @@ static NTSTATUS ext_glBindBufferBaseEXT( void *args )
     struct glBindBufferBaseEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindBufferBaseEXT( params->target, params->index, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3152,6 +3498,7 @@ static NTSTATUS ext_glBindBufferBaseNV( void *args )
     struct glBindBufferBaseNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindBufferBaseNV( params->target, params->index, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3160,6 +3507,7 @@ static NTSTATUS ext_glBindBufferOffsetEXT( void *args )
     struct glBindBufferOffsetEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindBufferOffsetEXT( params->target, params->index, params->buffer, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3168,6 +3516,7 @@ static NTSTATUS ext_glBindBufferOffsetNV( void *args )
     struct glBindBufferOffsetNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindBufferOffsetNV( params->target, params->index, params->buffer, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3176,6 +3525,7 @@ static NTSTATUS ext_glBindBufferRange( void *args )
     struct glBindBufferRange_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindBufferRange( params->target, params->index, params->buffer, params->offset, params->size );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3184,6 +3534,7 @@ static NTSTATUS ext_glBindBufferRangeEXT( void *args )
     struct glBindBufferRangeEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindBufferRangeEXT( params->target, params->index, params->buffer, params->offset, params->size );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3192,6 +3543,7 @@ static NTSTATUS ext_glBindBufferRangeNV( void *args )
     struct glBindBufferRangeNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindBufferRangeNV( params->target, params->index, params->buffer, params->offset, params->size );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3200,6 +3552,7 @@ static NTSTATUS ext_glBindBuffersBase( void *args )
     struct glBindBuffersBase_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindBuffersBase( params->target, params->first, params->count, params->buffers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3208,6 +3561,7 @@ static NTSTATUS ext_glBindBuffersRange( void *args )
     struct glBindBuffersRange_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindBuffersRange( params->target, params->first, params->count, params->buffers, params->offsets, params->sizes );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3216,6 +3570,7 @@ static NTSTATUS ext_glBindFragDataLocation( void *args )
     struct glBindFragDataLocation_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindFragDataLocation( params->program, params->color, params->name );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3224,6 +3579,7 @@ static NTSTATUS ext_glBindFragDataLocationEXT( void *args )
     struct glBindFragDataLocationEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindFragDataLocationEXT( params->program, params->color, params->name );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3232,6 +3588,7 @@ static NTSTATUS ext_glBindFragDataLocationIndexed( void *args )
     struct glBindFragDataLocationIndexed_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindFragDataLocationIndexed( params->program, params->colorNumber, params->index, params->name );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3240,6 +3597,7 @@ static NTSTATUS ext_glBindFragmentShaderATI( void *args )
     struct glBindFragmentShaderATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindFragmentShaderATI( params->id );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3248,6 +3606,7 @@ static NTSTATUS ext_glBindFramebuffer( void *args )
     struct glBindFramebuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindFramebuffer( params->target, params->framebuffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3256,6 +3615,7 @@ static NTSTATUS ext_glBindFramebufferEXT( void *args )
     struct glBindFramebufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindFramebufferEXT( params->target, params->framebuffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3264,6 +3624,7 @@ static NTSTATUS ext_glBindImageTexture( void *args )
     struct glBindImageTexture_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindImageTexture( params->unit, params->texture, params->level, params->layered, params->layer, params->access, params->format );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3272,6 +3633,7 @@ static NTSTATUS ext_glBindImageTextureEXT( void *args )
     struct glBindImageTextureEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindImageTextureEXT( params->index, params->texture, params->level, params->layered, params->layer, params->access, params->format );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3280,6 +3642,7 @@ static NTSTATUS ext_glBindImageTextures( void *args )
     struct glBindImageTextures_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindImageTextures( params->first, params->count, params->textures );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3288,6 +3651,7 @@ static NTSTATUS ext_glBindLightParameterEXT( void *args )
     struct glBindLightParameterEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glBindLightParameterEXT( params->light, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3296,6 +3660,7 @@ static NTSTATUS ext_glBindMaterialParameterEXT( void *args )
     struct glBindMaterialParameterEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glBindMaterialParameterEXT( params->face, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3304,6 +3669,7 @@ static NTSTATUS ext_glBindMultiTextureEXT( void *args )
     struct glBindMultiTextureEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindMultiTextureEXT( params->texunit, params->target, params->texture );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3312,6 +3678,7 @@ static NTSTATUS ext_glBindParameterEXT( void *args )
     struct glBindParameterEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glBindParameterEXT( params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3320,6 +3687,7 @@ static NTSTATUS ext_glBindProgramARB( void *args )
     struct glBindProgramARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindProgramARB( params->target, params->program );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3328,6 +3696,7 @@ static NTSTATUS ext_glBindProgramNV( void *args )
     struct glBindProgramNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindProgramNV( params->target, params->id );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3336,6 +3705,7 @@ static NTSTATUS ext_glBindProgramPipeline( void *args )
     struct glBindProgramPipeline_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindProgramPipeline( params->pipeline );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3344,6 +3714,7 @@ static NTSTATUS ext_glBindRenderbuffer( void *args )
     struct glBindRenderbuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindRenderbuffer( params->target, params->renderbuffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3352,6 +3723,7 @@ static NTSTATUS ext_glBindRenderbufferEXT( void *args )
     struct glBindRenderbufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindRenderbufferEXT( params->target, params->renderbuffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3360,6 +3732,7 @@ static NTSTATUS ext_glBindSampler( void *args )
     struct glBindSampler_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindSampler( params->unit, params->sampler );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3368,6 +3741,7 @@ static NTSTATUS ext_glBindSamplers( void *args )
     struct glBindSamplers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindSamplers( params->first, params->count, params->samplers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3376,6 +3750,7 @@ static NTSTATUS ext_glBindShadingRateImageNV( void *args )
     struct glBindShadingRateImageNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindShadingRateImageNV( params->texture );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3384,6 +3759,7 @@ static NTSTATUS ext_glBindTexGenParameterEXT( void *args )
     struct glBindTexGenParameterEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glBindTexGenParameterEXT( params->unit, params->coord, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3392,6 +3768,7 @@ static NTSTATUS ext_glBindTextureEXT( void *args )
     struct glBindTextureEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindTextureEXT( params->target, params->texture );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3400,6 +3777,7 @@ static NTSTATUS ext_glBindTextureUnit( void *args )
     struct glBindTextureUnit_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindTextureUnit( params->unit, params->texture );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3408,6 +3786,7 @@ static NTSTATUS ext_glBindTextureUnitParameterEXT( void *args )
     struct glBindTextureUnitParameterEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glBindTextureUnitParameterEXT( params->unit, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3416,6 +3795,7 @@ static NTSTATUS ext_glBindTextures( void *args )
     struct glBindTextures_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindTextures( params->first, params->count, params->textures );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3424,6 +3804,7 @@ static NTSTATUS ext_glBindTransformFeedback( void *args )
     struct glBindTransformFeedback_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindTransformFeedback( params->target, params->id );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3432,6 +3813,7 @@ static NTSTATUS ext_glBindTransformFeedbackNV( void *args )
     struct glBindTransformFeedbackNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindTransformFeedbackNV( params->target, params->id );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3440,6 +3822,7 @@ static NTSTATUS ext_glBindVertexArray( void *args )
     struct glBindVertexArray_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindVertexArray( params->array );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3448,6 +3831,7 @@ static NTSTATUS ext_glBindVertexArrayAPPLE( void *args )
     struct glBindVertexArrayAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindVertexArrayAPPLE( params->array );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3456,6 +3840,7 @@ static NTSTATUS ext_glBindVertexBuffer( void *args )
     struct glBindVertexBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindVertexBuffer( params->bindingindex, params->buffer, params->offset, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3464,6 +3849,7 @@ static NTSTATUS ext_glBindVertexBuffers( void *args )
     struct glBindVertexBuffers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindVertexBuffers( params->first, params->count, params->buffers, params->offsets, params->strides );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3472,6 +3858,7 @@ static NTSTATUS ext_glBindVertexShaderEXT( void *args )
     struct glBindVertexShaderEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindVertexShaderEXT( params->id );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3480,6 +3867,7 @@ static NTSTATUS ext_glBindVideoCaptureStreamBufferNV( void *args )
     struct glBindVideoCaptureStreamBufferNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindVideoCaptureStreamBufferNV( params->video_capture_slot, params->stream, params->frame_region, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3488,6 +3876,7 @@ static NTSTATUS ext_glBindVideoCaptureStreamTextureNV( void *args )
     struct glBindVideoCaptureStreamTextureNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindVideoCaptureStreamTextureNV( params->video_capture_slot, params->stream, params->frame_region, params->target, params->texture );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3496,6 +3885,7 @@ static NTSTATUS ext_glBinormal3bEXT( void *args )
     struct glBinormal3bEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBinormal3bEXT( params->bx, params->by, params->bz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3504,6 +3894,7 @@ static NTSTATUS ext_glBinormal3bvEXT( void *args )
     struct glBinormal3bvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBinormal3bvEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3512,6 +3903,7 @@ static NTSTATUS ext_glBinormal3dEXT( void *args )
     struct glBinormal3dEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBinormal3dEXT( params->bx, params->by, params->bz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3520,6 +3912,7 @@ static NTSTATUS ext_glBinormal3dvEXT( void *args )
     struct glBinormal3dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBinormal3dvEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3528,6 +3921,7 @@ static NTSTATUS ext_glBinormal3fEXT( void *args )
     struct glBinormal3fEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBinormal3fEXT( params->bx, params->by, params->bz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3536,6 +3930,7 @@ static NTSTATUS ext_glBinormal3fvEXT( void *args )
     struct glBinormal3fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBinormal3fvEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3544,6 +3939,7 @@ static NTSTATUS ext_glBinormal3iEXT( void *args )
     struct glBinormal3iEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBinormal3iEXT( params->bx, params->by, params->bz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3552,6 +3948,7 @@ static NTSTATUS ext_glBinormal3ivEXT( void *args )
     struct glBinormal3ivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBinormal3ivEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3560,6 +3957,7 @@ static NTSTATUS ext_glBinormal3sEXT( void *args )
     struct glBinormal3sEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBinormal3sEXT( params->bx, params->by, params->bz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3568,6 +3966,7 @@ static NTSTATUS ext_glBinormal3svEXT( void *args )
     struct glBinormal3svEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBinormal3svEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3576,6 +3975,7 @@ static NTSTATUS ext_glBinormalPointerEXT( void *args )
     struct glBinormalPointerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBinormalPointerEXT( params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3584,6 +3984,7 @@ static NTSTATUS ext_glBitmapxOES( void *args )
     struct glBitmapxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBitmapxOES( params->width, params->height, params->xorig, params->yorig, params->xmove, params->ymove, params->bitmap );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3592,6 +3993,7 @@ static NTSTATUS ext_glBlendBarrierKHR( void *args )
     struct glBlendBarrierKHR_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendBarrierKHR();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3600,6 +4002,7 @@ static NTSTATUS ext_glBlendBarrierNV( void *args )
     struct glBlendBarrierNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendBarrierNV();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3608,6 +4011,7 @@ static NTSTATUS ext_glBlendColor( void *args )
     struct glBlendColor_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendColor( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3616,6 +4020,7 @@ static NTSTATUS ext_glBlendColorEXT( void *args )
     struct glBlendColorEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendColorEXT( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3624,6 +4029,7 @@ static NTSTATUS ext_glBlendColorxOES( void *args )
     struct glBlendColorxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendColorxOES( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3632,6 +4038,7 @@ static NTSTATUS ext_glBlendEquation( void *args )
     struct glBlendEquation_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendEquation( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3640,6 +4047,7 @@ static NTSTATUS ext_glBlendEquationEXT( void *args )
     struct glBlendEquationEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendEquationEXT( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3648,6 +4056,7 @@ static NTSTATUS ext_glBlendEquationIndexedAMD( void *args )
     struct glBlendEquationIndexedAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendEquationIndexedAMD( params->buf, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3656,6 +4065,7 @@ static NTSTATUS ext_glBlendEquationSeparate( void *args )
     struct glBlendEquationSeparate_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendEquationSeparate( params->modeRGB, params->modeAlpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3664,6 +4074,7 @@ static NTSTATUS ext_glBlendEquationSeparateEXT( void *args )
     struct glBlendEquationSeparateEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendEquationSeparateEXT( params->modeRGB, params->modeAlpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3672,6 +4083,7 @@ static NTSTATUS ext_glBlendEquationSeparateIndexedAMD( void *args )
     struct glBlendEquationSeparateIndexedAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendEquationSeparateIndexedAMD( params->buf, params->modeRGB, params->modeAlpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3680,6 +4092,7 @@ static NTSTATUS ext_glBlendEquationSeparatei( void *args )
     struct glBlendEquationSeparatei_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendEquationSeparatei( params->buf, params->modeRGB, params->modeAlpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3688,6 +4101,7 @@ static NTSTATUS ext_glBlendEquationSeparateiARB( void *args )
     struct glBlendEquationSeparateiARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendEquationSeparateiARB( params->buf, params->modeRGB, params->modeAlpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3696,6 +4110,7 @@ static NTSTATUS ext_glBlendEquationi( void *args )
     struct glBlendEquationi_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendEquationi( params->buf, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3704,6 +4119,7 @@ static NTSTATUS ext_glBlendEquationiARB( void *args )
     struct glBlendEquationiARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendEquationiARB( params->buf, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3712,6 +4128,7 @@ static NTSTATUS ext_glBlendFuncIndexedAMD( void *args )
     struct glBlendFuncIndexedAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendFuncIndexedAMD( params->buf, params->src, params->dst );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3720,6 +4137,7 @@ static NTSTATUS ext_glBlendFuncSeparate( void *args )
     struct glBlendFuncSeparate_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendFuncSeparate( params->sfactorRGB, params->dfactorRGB, params->sfactorAlpha, params->dfactorAlpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3728,6 +4146,7 @@ static NTSTATUS ext_glBlendFuncSeparateEXT( void *args )
     struct glBlendFuncSeparateEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendFuncSeparateEXT( params->sfactorRGB, params->dfactorRGB, params->sfactorAlpha, params->dfactorAlpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3736,6 +4155,7 @@ static NTSTATUS ext_glBlendFuncSeparateINGR( void *args )
     struct glBlendFuncSeparateINGR_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendFuncSeparateINGR( params->sfactorRGB, params->dfactorRGB, params->sfactorAlpha, params->dfactorAlpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3744,6 +4164,7 @@ static NTSTATUS ext_glBlendFuncSeparateIndexedAMD( void *args )
     struct glBlendFuncSeparateIndexedAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendFuncSeparateIndexedAMD( params->buf, params->srcRGB, params->dstRGB, params->srcAlpha, params->dstAlpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3752,6 +4173,7 @@ static NTSTATUS ext_glBlendFuncSeparatei( void *args )
     struct glBlendFuncSeparatei_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendFuncSeparatei( params->buf, params->srcRGB, params->dstRGB, params->srcAlpha, params->dstAlpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3760,6 +4182,7 @@ static NTSTATUS ext_glBlendFuncSeparateiARB( void *args )
     struct glBlendFuncSeparateiARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendFuncSeparateiARB( params->buf, params->srcRGB, params->dstRGB, params->srcAlpha, params->dstAlpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3768,6 +4191,7 @@ static NTSTATUS ext_glBlendFunci( void *args )
     struct glBlendFunci_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendFunci( params->buf, params->src, params->dst );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3776,6 +4200,7 @@ static NTSTATUS ext_glBlendFunciARB( void *args )
     struct glBlendFunciARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendFunciARB( params->buf, params->src, params->dst );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3784,6 +4209,7 @@ static NTSTATUS ext_glBlendParameteriNV( void *args )
     struct glBlendParameteriNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlendParameteriNV( params->pname, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3792,6 +4218,7 @@ static NTSTATUS ext_glBlitFramebuffer( void *args )
     struct glBlitFramebuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlitFramebuffer( params->srcX0, params->srcY0, params->srcX1, params->srcY1, params->dstX0, params->dstY0, params->dstX1, params->dstY1, params->mask, params->filter );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3800,6 +4227,7 @@ static NTSTATUS ext_glBlitFramebufferEXT( void *args )
     struct glBlitFramebufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlitFramebufferEXT( params->srcX0, params->srcY0, params->srcX1, params->srcY1, params->dstX0, params->dstY0, params->dstX1, params->dstY1, params->mask, params->filter );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3808,6 +4236,7 @@ static NTSTATUS ext_glBlitNamedFramebuffer( void *args )
     struct glBlitNamedFramebuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBlitNamedFramebuffer( params->readFramebuffer, params->drawFramebuffer, params->srcX0, params->srcY0, params->srcX1, params->srcY1, params->dstX0, params->dstY0, params->dstX1, params->dstY1, params->mask, params->filter );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3816,6 +4245,7 @@ static NTSTATUS ext_glBufferAddressRangeNV( void *args )
     struct glBufferAddressRangeNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBufferAddressRangeNV( params->pname, params->index, params->address, params->length );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3824,6 +4254,7 @@ static NTSTATUS ext_glBufferAttachMemoryNV( void *args )
     struct glBufferAttachMemoryNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBufferAttachMemoryNV( params->target, params->memory, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3832,6 +4263,7 @@ static NTSTATUS ext_glBufferData( void *args )
     struct glBufferData_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBufferData( params->target, params->size, params->data, params->usage );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3840,6 +4272,7 @@ static NTSTATUS ext_glBufferDataARB( void *args )
     struct glBufferDataARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBufferDataARB( params->target, params->size, params->data, params->usage );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3848,6 +4281,7 @@ static NTSTATUS ext_glBufferPageCommitmentARB( void *args )
     struct glBufferPageCommitmentARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBufferPageCommitmentARB( params->target, params->offset, params->size, params->commit );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3856,6 +4290,7 @@ static NTSTATUS ext_glBufferParameteriAPPLE( void *args )
     struct glBufferParameteriAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBufferParameteriAPPLE( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3864,6 +4299,7 @@ static NTSTATUS ext_glBufferRegionEnabled( void *args )
     struct glBufferRegionEnabled_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glBufferRegionEnabled();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3872,6 +4308,7 @@ static NTSTATUS ext_glBufferStorage( void *args )
     struct glBufferStorage_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBufferStorage( params->target, params->size, params->data, params->flags );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3880,6 +4317,7 @@ static NTSTATUS ext_glBufferStorageExternalEXT( void *args )
     struct glBufferStorageExternalEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBufferStorageExternalEXT( params->target, params->offset, params->size, params->clientBuffer, params->flags );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3888,6 +4326,7 @@ static NTSTATUS ext_glBufferStorageMemEXT( void *args )
     struct glBufferStorageMemEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBufferStorageMemEXT( params->target, params->size, params->memory, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3896,6 +4335,7 @@ static NTSTATUS ext_glBufferSubData( void *args )
     struct glBufferSubData_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBufferSubData( params->target, params->offset, params->size, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3904,6 +4344,7 @@ static NTSTATUS ext_glBufferSubDataARB( void *args )
     struct glBufferSubDataARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBufferSubDataARB( params->target, params->offset, params->size, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3912,6 +4353,7 @@ static NTSTATUS ext_glCallCommandListNV( void *args )
     struct glCallCommandListNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCallCommandListNV( params->list );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3920,6 +4362,7 @@ static NTSTATUS ext_glCheckFramebufferStatus( void *args )
     struct glCheckFramebufferStatus_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glCheckFramebufferStatus( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3928,6 +4371,7 @@ static NTSTATUS ext_glCheckFramebufferStatusEXT( void *args )
     struct glCheckFramebufferStatusEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glCheckFramebufferStatusEXT( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3936,6 +4380,7 @@ static NTSTATUS ext_glCheckNamedFramebufferStatus( void *args )
     struct glCheckNamedFramebufferStatus_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glCheckNamedFramebufferStatus( params->framebuffer, params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3944,6 +4389,7 @@ static NTSTATUS ext_glCheckNamedFramebufferStatusEXT( void *args )
     struct glCheckNamedFramebufferStatusEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glCheckNamedFramebufferStatusEXT( params->framebuffer, params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3952,6 +4398,7 @@ static NTSTATUS ext_glClampColor( void *args )
     struct glClampColor_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClampColor( params->target, params->clamp );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3960,6 +4407,7 @@ static NTSTATUS ext_glClampColorARB( void *args )
     struct glClampColorARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClampColorARB( params->target, params->clamp );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3968,6 +4416,7 @@ static NTSTATUS ext_glClearAccumxOES( void *args )
     struct glClearAccumxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearAccumxOES( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3976,6 +4425,7 @@ static NTSTATUS ext_glClearBufferData( void *args )
     struct glClearBufferData_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearBufferData( params->target, params->internalformat, params->format, params->type, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3984,6 +4434,7 @@ static NTSTATUS ext_glClearBufferSubData( void *args )
     struct glClearBufferSubData_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearBufferSubData( params->target, params->internalformat, params->offset, params->size, params->format, params->type, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -3992,6 +4443,7 @@ static NTSTATUS ext_glClearBufferfi( void *args )
     struct glClearBufferfi_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearBufferfi( params->buffer, params->drawbuffer, params->depth, params->stencil );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4000,6 +4452,7 @@ static NTSTATUS ext_glClearBufferfv( void *args )
     struct glClearBufferfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearBufferfv( params->buffer, params->drawbuffer, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4008,6 +4461,7 @@ static NTSTATUS ext_glClearBufferiv( void *args )
     struct glClearBufferiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearBufferiv( params->buffer, params->drawbuffer, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4016,6 +4470,7 @@ static NTSTATUS ext_glClearBufferuiv( void *args )
     struct glClearBufferuiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearBufferuiv( params->buffer, params->drawbuffer, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4024,6 +4479,7 @@ static NTSTATUS ext_glClearColorIiEXT( void *args )
     struct glClearColorIiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearColorIiEXT( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4032,6 +4488,7 @@ static NTSTATUS ext_glClearColorIuiEXT( void *args )
     struct glClearColorIuiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearColorIuiEXT( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4040,6 +4497,7 @@ static NTSTATUS ext_glClearColorxOES( void *args )
     struct glClearColorxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearColorxOES( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4048,6 +4506,7 @@ static NTSTATUS ext_glClearDepthdNV( void *args )
     struct glClearDepthdNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearDepthdNV( params->depth );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4056,6 +4515,7 @@ static NTSTATUS ext_glClearDepthf( void *args )
     struct glClearDepthf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearDepthf( params->d );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4064,6 +4524,7 @@ static NTSTATUS ext_glClearDepthfOES( void *args )
     struct glClearDepthfOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearDepthfOES( params->depth );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4072,6 +4533,7 @@ static NTSTATUS ext_glClearDepthxOES( void *args )
     struct glClearDepthxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearDepthxOES( params->depth );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4080,6 +4542,7 @@ static NTSTATUS ext_glClearNamedBufferData( void *args )
     struct glClearNamedBufferData_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearNamedBufferData( params->buffer, params->internalformat, params->format, params->type, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4088,6 +4551,7 @@ static NTSTATUS ext_glClearNamedBufferDataEXT( void *args )
     struct glClearNamedBufferDataEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearNamedBufferDataEXT( params->buffer, params->internalformat, params->format, params->type, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4096,6 +4560,7 @@ static NTSTATUS ext_glClearNamedBufferSubData( void *args )
     struct glClearNamedBufferSubData_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearNamedBufferSubData( params->buffer, params->internalformat, params->offset, params->size, params->format, params->type, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4104,6 +4569,7 @@ static NTSTATUS ext_glClearNamedBufferSubDataEXT( void *args )
     struct glClearNamedBufferSubDataEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearNamedBufferSubDataEXT( params->buffer, params->internalformat, params->offset, params->size, params->format, params->type, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4112,6 +4578,7 @@ static NTSTATUS ext_glClearNamedFramebufferfi( void *args )
     struct glClearNamedFramebufferfi_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearNamedFramebufferfi( params->framebuffer, params->buffer, params->drawbuffer, params->depth, params->stencil );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4120,6 +4587,7 @@ static NTSTATUS ext_glClearNamedFramebufferfv( void *args )
     struct glClearNamedFramebufferfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearNamedFramebufferfv( params->framebuffer, params->buffer, params->drawbuffer, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4128,6 +4596,7 @@ static NTSTATUS ext_glClearNamedFramebufferiv( void *args )
     struct glClearNamedFramebufferiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearNamedFramebufferiv( params->framebuffer, params->buffer, params->drawbuffer, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4136,6 +4605,7 @@ static NTSTATUS ext_glClearNamedFramebufferuiv( void *args )
     struct glClearNamedFramebufferuiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearNamedFramebufferuiv( params->framebuffer, params->buffer, params->drawbuffer, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4144,6 +4614,7 @@ static NTSTATUS ext_glClearTexImage( void *args )
     struct glClearTexImage_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearTexImage( params->texture, params->level, params->format, params->type, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4152,6 +4623,7 @@ static NTSTATUS ext_glClearTexSubImage( void *args )
     struct glClearTexSubImage_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearTexSubImage( params->texture, params->level, params->xoffset, params->yoffset, params->zoffset, params->width, params->height, params->depth, params->format, params->type, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4160,6 +4632,7 @@ static NTSTATUS ext_glClientActiveTexture( void *args )
     struct glClientActiveTexture_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClientActiveTexture( params->texture );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4168,6 +4641,7 @@ static NTSTATUS ext_glClientActiveTextureARB( void *args )
     struct glClientActiveTextureARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClientActiveTextureARB( params->texture );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4176,6 +4650,7 @@ static NTSTATUS ext_glClientActiveVertexStreamATI( void *args )
     struct glClientActiveVertexStreamATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClientActiveVertexStreamATI( params->stream );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4184,6 +4659,7 @@ static NTSTATUS ext_glClientAttribDefaultEXT( void *args )
     struct glClientAttribDefaultEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClientAttribDefaultEXT( params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4192,6 +4668,7 @@ static NTSTATUS ext_glClientWaitSemaphoreui64NVX( void *args )
     struct glClientWaitSemaphoreui64NVX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClientWaitSemaphoreui64NVX( params->fenceObjectCount, params->semaphoreArray, params->fenceValueArray );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4200,6 +4677,7 @@ NTSTATUS ext_glClientWaitSync( void *args )
     struct glClientWaitSync_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glClientWaitSync( params->sync, params->flags, params->timeout );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4208,6 +4686,7 @@ static NTSTATUS ext_glClipControl( void *args )
     struct glClipControl_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClipControl( params->origin, params->depth );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4216,6 +4695,7 @@ static NTSTATUS ext_glClipPlanefOES( void *args )
     struct glClipPlanefOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClipPlanefOES( params->plane, params->equation );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4224,6 +4704,7 @@ static NTSTATUS ext_glClipPlanexOES( void *args )
     struct glClipPlanexOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClipPlanexOES( params->plane, params->equation );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4232,6 +4713,7 @@ static NTSTATUS ext_glColor3fVertex3fSUN( void *args )
     struct glColor3fVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3fVertex3fSUN( params->r, params->g, params->b, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4240,6 +4722,7 @@ static NTSTATUS ext_glColor3fVertex3fvSUN( void *args )
     struct glColor3fVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3fVertex3fvSUN( params->c, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4248,6 +4731,7 @@ static NTSTATUS ext_glColor3hNV( void *args )
     struct glColor3hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3hNV( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4256,6 +4740,7 @@ static NTSTATUS ext_glColor3hvNV( void *args )
     struct glColor3hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3hvNV( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4264,6 +4749,7 @@ static NTSTATUS ext_glColor3xOES( void *args )
     struct glColor3xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3xOES( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4272,6 +4758,7 @@ static NTSTATUS ext_glColor3xvOES( void *args )
     struct glColor3xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor3xvOES( params->components );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4280,6 +4767,7 @@ static NTSTATUS ext_glColor4fNormal3fVertex3fSUN( void *args )
     struct glColor4fNormal3fVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4fNormal3fVertex3fSUN( params->r, params->g, params->b, params->a, params->nx, params->ny, params->nz, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4288,6 +4776,7 @@ static NTSTATUS ext_glColor4fNormal3fVertex3fvSUN( void *args )
     struct glColor4fNormal3fVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4fNormal3fVertex3fvSUN( params->c, params->n, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4296,6 +4785,7 @@ static NTSTATUS ext_glColor4hNV( void *args )
     struct glColor4hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4hNV( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4304,6 +4794,7 @@ static NTSTATUS ext_glColor4hvNV( void *args )
     struct glColor4hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4hvNV( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4312,6 +4803,7 @@ static NTSTATUS ext_glColor4ubVertex2fSUN( void *args )
     struct glColor4ubVertex2fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4ubVertex2fSUN( params->r, params->g, params->b, params->a, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4320,6 +4812,7 @@ static NTSTATUS ext_glColor4ubVertex2fvSUN( void *args )
     struct glColor4ubVertex2fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4ubVertex2fvSUN( params->c, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4328,6 +4821,7 @@ static NTSTATUS ext_glColor4ubVertex3fSUN( void *args )
     struct glColor4ubVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4ubVertex3fSUN( params->r, params->g, params->b, params->a, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4336,6 +4830,7 @@ static NTSTATUS ext_glColor4ubVertex3fvSUN( void *args )
     struct glColor4ubVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4ubVertex3fvSUN( params->c, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4344,6 +4839,7 @@ static NTSTATUS ext_glColor4xOES( void *args )
     struct glColor4xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4xOES( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4352,6 +4848,7 @@ static NTSTATUS ext_glColor4xvOES( void *args )
     struct glColor4xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4xvOES( params->components );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4360,6 +4857,7 @@ static NTSTATUS ext_glColorFormatNV( void *args )
     struct glColorFormatNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorFormatNV( params->size, params->type, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4368,6 +4866,7 @@ static NTSTATUS ext_glColorFragmentOp1ATI( void *args )
     struct glColorFragmentOp1ATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorFragmentOp1ATI( params->op, params->dst, params->dstMask, params->dstMod, params->arg1, params->arg1Rep, params->arg1Mod );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4376,6 +4875,7 @@ static NTSTATUS ext_glColorFragmentOp2ATI( void *args )
     struct glColorFragmentOp2ATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorFragmentOp2ATI( params->op, params->dst, params->dstMask, params->dstMod, params->arg1, params->arg1Rep, params->arg1Mod, params->arg2, params->arg2Rep, params->arg2Mod );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4384,6 +4884,7 @@ static NTSTATUS ext_glColorFragmentOp3ATI( void *args )
     struct glColorFragmentOp3ATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorFragmentOp3ATI( params->op, params->dst, params->dstMask, params->dstMod, params->arg1, params->arg1Rep, params->arg1Mod, params->arg2, params->arg2Rep, params->arg2Mod, params->arg3, params->arg3Rep, params->arg3Mod );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4392,6 +4893,7 @@ static NTSTATUS ext_glColorMaskIndexedEXT( void *args )
     struct glColorMaskIndexedEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorMaskIndexedEXT( params->index, params->r, params->g, params->b, params->a );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4400,6 +4902,7 @@ static NTSTATUS ext_glColorMaski( void *args )
     struct glColorMaski_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorMaski( params->index, params->r, params->g, params->b, params->a );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4408,6 +4911,7 @@ static NTSTATUS ext_glColorP3ui( void *args )
     struct glColorP3ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorP3ui( params->type, params->color );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4416,6 +4920,7 @@ static NTSTATUS ext_glColorP3uiv( void *args )
     struct glColorP3uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorP3uiv( params->type, params->color );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4424,6 +4929,7 @@ static NTSTATUS ext_glColorP4ui( void *args )
     struct glColorP4ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorP4ui( params->type, params->color );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4432,6 +4938,7 @@ static NTSTATUS ext_glColorP4uiv( void *args )
     struct glColorP4uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorP4uiv( params->type, params->color );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4440,6 +4947,7 @@ static NTSTATUS ext_glColorPointerEXT( void *args )
     struct glColorPointerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorPointerEXT( params->size, params->type, params->stride, params->count, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4448,6 +4956,7 @@ static NTSTATUS ext_glColorPointerListIBM( void *args )
     struct glColorPointerListIBM_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorPointerListIBM( params->size, params->type, params->stride, params->pointer, params->ptrstride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4456,6 +4965,7 @@ static NTSTATUS ext_glColorPointervINTEL( void *args )
     struct glColorPointervINTEL_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorPointervINTEL( params->size, params->type, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4464,6 +4974,7 @@ static NTSTATUS ext_glColorSubTable( void *args )
     struct glColorSubTable_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorSubTable( params->target, params->start, params->count, params->format, params->type, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4472,6 +4983,7 @@ static NTSTATUS ext_glColorSubTableEXT( void *args )
     struct glColorSubTableEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorSubTableEXT( params->target, params->start, params->count, params->format, params->type, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4480,6 +4992,7 @@ static NTSTATUS ext_glColorTable( void *args )
     struct glColorTable_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorTable( params->target, params->internalformat, params->width, params->format, params->type, params->table );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4488,6 +5001,7 @@ static NTSTATUS ext_glColorTableEXT( void *args )
     struct glColorTableEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorTableEXT( params->target, params->internalFormat, params->width, params->format, params->type, params->table );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4496,6 +5010,7 @@ static NTSTATUS ext_glColorTableParameterfv( void *args )
     struct glColorTableParameterfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorTableParameterfv( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4504,6 +5019,7 @@ static NTSTATUS ext_glColorTableParameterfvSGI( void *args )
     struct glColorTableParameterfvSGI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorTableParameterfvSGI( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4512,6 +5028,7 @@ static NTSTATUS ext_glColorTableParameteriv( void *args )
     struct glColorTableParameteriv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorTableParameteriv( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4520,6 +5037,7 @@ static NTSTATUS ext_glColorTableParameterivSGI( void *args )
     struct glColorTableParameterivSGI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorTableParameterivSGI( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4528,6 +5046,7 @@ static NTSTATUS ext_glColorTableSGI( void *args )
     struct glColorTableSGI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColorTableSGI( params->target, params->internalformat, params->width, params->format, params->type, params->table );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4536,6 +5055,7 @@ static NTSTATUS ext_glCombinerInputNV( void *args )
     struct glCombinerInputNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCombinerInputNV( params->stage, params->portion, params->variable, params->input, params->mapping, params->componentUsage );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4544,6 +5064,7 @@ static NTSTATUS ext_glCombinerOutputNV( void *args )
     struct glCombinerOutputNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCombinerOutputNV( params->stage, params->portion, params->abOutput, params->cdOutput, params->sumOutput, params->scale, params->bias, params->abDotProduct, params->cdDotProduct, params->muxSum );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4552,6 +5073,7 @@ static NTSTATUS ext_glCombinerParameterfNV( void *args )
     struct glCombinerParameterfNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCombinerParameterfNV( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4560,6 +5082,7 @@ static NTSTATUS ext_glCombinerParameterfvNV( void *args )
     struct glCombinerParameterfvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCombinerParameterfvNV( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4568,6 +5091,7 @@ static NTSTATUS ext_glCombinerParameteriNV( void *args )
     struct glCombinerParameteriNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCombinerParameteriNV( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4576,6 +5100,7 @@ static NTSTATUS ext_glCombinerParameterivNV( void *args )
     struct glCombinerParameterivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCombinerParameterivNV( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4584,6 +5109,7 @@ static NTSTATUS ext_glCombinerStageParameterfvNV( void *args )
     struct glCombinerStageParameterfvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCombinerStageParameterfvNV( params->stage, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4592,6 +5118,7 @@ static NTSTATUS ext_glCommandListSegmentsNV( void *args )
     struct glCommandListSegmentsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCommandListSegmentsNV( params->list, params->segments );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4600,6 +5127,7 @@ static NTSTATUS ext_glCompileCommandListNV( void *args )
     struct glCompileCommandListNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompileCommandListNV( params->list );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4608,6 +5136,7 @@ static NTSTATUS ext_glCompileShader( void *args )
     struct glCompileShader_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompileShader( params->shader );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4616,6 +5145,7 @@ static NTSTATUS ext_glCompileShaderARB( void *args )
     struct glCompileShaderARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompileShaderARB( params->shaderObj );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4624,6 +5154,7 @@ static NTSTATUS ext_glCompileShaderIncludeARB( void *args )
     struct glCompileShaderIncludeARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompileShaderIncludeARB( params->shader, params->count, params->path, params->length );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4632,6 +5163,7 @@ static NTSTATUS ext_glCompressedMultiTexImage1DEXT( void *args )
     struct glCompressedMultiTexImage1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedMultiTexImage1DEXT( params->texunit, params->target, params->level, params->internalformat, params->width, params->border, params->imageSize, params->bits );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4640,6 +5172,7 @@ static NTSTATUS ext_glCompressedMultiTexImage2DEXT( void *args )
     struct glCompressedMultiTexImage2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedMultiTexImage2DEXT( params->texunit, params->target, params->level, params->internalformat, params->width, params->height, params->border, params->imageSize, params->bits );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4648,6 +5181,7 @@ static NTSTATUS ext_glCompressedMultiTexImage3DEXT( void *args )
     struct glCompressedMultiTexImage3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedMultiTexImage3DEXT( params->texunit, params->target, params->level, params->internalformat, params->width, params->height, params->depth, params->border, params->imageSize, params->bits );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4656,6 +5190,7 @@ static NTSTATUS ext_glCompressedMultiTexSubImage1DEXT( void *args )
     struct glCompressedMultiTexSubImage1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedMultiTexSubImage1DEXT( params->texunit, params->target, params->level, params->xoffset, params->width, params->format, params->imageSize, params->bits );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4664,6 +5199,7 @@ static NTSTATUS ext_glCompressedMultiTexSubImage2DEXT( void *args )
     struct glCompressedMultiTexSubImage2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedMultiTexSubImage2DEXT( params->texunit, params->target, params->level, params->xoffset, params->yoffset, params->width, params->height, params->format, params->imageSize, params->bits );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4672,6 +5208,7 @@ static NTSTATUS ext_glCompressedMultiTexSubImage3DEXT( void *args )
     struct glCompressedMultiTexSubImage3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedMultiTexSubImage3DEXT( params->texunit, params->target, params->level, params->xoffset, params->yoffset, params->zoffset, params->width, params->height, params->depth, params->format, params->imageSize, params->bits );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4680,6 +5217,7 @@ static NTSTATUS ext_glCompressedTexImage1D( void *args )
     struct glCompressedTexImage1D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTexImage1D( params->target, params->level, params->internalformat, params->width, params->border, params->imageSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4688,6 +5226,7 @@ static NTSTATUS ext_glCompressedTexImage1DARB( void *args )
     struct glCompressedTexImage1DARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTexImage1DARB( params->target, params->level, params->internalformat, params->width, params->border, params->imageSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4696,6 +5235,7 @@ static NTSTATUS ext_glCompressedTexImage2D( void *args )
     struct glCompressedTexImage2D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTexImage2D( params->target, params->level, params->internalformat, params->width, params->height, params->border, params->imageSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4704,6 +5244,7 @@ static NTSTATUS ext_glCompressedTexImage2DARB( void *args )
     struct glCompressedTexImage2DARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTexImage2DARB( params->target, params->level, params->internalformat, params->width, params->height, params->border, params->imageSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4712,6 +5253,7 @@ static NTSTATUS ext_glCompressedTexImage3D( void *args )
     struct glCompressedTexImage3D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTexImage3D( params->target, params->level, params->internalformat, params->width, params->height, params->depth, params->border, params->imageSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4720,6 +5262,7 @@ static NTSTATUS ext_glCompressedTexImage3DARB( void *args )
     struct glCompressedTexImage3DARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTexImage3DARB( params->target, params->level, params->internalformat, params->width, params->height, params->depth, params->border, params->imageSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4728,6 +5271,7 @@ static NTSTATUS ext_glCompressedTexSubImage1D( void *args )
     struct glCompressedTexSubImage1D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTexSubImage1D( params->target, params->level, params->xoffset, params->width, params->format, params->imageSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4736,6 +5280,7 @@ static NTSTATUS ext_glCompressedTexSubImage1DARB( void *args )
     struct glCompressedTexSubImage1DARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTexSubImage1DARB( params->target, params->level, params->xoffset, params->width, params->format, params->imageSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4744,6 +5289,7 @@ static NTSTATUS ext_glCompressedTexSubImage2D( void *args )
     struct glCompressedTexSubImage2D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTexSubImage2D( params->target, params->level, params->xoffset, params->yoffset, params->width, params->height, params->format, params->imageSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4752,6 +5298,7 @@ static NTSTATUS ext_glCompressedTexSubImage2DARB( void *args )
     struct glCompressedTexSubImage2DARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTexSubImage2DARB( params->target, params->level, params->xoffset, params->yoffset, params->width, params->height, params->format, params->imageSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4760,6 +5307,7 @@ static NTSTATUS ext_glCompressedTexSubImage3D( void *args )
     struct glCompressedTexSubImage3D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTexSubImage3D( params->target, params->level, params->xoffset, params->yoffset, params->zoffset, params->width, params->height, params->depth, params->format, params->imageSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4768,6 +5316,7 @@ static NTSTATUS ext_glCompressedTexSubImage3DARB( void *args )
     struct glCompressedTexSubImage3DARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTexSubImage3DARB( params->target, params->level, params->xoffset, params->yoffset, params->zoffset, params->width, params->height, params->depth, params->format, params->imageSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4776,6 +5325,7 @@ static NTSTATUS ext_glCompressedTextureImage1DEXT( void *args )
     struct glCompressedTextureImage1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTextureImage1DEXT( params->texture, params->target, params->level, params->internalformat, params->width, params->border, params->imageSize, params->bits );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4784,6 +5334,7 @@ static NTSTATUS ext_glCompressedTextureImage2DEXT( void *args )
     struct glCompressedTextureImage2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTextureImage2DEXT( params->texture, params->target, params->level, params->internalformat, params->width, params->height, params->border, params->imageSize, params->bits );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4792,6 +5343,7 @@ static NTSTATUS ext_glCompressedTextureImage3DEXT( void *args )
     struct glCompressedTextureImage3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTextureImage3DEXT( params->texture, params->target, params->level, params->internalformat, params->width, params->height, params->depth, params->border, params->imageSize, params->bits );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4800,6 +5352,7 @@ static NTSTATUS ext_glCompressedTextureSubImage1D( void *args )
     struct glCompressedTextureSubImage1D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTextureSubImage1D( params->texture, params->level, params->xoffset, params->width, params->format, params->imageSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4808,6 +5361,7 @@ static NTSTATUS ext_glCompressedTextureSubImage1DEXT( void *args )
     struct glCompressedTextureSubImage1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTextureSubImage1DEXT( params->texture, params->target, params->level, params->xoffset, params->width, params->format, params->imageSize, params->bits );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4816,6 +5370,7 @@ static NTSTATUS ext_glCompressedTextureSubImage2D( void *args )
     struct glCompressedTextureSubImage2D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTextureSubImage2D( params->texture, params->level, params->xoffset, params->yoffset, params->width, params->height, params->format, params->imageSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4824,6 +5379,7 @@ static NTSTATUS ext_glCompressedTextureSubImage2DEXT( void *args )
     struct glCompressedTextureSubImage2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTextureSubImage2DEXT( params->texture, params->target, params->level, params->xoffset, params->yoffset, params->width, params->height, params->format, params->imageSize, params->bits );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4832,6 +5388,7 @@ static NTSTATUS ext_glCompressedTextureSubImage3D( void *args )
     struct glCompressedTextureSubImage3D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTextureSubImage3D( params->texture, params->level, params->xoffset, params->yoffset, params->zoffset, params->width, params->height, params->depth, params->format, params->imageSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4840,6 +5397,7 @@ static NTSTATUS ext_glCompressedTextureSubImage3DEXT( void *args )
     struct glCompressedTextureSubImage3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCompressedTextureSubImage3DEXT( params->texture, params->target, params->level, params->xoffset, params->yoffset, params->zoffset, params->width, params->height, params->depth, params->format, params->imageSize, params->bits );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4848,6 +5406,7 @@ static NTSTATUS ext_glConservativeRasterParameterfNV( void *args )
     struct glConservativeRasterParameterfNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glConservativeRasterParameterfNV( params->pname, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4856,6 +5415,7 @@ static NTSTATUS ext_glConservativeRasterParameteriNV( void *args )
     struct glConservativeRasterParameteriNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glConservativeRasterParameteriNV( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4864,6 +5424,7 @@ static NTSTATUS ext_glConvolutionFilter1D( void *args )
     struct glConvolutionFilter1D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glConvolutionFilter1D( params->target, params->internalformat, params->width, params->format, params->type, params->image );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4872,6 +5433,7 @@ static NTSTATUS ext_glConvolutionFilter1DEXT( void *args )
     struct glConvolutionFilter1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glConvolutionFilter1DEXT( params->target, params->internalformat, params->width, params->format, params->type, params->image );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4880,6 +5442,7 @@ static NTSTATUS ext_glConvolutionFilter2D( void *args )
     struct glConvolutionFilter2D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glConvolutionFilter2D( params->target, params->internalformat, params->width, params->height, params->format, params->type, params->image );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4888,6 +5451,7 @@ static NTSTATUS ext_glConvolutionFilter2DEXT( void *args )
     struct glConvolutionFilter2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glConvolutionFilter2DEXT( params->target, params->internalformat, params->width, params->height, params->format, params->type, params->image );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4896,6 +5460,7 @@ static NTSTATUS ext_glConvolutionParameterf( void *args )
     struct glConvolutionParameterf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glConvolutionParameterf( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4904,6 +5469,7 @@ static NTSTATUS ext_glConvolutionParameterfEXT( void *args )
     struct glConvolutionParameterfEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glConvolutionParameterfEXT( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4912,6 +5478,7 @@ static NTSTATUS ext_glConvolutionParameterfv( void *args )
     struct glConvolutionParameterfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glConvolutionParameterfv( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4920,6 +5487,7 @@ static NTSTATUS ext_glConvolutionParameterfvEXT( void *args )
     struct glConvolutionParameterfvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glConvolutionParameterfvEXT( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4928,6 +5496,7 @@ static NTSTATUS ext_glConvolutionParameteri( void *args )
     struct glConvolutionParameteri_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glConvolutionParameteri( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4936,6 +5505,7 @@ static NTSTATUS ext_glConvolutionParameteriEXT( void *args )
     struct glConvolutionParameteriEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glConvolutionParameteriEXT( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4944,6 +5514,7 @@ static NTSTATUS ext_glConvolutionParameteriv( void *args )
     struct glConvolutionParameteriv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glConvolutionParameteriv( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4952,6 +5523,7 @@ static NTSTATUS ext_glConvolutionParameterivEXT( void *args )
     struct glConvolutionParameterivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glConvolutionParameterivEXT( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4960,6 +5532,7 @@ static NTSTATUS ext_glConvolutionParameterxOES( void *args )
     struct glConvolutionParameterxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glConvolutionParameterxOES( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4968,6 +5541,7 @@ static NTSTATUS ext_glConvolutionParameterxvOES( void *args )
     struct glConvolutionParameterxvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glConvolutionParameterxvOES( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4976,6 +5550,7 @@ static NTSTATUS ext_glCopyBufferSubData( void *args )
     struct glCopyBufferSubData_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyBufferSubData( params->readTarget, params->writeTarget, params->readOffset, params->writeOffset, params->size );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4984,6 +5559,7 @@ static NTSTATUS ext_glCopyColorSubTable( void *args )
     struct glCopyColorSubTable_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyColorSubTable( params->target, params->start, params->x, params->y, params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -4992,6 +5568,7 @@ static NTSTATUS ext_glCopyColorSubTableEXT( void *args )
     struct glCopyColorSubTableEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyColorSubTableEXT( params->target, params->start, params->x, params->y, params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5000,6 +5577,7 @@ static NTSTATUS ext_glCopyColorTable( void *args )
     struct glCopyColorTable_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyColorTable( params->target, params->internalformat, params->x, params->y, params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5008,6 +5586,7 @@ static NTSTATUS ext_glCopyColorTableSGI( void *args )
     struct glCopyColorTableSGI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyColorTableSGI( params->target, params->internalformat, params->x, params->y, params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5016,6 +5595,7 @@ static NTSTATUS ext_glCopyConvolutionFilter1D( void *args )
     struct glCopyConvolutionFilter1D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyConvolutionFilter1D( params->target, params->internalformat, params->x, params->y, params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5024,6 +5604,7 @@ static NTSTATUS ext_glCopyConvolutionFilter1DEXT( void *args )
     struct glCopyConvolutionFilter1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyConvolutionFilter1DEXT( params->target, params->internalformat, params->x, params->y, params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5032,6 +5613,7 @@ static NTSTATUS ext_glCopyConvolutionFilter2D( void *args )
     struct glCopyConvolutionFilter2D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyConvolutionFilter2D( params->target, params->internalformat, params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5040,6 +5622,7 @@ static NTSTATUS ext_glCopyConvolutionFilter2DEXT( void *args )
     struct glCopyConvolutionFilter2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyConvolutionFilter2DEXT( params->target, params->internalformat, params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5048,6 +5631,7 @@ static NTSTATUS ext_glCopyImageSubData( void *args )
     struct glCopyImageSubData_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyImageSubData( params->srcName, params->srcTarget, params->srcLevel, params->srcX, params->srcY, params->srcZ, params->dstName, params->dstTarget, params->dstLevel, params->dstX, params->dstY, params->dstZ, params->srcWidth, params->srcHeight, params->srcDepth );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5056,6 +5640,7 @@ static NTSTATUS ext_glCopyImageSubDataNV( void *args )
     struct glCopyImageSubDataNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyImageSubDataNV( params->srcName, params->srcTarget, params->srcLevel, params->srcX, params->srcY, params->srcZ, params->dstName, params->dstTarget, params->dstLevel, params->dstX, params->dstY, params->dstZ, params->width, params->height, params->depth );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5064,6 +5649,7 @@ static NTSTATUS ext_glCopyMultiTexImage1DEXT( void *args )
     struct glCopyMultiTexImage1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyMultiTexImage1DEXT( params->texunit, params->target, params->level, params->internalformat, params->x, params->y, params->width, params->border );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5072,6 +5658,7 @@ static NTSTATUS ext_glCopyMultiTexImage2DEXT( void *args )
     struct glCopyMultiTexImage2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyMultiTexImage2DEXT( params->texunit, params->target, params->level, params->internalformat, params->x, params->y, params->width, params->height, params->border );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5080,6 +5667,7 @@ static NTSTATUS ext_glCopyMultiTexSubImage1DEXT( void *args )
     struct glCopyMultiTexSubImage1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyMultiTexSubImage1DEXT( params->texunit, params->target, params->level, params->xoffset, params->x, params->y, params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5088,6 +5676,7 @@ static NTSTATUS ext_glCopyMultiTexSubImage2DEXT( void *args )
     struct glCopyMultiTexSubImage2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyMultiTexSubImage2DEXT( params->texunit, params->target, params->level, params->xoffset, params->yoffset, params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5096,6 +5685,7 @@ static NTSTATUS ext_glCopyMultiTexSubImage3DEXT( void *args )
     struct glCopyMultiTexSubImage3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyMultiTexSubImage3DEXT( params->texunit, params->target, params->level, params->xoffset, params->yoffset, params->zoffset, params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5104,6 +5694,7 @@ static NTSTATUS ext_glCopyNamedBufferSubData( void *args )
     struct glCopyNamedBufferSubData_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyNamedBufferSubData( params->readBuffer, params->writeBuffer, params->readOffset, params->writeOffset, params->size );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5112,6 +5703,7 @@ static NTSTATUS ext_glCopyPathNV( void *args )
     struct glCopyPathNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyPathNV( params->resultPath, params->srcPath );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5120,6 +5712,7 @@ static NTSTATUS ext_glCopyTexImage1DEXT( void *args )
     struct glCopyTexImage1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTexImage1DEXT( params->target, params->level, params->internalformat, params->x, params->y, params->width, params->border );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5128,6 +5721,7 @@ static NTSTATUS ext_glCopyTexImage2DEXT( void *args )
     struct glCopyTexImage2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTexImage2DEXT( params->target, params->level, params->internalformat, params->x, params->y, params->width, params->height, params->border );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5136,6 +5730,7 @@ static NTSTATUS ext_glCopyTexSubImage1DEXT( void *args )
     struct glCopyTexSubImage1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTexSubImage1DEXT( params->target, params->level, params->xoffset, params->x, params->y, params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5144,6 +5739,7 @@ static NTSTATUS ext_glCopyTexSubImage2DEXT( void *args )
     struct glCopyTexSubImage2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTexSubImage2DEXT( params->target, params->level, params->xoffset, params->yoffset, params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5152,6 +5748,7 @@ static NTSTATUS ext_glCopyTexSubImage3D( void *args )
     struct glCopyTexSubImage3D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTexSubImage3D( params->target, params->level, params->xoffset, params->yoffset, params->zoffset, params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5160,6 +5757,7 @@ static NTSTATUS ext_glCopyTexSubImage3DEXT( void *args )
     struct glCopyTexSubImage3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTexSubImage3DEXT( params->target, params->level, params->xoffset, params->yoffset, params->zoffset, params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5168,6 +5766,7 @@ static NTSTATUS ext_glCopyTextureImage1DEXT( void *args )
     struct glCopyTextureImage1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTextureImage1DEXT( params->texture, params->target, params->level, params->internalformat, params->x, params->y, params->width, params->border );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5176,6 +5775,7 @@ static NTSTATUS ext_glCopyTextureImage2DEXT( void *args )
     struct glCopyTextureImage2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTextureImage2DEXT( params->texture, params->target, params->level, params->internalformat, params->x, params->y, params->width, params->height, params->border );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5184,6 +5784,7 @@ static NTSTATUS ext_glCopyTextureSubImage1D( void *args )
     struct glCopyTextureSubImage1D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTextureSubImage1D( params->texture, params->level, params->xoffset, params->x, params->y, params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5192,6 +5793,7 @@ static NTSTATUS ext_glCopyTextureSubImage1DEXT( void *args )
     struct glCopyTextureSubImage1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTextureSubImage1DEXT( params->texture, params->target, params->level, params->xoffset, params->x, params->y, params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5200,6 +5802,7 @@ static NTSTATUS ext_glCopyTextureSubImage2D( void *args )
     struct glCopyTextureSubImage2D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTextureSubImage2D( params->texture, params->level, params->xoffset, params->yoffset, params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5208,6 +5811,7 @@ static NTSTATUS ext_glCopyTextureSubImage2DEXT( void *args )
     struct glCopyTextureSubImage2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTextureSubImage2DEXT( params->texture, params->target, params->level, params->xoffset, params->yoffset, params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5216,6 +5820,7 @@ static NTSTATUS ext_glCopyTextureSubImage3D( void *args )
     struct glCopyTextureSubImage3D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTextureSubImage3D( params->texture, params->level, params->xoffset, params->yoffset, params->zoffset, params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5224,6 +5829,7 @@ static NTSTATUS ext_glCopyTextureSubImage3DEXT( void *args )
     struct glCopyTextureSubImage3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCopyTextureSubImage3DEXT( params->texture, params->target, params->level, params->xoffset, params->yoffset, params->zoffset, params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5232,6 +5838,7 @@ static NTSTATUS ext_glCoverFillPathInstancedNV( void *args )
     struct glCoverFillPathInstancedNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCoverFillPathInstancedNV( params->numPaths, params->pathNameType, params->paths, params->pathBase, params->coverMode, params->transformType, params->transformValues );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5240,6 +5847,7 @@ static NTSTATUS ext_glCoverFillPathNV( void *args )
     struct glCoverFillPathNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCoverFillPathNV( params->path, params->coverMode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5248,6 +5856,7 @@ static NTSTATUS ext_glCoverStrokePathInstancedNV( void *args )
     struct glCoverStrokePathInstancedNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCoverStrokePathInstancedNV( params->numPaths, params->pathNameType, params->paths, params->pathBase, params->coverMode, params->transformType, params->transformValues );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5256,6 +5865,7 @@ static NTSTATUS ext_glCoverStrokePathNV( void *args )
     struct glCoverStrokePathNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCoverStrokePathNV( params->path, params->coverMode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5264,6 +5874,7 @@ static NTSTATUS ext_glCoverageModulationNV( void *args )
     struct glCoverageModulationNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCoverageModulationNV( params->components );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5272,6 +5883,7 @@ static NTSTATUS ext_glCoverageModulationTableNV( void *args )
     struct glCoverageModulationTableNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCoverageModulationTableNV( params->n, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5280,6 +5892,7 @@ static NTSTATUS ext_glCreateBuffers( void *args )
     struct glCreateBuffers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCreateBuffers( params->n, params->buffers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5288,6 +5901,7 @@ static NTSTATUS ext_glCreateCommandListsNV( void *args )
     struct glCreateCommandListsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCreateCommandListsNV( params->n, params->lists );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5296,6 +5910,7 @@ static NTSTATUS ext_glCreateFramebuffers( void *args )
     struct glCreateFramebuffers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCreateFramebuffers( params->n, params->framebuffers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5304,6 +5919,7 @@ static NTSTATUS ext_glCreateMemoryObjectsEXT( void *args )
     struct glCreateMemoryObjectsEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCreateMemoryObjectsEXT( params->n, params->memoryObjects );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5312,6 +5928,7 @@ static NTSTATUS ext_glCreatePerfQueryINTEL( void *args )
     struct glCreatePerfQueryINTEL_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCreatePerfQueryINTEL( params->queryId, params->queryHandle );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5320,6 +5937,7 @@ static NTSTATUS ext_glCreateProgram( void *args )
     struct glCreateProgram_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glCreateProgram();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5328,6 +5946,7 @@ static NTSTATUS ext_glCreateProgramObjectARB( void *args )
     struct glCreateProgramObjectARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glCreateProgramObjectARB();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5336,6 +5955,7 @@ static NTSTATUS ext_glCreateProgramPipelines( void *args )
     struct glCreateProgramPipelines_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCreateProgramPipelines( params->n, params->pipelines );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5344,6 +5964,7 @@ static NTSTATUS ext_glCreateProgressFenceNVX( void *args )
     struct glCreateProgressFenceNVX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glCreateProgressFenceNVX();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5352,6 +5973,7 @@ static NTSTATUS ext_glCreateQueries( void *args )
     struct glCreateQueries_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCreateQueries( params->target, params->n, params->ids );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5360,6 +5982,7 @@ static NTSTATUS ext_glCreateRenderbuffers( void *args )
     struct glCreateRenderbuffers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCreateRenderbuffers( params->n, params->renderbuffers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5368,6 +5991,7 @@ static NTSTATUS ext_glCreateSamplers( void *args )
     struct glCreateSamplers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCreateSamplers( params->n, params->samplers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5376,6 +6000,7 @@ static NTSTATUS ext_glCreateShader( void *args )
     struct glCreateShader_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glCreateShader( params->type );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5384,6 +6009,7 @@ static NTSTATUS ext_glCreateShaderObjectARB( void *args )
     struct glCreateShaderObjectARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glCreateShaderObjectARB( params->shaderType );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5392,6 +6018,7 @@ static NTSTATUS ext_glCreateShaderProgramEXT( void *args )
     struct glCreateShaderProgramEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glCreateShaderProgramEXT( params->type, params->string );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5400,6 +6027,7 @@ static NTSTATUS ext_glCreateShaderProgramv( void *args )
     struct glCreateShaderProgramv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glCreateShaderProgramv( params->type, params->count, params->strings );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5408,6 +6036,7 @@ static NTSTATUS ext_glCreateStatesNV( void *args )
     struct glCreateStatesNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCreateStatesNV( params->n, params->states );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5416,6 +6045,7 @@ static NTSTATUS ext_glCreateSyncFromCLeventARB( void *args )
     struct glCreateSyncFromCLeventARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glCreateSyncFromCLeventARB( params->context, params->event, params->flags );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5424,6 +6054,7 @@ static NTSTATUS ext_glCreateTextures( void *args )
     struct glCreateTextures_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCreateTextures( params->target, params->n, params->textures );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5432,6 +6063,7 @@ static NTSTATUS ext_glCreateTransformFeedbacks( void *args )
     struct glCreateTransformFeedbacks_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCreateTransformFeedbacks( params->n, params->ids );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5440,6 +6072,7 @@ static NTSTATUS ext_glCreateVertexArrays( void *args )
     struct glCreateVertexArrays_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCreateVertexArrays( params->n, params->arrays );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5448,6 +6081,7 @@ static NTSTATUS ext_glCullParameterdvEXT( void *args )
     struct glCullParameterdvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCullParameterdvEXT( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5456,6 +6090,7 @@ static NTSTATUS ext_glCullParameterfvEXT( void *args )
     struct glCullParameterfvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCullParameterfvEXT( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5464,6 +6099,7 @@ static NTSTATUS ext_glCurrentPaletteMatrixARB( void *args )
     struct glCurrentPaletteMatrixARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glCurrentPaletteMatrixARB( params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5471,6 +6107,7 @@ static NTSTATUS ext_glDebugMessageCallback( void *args )
 {
     struct glDebugMessageCallback_params *params = args;
     wrap_glDebugMessageCallback( params->teb, params->callback, params->userParam );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5478,6 +6115,7 @@ static NTSTATUS ext_glDebugMessageCallbackAMD( void *args )
 {
     struct glDebugMessageCallbackAMD_params *params = args;
     wrap_glDebugMessageCallbackAMD( params->teb, params->callback, params->userParam );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5485,6 +6123,7 @@ static NTSTATUS ext_glDebugMessageCallbackARB( void *args )
 {
     struct glDebugMessageCallbackARB_params *params = args;
     wrap_glDebugMessageCallbackARB( params->teb, params->callback, params->userParam );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5493,6 +6132,7 @@ static NTSTATUS ext_glDebugMessageControl( void *args )
     struct glDebugMessageControl_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDebugMessageControl( params->source, params->type, params->severity, params->count, params->ids, params->enabled );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5501,6 +6141,7 @@ static NTSTATUS ext_glDebugMessageControlARB( void *args )
     struct glDebugMessageControlARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDebugMessageControlARB( params->source, params->type, params->severity, params->count, params->ids, params->enabled );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5509,6 +6150,7 @@ static NTSTATUS ext_glDebugMessageEnableAMD( void *args )
     struct glDebugMessageEnableAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDebugMessageEnableAMD( params->category, params->severity, params->count, params->ids, params->enabled );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5517,6 +6159,7 @@ static NTSTATUS ext_glDebugMessageInsert( void *args )
     struct glDebugMessageInsert_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDebugMessageInsert( params->source, params->type, params->id, params->severity, params->length, params->buf );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5525,6 +6168,7 @@ static NTSTATUS ext_glDebugMessageInsertAMD( void *args )
     struct glDebugMessageInsertAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDebugMessageInsertAMD( params->category, params->severity, params->id, params->length, params->buf );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5533,6 +6177,7 @@ static NTSTATUS ext_glDebugMessageInsertARB( void *args )
     struct glDebugMessageInsertARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDebugMessageInsertARB( params->source, params->type, params->id, params->severity, params->length, params->buf );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5541,6 +6186,7 @@ static NTSTATUS ext_glDeformSGIX( void *args )
     struct glDeformSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeformSGIX( params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5549,6 +6195,7 @@ static NTSTATUS ext_glDeformationMap3dSGIX( void *args )
     struct glDeformationMap3dSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeformationMap3dSGIX( params->target, params->u1, params->u2, params->ustride, params->uorder, params->v1, params->v2, params->vstride, params->vorder, params->w1, params->w2, params->wstride, params->worder, params->points );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5557,6 +6204,7 @@ static NTSTATUS ext_glDeformationMap3fSGIX( void *args )
     struct glDeformationMap3fSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeformationMap3fSGIX( params->target, params->u1, params->u2, params->ustride, params->uorder, params->v1, params->v2, params->vstride, params->vorder, params->w1, params->w2, params->wstride, params->worder, params->points );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5565,6 +6213,7 @@ static NTSTATUS ext_glDeleteAsyncMarkersSGIX( void *args )
     struct glDeleteAsyncMarkersSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteAsyncMarkersSGIX( params->marker, params->range );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5573,6 +6222,7 @@ static NTSTATUS ext_glDeleteBufferRegion( void *args )
     struct glDeleteBufferRegion_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteBufferRegion( params->region );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5581,6 +6231,7 @@ static NTSTATUS ext_glDeleteBuffers( void *args )
     struct glDeleteBuffers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteBuffers( params->n, params->buffers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5589,6 +6240,7 @@ static NTSTATUS ext_glDeleteBuffersARB( void *args )
     struct glDeleteBuffersARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteBuffersARB( params->n, params->buffers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5597,6 +6249,7 @@ static NTSTATUS ext_glDeleteCommandListsNV( void *args )
     struct glDeleteCommandListsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteCommandListsNV( params->n, params->lists );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5605,6 +6258,7 @@ static NTSTATUS ext_glDeleteFencesAPPLE( void *args )
     struct glDeleteFencesAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteFencesAPPLE( params->n, params->fences );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5613,6 +6267,7 @@ static NTSTATUS ext_glDeleteFencesNV( void *args )
     struct glDeleteFencesNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteFencesNV( params->n, params->fences );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5621,6 +6276,7 @@ static NTSTATUS ext_glDeleteFragmentShaderATI( void *args )
     struct glDeleteFragmentShaderATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteFragmentShaderATI( params->id );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5629,6 +6285,7 @@ static NTSTATUS ext_glDeleteFramebuffers( void *args )
     struct glDeleteFramebuffers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteFramebuffers( params->n, params->framebuffers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5637,6 +6294,7 @@ static NTSTATUS ext_glDeleteFramebuffersEXT( void *args )
     struct glDeleteFramebuffersEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteFramebuffersEXT( params->n, params->framebuffers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5645,6 +6303,7 @@ static NTSTATUS ext_glDeleteMemoryObjectsEXT( void *args )
     struct glDeleteMemoryObjectsEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteMemoryObjectsEXT( params->n, params->memoryObjects );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5653,6 +6312,7 @@ static NTSTATUS ext_glDeleteNamedStringARB( void *args )
     struct glDeleteNamedStringARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteNamedStringARB( params->namelen, params->name );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5661,6 +6321,7 @@ static NTSTATUS ext_glDeleteNamesAMD( void *args )
     struct glDeleteNamesAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteNamesAMD( params->identifier, params->num, params->names );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5669,6 +6330,7 @@ static NTSTATUS ext_glDeleteObjectARB( void *args )
     struct glDeleteObjectARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteObjectARB( params->obj );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5677,6 +6339,7 @@ static NTSTATUS ext_glDeleteObjectBufferATI( void *args )
     struct glDeleteObjectBufferATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteObjectBufferATI( params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5685,6 +6348,7 @@ static NTSTATUS ext_glDeleteOcclusionQueriesNV( void *args )
     struct glDeleteOcclusionQueriesNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteOcclusionQueriesNV( params->n, params->ids );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5693,6 +6357,7 @@ static NTSTATUS ext_glDeletePathsNV( void *args )
     struct glDeletePathsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeletePathsNV( params->path, params->range );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5701,6 +6366,7 @@ static NTSTATUS ext_glDeletePerfMonitorsAMD( void *args )
     struct glDeletePerfMonitorsAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeletePerfMonitorsAMD( params->n, params->monitors );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5709,6 +6375,7 @@ static NTSTATUS ext_glDeletePerfQueryINTEL( void *args )
     struct glDeletePerfQueryINTEL_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeletePerfQueryINTEL( params->queryHandle );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5717,6 +6384,7 @@ static NTSTATUS ext_glDeleteProgram( void *args )
     struct glDeleteProgram_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteProgram( params->program );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5725,6 +6393,7 @@ static NTSTATUS ext_glDeleteProgramPipelines( void *args )
     struct glDeleteProgramPipelines_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteProgramPipelines( params->n, params->pipelines );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5733,6 +6402,7 @@ static NTSTATUS ext_glDeleteProgramsARB( void *args )
     struct glDeleteProgramsARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteProgramsARB( params->n, params->programs );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5741,6 +6411,7 @@ static NTSTATUS ext_glDeleteProgramsNV( void *args )
     struct glDeleteProgramsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteProgramsNV( params->n, params->programs );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5749,6 +6420,7 @@ static NTSTATUS ext_glDeleteQueries( void *args )
     struct glDeleteQueries_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteQueries( params->n, params->ids );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5757,6 +6429,7 @@ static NTSTATUS ext_glDeleteQueriesARB( void *args )
     struct glDeleteQueriesARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteQueriesARB( params->n, params->ids );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5765,6 +6438,7 @@ static NTSTATUS ext_glDeleteQueryResourceTagNV( void *args )
     struct glDeleteQueryResourceTagNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteQueryResourceTagNV( params->n, params->tagIds );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5773,6 +6447,7 @@ static NTSTATUS ext_glDeleteRenderbuffers( void *args )
     struct glDeleteRenderbuffers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteRenderbuffers( params->n, params->renderbuffers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5781,6 +6456,7 @@ static NTSTATUS ext_glDeleteRenderbuffersEXT( void *args )
     struct glDeleteRenderbuffersEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteRenderbuffersEXT( params->n, params->renderbuffers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5789,6 +6465,7 @@ static NTSTATUS ext_glDeleteSamplers( void *args )
     struct glDeleteSamplers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteSamplers( params->count, params->samplers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5797,6 +6474,7 @@ static NTSTATUS ext_glDeleteSemaphoresEXT( void *args )
     struct glDeleteSemaphoresEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteSemaphoresEXT( params->n, params->semaphores );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5805,6 +6483,7 @@ static NTSTATUS ext_glDeleteShader( void *args )
     struct glDeleteShader_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteShader( params->shader );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5813,6 +6492,7 @@ static NTSTATUS ext_glDeleteStatesNV( void *args )
     struct glDeleteStatesNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteStatesNV( params->n, params->states );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5821,6 +6501,7 @@ NTSTATUS ext_glDeleteSync( void *args )
     struct glDeleteSync_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteSync( params->sync );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5829,6 +6510,7 @@ static NTSTATUS ext_glDeleteTexturesEXT( void *args )
     struct glDeleteTexturesEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteTexturesEXT( params->n, params->textures );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5837,6 +6519,7 @@ static NTSTATUS ext_glDeleteTransformFeedbacks( void *args )
     struct glDeleteTransformFeedbacks_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteTransformFeedbacks( params->n, params->ids );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5845,6 +6528,7 @@ static NTSTATUS ext_glDeleteTransformFeedbacksNV( void *args )
     struct glDeleteTransformFeedbacksNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteTransformFeedbacksNV( params->n, params->ids );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5853,6 +6537,7 @@ static NTSTATUS ext_glDeleteVertexArrays( void *args )
     struct glDeleteVertexArrays_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteVertexArrays( params->n, params->arrays );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5861,6 +6546,7 @@ static NTSTATUS ext_glDeleteVertexArraysAPPLE( void *args )
     struct glDeleteVertexArraysAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteVertexArraysAPPLE( params->n, params->arrays );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5869,6 +6555,7 @@ static NTSTATUS ext_glDeleteVertexShaderEXT( void *args )
     struct glDeleteVertexShaderEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDeleteVertexShaderEXT( params->id );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5877,6 +6564,7 @@ static NTSTATUS ext_glDepthBoundsEXT( void *args )
     struct glDepthBoundsEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDepthBoundsEXT( params->zmin, params->zmax );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5885,6 +6573,7 @@ static NTSTATUS ext_glDepthBoundsdNV( void *args )
     struct glDepthBoundsdNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDepthBoundsdNV( params->zmin, params->zmax );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5893,6 +6582,7 @@ static NTSTATUS ext_glDepthRangeArraydvNV( void *args )
     struct glDepthRangeArraydvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDepthRangeArraydvNV( params->first, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5901,6 +6591,7 @@ static NTSTATUS ext_glDepthRangeArrayv( void *args )
     struct glDepthRangeArrayv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDepthRangeArrayv( params->first, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5909,6 +6600,7 @@ static NTSTATUS ext_glDepthRangeIndexed( void *args )
     struct glDepthRangeIndexed_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDepthRangeIndexed( params->index, params->n, params->f );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5917,6 +6609,7 @@ static NTSTATUS ext_glDepthRangeIndexeddNV( void *args )
     struct glDepthRangeIndexeddNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDepthRangeIndexeddNV( params->index, params->n, params->f );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5925,6 +6618,7 @@ static NTSTATUS ext_glDepthRangedNV( void *args )
     struct glDepthRangedNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDepthRangedNV( params->zNear, params->zFar );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5933,6 +6627,7 @@ static NTSTATUS ext_glDepthRangef( void *args )
     struct glDepthRangef_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDepthRangef( params->n, params->f );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5941,6 +6636,7 @@ static NTSTATUS ext_glDepthRangefOES( void *args )
     struct glDepthRangefOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDepthRangefOES( params->n, params->f );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5949,6 +6645,7 @@ static NTSTATUS ext_glDepthRangexOES( void *args )
     struct glDepthRangexOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDepthRangexOES( params->n, params->f );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5957,6 +6654,7 @@ static NTSTATUS ext_glDetachObjectARB( void *args )
     struct glDetachObjectARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDetachObjectARB( params->containerObj, params->attachedObj );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5965,6 +6663,7 @@ static NTSTATUS ext_glDetachShader( void *args )
     struct glDetachShader_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDetachShader( params->program, params->shader );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5973,6 +6672,7 @@ static NTSTATUS ext_glDetailTexFuncSGIS( void *args )
     struct glDetailTexFuncSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDetailTexFuncSGIS( params->target, params->n, params->points );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5981,6 +6681,7 @@ static NTSTATUS ext_glDisableClientStateIndexedEXT( void *args )
     struct glDisableClientStateIndexedEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDisableClientStateIndexedEXT( params->array, params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5989,6 +6690,7 @@ static NTSTATUS ext_glDisableClientStateiEXT( void *args )
     struct glDisableClientStateiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDisableClientStateiEXT( params->array, params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -5997,6 +6699,7 @@ static NTSTATUS ext_glDisableIndexedEXT( void *args )
     struct glDisableIndexedEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDisableIndexedEXT( params->target, params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6005,6 +6708,7 @@ static NTSTATUS ext_glDisableVariantClientStateEXT( void *args )
     struct glDisableVariantClientStateEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDisableVariantClientStateEXT( params->id );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6013,6 +6717,7 @@ static NTSTATUS ext_glDisableVertexArrayAttrib( void *args )
     struct glDisableVertexArrayAttrib_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDisableVertexArrayAttrib( params->vaobj, params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6021,6 +6726,7 @@ static NTSTATUS ext_glDisableVertexArrayAttribEXT( void *args )
     struct glDisableVertexArrayAttribEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDisableVertexArrayAttribEXT( params->vaobj, params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6029,6 +6735,7 @@ static NTSTATUS ext_glDisableVertexArrayEXT( void *args )
     struct glDisableVertexArrayEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDisableVertexArrayEXT( params->vaobj, params->array );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6037,6 +6744,7 @@ static NTSTATUS ext_glDisableVertexAttribAPPLE( void *args )
     struct glDisableVertexAttribAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDisableVertexAttribAPPLE( params->index, params->pname );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6045,6 +6753,7 @@ static NTSTATUS ext_glDisableVertexAttribArray( void *args )
     struct glDisableVertexAttribArray_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDisableVertexAttribArray( params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6053,6 +6762,7 @@ static NTSTATUS ext_glDisableVertexAttribArrayARB( void *args )
     struct glDisableVertexAttribArrayARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDisableVertexAttribArrayARB( params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6061,6 +6771,7 @@ static NTSTATUS ext_glDisablei( void *args )
     struct glDisablei_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDisablei( params->target, params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6069,6 +6780,7 @@ static NTSTATUS ext_glDispatchCompute( void *args )
     struct glDispatchCompute_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDispatchCompute( params->num_groups_x, params->num_groups_y, params->num_groups_z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6077,6 +6789,7 @@ static NTSTATUS ext_glDispatchComputeGroupSizeARB( void *args )
     struct glDispatchComputeGroupSizeARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDispatchComputeGroupSizeARB( params->num_groups_x, params->num_groups_y, params->num_groups_z, params->group_size_x, params->group_size_y, params->group_size_z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6085,6 +6798,7 @@ static NTSTATUS ext_glDispatchComputeIndirect( void *args )
     struct glDispatchComputeIndirect_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDispatchComputeIndirect( params->indirect );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6093,6 +6807,7 @@ static NTSTATUS ext_glDrawArraysEXT( void *args )
     struct glDrawArraysEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawArraysEXT( params->mode, params->first, params->count );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6101,6 +6816,7 @@ static NTSTATUS ext_glDrawArraysIndirect( void *args )
     struct glDrawArraysIndirect_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawArraysIndirect( params->mode, params->indirect );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6109,6 +6825,7 @@ static NTSTATUS ext_glDrawArraysInstanced( void *args )
     struct glDrawArraysInstanced_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawArraysInstanced( params->mode, params->first, params->count, params->instancecount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6117,6 +6834,7 @@ static NTSTATUS ext_glDrawArraysInstancedARB( void *args )
     struct glDrawArraysInstancedARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawArraysInstancedARB( params->mode, params->first, params->count, params->primcount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6125,6 +6843,7 @@ static NTSTATUS ext_glDrawArraysInstancedBaseInstance( void *args )
     struct glDrawArraysInstancedBaseInstance_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawArraysInstancedBaseInstance( params->mode, params->first, params->count, params->instancecount, params->baseinstance );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6133,6 +6852,7 @@ static NTSTATUS ext_glDrawArraysInstancedEXT( void *args )
     struct glDrawArraysInstancedEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawArraysInstancedEXT( params->mode, params->start, params->count, params->primcount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6141,6 +6861,7 @@ static NTSTATUS ext_glDrawBufferRegion( void *args )
     struct glDrawBufferRegion_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawBufferRegion( params->region, params->x, params->y, params->width, params->height, params->xDest, params->yDest );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6149,6 +6870,7 @@ static NTSTATUS ext_glDrawBuffers( void *args )
     struct glDrawBuffers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawBuffers( params->n, params->bufs );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6157,6 +6879,7 @@ static NTSTATUS ext_glDrawBuffersARB( void *args )
     struct glDrawBuffersARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawBuffersARB( params->n, params->bufs );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6165,6 +6888,7 @@ static NTSTATUS ext_glDrawBuffersATI( void *args )
     struct glDrawBuffersATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawBuffersATI( params->n, params->bufs );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6173,6 +6897,7 @@ static NTSTATUS ext_glDrawCommandsAddressNV( void *args )
     struct glDrawCommandsAddressNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawCommandsAddressNV( params->primitiveMode, params->indirects, params->sizes, params->count );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6181,6 +6906,7 @@ static NTSTATUS ext_glDrawCommandsNV( void *args )
     struct glDrawCommandsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawCommandsNV( params->primitiveMode, params->buffer, params->indirects, params->sizes, params->count );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6189,6 +6915,7 @@ static NTSTATUS ext_glDrawCommandsStatesAddressNV( void *args )
     struct glDrawCommandsStatesAddressNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawCommandsStatesAddressNV( params->indirects, params->sizes, params->states, params->fbos, params->count );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6197,6 +6924,7 @@ static NTSTATUS ext_glDrawCommandsStatesNV( void *args )
     struct glDrawCommandsStatesNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawCommandsStatesNV( params->buffer, params->indirects, params->sizes, params->states, params->fbos, params->count );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6205,6 +6933,7 @@ static NTSTATUS ext_glDrawElementArrayAPPLE( void *args )
     struct glDrawElementArrayAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawElementArrayAPPLE( params->mode, params->first, params->count );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6213,6 +6942,7 @@ static NTSTATUS ext_glDrawElementArrayATI( void *args )
     struct glDrawElementArrayATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawElementArrayATI( params->mode, params->count );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6221,6 +6951,7 @@ static NTSTATUS ext_glDrawElementsBaseVertex( void *args )
     struct glDrawElementsBaseVertex_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawElementsBaseVertex( params->mode, params->count, params->type, params->indices, params->basevertex );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6229,6 +6960,7 @@ static NTSTATUS ext_glDrawElementsIndirect( void *args )
     struct glDrawElementsIndirect_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawElementsIndirect( params->mode, params->type, params->indirect );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6237,6 +6969,7 @@ static NTSTATUS ext_glDrawElementsInstanced( void *args )
     struct glDrawElementsInstanced_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawElementsInstanced( params->mode, params->count, params->type, params->indices, params->instancecount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6245,6 +6978,7 @@ static NTSTATUS ext_glDrawElementsInstancedARB( void *args )
     struct glDrawElementsInstancedARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawElementsInstancedARB( params->mode, params->count, params->type, params->indices, params->primcount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6253,6 +6987,7 @@ static NTSTATUS ext_glDrawElementsInstancedBaseInstance( void *args )
     struct glDrawElementsInstancedBaseInstance_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawElementsInstancedBaseInstance( params->mode, params->count, params->type, params->indices, params->instancecount, params->baseinstance );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6261,6 +6996,7 @@ static NTSTATUS ext_glDrawElementsInstancedBaseVertex( void *args )
     struct glDrawElementsInstancedBaseVertex_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawElementsInstancedBaseVertex( params->mode, params->count, params->type, params->indices, params->instancecount, params->basevertex );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6269,6 +7005,7 @@ static NTSTATUS ext_glDrawElementsInstancedBaseVertexBaseInstance( void *args )
     struct glDrawElementsInstancedBaseVertexBaseInstance_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawElementsInstancedBaseVertexBaseInstance( params->mode, params->count, params->type, params->indices, params->instancecount, params->basevertex, params->baseinstance );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6277,6 +7014,7 @@ static NTSTATUS ext_glDrawElementsInstancedEXT( void *args )
     struct glDrawElementsInstancedEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawElementsInstancedEXT( params->mode, params->count, params->type, params->indices, params->primcount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6285,6 +7023,7 @@ static NTSTATUS ext_glDrawMeshArraysSUN( void *args )
     struct glDrawMeshArraysSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawMeshArraysSUN( params->mode, params->first, params->count, params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6293,6 +7032,7 @@ static NTSTATUS ext_glDrawMeshTasksIndirectNV( void *args )
     struct glDrawMeshTasksIndirectNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawMeshTasksIndirectNV( params->indirect );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6301,6 +7041,7 @@ static NTSTATUS ext_glDrawMeshTasksNV( void *args )
     struct glDrawMeshTasksNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawMeshTasksNV( params->first, params->count );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6309,6 +7050,7 @@ static NTSTATUS ext_glDrawRangeElementArrayAPPLE( void *args )
     struct glDrawRangeElementArrayAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawRangeElementArrayAPPLE( params->mode, params->start, params->end, params->first, params->count );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6317,6 +7059,7 @@ static NTSTATUS ext_glDrawRangeElementArrayATI( void *args )
     struct glDrawRangeElementArrayATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawRangeElementArrayATI( params->mode, params->start, params->end, params->count );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6325,6 +7068,7 @@ static NTSTATUS ext_glDrawRangeElements( void *args )
     struct glDrawRangeElements_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawRangeElements( params->mode, params->start, params->end, params->count, params->type, params->indices );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6333,6 +7077,7 @@ static NTSTATUS ext_glDrawRangeElementsBaseVertex( void *args )
     struct glDrawRangeElementsBaseVertex_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawRangeElementsBaseVertex( params->mode, params->start, params->end, params->count, params->type, params->indices, params->basevertex );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6341,6 +7086,7 @@ static NTSTATUS ext_glDrawRangeElementsEXT( void *args )
     struct glDrawRangeElementsEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawRangeElementsEXT( params->mode, params->start, params->end, params->count, params->type, params->indices );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6349,6 +7095,7 @@ static NTSTATUS ext_glDrawTextureNV( void *args )
     struct glDrawTextureNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawTextureNV( params->texture, params->sampler, params->x0, params->y0, params->x1, params->y1, params->z, params->s0, params->t0, params->s1, params->t1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6357,6 +7104,7 @@ static NTSTATUS ext_glDrawTransformFeedback( void *args )
     struct glDrawTransformFeedback_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawTransformFeedback( params->mode, params->id );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6365,6 +7113,7 @@ static NTSTATUS ext_glDrawTransformFeedbackInstanced( void *args )
     struct glDrawTransformFeedbackInstanced_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawTransformFeedbackInstanced( params->mode, params->id, params->instancecount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6373,6 +7122,7 @@ static NTSTATUS ext_glDrawTransformFeedbackNV( void *args )
     struct glDrawTransformFeedbackNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawTransformFeedbackNV( params->mode, params->id );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6381,6 +7131,7 @@ static NTSTATUS ext_glDrawTransformFeedbackStream( void *args )
     struct glDrawTransformFeedbackStream_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawTransformFeedbackStream( params->mode, params->id, params->stream );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6389,6 +7140,7 @@ static NTSTATUS ext_glDrawTransformFeedbackStreamInstanced( void *args )
     struct glDrawTransformFeedbackStreamInstanced_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawTransformFeedbackStreamInstanced( params->mode, params->id, params->stream, params->instancecount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6397,6 +7149,7 @@ static NTSTATUS ext_glDrawVkImageNV( void *args )
     struct glDrawVkImageNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDrawVkImageNV( params->vkImage, params->sampler, params->x0, params->y0, params->x1, params->y1, params->z, params->s0, params->t0, params->s1, params->t1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6405,6 +7158,7 @@ static NTSTATUS ext_glEGLImageTargetTexStorageEXT( void *args )
     struct glEGLImageTargetTexStorageEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEGLImageTargetTexStorageEXT( params->target, params->image, params->attrib_list );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6413,6 +7167,7 @@ static NTSTATUS ext_glEGLImageTargetTextureStorageEXT( void *args )
     struct glEGLImageTargetTextureStorageEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEGLImageTargetTextureStorageEXT( params->texture, params->image, params->attrib_list );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6421,6 +7176,7 @@ static NTSTATUS ext_glEdgeFlagFormatNV( void *args )
     struct glEdgeFlagFormatNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEdgeFlagFormatNV( params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6429,6 +7185,7 @@ static NTSTATUS ext_glEdgeFlagPointerEXT( void *args )
     struct glEdgeFlagPointerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEdgeFlagPointerEXT( params->stride, params->count, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6437,6 +7194,7 @@ static NTSTATUS ext_glEdgeFlagPointerListIBM( void *args )
     struct glEdgeFlagPointerListIBM_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEdgeFlagPointerListIBM( params->stride, params->pointer, params->ptrstride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6445,6 +7203,7 @@ static NTSTATUS ext_glElementPointerAPPLE( void *args )
     struct glElementPointerAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glElementPointerAPPLE( params->type, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6453,6 +7212,7 @@ static NTSTATUS ext_glElementPointerATI( void *args )
     struct glElementPointerATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glElementPointerATI( params->type, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6461,6 +7221,7 @@ static NTSTATUS ext_glEnableClientStateIndexedEXT( void *args )
     struct glEnableClientStateIndexedEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEnableClientStateIndexedEXT( params->array, params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6469,6 +7230,7 @@ static NTSTATUS ext_glEnableClientStateiEXT( void *args )
     struct glEnableClientStateiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEnableClientStateiEXT( params->array, params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6477,6 +7239,7 @@ static NTSTATUS ext_glEnableIndexedEXT( void *args )
     struct glEnableIndexedEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEnableIndexedEXT( params->target, params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6485,6 +7248,7 @@ static NTSTATUS ext_glEnableVariantClientStateEXT( void *args )
     struct glEnableVariantClientStateEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEnableVariantClientStateEXT( params->id );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6493,6 +7257,7 @@ static NTSTATUS ext_glEnableVertexArrayAttrib( void *args )
     struct glEnableVertexArrayAttrib_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEnableVertexArrayAttrib( params->vaobj, params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6501,6 +7266,7 @@ static NTSTATUS ext_glEnableVertexArrayAttribEXT( void *args )
     struct glEnableVertexArrayAttribEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEnableVertexArrayAttribEXT( params->vaobj, params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6509,6 +7275,7 @@ static NTSTATUS ext_glEnableVertexArrayEXT( void *args )
     struct glEnableVertexArrayEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEnableVertexArrayEXT( params->vaobj, params->array );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6517,6 +7284,7 @@ static NTSTATUS ext_glEnableVertexAttribAPPLE( void *args )
     struct glEnableVertexAttribAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEnableVertexAttribAPPLE( params->index, params->pname );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6525,6 +7293,7 @@ static NTSTATUS ext_glEnableVertexAttribArray( void *args )
     struct glEnableVertexAttribArray_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEnableVertexAttribArray( params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6533,6 +7302,7 @@ static NTSTATUS ext_glEnableVertexAttribArrayARB( void *args )
     struct glEnableVertexAttribArrayARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEnableVertexAttribArrayARB( params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6541,6 +7311,7 @@ static NTSTATUS ext_glEnablei( void *args )
     struct glEnablei_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEnablei( params->target, params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6549,6 +7320,7 @@ static NTSTATUS ext_glEndConditionalRender( void *args )
     struct glEndConditionalRender_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEndConditionalRender();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6557,6 +7329,7 @@ static NTSTATUS ext_glEndConditionalRenderNV( void *args )
     struct glEndConditionalRenderNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEndConditionalRenderNV();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6565,6 +7338,7 @@ static NTSTATUS ext_glEndConditionalRenderNVX( void *args )
     struct glEndConditionalRenderNVX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEndConditionalRenderNVX();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6573,6 +7347,7 @@ static NTSTATUS ext_glEndFragmentShaderATI( void *args )
     struct glEndFragmentShaderATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEndFragmentShaderATI();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6581,6 +7356,7 @@ static NTSTATUS ext_glEndOcclusionQueryNV( void *args )
     struct glEndOcclusionQueryNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEndOcclusionQueryNV();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6589,6 +7365,7 @@ static NTSTATUS ext_glEndPerfMonitorAMD( void *args )
     struct glEndPerfMonitorAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEndPerfMonitorAMD( params->monitor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6597,6 +7374,7 @@ static NTSTATUS ext_glEndPerfQueryINTEL( void *args )
     struct glEndPerfQueryINTEL_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEndPerfQueryINTEL( params->queryHandle );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6605,6 +7383,7 @@ static NTSTATUS ext_glEndQuery( void *args )
     struct glEndQuery_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEndQuery( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6613,6 +7392,7 @@ static NTSTATUS ext_glEndQueryARB( void *args )
     struct glEndQueryARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEndQueryARB( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6621,6 +7401,7 @@ static NTSTATUS ext_glEndQueryIndexed( void *args )
     struct glEndQueryIndexed_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEndQueryIndexed( params->target, params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6629,6 +7410,7 @@ static NTSTATUS ext_glEndTransformFeedback( void *args )
     struct glEndTransformFeedback_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEndTransformFeedback();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6637,6 +7419,7 @@ static NTSTATUS ext_glEndTransformFeedbackEXT( void *args )
     struct glEndTransformFeedbackEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEndTransformFeedbackEXT();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6645,6 +7428,7 @@ static NTSTATUS ext_glEndTransformFeedbackNV( void *args )
     struct glEndTransformFeedbackNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEndTransformFeedbackNV();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6653,6 +7437,7 @@ static NTSTATUS ext_glEndVertexShaderEXT( void *args )
     struct glEndVertexShaderEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEndVertexShaderEXT();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6661,6 +7446,7 @@ static NTSTATUS ext_glEndVideoCaptureNV( void *args )
     struct glEndVideoCaptureNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEndVideoCaptureNV( params->video_capture_slot );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6669,6 +7455,7 @@ static NTSTATUS ext_glEvalCoord1xOES( void *args )
     struct glEvalCoord1xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalCoord1xOES( params->u );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6677,6 +7464,7 @@ static NTSTATUS ext_glEvalCoord1xvOES( void *args )
     struct glEvalCoord1xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalCoord1xvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6685,6 +7473,7 @@ static NTSTATUS ext_glEvalCoord2xOES( void *args )
     struct glEvalCoord2xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalCoord2xOES( params->u, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6693,6 +7482,7 @@ static NTSTATUS ext_glEvalCoord2xvOES( void *args )
     struct glEvalCoord2xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalCoord2xvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6701,6 +7491,7 @@ static NTSTATUS ext_glEvalMapsNV( void *args )
     struct glEvalMapsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvalMapsNV( params->target, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6709,6 +7500,7 @@ static NTSTATUS ext_glEvaluateDepthValuesARB( void *args )
     struct glEvaluateDepthValuesARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEvaluateDepthValuesARB();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6717,6 +7509,7 @@ static NTSTATUS ext_glExecuteProgramNV( void *args )
     struct glExecuteProgramNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glExecuteProgramNV( params->target, params->id, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6725,6 +7518,7 @@ static NTSTATUS ext_glExtractComponentEXT( void *args )
     struct glExtractComponentEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glExtractComponentEXT( params->res, params->src, params->num );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6733,6 +7527,7 @@ static NTSTATUS ext_glFeedbackBufferxOES( void *args )
     struct glFeedbackBufferxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFeedbackBufferxOES( params->n, params->type, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6741,6 +7536,7 @@ NTSTATUS ext_glFenceSync( void *args )
     struct glFenceSync_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glFenceSync( params->condition, params->flags );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6749,6 +7545,7 @@ static NTSTATUS ext_glFinalCombinerInputNV( void *args )
     struct glFinalCombinerInputNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFinalCombinerInputNV( params->variable, params->input, params->mapping, params->componentUsage );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6757,6 +7554,7 @@ static NTSTATUS ext_glFinishAsyncSGIX( void *args )
     struct glFinishAsyncSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glFinishAsyncSGIX( params->markerp );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6765,6 +7563,7 @@ static NTSTATUS ext_glFinishFenceAPPLE( void *args )
     struct glFinishFenceAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFinishFenceAPPLE( params->fence );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6773,6 +7572,7 @@ static NTSTATUS ext_glFinishFenceNV( void *args )
     struct glFinishFenceNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFinishFenceNV( params->fence );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6781,6 +7581,7 @@ static NTSTATUS ext_glFinishObjectAPPLE( void *args )
     struct glFinishObjectAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFinishObjectAPPLE( params->object, params->name );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6789,6 +7590,7 @@ static NTSTATUS ext_glFinishTextureSUNX( void *args )
     struct glFinishTextureSUNX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFinishTextureSUNX();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6797,6 +7599,7 @@ static NTSTATUS ext_glFlushMappedBufferRange( void *args )
     struct glFlushMappedBufferRange_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFlushMappedBufferRange( params->target, params->offset, params->length );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6805,6 +7608,7 @@ static NTSTATUS ext_glFlushMappedBufferRangeAPPLE( void *args )
     struct glFlushMappedBufferRangeAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFlushMappedBufferRangeAPPLE( params->target, params->offset, params->size );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6813,6 +7617,7 @@ static NTSTATUS ext_glFlushMappedNamedBufferRange( void *args )
     struct glFlushMappedNamedBufferRange_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFlushMappedNamedBufferRange( params->buffer, params->offset, params->length );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6821,6 +7626,7 @@ static NTSTATUS ext_glFlushMappedNamedBufferRangeEXT( void *args )
     struct glFlushMappedNamedBufferRangeEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFlushMappedNamedBufferRangeEXT( params->buffer, params->offset, params->length );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6829,6 +7635,7 @@ static NTSTATUS ext_glFlushPixelDataRangeNV( void *args )
     struct glFlushPixelDataRangeNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFlushPixelDataRangeNV( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6837,6 +7644,7 @@ static NTSTATUS ext_glFlushRasterSGIX( void *args )
     struct glFlushRasterSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFlushRasterSGIX();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6845,6 +7653,7 @@ static NTSTATUS ext_glFlushStaticDataIBM( void *args )
     struct glFlushStaticDataIBM_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFlushStaticDataIBM( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6853,6 +7662,7 @@ static NTSTATUS ext_glFlushVertexArrayRangeAPPLE( void *args )
     struct glFlushVertexArrayRangeAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFlushVertexArrayRangeAPPLE( params->length, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6861,6 +7671,7 @@ static NTSTATUS ext_glFlushVertexArrayRangeNV( void *args )
     struct glFlushVertexArrayRangeNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFlushVertexArrayRangeNV();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6869,6 +7680,7 @@ static NTSTATUS ext_glFogCoordFormatNV( void *args )
     struct glFogCoordFormatNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogCoordFormatNV( params->type, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6877,6 +7689,7 @@ static NTSTATUS ext_glFogCoordPointer( void *args )
     struct glFogCoordPointer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogCoordPointer( params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6885,6 +7698,7 @@ static NTSTATUS ext_glFogCoordPointerEXT( void *args )
     struct glFogCoordPointerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogCoordPointerEXT( params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6893,6 +7707,7 @@ static NTSTATUS ext_glFogCoordPointerListIBM( void *args )
     struct glFogCoordPointerListIBM_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogCoordPointerListIBM( params->type, params->stride, params->pointer, params->ptrstride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6901,6 +7716,7 @@ static NTSTATUS ext_glFogCoordd( void *args )
     struct glFogCoordd_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogCoordd( params->coord );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6909,6 +7725,7 @@ static NTSTATUS ext_glFogCoorddEXT( void *args )
     struct glFogCoorddEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogCoorddEXT( params->coord );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6917,6 +7734,7 @@ static NTSTATUS ext_glFogCoorddv( void *args )
     struct glFogCoorddv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogCoorddv( params->coord );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6925,6 +7743,7 @@ static NTSTATUS ext_glFogCoorddvEXT( void *args )
     struct glFogCoorddvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogCoorddvEXT( params->coord );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6933,6 +7752,7 @@ static NTSTATUS ext_glFogCoordf( void *args )
     struct glFogCoordf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogCoordf( params->coord );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6941,6 +7761,7 @@ static NTSTATUS ext_glFogCoordfEXT( void *args )
     struct glFogCoordfEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogCoordfEXT( params->coord );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6949,6 +7770,7 @@ static NTSTATUS ext_glFogCoordfv( void *args )
     struct glFogCoordfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogCoordfv( params->coord );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6957,6 +7779,7 @@ static NTSTATUS ext_glFogCoordfvEXT( void *args )
     struct glFogCoordfvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogCoordfvEXT( params->coord );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6965,6 +7788,7 @@ static NTSTATUS ext_glFogCoordhNV( void *args )
     struct glFogCoordhNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogCoordhNV( params->fog );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6973,6 +7797,7 @@ static NTSTATUS ext_glFogCoordhvNV( void *args )
     struct glFogCoordhvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogCoordhvNV( params->fog );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6981,6 +7806,7 @@ static NTSTATUS ext_glFogFuncSGIS( void *args )
     struct glFogFuncSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogFuncSGIS( params->n, params->points );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6989,6 +7815,7 @@ static NTSTATUS ext_glFogxOES( void *args )
     struct glFogxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogxOES( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -6997,6 +7824,7 @@ static NTSTATUS ext_glFogxvOES( void *args )
     struct glFogxvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogxvOES( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7005,6 +7833,7 @@ static NTSTATUS ext_glFragmentColorMaterialSGIX( void *args )
     struct glFragmentColorMaterialSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFragmentColorMaterialSGIX( params->face, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7013,6 +7842,7 @@ static NTSTATUS ext_glFragmentCoverageColorNV( void *args )
     struct glFragmentCoverageColorNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFragmentCoverageColorNV( params->color );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7021,6 +7851,7 @@ static NTSTATUS ext_glFragmentLightModelfSGIX( void *args )
     struct glFragmentLightModelfSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFragmentLightModelfSGIX( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7029,6 +7860,7 @@ static NTSTATUS ext_glFragmentLightModelfvSGIX( void *args )
     struct glFragmentLightModelfvSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFragmentLightModelfvSGIX( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7037,6 +7869,7 @@ static NTSTATUS ext_glFragmentLightModeliSGIX( void *args )
     struct glFragmentLightModeliSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFragmentLightModeliSGIX( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7045,6 +7878,7 @@ static NTSTATUS ext_glFragmentLightModelivSGIX( void *args )
     struct glFragmentLightModelivSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFragmentLightModelivSGIX( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7053,6 +7887,7 @@ static NTSTATUS ext_glFragmentLightfSGIX( void *args )
     struct glFragmentLightfSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFragmentLightfSGIX( params->light, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7061,6 +7896,7 @@ static NTSTATUS ext_glFragmentLightfvSGIX( void *args )
     struct glFragmentLightfvSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFragmentLightfvSGIX( params->light, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7069,6 +7905,7 @@ static NTSTATUS ext_glFragmentLightiSGIX( void *args )
     struct glFragmentLightiSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFragmentLightiSGIX( params->light, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7077,6 +7914,7 @@ static NTSTATUS ext_glFragmentLightivSGIX( void *args )
     struct glFragmentLightivSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFragmentLightivSGIX( params->light, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7085,6 +7923,7 @@ static NTSTATUS ext_glFragmentMaterialfSGIX( void *args )
     struct glFragmentMaterialfSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFragmentMaterialfSGIX( params->face, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7093,6 +7932,7 @@ static NTSTATUS ext_glFragmentMaterialfvSGIX( void *args )
     struct glFragmentMaterialfvSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFragmentMaterialfvSGIX( params->face, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7101,6 +7941,7 @@ static NTSTATUS ext_glFragmentMaterialiSGIX( void *args )
     struct glFragmentMaterialiSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFragmentMaterialiSGIX( params->face, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7109,6 +7950,7 @@ static NTSTATUS ext_glFragmentMaterialivSGIX( void *args )
     struct glFragmentMaterialivSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFragmentMaterialivSGIX( params->face, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7117,6 +7959,7 @@ static NTSTATUS ext_glFrameTerminatorGREMEDY( void *args )
     struct glFrameTerminatorGREMEDY_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFrameTerminatorGREMEDY();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7125,6 +7968,7 @@ static NTSTATUS ext_glFrameZoomSGIX( void *args )
     struct glFrameZoomSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFrameZoomSGIX( params->factor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7133,6 +7977,7 @@ static NTSTATUS ext_glFramebufferDrawBufferEXT( void *args )
     struct glFramebufferDrawBufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferDrawBufferEXT( params->framebuffer, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7141,6 +7986,7 @@ static NTSTATUS ext_glFramebufferDrawBuffersEXT( void *args )
     struct glFramebufferDrawBuffersEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferDrawBuffersEXT( params->framebuffer, params->n, params->bufs );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7149,6 +7995,7 @@ static NTSTATUS ext_glFramebufferFetchBarrierEXT( void *args )
     struct glFramebufferFetchBarrierEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferFetchBarrierEXT();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7157,6 +8004,7 @@ static NTSTATUS ext_glFramebufferParameteri( void *args )
     struct glFramebufferParameteri_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferParameteri( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7165,6 +8013,7 @@ static NTSTATUS ext_glFramebufferParameteriMESA( void *args )
     struct glFramebufferParameteriMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferParameteriMESA( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7173,6 +8022,7 @@ static NTSTATUS ext_glFramebufferReadBufferEXT( void *args )
     struct glFramebufferReadBufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferReadBufferEXT( params->framebuffer, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7181,6 +8031,7 @@ static NTSTATUS ext_glFramebufferRenderbuffer( void *args )
     struct glFramebufferRenderbuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferRenderbuffer( params->target, params->attachment, params->renderbuffertarget, params->renderbuffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7189,6 +8040,7 @@ static NTSTATUS ext_glFramebufferRenderbufferEXT( void *args )
     struct glFramebufferRenderbufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferRenderbufferEXT( params->target, params->attachment, params->renderbuffertarget, params->renderbuffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7197,6 +8049,7 @@ static NTSTATUS ext_glFramebufferSampleLocationsfvARB( void *args )
     struct glFramebufferSampleLocationsfvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferSampleLocationsfvARB( params->target, params->start, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7205,6 +8058,7 @@ static NTSTATUS ext_glFramebufferSampleLocationsfvNV( void *args )
     struct glFramebufferSampleLocationsfvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferSampleLocationsfvNV( params->target, params->start, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7213,6 +8067,7 @@ static NTSTATUS ext_glFramebufferSamplePositionsfvAMD( void *args )
     struct glFramebufferSamplePositionsfvAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferSamplePositionsfvAMD( params->target, params->numsamples, params->pixelindex, params->values );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7221,6 +8076,7 @@ static NTSTATUS ext_glFramebufferTexture( void *args )
     struct glFramebufferTexture_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferTexture( params->target, params->attachment, params->texture, params->level );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7229,6 +8085,7 @@ static NTSTATUS ext_glFramebufferTexture1D( void *args )
     struct glFramebufferTexture1D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferTexture1D( params->target, params->attachment, params->textarget, params->texture, params->level );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7237,6 +8094,7 @@ static NTSTATUS ext_glFramebufferTexture1DEXT( void *args )
     struct glFramebufferTexture1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferTexture1DEXT( params->target, params->attachment, params->textarget, params->texture, params->level );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7245,6 +8103,7 @@ static NTSTATUS ext_glFramebufferTexture2D( void *args )
     struct glFramebufferTexture2D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferTexture2D( params->target, params->attachment, params->textarget, params->texture, params->level );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7253,6 +8112,7 @@ static NTSTATUS ext_glFramebufferTexture2DEXT( void *args )
     struct glFramebufferTexture2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferTexture2DEXT( params->target, params->attachment, params->textarget, params->texture, params->level );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7261,6 +8121,7 @@ static NTSTATUS ext_glFramebufferTexture3D( void *args )
     struct glFramebufferTexture3D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferTexture3D( params->target, params->attachment, params->textarget, params->texture, params->level, params->zoffset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7269,6 +8130,7 @@ static NTSTATUS ext_glFramebufferTexture3DEXT( void *args )
     struct glFramebufferTexture3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferTexture3DEXT( params->target, params->attachment, params->textarget, params->texture, params->level, params->zoffset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7277,6 +8139,7 @@ static NTSTATUS ext_glFramebufferTextureARB( void *args )
     struct glFramebufferTextureARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferTextureARB( params->target, params->attachment, params->texture, params->level );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7285,6 +8148,7 @@ static NTSTATUS ext_glFramebufferTextureEXT( void *args )
     struct glFramebufferTextureEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferTextureEXT( params->target, params->attachment, params->texture, params->level );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7293,6 +8157,7 @@ static NTSTATUS ext_glFramebufferTextureFaceARB( void *args )
     struct glFramebufferTextureFaceARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferTextureFaceARB( params->target, params->attachment, params->texture, params->level, params->face );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7301,6 +8166,7 @@ static NTSTATUS ext_glFramebufferTextureFaceEXT( void *args )
     struct glFramebufferTextureFaceEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferTextureFaceEXT( params->target, params->attachment, params->texture, params->level, params->face );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7309,6 +8175,7 @@ static NTSTATUS ext_glFramebufferTextureLayer( void *args )
     struct glFramebufferTextureLayer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferTextureLayer( params->target, params->attachment, params->texture, params->level, params->layer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7317,6 +8184,7 @@ static NTSTATUS ext_glFramebufferTextureLayerARB( void *args )
     struct glFramebufferTextureLayerARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferTextureLayerARB( params->target, params->attachment, params->texture, params->level, params->layer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7325,6 +8193,7 @@ static NTSTATUS ext_glFramebufferTextureLayerEXT( void *args )
     struct glFramebufferTextureLayerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferTextureLayerEXT( params->target, params->attachment, params->texture, params->level, params->layer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7333,6 +8202,7 @@ static NTSTATUS ext_glFramebufferTextureMultiviewOVR( void *args )
     struct glFramebufferTextureMultiviewOVR_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFramebufferTextureMultiviewOVR( params->target, params->attachment, params->texture, params->level, params->baseViewIndex, params->numViews );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7341,6 +8211,7 @@ static NTSTATUS ext_glFreeObjectBufferATI( void *args )
     struct glFreeObjectBufferATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFreeObjectBufferATI( params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7349,6 +8220,7 @@ static NTSTATUS ext_glFrustumfOES( void *args )
     struct glFrustumfOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFrustumfOES( params->l, params->r, params->b, params->t, params->n, params->f );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7357,6 +8229,7 @@ static NTSTATUS ext_glFrustumxOES( void *args )
     struct glFrustumxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFrustumxOES( params->l, params->r, params->b, params->t, params->n, params->f );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7365,6 +8238,7 @@ static NTSTATUS ext_glGenAsyncMarkersSGIX( void *args )
     struct glGenAsyncMarkersSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glGenAsyncMarkersSGIX( params->range );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7373,6 +8247,7 @@ static NTSTATUS ext_glGenBuffers( void *args )
     struct glGenBuffers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenBuffers( params->n, params->buffers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7381,6 +8256,7 @@ static NTSTATUS ext_glGenBuffersARB( void *args )
     struct glGenBuffersARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenBuffersARB( params->n, params->buffers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7389,6 +8265,7 @@ static NTSTATUS ext_glGenFencesAPPLE( void *args )
     struct glGenFencesAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenFencesAPPLE( params->n, params->fences );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7397,6 +8274,7 @@ static NTSTATUS ext_glGenFencesNV( void *args )
     struct glGenFencesNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenFencesNV( params->n, params->fences );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7405,6 +8283,7 @@ static NTSTATUS ext_glGenFragmentShadersATI( void *args )
     struct glGenFragmentShadersATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glGenFragmentShadersATI( params->range );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7413,6 +8292,7 @@ static NTSTATUS ext_glGenFramebuffers( void *args )
     struct glGenFramebuffers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenFramebuffers( params->n, params->framebuffers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7421,6 +8301,7 @@ static NTSTATUS ext_glGenFramebuffersEXT( void *args )
     struct glGenFramebuffersEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenFramebuffersEXT( params->n, params->framebuffers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7429,6 +8310,7 @@ static NTSTATUS ext_glGenNamesAMD( void *args )
     struct glGenNamesAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenNamesAMD( params->identifier, params->num, params->names );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7437,6 +8319,7 @@ static NTSTATUS ext_glGenOcclusionQueriesNV( void *args )
     struct glGenOcclusionQueriesNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenOcclusionQueriesNV( params->n, params->ids );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7445,6 +8328,7 @@ static NTSTATUS ext_glGenPathsNV( void *args )
     struct glGenPathsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glGenPathsNV( params->range );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7453,6 +8337,7 @@ static NTSTATUS ext_glGenPerfMonitorsAMD( void *args )
     struct glGenPerfMonitorsAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenPerfMonitorsAMD( params->n, params->monitors );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7461,6 +8346,7 @@ static NTSTATUS ext_glGenProgramPipelines( void *args )
     struct glGenProgramPipelines_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenProgramPipelines( params->n, params->pipelines );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7469,6 +8355,7 @@ static NTSTATUS ext_glGenProgramsARB( void *args )
     struct glGenProgramsARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenProgramsARB( params->n, params->programs );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7477,6 +8364,7 @@ static NTSTATUS ext_glGenProgramsNV( void *args )
     struct glGenProgramsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenProgramsNV( params->n, params->programs );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7485,6 +8373,7 @@ static NTSTATUS ext_glGenQueries( void *args )
     struct glGenQueries_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenQueries( params->n, params->ids );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7493,6 +8382,7 @@ static NTSTATUS ext_glGenQueriesARB( void *args )
     struct glGenQueriesARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenQueriesARB( params->n, params->ids );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7501,6 +8391,7 @@ static NTSTATUS ext_glGenQueryResourceTagNV( void *args )
     struct glGenQueryResourceTagNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenQueryResourceTagNV( params->n, params->tagIds );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7509,6 +8400,7 @@ static NTSTATUS ext_glGenRenderbuffers( void *args )
     struct glGenRenderbuffers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenRenderbuffers( params->n, params->renderbuffers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7517,6 +8409,7 @@ static NTSTATUS ext_glGenRenderbuffersEXT( void *args )
     struct glGenRenderbuffersEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenRenderbuffersEXT( params->n, params->renderbuffers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7525,6 +8418,7 @@ static NTSTATUS ext_glGenSamplers( void *args )
     struct glGenSamplers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenSamplers( params->count, params->samplers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7533,6 +8427,7 @@ static NTSTATUS ext_glGenSemaphoresEXT( void *args )
     struct glGenSemaphoresEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenSemaphoresEXT( params->n, params->semaphores );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7541,6 +8436,7 @@ static NTSTATUS ext_glGenSymbolsEXT( void *args )
     struct glGenSymbolsEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glGenSymbolsEXT( params->datatype, params->storagetype, params->range, params->components );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7549,6 +8445,7 @@ static NTSTATUS ext_glGenTexturesEXT( void *args )
     struct glGenTexturesEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenTexturesEXT( params->n, params->textures );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7557,6 +8454,7 @@ static NTSTATUS ext_glGenTransformFeedbacks( void *args )
     struct glGenTransformFeedbacks_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenTransformFeedbacks( params->n, params->ids );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7565,6 +8463,7 @@ static NTSTATUS ext_glGenTransformFeedbacksNV( void *args )
     struct glGenTransformFeedbacksNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenTransformFeedbacksNV( params->n, params->ids );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7573,6 +8472,7 @@ static NTSTATUS ext_glGenVertexArrays( void *args )
     struct glGenVertexArrays_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenVertexArrays( params->n, params->arrays );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7581,6 +8481,7 @@ static NTSTATUS ext_glGenVertexArraysAPPLE( void *args )
     struct glGenVertexArraysAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenVertexArraysAPPLE( params->n, params->arrays );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7589,6 +8490,7 @@ static NTSTATUS ext_glGenVertexShadersEXT( void *args )
     struct glGenVertexShadersEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glGenVertexShadersEXT( params->range );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7597,6 +8499,7 @@ static NTSTATUS ext_glGenerateMipmap( void *args )
     struct glGenerateMipmap_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenerateMipmap( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7605,6 +8508,7 @@ static NTSTATUS ext_glGenerateMipmapEXT( void *args )
     struct glGenerateMipmapEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenerateMipmapEXT( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7613,6 +8517,7 @@ static NTSTATUS ext_glGenerateMultiTexMipmapEXT( void *args )
     struct glGenerateMultiTexMipmapEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenerateMultiTexMipmapEXT( params->texunit, params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7621,6 +8526,7 @@ static NTSTATUS ext_glGenerateTextureMipmap( void *args )
     struct glGenerateTextureMipmap_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenerateTextureMipmap( params->texture );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -7629,6 +8535,7 @@ static NTSTATUS ext_glGenerateTextureMipmapEXT( void *args )
     struct glGenerateTextureMipmapEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGenerateTextureMipmapEXT( params->texture, params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11044,6 +11951,7 @@ static NTSTATUS ext_glGlobalAlphaFactorbSUN( void *args )
     struct glGlobalAlphaFactorbSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGlobalAlphaFactorbSUN( params->factor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11052,6 +11960,7 @@ static NTSTATUS ext_glGlobalAlphaFactordSUN( void *args )
     struct glGlobalAlphaFactordSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGlobalAlphaFactordSUN( params->factor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11060,6 +11969,7 @@ static NTSTATUS ext_glGlobalAlphaFactorfSUN( void *args )
     struct glGlobalAlphaFactorfSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGlobalAlphaFactorfSUN( params->factor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11068,6 +11978,7 @@ static NTSTATUS ext_glGlobalAlphaFactoriSUN( void *args )
     struct glGlobalAlphaFactoriSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGlobalAlphaFactoriSUN( params->factor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11076,6 +11987,7 @@ static NTSTATUS ext_glGlobalAlphaFactorsSUN( void *args )
     struct glGlobalAlphaFactorsSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGlobalAlphaFactorsSUN( params->factor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11084,6 +11996,7 @@ static NTSTATUS ext_glGlobalAlphaFactorubSUN( void *args )
     struct glGlobalAlphaFactorubSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGlobalAlphaFactorubSUN( params->factor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11092,6 +12005,7 @@ static NTSTATUS ext_glGlobalAlphaFactoruiSUN( void *args )
     struct glGlobalAlphaFactoruiSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGlobalAlphaFactoruiSUN( params->factor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11100,6 +12014,7 @@ static NTSTATUS ext_glGlobalAlphaFactorusSUN( void *args )
     struct glGlobalAlphaFactorusSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGlobalAlphaFactorusSUN( params->factor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11108,6 +12023,7 @@ static NTSTATUS ext_glHintPGI( void *args )
     struct glHintPGI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glHintPGI( params->target, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11116,6 +12032,7 @@ static NTSTATUS ext_glHistogram( void *args )
     struct glHistogram_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glHistogram( params->target, params->width, params->internalformat, params->sink );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11124,6 +12041,7 @@ static NTSTATUS ext_glHistogramEXT( void *args )
     struct glHistogramEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glHistogramEXT( params->target, params->width, params->internalformat, params->sink );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11132,6 +12050,7 @@ static NTSTATUS ext_glIglooInterfaceSGIX( void *args )
     struct glIglooInterfaceSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIglooInterfaceSGIX( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11140,6 +12059,7 @@ static NTSTATUS ext_glImageTransformParameterfHP( void *args )
     struct glImageTransformParameterfHP_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glImageTransformParameterfHP( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11148,6 +12068,7 @@ static NTSTATUS ext_glImageTransformParameterfvHP( void *args )
     struct glImageTransformParameterfvHP_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glImageTransformParameterfvHP( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11156,6 +12077,7 @@ static NTSTATUS ext_glImageTransformParameteriHP( void *args )
     struct glImageTransformParameteriHP_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glImageTransformParameteriHP( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11164,6 +12086,7 @@ static NTSTATUS ext_glImageTransformParameterivHP( void *args )
     struct glImageTransformParameterivHP_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glImageTransformParameterivHP( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11172,6 +12095,7 @@ static NTSTATUS ext_glImportMemoryFdEXT( void *args )
     struct glImportMemoryFdEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glImportMemoryFdEXT( params->memory, params->size, params->handleType, params->fd );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11180,6 +12104,7 @@ static NTSTATUS ext_glImportMemoryWin32HandleEXT( void *args )
     struct glImportMemoryWin32HandleEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glImportMemoryWin32HandleEXT( params->memory, params->size, params->handleType, params->handle );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11188,6 +12113,7 @@ static NTSTATUS ext_glImportMemoryWin32NameEXT( void *args )
     struct glImportMemoryWin32NameEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glImportMemoryWin32NameEXT( params->memory, params->size, params->handleType, params->name );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11196,6 +12122,7 @@ static NTSTATUS ext_glImportSemaphoreFdEXT( void *args )
     struct glImportSemaphoreFdEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glImportSemaphoreFdEXT( params->semaphore, params->handleType, params->fd );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11204,6 +12131,7 @@ static NTSTATUS ext_glImportSemaphoreWin32HandleEXT( void *args )
     struct glImportSemaphoreWin32HandleEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glImportSemaphoreWin32HandleEXT( params->semaphore, params->handleType, params->handle );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11212,6 +12140,7 @@ static NTSTATUS ext_glImportSemaphoreWin32NameEXT( void *args )
     struct glImportSemaphoreWin32NameEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glImportSemaphoreWin32NameEXT( params->semaphore, params->handleType, params->name );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11220,6 +12149,7 @@ static NTSTATUS ext_glImportSyncEXT( void *args )
     struct glImportSyncEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glImportSyncEXT( params->external_sync_type, params->external_sync, params->flags );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11228,6 +12158,7 @@ static NTSTATUS ext_glIndexFormatNV( void *args )
     struct glIndexFormatNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexFormatNV( params->type, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11236,6 +12167,7 @@ static NTSTATUS ext_glIndexFuncEXT( void *args )
     struct glIndexFuncEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexFuncEXT( params->func, params->ref );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11244,6 +12176,7 @@ static NTSTATUS ext_glIndexMaterialEXT( void *args )
     struct glIndexMaterialEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexMaterialEXT( params->face, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11252,6 +12185,7 @@ static NTSTATUS ext_glIndexPointerEXT( void *args )
     struct glIndexPointerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexPointerEXT( params->type, params->stride, params->count, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11260,6 +12194,7 @@ static NTSTATUS ext_glIndexPointerListIBM( void *args )
     struct glIndexPointerListIBM_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexPointerListIBM( params->type, params->stride, params->pointer, params->ptrstride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11268,6 +12203,7 @@ static NTSTATUS ext_glIndexxOES( void *args )
     struct glIndexxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexxOES( params->component );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11276,6 +12212,7 @@ static NTSTATUS ext_glIndexxvOES( void *args )
     struct glIndexxvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glIndexxvOES( params->component );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11284,6 +12221,7 @@ static NTSTATUS ext_glInsertComponentEXT( void *args )
     struct glInsertComponentEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glInsertComponentEXT( params->res, params->src, params->num );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11292,6 +12230,7 @@ static NTSTATUS ext_glInsertEventMarkerEXT( void *args )
     struct glInsertEventMarkerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glInsertEventMarkerEXT( params->length, params->marker );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11300,6 +12239,7 @@ static NTSTATUS ext_glInstrumentsBufferSGIX( void *args )
     struct glInstrumentsBufferSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glInstrumentsBufferSGIX( params->size, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11308,6 +12248,7 @@ static NTSTATUS ext_glInterpolatePathsNV( void *args )
     struct glInterpolatePathsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glInterpolatePathsNV( params->resultPath, params->pathA, params->pathB, params->weight );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11316,6 +12257,7 @@ static NTSTATUS ext_glInvalidateBufferData( void *args )
     struct glInvalidateBufferData_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glInvalidateBufferData( params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11324,6 +12266,7 @@ static NTSTATUS ext_glInvalidateBufferSubData( void *args )
     struct glInvalidateBufferSubData_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glInvalidateBufferSubData( params->buffer, params->offset, params->length );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11332,6 +12275,7 @@ static NTSTATUS ext_glInvalidateFramebuffer( void *args )
     struct glInvalidateFramebuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glInvalidateFramebuffer( params->target, params->numAttachments, params->attachments );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11340,6 +12284,7 @@ static NTSTATUS ext_glInvalidateNamedFramebufferData( void *args )
     struct glInvalidateNamedFramebufferData_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glInvalidateNamedFramebufferData( params->framebuffer, params->numAttachments, params->attachments );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11348,6 +12293,7 @@ static NTSTATUS ext_glInvalidateNamedFramebufferSubData( void *args )
     struct glInvalidateNamedFramebufferSubData_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glInvalidateNamedFramebufferSubData( params->framebuffer, params->numAttachments, params->attachments, params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11356,6 +12302,7 @@ static NTSTATUS ext_glInvalidateSubFramebuffer( void *args )
     struct glInvalidateSubFramebuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glInvalidateSubFramebuffer( params->target, params->numAttachments, params->attachments, params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11364,6 +12311,7 @@ static NTSTATUS ext_glInvalidateTexImage( void *args )
     struct glInvalidateTexImage_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glInvalidateTexImage( params->texture, params->level );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11372,6 +12320,7 @@ static NTSTATUS ext_glInvalidateTexSubImage( void *args )
     struct glInvalidateTexSubImage_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glInvalidateTexSubImage( params->texture, params->level, params->xoffset, params->yoffset, params->zoffset, params->width, params->height, params->depth );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11732,6 +12681,7 @@ static NTSTATUS ext_glLGPUCopyImageSubDataNVX( void *args )
     struct glLGPUCopyImageSubDataNVX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLGPUCopyImageSubDataNVX( params->sourceGpu, params->destinationGpuMask, params->srcName, params->srcTarget, params->srcLevel, params->srcX, params->srxY, params->srcZ, params->dstName, params->dstTarget, params->dstLevel, params->dstX, params->dstY, params->dstZ, params->width, params->height, params->depth );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11740,6 +12690,7 @@ static NTSTATUS ext_glLGPUInterlockNVX( void *args )
     struct glLGPUInterlockNVX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLGPUInterlockNVX();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11748,6 +12699,7 @@ static NTSTATUS ext_glLGPUNamedBufferSubDataNVX( void *args )
     struct glLGPUNamedBufferSubDataNVX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLGPUNamedBufferSubDataNVX( params->gpuMask, params->buffer, params->offset, params->size, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11756,6 +12708,7 @@ static NTSTATUS ext_glLabelObjectEXT( void *args )
     struct glLabelObjectEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLabelObjectEXT( params->type, params->object, params->length, params->label );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11764,6 +12717,7 @@ static NTSTATUS ext_glLightEnviSGIX( void *args )
     struct glLightEnviSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightEnviSGIX( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11772,6 +12726,7 @@ static NTSTATUS ext_glLightModelxOES( void *args )
     struct glLightModelxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightModelxOES( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11780,6 +12735,7 @@ static NTSTATUS ext_glLightModelxvOES( void *args )
     struct glLightModelxvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightModelxvOES( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11788,6 +12744,7 @@ static NTSTATUS ext_glLightxOES( void *args )
     struct glLightxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightxOES( params->light, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11796,6 +12753,7 @@ static NTSTATUS ext_glLightxvOES( void *args )
     struct glLightxvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightxvOES( params->light, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11804,6 +12762,7 @@ static NTSTATUS ext_glLineWidthxOES( void *args )
     struct glLineWidthxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLineWidthxOES( params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11812,6 +12771,7 @@ static NTSTATUS ext_glLinkProgram( void *args )
     struct glLinkProgram_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLinkProgram( params->program );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11820,6 +12780,7 @@ static NTSTATUS ext_glLinkProgramARB( void *args )
     struct glLinkProgramARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLinkProgramARB( params->programObj );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11828,6 +12789,7 @@ static NTSTATUS ext_glListDrawCommandsStatesClientNV( void *args )
     struct glListDrawCommandsStatesClientNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glListDrawCommandsStatesClientNV( params->list, params->segment, params->indirects, params->sizes, params->states, params->fbos, params->count );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11836,6 +12798,7 @@ static NTSTATUS ext_glListParameterfSGIX( void *args )
     struct glListParameterfSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glListParameterfSGIX( params->list, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11844,6 +12807,7 @@ static NTSTATUS ext_glListParameterfvSGIX( void *args )
     struct glListParameterfvSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glListParameterfvSGIX( params->list, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11852,6 +12816,7 @@ static NTSTATUS ext_glListParameteriSGIX( void *args )
     struct glListParameteriSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glListParameteriSGIX( params->list, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11860,6 +12825,7 @@ static NTSTATUS ext_glListParameterivSGIX( void *args )
     struct glListParameterivSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glListParameterivSGIX( params->list, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11868,6 +12834,7 @@ static NTSTATUS ext_glLoadIdentityDeformationMapSGIX( void *args )
     struct glLoadIdentityDeformationMapSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLoadIdentityDeformationMapSGIX( params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11876,6 +12843,7 @@ static NTSTATUS ext_glLoadMatrixxOES( void *args )
     struct glLoadMatrixxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLoadMatrixxOES( params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11884,6 +12852,7 @@ static NTSTATUS ext_glLoadProgramNV( void *args )
     struct glLoadProgramNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLoadProgramNV( params->target, params->id, params->len, params->program );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11892,6 +12861,7 @@ static NTSTATUS ext_glLoadTransposeMatrixd( void *args )
     struct glLoadTransposeMatrixd_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLoadTransposeMatrixd( params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11900,6 +12870,7 @@ static NTSTATUS ext_glLoadTransposeMatrixdARB( void *args )
     struct glLoadTransposeMatrixdARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLoadTransposeMatrixdARB( params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11908,6 +12879,7 @@ static NTSTATUS ext_glLoadTransposeMatrixf( void *args )
     struct glLoadTransposeMatrixf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLoadTransposeMatrixf( params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11916,6 +12888,7 @@ static NTSTATUS ext_glLoadTransposeMatrixfARB( void *args )
     struct glLoadTransposeMatrixfARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLoadTransposeMatrixfARB( params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11924,6 +12897,7 @@ static NTSTATUS ext_glLoadTransposeMatrixxOES( void *args )
     struct glLoadTransposeMatrixxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLoadTransposeMatrixxOES( params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11932,6 +12906,7 @@ static NTSTATUS ext_glLockArraysEXT( void *args )
     struct glLockArraysEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLockArraysEXT( params->first, params->count );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11940,6 +12915,7 @@ static NTSTATUS ext_glMTexCoord2fSGIS( void *args )
     struct glMTexCoord2fSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMTexCoord2fSGIS( params->target, params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11948,6 +12924,7 @@ static NTSTATUS ext_glMTexCoord2fvSGIS( void *args )
     struct glMTexCoord2fvSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMTexCoord2fvSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11956,6 +12933,7 @@ static NTSTATUS ext_glMakeBufferNonResidentNV( void *args )
     struct glMakeBufferNonResidentNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMakeBufferNonResidentNV( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11964,6 +12942,7 @@ static NTSTATUS ext_glMakeBufferResidentNV( void *args )
     struct glMakeBufferResidentNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMakeBufferResidentNV( params->target, params->access );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11972,6 +12951,7 @@ static NTSTATUS ext_glMakeImageHandleNonResidentARB( void *args )
     struct glMakeImageHandleNonResidentARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMakeImageHandleNonResidentARB( params->handle );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11980,6 +12960,7 @@ static NTSTATUS ext_glMakeImageHandleNonResidentNV( void *args )
     struct glMakeImageHandleNonResidentNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMakeImageHandleNonResidentNV( params->handle );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11988,6 +12969,7 @@ static NTSTATUS ext_glMakeImageHandleResidentARB( void *args )
     struct glMakeImageHandleResidentARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMakeImageHandleResidentARB( params->handle, params->access );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -11996,6 +12978,7 @@ static NTSTATUS ext_glMakeImageHandleResidentNV( void *args )
     struct glMakeImageHandleResidentNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMakeImageHandleResidentNV( params->handle, params->access );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12004,6 +12987,7 @@ static NTSTATUS ext_glMakeNamedBufferNonResidentNV( void *args )
     struct glMakeNamedBufferNonResidentNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMakeNamedBufferNonResidentNV( params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12012,6 +12996,7 @@ static NTSTATUS ext_glMakeNamedBufferResidentNV( void *args )
     struct glMakeNamedBufferResidentNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMakeNamedBufferResidentNV( params->buffer, params->access );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12020,6 +13005,7 @@ static NTSTATUS ext_glMakeTextureHandleNonResidentARB( void *args )
     struct glMakeTextureHandleNonResidentARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMakeTextureHandleNonResidentARB( params->handle );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12028,6 +13014,7 @@ static NTSTATUS ext_glMakeTextureHandleNonResidentNV( void *args )
     struct glMakeTextureHandleNonResidentNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMakeTextureHandleNonResidentNV( params->handle );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12036,6 +13023,7 @@ static NTSTATUS ext_glMakeTextureHandleResidentARB( void *args )
     struct glMakeTextureHandleResidentARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMakeTextureHandleResidentARB( params->handle );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12044,6 +13032,7 @@ static NTSTATUS ext_glMakeTextureHandleResidentNV( void *args )
     struct glMakeTextureHandleResidentNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMakeTextureHandleResidentNV( params->handle );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12052,6 +13041,7 @@ static NTSTATUS ext_glMap1xOES( void *args )
     struct glMap1xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMap1xOES( params->target, params->u1, params->u2, params->stride, params->order, params->points );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12060,6 +13050,7 @@ static NTSTATUS ext_glMap2xOES( void *args )
     struct glMap2xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMap2xOES( params->target, params->u1, params->u2, params->ustride, params->uorder, params->v1, params->v2, params->vstride, params->vorder, params->points );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12068,6 +13059,7 @@ NTSTATUS ext_glMapBuffer( void *args )
     struct glMapBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glMapBuffer( params->target, params->access );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12076,6 +13068,7 @@ NTSTATUS ext_glMapBufferARB( void *args )
     struct glMapBufferARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glMapBufferARB( params->target, params->access );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12084,6 +13077,7 @@ NTSTATUS ext_glMapBufferRange( void *args )
     struct glMapBufferRange_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glMapBufferRange( params->target, params->offset, params->length, params->access );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12092,6 +13086,7 @@ static NTSTATUS ext_glMapControlPointsNV( void *args )
     struct glMapControlPointsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMapControlPointsNV( params->target, params->index, params->type, params->ustride, params->vstride, params->uorder, params->vorder, params->packed, params->points );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12100,6 +13095,7 @@ static NTSTATUS ext_glMapGrid1xOES( void *args )
     struct glMapGrid1xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMapGrid1xOES( params->n, params->u1, params->u2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12108,6 +13104,7 @@ static NTSTATUS ext_glMapGrid2xOES( void *args )
     struct glMapGrid2xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMapGrid2xOES( params->n, params->u1, params->u2, params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12116,6 +13113,7 @@ NTSTATUS ext_glMapNamedBuffer( void *args )
     struct glMapNamedBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glMapNamedBuffer( params->buffer, params->access );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12124,6 +13122,7 @@ NTSTATUS ext_glMapNamedBufferEXT( void *args )
     struct glMapNamedBufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glMapNamedBufferEXT( params->buffer, params->access );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12132,6 +13131,7 @@ NTSTATUS ext_glMapNamedBufferRange( void *args )
     struct glMapNamedBufferRange_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glMapNamedBufferRange( params->buffer, params->offset, params->length, params->access );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12140,6 +13140,7 @@ NTSTATUS ext_glMapNamedBufferRangeEXT( void *args )
     struct glMapNamedBufferRangeEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glMapNamedBufferRangeEXT( params->buffer, params->offset, params->length, params->access );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12148,6 +13149,7 @@ static NTSTATUS ext_glMapObjectBufferATI( void *args )
     struct glMapObjectBufferATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glMapObjectBufferATI( params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12156,6 +13158,7 @@ static NTSTATUS ext_glMapParameterfvNV( void *args )
     struct glMapParameterfvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMapParameterfvNV( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12164,6 +13167,7 @@ static NTSTATUS ext_glMapParameterivNV( void *args )
     struct glMapParameterivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMapParameterivNV( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12172,6 +13176,7 @@ static NTSTATUS ext_glMapTexture2DINTEL( void *args )
     struct glMapTexture2DINTEL_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glMapTexture2DINTEL( params->texture, params->level, params->access, params->stride, params->layout );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12180,6 +13185,7 @@ static NTSTATUS ext_glMapVertexAttrib1dAPPLE( void *args )
     struct glMapVertexAttrib1dAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMapVertexAttrib1dAPPLE( params->index, params->size, params->u1, params->u2, params->stride, params->order, params->points );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12188,6 +13194,7 @@ static NTSTATUS ext_glMapVertexAttrib1fAPPLE( void *args )
     struct glMapVertexAttrib1fAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMapVertexAttrib1fAPPLE( params->index, params->size, params->u1, params->u2, params->stride, params->order, params->points );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12196,6 +13203,7 @@ static NTSTATUS ext_glMapVertexAttrib2dAPPLE( void *args )
     struct glMapVertexAttrib2dAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMapVertexAttrib2dAPPLE( params->index, params->size, params->u1, params->u2, params->ustride, params->uorder, params->v1, params->v2, params->vstride, params->vorder, params->points );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12204,6 +13212,7 @@ static NTSTATUS ext_glMapVertexAttrib2fAPPLE( void *args )
     struct glMapVertexAttrib2fAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMapVertexAttrib2fAPPLE( params->index, params->size, params->u1, params->u2, params->ustride, params->uorder, params->v1, params->v2, params->vstride, params->vorder, params->points );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12212,6 +13221,7 @@ static NTSTATUS ext_glMaterialxOES( void *args )
     struct glMaterialxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMaterialxOES( params->face, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12220,6 +13230,7 @@ static NTSTATUS ext_glMaterialxvOES( void *args )
     struct glMaterialxvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMaterialxvOES( params->face, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12228,6 +13239,7 @@ static NTSTATUS ext_glMatrixFrustumEXT( void *args )
     struct glMatrixFrustumEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixFrustumEXT( params->mode, params->left, params->right, params->bottom, params->top, params->zNear, params->zFar );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12236,6 +13248,7 @@ static NTSTATUS ext_glMatrixIndexPointerARB( void *args )
     struct glMatrixIndexPointerARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixIndexPointerARB( params->size, params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12244,6 +13257,7 @@ static NTSTATUS ext_glMatrixIndexubvARB( void *args )
     struct glMatrixIndexubvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixIndexubvARB( params->size, params->indices );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12252,6 +13266,7 @@ static NTSTATUS ext_glMatrixIndexuivARB( void *args )
     struct glMatrixIndexuivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixIndexuivARB( params->size, params->indices );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12260,6 +13275,7 @@ static NTSTATUS ext_glMatrixIndexusvARB( void *args )
     struct glMatrixIndexusvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixIndexusvARB( params->size, params->indices );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12268,6 +13284,7 @@ static NTSTATUS ext_glMatrixLoad3x2fNV( void *args )
     struct glMatrixLoad3x2fNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixLoad3x2fNV( params->matrixMode, params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12276,6 +13293,7 @@ static NTSTATUS ext_glMatrixLoad3x3fNV( void *args )
     struct glMatrixLoad3x3fNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixLoad3x3fNV( params->matrixMode, params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12284,6 +13302,7 @@ static NTSTATUS ext_glMatrixLoadIdentityEXT( void *args )
     struct glMatrixLoadIdentityEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixLoadIdentityEXT( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12292,6 +13311,7 @@ static NTSTATUS ext_glMatrixLoadTranspose3x3fNV( void *args )
     struct glMatrixLoadTranspose3x3fNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixLoadTranspose3x3fNV( params->matrixMode, params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12300,6 +13320,7 @@ static NTSTATUS ext_glMatrixLoadTransposedEXT( void *args )
     struct glMatrixLoadTransposedEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixLoadTransposedEXT( params->mode, params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12308,6 +13329,7 @@ static NTSTATUS ext_glMatrixLoadTransposefEXT( void *args )
     struct glMatrixLoadTransposefEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixLoadTransposefEXT( params->mode, params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12316,6 +13338,7 @@ static NTSTATUS ext_glMatrixLoaddEXT( void *args )
     struct glMatrixLoaddEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixLoaddEXT( params->mode, params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12324,6 +13347,7 @@ static NTSTATUS ext_glMatrixLoadfEXT( void *args )
     struct glMatrixLoadfEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixLoadfEXT( params->mode, params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12332,6 +13356,7 @@ static NTSTATUS ext_glMatrixMult3x2fNV( void *args )
     struct glMatrixMult3x2fNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixMult3x2fNV( params->matrixMode, params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12340,6 +13365,7 @@ static NTSTATUS ext_glMatrixMult3x3fNV( void *args )
     struct glMatrixMult3x3fNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixMult3x3fNV( params->matrixMode, params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12348,6 +13374,7 @@ static NTSTATUS ext_glMatrixMultTranspose3x3fNV( void *args )
     struct glMatrixMultTranspose3x3fNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixMultTranspose3x3fNV( params->matrixMode, params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12356,6 +13383,7 @@ static NTSTATUS ext_glMatrixMultTransposedEXT( void *args )
     struct glMatrixMultTransposedEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixMultTransposedEXT( params->mode, params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12364,6 +13392,7 @@ static NTSTATUS ext_glMatrixMultTransposefEXT( void *args )
     struct glMatrixMultTransposefEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixMultTransposefEXT( params->mode, params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12372,6 +13401,7 @@ static NTSTATUS ext_glMatrixMultdEXT( void *args )
     struct glMatrixMultdEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixMultdEXT( params->mode, params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12380,6 +13410,7 @@ static NTSTATUS ext_glMatrixMultfEXT( void *args )
     struct glMatrixMultfEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixMultfEXT( params->mode, params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12388,6 +13419,7 @@ static NTSTATUS ext_glMatrixOrthoEXT( void *args )
     struct glMatrixOrthoEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixOrthoEXT( params->mode, params->left, params->right, params->bottom, params->top, params->zNear, params->zFar );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12396,6 +13428,7 @@ static NTSTATUS ext_glMatrixPopEXT( void *args )
     struct glMatrixPopEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixPopEXT( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12404,6 +13437,7 @@ static NTSTATUS ext_glMatrixPushEXT( void *args )
     struct glMatrixPushEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixPushEXT( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12412,6 +13446,7 @@ static NTSTATUS ext_glMatrixRotatedEXT( void *args )
     struct glMatrixRotatedEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixRotatedEXT( params->mode, params->angle, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12420,6 +13455,7 @@ static NTSTATUS ext_glMatrixRotatefEXT( void *args )
     struct glMatrixRotatefEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixRotatefEXT( params->mode, params->angle, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12428,6 +13464,7 @@ static NTSTATUS ext_glMatrixScaledEXT( void *args )
     struct glMatrixScaledEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixScaledEXT( params->mode, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12436,6 +13473,7 @@ static NTSTATUS ext_glMatrixScalefEXT( void *args )
     struct glMatrixScalefEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixScalefEXT( params->mode, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12444,6 +13482,7 @@ static NTSTATUS ext_glMatrixTranslatedEXT( void *args )
     struct glMatrixTranslatedEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixTranslatedEXT( params->mode, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12452,6 +13491,7 @@ static NTSTATUS ext_glMatrixTranslatefEXT( void *args )
     struct glMatrixTranslatefEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMatrixTranslatefEXT( params->mode, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12460,6 +13500,7 @@ static NTSTATUS ext_glMaxShaderCompilerThreadsARB( void *args )
     struct glMaxShaderCompilerThreadsARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMaxShaderCompilerThreadsARB( params->count );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12468,6 +13509,7 @@ static NTSTATUS ext_glMaxShaderCompilerThreadsKHR( void *args )
     struct glMaxShaderCompilerThreadsKHR_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMaxShaderCompilerThreadsKHR( params->count );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12476,6 +13518,7 @@ static NTSTATUS ext_glMemoryBarrier( void *args )
     struct glMemoryBarrier_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMemoryBarrier( params->barriers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12484,6 +13527,7 @@ static NTSTATUS ext_glMemoryBarrierByRegion( void *args )
     struct glMemoryBarrierByRegion_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMemoryBarrierByRegion( params->barriers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12492,6 +13536,7 @@ static NTSTATUS ext_glMemoryBarrierEXT( void *args )
     struct glMemoryBarrierEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMemoryBarrierEXT( params->barriers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12500,6 +13545,7 @@ static NTSTATUS ext_glMemoryObjectParameterivEXT( void *args )
     struct glMemoryObjectParameterivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMemoryObjectParameterivEXT( params->memoryObject, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12508,6 +13554,7 @@ static NTSTATUS ext_glMinSampleShading( void *args )
     struct glMinSampleShading_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMinSampleShading( params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12516,6 +13563,7 @@ static NTSTATUS ext_glMinSampleShadingARB( void *args )
     struct glMinSampleShadingARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMinSampleShadingARB( params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12524,6 +13572,7 @@ static NTSTATUS ext_glMinmax( void *args )
     struct glMinmax_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMinmax( params->target, params->internalformat, params->sink );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12532,6 +13581,7 @@ static NTSTATUS ext_glMinmaxEXT( void *args )
     struct glMinmaxEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMinmaxEXT( params->target, params->internalformat, params->sink );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12540,6 +13590,7 @@ static NTSTATUS ext_glMultMatrixxOES( void *args )
     struct glMultMatrixxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultMatrixxOES( params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12548,6 +13599,7 @@ static NTSTATUS ext_glMultTransposeMatrixd( void *args )
     struct glMultTransposeMatrixd_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultTransposeMatrixd( params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12556,6 +13608,7 @@ static NTSTATUS ext_glMultTransposeMatrixdARB( void *args )
     struct glMultTransposeMatrixdARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultTransposeMatrixdARB( params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12564,6 +13617,7 @@ static NTSTATUS ext_glMultTransposeMatrixf( void *args )
     struct glMultTransposeMatrixf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultTransposeMatrixf( params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12572,6 +13626,7 @@ static NTSTATUS ext_glMultTransposeMatrixfARB( void *args )
     struct glMultTransposeMatrixfARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultTransposeMatrixfARB( params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12580,6 +13635,7 @@ static NTSTATUS ext_glMultTransposeMatrixxOES( void *args )
     struct glMultTransposeMatrixxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultTransposeMatrixxOES( params->m );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12588,6 +13644,7 @@ static NTSTATUS ext_glMultiDrawArrays( void *args )
     struct glMultiDrawArrays_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawArrays( params->mode, params->first, params->count, params->drawcount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12596,6 +13653,7 @@ static NTSTATUS ext_glMultiDrawArraysEXT( void *args )
     struct glMultiDrawArraysEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawArraysEXT( params->mode, params->first, params->count, params->primcount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12604,6 +13662,7 @@ static NTSTATUS ext_glMultiDrawArraysIndirect( void *args )
     struct glMultiDrawArraysIndirect_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawArraysIndirect( params->mode, params->indirect, params->drawcount, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12612,6 +13671,7 @@ static NTSTATUS ext_glMultiDrawArraysIndirectAMD( void *args )
     struct glMultiDrawArraysIndirectAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawArraysIndirectAMD( params->mode, params->indirect, params->primcount, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12620,6 +13680,7 @@ static NTSTATUS ext_glMultiDrawArraysIndirectBindlessCountNV( void *args )
     struct glMultiDrawArraysIndirectBindlessCountNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawArraysIndirectBindlessCountNV( params->mode, params->indirect, params->drawCount, params->maxDrawCount, params->stride, params->vertexBufferCount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12628,6 +13689,7 @@ static NTSTATUS ext_glMultiDrawArraysIndirectBindlessNV( void *args )
     struct glMultiDrawArraysIndirectBindlessNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawArraysIndirectBindlessNV( params->mode, params->indirect, params->drawCount, params->stride, params->vertexBufferCount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12636,6 +13698,7 @@ static NTSTATUS ext_glMultiDrawArraysIndirectCount( void *args )
     struct glMultiDrawArraysIndirectCount_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawArraysIndirectCount( params->mode, params->indirect, params->drawcount, params->maxdrawcount, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12644,6 +13707,7 @@ static NTSTATUS ext_glMultiDrawArraysIndirectCountARB( void *args )
     struct glMultiDrawArraysIndirectCountARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawArraysIndirectCountARB( params->mode, params->indirect, params->drawcount, params->maxdrawcount, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12652,6 +13716,7 @@ static NTSTATUS ext_glMultiDrawElementArrayAPPLE( void *args )
     struct glMultiDrawElementArrayAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawElementArrayAPPLE( params->mode, params->first, params->count, params->primcount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12660,6 +13725,7 @@ static NTSTATUS ext_glMultiDrawElements( void *args )
     struct glMultiDrawElements_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawElements( params->mode, params->count, params->type, params->indices, params->drawcount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12668,6 +13734,7 @@ static NTSTATUS ext_glMultiDrawElementsBaseVertex( void *args )
     struct glMultiDrawElementsBaseVertex_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawElementsBaseVertex( params->mode, params->count, params->type, params->indices, params->drawcount, params->basevertex );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12676,6 +13743,7 @@ static NTSTATUS ext_glMultiDrawElementsEXT( void *args )
     struct glMultiDrawElementsEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawElementsEXT( params->mode, params->count, params->type, params->indices, params->primcount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12684,6 +13752,7 @@ static NTSTATUS ext_glMultiDrawElementsIndirect( void *args )
     struct glMultiDrawElementsIndirect_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawElementsIndirect( params->mode, params->type, params->indirect, params->drawcount, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12692,6 +13761,7 @@ static NTSTATUS ext_glMultiDrawElementsIndirectAMD( void *args )
     struct glMultiDrawElementsIndirectAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawElementsIndirectAMD( params->mode, params->type, params->indirect, params->primcount, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12700,6 +13770,7 @@ static NTSTATUS ext_glMultiDrawElementsIndirectBindlessCountNV( void *args )
     struct glMultiDrawElementsIndirectBindlessCountNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawElementsIndirectBindlessCountNV( params->mode, params->type, params->indirect, params->drawCount, params->maxDrawCount, params->stride, params->vertexBufferCount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12708,6 +13779,7 @@ static NTSTATUS ext_glMultiDrawElementsIndirectBindlessNV( void *args )
     struct glMultiDrawElementsIndirectBindlessNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawElementsIndirectBindlessNV( params->mode, params->type, params->indirect, params->drawCount, params->stride, params->vertexBufferCount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12716,6 +13788,7 @@ static NTSTATUS ext_glMultiDrawElementsIndirectCount( void *args )
     struct glMultiDrawElementsIndirectCount_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawElementsIndirectCount( params->mode, params->type, params->indirect, params->drawcount, params->maxdrawcount, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12724,6 +13797,7 @@ static NTSTATUS ext_glMultiDrawElementsIndirectCountARB( void *args )
     struct glMultiDrawElementsIndirectCountARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawElementsIndirectCountARB( params->mode, params->type, params->indirect, params->drawcount, params->maxdrawcount, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12732,6 +13806,7 @@ static NTSTATUS ext_glMultiDrawMeshTasksIndirectCountNV( void *args )
     struct glMultiDrawMeshTasksIndirectCountNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawMeshTasksIndirectCountNV( params->indirect, params->drawcount, params->maxdrawcount, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12740,6 +13815,7 @@ static NTSTATUS ext_glMultiDrawMeshTasksIndirectNV( void *args )
     struct glMultiDrawMeshTasksIndirectNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawMeshTasksIndirectNV( params->indirect, params->drawcount, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12748,6 +13824,7 @@ static NTSTATUS ext_glMultiDrawRangeElementArrayAPPLE( void *args )
     struct glMultiDrawRangeElementArrayAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiDrawRangeElementArrayAPPLE( params->mode, params->start, params->end, params->first, params->count, params->primcount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12756,6 +13833,7 @@ static NTSTATUS ext_glMultiModeDrawArraysIBM( void *args )
     struct glMultiModeDrawArraysIBM_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiModeDrawArraysIBM( params->mode, params->first, params->count, params->primcount, params->modestride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12764,6 +13842,7 @@ static NTSTATUS ext_glMultiModeDrawElementsIBM( void *args )
     struct glMultiModeDrawElementsIBM_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiModeDrawElementsIBM( params->mode, params->count, params->type, params->indices, params->primcount, params->modestride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12772,6 +13851,7 @@ static NTSTATUS ext_glMultiTexBufferEXT( void *args )
     struct glMultiTexBufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexBufferEXT( params->texunit, params->target, params->internalformat, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12780,6 +13860,7 @@ static NTSTATUS ext_glMultiTexCoord1bOES( void *args )
     struct glMultiTexCoord1bOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1bOES( params->texture, params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12788,6 +13869,7 @@ static NTSTATUS ext_glMultiTexCoord1bvOES( void *args )
     struct glMultiTexCoord1bvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1bvOES( params->texture, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12796,6 +13878,7 @@ static NTSTATUS ext_glMultiTexCoord1d( void *args )
     struct glMultiTexCoord1d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1d( params->target, params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12804,6 +13887,7 @@ static NTSTATUS ext_glMultiTexCoord1dARB( void *args )
     struct glMultiTexCoord1dARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1dARB( params->target, params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12812,6 +13896,7 @@ static NTSTATUS ext_glMultiTexCoord1dSGIS( void *args )
     struct glMultiTexCoord1dSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1dSGIS( params->target, params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12820,6 +13905,7 @@ static NTSTATUS ext_glMultiTexCoord1dv( void *args )
     struct glMultiTexCoord1dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1dv( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12828,6 +13914,7 @@ static NTSTATUS ext_glMultiTexCoord1dvARB( void *args )
     struct glMultiTexCoord1dvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1dvARB( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12836,6 +13923,7 @@ static NTSTATUS ext_glMultiTexCoord1dvSGIS( void *args )
     struct glMultiTexCoord1dvSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1dvSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12844,6 +13932,7 @@ static NTSTATUS ext_glMultiTexCoord1f( void *args )
     struct glMultiTexCoord1f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1f( params->target, params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12852,6 +13941,7 @@ static NTSTATUS ext_glMultiTexCoord1fARB( void *args )
     struct glMultiTexCoord1fARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1fARB( params->target, params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12860,6 +13950,7 @@ static NTSTATUS ext_glMultiTexCoord1fSGIS( void *args )
     struct glMultiTexCoord1fSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1fSGIS( params->target, params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12868,6 +13959,7 @@ static NTSTATUS ext_glMultiTexCoord1fv( void *args )
     struct glMultiTexCoord1fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1fv( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12876,6 +13968,7 @@ static NTSTATUS ext_glMultiTexCoord1fvARB( void *args )
     struct glMultiTexCoord1fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1fvARB( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12884,6 +13977,7 @@ static NTSTATUS ext_glMultiTexCoord1fvSGIS( void *args )
     struct glMultiTexCoord1fvSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1fvSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12892,6 +13986,7 @@ static NTSTATUS ext_glMultiTexCoord1hNV( void *args )
     struct glMultiTexCoord1hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1hNV( params->target, params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12900,6 +13995,7 @@ static NTSTATUS ext_glMultiTexCoord1hvNV( void *args )
     struct glMultiTexCoord1hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1hvNV( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12908,6 +14004,7 @@ static NTSTATUS ext_glMultiTexCoord1i( void *args )
     struct glMultiTexCoord1i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1i( params->target, params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12916,6 +14013,7 @@ static NTSTATUS ext_glMultiTexCoord1iARB( void *args )
     struct glMultiTexCoord1iARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1iARB( params->target, params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12924,6 +14022,7 @@ static NTSTATUS ext_glMultiTexCoord1iSGIS( void *args )
     struct glMultiTexCoord1iSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1iSGIS( params->target, params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12932,6 +14031,7 @@ static NTSTATUS ext_glMultiTexCoord1iv( void *args )
     struct glMultiTexCoord1iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1iv( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12940,6 +14040,7 @@ static NTSTATUS ext_glMultiTexCoord1ivARB( void *args )
     struct glMultiTexCoord1ivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1ivARB( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12948,6 +14049,7 @@ static NTSTATUS ext_glMultiTexCoord1ivSGIS( void *args )
     struct glMultiTexCoord1ivSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1ivSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12956,6 +14058,7 @@ static NTSTATUS ext_glMultiTexCoord1s( void *args )
     struct glMultiTexCoord1s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1s( params->target, params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12964,6 +14067,7 @@ static NTSTATUS ext_glMultiTexCoord1sARB( void *args )
     struct glMultiTexCoord1sARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1sARB( params->target, params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12972,6 +14076,7 @@ static NTSTATUS ext_glMultiTexCoord1sSGIS( void *args )
     struct glMultiTexCoord1sSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1sSGIS( params->target, params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12980,6 +14085,7 @@ static NTSTATUS ext_glMultiTexCoord1sv( void *args )
     struct glMultiTexCoord1sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1sv( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12988,6 +14094,7 @@ static NTSTATUS ext_glMultiTexCoord1svARB( void *args )
     struct glMultiTexCoord1svARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1svARB( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -12996,6 +14103,7 @@ static NTSTATUS ext_glMultiTexCoord1svSGIS( void *args )
     struct glMultiTexCoord1svSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1svSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13004,6 +14112,7 @@ static NTSTATUS ext_glMultiTexCoord1xOES( void *args )
     struct glMultiTexCoord1xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1xOES( params->texture, params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13012,6 +14121,7 @@ static NTSTATUS ext_glMultiTexCoord1xvOES( void *args )
     struct glMultiTexCoord1xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord1xvOES( params->texture, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13020,6 +14130,7 @@ static NTSTATUS ext_glMultiTexCoord2bOES( void *args )
     struct glMultiTexCoord2bOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2bOES( params->texture, params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13028,6 +14139,7 @@ static NTSTATUS ext_glMultiTexCoord2bvOES( void *args )
     struct glMultiTexCoord2bvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2bvOES( params->texture, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13036,6 +14148,7 @@ static NTSTATUS ext_glMultiTexCoord2d( void *args )
     struct glMultiTexCoord2d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2d( params->target, params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13044,6 +14157,7 @@ static NTSTATUS ext_glMultiTexCoord2dARB( void *args )
     struct glMultiTexCoord2dARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2dARB( params->target, params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13052,6 +14166,7 @@ static NTSTATUS ext_glMultiTexCoord2dSGIS( void *args )
     struct glMultiTexCoord2dSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2dSGIS( params->target, params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13060,6 +14175,7 @@ static NTSTATUS ext_glMultiTexCoord2dv( void *args )
     struct glMultiTexCoord2dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2dv( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13068,6 +14184,7 @@ static NTSTATUS ext_glMultiTexCoord2dvARB( void *args )
     struct glMultiTexCoord2dvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2dvARB( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13076,6 +14193,7 @@ static NTSTATUS ext_glMultiTexCoord2dvSGIS( void *args )
     struct glMultiTexCoord2dvSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2dvSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13084,6 +14202,7 @@ static NTSTATUS ext_glMultiTexCoord2f( void *args )
     struct glMultiTexCoord2f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2f( params->target, params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13092,6 +14211,7 @@ static NTSTATUS ext_glMultiTexCoord2fARB( void *args )
     struct glMultiTexCoord2fARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2fARB( params->target, params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13100,6 +14220,7 @@ static NTSTATUS ext_glMultiTexCoord2fSGIS( void *args )
     struct glMultiTexCoord2fSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2fSGIS( params->target, params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13108,6 +14229,7 @@ static NTSTATUS ext_glMultiTexCoord2fv( void *args )
     struct glMultiTexCoord2fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2fv( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13116,6 +14238,7 @@ static NTSTATUS ext_glMultiTexCoord2fvARB( void *args )
     struct glMultiTexCoord2fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2fvARB( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13124,6 +14247,7 @@ static NTSTATUS ext_glMultiTexCoord2fvSGIS( void *args )
     struct glMultiTexCoord2fvSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2fvSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13132,6 +14256,7 @@ static NTSTATUS ext_glMultiTexCoord2hNV( void *args )
     struct glMultiTexCoord2hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2hNV( params->target, params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13140,6 +14265,7 @@ static NTSTATUS ext_glMultiTexCoord2hvNV( void *args )
     struct glMultiTexCoord2hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2hvNV( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13148,6 +14274,7 @@ static NTSTATUS ext_glMultiTexCoord2i( void *args )
     struct glMultiTexCoord2i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2i( params->target, params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13156,6 +14283,7 @@ static NTSTATUS ext_glMultiTexCoord2iARB( void *args )
     struct glMultiTexCoord2iARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2iARB( params->target, params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13164,6 +14292,7 @@ static NTSTATUS ext_glMultiTexCoord2iSGIS( void *args )
     struct glMultiTexCoord2iSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2iSGIS( params->target, params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13172,6 +14301,7 @@ static NTSTATUS ext_glMultiTexCoord2iv( void *args )
     struct glMultiTexCoord2iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2iv( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13180,6 +14310,7 @@ static NTSTATUS ext_glMultiTexCoord2ivARB( void *args )
     struct glMultiTexCoord2ivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2ivARB( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13188,6 +14319,7 @@ static NTSTATUS ext_glMultiTexCoord2ivSGIS( void *args )
     struct glMultiTexCoord2ivSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2ivSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13196,6 +14328,7 @@ static NTSTATUS ext_glMultiTexCoord2s( void *args )
     struct glMultiTexCoord2s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2s( params->target, params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13204,6 +14337,7 @@ static NTSTATUS ext_glMultiTexCoord2sARB( void *args )
     struct glMultiTexCoord2sARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2sARB( params->target, params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13212,6 +14346,7 @@ static NTSTATUS ext_glMultiTexCoord2sSGIS( void *args )
     struct glMultiTexCoord2sSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2sSGIS( params->target, params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13220,6 +14355,7 @@ static NTSTATUS ext_glMultiTexCoord2sv( void *args )
     struct glMultiTexCoord2sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2sv( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13228,6 +14364,7 @@ static NTSTATUS ext_glMultiTexCoord2svARB( void *args )
     struct glMultiTexCoord2svARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2svARB( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13236,6 +14373,7 @@ static NTSTATUS ext_glMultiTexCoord2svSGIS( void *args )
     struct glMultiTexCoord2svSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2svSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13244,6 +14382,7 @@ static NTSTATUS ext_glMultiTexCoord2xOES( void *args )
     struct glMultiTexCoord2xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2xOES( params->texture, params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13252,6 +14391,7 @@ static NTSTATUS ext_glMultiTexCoord2xvOES( void *args )
     struct glMultiTexCoord2xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord2xvOES( params->texture, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13260,6 +14400,7 @@ static NTSTATUS ext_glMultiTexCoord3bOES( void *args )
     struct glMultiTexCoord3bOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3bOES( params->texture, params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13268,6 +14409,7 @@ static NTSTATUS ext_glMultiTexCoord3bvOES( void *args )
     struct glMultiTexCoord3bvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3bvOES( params->texture, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13276,6 +14418,7 @@ static NTSTATUS ext_glMultiTexCoord3d( void *args )
     struct glMultiTexCoord3d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3d( params->target, params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13284,6 +14427,7 @@ static NTSTATUS ext_glMultiTexCoord3dARB( void *args )
     struct glMultiTexCoord3dARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3dARB( params->target, params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13292,6 +14436,7 @@ static NTSTATUS ext_glMultiTexCoord3dSGIS( void *args )
     struct glMultiTexCoord3dSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3dSGIS( params->target, params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13300,6 +14445,7 @@ static NTSTATUS ext_glMultiTexCoord3dv( void *args )
     struct glMultiTexCoord3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3dv( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13308,6 +14454,7 @@ static NTSTATUS ext_glMultiTexCoord3dvARB( void *args )
     struct glMultiTexCoord3dvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3dvARB( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13316,6 +14463,7 @@ static NTSTATUS ext_glMultiTexCoord3dvSGIS( void *args )
     struct glMultiTexCoord3dvSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3dvSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13324,6 +14472,7 @@ static NTSTATUS ext_glMultiTexCoord3f( void *args )
     struct glMultiTexCoord3f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3f( params->target, params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13332,6 +14481,7 @@ static NTSTATUS ext_glMultiTexCoord3fARB( void *args )
     struct glMultiTexCoord3fARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3fARB( params->target, params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13340,6 +14490,7 @@ static NTSTATUS ext_glMultiTexCoord3fSGIS( void *args )
     struct glMultiTexCoord3fSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3fSGIS( params->target, params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13348,6 +14499,7 @@ static NTSTATUS ext_glMultiTexCoord3fv( void *args )
     struct glMultiTexCoord3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3fv( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13356,6 +14508,7 @@ static NTSTATUS ext_glMultiTexCoord3fvARB( void *args )
     struct glMultiTexCoord3fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3fvARB( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13364,6 +14517,7 @@ static NTSTATUS ext_glMultiTexCoord3fvSGIS( void *args )
     struct glMultiTexCoord3fvSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3fvSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13372,6 +14526,7 @@ static NTSTATUS ext_glMultiTexCoord3hNV( void *args )
     struct glMultiTexCoord3hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3hNV( params->target, params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13380,6 +14535,7 @@ static NTSTATUS ext_glMultiTexCoord3hvNV( void *args )
     struct glMultiTexCoord3hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3hvNV( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13388,6 +14544,7 @@ static NTSTATUS ext_glMultiTexCoord3i( void *args )
     struct glMultiTexCoord3i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3i( params->target, params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13396,6 +14553,7 @@ static NTSTATUS ext_glMultiTexCoord3iARB( void *args )
     struct glMultiTexCoord3iARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3iARB( params->target, params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13404,6 +14562,7 @@ static NTSTATUS ext_glMultiTexCoord3iSGIS( void *args )
     struct glMultiTexCoord3iSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3iSGIS( params->target, params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13412,6 +14571,7 @@ static NTSTATUS ext_glMultiTexCoord3iv( void *args )
     struct glMultiTexCoord3iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3iv( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13420,6 +14580,7 @@ static NTSTATUS ext_glMultiTexCoord3ivARB( void *args )
     struct glMultiTexCoord3ivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3ivARB( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13428,6 +14589,7 @@ static NTSTATUS ext_glMultiTexCoord3ivSGIS( void *args )
     struct glMultiTexCoord3ivSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3ivSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13436,6 +14598,7 @@ static NTSTATUS ext_glMultiTexCoord3s( void *args )
     struct glMultiTexCoord3s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3s( params->target, params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13444,6 +14607,7 @@ static NTSTATUS ext_glMultiTexCoord3sARB( void *args )
     struct glMultiTexCoord3sARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3sARB( params->target, params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13452,6 +14616,7 @@ static NTSTATUS ext_glMultiTexCoord3sSGIS( void *args )
     struct glMultiTexCoord3sSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3sSGIS( params->target, params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13460,6 +14625,7 @@ static NTSTATUS ext_glMultiTexCoord3sv( void *args )
     struct glMultiTexCoord3sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3sv( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13468,6 +14634,7 @@ static NTSTATUS ext_glMultiTexCoord3svARB( void *args )
     struct glMultiTexCoord3svARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3svARB( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13476,6 +14643,7 @@ static NTSTATUS ext_glMultiTexCoord3svSGIS( void *args )
     struct glMultiTexCoord3svSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3svSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13484,6 +14652,7 @@ static NTSTATUS ext_glMultiTexCoord3xOES( void *args )
     struct glMultiTexCoord3xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3xOES( params->texture, params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13492,6 +14661,7 @@ static NTSTATUS ext_glMultiTexCoord3xvOES( void *args )
     struct glMultiTexCoord3xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord3xvOES( params->texture, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13500,6 +14670,7 @@ static NTSTATUS ext_glMultiTexCoord4bOES( void *args )
     struct glMultiTexCoord4bOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4bOES( params->texture, params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13508,6 +14679,7 @@ static NTSTATUS ext_glMultiTexCoord4bvOES( void *args )
     struct glMultiTexCoord4bvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4bvOES( params->texture, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13516,6 +14688,7 @@ static NTSTATUS ext_glMultiTexCoord4d( void *args )
     struct glMultiTexCoord4d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4d( params->target, params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13524,6 +14697,7 @@ static NTSTATUS ext_glMultiTexCoord4dARB( void *args )
     struct glMultiTexCoord4dARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4dARB( params->target, params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13532,6 +14706,7 @@ static NTSTATUS ext_glMultiTexCoord4dSGIS( void *args )
     struct glMultiTexCoord4dSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4dSGIS( params->target, params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13540,6 +14715,7 @@ static NTSTATUS ext_glMultiTexCoord4dv( void *args )
     struct glMultiTexCoord4dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4dv( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13548,6 +14724,7 @@ static NTSTATUS ext_glMultiTexCoord4dvARB( void *args )
     struct glMultiTexCoord4dvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4dvARB( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13556,6 +14733,7 @@ static NTSTATUS ext_glMultiTexCoord4dvSGIS( void *args )
     struct glMultiTexCoord4dvSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4dvSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13564,6 +14742,7 @@ static NTSTATUS ext_glMultiTexCoord4f( void *args )
     struct glMultiTexCoord4f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4f( params->target, params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13572,6 +14751,7 @@ static NTSTATUS ext_glMultiTexCoord4fARB( void *args )
     struct glMultiTexCoord4fARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4fARB( params->target, params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13580,6 +14760,7 @@ static NTSTATUS ext_glMultiTexCoord4fSGIS( void *args )
     struct glMultiTexCoord4fSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4fSGIS( params->target, params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13588,6 +14769,7 @@ static NTSTATUS ext_glMultiTexCoord4fv( void *args )
     struct glMultiTexCoord4fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4fv( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13596,6 +14778,7 @@ static NTSTATUS ext_glMultiTexCoord4fvARB( void *args )
     struct glMultiTexCoord4fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4fvARB( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13604,6 +14787,7 @@ static NTSTATUS ext_glMultiTexCoord4fvSGIS( void *args )
     struct glMultiTexCoord4fvSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4fvSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13612,6 +14796,7 @@ static NTSTATUS ext_glMultiTexCoord4hNV( void *args )
     struct glMultiTexCoord4hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4hNV( params->target, params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13620,6 +14805,7 @@ static NTSTATUS ext_glMultiTexCoord4hvNV( void *args )
     struct glMultiTexCoord4hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4hvNV( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13628,6 +14814,7 @@ static NTSTATUS ext_glMultiTexCoord4i( void *args )
     struct glMultiTexCoord4i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4i( params->target, params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13636,6 +14823,7 @@ static NTSTATUS ext_glMultiTexCoord4iARB( void *args )
     struct glMultiTexCoord4iARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4iARB( params->target, params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13644,6 +14832,7 @@ static NTSTATUS ext_glMultiTexCoord4iSGIS( void *args )
     struct glMultiTexCoord4iSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4iSGIS( params->target, params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13652,6 +14841,7 @@ static NTSTATUS ext_glMultiTexCoord4iv( void *args )
     struct glMultiTexCoord4iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4iv( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13660,6 +14850,7 @@ static NTSTATUS ext_glMultiTexCoord4ivARB( void *args )
     struct glMultiTexCoord4ivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4ivARB( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13668,6 +14859,7 @@ static NTSTATUS ext_glMultiTexCoord4ivSGIS( void *args )
     struct glMultiTexCoord4ivSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4ivSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13676,6 +14868,7 @@ static NTSTATUS ext_glMultiTexCoord4s( void *args )
     struct glMultiTexCoord4s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4s( params->target, params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13684,6 +14877,7 @@ static NTSTATUS ext_glMultiTexCoord4sARB( void *args )
     struct glMultiTexCoord4sARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4sARB( params->target, params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13692,6 +14886,7 @@ static NTSTATUS ext_glMultiTexCoord4sSGIS( void *args )
     struct glMultiTexCoord4sSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4sSGIS( params->target, params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13700,6 +14895,7 @@ static NTSTATUS ext_glMultiTexCoord4sv( void *args )
     struct glMultiTexCoord4sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4sv( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13708,6 +14904,7 @@ static NTSTATUS ext_glMultiTexCoord4svARB( void *args )
     struct glMultiTexCoord4svARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4svARB( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13716,6 +14913,7 @@ static NTSTATUS ext_glMultiTexCoord4svSGIS( void *args )
     struct glMultiTexCoord4svSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4svSGIS( params->target, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13724,6 +14922,7 @@ static NTSTATUS ext_glMultiTexCoord4xOES( void *args )
     struct glMultiTexCoord4xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4xOES( params->texture, params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13732,6 +14931,7 @@ static NTSTATUS ext_glMultiTexCoord4xvOES( void *args )
     struct glMultiTexCoord4xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoord4xvOES( params->texture, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13740,6 +14940,7 @@ static NTSTATUS ext_glMultiTexCoordP1ui( void *args )
     struct glMultiTexCoordP1ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoordP1ui( params->texture, params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13748,6 +14949,7 @@ static NTSTATUS ext_glMultiTexCoordP1uiv( void *args )
     struct glMultiTexCoordP1uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoordP1uiv( params->texture, params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13756,6 +14958,7 @@ static NTSTATUS ext_glMultiTexCoordP2ui( void *args )
     struct glMultiTexCoordP2ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoordP2ui( params->texture, params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13764,6 +14967,7 @@ static NTSTATUS ext_glMultiTexCoordP2uiv( void *args )
     struct glMultiTexCoordP2uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoordP2uiv( params->texture, params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13772,6 +14976,7 @@ static NTSTATUS ext_glMultiTexCoordP3ui( void *args )
     struct glMultiTexCoordP3ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoordP3ui( params->texture, params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13780,6 +14985,7 @@ static NTSTATUS ext_glMultiTexCoordP3uiv( void *args )
     struct glMultiTexCoordP3uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoordP3uiv( params->texture, params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13788,6 +14994,7 @@ static NTSTATUS ext_glMultiTexCoordP4ui( void *args )
     struct glMultiTexCoordP4ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoordP4ui( params->texture, params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13796,6 +15003,7 @@ static NTSTATUS ext_glMultiTexCoordP4uiv( void *args )
     struct glMultiTexCoordP4uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoordP4uiv( params->texture, params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13804,6 +15012,7 @@ static NTSTATUS ext_glMultiTexCoordPointerEXT( void *args )
     struct glMultiTexCoordPointerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoordPointerEXT( params->texunit, params->size, params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13812,6 +15021,7 @@ static NTSTATUS ext_glMultiTexCoordPointerSGIS( void *args )
     struct glMultiTexCoordPointerSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexCoordPointerSGIS( params->target, params->size, params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13820,6 +15030,7 @@ static NTSTATUS ext_glMultiTexEnvfEXT( void *args )
     struct glMultiTexEnvfEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexEnvfEXT( params->texunit, params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13828,6 +15039,7 @@ static NTSTATUS ext_glMultiTexEnvfvEXT( void *args )
     struct glMultiTexEnvfvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexEnvfvEXT( params->texunit, params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13836,6 +15048,7 @@ static NTSTATUS ext_glMultiTexEnviEXT( void *args )
     struct glMultiTexEnviEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexEnviEXT( params->texunit, params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13844,6 +15057,7 @@ static NTSTATUS ext_glMultiTexEnvivEXT( void *args )
     struct glMultiTexEnvivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexEnvivEXT( params->texunit, params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13852,6 +15066,7 @@ static NTSTATUS ext_glMultiTexGendEXT( void *args )
     struct glMultiTexGendEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexGendEXT( params->texunit, params->coord, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13860,6 +15075,7 @@ static NTSTATUS ext_glMultiTexGendvEXT( void *args )
     struct glMultiTexGendvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexGendvEXT( params->texunit, params->coord, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13868,6 +15084,7 @@ static NTSTATUS ext_glMultiTexGenfEXT( void *args )
     struct glMultiTexGenfEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexGenfEXT( params->texunit, params->coord, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13876,6 +15093,7 @@ static NTSTATUS ext_glMultiTexGenfvEXT( void *args )
     struct glMultiTexGenfvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexGenfvEXT( params->texunit, params->coord, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13884,6 +15102,7 @@ static NTSTATUS ext_glMultiTexGeniEXT( void *args )
     struct glMultiTexGeniEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexGeniEXT( params->texunit, params->coord, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13892,6 +15111,7 @@ static NTSTATUS ext_glMultiTexGenivEXT( void *args )
     struct glMultiTexGenivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexGenivEXT( params->texunit, params->coord, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13900,6 +15120,7 @@ static NTSTATUS ext_glMultiTexImage1DEXT( void *args )
     struct glMultiTexImage1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexImage1DEXT( params->texunit, params->target, params->level, params->internalformat, params->width, params->border, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13908,6 +15129,7 @@ static NTSTATUS ext_glMultiTexImage2DEXT( void *args )
     struct glMultiTexImage2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexImage2DEXT( params->texunit, params->target, params->level, params->internalformat, params->width, params->height, params->border, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13916,6 +15138,7 @@ static NTSTATUS ext_glMultiTexImage3DEXT( void *args )
     struct glMultiTexImage3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexImage3DEXT( params->texunit, params->target, params->level, params->internalformat, params->width, params->height, params->depth, params->border, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13924,6 +15147,7 @@ static NTSTATUS ext_glMultiTexParameterIivEXT( void *args )
     struct glMultiTexParameterIivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexParameterIivEXT( params->texunit, params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13932,6 +15156,7 @@ static NTSTATUS ext_glMultiTexParameterIuivEXT( void *args )
     struct glMultiTexParameterIuivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexParameterIuivEXT( params->texunit, params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13940,6 +15165,7 @@ static NTSTATUS ext_glMultiTexParameterfEXT( void *args )
     struct glMultiTexParameterfEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexParameterfEXT( params->texunit, params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13948,6 +15174,7 @@ static NTSTATUS ext_glMultiTexParameterfvEXT( void *args )
     struct glMultiTexParameterfvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexParameterfvEXT( params->texunit, params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13956,6 +15183,7 @@ static NTSTATUS ext_glMultiTexParameteriEXT( void *args )
     struct glMultiTexParameteriEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexParameteriEXT( params->texunit, params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13964,6 +15192,7 @@ static NTSTATUS ext_glMultiTexParameterivEXT( void *args )
     struct glMultiTexParameterivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexParameterivEXT( params->texunit, params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13972,6 +15201,7 @@ static NTSTATUS ext_glMultiTexRenderbufferEXT( void *args )
     struct glMultiTexRenderbufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexRenderbufferEXT( params->texunit, params->target, params->renderbuffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13980,6 +15210,7 @@ static NTSTATUS ext_glMultiTexSubImage1DEXT( void *args )
     struct glMultiTexSubImage1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexSubImage1DEXT( params->texunit, params->target, params->level, params->xoffset, params->width, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13988,6 +15219,7 @@ static NTSTATUS ext_glMultiTexSubImage2DEXT( void *args )
     struct glMultiTexSubImage2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexSubImage2DEXT( params->texunit, params->target, params->level, params->xoffset, params->yoffset, params->width, params->height, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -13996,6 +15228,7 @@ static NTSTATUS ext_glMultiTexSubImage3DEXT( void *args )
     struct glMultiTexSubImage3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMultiTexSubImage3DEXT( params->texunit, params->target, params->level, params->xoffset, params->yoffset, params->zoffset, params->width, params->height, params->depth, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14004,6 +15237,7 @@ static NTSTATUS ext_glMulticastBarrierNV( void *args )
     struct glMulticastBarrierNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMulticastBarrierNV();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14012,6 +15246,7 @@ static NTSTATUS ext_glMulticastBlitFramebufferNV( void *args )
     struct glMulticastBlitFramebufferNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMulticastBlitFramebufferNV( params->srcGpu, params->dstGpu, params->srcX0, params->srcY0, params->srcX1, params->srcY1, params->dstX0, params->dstY0, params->dstX1, params->dstY1, params->mask, params->filter );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14020,6 +15255,7 @@ static NTSTATUS ext_glMulticastBufferSubDataNV( void *args )
     struct glMulticastBufferSubDataNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMulticastBufferSubDataNV( params->gpuMask, params->buffer, params->offset, params->size, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14028,6 +15264,7 @@ static NTSTATUS ext_glMulticastCopyBufferSubDataNV( void *args )
     struct glMulticastCopyBufferSubDataNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMulticastCopyBufferSubDataNV( params->readGpu, params->writeGpuMask, params->readBuffer, params->writeBuffer, params->readOffset, params->writeOffset, params->size );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14036,6 +15273,7 @@ static NTSTATUS ext_glMulticastCopyImageSubDataNV( void *args )
     struct glMulticastCopyImageSubDataNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMulticastCopyImageSubDataNV( params->srcGpu, params->dstGpuMask, params->srcName, params->srcTarget, params->srcLevel, params->srcX, params->srcY, params->srcZ, params->dstName, params->dstTarget, params->dstLevel, params->dstX, params->dstY, params->dstZ, params->srcWidth, params->srcHeight, params->srcDepth );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14044,6 +15282,7 @@ static NTSTATUS ext_glMulticastFramebufferSampleLocationsfvNV( void *args )
     struct glMulticastFramebufferSampleLocationsfvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMulticastFramebufferSampleLocationsfvNV( params->gpu, params->framebuffer, params->start, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14052,6 +15291,7 @@ static NTSTATUS ext_glMulticastGetQueryObjecti64vNV( void *args )
     struct glMulticastGetQueryObjecti64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMulticastGetQueryObjecti64vNV( params->gpu, params->id, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14060,6 +15300,7 @@ static NTSTATUS ext_glMulticastGetQueryObjectivNV( void *args )
     struct glMulticastGetQueryObjectivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMulticastGetQueryObjectivNV( params->gpu, params->id, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14068,6 +15309,7 @@ static NTSTATUS ext_glMulticastGetQueryObjectui64vNV( void *args )
     struct glMulticastGetQueryObjectui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMulticastGetQueryObjectui64vNV( params->gpu, params->id, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14076,6 +15318,7 @@ static NTSTATUS ext_glMulticastGetQueryObjectuivNV( void *args )
     struct glMulticastGetQueryObjectuivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMulticastGetQueryObjectuivNV( params->gpu, params->id, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14084,6 +15327,7 @@ static NTSTATUS ext_glMulticastScissorArrayvNVX( void *args )
     struct glMulticastScissorArrayvNVX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMulticastScissorArrayvNVX( params->gpu, params->first, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14092,6 +15336,7 @@ static NTSTATUS ext_glMulticastViewportArrayvNVX( void *args )
     struct glMulticastViewportArrayvNVX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMulticastViewportArrayvNVX( params->gpu, params->first, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14100,6 +15345,7 @@ static NTSTATUS ext_glMulticastViewportPositionWScaleNVX( void *args )
     struct glMulticastViewportPositionWScaleNVX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMulticastViewportPositionWScaleNVX( params->gpu, params->index, params->xcoeff, params->ycoeff );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14108,6 +15354,7 @@ static NTSTATUS ext_glMulticastWaitSyncNV( void *args )
     struct glMulticastWaitSyncNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMulticastWaitSyncNV( params->signalGpu, params->waitGpuMask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14116,6 +15363,7 @@ static NTSTATUS ext_glNamedBufferAttachMemoryNV( void *args )
     struct glNamedBufferAttachMemoryNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedBufferAttachMemoryNV( params->buffer, params->memory, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14124,6 +15372,7 @@ static NTSTATUS ext_glNamedBufferData( void *args )
     struct glNamedBufferData_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedBufferData( params->buffer, params->size, params->data, params->usage );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14132,6 +15381,7 @@ static NTSTATUS ext_glNamedBufferDataEXT( void *args )
     struct glNamedBufferDataEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedBufferDataEXT( params->buffer, params->size, params->data, params->usage );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14140,6 +15390,7 @@ static NTSTATUS ext_glNamedBufferPageCommitmentARB( void *args )
     struct glNamedBufferPageCommitmentARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedBufferPageCommitmentARB( params->buffer, params->offset, params->size, params->commit );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14148,6 +15399,7 @@ static NTSTATUS ext_glNamedBufferPageCommitmentEXT( void *args )
     struct glNamedBufferPageCommitmentEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedBufferPageCommitmentEXT( params->buffer, params->offset, params->size, params->commit );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14156,6 +15408,7 @@ static NTSTATUS ext_glNamedBufferStorage( void *args )
     struct glNamedBufferStorage_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedBufferStorage( params->buffer, params->size, params->data, params->flags );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14164,6 +15417,7 @@ static NTSTATUS ext_glNamedBufferStorageEXT( void *args )
     struct glNamedBufferStorageEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedBufferStorageEXT( params->buffer, params->size, params->data, params->flags );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14172,6 +15426,7 @@ static NTSTATUS ext_glNamedBufferStorageExternalEXT( void *args )
     struct glNamedBufferStorageExternalEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedBufferStorageExternalEXT( params->buffer, params->offset, params->size, params->clientBuffer, params->flags );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14180,6 +15435,7 @@ static NTSTATUS ext_glNamedBufferStorageMemEXT( void *args )
     struct glNamedBufferStorageMemEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedBufferStorageMemEXT( params->buffer, params->size, params->memory, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14188,6 +15444,7 @@ static NTSTATUS ext_glNamedBufferSubData( void *args )
     struct glNamedBufferSubData_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedBufferSubData( params->buffer, params->offset, params->size, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14196,6 +15453,7 @@ static NTSTATUS ext_glNamedBufferSubDataEXT( void *args )
     struct glNamedBufferSubDataEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedBufferSubDataEXT( params->buffer, params->offset, params->size, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14204,6 +15462,7 @@ static NTSTATUS ext_glNamedCopyBufferSubDataEXT( void *args )
     struct glNamedCopyBufferSubDataEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedCopyBufferSubDataEXT( params->readBuffer, params->writeBuffer, params->readOffset, params->writeOffset, params->size );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14212,6 +15471,7 @@ static NTSTATUS ext_glNamedFramebufferDrawBuffer( void *args )
     struct glNamedFramebufferDrawBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferDrawBuffer( params->framebuffer, params->buf );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14220,6 +15480,7 @@ static NTSTATUS ext_glNamedFramebufferDrawBuffers( void *args )
     struct glNamedFramebufferDrawBuffers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferDrawBuffers( params->framebuffer, params->n, params->bufs );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14228,6 +15489,7 @@ static NTSTATUS ext_glNamedFramebufferParameteri( void *args )
     struct glNamedFramebufferParameteri_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferParameteri( params->framebuffer, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14236,6 +15498,7 @@ static NTSTATUS ext_glNamedFramebufferParameteriEXT( void *args )
     struct glNamedFramebufferParameteriEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferParameteriEXT( params->framebuffer, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14244,6 +15507,7 @@ static NTSTATUS ext_glNamedFramebufferReadBuffer( void *args )
     struct glNamedFramebufferReadBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferReadBuffer( params->framebuffer, params->src );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14252,6 +15516,7 @@ static NTSTATUS ext_glNamedFramebufferRenderbuffer( void *args )
     struct glNamedFramebufferRenderbuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferRenderbuffer( params->framebuffer, params->attachment, params->renderbuffertarget, params->renderbuffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14260,6 +15525,7 @@ static NTSTATUS ext_glNamedFramebufferRenderbufferEXT( void *args )
     struct glNamedFramebufferRenderbufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferRenderbufferEXT( params->framebuffer, params->attachment, params->renderbuffertarget, params->renderbuffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14268,6 +15534,7 @@ static NTSTATUS ext_glNamedFramebufferSampleLocationsfvARB( void *args )
     struct glNamedFramebufferSampleLocationsfvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferSampleLocationsfvARB( params->framebuffer, params->start, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14276,6 +15543,7 @@ static NTSTATUS ext_glNamedFramebufferSampleLocationsfvNV( void *args )
     struct glNamedFramebufferSampleLocationsfvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferSampleLocationsfvNV( params->framebuffer, params->start, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14284,6 +15552,7 @@ static NTSTATUS ext_glNamedFramebufferSamplePositionsfvAMD( void *args )
     struct glNamedFramebufferSamplePositionsfvAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferSamplePositionsfvAMD( params->framebuffer, params->numsamples, params->pixelindex, params->values );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14292,6 +15561,7 @@ static NTSTATUS ext_glNamedFramebufferTexture( void *args )
     struct glNamedFramebufferTexture_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferTexture( params->framebuffer, params->attachment, params->texture, params->level );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14300,6 +15570,7 @@ static NTSTATUS ext_glNamedFramebufferTexture1DEXT( void *args )
     struct glNamedFramebufferTexture1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferTexture1DEXT( params->framebuffer, params->attachment, params->textarget, params->texture, params->level );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14308,6 +15579,7 @@ static NTSTATUS ext_glNamedFramebufferTexture2DEXT( void *args )
     struct glNamedFramebufferTexture2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferTexture2DEXT( params->framebuffer, params->attachment, params->textarget, params->texture, params->level );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14316,6 +15588,7 @@ static NTSTATUS ext_glNamedFramebufferTexture3DEXT( void *args )
     struct glNamedFramebufferTexture3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferTexture3DEXT( params->framebuffer, params->attachment, params->textarget, params->texture, params->level, params->zoffset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14324,6 +15597,7 @@ static NTSTATUS ext_glNamedFramebufferTextureEXT( void *args )
     struct glNamedFramebufferTextureEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferTextureEXT( params->framebuffer, params->attachment, params->texture, params->level );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14332,6 +15606,7 @@ static NTSTATUS ext_glNamedFramebufferTextureFaceEXT( void *args )
     struct glNamedFramebufferTextureFaceEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferTextureFaceEXT( params->framebuffer, params->attachment, params->texture, params->level, params->face );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14340,6 +15615,7 @@ static NTSTATUS ext_glNamedFramebufferTextureLayer( void *args )
     struct glNamedFramebufferTextureLayer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferTextureLayer( params->framebuffer, params->attachment, params->texture, params->level, params->layer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14348,6 +15624,7 @@ static NTSTATUS ext_glNamedFramebufferTextureLayerEXT( void *args )
     struct glNamedFramebufferTextureLayerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedFramebufferTextureLayerEXT( params->framebuffer, params->attachment, params->texture, params->level, params->layer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14356,6 +15633,7 @@ static NTSTATUS ext_glNamedProgramLocalParameter4dEXT( void *args )
     struct glNamedProgramLocalParameter4dEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedProgramLocalParameter4dEXT( params->program, params->target, params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14364,6 +15642,7 @@ static NTSTATUS ext_glNamedProgramLocalParameter4dvEXT( void *args )
     struct glNamedProgramLocalParameter4dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedProgramLocalParameter4dvEXT( params->program, params->target, params->index, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14372,6 +15651,7 @@ static NTSTATUS ext_glNamedProgramLocalParameter4fEXT( void *args )
     struct glNamedProgramLocalParameter4fEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedProgramLocalParameter4fEXT( params->program, params->target, params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14380,6 +15660,7 @@ static NTSTATUS ext_glNamedProgramLocalParameter4fvEXT( void *args )
     struct glNamedProgramLocalParameter4fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedProgramLocalParameter4fvEXT( params->program, params->target, params->index, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14388,6 +15669,7 @@ static NTSTATUS ext_glNamedProgramLocalParameterI4iEXT( void *args )
     struct glNamedProgramLocalParameterI4iEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedProgramLocalParameterI4iEXT( params->program, params->target, params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14396,6 +15678,7 @@ static NTSTATUS ext_glNamedProgramLocalParameterI4ivEXT( void *args )
     struct glNamedProgramLocalParameterI4ivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedProgramLocalParameterI4ivEXT( params->program, params->target, params->index, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14404,6 +15687,7 @@ static NTSTATUS ext_glNamedProgramLocalParameterI4uiEXT( void *args )
     struct glNamedProgramLocalParameterI4uiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedProgramLocalParameterI4uiEXT( params->program, params->target, params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14412,6 +15696,7 @@ static NTSTATUS ext_glNamedProgramLocalParameterI4uivEXT( void *args )
     struct glNamedProgramLocalParameterI4uivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedProgramLocalParameterI4uivEXT( params->program, params->target, params->index, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14420,6 +15705,7 @@ static NTSTATUS ext_glNamedProgramLocalParameters4fvEXT( void *args )
     struct glNamedProgramLocalParameters4fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedProgramLocalParameters4fvEXT( params->program, params->target, params->index, params->count, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14428,6 +15714,7 @@ static NTSTATUS ext_glNamedProgramLocalParametersI4ivEXT( void *args )
     struct glNamedProgramLocalParametersI4ivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedProgramLocalParametersI4ivEXT( params->program, params->target, params->index, params->count, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14436,6 +15723,7 @@ static NTSTATUS ext_glNamedProgramLocalParametersI4uivEXT( void *args )
     struct glNamedProgramLocalParametersI4uivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedProgramLocalParametersI4uivEXT( params->program, params->target, params->index, params->count, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14444,6 +15732,7 @@ static NTSTATUS ext_glNamedProgramStringEXT( void *args )
     struct glNamedProgramStringEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedProgramStringEXT( params->program, params->target, params->format, params->len, params->string );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14452,6 +15741,7 @@ static NTSTATUS ext_glNamedRenderbufferStorage( void *args )
     struct glNamedRenderbufferStorage_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedRenderbufferStorage( params->renderbuffer, params->internalformat, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14460,6 +15750,7 @@ static NTSTATUS ext_glNamedRenderbufferStorageEXT( void *args )
     struct glNamedRenderbufferStorageEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedRenderbufferStorageEXT( params->renderbuffer, params->internalformat, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14468,6 +15759,7 @@ static NTSTATUS ext_glNamedRenderbufferStorageMultisample( void *args )
     struct glNamedRenderbufferStorageMultisample_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedRenderbufferStorageMultisample( params->renderbuffer, params->samples, params->internalformat, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14476,6 +15768,7 @@ static NTSTATUS ext_glNamedRenderbufferStorageMultisampleAdvancedAMD( void *args
     struct glNamedRenderbufferStorageMultisampleAdvancedAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedRenderbufferStorageMultisampleAdvancedAMD( params->renderbuffer, params->samples, params->storageSamples, params->internalformat, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14484,6 +15777,7 @@ static NTSTATUS ext_glNamedRenderbufferStorageMultisampleCoverageEXT( void *args
     struct glNamedRenderbufferStorageMultisampleCoverageEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedRenderbufferStorageMultisampleCoverageEXT( params->renderbuffer, params->coverageSamples, params->colorSamples, params->internalformat, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14492,6 +15786,7 @@ static NTSTATUS ext_glNamedRenderbufferStorageMultisampleEXT( void *args )
     struct glNamedRenderbufferStorageMultisampleEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedRenderbufferStorageMultisampleEXT( params->renderbuffer, params->samples, params->internalformat, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14500,6 +15795,7 @@ static NTSTATUS ext_glNamedStringARB( void *args )
     struct glNamedStringARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNamedStringARB( params->type, params->namelen, params->name, params->stringlen, params->string );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14508,6 +15804,7 @@ static NTSTATUS ext_glNewBufferRegion( void *args )
     struct glNewBufferRegion_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glNewBufferRegion( params->type );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14516,6 +15813,7 @@ static NTSTATUS ext_glNewObjectBufferATI( void *args )
     struct glNewObjectBufferATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glNewObjectBufferATI( params->size, params->pointer, params->usage );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14524,6 +15822,7 @@ static NTSTATUS ext_glNormal3fVertex3fSUN( void *args )
     struct glNormal3fVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormal3fVertex3fSUN( params->nx, params->ny, params->nz, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14532,6 +15831,7 @@ static NTSTATUS ext_glNormal3fVertex3fvSUN( void *args )
     struct glNormal3fVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormal3fVertex3fvSUN( params->n, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14540,6 +15840,7 @@ static NTSTATUS ext_glNormal3hNV( void *args )
     struct glNormal3hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormal3hNV( params->nx, params->ny, params->nz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14548,6 +15849,7 @@ static NTSTATUS ext_glNormal3hvNV( void *args )
     struct glNormal3hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormal3hvNV( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14556,6 +15858,7 @@ static NTSTATUS ext_glNormal3xOES( void *args )
     struct glNormal3xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormal3xOES( params->nx, params->ny, params->nz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14564,6 +15867,7 @@ static NTSTATUS ext_glNormal3xvOES( void *args )
     struct glNormal3xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormal3xvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14572,6 +15876,7 @@ static NTSTATUS ext_glNormalFormatNV( void *args )
     struct glNormalFormatNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalFormatNV( params->type, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14580,6 +15885,7 @@ static NTSTATUS ext_glNormalP3ui( void *args )
     struct glNormalP3ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalP3ui( params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14588,6 +15894,7 @@ static NTSTATUS ext_glNormalP3uiv( void *args )
     struct glNormalP3uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalP3uiv( params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14596,6 +15903,7 @@ static NTSTATUS ext_glNormalPointerEXT( void *args )
     struct glNormalPointerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalPointerEXT( params->type, params->stride, params->count, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14604,6 +15912,7 @@ static NTSTATUS ext_glNormalPointerListIBM( void *args )
     struct glNormalPointerListIBM_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalPointerListIBM( params->type, params->stride, params->pointer, params->ptrstride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14612,6 +15921,7 @@ static NTSTATUS ext_glNormalPointervINTEL( void *args )
     struct glNormalPointervINTEL_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalPointervINTEL( params->type, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14620,6 +15930,7 @@ static NTSTATUS ext_glNormalStream3bATI( void *args )
     struct glNormalStream3bATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalStream3bATI( params->stream, params->nx, params->ny, params->nz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14628,6 +15939,7 @@ static NTSTATUS ext_glNormalStream3bvATI( void *args )
     struct glNormalStream3bvATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalStream3bvATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14636,6 +15948,7 @@ static NTSTATUS ext_glNormalStream3dATI( void *args )
     struct glNormalStream3dATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalStream3dATI( params->stream, params->nx, params->ny, params->nz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14644,6 +15957,7 @@ static NTSTATUS ext_glNormalStream3dvATI( void *args )
     struct glNormalStream3dvATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalStream3dvATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14652,6 +15966,7 @@ static NTSTATUS ext_glNormalStream3fATI( void *args )
     struct glNormalStream3fATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalStream3fATI( params->stream, params->nx, params->ny, params->nz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14660,6 +15975,7 @@ static NTSTATUS ext_glNormalStream3fvATI( void *args )
     struct glNormalStream3fvATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalStream3fvATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14668,6 +15984,7 @@ static NTSTATUS ext_glNormalStream3iATI( void *args )
     struct glNormalStream3iATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalStream3iATI( params->stream, params->nx, params->ny, params->nz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14676,6 +15993,7 @@ static NTSTATUS ext_glNormalStream3ivATI( void *args )
     struct glNormalStream3ivATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalStream3ivATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14684,6 +16002,7 @@ static NTSTATUS ext_glNormalStream3sATI( void *args )
     struct glNormalStream3sATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalStream3sATI( params->stream, params->nx, params->ny, params->nz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14692,6 +16011,7 @@ static NTSTATUS ext_glNormalStream3svATI( void *args )
     struct glNormalStream3svATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glNormalStream3svATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14700,6 +16020,7 @@ static NTSTATUS ext_glObjectLabel( void *args )
     struct glObjectLabel_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glObjectLabel( params->identifier, params->name, params->length, params->label );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14708,6 +16029,7 @@ static NTSTATUS ext_glObjectPtrLabel( void *args )
     struct glObjectPtrLabel_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glObjectPtrLabel( params->ptr, params->length, params->label );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14716,6 +16038,7 @@ static NTSTATUS ext_glObjectPurgeableAPPLE( void *args )
     struct glObjectPurgeableAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glObjectPurgeableAPPLE( params->objectType, params->name, params->option );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14724,6 +16047,7 @@ static NTSTATUS ext_glObjectUnpurgeableAPPLE( void *args )
     struct glObjectUnpurgeableAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glObjectUnpurgeableAPPLE( params->objectType, params->name, params->option );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14732,6 +16056,7 @@ static NTSTATUS ext_glOrthofOES( void *args )
     struct glOrthofOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glOrthofOES( params->l, params->r, params->b, params->t, params->n, params->f );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14740,6 +16065,7 @@ static NTSTATUS ext_glOrthoxOES( void *args )
     struct glOrthoxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glOrthoxOES( params->l, params->r, params->b, params->t, params->n, params->f );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14748,6 +16074,7 @@ static NTSTATUS ext_glPNTrianglesfATI( void *args )
     struct glPNTrianglesfATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPNTrianglesfATI( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14756,6 +16083,7 @@ static NTSTATUS ext_glPNTrianglesiATI( void *args )
     struct glPNTrianglesiATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPNTrianglesiATI( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14764,6 +16092,7 @@ static NTSTATUS ext_glPassTexCoordATI( void *args )
     struct glPassTexCoordATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPassTexCoordATI( params->dst, params->coord, params->swizzle );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14772,6 +16101,7 @@ static NTSTATUS ext_glPassThroughxOES( void *args )
     struct glPassThroughxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPassThroughxOES( params->token );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14780,6 +16110,7 @@ static NTSTATUS ext_glPatchParameterfv( void *args )
     struct glPatchParameterfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPatchParameterfv( params->pname, params->values );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14788,6 +16119,7 @@ static NTSTATUS ext_glPatchParameteri( void *args )
     struct glPatchParameteri_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPatchParameteri( params->pname, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14796,6 +16128,7 @@ static NTSTATUS ext_glPathColorGenNV( void *args )
     struct glPathColorGenNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathColorGenNV( params->color, params->genMode, params->colorFormat, params->coeffs );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14804,6 +16137,7 @@ static NTSTATUS ext_glPathCommandsNV( void *args )
     struct glPathCommandsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathCommandsNV( params->path, params->numCommands, params->commands, params->numCoords, params->coordType, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14812,6 +16146,7 @@ static NTSTATUS ext_glPathCoordsNV( void *args )
     struct glPathCoordsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathCoordsNV( params->path, params->numCoords, params->coordType, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14820,6 +16155,7 @@ static NTSTATUS ext_glPathCoverDepthFuncNV( void *args )
     struct glPathCoverDepthFuncNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathCoverDepthFuncNV( params->func );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14828,6 +16164,7 @@ static NTSTATUS ext_glPathDashArrayNV( void *args )
     struct glPathDashArrayNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathDashArrayNV( params->path, params->dashCount, params->dashArray );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14836,6 +16173,7 @@ static NTSTATUS ext_glPathFogGenNV( void *args )
     struct glPathFogGenNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathFogGenNV( params->genMode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14844,6 +16182,7 @@ static NTSTATUS ext_glPathGlyphIndexArrayNV( void *args )
     struct glPathGlyphIndexArrayNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glPathGlyphIndexArrayNV( params->firstPathName, params->fontTarget, params->fontName, params->fontStyle, params->firstGlyphIndex, params->numGlyphs, params->pathParameterTemplate, params->emScale );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14852,6 +16191,7 @@ NTSTATUS ext_glPathGlyphIndexRangeNV( void *args )
     struct glPathGlyphIndexRangeNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glPathGlyphIndexRangeNV( params->fontTarget, params->fontName, params->fontStyle, params->pathParameterTemplate, params->emScale, params->baseAndCount );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14860,6 +16200,7 @@ static NTSTATUS ext_glPathGlyphRangeNV( void *args )
     struct glPathGlyphRangeNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathGlyphRangeNV( params->firstPathName, params->fontTarget, params->fontName, params->fontStyle, params->firstGlyph, params->numGlyphs, params->handleMissingGlyphs, params->pathParameterTemplate, params->emScale );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14868,6 +16209,7 @@ static NTSTATUS ext_glPathGlyphsNV( void *args )
     struct glPathGlyphsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathGlyphsNV( params->firstPathName, params->fontTarget, params->fontName, params->fontStyle, params->numGlyphs, params->type, params->charcodes, params->handleMissingGlyphs, params->pathParameterTemplate, params->emScale );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14876,6 +16218,7 @@ static NTSTATUS ext_glPathMemoryGlyphIndexArrayNV( void *args )
     struct glPathMemoryGlyphIndexArrayNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glPathMemoryGlyphIndexArrayNV( params->firstPathName, params->fontTarget, params->fontSize, params->fontData, params->faceIndex, params->firstGlyphIndex, params->numGlyphs, params->pathParameterTemplate, params->emScale );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14884,6 +16227,7 @@ static NTSTATUS ext_glPathParameterfNV( void *args )
     struct glPathParameterfNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathParameterfNV( params->path, params->pname, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14892,6 +16236,7 @@ static NTSTATUS ext_glPathParameterfvNV( void *args )
     struct glPathParameterfvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathParameterfvNV( params->path, params->pname, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14900,6 +16245,7 @@ static NTSTATUS ext_glPathParameteriNV( void *args )
     struct glPathParameteriNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathParameteriNV( params->path, params->pname, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14908,6 +16254,7 @@ static NTSTATUS ext_glPathParameterivNV( void *args )
     struct glPathParameterivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathParameterivNV( params->path, params->pname, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14916,6 +16263,7 @@ static NTSTATUS ext_glPathStencilDepthOffsetNV( void *args )
     struct glPathStencilDepthOffsetNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathStencilDepthOffsetNV( params->factor, params->units );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14924,6 +16272,7 @@ static NTSTATUS ext_glPathStencilFuncNV( void *args )
     struct glPathStencilFuncNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathStencilFuncNV( params->func, params->ref, params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14932,6 +16281,7 @@ static NTSTATUS ext_glPathStringNV( void *args )
     struct glPathStringNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathStringNV( params->path, params->format, params->length, params->pathString );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14940,6 +16290,7 @@ static NTSTATUS ext_glPathSubCommandsNV( void *args )
     struct glPathSubCommandsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathSubCommandsNV( params->path, params->commandStart, params->commandsToDelete, params->numCommands, params->commands, params->numCoords, params->coordType, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14948,6 +16299,7 @@ static NTSTATUS ext_glPathSubCoordsNV( void *args )
     struct glPathSubCoordsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathSubCoordsNV( params->path, params->coordStart, params->numCoords, params->coordType, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14956,6 +16308,7 @@ static NTSTATUS ext_glPathTexGenNV( void *args )
     struct glPathTexGenNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPathTexGenNV( params->texCoordSet, params->genMode, params->components, params->coeffs );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14964,6 +16317,7 @@ static NTSTATUS ext_glPauseTransformFeedback( void *args )
     struct glPauseTransformFeedback_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPauseTransformFeedback();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14972,6 +16326,7 @@ static NTSTATUS ext_glPauseTransformFeedbackNV( void *args )
     struct glPauseTransformFeedbackNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPauseTransformFeedbackNV();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14980,6 +16335,7 @@ static NTSTATUS ext_glPixelDataRangeNV( void *args )
     struct glPixelDataRangeNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelDataRangeNV( params->target, params->length, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14988,6 +16344,7 @@ static NTSTATUS ext_glPixelMapx( void *args )
     struct glPixelMapx_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelMapx( params->map, params->size, params->values );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -14996,6 +16353,7 @@ static NTSTATUS ext_glPixelStorex( void *args )
     struct glPixelStorex_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelStorex( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15004,6 +16362,7 @@ static NTSTATUS ext_glPixelTexGenParameterfSGIS( void *args )
     struct glPixelTexGenParameterfSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelTexGenParameterfSGIS( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15012,6 +16371,7 @@ static NTSTATUS ext_glPixelTexGenParameterfvSGIS( void *args )
     struct glPixelTexGenParameterfvSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelTexGenParameterfvSGIS( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15020,6 +16380,7 @@ static NTSTATUS ext_glPixelTexGenParameteriSGIS( void *args )
     struct glPixelTexGenParameteriSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelTexGenParameteriSGIS( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15028,6 +16389,7 @@ static NTSTATUS ext_glPixelTexGenParameterivSGIS( void *args )
     struct glPixelTexGenParameterivSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelTexGenParameterivSGIS( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15036,6 +16398,7 @@ static NTSTATUS ext_glPixelTexGenSGIX( void *args )
     struct glPixelTexGenSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelTexGenSGIX( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15044,6 +16407,7 @@ static NTSTATUS ext_glPixelTransferxOES( void *args )
     struct glPixelTransferxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelTransferxOES( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15052,6 +16416,7 @@ static NTSTATUS ext_glPixelTransformParameterfEXT( void *args )
     struct glPixelTransformParameterfEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelTransformParameterfEXT( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15060,6 +16425,7 @@ static NTSTATUS ext_glPixelTransformParameterfvEXT( void *args )
     struct glPixelTransformParameterfvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelTransformParameterfvEXT( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15068,6 +16434,7 @@ static NTSTATUS ext_glPixelTransformParameteriEXT( void *args )
     struct glPixelTransformParameteriEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelTransformParameteriEXT( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15076,6 +16443,7 @@ static NTSTATUS ext_glPixelTransformParameterivEXT( void *args )
     struct glPixelTransformParameterivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelTransformParameterivEXT( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15084,6 +16452,7 @@ static NTSTATUS ext_glPixelZoomxOES( void *args )
     struct glPixelZoomxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPixelZoomxOES( params->xfactor, params->yfactor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15092,6 +16461,7 @@ static NTSTATUS ext_glPointAlongPathNV( void *args )
     struct glPointAlongPathNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glPointAlongPathNV( params->path, params->startSegment, params->numSegments, params->distance, params->x, params->y, params->tangentX, params->tangentY );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15100,6 +16470,7 @@ static NTSTATUS ext_glPointParameterf( void *args )
     struct glPointParameterf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPointParameterf( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15108,6 +16479,7 @@ static NTSTATUS ext_glPointParameterfARB( void *args )
     struct glPointParameterfARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPointParameterfARB( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15116,6 +16488,7 @@ static NTSTATUS ext_glPointParameterfEXT( void *args )
     struct glPointParameterfEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPointParameterfEXT( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15124,6 +16497,7 @@ static NTSTATUS ext_glPointParameterfSGIS( void *args )
     struct glPointParameterfSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPointParameterfSGIS( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15132,6 +16506,7 @@ static NTSTATUS ext_glPointParameterfv( void *args )
     struct glPointParameterfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPointParameterfv( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15140,6 +16515,7 @@ static NTSTATUS ext_glPointParameterfvARB( void *args )
     struct glPointParameterfvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPointParameterfvARB( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15148,6 +16524,7 @@ static NTSTATUS ext_glPointParameterfvEXT( void *args )
     struct glPointParameterfvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPointParameterfvEXT( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15156,6 +16533,7 @@ static NTSTATUS ext_glPointParameterfvSGIS( void *args )
     struct glPointParameterfvSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPointParameterfvSGIS( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15164,6 +16542,7 @@ static NTSTATUS ext_glPointParameteri( void *args )
     struct glPointParameteri_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPointParameteri( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15172,6 +16551,7 @@ static NTSTATUS ext_glPointParameteriNV( void *args )
     struct glPointParameteriNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPointParameteriNV( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15180,6 +16560,7 @@ static NTSTATUS ext_glPointParameteriv( void *args )
     struct glPointParameteriv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPointParameteriv( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15188,6 +16569,7 @@ static NTSTATUS ext_glPointParameterivNV( void *args )
     struct glPointParameterivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPointParameterivNV( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15196,6 +16578,7 @@ static NTSTATUS ext_glPointParameterxvOES( void *args )
     struct glPointParameterxvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPointParameterxvOES( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15204,6 +16587,7 @@ static NTSTATUS ext_glPointSizexOES( void *args )
     struct glPointSizexOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPointSizexOES( params->size );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15212,6 +16596,7 @@ static NTSTATUS ext_glPollAsyncSGIX( void *args )
     struct glPollAsyncSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glPollAsyncSGIX( params->markerp );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15220,6 +16605,7 @@ static NTSTATUS ext_glPollInstrumentsSGIX( void *args )
     struct glPollInstrumentsSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glPollInstrumentsSGIX( params->marker_p );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15228,6 +16614,7 @@ static NTSTATUS ext_glPolygonOffsetClamp( void *args )
     struct glPolygonOffsetClamp_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPolygonOffsetClamp( params->factor, params->units, params->clamp );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15236,6 +16623,7 @@ static NTSTATUS ext_glPolygonOffsetClampEXT( void *args )
     struct glPolygonOffsetClampEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPolygonOffsetClampEXT( params->factor, params->units, params->clamp );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15244,6 +16632,7 @@ static NTSTATUS ext_glPolygonOffsetEXT( void *args )
     struct glPolygonOffsetEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPolygonOffsetEXT( params->factor, params->bias );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15252,6 +16641,7 @@ static NTSTATUS ext_glPolygonOffsetxOES( void *args )
     struct glPolygonOffsetxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPolygonOffsetxOES( params->factor, params->units );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15260,6 +16650,7 @@ static NTSTATUS ext_glPopDebugGroup( void *args )
     struct glPopDebugGroup_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPopDebugGroup();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15268,6 +16659,7 @@ static NTSTATUS ext_glPopGroupMarkerEXT( void *args )
     struct glPopGroupMarkerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPopGroupMarkerEXT();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15276,6 +16668,7 @@ static NTSTATUS ext_glPresentFrameDualFillNV( void *args )
     struct glPresentFrameDualFillNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPresentFrameDualFillNV( params->video_slot, params->minPresentTime, params->beginPresentTimeId, params->presentDurationId, params->type, params->target0, params->fill0, params->target1, params->fill1, params->target2, params->fill2, params->target3, params->fill3 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15284,6 +16677,7 @@ static NTSTATUS ext_glPresentFrameKeyedNV( void *args )
     struct glPresentFrameKeyedNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPresentFrameKeyedNV( params->video_slot, params->minPresentTime, params->beginPresentTimeId, params->presentDurationId, params->type, params->target0, params->fill0, params->key0, params->target1, params->fill1, params->key1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15292,6 +16686,7 @@ static NTSTATUS ext_glPrimitiveBoundingBoxARB( void *args )
     struct glPrimitiveBoundingBoxARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPrimitiveBoundingBoxARB( params->minX, params->minY, params->minZ, params->minW, params->maxX, params->maxY, params->maxZ, params->maxW );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15300,6 +16695,7 @@ static NTSTATUS ext_glPrimitiveRestartIndex( void *args )
     struct glPrimitiveRestartIndex_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPrimitiveRestartIndex( params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15308,6 +16704,7 @@ static NTSTATUS ext_glPrimitiveRestartIndexNV( void *args )
     struct glPrimitiveRestartIndexNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPrimitiveRestartIndexNV( params->index );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15316,6 +16713,7 @@ static NTSTATUS ext_glPrimitiveRestartNV( void *args )
     struct glPrimitiveRestartNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPrimitiveRestartNV();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15324,6 +16722,7 @@ static NTSTATUS ext_glPrioritizeTexturesEXT( void *args )
     struct glPrioritizeTexturesEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPrioritizeTexturesEXT( params->n, params->textures, params->priorities );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15332,6 +16731,7 @@ static NTSTATUS ext_glPrioritizeTexturesxOES( void *args )
     struct glPrioritizeTexturesxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPrioritizeTexturesxOES( params->n, params->textures, params->priorities );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15340,6 +16740,7 @@ static NTSTATUS ext_glProgramBinary( void *args )
     struct glProgramBinary_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramBinary( params->program, params->binaryFormat, params->binary, params->length );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15348,6 +16749,7 @@ static NTSTATUS ext_glProgramBufferParametersIivNV( void *args )
     struct glProgramBufferParametersIivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramBufferParametersIivNV( params->target, params->bindingIndex, params->wordIndex, params->count, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15356,6 +16758,7 @@ static NTSTATUS ext_glProgramBufferParametersIuivNV( void *args )
     struct glProgramBufferParametersIuivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramBufferParametersIuivNV( params->target, params->bindingIndex, params->wordIndex, params->count, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15364,6 +16767,7 @@ static NTSTATUS ext_glProgramBufferParametersfvNV( void *args )
     struct glProgramBufferParametersfvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramBufferParametersfvNV( params->target, params->bindingIndex, params->wordIndex, params->count, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15372,6 +16776,7 @@ static NTSTATUS ext_glProgramEnvParameter4dARB( void *args )
     struct glProgramEnvParameter4dARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramEnvParameter4dARB( params->target, params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15380,6 +16785,7 @@ static NTSTATUS ext_glProgramEnvParameter4dvARB( void *args )
     struct glProgramEnvParameter4dvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramEnvParameter4dvARB( params->target, params->index, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15388,6 +16794,7 @@ static NTSTATUS ext_glProgramEnvParameter4fARB( void *args )
     struct glProgramEnvParameter4fARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramEnvParameter4fARB( params->target, params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15396,6 +16803,7 @@ static NTSTATUS ext_glProgramEnvParameter4fvARB( void *args )
     struct glProgramEnvParameter4fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramEnvParameter4fvARB( params->target, params->index, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15404,6 +16812,7 @@ static NTSTATUS ext_glProgramEnvParameterI4iNV( void *args )
     struct glProgramEnvParameterI4iNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramEnvParameterI4iNV( params->target, params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15412,6 +16821,7 @@ static NTSTATUS ext_glProgramEnvParameterI4ivNV( void *args )
     struct glProgramEnvParameterI4ivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramEnvParameterI4ivNV( params->target, params->index, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15420,6 +16830,7 @@ static NTSTATUS ext_glProgramEnvParameterI4uiNV( void *args )
     struct glProgramEnvParameterI4uiNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramEnvParameterI4uiNV( params->target, params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15428,6 +16839,7 @@ static NTSTATUS ext_glProgramEnvParameterI4uivNV( void *args )
     struct glProgramEnvParameterI4uivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramEnvParameterI4uivNV( params->target, params->index, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15436,6 +16848,7 @@ static NTSTATUS ext_glProgramEnvParameters4fvEXT( void *args )
     struct glProgramEnvParameters4fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramEnvParameters4fvEXT( params->target, params->index, params->count, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15444,6 +16857,7 @@ static NTSTATUS ext_glProgramEnvParametersI4ivNV( void *args )
     struct glProgramEnvParametersI4ivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramEnvParametersI4ivNV( params->target, params->index, params->count, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15452,6 +16866,7 @@ static NTSTATUS ext_glProgramEnvParametersI4uivNV( void *args )
     struct glProgramEnvParametersI4uivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramEnvParametersI4uivNV( params->target, params->index, params->count, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15460,6 +16875,7 @@ static NTSTATUS ext_glProgramLocalParameter4dARB( void *args )
     struct glProgramLocalParameter4dARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramLocalParameter4dARB( params->target, params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15468,6 +16884,7 @@ static NTSTATUS ext_glProgramLocalParameter4dvARB( void *args )
     struct glProgramLocalParameter4dvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramLocalParameter4dvARB( params->target, params->index, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15476,6 +16893,7 @@ static NTSTATUS ext_glProgramLocalParameter4fARB( void *args )
     struct glProgramLocalParameter4fARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramLocalParameter4fARB( params->target, params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15484,6 +16902,7 @@ static NTSTATUS ext_glProgramLocalParameter4fvARB( void *args )
     struct glProgramLocalParameter4fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramLocalParameter4fvARB( params->target, params->index, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15492,6 +16911,7 @@ static NTSTATUS ext_glProgramLocalParameterI4iNV( void *args )
     struct glProgramLocalParameterI4iNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramLocalParameterI4iNV( params->target, params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15500,6 +16920,7 @@ static NTSTATUS ext_glProgramLocalParameterI4ivNV( void *args )
     struct glProgramLocalParameterI4ivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramLocalParameterI4ivNV( params->target, params->index, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15508,6 +16929,7 @@ static NTSTATUS ext_glProgramLocalParameterI4uiNV( void *args )
     struct glProgramLocalParameterI4uiNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramLocalParameterI4uiNV( params->target, params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15516,6 +16938,7 @@ static NTSTATUS ext_glProgramLocalParameterI4uivNV( void *args )
     struct glProgramLocalParameterI4uivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramLocalParameterI4uivNV( params->target, params->index, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15524,6 +16947,7 @@ static NTSTATUS ext_glProgramLocalParameters4fvEXT( void *args )
     struct glProgramLocalParameters4fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramLocalParameters4fvEXT( params->target, params->index, params->count, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15532,6 +16956,7 @@ static NTSTATUS ext_glProgramLocalParametersI4ivNV( void *args )
     struct glProgramLocalParametersI4ivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramLocalParametersI4ivNV( params->target, params->index, params->count, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15540,6 +16965,7 @@ static NTSTATUS ext_glProgramLocalParametersI4uivNV( void *args )
     struct glProgramLocalParametersI4uivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramLocalParametersI4uivNV( params->target, params->index, params->count, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15548,6 +16974,7 @@ static NTSTATUS ext_glProgramNamedParameter4dNV( void *args )
     struct glProgramNamedParameter4dNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramNamedParameter4dNV( params->id, params->len, params->name, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15556,6 +16983,7 @@ static NTSTATUS ext_glProgramNamedParameter4dvNV( void *args )
     struct glProgramNamedParameter4dvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramNamedParameter4dvNV( params->id, params->len, params->name, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15564,6 +16992,7 @@ static NTSTATUS ext_glProgramNamedParameter4fNV( void *args )
     struct glProgramNamedParameter4fNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramNamedParameter4fNV( params->id, params->len, params->name, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15572,6 +17001,7 @@ static NTSTATUS ext_glProgramNamedParameter4fvNV( void *args )
     struct glProgramNamedParameter4fvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramNamedParameter4fvNV( params->id, params->len, params->name, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15580,6 +17010,7 @@ static NTSTATUS ext_glProgramParameter4dNV( void *args )
     struct glProgramParameter4dNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramParameter4dNV( params->target, params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15588,6 +17019,7 @@ static NTSTATUS ext_glProgramParameter4dvNV( void *args )
     struct glProgramParameter4dvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramParameter4dvNV( params->target, params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15596,6 +17028,7 @@ static NTSTATUS ext_glProgramParameter4fNV( void *args )
     struct glProgramParameter4fNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramParameter4fNV( params->target, params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15604,6 +17037,7 @@ static NTSTATUS ext_glProgramParameter4fvNV( void *args )
     struct glProgramParameter4fvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramParameter4fvNV( params->target, params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15612,6 +17046,7 @@ static NTSTATUS ext_glProgramParameteri( void *args )
     struct glProgramParameteri_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramParameteri( params->program, params->pname, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15620,6 +17055,7 @@ static NTSTATUS ext_glProgramParameteriARB( void *args )
     struct glProgramParameteriARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramParameteriARB( params->program, params->pname, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15628,6 +17064,7 @@ static NTSTATUS ext_glProgramParameteriEXT( void *args )
     struct glProgramParameteriEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramParameteriEXT( params->program, params->pname, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15636,6 +17073,7 @@ static NTSTATUS ext_glProgramParameters4dvNV( void *args )
     struct glProgramParameters4dvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramParameters4dvNV( params->target, params->index, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15644,6 +17082,7 @@ static NTSTATUS ext_glProgramParameters4fvNV( void *args )
     struct glProgramParameters4fvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramParameters4fvNV( params->target, params->index, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15652,6 +17091,7 @@ static NTSTATUS ext_glProgramPathFragmentInputGenNV( void *args )
     struct glProgramPathFragmentInputGenNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramPathFragmentInputGenNV( params->program, params->location, params->genMode, params->components, params->coeffs );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15660,6 +17100,7 @@ static NTSTATUS ext_glProgramStringARB( void *args )
     struct glProgramStringARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramStringARB( params->target, params->format, params->len, params->string );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15668,6 +17109,7 @@ static NTSTATUS ext_glProgramSubroutineParametersuivNV( void *args )
     struct glProgramSubroutineParametersuivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramSubroutineParametersuivNV( params->target, params->count, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15676,6 +17118,7 @@ static NTSTATUS ext_glProgramUniform1d( void *args )
     struct glProgramUniform1d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1d( params->program, params->location, params->v0 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15684,6 +17127,7 @@ static NTSTATUS ext_glProgramUniform1dEXT( void *args )
     struct glProgramUniform1dEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1dEXT( params->program, params->location, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15692,6 +17136,7 @@ static NTSTATUS ext_glProgramUniform1dv( void *args )
     struct glProgramUniform1dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1dv( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15700,6 +17145,7 @@ static NTSTATUS ext_glProgramUniform1dvEXT( void *args )
     struct glProgramUniform1dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1dvEXT( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15708,6 +17154,7 @@ static NTSTATUS ext_glProgramUniform1f( void *args )
     struct glProgramUniform1f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1f( params->program, params->location, params->v0 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15716,6 +17163,7 @@ static NTSTATUS ext_glProgramUniform1fEXT( void *args )
     struct glProgramUniform1fEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1fEXT( params->program, params->location, params->v0 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15724,6 +17172,7 @@ static NTSTATUS ext_glProgramUniform1fv( void *args )
     struct glProgramUniform1fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1fv( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15732,6 +17181,7 @@ static NTSTATUS ext_glProgramUniform1fvEXT( void *args )
     struct glProgramUniform1fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1fvEXT( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15740,6 +17190,7 @@ static NTSTATUS ext_glProgramUniform1i( void *args )
     struct glProgramUniform1i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1i( params->program, params->location, params->v0 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15748,6 +17199,7 @@ static NTSTATUS ext_glProgramUniform1i64ARB( void *args )
     struct glProgramUniform1i64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1i64ARB( params->program, params->location, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15756,6 +17208,7 @@ static NTSTATUS ext_glProgramUniform1i64NV( void *args )
     struct glProgramUniform1i64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1i64NV( params->program, params->location, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15764,6 +17217,7 @@ static NTSTATUS ext_glProgramUniform1i64vARB( void *args )
     struct glProgramUniform1i64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1i64vARB( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15772,6 +17226,7 @@ static NTSTATUS ext_glProgramUniform1i64vNV( void *args )
     struct glProgramUniform1i64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1i64vNV( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15780,6 +17235,7 @@ static NTSTATUS ext_glProgramUniform1iEXT( void *args )
     struct glProgramUniform1iEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1iEXT( params->program, params->location, params->v0 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15788,6 +17244,7 @@ static NTSTATUS ext_glProgramUniform1iv( void *args )
     struct glProgramUniform1iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1iv( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15796,6 +17253,7 @@ static NTSTATUS ext_glProgramUniform1ivEXT( void *args )
     struct glProgramUniform1ivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1ivEXT( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15804,6 +17262,7 @@ static NTSTATUS ext_glProgramUniform1ui( void *args )
     struct glProgramUniform1ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1ui( params->program, params->location, params->v0 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15812,6 +17271,7 @@ static NTSTATUS ext_glProgramUniform1ui64ARB( void *args )
     struct glProgramUniform1ui64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1ui64ARB( params->program, params->location, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15820,6 +17280,7 @@ static NTSTATUS ext_glProgramUniform1ui64NV( void *args )
     struct glProgramUniform1ui64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1ui64NV( params->program, params->location, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15828,6 +17289,7 @@ static NTSTATUS ext_glProgramUniform1ui64vARB( void *args )
     struct glProgramUniform1ui64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1ui64vARB( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15836,6 +17298,7 @@ static NTSTATUS ext_glProgramUniform1ui64vNV( void *args )
     struct glProgramUniform1ui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1ui64vNV( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15844,6 +17307,7 @@ static NTSTATUS ext_glProgramUniform1uiEXT( void *args )
     struct glProgramUniform1uiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1uiEXT( params->program, params->location, params->v0 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15852,6 +17316,7 @@ static NTSTATUS ext_glProgramUniform1uiv( void *args )
     struct glProgramUniform1uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1uiv( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15860,6 +17325,7 @@ static NTSTATUS ext_glProgramUniform1uivEXT( void *args )
     struct glProgramUniform1uivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform1uivEXT( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15868,6 +17334,7 @@ static NTSTATUS ext_glProgramUniform2d( void *args )
     struct glProgramUniform2d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2d( params->program, params->location, params->v0, params->v1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15876,6 +17343,7 @@ static NTSTATUS ext_glProgramUniform2dEXT( void *args )
     struct glProgramUniform2dEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2dEXT( params->program, params->location, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15884,6 +17352,7 @@ static NTSTATUS ext_glProgramUniform2dv( void *args )
     struct glProgramUniform2dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2dv( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15892,6 +17361,7 @@ static NTSTATUS ext_glProgramUniform2dvEXT( void *args )
     struct glProgramUniform2dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2dvEXT( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15900,6 +17370,7 @@ static NTSTATUS ext_glProgramUniform2f( void *args )
     struct glProgramUniform2f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2f( params->program, params->location, params->v0, params->v1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15908,6 +17379,7 @@ static NTSTATUS ext_glProgramUniform2fEXT( void *args )
     struct glProgramUniform2fEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2fEXT( params->program, params->location, params->v0, params->v1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15916,6 +17388,7 @@ static NTSTATUS ext_glProgramUniform2fv( void *args )
     struct glProgramUniform2fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2fv( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15924,6 +17397,7 @@ static NTSTATUS ext_glProgramUniform2fvEXT( void *args )
     struct glProgramUniform2fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2fvEXT( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15932,6 +17406,7 @@ static NTSTATUS ext_glProgramUniform2i( void *args )
     struct glProgramUniform2i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2i( params->program, params->location, params->v0, params->v1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15940,6 +17415,7 @@ static NTSTATUS ext_glProgramUniform2i64ARB( void *args )
     struct glProgramUniform2i64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2i64ARB( params->program, params->location, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15948,6 +17424,7 @@ static NTSTATUS ext_glProgramUniform2i64NV( void *args )
     struct glProgramUniform2i64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2i64NV( params->program, params->location, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15956,6 +17433,7 @@ static NTSTATUS ext_glProgramUniform2i64vARB( void *args )
     struct glProgramUniform2i64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2i64vARB( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15964,6 +17442,7 @@ static NTSTATUS ext_glProgramUniform2i64vNV( void *args )
     struct glProgramUniform2i64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2i64vNV( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15972,6 +17451,7 @@ static NTSTATUS ext_glProgramUniform2iEXT( void *args )
     struct glProgramUniform2iEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2iEXT( params->program, params->location, params->v0, params->v1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15980,6 +17460,7 @@ static NTSTATUS ext_glProgramUniform2iv( void *args )
     struct glProgramUniform2iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2iv( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15988,6 +17469,7 @@ static NTSTATUS ext_glProgramUniform2ivEXT( void *args )
     struct glProgramUniform2ivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2ivEXT( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -15996,6 +17478,7 @@ static NTSTATUS ext_glProgramUniform2ui( void *args )
     struct glProgramUniform2ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2ui( params->program, params->location, params->v0, params->v1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16004,6 +17487,7 @@ static NTSTATUS ext_glProgramUniform2ui64ARB( void *args )
     struct glProgramUniform2ui64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2ui64ARB( params->program, params->location, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16012,6 +17496,7 @@ static NTSTATUS ext_glProgramUniform2ui64NV( void *args )
     struct glProgramUniform2ui64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2ui64NV( params->program, params->location, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16020,6 +17505,7 @@ static NTSTATUS ext_glProgramUniform2ui64vARB( void *args )
     struct glProgramUniform2ui64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2ui64vARB( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16028,6 +17514,7 @@ static NTSTATUS ext_glProgramUniform2ui64vNV( void *args )
     struct glProgramUniform2ui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2ui64vNV( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16036,6 +17523,7 @@ static NTSTATUS ext_glProgramUniform2uiEXT( void *args )
     struct glProgramUniform2uiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2uiEXT( params->program, params->location, params->v0, params->v1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16044,6 +17532,7 @@ static NTSTATUS ext_glProgramUniform2uiv( void *args )
     struct glProgramUniform2uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2uiv( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16052,6 +17541,7 @@ static NTSTATUS ext_glProgramUniform2uivEXT( void *args )
     struct glProgramUniform2uivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform2uivEXT( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16060,6 +17550,7 @@ static NTSTATUS ext_glProgramUniform3d( void *args )
     struct glProgramUniform3d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3d( params->program, params->location, params->v0, params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16068,6 +17559,7 @@ static NTSTATUS ext_glProgramUniform3dEXT( void *args )
     struct glProgramUniform3dEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3dEXT( params->program, params->location, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16076,6 +17568,7 @@ static NTSTATUS ext_glProgramUniform3dv( void *args )
     struct glProgramUniform3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3dv( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16084,6 +17577,7 @@ static NTSTATUS ext_glProgramUniform3dvEXT( void *args )
     struct glProgramUniform3dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3dvEXT( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16092,6 +17586,7 @@ static NTSTATUS ext_glProgramUniform3f( void *args )
     struct glProgramUniform3f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3f( params->program, params->location, params->v0, params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16100,6 +17595,7 @@ static NTSTATUS ext_glProgramUniform3fEXT( void *args )
     struct glProgramUniform3fEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3fEXT( params->program, params->location, params->v0, params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16108,6 +17604,7 @@ static NTSTATUS ext_glProgramUniform3fv( void *args )
     struct glProgramUniform3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3fv( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16116,6 +17613,7 @@ static NTSTATUS ext_glProgramUniform3fvEXT( void *args )
     struct glProgramUniform3fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3fvEXT( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16124,6 +17622,7 @@ static NTSTATUS ext_glProgramUniform3i( void *args )
     struct glProgramUniform3i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3i( params->program, params->location, params->v0, params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16132,6 +17631,7 @@ static NTSTATUS ext_glProgramUniform3i64ARB( void *args )
     struct glProgramUniform3i64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3i64ARB( params->program, params->location, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16140,6 +17640,7 @@ static NTSTATUS ext_glProgramUniform3i64NV( void *args )
     struct glProgramUniform3i64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3i64NV( params->program, params->location, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16148,6 +17649,7 @@ static NTSTATUS ext_glProgramUniform3i64vARB( void *args )
     struct glProgramUniform3i64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3i64vARB( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16156,6 +17658,7 @@ static NTSTATUS ext_glProgramUniform3i64vNV( void *args )
     struct glProgramUniform3i64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3i64vNV( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16164,6 +17667,7 @@ static NTSTATUS ext_glProgramUniform3iEXT( void *args )
     struct glProgramUniform3iEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3iEXT( params->program, params->location, params->v0, params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16172,6 +17676,7 @@ static NTSTATUS ext_glProgramUniform3iv( void *args )
     struct glProgramUniform3iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3iv( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16180,6 +17685,7 @@ static NTSTATUS ext_glProgramUniform3ivEXT( void *args )
     struct glProgramUniform3ivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3ivEXT( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16188,6 +17694,7 @@ static NTSTATUS ext_glProgramUniform3ui( void *args )
     struct glProgramUniform3ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3ui( params->program, params->location, params->v0, params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16196,6 +17703,7 @@ static NTSTATUS ext_glProgramUniform3ui64ARB( void *args )
     struct glProgramUniform3ui64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3ui64ARB( params->program, params->location, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16204,6 +17712,7 @@ static NTSTATUS ext_glProgramUniform3ui64NV( void *args )
     struct glProgramUniform3ui64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3ui64NV( params->program, params->location, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16212,6 +17721,7 @@ static NTSTATUS ext_glProgramUniform3ui64vARB( void *args )
     struct glProgramUniform3ui64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3ui64vARB( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16220,6 +17730,7 @@ static NTSTATUS ext_glProgramUniform3ui64vNV( void *args )
     struct glProgramUniform3ui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3ui64vNV( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16228,6 +17739,7 @@ static NTSTATUS ext_glProgramUniform3uiEXT( void *args )
     struct glProgramUniform3uiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3uiEXT( params->program, params->location, params->v0, params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16236,6 +17748,7 @@ static NTSTATUS ext_glProgramUniform3uiv( void *args )
     struct glProgramUniform3uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3uiv( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16244,6 +17757,7 @@ static NTSTATUS ext_glProgramUniform3uivEXT( void *args )
     struct glProgramUniform3uivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform3uivEXT( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16252,6 +17766,7 @@ static NTSTATUS ext_glProgramUniform4d( void *args )
     struct glProgramUniform4d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4d( params->program, params->location, params->v0, params->v1, params->v2, params->v3 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16260,6 +17775,7 @@ static NTSTATUS ext_glProgramUniform4dEXT( void *args )
     struct glProgramUniform4dEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4dEXT( params->program, params->location, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16268,6 +17784,7 @@ static NTSTATUS ext_glProgramUniform4dv( void *args )
     struct glProgramUniform4dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4dv( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16276,6 +17793,7 @@ static NTSTATUS ext_glProgramUniform4dvEXT( void *args )
     struct glProgramUniform4dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4dvEXT( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16284,6 +17802,7 @@ static NTSTATUS ext_glProgramUniform4f( void *args )
     struct glProgramUniform4f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4f( params->program, params->location, params->v0, params->v1, params->v2, params->v3 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16292,6 +17811,7 @@ static NTSTATUS ext_glProgramUniform4fEXT( void *args )
     struct glProgramUniform4fEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4fEXT( params->program, params->location, params->v0, params->v1, params->v2, params->v3 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16300,6 +17820,7 @@ static NTSTATUS ext_glProgramUniform4fv( void *args )
     struct glProgramUniform4fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4fv( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16308,6 +17829,7 @@ static NTSTATUS ext_glProgramUniform4fvEXT( void *args )
     struct glProgramUniform4fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4fvEXT( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16316,6 +17838,7 @@ static NTSTATUS ext_glProgramUniform4i( void *args )
     struct glProgramUniform4i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4i( params->program, params->location, params->v0, params->v1, params->v2, params->v3 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16324,6 +17847,7 @@ static NTSTATUS ext_glProgramUniform4i64ARB( void *args )
     struct glProgramUniform4i64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4i64ARB( params->program, params->location, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16332,6 +17856,7 @@ static NTSTATUS ext_glProgramUniform4i64NV( void *args )
     struct glProgramUniform4i64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4i64NV( params->program, params->location, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16340,6 +17865,7 @@ static NTSTATUS ext_glProgramUniform4i64vARB( void *args )
     struct glProgramUniform4i64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4i64vARB( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16348,6 +17874,7 @@ static NTSTATUS ext_glProgramUniform4i64vNV( void *args )
     struct glProgramUniform4i64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4i64vNV( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16356,6 +17883,7 @@ static NTSTATUS ext_glProgramUniform4iEXT( void *args )
     struct glProgramUniform4iEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4iEXT( params->program, params->location, params->v0, params->v1, params->v2, params->v3 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16364,6 +17892,7 @@ static NTSTATUS ext_glProgramUniform4iv( void *args )
     struct glProgramUniform4iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4iv( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16372,6 +17901,7 @@ static NTSTATUS ext_glProgramUniform4ivEXT( void *args )
     struct glProgramUniform4ivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4ivEXT( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16380,6 +17910,7 @@ static NTSTATUS ext_glProgramUniform4ui( void *args )
     struct glProgramUniform4ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4ui( params->program, params->location, params->v0, params->v1, params->v2, params->v3 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16388,6 +17919,7 @@ static NTSTATUS ext_glProgramUniform4ui64ARB( void *args )
     struct glProgramUniform4ui64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4ui64ARB( params->program, params->location, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16396,6 +17928,7 @@ static NTSTATUS ext_glProgramUniform4ui64NV( void *args )
     struct glProgramUniform4ui64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4ui64NV( params->program, params->location, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16404,6 +17937,7 @@ static NTSTATUS ext_glProgramUniform4ui64vARB( void *args )
     struct glProgramUniform4ui64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4ui64vARB( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16412,6 +17946,7 @@ static NTSTATUS ext_glProgramUniform4ui64vNV( void *args )
     struct glProgramUniform4ui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4ui64vNV( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16420,6 +17955,7 @@ static NTSTATUS ext_glProgramUniform4uiEXT( void *args )
     struct glProgramUniform4uiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4uiEXT( params->program, params->location, params->v0, params->v1, params->v2, params->v3 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16428,6 +17964,7 @@ static NTSTATUS ext_glProgramUniform4uiv( void *args )
     struct glProgramUniform4uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4uiv( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16436,6 +17973,7 @@ static NTSTATUS ext_glProgramUniform4uivEXT( void *args )
     struct glProgramUniform4uivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniform4uivEXT( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16444,6 +17982,7 @@ static NTSTATUS ext_glProgramUniformHandleui64ARB( void *args )
     struct glProgramUniformHandleui64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformHandleui64ARB( params->program, params->location, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16452,6 +17991,7 @@ static NTSTATUS ext_glProgramUniformHandleui64NV( void *args )
     struct glProgramUniformHandleui64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformHandleui64NV( params->program, params->location, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16460,6 +18000,7 @@ static NTSTATUS ext_glProgramUniformHandleui64vARB( void *args )
     struct glProgramUniformHandleui64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformHandleui64vARB( params->program, params->location, params->count, params->values );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16468,6 +18009,7 @@ static NTSTATUS ext_glProgramUniformHandleui64vNV( void *args )
     struct glProgramUniformHandleui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformHandleui64vNV( params->program, params->location, params->count, params->values );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16476,6 +18018,7 @@ static NTSTATUS ext_glProgramUniformMatrix2dv( void *args )
     struct glProgramUniformMatrix2dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix2dv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16484,6 +18027,7 @@ static NTSTATUS ext_glProgramUniformMatrix2dvEXT( void *args )
     struct glProgramUniformMatrix2dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix2dvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16492,6 +18036,7 @@ static NTSTATUS ext_glProgramUniformMatrix2fv( void *args )
     struct glProgramUniformMatrix2fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix2fv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16500,6 +18045,7 @@ static NTSTATUS ext_glProgramUniformMatrix2fvEXT( void *args )
     struct glProgramUniformMatrix2fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix2fvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16508,6 +18054,7 @@ static NTSTATUS ext_glProgramUniformMatrix2x3dv( void *args )
     struct glProgramUniformMatrix2x3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix2x3dv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16516,6 +18063,7 @@ static NTSTATUS ext_glProgramUniformMatrix2x3dvEXT( void *args )
     struct glProgramUniformMatrix2x3dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix2x3dvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16524,6 +18072,7 @@ static NTSTATUS ext_glProgramUniformMatrix2x3fv( void *args )
     struct glProgramUniformMatrix2x3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix2x3fv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16532,6 +18081,7 @@ static NTSTATUS ext_glProgramUniformMatrix2x3fvEXT( void *args )
     struct glProgramUniformMatrix2x3fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix2x3fvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16540,6 +18090,7 @@ static NTSTATUS ext_glProgramUniformMatrix2x4dv( void *args )
     struct glProgramUniformMatrix2x4dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix2x4dv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16548,6 +18099,7 @@ static NTSTATUS ext_glProgramUniformMatrix2x4dvEXT( void *args )
     struct glProgramUniformMatrix2x4dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix2x4dvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16556,6 +18108,7 @@ static NTSTATUS ext_glProgramUniformMatrix2x4fv( void *args )
     struct glProgramUniformMatrix2x4fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix2x4fv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16564,6 +18117,7 @@ static NTSTATUS ext_glProgramUniformMatrix2x4fvEXT( void *args )
     struct glProgramUniformMatrix2x4fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix2x4fvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16572,6 +18126,7 @@ static NTSTATUS ext_glProgramUniformMatrix3dv( void *args )
     struct glProgramUniformMatrix3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix3dv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16580,6 +18135,7 @@ static NTSTATUS ext_glProgramUniformMatrix3dvEXT( void *args )
     struct glProgramUniformMatrix3dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix3dvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16588,6 +18144,7 @@ static NTSTATUS ext_glProgramUniformMatrix3fv( void *args )
     struct glProgramUniformMatrix3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix3fv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16596,6 +18153,7 @@ static NTSTATUS ext_glProgramUniformMatrix3fvEXT( void *args )
     struct glProgramUniformMatrix3fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix3fvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16604,6 +18162,7 @@ static NTSTATUS ext_glProgramUniformMatrix3x2dv( void *args )
     struct glProgramUniformMatrix3x2dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix3x2dv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16612,6 +18171,7 @@ static NTSTATUS ext_glProgramUniformMatrix3x2dvEXT( void *args )
     struct glProgramUniformMatrix3x2dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix3x2dvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16620,6 +18180,7 @@ static NTSTATUS ext_glProgramUniformMatrix3x2fv( void *args )
     struct glProgramUniformMatrix3x2fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix3x2fv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16628,6 +18189,7 @@ static NTSTATUS ext_glProgramUniformMatrix3x2fvEXT( void *args )
     struct glProgramUniformMatrix3x2fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix3x2fvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16636,6 +18198,7 @@ static NTSTATUS ext_glProgramUniformMatrix3x4dv( void *args )
     struct glProgramUniformMatrix3x4dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix3x4dv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16644,6 +18207,7 @@ static NTSTATUS ext_glProgramUniformMatrix3x4dvEXT( void *args )
     struct glProgramUniformMatrix3x4dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix3x4dvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16652,6 +18216,7 @@ static NTSTATUS ext_glProgramUniformMatrix3x4fv( void *args )
     struct glProgramUniformMatrix3x4fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix3x4fv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16660,6 +18225,7 @@ static NTSTATUS ext_glProgramUniformMatrix3x4fvEXT( void *args )
     struct glProgramUniformMatrix3x4fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix3x4fvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16668,6 +18234,7 @@ static NTSTATUS ext_glProgramUniformMatrix4dv( void *args )
     struct glProgramUniformMatrix4dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix4dv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16676,6 +18243,7 @@ static NTSTATUS ext_glProgramUniformMatrix4dvEXT( void *args )
     struct glProgramUniformMatrix4dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix4dvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16684,6 +18252,7 @@ static NTSTATUS ext_glProgramUniformMatrix4fv( void *args )
     struct glProgramUniformMatrix4fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix4fv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16692,6 +18261,7 @@ static NTSTATUS ext_glProgramUniformMatrix4fvEXT( void *args )
     struct glProgramUniformMatrix4fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix4fvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16700,6 +18270,7 @@ static NTSTATUS ext_glProgramUniformMatrix4x2dv( void *args )
     struct glProgramUniformMatrix4x2dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix4x2dv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16708,6 +18279,7 @@ static NTSTATUS ext_glProgramUniformMatrix4x2dvEXT( void *args )
     struct glProgramUniformMatrix4x2dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix4x2dvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16716,6 +18288,7 @@ static NTSTATUS ext_glProgramUniformMatrix4x2fv( void *args )
     struct glProgramUniformMatrix4x2fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix4x2fv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16724,6 +18297,7 @@ static NTSTATUS ext_glProgramUniformMatrix4x2fvEXT( void *args )
     struct glProgramUniformMatrix4x2fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix4x2fvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16732,6 +18306,7 @@ static NTSTATUS ext_glProgramUniformMatrix4x3dv( void *args )
     struct glProgramUniformMatrix4x3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix4x3dv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16740,6 +18315,7 @@ static NTSTATUS ext_glProgramUniformMatrix4x3dvEXT( void *args )
     struct glProgramUniformMatrix4x3dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix4x3dvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16748,6 +18324,7 @@ static NTSTATUS ext_glProgramUniformMatrix4x3fv( void *args )
     struct glProgramUniformMatrix4x3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix4x3fv( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16756,6 +18333,7 @@ static NTSTATUS ext_glProgramUniformMatrix4x3fvEXT( void *args )
     struct glProgramUniformMatrix4x3fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformMatrix4x3fvEXT( params->program, params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16764,6 +18342,7 @@ static NTSTATUS ext_glProgramUniformui64NV( void *args )
     struct glProgramUniformui64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformui64NV( params->program, params->location, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16772,6 +18351,7 @@ static NTSTATUS ext_glProgramUniformui64vNV( void *args )
     struct glProgramUniformui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramUniformui64vNV( params->program, params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16780,6 +18360,7 @@ static NTSTATUS ext_glProgramVertexLimitNV( void *args )
     struct glProgramVertexLimitNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProgramVertexLimitNV( params->target, params->limit );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16788,6 +18369,7 @@ static NTSTATUS ext_glProvokingVertex( void *args )
     struct glProvokingVertex_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProvokingVertex( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16796,6 +18378,7 @@ static NTSTATUS ext_glProvokingVertexEXT( void *args )
     struct glProvokingVertexEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glProvokingVertexEXT( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16804,6 +18387,7 @@ static NTSTATUS ext_glPushClientAttribDefaultEXT( void *args )
     struct glPushClientAttribDefaultEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPushClientAttribDefaultEXT( params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16812,6 +18396,7 @@ static NTSTATUS ext_glPushDebugGroup( void *args )
     struct glPushDebugGroup_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPushDebugGroup( params->source, params->id, params->length, params->message );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16820,6 +18405,7 @@ static NTSTATUS ext_glPushGroupMarkerEXT( void *args )
     struct glPushGroupMarkerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPushGroupMarkerEXT( params->length, params->marker );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16828,6 +18414,7 @@ static NTSTATUS ext_glQueryCounter( void *args )
     struct glQueryCounter_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glQueryCounter( params->id, params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16836,6 +18423,7 @@ static NTSTATUS ext_glQueryMatrixxOES( void *args )
     struct glQueryMatrixxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glQueryMatrixxOES( params->mantissa, params->exponent );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16844,6 +18432,7 @@ static NTSTATUS ext_glQueryObjectParameteruiAMD( void *args )
     struct glQueryObjectParameteruiAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glQueryObjectParameteruiAMD( params->target, params->id, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16852,6 +18441,7 @@ static NTSTATUS ext_glQueryResourceNV( void *args )
     struct glQueryResourceNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glQueryResourceNV( params->queryType, params->tagId, params->count, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16860,6 +18450,7 @@ static NTSTATUS ext_glQueryResourceTagNV( void *args )
     struct glQueryResourceTagNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glQueryResourceTagNV( params->tagId, params->tagString );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16868,6 +18459,7 @@ static NTSTATUS ext_glRasterPos2xOES( void *args )
     struct glRasterPos2xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos2xOES( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16876,6 +18468,7 @@ static NTSTATUS ext_glRasterPos2xvOES( void *args )
     struct glRasterPos2xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos2xvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16884,6 +18477,7 @@ static NTSTATUS ext_glRasterPos3xOES( void *args )
     struct glRasterPos3xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos3xOES( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16892,6 +18486,7 @@ static NTSTATUS ext_glRasterPos3xvOES( void *args )
     struct glRasterPos3xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos3xvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16900,6 +18495,7 @@ static NTSTATUS ext_glRasterPos4xOES( void *args )
     struct glRasterPos4xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos4xOES( params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16908,6 +18504,7 @@ static NTSTATUS ext_glRasterPos4xvOES( void *args )
     struct glRasterPos4xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterPos4xvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16916,6 +18513,7 @@ static NTSTATUS ext_glRasterSamplesEXT( void *args )
     struct glRasterSamplesEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRasterSamplesEXT( params->samples, params->fixedsamplelocations );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16924,6 +18522,7 @@ static NTSTATUS ext_glReadBufferRegion( void *args )
     struct glReadBufferRegion_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReadBufferRegion( params->region, params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16932,6 +18531,7 @@ static NTSTATUS ext_glReadInstrumentsSGIX( void *args )
     struct glReadInstrumentsSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReadInstrumentsSGIX( params->marker );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16940,6 +18540,7 @@ static NTSTATUS ext_glReadnPixels( void *args )
     struct glReadnPixels_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReadnPixels( params->x, params->y, params->width, params->height, params->format, params->type, params->bufSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16948,6 +18549,7 @@ static NTSTATUS ext_glReadnPixelsARB( void *args )
     struct glReadnPixelsARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReadnPixelsARB( params->x, params->y, params->width, params->height, params->format, params->type, params->bufSize, params->data );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16956,6 +18558,7 @@ static NTSTATUS ext_glRectxOES( void *args )
     struct glRectxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRectxOES( params->x1, params->y1, params->x2, params->y2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16964,6 +18567,7 @@ static NTSTATUS ext_glRectxvOES( void *args )
     struct glRectxvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRectxvOES( params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16972,6 +18576,7 @@ static NTSTATUS ext_glReferencePlaneSGIX( void *args )
     struct glReferencePlaneSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReferencePlaneSGIX( params->equation );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16980,6 +18585,7 @@ static NTSTATUS ext_glReleaseKeyedMutexWin32EXT( void *args )
     struct glReleaseKeyedMutexWin32EXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glReleaseKeyedMutexWin32EXT( params->memory, params->key );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16988,6 +18594,7 @@ static NTSTATUS ext_glReleaseShaderCompiler( void *args )
     struct glReleaseShaderCompiler_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReleaseShaderCompiler();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -16996,6 +18603,7 @@ static NTSTATUS ext_glRenderGpuMaskNV( void *args )
     struct glRenderGpuMaskNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRenderGpuMaskNV( params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17004,6 +18612,7 @@ static NTSTATUS ext_glRenderbufferStorage( void *args )
     struct glRenderbufferStorage_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRenderbufferStorage( params->target, params->internalformat, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17012,6 +18621,7 @@ static NTSTATUS ext_glRenderbufferStorageEXT( void *args )
     struct glRenderbufferStorageEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRenderbufferStorageEXT( params->target, params->internalformat, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17020,6 +18630,7 @@ static NTSTATUS ext_glRenderbufferStorageMultisample( void *args )
     struct glRenderbufferStorageMultisample_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRenderbufferStorageMultisample( params->target, params->samples, params->internalformat, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17028,6 +18639,7 @@ static NTSTATUS ext_glRenderbufferStorageMultisampleAdvancedAMD( void *args )
     struct glRenderbufferStorageMultisampleAdvancedAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRenderbufferStorageMultisampleAdvancedAMD( params->target, params->samples, params->storageSamples, params->internalformat, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17036,6 +18648,7 @@ static NTSTATUS ext_glRenderbufferStorageMultisampleCoverageNV( void *args )
     struct glRenderbufferStorageMultisampleCoverageNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRenderbufferStorageMultisampleCoverageNV( params->target, params->coverageSamples, params->colorSamples, params->internalformat, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17044,6 +18657,7 @@ static NTSTATUS ext_glRenderbufferStorageMultisampleEXT( void *args )
     struct glRenderbufferStorageMultisampleEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRenderbufferStorageMultisampleEXT( params->target, params->samples, params->internalformat, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17052,6 +18666,7 @@ static NTSTATUS ext_glReplacementCodePointerSUN( void *args )
     struct glReplacementCodePointerSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodePointerSUN( params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17060,6 +18675,7 @@ static NTSTATUS ext_glReplacementCodeubSUN( void *args )
     struct glReplacementCodeubSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeubSUN( params->code );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17068,6 +18684,7 @@ static NTSTATUS ext_glReplacementCodeubvSUN( void *args )
     struct glReplacementCodeubvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeubvSUN( params->code );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17076,6 +18693,7 @@ static NTSTATUS ext_glReplacementCodeuiColor3fVertex3fSUN( void *args )
     struct glReplacementCodeuiColor3fVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiColor3fVertex3fSUN( params->rc, params->r, params->g, params->b, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17084,6 +18702,7 @@ static NTSTATUS ext_glReplacementCodeuiColor3fVertex3fvSUN( void *args )
     struct glReplacementCodeuiColor3fVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiColor3fVertex3fvSUN( params->rc, params->c, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17092,6 +18711,7 @@ static NTSTATUS ext_glReplacementCodeuiColor4fNormal3fVertex3fSUN( void *args )
     struct glReplacementCodeuiColor4fNormal3fVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiColor4fNormal3fVertex3fSUN( params->rc, params->r, params->g, params->b, params->a, params->nx, params->ny, params->nz, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17100,6 +18720,7 @@ static NTSTATUS ext_glReplacementCodeuiColor4fNormal3fVertex3fvSUN( void *args )
     struct glReplacementCodeuiColor4fNormal3fVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiColor4fNormal3fVertex3fvSUN( params->rc, params->c, params->n, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17108,6 +18729,7 @@ static NTSTATUS ext_glReplacementCodeuiColor4ubVertex3fSUN( void *args )
     struct glReplacementCodeuiColor4ubVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiColor4ubVertex3fSUN( params->rc, params->r, params->g, params->b, params->a, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17116,6 +18738,7 @@ static NTSTATUS ext_glReplacementCodeuiColor4ubVertex3fvSUN( void *args )
     struct glReplacementCodeuiColor4ubVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiColor4ubVertex3fvSUN( params->rc, params->c, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17124,6 +18747,7 @@ static NTSTATUS ext_glReplacementCodeuiNormal3fVertex3fSUN( void *args )
     struct glReplacementCodeuiNormal3fVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiNormal3fVertex3fSUN( params->rc, params->nx, params->ny, params->nz, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17132,6 +18756,7 @@ static NTSTATUS ext_glReplacementCodeuiNormal3fVertex3fvSUN( void *args )
     struct glReplacementCodeuiNormal3fVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiNormal3fVertex3fvSUN( params->rc, params->n, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17140,6 +18765,7 @@ static NTSTATUS ext_glReplacementCodeuiSUN( void *args )
     struct glReplacementCodeuiSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiSUN( params->code );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17148,6 +18774,7 @@ static NTSTATUS ext_glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN( voi
     struct glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN( params->rc, params->s, params->t, params->r, params->g, params->b, params->a, params->nx, params->ny, params->nz, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17156,6 +18783,7 @@ static NTSTATUS ext_glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN( vo
     struct glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN( params->rc, params->tc, params->c, params->n, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17164,6 +18792,7 @@ static NTSTATUS ext_glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN( void *args
     struct glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN( params->rc, params->s, params->t, params->nx, params->ny, params->nz, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17172,6 +18801,7 @@ static NTSTATUS ext_glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN( void *arg
     struct glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN( params->rc, params->tc, params->n, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17180,6 +18810,7 @@ static NTSTATUS ext_glReplacementCodeuiTexCoord2fVertex3fSUN( void *args )
     struct glReplacementCodeuiTexCoord2fVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiTexCoord2fVertex3fSUN( params->rc, params->s, params->t, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17188,6 +18819,7 @@ static NTSTATUS ext_glReplacementCodeuiTexCoord2fVertex3fvSUN( void *args )
     struct glReplacementCodeuiTexCoord2fVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiTexCoord2fVertex3fvSUN( params->rc, params->tc, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17196,6 +18828,7 @@ static NTSTATUS ext_glReplacementCodeuiVertex3fSUN( void *args )
     struct glReplacementCodeuiVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiVertex3fSUN( params->rc, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17204,6 +18837,7 @@ static NTSTATUS ext_glReplacementCodeuiVertex3fvSUN( void *args )
     struct glReplacementCodeuiVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuiVertex3fvSUN( params->rc, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17212,6 +18846,7 @@ static NTSTATUS ext_glReplacementCodeuivSUN( void *args )
     struct glReplacementCodeuivSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeuivSUN( params->code );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17220,6 +18855,7 @@ static NTSTATUS ext_glReplacementCodeusSUN( void *args )
     struct glReplacementCodeusSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeusSUN( params->code );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17228,6 +18864,7 @@ static NTSTATUS ext_glReplacementCodeusvSUN( void *args )
     struct glReplacementCodeusvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glReplacementCodeusvSUN( params->code );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17236,6 +18873,7 @@ static NTSTATUS ext_glRequestResidentProgramsNV( void *args )
     struct glRequestResidentProgramsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRequestResidentProgramsNV( params->n, params->programs );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17244,6 +18882,7 @@ static NTSTATUS ext_glResetHistogram( void *args )
     struct glResetHistogram_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glResetHistogram( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17252,6 +18891,7 @@ static NTSTATUS ext_glResetHistogramEXT( void *args )
     struct glResetHistogramEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glResetHistogramEXT( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17260,6 +18900,7 @@ static NTSTATUS ext_glResetMemoryObjectParameterNV( void *args )
     struct glResetMemoryObjectParameterNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glResetMemoryObjectParameterNV( params->memory, params->pname );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17268,6 +18909,7 @@ static NTSTATUS ext_glResetMinmax( void *args )
     struct glResetMinmax_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glResetMinmax( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17276,6 +18918,7 @@ static NTSTATUS ext_glResetMinmaxEXT( void *args )
     struct glResetMinmaxEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glResetMinmaxEXT( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17284,6 +18927,7 @@ static NTSTATUS ext_glResizeBuffersMESA( void *args )
     struct glResizeBuffersMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glResizeBuffersMESA();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17292,6 +18936,7 @@ static NTSTATUS ext_glResolveDepthValuesNV( void *args )
     struct glResolveDepthValuesNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glResolveDepthValuesNV();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17300,6 +18945,7 @@ static NTSTATUS ext_glResumeTransformFeedback( void *args )
     struct glResumeTransformFeedback_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glResumeTransformFeedback();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17308,6 +18954,7 @@ static NTSTATUS ext_glResumeTransformFeedbackNV( void *args )
     struct glResumeTransformFeedbackNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glResumeTransformFeedbackNV();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17316,6 +18963,7 @@ static NTSTATUS ext_glRotatexOES( void *args )
     struct glRotatexOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glRotatexOES( params->angle, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17324,6 +18972,7 @@ static NTSTATUS ext_glSampleCoverage( void *args )
     struct glSampleCoverage_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSampleCoverage( params->value, params->invert );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17332,6 +18981,7 @@ static NTSTATUS ext_glSampleCoverageARB( void *args )
     struct glSampleCoverageARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSampleCoverageARB( params->value, params->invert );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17340,6 +18990,7 @@ static NTSTATUS ext_glSampleMapATI( void *args )
     struct glSampleMapATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSampleMapATI( params->dst, params->interp, params->swizzle );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17348,6 +18999,7 @@ static NTSTATUS ext_glSampleMaskEXT( void *args )
     struct glSampleMaskEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSampleMaskEXT( params->value, params->invert );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17356,6 +19008,7 @@ static NTSTATUS ext_glSampleMaskIndexedNV( void *args )
     struct glSampleMaskIndexedNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSampleMaskIndexedNV( params->index, params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17364,6 +19017,7 @@ static NTSTATUS ext_glSampleMaskSGIS( void *args )
     struct glSampleMaskSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSampleMaskSGIS( params->value, params->invert );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17372,6 +19026,7 @@ static NTSTATUS ext_glSampleMaski( void *args )
     struct glSampleMaski_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSampleMaski( params->maskNumber, params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17380,6 +19035,7 @@ static NTSTATUS ext_glSamplePatternEXT( void *args )
     struct glSamplePatternEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSamplePatternEXT( params->pattern );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17388,6 +19044,7 @@ static NTSTATUS ext_glSamplePatternSGIS( void *args )
     struct glSamplePatternSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSamplePatternSGIS( params->pattern );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17396,6 +19053,7 @@ static NTSTATUS ext_glSamplerParameterIiv( void *args )
     struct glSamplerParameterIiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSamplerParameterIiv( params->sampler, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17404,6 +19062,7 @@ static NTSTATUS ext_glSamplerParameterIuiv( void *args )
     struct glSamplerParameterIuiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSamplerParameterIuiv( params->sampler, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17412,6 +19071,7 @@ static NTSTATUS ext_glSamplerParameterf( void *args )
     struct glSamplerParameterf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSamplerParameterf( params->sampler, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17420,6 +19080,7 @@ static NTSTATUS ext_glSamplerParameterfv( void *args )
     struct glSamplerParameterfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSamplerParameterfv( params->sampler, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17428,6 +19089,7 @@ static NTSTATUS ext_glSamplerParameteri( void *args )
     struct glSamplerParameteri_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSamplerParameteri( params->sampler, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17436,6 +19098,7 @@ static NTSTATUS ext_glSamplerParameteriv( void *args )
     struct glSamplerParameteriv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSamplerParameteriv( params->sampler, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17444,6 +19107,7 @@ static NTSTATUS ext_glScalexOES( void *args )
     struct glScalexOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glScalexOES( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17452,6 +19116,7 @@ static NTSTATUS ext_glScissorArrayv( void *args )
     struct glScissorArrayv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glScissorArrayv( params->first, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17460,6 +19125,7 @@ static NTSTATUS ext_glScissorExclusiveArrayvNV( void *args )
     struct glScissorExclusiveArrayvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glScissorExclusiveArrayvNV( params->first, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17468,6 +19134,7 @@ static NTSTATUS ext_glScissorExclusiveNV( void *args )
     struct glScissorExclusiveNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glScissorExclusiveNV( params->x, params->y, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17476,6 +19143,7 @@ static NTSTATUS ext_glScissorIndexed( void *args )
     struct glScissorIndexed_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glScissorIndexed( params->index, params->left, params->bottom, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17484,6 +19152,7 @@ static NTSTATUS ext_glScissorIndexedv( void *args )
     struct glScissorIndexedv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glScissorIndexedv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17492,6 +19161,7 @@ static NTSTATUS ext_glSecondaryColor3b( void *args )
     struct glSecondaryColor3b_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3b( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17500,6 +19170,7 @@ static NTSTATUS ext_glSecondaryColor3bEXT( void *args )
     struct glSecondaryColor3bEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3bEXT( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17508,6 +19179,7 @@ static NTSTATUS ext_glSecondaryColor3bv( void *args )
     struct glSecondaryColor3bv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3bv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17516,6 +19188,7 @@ static NTSTATUS ext_glSecondaryColor3bvEXT( void *args )
     struct glSecondaryColor3bvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3bvEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17524,6 +19197,7 @@ static NTSTATUS ext_glSecondaryColor3d( void *args )
     struct glSecondaryColor3d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3d( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17532,6 +19206,7 @@ static NTSTATUS ext_glSecondaryColor3dEXT( void *args )
     struct glSecondaryColor3dEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3dEXT( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17540,6 +19215,7 @@ static NTSTATUS ext_glSecondaryColor3dv( void *args )
     struct glSecondaryColor3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3dv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17548,6 +19224,7 @@ static NTSTATUS ext_glSecondaryColor3dvEXT( void *args )
     struct glSecondaryColor3dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3dvEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17556,6 +19233,7 @@ static NTSTATUS ext_glSecondaryColor3f( void *args )
     struct glSecondaryColor3f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3f( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17564,6 +19242,7 @@ static NTSTATUS ext_glSecondaryColor3fEXT( void *args )
     struct glSecondaryColor3fEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3fEXT( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17572,6 +19251,7 @@ static NTSTATUS ext_glSecondaryColor3fv( void *args )
     struct glSecondaryColor3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3fv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17580,6 +19260,7 @@ static NTSTATUS ext_glSecondaryColor3fvEXT( void *args )
     struct glSecondaryColor3fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3fvEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17588,6 +19269,7 @@ static NTSTATUS ext_glSecondaryColor3hNV( void *args )
     struct glSecondaryColor3hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3hNV( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17596,6 +19278,7 @@ static NTSTATUS ext_glSecondaryColor3hvNV( void *args )
     struct glSecondaryColor3hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3hvNV( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17604,6 +19287,7 @@ static NTSTATUS ext_glSecondaryColor3i( void *args )
     struct glSecondaryColor3i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3i( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17612,6 +19296,7 @@ static NTSTATUS ext_glSecondaryColor3iEXT( void *args )
     struct glSecondaryColor3iEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3iEXT( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17620,6 +19305,7 @@ static NTSTATUS ext_glSecondaryColor3iv( void *args )
     struct glSecondaryColor3iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3iv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17628,6 +19314,7 @@ static NTSTATUS ext_glSecondaryColor3ivEXT( void *args )
     struct glSecondaryColor3ivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3ivEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17636,6 +19323,7 @@ static NTSTATUS ext_glSecondaryColor3s( void *args )
     struct glSecondaryColor3s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3s( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17644,6 +19332,7 @@ static NTSTATUS ext_glSecondaryColor3sEXT( void *args )
     struct glSecondaryColor3sEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3sEXT( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17652,6 +19341,7 @@ static NTSTATUS ext_glSecondaryColor3sv( void *args )
     struct glSecondaryColor3sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3sv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17660,6 +19350,7 @@ static NTSTATUS ext_glSecondaryColor3svEXT( void *args )
     struct glSecondaryColor3svEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3svEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17668,6 +19359,7 @@ static NTSTATUS ext_glSecondaryColor3ub( void *args )
     struct glSecondaryColor3ub_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3ub( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17676,6 +19368,7 @@ static NTSTATUS ext_glSecondaryColor3ubEXT( void *args )
     struct glSecondaryColor3ubEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3ubEXT( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17684,6 +19377,7 @@ static NTSTATUS ext_glSecondaryColor3ubv( void *args )
     struct glSecondaryColor3ubv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3ubv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17692,6 +19386,7 @@ static NTSTATUS ext_glSecondaryColor3ubvEXT( void *args )
     struct glSecondaryColor3ubvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3ubvEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17700,6 +19395,7 @@ static NTSTATUS ext_glSecondaryColor3ui( void *args )
     struct glSecondaryColor3ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3ui( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17708,6 +19404,7 @@ static NTSTATUS ext_glSecondaryColor3uiEXT( void *args )
     struct glSecondaryColor3uiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3uiEXT( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17716,6 +19413,7 @@ static NTSTATUS ext_glSecondaryColor3uiv( void *args )
     struct glSecondaryColor3uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3uiv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17724,6 +19422,7 @@ static NTSTATUS ext_glSecondaryColor3uivEXT( void *args )
     struct glSecondaryColor3uivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3uivEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17732,6 +19431,7 @@ static NTSTATUS ext_glSecondaryColor3us( void *args )
     struct glSecondaryColor3us_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3us( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17740,6 +19440,7 @@ static NTSTATUS ext_glSecondaryColor3usEXT( void *args )
     struct glSecondaryColor3usEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3usEXT( params->red, params->green, params->blue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17748,6 +19449,7 @@ static NTSTATUS ext_glSecondaryColor3usv( void *args )
     struct glSecondaryColor3usv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3usv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17756,6 +19458,7 @@ static NTSTATUS ext_glSecondaryColor3usvEXT( void *args )
     struct glSecondaryColor3usvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColor3usvEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17764,6 +19467,7 @@ static NTSTATUS ext_glSecondaryColorFormatNV( void *args )
     struct glSecondaryColorFormatNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColorFormatNV( params->size, params->type, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17772,6 +19476,7 @@ static NTSTATUS ext_glSecondaryColorP3ui( void *args )
     struct glSecondaryColorP3ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColorP3ui( params->type, params->color );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17780,6 +19485,7 @@ static NTSTATUS ext_glSecondaryColorP3uiv( void *args )
     struct glSecondaryColorP3uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColorP3uiv( params->type, params->color );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17788,6 +19494,7 @@ static NTSTATUS ext_glSecondaryColorPointer( void *args )
     struct glSecondaryColorPointer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColorPointer( params->size, params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17796,6 +19503,7 @@ static NTSTATUS ext_glSecondaryColorPointerEXT( void *args )
     struct glSecondaryColorPointerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColorPointerEXT( params->size, params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17804,6 +19512,7 @@ static NTSTATUS ext_glSecondaryColorPointerListIBM( void *args )
     struct glSecondaryColorPointerListIBM_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSecondaryColorPointerListIBM( params->size, params->type, params->stride, params->pointer, params->ptrstride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17812,6 +19521,7 @@ static NTSTATUS ext_glSelectPerfMonitorCountersAMD( void *args )
     struct glSelectPerfMonitorCountersAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSelectPerfMonitorCountersAMD( params->monitor, params->enable, params->group, params->numCounters, params->counterList );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17820,6 +19530,7 @@ static NTSTATUS ext_glSelectTextureCoordSetSGIS( void *args )
     struct glSelectTextureCoordSetSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSelectTextureCoordSetSGIS( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17828,6 +19539,7 @@ static NTSTATUS ext_glSelectTextureSGIS( void *args )
     struct glSelectTextureSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSelectTextureSGIS( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17836,6 +19548,7 @@ static NTSTATUS ext_glSemaphoreParameterui64vEXT( void *args )
     struct glSemaphoreParameterui64vEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSemaphoreParameterui64vEXT( params->semaphore, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17844,6 +19557,7 @@ static NTSTATUS ext_glSeparableFilter2D( void *args )
     struct glSeparableFilter2D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSeparableFilter2D( params->target, params->internalformat, params->width, params->height, params->format, params->type, params->row, params->column );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17852,6 +19566,7 @@ static NTSTATUS ext_glSeparableFilter2DEXT( void *args )
     struct glSeparableFilter2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSeparableFilter2DEXT( params->target, params->internalformat, params->width, params->height, params->format, params->type, params->row, params->column );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17860,6 +19575,7 @@ static NTSTATUS ext_glSetFenceAPPLE( void *args )
     struct glSetFenceAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSetFenceAPPLE( params->fence );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17868,6 +19584,7 @@ static NTSTATUS ext_glSetFenceNV( void *args )
     struct glSetFenceNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSetFenceNV( params->fence, params->condition );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17876,6 +19593,7 @@ static NTSTATUS ext_glSetFragmentShaderConstantATI( void *args )
     struct glSetFragmentShaderConstantATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSetFragmentShaderConstantATI( params->dst, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17884,6 +19602,7 @@ static NTSTATUS ext_glSetInvariantEXT( void *args )
     struct glSetInvariantEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSetInvariantEXT( params->id, params->type, params->addr );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17892,6 +19611,7 @@ static NTSTATUS ext_glSetLocalConstantEXT( void *args )
     struct glSetLocalConstantEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSetLocalConstantEXT( params->id, params->type, params->addr );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17900,6 +19620,7 @@ static NTSTATUS ext_glSetMultisamplefvAMD( void *args )
     struct glSetMultisamplefvAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSetMultisamplefvAMD( params->pname, params->index, params->val );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17908,6 +19629,7 @@ static NTSTATUS ext_glShaderBinary( void *args )
     struct glShaderBinary_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glShaderBinary( params->count, params->shaders, params->binaryformat, params->binary, params->length );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17916,6 +19638,7 @@ static NTSTATUS ext_glShaderOp1EXT( void *args )
     struct glShaderOp1EXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glShaderOp1EXT( params->op, params->res, params->arg1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17924,6 +19647,7 @@ static NTSTATUS ext_glShaderOp2EXT( void *args )
     struct glShaderOp2EXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glShaderOp2EXT( params->op, params->res, params->arg1, params->arg2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17932,6 +19656,7 @@ static NTSTATUS ext_glShaderOp3EXT( void *args )
     struct glShaderOp3EXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glShaderOp3EXT( params->op, params->res, params->arg1, params->arg2, params->arg3 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17940,6 +19665,7 @@ static NTSTATUS ext_glShaderSource( void *args )
     struct glShaderSource_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glShaderSource( params->shader, params->count, params->string, params->length );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17948,6 +19674,7 @@ static NTSTATUS ext_glShaderSourceARB( void *args )
     struct glShaderSourceARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glShaderSourceARB( params->shaderObj, params->count, params->string, params->length );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17956,6 +19683,7 @@ static NTSTATUS ext_glShaderStorageBlockBinding( void *args )
     struct glShaderStorageBlockBinding_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glShaderStorageBlockBinding( params->program, params->storageBlockIndex, params->storageBlockBinding );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17964,6 +19692,7 @@ static NTSTATUS ext_glShadingRateImageBarrierNV( void *args )
     struct glShadingRateImageBarrierNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glShadingRateImageBarrierNV( params->synchronize );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17972,6 +19701,7 @@ static NTSTATUS ext_glShadingRateImagePaletteNV( void *args )
     struct glShadingRateImagePaletteNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glShadingRateImagePaletteNV( params->viewport, params->first, params->count, params->rates );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17980,6 +19710,7 @@ static NTSTATUS ext_glShadingRateSampleOrderCustomNV( void *args )
     struct glShadingRateSampleOrderCustomNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glShadingRateSampleOrderCustomNV( params->rate, params->samples, params->locations );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17988,6 +19719,7 @@ static NTSTATUS ext_glShadingRateSampleOrderNV( void *args )
     struct glShadingRateSampleOrderNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glShadingRateSampleOrderNV( params->order );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -17996,6 +19728,7 @@ static NTSTATUS ext_glSharpenTexFuncSGIS( void *args )
     struct glSharpenTexFuncSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSharpenTexFuncSGIS( params->target, params->n, params->points );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18004,6 +19737,7 @@ static NTSTATUS ext_glSignalSemaphoreEXT( void *args )
     struct glSignalSemaphoreEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSignalSemaphoreEXT( params->semaphore, params->numBufferBarriers, params->buffers, params->numTextureBarriers, params->textures, params->dstLayouts );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18012,6 +19746,7 @@ static NTSTATUS ext_glSignalSemaphoreui64NVX( void *args )
     struct glSignalSemaphoreui64NVX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSignalSemaphoreui64NVX( params->signalGpu, params->fenceObjectCount, params->semaphoreArray, params->fenceValueArray );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18020,6 +19755,7 @@ static NTSTATUS ext_glSignalVkFenceNV( void *args )
     struct glSignalVkFenceNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSignalVkFenceNV( params->vkFence );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18028,6 +19764,7 @@ static NTSTATUS ext_glSignalVkSemaphoreNV( void *args )
     struct glSignalVkSemaphoreNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSignalVkSemaphoreNV( params->vkSemaphore );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18036,6 +19773,7 @@ static NTSTATUS ext_glSpecializeShader( void *args )
     struct glSpecializeShader_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSpecializeShader( params->shader, params->pEntryPoint, params->numSpecializationConstants, params->pConstantIndex, params->pConstantValue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18044,6 +19782,7 @@ static NTSTATUS ext_glSpecializeShaderARB( void *args )
     struct glSpecializeShaderARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSpecializeShaderARB( params->shader, params->pEntryPoint, params->numSpecializationConstants, params->pConstantIndex, params->pConstantValue );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18052,6 +19791,7 @@ static NTSTATUS ext_glSpriteParameterfSGIX( void *args )
     struct glSpriteParameterfSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSpriteParameterfSGIX( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18060,6 +19800,7 @@ static NTSTATUS ext_glSpriteParameterfvSGIX( void *args )
     struct glSpriteParameterfvSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSpriteParameterfvSGIX( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18068,6 +19809,7 @@ static NTSTATUS ext_glSpriteParameteriSGIX( void *args )
     struct glSpriteParameteriSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSpriteParameteriSGIX( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18076,6 +19818,7 @@ static NTSTATUS ext_glSpriteParameterivSGIX( void *args )
     struct glSpriteParameterivSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSpriteParameterivSGIX( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18084,6 +19827,7 @@ static NTSTATUS ext_glStartInstrumentsSGIX( void *args )
     struct glStartInstrumentsSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStartInstrumentsSGIX();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18092,6 +19836,7 @@ static NTSTATUS ext_glStateCaptureNV( void *args )
     struct glStateCaptureNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStateCaptureNV( params->state, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18100,6 +19845,7 @@ static NTSTATUS ext_glStencilClearTagEXT( void *args )
     struct glStencilClearTagEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilClearTagEXT( params->stencilTagBits, params->stencilClearTag );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18108,6 +19854,7 @@ static NTSTATUS ext_glStencilFillPathInstancedNV( void *args )
     struct glStencilFillPathInstancedNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilFillPathInstancedNV( params->numPaths, params->pathNameType, params->paths, params->pathBase, params->fillMode, params->mask, params->transformType, params->transformValues );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18116,6 +19863,7 @@ static NTSTATUS ext_glStencilFillPathNV( void *args )
     struct glStencilFillPathNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilFillPathNV( params->path, params->fillMode, params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18124,6 +19872,7 @@ static NTSTATUS ext_glStencilFuncSeparate( void *args )
     struct glStencilFuncSeparate_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilFuncSeparate( params->face, params->func, params->ref, params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18132,6 +19881,7 @@ static NTSTATUS ext_glStencilFuncSeparateATI( void *args )
     struct glStencilFuncSeparateATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilFuncSeparateATI( params->frontfunc, params->backfunc, params->ref, params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18140,6 +19890,7 @@ static NTSTATUS ext_glStencilMaskSeparate( void *args )
     struct glStencilMaskSeparate_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilMaskSeparate( params->face, params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18148,6 +19899,7 @@ static NTSTATUS ext_glStencilOpSeparate( void *args )
     struct glStencilOpSeparate_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilOpSeparate( params->face, params->sfail, params->dpfail, params->dppass );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18156,6 +19908,7 @@ static NTSTATUS ext_glStencilOpSeparateATI( void *args )
     struct glStencilOpSeparateATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilOpSeparateATI( params->face, params->sfail, params->dpfail, params->dppass );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18164,6 +19917,7 @@ static NTSTATUS ext_glStencilOpValueAMD( void *args )
     struct glStencilOpValueAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilOpValueAMD( params->face, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18172,6 +19926,7 @@ static NTSTATUS ext_glStencilStrokePathInstancedNV( void *args )
     struct glStencilStrokePathInstancedNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilStrokePathInstancedNV( params->numPaths, params->pathNameType, params->paths, params->pathBase, params->reference, params->mask, params->transformType, params->transformValues );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18180,6 +19935,7 @@ static NTSTATUS ext_glStencilStrokePathNV( void *args )
     struct glStencilStrokePathNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilStrokePathNV( params->path, params->reference, params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18188,6 +19944,7 @@ static NTSTATUS ext_glStencilThenCoverFillPathInstancedNV( void *args )
     struct glStencilThenCoverFillPathInstancedNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilThenCoverFillPathInstancedNV( params->numPaths, params->pathNameType, params->paths, params->pathBase, params->fillMode, params->mask, params->coverMode, params->transformType, params->transformValues );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18196,6 +19953,7 @@ static NTSTATUS ext_glStencilThenCoverFillPathNV( void *args )
     struct glStencilThenCoverFillPathNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilThenCoverFillPathNV( params->path, params->fillMode, params->mask, params->coverMode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18204,6 +19962,7 @@ static NTSTATUS ext_glStencilThenCoverStrokePathInstancedNV( void *args )
     struct glStencilThenCoverStrokePathInstancedNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilThenCoverStrokePathInstancedNV( params->numPaths, params->pathNameType, params->paths, params->pathBase, params->reference, params->mask, params->coverMode, params->transformType, params->transformValues );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18212,6 +19971,7 @@ static NTSTATUS ext_glStencilThenCoverStrokePathNV( void *args )
     struct glStencilThenCoverStrokePathNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStencilThenCoverStrokePathNV( params->path, params->reference, params->mask, params->coverMode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18220,6 +19980,7 @@ static NTSTATUS ext_glStopInstrumentsSGIX( void *args )
     struct glStopInstrumentsSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStopInstrumentsSGIX( params->marker );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18228,6 +19989,7 @@ static NTSTATUS ext_glStringMarkerGREMEDY( void *args )
     struct glStringMarkerGREMEDY_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glStringMarkerGREMEDY( params->len, params->string );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18236,6 +19998,7 @@ static NTSTATUS ext_glSubpixelPrecisionBiasNV( void *args )
     struct glSubpixelPrecisionBiasNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSubpixelPrecisionBiasNV( params->xbits, params->ybits );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18244,6 +20007,7 @@ static NTSTATUS ext_glSwizzleEXT( void *args )
     struct glSwizzleEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSwizzleEXT( params->res, params->in, params->outX, params->outY, params->outZ, params->outW );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18252,6 +20016,7 @@ static NTSTATUS ext_glSyncTextureINTEL( void *args )
     struct glSyncTextureINTEL_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSyncTextureINTEL( params->texture );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18260,6 +20025,7 @@ static NTSTATUS ext_glTagSampleBufferSGIX( void *args )
     struct glTagSampleBufferSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTagSampleBufferSGIX();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18268,6 +20034,7 @@ static NTSTATUS ext_glTangent3bEXT( void *args )
     struct glTangent3bEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTangent3bEXT( params->tx, params->ty, params->tz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18276,6 +20043,7 @@ static NTSTATUS ext_glTangent3bvEXT( void *args )
     struct glTangent3bvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTangent3bvEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18284,6 +20052,7 @@ static NTSTATUS ext_glTangent3dEXT( void *args )
     struct glTangent3dEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTangent3dEXT( params->tx, params->ty, params->tz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18292,6 +20061,7 @@ static NTSTATUS ext_glTangent3dvEXT( void *args )
     struct glTangent3dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTangent3dvEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18300,6 +20070,7 @@ static NTSTATUS ext_glTangent3fEXT( void *args )
     struct glTangent3fEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTangent3fEXT( params->tx, params->ty, params->tz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18308,6 +20079,7 @@ static NTSTATUS ext_glTangent3fvEXT( void *args )
     struct glTangent3fvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTangent3fvEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18316,6 +20088,7 @@ static NTSTATUS ext_glTangent3iEXT( void *args )
     struct glTangent3iEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTangent3iEXT( params->tx, params->ty, params->tz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18324,6 +20097,7 @@ static NTSTATUS ext_glTangent3ivEXT( void *args )
     struct glTangent3ivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTangent3ivEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18332,6 +20106,7 @@ static NTSTATUS ext_glTangent3sEXT( void *args )
     struct glTangent3sEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTangent3sEXT( params->tx, params->ty, params->tz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18340,6 +20115,7 @@ static NTSTATUS ext_glTangent3svEXT( void *args )
     struct glTangent3svEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTangent3svEXT( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18348,6 +20124,7 @@ static NTSTATUS ext_glTangentPointerEXT( void *args )
     struct glTangentPointerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTangentPointerEXT( params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18356,6 +20133,7 @@ static NTSTATUS ext_glTbufferMask3DFX( void *args )
     struct glTbufferMask3DFX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTbufferMask3DFX( params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18364,6 +20142,7 @@ static NTSTATUS ext_glTessellationFactorAMD( void *args )
     struct glTessellationFactorAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTessellationFactorAMD( params->factor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18372,6 +20151,7 @@ static NTSTATUS ext_glTessellationModeAMD( void *args )
     struct glTessellationModeAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTessellationModeAMD( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18380,6 +20160,7 @@ static NTSTATUS ext_glTestFenceAPPLE( void *args )
     struct glTestFenceAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glTestFenceAPPLE( params->fence );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18388,6 +20169,7 @@ static NTSTATUS ext_glTestFenceNV( void *args )
     struct glTestFenceNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glTestFenceNV( params->fence );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18396,6 +20178,7 @@ static NTSTATUS ext_glTestObjectAPPLE( void *args )
     struct glTestObjectAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glTestObjectAPPLE( params->object, params->name );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18404,6 +20187,7 @@ static NTSTATUS ext_glTexAttachMemoryNV( void *args )
     struct glTexAttachMemoryNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexAttachMemoryNV( params->target, params->memory, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18412,6 +20196,7 @@ static NTSTATUS ext_glTexBuffer( void *args )
     struct glTexBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexBuffer( params->target, params->internalformat, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18420,6 +20205,7 @@ static NTSTATUS ext_glTexBufferARB( void *args )
     struct glTexBufferARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexBufferARB( params->target, params->internalformat, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18428,6 +20214,7 @@ static NTSTATUS ext_glTexBufferEXT( void *args )
     struct glTexBufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexBufferEXT( params->target, params->internalformat, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18436,6 +20223,7 @@ static NTSTATUS ext_glTexBufferRange( void *args )
     struct glTexBufferRange_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexBufferRange( params->target, params->internalformat, params->buffer, params->offset, params->size );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18444,6 +20232,7 @@ static NTSTATUS ext_glTexBumpParameterfvATI( void *args )
     struct glTexBumpParameterfvATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexBumpParameterfvATI( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18452,6 +20241,7 @@ static NTSTATUS ext_glTexBumpParameterivATI( void *args )
     struct glTexBumpParameterivATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexBumpParameterivATI( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18460,6 +20250,7 @@ static NTSTATUS ext_glTexCoord1bOES( void *args )
     struct glTexCoord1bOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord1bOES( params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18468,6 +20259,7 @@ static NTSTATUS ext_glTexCoord1bvOES( void *args )
     struct glTexCoord1bvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord1bvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18476,6 +20268,7 @@ static NTSTATUS ext_glTexCoord1hNV( void *args )
     struct glTexCoord1hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord1hNV( params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18484,6 +20277,7 @@ static NTSTATUS ext_glTexCoord1hvNV( void *args )
     struct glTexCoord1hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord1hvNV( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18492,6 +20286,7 @@ static NTSTATUS ext_glTexCoord1xOES( void *args )
     struct glTexCoord1xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord1xOES( params->s );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18500,6 +20295,7 @@ static NTSTATUS ext_glTexCoord1xvOES( void *args )
     struct glTexCoord1xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord1xvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18508,6 +20304,7 @@ static NTSTATUS ext_glTexCoord2bOES( void *args )
     struct glTexCoord2bOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2bOES( params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18516,6 +20313,7 @@ static NTSTATUS ext_glTexCoord2bvOES( void *args )
     struct glTexCoord2bvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2bvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18524,6 +20322,7 @@ static NTSTATUS ext_glTexCoord2fColor3fVertex3fSUN( void *args )
     struct glTexCoord2fColor3fVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2fColor3fVertex3fSUN( params->s, params->t, params->r, params->g, params->b, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18532,6 +20331,7 @@ static NTSTATUS ext_glTexCoord2fColor3fVertex3fvSUN( void *args )
     struct glTexCoord2fColor3fVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2fColor3fVertex3fvSUN( params->tc, params->c, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18540,6 +20340,7 @@ static NTSTATUS ext_glTexCoord2fColor4fNormal3fVertex3fSUN( void *args )
     struct glTexCoord2fColor4fNormal3fVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2fColor4fNormal3fVertex3fSUN( params->s, params->t, params->r, params->g, params->b, params->a, params->nx, params->ny, params->nz, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18548,6 +20349,7 @@ static NTSTATUS ext_glTexCoord2fColor4fNormal3fVertex3fvSUN( void *args )
     struct glTexCoord2fColor4fNormal3fVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2fColor4fNormal3fVertex3fvSUN( params->tc, params->c, params->n, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18556,6 +20358,7 @@ static NTSTATUS ext_glTexCoord2fColor4ubVertex3fSUN( void *args )
     struct glTexCoord2fColor4ubVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2fColor4ubVertex3fSUN( params->s, params->t, params->r, params->g, params->b, params->a, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18564,6 +20367,7 @@ static NTSTATUS ext_glTexCoord2fColor4ubVertex3fvSUN( void *args )
     struct glTexCoord2fColor4ubVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2fColor4ubVertex3fvSUN( params->tc, params->c, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18572,6 +20376,7 @@ static NTSTATUS ext_glTexCoord2fNormal3fVertex3fSUN( void *args )
     struct glTexCoord2fNormal3fVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2fNormal3fVertex3fSUN( params->s, params->t, params->nx, params->ny, params->nz, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18580,6 +20385,7 @@ static NTSTATUS ext_glTexCoord2fNormal3fVertex3fvSUN( void *args )
     struct glTexCoord2fNormal3fVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2fNormal3fVertex3fvSUN( params->tc, params->n, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18588,6 +20394,7 @@ static NTSTATUS ext_glTexCoord2fVertex3fSUN( void *args )
     struct glTexCoord2fVertex3fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2fVertex3fSUN( params->s, params->t, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18596,6 +20403,7 @@ static NTSTATUS ext_glTexCoord2fVertex3fvSUN( void *args )
     struct glTexCoord2fVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2fVertex3fvSUN( params->tc, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18604,6 +20412,7 @@ static NTSTATUS ext_glTexCoord2hNV( void *args )
     struct glTexCoord2hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2hNV( params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18612,6 +20421,7 @@ static NTSTATUS ext_glTexCoord2hvNV( void *args )
     struct glTexCoord2hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2hvNV( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18620,6 +20430,7 @@ static NTSTATUS ext_glTexCoord2xOES( void *args )
     struct glTexCoord2xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2xOES( params->s, params->t );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18628,6 +20439,7 @@ static NTSTATUS ext_glTexCoord2xvOES( void *args )
     struct glTexCoord2xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord2xvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18636,6 +20448,7 @@ static NTSTATUS ext_glTexCoord3bOES( void *args )
     struct glTexCoord3bOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord3bOES( params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18644,6 +20457,7 @@ static NTSTATUS ext_glTexCoord3bvOES( void *args )
     struct glTexCoord3bvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord3bvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18652,6 +20466,7 @@ static NTSTATUS ext_glTexCoord3hNV( void *args )
     struct glTexCoord3hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord3hNV( params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18660,6 +20475,7 @@ static NTSTATUS ext_glTexCoord3hvNV( void *args )
     struct glTexCoord3hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord3hvNV( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18668,6 +20484,7 @@ static NTSTATUS ext_glTexCoord3xOES( void *args )
     struct glTexCoord3xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord3xOES( params->s, params->t, params->r );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18676,6 +20493,7 @@ static NTSTATUS ext_glTexCoord3xvOES( void *args )
     struct glTexCoord3xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord3xvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18684,6 +20502,7 @@ static NTSTATUS ext_glTexCoord4bOES( void *args )
     struct glTexCoord4bOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4bOES( params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18692,6 +20511,7 @@ static NTSTATUS ext_glTexCoord4bvOES( void *args )
     struct glTexCoord4bvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4bvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18700,6 +20520,7 @@ static NTSTATUS ext_glTexCoord4fColor4fNormal3fVertex4fSUN( void *args )
     struct glTexCoord4fColor4fNormal3fVertex4fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4fColor4fNormal3fVertex4fSUN( params->s, params->t, params->p, params->q, params->r, params->g, params->b, params->a, params->nx, params->ny, params->nz, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18708,6 +20529,7 @@ static NTSTATUS ext_glTexCoord4fColor4fNormal3fVertex4fvSUN( void *args )
     struct glTexCoord4fColor4fNormal3fVertex4fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4fColor4fNormal3fVertex4fvSUN( params->tc, params->c, params->n, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18716,6 +20538,7 @@ static NTSTATUS ext_glTexCoord4fVertex4fSUN( void *args )
     struct glTexCoord4fVertex4fSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4fVertex4fSUN( params->s, params->t, params->p, params->q, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18724,6 +20547,7 @@ static NTSTATUS ext_glTexCoord4fVertex4fvSUN( void *args )
     struct glTexCoord4fVertex4fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4fVertex4fvSUN( params->tc, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18732,6 +20556,7 @@ static NTSTATUS ext_glTexCoord4hNV( void *args )
     struct glTexCoord4hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4hNV( params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18740,6 +20565,7 @@ static NTSTATUS ext_glTexCoord4hvNV( void *args )
     struct glTexCoord4hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4hvNV( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18748,6 +20574,7 @@ static NTSTATUS ext_glTexCoord4xOES( void *args )
     struct glTexCoord4xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4xOES( params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18756,6 +20583,7 @@ static NTSTATUS ext_glTexCoord4xvOES( void *args )
     struct glTexCoord4xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoord4xvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18764,6 +20592,7 @@ static NTSTATUS ext_glTexCoordFormatNV( void *args )
     struct glTexCoordFormatNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoordFormatNV( params->size, params->type, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18772,6 +20601,7 @@ static NTSTATUS ext_glTexCoordP1ui( void *args )
     struct glTexCoordP1ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoordP1ui( params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18780,6 +20610,7 @@ static NTSTATUS ext_glTexCoordP1uiv( void *args )
     struct glTexCoordP1uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoordP1uiv( params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18788,6 +20619,7 @@ static NTSTATUS ext_glTexCoordP2ui( void *args )
     struct glTexCoordP2ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoordP2ui( params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18796,6 +20628,7 @@ static NTSTATUS ext_glTexCoordP2uiv( void *args )
     struct glTexCoordP2uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoordP2uiv( params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18804,6 +20637,7 @@ static NTSTATUS ext_glTexCoordP3ui( void *args )
     struct glTexCoordP3ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoordP3ui( params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18812,6 +20646,7 @@ static NTSTATUS ext_glTexCoordP3uiv( void *args )
     struct glTexCoordP3uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoordP3uiv( params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18820,6 +20655,7 @@ static NTSTATUS ext_glTexCoordP4ui( void *args )
     struct glTexCoordP4ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoordP4ui( params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18828,6 +20664,7 @@ static NTSTATUS ext_glTexCoordP4uiv( void *args )
     struct glTexCoordP4uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoordP4uiv( params->type, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18836,6 +20673,7 @@ static NTSTATUS ext_glTexCoordPointerEXT( void *args )
     struct glTexCoordPointerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoordPointerEXT( params->size, params->type, params->stride, params->count, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18844,6 +20682,7 @@ static NTSTATUS ext_glTexCoordPointerListIBM( void *args )
     struct glTexCoordPointerListIBM_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoordPointerListIBM( params->size, params->type, params->stride, params->pointer, params->ptrstride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18852,6 +20691,7 @@ static NTSTATUS ext_glTexCoordPointervINTEL( void *args )
     struct glTexCoordPointervINTEL_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexCoordPointervINTEL( params->size, params->type, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18860,6 +20700,7 @@ static NTSTATUS ext_glTexEnvxOES( void *args )
     struct glTexEnvxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexEnvxOES( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18868,6 +20709,7 @@ static NTSTATUS ext_glTexEnvxvOES( void *args )
     struct glTexEnvxvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexEnvxvOES( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18876,6 +20718,7 @@ static NTSTATUS ext_glTexFilterFuncSGIS( void *args )
     struct glTexFilterFuncSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexFilterFuncSGIS( params->target, params->filter, params->n, params->weights );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18884,6 +20727,7 @@ static NTSTATUS ext_glTexGenxOES( void *args )
     struct glTexGenxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexGenxOES( params->coord, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18892,6 +20736,7 @@ static NTSTATUS ext_glTexGenxvOES( void *args )
     struct glTexGenxvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexGenxvOES( params->coord, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18900,6 +20745,7 @@ static NTSTATUS ext_glTexImage2DMultisample( void *args )
     struct glTexImage2DMultisample_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexImage2DMultisample( params->target, params->samples, params->internalformat, params->width, params->height, params->fixedsamplelocations );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18908,6 +20754,7 @@ static NTSTATUS ext_glTexImage2DMultisampleCoverageNV( void *args )
     struct glTexImage2DMultisampleCoverageNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexImage2DMultisampleCoverageNV( params->target, params->coverageSamples, params->colorSamples, params->internalFormat, params->width, params->height, params->fixedSampleLocations );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18916,6 +20763,7 @@ static NTSTATUS ext_glTexImage3D( void *args )
     struct glTexImage3D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexImage3D( params->target, params->level, params->internalformat, params->width, params->height, params->depth, params->border, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18924,6 +20772,7 @@ static NTSTATUS ext_glTexImage3DEXT( void *args )
     struct glTexImage3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexImage3DEXT( params->target, params->level, params->internalformat, params->width, params->height, params->depth, params->border, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18932,6 +20781,7 @@ static NTSTATUS ext_glTexImage3DMultisample( void *args )
     struct glTexImage3DMultisample_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexImage3DMultisample( params->target, params->samples, params->internalformat, params->width, params->height, params->depth, params->fixedsamplelocations );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18940,6 +20790,7 @@ static NTSTATUS ext_glTexImage3DMultisampleCoverageNV( void *args )
     struct glTexImage3DMultisampleCoverageNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexImage3DMultisampleCoverageNV( params->target, params->coverageSamples, params->colorSamples, params->internalFormat, params->width, params->height, params->depth, params->fixedSampleLocations );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18948,6 +20799,7 @@ static NTSTATUS ext_glTexImage4DSGIS( void *args )
     struct glTexImage4DSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexImage4DSGIS( params->target, params->level, params->internalformat, params->width, params->height, params->depth, params->size4d, params->border, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18956,6 +20808,7 @@ static NTSTATUS ext_glTexPageCommitmentARB( void *args )
     struct glTexPageCommitmentARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexPageCommitmentARB( params->target, params->level, params->xoffset, params->yoffset, params->zoffset, params->width, params->height, params->depth, params->commit );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18964,6 +20817,7 @@ static NTSTATUS ext_glTexParameterIiv( void *args )
     struct glTexParameterIiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexParameterIiv( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18972,6 +20826,7 @@ static NTSTATUS ext_glTexParameterIivEXT( void *args )
     struct glTexParameterIivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexParameterIivEXT( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18980,6 +20835,7 @@ static NTSTATUS ext_glTexParameterIuiv( void *args )
     struct glTexParameterIuiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexParameterIuiv( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18988,6 +20844,7 @@ static NTSTATUS ext_glTexParameterIuivEXT( void *args )
     struct glTexParameterIuivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexParameterIuivEXT( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -18996,6 +20853,7 @@ static NTSTATUS ext_glTexParameterxOES( void *args )
     struct glTexParameterxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexParameterxOES( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19004,6 +20862,7 @@ static NTSTATUS ext_glTexParameterxvOES( void *args )
     struct glTexParameterxvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexParameterxvOES( params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19012,6 +20871,7 @@ static NTSTATUS ext_glTexRenderbufferNV( void *args )
     struct glTexRenderbufferNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexRenderbufferNV( params->target, params->renderbuffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19020,6 +20880,7 @@ static NTSTATUS ext_glTexStorage1D( void *args )
     struct glTexStorage1D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexStorage1D( params->target, params->levels, params->internalformat, params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19028,6 +20889,7 @@ static NTSTATUS ext_glTexStorage2D( void *args )
     struct glTexStorage2D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexStorage2D( params->target, params->levels, params->internalformat, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19036,6 +20898,7 @@ static NTSTATUS ext_glTexStorage2DMultisample( void *args )
     struct glTexStorage2DMultisample_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexStorage2DMultisample( params->target, params->samples, params->internalformat, params->width, params->height, params->fixedsamplelocations );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19044,6 +20907,7 @@ static NTSTATUS ext_glTexStorage3D( void *args )
     struct glTexStorage3D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexStorage3D( params->target, params->levels, params->internalformat, params->width, params->height, params->depth );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19052,6 +20916,7 @@ static NTSTATUS ext_glTexStorage3DMultisample( void *args )
     struct glTexStorage3DMultisample_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexStorage3DMultisample( params->target, params->samples, params->internalformat, params->width, params->height, params->depth, params->fixedsamplelocations );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19060,6 +20925,7 @@ static NTSTATUS ext_glTexStorageMem1DEXT( void *args )
     struct glTexStorageMem1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexStorageMem1DEXT( params->target, params->levels, params->internalFormat, params->width, params->memory, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19068,6 +20934,7 @@ static NTSTATUS ext_glTexStorageMem2DEXT( void *args )
     struct glTexStorageMem2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexStorageMem2DEXT( params->target, params->levels, params->internalFormat, params->width, params->height, params->memory, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19076,6 +20943,7 @@ static NTSTATUS ext_glTexStorageMem2DMultisampleEXT( void *args )
     struct glTexStorageMem2DMultisampleEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexStorageMem2DMultisampleEXT( params->target, params->samples, params->internalFormat, params->width, params->height, params->fixedSampleLocations, params->memory, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19084,6 +20952,7 @@ static NTSTATUS ext_glTexStorageMem3DEXT( void *args )
     struct glTexStorageMem3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexStorageMem3DEXT( params->target, params->levels, params->internalFormat, params->width, params->height, params->depth, params->memory, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19092,6 +20961,7 @@ static NTSTATUS ext_glTexStorageMem3DMultisampleEXT( void *args )
     struct glTexStorageMem3DMultisampleEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexStorageMem3DMultisampleEXT( params->target, params->samples, params->internalFormat, params->width, params->height, params->depth, params->fixedSampleLocations, params->memory, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19100,6 +20970,7 @@ static NTSTATUS ext_glTexStorageSparseAMD( void *args )
     struct glTexStorageSparseAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexStorageSparseAMD( params->target, params->internalFormat, params->width, params->height, params->depth, params->layers, params->flags );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19108,6 +20979,7 @@ static NTSTATUS ext_glTexSubImage1DEXT( void *args )
     struct glTexSubImage1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexSubImage1DEXT( params->target, params->level, params->xoffset, params->width, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19116,6 +20988,7 @@ static NTSTATUS ext_glTexSubImage2DEXT( void *args )
     struct glTexSubImage2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexSubImage2DEXT( params->target, params->level, params->xoffset, params->yoffset, params->width, params->height, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19124,6 +20997,7 @@ static NTSTATUS ext_glTexSubImage3D( void *args )
     struct glTexSubImage3D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexSubImage3D( params->target, params->level, params->xoffset, params->yoffset, params->zoffset, params->width, params->height, params->depth, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19132,6 +21006,7 @@ static NTSTATUS ext_glTexSubImage3DEXT( void *args )
     struct glTexSubImage3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexSubImage3DEXT( params->target, params->level, params->xoffset, params->yoffset, params->zoffset, params->width, params->height, params->depth, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19140,6 +21015,7 @@ static NTSTATUS ext_glTexSubImage4DSGIS( void *args )
     struct glTexSubImage4DSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexSubImage4DSGIS( params->target, params->level, params->xoffset, params->yoffset, params->zoffset, params->woffset, params->width, params->height, params->depth, params->size4d, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19148,6 +21024,7 @@ static NTSTATUS ext_glTextureAttachMemoryNV( void *args )
     struct glTextureAttachMemoryNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureAttachMemoryNV( params->texture, params->memory, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19156,6 +21033,7 @@ static NTSTATUS ext_glTextureBarrier( void *args )
     struct glTextureBarrier_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureBarrier();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19164,6 +21042,7 @@ static NTSTATUS ext_glTextureBarrierNV( void *args )
     struct glTextureBarrierNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureBarrierNV();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19172,6 +21051,7 @@ static NTSTATUS ext_glTextureBuffer( void *args )
     struct glTextureBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureBuffer( params->texture, params->internalformat, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19180,6 +21060,7 @@ static NTSTATUS ext_glTextureBufferEXT( void *args )
     struct glTextureBufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureBufferEXT( params->texture, params->target, params->internalformat, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19188,6 +21069,7 @@ static NTSTATUS ext_glTextureBufferRange( void *args )
     struct glTextureBufferRange_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureBufferRange( params->texture, params->internalformat, params->buffer, params->offset, params->size );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19196,6 +21078,7 @@ static NTSTATUS ext_glTextureBufferRangeEXT( void *args )
     struct glTextureBufferRangeEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureBufferRangeEXT( params->texture, params->target, params->internalformat, params->buffer, params->offset, params->size );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19204,6 +21087,7 @@ static NTSTATUS ext_glTextureColorMaskSGIS( void *args )
     struct glTextureColorMaskSGIS_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureColorMaskSGIS( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19212,6 +21096,7 @@ static NTSTATUS ext_glTextureImage1DEXT( void *args )
     struct glTextureImage1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureImage1DEXT( params->texture, params->target, params->level, params->internalformat, params->width, params->border, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19220,6 +21105,7 @@ static NTSTATUS ext_glTextureImage2DEXT( void *args )
     struct glTextureImage2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureImage2DEXT( params->texture, params->target, params->level, params->internalformat, params->width, params->height, params->border, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19228,6 +21114,7 @@ static NTSTATUS ext_glTextureImage2DMultisampleCoverageNV( void *args )
     struct glTextureImage2DMultisampleCoverageNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureImage2DMultisampleCoverageNV( params->texture, params->target, params->coverageSamples, params->colorSamples, params->internalFormat, params->width, params->height, params->fixedSampleLocations );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19236,6 +21123,7 @@ static NTSTATUS ext_glTextureImage2DMultisampleNV( void *args )
     struct glTextureImage2DMultisampleNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureImage2DMultisampleNV( params->texture, params->target, params->samples, params->internalFormat, params->width, params->height, params->fixedSampleLocations );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19244,6 +21132,7 @@ static NTSTATUS ext_glTextureImage3DEXT( void *args )
     struct glTextureImage3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureImage3DEXT( params->texture, params->target, params->level, params->internalformat, params->width, params->height, params->depth, params->border, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19252,6 +21141,7 @@ static NTSTATUS ext_glTextureImage3DMultisampleCoverageNV( void *args )
     struct glTextureImage3DMultisampleCoverageNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureImage3DMultisampleCoverageNV( params->texture, params->target, params->coverageSamples, params->colorSamples, params->internalFormat, params->width, params->height, params->depth, params->fixedSampleLocations );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19260,6 +21150,7 @@ static NTSTATUS ext_glTextureImage3DMultisampleNV( void *args )
     struct glTextureImage3DMultisampleNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureImage3DMultisampleNV( params->texture, params->target, params->samples, params->internalFormat, params->width, params->height, params->depth, params->fixedSampleLocations );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19268,6 +21159,7 @@ static NTSTATUS ext_glTextureLightEXT( void *args )
     struct glTextureLightEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureLightEXT( params->pname );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19276,6 +21168,7 @@ static NTSTATUS ext_glTextureMaterialEXT( void *args )
     struct glTextureMaterialEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureMaterialEXT( params->face, params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19284,6 +21177,7 @@ static NTSTATUS ext_glTextureNormalEXT( void *args )
     struct glTextureNormalEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureNormalEXT( params->mode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19292,6 +21186,7 @@ static NTSTATUS ext_glTexturePageCommitmentEXT( void *args )
     struct glTexturePageCommitmentEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexturePageCommitmentEXT( params->texture, params->level, params->xoffset, params->yoffset, params->zoffset, params->width, params->height, params->depth, params->commit );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19300,6 +21195,7 @@ static NTSTATUS ext_glTextureParameterIiv( void *args )
     struct glTextureParameterIiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureParameterIiv( params->texture, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19308,6 +21204,7 @@ static NTSTATUS ext_glTextureParameterIivEXT( void *args )
     struct glTextureParameterIivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureParameterIivEXT( params->texture, params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19316,6 +21213,7 @@ static NTSTATUS ext_glTextureParameterIuiv( void *args )
     struct glTextureParameterIuiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureParameterIuiv( params->texture, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19324,6 +21222,7 @@ static NTSTATUS ext_glTextureParameterIuivEXT( void *args )
     struct glTextureParameterIuivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureParameterIuivEXT( params->texture, params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19332,6 +21231,7 @@ static NTSTATUS ext_glTextureParameterf( void *args )
     struct glTextureParameterf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureParameterf( params->texture, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19340,6 +21240,7 @@ static NTSTATUS ext_glTextureParameterfEXT( void *args )
     struct glTextureParameterfEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureParameterfEXT( params->texture, params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19348,6 +21249,7 @@ static NTSTATUS ext_glTextureParameterfv( void *args )
     struct glTextureParameterfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureParameterfv( params->texture, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19356,6 +21258,7 @@ static NTSTATUS ext_glTextureParameterfvEXT( void *args )
     struct glTextureParameterfvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureParameterfvEXT( params->texture, params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19364,6 +21267,7 @@ static NTSTATUS ext_glTextureParameteri( void *args )
     struct glTextureParameteri_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureParameteri( params->texture, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19372,6 +21276,7 @@ static NTSTATUS ext_glTextureParameteriEXT( void *args )
     struct glTextureParameteriEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureParameteriEXT( params->texture, params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19380,6 +21285,7 @@ static NTSTATUS ext_glTextureParameteriv( void *args )
     struct glTextureParameteriv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureParameteriv( params->texture, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19388,6 +21294,7 @@ static NTSTATUS ext_glTextureParameterivEXT( void *args )
     struct glTextureParameterivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureParameterivEXT( params->texture, params->target, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19396,6 +21303,7 @@ static NTSTATUS ext_glTextureRangeAPPLE( void *args )
     struct glTextureRangeAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureRangeAPPLE( params->target, params->length, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19404,6 +21312,7 @@ static NTSTATUS ext_glTextureRenderbufferEXT( void *args )
     struct glTextureRenderbufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureRenderbufferEXT( params->texture, params->target, params->renderbuffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19412,6 +21321,7 @@ static NTSTATUS ext_glTextureStorage1D( void *args )
     struct glTextureStorage1D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureStorage1D( params->texture, params->levels, params->internalformat, params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19420,6 +21330,7 @@ static NTSTATUS ext_glTextureStorage1DEXT( void *args )
     struct glTextureStorage1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureStorage1DEXT( params->texture, params->target, params->levels, params->internalformat, params->width );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19428,6 +21339,7 @@ static NTSTATUS ext_glTextureStorage2D( void *args )
     struct glTextureStorage2D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureStorage2D( params->texture, params->levels, params->internalformat, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19436,6 +21348,7 @@ static NTSTATUS ext_glTextureStorage2DEXT( void *args )
     struct glTextureStorage2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureStorage2DEXT( params->texture, params->target, params->levels, params->internalformat, params->width, params->height );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19444,6 +21357,7 @@ static NTSTATUS ext_glTextureStorage2DMultisample( void *args )
     struct glTextureStorage2DMultisample_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureStorage2DMultisample( params->texture, params->samples, params->internalformat, params->width, params->height, params->fixedsamplelocations );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19452,6 +21366,7 @@ static NTSTATUS ext_glTextureStorage2DMultisampleEXT( void *args )
     struct glTextureStorage2DMultisampleEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureStorage2DMultisampleEXT( params->texture, params->target, params->samples, params->internalformat, params->width, params->height, params->fixedsamplelocations );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19460,6 +21375,7 @@ static NTSTATUS ext_glTextureStorage3D( void *args )
     struct glTextureStorage3D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureStorage3D( params->texture, params->levels, params->internalformat, params->width, params->height, params->depth );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19468,6 +21384,7 @@ static NTSTATUS ext_glTextureStorage3DEXT( void *args )
     struct glTextureStorage3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureStorage3DEXT( params->texture, params->target, params->levels, params->internalformat, params->width, params->height, params->depth );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19476,6 +21393,7 @@ static NTSTATUS ext_glTextureStorage3DMultisample( void *args )
     struct glTextureStorage3DMultisample_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureStorage3DMultisample( params->texture, params->samples, params->internalformat, params->width, params->height, params->depth, params->fixedsamplelocations );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19484,6 +21402,7 @@ static NTSTATUS ext_glTextureStorage3DMultisampleEXT( void *args )
     struct glTextureStorage3DMultisampleEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureStorage3DMultisampleEXT( params->texture, params->target, params->samples, params->internalformat, params->width, params->height, params->depth, params->fixedsamplelocations );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19492,6 +21411,7 @@ static NTSTATUS ext_glTextureStorageMem1DEXT( void *args )
     struct glTextureStorageMem1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureStorageMem1DEXT( params->texture, params->levels, params->internalFormat, params->width, params->memory, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19500,6 +21420,7 @@ static NTSTATUS ext_glTextureStorageMem2DEXT( void *args )
     struct glTextureStorageMem2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureStorageMem2DEXT( params->texture, params->levels, params->internalFormat, params->width, params->height, params->memory, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19508,6 +21429,7 @@ static NTSTATUS ext_glTextureStorageMem2DMultisampleEXT( void *args )
     struct glTextureStorageMem2DMultisampleEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureStorageMem2DMultisampleEXT( params->texture, params->samples, params->internalFormat, params->width, params->height, params->fixedSampleLocations, params->memory, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19516,6 +21438,7 @@ static NTSTATUS ext_glTextureStorageMem3DEXT( void *args )
     struct glTextureStorageMem3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureStorageMem3DEXT( params->texture, params->levels, params->internalFormat, params->width, params->height, params->depth, params->memory, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19524,6 +21447,7 @@ static NTSTATUS ext_glTextureStorageMem3DMultisampleEXT( void *args )
     struct glTextureStorageMem3DMultisampleEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureStorageMem3DMultisampleEXT( params->texture, params->samples, params->internalFormat, params->width, params->height, params->depth, params->fixedSampleLocations, params->memory, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19532,6 +21456,7 @@ static NTSTATUS ext_glTextureStorageSparseAMD( void *args )
     struct glTextureStorageSparseAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureStorageSparseAMD( params->texture, params->target, params->internalFormat, params->width, params->height, params->depth, params->layers, params->flags );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19540,6 +21465,7 @@ static NTSTATUS ext_glTextureSubImage1D( void *args )
     struct glTextureSubImage1D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureSubImage1D( params->texture, params->level, params->xoffset, params->width, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19548,6 +21474,7 @@ static NTSTATUS ext_glTextureSubImage1DEXT( void *args )
     struct glTextureSubImage1DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureSubImage1DEXT( params->texture, params->target, params->level, params->xoffset, params->width, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19556,6 +21483,7 @@ static NTSTATUS ext_glTextureSubImage2D( void *args )
     struct glTextureSubImage2D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureSubImage2D( params->texture, params->level, params->xoffset, params->yoffset, params->width, params->height, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19564,6 +21492,7 @@ static NTSTATUS ext_glTextureSubImage2DEXT( void *args )
     struct glTextureSubImage2DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureSubImage2DEXT( params->texture, params->target, params->level, params->xoffset, params->yoffset, params->width, params->height, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19572,6 +21501,7 @@ static NTSTATUS ext_glTextureSubImage3D( void *args )
     struct glTextureSubImage3D_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureSubImage3D( params->texture, params->level, params->xoffset, params->yoffset, params->zoffset, params->width, params->height, params->depth, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19580,6 +21510,7 @@ static NTSTATUS ext_glTextureSubImage3DEXT( void *args )
     struct glTextureSubImage3DEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureSubImage3DEXT( params->texture, params->target, params->level, params->xoffset, params->yoffset, params->zoffset, params->width, params->height, params->depth, params->format, params->type, params->pixels );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19588,6 +21519,7 @@ static NTSTATUS ext_glTextureView( void *args )
     struct glTextureView_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTextureView( params->texture, params->target, params->origtexture, params->internalformat, params->minlevel, params->numlevels, params->minlayer, params->numlayers );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19596,6 +21528,7 @@ static NTSTATUS ext_glTrackMatrixNV( void *args )
     struct glTrackMatrixNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTrackMatrixNV( params->target, params->address, params->matrix, params->transform );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19604,6 +21537,7 @@ static NTSTATUS ext_glTransformFeedbackAttribsNV( void *args )
     struct glTransformFeedbackAttribsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTransformFeedbackAttribsNV( params->count, params->attribs, params->bufferMode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19612,6 +21546,7 @@ static NTSTATUS ext_glTransformFeedbackBufferBase( void *args )
     struct glTransformFeedbackBufferBase_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTransformFeedbackBufferBase( params->xfb, params->index, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19620,6 +21555,7 @@ static NTSTATUS ext_glTransformFeedbackBufferRange( void *args )
     struct glTransformFeedbackBufferRange_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTransformFeedbackBufferRange( params->xfb, params->index, params->buffer, params->offset, params->size );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19628,6 +21564,7 @@ static NTSTATUS ext_glTransformFeedbackStreamAttribsNV( void *args )
     struct glTransformFeedbackStreamAttribsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTransformFeedbackStreamAttribsNV( params->count, params->attribs, params->nbuffers, params->bufstreams, params->bufferMode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19636,6 +21573,7 @@ static NTSTATUS ext_glTransformFeedbackVaryings( void *args )
     struct glTransformFeedbackVaryings_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTransformFeedbackVaryings( params->program, params->count, params->varyings, params->bufferMode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19644,6 +21582,7 @@ static NTSTATUS ext_glTransformFeedbackVaryingsEXT( void *args )
     struct glTransformFeedbackVaryingsEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTransformFeedbackVaryingsEXT( params->program, params->count, params->varyings, params->bufferMode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19652,6 +21591,7 @@ static NTSTATUS ext_glTransformFeedbackVaryingsNV( void *args )
     struct glTransformFeedbackVaryingsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTransformFeedbackVaryingsNV( params->program, params->count, params->locations, params->bufferMode );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19660,6 +21600,7 @@ static NTSTATUS ext_glTransformPathNV( void *args )
     struct glTransformPathNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTransformPathNV( params->resultPath, params->srcPath, params->transformType, params->transformValues );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19668,6 +21609,7 @@ static NTSTATUS ext_glTranslatexOES( void *args )
     struct glTranslatexOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTranslatexOES( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19676,6 +21618,7 @@ static NTSTATUS ext_glUniform1d( void *args )
     struct glUniform1d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1d( params->location, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19684,6 +21627,7 @@ static NTSTATUS ext_glUniform1dv( void *args )
     struct glUniform1dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1dv( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19692,6 +21636,7 @@ static NTSTATUS ext_glUniform1f( void *args )
     struct glUniform1f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1f( params->location, params->v0 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19700,6 +21645,7 @@ static NTSTATUS ext_glUniform1fARB( void *args )
     struct glUniform1fARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1fARB( params->location, params->v0 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19708,6 +21654,7 @@ static NTSTATUS ext_glUniform1fv( void *args )
     struct glUniform1fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1fv( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19716,6 +21663,7 @@ static NTSTATUS ext_glUniform1fvARB( void *args )
     struct glUniform1fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1fvARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19724,6 +21672,7 @@ static NTSTATUS ext_glUniform1i( void *args )
     struct glUniform1i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1i( params->location, params->v0 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19732,6 +21681,7 @@ static NTSTATUS ext_glUniform1i64ARB( void *args )
     struct glUniform1i64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1i64ARB( params->location, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19740,6 +21690,7 @@ static NTSTATUS ext_glUniform1i64NV( void *args )
     struct glUniform1i64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1i64NV( params->location, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19748,6 +21699,7 @@ static NTSTATUS ext_glUniform1i64vARB( void *args )
     struct glUniform1i64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1i64vARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19756,6 +21708,7 @@ static NTSTATUS ext_glUniform1i64vNV( void *args )
     struct glUniform1i64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1i64vNV( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19764,6 +21717,7 @@ static NTSTATUS ext_glUniform1iARB( void *args )
     struct glUniform1iARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1iARB( params->location, params->v0 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19772,6 +21726,7 @@ static NTSTATUS ext_glUniform1iv( void *args )
     struct glUniform1iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1iv( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19780,6 +21735,7 @@ static NTSTATUS ext_glUniform1ivARB( void *args )
     struct glUniform1ivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1ivARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19788,6 +21744,7 @@ static NTSTATUS ext_glUniform1ui( void *args )
     struct glUniform1ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1ui( params->location, params->v0 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19796,6 +21753,7 @@ static NTSTATUS ext_glUniform1ui64ARB( void *args )
     struct glUniform1ui64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1ui64ARB( params->location, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19804,6 +21762,7 @@ static NTSTATUS ext_glUniform1ui64NV( void *args )
     struct glUniform1ui64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1ui64NV( params->location, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19812,6 +21771,7 @@ static NTSTATUS ext_glUniform1ui64vARB( void *args )
     struct glUniform1ui64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1ui64vARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19820,6 +21780,7 @@ static NTSTATUS ext_glUniform1ui64vNV( void *args )
     struct glUniform1ui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1ui64vNV( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19828,6 +21789,7 @@ static NTSTATUS ext_glUniform1uiEXT( void *args )
     struct glUniform1uiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1uiEXT( params->location, params->v0 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19836,6 +21798,7 @@ static NTSTATUS ext_glUniform1uiv( void *args )
     struct glUniform1uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1uiv( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19844,6 +21807,7 @@ static NTSTATUS ext_glUniform1uivEXT( void *args )
     struct glUniform1uivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform1uivEXT( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19852,6 +21816,7 @@ static NTSTATUS ext_glUniform2d( void *args )
     struct glUniform2d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2d( params->location, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19860,6 +21825,7 @@ static NTSTATUS ext_glUniform2dv( void *args )
     struct glUniform2dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2dv( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19868,6 +21834,7 @@ static NTSTATUS ext_glUniform2f( void *args )
     struct glUniform2f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2f( params->location, params->v0, params->v1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19876,6 +21843,7 @@ static NTSTATUS ext_glUniform2fARB( void *args )
     struct glUniform2fARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2fARB( params->location, params->v0, params->v1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19884,6 +21852,7 @@ static NTSTATUS ext_glUniform2fv( void *args )
     struct glUniform2fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2fv( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19892,6 +21861,7 @@ static NTSTATUS ext_glUniform2fvARB( void *args )
     struct glUniform2fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2fvARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19900,6 +21870,7 @@ static NTSTATUS ext_glUniform2i( void *args )
     struct glUniform2i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2i( params->location, params->v0, params->v1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19908,6 +21879,7 @@ static NTSTATUS ext_glUniform2i64ARB( void *args )
     struct glUniform2i64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2i64ARB( params->location, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19916,6 +21888,7 @@ static NTSTATUS ext_glUniform2i64NV( void *args )
     struct glUniform2i64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2i64NV( params->location, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19924,6 +21897,7 @@ static NTSTATUS ext_glUniform2i64vARB( void *args )
     struct glUniform2i64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2i64vARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19932,6 +21906,7 @@ static NTSTATUS ext_glUniform2i64vNV( void *args )
     struct glUniform2i64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2i64vNV( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19940,6 +21915,7 @@ static NTSTATUS ext_glUniform2iARB( void *args )
     struct glUniform2iARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2iARB( params->location, params->v0, params->v1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19948,6 +21924,7 @@ static NTSTATUS ext_glUniform2iv( void *args )
     struct glUniform2iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2iv( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19956,6 +21933,7 @@ static NTSTATUS ext_glUniform2ivARB( void *args )
     struct glUniform2ivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2ivARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19964,6 +21942,7 @@ static NTSTATUS ext_glUniform2ui( void *args )
     struct glUniform2ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2ui( params->location, params->v0, params->v1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19972,6 +21951,7 @@ static NTSTATUS ext_glUniform2ui64ARB( void *args )
     struct glUniform2ui64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2ui64ARB( params->location, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19980,6 +21960,7 @@ static NTSTATUS ext_glUniform2ui64NV( void *args )
     struct glUniform2ui64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2ui64NV( params->location, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19988,6 +21969,7 @@ static NTSTATUS ext_glUniform2ui64vARB( void *args )
     struct glUniform2ui64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2ui64vARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -19996,6 +21978,7 @@ static NTSTATUS ext_glUniform2ui64vNV( void *args )
     struct glUniform2ui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2ui64vNV( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20004,6 +21987,7 @@ static NTSTATUS ext_glUniform2uiEXT( void *args )
     struct glUniform2uiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2uiEXT( params->location, params->v0, params->v1 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20012,6 +21996,7 @@ static NTSTATUS ext_glUniform2uiv( void *args )
     struct glUniform2uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2uiv( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20020,6 +22005,7 @@ static NTSTATUS ext_glUniform2uivEXT( void *args )
     struct glUniform2uivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform2uivEXT( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20028,6 +22014,7 @@ static NTSTATUS ext_glUniform3d( void *args )
     struct glUniform3d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3d( params->location, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20036,6 +22023,7 @@ static NTSTATUS ext_glUniform3dv( void *args )
     struct glUniform3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3dv( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20044,6 +22032,7 @@ static NTSTATUS ext_glUniform3f( void *args )
     struct glUniform3f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3f( params->location, params->v0, params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20052,6 +22041,7 @@ static NTSTATUS ext_glUniform3fARB( void *args )
     struct glUniform3fARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3fARB( params->location, params->v0, params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20060,6 +22050,7 @@ static NTSTATUS ext_glUniform3fv( void *args )
     struct glUniform3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3fv( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20068,6 +22059,7 @@ static NTSTATUS ext_glUniform3fvARB( void *args )
     struct glUniform3fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3fvARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20076,6 +22068,7 @@ static NTSTATUS ext_glUniform3i( void *args )
     struct glUniform3i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3i( params->location, params->v0, params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20084,6 +22077,7 @@ static NTSTATUS ext_glUniform3i64ARB( void *args )
     struct glUniform3i64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3i64ARB( params->location, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20092,6 +22086,7 @@ static NTSTATUS ext_glUniform3i64NV( void *args )
     struct glUniform3i64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3i64NV( params->location, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20100,6 +22095,7 @@ static NTSTATUS ext_glUniform3i64vARB( void *args )
     struct glUniform3i64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3i64vARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20108,6 +22104,7 @@ static NTSTATUS ext_glUniform3i64vNV( void *args )
     struct glUniform3i64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3i64vNV( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20116,6 +22113,7 @@ static NTSTATUS ext_glUniform3iARB( void *args )
     struct glUniform3iARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3iARB( params->location, params->v0, params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20124,6 +22122,7 @@ static NTSTATUS ext_glUniform3iv( void *args )
     struct glUniform3iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3iv( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20132,6 +22131,7 @@ static NTSTATUS ext_glUniform3ivARB( void *args )
     struct glUniform3ivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3ivARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20140,6 +22140,7 @@ static NTSTATUS ext_glUniform3ui( void *args )
     struct glUniform3ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3ui( params->location, params->v0, params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20148,6 +22149,7 @@ static NTSTATUS ext_glUniform3ui64ARB( void *args )
     struct glUniform3ui64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3ui64ARB( params->location, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20156,6 +22158,7 @@ static NTSTATUS ext_glUniform3ui64NV( void *args )
     struct glUniform3ui64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3ui64NV( params->location, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20164,6 +22167,7 @@ static NTSTATUS ext_glUniform3ui64vARB( void *args )
     struct glUniform3ui64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3ui64vARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20172,6 +22176,7 @@ static NTSTATUS ext_glUniform3ui64vNV( void *args )
     struct glUniform3ui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3ui64vNV( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20180,6 +22185,7 @@ static NTSTATUS ext_glUniform3uiEXT( void *args )
     struct glUniform3uiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3uiEXT( params->location, params->v0, params->v1, params->v2 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20188,6 +22194,7 @@ static NTSTATUS ext_glUniform3uiv( void *args )
     struct glUniform3uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3uiv( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20196,6 +22203,7 @@ static NTSTATUS ext_glUniform3uivEXT( void *args )
     struct glUniform3uivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform3uivEXT( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20204,6 +22212,7 @@ static NTSTATUS ext_glUniform4d( void *args )
     struct glUniform4d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4d( params->location, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20212,6 +22221,7 @@ static NTSTATUS ext_glUniform4dv( void *args )
     struct glUniform4dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4dv( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20220,6 +22230,7 @@ static NTSTATUS ext_glUniform4f( void *args )
     struct glUniform4f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4f( params->location, params->v0, params->v1, params->v2, params->v3 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20228,6 +22239,7 @@ static NTSTATUS ext_glUniform4fARB( void *args )
     struct glUniform4fARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4fARB( params->location, params->v0, params->v1, params->v2, params->v3 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20236,6 +22248,7 @@ static NTSTATUS ext_glUniform4fv( void *args )
     struct glUniform4fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4fv( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20244,6 +22257,7 @@ static NTSTATUS ext_glUniform4fvARB( void *args )
     struct glUniform4fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4fvARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20252,6 +22266,7 @@ static NTSTATUS ext_glUniform4i( void *args )
     struct glUniform4i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4i( params->location, params->v0, params->v1, params->v2, params->v3 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20260,6 +22275,7 @@ static NTSTATUS ext_glUniform4i64ARB( void *args )
     struct glUniform4i64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4i64ARB( params->location, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20268,6 +22284,7 @@ static NTSTATUS ext_glUniform4i64NV( void *args )
     struct glUniform4i64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4i64NV( params->location, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20276,6 +22293,7 @@ static NTSTATUS ext_glUniform4i64vARB( void *args )
     struct glUniform4i64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4i64vARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20284,6 +22302,7 @@ static NTSTATUS ext_glUniform4i64vNV( void *args )
     struct glUniform4i64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4i64vNV( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20292,6 +22311,7 @@ static NTSTATUS ext_glUniform4iARB( void *args )
     struct glUniform4iARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4iARB( params->location, params->v0, params->v1, params->v2, params->v3 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20300,6 +22320,7 @@ static NTSTATUS ext_glUniform4iv( void *args )
     struct glUniform4iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4iv( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20308,6 +22329,7 @@ static NTSTATUS ext_glUniform4ivARB( void *args )
     struct glUniform4ivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4ivARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20316,6 +22338,7 @@ static NTSTATUS ext_glUniform4ui( void *args )
     struct glUniform4ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4ui( params->location, params->v0, params->v1, params->v2, params->v3 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20324,6 +22347,7 @@ static NTSTATUS ext_glUniform4ui64ARB( void *args )
     struct glUniform4ui64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4ui64ARB( params->location, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20332,6 +22356,7 @@ static NTSTATUS ext_glUniform4ui64NV( void *args )
     struct glUniform4ui64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4ui64NV( params->location, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20340,6 +22365,7 @@ static NTSTATUS ext_glUniform4ui64vARB( void *args )
     struct glUniform4ui64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4ui64vARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20348,6 +22374,7 @@ static NTSTATUS ext_glUniform4ui64vNV( void *args )
     struct glUniform4ui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4ui64vNV( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20356,6 +22383,7 @@ static NTSTATUS ext_glUniform4uiEXT( void *args )
     struct glUniform4uiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4uiEXT( params->location, params->v0, params->v1, params->v2, params->v3 );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20364,6 +22392,7 @@ static NTSTATUS ext_glUniform4uiv( void *args )
     struct glUniform4uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4uiv( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20372,6 +22401,7 @@ static NTSTATUS ext_glUniform4uivEXT( void *args )
     struct glUniform4uivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniform4uivEXT( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20380,6 +22410,7 @@ static NTSTATUS ext_glUniformBlockBinding( void *args )
     struct glUniformBlockBinding_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformBlockBinding( params->program, params->uniformBlockIndex, params->uniformBlockBinding );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20388,6 +22419,7 @@ static NTSTATUS ext_glUniformBufferEXT( void *args )
     struct glUniformBufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformBufferEXT( params->program, params->location, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20396,6 +22428,7 @@ static NTSTATUS ext_glUniformHandleui64ARB( void *args )
     struct glUniformHandleui64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformHandleui64ARB( params->location, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20404,6 +22437,7 @@ static NTSTATUS ext_glUniformHandleui64NV( void *args )
     struct glUniformHandleui64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformHandleui64NV( params->location, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20412,6 +22446,7 @@ static NTSTATUS ext_glUniformHandleui64vARB( void *args )
     struct glUniformHandleui64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformHandleui64vARB( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20420,6 +22455,7 @@ static NTSTATUS ext_glUniformHandleui64vNV( void *args )
     struct glUniformHandleui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformHandleui64vNV( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20428,6 +22464,7 @@ static NTSTATUS ext_glUniformMatrix2dv( void *args )
     struct glUniformMatrix2dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix2dv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20436,6 +22473,7 @@ static NTSTATUS ext_glUniformMatrix2fv( void *args )
     struct glUniformMatrix2fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix2fv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20444,6 +22482,7 @@ static NTSTATUS ext_glUniformMatrix2fvARB( void *args )
     struct glUniformMatrix2fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix2fvARB( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20452,6 +22491,7 @@ static NTSTATUS ext_glUniformMatrix2x3dv( void *args )
     struct glUniformMatrix2x3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix2x3dv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20460,6 +22500,7 @@ static NTSTATUS ext_glUniformMatrix2x3fv( void *args )
     struct glUniformMatrix2x3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix2x3fv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20468,6 +22509,7 @@ static NTSTATUS ext_glUniformMatrix2x4dv( void *args )
     struct glUniformMatrix2x4dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix2x4dv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20476,6 +22518,7 @@ static NTSTATUS ext_glUniformMatrix2x4fv( void *args )
     struct glUniformMatrix2x4fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix2x4fv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20484,6 +22527,7 @@ static NTSTATUS ext_glUniformMatrix3dv( void *args )
     struct glUniformMatrix3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix3dv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20492,6 +22536,7 @@ static NTSTATUS ext_glUniformMatrix3fv( void *args )
     struct glUniformMatrix3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix3fv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20500,6 +22545,7 @@ static NTSTATUS ext_glUniformMatrix3fvARB( void *args )
     struct glUniformMatrix3fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix3fvARB( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20508,6 +22554,7 @@ static NTSTATUS ext_glUniformMatrix3x2dv( void *args )
     struct glUniformMatrix3x2dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix3x2dv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20516,6 +22563,7 @@ static NTSTATUS ext_glUniformMatrix3x2fv( void *args )
     struct glUniformMatrix3x2fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix3x2fv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20524,6 +22572,7 @@ static NTSTATUS ext_glUniformMatrix3x4dv( void *args )
     struct glUniformMatrix3x4dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix3x4dv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20532,6 +22581,7 @@ static NTSTATUS ext_glUniformMatrix3x4fv( void *args )
     struct glUniformMatrix3x4fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix3x4fv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20540,6 +22590,7 @@ static NTSTATUS ext_glUniformMatrix4dv( void *args )
     struct glUniformMatrix4dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix4dv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20548,6 +22599,7 @@ static NTSTATUS ext_glUniformMatrix4fv( void *args )
     struct glUniformMatrix4fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix4fv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20556,6 +22608,7 @@ static NTSTATUS ext_glUniformMatrix4fvARB( void *args )
     struct glUniformMatrix4fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix4fvARB( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20564,6 +22617,7 @@ static NTSTATUS ext_glUniformMatrix4x2dv( void *args )
     struct glUniformMatrix4x2dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix4x2dv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20572,6 +22626,7 @@ static NTSTATUS ext_glUniformMatrix4x2fv( void *args )
     struct glUniformMatrix4x2fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix4x2fv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20580,6 +22635,7 @@ static NTSTATUS ext_glUniformMatrix4x3dv( void *args )
     struct glUniformMatrix4x3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix4x3dv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20588,6 +22644,7 @@ static NTSTATUS ext_glUniformMatrix4x3fv( void *args )
     struct glUniformMatrix4x3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformMatrix4x3fv( params->location, params->count, params->transpose, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20596,6 +22653,7 @@ static NTSTATUS ext_glUniformSubroutinesuiv( void *args )
     struct glUniformSubroutinesuiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformSubroutinesuiv( params->shadertype, params->count, params->indices );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20604,6 +22662,7 @@ static NTSTATUS ext_glUniformui64NV( void *args )
     struct glUniformui64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformui64NV( params->location, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20612,6 +22671,7 @@ static NTSTATUS ext_glUniformui64vNV( void *args )
     struct glUniformui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUniformui64vNV( params->location, params->count, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20620,6 +22680,7 @@ static NTSTATUS ext_glUnlockArraysEXT( void *args )
     struct glUnlockArraysEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUnlockArraysEXT();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20628,6 +22689,7 @@ NTSTATUS ext_glUnmapBuffer( void *args )
     struct glUnmapBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glUnmapBuffer( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20636,6 +22698,7 @@ NTSTATUS ext_glUnmapBufferARB( void *args )
     struct glUnmapBufferARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glUnmapBufferARB( params->target );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20644,6 +22707,7 @@ NTSTATUS ext_glUnmapNamedBuffer( void *args )
     struct glUnmapNamedBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glUnmapNamedBuffer( params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20652,6 +22716,7 @@ NTSTATUS ext_glUnmapNamedBufferEXT( void *args )
     struct glUnmapNamedBufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glUnmapNamedBufferEXT( params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20660,6 +22725,7 @@ static NTSTATUS ext_glUnmapObjectBufferATI( void *args )
     struct glUnmapObjectBufferATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUnmapObjectBufferATI( params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20668,6 +22734,7 @@ static NTSTATUS ext_glUnmapTexture2DINTEL( void *args )
     struct glUnmapTexture2DINTEL_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUnmapTexture2DINTEL( params->texture, params->level );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20676,6 +22743,7 @@ static NTSTATUS ext_glUpdateObjectBufferATI( void *args )
     struct glUpdateObjectBufferATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUpdateObjectBufferATI( params->buffer, params->offset, params->size, params->pointer, params->preserve );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20684,6 +22752,7 @@ static NTSTATUS ext_glUploadGpuMaskNVX( void *args )
     struct glUploadGpuMaskNVX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUploadGpuMaskNVX( params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20692,6 +22761,7 @@ static NTSTATUS ext_glUseProgram( void *args )
     struct glUseProgram_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUseProgram( params->program );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20700,6 +22770,7 @@ static NTSTATUS ext_glUseProgramObjectARB( void *args )
     struct glUseProgramObjectARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUseProgramObjectARB( params->programObj );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20708,6 +22779,7 @@ static NTSTATUS ext_glUseProgramStages( void *args )
     struct glUseProgramStages_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUseProgramStages( params->pipeline, params->stages, params->program );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20716,6 +22788,7 @@ static NTSTATUS ext_glUseShaderProgramEXT( void *args )
     struct glUseShaderProgramEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glUseShaderProgramEXT( params->type, params->program );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20724,6 +22797,7 @@ static NTSTATUS ext_glVDPAUFiniNV( void *args )
     struct glVDPAUFiniNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVDPAUFiniNV();
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20732,6 +22806,7 @@ static NTSTATUS ext_glVDPAUGetSurfaceivNV( void *args )
     struct glVDPAUGetSurfaceivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVDPAUGetSurfaceivNV( params->surface, params->pname, params->count, params->length, params->values );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20740,6 +22815,7 @@ static NTSTATUS ext_glVDPAUInitNV( void *args )
     struct glVDPAUInitNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVDPAUInitNV( params->vdpDevice, params->getProcAddress );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20748,6 +22824,7 @@ static NTSTATUS ext_glVDPAUIsSurfaceNV( void *args )
     struct glVDPAUIsSurfaceNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glVDPAUIsSurfaceNV( params->surface );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20756,6 +22833,7 @@ static NTSTATUS ext_glVDPAUMapSurfacesNV( void *args )
     struct glVDPAUMapSurfacesNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVDPAUMapSurfacesNV( params->numSurfaces, params->surfaces );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20764,6 +22842,7 @@ static NTSTATUS ext_glVDPAURegisterOutputSurfaceNV( void *args )
     struct glVDPAURegisterOutputSurfaceNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glVDPAURegisterOutputSurfaceNV( params->vdpSurface, params->target, params->numTextureNames, params->textureNames );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20772,6 +22851,7 @@ static NTSTATUS ext_glVDPAURegisterVideoSurfaceNV( void *args )
     struct glVDPAURegisterVideoSurfaceNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glVDPAURegisterVideoSurfaceNV( params->vdpSurface, params->target, params->numTextureNames, params->textureNames );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20780,6 +22860,7 @@ static NTSTATUS ext_glVDPAURegisterVideoSurfaceWithPictureStructureNV( void *arg
     struct glVDPAURegisterVideoSurfaceWithPictureStructureNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glVDPAURegisterVideoSurfaceWithPictureStructureNV( params->vdpSurface, params->target, params->numTextureNames, params->textureNames, params->isFrameStructure );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20788,6 +22869,7 @@ static NTSTATUS ext_glVDPAUSurfaceAccessNV( void *args )
     struct glVDPAUSurfaceAccessNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVDPAUSurfaceAccessNV( params->surface, params->access );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20796,6 +22878,7 @@ static NTSTATUS ext_glVDPAUUnmapSurfacesNV( void *args )
     struct glVDPAUUnmapSurfacesNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVDPAUUnmapSurfacesNV( params->numSurface, params->surfaces );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20804,6 +22887,7 @@ static NTSTATUS ext_glVDPAUUnregisterSurfaceNV( void *args )
     struct glVDPAUUnregisterSurfaceNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVDPAUUnregisterSurfaceNV( params->surface );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20812,6 +22896,7 @@ static NTSTATUS ext_glValidateProgram( void *args )
     struct glValidateProgram_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glValidateProgram( params->program );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20820,6 +22905,7 @@ static NTSTATUS ext_glValidateProgramARB( void *args )
     struct glValidateProgramARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glValidateProgramARB( params->programObj );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20828,6 +22914,7 @@ static NTSTATUS ext_glValidateProgramPipeline( void *args )
     struct glValidateProgramPipeline_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glValidateProgramPipeline( params->pipeline );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20836,6 +22923,7 @@ static NTSTATUS ext_glVariantArrayObjectATI( void *args )
     struct glVariantArrayObjectATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVariantArrayObjectATI( params->id, params->type, params->stride, params->buffer, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20844,6 +22932,7 @@ static NTSTATUS ext_glVariantPointerEXT( void *args )
     struct glVariantPointerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVariantPointerEXT( params->id, params->type, params->stride, params->addr );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20852,6 +22941,7 @@ static NTSTATUS ext_glVariantbvEXT( void *args )
     struct glVariantbvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVariantbvEXT( params->id, params->addr );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20860,6 +22950,7 @@ static NTSTATUS ext_glVariantdvEXT( void *args )
     struct glVariantdvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVariantdvEXT( params->id, params->addr );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20868,6 +22959,7 @@ static NTSTATUS ext_glVariantfvEXT( void *args )
     struct glVariantfvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVariantfvEXT( params->id, params->addr );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20876,6 +22968,7 @@ static NTSTATUS ext_glVariantivEXT( void *args )
     struct glVariantivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVariantivEXT( params->id, params->addr );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20884,6 +22977,7 @@ static NTSTATUS ext_glVariantsvEXT( void *args )
     struct glVariantsvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVariantsvEXT( params->id, params->addr );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20892,6 +22986,7 @@ static NTSTATUS ext_glVariantubvEXT( void *args )
     struct glVariantubvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVariantubvEXT( params->id, params->addr );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20900,6 +22995,7 @@ static NTSTATUS ext_glVariantuivEXT( void *args )
     struct glVariantuivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVariantuivEXT( params->id, params->addr );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20908,6 +23004,7 @@ static NTSTATUS ext_glVariantusvEXT( void *args )
     struct glVariantusvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVariantusvEXT( params->id, params->addr );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20916,6 +23013,7 @@ static NTSTATUS ext_glVertex2bOES( void *args )
     struct glVertex2bOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex2bOES( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20924,6 +23022,7 @@ static NTSTATUS ext_glVertex2bvOES( void *args )
     struct glVertex2bvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex2bvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20932,6 +23031,7 @@ static NTSTATUS ext_glVertex2hNV( void *args )
     struct glVertex2hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex2hNV( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20940,6 +23040,7 @@ static NTSTATUS ext_glVertex2hvNV( void *args )
     struct glVertex2hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex2hvNV( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20948,6 +23049,7 @@ static NTSTATUS ext_glVertex2xOES( void *args )
     struct glVertex2xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex2xOES( params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20956,6 +23058,7 @@ static NTSTATUS ext_glVertex2xvOES( void *args )
     struct glVertex2xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex2xvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20964,6 +23067,7 @@ static NTSTATUS ext_glVertex3bOES( void *args )
     struct glVertex3bOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex3bOES( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20972,6 +23076,7 @@ static NTSTATUS ext_glVertex3bvOES( void *args )
     struct glVertex3bvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex3bvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20980,6 +23085,7 @@ static NTSTATUS ext_glVertex3hNV( void *args )
     struct glVertex3hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex3hNV( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20988,6 +23094,7 @@ static NTSTATUS ext_glVertex3hvNV( void *args )
     struct glVertex3hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex3hvNV( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -20996,6 +23103,7 @@ static NTSTATUS ext_glVertex3xOES( void *args )
     struct glVertex3xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex3xOES( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21004,6 +23112,7 @@ static NTSTATUS ext_glVertex3xvOES( void *args )
     struct glVertex3xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex3xvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21012,6 +23121,7 @@ static NTSTATUS ext_glVertex4bOES( void *args )
     struct glVertex4bOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex4bOES( params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21020,6 +23130,7 @@ static NTSTATUS ext_glVertex4bvOES( void *args )
     struct glVertex4bvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex4bvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21028,6 +23139,7 @@ static NTSTATUS ext_glVertex4hNV( void *args )
     struct glVertex4hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex4hNV( params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21036,6 +23148,7 @@ static NTSTATUS ext_glVertex4hvNV( void *args )
     struct glVertex4hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex4hvNV( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21044,6 +23157,7 @@ static NTSTATUS ext_glVertex4xOES( void *args )
     struct glVertex4xOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex4xOES( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21052,6 +23166,7 @@ static NTSTATUS ext_glVertex4xvOES( void *args )
     struct glVertex4xvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertex4xvOES( params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21060,6 +23175,7 @@ static NTSTATUS ext_glVertexArrayAttribBinding( void *args )
     struct glVertexArrayAttribBinding_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayAttribBinding( params->vaobj, params->attribindex, params->bindingindex );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21068,6 +23184,7 @@ static NTSTATUS ext_glVertexArrayAttribFormat( void *args )
     struct glVertexArrayAttribFormat_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayAttribFormat( params->vaobj, params->attribindex, params->size, params->type, params->normalized, params->relativeoffset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21076,6 +23193,7 @@ static NTSTATUS ext_glVertexArrayAttribIFormat( void *args )
     struct glVertexArrayAttribIFormat_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayAttribIFormat( params->vaobj, params->attribindex, params->size, params->type, params->relativeoffset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21084,6 +23202,7 @@ static NTSTATUS ext_glVertexArrayAttribLFormat( void *args )
     struct glVertexArrayAttribLFormat_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayAttribLFormat( params->vaobj, params->attribindex, params->size, params->type, params->relativeoffset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21092,6 +23211,7 @@ static NTSTATUS ext_glVertexArrayBindVertexBufferEXT( void *args )
     struct glVertexArrayBindVertexBufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayBindVertexBufferEXT( params->vaobj, params->bindingindex, params->buffer, params->offset, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21100,6 +23220,7 @@ static NTSTATUS ext_glVertexArrayBindingDivisor( void *args )
     struct glVertexArrayBindingDivisor_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayBindingDivisor( params->vaobj, params->bindingindex, params->divisor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21108,6 +23229,7 @@ static NTSTATUS ext_glVertexArrayColorOffsetEXT( void *args )
     struct glVertexArrayColorOffsetEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayColorOffsetEXT( params->vaobj, params->buffer, params->size, params->type, params->stride, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21116,6 +23238,7 @@ static NTSTATUS ext_glVertexArrayEdgeFlagOffsetEXT( void *args )
     struct glVertexArrayEdgeFlagOffsetEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayEdgeFlagOffsetEXT( params->vaobj, params->buffer, params->stride, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21124,6 +23247,7 @@ static NTSTATUS ext_glVertexArrayElementBuffer( void *args )
     struct glVertexArrayElementBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayElementBuffer( params->vaobj, params->buffer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21132,6 +23256,7 @@ static NTSTATUS ext_glVertexArrayFogCoordOffsetEXT( void *args )
     struct glVertexArrayFogCoordOffsetEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayFogCoordOffsetEXT( params->vaobj, params->buffer, params->type, params->stride, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21140,6 +23265,7 @@ static NTSTATUS ext_glVertexArrayIndexOffsetEXT( void *args )
     struct glVertexArrayIndexOffsetEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayIndexOffsetEXT( params->vaobj, params->buffer, params->type, params->stride, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21148,6 +23274,7 @@ static NTSTATUS ext_glVertexArrayMultiTexCoordOffsetEXT( void *args )
     struct glVertexArrayMultiTexCoordOffsetEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayMultiTexCoordOffsetEXT( params->vaobj, params->buffer, params->texunit, params->size, params->type, params->stride, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21156,6 +23283,7 @@ static NTSTATUS ext_glVertexArrayNormalOffsetEXT( void *args )
     struct glVertexArrayNormalOffsetEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayNormalOffsetEXT( params->vaobj, params->buffer, params->type, params->stride, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21164,6 +23292,7 @@ static NTSTATUS ext_glVertexArrayParameteriAPPLE( void *args )
     struct glVertexArrayParameteriAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayParameteriAPPLE( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21172,6 +23301,7 @@ static NTSTATUS ext_glVertexArrayRangeAPPLE( void *args )
     struct glVertexArrayRangeAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayRangeAPPLE( params->length, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21180,6 +23310,7 @@ static NTSTATUS ext_glVertexArrayRangeNV( void *args )
     struct glVertexArrayRangeNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayRangeNV( params->length, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21188,6 +23319,7 @@ static NTSTATUS ext_glVertexArraySecondaryColorOffsetEXT( void *args )
     struct glVertexArraySecondaryColorOffsetEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArraySecondaryColorOffsetEXT( params->vaobj, params->buffer, params->size, params->type, params->stride, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21196,6 +23328,7 @@ static NTSTATUS ext_glVertexArrayTexCoordOffsetEXT( void *args )
     struct glVertexArrayTexCoordOffsetEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayTexCoordOffsetEXT( params->vaobj, params->buffer, params->size, params->type, params->stride, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21204,6 +23337,7 @@ static NTSTATUS ext_glVertexArrayVertexAttribBindingEXT( void *args )
     struct glVertexArrayVertexAttribBindingEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayVertexAttribBindingEXT( params->vaobj, params->attribindex, params->bindingindex );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21212,6 +23346,7 @@ static NTSTATUS ext_glVertexArrayVertexAttribDivisorEXT( void *args )
     struct glVertexArrayVertexAttribDivisorEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayVertexAttribDivisorEXT( params->vaobj, params->index, params->divisor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21220,6 +23355,7 @@ static NTSTATUS ext_glVertexArrayVertexAttribFormatEXT( void *args )
     struct glVertexArrayVertexAttribFormatEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayVertexAttribFormatEXT( params->vaobj, params->attribindex, params->size, params->type, params->normalized, params->relativeoffset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21228,6 +23364,7 @@ static NTSTATUS ext_glVertexArrayVertexAttribIFormatEXT( void *args )
     struct glVertexArrayVertexAttribIFormatEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayVertexAttribIFormatEXT( params->vaobj, params->attribindex, params->size, params->type, params->relativeoffset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21236,6 +23373,7 @@ static NTSTATUS ext_glVertexArrayVertexAttribIOffsetEXT( void *args )
     struct glVertexArrayVertexAttribIOffsetEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayVertexAttribIOffsetEXT( params->vaobj, params->buffer, params->index, params->size, params->type, params->stride, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21244,6 +23382,7 @@ static NTSTATUS ext_glVertexArrayVertexAttribLFormatEXT( void *args )
     struct glVertexArrayVertexAttribLFormatEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayVertexAttribLFormatEXT( params->vaobj, params->attribindex, params->size, params->type, params->relativeoffset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21252,6 +23391,7 @@ static NTSTATUS ext_glVertexArrayVertexAttribLOffsetEXT( void *args )
     struct glVertexArrayVertexAttribLOffsetEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayVertexAttribLOffsetEXT( params->vaobj, params->buffer, params->index, params->size, params->type, params->stride, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21260,6 +23400,7 @@ static NTSTATUS ext_glVertexArrayVertexAttribOffsetEXT( void *args )
     struct glVertexArrayVertexAttribOffsetEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayVertexAttribOffsetEXT( params->vaobj, params->buffer, params->index, params->size, params->type, params->normalized, params->stride, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21268,6 +23409,7 @@ static NTSTATUS ext_glVertexArrayVertexBindingDivisorEXT( void *args )
     struct glVertexArrayVertexBindingDivisorEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayVertexBindingDivisorEXT( params->vaobj, params->bindingindex, params->divisor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21276,6 +23418,7 @@ static NTSTATUS ext_glVertexArrayVertexBuffer( void *args )
     struct glVertexArrayVertexBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayVertexBuffer( params->vaobj, params->bindingindex, params->buffer, params->offset, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21284,6 +23427,7 @@ static NTSTATUS ext_glVertexArrayVertexBuffers( void *args )
     struct glVertexArrayVertexBuffers_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayVertexBuffers( params->vaobj, params->first, params->count, params->buffers, params->offsets, params->strides );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21292,6 +23436,7 @@ static NTSTATUS ext_glVertexArrayVertexOffsetEXT( void *args )
     struct glVertexArrayVertexOffsetEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexArrayVertexOffsetEXT( params->vaobj, params->buffer, params->size, params->type, params->stride, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21300,6 +23445,7 @@ static NTSTATUS ext_glVertexAttrib1d( void *args )
     struct glVertexAttrib1d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1d( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21308,6 +23454,7 @@ static NTSTATUS ext_glVertexAttrib1dARB( void *args )
     struct glVertexAttrib1dARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1dARB( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21316,6 +23463,7 @@ static NTSTATUS ext_glVertexAttrib1dNV( void *args )
     struct glVertexAttrib1dNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1dNV( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21324,6 +23472,7 @@ static NTSTATUS ext_glVertexAttrib1dv( void *args )
     struct glVertexAttrib1dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1dv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21332,6 +23481,7 @@ static NTSTATUS ext_glVertexAttrib1dvARB( void *args )
     struct glVertexAttrib1dvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1dvARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21340,6 +23490,7 @@ static NTSTATUS ext_glVertexAttrib1dvNV( void *args )
     struct glVertexAttrib1dvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1dvNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21348,6 +23499,7 @@ static NTSTATUS ext_glVertexAttrib1f( void *args )
     struct glVertexAttrib1f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1f( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21356,6 +23508,7 @@ static NTSTATUS ext_glVertexAttrib1fARB( void *args )
     struct glVertexAttrib1fARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1fARB( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21364,6 +23517,7 @@ static NTSTATUS ext_glVertexAttrib1fNV( void *args )
     struct glVertexAttrib1fNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1fNV( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21372,6 +23526,7 @@ static NTSTATUS ext_glVertexAttrib1fv( void *args )
     struct glVertexAttrib1fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1fv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21380,6 +23535,7 @@ static NTSTATUS ext_glVertexAttrib1fvARB( void *args )
     struct glVertexAttrib1fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1fvARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21388,6 +23544,7 @@ static NTSTATUS ext_glVertexAttrib1fvNV( void *args )
     struct glVertexAttrib1fvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1fvNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21396,6 +23553,7 @@ static NTSTATUS ext_glVertexAttrib1hNV( void *args )
     struct glVertexAttrib1hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1hNV( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21404,6 +23562,7 @@ static NTSTATUS ext_glVertexAttrib1hvNV( void *args )
     struct glVertexAttrib1hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1hvNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21412,6 +23571,7 @@ static NTSTATUS ext_glVertexAttrib1s( void *args )
     struct glVertexAttrib1s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1s( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21420,6 +23580,7 @@ static NTSTATUS ext_glVertexAttrib1sARB( void *args )
     struct glVertexAttrib1sARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1sARB( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21428,6 +23589,7 @@ static NTSTATUS ext_glVertexAttrib1sNV( void *args )
     struct glVertexAttrib1sNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1sNV( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21436,6 +23598,7 @@ static NTSTATUS ext_glVertexAttrib1sv( void *args )
     struct glVertexAttrib1sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1sv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21444,6 +23607,7 @@ static NTSTATUS ext_glVertexAttrib1svARB( void *args )
     struct glVertexAttrib1svARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1svARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21452,6 +23616,7 @@ static NTSTATUS ext_glVertexAttrib1svNV( void *args )
     struct glVertexAttrib1svNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib1svNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21460,6 +23625,7 @@ static NTSTATUS ext_glVertexAttrib2d( void *args )
     struct glVertexAttrib2d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2d( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21468,6 +23634,7 @@ static NTSTATUS ext_glVertexAttrib2dARB( void *args )
     struct glVertexAttrib2dARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2dARB( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21476,6 +23643,7 @@ static NTSTATUS ext_glVertexAttrib2dNV( void *args )
     struct glVertexAttrib2dNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2dNV( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21484,6 +23652,7 @@ static NTSTATUS ext_glVertexAttrib2dv( void *args )
     struct glVertexAttrib2dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2dv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21492,6 +23661,7 @@ static NTSTATUS ext_glVertexAttrib2dvARB( void *args )
     struct glVertexAttrib2dvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2dvARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21500,6 +23670,7 @@ static NTSTATUS ext_glVertexAttrib2dvNV( void *args )
     struct glVertexAttrib2dvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2dvNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21508,6 +23679,7 @@ static NTSTATUS ext_glVertexAttrib2f( void *args )
     struct glVertexAttrib2f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2f( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21516,6 +23688,7 @@ static NTSTATUS ext_glVertexAttrib2fARB( void *args )
     struct glVertexAttrib2fARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2fARB( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21524,6 +23697,7 @@ static NTSTATUS ext_glVertexAttrib2fNV( void *args )
     struct glVertexAttrib2fNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2fNV( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21532,6 +23706,7 @@ static NTSTATUS ext_glVertexAttrib2fv( void *args )
     struct glVertexAttrib2fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2fv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21540,6 +23715,7 @@ static NTSTATUS ext_glVertexAttrib2fvARB( void *args )
     struct glVertexAttrib2fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2fvARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21548,6 +23724,7 @@ static NTSTATUS ext_glVertexAttrib2fvNV( void *args )
     struct glVertexAttrib2fvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2fvNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21556,6 +23733,7 @@ static NTSTATUS ext_glVertexAttrib2hNV( void *args )
     struct glVertexAttrib2hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2hNV( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21564,6 +23742,7 @@ static NTSTATUS ext_glVertexAttrib2hvNV( void *args )
     struct glVertexAttrib2hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2hvNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21572,6 +23751,7 @@ static NTSTATUS ext_glVertexAttrib2s( void *args )
     struct glVertexAttrib2s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2s( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21580,6 +23760,7 @@ static NTSTATUS ext_glVertexAttrib2sARB( void *args )
     struct glVertexAttrib2sARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2sARB( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21588,6 +23769,7 @@ static NTSTATUS ext_glVertexAttrib2sNV( void *args )
     struct glVertexAttrib2sNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2sNV( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21596,6 +23778,7 @@ static NTSTATUS ext_glVertexAttrib2sv( void *args )
     struct glVertexAttrib2sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2sv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21604,6 +23787,7 @@ static NTSTATUS ext_glVertexAttrib2svARB( void *args )
     struct glVertexAttrib2svARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2svARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21612,6 +23796,7 @@ static NTSTATUS ext_glVertexAttrib2svNV( void *args )
     struct glVertexAttrib2svNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib2svNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21620,6 +23805,7 @@ static NTSTATUS ext_glVertexAttrib3d( void *args )
     struct glVertexAttrib3d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3d( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21628,6 +23814,7 @@ static NTSTATUS ext_glVertexAttrib3dARB( void *args )
     struct glVertexAttrib3dARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3dARB( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21636,6 +23823,7 @@ static NTSTATUS ext_glVertexAttrib3dNV( void *args )
     struct glVertexAttrib3dNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3dNV( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21644,6 +23832,7 @@ static NTSTATUS ext_glVertexAttrib3dv( void *args )
     struct glVertexAttrib3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3dv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21652,6 +23841,7 @@ static NTSTATUS ext_glVertexAttrib3dvARB( void *args )
     struct glVertexAttrib3dvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3dvARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21660,6 +23850,7 @@ static NTSTATUS ext_glVertexAttrib3dvNV( void *args )
     struct glVertexAttrib3dvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3dvNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21668,6 +23859,7 @@ static NTSTATUS ext_glVertexAttrib3f( void *args )
     struct glVertexAttrib3f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3f( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21676,6 +23868,7 @@ static NTSTATUS ext_glVertexAttrib3fARB( void *args )
     struct glVertexAttrib3fARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3fARB( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21684,6 +23877,7 @@ static NTSTATUS ext_glVertexAttrib3fNV( void *args )
     struct glVertexAttrib3fNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3fNV( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21692,6 +23886,7 @@ static NTSTATUS ext_glVertexAttrib3fv( void *args )
     struct glVertexAttrib3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3fv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21700,6 +23895,7 @@ static NTSTATUS ext_glVertexAttrib3fvARB( void *args )
     struct glVertexAttrib3fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3fvARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21708,6 +23904,7 @@ static NTSTATUS ext_glVertexAttrib3fvNV( void *args )
     struct glVertexAttrib3fvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3fvNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21716,6 +23913,7 @@ static NTSTATUS ext_glVertexAttrib3hNV( void *args )
     struct glVertexAttrib3hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3hNV( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21724,6 +23922,7 @@ static NTSTATUS ext_glVertexAttrib3hvNV( void *args )
     struct glVertexAttrib3hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3hvNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21732,6 +23931,7 @@ static NTSTATUS ext_glVertexAttrib3s( void *args )
     struct glVertexAttrib3s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3s( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21740,6 +23940,7 @@ static NTSTATUS ext_glVertexAttrib3sARB( void *args )
     struct glVertexAttrib3sARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3sARB( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21748,6 +23949,7 @@ static NTSTATUS ext_glVertexAttrib3sNV( void *args )
     struct glVertexAttrib3sNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3sNV( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21756,6 +23958,7 @@ static NTSTATUS ext_glVertexAttrib3sv( void *args )
     struct glVertexAttrib3sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3sv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21764,6 +23967,7 @@ static NTSTATUS ext_glVertexAttrib3svARB( void *args )
     struct glVertexAttrib3svARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3svARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21772,6 +23976,7 @@ static NTSTATUS ext_glVertexAttrib3svNV( void *args )
     struct glVertexAttrib3svNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib3svNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21780,6 +23985,7 @@ static NTSTATUS ext_glVertexAttrib4Nbv( void *args )
     struct glVertexAttrib4Nbv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4Nbv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21788,6 +23994,7 @@ static NTSTATUS ext_glVertexAttrib4NbvARB( void *args )
     struct glVertexAttrib4NbvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4NbvARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21796,6 +24003,7 @@ static NTSTATUS ext_glVertexAttrib4Niv( void *args )
     struct glVertexAttrib4Niv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4Niv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21804,6 +24012,7 @@ static NTSTATUS ext_glVertexAttrib4NivARB( void *args )
     struct glVertexAttrib4NivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4NivARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21812,6 +24021,7 @@ static NTSTATUS ext_glVertexAttrib4Nsv( void *args )
     struct glVertexAttrib4Nsv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4Nsv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21820,6 +24030,7 @@ static NTSTATUS ext_glVertexAttrib4NsvARB( void *args )
     struct glVertexAttrib4NsvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4NsvARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21828,6 +24039,7 @@ static NTSTATUS ext_glVertexAttrib4Nub( void *args )
     struct glVertexAttrib4Nub_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4Nub( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21836,6 +24048,7 @@ static NTSTATUS ext_glVertexAttrib4NubARB( void *args )
     struct glVertexAttrib4NubARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4NubARB( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21844,6 +24057,7 @@ static NTSTATUS ext_glVertexAttrib4Nubv( void *args )
     struct glVertexAttrib4Nubv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4Nubv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21852,6 +24066,7 @@ static NTSTATUS ext_glVertexAttrib4NubvARB( void *args )
     struct glVertexAttrib4NubvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4NubvARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21860,6 +24075,7 @@ static NTSTATUS ext_glVertexAttrib4Nuiv( void *args )
     struct glVertexAttrib4Nuiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4Nuiv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21868,6 +24084,7 @@ static NTSTATUS ext_glVertexAttrib4NuivARB( void *args )
     struct glVertexAttrib4NuivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4NuivARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21876,6 +24093,7 @@ static NTSTATUS ext_glVertexAttrib4Nusv( void *args )
     struct glVertexAttrib4Nusv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4Nusv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21884,6 +24102,7 @@ static NTSTATUS ext_glVertexAttrib4NusvARB( void *args )
     struct glVertexAttrib4NusvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4NusvARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21892,6 +24111,7 @@ static NTSTATUS ext_glVertexAttrib4bv( void *args )
     struct glVertexAttrib4bv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4bv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21900,6 +24120,7 @@ static NTSTATUS ext_glVertexAttrib4bvARB( void *args )
     struct glVertexAttrib4bvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4bvARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21908,6 +24129,7 @@ static NTSTATUS ext_glVertexAttrib4d( void *args )
     struct glVertexAttrib4d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4d( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21916,6 +24138,7 @@ static NTSTATUS ext_glVertexAttrib4dARB( void *args )
     struct glVertexAttrib4dARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4dARB( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21924,6 +24147,7 @@ static NTSTATUS ext_glVertexAttrib4dNV( void *args )
     struct glVertexAttrib4dNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4dNV( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21932,6 +24156,7 @@ static NTSTATUS ext_glVertexAttrib4dv( void *args )
     struct glVertexAttrib4dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4dv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21940,6 +24165,7 @@ static NTSTATUS ext_glVertexAttrib4dvARB( void *args )
     struct glVertexAttrib4dvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4dvARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21948,6 +24174,7 @@ static NTSTATUS ext_glVertexAttrib4dvNV( void *args )
     struct glVertexAttrib4dvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4dvNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21956,6 +24183,7 @@ static NTSTATUS ext_glVertexAttrib4f( void *args )
     struct glVertexAttrib4f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4f( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21964,6 +24192,7 @@ static NTSTATUS ext_glVertexAttrib4fARB( void *args )
     struct glVertexAttrib4fARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4fARB( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21972,6 +24201,7 @@ static NTSTATUS ext_glVertexAttrib4fNV( void *args )
     struct glVertexAttrib4fNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4fNV( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21980,6 +24210,7 @@ static NTSTATUS ext_glVertexAttrib4fv( void *args )
     struct glVertexAttrib4fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4fv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21988,6 +24219,7 @@ static NTSTATUS ext_glVertexAttrib4fvARB( void *args )
     struct glVertexAttrib4fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4fvARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -21996,6 +24228,7 @@ static NTSTATUS ext_glVertexAttrib4fvNV( void *args )
     struct glVertexAttrib4fvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4fvNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22004,6 +24237,7 @@ static NTSTATUS ext_glVertexAttrib4hNV( void *args )
     struct glVertexAttrib4hNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4hNV( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22012,6 +24246,7 @@ static NTSTATUS ext_glVertexAttrib4hvNV( void *args )
     struct glVertexAttrib4hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4hvNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22020,6 +24255,7 @@ static NTSTATUS ext_glVertexAttrib4iv( void *args )
     struct glVertexAttrib4iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4iv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22028,6 +24264,7 @@ static NTSTATUS ext_glVertexAttrib4ivARB( void *args )
     struct glVertexAttrib4ivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4ivARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22036,6 +24273,7 @@ static NTSTATUS ext_glVertexAttrib4s( void *args )
     struct glVertexAttrib4s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4s( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22044,6 +24282,7 @@ static NTSTATUS ext_glVertexAttrib4sARB( void *args )
     struct glVertexAttrib4sARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4sARB( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22052,6 +24291,7 @@ static NTSTATUS ext_glVertexAttrib4sNV( void *args )
     struct glVertexAttrib4sNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4sNV( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22060,6 +24300,7 @@ static NTSTATUS ext_glVertexAttrib4sv( void *args )
     struct glVertexAttrib4sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4sv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22068,6 +24309,7 @@ static NTSTATUS ext_glVertexAttrib4svARB( void *args )
     struct glVertexAttrib4svARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4svARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22076,6 +24318,7 @@ static NTSTATUS ext_glVertexAttrib4svNV( void *args )
     struct glVertexAttrib4svNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4svNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22084,6 +24327,7 @@ static NTSTATUS ext_glVertexAttrib4ubNV( void *args )
     struct glVertexAttrib4ubNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4ubNV( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22092,6 +24336,7 @@ static NTSTATUS ext_glVertexAttrib4ubv( void *args )
     struct glVertexAttrib4ubv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4ubv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22100,6 +24345,7 @@ static NTSTATUS ext_glVertexAttrib4ubvARB( void *args )
     struct glVertexAttrib4ubvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4ubvARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22108,6 +24354,7 @@ static NTSTATUS ext_glVertexAttrib4ubvNV( void *args )
     struct glVertexAttrib4ubvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4ubvNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22116,6 +24363,7 @@ static NTSTATUS ext_glVertexAttrib4uiv( void *args )
     struct glVertexAttrib4uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4uiv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22124,6 +24372,7 @@ static NTSTATUS ext_glVertexAttrib4uivARB( void *args )
     struct glVertexAttrib4uivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4uivARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22132,6 +24381,7 @@ static NTSTATUS ext_glVertexAttrib4usv( void *args )
     struct glVertexAttrib4usv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4usv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22140,6 +24390,7 @@ static NTSTATUS ext_glVertexAttrib4usvARB( void *args )
     struct glVertexAttrib4usvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttrib4usvARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22148,6 +24399,7 @@ static NTSTATUS ext_glVertexAttribArrayObjectATI( void *args )
     struct glVertexAttribArrayObjectATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribArrayObjectATI( params->index, params->size, params->type, params->normalized, params->stride, params->buffer, params->offset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22156,6 +24408,7 @@ static NTSTATUS ext_glVertexAttribBinding( void *args )
     struct glVertexAttribBinding_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribBinding( params->attribindex, params->bindingindex );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22164,6 +24417,7 @@ static NTSTATUS ext_glVertexAttribDivisor( void *args )
     struct glVertexAttribDivisor_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribDivisor( params->index, params->divisor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22172,6 +24426,7 @@ static NTSTATUS ext_glVertexAttribDivisorARB( void *args )
     struct glVertexAttribDivisorARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribDivisorARB( params->index, params->divisor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22180,6 +24435,7 @@ static NTSTATUS ext_glVertexAttribFormat( void *args )
     struct glVertexAttribFormat_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribFormat( params->attribindex, params->size, params->type, params->normalized, params->relativeoffset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22188,6 +24444,7 @@ static NTSTATUS ext_glVertexAttribFormatNV( void *args )
     struct glVertexAttribFormatNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribFormatNV( params->index, params->size, params->type, params->normalized, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22196,6 +24453,7 @@ static NTSTATUS ext_glVertexAttribI1i( void *args )
     struct glVertexAttribI1i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI1i( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22204,6 +24462,7 @@ static NTSTATUS ext_glVertexAttribI1iEXT( void *args )
     struct glVertexAttribI1iEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI1iEXT( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22212,6 +24471,7 @@ static NTSTATUS ext_glVertexAttribI1iv( void *args )
     struct glVertexAttribI1iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI1iv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22220,6 +24480,7 @@ static NTSTATUS ext_glVertexAttribI1ivEXT( void *args )
     struct glVertexAttribI1ivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI1ivEXT( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22228,6 +24489,7 @@ static NTSTATUS ext_glVertexAttribI1ui( void *args )
     struct glVertexAttribI1ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI1ui( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22236,6 +24498,7 @@ static NTSTATUS ext_glVertexAttribI1uiEXT( void *args )
     struct glVertexAttribI1uiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI1uiEXT( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22244,6 +24507,7 @@ static NTSTATUS ext_glVertexAttribI1uiv( void *args )
     struct glVertexAttribI1uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI1uiv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22252,6 +24516,7 @@ static NTSTATUS ext_glVertexAttribI1uivEXT( void *args )
     struct glVertexAttribI1uivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI1uivEXT( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22260,6 +24525,7 @@ static NTSTATUS ext_glVertexAttribI2i( void *args )
     struct glVertexAttribI2i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI2i( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22268,6 +24534,7 @@ static NTSTATUS ext_glVertexAttribI2iEXT( void *args )
     struct glVertexAttribI2iEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI2iEXT( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22276,6 +24543,7 @@ static NTSTATUS ext_glVertexAttribI2iv( void *args )
     struct glVertexAttribI2iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI2iv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22284,6 +24552,7 @@ static NTSTATUS ext_glVertexAttribI2ivEXT( void *args )
     struct glVertexAttribI2ivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI2ivEXT( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22292,6 +24561,7 @@ static NTSTATUS ext_glVertexAttribI2ui( void *args )
     struct glVertexAttribI2ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI2ui( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22300,6 +24570,7 @@ static NTSTATUS ext_glVertexAttribI2uiEXT( void *args )
     struct glVertexAttribI2uiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI2uiEXT( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22308,6 +24579,7 @@ static NTSTATUS ext_glVertexAttribI2uiv( void *args )
     struct glVertexAttribI2uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI2uiv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22316,6 +24588,7 @@ static NTSTATUS ext_glVertexAttribI2uivEXT( void *args )
     struct glVertexAttribI2uivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI2uivEXT( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22324,6 +24597,7 @@ static NTSTATUS ext_glVertexAttribI3i( void *args )
     struct glVertexAttribI3i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI3i( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22332,6 +24606,7 @@ static NTSTATUS ext_glVertexAttribI3iEXT( void *args )
     struct glVertexAttribI3iEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI3iEXT( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22340,6 +24615,7 @@ static NTSTATUS ext_glVertexAttribI3iv( void *args )
     struct glVertexAttribI3iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI3iv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22348,6 +24624,7 @@ static NTSTATUS ext_glVertexAttribI3ivEXT( void *args )
     struct glVertexAttribI3ivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI3ivEXT( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22356,6 +24633,7 @@ static NTSTATUS ext_glVertexAttribI3ui( void *args )
     struct glVertexAttribI3ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI3ui( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22364,6 +24642,7 @@ static NTSTATUS ext_glVertexAttribI3uiEXT( void *args )
     struct glVertexAttribI3uiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI3uiEXT( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22372,6 +24651,7 @@ static NTSTATUS ext_glVertexAttribI3uiv( void *args )
     struct glVertexAttribI3uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI3uiv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22380,6 +24660,7 @@ static NTSTATUS ext_glVertexAttribI3uivEXT( void *args )
     struct glVertexAttribI3uivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI3uivEXT( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22388,6 +24669,7 @@ static NTSTATUS ext_glVertexAttribI4bv( void *args )
     struct glVertexAttribI4bv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI4bv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22396,6 +24678,7 @@ static NTSTATUS ext_glVertexAttribI4bvEXT( void *args )
     struct glVertexAttribI4bvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI4bvEXT( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22404,6 +24687,7 @@ static NTSTATUS ext_glVertexAttribI4i( void *args )
     struct glVertexAttribI4i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI4i( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22412,6 +24696,7 @@ static NTSTATUS ext_glVertexAttribI4iEXT( void *args )
     struct glVertexAttribI4iEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI4iEXT( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22420,6 +24705,7 @@ static NTSTATUS ext_glVertexAttribI4iv( void *args )
     struct glVertexAttribI4iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI4iv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22428,6 +24714,7 @@ static NTSTATUS ext_glVertexAttribI4ivEXT( void *args )
     struct glVertexAttribI4ivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI4ivEXT( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22436,6 +24723,7 @@ static NTSTATUS ext_glVertexAttribI4sv( void *args )
     struct glVertexAttribI4sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI4sv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22444,6 +24732,7 @@ static NTSTATUS ext_glVertexAttribI4svEXT( void *args )
     struct glVertexAttribI4svEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI4svEXT( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22452,6 +24741,7 @@ static NTSTATUS ext_glVertexAttribI4ubv( void *args )
     struct glVertexAttribI4ubv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI4ubv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22460,6 +24750,7 @@ static NTSTATUS ext_glVertexAttribI4ubvEXT( void *args )
     struct glVertexAttribI4ubvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI4ubvEXT( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22468,6 +24759,7 @@ static NTSTATUS ext_glVertexAttribI4ui( void *args )
     struct glVertexAttribI4ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI4ui( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22476,6 +24768,7 @@ static NTSTATUS ext_glVertexAttribI4uiEXT( void *args )
     struct glVertexAttribI4uiEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI4uiEXT( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22484,6 +24777,7 @@ static NTSTATUS ext_glVertexAttribI4uiv( void *args )
     struct glVertexAttribI4uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI4uiv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22492,6 +24786,7 @@ static NTSTATUS ext_glVertexAttribI4uivEXT( void *args )
     struct glVertexAttribI4uivEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI4uivEXT( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22500,6 +24795,7 @@ static NTSTATUS ext_glVertexAttribI4usv( void *args )
     struct glVertexAttribI4usv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI4usv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22508,6 +24804,7 @@ static NTSTATUS ext_glVertexAttribI4usvEXT( void *args )
     struct glVertexAttribI4usvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribI4usvEXT( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22516,6 +24813,7 @@ static NTSTATUS ext_glVertexAttribIFormat( void *args )
     struct glVertexAttribIFormat_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribIFormat( params->attribindex, params->size, params->type, params->relativeoffset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22524,6 +24822,7 @@ static NTSTATUS ext_glVertexAttribIFormatNV( void *args )
     struct glVertexAttribIFormatNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribIFormatNV( params->index, params->size, params->type, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22532,6 +24831,7 @@ static NTSTATUS ext_glVertexAttribIPointer( void *args )
     struct glVertexAttribIPointer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribIPointer( params->index, params->size, params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22540,6 +24840,7 @@ static NTSTATUS ext_glVertexAttribIPointerEXT( void *args )
     struct glVertexAttribIPointerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribIPointerEXT( params->index, params->size, params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22548,6 +24849,7 @@ static NTSTATUS ext_glVertexAttribL1d( void *args )
     struct glVertexAttribL1d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL1d( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22556,6 +24858,7 @@ static NTSTATUS ext_glVertexAttribL1dEXT( void *args )
     struct glVertexAttribL1dEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL1dEXT( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22564,6 +24867,7 @@ static NTSTATUS ext_glVertexAttribL1dv( void *args )
     struct glVertexAttribL1dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL1dv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22572,6 +24876,7 @@ static NTSTATUS ext_glVertexAttribL1dvEXT( void *args )
     struct glVertexAttribL1dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL1dvEXT( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22580,6 +24885,7 @@ static NTSTATUS ext_glVertexAttribL1i64NV( void *args )
     struct glVertexAttribL1i64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL1i64NV( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22588,6 +24894,7 @@ static NTSTATUS ext_glVertexAttribL1i64vNV( void *args )
     struct glVertexAttribL1i64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL1i64vNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22596,6 +24903,7 @@ static NTSTATUS ext_glVertexAttribL1ui64ARB( void *args )
     struct glVertexAttribL1ui64ARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL1ui64ARB( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22604,6 +24912,7 @@ static NTSTATUS ext_glVertexAttribL1ui64NV( void *args )
     struct glVertexAttribL1ui64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL1ui64NV( params->index, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22612,6 +24921,7 @@ static NTSTATUS ext_glVertexAttribL1ui64vARB( void *args )
     struct glVertexAttribL1ui64vARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL1ui64vARB( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22620,6 +24930,7 @@ static NTSTATUS ext_glVertexAttribL1ui64vNV( void *args )
     struct glVertexAttribL1ui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL1ui64vNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22628,6 +24939,7 @@ static NTSTATUS ext_glVertexAttribL2d( void *args )
     struct glVertexAttribL2d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL2d( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22636,6 +24948,7 @@ static NTSTATUS ext_glVertexAttribL2dEXT( void *args )
     struct glVertexAttribL2dEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL2dEXT( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22644,6 +24957,7 @@ static NTSTATUS ext_glVertexAttribL2dv( void *args )
     struct glVertexAttribL2dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL2dv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22652,6 +24966,7 @@ static NTSTATUS ext_glVertexAttribL2dvEXT( void *args )
     struct glVertexAttribL2dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL2dvEXT( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22660,6 +24975,7 @@ static NTSTATUS ext_glVertexAttribL2i64NV( void *args )
     struct glVertexAttribL2i64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL2i64NV( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22668,6 +24984,7 @@ static NTSTATUS ext_glVertexAttribL2i64vNV( void *args )
     struct glVertexAttribL2i64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL2i64vNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22676,6 +24993,7 @@ static NTSTATUS ext_glVertexAttribL2ui64NV( void *args )
     struct glVertexAttribL2ui64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL2ui64NV( params->index, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22684,6 +25002,7 @@ static NTSTATUS ext_glVertexAttribL2ui64vNV( void *args )
     struct glVertexAttribL2ui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL2ui64vNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22692,6 +25011,7 @@ static NTSTATUS ext_glVertexAttribL3d( void *args )
     struct glVertexAttribL3d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL3d( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22700,6 +25020,7 @@ static NTSTATUS ext_glVertexAttribL3dEXT( void *args )
     struct glVertexAttribL3dEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL3dEXT( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22708,6 +25029,7 @@ static NTSTATUS ext_glVertexAttribL3dv( void *args )
     struct glVertexAttribL3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL3dv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22716,6 +25038,7 @@ static NTSTATUS ext_glVertexAttribL3dvEXT( void *args )
     struct glVertexAttribL3dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL3dvEXT( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22724,6 +25047,7 @@ static NTSTATUS ext_glVertexAttribL3i64NV( void *args )
     struct glVertexAttribL3i64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL3i64NV( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22732,6 +25056,7 @@ static NTSTATUS ext_glVertexAttribL3i64vNV( void *args )
     struct glVertexAttribL3i64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL3i64vNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22740,6 +25065,7 @@ static NTSTATUS ext_glVertexAttribL3ui64NV( void *args )
     struct glVertexAttribL3ui64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL3ui64NV( params->index, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22748,6 +25074,7 @@ static NTSTATUS ext_glVertexAttribL3ui64vNV( void *args )
     struct glVertexAttribL3ui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL3ui64vNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22756,6 +25083,7 @@ static NTSTATUS ext_glVertexAttribL4d( void *args )
     struct glVertexAttribL4d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL4d( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22764,6 +25092,7 @@ static NTSTATUS ext_glVertexAttribL4dEXT( void *args )
     struct glVertexAttribL4dEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL4dEXT( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22772,6 +25101,7 @@ static NTSTATUS ext_glVertexAttribL4dv( void *args )
     struct glVertexAttribL4dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL4dv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22780,6 +25110,7 @@ static NTSTATUS ext_glVertexAttribL4dvEXT( void *args )
     struct glVertexAttribL4dvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL4dvEXT( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22788,6 +25119,7 @@ static NTSTATUS ext_glVertexAttribL4i64NV( void *args )
     struct glVertexAttribL4i64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL4i64NV( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22796,6 +25128,7 @@ static NTSTATUS ext_glVertexAttribL4i64vNV( void *args )
     struct glVertexAttribL4i64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL4i64vNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22804,6 +25137,7 @@ static NTSTATUS ext_glVertexAttribL4ui64NV( void *args )
     struct glVertexAttribL4ui64NV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL4ui64NV( params->index, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22812,6 +25146,7 @@ static NTSTATUS ext_glVertexAttribL4ui64vNV( void *args )
     struct glVertexAttribL4ui64vNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribL4ui64vNV( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22820,6 +25155,7 @@ static NTSTATUS ext_glVertexAttribLFormat( void *args )
     struct glVertexAttribLFormat_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribLFormat( params->attribindex, params->size, params->type, params->relativeoffset );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22828,6 +25164,7 @@ static NTSTATUS ext_glVertexAttribLFormatNV( void *args )
     struct glVertexAttribLFormatNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribLFormatNV( params->index, params->size, params->type, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22836,6 +25173,7 @@ static NTSTATUS ext_glVertexAttribLPointer( void *args )
     struct glVertexAttribLPointer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribLPointer( params->index, params->size, params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22844,6 +25182,7 @@ static NTSTATUS ext_glVertexAttribLPointerEXT( void *args )
     struct glVertexAttribLPointerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribLPointerEXT( params->index, params->size, params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22852,6 +25191,7 @@ static NTSTATUS ext_glVertexAttribP1ui( void *args )
     struct glVertexAttribP1ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribP1ui( params->index, params->type, params->normalized, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22860,6 +25200,7 @@ static NTSTATUS ext_glVertexAttribP1uiv( void *args )
     struct glVertexAttribP1uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribP1uiv( params->index, params->type, params->normalized, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22868,6 +25209,7 @@ static NTSTATUS ext_glVertexAttribP2ui( void *args )
     struct glVertexAttribP2ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribP2ui( params->index, params->type, params->normalized, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22876,6 +25218,7 @@ static NTSTATUS ext_glVertexAttribP2uiv( void *args )
     struct glVertexAttribP2uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribP2uiv( params->index, params->type, params->normalized, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22884,6 +25227,7 @@ static NTSTATUS ext_glVertexAttribP3ui( void *args )
     struct glVertexAttribP3ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribP3ui( params->index, params->type, params->normalized, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22892,6 +25236,7 @@ static NTSTATUS ext_glVertexAttribP3uiv( void *args )
     struct glVertexAttribP3uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribP3uiv( params->index, params->type, params->normalized, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22900,6 +25245,7 @@ static NTSTATUS ext_glVertexAttribP4ui( void *args )
     struct glVertexAttribP4ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribP4ui( params->index, params->type, params->normalized, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22908,6 +25254,7 @@ static NTSTATUS ext_glVertexAttribP4uiv( void *args )
     struct glVertexAttribP4uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribP4uiv( params->index, params->type, params->normalized, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22916,6 +25263,7 @@ static NTSTATUS ext_glVertexAttribParameteriAMD( void *args )
     struct glVertexAttribParameteriAMD_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribParameteriAMD( params->index, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22924,6 +25272,7 @@ static NTSTATUS ext_glVertexAttribPointer( void *args )
     struct glVertexAttribPointer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribPointer( params->index, params->size, params->type, params->normalized, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22932,6 +25281,7 @@ static NTSTATUS ext_glVertexAttribPointerARB( void *args )
     struct glVertexAttribPointerARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribPointerARB( params->index, params->size, params->type, params->normalized, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22940,6 +25290,7 @@ static NTSTATUS ext_glVertexAttribPointerNV( void *args )
     struct glVertexAttribPointerNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribPointerNV( params->index, params->fsize, params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22948,6 +25299,7 @@ static NTSTATUS ext_glVertexAttribs1dvNV( void *args )
     struct glVertexAttribs1dvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs1dvNV( params->index, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22956,6 +25308,7 @@ static NTSTATUS ext_glVertexAttribs1fvNV( void *args )
     struct glVertexAttribs1fvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs1fvNV( params->index, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22964,6 +25317,7 @@ static NTSTATUS ext_glVertexAttribs1hvNV( void *args )
     struct glVertexAttribs1hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs1hvNV( params->index, params->n, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22972,6 +25326,7 @@ static NTSTATUS ext_glVertexAttribs1svNV( void *args )
     struct glVertexAttribs1svNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs1svNV( params->index, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22980,6 +25335,7 @@ static NTSTATUS ext_glVertexAttribs2dvNV( void *args )
     struct glVertexAttribs2dvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs2dvNV( params->index, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22988,6 +25344,7 @@ static NTSTATUS ext_glVertexAttribs2fvNV( void *args )
     struct glVertexAttribs2fvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs2fvNV( params->index, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -22996,6 +25353,7 @@ static NTSTATUS ext_glVertexAttribs2hvNV( void *args )
     struct glVertexAttribs2hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs2hvNV( params->index, params->n, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23004,6 +25362,7 @@ static NTSTATUS ext_glVertexAttribs2svNV( void *args )
     struct glVertexAttribs2svNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs2svNV( params->index, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23012,6 +25371,7 @@ static NTSTATUS ext_glVertexAttribs3dvNV( void *args )
     struct glVertexAttribs3dvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs3dvNV( params->index, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23020,6 +25380,7 @@ static NTSTATUS ext_glVertexAttribs3fvNV( void *args )
     struct glVertexAttribs3fvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs3fvNV( params->index, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23028,6 +25389,7 @@ static NTSTATUS ext_glVertexAttribs3hvNV( void *args )
     struct glVertexAttribs3hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs3hvNV( params->index, params->n, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23036,6 +25398,7 @@ static NTSTATUS ext_glVertexAttribs3svNV( void *args )
     struct glVertexAttribs3svNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs3svNV( params->index, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23044,6 +25407,7 @@ static NTSTATUS ext_glVertexAttribs4dvNV( void *args )
     struct glVertexAttribs4dvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs4dvNV( params->index, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23052,6 +25416,7 @@ static NTSTATUS ext_glVertexAttribs4fvNV( void *args )
     struct glVertexAttribs4fvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs4fvNV( params->index, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23060,6 +25425,7 @@ static NTSTATUS ext_glVertexAttribs4hvNV( void *args )
     struct glVertexAttribs4hvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs4hvNV( params->index, params->n, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23068,6 +25434,7 @@ static NTSTATUS ext_glVertexAttribs4svNV( void *args )
     struct glVertexAttribs4svNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs4svNV( params->index, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23076,6 +25443,7 @@ static NTSTATUS ext_glVertexAttribs4ubvNV( void *args )
     struct glVertexAttribs4ubvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexAttribs4ubvNV( params->index, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23084,6 +25452,7 @@ static NTSTATUS ext_glVertexBindingDivisor( void *args )
     struct glVertexBindingDivisor_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexBindingDivisor( params->bindingindex, params->divisor );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23092,6 +25461,7 @@ static NTSTATUS ext_glVertexBlendARB( void *args )
     struct glVertexBlendARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexBlendARB( params->count );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23100,6 +25470,7 @@ static NTSTATUS ext_glVertexBlendEnvfATI( void *args )
     struct glVertexBlendEnvfATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexBlendEnvfATI( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23108,6 +25479,7 @@ static NTSTATUS ext_glVertexBlendEnviATI( void *args )
     struct glVertexBlendEnviATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexBlendEnviATI( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23116,6 +25488,7 @@ static NTSTATUS ext_glVertexFormatNV( void *args )
     struct glVertexFormatNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexFormatNV( params->size, params->type, params->stride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23124,6 +25497,7 @@ static NTSTATUS ext_glVertexP2ui( void *args )
     struct glVertexP2ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexP2ui( params->type, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23132,6 +25506,7 @@ static NTSTATUS ext_glVertexP2uiv( void *args )
     struct glVertexP2uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexP2uiv( params->type, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23140,6 +25515,7 @@ static NTSTATUS ext_glVertexP3ui( void *args )
     struct glVertexP3ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexP3ui( params->type, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23148,6 +25524,7 @@ static NTSTATUS ext_glVertexP3uiv( void *args )
     struct glVertexP3uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexP3uiv( params->type, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23156,6 +25533,7 @@ static NTSTATUS ext_glVertexP4ui( void *args )
     struct glVertexP4ui_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexP4ui( params->type, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23164,6 +25542,7 @@ static NTSTATUS ext_glVertexP4uiv( void *args )
     struct glVertexP4uiv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexP4uiv( params->type, params->value );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23172,6 +25551,7 @@ static NTSTATUS ext_glVertexPointerEXT( void *args )
     struct glVertexPointerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexPointerEXT( params->size, params->type, params->stride, params->count, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23180,6 +25560,7 @@ static NTSTATUS ext_glVertexPointerListIBM( void *args )
     struct glVertexPointerListIBM_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexPointerListIBM( params->size, params->type, params->stride, params->pointer, params->ptrstride );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23188,6 +25569,7 @@ static NTSTATUS ext_glVertexPointervINTEL( void *args )
     struct glVertexPointervINTEL_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexPointervINTEL( params->size, params->type, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23196,6 +25578,7 @@ static NTSTATUS ext_glVertexStream1dATI( void *args )
     struct glVertexStream1dATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream1dATI( params->stream, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23204,6 +25587,7 @@ static NTSTATUS ext_glVertexStream1dvATI( void *args )
     struct glVertexStream1dvATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream1dvATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23212,6 +25596,7 @@ static NTSTATUS ext_glVertexStream1fATI( void *args )
     struct glVertexStream1fATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream1fATI( params->stream, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23220,6 +25605,7 @@ static NTSTATUS ext_glVertexStream1fvATI( void *args )
     struct glVertexStream1fvATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream1fvATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23228,6 +25614,7 @@ static NTSTATUS ext_glVertexStream1iATI( void *args )
     struct glVertexStream1iATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream1iATI( params->stream, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23236,6 +25623,7 @@ static NTSTATUS ext_glVertexStream1ivATI( void *args )
     struct glVertexStream1ivATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream1ivATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23244,6 +25632,7 @@ static NTSTATUS ext_glVertexStream1sATI( void *args )
     struct glVertexStream1sATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream1sATI( params->stream, params->x );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23252,6 +25641,7 @@ static NTSTATUS ext_glVertexStream1svATI( void *args )
     struct glVertexStream1svATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream1svATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23260,6 +25650,7 @@ static NTSTATUS ext_glVertexStream2dATI( void *args )
     struct glVertexStream2dATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream2dATI( params->stream, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23268,6 +25659,7 @@ static NTSTATUS ext_glVertexStream2dvATI( void *args )
     struct glVertexStream2dvATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream2dvATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23276,6 +25668,7 @@ static NTSTATUS ext_glVertexStream2fATI( void *args )
     struct glVertexStream2fATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream2fATI( params->stream, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23284,6 +25677,7 @@ static NTSTATUS ext_glVertexStream2fvATI( void *args )
     struct glVertexStream2fvATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream2fvATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23292,6 +25686,7 @@ static NTSTATUS ext_glVertexStream2iATI( void *args )
     struct glVertexStream2iATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream2iATI( params->stream, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23300,6 +25695,7 @@ static NTSTATUS ext_glVertexStream2ivATI( void *args )
     struct glVertexStream2ivATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream2ivATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23308,6 +25704,7 @@ static NTSTATUS ext_glVertexStream2sATI( void *args )
     struct glVertexStream2sATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream2sATI( params->stream, params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23316,6 +25713,7 @@ static NTSTATUS ext_glVertexStream2svATI( void *args )
     struct glVertexStream2svATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream2svATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23324,6 +25722,7 @@ static NTSTATUS ext_glVertexStream3dATI( void *args )
     struct glVertexStream3dATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream3dATI( params->stream, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23332,6 +25731,7 @@ static NTSTATUS ext_glVertexStream3dvATI( void *args )
     struct glVertexStream3dvATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream3dvATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23340,6 +25740,7 @@ static NTSTATUS ext_glVertexStream3fATI( void *args )
     struct glVertexStream3fATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream3fATI( params->stream, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23348,6 +25749,7 @@ static NTSTATUS ext_glVertexStream3fvATI( void *args )
     struct glVertexStream3fvATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream3fvATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23356,6 +25758,7 @@ static NTSTATUS ext_glVertexStream3iATI( void *args )
     struct glVertexStream3iATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream3iATI( params->stream, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23364,6 +25767,7 @@ static NTSTATUS ext_glVertexStream3ivATI( void *args )
     struct glVertexStream3ivATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream3ivATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23372,6 +25776,7 @@ static NTSTATUS ext_glVertexStream3sATI( void *args )
     struct glVertexStream3sATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream3sATI( params->stream, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23380,6 +25785,7 @@ static NTSTATUS ext_glVertexStream3svATI( void *args )
     struct glVertexStream3svATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream3svATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23388,6 +25794,7 @@ static NTSTATUS ext_glVertexStream4dATI( void *args )
     struct glVertexStream4dATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream4dATI( params->stream, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23396,6 +25803,7 @@ static NTSTATUS ext_glVertexStream4dvATI( void *args )
     struct glVertexStream4dvATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream4dvATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23404,6 +25812,7 @@ static NTSTATUS ext_glVertexStream4fATI( void *args )
     struct glVertexStream4fATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream4fATI( params->stream, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23412,6 +25821,7 @@ static NTSTATUS ext_glVertexStream4fvATI( void *args )
     struct glVertexStream4fvATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream4fvATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23420,6 +25830,7 @@ static NTSTATUS ext_glVertexStream4iATI( void *args )
     struct glVertexStream4iATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream4iATI( params->stream, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23428,6 +25839,7 @@ static NTSTATUS ext_glVertexStream4ivATI( void *args )
     struct glVertexStream4ivATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream4ivATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23436,6 +25848,7 @@ static NTSTATUS ext_glVertexStream4sATI( void *args )
     struct glVertexStream4sATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream4sATI( params->stream, params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23444,6 +25857,7 @@ static NTSTATUS ext_glVertexStream4svATI( void *args )
     struct glVertexStream4svATI_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexStream4svATI( params->stream, params->coords );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23452,6 +25866,7 @@ static NTSTATUS ext_glVertexWeightPointerEXT( void *args )
     struct glVertexWeightPointerEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexWeightPointerEXT( params->size, params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23460,6 +25875,7 @@ static NTSTATUS ext_glVertexWeightfEXT( void *args )
     struct glVertexWeightfEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexWeightfEXT( params->weight );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23468,6 +25884,7 @@ static NTSTATUS ext_glVertexWeightfvEXT( void *args )
     struct glVertexWeightfvEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexWeightfvEXT( params->weight );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23476,6 +25893,7 @@ static NTSTATUS ext_glVertexWeighthNV( void *args )
     struct glVertexWeighthNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexWeighthNV( params->weight );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23484,6 +25902,7 @@ static NTSTATUS ext_glVertexWeighthvNV( void *args )
     struct glVertexWeighthvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVertexWeighthvNV( params->weight );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23492,6 +25911,7 @@ static NTSTATUS ext_glVideoCaptureNV( void *args )
     struct glVideoCaptureNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glVideoCaptureNV( params->video_capture_slot, params->sequence_num, params->capture_time );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23500,6 +25920,7 @@ static NTSTATUS ext_glVideoCaptureStreamParameterdvNV( void *args )
     struct glVideoCaptureStreamParameterdvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVideoCaptureStreamParameterdvNV( params->video_capture_slot, params->stream, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23508,6 +25929,7 @@ static NTSTATUS ext_glVideoCaptureStreamParameterfvNV( void *args )
     struct glVideoCaptureStreamParameterfvNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVideoCaptureStreamParameterfvNV( params->video_capture_slot, params->stream, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23516,6 +25938,7 @@ static NTSTATUS ext_glVideoCaptureStreamParameterivNV( void *args )
     struct glVideoCaptureStreamParameterivNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glVideoCaptureStreamParameterivNV( params->video_capture_slot, params->stream, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23524,6 +25947,7 @@ static NTSTATUS ext_glViewportArrayv( void *args )
     struct glViewportArrayv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glViewportArrayv( params->first, params->count, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23532,6 +25956,7 @@ static NTSTATUS ext_glViewportIndexedf( void *args )
     struct glViewportIndexedf_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glViewportIndexedf( params->index, params->x, params->y, params->w, params->h );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23540,6 +25965,7 @@ static NTSTATUS ext_glViewportIndexedfv( void *args )
     struct glViewportIndexedfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glViewportIndexedfv( params->index, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23548,6 +25974,7 @@ static NTSTATUS ext_glViewportPositionWScaleNV( void *args )
     struct glViewportPositionWScaleNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glViewportPositionWScaleNV( params->index, params->xcoeff, params->ycoeff );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23556,6 +25983,7 @@ static NTSTATUS ext_glViewportSwizzleNV( void *args )
     struct glViewportSwizzleNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glViewportSwizzleNV( params->index, params->swizzlex, params->swizzley, params->swizzlez, params->swizzlew );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23564,6 +25992,7 @@ static NTSTATUS ext_glWaitSemaphoreEXT( void *args )
     struct glWaitSemaphoreEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWaitSemaphoreEXT( params->semaphore, params->numBufferBarriers, params->buffers, params->numTextureBarriers, params->textures, params->srcLayouts );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23572,6 +26001,7 @@ static NTSTATUS ext_glWaitSemaphoreui64NVX( void *args )
     struct glWaitSemaphoreui64NVX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWaitSemaphoreui64NVX( params->waitGpu, params->fenceObjectCount, params->semaphoreArray, params->fenceValueArray );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23580,6 +26010,7 @@ NTSTATUS ext_glWaitSync( void *args )
     struct glWaitSync_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWaitSync( params->sync, params->flags, params->timeout );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23588,6 +26019,7 @@ static NTSTATUS ext_glWaitVkSemaphoreNV( void *args )
     struct glWaitVkSemaphoreNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWaitVkSemaphoreNV( params->vkSemaphore );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23596,6 +26028,7 @@ static NTSTATUS ext_glWeightPathsNV( void *args )
     struct glWeightPathsNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWeightPathsNV( params->resultPath, params->numPaths, params->paths, params->weights );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23604,6 +26037,7 @@ static NTSTATUS ext_glWeightPointerARB( void *args )
     struct glWeightPointerARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWeightPointerARB( params->size, params->type, params->stride, params->pointer );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23612,6 +26046,7 @@ static NTSTATUS ext_glWeightbvARB( void *args )
     struct glWeightbvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWeightbvARB( params->size, params->weights );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23620,6 +26055,7 @@ static NTSTATUS ext_glWeightdvARB( void *args )
     struct glWeightdvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWeightdvARB( params->size, params->weights );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23628,6 +26064,7 @@ static NTSTATUS ext_glWeightfvARB( void *args )
     struct glWeightfvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWeightfvARB( params->size, params->weights );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23636,6 +26073,7 @@ static NTSTATUS ext_glWeightivARB( void *args )
     struct glWeightivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWeightivARB( params->size, params->weights );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23644,6 +26082,7 @@ static NTSTATUS ext_glWeightsvARB( void *args )
     struct glWeightsvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWeightsvARB( params->size, params->weights );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23652,6 +26091,7 @@ static NTSTATUS ext_glWeightubvARB( void *args )
     struct glWeightubvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWeightubvARB( params->size, params->weights );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23660,6 +26100,7 @@ static NTSTATUS ext_glWeightuivARB( void *args )
     struct glWeightuivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWeightuivARB( params->size, params->weights );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23668,6 +26109,7 @@ static NTSTATUS ext_glWeightusvARB( void *args )
     struct glWeightusvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWeightusvARB( params->size, params->weights );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23676,6 +26118,7 @@ static NTSTATUS ext_glWindowPos2d( void *args )
     struct glWindowPos2d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2d( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23684,6 +26127,7 @@ static NTSTATUS ext_glWindowPos2dARB( void *args )
     struct glWindowPos2dARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2dARB( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23692,6 +26136,7 @@ static NTSTATUS ext_glWindowPos2dMESA( void *args )
     struct glWindowPos2dMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2dMESA( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23700,6 +26145,7 @@ static NTSTATUS ext_glWindowPos2dv( void *args )
     struct glWindowPos2dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2dv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23708,6 +26154,7 @@ static NTSTATUS ext_glWindowPos2dvARB( void *args )
     struct glWindowPos2dvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2dvARB( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23716,6 +26163,7 @@ static NTSTATUS ext_glWindowPos2dvMESA( void *args )
     struct glWindowPos2dvMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2dvMESA( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23724,6 +26172,7 @@ static NTSTATUS ext_glWindowPos2f( void *args )
     struct glWindowPos2f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2f( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23732,6 +26181,7 @@ static NTSTATUS ext_glWindowPos2fARB( void *args )
     struct glWindowPos2fARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2fARB( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23740,6 +26190,7 @@ static NTSTATUS ext_glWindowPos2fMESA( void *args )
     struct glWindowPos2fMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2fMESA( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23748,6 +26199,7 @@ static NTSTATUS ext_glWindowPos2fv( void *args )
     struct glWindowPos2fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2fv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23756,6 +26208,7 @@ static NTSTATUS ext_glWindowPos2fvARB( void *args )
     struct glWindowPos2fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2fvARB( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23764,6 +26217,7 @@ static NTSTATUS ext_glWindowPos2fvMESA( void *args )
     struct glWindowPos2fvMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2fvMESA( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23772,6 +26226,7 @@ static NTSTATUS ext_glWindowPos2i( void *args )
     struct glWindowPos2i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2i( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23780,6 +26235,7 @@ static NTSTATUS ext_glWindowPos2iARB( void *args )
     struct glWindowPos2iARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2iARB( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23788,6 +26244,7 @@ static NTSTATUS ext_glWindowPos2iMESA( void *args )
     struct glWindowPos2iMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2iMESA( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23796,6 +26253,7 @@ static NTSTATUS ext_glWindowPos2iv( void *args )
     struct glWindowPos2iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2iv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23804,6 +26262,7 @@ static NTSTATUS ext_glWindowPos2ivARB( void *args )
     struct glWindowPos2ivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2ivARB( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23812,6 +26271,7 @@ static NTSTATUS ext_glWindowPos2ivMESA( void *args )
     struct glWindowPos2ivMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2ivMESA( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23820,6 +26280,7 @@ static NTSTATUS ext_glWindowPos2s( void *args )
     struct glWindowPos2s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2s( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23828,6 +26289,7 @@ static NTSTATUS ext_glWindowPos2sARB( void *args )
     struct glWindowPos2sARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2sARB( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23836,6 +26298,7 @@ static NTSTATUS ext_glWindowPos2sMESA( void *args )
     struct glWindowPos2sMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2sMESA( params->x, params->y );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23844,6 +26307,7 @@ static NTSTATUS ext_glWindowPos2sv( void *args )
     struct glWindowPos2sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2sv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23852,6 +26316,7 @@ static NTSTATUS ext_glWindowPos2svARB( void *args )
     struct glWindowPos2svARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2svARB( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23860,6 +26325,7 @@ static NTSTATUS ext_glWindowPos2svMESA( void *args )
     struct glWindowPos2svMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos2svMESA( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23868,6 +26334,7 @@ static NTSTATUS ext_glWindowPos3d( void *args )
     struct glWindowPos3d_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3d( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23876,6 +26343,7 @@ static NTSTATUS ext_glWindowPos3dARB( void *args )
     struct glWindowPos3dARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3dARB( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23884,6 +26352,7 @@ static NTSTATUS ext_glWindowPos3dMESA( void *args )
     struct glWindowPos3dMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3dMESA( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23892,6 +26361,7 @@ static NTSTATUS ext_glWindowPos3dv( void *args )
     struct glWindowPos3dv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3dv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23900,6 +26370,7 @@ static NTSTATUS ext_glWindowPos3dvARB( void *args )
     struct glWindowPos3dvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3dvARB( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23908,6 +26379,7 @@ static NTSTATUS ext_glWindowPos3dvMESA( void *args )
     struct glWindowPos3dvMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3dvMESA( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23916,6 +26388,7 @@ static NTSTATUS ext_glWindowPos3f( void *args )
     struct glWindowPos3f_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3f( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23924,6 +26397,7 @@ static NTSTATUS ext_glWindowPos3fARB( void *args )
     struct glWindowPos3fARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3fARB( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23932,6 +26406,7 @@ static NTSTATUS ext_glWindowPos3fMESA( void *args )
     struct glWindowPos3fMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3fMESA( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23940,6 +26415,7 @@ static NTSTATUS ext_glWindowPos3fv( void *args )
     struct glWindowPos3fv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3fv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23948,6 +26424,7 @@ static NTSTATUS ext_glWindowPos3fvARB( void *args )
     struct glWindowPos3fvARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3fvARB( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23956,6 +26433,7 @@ static NTSTATUS ext_glWindowPos3fvMESA( void *args )
     struct glWindowPos3fvMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3fvMESA( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23964,6 +26442,7 @@ static NTSTATUS ext_glWindowPos3i( void *args )
     struct glWindowPos3i_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3i( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23972,6 +26451,7 @@ static NTSTATUS ext_glWindowPos3iARB( void *args )
     struct glWindowPos3iARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3iARB( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23980,6 +26460,7 @@ static NTSTATUS ext_glWindowPos3iMESA( void *args )
     struct glWindowPos3iMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3iMESA( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23988,6 +26469,7 @@ static NTSTATUS ext_glWindowPos3iv( void *args )
     struct glWindowPos3iv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3iv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -23996,6 +26478,7 @@ static NTSTATUS ext_glWindowPos3ivARB( void *args )
     struct glWindowPos3ivARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3ivARB( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24004,6 +26487,7 @@ static NTSTATUS ext_glWindowPos3ivMESA( void *args )
     struct glWindowPos3ivMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3ivMESA( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24012,6 +26496,7 @@ static NTSTATUS ext_glWindowPos3s( void *args )
     struct glWindowPos3s_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3s( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24020,6 +26505,7 @@ static NTSTATUS ext_glWindowPos3sARB( void *args )
     struct glWindowPos3sARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3sARB( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24028,6 +26514,7 @@ static NTSTATUS ext_glWindowPos3sMESA( void *args )
     struct glWindowPos3sMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3sMESA( params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24036,6 +26523,7 @@ static NTSTATUS ext_glWindowPos3sv( void *args )
     struct glWindowPos3sv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3sv( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24044,6 +26532,7 @@ static NTSTATUS ext_glWindowPos3svARB( void *args )
     struct glWindowPos3svARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3svARB( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24052,6 +26541,7 @@ static NTSTATUS ext_glWindowPos3svMESA( void *args )
     struct glWindowPos3svMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos3svMESA( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24060,6 +26550,7 @@ static NTSTATUS ext_glWindowPos4dMESA( void *args )
     struct glWindowPos4dMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos4dMESA( params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24068,6 +26559,7 @@ static NTSTATUS ext_glWindowPos4dvMESA( void *args )
     struct glWindowPos4dvMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos4dvMESA( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24076,6 +26568,7 @@ static NTSTATUS ext_glWindowPos4fMESA( void *args )
     struct glWindowPos4fMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos4fMESA( params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24084,6 +26577,7 @@ static NTSTATUS ext_glWindowPos4fvMESA( void *args )
     struct glWindowPos4fvMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos4fvMESA( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24092,6 +26586,7 @@ static NTSTATUS ext_glWindowPos4iMESA( void *args )
     struct glWindowPos4iMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos4iMESA( params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24100,6 +26595,7 @@ static NTSTATUS ext_glWindowPos4ivMESA( void *args )
     struct glWindowPos4ivMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos4ivMESA( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24108,6 +26604,7 @@ static NTSTATUS ext_glWindowPos4sMESA( void *args )
     struct glWindowPos4sMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos4sMESA( params->x, params->y, params->z, params->w );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24116,6 +26613,7 @@ static NTSTATUS ext_glWindowPos4svMESA( void *args )
     struct glWindowPos4svMESA_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowPos4svMESA( params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24124,6 +26622,7 @@ static NTSTATUS ext_glWindowRectanglesEXT( void *args )
     struct glWindowRectanglesEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWindowRectanglesEXT( params->mode, params->count, params->box );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -24132,6 +26631,7 @@ static NTSTATUS ext_glWriteMaskEXT( void *args )
     struct glWriteMaskEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glWriteMaskEXT( params->res, params->in, params->outX, params->outY, params->outZ, params->outW );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
 

@@ -135,4 +135,6 @@ extern NTSTATUS ext_wglMakeContextCurrentARB( void *args );
 extern NTSTATUS ext_wglQueryCurrentRendererStringWINE( void *args );
 extern NTSTATUS ext_wglQueryRendererStringWINE( void *args );
 
+extern void set_context_attribute( TEB *teb, GLenum name, const void *value, size_t size );
+
 #endif /* __WINE_OPENGL32_UNIX_PRIVATE_H */

@@ -75,6 +75,9 @@ struct opengl_context
     GLuint *disabled_exts;       /* indices of disabled extensions */
     struct wgl_context *drv_ctx; /* driver context */
     GLubyte *wow64_version;      /* wow64 GL version override */
+
+    /* semi-stub state tracker for wglCopyContext */
+    GLbitfield used;                            /* context state used bits */
 };
 
 struct wgl_handle
@@ -119,6 +122,17 @@ static struct wgl_handle *get_handle_ptr( HANDLE handle )
 
     RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
     return NULL;
+}
+
+void set_context_attribute( TEB *teb, GLenum name, const void *value, size_t size )
+{
+    struct opengl_context *ctx = get_current_context( teb );
+    GLbitfield bit = -1;
+
+    if (!(ctx = get_current_context( teb ))) return;
+
+    if (bit == -1 && ctx->used != -1) WARN( "Unsupported attribute on context %p/%p\n", teb->glCurrentRC, ctx );
+    ctx->used |= bit;
 }
 
 static struct opengl_context *opengl_context_from_handle( HGLRC handle, const struct opengl_funcs **funcs )
@@ -983,6 +997,7 @@ void wrap_glDebugMessageCallback( TEB *teb, GLDEBUGPROC callback, const void *us
     ctx->debug_callback = (UINT_PTR)callback;
     ctx->debug_user     = (UINT_PTR)user;
     funcs->p_glDebugMessageCallback( gl_debug_message_callback, ctx );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
 }
 
 void wrap_glDebugMessageCallbackAMD( TEB *teb, GLDEBUGPROCAMD callback, void *user )
@@ -995,6 +1010,7 @@ void wrap_glDebugMessageCallbackAMD( TEB *teb, GLDEBUGPROCAMD callback, void *us
     ctx->debug_callback = (UINT_PTR)callback;
     ctx->debug_user     = (UINT_PTR)user;
     funcs->p_glDebugMessageCallbackAMD( gl_debug_message_callback, ctx );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
 }
 
 void wrap_glDebugMessageCallbackARB( TEB *teb, GLDEBUGPROCARB callback, const void *user )
@@ -1007,6 +1023,7 @@ void wrap_glDebugMessageCallbackARB( TEB *teb, GLDEBUGPROCARB callback, const vo
     ctx->debug_callback = (UINT_PTR)callback;
     ctx->debug_user     = (UINT_PTR)user;
     funcs->p_glDebugMessageCallbackARB( gl_debug_message_callback, ctx );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
 }
 
 NTSTATUS process_attach( void *args )

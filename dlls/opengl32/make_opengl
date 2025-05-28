@@ -195,6 +195,16 @@ my %manual_win_thunks =
      "wglQueryRendererStringWINE" => 1,
      "wglSwapBuffers" => 1,
     );
+my %manual_unix_thunks =
+    (
+     "glDebugMessageCallback" => 1,
+     "glDebugMessageCallbackAMD" => 1,
+     "glDebugMessageCallbackARB" => 1,
+     "glGetIntegerv" => 1,
+     "glGetString" => 1,
+     "glGetStringi" => 1,
+     "wglGetProcAddress" => 1,
+    );
 my %manual_wow64_thunks =
     (
      "glClientWaitSync" => 1,
@@ -389,6 +399,10 @@ sub generate_unix_thunk($$$)
         $ret .= "funcs->p_$name($call_args);\n";
     }
     $ret .= "    pthread_mutex_unlock( &wgl_lock );\n" if $need_lock;
+    if ($name !~ /^wgl|^glGet|^glIs[A-Z]|^glAre[A-Z]/)
+    {
+        $ret .= "    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );\n";
+    }
     $ret .= "    return STATUS_SUCCESS;\n";
     $ret .= "}\n\n";
 
@@ -760,7 +774,7 @@ sub needs_wrapper($$)
 {
     my ($name, $func) = @_;
 
-    return 1 if $name =~ /^glDebugMessageCallback|^glGetString|^glGetIntegerv|^wglGetProcAddress/;
+    return 1 if defined $manual_unix_thunks{$name};
 
     # check if return value needs special handling
     (my $type = $func->[0]->textContent()) =~ s/ $//;
