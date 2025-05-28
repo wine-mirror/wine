@@ -1932,26 +1932,21 @@ static void test_get_Count_and_Item(void)
     index.uiVal = 1;
 
     hr = IRegisteredTaskCollection_get_Item(tasks, index, NULL);
-    todo_wine
     ok(hr == E_POINTER, "expected E_POINTER, got %#lx\n", hr);
 
     index.uiVal = 0;
     hr = IRegisteredTaskCollection_get_Item(tasks, index, &ret_task1);
-    todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#lx\n", hr);
 
     index.uiVal = 2;
     hr = IRegisteredTaskCollection_get_Item(tasks, index, &ret_task1);
-    todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#lx\n", hr);
 
     index.uiVal = 1;
     hr = IRegisteredTaskCollection_get_Item(tasks, index, &ret_task1);
-    todo_wine
     ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
 
     IRegisteredTask_get_Name(ret_task1, &ret_task1_name);
-    todo_wine
     ok(!lstrcmpW(L"Task1", ret_task1_name), "expected name \"Task1\", got %ls\n", ret_task1_name);
 
     ITaskFolder_DeleteTask(folder, (BSTR)L"Task1", 0);

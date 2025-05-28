@@ -471,8 +471,59 @@ static HRESULT WINAPI regtasks_get_Count(IRegisteredTaskCollection *iface, LONG 
 
 static HRESULT WINAPI regtasks_get_Item(IRegisteredTaskCollection *iface, VARIANT index, IRegisteredTask **regtask)
 {
-    FIXME("%p,%s,%p: stub\n", iface, debugstr_variant(&index), regtask);
-    return E_NOTIMPL;
+    HRESULT hr;
+    VARIANT converted_index;
+    TASK_NAMES task_names = NULL;
+    ITaskDefinition *definition = NULL;
+    RegisteredTaskCollection *collection = NULL;
+    DWORD start_index = 0, num_tasks = 0;
+
+    collection = impl_from_IRegisteredTaskCollection(iface);
+    if (!regtask)
+        return E_POINTER;
+    *regtask = NULL;
+
+    VariantInit(&converted_index);
+    hr = VariantChangeType(&converted_index, &index, 0, VT_UI4);
+    if (FAILED(hr))
+        return hr;
+
+    start_index = V_UI4(&index);
+    if (start_index == 0)
+    {
+        VariantClear(&converted_index);
+        return E_INVALIDARG;
+    }
+    start_index -= 1;
+
+    hr = SchRpcEnumTasks(collection->path, 0, &start_index, 1, &num_tasks, &task_names);
+    if (FAILED(hr))
+    {
+        VariantClear(&converted_index);
+        return hr;
+    }
+    if (!task_names)
+    {
+        VariantClear(&converted_index);
+        return E_INVALIDARG;
+    }
+
+    hr = TaskDefinition_create(&definition);
+    if (FAILED(hr))
+    {
+        if(hr != E_OUTOFMEMORY)
+            ITaskDefinition_Release(definition);
+        VariantClear(&converted_index);
+        return hr;
+    }
+
+    hr = RegisteredTask_create(collection->path, task_names[0], definition, TASK_VALIDATE_ONLY, TASK_LOGON_INTERACTIVE_TOKEN, regtask, FALSE);
+
+    VariantClear(&converted_index);
+    MIDL_user_free(task_names[0]);
+    MIDL_user_free(task_names);
+    ITaskDefinition_Release(definition);
+    return hr;
 }
 
 static HRESULT WINAPI regtasks_get__NewEnum(IRegisteredTaskCollection *iface, IUnknown **penum)
