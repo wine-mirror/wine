@@ -471,12 +471,6 @@ void wayland_glClear(GLbitfield mask)
     p_glClear(mask);
 }
 
-static BOOL wayland_context_copy(void *src, void *dst, UINT mask)
-{
-    FIXME("%p -> %p mask %#x unsupported\n", src, dst, mask);
-    return FALSE;
-}
-
 static BOOL wayland_context_destroy(void *private)
 {
     struct wayland_context *ctx = private;
@@ -641,7 +635,6 @@ static struct opengl_driver_funcs wayland_driver_funcs =
     .p_swap_buffers = wayland_swap_buffers,
     .p_context_create = wayland_context_create,
     .p_context_destroy = wayland_context_destroy,
-    .p_context_copy = wayland_context_copy,
     .p_context_share = wayland_context_share,
     .p_context_flush = wayland_context_flush,
     .p_context_make_current = wayland_context_make_current,

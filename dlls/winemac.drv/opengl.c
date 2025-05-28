@@ -2945,19 +2945,6 @@ static BOOL macdrv_describe_pixel_format(int format, struct wgl_pixel_format *de
     return TRUE;
 }
 
-static BOOL macdrv_context_copy(void *src_private, void *dst_private, UINT mask)
-{
-    struct macdrv_context *src = src_private, *dst = dst_private;
-    CGLError err;
-
-    TRACE("src %p dst %p mask %x\n", src, dst, mask);
-
-    err = CGLCopyContext(src->cglcontext, dst->cglcontext, mask);
-    if (err != kCGLNoError)
-        WARN("CGLCopyContext() failed with err %d %s\n", err, CGLErrorString(err));
-    return (err == kCGLNoError);
-}
-
 static BOOL macdrv_context_destroy(void *private)
 {
     struct macdrv_context *context = private;
@@ -3104,7 +3091,6 @@ static const struct opengl_driver_funcs macdrv_driver_funcs =
     .p_swap_buffers = macdrv_swap_buffers,
     .p_context_create = macdrv_context_create,
     .p_context_destroy = macdrv_context_destroy,
-    .p_context_copy = macdrv_context_copy,
     .p_context_share = macdrv_context_share,
     .p_context_flush = macdrv_context_flush,
     .p_context_make_current = macdrv_context_make_current,

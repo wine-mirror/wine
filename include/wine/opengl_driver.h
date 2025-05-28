@@ -134,7 +134,6 @@ struct opengl_driver_funcs
     BOOL (*p_swap_buffers)(void*,HWND,HDC,int);
     BOOL (*p_context_create)(HDC,int,void*,const int*,void**);
     BOOL (*p_context_destroy)(void*);
-    BOOL (*p_context_copy)(void*,void*,UINT);
     BOOL (*p_context_share)(void*,void*);
     BOOL (*p_context_flush)(void*,HWND,HDC,int,BOOL);
     BOOL (*p_context_make_current)(HDC,HDC,void*);

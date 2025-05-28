@@ -1495,32 +1495,6 @@ static BOOL x11drv_describe_pixel_format( int iPixelFormat, struct wgl_pixel_for
 }
 
 /***********************************************************************
- *		glxdrv_wglCopyContext
- */
-static BOOL x11drv_context_copy(void *src_private, void *dst_private, UINT mask)
-{
-    struct x11drv_context *src = src_private, *dst = dst_private;
-    TRACE("%p -> %p mask %#x\n", src, dst, mask);
-
-    X11DRV_expect_error( gdi_display, GLXErrorHandler, NULL );
-    pglXCopyContext( gdi_display, src->ctx, dst->ctx, mask );
-    XSync( gdi_display, False );
-    if (X11DRV_check_error())
-    {
-        static unsigned int once;
-
-        if (!once++)
-        {
-            ERR("glXCopyContext failed. glXCopyContext() for direct rendering contexts not "
-                "implemented in the host graphics driver?\n");
-        }
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-/***********************************************************************
  *		glxdrv_wglDeleteContext
  */
 static BOOL x11drv_context_destroy(void *private)
@@ -2081,7 +2055,6 @@ static const struct opengl_driver_funcs x11drv_driver_funcs =
     .p_swap_buffers = x11drv_swap_buffers,
     .p_context_create = x11drv_context_create,
     .p_context_destroy = x11drv_context_destroy,
-    .p_context_copy = x11drv_context_copy,
     .p_context_share = x11drv_context_share,
     .p_context_flush = x11drv_context_flush,
     .p_context_make_current = x11drv_context_make_current,

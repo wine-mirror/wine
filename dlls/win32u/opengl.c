@@ -424,12 +424,6 @@ static BOOL egldrv_context_destroy( void *private )
     return FALSE;
 }
 
-static BOOL egldrv_context_copy( void *src_private, void *dst_private, UINT mask )
-{
-    FIXME( "stub!\n" );
-    return FALSE;
-}
-
 static BOOL egldrv_context_share( void *src_private, void *dst_private )
 {
     FIXME( "stub!\n" );
@@ -462,7 +456,6 @@ static const struct opengl_driver_funcs egldrv_funcs =
     .p_pbuffer_bind = egldrv_pbuffer_bind,
     .p_context_create = egldrv_context_create,
     .p_context_destroy = egldrv_context_destroy,
-    .p_context_copy = egldrv_context_copy,
     .p_context_share = egldrv_context_share,
     .p_context_flush = egldrv_context_flush,
     .p_context_make_current = egldrv_context_make_current,
@@ -732,12 +725,6 @@ static BOOL osmesa_swap_buffers( void *private, HWND hwnd, HDC hdc, int interval
     return TRUE;
 }
 
-static BOOL osmesa_context_copy( void *src_private, void *dst_private, UINT mask )
-{
-    FIXME( "not supported yet\n" );
-    return FALSE;
-}
-
 static BOOL osmesa_context_share( void *src_private, void *dst_private )
 {
     FIXME( "not supported yet\n" );
@@ -808,7 +795,6 @@ static const struct opengl_driver_funcs osmesa_driver_funcs =
     .p_swap_buffers = osmesa_swap_buffers,
     .p_context_create = osmesa_context_create,
     .p_context_destroy = osmesa_context_destroy,
-    .p_context_copy = osmesa_context_copy,
     .p_context_share = osmesa_context_share,
     .p_context_flush = osmesa_context_flush,
     .p_context_make_current = osmesa_context_make_current,
@@ -887,11 +873,6 @@ static BOOL nulldrv_context_destroy( void *private )
     return FALSE;
 }
 
-static BOOL nulldrv_context_copy( void *src_private, void *dst_private, UINT mask )
-{
-    return FALSE;
-}
-
 static BOOL nulldrv_context_share( void *src_private, void *dst_private )
 {
     return FALSE;
@@ -921,7 +902,6 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_pbuffer_bind = nulldrv_pbuffer_bind,
     .p_context_create = nulldrv_context_create,
     .p_context_destroy = nulldrv_context_destroy,
-    .p_context_copy = nulldrv_context_copy,
     .p_context_share = nulldrv_context_share,
     .p_context_flush = nulldrv_context_flush,
     .p_context_make_current = nulldrv_context_make_current,
@@ -1124,16 +1104,6 @@ static BOOL win32u_wglDeleteContext( struct wgl_context *context )
     free( context );
 
     return ret;
-}
-
-static BOOL win32u_wglCopyContext( struct wgl_context *src, struct wgl_context *dst, UINT mask )
-{
-    const struct opengl_driver_funcs *funcs = src->driver_funcs;
-
-    TRACE( "src %p, dst %p, mask %#x\n", src, dst, mask );
-
-    if (funcs != dst->driver_funcs) return FALSE;
-    return funcs->p_context_copy( src->driver_private, dst->driver_private, mask );
 }
 
 static BOOL win32u_wglShareLists( struct wgl_context *src, struct wgl_context *dst )
@@ -1744,7 +1714,7 @@ static void memory_funcs_init(void)
 
     memory_funcs.p_wglCreateContext = win32u_wglCreateContext;
     memory_funcs.p_wglDeleteContext = win32u_wglDeleteContext;
-    memory_funcs.p_wglCopyContext = win32u_wglCopyContext;
+    memory_funcs.p_wglCopyContext = (void *)1; /* never called */
     memory_funcs.p_wglShareLists = win32u_wglShareLists;
     memory_funcs.p_wglMakeCurrent = win32u_wglMakeCurrent;
 
@@ -1777,7 +1747,7 @@ static void display_funcs_init(void)
 
     display_funcs.p_wglCreateContext = win32u_wglCreateContext;
     display_funcs.p_wglDeleteContext = win32u_wglDeleteContext;
-    display_funcs.p_wglCopyContext = win32u_wglCopyContext;
+    display_funcs.p_wglCopyContext = (void *)1; /* never called */
     display_funcs.p_wglShareLists = win32u_wglShareLists;
     display_funcs.p_wglMakeCurrent = win32u_wglMakeCurrent;
 

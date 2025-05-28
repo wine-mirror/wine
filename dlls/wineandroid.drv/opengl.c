@@ -299,15 +299,6 @@ done:
 }
 
 /***********************************************************************
- *		android_wglCopyContext
- */
-static BOOL android_context_copy( void *src, void *dst, UINT mask )
-{
-    FIXME( "%p -> %p mask %#x unsupported\n", src, dst, mask );
-    return FALSE;
-}
-
-/***********************************************************************
  *		android_wglDeleteContext
  */
 static BOOL android_context_destroy( void *private )
@@ -400,7 +391,6 @@ static struct opengl_driver_funcs android_driver_funcs =
     .p_swap_buffers = android_swap_buffers,
     .p_context_create = android_context_create,
     .p_context_destroy = android_context_destroy,
-    .p_context_copy = android_context_copy,
     .p_context_share = android_context_share,
     .p_context_flush = android_context_flush,
     .p_context_make_current = android_context_make_current,
