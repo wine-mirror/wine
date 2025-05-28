@@ -272,6 +272,18 @@ my %pointer_is_offset =
      "glGetVertexAttribPointerv" => "pointer",
      "glGetVertexAttribPointervARB" => "pointer",
     );
+my %state_attrib_funcs =
+    (
+     "glViewport" => "GL_VIEWPORT, &params->x, 2 * sizeof(GLint) + 2 * sizeof(GLsizei)",
+     "glEnable" => "params->cap, &const_true, sizeof(const_true)",
+     "glDisable" => "params->cap, &const_false, sizeof(const_false)",
+     "glHint" => "params->target, &params->mode, sizeof(params->mode)",
+     "glDepthFunc" => "GL_DEPTH_FUNC, &params->func, sizeof(params->func)",
+     "glShadeModel" => "GL_SHADE_MODEL, &params->mode, sizeof(params->mode)",
+     "glClearColor" => "GL_COLOR_CLEAR_VALUE, &params->red, 4 * sizeof(GLfloat)",
+     "glLightModelfv" => "params->pname, params->params, 0 /* variable size */",
+     "glLightModeli" => "params->pname, &params->param, sizeof(params->param)",
+    );
 
 #
 # Used to convert some types
@@ -399,7 +411,11 @@ sub generate_unix_thunk($$$)
         $ret .= "funcs->p_$name($call_args);\n";
     }
     $ret .= "    pthread_mutex_unlock( &wgl_lock );\n" if $need_lock;
-    if ($name !~ /^wgl|^glGet|^glIs[A-Z]|^glAre[A-Z]/)
+    if (defined $state_attrib_funcs{$name})
+    {
+        $ret .= "    set_context_attribute( params->teb, $state_attrib_funcs{$name} );\n";
+    }
+    elsif ($name !~ /^wgl|^glGet|^glIs[A-Z]|^glAre[A-Z]/)
     {
         $ret .= "    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );\n";
     }
@@ -1270,6 +1286,9 @@ print OUT "#include \"unix_private.h\"\n\n";
 print OUT "#include \"wine/debug.h\"\n\n";
 
 print OUT "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n\n";
+
+print OUT "static GLboolean const_false;\n";
+print OUT "static GLboolean const_true = 1;\n\n";
 
 foreach (sort keys %wgl_functions)
 {

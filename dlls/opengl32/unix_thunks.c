@@ -20,6 +20,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
+static GLboolean const_false;
+static GLboolean const_true = 1;
+
 static NTSTATUS wgl_wglCopyContext( void *args )
 {
     struct wglCopyContext_params *params = args;
@@ -213,7 +216,7 @@ static NTSTATUS gl_glClearColor( void *args )
     struct glClearColor_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearColor( params->red, params->green, params->blue, params->alpha );
-    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    set_context_attribute( params->teb, GL_COLOR_CLEAR_VALUE, &params->red, 4 * sizeof(GLfloat) );
     return STATUS_SUCCESS;
 }
 
@@ -645,7 +648,7 @@ static NTSTATUS gl_glDepthFunc( void *args )
     struct glDepthFunc_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDepthFunc( params->func );
-    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    set_context_attribute( params->teb, GL_DEPTH_FUNC, &params->func, sizeof(params->func) );
     return STATUS_SUCCESS;
 }
 
@@ -672,7 +675,7 @@ static NTSTATUS gl_glDisable( void *args )
     struct glDisable_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glDisable( params->cap );
-    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    set_context_attribute( params->teb, params->cap, &const_false, sizeof(const_false) );
     return STATUS_SUCCESS;
 }
 
@@ -753,7 +756,7 @@ static NTSTATUS gl_glEnable( void *args )
     struct glEnable_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glEnable( params->cap );
-    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    set_context_attribute( params->teb, params->cap, &const_true, sizeof(const_true) );
     return STATUS_SUCCESS;
 }
 
@@ -1226,7 +1229,7 @@ static NTSTATUS gl_glHint( void *args )
     struct glHint_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glHint( params->target, params->mode );
-    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    set_context_attribute( params->teb, params->target, &params->mode, sizeof(params->mode) );
     return STATUS_SUCCESS;
 }
 
@@ -1394,7 +1397,7 @@ static NTSTATUS gl_glLightModelfv( void *args )
     struct glLightModelfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightModelfv( params->pname, params->params );
-    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    set_context_attribute( params->teb, params->pname, params->params, 0 /* variable size */ );
     return STATUS_SUCCESS;
 }
 
@@ -1403,7 +1406,7 @@ static NTSTATUS gl_glLightModeli( void *args )
     struct glLightModeli_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightModeli( params->pname, params->param );
-    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    set_context_attribute( params->teb, params->pname, &params->param, sizeof(params->param) );
     return STATUS_SUCCESS;
 }
 
@@ -2348,7 +2351,7 @@ static NTSTATUS gl_glShadeModel( void *args )
     struct glShadeModel_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glShadeModel( params->mode );
-    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    set_context_attribute( params->teb, GL_SHADE_MODEL, &params->mode, sizeof(params->mode) );
     return STATUS_SUCCESS;
 }
 
@@ -3086,7 +3089,7 @@ static NTSTATUS gl_glViewport( void *args )
     struct glViewport_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glViewport( params->x, params->y, params->width, params->height );
-    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    set_context_attribute( params->teb, GL_VIEWPORT, &params->x, 2 * sizeof(GLint) + 2 * sizeof(GLsizei) );
     return STATUS_SUCCESS;
 }
 

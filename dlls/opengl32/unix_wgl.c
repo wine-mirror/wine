@@ -63,6 +63,53 @@ enum wgl_handle_type
     HANDLE_TYPE_MASK = 15 << 12,
 };
 
+/* context state management */
+
+struct light_model_state
+{
+    GLfloat ambient[4];
+    GLint two_side;
+};
+
+struct lighting_state
+{
+    struct light_model_state model;
+    GLenum shade_model;
+};
+
+struct depth_buffer_state
+{
+    GLenum depth_func;
+};
+
+struct viewport_state
+{
+    GLint x;
+    GLint y;
+    GLsizei w;
+    GLsizei h;
+};
+
+struct enable_state
+{
+    GLboolean cull_face;
+    GLboolean depth_test;
+    GLboolean dither;
+    GLboolean fog;
+    GLboolean lighting;
+    GLboolean normalize;
+};
+
+struct color_buffer_state
+{
+    GLfloat clear_color[4];
+};
+
+struct hint_state
+{
+    GLenum perspective_correction;
+};
+
 struct opengl_context
 {
     HDC hdc;                     /* context creation DC */
@@ -78,6 +125,12 @@ struct opengl_context
 
     /* semi-stub state tracker for wglCopyContext */
     GLbitfield used;                            /* context state used bits */
+    struct lighting_state lighting;             /* GL_LIGHTING_BIT */
+    struct depth_buffer_state depth_buffer;     /* GL_DEPTH_BUFFER_BIT */
+    struct viewport_state viewport;             /* GL_VIEWPORT_BIT */
+    struct enable_state enable;                 /* GL_ENABLE_BIT */
+    struct color_buffer_state color_buffer;     /* GL_COLOR_BUFFER_BIT */
+    struct hint_state hint;                     /* GL_HINT_BIT */
 };
 
 struct wgl_handle
@@ -124,12 +177,45 @@ static struct wgl_handle *get_handle_ptr( HANDLE handle )
     return NULL;
 }
 
+struct context_attribute_desc
+{
+    GLbitfield bit;
+    unsigned short offset;
+    unsigned short size;
+};
+
+static struct context_attribute_desc context_attributes[] =
+{
+#define CONTEXT_ATTRIBUTE_DESC(bit, name, field) [name] = { bit, offsetof(struct opengl_context, field), sizeof(((struct opengl_context *)0)->field) }
+    CONTEXT_ATTRIBUTE_DESC( GL_COLOR_BUFFER_BIT, GL_COLOR_CLEAR_VALUE, color_buffer.clear_color ),
+    CONTEXT_ATTRIBUTE_DESC( GL_DEPTH_BUFFER_BIT, GL_DEPTH_FUNC, depth_buffer.depth_func ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_CULL_FACE, enable.cull_face ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_DEPTH_TEST, enable.depth_test ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_DITHER, enable.dither ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_FOG, enable.fog ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_LIGHTING, enable.lighting ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_NORMALIZE, enable.normalize ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_PERSPECTIVE_CORRECTION_HINT, hint.perspective_correction ),
+    CONTEXT_ATTRIBUTE_DESC( GL_LIGHTING_BIT, GL_LIGHT_MODEL_AMBIENT, lighting.model.ambient ),
+    CONTEXT_ATTRIBUTE_DESC( GL_LIGHTING_BIT, GL_LIGHT_MODEL_TWO_SIDE, lighting.model.two_side ),
+    CONTEXT_ATTRIBUTE_DESC( GL_LIGHTING_BIT, GL_SHADE_MODEL, lighting.shade_model ),
+    CONTEXT_ATTRIBUTE_DESC( GL_VIEWPORT_BIT, GL_VIEWPORT, viewport ),
+#undef CONTEXT_ATTRIBUTE_DESC
+};
+
+/* GL constants used as indexes should be small, make sure size is reasonable */
+C_ASSERT( sizeof(context_attributes) <= 64 * 1024 );
+
 void set_context_attribute( TEB *teb, GLenum name, const void *value, size_t size )
 {
     struct opengl_context *ctx = get_current_context( teb );
-    GLbitfield bit = -1;
+    GLbitfield bit;
 
     if (!(ctx = get_current_context( teb ))) return;
+
+    if (name >= ARRAY_SIZE(context_attributes) || !(bit = context_attributes[name].bit)) bit = -1 /* unsupported */;
+    else if (size && size != context_attributes[name].size) ERR( "Invalid state attrib %#x parameter size %#zx\n", name, size );
+    else memcpy( (char *)ctx + context_attributes[name].offset, value, context_attributes[name].size );
 
     if (bit == -1 && ctx->used != -1) WARN( "Unsupported attribute on context %p/%p\n", teb->glCurrentRC, ctx );
     ctx->used |= bit;
