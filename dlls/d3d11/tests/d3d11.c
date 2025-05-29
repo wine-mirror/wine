@@ -2446,7 +2446,6 @@ static void test_immediate_context(void)
     check_interface(immediate_context, &IID_ID3D11DeviceContext, TRUE, FALSE);
     check_interface(immediate_context, &IID_ID3D11DeviceContext1, TRUE, FALSE);
     check_interface(immediate_context, &IID_ID3D11DeviceContext2, TRUE, TRUE); /* Not available on all Windows versions. */
-    todo_wine
     check_interface(immediate_context, &IID_ID3D11DeviceContext3, TRUE, TRUE); /* Not available on all Windows versions. */
     todo_wine
     check_interface(immediate_context, &IID_ID3D11DeviceContext4, TRUE, TRUE); /* Not available on all Windows versions. */
@@ -2561,7 +2560,6 @@ static void test_create_deferred_context(void)
     check_interface(context, &IID_ID3D11DeviceContext, TRUE, FALSE);
     check_interface(context, &IID_ID3D11DeviceContext1, TRUE, FALSE);
     check_interface(context, &IID_ID3D11DeviceContext2, TRUE, TRUE); /* Not available on all Windows versions. */
-    todo_wine
     check_interface(context, &IID_ID3D11DeviceContext3, TRUE, TRUE); /* Not available on all Windows versions. */
     todo_wine
     check_interface(context, &IID_ID3D11DeviceContext4, TRUE, TRUE); /* Not available on all Windows versions. */

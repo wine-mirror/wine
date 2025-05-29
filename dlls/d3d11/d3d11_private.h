@@ -552,7 +552,7 @@ struct d3d_device_context_state
 /* ID3D11DeviceContext */
 struct d3d11_device_context
 {
-    ID3D11DeviceContext2 ID3D11DeviceContext2_iface;
+    ID3D11DeviceContext3 ID3D11DeviceContext3_iface;
     ID3D11Multithread ID3D11Multithread_iface;
     ID3D11VideoContext ID3D11VideoContext_iface;
     ID3DUserDefinedAnnotation ID3DUserDefinedAnnotation_iface;
