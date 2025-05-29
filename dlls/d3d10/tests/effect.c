@@ -82,6 +82,22 @@ static HRESULT create_effect_pool(DWORD *data, ID3D10Device *device, ID3D10Effec
     return D3D10CreateEffectPoolFromMemory(data, data[6], 0, device, pool);
 }
 
+static UINT effect_get_d3d_buffer_size(ID3D10Effect *effect, const char *name)
+{
+    ID3D10EffectConstantBuffer *var;
+    D3D10_BUFFER_DESC desc;
+    ID3D10Buffer *buffer;
+    HRESULT hr;
+
+    var = effect->lpVtbl->GetConstantBufferByName(effect, name);
+    hr = var->lpVtbl->GetConstantBuffer(var, &buffer);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID3D10Buffer_GetDesc(buffer, &desc);
+    ID3D10Buffer_Release(buffer);
+
+    return desc.ByteWidth;
+}
+
 /*
  * test_effect_constant_buffer_type
  */
@@ -129,6 +145,7 @@ static void test_effect_constant_buffer_type(void)
     HRESULT hr;
     LPCSTR string;
     unsigned int i;
+    UINT size;
 
     if (!(device = create_device()))
     {
@@ -155,6 +172,11 @@ static void test_effect_constant_buffer_type(void)
     ok(desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
             desc.SharedGlobalVariables);
     ok(desc.Techniques == 0, "Unexpected techniques count %u.\n", desc.Techniques);
+
+    size = effect_get_d3d_buffer_size(effect, "cb");
+    ok(size == 16, "Unexpected size %u.\n", size);
+    size = effect_get_d3d_buffer_size(effect, "cb2");
+    ok(size == 48, "Unexpected size %u.\n", size);
 
     constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
 
@@ -356,6 +378,7 @@ static void test_effect_variable_type(void)
     HRESULT hr;
     LPCSTR string;
     unsigned int i;
+    UINT size;
 
     if (!(device = create_device()))
     {
@@ -376,6 +399,9 @@ static void test_effect_variable_type(void)
     ok(desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
             desc.SharedGlobalVariables);
     ok(desc.Techniques == 0, "Unexpected techniques count %u.\n", desc.Techniques);
+
+    size = effect_get_d3d_buffer_size(effect, "cb");
+    ok(size == 32, "Unexpected size %u.\n", size);
 
     constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
     type = constantbuffer->lpVtbl->GetType(constantbuffer);
@@ -601,6 +627,7 @@ static void test_effect_variable_member(void)
     ID3D10Device *device;
     ULONG refcount;
     HRESULT hr;
+    UINT size;
 
     if (!(device = create_device()))
     {
@@ -623,6 +650,9 @@ static void test_effect_variable_member(void)
     ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
             effect_desc.SharedGlobalVariables);
     ok(effect_desc.Techniques == 0, "Unexpected techniques count %u.\n", effect_desc.Techniques);
+
+    size = effect_get_d3d_buffer_size(effect, "cb");
+    ok(size == 32, "Unexpected size %u.\n", size);
 
     constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
     hr = constantbuffer->lpVtbl->GetDesc(constantbuffer, &desc);
@@ -822,6 +852,7 @@ static void test_effect_variable_element(void)
     ID3D10Device *device;
     ULONG refcount;
     HRESULT hr;
+    UINT size;
 
     if (!(device = create_device()))
     {
@@ -844,6 +875,9 @@ static void test_effect_variable_element(void)
     ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
             effect_desc.SharedGlobalVariables);
     ok(effect_desc.Techniques == 0, "Unexpected techniques count %u.\n", effect_desc.Techniques);
+
+    size = effect_get_d3d_buffer_size(effect, "cb");
+    ok(size == 96, "Unexpected size %u.\n", size);
 
     constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
     hr = constantbuffer->lpVtbl->GetDesc(constantbuffer, &desc);
@@ -1500,6 +1534,7 @@ static void test_effect_variable_type_class(void)
     HRESULT hr;
     unsigned int variable_nr = 0;
     const char *str1, *str2;
+    UINT size;
 
     if (!(device = create_device()))
     {
@@ -1522,6 +1557,9 @@ static void test_effect_variable_type_class(void)
     ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
             effect_desc.SharedGlobalVariables);
     ok(effect_desc.Techniques == 0, "Unexpected techniques count %u.\n", effect_desc.Techniques);
+
+    size = effect_get_d3d_buffer_size(effect, "cb");
+    ok(size == 96, "Unexpected size %u.\n", size);
 
     /* get the null_constantbuffer, so that we can compare it to variables->GetParentConstantBuffer */
     null_buffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 1);
@@ -2569,6 +2607,7 @@ static void test_effect_constant_buffer_stride(void)
     ULONG refcount;
     HRESULT hr;
     unsigned int i;
+    UINT size;
 
     static const struct {
         unsigned int m; /* members */
@@ -2614,6 +2653,37 @@ static void test_effect_constant_buffer_stride(void)
     ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
             effect_desc.SharedGlobalVariables);
     ok(effect_desc.Techniques == 0, "Unexpected techniques count %u.\n", effect_desc.Techniques);
+
+    size = effect_get_d3d_buffer_size(effect, "cb1");
+    ok(size == 16, "Unexpected size %u.\n", size);
+    size = effect_get_d3d_buffer_size(effect, "cb2");
+    ok(size == 16, "Unexpected size %u.\n", size);
+    size = effect_get_d3d_buffer_size(effect, "cb3");
+    ok(size == 32, "Unexpected size %u.\n", size);
+    size = effect_get_d3d_buffer_size(effect, "cb4");
+    ok(size == 48, "Unexpected size %u.\n", size);
+    size = effect_get_d3d_buffer_size(effect, "cb5");
+    ok(size == 32, "Unexpected size %u.\n", size);
+    size = effect_get_d3d_buffer_size(effect, "cb6");
+    ok(size == 32, "Unexpected size %u.\n", size);
+    size = effect_get_d3d_buffer_size(effect, "cb7");
+    ok(size == 48, "Unexpected size %u.\n", size);
+    size = effect_get_d3d_buffer_size(effect, "cb8");
+    ok(size == 48, "Unexpected size %u.\n", size);
+    size = effect_get_d3d_buffer_size(effect, "cb9");
+    ok(size == 16, "Unexpected size %u.\n", size);
+    size = effect_get_d3d_buffer_size(effect, "cb10");
+    ok(size == 48, "Unexpected size %u.\n", size);
+    size = effect_get_d3d_buffer_size(effect, "cb11");
+    ok(size == 32, "Unexpected size %u.\n", size);
+    size = effect_get_d3d_buffer_size(effect, "cb12");
+    ok(size == 48, "Unexpected size %u.\n", size);
+    size = effect_get_d3d_buffer_size(effect, "cb13");
+    ok(size == 32, "Unexpected size %u.\n", size);
+    size = effect_get_d3d_buffer_size(effect, "cb14");
+    ok(size == 32, "Unexpected size %u.\n", size);
+    size = effect_get_d3d_buffer_size(effect, "cb15");
+    ok(size == 32, "Unexpected size %u.\n", size);
 
     for (i=0; i<ARRAY_SIZE(tv_ecbs); i++)
     {
@@ -4002,6 +4072,7 @@ static void test_effect_get_variable_by(void)
     ID3D10Device *device;
     ULONG refcount;
     HRESULT hr;
+    UINT size;
 
     if (!(device = create_device()))
     {
@@ -4024,6 +4095,11 @@ static void test_effect_get_variable_by(void)
     ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
             effect_desc.SharedGlobalVariables);
     ok(effect_desc.Techniques == 0, "Unexpected techniques count %u.\n", effect_desc.Techniques);
+
+    size = effect_get_d3d_buffer_size(effect, "cb");
+    ok(size == 16, "Unexpected size %u.\n", size);
+    size = effect_get_d3d_buffer_size(effect, "cb2");
+    ok(size == 16, "Unexpected size %u.\n", size);
 
     /* get the null variable */
     null_variable = effect->lpVtbl->GetVariableByIndex(effect, 0xffffffff);
@@ -5275,6 +5351,7 @@ static void test_effect_scalar_variable(void)
     unsigned int i;
     ULONG refcount;
     HRESULT hr;
+    UINT size;
     float f;
 
     if (!(device = create_device()))
@@ -5298,6 +5375,9 @@ static void test_effect_scalar_variable(void)
     ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
             effect_desc.SharedGlobalVariables);
     ok(effect_desc.Techniques == 0, "Unexpected techniques count %u.\n", effect_desc.Techniques);
+
+    size = effect_get_d3d_buffer_size(effect, "cb");
+    ok(size == 144, "Unexpected size %u.\n", size);
 
     /* Check each different scalar type, make sure the variable returned is
      * valid, set it to a value, and make sure what we get back is the same
@@ -5719,6 +5799,7 @@ static void test_effect_vector_variable(void)
     unsigned int i;
     ULONG refcount;
     HRESULT hr;
+    UINT size;
 
     if (!(device = create_device()))
     {
@@ -5741,6 +5822,9 @@ static void test_effect_vector_variable(void)
     ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
             effect_desc.SharedGlobalVariables);
     ok(effect_desc.Techniques == 0, "Unexpected techniques count %u.\n", effect_desc.Techniques);
+
+    size = effect_get_d3d_buffer_size(effect, "cb");
+    ok(size == 192, "Unexpected size %u.\n", size);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
@@ -6078,6 +6162,7 @@ static void test_effect_matrix_variable(void)
     unsigned int i;
     ULONG refcount;
     HRESULT hr;
+    UINT size;
 
     if (!(device = create_device()))
     {
@@ -6100,6 +6185,9 @@ static void test_effect_matrix_variable(void)
     ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
             effect_desc.SharedGlobalVariables);
     ok(effect_desc.Techniques == 0, "Unexpected techniques count %u.\n", effect_desc.Techniques);
+
+    size = effect_get_d3d_buffer_size(effect, "cb");
+    ok(size == 320, "Unexpected size %u.\n", size);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
@@ -7545,6 +7633,7 @@ static void test_effect_default_variable_value(void)
     int int_v[2], int_s;
     ULONG refcount;
     HRESULT hr;
+    UINT size;
     BOOL ret;
 
     if (!(device = create_device()))
@@ -7555,6 +7644,9 @@ static void test_effect_default_variable_value(void)
 
     hr = create_effect(fx_test_default_variable_value, 0, device, NULL, &effect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    size = effect_get_d3d_buffer_size(effect, "$Globals");
+    ok(size == 224, "Unexpected size %u.\n", size);
 
     memset(float_v, 0, sizeof(float_v));
     v = effect->lpVtbl->GetVariableByName(effect, "f4");
@@ -7886,6 +7978,7 @@ static void test_effect_dynamic_numeric_field(void)
     unsigned int idx;
     ULONG refcount;
     HRESULT hr;
+    UINT size;
 
     if (!(device = create_device()))
     {
@@ -7895,6 +7988,9 @@ static void test_effect_dynamic_numeric_field(void)
 
     hr = create_effect(fx_test_effect_dynamic_numeric_field, 0, device, NULL, &effect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    size = effect_get_d3d_buffer_size(effect, "$Globals");
+    ok(size == 144, "Unexpected size %u.\n", size);
 
     tech = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
     ok(tech->lpVtbl->IsValid(tech), "Expected valid technique.\n");
@@ -8997,6 +9093,7 @@ static void test_effect_value_expression(void)
     unsigned int idx;
     ULONG refcount;
     HRESULT hr;
+    UINT size;
     int i[4];
 
     if (!(device = create_device()))
@@ -9007,6 +9104,9 @@ static void test_effect_value_expression(void)
 
     hr = create_effect(fx_test_value_expression, 0, device, NULL, &effect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    size = effect_get_d3d_buffer_size(effect, "$Globals");
+    ok(size == 64, "Unexpected size %u.\n", size);
 
     t = effect->lpVtbl->GetTechniqueByName(effect, "tech");
     ok(t->lpVtbl->IsValid(t), "Expected valid technique.\n");
