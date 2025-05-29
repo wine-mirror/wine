@@ -1191,7 +1191,6 @@ static HRESULT sample_grabber_set_state(struct sample_grabber *grabber, enum sin
                 sample_grabber_cancel_timer(grabber);
                 release_samples(grabber);
                 grabber->sample_count = MAX_SAMPLE_QUEUE_LENGTH;
-                sample_grabber_release_pending_items(grabber);
             }
 
             if (state == SINK_STATE_RUNNING && grabber->state != SINK_STATE_RUNNING)
