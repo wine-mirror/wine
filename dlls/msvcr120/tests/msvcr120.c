@@ -1852,6 +1852,8 @@ static void test_exp(void)
             ok(!matherr_called, "matherr was called for %d\n", i);
         }
     }
+
+    __setusermatherr(NULL);
 }
 
 static void test_cexp(void)
