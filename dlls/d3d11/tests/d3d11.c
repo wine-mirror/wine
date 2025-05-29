@@ -2441,6 +2441,20 @@ static void test_immediate_context(void)
     ok(refcount == expected_refcount, "Got unexpected refcount %lu.\n", refcount);
     previous_immediate_context = immediate_context;
 
+    check_interface(immediate_context, &IID_IUnknown, TRUE, FALSE);
+    check_interface(immediate_context, &IID_ID3D11DeviceChild, TRUE, FALSE);
+    check_interface(immediate_context, &IID_ID3D11DeviceContext, TRUE, FALSE);
+    check_interface(immediate_context, &IID_ID3D11DeviceContext1, TRUE, FALSE);
+    todo_wine
+    check_interface(immediate_context, &IID_ID3D11DeviceContext2, TRUE, TRUE); /* Not available on all Windows versions. */
+    todo_wine
+    check_interface(immediate_context, &IID_ID3D11DeviceContext3, TRUE, TRUE); /* Not available on all Windows versions. */
+    todo_wine
+    check_interface(immediate_context, &IID_ID3D11DeviceContext4, TRUE, TRUE); /* Not available on all Windows versions. */
+    check_interface(immediate_context, &IID_ID3D11Multithread, TRUE, FALSE);
+    check_interface(immediate_context, &IID_ID3D11VideoContext, TRUE, FALSE);
+    check_interface(immediate_context, &IID_ID3DUserDefinedAnnotation, TRUE, FALSE);
+
     ID3D11Device_GetImmediateContext(device, &immediate_context);
     ok(immediate_context == previous_immediate_context, "Got different immediate device context objects.\n");
     refcount = get_refcount(device);
@@ -2546,7 +2560,15 @@ static void test_create_deferred_context(void)
     check_interface(context, &IID_IUnknown, TRUE, FALSE);
     check_interface(context, &IID_ID3D11DeviceChild, TRUE, FALSE);
     check_interface(context, &IID_ID3D11DeviceContext, TRUE, FALSE);
+    check_interface(context, &IID_ID3D11DeviceContext1, TRUE, FALSE);
+    todo_wine
+    check_interface(context, &IID_ID3D11DeviceContext2, TRUE, TRUE); /* Not available on all Windows versions. */
+    todo_wine
+    check_interface(context, &IID_ID3D11DeviceContext3, TRUE, TRUE); /* Not available on all Windows versions. */
+    todo_wine
+    check_interface(context, &IID_ID3D11DeviceContext4, TRUE, TRUE); /* Not available on all Windows versions. */
     check_interface(context, &IID_ID3D11Multithread, FALSE, FALSE);
+    check_interface(context, &IID_ID3DUserDefinedAnnotation, TRUE, FALSE);
 
     refcount = ID3D11DeviceContext_Release(context);
     ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
