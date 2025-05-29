@@ -79,6 +79,9 @@ double __cdecl __exp(double x, matherr_t matherr)
 	uint64_t ki, idx, top, sbits;
 	double_t kd, z, r, r2, scale, tail, tmp;
 
+	if (isnan(x))
+		return matherr(_DOMAIN, "exp", x, 0, x);
+
 	abstop = top12(x) & 0x7ff;
 	if (predict_false(abstop - top12(0x1p-54) >= top12(512.0) - top12(0x1p-54))) {
 		if (abstop - top12(0x1p-54) >= 0x80000000)
