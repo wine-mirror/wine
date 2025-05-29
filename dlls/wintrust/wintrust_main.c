@@ -1058,6 +1058,7 @@ BOOL WINAPI WINTRUST_AddCert(CRYPT_PROVIDER_DATA *data, DWORD idxSigner,
         CRYPT_PROVIDER_CERT *cert = &data->pasSigners[idxSigner].pasCertChain[
          data->pasSigners[idxSigner].csCertChain];
 
+        memset(cert, 0, sizeof(*cert));
         cert->cbStruct = sizeof(CRYPT_PROVIDER_CERT);
         cert->pCert = CertDuplicateCertificateContext(pCert2Add);
         data->pasSigners[idxSigner].csCertChain++;
