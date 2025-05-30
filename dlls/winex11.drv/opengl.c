@@ -1128,7 +1128,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel
 static BOOL x11drv_set_pixel_format( HWND hwnd, int old_format, int new_format, BOOL internal )
 {
     const struct glx_pixel_format *fmt;
-    struct gl_drawable *old, *gl;
+    struct gl_drawable *gl;
 
     /* Even for internal pixel format fail setting it if the app has already set a
      * different pixel format. Let wined3d create a backup GL context instead.
@@ -1142,25 +1142,14 @@ static BOOL x11drv_set_pixel_format( HWND hwnd, int old_format, int new_format, 
         return FALSE;
     }
 
-    if (!(old = get_gl_drawable( hwnd, 0 )) || old->format != fmt)
-    {
-        if (!(gl = create_gl_drawable( hwnd, fmt, FALSE )))
-        {
-            release_gl_drawable( old );
-            return FALSE;
-        }
+    if (!(gl = create_gl_drawable( hwnd, fmt, FALSE ))) return FALSE;
 
-        TRACE( "created GL drawable %lx for win %p %s\n",
-               gl->drawable, hwnd, debugstr_fbconfig( fmt->fbconfig ));
+    TRACE( "created GL drawable %lx for win %p %s\n",
+           gl->drawable, hwnd, debugstr_fbconfig( fmt->fbconfig ));
 
-        if (old)
-            mark_drawable_dirty( old, gl );
+    XFlush( gdi_display );
+    release_gl_drawable( gl );
 
-        XFlush( gdi_display );
-        release_gl_drawable( gl );
-    }
-
-    release_gl_drawable( old );
     return TRUE;
 }
 
