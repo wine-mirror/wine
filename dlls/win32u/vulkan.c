@@ -53,7 +53,6 @@ struct surface
     HWND hwnd;
 
     struct list entry;
-    struct rb_entry window_entry;
 };
 
 static struct surface *surface_from_handle( VkSurfaceKHR handle )
