@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-05-11 00:27+0200\n"
+"PO-Revision-Date: 2025-05-30 16:31+0200\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -395,19 +395,21 @@ msgid "uncompressed"
 msgstr "nieskompresowany"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:31
-#, fuzzy
-#| msgid "&Confirm password:"
 msgid "Confirm pairing"
-msgstr "&Potwierdź hasło:"
+msgstr "Potwierdź parowanie"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:32
 msgid "Pair with '%1!s!' using the following PIN/passkey value: %2!lu!?"
 msgstr ""
+"Sparuj z '%1!s!' przy użyciu następującej wartości kodu PIN lub klucza "
+"dostępu: %2!lu!?"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:33
 msgid ""
 "Pair with unnamed device %1!s! using the following PIN/passkey value: %2!lu!?"
 msgstr ""
+"Sparuj z nienazwanym urządzeniem %1!s! przy użyciu następującej wartości "
+"kodu PIN lub klucza dostępu: %2!lu!?"
 
 #: dlls/browseui/browseui.rc:28
 msgid "Canceling..."
