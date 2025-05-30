@@ -1151,7 +1151,7 @@ int WINAPI bind( SOCKET s, const struct sockaddr *addr, int len )
     HANDLE sync_event;
     NTSTATUS status;
 
-    TRACE( "socket %#Ix, addr %s\n", s, debugstr_sockaddr(addr) );
+    TRACE( "socket %#Ix, addr %s, len %d\n", s, debugstr_sockaddr(addr), len );
 
     if (!addr)
     {
