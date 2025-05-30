@@ -908,18 +908,17 @@ static GLXContext create_glxcontext( struct x11drv_context *context, int format,
     return ctx;
 }
 
-/***********************************************************************
- *              create_gl_drawable
- */
-static struct gl_drawable *create_gl_drawable( HWND hwnd, int format )
+static BOOL x11drv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable )
 {
     struct glx_pixel_format *fmt = glx_pixel_format_from_format( format );
+    struct opengl_drawable *previous;
     struct gl_drawable *gl, *prev;
     RECT rect;
 
+    if ((previous = *drawable) && previous->format == format) return TRUE;
     NtUserGetClientRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) );
 
-    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_surface_funcs, format, hwnd, 0 ))) return NULL;
+    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_surface_funcs, format, hwnd, hdc ))) return FALSE;
     /* Default GLX and WGL swap interval is 1, but in case of glXSwapIntervalSGI there is no way to query it. */
     gl->swap_interval = INT_MIN;
     gl->rect = rect;
@@ -933,7 +932,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, int format )
     if (!gl->drawable)
     {
         free( gl );
-        return NULL;
+        return FALSE;
     }
 
     TRACE( "Created drawable %s with client window %lx\n", debugstr_opengl_drawable( &gl->base ), gl->window );
@@ -941,26 +940,13 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, int format )
     pthread_mutex_lock( &context_mutex );
     if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&prev ))
         opengl_drawable_release( &prev->base );
-    XSaveContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char *)grab_gl_drawable(gl) );
+    XSaveContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char *)gl );
     pthread_mutex_unlock( &context_mutex );
-    return gl;
-}
 
-static BOOL x11drv_set_pixel_format( HWND hwnd, int old_format, int new_format, BOOL internal )
-{
-    struct gl_drawable *gl;
-
-    /* Even for internal pixel format fail setting it if the app has already set a
-     * different pixel format. Let wined3d create a backup GL context instead.
-     * Switching pixel format involves drawable recreation and is much more expensive
-     * than blitting from backup context. */
-    if (old_format) return old_format == new_format;
-
-    if (!(gl = create_gl_drawable( hwnd, new_format ))) return FALSE;
-    TRACE( "created GL drawable %lx for win %p\n", gl->drawable, hwnd);
     XFlush( gdi_display );
-    opengl_drawable_release( &gl->base );
 
+    if (previous) opengl_drawable_release( previous );
+    opengl_drawable_add_ref( (*drawable = &gl->base) );
     return TRUE;
 }
 
@@ -1719,7 +1705,7 @@ static const struct opengl_driver_funcs x11drv_driver_funcs =
     .p_init_pixel_formats = x11drv_init_pixel_formats,
     .p_describe_pixel_format = x11drv_describe_pixel_format,
     .p_init_wgl_extensions = x11drv_init_wgl_extensions,
-    .p_set_pixel_format = x11drv_set_pixel_format,
+    .p_surface_create = x11drv_surface_create,
     .p_swap_buffers = x11drv_swap_buffers,
     .p_context_create = x11drv_context_create,
     .p_context_destroy = x11drv_context_destroy,

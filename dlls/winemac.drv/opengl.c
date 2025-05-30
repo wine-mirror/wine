@@ -100,6 +100,7 @@ static pthread_mutex_t dc_pbuffers_mutex = PTHREAD_MUTEX_INITIALIZER;
 static void *opengl_handle;
 static const struct opengl_funcs *funcs;
 static const struct opengl_driver_funcs macdrv_driver_funcs;
+static const struct opengl_drawable_funcs macdrv_surface_funcs;
 static const struct opengl_drawable_funcs macdrv_pbuffer_funcs;
 
 static void (*pglCopyColorTable)(GLenum target, GLenum internalformat, GLint x, GLint y,
@@ -1473,11 +1474,12 @@ static BOOL create_context(struct macdrv_context *context, CGLContextObj share, 
     return TRUE;
 }
 
-static BOOL macdrv_set_pixel_format(HWND hwnd, int old_format, int new_format, BOOL internal)
+static BOOL macdrv_surface_create(HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable)
 {
     struct macdrv_win_data *data;
+    struct gl_drawable *gl;
 
-    TRACE("hwnd %p, old_format %d, new_format %d, internal %u\n", hwnd, old_format, new_format, internal);
+    TRACE("hwnd %p, hdc %p, format %d, drawable %p\n", hwnd, hdc, format, drawable);
 
     if (!(data = get_win_data(hwnd)))
     {
@@ -1485,11 +1487,19 @@ static BOOL macdrv_set_pixel_format(HWND hwnd, int old_format, int new_format, B
         return FALSE;
     }
 
-    data->pixel_format = new_format;
+    data->pixel_format = format;
     release_win_data(data);
+
+    if (!(gl = opengl_drawable_create(sizeof(*gl), &macdrv_surface_funcs, format, hwnd, hdc))) return FALSE;
+    *drawable = &gl->base;
+
     return TRUE;
 }
 
+static void macdrv_surface_destroy(struct opengl_drawable *base)
+{
+    TRACE("drawable %s\n", debugstr_opengl_drawable(base));
+}
 
 /**********************************************************************
  *              mark_contexts_for_moved_view
@@ -3050,7 +3060,7 @@ static const struct opengl_driver_funcs macdrv_driver_funcs =
     .p_init_pixel_formats = macdrv_init_pixel_formats,
     .p_describe_pixel_format = macdrv_describe_pixel_format,
     .p_init_wgl_extensions = macdrv_init_wgl_extensions,
-    .p_set_pixel_format = macdrv_set_pixel_format,
+    .p_surface_create = macdrv_surface_create,
     .p_swap_buffers = macdrv_swap_buffers,
     .p_context_create = macdrv_context_create,
     .p_context_destroy = macdrv_context_destroy,
@@ -3059,6 +3069,11 @@ static const struct opengl_driver_funcs macdrv_driver_funcs =
     .p_pbuffer_create = macdrv_pbuffer_create,
     .p_pbuffer_updated = macdrv_pbuffer_updated,
     .p_pbuffer_bind = macdrv_pbuffer_bind,
+};
+
+static const struct opengl_drawable_funcs macdrv_surface_funcs =
+{
+    .destroy = macdrv_surface_destroy,
 };
 
 static const struct opengl_drawable_funcs macdrv_pbuffer_funcs =

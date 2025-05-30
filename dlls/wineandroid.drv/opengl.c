@@ -199,23 +199,31 @@ void update_gl_drawable( HWND hwnd )
     }
 }
 
-static BOOL android_set_pixel_format( HWND hwnd, int old_format, int new_format, BOOL internal )
+static BOOL android_surface_create( HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable )
 {
     struct gl_drawable *gl;
 
-    TRACE( "hwnd %p, old_format %d, new_format %d, internal %u\n", hwnd, old_format, new_format, internal );
+    TRACE( "hwnd %p, hdc %p, format %d, drawable %p\n", hwnd, hdc, format, drawable );
 
-    if ((gl = get_gl_drawable( hwnd, 0 )))
+    if (*drawable)
     {
-        if (internal)
-        {
-            EGLint pf;
-            funcs->p_eglGetConfigAttrib( egl->display, egl_config_for_format(new_format), EGL_NATIVE_VISUAL_ID, &pf );
-            gl->window->perform( gl->window, NATIVE_WINDOW_SET_BUFFERS_FORMAT, pf );
-            gl->base.format = new_format;
-        }
+        EGLint pf;
+
+        FIXME( "Updating drawable %s, multiple surfaces not implemented\n", debugstr_opengl_drawable( *drawable ) );
+
+        gl = impl_from_opengl_drawable( *drawable );
+        funcs->p_eglGetConfigAttrib( egl->display, egl_config_for_format(format), EGL_NATIVE_VISUAL_ID, &pf );
+        gl->window->perform( gl->window, NATIVE_WINDOW_SET_BUFFERS_FORMAT, pf );
+        gl->base.hwnd = hwnd;
+        gl->base.hdc = hdc;
+        gl->base.format = format;
+
+        TRACE( "Updated drawable %s\n", debugstr_opengl_drawable( *drawable ) );
+        return TRUE;
     }
-    else if (!(gl = create_gl_drawable( hwnd, 0, new_format ))) return FALSE;
+
+    if (!(gl = create_gl_drawable( hwnd, hdc, format ))) return FALSE;
+    opengl_drawable_add_ref( (*drawable = &gl->base) );
     release_gl_drawable( gl );
 
     return TRUE;
@@ -397,7 +405,7 @@ static struct opengl_driver_funcs android_driver_funcs =
     .p_init_egl_platform = android_init_egl_platform,
     .p_get_proc_address = android_get_proc_address,
     .p_init_wgl_extensions = android_init_wgl_extensions,
-    .p_set_pixel_format = android_set_pixel_format,
+    .p_surface_create = android_surface_create,
     .p_swap_buffers = android_swap_buffers,
     .p_context_create = android_context_create,
     .p_context_destroy = android_context_destroy,

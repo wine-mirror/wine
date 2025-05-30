@@ -161,7 +161,7 @@ struct opengl_driver_funcs
     UINT (*p_init_pixel_formats)(UINT*);
     BOOL (*p_describe_pixel_format)(int,struct wgl_pixel_format*);
     const char *(*p_init_wgl_extensions)(struct opengl_funcs *funcs);
-    BOOL (*p_set_pixel_format)(HWND,int,int,BOOL);
+    BOOL (*p_surface_create)( HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable );
     BOOL (*p_swap_buffers)(void*,HWND,HDC,int);
     BOOL (*p_context_create)( int format, void *share, const int *attribs, void **context );
     BOOL (*p_context_destroy)(void*);

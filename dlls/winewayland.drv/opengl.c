@@ -337,23 +337,23 @@ static void wayland_context_refresh(struct wayland_context *ctx)
     if (old_read) opengl_drawable_release(&old_read->base);
 }
 
-static BOOL wayland_set_pixel_format(HWND hwnd, int old_format, int new_format, BOOL internal)
+static BOOL wayland_opengl_surface_create(HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable)
 {
+    struct opengl_drawable *previous;
     struct wayland_gl_drawable *gl;
     RECT rect;
 
-    /* Even for internal pixel format fail setting it if the app has already set a
-     * different pixel format. Let wined3d create a backup GL context instead.
-     * Switching pixel format involves drawable recreation and is much more expensive
-     * than blitting from backup context. */
-    if (old_format) return old_format == new_format;
+    if ((previous = *drawable) && previous->format == format) return TRUE;
 
     NtUserGetClientRect(hwnd, &rect, NtUserGetDpiForWindow(hwnd));
     if (rect.right == rect.left) rect.right = rect.left + 1;
     if (rect.bottom == rect.top) rect.bottom = rect.top + 1;
 
-    if (!(gl = wayland_gl_drawable_create(hwnd, 0, new_format, rect.right - rect.left, rect.bottom - rect.top))) return FALSE;
+    if (!(gl = wayland_gl_drawable_create(hwnd, 0, format, rect.right - rect.left, rect.bottom - rect.top))) return FALSE;
     wayland_update_gl_drawable(hwnd, gl);
+
+    if (previous) opengl_drawable_release( previous );
+    opengl_drawable_add_ref( (*drawable = &gl->base) );
     return TRUE;
 }
 
@@ -538,7 +538,7 @@ static UINT wayland_pbuffer_bind(HDC hdc, struct opengl_drawable *base, GLenum b
 static struct opengl_driver_funcs wayland_driver_funcs =
 {
     .p_init_egl_platform = wayland_init_egl_platform,
-    .p_set_pixel_format = wayland_set_pixel_format,
+    .p_surface_create = wayland_opengl_surface_create,
     .p_swap_buffers = wayland_swap_buffers,
     .p_context_create = wayland_context_create,
     .p_context_destroy = wayland_context_destroy,

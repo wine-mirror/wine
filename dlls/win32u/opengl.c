@@ -398,7 +398,7 @@ static const char *egldrv_init_wgl_extensions( struct opengl_funcs *funcs )
     return "";
 }
 
-static BOOL egldrv_set_pixel_format( HWND hwnd, int old_format, int new_format, BOOL internal )
+static BOOL egldrv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable )
 {
     FIXME( "stub!\n" );
     return TRUE;
@@ -459,7 +459,7 @@ static const struct opengl_driver_funcs egldrv_funcs =
     .p_init_pixel_formats = egldrv_init_pixel_formats,
     .p_describe_pixel_format = egldrv_describe_pixel_format,
     .p_init_wgl_extensions = egldrv_init_wgl_extensions,
-    .p_set_pixel_format = egldrv_set_pixel_format,
+    .p_surface_create = egldrv_surface_create,
     .p_swap_buffers = egldrv_swap_buffers,
     .p_pbuffer_create = egldrv_pbuffer_create,
     .p_pbuffer_updated = egldrv_pbuffer_updated,
@@ -607,7 +607,7 @@ static const char *nulldrv_init_wgl_extensions( struct opengl_funcs *funcs )
     return "";
 }
 
-static BOOL nulldrv_set_pixel_format( HWND hwnd, int old_format, int new_format, BOOL internal )
+static BOOL nulldrv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable )
 {
     return TRUE;
 }
@@ -648,7 +648,7 @@ static BOOL nulldrv_context_flush( void *private, HWND hwnd, HDC hdc, int interv
     return FALSE;
 }
 
-static BOOL nulldrv_context_make_current( HDC draw_hdc, HDC read_hdc, void *private )
+static BOOL nulldrv_context_make_current( HDC draw, HDC read, void *context )
 {
     return FALSE;
 }
@@ -659,7 +659,7 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_init_pixel_formats = nulldrv_init_pixel_formats,
     .p_describe_pixel_format = nulldrv_describe_pixel_format,
     .p_init_wgl_extensions = nulldrv_init_wgl_extensions,
-    .p_set_pixel_format = nulldrv_set_pixel_format,
+    .p_surface_create = nulldrv_surface_create,
     .p_swap_buffers = nulldrv_swap_buffers,
     .p_pbuffer_create = nulldrv_pbuffer_create,
     .p_pbuffer_updated = nulldrv_pbuffer_updated,
@@ -721,6 +721,38 @@ static int win32u_wglGetPixelFormat( HDC hdc )
 {
     int format = get_dc_pixel_format( hdc, FALSE );
     return format > 0 ? format : 0;
+}
+
+static void set_window_opengl_drawable( HWND hwnd, struct opengl_drawable *new_drawable )
+{
+    void *old_drawable = NULL;
+    WND *win;
+
+    TRACE( "hwnd %p, new_drawable %s\n", hwnd, debugstr_opengl_drawable( new_drawable ) );
+
+    if ((win = get_win_ptr( hwnd )) && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
+    {
+        old_drawable = win->opengl_drawable;
+        if ((win->opengl_drawable = new_drawable)) opengl_drawable_add_ref( new_drawable );
+        release_win_ptr( win );
+    }
+
+    if (old_drawable) opengl_drawable_release( old_drawable );
+}
+
+static struct opengl_drawable *get_window_opengl_drawable( HWND hwnd )
+{
+    void *drawable = NULL;
+    WND *win;
+
+    if ((win = get_win_ptr( hwnd )) && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
+    {
+        if ((drawable = win->opengl_drawable)) opengl_drawable_add_ref( drawable );
+        release_win_ptr( win );
+    }
+
+    TRACE( "hwnd %p, drawable %s\n", hwnd, debugstr_opengl_drawable( drawable ) );
+    return drawable;
 }
 
 static struct wgl_pbuffer *create_memory_pbuffer( HDC hdc, int format )
@@ -804,7 +836,9 @@ static BOOL set_dc_pixel_format( HDC hdc, int new_format, BOOL internal )
 
     if ((hwnd = NtUserWindowFromDC( hdc )))
     {
+        struct opengl_drawable *drawable;
         int old_format;
+        BOOL ret;
 
         if (new_format > onscreen)
         {
@@ -815,7 +849,13 @@ static BOOL set_dc_pixel_format( HDC hdc, int new_format, BOOL internal )
         TRACE( "%p/%p format %d, internal %u\n", hdc, hwnd, new_format, internal );
 
         if ((old_format = get_window_pixel_format( hwnd, FALSE )) && !internal) return old_format == new_format;
-        if (!driver_funcs->p_set_pixel_format( hwnd, old_format, new_format, internal )) return FALSE;
+
+        drawable = get_window_opengl_drawable( hwnd );
+        if ((ret = driver_funcs->p_surface_create( hwnd, hdc, new_format, &drawable )))
+            set_window_opengl_drawable( hwnd, drawable );
+        if (drawable) opengl_drawable_release( drawable );
+
+        if (!ret) return FALSE;
         return set_window_pixel_format( hwnd, new_format, internal );
     }
 
