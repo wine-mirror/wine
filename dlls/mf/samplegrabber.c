@@ -1170,9 +1170,9 @@ static HRESULT sample_grabber_set_state(struct sample_grabber *grabber, enum sin
 {
     static const DWORD events[] =
     {
-        MEStreamSinkStopped, /* SINK_STATE_STOPPED */
-        MEStreamSinkPaused,  /* SINK_STATE_PAUSED */
-        MEStreamSinkStarted, /* SINK_STATE_RUNNING */
+        [SINK_STATE_STOPPED] = MEStreamSinkStopped,
+        [SINK_STATE_PAUSED]  = MEStreamSinkPaused,
+        [SINK_STATE_RUNNING] = MEStreamSinkStarted,
     };
     BOOL do_callback = FALSE;
     HRESULT hr = S_OK;
