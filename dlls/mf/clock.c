@@ -473,10 +473,9 @@ static HRESULT WINAPI present_clock_AddClockStateSink(IMFPresentationClock *ifac
     {
         static const enum clock_notification notifications[MFCLOCK_STATE_PAUSED + 1] =
         {
-            /* MFCLOCK_STATE_INVALID */ 0, /* Does not apply */
-            /* MFCLOCK_STATE_RUNNING */ CLOCK_NOTIFY_START,
-            /* MFCLOCK_STATE_STOPPED */ CLOCK_NOTIFY_STOP,
-            /* MFCLOCK_STATE_PAUSED  */ CLOCK_NOTIFY_PAUSE,
+            [MFCLOCK_STATE_RUNNING] = CLOCK_NOTIFY_START,
+            [MFCLOCK_STATE_STOPPED] = CLOCK_NOTIFY_STOP,
+            [MFCLOCK_STATE_PAUSED]  = CLOCK_NOTIFY_PAUSE,
         };
         struct clock_state_change_param param;
 
@@ -559,26 +558,18 @@ static HRESULT clock_call_state_change(MFTIME system_time, struct clock_state_ch
 static HRESULT clock_change_state(struct presentation_clock *clock, enum clock_command command,
         struct clock_state_change_param param)
 {
-    static const BYTE state_change_is_allowed[MFCLOCK_STATE_PAUSED+1][CLOCK_CMD_MAX] =
-    {   /*              S  S* P, R  */
-        /* INVALID */ { 1, 1, 1, 1 },
-        /* RUNNING */ { 1, 1, 1, 1 },
-        /* STOPPED */ { 1, 1, 0, 1 },
-        /* PAUSED  */ { 1, 1, 0, 1 },
-    };
     static const MFCLOCK_STATE states[CLOCK_CMD_MAX] =
     {
-        /* CLOCK_CMD_START    */ MFCLOCK_STATE_RUNNING,
-        /* CLOCK_CMD_STOP     */ MFCLOCK_STATE_STOPPED,
-        /* CLOCK_CMD_PAUSE    */ MFCLOCK_STATE_PAUSED,
-        /* CLOCK_CMD_SET_RATE */ 0, /* Unused */
+        [CLOCK_CMD_START] = MFCLOCK_STATE_RUNNING,
+        [CLOCK_CMD_STOP]  = MFCLOCK_STATE_STOPPED,
+        [CLOCK_CMD_PAUSE] = MFCLOCK_STATE_PAUSED,
     };
     static const enum clock_notification notifications[CLOCK_CMD_MAX] =
     {
-        /* CLOCK_CMD_START    */ CLOCK_NOTIFY_START,
-        /* CLOCK_CMD_STOP     */ CLOCK_NOTIFY_STOP,
-        /* CLOCK_CMD_PAUSE    */ CLOCK_NOTIFY_PAUSE,
-        /* CLOCK_CMD_SET_RATE */ CLOCK_NOTIFY_SET_RATE,
+        [CLOCK_CMD_START]    = CLOCK_NOTIFY_START,
+        [CLOCK_CMD_STOP]     = CLOCK_NOTIFY_STOP,
+        [CLOCK_CMD_PAUSE]    = CLOCK_NOTIFY_PAUSE,
+        [CLOCK_CMD_SET_RATE] = CLOCK_NOTIFY_SET_RATE,
     };
     enum clock_notification notification;
     struct clock_sink *sink;
@@ -593,7 +584,8 @@ static HRESULT clock_change_state(struct presentation_clock *clock, enum clock_c
     if (command != CLOCK_CMD_SET_RATE && clock->state == states[command] && clock->state != MFCLOCK_STATE_RUNNING)
         return MF_E_CLOCK_STATE_ALREADY_SET;
 
-    if (!state_change_is_allowed[clock->state][command])
+    /* Invalid transitions. */
+    if (command == CLOCK_CMD_PAUSE && (clock->state == MFCLOCK_STATE_STOPPED || clock->state == MFCLOCK_STATE_PAUSED))
         return MF_E_INVALIDREQUEST;
 
     system_time = MFGetSystemTime();
