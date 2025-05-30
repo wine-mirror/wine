@@ -1779,12 +1779,79 @@ static enum pdb_result pdb_reader_read_DBI_codeview_symbol_by_name(struct pdb_re
     return R_PDB_NOT_FOUND;
 }
 
+struct pdb_reader_whole_stream
+{
+    unsigned short stream_id;
+    const BYTE *data;
+};
+
+static enum pdb_result pdb_reader_alloc_and_load_whole_stream(struct pdb_reader *pdb, unsigned short stream_id, struct pdb_reader_whole_stream *whole)
+{
+    enum pdb_result result;
+    const uint32_t *blocks;
+    unsigned num_blocks, i, j;
+    BYTE *buffer;
+
+    memset(whole, 0, sizeof(*whole));
+    if (stream_id >= pdb->toc->num_streams) return R_PDB_INVALID_ARGUMENT;
+    if (pdb->toc->stream_size[stream_id] == 0 || pdb->toc->stream_size[stream_id] == 0xFFFFFFFF) return R_PDB_NOT_FOUND;
+
+    blocks = pdb->streams[stream_id].blocks;
+    num_blocks = ((pdboff_t)pdb->toc->stream_size[stream_id] + pdb->block_size - 1) / pdb->block_size;
+    buffer = HeapAlloc(GetProcessHeap(), 0, num_blocks * pdb->block_size);
+    if (!buffer) return R_PDB_OUT_OF_MEMORY;
+
+    for (i = 0; i < num_blocks; i = j)
+    {
+        /* find all contiguous blocks to read them at once */
+        for (j = i + 1; j < num_blocks && blocks[j] == blocks[j - 1] + 1; j++) {}
+        if ((result = pdb_reader_fetch_file_no_cache(pdb, buffer + i * pdb->block_size,
+                                                     (pdboff_t)blocks[i] * pdb->block_size, (j - i) * pdb->block_size)))
+        {
+            HeapFree(GetProcessHeap(), 0, buffer);
+            return result;
+        }
+    }
+    whole->stream_id = stream_id;
+    whole->data = buffer;
+    return R_PDB_SUCCESS;
+}
+
+static enum pdb_result pdb_reader_dispose_whole_stream(struct pdb_reader *pdb, struct pdb_reader_whole_stream *whole)
+{
+    HeapFree(GetProcessHeap(), 0, (void *)whole->data);
+    return R_PDB_SUCCESS;
+}
+
+static enum pdb_result pdb_reader_whole_stream_access_codeview_symbol(struct pdb_reader *pdb, struct pdb_reader_whole_stream *whole,
+                                                                      unsigned offset, const union codeview_symbol **cv_symbol)
+{
+    const union codeview_symbol *cv = (const void *)(whole->data + offset);
+    if (!whole->data ||
+        offset + sizeof(cv->generic) > pdb->toc->stream_size[whole->stream_id] ||
+        offset + sizeof(cv->generic.len) + cv->generic.len > pdb->toc->stream_size[whole->stream_id]) return R_PDB_INVALID_ARGUMENT;
+    *cv_symbol = cv;
+    return R_PDB_SUCCESS;
+}
+
+static int my_action_global_obj_cmp(const void *p1, const void *p2)
+{
+    pdbsize_t o1 = ((const struct pdb_action_entry *)p1)->stream_offset;
+    pdbsize_t o2 = ((const struct pdb_action_entry *)p2)->stream_offset;
+
+    if (o1 < o2) return -1;
+    if (o1 > o2) return +1;
+    return 0;
+}
+
 static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb)
 {
     enum pdb_result result;
     struct pdb_reader_compiland_iterator compiland_iter;
     struct pdb_reader_walker walker;
-    union codeview_symbol cv_symbol;
+    struct pdb_reader_whole_stream whole;
+    const union codeview_symbol *cv_global_symbol, *cv_global_symbol2;
+    unsigned hash;
     symref_t symref;
     unsigned i;
 
@@ -1811,40 +1878,43 @@ static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb)
     }
     if ((result = pdb_reader_load_DBI_hash_table(pdb))) return result;
 
-    /* register the globals entries not bound to a compiland */
-    if ((result = pdb_reader_walker_init(pdb, pdb->dbi_header.gsym_stream, &walker))) return result;
-    while (pdb_reader_READ(pdb, &walker, &cv_symbol.generic) == R_PDB_SUCCESS)
-    {
-        switch (cv_symbol.generic.id)
-        {
-        case S_UDT:
-            if ((result = pdb_reader_push_action(pdb, action_type_globals, walker.offset - sizeof(cv_symbol.generic),
-                                                 cv_symbol.generic.len + sizeof(cv_symbol.generic.len), 0, &symref))) return result;
-            break;
-        case S_GDATA32:
-            {
-                DWORD64 address;
-                symref_t type_symref;
-                union codeview_symbol *cv_global_symbol;
-                union codeview_symbol zzcv;
-                struct pdb_reader_walker global_walker = walker;
-                pdbsize_t global_hash_offset, global_offset;
+    if ((result = pdb_reader_alloc_and_load_whole_stream(pdb, pdb->dbi_header.gsym_stream, &whole))) return result;
 
-                /* There are cases (incremental linking) where we have several entries of same name, but
-                 * only one is valid.
-                 * We discriminate valid with:
-                 * - the hash for that name points to this global entry
-                 * - the address is valid
-                 * - the typeid is valid
-                 * Note: checking address map doesn't bring nothing as the invalid entries are also listed
-                 * there.
-                 */
-                global_walker.offset -= sizeof(cv_symbol.generic);
-                global_offset = global_walker.offset;
-                if (!pdb_reader_alloc_and_read_full_codeview_symbol(pdb, &global_walker, &cv_global_symbol))
+    for (hash = 0; hash < DBI_MAX_HASH; hash++)
+    {
+        struct pdb_dbi_hash_entry *entry, *entry2;
+        DWORD64 address;
+        symref_t type_symref;
+        BOOL found;
+
+        if (pdb->dbi_symbols_hash[hash].next == &pdb->dbi_symbols_hash[hash]) continue;
+        for (entry = &pdb->dbi_symbols_hash[hash]; entry; entry = entry->next)
+        {
+            if (!pdb_reader_whole_stream_access_codeview_symbol(pdb, &whole, entry->dbi_stream_offset, &cv_global_symbol))
+            {
+                switch (cv_global_symbol->generic.id)
                 {
-                    if (!pdb_reader_read_DBI_codeview_symbol_by_name(pdb, cv_global_symbol->data_v3.name, &global_hash_offset, &zzcv) &&
-                        global_hash_offset == global_offset &&
+                case S_UDT:
+                    if ((result = pdb_reader_push_action(pdb, action_type_globals, entry->dbi_stream_offset,
+                                                         cv_global_symbol->generic.len + sizeof(cv_global_symbol->generic.len), 0, &symref))) return result;
+                    break;
+                case S_GDATA32:
+                    /* There are cases (incremental linking) where we have several entries of same name, but
+                     * only one is valid.
+                     * We discriminate valid with:
+                     * - there's no other entry with same name before this entry in hash bucket,
+                     * - the address is valid
+                     * - the typeid is valid
+                     * Note: checking address map doesn't bring nothing as the invalid entries are also listed
+                     * there.
+                     */
+                    found = FALSE;
+                    for (entry2 = &pdb->dbi_symbols_hash[hash]; !found && entry2 && entry2 != entry; entry2 = entry2->next)
+                    {
+                        if (!pdb_reader_whole_stream_access_codeview_symbol(pdb, &whole, entry2->dbi_stream_offset, &cv_global_symbol2))
+                            found = !strcmp(cv_global_symbol->data_v3.name, cv_global_symbol2->data_v3.name);
+                    }
+                    if (!found &&
                         !pdb_reader_get_segment_address(pdb, cv_global_symbol->data_v3.segment, cv_global_symbol->data_v3.offset, &address) &&
                         !pdb_reader_symref_from_cv_typeid(pdb, cv_global_symbol->data_v3.symtype, &type_symref))
                     {
@@ -1852,14 +1922,16 @@ static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb)
                         symt_new_global_variable(pdb->module, 0, cv_global_symbol->data_v3.name,
                                                  FALSE, loc, 0, type_symref);
                     }
-                    pdb_reader_free(pdb, cv_global_symbol);
+                    break;
                 }
             }
-            break;
         }
-        walker.offset += cv_symbol.generic.len - sizeof(cv_symbol.generic.id);
     }
+    if ((result = pdb_reader_dispose_whole_stream(pdb, &whole))) return result;
     pdb->num_action_globals = pdb->num_action_entries;
+    /* as we walked the DBI stream according to hash order, resort by stream_offset */
+    qsort(pdb->action_store, pdb->num_action_globals, sizeof(pdb->action_store[0]),
+          &my_action_global_obj_cmp);
 
     return R_PDB_SUCCESS;
 }
