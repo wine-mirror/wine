@@ -562,10 +562,11 @@ static WINE_SIP_PROVIDER *CRYPT_GetCachedSIP(const GUID *pgSubject)
     LIST_FOR_EACH_ENTRY(provider, &providers, WINE_SIP_PROVIDER, entry)
     {
         if (IsEqualGUID(pgSubject, &provider->subject))
+        {
+            ret = provider;
             break;
+        }
     }
-    if (provider && IsEqualGUID(pgSubject, &provider->subject))
-        ret = provider;
     LeaveCriticalSection(&providers_cs);
     return ret;
 }
