@@ -1295,7 +1295,6 @@ static void bluez_device_pair_callback( DBusPendingCall *pending, void *param )
     bluez_event_list_queue_new_event( &data->watcher_ctx->event_list,
                                       BLUETOOTH_WATCHER_EVENT_TYPE_PAIRING_FINISHED, event );
     p_dbus_message_unref( reply );
-    p_dbus_pending_call_unref( pending );
 }
 
 NTSTATUS bluez_device_start_pairing( void *connection, void *watcher_ctx, struct unix_name *device, IRP *irp )
