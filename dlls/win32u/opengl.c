@@ -725,7 +725,7 @@ static int win32u_wglGetPixelFormat( HDC hdc )
     return format > 0 ? format : 0;
 }
 
-static void set_window_opengl_drawable( HWND hwnd, struct opengl_drawable *new_drawable )
+void set_window_opengl_drawable( HWND hwnd, struct opengl_drawable *new_drawable )
 {
     void *old_drawable = NULL;
     WND *win;
@@ -742,7 +742,7 @@ static void set_window_opengl_drawable( HWND hwnd, struct opengl_drawable *new_d
     if (old_drawable) opengl_drawable_release( old_drawable );
 }
 
-static struct opengl_drawable *get_window_opengl_drawable( HWND hwnd )
+struct opengl_drawable *get_window_opengl_drawable( HWND hwnd )
 {
     void *drawable = NULL;
     WND *win;

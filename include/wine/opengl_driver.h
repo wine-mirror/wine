@@ -153,6 +153,9 @@ W32KAPI void *opengl_drawable_create( UINT size, const struct opengl_drawable_fu
 W32KAPI void opengl_drawable_add_ref( struct opengl_drawable *drawable );
 W32KAPI void opengl_drawable_release( struct opengl_drawable *drawable );
 
+W32KAPI struct opengl_drawable *get_window_opengl_drawable( HWND hwnd );
+W32KAPI void set_window_opengl_drawable( HWND hwnd, struct opengl_drawable *drawable );
+
 /* interface between win32u and the user drivers */
 struct opengl_driver_funcs
 {
