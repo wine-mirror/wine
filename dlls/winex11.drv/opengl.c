@@ -345,9 +345,11 @@ static INT64 (*pglXSwapBuffersMscOML)( Display *dpy, GLXDrawable drawable,
         INT64 target_msc, INT64 divisor, INT64 remainder );
 
 /* Standard OpenGL */
-static void (*pglFinish)(void);
-static void (*pglFlush)(void);
 static const GLubyte *(*pglGetString)(GLenum name);
+
+static void *opengl_handle;
+static const struct opengl_funcs *funcs;
+static const struct opengl_driver_funcs x11drv_driver_funcs;
 
 /* check if the extension is present in the list */
 static BOOL has_extension( const char *list, const char *ext )
@@ -489,9 +491,6 @@ done:
     return ret;
 }
 
-static void *opengl_handle;
-static const struct opengl_driver_funcs x11drv_driver_funcs;
-
 /**********************************************************************
  *           X11DRV_OpenglInit
  */
@@ -504,6 +503,7 @@ UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, c
         ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_OPENGL_DRIVER_VERSION );
         return STATUS_INVALID_PARAMETER;
     }
+    funcs = opengl_funcs;
 
     /* No need to load any other libraries as according to the ABI, libGL should be self-sufficient
        and include all dependencies */
@@ -522,8 +522,6 @@ UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, c
             ERR( "%s not found in libGL, disabling OpenGL.\n", #func ); \
             goto failed; \
         }
-    LOAD_FUNCPTR( glFinish );
-    LOAD_FUNCPTR( glFlush );
     LOAD_FUNCPTR( glGetString );
 #undef LOAD_FUNCPTR
 
@@ -1568,7 +1566,7 @@ static void present_gl_drawable( HWND hwnd, HDC hdc, struct gl_drawable *gl, BOO
     window = get_dc_drawable( hdc, &rect );
     region = get_dc_monitor_region( hwnd, hdc );
 
-    if (gl_finish) pglFinish();
+    if (gl_finish) funcs->p_glFinish();
     if (flush) XFlush( gdi_display );
 
     NtUserGetClientRect( hwnd, &rect_dst, NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) );
@@ -1605,7 +1603,7 @@ static BOOL x11drv_context_flush( void *private, HWND hwnd, HDC hdc, int interva
 
     if (flush) flush();
 
-    present_gl_drawable( hwnd, ctx->hdc, gl, TRUE, flush != pglFinish );
+    present_gl_drawable( hwnd, ctx->hdc, gl, TRUE, flush != funcs->p_glFinish );
     release_gl_drawable( gl );
     return TRUE;
 }
@@ -1920,14 +1918,14 @@ static BOOL x11drv_swap_buffers( void *private, HWND hwnd, HDC hdc, int interval
             /* (glX)SwapBuffers has an implicit glFlush effect, however
              * GLX_MESA_copy_sub_buffer doesn't. Make sure GL is flushed before
              * copying */
-            pglFlush();
+            funcs->p_glFlush();
             pglXCopySubBufferMESA( gdi_display, gl->drawable, 0, 0,
                                    gl->rect.right, gl->rect.bottom );
             break;
         }
         if (ctx && pglXSwapBuffersMscOML)
         {
-            pglFlush();
+            funcs->p_glFlush();
             target_sbc = pglXSwapBuffersMscOML( gdi_display, gl->drawable, 0, 0, 0 );
             break;
         }
@@ -1941,7 +1939,7 @@ static BOOL x11drv_swap_buffers( void *private, HWND hwnd, HDC hdc, int interval
     default:
         if (ctx && drawable && pglXSwapBuffersMscOML)
         {
-            pglFlush();
+            funcs->p_glFlush();
             target_sbc = pglXSwapBuffersMscOML( gdi_display, gl->drawable, 0, 0, 0 );
             break;
         }
