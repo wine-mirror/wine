@@ -86,12 +86,13 @@ static pthread_mutex_t context_mutex = PTHREAD_MUTEX_INITIALIZER;
 static CFMutableDictionaryRef dc_pbuffers;
 static pthread_mutex_t dc_pbuffers_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+static void *opengl_handle;
+static const struct opengl_funcs *funcs;
 static const struct opengl_driver_funcs macdrv_driver_funcs;
 
 static void (*pglCopyColorTable)(GLenum target, GLenum internalformat, GLint x, GLint y,
                                  GLsizei width);
 static void (*pglCopyPixels)(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type);
-static void (*pglFlush)(void);
 static void (*pglFlushRenderAPPLE)(void);
 static const GLubyte *(*pglGetString)(GLenum name);
 static PFN_glGetIntegerv pglGetIntegerv;
@@ -230,9 +231,6 @@ C_ASSERT(sizeof(((pixel_format_or_code*)0)->format) <= sizeof(((pixel_format_or_
 
 static pixel_format *pixel_formats;
 static int nb_formats, nb_displayable_formats;
-
-
-static void *opengl_handle;
 
 
 static const char* debugstr_attrib(int attrib, int value)
@@ -2174,7 +2172,7 @@ static UINT macdrv_pbuffer_bind(HDC hdc, void *private, GLenum source)
     TRACE("hdc %p pbuffer %p source 0x%x\n", hdc, pbuffer, source);
 
     if (!context->draw_view && context->draw_pbuffer == pbuffer && source != GL_NONE)
-        pglFlush();
+        funcs->p_glFlush();
 
     err = CGLTexImagePBuffer(context->cglcontext, pbuffer, source);
     if (err != kCGLNoError)
@@ -2782,6 +2780,7 @@ UINT macdrv_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, co
         ERR("version mismatch, opengl32 wants %u but macdrv has %u\n", version, WINE_OPENGL_DRIVER_VERSION);
         return STATUS_INVALID_PARAMETER;
     }
+    funcs = opengl_funcs;
 
     dc_pbuffers = CFDictionaryCreateMutable(NULL, 0, NULL, NULL);
     if (!dc_pbuffers)
@@ -2810,7 +2809,6 @@ UINT macdrv_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, co
     LOAD_FUNCPTR(glReadPixels);
     LOAD_FUNCPTR(glViewport);
     LOAD_FUNCPTR(glCopyColorTable);
-    LOAD_FUNCPTR(glFlush);
 
     if (!init_gl_info())
         goto failed;
