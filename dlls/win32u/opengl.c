@@ -41,8 +41,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 
 struct wgl_context
 {
-    const struct opengl_driver_funcs *driver_funcs;
-    const struct opengl_funcs *funcs;
     void *driver_private;
     int pixel_format;
 
@@ -52,8 +50,6 @@ struct wgl_context
 
 struct wgl_pbuffer
 {
-    const struct opengl_driver_funcs *driver_funcs;
-    const struct opengl_funcs *funcs;
     void *driver_private;
 
     HDC hdc;
@@ -770,7 +766,7 @@ static BOOL flush_memory_pbuffer( struct wgl_context *context, HDC hdc, BOOL wri
 
 static void destroy_memory_pbuffer( struct wgl_context *context, HDC hdc )
 {
-    const struct opengl_funcs *funcs = context->funcs;
+    const struct opengl_funcs *funcs = &display_funcs;
     flush_memory_pbuffer( context, hdc, FALSE, funcs->p_glFinish );
     funcs->p_wglDestroyPbufferARB( context->memory_pbuffer );
     context->memory_pbuffer = NULL;
@@ -838,7 +834,6 @@ static void win32u_get_pixel_formats( struct wgl_pixel_format *formats, UINT max
 static struct wgl_context *context_create( HDC hdc, struct wgl_context *shared, const int *attribs )
 {
     void *shared_private = shared ? shared->driver_private : NULL;
-    const struct opengl_funcs *funcs = &display_funcs;
     struct wgl_context *context;
     int format;
 
@@ -851,11 +846,9 @@ static struct wgl_context *context_create( HDC hdc, struct wgl_context *shared, 
     }
 
     if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
-    context->driver_funcs = driver_funcs;
-    context->funcs = funcs;
     context->pixel_format = format;
 
-    if (!context->driver_funcs->p_context_create( hdc, format, shared_private, attribs, &context->driver_private ))
+    if (!driver_funcs->p_context_create( hdc, format, shared_private, attribs, &context->driver_private ))
     {
         free( context );
         return NULL;
@@ -883,12 +876,11 @@ static struct wgl_context *win32u_wglCreateContext( HDC hdc )
 
 static BOOL win32u_wglDeleteContext( struct wgl_context *context )
 {
-    const struct opengl_driver_funcs *funcs = context->driver_funcs;
     BOOL ret;
 
     TRACE( "context %p\n", context );
 
-    ret = funcs->p_context_destroy( context->driver_private );
+    ret = driver_funcs->p_context_destroy( context->driver_private );
     free( context );
 
     return ret;
@@ -971,8 +963,6 @@ static struct wgl_pbuffer *win32u_wglCreatePbufferARB( HDC hdc, int format, int 
         return NULL;
     }
     NtGdiSetPixelFormat( pbuffer->hdc, format );
-    pbuffer->driver_funcs = driver_funcs;
-    pbuffer->funcs = funcs;
     pbuffer->width = width;
     pbuffer->height = height;
     pbuffer->mipmap_level = -1;
@@ -1060,9 +1050,9 @@ static struct wgl_pbuffer *win32u_wglCreatePbufferARB( HDC hdc, int format, int 
         }
     }
 
-    if (pbuffer->driver_funcs->p_pbuffer_create( pbuffer->hdc, format, largest, pbuffer->texture_format,
-                                                 pbuffer->texture_target, max_level, &pbuffer->width,
-                                                 &pbuffer->height, &pbuffer->driver_private ))
+    if (driver_funcs->p_pbuffer_create( pbuffer->hdc, format, largest, pbuffer->texture_format,
+                                        pbuffer->texture_target, max_level, &pbuffer->width,
+                                        &pbuffer->height, &pbuffer->driver_private ))
         return pbuffer;
 
 failed:
@@ -1074,10 +1064,12 @@ failed:
 
 static BOOL win32u_wglDestroyPbufferARB( struct wgl_pbuffer *pbuffer )
 {
+    const struct opengl_funcs *funcs = &display_funcs;
+
     TRACE( "pbuffer %p\n", pbuffer );
 
-    pbuffer->driver_funcs->p_pbuffer_destroy( pbuffer->hdc, pbuffer->driver_private );
-    if (pbuffer->tmp_context) pbuffer->funcs->p_wglDeleteContext( pbuffer->tmp_context );
+    driver_funcs->p_pbuffer_destroy( pbuffer->hdc, pbuffer->driver_private );
+    if (pbuffer->tmp_context) funcs->p_wglDeleteContext( pbuffer->tmp_context );
     NtGdiDeleteObjectApp( pbuffer->hdc );
     free( pbuffer );
 
@@ -1199,6 +1191,7 @@ static GLenum binding_from_target( GLenum target )
 
 static BOOL win32u_wglBindTexImageARB( struct wgl_pbuffer *pbuffer, int buffer )
 {
+    const struct opengl_funcs *funcs = &display_funcs;
     HDC prev_draw = NtCurrentTeb()->glReserved1[0], prev_read = NtCurrentTeb()->glReserved1[1];
     int prev_texture = 0, format = win32u_wglGetPixelFormat( pbuffer->hdc );
     struct wgl_context *prev_context = NtCurrentTeb()->glContext;
@@ -1214,7 +1207,7 @@ static BOOL win32u_wglBindTexImageARB( struct wgl_pbuffer *pbuffer, int buffer )
         return GL_FALSE;
     }
 
-    if (!pbuffer->driver_funcs->p_describe_pixel_format( format, &desc ))
+    if (!driver_funcs->p_describe_pixel_format( format, &desc ))
     {
         RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
         return FALSE;
@@ -1257,29 +1250,29 @@ static BOOL win32u_wglBindTexImageARB( struct wgl_pbuffer *pbuffer, int buffer )
         return GL_FALSE;
     }
 
-    if ((ret = pbuffer->driver_funcs->p_pbuffer_bind( pbuffer->hdc, pbuffer->driver_private, source )) != -1)
+    if ((ret = driver_funcs->p_pbuffer_bind( pbuffer->hdc, pbuffer->driver_private, source )) != -1)
         return ret;
 
     if (!pbuffer->tmp_context || pbuffer->prev_context != prev_context)
     {
-        if (pbuffer->tmp_context) pbuffer->funcs->p_wglDeleteContext( pbuffer->tmp_context );
-        pbuffer->tmp_context = pbuffer->funcs->p_wglCreateContextAttribsARB( pbuffer->hdc, prev_context, NULL );
+        if (pbuffer->tmp_context) funcs->p_wglDeleteContext( pbuffer->tmp_context );
+        pbuffer->tmp_context = funcs->p_wglCreateContextAttribsARB( pbuffer->hdc, prev_context, NULL );
         pbuffer->prev_context = prev_context;
     }
 
-    pbuffer->funcs->p_glGetIntegerv( binding_from_target( pbuffer->texture_target ), &prev_texture );
+    funcs->p_glGetIntegerv( binding_from_target( pbuffer->texture_target ), &prev_texture );
 
     /* Switch to our pbuffer */
-    pbuffer->funcs->p_wglMakeCurrent( pbuffer->hdc, pbuffer->tmp_context );
+    funcs->p_wglMakeCurrent( pbuffer->hdc, pbuffer->tmp_context );
 
     /* Make sure that the prev_texture is set as the current texture state isn't shared
      * between contexts. After that copy the pbuffer texture data. */
-    pbuffer->funcs->p_glBindTexture( pbuffer->texture_target, prev_texture );
-    pbuffer->funcs->p_glCopyTexImage2D( pbuffer->texture_target, 0, pbuffer->texture_format, 0, 0,
+    funcs->p_glBindTexture( pbuffer->texture_target, prev_texture );
+    funcs->p_glCopyTexImage2D( pbuffer->texture_target, 0, pbuffer->texture_format, 0, 0,
                                         pbuffer->width, pbuffer->height, 0 );
 
     /* Switch back to the original drawable and context */
-    pbuffer->funcs->p_wglMakeContextCurrentARB( prev_draw, prev_read, prev_context );
+    funcs->p_wglMakeContextCurrentARB( prev_draw, prev_read, prev_context );
     return GL_TRUE;
 }
 
@@ -1293,7 +1286,7 @@ static BOOL win32u_wglReleaseTexImageARB( struct wgl_pbuffer *pbuffer, int buffe
         return GL_FALSE;
     }
 
-    return !!pbuffer->driver_funcs->p_pbuffer_bind( pbuffer->hdc, pbuffer->driver_private, GL_NONE );
+    return !!driver_funcs->p_pbuffer_bind( pbuffer->hdc, pbuffer->driver_private, GL_NONE );
 }
 
 static BOOL win32u_wglSetPbufferAttribARB( struct wgl_pbuffer *pbuffer, const int *attribs )
@@ -1351,8 +1344,8 @@ static BOOL win32u_wglSetPbufferAttribARB( struct wgl_pbuffer *pbuffer, const in
         }
     }
 
-    return pbuffer->driver_funcs->p_pbuffer_updated( pbuffer->hdc, pbuffer->driver_private,
-                                                     pbuffer->cube_face, max( pbuffer->mipmap_level, 0 ) );
+    return driver_funcs->p_pbuffer_updated( pbuffer->hdc, pbuffer->driver_private,
+                                            pbuffer->cube_face, max( pbuffer->mipmap_level, 0 ) );
 }
 
 static int get_window_swap_interval( HWND hwnd )
@@ -1379,7 +1372,7 @@ static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)
     TRACE( "context %p, hwnd %p, draw_hdc %p, interval %d, flush %p\n", context, hwnd, draw_hdc, interval, flush );
 
     if (context->memory_pbuffer) return flush_memory_pbuffer( context, draw_hdc, FALSE, flush );
-    return context->driver_funcs->p_context_flush( context->driver_private, hwnd, draw_hdc, interval, flush );
+    return driver_funcs->p_context_flush( context->driver_private, hwnd, draw_hdc, interval, flush );
 }
 
 static BOOL win32u_wglSwapBuffers( HDC hdc )
@@ -1393,7 +1386,7 @@ static BOOL win32u_wglSwapBuffers( HDC hdc )
     else interval = get_window_swap_interval( hwnd );
 
     if (context->memory_pbuffer) return flush_memory_pbuffer( context, hdc, FALSE, funcs->p_glFlush );
-    return context->driver_funcs->p_swap_buffers( context ? context->driver_private : NULL, hwnd, hdc, interval );
+    return driver_funcs->p_swap_buffers( context ? context->driver_private : NULL, hwnd, hdc, interval );
 }
 
 static BOOL win32u_wglSwapIntervalEXT( int interval )
