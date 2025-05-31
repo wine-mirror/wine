@@ -942,7 +942,6 @@ with_mingw
 with_netapi
 with_opencl
 with_opengl
-with_osmesa
 with_oss
 with_pcap
 with_pcsclite
@@ -2554,7 +2553,6 @@ Optional Packages:
   --without-netapi        do not use the Samba NetAPI library
   --without-opencl        do not use OpenCL
   --without-opengl        do not use OpenGL
-  --without-osmesa        do not use the OSMesa library
   --without-oss           do not use the OSS sound support
   --without-pcap          do not use the Packet Capture library
   --without-pcsclite      do not use PCSC lite
@@ -4487,13 +4485,6 @@ fi
 if test ${with_opengl+y}
 then :
   withval=$with_opengl;
-fi
-
-
-# Check whether --with-osmesa was given.
-if test ${with_osmesa+y}
-then :
-  withval=$with_osmesa;
 fi
 
 
@@ -15976,82 +15967,6 @@ printf "%s\n" "#define SONAME_LIBGL \"$ac_cv_lib_soname_GL\"" >>confdefs.h
        OPENGL_LIBS="-lGL" ;;
 esac
 fi
-        if test "x$with_osmesa" != "xno"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lOSMesa" >&5
-printf %s "checking for -lOSMesa... " >&6; }
-if test ${ac_cv_lib_soname_OSMesa+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_soname_save_LIBS=$LIBS
-LIBS="-lOSMesa $X_LIBS -lm $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char OSMesaGetProcAddress (void);
-int
-main (void)
-{
-return OSMesaGetProcAddress ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_OSMesa=`$ac_cv_path_LDD conftest.exe | grep "OSMesa" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_OSMesa=`$OTOOL -L conftest$ac_exeext | grep "libOSMesa\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libOSMesa\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_OSMesa=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libOSMesa\\.$LIBEXT" | sed -e "s/^.*\\[\\(libOSMesa\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_OSMesa:+false} :
-then :
-  ac_cv_lib_soname_OSMesa=`$LDD conftest$ac_exeext | grep "libOSMesa\\.$LIBEXT" | sed -e "s/^.*\(libOSMesa\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-else case e in #(
-  e) ac_cv_lib_soname_OSMesa= ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS ;;
-esac
-fi
-if ${ac_cv_lib_soname_OSMesa:+false} :
-then :
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-printf "%s\n" "not found" >&6; }
-
-else case e in #(
-  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_OSMesa" >&5
-printf "%s\n" "$ac_cv_lib_soname_OSMesa" >&6; }
-
-printf "%s\n" "#define SONAME_LIBOSMESA \"$ac_cv_lib_soname_OSMesa\"" >>confdefs.h
-
-        ;;
-esac
-fi
-            if test "x$ac_cv_lib_soname_OSMesa" = "x"
-then :
-  case "x$with_osmesa" in
-  x)   as_fn_append wine_notices "|libOSMesa ${notice_platform}development files not found (or too old), OpenGL rendering in bitmaps won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "libOSMesa ${notice_platform}development files not found (or too old), OpenGL rendering in bitmaps won't be supported.
-This is an error since --with-osmesa was requested." "$LINENO" 5 ;;
-esac
-
-fi
-        fi
     fi
     if test -n "$opengl_msg"
 then :

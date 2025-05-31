@@ -47,7 +47,6 @@ AC_ARG_WITH(netapi,    AS_HELP_STRING([--without-netapi],[do not use the Samba N
 AC_ARG_WITH(opencl,    AS_HELP_STRING([--without-opencl],[do not use OpenCL]),
             [if test "x$withval" = "xno"; then ac_cv_header_CL_cl_h=no; ac_cv_header_OpenCL_opencl_h=no; fi])
 AC_ARG_WITH(opengl,    AS_HELP_STRING([--without-opengl],[do not use OpenGL]))
-AC_ARG_WITH(osmesa,     AS_HELP_STRING([--without-osmesa],[do not use the OSMesa library]))
 AC_ARG_WITH(oss,       AS_HELP_STRING([--without-oss],[do not use the OSS sound support]))
 AC_ARG_WITH(pcap,      AS_HELP_STRING([--without-pcap],[do not use the Packet Capture library]),
             [if test "x$withval" = "xno"; then ac_cv_header_pcap_pcap_h=no; fi])
@@ -1390,12 +1389,6 @@ This probably prevents linking to OpenGL. Try deleting the file and restarting c
                             fi],
 			    $X_LIBS -lm -dylib_file /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib)],
 		     $X_LIBS -lm)
-        if test "x$with_osmesa" != "xno"
-        then
-            WINE_CHECK_SONAME(OSMesa,OSMesaGetProcAddress,,,[$X_LIBS -lm])
-            WINE_NOTICE_WITH(osmesa,[test "x$ac_cv_lib_soname_OSMesa" = "x"],
-                             [libOSMesa ${notice_platform}development files not found (or too old), OpenGL rendering in bitmaps won't be supported.])
-        fi
     fi
     WINE_WARNING_WITH(opengl,[test -n "$opengl_msg"],[$opengl_msg
 OpenGL and Direct3D won't be supported.])

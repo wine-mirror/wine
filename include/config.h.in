@@ -780,9 +780,6 @@
 /* Define to the soname of the libodbc library. */
 #undef SONAME_LIBODBC
 
-/* Define to the soname of the libOSMesa library. */
-#undef SONAME_LIBOSMESA
-
 /* Define to the soname of the libSDL2 library. */
 #undef SONAME_LIBSDL2
 
