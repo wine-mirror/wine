@@ -111,7 +111,6 @@ static const GLubyte *(*pglGetString)(GLenum name);
 static PFN_glGetIntegerv pglGetIntegerv;
 static void (*pglReadPixels)(GLint x, GLint y, GLsizei width, GLsizei height,
                              GLenum format, GLenum type, void *pixels);
-static void (*pglViewport)(GLint x, GLint y, GLsizei width, GLsizei height);
 
 
 struct color_mode {
@@ -1592,16 +1591,6 @@ static void make_context_current(struct macdrv_context *context, BOOL read)
 
 
 /**********************************************************************
- *              sync_context
- */
-static void sync_context(struct macdrv_context *context)
-{
-    if (sync_context_rect(context))
-        make_context_current(context, FALSE);
-}
-
-
-/**********************************************************************
  *              set_swap_interval
  */
 static BOOL set_swap_interval(struct macdrv_context *context, long interval)
@@ -2093,7 +2082,6 @@ static BOOL macdrv_context_flush( void *private, HWND hwnd, HDC hdc, int interva
     struct macdrv_context *context = private;
 
     set_swap_interval(context, interval);
-    sync_context(context);
 
     if (skip_single_buffer_flushes)
     {
@@ -2160,23 +2148,6 @@ static void macdrv_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 
     if (context->read_view || context->read_pbuffer)
         make_context_current(context, FALSE);
-}
-
-
-/**********************************************************************
- *              macdrv_glViewport
- *
- * Hook into glViewport as an opportunity to update the OpenGL context
- * if necessary.  This is modeled after what Mesa GLX's Apple
- * implementation does.
- */
-static void macdrv_glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
-{
-    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
-
-    sync_context(context);
-    macdrv_update_opengl_context(context->context);
-    pglViewport(x, y, width, height);
 }
 
 
@@ -2836,7 +2807,6 @@ UINT macdrv_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, co
     LOAD_FUNCPTR(glGetIntegerv);
     LOAD_FUNCPTR(glGetString);
     LOAD_FUNCPTR(glReadPixels);
-    LOAD_FUNCPTR(glViewport);
     LOAD_FUNCPTR(glCopyColorTable);
 
     if (!init_gl_info())
@@ -2990,7 +2960,6 @@ static void *macdrv_get_proc_address(const char *name)
     if (!strcmp(name, "glCopyPixels")) return macdrv_glCopyPixels;
     if (!strcmp(name, "glGetString")) return macdrv_glGetString;
     if (!strcmp(name, "glReadPixels")) return macdrv_glReadPixels;
-    if (!strcmp(name, "glViewport")) return macdrv_glViewport;
 
     /* redirect some OpenGL extension functions */
     if (!strcmp(name, "glCopyColorTable")) return macdrv_glCopyColorTable;
@@ -3005,11 +2974,7 @@ static BOOL macdrv_swap_buffers(void *private, HWND hwnd, HDC hdc, int interval)
     TRACE("hdc %p context %p/%p/%p\n", hdc, context, (context ? context->context : NULL),
           (context ? context->cglcontext : NULL));
 
-    if (context)
-    {
-        set_swap_interval(context, interval);
-        sync_context(context);
-    }
+    if (context) set_swap_interval(context, interval);
 
     if (hwnd)
     {
