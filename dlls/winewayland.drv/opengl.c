@@ -479,7 +479,7 @@ static void *wayland_get_proc_address(const char *name)
     return funcs->p_eglGetProcAddress(name);
 }
 
-static BOOL wayland_context_flush( void *private, HWND hwnd, HDC hdc, int interval, BOOL finish )
+static BOOL wayland_context_flush( void *private, HWND hwnd, HDC hdc, int interval, void (*flush)(void) )
 {
     return FALSE;
 }

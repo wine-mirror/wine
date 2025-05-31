@@ -355,7 +355,7 @@ static BOOL android_swap_buffers( void *private, HWND hwnd, HDC hdc, int interva
     return TRUE;
 }
 
-static BOOL android_context_flush( void *private, HWND hwnd, HDC hdc, int interval, BOOL finish )
+static BOOL android_context_flush( void *private, HWND hwnd, HDC hdc, int interval, void (*flush)(void) )
 {
     struct android_context *ctx = private;
     struct gl_drawable *gl;

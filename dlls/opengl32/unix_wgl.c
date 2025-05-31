@@ -986,6 +986,44 @@ BOOL wrap_wglDeleteContext( TEB *teb, HGLRC hglrc )
     return TRUE;
 }
 
+static void flush_context( TEB *teb, void (*flush)(void) )
+{
+    struct opengl_context *ctx = get_current_context( teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+
+    if (!ctx || !funcs->p_wgl_context_flush( ctx->drv_ctx, flush ))
+    {
+        /* default implementation: call the functions directly */
+        if (flush) flush();
+    }
+}
+
+void wrap_glFinish( TEB *teb )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    flush_context( teb, funcs->p_glFinish );
+}
+
+void wrap_glFlush( TEB *teb )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    flush_context( teb, funcs->p_glFlush );
+}
+
+BOOL wrap_wglSwapBuffers( TEB *teb, HDC hdc )
+{
+    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
+    BOOL ret;
+
+    if (!(ret = funcs->p_wglSwapBuffers( hdc )))
+    {
+        /* default implementation: implicitly flush the context */
+        flush_context( teb, funcs->p_glFlush );
+    }
+
+    return ret;
+}
+
 BOOL wrap_wglShareLists( TEB *teb, HGLRC hglrcSrc, HGLRC hglrcDst )
 {
     const struct opengl_funcs *src_funcs, *dst_funcs;

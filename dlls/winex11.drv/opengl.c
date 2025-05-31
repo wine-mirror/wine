@@ -1591,7 +1591,7 @@ static void present_gl_drawable( HWND hwnd, HDC hdc, struct gl_drawable *gl, BOO
     if (region) NtGdiDeleteObjectApp( region );
 }
 
-static BOOL x11drv_context_flush( void *private, HWND hwnd, HDC hdc, int interval, BOOL finish )
+static BOOL x11drv_context_flush( void *private, HWND hwnd, HDC hdc, int interval, void (*flush)(void) )
 {
     struct gl_drawable *gl;
     struct x11drv_context *ctx = private;
@@ -1603,10 +1603,9 @@ static BOOL x11drv_context_flush( void *private, HWND hwnd, HDC hdc, int interva
     set_swap_interval( gl, interval );
     pthread_mutex_unlock( &context_mutex );
 
-    if (finish) pglFinish();
-    else pglFlush();
+    if (flush) flush();
 
-    present_gl_drawable( hwnd, ctx->hdc, gl, TRUE, !finish );
+    present_gl_drawable( hwnd, ctx->hdc, gl, TRUE, flush != pglFinish );
     release_gl_drawable( gl );
     return TRUE;
 }

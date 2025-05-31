@@ -200,10 +200,13 @@ my %manual_unix_thunks =
      "glDebugMessageCallback" => 1,
      "glDebugMessageCallbackAMD" => 1,
      "glDebugMessageCallbackARB" => 1,
+     "glFinish" => 1,
+     "glFlush" => 1,
      "glGetIntegerv" => 1,
      "glGetString" => 1,
      "glGetStringi" => 1,
      "wglGetProcAddress" => 1,
+     "wglSwapBuffers" => 1,
     );
 my %manual_wow64_thunks =
     (

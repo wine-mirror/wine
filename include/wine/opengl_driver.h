@@ -61,7 +61,7 @@ struct wgl_pixel_format
 #ifdef WINE_UNIX_LIB
 
 /* Wine internal opengl driver version, needs to be bumped upon opengl_funcs changes. */
-#define WINE_OPENGL_DRIVER_VERSION 35
+#define WINE_OPENGL_DRIVER_VERSION 36
 
 struct wgl_context;
 struct wgl_pbuffer;
@@ -69,6 +69,7 @@ struct wgl_pbuffer;
 /* interface between opengl32 and win32u */
 struct opengl_funcs
 {
+    BOOL       (*p_wgl_context_flush)( struct wgl_context *context, void (*flush)(void) );
     BOOL       (*p_wglCopyContext)( struct wgl_context * hglrcSrc, struct wgl_context * hglrcDst, UINT mask );
     struct wgl_context * (*p_wglCreateContext)( HDC hDc );
     BOOL       (*p_wglDeleteContext)( struct wgl_context * oldContext );
@@ -134,7 +135,7 @@ struct opengl_driver_funcs
     BOOL (*p_swap_buffers)(void*,HWND,HDC,int);
     BOOL (*p_context_create)(HDC,int,void*,const int*,void**);
     BOOL (*p_context_destroy)(void*);
-    BOOL (*p_context_flush)(void*,HWND,HDC,int,BOOL);
+    BOOL (*p_context_flush)(void*,HWND,HDC,int,void(*)(void));
     BOOL (*p_context_make_current)(HDC,HDC,void*);
     BOOL (*p_pbuffer_create)(HDC,int,BOOL,GLenum,GLenum,GLint,GLsizei*,GLsizei*,void **);
     BOOL (*p_pbuffer_destroy)(HDC,void*);

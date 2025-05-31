@@ -100,7 +100,7 @@ static NTSTATUS wgl_wglSwapBuffers( void *args )
     struct wglSwapBuffers_params *params = args;
     const struct opengl_funcs *funcs = get_dc_funcs( params->hdc );
     if (!funcs || !funcs->p_wglSwapBuffers) return STATUS_NOT_IMPLEMENTED;
-    params->ret = funcs->p_wglSwapBuffers( params->hdc );
+    params->ret = wrap_wglSwapBuffers( params->teb, params->hdc );
     return STATUS_SUCCESS;
 }
 
@@ -907,8 +907,7 @@ static NTSTATUS gl_glFeedbackBuffer( void *args )
 static NTSTATUS gl_glFinish( void *args )
 {
     struct glFinish_params *params = args;
-    const struct opengl_funcs *funcs = params->teb->glTable;
-    funcs->p_glFinish();
+    wrap_glFinish( params->teb );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -916,8 +915,7 @@ static NTSTATUS gl_glFinish( void *args )
 static NTSTATUS gl_glFlush( void *args )
 {
     struct glFlush_params *params = args;
-    const struct opengl_funcs *funcs = params->teb->glTable;
-    funcs->p_glFlush();
+    wrap_glFlush( params->teb );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
