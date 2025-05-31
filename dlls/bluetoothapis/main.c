@@ -1107,7 +1107,6 @@ DWORD WINAPI BluetoothAuthenticateDeviceEx( HWND parent, HANDLE handle_radio, BL
         return ret;
     }
 
-    ovl.hEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
     AcquireSRWLockExclusive( &bluetooth_auth_lock );
     if (list_empty( &bluetooth_auth_listeners ) && list_empty( &bluetooth_auth_wizard_listeners ))
     {
@@ -1142,6 +1141,7 @@ DWORD WINAPI BluetoothAuthenticateDeviceEx( HWND parent, HANDLE handle_radio, BL
     }
     ReleaseSRWLockExclusive( &bluetooth_auth_lock );
 
+    ovl.hEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
     device_addr = RtlUlonglongByteSwap( device_info->Address.ullLong ) >> 16;
     success = DeviceIoControl( handle_radio, IOCTL_WINEBTH_RADIO_START_AUTH, &device_addr, sizeof( device_addr ),
                                NULL, 0, &bytes, &ovl );
@@ -1151,8 +1151,8 @@ DWORD WINAPI BluetoothAuthenticateDeviceEx( HWND parent, HANDLE handle_radio, BL
         ret = GetLastError();
         if (ret == ERROR_IO_PENDING)
             ret = GetOverlappedResult( handle_radio, &ovl, &bytes, TRUE );
-        CloseHandle( ovl.hEvent );
     }
+    CloseHandle( ovl.hEvent );
 
     return ret;
 }
