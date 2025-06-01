@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-05-11 01:19+0300\n"
+"PO-Revision-Date: 2025-06-01 22:40+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -386,19 +386,19 @@ msgid "uncompressed"
 msgstr "neglaudintas"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:31
-#, fuzzy
-#| msgid "&Confirm password:"
 msgid "Confirm pairing"
-msgstr "&Patvirtinti slaptažodį:"
+msgstr "Patvirtinti sujungimą"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:32
 msgid "Pair with '%1!s!' using the following PIN/passkey value: %2!lu!?"
-msgstr ""
+msgstr "Sujungti su „%1!s!“ naudojant šią PIN/prieigos rakto reikšmę: %2!lu!?"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:33
 msgid ""
 "Pair with unnamed device %1!s! using the following PIN/passkey value: %2!lu!?"
 msgstr ""
+"Sujungti su neįvardintu įrenginiu %1!s! naudojant šią PIN/prieigos rakto "
+"reikšmę: %2!lu!?"
 
 #: dlls/browseui/browseui.rc:28
 msgid "Canceling..."
