@@ -513,6 +513,18 @@ static void serialize_table_idx( UINT idx, enum table target )
     add_bytes( &tables_disk, (const BYTE *)&idx, size );
 }
 
+static enum table resolution_scope_to_table( UINT token )
+{
+    switch (token & 0x3)
+    {
+    case 0: return TABLE_MODULE;
+    case 1: return TABLE_MODULEREF;
+    case 2: return TABLE_ASSEMBLYREF;
+    case 3: return TABLE_TYPEREF;
+    default: assert( 0 );
+    }
+}
+
 static enum table typedef_or_ref_to_table( UINT token )
 {
     switch (token & 0x3)
@@ -548,6 +560,33 @@ static void serialize_module_table( void )
     serialize_guid_idx( row->mvid );
     serialize_guid_idx( row->encid );
     serialize_guid_idx( row->encbaseid );
+}
+
+struct typeref_row
+{
+    UINT scope;
+    UINT name;
+    UINT namespace;
+};
+
+static UINT add_typeref_row( UINT scope, UINT name, UINT namespace )
+{
+    struct typeref_row row = { scope, name, namespace };
+    return add_row( TABLE_TYPEREF, (const BYTE *)&row, sizeof(row) );
+}
+
+static void serialize_typeref_table( void )
+{
+    const struct typeref_row *row = (const struct typeref_row *)tables[TABLE_TYPEREF].ptr;
+    UINT i;
+
+    for (i = 0; i < tables[TABLE_TYPEREF].count; i++)
+    {
+        serialize_table_idx( row->scope, resolution_scope_to_table(row->scope) );
+        serialize_string_idx( row->name );
+        serialize_string_idx( row->namespace );
+        row++;
+    }
 }
 
 struct typedef_row
@@ -660,6 +699,41 @@ static void serialize_assemblyref_table( void )
     }
 }
 
+static UINT typedef_or_ref( enum table table, UINT row )
+{
+    switch (table)
+    {
+    case TABLE_TYPEDEF: return row << 2;
+    case TABLE_TYPEREF: return row << 2 | 1;
+    case TABLE_TYPESPEC: return row << 2 | 2;
+    default: assert( 0 );
+    }
+}
+
+static UINT resolution_scope( enum table table, UINT row )
+{
+    switch (table)
+    {
+    case TABLE_MODULE: return row << 2;
+    case TABLE_MODULEREF: return row << 2 | 1;
+    case TABLE_ASSEMBLYREF: return row << 2 | 2;
+    case TABLE_TYPEREF: return row << 2 | 3;
+    default: assert( 0 );
+    }
+}
+
+#define MODULE_ROW      1
+#define MSCORLIB_ROW    1
+
+static UINT add_name( type_t *type, UINT *namespace )
+{
+    UINT name = add_string( type->name );
+    char *str = format_namespace( type->namespace, "", ".", NULL, NULL );
+    *namespace = add_string( str );
+    free( str );
+    return name;
+}
+
 enum
 {
     LARGE_STRING_HEAP = 0x01,
@@ -668,6 +742,43 @@ enum
 };
 
 static char *assembly_name;
+
+static void add_enum_type_step1( type_t *type )
+{
+    UINT name, namespace, scope, typeref;
+
+    name = add_name( type, &namespace );
+
+    scope = resolution_scope( TABLE_ASSEMBLYREF, MSCORLIB_ROW );
+    typeref = add_typeref_row( scope, add_string("Enum"), add_string("System") );
+    type->md.extends = typedef_or_ref( TABLE_TYPEREF, typeref );
+    type->md.ref = add_typeref_row( resolution_scope(TABLE_MODULE, MODULE_ROW), name, namespace );
+}
+
+static void build_tables( const statement_list_t *stmt_list )
+{
+    const statement_t *stmt;
+
+    /* Adding a type involves two passes: the first creates various references and the second
+       uses those references to create the remaining rows. */
+
+    LIST_FOR_EACH_ENTRY( stmt, stmt_list, const statement_t, entry )
+    {
+        type_t *type = stmt->u.type;
+
+        if (stmt->type != STMT_TYPE) continue;
+
+        switch (type->type_type)
+        {
+        case TYPE_ENUM:
+            add_enum_type_step1( type );
+            break;
+        default:
+            fprintf( stderr, "Unhandled type %u name '%s'.\n", type->type_type, type->name );
+            break;
+        }
+    }
+}
 
 static void build_table_stream( const statement_list_t *stmts )
 {
@@ -690,6 +801,8 @@ static void build_table_stream( const statement_list_t *stmts )
     add_module_row( add_string(metadata_name), add_guid(&guid) );
     add_assemblyref_row( 0, add_blob(token, sizeof(token)), add_string("mscorlib") );
 
+    build_tables( stmts );
+
     for (i = 0; i < TABLE_MAX; i++) if (tables[i].count) tables_header.valid |= (1ull << i);
 
     if (strings.offset >> 16) tables_header.heap_sizes |= LARGE_STRING_HEAP;
@@ -702,6 +815,7 @@ static void build_table_stream( const statement_list_t *stmts )
         if (tables[i].count) add_bytes( &tables_disk, (const BYTE *)&tables[i].count, sizeof(tables[i].count) );
 
     serialize_module_table();
+    serialize_typeref_table();
     serialize_typedef_table();
     serialize_assembly_table();
     serialize_assemblyref_table();

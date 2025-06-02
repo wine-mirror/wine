@@ -496,6 +496,12 @@ enum type_type
     TYPE_DELEGATE,
 };
 
+struct metadata
+{
+    unsigned int ref;
+    unsigned int extends;
+};
+
 struct _type_t {
   const char *name;               /* C++ name with parameters in brackets */
   struct namespace *namespace;
@@ -527,6 +533,7 @@ struct _type_t {
   unsigned int typestring_offset;
   unsigned int ptrdesc;           /* used for complex structs */
   int typelib_idx;
+  struct metadata md;
   struct location where;
   unsigned int ignore : 1;
   unsigned int defined : 1;

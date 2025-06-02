@@ -56,6 +56,7 @@ type_t *make_type(enum type_type type)
     t->param_name = NULL;
     t->short_name = NULL;
     memset(&t->details, 0, sizeof(t->details));
+    memset(&t->md, 0, sizeof(t->md));
     t->typestring_offset = 0;
     t->ptrdesc = 0;
     t->ignore = (parse_only != 0);
