@@ -55,10 +55,9 @@ static struct list gl_contexts = LIST_INIT(gl_contexts);
 
 struct wayland_gl_drawable
 {
+    struct opengl_drawable base;
     struct list entry;
     LONG ref;
-    HWND hwnd;
-    HDC hdc;
     struct wayland_client_surface *client;
     struct wl_egl_window *wl_egl_window;
     EGLSurface surface;
@@ -97,8 +96,8 @@ static struct wayland_gl_drawable *find_drawable(HWND hwnd, HDC hdc)
     struct wayland_gl_drawable *gl;
     LIST_FOR_EACH_ENTRY(gl, &gl_drawables, struct wayland_gl_drawable, entry)
     {
-        if (hwnd && gl->hwnd == hwnd) return gl;
-        if (hdc && gl->hdc == hdc) return gl;
+        if (hwnd && gl->base.hwnd == hwnd) return gl;
+        if (hdc && gl->base.hdc == hdc) return gl;
     }
     return NULL;
 }
@@ -168,12 +167,12 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, HDC hdc
     }
     *attrib++ = EGL_NONE;
 
-    gl = calloc(1, sizeof(*gl));
-    if (!gl) return NULL;
+    if (!(gl = calloc(1, sizeof(*gl)))) return NULL;
+    gl->base.hwnd = hwnd;
+    gl->base.hdc = hdc;
+    gl->base.format = format;
 
     gl->ref = 1;
-    gl->hwnd = hwnd;
-    gl->hdc = hdc;
     gl->swap_interval = 1;
 
     /* Get the client surface for the HWND. If don't have a wayland surface
@@ -198,7 +197,7 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, HDC hdc
 
     gl->double_buffered = is_onscreen_format(format);
 
-    TRACE("hwnd=%p egl_surface=%p\n", gl->hwnd, gl->surface);
+    TRACE("Created drawable %s with egl_surface %p\n", debugstr_opengl_drawable(&gl->base), gl->surface);
 
     return gl;
 
@@ -241,7 +240,7 @@ static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
 
     if (InterlockedCompareExchange(&gl->resized, FALSE, TRUE))
     {
-        NtUserGetClientRect(gl->hwnd, &client_rect, NtUserGetDpiForWindow(gl->hwnd));
+        NtUserGetClientRect(gl->base.hwnd, &client_rect, NtUserGetDpiForWindow(gl->base.hwnd));
         client_width = client_rect.right - client_rect.left;
         client_height = client_rect.bottom - client_rect.top;
         if (client_width == 0 || client_height == 0) client_width = client_height = 1;

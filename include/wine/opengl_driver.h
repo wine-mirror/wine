@@ -27,6 +27,7 @@
 #include <wingdi.h>
 
 #include "wine/wgl.h"
+#include "wine/debug.h"
 
 struct wgl_pixel_format
 {
@@ -122,6 +123,20 @@ struct egl_platform
     BOOL        has_EGL_EXT_present_opaque;
     BOOL        has_EGL_EXT_pixel_format_float;
 };
+
+/* a driver opengl drawable, either a client surface of a pbuffer */
+struct opengl_drawable
+{
+    int format;  /* pixel format of the drawable */
+    HWND hwnd;   /* window the drawable was created for */
+    HDC hdc;     /* DC the drawable was created for */
+};
+
+static inline const char *debugstr_opengl_drawable( struct opengl_drawable *drawable )
+{
+    if (!drawable) return "(null)";
+    return wine_dbg_sprintf( "%p (format %u, hwnd %p, hdc %p)", drawable, drawable->format, drawable->hwnd, drawable->hdc );
+}
 
 /* interface between win32u and the user drivers */
 struct opengl_driver_funcs

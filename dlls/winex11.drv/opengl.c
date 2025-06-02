@@ -211,9 +211,9 @@ enum dc_gl_type
 
 struct gl_drawable
 {
+    struct opengl_drawable         base;
     LONG                           ref;          /* reference count */
     enum dc_gl_type                type;         /* type of GL surface */
-    HWND                           hwnd;
     RECT                           rect;         /* current size of the GL drawable */
     GLXDrawable                    drawable;     /* drawable for rendering with GL */
     Window                         window;       /* window if drawable is a GLXWindow */
@@ -838,7 +838,7 @@ static void release_gl_drawable( struct gl_drawable *gl )
     case DC_GL_WINDOW:
         TRACE( "destroying %lx drawable %lx\n", gl->window, gl->drawable );
         pglXDestroyWindow( gdi_display, gl->drawable );
-        destroy_client_window( gl->hwnd, gl->window );
+        destroy_client_window( gl->base.hwnd, gl->window );
         XFreeColormap( gdi_display, gl->colormap );
         break;
     case DC_GL_PBUFFER:
@@ -932,11 +932,13 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, int format )
     NtUserGetClientRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) );
 
     if (!(gl = calloc( 1, sizeof(*gl) ))) return NULL;
+    gl->base.hwnd = hwnd;
+    gl->base.hdc = 0;
+    gl->base.format = format;
 
     /* Default GLX and WGL swap interval is 1, but in case of glXSwapIntervalSGI there is no way to query it. */
     gl->swap_interval = INT_MIN;
     gl->ref = 1;
-    gl->hwnd = hwnd;
     gl->rect = rect;
 
     gl->type = DC_GL_WINDOW;
@@ -945,13 +947,14 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, int format )
                                      fmt->visual->class == DirectColor) ? AllocAll : AllocNone );
     gl->window = create_client_window( hwnd, fmt->visual, gl->colormap );
     if (gl->window) gl->drawable = pglXCreateWindow( gdi_display, fmt->fbconfig, gl->window, NULL );
-    TRACE( "%p created client %lx drawable %lx, format %d\n", hwnd, gl->window, gl->drawable, format );
 
     if (!gl->drawable)
     {
         free( gl );
         return NULL;
     }
+
+    TRACE( "Created drawable %s with client window %lx\n", debugstr_opengl_drawable( &gl->base ), gl->window );
 
     pthread_mutex_lock( &context_mutex );
     if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&prev ))
@@ -984,7 +987,7 @@ static void update_gl_drawable_size( struct gl_drawable *gl )
     XWindowChanges changes;
     RECT rect;
 
-    NtUserGetClientRect( gl->hwnd, &rect, NtUserGetDpiForWindow( gl->hwnd ) );
+    NtUserGetClientRect( gl->base.hwnd, &rect, NtUserGetDpiForWindow( gl->base.hwnd ) );
     if (EqualRect( &gl->rect, &rect )) return;
 
     changes.width  = min( max( 1, rect.right ), 65535 );
@@ -995,12 +998,12 @@ static void update_gl_drawable_size( struct gl_drawable *gl )
 
 static void update_gl_drawable_offscreen( struct gl_drawable *gl )
 {
-    BOOL offscreen = needs_offscreen_rendering( gl->hwnd );
+    BOOL offscreen = needs_offscreen_rendering( gl->base.hwnd );
     struct x11drv_win_data *data;
 
     if (offscreen == gl->offscreen)
     {
-        if (!offscreen && (data = get_win_data( gl->hwnd )))
+        if (!offscreen && (data = get_win_data( gl->base.hwnd )))
         {
             attach_client_window( data, gl->window );
             release_win_data( data );
@@ -1009,7 +1012,7 @@ static void update_gl_drawable_offscreen( struct gl_drawable *gl )
     }
     gl->offscreen = offscreen;
 
-    TRACE( "Moving hwnd %p client %lx drawable %lx %sscreen\n", gl->hwnd, gl->window, gl->drawable, offscreen ? "off" : "on" );
+    TRACE( "Moving hwnd %p client %lx drawable %lx %sscreen\n", gl->base.hwnd, gl->window, gl->drawable, offscreen ? "off" : "on" );
 
     if (!gl->offscreen)
     {
@@ -1039,7 +1042,7 @@ static void update_gl_drawable_offscreen( struct gl_drawable *gl )
 #endif
     }
 
-    if ((data = get_win_data( gl->hwnd )))
+    if ((data = get_win_data( gl->base.hwnd )))
     {
         if (gl->offscreen) detach_client_window( data, gl->window );
         else attach_client_window( data, gl->window );
@@ -1058,12 +1061,12 @@ void sync_gl_drawable( HWND hwnd )
     pthread_mutex_lock( &context_mutex );
     LIST_FOR_EACH_ENTRY( context, &context_list, struct x11drv_context, entry )
     {
-        if ((gl = context->draw) && gl->type == DC_GL_WINDOW && gl->hwnd == hwnd)
+        if ((gl = context->draw) && gl->type == DC_GL_WINDOW && gl->base.hwnd == hwnd)
         {
             update_gl_drawable_size( gl );
             update_gl_drawable_offscreen( gl );
         }
-        if ((gl = context->read) && gl->type == DC_GL_WINDOW && gl->hwnd == hwnd)
+        if ((gl = context->read) && gl->type == DC_GL_WINDOW && gl->base.hwnd == hwnd)
         {
             update_gl_drawable_size( gl );
             update_gl_drawable_offscreen( gl );
@@ -1524,6 +1527,10 @@ static BOOL x11drv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum tex
     glx_attribs[count++] = 0;
 
     if (!(surface = calloc( 1, sizeof(*surface) ))) return FALSE;
+    surface->base.hwnd = 0;
+    surface->base.hdc = hdc;
+    surface->base.format = format;
+
     surface->type = DC_GL_PBUFFER;
     surface->ref = 1;
 
