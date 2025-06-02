@@ -1832,6 +1832,9 @@ static ULONG WINAPI ddraw_sample_Release(IDirectDrawStreamSample *iface)
     {
         EnterCriticalSection(&sample->parent->cs);
 
+        if (sample->pending)
+            remove_queued_update(sample);
+
         while (sample->media_sample_refcount)
             SleepConditionVariableCS(&sample->parent->allocator_cv, &sample->parent->cs, INFINITE);
 
