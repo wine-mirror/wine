@@ -1859,10 +1859,10 @@ static void test_move(void)
     ok(!file_exists("nonexistence"), "Expected nonexistence to not exist.\n");
     check_file_operation(FO_MOVE, FOF_NO_UI,
             "test1.txt\0", "\0",
-            ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
+            DE_SAMEFILE, FALSE, FALSE, FALSE);
     check_file_operation(FO_MOVE, FOF_NO_UI,
             "testdir2\0", "\0",
-            DE_DESTSAMETREE, FALSE, TRUE, FALSE);
+            DE_DESTSAMETREE, FALSE, FALSE, FALSE);
     check_file_operation(FO_MOVE, FOF_NO_UI,
             "nonexistence\0", "\0",
             ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
@@ -1907,11 +1907,11 @@ static void test_move(void)
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     check_file_operation(FO_MOVE, FOF_NO_UI, from, to,
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
-    todo_wine ok(DeleteFileA("test6.txt\\test1.txt"), "The file is not moved. Many files are specified\n");
-    todo_wine ok(DeleteFileA("test6.txt\\test2.txt"), "The file is not moved. Many files are specified\n");
-    todo_wine ok(DeleteFileA("test6.txt\\test4.txt\\test1.txt"), "The file is not moved. Many files are specified\n");
-    todo_wine ok(RemoveDirectoryA("test6.txt\\test4.txt"), "The directory is not moved. Many files are specified\n");
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
+    ok(DeleteFileA("test6.txt\\test1.txt"), "The file is not moved. Many files are specified\n");
+    ok(DeleteFileA("test6.txt\\test2.txt"), "The file is not moved. Many files are specified\n");
+    ok(DeleteFileA("test6.txt\\test4.txt\\test1.txt"), "The file is not moved. Many files are specified\n");
+    ok(RemoveDirectoryA("test6.txt\\test4.txt"), "The directory is not moved. Many files are specified\n");
     RemoveDirectoryA("test6.txt");
     init_shfo_tests();
 
@@ -1949,9 +1949,9 @@ static void test_move(void)
     /* move two files to one other */
     check_file_operation(FO_MOVE, FOF_NO_UI,
             "test2.txt\0test3.txt\0", "test1.txt\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
-    todo_wine ok(DeleteFileA("test1.txt\\test2.txt"), "Expected test1.txt\\test2.txt to exist\n");
-    todo_wine ok(DeleteFileA("test1.txt\\test3.txt"), "Expected test1.txt\\test3.txt to exist\n");
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
+    ok(DeleteFileA("test1.txt\\test2.txt"), "Expected test1.txt\\test2.txt to exist\n");
+    ok(DeleteFileA("test1.txt\\test3.txt"), "Expected test1.txt\\test3.txt to exist\n");
     RemoveDirectoryA("test1.txt");
     createTestFile("test2.txt");
     createTestFile("test3.txt");
@@ -1959,16 +1959,16 @@ static void test_move(void)
     /* move a directory into itself */
     check_file_operation(FO_MOVE, FOF_NO_UI,
             "test4.txt\0", "test4.txt\\b.txt\0",
-            DE_DESTSUBTREE, FALSE, TRUE, FALSE);
+            DE_DESTSUBTREE, FALSE, FALSE, FALSE);
     ok(!RemoveDirectoryA("test4.txt\\b.txt"), "Expected test4.txt\\b.txt to not exist\n");
     ok(dir_exists("test4.txt"), "Expected test4.txt to exist\n");
 
     /* move many files without FOF_MULTIDESTFILES */
     check_file_operation(FO_MOVE, FOF_NO_UI,
             "test2.txt\0test3.txt\0", "d.txt\0e.txt\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
-    todo_wine ok(DeleteFileA("d.txt\\test2.txt"), "Expected d.txt\\test2.txt to exist\n");
-    todo_wine ok(DeleteFileA("d.txt\\test3.txt"), "Expected d.txt\\test3.txt to exist\n");
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
+    ok(DeleteFileA("d.txt\\test2.txt"), "Expected d.txt\\test2.txt to exist\n");
+    ok(DeleteFileA("d.txt\\test3.txt"), "Expected d.txt\\test3.txt to exist\n");
     RemoveDirectoryA("d.txt");
     createTestFile("test2.txt");
     createTestFile("test3.txt");
