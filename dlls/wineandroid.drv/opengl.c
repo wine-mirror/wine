@@ -48,6 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(android);
 
 static const struct egl_platform *egl;
 static const struct opengl_funcs *funcs;
+static const struct opengl_drawable_funcs android_drawable_funcs;
 static const int egl_client_version = 2;
 
 struct egl_pixel_format
@@ -68,13 +69,17 @@ struct android_context
 struct gl_drawable
 {
     struct opengl_drawable base;
-    LONG            ref;
     struct list     entry;
     ANativeWindow  *window;
     EGLSurface      surface;
     EGLSurface      pbuffer;
     int             swap_interval;
 };
+
+static struct gl_drawable *impl_from_opengl_drawable( struct opengl_drawable *base )
+{
+    return CONTAINING_RECORD( base, struct gl_drawable, base );
+}
 
 static void *opengl_handle;
 static struct list gl_contexts = LIST_INIT( gl_contexts );
@@ -91,7 +96,7 @@ static inline EGLConfig egl_config_for_format(int format)
 
 static struct gl_drawable *gl_drawable_grab( struct gl_drawable *gl )
 {
-    InterlockedIncrement( &gl->ref );
+    opengl_drawable_add_ref( &gl->base );
     return gl;
 }
 
@@ -101,17 +106,18 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, HDC hdc, int format )
     struct gl_drawable *gl;
 
     if (!(gl = calloc( 1, sizeof(*gl) ))) return NULL;
+    gl->base.funcs  = &android_drawable_funcs;
+    gl->base.ref    = 1;
     gl->base.hwnd   = hwnd;
     gl->base.hdc    = hdc;
     gl->base.format = format;
 
-    gl->ref = 1;
     gl->window = create_ioctl_window( hwnd, TRUE, 1.0f );
     gl->surface = 0;
     gl->pbuffer = funcs->p_eglCreatePbufferSurface( egl->display, egl_config_for_format(gl->base.format), attribs );
     pthread_mutex_lock( &drawable_mutex );
     list_add_head( &gl_drawables, &gl->entry );
-    gl_drawable_grab( gl );
+    opengl_drawable_add_ref( &gl->base );
 
     TRACE( "Created drawable %s with client window %p\n", debugstr_opengl_drawable( &gl->base ), gl->window );
     return gl;
@@ -131,8 +137,9 @@ static struct gl_drawable *get_gl_drawable( HWND hwnd, HDC hdc )
     return NULL;
 }
 
-static void gl_drawable_destroy( struct gl_drawable *gl )
+static void android_drawable_destroy( struct opengl_drawable *base )
 {
+    struct gl_drawable *gl = impl_from_opengl_drawable( base );
     if (gl->surface) funcs->p_eglDestroySurface( egl->display, gl->surface );
     if (gl->pbuffer) funcs->p_eglDestroySurface( egl->display, gl->pbuffer );
     release_ioctl_window( gl->window );
@@ -141,7 +148,7 @@ static void gl_drawable_destroy( struct gl_drawable *gl )
 
 static void release_gl_drawable( struct gl_drawable *gl )
 {
-    if (!InterlockedDecrement( &gl->ref )) gl_drawable_destroy( gl );
+    opengl_drawable_release( &gl->base );
     pthread_mutex_unlock( &drawable_mutex );
 }
 
@@ -403,6 +410,11 @@ static struct opengl_driver_funcs android_driver_funcs =
     .p_context_destroy = android_context_destroy,
     .p_context_flush = android_context_flush,
     .p_context_make_current = android_context_make_current,
+};
+
+static const struct opengl_drawable_funcs android_drawable_funcs =
+{
+    .destroy = android_drawable_destroy,
 };
 
 /**********************************************************************

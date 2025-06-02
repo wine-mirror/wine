@@ -100,6 +100,7 @@ static pthread_mutex_t dc_pbuffers_mutex = PTHREAD_MUTEX_INITIALIZER;
 static void *opengl_handle;
 static const struct opengl_funcs *funcs;
 static const struct opengl_driver_funcs macdrv_driver_funcs;
+static const struct opengl_drawable_funcs macdrv_drawable_funcs;
 
 static void (*pglCopyColorTable)(GLenum target, GLenum internalformat, GLint x, GLint y,
                                  GLsizei width);
@@ -2383,6 +2384,8 @@ static BOOL macdrv_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum text
     }
 
     if (!(gl = calloc(1, sizeof(*gl)))) return FALSE;
+    gl->base.funcs = &macdrv_drawable_funcs;
+    gl->base.ref = 1;
     gl->base.hwnd = 0;
     gl->base.hdc = hdc;
     gl->base.format = format;

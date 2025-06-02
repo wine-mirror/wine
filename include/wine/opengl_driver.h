@@ -61,6 +61,8 @@ struct wgl_pixel_format
 
 #ifdef WINE_UNIX_LIB
 
+#include "wine/gdi_driver.h"
+
 /* Wine internal opengl driver version, needs to be bumped upon opengl_funcs changes. */
 #define WINE_OPENGL_DRIVER_VERSION 36
 
@@ -125,8 +127,17 @@ struct egl_platform
 };
 
 /* a driver opengl drawable, either a client surface of a pbuffer */
+struct opengl_drawable;
+struct opengl_drawable_funcs
+{
+    void (*destroy)( struct opengl_drawable *iface );
+};
+
 struct opengl_drawable
 {
+    const struct opengl_drawable_funcs *funcs;
+    LONG ref;
+
     int format;  /* pixel format of the drawable */
     HWND hwnd;   /* window the drawable was created for */
     HDC hdc;     /* DC the drawable was created for */
@@ -137,6 +148,9 @@ static inline const char *debugstr_opengl_drawable( struct opengl_drawable *draw
     if (!drawable) return "(null)";
     return wine_dbg_sprintf( "%p (format %u, hwnd %p, hdc %p)", drawable, drawable->format, drawable->hwnd, drawable->hdc );
 }
+
+W32KAPI void opengl_drawable_add_ref( struct opengl_drawable *drawable );
+W32KAPI void opengl_drawable_release( struct opengl_drawable *drawable );
 
 /* interface between win32u and the user drivers */
 struct opengl_driver_funcs

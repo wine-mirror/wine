@@ -163,6 +163,23 @@ static void register_extension( char *list, size_t size, const char *name )
     }
 }
 
+void opengl_drawable_add_ref( struct opengl_drawable *drawable )
+{
+    ULONG ref = InterlockedIncrement( &drawable->ref );
+    TRACE( "%s increasing refcount to %u\n", debugstr_opengl_drawable( drawable ), ref );
+}
+
+void opengl_drawable_release( struct opengl_drawable *drawable )
+{
+    ULONG ref = InterlockedDecrement( &drawable->ref );
+    TRACE( "%s decreasing refcount to %u\n", debugstr_opengl_drawable( drawable ), ref );
+
+    if (!ref)
+    {
+        drawable->funcs->destroy( drawable );
+    }
+}
+
 #ifdef SONAME_LIBEGL
 
 static void *egldrv_get_proc_address( const char *name )
