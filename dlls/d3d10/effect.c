@@ -2431,7 +2431,7 @@ static HRESULT parse_fx10_annotations(const char *data, size_t data_size, const 
             return hr;
     }
 
-    return hr;
+    return S_OK;
 }
 
 static HRESULT parse_fx10_anonymous_shader(struct d3d10_effect *e, D3D_SHADER_VARIABLE_TYPE basetype,
