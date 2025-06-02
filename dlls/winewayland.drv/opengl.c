@@ -34,7 +34,7 @@
 #include "waylanddrv.h"
 #include "wine/debug.h"
 
-#if defined(SONAME_LIBEGL) && defined(HAVE_LIBWAYLAND_EGL)
+#ifdef HAVE_LIBWAYLAND_EGL
 
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
@@ -45,10 +45,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 static const struct egl_platform *egl;
 static const struct opengl_funcs *funcs;
 static const struct opengl_drawable_funcs wayland_drawable_funcs;
-
-#define DECL_FUNCPTR(f) static PFN_##f p_##f
-DECL_FUNCPTR(glClear);
-#undef DECL_FUNCPTR
 
 static pthread_mutex_t gl_object_mutex = PTHREAD_MUTEX_INITIALIZER;
 static struct list gl_drawables = LIST_INIT(gl_drawables);
@@ -447,15 +443,6 @@ static BOOL wayland_context_create(int format, void *share_private, const int *a
     return TRUE;
 }
 
-void wayland_glClear(GLbitfield mask)
-{
-    struct wayland_context *ctx = NtCurrentTeb()->glReserved2;
-    /* Since glClear is one of the operations that may latch the native size,
-     * perform any pending resizes before calling it. */
-    if (ctx && ctx->draw) wayland_gl_drawable_sync_size(ctx->draw);
-    p_glClear(mask);
-}
-
 static BOOL wayland_context_destroy(void *private)
 {
     struct wayland_context *ctx = private;
@@ -477,16 +464,17 @@ static EGLenum wayland_init_egl_platform(const struct egl_platform *platform, EG
     return EGL_PLATFORM_WAYLAND_KHR;
 }
 
-static void *wayland_get_proc_address(const char *name)
-{
-    if (!strcmp(name, "glClear")) return wayland_glClear;
-
-    return funcs->p_eglGetProcAddress(name);
-}
-
 static BOOL wayland_context_flush( void *private, HWND hwnd, HDC hdc, int interval, void (*flush)(void) )
 {
-    return FALSE;
+    struct wayland_context *ctx = private;
+
+    /* Since context_flush is called from operations that may latch the native size,
+     * perform any pending resizes before calling them. */
+    if (ctx->draw) wayland_gl_drawable_sync_size(ctx->draw);
+
+    if (flush) flush();
+
+    return TRUE;
 }
 
 static BOOL wayland_swap_buffers(void *private, HWND hwnd, HDC hdc, int interval)
@@ -560,16 +548,9 @@ static UINT wayland_pbuffer_bind(HDC hdc, struct opengl_drawable *base, GLenum b
     return -1; /* use default implementation */
 }
 
-static BOOL init_opengl_funcs(void)
-{
-    p_glClear = (void *)funcs->p_eglGetProcAddress("glClear");
-    return TRUE;
-}
-
 static struct opengl_driver_funcs wayland_driver_funcs =
 {
     .p_init_egl_platform = wayland_init_egl_platform,
-    .p_get_proc_address = wayland_get_proc_address,
     .p_set_pixel_format = wayland_set_pixel_format,
     .p_swap_buffers = wayland_swap_buffers,
     .p_context_create = wayland_context_create,
@@ -602,17 +583,13 @@ UINT WAYLAND_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, c
     if (!opengl_funcs->egl_handle) return STATUS_NOT_SUPPORTED;
     funcs = opengl_funcs;
 
-    if (!init_opengl_funcs()) goto err;
-
+    wayland_driver_funcs.p_get_proc_address = (*driver_funcs)->p_get_proc_address;
     wayland_driver_funcs.p_init_pixel_formats = (*driver_funcs)->p_init_pixel_formats;
     wayland_driver_funcs.p_describe_pixel_format = (*driver_funcs)->p_describe_pixel_format;
     wayland_driver_funcs.p_init_wgl_extensions = (*driver_funcs)->p_init_wgl_extensions;
 
     *driver_funcs = &wayland_driver_funcs;
     return STATUS_SUCCESS;
-
-err:
-    return STATUS_NOT_SUPPORTED;
 }
 
 /**********************************************************************
