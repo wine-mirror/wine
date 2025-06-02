@@ -499,6 +499,7 @@ enum type_type
 struct metadata
 {
     unsigned int ref;
+    unsigned int def;
     unsigned int extends;
 };
 

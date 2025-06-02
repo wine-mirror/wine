@@ -479,6 +479,11 @@ static void add_bytes( struct buffer *buf, const BYTE *data, UINT size )
     buf->offset += size;
 }
 
+static void serialize_byte( BYTE value )
+{
+    add_bytes( &tables_disk, (const BYTE *)&value, sizeof(value) );
+}
+
 static void serialize_ushort( USHORT value )
 {
     add_bytes( &tables_disk, (const BYTE *)&value, sizeof(value) );
@@ -532,6 +537,17 @@ static enum table typedef_or_ref_to_table( UINT token )
     case 0: return TABLE_TYPEDEF;
     case 1: return TABLE_TYPEREF;
     case 2: return TABLE_TYPESPEC;
+    default: assert( 0 );
+    }
+}
+
+static enum table has_constant_to_table( UINT token )
+{
+    switch (token & 0x3)
+    {
+    case 0: return TABLE_FIELD;
+    case 1: return TABLE_PARAM;
+    case 2: return TABLE_PROPERTY;
     default: assert( 0 );
     }
 }
@@ -622,6 +638,73 @@ static void serialize_typedef_table( void )
         serialize_table_idx( row->extends, typedef_or_ref_to_table(row->extends) );
         serialize_table_idx( row->fieldlist, TABLE_FIELD );
         serialize_table_idx( row->methodlist, TABLE_METHODDEF );
+        row++;
+    }
+}
+
+struct field_row
+{
+    USHORT flags;
+    UINT   name;
+    UINT   signature;
+};
+
+static UINT add_field_row( UINT flags, UINT name, UINT signature )
+{
+    struct field_row row = { flags, name, signature };
+    return add_row( TABLE_FIELD, (const BYTE *)&row, sizeof(row) );
+}
+
+static void serialize_field_table( void )
+{
+    const struct field_row *row = (const struct field_row *)tables[TABLE_FIELD].ptr;
+    UINT i;
+
+    for (i = 0; i < tables[TABLE_FIELD].count; i++)
+    {
+        serialize_ushort( row->flags );
+        serialize_string_idx( row->name );
+        serialize_blob_idx( row->signature );
+        row++;
+    }
+}
+
+struct constant_row
+{
+    BYTE type;
+    BYTE padding;
+    UINT parent;
+    UINT value;
+};
+
+static UINT add_constant_row( BYTE type, UINT parent, UINT value )
+{
+    struct constant_row row = { type, 0, parent, value };
+    return add_row( TABLE_CONSTANT, (const BYTE *)&row, sizeof(row) );
+}
+
+static int cmp_constant_row( const void *a, const void *b )
+{
+    const struct constant_row *row = a, *row2 = b;
+    if (row->parent > row2->parent) return 1;
+    if (row->parent < row2->parent) return -1;
+    return 0;
+}
+
+/* sorted by parent */
+static void serialize_constant_table( void )
+{
+    const struct constant_row *row = (const struct constant_row *)tables[TABLE_CONSTANT].ptr;
+    UINT i;
+
+    qsort( tables[TABLE_CONSTANT].ptr, tables[TABLE_CONSTANT].count, sizeof(*row), cmp_constant_row );
+
+    for (i = 0; i < tables_idx[TABLE_CONSTANT].count; i++)
+    {
+        serialize_byte( row->type );
+        serialize_byte( row->padding );
+        serialize_table_idx( row->parent, has_constant_to_table(row->parent) );
+        serialize_blob_idx( row->value );
         row++;
     }
 }
@@ -722,6 +805,118 @@ static UINT resolution_scope( enum table table, UINT row )
     }
 }
 
+static UINT has_constant( enum table table, UINT row )
+{
+    switch (table)
+    {
+    case TABLE_FIELD: return row << 2;
+    case TABLE_PARAM: return row << 2 | 1;
+    case TABLE_PROPERTY: return row << 2 | 2;
+    default: assert( 0 );
+    }
+}
+
+enum element_type
+{
+    ELEMENT_TYPE_END            = 0x00,
+    ELEMENT_TYPE_VOID           = 0x01,
+    ELEMENT_TYPE_BOOLEAN        = 0x02,
+    ELEMENT_TYPE_CHAR           = 0x03,
+    ELEMENT_TYPE_I1             = 0x04,
+    ELEMENT_TYPE_U1             = 0x05,
+    ELEMENT_TYPE_I2             = 0x06,
+    ELEMENT_TYPE_U2             = 0x07,
+    ELEMENT_TYPE_I4             = 0x08,
+    ELEMENT_TYPE_U4             = 0x09,
+    ELEMENT_TYPE_I8             = 0x0a,
+    ELEMENT_TYPE_U8             = 0x0b,
+    ELEMENT_TYPE_R4             = 0x0c,
+    ELEMENT_TYPE_R8             = 0x0d,
+    ELEMENT_TYPE_STRING         = 0x0e,
+    ELEMENT_TYPE_PTR            = 0x0f,
+    ELEMENT_TYPE_BYREF          = 0x10,
+    ELEMENT_TYPE_VALUETYPE      = 0x11,
+    ELEMENT_TYPE_CLASS          = 0x12,
+    ELEMENT_TYPE_VAR            = 0x13,
+    ELEMENT_TYPE_ARRAY          = 0x14,
+    ELEMENT_TYPE_GENERICINST    = 0x15,
+    ELEMENT_TYPE_TYPEDBYREF     = 0x16,
+    ELEMENT_TYPE_I              = 0x18,
+    ELEMENT_TYPE_U              = 0x19,
+    ELEMENT_TYPE_FNPTR          = 0x1b,
+    ELEMENT_TYPE_OBJECT         = 0x1c,
+    ELEMENT_TYPE_SZARRAY        = 0x1d,
+    ELEMENT_TYPE_MVAR           = 0x1e,
+    ELEMENT_TYPE_CMOD_REQD      = 0x1f,
+    ELEMENT_TYPE_CMOD_OPT       = 0x20,
+    ELEMENT_TYPE_INTERNAL       = 0x21,
+    ELEMENT_TYPE_MODIFIER       = 0x40,
+    ELEMENT_TYPE_SENTINEL       = 0x41,
+    ELEMENT_TYPE_PINNED         = 0x45
+};
+
+enum
+{
+    TYPE_ATTR_PUBLIC            = 0x000001,
+    TYPE_ATTR_NESTEDPUBLIC      = 0x000002,
+    TYPE_ATTR_NESTEDPRIVATE     = 0x000003,
+    TYPE_ATTR_NESTEDFAMILY      = 0x000004,
+    TYPE_ATTR_NESTEDASSEMBLY    = 0x000005,
+    TYPE_ATTR_NESTEDFAMANDASSEM = 0x000006,
+    TYPE_ATTR_NESTEDFAMORASSEM  = 0x000007,
+    TYPE_ATTR_SEQUENTIALLAYOUT  = 0x000008,
+    TYPE_ATTR_EXPLICITLAYOUT    = 0x000010,
+    TYPE_ATTR_INTERFACE         = 0x000020,
+    TYPE_ATTR_ABSTRACT          = 0x000080,
+    TYPE_ATTR_SEALED            = 0x000100,
+    TYPE_ATTR_SPECIALNAME       = 0x000400,
+    TYPE_ATTR_RTSPECIALNAME     = 0x000800,
+    TYPE_ATTR_IMPORT            = 0x001000,
+    TYPE_ATTR_SERIALIZABLE      = 0x002000,
+    TYPE_ATTR_UNKNOWN           = 0x004000,
+    TYPE_ATTR_UNICODECLASS      = 0x010000,
+    TYPE_ATTR_AUTOCLASS         = 0x020000,
+    TYPE_ATTR_CUSTOMFORMATCLASS = 0x030000,
+    TYPE_ATTR_HASSECURITY       = 0x040000,
+    TYPE_ATTR_BEFOREFIELDINIT   = 0x100000
+};
+
+enum
+{
+    FIELD_ATTR_PRIVATE          = 0x0001,
+    FIELD_ATTR_FAMANDASSEM      = 0x0002,
+    FIELD_ATTR_ASSEMBLY         = 0x0003,
+    FIELD_ATTR_FAMILY           = 0x0004,
+    FIELD_ATTR_FAMORASSEM       = 0x0005,
+    FIELD_ATTR_PUBLIC           = 0x0006,
+    FIELD_ATTR_STATIC           = 0x0010,
+    FIELD_ATTR_INITONLY         = 0x0020,
+    FIELD_ATTR_LITERAL          = 0x0040,
+    FIELD_ATTR_NOTSERIALIZED    = 0x0080,
+    FIELD_ATTR_HASFIELDRVA      = 0x0100,
+    FIELD_ATTR_SPECIALNAME      = 0x0200,
+    FIELD_ATTR_RTSPECIALNAME    = 0x0400,
+    FIELD_ATTR_HASFIELDMARSHAL  = 0x1000,
+    FIELD_ATTR_PINVOKEIMPL      = 0x2000,
+    FIELD_ATTR_HASDEFAULT       = 0x8000
+};
+
+enum
+{
+    SIG_TYPE_DEFAULT      = 0x00,
+    SIG_TYPE_C            = 0x01,
+    SIG_TYPE_STDCALL      = 0x02,
+    SIG_TYPE_THISCALL     = 0x03,
+    SIG_TYPE_FASTCALL     = 0x04,
+    SIG_TYPE_VARARG       = 0x05,
+    SIG_TYPE_FIELD        = 0x06,
+    SIG_TYPE_LOCALSIG     = 0x07,
+    SIG_TYPE_PROPERTY     = 0x08,
+    SIG_TYPE_GENERIC      = 0x10,
+    SIG_TYPE_HASTHIS      = 0x20,
+    SIG_TYPE_EXPLICITTHIS = 0x40
+};
+
 #define MODULE_ROW      1
 #define MSCORLIB_ROW    1
 
@@ -732,6 +927,16 @@ static UINT add_name( type_t *type, UINT *namespace )
     *namespace = add_string( str );
     free( str );
     return name;
+}
+
+static UINT make_field_value_sig( UINT token, BYTE *buf )
+{
+    UINT len = 2;
+
+    buf[0] = SIG_TYPE_FIELD;
+    buf[1] = ELEMENT_TYPE_VALUETYPE;
+    len += encode_int( token, buf + 2 );
+    return len;
 }
 
 enum
@@ -755,6 +960,34 @@ static void add_enum_type_step1( type_t *type )
     type->md.ref = add_typeref_row( resolution_scope(TABLE_MODULE, MODULE_ROW), name, namespace );
 }
 
+static void add_enum_type_step2( type_t *type )
+{
+    BYTE sig_value[] = { SIG_TYPE_FIELD, ELEMENT_TYPE_I4 };
+    UINT name, namespace, field, parent, sig_size;
+    BYTE sig_field[32];
+    const var_t *var;
+
+    name = add_name( type, &namespace );
+
+    field = add_field_row( FIELD_ATTR_PRIVATE | FIELD_ATTR_SPECIALNAME | FIELD_ATTR_RTSPECIALNAME,
+                           add_string("value__"), add_blob(sig_value, sizeof(sig_value)) );
+
+    type->md.def = add_typedef_row( TYPE_ATTR_PUBLIC | TYPE_ATTR_SEALED | TYPE_ATTR_UNKNOWN, name, namespace,
+                                    type->md.extends, field, 1 );
+
+    sig_size = make_field_value_sig( typedef_or_ref(TABLE_TYPEREF, type->md.ref), sig_field );
+
+    LIST_FOR_EACH_ENTRY( var, type_enum_get_values(type), const var_t, entry )
+    {
+        int val = var->eval->u.integer.value;
+
+        field = add_field_row( FIELD_ATTR_PUBLIC | FIELD_ATTR_LITERAL | FIELD_ATTR_STATIC | FIELD_ATTR_HASDEFAULT,
+                               add_string(var->name), add_blob(sig_field, sig_size) );
+        parent = has_constant( TABLE_FIELD, field );
+        add_constant_row( sig_value[1], parent, add_blob((const BYTE *)&val, sizeof(val)) );
+    }
+}
+
 static void build_tables( const statement_list_t *stmt_list )
 {
     const statement_t *stmt;
@@ -775,6 +1008,22 @@ static void build_tables( const statement_list_t *stmt_list )
             break;
         default:
             fprintf( stderr, "Unhandled type %u name '%s'.\n", type->type_type, type->name );
+            break;
+        }
+    }
+
+    LIST_FOR_EACH_ENTRY( stmt, stmt_list, const statement_t, entry )
+    {
+        type_t *type = stmt->u.type;
+
+        if (stmt->type != STMT_TYPE) continue;
+
+        switch (type->type_type)
+        {
+        case TYPE_ENUM:
+            add_enum_type_step2( type );
+            break;
+        default:
             break;
         }
     }
@@ -817,6 +1066,8 @@ static void build_table_stream( const statement_list_t *stmts )
     serialize_module_table();
     serialize_typeref_table();
     serialize_typedef_table();
+    serialize_field_table();
+    serialize_constant_table();
     serialize_assembly_table();
     serialize_assemblyref_table();
 }
