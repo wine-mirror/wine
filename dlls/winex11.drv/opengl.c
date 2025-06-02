@@ -197,7 +197,6 @@ struct glx_pixel_format
 struct x11drv_context
 {
     HDC hdc;
-    const struct glx_pixel_format *fmt;
     GLXContext ctx;
     struct gl_drawable *draw;
     struct gl_drawable *read;
@@ -221,7 +220,6 @@ struct gl_drawable
     Window                         window;       /* window if drawable is a GLXWindow */
     Colormap                       colormap;     /* colormap for the client window */
     Pixmap                         pixmap;       /* base pixmap if drawable is a GLXPixmap */
-    const struct glx_pixel_format *format;       /* pixel format for the drawable */
     int                            swap_interval;
     BOOL                           offscreen;
     HDC                            hdc_src;
@@ -679,17 +677,6 @@ failed:
     return STATUS_NOT_SUPPORTED;
 }
 
-static const char *debugstr_fbconfig( GLXFBConfig fbconfig )
-{
-    int id, visual, drawable;
-
-    if (pglXGetFBConfigAttrib( gdi_display, fbconfig, GLX_FBCONFIG_ID, &id ))
-        return "*** invalid fbconfig";
-    pglXGetFBConfigAttrib( gdi_display, fbconfig, GLX_VISUAL_ID, &visual );
-    pglXGetFBConfigAttrib( gdi_display, fbconfig, GLX_DRAWABLE_TYPE, &drawable );
-    return wine_dbg_sprintf( "fbconfig %#x visual id %#x drawable type %#x", id, visual, drawable );
-}
-
 static int get_render_type_from_fbconfig(Display *display, GLXFBConfig fbconfig)
 {
     int render_type, render_type_bit;
@@ -832,33 +819,10 @@ static UINT x11drv_init_pixel_formats( UINT *onscreen_count )
     return size;
 }
 
-static inline BOOL is_valid_pixel_format( int format )
+static struct glx_pixel_format *glx_pixel_format_from_format( int format )
 {
-    return format > 0 && format <= nb_pixel_formats;
-}
-
-static inline BOOL is_onscreen_pixel_format( int format )
-{
-    return format > 0 && format <= nb_onscreen_formats;
-}
-
-/* GLX can advertise dozens of different pixelformats including offscreen and onscreen ones.
- * In our WGL implementation we only support a subset of these formats namely the format of
- * Wine's main visual and offscreen formats (if they are available).
- * This function converts a WGL format to its corresponding GLX one.
- */
-static const struct glx_pixel_format *get_pixel_format(Display *display, int iPixelFormat, BOOL AllowOffscreen)
-{
-    /* Check if the pixelformat is valid. Note that it is legal to pass an invalid
-     * iPixelFormat in case of probing the number of pixelformats.
-     */
-    if (is_valid_pixel_format( iPixelFormat ) &&
-        (is_onscreen_pixel_format( iPixelFormat ) || AllowOffscreen)) {
-        TRACE("Returning fmt_id=%#x for iPixelFormat=%d\n",
-              pixel_formats[iPixelFormat-1].fmt_id, iPixelFormat);
-        return &pixel_formats[iPixelFormat-1];
-    }
-    return NULL;
+    assert( format > 0 && format <= nb_pixel_formats );
+    return &pixel_formats[format - 1];
 }
 
 static struct gl_drawable *grab_gl_drawable( struct gl_drawable *gl )
@@ -945,16 +909,14 @@ static struct gl_drawable *get_gl_drawable( HWND hwnd, HDC hdc )
     return gl;
 }
 
-static GLXContext create_glxcontext(Display *display, struct x11drv_context *context, GLXContext shareList, const int *attribs)
+static GLXContext create_glxcontext( struct x11drv_context *context, int format, GLXContext share, const int *attribs )
 {
+    struct glx_pixel_format *fmt = glx_pixel_format_from_format( format );
     GLXContext ctx;
 
-    if(attribs)
-        ctx = pglXCreateContextAttribsARB(gdi_display, context->fmt->fbconfig, shareList, GL_TRUE, attribs);
-    else if(context->fmt->visual)
-        ctx = pglXCreateContext(gdi_display, context->fmt->visual, shareList, GL_TRUE);
-    else /* Create a GLX Context for a pbuffer */
-        ctx = pglXCreateNewContext(gdi_display, context->fmt->fbconfig, context->fmt->render_type, shareList, TRUE);
+    if (attribs) ctx = pglXCreateContextAttribsARB( gdi_display, fmt->fbconfig, share, TRUE, attribs );
+    else if (fmt->visual) ctx = pglXCreateContext( gdi_display, fmt->visual, share, TRUE );
+    else ctx = pglXCreateNewContext( gdi_display, fmt->fbconfig, fmt->render_type, share, TRUE );
 
     return ctx;
 }
@@ -962,10 +924,10 @@ static GLXContext create_glxcontext(Display *display, struct x11drv_context *con
 /***********************************************************************
  *              create_gl_drawable
  */
-static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel_format *format )
+static struct gl_drawable *create_gl_drawable( HWND hwnd, int format )
 {
+    struct glx_pixel_format *fmt = glx_pixel_format_from_format( format );
     struct gl_drawable *gl, *prev;
-    XVisualInfo *visual = format->visual;
     RECT rect;
 
     NtUserGetClientRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) );
@@ -974,18 +936,17 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel
 
     /* Default GLX and WGL swap interval is 1, but in case of glXSwapIntervalSGI there is no way to query it. */
     gl->swap_interval = INT_MIN;
-    gl->format = format;
     gl->ref = 1;
     gl->hwnd = hwnd;
     gl->rect = rect;
 
     gl->type = DC_GL_WINDOW;
-    gl->colormap = XCreateColormap( gdi_display, get_dummy_parent(), visual->visual,
-                                    (visual->class == PseudoColor || visual->class == GrayScale ||
-                                     visual->class == DirectColor) ? AllocAll : AllocNone );
-    gl->window = create_client_window( hwnd, visual, gl->colormap );
-    if (gl->window) gl->drawable = pglXCreateWindow( gdi_display, gl->format->fbconfig, gl->window, NULL );
-    TRACE( "%p created client %lx drawable %lx\n", hwnd, gl->window, gl->drawable );
+    gl->colormap = XCreateColormap( gdi_display, get_dummy_parent(), fmt->visual->visual,
+                                    (fmt->visual->class == PseudoColor || fmt->visual->class == GrayScale ||
+                                     fmt->visual->class == DirectColor) ? AllocAll : AllocNone );
+    gl->window = create_client_window( hwnd, fmt->visual, gl->colormap );
+    if (gl->window) gl->drawable = pglXCreateWindow( gdi_display, fmt->fbconfig, gl->window, NULL );
+    TRACE( "%p created client %lx drawable %lx, format %d\n", hwnd, gl->window, gl->drawable, format );
 
     if (!gl->drawable)
     {
@@ -1003,7 +964,6 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel
 
 static BOOL x11drv_set_pixel_format( HWND hwnd, int old_format, int new_format, BOOL internal )
 {
-    const struct glx_pixel_format *fmt;
     struct gl_drawable *gl;
 
     /* Even for internal pixel format fail setting it if the app has already set a
@@ -1012,17 +972,8 @@ static BOOL x11drv_set_pixel_format( HWND hwnd, int old_format, int new_format, 
      * than blitting from backup context. */
     if (old_format) return old_format == new_format;
 
-    if (!(fmt = get_pixel_format(gdi_display, new_format, FALSE /* Offscreen */)))
-    {
-        ERR( "Invalid format %d\n", new_format );
-        return FALSE;
-    }
-
-    if (!(gl = create_gl_drawable( hwnd, fmt ))) return FALSE;
-
-    TRACE( "created GL drawable %lx for win %p %s\n",
-           gl->drawable, hwnd, debugstr_fbconfig( fmt->fbconfig ));
-
+    if (!(gl = create_gl_drawable( hwnd, new_format ))) return FALSE;
+    TRACE( "created GL drawable %lx for win %p\n", gl->drawable, hwnd);
     XFlush( gdi_display );
     release_gl_drawable( gl );
 
@@ -1140,21 +1091,11 @@ void destroy_gl_drawable( HWND hwnd )
 }
 
 
-static BOOL x11drv_describe_pixel_format( int iPixelFormat, struct wgl_pixel_format *pf )
+static BOOL x11drv_describe_pixel_format( int format, struct wgl_pixel_format *pf )
 {
     int value, drawable_type = 0, render_type = 0;
+    struct glx_pixel_format *fmt = glx_pixel_format_from_format( format );
     int rb, gb, bb, ab;
-    const struct glx_pixel_format *fmt;
-
-    /* Look for the iPixelFormat in our list of supported formats. If it is
-     * supported we get the index in the FBConfig table and the number of
-     * supported formats back */
-    fmt = get_pixel_format( gdi_display, iPixelFormat, TRUE /* Offscreen */);
-    if (!fmt)
-    {
-        WARN( "unexpected format %d\n", iPixelFormat );
-        return FALSE;
-    }
 
     /* If we can't get basic information, there is no point continuing */
     if (pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &drawable_type )) return 0;
@@ -1495,7 +1436,6 @@ static BOOL x11drv_context_create( HDC hdc, int format, void *share_private, con
     if ((ret = calloc( 1, sizeof(*ret) )))
     {
         ret->hdc = hdc;
-        ret->fmt = &pixel_formats[format - 1];
         if (attribList)
         {
             /* attribList consists of pairs {token, value] terminated with 0 */
@@ -1544,7 +1484,7 @@ static BOOL x11drv_context_create( HDC hdc, int format, void *share_private, con
         }
 
         X11DRV_expect_error(gdi_display, GLXErrorHandler, NULL);
-        ret->ctx = create_glxcontext( gdi_display, ret, hShareContext ? hShareContext->ctx : NULL,
+        ret->ctx = create_glxcontext( ret, format, hShareContext ? hShareContext->ctx : NULL,
                                       attribList ? glx_attribs : NULL );
         XSync(gdi_display, False);
         if ((err = X11DRV_check_error()) || !ret->ctx)
@@ -1568,20 +1508,13 @@ static BOOL x11drv_context_create( HDC hdc, int format, void *share_private, con
 static BOOL x11drv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
                                    GLint max_level, GLsizei *width, GLsizei *height, void **private )
 {
-    const struct glx_pixel_format *fmt;
+    const struct glx_pixel_format *fmt = glx_pixel_format_from_format( format );
     int glx_attribs[7], count = 0;
     struct gl_drawable *surface;
     RECT rect;
 
     TRACE( "hdc %p, format %d, largest %u, texture_format %#x, texture_target %#x, max_level %#x, width %d, height %d, private %p\n",
            hdc, format, largest, texture_format, texture_target, max_level, *width, *height, private );
-
-    /* Convert the WGL pixelformat to a GLX format, if it fails then the format is invalid */
-    if (!(fmt = get_pixel_format( gdi_display, format, TRUE /* Offscreen */ )))
-    {
-        ERR( "(%p): invalid pixel format %d\n", hdc, format );
-        return FALSE;
-    }
 
     glx_attribs[count++] = GLX_PBUFFER_WIDTH;
     glx_attribs[count++] = *width;
@@ -1596,7 +1529,6 @@ static BOOL x11drv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum tex
 
     if (!(surface = calloc( 1, sizeof(*surface) ))) return FALSE;
     surface->type = DC_GL_PBUFFER;
-    surface->format = fmt;
     surface->ref = 1;
 
     surface->drawable = pglXCreatePbuffer( gdi_display, fmt->fbconfig, glx_attribs );
