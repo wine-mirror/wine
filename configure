@@ -6587,6 +6587,14 @@ if test "x$enable_win64" = "xyes"
 then
     test -z "$with_wine64" || as_fn_error $? "--enable-win64 and --with-wine64 are mutually exclusive.
 --enable-win64 should be used in the 64-bit build tree, --with-wine64 in the 32-bit Wow64 build tree." "$LINENO" 5
+elif test -n "$with_wine64"
+then
+    test -f "$with_wine64/Makefile" || as_fn_error $? "the 64-bit tree in $with_wine64 has not been configured yet." "$LINENO" 5
+    libdir64=$(grep "^libdir *=" "$with_wine64/Makefile" | sed 's/^libdir *= *//')
+    if test "$libdir64" != "$libdir"; then
+        printf "%s\n" "$as_me:${as_lineno-$LINENO}: libdir64: $libdir64" >&5
+        as_fn_error $? "when using --with-wine64 you must use the same --libdir in both build trees." "$LINENO" 5
+    fi
 fi
 
 case $build_os in
@@ -6614,11 +6622,6 @@ if test -z "$toolsdir"; then
         as_fn_error $? "you must use the --with-wine-tools option when cross-compiling." "$LINENO" 5
     elif test -n "$with_wine64"; then
         toolsdir="$with_wine64"
-        libdir64=$(grep "^libdir *=" $with_wine64/Makefile | sed 's/^libdir *= *//')
-        if test "$libdir64" != "$libdir"; then
-            printf "%s\n" "$as_me:${as_lineno-$LINENO}: libdir64: $libdir64" >&5
-            as_fn_error $? "when using --with-wine64 you must use the same --libdir in both build trees." "$LINENO" 5
-        fi
     fi
 fi
 if test -z "$toolsdir"; then

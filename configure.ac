@@ -160,6 +160,14 @@ if test "x$enable_win64" = "xyes"
 then
     test -z "$with_wine64" || AC_MSG_ERROR([--enable-win64 and --with-wine64 are mutually exclusive.
 --enable-win64 should be used in the 64-bit build tree, --with-wine64 in the 32-bit Wow64 build tree.])
+elif test -n "$with_wine64"
+then
+    test -f "$with_wine64/Makefile" || AC_MSG_ERROR([the 64-bit tree in $with_wine64 has not been configured yet.])
+    libdir64=$(grep "^libdir *=" "$with_wine64/Makefile" | sed 's/^libdir *= *//')
+    if test "$libdir64" != "$libdir"; then
+        AS_ECHO(["$as_me:${as_lineno-$LINENO}: libdir64: $libdir64"]) >&AS_MESSAGE_LOG_FD
+        AC_MSG_ERROR([when using --with-wine64 you must use the same --libdir in both build trees.])
+    fi
 fi
 
 case $build_os in
@@ -184,11 +192,6 @@ if test -z "$toolsdir"; then
         AC_MSG_ERROR([you must use the --with-wine-tools option when cross-compiling.])
     elif test -n "$with_wine64"; then
         toolsdir="$with_wine64"
-        libdir64=$(grep "^libdir *=" $with_wine64/Makefile | sed 's/^libdir *= *//')
-        if test "$libdir64" != "$libdir"; then
-            AS_ECHO(["$as_me:${as_lineno-$LINENO}: libdir64: $libdir64"]) >&AS_MESSAGE_LOG_FD
-            AC_MSG_ERROR([when using --with-wine64 you must use the same --libdir in both build trees.])
-        fi
     fi
 fi
 if test -z "$toolsdir"; then
