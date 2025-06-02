@@ -60,7 +60,6 @@ struct android_context
 {
     EGLConfig  config;
     EGLContext context;
-    EGLSurface surface;
 };
 
 struct gl_drawable
@@ -242,7 +241,6 @@ static BOOL android_context_create( int format, void *share, const int *attribs,
     ctx = malloc( sizeof(*ctx) );
 
     ctx->config  = egl_config_for_format(format);
-    ctx->surface = 0;
     ctx->context = funcs->p_eglCreateContext( egl->display, ctx->config, shared_ctx ? shared_ctx->context : EGL_NO_CONTEXT, attribs );
     TRACE( "fmt %d ctx %p\n", format, ctx->context );
 
@@ -272,11 +270,7 @@ static BOOL android_context_make_current( HDC draw_hdc, HDC read_hdc, void *priv
         TRACE( "%p/%p context %p surface %p/%p\n",
                draw_hdc, read_hdc, ctx->context, draw_gl->surface, read_gl->surface );
         ret = funcs->p_eglMakeCurrent( egl->display, draw_gl->surface, read_gl->surface, ctx->context );
-        if (ret)
-        {
-            ctx->surface = draw_gl->surface;
-            goto done;
-        }
+        if (ret) goto done;
     }
     RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
 
@@ -319,38 +313,26 @@ static void set_swap_interval( struct gl_drawable *gl, int interval )
     gl->swap_interval = interval;
 }
 
-static BOOL android_swap_buffers( void *private, HWND hwnd, HDC hdc, int interval )
+static BOOL android_drawable_swap( struct opengl_drawable *base, int interval )
 {
-    struct android_context *ctx = private;
-    struct gl_drawable *gl;
+    struct gl_drawable *gl = impl_from_opengl_drawable( base );
 
-    if (!ctx) return FALSE;
+    TRACE( "drawable %s surface %p\n", debugstr_opengl_drawable( base ), gl->surface );
 
-    TRACE( "%p hwnd %p context %p surface %p\n", hdc, hwnd, ctx->context, ctx->surface );
-
-    if ((gl = get_gl_drawable( hwnd, hdc )))
-    {
-        set_swap_interval( gl, interval );
-        release_gl_drawable( gl );
-    }
-
-    if (ctx->surface) funcs->p_eglSwapBuffers( egl->display, ctx->surface );
+    set_swap_interval( gl, interval );
+    funcs->p_eglSwapBuffers( egl->display, gl->surface );
     return TRUE;
 }
 
-static BOOL android_context_flush( void *private, HWND hwnd, HDC hdc, int interval, void (*flush)(void) )
+static BOOL android_drawable_flush( struct opengl_drawable *base, int interval, void (*flush)(void) )
 {
-    struct android_context *ctx = private;
-    struct gl_drawable *gl;
+    struct gl_drawable *gl = impl_from_opengl_drawable( base );
 
-    TRACE( "hwnd %p context %p\n", hwnd, ctx->context );
+    TRACE( "drawable %s surface %p\n", debugstr_opengl_drawable( base ), gl->surface );
 
-    if ((gl = get_gl_drawable( hwnd, hdc )))
-    {
-        set_swap_interval( gl, interval );
-        release_gl_drawable( gl );
-    }
-    return FALSE;
+    set_swap_interval( gl, interval );
+    if (flush) flush();
+    return TRUE;
 }
 
 static const char *android_init_wgl_extensions( struct opengl_funcs *funcs )
@@ -364,16 +346,16 @@ static struct opengl_driver_funcs android_driver_funcs =
     .p_get_proc_address = android_get_proc_address,
     .p_init_wgl_extensions = android_init_wgl_extensions,
     .p_surface_create = android_surface_create,
-    .p_swap_buffers = android_swap_buffers,
     .p_context_create = android_context_create,
     .p_context_destroy = android_context_destroy,
-    .p_context_flush = android_context_flush,
     .p_context_make_current = android_context_make_current,
 };
 
 static const struct opengl_drawable_funcs android_drawable_funcs =
 {
     .destroy = android_drawable_destroy,
+    .flush = android_drawable_flush,
+    .swap = android_drawable_swap,
 };
 
 /**********************************************************************

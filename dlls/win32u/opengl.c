@@ -406,12 +406,6 @@ static BOOL egldrv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl
     return TRUE;
 }
 
-static BOOL egldrv_swap_buffers( void *private, HWND hwnd, HDC hdc, int interval )
-{
-    FIXME( "stub!\n" );
-    return TRUE;
-}
-
 static BOOL egldrv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
                                    GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **drawable )
 {
@@ -443,12 +437,6 @@ static BOOL egldrv_context_destroy( void *private )
     return FALSE;
 }
 
-static BOOL egldrv_context_flush( void *private, HWND hwnd, HDC hdc, int interval, void (*flush)(void) )
-{
-    FIXME( "stub!\n" );
-    return FALSE;
-}
-
 static BOOL egldrv_context_make_current( HDC draw_hdc, HDC read_hdc, void *private )
 {
     FIXME( "stub!\n" );
@@ -462,13 +450,11 @@ static const struct opengl_driver_funcs egldrv_funcs =
     .p_describe_pixel_format = egldrv_describe_pixel_format,
     .p_init_wgl_extensions = egldrv_init_wgl_extensions,
     .p_surface_create = egldrv_surface_create,
-    .p_swap_buffers = egldrv_swap_buffers,
     .p_pbuffer_create = egldrv_pbuffer_create,
     .p_pbuffer_updated = egldrv_pbuffer_updated,
     .p_pbuffer_bind = egldrv_pbuffer_bind,
     .p_context_create = egldrv_context_create,
     .p_context_destroy = egldrv_context_destroy,
-    .p_context_flush = egldrv_context_flush,
     .p_context_make_current = egldrv_context_make_current,
 };
 
@@ -614,11 +600,6 @@ static BOOL nulldrv_surface_create( HWND hwnd, HDC hdc, int format, struct openg
     return TRUE;
 }
 
-static BOOL nulldrv_swap_buffers( void *private, HWND hwnd, HDC hdc, int interval )
-{
-    return FALSE;
-}
-
 static BOOL nulldrv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
                                     GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **drawable )
 {
@@ -645,11 +626,6 @@ static BOOL nulldrv_context_destroy( void *private )
     return FALSE;
 }
 
-static BOOL nulldrv_context_flush( void *private, HWND hwnd, HDC hdc, int interval, void (*flush)(void) )
-{
-    return FALSE;
-}
-
 static BOOL nulldrv_context_make_current( HDC draw, HDC read, void *context )
 {
     return FALSE;
@@ -662,13 +638,11 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_describe_pixel_format = nulldrv_describe_pixel_format,
     .p_init_wgl_extensions = nulldrv_init_wgl_extensions,
     .p_surface_create = nulldrv_surface_create,
-    .p_swap_buffers = nulldrv_swap_buffers,
     .p_pbuffer_create = nulldrv_pbuffer_create,
     .p_pbuffer_updated = nulldrv_pbuffer_updated,
     .p_pbuffer_bind = nulldrv_pbuffer_bind,
     .p_context_create = nulldrv_context_create,
     .p_context_destroy = nulldrv_context_destroy,
-    .p_context_flush = nulldrv_context_flush,
     .p_context_make_current = nulldrv_context_make_current,
 };
 
@@ -1496,8 +1470,10 @@ static int get_window_swap_interval( HWND hwnd )
 static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)(void) )
 {
     HDC draw_hdc = NtCurrentTeb()->glReserved1[0], read_hdc = NtCurrentTeb()->glReserved1[1];
+    struct opengl_drawable *draw;
     int interval;
     HWND hwnd;
+    BOOL ret;
 
     if (!(hwnd = NtUserWindowFromDC( draw_hdc ))) interval = 0;
     else interval = get_window_swap_interval( hwnd );
@@ -1506,7 +1482,12 @@ static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)
 
     context_set_drawables( context, context->driver_private, draw_hdc, read_hdc, FALSE );
     if (context->memory_pbuffer) return flush_memory_pbuffer( context, draw_hdc, FALSE, flush );
-    return driver_funcs->p_context_flush( context->driver_private, hwnd, draw_hdc, interval, flush );
+
+    if (!(draw = get_dc_opengl_drawable( draw_hdc ))) return FALSE;
+    ret = draw->funcs->flush( draw, interval, flush );
+    opengl_drawable_release( draw );
+
+    return ret;
 }
 
 static BOOL win32u_wglSwapBuffers( HDC hdc )
@@ -1514,15 +1495,22 @@ static BOOL win32u_wglSwapBuffers( HDC hdc )
     HDC draw_hdc = NtCurrentTeb()->glReserved1[0], read_hdc = NtCurrentTeb()->glReserved1[1];
     struct wgl_context *context = NtCurrentTeb()->glContext;
     const struct opengl_funcs *funcs = &display_funcs;
+    struct opengl_drawable *draw;
     int interval;
     HWND hwnd;
+    BOOL ret;
 
     if (!(hwnd = NtUserWindowFromDC( hdc ))) interval = 0;
     else interval = get_window_swap_interval( hwnd );
 
     context_set_drawables( context, context->driver_private, draw_hdc, read_hdc, FALSE );
     if (context->memory_pbuffer) return flush_memory_pbuffer( context, hdc, FALSE, funcs->p_glFlush );
-    return driver_funcs->p_swap_buffers( context ? context->driver_private : NULL, hwnd, hdc, interval );
+
+    if (!(draw = get_dc_opengl_drawable( draw_hdc ))) return FALSE;
+    ret = draw->funcs->swap( draw, interval );
+    opengl_drawable_release( draw );
+
+    return ret;
 }
 
 static BOOL win32u_wglSwapIntervalEXT( int interval )

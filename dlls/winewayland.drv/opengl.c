@@ -419,25 +419,24 @@ static EGLenum wayland_init_egl_platform(const struct egl_platform *platform, EG
     return EGL_PLATFORM_WAYLAND_KHR;
 }
 
-static BOOL wayland_context_flush( void *private, HWND hwnd, HDC hdc, int interval, void (*flush)(void) )
+static BOOL wayland_drawable_flush(struct opengl_drawable *base, int interval, void (*flush)(void))
 {
-    struct wayland_context *ctx = private;
+    struct wayland_gl_drawable *gl = impl_from_opengl_drawable(base);
+
+    TRACE("drawable %s\n", debugstr_opengl_drawable(base));
 
     /* Since context_flush is called from operations that may latch the native size,
      * perform any pending resizes before calling them. */
-    if (ctx->draw) wayland_gl_drawable_sync_size(ctx->draw);
+    wayland_gl_drawable_sync_size(gl);
 
     if (flush) flush();
-
     return TRUE;
 }
 
-static BOOL wayland_swap_buffers(void *private, HWND hwnd, HDC hdc, int interval)
+static BOOL wayland_drawable_swap(struct opengl_drawable *base, int interval)
 {
-    HWND toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
-    struct wayland_gl_drawable *gl;
-
-    if (!(gl = wayland_gl_drawable_get(NtUserWindowFromDC(hdc), hdc))) return FALSE;
+    HWND hwnd = base->hwnd, toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
+    struct wayland_gl_drawable *gl = impl_from_opengl_drawable(base);
 
     if (interval < 0) interval = -interval;
     if (gl->swap_interval != interval)
@@ -453,8 +452,6 @@ static BOOL wayland_swap_buffers(void *private, HWND hwnd, HDC hdc, int interval
      * use some as single-buffered, so avoid swapping those. */
     if (gl->double_buffered) funcs->p_eglSwapBuffers(egl->display, gl->surface);
     wayland_gl_drawable_sync_size(gl);
-
-    opengl_drawable_release(&gl->base);
 
     return TRUE;
 }
@@ -492,10 +489,8 @@ static struct opengl_driver_funcs wayland_driver_funcs =
 {
     .p_init_egl_platform = wayland_init_egl_platform,
     .p_surface_create = wayland_opengl_surface_create,
-    .p_swap_buffers = wayland_swap_buffers,
     .p_context_create = wayland_context_create,
     .p_context_destroy = wayland_context_destroy,
-    .p_context_flush = wayland_context_flush,
     .p_context_make_current = wayland_context_make_current,
     .p_pbuffer_create = wayland_pbuffer_create,
     .p_pbuffer_updated = wayland_pbuffer_updated,
@@ -505,6 +500,8 @@ static struct opengl_driver_funcs wayland_driver_funcs =
 static const struct opengl_drawable_funcs wayland_drawable_funcs =
 {
     .destroy = wayland_drawable_destroy,
+    .flush = wayland_drawable_flush,
+    .swap = wayland_drawable_swap,
 };
 
 /**********************************************************************

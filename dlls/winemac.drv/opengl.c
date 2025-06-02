@@ -2075,9 +2075,9 @@ static void macdrv_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 }
 
 
-static BOOL macdrv_context_flush( void *private, HWND hwnd, HDC hdc, int interval, void (*flush)(void) )
+static BOOL macdrv_surface_flush(struct opengl_drawable *base, int interval, void (*flush)(void))
 {
-    struct macdrv_context *context = private;
+    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
 
     set_swap_interval(context, interval);
 
@@ -2374,6 +2374,15 @@ static void macdrv_pbuffer_destroy(struct opengl_drawable *base)
     CGLReleasePBuffer(gl->pbuffer);
 }
 
+static BOOL macdrv_pbuffer_flush(struct opengl_drawable *base, int interval, void (*flush)(void))
+{
+    return FALSE;
+}
+
+static BOOL macdrv_pbuffer_swap(struct opengl_drawable *base, int interval)
+{
+    return FALSE;
+}
 
 static BOOL macdrv_context_make_current(HDC draw_hdc, HDC read_hdc, void *private)
 {
@@ -2942,9 +2951,11 @@ static void *macdrv_get_proc_address(const char *name)
     return dlsym(opengl_handle, name);
 }
 
-static BOOL macdrv_swap_buffers(void *private, HWND hwnd, HDC hdc, int interval)
+static BOOL macdrv_surface_swap(struct opengl_drawable *base, int interval)
 {
-    struct macdrv_context *context = private;
+    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
+    HWND hwnd = base->hwnd;
+    HDC hdc = base->hdc;
     BOOL match = FALSE;
 
     TRACE("hdc %p context %p/%p/%p\n", hdc, context, (context ? context->context : NULL),
@@ -3002,10 +3013,8 @@ static const struct opengl_driver_funcs macdrv_driver_funcs =
     .p_describe_pixel_format = macdrv_describe_pixel_format,
     .p_init_wgl_extensions = macdrv_init_wgl_extensions,
     .p_surface_create = macdrv_surface_create,
-    .p_swap_buffers = macdrv_swap_buffers,
     .p_context_create = macdrv_context_create,
     .p_context_destroy = macdrv_context_destroy,
-    .p_context_flush = macdrv_context_flush,
     .p_context_make_current = macdrv_context_make_current,
     .p_pbuffer_create = macdrv_pbuffer_create,
     .p_pbuffer_updated = macdrv_pbuffer_updated,
@@ -3015,9 +3024,13 @@ static const struct opengl_driver_funcs macdrv_driver_funcs =
 static const struct opengl_drawable_funcs macdrv_surface_funcs =
 {
     .destroy = macdrv_surface_destroy,
+    .flush = macdrv_surface_flush,
+    .swap = macdrv_surface_swap,
 };
 
 static const struct opengl_drawable_funcs macdrv_pbuffer_funcs =
 {
     .destroy = macdrv_pbuffer_destroy,
+    .flush = macdrv_pbuffer_flush,
+    .swap = macdrv_pbuffer_swap,
 };

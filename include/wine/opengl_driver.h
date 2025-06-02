@@ -131,6 +131,10 @@ struct opengl_drawable;
 struct opengl_drawable_funcs
 {
     void (*destroy)( struct opengl_drawable *iface );
+    /* flush the drawable and the opengl context, called from render thread */
+    BOOL (*flush)( struct opengl_drawable *iface, int interval, void (*flush)(void) );
+    /* swap and present the drawable buffers, called from render thread */
+    BOOL (*swap)( struct opengl_drawable *iface, int interval );
 };
 
 struct opengl_drawable
@@ -165,10 +169,8 @@ struct opengl_driver_funcs
     BOOL (*p_describe_pixel_format)(int,struct wgl_pixel_format*);
     const char *(*p_init_wgl_extensions)(struct opengl_funcs *funcs);
     BOOL (*p_surface_create)( HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable );
-    BOOL (*p_swap_buffers)(void*,HWND,HDC,int);
     BOOL (*p_context_create)( int format, void *share, const int *attribs, void **context );
     BOOL (*p_context_destroy)(void*);
-    BOOL (*p_context_flush)(void*,HWND,HDC,int,void(*)(void));
     BOOL (*p_context_make_current)(HDC,HDC,void*);
     BOOL (*p_pbuffer_create)( HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
                               GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **drawable );
