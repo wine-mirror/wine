@@ -100,7 +100,7 @@ static pthread_mutex_t dc_pbuffers_mutex = PTHREAD_MUTEX_INITIALIZER;
 static void *opengl_handle;
 static const struct opengl_funcs *funcs;
 static const struct opengl_driver_funcs macdrv_driver_funcs;
-static const struct opengl_drawable_funcs macdrv_drawable_funcs;
+static const struct opengl_drawable_funcs macdrv_pbuffer_funcs;
 
 static void (*pglCopyColorTable)(GLenum target, GLenum internalformat, GLint x, GLint y,
                                  GLsizei width);
@@ -2384,7 +2384,7 @@ static BOOL macdrv_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum text
     }
 
     if (!(gl = calloc(1, sizeof(*gl)))) return FALSE;
-    gl->base.funcs = &macdrv_drawable_funcs;
+    gl->base.funcs = &macdrv_pbuffer_funcs;
     gl->base.ref = 1;
     gl->base.hwnd = 0;
     gl->base.hdc = hdc;
@@ -2407,11 +2407,11 @@ static BOOL macdrv_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum text
     return TRUE;
 }
 
-static BOOL macdrv_pbuffer_destroy(HDC hdc, struct opengl_drawable *base)
+static void macdrv_pbuffer_destroy(struct opengl_drawable *base)
 {
     struct gl_drawable *gl = impl_from_opengl_drawable(base);
 
-    TRACE("hdc %p, drawable %s\n", hdc, debugstr_opengl_drawable(base));
+    TRACE("drawable %s\n", debugstr_opengl_drawable(base));
 
     pthread_mutex_lock(&dc_pbuffers_mutex);
     CFDictionaryRemoveValue(dc_pbuffers, gl->pbuffer);
@@ -2419,7 +2419,6 @@ static BOOL macdrv_pbuffer_destroy(HDC hdc, struct opengl_drawable *base)
 
     CGLReleasePBuffer(gl->pbuffer);
     free(gl);
-    return TRUE;
 }
 
 
@@ -3064,7 +3063,11 @@ static const struct opengl_driver_funcs macdrv_driver_funcs =
     .p_context_flush = macdrv_context_flush,
     .p_context_make_current = macdrv_context_make_current,
     .p_pbuffer_create = macdrv_pbuffer_create,
-    .p_pbuffer_destroy = macdrv_pbuffer_destroy,
     .p_pbuffer_updated = macdrv_pbuffer_updated,
     .p_pbuffer_bind = macdrv_pbuffer_bind,
+};
+
+static const struct opengl_drawable_funcs macdrv_pbuffer_funcs =
+{
+    .destroy = macdrv_pbuffer_destroy,
 };

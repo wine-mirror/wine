@@ -124,6 +124,13 @@ static struct wayland_gl_drawable *wayland_gl_drawable_get(HWND hwnd, HDC hdc)
 static void wayland_drawable_destroy(struct opengl_drawable *base)
 {
     struct wayland_gl_drawable *gl = impl_from_opengl_drawable(base);
+
+    if (!gl->base.hwnd)
+    {
+        pthread_mutex_lock(&gl_object_mutex);
+        list_remove(&gl->entry);
+        pthread_mutex_unlock(&gl_object_mutex);
+    }
     if (gl->surface) funcs->p_eglDestroySurface(egl->display, gl->surface);
     if (gl->wl_egl_window) wl_egl_window_destroy(gl->wl_egl_window);
     if (gl->client)
@@ -523,21 +530,6 @@ static BOOL wayland_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum tex
     return TRUE;
 }
 
-static BOOL wayland_pbuffer_destroy(HDC hdc, struct opengl_drawable *base)
-{
-    struct wayland_gl_drawable *drawable = impl_from_opengl_drawable(base);
-
-    TRACE("hdc %p, drawable %s\n", hdc, debugstr_opengl_drawable(base));
-
-    pthread_mutex_lock(&gl_object_mutex);
-    list_remove(&drawable->entry);
-    pthread_mutex_unlock(&gl_object_mutex);
-
-    opengl_drawable_release(&drawable->base);
-
-    return GL_TRUE;
-}
-
 static BOOL wayland_pbuffer_updated(HDC hdc, struct opengl_drawable *base, GLenum cube_face, GLint mipmap_level)
 {
     return GL_TRUE;
@@ -558,7 +550,6 @@ static struct opengl_driver_funcs wayland_driver_funcs =
     .p_context_flush = wayland_context_flush,
     .p_context_make_current = wayland_context_make_current,
     .p_pbuffer_create = wayland_pbuffer_create,
-    .p_pbuffer_destroy = wayland_pbuffer_destroy,
     .p_pbuffer_updated = wayland_pbuffer_updated,
     .p_pbuffer_bind = wayland_pbuffer_bind,
 };

@@ -400,12 +400,6 @@ static BOOL egldrv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum tex
     return FALSE;
 }
 
-static BOOL egldrv_pbuffer_destroy( HDC hdc, struct opengl_drawable *drawable )
-{
-    FIXME( "stub!\n" );
-    return FALSE;
-}
-
 static BOOL egldrv_pbuffer_updated( HDC hdc, struct opengl_drawable *drawable, GLenum cube_face, GLint mipmap_level )
 {
     FIXME( "stub!\n" );
@@ -451,7 +445,6 @@ static const struct opengl_driver_funcs egldrv_funcs =
     .p_set_pixel_format = egldrv_set_pixel_format,
     .p_swap_buffers = egldrv_swap_buffers,
     .p_pbuffer_create = egldrv_pbuffer_create,
-    .p_pbuffer_destroy = egldrv_pbuffer_destroy,
     .p_pbuffer_updated = egldrv_pbuffer_updated,
     .p_pbuffer_bind = egldrv_pbuffer_bind,
     .p_context_create = egldrv_context_create,
@@ -613,11 +606,6 @@ static BOOL nulldrv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum te
     return FALSE;
 }
 
-static BOOL nulldrv_pbuffer_destroy( HDC hdc, struct opengl_drawable *drawable )
-{
-    return FALSE;
-}
-
 static BOOL nulldrv_pbuffer_updated( HDC hdc, struct opengl_drawable *drawable, GLenum cube_face, GLint mipmap_level )
 {
     return GL_TRUE;
@@ -657,7 +645,6 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_set_pixel_format = nulldrv_set_pixel_format,
     .p_swap_buffers = nulldrv_swap_buffers,
     .p_pbuffer_create = nulldrv_pbuffer_create,
-    .p_pbuffer_destroy = nulldrv_pbuffer_destroy,
     .p_pbuffer_updated = nulldrv_pbuffer_updated,
     .p_pbuffer_bind = nulldrv_pbuffer_bind,
     .p_context_create = nulldrv_context_create,
@@ -1085,7 +1072,7 @@ static BOOL win32u_wglDestroyPbufferARB( struct wgl_pbuffer *pbuffer )
 
     TRACE( "pbuffer %p\n", pbuffer );
 
-    driver_funcs->p_pbuffer_destroy( pbuffer->hdc, pbuffer->drawable );
+    opengl_drawable_release( pbuffer->drawable );
     if (pbuffer->tmp_context) funcs->p_wglDeleteContext( pbuffer->tmp_context );
     NtGdiDeleteObjectApp( pbuffer->hdc );
     free( pbuffer );

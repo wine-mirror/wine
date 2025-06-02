@@ -828,21 +828,15 @@ static struct gl_drawable *grab_gl_drawable( struct gl_drawable *gl )
     return gl;
 }
 
-static void x11drv_drawable_destroy( struct opengl_drawable *base )
+static void x11drv_surface_destroy( struct opengl_drawable *base )
 {
-    struct gl_drawable *gl = impl_from_opengl_drawable(base);
-    if (gl->base.funcs == &x11drv_surface_funcs)
-    {
-        TRACE( "destroying %lx drawable %lx\n", gl->window, gl->drawable );
-        pglXDestroyWindow( gdi_display, gl->drawable );
-        destroy_client_window( gl->base.hwnd, gl->window );
-        XFreeColormap( gdi_display, gl->colormap );
-    }
-    else
-    {
-        TRACE( "destroying pbuffer drawable %lx\n", gl->drawable );
-        pglXDestroyPbuffer( gdi_display, gl->drawable );
-    }
+    struct gl_drawable *gl = impl_from_opengl_drawable( base );
+
+    TRACE( "drawable %s\n", debugstr_opengl_drawable( base ) );
+
+    pglXDestroyWindow( gdi_display, gl->drawable );
+    destroy_client_window( gl->base.hwnd, gl->window );
+    XFreeColormap( gdi_display, gl->colormap );
     if (gl->hdc_src) NtGdiDeleteObjectApp( gl->hdc_src );
     if (gl->hdc_dst) NtGdiDeleteObjectApp( gl->hdc_dst );
     free( gl );
@@ -1302,17 +1296,17 @@ static void *x11drv_get_proc_address( const char *name )
     return pglXGetProcAddressARB( (const GLubyte *)name );
 }
 
-static void set_context_drawables( struct x11drv_context *ctx, struct gl_drawable *draw,
-                                   struct gl_drawable *read )
+static void set_context_drawables( struct x11drv_context *ctx, struct gl_drawable **draw,
+                                   struct gl_drawable **read )
 {
     struct gl_drawable *old_draw, *old_read;
 
     old_draw = ctx->draw;
     old_read = ctx->read;
-    ctx->draw = grab_gl_drawable( draw );
-    ctx->read = read ? grab_gl_drawable( read ) : NULL;
-    if (old_draw) opengl_drawable_release( &old_draw->base );
-    if (old_read) opengl_drawable_release( &old_read->base );
+    ctx->draw = *draw;
+    ctx->read = *read;
+    *draw = old_draw;
+    *read = old_read;
 }
 
 static BOOL x11drv_context_make_current( HDC draw_hdc, HDC read_hdc, void *private )
@@ -1339,7 +1333,7 @@ static BOOL x11drv_context_make_current( HDC draw_hdc, HDC read_hdc, void *priva
         else ret = pglXMakeContextCurrent( gdi_display, draw_gl->drawable, read_gl ? read_gl->drawable : 0, ctx->ctx );
         if (ret)
         {
-            set_context_drawables( ctx, draw_gl, read_gl );
+            set_context_drawables( ctx, &draw_gl, &read_gl );
             NtCurrentTeb()->glReserved2 = ctx;
             pthread_mutex_unlock( &context_mutex );
             goto done;
@@ -1548,18 +1542,19 @@ static BOOL x11drv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum tex
     return TRUE;
 }
 
-static BOOL x11drv_pbuffer_destroy( HDC hdc, struct opengl_drawable *base )
+static void x11drv_pbuffer_destroy( struct opengl_drawable *base )
 {
     struct gl_drawable *gl = impl_from_opengl_drawable( base );
+    HDC hdc = gl->base.hdc;
 
-    TRACE( "hdc %p, drawable %s\n", hdc, debugstr_opengl_drawable( base ) );
+    TRACE( "drawable %s\n", debugstr_opengl_drawable( base ) );
 
     pthread_mutex_lock( &context_mutex );
     XDeleteContext( gdi_display, (XID)hdc, gl_pbuffer_context );
     pthread_mutex_unlock( &context_mutex );
-    opengl_drawable_release( &gl->base );
 
-    return GL_TRUE;
+    pglXDestroyPbuffer( gdi_display, gl->drawable );
+    free( gl );
 }
 
 static BOOL x11drv_pbuffer_updated( HDC hdc, struct opengl_drawable *base, GLenum cube_face, GLint mipmap_level )
@@ -1744,19 +1739,18 @@ static const struct opengl_driver_funcs x11drv_driver_funcs =
     .p_context_flush = x11drv_context_flush,
     .p_context_make_current = x11drv_context_make_current,
     .p_pbuffer_create = x11drv_pbuffer_create,
-    .p_pbuffer_destroy = x11drv_pbuffer_destroy,
     .p_pbuffer_updated = x11drv_pbuffer_updated,
     .p_pbuffer_bind = x11drv_pbuffer_bind,
 };
 
 static const struct opengl_drawable_funcs x11drv_surface_funcs =
 {
-    .destroy = x11drv_drawable_destroy,
+    .destroy = x11drv_surface_destroy,
 };
 
 static const struct opengl_drawable_funcs x11drv_pbuffer_funcs =
 {
-    .destroy = x11drv_drawable_destroy,
+    .destroy = x11drv_pbuffer_destroy,
 };
 
 #else  /* no OpenGL includes */
