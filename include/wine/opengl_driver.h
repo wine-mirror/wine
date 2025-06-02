@@ -152,10 +152,11 @@ struct opengl_driver_funcs
     BOOL (*p_context_destroy)(void*);
     BOOL (*p_context_flush)(void*,HWND,HDC,int,void(*)(void));
     BOOL (*p_context_make_current)(HDC,HDC,void*);
-    BOOL (*p_pbuffer_create)(HDC,int,BOOL,GLenum,GLenum,GLint,GLsizei*,GLsizei*,void **);
-    BOOL (*p_pbuffer_destroy)(HDC,void*);
-    BOOL (*p_pbuffer_updated)(HDC,void*,GLenum,GLint);
-    UINT (*p_pbuffer_bind)(HDC,void*,GLenum);
+    BOOL (*p_pbuffer_create)( HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
+                              GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **drawable );
+    BOOL (*p_pbuffer_destroy)( HDC hdc, struct opengl_drawable *drawable );
+    BOOL (*p_pbuffer_updated)( HDC hdc, struct opengl_drawable *drawable, GLenum cube_face, GLint mipmap_level );
+    UINT (*p_pbuffer_bind)( HDC hdc, struct opengl_drawable *drawable, GLenum buffer );
 };
 
 #endif /* WINE_UNIX_LIB */

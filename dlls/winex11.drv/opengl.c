@@ -225,6 +225,11 @@ struct gl_drawable
     HDC                            hdc_dst;
 };
 
+static struct gl_drawable *impl_from_opengl_drawable( struct opengl_drawable *base )
+{
+    return CONTAINING_RECORD( base, struct gl_drawable, base );
+}
+
 enum glx_swap_control_method
 {
     GLX_SWAP_CONTROL_NONE,
@@ -1505,15 +1510,15 @@ static BOOL x11drv_context_create( int format, void *share_private, const int *a
 }
 
 static BOOL x11drv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
-                                   GLint max_level, GLsizei *width, GLsizei *height, void **private )
+                                   GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **drawable )
 {
     const struct glx_pixel_format *fmt = glx_pixel_format_from_format( format );
     int glx_attribs[7], count = 0;
-    struct gl_drawable *surface;
+    struct gl_drawable *gl;
     RECT rect;
 
-    TRACE( "hdc %p, format %d, largest %u, texture_format %#x, texture_target %#x, max_level %#x, width %d, height %d, private %p\n",
-           hdc, format, largest, texture_format, texture_target, max_level, *width, *height, private );
+    TRACE( "hdc %p, format %d, largest %u, texture_format %#x, texture_target %#x, max_level %#x, width %d, height %d, drawable %p\n",
+           hdc, format, largest, texture_format, texture_target, max_level, *width, *height, drawable );
 
     glx_attribs[count++] = GLX_PBUFFER_WIDTH;
     glx_attribs[count++] = *width;
@@ -1526,57 +1531,55 @@ static BOOL x11drv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum tex
     }
     glx_attribs[count++] = 0;
 
-    if (!(surface = calloc( 1, sizeof(*surface) ))) return FALSE;
-    surface->base.hwnd = 0;
-    surface->base.hdc = hdc;
-    surface->base.format = format;
+    if (!(gl = calloc( 1, sizeof(*gl) ))) return FALSE;
+    gl->base.hwnd = 0;
+    gl->base.hdc = hdc;
+    gl->base.format = format;
 
-    surface->type = DC_GL_PBUFFER;
-    surface->ref = 1;
+    gl->type = DC_GL_PBUFFER;
+    gl->ref = 1;
 
-    surface->drawable = pglXCreatePbuffer( gdi_display, fmt->fbconfig, glx_attribs );
-    TRACE( "new Pbuffer drawable as %p (%lx)\n", surface, surface->drawable );
-    if (!surface->drawable)
+    gl->drawable = pglXCreatePbuffer( gdi_display, fmt->fbconfig, glx_attribs );
+    TRACE( "new Pbuffer drawable as %p (%lx)\n", gl, gl->drawable );
+    if (!gl->drawable)
     {
-        free( surface );
+        free( gl );
         return FALSE;
     }
-    pglXQueryDrawable( gdi_display, surface->drawable, GLX_WIDTH, (unsigned int *)width );
-    pglXQueryDrawable( gdi_display, surface->drawable, GLX_HEIGHT, (unsigned int *)height );
+    pglXQueryDrawable( gdi_display, gl->drawable, GLX_WIDTH, (unsigned int *)width );
+    pglXQueryDrawable( gdi_display, gl->drawable, GLX_HEIGHT, (unsigned int *)height );
     SetRect( &rect, 0, 0, *width, *height );
-    set_dc_drawable( hdc, surface->drawable, &rect, IncludeInferiors );
+    set_dc_drawable( hdc, gl->drawable, &rect, IncludeInferiors );
 
     pthread_mutex_lock( &context_mutex );
-    XSaveContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char *)surface );
+    XSaveContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char *)gl );
     pthread_mutex_unlock( &context_mutex );
 
-    *private = surface;
+    *drawable = &gl->base;
     return TRUE;
 }
 
-static BOOL x11drv_pbuffer_destroy( HDC hdc, void *private )
+static BOOL x11drv_pbuffer_destroy( HDC hdc, struct opengl_drawable *base )
 {
-    struct gl_drawable *surface = private;
+    struct gl_drawable *gl = impl_from_opengl_drawable( base );
 
-    TRACE( "hdc %p, private %p\n", hdc, surface );
+    TRACE( "hdc %p, drawable %s\n", hdc, debugstr_opengl_drawable( base ) );
 
     pthread_mutex_lock( &context_mutex );
     XDeleteContext( gdi_display, (XID)hdc, gl_pbuffer_context );
     pthread_mutex_unlock( &context_mutex );
-    release_gl_drawable( surface );
+    release_gl_drawable( gl );
 
     return GL_TRUE;
 }
 
-static BOOL x11drv_pbuffer_updated( HDC hdc, void *private, GLenum cube_face, GLint mipmap_level )
+static BOOL x11drv_pbuffer_updated( HDC hdc, struct opengl_drawable *base, GLenum cube_face, GLint mipmap_level )
 {
-    TRACE( "hdc %p, private %p, cube_face %#x, mipmap_level %d\n", hdc, private, cube_face, mipmap_level );
     return GL_TRUE;
 }
 
-static UINT x11drv_pbuffer_bind( HDC hdc, void *private, GLenum buffer )
+static UINT x11drv_pbuffer_bind( HDC hdc, struct opengl_drawable *base, GLenum buffer )
 {
-    TRACE( "hdc %p, private %p, buffer %#x\n", hdc, private, buffer );
     return -1; /* use default implementation */
 }
 

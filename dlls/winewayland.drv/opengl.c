@@ -66,6 +66,11 @@ struct wayland_gl_drawable
     BOOL double_buffered;
 };
 
+static struct wayland_gl_drawable *impl_from_opengl_drawable(struct opengl_drawable *base)
+{
+    return CONTAINING_RECORD(base, struct wayland_gl_drawable, base);
+}
+
 struct wayland_context
 {
     struct list entry;
@@ -511,12 +516,12 @@ static BOOL wayland_swap_buffers(void *private, HWND hwnd, HDC hdc, int interval
 }
 
 static BOOL wayland_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
-                                   GLint max_level, GLsizei *width, GLsizei *height, void **private)
+                                   GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **surface)
 {
     struct wayland_gl_drawable *drawable;
 
     TRACE("hdc %p, format %d, largest %u, texture_format %#x, texture_target %#x, max_level %#x, width %d, height %d, private %p\n",
-          hdc, format, largest, texture_format, texture_target, max_level, *width, *height, private);
+          hdc, format, largest, texture_format, texture_target, max_level, *width, *height, surface);
 
     /* Use an unmapped wayland surface as our offscreen "pbuffer" surface. */
     if (!(drawable = wayland_gl_drawable_create(0, hdc, format, *width, *height))) return FALSE;
@@ -525,15 +530,15 @@ static BOOL wayland_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum tex
     list_add_head(&gl_drawables, &drawable->entry);
     pthread_mutex_unlock(&gl_object_mutex);
 
-    *private = drawable;
+    *surface = &drawable->base;
     return TRUE;
 }
 
-static BOOL wayland_pbuffer_destroy(HDC hdc, void *private)
+static BOOL wayland_pbuffer_destroy(HDC hdc, struct opengl_drawable *base)
 {
-    struct wayland_gl_drawable *drawable = private;
+    struct wayland_gl_drawable *drawable = impl_from_opengl_drawable(base);
 
-    TRACE("hdc %p, private %p\n", hdc, private);
+    TRACE("hdc %p, drawable %s\n", hdc, debugstr_opengl_drawable(base));
 
     pthread_mutex_lock(&gl_object_mutex);
     list_remove(&drawable->entry);
@@ -544,15 +549,13 @@ static BOOL wayland_pbuffer_destroy(HDC hdc, void *private)
     return GL_TRUE;
 }
 
-static BOOL wayland_pbuffer_updated(HDC hdc, void *private, GLenum cube_face, GLint mipmap_level)
+static BOOL wayland_pbuffer_updated(HDC hdc, struct opengl_drawable *base, GLenum cube_face, GLint mipmap_level)
 {
-    TRACE("hdc %p, private %p, cube_face %#x, mipmap_level %d\n", hdc, private, cube_face, mipmap_level);
     return GL_TRUE;
 }
 
-static UINT wayland_pbuffer_bind(HDC hdc, void *private, GLenum buffer)
+static UINT wayland_pbuffer_bind(HDC hdc, struct opengl_drawable *base, GLenum buffer)
 {
-    TRACE("hdc %p, private %p, buffer %#x\n", hdc, private, buffer);
     return -1; /* use default implementation */
 }
 

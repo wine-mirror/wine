@@ -80,6 +80,17 @@ struct macdrv_context
     UINT                    major;
 };
 
+struct gl_drawable
+{
+    struct opengl_drawable  base;
+    CGLPBufferObj           pbuffer;
+};
+
+static struct gl_drawable *impl_from_opengl_drawable(struct opengl_drawable *base)
+{
+    return CONTAINING_RECORD(base, struct gl_drawable, base);
+}
+
 static struct list context_list = LIST_INIT(context_list);
 static pthread_mutex_t context_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -2163,13 +2174,14 @@ static void macdrv_glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
  *
  * WGL_ARB_render_texture: wglBindTexImageARB
  */
-static UINT macdrv_pbuffer_bind(HDC hdc, void *private, GLenum source)
+static UINT macdrv_pbuffer_bind(HDC hdc, struct opengl_drawable *base, GLenum source)
 {
     struct macdrv_context *context = NtCurrentTeb()->glReserved2;
-    CGLPBufferObj pbuffer = private;
+    struct gl_drawable *gl = impl_from_opengl_drawable(base);
+    CGLPBufferObj pbuffer = gl->pbuffer;
     CGLError err;
 
-    TRACE("hdc %p pbuffer %p source 0x%x\n", hdc, pbuffer, source);
+    TRACE("hdc %p drawable %s source 0x%x\n", hdc, debugstr_opengl_drawable(base), source);
 
     if (!context->draw_view && context->draw_pbuffer == pbuffer && source != GL_NONE)
         funcs->p_glFlush();
@@ -2355,12 +2367,13 @@ static BOOL macdrv_context_create(int format, void *shared, const int *attrib_li
 }
 
 static BOOL macdrv_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
-                                  GLint max_level, GLsizei *width, GLsizei *height, void **private)
+                                  GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **drawable)
 {
+    struct gl_drawable *gl;
     CGLError err;
 
-    TRACE("hdc %p, format %d, largest %u, texture_format %#x, texture_target %#x, max_level %#x, width %d, height %d, private %p\n",
-          hdc, format, largest, texture_format, texture_target, max_level, *width, *height, private);
+    TRACE("hdc %p, format %d, largest %u, texture_format %#x, texture_target %#x, max_level %#x, width %d, height %d, drawable %p\n",
+          hdc, format, largest, texture_format, texture_target, max_level, *width, *height, drawable);
 
     if (!texture_target || !texture_format)
     {
@@ -2369,31 +2382,41 @@ static BOOL macdrv_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum text
         texture_format = GL_RGB;
     }
 
-    err = CGLCreatePBuffer(*width, *height, texture_target, texture_format, max_level, (CGLPBufferObj *)private);
+    if (!(gl = calloc(1, sizeof(*gl)))) return FALSE;
+    gl->base.hwnd = 0;
+    gl->base.hdc = hdc;
+    gl->base.format = format;
+
+    err = CGLCreatePBuffer(*width, *height, texture_target, texture_format, max_level, &gl->pbuffer);
     if (err != kCGLNoError)
     {
         WARN("CGLCreatePBuffer failed; err %d %s\n", err, CGLErrorString(err));
+        free(gl);
         return FALSE;
     }
 
     pthread_mutex_lock(&dc_pbuffers_mutex);
-    CFDictionarySetValue(dc_pbuffers, hdc, private);
+    CFDictionarySetValue(dc_pbuffers, hdc, gl->pbuffer);
     pthread_mutex_unlock(&dc_pbuffers_mutex);
 
-    TRACE(" -> %p\n", *private);
+    *drawable = &gl->base;
+    TRACE(" -> %p\n", gl);
     return TRUE;
 }
 
-static BOOL macdrv_pbuffer_destroy(HDC hdc, void *private)
+static BOOL macdrv_pbuffer_destroy(HDC hdc, struct opengl_drawable *base)
 {
-    TRACE("private %p\n", private);
+    struct gl_drawable *gl = impl_from_opengl_drawable(base);
+
+    TRACE("hdc %p, drawable %s\n", hdc, debugstr_opengl_drawable(base));
 
     pthread_mutex_lock(&dc_pbuffers_mutex);
-    CFDictionaryRemoveValue(dc_pbuffers, hdc);
+    CFDictionaryRemoveValue(dc_pbuffers, gl->pbuffer);
     pthread_mutex_unlock(&dc_pbuffers_mutex);
 
-    CGLReleasePBuffer(private);
-    return GL_TRUE;
+    CGLReleasePBuffer(gl->pbuffer);
+    free(gl);
+    return TRUE;
 }
 
 
@@ -2695,13 +2718,13 @@ done:
     return ret;
 }
 
-
-static BOOL macdrv_pbuffer_updated(HDC hdc, void *private, GLenum cube_face, GLint mipmap_level)
+static BOOL macdrv_pbuffer_updated(HDC hdc, struct opengl_drawable *base, GLenum cube_face, GLint mipmap_level)
 {
     struct macdrv_context *context = NtCurrentTeb()->glReserved2;
-    CGLPBufferObj pbuffer = private;
+    struct gl_drawable *gl = impl_from_opengl_drawable(base);
+    CGLPBufferObj pbuffer = gl->pbuffer;
 
-    TRACE("hdc %p pbuffer %p cube_face %#x mipmap_level %d\n", hdc, pbuffer, cube_face, mipmap_level);
+    TRACE("hdc %p drawable %s cube_face %#x mipmap_level %d\n", hdc, debugstr_opengl_drawable(base), cube_face, mipmap_level);
 
     if (context && context->draw_pbuffer == pbuffer)
     {
