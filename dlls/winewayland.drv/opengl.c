@@ -46,14 +46,9 @@ static const struct egl_platform *egl;
 static const struct opengl_funcs *funcs;
 static const struct opengl_drawable_funcs wayland_drawable_funcs;
 
-static pthread_mutex_t gl_object_mutex = PTHREAD_MUTEX_INITIALIZER;
-static struct list gl_drawables = LIST_INIT(gl_drawables);
-static struct list gl_contexts = LIST_INIT(gl_contexts);
-
 struct wayland_gl_drawable
 {
     struct opengl_drawable base;
-    struct list entry;
     struct wayland_client_surface *client;
     struct wl_egl_window *wl_egl_window;
     EGLSurface surface;
@@ -67,50 +62,14 @@ static struct wayland_gl_drawable *impl_from_opengl_drawable(struct opengl_drawa
 
 struct wayland_context
 {
-    struct list entry;
     EGLConfig config;
     EGLContext context;
-    struct wayland_gl_drawable *draw, *read;
 };
-
-struct wgl_pbuffer
-{
-    struct list entry;
-    struct wayland_gl_drawable *gl;
-    int width, height, pixel_format;
-    int texture_format, texture_target, texture_binding;
-    EGLContext tmp_context, prev_context;
-};
-
-struct wayland_pbuffer_dc
-{
-    struct list entry;
-    HDC hdc;
-    struct wayland_gl_drawable *gl;
-};
-
-/* lookup the existing drawable for a window, gl_object_mutex must be held */
-static struct wayland_gl_drawable *find_drawable(HWND hwnd, HDC hdc)
-{
-    struct wayland_gl_drawable *gl;
-    LIST_FOR_EACH_ENTRY(gl, &gl_drawables, struct wayland_gl_drawable, entry)
-    {
-        if (hwnd && gl->base.hwnd == hwnd) return gl;
-        if (hdc && gl->base.hdc == hdc) return gl;
-    }
-    return NULL;
-}
 
 static void wayland_drawable_destroy(struct opengl_drawable *base)
 {
     struct wayland_gl_drawable *gl = impl_from_opengl_drawable(base);
 
-    if (!gl->base.hwnd)
-    {
-        pthread_mutex_lock(&gl_object_mutex);
-        list_remove(&gl->entry);
-        pthread_mutex_unlock(&gl_object_mutex);
-    }
     if (gl->surface) funcs->p_eglDestroySurface(egl->display, gl->surface);
     if (gl->wl_egl_window) wl_egl_window_destroy(gl->wl_egl_window);
     if (gl->client)
@@ -127,16 +86,7 @@ static void wayland_drawable_destroy(struct opengl_drawable *base)
 
 static void wayland_drawable_detach(struct opengl_drawable *base)
 {
-    struct wayland_gl_drawable *gl = impl_from_opengl_drawable(base), *old;
-    HWND hwnd = base->hwnd;
-
     TRACE("%s\n", debugstr_opengl_drawable(base));
-
-    pthread_mutex_lock(&gl_object_mutex);
-    if ((old = find_drawable(hwnd, 0)) && old == gl) list_remove(&gl->entry);
-    pthread_mutex_unlock(&gl_object_mutex);
-
-    if (gl) opengl_drawable_release(&gl->base);
 }
 
 static void wayland_drawable_update(struct opengl_drawable *base)
@@ -206,20 +156,6 @@ err:
     return NULL;
 }
 
-static void wayland_update_gl_drawable(HWND hwnd, struct wayland_gl_drawable *new)
-{
-    struct wayland_gl_drawable *old;
-
-    pthread_mutex_lock(&gl_object_mutex);
-
-    if ((old = find_drawable(hwnd, 0))) list_remove(&old->entry);
-    if (new) list_add_head(&gl_drawables, &new->entry);
-
-    pthread_mutex_unlock(&gl_object_mutex);
-
-    if (old) opengl_drawable_release(&old->base);
-}
-
 static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
 {
     int client_width, client_height;
@@ -236,9 +172,7 @@ static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
 static BOOL wayland_make_current(struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *private)
 {
     struct wayland_gl_drawable *draw = impl_from_opengl_drawable(draw_base), *read = impl_from_opengl_drawable(read_base);
-    BOOL ret;
     struct wayland_context *ctx = private;
-    struct wayland_gl_drawable *old_draw = NULL, *old_read = NULL;
 
     TRACE("draw %s, read %s, context %p\n", debugstr_opengl_drawable(draw_base), debugstr_opengl_drawable(read_base), private);
 
@@ -248,26 +182,7 @@ static BOOL wayland_make_current(struct opengl_drawable *draw_base, struct openg
         return TRUE;
     }
 
-    pthread_mutex_lock(&gl_object_mutex);
-
-    ret = funcs->p_eglMakeCurrent(egl->display,
-                                  draw ? draw->surface : EGL_NO_SURFACE,
-                                  read ? read->surface : EGL_NO_SURFACE,
-                                  ctx->context);
-    if (ret)
-    {
-        old_draw = ctx->draw;
-        old_read = ctx->read;
-        if ((ctx->draw = draw)) opengl_drawable_add_ref(&draw->base);
-        if ((ctx->read = read)) opengl_drawable_add_ref(&read->base);
-    }
-
-    pthread_mutex_unlock(&gl_object_mutex);
-
-    if (old_draw) opengl_drawable_release(&old_draw->base);
-    if (old_read) opengl_drawable_release(&old_read->base);
-
-    return ret;
+    return funcs->p_eglMakeCurrent(egl->display, draw->surface, read->surface, ctx->context);
 }
 
 static BOOL wayland_opengl_surface_create(HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable)
@@ -283,10 +198,8 @@ static BOOL wayland_opengl_surface_create(HWND hwnd, HDC hdc, int format, struct
     if (rect.bottom == rect.top) rect.bottom = rect.top + 1;
 
     if (!(gl = wayland_gl_drawable_create(hwnd, 0, format, rect.right - rect.left, rect.bottom - rect.top))) return FALSE;
-    wayland_update_gl_drawable(hwnd, gl);
-
     if (previous) opengl_drawable_release( previous );
-    opengl_drawable_add_ref( (*drawable = &gl->base) );
+    *drawable = &gl->base;
     return TRUE;
 }
 
@@ -365,11 +278,6 @@ static BOOL wayland_context_create(int format, void *share_private, const int *a
     ctx->context = funcs->p_eglCreateContext(egl->display, EGL_NO_CONFIG_KHR,
                                              share ? share->context : EGL_NO_CONTEXT,
                                              attribs ? egl_attribs : NULL);
-
-    pthread_mutex_lock(&gl_object_mutex);
-    list_add_head(&gl_contexts, &ctx->entry);
-    pthread_mutex_unlock(&gl_object_mutex);
-
     TRACE("ctx=%p egl_context=%p\n", ctx, ctx->context);
 
     *private = ctx;
@@ -379,13 +287,7 @@ static BOOL wayland_context_create(int format, void *share_private, const int *a
 static BOOL wayland_context_destroy(void *private)
 {
     struct wayland_context *ctx = private;
-
-    pthread_mutex_lock(&gl_object_mutex);
-    list_remove(&ctx->entry);
-    pthread_mutex_unlock(&gl_object_mutex);
     funcs->p_eglDestroyContext(egl->display, ctx->context);
-    if (ctx->draw) opengl_drawable_release(&ctx->draw->base);
-    if (ctx->read) opengl_drawable_release(&ctx->read->base);
     free(ctx);
     return TRUE;
 }
@@ -435,11 +337,6 @@ static BOOL wayland_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum tex
 
     /* Use an unmapped wayland surface as our offscreen "pbuffer" surface. */
     if (!(drawable = wayland_gl_drawable_create(0, hdc, format, *width, *height))) return FALSE;
-
-    pthread_mutex_lock(&gl_object_mutex);
-    list_add_head(&gl_drawables, &drawable->entry);
-    pthread_mutex_unlock(&gl_object_mutex);
-
     *surface = &drawable->base;
     return TRUE;
 }
