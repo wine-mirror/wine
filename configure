@@ -6620,7 +6620,7 @@ printf %s "checking for the directory containing the Wine tools... " >&6; }
 if test -z "$toolsdir"; then
     if test "$cross_compiling" = "yes"; then
         as_fn_error $? "you must use the --with-wine-tools option when cross-compiling." "$LINENO" 5
-    elif test -n "$with_wine64"; then
+    elif test -n "$with_wine64" -a "x$enable_tools" != xyes; then
         toolsdir="$with_wine64"
     fi
 fi

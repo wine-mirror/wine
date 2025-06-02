@@ -190,7 +190,7 @@ AC_MSG_CHECKING([for the directory containing the Wine tools])
 if test -z "$toolsdir"; then
     if test "$cross_compiling" = "yes"; then
         AC_MSG_ERROR([you must use the --with-wine-tools option when cross-compiling.])
-    elif test -n "$with_wine64"; then
+    elif test -n "$with_wine64" -a "x$enable_tools" != xyes; then
         toolsdir="$with_wine64"
     fi
 fi
