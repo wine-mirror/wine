@@ -1238,11 +1238,6 @@ static BOOL x11drv_context_create( int format, void *share, const int *attribLis
                 pContextAttribList[1] = attribList[1];
                 pContextAttribList += 2;
                 break;
-            case WGL_RENDERER_ID_WINE:
-                pContextAttribList[0] = GLX_RENDERER_ID_MESA;
-                pContextAttribList[1] = attribList[1];
-                pContextAttribList += 2;
-                break;
             default:
                 ERR("Unhandled attribList pair: %#x %#x\n", attribList[0], attribList[1]);
             }

@@ -5434,7 +5434,6 @@ typedef unsigned int GLhandleARB;
 #define WGL_RED_SHIFT_ARB                                             0x2016
 #define WGL_RENDERER_ACCELERATED_WINE                                 0x8186
 #define WGL_RENDERER_DEVICE_ID_WINE                                   0x8184
-#define WGL_RENDERER_ID_WINE                                          0x818E
 #define WGL_RENDERER_OPENGL_COMPATIBILITY_PROFILE_VERSION_WINE        0x818B
 #define WGL_RENDERER_OPENGL_CORE_PROFILE_VERSION_WINE                 0x818A
 #define WGL_RENDERER_OPENGL_ES2_PROFILE_VERSION_WINE                  0x818D

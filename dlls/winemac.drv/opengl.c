@@ -270,7 +270,6 @@ static const char* debugstr_attrib(int attrib, int value)
         ATTRIB(WGL_PIXEL_TYPE_ARB),
         ATTRIB(WGL_RED_BITS_ARB),
         ATTRIB(WGL_RED_SHIFT_ARB),
-        ATTRIB(WGL_RENDERER_ID_WINE),
         ATTRIB(WGL_SAMPLE_BUFFERS_ARB),
         ATTRIB(WGL_SAMPLES_ARB),
         ATTRIB(WGL_SHARE_ACCUM_ARB),
@@ -2150,50 +2149,6 @@ static BOOL macdrv_context_create(int format, void *shared, const int *attrib_li
                 }
                 profile = value;
                 break;
-
-            case WGL_RENDERER_ID_WINE:
-            {
-                CGLError err;
-                CGLRendererInfoObj renderer_info;
-                GLint renderer_count, temp;
-
-                err = CGLQueryRendererInfo(active_displays_mask(), &renderer_info, &renderer_count);
-                if (err != kCGLNoError)
-                {
-                    WARN("CGLQueryRendererInfo failed: %d %s\n", err, CGLErrorString(err));
-                    RtlSetLastWin32Error(ERROR_GEN_FAILURE);
-                    return FALSE;
-                }
-
-                value = map_renderer_index(renderer_info, renderer_count, value);
-
-                if (value >= renderer_count)
-                {
-                    WARN("WGL_RENDERER_ID_WINE renderer %d exceeds count (%d)\n", value, renderer_count);
-                    CGLDestroyRendererInfo(renderer_info);
-                    RtlSetLastWin32Error(ERROR_INVALID_PARAMETER);
-                    return FALSE;
-                }
-
-                if (!get_renderer_property(renderer_info, value, kCGLRPRendererID, &temp))
-                {
-                    WARN("WGL_RENDERER_ID_WINE failed to get ID of renderer %d\n", value);
-                    CGLDestroyRendererInfo(renderer_info);
-                    RtlSetLastWin32Error(ERROR_GEN_FAILURE);
-                    return FALSE;
-                }
-
-                CGLDestroyRendererInfo(renderer_info);
-
-                if (renderer_id && temp != renderer_id)
-                {
-                    WARN("WGL_RENDERER_ID_WINE requested two different renderers (0x%08x vs. 0x%08x)\n", renderer_id, temp);
-                    RtlSetLastWin32Error(ERROR_INVALID_PARAMETER);
-                    return FALSE;
-                }
-                renderer_id = temp;
-                break;
-            }
 
             default:
                 WARN("Unknown attribute %s.\n", debugstr_attrib(attr, value));
