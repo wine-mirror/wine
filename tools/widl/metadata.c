@@ -541,6 +541,19 @@ static enum table typedef_or_ref_to_table( UINT token )
     }
 }
 
+static enum table memberref_parent_to_table( UINT token )
+{
+    switch (token & 0x7)
+    {
+    case 0: return TABLE_TYPEDEF;
+    case 1: return TABLE_TYPEREF;
+    case 2: return TABLE_MODULEREF;
+    case 3: return TABLE_METHODDEF;
+    case 4: return TABLE_TYPESPEC;
+    default: assert( 0 );
+    }
+}
+
 static enum table has_constant_to_table( UINT token )
 {
     switch (token & 0x3)
@@ -548,6 +561,42 @@ static enum table has_constant_to_table( UINT token )
     case 0: return TABLE_FIELD;
     case 1: return TABLE_PARAM;
     case 2: return TABLE_PROPERTY;
+    default: assert( 0 );
+    }
+}
+
+static enum table has_customattribute_to_table( UINT token )
+{
+    switch (token & 0x1f)
+    {
+    case 0: return TABLE_METHODDEF;
+    case 1: return TABLE_FIELD;
+    case 2: return TABLE_TYPEREF;
+    case 3: return TABLE_TYPEDEF;
+    case 4: return TABLE_PARAM;
+    case 5: return TABLE_INTERFACEIMPL;
+    case 6: return TABLE_MEMBERREF;
+    case 7: return TABLE_MODULE;
+    case 9: return TABLE_PROPERTY;
+    case 10: return TABLE_EVENT;
+    case 11: return TABLE_STANDALONESIG;
+    case 12: return TABLE_MODULEREF;
+    case 13: return TABLE_TYPESPEC;
+    case 14: return TABLE_ASSEMBLY;
+    case 15: return TABLE_ASSEMBLYREF;
+    case 16: return TABLE_FILE;
+    case 17: return TABLE_EXPORTEDTYPE;
+    case 18: return TABLE_MANIFESTRESOURCE;
+    default: assert( 0 );
+    }
+}
+
+static enum table customattribute_type_to_table( UINT token )
+{
+    switch (token & 0x7)
+    {
+    case 2: return TABLE_METHODDEF;
+    case 3: return TABLE_MEMBERREF;
     default: assert( 0 );
     }
 }
@@ -669,6 +718,33 @@ static void serialize_field_table( void )
     }
 }
 
+struct memberref_row
+{
+    UINT class;
+    UINT name;
+    UINT signature;
+};
+
+static UINT add_memberref_row( UINT class, UINT name, UINT signature )
+{
+    struct memberref_row row = { class, name, signature };
+    return add_row( TABLE_MEMBERREF, (const BYTE *)&row, sizeof(row) );
+}
+
+static void serialize_memberref_table( void )
+{
+    const struct memberref_row *row = (const struct memberref_row *)tables[TABLE_MEMBERREF].ptr;
+    UINT i;
+
+    for (i = 0; i < tables[TABLE_MEMBERREF].count; i++)
+    {
+        serialize_table_idx( row->class, memberref_parent_to_table(row->class) );
+        serialize_string_idx( row->name );
+        serialize_blob_idx( row->signature );
+        row++;
+    }
+}
+
 struct constant_row
 {
     BYTE type;
@@ -704,6 +780,45 @@ static void serialize_constant_table( void )
         serialize_byte( row->type );
         serialize_byte( row->padding );
         serialize_table_idx( row->parent, has_constant_to_table(row->parent) );
+        serialize_blob_idx( row->value );
+        row++;
+    }
+}
+
+struct customattribute_row
+{
+    UINT parent;
+    UINT type;
+    UINT value;
+};
+
+static UINT add_customattribute_row( UINT parent, UINT type, UINT value )
+{
+    struct customattribute_row row = { parent, type, value };
+    return add_row( TABLE_CUSTOMATTRIBUTE, (const BYTE *)&row, sizeof(row) );
+}
+
+static int cmp_customattribute_row( const void *a, const void *b )
+{
+    const struct customattribute_row *row = a, *row2 = b;
+    if (row->parent > row2->parent) return 1;
+    if (row->parent < row2->parent) return -1;
+    return 0;
+}
+
+/* sorted by parent */
+static void serialize_customattribute_table( void )
+{
+    const struct customattribute_row *row = (const struct customattribute_row *)tables[TABLE_CUSTOMATTRIBUTE].ptr;
+    UINT i;
+
+    qsort( tables[TABLE_CUSTOMATTRIBUTE].ptr, tables[TABLE_CUSTOMATTRIBUTE].count, sizeof(*row),
+           cmp_customattribute_row );
+
+    for (i = 0; i < tables_idx[TABLE_CUSTOMATTRIBUTE].count; i++)
+    {
+        serialize_table_idx( row->parent, has_customattribute_to_table(row->parent) );
+        serialize_table_idx( row->type, customattribute_type_to_table(row->type) );
         serialize_blob_idx( row->value );
         row++;
     }
@@ -812,6 +927,55 @@ static UINT has_constant( enum table table, UINT row )
     case TABLE_FIELD: return row << 2;
     case TABLE_PARAM: return row << 2 | 1;
     case TABLE_PROPERTY: return row << 2 | 2;
+    default: assert( 0 );
+    }
+}
+
+static UINT memberref_parent( enum table table, UINT row )
+{
+    switch (table)
+    {
+    case TABLE_TYPEDEF: return row << 3;
+    case TABLE_TYPEREF: return row << 3 | 1;
+    case TABLE_MODULEREF: return row << 3 | 2;
+    case TABLE_METHODDEF: return row << 3 | 3;
+    case TABLE_TYPESPEC: return row << 3 | 4;
+    default: assert( 0 );
+    }
+}
+
+static UINT has_customattribute( enum table table, UINT row )
+{
+    switch (table)
+    {
+    case TABLE_METHODDEF: return row << 5;
+    case TABLE_FIELD: return row << 5 | 1;
+    case TABLE_TYPEREF: return row << 5 | 2;
+    case TABLE_TYPEDEF: return row << 5 | 3;
+    case TABLE_PARAM: return row << 5 | 4;
+    case TABLE_INTERFACEIMPL: return row << 5 | 5;
+    case TABLE_MEMBERREF: return row << 5 | 6;
+    case TABLE_MODULE: return row << 5 | 7;
+    case TABLE_PROPERTY: return row << 5 | 9;
+    case TABLE_EVENT: return row << 5 | 10;
+    case TABLE_STANDALONESIG: return row << 5 | 11;
+    case TABLE_MODULEREF: return row << 5 | 12;
+    case TABLE_TYPESPEC: return row << 5 | 13;
+    case TABLE_ASSEMBLY: return row << 5 | 14;
+    case TABLE_ASSEMBLYREF: return row << 5 | 15;
+    case TABLE_FILE: return row << 5 | 16;
+    case TABLE_EXPORTEDTYPE: return row << 5 | 17;
+    case TABLE_MANIFESTRESOURCE: return row << 5 | 18;
+    default: assert( 0 );
+    }
+}
+
+static UINT customattribute_type( enum table table, UINT row )
+{
+    switch (table)
+    {
+    case TABLE_METHODDEF: return row << 3 | 2;
+    case TABLE_MEMBERREF: return row << 3 | 3;
     default: assert( 0 );
     }
 }
@@ -948,6 +1112,31 @@ enum
 
 static char *assembly_name;
 
+static void add_flags_attr_step1( type_t *type )
+{
+    static const BYTE sig[] = { SIG_TYPE_HASTHIS, 0, ELEMENT_TYPE_VOID };
+    UINT scope, typeref, class;
+
+    if (!is_attr( type->attrs, ATTR_FLAGS )) return;
+
+    scope = resolution_scope( TABLE_ASSEMBLYREF, MSCORLIB_ROW );
+    typeref = add_typeref_row( scope, add_string("FlagsAttribute"), add_string("System") );
+    class = memberref_parent( TABLE_TYPEREF, typeref );
+    type->md.member[MD_ATTR_FLAGS] = add_memberref_row( class, add_string(".ctor"), add_blob(sig, sizeof(sig)) );
+}
+
+static void add_flags_attr_step2( type_t *type )
+{
+    static const BYTE value[] = { 0x01, 0x00, 0x00, 0x00 };
+    UINT parent, attr_type;
+
+    if (!is_attr( type->attrs, ATTR_FLAGS )) return;
+
+    parent = has_customattribute( TABLE_TYPEDEF, type->md.def );
+    attr_type = customattribute_type( TABLE_MEMBERREF, type->md.member[MD_ATTR_FLAGS] );
+    add_customattribute_row( parent, attr_type, add_blob(value, sizeof(value)) );
+}
+
 static void add_enum_type_step1( type_t *type )
 {
     UINT name, namespace, scope, typeref;
@@ -958,6 +1147,8 @@ static void add_enum_type_step1( type_t *type )
     typeref = add_typeref_row( scope, add_string("Enum"), add_string("System") );
     type->md.extends = typedef_or_ref( TABLE_TYPEREF, typeref );
     type->md.ref = add_typeref_row( resolution_scope(TABLE_MODULE, MODULE_ROW), name, namespace );
+
+    add_flags_attr_step1( type );
 }
 
 static void add_enum_type_step2( type_t *type )
@@ -966,6 +1157,8 @@ static void add_enum_type_step2( type_t *type )
     UINT name, namespace, field, parent, sig_size;
     BYTE sig_field[32];
     const var_t *var;
+
+    if (is_attr( type->attrs, ATTR_FLAGS )) sig_value[1] = ELEMENT_TYPE_U4;
 
     name = add_name( type, &namespace );
 
@@ -986,6 +1179,8 @@ static void add_enum_type_step2( type_t *type )
         parent = has_constant( TABLE_FIELD, field );
         add_constant_row( sig_value[1], parent, add_blob((const BYTE *)&val, sizeof(val)) );
     }
+
+    add_flags_attr_step2( type );
 }
 
 static void build_tables( const statement_list_t *stmt_list )
@@ -1067,7 +1262,9 @@ static void build_table_stream( const statement_list_t *stmts )
     serialize_typeref_table();
     serialize_typedef_table();
     serialize_field_table();
+    serialize_memberref_table();
     serialize_constant_table();
+    serialize_customattribute_table();
     serialize_assembly_table();
     serialize_assemblyref_table();
 }

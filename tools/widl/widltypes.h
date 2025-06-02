@@ -496,11 +496,27 @@ enum type_type
     TYPE_DELEGATE,
 };
 
+enum
+{
+    MD_ATTR_CONTRACT,
+    MD_ATTR_FLAGS,
+    MD_ATTR_APICONTRACT,
+    MD_ATTR_CONTRACTVERSION,
+    MD_ATTR_UUID,
+    MD_ATTR_EXCLUSIVETO,
+    MD_ATTR_STATIC,
+    MD_ATTR_ACTIVATABLE,
+    MD_ATTR_THREADING,
+    MD_ATTR_MARSHALINGBEHAVIOR,
+    MD_ATTR_MAX,
+};
+
 struct metadata
 {
     unsigned int ref;
     unsigned int def;
     unsigned int extends;
+    unsigned int member[MD_ATTR_MAX];
 };
 
 struct _type_t {
