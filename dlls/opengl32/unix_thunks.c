@@ -196,8 +196,7 @@ static NTSTATUS gl_glCallLists( void *args )
 static NTSTATUS gl_glClear( void *args )
 {
     struct glClear_params *params = args;
-    const struct opengl_funcs *funcs = params->teb->glTable;
-    funcs->p_glClear( params->mask );
+    wrap_glClear( params->teb, params->mask );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }

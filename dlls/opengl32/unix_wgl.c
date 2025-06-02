@@ -1010,6 +1010,13 @@ void wrap_glFlush( TEB *teb )
     flush_context( teb, funcs->p_glFlush );
 }
 
+void wrap_glClear( TEB *teb, GLbitfield mask )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    flush_context( teb, NULL );
+    funcs->p_glClear( mask );
+}
+
 void wrap_glDrawPixels( TEB *teb, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels )
 {
     const struct opengl_funcs *funcs = teb->glTable;

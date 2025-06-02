@@ -197,6 +197,7 @@ my %manual_win_thunks =
     );
 my %manual_unix_thunks =
     (
+     "glClear" => 1,
      "glDebugMessageCallback" => 1,
      "glDebugMessageCallbackAMD" => 1,
      "glDebugMessageCallbackARB" => 1,
