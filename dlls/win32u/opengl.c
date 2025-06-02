@@ -755,6 +755,23 @@ static struct opengl_drawable *get_window_opengl_drawable( HWND hwnd )
     return drawable;
 }
 
+static void set_dc_opengl_drawable( HDC hdc, struct opengl_drawable *new_drawable )
+{
+    void *old_drawable = NULL;
+    DC *dc;
+
+    TRACE( "hdc %p, new_drawable %s\n", hdc, debugstr_opengl_drawable( new_drawable ) );
+
+    if ((dc = get_dc_ptr( hdc )))
+    {
+        old_drawable = dc->opengl_drawable;
+        if ((dc->opengl_drawable = new_drawable)) opengl_drawable_add_ref( new_drawable );
+        release_dc_ptr( dc );
+    }
+
+    if (old_drawable) opengl_drawable_release( old_drawable );
+}
+
 static struct wgl_pbuffer *create_memory_pbuffer( HDC hdc, int format )
 {
     const struct opengl_funcs *funcs = &display_funcs;
@@ -778,6 +795,7 @@ static struct wgl_pbuffer *create_memory_pbuffer( HDC hdc, int format )
     {
         int width = dib.rect.right - dib.rect.left, height = dib.rect.bottom - dib.rect.top;
         pbuffer = funcs->p_wglCreatePbufferARB( hdc, format, width, height, NULL );
+        if (pbuffer) set_dc_opengl_drawable( hdc, pbuffer->drawable );
     }
 
     if (pbuffer) TRACE( "Created pbuffer %p for memory DC %p\n", pbuffer, hdc );
@@ -821,6 +839,7 @@ static void destroy_memory_pbuffer( struct wgl_context *context, HDC hdc )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     flush_memory_pbuffer( context, hdc, FALSE, funcs->p_glFinish );
+    set_dc_opengl_drawable( hdc, NULL );
     funcs->p_wglDestroyPbufferARB( context->memory_pbuffer );
     context->memory_pbuffer = NULL;
 }
@@ -1114,7 +1133,10 @@ static struct wgl_pbuffer *win32u_wglCreatePbufferARB( HDC hdc, int format, int 
     if (driver_funcs->p_pbuffer_create( pbuffer->hdc, format, largest, pbuffer->texture_format,
                                         pbuffer->texture_target, max_level, &pbuffer->width,
                                         &pbuffer->height, &pbuffer->drawable ))
+    {
+        set_dc_opengl_drawable( pbuffer->hdc, pbuffer->drawable );
         return pbuffer;
+    }
 
 failed:
     RtlSetLastWin32Error( ERROR_INVALID_DATA );

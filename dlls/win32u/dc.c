@@ -37,6 +37,7 @@
 #include "winerror.h"
 #include "ntgdi_private.h"
 
+#include "wine/opengl_driver.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dc);
@@ -457,6 +458,7 @@ void DC_UpdateXforms( DC *dc )
  */
 static BOOL reset_dc_state( HDC hdc )
 {
+    struct opengl_drawable *drawable;
     DC *dc, *dcs, *next;
 
     if (!(dc = get_dc_ptr( hdc ))) return FALSE;
@@ -485,7 +487,12 @@ static BOOL reset_dc_state( HDC hdc )
     }
     dc->saved_dc = NULL;
     dc->attr->save_level = 0;
+
+    drawable = dc->opengl_drawable;
+    dc->opengl_drawable = NULL;
     release_dc_ptr( dc );
+
+    if (drawable) opengl_drawable_release( drawable );
     return TRUE;
 }
 

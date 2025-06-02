@@ -61,6 +61,7 @@ typedef struct tagDC
     UINT         bounds_enabled:1; /* bounds tracking is enabled */
     UINT         path_open:1;      /* path is currently open (only for saved DCs) */
     UINT         is_display:1;     /* DC is for display device */
+    struct opengl_drawable *opengl_drawable; /* GL driver drawable for the DC */
 
     RECT         device_rect;      /* rectangle for the whole device */
     int          pixel_format;     /* pixel format (for memory DCs) */
