@@ -197,7 +197,6 @@ struct glx_pixel_format
 struct x11drv_context
 {
     HDC hdc;
-    BOOL gl3_context;
     const struct glx_pixel_format *fmt;
     GLXContext ctx;
     struct gl_drawable *drawables[2];
@@ -1016,7 +1015,7 @@ static GLXContext create_glxcontext(Display *display, struct x11drv_context *con
 {
     GLXContext ctx;
 
-    if(context->gl3_context)
+    if(attribs)
         ctx = pglXCreateContextAttribsARB(gdi_display, context->fmt->fbconfig, shareList, GL_TRUE, attribs);
     else if(context->fmt->visual)
         ctx = pglXCreateContext(gdi_display, context->fmt->visual, shareList, GL_TRUE);
@@ -1640,7 +1639,6 @@ static BOOL x11drv_context_create( HDC hdc, int format, void *share_private, con
         ret->fmt = &pixel_formats[format - 1];
         if (attribList)
         {
-            ret->gl3_context = TRUE;
             /* attribList consists of pairs {token, value] terminated with 0 */
             while(attribList[0] != 0)
             {
