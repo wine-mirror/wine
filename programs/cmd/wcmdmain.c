@@ -2045,7 +2045,7 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
 
             /* Remove quotes */
             length = wcslen(sc->path);
-            if (sc->path[length - 1] == L'"')
+            if (length && sc->path[length - 1] == L'"')
                 sc->path[length - 1] = 0;
 
             if (*sc->path != L'"')
