@@ -120,8 +120,11 @@ struct wayland_pointer
 struct wayland_text_input
 {
     struct zwp_text_input_v3 *zwp_text_input_v3;
-    WCHAR *preedit_string;
-    DWORD preedit_cursor_pos;
+    struct
+    {
+        WCHAR *string;
+        DWORD cursor_pos;
+    } preedit, current_preedit;
     WCHAR *commit_string;
     HWND focused_hwnd;
     pthread_mutex_t mutex;

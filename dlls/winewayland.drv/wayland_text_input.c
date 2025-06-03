@@ -62,11 +62,19 @@ static WCHAR *strdupUtoW(const char *str)
 
 static void wayland_text_input_reset_pending_state(struct wayland_text_input *text_input)
 {
-    free(text_input->preedit_string);
-    text_input->preedit_string = NULL;
-    text_input->preedit_cursor_pos = 0;
+    free(text_input->preedit.string);
+    text_input->preedit.string = NULL;
+    text_input->preedit.cursor_pos = 0;
     free(text_input->commit_string);
     text_input->commit_string = NULL;
+}
+
+static void wayland_text_input_reset_all_state(struct wayland_text_input *text_input)
+{
+    free(text_input->current_preedit.string);
+    text_input->current_preedit.string = NULL;
+    text_input->current_preedit.cursor_pos = 0;
+    wayland_text_input_reset_pending_state(text_input);
 }
 
 static void text_input_enter(void *data, struct zwp_text_input_v3 *zwp_text_input_v3,
@@ -105,7 +113,7 @@ static void text_input_leave(void *data, struct zwp_text_input_v3 *zwp_text_inpu
         post_ime_update(text_input->focused_hwnd, 0, NULL, NULL);
         text_input->focused_hwnd = NULL;
     }
-    wayland_text_input_reset_pending_state(text_input);
+    wayland_text_input_reset_all_state(text_input);
     pthread_mutex_unlock(&text_input->mutex);
 }
 
@@ -126,9 +134,9 @@ static void text_input_preedit_string(void *data, struct zwp_text_input_v3 *zwp_
     }
 
     pthread_mutex_lock(&text_input->mutex);
-    free(text_input->preedit_string);
-    text_input->preedit_string = textW;
-    text_input->preedit_cursor_pos = MAKELONG(begin / sizeof(WCHAR), end / sizeof(WCHAR));
+    free(text_input->preedit.string);
+    text_input->preedit.string = textW;
+    text_input->preedit.cursor_pos = MAKELONG(begin / sizeof(WCHAR), end / sizeof(WCHAR));
     pthread_mutex_unlock(&text_input->mutex);
 }
 
@@ -158,12 +166,21 @@ static void text_input_done(void *data, struct zwp_text_input_v3 *zwp_text_input
     pthread_mutex_lock(&text_input->mutex);
     /* Some compositors will send a done event for every commit, regardless of
      * the focus state of the text input. This behavior is arguably out of spec,
-     * but otherwise harmless, so just ignore the new state in such cases. */
-    if (text_input->focused_hwnd)
+     * but otherwise harmless, so just ignore the new state in such cases.
+     * Additionally ignore done events that don't actually modify the state. */
+    if (text_input->focused_hwnd &&
+        (text_input->commit_string ||
+         text_input->preedit.cursor_pos != text_input->current_preedit.cursor_pos ||
+         !!text_input->preedit.string != !!text_input->current_preedit.string ||
+         (text_input->preedit.string && text_input->current_preedit.string &&
+          wcscmp(text_input->preedit.string, text_input->current_preedit.string))))
     {
-        post_ime_update(text_input->focused_hwnd, text_input->preedit_cursor_pos,
-                text_input->preedit_string, text_input->commit_string);
+        post_ime_update(text_input->focused_hwnd, text_input->preedit.cursor_pos,
+                text_input->preedit.string, text_input->commit_string);
     }
+    free(text_input->current_preedit.string);
+    text_input->current_preedit = text_input->preedit;
+    text_input->preedit.string = NULL;
     wayland_text_input_reset_pending_state(text_input);
     pthread_mutex_unlock(&text_input->mutex);
 }
@@ -197,7 +214,7 @@ void wayland_text_input_deinit(void)
     zwp_text_input_v3_destroy(text_input->zwp_text_input_v3);
     text_input->zwp_text_input_v3 = NULL;
     text_input->focused_hwnd = NULL;
-    wayland_text_input_reset_pending_state(text_input);
+    wayland_text_input_reset_all_state(text_input);
     pthread_mutex_unlock(&text_input->mutex);
 };
 
