@@ -224,6 +224,7 @@ extern BOOL vulkan_init(void);
 extern void vulkan_detach_surfaces( struct list *surfaces );
 
 /* opengl.c */
+extern void update_opengl_drawables( HWND hwnd );
 extern void detach_opengl_drawables( HWND hwnd );
 
 /* window.c */

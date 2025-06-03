@@ -1514,6 +1514,20 @@ static void mark_contexts_for_moved_view(macdrv_view view)
     pthread_mutex_unlock(&context_mutex);
 }
 
+static void macdrv_surface_update(struct opengl_drawable *base)
+{
+    struct macdrv_win_data *data = get_win_data(base->hwnd);
+
+    TRACE("%s\n", debugstr_opengl_drawable(base));
+
+    if (data->client_cocoa_view && data->pixel_format)
+    {
+        TRACE("GL view %p changed position; marking contexts\n", data->client_cocoa_view);
+        mark_contexts_for_moved_view(data->client_cocoa_view);
+    }
+
+    release_win_data(data);
+}
 
 /**********************************************************************
  *              sync_context_rect
@@ -2817,30 +2831,6 @@ failed:
     return STATUS_NOT_SUPPORTED;
 }
 
-
-/***********************************************************************
- *              sync_gl_view
- *
- * Synchronize the Mac GL view position with the Windows child window
- * position.
- */
-void sync_gl_view(struct macdrv_win_data* data, const struct window_rects *old_rects)
-{
-    if (data->client_cocoa_view && data->pixel_format)
-    {
-        RECT old = old_rects->client, new = data->rects.client;
-
-        OffsetRect(&old, -old_rects->visible.left, -old_rects->visible.top);
-        OffsetRect(&new, -data->rects.visible.left, -data->rects.visible.top);
-        if (!EqualRect(&old, &new))
-        {
-            TRACE("GL view %p changed position; marking contexts\n", data->client_cocoa_view);
-            mark_contexts_for_moved_view(data->client_cocoa_view);
-        }
-    }
-}
-
-
 static BOOL macdrv_describe_pixel_format(int format, struct wgl_pixel_format *descr)
 {
     const pixel_format *pf = pixel_formats + format - 1;
@@ -3030,6 +3020,7 @@ static const struct opengl_drawable_funcs macdrv_surface_funcs =
 {
     .destroy = macdrv_surface_destroy,
     .detach = macdrv_surface_detach,
+    .update = macdrv_surface_update,
     .flush = macdrv_surface_flush,
     .swap = macdrv_surface_swap,
 };

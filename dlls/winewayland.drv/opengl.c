@@ -57,7 +57,6 @@ struct wayland_gl_drawable
     struct wayland_client_surface *client;
     struct wl_egl_window *wl_egl_window;
     EGLSurface surface;
-    LONG resized;
     BOOL double_buffered;
 };
 
@@ -102,24 +101,6 @@ static struct wayland_gl_drawable *find_drawable(HWND hwnd, HDC hdc)
     return NULL;
 }
 
-static struct wayland_gl_drawable *wayland_gl_drawable_acquire(struct wayland_gl_drawable *gl)
-{
-    opengl_drawable_add_ref(&gl->base);
-    return gl;
-}
-
-static struct wayland_gl_drawable *wayland_gl_drawable_get(HWND hwnd, HDC hdc)
-{
-    struct wayland_gl_drawable *ret;
-
-    pthread_mutex_lock(&gl_object_mutex);
-    if ((ret = find_drawable(hwnd, hdc)))
-        ret = wayland_gl_drawable_acquire(ret);
-    pthread_mutex_unlock(&gl_object_mutex);
-
-    return ret;
-}
-
 static void wayland_drawable_destroy(struct opengl_drawable *base)
 {
     struct wayland_gl_drawable *gl = impl_from_opengl_drawable(base);
@@ -156,6 +137,11 @@ static void wayland_drawable_detach(struct opengl_drawable *base)
     pthread_mutex_unlock(&gl_object_mutex);
 
     if (gl) opengl_drawable_release(&gl->base);
+}
+
+static void wayland_drawable_update(struct opengl_drawable *base)
+{
+    TRACE("%s\n", debugstr_opengl_drawable(base));
 }
 
 static inline BOOL is_onscreen_format(int format)
@@ -239,15 +225,12 @@ static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
     int client_width, client_height;
     RECT client_rect = {0};
 
-    if (InterlockedCompareExchange(&gl->resized, FALSE, TRUE))
-    {
-        NtUserGetClientRect(gl->base.hwnd, &client_rect, NtUserGetDpiForWindow(gl->base.hwnd));
-        client_width = client_rect.right - client_rect.left;
-        client_height = client_rect.bottom - client_rect.top;
-        if (client_width == 0 || client_height == 0) client_width = client_height = 1;
+    NtUserGetClientRect(gl->base.hwnd, &client_rect, NtUserGetDpiForWindow(gl->base.hwnd));
+    client_width = client_rect.right - client_rect.left;
+    client_height = client_rect.bottom - client_rect.top;
+    if (client_width == 0 || client_height == 0) client_width = client_height = 1;
 
-        wl_egl_window_resize(gl->wl_egl_window, client_width, client_height, 0, 0);
-    }
+    wl_egl_window_resize(gl->wl_egl_window, client_width, client_height, 0, 0);
 }
 
 static BOOL wayland_make_current(struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *private)
@@ -264,10 +247,6 @@ static BOOL wayland_make_current(struct opengl_drawable *draw_base, struct openg
         funcs->p_eglMakeCurrent(egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         return TRUE;
     }
-
-    /* Since making an EGL surface current may latch the native size,
-     * perform any pending resizes before calling it. */
-    if (draw) wayland_gl_drawable_sync_size(draw);
 
     pthread_mutex_lock(&gl_object_mutex);
 
@@ -428,7 +407,7 @@ static void wayland_drawable_flush(struct opengl_drawable *base, UINT flags)
 
     /* Since context_flush is called from operations that may latch the native size,
      * perform any pending resizes before calling them. */
-    wayland_gl_drawable_sync_size(gl);
+    if (flags & GL_FLUSH_UPDATED) wayland_gl_drawable_sync_size(gl);
 }
 
 static BOOL wayland_drawable_swap(struct opengl_drawable *base)
@@ -442,7 +421,6 @@ static BOOL wayland_drawable_swap(struct opengl_drawable *base)
     /* Although all the EGL surfaces we create are double-buffered, we want to
      * use some as single-buffered, so avoid swapping those. */
     if (gl->double_buffered) funcs->p_eglSwapBuffers(egl->display, gl->surface);
-    wayland_gl_drawable_sync_size(gl);
 
     return TRUE;
 }
@@ -492,6 +470,7 @@ static const struct opengl_drawable_funcs wayland_drawable_funcs =
 {
     .destroy = wayland_drawable_destroy,
     .detach = wayland_drawable_detach,
+    .update = wayland_drawable_update,
     .flush = wayland_drawable_flush,
     .swap = wayland_drawable_swap,
 };
@@ -520,29 +499,11 @@ UINT WAYLAND_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, c
     return STATUS_SUCCESS;
 }
 
-/**********************************************************************
- *           wayland_resize_gl_drawable
- */
-void wayland_resize_gl_drawable(HWND hwnd)
-{
-    struct wayland_gl_drawable *gl;
-
-    if (!(gl = wayland_gl_drawable_get(hwnd, 0))) return;
-    /* wl_egl_window_resize is not thread safe, so we just mark the
-     * drawable as resized and perform the resize in the proper thread. */
-    InterlockedExchange(&gl->resized, TRUE);
-    opengl_drawable_release(&gl->base);
-}
-
 #else /* No GL */
 
 UINT WAYLAND_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, const struct opengl_driver_funcs **driver_funcs)
 {
     return STATUS_NOT_IMPLEMENTED;
-}
-
-void wayland_resize_gl_drawable(HWND hwnd)
-{
 }
 
 #endif

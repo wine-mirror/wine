@@ -929,7 +929,7 @@ static BOOL x11drv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl
 static void update_gl_drawable_size( struct gl_drawable *gl )
 {
     XWindowChanges changes;
-    RECT rect;
+    RECT rect = {0};
 
     NtUserGetClientRect( gl->base.hwnd, &rect, NtUserGetDpiForWindow( gl->base.hwnd ) );
     if (EqualRect( &gl->rect, &rect )) return;
@@ -994,29 +994,12 @@ static void update_gl_drawable_offscreen( struct gl_drawable *gl )
     }
 }
 
-/***********************************************************************
- *              sync_gl_drawable
- */
-void sync_gl_drawable( HWND hwnd )
+static void x11drv_surface_update( struct opengl_drawable *base )
 {
-    struct x11drv_context *context;
-    struct gl_drawable *gl;
+    struct gl_drawable *gl = impl_from_opengl_drawable( base );
 
-    pthread_mutex_lock( &context_mutex );
-    LIST_FOR_EACH_ENTRY( context, &context_list, struct x11drv_context, entry )
-    {
-        if ((gl = context->draw) && gl->base.funcs == &x11drv_surface_funcs && gl->base.hwnd == hwnd)
-        {
-            update_gl_drawable_size( gl );
-            update_gl_drawable_offscreen( gl );
-        }
-        if ((gl = context->read) && gl->base.funcs == &x11drv_surface_funcs && gl->base.hwnd == hwnd)
-        {
-            update_gl_drawable_size( gl );
-            update_gl_drawable_offscreen( gl );
-        }
-    }
-    pthread_mutex_unlock( &context_mutex );
+    update_gl_drawable_size( gl );
+    update_gl_drawable_offscreen( gl );
 }
 
 
@@ -1657,6 +1640,7 @@ static const struct opengl_drawable_funcs x11drv_surface_funcs =
 {
     .destroy = x11drv_surface_destroy,
     .detach = x11drv_surface_detach,
+    .update = x11drv_surface_update,
     .flush = x11drv_surface_flush,
     .swap = x11drv_surface_swap,
 };

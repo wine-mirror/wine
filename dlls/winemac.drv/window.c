@@ -1736,8 +1736,6 @@ void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT
     TRACE("win %p/%p new_rects %s style %08x flags %08x surface %p\n", hwnd, data->cocoa_window,
           debugstr_window_rects(new_rects), new_style, swp_flags, surface);
 
-    sync_gl_view(data, &old_rects);
-
     if (!data->cocoa_window && !data->cocoa_view) goto done;
 
     if (data->on_screen)

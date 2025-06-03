@@ -133,6 +133,8 @@ struct opengl_drawable_funcs
     void (*destroy)( struct opengl_drawable *iface );
     /* detach the drawable from its window, called from window owner thread */
     void (*detach)( struct opengl_drawable *drawable );
+    /* update the drawable to match its window state, called from window owner thread */
+    void (*update)( struct opengl_drawable *drawable );
     /* flush and update the drawable front buffer, called from render thread */
     void (*flush)( struct opengl_drawable *iface, UINT flags );
     /* swap and present the drawable buffers, called from render thread */
@@ -142,6 +144,7 @@ struct opengl_drawable_funcs
 /* flags for opengl_drawable flush */
 #define GL_FLUSH_FINISHED      0x01
 #define GL_FLUSH_INTERVAL      0x02
+#define GL_FLUSH_UPDATED       0x04
 
 struct opengl_drawable
 {
@@ -153,6 +156,7 @@ struct opengl_drawable
     HWND        hwnd;           /* window the drawable was created for */
     HDC         hdc;            /* DC the drawable was created for */
     struct list entry;          /* entry in win32u managed list */
+    LONG        updated;        /* has been moved / resized / reparented */
 };
 
 static inline const char *debugstr_opengl_drawable( struct opengl_drawable *drawable )

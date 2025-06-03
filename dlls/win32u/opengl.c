@@ -189,6 +189,22 @@ void detach_opengl_drawables( HWND hwnd )
     pthread_mutex_unlock( &drawables_lock );
 }
 
+void update_opengl_drawables( HWND hwnd )
+{
+    struct opengl_drawable *drawable, *next;
+
+    pthread_mutex_lock( &drawables_lock );
+
+    LIST_FOR_EACH_ENTRY_SAFE( drawable, next, &drawables, struct opengl_drawable, entry )
+    {
+        if (drawable->hwnd != hwnd) continue;
+        drawable->funcs->update( drawable );
+        InterlockedExchange( &drawable->updated, 1 );
+    }
+
+    pthread_mutex_unlock( &drawables_lock );
+}
+
 void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *funcs, int format, HWND hwnd, HDC hdc )
 {
     struct opengl_drawable *drawable;
@@ -234,6 +250,18 @@ void opengl_drawable_release( struct opengl_drawable *drawable )
         drawable->funcs->destroy( drawable );
         free( drawable );
     }
+}
+
+static void opengl_drawable_flush( struct opengl_drawable *drawable, int interval, UINT flags )
+{
+    if (InterlockedCompareExchange( &drawable->updated, 0, 1 )) flags |= GL_FLUSH_UPDATED;
+    if (interval != drawable->interval)
+    {
+        drawable->interval = interval;
+        flags = GL_FLUSH_INTERVAL;
+    }
+
+    if (flags) drawable->funcs->flush( drawable, flags );
 }
 
 #ifdef SONAME_LIBEGL
@@ -1003,16 +1031,21 @@ static BOOL context_set_drawables( struct wgl_context *context, void *private, H
         WARN( "Unexpected drawables with NULL context\n" );
     else if (!force && new_draw == context->draw && new_read == context->read)
         TRACE( "Drawables didn't change, nothing to do\n" );
-    else if (driver_funcs->p_make_current( new_draw, new_read, private ))
+    else
     {
-        if ((context->draw = new_draw)) opengl_drawable_add_ref( new_draw );
-        if ((context->read = new_read)) opengl_drawable_add_ref( new_read );
-        if (old_draw) opengl_drawable_release( old_draw );
-        if (old_read) opengl_drawable_release( old_read );
+        if (new_draw) opengl_drawable_flush( new_draw, new_draw->interval, 0 );
+        if (new_read) opengl_drawable_flush( new_read, new_read->interval, 0 );
 
-        /* update the current window drawable to the last used draw surface */
-        if ((hwnd = NtUserWindowFromDC( draw_hdc ))) set_window_opengl_drawable( hwnd, new_draw );
-        ret = TRUE;
+        if ((ret = driver_funcs->p_make_current( new_draw, new_read, private )))
+        {
+            if ((context->draw = new_draw)) opengl_drawable_add_ref( new_draw );
+            if ((context->read = new_read)) opengl_drawable_add_ref( new_read );
+            if (old_draw) opengl_drawable_release( old_draw );
+            if (old_read) opengl_drawable_release( old_read );
+
+            /* update the current window drawable to the last used draw surface */
+            if ((hwnd = NtUserWindowFromDC( draw_hdc ))) set_window_opengl_drawable( hwnd, new_draw );
+        }
     }
 
     if (new_draw) opengl_drawable_release( new_draw );
@@ -1518,17 +1551,11 @@ static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)
     context_set_drawables( context, context->driver_private, draw_hdc, read_hdc, FALSE );
     if (flush_memory_dc( context, draw_hdc, FALSE, flush )) return TRUE;
 
-    if (!(draw = get_dc_opengl_drawable( draw_hdc, FALSE ))) return FALSE;
-    if (interval != draw->interval)
-    {
-        draw->interval = interval;
-        flags = GL_FLUSH_INTERVAL;
-    }
-
     if (flush) flush();
     if (flush == funcs->p_glFinish) flags |= GL_FLUSH_FINISHED;
 
-    if (flags) draw->funcs->flush( draw, flags );
+    if (!(draw = get_dc_opengl_drawable( draw_hdc, FALSE ))) return FALSE;
+    opengl_drawable_flush( draw, interval, flags );
     opengl_drawable_release( draw );
 
     return TRUE;
@@ -1540,7 +1567,6 @@ static BOOL win32u_wglSwapBuffers( HDC hdc )
     struct wgl_context *context = NtCurrentTeb()->glContext;
     const struct opengl_funcs *funcs = &display_funcs;
     struct opengl_drawable *draw;
-    UINT flags = 0;
     int interval;
     HWND hwnd;
     BOOL ret;
@@ -1552,18 +1578,8 @@ static BOOL win32u_wglSwapBuffers( HDC hdc )
     if (flush_memory_dc( context, hdc, FALSE, funcs->p_glFlush )) return TRUE;
 
     if (!(draw = get_dc_opengl_drawable( draw_hdc, FALSE ))) return FALSE;
-    if (interval != draw->interval)
-    {
-        draw->interval = interval;
-        flags = GL_FLUSH_INTERVAL;
-    }
-
-    if (!draw->hwnd || !draw->funcs->swap) ret = TRUE; /* pbuffer, nothing to do */
-    else
-    {
-        if (flags) draw->funcs->flush( draw, flags );
-        ret = draw->funcs->swap( draw );
-    }
+    opengl_drawable_flush( draw, interval, 0 );
+    ret = draw->funcs->swap( draw );
     opengl_drawable_release( draw );
 
     return ret;

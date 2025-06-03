@@ -413,12 +413,6 @@ void wayland_text_input_deinit(void);
 void wayland_data_device_init(void);
 
 /**********************************************************************
- *          OpenGL
- */
-
-void wayland_resize_gl_drawable(HWND hwnd);
-
-/**********************************************************************
  *          Helpers
  */
 
