@@ -556,7 +556,6 @@ static void test_scheduled_items(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     IRtwqAsyncResult_Release(result2);
     res = wait_async_callback_result(&test_callback->IRtwqAsyncCallback_iface, 200, &callback_result);
-    todo_wine
     ok(res == 0, "got %#lx\n", res);
 
     SetEvent(event);
@@ -584,7 +583,6 @@ static void test_scheduled_items(void)
     IRtwqAsyncResult_Release(result2);
     SetEvent(event2);
     res = wait_async_callback_result(&test_callback2->IRtwqAsyncCallback_iface, 100, &callback_result);
-    todo_wine
     ok(res == 0, "got %#lx\n", res);
 
     hr = RtwqCancelWorkItem(key);

@@ -2440,13 +2440,11 @@ static void test_tp_wait_early_closure(void)
     CloseHandle(timer);
     pTpSetWait(wait2, semaphores[0], NULL);
     result = WaitForSingleObject(semaphore, 200);
-    todo_wine
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", result);
     ok(info.userdata == 1, "expected info.userdata = 1, got %lu\n", info.userdata);
     ReleaseSemaphore(semaphores[0], 1, NULL);
     result = WaitForSingleObject(semaphore, 200);
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", result);
-    todo_wine
     ok(info.userdata == 2, "expected info.userdata = 2, got %lu\n", info.userdata);
     result = WaitForSingleObject(semaphores[0], 0);
     ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", result);
@@ -2460,13 +2458,11 @@ static void test_tp_wait_early_closure(void)
     ReleaseSemaphore(semaphores[1], 1, NULL);
     result = WaitForSingleObject(semaphore, 100);
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", result);
-    todo_wine
     ok(info.userdata == 1, "expected info.userdata = 1, got %lu\n", info.userdata);
     result = WaitForSingleObject(semaphores[1], 0);
     ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", result);
     result = WaitForSingleObject(semaphore, 300);
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", result);
-    todo_wine
     ok(info.userdata == 0x10001, "expected info.userdata = 0x10001, got %lu\n", info.userdata);
 
     /* cleanup */
