@@ -205,7 +205,7 @@ static BOOL android_set_pixel_format( HWND hwnd, int old_format, int new_format,
     return TRUE;
 }
 
-static BOOL android_context_create( HDC hdc, int format, void *share, const int *attribs, void **private )
+static BOOL android_context_create( int format, void *share, const int *attribs, void **private )
 {
     struct android_context *ctx, *shared_ctx = share;
     int count = 0, egl_attribs[3];
@@ -248,7 +248,7 @@ static BOOL android_context_create( HDC hdc, int format, void *share, const int 
     ctx->surface = 0;
     ctx->refresh = FALSE;
     ctx->context = funcs->p_eglCreateContext( egl->display, ctx->config, shared_ctx ? shared_ctx->context : EGL_NO_CONTEXT, attribs );
-    TRACE( "%p fmt %d ctx %p\n", hdc, format, ctx->context );
+    TRACE( "fmt %d ctx %p\n", format, ctx->context );
     list_add_head( &gl_contexts, &ctx->entry );
 
     *private = ctx;

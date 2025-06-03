@@ -401,7 +401,7 @@ static UINT egldrv_pbuffer_bind( HDC hdc, void *private, GLenum buffer )
     return -1; /* use default implementation */
 }
 
-static BOOL egldrv_context_create( HDC hdc, int format, void *share, const int *attribs, void **private )
+static BOOL egldrv_context_create( int format, void *share, const int *attribs, void **private )
 {
     FIXME( "stub!\n" );
     return TRUE;
@@ -611,7 +611,7 @@ static UINT nulldrv_pbuffer_bind( HDC hdc, void *private, GLenum buffer )
     return -1; /* use default implementation */
 }
 
-static BOOL nulldrv_context_create( HDC hdc, int format, void *share, const int *attribs, void **private )
+static BOOL nulldrv_context_create( int format, void *share, const int *attribs, void **private )
 {
     return FALSE;
 }
@@ -848,7 +848,7 @@ static struct wgl_context *context_create( HDC hdc, struct wgl_context *shared, 
     if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
     context->pixel_format = format;
 
-    if (!driver_funcs->p_context_create( hdc, format, shared_private, attribs, &context->driver_private ))
+    if (!driver_funcs->p_context_create( format, shared_private, attribs, &context->driver_private ))
     {
         free( context );
         return NULL;

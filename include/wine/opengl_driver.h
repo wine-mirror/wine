@@ -133,7 +133,7 @@ struct opengl_driver_funcs
     const char *(*p_init_wgl_extensions)(struct opengl_funcs *funcs);
     BOOL (*p_set_pixel_format)(HWND,int,int,BOOL);
     BOOL (*p_swap_buffers)(void*,HWND,HDC,int);
-    BOOL (*p_context_create)(HDC,int,void*,const int*,void**);
+    BOOL (*p_context_create)( int format, void *share, const int *attribs, void **context );
     BOOL (*p_context_destroy)(void*);
     BOOL (*p_context_flush)(void*,HWND,HDC,int,void(*)(void));
     BOOL (*p_context_make_current)(HDC,HDC,void*);

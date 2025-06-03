@@ -2190,7 +2190,7 @@ static UINT macdrv_pbuffer_bind(HDC hdc, void *private, GLenum source)
  *
  * WGL_ARB_create_context: wglCreateContextAttribsARB
  */
-static BOOL macdrv_context_create(HDC hdc, int format, void *shared, const int *attrib_list, void **private)
+static BOOL macdrv_context_create(int format, void *shared, const int *attrib_list, void **private)
 {
     struct macdrv_context *share_context = shared;
     struct macdrv_context *context;
@@ -2199,7 +2199,7 @@ static BOOL macdrv_context_create(HDC hdc, int format, void *shared, const int *
     BOOL core = FALSE;
     GLint renderer_id = 0;
 
-    TRACE("hdc %p, format %d, share_context %p, attrib_list %p\n", hdc, format, share_context, attrib_list);
+    TRACE("format %d, share_context %p, attrib_list %p\n", format, share_context, attrib_list);
 
     for (iptr = attrib_list; iptr && *iptr; iptr += 2)
     {

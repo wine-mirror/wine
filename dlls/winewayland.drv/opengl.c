@@ -356,12 +356,12 @@ static BOOL wayland_set_pixel_format(HWND hwnd, int old_format, int new_format, 
     return TRUE;
 }
 
-static BOOL wayland_context_create(HDC hdc, int format, void *share_private, const int *attribs, void **private)
+static BOOL wayland_context_create(int format, void *share_private, const int *attribs, void **private)
 {
     struct wayland_context *share = share_private, *ctx;
     EGLint egl_attribs[16], *attribs_end = egl_attribs;
 
-    TRACE("hdc=%p format=%d share=%p attribs=%p\n", hdc, format, share, attribs);
+    TRACE("format=%d share=%p attribs=%p\n", format, share, attribs);
 
     for (; attribs && attribs[0] != 0; attribs += 2)
     {

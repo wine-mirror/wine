@@ -196,7 +196,6 @@ struct glx_pixel_format
 
 struct x11drv_context
 {
-    HDC hdc;
     GLXContext ctx;
     struct gl_drawable *draw;
     struct gl_drawable *read;
@@ -1342,7 +1341,6 @@ static BOOL x11drv_context_make_current( HDC draw_hdc, HDC read_hdc, void *priva
         else ret = pglXMakeContextCurrent( gdi_display, draw_gl->drawable, read_gl ? read_gl->drawable : 0, ctx->ctx );
         if (ret)
         {
-            ctx->hdc = draw_hdc;
             set_context_drawables( ctx, draw_gl, read_gl );
             NtCurrentTeb()->glReserved2 = ctx;
             pthread_mutex_unlock( &context_mutex );
@@ -1397,7 +1395,6 @@ static void present_gl_drawable( HWND hwnd, HDC hdc, struct gl_drawable *gl, BOO
 static BOOL x11drv_context_flush( void *private, HWND hwnd, HDC hdc, int interval, void (*flush)(void) )
 {
     struct gl_drawable *gl;
-    struct x11drv_context *ctx = private;
 
     if (!(gl = get_gl_drawable( hwnd, 0 ))) return FALSE;
     if (gl->type != DC_GL_WINDOW)
@@ -1417,7 +1414,7 @@ static BOOL x11drv_context_flush( void *private, HWND hwnd, HDC hdc, int interva
     update_gl_drawable_offscreen( gl );
     pthread_mutex_unlock( &context_mutex );
 
-    present_gl_drawable( hwnd, ctx->hdc, gl, TRUE, flush != funcs->p_glFinish );
+    present_gl_drawable( hwnd, hdc, gl, TRUE, flush != funcs->p_glFinish );
     release_gl_drawable( gl );
     return TRUE;
 }
@@ -1425,17 +1422,16 @@ static BOOL x11drv_context_flush( void *private, HWND hwnd, HDC hdc, int interva
 /***********************************************************************
  *		X11DRV_wglCreateContextAttribsARB
  */
-static BOOL x11drv_context_create( HDC hdc, int format, void *share_private, const int *attribList, void **private )
+static BOOL x11drv_context_create( int format, void *share_private, const int *attribList, void **private )
 {
     struct x11drv_context *ret, *hShareContext = share_private;
     int glx_attribs[16] = {0}, *pContextAttribList = glx_attribs;
     int err = 0;
 
-    TRACE("(%p %d %p %p)\n", hdc, format, hShareContext, attribList);
+    TRACE("(%d %p %p)\n", format, hShareContext, attribList);
 
     if ((ret = calloc( 1, sizeof(*ret) )))
     {
-        ret->hdc = hdc;
         if (attribList)
         {
             /* attribList consists of pairs {token, value] terminated with 0 */
@@ -1500,7 +1496,7 @@ static BOOL x11drv_context_create( HDC hdc, int format, void *share_private, con
         pthread_mutex_unlock( &context_mutex );
     }
 
-    TRACE( "%p -> %p\n", hdc, ret );
+    TRACE( "-> %p\n", ret );
     *private = ret;
     return TRUE;
 }
@@ -1731,7 +1727,7 @@ static BOOL x11drv_swap_buffers( void *private, HWND hwnd, HDC hdc, int interval
     update_gl_drawable_offscreen( gl );
     pthread_mutex_unlock( &context_mutex );
 
-    present_gl_drawable( hwnd, ctx ? ctx->hdc : hdc, gl, !pglXWaitForSbcOML, FALSE );
+    present_gl_drawable( hwnd, hdc, gl, !pglXWaitForSbcOML, FALSE );
     release_gl_drawable( gl );
     return TRUE;
 }
