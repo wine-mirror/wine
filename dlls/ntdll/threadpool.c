@@ -1436,7 +1436,7 @@ static NTSTATUS tp_waitqueue_lock( struct threadpool_object *wait )
     wait->u.wait.bucket         = NULL;
     wait->u.wait.wait_pending   = FALSE;
     wait->u.wait.timeout        = 0;
-    wait->u.wait.handle         = INVALID_HANDLE_VALUE;
+    wait->u.wait.handle         = NULL;
 
     RtlEnterCriticalSection( &waitqueue.cs );
 
