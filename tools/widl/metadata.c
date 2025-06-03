@@ -1112,6 +1112,73 @@ enum
 
 static char *assembly_name;
 
+static UINT make_member_sig( UINT token, BYTE *buf )
+{
+    UINT len = 4;
+
+    buf[0] = SIG_TYPE_HASTHIS;
+    buf[1] = 2;
+    buf[2] = ELEMENT_TYPE_VOID;
+    buf[3] = ELEMENT_TYPE_CLASS;
+    len += encode_int( token, buf + 4 );
+    buf[len++] = ELEMENT_TYPE_U4;
+    return len;
+}
+
+static UINT make_contract_value( const type_t *type, BYTE *buf )
+{
+    const expr_t *contract = get_attrp( type->attrs, ATTR_CONTRACT );
+    char *name = format_namespace( contract->u.tref.type->namespace, "", ".", contract->u.tref.type->name, NULL );
+    UINT version = contract->ref->u.integer.value, len = strlen( name );
+
+    buf[0] = 1;
+    buf[1] = 0;
+    buf[2] = len;
+    memcpy( buf + 3, name, len );
+    len += 3;
+    memcpy( buf + len, &version, sizeof(version) );
+    len += sizeof(version);
+    buf[len++] = 0;
+    buf[len++] = 0;
+
+    free( name );
+    return len;
+}
+
+static void add_contract_attr_step1( type_t *type )
+{
+    UINT assemblyref, scope, typeref, typeref_type, class, sig_size;
+    BYTE sig[32];
+
+    if (!is_attr( type->attrs, ATTR_CONTRACT )) return;
+
+    add_assemblyref_row( 0x200, 0, add_string("windowscontracts") );
+    assemblyref = add_assemblyref_row( 0x200, 0, add_string("Windows.Foundation") );
+
+    scope = resolution_scope( TABLE_ASSEMBLYREF, MSCORLIB_ROW );
+    typeref_type = add_typeref_row( scope, add_string("Type"), add_string("System") );
+
+    scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+    typeref = add_typeref_row( scope, add_string("ContractVersionAttribute"), add_string("Windows.Foundation.Metadata") );
+
+    class = memberref_parent( TABLE_TYPEREF, typeref );
+    sig_size = make_member_sig( typedef_or_ref(TABLE_TYPEREF, typeref_type), sig );
+    type->md.member[MD_ATTR_CONTRACT] = add_memberref_row( class, add_string(".ctor"), add_blob(sig, sig_size) );
+}
+
+static void add_contract_attr_step2( type_t *type )
+{
+    UINT parent, attr_type, value_size;
+    BYTE value[256 + sizeof(UINT) + 5];
+
+    if (!is_attr( type->attrs, ATTR_CONTRACT )) return;
+
+    parent = has_customattribute( TABLE_TYPEDEF, type->md.def );
+    attr_type = customattribute_type( TABLE_MEMBERREF, type->md.member[MD_ATTR_CONTRACT] );
+    value_size = make_contract_value( type, value );
+    add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
+}
+
 static void add_flags_attr_step1( type_t *type )
 {
     static const BYTE sig[] = { SIG_TYPE_HASTHIS, 0, ELEMENT_TYPE_VOID };
@@ -1148,6 +1215,7 @@ static void add_enum_type_step1( type_t *type )
     type->md.extends = typedef_or_ref( TABLE_TYPEREF, typeref );
     type->md.ref = add_typeref_row( resolution_scope(TABLE_MODULE, MODULE_ROW), name, namespace );
 
+    add_contract_attr_step1( type );
     add_flags_attr_step1( type );
 }
 
@@ -1180,6 +1248,7 @@ static void add_enum_type_step2( type_t *type )
         add_constant_row( sig_value[1], parent, add_blob((const BYTE *)&val, sizeof(val)) );
     }
 
+    add_contract_attr_step2( type );
     add_flags_attr_step2( type );
 }
 
