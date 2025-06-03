@@ -475,11 +475,14 @@ static void test_work_queue(void)
 
 static void test_scheduled_items(void)
 {
-    struct test_callback *test_callback;
+    struct test_callback *test_callback, *test_callback2;
     RTWQWORKITEM_KEY key, key2;
-    IRtwqAsyncResult *result;
+    IRtwqAsyncResult *result, *result2, *callback_result;
+    HANDLE timer, event, event2;
+    LARGE_INTEGER time;
     ULONG refcount;
     HRESULT hr;
+    DWORD res;
 
     test_callback = create_test_callback();
 
@@ -527,7 +530,72 @@ static void test_scheduled_items(void)
     refcount = IRtwqAsyncResult_Release(result);
     ok(refcount == 0, "Unexpected refcount %lu.\n", refcount);
 
+    hr = RtwqStartup();
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+
+    test_callback2 = create_test_callback();
+
+    timer = CreateWaitableTimerW(NULL, TRUE, NULL);
+    event = CreateEventA(NULL, FALSE, FALSE, NULL);
+
+    hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    hr = RtwqCreateAsyncResult(NULL, &test_callback2->IRtwqAsyncCallback_iface, NULL, &result2);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+
+    time.QuadPart = -1000000LL;
+    SetWaitableTimer(timer, &time, 0, NULL, NULL, 0);
+    hr = RtwqPutWaitingWorkItem(timer, 0, result, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    /* Close the timer handle while the item is pending. This should work and
+     * not cause failure to execute other waiting items.*/
+    CloseHandle(timer);
+    IRtwqAsyncResult_Release(result);
+
+    hr = RtwqPutWaitingWorkItem(event, 0, result2, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IRtwqAsyncResult_Release(result2);
+    res = wait_async_callback_result(&test_callback->IRtwqAsyncCallback_iface, 200, &callback_result);
+    todo_wine
+    ok(res == 0, "got %#lx\n", res);
+
+    SetEvent(event);
+    res = wait_async_callback_result(&test_callback2->IRtwqAsyncCallback_iface, 100, &callback_result);
+    ok(res == 0, "got %#lx\n", res);
+
+    CloseHandle(event);
+
+    event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    event2 = CreateEventA(NULL, FALSE, FALSE, NULL);
+
+    hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    hr = RtwqCreateAsyncResult(NULL, &test_callback2->IRtwqAsyncCallback_iface, NULL, &result2);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+
+    hr = RtwqPutWaitingWorkItem(event, 0, result, &key);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    /* Abandon the waiting item. This should not cause failure to execute other waiting items. */
+    CloseHandle(event);
+    IRtwqAsyncResult_Release(result);
+
+    hr = RtwqPutWaitingWorkItem(event2, 0, result2, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IRtwqAsyncResult_Release(result2);
+    SetEvent(event2);
+    res = wait_async_callback_result(&test_callback2->IRtwqAsyncCallback_iface, 100, &callback_result);
+    todo_wine
+    ok(res == 0, "got %#lx\n", res);
+
+    hr = RtwqCancelWorkItem(key);
+    ok(hr == S_OK, "Failed to cancel item, hr %#lx.\n", hr);
+    CloseHandle(event2);
+
+    hr = RtwqShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
     IRtwqAsyncCallback_Release(&test_callback->IRtwqAsyncCallback_iface);
+    IRtwqAsyncCallback_Release(&test_callback2->IRtwqAsyncCallback_iface);
 }
 
 static void test_queue_shutdown(void)
