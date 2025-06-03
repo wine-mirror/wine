@@ -5239,9 +5239,7 @@ void write_client_call_routine( FILE *file, const type_t *iface, const var_t *fu
     }
     else if (has_ret) print_file( file, 1, "%s", "CLIENT_CALL_RETURN _RetVal;\n\n" );
 
-    len = fprintf( file, "    %s%s( ",
-                   has_ret ? "_RetVal = " : "",
-                   interpreted_mode ? "NdrClientCall2" : "NdrClientCall" );
+    len = fprintf( file, "    %sNdrClientCall2( ", has_ret ? "_RetVal = " : "" );
     fprintf( file, "&%s_StubDesc,", prefix );
     fprintf( file, "\n%*s&__MIDL_ProcFormatString.Format[%u]", len, "", proc_offset );
     if (needs_params)
