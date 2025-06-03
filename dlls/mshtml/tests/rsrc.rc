@@ -91,6 +91,30 @@ iframe.html HTML "iframe.html"
 /* @makedep: xhr_iframe.html */
 xhr_iframe.html HTML "xhr_iframe.html"
 
+/* @makedep: utf8.css */
+utf8.css HTML "utf8.css"
+
+/* @makedep: utf16.css */
+utf16.css HTML "utf16.css"
+
+/* @makedep: utf8_bom.css */
+utf8_bom.css HTML "utf8_bom.css"
+
+/* @makedep: utf16_bom.css */
+utf16_bom.css HTML "utf16_bom.css"
+
+/* @makedep: utf8.js */
+utf8.js HTML "utf8.js"
+
+/* @makedep: utf16.js */
+utf16.js HTML "utf16.js"
+
+/* @makedep: utf8_bom.js */
+utf8_bom.js HTML "utf8_bom.js"
+
+/* @makedep: utf16_bom.js */
+utf16_bom.js HTML "utf16_bom.js"
+
 /* For res: protocol test: */
 
 /* @makedep: jstest.html */
