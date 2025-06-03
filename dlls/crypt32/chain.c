@@ -117,16 +117,19 @@ HCERTCHAINENGINE CRYPT_CreateChainEngine(HCERTSTORE root, DWORD system_store, co
     CertificateChainEngine *engine;
     HCERTSTORE worldStores[4];
 
-    if(!root) {
+    if (root) {
+        root = CertDuplicateStore(root);
+    } else {
         if(config->cbSize >= sizeof(CERT_CHAIN_ENGINE_CONFIG) && config->hExclusiveRoot)
             root = CertDuplicateStore(config->hExclusiveRoot);
         else if (config->hRestrictedRoot)
             root = CertDuplicateStore(config->hRestrictedRoot);
         else
             root = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, system_store, L"Root");
-        if(!root)
-            return NULL;
     }
+
+    if(!root)
+        return NULL;
 
     engine = CryptMemAlloc(sizeof(CertificateChainEngine));
     if(!engine) {
