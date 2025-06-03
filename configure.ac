@@ -587,13 +587,18 @@ This is an error since --enable-archs=$wine_arch was requested.])])
     wine_crossdebug=$CROSSDEBUG
     if test -z "$wine_crossdebug"
     then
+      ac_g_flag_seen=""
       for ac_flag in $CFLAGS; do
         case $ac_flag in
-         -gdwarf*)    wine_crossdebug=dwarf ;;
-         -gcodeview)  wine_crossdebug=pdb ;;
-         -g)          wine_crossdebug=${wine_crossdebug:-dwarf} ;;
+         -gdwarf*)    AS_VAR_APPEND(wine_crossdebug, " dwarf") ;;
+         -gcodeview)  AS_VAR_APPEND(wine_crossdebug, " pdb") ;;
+         -g)          ac_g_flag_seen=$ac_flag ;;
         esac
       done
+      if test -n "$ac_g_flag_seen" -a -z "$wine_crossdebug"
+      then
+        wine_crossdebug=dwarf
+      fi
     fi
 
     ac_debug_format_seen=""
@@ -604,13 +609,16 @@ This is an error since --enable-archs=$wine_arch was requested.])])
     done
     if test "x$ac_debug_format_seen" = x
     then
-      case $wine_crossdebug in
-        *dwarf)  dnl clang emits a warning without -Wl,-debug:dwarf, so ensure linker option is present
-                 WINE_TRY_PE_CFLAGS([-Wl,-debug:dwarf],[AS_VAR_APPEND([${wine_arch}_LDFLAGS],[" -Wl,-debug:dwarf"])
-                                                        CFLAGS="$CFLAGS -Wl,-debug:dwarf"])
-                 WINE_TRY_PE_CFLAGS([-gdwarf-4]) ;;
-        pdb)     WINE_TRY_PE_CFLAGS([-gcodeview]) ;;
-      esac
+      for wine_debug_format in $wine_crossdebug
+      do
+        case $wine_debug_format in
+          *dwarf)  dnl clang emits a warning without -Wl,-debug:dwarf, so ensure linker option is present
+                   WINE_TRY_PE_CFLAGS([-Wl,-debug:dwarf],[AS_VAR_APPEND([${wine_arch}_LDFLAGS],[" -Wl,-debug:dwarf"])
+                                                          CFLAGS="$CFLAGS -Wl,-debug:dwarf"])
+                   WINE_TRY_PE_CFLAGS([-gdwarf-4]) ;;
+          pdb)     WINE_TRY_PE_CFLAGS([-gcodeview]) ;;
+        esac
+      done
     fi
     AS_VAR_SET([${wine_arch}_DEBUG],[$wine_crossdebug])
 

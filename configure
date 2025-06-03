@@ -9298,13 +9298,18 @@ fi } ;;
         wine_crossdebug=$CROSSDEBUG
     if test -z "$wine_crossdebug"
     then
+      ac_g_flag_seen=""
       for ac_flag in $CFLAGS; do
         case $ac_flag in
-         -gdwarf*)    wine_crossdebug=dwarf ;;
-         -gcodeview)  wine_crossdebug=pdb ;;
-         -g)          wine_crossdebug=${wine_crossdebug:-dwarf} ;;
+         -gdwarf*)    as_fn_append wine_crossdebug " dwarf" ;;
+         -gcodeview)  as_fn_append wine_crossdebug " pdb" ;;
+         -g)          ac_g_flag_seen=$ac_flag ;;
         esac
       done
+      if test -n "$ac_g_flag_seen" -a -z "$wine_crossdebug"
+      then
+        wine_crossdebug=dwarf
+      fi
     fi
 
     ac_debug_format_seen=""
@@ -9315,8 +9320,10 @@ fi } ;;
     done
     if test "x$ac_debug_format_seen" = x
     then
-      case $wine_crossdebug in
-        *dwarf)                   { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wl,-debug:dwarf" | sed "$as_sed_sh"`
+      for wine_debug_format in $wine_crossdebug
+      do
+        case $wine_debug_format in
+          *dwarf)                     { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wl,-debug:dwarf" | sed "$as_sed_sh"`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wl,-debug:dwarf" >&5
 printf %s "checking whether $CC supports -Wl,-debug:dwarf... " >&6; }
 if eval test \${$as_ac_var+y}
@@ -9355,9 +9362,9 @@ printf "%s\n" "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
   as_fn_append ${wine_arch}_LDFLAGS " -Wl,-debug:dwarf"
-                                                        CFLAGS="$CFLAGS -Wl,-debug:dwarf"
+                                                          CFLAGS="$CFLAGS -Wl,-debug:dwarf"
 fi }
-                 { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-gdwarf-4" | sed "$as_sed_sh"`
+                   { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-gdwarf-4" | sed "$as_sed_sh"`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -gdwarf-4" >&5
 printf %s "checking whether $CC supports -gdwarf-4... " >&6; }
 if eval test \${$as_ac_var+y}
@@ -9397,7 +9404,7 @@ if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
   as_fn_append ${wine_arch}_EXTRACFLAGS " -gdwarf-4"
 fi } ;;
-        pdb)     { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-gcodeview" | sed "$as_sed_sh"`
+          pdb)     { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-gcodeview" | sed "$as_sed_sh"`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -gcodeview" >&5
 printf %s "checking whether $CC supports -gcodeview... " >&6; }
 if eval test \${$as_ac_var+y}
@@ -9437,7 +9444,8 @@ if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
   as_fn_append ${wine_arch}_EXTRACFLAGS " -gcodeview"
 fi } ;;
-      esac
+        esac
+      done
     fi
     eval "${wine_arch}_DEBUG=\$wine_crossdebug"
 
