@@ -12173,7 +12173,6 @@ static void test_default_content_charset(void)
 
             bstr = SysAllocString(L"wineTestProp");
             hres = IHTMLDocument2_GetIDsOfNames(doc, &IID_NULL, &bstr, 1, 0, &dispid);
-            todo_wine_if((doc_charset == utf8 || doc_charset == utf16) && rsrc_charset == utf16)
             ok(hres == S_OK, "[%s:%s] GetIDsOfNames(wineTestProp) returned: %08lx\n", charsets[doc_charset], charsets[rsrc_charset], hres);
             SysFreeString(bstr);
 

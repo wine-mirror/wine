@@ -963,6 +963,7 @@ typedef struct {
 
 static HRESULT get_binding_text(ScriptBSC *bsc, WCHAR **ret)
 {
+    binding_bom_t bom;
     UINT cp = CP_UTF8;
     WCHAR *text;
 
@@ -975,7 +976,17 @@ static HRESULT get_binding_text(ScriptBSC *bsc, WCHAR **ret)
         return S_OK;
     }
 
-    switch(bsc->bsc.bom) {
+    bom = bsc->bsc.bom;
+    if(bom == BOM_NONE) {
+        /* FIXME: Try to use charset from HTTP headers first */
+
+        /* IE guesses the encoding here using heuristics. Since valid script must start with an
+         * ASCII char (keyword, comment slash, string literal char, etc) that should be enough. */
+        if(bsc->bsc.read > sizeof(WCHAR) && *(WCHAR*)bsc->buf < 128)
+            bom = BOM_UTF16;
+    }
+
+    switch(bom) {
     case BOM_UTF16:
         if(bsc->bsc.read % sizeof(WCHAR)) {
             FIXME("The buffer is not a valid utf16 string\n");
