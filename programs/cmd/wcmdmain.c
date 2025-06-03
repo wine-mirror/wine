@@ -3398,7 +3398,8 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
           /* See if 1>, 2> etc, in which case we have some patching up
              to do (provided there's a preceding whitespace, and enough
              chars read so far) */
-          if (curPos[-1] >= L'1' && curPos[-1] <= L'9' && (curStringLen == 1 || iswspace(curPos[-2])))
+          if (curStringLen && curPos[-1] >= L'1' && curPos[-1] <= L'9' &&
+              (curStringLen == 1 || iswspace(curPos[-2])))
           {
               curStringLen--;
               curString[curStringLen] = L'\0';
