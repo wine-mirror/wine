@@ -1292,7 +1292,7 @@ static pthreadlocinfo create_locinfo(int category,
     char buf[256];
     BOOL sname_match;
     wchar_t wbuf[256], map_buf[256];
-    int i;
+    int i, ret;
 
     TRACE("(%d %s)\n", category, locale);
 
@@ -1514,9 +1514,13 @@ static pthreadlocinfo create_locinfo(int category,
 
         MultiByteToWideChar(locinfo->lc_codepage, 0, buf, 256, wbuf, 256);
         LCMapStringW(LOCALE_INVARIANT, LCMAP_LOWERCASE, wbuf, 256, map_buf, 256);
-        WideCharToMultiByte(locinfo->lc_codepage, 0, map_buf, 256, (char *)locinfo->pclmap, 256, NULL, NULL);
+        if ((ret = WideCharToMultiByte(locinfo->lc_codepage, 0, map_buf, 256,
+                (char *)locinfo->pclmap, 256, NULL, NULL)) != 256)
+            FIXME("WideCharToMultiByte failed, ret %d, error %lu.\n", ret, GetLastError());
         LCMapStringW(LOCALE_INVARIANT, LCMAP_UPPERCASE, wbuf, 256, map_buf, 256);
-        WideCharToMultiByte(locinfo->lc_codepage, 0, map_buf, 256, (char *)locinfo->pcumap, 256, NULL, NULL);
+        if ((ret = WideCharToMultiByte(locinfo->lc_codepage, 0, map_buf, 256,
+                (char *)locinfo->pcumap, 256, NULL, NULL)) != 256)
+            FIXME("WideCharToMultiByte failed, ret %d, error %lu.\n", ret, GetLastError());
     } else {
         locinfo->lc_clike = 1;
         locinfo->mb_cur_max = 1;
