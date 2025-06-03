@@ -1145,6 +1145,18 @@ static UINT make_contract_value( const type_t *type, BYTE *buf )
     return len;
 }
 
+static UINT make_version_value( const type_t *type, BYTE *buf )
+{
+    UINT version = get_attrv( type->attrs, ATTR_VERSION );
+
+    buf[0] = 1;
+    buf[1] = 0;
+    buf[2] = is_attr( type->attrs, ATTR_VERSION ) ? 0 : 1;
+    buf[3] = 0;
+    memcpy( buf + 4, &version, sizeof(version) );
+    return 8;
+}
+
 static void add_contract_attr_step1( type_t *type )
 {
     UINT assemblyref, scope, typeref, typeref_type, class, sig_size;
@@ -1176,6 +1188,34 @@ static void add_contract_attr_step2( type_t *type )
     parent = has_customattribute( TABLE_TYPEDEF, type->md.def );
     attr_type = customattribute_type( TABLE_MEMBERREF, type->md.member[MD_ATTR_CONTRACT] );
     value_size = make_contract_value( type, value );
+    add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
+}
+
+static void add_version_attr_step1( type_t *type )
+{
+    static const BYTE sig[] = { SIG_TYPE_HASTHIS, 1, ELEMENT_TYPE_VOID, ELEMENT_TYPE_U4 };
+    UINT assemblyref, scope, typeref, class;
+
+    if (!is_attr( type->attrs, ATTR_VERSION ) && is_attr( type->attrs, ATTR_CONTRACT )) return;
+
+    assemblyref = add_assemblyref_row( 0x200, 0, add_string("Windows.Foundation") );
+    scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+
+    typeref = add_typeref_row( scope, add_string("VersionAttribute"), add_string("Windows.Foundation.Metadata") );
+    class = memberref_parent( TABLE_TYPEREF, typeref );
+    type->md.member[MD_ATTR_VERSION] = add_memberref_row( class, add_string(".ctor"), add_blob(sig, sizeof(sig)) );
+}
+
+static void add_version_attr_step2( type_t *type )
+{
+    UINT parent, attr_type, value_size;
+    BYTE value[8];
+
+    if (!is_attr( type->attrs, ATTR_VERSION ) && is_attr( type->attrs, ATTR_CONTRACT )) return;
+
+    parent = has_customattribute( TABLE_TYPEDEF, type->md.def );
+    attr_type = customattribute_type( TABLE_MEMBERREF, type->md.member[MD_ATTR_VERSION] );
+    value_size = make_version_value( type, value );
     add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
 }
 
@@ -1215,6 +1255,7 @@ static void add_enum_type_step1( type_t *type )
     type->md.extends = typedef_or_ref( TABLE_TYPEREF, typeref );
     type->md.ref = add_typeref_row( resolution_scope(TABLE_MODULE, MODULE_ROW), name, namespace );
 
+    add_version_attr_step1( type );
     add_contract_attr_step1( type );
     add_flags_attr_step1( type );
 }
@@ -1248,6 +1289,7 @@ static void add_enum_type_step2( type_t *type )
         add_constant_row( sig_value[1], parent, add_blob((const BYTE *)&val, sizeof(val)) );
     }
 
+    add_version_attr_step2( type );
     add_contract_attr_step2( type );
     add_flags_attr_step2( type );
 }
