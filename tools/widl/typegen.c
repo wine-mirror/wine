@@ -5031,12 +5031,20 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
         fprintf(file, "\n");
 }
 
+static void init_param_struct_declspec( decl_spec_t *dst, const decl_spec_t *src )
+{
+    *dst = *src;
+
+    if (!is_ptr( dst->type ) || type_is_alias( dst->type ))
+        dst->qualifier = 0;
+}
 
 void write_func_param_struct( FILE *file, const type_t *iface, const type_t *func,
                               const char *var_decl, int add_retval )
 {
     var_t *retval = type_function_get_retval( func );
     const var_list_t *args = type_function_get_args( func );
+    decl_spec_t declspec;
     const var_t *arg;
     int needs_packing;
     unsigned int align = 0;
@@ -5055,7 +5063,8 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
     if (args) LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
     {
         print_file(file, 2, "%s", "");
-        write_type_left( file, &arg->declspec, NAME_DEFAULT, false, TRUE );
+        init_param_struct_declspec( &declspec, &arg->declspec );
+        write_type_left( file, &declspec, NAME_DEFAULT, false, TRUE );
         if (needs_space_after( arg->declspec.type )) fputc( ' ', file );
         if (is_array( arg->declspec.type ) && !type_array_is_decl_as_ptr( arg->declspec.type )) fputc( '*', file );
 
@@ -5071,7 +5080,8 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
     if (add_retval && !is_void( retval->declspec.type ))
     {
         print_file(file, 2, "%s", "");
-        write_type_left( file, &retval->declspec, NAME_DEFAULT, false, TRUE );
+        init_param_struct_declspec( &declspec, &retval->declspec );
+        write_type_left( file, &declspec, NAME_DEFAULT, false, TRUE );
         if (needs_space_after( retval->declspec.type )) fputc( ' ', file );
         if (!is_array( retval->declspec.type ) && !is_ptr( retval->declspec.type ) &&
             type_memsize( retval->declspec.type ) != pointer_size)
