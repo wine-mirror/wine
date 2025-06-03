@@ -140,7 +140,7 @@ static const char* app_loader_template =
 ;
 
 static const char *output_file_name;
-static const char *output_debug_file;
+static struct strarray output_debug_files;
 static const char *output_implib;
 static const char *output;
 static int keep_generated = 0;
@@ -207,9 +207,11 @@ static struct strarray delayimports;
 
 static void cleanup_output_files(void)
 {
+    unsigned int i;
     if (output_file_name) unlink( output_file_name );
-    if (output_debug_file) unlink( output_debug_file );
     if (output_implib) unlink( output_implib );
+    for (i = 0; i < output_debug_files.count; i++)
+        unlink( output_debug_files.str[i] );
 }
 
 static void clean_temp_files(void)
@@ -499,6 +501,7 @@ static struct strarray get_link_args( const char *output_name )
 {
     struct strarray link_args = get_translator();
     struct strarray flags = empty_strarray;
+    unsigned int i;
 
     strarray_addall( &link_args, linker_args );
 
@@ -562,8 +565,11 @@ static struct strarray get_link_args( const char *output_name )
         if (entry_point)
             strarray_add( &flags, strmake( "-Wl,--entry,%s%s", target.cpu == CPU_i386 ? "_" : "", entry_point ));
 
-        if (output_debug_file && strendswith(output_debug_file, ".pdb"))
-            strarray_add(&link_args, strmake("-Wl,--pdb=%s", output_debug_file));
+        for (i = 0; i < output_debug_files.count; i++)
+        {
+            if (!strendswith(output_debug_files.str[i], ".pdb")) continue;
+            strarray_add(&link_args, strmake("-Wl,--pdb=%s", output_debug_files.str[i]));
+        }
 
         if (use_build_id)
             strarray_add( &link_args, "-Wl,--build-id");
@@ -604,15 +610,20 @@ static struct strarray get_link_args( const char *output_name )
         else
             strarray_add( &flags, strmake("-Wl,-subsystem:%s", is_gui_app ? "windows" : "console" ));
 
-        if (output_debug_file && strendswith(output_debug_file, ".pdb"))
+        for (i = 0; i < output_debug_files.count; i++)
         {
-            strarray_add(&link_args, "-Wl,-debug");
-            strarray_add(&link_args, strmake("-Wl,-pdb:%s", output_debug_file));
+            if (strendswith(output_debug_files.str[i], ".pdb"))
+            {
+                strarray_add(&link_args, "-Wl,-debug");
+                strarray_add(&link_args, strmake("-Wl,-pdb:%s", output_debug_files.str[i]));
+            }
+            else strarray_add( &link_args, "-Wl,-debug:dwarf" );
         }
-        else if (strip)
+
+        if (strip)
             strarray_add( &link_args, "-s" );
-        else
-            strarray_add(&link_args, "-Wl,-debug:dwarf");
+        else if (!output_debug_files.count)
+            strarray_add( &link_args, "-Wl,-debug:dwarf" );
 
         if (use_build_id)
             strarray_add( &link_args, "-Wl,-build-id");
@@ -1459,15 +1470,18 @@ static void build(struct strarray input_files, const char *output)
 
     spawn(link_args, 0);
 
-    if (output_debug_file && !strendswith(output_debug_file, ".pdb"))
+    for (i = 0; i < output_debug_files.count; i++)
     {
-        struct strarray tool, objcopy = build_tool_name(target_alias, tool_objcopy);
+        struct strarray tool, objcopy;
+
+        if (strendswith(output_debug_files.str[i], ".pdb")) continue;
+        objcopy = build_tool_name(target_alias, tool_objcopy);
 
         tool = empty_strarray;
         strarray_addall( &tool, objcopy );
         strarray_add(&tool, "--only-keep-debug");
         strarray_add(&tool, output_file_name);
-        strarray_add(&tool, output_debug_file);
+        strarray_add(&tool, output_debug_files.str[i]);
         spawn(tool, 1);
 
         tool = empty_strarray;
@@ -1479,7 +1493,7 @@ static void build(struct strarray input_files, const char *output)
         tool = empty_strarray;
         strarray_addall( &tool, objcopy );
         strarray_add(&tool, "--add-gnu-debuglink");
-        strarray_add(&tool, output_debug_file);
+        strarray_add(&tool, output_debug_files.str[i]);
         strarray_add(&tool, output_file_name);
         spawn(tool, 0);
     }
@@ -1930,7 +1944,7 @@ int main(int argc, char **argv)
                             }
                             if (!strcmp(Wl.str[j], "--debug-file") && j < Wl.count - 1)
                             {
-                                output_debug_file = xstrdup( Wl.str[++j] );
+                                strarray_add( &output_debug_files, xstrdup( Wl.str[++j] ));
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "--whole-archive") ||
@@ -2068,7 +2082,7 @@ int main(int argc, char **argv)
     else compile(file_args, output, compile_only);
 
     output_file_name = NULL;
-    output_debug_file = NULL;
+    output_debug_files.count = 0;
     output_implib = NULL;
     return 0;
 }
