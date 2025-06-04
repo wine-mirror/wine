@@ -462,7 +462,7 @@ static BOOL egl_init( const struct opengl_driver_funcs **driver_funcs )
     if (!(funcs->egl_handle = dlopen( SONAME_LIBEGL, RTLD_NOW | RTLD_GLOBAL )))
     {
         ERR( "Failed to load %s: %s\n", SONAME_LIBEGL, dlerror() );
-        goto failed;
+        return FALSE;
     }
 
 #define LOAD_FUNCPTR( name )                                    \
