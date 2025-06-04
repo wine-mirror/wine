@@ -1506,7 +1506,12 @@ static pthreadlocinfo create_locinfo(int category,
                 locinfo->ctype1[j+1] |= _LEADBYTE;
 
         for(i=0; i<256; i++) {
-            if(locinfo->pctype[i] & _LEADBYTE)
+            if (locinfo->lc_codepage == CP_UTF8)
+            {
+                buf[i] = (i >= 0x80) ? ' ' : i;
+                if (i >= 0x80) locinfo->ctype1[i+1] = (i >= 0xc2 && i <= 0xf4) ? _LEADBYTE : 0;
+            }
+            else if(locinfo->pctype[i] & _LEADBYTE)
                 buf[i] = ' ';
             else
                 buf[i] = i;

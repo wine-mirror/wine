@@ -232,6 +232,7 @@ static void test_utf8(const char *argv0)
     intptr_t hfind, hproc;
     WCHAR bufW[256], *pW;
     struct _stat64 stat;
+    unsigned int i;
     FILE *f;
     int ret;
 
@@ -239,6 +240,24 @@ static void test_utf8(const char *argv0)
     {
         win_skip("utf-8 tests\n");
         return;
+    }
+
+    for (i = 128; i < 256; ++i)
+    {
+        unsigned int v;
+
+        winetest_push_context("%#x", i);
+        v = tolower(i);
+        ok(i == v, "got %#x.\n", v);
+        v = toupper(i);
+        ok(i == v, "got %#x.\n", v);
+
+        v = _isctype(i, ~0u);
+        if (i >= 0xc2 && i <= 0xf4)
+            ok(v == _LEADBYTE, "got %#x.\n", v);
+        else
+            ok(!v, "got %#x.\n", v);
+        winetest_pop_context();
     }
 
     ret = _mkdir(dir);
