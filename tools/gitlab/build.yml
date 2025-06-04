@@ -54,7 +54,7 @@ build-clang:
 
 build-mac:
   extends: .wine-build
-  image: winehq-sonoma-pristine
+  image: winehq-sequoia-pristine
   variables:
     TART_EXECUTOR_SSH_USERNAME: "gitlab"
     TART_EXECUTOR_SSH_PASSWORD: "gitlab"
