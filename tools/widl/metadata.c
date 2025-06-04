@@ -1334,6 +1334,29 @@ static void add_contractversion_attr_step2( type_t *type )
     add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
 }
 
+static void add_apicontract_attr_step1( type_t *type )
+{
+    static const BYTE sig[] = { SIG_TYPE_HASTHIS, 0, ELEMENT_TYPE_VOID };
+    UINT assemblyref, scope, typeref, class;
+
+    assemblyref = add_assemblyref_row( 0x200, 0, add_string("Windows.Foundation") );
+    scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+    typeref = add_typeref_row( scope, add_string("ApiContractAttribute"), add_string("Windows.Foundation.Metadata") );
+
+    class = memberref_parent( TABLE_TYPEREF, typeref );
+    type->md.member[MD_ATTR_APICONTRACT] = add_memberref_row( class, add_string(".ctor"), add_blob(sig, sizeof(sig)) );
+}
+
+static void add_apicontract_attr_step2( type_t *type )
+{
+    static const BYTE value[] = { 0x01, 0x00, 0x00, 0x00 };
+    UINT parent, attr_type;
+
+    parent = has_customattribute( TABLE_TYPEDEF, type->md.def );
+    attr_type = customattribute_type( TABLE_MEMBERREF, type->md.member[MD_ATTR_APICONTRACT] );
+    add_customattribute_row( parent, attr_type, add_blob(value, sizeof(value)) );
+}
+
 static void add_apicontract_type_step1( type_t *type )
 {
     UINT name, namespace, scope, typeref;
@@ -1346,6 +1369,7 @@ static void add_apicontract_type_step1( type_t *type )
     type->md.ref = add_typeref_row( resolution_scope(TABLE_MODULE, MODULE_ROW), name, namespace );
 
     add_contractversion_attr_step1( type );
+    add_apicontract_attr_step1( type );
 }
 
 static void add_apicontract_type_step2( type_t *type )
@@ -1357,6 +1381,7 @@ static void add_apicontract_type_step2( type_t *type )
     type->md.def = add_typedef_row( flags, name, namespace, type->md.extends, 0, 1 );
 
     add_contractversion_attr_step2( type );
+    add_apicontract_attr_step2( type );
 }
 
 static void build_tables( const statement_list_t *stmt_list )
