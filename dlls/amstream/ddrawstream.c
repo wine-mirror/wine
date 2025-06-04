@@ -2356,6 +2356,30 @@ static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDraw
     {
         object->surface = surface;
         IDirectDrawSurface_AddRef(surface);
+
+        desc.dwSize = sizeof(desc);
+        if (FAILED(hr = IDirectDrawSurface_GetSurfaceDesc(object->surface, &desc)))
+        {
+            IDirectDrawStreamSample_Release(&object->IDirectDrawStreamSample_iface);
+            return hr;
+        }
+
+        if (rect)
+        {
+            object->rect = *rect;
+            desc.dwWidth = rect->right - rect->left;
+            desc.dwHeight = rect->bottom - rect->top;
+        }
+        else
+        {
+            SetRect(&object->rect, 0, 0, desc.dwWidth, desc.dwHeight);
+        }
+
+        if (FAILED(hr = IDirectDrawMediaStream_SetFormat(&parent->IDirectDrawMediaStream_iface, &desc, NULL)))
+        {
+            IDirectDrawStreamSample_Release(&object->IDirectDrawStreamSample_iface);
+            return hr;
+        }
     }
     else
     {
@@ -2397,32 +2421,6 @@ static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDraw
             IDirectDrawStreamSample_Release(&object->IDirectDrawStreamSample_iface);
             return hr;
         }
-    }
-
-    desc.dwSize = sizeof(desc);
-    hr = IDirectDrawSurface_GetSurfaceDesc(object->surface, &desc);
-    if (FAILED(hr))
-    {
-        IDirectDrawStreamSample_Release(&object->IDirectDrawStreamSample_iface);
-        return hr;
-    }
-
-    if (rect)
-    {
-        object->rect = *rect;
-        desc.dwWidth = rect->right - rect->left;
-        desc.dwHeight = rect->bottom - rect->top;
-    }
-    else
-    {
-        SetRect(&object->rect, 0, 0, desc.dwWidth, desc.dwHeight);
-    }
-
-    hr = IDirectDrawMediaStream_SetFormat(&parent->IDirectDrawMediaStream_iface, &desc, NULL);
-    if (FAILED(hr))
-    {
-        IDirectDrawStreamSample_Release(&object->IDirectDrawStreamSample_iface);
-        return hr;
     }
 
     *ddraw_stream_sample = &object->IDirectDrawStreamSample_iface;
