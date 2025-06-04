@@ -410,10 +410,17 @@ void write_type_right( FILE *h, type_t *type, bool is_field )
     case TYPE_FUNCTION:
     {
         const var_list_t *args = type_function_get_args( type );
+        const var_t *arg;
+
         fputc( '(', h );
-        if (args) write_args( h, args, NULL, 0, false, NAME_DEFAULT );
-        else fprintf( h, "void" );
+        if (!args) fprintf( h, "void" );
+        else LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
+        {
+            write_type_v( h, &arg->declspec, false, arg->name, NAME_DEFAULT );
+            if (arg->entry.next != args) fprintf( h, "," );
+        }
         fputc( ')', h );
+
         write_type_right( h, type_function_get_rettype( type ), false );
         break;
     }
