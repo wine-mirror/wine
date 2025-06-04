@@ -1,7 +1,8 @@
 /*
  * AVI decompressor filter unit tests
  *
- * Copyright 2018 Zebediah Figura
+ * Copyright 2018-2021 Elizabeth Figura
+ * Copyright 2025 Elizabeth Figura for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1047,6 +1048,145 @@ static void test_sink_allocator(IMemInputPin *input)
     IMemAllocator_Release(ret_allocator);
 }
 
+static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
+        IPin *sink, IPin *source, struct testfilter *testsource, struct testfilter *testsink)
+{
+    ALLOCATOR_PROPERTIES props, req_props = {2, 30000, 32, 0};
+    IMemAllocator *allocator;
+    IMediaSample *sample;
+    HRESULT hr;
+
+    VIDEOINFOHEADER sink_format =
+    {
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biCompression = test_handler,
+        .bmiHeader.biWidth = 29,
+        .bmiHeader.biHeight = -24,
+        .bmiHeader.biBitCount = 16,
+    };
+    AM_MEDIA_TYPE sink_mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .subtype = test_subtype,
+        .formattype = FORMAT_VideoInfo,
+        .lSampleSize = 888,
+        .cbFormat = sizeof(sink_format),
+        .pbFormat = (BYTE *)&sink_format,
+    };
+
+    VIDEOINFOHEADER source_format =
+    {
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biCompression = mmioFOURCC('I','4','2','0'),
+        .bmiHeader.biWidth = 29,
+        .bmiHeader.biHeight = -24,
+        .bmiHeader.biBitCount = 12,
+        .bmiHeader.biPlanes = 1,
+        .bmiHeader.biSizeImage = 123,
+    };
+    AM_MEDIA_TYPE source_mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .subtype = MEDIASUBTYPE_I420,
+        .formattype = FORMAT_VideoInfo,
+        .bFixedSizeSamples = TRUE,
+        .lSampleSize = 999,
+        .cbFormat = sizeof(source_format),
+        .pbFormat = (BYTE *)&source_format,
+    };
+
+    hr = IFilterGraph2_ConnectDirect(graph, &testsource->source.pin.IPin_iface, sink, &sink_mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &source_mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ok(!!testsink->sink.pAllocator, "Expected an allocator.\n");
+    hr = IMemAllocator_GetProperties(testsink->sink.pAllocator, &props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(props.cBuffers == 1, "Got %ld buffers.\n", props.cBuffers);
+    todo_wine ok(props.cbBuffer == 999, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
+    ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
+
+    hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, 0);
+    ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#lx.\n", hr);
+
+    sink_bitmap_info = sink_format.bmiHeader;
+    source_bitmap_info = source_format.bmiHeader;
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+        IMediaSample_Release(sample);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, 0);
+    ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#lx.\n", hr);
+
+    IFilterGraph2_Disconnect(graph, source);
+    IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
+
+    /* Evidently setting bFixedSizeSamples to FALSE means the AVI decompressor
+     * won't set a sample size at all. The AVI decompressor will never propose
+     * a media type with bFixedSizeSamples set to FALSE, and conceptually isn't
+     * supposed to handle that case, but it won't reject it either. Presumably
+     * it then expects the downstream filter to be the one setting up the
+     * allocator. Not that this is documented or normal behaviour, of course. */
+    source_mt.bFixedSizeSamples = FALSE;
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &source_mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ok(!!testsink->sink.pAllocator, "Expected an allocator.\n");
+    hr = IMemAllocator_GetProperties(testsink->sink.pAllocator, &props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(props.cBuffers == 1, "Got %ld buffers.\n", props.cBuffers);
+    todo_wine ok(!props.cbBuffer, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
+    ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
+
+    hr = IMediaControl_Pause(control);
+    todo_wine ok(hr == VFW_E_SIZENOTSET, "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IMediaControl_Stop(control);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    }
+
+    IFilterGraph2_Disconnect(graph, source);
+    IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
+    source_mt.bFixedSizeSamples = TRUE;
+
+    CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMemAllocator, (void **)&allocator);
+    testsink->sink.pAllocator = allocator;
+
+    hr = IMemAllocator_SetProperties(allocator, &req_props, &props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &source_mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ok(testsink->sink.pAllocator == allocator, "Expected an allocator.\n");
+    hr = IMemAllocator_GetProperties(testsink->sink.pAllocator, &props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(props.cBuffers == 1, "Got %ld buffers.\n", props.cBuffers);
+    todo_wine ok(props.cbBuffer == 999, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
+    ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
+
+    IFilterGraph2_Disconnect(graph, source);
+    IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
+
+    IFilterGraph2_Disconnect(graph, sink);
+    IFilterGraph2_Disconnect(graph, &testsource->source.pin.IPin_iface);
+}
+
 static void test_sample_processing(IMediaControl *control, IMemInputPin *input, struct testfilter *sink)
 {
     REFERENCE_TIME start, stop;
@@ -1287,6 +1427,8 @@ static void test_connect_pin(void)
     IBaseFilter_FindPin(filter, L"Out", &source);
     IPin_QueryInterface(sink, &IID_IMemInputPin, (void **)&meminput);
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+
+    test_source_allocator(graph, control, sink, source, &testsource, &testsink);
 
     /* Test sink connection. */
 
