@@ -1294,6 +1294,27 @@ static void add_enum_type_step2( type_t *type )
     add_flags_attr_step2( type );
 }
 
+static void add_apicontract_type_step1( type_t *type )
+{
+    UINT name, namespace, scope, typeref;
+
+    name = add_name( type, &namespace );
+
+    scope = resolution_scope( TABLE_ASSEMBLYREF, MSCORLIB_ROW );
+    typeref = add_typeref_row( scope, add_string("ValueType"), add_string("System") );
+    type->md.extends = typedef_or_ref( TABLE_TYPEREF, typeref );
+    type->md.ref = add_typeref_row( resolution_scope(TABLE_MODULE, MODULE_ROW), name, namespace );
+}
+
+static void add_apicontract_type_step2( type_t *type )
+{
+    UINT name, namespace, flags = TYPE_ATTR_PUBLIC | TYPE_ATTR_SEQUENTIALLAYOUT | TYPE_ATTR_SEALED | TYPE_ATTR_UNKNOWN;
+
+    name = add_name( type, &namespace );
+
+    type->md.def = add_typedef_row( flags, name, namespace, type->md.extends, 0, 1 );
+}
+
 static void build_tables( const statement_list_t *stmt_list )
 {
     const statement_t *stmt;
@@ -1312,6 +1333,9 @@ static void build_tables( const statement_list_t *stmt_list )
         case TYPE_ENUM:
             add_enum_type_step1( type );
             break;
+        case TYPE_APICONTRACT:
+            add_apicontract_type_step1( type );
+            break;
         default:
             fprintf( stderr, "Unhandled type %u name '%s'.\n", type->type_type, type->name );
             break;
@@ -1328,6 +1352,9 @@ static void build_tables( const statement_list_t *stmt_list )
         {
         case TYPE_ENUM:
             add_enum_type_step2( type );
+            break;
+        case TYPE_APICONTRACT:
+            add_apicontract_type_step2( type );
             break;
         default:
             break;
