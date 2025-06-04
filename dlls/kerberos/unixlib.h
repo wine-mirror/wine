@@ -108,8 +108,8 @@ struct unseal_message_params
     UINT64 context;
     BYTE *stream;
     ULONG stream_length;
-    BYTE *data;
-    ULONG data_length;
+    BYTE **data;
+    ULONG *data_length;
     BYTE *token;
     ULONG token_length;
     ULONG *qop;

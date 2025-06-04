@@ -976,7 +976,7 @@ static NTSTATUS seal_message( void *args )
     return seal_message_no_vector( ctx, params );
 }
 
-static NTSTATUS unseal_message_vector( gss_ctx_id_t ctx, const struct unseal_message_params *params )
+static NTSTATUS unseal_message_vector( gss_ctx_id_t ctx, struct unseal_message_params *params )
 {
     gss_iov_buffer_desc iov[4];
     OM_uint32 ret, minor_status;
@@ -986,9 +986,7 @@ static NTSTATUS unseal_message_vector( gss_ctx_id_t ctx, const struct unseal_mes
     {
         iov[0].type          = GSS_IOV_BUFFER_TYPE_STREAM;
         iov[0].buffer.length = params->stream_length;
-        iov[0].buffer.value  = malloc( params->stream_length );
-        if (!iov[0].buffer.value) return STATUS_NO_MEMORY;
-        memcpy( iov[0].buffer.value, params->stream, params->stream_length );
+        iov[0].buffer.value  = params->stream;
 
         iov[1].type          = GSS_IOV_BUFFER_TYPE_DATA;
         iov[1].buffer.length = 0;
@@ -999,17 +997,12 @@ static NTSTATUS unseal_message_vector( gss_ctx_id_t ctx, const struct unseal_mes
         if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
         if (ret == GSS_S_COMPLETE)
         {
-            if (params->data_length < iov[1].buffer.length)
-            {
-                free( iov[0].buffer.value );
-                return SEC_E_BUFFER_TOO_SMALL;
-            }
+            *params->data = iov[1].buffer.value;
+            *params->data_length = iov[1].buffer.length;
 
-            memcpy( params->data, iov[1].buffer.value, iov[1].buffer.length );
             if (params->qop)
                 *params->qop = conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT;
         }
-        free( iov[0].buffer.value );
         return status_gss_to_sspi( ret );
     }
 
@@ -1018,8 +1011,8 @@ static NTSTATUS unseal_message_vector( gss_ctx_id_t ctx, const struct unseal_mes
     iov[0].buffer.value  = NULL;
 
     iov[1].type          = GSS_IOV_BUFFER_TYPE_DATA;
-    iov[1].buffer.length = params->data_length;
-    iov[1].buffer.value  = params->data;
+    iov[1].buffer.length = *params->data_length;
+    iov[1].buffer.value  = *params->data;
 
     iov[2].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
     iov[2].buffer.length = 0;
@@ -1052,14 +1045,10 @@ static NTSTATUS unseal_message_no_vector( gss_ctx_id_t ctx, const struct unseal_
     }
     else
     {
-        DWORD len_data, len_token;
-
-        len_data = params->data_length;
-        len_token = params->token_length;
-        input.length = len_data + len_token;
+        input.length = *params->data_length + params->token_length;
         if (!(input.value = malloc( input.length ))) return STATUS_NO_MEMORY;
-        memcpy( input.value, params->data, len_data );
-        memcpy( (char *)input.value + len_data, params->token, len_token );
+        memcpy( input.value, *params->data, *params->data_length );
+        memcpy( (char *)input.value + *params->data_length, params->token, params->token_length );
     }
 
     ret = pgss_unwrap( &minor_status, ctx, &input, &output, &conf_state, NULL );
@@ -1069,7 +1058,13 @@ static NTSTATUS unseal_message_no_vector( gss_ctx_id_t ctx, const struct unseal_
     if (ret == GSS_S_COMPLETE)
     {
         if (params->qop) *params->qop = (conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT);
-        memcpy( params->data, output.value, output.length );
+        if (params->stream_length)
+        {
+            memcpy( params->stream, output.value, output.length );
+            *params->data = params->stream;
+            *params->data_length = output.length;
+        }
+        else memcpy( *params->data, output.value, output.length );
         pgss_release_buffer( &minor_status, &output );
     }
 
@@ -1396,7 +1391,7 @@ static NTSTATUS wow64_unseal_message( void *args )
         PTR32 stream;
         ULONG stream_length;
         PTR32 data;
-        ULONG data_length;
+        PTR32 data_length;
         PTR32 token;
         ULONG token_length;
         PTR32 qop;
@@ -1407,7 +1402,7 @@ static NTSTATUS wow64_unseal_message( void *args )
         ULongToPtr(params32->stream),
         params32->stream_length,
         ULongToPtr(params32->data),
-        params32->data_length,
+        ULongToPtr(params32->data_length),
         ULongToPtr(params32->token),
         params32->token_length,
         ULongToPtr(params32->qop),
