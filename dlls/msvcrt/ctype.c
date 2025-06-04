@@ -541,9 +541,9 @@ int CDECL _tolower_l(int c, _locale_t locale)
 
     if((unsigned)c < 256)
     {
-        if(locinfo->pctype[c] & _LEADBYTE)
-            return c;
-        return locinfo->pclmap[c];
+        if(locinfo->pctype[c] & _UPPER)
+            return locinfo->pclmap[c];
+        return c;
     }
 
     if(locinfo->pctype[(c>>8)&255] & _LEADBYTE)
