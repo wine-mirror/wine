@@ -1294,6 +1294,46 @@ static void add_enum_type_step2( type_t *type )
     add_flags_attr_step2( type );
 }
 
+static UINT make_contractversion_value( const type_t *type, BYTE *buf )
+{
+    UINT version = get_attrv( type->attrs, ATTR_CONTRACTVERSION ), len = 2 + sizeof(version);
+
+    buf[0] = 1;
+    buf[1] = 0;
+    memcpy( buf + 2, &version, sizeof(version) );
+    buf[len++] = 0;
+    buf[len++] = 0;
+    return len;
+}
+
+static void add_contractversion_attr_step1( type_t *type )
+{
+    static const BYTE sig[] = { SIG_TYPE_HASTHIS, 1, ELEMENT_TYPE_VOID, ELEMENT_TYPE_U4 };
+    UINT assemblyref, scope, typeref, class;
+
+    if (!is_attr( type->attrs, ATTR_CONTRACTVERSION )) return;
+
+    assemblyref = add_assemblyref_row( 0x200, 0, add_string("Windows.Foundation") );
+    scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+    typeref = add_typeref_row( scope, add_string("ContractVersionAttribute"), add_string("Windows.Foundation.Metadata") );
+
+    class = memberref_parent( TABLE_TYPEREF, typeref );
+    type->md.member[MD_ATTR_CONTRACTVERSION] = add_memberref_row( class, add_string(".ctor"), add_blob(sig, sizeof(sig)) );
+}
+
+static void add_contractversion_attr_step2( type_t *type )
+{
+    UINT parent, attr_type, value_size;
+    BYTE value[8];
+
+    if (!is_attr( type->attrs, ATTR_CONTRACTVERSION )) return;
+
+    parent = has_customattribute( TABLE_TYPEDEF, type->md.def );
+    attr_type = customattribute_type( TABLE_MEMBERREF, type->md.member[MD_ATTR_CONTRACTVERSION] );
+    value_size = make_contractversion_value( type, value );
+    add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
+}
+
 static void add_apicontract_type_step1( type_t *type )
 {
     UINT name, namespace, scope, typeref;
@@ -1304,6 +1344,8 @@ static void add_apicontract_type_step1( type_t *type )
     typeref = add_typeref_row( scope, add_string("ValueType"), add_string("System") );
     type->md.extends = typedef_or_ref( TABLE_TYPEREF, typeref );
     type->md.ref = add_typeref_row( resolution_scope(TABLE_MODULE, MODULE_ROW), name, namespace );
+
+    add_contractversion_attr_step1( type );
 }
 
 static void add_apicontract_type_step2( type_t *type )
@@ -1313,6 +1355,8 @@ static void add_apicontract_type_step2( type_t *type )
     name = add_name( type, &namespace );
 
     type->md.def = add_typedef_row( flags, name, namespace, type->md.extends, 0, 1 );
+
+    add_contractversion_attr_step2( type );
 }
 
 static void build_tables( const statement_list_t *stmt_list )
