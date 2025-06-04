@@ -68,37 +68,28 @@ int sasl_decode( sasl_conn_t *handle, const char *input, unsigned int inputlen, 
     unsigned int len;
     SecBuffer bufs[2] =
     {
-        { 0, SECBUFFER_DATA, NULL },
-        { conn->trailer_size, SECBUFFER_TOKEN, NULL }
+        { 0, SECBUFFER_STREAM, NULL },
+        { 0, SECBUFFER_DATA, NULL }
     };
     SecBufferDesc buf_desc = { SECBUFFER_VERSION, ARRAYSIZE(bufs), bufs };
     SECURITY_STATUS status;
     int ret;
 
-    if (inputlen < sizeof(len) + conn->trailer_size) return SASL_FAIL;
+    if (inputlen < sizeof(len)) return SASL_FAIL;
     len = ntohl( *(unsigned int *)input );
     if (inputlen < sizeof(len) + len) return SASL_FAIL;
 
     if ((ret = grow_buffer( conn, len )) < 0) return ret;
     memcpy( conn->buf, input + sizeof(len), len );
 
-    bufs[0].cbBuffer = len - conn->trailer_size;
-    if (conn->package_id == RPC_C_AUTHN_GSS_KERBEROS)
-    {
-        bufs[0].pvBuffer = conn->buf;
-        bufs[1].pvBuffer = conn->buf + bufs[0].cbBuffer;
-    }
-    else
-    {
-        bufs[0].pvBuffer = conn->buf + conn->trailer_size;
-        bufs[1].pvBuffer = conn->buf;
-    }
+    bufs[0].pvBuffer = conn->buf;
+    bufs[0].cbBuffer = len;
 
     status = DecryptMessage( &conn->ctxt_handle, &buf_desc, 0, NULL );
     if (status == SEC_E_OK)
     {
-        *output = bufs[0].pvBuffer;
-        *outputlen = bufs[0].cbBuffer;
+        *output = bufs[1].pvBuffer;
+        *outputlen = bufs[1].cbBuffer;
         return SASL_OK;
     }
 
