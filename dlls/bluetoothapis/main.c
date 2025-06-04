@@ -1150,7 +1150,11 @@ DWORD WINAPI BluetoothAuthenticateDeviceEx( HWND parent, HANDLE handle_radio, BL
     {
         ret = GetLastError();
         if (ret == ERROR_IO_PENDING)
-            ret = GetOverlappedResult( handle_radio, &ovl, &bytes, TRUE );
+        {
+            ret = ERROR_SUCCESS;
+            if (!GetOverlappedResult( handle_radio, &ovl, &bytes, TRUE ))
+                ret = GetLastError();
+        }
     }
     CloseHandle( ovl.hEvent );
 
