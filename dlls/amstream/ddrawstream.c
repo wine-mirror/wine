@@ -1456,6 +1456,7 @@ static HRESULT WINAPI ddraw_mem_allocator_Decommit(IMemAllocator *iface)
 
     EnterCriticalSection(&stream->cs);
     stream->committed = false;
+    WakeAllConditionVariable(&stream->allocator_cv);
     /* We have nothing to actually decommit; all of our samples are created by
      * CreateSample(). */
     LeaveCriticalSection(&stream->cs);
@@ -1487,14 +1488,14 @@ static HRESULT WINAPI ddraw_mem_allocator_GetBuffer(IMemAllocator *iface,
 
     EnterCriticalSection(&stream->cs);
 
+    while (stream->committed && !(sample = get_pending_sample(stream)))
+        SleepConditionVariableCS(&stream->allocator_cv, &stream->cs, INFINITE);
+
     if (!stream->committed)
     {
         LeaveCriticalSection(&stream->cs);
         return VFW_E_NOT_COMMITTED;
     }
-
-    while (!(sample = get_pending_sample(stream)))
-        SleepConditionVariableCS(&stream->allocator_cv, &stream->cs, INFINITE);
 
     sample->surface_desc.dwSize = sizeof(DDSURFACEDESC);
     if ((FAILED(hr = IDirectDrawSurface_Lock(sample->surface,
