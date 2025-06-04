@@ -358,6 +358,45 @@ static void wg_format_from_caps_video_cinepak(struct wg_format *format, const Gs
     format->u.video.fps_d = fps_d;
 }
 
+static void wg_format_from_caps_video_indeo(struct wg_format *format, const GstCaps *caps)
+{
+    const GstStructure *structure = gst_caps_get_structure(caps, 0);
+    gint version, width, height, fps_n, fps_d;
+
+    if (!gst_structure_get_int(structure, "indeoversion", &version))
+    {
+        GST_WARNING("Missing \"indeoversion\" value.");
+        return;
+    }
+    if (version != 5)
+    {
+        GST_FIXME("Unknown version %d.", version);
+        return;
+    }
+    if (!gst_structure_get_int(structure, "width", &width))
+    {
+        GST_WARNING("Missing \"width\" value.");
+        return;
+    }
+    if (!gst_structure_get_int(structure, "height", &height))
+    {
+        GST_WARNING("Missing \"height\" value.");
+        return;
+    }
+    if (!gst_structure_get_fraction(structure, "framerate", &fps_n, &fps_d))
+    {
+        fps_n = 0;
+        fps_d = 1;
+    }
+
+    format->major_type = WG_MAJOR_TYPE_VIDEO_INDEO;
+    format->u.video.version = version;
+    format->u.video.width = width;
+    format->u.video.height = height;
+    format->u.video.fps_n = fps_n;
+    format->u.video.fps_d = fps_d;
+}
+
 static void wg_format_from_caps_video_wmv(struct wg_format *format, const GstCaps *caps)
 {
     const GstStructure *structure = gst_caps_get_structure(caps, 0);
@@ -612,6 +651,10 @@ void wg_format_from_caps(struct wg_format *format, const GstCaps *caps)
     else if (!strcmp(name, "video/x-cinepak"))
     {
         wg_format_from_caps_video_cinepak(format, caps);
+    }
+    else if (!strcmp(name, "video/x-indeo"))
+    {
+        wg_format_from_caps_video_indeo(format, caps);
     }
     else if (!strcmp(name, "video/x-wmv"))
     {
@@ -1094,7 +1137,6 @@ bool wg_format_compare(const struct wg_format *a, const struct wg_format *b)
         case WG_MAJOR_TYPE_AUDIO_MPEG4:
         case WG_MAJOR_TYPE_AUDIO_WMA:
         case WG_MAJOR_TYPE_VIDEO_H264:
-        case WG_MAJOR_TYPE_VIDEO_INDEO:
         case WG_MAJOR_TYPE_VIDEO_MPEG1:
             GST_FIXME("Format %u not implemented!", a->major_type);
             /* fallthrough */
@@ -1116,6 +1158,12 @@ bool wg_format_compare(const struct wg_format *a, const struct wg_format *b)
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
             /* Do not compare FPS. */
             return a->u.video.width == b->u.video.width
+                    && a->u.video.height == b->u.video.height;
+
+        case WG_MAJOR_TYPE_VIDEO_INDEO:
+            /* Do not compare FPS. */
+            return a->u.video.version == b->u.video.version
+                    && a->u.video.width == b->u.video.width
                     && a->u.video.height == b->u.video.height;
 
         case WG_MAJOR_TYPE_VIDEO_WMV:

@@ -37,6 +37,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 static const GUID MEDIASUBTYPE_CVID = {mmioFOURCC('c','v','i','d'), 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
+static const GUID MEDIASUBTYPE_IV50 = {mmioFOURCC('I','V','5','0'), 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
 static const GUID MEDIASUBTYPE_VC1S = {mmioFOURCC('V','C','1','S'), 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
 static const GUID MEDIASUBTYPE_MP3  = {WAVE_FORMAT_MPEGLAYER3, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
 static const GUID MEDIASUBTYPE_WMV_Unknown = {0x7ce12ca9, 0xbfbf, 0x43d9, {0x9d, 0x00, 0x82, 0xb8, 0xed, 0x54, 0x31, 0x6b}};
@@ -397,6 +398,10 @@ unsigned int wg_format_get_max_size(const struct wg_format *format)
             /* Both ffmpeg's encoder and a Cinepak file seen in the wild report
              * 24 bpp. ffmpeg sets biSizeImage as below; others may be smaller,
              * but as long as every sample fits into our allocator, we're fine. */
+        case WG_MAJOR_TYPE_VIDEO_INDEO:
+            /* Similar situation, though we don't even have ffmpeg to comapre.
+             * Files from Close Combat 3 report 24 bpp, but a smaller
+             * biSizeImage. */
             return format->u.video.width * format->u.video.height * 3;
 
         case WG_MAJOR_TYPE_VIDEO_MPEG1:
@@ -461,7 +466,6 @@ unsigned int wg_format_get_max_size(const struct wg_format *format)
 
         case WG_MAJOR_TYPE_AUDIO_MPEG4:
         case WG_MAJOR_TYPE_VIDEO_H264:
-        case WG_MAJOR_TYPE_VIDEO_INDEO:
             FIXME("Format %u not implemented!\n", format->major_type);
             return 0;
 
@@ -558,7 +562,10 @@ static bool amt_from_wg_format_video(AM_MEDIA_TYPE *mt, const struct wg_format *
     uint32_t frame_time;
 
     if (format->u.video.format == WG_VIDEO_FORMAT_UNKNOWN)
+    {
+        WARN("Unknown video format.\n");
         return false;
+    }
 
     if (!(video_format = CoTaskMemAlloc(sizeof(*video_format))))
         return false;
@@ -615,6 +622,43 @@ static bool amt_from_wg_format_video_cinepak(AM_MEDIA_TYPE *mt, const struct wg_
     mt->majortype = MEDIATYPE_Video;
     mt->subtype = MEDIASUBTYPE_CVID;
     mt->bTemporalCompression = TRUE;
+    mt->lSampleSize = 1;
+    mt->formattype = FORMAT_VideoInfo;
+    mt->cbFormat = sizeof(*video_format);
+    mt->pbFormat = (BYTE *)video_format;
+
+    memset(video_format, 0, sizeof(*video_format));
+    if ((frame_time = MulDiv(10000000, format->u.video.fps_d, format->u.video.fps_n)) != -1)
+        video_format->AvgTimePerFrame = frame_time;
+    video_format->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    video_format->bmiHeader.biWidth = format->u.video.width;
+    video_format->bmiHeader.biHeight = format->u.video.height;
+    video_format->bmiHeader.biPlanes = 1;
+    video_format->bmiHeader.biBitCount = 24;
+    video_format->bmiHeader.biCompression = mt->subtype.Data1;
+    video_format->bmiHeader.biSizeImage = wg_format_get_max_size(format);
+
+    return true;
+}
+
+static bool amt_from_wg_format_video_indeo(AM_MEDIA_TYPE *mt, const struct wg_format *format)
+{
+    VIDEOINFOHEADER *video_format;
+    uint32_t frame_time;
+
+    if (!(video_format = CoTaskMemAlloc(sizeof(*video_format))))
+        return false;
+
+    mt->majortype = MEDIATYPE_Video;
+    if (format->u.video.version == 5)
+    {
+        mt->subtype = MEDIASUBTYPE_IV50;
+    }
+    else
+    {
+        FIXME("Unhandled version %u.\n", format->u.video.version);
+        return false;
+    }
     mt->lSampleSize = 1;
     mt->formattype = FORMAT_VideoInfo;
     mt->cbFormat = sizeof(*video_format);
@@ -732,7 +776,6 @@ bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool 
     {
     case WG_MAJOR_TYPE_AUDIO_MPEG4:
     case WG_MAJOR_TYPE_VIDEO_H264:
-    case WG_MAJOR_TYPE_VIDEO_INDEO:
         FIXME("Format %u not implemented!\n", format->major_type);
         /* fallthrough */
     case WG_MAJOR_TYPE_UNKNOWN:
@@ -752,6 +795,9 @@ bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool 
 
     case WG_MAJOR_TYPE_VIDEO_CINEPAK:
         return amt_from_wg_format_video_cinepak(mt, format);
+
+    case WG_MAJOR_TYPE_VIDEO_INDEO:
+        return amt_from_wg_format_video_indeo(mt, format);
 
     case WG_MAJOR_TYPE_VIDEO_WMV:
         return amt_from_wg_format_video_wmv(mt, format, wm);
@@ -1008,6 +1054,32 @@ static bool amt_to_wg_format_video_cinepak(const AM_MEDIA_TYPE *mt, struct wg_fo
     return true;
 }
 
+static bool amt_to_wg_format_video_indeo(const AM_MEDIA_TYPE *mt, struct wg_format *format)
+{
+    const VIDEOINFOHEADER *video_format = (const VIDEOINFOHEADER *)mt->pbFormat;
+
+    if (!IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+    {
+        FIXME("Unknown format type %s.\n", debugstr_guid(&mt->formattype));
+        return false;
+    }
+    if (mt->cbFormat < sizeof(VIDEOINFOHEADER) || !mt->pbFormat)
+    {
+        ERR("Unexpected format size %lu.\n", mt->cbFormat);
+        return false;
+    }
+
+    format->major_type = WG_MAJOR_TYPE_VIDEO_CINEPAK;
+    if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_IV50))
+        format->u.video.version = 5;
+    format->u.video.width = video_format->bmiHeader.biWidth;
+    format->u.video.height = video_format->bmiHeader.biHeight;
+    format->u.video.fps_n = 10000000;
+    format->u.video.fps_d = video_format->AvgTimePerFrame;
+
+    return true;
+}
+
 static bool amt_to_wg_format_video_wmv(const AM_MEDIA_TYPE *mt, struct wg_format *format)
 {
     const VIDEOINFOHEADER *video_format = (const VIDEOINFOHEADER *)mt->pbFormat;
@@ -1084,6 +1156,8 @@ bool amt_to_wg_format(const AM_MEDIA_TYPE *mt, struct wg_format *format)
     {
         if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_CVID))
             return amt_to_wg_format_video_cinepak(mt, format);
+        if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_IV50))
+            return amt_to_wg_format_video_indeo(mt, format);
         if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMV1)
                 || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMV2)
                 || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMVA)
