@@ -1941,10 +1941,13 @@ static void test_get_Count_and_Item(void)
 
     index.uiVal = 1;
     hr = IRegisteredTaskCollection_get_Item(tasks, index, &ret_task1);
-    ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
+    ok(hr == S_OK || broken(hr == E_INVALIDARG) /* Win7 */, "expected S_OK, got %#lx\n", hr);
 
-    IRegisteredTask_get_Name(ret_task1, &ret_task1_name);
-    ok(!lstrcmpW(L"Task1", ret_task1_name), "expected name \"Task1\", got %ls\n", ret_task1_name);
+    if (hr == S_OK)
+    {
+        IRegisteredTask_get_Name(ret_task1, &ret_task1_name);
+        ok(!lstrcmpW(L"Task1", ret_task1_name), "expected name \"Task1\", got %ls\n", ret_task1_name);
+    }
 
     ITaskFolder_DeleteTask(folder, (BSTR)L"Task1", 0);
     ITaskFolder_DeleteFolder(root, (BSTR)L"\\Wine", 0);
