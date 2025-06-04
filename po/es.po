@@ -15423,6 +15423,12 @@ msgstr "Fin del archivo.\n"
 msgid "End of file"
 msgstr "Fin del archivo.\n"
 
+#: programs/cmd/cmd.rc:410
+#, fuzzy
+#| msgid "%1!d! file(s) copied\n"
+msgid "%t%1!u! file(s) copied\n"
+msgstr "%1!d! archivo(s) copiados\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Tamaño del cursor"

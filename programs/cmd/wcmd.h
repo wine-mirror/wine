@@ -454,3 +454,4 @@ extern WCHAR version_string[];
 #define WCMD_BADTOKEN         1047
 #define WCMD_ENDOFLINE        1048
 #define WCMD_ENDOFFILE        1049
+#define WCMD_NUMCOPIED        1050

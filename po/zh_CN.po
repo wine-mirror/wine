@@ -14510,6 +14510,12 @@ msgstr "行尾"
 msgid "End of file"
 msgstr "文件尾"
 
+#: programs/cmd/cmd.rc:410
+#, fuzzy
+#| msgid "%1!d! file(s) copied\n"
+msgid "%t%1!u! file(s) copied\n"
+msgstr "已复制 %1!d! 个文件\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "光标尺寸"

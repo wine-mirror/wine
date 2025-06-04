@@ -14846,6 +14846,12 @@ msgstr "S'ha acabat el fitxer.\n"
 msgid "End of file"
 msgstr "S'ha acabat el fitxer.\n"
 
+#: programs/cmd/cmd.rc:410
+#, fuzzy
+#| msgid "%1!d! file(s) copied\n"
+msgid "%t%1!u! file(s) copied\n"
+msgstr "%1!d! fitxer(s) copiat(s)\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Mida de cursor"

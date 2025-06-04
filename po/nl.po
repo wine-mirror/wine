@@ -14758,6 +14758,12 @@ msgstr "Einde van regel"
 msgid "End of file"
 msgstr "Einde van bestand"
 
+#: programs/cmd/cmd.rc:410
+#, fuzzy
+#| msgid "%1!d! file(s) copied\n"
+msgid "%t%1!u! file(s) copied\n"
+msgstr "%1!d! bestand(en) gekopieerd\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Cursorgrootte"

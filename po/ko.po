@@ -14697,6 +14697,12 @@ msgstr "파일 끝.\n"
 msgid "End of file"
 msgstr "파일 끝.\n"
 
+#: programs/cmd/cmd.rc:410
+#, fuzzy
+#| msgid "%1!d! file(s) copied\n"
+msgid "%t%1!u! file(s) copied\n"
+msgstr "%1!d! 파일이 복사되었습니다\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "커서 크기"

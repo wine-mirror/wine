@@ -14189,6 +14189,10 @@ msgstr "கையொப்பமிடும் நேரம்"
 msgid "End of file"
 msgstr "கையொப்பமிடும் நேரம்"
 
+#: programs/cmd/cmd.rc:410
+msgid "%t%1!u! file(s) copied\n"
+msgstr ""
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr ""

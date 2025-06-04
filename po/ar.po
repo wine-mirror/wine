@@ -16049,6 +16049,12 @@ msgstr "نهاية الملف.\n"
 msgid "End of file"
 msgstr "نهاية الملف.\n"
 
+#: programs/cmd/cmd.rc:410
+#, fuzzy
+#| msgid "%1!d! file(s) copied\n"
+msgid "%t%1!u! file(s) copied\n"
+msgstr "تم نسخ الملفات %1!d!\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "حجم المؤشر"

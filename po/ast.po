@@ -14642,6 +14642,10 @@ msgstr "Fin del ficheru.\n"
 msgid "End of file"
 msgstr "Fin del ficheru.\n"
 
+#: programs/cmd/cmd.rc:410
+msgid "%t%1!u! file(s) copied\n"
+msgstr ""
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Tamañu del cursor"

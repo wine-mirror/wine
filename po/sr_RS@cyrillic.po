@@ -15272,6 +15272,11 @@ msgstr "&Додај у омиљене..."
 msgid "End of file"
 msgstr "&Додај у омиљене..."
 
+#: programs/cmd/cmd.rc:410
+#, fuzzy
+msgid "%t%1!u! file(s) copied\n"
+msgstr "%d датотека/е је умножено\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr ""

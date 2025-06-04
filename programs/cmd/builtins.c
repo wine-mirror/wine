@@ -656,6 +656,7 @@ RETURN_CODE WCMD_copy(WCHAR * args)
   WCHAR   copycmd[4];
   DWORD   len;
   BOOL    dstisdevice = FALSE;
+  unsigned numcopied = 0;
 
   typedef struct _COPY_FILES
   {
@@ -954,6 +955,8 @@ RETURN_CODE WCMD_copy(WCHAR * args)
     WCHAR *filenamepart;
     DWORD  attributes;
     BOOL   srcisdevice = FALSE;
+    BOOL   havewildcards = FALSE;
+    BOOL   displaynames = anyconcats; /* Display names if we are concatenating. */
 
     /* If it was not explicit, we now know whether we are concatenating or not and
        hence whether to copy as binary or ascii                                    */
@@ -965,6 +968,13 @@ RETURN_CODE WCMD_copy(WCHAR * args)
         return errorlevel = ERROR_INVALID_FUNCTION;
     WINE_TRACE("Full src name is '%s'\n", wine_dbgstr_w(srcpath));
 
+    havewildcards = wcspbrk(srcpath, L"*?") ? TRUE : FALSE;
+    /* If we are not already displaying file names due to concatenation, then display them
+       if using wildards. */
+    if (!displaynames) {
+      displaynames = havewildcards;
+    }
+
     /* If parameter is a directory, ensure it ends in \* */
     attributes = GetFileAttributesW(srcpath);
     if (ends_with_backslash( srcpath )) {
@@ -972,17 +982,19 @@ RETURN_CODE WCMD_copy(WCHAR * args)
       /* We need to know where the filename part starts, so append * and
          recalculate the full resulting path                              */
       lstrcatW(thiscopy->name, L"*");
+      displaynames = TRUE;
       if (!WCMD_get_fullpath(thiscopy->name, ARRAY_SIZE(srcpath), srcpath, &filenamepart))
           return errorlevel = ERROR_INVALID_FUNCTION;
       WINE_TRACE("Directory, so full name is now '%s'\n", wine_dbgstr_w(srcpath));
 
-    } else if ((wcspbrk(srcpath, L"*?") == NULL) &&
+    } else if (!havewildcards &&
                (attributes != INVALID_FILE_ATTRIBUTES) &&
                (attributes & FILE_ATTRIBUTE_DIRECTORY)) {
 
       /* We need to know where the filename part starts, so append \* and
          recalculate the full resulting path                              */
       lstrcatW(thiscopy->name, L"\\*");
+      displaynames = TRUE;
       if (!WCMD_get_fullpath(thiscopy->name, ARRAY_SIZE(srcpath), srcpath, &filenamepart))
           return errorlevel = ERROR_INVALID_FUNCTION;
       WINE_TRACE("Directory, so full name is now '%s'\n", wine_dbgstr_w(srcpath));
@@ -1064,6 +1076,10 @@ RETURN_CODE WCMD_copy(WCHAR * args)
 
           /* Do the copy as appropriate */
           if (overwrite) {
+            if (displaynames) {
+              WCMD_output_asis(srcpath);
+              WCMD_output_asis(L"\r\n");
+            }
             if (anyconcats && WCMD_IsSameFile(srcpath, outname)) {
               /* behavior is as Unix 'touch' (change last-written time only) */
               HANDLE file = CreateFileW(srcpath, GENERIC_WRITE, FILE_SHARE_WRITE, NULL,
@@ -1097,7 +1113,12 @@ RETURN_CODE WCMD_copy(WCHAR * args)
               return_code = ERROR_INVALID_FUNCTION;
             } else {
               WINE_TRACE("Copied successfully\n");
-              if (anyconcats) writtenoneconcat = TRUE;
+              if (anyconcats) {
+                writtenoneconcat = TRUE;
+                numcopied = 1;
+              } else {
+                numcopied++;
+              }
 
               /* Append EOF if ascii destination and we are not going to add more onto the end
                  Note: Testing shows windows has an optimization whereas if you have a binary
@@ -1133,6 +1154,10 @@ RETURN_CODE WCMD_copy(WCHAR * args)
       WCMD_print_error ();
       return_code = ERROR_INVALID_FUNCTION;
     }
+  }
+
+  if (numcopied) {
+    WCMD_output(WCMD_LoadMessage(WCMD_NUMCOPIED), numcopied);
   }
 
   /* Exit out of the routine, freeing any remaining allocated memory */

@@ -14640,6 +14640,10 @@ msgstr "&Rafacer\tDel"
 msgid "End of file"
 msgstr "&Rafacer\tDel"
 
+#: programs/cmd/cmd.rc:410
+msgid "%t%1!u! file(s) copied\n"
+msgstr ""
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr ""

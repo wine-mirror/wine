@@ -14842,6 +14842,12 @@ msgstr "ගොනුවේ අවසානය.\n"
 msgid "End of file"
 msgstr "ගොනුවේ අවසානය.\n"
 
+#: programs/cmd/cmd.rc:410
+#, fuzzy
+#| msgid "%1!d! file(s) copied\n"
+msgid "%t%1!u! file(s) copied\n"
+msgstr "%1!d! ගොනුවක් (ගොනු) පිටපත් කරා\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "කර්සරය ප්රමාණය"

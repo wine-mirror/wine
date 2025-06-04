@@ -15562,6 +15562,12 @@ msgstr "Konec souboru.\n"
 msgid "End of file"
 msgstr "Konec souboru.\n"
 
+#: programs/cmd/cmd.rc:410
+#, fuzzy
+#| msgid "%1!d! file(s) copied\n"
+msgid "%t%1!u! file(s) copied\n"
+msgstr "%1!d! souborů zkopírováno\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Velikost kurzoru"

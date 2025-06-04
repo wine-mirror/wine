@@ -14716,6 +14716,12 @@ msgstr "行末"
 msgid "End of file"
 msgstr "ファイルの終端"
 
+#: programs/cmd/cmd.rc:410
+#, fuzzy
+#| msgid "%1!d! file(s) copied\n"
+msgid "%t%1!u! file(s) copied\n"
+msgstr "%1!d! ファイルをコピーしました\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "カーソルの大きさ"

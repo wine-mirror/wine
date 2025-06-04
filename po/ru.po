@@ -15025,6 +15025,12 @@ msgstr "Конец строки"
 msgid "End of file"
 msgstr "Конец файла"
 
+#: programs/cmd/cmd.rc:410
+#, fuzzy
+#| msgid "%1!d! file(s) copied\n"
+msgid "%t%1!u! file(s) copied\n"
+msgstr "Скопировано %1!d! файл(ов)\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Размер курсора"

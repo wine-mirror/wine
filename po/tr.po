@@ -14766,6 +14766,12 @@ msgstr "Dosya sonu.\n"
 msgid "End of file"
 msgstr "Dosya sonu.\n"
 
+#: programs/cmd/cmd.rc:410
+#, fuzzy
+#| msgid "%1!d! file(s) copied\n"
+msgid "%t%1!u! file(s) copied\n"
+msgstr "%1!d! dosya kopyalandı\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "İmleç boyutu"
