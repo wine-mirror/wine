@@ -95,6 +95,9 @@ extern void append_basic_type( struct strbuf *str, const type_t *type );
 extern void append_pointer_left( struct strbuf *str, const type_t *type, const char *callconv );
 extern void append_type_left( struct strbuf *str, const decl_spec_t *decl_spec, enum name_type name_type,
                               const char *callconv );
+extern void append_type_right( struct strbuf *str, const type_t *type, const char *callconv, bool is_field );
+extern void append_declspec( struct strbuf *str, const decl_spec_t *decl_spec, enum name_type name_type,
+                             const char *callconv, bool is_field, const char *name );
 
 extern char *format_namespace( const struct namespace *namespace, const char *prefix, const char *separator,
                                const char *suffix, const char *abi_prefix );

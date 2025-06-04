@@ -151,12 +151,11 @@ static void write_type_definition( FILE *h, const decl_spec_t *ds, bool is_field
 
 static void write_type_v( FILE *h, const decl_spec_t *ds, bool is_field, const char *name, enum name_type name_type )
 {
-    type_t *t = ds->type;
+    struct strbuf str = {0};
 
     if (!h) return;
-    if (t) write_type_left( h, ds, name_type );
-    if (name) fprintf( h, "%s%s", !t || needs_space_after( t ) ? " " : "", name );
-    if (t) write_type_right( h, t, is_field );
+    append_declspec( &str, ds, name_type, is_object_interface ? "STDMETHODCALLTYPE" : "", is_field, name );
+    fwrite( str.buf, 1, str.pos, h );
 }
 
 static void write_fields(FILE *h, var_list_t *fields, enum name_type name_type)
@@ -386,76 +385,10 @@ void write_type_left( FILE *h, const decl_spec_t *ds, enum name_type name_type )
 
 void write_type_right( FILE *h, type_t *type, bool is_field )
 {
+    struct strbuf str = {0};
     if (!h) return;
-    if (type_is_alias( type )) return;
-
-    switch (type_get_type( type ))
-    {
-    case TYPE_ARRAY:
-    {
-        type_t *elem = type_array_get_element_type( type );
-        if (type_array_is_decl_as_ptr( type ))
-        {
-            if (decl_needs_parens( elem )) fprintf( h, ")" );
-        }
-        else
-        {
-            if (is_conformant_array( type )) fprintf( h, "[%s]", is_field ? "1" : "" );
-            else fprintf( h, "[%u]", type_array_get_dim( type ) );
-        }
-        write_type_right( h, elem, false );
-        break;
-    }
-
-    case TYPE_FUNCTION:
-    {
-        const var_list_t *args = type_function_get_args( type );
-        const var_t *arg;
-
-        fputc( '(', h );
-        if (!args) fprintf( h, "void" );
-        else LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
-        {
-            write_type_v( h, &arg->declspec, false, arg->name, NAME_DEFAULT );
-            if (arg->entry.next != args) fprintf( h, "," );
-        }
-        fputc( ')', h );
-
-        write_type_right( h, type_function_get_rettype( type ), false );
-        break;
-    }
-
-    case TYPE_POINTER:
-    {
-        type_t *ref = type_pointer_get_ref_type( type );
-        if (decl_needs_parens( ref )) fprintf( h, ")" );
-        write_type_right( h, ref, false );
-        break;
-    }
-
-    case TYPE_BITFIELD:
-        fprintf( h, " : %u", type_bitfield_get_bits( type )->cval );
-        break;
-
-    case TYPE_VOID:
-    case TYPE_BASIC:
-    case TYPE_ENUM:
-    case TYPE_STRUCT:
-    case TYPE_ENCAPSULATED_UNION:
-    case TYPE_UNION:
-    case TYPE_ALIAS:
-    case TYPE_MODULE:
-    case TYPE_COCLASS:
-    case TYPE_INTERFACE:
-    case TYPE_RUNTIMECLASS:
-    case TYPE_DELEGATE:
-    case TYPE_PARAMETERIZED_TYPE:
-    case TYPE_PARAMETER: break;
-    case TYPE_APICONTRACT:
-        /* not supposed to be here */
-        assert( 0 );
-        break;
-    }
+    append_type_right( &str, type, is_object_interface ? "STDMETHODCALLTYPE" : "", is_field );
+    fwrite( str.buf, 1, str.pos, h );
 }
 
 static void write_type( FILE *f, type_t *t, bool define )

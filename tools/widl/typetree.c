@@ -302,6 +302,88 @@ void append_type_left( struct strbuf *str, const decl_spec_t *decl_spec, enum na
     }
 }
 
+void append_type_right( struct strbuf *str, const type_t *type, const char *callconv, bool is_field )
+{
+    if (type_is_alias( type )) return;
+
+    switch (type_get_type( type ))
+    {
+    case TYPE_ARRAY:
+    {
+        type_t *elem = type_array_get_element_type( type );
+        if (type_array_is_decl_as_ptr( type ))
+        {
+            if (decl_needs_parens( elem )) strappend( str, ")" );
+        }
+        else
+        {
+            if (is_conformant_array( type )) strappend( str, "[%s]", is_field ? "1" : "" );
+            else strappend( str, "[%u]", type_array_get_dim( type ) );
+        }
+        append_type_right( str, elem, callconv, false );
+        break;
+    }
+
+    case TYPE_FUNCTION:
+    {
+        const var_list_t *args = type_function_get_args( type );
+        const var_t *arg;
+
+        strappend( str, "(" );
+        if (!args) strappend( str, "void" );
+        else LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
+        {
+            append_declspec( str, &arg->declspec, NAME_DEFAULT, callconv, false, arg->name );
+            if (arg->entry.next != args) strappend( str, "," );
+        }
+        strappend( str, ")" );
+
+        append_type_right( str, type_function_get_rettype( type ), callconv, false );
+        break;
+    }
+
+    case TYPE_POINTER:
+    {
+        type_t *ref = type_pointer_get_ref_type( type );
+        if (decl_needs_parens( ref )) strappend( str, ")" );
+        append_type_right( str, ref, callconv, false );
+        break;
+    }
+
+    case TYPE_BITFIELD:
+        strappend( str, " : %u", type_bitfield_get_bits( type )->cval );
+        break;
+
+    case TYPE_VOID:
+    case TYPE_BASIC:
+    case TYPE_ENUM:
+    case TYPE_STRUCT:
+    case TYPE_ENCAPSULATED_UNION:
+    case TYPE_UNION:
+    case TYPE_ALIAS:
+    case TYPE_MODULE:
+    case TYPE_COCLASS:
+    case TYPE_INTERFACE:
+    case TYPE_RUNTIMECLASS:
+    case TYPE_DELEGATE:
+    case TYPE_PARAMETERIZED_TYPE:
+    case TYPE_PARAMETER: break;
+    case TYPE_APICONTRACT:
+        /* not supposed to be here */
+        assert( 0 );
+        break;
+    }
+}
+
+void append_declspec( struct strbuf *str, const decl_spec_t *decl_spec, enum name_type name_type,
+                      const char *callconv, bool is_field, const char *name )
+{
+    const type_t *type = decl_spec->type;
+    if (type) append_type_left( str, decl_spec, name_type, callconv );
+    if (name) strappend( str, "%s%s", !type || needs_space_after( type ) ? " " : "", name );
+    if (type) append_type_right( str, type, callconv, is_field );
+}
+
 static void append_namespace( struct strbuf *str, const struct namespace *namespace,
                               const char *separator, const char *abi_prefix )
 {
