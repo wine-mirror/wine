@@ -957,7 +957,7 @@
 @ stub HeapSetFlags
 @ stdcall -import HeapSetInformation(ptr long ptr long)
 @ stdcall HeapSize(long long ptr) NTDLL.RtlSizeHeap
-@ stub HeapSummary
+@ stdcall -import HeapSummary(long long ptr)
 @ stdcall -import HeapUnlock(long)
 @ stub HeapUsage
 @ stdcall -import HeapValidate(long long ptr)

@@ -821,7 +821,7 @@
 @ stdcall HeapReAlloc(long long ptr long) ntdll.RtlReAllocateHeap
 @ stdcall HeapSetInformation(ptr long ptr long)
 @ stdcall HeapSize(long long ptr) ntdll.RtlSizeHeap
-@ stub HeapSummary
+@ stdcall HeapSummary(long long ptr)
 @ stdcall HeapUnlock(long)
 @ stdcall HeapValidate(long long ptr)
 @ stdcall HeapWalk(long ptr)

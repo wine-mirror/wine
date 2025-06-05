@@ -143,6 +143,15 @@ typedef struct _PROCESS_HEAP_ENTRY
 #define PROCESS_HEAP_ENTRY_MOVEABLE           0x0010
 #define PROCESS_HEAP_ENTRY_DDESHARE           0x0020
 
+typedef struct _HEAP_SUMMARY
+{
+    DWORD  cb;
+    SIZE_T cbAllocated;
+    SIZE_T cbCommitted;
+    SIZE_T cbReserved;
+    SIZE_T cbMaxReserve;
+} HEAP_SUMMARY, *PHEAP_SUMMARY, *LPHEAP_SUMMARY;
+
 typedef enum _GET_FILEEX_INFO_LEVELS {
     GetFileExInfoStandard
 } GET_FILEEX_INFO_LEVELS;

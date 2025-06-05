@@ -778,6 +778,58 @@ BOOL WINAPI HeapSetInformation( HANDLE heap, HEAP_INFORMATION_CLASS infoclass, P
 
 
 /***********************************************************************
+ *           HeapSummary   (kernelbase.@)
+ */
+BOOL WINAPI HeapSummary( HANDLE heap, DWORD flags, LPHEAP_SUMMARY heap_summary )
+{
+    SIZE_T allocated = 0;
+    SIZE_T committed = 0;
+    SIZE_T uncommitted = 0;
+    PROCESS_HEAP_ENTRY entry;
+
+    if (heap_summary->cb != sizeof(*heap_summary))
+    {
+        /* needs to be set to the exact size by the caller */
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    memset( &entry, 0, sizeof(entry) );
+
+    if (!HeapLock( heap ))
+        return FALSE;
+
+    while (HeapWalk( heap, &entry ))
+    {
+        if (entry.wFlags & PROCESS_HEAP_ENTRY_BUSY)
+        {
+            allocated += entry.cbData;
+        }
+        else if (entry.wFlags & PROCESS_HEAP_REGION)
+        {
+            committed += entry.Region.dwCommittedSize;
+            uncommitted += entry.Region.dwUnCommittedSize;
+        }
+    }
+
+    if (GetLastError() != ERROR_NO_MORE_ITEMS)
+    {
+        /* HeapWalk unsuccessful */
+        HeapUnlock( heap );
+        return FALSE;
+    }
+
+    HeapUnlock( heap );
+    heap_summary->cbAllocated = allocated;
+    heap_summary->cbCommitted = committed;
+    heap_summary->cbReserved = committed + uncommitted;
+    heap_summary->cbMaxReserve = heap_summary->cbReserved;
+
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           HeapUnlock   (kernelbase.@)
  */
 BOOL WINAPI HeapUnlock( HANDLE heap )

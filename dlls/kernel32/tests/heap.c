@@ -3740,6 +3740,53 @@ static void test_heap_sizes(void)
     }
 }
 
+static void test_HeapSummary(void)
+{
+    HANDLE heap;
+    HEAP_SUMMARY heap_summary;
+    BOOL ret;
+    DWORD err;
+    void *p;
+
+    /* setup */
+
+    heap = HeapCreate( 0, 0, 0 ); /* growable heap */
+    ok( heap != NULL, "creation failed\n" );
+
+    HeapAlloc( heap , 0, 0x100 );
+    HeapAlloc( heap , 0, 0x200 );
+    p = HeapAlloc( heap , 0, 0x300 );
+    HeapAlloc( heap, 0, 0x60000 );
+    HeapFree( heap, 0, p );
+
+    memset( &heap_summary, 0, sizeof(heap_summary) );
+
+    /* test cases */
+
+    ret = HeapSummary( heap, 0, &heap_summary );
+    err = GetLastError();
+    ok( !ret, "HeapSummary() with cb != sizeof(HEAP_SUMMARY) returned TRUE\n" );
+    ok( err == ERROR_INVALID_PARAMETER,
+        "HeapSummary() with cb != sizeof(HEAP_SUMMARY) set last error to %lu\n", err );
+
+    heap_summary.cb = sizeof(heap_summary);
+    ret = HeapSummary( heap, 0, &heap_summary );
+    ok( ret, "HeapSummary() returned FALSE\n" );
+
+    ok( heap_summary.cbAllocated == 0x100 + 0x200 + 0x60000,
+        "HeapSummary: wrong cbAllocated value %#Ix\n", heap_summary.cbAllocated );
+    ok( heap_summary.cbCommitted >= heap_summary.cbAllocated,
+        "HeapSummary: cbCommitted %#Ix < cbAllocated %#Ix\n",
+        heap_summary.cbCommitted, heap_summary.cbAllocated );
+    ok( heap_summary.cbReserved >= heap_summary.cbCommitted,
+        "HeapSummary: cbReserved %#Ix < cbCommitted %#Ix\n",
+        heap_summary.cbReserved, heap_summary.cbCommitted );
+
+    /* cleanup */
+
+    HeapDestroy( heap );
+}
+
 START_TEST(heap)
 {
     int argc;
@@ -3760,6 +3807,7 @@ START_TEST(heap)
 
     test_GetPhysicallyInstalledSystemMemory();
     test_GlobalMemoryStatus();
+    test_HeapSummary();
 
     if (pRtlGetNtGlobalFlags)
     {
