@@ -153,9 +153,8 @@ static LRESULT CALLBACK vfw_driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
         expect_sink_format.biSizeImage = 200;
         ok(!memcmp(params->lpbiInput, &expect_sink_format, sizeof(BITMAPINFOHEADER)),
                 "Input types didn't match.\n");
-        todo_wine_if (testmode == 8)
-            ok(!memcmp(params->lpbiOutput, &source_bitmap_info, sizeof(BITMAPINFOHEADER)),
-                    "Output types didn't match.\n");
+        ok(!memcmp(params->lpbiOutput, &source_bitmap_info, sizeof(BITMAPINFOHEADER)),
+                "Output types didn't match.\n");
         ok(!params->ckid, "Got chunk id %#lx.\n", params->ckid);
 
         for (i = 0; i < 200; ++i)
@@ -911,8 +910,7 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     else
         ok(size == source_bitmap_info.biSizeImage, "Got size %lu.\n", size);
     size = IMediaSample_GetActualDataLength(sample);
-    todo_wine_if (testmode == 8)
-        ok(size == source_bitmap_info.biSizeImage, "Got valid size %lu.\n", size);
+    ok(size == source_bitmap_info.biSizeImage, "Got valid size %lu.\n", size);
 
     hr = IMediaSample_GetPointer(sample, &data);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1098,7 +1096,7 @@ static HRESULT WINAPI sample_SetActualDataLength(IMediaSample *iface, LONG size)
 
     if (winetest_debug > 1) trace("SetActualDataLength(%ld)\n", size);
 
-    todo_wine ok(size == 222, "Got size %ld.\n", size);
+    ok(size == 222, "Got size %ld.\n", size);
 
     IMediaSample_SetActualDataLength(filter->wrapped_sample, size);
     return E_FAIL;
