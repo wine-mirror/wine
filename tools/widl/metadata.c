@@ -1396,6 +1396,38 @@ static void add_struct_type_step2( type_t *type )
     add_contract_attr_step2( type );
 }
 
+static void add_uuid_attr_step1( type_t *type )
+{
+    static const BYTE sig[] =
+        { SIG_TYPE_HASTHIS, 11, ELEMENT_TYPE_VOID, ELEMENT_TYPE_U4, ELEMENT_TYPE_U2, ELEMENT_TYPE_U2,
+          ELEMENT_TYPE_U1, ELEMENT_TYPE_U1, ELEMENT_TYPE_U1, ELEMENT_TYPE_U1, ELEMENT_TYPE_U1, ELEMENT_TYPE_U1,
+          ELEMENT_TYPE_U1, ELEMENT_TYPE_U1 };
+    UINT assemblyref, scope, typeref, class;
+
+    assemblyref = add_assemblyref_row( 0x200, 0, add_string("Windows.Foundation") );
+    scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+    typeref = add_typeref_row( scope, add_string("GuidAttribute"), add_string("Windows.Foundation.Metadata") );
+
+    class = memberref_parent( TABLE_TYPEREF, typeref );
+    type->md.member[MD_ATTR_UUID] = add_memberref_row( class, add_string(".ctor"), add_blob(sig, sizeof(sig)) );
+}
+
+static void add_uuid_attr_step2( type_t *type )
+{
+    static const BYTE default_uuid[] =
+        { 0xe7, 0x1f, 0xb5, 0x67, 0x6e, 0x38, 0x31, 0x5a, 0x8a, 0x1c, 0x89, 0x83, 0xc9, 0x49, 0x5c, 0x33 };
+    const struct uuid *uuid = get_attrp( type->attrs, ATTR_UUID );
+    BYTE value[sizeof(*uuid) + 4] = { 0x01 };
+    UINT parent, attr_type;
+
+    if (uuid) memcpy( value + 2, uuid, sizeof(*uuid) );
+    else memcpy( value + 2, default_uuid, sizeof(default_uuid) );
+
+    parent = has_customattribute( TABLE_TYPEDEF, type->md.def );
+    attr_type = customattribute_type( TABLE_MEMBERREF, type->md.member[MD_ATTR_UUID] );
+    add_customattribute_row( parent, attr_type, add_blob(value, sizeof(value)) );
+}
+
 static void add_interface_type_step1( type_t *type )
 {
     UINT name, namespace;
@@ -1405,6 +1437,7 @@ static void add_interface_type_step1( type_t *type )
     type->md.ref = add_typeref_row( resolution_scope(TABLE_MODULE, MODULE_ROW), name, namespace );
 
     add_contract_attr_step1( type );
+    add_uuid_attr_step1( type );
 }
 
 static void add_interface_type_step2( type_t *type )
@@ -1417,6 +1450,7 @@ static void add_interface_type_step2( type_t *type )
     type->md.def = add_typedef_row( flags, name, namespace, 0, 0, 0 );
 
     add_contract_attr_step2( type );
+    add_uuid_attr_step2( type );
 }
 
 static UINT make_contractversion_value( const type_t *type, BYTE *buf )
