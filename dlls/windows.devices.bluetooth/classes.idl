@@ -36,5 +36,6 @@ import "windows.networking.sockets.idl";
 import "windows.storage.streams.idl";
 
 #define DO_NO_IMPORTS
+#include "windows.devices.bluetooth.genericattributeprofile.idl"
 #include "windows.devices.bluetooth.rfcomm.idl"
 #include "windows.devices.bluetooth.idl"

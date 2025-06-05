@@ -26,7 +26,7 @@ import "asyncinfo.idl";
 import "eventtoken.idl";
 import "windowscontracts.idl";
 import "windows.foundation.idl";
-/* import "windows.devices.bluetooth.genericattributeprofile.idl"; */
+import "windows.devices.bluetooth.genericattributeprofile.idl";
 import "windows.devices.bluetooth.rfcomm.idl";
 import "windows.devices.enumeration.idl";
 import "windows.devices.radios.idl";
@@ -57,14 +57,27 @@ namespace Windows.Devices.Bluetooth {
     interface IBluetoothDeviceStatics2;
     interface IBluetoothDeviceId;
     interface IBluetoothDeviceIdStatics;
+    interface IBluetoothLEDevice;
+    interface IBluetoothLEDevice2;
+    interface IBluetoothLEDevice3;
+    interface IBluetoothLEDevice4;
+    interface IBluetoothLEDevice5;
+    interface IBluetoothLEDevice6;
+    interface IBluetoothLEDeviceStatics;
+    interface IBluetoothLEDeviceStatics2;
 
     runtimeclass BluetoothAdapter;
     runtimeclass BluetoothClassOfDevice;
     runtimeclass BluetoothDevice;
     runtimeclass BluetoothDeviceId;
+    runtimeclass BluetoothLEDevice;
 
     namespace Rfcomm {
         runtimeclass RfcommDeviceService;
+    }
+
+    namespace GenericAttributeProfile {
+        runtimeclass GattDeviceService;
     }
 
     declare {
@@ -73,8 +86,12 @@ namespace Windows.Devices.Bluetooth {
         interface Windows.Foundation.TypedEventHandler<Windows.Devices.Bluetooth.BluetoothDevice *, IInspectable *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Devices.Bluetooth.BluetoothDevice *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.BluetoothDevice *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Devices.Bluetooth.BluetoothLEDevice *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.BluetoothLEDevice *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Devices.Bluetooth.BluetoothLEDevice *, IInspectable *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Storage.Streams.IBuffer *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Bluetooth.Rfcomm.RfcommDeviceService *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceService *>;
     }
 
     [
@@ -399,4 +416,61 @@ namespace Windows.Devices.Bluetooth {
         [default] interface Windows.Devices.Bluetooth.IBluetoothDeviceId;
     }
 
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Bluetooth.BluetoothLEDevice),
+        uuid(b5ee2f7b-4ad8-4642-ac48-80a0b500e887)
+    ]
+    interface IBluetoothLEDevice : IInspectable
+    {
+        [propget] HRESULT DeviceId([out, retval] HSTRING *value);
+        [propget] HRESULT Name([out, retval] HSTRING *value);
+        [propget] HRESULT GattServices([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceService *> **value);
+        [propget] HRESULT ConnectionStatus([out, retval] Windows.Devices.Bluetooth.BluetoothConnectionStatus *value);
+        [propget] HRESULT BluetoothAddress([out, retval] UINT64 *value);
+        HRESULT GetGattService([in] GUID uuid,
+                               [out, retval] Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceService **service);
+        [eventadd] HRESULT NameChanged([in] Windows.Foundation.TypedEventHandler<Windows.Devices.Bluetooth.BluetoothLEDevice *, IInspectable *> *handler,
+                                       [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT NameChanged([in] EventRegistrationToken token);
+        [eventadd] HRESULT GattServicesChanged([in] Windows.Foundation.TypedEventHandler<Windows.Devices.Bluetooth.BluetoothLEDevice *, IInspectable *> *handler,
+                                               [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT GattServicesChanged([in] EventRegistrationToken token);
+        [eventadd] HRESULT ConnectionStatusChanged([in] Windows.Foundation.TypedEventHandler<Windows.Devices.Bluetooth.BluetoothLEDevice *, IInspectable *> *handler,
+                                                   [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT ConnectionStatusChanged([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Bluetooth.BluetoothLEDevice),
+        uuid(c8cf1a19-f0b6-4bf0-8689-41303de2d9f4)
+    ]
+    interface IBluetoothLEDeviceStatics : IInspectable
+    {
+        HRESULT FromIdAsync([in] HSTRING id,
+                            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.BluetoothLEDevice *> **async);
+        [overload("FromBluetoothAddressAsync")]
+        HRESULT FromBluetoothAddressAsync([in] UINT64 addr,
+                                          [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.BluetoothLEDevice *> **async);
+        HRESULT GetDeviceSelector([out, retval] HSTRING *result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Devices.Bluetooth.IBluetoothLEDeviceStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.Devices.Bluetooth.IBluetoothLEDeviceStatics2, Windows.Foundation.UniversalApiContract, 2.0),
+        threading(both)
+    ]
+    runtimeclass BluetoothLEDevice
+    {
+        [default] interface Windows.Devices.Bluetooth.IBluetoothLEDevice;
+        [contract(Windows.Foundation.UniversalApiContract, 2.0)] interface Windows.Devices.Bluetooth.IBluetoothLEDevice2;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Devices.Bluetooth.IBluetoothLEDevice3;
+        [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.Devices.Bluetooth.IBluetoothLEDevice4;
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Devices.Bluetooth.IBluetoothLEDevice5;
+        [contract(Windows.Foundation.UniversalApiContract, 13.0)] interface Windows.Devices.Bluetooth.IBluetoothLEDevice6;
+        interface Windows.Foundation.IClosable;
+    }
 }
