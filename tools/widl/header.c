@@ -154,7 +154,7 @@ static void write_type_v( FILE *h, const decl_spec_t *ds, bool is_field, const c
     type_t *t = ds->type;
 
     if (!h) return;
-    if (t) write_type_left( h, ds, name_type, true );
+    if (t) write_type_left( h, ds, name_type );
     if (name) fprintf( h, "%s%s", !t || needs_space_after( t ) ? " " : "", name );
     if (t) write_type_right( h, t, is_field );
 }
@@ -376,11 +376,11 @@ static void write_type_definition_left( FILE *h, const decl_spec_t *decl_spec, e
     }
 }
 
-void write_type_left( FILE *h, const decl_spec_t *ds, enum name_type name_type, bool write_callconv )
+void write_type_left( FILE *h, const decl_spec_t *ds, enum name_type name_type )
 {
     struct strbuf str = {0};
     if (!h) return;
-    append_type_left( &str, ds, name_type, write_callconv ? is_object_interface ? "STDMETHODCALLTYPE" : "" : NULL );
+    append_type_left( &str, ds, name_type, is_object_interface ? "STDMETHODCALLTYPE" : "" );
     fwrite( str.buf, 1, str.pos, h );
 }
 
@@ -474,7 +474,7 @@ static void write_type( FILE *f, type_t *t, bool define )
     }
     indent(f, 0);
     if (define) write_type_definition_left( f, &ds, NAME_DEFAULT, true );
-    else write_type_left( f, &ds, NAME_DEFAULT, true );
+    else write_type_left( f, &ds, NAME_DEFAULT );
     fprintf(f, ";\n");
     if(in_namespace) {
         t->written = false;
@@ -482,7 +482,7 @@ static void write_type( FILE *f, type_t *t, bool define )
         fprintf(f, "extern \"C\" {\n");
         fprintf(f, "#else\n");
         if (define) write_type_definition_left( f, &ds, NAME_C, true );
-        else write_type_left( f, &ds, NAME_C, true );
+        else write_type_left( f, &ds, NAME_C );
         fprintf(f, ";\n");
         if (winrt_mode) write_widl_using_macros(f, t);
         fprintf(f, "#endif\n\n");
@@ -499,7 +499,7 @@ void write_type_decl(FILE *f, const decl_spec_t *t, const char *name)
 
 void write_type_decl_left(FILE *f, const decl_spec_t *ds)
 {
-    write_type_left( f, ds, NAME_DEFAULT, true );
+    write_type_left( f, ds, NAME_DEFAULT );
 }
 
 static int user_type_registered(const char *name)
