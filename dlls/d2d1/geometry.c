@@ -276,50 +276,30 @@ static float d2d_fp_estimate(float *a, size_t len)
 static void d2d_fp_fast_expansion_sum_zeroelim(float *out, size_t *out_len,
         const float *a, size_t a_len, const float *b, size_t b_len)
 {
-    float sum[2], q, a_curr, b_curr;
+    float sum[2], q;
     size_t a_idx, b_idx, out_idx;
 
-    a_curr = a[0];
-    b_curr = b[0];
     a_idx = b_idx = 0;
-    if ((b_curr > a_curr) == (b_curr > -a_curr))
-    {
-        q = a_curr;
-        a_curr = a[++a_idx];
-    }
+    if ((b[b_idx] > a[a_idx]) == (b[b_idx] > -a[a_idx]))
+        q = a[a_idx++];
     else
-    {
-        q = b_curr;
-        b_curr = b[++b_idx];
-    }
+        q = b[b_idx++];
     out_idx = 0;
     if (a_idx < a_len && b_idx < b_len)
     {
-        if ((b_curr > a_curr) == (b_curr > -a_curr))
-        {
-            d2d_fp_fast_two_sum(sum, a_curr, q);
-            a_curr = a[++a_idx];
-        }
+        if ((b[b_idx] > a[a_idx]) == (b[b_idx] > -a[a_idx]))
+            d2d_fp_fast_two_sum(sum, a[a_idx++], q);
         else
-        {
-            d2d_fp_fast_two_sum(sum, b_curr, q);
-            b_curr = b[++b_idx];
-        }
+            d2d_fp_fast_two_sum(sum, b[b_idx++], q);
         if (sum[0] != 0.0f)
             out[out_idx++] = sum[0];
         q = sum[1];
         while (a_idx < a_len && b_idx < b_len)
         {
-            if ((b_curr > a_curr) == (b_curr > -a_curr))
-            {
-                d2d_fp_two_sum(sum, q, a_curr);
-                a_curr = a[++a_idx];
-            }
+            if ((b[b_idx] > a[a_idx]) == (b[b_idx] > -a[a_idx]))
+                d2d_fp_two_sum(sum, q, a[a_idx++]);
             else
-            {
-                d2d_fp_two_sum(sum, q, b_curr);
-                b_curr = b[++b_idx];
-            }
+                d2d_fp_two_sum(sum, q, b[b_idx++]);
             if (sum[0] != 0.0f)
                 out[out_idx++] = sum[0];
             q = sum[1];
@@ -327,16 +307,14 @@ static void d2d_fp_fast_expansion_sum_zeroelim(float *out, size_t *out_len,
     }
     while (a_idx < a_len)
     {
-        d2d_fp_two_sum(sum, q, a_curr);
-        a_curr = a[++a_idx];
+        d2d_fp_two_sum(sum, q, a[a_idx++]);
         if (sum[0] != 0.0f)
             out[out_idx++] = sum[0];
         q = sum[1];
     }
     while (b_idx < b_len)
     {
-        d2d_fp_two_sum(sum, q, b_curr);
-        b_curr = b[++b_idx];
+        d2d_fp_two_sum(sum, q, b[b_idx++]);
         if (sum[0] != 0.0f)
             out[out_idx++] = sum[0];
         q = sum[1];
