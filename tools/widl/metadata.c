@@ -1396,6 +1396,29 @@ static void add_struct_type_step2( type_t *type )
     add_contract_attr_step2( type );
 }
 
+static void add_interface_type_step1( type_t *type )
+{
+    UINT name, namespace;
+
+    name = add_name( type, &namespace );
+
+    type->md.ref = add_typeref_row( resolution_scope(TABLE_MODULE, MODULE_ROW), name, namespace );
+
+    add_contract_attr_step1( type );
+}
+
+static void add_interface_type_step2( type_t *type )
+{
+    UINT name, namespace, flags = TYPE_ATTR_INTERFACE | TYPE_ATTR_ABSTRACT | TYPE_ATTR_UNKNOWN;
+
+    name = add_name( type, &namespace );
+
+    if (!is_attr( type->attrs, ATTR_EXCLUSIVETO )) flags |= TYPE_ATTR_PUBLIC;
+    type->md.def = add_typedef_row( flags, name, namespace, 0, 0, 0 );
+
+    add_contract_attr_step2( type );
+}
+
 static UINT make_contractversion_value( const type_t *type, BYTE *buf )
 {
     UINT version = get_attrv( type->attrs, ATTR_CONTRACTVERSION ), len = 2 + sizeof(version);
@@ -1507,6 +1530,14 @@ static void build_tables( const statement_list_t *stmt_list )
         case TYPE_STRUCT:
             add_struct_type_step1( type );
             break;
+        case TYPE_INTERFACE:
+            if (type->signature && !strncmp( type->signature, "pinterface", 10 ))
+            {
+                fprintf( stderr, "Ingoring supported %s parameterized interface.\n", type->name );
+                break;
+            }
+            add_interface_type_step1( type );
+            break;
         case TYPE_APICONTRACT:
             add_apicontract_type_step1( type );
             break;
@@ -1529,6 +1560,14 @@ static void build_tables( const statement_list_t *stmt_list )
             break;
         case TYPE_STRUCT:
             add_struct_type_step2( type );
+            break;
+        case TYPE_INTERFACE:
+            if (type->signature && !strncmp( type->signature, "pinterface", 10 ))
+            {
+                fprintf( stderr, "Ingoring supported %s parameterized interface.\n", type->name );
+                break;
+            }
+            add_interface_type_step2( type );
             break;
         case TYPE_APICONTRACT:
             add_apicontract_type_step2( type );
