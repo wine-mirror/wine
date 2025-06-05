@@ -2503,6 +2503,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     IDirect3DSurface9 *surf, *newsurf;
     RECT rect, destrect;
     D3DLOCKED_RECT lockrect;
+    UINT row_pitch;
     static const WORD pixdata_a8r3g3b2[] = { 0x57df, 0x98fc, 0xacdd, 0xc891 };
     static const WORD pixdata_a1r5g5b5[] = { 0x46b5, 0x99c8, 0x06a2, 0x9431 };
     static const WORD pixdata_r5g6b5[] = { 0x9ef6, 0x658d, 0x0aee, 0x42ee };
@@ -2603,44 +2604,45 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
     /* D3DXLoadSurfaceFromMemory */
     SetRect(&rect, 0, 0, 2, 2);
+    row_pitch = 8; /* 2 * 4 bytes */
 
-    hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_FILTER_NONE, 0);
+    hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, row_pitch, NULL, &rect, D3DX_FILTER_NONE, 0);
     ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
 
     hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, 0, NULL, &rect, D3DX_FILTER_NONE, 0);
     ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
 
-    hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, NULL, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_DEFAULT, 0);
+    hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, NULL, D3DFMT_A8R8G8B8, row_pitch, NULL, &rect, D3DX_DEFAULT, 0);
     ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DXLoadSurfaceFromMemory(NULL, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_DEFAULT, 0);
+    hr = D3DXLoadSurfaceFromMemory(NULL, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, row_pitch, NULL, &rect, D3DX_DEFAULT, 0);
     ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, NULL, D3DX_DEFAULT, 0);
+    hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, row_pitch, NULL, NULL, D3DX_DEFAULT, 0);
     ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_UNKNOWN, sizeof(pixdata), NULL, &rect, D3DX_DEFAULT, 0);
+    hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_UNKNOWN, row_pitch, NULL, &rect, D3DX_DEFAULT, 0);
     ok(hr == E_FAIL, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, E_FAIL);
 
     SetRect(&destrect, -1, -1, 1, 1); /* destination rect is partially outside texture boundaries */
-    hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_FILTER_NONE, 0);
+    hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, row_pitch, NULL, &rect, D3DX_FILTER_NONE, 0);
     ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     SetRect(&destrect, 255, 255, 257, 257); /* destination rect is partially outside texture boundaries */
-    hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_FILTER_NONE, 0);
+    hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, row_pitch, NULL, &rect, D3DX_FILTER_NONE, 0);
     ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     SetRect(&destrect, 1, 1, 0, 0); /* left > right, top > bottom */
-    hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_FILTER_NONE, 0);
+    hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, row_pitch, NULL, &rect, D3DX_FILTER_NONE, 0);
     ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     SetRect(&destrect, 1, 2, 1, 2); /* left = right, top = bottom */
-    hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_FILTER_NONE, 0);
+    hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, row_pitch, NULL, &rect, D3DX_FILTER_NONE, 0);
     /* fails when debug version of d3d9 is used */
     ok(hr == D3D_OK || broken(hr == D3DERR_INVALIDCALL), "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
 
     SetRect(&destrect, 257, 257, 257, 257); /* left = right, top = bottom, but invalid values */
-    hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_FILTER_NONE, 0);
+    hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, row_pitch, NULL, &rect, D3DX_FILTER_NONE, 0);
     ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
 
