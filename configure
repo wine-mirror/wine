@@ -22105,6 +22105,7 @@ wine_fn_config_makefile dlls/avifil32/tests enable_tests
 wine_fn_config_makefile dlls/avifile.dll16 enable_win16
 wine_fn_config_makefile dlls/avrt enable_avrt
 wine_fn_config_makefile dlls/bcp47langs enable_bcp47langs
+wine_fn_config_makefile dlls/bcp47langs/tests enable_tests
 wine_fn_config_makefile dlls/bcrypt enable_bcrypt
 wine_fn_config_makefile dlls/bcrypt/tests enable_tests
 wine_fn_config_makefile dlls/bcryptprimitives enable_bcryptprimitives

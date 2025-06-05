@@ -37,7 +37,7 @@
 @ stub GetAppropriateUserPreferredAndDisplayLanguagesForUser
 @ stub GetClosestMatchingUserLanguage
 @ stub GetDisplayLanguagesForAllUsers
-@ stub GetFontFallbackLanguageList
+@ stdcall GetFontFallbackLanguageList(wstr long ptr ptr)
 @ stub GetHttpAcceptLanguageOptOut
 @ stub GetInputMethodOverrideForUser
 @ stub GetPendingUserDisplayLanguage
