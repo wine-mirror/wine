@@ -1184,6 +1184,18 @@ static UINT make_member_sig( UINT token, BYTE *buf )
     return len;
 }
 
+static UINT make_member_sig2( UINT type, UINT token, BYTE *buf )
+{
+    UINT len = 4;
+
+    buf[0] = SIG_TYPE_HASTHIS;
+    buf[1] = 1;
+    buf[2] = ELEMENT_TYPE_VOID;
+    buf[3] = type;
+    len += encode_int( token, buf + 4 );
+    return len;
+}
+
 static UINT make_contract_value( const type_t *type, BYTE *buf )
 {
     const expr_t *contract = get_attrp( type->attrs, ATTR_CONTRACT );
@@ -1428,6 +1440,56 @@ static void add_uuid_attr_step2( type_t *type )
     add_customattribute_row( parent, attr_type, add_blob(value, sizeof(value)) );
 }
 
+static UINT make_exclusiveto_value( const type_t *type, BYTE *buf )
+{
+    const type_t *attr = get_attrp( type->attrs, ATTR_EXCLUSIVETO );
+    char *name = format_namespace( attr->namespace, "", ".", attr->name, NULL );
+    UINT len = strlen( name );
+
+    buf[0] = 1;
+    buf[1] = 0;
+    buf[2] = len;
+    memcpy( buf + 3, name, len );
+    len += 3;
+    buf[len++] = 0;
+    buf[len++] = 0;
+
+    free( name );
+    return len;
+}
+
+static void add_exclusiveto_attr_step1( type_t *type )
+{
+    UINT assemblyref, scope, typeref, typeref_type, class, sig_size;
+    BYTE sig[32];
+
+    if (!is_attr( type->attrs, ATTR_EXCLUSIVETO )) return;
+
+    scope = resolution_scope( TABLE_ASSEMBLYREF, MSCORLIB_ROW );
+    typeref_type = add_typeref_row( scope, add_string("Type"), add_string("System") );
+
+    assemblyref = add_assemblyref_row( 0x200, 0, add_string("Windows.Foundation") );
+    scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+    typeref = add_typeref_row( scope, add_string("ExclusiveToAttribute"), add_string("Windows.Foundation.Metadata") );
+
+    class = memberref_parent( TABLE_TYPEREF, typeref );
+    sig_size = make_member_sig2( ELEMENT_TYPE_CLASS, typedef_or_ref(TABLE_TYPEREF, typeref_type), sig );
+    type->md.member[MD_ATTR_EXCLUSIVETO] = add_memberref_row( class, add_string(".ctor"), add_blob(sig, sig_size) );
+}
+
+static void add_exclusiveto_attr_step2( type_t *type )
+{
+    UINT parent, attr_type, value_size;
+    BYTE value[256 + 5];
+
+    if (!is_attr( type->attrs, ATTR_EXCLUSIVETO )) return;
+
+    parent = has_customattribute( TABLE_TYPEDEF, type->md.def );
+    attr_type = customattribute_type( TABLE_MEMBERREF, type->md.member[MD_ATTR_EXCLUSIVETO] );
+    value_size = make_exclusiveto_value( type, value );
+    add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
+}
+
 static void add_interface_type_step1( type_t *type )
 {
     UINT name, namespace;
@@ -1438,6 +1500,7 @@ static void add_interface_type_step1( type_t *type )
 
     add_contract_attr_step1( type );
     add_uuid_attr_step1( type );
+    add_exclusiveto_attr_step1( type );
 }
 
 static void add_interface_type_step2( type_t *type )
@@ -1451,6 +1514,7 @@ static void add_interface_type_step2( type_t *type )
 
     add_contract_attr_step2( type );
     add_uuid_attr_step2( type );
+    add_exclusiveto_attr_step2( type );
 }
 
 static UINT make_contractversion_value( const type_t *type, BYTE *buf )
