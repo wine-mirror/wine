@@ -134,9 +134,7 @@ static UINT_PTR CALLBACK printer_properties_hook_procA(HWND hdlg, UINT msg, WPAR
     {
         dlg = (PRINTDLGA*)lp;
         dm = GlobalLock(dlg->hDevMode);
-        todo_wine
         ok(dm->dmDuplex != 123, "dmDuplex should not equal 123 in the hook.\n");
-        todo_wine
         ok(dm->dmPaperSize != 321, "dmPaperSize should not equal 321 in the hook.\n");
         GlobalUnlock(dlg->hDevMode);
         PostMessageW(hdlg, WM_COMMAND, psh2, lp);
@@ -313,9 +311,7 @@ static void test_PrintDlgA(void)
 
     PrintDlgA(pDlg);
     dm = GlobalLock(pDlg->hDevMode);
-    todo_wine
     ok(dm->dmDuplex == 999, "expected 999, but got %d.\n", dm->dmDuplex);
-    todo_wine
     ok(dm->dmPaperSize == 888, "expected 888, but got %d.\n", dm->dmPaperSize);
     GlobalUnlock(pDlg->hDevMode);
     GlobalFree(pDlg->hDevMode);
