@@ -1283,7 +1283,7 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     if (testmode == 100)
     {
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        todo_wine ok(compare_media_types(mt, &testdmo_output_mt), "Media types didn't match.\n");
+        ok(compare_media_types(mt, &testdmo_output_mt), "Media types didn't match.\n");
     }
     else
     {
@@ -1813,7 +1813,7 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
     ok(got_Receive == 1, "Got %u calls to Receive().\n", got_Receive);
     got_Receive = 0;
 
-    todo_wine ok(compare_media_types(&testdmo_output_mt, &mt1), "Media types didn't match.\n");
+    ok(compare_media_types(&testdmo_output_mt, &mt1), "Media types didn't match.\n");
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);

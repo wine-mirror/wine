@@ -220,7 +220,7 @@ static void release_output_samples(struct dmo_wrapper *filter)
     }
 }
 
-static HRESULT get_output_samples(struct dmo_wrapper *filter)
+static HRESULT get_output_samples(struct dmo_wrapper *filter, IMediaObject *dmo)
 {
     HRESULT hr;
     DWORD i;
@@ -229,6 +229,8 @@ static HRESULT get_output_samples(struct dmo_wrapper *filter)
     {
         if (filter->sources[i].pin.pin.peer)
         {
+            AM_MEDIA_TYPE *mt;
+
             if (FAILED(hr = IMemAllocator_GetBuffer(filter->sources[i].pin.pAllocator,
                     &filter->sources[i].buffer.sample, NULL, NULL, 0)))
             {
@@ -238,6 +240,25 @@ static HRESULT get_output_samples(struct dmo_wrapper *filter)
             }
             filter->buffers[i].pBuffer = &filter->sources[i].buffer.IMediaBuffer_iface;
             filter->sources[i].buffer.len = 0;
+
+            /* Handle dynamic format change. */
+            if ((hr = IMediaSample_GetMediaType(filter->sources[i].buffer.sample, &mt)) == S_OK)
+            {
+                if ((hr = IMediaObject_SetOutputType(dmo, i, (const DMO_MEDIA_TYPE *)mt, 0)) != S_OK)
+                {
+                    /* This isn't supposed to happen; the downstream filter
+                     * should call QueryAccept() first. */
+                    ERR("Failed to set output type, hr %#lx.\n", hr);
+                    release_output_samples(filter);
+                    DeleteMediaType(mt);
+                    return hr;
+                }
+                DeleteMediaType(mt);
+            }
+            else if (hr != S_FALSE)
+            {
+                ERR("Failed to get media type, hr %#lx.\n", hr);
+            }
         }
         else
             filter->buffers[i].pBuffer = NULL;
@@ -258,7 +279,7 @@ static HRESULT process_output(struct dmo_wrapper *filter, IMediaObject *dmo)
         HRESULT process_hr;
         more_data = FALSE;
 
-        if (FAILED(hr = get_output_samples(filter)))
+        if (FAILED(hr = get_output_samples(filter, dmo)))
             return hr;
 
         process_hr = IMediaObject_ProcessOutput(dmo, DMO_PROCESS_OUTPUT_DISCARD_WHEN_NO_BUFFER,
