@@ -720,10 +720,14 @@ static int get_render_type_from_fbconfig(Display *display, GLXFBConfig fbconfig)
 }
 
 /* Check whether a fbconfig is suitable for Windows-style bitmap rendering */
-static BOOL check_fbconfig_bitmap_capability(Display *display, GLXFBConfig fbconfig)
+static BOOL check_fbconfig_bitmap_capability( GLXFBConfig fbconfig, const XVisualInfo *vis )
 {
     int dbuf, value;
-    pglXGetFBConfigAttrib(display, fbconfig, GLX_DOUBLEBUFFER, &dbuf);
+
+    pglXGetFBConfigAttrib( gdi_display, fbconfig, GLX_BUFFER_SIZE, &value );
+    if (vis && value != vis->depth) return FALSE;
+
+    pglXGetFBConfigAttrib( gdi_display, fbconfig, GLX_DOUBLEBUFFER, &dbuf );
     pglXGetFBConfigAttrib(gdi_display, fbconfig, GLX_DRAWABLE_TYPE, &value);
 
     /* Windows only supports bitmap rendering on single buffered formats, further the fbconfig needs to have
@@ -783,7 +787,7 @@ static UINT x11drv_init_pixel_formats( UINT *onscreen_count )
                 onscreen_size++;
 
                 /* Clone a format if it is bitmap capable for indirect rendering to bitmaps */
-                if(check_fbconfig_bitmap_capability(gdi_display, cfgs[i]))
+                if (check_fbconfig_bitmap_capability( cfgs[i], visinfo ))
                 {
                     TRACE("Found bitmap capable format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", fmt_id, size+1, i);
                     list[size].fbconfig = cfgs[i];
@@ -814,7 +818,7 @@ static UINT x11drv_init_pixel_formats( UINT *onscreen_count )
                 list[size].fbconfig = cfgs[i];
                 list[size].fmt_id = fmt_id;
                 list[size].render_type = get_render_type_from_fbconfig(gdi_display, cfgs[i]);
-                if (!check_fbconfig_bitmap_capability( gdi_display, cfgs[i] )) list[size].dwFlags = 0;
+                if (!check_fbconfig_bitmap_capability( cfgs[i], NULL )) list[size].dwFlags = 0;
                 else list[size].dwFlags = PFD_DRAW_TO_BITMAP | PFD_SUPPORT_GDI | PFD_GENERIC_FORMAT;
                 size++;
             }
