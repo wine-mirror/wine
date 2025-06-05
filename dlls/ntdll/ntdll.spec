@@ -129,18 +129,18 @@
 @ extern NlsAnsiCodePage
 @ extern NlsMbCodePageTag
 @ extern NlsMbOemCodePageTag
-@ stdcall -syscall NtAcceptConnectPort(ptr long ptr long ptr ptr)
-@ stdcall -syscall NtAccessCheck(ptr long long ptr ptr ptr ptr ptr)
-@ stdcall -syscall NtAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr)
+@ stdcall -syscall=0x0002 NtAcceptConnectPort(ptr long ptr long ptr ptr)
+@ stdcall -syscall=0x0000 NtAccessCheck(ptr long long ptr ptr ptr ptr ptr)
+@ stdcall -syscall=0x0029 NtAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr)
 # @ stub NtAccessCheckByType
 # @ stub NtAccessCheckByTypeAndAuditAlarm
 # @ stub NtAccessCheckByTypeResultList
 # @ stub NtAccessCheckByTypeResultListAndAuditAlarm
 # @ stub NtAccessCheckByTypeResultListAndAuditAlarmByHandle
-@ stdcall -syscall NtAddAtom(ptr long ptr)
+@ stdcall -syscall=0x0047 NtAddAtom(ptr long ptr)
 # @ stub NtAddBootEntry
 @ stdcall -syscall NtAdjustGroupsToken(long long ptr long ptr ptr)
-@ stdcall -syscall NtAdjustPrivilegesToken(long long ptr long ptr ptr)
+@ stdcall -syscall=0x0041 NtAdjustPrivilegesToken(long long ptr long ptr ptr)
 @ stdcall -syscall NtAlertResumeThread(long ptr)
 @ stdcall -syscall NtAlertThread(long)
 @ stdcall -syscall NtAlertThreadByThreadId(ptr)
@@ -148,18 +148,18 @@
 @ stdcall -syscall NtAllocateReserveObject(ptr ptr long)
 # @ stub NtAllocateUserPhysicalPages
 @ stdcall -syscall NtAllocateUuids(ptr ptr ptr ptr)
-@ stdcall -syscall NtAllocateVirtualMemory(long ptr long ptr long long)
+@ stdcall -syscall=0x0018 NtAllocateVirtualMemory(long ptr long ptr long long)
 @ stdcall -syscall NtAllocateVirtualMemoryEx(long ptr ptr long long ptr long)
 @ stdcall -syscall NtAreMappedFilesTheSame(ptr ptr)
 @ stdcall -syscall NtAssignProcessToJobObject(long long)
-@ stdcall -syscall NtCallbackReturn(ptr long long)
+@ stdcall -syscall=0x0005 NtCallbackReturn(ptr long long)
 # @ stub NtCancelDeviceWakeupRequest
-@ stdcall -syscall NtCancelIoFile(long ptr)
+@ stdcall -syscall=0x005d NtCancelIoFile(long ptr)
 @ stdcall -syscall NtCancelIoFileEx(long ptr ptr)
 @ stdcall -syscall NtCancelSynchronousIoFile(long ptr ptr)
-@ stdcall -syscall NtCancelTimer(long ptr)
-@ stdcall -syscall NtClearEvent(long)
-@ stdcall -syscall NtClose(long)
+@ stdcall -syscall=0x0061 NtCancelTimer(long ptr)
+@ stdcall -syscall=0x003e NtClearEvent(long)
+@ stdcall -syscall=0x000f NtClose(long)
 # @ stub NtCloseObjectAuditAlarm
 @ stdcall -syscall NtCommitTransaction(long long)
 # @ stub NtCompactKeys
@@ -168,18 +168,18 @@
 @ stdcall -syscall NtCompleteConnectPort(ptr)
 # @ stub NtCompressKey
 @ stdcall -syscall NtConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr)
-@ stdcall -syscall NtContinue(ptr long)
+@ stdcall -syscall=0x0043 NtContinue(ptr long)
 @ stdcall -syscall NtContinueEx(ptr ptr)
 @ stdcall -syscall NtConvertBetweenAuxiliaryCounterAndPerformanceCounter(long ptr ptr ptr)
-@ stdcall -syscall NtCreateDebugObject(ptr long ptr long)
+@ stdcall -syscall=0x00a6 NtCreateDebugObject(ptr long ptr long)
 @ stdcall -syscall NtCreateDirectoryObject(ptr long ptr)
-@ stdcall -syscall NtCreateEvent(ptr long ptr long long)
+@ stdcall -syscall=0x0048 NtCreateEvent(ptr long ptr long long)
 # @ stub NtCreateEventPair
-@ stdcall -syscall NtCreateFile(ptr long ptr ptr ptr long long long long ptr long)
+@ stdcall -syscall=0x0055 NtCreateFile(ptr long ptr ptr ptr long long long long ptr long)
 @ stdcall -syscall NtCreateIoCompletion(ptr long ptr long)
 @ stdcall -syscall NtCreateJobObject(ptr long ptr)
 # @ stub NtCreateJobSet
-@ stdcall -syscall NtCreateKey(ptr long ptr long ptr long ptr)
+@ stdcall -syscall=0x001d NtCreateKey(ptr long ptr long ptr long ptr)
 @ stdcall -syscall NtCreateKeyTransacted(ptr long ptr long ptr long long ptr)
 @ stdcall -syscall NtCreateKeyedEvent(ptr long ptr long)
 @ stdcall -syscall NtCreateLowBoxToken(ptr long long ptr ptr long ptr long ptr)
@@ -191,11 +191,11 @@
 # @ stub NtCreateProcess
 # @ stub NtCreateProcessEx
 # @ stub NtCreateProfile
-@ stdcall -syscall NtCreateSection(ptr long ptr ptr long long long)
+@ stdcall -syscall=0x004a NtCreateSection(ptr long ptr ptr long long long)
 @ stdcall -syscall NtCreateSectionEx(ptr long ptr ptr long long long ptr long)
 @ stdcall -syscall NtCreateSemaphore(ptr long ptr long long)
 @ stdcall -syscall NtCreateSymbolicLinkObject(ptr long ptr ptr)
-@ stdcall -syscall NtCreateThread(ptr long ptr long ptr ptr ptr long)
+@ stdcall -syscall=0x004e NtCreateThread(ptr long ptr long ptr ptr ptr long)
 @ stdcall -syscall NtCreateThreadEx(ptr long ptr long ptr ptr long long long long ptr)
 @ stdcall -syscall NtCreateTimer(ptr long ptr long)
 @ stdcall -syscall NtCreateToken(ptr long ptr long ptr ptr ptr ptr ptr ptr ptr ptr ptr)
@@ -205,26 +205,26 @@
 @ stdcall -arch=i386 NtCurrentTeb()
 @ stdcall -syscall NtDebugActiveProcess(long long)
 @ stdcall -syscall NtDebugContinue(long ptr long)
-@ stdcall -syscall NtDelayExecution(long ptr)
+@ stdcall -syscall=0x0034 NtDelayExecution(long ptr)
 @ stdcall -syscall NtDeleteAtom(long)
 # @ stub NtDeleteBootEntry
 @ stdcall -syscall NtDeleteFile(ptr)
 @ stdcall -syscall NtDeleteKey(long)
 # @ stub NtDeleteObjectAuditAlarm
 @ stdcall -syscall NtDeleteValueKey(long ptr)
-@ stdcall -syscall NtDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long)
+@ stdcall -syscall=0x0007 NtDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long)
 @ stdcall -syscall NtDisplayString(ptr)
-@ stdcall -syscall NtDuplicateObject(long long long ptr long long long)
-@ stdcall -syscall NtDuplicateToken(long long ptr long long ptr)
+@ stdcall -syscall=0x003c NtDuplicateObject(long long long ptr long long long)
+@ stdcall -syscall=0x0042 NtDuplicateToken(long long ptr long long ptr)
 # @ stub NtEnumerateBootEntries
 # @ stub NtEnumerateBus
-@ stdcall -syscall NtEnumerateKey(long long long ptr long ptr)
+@ stdcall -syscall=0x0032 NtEnumerateKey(long long long ptr long ptr)
 # @ stub NtEnumerateSystemEnvironmentValuesEx
-@ stdcall -syscall NtEnumerateValueKey(long long long ptr long ptr)
+@ stdcall -syscall=0x0013 NtEnumerateValueKey(long long long ptr long ptr)
 # @ stub NtExtendSection
 @ stdcall -syscall NtFilterToken(long long ptr ptr ptr ptr)
-@ stdcall -syscall NtFindAtom(ptr long ptr)
-@ stdcall -syscall NtFlushBuffersFile(long ptr)
+@ stdcall -syscall=0x0014 NtFindAtom(ptr long ptr)
+@ stdcall -syscall=0x004b NtFlushBuffersFile(long ptr)
 @ stdcall -syscall NtFlushBuffersFileEx(long long ptr long ptr)
 @ stdcall -syscall NtFlushInstructionCache(long ptr long)
 @ stdcall -syscall NtFlushKey(long)
@@ -232,8 +232,8 @@
 @ stdcall -syscall NtFlushVirtualMemory(long ptr ptr long)
 # @ stub NtFlushWriteBuffer
 # @ stub NtFreeUserPhysicalPages
-@ stdcall -syscall NtFreeVirtualMemory(long ptr ptr long)
-@ stdcall -syscall NtFsControlFile(long long ptr ptr ptr long ptr long ptr long)
+@ stdcall -syscall=0x001e NtFreeVirtualMemory(long ptr ptr long)
+@ stdcall -syscall=0x0039 NtFsControlFile(long long ptr ptr ptr long ptr long ptr long)
 @ stdcall -norelay -syscall NtGetContextThread(long ptr)
 @ stdcall -syscall NtGetCurrentProcessorNumber()
 # @ stub NtGetDevicePowerState
@@ -249,7 +249,7 @@
 @ stdcall -syscall NtInitializeNlsFiles(ptr ptr ptr)
 # @ stub NtInitializeRegistry
 @ stdcall -syscall NtInitiatePowerAction (long long long long)
-@ stdcall -syscall NtIsProcessInJob(long long)
+@ stdcall -syscall=0x004f NtIsProcessInJob(long long)
 # @ stub NtIsSystemResumeAutomatic
 @ stdcall -syscall NtListenPort(ptr ptr)
 @ stdcall -syscall NtLoadDriver(ptr)
@@ -264,118 +264,118 @@
 @ stdcall -syscall NtMakeTemporaryObject(long)
 # @ stub NtMapUserPhysicalPages
 # @ stub NtMapUserPhysicalPagesScatter
-@ stdcall -syscall NtMapViewOfSection(long long ptr long long ptr ptr long long long)
+@ stdcall -syscall=0x0028 NtMapViewOfSection(long long ptr long long ptr ptr long long long)
 @ stdcall -syscall NtMapViewOfSectionEx(long long ptr ptr ptr long long ptr long)
 # @ stub NtModifyBootEntry
 @ stdcall -syscall NtNotifyChangeDirectoryFile(long long ptr ptr ptr ptr long long long)
 @ stdcall -syscall NtNotifyChangeKey(long long ptr ptr ptr long long ptr long long)
 @ stdcall -syscall NtNotifyChangeMultipleKeys(long long ptr long ptr ptr ptr long long ptr long long)
-@ stdcall -syscall NtOpenDirectoryObject(ptr long ptr)
-@ stdcall -syscall NtOpenEvent(ptr long ptr)
+@ stdcall -syscall=0x0058 NtOpenDirectoryObject(ptr long ptr)
+@ stdcall -syscall=0x0040 NtOpenEvent(ptr long ptr)
 # @ stub NtOpenEventPair
-@ stdcall -syscall NtOpenFile(ptr long ptr ptr long long)
+@ stdcall -syscall=0x0033 NtOpenFile(ptr long ptr ptr long long)
 @ stdcall -syscall NtOpenIoCompletion(ptr long ptr)
 @ stdcall -syscall NtOpenJobObject(ptr long ptr)
-@ stdcall -syscall NtOpenKey(ptr long ptr)
+@ stdcall -syscall=0x0012 NtOpenKey(ptr long ptr)
 @ stdcall -syscall NtOpenKeyEx(ptr long ptr long)
 @ stdcall -syscall NtOpenKeyTransacted(ptr long ptr long)
 @ stdcall -syscall NtOpenKeyTransactedEx(ptr long ptr long long)
 @ stdcall -syscall NtOpenKeyedEvent(ptr long ptr)
 @ stdcall -syscall NtOpenMutant(ptr long ptr)
 # @ stub NtOpenObjectAuditAlarm
-@ stdcall -syscall NtOpenProcess(ptr long ptr ptr)
+@ stdcall -syscall=0x0026 NtOpenProcess(ptr long ptr ptr)
 @ stdcall -syscall NtOpenProcessToken(long long ptr)
-@ stdcall -syscall NtOpenProcessTokenEx(long long long ptr)
-@ stdcall -syscall NtOpenSection(ptr long ptr)
+@ stdcall -syscall=0x0030 NtOpenProcessTokenEx(long long long ptr)
+@ stdcall -syscall=0x0037 NtOpenSection(ptr long ptr)
 @ stdcall -syscall NtOpenSemaphore(ptr long ptr)
 @ stdcall -syscall NtOpenSymbolicLinkObject (ptr long ptr)
 @ stdcall -syscall NtOpenThread(ptr long ptr ptr)
-@ stdcall -syscall NtOpenThreadToken(long long long ptr)
-@ stdcall -syscall NtOpenThreadTokenEx(long long long long ptr)
+@ stdcall -syscall=0x0024 NtOpenThreadToken(long long long ptr)
+@ stdcall -syscall=0x002f NtOpenThreadTokenEx(long long long long ptr)
 @ stdcall -syscall NtOpenTimer(ptr long ptr)
 # @ stub NtPlugPlayControl
-@ stdcall -syscall NtPowerInformation(long ptr long ptr long)
+@ stdcall -syscall=0x005f NtPowerInformation(long ptr long ptr long)
 @ stdcall -syscall NtPrivilegeCheck(ptr ptr ptr)
 # @ stub NtPrivilegeObjectAuditAlarm
 # @ stub NtPrivilegedServiceAuditAlarm
-@ stdcall -syscall NtProtectVirtualMemory(long ptr ptr long ptr)
+@ stdcall -syscall=0x0050 NtProtectVirtualMemory(long ptr ptr long ptr)
 @ stdcall -syscall NtPulseEvent(long ptr)
-@ stdcall -syscall NtQueryAttributesFile(ptr ptr)
+@ stdcall -syscall=0x003d NtQueryAttributesFile(ptr ptr)
 # @ stub NtQueryBootEntryOrder
 # @ stub NtQueryBootOptions
 # @ stub NtQueryDebugFilterState
-@ stdcall -syscall NtQueryDefaultLocale(long ptr)
-@ stdcall -syscall NtQueryDefaultUILanguage(ptr)
-@ stdcall -syscall NtQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long)
+@ stdcall -syscall=0x0015 NtQueryDefaultLocale(long ptr)
+@ stdcall -syscall=0x0044 NtQueryDefaultUILanguage(ptr)
+@ stdcall -syscall=0x0035 NtQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long)
 @ stdcall -syscall NtQueryDirectoryObject(long ptr long long long ptr ptr)
 @ stdcall -syscall NtQueryEaFile(long ptr ptr long long ptr long ptr long)
-@ stdcall -syscall NtQueryEvent(long long ptr long ptr)
+@ stdcall -syscall=0x0056 NtQueryEvent(long long ptr long ptr)
 @ stdcall -syscall NtQueryFullAttributesFile(ptr ptr)
 @ stdcall -syscall NtQueryInformationAtom(long long ptr long ptr)
-@ stdcall -syscall NtQueryInformationFile(long ptr ptr long long)
+@ stdcall -syscall=0x0011 NtQueryInformationFile(long ptr ptr long long)
 @ stdcall -syscall NtQueryInformationJobObject(long long ptr long ptr)
 # @ stub NtQueryInformationPort
-@ stdcall -syscall NtQueryInformationProcess(long long ptr long ptr)
-@ stdcall -syscall NtQueryInformationThread(long long ptr long ptr)
-@ stdcall -syscall NtQueryInformationToken(long long ptr long ptr)
+@ stdcall -syscall=0x0019 NtQueryInformationProcess(long long ptr long ptr)
+@ stdcall -syscall=0x0025 NtQueryInformationThread(long long ptr long ptr)
+@ stdcall -syscall=0x0021 NtQueryInformationToken(long long ptr long ptr)
 @ stdcall -syscall NtQueryInstallUILanguage(ptr)
 # @ stub NtQueryIntervalProfile
 @ stdcall -syscall NtQueryIoCompletion(long long ptr long ptr)
-@ stdcall -syscall NtQueryKey(long long ptr long ptr)
+@ stdcall -syscall=0x0016 NtQueryKey(long long ptr long ptr)
 @ stdcall -syscall NtQueryLicenseValue(ptr ptr ptr long ptr)
 @ stdcall -syscall NtQueryMultipleValueKey(long ptr long ptr long ptr)
 @ stdcall -syscall NtQueryMutant(long long ptr long ptr)
-@ stdcall -syscall NtQueryObject(long long ptr long ptr)
+@ stdcall -syscall=0x0010 NtQueryObject(long long ptr long ptr)
 # @ stub NtQueryOpenSubKeys
-@ stdcall -syscall NtQueryPerformanceCounter(ptr ptr)
+@ stdcall -syscall=0x0031 NtQueryPerformanceCounter(ptr ptr)
 # @ stub NtQueryPortInformationProcess
 # @ stub NtQueryQuotaInformationFile
-@ stdcall -syscall NtQuerySection(long long ptr long ptr)
+@ stdcall -syscall=0x0051 NtQuerySection(long long ptr long ptr)
 @ stdcall -syscall NtQuerySecurityObject(long long ptr long ptr)
 @ stdcall -syscall NtQuerySemaphore (long long ptr long ptr)
 @ stdcall -syscall NtQuerySymbolicLinkObject(long ptr ptr)
 @ stdcall -syscall NtQuerySystemEnvironmentValue(ptr ptr long ptr)
 @ stdcall -syscall NtQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr)
-@ stdcall -syscall NtQuerySystemInformation(long ptr long ptr)
+@ stdcall -syscall=0x0036 NtQuerySystemInformation(long ptr long ptr)
 @ stdcall -syscall NtQuerySystemInformationEx(long ptr long ptr long ptr)
-@ stdcall -syscall NtQuerySystemTime(ptr)
-@ stdcall -syscall NtQueryTimer(ptr long ptr long ptr)
+@ stdcall -syscall=0x005a NtQuerySystemTime(ptr)
+@ stdcall -syscall=0x0038 NtQueryTimer(ptr long ptr long ptr)
 @ stdcall -syscall NtQueryTimerResolution(ptr ptr ptr)
-@ stdcall -syscall NtQueryValueKey(long ptr long ptr long ptr)
-@ stdcall -syscall NtQueryVirtualMemory(long ptr long ptr long ptr)
-@ stdcall -syscall NtQueryVolumeInformationFile(long ptr ptr long long)
-@ stdcall -syscall NtQueueApcThread(long ptr long long long)
+@ stdcall -syscall=0x0017 NtQueryValueKey(long ptr long ptr long ptr)
+@ stdcall -syscall=0x0023 NtQueryVirtualMemory(long ptr long ptr long ptr)
+@ stdcall -syscall=0x0049 NtQueryVolumeInformationFile(long ptr ptr long long)
+@ stdcall -syscall=0x0045 NtQueueApcThread(long ptr long long long)
 @ stdcall -syscall NtQueueApcThreadEx(long long ptr long long long)
 @ stdcall -syscall NtRaiseException(ptr ptr long)
 @ stdcall -syscall NtRaiseHardError(long long long ptr long ptr)
-@ stdcall -syscall NtReadFile(long long ptr ptr ptr ptr long ptr ptr)
-@ stdcall -syscall NtReadFileScatter(long long ptr ptr ptr ptr long ptr ptr)
+@ stdcall -syscall=0x0006 NtReadFile(long long ptr ptr ptr ptr long ptr ptr)
+@ stdcall -syscall=0x002e NtReadFileScatter(long long ptr ptr ptr ptr long ptr ptr)
 # @ stub NtReadRequestData
-@ stdcall -syscall NtReadVirtualMemory(long ptr ptr long ptr)
+@ stdcall -syscall=0x003f NtReadVirtualMemory(long ptr ptr long ptr)
 # @ stub NtRegisterNewDevice
 @ stdcall -syscall NtRegisterThreadTerminatePort(ptr)
 @ stdcall -syscall NtReleaseKeyedEvent(long ptr long ptr)
-@ stdcall -syscall NtReleaseMutant(long ptr)
+@ stdcall -syscall=0x0020 NtReleaseMutant(long ptr)
 # @ stub NtReleaseProcessMutant
-@ stdcall -syscall NtReleaseSemaphore(long long ptr)
-@ stdcall -syscall NtRemoveIoCompletion(ptr ptr ptr ptr ptr)
+@ stdcall -syscall=0x000a NtReleaseSemaphore(long long ptr)
+@ stdcall -syscall=0x0009 NtRemoveIoCompletion(ptr ptr ptr ptr ptr)
 @ stdcall -syscall NtRemoveIoCompletionEx(ptr ptr long ptr ptr long)
 @ stdcall -syscall NtRemoveProcessDebug(long long)
 @ stdcall -syscall NtRenameKey(long ptr)
 @ stdcall -syscall NtReplaceKey(ptr long ptr)
 # @ stub NtReplyPort
-@ stdcall -syscall NtReplyWaitReceivePort(ptr ptr ptr ptr)
+@ stdcall -syscall=0x000b NtReplyWaitReceivePort(ptr ptr ptr ptr)
 # @ stub NtReplyWaitReceivePortEx
 # @ stub NtReplyWaitReplyPort
 # @ stub NtRequestDeviceWakeup
 # @ stub NtRequestPort
-@ stdcall -syscall NtRequestWaitReplyPort(ptr ptr ptr)
+@ stdcall -syscall=0x0022 NtRequestWaitReplyPort(ptr ptr ptr)
 # @ stub NtRequestWakeupLatency
 @ stdcall -syscall NtResetEvent(long ptr)
 @ stdcall -syscall NtResetWriteWatch(long ptr long)
 @ stdcall -syscall NtRestoreKey(long long long)
 @ stdcall -syscall NtResumeProcess(long)
-@ stdcall -syscall NtResumeThread(long ptr)
+@ stdcall -syscall=0x0052 NtResumeThread(long ptr)
 @ stdcall -syscall NtRollbackTransaction(long long)
 @ stdcall -syscall NtSaveKey(long long)
 # @ stub NtSaveKeyEx
@@ -389,18 +389,18 @@
 @ stdcall -syscall NtSetDefaultLocale(long long)
 @ stdcall -syscall NtSetDefaultUILanguage(long)
 @ stdcall -syscall NtSetEaFile(long ptr ptr long)
-@ stdcall -syscall NtSetEvent(long ptr)
+@ stdcall -syscall=0x000e NtSetEvent(long ptr)
 # @ stub NtSetEventBoostPriority
 # @ stub NtSetHighEventPair
 # @ stub NtSetHighWaitLowEventPair
 # @ stub NtSetHighWaitLowThread
 @ stdcall -syscall NtSetInformationDebugObject(long long ptr long ptr)
-@ stdcall -syscall NtSetInformationFile(long ptr ptr long long)
+@ stdcall -syscall=0x0027 NtSetInformationFile(long ptr ptr long long)
 @ stdcall -syscall NtSetInformationJobObject(long long ptr long)
 @ stdcall -syscall NtSetInformationKey(long long ptr long)
-@ stdcall -syscall NtSetInformationObject(long long ptr long)
-@ stdcall -syscall NtSetInformationProcess(long long ptr long)
-@ stdcall -syscall NtSetInformationThread(long long ptr long)
+@ stdcall -syscall=0x005c NtSetInformationObject(long long ptr long)
+@ stdcall -syscall=0x001c NtSetInformationProcess(long long ptr long)
+@ stdcall -syscall=0x000d NtSetInformationThread(long long ptr long)
 @ stdcall -syscall NtSetInformationToken(long long ptr long)
 @ stdcall -syscall NtSetInformationVirtualMemory(long long ptr ptr ptr long)
 @ stdcall -syscall NtSetIntervalProfile(long long)
@@ -418,10 +418,10 @@
 # @ stub NtSetSystemPowerState
 @ stdcall -syscall NtSetSystemTime(ptr ptr)
 @ stdcall -syscall NtSetThreadExecutionState(long ptr)
-@ stdcall -syscall NtSetTimer(long ptr ptr ptr long long ptr)
+@ stdcall -syscall=0x0062 NtSetTimer(long ptr ptr ptr long long ptr)
 @ stdcall -syscall NtSetTimerResolution(long long ptr)
 # @ stub NtSetUuidSeed
-@ stdcall -syscall NtSetValueKey(long ptr long long ptr long)
+@ stdcall -syscall=0x0060 NtSetValueKey(long ptr long long ptr long)
 @ stdcall -syscall NtSetVolumeInformationFile(long ptr ptr long long)
 @ stdcall -syscall NtShutdownSystem(long)
 @ stdcall -syscall NtSignalAndWaitForSingleObject(long long long ptr)
@@ -431,8 +431,8 @@
 @ stdcall -syscall NtSuspendThread(long ptr)
 @ stdcall -syscall NtSystemDebugControl(long ptr long ptr long ptr)
 @ stdcall -syscall NtTerminateJobObject(long long)
-@ stdcall -syscall NtTerminateProcess(long long)
-@ stdcall -syscall NtTerminateThread(long long)
+@ stdcall -syscall=0x002c NtTerminateProcess(long long)
+@ stdcall -syscall=0x0053 NtTerminateThread(long long)
 @ stdcall -syscall NtTestAlert()
 @ stdcall -syscall NtTraceControl(long ptr long ptr long long)
 # @ stub NtTraceEvent
@@ -442,16 +442,16 @@
 # @ stub NtUnloadKeyEx
 @ stdcall -syscall NtUnlockFile(long ptr ptr ptr ptr)
 @ stdcall -syscall NtUnlockVirtualMemory(long ptr ptr long)
-@ stdcall -syscall NtUnmapViewOfSection(long ptr)
+@ stdcall -syscall=0x002a NtUnmapViewOfSection(long ptr)
 @ stdcall -syscall NtUnmapViewOfSectionEx(long ptr long)
 # @ stub NtVdmControl
 # @ stub NtW32Call
 @ stdcall -syscall NtWaitForAlertByThreadId(ptr ptr)
 @ stdcall -syscall NtWaitForDebugEvent(long long ptr ptr)
 @ stdcall -syscall NtWaitForKeyedEvent(long ptr long ptr)
-@ stdcall -syscall NtWaitForMultipleObjects(long ptr long long ptr)
+@ stdcall -syscall=0x005b NtWaitForMultipleObjects(long ptr long long ptr)
 # @ stub NtWaitForProcessMutant
-@ stdcall -syscall NtWaitForSingleObject(long long ptr)
+@ stdcall -syscall=0x0004 NtWaitForSingleObject(long long ptr)
 # @ stub NtWaitHighEventPair
 # @ stub NtWaitLowEventPair
 @ stdcall -syscall -arch=win32 NtWow64AllocateVirtualMemory64(long ptr int64 ptr long long)
@@ -460,11 +460,11 @@
 @ stdcall -syscall -arch=win32 NtWow64QueryInformationProcess64(long long ptr long ptr)
 @ stdcall -syscall -arch=win32 NtWow64ReadVirtualMemory64(long int64 ptr int64 ptr)
 @ stdcall -syscall -arch=win32 NtWow64WriteVirtualMemory64(long int64 ptr int64 ptr)
-@ stdcall -syscall NtWriteFile(long long ptr ptr ptr ptr long ptr ptr)
-@ stdcall -syscall NtWriteFileGather(long long ptr ptr ptr ptr long ptr ptr)
+@ stdcall -syscall=0x0008 NtWriteFile(long long ptr ptr ptr ptr long ptr ptr)
+@ stdcall -syscall=0x001b NtWriteFileGather(long long ptr ptr ptr ptr long ptr ptr)
 # @ stub NtWriteRequestData
-@ stdcall -syscall NtWriteVirtualMemory(long ptr ptr long ptr)
-@ stdcall -syscall NtYieldExecution()
+@ stdcall -syscall=0x003a NtWriteVirtualMemory(long ptr ptr long ptr)
+@ stdcall -syscall=0x0046 NtYieldExecution()
 @ stdcall NtdllDefWindowProc_A(long long long long)
 @ stdcall NtdllDefWindowProc_W(long long long long)
 @ stdcall NtdllDialogWndProc_A(long long long long)
