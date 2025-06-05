@@ -271,6 +271,70 @@ static void test_PrintDlgA(void)
     free(pDlg);
 }
 
+static UINT_PTR CALLBACK printer_properties_hook_procW(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
+{
+    DEVMODEW* dm;
+    PRINTDLGW* dlg;
+
+    if (msg == WM_INITDIALOG)
+    {
+        dlg = (PRINTDLGW*)lp;
+        dm = GlobalLock(dlg->hDevMode);
+        todo_wine
+        ok(dm->dmDuplex != 123, "dmDuplex should not equal 123 in the hook.\n");
+        todo_wine
+        ok(dm->dmPaperSize != 321, "dmPaperSize should not equal 321 in the hook.\n");
+        GlobalUnlock(dlg->hDevMode);
+        PostMessageW(hdlg, WM_COMMAND, psh2, lp);
+    }
+    if (msg == WM_COMMAND && wp == psh2)
+    {
+        dlg = (PRINTDLGW*)lp;
+        dm = GlobalLock(dlg->hDevMode);
+        dm->dmDuplex = 999;
+        dm->dmPaperSize = 888;
+        GlobalUnlock(dlg->hDevMode);
+        PostMessageW(hdlg, WM_COMMAND, IDOK, FALSE);
+        return TRUE;
+    }
+    return 0;
+}
+
+void test_PrintDlgW(void)
+{
+    PRINTDLGW pd = { 0 };
+    DEVMODEW* dm;
+    DWORD name_size = 0;
+
+    GetDefaultPrinterW(NULL, &name_size);
+    if(name_size == 0)
+    {
+        skip("No printer configured.\n");
+        return;
+    }
+
+    pd.lStructSize = sizeof(pd);
+    pd.Flags = PD_ENABLEPRINTHOOK;
+    pd.lpfnPrintHook = printer_properties_hook_procW;
+
+    pd.hDevMode = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(DEVMODEW));
+    dm = GlobalLock(pd.hDevMode);
+    dm->dmSize = sizeof(*dm);
+    dm->dmFields |= DM_DUPLEX | DM_PAPERSIZE;
+    dm->dmDuplex = 123;
+    dm->dmPaperSize = 321;
+    GlobalUnlock(pd.hDevMode);
+
+    PrintDlgW(&pd);
+    dm = GlobalLock(pd.hDevMode);
+    todo_wine
+    ok(dm->dmDuplex == 999, "expected 999, but got %d.\n", dm->dmDuplex);
+    todo_wine
+    ok(dm->dmPaperSize == 888, "expected 888, but got %d.\n", dm->dmPaperSize);
+    GlobalUnlock(pd.hDevMode);
+    GlobalFree(pd.hDevMode);
+}
+
 /* ########################### */
 
 static HRESULT WINAPI callback_QueryInterface(IPrintDialogCallback *iface,
@@ -641,6 +705,7 @@ START_TEST(printdlg)
 
     test_PageSetupDlgA();
     test_PrintDlgA();
+    test_PrintDlgW();
     test_PrintDlgExW();
     test_abort_proc();
 }
