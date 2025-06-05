@@ -140,7 +140,10 @@ LONG WINAPI AppPolicyGetShowDeveloperDiagnostic(HANDLE token, AppPolicyShowDevel
  */
 LONG WINAPI AppPolicyGetWindowingModel(HANDLE token, AppPolicyWindowingModel *policy)
 {
-    FIXME("%p, %p\n", token, policy);
+    static int once;
+
+    if(!once++)
+        FIXME("%p, %p\n", token, policy);
 
     if(policy)
         *policy = AppPolicyWindowingModel_ClassicDesktop;
