@@ -53,17 +53,27 @@ struct avi_decompressor
     REFERENCE_TIME late;
 };
 
+static const BITMAPINFOHEADER *get_bitmap_header(const AM_MEDIA_TYPE *mt)
+{
+    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+        return &((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader;
+    else
+        return &((VIDEOINFOHEADER2 *)mt->pbFormat)->bmiHeader;
+}
+
+static size_t get_bitmap_info_size(const BITMAPINFOHEADER *header)
+{
+    if (header->biCompression == BI_BITFIELDS)
+        return header->biSize + 3 * sizeof(DWORD);
+    else
+        return header->biSize + header->biClrUsed * sizeof(RGBQUAD);
+}
+
 static BITMAPINFOHEADER *copy_bitmap_header(const AM_MEDIA_TYPE *mt)
 {
-    const BITMAPINFOHEADER *src;
+    const BITMAPINFOHEADER *src = get_bitmap_header(mt);
+    size_t size = get_bitmap_info_size(src);
     BITMAPINFOHEADER *header;
-    size_t size;
-
-    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
-        src = &((const VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader;
-    else
-        src = &((const VIDEOINFOHEADER2 *)mt->pbFormat)->bmiHeader;
-    size = src->biSize + src->biClrUsed * sizeof(RGBQUAD);
 
     if ((header = malloc(size)))
         memcpy(header, src, size);
