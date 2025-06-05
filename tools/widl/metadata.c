@@ -718,6 +718,45 @@ static void serialize_field_table( void )
     }
 }
 
+struct interfaceimpl_row
+{
+    UINT class;
+    UINT interface;
+};
+
+static UINT add_interfaceimpl_row( UINT class, UINT interface )
+{
+    struct interfaceimpl_row row = { class, interface };
+    return add_row( TABLE_INTERFACEIMPL, (const BYTE *)&row, sizeof(row) );
+}
+
+static int cmp_interfaceimpl_row( const void *a, const void *b )
+{
+    const struct interfaceimpl_row *row = a, *row2 = b;
+    if (row->class > row2->class) return 1;
+    if (row->class < row2->class) return -1;
+    if (row->interface > row2->interface) return 1;
+    if (row->interface < row2->interface) return -1;
+    return 0;
+}
+
+/* sorted by class, interface */
+static void serialize_interfaceimpl_table( void )
+{
+    const struct interfaceimpl_row *row = (const struct interfaceimpl_row *)tables[TABLE_INTERFACEIMPL].ptr;
+    UINT i;
+
+    qsort( tables[TABLE_INTERFACEIMPL].ptr, tables[TABLE_INTERFACEIMPL].count, sizeof(*row),
+           cmp_interfaceimpl_row );
+
+    for (i = 0; i < tables_idx[TABLE_INTERFACEIMPL].count; i++)
+    {
+        serialize_table_idx( row->class, TABLE_TYPEDEF );
+        serialize_table_idx( row->interface, typedef_or_ref_to_table(row->interface) );
+        row++;
+    }
+}
+
 struct memberref_row
 {
     UINT class;
@@ -1505,12 +1544,20 @@ static void add_interface_type_step1( type_t *type )
 
 static void add_interface_type_step2( type_t *type )
 {
-    UINT name, namespace, flags = TYPE_ATTR_INTERFACE | TYPE_ATTR_ABSTRACT | TYPE_ATTR_UNKNOWN;
+    UINT name, namespace, interface, flags = TYPE_ATTR_INTERFACE | TYPE_ATTR_ABSTRACT | TYPE_ATTR_UNKNOWN;
+    const typeref_list_t *require_list = type_iface_get_requires( type );
+    const typeref_t *require;
 
     name = add_name( type, &namespace );
 
     if (!is_attr( type->attrs, ATTR_EXCLUSIVETO )) flags |= TYPE_ATTR_PUBLIC;
     type->md.def = add_typedef_row( flags, name, namespace, 0, 0, 0 );
+
+    if (require_list) LIST_FOR_EACH_ENTRY( require, require_list, typeref_t, entry )
+    {
+        interface = typedef_or_ref( TABLE_TYPEREF, require->type->md.ref );
+        add_interfaceimpl_row( type->md.def, interface );
+    }
 
     add_contract_attr_step2( type );
     add_uuid_attr_step2( type );
@@ -1714,6 +1761,7 @@ static void build_table_stream( const statement_list_t *stmts )
     serialize_typeref_table();
     serialize_typedef_table();
     serialize_field_table();
+    serialize_interfaceimpl_table();
     serialize_memberref_table();
     serialize_constant_table();
     serialize_customattribute_table();
