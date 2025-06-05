@@ -248,11 +248,6 @@ argument array to use Unicode strings. A graphical executable has a
 Optionally a major and minor subsystem version can also be specified;
 the default subsystem version is 4.0.
 .TP
-.BI --syscall-table= id
-Set the system call table id, between 0 and 3. The default is 0, the
-ntdll syscall table. Only useful in modules that define syscall entry
-points.
-.TP
 .BI \-u,\ --undefined= symbol
 Add \fIsymbol\fR to the list of undefined symbols when invoking the
 linker. This makes it possible to force a specific module of a static
@@ -343,11 +338,12 @@ The function uses the
 calling convention (first two parameters in %ecx/%edx registers on
 i386).
 .TP
-.B -syscall
+.B -syscall\fR[=\fInumber\fR]
 The function is an NT system call. A system call thunk will be
 generated, and the actual function will be called by the
-\fI__wine_syscall_dispatcher\fR function that will be generated on the
-Unix library side.
+\fI__wine_syscall_dispatcher\fR function in ntdll. The system call
+number can be specified explicitly; by default it will be assigned
+sequentially starting from 0.
 .TP
 .B -import
 The function is imported from another module. This can be used instead

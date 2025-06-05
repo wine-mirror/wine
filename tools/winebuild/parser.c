@@ -507,6 +507,15 @@ static const char *parse_spec_flags( DLLSPEC *spec, ORDDEF *odp, const char *tok
             }
             free( args );
         }
+        else if (!strncmp( token, "syscall=", 8 ))
+        {
+            char *end;
+            unsigned int id = strtoul( token + 8, &end, 0 );
+
+            if (*end || id >= 0x4000)
+                error( "Invalid syscall number '%s', should be in range 0-0x3fff\n", token + 8 );
+            odp->flags |= FLAG_SYSCALL;
+        }
         else if (!strcmp( token, "i386" ))  /* backwards compatibility */
         {
             odp->flags |= FLAG_CPU(CPU_i386);
