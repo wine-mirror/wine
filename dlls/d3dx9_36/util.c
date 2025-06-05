@@ -192,6 +192,77 @@ enum d3dx_pixel_format_id d3dx_pixel_format_id_from_d3dformat(D3DFORMAT format)
     }
 }
 
+enum d3dx_resource_type d3dx_resource_type_from_d3dresourcetype(D3DRESOURCETYPE type)
+{
+    switch (type)
+    {
+        case D3DRTYPE_TEXTURE:       return D3DX_RESOURCE_TYPE_TEXTURE_2D;
+        case D3DRTYPE_VOLUMETEXTURE: return D3DX_RESOURCE_TYPE_TEXTURE_3D;
+        case D3DRTYPE_CUBETEXTURE:   return D3DX_RESOURCE_TYPE_CUBE_TEXTURE;
+        default:
+            FIXME("No d3dx_resource_type for D3DRESOURCETYPE %d.\n", type);
+            return D3DX_RESOURCE_TYPE_COUNT;
+    }
+}
+
+static D3DRESOURCETYPE d3dresourcetype_from_d3dx_resource_type(enum d3dx_resource_type type)
+{
+    switch (type)
+    {
+        case D3DX_RESOURCE_TYPE_TEXTURE_2D:   return D3DRTYPE_TEXTURE;
+        case D3DX_RESOURCE_TYPE_TEXTURE_3D:   return D3DRTYPE_VOLUMETEXTURE;
+        case D3DX_RESOURCE_TYPE_CUBE_TEXTURE: return D3DRTYPE_CUBETEXTURE;
+        default:
+            FIXME("No D3DRESOURCETYPE for d3dx_resource_type %d.\n", type);
+            return D3DRTYPE_FORCE_DWORD;
+    }
+}
+
+BOOL d3dximage_info_from_d3dx_image(D3DXIMAGE_INFO *info, struct d3dx_image *image)
+{
+    D3DRESOURCETYPE rtype = d3dresourcetype_from_d3dx_resource_type(image->resource_type);
+
+    if (rtype == D3DRTYPE_FORCE_DWORD)
+        return FALSE;
+
+    switch (image->format)
+    {
+        case D3DX_PIXEL_FORMAT_P1_UINT:
+        case D3DX_PIXEL_FORMAT_P2_UINT:
+        case D3DX_PIXEL_FORMAT_P4_UINT:
+            info->Format = D3DFMT_P8;
+            break;
+
+        case D3DX_PIXEL_FORMAT_R16G16B16_UNORM:
+            info->Format = D3DFMT_A16B16G16R16;
+            break;
+
+        case D3DX_PIXEL_FORMAT_B8G8R8_UNORM:
+            if (image->image_file_format == D3DXIFF_PNG || image->image_file_format == D3DXIFF_JPG)
+                info->Format = D3DFMT_X8R8G8B8;
+            else
+                info->Format = d3dformat_from_d3dx_pixel_format_id(image->format);
+            break;
+
+        default:
+        {
+            D3DFORMAT fmt = d3dformat_from_d3dx_pixel_format_id(image->format);
+
+            if (fmt == D3DFMT_UNKNOWN)
+                return FALSE;
+            info->Format = fmt;
+            break;
+        }
+    }
+    info->ImageFileFormat = image->image_file_format;
+    info->Width = image->size.width;
+    info->Height = image->size.height;
+    info->Depth = image->size.depth;
+    info->MipLevels = image->mip_levels;
+    info->ResourceType = rtype;
+    return TRUE;
+}
+
 /************************************************************
  * map_view_of_file
  *

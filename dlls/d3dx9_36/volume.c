@@ -201,7 +201,12 @@ HRESULT WINAPI D3DXLoadVolumeFromFileInMemory(IDirect3DVolume9 *dst_volume, cons
     if (FAILED(hr))
         return D3DXERR_INVALIDDATA;
 
-    d3dximage_info_from_d3dx_image(&image_info, &image);
+    if (!d3dximage_info_from_d3dx_image(&image_info, &image))
+    {
+        hr = D3DXERR_INVALIDDATA;
+        goto exit;
+    }
+
     if (src_box)
     {
         if (src_box->Right > image_info.Width
