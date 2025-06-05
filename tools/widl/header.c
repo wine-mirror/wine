@@ -251,34 +251,11 @@ static void write_enums(FILE *h, var_list_t *enums, const char *enum_name)
   }
 }
 
-int needs_space_after(type_t *t)
-{
-  return (type_is_alias(t) ||
-          (!is_ptr(t) && (!is_array(t) || !type_array_is_decl_as_ptr(t) || t->name)));
-}
-
-static int decl_needs_parens(const type_t *t)
-{
-    if (type_is_alias(t))
-        return FALSE;
-    if (is_array(t) && !type_array_is_decl_as_ptr(t))
-        return TRUE;
-    return is_func(t);
-}
-
 static void write_pointer_left(FILE *h, type_t *ref)
 {
-    if (needs_space_after(ref))
-        fprintf(h, " ");
-    if (decl_needs_parens(ref))
-        fprintf(h, "(");
-    if (type_get_type_detect_alias(ref) == TYPE_FUNCTION)
-    {
-        const char *callconv = get_attrp(ref->attrs, ATTR_CALLCONV);
-        if (!callconv && is_object_interface) callconv = "STDMETHODCALLTYPE";
-        if (callconv) fprintf(h, "%s ", callconv);
-    }
-    fprintf(h, "*");
+    struct strbuf str = {0};
+    append_pointer_left( &str, ref, is_object_interface ? "STDMETHODCALLTYPE" : "" );
+    fwrite( str.buf, 1, str.pos, h );
 }
 
 static void write_record_type_definition( FILE *header, type_t *type, const char *specifier, enum name_type name_type )
@@ -399,87 +376,12 @@ static void write_type_definition_left( FILE *h, const decl_spec_t *decl_spec, e
     }
 }
 
-void write_type_left( FILE *h, const decl_spec_t *decl_spec, enum name_type name_type, bool write_callconv )
+void write_type_left( FILE *h, const decl_spec_t *ds, enum name_type name_type, bool write_callconv )
 {
-    bool is_const = !!(decl_spec->qualifier & TYPE_QUALIFIER_CONST);
-    type_t *type = decl_spec->type;
     struct strbuf str = {0};
-    const char *name;
-
     if (!h) return;
-
-    if (decl_spec->func_specifier & FUNCTION_SPECIFIER_INLINE) fprintf( h, "inline " );
-    if (is_const && (type_is_alias( type ) || !is_ptr( type ))) fprintf( h, "const " );
-
-    if ((name = type_get_name( type, name_type, false ))) fprintf( h, "%s", name );
-    else switch (type_get_type_detect_alias( type ))
-    {
-    case TYPE_ENUM:
-    case TYPE_STRUCT:
-    case TYPE_ENCAPSULATED_UNION:
-    case TYPE_UNION:
-    {
-        const char *specifier = type_get_record_specifier( type ), *decl_name;
-        if (!(decl_name = type_get_decl_name( type, name_type ))) decl_name = "";
-        fprintf( h, "%s %s", specifier, decl_name );
-        break;
-    }
-
-    case TYPE_POINTER:
-        write_type_left( h, type_pointer_get_ref( type ), name_type, false );
-        write_pointer_left( h, type_pointer_get_ref_type( type ) );
-        if (is_const) fprintf( h, "const " );
-        break;
-
-    case TYPE_ARRAY:
-        write_type_left( h, type_array_get_element( type ), name_type, !type_array_is_decl_as_ptr( type ) );
-        if (type_array_is_decl_as_ptr( type )) write_pointer_left( h, type_array_get_element_type( type ) );
-        break;
-
-    case TYPE_FUNCTION:
-        write_type_left( h, type_function_get_ret( type ), name_type, true );
-
-        /* A pointer to a function has to write the calling convention inside
-         * the parentheses. There's no way to handle that here, so we have to
-         * use an extra parameter to tell us whether to write the calling
-         * convention or not. */
-        if (write_callconv)
-        {
-            const char *callconv = get_attrp( type->attrs, ATTR_CALLCONV );
-            if (!callconv && is_object_interface) callconv = "STDMETHODCALLTYPE";
-            if (callconv) fprintf( h, " %s ", callconv );
-        }
-        break;
-
-    case TYPE_BASIC:
-        append_basic_type( &str, type );
-        fwrite( str.buf, 1, str.pos, h );
-        break;
-    case TYPE_BITFIELD:
-        type = type_bitfield_get_field( type );
-        if (!type_is_alias( type )) append_basic_type( &str, type );
-        else strappend( &str, "%s", type_get_name( type, name_type, false ) );
-        fwrite( str.buf, 1, str.pos, h );
-        break;
-
-    case TYPE_INTERFACE:
-    case TYPE_MODULE:
-    case TYPE_COCLASS:
-    case TYPE_RUNTIMECLASS:
-    case TYPE_DELEGATE:
-    case TYPE_VOID:
-    case TYPE_ALIAS:
-    case TYPE_PARAMETERIZED_TYPE:
-    case TYPE_PARAMETER:
-        /* handled elsewhere */
-        assert( 0 );
-        break;
-
-    case TYPE_APICONTRACT:
-        /* shouldn't be here */
-        assert( 0 );
-        break;
-    }
+    append_type_left( &str, ds, name_type, write_callconv ? is_object_interface ? "STDMETHODCALLTYPE" : "" : NULL );
+    fwrite( str.buf, 1, str.pos, h );
 }
 
 void write_type_right(FILE *h, type_t *t, int is_field)

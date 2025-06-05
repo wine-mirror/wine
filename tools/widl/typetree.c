@@ -190,6 +190,118 @@ void append_basic_type( struct strbuf *str, const type_t *type )
     }
 }
 
+bool needs_space_after( const type_t *type )
+{
+    if (type_is_alias( type )) return true;
+    if (type_get_type( type ) == TYPE_POINTER) return false;
+    if (type_get_type( type ) != TYPE_ARRAY) return true;
+    if (!type_array_is_decl_as_ptr( type )) return true;
+    if (type->name) return true;
+    return false;
+}
+
+bool decl_needs_parens( const type_t *type )
+{
+    if (type_is_alias( type )) return false;
+    if (is_array( type ) && !type_array_is_decl_as_ptr( type )) return true;
+    if (type_get_type( type ) == TYPE_FUNCTION) return true;
+    return false;
+}
+
+void append_pointer_left( struct strbuf *str, const type_t *type, const char *callconv )
+{
+    if (needs_space_after( type )) strappend( str, " " );
+    if (decl_needs_parens( type )) strappend( str, "(" );
+    if (callconv && type_get_type_detect_alias( type ) == TYPE_FUNCTION)
+    {
+        const char *explicit_callconv = get_attrp( type->attrs, ATTR_CALLCONV );
+        if (explicit_callconv) callconv = explicit_callconv;
+        if (*callconv) strappend( str, "%s ", callconv );
+    }
+    strappend( str, "*" );
+}
+
+void append_type_left( struct strbuf *str, const decl_spec_t *decl_spec, enum name_type name_type,
+                       const char *callconv )
+{
+    bool is_const = !!(decl_spec->qualifier & TYPE_QUALIFIER_CONST);
+    type_t *type = decl_spec->type;
+    const char *name;
+
+    if (decl_spec->func_specifier & FUNCTION_SPECIFIER_INLINE) strappend( str, "inline " );
+    if (is_const && (type_is_alias( type ) || !is_ptr( type ))) strappend( str, "const " );
+
+    if ((name = type_get_name( type, name_type, false ))) return strappend( str, "%s", name );
+
+    switch (type_get_type_detect_alias( type ))
+    {
+    case TYPE_ENUM:
+    case TYPE_STRUCT:
+    case TYPE_ENCAPSULATED_UNION:
+    case TYPE_UNION:
+    {
+        const char *specifier = type_get_record_specifier( type ), *decl_name;
+        if (!(decl_name = type_get_decl_name( type, name_type ))) decl_name = "";
+        return strappend( str, "%s %s", specifier, decl_name );
+    }
+
+    case TYPE_POINTER:
+        append_type_left( str, type_pointer_get_ref( type ), name_type, NULL );
+        append_pointer_left( str, type_pointer_get_ref_type( type ), callconv );
+        if (is_const) strappend( str, "const " );
+        return;
+
+    case TYPE_ARRAY:
+    {
+        bool as_pointer = type_array_is_decl_as_ptr( type );
+        append_type_left( str, type_array_get_element( type ), name_type, as_pointer ? NULL : callconv );
+        if (as_pointer) append_pointer_left( str, type_array_get_element_type( type ), callconv );
+        return;
+    }
+
+    case TYPE_FUNCTION:
+        append_type_left( str, type_function_get_ret( type ), name_type, callconv );
+
+        /* A pointer to a function has to write the calling convention inside
+         * the parentheses. There's no way to handle that here, so we have to
+         * use an extra parameter to tell us whether to write the calling
+         * convention or not. */
+        if (callconv)
+        {
+            const char *explicit_callconv = get_attrp( type->attrs, ATTR_CALLCONV );
+            if (explicit_callconv) callconv = explicit_callconv;
+            if (*callconv) strappend( str, " %s ", callconv );
+        }
+        return;
+
+    case TYPE_BASIC:
+        return append_basic_type( str, type );
+
+    case TYPE_BITFIELD:
+        type = type_bitfield_get_field( type );
+        if (!type_is_alias( type )) return append_basic_type( str, type );
+        return strappend( str, "%s", type_get_name( type, name_type, false ) );
+
+    case TYPE_INTERFACE:
+    case TYPE_MODULE:
+    case TYPE_COCLASS:
+    case TYPE_RUNTIMECLASS:
+    case TYPE_DELEGATE:
+    case TYPE_VOID:
+    case TYPE_ALIAS:
+    case TYPE_PARAMETERIZED_TYPE:
+    case TYPE_PARAMETER:
+        /* handled elsewhere */
+        assert( 0 );
+        break;
+
+    case TYPE_APICONTRACT:
+        /* shouldn't be here */
+        assert( 0 );
+        break;
+    }
+}
+
 static void append_namespace( struct strbuf *str, const struct namespace *namespace,
                               const char *separator, const char *abi_prefix )
 {

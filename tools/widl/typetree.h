@@ -88,7 +88,13 @@ extern const char *type_get_record_specifier( type_t *type );
 extern const char *type_get_name( const type_t *type, enum name_type name_type, bool record );
 char *gen_name(void);
 
+extern bool needs_space_after( const type_t *type );
+extern bool decl_needs_parens( const type_t *type );
+
 extern void append_basic_type( struct strbuf *str, const type_t *type );
+extern void append_pointer_left( struct strbuf *str, const type_t *type, const char *callconv );
+extern void append_type_left( struct strbuf *str, const decl_spec_t *decl_spec, enum name_type name_type,
+                              const char *callconv );
 
 extern char *format_namespace( const struct namespace *namespace, const char *prefix, const char *separator,
                                const char *suffix, const char *abi_prefix );
