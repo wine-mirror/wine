@@ -36,7 +36,7 @@ static inline void expect_(unsigned line, DWORD expected, DWORD got)
 static BOOL save_metafiles;
 static BOOL load_metafiles;
 
-static const WCHAR description[] = L"winetest";
+static const WCHAR description[] = L"winetest\0\0";
 
 typedef struct emfplus_record
 {
@@ -2932,7 +2932,7 @@ static void test_restoredc(void)
     hdc = CreateCompatibleDC(0);
 
     stat = GdipRecordMetafile(hdc, EmfTypeEmfOnly, &frame, MetafileFrameUnitPixel,
-        L"winetest", &metafile);
+        description, &metafile);
     expect(Ok, stat);
 
     DeleteDC(hdc);
@@ -3059,7 +3059,7 @@ static void test_drawdriverstring(void)
     expect(Ok, stat);
 
     stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel,
-        L"winetest", &metafile);
+        description, &metafile);
     expect(Ok, stat);
 
     DeleteDC(hdc);
@@ -3188,7 +3188,7 @@ static void test_unknownfontdecode(void)
     /* Start metafile recording. */
     hdc = CreateCompatibleDC(0);
     stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel,
-        L"winetest", &metafile);
+        description, &metafile);
     expect(Ok, stat);
     DeleteDC(hdc);
     hdc = NULL;
@@ -3263,7 +3263,7 @@ static void test_fillregion(void)
 
     hdc = CreateCompatibleDC(0);
     stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel,
-        L"winetest", &metafile);
+        description, &metafile);
     expect(Ok, stat);
     DeleteDC(hdc);
     hdc = NULL;
@@ -3367,7 +3367,7 @@ static void test_lineargradient(void)
 
     hdc = CreateCompatibleDC(0);
     stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel,
-        L"winetest", &metafile);
+        description, &metafile);
     expect(Ok, stat);
     DeleteDC(hdc);
     hdc = NULL;
@@ -3536,7 +3536,7 @@ static void test_printer_dc(void)
         return;
     }
 
-    status = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitInch, L"winetest", &metafile);
+    status = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitInch, description, &metafile);
     expect(Ok, status);
 
     status = GdipGetImageGraphicsContext((GpImage *)metafile, &graphics);
