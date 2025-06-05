@@ -1112,6 +1112,65 @@ enum
 
 static char *assembly_name;
 
+static enum element_type map_basic_type( enum type_basic_type type, int sign )
+{
+    enum element_type elem_type;
+
+    switch (type)
+    {
+    case TYPE_BASIC_CHAR:   elem_type = ELEMENT_TYPE_BOOLEAN; break;
+    case TYPE_BASIC_INT16:  elem_type = (sign > 0) ? ELEMENT_TYPE_U2 : ELEMENT_TYPE_I2; break;
+    case TYPE_BASIC_INT:
+    case TYPE_BASIC_INT32:
+    case TYPE_BASIC_LONG:   elem_type = (sign > 0) ? ELEMENT_TYPE_U4 : ELEMENT_TYPE_I4; break;
+    case TYPE_BASIC_INT64:  elem_type = (sign > 0) ? ELEMENT_TYPE_U8 : ELEMENT_TYPE_I8; break;
+    case TYPE_BASIC_BYTE:   elem_type = ELEMENT_TYPE_U1; break;
+    case TYPE_BASIC_WCHAR:  elem_type = ELEMENT_TYPE_CHAR; break;
+    case TYPE_BASIC_FLOAT:  elem_type = ELEMENT_TYPE_R4; break;
+    case TYPE_BASIC_DOUBLE: elem_type = ELEMENT_TYPE_R8; break;
+    default:
+        fprintf( stderr, "Unhandled basic type %u.\n", type );
+        exit( 1 );
+    }
+    return elem_type;
+}
+
+static UINT make_struct_field_sig( const var_t *var, BYTE *buf )
+{
+    const type_t *type = var->declspec.type;
+
+    if (!strcmp( type->name, "HSTRING" ))
+    {
+        buf[0] = SIG_TYPE_FIELD;
+        buf[1] = ELEMENT_TYPE_STRING;
+        return 2;
+    }
+
+    if (!strcmp( type->name, "GUID" ))
+    {
+        UINT token = typedef_or_ref( TABLE_TYPEREF, type->md.ref );
+        return make_field_value_sig( token, buf );
+    }
+
+    type = type_get_real_type( type );
+
+    if (type_get_type( type ) == TYPE_ENUM || type_get_type( type ) == TYPE_STRUCT)
+    {
+        UINT token = typedef_or_ref( TABLE_TYPEREF, type->md.ref );
+        return make_field_value_sig( token, buf );
+    }
+
+    if (type_get_type( type ) != TYPE_BASIC)
+    {
+        fprintf( stderr, "Unhandled struct field type %u.\n", type_get_type( type ) );
+        exit( 1 );
+    }
+
+    buf[0] = SIG_TYPE_FIELD;
+    buf[1] = map_basic_type( type_basic_get_type(type), type_basic_get_sign(type) );
+    return 2;
+}
+
 static UINT make_member_sig( UINT token, BYTE *buf )
 {
     UINT len = 4;
@@ -1294,6 +1353,49 @@ static void add_enum_type_step2( type_t *type )
     add_flags_attr_step2( type );
 }
 
+static void add_struct_type_step1( type_t *type )
+{
+    UINT name, namespace, scope, typeref;
+    const var_t *var;
+
+    name = add_name( type, &namespace );
+    scope = resolution_scope( TABLE_ASSEMBLYREF, MSCORLIB_ROW );
+
+    LIST_FOR_EACH_ENTRY( var, type_struct_get_fields(type), const var_t, entry )
+    {
+        type_t *field_type = var->declspec.type;
+        if (!strcmp( field_type->name, "GUID" ))
+            field_type->md.ref = add_typeref_row( scope, add_string("Guid"), add_string("System") );
+    }
+
+    typeref = add_typeref_row( scope, add_string("ValueType"), add_string("System") );
+    type->md.extends = typedef_or_ref( TABLE_TYPEREF, typeref );
+    type->md.ref = add_typeref_row( resolution_scope(TABLE_MODULE, MODULE_ROW), name, namespace );
+
+    add_contract_attr_step1( type );
+}
+
+static void add_struct_type_step2( type_t *type )
+{
+    UINT name, namespace, field, flags, sig_size, first_field = 0;
+    const var_t *var;
+    BYTE sig[32];
+
+    name = add_name( type, &namespace );
+
+    LIST_FOR_EACH_ENTRY( var, type_struct_get_fields(type), const var_t, entry )
+    {
+        sig_size = make_struct_field_sig( var, sig );
+        field = add_field_row( FIELD_ATTR_PUBLIC, add_string(var->name), add_blob(sig, sig_size) );
+        if (!first_field) first_field = field;
+    }
+
+    flags = TYPE_ATTR_PUBLIC | TYPE_ATTR_SEQUENTIALLAYOUT | TYPE_ATTR_SEALED | TYPE_ATTR_UNKNOWN;
+    type->md.def = add_typedef_row( flags, name, namespace, type->md.extends, first_field, 0 );
+
+    add_contract_attr_step2( type );
+}
+
 static UINT make_contractversion_value( const type_t *type, BYTE *buf )
 {
     UINT version = get_attrv( type->attrs, ATTR_CONTRACTVERSION ), len = 2 + sizeof(version);
@@ -1402,6 +1504,9 @@ static void build_tables( const statement_list_t *stmt_list )
         case TYPE_ENUM:
             add_enum_type_step1( type );
             break;
+        case TYPE_STRUCT:
+            add_struct_type_step1( type );
+            break;
         case TYPE_APICONTRACT:
             add_apicontract_type_step1( type );
             break;
@@ -1421,6 +1526,9 @@ static void build_tables( const statement_list_t *stmt_list )
         {
         case TYPE_ENUM:
             add_enum_type_step2( type );
+            break;
+        case TYPE_STRUCT:
+            add_struct_type_step2( type );
             break;
         case TYPE_APICONTRACT:
             add_apicontract_type_step2( type );
