@@ -324,10 +324,21 @@ static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSa
     for (;;)
     {
         IMediaSample *output_sample;
+        AM_MEDIA_TYPE *mt;
 
         hr = IMemAllocator_GetBuffer(filter->source.pAllocator, &output_sample, NULL, NULL, 0);
         if (FAILED(hr))
             return hr;
+
+        if ((hr = IMediaSample_GetMediaType(sample, &mt)) == S_OK)
+        {
+            FIXME("Dynamic format change.\n");
+            DeleteMediaType(mt);
+        }
+        else if (hr != S_FALSE)
+        {
+            ERR("Failed to get media type, hr %#lx.\n", hr);
+        }
 
         hr = wg_sample_create_quartz(output_sample, &wg_sample);
         if (FAILED(hr))
