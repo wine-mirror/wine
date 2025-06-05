@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "ntuser.h"
+#include "ntgdi.h"
 #include "malloc.h"
 
 #include "unixlib.h"
@@ -314,6 +315,7 @@ static struct wgl_pixel_format *get_pixel_formats( HDC hdc, UINT *num_formats,
     struct get_pixel_formats_params args = { .teb = NtCurrentTeb(), .hdc = hdc };
     PVOID *glReserved = NtCurrentTeb()->glReserved1;
     NTSTATUS status;
+    DWORD is_memdc;
 
     if (glReserved[WINE_GL_RESERVED_FORMATS_HDC] == hdc)
     {
@@ -328,6 +330,9 @@ static struct wgl_pixel_format *get_pixel_formats( HDC hdc, UINT *num_formats,
     if (!(args.formats = calloc( args.num_formats, sizeof(*args.formats) ))) goto error;
     args.max_formats = args.num_formats;
     if ((status = UNIX_CALL( get_pixel_formats, &args ))) goto error;
+
+    if (NtGdiGetDCDword( hdc, NtGdiIsMemDC, &is_memdc ) && is_memdc)
+        args.num_onscreen_formats = args.num_formats;
 
     *num_formats = args.num_formats;
     *num_onscreen_formats = args.num_onscreen_formats;
