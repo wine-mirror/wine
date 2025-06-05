@@ -707,9 +707,9 @@ static void test_trig(void)
     init_readback(device, &rb);
     for (i = 0; i < 32; ++i)
     {
-        float expect_x = (sinf(i * 2 * M_PI / 32) + 1.0f) / 2.0f;
-        float expect_y = (cosf(i * 2 * M_PI / 32) + 1.0f) / 2.0f;
-        v = get_readback_vec4(&rb, i * 640 / 32, 0);
+        float expect_x = (sinf((i + 0.5f) * 2.0f * M_PI / 32) + 1.0f) / 2.0f;
+        float expect_y = (cosf((i + 0.5f) * 2.0f * M_PI / 32) + 1.0f) / 2.0f;
+        v = get_readback_vec4(&rb, i * 640 / 32 + 640 / 2 / 32, 0);
         ok(compare_vec4(v, expect_x, expect_y, 0.0f, 0.0f, 4096),
                 "Test %u: Got {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
                 i, v->x, v->y, v->z, v->w, expect_x, expect_y, 0.0f, 0.0f);
