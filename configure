@@ -11488,9 +11488,7 @@ fi
         ac_cv_lib_OpenCL_clGetPlatformInfo=yes
     fi
 
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether MTLDevice protocol supports registryID property" >&5
-printf %s "checking whether MTLDevice protocol supports registryID property... " >&6; }
-    ac_ext=m
+        ac_ext=m
 ac_cpp='$OBJCPP $CPPFLAGS'
 ac_compile='$OBJC -c $OBJCFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$OBJC -o conftest$ac_exeext $OBJCFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -11773,7 +11771,13 @@ ac_link='$OBJC -o conftest$ac_exeext $OBJCFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_
 ac_compiler_gnu=$ac_cv_objc_compiler_gnu
 
 
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether MTLDevice protocol supports registryID property" >&5
+printf %s "checking whether MTLDevice protocol supports registryID property... " >&6; }
+if test ${ac_cv_mtldevice_registryid+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <Metal/Metal.h>
 int
@@ -11786,22 +11790,24 @@ id<MTLDevice> device; device.registryID;
 _ACEOF
 if ac_fn_objc_try_compile "$LINENO"
 then :
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-printf "%s\n" "yes" >&6; }
-
-printf "%s\n" "#define HAVE_MTLDEVICE_REGISTRYID 1" >>confdefs.h
-
+  ac_cv_mtldevice_registryid=yes
 else case e in #(
-  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; } ;;
+  e) ac_cv_mtldevice_registryid=no ;;
 esac
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mtldevice_registryid" >&5
+printf "%s\n" "$ac_cv_mtldevice_registryid" >&6; }
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    test $ac_cv_mtldevice_registryid != yes ||
+printf "%s\n" "#define HAVE_MTLDEVICE_REGISTRYID 1" >>confdefs.h
 
 
     UNIXLDFLAGS="-dynamiclib -install_name @rpath/\$(UNIXLIB) -Wl,-rpath,@loader_path\/"

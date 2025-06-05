@@ -974,13 +974,13 @@ case $host_os in
     fi
 
     dnl Check for MTLDevice registryID property
-    AC_MSG_CHECKING([whether MTLDevice protocol supports registryID property])
     AC_LANG_PUSH([Objective C])
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <Metal/Metal.h>]], [[id<MTLDevice> device; device.registryID;]])],
-                          [AC_MSG_RESULT(yes)
-                           AC_DEFINE(HAVE_MTLDEVICE_REGISTRYID, 1, [Define if MTLDevice protocol has registryID property.])],
-                          [AC_MSG_RESULT(no)])
+    AC_CACHE_CHECK([whether MTLDevice protocol supports registryID property], ac_cv_mtldevice_registryid,
+                   [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <Metal/Metal.h>]], [[id<MTLDevice> device; device.registryID;]])],
+                                      [ac_cv_mtldevice_registryid=yes],
+                                      [ac_cv_mtldevice_registryid=no])])
     AC_LANG_POP([Objective C])
+    test $ac_cv_mtldevice_registryid != yes || AC_DEFINE(HAVE_MTLDEVICE_REGISTRYID, 1, [Define if MTLDevice protocol has registryID property.])
 
     UNIXLDFLAGS="-dynamiclib -install_name @rpath/\$(UNIXLIB) -Wl,-rpath,@loader_path\/"
     AC_SUBST(WINELOADER_DEPENDS,"wine_info.plist")
