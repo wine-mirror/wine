@@ -309,14 +309,12 @@ static HRESULT WINAPI FileProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
         return report_result(pOIProtSink, hres, 0);
     }
 
+    /* If path contains fragment part, ignore it. */
+    if((ptr = wcschr(path, '#')))
+        *ptr = 0;
+
     file_handle = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL,
             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if(file_handle == INVALID_HANDLE_VALUE && (ptr = wcsrchr(path, '#'))) {
-        /* If path contains fragment part, try without it. */
-        *ptr = 0;
-        file_handle = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL,
-                OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    }
     if(file_handle == INVALID_HANDLE_VALUE)
         return report_result(pOIProtSink, INET_E_RESOURCE_NOT_FOUND, GetLastError());
 

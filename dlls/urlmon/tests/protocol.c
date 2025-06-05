@@ -3145,25 +3145,29 @@ static void test_file_protocol(void) {
     buf[ARRAY_SIZE(L"file:\\\\")] = '|';
     test_file_protocol_url(buf);
 
-    /* Fragment part of URL is skipped if the file doesn't exist. */
-    lstrcatW(buf, L"#frag");
+    /* Fragment part of URL is always skipped. */
+    lstrcatW(buf, L"#frag#abc");
     test_file_protocol_url(buf);
 
-    /* Fragment part is considered a part of the file name, if the file exists. */
-    len = lstrlenW(file_name_buf);
-    lstrcpyW(file_name_buf+len, L"#frag");
+    file = CreateFileW(L"index.html#frag#abc", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+            FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
+    WriteFile(file, "DEAD", 3, &size, NULL);
+    CloseHandle(file);
+
+    test_file_protocol_url(buf);
+
     file = CreateFileW(L"index.html", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
             FILE_ATTRIBUTE_NORMAL, NULL);
     ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
     WriteFile(file, "XXX", 3, &size, NULL);
     CloseHandle(file);
-    file_name_buf[len] = 0;
 
     file_with_hash = TRUE;
     test_file_protocol_url(buf);
 
+    DeleteFileW(L"index.html#frag#abc");
     DeleteFileW(L"index.html");
-    DeleteFileW(file_name_buf);
 
     bindf = 0;
     test_file_protocol_fail();
