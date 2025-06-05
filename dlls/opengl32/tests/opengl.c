@@ -1539,7 +1539,7 @@ static void test_bitmap_rendering( BOOL use_dib )
         ok( ret == count, "got %d\n", ret );
 
         if ((pfd.dwFlags & PFD_DRAW_TO_BITMAP) && (pfd.dwFlags & PFD_SUPPORT_OPENGL) &&
-            pfd.cColorBits == bpp && pfd.cAlphaBits == 8)
+            pfd.cColorBits == bpp && pfd.cAlphaBits > 0)
         {
             ret = SetPixelFormat( hdc, i, &pfd );
             if (pixel_format) ok( !ret, "SetPixelFormat succeeded\n" );
@@ -1825,7 +1825,7 @@ static void test_d3dkmt_rendering(void)
         ok( ret == count, "got %d\n", ret );
 
         if ((pfd.dwFlags & PFD_DRAW_TO_BITMAP) && (pfd.dwFlags & PFD_SUPPORT_OPENGL) &&
-            pfd.cColorBits == 32 && pfd.cAlphaBits == 8)
+            pfd.cColorBits == 32 && pfd.cAlphaBits > 0)
         {
             ret = SetPixelFormat( desc.hDc, i, &pfd );
             if (pixel_format) ok( !ret, "SetPixelFormat succeeded\n" );
