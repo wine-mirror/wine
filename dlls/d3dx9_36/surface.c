@@ -468,14 +468,14 @@ HRESULT d3dx_init_dds_header(struct dds_header *header, enum d3dx_resource_type 
     return D3D_OK;
 }
 
-static const GUID *wic_container_guid_from_d3dx_file_format(D3DXIMAGE_FILEFORMAT iff)
+static const GUID *wic_container_guid_from_d3dx_file_format(enum d3dx_image_file_format iff)
 {
     switch (iff)
     {
-        case D3DXIFF_DIB:
-        case D3DXIFF_BMP: return &GUID_ContainerFormatBmp;
-        case D3DXIFF_JPG: return &GUID_ContainerFormatJpeg;
-        case D3DXIFF_PNG: return &GUID_ContainerFormatPng;
+        case D3DX_IMAGE_FILE_FORMAT_DIB:
+        case D3DX_IMAGE_FILE_FORMAT_BMP: return &GUID_ContainerFormatBmp;
+        case D3DX_IMAGE_FILE_FORMAT_JPG: return &GUID_ContainerFormatJpeg;
+        case D3DX_IMAGE_FILE_FORMAT_PNG: return &GUID_ContainerFormatPng;
         default:
             assert(0 && "Unexpected file format.");
             return NULL;
@@ -483,7 +483,7 @@ static const GUID *wic_container_guid_from_d3dx_file_format(D3DXIMAGE_FILEFORMAT
 }
 
 static HRESULT d3dx_pixels_save_wic(struct d3dx_pixels *pixels, const struct pixel_format_desc *fmt_desc,
-        D3DXIMAGE_FILEFORMAT image_file_format, IStream **wic_file, uint32_t *wic_file_size)
+        enum d3dx_image_file_format image_file_format, IStream **wic_file, uint32_t *wic_file_size)
 {
     const GUID *container_format = wic_container_guid_from_d3dx_file_format(image_file_format);
     const GUID *pixel_format_guid = wic_guid_from_d3dx_pixel_format_id(fmt_desc->format);
@@ -526,7 +526,7 @@ static HRESULT d3dx_pixels_save_wic(struct d3dx_pixels *pixels, const struct pix
     if (FAILED(hr))
         goto exit;
 
-    if (image_file_format == D3DXIFF_JPG)
+    if (image_file_format == D3DX_IMAGE_FILE_FORMAT_JPG)
         FIXME("JPEG saving quality adjustment currently unimplemented, expect lower quality JPEG.\n");
 
     hr = IWICBitmapFrameEncode_SetSize(wic_frame, pixels->size.width, pixels->size.height);
@@ -755,7 +755,7 @@ static enum d3dx_pixel_format_id d3dx_get_closest_d3dx_pixel_format_id(const enu
 }
 
 HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct pixel_format_desc *src_fmt_desc,
-        D3DXIMAGE_FILEFORMAT file_format, ID3DXBuffer **dst_buffer)
+        enum d3dx_image_file_format file_format, ID3DXBuffer **dst_buffer)
 {
     enum d3dx_pixel_format_id dst_format = src_fmt_desc->format;
     const struct pixel_format_desc *dst_fmt_desc;
@@ -769,29 +769,29 @@ HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct 
     pixels = tmp_buf = NULL;
     switch (file_format)
     {
-        case D3DXIFF_DDS:
+        case D3DX_IMAGE_FILE_FORMAT_DDS:
             hr = dds_pixel_format_from_d3dx_pixel_format_id(NULL, dst_format);
             if (FAILED(hr))
                 return hr;
             break;
 
-        case D3DXIFF_TGA:
+        case D3DX_IMAGE_FILE_FORMAT_TGA:
             dst_format = d3dx_get_closest_d3dx_pixel_format_id(tga_save_pixel_formats, ARRAY_SIZE(tga_save_pixel_formats),
                     dst_format);
             break;
 
-        case D3DXIFF_PNG:
+        case D3DX_IMAGE_FILE_FORMAT_PNG:
             dst_format = d3dx_get_closest_d3dx_pixel_format_id(png_save_pixel_formats, ARRAY_SIZE(png_save_pixel_formats),
                     dst_format);
             break;
 
-        case D3DXIFF_JPG:
+        case D3DX_IMAGE_FILE_FORMAT_JPG:
             dst_format = d3dx_get_closest_d3dx_pixel_format_id(jpg_save_pixel_formats, ARRAY_SIZE(jpg_save_pixel_formats),
                     dst_format);
             break;
 
-        case D3DXIFF_BMP:
-        case D3DXIFF_DIB:
+        case D3DX_IMAGE_FILE_FORMAT_BMP:
+        case D3DX_IMAGE_FILE_FORMAT_DIB:
         {
             unsigned int i;
 
@@ -826,7 +826,7 @@ HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct 
     }
 
     dst_fmt_desc = get_d3dx_pixel_format_info(dst_format);
-    src_pixels->size.depth = (file_format == D3DXIFF_DDS) ? src_pixels->size.depth : 1;
+    src_pixels->size.depth = (file_format == D3DX_IMAGE_FILE_FORMAT_DDS) ? src_pixels->size.depth : 1;
     hr = d3dx_calculate_pixels_size(dst_format, src_pixels->size.width, src_pixels->size.height, &dst_row_pitch,
             &dst_slice_pitch);
     if (FAILED(hr))
@@ -834,7 +834,7 @@ HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct 
 
     switch (file_format)
     {
-        case D3DXIFF_DDS:
+        case D3DX_IMAGE_FILE_FORMAT_DDS:
         {
             struct dds_header *header;
             uint32_t header_size;
@@ -855,7 +855,7 @@ HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct 
             break;
         }
 
-        case D3DXIFF_TGA:
+        case D3DX_IMAGE_FILE_FORMAT_TGA:
         {
             struct tga_header *header;
 
@@ -877,10 +877,10 @@ HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct 
              break;
         }
 
-        case D3DXIFF_PNG:
-        case D3DXIFF_JPG:
-        case D3DXIFF_BMP:
-        case D3DXIFF_DIB:
+        case D3DX_IMAGE_FILE_FORMAT_PNG:
+        case D3DX_IMAGE_FILE_FORMAT_JPG:
+        case D3DX_IMAGE_FILE_FORMAT_BMP:
+        case D3DX_IMAGE_FILE_FORMAT_DIB:
             if (src_fmt_desc == dst_fmt_desc)
                 dst_pixels = *src_pixels;
             else
@@ -963,24 +963,24 @@ struct d3dx_file_format_signature
 {
     const uint8_t *file_signature;
     uint32_t file_signature_len;
-    D3DXIMAGE_FILEFORMAT image_file_format;
+    enum d3dx_image_file_format image_file_format;
 };
 
 static const struct d3dx_file_format_signature file_format_signatures[] =
 {
-    { bmp_file_signature,       sizeof(bmp_file_signature),       D3DXIFF_BMP },
-    { jpg_file_signature,       sizeof(jpg_file_signature),       D3DXIFF_JPG },
-    { png_file_signature,       sizeof(png_file_signature),       D3DXIFF_PNG },
-    { dds_file_signature,       sizeof(dds_file_signature),       D3DXIFF_DDS },
-    { ppm_plain_file_signature, sizeof(ppm_plain_file_signature), D3DXIFF_PPM },
-    { ppm_raw_file_signature,   sizeof(ppm_raw_file_signature),   D3DXIFF_PPM },
-    { hdr_file_signature,       sizeof(hdr_file_signature),       D3DXIFF_HDR },
-    { pfm_color_file_signature, sizeof(pfm_color_file_signature), D3DXIFF_PFM },
-    { pfm_gray_file_signature,  sizeof(pfm_gray_file_signature),  D3DXIFF_PFM },
+    { bmp_file_signature,       sizeof(bmp_file_signature),       D3DX_IMAGE_FILE_FORMAT_BMP },
+    { jpg_file_signature,       sizeof(jpg_file_signature),       D3DX_IMAGE_FILE_FORMAT_JPG },
+    { png_file_signature,       sizeof(png_file_signature),       D3DX_IMAGE_FILE_FORMAT_PNG },
+    { dds_file_signature,       sizeof(dds_file_signature),       D3DX_IMAGE_FILE_FORMAT_DDS },
+    { ppm_plain_file_signature, sizeof(ppm_plain_file_signature), D3DX_IMAGE_FILE_FORMAT_PPM },
+    { ppm_raw_file_signature,   sizeof(ppm_raw_file_signature),   D3DX_IMAGE_FILE_FORMAT_PPM },
+    { hdr_file_signature,       sizeof(hdr_file_signature),       D3DX_IMAGE_FILE_FORMAT_HDR },
+    { pfm_color_file_signature, sizeof(pfm_color_file_signature), D3DX_IMAGE_FILE_FORMAT_PFM },
+    { pfm_gray_file_signature,  sizeof(pfm_gray_file_signature),  D3DX_IMAGE_FILE_FORMAT_PFM },
 };
 
 static BOOL d3dx_get_image_file_format_from_file_signature(const void *src_data, uint32_t src_data_size,
-        D3DXIMAGE_FILEFORMAT *out_iff)
+        enum d3dx_image_file_format *out_iff)
 {
     unsigned int i;
 
@@ -1057,7 +1057,7 @@ static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src
 
     image->palette = (is_indexed_fmt) ? (PALETTEENTRY *)(((uint8_t *)src_data) + sizeof(*header)) : NULL;
     image->pixels = ((BYTE *)src_data) + header_size;
-    image->image_file_format = D3DXIFF_DDS;
+    image->image_file_format = D3DX_IMAGE_FILE_FORMAT_DDS;
     if (starting_mip_level && (image->mip_levels > 1))
     {
         uint32_t i, row_pitch, slice_pitch, initial_mip_levels;
@@ -1157,7 +1157,7 @@ static BOOL image_is_argb(IWICBitmapFrameDecode *frame, struct d3dx_image *image
     BYTE *buffer;
     HRESULT hr;
 
-    if (image->format != D3DX_PIXEL_FORMAT_B8G8R8X8_UNORM || image->image_file_format != D3DXIFF_BMP)
+    if (image->format != D3DX_PIXEL_FORMAT_B8G8R8X8_UNORM || image->image_file_format != D3DX_IMAGE_FILE_FORMAT_BMP)
         return FALSE;
 
     size = image->size.width * image->size.height * 4;
@@ -1184,20 +1184,20 @@ static BOOL image_is_argb(IWICBitmapFrameDecode *frame, struct d3dx_image *image
     return FALSE;
 }
 
-const char *debug_d3dx_image_file_format(D3DXIMAGE_FILEFORMAT format)
+const char *debug_d3dx_image_file_format(enum d3dx_image_file_format format)
 {
     switch (format)
     {
 #define FMT_TO_STR(format) case format: return #format
-        FMT_TO_STR(D3DXIFF_BMP);
-        FMT_TO_STR(D3DXIFF_JPG);
-        FMT_TO_STR(D3DXIFF_TGA);
-        FMT_TO_STR(D3DXIFF_PNG);
-        FMT_TO_STR(D3DXIFF_DDS);
-        FMT_TO_STR(D3DXIFF_PPM);
-        FMT_TO_STR(D3DXIFF_DIB);
-        FMT_TO_STR(D3DXIFF_HDR);
-        FMT_TO_STR(D3DXIFF_PFM);
+        FMT_TO_STR(D3DX_IMAGE_FILE_FORMAT_BMP);
+        FMT_TO_STR(D3DX_IMAGE_FILE_FORMAT_JPG);
+        FMT_TO_STR(D3DX_IMAGE_FILE_FORMAT_TGA);
+        FMT_TO_STR(D3DX_IMAGE_FILE_FORMAT_PNG);
+        FMT_TO_STR(D3DX_IMAGE_FILE_FORMAT_DDS);
+        FMT_TO_STR(D3DX_IMAGE_FILE_FORMAT_PPM);
+        FMT_TO_STR(D3DX_IMAGE_FILE_FORMAT_DIB);
+        FMT_TO_STR(D3DX_IMAGE_FILE_FORMAT_HDR);
+        FMT_TO_STR(D3DX_IMAGE_FILE_FORMAT_PFM);
 #undef FMT_TO_STR
         default:
             return "unrecognized";
@@ -1287,7 +1287,7 @@ exit:
 }
 
 static HRESULT d3dx_initialize_image_from_wic(const void *src_data, uint32_t src_data_size,
-        struct d3dx_image *image, D3DXIMAGE_FILEFORMAT d3dx_file_format, uint32_t flags)
+        struct d3dx_image *image, enum d3dx_image_file_format d3dx_file_format, uint32_t flags)
 {
     const GUID *container_format_guid = wic_container_guid_from_d3dx_file_format(d3dx_file_format);
     IWICBitmapFrameDecode *bitmap_frame = NULL;
@@ -1342,7 +1342,7 @@ static HRESULT d3dx_initialize_image_from_wic(const void *src_data, uint32_t src
     switch (image->format)
     {
         case D3DX_PIXEL_FORMAT_P2_UINT:
-            if (image->image_file_format != D3DXIFF_BMP)
+            if (image->image_file_format != D3DX_IMAGE_FILE_FORMAT_BMP)
                 break;
             /* Fall through. */
 
@@ -1610,7 +1610,7 @@ static HRESULT d3dx_initialize_image_from_tga(const void *src_data, uint32_t src
     image->mip_levels = 1;
     image->layer_count = 1;
     image->resource_type = D3DX_RESOURCE_TYPE_TEXTURE_2D;
-    image->image_file_format = D3DXIFF_TGA;
+    image->image_file_format = D3DX_IMAGE_FILE_FORMAT_TGA;
 
     if (!(flags & D3DX_IMAGE_INFO_ONLY))
         return d3dx_image_tga_decode(src_data, src_data_size, expected_header_size, image);
@@ -1621,7 +1621,7 @@ static HRESULT d3dx_initialize_image_from_tga(const void *src_data, uint32_t src
 HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3dx_image *image,
         uint32_t starting_mip_level, uint32_t flags)
 {
-    D3DXIMAGE_FILEFORMAT iff = D3DXIFF_FORCE_DWORD;
+    enum d3dx_image_file_format iff = D3DX_IMAGE_FILE_FORMAT_FORCE_DWORD;
     HRESULT hr;
 
     if (!src_data || !src_data_size || !image)
@@ -1638,7 +1638,7 @@ HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3d
             hr = d3dx_image_init(src_image, src_image_size, image, starting_mip_level, flags);
             free((void *)src_image);
             if (SUCCEEDED(hr))
-                image->image_file_format = D3DXIFF_DIB;
+                image->image_file_format = D3DX_IMAGE_FILE_FORMAT_DIB;
             return hr;
         }
 
@@ -1648,24 +1648,24 @@ HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3d
 
     switch (iff)
     {
-        case D3DXIFF_BMP:
-        case D3DXIFF_JPG:
-        case D3DXIFF_PNG:
+        case D3DX_IMAGE_FILE_FORMAT_BMP:
+        case D3DX_IMAGE_FILE_FORMAT_JPG:
+        case D3DX_IMAGE_FILE_FORMAT_PNG:
             hr = d3dx_initialize_image_from_wic(src_data, src_data_size, image, iff, flags);
             break;
 
-        case D3DXIFF_DDS:
+        case D3DX_IMAGE_FILE_FORMAT_DDS:
             hr = d3dx_initialize_image_from_dds(src_data, src_data_size, image, starting_mip_level);
             break;
 
-        case D3DXIFF_PPM:
-        case D3DXIFF_HDR:
-        case D3DXIFF_PFM:
+        case D3DX_IMAGE_FILE_FORMAT_PPM:
+        case D3DX_IMAGE_FILE_FORMAT_HDR:
+        case D3DX_IMAGE_FILE_FORMAT_PFM:
             WARN("Unsupported file format %s.\n", debug_d3dx_image_file_format(iff));
             hr = E_NOTIMPL;
             break;
 
-        case D3DXIFF_FORCE_DWORD:
+        case D3DX_IMAGE_FILE_FORMAT_FORCE_DWORD:
             ERR("Unrecognized file format.\n");
             hr = D3DXERR_INVALIDDATA;
             break;
@@ -3574,7 +3574,8 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
         return hr;
     }
 
-    hr = d3dx_save_pixels_to_memory(&src_pixels, src_fmt_desc, file_format, &buffer);
+    hr = d3dx_save_pixels_to_memory(&src_pixels, src_fmt_desc,
+            d3dx_image_file_format_from_d3dximage_fileformat(file_format), &buffer);
     if (FAILED(hr))
     {
         unlock_surface(src_surface, NULL, temp_surface, FALSE);

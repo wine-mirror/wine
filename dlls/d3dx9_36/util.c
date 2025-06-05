@@ -218,11 +218,50 @@ static D3DRESOURCETYPE d3dresourcetype_from_d3dx_resource_type(enum d3dx_resourc
     }
 }
 
+enum d3dx_image_file_format d3dx_image_file_format_from_d3dximage_fileformat(D3DXIMAGE_FILEFORMAT iff)
+{
+    switch (iff)
+    {
+        case D3DXIFF_BMP: return D3DX_IMAGE_FILE_FORMAT_BMP;
+        case D3DXIFF_JPG: return D3DX_IMAGE_FILE_FORMAT_JPG;
+        case D3DXIFF_TGA: return D3DX_IMAGE_FILE_FORMAT_TGA;
+        case D3DXIFF_PNG: return D3DX_IMAGE_FILE_FORMAT_PNG;
+        case D3DXIFF_DDS: return D3DX_IMAGE_FILE_FORMAT_DDS;
+        case D3DXIFF_PPM: return D3DX_IMAGE_FILE_FORMAT_PPM;
+        case D3DXIFF_DIB: return D3DX_IMAGE_FILE_FORMAT_DIB;
+        case D3DXIFF_HDR: return D3DX_IMAGE_FILE_FORMAT_HDR;
+        case D3DXIFF_PFM: return D3DX_IMAGE_FILE_FORMAT_PFM;
+        default:
+            FIXME("No d3dx_image_file_format for D3DXIMAGE_FILEFORMAT %d.\n", iff);
+            return D3DX_IMAGE_FILE_FORMAT_FORCE_DWORD;
+    }
+}
+
+D3DXIMAGE_FILEFORMAT d3dximage_fileformat_from_d3dx_image_file_format(enum d3dx_image_file_format iff)
+{
+    switch (iff)
+    {
+        case D3DX_IMAGE_FILE_FORMAT_BMP: return D3DXIFF_BMP;
+        case D3DX_IMAGE_FILE_FORMAT_JPG: return D3DXIFF_JPG;
+        case D3DX_IMAGE_FILE_FORMAT_TGA: return D3DXIFF_TGA;
+        case D3DX_IMAGE_FILE_FORMAT_PNG: return D3DXIFF_PNG;
+        case D3DX_IMAGE_FILE_FORMAT_DDS: return D3DXIFF_DDS;
+        case D3DX_IMAGE_FILE_FORMAT_PPM: return D3DXIFF_PPM;
+        case D3DX_IMAGE_FILE_FORMAT_DIB: return D3DXIFF_DIB;
+        case D3DX_IMAGE_FILE_FORMAT_HDR: return D3DXIFF_HDR;
+        case D3DX_IMAGE_FILE_FORMAT_PFM: return D3DXIFF_PFM;
+        default:
+            FIXME("No D3DXIMAGE_FILEFORMAT for d3dx_image_file_format %d.\n", iff);
+            return D3DXIFF_FORCE_DWORD;
+    }
+}
+
 BOOL d3dximage_info_from_d3dx_image(D3DXIMAGE_INFO *info, struct d3dx_image *image)
 {
+    D3DXIMAGE_FILEFORMAT iff = d3dximage_fileformat_from_d3dx_image_file_format(image->image_file_format);
     D3DRESOURCETYPE rtype = d3dresourcetype_from_d3dx_resource_type(image->resource_type);
 
-    if (rtype == D3DRTYPE_FORCE_DWORD)
+    if (rtype == D3DRTYPE_FORCE_DWORD || iff == D3DXIFF_FORCE_DWORD)
         return FALSE;
 
     switch (image->format)
@@ -238,7 +277,7 @@ BOOL d3dximage_info_from_d3dx_image(D3DXIMAGE_INFO *info, struct d3dx_image *ima
             break;
 
         case D3DX_PIXEL_FORMAT_B8G8R8_UNORM:
-            if (image->image_file_format == D3DXIFF_PNG || image->image_file_format == D3DXIFF_JPG)
+            if (iff == D3DXIFF_PNG || iff == D3DXIFF_JPG)
                 info->Format = D3DFMT_X8R8G8B8;
             else
                 info->Format = d3dformat_from_d3dx_pixel_format_id(image->format);
@@ -254,7 +293,7 @@ BOOL d3dximage_info_from_d3dx_image(D3DXIMAGE_INFO *info, struct d3dx_image *ima
             break;
         }
     }
-    info->ImageFileFormat = image->image_file_format;
+    info->ImageFileFormat = iff;
     info->Width = image->size.width;
     info->Height = image->size.height;
     info->Depth = image->size.depth;

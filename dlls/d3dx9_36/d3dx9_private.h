@@ -164,6 +164,20 @@ static inline void set_volume_struct(struct volume *volume, uint32_t width, uint
     volume->depth = depth;
 }
 
+enum d3dx_image_file_format
+{
+    D3DX_IMAGE_FILE_FORMAT_BMP  = 0,
+    D3DX_IMAGE_FILE_FORMAT_JPG  = 1,
+    D3DX_IMAGE_FILE_FORMAT_TGA  = 2,
+    D3DX_IMAGE_FILE_FORMAT_PNG  = 3,
+    D3DX_IMAGE_FILE_FORMAT_DDS  = 4,
+    D3DX_IMAGE_FILE_FORMAT_PPM  = 5,
+    D3DX_IMAGE_FILE_FORMAT_DIB  = 6,
+    D3DX_IMAGE_FILE_FORMAT_HDR  = 7,
+    D3DX_IMAGE_FILE_FORMAT_PFM  = 8,
+    D3DX_IMAGE_FILE_FORMAT_FORCE_DWORD = 0x7fffffff
+};
+
 enum d3dx_resource_type
 {
     D3DX_RESOURCE_TYPE_TEXTURE_2D,
@@ -303,7 +317,7 @@ struct d3dx_image
     void *image_buf;
     PALETTEENTRY *image_palette;
 
-    D3DXIMAGE_FILEFORMAT image_file_format;
+    enum d3dx_image_file_format image_file_format;
 };
 
 HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3dx_image *image,
@@ -378,6 +392,8 @@ HRESULT write_buffer_to_file(const WCHAR *filename, ID3DXBuffer *buffer);
 D3DFORMAT d3dformat_from_d3dx_pixel_format_id(enum d3dx_pixel_format_id format);
 enum d3dx_pixel_format_id d3dx_pixel_format_id_from_d3dformat(D3DFORMAT format);
 enum d3dx_resource_type d3dx_resource_type_from_d3dresourcetype(D3DRESOURCETYPE type);
+enum d3dx_image_file_format d3dx_image_file_format_from_d3dximage_fileformat(D3DXIMAGE_FILEFORMAT iff);
+D3DXIMAGE_FILEFORMAT d3dximage_fileformat_from_d3dx_image_file_format(enum d3dx_image_file_format iff);
 const struct pixel_format_desc *get_d3dx_pixel_format_info(enum d3dx_pixel_format_id format);
 const struct pixel_format_desc *get_format_info(D3DFORMAT format);
 const struct pixel_format_desc *get_format_info_idx(int idx);
@@ -395,8 +411,8 @@ uint32_t d3dx_calculate_layer_pixels_size(enum d3dx_pixel_format_id format, uint
 HRESULT d3dx_init_dds_header(struct dds_header *header, enum d3dx_resource_type resource_type,
         enum d3dx_pixel_format_id format, const struct volume *size, uint32_t mip_levels);
 HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct pixel_format_desc *src_fmt_desc,
-        D3DXIMAGE_FILEFORMAT file_format, ID3DXBuffer **dst_buffer);
-const char *debug_d3dx_image_file_format(D3DXIMAGE_FILEFORMAT format);
+        enum d3dx_image_file_format file_format, ID3DXBuffer **dst_buffer);
+const char *debug_d3dx_image_file_format(enum d3dx_image_file_format format);
 HRESULT d3dx_pixels_init(const void *data, uint32_t row_pitch, uint32_t slice_pitch,
         const PALETTEENTRY *palette, enum d3dx_pixel_format_id format, uint32_t left, uint32_t top, uint32_t right,
         uint32_t bottom, uint32_t front, uint32_t back, struct d3dx_pixels *pixels);
