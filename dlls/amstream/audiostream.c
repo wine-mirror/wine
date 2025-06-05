@@ -960,6 +960,7 @@ static HRESULT WINAPI audio_sink_ReceiveConnection(IPin *iface, IPin *peer, cons
     PIN_DIRECTION dir;
 
     TRACE("stream %p, peer %p, mt %p.\n", stream, peer, mt);
+    strmbase_dump_media_type(mt);
 
     if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio)
             || !IsEqualGUID(&mt->formattype, &FORMAT_WaveFormatEx)
