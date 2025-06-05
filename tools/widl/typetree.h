@@ -87,6 +87,8 @@ const char *type_get_decl_name(const type_t *type, enum name_type name_type);
 const char *type_get_name(const type_t *type, enum name_type name_type);
 char *gen_name(void);
 
+extern void append_basic_type( struct strbuf *str, const type_t *type );
+
 extern char *format_namespace( const struct namespace *namespace, const char *prefix, const char *separator,
                                const char *suffix, const char *abi_prefix );
 extern char *format_parameterized_type_name( const type_t *type, const typeref_list_t *params );

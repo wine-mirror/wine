@@ -265,6 +265,7 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, b
 {
   type_t *t = ds->type;
   const char *decl_name, *name;
+  struct strbuf str = {0};
   char *args;
 
   if (!h) return;
@@ -364,52 +365,8 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, b
         break;
       }
       case TYPE_BASIC:
-        if (type_basic_get_type(t) != TYPE_BASIC_INT32 &&
-            type_basic_get_type(t) != TYPE_BASIC_INT64 &&
-            type_basic_get_type(t) != TYPE_BASIC_LONG &&
-            type_basic_get_type(t) != TYPE_BASIC_HYPER)
-        {
-          if (type_basic_get_sign(t) < 0) fprintf(h, "signed ");
-          else if (type_basic_get_sign(t) > 0) fprintf(h, "unsigned ");
-        }
-        switch (type_basic_get_type(t))
-        {
-        case TYPE_BASIC_INT8: fprintf(h, "small"); break;
-        case TYPE_BASIC_INT16: fprintf(h, "short"); break;
-        case TYPE_BASIC_INT: fprintf(h, "int"); break;
-        case TYPE_BASIC_INT3264: fprintf(h, "__int3264"); break;
-        case TYPE_BASIC_BYTE: fprintf(h, "byte"); break;
-        case TYPE_BASIC_CHAR: fprintf(h, "char"); break;
-        case TYPE_BASIC_WCHAR: fprintf(h, "wchar_t"); break;
-        case TYPE_BASIC_FLOAT: fprintf(h, "float"); break;
-        case TYPE_BASIC_DOUBLE: fprintf(h, "double"); break;
-        case TYPE_BASIC_ERROR_STATUS_T: fprintf(h, "error_status_t"); break;
-        case TYPE_BASIC_HANDLE: fprintf(h, "handle_t"); break;
-        case TYPE_BASIC_INT32:
-          if (type_basic_get_sign(t) > 0)
-            fprintf(h, "UINT32");
-          else
-            fprintf(h, "INT32");
-          break;
-        case TYPE_BASIC_LONG:
-          if (type_basic_get_sign(t) > 0)
-            fprintf(h, "ULONG");
-          else
-            fprintf(h, "LONG");
-          break;
-        case TYPE_BASIC_INT64:
-          if (type_basic_get_sign(t) > 0)
-            fprintf(h, "UINT64");
-          else
-            fprintf(h, "INT64");
-          break;
-        case TYPE_BASIC_HYPER:
-          if (type_basic_get_sign(t) > 0)
-            fprintf(h, "MIDL_uhyper");
-          else
-            fprintf(h, "hyper");
-          break;
-        }
+        append_basic_type( &str, t );
+        fwrite( str.buf, 1, str.pos, h );
         break;
       case TYPE_INTERFACE:
       case TYPE_MODULE:

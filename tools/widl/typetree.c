@@ -109,6 +109,31 @@ const char *type_get_name(const type_t *type, enum name_type name_type)
     return NULL;
 }
 
+void append_basic_type( struct strbuf *str, const type_t *type )
+{
+    int sign = type_basic_get_sign( type );
+    const char *prefix = sign > 0 ? "unsigned " : sign < 0 ? "signed " : "";
+
+    switch (type_basic_get_type( type ))
+    {
+    case TYPE_BASIC_INT8:            return strappend( str, "%ssmall", prefix );
+    case TYPE_BASIC_INT16:           return strappend( str, "%sshort", prefix );
+    case TYPE_BASIC_INT:             return strappend( str, "%sint", prefix );
+    case TYPE_BASIC_INT3264:         return strappend( str, "%s__int3264", prefix );
+    case TYPE_BASIC_BYTE:            return strappend( str, "%sbyte", prefix );
+    case TYPE_BASIC_CHAR:            return strappend( str, "%schar", prefix );
+    case TYPE_BASIC_WCHAR:           return strappend( str, "%swchar_t", prefix );
+    case TYPE_BASIC_FLOAT:           return strappend( str, "%sfloat", prefix );
+    case TYPE_BASIC_DOUBLE:          return strappend( str, "%sdouble", prefix );
+    case TYPE_BASIC_ERROR_STATUS_T:  return strappend( str, "%serror_status_t", prefix );
+    case TYPE_BASIC_HANDLE:          return strappend( str, "%shandle_t", prefix );
+    case TYPE_BASIC_INT32:           return strappend( str, sign > 0 ? "UINT32" : "INT32" );
+    case TYPE_BASIC_LONG:            return strappend( str, sign > 0 ? "ULONG" : "LONG" );
+    case TYPE_BASIC_INT64:           return strappend( str, sign > 0 ? "UINT64" : "INT64" );
+    case TYPE_BASIC_HYPER:           return strappend( str, sign > 0 ? "MIDL_uhyper" : "hyper" );
+    }
+}
+
 static void append_namespace( struct strbuf *str, const struct namespace *namespace,
                               const char *separator, const char *abi_prefix )
 {
