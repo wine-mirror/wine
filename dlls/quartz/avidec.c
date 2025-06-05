@@ -47,11 +47,28 @@ struct avi_decompressor
     struct strmbase_sink sink;
 
     HIC hvid;
-    BITMAPINFOHEADER* pBihIn;
+    BITMAPINFOHEADER *input_format;
 
     CRITICAL_SECTION late_cs;
     REFERENCE_TIME late;
 };
+
+static BITMAPINFOHEADER *copy_bitmap_header(const AM_MEDIA_TYPE *mt)
+{
+    const BITMAPINFOHEADER *src;
+    BITMAPINFOHEADER *header;
+    size_t size;
+
+    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+        src = &((const VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader;
+    else
+        src = &((const VIDEOINFOHEADER2 *)mt->pbFormat)->bmiHeader;
+    size = src->biSize + src->biClrUsed * sizeof(RGBQUAD);
+
+    if ((header = malloc(size)))
+        memcpy(header, src, size);
+    return header;
+}
 
 static struct avi_decompressor *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
@@ -141,7 +158,7 @@ static HRESULT WINAPI avi_decompressor_sink_Receive(struct strmbase_sink *iface,
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
 
     /* Update input size to match sample size */
-    This->pBihIn->biSizeImage = cbSrcStream;
+    This->input_format->biSizeImage = cbSrcStream;
 
     if (FAILED(hr = IMemAllocator_GetBuffer(This->source.pAllocator, &pOutSample, NULL, NULL, 0)))
     {
@@ -173,7 +190,7 @@ static HRESULT WINAPI avi_decompressor_sink_Receive(struct strmbase_sink *iface,
         flags |= ICDECOMPRESS_HURRYUP;
     LeaveCriticalSection(&This->late_cs);
 
-    res = ICDecompress(This->hvid, flags, This->pBihIn, pbSrcStream, &source_format->bmiHeader, pbDstStream);
+    res = ICDecompress(This->hvid, flags, This->input_format, pbSrcStream, &source_format->bmiHeader, pbDstStream);
     if (res != ICERR_OK)
         ERR("Failed to decompress, error %Id.\n", res);
 
@@ -227,20 +244,12 @@ static HRESULT avi_decompressor_sink_connect(struct strmbase_sink *iface, IPin *
         This->hvid = ICLocate(pmt->majortype.Data1, pmt->subtype.Data1, bmi, NULL, ICMODE_DECOMPRESS);
         if (This->hvid)
         {
-            DWORD bih_size;
             LRESULT result;
 
-            /* Copy bitmap header from media type to 1 for input and 1 for output */
-            bih_size = bmi->biSize + bmi->biClrUsed * 4;
-            This->pBihIn = CoTaskMemAlloc(bih_size);
-            if (!This->pBihIn)
-            {
-                hr = E_OUTOFMEMORY;
-                goto failed;
-            }
-            memcpy(This->pBihIn, bmi, bih_size);
+            if (!(This->input_format = copy_bitmap_header(pmt)))
+                return E_OUTOFMEMORY;
 
-            if ((result = ICDecompressQuery(This->hvid, This->pBihIn, NULL)))
+            if ((result = ICDecompressQuery(This->hvid, This->input_format, NULL)))
             {
                 WARN("No decompressor found, error %Id.\n", result);
                 return VFW_E_TYPE_NOT_ACCEPTED;
@@ -264,9 +273,9 @@ static void avi_decompressor_sink_disconnect(struct strmbase_sink *iface)
 
     if (filter->hvid)
         ICClose(filter->hvid);
-    CoTaskMemFree(filter->pBihIn);
+    free(filter->input_format);
     filter->hvid = NULL;
-    filter->pBihIn = NULL;
+    filter->input_format = NULL;
 }
 
 static const struct strmbase_sink_ops sink_ops =
@@ -562,7 +571,7 @@ static HRESULT avi_decompressor_init_stream(struct strmbase_filter *iface)
     LeaveCriticalSection(&filter->late_cs);
 
     source_format = (VIDEOINFOHEADER *)filter->source.pin.mt.pbFormat;
-    if ((res = ICDecompressBegin(filter->hvid, filter->pBihIn, &source_format->bmiHeader)))
+    if ((res = ICDecompressBegin(filter->hvid, filter->input_format, &source_format->bmiHeader)))
     {
         ERR("ICDecompressBegin() failed, error %Id.\n", res);
         return E_FAIL;
