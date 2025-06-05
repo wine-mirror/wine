@@ -735,7 +735,7 @@ static UINT x11drv_init_pixel_formats( UINT *onscreen_count )
 {
     struct glx_pixel_format *list;
     int size = 0, onscreen_size = 0;
-    int fmt_id, nCfgs, i, run, bmp_formats;
+    int fmt_id, nCfgs, i, run;
     GLXFBConfig* cfgs;
     XVisualInfo *visinfo;
 
@@ -746,21 +746,7 @@ static UINT x11drv_init_pixel_formats( UINT *onscreen_count )
         return 0;
     }
 
-    /* Bitmap rendering on Windows implies the use of the Microsoft GDI software renderer.
-     * Further most GLX drivers only offer pixmap rendering using indirect rendering (except for modern drivers which support 'AIGLX' / composite).
-     * Indirect rendering can indicate software rendering (on Nvidia it is hw accelerated)
-     * Since bitmap rendering implies the use of software rendering we can safely use indirect rendering for bitmaps.
-     *
-     * Below we count the number of formats which are suitable for bitmap rendering. Windows restricts bitmap rendering to single buffered formats.
-     */
-    for(i=0, bmp_formats=0; i<nCfgs; i++)
-    {
-        if(check_fbconfig_bitmap_capability(gdi_display, cfgs[i]))
-            bmp_formats++;
-    }
-    TRACE("Found %d bitmap capable fbconfigs\n", bmp_formats);
-
-    list = calloc( 1, (nCfgs + bmp_formats) * sizeof(*list) );
+    list = calloc( 1, (nCfgs * 2) * sizeof(*list) );
 
     /* Fill the pixel format list. Put onscreen formats at the top and offscreen ones at the bottom.
      * Do this as GLX doesn't guarantee that the list is sorted */
@@ -828,7 +814,8 @@ static UINT x11drv_init_pixel_formats( UINT *onscreen_count )
                 list[size].fbconfig = cfgs[i];
                 list[size].fmt_id = fmt_id;
                 list[size].render_type = get_render_type_from_fbconfig(gdi_display, cfgs[i]);
-                list[size].dwFlags = 0;
+                if (!check_fbconfig_bitmap_capability( gdi_display, cfgs[i] )) list[size].dwFlags = 0;
+                else list[size].dwFlags = PFD_DRAW_TO_BITMAP | PFD_SUPPORT_GDI | PFD_GENERIC_FORMAT;
                 size++;
             }
             else if (visinfo) XFree(visinfo);
