@@ -1597,7 +1597,7 @@ static void test_bitmap_rendering( BOOL use_dib )
     ok( EqualRect( (RECT *)viewport, &expect_rect ), "got viewport %s\n", wine_dbgstr_rect( (RECT *)viewport ) );
 
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
-    todo_wine ok( (pixel & 0xffffff) == 0xcdcdcd, "got %#x\n", pixel );
+    ok( (pixel & 0xffffff) == 0xcdcdcd, "got %#x\n", pixel );
 
     glClearColor( (float)0x22 / 0xff, (float)0x33 / 0xff, (float)0x44 / 0xff, (float)0x11 / 0xff );
     glClear( GL_COLOR_BUFFER_BIT );
@@ -1642,7 +1642,7 @@ static void test_bitmap_rendering( BOOL use_dib )
     ok( (pixel & 0xffffff) == 0x443322, "got %#x\n", pixel );
     if (pixels == buffer) read_bitmap_pixels( hdc, bmp, pixels, 4, 4, bpp );
     if (pixels2 == buffer2) read_bitmap_pixels( hdc, bmp2, pixels2, 12, 12, bpp );
-    todo_wine ok( (pixels[0] & 0xffffff) == 0x223344, "got %#x\n", pixels[0] );
+    ok( (pixels[0] & 0xffffff) == 0x223344, "got %#x\n", pixels[0] );
     ok( (pixels2[0] & 0xffffff) == 0xdcdcdc, "got %#x\n", pixels2[0] );
 
 
@@ -1657,13 +1657,13 @@ static void test_bitmap_rendering( BOOL use_dib )
     /* pixels are read from the selected bitmap */
 
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
-    todo_wine ok( (pixel & 0xffffff) == 0xdcdcdc, "got %#x\n", pixel );
+    ok( (pixel & 0xffffff) == 0xdcdcdc, "got %#x\n", pixel );
 
     if (use_dib)
     {
         memset( buffer2, 0xa5, sizeof(buffer2) );
         glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
-        todo_wine ok( (pixel & 0xffffff) == 0xdcdcdc, "got %#x\n", pixel );
+        ok( (pixel & 0xffffff) == 0xdcdcdc, "got %#x\n", pixel );
         memset( buffer2, 0xdc, sizeof(buffer2) );
     }
 
@@ -1676,7 +1676,7 @@ static void test_bitmap_rendering( BOOL use_dib )
 
     if (pixels == buffer) read_bitmap_pixels( hdc, bmp, pixels, 4, 4, bpp );
     if (pixels2 == buffer2) read_bitmap_pixels( hdc, bmp2, pixels2, 12, 12, bpp );
-    todo_wine ok( (pixels[0] & 0xffffff) == 0x223344, "got %#x\n", pixels[0] );
+    ok( (pixels[0] & 0xffffff) == 0x223344, "got %#x\n", pixels[0] );
     ok( (pixels2[0] & 0xffffff) == 0xdcdcdc, "got %#x\n", pixels2[0] );
 
     glFinish();
@@ -1685,8 +1685,8 @@ static void test_bitmap_rendering( BOOL use_dib )
     ok( (pixel & 0xffffff) == 0x223344, "got %#x\n", pixel );
     if (pixels == buffer) read_bitmap_pixels( hdc, bmp, pixels, 4, 4, bpp );
     if (pixels2 == buffer2) read_bitmap_pixels( hdc, bmp2, pixels2, 12, 12, bpp );
-    todo_wine ok( (pixels[0] & 0xffffff) == 0x223344, "got %#x\n", pixels[0] );
-    todo_wine ok( (pixels2[0] & 0xffffff) == 0x443322, "got %#x\n", pixels2[0] );
+    ok( (pixels[0] & 0xffffff) == 0x223344, "got %#x\n", pixels[0] );
+    ok( (pixels2[0] & 0xffffff) == 0x443322, "got %#x\n", pixels2[0] );
 
 
     ret = wglMakeCurrent( NULL, NULL );
@@ -1704,7 +1704,7 @@ static void test_bitmap_rendering( BOOL use_dib )
 
     if (pixels == buffer) read_bitmap_pixels( hdc, bmp, pixels, 4, 4, bpp );
     if (pixels2 == buffer2) read_bitmap_pixels( hdc, bmp2, pixels2, 12, 12, bpp );
-    todo_wine ok( (pixels[0] & 0xffffff) == 0x223344, "got %#x\n", pixels[0] );
+    ok( (pixels[0] & 0xffffff) == 0x223344, "got %#x\n", pixels[0] );
     ok( (pixels2[0] & 0xffffff) == 0x445566, "got %#x\n", pixels2[0] );
 
 
@@ -1726,7 +1726,7 @@ static void test_bitmap_rendering( BOOL use_dib )
 
     if (pixels == buffer) read_bitmap_pixels( hdc, bmp, pixels, 4, 4, bpp );
     if (pixels2 == buffer2) read_bitmap_pixels( hdc, bmp2, pixels2, 12, 12, bpp );
-    todo_wine ok( (pixels[0] & 0xffffff) == 0x223344, "got %#x\n", pixels[0] );
+    ok( (pixels[0] & 0xffffff) == 0x223344, "got %#x\n", pixels[0] );
     if (use_dib) todo_wine ok( (pixels2[0] & 0xffffff) == 0x03148, "got %#x\n", pixels2[0] );
     else ok( (pixels2[0] & 0xffffff) == 0x665544, "got %#x\n", pixels2[0] );
 
@@ -1743,7 +1743,7 @@ static void test_bitmap_rendering( BOOL use_dib )
 
     if (pixels == buffer) read_bitmap_pixels( hdc, bmp, pixels, 4, 4, bpp );
     if (pixels2 == buffer2) read_bitmap_pixels( hdc, bmp2, pixels2, 12, 12, bpp );
-    todo_wine ok( (pixels[0] & 0xffffff) == 0x223344, "got %#x\n", pixels[0] );
+    ok( (pixels[0] & 0xffffff) == 0x223344, "got %#x\n", pixels[0] );
     ok( (pixels2[0] & 0xffffff) == 0x667788, "got %#x\n", pixels2[0] );
 
 
@@ -1789,6 +1789,7 @@ static void test_d3dkmt_rendering(void)
     NTSTATUS status;
     HGLRC hglrc;
 
+    memset( (void *)pixels, 0xcd, sizeof(*pixels) * 4 * 4 );
     create.pMemory = pixels;
     create.Format = D3DDDIFMT_A8R8G8B8;
     create.Width = 4;
@@ -1858,7 +1859,7 @@ static void test_d3dkmt_rendering(void)
 
     memset( (void *)pixels, 0xcd, sizeof(*pixels) * 4 * 4 );
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
-    todo_wine ok( (pixel & 0xffffff) == 0xcdcdcd, "got %#x\n", pixel );
+    ok( (pixel & 0xffffff) == 0xcdcdcd, "got %#x\n", pixel );
 
     glClearColor( (float)0x44 / 0xff, (float)0x33 / 0xff, (float)0x22 / 0xff, (float)0x11 / 0xff );
     glClear( GL_COLOR_BUFFER_BIT );
@@ -1881,7 +1882,7 @@ static void test_d3dkmt_rendering(void)
     ok( (pixels[0] & 0xffffff) == 0x556677, "got %#x\n", pixels[0] );
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
     ok( (pixel & 0xffffff) == 0x223344, "got %#x\n", pixel );
-    todo_wine ok( (pixels[0] & 0xffffff) == 0x443322, "got %#x\n", pixels[0] );
+    ok( (pixels[0] & 0xffffff) == 0x443322, "got %#x\n", pixels[0] );
 
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
     ok( (pixel & 0xffffff) == 0x223344, "got %#x\n", pixel );
