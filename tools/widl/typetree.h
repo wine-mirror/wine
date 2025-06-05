@@ -84,6 +84,7 @@ type_t *type_parameterized_type_specialize_declare(type_t *type, typeref_list_t 
 type_t *type_parameterized_type_specialize_define(type_t *type);
 int type_is_equal(const type_t *type1, const type_t *type2);
 const char *type_get_decl_name(const type_t *type, enum name_type name_type);
+extern const char *type_get_record_specifier( type_t *type );
 extern const char *type_get_name( const type_t *type, enum name_type name_type, bool record );
 char *gen_name(void);
 

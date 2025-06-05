@@ -261,15 +261,45 @@ static void write_pointer_left(FILE *h, type_t *ref)
     fprintf(h, "*");
 }
 
+static void write_record_type_definition( FILE *header, type_t *type, const char *specifier,
+                                          const char *decl_name, enum name_type name_type )
+{
+    assert( type->defined );
+    type->written = TRUE;
+    fprintf( header, "%s %s%s{\n", specifier, decl_name, *decl_name ? " " : "" );
+    indentation++;
+
+    switch (type_get_type_detect_alias( type ))
+    {
+    case TYPE_ENUM:
+        write_enums( header, type_enum_get_values( type ), is_global_namespace( type->namespace ) ? NULL : type->name );
+        break;
+    case TYPE_STRUCT:
+        write_fields( header, type_struct_get_fields( type ), name_type );
+        break;
+    case TYPE_ENCAPSULATED_UNION:
+        write_fields( header, type_encapsulated_union_get_fields( type ), name_type );
+        break;
+    case TYPE_UNION:
+        write_fields( header, type_union_get_cases( type ), name_type );
+        break;
+    default:
+        /* shouldn't be here */
+        assert( 0 );
+        break;
+    }
+
+    indent( header, -1 );
+    fprintf( header, "}" );
+}
+
 void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, bool define, int write_callconv)
 {
   type_t *t = ds->type;
-  const char *decl_name, *name;
+  const char *name;
   struct strbuf str = {0};
 
   if (!h) return;
-
-  decl_name = type_get_decl_name(t, name_type);
 
   if (ds->func_specifier & FUNCTION_SPECIFIER_INLINE)
     fprintf(h, "inline ");
@@ -281,57 +311,18 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, b
   else {
     switch (type_get_type_detect_alias(t)) {
       case TYPE_ENUM:
-        name = type_get_name( t, name_type, true );
-        if (!define) fprintf(h, "enum %s", decl_name ? decl_name : "");
-        else if (!t->written) {
-          assert(t->defined);
-          if (decl_name) fprintf(h, "enum %s {\n", decl_name);
-          else fprintf(h, "enum {\n");
-          t->written = TRUE;
-          indentation++;
-          write_enums(h, type_enum_get_values(t), is_global_namespace(t->namespace) ? NULL : t->name);
-          indent(h, -1);
-          fprintf(h, "}");
-        }
-        else if (winrt_mode && name_type == NAME_DEFAULT && name) fprintf(h, "%s", name);
-        else fprintf(h, "enum %s", name ? name : "");
-        break;
       case TYPE_STRUCT:
       case TYPE_ENCAPSULATED_UNION:
-        name = type_get_name( t, name_type, true );
-        if (!define) fprintf(h, "struct %s", decl_name ? decl_name : "");
-        else if (!t->written) {
-          assert(t->defined);
-          if (decl_name) fprintf(h, "struct %s {\n", decl_name);
-          else fprintf(h, "struct {\n");
-          t->written = TRUE;
-          indentation++;
-          if (type_get_type(t) != TYPE_STRUCT)
-            write_fields(h, type_encapsulated_union_get_fields(t), name_type);
-          else
-            write_fields(h, type_struct_get_fields(t), name_type);
-          indent(h, -1);
-          fprintf(h, "}");
-        }
-        else if (winrt_mode && name_type == NAME_DEFAULT && name) fprintf(h, "%s", name);
-        else fprintf(h, "struct %s", name ? name : "");
-        break;
       case TYPE_UNION:
-        name = type_get_name( t, name_type, true );
-        if (!define) fprintf(h, "union %s", decl_name ? decl_name : "");
-        else if (!t->written) {
-          assert(t->defined);
-          if (decl_name) fprintf(h, "union %s {\n", decl_name);
-          else fprintf(h, "union {\n");
-          t->written = TRUE;
-          indentation++;
-          write_fields(h, type_union_get_cases(t), name_type);
-          indent(h, -1);
-          fprintf(h, "}");
-        }
-        else if (winrt_mode && name_type == NAME_DEFAULT && name) fprintf(h, "%s", name);
-        else fprintf(h, "union %s", name ? name : "");
-        break;
+      {
+          const char *specifier = type_get_record_specifier( t ), *decl_name;
+          if (!(decl_name = type_get_decl_name( t, name_type ))) decl_name = "";
+          if (!define) fprintf( h, "%s %s", specifier, decl_name );
+          else if (!t->written) write_record_type_definition( h, t, specifier, decl_name, name_type );
+          else if ((name = type_get_name( t, name_type, true )) && winrt_mode && name_type == NAME_DEFAULT) fprintf( h, "%s", name );
+          else fprintf( h, "%s %s", specifier, name ? name : "" );
+          break;
+      }
       case TYPE_POINTER:
       {
         write_type_left(h, type_pointer_get_ref(t), name_type, define, FALSE);

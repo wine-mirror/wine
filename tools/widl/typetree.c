@@ -96,6 +96,18 @@ const char *type_get_decl_name(const type_t *type, enum name_type name_type)
     return NULL;
 }
 
+const char *type_get_record_specifier( type_t *type )
+{
+    switch (type_get_type_detect_alias( type ))
+    {
+    case TYPE_ENUM:               return "enum";
+    case TYPE_STRUCT:             return "struct";
+    case TYPE_ENCAPSULATED_UNION: return "struct";
+    case TYPE_UNION:              return "union";
+    default: assert( 0 ); break; /* shouldn't be here */
+    }
+}
+
 const char *type_get_name( const type_t *type, enum name_type name_type, bool record )
 {
     const char *name;
