@@ -149,9 +149,6 @@ static HRESULT WINAPI avi_decompressor_sink_Receive(struct strmbase_sink *iface,
         return hr;
     }
 
-    hr = IMediaSample_SetActualDataLength(pOutSample, 0);
-    assert(hr == S_OK);
-
     hr = IMediaSample_GetPointer(pOutSample, &pbDstStream);
     if (FAILED(hr)) {
         ERR("Failed to get output buffer pointer, hr %#lx.\n", hr);
