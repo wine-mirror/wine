@@ -66,6 +66,7 @@ static const GUID CLSID_ft_unmarshaler_1809 = {0x00000359, 0x0000, 0x0000, {0xc0
 static HRESULT (WINAPI *pDllGetClassObject)(REFCLSID,REFIID,LPVOID);
 static HRESULT (WINAPI *pCoIncrementMTAUsage)(CO_MTA_USAGE_COOKIE *cookie);
 static HRESULT (WINAPI *pCoDecrementMTAUsage)(CO_MTA_USAGE_COOKIE cookie);
+static HRESULT (WINAPI *pCoGetApartmentType)(APTTYPE *type, APTTYPEQUALIFIER *qualifier);
 
 /* helper macros to make tests a bit leaner */
 #define ok_more_than_one_lock() ok(cLocks > 0, "Number of locks should be > 0, but actually is %ld\n", cLocks)
@@ -2649,9 +2650,19 @@ static void test_hresult_marshaling(void)
 /* helper for test_proxy_used_in_wrong_thread */
 static DWORD CALLBACK bad_thread_proc(LPVOID p)
 {
+    APTTYPE type;
+    APTTYPEQUALIFIER qual;
     IClassFactory * cf = p;
     HRESULT hr;
     IUnknown * proxy = NULL;
+
+    if (pCoGetApartmentType)
+    {
+        hr = pCoGetApartmentType(&type, &qual);
+        ok(hr == CO_E_NOTINITIALIZED, "Got hr %#lx.\n", hr);
+        ok(type == APTTYPE_CURRENT, "got %d\n", type);
+        ok(qual == 0, "got %d\n", qual);
+    }
 
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
     todo_wine ok(hr == CO_E_NOTINITIALIZED, "Got hr %#lx.\n", hr);
@@ -2666,7 +2677,62 @@ static DWORD CALLBACK bad_thread_proc(LPVOID p)
     if (SUCCEEDED(hr))
         IUnknown_Release(proxy);
 
+    if (pCoIncrementMTAUsage)
+    {
+        CO_MTA_USAGE_COOKIE cookie;
+
+        hr = pCoIncrementMTAUsage(&cookie);
+        ok_ole_success(hr, CoIncrementMTAUsage);
+
+        hr = pCoGetApartmentType(&type, &qual);
+        ok_ole_success(hr, CoGetApartmentType);
+        ok(type == APTTYPE_MTA, "got %d\n", type);
+        ok(qual == APTTYPEQUALIFIER_IMPLICIT_MTA, "got %d\n", qual);
+
+        hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
+        if (proxy) IUnknown_Release(proxy);
+        ok(hr == RPC_E_WRONG_THREAD,
+            "COM should have failed with RPC_E_WRONG_THREAD on using proxy from wrong apartment, but instead returned 0x%08lx\n",
+            hr);
+
+        hr = IClassFactory_QueryInterface(cf, &IID_IStream, (LPVOID *)&proxy);
+        todo_wine ok(hr == RPC_E_WRONG_THREAD, "Got hr %#lx.\n", hr);
+
+        hr = pCoDecrementMTAUsage(cookie);
+        ok_ole_success(hr, CoDecrementMTAUsage);
+    }
+
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    if (pCoGetApartmentType)
+    {
+        hr = pCoGetApartmentType(&type, &qual);
+        ok_ole_success(hr, CoGetApartmentType);
+        ok(type == APTTYPE_MTA, "got %d\n", type);
+        ok(qual == 0, "got %d\n", qual);
+    }
+
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
+    if (proxy) IUnknown_Release(proxy);
+    ok(hr == RPC_E_WRONG_THREAD,
+        "COM should have failed with RPC_E_WRONG_THREAD on using proxy from wrong apartment, but instead returned 0x%08lx\n",
+        hr);
+
+    hr = IClassFactory_QueryInterface(cf, &IID_IStream, (LPVOID *)&proxy);
+    todo_wine ok(hr == RPC_E_WRONG_THREAD, "Got hr %#lx.\n", hr);
+
+    CoUninitialize();
+
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    ok_ole_success(hr, CoInitializeEx);
+
+    if (pCoGetApartmentType)
+    {
+        hr = pCoGetApartmentType(&type, &qual);
+        ok_ole_success(hr, CoGetApartmentType);
+        ok(type == APTTYPE_STA, "got %d\n", type);
+        ok(qual == 0, "got %d\n", qual);
+    }
 
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
     if (proxy) IUnknown_Release(proxy);
@@ -2679,6 +2745,65 @@ static DWORD CALLBACK bad_thread_proc(LPVOID p)
 
     /* now be really bad and release the proxy from the wrong apartment */
     IClassFactory_Release(cf);
+
+    CoUninitialize();
+
+    return 0;
+}
+
+/* helper for test_proxy_used_in_wrong_thread */
+static DWORD CALLBACK bad_thread_proc_sta(LPVOID p)
+{
+    APTTYPE type;
+    APTTYPEQUALIFIER qual;
+    IClassFactory * cf = p;
+    HRESULT hr;
+    IUnknown * proxy = NULL;
+
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    ok_ole_success(hr, CoInitializeEx);
+
+    if (pCoGetApartmentType)
+    {
+        hr = pCoGetApartmentType(&type, &qual);
+        ok_ole_success(hr, CoGetApartmentType);
+        ok(type == APTTYPE_STA, "got %d\n", type);
+        ok(qual == 0, "got %d\n", qual);
+    }
+
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
+    if (proxy) IUnknown_Release(proxy);
+    ok(hr == RPC_E_WRONG_THREAD,
+        "COM should have failed with RPC_E_WRONG_THREAD on using proxy from wrong apartment, but instead returned 0x%08lx\n",
+        hr);
+
+    hr = IClassFactory_QueryInterface(cf, &IID_IStream, (LPVOID *)&proxy);
+    todo_wine ok(hr == RPC_E_WRONG_THREAD, "Got hr %#lx.\n", hr);
+
+    if (pCoIncrementMTAUsage)
+    {
+        CO_MTA_USAGE_COOKIE cookie;
+
+        hr = pCoIncrementMTAUsage(&cookie);
+        ok_ole_success(hr, CoIncrementMTAUsage);
+
+        hr = pCoGetApartmentType(&type, &qual);
+        ok_ole_success(hr, CoGetApartmentType);
+        ok(type == APTTYPE_STA, "got %d\n", type);
+        ok(qual == 0, "got %d\n", qual);
+
+        hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
+        if (proxy) IUnknown_Release(proxy);
+        ok(hr == RPC_E_WRONG_THREAD,
+            "COM should have failed with RPC_E_WRONG_THREAD on using proxy from wrong apartment, but instead returned 0x%08lx\n",
+            hr);
+
+        hr = IClassFactory_QueryInterface(cf, &IID_IStream, (LPVOID *)&proxy);
+        todo_wine ok(hr == RPC_E_WRONG_THREAD, "Got hr %#lx.\n", hr);
+
+        hr = pCoDecrementMTAUsage(cookie);
+        ok_ole_success(hr, CoDecrementMTAUsage);
+    }
 
     CoUninitialize();
 
@@ -2712,6 +2837,12 @@ static void test_proxy_used_in_wrong_thread(void)
 
     /* do a call that will fail, but result in IRemUnknown being used by the proxy */
     IUnknown_QueryInterface(pProxy, &IID_IStream, (LPVOID *)&pStream);
+
+    /* create a thread that we can misbehave in */
+    thread = CreateThread(NULL, 0, bad_thread_proc_sta, pProxy, 0, &tid2);
+
+    ok( !WaitForSingleObject(thread, 10000), "wait timed out\n" );
+    CloseHandle(thread);
 
     /* create a thread that we can misbehave in */
     thread = CreateThread(NULL, 0, bad_thread_proc, pProxy, 0, &tid2);
@@ -4737,6 +4868,7 @@ START_TEST(marshal)
     pDllGetClassObject = (void*)GetProcAddress(hOle32, "DllGetClassObject");
     pCoIncrementMTAUsage = (void*)GetProcAddress(hOle32, "CoIncrementMTAUsage");
     pCoDecrementMTAUsage = (void*)GetProcAddress(hOle32, "CoDecrementMTAUsage");
+    pCoGetApartmentType = (void*)GetProcAddress(hOle32, "CoGetApartmentType");
 
     argc = winetest_get_mainargs( &argv );
     if (argc > 2 && (!strcmp(argv[2], "-Embedding")))
