@@ -414,6 +414,7 @@ enum format_info
     DFI_PE,
     DFI_MACHO,
     DFI_DWARF,
+    DFI_PDB,
     DFI_OLD_PDB,
     DFI_LAST
 };
@@ -479,6 +480,7 @@ struct module_format
         struct pe_module_info*          pe_info;
         struct macho_module_info*       macho_info;
         struct old_pdb_module_info*     old_pdb_info;
+        struct pdb_module_info*         pdb_info;
     } u;
 };
 
@@ -503,7 +505,12 @@ struct module
     /* specific information for debug types */
     struct module_format*       format_info[DFI_LAST];
     unsigned                    debug_format_bitmask;
-    struct module_format       *ops_symref_modfmt; /* HACK for fast access to the ops table */
+    /* Hack for fast symdef deref...
+     * Note: if ever we need another backend with dedicated symref_t support,
+     * we could always use the 3 non-zero lower bits of symref_t to match a
+     * debug backend.
+     */
+    struct module_format       *ops_symref_modfmt;
 
     /* memory allocation pool */
     struct pool                 pool;
@@ -843,6 +850,8 @@ extern const WCHAR* file_name(const WCHAR* str);
 extern const char* file_nameA(const char* str);
 
 /* pdb.c */
+extern BOOL         pdb_init_modfmt(const struct process *pcs, const struct msc_debug_info *msc_dbg,
+                                    const WCHAR *filename, BOOL *has_linenumber_info);
 extern BOOL         pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip, union ctx *context);
 struct _PDB_FPO_DATA;
 extern BOOL         pdb_fpo_unwind_parse_cmd_string(struct cpu_stack_walk* csw, struct _PDB_FPO_DATA* fpoext,
@@ -1086,10 +1095,3 @@ extern struct symt_function*
 #define IFC_DEPTH_MASK   0x3FFFFFFF
 #define IFC_MODE(x)      ((x) & ~IFC_DEPTH_MASK)
 #define IFC_DEPTH(x)     ((x) & IFC_DEPTH_MASK)
-
-/* temporary helpers for PDB rewriting */
-struct pdb_reader;
-extern BOOL pdb_hack_get_main_info(struct module_format *modfmt, struct pdb_reader **pdb, unsigned *fpoext_stream);
-extern void pdb_reader_dispose(struct pdb_reader *pdb);
-extern struct pdb_reader *pdb_hack_reader_init(struct module *module, HANDLE file, const IMAGE_SECTION_HEADER *sections, unsigned num_sections);
-extern BOOL cv_hack_ptr_to_symref(struct pdb_reader *pdb, unsigned typeno, symref_t *symref);

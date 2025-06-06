@@ -346,14 +346,6 @@ BOOL module_load_debug(struct module* module)
         }
         else ret = module->process->loader->load_debug_info(module->process, module);
 
-        /* Hack for fast symdef deref...
-         * Note: if ever we need another backend with dedicated symref_t support,
-         * we could always use the 3 non-zero lower bits of symref_t to match a
-         * debug backend.
-        */
-        if (module->format_info[DFI_OLD_PDB] && module->format_info[DFI_OLD_PDB]->vtable)
-            module->ops_symref_modfmt = module->format_info[DFI_OLD_PDB];
-
         if (!ret) module->module.SymType = SymNone;
         assert(module->module.SymType != SymDeferred);
         module->module.NumSyms = module->ht_symbols.num_elts;
