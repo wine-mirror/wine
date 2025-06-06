@@ -5070,8 +5070,7 @@ static BOOL  pev_assign(struct pevaluator* pev)
 }
 
 /* initializes the postfix evaluator */
-static void  pev_init(struct pevaluator* pev, struct cpu_stack_walk* csw,
-                      const PDB_FPO_DATA* fpoext, struct pdb_cmd_pair* cpair)
+static void pev_init(struct pevaluator* pev, struct cpu_stack_walk* csw)
 {
     pev->csw = csw;
     pool_init(&pev->pool, 512);
@@ -5079,29 +5078,41 @@ static void  pev_init(struct pevaluator* pev, struct cpu_stack_walk* csw,
     pev->stk_index = 0;
     hash_table_init(&pev->pool, &pev->values, 8);
     pev->error[0] = '\0';
-    for (; cpair->name; cpair++)
-        pev_set_value(pev, cpair->name, *cpair->pvalue);
+}
+
+static void pev_push_context(struct pevaluator *pev, const WOW64_CONTEXT *context)
+{
+    pev_set_value(pev, "$ebp", context->Ebp);
+    pev_set_value(pev, "$esp", context->Esp);
+    pev_set_value(pev, "$eip", context->Eip);
+}
+
+static void pev_pop_context(struct pevaluator *pev, WOW64_CONTEXT *context)
+{
+    DWORD_PTR val;
+
+    if (pev_get_val(pev, "$ebp", &val)) context->Ebp = val;
+    if (pev_get_val(pev, "$esp", &val)) context->Esp = val;
+    if (pev_get_val(pev, "$eip", &val)) context->Eip = val;
+}
+
+static void pev_push_fpodata(struct pevaluator *pev, const PDB_FPO_DATA* fpoext)
+{
+
     pev_set_value(pev, ".raSearchStart", fpoext->start);
     pev_set_value(pev, ".cbLocals",      fpoext->locals_size);
     pev_set_value(pev, ".cbParams",      fpoext->params_size);
     pev_set_value(pev, ".cbSavedRegs",   fpoext->savedregs_size);
 }
 
-static BOOL  pev_free(struct pevaluator* pev, struct pdb_cmd_pair* cpair)
+static BOOL  pev_free(struct pevaluator* pev)
 {
-    DWORD_PTR   val;
-
-    if (cpair) for (; cpair->name; cpair++)
-    {
-        if (pev_get_val(pev, cpair->name, &val))
-            *cpair->pvalue = val;
-    }
     pool_destroy(&pev->pool);
     return TRUE;
 }
 
-BOOL  pdb_fpo_unwind_parse_cmd_string(struct cpu_stack_walk* csw, PDB_FPO_DATA* fpoext,
-                                      const char* cmd, struct pdb_cmd_pair* cpair)
+BOOL pdb_fpo_unwind_parse_cmd_string(struct cpu_stack_walk* csw, PDB_FPO_DATA* fpoext,
+                                     const char* cmd, WOW64_CONTEXT *context)
 {
     char                token[PEV_MAX_LEN];
     char*               ptok = token;
@@ -5110,7 +5121,9 @@ BOOL  pdb_fpo_unwind_parse_cmd_string(struct cpu_stack_walk* csw, PDB_FPO_DATA* 
     struct pevaluator   pev;
 
     if (!cmd) return FALSE;
-    pev_init(&pev, csw, fpoext, cpair);
+    pev_init(&pev, csw);
+    pev_push_context(&pev, context);
+    pev_push_fpodata(&pev, fpoext);
     for (ptr = cmd; !over; ptr++)
     {
         if (*ptr == ' ' || (over = *ptr == '\0'))
@@ -5146,16 +5159,16 @@ BOOL  pdb_fpo_unwind_parse_cmd_string(struct cpu_stack_walk* csw, PDB_FPO_DATA* 
             *ptok++ = *ptr;
         }
     }
-    pev_free(&pev, cpair);
+    pev_pop_context(&pev, context);
+    pev_free(&pev);
     return TRUE;
 done:
     FIXME("Couldn't evaluate %s => %s\n", debugstr_a(cmd), pev.error);
-    pev_free(&pev, NULL);
+    pev_free(&pev);
     return FALSE;
 }
 
-BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
-                        union ctx *context, struct pdb_cmd_pair *cpair)
+BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip, union ctx *context)
 {
     struct pdb_reader          *pdb;
     struct pdb_reader_walker    walker;
@@ -5165,9 +5178,10 @@ BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
     BOOL                        ret = FALSE;
 
     if (!module_init_pair(&pair, csw->hProcess, ip)) return FALSE;
+    if (!pair.effective->format_info[DFI_PDB]) return FALSE;
     if (!pdb_hack_get_main_info(pair.effective->format_info[DFI_PDB], &pdb, NULL)) return FALSE;
-    if (!pdb)
-        return pdb_old_virtual_unwind(csw, ip, context, cpair);
+    if (!pdb) return FALSE;
+
     TRACE("searching %Ix => %Ix\n", ip, ip - (DWORD_PTR)pair.effective->module.BaseOfImage);
     ip -= (DWORD_PTR)pair.effective->module.BaseOfImage;
 
@@ -5189,7 +5203,7 @@ BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
                       fpoext.savedregs_size, fpoext.flags,
                       debugstr_a(cmd));
 
-                ret = pdb_fpo_unwind_parse_cmd_string(csw, &fpoext, cmd, cpair);
+                ret = pdb_fpo_unwind_parse_cmd_string(csw, &fpoext, cmd, &context->x86);
                 pdb_reader_free(pdb, cmd);
                 break;
             }

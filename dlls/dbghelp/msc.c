@@ -4409,8 +4409,7 @@ DWORD dbg_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info)
     return msc_get_file_indexinfo(image, dbg, num_directories, info);
 }
 
-BOOL pdb_old_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
-                            union ctx *context, struct pdb_cmd_pair *cpair)
+BOOL old_pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip, union ctx *context)
 {
     struct module_pair          pair;
     struct pdb_module_info*     pdb_info;
@@ -4443,7 +4442,7 @@ BOOL pdb_old_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
                       debugstr_a(pdb_get_string_table_entry(strbase, fpoext[i].str_offset)));
                 ret = pdb_fpo_unwind_parse_cmd_string(csw, &fpoext[i],
                                                       pdb_get_string_table_entry(strbase, fpoext[i].str_offset),
-                                                      cpair);
+                                                      &context->x86);
                 break;
             }
         }

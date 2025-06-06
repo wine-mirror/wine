@@ -827,14 +827,9 @@ extern BOOL         pe_load_debug_directory(const struct process* pcs,
                                             const IMAGE_DEBUG_DIRECTORY* dbg, int nDbg);
 extern DWORD        msc_get_file_indexinfo(void* image, const IMAGE_DEBUG_DIRECTORY* dbgdir, DWORD size,
                                            SYMSRV_INDEX_INFOW* info);
-struct pdb_cmd_pair {
-    const char*         name;
-    DWORD*              pvalue;
-};
-extern BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
-    union ctx *context, struct pdb_cmd_pair *cpair);
-extern DWORD pdb_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info);
-extern DWORD dbg_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info);
+extern DWORD        pdb_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info);
+extern DWORD        dbg_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info);
+extern BOOL         old_pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip, union ctx *context);
 
 /* path.c */
 extern BOOL         path_find_symbol_file(const struct process *pcs, const struct module *module,
@@ -846,6 +841,12 @@ extern BOOL         search_dll_path(const struct process* process, const WCHAR *
 extern BOOL search_unix_path(const WCHAR *name, const WCHAR *path, BOOL (*match)(void*, HANDLE, const WCHAR*), void *param);
 extern const WCHAR* file_name(const WCHAR* str);
 extern const char* file_nameA(const char* str);
+
+/* pdb.c */
+extern BOOL         pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip, union ctx *context);
+struct _PDB_FPO_DATA;
+extern BOOL         pdb_fpo_unwind_parse_cmd_string(struct cpu_stack_walk* csw, struct _PDB_FPO_DATA* fpoext,
+                                                    const char* cmd, WOW64_CONTEXT *context);
 
 /* pe_module.c */
 extern BOOL         pe_load_nt_header(HANDLE hProc, DWORD64 base, IMAGE_NT_HEADERS* nth, BOOL* is_builtin);
@@ -1087,11 +1088,6 @@ extern struct symt_function*
 #define IFC_DEPTH(x)     ((x) & IFC_DEPTH_MASK)
 
 /* temporary helpers for PDB rewriting */
-struct _PDB_FPO_DATA;
-extern BOOL pdb_fpo_unwind_parse_cmd_string(struct cpu_stack_walk* csw, struct _PDB_FPO_DATA* fpoext,
-                                            const char* cmd, struct pdb_cmd_pair* cpair);
-extern BOOL pdb_old_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
-                                   union ctx *context, struct pdb_cmd_pair *cpair);
 struct pdb_reader;
 extern BOOL pdb_hack_get_main_info(struct module_format *modfmt, struct pdb_reader **pdb, unsigned *fpoext_stream);
 extern void pdb_reader_dispose(struct pdb_reader *pdb);

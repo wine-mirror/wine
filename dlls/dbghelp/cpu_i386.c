@@ -95,8 +95,7 @@ static BOOL fetch_next_frame32(struct cpu_stack_walk* csw,
                                union ctx *pcontext, DWORD_PTR curr_pc)
 {
     DWORD64 xframe;
-    struct pdb_cmd_pair     cpair[4];
-    DWORD                   val32;
+    DWORD val32;
     WOW64_CONTEXT *context = &pcontext->x86;
 
     if (dwarf2_virtual_unwind(csw, curr_pc, pcontext, &xframe))
@@ -104,12 +103,9 @@ static BOOL fetch_next_frame32(struct cpu_stack_walk* csw,
         context->Esp = xframe;
         return TRUE;
     }
-    cpair[0].name = "$ebp";      cpair[0].pvalue = &context->Ebp;
-    cpair[1].name = "$esp";      cpair[1].pvalue = &context->Esp;
-    cpair[2].name = "$eip";      cpair[2].pvalue = &context->Eip;
-    cpair[3].name = NULL;        cpair[3].pvalue = NULL;
 
-    if (!pdb_virtual_unwind(csw, curr_pc, pcontext, cpair))
+    if (!pdb_virtual_unwind(csw, curr_pc, pcontext) &&
+        !old_pdb_virtual_unwind(csw, curr_pc, pcontext))
     {
         /* do a simple unwind using ebp
          * we assume a "regular" prologue in the function has been used
