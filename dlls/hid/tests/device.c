@@ -370,10 +370,13 @@ static void test_read_device(void)
         trace("REMAINING: %ld ms\n", max_time - spent);
     } while(spent < max_time);
 
+    CancelIo(device);
+    rc = WaitForSingleObject(overlapped.hEvent, timeout);
+    ok(rc == WAIT_OBJECT_0, "Wait for object failed\n");
+
     CloseHandle(overlapped.hEvent);
     rc = HidD_FreePreparsedData(ppd);
     ok(rc, "Failed to free preparsed data(0x%lx)\n", GetLastError());
-    CancelIo(device);
     CloseHandle(device);
     HeapFree(GetProcessHeap(), 0, data);
     HeapFree(GetProcessHeap(), 0, report);
