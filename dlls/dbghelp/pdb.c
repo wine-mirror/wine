@@ -150,6 +150,7 @@ struct pdb_reader
     unsigned num_action_entries;
     struct pdb_action_entry *action_store;
     struct pdb_dbi_hash_entry *dbi_symbols_hash;
+    unsigned short dbi_substreams[16]; /* 0 means non existing stream */
 
     /* compilands */
     unsigned num_compilands;
@@ -1844,6 +1845,27 @@ static int my_action_global_obj_cmp(const void *p1, const void *p2)
     return 0;
 }
 
+static enum pdb_result pdb_reader_init_DBI_substreams(struct pdb_reader *pdb)
+{
+    enum pdb_result result;
+    struct pdb_reader_walker walker;
+    PDB_SYMBOLS dbi_header;
+    unsigned i;
+    unsigned short streamid;
+
+    if ((result = pdb_reader_read_DBI_header(pdb, &dbi_header, &walker))) return result;
+    walker.offset += dbi_header.module_size + dbi_header.sectcontrib_size +
+        dbi_header.segmap_size + dbi_header.srcmodule_size +
+        dbi_header.pdbimport_size + dbi_header.unknown2_size;
+    walker.last = walker.offset + dbi_header.stream_index_size;
+    for (i = 0; i < ARRAY_SIZE(pdb->dbi_substreams); i++)
+    {
+        if (pdb_reader_READ(pdb, &walker, &streamid)) streamid = 0xffff;
+        pdb->dbi_substreams[i] = streamid;
+    }
+    return R_PDB_SUCCESS;
+}
+
 static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb)
 {
     enum pdb_result result;
@@ -1932,6 +1954,8 @@ static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb)
     /* as we walked the DBI stream according to hash order, resort by stream_offset */
     qsort(pdb->action_store, pdb->num_action_globals, sizeof(pdb->action_store[0]),
           &my_action_global_obj_cmp);
+
+    if ((result = pdb_reader_init_DBI_substreams(pdb))) return result;
 
     return R_PDB_SUCCESS;
 }
@@ -5141,13 +5165,13 @@ BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
     BOOL                        ret = FALSE;
 
     if (!module_init_pair(&pair, csw->hProcess, ip)) return FALSE;
-    if (!pdb_hack_get_main_info(pair.effective->format_info[DFI_PDB], &pdb, &fpoext_stream)) return FALSE;
-
+    if (!pdb_hack_get_main_info(pair.effective->format_info[DFI_PDB], &pdb, NULL)) return FALSE;
     if (!pdb)
         return pdb_old_virtual_unwind(csw, ip, context, cpair);
     TRACE("searching %Ix => %Ix\n", ip, ip - (DWORD_PTR)pair.effective->module.BaseOfImage);
     ip -= (DWORD_PTR)pair.effective->module.BaseOfImage;
 
+    fpoext_stream = pdb->dbi_substreams[PDB_SIDX_FPOEXT];
     if (!pdb_reader_walker_init(pdb, fpoext_stream, &walker) &&
         (walker.last % sizeof(fpoext)) == 0)
     {
