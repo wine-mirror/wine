@@ -1792,18 +1792,16 @@ __ASM_BLOCK_END
 
 void init_misc(void *base)
 {
-#ifdef RTTI_USE_RVA
 #if _MSVCP_VER >= 100
-    init_error_category_rtti(base);
-    init_generic_category_rtti(base);
-    init_iostream_category_rtti(base);
+    INIT_RTTI(error_category, base);
+    INIT_RTTI(generic_category, base);
+    INIT_RTTI(iostream_category, base);
 #endif
 #if _MSVCP_VER == 100 || _MSVCP_VER >= 140
-    init_system_category_rtti(base);
+    INIT_RTTI(system_category, base);
 #endif
 #if _MSVCP_VER >= 110
-    init__Pad_rtti(base);
-#endif
+    INIT_RTTI(_Pad, base);
 #endif
 
 #if _MSVCP_VER >= 100

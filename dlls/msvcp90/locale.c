@@ -13551,41 +13551,39 @@ __ASM_BLOCK_END
 
 void init_locale(void *base)
 {
-#ifdef RTTI_USE_RVA
-    init__Facet_base_rtti(base);
-    init_locale_facet_rtti(base);
-    init_locale__Locimp_rtti(base);
-    init_collate_char_rtti(base);
-    init_collate_wchar_rtti(base);
-    init_collate_short_rtti(base);
-    init_ctype_base_rtti(base);
-    init_ctype_char_rtti(base);
-    init_ctype_wchar_rtti(base);
-    init_ctype_short_rtti(base);
-    init_codecvt_base_rtti(base);
-    init_codecvt_char_rtti(base);
+    INIT_RTTI(_Facet_base, base);
+    INIT_RTTI(locale_facet, base);
+    INIT_RTTI(locale__Locimp, base);
+    INIT_RTTI(collate_char, base);
+    INIT_RTTI(collate_wchar, base);
+    INIT_RTTI(collate_short, base);
+    INIT_RTTI(ctype_base, base);
+    INIT_RTTI(ctype_char, base);
+    INIT_RTTI(ctype_wchar, base);
+    INIT_RTTI(ctype_short, base);
+    INIT_RTTI(codecvt_base, base);
+    INIT_RTTI(codecvt_char, base);
 #if _MSVCP_VER >= 140
-    init_codecvt_char16_rtti(base);
-    init_codecvt_char32_rtti(base);
+    INIT_RTTI(codecvt_char16, base);
+    INIT_RTTI(codecvt_char32, base);
 #endif
-    init_codecvt_wchar_rtti(base);
-    init_codecvt_short_rtti(base);
-    init_numpunct_char_rtti(base);
-    init_numpunct_wchar_rtti(base);
-    init_numpunct_short_rtti(base);
-    init_num_get_char_rtti(base);
-    init_num_get_wchar_rtti(base);
-    init_num_get_short_rtti(base);
-    init_num_put_char_rtti(base);
-    init_num_put_wchar_rtti(base);
-    init_num_put_short_rtti(base);
-    init_time_put_char_rtti(base);
-    init_time_put_wchar_rtti(base);
-    init_time_put_short_rtti(base);
-    init_time_base_rtti(base);
-    init_time_get_char_rtti(base);
-    init_time_get_wchar_rtti(base);
-#endif
+    INIT_RTTI(codecvt_wchar, base);
+    INIT_RTTI(codecvt_short, base);
+    INIT_RTTI(numpunct_char, base);
+    INIT_RTTI(numpunct_wchar, base);
+    INIT_RTTI(numpunct_short, base);
+    INIT_RTTI(num_get_char, base);
+    INIT_RTTI(num_get_wchar, base);
+    INIT_RTTI(num_get_short, base);
+    INIT_RTTI(num_put_char, base);
+    INIT_RTTI(num_put_wchar, base);
+    INIT_RTTI(num_put_short, base);
+    INIT_RTTI(time_put_char, base);
+    INIT_RTTI(time_put_wchar, base);
+    INIT_RTTI(time_put_short, base);
+    INIT_RTTI(time_base, base);
+    INIT_RTTI(time_get_char, base);
+    INIT_RTTI(time_get_wchar, base);
 }
 
 void free_locale(void)

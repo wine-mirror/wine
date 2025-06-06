@@ -5162,25 +5162,23 @@ static void init_io(void *base)
 {
     filebuf *fb;
 
-#ifdef RTTI_USE_RVA
-    init_streambuf_rtti(base);
-    init_filebuf_rtti(base);
-    init_strstreambuf_rtti(base);
-    init_stdiobuf_rtti(base);
-    init_ios_rtti(base);
-    init_ostream_rtti(base);
-    init_ostream_withassign_rtti(base);
-    init_ostrstream_rtti(base);
-    init_ofstream_rtti(base);
-    init_istream_rtti(base);
-    init_istream_withassign_rtti(base);
-    init_istrstream_rtti(base);
-    init_ifstream_rtti(base);
-    init_iostream_rtti(base);
-    init_strstream_rtti(base);
-    init_stdiostream_rtti(base);
-    init_fstream_rtti(base);
-#endif
+    INIT_RTTI(streambuf, base);
+    INIT_RTTI(filebuf, base);
+    INIT_RTTI(strstreambuf, base);
+    INIT_RTTI(stdiobuf, base);
+    INIT_RTTI(ios, base);
+    INIT_RTTI(ostream, base);
+    INIT_RTTI(ostream_withassign, base);
+    INIT_RTTI(ostrstream, base);
+    INIT_RTTI(ofstream, base);
+    INIT_RTTI(istream, base);
+    INIT_RTTI(istream_withassign, base);
+    INIT_RTTI(istrstream, base);
+    INIT_RTTI(ifstream, base);
+    INIT_RTTI(iostream, base);
+    INIT_RTTI(strstream, base);
+    INIT_RTTI(stdiostream, base);
+    INIT_RTTI(fstream, base);
 
     if ((fb = operator_new(sizeof(filebuf)))) {
         filebuf_fd_ctor(fb, 0);

@@ -263,14 +263,12 @@ static BOOL init_cxx_funcs(void)
 
 static void init_rtti(void *base)
 {
-#ifdef RTTI_USE_RVA
-    init_type_info_rtti(base);
-    init_base_memory_resource_rtti(base);
-    init__Identity_equal_resource_rtti(base);
-    init_aligned_resource_rtti(base);
-    init_unaligned_resource_rtti(base);
-    init_null_resource_rtti(base);
-#endif
+    INIT_RTTI(type_info, base);
+    INIT_RTTI(base_memory_resource, base);
+    INIT_RTTI(_Identity_equal_resource, base);
+    INIT_RTTI(aligned_resource, base);
+    INIT_RTTI(unaligned_resource, base);
+    INIT_RTTI(null_resource, base);
 }
 
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)

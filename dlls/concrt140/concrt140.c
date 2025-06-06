@@ -140,16 +140,14 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
    {
    case DLL_PROCESS_ATTACH:
        if (!init_cxx_funcs()) return FALSE;
-#ifdef RTTI_USE_RVA
-       init_exception_rtti((char*)inst);
-       init_range_error_rtti((char*)inst);
-       init_runtime_error_rtti((char*)inst);
-       init_type_info_rtti((char*)inst);
+       INIT_RTTI(exception, inst);
+       INIT_RTTI(range_error, inst);
+       INIT_RTTI(runtime_error, inst);
+       INIT_RTTI(type_info, inst);
 
-       init_exception_cxx((char*)inst);
-       init_runtime_error_cxx_type_info((char*)inst);
-       init_range_error_cxx((char*)inst);
-#endif
+       INIT_CXX_TYPE(exception, inst);
+       INIT_CXX_TYPE_INFO(runtime_error, inst);
+       INIT_CXX_TYPE(range_error, inst);
        msvcrt_init_concurrency(inst);
        init_concurrency_details(inst);
        break;

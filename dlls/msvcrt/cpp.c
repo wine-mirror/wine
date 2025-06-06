@@ -573,24 +573,22 @@ DEFINE_CXX_DATA1( bad_alloc, &exception_cxx_type_info, bad_alloc_dtor )
 
 void msvcrt_init_exception(void *base)
 {
-#ifdef RTTI_USE_RVA
-    init_type_info_rtti(base);
-    init_exception_rtti(base);
+    INIT_RTTI(type_info, base);
+    INIT_RTTI(exception, base);
 #if _MSVCR_VER >= 80
-    init_exception_old_rtti(base);
-    init_bad_alloc_rtti(base);
+    INIT_RTTI(exception_old, base);
+    INIT_RTTI(bad_alloc, base);
 #endif
-    init_bad_typeid_rtti(base);
-    init_bad_cast_rtti(base);
-    init___non_rtti_object_rtti(base);
+    INIT_RTTI(bad_typeid, base);
+    INIT_RTTI(bad_cast, base);
+    INIT_RTTI(__non_rtti_object, base);
 
-    init_exception_cxx(base);
-    init_bad_typeid_cxx(base);
-    init_bad_cast_cxx(base);
-    init___non_rtti_object_cxx(base);
+    INIT_CXX_TYPE(exception, base);
+    INIT_CXX_TYPE(bad_typeid, base);
+    INIT_CXX_TYPE(bad_cast, base);
+    INIT_CXX_TYPE(__non_rtti_object, base);
 #if _MSVCR_VER >= 80
-    init_bad_alloc_cxx(base);
-#endif
+    INIT_CXX_TYPE(bad_alloc, base);
 #endif
 }
 

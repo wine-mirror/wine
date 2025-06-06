@@ -11155,39 +11155,37 @@ void* __thiscall _Winit_op_assign(void *this, void *rhs)
 
 void init_io(void *base)
 {
-#ifdef RTTI_USE_RVA
-    init_iosb_rtti(base);
-    init_ios_base_rtti(base);
-    init_basic_ios_char_rtti(base);
-    init_basic_ios_short_rtti(base);
-    init_basic_streambuf_char_rtti(base);
-    init_basic_streambuf_short_rtti(base);
-    init_basic_filebuf_char_rtti(base);
-    init_basic_filebuf_short_rtti(base);
-    init_basic_stringbuf_char_rtti(base);
-    init_basic_stringbuf_short_rtti(base);
-    init_basic_ostream_char_rtti(base);
-    init_basic_ostream_short_rtti(base);
-    init_basic_istream_char_rtti(base);
-    init_basic_istream_short_rtti(base);
-    init_basic_iostream_char_rtti(base);
-    init_basic_iostream_short_rtti(base);
-    init_basic_ofstream_char_rtti(base);
-    init_basic_ofstream_short_rtti(base);
-    init_basic_ifstream_char_rtti(base);
-    init_basic_ifstream_short_rtti(base);
-    init_basic_fstream_char_rtti(base);
-    init_basic_fstream_short_rtti(base);
-    init_basic_ostringstream_char_rtti(base);
-    init_basic_ostringstream_short_rtti(base);
-    init_basic_istringstream_char_rtti(base);
-    init_basic_istringstream_short_rtti(base);
-    init_basic_stringstream_char_rtti(base);
-    init_basic_stringstream_short_rtti(base);
-    init_strstreambuf_rtti(base);
-    init_strstream_rtti(base);
-    init_ostrstream_rtti(base);
-#endif
+    INIT_RTTI(iosb, base);
+    INIT_RTTI(ios_base, base);
+    INIT_RTTI(basic_ios_char, base);
+    INIT_RTTI(basic_ios_short, base);
+    INIT_RTTI(basic_streambuf_char, base);
+    INIT_RTTI(basic_streambuf_short, base);
+    INIT_RTTI(basic_filebuf_char, base);
+    INIT_RTTI(basic_filebuf_short, base);
+    INIT_RTTI(basic_stringbuf_char, base);
+    INIT_RTTI(basic_stringbuf_short, base);
+    INIT_RTTI(basic_ostream_char, base);
+    INIT_RTTI(basic_ostream_short, base);
+    INIT_RTTI(basic_istream_char, base);
+    INIT_RTTI(basic_istream_short, base);
+    INIT_RTTI(basic_iostream_char, base);
+    INIT_RTTI(basic_iostream_short, base);
+    INIT_RTTI(basic_ofstream_char, base);
+    INIT_RTTI(basic_ofstream_short, base);
+    INIT_RTTI(basic_ifstream_char, base);
+    INIT_RTTI(basic_ifstream_short, base);
+    INIT_RTTI(basic_fstream_char, base);
+    INIT_RTTI(basic_fstream_short, base);
+    INIT_RTTI(basic_ostringstream_char, base);
+    INIT_RTTI(basic_ostringstream_short, base);
+    INIT_RTTI(basic_istringstream_char, base);
+    INIT_RTTI(basic_istringstream_short, base);
+    INIT_RTTI(basic_stringstream_char, base);
+    INIT_RTTI(basic_stringstream_short, base);
+    INIT_RTTI(strstreambuf, base);
+    INIT_RTTI(strstream, base);
+    INIT_RTTI(ostrstream, base);
 
     basic_filebuf_char_ctor_file(&filebuf_char_stdin, stdin);
     basic_istream_char_ctor(&cin.obj, &filebuf_char_stdin.base, FALSE/*FIXME*/, TRUE);

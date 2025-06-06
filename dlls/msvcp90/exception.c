@@ -1497,51 +1497,49 @@ void DECLSPEC_NORETURN throw_failure(const char *str)
 
 void init_exception(void *base)
 {
-#ifdef RTTI_USE_RVA
-    init_type_info_rtti(base);
-    init_exception_rtti(base);
-    init_bad_alloc_rtti(base);
-    init_logic_error_rtti(base);
-    init_length_error_rtti(base);
-    init_out_of_range_rtti(base);
-    init_invalid_argument_rtti(base);
-    init_runtime_error_rtti(base);
+    INIT_RTTI(type_info, base);
+    INIT_RTTI(exception, base);
+    INIT_RTTI(bad_alloc, base);
+    INIT_RTTI(logic_error, base);
+    INIT_RTTI(length_error, base);
+    INIT_RTTI(out_of_range, base);
+    INIT_RTTI(invalid_argument, base);
+    INIT_RTTI(runtime_error, base);
 #if _MSVCP_VER >= 110
-    init_future_error_rtti(base);
+    INIT_RTTI(future_error, base);
 #endif
 #if _MSVCP_VER > 110
-    init__System_error_rtti(base);
+    INIT_RTTI(_System_error, base);
 #endif
 #if _MSVCP_VER > 90
-    init_system_error_rtti(base);
-    init_bad_function_call_rtti(base);
+    INIT_RTTI(system_error, base);
+    INIT_RTTI(bad_function_call, base);
 #endif
-    init_failure_rtti(base);
-    init_bad_cast_rtti(base);
-    init_range_error_rtti(base);
+    INIT_RTTI(failure, base);
+    INIT_RTTI(bad_cast, base);
+    INIT_RTTI(range_error, base);
 
-    init_exception_cxx(base);
-    init_bad_alloc_cxx(base);
-    init_logic_error_cxx_type_info(base);
-    init_length_error_cxx(base);
-    init_out_of_range_cxx(base);
-    init_invalid_argument_cxx(base);
-    init_runtime_error_cxx(base);
+    INIT_CXX_TYPE(exception, base);
+    INIT_CXX_TYPE(bad_alloc, base);
+    INIT_CXX_TYPE_INFO(logic_error, base);
+    INIT_CXX_TYPE(length_error, base);
+    INIT_CXX_TYPE(out_of_range, base);
+    INIT_CXX_TYPE(invalid_argument, base);
+    INIT_CXX_TYPE(runtime_error, base);
 #if _MSVCP_VER >= 110
-    init_future_error_cxx(base);
+    INIT_CXX_TYPE(future_error, base);
 #endif
 #if _MSVCP_VER > 110
-    init__System_error_cxx_type_info(base);
+    INIT_CXX_TYPE_INFO(_System_error, base);
 #endif
 #if _MSVCP_VER == 100
-    init_system_error_cxx_type_info(base);
+    INIT_CXX_TYPE_INFO(system_error, base);
 #elif _MSVCP_VER > 100
-    init_system_error_cxx(base);
+    INIT_CXX_TYPE(system_error, base);
 #endif
 #if _MSVCP_VER > 90
-    init_bad_function_call_cxx(base);
+    INIT_CXX_TYPE(bad_function_call, base);
 #endif
-    init_failure_cxx(base);
-    init_range_error_cxx(base);
-#endif
+    INIT_CXX_TYPE(failure, base);
+    INIT_CXX_TYPE(range_error, base);
 }

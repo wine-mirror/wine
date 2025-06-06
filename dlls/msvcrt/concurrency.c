@@ -3783,38 +3783,36 @@ __ASM_BLOCK_END
 
 void msvcrt_init_concurrency(void *base)
 {
-#ifdef RTTI_USE_RVA
-    init_cexception_rtti(base);
-    init_improper_lock_rtti(base);
-    init_improper_scheduler_attach_rtti(base);
-    init_improper_scheduler_detach_rtti(base);
-    init_invalid_multiple_scheduling_rtti(base);
-    init_invalid_scheduler_policy_key_rtti(base);
-    init_invalid_scheduler_policy_thread_specification_rtti(base);
-    init_invalid_scheduler_policy_value_rtti(base);
-    init_missing_wait_rtti(base);
-    init_scheduler_resource_allocation_error_rtti(base);
-    init_Context_rtti(base);
-    init_ContextBase_rtti(base);
-    init_ExternalContextBase_rtti(base);
-    init_Scheduler_rtti(base);
-    init_SchedulerBase_rtti(base);
-    init_ThreadScheduler_rtti(base);
-    init__Timer_rtti(base);
+    INIT_RTTI(cexception, base);
+    INIT_RTTI(improper_lock, base);
+    INIT_RTTI(improper_scheduler_attach, base);
+    INIT_RTTI(improper_scheduler_detach, base);
+    INIT_RTTI(invalid_multiple_scheduling, base);
+    INIT_RTTI(invalid_scheduler_policy_key, base);
+    INIT_RTTI(invalid_scheduler_policy_thread_specification, base);
+    INIT_RTTI(invalid_scheduler_policy_value, base);
+    INIT_RTTI(missing_wait, base);
+    INIT_RTTI(scheduler_resource_allocation_error, base);
+    INIT_RTTI(Context, base);
+    INIT_RTTI(ContextBase, base);
+    INIT_RTTI(ExternalContextBase, base);
+    INIT_RTTI(Scheduler, base);
+    INIT_RTTI(SchedulerBase, base);
+    INIT_RTTI(ThreadScheduler, base);
+    INIT_RTTI(_Timer, base);
 
-    init_cexception_cxx_type_info(base);
-    init_improper_lock_cxx(base);
-    init_improper_scheduler_attach_cxx(base);
-    init_improper_scheduler_detach_cxx(base);
-    init_invalid_multiple_scheduling_cxx(base);
-    init_invalid_scheduler_policy_key_cxx(base);
-    init_invalid_scheduler_policy_thread_specification_cxx(base);
-    init_invalid_scheduler_policy_value_cxx(base);
+    INIT_CXX_TYPE_INFO(cexception, base);
+    INIT_CXX_TYPE(improper_lock, base);
+    INIT_CXX_TYPE(improper_scheduler_attach, base);
+    INIT_CXX_TYPE(improper_scheduler_detach, base);
+    INIT_CXX_TYPE(invalid_multiple_scheduling, base);
+    INIT_CXX_TYPE(invalid_scheduler_policy_key, base);
+    INIT_CXX_TYPE(invalid_scheduler_policy_thread_specification, base);
+    INIT_CXX_TYPE(invalid_scheduler_policy_value, base);
 #if _MSVCR_VER >= 120
-    init_missing_wait_cxx(base);
+    INIT_CXX_TYPE(missing_wait, base);
 #endif
-    init_scheduler_resource_allocation_error_cxx(base);
-#endif
+    INIT_CXX_TYPE(scheduler_resource_allocation_error, base);
 }
 
 void msvcrt_free_concurrency(void)

@@ -1100,10 +1100,8 @@ __ASM_BLOCK_END
 
 void init_concurrency_details(void *base)
 {
-#ifdef RTTI_USE_RVA
-    init__Concurrent_queue_base_v4_rtti(base);
-    init__Runtime_object_rtti(base);
-#endif
+    INIT_RTTI(_Concurrent_queue_base_v4, base);
+    INIT_RTTI(_Runtime_object, base);
 }
 
 /* ?_Byte_reverse_table@details@Concurrency@@3QBEB */

@@ -130,6 +130,10 @@ static const cxx_exception_type type ## _exception_type = { \
     & type ## _cxx_type_table \
 };
 
+#define INIT_RTTI(name,base) /* nothing to do */
+#define INIT_CXX_TYPE(name,base) /* nothing to do */
+#define INIT_CXX_TYPE_INFO(name,base) /* nothing to do */
+
 #else
 
 #define __DEFINE_RTTI_BASE(name, base_classes_no, mangled_name) \
@@ -255,6 +259,10 @@ static void init_ ## type ## _cxx(char *base) \
     type ## _exception_type.destructor      = (char *)dtor - base; \
     type ## _exception_type.type_info_table = (char *)&type ## _cxx_type_table - base; \
 }
+
+#define INIT_RTTI(name,base) init_ ## name ## _rtti((void *)(base))
+#define INIT_CXX_TYPE(name,base) init_ ## name ## _cxx((void *)(base))
+#define INIT_CXX_TYPE_INFO(name,base) init_ ## name ## _cxx_type_info((void *)(base))
 
 #endif
 
