@@ -53,6 +53,18 @@ extern const vtable_ptr bad_cast_vtable;
 extern const vtable_ptr __non_rtti_object_vtable;
 extern const vtable_ptr type_info_vtable;
 
+#ifdef RTTI_USE_RVA
+static inline void *rtti_rva( unsigned int rva, uintptr_t base )
+{
+    return (void *)(base + rva);
+}
+#else
+static inline void *rtti_rva( const void *ptr, uintptr_t base )
+{
+    return (void *)ptr;
+}
+#endif
+
 /* get the vtable pointer for a C++ object */
 static inline const vtable_ptr *get_vtable( void *obj )
 {
@@ -68,9 +80,12 @@ static inline const rtti_object_locator *get_obj_locator( void *cppobj )
 static uintptr_t get_obj_locator_base( const rtti_object_locator *ptr )
 {
 #ifdef RTTI_USE_RVA
+    void *base;
     if (ptr->signature) return (uintptr_t)ptr - ptr->object_locator;
+    return (uintptr_t)RtlPcToFileHeader( (void *)ptr, &base );
+#else
+    return 0;
 #endif
-    return rtti_rva_base( ptr );
 }
 
 static void dump_obj_locator( const rtti_object_locator *ptr )
@@ -892,7 +907,7 @@ void WINAPI _CxxThrowException( void *object, const cxx_exception_type *type )
     args[0] = CXX_FRAME_MAGIC_VC6;
     args[1] = (ULONG_PTR)object;
     args[2] = (ULONG_PTR)type;
-    if (CXX_EXCEPTION_PARAMS == 4) args[3] = rtti_rva_base( type );
+    if (CXX_EXCEPTION_PARAMS == 4) args[3] = cxx_rva_base( type );
     for (;;) RaiseException( CXX_EXCEPTION, EXCEPTION_NONCONTINUABLE, CXX_EXCEPTION_PARAMS, args );
 }
 
@@ -916,13 +931,13 @@ int __cdecl _is_exception_typeof(const type_info *ti, EXCEPTION_POINTERS *ep)
         {
             const cxx_exception_type *et = (cxx_exception_type*)rec->ExceptionInformation[2];
             uintptr_t base = (CXX_EXCEPTION_PARAMS == 4) ? rec->ExceptionInformation[3] : 0;
-            const cxx_type_info_table *tit = rtti_rva( et->type_info_table, base );
+            const cxx_type_info_table *tit = cxx_rva( et->type_info_table, base );
             int i;
 
             for (i=0; i<tit->count; i++)
             {
-                const cxx_type_info *cti = rtti_rva( tit->info[i], base );
-                const type_info *except_ti = rtti_rva( cti->type_info, base );
+                const cxx_type_info *cti = cxx_rva( tit->info[i], base );
+                const type_info *except_ti = cxx_rva( cti->type_info, base );
                 if (ti==except_ti || !strcmp(ti->mangled, except_ti->mangled))
                 {
                     ret = 1;

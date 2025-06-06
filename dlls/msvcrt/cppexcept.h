@@ -35,7 +35,7 @@ typedef struct
     int  state;
 } ipmap_info;
 
-#ifndef RTTI_USE_RVA
+#ifndef CXX_USE_RVA
 
 #define CXX_EXCEPTION_PARAMS 3
 
@@ -80,7 +80,7 @@ typedef struct
     UINT                 flags;          /* flags when magic >= VC8 */
 } cxx_function_descr;
 
-#else  /* RTTI_USE_RVA */
+#else  /* CXX_USE_RVA */
 
 #define CXX_EXCEPTION_PARAMS 4
 
@@ -125,7 +125,7 @@ typedef struct
     UINT flags;
 } cxx_function_descr;
 
-#endif  /* RTTI_USE_RVA */
+#endif  /* CXX_USE_RVA */
 
 #define FUNC_DESCR_SYNCHRONOUS  1 /* synchronous exceptions only (built with /EHs and /EHsc) */
 #define FUNC_DESCR_NOEXCEPT     4 /* noexcept function */
@@ -210,13 +210,13 @@ static inline void call_dtor( void *func, void *this )
 static inline const cxx_type_info *find_caught_type( cxx_exception_type *exc_type, uintptr_t base,
                                                      const type_info *catch_ti, UINT catch_flags )
 {
-    const cxx_type_info_table *type_info_table = rtti_rva( exc_type->type_info_table, base );
+    const cxx_type_info_table *type_info_table = cxx_rva( exc_type->type_info_table, base );
     UINT i;
 
     for (i = 0; i < type_info_table->count; i++)
     {
-        const cxx_type_info *type = rtti_rva( type_info_table->info[i], base );
-        const type_info *ti = rtti_rva( type->type_info, base );
+        const cxx_type_info *type = cxx_rva( type_info_table->info[i], base );
+        const type_info *ti = cxx_rva( type->type_info, base );
 
         if (!catch_ti) return type;   /* catch(...) matches any type */
         if (catch_ti != ti)
@@ -250,7 +250,7 @@ static inline void copy_exception( void *object, void **dest, UINT catch_flags,
     else  /* copy the object */
     {
         if (type->copy_ctor)
-            call_copy_ctor( rtti_rva( type->copy_ctor, base ), dest,
+            call_copy_ctor( cxx_rva( type->copy_ctor, base ), dest,
                             get_this_pointer( &type->offsets, object ),
                             (type->flags & CLASS_HAS_VIRTUAL_BASE_CLASS) );
         else
@@ -259,19 +259,19 @@ static inline void copy_exception( void *object, void **dest, UINT catch_flags,
 }
 
 #define TRACE_EXCEPTION_TYPE(type,base) do { \
-    const cxx_type_info_table *table = rtti_rva( type->type_info_table, base ); \
+    const cxx_type_info_table *table = cxx_rva( type->type_info_table, base ); \
     unsigned int i; \
     TRACE( "flags %x destr %p handler %p type info %p\n", \
-           type->flags, rtti_rva( type->destructor, base ), \
-           type->custom_handler ? rtti_rva( type->custom_handler, base ) : NULL, table ); \
+           type->flags, cxx_rva( type->destructor, base ), \
+           type->custom_handler ? cxx_rva( type->custom_handler, base ) : NULL, table ); \
     for (i = 0; i < table->count; i++) \
     { \
-        const cxx_type_info *type = rtti_rva( table->info[i], base ); \
-        const type_info *info = rtti_rva( type->type_info, base ); \
+        const cxx_type_info *type = cxx_rva( table->info[i], base ); \
+        const type_info *info = cxx_rva( type->type_info, base ); \
         TRACE( "    %d: flags %x type %p %s offsets %d,%d,%d size %d copy ctor %p\n", \
                i, type->flags, info, dbgstr_type_info( info ), \
                type->offsets.this_offset, type->offsets.vbase_descr, type->offsets.vbase_offset, \
-               type->size, rtti_rva( type->copy_ctor, base )); \
+               type->size, cxx_rva( type->copy_ctor, base )); \
     } \
 } while(0)
 

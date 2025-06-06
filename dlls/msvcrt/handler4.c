@@ -187,7 +187,7 @@ static void read_tryblock_info(BYTE **b, tryblock_info *ti, ULONG64 image_base)
 
     if (ti->catchblock)
     {
-        count = count_end = rtti_rva(ti->catchblock, image_base);
+        count = count_end = cxx_rva(ti->catchblock, image_base);
         ti->catchblock_count = decode_uint(&count_end);
         ti->catchblock += count_end - count;
     }
@@ -247,9 +247,9 @@ static void read_ipmap_info(BYTE **b, ipmap_info *ii)
 static BOOL validate_cxx_function_descr4(const cxx_function_descr_v4 *descr, DISPATCHER_CONTEXT *dispatch)
 {
     ULONG64 image_base = dispatch->ImageBase;
-    BYTE *unwind_map = rtti_rva(descr->unwind_map, image_base);
-    BYTE *tryblock_map = rtti_rva(descr->tryblock_map, image_base);
-    BYTE *ip_map = rtti_rva(descr->ip_map, image_base);
+    BYTE *unwind_map = cxx_rva(descr->unwind_map, image_base);
+    BYTE *tryblock_map = cxx_rva(descr->tryblock_map, image_base);
+    BYTE *ip_map = cxx_rva(descr->ip_map, image_base);
     UINT i, j;
     char *ip;
 
@@ -263,7 +263,7 @@ static BOOL validate_cxx_function_descr4(const cxx_function_descr_v4 *descr, DIS
         unwind_info_v4 ui;
 
         read_unwind_info(&unwind_map, &ui);
-        if (ui.prev < (BYTE*)rtti_rva(descr->unwind_map, image_base)) ui.prev = NULL;
+        if (ui.prev < (BYTE*)cxx_rva(descr->unwind_map, image_base)) ui.prev = NULL;
         TRACE("    %d (%p): type 0x%x prev %p func 0x%x object 0x%x\n",
                 i, entry, ui.type, ui.prev, ui.handler, ui.object);
     }
@@ -275,7 +275,7 @@ static BOOL validate_cxx_function_descr4(const cxx_function_descr_v4 *descr, DIS
         BYTE *catchblock;
 
         read_tryblock_info(&tryblock_map, &ti, image_base);
-        catchblock = rtti_rva(ti.catchblock, image_base);
+        catchblock = cxx_rva(ti.catchblock, image_base);
         TRACE("    %d: start %d end %d catchlevel %d catch 0x%x(%p) %d\n",
                 i, ti.start_level, ti.end_level, ti.catch_level,
                 ti.catchblock, catchblock, ti.catchblock_count);
@@ -287,12 +287,12 @@ static BOOL validate_cxx_function_descr4(const cxx_function_descr_v4 *descr, DIS
             TRACE("        %d: header 0x%x offset %d handler 0x%x "
                     "ret addr[0] %#x ret_addr[1] %#x type %#x %s\n", j, ci.header, ci.offset,
                     ci.handler, ci.ret_addr[0], ci.ret_addr[1], ci.type_info,
-                    dbgstr_type_info(ci.type_info ? rtti_rva(ci.type_info, image_base) : NULL));
+                    dbgstr_type_info(ci.type_info ? cxx_rva(ci.type_info, image_base) : NULL));
         }
     }
 
     TRACE("ipmap: 0x%x(%p) %d\n", descr->ip_map, ip_map, descr->ip_count);
-    ip = rtti_rva(dispatch->FunctionEntry->BeginAddress, image_base);
+    ip = cxx_rva(dispatch->FunctionEntry->BeginAddress, image_base);
     for (i = 0; i < descr->ip_count; i++)
     {
         ipmap_info ii;
@@ -308,7 +308,7 @@ static BOOL validate_cxx_function_descr4(const cxx_function_descr_v4 *descr, DIS
 
 static inline int ip_to_state4(const cxx_function_descr_v4 *descr, DISPATCHER_CONTEXT *dispatch, ULONG64 ip)
 {
-    BYTE *ip_map = rtti_rva( descr->ip_map, dispatch->ImageBase );
+    BYTE *ip_map = cxx_rva( descr->ip_map, dispatch->ImageBase );
     ULONG64 state_ip;
     ipmap_info ii;
     int ret = -1;
@@ -348,7 +348,7 @@ static void cxx_local_unwind4(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
 
     if (trylevel <= last_level) return;
 
-    unwind_data = rtti_rva(descr->unwind_map, dispatch->ImageBase);
+    unwind_data = cxx_rva(descr->unwind_map, dispatch->ImageBase);
     last = unwind_data - 1;
     for (i = 0; i < trylevel; i++)
     {
@@ -364,7 +364,7 @@ static void cxx_local_unwind4(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
 
         if (ui.handler)
         {
-            handler_dtor = rtti_rva(ui.handler, dispatch->ImageBase);
+            handler_dtor = cxx_rva(ui.handler, dispatch->ImageBase);
             obj = (void *)(frame + ui.object);
             if(ui.type == UNWIND_TYPE_DTOR_PTR)
                 obj = *(void**)obj;
@@ -481,7 +481,7 @@ static inline void find_catch_block4(EXCEPTION_RECORD *rec, CONTEXT *context,
     if (trylevel == -2) trylevel = ip_to_state4( descr, dispatch, get_exception_pc(dispatch) );
     TRACE("current trylevel: %d\n", trylevel);
 
-    tryblock_map = rtti_rva(descr->tryblock_map, dispatch->ImageBase);
+    tryblock_map = cxx_rva(descr->tryblock_map, dispatch->ImageBase);
     for (i=0; i<descr->tryblock_count; i++)
     {
         tryblock_info tryblock;
@@ -493,7 +493,7 @@ static inline void find_catch_block4(EXCEPTION_RECORD *rec, CONTEXT *context,
         if (trylevel > tryblock.end_level) continue;
 
         /* got a try block */
-        catchblock = rtti_rva(tryblock.catchblock, dispatch->ImageBase);
+        catchblock = cxx_rva(tryblock.catchblock, dispatch->ImageBase);
         for (j=0; j<tryblock.catchblock_count; j++)
         {
             catchblock_info_v4 ci;
@@ -505,7 +505,7 @@ static inline void find_catch_block4(EXCEPTION_RECORD *rec, CONTEXT *context,
                 const type_info *catch_ti = NULL;
                 const cxx_type_info *type;
 
-                if (ci.type_info) catch_ti = rtti_rva( ci.type_info, dispatch->ImageBase );
+                if (ci.type_info) catch_ti = cxx_rva( ci.type_info, dispatch->ImageBase );
                 if (!(type = find_caught_type( info, exc_base, catch_ti, ci.flags ))) continue;
 
                 TRACE("matched type %p in tryblock %d catchblock %d\n", type, i, j);
@@ -535,20 +535,14 @@ static inline void find_catch_block4(EXCEPTION_RECORD *rec, CONTEXT *context,
             catch_record.ExceptionInformation[2] = tryblock.catch_level;
             catch_record.ExceptionInformation[3] = tryblock.start_level;
             catch_record.ExceptionInformation[4] = (ULONG_PTR)untrans_rec;
-            catch_record.ExceptionInformation[5] = (ULONG_PTR)rtti_rva(ci.handler, dispatch->ImageBase);
+            catch_record.ExceptionInformation[5] = (ULONG_PTR)cxx_rva(ci.handler, dispatch->ImageBase);
             /* 3ds Max plugin expect ExceptionInformation[6] to contain exception record */
             catch_record.ExceptionInformation[6] = (ULONG_PTR)rec;
             catch_record.ExceptionInformation[7] = (ULONG_PTR)context;
             if (ci.ret_addr[0])
-            {
-                catch_record.ExceptionInformation[8] = (ULONG_PTR)rtti_rva(
-                        ci.ret_addr[0], dispatch->ImageBase);
-            }
+                catch_record.ExceptionInformation[8] = (ULONG_PTR)cxx_rva(ci.ret_addr[0], dispatch->ImageBase);
             if (ci.ret_addr[1])
-            {
-                catch_record.ExceptionInformation[9] = (ULONG_PTR)rtti_rva(
-                        ci.ret_addr[1], dispatch->ImageBase);
-            }
+                catch_record.ExceptionInformation[9] = (ULONG_PTR)cxx_rva(ci.ret_addr[1], dispatch->ImageBase);
             RtlUnwindEx((void*)frame, (void*)dispatch->ControlPc, &catch_record, NULL, &ctx, NULL);
         }
     }
@@ -690,7 +684,7 @@ EXCEPTION_DISPOSITION __cdecl __CxxFrameHandler4(EXCEPTION_RECORD *rec,
     FlsSetValue(fls_index, (void*)-2);
 
     memset(&descr, 0, sizeof(descr));
-    p = rtti_rva(*(UINT*)dispatch->HandlerData, dispatch->ImageBase);
+    p = cxx_rva(*(UINT*)dispatch->HandlerData, dispatch->ImageBase);
     descr.header = *p++;
 
     if ((descr.header & FUNC_DESCR_EHS) &&
@@ -711,14 +705,14 @@ EXCEPTION_DISPOSITION __cdecl __CxxFrameHandler4(EXCEPTION_RECORD *rec,
     if (descr.header & FUNC_DESCR_UNWIND_MAP)
     {
         descr.unwind_map = read_rva(&p);
-        count_end = count = rtti_rva(descr.unwind_map, dispatch->ImageBase);
+        count_end = count = cxx_rva(descr.unwind_map, dispatch->ImageBase);
         descr.unwind_count = decode_uint(&count_end);
         descr.unwind_map += count_end - count;
     }
     if (descr.header & FUNC_DESCR_TRYBLOCK_MAP)
     {
         descr.tryblock_map = read_rva(&p);
-        count_end = count = rtti_rva(descr.tryblock_map, dispatch->ImageBase);
+        count_end = count = cxx_rva(descr.tryblock_map, dispatch->ImageBase);
         descr.tryblock_count = decode_uint(&count_end);
         descr.tryblock_map += count_end - count;
     }
@@ -726,7 +720,7 @@ EXCEPTION_DISPOSITION __cdecl __CxxFrameHandler4(EXCEPTION_RECORD *rec,
     if (descr.header & FUNC_DESCR_IS_SEPARATED)
     {
         UINT i, num, func;
-        BYTE *map = rtti_rva(descr.ip_map, dispatch->ImageBase);
+        BYTE *map = cxx_rva(descr.ip_map, dispatch->ImageBase);
 
         num = decode_uint(&map);
         for (i = 0; i < num; i++)
@@ -742,7 +736,7 @@ EXCEPTION_DISPOSITION __cdecl __CxxFrameHandler4(EXCEPTION_RECORD *rec,
             return ExceptionContinueSearch;
         }
     }
-    count_end = count = rtti_rva(descr.ip_map, dispatch->ImageBase);
+    count_end = count = cxx_rva(descr.ip_map, dispatch->ImageBase);
     descr.ip_count = decode_uint(&count_end);
     descr.ip_map += count_end - count;
     if (descr.header & FUNC_DESCR_IS_CATCH) descr.frame = decode_uint(&p);

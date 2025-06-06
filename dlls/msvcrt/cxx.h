@@ -22,6 +22,12 @@
 #include "wine/asm.h"
 
 #ifdef __i386__
+#undef CXX_USE_RVA
+#else
+#define CXX_USE_RVA 1
+#endif
+
+#ifndef _WIN64
 #undef RTTI_USE_RVA
 #else
 #define RTTI_USE_RVA 1
@@ -100,37 +106,9 @@ const rtti_object_locator name ## _rtti = { \
     &name ## _hierarchy \
 };
 
-#define DEFINE_CXX_DATA(type, base_no, cl1, cl2, cl3, cl4, dtor)  \
-static const cxx_type_info type ## _cxx_type_info = { \
-    0, \
-    & type ##_type_info, \
-    { 0, -1, 0 }, \
-    sizeof(type), \
-    THISCALL(type ##_copy_ctor) \
-}; \
-\
-static const cxx_type_info_table type ## _cxx_type_table = { \
-    base_no+1, \
-    { \
-        & type ## _cxx_type_info, \
-        cl1, \
-        cl2, \
-        cl3, \
-        cl4  \
-    } \
-}; \
-\
-static const cxx_exception_type type ## _exception_type = { \
-    0, \
-    THISCALL(dtor), \
-    NULL, \
-    & type ## _cxx_type_table \
-};
-
 #define INIT_RTTI(name,base) /* nothing to do */
-#define INIT_CXX_TYPE(name,base) (void)name ## _exception_type
 
-#else
+#else  /* RTTI_USE_RVA */
 
 #define __DEFINE_RTTI_BASE(name, base_classes_no, mangled_name) \
     static type_info name ## _type_info = { \
@@ -207,6 +185,43 @@ static void init_ ## name ## _rtti(char *base) \
     name ## _rtti.object_locator = (char*)&name ## _rtti - base; \
 }
 
+#define INIT_RTTI(name,base) init_ ## name ## _rtti((void *)(base))
+
+#endif  /* RTTI_USE_RVA */
+
+#ifndef CXX_USE_RVA
+
+#define DEFINE_CXX_DATA(type, base_no, cl1, cl2, cl3, cl4, dtor)  \
+static const cxx_type_info type ## _cxx_type_info = { \
+    0, \
+    & type ##_type_info, \
+    { 0, -1, 0 }, \
+    sizeof(type), \
+    THISCALL(type ##_copy_ctor) \
+}; \
+\
+static const cxx_type_info_table type ## _cxx_type_table = { \
+    base_no+1, \
+    { \
+        & type ## _cxx_type_info, \
+        cl1, \
+        cl2, \
+        cl3, \
+        cl4  \
+    } \
+}; \
+\
+static const cxx_exception_type type ## _exception_type = { \
+    0, \
+    THISCALL(dtor), \
+    NULL, \
+    & type ## _cxx_type_table \
+};
+
+#define INIT_CXX_TYPE(name,base) (void)name ## _exception_type
+
+#else  /* CXX_USE_RVA */
+
 #define DEFINE_CXX_DATA(type, base_no, cl1, cl2, cl3, cl4, dtor)  \
 static cxx_type_info type ## _cxx_type_info = { \
     0, \
@@ -252,10 +267,9 @@ static void init_ ## type ## _cxx(char *base) \
     type ## _exception_type.type_info_table = (char *)&type ## _cxx_type_table - base; \
 }
 
-#define INIT_RTTI(name,base) init_ ## name ## _rtti((void *)(base))
 #define INIT_CXX_TYPE(name,base) init_ ## name ## _cxx((void *)(base))
 
-#endif
+#endif  /* CXX_USE_RVA */
 
 #define DEFINE_RTTI_DATA0(name, off, mangled_name) \
     DEFINE_RTTI_DATA(name, off, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, mangled_name)
@@ -368,29 +382,6 @@ typedef struct _rtti_object_locator
     const rtti_object_hierarchy *type_hierarchy;
 } rtti_object_locator;
 
-typedef struct
-{
-    UINT flags;
-    const type_info *type_info;
-    this_ptr_offsets offsets;
-    unsigned int size;
-    void *copy_ctor;
-} cxx_type_info;
-
-typedef struct
-{
-    UINT count;
-    const cxx_type_info *info[5];
-} cxx_type_info_table;
-
-typedef struct
-{
-    UINT flags;
-    void *destructor;
-    void *custom_handler;
-    const cxx_type_info_table *type_info_table;
-} cxx_exception_type;
-
 #else
 
 typedef struct
@@ -424,6 +415,35 @@ typedef struct
     unsigned int object_locator;
 } rtti_object_locator;
 
+#endif  /* RTTI_USE_RVA */
+
+#ifndef CXX_USE_RVA
+
+typedef struct
+{
+    UINT flags;
+    const type_info *type_info;
+    this_ptr_offsets offsets;
+    unsigned int size;
+    void *copy_ctor;
+} cxx_type_info;
+
+typedef struct
+{
+    UINT count;
+    const cxx_type_info *info[5];
+} cxx_type_info_table;
+
+typedef struct
+{
+    UINT flags;
+    void *destructor;
+    void *custom_handler;
+    const cxx_type_info_table *type_info_table;
+} cxx_exception_type;
+
+#else
+
 typedef struct
 {
     UINT flags;
@@ -447,31 +467,31 @@ typedef struct
     unsigned int type_info_table;
 } cxx_exception_type;
 
-#endif
+#endif  /* CXX_USE_RVA */
 
 extern const vtable_ptr type_info_vtable;
 
-#ifdef RTTI_USE_RVA
+#ifdef CXX_USE_RVA
 
-static inline uintptr_t rtti_rva_base( const void *ptr )
+static inline uintptr_t cxx_rva_base( const void *ptr )
 {
     void *base;
     return (uintptr_t)RtlPcToFileHeader( (void *)ptr, &base );
 }
 
-static inline void *rtti_rva( unsigned int rva, uintptr_t base )
+static inline void *cxx_rva( unsigned int rva, uintptr_t base )
 {
     return (void *)(base + rva);
 }
 
 #else
 
-static inline uintptr_t rtti_rva_base( const void *ptr )
+static inline uintptr_t cxx_rva_base( const void *ptr )
 {
     return 0;
 }
 
-static inline void *rtti_rva( const void *ptr, uintptr_t base )
+static inline void *cxx_rva( const void *ptr, uintptr_t base )
 {
     return (void *)ptr;
 }
