@@ -351,8 +351,8 @@ BOOL module_load_debug(struct module* module)
          * we could always use the 3 non-zero lower bits of symref_t to match a
          * debug backend.
         */
-        if (module->format_info[DFI_PDB] && module->format_info[DFI_PDB]->vtable)
-            module->ops_symref_modfmt = module->format_info[DFI_PDB];
+        if (module->format_info[DFI_OLD_PDB] && module->format_info[DFI_OLD_PDB]->vtable)
+            module->ops_symref_modfmt = module->format_info[DFI_OLD_PDB];
 
         if (!ret) module->module.SymType = SymNone;
         assert(module->module.SymType != SymDeferred);

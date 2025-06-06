@@ -510,7 +510,7 @@ static enum pdb_result pdb_reader_init(struct pdb_reader *pdb, struct module *mo
         pdb->streams[i].name = NULL;
     }
     /* hack (must be set before loading debug info so it can be used therein) */
-    pdb->module->ops_symref_modfmt = module->format_info[DFI_PDB];
+    pdb->module->ops_symref_modfmt = module->format_info[DFI_OLD_PDB];
     pdb_reader_init_DBI(pdb);
 
     return R_PDB_SUCCESS;
@@ -4840,9 +4840,9 @@ struct pdb_reader *pdb_hack_reader_init(struct module *module, HANDLE file, cons
         if (pdb_reader_init(pdb, module, file, new_sections, num_sections) == R_PDB_SUCCESS)
         {
             /* hack (copy old pdb methods until they are moved here) */
-            pdb_module_format_vtable.remove = module->format_info[DFI_PDB]->vtable->remove;
+            pdb_module_format_vtable.remove = module->format_info[DFI_OLD_PDB]->vtable->remove;
 
-            module->format_info[DFI_PDB]->vtable = &pdb_module_format_vtable;
+            module->format_info[DFI_OLD_PDB]->vtable = &pdb_module_format_vtable;
             return pdb;
         }
     }
@@ -5178,8 +5178,8 @@ BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip, union ctx *con
     BOOL                        ret = FALSE;
 
     if (!module_init_pair(&pair, csw->hProcess, ip)) return FALSE;
-    if (!pair.effective->format_info[DFI_PDB]) return FALSE;
-    if (!pdb_hack_get_main_info(pair.effective->format_info[DFI_PDB], &pdb, NULL)) return FALSE;
+    if (!pair.effective->format_info[DFI_OLD_PDB]) return FALSE;
+    if (!pdb_hack_get_main_info(pair.effective->format_info[DFI_OLD_PDB], &pdb, NULL)) return FALSE;
     if (!pdb) return FALSE;
 
     TRACE("searching %Ix => %Ix\n", ip, ip - (DWORD_PTR)pair.effective->module.BaseOfImage);
