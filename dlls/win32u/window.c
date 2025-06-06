@@ -236,7 +236,7 @@ HWND get_full_window_handle( HWND hwnd )
     /* do sign extension for -2 and -3 */
     if (LOWORD(hwnd) >= (WORD)-3) return (HWND)(LONG_PTR)(INT16)LOWORD(hwnd);
 
-    if (!get_user_entry( hwnd, NTUSER_OBJ_WINDOW, &entry, &handle )) return 0;
+    if (!get_user_entry( hwnd, NTUSER_OBJ_WINDOW, &entry, &handle )) return hwnd;
     return handle;
 }
 
