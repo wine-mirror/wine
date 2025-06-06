@@ -862,6 +862,14 @@ struct testpin
     HANDLE on_input_full;
 };
 
+struct testenumpins
+{
+    IEnumPins IEnumPins_iface;
+    LONG ref;
+    struct testfilter *filter;
+    unsigned int enum_idx;
+};
+
 struct testfilter
 {
     IBaseFilter IBaseFilter_iface;
@@ -870,9 +878,8 @@ struct testfilter
     WCHAR *name;
     IReferenceClock *clock;
 
-    IEnumPins IEnumPins_iface;
     struct testpin *pins;
-    unsigned int pin_count, enum_idx;
+    unsigned int pin_count;
 
     FILTER_STATE state;
     REFERENCE_TIME start_time;
@@ -1264,9 +1271,9 @@ static void testsource_init(struct testpin *pin, const AM_MEDIA_TYPE *types, int
     pin->type_count = type_count;
 }
 
-static inline struct testfilter *impl_from_IEnumPins(IEnumPins *iface)
+static inline struct testenumpins *impl_from_IEnumPins(IEnumPins *iface)
 {
-    return CONTAINING_RECORD(iface, struct testfilter, IEnumPins_iface);
+    return CONTAINING_RECORD(iface, struct testenumpins, IEnumPins_iface);
 }
 
 static HRESULT WINAPI testenumpins_QueryInterface(IEnumPins *iface, REFIID iid, void **out)
@@ -1277,33 +1284,37 @@ static HRESULT WINAPI testenumpins_QueryInterface(IEnumPins *iface, REFIID iid, 
 
 static ULONG WINAPI testenumpins_AddRef(IEnumPins * iface)
 {
-    struct testfilter *filter = impl_from_IEnumPins(iface);
-    return InterlockedIncrement(&filter->ref);
+    struct testenumpins *enumpins = impl_from_IEnumPins(iface);
+    return InterlockedIncrement(&enumpins->ref);
 }
 
 static ULONG WINAPI testenumpins_Release(IEnumPins * iface)
 {
-    struct testfilter *filter = impl_from_IEnumPins(iface);
-    return InterlockedDecrement(&filter->ref);
+    struct testenumpins *enumpins = impl_from_IEnumPins(iface);
+    ULONG ref = InterlockedIncrement(&enumpins->ref);
+
+    if (!ref)
+        free(enumpins);
+    return ref;
 }
 
 static HRESULT WINAPI testenumpins_Next(IEnumPins *iface, ULONG count, IPin **out, ULONG *fetched)
 {
-    struct testfilter *filter = impl_from_IEnumPins(iface);
+    struct testenumpins *enumpins = impl_from_IEnumPins(iface);
     unsigned int i;
 
     for (i = 0; i < count; ++i)
     {
-        if (filter->enum_idx + i >= filter->pin_count)
+        if (enumpins->enum_idx + i >= enumpins->filter->pin_count)
             break;
 
-        out[i] = &filter->pins[filter->enum_idx + i].IPin_iface;
+        out[i] = &enumpins->filter->pins[enumpins->enum_idx + i].IPin_iface;
         IPin_AddRef(out[i]);
     }
 
     if (fetched)
         *fetched = i;
-    filter->enum_idx += i;
+    enumpins->enum_idx += i;
 
     return (i == count) ? S_OK : S_FALSE;
 }
@@ -1316,8 +1327,8 @@ static HRESULT WINAPI testenumpins_Skip(IEnumPins *iface, ULONG count)
 
 static HRESULT WINAPI testenumpins_Reset(IEnumPins *iface)
 {
-    struct testfilter *filter = impl_from_IEnumPins(iface);
-    filter->enum_idx = 0;
+    struct testenumpins *enumpins = impl_from_IEnumPins(iface);
+    enumpins->enum_idx = 0;
     return S_OK;
 }
 
@@ -1502,11 +1513,17 @@ static HRESULT WINAPI testfilter_GetSyncSource(IBaseFilter *iface, IReferenceClo
 static HRESULT WINAPI testfilter_EnumPins(IBaseFilter *iface, IEnumPins **out)
 {
     struct testfilter *filter = impl_from_IBaseFilter(iface);
+    struct testenumpins *enumpins;
+
     if (winetest_debug > 1) trace("%p->EnumPins()\n", filter);
 
-    *out = &filter->IEnumPins_iface;
-    IEnumPins_AddRef(*out);
-    filter->enum_idx = 0;
+    enumpins = malloc(sizeof(*enumpins));
+    enumpins->IEnumPins_iface.lpVtbl = &testenumpins_vtbl;
+    enumpins->ref = 1;
+    enumpins->enum_idx = 0;
+    enumpins->filter = filter;
+
+    *out = &enumpins->IEnumPins_iface;
     return S_OK;
 }
 
@@ -2050,7 +2067,6 @@ static void testfilter_init(struct testfilter *filter, struct testpin *pins, int
 
     memset(filter, 0, sizeof(*filter));
     filter->IBaseFilter_iface.lpVtbl = &testfilter_vtbl;
-    filter->IEnumPins_iface.lpVtbl = &testenumpins_vtbl;
     filter->ref = 1;
     filter->pins = pins;
     filter->pin_count = pin_count;
