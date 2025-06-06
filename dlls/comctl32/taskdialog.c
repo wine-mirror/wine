@@ -990,7 +990,9 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
             line_count++;
         }
     }
-    line_count++;
+
+    if (dialog_info->button_count > 0)
+        line_count++;
 
     /* Try to balance lines so they are about the same size */
     for (i = 1; i < line_count - 1; i++)
@@ -1040,7 +1042,8 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     }
 
     /* Add height for last row button and spacing */
-    dialog_height += size.cy + v_spacing;
+    if (dialog_info->button_count > 0)
+        dialog_height += size.cy + v_spacing;
     dialog_height = max(dialog_height, expando_bottom);
 
     Free(button_layout_infos);
