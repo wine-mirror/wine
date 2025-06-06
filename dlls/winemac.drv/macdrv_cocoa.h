@@ -32,29 +32,7 @@
 #define GetCurrentThread MacGetCurrentThread
 #define GetProcessInformation MacGetProcessInformation
 #define LoadResource MacLoadResource
-#define AnimatePalette MacAnimatePalette
-#define EqualRgn MacEqualRgn
-#define FillRgn MacFillRgn
-#define FrameRgn MacFrameRgn
-#define GetPixel MacGetPixel
-#define InvertRgn MacInvertRgn
-#define LineTo MacLineTo
-#define OffsetRgn MacOffsetRgn
-#define PaintRgn MacPaintRgn
 #define Polygon MacPolygon
-#define ResizePalette MacResizePalette
-#define SetRectRgn MacSetRectRgn
-#define EqualRect MacEqualRect
-#define FillRect MacFillRect
-#define FrameRect MacFrameRect
-#define GetCursor MacGetCursor
-#define InvertRect MacInvertRect
-#define OffsetRect MacOffsetRect
-#define PtInRect MacPtInRect
-#define SetCursor MacSetCursor
-#define SetRect MacSetRect
-#define ShowCursor MacShowCursor
-#define UnionRect MacUnionRect
 
 #include <ApplicationServices/ApplicationServices.h>
 
@@ -62,29 +40,7 @@
 #undef GetCurrentThread
 #undef GetProcessInformation
 #undef LoadResource
-#undef AnimatePalette
-#undef EqualRgn
-#undef FillRgn
-#undef FrameRgn
-#undef GetPixel
-#undef InvertRgn
-#undef LineTo
-#undef OffsetRgn
-#undef PaintRgn
 #undef Polygon
-#undef ResizePalette
-#undef SetRectRgn
-#undef EqualRect
-#undef FillRect
-#undef FrameRect
-#undef GetCursor
-#undef InvertRect
-#undef OffsetRect
-#undef PtInRect
-#undef SetCursor
-#undef SetRect
-#undef ShowCursor
-#undef UnionRect
 
 #include <pthread.h>
 

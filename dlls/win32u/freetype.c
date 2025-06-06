@@ -47,25 +47,14 @@
 #define GetCurrentThread __carbon_GetCurrentThread
 #define GetCurrentProcess __carbon_GetCurrentProcess
 #define GetProcessInformation __carbon_GetProcessInformation
-#define AnimatePalette __carbon_AnimatePalette
 #define DeleteMenu __carbon_DeleteMenu
 #define DrawMenu __carbon_DrawMenu
 #define DrawMenuBar __carbon_DrawMenuBar
 #define EnableMenuItem __carbon_EnableMenuItem
-#define EqualRgn __carbon_EqualRgn
-#define FillRgn __carbon_FillRgn
-#define FrameRgn __carbon_FrameRgn
 #define GetMenu __carbon_GetMenu
-#define GetPixel __carbon_GetPixel
-#define InvertRgn __carbon_InvertRgn
 #define IsWindowVisible __carbon_IsWindowVisible
-#define LineTo __carbon_LineTo
 #define MoveWindow __carbon_MoveWindow
-#define OffsetRgn __carbon_OffsetRgn
-#define PaintRgn __carbon_PaintRgn
 #define Polygon __carbon_Polygon
-#define ResizePalette __carbon_ResizePalette
-#define SetRectRgn __carbon_SetRectRgn
 #define ShowWindow __carbon_ShowWindow
 #include <Carbon/Carbon.h>
 #undef LoadResource
@@ -74,26 +63,15 @@
 #undef _CDECL
 #undef GetCurrentProcess
 #undef GetProcessInformation
-#undef AnimatePalette
 #undef CheckMenuItem
 #undef DeleteMenu
 #undef DrawMenu
 #undef DrawMenuBar
 #undef EnableMenuItem
-#undef EqualRgn
-#undef FillRgn
-#undef FrameRgn
 #undef GetMenu
-#undef GetPixel
-#undef InvertRgn
 #undef IsWindowVisible
-#undef LineTo
 #undef MoveWindow
-#undef OffsetRgn
-#undef PaintRgn
 #undef Polygon
-#undef ResizePalette
-#undef SetRectRgn
 #undef ShowWindow
 #endif /* __APPLE__ */
 
