@@ -26,6 +26,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(find);
 
 static int flag_case_sensitive = 1;
+static int flag_line_count;
+
+static unsigned int line_count;
 
 static BOOL read_char_from_handle(HANDLE handle, char *char_out)
 {
@@ -126,8 +129,12 @@ static BOOL run_find_for_line(const WCHAR *line, const WCHAR *tofind)
 
     if (found)
     {
-        write_to_stdout(line);
-        write_to_stdout(L"\r\n");
+        if (flag_line_count) line_count++;
+        else
+        {
+            write_to_stdout(line);
+            write_to_stdout(L"\r\n");
+        }
         return TRUE;
     }
 
@@ -169,6 +176,11 @@ int __cdecl wmain(int argc, WCHAR *argv[])
                 flag_case_sensitive = 0;
                 break;
 
+            case 'c':
+            case 'C':
+                flag_line_count = 1;
+                break;
+
             default:
                 output_resource_message(IDS_INVALID_SWITCH);
                 return 2;
@@ -202,7 +214,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
         for (i = 0; i < file_paths_len; i++)
         {
             HANDLE input;
-            WCHAR file_path_upper[MAX_PATH];
+            WCHAR file_path_upper[MAX_PATH], buf[11];
 
             wcscpy(file_path_upper, file_paths[i]);
             wcsupr(file_path_upper);
@@ -223,13 +235,21 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 
             write_to_stdout(L"\r\n---------- ");
             write_to_stdout(file_path_upper);
-            write_to_stdout(L"\r\n");
+            if (flag_line_count) write_to_stdout(L": ");
+            else write_to_stdout(L"\r\n");
+
             while ((line = read_line_from_handle(input)) != NULL)
             {
                 if (run_find_for_line(line, tofind))
                     exitcode = 0;
 
                 free(line);
+            }
+
+            if (flag_line_count)
+            {
+                wsprintfW(buf, L"%u\r\n\r\n", line_count);
+                write_to_stdout(buf);
             }
             CloseHandle(input);
         }
