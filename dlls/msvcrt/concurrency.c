@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 typedef exception cexception;
 CREATE_EXCEPTION_OBJECT(cexception)
-DEFINE_CXX_TYPE_INFO(cexception)
+DEFINE_CXX_DATA0(cexception, cexception_dtor)
 
 static LONG context_id = -1;
 static LONG scheduler_id = -1;
@@ -3801,7 +3801,7 @@ void msvcrt_init_concurrency(void *base)
     INIT_RTTI(ThreadScheduler, base);
     INIT_RTTI(_Timer, base);
 
-    INIT_CXX_TYPE_INFO(cexception, base);
+    INIT_CXX_TYPE(cexception, base);
     INIT_CXX_TYPE(improper_lock, base);
     INIT_CXX_TYPE(improper_scheduler_attach, base);
     INIT_CXX_TYPE(improper_scheduler_detach, base);

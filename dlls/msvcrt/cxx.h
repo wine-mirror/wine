@@ -100,17 +100,14 @@ const rtti_object_locator name ## _rtti = { \
     &name ## _hierarchy \
 };
 
-#define DEFINE_CXX_TYPE_INFO(type) \
+#define DEFINE_CXX_DATA(type, base_no, cl1, cl2, cl3, cl4, dtor)  \
 static const cxx_type_info type ## _cxx_type_info = { \
     0, \
     & type ##_type_info, \
     { 0, -1, 0 }, \
     sizeof(type), \
     THISCALL(type ##_copy_ctor) \
-};
-
-#define DEFINE_CXX_DATA(type, base_no, cl1, cl2, cl3, cl4, dtor)  \
-DEFINE_CXX_TYPE_INFO(type) \
+}; \
 \
 static const cxx_type_info_table type ## _cxx_type_table = { \
     base_no+1, \
@@ -131,8 +128,7 @@ static const cxx_exception_type type ## _exception_type = { \
 };
 
 #define INIT_RTTI(name,base) /* nothing to do */
-#define INIT_CXX_TYPE(name,base) /* nothing to do */
-#define INIT_CXX_TYPE_INFO(name,base) /* nothing to do */
+#define INIT_CXX_TYPE(name,base) (void)name ## _exception_type
 
 #else
 
@@ -211,7 +207,7 @@ static void init_ ## name ## _rtti(char *base) \
     name ## _rtti.object_locator = (char*)&name ## _rtti - base; \
 }
 
-#define DEFINE_CXX_TYPE_INFO(type) \
+#define DEFINE_CXX_DATA(type, base_no, cl1, cl2, cl3, cl4, dtor)  \
 static cxx_type_info type ## _cxx_type_info = { \
     0, \
     0xdeadbeef, \
@@ -224,11 +220,7 @@ static void init_ ## type ## _cxx_type_info(char *base) \
 { \
     type ## _cxx_type_info.type_info  = (char *)&type ## _type_info - base; \
     type ## _cxx_type_info.copy_ctor  = (char *)type ## _copy_ctor - base; \
-}
-
-#define DEFINE_CXX_DATA(type, base_no, cl1, cl2, cl3, cl4, dtor)  \
-\
-DEFINE_CXX_TYPE_INFO(type) \
+} \
 \
 static cxx_type_info_table type ## _cxx_type_table = { \
     base_no+1, \
@@ -262,7 +254,6 @@ static void init_ ## type ## _cxx(char *base) \
 
 #define INIT_RTTI(name,base) init_ ## name ## _rtti((void *)(base))
 #define INIT_CXX_TYPE(name,base) init_ ## name ## _cxx((void *)(base))
-#define INIT_CXX_TYPE_INFO(name,base) init_ ## name ## _cxx_type_info((void *)(base))
 
 #endif
 

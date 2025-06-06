@@ -411,7 +411,7 @@ DEFINE_RTTI_DATA1(logic_error, 0, &exception_rtti_base_descriptor, ".?AVlogic_er
 #else
 DEFINE_RTTI_DATA1(logic_error, 0, &exception_rtti_base_descriptor, ".?AVlogic_error@@")
 #endif
-DEFINE_CXX_TYPE_INFO(logic_error)
+DEFINE_CXX_DATA1(logic_error, &exception_cxx_type_info, MSVCP_logic_error_dtor)
 
 /* length_error class data */
 typedef logic_error length_error;
@@ -731,7 +731,8 @@ DEFINE_RTTI_DATA3(system_error, 0, &_System_error_rtti_base_descriptor,
 DEFINE_RTTI_DATA4(failure, 0, &system_error_rtti_base_descriptor,
         &_System_error_rtti_base_descriptor, &runtime_error_rtti_base_descriptor,
         &exception_rtti_base_descriptor, ".?AVfailure@ios_base@std@@")
-DEFINE_CXX_TYPE_INFO(_System_error)
+DEFINE_CXX_DATA2(_System_error, &runtime_error_cxx_type_info, &exception_cxx_type_info,
+        MSVCP_runtime_error_dtor)
 DEFINE_CXX_DATA3(system_error, &_System_error_cxx_type_info,
         &runtime_error_cxx_type_info, &exception_cxx_type_info,
         MSVCP_runtime_error_dtor)
@@ -744,12 +745,8 @@ DEFINE_RTTI_DATA2(system_error, 0, &runtime_error_rtti_base_descriptor,
 DEFINE_RTTI_DATA3(failure, 0, &system_error_rtti_base_descriptor,
         &runtime_error_rtti_base_descriptor, &exception_rtti_base_descriptor,
         ".?AVfailure@ios_base@std@@")
-#if _MSVCP_VER == 100
-DEFINE_CXX_TYPE_INFO(system_error);
-#else
 DEFINE_CXX_DATA2(system_error, &runtime_error_cxx_type_info,
         &exception_cxx_type_info, MSVCP_runtime_error_dtor)
-#endif
 DEFINE_CXX_DATA3(failure, &system_error_cxx_type_info, &runtime_error_cxx_type_info,
         &exception_cxx_type_info, MSVCP_runtime_error_dtor)
 #else
@@ -1521,7 +1518,7 @@ void init_exception(void *base)
 
     INIT_CXX_TYPE(exception, base);
     INIT_CXX_TYPE(bad_alloc, base);
-    INIT_CXX_TYPE_INFO(logic_error, base);
+    INIT_CXX_TYPE(logic_error, base);
     INIT_CXX_TYPE(length_error, base);
     INIT_CXX_TYPE(out_of_range, base);
     INIT_CXX_TYPE(invalid_argument, base);
@@ -1530,14 +1527,10 @@ void init_exception(void *base)
     INIT_CXX_TYPE(future_error, base);
 #endif
 #if _MSVCP_VER > 110
-    INIT_CXX_TYPE_INFO(_System_error, base);
-#endif
-#if _MSVCP_VER == 100
-    INIT_CXX_TYPE_INFO(system_error, base);
-#elif _MSVCP_VER > 100
-    INIT_CXX_TYPE(system_error, base);
+    INIT_CXX_TYPE(_System_error, base);
 #endif
 #if _MSVCP_VER > 90
+    INIT_CXX_TYPE(system_error, base);
     INIT_CXX_TYPE(bad_function_call, base);
 #endif
     INIT_CXX_TYPE(failure, base);

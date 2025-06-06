@@ -93,7 +93,7 @@ __ASM_BLOCK_END
 
 DEFINE_CXX_DATA0( exception, exception_dtor )
 DEFINE_RTTI_DATA1(runtime_error, 0, &exception_rtti_base_descriptor, ".?AVruntime_error@std@@")
-DEFINE_CXX_TYPE_INFO(runtime_error)
+DEFINE_CXX_DATA1(runtime_error, &exception_cxx_type_info, exception_dtor)
 DEFINE_RTTI_DATA2(range_error, 0, &runtime_error_rtti_base_descriptor,
         &exception_rtti_base_descriptor, ".?AVrange_error@std@@")
 DEFINE_CXX_DATA2(range_error, &runtime_error_cxx_type_info,
@@ -146,7 +146,7 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
        INIT_RTTI(type_info, inst);
 
        INIT_CXX_TYPE(exception, inst);
-       INIT_CXX_TYPE_INFO(runtime_error, inst);
+       INIT_CXX_TYPE(runtime_error, inst);
        INIT_CXX_TYPE(range_error, inst);
        msvcrt_init_concurrency(inst);
        init_concurrency_details(inst);
