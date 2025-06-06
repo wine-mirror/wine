@@ -9,10 +9,10 @@ UNIX_LIBS    = \
 	-framework CoreVideo \
 	-framework Foundation \
 	-framework IOKit \
+	-framework Metal \
 	-framework OpenGL \
 	-framework QuartzCore \
 	-framework Security \
-	$(METAL_LIBS)
 
 SOURCES = \
 	clipboard.c \
