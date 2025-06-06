@@ -64,6 +64,8 @@ static const GUID CLSID_ft_unmarshaler_1809 = {0x00000359, 0x0000, 0x0000, {0xc0
 
 /* functions that are not present on all versions of Windows */
 static HRESULT (WINAPI *pDllGetClassObject)(REFCLSID,REFIID,LPVOID);
+static HRESULT (WINAPI *pCoIncrementMTAUsage)(CO_MTA_USAGE_COOKIE *cookie);
+static HRESULT (WINAPI *pCoDecrementMTAUsage)(CO_MTA_USAGE_COOKIE cookie);
 
 /* helper macros to make tests a bit leaner */
 #define ok_more_than_one_lock() ok(cLocks > 0, "Number of locks should be > 0, but actually is %ld\n", cLocks)
@@ -1368,6 +1370,95 @@ static void test_marshal_proxy_mta_apartment_shutdown(void)
     end_host_object(tid, thread);
 
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+}
+
+static HRESULT WINAPI TestMTA_IClassFactory_CreateInstance(
+    LPCLASSFACTORY iface,
+    LPUNKNOWN pUnkOuter,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    static CO_MTA_USAGE_COOKIE cookie;
+    HRESULT hr;
+
+    if (!cookie)
+    {
+        hr = pCoIncrementMTAUsage(&cookie);
+        ok_ole_success(hr, CoIncrementMTAUsage);
+    }
+    else
+    {
+        hr = pCoDecrementMTAUsage(cookie);
+        ok_ole_success(hr, CoDecrementMTAUsage);
+        cookie = NULL;
+    }
+
+    return Test_IClassFactory_CreateInstance(iface, pUnkOuter, riid, ppvObj);
+}
+
+static const IClassFactoryVtbl TestMTAClassFactory_Vtbl =
+{
+    Test_IClassFactory_QueryInterface,
+    Test_IClassFactory_AddRef,
+    Test_IClassFactory_Release,
+    TestMTA_IClassFactory_CreateInstance,
+    Test_IClassFactory_LockServer
+};
+
+static IClassFactory Test_MTAClassFactory = { &TestMTAClassFactory_Vtbl };
+
+/* tests that proxies are working when the host joins mta apartment */
+static void test_marshal_proxy_join_mta_apartment(void)
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IClassFactory *pProxy = NULL;
+    IUnknown *tmp;
+    HANDLE thread;
+    DWORD tid;
+
+    if (!pCoIncrementMTAUsage)
+    {
+        win_skip("CoIncrementMTAUsage() is not available.\n");
+        return;
+    }
+
+    cLocks = 0;
+    external_connections = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&Test_MTAClassFactory, MSHLFLAGS_NORMAL, &thread);
+
+    ok_more_than_one_lock();
+    ok_non_zero_external_conn();
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
+    ok_ole_success(hr, CoUnmarshalInterface);
+    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+    ok_non_zero_external_conn();
+
+    /* do a call that will fail, but result in IRemUnknown being used by the proxy */
+    IUnknown_QueryInterface(pProxy, &IID_IStream, (LPVOID *)&pStream);
+
+    hr = IClassFactory_CreateInstance(pProxy, NULL, &IID_IUnknown, (void **)&tmp);
+    ok_ole_success(hr, IClassFactory_CreateInstance);
+    IUnknown_Release(tmp);
+
+    hr = IClassFactory_CreateInstance(pProxy, NULL, &IID_IUnknown, (void **)&tmp);
+    ok_ole_success(hr, IClassFactory_CreateInstance);
+    IUnknown_Release(tmp);
+
+    IUnknown_Release(pProxy);
+
+    ok_no_locks();
+    ok_zero_external_conn();
+    ok_last_release_closes(TRUE);
+
+    end_host_object(tid, thread);
 }
 
 static void test_marshal_channel_buffer(void)
@@ -4644,6 +4735,8 @@ START_TEST(marshal)
     char **argv;
 
     pDllGetClassObject = (void*)GetProcAddress(hOle32, "DllGetClassObject");
+    pCoIncrementMTAUsage = (void*)GetProcAddress(hOle32, "CoIncrementMTAUsage");
+    pCoDecrementMTAUsage = (void*)GetProcAddress(hOle32, "CoDecrementMTAUsage");
 
     argc = winetest_get_mainargs( &argv );
     if (argc > 2 && (!strcmp(argv[2], "-Embedding")))
@@ -4681,6 +4774,7 @@ START_TEST(marshal)
         test_marshal_stub_apartment_shutdown();
         test_marshal_proxy_apartment_shutdown();
         test_marshal_proxy_mta_apartment_shutdown();
+        test_marshal_proxy_join_mta_apartment();
         test_no_couninitialize_server();
         test_no_couninitialize_client();
         test_tableweak_marshal_and_unmarshal_twice();
