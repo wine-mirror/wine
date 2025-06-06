@@ -321,6 +321,12 @@ static void test_sscanf(void)
         ok(ret == 1, "sscanf returned %d for flags %#x\n", ret, tests[i]);
         ok(result_ptr == (DWORD_PTR)0x123456789ull, /* this is truncated on 32bit systems */
            "got wrong number %Ix for flags %#x\n", result_ptr, tests[i]);
+
+        result64 = 0;
+        ret = vsscanf_wrapper(tests[i], "0xfefefefefefefefe", -1, "%jx", &result64);
+        ok(ret == 1, "sscanf returned %d for flags %#x\n", ret, tests[i]);
+        ok(result64 == 0xfefefefefefefefell, "got wrong number 0x%s for flags %#x\n",
+                wine_dbgstr_longlong(result64), tests[i]);
     }
 }
 

@@ -350,6 +350,11 @@ static void test_sscanf( void )
     ret = p_sscanf("\x81\x82test", "\x81%\x82%s", buffer);
     ok(ret == 1, "got %d\n", ret);
     ok(!strcmp(buffer, "test"), "buf = %s\n", buffer);
+
+    result64 = 0;
+    ret = p_sscanf("0xfefefefefefefefe", "%jx", &result64);
+    ok(ret == 1, "got %d\n", ret);
+    ok(result64 == 0xfefefefefefefefell, "got 0x%s\n", wine_dbgstr_longlong(result64));
 }
 
 static void test_sscanf_s(void)
