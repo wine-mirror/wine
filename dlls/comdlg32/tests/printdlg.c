@@ -125,6 +125,35 @@ static UINT_PTR CALLBACK print_hook_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM 
     return 0;
 }
 
+static UINT_PTR CALLBACK printer_properties_hook_procA(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
+{
+    DEVMODEA* dm;
+    PRINTDLGA* dlg;
+
+    if (msg == WM_INITDIALOG)
+    {
+        dlg = (PRINTDLGA*)lp;
+        dm = GlobalLock(dlg->hDevMode);
+        todo_wine
+        ok(dm->dmDuplex != 123, "dmDuplex should not equal 123 in the hook.\n");
+        todo_wine
+        ok(dm->dmPaperSize != 321, "dmPaperSize should not equal 321 in the hook.\n");
+        GlobalUnlock(dlg->hDevMode);
+        PostMessageW(hdlg, WM_COMMAND, psh2, lp);
+    }
+    if (msg == WM_COMMAND && wp == psh2)
+    {
+        dlg = (PRINTDLGA*)lp;
+        dm = GlobalLock(dlg->hDevMode);
+        dm->dmDuplex = 999;
+        dm->dmPaperSize = 888;
+        GlobalUnlock(dlg->hDevMode);
+        PostMessageW(hdlg, WM_COMMAND, IDOK, FALSE);
+        return TRUE;
+    }
+    return 0;
+}
+
 static void test_PrintDlgA(void)
 {
     DWORD res, n_copies = 0;
@@ -267,6 +296,29 @@ static void test_PrintDlgA(void)
         GlobalFree(pDlg->hDevMode);
         GlobalFree(pDlg->hDevNames);
     }
+
+    ZeroMemory(pDlg, sizeof(*pDlg));
+
+    pDlg->lStructSize = sizeof(*pDlg);
+    pDlg->Flags = PD_ENABLEPRINTHOOK;
+    pDlg->lpfnPrintHook = printer_properties_hook_procA;
+
+    pDlg->hDevMode = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(DEVMODEA));
+    dm = GlobalLock(pDlg->hDevMode);
+    dm->dmSize = sizeof(*dm);
+    dm->dmFields |= DM_DUPLEX | DM_PAPERSIZE;
+    dm->dmDuplex = 123;
+    dm->dmPaperSize = 321;
+    GlobalUnlock(pDlg->hDevMode);
+
+    PrintDlgA(pDlg);
+    dm = GlobalLock(pDlg->hDevMode);
+    todo_wine
+    ok(dm->dmDuplex == 999, "expected 999, but got %d.\n", dm->dmDuplex);
+    todo_wine
+    ok(dm->dmPaperSize == 888, "expected 888, but got %d.\n", dm->dmPaperSize);
+    GlobalUnlock(pDlg->hDevMode);
+    GlobalFree(pDlg->hDevMode);
 
     free(pDlg);
 }
