@@ -1453,6 +1453,35 @@ static void test_marshal_proxy_join_mta_apartment(void)
     ok_ole_success(hr, IClassFactory_CreateInstance);
     IUnknown_Release(tmp);
 
+    if (pCoIncrementMTAUsage)
+    {
+        CO_MTA_USAGE_COOKIE cookie;
+        APTTYPEQUALIFIER qual;
+        APTTYPE type;
+
+        pCoIncrementMTAUsage(&cookie);
+
+        CoUninitialize();
+
+        hr = pCoGetApartmentType(&type, &qual);
+        ok_ole_success(hr, CoGetApartmentType);
+        ok(type == APTTYPE_MTA, "got %d\n", type);
+        ok(qual == APTTYPEQUALIFIER_IMPLICIT_MTA, "got %d\n", qual);
+
+        hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+        ok_ole_success(hr, CoInitializeEx);
+
+        hr = pCoGetApartmentType(&type, &qual);
+        ok_ole_success(hr, CoGetApartmentType);
+        ok(type == APTTYPE_MAINSTA, "got %d\n", type);
+        ok(qual == 0, "got %d\n", qual);
+
+        hr = IClassFactory_CreateInstance(pProxy, NULL, &IID_IUnknown, (void **)&tmp);
+        ok(hr == CO_E_OBJNOTCONNECTED, "got %#lx\n", hr);
+
+        pCoDecrementMTAUsage(cookie);
+    }
+
     IUnknown_Release(pProxy);
 
     ok_no_locks();
