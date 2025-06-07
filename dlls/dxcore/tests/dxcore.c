@@ -40,6 +40,13 @@ static void check_interface_(unsigned int line, void *iface, REFIID riid, BOOL s
         IUnknown_Release(out);
 }
 
+static BOOL is_any_display_available(void)
+{
+    DISPLAY_DEVICEW display_device;
+    display_device.cb = sizeof(display_device);
+    return EnumDisplayDevicesW(NULL, 0, &display_device, 0);
+}
+
 static void test_DXCoreCreateAdapterFactory(void)
 {
     IDXCoreAdapterFactory *factory2 = (void *)0xdeadbeef;
@@ -175,6 +182,12 @@ START_TEST(dxcore)
     {
         win_skip("Failed to get DXCoreCreateAdapterFactory address, skipping dxcore tests\n");
         FreeLibrary(dxcore_handle);
+        return;
+    }
+
+    if (!is_any_display_available())
+    {
+        skip("No display available.\n");
         return;
     }
 
