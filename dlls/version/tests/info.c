@@ -30,6 +30,14 @@
 #include "verrsrc.h"
 #include "wine/test.h"
 
+static BOOL is_wow64;
+
+static char system_dir[MAX_PATH];
+static char syswow_dir[MAX_PATH];
+
+static BOOL (WINAPI *pWow64DisableWow64FsRedirection)(void **);
+static BOOL (WINAPI *pWow64RevertWow64FsRedirection)(void *);
+
 #define MY_LAST_ERROR ((DWORD)-1)
 #define EXPECT_BAD_PATH__NOT_FOUND \
     ok( (ERROR_PATH_NOT_FOUND == GetLastError()) || \
@@ -868,8 +876,108 @@ static void test_GetFileVersionInfoEx(void)
     return;
 }
 
+static void test_wow64_redirection(void)
+{
+    char buf[MAX_PATH], buf2[MAX_PATH];
+    UINT size, translation;
+    char *ver, *p;
+    void *cookie;
+    HMODULE module;
+    BOOL ret;
+
+    if (!is_wow64)
+        return;
+
+    ret = pWow64DisableWow64FsRedirection(&cookie);
+    ok(ret, "got error %lu.\n", GetLastError());
+
+    sprintf(buf, "%s\\psapi.dll", syswow_dir);
+    sprintf(buf2, "%s\\test.dll", syswow_dir);
+    ret = CopyFileA(buf, buf2, FALSE);
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        ret = pWow64RevertWow64FsRedirection(cookie);
+        ok(ret, "got error %lu.\n", GetLastError());
+        skip("Can't copy file to system directory.\n");
+        return;
+    }
+    ok(ret, "got error %lu.\n", GetLastError());
+
+    sprintf(buf, "%s\\iphlpapi.dll", system_dir);
+    sprintf(buf2, "%s\\test.dll", system_dir);
+    ret = CopyFileA(buf, buf2, FALSE);
+    ok(ret, "got error %lu.\n", GetLastError());
+
+    module = LoadLibraryA("test.dll");
+    ok(!!module, "got error %lu.\n", GetLastError());
+
+    size = GetFileVersionInfoSizeW(L"C:\\windows\\system32\\test.dll", NULL);
+    ok(size, "got error %lu.\n", GetLastError());
+    ver = malloc(size);
+    ret = GetFileVersionInfoW(L"C:\\windows\\system32\\test.dll", 0, size, ver);
+    ok(ret, "got error %lu.\n", GetLastError());
+    ret = VerQueryValueA(ver, "\\VarFileInfo\\Translation", (void **)&p, &size);
+    ok(ret, "got error %lu.\n", GetLastError());
+    translation = *(UINT *)p;
+    translation = MAKELONG(HIWORD(translation), LOWORD(translation));
+    sprintf(buf, "\\StringFileInfo\\%08x\\OriginalFileName", translation);
+    ret = VerQueryValueA(ver, buf, (LPVOID*)&p, &size);
+    ok(ret, "got error %lu.\n", GetLastError());
+    /* When the module is already loaded GetFileVersionInfoW finds redirected loaded one while the file which
+     * should've been open with disabled redirection is different. */
+    ok(!strnicmp(p, "psapi", 5), "got %s.\n", debugstr_a(p));
+    free(ver);
+
+    FreeLibrary(module);
+
+    size = GetFileVersionInfoSizeW(L"C:\\windows\\system32\\test.dll", NULL);
+    ok(size, "got error %lu.\n", GetLastError());
+    ver = malloc(size);
+    ret = GetFileVersionInfoW(L"C:\\windows\\system32\\test.dll", 0, size, ver);
+    ok(ret, "got error %lu.\n", GetLastError());
+    ret = VerQueryValueA(ver, "\\VarFileInfo\\Translation", (void **)&p, &size);
+    ok(ret, "got error %lu.\n", GetLastError());
+    translation = *(UINT *)p;
+    translation = MAKELONG(HIWORD(translation), LOWORD(translation));
+    sprintf(buf, "\\StringFileInfo\\%08x\\OriginalFileName", translation);
+    ret = VerQueryValueA(ver, buf, (LPVOID*)&p, &size);
+    ok(ret, "got error %lu.\n", GetLastError());
+    /* When the module is not loaded GetFileVersionInfoW finds the module in system32 as one would expect. */
+    ok(!strnicmp(p, "iphlpapi", 8), "got %s.\n", debugstr_a(p));
+    free(ver);
+
+    sprintf(buf2, "%s\\test.dll", syswow_dir);
+    ret = DeleteFileA(buf2);
+    ok(ret, "got error %lu.\n", GetLastError());
+
+    sprintf(buf2, "%s\\test.dll", system_dir);
+    ret = DeleteFileA(buf2);
+    ok(ret, "got error %lu.\n", GetLastError());
+
+    ret = pWow64RevertWow64FsRedirection(cookie);
+    ok(ret, "got error %lu.\n", GetLastError());
+}
+
 START_TEST(info)
 {
+    HMODULE kernel32 =kernel32 = GetModuleHandleA("kernel32.dll");
+    BOOL (WINAPI *pIsWow64Process)(HANDLE, BOOL *);
+    DWORD size;
+
+    pWow64DisableWow64FsRedirection = (void *)GetProcAddress(kernel32, "Wow64DisableWow64FsRedirection");
+    pWow64RevertWow64FsRedirection = (void *)GetProcAddress(kernel32, "Wow64RevertWow64FsRedirection");
+
+    if ((pIsWow64Process = (void *)GetProcAddress(kernel32, "IsWow64Process")))
+        pIsWow64Process( GetCurrentProcess(), &is_wow64 );
+
+    size = GetSystemDirectoryA(system_dir, ARRAY_SIZE(system_dir));
+    ok(size && size < ARRAY_SIZE(system_dir), "Couldn't get system directory: %lu\n", GetLastError());
+    if (is_wow64)
+    {
+        size = GetSystemWow64DirectoryA(syswow_dir, ARRAY_SIZE(syswow_dir));
+        ok(size && size < ARRAY_SIZE(syswow_dir), "Couldn't get wow directory: %lu\n", GetLastError());
+    }
+
     test_info_size();
     test_info();
     test_32bit_win();
@@ -877,4 +985,5 @@ START_TEST(info)
     test_VerQueryValue_EmptyData();
     test_extra_block();
     test_GetFileVersionInfoEx();
+    test_wow64_redirection();
 }
