@@ -15717,13 +15717,13 @@ static void test_get_dxgi_device(BOOL d3d11)
 
 static void test_no_target(BOOL d3d11)
 {
+    struct d2d1_test_context ctx;
     D2D1_BITMAP_PROPERTIES1 bitmap_desc;
     IDWriteFactory *dwrite_factory;
     IDWriteTextFormat *text_format;
     ID2D1SolidColorBrush *brush;
     ID2D1DeviceContext *context;
     D2D1_MATRIX_3X2_F matrix;
-    IDXGIDevice *dxgi_device;
     ID2D1Bitmap1 *bitmap;
     ID2D1Device *device;
     D2D1_COLOR_F color;
@@ -15738,10 +15738,10 @@ static void test_no_target(BOOL d3d11)
         return;
     }
 
-    dxgi_device = create_device(d3d11);
-    ok(!!dxgi_device, "Failed to create device.\n");
+    if (!init_test_context(&ctx, d3d11))
+        return;
 
-    hr = pD2D1CreateDevice(dxgi_device, NULL, &device);
+    hr = pD2D1CreateDevice(ctx.device, NULL, &device);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1Device_CreateDeviceContext(device, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &context);
@@ -15850,7 +15850,7 @@ static void test_no_target(BOOL d3d11)
 
     ID2D1DeviceContext_Release(context);
     ID2D1Device_Release(device);
-    IDXGIDevice_Release(dxgi_device);
+    release_test_context(&ctx);
 }
 
 START_TEST(d2d1)
