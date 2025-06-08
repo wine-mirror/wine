@@ -1936,19 +1936,33 @@ file correctly deleted
 --- a batch file can alter itself
 bar
 ---------- Testing copy
+Passed: Did not find file1 in COPY output
 Passed: Found expected dummy.file
+Passed: Did not find file1 in COPY output
 Passed: Found expected dir1\file1
+Passed: Did not find file1 in COPY output
 Passed: Found expected dir1\file1
+Passed: Did not find file1 in COPY output
 Passed: Found expected dir1\file99
+Passed: Did not find file1 in COPY output
 Passed: Found expected file1
 Passed: Did not find dir2
 Passed: Did not find dir2\file1
+Passed: Found expected file1 in COPY output
+Passed: Found expected file2 in COPY output
+Passed: Found expected file3 in COPY output
 Passed: Found expected dir1\file1
 Passed: Found expected dir1\file2
 Passed: Found expected dir1\file3
+Passed: Found expected file1 in COPY output
+Passed: Found expected file2 in COPY output
+Passed: Found expected file3 in COPY output
 Passed: Found expected dir1\file1
 Passed: Found expected dir1\file2
 Passed: Found expected dir1\file3
+Passed: Found expected file1 in COPY output
+Passed: Found expected file2 in COPY output
+Passed: Found expected file3 in COPY output
 Passed: Found expected file1
 Passed: Found expected file2
 Passed: Found expected file3
@@ -1956,14 +1970,42 @@ Passed: Did not find dir2
 Passed: Did not find dir2\file1
 Passed: Did not find dir2\file2
 Passed: Did not find dir2\file3
+Passed: Did not find file2 in COPY output
 Passed: Found expected testfile
+Passed: Found expected file1 in COPY output
+Passed: Found expected file2 in COPY output
 Passed: Found expected testfile
+Passed: Found expected file1 in COPY output
+Passed: Found expected file2 in COPY output
+Passed: Found expected file3 in COPY output
 Passed: Found expected testfile
+Passed: Found expected file1 in COPY output
+Passed: Found expected file2 in COPY output
+Passed: Found expected file3 in COPY output
+Passed: Found expected fred in COPY output
 Passed: Found expected testfile
+Passed: Found expected fred in COPY output
+Passed: Found expected file1 in COPY output
+Passed: Found expected file2 in COPY output
+Passed: Found expected file3 in COPY output
 Passed: Found expected testfile
+Passed: Found expected fred in COPY output
+Passed: Found expected file1 in COPY output
+Passed: Found expected file2 in COPY output
+Passed: Found expected file3 in COPY output
 Passed: Found expected dir1\fred
+Passed: Found expected fred in COPY output
+Passed: Found expected file1 in COPY output
+Passed: Found expected file2 in COPY output
+Passed: Found expected file3 in COPY output
 Passed: Found expected dir1\fred
+Passed: Found expected fred in COPY output
+Passed: Found expected file1 in COPY output
+Passed: Found expected file2 in COPY output
+Passed: Found expected file3 in COPY output
 Passed: Found expected fred
+Passed: Found expected fred in COPY output
+Passed: Found expected file1 in COPY output
 Passed: Found expected fred
 Passed: file size check on file1 [5]@or_broken@Skipping file size check on NT4
 Passed: file size check on file2 [8]@or_broken@Skipping file size check on NT4
