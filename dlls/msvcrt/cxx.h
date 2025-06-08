@@ -59,112 +59,45 @@
 
 #ifndef RTTI_USE_RVA
 
-#define DEFINE_RTTI_DATA(name, off, base_classes_no, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
-static type_info name ## _type_info = { \
-    &type_info_vtable, \
-    NULL, \
-    mangled_name \
-}; \
+#define DEFINE_RTTI_DATA(name, off, mangled_name, ...) \
+static type_info name ## _type_info = { &type_info_vtable, NULL, mangled_name }; \
 \
-static const rtti_base_descriptor name ## _rtti_base_descriptor = { \
-    &name ##_type_info, \
-    base_classes_no, \
-    { 0, -1, 0}, \
-    64 \
-}; \
+static const rtti_base_descriptor name ## _rtti_base_descriptor = \
+    { &name ##_type_info, ARRAY_SIZE(((const void *[]){ __VA_ARGS__ })), { 0, -1, 0 }, 64 }; \
 \
-static const rtti_base_array name ## _rtti_base_array = { \
-    { \
-        &name ## _rtti_base_descriptor, \
-        cl1, \
-        cl2, \
-        cl3, \
-        cl4, \
-        cl5, \
-        cl6, \
-        cl7, \
-        cl8, \
-        cl9, \
-    } \
-}; \
+static const rtti_base_array name ## _rtti_base_array = \
+    { { &name ## _rtti_base_descriptor, __VA_ARGS__ } }; \
 \
-static const rtti_object_hierarchy name ## _hierarchy = { \
-    0, \
-    0, \
-    base_classes_no+1, \
-    &name ## _rtti_base_array \
-}; \
+static const rtti_object_hierarchy name ## _hierarchy = \
+    { 0, 0, ARRAY_SIZE(((const void *[]){ NULL, __VA_ARGS__ })), &name ## _rtti_base_array }; \
 \
-const rtti_object_locator name ## _rtti = { \
-    0, \
-    off, \
-    0, \
-    &name ## _type_info, \
-    &name ## _hierarchy \
-};
+const rtti_object_locator name ## _rtti = \
+    { 0, off, 0, &name ## _type_info, &name ## _hierarchy };
 
 #define INIT_RTTI(name,base) /* nothing to do */
 
 #else  /* RTTI_USE_RVA */
 
-#define DEFINE_RTTI_DATA(name, off, base_classes_no, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
-static type_info name ## _type_info = { \
-    &type_info_vtable, \
-    NULL, \
-    mangled_name \
-}; \
+#define DEFINE_RTTI_DATA(name, off, mangled_name, ...) \
+static type_info name ## _type_info = { &type_info_vtable, NULL, mangled_name }; \
 \
-static rtti_base_descriptor name ## _rtti_base_descriptor = { \
-    0xdeadbeef, \
-    base_classes_no, \
-    { 0, -1, 0}, \
-    64 \
-}; \
+static rtti_base_descriptor name ## _rtti_base_descriptor = \
+    { 0xdeadbeef, ARRAY_SIZE(((const void *[]){ __VA_ARGS__ })), { 0, -1, 0 }, 64 }; \
 \
-static rtti_base_array name ## _rtti_base_array = { \
-    { \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-    } \
-}; \
+static rtti_base_array name ## _rtti_base_array; \
 \
-static rtti_object_hierarchy name ## _hierarchy = { \
-    0, \
-    0, \
-    base_classes_no+1, \
-    0xdeadbeef \
-}; \
+static rtti_object_hierarchy name ## _hierarchy = \
+    { 0, 0, ARRAY_SIZE(((const void *[]){ NULL, __VA_ARGS__ })) }; \
 \
-rtti_object_locator name ## _rtti = { \
-    1, \
-    off, \
-    0, \
-    0xdeadbeef, \
-    0xdeadbeef, \
-    0xdeadbeef \
-};\
+rtti_object_locator name ## _rtti = \
+    { 1, off, 0, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef }; \
 \
 static void init_ ## name ## _rtti(char *base) \
 { \
+    const void * const name ## _rtti_bases[] = { &name ## _rtti_base_descriptor, __VA_ARGS__ }; \
     name ## _rtti_base_descriptor.type_descriptor = (char*)&name ## _type_info - base; \
-    name ## _rtti_base_array.bases[0] = (char*)&name ## _rtti_base_descriptor - base; \
-    name ## _rtti_base_array.bases[1] = (char*)cl1 - base; \
-    name ## _rtti_base_array.bases[2] = (char*)cl2 - base; \
-    name ## _rtti_base_array.bases[3] = (char*)cl3 - base; \
-    name ## _rtti_base_array.bases[4] = (char*)cl4 - base; \
-    name ## _rtti_base_array.bases[5] = (char*)cl5 - base; \
-    name ## _rtti_base_array.bases[6] = (char*)cl6 - base; \
-    name ## _rtti_base_array.bases[7] = (char*)cl7 - base; \
-    name ## _rtti_base_array.bases[8] = (char*)cl8 - base; \
-    name ## _rtti_base_array.bases[9] = (char*)cl9 - base; \
+    for (unsigned int i = 0; i < ARRAY_SIZE(name ## _rtti_bases); i++) \
+        name ## _rtti_base_array.bases[i] = (char*)name ## _rtti_bases[i] - base; \
     name ## _hierarchy.base_classes = (char*)&name ## _rtti_base_array - base; \
     name ## _rtti.type_descriptor = (char*)&name ## _type_info - base; \
     name ## _rtti.type_hierarchy = (char*)&name ## _hierarchy - base; \
@@ -212,23 +145,6 @@ static void init_ ## type ## _cxx(char *base) \
 #define INIT_CXX_TYPE(name,base) init_ ## name ## _cxx((void *)(base))
 
 #endif  /* CXX_USE_RVA */
-
-#define DEFINE_RTTI_DATA0(name, off, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, mangled_name)
-#define DEFINE_RTTI_DATA1(name, off, cl1, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 1, cl1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, mangled_name)
-#define DEFINE_RTTI_DATA2(name, off, cl1, cl2, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 2, cl1, cl2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, mangled_name)
-#define DEFINE_RTTI_DATA3(name, off, cl1, cl2, cl3, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 3, cl1, cl2, cl3, NULL, NULL, NULL, NULL, NULL, NULL, mangled_name)
-#define DEFINE_RTTI_DATA4(name, off, cl1, cl2, cl3, cl4, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 4, cl1, cl2, cl3, cl4, NULL, NULL, NULL, NULL, NULL, mangled_name)
-#define DEFINE_RTTI_DATA5(name, off, cl1, cl2, cl3, cl4, cl5, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 5, cl1, cl2, cl3, cl4, cl5, NULL, NULL, NULL, NULL, mangled_name)
-#define DEFINE_RTTI_DATA8(name, off, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 8, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, NULL, mangled_name)
-#define DEFINE_RTTI_DATA9(name, off, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 9, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name)
 
 #ifdef __ASM_USE_THISCALL_WRAPPER
 
@@ -449,7 +365,7 @@ void * __thiscall type_info_vector_dtor(type_info * _this, unsigned int flags) \
     return _this; \
 } \
 \
-DEFINE_RTTI_DATA0( type_info, 0, ".?AVtype_info@@" ) \
+DEFINE_RTTI_DATA( type_info, 0, ".?AVtype_info@@" ) \
 \
 __ASM_BLOCK_BEGIN(type_info_vtables) \
     __ASM_VTABLE(type_info, \

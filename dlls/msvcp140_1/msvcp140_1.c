@@ -116,17 +116,19 @@ __ASM_BLOCK_BEGIN(vtables)
             VTABLE_ADD_FUNC(do_is_equal));
 __ASM_BLOCK_END
 
-DEFINE_RTTI_DATA0(base_memory_resource, 0, ".?AVmemory_resource@pmr@std@@")
-DEFINE_RTTI_DATA0(_Identity_equal_resource, 0, ".?AV_Identity_equal_resource@pmr@std@@")
-DEFINE_RTTI_DATA2(aligned_resource, 0, &_Identity_equal_resource_rtti_base_descriptor,
-        &base_memory_resource_rtti_base_descriptor,
-        ".?AV_Aligned_new_delete_resource_impl@pmr@std@@")
-DEFINE_RTTI_DATA2(unaligned_resource, 0, &_Identity_equal_resource_rtti_base_descriptor,
-        &base_memory_resource_rtti_base_descriptor,
-        ".?AV_Unaligned_new_delete_resource_impl@pmr@std@@")
-DEFINE_RTTI_DATA2(null_resource, 0, &_Identity_equal_resource_rtti_base_descriptor,
-        &base_memory_resource_rtti_base_descriptor,
-        ".?AV_Null_resource@?1??null_memory_resource@@YAPAVmemory_resource@pmr@std@@XZ")
+DEFINE_RTTI_DATA(base_memory_resource, 0, ".?AVmemory_resource@pmr@std@@")
+DEFINE_RTTI_DATA(_Identity_equal_resource, 0, ".?AV_Identity_equal_resource@pmr@std@@")
+DEFINE_RTTI_DATA(aligned_resource, 0, ".?AV_Aligned_new_delete_resource_impl@pmr@std@@",
+        &_Identity_equal_resource_rtti_base_descriptor,
+        &base_memory_resource_rtti_base_descriptor)
+DEFINE_RTTI_DATA(unaligned_resource, 0,
+        ".?AV_Unaligned_new_delete_resource_impl@pmr@std@@",
+        &_Identity_equal_resource_rtti_base_descriptor,
+        &base_memory_resource_rtti_base_descriptor)
+DEFINE_RTTI_DATA(null_resource, 0,
+        ".?AV_Null_resource@?1??null_memory_resource@@YAPAVmemory_resource@pmr@std@@XZ",
+        &_Identity_equal_resource_rtti_base_descriptor,
+        &base_memory_resource_rtti_base_descriptor)
 
 DEFINE_THISCALL_WRAPPER(nop_dtor, 4)
 void __thiscall nop_dtor(void *this)

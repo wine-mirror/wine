@@ -368,6 +368,6 @@ __ASM_VTABLE(exception_name, \
         VTABLE_ADD_FUNC(exception_name ## _what)); \
 __ASM_BLOCK_END \
 \
-DEFINE_RTTI_DATA0(exception_name, 0, EXCEPTION_MANGLED_NAME)
+DEFINE_RTTI_DATA(exception_name, 0, EXCEPTION_MANGLED_NAME)
 
 #endif /* __MSVCRT_CPPEXCEPT_H */
