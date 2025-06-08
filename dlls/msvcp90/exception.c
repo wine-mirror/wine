@@ -205,7 +205,7 @@ DEFINE_RTTI_DATA0(exception, 0, ".?AVexception@std@@")
 #else
 DEFINE_RTTI_DATA0(exception, 0, ".?AVexception@@")
 #endif
-DEFINE_CXX_DATA0(exception, MSVCP_exception_dtor)
+DEFINE_CXX_TYPE(exception, MSVCP_exception_dtor)
 
 /* bad_alloc class data */
 typedef exception bad_alloc;
@@ -280,7 +280,7 @@ bad_alloc* __thiscall MSVCP_bad_alloc_assign(bad_alloc *this, const bad_alloc *a
 }
 
 DEFINE_RTTI_DATA1(bad_alloc, 0, &exception_rtti_base_descriptor, ".?AVbad_alloc@std@@")
-DEFINE_CXX_DATA1(bad_alloc, &exception_cxx_type_info, MSVCP_bad_alloc_dtor)
+DEFINE_CXX_TYPE(bad_alloc, MSVCP_bad_alloc_dtor, &exception_cxx_type_info)
 
 /* logic_error class data */
 typedef struct {
@@ -411,7 +411,7 @@ DEFINE_RTTI_DATA1(logic_error, 0, &exception_rtti_base_descriptor, ".?AVlogic_er
 #else
 DEFINE_RTTI_DATA1(logic_error, 0, &exception_rtti_base_descriptor, ".?AVlogic_error@@")
 #endif
-DEFINE_CXX_DATA1(logic_error, &exception_cxx_type_info, MSVCP_logic_error_dtor)
+DEFINE_CXX_TYPE(logic_error, MSVCP_logic_error_dtor, &exception_cxx_type_info)
 
 /* length_error class data */
 typedef logic_error length_error;
@@ -458,7 +458,7 @@ length_error* __thiscall MSVCP_length_error_assign(length_error *this, const len
 }
 
 DEFINE_RTTI_DATA2(length_error, 0, &logic_error_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AVlength_error@std@@")
-DEFINE_CXX_DATA2(length_error, &logic_error_cxx_type_info, &exception_cxx_type_info, MSVCP_logic_error_dtor)
+DEFINE_CXX_TYPE(length_error, MSVCP_logic_error_dtor, &logic_error_cxx_type_info, &exception_cxx_type_info)
 
 /* out_of_range class data */
 typedef logic_error out_of_range;
@@ -505,7 +505,7 @@ out_of_range* __thiscall MSVCP_out_of_range_assign(out_of_range *this, const out
 }
 
 DEFINE_RTTI_DATA2(out_of_range, 0, &logic_error_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AVout_of_range@std@@")
-DEFINE_CXX_DATA2(out_of_range, &logic_error_cxx_type_info, &exception_cxx_type_info, MSVCP_logic_error_dtor)
+DEFINE_CXX_TYPE(out_of_range, MSVCP_logic_error_dtor, &logic_error_cxx_type_info, &exception_cxx_type_info)
 
 /* invalid_argument class data */
 typedef logic_error invalid_argument;
@@ -529,7 +529,7 @@ invalid_argument* __thiscall invalid_argument_copy_ctor(
 }
 
 DEFINE_RTTI_DATA2(invalid_argument, 0, &logic_error_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AVinvalid_argument@std@@")
-DEFINE_CXX_DATA2(invalid_argument, &logic_error_cxx_type_info,  &exception_cxx_type_info, MSVCP_logic_error_dtor)
+DEFINE_CXX_TYPE(invalid_argument, MSVCP_logic_error_dtor, &logic_error_cxx_type_info,  &exception_cxx_type_info)
 
 /* runtime_error class data */
 typedef struct {
@@ -641,7 +641,7 @@ const char* __thiscall MSVCP_runtime_error_what(runtime_error *this)
 }
 
 DEFINE_RTTI_DATA1(runtime_error, 0, &exception_rtti_base_descriptor, ".?AVruntime_error@std@@")
-DEFINE_CXX_DATA1(runtime_error, &exception_cxx_type_info, MSVCP_runtime_error_dtor)
+DEFINE_CXX_TYPE(runtime_error, MSVCP_runtime_error_dtor, &exception_cxx_type_info)
 
 /* failure class data */
 typedef struct {
@@ -731,29 +731,25 @@ DEFINE_RTTI_DATA3(system_error, 0, &_System_error_rtti_base_descriptor,
 DEFINE_RTTI_DATA4(failure, 0, &system_error_rtti_base_descriptor,
         &_System_error_rtti_base_descriptor, &runtime_error_rtti_base_descriptor,
         &exception_rtti_base_descriptor, ".?AVfailure@ios_base@std@@")
-DEFINE_CXX_DATA2(_System_error, &runtime_error_cxx_type_info, &exception_cxx_type_info,
-        MSVCP_runtime_error_dtor)
-DEFINE_CXX_DATA3(system_error, &_System_error_cxx_type_info,
-        &runtime_error_cxx_type_info, &exception_cxx_type_info,
-        MSVCP_runtime_error_dtor)
-DEFINE_CXX_DATA4(failure, &system_error_cxx_type_info,
+DEFINE_CXX_TYPE(_System_error, MSVCP_runtime_error_dtor, &runtime_error_cxx_type_info, &exception_cxx_type_info)
+DEFINE_CXX_TYPE(system_error, MSVCP_runtime_error_dtor, &_System_error_cxx_type_info,
+                 &runtime_error_cxx_type_info, &exception_cxx_type_info)
+DEFINE_CXX_TYPE(failure, MSVCP_runtime_error_dtor, &system_error_cxx_type_info,
         &_System_error_cxx_type_info, &runtime_error_cxx_type_info,
-        &exception_cxx_type_info, MSVCP_runtime_error_dtor)
+        &exception_cxx_type_info)
 #elif _MSVCP_VER > 90
 DEFINE_RTTI_DATA2(system_error, 0, &runtime_error_rtti_base_descriptor,
         &exception_rtti_base_descriptor, ".?AVsystem_error@std@@")
 DEFINE_RTTI_DATA3(failure, 0, &system_error_rtti_base_descriptor,
         &runtime_error_rtti_base_descriptor, &exception_rtti_base_descriptor,
         ".?AVfailure@ios_base@std@@")
-DEFINE_CXX_DATA2(system_error, &runtime_error_cxx_type_info,
-        &exception_cxx_type_info, MSVCP_runtime_error_dtor)
-DEFINE_CXX_DATA3(failure, &system_error_cxx_type_info, &runtime_error_cxx_type_info,
-        &exception_cxx_type_info, MSVCP_runtime_error_dtor)
+DEFINE_CXX_TYPE(system_error, MSVCP_runtime_error_dtor, &runtime_error_cxx_type_info, &exception_cxx_type_info)
+DEFINE_CXX_TYPE(failure, MSVCP_runtime_error_dtor, &system_error_cxx_type_info,
+                 &runtime_error_cxx_type_info, &exception_cxx_type_info)
 #else
 DEFINE_RTTI_DATA2(failure, 0, &runtime_error_rtti_base_descriptor,
         &exception_rtti_base_descriptor, ".?AVfailure@ios_base@std@@")
-DEFINE_CXX_DATA2(failure, &runtime_error_cxx_type_info,
-        &exception_cxx_type_info, MSVCP_runtime_error_dtor)
+DEFINE_CXX_TYPE(failure, MSVCP_runtime_error_dtor, &runtime_error_cxx_type_info, &exception_cxx_type_info)
 #endif
 
 /* bad_cast class data */
@@ -879,7 +875,7 @@ range_error* __thiscall MSVCP_range_error_assign(range_error *this, const range_
 }
 
 DEFINE_RTTI_DATA2(range_error, 0, &runtime_error_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AVrange_error@std@@")
-DEFINE_CXX_DATA2(range_error, &runtime_error_cxx_type_info, &exception_cxx_type_info, MSVCP_runtime_error_dtor)
+DEFINE_CXX_TYPE(range_error, MSVCP_runtime_error_dtor, &runtime_error_cxx_type_info, &exception_cxx_type_info)
 
 #if _MSVCP_VER > 90
 /* bad_function_call class data */
@@ -905,7 +901,7 @@ bad_function_call* __thiscall bad_function_call_copy_ctor(bad_function_call *thi
 }
 
 DEFINE_RTTI_DATA1(bad_function_call, 0, &exception_rtti_base_descriptor, ".?AVbad_function_call@std@@")
-DEFINE_CXX_DATA1(bad_function_call, &exception_cxx_type_info, MSVCP_exception_dtor)
+DEFINE_CXX_TYPE(bad_function_call, MSVCP_exception_dtor, &exception_cxx_type_info)
 #endif
 
 /* ?_Nomemory@std@@YAXXZ */
@@ -1060,8 +1056,8 @@ const char* __thiscall MSVCP_future_error_what(future_error *this)
 DEFINE_RTTI_DATA3(future_error, 0, &future_error_rtti_base_descriptor,
         &logic_error_rtti_base_descriptor, &exception_rtti_base_descriptor,
         ".?AVfuture_error@std@@")
-DEFINE_CXX_DATA3(future_error, &logic_error_cxx_type_info, &logic_error_cxx_type_info,
-        &exception_cxx_type_info, MSVCP_logic_error_dtor)
+DEFINE_CXX_TYPE(future_error, MSVCP_logic_error_dtor, &logic_error_cxx_type_info,
+                 &logic_error_cxx_type_info, &exception_cxx_type_info)
 
 /* ?_Throw_future_error@std@@YAXABVerror_code@1@@Z */
 /* ?_Throw_future_error@std@@YAXAEBVerror_code@1@@Z */

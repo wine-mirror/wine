@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 typedef exception cexception;
 CREATE_EXCEPTION_OBJECT(cexception)
-DEFINE_CXX_DATA0(cexception, cexception_dtor)
+DEFINE_CXX_TYPE(cexception, cexception_dtor)
 
 static LONG context_id = -1;
 static LONG scheduler_id = -1;
@@ -721,17 +721,17 @@ DEFINE_RTTI_DATA1(missing_wait, 0, &cexception_rtti_base_descriptor,
 DEFINE_RTTI_DATA1(scheduler_resource_allocation_error, 0, &cexception_rtti_base_descriptor,
         ".?AVscheduler_resource_allocation_error@Concurrency@@")
 
-DEFINE_CXX_DATA1(improper_lock, &cexception_cxx_type_info, cexception_dtor)
-DEFINE_CXX_DATA1(improper_scheduler_attach, &cexception_cxx_type_info, cexception_dtor)
-DEFINE_CXX_DATA1(improper_scheduler_detach, &cexception_cxx_type_info, cexception_dtor)
-DEFINE_CXX_DATA1(invalid_multiple_scheduling, &cexception_cxx_type_info, cexception_dtor)
-DEFINE_CXX_DATA1(invalid_scheduler_policy_key, &cexception_cxx_type_info, cexception_dtor)
-DEFINE_CXX_DATA1(invalid_scheduler_policy_thread_specification, &cexception_cxx_type_info, cexception_dtor)
-DEFINE_CXX_DATA1(invalid_scheduler_policy_value, &cexception_cxx_type_info, cexception_dtor)
+DEFINE_CXX_TYPE(improper_lock, cexception_dtor, &cexception_cxx_type_info)
+DEFINE_CXX_TYPE(improper_scheduler_attach, cexception_dtor, &cexception_cxx_type_info)
+DEFINE_CXX_TYPE(improper_scheduler_detach, cexception_dtor, &cexception_cxx_type_info)
+DEFINE_CXX_TYPE(invalid_multiple_scheduling, cexception_dtor, &cexception_cxx_type_info)
+DEFINE_CXX_TYPE(invalid_scheduler_policy_key, cexception_dtor, &cexception_cxx_type_info)
+DEFINE_CXX_TYPE(invalid_scheduler_policy_thread_specification, cexception_dtor, &cexception_cxx_type_info)
+DEFINE_CXX_TYPE(invalid_scheduler_policy_value, cexception_dtor, &cexception_cxx_type_info)
 #if _MSVCR_VER >= 120
-DEFINE_CXX_DATA1(missing_wait, &cexception_cxx_type_info, cexception_dtor)
+DEFINE_CXX_TYPE(missing_wait, cexception_dtor, &cexception_cxx_type_info)
 #endif
-DEFINE_CXX_DATA1(scheduler_resource_allocation_error, &cexception_cxx_type_info, cexception_dtor)
+DEFINE_CXX_TYPE(scheduler_resource_allocation_error, cexception_dtor, &cexception_cxx_type_info)
 
 __ASM_BLOCK_BEGIN(concurrency_exception_vtables)
     __ASM_VTABLE(improper_lock,

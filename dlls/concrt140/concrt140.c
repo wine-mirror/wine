@@ -91,13 +91,12 @@ __ASM_VTABLE(range_error,
         VTABLE_ADD_FUNC(exception_what));
 __ASM_BLOCK_END
 
-DEFINE_CXX_DATA0( exception, exception_dtor )
+DEFINE_CXX_TYPE( exception, exception_dtor )
 DEFINE_RTTI_DATA1(runtime_error, 0, &exception_rtti_base_descriptor, ".?AVruntime_error@std@@")
-DEFINE_CXX_DATA1(runtime_error, &exception_cxx_type_info, exception_dtor)
+DEFINE_CXX_TYPE(runtime_error, exception_dtor, &exception_cxx_type_info)
 DEFINE_RTTI_DATA2(range_error, 0, &runtime_error_rtti_base_descriptor,
         &exception_rtti_base_descriptor, ".?AVrange_error@std@@")
-DEFINE_CXX_DATA2(range_error, &runtime_error_cxx_type_info,
-        &exception_cxx_type_info, exception_dtor)
+DEFINE_CXX_TYPE(range_error, exception_dtor, &runtime_error_cxx_type_info, &exception_cxx_type_info)
 
 void DECLSPEC_NORETURN throw_range_error(const char *str)
 {
