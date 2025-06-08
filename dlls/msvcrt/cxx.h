@@ -59,22 +59,19 @@
 
 #ifndef RTTI_USE_RVA
 
-#define DEFINE_RTTI_BASE(name, base_classes_no, mangled_name) \
-    static type_info name ## _type_info = { \
-        &type_info_vtable, \
-        NULL, \
-        mangled_name \
-    }; \
+#define DEFINE_RTTI_DATA(name, off, base_classes_no, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
+static type_info name ## _type_info = { \
+    &type_info_vtable, \
+    NULL, \
+    mangled_name \
+}; \
 \
 static const rtti_base_descriptor name ## _rtti_base_descriptor = { \
     &name ##_type_info, \
     base_classes_no, \
     { 0, -1, 0}, \
     64 \
-};
-
-#define DEFINE_RTTI_DATA(name, off, base_classes_no, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
-    DEFINE_RTTI_BASE(name, base_classes_no, mangled_name) \
+}; \
 \
 static const rtti_base_array name ## _rtti_base_array = { \
     { \
@@ -110,30 +107,19 @@ const rtti_object_locator name ## _rtti = { \
 
 #else  /* RTTI_USE_RVA */
 
-#define __DEFINE_RTTI_BASE(name, base_classes_no, mangled_name) \
-    static type_info name ## _type_info = { \
-        &type_info_vtable, \
-        NULL, \
-        mangled_name \
-    }; \
+#define DEFINE_RTTI_DATA(name, off, base_classes_no, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
+static type_info name ## _type_info = { \
+    &type_info_vtable, \
+    NULL, \
+    mangled_name \
+}; \
 \
 static rtti_base_descriptor name ## _rtti_base_descriptor = { \
     0xdeadbeef, \
     base_classes_no, \
     { 0, -1, 0}, \
     64 \
-};
-
-#define DEFINE_RTTI_BASE(name, base_classes_no, mangled_name) \
-    __DEFINE_RTTI_BASE(name, base_classes_no, mangled_name) \
-    \
-    static void init_ ## name ## _rtti(char *base) \
-    { \
-        name ## _rtti_base_descriptor.type_descriptor = (char*)&name ## _type_info - base; \
-    }
-
-#define DEFINE_RTTI_DATA(name, off, base_classes_no, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
-    __DEFINE_RTTI_BASE(name, base_classes_no, mangled_name) \
+}; \
 \
 static rtti_base_array name ## _rtti_base_array = { \
     { \

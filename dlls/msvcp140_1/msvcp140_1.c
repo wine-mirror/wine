@@ -116,8 +116,8 @@ __ASM_BLOCK_BEGIN(vtables)
             VTABLE_ADD_FUNC(do_is_equal));
 __ASM_BLOCK_END
 
-DEFINE_RTTI_BASE(base_memory_resource, 0, ".?AVmemory_resource@pmr@std@@")
-DEFINE_RTTI_BASE(_Identity_equal_resource, 0, ".?AV_Identity_equal_resource@pmr@std@@")
+DEFINE_RTTI_DATA0(base_memory_resource, 0, ".?AVmemory_resource@pmr@std@@")
+DEFINE_RTTI_DATA0(_Identity_equal_resource, 0, ".?AV_Identity_equal_resource@pmr@std@@")
 DEFINE_RTTI_DATA2(aligned_resource, 0, &_Identity_equal_resource_rtti_base_descriptor,
         &base_memory_resource_rtti_base_descriptor,
         ".?AV_Aligned_new_delete_resource_impl@pmr@std@@")
