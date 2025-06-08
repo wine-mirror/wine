@@ -432,6 +432,8 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
         WARN("Duplicate addition of line number in %s\n", debugstr_a(func->hash_elt.name));
         return;
     }
+    /* clear previous last */
+    if (prev) prev->is_last = 0;
     if (!last_matches)
     {
         /* we shouldn't have line changes on first line of function */
@@ -442,8 +444,6 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
         dli->line_number    = 0;
         dli->u.source_file  = source_idx;
     }
-    /* clear previous last */
-    if (prev) prev->is_last = 0;
     dli = vector_add(&func->vlines, &module->pool);
     dli->is_source_file = 0;
     dli->is_first       = 0; /* only a source file can be first */
