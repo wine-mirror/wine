@@ -5711,9 +5711,7 @@ static void test_GetFinalPathNameByHandleW(void)
 
     memset(result_path, 0xcb, sizeof(result_path));
     count = pGetFinalPathNameByHandleW(file, result_path, ARRAY_SIZE(result_path), FILE_NAME_NORMALIZED);
-    todo_wine
     ok(count == lstrlenW(test_path), "Expected length %u, got %lu\n", lstrlenW(test_path), count);
-    todo_wine
     ok(lstrcmpiW(test_path, result_path) == 0, "Expected %s, got %s\n",
        wine_dbgstr_w(test_path), wine_dbgstr_w(result_path));
     CloseHandle(file);
