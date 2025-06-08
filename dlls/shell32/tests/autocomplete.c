@@ -275,6 +275,9 @@ struct string_enumerator
     int cur;
     UINT num_resets;
     UINT num_expand;
+    UINT num_next;
+    HRESULT no_next_str_hr;
+    HRESULT next_str_hr;
     WCHAR last_expand[32];
 };
 
@@ -324,24 +327,27 @@ static ULONG WINAPI string_enumerator_Release(IEnumString *iface)
 static HRESULT WINAPI string_enumerator_Next(IEnumString *iface, ULONG num, LPOLESTR *strings, ULONG *num_returned)
 {
     struct string_enumerator *this = impl_from_IEnumString(iface);
-    int i, len;
+    int len;
 
-    *num_returned = 0;
-    for (i = 0; i < num; i++)
-    {
-        if (this->cur >= this->data_len)
-            return S_FALSE;
+    this->num_next++;
 
-        len = lstrlenW(this->data[this->cur]) + 1;
+    /* Strings are always enumerated one at a time. */
+    ok(num == 1, "Expected request for only 1 string, got %lu\n", num);
 
-        strings[i] = CoTaskMemAlloc(len * sizeof(WCHAR));
-        memcpy(strings[i], this->data[this->cur], len * sizeof(WCHAR));
+    /* Write a bogus value through num_returned to show it is completely ignored. */
+    *num_returned = 0xdeadbeef;
 
-        (*num_returned)++;
-        this->cur++;
-    }
+    if (this->cur >= this->data_len)
+        return this->no_next_str_hr;
 
-    return S_OK;
+    len = lstrlenW(this->data[this->cur]) + 1;
+
+    strings[0] = CoTaskMemAlloc(len * sizeof(WCHAR));
+    memcpy(strings[0], this->data[this->cur], len * sizeof(WCHAR));
+
+    this->cur++;
+
+    return this->next_str_hr;
 }
 
 static HRESULT WINAPI string_enumerator_Reset(IEnumString *iface)
@@ -432,6 +438,8 @@ static HRESULT string_enumerator_create(void **ppv, WCHAR **suggestions, int cou
     object->data = suggestions;
     object->data_len = count;
     object->cur = 0;
+    object->no_next_str_hr = S_FALSE;
+    object->next_str_hr = S_OK;
 
     *ppv = &object->IEnumString_iface;
 
@@ -687,6 +695,94 @@ static void test_prefix_filtering(HWND hwnd_edit)
     IUnknown_Release(enumerator);
 }
 
+static void test_string_enumerator(HWND hwnd_edit)
+{
+    static WCHAR str0[] = L"aa";
+    static WCHAR *suggestions[] = { str0 };
+    IUnknown *enumerator;
+    struct string_enumerator *obj;
+    IAutoComplete2 *autocomplete;
+    IAutoCompleteDropDown *acdropdown;
+    WCHAR buffer[20];
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_AutoComplete, NULL, CLSCTX_INPROC_SERVER, &IID_IAutoComplete2, (void**)&autocomplete);
+    ok(hr == S_OK, "CoCreateInstance failed: %lx\n", hr);
+
+    hr = IAutoComplete2_QueryInterface(autocomplete, &IID_IAutoCompleteDropDown, (LPVOID*)&acdropdown);
+    ok(hr == S_OK, "No IAutoCompleteDropDown interface: %lx\n", hr);
+
+    string_enumerator_create((void**)&enumerator, suggestions, ARRAY_SIZE(suggestions));
+    obj = (struct string_enumerator*)enumerator;
+
+    hr = IAutoComplete2_SetOptions(autocomplete, ACO_AUTOSUGGEST | ACO_AUTOAPPEND);
+    ok(hr == S_OK, "IAutoComplete2_SetOptions failed: %lx\n", hr);
+    hr = IAutoComplete2_Init(autocomplete, hwnd_edit, enumerator, NULL, NULL);
+    ok(hr == S_OK, "IAutoComplete_Init failed: %lx\n", hr);
+    ok(obj->num_next == 0, "Expected 0 next calls, got %u\n", obj->num_next);
+
+    /* Returning S_FALSE immediately from the string enumerator Next method yields
+     * no usable suggestion strings. */
+    obj->data_len = 0;
+    obj->num_next = 0;
+    obj->no_next_str_hr = S_FALSE;
+    obj->next_str_hr = S_OK;
+    SendMessageW(hwnd_edit, EM_SETSEL, 0, -1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'a', 1);
+    dispatch_messages();
+    ok(obj->num_next == 1, "Expected 1 next call, got %u\n", obj->num_next);
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(L"a", buffer) == 0, "Expected \"a\", got %s\n", wine_dbgstr_w(buffer));
+    hr = IAutoCompleteDropDown_ResetEnumerator(acdropdown);
+    ok(hr == S_OK, "IAutoCompleteDropDown_ResetEnumerator failed: %lx\n", hr);
+
+    /* Returning a failure HRESULT in the same scenario yields the same behavior. */
+    obj->data_len = 0;
+    obj->num_next = 0;
+    obj->no_next_str_hr = E_NOTIMPL;
+    obj->next_str_hr = S_OK;
+    SendMessageW(hwnd_edit, EM_SETSEL, 0, -1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'a', 1);
+    dispatch_messages();
+    ok(obj->num_next == 1, "Expected 1 next call, got %u\n", obj->num_next);
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(L"a", buffer) == 0, "Expected \"a\", got %s\n", wine_dbgstr_w(buffer));
+    hr = IAutoCompleteDropDown_ResetEnumerator(acdropdown);
+    ok(hr == S_OK, "IAutoCompleteDropDown_ResetEnumerator failed: %lx\n", hr);
+
+    /* Any string retrieved when returning S_FALSE from the string enumerator
+     * Next method is ignored. */
+    obj->data_len = ARRAY_SIZE(suggestions);
+    obj->num_next = 0;
+    obj->no_next_str_hr = S_FALSE;
+    obj->next_str_hr = S_FALSE;
+    SendMessageW(hwnd_edit, EM_SETSEL, 0, -1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'a', 1);
+    dispatch_messages();
+    ok(obj->num_next == 1, "Expected 1 next call, got %u\n", obj->num_next);
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(L"a", buffer) == 0, "Expected \"a\", got %s\n", wine_dbgstr_w(buffer));
+    hr = IAutoCompleteDropDown_ResetEnumerator(acdropdown);
+    ok(hr == S_OK, "IAutoCompleteDropDown_ResetEnumerator failed: %lx\n", hr);
+
+    /* Returning a failure HRESULT in the same scenario yields the same behavior. */
+    obj->data_len = ARRAY_SIZE(suggestions);
+    obj->num_next = 0;
+    obj->no_next_str_hr = S_FALSE;
+    obj->next_str_hr = E_NOTIMPL;
+    SendMessageW(hwnd_edit, EM_SETSEL, 0, -1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'a', 1);
+    dispatch_messages();
+    ok(obj->num_next == 1, "Expected 1 next call, got %u\n", obj->num_next);
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(L"a", buffer) == 0, "Expected \"a\", got %s\n", wine_dbgstr_w(buffer));
+    hr = IAutoCompleteDropDown_ResetEnumerator(acdropdown);
+    ok(hr == S_OK, "IAutoCompleteDropDown_ResetEnumerator failed: %lx\n", hr);
+
+    IAutoComplete2_Release(autocomplete);
+    IUnknown_Release(enumerator);
+}
+
 static void test_custom_source(void)
 {
     static WCHAR str_alpha[] = L"test1";
@@ -805,6 +901,7 @@ static void test_custom_source(void)
     IUnknown_Release(enumerator);
 
     test_prefix_filtering(hwnd_edit);
+    test_string_enumerator(hwnd_edit);
 
     ShowWindow(hMainWnd, SW_HIDE);
     DestroyWindow(hwnd_edit);

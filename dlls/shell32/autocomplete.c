@@ -205,7 +205,7 @@ static void enumerate_strings(IAutoCompleteImpl *ac, enum prefix_filtering pfx_f
 {
     UINT cur = 0, array_size = 1024;
     LPOLESTR *strs = NULL, *tmp;
-    ULONG read;
+    BOOL str_read = FALSE;
 
     do
     {
@@ -215,12 +215,17 @@ static void enumerate_strings(IAutoCompleteImpl *ac, enum prefix_filtering pfx_f
 
         do
         {
-            if (FAILED(IEnumString_Next(ac->enumstr, array_size - cur, &strs[cur], &read)))
-                read = 0;
-        } while (read != 0 && (cur += read) < array_size);
+            /* An implementation of IEnumString::Next in the ETQW World Editor
+               never initializes the output number of strings returned, so to
+               determine if a string was successfully retrieved, just enumerate
+               one string at a time and check the returned HRESULT. */
+            ULONG dummy;
+            HRESULT hr = IEnumString_Next(ac->enumstr, 1, &strs[cur], &dummy);
+            str_read = SUCCEEDED(hr) && hr != S_FALSE;
+        } while (str_read && ++cur < array_size);
 
         array_size *= 2;
-    } while (read != 0);
+    } while (str_read);
 
     /* Allocate even if there were zero strings enumerated, to mark it non-NULL */
     if ((tmp = realloc(strs, cur * sizeof(*strs))))
