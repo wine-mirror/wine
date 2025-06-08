@@ -5558,8 +5558,8 @@ static void test_GetFinalPathNameByHandleW(void)
     static WCHAR prefix[] = {'G','e','t','F','i','n','a','l','P','a','t','h',
                              'N','a','m','e','B','y','H','a','n','d','l','e','W','\0'};
     static WCHAR dos_prefix[] = {'\\','\\','?','\\','\0'};
-    WCHAR temp_path[MAX_PATH], test_path[MAX_PATH];
-    WCHAR long_path[MAX_PATH], result_path[MAX_PATH];
+    WCHAR temp_path[MAX_PATH], test_path[MAX_PATH * 2];
+    WCHAR long_path[MAX_PATH], result_path[MAX_PATH * 2];
     WCHAR dos_path[MAX_PATH + sizeof(dos_prefix)];
     WCHAR drive_part[MAX_PATH];
     WCHAR *file_part;
@@ -5568,7 +5568,7 @@ static void test_GetFinalPathNameByHandleW(void)
     BOOL success;
     HANDLE file;
     DWORD count;
-    UINT ret;
+    UINT i, ret;
 
     if (!pGetFinalPathNameByHandleW)
     {
@@ -5697,6 +5697,25 @@ static void test_GetFinalPathNameByHandleW(void)
     ok(count == lstrlenW(dos_path), "Expected length %u, got %lu\n", lstrlenW(dos_path), count);
     ok(lstrcmpiW(dos_path, result_path) == 0, "Expected %s, got %s\n",
        wine_dbgstr_w(dos_path), wine_dbgstr_w(result_path));
+    CloseHandle(file);
+
+    lstrcpyW(test_path, L"\\\\?\\");
+    lstrcatW(test_path, temp_path);
+    for (i = 0; i < ARRAY_SIZE(long_path) - 5; i++) long_path[i] = 'a';
+    long_path[i] = 0;
+    lstrcatW(test_path, long_path);
+
+    file = CreateFileW(test_path, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                       CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileW error %lu\n", GetLastError());
+
+    memset(result_path, 0xcb, sizeof(result_path));
+    count = pGetFinalPathNameByHandleW(file, result_path, ARRAY_SIZE(result_path), FILE_NAME_NORMALIZED);
+    todo_wine
+    ok(count == lstrlenW(test_path), "Expected length %u, got %lu\n", lstrlenW(test_path), count);
+    todo_wine
+    ok(lstrcmpiW(test_path, result_path) == 0, "Expected %s, got %s\n",
+       wine_dbgstr_w(test_path), wine_dbgstr_w(result_path));
     CloseHandle(file);
 }
 
