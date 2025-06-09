@@ -869,15 +869,12 @@ static inline void/*rtti_object_locator*/ *get_obj_locator( void *cppobj )
     return (void *)vtable[-1];
 }
 
-#ifdef __i386__
-#define DEFINE_RTTI_REF(type, name) type *name
-#define RTTI_REF(instance, name) &instance.name
-#define RTTI_REF_SIG0(instance, name, base) RTTI_REF(instance, name)
+#ifndef _WIN64
+#define RTTI_REF(instance, name) (uintptr_t)&instance.name
 #else
-#define DEFINE_RTTI_REF(type, name) unsigned name
 #define RTTI_REF(instance, name) FIELD_OFFSET(struct rtti_data, name)
-#define RTTI_REF_SIG0(instance, name, base) ((char*)&instance.name-base)
 #endif
+#define RVA(ptr,base) ((uintptr_t)ptr - base)
 /* Test RTTI functions */
 static void test_rtti(void)
 {
@@ -886,14 +883,14 @@ static void test_rtti(void)
       unsigned int signature;
       int base_class_offset;
       unsigned int flags;
-      DEFINE_RTTI_REF(type_info, type_descriptor);
-      DEFINE_RTTI_REF(struct _rtti_object_hierarchy, type_hierarchy);
-      DEFINE_RTTI_REF(void, object_locator);
+      unsigned int type_descriptor;
+      unsigned int type_hierarchy;
+      unsigned int object_locator;
   } *obj_locator;
 
   struct _rtti_base_descriptor
   {
-    DEFINE_RTTI_REF(type_info, type_descriptor);
+    unsigned int type_descriptor;
     int num_base_classes;
     struct {
       int this_offset;
@@ -904,14 +901,14 @@ static void test_rtti(void)
   };
 
   struct _rtti_base_array {
-    DEFINE_RTTI_REF(struct _rtti_base_descriptor, bases[4]);
+    unsigned int bases[4];
   };
 
   struct _rtti_object_hierarchy {
     unsigned int signature;
     unsigned int attributes;
     int array_len;
-    DEFINE_RTTI_REF(struct _rtti_base_array, base_classes);
+    unsigned int base_classes;
   };
 
   struct rtti_data
@@ -970,8 +967,10 @@ static void test_rtti(void)
   exception e,b;
   void *casted;
   BOOL old_signature;
-#ifndef __i386__
-  char *base = (char*)GetModuleHandleW(NULL);
+#ifndef _WIN64
+  uintptr_t base = 0;
+#else
+  uintptr_t base = (uintptr_t)GetModuleHandleW(NULL);
 #endif
 
   if (!p__RTCastToVoid || !p__RTtypeid || !pexception_ctor || !pbad_typeid_ctor
@@ -1011,21 +1010,21 @@ static void test_rtti(void)
 
   simple_class_sig0_rtti = simple_class_rtti;
   simple_class_sig0_rtti.object_locator.signature = 0;
-  simple_class_sig0_rtti.base_descriptor[0].type_descriptor = RTTI_REF_SIG0(simple_class_sig0_rtti, type_info[0], base);
-  simple_class_sig0_rtti.base_array.bases[0] = RTTI_REF_SIG0(simple_class_sig0_rtti, base_descriptor[0], base);
-  simple_class_sig0_rtti.object_hierarchy.base_classes = RTTI_REF_SIG0(simple_class_sig0_rtti, base_array, base);
-  simple_class_sig0_rtti.object_locator.type_descriptor = RTTI_REF_SIG0(simple_class_sig0_rtti, type_info[0], base);
-  simple_class_sig0_rtti.object_locator.type_hierarchy = RTTI_REF_SIG0(simple_class_sig0_rtti, object_hierarchy, base);
+  simple_class_sig0_rtti.base_descriptor[0].type_descriptor = RVA(&simple_class_sig0_rtti.type_info[0], base);
+  simple_class_sig0_rtti.base_array.bases[0] = RVA(&simple_class_sig0_rtti.base_descriptor[0], base);
+  simple_class_sig0_rtti.object_hierarchy.base_classes = RVA(&simple_class_sig0_rtti.base_array, base);
+  simple_class_sig0_rtti.object_locator.type_descriptor = RVA(&simple_class_sig0_rtti.type_info[0], base);
+  simple_class_sig0_rtti.object_locator.type_hierarchy = RVA(&simple_class_sig0_rtti.object_hierarchy, base);
 
   child_class_sig0_rtti = child_class_rtti;
   child_class_sig0_rtti.object_locator.signature = 0;
-  child_class_sig0_rtti.base_descriptor[0].type_descriptor = RTTI_REF_SIG0(child_class_sig0_rtti, type_info[1], base);
-  child_class_sig0_rtti.base_descriptor[1].type_descriptor = RTTI_REF_SIG0(child_class_sig0_rtti, type_info[0], base);
-  child_class_sig0_rtti.base_array.bases[0] = RTTI_REF_SIG0(child_class_sig0_rtti, base_descriptor[0], base);
-  child_class_sig0_rtti.base_array.bases[1] = RTTI_REF_SIG0(child_class_sig0_rtti, base_descriptor[1], base);
-  child_class_sig0_rtti.object_hierarchy.base_classes = RTTI_REF_SIG0(child_class_sig0_rtti, base_array, base);
-  child_class_sig0_rtti.object_locator.type_descriptor = RTTI_REF_SIG0(child_class_sig0_rtti, type_info[1], base);
-  child_class_sig0_rtti.object_locator.type_hierarchy = RTTI_REF_SIG0(child_class_sig0_rtti, object_hierarchy, base);
+  child_class_sig0_rtti.base_descriptor[0].type_descriptor = RVA(&child_class_sig0_rtti.type_info[1], base);
+  child_class_sig0_rtti.base_descriptor[1].type_descriptor = RVA(&child_class_sig0_rtti.type_info[0], base);
+  child_class_sig0_rtti.base_array.bases[0] = RVA(&child_class_sig0_rtti.base_descriptor[0], base);
+  child_class_sig0_rtti.base_array.bases[1] = RVA(&child_class_sig0_rtti.base_descriptor[1], base);
+  child_class_sig0_rtti.object_hierarchy.base_classes = RVA(&child_class_sig0_rtti.base_array, base);
+  child_class_sig0_rtti.object_locator.type_descriptor = RVA(&child_class_sig0_rtti.type_info[1], base);
+  child_class_sig0_rtti.object_locator.type_hierarchy = RVA(&child_class_sig0_rtti.object_hierarchy, base);
 
   ti = p__RTtypeid(&simple_class_sig0);
   ok (ti && !strcmp(ti->mangled, "simple_class"), "incorrect rtti data\n");
