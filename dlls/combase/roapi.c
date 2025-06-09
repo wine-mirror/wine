@@ -194,6 +194,10 @@ HRESULT WINAPI DECLSPEC_HOTPATCH RoGetActivationFactory(HSTRING classid, REFIID 
         }
         IActivationFactory_Release(factory);
     }
+    else
+    {
+        ERR("Class %s not found in %s, hr %#lx.\n", wine_dbgstr_hstring(classid), debugstr_w(library), hr);
+    }
 
 done:
     free(library);
