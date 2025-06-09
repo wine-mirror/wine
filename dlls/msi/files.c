@@ -157,27 +157,31 @@ static BOOL apply_filepatch( MSIPACKAGE *package, const WCHAR *patch, const WCHA
     return ret;
 }
 
-DWORD msi_get_file_version_info( MSIPACKAGE *package, const WCHAR *path, DWORD buflen, BYTE *buffer )
+BYTE *msi_get_file_version_info( MSIPACKAGE *package, const WCHAR *path )
 {
-    DWORD size, handle;
+    DWORD size;
+    BYTE *buffer = NULL;
+
     msi_disable_fs_redirection( package );
-    if (buffer) size = GetFileVersionInfoW( path, 0, buflen, buffer );
-    else size = GetFileVersionInfoSizeW( path, &handle );
+    if (!(size = GetFileVersionInfoSizeW( path, NULL ))) goto done;
+    if (!(buffer = malloc( size ))) goto done;
+    if (!GetFileVersionInfoW( path, 0, size, buffer ))
+    {
+        free( buffer );
+        buffer = NULL;
+    }
+done:
     msi_revert_fs_redirection( package );
-    return size;
+    return buffer;
 }
 
 VS_FIXEDFILEINFO *msi_get_disk_file_version( MSIPACKAGE *package, const WCHAR *filename )
 {
     VS_FIXEDFILEINFO *ptr, *ret;
-    DWORD version_size;
     UINT size;
     void *version;
 
-    if (!(version_size = msi_get_file_version_info( package, filename, 0, NULL ))) return NULL;
-    if (!(version = malloc( version_size ))) return NULL;
-
-    msi_get_file_version_info( package, filename, version_size, version );
+    if (!(version = msi_get_file_version_info( package, filename ))) return NULL;
 
     if (!VerQueryValueW( version, L"\\", (void **)&ptr, &size ))
     {
