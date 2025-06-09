@@ -536,6 +536,21 @@ HRESULT WINAPI RoSetErrorReportingFlags(UINT32 flags)
 }
 
 /***********************************************************************
+ *      RoGetErrorReportingFlags (combase.@)
+ */
+HRESULT WINAPI RoGetErrorReportingFlags(UINT32 *flags)
+{
+    FIXME("(%p): stub\n", flags);
+
+    if (!flags)
+        return E_POINTER;
+
+    *flags = RO_ERROR_REPORTING_USESETERRORINFO;
+    return S_OK;
+}
+
+
+/***********************************************************************
  *      CleanupTlsOleState (combase.@)
  */
 void WINAPI CleanupTlsOleState(void *unknown)
