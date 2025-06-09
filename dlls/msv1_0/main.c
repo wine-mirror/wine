@@ -1539,9 +1539,7 @@ static NTSTATUS NTAPI ntlm_SpSealMessage( LSA_SEC_HANDLE handle, ULONG qop, SecB
 
 static NTSTATUS NTAPI ntlm_SpUnsealMessage( LSA_SEC_HANDLE handle, SecBufferDesc *msg, ULONG msg_seq_no, ULONG *qop )
 {
-    int data_idx = get_buffer_index( msg, SECBUFFER_DATA );
-    int stream_idx = get_buffer_index( msg, SECBUFFER_STREAM );
-    int token_idx = get_buffer_index( msg, SECBUFFER_TOKEN );
+    int data_idx, stream_idx, token_idx;
     SecBuffer token_buf;
     struct ntlm_ctx *ctx;
 
@@ -1550,8 +1548,14 @@ static NTSTATUS NTAPI ntlm_SpUnsealMessage( LSA_SEC_HANDLE handle, SecBufferDesc
 
     if (!handle) return SEC_E_INVALID_HANDLE;
 
-    if (!msg || !msg->pBuffers || msg->cBuffers < 2 || (token_idx == -1 && stream_idx == -1) ||
-        (stream_idx != -1 && token_idx != -1) || data_idx == -1) return SEC_E_INVALID_TOKEN;
+    if (!msg || !msg->pBuffers || msg->cBuffers < 2) return SEC_E_INVALID_TOKEN;
+
+    data_idx = get_buffer_index( msg, SECBUFFER_DATA );
+    stream_idx = get_buffer_index( msg, SECBUFFER_STREAM );
+    token_idx = get_buffer_index( msg, SECBUFFER_TOKEN );
+
+    if ((token_idx == -1 && stream_idx == -1) || (stream_idx != -1 && token_idx != -1) || data_idx == -1)
+        return SEC_E_INVALID_TOKEN;
 
     if (stream_idx != -1)
     {
