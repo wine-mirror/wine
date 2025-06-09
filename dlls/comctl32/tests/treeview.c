@@ -52,6 +52,7 @@ static char *g_endedit_overwrite_ptr;
 static HFONT g_customdraw_font;
 static BOOL g_v6;
 static int g_reject_tvn_itemexpanding = 0;
+static int g_click_delete_test = 0;
 
 #define NUM_MSG_SEQUENCES   3
 #define TREEVIEW_SEQ_INDEX  0
@@ -240,6 +241,20 @@ static const struct message test_right_click_seq[] = {
     { WM_MOUSEMOVE, sent|optional },
     { WM_PAINT, sent|optional },
     { WM_ERASEBKGND, sent|defwinproc|optional },
+    { 0 }
+};
+
+static const struct message test_click_delete_seq[] = {
+    { WM_LBUTTONDOWN, sent|wparam, MK_LBUTTON },
+    { WM_CAPTURECHANGED, sent|defwinproc },
+    { 0x90, sent|defwinproc|optional },
+    { WM_SHOWWINDOW, sent|defwinproc|wparam|lparam,  0, 0 },
+    { WM_WINDOWPOSCHANGING, sent|defwinproc },
+    { WM_WINDOWPOSCHANGED, sent|defwinproc },
+    { WM_KILLFOCUS, sent|defwinproc },
+    { WM_IME_SETCONTEXT, sent|defwinproc|wparam, 0 },
+    { WM_DESTROY, sent|defwinproc },
+    { WM_NCDESTROY, sent|defwinproc },
     { 0 }
 };
 
@@ -1476,6 +1491,15 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
                 HTREEITEM selected = (HTREEITEM)SendMessageA(((NMHDR *)lParam)->hwndFrom,
                                                              TVM_GETNEXTITEM, TVGN_CARET, 0);
                 ok(selected == hChild, "child item should still be selected\n");
+                break;
+            }
+            case NM_CLICK:
+            {
+                if (g_click_delete_test)
+                {
+                    DestroyWindow(pHdr->hwndFrom);
+                    return FALSE;
+                }
                 break;
             }
             }
@@ -3123,6 +3147,43 @@ static void test_right_click(void)
     DestroyWindow(hTree);
 }
 
+static void test_treeview_delete_midclick(void)
+{
+    HWND treeview;
+    RECT rc;
+    POINT pt, orig_pos;
+
+    g_click_delete_test = 1;
+    treeview = create_treeview_control(0);
+    fill_tree(treeview);
+    ShowWindow(hMainWnd, SW_SHOW);
+    UpdateWindow(hMainWnd);
+
+    *(HTREEITEM *)&rc = hRoot;
+    SendMessageA(treeview, TVM_GETITEMRECT, TRUE, (LPARAM)&rc);
+
+    pt.x = (rc.left + rc.right) / 2;
+    pt.y = (rc.top + rc.bottom) / 2;
+    ClientToScreen(hMainWnd, &pt);
+    GetCursorPos(&orig_pos);
+    SetCursorPos(pt.x, pt.y);
+    ScreenToClient(treeview, &pt);
+
+    flush_events();
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    PostMessageA(treeview, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(pt.x, pt.y));
+    if (IsWindow(treeview))
+        PostMessageA(treeview, WM_LBUTTONUP, 0, MAKELPARAM(pt.x, pt.y));
+
+    flush_events();
+    ok_sequence(sequences, TREEVIEW_SEQ_INDEX, test_click_delete_seq, "treeview click and destroy sequence", FALSE);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    SetCursorPos(orig_pos.x, orig_pos.y);
+    g_click_delete_test = 0;
+}
+
 static void init_functions(void)
 {
     HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
@@ -3206,6 +3267,7 @@ START_TEST(treeview)
     test_TVS_FULLROWSELECT();
     test_TVM_SORTCHILDREN();
     test_right_click();
+    test_treeview_delete_midclick();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
@@ -3241,6 +3303,7 @@ START_TEST(treeview)
     test_WM_KEYDOWN();
     test_TVS_FULLROWSELECT();
     test_TVM_SORTCHILDREN();
+    test_treeview_delete_midclick();
 
     unload_v6_module(ctx_cookie, hCtx);
 }
