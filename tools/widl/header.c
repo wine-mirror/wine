@@ -42,6 +42,7 @@ generic_handle_list_t generic_handle_list = LIST_INIT(generic_handle_list);
 
 static void write_type_v(FILE *f, const decl_spec_t *t, int is_field, bool define, const char *name, enum name_type name_type);
 
+static void write_apicontract( FILE *header, type_t *type );
 static void write_apicontract_guard_start(FILE *header, const expr_t *expr);
 static void write_apicontract_guard_end(FILE *header, const expr_t *expr);
 
@@ -1574,11 +1575,12 @@ static char *format_apicontract_macro(const type_t *type)
 
 static void write_apicontract_guard_start(FILE *header, const expr_t *expr)
 {
-    const type_t *type;
+    type_t *type;
     char *name;
     int ver;
     if (!winrt_mode) return;
     type = expr->u.tref.type;
+    write_apicontract( header, type );
     ver = expr->ref->u.integer.value;
     name = format_apicontract_macro(type);
     fprintf(header, "#if %s_VERSION >= %#x\n", name, ver);
@@ -1823,11 +1825,14 @@ static void write_coclass_forward(FILE *header, type_t *cocl)
 
 static void write_apicontract(FILE *header, type_t *apicontract)
 {
-    char *name = format_apicontract_macro(apicontract);
+    char *name;
+    if (apicontract->written) return;
+    name = format_apicontract_macro( apicontract );
     fprintf(header, "#if !defined(%s_VERSION)\n", name);
     fprintf(header, "#define %s_VERSION %#x\n", name, get_attrv(apicontract->attrs, ATTR_CONTRACTVERSION));
     fprintf(header, "#endif // defined(%s_VERSION)\n\n", name);
     free(name);
+    apicontract->written = true;
 }
 
 static void write_runtimeclass(FILE *header, type_t *runtimeclass)
