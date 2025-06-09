@@ -489,12 +489,6 @@ end:
     return hr;
 }
 
-HRESULT WINAPI D3DCreateLinker(ID3D11Linker **linker)
-{
-    FIXME("linker %p stub!\n", linker);
-    return E_NOTIMPL;
-}
-
 HRESULT WINAPI D3DLoadModule(const void *data, SIZE_T size, ID3D11Module **module)
 {
     FIXME("data %p, size %Iu, module %p stub!\n", data, size, module);

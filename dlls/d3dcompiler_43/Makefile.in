@@ -13,6 +13,7 @@ SOURCES = \
 	blob.c \
 	bytecodewriter.c \
 	compiler.c \
+	linker.c \
 	reflection.c \
 	utils.c \
 	version.rc

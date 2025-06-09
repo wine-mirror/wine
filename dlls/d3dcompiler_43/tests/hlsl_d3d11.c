@@ -1164,12 +1164,32 @@ static void test_semantic_reflection(void)
     }
 }
 
+#if D3D_COMPILER_VERSION >= 47
+
+static void test_D3DCreateLinker(void)
+{
+    ID3D11Linker *linker;
+    HRESULT hr;
+
+    hr = D3DCreateLinker(NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    hr = D3DCreateLinker(&linker);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    linker->lpVtbl->Release(linker);
+}
+
+#endif /* D3D_COMPILER_VERSION >= 47 */
+
 START_TEST(hlsl_d3d11)
 {
     HMODULE mod;
 
     test_reflection();
     test_semantic_reflection();
+#if D3D_COMPILER_VERSION >= 47
+    test_D3DCreateLinker();
+#endif
 
     if (!(mod = LoadLibraryA("d3d11.dll")))
     {
