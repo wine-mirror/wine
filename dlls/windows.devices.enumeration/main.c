@@ -284,7 +284,7 @@ static HRESULT WINAPI device_watcher_Start( IDeviceWatcher *iface )
     if (!WindowsIsStringEmpty( impl->filter ))
     {
         FIXME( "Unsupported filter: %s\n", debugstr_hstring( impl->filter ) );
-        return E_NOTIMPL;
+        return S_OK;
     }
 
     EnterCriticalSection( &impl->cs );
