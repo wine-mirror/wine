@@ -427,6 +427,7 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
     struct device *device = (struct device *)obj;
     struct device_file *file;
     struct unicode_str nt_name;
+    WCHAR *fullname;
 
     if (!(file = alloc_object( &device_file_ops ))) return NULL;
 
@@ -437,11 +438,16 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
     list_add_tail( &device->files, &file->entry );
     if (device->unix_path)
     {
-        mode_t mode = 0666;
-        access = file->obj.ops->map_access( &file->obj, access );
-        nt_name.str = device->obj.ops->get_full_name( &device->obj, &nt_name.len );
-        file->fd = open_fd( NULL, device->unix_path, nt_name, O_NONBLOCK, &mode, access, sharing, options );
-        if (file->fd) set_fd_user( file->fd, &device_file_fd_ops, &file->obj );
+        if ((fullname = device->obj.ops->get_full_name( &device->obj, &nt_name.len )))
+        {
+            mode_t mode = 0666;
+            access = file->obj.ops->map_access( &file->obj, access );
+            nt_name.str = fullname;
+            file->fd = open_fd( NULL, device->unix_path, nt_name, O_NONBLOCK, &mode, access, sharing, options );
+            if (file->fd) set_fd_user( file->fd, &device_file_fd_ops, &file->obj );
+            free( fullname );
+        }
+        else file->fd = NULL;
     }
     else file->fd = alloc_pseudo_fd( &device_file_fd_ops, &file->obj, options );
 
