@@ -1977,9 +1977,12 @@ static void test_WaitCommEvent(void)
                 test_GetModemStatus(hcom);
                 break;
             }
-            else
+            else if (last_event_time || after - before >= 10000)
             {
-                if (last_event_time || after - before >= 10000) goto done;
+                CancelIoEx(hcom, &ovl_wait);
+                ret = WaitForSingleObject(ovl_wait.hEvent, 500);
+                ok(ret == WAIT_OBJECT_0, "Wait for object failed\n");
+                goto done;
             }
         }
     } while (after - before < 10000);
@@ -2183,9 +2186,12 @@ static void test_read_write(void)
                 ok(iob.Information == 1, "expected 1, got %Iu\n", iob.Information);
                 goto done;
             }
-            else
+            else if (last_event_time || after - before >= 3000)
             {
-                if (last_event_time || after - before >= 3000) goto done;
+                CancelIoEx(hcom, &ovl_wait);
+                ret = WaitForSingleObject(ovl_wait.hEvent, 100);
+                ok(ret == WAIT_OBJECT_0, "Wait object failed\n");
+                goto done;
             }
         }
     } while (after - before < 3000);
