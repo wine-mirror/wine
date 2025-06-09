@@ -4820,7 +4820,7 @@ DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_r
         ret = IcmpParseReplies( reply, reply_size );
 
     if (!event && request_event) CloseHandle( request_event );
-    if (!apc_routine || status != STATUS_PENDING) heap_free( ctxt );
+    if ((!apc_routine && !event) || status != STATUS_PENDING) heap_free( ctxt );
     heap_free( in );
 
     if (status) SetLastError( RtlNtStatusToDosError( status ) );
