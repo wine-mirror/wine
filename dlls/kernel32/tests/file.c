@@ -1365,12 +1365,12 @@ static void test_CreateFileA(void)
     {
         filename[0] = 0;
         /* update the drive id in the table entry with the current one */
-        if (p[i].file[1] == ':')
+        if (strlen(p[i].file) > 1 && p[i].file[1] == ':')
         {
             strcpy(filename, p[i].file);
             filename[0] = windowsdir[0];
         }
-        else if (p[i].file[0] == '\\' && p[i].file[5] == ':')
+        else if (strlen(p[i].file) > 5 && p[i].file[0] == '\\' && p[i].file[5] == ':')
         {
             strcpy(filename, p[i].file);
             filename[4] = windowsdir[0];
