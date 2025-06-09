@@ -761,10 +761,10 @@ static NTSTATUS ipv6_ipstats_get_all_parameters( const void *key, UINT key_size,
             for (i = 0; i < ARRAY_SIZE(ipstatlist); i++)
                 if (!ascii_strcasecmp( buf, ipstatlist[i].name ))
                 {
-                    if (ipstatlist[i].size == sizeof(long))
-                        *(long *)ipstatlist[i].elem = strtoul( value, NULL, 10 );
+                    if (ipstatlist[i].size == sizeof(UINT))
+                        *(UINT *)ipstatlist[i].elem = strtoul( value, NULL, 10 );
                     else
-                        *(long long *)ipstatlist[i].elem = strtoull( value, NULL, 10 );
+                        *(ULONGLONG *)ipstatlist[i].elem = strtoull( value, NULL, 10 );
                     status = STATUS_SUCCESS;
                 }
         }
