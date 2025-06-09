@@ -566,6 +566,11 @@ static void write_type_definition(FILE *f, type_t *t, bool define)
     if (t->written) return;
 
     if (contract) write_apicontract_guard_start(f, contract);
+    if (winrt_mode && define && type_get_type( t ) == TYPE_ENUM)
+    {
+        fprintf( f, "#ifndef __%s_ENUM_DEFINED__\n", t->c_name );
+        fprintf( f, "#define __%s_ENUM_DEFINED__\n", t->c_name );
+    }
     if(in_namespace) {
         fprintf(f, "#ifdef __cplusplus\n");
         fprintf(f, "} /* extern \"C\" */\n");
@@ -584,6 +589,8 @@ static void write_type_definition(FILE *f, type_t *t, bool define)
         if (winrt_mode) write_widl_using_macros(f, t);
         fprintf(f, "#endif\n\n");
     }
+    if (winrt_mode && define && type_get_type( t ) == TYPE_ENUM)
+        fprintf( f, "#endif /* __%s_ENUM_DEFINED__ */\n", t->c_name );
     if (contract) write_apicontract_guard_end(f, contract);
 }
 
@@ -818,6 +825,8 @@ static void write_generic_handle_routines(FILE *header)
 static void write_typedef(FILE *header, type_t *type, bool define)
 {
     type_t *t = type_alias_get_aliasee_type(type), *root = type_pointer_get_root_type(t);
+    if (winrt_mode && !define && type_get_type( t ) == TYPE_ENUM)
+        write_type_definition( header, t, TRUE );
     if (winrt_mode && root->namespace && !is_global_namespace(root->namespace))
     {
         fprintf(header, "#ifndef __cplusplus\n");
