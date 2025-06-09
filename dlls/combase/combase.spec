@@ -309,7 +309,7 @@
 @ stdcall RoRegisterForApartmentShutdown(ptr ptr ptr)
 @ stub RoReportCapabilityCheckFailure
 @ stub RoReportFailedDelegate
-@ stub RoReportUnhandledError
+@ stdcall RoReportUnhandledError(ptr)
 @ stub RoResolveRestrictedErrorInfoReference
 @ stub RoRevokeActivationFactories
 @ stdcall RoSetErrorReportingFlags(long)

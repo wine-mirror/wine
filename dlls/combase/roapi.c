@@ -527,6 +527,15 @@ BOOL WINAPI RoOriginateErrorW(HRESULT error, UINT max_len, const WCHAR *message)
 }
 
 /***********************************************************************
+ *      RoReportUnhandledError (combase.@)
+ */
+HRESULT WINAPI RoReportUnhandledError(IRestrictedErrorInfo *info)
+{
+    FIXME("(%p): stub\n", info);
+    return S_OK;
+}
+
+/***********************************************************************
  *      RoSetErrorReportingFlags (combase.@)
  */
 HRESULT WINAPI RoSetErrorReportingFlags(UINT32 flags)
