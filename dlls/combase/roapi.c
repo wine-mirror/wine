@@ -23,6 +23,7 @@
 #include "roparameterizediid.h"
 #include "roerrorapi.h"
 #include "winstring.h"
+#include "errhandlingapi.h"
 
 #include "combase_private.h"
 
@@ -413,6 +414,15 @@ HRESULT WINAPI RoGetAgileReference(enum AgileReferenceOptions option, REFIID rii
 
     *agile_reference = &impl->IAgileReference_iface;
     return S_OK;
+}
+
+/***********************************************************************
+ *      RoFailFastWithErrorContextInternal2 (combase.@)
+ */
+void WINAPI RoFailFastWithErrorContextInternal2(HRESULT error, ULONG exception_count, /* PSTOWED_EXCEPTION_INFORMATION_V2 */void *information)
+{
+    FIXME("%#lx, %lu, %p stub.\n", error, exception_count, information);
+    RaiseFailFastException(NULL, NULL, 0);
 }
 
 /***********************************************************************

@@ -59,7 +59,7 @@
 @ stub NdrProxyForwardingFunction31
 @ stub NdrProxyForwardingFunction32
 @ stub NdrOleInitializeExtension
-@ stub RoFailFastWithErrorContextInternal2
+@ stdcall RoFailFastWithErrorContextInternal2(long long ptr)
 @ stub RoFailFastWithErrorContextInternal
 @ stub UpdateProcessTracing
 @ stdcall CLIPFORMAT_UserFree(ptr ptr)
