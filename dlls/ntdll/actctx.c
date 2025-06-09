@@ -5799,6 +5799,16 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
     return STATUS_SUCCESS;
 }
 
+/******************************************************************
+ *              RtlQueryInformationActiveActivationContext (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlQueryInformationActiveActivationContext( ULONG class, PVOID buffer,
+                                                            SIZE_T buffer_size, SIZE_T *return_length )
+{
+    return RtlQueryInformationActivationContext( QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX, NULL, NULL,
+                                                 class, buffer, buffer_size, return_length );
+}
+
 /***********************************************************************
  *		RtlFindActivationContextSectionString (NTDLL.@)
  *

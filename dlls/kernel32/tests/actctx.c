@@ -34,6 +34,7 @@ static BOOL   (WINAPI *pQueryActCtxSettingsW)(DWORD,HANDLE,LPCWSTR,LPCWSTR,LPWST
 static NTSTATUS(NTAPI *pRtlFindActivationContextSectionString)(DWORD,const GUID *,ULONG,PUNICODE_STRING,PACTCTX_SECTION_KEYED_DATA);
 static BOOLEAN (NTAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING, PCSZ);
 static VOID    (NTAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
+static NTSTATUS(NTAPI *pRtlQueryInformationActiveActivationContext)(ULONG,PVOID,SIZE_T,SIZE_T *);
 
 #ifdef __i386__
 #define ARCH "x86"
@@ -3098,6 +3099,7 @@ static BOOL init_funcs(void)
     X(RtlFindActivationContextSectionString);
     X(RtlCreateUnicodeStringFromAsciiz);
     X(RtlFreeUnicodeString);
+    X(RtlQueryInformationActiveActivationContext);
 #undef X
 
     return TRUE;
@@ -4491,6 +4493,39 @@ static void test_manifest_resource_name_omitted(void)
     ok(err == ERROR_INVALID_PARAMETER, "got %lu\n", err);
 }
 
+static void test_RtlQueryInformationActiveActivationContext(void)
+{
+    ACTIVATION_CONTEXT_BASIC_INFORMATION basic;
+    ULONG_PTR cookie;
+    NTSTATUS status;
+    HANDLE context;
+    SIZE_T size;
+    BOOL ret;
+
+    if (!create_manifest_file( "test1.manifest", manifest1, -1, NULL, NULL ))
+    {
+        skip("Could not create manifest file.\n");
+        return;
+    }
+    context = test_create( "test1.manifest" );
+    ok( context != INVALID_HANDLE_VALUE, "Failed to create context, error %lu.\n", GetLastError() );
+    DeleteFileA( "test1.manifest" );
+    ret = ActivateActCtx( context, &cookie );
+    ok( ret, "ActivateActCtx failed, error %lu.\n", GetLastError() );
+
+    status = pRtlQueryInformationActiveActivationContext( ActivationContextBasicInformation, &basic,
+                                                          sizeof(basic), &size );
+    ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
+    ok( size == sizeof(ACTIVATION_CONTEXT_BASIC_INFORMATION), "Size mismatch.\n" );
+    ok( basic.dwFlags == 0, "Got unexpected flags %#lx.\n", basic.dwFlags );
+    ok( basic.hActCtx == context, "Got unexpected handle.\n" );
+    ReleaseActCtx( basic.hActCtx );
+
+    ret = DeactivateActCtx( 0, cookie );
+    ok( ret, "DeactivateActCtx failed, error %lu.\n", GetLastError() );
+    ReleaseActCtx( context );
+}
+
 START_TEST(actctx)
 {
     int argc;
@@ -4530,5 +4565,6 @@ START_TEST(actctx)
     run_child_process();
     test_compatibility();
     test_settings();
+    test_RtlQueryInformationActiveActivationContext();
     for (int i = 1; i <= 6; i++) run_child_process_two_dll(i);
 }

@@ -943,7 +943,7 @@
 @ stdcall RtlQueryHeapInformation(long long ptr long ptr)
 @ stdcall RtlQueryInformationAcl(ptr ptr long long)
 @ stdcall RtlQueryInformationActivationContext(long long ptr long ptr long ptr)
-@ stub RtlQueryInformationActiveActivationContext
+@ stdcall RtlQueryInformationActiveActivationContext(long ptr long ptr)
 @ stub RtlQueryInterfaceMemoryStream
 @ stdcall RtlQueryPackageIdentity(long ptr ptr ptr ptr ptr)
 @ stdcall RtlQueryPerformanceCounter(ptr)
