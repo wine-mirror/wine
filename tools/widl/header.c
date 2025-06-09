@@ -560,9 +560,10 @@ static void write_type_v(FILE *h, const decl_spec_t *ds, int is_field, bool defi
 static void write_type_definition(FILE *f, type_t *t, bool define)
 {
     int in_namespace = t->namespace && !is_global_namespace(t->namespace);
-    int save_written = t->written;
     decl_spec_t ds = {.type = t};
     expr_t *contract = get_attrp(t->attrs, ATTR_CONTRACT);
+
+    if (t->written) return;
 
     if (contract) write_apicontract_guard_start(f, contract);
     if(in_namespace) {
@@ -574,7 +575,7 @@ static void write_type_definition(FILE *f, type_t *t, bool define)
     write_type_left(f, &ds, NAME_DEFAULT, define, TRUE);
     fprintf(f, ";\n");
     if(in_namespace) {
-        t->written = save_written;
+        t->written = false;
         write_namespace_end(f, t->namespace);
         fprintf(f, "extern \"C\" {\n");
         fprintf(f, "#else\n");
