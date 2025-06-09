@@ -6,4 +6,5 @@ SOURCES = \
 	except_arm64ec.c \
 	except_x86_64.c \
 	handler4.c \
-	main.c
+	main.c \
+	version.rc
