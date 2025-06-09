@@ -6315,7 +6315,7 @@ static void test_wow64(void)
     sprintf(path, "%s\\msitest\\cabout\\new\\five.txt", system_dir);
     ret = GetFileAttributesExA(path, GetFileExInfoStandard, &attr);
     ok(ret, "got error %lu.\n", GetLastError());
-    todo_wine ok(attr.nFileSizeLow == dll_size, "got %lu, expected %lu.\n", attr.nFileSizeLow, dll_size);
+    ok(attr.nFileSizeLow == dll_size, "got %lu, expected %lu.\n", attr.nFileSizeLow, dll_size);
 
     ok(delete_pf_dir("msitest\\cabout\\new\\five.txt", TRUE, system_dir), "File not installed\n");
     ok(delete_pf_dir("msitest\\cabout\\new", FALSE, system_dir), "Directory not created\n");

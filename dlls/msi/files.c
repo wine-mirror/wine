@@ -159,10 +159,20 @@ static BOOL apply_filepatch( MSIPACKAGE *package, const WCHAR *patch, const WCHA
 
 BYTE *msi_get_file_version_info( MSIPACKAGE *package, const WCHAR *path )
 {
+    WCHAR temppath[MAX_PATH];
     DWORD size;
     BYTE *buffer = NULL;
 
     msi_disable_fs_redirection( package );
+    if (is_wow64 && is_platform_64bit( package->platform ) && !wcsnicmp( path, sysdir, sysdir_len )
+        && path[sysdir_len] == '\\')
+    {
+        SIZE_T len = sysdir_len;
+
+        while (len && sysdir[len] != '\\') --len;
+        swprintf( temppath, ARRAY_SIZE(temppath), L"%.*s\\sysnative%s", len, sysdir, path + sysdir_len );
+        path = temppath;
+    }
     if (!(size = GetFileVersionInfoSizeW( path, NULL ))) goto done;
     if (!(buffer = malloc( size ))) goto done;
     if (!GetFileVersionInfoW( path, 0, size, buffer ))
