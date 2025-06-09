@@ -52,6 +52,8 @@ char PROG_FILES_DIR_NATIVE[MAX_PATH];
 char COMMON_FILES_DIR[MAX_PATH];
 char APP_DATA_DIR[MAX_PATH];
 char WINDOWS_DIR[MAX_PATH];
+static char system_dir[MAX_PATH];
+static char syswow_dir[MAX_PATH];
 
 static const char *customdll;
 
@@ -102,7 +104,7 @@ static const CHAR feature_comp_dat[] = "Feature_\tComponent_\n"
 static const CHAR file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
                                "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
                                "File\tFile\n"
-                               "five.txt\tFive\tfive.txt\t1000\t\t\t16384\t5\n"
+                               "five.txt\tFive\tfive.txt\t1000\t0.0.0.0\t\t16384\t5\n"
                                "four.txt\tFour\tfour.txt\t1000\t\t\t16384\t4\n"
                                "one.txt\tOne\tone.txt\t1000\t\t\t0\t1\n"
                                "three.txt\tThree\tthree.txt\t1000\t\t\t0\t3\n"
@@ -1348,9 +1350,9 @@ static const CHAR x64_directory_dat[] =
     "CABOUTDIR\tMSITESTDIR\tcabout\n"
     "CHANGEDDIR\tMSITESTDIR\tchanged:second\n"
     "FIRSTDIR\tMSITESTDIR\tfirst\n"
-    "MSITESTDIR\tProgramFiles64Folder\tmsitest\n"
+    "MSITESTDIR\tSystem64Folder\tmsitest\n"
     "NEWDIR\tCABOUTDIR\tnew\n"
-    "ProgramFiles64Folder\tTARGETDIR\t.\n"
+    "System64Folder\tTARGETDIR\t.\n"
     "TARGETDIR\t\tSourceDir";
 
 static const CHAR sr_install_exec_seq_dat[] =
@@ -2388,6 +2390,16 @@ BOOL get_system_dirs(void)
     if(!GetWindowsDirectoryA(WINDOWS_DIR, MAX_PATH))
         return FALSE;
 
+    size = GetSystemDirectoryA(system_dir, ARRAY_SIZE(system_dir));
+    if (!size || size >= ARRAY_SIZE(system_dir))
+        return FALSE;
+    if (is_wow64)
+    {
+        size = GetSystemWow64DirectoryA(syswow_dir, ARRAY_SIZE(syswow_dir));
+        if (!size || size >= ARRAY_SIZE(syswow_dir))
+            return FALSE;
+    }
+
     return TRUE;
 }
 
@@ -2430,13 +2442,11 @@ static void create_test_files(void)
     DeleteFileA("five.txt");
 }
 
-BOOL delete_pf(const CHAR *rel_path, BOOL is_file)
+static BOOL delete_pf_dir(const char *rel_path, BOOL is_file, const char *basedir)
 {
-    CHAR path[MAX_PATH];
+    char path[MAX_PATH];
 
-    lstrcpyA(path, PROG_FILES_DIR);
-    lstrcatA(path, "\\");
-    lstrcatA(path, rel_path);
+    sprintf(path, "%s\\%s", basedir, rel_path);
 
     if (is_file)
         return DeleteFileA(path);
@@ -2444,18 +2454,9 @@ BOOL delete_pf(const CHAR *rel_path, BOOL is_file)
         return RemoveDirectoryA(path);
 }
 
-static BOOL delete_pf_native(const CHAR *rel_path, BOOL is_file)
+BOOL delete_pf(const CHAR *rel_path, BOOL is_file)
 {
-    CHAR path[MAX_PATH];
-
-    lstrcpyA(path, PROG_FILES_DIR_NATIVE);
-    lstrcatA(path, "\\");
-    lstrcatA(path, rel_path);
-
-    if (is_file)
-        return DeleteFileA(path);
-    else
-        return RemoveDirectoryA(path);
+    return delete_pf_dir(rel_path, is_file, PROG_FILES_DIR);
 }
 
 static BOOL delete_cf(const CHAR *rel_path, BOOL is_file)
@@ -6215,7 +6216,12 @@ error:
 
 static void test_wow64(void)
 {
+    WIN32_FILE_ATTRIBUTE_DATA attr;
+    char path[MAX_PATH];
+    HMODULE module;
+    DWORD dll_size;
     void *cookie;
+    BOOL ret;
     UINT r;
 
     if (!is_wow64)
@@ -6230,7 +6236,59 @@ static void test_wow64(void)
         return;
     }
 
-    create_test_files();
+    sprintf(path, "%s\\msitest", "C:\\windows\\syswow64");
+    ret = CreateDirectoryA(path, NULL);
+    ok(ret, "got error %lu.\n", GetLastError());
+    sprintf(path, "%s\\msitest\\cabout", "C:\\windows\\syswow64");
+    ret = CreateDirectoryA(path, NULL);
+    ok(ret, "got error %lu.\n", GetLastError());
+    sprintf(path, "%s\\msitest\\cabout\\new", "C:\\windows\\syswow64");
+    ret = CreateDirectoryA(path, NULL);
+    ok(ret, "got error %lu.\n", GetLastError());
+
+    sprintf(path, "%s\\msitest\\cabout\\new\\five.txt", "C:\\windows\\syswow64");
+    ret = CopyFileA("C:\\windows\\system32\\psapi.dll", path, FALSE);
+    ok(ret, "got error %lu.\n", GetLastError());
+
+    module = LoadLibraryA(path);
+    ok(!!module, "failed to load module.\n");
+
+    Wow64DisableWow64FsRedirection(&cookie);
+
+    sprintf(path, "%s\\msitest", "C:\\windows\\system32");
+    ret = CreateDirectoryA(path, NULL);
+    ok(ret, "%s, got error %lu.\n", path, GetLastError());
+    sprintf(path, "%s\\msitest\\cabout", "C:\\windows\\system32");
+    ret = CreateDirectoryA(path, NULL);
+    ok(ret, "got error %lu.\n", GetLastError());
+    sprintf(path, "%s\\msitest\\cabout\\new", "C:\\windows\\system32");
+    ret = CreateDirectoryA(path, NULL);
+    ok(ret, "got error %lu.\n", GetLastError());
+
+    sprintf(path, "%s\\msitest\\cabout\\new\\five.txt", "C:\\windows\\system32");
+    create_file(path, 100);
+
+    CreateDirectoryA("msitest", NULL);
+
+    create_file("msitest\\one.txt", 100);
+    CreateDirectoryA("msitest\\first", NULL);
+    create_file("msitest\\first\\two.txt", 100);
+    CreateDirectoryA("msitest\\second", NULL);
+    create_file("msitest\\second\\three.txt", 100);
+
+    create_file("four.txt", 100);
+    ret = GetFileAttributesExA("C:\\windows\\system32\\psapi.dll", GetFileExInfoStandard, &attr);
+    ok(ret, "got error %lu.\n", GetLastError());
+    dll_size = attr.nFileSizeLow;
+    ret = CopyFileA("C:\\windows\\system32\\psapi.dll", "five.txt", FALSE);
+    ok(ret, "got error %lu.\n", GetLastError());
+    create_cab_file("msitest.cab", MEDIA_SIZE, "four.txt\0five.txt\0");
+    create_file("msitest\\filename", 100);
+
+    DeleteFileA("four.txt");
+    DeleteFileA("five.txt");
+    Wow64RevertWow64FsRedirection(cookie);
+
     create_database_template(msifile, x64_tables, ARRAY_SIZE(x64_tables), 200, "x64;0");
     r = MsiInstallProductA(msifile, NULL);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -6238,32 +6296,38 @@ static void test_wow64(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
+    FreeLibrary(module);
 
     Wow64DisableWow64FsRedirection(&cookie);
 
-    ok(!delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\cabout\\new", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\cabout\\four.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\cabout", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\changed\\three.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\changed", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\first\\two.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\first", FALSE), "Directory created\n");
-    ok(!delete_pf("msitest\\one.txt", TRUE), "File installed\n");
-    ok(!delete_pf("msitest\\filename", TRUE), "File installed\n");
-    ok(!delete_pf("msitest", FALSE), "Directory created\n");
+    ok(delete_pf_dir("msitest\\cabout\\new\\five.txt", TRUE, syswow_dir), "File installed\n");
+    ok(delete_pf_dir("msitest\\cabout\\new", FALSE, syswow_dir), "Directory created\n");
+    ok(!delete_pf_dir("msitest\\cabout\\four.txt", TRUE, syswow_dir), "File installed\n");
+    ok(delete_pf_dir("msitest\\cabout", FALSE, syswow_dir), "Directory created\n");
+    ok(!delete_pf_dir("msitest\\changed\\three.txt", TRUE, syswow_dir), "File installed\n");
+    ok(!delete_pf_dir("msitest\\changed", FALSE, syswow_dir), "Directory created\n");
+    ok(!delete_pf_dir("msitest\\first\\two.txt", TRUE, syswow_dir), "File installed\n");
+    ok(!delete_pf_dir("msitest\\first", FALSE, syswow_dir), "Directory created\n");
+    ok(!delete_pf_dir("msitest\\one.txt", TRUE, syswow_dir), "File installed\n");
+    ok(!delete_pf_dir("msitest\\filename", TRUE, syswow_dir), "File installed\n");
+    ok(delete_pf_dir("msitest", FALSE, syswow_dir), "Directory created\n");
 
-    ok(delete_pf_native("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
-    ok(delete_pf_native("msitest\\cabout\\new", FALSE), "Directory not created\n");
-    ok(delete_pf_native("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
-    ok(delete_pf_native("msitest\\cabout", FALSE), "Directory not created\n");
-    ok(delete_pf_native("msitest\\changed\\three.txt", TRUE), "File not installed\n");
-    ok(delete_pf_native("msitest\\changed", FALSE), "Directory not created\n");
-    ok(delete_pf_native("msitest\\first\\two.txt", TRUE), "File not installed\n");
-    ok(delete_pf_native("msitest\\first", FALSE), "Directory not created\n");
-    ok(delete_pf_native("msitest\\one.txt", TRUE), "File not installed\n");
-    ok(delete_pf_native("msitest\\filename", TRUE), "File not installed\n");
-    ok(delete_pf_native("msitest", FALSE), "Directory not created\n");
+    sprintf(path, "%s\\msitest\\cabout\\new\\five.txt", system_dir);
+    ret = GetFileAttributesExA(path, GetFileExInfoStandard, &attr);
+    ok(ret, "got error %lu.\n", GetLastError());
+    todo_wine ok(attr.nFileSizeLow == dll_size, "got %lu, expected %lu.\n", attr.nFileSizeLow, dll_size);
+
+    ok(delete_pf_dir("msitest\\cabout\\new\\five.txt", TRUE, system_dir), "File not installed\n");
+    ok(delete_pf_dir("msitest\\cabout\\new", FALSE, system_dir), "Directory not created\n");
+    ok(delete_pf_dir("msitest\\cabout\\four.txt", TRUE, system_dir), "File not installed\n");
+    ok(delete_pf_dir("msitest\\cabout", FALSE, system_dir), "Directory not created\n");
+    ok(delete_pf_dir("msitest\\changed\\three.txt", TRUE, system_dir), "File not installed\n");
+    ok(delete_pf_dir("msitest\\changed", FALSE, system_dir), "Directory not created\n");
+    ok(delete_pf_dir("msitest\\first\\two.txt", TRUE, system_dir), "File not installed\n");
+    ok(delete_pf_dir("msitest\\first", FALSE, system_dir), "Directory not created\n");
+    ok(delete_pf_dir("msitest\\one.txt", TRUE, system_dir), "File not installed\n");
+    ok(delete_pf_dir("msitest\\filename", TRUE, system_dir), "File not installed\n");
+    ok(delete_pf_dir("msitest", FALSE, system_dir), "Directory not created\n");
 
     Wow64RevertWow64FsRedirection(cookie);
 
