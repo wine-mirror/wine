@@ -10,6 +10,19 @@
 #ifndef __XSLT_LIBXSLT_H__
 #define __XSLT_LIBXSLT_H__
 
+/*
+ * These macros must be defined before including system headers.
+ * Do not add any #include directives above this block.
+ */
+#ifndef NO_LARGEFILE_SOURCE
+  #ifndef _LARGEFILE_SOURCE
+    #define _LARGEFILE_SOURCE
+  #endif
+  #ifndef _FILE_OFFSET_BITS
+    #define _FILE_OFFSET_BITS 64
+  #endif
+#endif
+
 #ifdef _WIN32
 #include <win32config.h>
 #else

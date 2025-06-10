@@ -9,6 +9,8 @@
 #ifndef __LIBXSLT_WIN32_CONFIG__
 #define __LIBXSLT_WIN32_CONFIG__
 
+#define MODULE_EXTENSION ".dll"
+
 /* snprintf emulation taken from http://stackoverflow.com/a/8712996/1956010 */
 #if defined(_MSC_VER) && _MSC_VER < 1900
 
@@ -48,4 +50,3 @@ __inline int c99_snprintf(char *outBuf, size_t size, const char *format, ...)
 #define HAVE_STAT
 
 #endif /* __LIBXSLT_WIN32_CONFIG__ */
-
