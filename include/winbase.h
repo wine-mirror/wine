@@ -113,6 +113,10 @@ typedef struct _OFSTRUCT
 #define SEM_NOALIGNMENTFAULTEXCEPT  0x0004
 #define SEM_NOOPENFILEERRORBOX      0x8000
 
+/* RaiseFailFastException flags */
+#define FAIL_FAST_GENERATE_EXCEPTION_ADDRESS 0x0001
+#define FAIL_FAST_NO_HARD_ERROR_DLG          0x0002
+
 /* CopyFileEx flags */
 #define COPY_FILE_FAIL_IF_EXISTS        0x00000001
 #define COPY_FILE_RESTARTABLE           0x00000002
