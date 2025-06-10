@@ -221,7 +221,6 @@ NTSTATUS get_shared_desktop( struct object_lock *lock, const desktop_shm_t **des
 
         data->shared_desktop = find_shared_session_object( locator );
         if (!(object = data->shared_desktop)) return STATUS_INVALID_HANDLE;
-        memset( lock, 0, sizeof(*lock) );
     }
 
     if (!lock->id || !shared_object_release_seqlock( object, lock->seq ))
@@ -255,7 +254,6 @@ NTSTATUS get_shared_queue( struct object_lock *lock, const queue_shm_t **queue_s
 
         data->shared_queue = find_shared_session_object( locator );
         if (!(object = data->shared_queue)) return STATUS_INVALID_HANDLE;
-        memset( lock, 0, sizeof(*lock) );
     }
 
     if (!lock->id || !shared_object_release_seqlock( object, lock->seq ))
@@ -290,7 +288,6 @@ static NTSTATUS try_get_shared_input( UINT tid, struct object_lock *lock, const 
         cache->id = locator.id;
         cache->object = find_shared_session_object( locator );
         if (!(object = cache->object)) return STATUS_INVALID_HANDLE;
-        memset( lock, 0, sizeof(*lock) );
     }
 
     /* check object validity by comparing ids, within the object seqlock */
@@ -308,7 +305,12 @@ static NTSTATUS try_get_shared_input( UINT tid, struct object_lock *lock, const 
         return STATUS_PENDING;
     }
 
-    if (!valid) memset( cache, 0, sizeof(*cache) ); /* object has been invalidated, clear the cache and start over */
+    if (!valid)
+    {
+        /* object has been invalidated, start over */
+        memset( cache, 0, sizeof(*cache) );
+        memset( lock, 0, sizeof(*lock) );
+    }
     return STATUS_SUCCESS;
 }
 
