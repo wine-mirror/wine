@@ -601,6 +601,16 @@ static enum table customattribute_type_to_table( UINT token )
     }
 }
 
+static enum table has_semantics_to_table( UINT token )
+{
+    switch (token & 0x1)
+    {
+    case 0: return TABLE_EVENT;
+    case 1: return TABLE_PROPERTY;
+    default: assert( 0 );
+    }
+}
+
 struct module_row
 {
     USHORT generation;
@@ -998,6 +1008,97 @@ static void serialize_assemblyref_table( void )
     }
 }
 
+struct propertymap_row
+{
+    UINT parent;
+    UINT proplist;
+};
+
+static UINT add_propertymap_row( UINT parent, UINT proplist )
+{
+    struct propertymap_row row = { parent, proplist };
+    return add_row( TABLE_PROPERTYMAP, (const BYTE *)&row, sizeof(row) );
+}
+
+static void serialize_propertymap_table( void )
+{
+    const struct propertymap_row *row = (const struct propertymap_row *)tables[TABLE_PROPERTYMAP].ptr;
+    UINT i;
+
+    for (i = 0; i < tables[TABLE_PROPERTYMAP].count; i++)
+    {
+        serialize_table_idx( row->parent, TABLE_TYPEDEF );
+        serialize_table_idx( row->proplist, TABLE_PROPERTY );
+        row++;
+    }
+}
+
+struct property_row
+{
+    USHORT flags;
+    UINT   name;
+    UINT   type;
+};
+
+static UINT add_property_row( USHORT flags, UINT name, UINT type )
+{
+    struct property_row row = { flags, name, type };
+    return add_row( TABLE_PROPERTY, (const BYTE *)&row, sizeof(row) );
+}
+
+static void serialize_property_table( void )
+{
+    const struct property_row *row = (const struct property_row *)tables[TABLE_PROPERTY].ptr;
+    UINT i;
+
+    for (i = 0; i < tables[TABLE_PROPERTY].count; i++)
+    {
+        serialize_ushort( row->flags );
+        serialize_string_idx( row->name );
+        serialize_blob_idx( row->type );
+        row++;
+    }
+}
+
+struct methodsemantics_row
+{
+    USHORT semantics;
+    UINT   method;
+    UINT   association;
+};
+
+static UINT add_methodsemantics_row( USHORT flags, UINT name, UINT type )
+{
+    struct methodsemantics_row row = { flags, name, type };
+    return add_row( TABLE_METHODSEMANTICS, (const BYTE *)&row, sizeof(row) );
+}
+
+static int cmp_methodsemantics_row( const void *a, const void *b )
+{
+    const struct methodsemantics_row *row = a, *row2 = b;
+    if (row->association > row2->association) return 1;
+    if (row->association < row2->association) return -1;
+    return 0;
+}
+
+/* sorted by association */
+static void serialize_methodsemantics_table( void )
+{
+    const struct methodsemantics_row *row = (const struct methodsemantics_row *)tables[TABLE_METHODSEMANTICS].ptr;
+    UINT i;
+
+    qsort( tables[TABLE_METHODSEMANTICS].ptr, tables[TABLE_METHODSEMANTICS].count, sizeof(*row),
+           cmp_methodsemantics_row );
+
+    for (i = 0; i < tables[TABLE_METHODSEMANTICS].count; i++)
+    {
+        serialize_ushort( row->semantics );
+        serialize_table_idx( row->method, TABLE_METHODDEF );
+        serialize_table_idx( row->association, has_semantics_to_table(row->association) );
+        row++;
+    }
+}
+
 static UINT typedef_or_ref( enum table table, UINT row )
 {
     switch (table)
@@ -1077,6 +1178,16 @@ static UINT customattribute_type( enum table table, UINT row )
     {
     case TABLE_METHODDEF: return row << 3 | 2;
     case TABLE_MEMBERREF: return row << 3 | 3;
+    default: assert( 0 );
+    }
+}
+
+static UINT has_semantics( enum table table, UINT row )
+{
+    switch (table)
+    {
+    case TABLE_EVENT: return row << 1;
+    case TABLE_PROPERTY: return row << 1 | 1;
     default: assert( 0 );
     }
 }
@@ -1194,6 +1305,15 @@ enum
     METHOD_IMPL_OPTIL     = 0x0002,
     METHOD_IMPL_RUNTIME   = 0x0003,
     METHOD_IMPL_UNMANAGED = 0x0004
+};
+
+enum
+{
+    METHOD_SEM_SETTER   = 0x0001,
+    METHOD_SEM_GETTER   = 0x0002,
+    METHOD_SEM_OTHER    = 0x0004,
+    METHOD_SEM_ADDON    = 0x0008,
+    METHOD_SEM_REMOVEON = 0x0010
 };
 
 enum
@@ -1419,6 +1539,28 @@ static UINT make_method_sig( const var_t *method, BYTE *buf )
         len += make_type_sig( arg->declspec.type, buf + len );
         buf[1]++;
     }
+    return len;
+}
+
+static UINT make_property_sig( const var_t *method, BYTE *buf )
+{
+    const var_t *arg;
+    const var_list_t *arg_list = type_function_get_args( method->declspec.type );
+    UINT len = 3;
+
+    buf[0] = SIG_TYPE_HASTHIS | SIG_TYPE_PROPERTY;
+    buf[1] = 0;
+    buf[2] = ELEMENT_TYPE_VOID;
+
+    LIST_FOR_EACH_ENTRY( arg, arg_list, var_t, entry )
+    {
+        const type_t *type;
+
+        if (!is_attr( arg->attrs, ATTR_RETVAL )) continue;
+        type = type_pointer_get_ref_type( arg->declspec.type ); /* retval must be a pointer */
+        len = make_type_sig( type, buf + 2 ) + 2;
+    }
+
     return len;
 }
 
@@ -1766,11 +1908,39 @@ static UINT add_method_params_step2( var_list_t *arg_list )
     return first;
 }
 
+static void add_propget_method( const type_t *iface, const var_t *method )
+{
+    UINT methoddef, property, sig_size, paramlist, attrs;
+    BYTE sig[256];
+    char *name;
+
+    /* method may already have been added by add_propput_method() */
+    if (method->declspec.type->md.property) return;
+
+    sig_size = make_property_sig( method, sig );
+    property = add_property_row( 0, add_string(method->name), add_blob(sig, sig_size) );
+    method->declspec.type->md.property = property;
+    add_propertymap_row( iface->md.def, property );
+
+    paramlist = add_method_params_step2( type_function_get_args(method->declspec.type) );
+    sig_size = make_method_sig( method, sig );
+
+    attrs = METHOD_ATTR_PUBLIC  | METHOD_ATTR_VIRTUAL  | METHOD_ATTR_HIDEBYSIG |
+            METHOD_ATTR_NEWSLOT | METHOD_ATTR_ABSTRACT | METHOD_ATTR_SPECIALNAME;
+
+    name = strmake( "get_%s", method->name );
+    methoddef = add_methoddef_row( 0, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
+    free( name );
+
+    add_methodsemantics_row( METHOD_SEM_GETTER, methoddef, has_semantics(TABLE_PROPERTY, property) );
+}
+
 static void add_interface_type_step2( type_t *type )
 {
     UINT name, namespace, interface, flags = TYPE_ATTR_INTERFACE | TYPE_ATTR_ABSTRACT | TYPE_ATTR_UNKNOWN;
     const typeref_list_t *require_list = type_iface_get_requires( type );
     const typeref_t *require;
+    const statement_t *stmt;
 
     name = add_name( type, &namespace );
 
@@ -1781,6 +1951,13 @@ static void add_interface_type_step2( type_t *type )
     {
         interface = typedef_or_ref( TABLE_TYPEREF, require->type->md.ref );
         add_interfaceimpl_row( type->md.def, interface );
+    }
+
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(type) )
+    {
+        const var_t *method = stmt->u.var;
+
+        if (is_attr( method->attrs, ATTR_PROPGET )) add_propget_method( type, method );
     }
 
     add_contract_attr_step2( type );
@@ -2052,6 +2229,9 @@ static void build_table_stream( const statement_list_t *stmts )
     serialize_memberref_table();
     serialize_constant_table();
     serialize_customattribute_table();
+    serialize_propertymap_table();
+    serialize_property_table();
+    serialize_methodsemantics_table();
     serialize_assembly_table();
     serialize_assemblyref_table();
 }
