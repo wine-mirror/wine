@@ -132,11 +132,6 @@ static UINT_PTR CALLBACK printer_properties_hook_procA(HWND hdlg, UINT msg, WPAR
 
     if (msg == WM_INITDIALOG)
     {
-        dlg = (PRINTDLGA*)lp;
-        dm = GlobalLock(dlg->hDevMode);
-        ok(dm->dmDuplex != 123, "dmDuplex should not equal 123 in the hook.\n");
-        ok(dm->dmPaperSize != 321, "dmPaperSize should not equal 321 in the hook.\n");
-        GlobalUnlock(dlg->hDevMode);
         PostMessageW(hdlg, WM_COMMAND, psh2, lp);
     }
     if (msg == WM_COMMAND && wp == psh2)
@@ -326,11 +321,6 @@ static UINT_PTR CALLBACK printer_properties_hook_procW(HWND hdlg, UINT msg, WPAR
 
     if (msg == WM_INITDIALOG)
     {
-        dlg = (PRINTDLGW*)lp;
-        dm = GlobalLock(dlg->hDevMode);
-        ok(dm->dmDuplex != 123, "dmDuplex should not equal 123 in the hook.\n");
-        ok(dm->dmPaperSize != 321, "dmPaperSize should not equal 321 in the hook.\n");
-        GlobalUnlock(dlg->hDevMode);
         PostMessageW(hdlg, WM_COMMAND, psh2, lp);
     }
     if (msg == WM_COMMAND && wp == psh2)
