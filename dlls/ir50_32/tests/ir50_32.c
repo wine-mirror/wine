@@ -65,9 +65,9 @@ static void test_formats(void)
     ok(out->bmiHeader.biWidth == 320, "Got width %ld.\n", out->bmiHeader.biWidth);
     ok(out->bmiHeader.biHeight == 240, "Got height %ld.\n", out->bmiHeader.biHeight);
     todo_wine ok(out->bmiHeader.biPlanes == 1, "Got %u planes.\n", out->bmiHeader.biPlanes);
-    todo_wine ok(out->bmiHeader.biBitCount == 24, "Got depth %u.\n", out->bmiHeader.biBitCount);
+    ok(out->bmiHeader.biBitCount == 24, "Got depth %u.\n", out->bmiHeader.biBitCount);
     ok(out->bmiHeader.biCompression == BI_RGB, "Got compression %#lx.\n", out->bmiHeader.biCompression);
-    todo_wine ok(out->bmiHeader.biSizeImage == 320 * 240 * 3, "Got image size %lu.\n", out->bmiHeader.biSizeImage);
+    ok(out->bmiHeader.biSizeImage == 320 * 240 * 3, "Got image size %lu.\n", out->bmiHeader.biSizeImage);
     todo_wine ok(!out->bmiHeader.biXPelsPerMeter, "Got horizontal resolution %ld.\n", out->bmiHeader.biXPelsPerMeter);
     todo_wine ok(!out->bmiHeader.biYPelsPerMeter, "Got vertical resolution %ld.\n", out->bmiHeader.biYPelsPerMeter);
     todo_wine ok(!out->bmiHeader.biClrUsed, "Got %lu used colours.\n", out->bmiHeader.biClrUsed);
