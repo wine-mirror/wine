@@ -125,9 +125,12 @@ IV50_DecompressGetFormat( LPBITMAPINFO in, LPBITMAPINFO out )
     size = in->bmiHeader.biSize;
     if ( out )
     {
-        memcpy( out, in, size );
+        memset(&out->bmiHeader, 0, sizeof(out->bmiHeader));
+        out->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        out->bmiHeader.biWidth = in->bmiHeader.biWidth;
         out->bmiHeader.biHeight = abs(in->bmiHeader.biHeight);
         out->bmiHeader.biCompression = BI_RGB;
+        out->bmiHeader.biPlanes = 1;
         out->bmiHeader.biBitCount = 24;
         out->bmiHeader.biSizeImage = out->bmiHeader.biWidth * out->bmiHeader.biHeight * 3;
         return ICERR_OK;
