@@ -172,9 +172,13 @@ static void fill_buffer_parameter(struct vkd3d_shader_parameter1 *parameter, uin
 }
 
 static void fill_vs_parameters(struct wined3d_shader_spirv_compile_args *vkd3d_args,
+        enum vkd3d_shader_source_type source_type,
         const struct shader_spirv_compile_arguments *compile_args, uint32_t ffp_extra_binding)
 {
     struct vkd3d_shader_parameter1 *parameters = vkd3d_args->parameters;
+
+    if (source_type != VKD3D_SHADER_SOURCE_D3D_BYTECODE)
+        return;
 
     for (unsigned int i = 0; i < WINED3D_MAX_CLIP_DISTANCES; ++i)
         fill_buffer_parameter(&parameters[i], ffp_extra_binding,
@@ -198,35 +202,44 @@ static void fill_vs_parameters(struct wined3d_shader_spirv_compile_args *vkd3d_a
 }
 
 static void fill_ps_parameters(struct wined3d_shader_spirv_compile_args *vkd3d_args,
+        enum vkd3d_shader_source_type source_type,
         const struct shader_spirv_compile_arguments *compile_args, uint32_t ffp_extra_binding)
 {
     struct vkd3d_shader_parameter1 *parameters = vkd3d_args->parameters;
 
-    parameters[0].name = VKD3D_SHADER_PARAMETER_NAME_RASTERIZER_SAMPLE_COUNT;
-    parameters[0].type = VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT;
-    parameters[0].data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32;
-    parameters[0].u.immediate_constant.u.u32 = compile_args->u.fs.sample_count;
-
-    parameters[1].name = VKD3D_SHADER_PARAMETER_NAME_FLAT_INTERPOLATION;
-    parameters[1].type = VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT;
-    parameters[1].data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32;
-    parameters[1].u.immediate_constant.u.u32 = compile_args->u.fs.args.flatshading;
-
-    parameters[2].name = VKD3D_SHADER_PARAMETER_NAME_ALPHA_TEST_FUNC;
-    parameters[2].type = VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT;
-    parameters[2].data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32;
-    parameters[2].u.immediate_constant.u.u32 = compile_args->u.fs.args.alpha_test_func + 1;
-
-    fill_buffer_parameter(&parameters[3], ffp_extra_binding, VKD3D_SHADER_PARAMETER_NAME_ALPHA_TEST_REF,
-            VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32, offsetof(struct wined3d_ffp_ps_constants, alpha_test_ref));
-
-    parameters[4].name = VKD3D_SHADER_PARAMETER_NAME_POINT_SPRITE;
-    parameters[4].type = VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT;
-    parameters[4].data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32;
-    parameters[4].u.immediate_constant.u.u32 = compile_args->u.fs.args.pointsprite;
-
-    vkd3d_args->parameter_info.parameter_count = 5;
     vkd3d_args->parameter_info.parameters = vkd3d_args->parameters;
+
+    if (source_type == VKD3D_SHADER_SOURCE_DXBC_TPF)
+    {
+        parameters[0].name = VKD3D_SHADER_PARAMETER_NAME_RASTERIZER_SAMPLE_COUNT;
+        parameters[0].type = VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT;
+        parameters[0].data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32;
+        parameters[0].u.immediate_constant.u.u32 = compile_args->u.fs.sample_count;
+
+        vkd3d_args->parameter_info.parameter_count = 1;
+    }
+    else
+    {
+        parameters[0].name = VKD3D_SHADER_PARAMETER_NAME_FLAT_INTERPOLATION;
+        parameters[0].type = VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT;
+        parameters[0].data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32;
+        parameters[0].u.immediate_constant.u.u32 = compile_args->u.fs.args.flatshading;
+
+        parameters[1].name = VKD3D_SHADER_PARAMETER_NAME_ALPHA_TEST_FUNC;
+        parameters[1].type = VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT;
+        parameters[1].data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32;
+        parameters[1].u.immediate_constant.u.u32 = compile_args->u.fs.args.alpha_test_func + 1;
+
+        fill_buffer_parameter(&parameters[2], ffp_extra_binding, VKD3D_SHADER_PARAMETER_NAME_ALPHA_TEST_REF,
+                VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32, offsetof(struct wined3d_ffp_ps_constants, alpha_test_ref));
+
+        parameters[3].name = VKD3D_SHADER_PARAMETER_NAME_POINT_SPRITE;
+        parameters[3].type = VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT;
+        parameters[3].data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32;
+        parameters[3].u.immediate_constant.u.u32 = compile_args->u.fs.args.pointsprite;
+
+        vkd3d_args->parameter_info.parameter_count = 4;
+    }
 }
 
 static void shader_spirv_init_compile_args(const struct wined3d_vk_info *vk_info,
@@ -257,7 +270,7 @@ static void shader_spirv_init_compile_args(const struct wined3d_vk_info *vk_info
     {
         unsigned int rt_alpha_swizzle = compile_args->u.fs.args.rt_alpha_swizzle;
 
-        fill_ps_parameters(args, compile_args, bindings->ffp_ps_extra_binding);
+        fill_ps_parameters(args, source_type, compile_args, bindings->ffp_ps_extra_binding);
 
         args->spirv_target.dual_source_blending = compile_args->u.fs.args.dual_source_blend;
 
@@ -274,7 +287,7 @@ static void shader_spirv_init_compile_args(const struct wined3d_vk_info *vk_info
     }
     else if (shader_type == WINED3D_SHADER_TYPE_VERTEX)
     {
-        fill_vs_parameters(args, compile_args, bindings->ffp_vs_extra_binding);
+        fill_vs_parameters(args, source_type, compile_args, bindings->ffp_vs_extra_binding);
 
         if (source_type == VKD3D_SHADER_SOURCE_D3D_BYTECODE)
         {
