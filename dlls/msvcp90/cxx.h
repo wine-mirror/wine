@@ -76,6 +76,32 @@ const rtti_object_locator name ## _rtti = \
 
 #define INIT_RTTI(name,base) /* nothing to do */
 
+#elif defined __WINE_PE_BUILD
+
+#define DEFINE_RTTI_DATA(name, off, mangled_name, ...) \
+type_info name ## _type_info = { &type_info_vtable, NULL, mangled_name }; \
+extern const rtti_base_descriptor name ## _rtti_base_descriptor[1]; \
+void __asm_dummy_ ## name ## _rtti(void) \
+{ \
+    asm( ".balign 4\n\t" \
+         __ASM_GLOBL(#name "_rtti_base_descriptor") "\n\t" \
+         ".rva " #name "_type_info\n\t" \
+         ".long %c0, 0, -1, 0, 64\n" \
+         #name "_rtti_base_array:\n\t" \
+         ".rva " #name "_rtti_base_descriptor" __VA_OPT__(",") #__VA_ARGS__ "\n" \
+         #name "_rtti_hierarchy:\n\t" \
+         ".long 0, 0, %c0+1\n\t" \
+         ".rva " #name "_rtti_base_array\n\t" \
+         __ASM_GLOBL(#name "_rtti") "\n\t" \
+         ".long 1, %c1, 0\n\t" \
+         ".rva " #name "_type_info\n\t" \
+         ".rva " #name "_rtti_hierarchy\n\t" \
+         ".rva " #name "_rtti\n\t" \
+         :: "i"(ARRAY_SIZE(((const void *[]){ __VA_ARGS__ }))), "i"(off) ); \
+}
+
+#define INIT_RTTI(name,base) /* nothing to do */
+
 #else  /* RTTI_USE_RVA */
 
 #define DEFINE_RTTI_DATA(name, off, mangled_name, ...) \
