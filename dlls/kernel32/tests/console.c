@@ -5678,7 +5678,7 @@ static void test_FreeConsoleStd(void)
         {DETACHED_PROCESS,      with_none,        0},
     };
 
-    if (!pVerifyConsoleIoHandle || skip_nt)
+    if (!pVerifyConsoleIoHandle || !pNtCompareObjects)
     {
         win_skip("Can't run test\n");
         return;
