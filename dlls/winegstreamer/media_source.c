@@ -791,6 +791,20 @@ static HRESULT media_stream_send_eos(struct media_source *source, struct media_s
     return S_OK;
 }
 
+static bool stream_get_buffer(struct media_stream *stream, struct wg_parser_buffer *buffer)
+{
+    struct media_source *source = impl_from_IMFMediaSource(stream->media_source);
+    wg_parser_stream_t wg_stream = stream->wg_stream;
+    wg_parser_t wg_parser = source->wg_parser;
+    bool ret;
+
+    LeaveCriticalSection(&source->cs);
+    ret = wg_parser_stream_get_buffer(wg_parser, wg_stream, buffer);
+    EnterCriticalSection(&source->cs);
+
+    return ret;
+}
+
 static HRESULT wait_on_sample(struct media_stream *stream, IUnknown *token)
 {
     struct media_source *source = impl_from_IMFMediaSource(stream->media_source);
@@ -798,12 +812,15 @@ static HRESULT wait_on_sample(struct media_stream *stream, IUnknown *token)
 
     TRACE("%p, %p\n", stream, token);
 
-    while (wg_parser_stream_get_buffer(source->wg_parser, stream->wg_stream, &buffer))
+    while (stream_get_buffer(stream, &buffer))
     {
         HRESULT hr = media_stream_send_sample(stream, &buffer, token);
         if (hr != S_FALSE)
             return hr;
     }
+
+    if (source->state == SOURCE_SHUTDOWN)
+        return S_OK;
 
     return media_stream_send_eos(source, stream);
 }
