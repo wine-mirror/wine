@@ -33,9 +33,7 @@ static void test_formats(void)
     in.biCompression = mmioFOURCC('i','v','5','0');
 
     hic = ICLocate(ICTYPE_VIDEO, mmioFOURCC('i','v','5','0'), &in, NULL, ICMODE_DECOMPRESS);
-    todo_wine ok(!!hic, "Failed to open codec.\n");
-    if (!hic)
-        return;
+    ok(!!hic, "Failed to open codec.\n");
 
     ret = ICGetInfo(hic, &info, sizeof(info));
     ok(ret == sizeof(info), "Got %Id.\n", ret);

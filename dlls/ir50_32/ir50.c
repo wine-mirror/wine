@@ -74,7 +74,7 @@ IV50_DecompressQuery( LPBITMAPINFO in, LPBITMAPINFO out )
     TRACE("in->width   = %ld\n", in->bmiHeader.biWidth);
     TRACE("in->compr   = %#lx\n", in->bmiHeader.biCompression);
 
-    if ( in->bmiHeader.biCompression != IV50_MAGIC )
+    if (compare_fourcc(in->bmiHeader.biCompression, IV50_MAGIC))
     {
         TRACE("can't do %#lx compression\n", in->bmiHeader.biCompression);
         return ICERR_BADFORMAT;
@@ -123,7 +123,7 @@ IV50_DecompressGetFormat( LPBITMAPINFO in, LPBITMAPINFO out )
     if ( !in )
         return ICERR_BADPARAM;
 
-    if ( in->bmiHeader.biCompression != IV50_MAGIC )
+    if (compare_fourcc(in->bmiHeader.biCompression, IV50_MAGIC))
         return ICERR_BADFORMAT;
 
     size = in->bmiHeader.biSize;
