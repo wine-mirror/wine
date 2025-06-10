@@ -519,6 +519,7 @@ struct metadata
     unsigned int extends;
     unsigned int member[MD_ATTR_MAX];
     unsigned int property; /* get/put methods */
+    unsigned int event;    /* add/remove methods */
 };
 
 struct _type_t {

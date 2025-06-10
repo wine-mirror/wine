@@ -1060,6 +1060,58 @@ static void serialize_property_table( void )
     }
 }
 
+struct eventmap_row
+{
+    UINT parent;
+    UINT eventlist;
+};
+
+static UINT add_eventmap_row( UINT parent, UINT eventlist )
+{
+    struct eventmap_row row = { parent, eventlist };
+    return add_row( TABLE_EVENTMAP, (const BYTE *)&row, sizeof(row) );
+}
+
+static void serialize_eventmap_table( void )
+{
+    const struct eventmap_row *row = (const struct eventmap_row *)tables[TABLE_EVENTMAP].ptr;
+    UINT i;
+
+    for (i = 0; i < tables[TABLE_EVENTMAP].count; i++)
+    {
+        serialize_table_idx( row->parent, TABLE_TYPEDEF );
+        serialize_table_idx( row->eventlist, TABLE_EVENT );
+        row++;
+    }
+}
+
+struct event_row
+{
+    USHORT flags;
+    UINT   name;
+    UINT   type;
+};
+
+static UINT add_event_row( USHORT flags, UINT name, UINT type )
+{
+    struct event_row row = { flags, name, type };
+    return add_row( TABLE_EVENT, (const BYTE *)&row, sizeof(row) );
+}
+
+static void serialize_event_table( void )
+{
+    const struct event_row *row = (const struct event_row *)tables[TABLE_EVENT].ptr;
+    UINT i;
+
+    for (i = 0; i < tables[TABLE_EVENT].count; i++)
+    {
+        serialize_ushort( row->flags );
+        serialize_string_idx( row->name );
+        serialize_table_idx( row->type, typedef_or_ref_to_table(row->type) );
+        row++;
+    }
+}
+
 struct methodsemantics_row
 {
     USHORT semantics;
@@ -1858,8 +1910,31 @@ static void add_exclusiveto_attr_step2( type_t *type )
     add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
 }
 
+static void add_method_params_step1( var_list_t *arg_list )
+{
+    var_t *arg;
+
+    if (!arg_list) return;
+
+    LIST_FOR_EACH_ENTRY( arg, arg_list, var_t, entry )
+    {
+        type_t *type = arg->declspec.type;
+
+        if (type_get_type( type ) == TYPE_POINTER) type = type_pointer_get_ref_type( type );
+
+        if (type->name && !strcmp( type->name, "EventRegistrationToken" ))
+        {
+            UINT assemblyref, scope;
+            assemblyref = add_assemblyref_row( 0x200, 0, add_string("Windows.Foundation") );
+            scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+            type->md.ref = add_typeref_row( scope, add_string("EventRegistrationToken"), add_string("Windows.Foundation") );
+        }
+    }
+}
+
 static void add_interface_type_step1( type_t *type )
 {
+    const statement_t *stmt;
     UINT name, namespace;
 
     name = add_name( type, &namespace );
@@ -1869,6 +1944,13 @@ static void add_interface_type_step1( type_t *type )
     add_contract_attr_step1( type );
     add_uuid_attr_step1( type );
     add_exclusiveto_attr_step1( type );
+
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(type) )
+    {
+        const var_t *method = stmt->u.var;
+
+        add_method_params_step1( type_function_get_args(method->declspec.type) );
+    }
 }
 
 static UINT get_param_attrs( const var_t *arg )
@@ -1971,6 +2053,32 @@ static void add_propput_method( const type_t *iface, const var_t *method )
     add_methodsemantics_row( METHOD_SEM_SETTER, methoddef, has_semantics(TABLE_PROPERTY, property) );
 }
 
+static void add_eventadd_method( const type_t *iface, const var_t *method )
+{
+    UINT methoddef, event, sig_size, paramlist, attrs;
+    BYTE sig[256];
+    char *name;
+
+    event = add_event_row( 0, add_string(method->name), typedef_or_ref(TABLE_TYPEREF, method->declspec.type->md.ref) );
+    method->declspec.type->md.event = event;
+    add_eventmap_row( iface->md.def, event );
+
+    /* method may already have been added by add_eventremove_method() */
+    if (method->declspec.type->md.event) return;
+
+    paramlist = add_method_params_step2( type_function_get_args(method->declspec.type) );
+    sig_size = make_method_sig( method, sig );
+
+    attrs = METHOD_ATTR_PUBLIC  | METHOD_ATTR_VIRTUAL  | METHOD_ATTR_HIDEBYSIG |
+            METHOD_ATTR_NEWSLOT | METHOD_ATTR_ABSTRACT | METHOD_ATTR_SPECIALNAME;
+
+    name = strmake( "add_%s", method->name );
+    methoddef = add_methoddef_row( 0, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
+    free( name );
+
+    add_methodsemantics_row( METHOD_SEM_ADDON, methoddef, has_semantics(TABLE_EVENT, event) );
+}
+
 static void add_interface_type_step2( type_t *type )
 {
     UINT name, namespace, interface, flags = TYPE_ATTR_INTERFACE | TYPE_ATTR_ABSTRACT | TYPE_ATTR_UNKNOWN;
@@ -1995,6 +2103,7 @@ static void add_interface_type_step2( type_t *type )
 
         if (is_attr( method->attrs, ATTR_PROPGET )) add_propget_method( type, method );
         else if (is_attr( method->attrs, ATTR_PROPPUT )) add_propput_method( type, method );
+        else if (is_attr( method->attrs, ATTR_EVENTADD )) add_eventadd_method( type, method );
     }
 
     add_contract_attr_step2( type );
@@ -2266,6 +2375,8 @@ static void build_table_stream( const statement_list_t *stmts )
     serialize_memberref_table();
     serialize_constant_table();
     serialize_customattribute_table();
+    serialize_eventmap_table();
+    serialize_event_table();
     serialize_propertymap_table();
     serialize_property_table();
     serialize_methodsemantics_table();
