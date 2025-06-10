@@ -4251,6 +4251,7 @@ static void init_vulkan_format_info(struct wined3d_adapter *adapter, struct wine
         enum wined3d_format_id id;
         VkFormat vk_format;
         const char *fixup;
+        bool legacy_fixup;
     }
     vulkan_formats[] =
     {
@@ -4272,7 +4273,7 @@ static void init_vulkan_format_info(struct wined3d_adapter *adapter, struct wine
         {WINED3DFMT_R11G11B10_FLOAT,            VK_FORMAT_B10G11R11_UFLOAT_PACK32, },
         {WINED3DFMT_R8G8_UNORM,                 VK_FORMAT_R8G8_UNORM,              },
         {WINED3DFMT_R8G8_UINT,                  VK_FORMAT_R8G8_UINT,               },
-        {WINED3DFMT_R8G8_SNORM,                 VK_FORMAT_R8G8_SNORM,              "XY11"},
+        {WINED3DFMT_R8G8_SNORM,                 VK_FORMAT_R8G8_SNORM,              "XY11", true},
         {WINED3DFMT_R8G8_SINT,                  VK_FORMAT_R8G8_SINT,               },
         {WINED3DFMT_R8G8B8A8_UNORM,             VK_FORMAT_R8G8B8A8_UNORM,          },
         {WINED3DFMT_R8G8B8A8_UNORM_SRGB,        VK_FORMAT_R8G8B8A8_SRGB,           },
@@ -4282,7 +4283,7 @@ static void init_vulkan_format_info(struct wined3d_adapter *adapter, struct wine
         {WINED3DFMT_R16G16_FLOAT,               VK_FORMAT_R16G16_SFLOAT,           },
         {WINED3DFMT_R16G16_UNORM,               VK_FORMAT_R16G16_UNORM,            },
         {WINED3DFMT_R16G16_UINT,                VK_FORMAT_R16G16_UINT,             },
-        {WINED3DFMT_R16G16_SNORM,               VK_FORMAT_R16G16_SNORM,            "XY11"},
+        {WINED3DFMT_R16G16_SNORM,               VK_FORMAT_R16G16_SNORM,            "XY11", true},
         {WINED3DFMT_R16G16_SINT,                VK_FORMAT_R16G16_SINT,             },
         {WINED3DFMT_D32_FLOAT,                  VK_FORMAT_D32_SFLOAT,              },
         {WINED3DFMT_R32_FLOAT,                  VK_FORMAT_R32_SFLOAT,              },
@@ -4332,13 +4333,14 @@ static void init_vulkan_format_info(struct wined3d_adapter *adapter, struct wine
         {WINED3DFMT_D24_UNORM_S8_UINT,          VK_FORMAT_D24_UNORM_S8_UINT,       },
         {WINED3DFMT_NV12_PLANAR,                VK_FORMAT_G8_B8R8_2PLANE_420_UNORM,},
     };
+    const struct wined3d_d3d_info *d3d_info = &adapter->d3d_info;
     VkFormat vk_format = VK_FORMAT_UNDEFINED;
     VkImageFormatProperties image_properties;
     VkFormatFeatureFlags texture_flags;
     VkFormatProperties properties;
     VkImageUsageFlags vk_usage;
+    const char *fixup = NULL;
     unsigned int caps;
-    const char *fixup;
     unsigned int i;
     uint32_t mask;
     VkResult vr;
@@ -4348,7 +4350,9 @@ static void init_vulkan_format_info(struct wined3d_adapter *adapter, struct wine
         if (vulkan_formats[i].id == format->f.id)
         {
             vk_format = vulkan_formats[i].vk_format;
-            fixup = vulkan_formats[i].fixup;
+            if (!vulkan_formats[i].legacy_fixup
+                    || (d3d_info->wined3d_creation_flags & WINED3D_LEGACY_UNBOUND_RESOURCE_COLOR))
+                fixup = vulkan_formats[i].fixup;
             break;
         }
     }
