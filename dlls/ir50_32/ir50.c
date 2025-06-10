@@ -101,9 +101,8 @@ IV50_DecompressQuery( LPBITMAPINFO in, LPBITMAPINFO out )
             return ICERR_BADFORMAT;
         }
 
-        if ( in->bmiHeader.biPlanes != out->bmiHeader.biPlanes ||
-             in->bmiHeader.biHeight != abs(out->bmiHeader.biHeight) ||
-             in->bmiHeader.biWidth  != out->bmiHeader.biWidth )
+        if (in->bmiHeader.biHeight != abs(out->bmiHeader.biHeight)
+                || in->bmiHeader.biWidth != out->bmiHeader.biWidth)
         {
             TRACE("incompatible output dimensions requested\n");
             return ICERR_BADFORMAT;
