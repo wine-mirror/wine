@@ -794,7 +794,7 @@ static int promote_framename(mpg123_handle *fr, char *id) /* fr because of VERBO
 
 #endif /* NO_ID3V2 */
 
-int store_id3v2( mpg123_handle *fr
+static int store_id3v2( mpg123_handle *fr
 ,	unsigned long first4bytes, unsigned char buf[6], unsigned long length )
 {
 	int ret = 1;

@@ -512,7 +512,7 @@ size_t INT123_unintr_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *st
 }
 
 #ifndef NO_CATCHSIGNAL
-#if (!defined(WIN32) || defined (__CYGWIN__)) && defined(HAVE_SIGNAL_H)
+#if (!defined(WIN32) || defined (__CYGWIN__)) && !defined(__PSP__) && defined(HAVE_SIGNAL_H)
 void (*INT123_catchsignal(int signum, void(*handler)(int)))(int)
 {
 	struct sigaction new_sa;

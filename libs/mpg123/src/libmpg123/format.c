@@ -688,7 +688,7 @@ static void conv_s16_to_s32(struct outbuffer *buf)
 
 #include "../common/swap_bytes_impl.h"
 
-void swap_endian(struct outbuffer *buf, int block)
+static void swap_endian(struct outbuffer *buf, int block)
 {
 	size_t count;
 

@@ -21,7 +21,10 @@
 
 // Only portable API plays a role in the library itself, outside of lfs_wrap.c.
 // Also, we need to ensure no suffix renaming for the primary implementations.
-#define MPG123_PORTABLE_API
+// But: The _definition_ of non-portable API needs to be present for those
+// primary implementations being exported for DLL builds. Just the largefile
+// renaming needs to be skipped!
+#define MPG123_NO_LARGENAME
 #define MPG123_ENUM_API
 #include "mpg123.h"
 
