@@ -366,7 +366,7 @@ LRESULT WINAPI IV50_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
         break;
 
     case ICM_DECOMPRESS_END:
-        r = ICERR_UNSUPPORTED;
+        r = ICERR_OK;
         break;
 
     case ICM_DECOMPRESSEX_QUERY:

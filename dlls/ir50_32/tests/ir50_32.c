@@ -127,7 +127,7 @@ static void test_formats(void)
     todo_wine ok(ret == ICERR_OK, "Got %Id.\n", ret);
 
     ret = ICDecompressEnd(hic);
-    todo_wine ok(ret == ICERR_OK, "Got %Id.\n", ret);
+    ok(ret == ICERR_OK, "Got %Id.\n", ret);
 
     out->bmiHeader.biCompression = BI_RGB;
     out->bmiHeader.biBitCount = 24;
@@ -135,7 +135,7 @@ static void test_formats(void)
     ok(ret == ICERR_OK, "Got %Id.\n", ret);
 
     ret = ICDecompressEnd(hic);
-    todo_wine ok(ret == ICERR_OK, "Got %Id.\n", ret);
+    ok(ret == ICERR_OK, "Got %Id.\n", ret);
 
     ret = ICClose(hic);
     ok(!ret, "Got %Id.\n", ret);
@@ -251,7 +251,7 @@ static void test_decompress(void)
             (BITMAPINFOHEADER *)&rgb_info.bmiHeader, rgb_data);
     ok(!ret, "Got %Id.\n", ret);
     ret = ICDecompressEnd(hic);
-    todo_wine ok(!ret, "Got %Id.\n", ret);
+    ok(!ret, "Got %Id.\n", ret);
 
     resource = FindResourceW(NULL, L"rgb24frame.bmp", (const WCHAR *)RT_RCDATA);
     expect_rgb_data = ((const BYTE *)LockResource(LoadResource(GetModuleHandleW(NULL), resource)))
