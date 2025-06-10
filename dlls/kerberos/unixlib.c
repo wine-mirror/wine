@@ -459,11 +459,17 @@ fail:
     return FALSE;
 }
 
-static BOOL is_dce_style_context( gss_ctx_id_t ctx )
+static OM_uint32 get_context_flags( gss_ctx_id_t ctx )
 {
     OM_uint32 ret, minor_status, flags;
     ret = pgss_inquire_context( &minor_status, ctx, NULL, NULL, NULL, NULL, &flags, NULL, NULL );
-    return (ret == GSS_S_COMPLETE && (flags & GSS_C_DCE_STYLE));
+    return ret == GSS_S_COMPLETE ? flags : 0;
+}
+
+static BOOL is_dce_style_context( gss_ctx_id_t ctx )
+{
+    OM_uint32 flags = get_context_flags( ctx );
+    return flags & GSS_C_DCE_STYLE;
 }
 
 static NTSTATUS status_gss_to_sspi( OM_uint32 status )
@@ -971,8 +977,12 @@ static NTSTATUS seal_message( void *args )
 {
     struct seal_message_params *params = args;
     gss_ctx_id_t ctx = ctxhandle_sspi_to_gss( params->context );
+    OM_uint32 flags = get_context_flags( ctx );
 
-    if (is_dce_style_context( ctx )) return seal_message_vector( ctx, params );
+    if (params->qop != SECQOP_WRAP_NO_ENCRYPT && !(flags & GSS_C_CONF_FLAG))
+        return SEC_E_UNSUPPORTED_FUNCTION;
+
+    if (flags & GSS_C_DCE_STYLE) return seal_message_vector( ctx, params );
     return seal_message_no_vector( ctx, params );
 }
 
