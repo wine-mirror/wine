@@ -33,6 +33,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
+#define BASE_DELIMS             L",=;~!^&()+{}[]"
+#define PATH_SEPARATION_DELIMS  L" " BASE_DELIMS
+#define INTRA_PATH_DELIMS       L"\\" BASE_DELIMS
+
 typedef struct _SEARCH_CONTEXT
 {
     WIN32_FIND_DATAW *fd;
@@ -133,12 +137,12 @@ static void build_search_string(WCHAR *inputBuffer, int len, SEARCH_CONTEXT *sc)
 
     sc->searchstr[0] = L'\0';
 
-    /* If inputBuffer ends in a space then the user hit tab beyond the last
-     * parameter, so use that as the search pos (i.e. a wildcard search).
+    /* If inputBuffer ends in one of our delimiters then use that as the search
+     * pos (i.e. a wildcard search).
      * Otherwise, parse the buffer to find the last parameter in the buffer,
      * where tab was pressed.
      */
-    if (len && inputBuffer[len-1] == L' ') {
+    if (len && wcschr(PATH_SEPARATION_DELIMS, inputBuffer[len-1])) {
         cc = len;
     } else {
         /* Handle spaces in directory names.  Need to quote paths if they contain spaces.
@@ -150,7 +154,7 @@ static void build_search_string(WCHAR *inputBuffer, int len, SEARCH_CONTEXT *sc)
             if (stripped_copy) {
                 wcsncpy_s(last_stripped_copy, ARRAY_SIZE(last_stripped_copy), stripped_copy, _TRUNCATE);
             }
-            stripped_copy = WCMD_parameter(inputBuffer, nn++, &param, FALSE, FALSE);
+            stripped_copy = WCMD_parameter_with_delims(inputBuffer, nn++, &param, FALSE, FALSE, PATH_SEPARATION_DELIMS);
         } while (param);
 
         if (last_param) {
@@ -184,16 +188,16 @@ static void build_search_string(WCHAR *inputBuffer, int len, SEARCH_CONTEXT *sc)
 
 static void find_insert_pos(const WCHAR *inputBuffer, int len, SEARCH_CONTEXT *sc)
 {
-    int cc = len;
+    int cc = len - 1;
 
-    /* Handle paths here.  Find last '\\'.
-     * If '\\' isn't found then insert pos is the same as search pos.
+    /* Handle paths here.  Find last '\\' or other delimiter.
+     * If not found then insert pos is the same as search pos.
      */
-    while (cc > sc->search_pos && inputBuffer[cc] != L'\\') {
+    while (cc > sc->search_pos && !wcschr(INTRA_PATH_DELIMS, inputBuffer[cc])) {
         cc--;
     }
 
-    if (inputBuffer[cc] == L'\"' || inputBuffer[cc] == L'\\') {
+    if (inputBuffer[cc] == L'\"' || wcschr(INTRA_PATH_DELIMS, inputBuffer[cc])) {
         cc++;
     }
 
