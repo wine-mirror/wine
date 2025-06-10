@@ -558,7 +558,7 @@ static void test_profile_directory_readonly(void)
     ret = WritePrivateProfileStringA("App", "key", "string", path_file);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
 
-    ret = WritePrivateProfileSectionA("App", "key=string", path_file);
+    ret = WritePrivateProfileSectionA("App", "key=string\0", path_file);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
 
     ret = WritePrivateProfileStructA("App", "key", lpStruct, sizeof(lpStruct), path_file);
