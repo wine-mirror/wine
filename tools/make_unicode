@@ -26,7 +26,7 @@ use Encode;
 use Time::Local qw(timegm_modern);
 
 my $UNIVERSION = "16.0.0";
-my $CLDRVERSION = "46";
+my $CLDRVERSION = "47";
 my $ISO639VERSION = "20230123";
 my $TZVERSION = "2025a";
 
@@ -39,7 +39,7 @@ my %data_files =
  idna      => { url  => "https://www.unicode.org/Public/idna/$UNIVERSION/IdnaMappingTable.txt", name => "IdnaMappingTable-$UNIVERSION.txt",
                 sha  => "6db2ef4ed35f3b3de74ebc2e00404a9607f76d499f576b8d4043cf14f1ed175c" },
  cldr      => { url  => "https://github.com/unicode-org/cldr/archive/refs/tags/release-$CLDRVERSION.zip",
-                sha  => "716d0fc10a6469f7b808e55671ab98640c387e43bae152382e725462e366ccb2" },
+                sha  => "90f600f3d59d2e8dc0e179b2d988647c338a5aa48f6b39a08ebf2a223d3d8b92" },
  cldr33    => { url  => "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip",
                 sha  => "fa3490082c086d21257153609642f54fcf788fcfda4966fe67f3f6daca0d58b9" },
  sorting   => { url  => "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows 10 Sorting Weight Table.txt",
@@ -581,6 +581,8 @@ my @locales =
  { name => "ca-ES-valencia", lcid => 0x00000803, file => "ca_ES_VALENCIA", sabbrevlangname => "VAL" },
  { name => "ca-FR", maccp => 65001 },
  { name => "ca-IT", maccp => 65001 },
+ { name => "cop" },
+ { name => "cop-EG" },
  { name => "ccp" },
  { name => "ccp-BD", alias => "ccp-Cakm-BD" },
  { name => "ccp-Cakm", file => "ccp" },
@@ -939,6 +941,8 @@ my @locales =
  { name => "hr-HR", lcid => 0x0000041a },
  { name => "hsb", lcid => 0x0000002e, oemcp => 850, ebcdiccp => 870, sopentypelang => "USB" },
  { name => "hsb-DE", lcid => 0x0000042e },
+ { name => "ht" },
+ { name => "ht-HT" },
  { name => "hu", lcid => 0x0000000e, oemcp => 852, group => 2 },
  { name => "hu-HU", lcid => 0x0000040e },
  { name => "hu-HU_technl", lcid => 0x0001040e, alias => "hu-HU" },
@@ -1528,6 +1532,7 @@ my @locales =
  { name => "yue-Hant" },
  { name => "yue-Hant-CN" },
  { name => "yue-Hant-HK" },
+ { name => "yue-Hant-MO" },
  { name => "zgh" },
  { name => "zgh-MA", alias => "zgh-Tfng-MA" },
  { name => "zgh-Tfng", file => "zgh" },
