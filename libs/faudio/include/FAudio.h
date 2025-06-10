@@ -494,7 +494,7 @@ extern FAudioGUID DATAFORMAT_SUBTYPE_IEEE_FLOAT;
 
 #define FAUDIO_ABI_VERSION	 0
 #define FAUDIO_MAJOR_VERSION	25
-#define FAUDIO_MINOR_VERSION	 2
+#define FAUDIO_MINOR_VERSION	 6
 #define FAUDIO_PATCH_VERSION	 0
 
 #define FAUDIO_COMPILED_VERSION ( \
@@ -511,7 +511,7 @@ FAUDIOAPI uint32_t FAudioLinkedVersion(void);
 /* This should be your first FAudio call.
  *
  * ppFAudio:		Filled with the FAudio core context.
- * Flags:		Can be 0 or FAUDIO_DEBUG_ENGINE.
+ * Flags:		Can be 0 or a combination of FAUDIO_DEBUG_ENGINE and FAUDIO_1024_QUANTUM.
  * XAudio2Processor:	Set this to FAUDIO_DEFAULT_PROCESSOR.
  *
  * Returns 0 on success.

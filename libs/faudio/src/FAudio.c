@@ -153,14 +153,30 @@ uint32_t FAudio_AddRef(FAudio *audio)
 	return audio->refcount;
 }
 
+static void destroy_voice(FAudioVoice *voice);
+
 uint32_t FAudio_Release(FAudio *audio)
 {
 	uint32_t refcount;
+	FAudioVoice *voice;
+
 	LOG_API_ENTER(audio)
 	audio->refcount -= 1;
 	refcount = audio->refcount;
 	if (audio->refcount == 0)
 	{
+		while (audio->sources)
+		{
+			voice = (FAudioSourceVoice*) audio->sources->entry;
+			destroy_voice(voice);
+		}
+		while (audio->submixes)
+		{
+			voice = (FAudioSourceVoice*) audio->submixes->entry;
+			destroy_voice(voice);
+		}
+		if (audio->master)
+			destroy_voice(audio->master);
 		FAudio_OPERATIONSET_ClearAll(audio);
 		FAudio_StopEngine(audio);
 		audio->pFree(audio->decodeCache);
@@ -210,7 +226,7 @@ uint32_t FAudio_Initialize(
 	FAudioProcessor XAudio2Processor
 ) {
 	LOG_API_ENTER(audio)
-	FAudio_assert(Flags == 0 || Flags == FAUDIO_DEBUG_ENGINE);
+	FAudio_assert((Flags & ~(FAUDIO_DEBUG_ENGINE | FAUDIO_1024_QUANTUM)) == 0);
 	FAudio_assert(XAudio2Processor == FAUDIO_DEFAULT_PROCESSOR);
 
 	audio->initFlags = Flags;
@@ -560,7 +576,6 @@ uint32_t FAudio_CreateSourceVoice(
 		audio->sourceLock,
 		audio->pMalloc
 	);
-	FAudio_AddRef(audio);
 
 #ifdef FAUDIO_DUMP_VOICES
 	FAudio_DUMPVOICE_Init(*ppSourceVoice);
@@ -670,7 +685,6 @@ uint32_t FAudio_CreateSubmixVoice(
 		audio->submixLock,
 		audio->pMalloc
 	);
-	FAudio_AddRef(audio);
 
 	LOG_API_EXIT(audio)
 	return 0;
@@ -747,7 +761,6 @@ uint32_t FAudio_CreateMasteringVoice(
 	);
 
 	/* Platform Device */
-	FAudio_AddRef(audio);
 	FAudio_PlatformInit(
 		audio,
 		audio->initFlags,
@@ -2314,21 +2327,9 @@ static uint32_t check_for_sends_to_voice(FAudioVoice *voice)
 	return ret;
 }
 
-uint32_t FAudioVoice_DestroyVoiceSafeEXT(FAudioVoice *voice)
+static void destroy_voice(FAudioVoice *voice)
 {
-	uint32_t i, ret;
-	LOG_API_ENTER(voice->audio)
-
-	if ((ret = check_for_sends_to_voice(voice)))
-	{
-		LOG_ERROR(
-			voice->audio,
-			"Voice %p is an output for other voice(s)",
-			voice
-		)
-		LOG_API_EXIT(voice->audio)
-		return ret;
-	}
+	uint32_t i;
 
 	/* TODO: Check for dependencies and remove from audio graph first! */
 	FAudio_OPERATIONSET_ClearAllForVoice(voice);
@@ -2500,9 +2501,27 @@ uint32_t FAudioVoice_DestroyVoiceSafeEXT(FAudioVoice *voice)
 		FAudio_PlatformDestroyMutex(voice->volumeLock);
 	}
 
-	LOG_API_EXIT(voice->audio)
-	FAudio_Release(voice->audio);
 	voice->audio->pFree(voice);
+}
+
+uint32_t FAudioVoice_DestroyVoiceSafeEXT(FAudioVoice *voice)
+{
+	uint32_t ret;
+
+	LOG_API_ENTER(voice->audio)
+
+	if ((ret = check_for_sends_to_voice(voice)))
+	{
+		LOG_ERROR(
+			voice->audio,
+			"Voice %p is an output for other voice(s)",
+			voice
+		)
+		LOG_API_EXIT(voice->audio)
+		return ret;
+	}
+	destroy_voice(voice);
+	LOG_API_EXIT(voice->audio)
 	return 0;
 }
 
@@ -2578,7 +2597,7 @@ uint32_t FAudioSourceVoice_SubmitSourceBuffer(
 	const FAudioBufferWMA *pBufferWMA
 ) {
 	uint32_t adpcmMask, *adpcmByteCount;
-	uint32_t playBegin, playLength, loopBegin, loopLength;
+	uint32_t playBegin, playLength, loopBegin, loopLength, bufferLength;
 	FAudioBufferEntry *entry, *list;
 
 	LOG_API_ENTER(voice->audio)
@@ -2617,37 +2636,43 @@ uint32_t FAudioSourceVoice_SubmitSourceBuffer(
 		return FAUDIO_E_INVALID_CALL;
 	}
 
+	if (voice->src.format->wFormatTag == FAUDIO_FORMAT_MSADPCM)
+	{
+		FAudioADPCMWaveFormat *fmtex = (FAudioADPCMWaveFormat*) voice->src.format;
+		bufferLength =
+			pBuffer->AudioBytes /
+			fmtex->wfx.nBlockAlign *
+			fmtex->wSamplesPerBlock;
+	}
+	else if (voice->src.format->wFormatTag == FAUDIO_FORMAT_XMAUDIO2)
+	{
+		FAudioXMA2WaveFormat *fmtex = (FAudioXMA2WaveFormat*) voice->src.format;
+		bufferLength = fmtex->dwSamplesEncoded;
+	}
+	else if (pBufferWMA != NULL)
+	{
+		bufferLength =
+			pBufferWMA->pDecodedPacketCumulativeBytes[pBufferWMA->PacketCount - 1] /
+			(voice->src.format->nChannels * voice->src.format->wBitsPerSample / 8);
+	}
+	else
+	{
+		bufferLength =
+			pBuffer->AudioBytes /
+			voice->src.format->nBlockAlign;
+	}
+
 	/* PlayLength Default */
 	if (playLength == 0)
 	{
-		if (voice->src.format->wFormatTag == FAUDIO_FORMAT_MSADPCM)
-		{
-			FAudioADPCMWaveFormat *fmtex = (FAudioADPCMWaveFormat*) voice->src.format;
-			playLength = (
-				pBuffer->AudioBytes /
-				fmtex->wfx.nBlockAlign *
-				fmtex->wSamplesPerBlock
-			) - playBegin;
-		}
-		else if (voice->src.format->wFormatTag == FAUDIO_FORMAT_XMAUDIO2)
-		{
-			FAudioXMA2WaveFormat *fmtex = (FAudioXMA2WaveFormat*) voice->src.format;
-			playLength = fmtex->dwSamplesEncoded - playBegin;
-		}
-		else if (pBufferWMA != NULL)
-		{
-			playLength = (
-				pBufferWMA->pDecodedPacketCumulativeBytes[pBufferWMA->PacketCount - 1] /
-				(voice->src.format->nChannels * voice->src.format->wBitsPerSample / 8)
-			) - playBegin;
-		}
-		else
-		{
-			playLength = (
-				pBuffer->AudioBytes /
-				voice->src.format->nBlockAlign
-			) - playBegin;
-		}
+		playLength = bufferLength - playBegin;
+	}
+	else if (playBegin + playLength > bufferLength || playBegin + playLength < playLength)
+	{
+		/* Reading past the end of the buffer, or begin + length overflow uint32_t, which
+		 * would also read past the end of the buffer. */
+		LOG_API_EXIT(voice->audio)
+		return FAUDIO_E_INVALID_CALL;
 	}
 
 	if (pBuffer->LoopCount > 0 && pBufferWMA == NULL && voice->src.format->wFormatTag != FAUDIO_FORMAT_XMAUDIO2)
