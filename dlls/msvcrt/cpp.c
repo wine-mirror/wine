@@ -578,12 +578,11 @@ DEFINE_RTTI_DATA( __non_rtti_object, 0, ".?AV__non_rtti_object@@", &bad_typeid_r
 #endif
 
 DEFINE_CXX_TYPE( exception, exception_dtor )
-DEFINE_CXX_TYPE( bad_typeid, bad_typeid_dtor, &exception_cxx_type_info )
-DEFINE_CXX_TYPE( bad_cast, bad_cast_dtor, &exception_cxx_type_info )
-DEFINE_CXX_TYPE( __non_rtti_object, __non_rtti_object_dtor, &bad_typeid_cxx_type_info,
-        &exception_cxx_type_info )
+DEFINE_CXX_TYPE( bad_typeid, bad_typeid_dtor, exception_cxx_type_info )
+DEFINE_CXX_TYPE( bad_cast, bad_cast_dtor, exception_cxx_type_info )
+DEFINE_CXX_TYPE( __non_rtti_object, __non_rtti_object_dtor, bad_typeid_cxx_type_info, exception_cxx_type_info )
 #if _MSVCR_VER >= 80
-DEFINE_CXX_TYPE( bad_alloc, bad_alloc_dtor, &exception_cxx_type_info )
+DEFINE_CXX_TYPE( bad_alloc, bad_alloc_dtor, exception_cxx_type_info )
 #endif
 
 void msvcrt_init_exception(void *base)

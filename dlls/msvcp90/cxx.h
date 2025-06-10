@@ -111,11 +111,11 @@ static void init_ ## name ## _rtti(char *base) \
 #ifndef CXX_USE_RVA
 
 #define DEFINE_CXX_TYPE(type, dtor, ...)  \
-static const cxx_type_info type ## _cxx_type_info = \
-    { 0, &type ##_type_info, { 0, -1, 0 }, sizeof(type), THISCALL(type ##_copy_ctor) }; \
+static const cxx_type_info type ## _cxx_type_info[1] = \
+    { { 0, &type ##_type_info, { 0, -1, 0 }, sizeof(type), THISCALL(type ##_copy_ctor) } }; \
 \
 static const cxx_type_info_table type ## _cxx_type_table = \
-    { ARRAY_SIZE(((const void *[]){ NULL, __VA_ARGS__ })), { &type ## _cxx_type_info, __VA_ARGS__ } }; \
+    { ARRAY_SIZE(((const void *[]){ NULL, __VA_ARGS__ })), { type ## _cxx_type_info, __VA_ARGS__ } }; \
 \
 static const cxx_exception_type type ## _exception_type = \
     { 0, THISCALL(dtor), NULL, & type ## _cxx_type_table };
@@ -125,17 +125,17 @@ static const cxx_exception_type type ## _exception_type = \
 #else  /* CXX_USE_RVA */
 
 #define DEFINE_CXX_TYPE(type, dtor, ...)  \
-static cxx_type_info type ## _cxx_type_info = \
-    { 0, 0xdeadbeef, { 0, -1, 0 }, sizeof(type), 0xdeadbeef }; \
+static cxx_type_info type ## _cxx_type_info[1] = \
+    { { 0, 0xdeadbeef, { 0, -1, 0 }, sizeof(type), 0xdeadbeef } }; \
 \
-static const void * const type ## _cxx_type_classes[] = { &type ## _cxx_type_info, __VA_ARGS__ }; \
+static const void * const type ## _cxx_type_classes[] = { type ## _cxx_type_info, __VA_ARGS__ }; \
 static cxx_type_info_table type ## _cxx_type_table = { ARRAY_SIZE(type ## _cxx_type_classes) }; \
 static cxx_exception_type type ##_exception_type; \
 \
 static void init_ ## type ## _cxx(char *base) \
 { \
-    type ## _cxx_type_info.type_info = (char *)&type ## _type_info - base; \
-    type ## _cxx_type_info.copy_ctor = (char *)type ## _copy_ctor - base; \
+    type ## _cxx_type_info[0].type_info = (char *)&type ## _type_info - base; \
+    type ## _cxx_type_info[0].copy_ctor = (char *)type ## _copy_ctor - base; \
     for (unsigned int i = 0; i < ARRAY_SIZE(type ## _cxx_type_classes); i++) \
         type ## _cxx_type_table.info[i] = (char *)type ## _cxx_type_classes[i] - base; \
     type ## _exception_type.destructor      = (char *)dtor - base; \

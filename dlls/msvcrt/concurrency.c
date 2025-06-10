@@ -721,17 +721,17 @@ DEFINE_RTTI_DATA(missing_wait, 0,
 DEFINE_RTTI_DATA(scheduler_resource_allocation_error, 0,
         ".?AVscheduler_resource_allocation_error@Concurrency@@", &cexception_rtti_base_descriptor)
 
-DEFINE_CXX_TYPE(improper_lock, cexception_dtor, &cexception_cxx_type_info)
-DEFINE_CXX_TYPE(improper_scheduler_attach, cexception_dtor, &cexception_cxx_type_info)
-DEFINE_CXX_TYPE(improper_scheduler_detach, cexception_dtor, &cexception_cxx_type_info)
-DEFINE_CXX_TYPE(invalid_multiple_scheduling, cexception_dtor, &cexception_cxx_type_info)
-DEFINE_CXX_TYPE(invalid_scheduler_policy_key, cexception_dtor, &cexception_cxx_type_info)
-DEFINE_CXX_TYPE(invalid_scheduler_policy_thread_specification, cexception_dtor, &cexception_cxx_type_info)
-DEFINE_CXX_TYPE(invalid_scheduler_policy_value, cexception_dtor, &cexception_cxx_type_info)
+DEFINE_CXX_TYPE(improper_lock, cexception_dtor, cexception_cxx_type_info)
+DEFINE_CXX_TYPE(improper_scheduler_attach, cexception_dtor, cexception_cxx_type_info)
+DEFINE_CXX_TYPE(improper_scheduler_detach, cexception_dtor, cexception_cxx_type_info)
+DEFINE_CXX_TYPE(invalid_multiple_scheduling, cexception_dtor, cexception_cxx_type_info)
+DEFINE_CXX_TYPE(invalid_scheduler_policy_key, cexception_dtor, cexception_cxx_type_info)
+DEFINE_CXX_TYPE(invalid_scheduler_policy_thread_specification, cexception_dtor, cexception_cxx_type_info)
+DEFINE_CXX_TYPE(invalid_scheduler_policy_value, cexception_dtor, cexception_cxx_type_info)
 #if _MSVCR_VER >= 120
-DEFINE_CXX_TYPE(missing_wait, cexception_dtor, &cexception_cxx_type_info)
+DEFINE_CXX_TYPE(missing_wait, cexception_dtor, cexception_cxx_type_info)
 #endif
-DEFINE_CXX_TYPE(scheduler_resource_allocation_error, cexception_dtor, &cexception_cxx_type_info)
+DEFINE_CXX_TYPE(scheduler_resource_allocation_error, cexception_dtor, cexception_cxx_type_info)
 
 __ASM_BLOCK_BEGIN(concurrency_exception_vtables)
     __ASM_VTABLE(improper_lock,
