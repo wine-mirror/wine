@@ -47,6 +47,14 @@ struct device_desc
     WCHAR serialnumber[MAX_PATH];
 };
 
+struct device_options
+{
+    struct list entry;
+    UINT vid;
+    UINT pid;
+    INT hidraw;
+};
+
 struct bus_options
 {
     BOOL disable_sdl;
@@ -56,6 +64,7 @@ struct bus_options
     BOOL split_controllers;
     BOOL map_controllers;
     UINT mappings_count;
+    struct list devices;
     char **mappings;
 };
 
