@@ -115,14 +115,11 @@ IV50_DecompressQuery( LPBITMAPINFO in, LPBITMAPINFO out )
 static LRESULT
 IV50_DecompressGetFormat( LPBITMAPINFO in, LPBITMAPINFO out )
 {
-    DWORD size;
-
     TRACE("ICM_DECOMPRESS_GETFORMAT %p %p\n", in, out);
 
     if (compare_fourcc(in->bmiHeader.biCompression, IV50_MAGIC))
         return ICERR_BADFORMAT;
 
-    size = in->bmiHeader.biSize;
     if ( out )
     {
         memset(&out->bmiHeader, 0, sizeof(out->bmiHeader));
@@ -136,7 +133,7 @@ IV50_DecompressGetFormat( LPBITMAPINFO in, LPBITMAPINFO out )
         return ICERR_OK;
     }
 
-    return size;
+    return offsetof(BITMAPINFO, bmiColors[256]);
 }
 
 static LRESULT IV50_DecompressBegin( IMFTransform *decoder, LPBITMAPINFO in, LPBITMAPINFO out )

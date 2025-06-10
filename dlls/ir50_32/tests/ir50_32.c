@@ -49,7 +49,7 @@ static void test_formats(void)
     ok(ret == ICERR_OK, "Got %Id.\n", ret);
 
     ret = ICDecompressGetFormat(hic, &in, NULL);
-    todo_wine ok(ret == offsetof(BITMAPINFO, bmiColors[256]), "Got %Id.\n", ret);
+    ok(ret == offsetof(BITMAPINFO, bmiColors[256]), "Got %Id.\n", ret);
 
     in.biWidth = 320;
     in.biHeight = 240;
