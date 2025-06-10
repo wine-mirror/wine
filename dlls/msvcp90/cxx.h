@@ -62,11 +62,11 @@
 #define DEFINE_RTTI_DATA(name, off, mangled_name, ...) \
 static type_info name ## _type_info = { &type_info_vtable, NULL, mangled_name }; \
 \
-static const rtti_base_descriptor name ## _rtti_base_descriptor = \
-    { &name ##_type_info, ARRAY_SIZE(((const void *[]){ __VA_ARGS__ })), { 0, -1, 0 }, 64 }; \
+static const rtti_base_descriptor name ## _rtti_base_descriptor[1] = \
+    { { &name ##_type_info, ARRAY_SIZE(((const void *[]){ __VA_ARGS__ })), { 0, -1, 0}, 64 } }; \
 \
 static const rtti_base_array name ## _rtti_base_array = \
-    { { &name ## _rtti_base_descriptor, __VA_ARGS__ } }; \
+    { { name ## _rtti_base_descriptor, __VA_ARGS__ } }; \
 \
 static const rtti_object_hierarchy name ## _hierarchy = \
     { 0, 0, ARRAY_SIZE(((const void *[]){ NULL, __VA_ARGS__ })), &name ## _rtti_base_array }; \
@@ -81,8 +81,8 @@ const rtti_object_locator name ## _rtti = \
 #define DEFINE_RTTI_DATA(name, off, mangled_name, ...) \
 static type_info name ## _type_info = { &type_info_vtable, NULL, mangled_name }; \
 \
-static rtti_base_descriptor name ## _rtti_base_descriptor = \
-    { 0xdeadbeef, ARRAY_SIZE(((const void *[]){ __VA_ARGS__ })), { 0, -1, 0 }, 64 }; \
+static rtti_base_descriptor name ## _rtti_base_descriptor[1] = \
+    { { 0xdeadbeef, ARRAY_SIZE(((const void *[]){ __VA_ARGS__ })), { 0, -1, 0}, 64 } }; \
 \
 static rtti_base_array name ## _rtti_base_array; \
 \
@@ -94,8 +94,8 @@ rtti_object_locator name ## _rtti = \
 \
 static void init_ ## name ## _rtti(char *base) \
 { \
-    const void * const name ## _rtti_bases[] = { &name ## _rtti_base_descriptor, __VA_ARGS__ }; \
-    name ## _rtti_base_descriptor.type_descriptor = (char*)&name ## _type_info - base; \
+    const void * const name ## _rtti_bases[] = { name ## _rtti_base_descriptor, __VA_ARGS__ }; \
+    name ## _rtti_base_descriptor[0].type_descriptor = (char*)&name ## _type_info - base; \
     for (unsigned int i = 0; i < ARRAY_SIZE(name ## _rtti_bases); i++) \
         name ## _rtti_base_array.bases[i] = (char*)name ## _rtti_bases[i] - base; \
     name ## _hierarchy.base_classes = (char*)&name ## _rtti_base_array - base; \

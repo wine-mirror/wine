@@ -1022,12 +1022,12 @@ typedef struct {
 static custom_category iostream_category;
 
 DEFINE_RTTI_DATA(error_category, 0, ".?AVerror_category@std@@")
-DEFINE_RTTI_DATA(generic_category, 0, ".?AV_Generic_error_category@std@@", &error_category_rtti_base_descriptor)
+DEFINE_RTTI_DATA(generic_category, 0, ".?AV_Generic_error_category@std@@", error_category_rtti_base_descriptor)
 #if _MSVCP_VER == 100
-DEFINE_RTTI_DATA(iostream_category, 0, ".?AV_Iostream_error_category@std@@", &error_category_rtti_base_descriptor)
+DEFINE_RTTI_DATA(iostream_category, 0, ".?AV_Iostream_error_category@std@@", error_category_rtti_base_descriptor)
 #else
 DEFINE_RTTI_DATA(iostream_category, 0, ".?AV_Iostream_error_category@std@@",
-        &generic_category_rtti_base_descriptor, &error_category_rtti_base_descriptor)
+        generic_category_rtti_base_descriptor, error_category_rtti_base_descriptor)
 #endif
 
 extern const vtable_ptr iostream_category_vtable;
@@ -1118,7 +1118,7 @@ const error_category* __cdecl std_iostream_category(void)
 
 #if _MSVCP_VER == 100 || _MSVCP_VER >= 140
 static custom_category system_category;
-DEFINE_RTTI_DATA(system_category, 0, ".?AV_System_error_category@std@@", &error_category_rtti_base_descriptor)
+DEFINE_RTTI_DATA(system_category, 0, ".?AV_System_error_category@std@@", error_category_rtti_base_descriptor)
 
 extern const vtable_ptr system_category_vtable;
 

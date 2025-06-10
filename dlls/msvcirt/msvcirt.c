@@ -305,36 +305,36 @@ const int iostream_vbtable_istream[] = {0, VBTABLE_ENTRY(iostream, FIELD_OFFSET(
 const int iostream_vbtable_ostream[] = {0, VBTABLE_ENTRY(iostream, FIELD_OFFSET(iostream, base2), ios)};
 
 DEFINE_RTTI_DATA(streambuf, 0, ".?AVstreambuf@@")
-DEFINE_RTTI_DATA(filebuf, 0, ".?AVfilebuf@@", &streambuf_rtti_base_descriptor)
-DEFINE_RTTI_DATA(strstreambuf, 0, ".?AVstrstreambuf@@", &streambuf_rtti_base_descriptor)
-DEFINE_RTTI_DATA(stdiobuf, 0, ".?AVstdiobuf@@", &streambuf_rtti_base_descriptor)
+DEFINE_RTTI_DATA(filebuf, 0, ".?AVfilebuf@@", streambuf_rtti_base_descriptor)
+DEFINE_RTTI_DATA(strstreambuf, 0, ".?AVstrstreambuf@@", streambuf_rtti_base_descriptor)
+DEFINE_RTTI_DATA(stdiobuf, 0, ".?AVstdiobuf@@", streambuf_rtti_base_descriptor)
 DEFINE_RTTI_DATA(ios, 0, ".?AVios@@")
-DEFINE_RTTI_DATA(ostream, sizeof(ostream), ".?AVostream@@", &ios_rtti_base_descriptor)
+DEFINE_RTTI_DATA(ostream, sizeof(ostream), ".?AVostream@@", ios_rtti_base_descriptor)
 DEFINE_RTTI_DATA(ostream_withassign, sizeof(ostream), ".?AVostream_withassign@@",
-    &ostream_rtti_base_descriptor, &ios_rtti_base_descriptor)
+    ostream_rtti_base_descriptor, ios_rtti_base_descriptor)
 DEFINE_RTTI_DATA(ostrstream, sizeof(ostream), ".?AVostrstream@@",
-    &ostream_rtti_base_descriptor, &ios_rtti_base_descriptor)
+    ostream_rtti_base_descriptor, ios_rtti_base_descriptor)
 DEFINE_RTTI_DATA(ofstream, sizeof(ostream), ".?AVofstream@@",
-    &ostream_rtti_base_descriptor, &ios_rtti_base_descriptor)
-DEFINE_RTTI_DATA(istream, sizeof(istream), ".?AVistream@@", &ios_rtti_base_descriptor)
+    ostream_rtti_base_descriptor, ios_rtti_base_descriptor)
+DEFINE_RTTI_DATA(istream, sizeof(istream), ".?AVistream@@", ios_rtti_base_descriptor)
 DEFINE_RTTI_DATA(istream_withassign, sizeof(istream), ".?AVistream_withassign@@",
-    &istream_rtti_base_descriptor, &ios_rtti_base_descriptor)
+    istream_rtti_base_descriptor, ios_rtti_base_descriptor)
 DEFINE_RTTI_DATA(istrstream, sizeof(istream), ".?AVistrstream@@",
-    &istream_rtti_base_descriptor, &ios_rtti_base_descriptor)
+    istream_rtti_base_descriptor, ios_rtti_base_descriptor)
 DEFINE_RTTI_DATA(ifstream, sizeof(istream), ".?AVifstream@@",
-    &istream_rtti_base_descriptor, &ios_rtti_base_descriptor)
+    istream_rtti_base_descriptor, ios_rtti_base_descriptor)
 DEFINE_RTTI_DATA(iostream, sizeof(iostream), ".?AViostream@@",
-    &istream_rtti_base_descriptor, &ios_rtti_base_descriptor,
-    &ostream_rtti_base_descriptor, &ios_rtti_base_descriptor)
-DEFINE_RTTI_DATA(strstream, sizeof(iostream), ".?AVstrstream@@", &iostream_rtti_base_descriptor,
-    &istream_rtti_base_descriptor, &ios_rtti_base_descriptor,
-    &ostream_rtti_base_descriptor, &ios_rtti_base_descriptor)
-DEFINE_RTTI_DATA(stdiostream, sizeof(iostream), ".?AVstdiostream@@", &iostream_rtti_base_descriptor,
-    &istream_rtti_base_descriptor, &ios_rtti_base_descriptor,
-    &ostream_rtti_base_descriptor, &ios_rtti_base_descriptor)
-DEFINE_RTTI_DATA(fstream, sizeof(iostream), ".?AVfstream@@", &iostream_rtti_base_descriptor,
-    &istream_rtti_base_descriptor, &ios_rtti_base_descriptor,
-    &ostream_rtti_base_descriptor, &ios_rtti_base_descriptor)
+    istream_rtti_base_descriptor, ios_rtti_base_descriptor,
+    ostream_rtti_base_descriptor, ios_rtti_base_descriptor)
+DEFINE_RTTI_DATA(strstream, sizeof(iostream), ".?AVstrstream@@", iostream_rtti_base_descriptor,
+    istream_rtti_base_descriptor, ios_rtti_base_descriptor,
+    ostream_rtti_base_descriptor, ios_rtti_base_descriptor)
+DEFINE_RTTI_DATA(stdiostream, sizeof(iostream), ".?AVstdiostream@@", iostream_rtti_base_descriptor,
+    istream_rtti_base_descriptor, ios_rtti_base_descriptor,
+    ostream_rtti_base_descriptor, ios_rtti_base_descriptor)
+DEFINE_RTTI_DATA(fstream, sizeof(iostream), ".?AVfstream@@", iostream_rtti_base_descriptor,
+    istream_rtti_base_descriptor, ios_rtti_base_descriptor,
+    ostream_rtti_base_descriptor, ios_rtti_base_descriptor)
 
 /* ?cin@@3Vistream_withassign@@A */
 struct {

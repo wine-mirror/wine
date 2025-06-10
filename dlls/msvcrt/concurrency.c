@@ -703,23 +703,23 @@ HRESULT __thiscall scheduler_resource_allocation_error_get_error_code(
 }
 
 DEFINE_RTTI_DATA(improper_lock, 0,
-        ".?AVimproper_lock@Concurrency@@", &cexception_rtti_base_descriptor)
+        ".?AVimproper_lock@Concurrency@@", cexception_rtti_base_descriptor)
 DEFINE_RTTI_DATA(improper_scheduler_attach, 0,
-        ".?AVimproper_scheduler_attach@Concurrency@@", &cexception_rtti_base_descriptor)
+        ".?AVimproper_scheduler_attach@Concurrency@@", cexception_rtti_base_descriptor)
 DEFINE_RTTI_DATA(improper_scheduler_detach, 0,
-        ".?AVimproper_scheduler_detach@Concurrency@@", &cexception_rtti_base_descriptor)
+        ".?AVimproper_scheduler_detach@Concurrency@@", cexception_rtti_base_descriptor)
 DEFINE_RTTI_DATA(invalid_multiple_scheduling, 0,
-        ".?AVinvalid_multiple_scheduling@Concurrency@@", &cexception_rtti_base_descriptor)
+        ".?AVinvalid_multiple_scheduling@Concurrency@@", cexception_rtti_base_descriptor)
 DEFINE_RTTI_DATA(invalid_scheduler_policy_key, 0,
-        ".?AVinvalid_scheduler_policy_key@Concurrency@@", &cexception_rtti_base_descriptor)
+        ".?AVinvalid_scheduler_policy_key@Concurrency@@", cexception_rtti_base_descriptor)
 DEFINE_RTTI_DATA(invalid_scheduler_policy_thread_specification, 0,
-        ".?AVinvalid_scheduler_policy_thread_specification@Concurrency@@", &cexception_rtti_base_descriptor)
+        ".?AVinvalid_scheduler_policy_thread_specification@Concurrency@@", cexception_rtti_base_descriptor)
 DEFINE_RTTI_DATA(invalid_scheduler_policy_value, 0,
-        ".?AVinvalid_scheduler_policy_value@Concurrency@@", &cexception_rtti_base_descriptor)
+        ".?AVinvalid_scheduler_policy_value@Concurrency@@", cexception_rtti_base_descriptor)
 DEFINE_RTTI_DATA(missing_wait, 0,
-        ".?AVmissing_wait@Concurrency@@", &cexception_rtti_base_descriptor)
+        ".?AVmissing_wait@Concurrency@@", cexception_rtti_base_descriptor)
 DEFINE_RTTI_DATA(scheduler_resource_allocation_error, 0,
-        ".?AVscheduler_resource_allocation_error@Concurrency@@", &cexception_rtti_base_descriptor)
+        ".?AVscheduler_resource_allocation_error@Concurrency@@", cexception_rtti_base_descriptor)
 
 DEFINE_CXX_TYPE(improper_lock, cexception_dtor, cexception_cxx_type_info)
 DEFINE_CXX_TYPE(improper_scheduler_attach, cexception_dtor, cexception_cxx_type_info)
@@ -3727,13 +3727,13 @@ DEFINE_VTBL_WRAPPER(48);
 #endif
 
 DEFINE_RTTI_DATA(Context, 0, ".?AVContext@Concurrency@@")
-DEFINE_RTTI_DATA(ContextBase, 0, ".?AVContextBase@details@Concurrency@@", &Context_rtti_base_descriptor)
+DEFINE_RTTI_DATA(ContextBase, 0, ".?AVContextBase@details@Concurrency@@", Context_rtti_base_descriptor)
 DEFINE_RTTI_DATA(ExternalContextBase, 0, ".?AVExternalContextBase@details@Concurrency@@",
-        &ContextBase_rtti_base_descriptor, &Context_rtti_base_descriptor)
+        ContextBase_rtti_base_descriptor, Context_rtti_base_descriptor)
 DEFINE_RTTI_DATA(Scheduler, 0, ".?AVScheduler@Concurrency@@")
-DEFINE_RTTI_DATA(SchedulerBase, 0, ".?AVSchedulerBase@details@Concurrency@@", &Scheduler_rtti_base_descriptor)
+DEFINE_RTTI_DATA(SchedulerBase, 0, ".?AVSchedulerBase@details@Concurrency@@", Scheduler_rtti_base_descriptor)
 DEFINE_RTTI_DATA(ThreadScheduler, 0, ".?AVThreadScheduler@details@Concurrency@@",
-        &SchedulerBase_rtti_base_descriptor, &Scheduler_rtti_base_descriptor)
+        SchedulerBase_rtti_base_descriptor, Scheduler_rtti_base_descriptor)
 DEFINE_RTTI_DATA(_Timer, 0, ".?AV_Timer@details@Concurrency@@");
 
 __ASM_BLOCK_BEGIN(concurrency_vtables)

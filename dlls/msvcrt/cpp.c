@@ -567,14 +567,14 @@ __ASM_BLOCK_END
 
 #if _MSVCR_VER >= 80
 DEFINE_RTTI_DATA( exception_old, 0, ".?AVexception@@" )
-DEFINE_RTTI_DATA( bad_typeid, 0, ".?AVbad_typeid@std@@", &exception_rtti_base_descriptor )
-DEFINE_RTTI_DATA( bad_cast, 0, ".?AVbad_cast@std@@", &exception_rtti_base_descriptor )
-DEFINE_RTTI_DATA( __non_rtti_object, 0, ".?AV__non_rtti_object@std@@", &bad_typeid_rtti_base_descriptor, &exception_rtti_base_descriptor )
-DEFINE_RTTI_DATA( bad_alloc, 0, ".?AVbad_alloc@std@@", &exception_rtti_base_descriptor )
+DEFINE_RTTI_DATA( bad_typeid, 0, ".?AVbad_typeid@std@@", exception_rtti_base_descriptor )
+DEFINE_RTTI_DATA( bad_cast, 0, ".?AVbad_cast@std@@", exception_rtti_base_descriptor )
+DEFINE_RTTI_DATA( __non_rtti_object, 0, ".?AV__non_rtti_object@std@@", bad_typeid_rtti_base_descriptor, exception_rtti_base_descriptor )
+DEFINE_RTTI_DATA( bad_alloc, 0, ".?AVbad_alloc@std@@", exception_rtti_base_descriptor )
 #else
-DEFINE_RTTI_DATA( bad_typeid, 0, ".?AVbad_typeid@@", &exception_rtti_base_descriptor )
-DEFINE_RTTI_DATA( bad_cast, 0, ".?AVbad_cast@@", &exception_rtti_base_descriptor )
-DEFINE_RTTI_DATA( __non_rtti_object, 0, ".?AV__non_rtti_object@@", &bad_typeid_rtti_base_descriptor, &exception_rtti_base_descriptor )
+DEFINE_RTTI_DATA( bad_typeid, 0, ".?AVbad_typeid@@", exception_rtti_base_descriptor )
+DEFINE_RTTI_DATA( bad_cast, 0, ".?AVbad_cast@@", exception_rtti_base_descriptor )
+DEFINE_RTTI_DATA( __non_rtti_object, 0, ".?AV__non_rtti_object@@", bad_typeid_rtti_base_descriptor, exception_rtti_base_descriptor )
 #endif
 
 DEFINE_CXX_TYPE( exception, exception_dtor )
