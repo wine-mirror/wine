@@ -85,12 +85,12 @@ static void test_formats(void)
 
     out->bmiHeader.biHeight = -480;
     ret = ICDecompressQuery(hic, &in, out);
-    todo_wine ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
+    ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
     out->bmiHeader.biHeight = -240;
 
     out->bmiHeader.biWidth = 640;
     ret = ICDecompressQuery(hic, &in, out);
-    todo_wine ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
+    ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
     out->bmiHeader.biWidth = 320;
 
     out->bmiHeader.biBitCount = 8;
