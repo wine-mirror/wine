@@ -106,7 +106,7 @@ static IOHIDManagerRef hid_manager;
 static CFRunLoopRef run_loop;
 static struct list event_queue = LIST_INIT(event_queue);
 static struct list device_list = LIST_INIT(device_list);
-static struct iohid_bus_options options;
+static const struct bus_options *options;
 
 struct iohid_device
 {
@@ -352,7 +352,7 @@ NTSTATUS iohid_bus_init(void *args)
 {
     TRACE("args %p\n", args);
 
-    options = *(struct iohid_bus_options *)args;
+    options = args;
 
     if (!(hid_manager = IOHIDManagerCreate(kCFAllocatorDefault, 0L)))
     {

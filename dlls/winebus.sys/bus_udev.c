@@ -99,7 +99,7 @@ static struct udev_monitor *udev_monitor;
 static int deviceloop_control[2];
 static struct list event_queue = LIST_INIT(event_queue);
 static struct list device_list = LIST_INIT(device_list);
-static struct udev_bus_options options;
+static const struct bus_options *options;
 
 struct base_device
 {
@@ -1408,7 +1408,7 @@ static void build_initial_deviceset_direct(void)
     int n, len;
     DIR *dir;
 
-    if (!options.disable_hidraw)
+    if (!options->disable_hidraw)
     {
         TRACE("Initial enumeration of /dev/hidraw*\n");
         if (!(dir = opendir("/dev"))) WARN("Unable to open /dev: %s\n", strerror(errno));
@@ -1425,7 +1425,7 @@ static void build_initial_deviceset_direct(void)
         }
     }
 #ifdef HAS_PROPER_INPUT_HEADER
-    if (!options.disable_input)
+    if (!options->disable_input)
     {
         TRACE("Initial enumeration of /dev/input/event*\n");
         if (!(dir = opendir("/dev/input"))) WARN("Unable to open /dev/input: %s\n", strerror(errno));
@@ -1454,7 +1454,7 @@ static int create_inotify(void)
         return fd;
     }
 
-    if (!options.disable_hidraw)
+    if (!options->disable_hidraw)
     {
         /* We need to watch for attribute changes in addition to
          * creation, because when a device is first created, it has
@@ -1466,7 +1466,7 @@ static int create_inotify(void)
         else systems++;
     }
 #ifdef HAS_PROPER_INPUT_HEADER
-    if (!options.disable_input)
+    if (!options->disable_input)
     {
         devinput_watch = inotify_add_watch(fd, "/dev/input", flags);
         if (devinput_watch < 0) WARN("Unable to initialize inotify for /dev/input: %s\n", strerror(errno));
@@ -1562,11 +1562,11 @@ static void build_initial_deviceset_udevd(void)
         return;
     }
 
-    if (!options.disable_hidraw)
+    if (!options->disable_hidraw)
         if (udev_enumerate_add_match_subsystem(enumerate, "hidraw") < 0)
             WARN("Failed to add subsystem 'hidraw' to enumeration\n");
 #ifdef HAS_PROPER_INPUT_HEADER
-    if (!options.disable_input)
+    if (!options->disable_input)
     {
         if (udev_enumerate_add_match_subsystem(enumerate, "input") < 0)
             WARN("Failed to add subsystem 'input' to enumeration\n");
@@ -1605,7 +1605,7 @@ static struct udev_monitor *create_monitor(int *fd)
         return NULL;
     }
 
-    if (!options.disable_hidraw)
+    if (!options->disable_hidraw)
     {
         if (udev_monitor_filter_add_match_subsystem_devtype(monitor, "hidraw", NULL) < 0)
             WARN("Failed to add 'hidraw' subsystem to monitor\n");
@@ -1613,7 +1613,7 @@ static struct udev_monitor *create_monitor(int *fd)
             systems++;
     }
 #ifdef HAS_PROPER_INPUT_HEADER
-    if (!options.disable_input)
+    if (!options->disable_input)
     {
         if (udev_monitor_filter_add_match_subsystem_devtype(monitor, "input", NULL) < 0)
             WARN("Failed to add 'input' subsystem to monitor\n");
@@ -1685,10 +1685,12 @@ static void process_monitor_event(struct udev_monitor *monitor)
 NTSTATUS udev_bus_init(void *args)
 {
     int monitor_fd = -1;
+    BOOL disable_udevd;
 
     TRACE("args %p\n", args);
 
-    options = *(struct udev_bus_options *)args;
+    options = (struct bus_options *)args;
+    disable_udevd = options->disable_udevd;
 
     if (pipe(deviceloop_control) != 0)
     {
@@ -1703,11 +1705,11 @@ NTSTATUS udev_bus_init(void *args)
     }
 
 #ifdef HAVE_SYS_INOTIFY_H
-    if (options.disable_udevd) monitor_fd = create_inotify();
-    if (monitor_fd < 0) options.disable_udevd = FALSE;
+    if (disable_udevd) monitor_fd = create_inotify();
+    if (monitor_fd < 0) disable_udevd = FALSE;
 #else
-    if (options.disable_udevd) ERR("inotify support not compiled in!\n");
-    options.disable_udevd = FALSE;
+    if (disable_udevd) ERR("inotify support not compiled in!\n");
+    disable_udevd = FALSE;
 #endif
 
     if (monitor_fd < 0 && !(udev_monitor = create_monitor(&monitor_fd)))
@@ -1726,7 +1728,7 @@ NTSTATUS udev_bus_init(void *args)
     poll_fds[1].revents = 0;
     poll_count = 2;
 
-    if (!options.disable_udevd) build_initial_deviceset_udevd();
+    if (!disable_udevd) build_initial_deviceset_udevd();
 #ifdef HAVE_SYS_INOTIFY_H
     else build_initial_deviceset_direct();
 #endif

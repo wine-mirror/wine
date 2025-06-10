@@ -61,7 +61,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(hid);
 #ifdef SONAME_LIBSDL2
 
 static pthread_mutex_t sdl_cs = PTHREAD_MUTEX_INITIALIZER;
-static struct sdl_bus_options options;
+static const struct bus_options *options;
 
 static void *sdl_handle = NULL;
 static UINT quit_event = -1;
@@ -283,7 +283,7 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
     USAGE_AND_PAGE physical_usage;
 
     axis_count = pSDL_JoystickNumAxes(impl->sdl_joystick);
-    if (options.split_controllers) axis_count = min(6, axis_count - impl->axis_offset);
+    if (options->split_controllers) axis_count = min(6, axis_count - impl->axis_offset);
     if (axis_count > ARRAY_SIZE(absolute_axis_usages))
     {
         FIXME("More than %zu absolute axes found, ignoring.\n", ARRAY_SIZE(absolute_axis_usages));
@@ -952,7 +952,7 @@ static void sdl_add_device(unsigned int index)
         return;
     }
 
-    if (options.map_controllers && pSDL_IsGameController(index))
+    if (options->map_controllers && pSDL_IsGameController(index))
         controller = pSDL_GameControllerOpen(index);
 
     if (controller) product = pSDL_GameControllerName(controller);
@@ -1027,7 +1027,7 @@ static void sdl_add_device(unsigned int index)
         }
 
         bus_event_queue_device_created(&event_queue, &impl->unix_device, &desc);
-        axis_offset += (options.split_controllers ? 6 : axis_count);
+        axis_offset += (options->split_controllers ? 6 : axis_count);
     }
     while (axis_offset < axis_count);
 }
@@ -1050,7 +1050,7 @@ static void process_device_event(SDL_Event *event)
         if (impl) bus_event_queue_device_removed(&event_queue, &impl->unix_device);
         else WARN("Failed to find device with id %d\n", id);
     }
-    else if (event->type == SDL_JOYAXISMOTION && options.split_controllers)
+    else if (event->type == SDL_JOYAXISMOTION && options->split_controllers)
     {
         id = event->jaxis.which;
         impl = find_device_from_id_and_axis(id, event->jaxis.axis);
@@ -1089,7 +1089,7 @@ NTSTATUS sdl_bus_init(void *args)
 
     TRACE("args %p\n", args);
 
-    options = *(struct sdl_bus_options *)args;
+    options = (struct bus_options *)args;
 
     if (!(sdl_handle = dlopen(SONAME_LIBSDL2, RTLD_NOW)))
     {
@@ -1182,10 +1182,10 @@ NTSTATUS sdl_bus_init(void *args)
             if (pSDL_GameControllerAddMapping(mapping) < 0)
                 WARN("Failed to add environment mapping %s\n", pSDL_GetError());
         }
-        else for (i = 0; i < options.mappings_count; ++i)
+        else for (i = 0; i < options->mappings_count; ++i)
         {
-            TRACE("Setting registry mapping %s\n", debugstr_a(options.mappings[i]));
-            if (pSDL_GameControllerAddMapping(options.mappings[i]) < 0)
+            TRACE("Setting registry mapping %s\n", debugstr_a(options->mappings[i]));
+            if (pSDL_GameControllerAddMapping(options->mappings[i]) < 0)
                 WARN("Failed to add registry mapping %s\n", pSDL_GetError());
         }
     }

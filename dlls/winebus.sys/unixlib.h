@@ -47,24 +47,16 @@ struct device_desc
     WCHAR serialnumber[MAX_PATH];
 };
 
-struct sdl_bus_options
+struct bus_options
 {
-    BOOL split_controllers;
-    BOOL map_controllers;
-    /* freed after bus_init */
-    UINT mappings_count;
-    char **mappings;
-};
-
-struct udev_bus_options
-{
+    BOOL disable_sdl;
     BOOL disable_hidraw;
     BOOL disable_input;
     BOOL disable_udevd;
-};
-
-struct iohid_bus_options
-{
+    BOOL split_controllers;
+    BOOL map_controllers;
+    UINT mappings_count;
+    char **mappings;
 };
 
 enum bus_event_type

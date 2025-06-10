@@ -51,6 +51,7 @@ static DEVICE_OBJECT *keyboard_obj;
 static DEVICE_OBJECT *bus_pdo;
 static DEVICE_OBJECT *bus_fdo;
 
+static struct bus_options options;
 static HANDLE driver_key;
 
 struct hid_report
@@ -426,7 +427,7 @@ static BOOL is_hidraw_enabled(WORD vid, WORD pid, const USAGE_AND_PAGE *usages, 
     UNICODE_STRING str;
     DWORD size;
 
-    if (check_bus_option(L"DisableHidraw", FALSE)) return FALSE;
+    if (options.disable_hidraw) return FALSE;
 
     if (usages->UsagePage == HID_USAGE_PAGE_DIGITIZER)
     {
@@ -441,9 +442,7 @@ static BOOL is_hidraw_enabled(WORD vid, WORD pid, const USAGE_AND_PAGE *usages, 
     }
     if (usages->Usage != HID_USAGE_GENERIC_GAMEPAD && usages->Usage != HID_USAGE_GENERIC_JOYSTICK) return TRUE;
 
-    if (!check_bus_option(L"Enable SDL", 1) && check_bus_option(L"DisableInput", 0))
-        prefer_hidraw = TRUE;
-
+    if (options.disable_sdl && options.disable_input) prefer_hidraw = TRUE;
     if (is_dualshock4_gamepad(vid, pid)) prefer_hidraw = TRUE;
     if (is_dualsense_gamepad(vid, pid)) prefer_hidraw = TRUE;
 
@@ -911,7 +910,7 @@ static NTSTATUS bus_main_thread_start(struct bus_main_params *bus)
     return status;
 }
 
-static void sdl_bus_free_mappings(struct sdl_bus_options *options)
+static void sdl_bus_free_mappings(struct bus_options *options)
 {
     DWORD count = options->mappings_count;
     char **mappings = options->mappings;
@@ -920,7 +919,7 @@ static void sdl_bus_free_mappings(struct sdl_bus_options *options)
     RtlFreeHeap(GetProcessHeap(), 0, mappings);
 }
 
-static void sdl_bus_load_mappings(struct sdl_bus_options *options)
+static void sdl_bus_load_mappings(struct bus_options *options)
 {
     ULONG idx = 0, len, count = 0, capacity, info_size, info_max_size;
     UNICODE_STRING path = RTL_CONSTANT_STRING(L"map");
@@ -987,74 +986,74 @@ done:
     NtClose(key);
 }
 
+static void bus_options_init(void)
+{
+    options.disable_sdl = !check_bus_option(L"Enable SDL", 1);
+    if (options.disable_sdl) TRACE("SDL devices disabled in registry\n");
+    options.disable_hidraw = check_bus_option(L"DisableHidraw", 0);
+    if (options.disable_hidraw) TRACE("UDEV hidraw devices disabled in registry\n");
+    options.disable_input = check_bus_option(L"DisableInput", 0);
+    if (options.disable_input) TRACE("UDEV input devices disabled in registry\n");
+    options.disable_udevd = check_bus_option(L"DisableUdevd", 0);
+    if (options.disable_udevd) TRACE("UDEV udevd use disabled in registry\n");
+
+    if (!options.disable_sdl)
+    {
+        options.split_controllers = check_bus_option(L"Split Controllers", 0);
+        if (options.split_controllers) TRACE("SDL controller splitting enabled\n");
+        options.map_controllers = check_bus_option(L"Map Controllers", 1);
+        if (!options.map_controllers) TRACE("SDL controller to XInput HID gamepad mapping disabled\n");
+        sdl_bus_load_mappings(&options);
+    }
+}
+
+static void bus_options_cleanup(void)
+{
+    if (!options.disable_sdl) sdl_bus_free_mappings(&options);
+    memset(&options, 0, sizeof(options));
+}
+
 static NTSTATUS sdl_driver_init(void)
 {
-    struct sdl_bus_options bus_options;
     struct bus_main_params bus =
     {
         .name = L"SDL",
-        .init_args = &bus_options,
+        .init_args = &options,
         .init_code = sdl_init,
         .wait_code = sdl_wait,
     };
-    NTSTATUS status;
-
-    bus_options.split_controllers = check_bus_option(L"Split Controllers", 0);
-    if (bus_options.split_controllers) TRACE("SDL controller splitting enabled\n");
-    bus_options.map_controllers = check_bus_option(L"Map Controllers", 1);
-    if (!bus_options.map_controllers) TRACE("SDL controller to XInput HID gamepad mapping disabled\n");
-    sdl_bus_load_mappings(&bus_options);
-
-    status = bus_main_thread_start(&bus);
-    sdl_bus_free_mappings(&bus_options);
-    return status;
+    if (options.disable_sdl) return STATUS_SUCCESS;
+    return bus_main_thread_start(&bus);
 }
 
-static NTSTATUS udev_driver_init(BOOL enable_sdl)
+static NTSTATUS udev_driver_init(void)
 {
-    struct udev_bus_options bus_options;
     struct bus_main_params bus =
     {
         .name = L"UDEV",
-        .init_args = &bus_options,
+        .init_args = &options,
         .init_code = udev_init,
         .wait_code = udev_wait,
     };
-
-    bus_options.disable_hidraw = check_bus_option(L"DisableHidraw", 0);
-    if (bus_options.disable_hidraw) TRACE("UDEV hidraw devices disabled in registry\n");
-    bus_options.disable_input = check_bus_option(L"DisableInput", 0) || enable_sdl;
-    if (bus_options.disable_input) TRACE("UDEV input devices disabled in registry\n");
-    bus_options.disable_udevd = check_bus_option(L"DisableUdevd", 0);
-    if (bus_options.disable_udevd) TRACE("UDEV udevd use disabled in registry\n");
-
     return bus_main_thread_start(&bus);
 }
 
 static NTSTATUS iohid_driver_init(void)
 {
-    struct iohid_bus_options bus_options;
     struct bus_main_params bus =
     {
         .name = L"IOHID",
-        .init_args = &bus_options,
+        .init_args = &options,
         .init_code = iohid_init,
         .wait_code = iohid_wait,
     };
-
-    if (check_bus_option(L"DisableHidraw", FALSE))
-    {
-        TRACE("IOHID hidraw devices disabled in registry\n");
-        return STATUS_SUCCESS;
-    }
-
+    if (options.disable_hidraw) return STATUS_SUCCESS;
     return bus_main_thread_start(&bus);
 }
 
 static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
-    BOOL enable_sdl;
     NTSTATUS ret;
 
     switch (irpsp->MinorFunction)
@@ -1063,12 +1062,13 @@ static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
         irp->IoStatus.Status = handle_IRP_MN_QUERY_DEVICE_RELATIONS(irp);
         break;
     case IRP_MN_START_DEVICE:
+        bus_options_init();
+
         mouse_device_create();
         keyboard_device_create();
 
-        if ((enable_sdl = check_bus_option(L"Enable SDL", 1)))
-            enable_sdl = !sdl_driver_init();
-        udev_driver_init(enable_sdl);
+        if (!sdl_driver_init()) options.disable_input = TRUE;
+        udev_driver_init();
         iohid_driver_init();
 
         irp->IoStatus.Status = STATUS_SUCCESS;
@@ -1089,6 +1089,8 @@ static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
         ret = IoCallDriver(bus_pdo, irp);
         IoDetachDevice(bus_pdo);
         IoDeleteDevice(device);
+
+        bus_options_cleanup();
         return ret;
     default:
         FIXME("Unhandled minor function %#x.\n", irpsp->MinorFunction);
