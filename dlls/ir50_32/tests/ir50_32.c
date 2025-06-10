@@ -111,7 +111,7 @@ static void test_formats(void)
     ((DWORD *)&out->bmiColors[0])[1] = 0x07e0;
     ((DWORD *)&out->bmiColors[0])[2] = 0x001f;
     ret = ICDecompressQuery(hic, &in, out);
-    todo_wine ok(ret == ICERR_OK, "Got %Id.\n", ret);
+    ok(ret == ICERR_OK, "Got %Id.\n", ret);
 
     out->bmiHeader.biCompression = mmioFOURCC('C','L','J','R');
     out->bmiHeader.biBitCount = 8;

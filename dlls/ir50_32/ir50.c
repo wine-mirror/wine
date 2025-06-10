@@ -89,15 +89,21 @@ IV50_DecompressQuery( LPBITMAPINFO in, LPBITMAPINFO out )
         TRACE("out->width  = %ld\n", out->bmiHeader.biWidth);
         TRACE("out->compr  = %#lx\n", out->bmiHeader.biCompression);
 
-        if ( out->bmiHeader.biCompression != BI_RGB )
+        if (out->bmiHeader.biCompression == BI_RGB)
         {
-            TRACE("incompatible compression requested\n");
-            return ICERR_BADFORMAT;
+            if (out->bmiHeader.biBitCount != 32 && out->bmiHeader.biBitCount != 24 && out->bmiHeader.biBitCount != 16)
+                return ICERR_BADFORMAT;
         }
-
-        if ( out->bmiHeader.biBitCount != 32 && out->bmiHeader.biBitCount != 24 && out->bmiHeader.biBitCount != 16 )
+        else if (out->bmiHeader.biCompression == BI_BITFIELDS)
         {
-            TRACE("incompatible depth requested\n");
+            const DWORD *masks = (const DWORD *)(&out->bmiColors[0]);
+
+            if (out->bmiHeader.biBitCount != 16
+                    || masks[0] != 0xf800 || masks[1] != 0x07e0 || masks[2] != 0x001f)
+                return ICERR_BADFORMAT;
+        }
+        else
+        {
             return ICERR_BADFORMAT;
         }
 
@@ -148,7 +154,9 @@ static LRESULT IV50_DecompressBegin( IMFTransform *decoder, LPBITMAPINFO in, LPB
     if ( !decoder )
         return ICERR_BADPARAM;
 
-    if ( out->bmiHeader.biBitCount == 32 )
+    if (out->bmiHeader.biCompression == BI_BITFIELDS)
+        output_subtype = &MFVideoFormat_RGB565;
+    else if (out->bmiHeader.biBitCount == 32)
         output_subtype = &MFVideoFormat_RGB32;
     else if ( out->bmiHeader.biBitCount == 24 )
         output_subtype = &MFVideoFormat_RGB24;
