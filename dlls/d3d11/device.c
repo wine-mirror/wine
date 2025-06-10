@@ -2292,7 +2292,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_RSGetState(ID3D11DeviceContex
     if ((wined3d_state = wined3d_device_context_get_rasterizer_state(context->wined3d_context)))
     {
         rasterizer_state_impl = wined3d_rasterizer_state_get_parent(wined3d_state);
-        *rasterizer_state = (ID3D11RasterizerState *)&rasterizer_state_impl->ID3D11RasterizerState1_iface;
+        *rasterizer_state = (ID3D11RasterizerState *)&rasterizer_state_impl->ID3D11RasterizerState2_iface;
         ID3D11RasterizerState_AddRef(*rasterizer_state);
     }
     else
@@ -4458,7 +4458,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateRasterizerState(ID3D11Device
 {
     struct d3d_device *device = impl_from_ID3D11Device5(iface);
     struct d3d_rasterizer_state *object;
-    D3D11_RASTERIZER_DESC1 desc1;
+    D3D11_RASTERIZER_DESC2 desc2;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, rasterizer_state %p.\n", iface, desc, rasterizer_state);
@@ -4466,13 +4466,14 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateRasterizerState(ID3D11Device
     if (!desc)
         return E_INVALIDARG;
 
-    memcpy(&desc1, desc, sizeof(*desc));
-    desc1.ForcedSampleCount = 0;
+    memcpy(&desc2, desc, sizeof(*desc));
+    desc2.ForcedSampleCount = 0;
+    desc2.ConservativeRaster = D3D11_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
-    if (FAILED(hr = d3d_rasterizer_state_create(device, &desc1, &object)))
+    if (FAILED(hr = d3d_rasterizer_state_create(device, &desc2, &object)))
         return hr;
 
-    *rasterizer_state = (ID3D11RasterizerState *)&object->ID3D11RasterizerState1_iface;
+    *rasterizer_state = (ID3D11RasterizerState *)&object->ID3D11RasterizerState2_iface;
 
     return S_OK;
 }
@@ -5136,6 +5137,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateRasterizerState1(ID3D11Devic
 {
     struct d3d_device *device = impl_from_ID3D11Device5(iface);
     struct d3d_rasterizer_state *object;
+    D3D11_RASTERIZER_DESC2 desc2;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, state %p.\n", iface, desc, state);
@@ -5143,10 +5145,13 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateRasterizerState1(ID3D11Devic
     if (!desc)
         return E_INVALIDARG;
 
-    if (FAILED(hr = d3d_rasterizer_state_create(device, desc, &object)))
+    memcpy(&desc2, desc, sizeof(*desc));
+    desc2.ConservativeRaster = D3D11_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+
+    if (FAILED(hr = d3d_rasterizer_state_create(device, &desc2, &object)))
         return hr;
 
-    *state = &object->ID3D11RasterizerState1_iface;
+    *state = (ID3D11RasterizerState1 *)&object->ID3D11RasterizerState2_iface;
 
     return S_OK;
 }
@@ -5292,9 +5297,21 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateTexture3D1(ID3D11Device5 *if
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateRasterizerState2(ID3D11Device5 *iface,
         const D3D11_RASTERIZER_DESC2 *desc, ID3D11RasterizerState2 **state)
 {
-    FIXME("iface %p, desc %p, state %p stub!\n", iface, desc, state);
+    struct d3d_device *device = impl_from_ID3D11Device5(iface);
+    struct d3d_rasterizer_state *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p, state %p.\n", iface, desc, state);
+
+    if (!desc)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = d3d_rasterizer_state_create(device, desc, &object)))
+        return hr;
+
+    *state = &object->ID3D11RasterizerState2_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateShaderResourceView1(ID3D11Device5 *iface,
@@ -6037,7 +6054,7 @@ static void STDMETHODCALLTYPE d3d10_device_RSSetState(ID3D10Device1 *iface, ID3D
 
     rasterizer_state_object = unsafe_impl_from_ID3D10RasterizerState(rasterizer_state);
     d3d11_device_context_RSSetState(&device->immediate_context.ID3D11DeviceContext4_iface,
-            rasterizer_state_object ? (ID3D11RasterizerState *)&rasterizer_state_object->ID3D11RasterizerState1_iface : NULL);
+            rasterizer_state_object ? (ID3D11RasterizerState *)&rasterizer_state_object->ID3D11RasterizerState2_iface : NULL);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_RSSetViewports(ID3D10Device1 *iface,
@@ -7331,7 +7348,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRasterizerState(ID3D10Device
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
     struct d3d_rasterizer_state *object;
-    D3D11_RASTERIZER_DESC1 desc1;
+    D3D11_RASTERIZER_DESC2 desc2;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, rasterizer_state %p.\n", iface, desc, rasterizer_state);
@@ -7339,10 +7356,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRasterizerState(ID3D10Device
     if (!desc)
         return E_INVALIDARG;
 
-    memcpy(&desc1, desc, sizeof(*desc));
-    desc1.ForcedSampleCount = 0;
+    memcpy(&desc2, desc, sizeof(*desc));
+    desc2.ForcedSampleCount = 0;
+    desc2.ConservativeRaster = D3D11_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
-    if (FAILED(hr = d3d_rasterizer_state_create(device, &desc1, &object)))
+    if (FAILED(hr = d3d_rasterizer_state_create(device, &desc2, &object)))
         return hr;
 
     *rasterizer_state = &object->ID3D10RasterizerState_iface;
@@ -8117,8 +8135,8 @@ static int d3d_depthstencil_state_compare(const void *key, const struct wine_rb_
 
 static int d3d_rasterizer_state_compare(const void *key, const struct wine_rb_entry *entry)
 {
-    const D3D11_RASTERIZER_DESC1 *ka = key;
-    const D3D11_RASTERIZER_DESC1 *kb = &WINE_RB_ENTRY_VALUE(entry, const struct d3d_rasterizer_state, entry)->desc;
+    const D3D11_RASTERIZER_DESC2 *ka = key;
+    const D3D11_RASTERIZER_DESC2 *kb = &WINE_RB_ENTRY_VALUE(entry, const struct d3d_rasterizer_state, entry)->desc;
 
     return memcmp(ka, kb, sizeof(*ka));
 }

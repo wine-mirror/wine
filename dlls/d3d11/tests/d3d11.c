@@ -5881,6 +5881,7 @@ static void test_create_rasterizer_state(void)
     D3D11_RASTERIZER_DESC desc;
     ID3D11Device *device, *tmp;
     ID3D11Device1 *device1;
+    ID3D11Device3 *device3;
     HRESULT hr;
 
     if (!(device = create_device(NULL)))
@@ -5967,6 +5968,33 @@ static void test_create_rasterizer_state(void)
         ID3D11RasterizerState1_Release(state_ex1);
 
         ID3D11Device1_Release(device1);
+    }
+
+    if (ID3D11Device_QueryInterface(device, &IID_ID3D11Device3, (void **)&device3) == S_OK)
+    {
+        ID3D11RasterizerState2 *state_ex2;
+        D3D11_RASTERIZER_DESC2 desc2;
+
+        hr = ID3D11RasterizerState_QueryInterface(rast_state1, &IID_ID3D11RasterizerState2, (void **)&state_ex2);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        memset(&desc2, 0xcc, sizeof(desc2));
+        ID3D11RasterizerState2_GetDesc2(state_ex2, &desc2);
+        ok(!memcmp(&desc2, &desc, sizeof(desc)), "D3D11 desc didn't match.\n");
+        ok(!desc2.ForcedSampleCount, "Got forced sample count %u.\n", desc2.ForcedSampleCount);
+        ok(!desc2.ConservativeRaster, "Got conservative raster %u.\n", desc2.ConservativeRaster);
+
+        ID3D11RasterizerState2_Release(state_ex2);
+
+        memcpy(&desc2, &desc, sizeof(desc));
+        desc2.ForcedSampleCount = 0;
+        desc2.ConservativeRaster = D3D11_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+        hr = ID3D11Device3_CreateRasterizerState2(device3, &desc2, &state_ex2);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        ID3D11RasterizerState2_Release(state_ex2);
+
+        ID3D11Device3_Release(device3);
     }
 
     refcount = ID3D11RasterizerState_Release(rast_state2);
