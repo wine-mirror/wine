@@ -122,6 +122,32 @@ static const cxx_exception_type type ## _exception_type = \
 
 #define INIT_CXX_TYPE(name,base) (void)name ## _exception_type
 
+#elif defined __WINE_PE_BUILD
+
+#define DEFINE_CXX_TYPE(type, dtor, ...)  \
+extern const cxx_type_info type ## _cxx_type_info[1]; \
+extern const cxx_exception_type type ## _exception_type; \
+void __asm_dummy_ ## type ## _exception_type(void) \
+{ \
+    asm( ".balign 4\n\t" \
+         __ASM_GLOBL(#type "_cxx_type_info") "\n\t" \
+         ".long 0\n\t" \
+         ".rva " #type "_type_info\n\t" \
+         ".long 0, -1, 0, %c0\n\t" \
+         ".rva " #type "_copy_ctor\n" \
+         #type "_type_table:\n\t" \
+         ".long %c1\n\t" \
+         ".rva " #type "_type_info" __VA_OPT__(",") #__VA_ARGS__ "\n\t" \
+         __ASM_GLOBL(#type "_exception_type") "\n\t" \
+         ".long 0\n\t" \
+         ".rva " #dtor "\n\t" \
+         ".long 0\n\t" \
+         ".rva " #type "_type_table\n\t" \
+         :: "i"(sizeof(type)), "i"(ARRAY_SIZE(((const void *[]){ NULL, __VA_ARGS__ }))) ); \
+}
+
+#define INIT_CXX_TYPE(name,base) /* nothing to do */
+
 #else  /* CXX_USE_RVA */
 
 #define DEFINE_CXX_TYPE(type, dtor, ...)  \
