@@ -22415,6 +22415,7 @@ wine_fn_config_makefile dlls/iphlpapi enable_iphlpapi
 wine_fn_config_makefile dlls/iphlpapi/tests enable_tests
 wine_fn_config_makefile dlls/iprop enable_iprop
 wine_fn_config_makefile dlls/ir50_32 enable_ir50_32
+wine_fn_config_makefile dlls/ir50_32/tests enable_tests
 wine_fn_config_makefile dlls/irprops.cpl enable_irprops_cpl
 wine_fn_config_makefile dlls/itircl enable_itircl
 wine_fn_config_makefile dlls/itss enable_itss
