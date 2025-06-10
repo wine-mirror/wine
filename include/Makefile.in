@@ -311,6 +311,7 @@ SOURCES = \
 	dxvahd.idl \
 	dyngraph.idl \
 	endpointvolume.idl \
+	errhandlingapi.h \
 	errorrep.h \
 	errors.h \
 	errrec.idl \
