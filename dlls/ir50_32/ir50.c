@@ -120,9 +120,6 @@ IV50_DecompressGetFormat( LPBITMAPINFO in, LPBITMAPINFO out )
 
     TRACE("ICM_DECOMPRESS_GETFORMAT %p %p\n", in, out);
 
-    if ( !in )
-        return ICERR_BADPARAM;
-
     if (compare_fourcc(in->bmiHeader.biCompression, IV50_MAGIC))
         return ICERR_BADFORMAT;
 
