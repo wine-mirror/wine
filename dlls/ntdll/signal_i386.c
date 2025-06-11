@@ -522,7 +522,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "leal -12(%esi),%edi\n\t"
                    /* clear the thread stack */
                    "andl $~0xfff,%edi\n\t"   /* round down to page size */
-                   "movl $0xf0000,%ecx\n\t"
+                   "movl $0xf000,%ecx\n\t"
                    "subl %ecx,%edi\n\t"
                    "movl %edi,%esp\n\t"
                    "xorl %eax,%eax\n\t"
