@@ -78,7 +78,7 @@ const rtti_object_locator name ## _rtti = \
 
 #elif defined __WINE_PE_BUILD
 
-#define DEFINE_RTTI_DATA(name, off, mangled_name, ...) \
+#define DEFINE_RTTI_DATA2(name, off, mangled_name, ...) \
 type_info name ## _type_info = { &type_info_vtable, NULL, mangled_name }; \
 extern const rtti_base_descriptor name ## _rtti_base_descriptor[1]; \
 void __asm_dummy_ ## name ## _rtti(void) \
@@ -86,11 +86,11 @@ void __asm_dummy_ ## name ## _rtti(void) \
     asm( ".balign 4\n\t" \
          __ASM_GLOBL(#name "_rtti_base_descriptor") "\n\t" \
          ".rva " #name "_type_info\n\t" \
-         ".long %c0, 0, -1, 0, 64\n" \
+         ".long %c0-1, 0, -1, 0, 64\n" \
          #name "_rtti_base_array:\n\t" \
-         ".rva " #name "_rtti_base_descriptor" __VA_OPT__(",") #__VA_ARGS__ "\n" \
+         ".rva " #__VA_ARGS__ "\n" \
          #name "_rtti_hierarchy:\n\t" \
-         ".long 0, 0, %c0+1\n\t" \
+         ".long 0, 0, %c0\n\t" \
          ".rva " #name "_rtti_base_array\n\t" \
          __ASM_GLOBL(#name "_rtti") "\n\t" \
          ".long 1, %c1, 0\n\t" \
@@ -99,6 +99,8 @@ void __asm_dummy_ ## name ## _rtti(void) \
          ".rva " #name "_rtti\n\t" \
          :: "i"(ARRAY_SIZE(((const void *[]){ __VA_ARGS__ }))), "i"(off) ); \
 }
+#define DEFINE_RTTI_DATA(name, off, mangled_name, ...) \
+    DEFINE_RTTI_DATA2(name, off, mangled_name, name ## _rtti_base_descriptor, ##__VA_ARGS__)
 
 #define INIT_RTTI(name,base) /* nothing to do */
 
@@ -150,7 +152,7 @@ static const cxx_exception_type type ## _exception_type = \
 
 #elif defined __WINE_PE_BUILD
 
-#define DEFINE_CXX_TYPE(type, dtor, ...)  \
+#define DEFINE_CXX_TYPE2(type, dtor, ...) \
 extern const cxx_type_info type ## _cxx_type_info[1]; \
 extern const cxx_exception_type type ## _exception_type; \
 void __asm_dummy_ ## type ## _exception_type(void) \
@@ -163,14 +165,16 @@ void __asm_dummy_ ## type ## _exception_type(void) \
          ".rva " #type "_copy_ctor\n" \
          #type "_type_table:\n\t" \
          ".long %c1\n\t" \
-         ".rva " #type "_type_info" __VA_OPT__(",") #__VA_ARGS__ "\n\t" \
+         ".rva " #__VA_ARGS__ "\n\t" \
          __ASM_GLOBL(#type "_exception_type") "\n\t" \
          ".long 0\n\t" \
          ".rva " #dtor "\n\t" \
          ".long 0\n\t" \
          ".rva " #type "_type_table\n\t" \
-         :: "i"(sizeof(type)), "i"(ARRAY_SIZE(((const void *[]){ NULL, __VA_ARGS__ }))) ); \
+         :: "i"(sizeof(type)), "i"(ARRAY_SIZE(((const void *[]){ &__VA_ARGS__ }))) ); \
 }
+#define DEFINE_CXX_TYPE(type, dtor, ...) \
+    DEFINE_CXX_TYPE2(type, dtor, type ## _type_info, ##__VA_ARGS__)
 
 #define INIT_CXX_TYPE(name,base) /* nothing to do */
 
