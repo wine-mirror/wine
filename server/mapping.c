@@ -242,6 +242,7 @@ struct session_object
 {
     struct list entry;      /* entry in the session free object list */
     mem_size_t offset;      /* offset of obj in the session shared mapping */
+    mem_size_t size;        /* size of obj in the session shared mapping */
     shared_object_t obj;    /* object actually shared with the client */
 };
 
@@ -1380,31 +1381,41 @@ static struct session_block *find_free_session_block( mem_size_t size )
     return grow_session_mapping( size );
 }
 
-volatile void *alloc_shared_object(void)
+static struct session_object *find_free_session_object( mem_size_t size )
 {
     struct session_object *object;
-    struct list *ptr;
 
-    if ((ptr = list_head( &session.free_objects )))
+    LIST_FOR_EACH_ENTRY( object, &session.free_objects, struct session_object, entry )
     {
-        object = CONTAINING_RECORD( ptr, struct session_object, entry );
-        list_remove( &object->entry );
+        if (size == sizeof(*object) && object->size == size) return object;
+        if (size > sizeof(*object) && size <= object->size) return object;
     }
+
+    return NULL;
+}
+
+volatile void *alloc_shared_object( mem_size_t shm_size )
+{
+    struct session_object *object;
+    mem_size_t size = sizeof(*object) - sizeof(object_shm_t) + max(shm_size, sizeof(object_shm_t));
+
+    if ((object = find_free_session_object( size )))
+        list_remove( &object->entry );
     else
     {
-        mem_size_t size = sizeof(*object);
         struct session_block *block;
 
         if (!(block = find_free_session_block( size ))) return NULL;
         object = (struct session_object *)(block->data + block->used_size);
         object->offset = block->offset + (char *)&object->obj - block->data;
+        object->size = size;
         block->used_size += size;
     }
 
     SHARED_WRITE_BEGIN( &object->obj.shm, object_shm_t )
     {
         /* mark the object data as uninitialized */
-        mark_block_uninitialized( (void *)shared, sizeof(*shared) );
+        mark_block_uninitialized( (void *)shared, shm_size );
         CONTAINING_RECORD( shared, shared_object_t, shm )->id = ++session.last_object_id;
     }
     SHARED_WRITE_END;
@@ -1415,10 +1426,11 @@ volatile void *alloc_shared_object(void)
 void free_shared_object( volatile void *object_shm )
 {
     struct session_object *object = CONTAINING_RECORD( object_shm, struct session_object, obj.shm );
+    mem_size_t shm_size = object->size - sizeof(*object) + sizeof(object_shm_t);
 
     SHARED_WRITE_BEGIN( &object->obj.shm, object_shm_t )
     {
-        mark_block_noaccess( (void *)shared, sizeof(*shared) );
+        mark_block_noaccess( (void *)shared, shm_size );
         CONTAINING_RECORD( shared, shared_object_t, shm )->id = 0;
     }
     SHARED_WRITE_END;

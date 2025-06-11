@@ -308,7 +308,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
             list_init( &desktop->hotkeys );
             list_init( &desktop->pointers );
 
-            if (!(desktop->shared = alloc_shared_object()))
+            if (!(desktop->shared = alloc_shared_object( sizeof(*desktop->shared) )))
             {
                 release_object( desktop );
                 return NULL;

@@ -66,7 +66,7 @@ static struct window_class *create_class( struct process *process, int extra_byt
     class->nb_extra_bytes = extra_bytes;
     memset( class->extra_bytes, 0, extra_bytes );
 
-    if (!(class->shared = alloc_shared_object())) goto failed;
+    if (!(class->shared = alloc_shared_object( sizeof(*class->shared) ))) goto failed;
     SHARED_WRITE_BEGIN( class->shared, class_shm_t )
     {
         memcpy( (void *)shared->name, name->str, name->len );

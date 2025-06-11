@@ -681,7 +681,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     list_init( &win->children );
     list_init( &win->unlinked );
 
-    if (!(win->shared = alloc_shared_object())) goto failed;
+    if (!(win->shared = alloc_shared_object( sizeof(*win->shared) ))) goto failed;
     SHARED_WRITE_BEGIN( win->shared, window_shm_t )
     {
         shared->class       = class_locator;

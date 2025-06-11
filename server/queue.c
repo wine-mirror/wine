@@ -263,7 +263,7 @@ static struct thread_input *create_thread_input( struct thread *thread )
         memcpy( input->desktop_keystate, (const void *)input->desktop->shared->keystate,
                 sizeof(input->desktop_keystate) );
 
-        if (!(input->shared = alloc_shared_object()))
+        if (!(input->shared = alloc_shared_object( sizeof(*input->shared) )))
         {
             release_object( input );
             return NULL;
@@ -324,7 +324,11 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         for (i = 0; i < NB_MSG_KINDS; i++) list_init( &queue->msg_list[i] );
 
         if (!(queue->sync = create_internal_sync( 1, 0 ))) goto error;
-        if (!(queue->shared = alloc_shared_object())) goto error;
+        if (!(queue->shared = alloc_shared_object( sizeof(*queue->shared) )))
+        {
+            release_object( queue );
+            return NULL;
+        }
 
         SHARED_WRITE_BEGIN( queue->shared, queue_shm_t )
         {
