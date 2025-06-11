@@ -1792,7 +1792,9 @@ static NTSTATUS wg_parser_disconnect(void *args)
     for (i = 0; i < parser->stream_count; ++i)
     {
         parser->streams[i]->flushing = true;
+        parser->streams[i]->eos = true;
         pthread_cond_signal(&parser->streams[i]->event_empty_cond);
+        pthread_cond_signal(&parser->streams[i]->event_cond);
     }
     pthread_mutex_unlock(&parser->mutex);
 
