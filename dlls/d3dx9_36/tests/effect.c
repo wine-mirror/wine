@@ -364,14 +364,18 @@ static void test_create_effect_compiler(void)
     static const char shader1[] =
         "float4 main() : COLOR { return 0; }\n"
         "float4 func2() : COLOR { return 0; }\n"
-        "float4 func() : COLOR { return 0; }\n";
+        "float4 func() : COLOR { return 0; }\n"
+        "technique t0 < int a = 1; > { pass p0 < float b = 2; float c = 3; > {} }";
     HRESULT hr;
     ID3DXEffectCompiler *compiler, *compiler2;
+    D3DXHANDLE hfunc, htech, hpass, h;
+    D3DXPARAMETER_DESC param_desc;
+    D3DXTECHNIQUE_DESC tech_desc;
     D3DXFUNCTION_DESC func_desc;
+    D3DXPASS_DESC pass_desc;
     ID3DXBaseEffect *base;
     D3DXEFFECT_DESC desc;
     IUnknown *unknown;
-    D3DXHANDLE hfunc;
     ULONG refcount;
 
     hr = D3DXCreateEffectCompiler(NULL, 0, NULL, NULL, 0, &compiler, NULL);
@@ -435,7 +439,7 @@ static void test_create_effect_compiler(void)
     {
         ok(!desc.Creator, "Unexpected creator %p.\n", desc.Creator);
         ok(!desc.Parameters, "Unexpected parameter count %u.\n", desc.Parameters);
-        ok(!desc.Techniques, "Unexpected technique count %u.\n", desc.Techniques);
+        ok(desc.Techniques == 1, "Unexpected technique count %u.\n", desc.Techniques);
         ok(desc.Functions == 3, "Unexpected function count %u.\n", desc.Functions);
     }
 
@@ -467,6 +471,36 @@ static void test_create_effect_compiler(void)
 
     hfunc = compiler->lpVtbl->GetFunction(compiler, 3);
     ok(!hfunc, "Unexpected handle %p.\n", hfunc);
+
+    /* Technique */
+    htech = compiler->lpVtbl->GetTechnique(compiler, 0);
+    ok(!!htech, "Unexpected handle %p.\n", htech);
+
+    hr = compiler->lpVtbl->GetTechniqueDesc(compiler, htech, &tech_desc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!strcmp(tech_desc.Name, "t0"), "Unexpected name %s.\n", wine_dbgstr_a(tech_desc.Name));
+    ok(tech_desc.Passes == 1, "Unexpected value %u.\n", tech_desc.Passes);
+    ok(tech_desc.Annotations == 1, "Unexpected value %u.\n", tech_desc.Annotations);
+
+    h = compiler->lpVtbl->GetAnnotation(compiler, htech, 0);
+    ok(!!h, "Unexpected handle %p.\n", h);
+
+    hr = compiler->lpVtbl->GetParameterDesc(compiler, h, &param_desc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!strcmp(param_desc.Name, "a"), "Unexpected name %s.\n", wine_dbgstr_a(param_desc.Name));
+    ok(param_desc.Type == D3DXPT_INT, "Unexpected type %u.\n", param_desc.Type);
+    ok(param_desc.Flags == D3DX_PARAMETER_ANNOTATION, "Unexpected flags %#lx.\n", param_desc.Flags);
+
+    hr = compiler->lpVtbl->SetLiteral(compiler, h, TRUE);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+
+    hpass = compiler->lpVtbl->GetPass(compiler, htech, 0);
+    ok(!!hpass, "Unexpected handle %p.\n", hpass);
+
+    hr = compiler->lpVtbl->GetPassDesc(compiler, hpass, &pass_desc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!strcmp(pass_desc.Name, "p0"), "Unexpected name %s.\n", wine_dbgstr_a(pass_desc.Name));
+    ok(pass_desc.Annotations == 2, "Unexpected value %u.\n", pass_desc.Annotations);
 
 done:
 
