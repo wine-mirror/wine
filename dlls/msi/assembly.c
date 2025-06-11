@@ -34,9 +34,8 @@ static void load_fusion_dlls( MSIPACKAGE *package )
 {
     HRESULT (WINAPI *pLoadLibraryShim)( const WCHAR *, const WCHAR *, void *, HMODULE * );
     WCHAR path[MAX_PATH];
-    DWORD len = GetSystemDirectoryW( path, MAX_PATH );
 
-    lstrcpyW( path + len, L"\\mscoree.dll" );
+    lstrcpyW( path + sysdir_len, L"\\mscoree.dll" );
     if (!package->hmscoree && !(package->hmscoree = LoadLibraryW( path ))) return;
     if (!(pLoadLibraryShim = (void *)GetProcAddress( package->hmscoree, "LoadLibraryShim" )))
     {

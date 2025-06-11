@@ -50,6 +50,8 @@ LPVOID                   gUIContextRecord = NULL;
 WCHAR                   *gszLogFile       = NULL;
 HINSTANCE msi_hInstance;
 
+WCHAR sysdir[MAX_PATH];
+SIZE_T sysdir_len;
 
 /*
  * Dll lifetime tracking declaration
@@ -75,6 +77,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         msi_hInstance = hinstDLL;
         DisableThreadLibraryCalls(hinstDLL);
         IsWow64Process( GetCurrentProcess(), &is_wow64 );
+        sysdir_len = GetSystemDirectoryW( sysdir, ARRAY_SIZE(sysdir) );
         break;
     case DLL_PROCESS_DETACH:
         if (lpvReserved) break;

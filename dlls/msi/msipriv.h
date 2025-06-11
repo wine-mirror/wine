@@ -43,6 +43,8 @@
 
 static const BOOL is_64bit = sizeof(void *) > sizeof(int);
 extern BOOL is_wow64;
+extern WCHAR sysdir[MAX_PATH];
+extern SIZE_T sysdir_len;
 
 #define MSI_DATASIZEMASK 0x00ff
 #define MSITYPE_VALID    0x0100

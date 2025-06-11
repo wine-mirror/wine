@@ -777,7 +777,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     msi_set_property( package->db, L"Intel", bufstr, len );
     if (sys_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
     {
-        GetSystemDirectoryW( pth, MAX_PATH );
+        wcscpy( pth, sysdir );
         PathAddBackslashW( pth );
         msi_set_property( package->db, L"SystemFolder", pth, -1 );
 
@@ -798,7 +798,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
         msi_set_property( package->db, L"Msix64", bufstr, -1 );
         msi_set_property( package->db, L"VersionNT64", verstr, -1 );
 
-        GetSystemDirectoryW( pth, MAX_PATH );
+        wcscpy( pth, sysdir );
         PathAddBackslashW( pth );
         msi_set_property( package->db, L"System64Folder", pth, -1 );
 

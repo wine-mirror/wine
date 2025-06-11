@@ -5210,12 +5210,11 @@ static UINT ACTION_InstallFinalize(MSIPACKAGE *package)
 
 UINT ACTION_ForceReboot(MSIPACKAGE *package)
 {
-    WCHAR buffer[256], sysdir[MAX_PATH], squashed_pc[SQUASHED_GUID_SIZE];
+    WCHAR buffer[256], squashed_pc[SQUASHED_GUID_SIZE];
     HKEY hkey;
 
     squash_guid( package->ProductCode, squashed_pc );
 
-    GetSystemDirectoryW(sysdir, ARRAY_SIZE(sysdir));
     RegCreateKeyW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce", &hkey);
     swprintf(buffer, ARRAY_SIZE(buffer), L"%s\\MsiExec.exe /@ \"%s\"", sysdir, squashed_pc);
 
