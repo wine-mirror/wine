@@ -1179,6 +1179,22 @@ static void test_D3DCreateLinker(void)
     linker->lpVtbl->Release(linker);
 }
 
+static void test_D3DCreateFunctionLinkingGraph(void)
+{
+    ID3D11FunctionLinkingGraph *graph;
+    HRESULT hr;
+
+    hr = D3DCreateFunctionLinkingGraph(0, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    hr = D3DCreateFunctionLinkingGraph(1, &graph);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    hr = D3DCreateFunctionLinkingGraph(0, &graph);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    graph->lpVtbl->Release(graph);
+}
+
 #endif /* D3D_COMPILER_VERSION >= 47 */
 
 START_TEST(hlsl_d3d11)
@@ -1189,6 +1205,7 @@ START_TEST(hlsl_d3d11)
     test_semantic_reflection();
 #if D3D_COMPILER_VERSION >= 47
     test_D3DCreateLinker();
+    test_D3DCreateFunctionLinkingGraph();
 #endif
 
     if (!(mod = LoadLibraryA("d3d11.dll")))
