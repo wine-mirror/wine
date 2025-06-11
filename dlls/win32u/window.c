@@ -5153,7 +5153,7 @@ BOOL WINAPI NtUserDestroyWindow( HWND hwnd )
  */
 void destroy_thread_windows(void)
 {
-    WND *win, *free_list = NULL;
+    WND *win, *entry, *free_list = NULL;
     HANDLE handle = 0;
 
     user_lock();
@@ -5175,25 +5175,25 @@ void destroy_thread_windows(void)
     }
     user_unlock();
 
-    while ((win = free_list))
+    while ((entry = free_list))
     {
-        free_list = (WND *)win->userdata;
-        TRACE( "destroying %p\n", win );
+        free_list = (WND *)entry->userdata;
+        TRACE( "destroying %p\n", entry );
 
-        user_driver->pDestroyWindow( win->handle );
-        vulkan_detach_surfaces( &win->vulkan_surfaces );
+        user_driver->pDestroyWindow( entry->handle );
+        vulkan_detach_surfaces( &entry->vulkan_surfaces );
 
-        if ((win->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD && win->wIDmenu)
-            NtUserDestroyMenu( UlongToHandle(win->wIDmenu) );
-        if (win->hSysMenu) NtUserDestroyMenu( win->hSysMenu );
-        if (win->surface)
+        if ((entry->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD && entry->wIDmenu)
+            NtUserDestroyMenu( UlongToHandle(entry->wIDmenu) );
+        if (entry->hSysMenu) NtUserDestroyMenu( entry->hSysMenu );
+        if (entry->surface)
         {
-            register_window_surface( win->surface, NULL );
-            window_surface_release( win->surface );
+            register_window_surface( entry->surface, NULL );
+            window_surface_release( entry->surface );
         }
-        free( win->pScroll );
-        free( win->text );
-        free( win );
+        free( entry->pScroll );
+        free( entry->text );
+        free( entry );
     }
 }
 
