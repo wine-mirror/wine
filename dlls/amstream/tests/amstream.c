@@ -1237,8 +1237,6 @@ static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface, 
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
     }
 
-    hr = IMemInputPin_GetAllocatorRequirements(pin, &props);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
     hr = iface->pFuncsTable->pfnDecideBufferSize(iface, *alloc, &props);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -8721,6 +8719,9 @@ static void test_ddrawstream_mem_allocator(void)
 
     hr = IMediaStream_QueryInterface(stream, &IID_IMemInputPin, (void **)&mem_input);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemInputPin_GetAllocatorRequirements(mem_input, &props);
+    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
 
     hr = IMediaStream_QueryInterface(stream, &IID_IDirectDrawMediaStream, (void **)&ddraw_stream);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
