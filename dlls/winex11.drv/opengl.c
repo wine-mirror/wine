@@ -1677,6 +1677,11 @@ static BOOL x11drv_context_flush( void *private, HWND hwnd, HDC hdc, int interva
 
     if (flush) flush();
 
+    pthread_mutex_lock( &context_mutex );
+    update_gl_drawable_size( gl );
+    update_gl_drawable_offscreen( gl );
+    pthread_mutex_unlock( &context_mutex );
+
     present_gl_drawable( hwnd, ctx->hdc, gl, TRUE, flush != funcs->p_glFinish );
     release_gl_drawable( gl );
     return TRUE;
@@ -2023,8 +2028,12 @@ static BOOL x11drv_swap_buffers( void *private, HWND hwnd, HDC hdc, int interval
     if (ctx && drawable && pglXWaitForSbcOML)
         pglXWaitForSbcOML( gdi_display, gl->drawable, target_sbc, &ust, &msc, &sbc );
 
-    present_gl_drawable( hwnd, ctx ? ctx->hdc : hdc, gl, !pglXWaitForSbcOML, FALSE );
+    pthread_mutex_lock( &context_mutex );
     update_gl_drawable_size( gl );
+    update_gl_drawable_offscreen( gl );
+    pthread_mutex_unlock( &context_mutex );
+
+    present_gl_drawable( hwnd, ctx ? ctx->hdc : hdc, gl, !pglXWaitForSbcOML, FALSE );
     release_gl_drawable( gl );
     return TRUE;
 }
