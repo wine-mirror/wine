@@ -1240,17 +1240,30 @@ static void update_gl_drawable_offscreen( struct gl_drawable *gl )
  */
 void sync_gl_drawable( HWND hwnd, BOOL known_child )
 {
-    struct gl_drawable *old, *new;
-
-    if (!(old = get_gl_drawable( hwnd, 0 ))) return;
+    struct gl_drawable *old, *new, *gl;
 
     if (usexcomposite)
     {
-        update_gl_drawable_size( old );
-        update_gl_drawable_offscreen( old );
-        release_gl_drawable( old );
-        return;
+        struct x11drv_context *context;
+
+        pthread_mutex_lock( &context_mutex );
+        LIST_FOR_EACH_ENTRY( context, &context_list, struct x11drv_context, entry )
+        {
+            if ((gl = context->drawables[0]) && gl->type == DC_GL_WINDOW && gl->hwnd == hwnd)
+            {
+                update_gl_drawable_size( gl );
+                update_gl_drawable_offscreen( gl );
+            }
+            if ((gl = context->drawables[1]) && gl->type == DC_GL_WINDOW && gl->hwnd == hwnd)
+            {
+                update_gl_drawable_size( gl );
+                update_gl_drawable_offscreen( gl );
+            }
+        }
+        pthread_mutex_unlock( &context_mutex );
     }
+
+    if (!(old = get_gl_drawable( hwnd, 0 ))) return;
 
     switch (old->type)
     {
