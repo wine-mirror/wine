@@ -61,12 +61,13 @@ struct atom_entry
 struct atom_table
 {
     struct object       obj;                 /* object header */
-    int                 count;               /* count of atom handles */
     int                 last;                /* last handle in-use */
-    struct atom_entry **handles;             /* atom handles */
+    struct atom_entry  *atoms[MAX_ATOMS];    /* atom entries */
     int                 entries_count;       /* number of hash entries */
     struct atom_entry **entries;             /* hash table entries */
 };
+
+C_ASSERT( sizeof(struct atom_table) <= 256 * 1024 );
 
 static void atom_table_dump( struct object *obj, int verbose );
 static void atom_table_destroy( struct object *obj );
@@ -107,18 +108,16 @@ static struct atom_table *create_table(int entries_count)
     {
         if ((entries_count < MIN_HASH_SIZE) ||
             (entries_count > MAX_HASH_SIZE)) entries_count = HASH_SIZE;
-        table->handles = NULL;
         table->entries_count = entries_count;
         if (!(table->entries = malloc( sizeof(*table->entries) * table->entries_count )))
         {
             set_error( STATUS_NO_MEMORY );
             goto fail;
         }
+        memset( table->atoms, 0, sizeof(*table->atoms) * ARRAY_SIZE(table->atoms) );
         memset( table->entries, 0, sizeof(*table->entries) * table->entries_count );
-        table->count = 64;
         table->last  = -1;
-        if ((table->handles = mem_alloc( sizeof(*table->handles) * table->count )))
-            return table;
+        return table;
 fail:
         release_object( table );
         table = NULL;
@@ -131,7 +130,7 @@ static struct atom_entry *get_atom_entry( struct atom_table *table, atom_t atom 
 {
     struct atom_entry *entry = NULL;
     if (table && (atom >= MIN_STR_ATOM) && (atom <= MIN_STR_ATOM + table->last))
-        entry = table->handles[atom - MIN_STR_ATOM];
+        entry = table->atoms[atom - MIN_STR_ATOM];
     if (!entry) set_error( STATUS_INVALID_HANDLE );
     return entry;
 }
@@ -140,26 +139,11 @@ static struct atom_entry *get_atom_entry( struct atom_table *table, atom_t atom 
 static atom_t add_atom_entry( struct atom_table *table, struct atom_entry *entry )
 {
     int i;
-    for (i = 0; i <= table->last; i++)
-        if (!table->handles[i]) goto found;
-    if (i == table->count)
-    {
-        struct atom_entry **new_table = NULL;
-        int new_size = table->count + table->count / 2;
-        if (new_size > MAX_ATOMS) new_size = MAX_ATOMS;
-        if (new_size > table->count)
-            new_table = realloc( table->handles, sizeof(*table->handles) * new_size );
-        if (!new_table)
-        {
-            set_error( STATUS_NO_MEMORY );
-            return 0;
-        }
-        table->count = new_size;
-        table->handles = new_table;
-    }
+    for (i = 0; i <= table->last; i++) if (!table->atoms[i]) goto found;
+    if (i == ARRAY_SIZE(table->atoms)) return 0;
     table->last = i;
  found:
-    table->handles[i] = entry;
+    table->atoms[i] = entry;
     entry->atom = i + MIN_STR_ATOM;
     return entry->atom;
 }
@@ -176,7 +160,7 @@ static void atom_table_dump( struct object *obj, int verbose )
     if (!verbose) return;
     for (i = 0; i <= table->last; i++)
     {
-        struct atom_entry *entry = table->handles[i];
+        struct atom_entry *entry = table->atoms[i];
         if (!entry) continue;
         fprintf( stderr, "  %04x: ref=%d pinned=%c hash=%d \"",
                  entry->atom, entry->count, entry->pinned ? 'Y' : 'N', entry->hash );
@@ -191,11 +175,7 @@ static void atom_table_destroy( struct object *obj )
     int i;
     struct atom_table *table = (struct atom_table *)obj;
     assert( obj->ops == &atom_table_ops );
-    if (table->handles)
-    {
-        for (i = 0; i <= table->last; i++) free( table->handles[i] );
-        free( table->handles );
-    }
+    for (i = 0; i <= table->last; i++) free( table->atoms[i] );
     free( table->entries );
 }
 
@@ -248,9 +228,13 @@ static atom_t add_atom( struct atom_table *table, const struct unicode_str *str 
             entry->len    = str->len;
             memcpy( entry->str, str->str, str->len );
         }
-        else free( entry );
+        else
+        {
+            set_error( STATUS_NO_MEMORY );
+            free( entry );
+        }
     }
-    else set_error( STATUS_NO_MEMORY );
+
     return atom;
 }
 
@@ -265,7 +249,7 @@ static void delete_atom( struct atom_table *table, atom_t atom, int if_pinned )
         if (entry->next) entry->next->prev = entry->prev;
         if (entry->prev) entry->prev->next = entry->next;
         else table->entries[entry->hash] = entry->next;
-        table->handles[atom - MIN_STR_ATOM] = NULL;
+        table->atoms[atom - MIN_STR_ATOM] = NULL;
         free( entry );
     }
 }
