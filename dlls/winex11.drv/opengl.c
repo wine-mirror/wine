@@ -199,7 +199,8 @@ struct x11drv_context
     HDC hdc;
     const struct glx_pixel_format *fmt;
     GLXContext ctx;
-    struct gl_drawable *drawables[2];
+    struct gl_drawable *draw;
+    struct gl_drawable *read;
     struct list entry;
 };
 
@@ -868,7 +869,6 @@ static struct gl_drawable *grab_gl_drawable( struct gl_drawable *gl )
 
 static void release_gl_drawable( struct gl_drawable *gl )
 {
-    if (!gl) return;
     if (InterlockedDecrement( &gl->ref )) return;
     switch (gl->type)
     {
@@ -1108,12 +1108,12 @@ void sync_gl_drawable( HWND hwnd )
     pthread_mutex_lock( &context_mutex );
     LIST_FOR_EACH_ENTRY( context, &context_list, struct x11drv_context, entry )
     {
-        if ((gl = context->drawables[0]) && gl->type == DC_GL_WINDOW && gl->hwnd == hwnd)
+        if ((gl = context->draw) && gl->type == DC_GL_WINDOW && gl->hwnd == hwnd)
         {
             update_gl_drawable_size( gl );
             update_gl_drawable_offscreen( gl );
         }
-        if ((gl = context->drawables[1]) && gl->type == DC_GL_WINDOW && gl->hwnd == hwnd)
+        if ((gl = context->read) && gl->type == DC_GL_WINDOW && gl->hwnd == hwnd)
         {
             update_gl_drawable_size( gl );
             update_gl_drawable_offscreen( gl );
@@ -1351,8 +1351,8 @@ static BOOL x11drv_context_destroy(void *private)
     pthread_mutex_unlock( &context_mutex );
 
     if (ctx->ctx) pglXDestroyContext( gdi_display, ctx->ctx );
-    release_gl_drawable( ctx->drawables[0] );
-    release_gl_drawable( ctx->drawables[1] );
+    if (ctx->draw) release_gl_drawable( ctx->draw );
+    if (ctx->read) release_gl_drawable( ctx->read );
     free( ctx );
     return TRUE;
 }
@@ -1367,14 +1367,14 @@ static void *x11drv_get_proc_address( const char *name )
 static void set_context_drawables( struct x11drv_context *ctx, struct gl_drawable *draw,
                                    struct gl_drawable *read )
 {
-    struct gl_drawable *prev[2];
-    int i;
+    struct gl_drawable *old_draw, *old_read;
 
-    prev[0] = ctx->drawables[0];
-    prev[1] = ctx->drawables[1];
-    ctx->drawables[0] = grab_gl_drawable( draw );
-    ctx->drawables[1] = read ? grab_gl_drawable( read ) : NULL;
-    for (i = 0; i < 2; i++) release_gl_drawable( prev[i] );
+    old_draw = ctx->draw;
+    old_read = ctx->read;
+    ctx->draw = grab_gl_drawable( draw );
+    ctx->read = read ? grab_gl_drawable( read ) : NULL;
+    if (old_draw) release_gl_drawable( old_draw );
+    if (old_read) release_gl_drawable( old_read );
 }
 
 static BOOL x11drv_context_make_current( HDC draw_hdc, HDC read_hdc, void *private )
@@ -1411,8 +1411,8 @@ static BOOL x11drv_context_make_current( HDC draw_hdc, HDC read_hdc, void *priva
     }
     RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
 done:
-    release_gl_drawable( read_gl );
-    release_gl_drawable( draw_gl );
+    if (read_gl) release_gl_drawable( read_gl );
+    if (draw_gl) release_gl_drawable( draw_gl );
     TRACE( "%p,%p,%p returning %d\n", draw_hdc, read_hdc, ctx, ret );
     return ret;
 }
