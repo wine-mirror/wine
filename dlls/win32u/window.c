@@ -5153,12 +5153,12 @@ BOOL WINAPI NtUserDestroyWindow( HWND hwnd )
  */
 void destroy_thread_windows(void)
 {
+    struct list vulkan_surfaces = LIST_INIT(vulkan_surfaces);
     struct destroy_entry
     {
         HWND handle;
         HMENU menu;
         HMENU sys_menu;
-        struct list vulkan_surfaces;
         struct window_surface *surface;
         struct destroy_entry *next;
     } *entry, *free_list = NULL;
@@ -5182,7 +5182,7 @@ void destroy_thread_windows(void)
         /* recycle the WND struct as a destroy_entry struct */
         entry = (struct destroy_entry *)win;
         tmp.handle = win->handle;
-        tmp.vulkan_surfaces = win->vulkan_surfaces;
+        list_move_tail( &vulkan_surfaces, &win->vulkan_surfaces );
         if (!is_child) tmp.menu = (HMENU)win->wIDmenu;
         tmp.sys_menu = win->hSysMenu;
         tmp.surface = win->surface;
@@ -5208,7 +5208,6 @@ void destroy_thread_windows(void)
         TRACE( "destroying %p\n", entry );
 
         user_driver->pDestroyWindow( entry->handle );
-        vulkan_detach_surfaces( &entry->vulkan_surfaces );
 
         NtUserDestroyMenu( entry->menu );
         NtUserDestroyMenu( entry->sys_menu );
@@ -5219,6 +5218,8 @@ void destroy_thread_windows(void)
         }
         free( entry );
     }
+
+    vulkan_detach_surfaces( &vulkan_surfaces );
 }
 
 /***********************************************************************
