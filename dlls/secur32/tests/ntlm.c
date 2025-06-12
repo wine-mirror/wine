@@ -947,6 +947,7 @@ static void test_Signature(void)
     SecBuffer               data[2], fake_data[2], complex_data[4];
     ULONG                   qop = 0xdeadbeef;
     SecPkgContext_Sizes     ctxt_sizes;
+    SEC_WINNT_AUTH_IDENTITY_A id;
 
     complex_data[1].pvBuffer = complex_data[3].pvBuffer = NULL;
 
@@ -961,6 +962,15 @@ static void test_Signature(void)
     }
 
     FreeContextBuffer(pkg_info);
+
+    id.User = (unsigned char *)test_user;
+    id.UserLength = strlen((char *)id.User);
+    id.Domain = (unsigned char *)workgroup;
+    id.DomainLength = strlen((char *)id.Domain);
+    id.Password = (unsigned char *)test_pass;
+    id.PasswordLength = strlen((char *)id.Password);
+    id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+    client.id = &id;
 
     sec_status = setupClient(&client, sec_pkg_name);
 
@@ -979,7 +989,6 @@ static void test_Signature(void)
     {
         client_stat = runClient(&client, first, SECURITY_NETWORK_DREP);
 
-        todo_wine_if(client_stat != SEC_I_CONTINUE_NEEDED)
         ok(client_stat == SEC_E_OK || client_stat == SEC_I_CONTINUE_NEEDED,
                 "Running the client returned %s, more tests will fail.\n",
                 getSecError(client_stat));
