@@ -355,7 +355,7 @@ struct x11drv_escape_get_drawable
     RECT                     dc_rect;      /* DC rectangle relative to drawable */
 };
 
-extern BOOL needs_offscreen_rendering( HWND hwnd, BOOL known_child );
+extern BOOL needs_offscreen_rendering( HWND hwnd );
 extern void set_dc_drawable( HDC hdc, Drawable drawable, const RECT *rect, int mode );
 extern Drawable get_dc_drawable( HDC hdc, RECT *rect );
 extern HRGN get_dc_monitor_region( HWND hwnd, HDC hdc );
@@ -681,10 +681,8 @@ extern void set_window_parent( struct x11drv_win_data *data, Window parent );
 extern Window X11DRV_get_whole_window( HWND hwnd );
 extern Window get_dummy_parent(void);
 
-extern void sync_gl_drawable( HWND hwnd, BOOL known_child );
-extern void set_gl_drawable_parent( HWND hwnd, HWND parent );
+extern void sync_gl_drawable( HWND hwnd );
 extern void destroy_gl_drawable( HWND hwnd );
-extern void destroy_vk_surface( HWND hwnd );
 
 extern BOOL window_is_reparenting( HWND hwnd );
 extern BOOL window_should_take_focus( HWND hwnd, Time time );

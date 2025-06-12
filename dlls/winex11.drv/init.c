@@ -217,11 +217,11 @@ static BOOL needs_client_window_clipping( HWND hwnd )
     return ret > 0;
 }
 
-BOOL needs_offscreen_rendering( HWND hwnd, BOOL known_child )
+BOOL needs_offscreen_rendering( HWND hwnd )
 {
     if (NtUserGetDpiForWindow( hwnd ) != NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI )) return TRUE; /* needs DPI scaling */
     if (NtUserGetAncestor( hwnd, GA_PARENT ) != NtUserGetDesktopWindow()) return TRUE; /* child window, needs compositing */
-    if (NtUserGetWindowRelative( hwnd, GW_CHILD ) || known_child) return needs_client_window_clipping( hwnd ); /* window has children, needs compositing */
+    if (NtUserGetWindowRelative( hwnd, GW_CHILD )) return needs_client_window_clipping( hwnd ); /* window has children, needs compositing */
     return FALSE;
 }
 
