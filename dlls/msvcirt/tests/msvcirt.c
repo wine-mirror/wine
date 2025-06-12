@@ -2265,6 +2265,15 @@ static void test_filebuf(void)
     CloseHandle(thread);
 }
 
+static void *custom_alloc(LONG size)
+{
+    /* this allocates size + 16 bytes. a test later validates that strstreambuf_overflow
+     * always allocates in `strstreambuf.increase` increments, even when the resultant buffer
+     * won't be large enough to contain `pptr`. to avoid actually writing out-of-bound, we
+     * allocate a few bytes more here. */
+    return p_operator_new(size + 16);
+}
+
 static void test_strstreambuf(void)
 {
     strstreambuf ssb1, ssb2;
@@ -2532,8 +2541,12 @@ static void test_strstreambuf(void)
     ok(ssb2.base.pptr == ssb2.base.base + 1, "wrong put pointer, expected %p got %p\n", ssb2.base.base + 1, ssb2.base.pptr);
     ok(ssb2.base.epptr == ssb2.base.base + 16, "wrong put end, expected %p got %p\n", ssb2.base.base + 16, ssb2.base.epptr);
     ok(*(ssb2.base.pptr - 1) == 'D', "expected 'D' got %d\n", *(ssb2.base.pptr - 1));
+    /* test strstreambuf_overflow always allocate in `increase` increments, even when the new size
+     * won't be large enough to contain `pptr`. `custom_alloc` allocate more space than asked for
+     * to avoid out-of-bound access. */
     ssb2.base.pbase = ssb2.base.base + 3;
     ssb2.base.pptr = ssb2.base.epptr + 5;
+    ssb2.f_alloc = custom_alloc;
     ret = (int) call_func2(p_strstreambuf_overflow, &ssb2, 'E');
     ok(ret == 1, "expected 1 got %d\n", ret);
     ok(ssb2.base.ebuf == ssb2.base.base + 20, "expected %p got %p\n", ssb2.base.base + 20, ssb2.base.ebuf);
@@ -2542,6 +2555,7 @@ static void test_strstreambuf(void)
     ok(ssb2.base.pptr == ssb2.base.base + 22, "wrong put pointer, expected %p got %p\n", ssb2.base.base + 22, ssb2.base.pptr);
     ok(ssb2.base.epptr == ssb2.base.base + 20, "wrong put end, expected %p got %p\n", ssb2.base.base + 20, ssb2.base.epptr);
     ok(*(ssb2.base.pptr - 1) == 'E', "expected 'E' got %d\n", *(ssb2.base.pptr - 1));
+    ssb2.f_alloc = NULL;
     ssb2.base.egptr = ssb2.base.base + 2;
     ret = (int) call_func2(p_strstreambuf_overflow, &ssb2, 'F');
     ok(ret == 1, "expected 1 got %d\n", ret);
