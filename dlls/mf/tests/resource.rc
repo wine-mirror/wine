@@ -162,10 +162,6 @@ rgb555frame.bmp RCDATA rgb555frame.bmp
 rgb555frame-flip.bmp RCDATA rgb555frame-flip.bmp
 
 /* Generated from running the tests on Windows */
-/* @makedep: iv50frame.bin */
-iv50frame.bin RCDATA iv50frame.bin
-
-/* Generated from running the tests on Windows */
 /* @makedep: rgb24frame.bmp */
 rgb24frame.bmp RCDATA rgb24frame.bmp
 

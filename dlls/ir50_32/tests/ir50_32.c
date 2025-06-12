@@ -143,6 +143,131 @@ static void test_formats(void)
     ok(!ret, "Got %Id.\n", ret);
 }
 
+static void test_compress(void)
+{
+    const void *res_data, *rgb_data;
+    BITMAPINFO rgb_info, iv50_info;
+    BYTE iv50_data[0x5100];
+    HRSRC resource;
+    LRESULT ret;
+    DWORD flags;
+    HIC hic;
+
+    resource = FindResourceW(NULL, L"rgb24frame.bmp", (const WCHAR *)RT_RCDATA);
+    res_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    memcpy(&rgb_info, ((BITMAPFILEHEADER *)res_data) + 1, sizeof(BITMAPINFOHEADER));
+    rgb_data = ((const char *)res_data) + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+
+    hic = ICOpen(ICTYPE_VIDEO, mmioFOURCC('i','v','5','0'), ICMODE_COMPRESS);
+    ok(!!hic, "Failed to open codec.\n");
+
+    ret = ICCompressQuery(hic, &rgb_info, NULL);
+    todo_wine ok(!ret, "Got %Id.\n", ret);
+    if (ret)
+    {
+        ICClose(hic);
+        return;
+    }
+
+    ret = ICCompressGetSize(hic, &rgb_info, NULL);
+    ok(ret == 0x5100, "Got %Id.\n", ret);
+
+    ret = ICCompressGetFormatSize(hic, &rgb_info);
+    ok(ret == sizeof(BITMAPINFOHEADER), "Got %Id.\n", ret);
+
+    memset(&iv50_info, 0xcc, sizeof(iv50_info));
+    ret = ICCompressGetFormat(hic, &rgb_info, &iv50_info);
+    ok(!ret, "Got %Id.\n", ret);
+    ok(iv50_info.bmiHeader.biSize == sizeof(BITMAPINFOHEADER), "Got size %lu.\n", iv50_info.bmiHeader.biSize);
+    ok(iv50_info.bmiHeader.biWidth == 96, "Got width %ld.\n", iv50_info.bmiHeader.biWidth);
+    ok(iv50_info.bmiHeader.biHeight == 96, "Got height %ld.\n", iv50_info.bmiHeader.biHeight);
+    ok(iv50_info.bmiHeader.biPlanes == 1, "Got %u planes.\n", iv50_info.bmiHeader.biPlanes);
+    ok(iv50_info.bmiHeader.biBitCount == 24, "Got depth %u.\n", iv50_info.bmiHeader.biBitCount);
+    ok(iv50_info.bmiHeader.biCompression == mmioFOURCC('I','V','5','0'),
+            "Got compression %#lx.\n", iv50_info.bmiHeader.biCompression);
+    ok(iv50_info.bmiHeader.biSizeImage == 0x5100, "Got image size %lu.\n", iv50_info.bmiHeader.biSizeImage);
+    ok(!iv50_info.bmiHeader.biXPelsPerMeter, "Got horizontal resolution %ld.\n", iv50_info.bmiHeader.biXPelsPerMeter);
+    ok(!iv50_info.bmiHeader.biYPelsPerMeter, "Got vertical resolution %ld.\n", iv50_info.bmiHeader.biYPelsPerMeter);
+    ok(!iv50_info.bmiHeader.biClrUsed, "Got %lu used colours.\n", iv50_info.bmiHeader.biClrUsed);
+    ok(!iv50_info.bmiHeader.biClrImportant, "Got %lu important colours.\n", iv50_info.bmiHeader.biClrImportant);
+    ok(iv50_info.bmiColors[0].rgbRed == 0xcc, "Expected colours to be unmodified.\n");
+
+    ret = ICCompressQuery(hic, &rgb_info, &iv50_info);
+    ok(!ret, "Got %Id.\n", ret);
+
+    ret = ICCompressBegin(hic, &rgb_info, &iv50_info);
+    ok(!ret, "Got %Id.\n", ret);
+    memset(iv50_data, 0xcd, sizeof(iv50_data));
+    ret = ICCompress(hic, ICCOMPRESS_KEYFRAME, &iv50_info.bmiHeader, iv50_data,
+            &rgb_info.bmiHeader, (void *)rgb_data, NULL, &flags, 1, 0, 0, NULL, NULL);
+    ok(!ret, "Got %Id.\n", ret);
+    ok(flags == AVIIF_KEYFRAME, "got flags %#lx\n", flags);
+    ok(iv50_info.bmiHeader.biSizeImage < 0x5100, "Got size %ld.\n", iv50_info.bmiHeader.biSizeImage);
+    ret = ICCompressEnd(hic);
+    ok(!ret, "Got %Id.\n", ret);
+
+    ret = ICClose(hic);
+    ok(!ret, "Got %Id.\n", ret);
+}
+
+static void test_decompress(void)
+{
+    const BYTE *expect_rgb_data;
+    BYTE rgb_data[96 * 96 * 3];
+    unsigned int diff = 0;
+    void *iv50_data;
+    HRSRC resource;
+    LRESULT ret;
+    HIC hic;
+
+    BITMAPINFO iv50_info =
+    {
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biWidth = 96,
+        .bmiHeader.biHeight = 96,
+        .bmiHeader.biPlanes = 1,
+        .bmiHeader.biBitCount = 24,
+        .bmiHeader.biCompression = mmioFOURCC('I','V','5','0'),
+    };
+    static const BITMAPINFO rgb_info =
+    {
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biWidth = 96,
+        .bmiHeader.biHeight = 96,
+        .bmiHeader.biPlanes = 1,
+        .bmiHeader.biBitCount = 24,
+        .bmiHeader.biCompression = BI_RGB,
+        .bmiHeader.biSizeImage = 96 * 96 * 3,
+    };
+
+    resource = FindResourceW(NULL, L"iv50frame.bin", (const WCHAR *)RT_RCDATA);
+    iv50_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    iv50_info.bmiHeader.biSizeImage = SizeofResource(GetModuleHandleW(NULL), resource);
+
+    hic = ICOpen(ICTYPE_VIDEO, mmioFOURCC('i','v','5','0'), ICMODE_DECOMPRESS);
+    ok(!!hic, "Failed to open codec.\n");
+
+    ret = ICDecompressBegin(hic, &iv50_info, &rgb_info);
+    ok(!ret, "Got %Id.\n", ret);
+    ret = ICDecompress(hic, 0, &iv50_info.bmiHeader, iv50_data,
+            (BITMAPINFOHEADER *)&rgb_info.bmiHeader, rgb_data);
+    ok(!ret, "Got %Id.\n", ret);
+    ret = ICDecompressEnd(hic);
+    todo_wine ok(!ret, "Got %Id.\n", ret);
+
+    resource = FindResourceW(NULL, L"rgb24frame.bmp", (const WCHAR *)RT_RCDATA);
+    expect_rgb_data = ((const BYTE *)LockResource(LoadResource(GetModuleHandleW(NULL), resource)))
+            + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+
+    for (unsigned int i = 0; i < rgb_info.bmiHeader.biSizeImage; ++i)
+        diff += abs((int)rgb_data[i] - (int)expect_rgb_data[i]);
+    diff = diff * 100 / 256 / rgb_info.bmiHeader.biSizeImage;
+    ok(diff < 4, "Got %u%% difference.\n", diff);
+
+    ret = ICClose(hic);
+    ok(!ret, "Got %Id.\n", ret);
+}
+
 START_TEST(ir50_32)
 {
     BITMAPINFOHEADER in = {.biSize = sizeof(BITMAPINFOHEADER), .biCompression = mmioFOURCC('I','V','5','0')};
@@ -156,4 +281,6 @@ START_TEST(ir50_32)
     ICClose(hic);
 
     test_formats();
+    test_compress();
+    test_decompress();
 }
