@@ -7380,7 +7380,7 @@ static void test_ifstream(void)
     call_func5(p_ifstream_buffer_ctor, &ifs, -1, NULL, 0, TRUE);
     ok(ifs.base_ios.sb->base == NULL, "wrong base value, expected NULL got %p\n", ifs.base_ios.sb->base);
     ok(ifs.base_ios.sb->ebuf == NULL, "wrong ebuf value, expected NULL got %p\n", ifs.base_ios.sb->ebuf);
-    ok(ifs.base_ios.sb->unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", pfb->base.unbuffered);
+    ok(ifs.base_ios.sb->unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", ifs.base_ios.sb->unbuffered);
     ok(ifs.base_ios.sb->allocated == 0, "wrong allocated value, expected 0 got %d\n", ifs.base_ios.sb->allocated);
 
     psb = call_func3(p_ifstream_setbuf, &ifs, buffer, ARRAY_SIZE(buffer));
