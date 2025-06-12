@@ -1024,6 +1024,10 @@ typedef volatile struct
 
 typedef volatile struct
 {
+    atom_t               atom;
+    unsigned int         style;
+    unsigned int         win_extra;
+    mod_handle_t         instance;
     data_size_t          name_offset;
     data_size_t          name_len;
     WCHAR                name[MAX_ATOM_LEN];
@@ -7015,6 +7019,6 @@ union generic_reply
     struct d3dkmt_object_open_name_reply d3dkmt_object_open_name_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 917
+#define SERVER_PROTOCOL_VERSION 918
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

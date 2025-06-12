@@ -1040,6 +1040,10 @@ typedef volatile struct
 
 typedef volatile struct
 {
+    atom_t               atom;               /* class atom */
+    unsigned int         style;              /* class style */
+    unsigned int         win_extra;          /* number of window extra bytes */
+    mod_handle_t         instance;           /* module instance */
     data_size_t          name_offset;        /* offset in WCHAR of the unversioned class name, constant */
     data_size_t          name_len;           /* len in bytes of the class name, constant */
     WCHAR                name[MAX_ATOM_LEN]; /* class name, constant */
