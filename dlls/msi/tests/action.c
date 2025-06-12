@@ -2468,7 +2468,7 @@ static void check_reg_multi(HKEY prodkey, const char *name, const char *expect, 
     ok_(__FILE__, line)(!res, "Failed to query value, error %ld\n", res);
     ok_(__FILE__, line)(type == REG_MULTI_SZ, "Got wrong type %lu\n", type);
     ok_(__FILE__, line)(size == expect_size, "expected size %lu, got %lu\n", expect_size, size);
-    ok_(__FILE__, line)(!memcmp(val, expect, size), "got %s\n", debugstr_an(val, size));
+    ok_(__FILE__, line)(size == expect_size && !memcmp(val, expect, size), "got %s\n", debugstr_an(val, size));
 }
 
 static void check_reg_dword(HKEY prodkey, LPCSTR name, DWORD expected, BOOL todo, DWORD line)
