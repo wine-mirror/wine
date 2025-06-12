@@ -208,7 +208,6 @@ enum dc_gl_type
 {
     DC_GL_NONE,       /* no GL support (pixel format not set yet) */
     DC_GL_WINDOW,     /* normal top-level window */
-    DC_GL_CHILD_WIN,  /* child window using XComposite */
     DC_GL_PIXMAP_WIN, /* child window using intermediate pixmap */
     DC_GL_PBUFFER     /* pseudo memory DC using a PBuffer */
 };
@@ -225,6 +224,7 @@ struct gl_drawable
     Pixmap                         pixmap;       /* base pixmap if drawable is a GLXPixmap */
     const struct glx_pixel_format *format;       /* pixel format for the drawable */
     int                            swap_interval;
+    BOOL                           offscreen;
     HDC                            hdc_src;
     HDC                            hdc_dst;
 };
@@ -875,7 +875,6 @@ static void release_gl_drawable( struct gl_drawable *gl )
     switch (gl->type)
     {
     case DC_GL_WINDOW:
-    case DC_GL_CHILD_WIN:
         TRACE( "destroying %lx drawable %lx\n", gl->window, gl->drawable );
         pglXDestroyWindow( gdi_display, gl->drawable );
         destroy_client_window( gl->hwnd, gl->window );
@@ -1062,7 +1061,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel
 #ifdef SONAME_LIBXCOMPOSITE
     else if(usexcomposite)
     {
-        gl->type = DC_GL_CHILD_WIN;
+        gl->type = DC_GL_WINDOW;
         gl->colormap = XCreateColormap( gdi_display, get_dummy_parent(), visual->visual,
                                         (visual->class == PseudoColor || visual->class == GrayScale ||
                                          visual->class == DirectColor) ? AllocAll : AllocNone );
@@ -1073,6 +1072,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel
 
             gl->drawable = pglXCreateWindow( gdi_display, gl->format->fbconfig, gl->window, NULL );
             pXCompositeRedirectWindow( gdi_display, gl->window, CompositeRedirectManual );
+            gl->offscreen = TRUE;
 
             if ((data = get_win_data( hwnd )))
             {
@@ -1166,7 +1166,6 @@ static void update_gl_drawable_size( struct gl_drawable *gl )
     switch (gl->type)
     {
     case DC_GL_WINDOW:
-    case DC_GL_CHILD_WIN:
         gl->rect = rect;
         XConfigureWindow( gdi_display, gl->window, CWWidth | CWHeight, &changes );
         set_dc_drawable( gl->hdc_src, gl->window, &gl->rect, IncludeInferiors );
@@ -1180,22 +1179,83 @@ static void update_gl_drawable_size( struct gl_drawable *gl )
     }
 }
 
+static void update_gl_drawable_offscreen( struct gl_drawable *gl )
+{
+    BOOL offscreen = needs_offscreen_rendering( gl->hwnd, FALSE );
+    struct x11drv_win_data *data;
+
+    if (gl->type != DC_GL_WINDOW) return;
+
+    if (offscreen == gl->offscreen)
+    {
+        if (!offscreen && (data = get_win_data( gl->hwnd )))
+        {
+            attach_client_window( data, gl->window );
+            release_win_data( data );
+        }
+        return;
+    }
+    gl->offscreen = offscreen;
+
+    TRACE( "Moving hwnd %p client %lx drawable %lx %sscreen\n", gl->hwnd, gl->window, gl->drawable, offscreen ? "off" : "on" );
+
+    if (!gl->offscreen)
+    {
+#ifdef SONAME_LIBXCOMPOSITE
+        if (usexcomposite) pXCompositeUnredirectWindow( gdi_display, gl->window, CompositeRedirectManual );
+#endif
+        if (gl->hdc_dst)
+        {
+            NtGdiDeleteObjectApp( gl->hdc_dst );
+            gl->hdc_dst = NULL;
+        }
+        if (gl->hdc_src)
+        {
+            NtGdiDeleteObjectApp( gl->hdc_src );
+            gl->hdc_src = NULL;
+        }
+    }
+    else
+    {
+        static const WCHAR displayW[] = {'D','I','S','P','L','A','Y'};
+        UNICODE_STRING device_str = RTL_CONSTANT_STRING(displayW);
+        gl->hdc_dst = NtGdiOpenDCW( &device_str, NULL, NULL, 0, TRUE, NULL, NULL, NULL );
+        gl->hdc_src = NtGdiOpenDCW( &device_str, NULL, NULL, 0, TRUE, NULL, NULL, NULL );
+        set_dc_drawable( gl->hdc_src, gl->window, &gl->rect, IncludeInferiors );
+#ifdef SONAME_LIBXCOMPOSITE
+        if (usexcomposite) pXCompositeRedirectWindow( gdi_display, gl->window, CompositeRedirectManual );
+#endif
+    }
+
+    if ((data = get_win_data( gl->hwnd )))
+    {
+        if (gl->offscreen) detach_client_window( data, gl->window );
+        else attach_client_window( data, gl->window );
+        release_win_data( data );
+    }
+}
+
 /***********************************************************************
  *              sync_gl_drawable
  */
 void sync_gl_drawable( HWND hwnd, BOOL known_child )
 {
     struct gl_drawable *old, *new;
-    BOOL is_offscreen;
 
     if (!(old = get_gl_drawable( hwnd, 0 ))) return;
+
+    if (usexcomposite)
+    {
+        update_gl_drawable_size( old );
+        update_gl_drawable_offscreen( old );
+        release_gl_drawable( old );
+        return;
+    }
 
     switch (old->type)
     {
     case DC_GL_WINDOW:
-    case DC_GL_CHILD_WIN:
-        is_offscreen = old->type == DC_GL_CHILD_WIN;
-        if (is_offscreen == needs_offscreen_rendering( hwnd, known_child ))
+        if (!needs_offscreen_rendering( hwnd, known_child ))
         {
             update_gl_drawable_size( old );
             break;
@@ -1222,6 +1282,8 @@ void set_gl_drawable_parent( HWND hwnd, HWND parent )
 {
     struct gl_drawable *old, *new;
 
+    if (usexcomposite) return sync_gl_drawable( hwnd, FALSE );
+
     if (!(old = get_gl_drawable( hwnd, 0 ))) return;
 
     TRACE( "setting drawable %lx parent %p\n", old->drawable, parent );
@@ -1230,7 +1292,6 @@ void set_gl_drawable_parent( HWND hwnd, HWND parent )
     {
     case DC_GL_WINDOW:
         break;
-    case DC_GL_CHILD_WIN:
     case DC_GL_PIXMAP_WIN:
         if (parent == NtUserGetDesktopWindow()) break;
         /* fall through */
@@ -1559,7 +1620,7 @@ static void present_gl_drawable( HWND hwnd, HDC hdc, struct gl_drawable *gl, BOO
     switch (gl->type)
     {
     case DC_GL_PIXMAP_WIN: drawable = gl->pixmap; break;
-    case DC_GL_CHILD_WIN: drawable = gl->window; break;
+    case DC_GL_WINDOW: drawable = gl->offscreen ? gl->window : 0; break;
     default: drawable = 0; break;
     }
     if (!drawable) return;
@@ -1932,9 +1993,8 @@ static BOOL x11drv_swap_buffers( void *private, HWND hwnd, HDC hdc, int interval
         pglXSwapBuffers(gdi_display, gl->drawable);
         break;
     case DC_GL_WINDOW:
-    case DC_GL_CHILD_WIN:
         if (ctx) sync_context( ctx );
-        if (gl->type == DC_GL_CHILD_WIN) drawable = gl->window;
+        if (gl->offscreen) drawable = gl->window;
         /* fall through */
     default:
         if (ctx && drawable && pglXSwapBuffersMscOML)
