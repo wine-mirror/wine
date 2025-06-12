@@ -1286,7 +1286,7 @@
 @ stub NtUserRegisterUserApiHook
 @ stub NtUserRegisterUserHungAppHandlers
 @ stub NtUserRegisterWindowArrangementCallout
-@ stub NtUserRegisterWindowMessage
+@ stdcall -syscall NtUserRegisterWindowMessage(ptr)
 @ stdcall -syscall NtUserReleaseCapture()
 @ stdcall -syscall NtUserReleaseDC(long long)
 @ stub NtUserReleaseDwmHitTestWaiters

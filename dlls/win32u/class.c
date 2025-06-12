@@ -596,6 +596,24 @@ ULONG WINAPI NtUserGetAtomName( ATOM atom, UNICODE_STRING *name )
 }
 
 /***********************************************************************
+ *       NtUserRegisterWindowMessage   (win32u.@)
+ */
+ATOM WINAPI NtUserRegisterWindowMessage( UNICODE_STRING *name )
+{
+    RTL_ATOM atom;
+
+    TRACE( "%s\n", debugstr_us(name) );
+
+    if (!name)
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (!set_ntstatus( NtAddAtom( name->Buffer, name->Length, &atom ) )) return 0;
+    return atom;
+}
+
+/***********************************************************************
  *	     NtUserGetClassName   (win32u.@)
  */
 INT WINAPI NtUserGetClassName( HWND hwnd, BOOL real, UNICODE_STRING *name )
