@@ -284,3 +284,39 @@ DECL_HANDLER(set_class_info)
     if (req->flags & SET_CLASS_EXTRA) memcpy( class->extra_bytes + req->extra_offset,
                                               &req->extra_value, req->extra_size );
 }
+
+
+/* get some information in a class */
+DECL_HANDLER(get_class_info)
+{
+    struct window_class *class;
+
+    if (!(class = get_window_class( req->window ))) return;
+
+    switch (req->offset)
+    {
+    case GCLP_HBRBACKGROUND:
+    case GCLP_HCURSOR:
+    case GCLP_HICON:
+    case GCLP_HICONSM:
+    case GCLP_WNDPROC:
+    case GCLP_MENUNAME:
+        /* not supported */
+        set_win32_error( ERROR_INVALID_HANDLE );
+        break;
+    case GCL_STYLE:          reply->info = class->style; break;
+    case GCL_CBWNDEXTRA:     reply->info = class->win_extra; break;
+    case GCL_CBCLSEXTRA:     reply->info = class->nb_extra_bytes; break;
+    case GCLP_HMODULE:       reply->info = class->instance; break;
+    case GCW_ATOM:           reply->info = class->atom; break;
+    default:
+        if (req->size > sizeof(reply->info) || req->offset < 0 ||
+            req->offset > class->nb_extra_bytes - (int)req->size)
+        {
+            set_win32_error( ERROR_INVALID_INDEX );
+            return;
+        }
+        memcpy( &reply->info, class->extra_bytes + req->offset, req->size );
+        break;
+    }
+}

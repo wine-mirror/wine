@@ -4537,6 +4537,20 @@ struct set_class_info_reply
 #define SET_CLASS_EXTRA     0x0010
 
 
+struct get_class_info_request
+{
+    struct request_header __header;
+    user_handle_t  window;
+    int            offset;
+    data_size_t    size;
+};
+struct get_class_info_reply
+{
+    struct reply_header __header;
+    lparam_t       info;
+};
+
+
 
 struct open_clipboard_request
 {
@@ -6164,6 +6178,7 @@ enum request
     REQ_create_class,
     REQ_destroy_class,
     REQ_set_class_info,
+    REQ_get_class_info,
     REQ_open_clipboard,
     REQ_close_clipboard,
     REQ_empty_clipboard,
@@ -6467,6 +6482,7 @@ union generic_request
     struct create_class_request create_class_request;
     struct destroy_class_request destroy_class_request;
     struct set_class_info_request set_class_info_request;
+    struct get_class_info_request get_class_info_request;
     struct open_clipboard_request open_clipboard_request;
     struct close_clipboard_request close_clipboard_request;
     struct empty_clipboard_request empty_clipboard_request;
@@ -6768,6 +6784,7 @@ union generic_reply
     struct create_class_reply create_class_reply;
     struct destroy_class_reply destroy_class_reply;
     struct set_class_info_reply set_class_info_reply;
+    struct get_class_info_reply get_class_info_reply;
     struct open_clipboard_reply open_clipboard_reply;
     struct close_clipboard_reply close_clipboard_reply;
     struct empty_clipboard_reply empty_clipboard_reply;
@@ -6859,6 +6876,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 888
+#define SERVER_PROTOCOL_VERSION 889
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

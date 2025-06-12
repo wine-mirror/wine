@@ -3277,6 +3277,15 @@ enum caret_state
 #define SET_CLASS_INSTANCE  0x0008
 #define SET_CLASS_EXTRA     0x0010
 
+/* Get some information in a class */
+@REQ(get_class_info)
+    user_handle_t  window;         /* handle to the window */
+    int            offset;         /* offset of the info */
+    data_size_t    size;           /* size of the info value to read */
+@REPLY
+    lparam_t       info;           /* current class info value */
+@END
+
 
 /* Open the clipboard */
 @REQ(open_clipboard)

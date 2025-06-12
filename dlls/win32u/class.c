@@ -933,15 +933,14 @@ static ULONG_PTR get_class_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
 
     if (class == OBJ_OTHER_PROCESS)
     {
-        SERVER_START_REQ( set_class_info )
+        SERVER_START_REQ( get_class_info )
         {
             req->window = wine_server_user_handle( hwnd );
-            req->flags = 0;
-            req->extra_offset = (offset >= 0) ? offset : -1;
-            req->extra_size = (offset >= 0) ? size : 0;
+            req->offset = offset;
+            req->size = size;
             if (!wine_server_call_err( req ))
             {
-                switch(offset)
+                switch (offset)
                 {
                 case GCLP_HBRBACKGROUND:
                 case GCLP_HCURSOR:
@@ -950,37 +949,9 @@ static ULONG_PTR get_class_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
                 case GCLP_WNDPROC:
                 case GCLP_MENUNAME:
                     FIXME( "offset %d not supported on other process window %p\n", offset, hwnd );
-                    RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-                    break;
-                case GCL_STYLE:
-                    retvalue = reply->old_style;
-                    break;
-                case GCL_CBWNDEXTRA:
-                    retvalue = reply->old_win_extra;
-                    break;
-                case GCL_CBCLSEXTRA:
-                    retvalue = reply->old_extra;
-                    break;
-                case GCLP_HMODULE:
-                    retvalue = (ULONG_PTR)wine_server_get_ptr( reply->old_instance );
-                    break;
-                case GCW_ATOM:
-                    retvalue = reply->old_atom;
                     break;
                 default:
-                    if (offset >= 0)
-                    {
-                        if (size == sizeof(DWORD))
-                        {
-                            DWORD retdword;
-                            memcpy( &retdword, &reply->old_extra_value, sizeof(DWORD) );
-                            retvalue = retdword;
-                        }
-                        else
-                            memcpy( &retvalue, &reply->old_extra_value,
-                                    sizeof(ULONG_PTR) );
-                    }
-                    else RtlSetLastWin32Error( ERROR_INVALID_INDEX );
+                    retvalue = reply->info;
                     break;
                 }
             }

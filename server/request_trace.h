@@ -2436,6 +2436,18 @@ static void dump_set_class_info_reply( const struct set_class_info_reply *req )
     fprintf( stderr, ", old_win_extra=%d", req->old_win_extra );
 }
 
+static void dump_get_class_info_request( const struct get_class_info_request *req )
+{
+    fprintf( stderr, " window=%08x", req->window );
+    fprintf( stderr, ", offset=%d", req->offset );
+    fprintf( stderr, ", size=%u", req->size );
+}
+
+static void dump_get_class_info_reply( const struct get_class_info_reply *req )
+{
+    dump_uint64( " info=", &req->info );
+}
+
 static void dump_open_clipboard_request( const struct open_clipboard_request *req )
 {
     fprintf( stderr, " window=%08x", req->window );
@@ -3592,6 +3604,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_create_class_request,
     (dump_func)dump_destroy_class_request,
     (dump_func)dump_set_class_info_request,
+    (dump_func)dump_get_class_info_request,
     (dump_func)dump_open_clipboard_request,
     (dump_func)dump_close_clipboard_request,
     (dump_func)dump_empty_clipboard_request,
@@ -3892,6 +3905,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_create_class_reply,
     (dump_func)dump_destroy_class_reply,
     (dump_func)dump_set_class_info_reply,
+    (dump_func)dump_get_class_info_reply,
     (dump_func)dump_open_clipboard_reply,
     (dump_func)dump_close_clipboard_reply,
     NULL,
@@ -4192,6 +4206,7 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "create_class",
     "destroy_class",
     "set_class_info",
+    "get_class_info",
     "open_clipboard",
     "close_clipboard",
     "empty_clipboard",
@@ -4318,6 +4333,7 @@ static const struct
     { "ERROR_HOTKEY_ALREADY_REGISTERED", 0xc0010000 | ERROR_HOTKEY_ALREADY_REGISTERED },
     { "ERROR_HOTKEY_NOT_REGISTERED", 0xc0010000 | ERROR_HOTKEY_NOT_REGISTERED },
     { "ERROR_INVALID_CURSOR_HANDLE", 0xc0010000 | ERROR_INVALID_CURSOR_HANDLE },
+    { "ERROR_INVALID_HANDLE",        0xc0010000 | ERROR_INVALID_HANDLE },
     { "ERROR_INVALID_INDEX",         0xc0010000 | ERROR_INVALID_INDEX },
     { "ERROR_INVALID_WINDOW_HANDLE", 0xc0010000 | ERROR_INVALID_WINDOW_HANDLE },
     { "ERROR_NO_MORE_USER_HANDLES",  0xc0010000 | ERROR_NO_MORE_USER_HANDLES },
