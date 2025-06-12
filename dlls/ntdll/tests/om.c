@@ -1651,7 +1651,7 @@ static void _test_object_name( unsigned line, HANDLE handle, const WCHAR *expect
     char buffer[1024];
     UNICODE_STRING *str = (UNICODE_STRING *)buffer, expect;
     ULONG len = 0;
-    NTSTATUS status;
+    NTSTATUS status, expect_status;
 
     RtlInitUnicodeString( &expect, expected_name );
 
@@ -1661,6 +1661,17 @@ static void _test_object_name( unsigned line, HANDLE handle, const WCHAR *expect
     ok_(__FILE__,line)( len >= sizeof(OBJECT_NAME_INFORMATION) + str->Length, "unexpected len %lu\n", len );
     ok_(__FILE__,line)( compare_unicode_string( str, expected_name ), "got %s, expected %s\n",
                         debugstr_w(str->Buffer), debugstr_w(expected_name) );
+    /* overflow status depends on object type */
+    pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
+    if (!expected_name[0]) expect_status = STATUS_SUCCESS;
+    else if (!wcscmp( str->Buffer, L"File" )) expect_status = STATUS_BUFFER_OVERFLOW;
+    else expect_status = STATUS_INFO_LENGTH_MISMATCH;
+    status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(UNICODE_STRING), &len );
+    ok_(__FILE__,line)( status == expect_status, "NtQueryObject failed %lx/%lx for %s\n",
+                        status, expect_status, debugstr_w(expected_name) );
+    status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(UNICODE_STRING) - 1, &len );
+    ok_(__FILE__,line)( status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryObject failed %lx for %s\n",
+                        status, debugstr_w(expected_name) );
 }
 
 static void test_query_object(void)
@@ -1720,7 +1731,8 @@ static void test_query_object(void)
     ok( status == STATUS_SUCCESS, "NtQueryObject failed %lx\n", status );
     ok( len > sizeof(UNICODE_STRING), "unexpected len %lu\n", len );
     str = (UNICODE_STRING *)buffer;
-    ok( sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR) == len, "unexpected len %lu\n", len );
+    expected_len = sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR);
+    ok( expected_len == len, "unexpected len %lu\n", len );
     ok( str->Length >= sizeof(name) - sizeof(WCHAR), "unexpected len %u\n", str->Length );
     ok( len > sizeof(UNICODE_STRING) + sizeof("\\test_event") * sizeof(WCHAR),
         "name too short %s\n", wine_dbgstr_w(str->Buffer) );
@@ -1733,7 +1745,7 @@ static void test_query_object(void)
     len -= sizeof(WCHAR);
     status = pNtQueryObject( handle, ObjectNameInformation, buffer, len, &len );
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryObject failed %lx\n", status );
-    ok( len >= sizeof(UNICODE_STRING) + sizeof(name), "unexpected len %lu\n", len );
+    ok( len == expected_len, "unexpected len %lu\n", len );
 
     test_object_type( handle, L"Event" );
 
@@ -1778,7 +1790,22 @@ static void test_query_object(void)
     ok( status == STATUS_BUFFER_OVERFLOW, "got %#lx\n", status);
     ok( len == expected_len, "unexpected len %lu\n", len );
 
+    len = 0;
+    status = pNtQueryObject( handle, ObjectNameInformation, buffer, expected_len - sizeof(WCHAR), &len );
+    ok( status == STATUS_BUFFER_OVERFLOW, "got %#lx\n", status);
+    ok( len == expected_len, "unexpected len %lu\n", len );
+
     test_object_type( handle, L"File" );
+
+    pNtClose( handle );
+
+    len = 0;
+    status = pNtQueryObject( (HANDLE)0xdeadbeef, ObjectNameInformation, buffer, 0, &len );
+    ok( status == STATUS_INVALID_HANDLE, "got %#lx\n", status );
+
+    len = 0;
+    status = pNtQueryObject( (HANDLE)0xdeadbeef, ObjectNameInformation, buffer, sizeof(UNICODE_STRING), &len );
+    ok( status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
 
     pNtClose( handle );
 

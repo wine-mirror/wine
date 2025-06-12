@@ -177,7 +177,7 @@ struct object *create_obj_symlink( struct object *root, const struct unicode_str
     data_size_t len;
     WCHAR *target_name;
 
-    if (!(target_name = target->ops->get_full_name( target, &len )))
+    if (!(target_name = target->ops->get_full_name( target, ~0u, &len )))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;

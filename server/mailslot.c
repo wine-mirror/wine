@@ -68,6 +68,7 @@ struct mailslot
 static void mailslot_dump( struct object*, int );
 static struct fd *mailslot_get_fd( struct object * );
 static unsigned int mailslot_map_access( struct object *obj, unsigned int access );
+static WCHAR *mailslot_get_full_name( struct object *obj, data_size_t max, data_size_t *len );
 static int mailslot_link_name( struct object *obj, struct object_name *name, struct object *parent );
 static struct object *mailslot_open_file( struct object *obj, unsigned int access,
                                           unsigned int sharing, unsigned int options );
@@ -87,7 +88,7 @@ static const struct object_ops mailslot_ops =
     mailslot_map_access,       /* map_access */
     default_get_sd,            /* get_sd */
     default_set_sd,            /* set_sd */
-    default_get_full_name,     /* get_full_name */
+    mailslot_get_full_name,    /* get_full_name */
     no_lookup_name,            /* lookup_name */
     mailslot_link_name,        /* link_name */
     default_unlink_name,       /* unlink_name */
@@ -225,7 +226,7 @@ static const struct object_ops mailslot_device_ops =
 
 static void mailslot_device_file_dump( struct object *obj, int verbose );
 static struct fd *mailslot_device_file_get_fd( struct object *obj );
-static WCHAR *mailslot_device_file_get_full_name( struct object *obj, data_size_t *len );
+static WCHAR *mailslot_device_file_get_full_name( struct object *obj, data_size_t max, data_size_t *len );
 static void mailslot_device_file_destroy( struct object *obj );
 static enum server_fd_type mailslot_device_file_get_fd_type( struct fd *fd );
 
@@ -398,6 +399,13 @@ static unsigned int mailslot_map_access( struct object *obj, unsigned int access
     return default_map_access( obj, access ) & FILE_GENERIC_READ;
 }
 
+static WCHAR *mailslot_get_full_name( struct object *obj, data_size_t max, data_size_t *len )
+{
+    WCHAR *ret = default_get_full_name( obj, max, len );
+    if (*len > max) set_error( STATUS_BUFFER_OVERFLOW );
+    return ret;
+}
+
 static int mailslot_link_name( struct object *obj, struct object_name *name, struct object *parent )
 {
     struct mailslot_device *dev = (struct mailslot_device *)parent;
@@ -531,10 +539,12 @@ static struct fd *mailslot_device_file_get_fd( struct object *obj )
     return (struct fd *)grab_object( file->fd );
 }
 
-static WCHAR *mailslot_device_file_get_full_name( struct object *obj, data_size_t *len )
+static WCHAR *mailslot_device_file_get_full_name( struct object *obj, data_size_t max, data_size_t *len )
 {
     struct mailslot_device_file *file = (struct mailslot_device_file *)obj;
-    return file->device->obj.ops->get_full_name( &file->device->obj, len );
+    WCHAR *ret = file->device->obj.ops->get_full_name( &file->device->obj, max, len );
+    if (*len > max) set_error( STATUS_BUFFER_OVERFLOW );
+    return ret;
 }
 
 static void mailslot_device_file_destroy( struct object *obj )

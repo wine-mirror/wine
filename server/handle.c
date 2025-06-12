@@ -722,7 +722,7 @@ DECL_HANDLER(get_object_name)
 
     if (!(obj = get_handle_obj( current->process, req->handle, 0, NULL ))) return;
 
-    if ((name = obj->ops->get_full_name( obj, &reply->total )))
+    if ((name = obj->ops->get_full_name( obj, get_reply_max_size(), &reply->total )))
         set_reply_data_ptr( name, min( reply->total, get_reply_max_size() ));
     release_object( obj );
 }

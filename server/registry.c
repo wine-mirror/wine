@@ -164,7 +164,7 @@ struct file_load_info
 static void key_dump( struct object *obj, int verbose );
 static unsigned int key_map_access( struct object *obj, unsigned int access );
 static struct security_descriptor *key_get_sd( struct object *obj );
-static WCHAR *key_get_full_name( struct object *obj, data_size_t *len );
+static WCHAR *key_get_full_name( struct object *obj, data_size_t max, data_size_t *len );
 static struct object *key_lookup_name( struct object *obj, struct unicode_str *name,
                                        unsigned int attr, struct object *root );
 static int key_link_name( struct object *obj, struct object_name *name, struct object *parent );
@@ -461,7 +461,7 @@ static struct security_descriptor *key_get_sd( struct object *obj )
     return key_default_sd;
 }
 
-static WCHAR *key_get_full_name( struct object *obj, data_size_t *ret_len )
+static WCHAR *key_get_full_name( struct object *obj, data_size_t max, data_size_t *ret_len )
 {
     struct key *key = (struct key *) obj;
 
@@ -470,7 +470,7 @@ static WCHAR *key_get_full_name( struct object *obj, data_size_t *ret_len )
         set_error( STATUS_KEY_DELETED );
         return NULL;
     }
-    return default_get_full_name( obj, ret_len );
+    return default_get_full_name( obj, max, ret_len );
 }
 
 static struct object *key_lookup_name( struct object *obj, struct unicode_str *name,
@@ -932,7 +932,7 @@ static void enum_key( struct key *key, int index, int info_class, struct enum_ke
     switch(info_class)
     {
     case KeyNameInformation:
-        if (!(fullname = key->obj.ops->get_full_name( &key->obj, &namelen ))) return;
+        if (!(fullname = key->obj.ops->get_full_name( &key->obj, ~0u, &namelen ))) return;
         /* fall through */
     case KeyBasicInformation:
         classlen = 0; /* only return the name */

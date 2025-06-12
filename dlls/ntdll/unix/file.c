@@ -7275,20 +7275,16 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
         SERVER_START_REQ( get_object_name )
         {
             req->handle = wine_server_obj_handle( handle );
-            if (len > sizeof(*p)) wine_server_set_reply( req, p + 1, len - sizeof(*p) );
+            if (len > sizeof(*p) + sizeof(WCHAR))
+                wine_server_set_reply( req, p + 1, len - sizeof(*p) - sizeof(WCHAR) );
             status = wine_server_call( req );
             if (status == STATUS_SUCCESS)
             {
                 if (!reply->total)  /* no name */
                 {
-                    if (sizeof(*p) > len) status = STATUS_INFO_LENGTH_MISMATCH;
+                    if (len < sizeof(*p)) status = STATUS_INFO_LENGTH_MISMATCH;
                     else memset( p, 0, sizeof(*p) );
                     if (used_len) *used_len = sizeof(*p);
-                }
-                else if (sizeof(*p) + reply->total + sizeof(WCHAR) > len)
-                {
-                    if (used_len) *used_len = sizeof(*p) + reply->total + sizeof(WCHAR);
-                    status = STATUS_INFO_LENGTH_MISMATCH;
                 }
                 else
                 {
@@ -7299,6 +7295,11 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
                     p->Name.Buffer[res / sizeof(WCHAR)] = 0;
                     if (used_len) *used_len = sizeof(*p) + p->Name.MaximumLength;
                 }
+            }
+            else if (status == STATUS_INFO_LENGTH_MISMATCH || status == STATUS_BUFFER_OVERFLOW)
+            {
+                if (len < sizeof(*p)) status = STATUS_INFO_LENGTH_MISMATCH;
+                if (used_len) *used_len = sizeof(*p) + reply->total + sizeof(WCHAR);
             }
         }
         SERVER_END_REQ;
