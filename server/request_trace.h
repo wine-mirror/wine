@@ -2399,7 +2399,8 @@ static void dump_create_class_request( const struct create_class_request *req )
 
 static void dump_create_class_reply( const struct create_class_reply *req )
 {
-    fprintf( stderr, " atom=%04x", req->atom );
+    dump_obj_locator( " locator=", &req->locator );
+    fprintf( stderr, ", atom=%04x", req->atom );
 }
 
 static void dump_destroy_class_request( const struct destroy_class_request *req )

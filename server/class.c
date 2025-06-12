@@ -35,23 +35,26 @@
 #include "object.h"
 #include "process.h"
 #include "user.h"
+#include "file.h"
 #include "winuser.h"
 #include "winternl.h"
 
 struct window_class
 {
-    struct list     entry;           /* entry in process list */
-    struct process *process;         /* process owning the class */
-    int             count;           /* reference count */
-    int             local;           /* local class? */
-    atom_t          atom;            /* class atom */
-    atom_t          base_atom;       /* base class atom for versioned class */
-    mod_handle_t    instance;        /* module instance */
-    unsigned int    style;           /* class style */
-    int             win_extra;       /* number of window extra bytes */
-    client_ptr_t    client_ptr;      /* pointer to class in client address space */
-    int             nb_extra_bytes;  /* number of extra bytes */
-    char            extra_bytes[1];  /* extra bytes storage */
+    struct list         entry;           /* entry in process list */
+    struct winstation  *winstation;      /* winstation the class was created on */
+    struct process     *process;         /* process owning the class */
+    int                 count;           /* reference count */
+    int                 local;           /* local class? */
+    atom_t              atom;            /* class atom */
+    atom_t              base_atom;       /* base class atom for versioned class */
+    mod_handle_t        instance;        /* module instance */
+    unsigned int        style;           /* class style */
+    int                 win_extra;       /* number of window extra bytes */
+    client_ptr_t        client_ptr;      /* pointer to class in client address space */
+    class_shm_t        *shared;          /* class in session shared memory */
+    int                 nb_extra_bytes;  /* number of extra bytes */
+    char                extra_bytes[1];  /* extra bytes storage */
 };
 
 static struct window_class *create_class( struct process *process, int extra_bytes, int local )
@@ -65,12 +68,24 @@ static struct window_class *create_class( struct process *process, int extra_byt
     class->local = local;
     class->nb_extra_bytes = extra_bytes;
     memset( class->extra_bytes, 0, extra_bytes );
+
+    if (!(class->shared = alloc_shared_object())) goto failed;
+    SHARED_WRITE_BEGIN( class->shared, class_shm_t )
+    {
+        shared->placeholder = 0;
+    }
+    SHARED_WRITE_END;
+
     /* other fields are initialized by caller */
 
     /* local classes have priority so we put them first in the list */
     if (local) list_add_head( &process->classes, &class->entry );
     else list_add_tail( &process->classes, &class->entry );
     return class;
+
+failed:
+    free( class );
+    return NULL;
 }
 
 static void destroy_class( struct window_class *class )
@@ -81,6 +96,7 @@ static void destroy_class( struct window_class *class )
     release_atom( table, class->base_atom );
     list_remove( &class->entry );
     release_object( class->process );
+    if (class->shared) free_shared_object( class->shared );
     free( class );
 }
 
@@ -212,7 +228,8 @@ DECL_HANDLER(create_class)
     class->style      = req->style;
     class->win_extra  = req->win_extra;
     class->client_ptr = req->client_ptr;
-    reply->atom = base_atom;
+    reply->locator   = get_shared_object_locator( class->shared );
+    reply->atom      = base_atom;
 }
 
 /* destroy a window class */

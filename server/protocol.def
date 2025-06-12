@@ -1016,6 +1016,11 @@ typedef volatile struct
 
 typedef volatile struct
 {
+    int placeholder;
+} class_shm_t;
+
+typedef volatile struct
+{
     unsigned int         dpi_context;      /* DPI awareness context */
 } window_shm_t;
 
@@ -1024,6 +1029,7 @@ typedef volatile union
     desktop_shm_t        desktop;
     queue_shm_t          queue;
     input_shm_t          input;
+    class_shm_t          class;
     window_shm_t         window;
 } object_shm_t;
 
@@ -3239,7 +3245,8 @@ enum caret_state
     data_size_t    name_offset;    /* base class name offset for specified atom */
     VARARG(name,unicode_str);      /* class name */
 @REPLY
-    atom_t         atom;           /* resulting class atom */
+    struct obj_locator locator;    /* locator for the shared class object */
+    atom_t             atom;       /* resulting class atom */
 @END
 
 

@@ -1000,6 +1000,11 @@ typedef volatile struct
 
 typedef volatile struct
 {
+    int placeholder;
+} class_shm_t;
+
+typedef volatile struct
+{
     unsigned int         dpi_context;
 } window_shm_t;
 
@@ -1008,6 +1013,7 @@ typedef volatile union
     desktop_shm_t        desktop;
     queue_shm_t          queue;
     input_shm_t          input;
+    class_shm_t          class;
     window_shm_t         window;
 } object_shm_t;
 
@@ -4488,8 +4494,9 @@ struct create_class_request
 struct create_class_reply
 {
     struct reply_header __header;
-    atom_t         atom;
-    char __pad_12[4];
+    struct obj_locator locator;
+    atom_t             atom;
+    char __pad_28[4];
 };
 
 
@@ -6886,6 +6893,6 @@ union generic_reply
     struct get_inproc_sync_fd_reply get_inproc_sync_fd_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 893
+#define SERVER_PROTOCOL_VERSION 894
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

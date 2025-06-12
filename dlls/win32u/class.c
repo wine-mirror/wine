@@ -63,6 +63,7 @@ typedef struct tagCLASS
     WCHAR        name[MAX_ATOM_LEN + 1];
     WCHAR       *basename;      /* Base name for redirected classes, pointer within 'name'. */
     struct client_menu_name menu_name; /* Default menu name */
+    const shared_object_t *shared; /* class object in session shared memory */
 } CLASS;
 
 /* Built-in class descriptor */
@@ -455,6 +456,8 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
                                       DWORD flags, DWORD *wow )
 {
     const BOOL is_builtin = fnid, ansi = flags;
+    const shared_object_t *shared;
+    struct obj_locator locator;
     HINSTANCE instance;
     HICON sm_icon = 0;
     CLASS *class;
@@ -505,11 +508,26 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
         req->atom       = wine_server_add_atom( req, name );
         req->name_offset = version->Length / sizeof(WCHAR);
         ret = !wine_server_call_err( req );
+        locator = reply->locator;
         atom = reply->atom;
     }
     SERVER_END_REQ;
     if (!ret)
     {
+        free( class );
+        return 0;
+    }
+
+    if (!(shared = find_shared_session_object( locator.id, locator.offset )))
+    {
+        ERR( "Failed to get shared session object for window class\n" );
+        SERVER_START_REQ( destroy_class )
+        {
+            req->instance = wine_server_client_ptr( instance );
+            wine_server_add_data( req, name->Buffer, name->Length );
+            wine_server_call( req );
+        }
+        SERVER_END_REQ;
         free( class );
         return 0;
     }
@@ -537,6 +555,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
     class->atom          = atom;
     class->winproc       = alloc_winproc( wc->lpfnWndProc, ansi );
     if (client_menu_name) class->menu_name = *client_menu_name;
+    class->shared        = shared;
     release_class_ptr( class );
     return atom;
 }
