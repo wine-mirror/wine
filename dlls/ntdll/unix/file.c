@@ -2099,31 +2099,40 @@ static unsigned int server_get_unix_name( HANDLE handle, char **unix_name )
     return ret;
 }
 
-static NTSTATUS fill_name_info( const char *unix_name, FILE_NAME_INFORMATION *info, LONG *name_len )
+static NTSTATUS server_get_name_info( HANDLE handle, FILE_NAME_INFORMATION *info, LONG *name_len )
 {
-    WCHAR *nt_name;
+    data_size_t size = 1024;
     NTSTATUS status;
+    OBJECT_NAME_INFORMATION *name;
 
-    if (!(status = unix_to_nt_file_name( unix_name, &nt_name )))
+    for (;;)
     {
-        const WCHAR *ptr = nt_name;
-        const WCHAR *end = ptr + wcslen( nt_name );
+        if (!(name = malloc( size ))) return STATUS_NO_MEMORY;
+        if (!(status = NtQueryObject( handle, ObjectNameInformation, name, size, &size )))
+        {
+            const WCHAR *ptr = name->Name.Buffer;
+            const WCHAR *end = ptr + name->Name.Length / sizeof(WCHAR);
 
-        /* Skip the volume mount point. */
-        while (ptr != end && *ptr == '\\') ++ptr;
-        while (ptr != end && *ptr != '\\') ++ptr;
-        while (ptr != end && *ptr == '\\') ++ptr;
-        while (ptr != end && *ptr != '\\') ++ptr;
+            /* Skip the volume mount point. */
+            while (ptr != end && *ptr == '\\') ++ptr;
+            while (ptr != end && *ptr != '\\') ++ptr;
+            while (ptr != end && *ptr == '\\') ++ptr;
+            while (ptr != end && *ptr != '\\') ++ptr;
 
-        info->FileNameLength = (end - ptr) * sizeof(WCHAR);
-        if (*name_len < info->FileNameLength) status = STATUS_BUFFER_OVERFLOW;
-        else *name_len = info->FileNameLength;
-
-        memcpy( info->FileName, ptr, *name_len );
-        free( nt_name );
+            info->FileNameLength = (end - ptr) * sizeof(WCHAR);
+            if (*name_len < info->FileNameLength) status = STATUS_BUFFER_OVERFLOW;
+            else if (!info->FileNameLength) status = STATUS_INVALID_INFO_CLASS;
+            else *name_len = info->FileNameLength;
+            memcpy( info->FileName, ptr, *name_len );
+            free( name );
+        }
+        else
+        {
+            free( name );
+            if (status == STATUS_INFO_LENGTH_MISMATCH || status == STATUS_BUFFER_OVERFLOW) continue;
+        }
+        return status;
     }
-
-    return status;
 }
 
 
@@ -4589,10 +4598,9 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
     case FileAllInformation:
         {
             FILE_ALL_INFORMATION *info = ptr;
-            char *unix_name;
 
             if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
-            else if (!(status = server_get_unix_name( handle, &unix_name )))
+            else
             {
                 LONG name_len = len - FIELD_OFFSET(FILE_ALL_INFORMATION, NameInformation.FileName);
 
@@ -4603,27 +4611,16 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                 info->PositionInformation.CurrentByteOffset.QuadPart = lseek( fd, 0, SEEK_CUR );
                 info->ModeInformation.Mode = 0;  /* FIXME */
                 info->AlignmentInformation.AlignmentRequirement = 1;  /* FIXME */
-
-                status = fill_name_info( unix_name, &info->NameInformation, &name_len );
-                free( unix_name );
+                status = server_get_name_info( handle, &info->NameInformation, &name_len );
                 io->Information = FIELD_OFFSET(FILE_ALL_INFORMATION, NameInformation.FileName) + name_len;
             }
-            else if (status == STATUS_OBJECT_TYPE_MISMATCH) status = STATUS_INVALID_INFO_CLASS;
         }
         break;
     case FileNameInformation:
         {
-            FILE_NAME_INFORMATION *info = ptr;
-            char *unix_name;
-
-            if (!(status = server_get_unix_name( handle, &unix_name )))
-            {
-                LONG name_len = len - FIELD_OFFSET(FILE_NAME_INFORMATION, FileName);
-                status = fill_name_info( unix_name, info, &name_len );
-                free( unix_name );
-                io->Information = FIELD_OFFSET(FILE_NAME_INFORMATION, FileName) + name_len;
-            }
-            else if (status == STATUS_OBJECT_TYPE_MISMATCH) status = STATUS_INVALID_INFO_CLASS;
+            LONG name_len = len - FIELD_OFFSET(FILE_NAME_INFORMATION, FileName);
+            status = server_get_name_info( handle, ptr, &name_len );
+            io->Information = offsetof( FILE_NAME_INFORMATION, FileName ) + name_len;
         }
         break;
     case FileNetworkOpenInformation:
