@@ -1999,6 +1999,24 @@ static NTSTATUS fill_file_info( const struct stat *st, ULONG attr, void *ptr,
             fill_file_info( st, attr, &info->InternalInformation, FileInternalInformation );
         }
         break;
+    case FileNetworkOpenInformation:
+        {
+            FILE_NETWORK_OPEN_INFORMATION *info = ptr;
+            get_file_times( st, &info->LastWriteTime, &info->ChangeTime,
+                            &info->LastAccessTime, &info->CreationTime );
+            info->FileAttributes = attr;
+            if (S_ISDIR(st->st_mode))
+            {
+                info->AllocationSize.QuadPart = 0;
+                info->EndOfFile.QuadPart      = 0;
+            }
+            else
+            {
+                info->AllocationSize.QuadPart = (ULONGLONG)st->st_blocks * 512;
+                info->EndOfFile.QuadPart      = st->st_size;
+            }
+        }
+        break;
     /* all directory structures start with the FileDirectoryInformation layout */
     case FileBothDirectoryInformation:
     case FileFullDirectoryInformation:
@@ -4375,21 +4393,7 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
         else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
             status = STATUS_INVALID_INFO_CLASS;
         else
-        {
-            FILE_BASIC_INFORMATION basic;
-            FILE_STANDARD_INFORMATION std;
-
-            fill_file_info( &st, attributes, &basic, FileBasicInformation );
-            fill_file_info( &st, attributes, &std, FileStandardInformation );
-
-            info->CreationTime   = basic.CreationTime;
-            info->LastAccessTime = basic.LastAccessTime;
-            info->LastWriteTime  = basic.LastWriteTime;
-            info->ChangeTime     = basic.ChangeTime;
-            info->AllocationSize = std.AllocationSize;
-            info->EndOfFile      = std.EndOfFile;
-            info->FileAttributes = basic.FileAttributes;
-        }
+            fill_file_info( &st, attributes, info, FileNetworkOpenInformation );
         free( unix_name );
     }
     else WARN( "%s not found (%x)\n", debugstr_us(attr->ObjectName), status );
@@ -4623,33 +4627,8 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         }
         break;
     case FileNetworkOpenInformation:
-        {
-            FILE_NETWORK_OPEN_INFORMATION *info = ptr;
-            char *unix_name;
-
-            if (!(status = server_get_unix_name( handle, &unix_name )))
-            {
-                if (get_file_info( unix_name, &st, &attr ) == -1) status = errno_to_status( errno );
-                else
-                {
-                    FILE_BASIC_INFORMATION basic;
-                    FILE_STANDARD_INFORMATION std;
-
-                    fill_file_info( &st, attr, &basic, FileBasicInformation );
-                    fill_file_info( &st, attr, &std, FileStandardInformation );
-
-                    info->CreationTime   = basic.CreationTime;
-                    info->LastAccessTime = basic.LastAccessTime;
-                    info->LastWriteTime  = basic.LastWriteTime;
-                    info->ChangeTime     = basic.ChangeTime;
-                    info->AllocationSize = std.AllocationSize;
-                    info->EndOfFile      = std.EndOfFile;
-                    info->FileAttributes = basic.FileAttributes;
-                }
-                free( unix_name );
-            }
-            else if (status == STATUS_OBJECT_TYPE_MISMATCH) status = STATUS_INVALID_INFO_CLASS;
-        }
+        if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
+        else fill_file_info( &st, attr, ptr, FileNetworkOpenInformation );
         break;
     case FileIdInformation:
         if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
