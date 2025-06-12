@@ -1615,7 +1615,7 @@ static void test_MsiQueryFeatureState(void)
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %lu\n", error);
 
-    res = RegSetValueExA(userkey, "feature", 0, REG_SZ, (const BYTE *)"", 2);
+    res = reg_set_str(userkey, "feature", "");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* feature value exists */
@@ -1649,7 +1649,7 @@ static void test_MsiQueryFeatureState(void)
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
     ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %lu\n", error);
 
-    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)"aaaaaaaaaaaaaaaaaaa", 20);
+    res = reg_set_str(localkey, "feature", "aaaaaaaaaaaaaaaaaaa");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     SetLastError(0xdeadbeef);
@@ -1658,7 +1658,7 @@ static void test_MsiQueryFeatureState(void)
     ok(state == INSTALLSTATE_BADCONFIG, "Expected INSTALLSTATE_BADCONFIG, got %d\n", state);
     ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %lu\n", error);
 
-    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)"aaaaaaaaaaaaaaaaaaaa", 21);
+    res = reg_set_str(localkey, "feature", "aaaaaaaaaaaaaaaaaaaa");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     SetLastError(0xdeadbeef);
@@ -1667,7 +1667,7 @@ static void test_MsiQueryFeatureState(void)
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
     ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %lu\n", error);
 
-    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)"aaaaaaaaaaaaaaaaaaaaa", 22);
+    res = reg_set_str(localkey, "feature", "aaaaaaaaaaaaaaaaaaaaa");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     SetLastError(0xdeadbeef);
@@ -1707,7 +1707,7 @@ static void test_MsiQueryFeatureState(void)
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
     ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %lu\n", error);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"", 1);
+    res = reg_set_str(compkey, prod_squashed, "");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     SetLastError(0xdeadbeef);
@@ -1716,7 +1716,7 @@ static void test_MsiQueryFeatureState(void)
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
     ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %lu\n", error);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"apple", 6);
+    res = reg_set_str(compkey, prod_squashed, "apple");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     SetLastError(0xdeadbeef);
@@ -1725,7 +1725,7 @@ static void test_MsiQueryFeatureState(void)
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
     ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %lu\n", error);
 
-    res = RegSetValueExA(compkey2, prod_squashed, 0, REG_SZ, (const BYTE *)"orange", 7);
+    res = reg_set_str(compkey2, prod_squashed, "orange");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* INSTALLSTATE_LOCAL */
@@ -1735,7 +1735,7 @@ static void test_MsiQueryFeatureState(void)
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
     ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %lu\n", error);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"01\\", 4);
+    res = reg_set_str(compkey, prod_squashed, "01\\");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* INSTALLSTATE_SOURCE */
@@ -1745,7 +1745,7 @@ static void test_MsiQueryFeatureState(void)
     ok(state == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", state);
     ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %lu\n", error);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"01", 3);
+    res = reg_set_str(compkey, prod_squashed, "01");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* bad INSTALLSTATE_SOURCE */
@@ -1755,7 +1755,7 @@ static void test_MsiQueryFeatureState(void)
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
     ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %lu\n", error);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"01a", 4);
+    res = reg_set_str(compkey, prod_squashed, "01a");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* INSTALLSTATE_SOURCE */
@@ -1765,7 +1765,7 @@ static void test_MsiQueryFeatureState(void)
     ok(state == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", state);
     ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %lu\n", error);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"01", 3);
+    res = reg_set_str(compkey, prod_squashed, "01");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* bad INSTALLSTATE_SOURCE */
@@ -1801,7 +1801,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
-    res = RegSetValueExA(userkey, "feature", 0, REG_SZ, (const BYTE *)"", 1);
+    res = reg_set_str(userkey, "feature", "");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* feature value exists */
@@ -1821,19 +1821,19 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
-    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)"aaaaaaaaaaaaaaaaaaa", 20);
+    res = reg_set_str(localkey, "feature", "aaaaaaaaaaaaaaaaaaa");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_BADCONFIG, "Expected INSTALLSTATE_BADCONFIG, got %d\n", state);
 
-    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)"aaaaaaaaaaaaaaaaaaaa", 21);
+    res = reg_set_str(localkey, "feature", "aaaaaaaaaaaaaaaaaaaa");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
-    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)"aaaaaaaaaaaaaaaaaaaaa", 22);
+    res = reg_set_str(localkey, "feature", "aaaaaaaaaaaaaaaaaaaaa");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
@@ -1864,19 +1864,19 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"", 1);
+    res = reg_set_str(compkey, prod_squashed, "");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"apple", 6);
+    res = reg_set_str(compkey, prod_squashed, "apple");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
-    res = RegSetValueExA(compkey2, prod_squashed, 0, REG_SZ, (const BYTE *)"orange", 7);
+    res = reg_set_str(compkey2, prod_squashed, "orange");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
@@ -1912,7 +1912,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
-    res = RegSetValueExA(userkey, "feature", 0, REG_SZ, (const BYTE *)"", 1);
+    res = reg_set_str(userkey, "feature", "");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* feature value exists */
@@ -1931,19 +1931,19 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
-    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)"aaaaaaaaaaaaaaaaaaa", 20);
+    res = reg_set_str(localkey, "feature", "aaaaaaaaaaaaaaaaaaa");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_BADCONFIG, "Expected INSTALLSTATE_BADCONFIG, got %d\n", state);
 
-    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)"aaaaaaaaaaaaaaaaaaaa", 21);
+    res = reg_set_str(localkey, "feature", "aaaaaaaaaaaaaaaaaaaa");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
-    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)"aaaaaaaaaaaaaaaaaaaaa", 22);
+    res = reg_set_str(localkey, "feature", "aaaaaaaaaaaaaaaaaaaaa");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
@@ -1972,19 +1972,19 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"", 1);
+    res = reg_set_str(compkey, prod_squashed, "");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"apple", 6);
+    res = reg_set_str(compkey, prod_squashed, "apple");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
-    res = RegSetValueExA(compkey2, prod_squashed, 0, REG_SZ, (const BYTE *)"orange", 7);
+    res = reg_set_str(compkey2, prod_squashed, "orange");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
@@ -2136,7 +2136,7 @@ static void test_MsiQueryComponentState(void)
     ok(state == MAGIC_ERROR, "Expected 0xdeadbeef, got %d\n", state);
     ok(error == 0xdeadbeef, "expected 0xdeadbeef, got %lu\n", error);
 
-    res = RegSetValueExA(prodkey, "LocalPackage", 0, REG_SZ, (const BYTE *)"msitest.msi", 11);
+    res = reg_set_str(prodkey, "LocalPackage", "msitest.msi");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LocalPackage value exists */
@@ -2163,7 +2163,7 @@ static void test_MsiQueryComponentState(void)
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(error == 0xdeadbeef, "expected 0xdeadbeef, got %lu\n", error);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"", 0);
+    res = reg_set_str(compkey, prod_squashed, "");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* component\product exists */
@@ -2185,7 +2185,7 @@ static void test_MsiQueryComponentState(void)
     ok(state == MAGIC_ERROR, "Expected state not changed, got %d\n", state);
     ok(error == 0xdeadbeef, "expected 0xdeadbeef, got %lu\n", error);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"hi", 2);
+    res = reg_set_str(compkey, prod_squashed, "hi");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* INSTALLSTATE_LOCAL */
@@ -2197,7 +2197,7 @@ static void test_MsiQueryComponentState(void)
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
     ok(error == 0xdeadbeef, "expected 0xdeadbeef, got %lu\n", error);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"01\\", 4);
+    res = reg_set_str(compkey, prod_squashed, "01\\");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* INSTALLSTATE_SOURCE */
@@ -2209,7 +2209,7 @@ static void test_MsiQueryComponentState(void)
     ok(state == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", state);
     ok(error == 0xdeadbeef, "expected 0xdeadbeef, got %lu\n", error);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"01", 3);
+    res = reg_set_str(compkey, prod_squashed, "01");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* bad INSTALLSTATE_SOURCE */
@@ -2221,7 +2221,7 @@ static void test_MsiQueryComponentState(void)
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
     ok(error == 0xdeadbeef, "expected 0xdeadbeef, got %lu\n", error);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"01a", 4);
+    res = reg_set_str(compkey, prod_squashed, "01a");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* INSTALLSTATE_SOURCE */
@@ -2233,7 +2233,7 @@ static void test_MsiQueryComponentState(void)
     ok(state == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", state);
     ok(error == 0xdeadbeef, "expected 0xdeadbeef, got %lu\n", error);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"01:", 4);
+    res = reg_set_str(compkey, prod_squashed, "01:");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* registry component */
@@ -2282,7 +2282,7 @@ static void test_MsiQueryComponentState(void)
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &prodkey, NULL);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(prodkey, "LocalPackage", 0, REG_SZ, (const BYTE *)"msitest.msi", 11);
+    res = reg_set_str(prodkey, "LocalPackage", "msitest.msi");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     RegCloseKey(prodkey);
@@ -2306,7 +2306,7 @@ static void test_MsiQueryComponentState(void)
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"", 0);
+    res = reg_set_str(compkey, prod_squashed, "");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* component\product exists */
@@ -2316,7 +2316,7 @@ static void test_MsiQueryComponentState(void)
     ok(state == INSTALLSTATE_NOTUSED || state == INSTALLSTATE_LOCAL,
        "Expected INSTALLSTATE_NOTUSED or INSTALLSTATE_LOCAL, got %d\n", state);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"hi", 2);
+    res = reg_set_str(compkey, prod_squashed, "hi");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     state = MAGIC_ERROR;
@@ -2370,7 +2370,7 @@ static void test_MsiQueryComponentState(void)
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &prodkey, NULL);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(prodkey, "ManagedLocalPackage", 0, REG_SZ, (const BYTE *)"msitest.msi", 11);
+    res = reg_set_str(prodkey, "ManagedLocalPackage", "msitest.msi");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     state = MAGIC_ERROR;
@@ -2485,7 +2485,7 @@ static void test_MsiGetComponentPath(void)
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %lu\n", size);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
+    res = reg_set_str(compkey, prod_squashed, "C:\\imapath");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* product value exists */
@@ -2589,7 +2589,7 @@ static void test_MsiGetComponentPath(void)
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %ld\n", size);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
+    res = reg_set_str(compkey, prod_squashed, "C:\\imapath");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* product value exists */
@@ -2699,7 +2699,7 @@ static void test_MsiGetComponentPath(void)
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %lu\n", size);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
+    res = reg_set_str(compkey, prod_squashed, "C:\\imapath");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* product value exists */
@@ -2808,7 +2808,7 @@ static void test_MsiGetComponentPath(void)
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %ld\n", size);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
+    res = reg_set_str(compkey, prod_squashed, "C:\\imapath");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* product value exists */
@@ -2891,7 +2891,7 @@ static void test_MsiGetComponentPath(void)
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %ld\n", size);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
+    res = reg_set_str(compkey, prod_squashed, "C:\\imapath");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* product value exists */
@@ -3006,7 +3006,7 @@ static void test_MsiGetComponentPathEx(void)
     state = MsiGetComponentPathExA( prod, comp, NULL, MSIINSTALLCONTEXT_MACHINE, path, &size );
     ok( state == INSTALLSTATE_UNKNOWN, "got %d\n", state );
 
-    res = RegSetValueExA( key_comp, prod_squashed, 0, REG_SZ, (const BYTE *)"c:\\testcomponentpath", 20 );
+    res = reg_set_str( key_comp, prod_squashed, "c:\\testcomponentpath" );
     ok( res == ERROR_SUCCESS, "got %ld\n", res );
 
     /* product value exists */
@@ -3089,7 +3089,7 @@ static void test_MsiGetComponentPathEx(void)
     ok( state == INSTALLSTATE_UNKNOWN, "got %d\n", state );
     todo_wine ok(!size, "got %lu\n", size);
 
-    res = RegSetValueExA( key_comp, prod_squashed, 0, REG_SZ, (const BYTE *)"c:\\testcomponentpath", 20 );
+    res = reg_set_str( key_comp, prod_squashed, "c:\\testcomponentpath" );
     ok( res == ERROR_SUCCESS, "got %ld\n", res );
 
     /* product value exists */
@@ -3145,7 +3145,7 @@ static void test_MsiGetComponentPathEx(void)
     state = MsiGetComponentPathExA( prod, comp, NULL, MSIINSTALLCONTEXT_USERMANAGED, path, &size );
     ok( state == INSTALLSTATE_UNKNOWN, "got %d\n", state );
 
-    res = RegSetValueExA( key_comp, prod_squashed, 0, REG_SZ, (const BYTE *)"c:\\testcomponentpath", 20 );
+    res = reg_set_str( key_comp, prod_squashed, "c:\\testcomponentpath" );
     ok( res == ERROR_SUCCESS, "got %ld\n", res );
 
     /* product value exists */
@@ -3226,7 +3226,7 @@ static void test_MsiGetComponentPathEx(void)
     ok( state == INSTALLSTATE_UNKNOWN, "got %d\n", state );
     todo_wine ok(!size, "got %lu\n", size);
 
-    res = RegSetValueExA( key_comp, prod_squashed, 0, REG_SZ, (const BYTE *)"c:\\testcomponentpath", 20 );
+    res = reg_set_str( key_comp, prod_squashed, "c:\\testcomponentpath" );
     ok( res == ERROR_SUCCESS, "got %ld\n", res );
 
     /* product value exists */
@@ -3410,7 +3410,7 @@ static void test_MsiProvideQualifiedComponentEx(void)
     state = MsiQueryFeatureStateA( prod, "feature" );
     ok( state == INSTALLSTATE_UNKNOWN, "got %d\n", state );
 
-    res = RegSetValueExA( hkey3, "feature", 0, REG_SZ, (const BYTE *)"", 1 );
+    res = reg_set_str( hkey3, "feature", "" );
     ok( res == ERROR_SUCCESS, "got %ld\n", res );
 
     state = MsiQueryFeatureStateA( prod, "feature" );
@@ -3442,7 +3442,7 @@ static void test_MsiProvideQualifiedComponentEx(void)
     res = RegCreateKeyExA( HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &hkey5, NULL );
     ok( res == ERROR_SUCCESS, "got %ld\n", res );
 
-    res = RegSetValueExA( hkey5, prod_squashed, 0, REG_SZ, (const BYTE *)"c:\\nosuchfile", sizeof("c:\\nosuchfile") );
+    res = reg_set_str( hkey5, prod_squashed, "c:\\nosuchfile" );
     ok( res == ERROR_SUCCESS, "got %ld\n", res );
 
     state = MsiQueryFeatureStateA( prod, "feature" );
@@ -3570,7 +3570,7 @@ static void test_MsiGetProductCode(void)
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(!lstrcmpA(product, "prod"), "Expected product to be unchanged, got %s\n", product);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
+    res = reg_set_str(compkey, prod_squashed, "C:\\imapath");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* product value exists */
@@ -3579,7 +3579,7 @@ static void test_MsiGetProductCode(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(product, prodcode), "Expected %s, got %s\n", prodcode, product);
 
-    res = RegSetValueExA(compkey, prod2_squashed, 0, REG_SZ, (const BYTE *)"C:\\another", 10);
+    res = reg_set_str(compkey, prod2_squashed, "C:\\another");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
@@ -3671,7 +3671,7 @@ static void test_MsiGetProductCode(void)
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(!lstrcmpA(product, "prod"), "Expected product to be unchanged, got %s\n", product);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
+    res = reg_set_str(compkey, prod_squashed, "C:\\imapath");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* product value exists */
@@ -3680,7 +3680,7 @@ static void test_MsiGetProductCode(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(product, prodcode), "Expected %s, got %s\n", prodcode, product);
 
-    res = RegSetValueExA(compkey, prod2_squashed, 0, REG_SZ, (const BYTE *)"C:\\another", 10);
+    res = reg_set_str(compkey, prod2_squashed, "C:\\another");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
@@ -3835,7 +3835,7 @@ static void test_MsiEnumClients(void)
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(!lstrcmpA(product, ""), "Expected product to be unchanged, got %s\n", product);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
+    res = reg_set_str(compkey, prod_squashed, "C:\\imapath");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* product value exists */
@@ -3855,7 +3855,7 @@ static void test_MsiEnumClients(void)
     ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
     ok(!lstrcmpA(product, ""), "Expected product to be unchanged, got %s\n", product);
 
-    res = RegSetValueExA(compkey, prod2_squashed, 0, REG_SZ, (const BYTE *)"C:\\another", 10);
+    res = reg_set_str(compkey, prod2_squashed, "C:\\another");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* try index 1, second product value does exist */
@@ -3911,7 +3911,7 @@ static void test_MsiEnumClients(void)
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(!lstrcmpA(product, ""), "Expected product to be unchanged, got %s\n", product);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
+    res = reg_set_str(compkey, prod_squashed, "C:\\imapath");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* product value exists */
@@ -3931,7 +3931,7 @@ static void test_MsiEnumClients(void)
     ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
     ok(!lstrcmpA(product, ""), "Expected product to be unchanged, got %s\n", product);
 
-    res = RegSetValueExA(compkey, prod2_squashed, 0, REG_SZ, (const BYTE *)"C:\\another", 10);
+    res = reg_set_str(compkey, prod2_squashed, "C:\\another");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* try index 1, second product value does exist */
@@ -4447,7 +4447,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 0, "Expected 0, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    res = reg_set_str(propkey, "HelpLink", "link");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpLink value exists */
@@ -4491,7 +4491,7 @@ static void test_MsiGetProductInfo(void)
        "Expected buf to remain unchanged, got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "IMadeThis", 0, REG_SZ, (LPBYTE)"random", 7);
+    res = reg_set_str(propkey, "IMadeThis", "random");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* random property not supported by MSI, value exists */
@@ -4555,7 +4555,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 0, "Expected 0, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    res = reg_set_str(propkey, "HelpLink", "link");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpLink value exists */
@@ -4656,7 +4656,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 0, "Expected 0, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    res = reg_set_str(propkey, "HelpLink", "link");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpLink value exists */
@@ -4679,7 +4679,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "DisplayName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(propkey, "DisplayName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* DisplayName value exists */
@@ -4701,7 +4701,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "DisplayVersion", 0, REG_SZ, (LPBYTE)"1.1.1", 6);
+    res = reg_set_str(propkey, "DisplayVersion", "1.1.1");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* DisplayVersion value exists */
@@ -4724,7 +4724,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "HelpTelephone", 0, REG_SZ, (LPBYTE)"tele", 5);
+    res = reg_set_str(propkey, "HelpTelephone", "tele");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpTelephone value exists */
@@ -4747,7 +4747,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "InstallLocation", 0, REG_SZ, (LPBYTE)"loc", 4);
+    res = reg_set_str(propkey, "InstallLocation", "loc");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallLocation value exists */
@@ -4770,7 +4770,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "InstallSource", 0, REG_SZ, (LPBYTE)"source", 7);
+    res = reg_set_str(propkey, "InstallSource", "source");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallSource value exists */
@@ -4793,7 +4793,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "InstallDate", 0, REG_SZ, (LPBYTE)"date", 5);
+    res = reg_set_str(propkey, "InstallDate", "date");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallDate value exists */
@@ -4816,7 +4816,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Publisher", 0, REG_SZ, (LPBYTE)"pub", 4);
+    res = reg_set_str(propkey, "Publisher", "pub");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Publisher value exists */
@@ -4839,7 +4839,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"pack", 5);
+    res = reg_set_str(propkey, "LocalPackage", "pack");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LocalPackage value exists */
@@ -4862,7 +4862,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "UrlInfoAbout", 0, REG_SZ, (LPBYTE)"about", 6);
+    res = reg_set_str(propkey, "UrlInfoAbout", "about");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* UrlInfoAbout value exists */
@@ -4885,7 +4885,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "UrlUpdateInfo", 0, REG_SZ, (LPBYTE)"info", 5);
+    res = reg_set_str(propkey, "UrlUpdateInfo", "info");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* UrlUpdateInfo value exists */
@@ -4908,7 +4908,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "VersionMinor", 0, REG_SZ, (LPBYTE)"1", 2);
+    res = reg_set_str(propkey, "VersionMinor", "1");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* VersionMinor value exists */
@@ -4931,7 +4931,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "VersionMajor", 0, REG_SZ, (LPBYTE)"1", 2);
+    res = reg_set_str(propkey, "VersionMajor", "1");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* VersionMajor value exists */
@@ -4954,7 +4954,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "ProductID", 0, REG_SZ, (LPBYTE)"id", 3);
+    res = reg_set_str(propkey, "ProductID", "id");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductID value exists */
@@ -4977,7 +4977,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "RegCompany", 0, REG_SZ, (LPBYTE)"comp", 5);
+    res = reg_set_str(propkey, "RegCompany", "comp");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegCompany value exists */
@@ -5000,7 +5000,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "RegOwner", 0, REG_SZ, (LPBYTE)"own", 4);
+    res = reg_set_str(propkey, "RegOwner", "own");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegOwner value exists */
@@ -5023,7 +5023,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "InstanceType", 0, REG_SZ, (LPBYTE)"type", 5);
+    res = reg_set_str(propkey, "InstanceType", "type");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstanceType value exists */
@@ -5046,7 +5046,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 0, "Expected 0, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "InstanceType", 0, REG_SZ, (LPBYTE)"type", 5);
+    res = reg_set_str(prodkey, "InstanceType", "type");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstanceType value exists */
@@ -5069,7 +5069,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Transforms", 0, REG_SZ, (LPBYTE)"tforms", 7);
+    res = reg_set_str(propkey, "Transforms", "tforms");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Transforms value exists */
@@ -5092,7 +5092,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 0, "Expected 0, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "Transforms", 0, REG_SZ, (LPBYTE)"tforms", 7);
+    res = reg_set_str(prodkey, "Transforms", "tforms");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Transforms value exists */
@@ -5115,7 +5115,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Language", 0, REG_SZ, (LPBYTE)"lang", 5);
+    res = reg_set_str(propkey, "Language", "lang");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Language value exists */
@@ -5138,7 +5138,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 0, "Expected 0, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "Language", 0, REG_SZ, (LPBYTE)"lang", 5);
+    res = reg_set_str(prodkey, "Language", "lang");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Language value exists */
@@ -5161,7 +5161,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "ProductName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(propkey, "ProductName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductName value exists */
@@ -5184,7 +5184,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 0, "Expected 0, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "ProductName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(prodkey, "ProductName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductName value exists */
@@ -5207,7 +5207,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Assignment", 0, REG_SZ, (LPBYTE)"at", 3);
+    res = reg_set_str(propkey, "Assignment", "at");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Assignment value exists */
@@ -5230,7 +5230,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 0, "Expected 0, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "Assignment", 0, REG_SZ, (LPBYTE)"at", 3);
+    res = reg_set_str(prodkey, "Assignment", "at");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Assignment value exists */
@@ -5253,7 +5253,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "PackageCode", 0, REG_SZ, (LPBYTE)"code", 5);
+    res = reg_set_str(propkey, "PackageCode", "code");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* PackageCode value exists */
@@ -5276,7 +5276,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 0, "Expected 0, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "PackageCode", 0, REG_SZ, (LPBYTE)"code", 5);
+    res = reg_set_str(prodkey, "PackageCode", "code");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* PackageCode value exists */
@@ -5311,7 +5311,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, packcode), "Expected \"%s\", got \"%s\"\n", packcode, buf);
     ok(sz == 38, "Expected 38, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Version", 0, REG_SZ, (LPBYTE)"ver", 4);
+    res = reg_set_str(propkey, "Version", "ver");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Version value exists */
@@ -5334,7 +5334,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 0, "Expected 0, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "Version", 0, REG_SZ, (LPBYTE)"ver", 4);
+    res = reg_set_str(prodkey, "Version", "ver");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Version value exists */
@@ -5357,7 +5357,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "ProductIcon", 0, REG_SZ, (LPBYTE)"ico", 4);
+    res = reg_set_str(propkey, "ProductIcon", "ico");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductIcon value exists */
@@ -5380,7 +5380,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 0, "Expected 0, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "ProductIcon", 0, REG_SZ, (LPBYTE)"ico", 4);
+    res = reg_set_str(prodkey, "ProductIcon", "ico");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductIcon value exists */
@@ -5424,7 +5424,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 0, "Expected 0, got %lu\n", sz);
 
-    res = RegSetValueExA(source, "PackageName", 0, REG_SZ, (LPBYTE)"packname", 9);
+    res = reg_set_str(source, "PackageName", "packname");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* PackageName val exists */
@@ -5447,7 +5447,7 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
+    res = reg_set_str(propkey, "AuthorizedLUAApp", "auth");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Authorized value exists */
@@ -5476,7 +5476,7 @@ static void test_MsiGetProductInfo(void)
         ok(sz == 0, "Expected 0, got %lu\n", sz);
     }
 
-    res = RegSetValueExA(prodkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
+    res = reg_set_str(prodkey, "AuthorizedLUAApp", "auth");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Authorized value exists */
@@ -5706,7 +5706,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    res = reg_set_str(propkey, "LocalPackage", "local");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LocalPackage value exists */
@@ -5728,7 +5728,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    res = reg_set_str(propkey, "LocalPackage", "local");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LocalPackage exists, but HelpLink does not exist */
@@ -5739,7 +5739,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 0, "Expected 0, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    res = reg_set_str(propkey, "HelpLink", "link");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpLink value exists */
@@ -5750,7 +5750,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "link"), "Expected \"link\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "HelpTelephone", 0, REG_SZ, (LPBYTE)"phone", 6);
+    res = reg_set_str(propkey, "HelpTelephone", "phone");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpTelephone value exists */
@@ -5798,7 +5798,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected \"apple\", got \"%s\"\n", buf);
     ok(sz == 10, "Expected 10, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "notvalid", 0, REG_SZ, (LPBYTE)"invalid", 8);
+    res = reg_set_str(propkey, "notvalid", "invalid");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* szProperty is not a valid property */
@@ -5809,7 +5809,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "InstallDate", 0, REG_SZ, (LPBYTE)"date", 5);
+    res = reg_set_str(propkey, "InstallDate", "date");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallDate value exists */
@@ -5821,7 +5821,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "date"), "Expected \"date\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "DisplayName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(propkey, "DisplayName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* DisplayName value exists */
@@ -5833,7 +5833,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "name"), "Expected \"name\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "InstallLocation", 0, REG_SZ, (LPBYTE)"loc", 4);
+    res = reg_set_str(propkey, "InstallLocation", "loc");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallLocation value exists */
@@ -5845,7 +5845,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "loc"), "Expected \"loc\", got \"%s\"\n", buf);
     ok(sz == 3, "Expected 3, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "InstallSource", 0, REG_SZ, (LPBYTE)"source", 7);
+    res = reg_set_str(propkey, "InstallSource", "source");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallSource value exists */
@@ -5857,7 +5857,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "source"), "Expected \"source\", got \"%s\"\n", buf);
     ok(sz == 6, "Expected 6, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    res = reg_set_str(propkey, "LocalPackage", "local");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LocalPackage value exists */
@@ -5869,7 +5869,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "local"), "Expected \"local\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Publisher", 0, REG_SZ, (LPBYTE)"pub", 4);
+    res = reg_set_str(propkey, "Publisher", "pub");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Publisher value exists */
@@ -5881,7 +5881,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "pub"), "Expected \"pub\", got \"%s\"\n", buf);
     ok(sz == 3, "Expected 3, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "URLInfoAbout", 0, REG_SZ, (LPBYTE)"about", 6);
+    res = reg_set_str(propkey, "URLInfoAbout", "about");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* URLInfoAbout value exists */
@@ -5893,7 +5893,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "about"), "Expected \"about\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "URLUpdateInfo", 0, REG_SZ, (LPBYTE)"update", 7);
+    res = reg_set_str(propkey, "URLUpdateInfo", "update");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* URLUpdateInfo value exists */
@@ -5905,7 +5905,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "update"), "Expected \"update\", got \"%s\"\n", buf);
     ok(sz == 6, "Expected 6, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "VersionMinor", 0, REG_SZ, (LPBYTE)"2", 2);
+    res = reg_set_str(propkey, "VersionMinor", "2");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* VersionMinor value exists */
@@ -5917,7 +5917,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "2"), "Expected \"2\", got \"%s\"\n", buf);
     ok(sz == 1, "Expected 1, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "VersionMajor", 0, REG_SZ, (LPBYTE)"3", 2);
+    res = reg_set_str(propkey, "VersionMajor", "3");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* VersionMajor value exists */
@@ -5929,7 +5929,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "3"), "Expected \"3\", got \"%s\"\n", buf);
     ok(sz == 1, "Expected 1, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "DisplayVersion", 0, REG_SZ, (LPBYTE)"3.2.1", 6);
+    res = reg_set_str(propkey, "DisplayVersion", "3.2.1");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* DisplayVersion value exists */
@@ -5941,7 +5941,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "3.2.1"), "Expected \"3.2.1\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "ProductID", 0, REG_SZ, (LPBYTE)"id", 3);
+    res = reg_set_str(propkey, "ProductID", "id");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductID value exists */
@@ -5953,7 +5953,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "id"), "Expected \"id\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "RegCompany", 0, REG_SZ, (LPBYTE)"comp", 5);
+    res = reg_set_str(propkey, "RegCompany", "comp");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegCompany value exists */
@@ -5965,7 +5965,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "comp"), "Expected \"comp\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "RegOwner", 0, REG_SZ, (LPBYTE)"owner", 6);
+    res = reg_set_str(propkey, "RegOwner", "owner");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegOwner value exists */
@@ -5977,7 +5977,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "owner"), "Expected \"owner\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Transforms", 0, REG_SZ, (LPBYTE)"trans", 6);
+    res = reg_set_str(propkey, "Transforms", "trans");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Transforms value exists */
@@ -5989,7 +5989,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Language", 0, REG_SZ, (LPBYTE)"lang", 5);
+    res = reg_set_str(propkey, "Language", "lang");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Language value exists */
@@ -6001,7 +6001,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "ProductName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(propkey, "ProductName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductName value exists */
@@ -6013,7 +6013,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "AssignmentType", 0, REG_SZ, (LPBYTE)"type", 5);
+    res = reg_set_str(propkey, "AssignmentType", "type");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* FIXME */
@@ -6027,7 +6027,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "PackageCode", 0, REG_SZ, (LPBYTE)"code", 5);
+    res = reg_set_str(propkey, "PackageCode", "code");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* PackageCode value exists */
@@ -6039,7 +6039,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Version", 0, REG_SZ, (LPBYTE)"ver", 4);
+    res = reg_set_str(propkey, "Version", "ver");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Version value exists */
@@ -6051,7 +6051,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "ProductIcon", 0, REG_SZ, (LPBYTE)"icon", 5);
+    res = reg_set_str(propkey, "ProductIcon", "icon");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductIcon value exists */
@@ -6063,7 +6063,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "PackageName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(propkey, "PackageName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* PackageName value exists */
@@ -6075,7 +6075,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
+    res = reg_set_str(propkey, "AuthorizedLUAApp", "auth");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* AuthorizedLUAApp value exists */
@@ -6152,7 +6152,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "1"), "Expected \"1\", got \"%s\"\n", buf);
     ok(sz == 1, "Expected 1, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    res = reg_set_str(prodkey, "HelpLink", "link");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpLink value exists */
@@ -6164,7 +6164,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "HelpTelephone", 0, REG_SZ, (LPBYTE)"phone", 6);
+    res = reg_set_str(prodkey, "HelpTelephone", "phone");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpTelephone value exists */
@@ -6176,7 +6176,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "InstallDate", 0, REG_SZ, (LPBYTE)"date", 5);
+    res = reg_set_str(prodkey, "InstallDate", "date");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallDate value exists */
@@ -6188,7 +6188,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "DisplayName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(prodkey, "DisplayName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* DisplayName value exists */
@@ -6200,7 +6200,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "InstallLocation", 0, REG_SZ, (LPBYTE)"loc", 4);
+    res = reg_set_str(prodkey, "InstallLocation", "loc");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallLocation value exists */
@@ -6212,7 +6212,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "InstallSource", 0, REG_SZ, (LPBYTE)"source", 7);
+    res = reg_set_str(prodkey, "InstallSource", "source");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallSource value exists */
@@ -6224,7 +6224,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    res = reg_set_str(prodkey, "LocalPackage", "local");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LocalPackage value exists */
@@ -6236,7 +6236,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "Publisher", 0, REG_SZ, (LPBYTE)"pub", 4);
+    res = reg_set_str(prodkey, "Publisher", "pub");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Publisher value exists */
@@ -6248,7 +6248,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "URLInfoAbout", 0, REG_SZ, (LPBYTE)"about", 6);
+    res = reg_set_str(prodkey, "URLInfoAbout", "about");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* URLInfoAbout value exists */
@@ -6260,7 +6260,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "URLUpdateInfo", 0, REG_SZ, (LPBYTE)"update", 7);
+    res = reg_set_str(prodkey, "URLUpdateInfo", "update");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* URLUpdateInfo value exists */
@@ -6272,7 +6272,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "VersionMinor", 0, REG_SZ, (LPBYTE)"2", 2);
+    res = reg_set_str(prodkey, "VersionMinor", "2");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* VersionMinor value exists */
@@ -6284,7 +6284,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "VersionMajor", 0, REG_SZ, (LPBYTE)"3", 2);
+    res = reg_set_str(prodkey, "VersionMajor", "3");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* VersionMajor value exists */
@@ -6296,7 +6296,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "DisplayVersion", 0, REG_SZ, (LPBYTE)"3.2.1", 6);
+    res = reg_set_str(prodkey, "DisplayVersion", "3.2.1");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* DisplayVersion value exists */
@@ -6308,7 +6308,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "ProductID", 0, REG_SZ, (LPBYTE)"id", 3);
+    res = reg_set_str(prodkey, "ProductID", "id");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductID value exists */
@@ -6320,7 +6320,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "RegCompany", 0, REG_SZ, (LPBYTE)"comp", 5);
+    res = reg_set_str(prodkey, "RegCompany", "comp");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegCompany value exists */
@@ -6332,7 +6332,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "RegOwner", 0, REG_SZ, (LPBYTE)"owner", 6);
+    res = reg_set_str(prodkey, "RegOwner", "owner");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegOwner value exists */
@@ -6344,7 +6344,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "Transforms", 0, REG_SZ, (LPBYTE)"trans", 6);
+    res = reg_set_str(prodkey, "Transforms", "trans");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Transforms value exists */
@@ -6356,7 +6356,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "trans"), "Expected \"trans\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "Language", 0, REG_SZ, (LPBYTE)"lang", 5);
+    res = reg_set_str(prodkey, "Language", "lang");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Language value exists */
@@ -6368,7 +6368,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "lang"), "Expected \"lang\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "ProductName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(prodkey, "ProductName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductName value exists */
@@ -6380,7 +6380,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "name"), "Expected \"name\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "AssignmentType", 0, REG_SZ, (LPBYTE)"type", 5);
+    res = reg_set_str(prodkey, "AssignmentType", "type");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* FIXME */
@@ -6394,7 +6394,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 0, "Expected 0, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "PackageCode", 0, REG_SZ, (LPBYTE)"code", 5);
+    res = reg_set_str(prodkey, "PackageCode", "code");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* FIXME */
@@ -6411,7 +6411,7 @@ static void test_MsiGetProductInfoEx(void)
         ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
     }
 
-    res = RegSetValueExA(prodkey, "Version", 0, REG_SZ, (LPBYTE)"ver", 4);
+    res = reg_set_str(prodkey, "Version", "ver");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Version value exists */
@@ -6423,7 +6423,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "ver"), "Expected \"ver\", got \"%s\"\n", buf);
     ok(sz == 3, "Expected 3, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "ProductIcon", 0, REG_SZ, (LPBYTE)"icon", 5);
+    res = reg_set_str(prodkey, "ProductIcon", "icon");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductIcon value exists */
@@ -6435,7 +6435,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "icon"), "Expected \"icon\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "PackageName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(prodkey, "PackageName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* PackageName value exists */
@@ -6450,7 +6450,7 @@ static void test_MsiGetProductInfoEx(void)
         ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
     }
 
-    res = RegSetValueExA(prodkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
+    res = reg_set_str(prodkey, "AuthorizedLUAApp", "auth");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* AuthorizedLUAApp value exists */
@@ -6522,7 +6522,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "ManagedLocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    res = reg_set_str(propkey, "ManagedLocalPackage", "local");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ManagedLocalPackage value exists */
@@ -6534,7 +6534,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "5"), "Expected \"5\", got \"%s\"\n", buf);
     ok(sz == 1, "Expected 1, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    res = reg_set_str(propkey, "HelpLink", "link");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpLink value exists */
@@ -6546,7 +6546,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "link"), "Expected \"link\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "HelpTelephone", 0, REG_SZ, (LPBYTE)"phone", 6);
+    res = reg_set_str(propkey, "HelpTelephone", "phone");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpTelephone value exists */
@@ -6558,7 +6558,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "phone"), "Expected \"phone\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "InstallDate", 0, REG_SZ, (LPBYTE)"date", 5);
+    res = reg_set_str(propkey, "InstallDate", "date");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallDate value exists */
@@ -6570,7 +6570,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "date"), "Expected \"date\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "DisplayName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(propkey, "DisplayName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* DisplayName value exists */
@@ -6582,7 +6582,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "name"), "Expected \"name\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "InstallLocation", 0, REG_SZ, (LPBYTE)"loc", 4);
+    res = reg_set_str(propkey, "InstallLocation", "loc");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallLocation value exists */
@@ -6594,7 +6594,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "loc"), "Expected \"loc\", got \"%s\"\n", buf);
     ok(sz == 3, "Expected 3, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "InstallSource", 0, REG_SZ, (LPBYTE)"source", 7);
+    res = reg_set_str(propkey, "InstallSource", "source");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallSource value exists */
@@ -6606,7 +6606,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "source"), "Expected \"source\", got \"%s\"\n", buf);
     ok(sz == 6, "Expected 6, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    res = reg_set_str(propkey, "LocalPackage", "local");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LocalPackage value exists */
@@ -6618,7 +6618,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "local"), "Expected \"local\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Publisher", 0, REG_SZ, (LPBYTE)"pub", 4);
+    res = reg_set_str(propkey, "Publisher", "pub");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Publisher value exists */
@@ -6630,7 +6630,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "pub"), "Expected \"pub\", got \"%s\"\n", buf);
     ok(sz == 3, "Expected 3, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "URLInfoAbout", 0, REG_SZ, (LPBYTE)"about", 6);
+    res = reg_set_str(propkey, "URLInfoAbout", "about");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* URLInfoAbout value exists */
@@ -6642,7 +6642,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "about"), "Expected \"about\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "URLUpdateInfo", 0, REG_SZ, (LPBYTE)"update", 7);
+    res = reg_set_str(propkey, "URLUpdateInfo", "update");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* URLUpdateInfo value exists */
@@ -6654,7 +6654,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "update"), "Expected \"update\", got \"%s\"\n", buf);
     ok(sz == 6, "Expected 6, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "VersionMinor", 0, REG_SZ, (LPBYTE)"2", 2);
+    res = reg_set_str(propkey, "VersionMinor", "2");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* VersionMinor value exists */
@@ -6666,7 +6666,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "2"), "Expected \"2\", got \"%s\"\n", buf);
     ok(sz == 1, "Expected 1, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "VersionMajor", 0, REG_SZ, (LPBYTE)"3", 2);
+    res = reg_set_str(propkey, "VersionMajor", "3");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* VersionMajor value exists */
@@ -6678,7 +6678,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "3"), "Expected \"3\", got \"%s\"\n", buf);
     ok(sz == 1, "Expected 1, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "DisplayVersion", 0, REG_SZ, (LPBYTE)"3.2.1", 6);
+    res = reg_set_str(propkey, "DisplayVersion", "3.2.1");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* DisplayVersion value exists */
@@ -6690,7 +6690,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "3.2.1"), "Expected \"3.2.1\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "ProductID", 0, REG_SZ, (LPBYTE)"id", 3);
+    res = reg_set_str(propkey, "ProductID", "id");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductID value exists */
@@ -6702,7 +6702,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "id"), "Expected \"id\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "RegCompany", 0, REG_SZ, (LPBYTE)"comp", 5);
+    res = reg_set_str(propkey, "RegCompany", "comp");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegCompany value exists */
@@ -6714,7 +6714,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "comp"), "Expected \"comp\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "RegOwner", 0, REG_SZ, (LPBYTE)"owner", 6);
+    res = reg_set_str(propkey, "RegOwner", "owner");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegOwner value exists */
@@ -6726,7 +6726,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "owner"), "Expected \"owner\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Transforms", 0, REG_SZ, (LPBYTE)"trans", 6);
+    res = reg_set_str(propkey, "Transforms", "trans");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Transforms value exists */
@@ -6738,7 +6738,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Language", 0, REG_SZ, (LPBYTE)"lang", 5);
+    res = reg_set_str(propkey, "Language", "lang");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Language value exists */
@@ -6750,7 +6750,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "ProductName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(propkey, "ProductName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductName value exists */
@@ -6762,7 +6762,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "AssignmentType", 0, REG_SZ, (LPBYTE)"type", 5);
+    res = reg_set_str(propkey, "AssignmentType", "type");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* FIXME */
@@ -6776,7 +6776,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "PackageCode", 0, REG_SZ, (LPBYTE)"code", 5);
+    res = reg_set_str(propkey, "PackageCode", "code");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* PackageCode value exists */
@@ -6788,7 +6788,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Version", 0, REG_SZ, (LPBYTE)"ver", 4);
+    res = reg_set_str(propkey, "Version", "ver");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Version value exists */
@@ -6800,7 +6800,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "ProductIcon", 0, REG_SZ, (LPBYTE)"icon", 5);
+    res = reg_set_str(propkey, "ProductIcon", "icon");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductIcon value exists */
@@ -6812,7 +6812,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "PackageName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(propkey, "PackageName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* PackageName value exists */
@@ -6824,7 +6824,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
+    res = reg_set_str(propkey, "AuthorizedLUAApp", "auth");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* AuthorizedLUAApp value exists */
@@ -6902,7 +6902,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    res = reg_set_str(prodkey, "HelpLink", "link");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpLink value exists, user product key does not exist */
@@ -6922,7 +6922,7 @@ static void test_MsiGetProductInfoEx(void)
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &userkey, NULL);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(userkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    res = reg_set_str(userkey, "HelpLink", "link");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpLink value exists, user product key does exist */
@@ -6934,7 +6934,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "HelpTelephone", 0, REG_SZ, (LPBYTE)"phone", 6);
+    res = reg_set_str(userkey, "HelpTelephone", "phone");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpTelephone value exists */
@@ -6946,7 +6946,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "InstallDate", 0, REG_SZ, (LPBYTE)"date", 5);
+    res = reg_set_str(userkey, "InstallDate", "date");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallDate value exists */
@@ -6958,7 +6958,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "DisplayName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(userkey, "DisplayName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* DisplayName value exists */
@@ -6970,7 +6970,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "InstallLocation", 0, REG_SZ, (LPBYTE)"loc", 4);
+    res = reg_set_str(userkey, "InstallLocation", "loc");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallLocation value exists */
@@ -6982,7 +6982,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "InstallSource", 0, REG_SZ, (LPBYTE)"source", 7);
+    res = reg_set_str(userkey, "InstallSource", "source");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallSource value exists */
@@ -6994,7 +6994,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    res = reg_set_str(userkey, "LocalPackage", "local");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LocalPackage value exists */
@@ -7006,7 +7006,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "Publisher", 0, REG_SZ, (LPBYTE)"pub", 4);
+    res = reg_set_str(userkey, "Publisher", "pub");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Publisher value exists */
@@ -7018,7 +7018,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "URLInfoAbout", 0, REG_SZ, (LPBYTE)"about", 6);
+    res = reg_set_str(userkey, "URLInfoAbout", "about");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* URLInfoAbout value exists */
@@ -7030,7 +7030,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "URLUpdateInfo", 0, REG_SZ, (LPBYTE)"update", 7);
+    res = reg_set_str(userkey, "URLUpdateInfo", "update");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* URLUpdateInfo value exists */
@@ -7042,7 +7042,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "VersionMinor", 0, REG_SZ, (LPBYTE)"2", 2);
+    res = reg_set_str(userkey, "VersionMinor", "2");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* VersionMinor value exists */
@@ -7054,7 +7054,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "VersionMajor", 0, REG_SZ, (LPBYTE)"3", 2);
+    res = reg_set_str(userkey, "VersionMajor", "3");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* VersionMajor value exists */
@@ -7066,7 +7066,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "DisplayVersion", 0, REG_SZ, (LPBYTE)"3.2.1", 6);
+    res = reg_set_str(userkey, "DisplayVersion", "3.2.1");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* DisplayVersion value exists */
@@ -7078,7 +7078,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "ProductID", 0, REG_SZ, (LPBYTE)"id", 3);
+    res = reg_set_str(userkey, "ProductID", "id");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductID value exists */
@@ -7090,7 +7090,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "RegCompany", 0, REG_SZ, (LPBYTE)"comp", 5);
+    res = reg_set_str(userkey, "RegCompany", "comp");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegCompany value exists */
@@ -7102,7 +7102,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "RegOwner", 0, REG_SZ, (LPBYTE)"owner", 6);
+    res = reg_set_str(userkey, "RegOwner", "owner");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegOwner value exists */
@@ -7114,7 +7114,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "Transforms", 0, REG_SZ, (LPBYTE)"trans", 6);
+    res = reg_set_str(userkey, "Transforms", "trans");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Transforms value exists */
@@ -7126,7 +7126,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "trans"), "Expected \"trans\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "Language", 0, REG_SZ, (LPBYTE)"lang", 5);
+    res = reg_set_str(userkey, "Language", "lang");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Language value exists */
@@ -7138,7 +7138,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "lang"), "Expected \"lang\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "ProductName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(userkey, "ProductName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductName value exists */
@@ -7150,7 +7150,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "name"), "Expected \"name\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "AssignmentType", 0, REG_SZ, (LPBYTE)"type", 5);
+    res = reg_set_str(userkey, "AssignmentType", "type");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* FIXME */
@@ -7164,7 +7164,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 0, "Expected 0, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "PackageCode", 0, REG_SZ, (LPBYTE)"code", 5);
+    res = reg_set_str(userkey, "PackageCode", "code");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* FIXME */
@@ -7181,7 +7181,7 @@ static void test_MsiGetProductInfoEx(void)
         ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
     }
 
-    res = RegSetValueExA(userkey, "Version", 0, REG_SZ, (LPBYTE)"ver", 4);
+    res = reg_set_str(userkey, "Version", "ver");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Version value exists */
@@ -7193,7 +7193,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "ver"), "Expected \"ver\", got \"%s\"\n", buf);
     ok(sz == 3, "Expected 3, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "ProductIcon", 0, REG_SZ, (LPBYTE)"icon", 5);
+    res = reg_set_str(userkey, "ProductIcon", "icon");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductIcon value exists */
@@ -7205,7 +7205,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "icon"), "Expected \"icon\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(userkey, "PackageName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(userkey, "PackageName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* PackageName value exists */
@@ -7220,7 +7220,7 @@ static void test_MsiGetProductInfoEx(void)
         ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
     }
 
-    res = RegSetValueExA(userkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
+    res = reg_set_str(userkey, "AuthorizedLUAApp", "auth");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* AuthorizedLUAApp value exists */
@@ -7297,7 +7297,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    res = reg_set_str(propkey, "LocalPackage", "local");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LocalPackage value exists */
@@ -7308,7 +7308,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "5"), "Expected \"5\", got \"%s\"\n", buf);
     ok(sz == 1, "Expected 1, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    res = reg_set_str(propkey, "HelpLink", "link");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpLink value exists */
@@ -7319,7 +7319,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "link"), "Expected \"link\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "HelpTelephone", 0, REG_SZ, (LPBYTE)"phone", 6);
+    res = reg_set_str(propkey, "HelpTelephone", "phone");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpTelephone value exists */
@@ -7330,7 +7330,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "phone"), "Expected \"phone\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "InstallDate", 0, REG_SZ, (LPBYTE)"date", 5);
+    res = reg_set_str(propkey, "InstallDate", "date");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallDate value exists */
@@ -7341,7 +7341,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "date"), "Expected \"date\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "DisplayName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(propkey, "DisplayName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* DisplayName value exists */
@@ -7353,7 +7353,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "name"), "Expected \"name\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "InstallLocation", 0, REG_SZ, (LPBYTE)"loc", 4);
+    res = reg_set_str(propkey, "InstallLocation", "loc");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallLocation value exists */
@@ -7364,7 +7364,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "loc"), "Expected \"loc\", got \"%s\"\n", buf);
     ok(sz == 3, "Expected 3, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "InstallSource", 0, REG_SZ, (LPBYTE)"source", 7);
+    res = reg_set_str(propkey, "InstallSource", "source");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallSource value exists */
@@ -7375,7 +7375,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "source"), "Expected \"source\", got \"%s\"\n", buf);
     ok(sz == 6, "Expected 6, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    res = reg_set_str(propkey, "LocalPackage", "local");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LocalPackage value exists */
@@ -7386,7 +7386,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "local"), "Expected \"local\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Publisher", 0, REG_SZ, (LPBYTE)"pub", 4);
+    res = reg_set_str(propkey, "Publisher", "pub");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Publisher value exists */
@@ -7397,7 +7397,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "pub"), "Expected \"pub\", got \"%s\"\n", buf);
     ok(sz == 3, "Expected 3, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "URLInfoAbout", 0, REG_SZ, (LPBYTE)"about", 6);
+    res = reg_set_str(propkey, "URLInfoAbout", "about");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* URLInfoAbout value exists */
@@ -7408,7 +7408,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "about"), "Expected \"about\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "URLUpdateInfo", 0, REG_SZ, (LPBYTE)"update", 7);
+    res = reg_set_str(propkey, "URLUpdateInfo", "update");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* URLUpdateInfo value exists */
@@ -7419,7 +7419,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "update"), "Expected \"update\", got \"%s\"\n", buf);
     ok(sz == 6, "Expected 6, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "VersionMinor", 0, REG_SZ, (LPBYTE)"2", 2);
+    res = reg_set_str(propkey, "VersionMinor", "2");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* VersionMinor value exists */
@@ -7430,7 +7430,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "2"), "Expected \"2\", got \"%s\"\n", buf);
     ok(sz == 1, "Expected 1, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "VersionMajor", 0, REG_SZ, (LPBYTE)"3", 2);
+    res = reg_set_str(propkey, "VersionMajor", "3");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* VersionMajor value exists */
@@ -7441,7 +7441,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "3"), "Expected \"3\", got \"%s\"\n", buf);
     ok(sz == 1, "Expected 1, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "DisplayVersion", 0, REG_SZ, (LPBYTE)"3.2.1", 6);
+    res = reg_set_str(propkey, "DisplayVersion", "3.2.1");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* DisplayVersion value exists */
@@ -7452,7 +7452,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "3.2.1"), "Expected \"3.2.1\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "ProductID", 0, REG_SZ, (LPBYTE)"id", 3);
+    res = reg_set_str(propkey, "ProductID", "id");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductID value exists */
@@ -7463,7 +7463,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "id"), "Expected \"id\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "RegCompany", 0, REG_SZ, (LPBYTE)"comp", 5);
+    res = reg_set_str(propkey, "RegCompany", "comp");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegCompany value exists */
@@ -7474,7 +7474,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "comp"), "Expected \"comp\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "RegOwner", 0, REG_SZ, (LPBYTE)"owner", 6);
+    res = reg_set_str(propkey, "RegOwner", "owner");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegOwner value exists */
@@ -7485,7 +7485,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "owner"), "Expected \"owner\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Transforms", 0, REG_SZ, (LPBYTE)"trans", 6);
+    res = reg_set_str(propkey, "Transforms", "trans");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Transforms value exists */
@@ -7496,7 +7496,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Language", 0, REG_SZ, (LPBYTE)"lang", 5);
+    res = reg_set_str(propkey, "Language", "lang");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Language value exists */
@@ -7507,7 +7507,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "ProductName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(propkey, "ProductName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductName value exists */
@@ -7518,7 +7518,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "AssignmentType", 0, REG_SZ, (LPBYTE)"type", 5);
+    res = reg_set_str(propkey, "AssignmentType", "type");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* FIXME */
@@ -7531,7 +7531,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "PackageCode", 0, REG_SZ, (LPBYTE)"code", 5);
+    res = reg_set_str(propkey, "PackageCode", "code");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* PackageCode value exists */
@@ -7542,7 +7542,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "Version", 0, REG_SZ, (LPBYTE)"ver", 4);
+    res = reg_set_str(propkey, "Version", "ver");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Version value exists */
@@ -7553,7 +7553,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "ProductIcon", 0, REG_SZ, (LPBYTE)"icon", 5);
+    res = reg_set_str(propkey, "ProductIcon", "icon");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductIcon value exists */
@@ -7564,7 +7564,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "PackageName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(propkey, "PackageName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* PackageName value exists */
@@ -7575,7 +7575,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(propkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
+    res = reg_set_str(propkey, "AuthorizedLUAApp", "auth");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* AuthorizedLUAApp value exists */
@@ -7637,7 +7637,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "1"), "Expected \"1\", got \"%s\"\n", buf);
     ok(sz == 1, "Expected 1, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    res = reg_set_str(prodkey, "HelpLink", "link");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpLink value exists */
@@ -7648,7 +7648,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "HelpTelephone", 0, REG_SZ, (LPBYTE)"phone", 6);
+    res = reg_set_str(prodkey, "HelpTelephone", "phone");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* HelpTelephone value exists */
@@ -7659,7 +7659,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "InstallDate", 0, REG_SZ, (LPBYTE)"date", 5);
+    res = reg_set_str(prodkey, "InstallDate", "date");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallDate value exists */
@@ -7670,7 +7670,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "DisplayName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(prodkey, "DisplayName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* DisplayName value exists */
@@ -7682,7 +7682,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "InstallLocation", 0, REG_SZ, (LPBYTE)"loc", 4);
+    res = reg_set_str(prodkey, "InstallLocation", "loc");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallLocation value exists */
@@ -7693,7 +7693,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "InstallSource", 0, REG_SZ, (LPBYTE)"source", 7);
+    res = reg_set_str(prodkey, "InstallSource", "source");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* InstallSource value exists */
@@ -7704,7 +7704,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    res = reg_set_str(prodkey, "LocalPackage", "local");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LocalPackage value exists */
@@ -7715,7 +7715,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "Publisher", 0, REG_SZ, (LPBYTE)"pub", 4);
+    res = reg_set_str(prodkey, "Publisher", "pub");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Publisher value exists */
@@ -7726,7 +7726,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "URLInfoAbout", 0, REG_SZ, (LPBYTE)"about", 6);
+    res = reg_set_str(prodkey, "URLInfoAbout", "about");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* URLInfoAbout value exists */
@@ -7737,7 +7737,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "URLUpdateInfo", 0, REG_SZ, (LPBYTE)"update", 7);
+    res = reg_set_str(prodkey, "URLUpdateInfo", "update");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* URLUpdateInfo value exists */
@@ -7748,7 +7748,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "VersionMinor", 0, REG_SZ, (LPBYTE)"2", 2);
+    res = reg_set_str(prodkey, "VersionMinor", "2");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* VersionMinor value exists */
@@ -7759,7 +7759,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "VersionMajor", 0, REG_SZ, (LPBYTE)"3", 2);
+    res = reg_set_str(prodkey, "VersionMajor", "3");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* VersionMajor value exists */
@@ -7770,7 +7770,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "DisplayVersion", 0, REG_SZ, (LPBYTE)"3.2.1", 6);
+    res = reg_set_str(prodkey, "DisplayVersion", "3.2.1");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* DisplayVersion value exists */
@@ -7781,7 +7781,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "ProductID", 0, REG_SZ, (LPBYTE)"id", 3);
+    res = reg_set_str(prodkey, "ProductID", "id");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductID value exists */
@@ -7792,7 +7792,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "RegCompany", 0, REG_SZ, (LPBYTE)"comp", 5);
+    res = reg_set_str(prodkey, "RegCompany", "comp");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegCompany value exists */
@@ -7803,7 +7803,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "RegOwner", 0, REG_SZ, (LPBYTE)"owner", 6);
+    res = reg_set_str(prodkey, "RegOwner", "owner");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegOwner value exists */
@@ -7814,7 +7814,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "Transforms", 0, REG_SZ, (LPBYTE)"trans", 6);
+    res = reg_set_str(prodkey, "Transforms", "trans");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Transforms value exists */
@@ -7825,7 +7825,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "trans"), "Expected \"trans\", got \"%s\"\n", buf);
     ok(sz == 5, "Expected 5, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "Language", 0, REG_SZ, (LPBYTE)"lang", 5);
+    res = reg_set_str(prodkey, "Language", "lang");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Language value exists */
@@ -7836,7 +7836,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "lang"), "Expected \"lang\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "ProductName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(prodkey, "ProductName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductName value exists */
@@ -7847,7 +7847,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "name"), "Expected \"name\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "AssignmentType", 0, REG_SZ, (LPBYTE)"type", 5);
+    res = reg_set_str(prodkey, "AssignmentType", "type");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* FIXME */
@@ -7860,7 +7860,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
     ok(sz == 0, "Expected 0, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "PackageCode", 0, REG_SZ, (LPBYTE)"code", 5);
+    res = reg_set_str(prodkey, "PackageCode", "code");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* FIXME */
@@ -7876,7 +7876,7 @@ static void test_MsiGetProductInfoEx(void)
         ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
     }
 
-    res = RegSetValueExA(prodkey, "Version", 0, REG_SZ, (LPBYTE)"ver", 4);
+    res = reg_set_str(prodkey, "Version", "ver");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Version value exists */
@@ -7887,7 +7887,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "ver"), "Expected \"ver\", got \"%s\"\n", buf);
     ok(sz == 3, "Expected 3, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "ProductIcon", 0, REG_SZ, (LPBYTE)"icon", 5);
+    res = reg_set_str(prodkey, "ProductIcon", "icon");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductIcon value exists */
@@ -7898,7 +7898,7 @@ static void test_MsiGetProductInfoEx(void)
     ok(!lstrcmpA(buf, "icon"), "Expected \"icon\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %lu\n", sz);
 
-    res = RegSetValueExA(prodkey, "PackageName", 0, REG_SZ, (LPBYTE)"name", 5);
+    res = reg_set_str(prodkey, "PackageName", "name");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* PackageName value exists */
@@ -7912,7 +7912,7 @@ static void test_MsiGetProductInfoEx(void)
         ok(sz == MAX_PATH, "Expected MAX_PATH, got %lu\n", sz);
     }
 
-    res = RegSetValueExA(prodkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
+    res = reg_set_str(prodkey, "AuthorizedLUAApp", "auth");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* AuthorizedLUAApp value exists */
@@ -8216,7 +8216,7 @@ static void test_MsiGetUserInfo(void)
     ok(!lstrcmpA(serial, "banana"), "Expected serial to be unchanged, got \"%s\"\n", serial);
     ok(serialsz == MAX_PATH - 1, "Expected MAX_PATH - 1, got %lu\n", serialsz);
 
-    res = RegSetValueExA(props, "RegOwner", 0, REG_SZ, (LPBYTE)"owner", 6);
+    res = reg_set_str(props, "RegOwner", "owner");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegOwner value exists */
@@ -8231,7 +8231,7 @@ static void test_MsiGetUserInfo(void)
     ok(orgsz == 0, "Expected 0, got %lu\n", orgsz);
     ok(serialsz == MAX_PATH - 1, "Expected MAX_PATH - 1, got %lu\n", serialsz);
 
-    res = RegSetValueExA(props, "RegCompany", 0, REG_SZ, (LPBYTE)"company", 8);
+    res = reg_set_str(props, "RegCompany", "company");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegCompany value exists */
@@ -8246,7 +8246,7 @@ static void test_MsiGetUserInfo(void)
     ok(orgsz == 7, "Expected 7, got %lu\n", orgsz);
     ok(serialsz == MAX_PATH - 1, "Expected MAX_PATH - 1, got %lu\n", serialsz);
 
-    res = RegSetValueExA(props, "ProductID", 0, REG_SZ, (LPBYTE)"ID", 3);
+    res = reg_set_str(props, "ProductID", "ID");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductID value exists */
@@ -8376,7 +8376,7 @@ static void test_MsiGetUserInfo(void)
     ok(!lstrcmpA(serial, "banana"), "Expected serial to be unchanged, got \"%s\"\n", serial);
     ok(serialsz == MAX_PATH - 1, "Expected MAX_PATH - 1, got %lu\n", serialsz);
 
-    res = RegSetValueExA(props, "RegOwner", 0, REG_SZ, (LPBYTE)"owner", 6);
+    res = reg_set_str(props, "RegOwner", "owner");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegOwner value exists */
@@ -8391,7 +8391,7 @@ static void test_MsiGetUserInfo(void)
     ok(orgsz == 0, "Expected 0, got %lu\n", orgsz);
     ok(serialsz == MAX_PATH - 1, "Expected MAX_PATH - 1, got %lu\n", serialsz);
 
-    res = RegSetValueExA(props, "RegCompany", 0, REG_SZ, (LPBYTE)"company", 8);
+    res = reg_set_str(props, "RegCompany", "company");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegCompany value exists */
@@ -8406,7 +8406,7 @@ static void test_MsiGetUserInfo(void)
     ok(orgsz == 7, "Expected 7, got %lu\n", orgsz);
     ok(serialsz == MAX_PATH - 1, "Expected MAX_PATH - 1, got %lu\n", serialsz);
 
-    res = RegSetValueExA(props, "ProductID", 0, REG_SZ, (LPBYTE)"ID", 3);
+    res = reg_set_str(props, "ProductID", "ID");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductID value exists */
@@ -8499,7 +8499,7 @@ static void test_MsiGetUserInfo(void)
     ok(!lstrcmpA(serial, "banana"), "Expected serial to be unchanged, got \"%s\"\n", serial);
     ok(serialsz == MAX_PATH - 1, "Expected MAX_PATH - 1, got %lu\n", serialsz);
 
-    res = RegSetValueExA(props, "RegOwner", 0, REG_SZ, (LPBYTE)"owner", 6);
+    res = reg_set_str(props, "RegOwner", "owner");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegOwner value exists */
@@ -8514,7 +8514,7 @@ static void test_MsiGetUserInfo(void)
     ok(orgsz == 0, "Expected 0, got %lu\n", orgsz);
     ok(serialsz == MAX_PATH - 1, "Expected MAX_PATH - 1, got %lu\n", serialsz);
 
-    res = RegSetValueExA(props, "RegCompany", 0, REG_SZ, (LPBYTE)"company", 8);
+    res = reg_set_str(props, "RegCompany", "company");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* RegCompany value exists */
@@ -8529,7 +8529,7 @@ static void test_MsiGetUserInfo(void)
     ok(orgsz == 7, "Expected 7, got %lu\n", orgsz);
     ok(serialsz == MAX_PATH - 1, "Expected MAX_PATH - 1, got %lu\n", serialsz);
 
-    res = RegSetValueExA(props, "ProductID", 0, REG_SZ, (LPBYTE)"ID", 3);
+    res = reg_set_str(props, "ProductID", "ID");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ProductID value exists */
@@ -8852,8 +8852,7 @@ static void test_MsiOpenProduct(void)
 
     MsiCloseHandle(hprod);
 
-    res = RegSetValueExA(props, "LocalPackage", 0, REG_SZ,
-                         (const BYTE *)"winetest.msi", 13);
+    res = reg_set_str(props, "LocalPackage", "winetest.msi");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     lstrcpyA(val, path);
@@ -9030,8 +9029,7 @@ static void test_MsiEnumPatchesEx_usermanaged(LPCSTR usersid, LPCSTR expectedsid
     ok(!lstrcmpA(targetsid, "kiwi"), "Expected targetsid to be unchanged, got %s\n", targetsid);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %lu\n", size);
 
-    res = RegSetValueExA(patches, patch_squashed, 0, REG_SZ,
-                         (const BYTE *)"whatever", 9);
+    res = reg_set_str(patches, patch_squashed, "whatever");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* patch squashed value exists */
@@ -9492,8 +9490,7 @@ static void test_MsiEnumPatchesEx_userunmanaged(LPCSTR usersid, LPCSTR expecteds
     ok(!lstrcmpA(targetsid, "kiwi"), "Expected targetsid to be unchanged, got %s\n", targetsid);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %lu\n", size);
 
-    res = RegSetValueExA(patches, patch_squashed, 0, REG_SZ,
-                         (const BYTE *)"whatever", 9);
+    res = reg_set_str(patches, patch_squashed, "whatever");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* patch code value exists */
@@ -9869,8 +9866,7 @@ static void test_MsiEnumPatchesEx_machine(void)
     ok(!lstrcmpA(targetsid, "kiwi"), "Expected targetsid to be unchanged, got %s\n", targetsid);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %lu\n", size);
 
-    res = RegSetValueExA(patches, patch_squashed, 0, REG_SZ,
-                         (const BYTE *)"whatever", 9);
+    res = reg_set_str(patches, patch_squashed, "whatever");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* patch code value exists */
@@ -10477,7 +10473,7 @@ static void test_MsiEnumPatches(void)
     ok(!lstrcmpA(transforms, "banana"), "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %lu\n", size);
 
-    res = RegSetValueExA(patches, patch_squashed, 0, REG_SZ, (const BYTE *)"whatever", 9);
+    res = reg_set_str(patches, patch_squashed, "whatever");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* patch squashed value exists */
@@ -10630,7 +10626,7 @@ static void test_MsiEnumPatches(void)
     ok(!lstrcmpA(transforms, "banana"), "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %lu\n", size);
 
-    res = RegSetValueExA(patches, patch_squashed, 0, REG_SZ, (const BYTE *)"whatever", 9);
+    res = reg_set_str(patches, patch_squashed, "whatever");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* patch code value exists */
@@ -10762,7 +10758,7 @@ static void test_MsiEnumPatches(void)
     ok(!lstrcmpA(transforms, "banana"), "Expected lpTransformsBuf to be unchanged, got \"%s\"\n", transforms);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %lu\n", size);
 
-    res = RegSetValueExA(patches, patch_squashed, 0, REG_SZ, (const BYTE *)"whatever", 9);
+    res = reg_set_str(patches, patch_squashed, "whatever");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* patch code value exists */
@@ -11163,7 +11159,7 @@ static void test_MsiGetPatchInfoEx(void)
     ok(!lstrcmpA(val, "apple"), "Expected val to be unchanged, got \"%s\"\n", val);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %lu\n", size);
 
-    res = RegSetValueExA(prodpatches, patch_squashed, 0, REG_SZ, (const BYTE *)"transforms", 11);
+    res = reg_set_str(prodpatches, patch_squashed, "transforms");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* specific patch value exists */
@@ -11192,7 +11188,7 @@ static void test_MsiGetPatchInfoEx(void)
     ok(!lstrcmpA(val, ""), "Expected \"\", got \"%s\"\n", val);
     ok(size == 0, "Expected 0, got %lu\n", size);
 
-    res = RegSetValueExA(udpatch, "ManagedLocalPackage", 0, REG_SZ, (const BYTE *)"pack", 5);
+    res = reg_set_str(udpatch, "ManagedLocalPackage", "pack");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* ManagedLocalPatch value exists */
@@ -11212,7 +11208,7 @@ static void test_MsiGetPatchInfoEx(void)
     ok(!lstrcmpA(val, "transforms"), "Expected \"transforms\", got \"%s\"\n", val);
     ok(size == 10, "Expected 10, got %lu\n", size);
 
-    res = RegSetValueExA(hpatch, "Installed", 0, REG_SZ, (const BYTE *)"mydate", 7);
+    res = reg_set_str(hpatch, "Installed", "mydate");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Installed value exists */
@@ -11224,7 +11220,7 @@ static void test_MsiGetPatchInfoEx(void)
     ok(!lstrcmpA(val, "mydate"), "Expected \"mydate\", got \"%s\"\n", val);
     ok(size == 6, "Expected 6, got %lu\n", size);
 
-    res = RegSetValueExA(hpatch, "Uninstallable", 0, REG_SZ, (const BYTE *)"yes", 4);
+    res = reg_set_str(hpatch, "Uninstallable", "yes");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* Uninstallable value exists */
@@ -11236,7 +11232,7 @@ static void test_MsiGetPatchInfoEx(void)
     ok(!lstrcmpA(val, "yes"), "Expected \"yes\", got \"%s\"\n", val);
     ok(size == 3, "Expected 3, got %lu\n", size);
 
-    res = RegSetValueExA(hpatch, "State", 0, REG_SZ, (const BYTE *)"good", 5);
+    res = reg_set_str(hpatch, "State", "good");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* State value exists */
@@ -11274,7 +11270,7 @@ static void test_MsiGetPatchInfoEx(void)
     ok(!lstrcmpA(val, "1"), "Expected \"1\", got \"%s\"\n", val);
     ok(size == 1, "Expected 1, got %lu\n", size);
 
-    res = RegSetValueExA(hpatch, "DisplayName", 0, REG_SZ, (const BYTE *)"display", 8);
+    res = reg_set_str(hpatch, "DisplayName", "display");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* DisplayName value exists */
@@ -11286,7 +11282,7 @@ static void test_MsiGetPatchInfoEx(void)
     ok(!lstrcmpA(val, "display"), "Expected \"display\", got \"%s\"\n", val);
     ok(size == 7, "Expected 7, got %lu\n", size);
 
-    res = RegSetValueExA(hpatch, "MoreInfoURL", 0, REG_SZ, (const BYTE *)"moreinfo", 9);
+    res = reg_set_str(hpatch, "MoreInfoURL", "moreinfo");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* MoreInfoURL value exists */
@@ -11485,8 +11481,7 @@ static void test_MsiGetPatchInfoEx(void)
     ok(!lstrcmpA(val, "apple"), "Expected val to be unchanged, got \"%s\"\n", val);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %lu\n", size);
 
-    res = RegSetValueExA(prodpatches, patch_squashed, 0, REG_SZ,
-                         (const BYTE *)"transforms", 11);
+    res = reg_set_str(prodpatches, patch_squashed, "transforms");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* specific patch value exists */
@@ -11515,8 +11510,7 @@ static void test_MsiGetPatchInfoEx(void)
     ok(!lstrcmpA(val, ""), "Expected \"\", got \"%s\"\n", val);
     ok(size == 0, "Expected 0, got %lu\n", size);
 
-    res = RegSetValueExA(udpatch, "LocalPackage", 0, REG_SZ,
-                         (const BYTE *)"pack", 5);
+    res = reg_set_str(udpatch, "LocalPackage", "pack");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LocalPatch value exists */
@@ -11671,8 +11665,7 @@ static void test_MsiGetPatchInfoEx(void)
     ok(!lstrcmpA(val, "apple"), "Expected val to be unchanged, got \"%s\"\n", val);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %lu\n", size);
 
-    res = RegSetValueExA(prodpatches, patch_squashed, 0, REG_SZ,
-                         (const BYTE *)"transforms", 11);
+    res = reg_set_str(prodpatches, patch_squashed, "transforms");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* specific patch value exists */
@@ -11700,7 +11693,7 @@ static void test_MsiGetPatchInfoEx(void)
     ok(!lstrcmpA(val, ""), "Expected \"\", got \"%s\"\n", val);
     ok(size == 0, "Expected 0, got %lu\n", size);
 
-    res = RegSetValueExA(udpatch, "LocalPackage", 0, REG_SZ, (const BYTE *)"pack", 5);
+    res = reg_set_str(udpatch, "LocalPackage", "pack");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LocalPatch value exists */
@@ -11901,7 +11894,7 @@ static void test_MsiGetPatchInfo(void)
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &hkey_udpatch, NULL);
     ok(res == ERROR_SUCCESS, "expected ERROR_SUCCESS got %ld\n", res);
 
-    res = RegSetValueExA(hkey_udpatch, "LocalPackage", 0, REG_SZ, (const BYTE *)"c:\\test.msp", 12);
+    res = reg_set_str(hkey_udpatch, "LocalPackage", "c:\\test.msp");
     ok(res == ERROR_SUCCESS, "expected ERROR_SUCCESS got %ld\n", res);
 
     /* UserData Patch key exists */
@@ -12385,8 +12378,7 @@ static void test_MsiEnumComponentsEx(void)
         goto done;
     }
     ok( r == ERROR_SUCCESS, "got %u\n", r );
-    r = RegSetValueExA( key2, comp_squashed2, 0, REG_SZ, (const BYTE *)"c:\\doesnotexist",
-                        sizeof("c:\\doesnotexist"));
+    r = reg_set_str( key2, comp_squashed2, "c:\\doesnotexist");
     ok( r == ERROR_SUCCESS, "got %u\n", r );
 
     index = 0;
@@ -12610,8 +12602,7 @@ static void test_MsiConfigureProductEx(void)
                            (LPBYTE)localpackage, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(props, "LocalPackage", 0, REG_SZ,
-                         (const BYTE *)"C:\\idontexist.msi", 18);
+    res = reg_set_str(props, "LocalPackage", "C:\\idontexist.msi");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LocalPackage is used to find the cached msi package */
@@ -12660,8 +12651,7 @@ static void test_MsiConfigureProductEx(void)
                            (LPBYTE)localpackage, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(props, "LocalPackage", 0, REG_SZ,
-                         (const BYTE *)"C:\\idontexist.msi", 18);
+    res = reg_set_str(props, "LocalPackage", "C:\\idontexist.msi");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     lstrcpyA(keypath, "SOFTWARE\\Classes\\Installer\\Products\\");
@@ -12676,8 +12666,7 @@ static void test_MsiConfigureProductEx(void)
                            (LPBYTE)packagename, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(source, "PackageName", 0, REG_SZ,
-                         (const BYTE *)"idontexist.msi", 15);
+    res = reg_set_str(source, "PackageName", "idontexist.msi");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* SourceList is altered */

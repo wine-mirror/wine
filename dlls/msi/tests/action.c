@@ -4763,10 +4763,10 @@ static void test_write_registry_values(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
     res = RegSetValueExA(hkey, "Value6", 0, REG_MULTI_SZ, (const BYTE *)"one\0", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
-    res = RegSetValueExA(hkey, "Value7", 0, REG_SZ, (const BYTE *)"one", 4);
+    res = reg_set_str(hkey, "Value7", "one");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(hkey, "instremove", 0, REG_SZ, (const BYTE *)"val", 3);
+    res = reg_set_str(hkey, "instremove", "val");
     ok(!res, "got %ld\n", res);
 
     res = RegCreateKeyA(hkey, "instremove", &subkey);
@@ -4919,13 +4919,13 @@ static void test_envvar(void)
                           0, NULL, 0, KEY_ALL_ACCESS, NULL, &env2, NULL);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(env, "MSITESTVAR1", 0, REG_SZ, (const BYTE *)"0", 2);
+    res = reg_set_str(env, "MSITESTVAR1", "0");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(env, "MSITESTVAR2", 0, REG_SZ, (const BYTE *)"0", 2);
+    res = reg_set_str(env, "MSITESTVAR2", "0");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(env, "MSITESTVAR21", 0, REG_SZ, (const BYTE *)"1", 2);
+    res = reg_set_str(env, "MSITESTVAR21", "1");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
@@ -4975,10 +4975,10 @@ static void test_envvar(void)
     CHECK_REG_STR(env, "MSITESTVAR24", "TestService");
     CHECK_REG_STR(env2, "MSITESTVAR100", "1");
 
-    res = RegSetValueExA(env, "MSITESTVAR22", 0, REG_SZ, (const BYTE *)"1", 2);
+    res = reg_set_str(env, "MSITESTVAR22", "1");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(env, "MSITESTVAR23", 0, REG_SZ, (const BYTE *)"1", 2);
+    res = reg_set_str(env, "MSITESTVAR23", "1");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     res = RegDeleteValueA(env, "MSITESTVAR25");

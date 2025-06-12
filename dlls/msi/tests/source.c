@@ -1067,13 +1067,13 @@ static void test_MsiSourceListEnumSources(void)
     ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
     ok(size == MAX_PATH, "Expected MAX_PATH, got %lu\n", size);
 
-    res = RegSetValueExA(url, "1", 0, REG_SZ, (LPBYTE)"first", 6);
+    res = reg_set_str(url, "1", "first");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(url, "2", 0, REG_SZ, (LPBYTE)"second", 7);
+    res = reg_set_str(url, "2", "second");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(url, "4", 0, REG_SZ, (LPBYTE)"fourth", 7);
+    res = reg_set_str(url, "4", "fourth");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* sources exist */
@@ -1246,7 +1246,7 @@ static void test_MsiSourceListEnumSources(void)
     ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
     ok(size == MAX_PATH, "Expected MAX_PATH, got %lu\n", size);
 
-    res = RegSetValueExA(net, "1", 0, REG_SZ, (LPBYTE)"first", 6);
+    res = reg_set_str(net, "1", "first");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* sources exist */
@@ -1321,7 +1321,7 @@ static void test_MsiSourceListEnumSources(void)
     ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
     ok(size == MAX_PATH, "Expected MAX_PATH, got %lu\n", size);
 
-    res = RegSetValueExA(url, "1", 0, REG_SZ, (LPBYTE)"first", 6);
+    res = reg_set_str(url, "1", "first");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* sources exist */
@@ -1367,7 +1367,7 @@ static void test_MsiSourceListEnumSources(void)
     ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
     ok(size == MAX_PATH, "Expected MAX_PATH, got %lu\n", size);
 
-    res = RegSetValueExA(net, "1", 0, REG_SZ, (LPBYTE)"first", 6);
+    res = reg_set_str(net, "1", "first");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* sources exist */
@@ -1452,7 +1452,7 @@ machine_tests:
     ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
     ok(size == MAX_PATH, "Expected MAX_PATH, got %lu\n", size);
 
-    res = RegSetValueExA(url, "1", 0, REG_SZ, (LPBYTE)"first", 6);
+    res = reg_set_str(url, "1", "first");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* sources exist */
@@ -1498,7 +1498,7 @@ machine_tests:
     ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
     ok(size == MAX_PATH, "Expected MAX_PATH, got %lu\n", size);
 
-    res = RegSetValueExA(net, "1", 0, REG_SZ, (LPBYTE)"first", 6);
+    res = reg_set_str(net, "1", "first");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* sources exist */
@@ -2315,7 +2315,7 @@ static void test_MsiSourceListEnumMediaDisks(void)
     ok(!lstrcmpA(prompt, "bbb"), "Expected \"bbb\", got \"%s\"\n", prompt);
     ok(promptsz == 0xdeadbeef, "Expected 0xdeadbeef, got %lu\n", promptsz);
 
-    res = RegSetValueExA(media, "1", 0, REG_SZ, (LPBYTE)"label;prompt", 13);
+    res = reg_set_str(media, "1", "label;prompt");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* disk exists */
@@ -2333,7 +2333,7 @@ static void test_MsiSourceListEnumMediaDisks(void)
     ok(!lstrcmpA(prompt, "prompt"), "Expected \"prompt\", got \"%s\"\n", prompt);
     ok(promptsz == 6, "Expected 6, got %lu\n", promptsz);
 
-    res = RegSetValueExA(media, "2", 0, REG_SZ, (LPBYTE)"one;two", 8);
+    res = reg_set_str(media, "2", "one;two");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* now disk 2 exists, get the sizes */
@@ -2378,7 +2378,7 @@ static void test_MsiSourceListEnumMediaDisks(void)
         ok(promptsz == MAX_PATH, "Expected MAX_PATH, got %lu\n", promptsz);
     }
 
-    res = RegSetValueExA(media, "4", 0, REG_SZ, (LPBYTE)"three;four", 11);
+    res = reg_set_str(media, "4", "three;four");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* disks 1, 2, 4 exist, reset the enumeration */
@@ -2656,7 +2656,7 @@ static void test_MsiSourceListEnumMediaDisks(void)
     ok(!lstrcmpA(prompt, "bbb"), "Expected \"bbb\", got \"%s\"\n", prompt);
     ok(promptsz == 6, "Expected 6, got %lu\n", promptsz);
 
-    res = RegSetValueExA(media, "1", 0, REG_SZ, (LPBYTE)"label", 13);
+    res = reg_set_str(media, "1", "label");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* no semicolon */
@@ -2674,7 +2674,7 @@ static void test_MsiSourceListEnumMediaDisks(void)
     ok(!lstrcmpA(prompt, "label"), "Expected \"label\", got \"%s\"\n", prompt);
     ok(promptsz == 5, "Expected 5, got %lu\n", promptsz);
 
-    res = RegSetValueExA(media, "1", 0, REG_SZ, (LPBYTE)"label;", 13);
+    res = reg_set_str(media, "1", "label;");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* semicolon, no disk prompt */
@@ -2692,7 +2692,7 @@ static void test_MsiSourceListEnumMediaDisks(void)
     ok(!lstrcmpA(prompt, ""), "Expected \"\", got \"%s\"\n", prompt);
     ok(promptsz == 0, "Expected 0, got %lu\n", promptsz);
 
-    res = RegSetValueExA(media, "1", 0, REG_SZ, (LPBYTE)";prompt", 13);
+    res = reg_set_str(media, "1", ";prompt");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* semicolon, label doesn't exist */
@@ -2710,7 +2710,7 @@ static void test_MsiSourceListEnumMediaDisks(void)
     ok(!lstrcmpA(prompt, "prompt"), "Expected \"prompt\", got \"%s\"\n", prompt);
     ok(promptsz == 6, "Expected 6, got %lu\n", promptsz);
 
-    res = RegSetValueExA(media, "1", 0, REG_SZ, (LPBYTE)";", 13);
+    res = reg_set_str(media, "1", ";");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* semicolon, neither label nor disk prompt exist */
@@ -2812,7 +2812,7 @@ static void test_MsiSourceListEnumMediaDisks(void)
     ok(!lstrcmpA(prompt, "bbb"), "Expected \"bbb\", got \"%s\"\n", prompt);
     ok(promptsz == 0xdeadbeef, "Expected 0xdeadbeef, got %lu\n", promptsz);
 
-    res = RegSetValueExA(media, "2", 0, REG_SZ, (LPBYTE)"label;prompt", 13);
+    res = reg_set_str(media, "2", "label;prompt");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* disk exists, but no id 1 */
@@ -2893,7 +2893,7 @@ machine_tests:
     ok(!lstrcmpA(prompt, "bbb"), "Expected \"bbb\", got \"%s\"\n", prompt);
     ok(promptsz == 0xdeadbeef, "Expected 0xdeadbeef, got %lu\n", promptsz);
 
-    res = RegSetValueExA(media, "2", 0, REG_SZ, (LPBYTE)"label;prompt", 13);
+    res = reg_set_str(media, "2", "label;prompt");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* disk exists, but no id 1 */
@@ -3046,7 +3046,7 @@ static void test_MsiSourceListAddSource(void)
     RegDeleteKeyExA(net, "", access, 0);
     RegCloseKey(net);
 
-    res = RegSetValueExA(source, "LastUsedSource", 0, REG_SZ, (LPBYTE)"blah", 5);
+    res = reg_set_str(source, "LastUsedSource", "blah");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LastUsedSource value exists */
@@ -3064,7 +3064,7 @@ static void test_MsiSourceListAddSource(void)
     RegDeleteKeyExA(net, "", access, 0);
     RegCloseKey(net);
 
-    res = RegSetValueExA(source, "LastUsedSource", 0, REG_SZ, (LPBYTE)"5", 2);
+    res = reg_set_str(source, "LastUsedSource", "5");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LastUsedSource is an integer */
@@ -3086,7 +3086,7 @@ static void test_MsiSourceListAddSource(void)
     CHECK_REG_STR(net, "1", "source\\");
     CHECK_REG_STR(net, "2", "another\\");
 
-    res = RegSetValueExA(source, "LastUsedSource", 0, REG_SZ, (LPBYTE)"2", 2);
+    res = reg_set_str(source, "LastUsedSource", "2");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* LastUsedSource is in the source list */
