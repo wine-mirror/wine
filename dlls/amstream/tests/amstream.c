@@ -5862,9 +5862,9 @@ static void test_ddrawstream_set_format(void)
     hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    /* As above, this fails because amstream wants to reconnect with an RGB24
+    /* As above, this fails because amstream wants to reconnect with an RGB32
      * format, but doesn't enumerate that format, and we don't either. */
-    format = rgb24_format;
+    format = rgb32_format;
     format.dwFlags |= DDSD_WIDTH | DDSD_HEIGHT;
     format.dwWidth = 333;
     format.dwHeight = 444;
@@ -5873,17 +5873,17 @@ static void test_ddrawstream_set_format(void)
     hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, surface, NULL, 0, &sample);
     ok(hr == DDERR_INVALIDSURFACETYPE, "Got hr %#lx.\n", hr);
 
-    /* Offer RGB24, and now we can reconnect. */
-    video_info = rgb24_video_info;
+    /* Offer RGB32, and now we can reconnect. */
+    video_info = rgb32_video_info;
     video_info.bmiHeader.biWidth = 333;
     video_info.bmiHeader.biHeight = -444;
-    mt = rgb24_mt;
+    mt = rgb32_mt;
     mt.pbFormat = (BYTE *)&video_info;
     source.preferred_mt = &mt;
 
     hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, surface, NULL, 0, &sample);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(IsEqualGUID(&source.source.pin.mt.subtype, &MEDIASUBTYPE_RGB24),
+    ok(IsEqualGUID(&source.source.pin.mt.subtype, &MEDIASUBTYPE_RGB32),
             "Got subtype %s.\n", wine_dbgstr_guid(&source.source.pin.mt.subtype));
     ok(((VIDEOINFO *)source.source.pin.mt.pbFormat)->bmiHeader.biWidth == 333,
             "Got width %ld.\n", ((VIDEOINFO *)source.source.pin.mt.pbFormat)->bmiHeader.biWidth);
@@ -5896,13 +5896,13 @@ static void test_ddrawstream_set_format(void)
             "Got flags %#lx.\n", current_format.dwFlags);
     ok(current_format.dwWidth == 333, "Got width %ld.\n", current_format.dwWidth);
     ok(current_format.dwHeight == 444, "Got height %ld.\n", current_format.dwHeight);
-    ok(current_format.ddpfPixelFormat.u1.dwRGBBitCount == 24,
+    ok(current_format.ddpfPixelFormat.u1.dwRGBBitCount == 32,
             "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.u1.dwRGBBitCount);
     ok(desired_format.dwFlags == (DDSD_WIDTH | DDSD_HEIGHT),
             "Got flags %#lx.\n", desired_format.dwFlags);
     ok(desired_format.dwWidth == 333, "Got width %ld.\n", desired_format.dwWidth);
     ok(desired_format.dwHeight == 444, "Got height %ld.\n", desired_format.dwHeight);
-    ok(desired_format.ddpfPixelFormat.u1.dwRGBBitCount == 24,
+    ok(desired_format.ddpfPixelFormat.u1.dwRGBBitCount == 32,
             "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.u1.dwRGBBitCount);
 
     SetRect(&rect, 100, 200, 300, 400);
@@ -5921,7 +5921,7 @@ static void test_ddrawstream_set_format(void)
     hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, surface, &rect, 0, &sample);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IDirectDrawStreamSample_Release(sample);
-    ok(IsEqualGUID(&source.source.pin.mt.subtype, &MEDIASUBTYPE_RGB24),
+    ok(IsEqualGUID(&source.source.pin.mt.subtype, &MEDIASUBTYPE_RGB32),
             "Got subtype %s.\n", wine_dbgstr_guid(&source.source.pin.mt.subtype));
     ok(((VIDEOINFO *)source.source.pin.mt.pbFormat)->bmiHeader.biWidth == 200,
             "Got width %ld.\n", ((VIDEOINFO *)source.source.pin.mt.pbFormat)->bmiHeader.biWidth);
