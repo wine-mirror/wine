@@ -244,45 +244,45 @@ DECL_HANDLER(set_class_info)
 
     if (!class) return;
 
-    if (req->flags && class->process != current->process)
+    if (class->process != current->process)
     {
         set_error( STATUS_ACCESS_DENIED );
         return;
     }
 
-    if (req->extra_size > sizeof(req->extra_value) ||
-        req->extra_offset < -1 ||
-        req->extra_offset > class->nb_extra_bytes - (int)req->extra_size)
+    switch (req->offset)
     {
+    case GCL_STYLE:
+        reply->old_info = class->style;
+        class->style = req->new_info;
+        break;
+    case GCL_CBWNDEXTRA:
+        if (req->new_info > 4096)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+        reply->old_info = class->win_extra;
+        class->win_extra = req->new_info;
+        break;
+    case GCL_CBCLSEXTRA:
         set_win32_error( ERROR_INVALID_INDEX );
-        return;
+        break;
+    case GCLP_HMODULE:
+        reply->old_info = class->instance;
+        class->instance = req->new_info;
+        break;
+    default:
+        if (req->size > sizeof(req->new_info) || req->offset < 0 ||
+            req->offset > class->nb_extra_bytes - (int)req->size)
+        {
+            set_win32_error( ERROR_INVALID_INDEX );
+            return;
+        }
+        memcpy( &reply->old_info, class->extra_bytes + req->offset, req->size );
+        memcpy( class->extra_bytes + req->offset, &req->new_info, req->size );
+        break;
     }
-    if ((req->flags & SET_CLASS_WINEXTRA) && (req->win_extra < 0 || req->win_extra > 4096))
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
-    if (req->extra_offset != -1)
-    {
-        memcpy( &reply->old_extra_value, class->extra_bytes + req->extra_offset, req->extra_size );
-    }
-    else if (req->flags & SET_CLASS_EXTRA)
-    {
-        set_win32_error( ERROR_INVALID_INDEX );
-        return;
-    }
-
-    reply->old_atom      = class->atom;
-    reply->old_style     = class->style;
-    reply->old_extra     = class->nb_extra_bytes;
-    reply->old_win_extra = class->win_extra;
-    reply->old_instance  = class->instance;
-
-    if (req->flags & SET_CLASS_STYLE) class->style = req->style;
-    if (req->flags & SET_CLASS_WINEXTRA) class->win_extra = req->win_extra;
-    if (req->flags & SET_CLASS_INSTANCE) class->instance = req->instance;
-    if (req->flags & SET_CLASS_EXTRA) memcpy( class->extra_bytes + req->extra_offset,
-                                              &req->extra_value, req->extra_size );
 }
 
 

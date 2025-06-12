@@ -4511,30 +4511,15 @@ struct set_class_info_request
 {
     struct request_header __header;
     user_handle_t  window;
-    unsigned int   flags;
-    atom_t         atom;
-    unsigned int   style;
-    int            win_extra;
-    mod_handle_t   instance;
-    int            extra_offset;
-    data_size_t    extra_size;
-    lparam_t       extra_value;
+    int            offset;
+    data_size_t    size;
+    lparam_t       new_info;
 };
 struct set_class_info_reply
 {
     struct reply_header __header;
-    unsigned int   old_style;
-    atom_t         old_atom;
-    mod_handle_t   old_instance;
-    lparam_t       old_extra_value;
-    int            old_extra;
-    int            old_win_extra;
+    lparam_t       old_info;
 };
-#define SET_CLASS_ATOM      0x0001
-#define SET_CLASS_STYLE     0x0002
-#define SET_CLASS_WINEXTRA  0x0004
-#define SET_CLASS_INSTANCE  0x0008
-#define SET_CLASS_EXTRA     0x0010
 
 
 struct get_class_info_request
@@ -6876,6 +6861,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 889
+#define SERVER_PROTOCOL_VERSION 890
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

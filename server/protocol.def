@@ -3254,28 +3254,13 @@ enum caret_state
 
 /* Set some information in a class */
 @REQ(set_class_info)
-    user_handle_t  window;         /* handle to the window */
-    unsigned int   flags;          /* flags for info to set (see below) */
-    atom_t         atom;           /* class atom */
-    unsigned int   style;          /* class style */
-    int            win_extra;      /* number of window extra bytes */
-    mod_handle_t   instance;       /* module instance */
-    int            extra_offset;   /* offset to set in extra bytes */
-    data_size_t    extra_size;     /* size to set in extra bytes */
-    lparam_t       extra_value;    /* value to set in extra bytes */
+    user_handle_t  window;        /* handle to the window */
+    int            offset;        /* offset of the info */
+    data_size_t    size;          /* size of the info value to write */
+    lparam_t       new_info;      /* new class info value */
 @REPLY
-    unsigned int   old_style;      /* previous class style */
-    atom_t         old_atom;       /* previous class base atom */
-    mod_handle_t   old_instance;   /* previous module instance */
-    lparam_t       old_extra_value; /* old value in extra bytes */
-    int            old_extra;      /* previous number of class extra bytes */
-    int            old_win_extra;  /* previous number of window extra bytes */
+    lparam_t       old_info;      /* previous class info value */
 @END
-#define SET_CLASS_ATOM      0x0001
-#define SET_CLASS_STYLE     0x0002
-#define SET_CLASS_WINEXTRA  0x0004
-#define SET_CLASS_INSTANCE  0x0008
-#define SET_CLASS_EXTRA     0x0010
 
 /* Get some information in a class */
 @REQ(get_class_info)

@@ -711,14 +711,13 @@ INT WINAPI NtUserGetClassName( HWND hwnd, BOOL real, UNICODE_STRING *name )
     {
         ATOM atom = 0;
 
-        SERVER_START_REQ( set_class_info )
+        SERVER_START_REQ( get_class_info )
         {
             req->window = wine_server_user_handle( hwnd );
-            req->flags = 0;
-            req->extra_offset = -1;
-            req->extra_size = 0;
-            if (!wine_server_call_err( req ))
-                atom = reply->old_atom;
+            req->offset = GCW_ATOM;
+            req->size = sizeof(atom);
+            wine_server_call_err( req );
+            atom = reply->info;
         }
         SERVER_END_REQ;
 
@@ -740,35 +739,9 @@ static BOOL set_server_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size )
     SERVER_START_REQ( set_class_info )
     {
         req->window = wine_server_user_handle( hwnd );
-        req->extra_offset = -1;
-        switch(offset)
-        {
-        case GCL_STYLE:
-            req->flags = SET_CLASS_STYLE;
-            req->style = newval;
-            break;
-        case GCL_CBWNDEXTRA:
-            req->flags = SET_CLASS_WINEXTRA;
-            req->win_extra = newval;
-            break;
-        case GCLP_HMODULE:
-            req->flags = SET_CLASS_INSTANCE;
-            req->instance = wine_server_client_ptr( (void *)newval );
-            break;
-        default:
-            assert( offset >= 0 );
-            req->flags = SET_CLASS_EXTRA;
-            req->extra_offset = offset;
-            req->extra_size = size;
-            if ( size == sizeof(LONG) )
-            {
-                LONG newlong = newval;
-                memcpy( &req->extra_value, &newlong, sizeof(LONG) );
-            }
-            else
-                memcpy( &req->extra_value, &newval, sizeof(LONG_PTR) );
-            break;
-        }
+        req->offset = offset;
+        req->size = size;
+        req->new_info = newval;
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;

@@ -2416,24 +2416,14 @@ static void dump_destroy_class_reply( const struct destroy_class_reply *req )
 static void dump_set_class_info_request( const struct set_class_info_request *req )
 {
     fprintf( stderr, " window=%08x", req->window );
-    fprintf( stderr, ", flags=%08x", req->flags );
-    fprintf( stderr, ", atom=%04x", req->atom );
-    fprintf( stderr, ", style=%08x", req->style );
-    fprintf( stderr, ", win_extra=%d", req->win_extra );
-    dump_uint64( ", instance=", &req->instance );
-    fprintf( stderr, ", extra_offset=%d", req->extra_offset );
-    fprintf( stderr, ", extra_size=%u", req->extra_size );
-    dump_uint64( ", extra_value=", &req->extra_value );
+    fprintf( stderr, ", offset=%d", req->offset );
+    fprintf( stderr, ", size=%u", req->size );
+    dump_uint64( ", new_info=", &req->new_info );
 }
 
 static void dump_set_class_info_reply( const struct set_class_info_reply *req )
 {
-    fprintf( stderr, " old_style=%08x", req->old_style );
-    fprintf( stderr, ", old_atom=%04x", req->old_atom );
-    dump_uint64( ", old_instance=", &req->old_instance );
-    dump_uint64( ", old_extra_value=", &req->old_extra_value );
-    fprintf( stderr, ", old_extra=%d", req->old_extra );
-    fprintf( stderr, ", old_win_extra=%d", req->old_win_extra );
+    dump_uint64( " old_info=", &req->old_info );
 }
 
 static void dump_get_class_info_request( const struct get_class_info_request *req )
