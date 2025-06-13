@@ -2776,7 +2776,7 @@ static void test_RegisterClipboardFormat(void)
     SetLastError( 0xdeadbeef );
     atom = RegisterClipboardFormatW( NULL );
     ok( atom == 0, "got %#x\n", atom );
-    todo_wine ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     atom = RegisterClipboardFormatW( L"" );
