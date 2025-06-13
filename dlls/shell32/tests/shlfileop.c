@@ -851,13 +851,13 @@ static void test_rename(void)
     clean_after_shfo_tests();
     init_shfo_tests();
     check_file_operation(FO_RENAME, FOF_NO_UI,
-            "\0", "test1.txt",
+            "\0", "test1.txt\0",
             DE_MANYSRC1DEST, FALSE, FALSE, FALSE);
     check_file_operation(FO_RENAME, FOF_NO_UI,
-            "\0", "testdir2",
+            "\0", "testdir2\0",
             DE_MANYSRC1DEST, FALSE, FALSE, FALSE);
     check_file_operation(FO_RENAME, FOF_NO_UI,
-            "\0", "nonexistence",
+            "\0", "nonexistence\0",
             DE_MANYSRC1DEST, FALSE, FALSE, FALSE);
     ok(!file_exists("nonexistence"), "Expected nonexistence to not exist\n");
     check_file_operation(FO_RENAME, FOF_NO_UI,
@@ -1509,7 +1509,7 @@ static void test_copy(void)
             "\0", "testfile.txt\0",
             ERROR_SUCCESS, FALSE, FALSE, FALSE);
     check_file_operation(FO_COPY, FOF_NO_UI,
-            "\0", "nonexistence",
+            "\0", "nonexistence\0",
             ERROR_SUCCESS, FALSE, FALSE, FALSE);
     check_file_operation(FO_COPY, FOF_NO_UI,
             "\0", "\0",
@@ -1858,13 +1858,13 @@ static void test_move(void)
             ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(!file_exists("nonexistence"), "Expected nonexistence to not exist.\n");
     check_file_operation(FO_MOVE, FOF_NO_UI,
-            "test1.txt", "\0",
+            "test1.txt\0", "\0",
             ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
     check_file_operation(FO_MOVE, FOF_NO_UI,
-            "testdir2", "\0",
+            "testdir2\0", "\0",
             DE_DESTSAMETREE, FALSE, TRUE, FALSE);
     check_file_operation(FO_MOVE, FOF_NO_UI,
-            "nonexistence", "\0",
+            "nonexistence\0", "\0",
             ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
     check_file_operation(FO_MOVE, FOF_NO_UI,
             "\0", "\0",
@@ -2200,7 +2200,7 @@ static void test_unicode(void)
     SHFILEOPSTRUCTW shfoW;
     int ret;
     HANDLE file;
-    static const WCHAR UNICODE_PATH_TO[] = L"c:\\\x00ae\x00ae";
+    static const WCHAR UNICODE_PATH_TO[] = L"c:\\\x00ae\x00ae\0";
     HWND hwnd;
 
     shfoW.hwnd = NULL;
