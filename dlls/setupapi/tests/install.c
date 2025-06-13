@@ -2289,7 +2289,6 @@ static void test_rename(void)
     ok(!delete_file("b/five.txt"), "File should not exist.\n");
     ok(delete_file("b/six.txt"), "File should exist.\n");
     ok(delete_file("b/seven.txt"), "File should exist.\n");
-    SetupCloseFileQueue(queue);
 
     create_file("a/one.txt");
     create_file("a/three.txt");
@@ -2312,7 +2311,6 @@ static void test_rename(void)
     ok(!delete_file("a/four.txt"), "File should not exist.\n");
     ok(!delete_file("a/five.txt"), "File should not exist.\n");
     ok(delete_file("a/six.txt"), "File should exist.\n");
-    SetupCloseFileQueue(queue);
 
     ret = delete_file("a/");
     ok(ret, "Failed to delete directory, error %lu.\n", GetLastError());
