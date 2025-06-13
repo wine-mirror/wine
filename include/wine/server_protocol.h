@@ -2911,6 +2911,21 @@ struct get_atom_information_reply
 
 
 
+struct add_user_atom_request
+{
+    struct request_header __header;
+    /* VARARG(name,unicode_str); */
+    char __pad_12[4];
+};
+struct add_user_atom_reply
+{
+    struct reply_header __header;
+    atom_t        atom;
+    char __pad_12[4];
+};
+
+
+
 struct get_user_atom_name_request
 {
     struct request_header __header;
@@ -6041,6 +6056,7 @@ enum request
     REQ_delete_atom,
     REQ_find_atom,
     REQ_get_atom_information,
+    REQ_add_user_atom,
     REQ_get_user_atom_name,
     REQ_get_msg_queue_handle,
     REQ_get_msg_queue,
@@ -6343,6 +6359,7 @@ union generic_request
     struct delete_atom_request delete_atom_request;
     struct find_atom_request find_atom_request;
     struct get_atom_information_request get_atom_information_request;
+    struct add_user_atom_request add_user_atom_request;
     struct get_user_atom_name_request get_user_atom_name_request;
     struct get_msg_queue_handle_request get_msg_queue_handle_request;
     struct get_msg_queue_request get_msg_queue_request;
@@ -6643,6 +6660,7 @@ union generic_reply
     struct delete_atom_reply delete_atom_reply;
     struct find_atom_reply find_atom_reply;
     struct get_atom_information_reply get_atom_information_reply;
+    struct add_user_atom_reply add_user_atom_reply;
     struct get_user_atom_name_reply get_user_atom_name_reply;
     struct get_msg_queue_handle_reply get_msg_queue_handle_reply;
     struct get_msg_queue_reply get_msg_queue_reply;
@@ -6828,6 +6846,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 879
+#define SERVER_PROTOCOL_VERSION 880
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

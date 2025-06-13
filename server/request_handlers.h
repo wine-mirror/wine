@@ -119,6 +119,7 @@ DECL_HANDLER(add_atom);
 DECL_HANDLER(delete_atom);
 DECL_HANDLER(find_atom);
 DECL_HANDLER(get_atom_information);
+DECL_HANDLER(add_user_atom);
 DECL_HANDLER(get_user_atom_name);
 DECL_HANDLER(get_msg_queue_handle);
 DECL_HANDLER(get_msg_queue);
@@ -418,6 +419,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_delete_atom,
     (req_handler)req_find_atom,
     (req_handler)req_get_atom_information,
+    (req_handler)req_add_user_atom,
     (req_handler)req_get_user_atom_name,
     (req_handler)req_get_msg_queue_handle,
     (req_handler)req_get_msg_queue,
@@ -1282,6 +1284,9 @@ C_ASSERT( offsetof(struct get_atom_information_reply, count) == 8 );
 C_ASSERT( offsetof(struct get_atom_information_reply, pinned) == 12 );
 C_ASSERT( offsetof(struct get_atom_information_reply, total) == 16 );
 C_ASSERT( sizeof(struct get_atom_information_reply) == 24 );
+C_ASSERT( sizeof(struct add_user_atom_request) == 16 );
+C_ASSERT( offsetof(struct add_user_atom_reply, atom) == 8 );
+C_ASSERT( sizeof(struct add_user_atom_reply) == 16 );
 C_ASSERT( offsetof(struct get_user_atom_name_request, atom) == 12 );
 C_ASSERT( sizeof(struct get_user_atom_name_request) == 16 );
 C_ASSERT( offsetof(struct get_user_atom_name_reply, total) == 8 );

@@ -2233,6 +2233,14 @@ struct process_info
 @END
 
 
+/* Add a user atom */
+@REQ(add_user_atom)
+    VARARG(name,unicode_str);  /* atom name */
+@REPLY
+    atom_t        atom;        /* resulting atom */
+@END
+
+
 /* Get a user atom name */
 @REQ(get_user_atom_name)
     atom_t       atom;         /* atom handle */

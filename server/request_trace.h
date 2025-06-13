@@ -1343,6 +1343,16 @@ static void dump_get_atom_information_reply( const struct get_atom_information_r
     dump_varargs_unicode_str( ", name=", cur_size );
 }
 
+static void dump_add_user_atom_request( const struct add_user_atom_request *req )
+{
+    dump_varargs_unicode_str( " name=", cur_size );
+}
+
+static void dump_add_user_atom_reply( const struct add_user_atom_reply *req )
+{
+    fprintf( stderr, " atom=%04x", req->atom );
+}
+
 static void dump_get_user_atom_name_request( const struct get_user_atom_name_request *req )
 {
     fprintf( stderr, " atom=%04x", req->atom );
@@ -3484,6 +3494,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_delete_atom_request,
     (dump_func)dump_find_atom_request,
     (dump_func)dump_get_atom_information_request,
+    (dump_func)dump_add_user_atom_request,
     (dump_func)dump_get_user_atom_name_request,
     (dump_func)dump_get_msg_queue_handle_request,
     (dump_func)dump_get_msg_queue_request,
@@ -3783,6 +3794,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     NULL,
     (dump_func)dump_find_atom_reply,
     (dump_func)dump_get_atom_information_reply,
+    (dump_func)dump_add_user_atom_reply,
     (dump_func)dump_get_user_atom_name_reply,
     (dump_func)dump_get_msg_queue_handle_reply,
     (dump_func)dump_get_msg_queue_reply,
@@ -4082,6 +4094,7 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "delete_atom",
     "find_atom",
     "get_atom_information",
+    "add_user_atom",
     "get_user_atom_name",
     "get_msg_queue_handle",
     "get_msg_queue",

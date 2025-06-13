@@ -327,6 +327,13 @@ DECL_HANDLER(get_atom_information)
     else reply->count = -1;
 }
 
+/* add a user atom */
+DECL_HANDLER(add_user_atom)
+{
+    struct unicode_str name = get_req_unicode_str();
+    reply->atom = add_atom( global_table, &name );
+}
+
 /* get a user atom name */
 DECL_HANDLER(get_user_atom_name)
 {
