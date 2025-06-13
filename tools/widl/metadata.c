@@ -718,6 +718,68 @@ static void serialize_field_table( void )
     }
 }
 
+struct methoddef_row
+{
+    UINT   rva;
+    USHORT implflags;
+    USHORT flags;
+    UINT   name;
+    UINT   signature;
+    UINT   paramlist;
+};
+
+static UINT add_methoddef_row( UINT implflags, UINT flags, UINT name, UINT signature, UINT paramlist )
+{
+    struct methoddef_row row = { 0, implflags, flags, name, signature, paramlist };
+
+    if (!row.paramlist) row.paramlist = tables[TABLE_PARAM].count + 1;
+    return add_row( TABLE_METHODDEF, (const BYTE *)&row, sizeof(row) );
+}
+
+static void serialize_methoddef_table( void )
+{
+    const struct methoddef_row *row = (const struct methoddef_row *)tables[TABLE_METHODDEF].ptr;
+    UINT i;
+
+    for (i = 0; i < tables[TABLE_METHODDEF].count; i++)
+    {
+        serialize_uint( row->rva );
+        serialize_ushort( row->implflags );
+        serialize_ushort( row->flags );
+        serialize_string_idx( row->name );
+        serialize_blob_idx( row->signature );
+        serialize_table_idx( row->paramlist, TABLE_PARAM );
+        row++;
+    }
+}
+
+struct param_row
+{
+    USHORT flags;
+    USHORT sequence;
+    UINT   name;
+};
+
+static UINT add_param_row( USHORT flags, USHORT sequence, UINT name )
+{
+    struct param_row row = { flags, sequence, name };
+    return add_row( TABLE_PARAM, (const BYTE *)&row, sizeof(row) );
+}
+
+static void serialize_param_table( void )
+{
+    const struct param_row *row = (const struct param_row *)tables[TABLE_PARAM].ptr;
+    UINT i;
+
+    for (i = 0; i < tables[TABLE_PARAM].count; i++)
+    {
+        serialize_ushort( row->flags );
+        serialize_ushort( row->sequence );
+        serialize_string_idx( row->name );
+        row++;
+    }
+}
+
 struct interfaceimpl_row
 {
     UINT class;
@@ -1106,6 +1168,43 @@ enum
 
 enum
 {
+    METHOD_ATTR_COMPILERCONTROLLED = 0x0000,
+    METHOD_ATTR_PRIVATE            = 0x0001,
+    METHOD_ATTR_FAMANDASSEM        = 0x0002,
+    METHOD_ATTR_ASSEM              = 0x0003,
+    METHOD_ATTR_FAMILY             = 0x0004,
+    METHOD_ATTR_FAMORASSEM         = 0x0005,
+    METHOD_ATTR_PUBLIC             = 0x0006,
+    METHOD_ATTR_STATIC             = 0x0010,
+    METHOD_ATTR_FINAL              = 0x0020,
+    METHOD_ATTR_VIRTUAL            = 0x0040,
+    METHOD_ATTR_HIDEBYSIG          = 0x0080,
+    METHOD_ATTR_NEWSLOT            = 0x0100,
+    METHOD_ATTR_STRICT             = 0x0200,
+    METHOD_ATTR_ABSTRACT           = 0x0400,
+    METHOD_ATTR_SPECIALNAME        = 0x0800,
+    METHOD_ATTR_RTSPECIALNAME      = 0x1000,
+    METHOD_ATTR_PINVOKEIMPL        = 0x2000
+};
+
+enum
+{
+    METHOD_IMPL_IL        = 0x0000,
+    METHOD_IMPL_NATIVE    = 0x0001,
+    METHOD_IMPL_OPTIL     = 0x0002,
+    METHOD_IMPL_RUNTIME   = 0x0003,
+    METHOD_IMPL_UNMANAGED = 0x0004
+};
+
+enum
+{
+    PARAM_ATTR_IN       = 0x0001,
+    PARAM_ATTR_OUT      = 0x0002,
+    PARAM_ATTR_OPTIONAL = 0x0010
+};
+
+enum
+{
     SIG_TYPE_DEFAULT      = 0x00,
     SIG_TYPE_C            = 0x01,
     SIG_TYPE_STDCALL      = 0x02,
@@ -1232,6 +1331,94 @@ static UINT make_member_sig2( UINT type, UINT token, BYTE *buf )
     buf[2] = ELEMENT_TYPE_VOID;
     buf[3] = type;
     len += encode_int( token, buf + 4 );
+    return len;
+}
+
+static UINT make_type_sig( const type_t *type, BYTE *buf )
+{
+    UINT len = 0;
+
+    type = type_get_real_type( type );
+
+    switch (type_get_type( type ))
+    {
+    case TYPE_POINTER:
+    {
+        const type_t *ref_type = type_pointer_get_ref_type( type );
+        BOOL skip_byref = FALSE;
+
+        switch (type_get_type( ref_type ))
+        {
+        case TYPE_DELEGATE:
+        case TYPE_INTERFACE:
+        case TYPE_RUNTIMECLASS:
+            skip_byref = TRUE;
+            break;
+        default:
+            break;
+        }
+        if (!skip_byref) buf[len++] = ELEMENT_TYPE_BYREF;
+        len += make_type_sig( ref_type, buf + len );
+        break;
+    }
+    case TYPE_ARRAY:
+        buf[len++] = ELEMENT_TYPE_SZARRAY;
+        len += make_type_sig( type_array_get_element_type(type), buf + len );
+        break;
+
+    case TYPE_DELEGATE:
+    case TYPE_INTERFACE:
+    case TYPE_RUNTIMECLASS:
+        buf[0] = ELEMENT_TYPE_CLASS;
+        len = encode_int( typedef_or_ref(TABLE_TYPEREF, type->md.ref), buf + 1 ) + 1;
+        break;
+
+    case TYPE_ENUM:
+    case TYPE_STRUCT:
+        buf[0] = ELEMENT_TYPE_VALUETYPE;
+        len = encode_int( typedef_or_ref(TABLE_TYPEREF, type->md.ref), buf + 1 ) + 1;
+        break;
+
+    case TYPE_BASIC:
+        buf[len++] = map_basic_type( type_basic_get_type(type), type_basic_get_sign(type) );
+        break;
+
+    default:
+        fprintf( stderr, "Unhandled type %u.\n", type_get_type( type ) );
+        exit( 1 );
+    }
+    return len;
+}
+
+static UINT make_method_sig( const var_t *method, BYTE *buf )
+{
+    const var_t *arg;
+    const var_list_t *arg_list = type_function_get_args( method->declspec.type );
+    UINT len = 3;
+
+    buf[0] = SIG_TYPE_HASTHIS;
+    buf[1] = 0;
+    buf[2] = ELEMENT_TYPE_VOID;
+
+    if (!arg_list) return 3;
+
+    /* add return value first */
+    LIST_FOR_EACH_ENTRY( arg, arg_list, var_t, entry )
+    {
+        const type_t *type;
+
+        if (!is_attr( arg->attrs, ATTR_RETVAL )) continue;
+        type = type_pointer_get_ref_type( arg->declspec.type ); /* retval must be a pointer */
+        len = make_type_sig( type, buf + 2 ) + 2;
+    }
+
+    /* add remaining parameters */
+    LIST_FOR_EACH_ENTRY( arg, arg_list, var_t, entry )
+    {
+        if (is_attr( arg->attrs, ATTR_RETVAL ) ) continue;
+        len += make_type_sig( arg->declspec.type, buf + len );
+        buf[1]++;
+    }
     return len;
 }
 
@@ -1542,6 +1729,43 @@ static void add_interface_type_step1( type_t *type )
     add_exclusiveto_attr_step1( type );
 }
 
+static UINT get_param_attrs( const var_t *arg )
+{
+    UINT attrs = 0;
+
+    if (is_attr( arg->attrs, ATTR_IN )) attrs |= PARAM_ATTR_IN;
+    if (is_attr( arg->attrs, ATTR_OUT )) attrs |= PARAM_ATTR_OUT;
+    if (is_attr( arg->attrs, ATTR_OPTIONAL )) attrs |= PARAM_ATTR_OPTIONAL;
+
+    return attrs ? attrs : PARAM_ATTR_IN;
+}
+
+static UINT add_method_params_step2( var_list_t *arg_list )
+{
+    UINT first = 0, row, seq = 1;
+    var_t *arg;
+
+    if (!arg_list) return 0;
+
+    LIST_FOR_EACH_ENTRY( arg, arg_list, var_t, entry )
+    {
+        if (is_attr( arg->attrs, ATTR_RETVAL ))
+        {
+            first = add_param_row( 0, 0, add_string(arg->name) );
+            break;
+        }
+    }
+
+    LIST_FOR_EACH_ENTRY( arg, arg_list, var_t, entry )
+    {
+        if (is_attr( arg->attrs, ATTR_RETVAL )) continue;
+        row = add_param_row( get_param_attrs(arg), seq++, add_string(arg->name) );
+        if (!first) first = row;
+    }
+
+    return first;
+}
+
 static void add_interface_type_step2( type_t *type )
 {
     UINT name, namespace, interface, flags = TYPE_ATTR_INTERFACE | TYPE_ATTR_ABSTRACT | TYPE_ATTR_UNKNOWN;
@@ -1654,6 +1878,61 @@ static void add_apicontract_type_step2( type_t *type )
     add_apicontract_attr_step2( type );
 }
 
+static void add_delegate_type_step1( type_t *type )
+{
+    UINT name, namespace, scope, typeref;
+
+    name = add_name( type, &namespace );
+
+    scope = resolution_scope( TABLE_ASSEMBLYREF, MSCORLIB_ROW );
+    typeref = add_typeref_row( scope, add_string("MulticastDelegate"), add_string("System") );
+    type->md.extends = typedef_or_ref( TABLE_TYPEREF, typeref );
+    type->md.ref = add_typeref_row( resolution_scope(TABLE_MODULE, MODULE_ROW), name, namespace );
+
+    add_version_attr_step1( type );
+    add_contract_attr_step1( type );
+    add_uuid_attr_step1( type );
+}
+
+static void add_delegate_type_step2( type_t *type )
+{
+    static const BYTE sig_ctor[] = { SIG_TYPE_HASTHIS, 2, ELEMENT_TYPE_VOID, ELEMENT_TYPE_OBJECT, ELEMENT_TYPE_I };
+    UINT name, namespace, methoddef, flags, paramlist;
+    const type_t *iface = type_delegate_get_iface( type );
+    const statement_t *stmt;
+
+    name = add_name( type, &namespace );
+
+    flags = METHOD_ATTR_RTSPECIALNAME | METHOD_ATTR_SPECIALNAME | METHOD_ATTR_HIDEBYSIG | METHOD_ATTR_PRIVATE;
+    methoddef = add_methoddef_row( METHOD_IMPL_RUNTIME, flags, add_string(".ctor"),
+                                   add_blob(sig_ctor, sizeof(sig_ctor)), 0 );
+
+    add_param_row( 0, 1, add_string("object") );
+    add_param_row( 0, 2, add_string("method") );
+
+    flags = METHOD_ATTR_SPECIALNAME | METHOD_ATTR_HIDEBYSIG | METHOD_ATTR_PUBLIC | METHOD_ATTR_VIRTUAL |
+            METHOD_ATTR_NEWSLOT;
+
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
+    {
+        const var_t *method = stmt->u.var;
+        UINT sig_size;
+        BYTE sig[256];
+
+        sig_size = make_method_sig( method, sig );
+        paramlist = add_method_params_step2( type_function_get_args(method->declspec.type) );
+
+        add_methoddef_row( METHOD_IMPL_RUNTIME, flags, add_string("Invoke"), add_blob(sig, sig_size), paramlist );
+        break;
+    }
+    type->md.def = add_typedef_row( TYPE_ATTR_PUBLIC | TYPE_ATTR_SEALED | TYPE_ATTR_UNKNOWN, name, namespace,
+                                    type->md.extends, 0, methoddef );
+
+    add_uuid_attr_step2( type );
+    add_version_attr_step2( type );
+    add_contract_attr_step2( type );
+}
+
 static void build_tables( const statement_list_t *stmt_list )
 {
     const statement_t *stmt;
@@ -1686,6 +1965,9 @@ static void build_tables( const statement_list_t *stmt_list )
         case TYPE_APICONTRACT:
             add_apicontract_type_step1( type );
             break;
+        case TYPE_DELEGATE:
+            add_delegate_type_step1( type );
+            break;
         default:
             fprintf( stderr, "Unhandled type %u name '%s'.\n", type->type_type, type->name );
             break;
@@ -1716,6 +1998,9 @@ static void build_tables( const statement_list_t *stmt_list )
             break;
         case TYPE_APICONTRACT:
             add_apicontract_type_step2( type );
+            break;
+        case TYPE_DELEGATE:
+            add_delegate_type_step2( type );
             break;
         default:
             break;
@@ -1761,6 +2046,8 @@ static void build_table_stream( const statement_list_t *stmts )
     serialize_typeref_table();
     serialize_typedef_table();
     serialize_field_table();
+    serialize_methoddef_table();
+    serialize_param_table();
     serialize_interfaceimpl_table();
     serialize_memberref_table();
     serialize_constant_table();
