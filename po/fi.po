@@ -323,10 +323,8 @@ msgid "Please wait until the current uninstall/modify process is complete."
 msgstr "Odota, että nykyinen poisto- tai muokkausprosessi päättyy."
 
 #: dlls/appwiz.cpl/appwiz.rc:55
-#, fuzzy
-#| msgid "Downloading..."
 msgid "Download failed."
-msgstr "Ladataan..."
+msgstr "Lataus epäonnistui."
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"
@@ -381,10 +379,8 @@ msgid "uncompressed"
 msgstr "pakkaamaton"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:31
-#, fuzzy
-#| msgid "&Confirm password:"
 msgid "Confirm pairing"
-msgstr "&Vahvista salasana:"
+msgstr "Vahvista pari"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:32
 msgid "Pair with '%1!s!' using the following PIN/passkey value: %2!lu!?"
@@ -1360,33 +1356,24 @@ msgid "Default"
 msgstr "Oletus"
 
 #: dlls/compstui/compstui.rc:35
-#, fuzzy
-#| msgid "&Copy Background"
 msgid "&Copy count"
-msgstr "&Kopioi tausta"
+msgstr "&Kopioiden määrä"
 
 #: dlls/compstui/compstui.rc:36
-#, fuzzy
-#| msgid "Print to File"
 msgid "Print on Both Sides"
-msgstr "Tulosta tiedostoon"
+msgstr "Tulosta molemmille puolille"
 
 #: dlls/compstui/compstui.rc:32
-#, fuzzy
-#| msgid "C&olor:"
 msgid "C&olor"
-msgstr "&Väri:"
+msgstr "&Väri"
 
 #: dlls/compstui/compstui.rc:34
 msgid "Bla&ck && White"
 msgstr ""
 
 #: dlls/compstui/compstui.rc:37
-#, fuzzy
-#| msgctxt "hotkey"
-#| msgid "None"
 msgid "&None"
-msgstr "Ei valittu"
+msgstr "&Ei valittu"
 
 #: dlls/compstui/compstui.rc:38 dlls/compstui/compstui.rc:41
 msgid "Flip on Shor&t Edge"
@@ -3478,10 +3465,8 @@ msgid "Show &Tabs"
 msgstr "Nä&ytä välilehdet"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:39
-#, fuzzy
-#| msgid "Select Source"
 msgid "Select Topic"
-msgstr "Valitse lähde"
+msgstr "Valitse aihe"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:44
 msgid "Show"
@@ -12513,53 +12498,51 @@ msgid "Install"
 msgstr "Asenna"
 
 #: dlls/urlmon/urlmon.rc:58
-#, fuzzy
-#| msgid "Local Port"
 msgid "Local intranet"
-msgstr "Paikallinen portti"
+msgstr "Paikallinen intranet"
 
 #: dlls/urlmon/urlmon.rc:60
-#, fuzzy
-#| msgid "Trusted Publishers"
 msgid "Trusted sites"
-msgstr "Luotetut julkaisijat"
+msgstr "Luotetut sivustot"
 
 #: dlls/urlmon/urlmon.rc:62
-#, fuzzy
-#| msgid "Ethernet"
 msgid "Internet"
-msgstr "Ethernet"
+msgstr "Internet"
 
 #: dlls/urlmon/urlmon.rc:64
 msgid "Restricted sites"
-msgstr ""
+msgstr "Rajoitetut sivustot"
 
 #: dlls/urlmon/urlmon.rc:57
-#, fuzzy
-#| msgid "My Computer"
 msgid "Your computer"
-msgstr "Oma tietokone"
+msgstr "Sinun tietokone"
 
 #: dlls/urlmon/urlmon.rc:59
 msgid ""
 "This zone contains all Web sites that are on your organization's intranet."
-msgstr ""
+msgstr "Tämä vyöhyke on tarkoitettu intranetin sivustoille."
 
 #: dlls/urlmon/urlmon.rc:61
 msgid ""
 "This zone contains Web sites that you trust not to damage your computer or "
 "data."
 msgstr ""
+"Tämä vyöhyke sisältää sivustoja, joiden et usko vahingoittavan tietokonetta "
+"tai tiedostoja."
 
 #: dlls/urlmon/urlmon.rc:63
 msgid "This zone contains all Web sites you haven't placed in other zones"
 msgstr ""
+"Tämä vyöhyke on Internet-sivustoille, jotka eivät kuulu luotettuun tai "
+"rajoitettuun vyöhykkeeseen."
 
 #: dlls/urlmon/urlmon.rc:65
 msgid ""
 "This zone contains Web sites that could potentially damage your computer or "
 "data."
 msgstr ""
+"Tämä vyöhyke sisältää sivustoja, jotka saattavat vahingoittaa tietokonetta "
+"tai tiedostoja."
 
 #: dlls/user32/user32.rc:30 dlls/user32/user32.rc:43
 #: programs/taskmgr/taskmgr.rc:138
@@ -15311,18 +15294,16 @@ msgstr "&Avaa...\tCtrl+O"
 
 #: programs/notepad/notepad.rc:32 programs/wordpad/wordpad.rc:33
 msgid "&Save\tCtrl+S"
-msgstr "Ta&llenna\tCtrl+S"
+msgstr "&Tallenna\tCtrl+S"
 
 #: programs/notepad/notepad.rc:33
-#, fuzzy
-#| msgid "Save As..."
 msgid "Save &As..."
-msgstr "Tallenna nimellä..."
+msgstr "Tallenna &nimellä..."
 
 #: programs/notepad/notepad.rc:35 programs/regedit/regedit.rc:39
 #: programs/wordpad/wordpad.rc:36
 msgid "&Print...\tCtrl+P"
-msgstr "T&ulosta...\tCtrl+P"
+msgstr "Tul&osta...\tCtrl+P"
 
 #: programs/notepad/notepad.rc:36 programs/wordpad/wordpad.rc:38
 msgid "Page Se&tup..."
@@ -15330,7 +15311,7 @@ msgstr "&Sivun asetukset..."
 
 #: programs/notepad/notepad.rc:37
 msgid "P&rinter Setup..."
-msgstr "&Tulostimen asetukset..."
+msgstr "Tulosti&men asetukset..."
 
 #: programs/notepad/notepad.rc:42 programs/wordpad/wordpad.rc:44
 msgid "&Undo\tCtrl+Z"
@@ -15342,17 +15323,15 @@ msgstr "&Leikkaa\tCtrl+X"
 
 #: programs/notepad/notepad.rc:45 programs/wordpad/wordpad.rc:48
 msgid "&Copy\tCtrl+C"
-msgstr "&Kopioi\tCtrl+C"
+msgstr "K&opioi\tCtrl+C"
 
 #: programs/notepad/notepad.rc:46 programs/wordpad/wordpad.rc:49
 msgid "&Paste\tCtrl+V"
-msgstr "L&iitä\tCtrl+V"
+msgstr "Liit&ä\tCtrl+V"
 
 #: programs/notepad/notepad.rc:47
-#, fuzzy
-#| msgid "&Delete\tDel"
 msgid "De&lete\tDel"
-msgstr "P&oista\tDel"
+msgstr "&Poista\tDel"
 
 #: programs/notepad/notepad.rc:49 programs/regedit/regedit.rc:62
 #: programs/regedit/regedit.rc:109 programs/wordpad/wordpad.rc:53
@@ -15360,38 +15339,32 @@ msgid "&Find...\tCtrl+F"
 msgstr "&Etsi...\tCtrl+F"
 
 #: programs/notepad/notepad.rc:50
-#, fuzzy
-#| msgid "Find &next\tF3"
 msgid "Find &Next\tF3"
-msgstr "Hae &seuraava\tF3"
+msgstr "Etsi &seuraava\tF3"
 
 #: programs/notepad/notepad.rc:51 programs/wordpad/wordpad.rc:55
 msgid "&Replace...\tCtrl+H"
-msgstr "&Korvaa...\tCtrl+H"
+msgstr "Ko&rvaa...\tCtrl+H"
 
 #: programs/notepad/notepad.rc:52
 msgid "&Go To...\tCtrl+G"
-msgstr "&Siirry...\tCtrl+G"
+msgstr "S&iirry...\tCtrl+G"
 
 #: programs/notepad/notepad.rc:54
-#, fuzzy
-#| msgid "Select &all\tCtrl+A"
 msgid "Select &All\tCtrl+A"
-msgstr "&Valitse kaikki\tCtrl+A"
+msgstr "Valitse k&aikki\tCtrl+A"
 
 #: programs/notepad/notepad.rc:55
-#, fuzzy
-#| msgid "&Time/Date\tF5"
 msgid "Time/&Date\tF5"
-msgstr "&Aika/Päivämäärä\tF5"
+msgstr "Aika/Päi&vämäärä\tF5"
 
 #: programs/notepad/notepad.rc:57 programs/wordpad/wordpad.rc:82
 msgid "F&ormat"
-msgstr "&Muotoile"
+msgstr "M&uotoile"
 
 #: programs/notepad/notepad.rc:58
 msgid "&Word Wrap"
-msgstr ""
+msgstr "&Automaattinen rivitys"
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -18339,10 +18312,8 @@ msgid "Usage: timeout /T <timeout> [</NOBREAK>]\n"
 msgstr ""
 
 #: programs/timeout/timeout.rc:29
-#, fuzzy
-#| msgid "FINDSTR: Bad command line\n"
 msgid "TIMEOUT: Bad command line\n"
-msgstr "FINDSTR: Komentorivi ei kelpaa\n"
+msgstr "TIMEOUT: Komentorivi ei kelpaa\n"
 
 #: programs/timeout/timeout.rc:30
 msgid "waiting since %d sec. "
@@ -18353,10 +18324,8 @@ msgid "press CTRL+C..."
 msgstr ""
 
 #: programs/timeout/timeout.rc:32
-#, fuzzy
-#| msgid "Press any key to continue... "
 msgid "press a key to continue..."
-msgstr "Paina mitä tahansa näppäintä jatkaaksesi... "
+msgstr "Paina mitä tahansa näppäintä jatkaaksesi..."
 
 #: programs/timeout/timeout.rc:33
 msgid "ERROR: not possible to redirect input\n"
