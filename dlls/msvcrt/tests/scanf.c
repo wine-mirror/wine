@@ -353,8 +353,12 @@ static void test_sscanf( void )
 
     result64 = 0;
     ret = p_sscanf("0xfefefefefefefefe", "%jx", &result64);
-    ok(ret == 1, "got %d\n", ret);
-    ok(result64 == 0xfefefefefefefefell, "got 0x%s\n", wine_dbgstr_longlong(result64));
+    ok(ret == 1 ||
+       broken(ret == 0 && p_sprintf(buffer, "%jx", 0xfefell) <= 2) /* <= Win10-1709 */,
+       "got %d\n", ret);
+    ok(result64 == 0xfefefefefefefefell ||
+       broken(ret == 0 && p_sprintf(buffer, "%jx", 0xfefell) <= 2) /* <= Win10-1709 */,
+       "got 0x%s\n", wine_dbgstr_longlong(result64));
 }
 
 static void test_sscanf_s(void)
