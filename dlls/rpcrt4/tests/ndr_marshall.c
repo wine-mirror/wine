@@ -256,7 +256,7 @@ static void test_pointer_marshal(const unsigned char *formattypes,
         ok(size == srcsize + (srcsize == 8 ? 8 : sizeof(void *)), "%s: mem size %lu\n", msgpfx, size);
 
     size = srcsize;
-    if (formattypes[1] & FC_POINTER_DEREF) size += 4;
+    if (formattypes[1] & FC_POINTER_DEREF) size += sizeof(void *);
 
     StubMsg.Buffer = StubMsg.BufferStart;
     StubMsg.MemorySize = 0;
