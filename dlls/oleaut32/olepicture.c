@@ -2670,7 +2670,7 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
       file_candidate = szURLorPath;
 
   /* Handle candidate DOS paths separately. */
-  if (file_candidate[1] == ':') {
+  if (file_candidate[0] && file_candidate[1] == ':') {
       hRes = create_stream(file_candidate, &stream);
       if (FAILED(hRes))
 	  return INET_E_RESOURCE_NOT_FOUND;
