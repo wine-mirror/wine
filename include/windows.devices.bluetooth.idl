@@ -40,6 +40,7 @@ namespace Windows.Devices.Bluetooth {
     typedef enum BluetoothMajorClass BluetoothMajorClass;
     typedef enum BluetoothMinorClass BluetoothMinorClass;
     typedef enum BluetoothServiceCapabilities BluetoothServiceCapabilities;
+    typedef enum BluetoothError BluetoothError;
 
     interface IBluetoothAdapter;
     interface IBluetoothAdapter2;
@@ -54,10 +55,13 @@ namespace Windows.Devices.Bluetooth {
     interface IBluetoothDevice5;
     interface IBluetoothDeviceStatics;
     interface IBluetoothDeviceStatics2;
+    interface IBluetoothDeviceId;
+    interface IBluetoothDeviceIdStatics;
 
     runtimeclass BluetoothAdapter;
     runtimeclass BluetoothClassOfDevice;
     runtimeclass BluetoothDevice;
+    runtimeclass BluetoothDeviceId;
 
     namespace Rfcomm {
         runtimeclass RfcommDeviceService;
@@ -205,6 +209,26 @@ namespace Windows.Devices.Bluetooth {
     };
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum BluetoothError
+    {
+        Success = 0,
+        RadioNotAvailable = 1,
+        ResourceInUse = 2,
+        DeviceNotConnected = 3,
+        OtherError = 4,
+        DisabledByPolicy = 5,
+        NotSupported = 6,
+        [contract(Windows.Foundation.UniversalApiContract, 2.0)]
+        DisabledByUser = 7,
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+        ConsentRequired = 8,
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)]
+        TransportNotSupported = 9,
+    };
+
+    [
         contract(Windows.Foundation.UniversalApiContract, 4.0),
         exclusiveto(Windows.Devices.Bluetooth.BluetoothAdapter),
         uuid(7974f04c-5f7a-4a34-9225-a855f84b1a8b)
@@ -341,4 +365,38 @@ namespace Windows.Devices.Bluetooth {
         [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Devices.Bluetooth.IBluetoothDevice5;
         interface Windows.Foundation.IClosable;
     }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Devices.Bluetooth.BluetoothDeviceId),
+        uuid(c17949af-57c1-4642-bcce-e6c06b20ae76)
+    ]
+    interface IBluetoothDeviceId : IInspectable
+    {
+        [propget] HRESULT Id([out, retval] HSTRING *value);
+        [propget] HRESULT IsClassicDevice([out, retval] boolean *value);
+        [propget] HRESULT IsLowEnergyDevice([out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.Devices.Bluetooth.BluetoothDeviceId),
+        uuid(a7884e67-3efb-4f31-bbc2-810e09977404)
+    ]
+    interface IBluetoothDeviceIdStatics : IInspectable
+    {
+        HRESULT FromId([in] HSTRING id, [out, retval] Windows.Devices.Bluetooth.BluetoothDeviceId **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        marshaling_behavior(agile),
+        static(Windows.Devices.Bluetooth.IBluetoothDeviceIdStatics, Windows.Foundation.UniversalApiContract, 5.0),
+        threading(both)
+    ]
+    runtimeclass BluetoothDeviceId
+    {
+        [default] interface Windows.Devices.Bluetooth.IBluetoothDeviceId;
+    }
+
 }
