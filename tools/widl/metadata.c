@@ -1277,14 +1277,14 @@ static UINT make_struct_field_sig( const var_t *var, BYTE *buf )
 {
     const type_t *type = var->declspec.type;
 
-    if (!strcmp( type->name, "HSTRING" ))
+    if (type->name && !strcmp( type->name, "HSTRING" ))
     {
         buf[0] = SIG_TYPE_FIELD;
         buf[1] = ELEMENT_TYPE_STRING;
         return 2;
     }
 
-    if (!strcmp( type->name, "GUID" ))
+    if (type->name && !strcmp( type->name, "GUID" ))
     {
         UINT token = typedef_or_ref( TABLE_TYPEREF, type->md.ref );
         return make_field_value_sig( token, buf );
@@ -1602,7 +1602,7 @@ static void add_struct_type_step1( type_t *type )
     LIST_FOR_EACH_ENTRY( var, type_struct_get_fields(type), const var_t, entry )
     {
         type_t *field_type = var->declspec.type;
-        if (!strcmp( field_type->name, "GUID" ))
+        if (field_type->name && !strcmp( field_type->name, "GUID" ))
             field_type->md.ref = add_typeref_row( scope, add_string("Guid"), add_string("System") );
     }
 
