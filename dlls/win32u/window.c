@@ -149,6 +149,20 @@ static NTSTATUS get_shared_window( HANDLE handle, struct object_lock *lock, cons
     return STATUS_SUCCESS;
 }
 
+struct obj_locator get_window_class_locator( HWND hwnd )
+{
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const window_shm_t *window_shm = NULL;
+    struct obj_locator locator = {0};
+    NTSTATUS status;
+
+    while ((status = get_shared_window( hwnd, &lock, &window_shm )) == STATUS_PENDING)
+        locator = window_shm->class;
+    if (status) memset( &locator, 0, sizeof(locator) );
+
+    return locator;
+}
+
 /***********************************************************************
  *           get_user_handle_ptr
  */

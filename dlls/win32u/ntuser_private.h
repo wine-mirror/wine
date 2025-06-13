@@ -236,6 +236,7 @@ static inline UINT win_get_flags( HWND hwnd )
     return win_set_flags( hwnd, 0, 0 );
 }
 
+struct obj_locator get_window_class_locator( HWND hwnd );
 WND *get_win_ptr( HWND hwnd );
 BOOL is_child( HWND parent, HWND child );
 BOOL is_window( HWND hwnd );
