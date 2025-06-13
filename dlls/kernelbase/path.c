@@ -4733,6 +4733,7 @@ BOOL WINAPI UrlIsA(const char *url, URLIS Urlis)
         return scheme_is_opaque( base.nScheme );
 
     case URLIS_FILEURL:
+        if (strlen(url) < 5) return FALSE;
         return (CompareStringA(LOCALE_INVARIANT, NORM_IGNORECASE, url, 5, "file:", 5) == CSTR_EQUAL);
 
     case URLIS_DIRECTORY:
