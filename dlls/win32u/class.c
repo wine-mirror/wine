@@ -47,19 +47,15 @@ SYSTEM_BASIC_INFORMATION system_info;
 typedef struct tagCLASS
 {
     struct list  entry;         /* Entry in class list */
-    UINT         style;         /* Class style */
     BOOL         local;         /* Local class? */
     WNDPROC      winproc;       /* Window procedure */
     INT          cbClsExtra;    /* Class extra bytes */
-    INT          cbWndExtra;    /* Window extra bytes */
     struct dce  *dce;           /* Opaque pointer to class DCE */
-    UINT_PTR     instance;      /* Module that created the task */
     HICON        hIcon;         /* Default icon */
     HICON        hIconSm;       /* Default small icon */
     HICON        hIconSmIntern; /* Internal small icon, derived from hIcon */
     HCURSOR      hCursor;       /* Default cursor */
     HBRUSH       hbrBackground; /* Default background */
-    ATOM         atom;          /* name of the class */
     struct client_menu_name menu_name; /* Default menu name */
     const shared_object_t *shared; /* class object in session shared memory */
 } CLASS;
@@ -389,6 +385,25 @@ static CLASS *get_class_ptr( HWND hwnd, BOOL write_access )
     return NULL;
 }
 
+static NTSTATUS get_shared_class( CLASS *class, struct object_lock *lock, const class_shm_t **class_shm )
+{
+    const shared_object_t *object;
+
+    TRACE( "class %p, lock %p, class_shm %p\n", class, lock, class_shm );
+
+    if (!(object = class->shared)) return STATUS_INVALID_HANDLE;
+
+    if (!lock->id || !shared_object_release_seqlock( object, lock->seq ))
+    {
+        shared_object_acquire_seqlock( object, &lock->seq );
+        *class_shm = &object->shm.class;
+        lock->id = object->id;
+        return STATUS_PENDING;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS get_shared_window_class( HWND hwnd, struct object_lock *lock, const class_shm_t **class_shm )
 {
     const shared_object_t *object;
@@ -430,6 +445,19 @@ static BOOL class_name_matches( CLASS *class, UNICODE_STRING *name )
     return name->Length == len && !wcsnicmp( class_name, name->Buffer, len / sizeof(WCHAR) );
 }
 
+static UINT_PTR get_class_instance( CLASS *class )
+{
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const class_shm_t *class_shm;
+    UINT_PTR instance = 0;
+    NTSTATUS status;
+
+    while ((status = get_shared_class( class, &lock, &class_shm )) == STATUS_PENDING)
+        instance = class_shm->instance;
+    if (status) return 0;
+    return instance;
+}
+
 static CLASS *find_class( HINSTANCE module, UNICODE_STRING *name )
 {
     ULONG_PTR instance = (UINT_PTR)module;
@@ -439,10 +467,11 @@ static CLASS *find_class( HINSTANCE module, UNICODE_STRING *name )
     user_lock();
     LIST_FOR_EACH_ENTRY( class, &class_list, CLASS, entry )
     {
+        UINT_PTR class_instance = get_class_instance( class );
         if (!class_name_matches( class, name )) continue;
-        is_win16 = !(class->instance >> 16);
-        if (!instance || !class->local || class->instance == instance ||
-            (!is_win16 && ((class->instance & ~0xffff) == (instance & ~0xffff))))
+        is_win16 = !(class_instance >> 16);
+        if (!instance || !class->local || class_instance == instance ||
+            (!is_win16 && ((class_instance & ~0xffff) == (instance & ~0xffff))))
         {
             TRACE( "%s %lx -> %p\n", debugstr_us(name), instance, class );
             return class;
@@ -517,19 +546,16 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
 
     if (!(class = calloc( 1, sizeof(CLASS) + wc->cbClsExtra ))) return 0;
 
-    class->style      = wc->style;
     class->local      = !is_builtin && !(wc->style & CS_GLOBALCLASS);
-    class->cbWndExtra = wc->cbWndExtra;
     class->cbClsExtra = wc->cbClsExtra;
-    class->instance   = (UINT_PTR)instance;
 
     SERVER_START_REQ( create_class )
     {
         req->local      = class->local;
-        req->style      = class->style;
-        req->instance   = class->instance;
+        req->style      = wc->style;
+        req->instance   = wine_server_client_ptr( instance );
         req->extra      = class->cbClsExtra;
-        req->win_extra  = class->cbWndExtra;
+        req->win_extra  = wc->cbWndExtra;
         req->client_ptr = wine_server_client_ptr( class );
         req->atom       = wine_server_add_atom( req, name );
         req->name_offset = version->Length / sizeof(WCHAR);
@@ -578,7 +604,6 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
     class->hIconSmIntern = sm_icon;
     class->hCursor       = wc->hCursor;
     class->hbrBackground = wc->hbrBackground;
-    class->atom          = atom;
     class->winproc       = alloc_winproc( wc->lpfnWndProc, ansi );
     if (client_menu_name) class->menu_name = *client_menu_name;
     class->shared        = shared;
@@ -626,31 +651,38 @@ BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
 ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
                                   struct client_menu_name *menu_name, BOOL ansi )
 {
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const class_shm_t *class_shm;
+    NTSTATUS status;
     CLASS *class;
-    ATOM atom;
+    ATOM atom = 0;
 
     /* create the desktop window to trigger builtin class registration */
     if (!is_desktop_class( name ) && !is_message_class( name )) get_desktop_window();
 
     if (!(class = find_class( instance, name ))) return 0;
 
-    if (wc)
+    while ((status = get_shared_class( class, &lock, &class_shm )) == STATUS_PENDING)
     {
-        wc->style         = class->style;
-        wc->lpfnWndProc   = get_winproc( class->winproc, ansi );
-        wc->cbClsExtra    = class->cbClsExtra;
-        wc->cbWndExtra    = class->cbWndExtra;
-        wc->hInstance     = (instance == user32_module) ? 0 : instance;
-        wc->hIcon         = class->hIcon;
-        wc->hIconSm       = class->hIconSm ? class->hIconSm : class->hIconSmIntern;
-        wc->hCursor       = class->hCursor;
-        wc->hbrBackground = class->hbrBackground;
-        wc->lpszMenuName  = ansi ? (const WCHAR *)class->menu_name.nameA : class->menu_name.nameW;
-        wc->lpszClassName = name->Buffer;
+        if (wc)
+        {
+            wc->style         = class_shm->style;
+            wc->lpfnWndProc   = get_winproc( class->winproc, ansi );
+            wc->cbClsExtra    = class->cbClsExtra;
+            wc->cbWndExtra    = class_shm->win_extra;
+            wc->hInstance     = (instance == user32_module) ? 0 : instance;
+            wc->hIcon         = class->hIcon;
+            wc->hIconSm       = class->hIconSm ? class->hIconSm : class->hIconSmIntern;
+            wc->hCursor       = class->hCursor;
+            wc->hbrBackground = class->hbrBackground;
+            wc->lpszMenuName  = ansi ? (const WCHAR *)class->menu_name.nameA : class->menu_name.nameW;
+            wc->lpszClassName = name->Buffer;
+        }
+        atom = class_shm->atom;
     }
+    if (status) return 0;
 
     if (menu_name) *menu_name = class->menu_name;
-    atom = class->atom;
     release_class_ptr( class );
     return atom;
 }
@@ -767,7 +799,7 @@ INT WINAPI NtUserGetClassName( HWND hwnd, BOOL real, UNICODE_STRING *name )
 }
 
 /* Set class info with the wine server. */
-static BOOL set_server_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size )
+static BOOL set_server_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size, ULONG_PTR *oldval )
 {
     BOOL ret;
 
@@ -778,6 +810,7 @@ static BOOL set_server_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size )
         req->size = size;
         req->new_info = newval;
         ret = !wine_server_call_err( req );
+        *oldval = reply->old_info;
     }
     SERVER_END_REQ;
     return ret;
@@ -793,7 +826,7 @@ static ULONG_PTR set_class_long_size( HWND hwnd, INT offset, LONG_PTR newval, UI
 
     if (offset >= 0)
     {
-        if (set_server_info( hwnd, offset, newval, size ))
+        if (set_server_info( hwnd, offset, newval, size, &retval ))
         {
             void *ptr = (char *)(class + 1) + offset;
             memcpy( &retval, ptr, size );
@@ -883,19 +916,13 @@ static ULONG_PTR set_class_long_size( HWND hwnd, INT offset, LONG_PTR newval, UI
         class->hIconSmIntern = small_icon;
         break;
     case GCL_STYLE:
-        if (!set_server_info( hwnd, offset, newval, size )) break;
-        retval = class->style;
-        class->style = newval;
+        if (!set_server_info( hwnd, offset, newval, size, &retval )) break;
         break;
     case GCL_CBWNDEXTRA:
-        if (!set_server_info( hwnd, offset, newval, size )) break;
-        retval = class->cbWndExtra;
-        class->cbWndExtra = newval;
+        if (!set_server_info( hwnd, offset, newval, size, &retval )) break;
         break;
     case GCLP_HMODULE:
-        if (!set_server_info( hwnd, offset, newval, size )) break;
-        retval = class->instance;
-        class->instance = newval;
+        if (!set_server_info( hwnd, offset, newval, size, &retval )) break;
         break;
     case GCL_CBCLSEXTRA:  /* cannot change this one */
         RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
@@ -932,10 +959,45 @@ WORD WINAPI NtUserSetClassWord( HWND hwnd, INT offset, WORD newval )
     return set_class_long_size( hwnd, offset, newval, sizeof(WORD), TRUE );
 }
 
+static ULONG_PTR get_class_long_shm( HWND hwnd, INT offset, UINT size, BOOL ansi )
+{
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const class_shm_t *class_shm;
+    ULONG_PTR ret = 0;
+    NTSTATUS status;
+
+    while ((status = get_shared_window_class( hwnd, &lock, &class_shm )) == STATUS_PENDING)
+    {
+        switch (offset)
+        {
+        case GCW_ATOM:           ret = class_shm->atom; break;
+        case GCL_STYLE:          ret = class_shm->style; break;
+        case GCL_CBWNDEXTRA:     ret = class_shm->win_extra; break;
+        case GCLP_HMODULE:       ret = class_shm->instance; break;
+        }
+    }
+    if (status)
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+
+    return ret;
+}
+
 static ULONG_PTR get_class_long_size( HWND hwnd, INT offset, UINT size, BOOL ansi )
 {
     CLASS *class;
     ULONG_PTR retvalue = 0;
+
+    switch (offset)
+    {
+    case GCW_ATOM:
+    case GCL_STYLE:
+    case GCL_CBWNDEXTRA:
+    case GCLP_HMODULE:
+        return get_class_long_shm( hwnd, offset, size, ansi );
+    }
 
     if (!(class = get_class_ptr( hwnd, FALSE ))) return 0;
 
@@ -1001,26 +1063,14 @@ static ULONG_PTR get_class_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
     case GCLP_HICONSM:
         retvalue = (ULONG_PTR)(class->hIconSm ? class->hIconSm : class->hIconSmIntern);
         break;
-    case GCL_STYLE:
-        retvalue = class->style;
-        break;
-    case GCL_CBWNDEXTRA:
-        retvalue = class->cbWndExtra;
-        break;
     case GCL_CBCLSEXTRA:
         retvalue = class->cbClsExtra;
-        break;
-    case GCLP_HMODULE:
-        retvalue = class->instance;
         break;
     case GCLP_WNDPROC:
         retvalue = (ULONG_PTR)get_winproc( class->winproc, ansi );
         break;
     case GCLP_MENUNAME:
         retvalue = ansi ? (ULONG_PTR)class->menu_name.nameA : (ULONG_PTR)class->menu_name.nameW;
-        break;
-    case GCW_ATOM:
-        retvalue = class->atom;
         break;
     default:
         RtlSetLastWin32Error( ERROR_INVALID_INDEX );

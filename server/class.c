@@ -345,11 +345,7 @@ DECL_HANDLER(get_class_info)
         /* not supported */
         set_win32_error( ERROR_INVALID_HANDLE );
         break;
-    case GCL_STYLE:          reply->info = class->shared->style; break;
-    case GCL_CBWNDEXTRA:     reply->info = class->shared->win_extra; break;
     case GCL_CBCLSEXTRA:     reply->info = class->nb_extra_bytes; break;
-    case GCLP_HMODULE:       reply->info = class->shared->instance; break;
-    case GCW_ATOM:           reply->info = class->shared->atom; break;
     default:
         if (req->size > sizeof(reply->info) || req->offset < 0 ||
             req->offset > class->nb_extra_bytes - (int)req->size)
