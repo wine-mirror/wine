@@ -1581,7 +1581,7 @@ static void test_connect_pin(void)
         DeleteMediaType(pmt);
 
         ++i;
-        while (winetest_platform_is_wine && !video_types[i].works_wine)
+        while (i < ARRAY_SIZE(video_types) && winetest_platform_is_wine && !video_types[i].works_wine)
             ++i;
     }
 
