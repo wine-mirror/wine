@@ -174,7 +174,7 @@ void __asm_dummy_ ## type ## _exception_type(void) \
          :: "i"(sizeof(type)), "i"(ARRAY_SIZE(((const void *[]){ &__VA_ARGS__ }))) ); \
 }
 #define DEFINE_CXX_TYPE(type, dtor, ...) \
-    DEFINE_CXX_TYPE2(type, dtor, type ## _type_info, ##__VA_ARGS__)
+    DEFINE_CXX_TYPE2(type, dtor, type ## _cxx_type_info, ##__VA_ARGS__)
 
 #define INIT_CXX_TYPE(name,base) /* nothing to do */
 
