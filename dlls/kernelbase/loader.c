@@ -533,9 +533,16 @@ HMODULE WINAPI DECLSPEC_HOTPATCH LoadLibraryW( LPCWSTR name )
 HMODULE WINAPI DECLSPEC_HOTPATCH LoadLibraryExA( LPCSTR name, HANDLE file, DWORD flags )
 {
     WCHAR *nameW;
+    HMODULE module;
 
-    if (!(nameW = file_name_AtoW( name, FALSE ))) return 0;
-    return LoadLibraryExW( nameW, file, flags );
+    /* A new allocation is necessary due to TP Shell Service
+     * calling LoadLibraryExA from an LdrLoadDll hook */
+    if (!(nameW = file_name_AtoW( name, TRUE ))) return 0;
+
+    module = LoadLibraryExW( nameW, file, flags );
+
+    HeapFree( GetProcessHeap(), 0, nameW );
+    return module;
 }
 
 
