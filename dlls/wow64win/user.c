@@ -4081,9 +4081,10 @@ NTSTATUS WINAPI wow64_NtUserRemoveClipboardFormatListener( UINT *args )
 
 NTSTATUS WINAPI wow64_NtUserRegisterWindowMessage( UINT *args )
 {
-    UNICODE_STRING *name = get_ptr( &args );
+    UNICODE_STRING32 *name32 = get_ptr( &args );
+    UNICODE_STRING name;
 
-    return NtUserRegisterWindowMessage( name );
+    return NtUserRegisterWindowMessage( unicode_str_32to64( &name, name32 ));
 }
 
 NTSTATUS WINAPI wow64_NtUserRemoveMenu( UINT *args )
