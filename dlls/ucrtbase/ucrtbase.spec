@@ -1758,9 +1758,9 @@
 @ cdecl _o_remquol(double double ptr) remquo
 @ cdecl _o_rename(str str) rename
 @ cdecl _o_rewind(ptr) rewind
-@ cdecl _o_rint(double) MSVCRT_rint
+@ cdecl _o_rint(double) rint
 @ cdecl _o_rintf(float) rintf
-@ cdecl _o_rintl(double) MSVCRT_rint
+@ cdecl _o_rintl(double) rint
 @ cdecl _o_round(double) round
 @ cdecl _o_roundf(float) roundf
 @ cdecl _o_roundl(double) round
@@ -2472,9 +2472,9 @@
 @ cdecl rename(str str)
 @ cdecl -arch=i386 rewind(ptr) rewind_preserve_stack
 @ cdecl -arch=!i386 rewind(ptr)
-@ cdecl rint(double) MSVCRT_rint
+@ cdecl rint(double)
 @ cdecl rintf(float)
-@ cdecl rintl(double) MSVCRT_rint
+@ cdecl rintl(double) rint
 @ cdecl round(double)
 @ cdecl roundf(float)
 @ cdecl roundl(double) round
