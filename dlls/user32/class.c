@@ -194,7 +194,7 @@ static ULONG_PTR set_menu_nameA( HWND hwnd, INT offset, ULONG_PTR newval )
     return 0;
 }
 
-static void get_versioned_name( const WCHAR *name, UNICODE_STRING *ret, UNICODE_STRING *version, HMODULE *reg_module )
+static void get_class_version( UNICODE_STRING *name, UNICODE_STRING *version, HMODULE *reg_module )
 {
     ACTCTX_SECTION_KEYED_DATA data;
     struct wndclass_redirect_data
@@ -207,30 +207,19 @@ static void get_versioned_name( const WCHAR *name, UNICODE_STRING *ret, UNICODE_
         ULONG module_offset;
     } *wndclass;
     const WCHAR *module, *ptr;
-    UNICODE_STRING name_us;
     HMODULE hmod;
     UINT offset = 0;
 
     if (reg_module) *reg_module = 0;
     if (version) version->Length = 0;
 
-    if (IS_INTRESOURCE( name ) || is_comctl32_class( name ) || is_builtin_class( name ))
-    {
-        init_class_name( ret, name );
-        return;
-    }
+    if (IS_INTRESOURCE( name->Buffer ) || is_comctl32_class( name->Buffer ) || is_builtin_class( name->Buffer )) return;
 
     data.cbSize = sizeof(data);
-    RtlInitUnicodeString(&name_us, name);
-    if (RtlFindActivationContextSectionString( 0, NULL, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION,
-                                               &name_us, &data ))
-    {
-        init_class_name( ret, name );
-        return;
-    }
+    if (RtlFindActivationContextSectionString( 0, NULL, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, name, &data )) return;
 
     wndclass = (struct wndclass_redirect_data *)data.lpData;
-    offset = wndclass->name_len / sizeof(WCHAR) - lstrlenW(name);
+    offset = (wndclass->name_len - name->Length) / sizeof(WCHAR);
 
     module = (const WCHAR *)((BYTE *)data.lpSectionBase + wndclass->module_offset);
     if (!(hmod = GetModuleHandleW( module )))
@@ -243,13 +232,13 @@ static void get_versioned_name( const WCHAR *name, UNICODE_STRING *ret, UNICODE_
     {
         WCHAR *combined = version->Buffer;
         memcpy( combined, ptr, offset * sizeof(WCHAR) );
-        lstrcpyW( &combined[offset], name );
+        lstrcpyW( &combined[offset], name->Buffer );
         version->Length = offset * sizeof(WCHAR);
         ptr = combined;
     }
 
     if (reg_module) *reg_module = hmod;
-    init_class_name( ret, ptr );
+    init_class_name( name, ptr );
 }
 
 
@@ -348,16 +337,13 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
 
     version.Buffer = combined;
     version.MaximumLength = sizeof(combined);
-    if (!IS_INTRESOURCE(wc->lpszClassName))
-    {
-        if (!MultiByteToWideChar( CP_ACP, 0, wc->lpszClassName, -1, nameW, MAX_ATOM_LEN + 1 )) return 0;
-        get_versioned_name( nameW, &name, &version, FALSE );
-    }
+    if (IS_INTRESOURCE( wc->lpszClassName )) init_class_name( &name, (const WCHAR *)wc->lpszClassName );
     else
     {
-        init_class_name( &name, (const WCHAR *)wc->lpszClassName );
-        version.Length = 0;
+        if (!MultiByteToWideChar( CP_ACP, 0, wc->lpszClassName, -1, nameW, MAX_ATOM_LEN + 1 )) return 0;
+        RtlInitUnicodeString( &name, nameW );
     }
+    get_class_version( &name, &version, NULL );
 
     if (!alloc_menu_nameA( &menu_name, wc->lpszMenuName )) return 0;
 
@@ -379,7 +365,8 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
 
     version.Buffer = combined;
     version.MaximumLength = sizeof(combined);
-    get_versioned_name( wc->lpszClassName, &name, &version, FALSE );
+    init_class_name( &name, wc->lpszClassName );
+    get_class_version( &name, &version, NULL );
 
     if (!alloc_menu_nameW( &menu_name, wc->lpszMenuName )) return 0;
 
@@ -408,14 +395,16 @@ BOOL WINAPI UnregisterClassA( LPCSTR className, HINSTANCE hInstance )
 /***********************************************************************
  *		UnregisterClassW (USER32.@)
  */
-BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
+BOOL WINAPI UnregisterClassW( LPCWSTR class_name, HINSTANCE instance )
 {
     struct client_menu_name menu_name;
     UNICODE_STRING name;
     BOOL ret;
 
-    get_versioned_name( className, &name, NULL, FALSE );
-    ret = NtUserUnregisterClass( &name, hInstance, &menu_name );
+    init_class_name( &name, class_name );
+    get_class_version( &name, NULL, NULL );
+
+    ret = NtUserUnregisterClass( &name, instance, &menu_name );
     if (ret) free_menu_name( &menu_name );
     return ret;
 }
@@ -569,7 +558,8 @@ ATOM get_class_info( HINSTANCE instance, const WCHAR *class_name, WNDCLASSEXW *i
     HMODULE module;
     ATOM atom;
 
-    get_versioned_name( class_name, &name, NULL, &module );
+    init_class_name( &name, class_name );
+    get_class_version( &name, NULL, &module );
 
     if (!name_str && !instance) instance = user32_module;
 
