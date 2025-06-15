@@ -341,6 +341,29 @@ static void test_class(void)
         "NtUserGetAtomName returned %lx %lu\n", ret, GetLastError() );
     ok( buf[0] == 0xcccc, "buf = %s\n", debugstr_w(buf) );
 
+    cls.lpszClassName = L"#1";
+    class = RegisterClassW( &cls );
+    ok( class == 1, "RegisterClassW failed: %lu\n", GetLastError() );
+
+    hwnd = CreateWindowW( MAKEINTRESOURCEW(1), NULL, WS_OVERLAPPEDWINDOW | WS_HSCROLL | WS_VSCROLL,
+                          CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 0, NULL, 0 );
+    ok( !!hwnd, "CreateWindowW failed: %lu\n", GetLastError() );
+
+    memset( buf, 0xcc, sizeof(buf) );
+    name.Buffer = buf;
+    name.Length = 0xdead;
+    name.MaximumLength = 8;
+    ret = NtUserGetClassName( hwnd, FALSE, &name );
+    ok( ret == 2, "NtUserGetClassName returned %lu\n", ret );
+    ok( name.Length == 0xdead, "Length = %u\n", name.Length );
+    ok( name.MaximumLength == 8, "MaximumLength = %u\n", name.MaximumLength );
+    ok( !wcscmp( buf, L"#1" ), "buf = %s\n", debugstr_w(buf) );
+
+    DestroyWindow( hwnd );
+
+    ret = UnregisterClassW( L"#1", GetModuleHandleW(NULL) );
+    ok( ret, "UnregisterClassW failed: %lu\n", GetLastError() );
+
     for (int i = 0; i < ARRAY_SIZE(global_atoms); i++)
     {
         winetest_push_context( "%#x: %s", global_atoms[i].atom, debugstr_w(global_atoms[i].name) );
