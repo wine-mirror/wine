@@ -1528,6 +1528,32 @@ static LRESULT WINAPI test_class_versioned_wndproc( HWND hwnd, UINT msg, WPARAM 
     return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
 
+static LRESULT WINAPI test_class_integral_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    if (msg == WM_NCCREATE)
+    {
+        CREATESTRUCTA *cs = (CREATESTRUCTA *)lparam;
+        if (IS_INTRESOURCE(cs->lpszClass)) todo_wine ok( (UINT_PTR)cs->lpszClass == 1234, "got %p\n", cs->lpszClass );
+        else todo_wine ok( !strcmp( cs->lpszClass, "#1234" ), "got %s\n", debugstr_a(cs->lpszClass) );
+        return 1;
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static LRESULT WINAPI test_class_integral_versioned_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    if (msg == WM_NCCREATE)
+    {
+        CREATESTRUCTA *cs = (CREATESTRUCTA *)lparam;
+        if (IS_INTRESOURCE(cs->lpszClass)) check_atom_name_a( (UINT_PTR)cs->lpszClass, "4.3.2.1!#1234" );
+        else ok( !strcmp( cs->lpszClass, "4.3.2.1!#1234" ), "got %s\n", debugstr_a(cs->lpszClass) );
+        return 1;
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
 static void test_actctx_classes(void)
 {
     static const char main_manifest[] =
@@ -1537,6 +1563,7 @@ static void test_actctx_classes(void)
             "<windowClass>WineTestClass</windowClass>"
             "<windowClass>WineLeakClass</windowClass>"
             "<windowClass>4.3.2.1!ClassVersion</windowClass>"
+            "<windowClass>#1234</windowClass>"
           "</file>"
         "</assembly>";
     const HINSTANCE hinst = GetModuleHandleW( 0 );
@@ -1572,6 +1599,27 @@ static void test_actctx_classes(void)
     {
         .lpszClassName = "4.3.2.1!ClassVersion",
         .lpfnWndProc = test_class_wndproc,
+        .hIcon = LoadIconW( 0, (LPCWSTR)IDI_APPLICATION ),
+        .hInstance = hinst,
+    };
+    const WNDCLASSA wc_integral_int =
+    {
+        .lpszClassName = MAKEINTRESOURCEA(1234),
+        .lpfnWndProc = test_class_integral_wndproc,
+        .hIcon = LoadIconW( 0, (LPCWSTR)IDI_APPLICATION ),
+        .hInstance = hinst,
+    };
+    const WNDCLASSA wc_integral =
+    {
+        .lpszClassName = "#1234",
+        .lpfnWndProc = test_class_integral_wndproc,
+        .hIcon = LoadIconW( 0, (LPCWSTR)IDI_APPLICATION ),
+        .hInstance = hinst,
+    };
+    const WNDCLASSA wc_integral_versioned =
+    {
+        .lpszClassName = "4.3.2.1!#1234",
+        .lpfnWndProc = test_class_integral_versioned_wndproc,
         .hIcon = LoadIconW( 0, (LPCWSTR)IDI_APPLICATION ),
         .hInstance = hinst,
     };
@@ -1955,6 +2003,248 @@ static void test_actctx_classes(void)
     ret = UnregisterClassA( wc_versioned.lpszClassName, hinst );
     ok( ret, "UnregisterClassA failed, error %lu\n", GetLastError() );
     check_atom_name_a( class, NULL );
+
+
+    /* integral atom class can be registered by atom or string */
+    ret = ActivateActCtx( context, &cookie );
+    ok( ret, "ActivateActCtx failed, error %lu\n", GetLastError() );
+    check_class_info_a( hinst, MAKEINTRESOURCEA(1234), NULL );
+    check_class_info_a( hinst, wc_integral.lpszClassName, NULL );
+    class = RegisterClassA( &wc_integral_int );
+    ok( class == 1234, "RegisterClassA failed, error %lu\n", GetLastError() );
+    check_class_info_a( hinst, MAKEINTRESOURCEA(1234), &wc_integral_int );
+    todo_wine check_class_info_a( hinst, wc_integral.lpszClassName, &wc_integral_int );
+    ret = UnregisterClassA( MAKEINTRESOURCEA( class ), hinst );
+    ok( ret, "UnregisterClassA failed, error %lu\n", GetLastError() );
+    class = RegisterClassA( &wc_integral );
+    todo_wine ok( class == 1234, "RegisterClassA failed, error %lu\n", GetLastError() );
+    todo_wine check_class_info_a( hinst, MAKEINTRESOURCEA(1234), &wc_integral );
+    check_class_info_a( hinst, wc_integral.lpszClassName, &wc_integral );
+    ret = DeactivateActCtx( 0, cookie );
+    ok( ret, "DeactivateActCtx failed, error %lu\n", GetLastError() );
+
+
+    /* UnregisterClassA is possible by atom, versioned, base names when context is active */
+    ret = ActivateActCtx( context, &cookie );
+    ok( ret, "ActivateActCtx failed, error %lu\n", GetLastError() );
+    ret = UnregisterClassA( MAKEINTRESOURCEA(1234), hinst );
+    todo_wine ok( ret, "UnregisterClassA failed, error %lu\n", GetLastError() );
+    class = RegisterClassA( &wc_integral );
+    todo_wine ok( class == 1234, "RegisterClassA failed, error %lu\n", GetLastError() );
+    ret = UnregisterClassA( wc_integral.lpszClassName, hinst );
+    ok( ret, "UnregisterClassA failed, error %lu\n", GetLastError() );
+    class = RegisterClassA( &wc_integral );
+    todo_wine ok( class == 1234, "RegisterClassA failed, error %lu\n", GetLastError() );
+    ret = UnregisterClassA( wc_integral_versioned.lpszClassName, hinst );
+    ok( ret, "UnregisterClassA failed, error %lu\n", GetLastError() );
+    class = RegisterClassA( &wc_integral );
+    todo_wine ok( class == 1234, "RegisterClassA failed, error %lu\n", GetLastError() );
+    ret = DeactivateActCtx( 0, cookie );
+    ok( ret, "DeactivateActCtx failed, error %lu\n", GetLastError() );
+
+    /* UnregisterClassA is possible by versioned name only when context isn't active */
+    ret = UnregisterClassA( MAKEINTRESOURCEA(1234), hinst );
+    ok( !ret, "UnregisterClassA succeeded\n" );
+    ret = UnregisterClassA( wc_integral.lpszClassName, hinst );
+    ok( !ret, "UnregisterClassA succeeded\n" );
+    ret = UnregisterClassA( wc_integral_versioned.lpszClassName, hinst );
+    ok( ret, "UnregisterClassA failed, error %lu\n", GetLastError() );
+
+
+    /* registering versioned class while context isn't active */
+    class = RegisterClassA( &wc_integral_versioned );
+    ok( class != 1234, "RegisterClassA failed, error %lu\n", GetLastError() );
+    check_class_info_a( hinst, MAKEINTRESOURCEA( class ), &wc_integral_versioned );
+    check_class_info_a( hinst, wc_integral.lpszClassName, NULL );
+    check_class_info_a( hinst, wc_integral_versioned.lpszClassName, &wc_integral_versioned );
+
+    ret = ActivateActCtx( context, &cookie );
+    ok( ret, "ActivateActCtx failed, error %lu\n", GetLastError() );
+
+    /* GetClassInfoA now works with base name */
+    check_class_info_a( hinst, MAKEINTRESOURCEA( class ), &wc_integral_versioned );
+    check_class_info_a( hinst, wc_integral.lpszClassName, &wc_integral_versioned );
+    check_class_info_a( hinst, wc_integral_versioned.lpszClassName, &wc_integral_versioned );
+
+    /* prevents the class to be registered when context is active */
+    tmp_class = RegisterClassA( &wc_integral_versioned );
+    ok( !tmp_class, "RegisterClassA succeeded, error %lu\n", GetLastError() );
+    tmp_class = RegisterClassA( &wc_integral );
+    ok( !tmp_class, "RegisterClassA succeeded, error %lu\n", GetLastError() );
+
+    check_class_info_a( hinst, MAKEINTRESOURCEA( class ), &wc_integral_versioned );
+    check_class_info_a( hinst, wc_integral.lpszClassName, &wc_integral_versioned );
+    check_class_info_a( hinst, wc_integral_versioned.lpszClassName, &wc_integral_versioned );
+
+    /* versioned class can be unregistered with its base name */
+    ret = UnregisterClassA( wc_integral.lpszClassName, hinst );
+    ok( ret, "UnregisterClassA failed, error %lu\n", GetLastError() );
+    ret = DeactivateActCtx( 0, cookie );
+    ok( ret, "DeactivateActCtx failed, error %lu\n", GetLastError() );
+
+
+    /* registering unversioned class before context is activated */
+    class = RegisterClassA( &wc_integral );
+    ok( class == 1234, "RegisterClassA failed, error %lu\n", GetLastError() );
+    check_class_info_a( hinst, MAKEINTRESOURCEA( class ), &wc_integral );
+    check_class_info_a( hinst, wc_integral.lpszClassName, &wc_integral );
+    check_class_info_a( hinst, wc_integral_versioned.lpszClassName, NULL );
+
+    ret = ActivateActCtx( context, &cookie );
+    ok( ret, "ActivateActCtx failed, error %lu\n", GetLastError() );
+
+    /* unversioned class is innaccessible now */
+    todo_wine check_class_info_a( hinst, MAKEINTRESOURCEA( class ), NULL );
+    check_class_info_a( hinst, wc_integral.lpszClassName, NULL );
+    check_class_info_a( hinst, wc_integral_versioned.lpszClassName, NULL );
+
+    /* versioned class can be registered when context is active, returns same atom as unversioned */
+    tmp_class = RegisterClassA( &wc_integral );
+    todo_wine ok( tmp_class == class, "RegisterClassA failed, error %lu\n", GetLastError() );
+
+    check_class_info_a( hinst, MAKEINTRESOURCEA( class ), &wc_integral );
+    check_class_info_a( hinst, wc_integral.lpszClassName, &wc_integral );
+    check_class_info_a( hinst, wc_integral_versioned.lpszClassName, &wc_integral );
+
+    /* versioned class can be unregistered with its base name */
+    ret = UnregisterClassA( wc_integral.lpszClassName, hinst );
+    ok( ret, "UnregisterClassA failed, error %lu\n", GetLastError() );
+    /* unversioned class cannot be unregistered */
+    ret = UnregisterClassA( wc_integral.lpszClassName, hinst );
+    ok( !ret, "UnregisterClassA succeeded\n" );
+    ret = UnregisterClassA( MAKEINTRESOURCEA( class ), hinst );
+    todo_wine ok( !ret, "UnregisterClassA succeeded\n" );
+    ret = DeactivateActCtx( 0, cookie );
+    ok( ret, "DeactivateActCtx failed, error %lu\n", GetLastError() );
+    /* unversioned class can be unregistered now */
+    ret = UnregisterClassA( MAKEINTRESOURCEA( class ), hinst );
+    todo_wine ok( ret, "UnregisterClassA failed, error %lu\n", GetLastError() );
+
+
+    /* class info is available by atom, versioned, base names when context is active */
+    ret = ActivateActCtx( context, &cookie );
+    ok( ret, "ActivateActCtx failed, error %lu\n", GetLastError() );
+    class = RegisterClassA( &wc_integral );
+    todo_wine ok( class == 1234, "RegisterClassA failed, error %lu\n", GetLastError() );
+    check_class_info_a( hinst, MAKEINTRESOURCEA( class ), &wc_integral );
+    check_class_info_a( hinst, wc_integral.lpszClassName, &wc_integral );
+    check_class_info_a( hinst, wc_integral_versioned.lpszClassName, &wc_integral );
+
+    /* class info is available by versioned name only, if context isn't active. */
+    ret = DeactivateActCtx( 0, cookie );
+    ok( ret, "DeactivateActCtx failed, error %lu\n", GetLastError() );
+    todo_wine check_class_info_a( hinst, MAKEINTRESOURCEA( class ), NULL );
+    check_class_info_a( hinst, wc_integral.lpszClassName, NULL );
+    check_class_info_a( hinst, wc_integral_versioned.lpszClassName, &wc_integral );
+
+
+    /* CreateWindow is allowed by atom, versioned, base names when context is active */
+    ret = ActivateActCtx( context, &cookie );
+    ok( ret, "ActivateActCtx failed, error %lu\n", GetLastError() );
+    hwnd = CreateWindowExA( 0, MAKEINTRESOURCEA( class ), NULL, 0, 0, 0, 0, 0, 0, 0, hinst, 0 );
+    ok( hwnd != NULL, "CreateWindowExA failed, error %lu\n", GetLastError() );
+    check_class_name_a( hwnd, wc_integral.lpszClassName );
+    DestroyWindow( hwnd );
+    hwnd = CreateWindowExA( 0, wc_integral.lpszClassName, NULL, 0, 0, 0, 0, 0, 0, 0, hinst, 0 );
+    ok( hwnd != NULL, "CreateWindowExA failed, error %lu\n", GetLastError() );
+    check_class_name_a( hwnd, wc_integral.lpszClassName );
+    DestroyWindow( hwnd );
+    hwnd = CreateWindowExA( 0, wc_integral_versioned.lpszClassName, NULL, 0, 0, 0, 0, 0, 0, 0, hinst, 0 );
+    ok( hwnd != NULL, "CreateWindowExA failed, error %lu\n", GetLastError() );
+    check_class_name_a( hwnd, wc_integral.lpszClassName );
+    DestroyWindow( hwnd );
+
+    /* CreateWindow is allowed by versioned name only when context isn't active */
+    ret = DeactivateActCtx( 0, cookie );
+    ok( ret, "DeactivateActCtx failed, error %lu\n", GetLastError() );
+    hwnd = CreateWindowExA( 0, MAKEINTRESOURCEA( class ), NULL, 0, 0, 0, 0, 0, 0, 0, hinst, 0 );
+    todo_wine ok( !hwnd, "CreateWindowExA succeeded\n" );
+    if (hwnd) DestroyWindow( hwnd );
+    hwnd = CreateWindowExA( 0, wc_integral.lpszClassName, NULL, 0, 0, 0, 0, 0, 0, 0, hinst, 0 );
+    ok( !hwnd, "CreateWindowExA succeeded\n" );
+    hwnd = CreateWindowExA( 0, wc_integral_versioned.lpszClassName, NULL, 0, 0, 0, 0, 0, 0, 0, hinst, 0 );
+    ok( hwnd != NULL, "CreateWindowExA failed, error %lu\n", GetLastError() );
+    check_class_name_a( hwnd, wc_integral.lpszClassName );
+    DestroyWindow( hwnd );
+
+
+    /* register versioned class before activating the context */
+    ret = UnregisterClassA( wc_integral_versioned.lpszClassName, hinst );
+    ok( ret, "UnregisterClassA failed, error %lu\n", GetLastError() );
+
+    class = RegisterClassA( &wc_integral_versioned );
+    ok( class != 0, "RegisterClassA failed, error %lu\n", GetLastError() );
+    ok( class != 1234, "RegisterClassA failed, error %lu\n", GetLastError() );
+    check_atom_name_a( class, wc_integral_versioned.lpszClassName );
+    hwnd = CreateWindowExA( 0, MAKEINTRESOURCEA( class ), NULL, 0, 0, 0, 0, 0, 0, 0, hinst, 0 );
+    ok( hwnd != NULL, "CreateWindowExA failed, error %lu\n", GetLastError() );
+    check_class_name_a( hwnd, wc_integral_versioned.lpszClassName );
+    DestroyWindow( hwnd );
+    hwnd = CreateWindowExA( 0, wc.lpszClassName, NULL, 0, 0, 0, 0, 0, 0, 0, hinst, 0 );
+    ok( !hwnd, "CreateWindowExA succeeded\n" );
+    hwnd = CreateWindowExA( 0, wc_integral_versioned.lpszClassName, NULL, 0, 0, 0, 0, 0, 0, 0, hinst, 0 );
+    ok( hwnd != NULL, "CreateWindowExA failed, error %lu\n", GetLastError() );
+    check_class_name_a( hwnd, wc_integral_versioned.lpszClassName );
+    DestroyWindow( hwnd );
+
+    ret = ActivateActCtx( context, &cookie );
+    ok( ret, "ActivateActCtx failed, error %lu\n", GetLastError() );
+    hwnd = CreateWindowExA( 0, MAKEINTRESOURCEA( class ), NULL, 0, 0, 0, 0, 0, 0, 0, hinst, 0 );
+    ok( hwnd != NULL, "CreateWindowExA failed, error %lu\n", GetLastError() );
+    check_class_name_a( hwnd, wc_integral_versioned.lpszClassName );
+    DestroyWindow( hwnd );
+    hwnd = CreateWindowExA( 0, wc.lpszClassName, NULL, 0, 0, 0, 0, 0, 0, 0, hinst, 0 );
+    ok( !hwnd, "CreateWindowExA succeeded\n" );
+    hwnd = CreateWindowExA( 0, wc_integral_versioned.lpszClassName, NULL, 0, 0, 0, 0, 0, 0, 0, hinst, 0 );
+    ok( hwnd != NULL, "CreateWindowExA failed, error %lu\n", GetLastError() );
+    check_class_name_a( hwnd, wc_integral_versioned.lpszClassName );
+    DestroyWindow( hwnd );
+    ret = DeactivateActCtx( 0, cookie );
+    ok( ret, "DeactivateActCtx failed, error %lu\n", GetLastError() );
+
+    ret = UnregisterClassA( wc_integral_versioned.lpszClassName, hinst );
+    ok( ret, "UnregisterClassA failed, error %lu\n", GetLastError() );
+    check_atom_name_a( class, NULL );
+
+
+    /* FindWindow is allowed only by atom and base names */
+    ret = ActivateActCtx( context, &cookie );
+    ok( ret, "ActivateActCtx failed, error %lu\n", GetLastError() );
+    class = RegisterClassA( &wc_integral );
+    todo_wine ok( class == 1234, "RegisterClassA failed, error %lu\n", GetLastError() );
+
+    hwnd = CreateWindowExA( 0, wc_integral_versioned.lpszClassName, NULL, 0, 0, 0, 0, 0, 0, 0, hinst, 0 );
+    ok( hwnd != NULL, "CreateWindowExA failed, error %lu\n", GetLastError() );
+    tmp_hwnd = FindWindowExA( NULL, NULL, MAKEINTRESOURCEA( class ), NULL );
+    todo_wine ok( tmp_hwnd == hwnd, "FindWindowExA returned %p, error %lu\n", tmp_hwnd, GetLastError() );
+    tmp_hwnd = FindWindowExA( NULL, NULL, wc_integral.lpszClassName, NULL );
+    todo_wine ok( tmp_hwnd == hwnd, "FindWindowExA returned %p, error %lu\n", tmp_hwnd, GetLastError() );
+    tmp_hwnd = FindWindowExA(NULL, NULL, wc_integral_versioned.lpszClassName, NULL);
+    ok( tmp_hwnd == NULL, "FindWindowExA returned %p, error %lu\n", tmp_hwnd, GetLastError() );
+
+    ret = DeactivateActCtx( 0, cookie );
+    ok( ret, "DeactivateActCtx failed, error %lu\n", GetLastError() );
+
+    tmp_hwnd = FindWindowExA( NULL, NULL, MAKEINTRESOURCEA( class ), NULL );
+    todo_wine ok( tmp_hwnd == hwnd, "FindWindowExA returned %p, error %lu\n", tmp_hwnd, GetLastError() );
+    tmp_hwnd = FindWindowExA( NULL, NULL, wc_integral.lpszClassName, NULL );
+    todo_wine ok( tmp_hwnd == hwnd, "FindWindowExA returned %p, error %lu\n", tmp_hwnd, GetLastError() );
+    tmp_hwnd = FindWindowExA(NULL, NULL, wc_integral_versioned.lpszClassName, NULL);
+    ok( tmp_hwnd == NULL, "FindWindowExA returned %p, error %lu\n", tmp_hwnd, GetLastError() );
+    DestroyWindow( hwnd );
+
+    hwnd = CreateWindowExA( 0, wc_integral_versioned.lpszClassName, NULL, 0, 0, 0, 0, 0, 0, 0, hinst, 0 );
+    ok( hwnd != NULL, "CreateWindowExA failed, error %lu\n", GetLastError() );
+    tmp_hwnd = FindWindowExA( NULL, NULL, MAKEINTRESOURCEA( class ), NULL );
+    todo_wine ok( tmp_hwnd == hwnd, "FindWindowExA returned %p, error %lu\n", tmp_hwnd, GetLastError() );
+    tmp_hwnd = FindWindowExA( NULL, NULL, wc_integral.lpszClassName, NULL );
+    todo_wine ok( tmp_hwnd == hwnd, "FindWindowExA returned %p, error %lu\n", tmp_hwnd, GetLastError() );
+    tmp_hwnd = FindWindowExA( NULL, NULL, wc_integral_versioned.lpszClassName, NULL );
+    ok( tmp_hwnd == NULL, "FindWindowExA returned %p, error %lu\n", tmp_hwnd, GetLastError() );
+    DestroyWindow( hwnd );
+
+    ret = UnregisterClassA( wc_integral_versioned.lpszClassName, hinst );
+    ok( ret, "UnregisterClassA failed, error %lu\n", GetLastError() );
 
 
     ReleaseActCtx( context );
