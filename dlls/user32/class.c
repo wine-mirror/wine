@@ -561,8 +561,6 @@ ATOM get_class_info( HINSTANCE instance, const WCHAR *class_name, WNDCLASSEXW *i
     init_class_name( &name, class_name );
     get_class_version( &name, NULL, &module );
 
-    if (!name_str && !instance) instance = user32_module;
-
     while (!(atom = NtUserGetClassInfoEx( instance, &name, info, NULL, ansi )))
     {
         if (module)
@@ -610,6 +608,7 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
         return FALSE;
     }
 
+    if (!hInstance) hInstance = user32_module;
     if (!IS_INTRESOURCE(name))
     {
         WCHAR nameW[MAX_ATOM_LEN + 1];
@@ -640,6 +639,7 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc 
         return FALSE;
     }
 
+    if (!hInstance) hInstance = user32_module;
     atom = get_class_info( hInstance, name, wc, NULL, FALSE );
     if (atom) wc->lpszClassName = name;
 
