@@ -2342,8 +2342,50 @@ static void test_class_name(void)
     nameW = (const WCHAR *)GetClassLongPtrW(hwnd, GCLP_MENUNAME);
     ok(!wcscmp(nameW, L"nameW"), "unexpected class name %s\n", debugstr_w(nameW));
 
+    res = GetClassLongPtrA(hwnd, GCW_ATOM);
+    ok(res != 0, "unexpected class atom %#Ix\n", res);
+    SetLastError(0xdeadbeef);
+    res = SetClassWord(hwnd, GCW_ATOM, 2);
+    todo_wine ok(res == 0, "SetClassLongPtrA returned %#Ix\n", res);
+    todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "got error %lu\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    res = SetClassLongPtrA(hwnd, GCW_ATOM, 2);
+    todo_wine ok(res == 0, "SetClassLongPtrA returned %#Ix\n", res);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError());
+    SetLastError(0xdeadbeef);
+
     DestroyWindow(hwnd);
     UnregisterClassW(class_name, hinst);
+
+    wcex.lpszClassName = MAKEINTRESOURCEW(1);
+    wcex.lpszMenuName  = MAKEINTRESOURCEW(2);
+    ok(RegisterClassExW(&wcex), "RegisterClassExW returned 0\n");
+    hwnd = CreateWindowExW(0, L"#1", NULL, WS_OVERLAPPEDWINDOW,
+                           0, 0, 0, 0, NULL, NULL, hinst, 0);
+    ok(hwnd != NULL, "Window was not created\n");
+
+    res = GetClassLongPtrA(hwnd, GCW_ATOM);
+    ok(res == 1, "unexpected class atom %#Ix\n", res);
+    SetLastError(0xdeadbeef);
+    res = SetClassWord(hwnd, GCW_ATOM, 2);
+    todo_wine ok(res == 0, "SetClassLongPtrA returned %#Ix\n", res);
+    todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "got error %lu\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    res = SetClassWord(hwnd, GCW_ATOM, 1);
+    todo_wine ok(res == 0, "SetClassLongPtrA returned %#Ix\n", res);
+    todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "got error %lu\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    res = SetClassLongPtrA(hwnd, GCW_ATOM, 2);
+    todo_wine ok(res == 0, "SetClassLongPtrA returned %#Ix\n", res);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError());
+
+    nameA = (const char *)GetClassLongPtrA(hwnd, GCLP_MENUNAME);
+    todo_wine ok(!nameA, "unexpected class name %s\n", debugstr_a(nameA));
+    nameW = (const WCHAR *)GetClassLongPtrW(hwnd, GCLP_MENUNAME);
+    todo_wine ok(!nameW, "unexpected class name %s\n", debugstr_w(nameW));
+
+    DestroyWindow(hwnd);
+    UnregisterClassW(wcex.lpszClassName, hinst);
 }
 
 START_TEST(class)
