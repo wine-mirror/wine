@@ -3661,6 +3661,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetFileInformationByHandle( HANDLE file, FILE_INFO
         status = NtSetInformationFile( file, &io, info, size, FileIoPriorityHintInformation );
         break;
     case FileRenameInfo:
+    case FileRenameInfoEx:
         {
             FILE_RENAME_INFORMATION *rename_info;
             UNICODE_STRING nt_name;
@@ -3676,7 +3677,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetFileInformationByHandle( HANDLE file, FILE_INFO
                 memcpy( rename_info, info, sizeof(*rename_info) );
                 memcpy( rename_info->FileName, nt_name.Buffer, nt_name.Length + sizeof(WCHAR) );
                 rename_info->FileNameLength = nt_name.Length;
-                status = NtSetInformationFile( file, &io, rename_info, size, FileRenameInformation );
+                status = NtSetInformationFile( file, &io, rename_info, size,
+                        class == FileRenameInfo ? FileRenameInformation : FileRenameInformationEx );
                 HeapFree( GetProcessHeap(), 0, rename_info );
             }
             RtlFreeUnicodeString( &nt_name );

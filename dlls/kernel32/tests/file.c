@@ -5630,21 +5630,21 @@ static void test_SetFileRenameInfo(void)
     fri->FileNameLength = wcslen(tempFileTo1) * sizeof(WCHAR);
     memcpy(fri->FileName, tempFileTo1, fri->FileNameLength + sizeof(WCHAR));
     ret = pSetFileInformationByHandle(file, FileRenameInfoEx, fri, size);
-    todo_wine ok(!ret && GetLastError() == ERROR_ALREADY_EXISTS, "FileRenameInfoEx unexpected result %ld\n", GetLastError());
+    ok(!ret && GetLastError() == ERROR_ALREADY_EXISTS, "FileRenameInfoEx unexpected result %ld\n", GetLastError());
 
     fri->Flags = FILE_RENAME_REPLACE_IF_EXISTS;
     ret = pSetFileInformationByHandle(file, FileRenameInfoEx, fri, size);
-    todo_wine ok(ret, "FileRenameInfoEx failed, error %ld\n", GetLastError());
+    ok(ret, "FileRenameInfoEx failed, error %ld\n", GetLastError());
 
     fri->Flags = 0;
     fri->FileNameLength = wcslen(tempFileTo2) * sizeof(WCHAR);
     memcpy(fri->FileName, tempFileTo2, fri->FileNameLength + sizeof(WCHAR));
     ret = pSetFileInformationByHandle(file, FileRenameInfoEx, fri, size);
-    todo_wine ok(ret, "FileRenameInfoEx failed, error %ld\n", GetLastError());
+    ok(ret, "FileRenameInfoEx failed, error %ld\n", GetLastError());
     CloseHandle(file);
 
     file = CreateFileW(tempFileTo2, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
-    todo_wine ok(file != INVALID_HANDLE_VALUE, "file not renamed, error %ld\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "file not renamed, error %ld\n", GetLastError());
 
     CloseHandle(file);
     HeapFree(GetProcessHeap(), 0, fri);
