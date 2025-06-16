@@ -72,6 +72,47 @@ static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
+static void CALLBACK msg_winevent_proc(HWINEVENTHOOK hevent,
+                                       DWORD event,
+                                       HWND hwnd,
+                                       LONG object_id,
+                                       LONG child_id,
+                                       DWORD thread_id,
+                                       DWORD event_time)
+{
+    struct message msg = {0};
+    char class_name[256];
+
+    /* ignore window and other system events */
+    if (object_id != OBJID_CLIENT) return;
+
+    /* ignore events not from an updown control */
+    if (!GetClassNameA(hwnd, class_name, ARRAY_SIZE(class_name)) ||
+        strcmp(class_name, UPDOWN_CLASSA) != 0)
+        return;
+
+    msg.message = event;
+    msg.flags = winevent_hook|wparam|lparam;
+    msg.wParam = object_id;
+    msg.lParam = child_id;
+    add_message(sequences, UPDOWN_SEQ_INDEX, &msg);
+}
+
+static void init_winevent_hook(void) {
+    hwineventhook = SetWinEventHook(EVENT_MIN, EVENT_MAX, GetModuleHandleA(0), msg_winevent_proc,
+                                    0, GetCurrentThreadId(), WINEVENT_INCONTEXT);
+    if (!hwineventhook)
+        win_skip( "no win event hook support\n" );
+}
+
+static void uninit_winevent_hook(void) {
+    if (!hwineventhook)
+        return;
+
+    UnhookWinEvent(hwineventhook);
+    hwineventhook = 0;
+}
+
 static const struct message add_updown_with_edit_seq[] = {
     { WM_WINDOWPOSCHANGING, sent },
     { WM_NCCALCSIZE, sent|wparam, TRUE },
@@ -96,14 +137,19 @@ static const struct message test_updown_pos_seq[] = {
     { UDM_SETRANGE, sent|lparam, 0, MAKELONG(100,0) },
     { UDM_GETRANGE, sent},
     { UDM_SETPOS, sent|lparam, 0, 5},
+    { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { UDM_GETPOS, sent},
     { UDM_SETPOS, sent|lparam, 0, 0},
+    { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { UDM_GETPOS, sent},
     { UDM_SETPOS, sent|lparam, 0, MAKELONG(-1,0)},
+    { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { UDM_GETPOS, sent},
     { UDM_SETPOS, sent|lparam, 0, 100},
+    { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { UDM_GETPOS, sent},
     { UDM_SETPOS, sent|lparam, 0, 101},
+    { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { UDM_GETPOS, sent},
     { 0 }
 };
@@ -112,14 +158,19 @@ static const struct message test_updown_pos32_seq[] = {
     { UDM_SETRANGE32, sent|lparam, 0, 1000 },
     { UDM_GETRANGE32, sent}, /* Cannot check wparam and lparam as they are ptrs */
     { UDM_SETPOS32, sent|lparam, 0, 500 },
+    { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { UDM_GETPOS32, sent},
     { UDM_SETPOS32, sent|lparam, 0, 0 },
+    { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { UDM_GETPOS32, sent},
     { UDM_SETPOS32, sent|lparam, 0, -1 },
+    { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { UDM_GETPOS32, sent},
     { UDM_SETPOS32, sent|lparam, 0, 1000 },
+    { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { UDM_GETPOS32, sent},
     { UDM_SETPOS32, sent|lparam, 0, 1001 },
+    { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { UDM_GETPOS32, sent},
     { 0 }
 };
@@ -1036,6 +1087,8 @@ START_TEST(updown)
     g_edit = create_edit_control();
     ok(g_edit != NULL, "Failed to create edit control\n");
 
+    init_winevent_hook();
+
     test_updown_create();
     test_updown_pos();
     test_updown_pos32();
@@ -1046,6 +1099,8 @@ START_TEST(updown)
     test_UDS_SETBUDDYINT();
     test_CreateUpDownControl();
     test_updown_pos_notifications();
+
+    uninit_winevent_hook();
 
     DestroyWindow(g_edit);
     DestroyWindow(parent_wnd);

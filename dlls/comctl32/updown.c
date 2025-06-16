@@ -518,6 +518,7 @@ static int UPDOWN_SetPos(UPDOWN_INFO *infoPtr, int pos)
         else
             ret = infoPtr->MaxVal;
     }
+    NotifyWinEvent( EVENT_OBJECT_VALUECHANGE, infoPtr->Self, OBJID_CLIENT, 0 );
     return ret;
 }
 
