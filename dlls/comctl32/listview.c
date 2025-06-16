@@ -6711,7 +6711,8 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     /* if the app stores all the data, handle it separately */
     if (infoPtr->dwStyle & LVS_OWNERDATA)
     {
-	dispInfo.item.state = 0;
+        if (lpLVItem->mask & LVIF_STATE) lpLVItem->state = 0;
+        dispInfo.item.state = lpLVItem->state;
 
 	/* apparently, we should not callback for lParam in LVS_OWNERDATA */
 	if ((lpLVItem->mask & ~(LVIF_STATE | LVIF_PARAM)) ||

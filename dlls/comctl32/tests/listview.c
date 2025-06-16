@@ -3528,7 +3528,7 @@ static void test_ownerdata(void)
     item.state = 0xffff;
     res = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
     ok(res, "Failed to get item.\n");
-    todo_wine ok(item.state == 0xffff, "Unexpected item state %#x.\n", item.state);
+    ok(item.state == 0xffff, "Unexpected item state %#x.\n", item.state);
 
     /* LVIF_STATE is set with no statemask, state field zeroed. */
     memset(&item, 0, sizeof(item));
@@ -3537,10 +3537,10 @@ static void test_ownerdata(void)
     item.state = 0xffff;
     res = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
     ok(res, "Failed to get item.\n");
-    todo_wine ok(!item.state, "Unexpected item state %#x.\n", item.state);
+    ok(!item.state, "Unexpected item state %#x.\n", item.state);
 
     res = SendMessageA(hwnd, LVM_GETITEMSTATE, 0, 0xff);
-    todo_wine ok(res == LVIS_SELECTED, "Unexpected item state %#lx.\n", res);
+    ok(res == LVIS_SELECTED, "Unexpected item state %#lx.\n", res);
 
     /* Set the callback mask for LVIS_SELECTED. */
     res = SendMessageA(hwnd, LVM_SETCALLBACKMASK, LVIS_SELECTED, 0);
