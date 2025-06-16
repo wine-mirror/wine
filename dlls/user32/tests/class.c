@@ -2398,11 +2398,11 @@ static void test_class_name(void)
     ok(res != 0, "unexpected class atom %#Ix\n", res);
     SetLastError(0xdeadbeef);
     res = SetClassWord(hwnd, GCW_ATOM, 2);
-    todo_wine ok(res == 0, "SetClassLongPtrA returned %#Ix\n", res);
-    todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "got error %lu\n", GetLastError());
+    ok(res == 0, "SetClassWord returned %#Ix\n", res);
+    ok(GetLastError() == ERROR_INVALID_INDEX, "got error %lu\n", GetLastError());
     SetLastError(0xdeadbeef);
     res = SetClassLongPtrA(hwnd, GCW_ATOM, 2);
-    todo_wine ok(res == 0, "SetClassLongPtrA returned %#Ix\n", res);
+    ok(res == 0, "SetClassLongPtrA returned %#Ix\n", res);
     todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError());
     SetLastError(0xdeadbeef);
 
@@ -2420,15 +2420,15 @@ static void test_class_name(void)
     ok(res == 1, "unexpected class atom %#Ix\n", res);
     SetLastError(0xdeadbeef);
     res = SetClassWord(hwnd, GCW_ATOM, 2);
-    todo_wine ok(res == 0, "SetClassLongPtrA returned %#Ix\n", res);
-    todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "got error %lu\n", GetLastError());
+    ok(res == 0, "SetClassWord returned %#Ix\n", res);
+    ok(GetLastError() == ERROR_INVALID_INDEX, "got error %lu\n", GetLastError());
     SetLastError(0xdeadbeef);
     res = SetClassWord(hwnd, GCW_ATOM, 1);
-    todo_wine ok(res == 0, "SetClassLongPtrA returned %#Ix\n", res);
-    todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "got error %lu\n", GetLastError());
+    ok(res == 0, "SetClassWord returned %#Ix\n", res);
+    ok(GetLastError() == ERROR_INVALID_INDEX, "got error %lu\n", GetLastError());
     SetLastError(0xdeadbeef);
     res = SetClassLongPtrA(hwnd, GCW_ATOM, 2);
-    todo_wine ok(res == 0, "SetClassLongPtrA returned %#Ix\n", res);
+    ok(res == 0, "SetClassLongPtrA returned %#Ix\n", res);
     todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError());
 
     nameA = (const char *)GetClassLongPtrA(hwnd, GCLP_MENUNAME);

@@ -4532,7 +4532,6 @@ struct set_class_info_reply
     int            old_win_extra;
     char __pad_44[4];
 };
-#define SET_CLASS_ATOM      0x0001
 #define SET_CLASS_STYLE     0x0002
 #define SET_CLASS_WINEXTRA  0x0004
 #define SET_CLASS_INSTANCE  0x0008

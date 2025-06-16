@@ -754,10 +754,6 @@ static BOOL set_server_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size )
         req->extra_offset = -1;
         switch(offset)
         {
-        case GCW_ATOM:
-            req->flags = SET_CLASS_ATOM;
-            req->atom = LOWORD(newval);
-            break;
         case GCL_STYLE:
             req->flags = SET_CLASS_STYLE;
             req->style = newval;
@@ -914,17 +910,6 @@ static ULONG_PTR set_class_long( HWND hwnd, INT offset, LONG_PTR newval, UINT si
         if (!set_server_info( hwnd, offset, newval, size )) break;
         retval = class->instance;
         class->instance = newval;
-        break;
-    case GCW_ATOM:
-        {
-            UNICODE_STRING us;
-            if (!set_server_info( hwnd, offset, newval, size )) break;
-            retval = class->atomName;
-            class->atomName = newval;
-            us.Buffer = class->name;
-            us.MaximumLength = sizeof(class->name);
-            NtUserGetAtomName( newval, &us );
-        }
         break;
     case GCL_CBCLSEXTRA:  /* cannot change this one */
         RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
