@@ -6867,8 +6867,6 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     {
         if (!lpLVItem->iSubItem || (infoPtr->dwLvExStyle & LVS_EX_SUBITEMIMAGES))
             lpLVItem->iImage = pItemHdr->iImage;
-        else
-            lpLVItem->iImage = 0;
     }
 
     /* The pszText field */

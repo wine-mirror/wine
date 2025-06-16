@@ -1171,7 +1171,7 @@ static void test_images(void)
     item.iImage = 500;
     r = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
     ok(r, "Failed to get item.\n");
-    todo_wine ok(item.iImage == 500, "Unexpected iImage value %d.\n", item.iImage);
+    ok(item.iImage == 500, "Unexpected iImage value %d.\n", item.iImage);
 
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "get image dispinfo 2", FALSE);
 
