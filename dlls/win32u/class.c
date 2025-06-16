@@ -1029,18 +1029,6 @@ WORD get_class_word( HWND hwnd, INT offset )
     return get_class_long_size( hwnd, offset, sizeof(WORD), TRUE );
 }
 
-BOOL needs_ime_window( HWND hwnd )
-{
-    static const WCHAR imeW[] = {'I','M','E',0};
-    CLASS *class;
-    BOOL ret;
-
-    if (!(class = get_class_ptr( hwnd, FALSE ))) return FALSE;
-    ret = !(class->style & CS_IME) && wcscmp( imeW, class->name );
-    release_class_ptr( class );
-    return ret;
-}
-
 static const struct builtin_class_descr desktop_builtin_class =
 {
     .name = "#32769", /* DESKTOP_CLASS_ATOM */

@@ -274,6 +274,17 @@ static struct imm_thread_data *get_imm_thread_data(void)
     return thread_info->imm_thread_data;
 }
 
+static BOOL needs_ime_window( HWND hwnd )
+{
+    static const WCHAR imeW[] = {'I','M','E'};
+    WCHAR nameW[MAX_ATOM_LEN + 1];
+    UNICODE_STRING name = RTL_CONSTANT_STRING(nameW);
+
+    if (NtUserGetClassLongW( hwnd, GCL_STYLE ) & CS_IME) return FALSE;
+    name.Length = NtUserGetClassName( hwnd, FALSE, &name ) * sizeof(WCHAR);
+    return name.Length != sizeof(imeW) || memcmp( name.Buffer, imeW, sizeof(imeW) );
+}
+
 BOOL register_imm_window( HWND hwnd )
 {
     struct imm_thread_data *thread_data;
