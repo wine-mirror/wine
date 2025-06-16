@@ -350,15 +350,15 @@ atom_t find_atom( struct atom_table *table, const struct unicode_str *str )
 }
 
 /* increment the ref count of a global atom; used for window properties */
-int grab_atom( struct atom_table *table, atom_t atom )
+atom_t grab_atom( struct atom_table *table, atom_t atom )
 {
     if (atom >= MIN_STR_ATOM)
     {
         struct atom_entry *entry = get_atom_entry( table, atom );
-        if (entry) entry->count++;
-        return (entry != NULL);
+        if (!entry) return 0;
+        entry->count++;
     }
-    else return 1;
+    return atom;
 }
 
 /* decrement the ref count of a global atom; used for window properties */

@@ -296,7 +296,7 @@ extern struct atom_table *get_global_atom_table(void);
 extern struct atom_table *get_user_atom_table(void);
 extern atom_t add_atom( struct atom_table *table, const struct unicode_str *str );
 extern atom_t find_atom( struct atom_table *table, const struct unicode_str *str );
-extern int grab_atom( struct atom_table *table, atom_t atom );
+extern atom_t grab_atom( struct atom_table *table, atom_t atom );
 extern void release_atom( struct atom_table *table, atom_t atom );
 
 /* directory functions */

@@ -164,35 +164,23 @@ DECL_HANDLER(create_class)
     struct window_class *class;
     struct unicode_str name = get_req_unicode_str();
     struct atom_table *table = get_user_atom_table();
-    atom_t atom, base_atom;
+    atom_t atom = req->atom, base_atom;
 
-    if (name.len)
+    if (!atom && !(atom = add_atom( table, &name ))) return;
+
+    if (req->name_offset && req->name_offset < name.len / sizeof(WCHAR))
     {
-        atom = add_atom( table, &name );
-        if (!atom) return;
-        if (req->name_offset && req->name_offset < name.len / sizeof(WCHAR))
+        name.str += req->name_offset;
+        name.len -= req->name_offset * sizeof(WCHAR);
+        if (!(base_atom = add_atom( table, &name )))
         {
-            name.str += req->name_offset;
-            name.len -= req->name_offset * sizeof(WCHAR);
-
-            base_atom = add_atom( table, &name );
-            if (!base_atom)
-            {
-                release_atom( table, atom );
-                return;
-            }
-        }
-        else
-        {
-            base_atom = atom;
-            grab_atom( table, atom );
+            release_atom( table, atom );
+            return;
         }
     }
     else
     {
-        base_atom = atom = req->atom;
-        if (!grab_atom( table, atom )) return;
-        grab_atom( table, base_atom );
+        base_atom = grab_atom( table, atom );
     }
 
     class = find_class( current->process, atom, req->instance );
