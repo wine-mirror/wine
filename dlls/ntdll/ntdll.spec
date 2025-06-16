@@ -606,7 +606,7 @@
 @ stub RtlCutoverTimeToSystemTime
 @ stdcall RtlDeNormalizeProcessParams(ptr)
 @ stdcall RtlDeactivateActivationContext(long long)
-@ stub RtlDeactivateActivationContextUnsafeFast
+@ stdcall -fastcall RtlDeactivateActivationContextUnsafeFast(ptr)
 @ stub RtlDebugPrintTimes
 @ stdcall RtlDecodePointer(ptr)
 @ stdcall RtlDecodeSystemPointer(ptr) RtlDecodePointer

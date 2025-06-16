@@ -5453,6 +5453,24 @@ RTL_ACTIVATION_CONTEXT_STACK_FRAME * FASTCALL RtlActivateActivationContextUnsafe
 }
 
 /******************************************************************
+ *              RtlDeactivateActivationContextUnsafeFast (NTDLL.@)
+ *
+ * FIXME: function prototype might be wrong
+ */
+DEFINE_FASTCALL1_WRAPPER( RtlDeactivateActivationContextUnsafeFast )
+void FASTCALL RtlDeactivateActivationContextUnsafeFast( RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_EXTENDED *frame_extended )
+{
+    ACTIVATION_CONTEXT_STACK *actctx_stack = NtCurrentTeb()->ActivationContextStackPointer;
+    ACTIVATION_CONTEXT *actctx;
+
+    TRACE( "%p\n", frame_extended );
+
+    actctx = actctx_stack->ActiveFrame->ActivationContext;
+    actctx_stack->ActiveFrame = frame_extended->Frame.Previous;
+    RtlReleaseActivationContext( actctx );
+}
+
+/******************************************************************
  *		RtlActivateActivationContextEx (NTDLL.@)
  */
 NTSTATUS WINAPI RtlActivateActivationContextEx( ULONG flags, TEB *teb, ACTIVATION_CONTEXT *actctx, ULONG_PTR *cookie )
