@@ -1063,34 +1063,7 @@ ULONG_PTR get_class_long_ptr( HWND hwnd, INT offset, BOOL ansi )
 
 WORD get_class_word( HWND hwnd, INT offset )
 {
-    CLASS *class;
-    WORD retvalue = 0;
-
-    if (offset < 0) return get_class_long( hwnd, offset, TRUE );
-
-    if (!(class = get_class_ptr( hwnd, FALSE ))) return 0;
-
-    if (class == OBJ_OTHER_PROCESS)
-    {
-        SERVER_START_REQ( set_class_info )
-        {
-            req->window = wine_server_user_handle( hwnd );
-            req->flags = 0;
-            req->extra_offset = offset;
-            req->extra_size = sizeof(retvalue);
-            if (!wine_server_call_err( req ))
-                memcpy( &retvalue, &reply->old_extra_value, sizeof(retvalue) );
-        }
-        SERVER_END_REQ;
-        return retvalue;
-    }
-
-    if (offset <= class->cbClsExtra - sizeof(WORD))
-        memcpy( &retvalue, (char *)(class + 1) + offset, sizeof(retvalue) );
-    else
-        RtlSetLastWin32Error( ERROR_INVALID_INDEX );
-    release_class_ptr( class );
-    return retvalue;
+    return get_class_long_size( hwnd, offset, sizeof(WORD), TRUE );
 }
 
 BOOL needs_ime_window( HWND hwnd )
