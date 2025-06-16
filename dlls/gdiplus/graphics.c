@@ -4833,6 +4833,11 @@ static GpStatus get_clipped_region_hrgn(GpGraphics* graphics, GpRegion* region, 
         GdipDeleteRegion(device_region);
     }
 
+    if (status == Ok && graphics->gdi_clip)
+    {
+        CombineRgn(*hrgn, *hrgn, graphics->gdi_clip, RGN_AND);
+    }
+
     return status;
 }
 
