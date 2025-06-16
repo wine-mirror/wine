@@ -235,6 +235,7 @@ SOURCES = \
 	devicetopology.idl \
 	devpkey.h \
 	devpropdef.h \
+	devquery.h \
 	devquerydef.h \
 	dhcpcsdk.h \
 	dhtmldid.h \
