@@ -230,6 +230,7 @@ SOURCES = \
 	ddstream.idl \
 	delayloadhandler.h \
 	devenum.idl \
+	devfiltertypes.h \
 	devguid.h \
 	devicetopology.idl \
 	devpkey.h \
