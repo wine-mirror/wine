@@ -616,21 +616,23 @@ static GpStatus alpha_blend_pixels_hrgn(GpGraphics *graphics, INT dst_x, INT dst
         if (!hrgn)
             return OutOfMemory;
 
-        stat = get_clip_hrgn(graphics, &visible_rgn);
-        if (stat != Ok)
-        {
-            DeleteObject(hrgn);
-            return stat;
-        }
-
-        if (visible_rgn)
-        {
-            CombineRgn(hrgn, hrgn, visible_rgn, RGN_AND);
-            DeleteObject(visible_rgn);
-        }
-
         if (hregion)
             CombineRgn(hrgn, hrgn, hregion, RGN_AND);
+        else
+        {
+            stat = get_clip_hrgn(graphics, &visible_rgn);
+            if (stat != Ok)
+            {
+                DeleteObject(hrgn);
+                return stat;
+            }
+
+            if (visible_rgn)
+            {
+                CombineRgn(hrgn, hrgn, visible_rgn, RGN_AND);
+                DeleteObject(visible_rgn);
+            }
+        }
 
         size = GetRegionData(hrgn, 0, NULL);
 
@@ -675,27 +677,30 @@ static GpStatus alpha_blend_pixels_hrgn(GpGraphics *graphics, INT dst_x, INT dst
         if (stat != Ok)
             return stat;
 
-        stat = get_clip_hrgn(graphics, &hrgn);
-
-        if (stat != Ok)
-        {
-            gdi_dc_release(graphics, hdc);
-            return stat;
-        }
-
         save = SaveDC(hdc);
 
-        ExtSelectClipRgn(hdc, hrgn, RGN_COPY);
-
         if (hregion)
-            ExtSelectClipRgn(hdc, hregion, RGN_AND);
+            ExtSelectClipRgn(hdc, hregion, RGN_COPY);
+        else
+        {
+            stat = get_clip_hrgn(graphics, &hrgn);
+
+            if (stat != Ok)
+            {
+                RestoreDC(hdc, save);
+                gdi_dc_release(graphics, hdc);
+                return stat;
+            }
+
+            ExtSelectClipRgn(hdc, hrgn, RGN_COPY);
+
+            DeleteObject(hrgn);
+        }
 
         stat = alpha_blend_hdc_pixels(graphics, dst_x, dst_y, src, src_width,
             src_height, src_stride, fmt);
 
         RestoreDC(hdc, save);
-
-        DeleteObject(hrgn);
 
         gdi_dc_release(graphics, hdc);
 
