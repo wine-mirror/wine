@@ -28,12 +28,42 @@
 
 #include "oaidl.h"
 #include "initguid.h"
+#include "wine/asm.h"
 
+#ifdef __ASM_USE_FASTCALL_WRAPPER
+
+extern void * WINAPI wrap_fastcall_func1( void *func, const void *a );
+__ASM_STDCALL_FUNC( wrap_fastcall_func1, 8,
+                   "popl %ecx\n\t"
+                   "popl %eax\n\t"
+                   "xchgl (%esp),%ecx\n\t"
+                   "jmp *%eax" );
+extern void * WINAPI wrap_fastcall_func2( void *func, const void *a, const void *b );
+__ASM_STDCALL_FUNC( wrap_fastcall_func2, 12,
+                   "popl %edx\n\t"
+                   "popl %eax\n\t"
+                   "popl %ecx\n\t"
+                   "xchgl (%esp),%edx\n\t"
+                   "jmp *%eax" );
+
+#define call_fastcall_func1(func,a) wrap_fastcall_func1(func,a)
+#define call_fastcall_func2(func,a,b) wrap_fastcall_func2(func,a,b)
+
+#else  /* __ASM_USE_FASTCALL_WRAPPER */
+
+#define call_fastcall_func1(func,a) func(a)
+#define call_fastcall_func2(func,a,b) func(a,b)
+
+#endif  /* __ASM_USE_FASTCALL_WRAPPER */
 static BOOL   (WINAPI *pQueryActCtxSettingsW)(DWORD,HANDLE,LPCWSTR,LPCWSTR,LPWSTR,SIZE_T,SIZE_T*);
 
 static NTSTATUS (NTAPI *pRtlActivateActivationContext)(ULONG,struct _ACTIVATION_CONTEXT *,ULONG_PTR *);
 static NTSTATUS (NTAPI *pRtlActivateActivationContextEx)(ULONG,TEB *,struct _ACTIVATION_CONTEXT *,ULONG_PTR *);
+static PRTL_ACTIVATION_CONTEXT_STACK_FRAME (FASTCALL *pRtlActivateActivationContextUnsafeFast)(PRTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_EXTENDED,
+                                                                                               struct _ACTIVATION_CONTEXT *);
+static VOID (FASTCALL *pRtlDeactivateActivationContextUnsafeFast)(PRTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_EXTENDED);
 static NTSTATUS(NTAPI *pRtlFindActivationContextSectionString)(DWORD,const GUID *,ULONG,PUNICODE_STRING,PACTCTX_SECTION_KEYED_DATA);
+static VOID (NTAPI *pRtlFreeThreadActivationContextStack)(VOID);
 static BOOLEAN (NTAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING, PCSZ);
 static VOID    (NTAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
 static NTSTATUS(NTAPI *pRtlQueryInformationActiveActivationContext)(ULONG,PVOID,SIZE_T,SIZE_T *);
@@ -3160,7 +3190,10 @@ static BOOL init_funcs(void)
     hLibrary = GetModuleHandleA("ntdll.dll");
     X(RtlActivateActivationContext);
     X(RtlActivateActivationContextEx);
+    X(RtlActivateActivationContextUnsafeFast);
+    X(RtlDeactivateActivationContextUnsafeFast);
     X(RtlFindActivationContextSectionString);
+    X(RtlFreeThreadActivationContextStack);
     X(RtlCreateUnicodeStringFromAsciiz);
     X(RtlFreeUnicodeString);
     X(RtlQueryInformationActiveActivationContext);
@@ -4590,6 +4623,112 @@ static void test_RtlQueryInformationActiveActivationContext(void)
     ReleaseActCtx( context );
 }
 
+static void test_RtlActivateActivationContextUnsafeFast(void)
+{
+    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_EXTENDED frame_extended1 = {0}, frame_extended2 = {0};
+    HANDLE context1, context2, current_context;
+    BOOL ret;
+
+    ret = GetCurrentActCtx(&current_context);
+    ok(ret, "GetCurrentActCtx failed.\n");
+    ok(!current_context, "Got unexpected handle.\n");
+
+    if (!create_manifest_file("test1.manifest", manifest1, -1, NULL, NULL))
+    {
+        skip("Could not create manifest file 1.\n");
+        return;
+    }
+    if (!create_manifest_file("test2.manifest", manifest1_1, -1, NULL, NULL))
+    {
+        skip("Could not create manifest file 2.\n");
+        DeleteFileA("test1.manifest");
+        return;
+    }
+    context1 = test_create("test1.manifest");
+    ok(context1 != INVALID_HANDLE_VALUE, "Failed to create context, error %lu.\n", GetLastError());
+    DeleteFileA("test1.manifest");
+    context2 = test_create("test2.manifest");
+    ok(context2 != INVALID_HANDLE_VALUE, "Failed to create context, error %lu.\n", GetLastError());
+    DeleteFileA("test2.manifest");
+
+    /* Size and Format don't seem to be checked */
+    frame_extended1.Size = 0;
+    frame_extended1.Format = 0xdeadbeef;
+    call_fastcall_func2( pRtlActivateActivationContextUnsafeFast, &frame_extended1, context1);
+    ok(frame_extended1.Size == 0, "Got unexpected Size %#Ix.\n", frame_extended1.Size);
+    ok(frame_extended1.Format == 0xdeadbeef, "Got unexpected Format %#lx.\n", frame_extended1.Format);
+    ok(!frame_extended1.Frame.Previous, "Got unexpected Previous.\n");
+    ok(frame_extended1.Frame.ActivationContext == context1, "Got unexpected ActivationContext.\n");
+    ok(!(frame_extended1.Frame.Flags & NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED),
+       "Got unexpected Flags %#lx.\n", frame_extended1.Frame.Flags);
+
+    ret = GetCurrentActCtx(&current_context);
+    ok(current_context == context1, "Got unexpected handle.\n");
+    ReleaseActCtx(current_context);
+
+    call_fastcall_func1( pRtlDeactivateActivationContextUnsafeFast, &frame_extended1);
+    ret = GetCurrentActCtx(&current_context);
+    ok(ret, "GetCurrentActCtx failed.\n");
+    ok(!current_context, "Got unexpected handle.\n");
+
+    /* Normal call */
+    frame_extended1.Size = sizeof(frame_extended1);
+    frame_extended1.Format = 0;
+    call_fastcall_func2( pRtlActivateActivationContextUnsafeFast, &frame_extended1, context1);
+    ok(frame_extended1.Size == sizeof(frame_extended1), "Got unexpected Size %#Ix.\n", frame_extended1.Size);
+    ok(frame_extended1.Format == 0, "Got unexpected Format %#lx.\n", frame_extended1.Format);
+    ok(!frame_extended1.Frame.Previous, "Got unexpected Previous.\n");
+    ok(frame_extended1.Frame.ActivationContext == context1, "Got unexpected ActivationContext.\n");
+    ok(!(frame_extended1.Frame.Flags & NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED),
+       "Got unexpected Flags %#lx.\n", frame_extended1.Frame.Flags);
+
+    ret = GetCurrentActCtx(&current_context);
+    ok(current_context == context1, "Got unexpected handle.\n");
+    ReleaseActCtx(current_context);
+
+    /* Activate another activation context */
+    frame_extended2.Size = sizeof(frame_extended2);
+    frame_extended2.Format = 0;
+    call_fastcall_func2( pRtlActivateActivationContextUnsafeFast, &frame_extended2, context2);
+    ok(frame_extended2.Size == sizeof(frame_extended2), "Got unexpected Size %#Ix.\n", frame_extended2.Size);
+    ok(frame_extended2.Format == 0, "Got unexpected Format %#lx.\n", frame_extended2.Format);
+    ok(frame_extended2.Frame.Previous == &frame_extended1.Frame, "Got unexpected Previous.\n");
+    ok(frame_extended2.Frame.ActivationContext == context2, "Got unexpected ActivationContext.\n");
+    ok(!(frame_extended2.Frame.Flags & NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED),
+       "Got unexpected Flags %#lx.\n", frame_extended2.Frame.Flags);
+
+    ret = GetCurrentActCtx(&current_context);
+    ok(current_context == context2, "Got unexpected handle.\n");
+    ReleaseActCtx(current_context);
+
+    call_fastcall_func1( pRtlDeactivateActivationContextUnsafeFast, &frame_extended2);
+    ret = GetCurrentActCtx(&current_context);
+    ok(current_context == context1, "Got unexpected handle.\n");
+    ReleaseActCtx(current_context);
+
+    call_fastcall_func1( pRtlDeactivateActivationContextUnsafeFast, &frame_extended1);
+    ret = GetCurrentActCtx(&current_context);
+    ok(ret, "GetCurrentActCtx failed.\n");
+    ok(!current_context, "Got unexpected handle.\n");
+
+    /* Test freeing an unsafe frame. Not crashing means RtlFreeThreadActivationContextStack() must
+     * be able to handle it, most likely by checking the frame flags */
+    frame_extended1.Size = sizeof(frame_extended1);
+    call_fastcall_func2( pRtlActivateActivationContextUnsafeFast, &frame_extended1, context1);
+
+    ret = GetCurrentActCtx(&current_context);
+    ok(current_context == context1, "Got unexpected handle.\n");
+    ReleaseActCtx(current_context);
+
+    pRtlFreeThreadActivationContextStack();
+    ret = GetCurrentActCtx(&current_context);
+    ok(ret, "GetCurrentActCtx failed.\n");
+    ok(!current_context, "Got unexpected handle.\n");
+
+    ReleaseActCtx(context2);
+    ReleaseActCtx(context1);
+}
+
 START_TEST(actctx)
 {
     int argc;
@@ -4630,5 +4769,6 @@ START_TEST(actctx)
     test_compatibility();
     test_settings();
     test_RtlQueryInformationActiveActivationContext();
+    test_RtlActivateActivationContextUnsafeFast();
     for (int i = 1; i <= 6; i++) run_child_process_two_dll(i);
 }
