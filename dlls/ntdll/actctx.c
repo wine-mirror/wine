@@ -5431,6 +5431,26 @@ NTSTATUS WINAPI RtlActivateActivationContext( ULONG unknown, ACTIVATION_CONTEXT 
     return RtlActivateActivationContextEx( 0, NtCurrentTeb(), actctx, cookie );
 }
 
+/******************************************************************
+ *              RtlActivateActivationContextUnsafeFast (NTDLL.@)
+ *
+ * FIXME: function prototype might be wrong
+ */
+DEFINE_FASTCALL_WRAPPER( RtlActivateActivationContextUnsafeFast, 8 )
+RTL_ACTIVATION_CONTEXT_STACK_FRAME * FASTCALL RtlActivateActivationContextUnsafeFast( RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_EXTENDED *frame_extended,
+                                                                                      ACTIVATION_CONTEXT *actctx )
+{
+    ACTIVATION_CONTEXT_STACK *actctx_stack = NtCurrentTeb()->ActivationContextStackPointer;
+
+    TRACE( "%p %p\n", frame_extended, actctx );
+
+    frame_extended->Frame.Previous = actctx_stack->ActiveFrame;
+    frame_extended->Frame.ActivationContext = actctx;
+    frame_extended->Frame.Flags = 0;
+    actctx_stack->ActiveFrame = &frame_extended->Frame;
+    RtlAddRefActivationContext( actctx );
+    return &frame_extended->Frame;
+}
 
 /******************************************************************
  *		RtlActivateActivationContextEx (NTDLL.@)
