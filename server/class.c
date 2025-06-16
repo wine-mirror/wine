@@ -212,7 +212,7 @@ DECL_HANDLER(create_class)
     class->style      = req->style;
     class->win_extra  = req->win_extra;
     class->client_ptr = req->client_ptr;
-    reply->atom = atom;
+    reply->atom = base_atom;
 }
 
 /* destroy a window class */
@@ -277,7 +277,6 @@ DECL_HANDLER(set_class_info)
     reply->old_extra     = class->nb_extra_bytes;
     reply->old_win_extra = class->win_extra;
     reply->old_instance  = class->instance;
-    reply->base_atom     = class->base_atom;
 
     if (req->flags & SET_CLASS_STYLE) class->style = req->style;
     if (req->flags & SET_CLASS_WINEXTRA) class->win_extra = req->win_extra;

@@ -2428,11 +2428,10 @@ static void dump_set_class_info_request( const struct set_class_info_request *re
 
 static void dump_set_class_info_reply( const struct set_class_info_reply *req )
 {
-    fprintf( stderr, " old_atom=%04x", req->old_atom );
-    fprintf( stderr, ", base_atom=%04x", req->base_atom );
+    fprintf( stderr, " old_style=%08x", req->old_style );
+    fprintf( stderr, ", old_atom=%04x", req->old_atom );
     dump_uint64( ", old_instance=", &req->old_instance );
     dump_uint64( ", old_extra_value=", &req->old_extra_value );
-    fprintf( stderr, ", old_style=%08x", req->old_style );
     fprintf( stderr, ", old_extra=%d", req->old_extra );
     fprintf( stderr, ", old_win_extra=%d", req->old_win_extra );
 }

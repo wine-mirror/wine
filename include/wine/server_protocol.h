@@ -4523,15 +4523,14 @@ struct set_class_info_request
 struct set_class_info_reply
 {
     struct reply_header __header;
+    unsigned int   old_style;
     atom_t         old_atom;
-    atom_t         base_atom;
     mod_handle_t   old_instance;
     lparam_t       old_extra_value;
-    unsigned int   old_style;
     int            old_extra;
     int            old_win_extra;
-    char __pad_44[4];
 };
+#define SET_CLASS_ATOM      0x0001
 #define SET_CLASS_STYLE     0x0002
 #define SET_CLASS_WINEXTRA  0x0004
 #define SET_CLASS_INSTANCE  0x0008
@@ -6860,6 +6859,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 887
+#define SERVER_PROTOCOL_VERSION 888
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -3264,11 +3264,10 @@ enum caret_state
     data_size_t    extra_size;     /* size to set in extra bytes */
     lparam_t       extra_value;    /* value to set in extra bytes */
 @REPLY
-    atom_t         old_atom;       /* previous class atom */
-    atom_t         base_atom;      /* base class atom */
+    unsigned int   old_style;      /* previous class style */
+    atom_t         old_atom;       /* previous class base atom */
     mod_handle_t   old_instance;   /* previous module instance */
     lparam_t       old_extra_value; /* old value in extra bytes */
-    unsigned int   old_style;      /* previous class style */
     int            old_extra;      /* previous number of class extra bytes */
     int            old_win_extra;  /* previous number of window extra bytes */
 @END

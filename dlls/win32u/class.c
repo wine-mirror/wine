@@ -59,7 +59,7 @@ typedef struct tagCLASS
     HICON        hIconSmIntern; /* Internal small icon, derived from hIcon */
     HCURSOR      hCursor;       /* Default cursor */
     HBRUSH       hbrBackground; /* Default background */
-    ATOM         atomName;      /* Name of the class */
+    ATOM         atom;          /* name of the class */
     WCHAR        name[MAX_ATOM_LEN + 1];
     WCHAR       *basename;      /* Base name for redirected classes, pointer within 'name'. */
     struct client_menu_name menu_name; /* Default menu name */
@@ -505,7 +505,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
         req->atom       = wine_server_add_atom( req, name );
         req->name_offset = version->Length / sizeof(WCHAR);
         ret = !wine_server_call_err( req );
-        class->atomName = reply->atom;
+        atom = reply->atom;
     }
     SERVER_END_REQ;
     if (!ret)
@@ -525,8 +525,6 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
     if (class->local) list_add_head( &class_list, &class->entry );
     else list_add_tail( &class_list, &class->entry );
 
-    atom = class->atomName;
-
     TRACE( "name=%s->%s atom=%04x wndproc=%p hinst=%p bg=%p style=%08x clsExt=%d winExt=%d class=%p\n",
            debugstr_w(wc->lpszClassName), debugstr_us(name), atom, wc->lpfnWndProc, instance,
            wc->hbrBackground, wc->style, wc->cbClsExtra, wc->cbWndExtra, class );
@@ -536,6 +534,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
     class->hIconSmIntern = sm_icon;
     class->hCursor       = wc->hCursor;
     class->hbrBackground = wc->hbrBackground;
+    class->atom          = atom;
     class->winproc       = alloc_winproc( wc->lpfnWndProc, ansi );
     if (client_menu_name) class->menu_name = *client_menu_name;
     release_class_ptr( class );
@@ -606,7 +605,7 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
     }
 
     if (menu_name) *menu_name = class->menu_name;
-    atom = class->atomName;
+    atom = class->atom;
     release_class_ptr( class );
     return atom;
 }
@@ -719,7 +718,7 @@ INT WINAPI NtUserGetClassName( HWND hwnd, BOOL real, UNICODE_STRING *name )
             req->extra_offset = -1;
             req->extra_size = 0;
             if (!wine_server_call_err( req ))
-                atom = reply->base_atom;
+                atom = reply->old_atom;
         }
         SERVER_END_REQ;
 
@@ -1076,7 +1075,7 @@ static ULONG_PTR get_class_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
         retvalue = ansi ? (ULONG_PTR)class->menu_name.nameA : (ULONG_PTR)class->menu_name.nameW;
         break;
     case GCW_ATOM:
-        retvalue = class->atomName;
+        retvalue = class->atom;
         break;
     default:
         RtlSetLastWin32Error( ERROR_INVALID_INDEX );
