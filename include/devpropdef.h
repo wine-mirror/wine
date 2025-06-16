@@ -100,4 +100,26 @@ typedef struct _DEVPROPKEY {
 #else
 #define IsEqualDevPropKey(a,b) (((a).pid == (b).pid) && IsEqualIID(&(a).fmtid,&(b).fmtid))
 #endif
+
+typedef enum _DEVPROPSTORE
+{
+    DEVPROP_STORE_SYSTEM,
+    DEVPROP_STORE_USER,
+} DEVPROPSTORE, *PDEVPROPSTORE;
+
+typedef struct _DEVPROPCOMPKEY
+{
+    DEVPROPKEY Key;
+    DEVPROPSTORE Store;
+    PCWSTR LocaleName;
+} DEVPROPCOMPKEY, *PDEVPROPCOMPKEY;
+
+typedef struct _DEVPROPERTY
+{
+    DEVPROPCOMPKEY CompKey;
+    DEVPROPTYPE Type;
+    ULONG BufferSize;
+    void *Buffer;
+} DEVPROPERTY, *PDEVPROPERTY;
+
 #endif
