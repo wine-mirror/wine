@@ -554,6 +554,12 @@ static int parse_input_file( DLLSPEC *spec )
     return result;
 }
 
+static void check_target(void)
+{
+    if (is_pe()) return;
+    if (target.cpu == CPU_i386 || target.cpu == CPU_x86_64) return;
+    fatal_error( "Non-PE builds are not supported on this platform.\n" );
+}
 
 /*******************************************************************
  *         main
@@ -595,6 +601,7 @@ int main(int argc, char **argv)
             spec->dll_characteristics |= IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA;
         }
 
+        check_target();
         files = load_resources( files, spec );
         if (spec_file_name && !parse_input_file( spec )) break;
         if (!spec->init_func) spec->init_func = xstrdup( get_default_entry_point( spec ));
@@ -626,6 +633,7 @@ int main(int argc, char **argv)
         close_output_file();
         break;
     case MODE_IMPLIB:
+        check_target();
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
         if (!parse_input_file( spec )) break;
         output_import_lib( spec, files );

@@ -369,10 +369,6 @@ struct strarray get_ld_command(void)
             break;
         }
     }
-
-    if (target.cpu == CPU_ARM && !is_pe())
-        strarray_add( &args, "--no-wchar-size-warning" );
-
     return args;
 }
 
