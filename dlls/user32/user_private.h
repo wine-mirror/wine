@@ -82,6 +82,7 @@ extern void winproc_init(void);
 extern LRESULT dispatch_win_proc_params( struct win_proc_params *params );
 
 extern void init_class_name( UNICODE_STRING *str, const WCHAR *name );
+extern void init_class_name_ansi( UNICODE_STRING *str, const char *name );
 extern void get_class_version( UNICODE_STRING *name, UNICODE_STRING *version, BOOL load );
 
 /* kernel callbacks */

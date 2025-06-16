@@ -120,7 +120,7 @@ static BOOL is_builtin_class( const WCHAR *name )
     return FALSE;
 }
 
-static void init_class_name_ansi( UNICODE_STRING *str, const char *name )
+void init_class_name_ansi( UNICODE_STRING *str, const char *name )
 {
     if (IS_INTRESOURCE( name ))
     {

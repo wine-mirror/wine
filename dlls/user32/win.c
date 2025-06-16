@@ -511,19 +511,11 @@ BOOL WINAPI OpenIcon( HWND hwnd )
  */
 HWND WINAPI FindWindowExW( HWND parent, HWND child, const WCHAR *class, const WCHAR *title )
 {
-    UNICODE_STRING class_str, title_str;
+    WCHAR class_nameW[MAX_ATOM_LEN + 1];
+    UNICODE_STRING class_str = RTL_CONSTANT_STRING(class_nameW), title_str;
 
     if (title) RtlInitUnicodeString( &title_str, title );
-
-    if (class)
-    {
-        if (IS_INTRESOURCE(class))
-        {
-            class_str.Buffer = (WCHAR *)class;
-            class_str.Length = class_str.MaximumLength = 0;
-        }
-        else RtlInitUnicodeString( &class_str, class );
-    }
+    if (class) init_class_name( &class_str, class );
 
     return NtUserFindWindowEx( parent, child, class ? &class_str : NULL,
                                title ? &title_str : NULL, 0 );
@@ -545,9 +537,10 @@ HWND WINAPI FindWindowA( LPCSTR className, LPCSTR title )
 /***********************************************************************
  *		FindWindowExA (USER32.@)
  */
-HWND WINAPI FindWindowExA( HWND parent, HWND child, LPCSTR className, LPCSTR title )
+HWND WINAPI FindWindowExA( HWND parent, HWND child, const char *class, const char *title )
 {
-    LPWSTR titleW = NULL;
+    WCHAR *titleW = NULL, class_nameW[MAX_ATOM_LEN + 1];
+    UNICODE_STRING class_str = RTL_CONSTANT_STRING(class_nameW), title_str;
     HWND hwnd = 0;
 
     if (title)
@@ -555,19 +548,12 @@ HWND WINAPI FindWindowExA( HWND parent, HWND child, LPCSTR className, LPCSTR tit
         DWORD len = MultiByteToWideChar( CP_ACP, 0, title, -1, NULL, 0 );
         if (!(titleW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return 0;
         MultiByteToWideChar( CP_ACP, 0, title, -1, titleW, len );
+        RtlInitUnicodeString( &title_str, titleW );
     }
+    if (class) init_class_name_ansi( &class_str, class );
 
-    if (!IS_INTRESOURCE(className))
-    {
-        WCHAR classW[256];
-        if (MultiByteToWideChar( CP_ACP, 0, className, -1, classW, ARRAY_SIZE( classW )))
-            hwnd = FindWindowExW( parent, child, classW, titleW );
-    }
-    else
-    {
-        hwnd = FindWindowExW( parent, child, (LPCWSTR)className, titleW );
-    }
-
+    hwnd = NtUserFindWindowEx( parent, child, class ? &class_str : NULL,
+                               title ? &title_str : NULL, 0 );
     HeapFree( GetProcessHeap(), 0, titleW );
     return hwnd;
 }
