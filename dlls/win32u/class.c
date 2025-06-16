@@ -775,7 +775,7 @@ static BOOL set_server_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size )
     return ret;
 }
 
-static ULONG_PTR set_class_long( HWND hwnd, INT offset, LONG_PTR newval, UINT size, BOOL ansi )
+static ULONG_PTR set_class_long_size( HWND hwnd, INT offset, LONG_PTR newval, UINT size, BOOL ansi )
 {
     ULONG_PTR retval = 0;
     HICON small_icon = 0;
@@ -788,19 +788,8 @@ static ULONG_PTR set_class_long( HWND hwnd, INT offset, LONG_PTR newval, UINT si
         if (set_server_info( hwnd, offset, newval, size ))
         {
             void *ptr = (char *)(class + 1) + offset;
-            if ( size == sizeof(LONG) )
-            {
-                DWORD retdword;
-                LONG newlong = newval;
-                memcpy( &retdword, ptr, sizeof(DWORD) );
-                memcpy( ptr, &newlong, sizeof(LONG) );
-                retval = retdword;
-            }
-            else
-            {
-                memcpy( &retval, ptr, sizeof(ULONG_PTR) );
-                memcpy( ptr, &newval, sizeof(LONG_PTR) );
-            }
+            memcpy( &retval, ptr, size );
+            memcpy( ptr, &newval, size );
         }
     }
     else switch(offset)
@@ -848,7 +837,7 @@ static ULONG_PTR set_class_long( HWND hwnd, INT offset, LONG_PTR newval, UINT si
                 /* someone beat us, restart */
                 release_class_ptr( class );
                 NtUserDestroyCursor( small_icon, 0 );
-                return set_class_long( hwnd, offset, newval, size, ansi );
+                return set_class_long_size( hwnd, offset, newval, size, ansi );
             }
         }
         if (class->hIconSmIntern) NtUserDestroyCursor( class->hIconSmIntern, 0 );
@@ -878,7 +867,7 @@ static ULONG_PTR set_class_long( HWND hwnd, INT offset, LONG_PTR newval, UINT si
                 /* someone beat us, restart */
                 release_class_ptr( class );
                 NtUserDestroyCursor( small_icon, 0 );
-                return set_class_long( hwnd, offset, newval, size, ansi );
+                return set_class_long_size( hwnd, offset, newval, size, ansi );
             }
         }
         if (class->hIconSmIntern) NtUserDestroyCursor( class->hIconSmIntern, 0 );
@@ -916,7 +905,7 @@ static ULONG_PTR set_class_long( HWND hwnd, INT offset, LONG_PTR newval, UINT si
  */
 DWORD WINAPI NtUserSetClassLong( HWND hwnd, INT offset, LONG newval, BOOL ansi )
 {
-    return set_class_long( hwnd, offset, newval, sizeof(LONG), ansi );
+    return set_class_long_size( hwnd, offset, newval, sizeof(LONG), ansi );
 }
 
 /***********************************************************************
@@ -924,7 +913,7 @@ DWORD WINAPI NtUserSetClassLong( HWND hwnd, INT offset, LONG newval, BOOL ansi )
  */
 ULONG_PTR WINAPI NtUserSetClassLongPtr( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi )
 {
-    return set_class_long( hwnd, offset, newval, sizeof(LONG_PTR), ansi );
+    return set_class_long_size( hwnd, offset, newval, sizeof(LONG_PTR), ansi );
 }
 
 /***********************************************************************
