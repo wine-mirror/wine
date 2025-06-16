@@ -921,30 +921,7 @@ ULONG_PTR WINAPI NtUserSetClassLongPtr( HWND hwnd, INT offset, LONG_PTR newval, 
  */
 WORD WINAPI NtUserSetClassWord( HWND hwnd, INT offset, WORD newval )
 {
-    CLASS *class;
-    WORD retval = 0;
-
-    if (offset < 0) return NtUserSetClassLong( hwnd, offset, (DWORD)newval, TRUE );
-
-    if (!(class = get_class_ptr( hwnd, TRUE ))) return 0;
-
-    SERVER_START_REQ( set_class_info )
-    {
-        req->window = wine_server_user_handle( hwnd );
-        req->flags = SET_CLASS_EXTRA;
-        req->extra_offset = offset;
-        req->extra_size = sizeof(newval);
-        memcpy( &req->extra_value, &newval, sizeof(newval) );
-        if (!wine_server_call_err( req ))
-        {
-            void *ptr = (char *)(class + 1) + offset;
-            memcpy( &retval, ptr, sizeof(retval) );
-            memcpy( ptr, &newval, sizeof(newval) );
-        }
-    }
-    SERVER_END_REQ;
-    release_class_ptr( class );
-    return retval;
+    return set_class_long_size( hwnd, offset, newval, sizeof(WORD), TRUE );
 }
 
 static ULONG_PTR get_class_long_size( HWND hwnd, INT offset, UINT size, BOOL ansi )
