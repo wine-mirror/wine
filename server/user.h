@@ -192,7 +192,7 @@ extern struct window_class *grab_class( struct process *process, atom_t atom,
                                         mod_handle_t instance, int *extra_bytes );
 extern void release_class( struct window_class *class );
 extern int is_desktop_class( struct window_class *class );
-extern int is_hwnd_message_class( struct window_class *class );
+extern int is_message_class( struct window_class *class );
 extern int get_class_style( struct window_class *class );
 extern atom_t get_class_atom( struct window_class *class );
 extern client_ptr_t get_class_client_ptr( struct window_class *class );

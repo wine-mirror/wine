@@ -134,7 +134,7 @@ int is_desktop_class( struct window_class *class )
     return (class->atom == DESKTOP_ATOM && !class->local);
 }
 
-int is_hwnd_message_class( struct window_class *class )
+int is_message_class( struct window_class *class )
 {
     static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
     static const struct unicode_str name = { messageW, sizeof(messageW) };

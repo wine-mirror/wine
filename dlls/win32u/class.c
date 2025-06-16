@@ -312,6 +312,22 @@ atom_t wine_server_add_atom( void *req, UNICODE_STRING *str )
     return atom;
 }
 
+BOOL is_desktop_class( UNICODE_STRING *name )
+{
+    static const WCHAR desktopW[] = {'#','3','2','7','6','9'};
+    ATOM atom;
+    if ((atom = get_int_atom_value( name ))) return atom == DESKTOP_CLASS_ATOM;
+    return name->Length == sizeof(desktopW) && !wcsnicmp( name->Buffer, desktopW, ARRAY_SIZE(desktopW) );
+}
+
+BOOL is_message_class( UNICODE_STRING *name )
+{
+    static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
+    ATOM atom;
+    if ((atom = get_int_atom_value( name ))) return FALSE;
+    return name->Length == sizeof(messageW) && !wcsnicmp( name->Buffer, messageW, ARRAY_SIZE(messageW) );
+}
+
 static unsigned int is_integral_atom( const WCHAR *atomstr, ULONG len, RTL_ATOM *ret_atom )
 {
     RTL_ATOM atom;
@@ -588,15 +604,11 @@ BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
 ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
                                   struct client_menu_name *menu_name, BOOL ansi )
 {
-    static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
     CLASS *class;
     ATOM atom;
 
     /* create the desktop window to trigger builtin class registration */
-    if (name->Buffer != (const WCHAR *)DESKTOP_CLASS_ATOM &&
-        (IS_INTRESOURCE(name->Buffer) || name->Length != sizeof(messageW) ||
-         wcsnicmp( name->Buffer, messageW, ARRAYSIZE(messageW) )))
-        get_desktop_window();
+    if (!is_desktop_class( name ) && !is_message_class( name )) get_desktop_window();
 
     if (!(class = find_class( instance, name ))) return 0;
 

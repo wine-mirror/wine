@@ -631,7 +631,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     {
         if (is_desktop_class( class ))
             parent = desktop->top_window;  /* use existing desktop if any */
-        else if (is_hwnd_message_class( class ))
+        else if (is_message_class( class ))
             /* use desktop window if message window is already created */
             parent = desktop->msg_window ? desktop->top_window : NULL;
         else if (!(parent = desktop->top_window))  /* must already have a desktop then */

@@ -182,6 +182,8 @@ struct dce *get_class_dce( struct tagCLASS *class );
 struct dce *set_class_dce( struct tagCLASS *class, struct dce *dce );
 BOOL needs_ime_window( HWND hwnd );
 extern atom_t wine_server_add_atom( void *req, UNICODE_STRING *str );
+extern BOOL is_desktop_class( UNICODE_STRING *name );
+extern BOOL is_message_class( UNICODE_STRING *name );
 extern void register_builtin_classes(void);
 extern void register_desktop_class(void);
 
