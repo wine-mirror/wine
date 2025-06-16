@@ -5616,6 +5616,37 @@ static void test_SetFileRenameInfo(void)
     ok(!ret && GetLastError() == ERROR_ACCESS_DENIED, "FileRenameInfo unexpected result %ld\n", GetLastError());
     CloseHandle(file);
 
+    DeleteFileW(tempFileFrom);
+    DeleteFileW(tempFileTo1);
+    DeleteFileW(tempFileTo2);
+
+    /* repeat test again with FileRenameInfoEx */
+
+    file = CreateFileW(tempFileFrom, GENERIC_READ | GENERIC_WRITE | DELETE, 0, 0, OPEN_EXISTING, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "failed to create temp file, error %lu.\n", GetLastError());
+
+    fri->Flags = 0;
+    fri->RootDirectory = NULL;
+    fri->FileNameLength = wcslen(tempFileTo1) * sizeof(WCHAR);
+    memcpy(fri->FileName, tempFileTo1, fri->FileNameLength + sizeof(WCHAR));
+    ret = pSetFileInformationByHandle(file, FileRenameInfoEx, fri, size);
+    todo_wine ok(!ret && GetLastError() == ERROR_ALREADY_EXISTS, "FileRenameInfoEx unexpected result %ld\n", GetLastError());
+
+    fri->Flags = FILE_RENAME_REPLACE_IF_EXISTS;
+    ret = pSetFileInformationByHandle(file, FileRenameInfoEx, fri, size);
+    todo_wine ok(ret, "FileRenameInfoEx failed, error %ld\n", GetLastError());
+
+    fri->Flags = 0;
+    fri->FileNameLength = wcslen(tempFileTo2) * sizeof(WCHAR);
+    memcpy(fri->FileName, tempFileTo2, fri->FileNameLength + sizeof(WCHAR));
+    ret = pSetFileInformationByHandle(file, FileRenameInfoEx, fri, size);
+    todo_wine ok(ret, "FileRenameInfoEx failed, error %ld\n", GetLastError());
+    CloseHandle(file);
+
+    file = CreateFileW(tempFileTo2, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
+    todo_wine ok(file != INVALID_HANDLE_VALUE, "file not renamed, error %ld\n", GetLastError());
+
+    CloseHandle(file);
     HeapFree(GetProcessHeap(), 0, fri);
     DeleteFileW(tempFileFrom);
     DeleteFileW(tempFileTo1);
