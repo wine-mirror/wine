@@ -44,8 +44,6 @@ struct wgl_context
     void *driver_private;
     int pixel_format;
 
-    HBITMAP memory_bitmap;
-    struct wgl_pbuffer *memory_pbuffer;
     struct opengl_drawable *draw;
     struct opengl_drawable *read;
 };
@@ -767,21 +765,20 @@ static struct opengl_drawable *get_dc_opengl_drawable( HDC hdc )
     return drawable;
 }
 
-static struct wgl_pbuffer *create_memory_pbuffer( HDC hdc, int format )
+static BOOL create_memory_pbuffer( HDC hdc, int format )
 {
     const struct opengl_funcs *funcs = &display_funcs;
-    struct wgl_pbuffer *pbuffer = NULL;
+    dib_info dib = {.rect = {0, 0, 1, 1}};
+    BOOL ret = TRUE;
     BITMAPOBJ *bmp;
-    dib_info dib;
-    BOOL ret;
     DC *dc;
 
-    if (!(dc = get_dc_ptr( hdc ))) return NULL;
-    if (get_gdi_object_type( hdc ) != NTGDI_OBJ_MEMDC) ret = FALSE;
-    else if (!(bmp = GDI_GetObjPtr( dc->hBitmap, NTGDI_OBJ_BITMAP ))) ret = FALSE;
-    else
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+    else if (dc->opengl_drawable) ret = FALSE;
+    else if (get_gdi_object_type( hdc ) != NTGDI_OBJ_MEMDC) ret = FALSE;
+    else if ((bmp = GDI_GetObjPtr( dc->hBitmap, NTGDI_OBJ_BITMAP )))
     {
-        ret = init_dib_info_from_bitmapobj( &dib, bmp );
+        init_dib_info_from_bitmapobj( &dib, bmp );
         GDI_ReleaseObj( dc->hBitmap );
     }
     release_dc_ptr( dc );
@@ -789,33 +786,38 @@ static struct wgl_pbuffer *create_memory_pbuffer( HDC hdc, int format )
     if (ret)
     {
         int width = dib.rect.right - dib.rect.left, height = dib.rect.bottom - dib.rect.top;
-        pbuffer = funcs->p_wglCreatePbufferARB( hdc, format, width, height, NULL );
-        if (pbuffer) set_dc_opengl_drawable( hdc, pbuffer->drawable );
+        struct wgl_pbuffer *pbuffer;
+
+        if (!(pbuffer = funcs->p_wglCreatePbufferARB( hdc, format, width, height, NULL )))
+            WARN( "Failed to create pbuffer for memory DC %p\n", hdc );
+        else
+        {
+            TRACE( "Created pbuffer %p for memory DC %p\n", pbuffer, hdc );
+            set_dc_opengl_drawable( hdc, pbuffer->drawable );
+            funcs->p_wglDestroyPbufferARB( pbuffer );
+        }
     }
 
-    if (pbuffer) TRACE( "Created pbuffer %p for memory DC %p\n", pbuffer, hdc );
-    else WARN( "Failed to create pbuffer for memory DC %p\n", hdc );
-    return pbuffer;
+    return ret;
 }
 
-static BOOL flush_memory_pbuffer( struct wgl_context *context, HDC hdc, BOOL write, void (*flush)(void) )
+static BOOL flush_memory_dc( struct wgl_context *context, HDC hdc, BOOL write, void (*flush)(void) )
 {
     const struct opengl_funcs *funcs = &display_funcs;
+    BOOL ret = TRUE;
     BITMAPOBJ *bmp;
     DC *dc;
 
-    if (flush) flush();
-
-    if (!(dc = get_dc_ptr( hdc ))) return TRUE;
-    if ((bmp = GDI_GetObjPtr( dc->hBitmap, NTGDI_OBJ_BITMAP )))
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+    if (get_gdi_object_type( hdc ) != NTGDI_OBJ_MEMDC) ret = FALSE;
+    else if (context && (bmp = GDI_GetObjPtr( dc->hBitmap, NTGDI_OBJ_BITMAP )))
     {
         char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
         BITMAPINFO *info = (BITMAPINFO *)buffer;
         struct bitblt_coords src = {0};
         struct gdi_image_bits bits;
 
-        if (dc->hBitmap != context->memory_bitmap) write = TRUE;
-        context->memory_bitmap = dc->hBitmap;
+        if (flush) flush();
 
         if (!get_image_from_bitmap( bmp, info, &bits, &src ))
         {
@@ -827,16 +829,7 @@ static BOOL flush_memory_pbuffer( struct wgl_context *context, HDC hdc, BOOL wri
     }
     release_dc_ptr( dc );
 
-    return TRUE;
-}
-
-static void destroy_memory_pbuffer( struct wgl_context *context, HDC hdc )
-{
-    const struct opengl_funcs *funcs = &display_funcs;
-    flush_memory_pbuffer( context, hdc, FALSE, funcs->p_glFinish );
-    set_dc_opengl_drawable( hdc, NULL );
-    funcs->p_wglDestroyPbufferARB( context->memory_pbuffer );
-    context->memory_pbuffer = NULL;
+    return ret;
 }
 
 static BOOL set_dc_pixel_format( HDC hdc, int new_format, BOOL internal )
@@ -952,8 +945,9 @@ static struct wgl_context *win32u_wglCreateContext( HDC hdc )
 static BOOL context_set_drawables( struct wgl_context *context, void *private, HDC draw_hdc, HDC read_hdc, BOOL force )
 {
     struct opengl_drawable *new_draw, *new_read, *old_draw = context->draw, *old_read = context->read;
-    BOOL ret = FALSE;
+    BOOL ret = FALSE, flush;
 
+    flush = create_memory_pbuffer( draw_hdc, context->pixel_format );
     new_draw = get_dc_opengl_drawable( draw_hdc );
     new_read = get_dc_opengl_drawable( read_hdc );
 
@@ -976,6 +970,8 @@ static BOOL context_set_drawables( struct wgl_context *context, void *private, H
 
     if (new_draw) opengl_drawable_release( new_draw );
     if (new_read) opengl_drawable_release( new_read );
+
+    if (ret && flush) flush_memory_dc( context, draw_hdc, TRUE, NULL );
     return ret;
 }
 
@@ -993,13 +989,10 @@ static BOOL win32u_wglDeleteContext( struct wgl_context *context )
 
 static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct wgl_context *context )
 {
-    HDC hdc = draw_hdc, prev_draw = NtCurrentTeb()->glReserved1[0];
     struct wgl_context *prev_context = NtCurrentTeb()->glContext;
     int format;
 
     TRACE( "draw_hdc %p, read_hdc %p, context %p\n", draw_hdc, read_hdc, context );
-
-    if (prev_context && prev_context->memory_pbuffer) destroy_memory_pbuffer( prev_context, prev_draw );
 
     if (!context)
     {
@@ -1022,15 +1015,8 @@ static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
         return FALSE;
     }
 
-    if ((context->memory_pbuffer = create_memory_pbuffer( draw_hdc, context->pixel_format )))
-    {
-        if (read_hdc != draw_hdc) ERR( "read != draw not supported\n" );
-        draw_hdc = read_hdc = context->memory_pbuffer->hdc;
-    }
-
     if (!context_set_drawables( context, context->driver_private, draw_hdc, read_hdc, TRUE )) return FALSE;
     NtCurrentTeb()->glContext = context;
-    if (context->memory_pbuffer) flush_memory_pbuffer( context, hdc, TRUE, NULL );
     return TRUE;
 }
 
@@ -1483,7 +1469,7 @@ static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)
     TRACE( "context %p, hwnd %p, draw_hdc %p, interval %d, flush %p\n", context, hwnd, draw_hdc, interval, flush );
 
     context_set_drawables( context, context->driver_private, draw_hdc, read_hdc, FALSE );
-    if (context->memory_pbuffer) return flush_memory_pbuffer( context, draw_hdc, FALSE, flush );
+    if (flush_memory_dc( context, draw_hdc, FALSE, flush )) return TRUE;
 
     if (!(draw = get_dc_opengl_drawable( draw_hdc ))) return FALSE;
     if (interval != draw->interval)
@@ -1516,7 +1502,7 @@ static BOOL win32u_wglSwapBuffers( HDC hdc )
     else interval = get_window_swap_interval( hwnd );
 
     context_set_drawables( context, context->driver_private, draw_hdc, read_hdc, FALSE );
-    if (context->memory_pbuffer) return flush_memory_pbuffer( context, hdc, FALSE, funcs->p_glFlush );
+    if (flush_memory_dc( context, hdc, FALSE, funcs->p_glFlush )) return TRUE;
 
     if (!(draw = get_dc_opengl_drawable( draw_hdc ))) return FALSE;
     if (interval != draw->interval)
