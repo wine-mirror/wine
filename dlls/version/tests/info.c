@@ -960,7 +960,7 @@ static void test_wow64_redirection(void)
 
 START_TEST(info)
 {
-    HMODULE kernel32 =kernel32 = GetModuleHandleA("kernel32.dll");
+    HMODULE kernel32 = GetModuleHandleA("kernel32.dll");
     BOOL (WINAPI *pIsWow64Process)(HANDLE, BOOL *);
     DWORD size;
 
