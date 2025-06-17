@@ -2079,6 +2079,42 @@ static void add_eventadd_method( const type_t *iface, const var_t *method )
     add_methodsemantics_row( METHOD_SEM_ADDON, methoddef, has_semantics(TABLE_EVENT, event) );
 }
 
+static const var_t *find_eventadd_method( const type_t *iface, const char *name )
+{
+    const statement_t *stmt;
+
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
+    {
+        const var_t *method = stmt->u.var;
+        if (is_attr( method->attrs, ATTR_EVENTADD ) && !strcmp( method->name, name )) return method;
+    }
+    return NULL;
+}
+
+static void add_eventremove_method( const type_t *iface, const var_t *method )
+{
+    const var_t *eventadd = find_eventadd_method( iface, method->name );
+    UINT methoddef, event, sig_size, paramlist, attrs;
+    BYTE sig[256];
+    char *name;
+
+    paramlist = add_method_params_step2( type_function_get_args(method->declspec.type) );
+    sig_size = make_method_sig( method, sig );
+
+    attrs = METHOD_ATTR_PUBLIC  | METHOD_ATTR_VIRTUAL  | METHOD_ATTR_HIDEBYSIG |
+            METHOD_ATTR_NEWSLOT | METHOD_ATTR_ABSTRACT | METHOD_ATTR_SPECIALNAME;
+
+    name = strmake( "remove_%s", method->name );
+    methoddef = add_methoddef_row( 0, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
+    free( name );
+
+    /* add eventadd method if not already added */
+    if (!eventadd->declspec.type->md.event) add_eventadd_method( iface, eventadd );
+    event = eventadd->declspec.type->md.event;
+
+    add_methodsemantics_row( METHOD_SEM_REMOVEON, methoddef, has_semantics(TABLE_EVENT, event) );
+}
+
 static void add_interface_type_step2( type_t *type )
 {
     UINT name, namespace, interface, flags = TYPE_ATTR_INTERFACE | TYPE_ATTR_ABSTRACT | TYPE_ATTR_UNKNOWN;
@@ -2104,6 +2140,7 @@ static void add_interface_type_step2( type_t *type )
         if (is_attr( method->attrs, ATTR_PROPGET )) add_propget_method( type, method );
         else if (is_attr( method->attrs, ATTR_PROPPUT )) add_propput_method( type, method );
         else if (is_attr( method->attrs, ATTR_EVENTADD )) add_eventadd_method( type, method );
+        else if (is_attr( method->attrs, ATTR_EVENTREMOVE )) add_eventremove_method( type, method );
     }
 
     add_contract_attr_step2( type );
