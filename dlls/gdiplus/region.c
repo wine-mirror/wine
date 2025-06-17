@@ -1727,15 +1727,89 @@ static void get_region_bounding_box(struct region_element *element,
     }
 }
 
+GpStatus point_in_region(struct region_element *element, REAL x, REAL y, BOOL *res)
+{
+    switch (element->type)
+    {
+        case RegionDataInfiniteRect:
+            *res = TRUE;
+            return Ok;
+        case RegionDataEmptyRect:
+            *res = FALSE;
+            return Ok;
+        case RegionDataPath:
+            return GdipIsVisiblePathPoint(element->elementdata.path, x, y, NULL, res);
+        case RegionDataRect:
+        {
+            REAL xadj = x + RGN_ROUND_OFS;
+            REAL yadj = y + RGN_ROUND_OFS;
+            GpRectF* rc = &element->elementdata.rect;
+
+            *res = (xadj >= rc->X && yadj >= rc->Y &&
+                xadj < rc->X + rc->Width && yadj < rc->Y + rc->Height);
+
+            return Ok;
+        }
+        case CombineModeIntersect:
+        case CombineModeUnion:
+        case CombineModeXor:
+        case CombineModeExclude:
+        case CombineModeComplement:
+        {
+            BOOL left, right;
+            GpStatus stat;
+
+            stat = point_in_region(element->elementdata.combine.left, x, y, &left);
+
+            if (stat != Ok)
+                return stat;
+
+            switch (element->type)
+            {
+                case CombineModeIntersect:
+                    if (left)
+                        return point_in_region(element->elementdata.combine.right, x, y, res);
+                    *res = FALSE;
+                    return Ok;
+                case CombineModeUnion:
+                    if (!left)
+                        return point_in_region(element->elementdata.combine.right, x, y, res);
+                    *res = TRUE;
+                    return Ok;
+                case CombineModeXor:
+                    stat = point_in_region(element->elementdata.combine.right, x, y, &right);
+                    if (stat == Ok)
+                        *res = left ^ right;
+                    return stat;
+                case CombineModeExclude:
+                    if (left)
+                    {
+                        stat = point_in_region(element->elementdata.combine.right, x, y, &right);
+                        if (stat == Ok)
+                            *res = !right;
+                    }
+                    else
+                        *res = FALSE;
+                    return stat;
+                case CombineModeComplement:
+                    if (!left)
+                        return point_in_region(element->elementdata.combine.right, x, y, res);
+                    *res = FALSE;
+                    return Ok;
+            }
+        }
+        default:
+            FIXME("point_in_region unimplemented for region type=%lx\n", element->type);
+            return NotImplemented;
+    }
+}
+
 /*****************************************************************************
  * GdipIsVisibleRegionPoint [GDIPLUS.@]
  */
 GpStatus WINGDIPAPI GdipIsVisibleRegionPoint(GpRegion* region, REAL x, REAL y, GpGraphics *graphics, BOOL *res)
 {
-    HRGN hrgn;
     GpStatus stat;
-    REAL min_x, min_y, max_x, max_y;
-    BOOL empty, infinite;
     GpMatrix transform;
     BOOL identity;
     GpRegion* tmp_region = NULL;
@@ -1786,34 +1860,7 @@ GpStatus WINGDIPAPI GdipIsVisibleRegionPoint(GpRegion* region, REAL x, REAL y, G
     x = gdip_round(x);
     y = gdip_round(y);
 
-    /* Check for cases where we can skip quantization. */
-    get_region_bounding_box(&region->node, &min_x, &min_y, &max_x, &max_y, &empty, &infinite);
-    if (empty || x < min_x || y < min_y || x > max_x || y > max_y)
-    {
-        *res = infinite;
-        GdipDeleteRegion(tmp_region);
-        return Ok;
-    }
-
-    if((stat = GdipGetRegionHRgn(region, NULL, &hrgn)) != Ok)
-    {
-        GdipDeleteRegion(tmp_region);
-        return stat;
-    }
-
-    GdipDeleteRegion(tmp_region);
-
-    /* infinite */
-    if(!hrgn){
-        *res = TRUE;
-        return Ok;
-    }
-
-    *res = PtInRegion(hrgn, x, y);
-
-    DeleteObject(hrgn);
-
-    return Ok;
+    return point_in_region(&region->node, x, y, res);
 }
 
 /*****************************************************************************
