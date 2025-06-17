@@ -1972,7 +1972,16 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     add_registry_environment( &env, &env_pos, &env_size );
     env[env_pos++] = 0;
 
-    status = load_main_exe( &nt_name, main_argv[1], curdir, 0, module );
+    get_full_path( main_argv[1], curdir, &nt_name );
+    status = load_main_exe( &nt_name, 0, module );
+    /* fail only if the file contained an explicit path */
+    if (status == STATUS_DLL_NOT_FOUND &&
+        (strpbrk( main_argv[1], "/\\" ) || (main_argv[1][0] && main_argv[1][1] == ':')))
+    {
+        MESSAGE( "wine: failed to open %s\n", debugstr_a(main_argv[1]) );
+        NtTerminateProcess( GetCurrentProcess(), status );
+    }
+
     if (NT_SUCCESS(status))
     {
         char *loader;
@@ -2153,10 +2162,10 @@ void init_startup_info(void)
     free( env );
     free( info );
 
-    status = load_main_exe( &nt_name, NULL, NULL, machine, &module );
+    status = load_main_exe( &nt_name, machine, &module );
     if (!NT_SUCCESS(status))
     {
-        MESSAGE( "wine: failed to start %s\n", debugstr_us(&params->ImagePathName) );
+        MESSAGE( "wine: failed to start %s: %x\n", debugstr_us(&params->ImagePathName), status );
         NtTerminateProcess( GetCurrentProcess(), status );
     }
     rebuild_argv();

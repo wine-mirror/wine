@@ -4020,51 +4020,63 @@ NTSTATUS WINAPI wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, ULON
  *
  * Simplified version of RtlGetFullPathName_U.
  */
-NTSTATUS get_full_path( const WCHAR *name, const WCHAR *curdir, UNICODE_STRING *nt_name )
+NTSTATUS get_full_path( const char *name, const WCHAR *curdir, UNICODE_STRING *nt_name )
 {
-    static const WCHAR uncW[] = {'\\','?','?','\\','U','N','C','\\',0};
-    static const WCHAR devW[] = {'\\','?','?','\\',0};
-    static const WCHAR unixW[] = {'u','n','i','x'};
-    WCHAR *ret, root[] = {'\\','?','?','\\','C',':','\\',0};
-    NTSTATUS status = STATUS_SUCCESS;
-    const WCHAR *prefix;
+    static const WCHAR unix_prefixW[] = {'\\','?','?','\\','u','n','i','x'};
+    static const WCHAR uncW[] = {'\\','?','?','\\','U','N','C','\\'};
+    static const WCHAR devW[] = {'\\','?','?','\\'};
+    static const WCHAR rootW[] = {'\\','?','?','\\','C',':','\\'};
+    WCHAR *ret;
+    struct stat st;
+    ULONG prefix_len, len = max( ARRAY_SIZE(unix_prefixW), wcslen(curdir) ) + strlen(name) + 1;
 
-    if (IS_SEPARATOR(name[0]) && IS_SEPARATOR(name[1]))  /* \\ prefix */
+    if (!(ret = malloc( len * sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
+
+    /* special case for Unix file name */
+    if (name && name[0] == '/' && !stat( name, &st ))
+    {
+        memcpy( ret, unix_prefixW, sizeof(unix_prefixW) );
+        prefix_len = ARRAY_SIZE(unix_prefixW);
+    }
+    else if (IS_SEPARATOR(name[0]) && name[1] == '?' && name[2] == '?' && IS_SEPARATOR(name[3]))  /* \??\ */
+    {
+        prefix_len = 0;
+    }
+    else if (IS_SEPARATOR(name[0]) && IS_SEPARATOR(name[1]))  /* \\ prefix */
     {
         if ((name[2] == '.' || name[2] == '?') && IS_SEPARATOR(name[3])) /* \\?\ device */
         {
             name += 4;
-            if (!wcsnicmp( name, unixW, 4 ) && IS_SEPARATOR(name[4]))  /* \\?\unix special name */
-            {
-                char *unix_name;
-                name += 4;
-                unix_name = malloc( wcslen(name) * 3 + 1 );
-                ntdll_wcstoumbs( name, wcslen(name) + 1, unix_name, wcslen(name) * 3 + 1, FALSE );
-                status = unix_to_nt_file_name( unix_name, &ret );
-                if (!status) init_unicode_string( nt_name, ret );
-                free( unix_name );
-                return status;
-            }
-            prefix = devW;
+            memcpy( ret, devW, sizeof(devW) );
+            prefix_len = ARRAY_SIZE(devW);
         }
-        else prefix = uncW;  /* UNC path */
+        else  /* UNC path */
+        {
+            name += 2;
+            memcpy( ret, uncW, sizeof(uncW) );
+            prefix_len = ARRAY_SIZE(uncW);
+        }
     }
     else if (IS_SEPARATOR(name[0]))  /* absolute path */
     {
-        root[4] = curdir[4];
-        prefix = root;
+        memcpy( ret, rootW, sizeof(rootW) );
+        prefix_len = ARRAY_SIZE(rootW);
+        ret[4] = curdir[4];
     }
     else if (name[0] && name[1] == ':')  /* drive letter */
     {
-        root[4] = towupper(name[0]);
+        memcpy( ret, rootW, sizeof(rootW) );
+        prefix_len = ARRAY_SIZE(rootW);
+        ret[4] = towupper(name[0]);
         name += 2;
-        prefix = root;
     }
-    else prefix = curdir;  /* relative path */
+    else  /* relative path */
+    {
+        prefix_len = wcslen( curdir );
+        memcpy( ret, curdir, prefix_len * sizeof(WCHAR) );
+    }
 
-    ret = malloc( (wcslen(prefix) + wcslen(name) + 1) * sizeof(WCHAR) );
-    wcscpy( ret, prefix );
-    wcscat( ret, name );
+    ntdll_umbstowcs( name, strlen(name) + 1, ret + prefix_len, len - prefix_len );
     collapse_path( ret );
     init_unicode_string( nt_name, ret );
     return STATUS_SUCCESS;

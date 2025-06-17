@@ -1493,59 +1493,21 @@ static NTSTATUS open_main_image( UNICODE_STRING *nt_name, void **module, SECTION
 /***********************************************************************
  *           load_main_exe
  */
-NTSTATUS load_main_exe( UNICODE_STRING *nt_name, const char *unix_name, const WCHAR *curdir,
-                        USHORT load_machine, void **module )
+NTSTATUS load_main_exe( UNICODE_STRING *nt_name, USHORT load_machine, void **module )
 {
-    enum loadorder loadorder = LO_INVALID;
-    WCHAR *image;
-    BOOL contains_path = TRUE;
+    enum loadorder loadorder = get_load_order( nt_name );
     unsigned int status;
     SIZE_T size;
-    struct stat st;
     USHORT search_machine;
-
-    /* special case for Unix file name */
-    if (unix_name && unix_name[0] == '/' && !stat( unix_name, &st ))
-    {
-        if ((status = unix_to_nt_file_name( unix_name, &image ))) goto failed;
-        init_unicode_string( nt_name, image );
-        loadorder = get_load_order( nt_name );
-        status = open_main_image( nt_name, module, &main_image_info, loadorder, load_machine );
-        if (status != STATUS_DLL_NOT_FOUND) return status;
-        free( image );
-    }
-
-    if (unix_name)
-    {
-        image = malloc( (strlen(unix_name) + 1) * sizeof(WCHAR) );
-        ntdll_umbstowcs( unix_name, strlen(unix_name) + 1, image, strlen(unix_name) + 1 );
-        contains_path = (wcschr( image, '/' ) ||
-                         wcschr( image, '\\' ) ||
-                         (image[0] && image[1] == ':'));
-
-        if ((status = get_full_path( image, curdir, nt_name ))) goto failed;
-        free( image );
-    }
-
-    if (loadorder == LO_INVALID) loadorder = get_load_order( nt_name );
 
     status = open_main_image( nt_name, module, &main_image_info, loadorder, load_machine );
     if (status != STATUS_DLL_NOT_FOUND) return status;
 
     /* if path is in system dir, we can load the builtin even if the file itself doesn't exist */
     if (loadorder != LO_NATIVE && is_builtin_path( nt_name, &search_machine ))
-    {
         status = find_builtin_dll( nt_name, module, &size, &main_image_info, 0, 0,
                                    search_machine, load_machine, FALSE );
-        if (status != STATUS_DLL_NOT_FOUND) return status;
-    }
-    if (!contains_path) return STATUS_DLL_NOT_FOUND;
-
-failed:
-    MESSAGE( "wine: failed to open %s: %x\n",
-             unix_name ? debugstr_a(unix_name) : debugstr_us(nt_name), status );
-    NtTerminateProcess( GetCurrentProcess(), status );
-    return status;  /* unreached */
+    return status;
 }
 
 
