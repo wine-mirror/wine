@@ -5431,9 +5431,9 @@ static void test_DataObject(void)
         hr = IEnumFORMATETC_Next(enum_format, 1, &fmt, NULL);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ret = GetClipboardFormatNameW(fmt.cfFormat, format_name, ARRAY_SIZE(format_name));
-        todo_wine ok(ret > 0, "Got %d.\n",ret);
+        ok(ret > 0, "Got %d.\n",ret);
         if (ret > 0)
-            ok(!wcscmp(format_name, CFSTR_PREFERREDDROPEFFECTW), "Got clipboard format %s.\n", debugstr_w(format_name));
+            todo_wine ok(!wcscmp(format_name, CFSTR_PREFERREDDROPEFFECTW), "Got clipboard format %s.\n", debugstr_w(format_name));
         ok(!fmt.ptd, "Got target device %p.\n", fmt.ptd);
         ok(fmt.dwAspect == DVASPECT_CONTENT, "Got aspect %#lx.\n", fmt.dwAspect);
         ok(fmt.lindex == -1, "Got index %ld.\n", fmt.lindex);
