@@ -1736,11 +1736,52 @@ GpStatus WINGDIPAPI GdipIsVisibleRegionPoint(GpRegion* region, REAL x, REAL y, G
     GpStatus stat;
     REAL min_x, min_y, max_x, max_y;
     BOOL empty, infinite;
+    GpMatrix transform;
+    BOOL identity;
+    GpRegion* tmp_region = NULL;
 
     TRACE("(%p, %.2f, %.2f, %p, %p)\n", region, x, y, graphics, res);
 
     if(!region || !res)
         return InvalidParameter;
+
+    if (graphics)
+    {
+        stat = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, &transform);
+        if (stat != Ok)
+            return stat;
+
+        stat = GdipIsMatrixIdentity(&transform, &identity);
+        if (stat != Ok)
+            return stat;
+    }
+    else
+        identity = TRUE;
+
+    if (!identity)
+    {
+        GpPointF pt = {x, y};
+
+        stat = GdipTransformMatrixPoints(&transform, &pt, 1);
+        if (stat != Ok)
+            return stat;
+
+        x = pt.X;
+        y = pt.Y;
+
+        stat = GdipCloneRegion(region, &tmp_region);
+        if (stat != Ok)
+            return stat;
+
+        stat = GdipTransformRegion(tmp_region, &transform);
+        if (stat != Ok)
+        {
+            GdipDeleteRegion(tmp_region);
+            return stat;
+        }
+
+        region = tmp_region;
+    }
 
     x = gdip_round(x);
     y = gdip_round(y);
@@ -1750,11 +1791,17 @@ GpStatus WINGDIPAPI GdipIsVisibleRegionPoint(GpRegion* region, REAL x, REAL y, G
     if (empty || x < min_x || y < min_y || x > max_x || y > max_y)
     {
         *res = infinite;
+        GdipDeleteRegion(tmp_region);
         return Ok;
     }
 
     if((stat = GdipGetRegionHRgn(region, NULL, &hrgn)) != Ok)
+    {
+        GdipDeleteRegion(tmp_region);
         return stat;
+    }
+
+    GdipDeleteRegion(tmp_region);
 
     /* infinite */
     if(!hrgn){

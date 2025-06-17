@@ -2039,7 +2039,6 @@ static void test_isvisiblepoint(void)
 
     status = GdipIsVisibleRegionPoint(region, x, y, graphics, &res);
     expect(Ok, status);
-todo_wine
     ok(res == TRUE, "Expected (%.2f, %.2f) to be visible\n", x, y);
 
     status = GdipResetWorldTransform(graphics);
