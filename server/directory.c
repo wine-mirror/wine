@@ -506,6 +506,10 @@ void init_directories( struct fd *intl_fd )
     set_global_atom_table( atom_table );
     release_object( atom_table );
 
+    atom_table = create_atom_table();
+    set_user_atom_table( atom_table );
+    release_object( atom_table );
+
     release_object( named_pipe_device );
     release_object( mailslot_device );
     release_object( null_device );

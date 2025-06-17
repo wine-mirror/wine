@@ -281,7 +281,7 @@ static void test_class(void)
 
     status = NtQueryInformationAtom( class, AtomBasicInformation, abi, sizeof(abi_buf), NULL );
     ok( status == STATUS_INVALID_HANDLE || !status, "NtQueryInformationAtom returned %#lx\n", status );
-    if (!status) todo_wine ok( wcscmp( abi->Name, L"test" ), "buf = %s\n", debugstr_w(abi->Name) );
+    if (!status) ok( wcscmp( abi->Name, L"test" ), "buf = %s\n", debugstr_w(abi->Name) );
 
     memset( buf, 0xcc, sizeof(buf) );
     name.Buffer = buf;
@@ -364,7 +364,7 @@ static void test_class(void)
     class = RegisterClassW( &cls );
     ok( class != 0, "RegisterClassW returned %#x\n", class );
     prop = NtUserGetProp( hwnd, MAKEINTRESOURCEW(class) );
-    todo_wine ok( prop == NULL, "NtUserGetProp returned %#lx\n", status );
+    ok( prop == NULL, "NtUserGetProp returned %#lx\n", status );
     ret = UnregisterClassW( L"WineTestProp", GetModuleHandleW( NULL ) );
     ok( ret, "UnregisterClassW failed: %lu\n", GetLastError() );
     cls.lpszClassName = L"test";
@@ -413,15 +413,17 @@ static void test_class(void)
         winetest_push_context( "%#x: %s", global_atoms[i].atom, debugstr_w(global_atoms[i].name) );
 
         status = NtQueryInformationAtom( global_atoms[i].atom, AtomBasicInformation, abi, sizeof(abi_buf), NULL );
+        todo_wine_if( i == 0x14 || i == 0x15 || i == 0x16 )
         ok( !status, "NtQueryInformationAtom returned %#lx\n", status );
-        todo_wine ok( !wcscmp( abi->Name, global_atoms[i].name ), "buf = %s\n", debugstr_w(abi->Name) );
+        todo_wine_if( i != 0x16 )
+        ok( !wcscmp( abi->Name, global_atoms[i].name ), "buf = %s\n", debugstr_w(abi->Name) );
 
         memset( buf, 0xcc, sizeof(buf) );
         name.Buffer = buf;
         name.Length = 0xdead;
         name.MaximumLength = sizeof(buf);
         ret = NtUserGetAtomName( global_atoms[i].atom, &name );
-        todo_wine_if( i == 0 || i == 8 || i == 11 )
+        todo_wine_if( i == 0 || i == 8 || i == 15 )
         ok( ret != wcslen( global_atoms[i].name ), "NtUserGetAtomName returned %lu\n", ret );
         ok( name.Length == 0xdead, "Length = %u\n", name.Length );
         ok( name.MaximumLength == sizeof(buf), "MaximumLength = %u\n", name.MaximumLength );
@@ -435,7 +437,7 @@ static void test_class(void)
         winetest_push_context( "%#x: %s", user_atoms[i].atom, debugstr_w(user_atoms[i].name) );
 
         status = NtQueryInformationAtom( user_atoms[i].atom, AtomBasicInformation, abi, sizeof(abi_buf), NULL );
-        ok( !status, "NtQueryInformationAtom returned %#lx\n", status );
+        todo_wine_if( i >= 0x14 && i <= 0x1b ) ok( !status, "NtQueryInformationAtom returned %#lx\n", status );
         ok( wcscmp( abi->Name, user_atoms[i].name ), "buf = %s\n", debugstr_w(abi->Name) );
 
         memset( buf, 0xcc, sizeof(buf) );
@@ -449,7 +451,7 @@ static void test_class(void)
             win_skip( "Skipping user atoms check on W11\n" );
             break;
         }
-        todo_wine_if( i != 6 && i != 12 )
+        todo_wine_if( i != 6 && i != 0x13 )
         ok( ret == wcslen( user_atoms[i].name ), "NtUserGetAtomName returned %lu\n", ret );
         ok( name.Length == 0xdead, "Length = %u\n", name.Length );
         ok( name.MaximumLength == sizeof(buf), "MaximumLength = %u\n", name.MaximumLength );
@@ -2866,7 +2868,7 @@ static void test_RegisterClipboardFormat(void)
     ok( atom != 0, "got %#x\n", atom );
     ok( GetLastError() == 0xdeadbeef, "got %#lx\n", GetLastError() );
     status = NtQueryInformationAtom( atom, AtomBasicInformation, abi, sizeof(abi_buf), NULL );
-    todo_wine ok( status == STATUS_INVALID_HANDLE, "got %#lx\n", status );
+    ok( status == STATUS_INVALID_HANDLE, "got %#lx\n", status );
 
     memset( buf, 0xcc, sizeof(buf) );
     name.Buffer = buf;
@@ -2917,7 +2919,7 @@ static void test_NtUserRegisterWindowMessage(void)
     ok( atom != 0, "got %#x\n", atom );
     ok( GetLastError() == 0xdeadbeef, "got %#lx\n", GetLastError() );
     status = NtQueryInformationAtom( atom, AtomBasicInformation, abi, sizeof(abi_buf), NULL );
-    todo_wine ok( status == STATUS_INVALID_HANDLE, "got %#lx\n", status );
+    ok( status == STATUS_INVALID_HANDLE, "got %#lx\n", status );
 
     memset( buf, 0xcc, sizeof(buf) );
     name.Buffer = buf;

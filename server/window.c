@@ -2203,7 +2203,7 @@ DECL_HANDLER(create_window)
 {
     struct window *win, *parent = NULL, *owner = NULL;
     struct unicode_str cls_name = get_req_unicode_str();
-    struct atom_table *table = get_global_atom_table();
+    struct atom_table *table = get_user_atom_table();
     unsigned int dpi_context;
     atom_t atom;
 
@@ -2318,7 +2318,7 @@ DECL_HANDLER(get_desktop_window)
     {
         static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
         static const struct unicode_str name = { messageW, sizeof(messageW) };
-        struct atom_table *table = get_global_atom_table();
+        struct atom_table *table = get_user_atom_table();
         atom_t atom = add_atom( table, &name );
         if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0, 0 )))
         {
@@ -2533,7 +2533,7 @@ DECL_HANDLER(get_class_windows)
     struct desktop *desktop = NULL;
     struct window *parent = NULL, *win = NULL;
     struct unicode_str cls_name = get_req_unicode_str();
-    struct atom_table *table = get_global_atom_table();
+    struct atom_table *table = get_user_atom_table();
     atom_t atom = req->atom;
     user_handle_t *data;
     unsigned int count = 0, max_count = get_reply_max_size() / sizeof(*data);

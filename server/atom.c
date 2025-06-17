@@ -96,6 +96,7 @@ static const struct object_ops atom_table_ops =
 };
 
 static struct atom_table *global_table;
+static struct atom_table *user_table;
 
 struct object *create_atom_table(void)
 {
@@ -120,6 +121,19 @@ void set_global_atom_table( struct object *obj )
 struct atom_table *get_global_atom_table(void)
 {
     return global_table;
+}
+
+void set_user_atom_table( struct object *obj )
+{
+    assert( obj->ops == &atom_table_ops );
+    user_table = (struct atom_table *)obj;
+    make_object_permanent( obj );
+    grab_object( obj );
+}
+
+struct atom_table *get_user_atom_table(void)
+{
+    return user_table;
 }
 
 /* retrieve an entry pointer from its atom */
@@ -331,7 +345,7 @@ DECL_HANDLER(get_atom_information)
 DECL_HANDLER(add_user_atom)
 {
     struct unicode_str name = get_req_unicode_str();
-    reply->atom = add_atom( global_table, &name );
+    reply->atom = add_atom( user_table, &name );
 }
 
 /* get a user atom name */
@@ -339,7 +353,7 @@ DECL_HANDLER(get_user_atom_name)
 {
     struct atom_entry *entry;
 
-    if ((entry = get_atom_entry( global_table, req->atom )))
+    if ((entry = get_atom_entry( user_table, req->atom )))
     {
         set_reply_data( (void *)entry->str, min( entry->len, get_reply_max_size() ));
         reply->total = entry->len;

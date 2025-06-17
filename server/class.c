@@ -75,7 +75,7 @@ static struct window_class *create_class( struct process *process, int extra_byt
 
 static void destroy_class( struct window_class *class )
 {
-    struct atom_table *table = get_global_atom_table();
+    struct atom_table *table = get_user_atom_table();
 
     release_atom( table, class->atom );
     release_atom( table, class->base_atom );
@@ -139,7 +139,7 @@ int is_hwnd_message_class( struct window_class *class )
 {
     static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
     static const struct unicode_str name = { messageW, sizeof(messageW) };
-    struct atom_table *table = get_global_atom_table();
+    struct atom_table *table = get_user_atom_table();
 
     return (!class->local && class->atom == find_atom( table, &name ));
 }
@@ -164,7 +164,7 @@ DECL_HANDLER(create_class)
 {
     struct window_class *class;
     struct unicode_str name = get_req_unicode_str();
-    struct atom_table *table = get_global_atom_table();
+    struct atom_table *table = get_user_atom_table();
     atom_t atom, base_atom;
 
     if (name.len)
@@ -233,7 +233,7 @@ DECL_HANDLER(destroy_class)
 {
     struct window_class *class;
     struct unicode_str name = get_req_unicode_str();
-    struct atom_table *table = get_global_atom_table();
+    struct atom_table *table = get_user_atom_table();
     atom_t atom = req->atom;
 
     if (name.len) atom = find_atom( table, &name );
@@ -254,7 +254,7 @@ DECL_HANDLER(destroy_class)
 DECL_HANDLER(set_class_info)
 {
     struct window_class *class = get_window_class( req->window );
-    struct atom_table *table = get_global_atom_table();
+    struct atom_table *table = get_user_atom_table();
 
     if (!class) return;
 
