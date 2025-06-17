@@ -7,7 +7,7 @@ static const float_t toint = 1 / FLT_EPSILON;
 
 double __cdecl rint(double x)
 {
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUC__) && !defined(__clang__)
     return __builtin_rint(x);
 #else
     union {double f; uint64_t i;} u = {x};
