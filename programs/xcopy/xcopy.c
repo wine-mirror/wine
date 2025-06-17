@@ -763,7 +763,8 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                                    OPT_REMOVEARCH;    break;
 
                 /* E can be /E or /EXCLUDE */
-                case 'E': if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                case 'E': if (wcslen(p) >= 8 &&
+                              CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
                                              p, 8, L"EXCLUDE:", -1) == CSTR_EQUAL) {
                             if (XCOPY_ProcessExcludeList(&p[8])) {
                               XCOPY_FailMessage(ERROR_INVALID_PARAMETER);
