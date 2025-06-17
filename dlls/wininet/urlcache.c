@@ -1461,11 +1461,12 @@ static DWORD urlcache_hash_key(LPCSTR lpszKey)
     for (i = 0; i < ARRAY_SIZE(key); i++)
         key[i] = lookupTable[(*lpszKey + i) & 0xFF];
 
-    for (lpszKey++; *lpszKey; lpszKey++)
-    {
-        for (i = 0; i < ARRAY_SIZE(key); i++)
-            key[i] = lookupTable[*lpszKey ^ key[i]];
-    }
+    if (*lpszKey)
+        for (lpszKey++; *lpszKey; lpszKey++)
+        {
+            for (i = 0; i < ARRAY_SIZE(key); i++)
+                key[i] = lookupTable[*lpszKey ^ key[i]];
+        }
 
     return *(DWORD *)key;
 }
