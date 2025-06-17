@@ -250,6 +250,7 @@ static void test_class(void)
     NTSTATUS status;
     WCHAR buf[64];
     WNDCLASSW cls;
+    HANDLE prop;
     HWND hwnd;
     ULONG ret;
 
@@ -337,6 +338,38 @@ static void test_class(void)
     ret = NtUserGetClassName( hwnd, FALSE, &name );
     ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
         "NtUserGetClassName returned %lx %lu\n", ret, GetLastError() );
+
+    SetPropW( hwnd, L"WineTestProp", (void *)0xdeadbeef );
+
+    status = NtFindAtom( L"WineTestProp", sizeof(L"WineTestProp") - sizeof(WCHAR), &global );
+    ok( !status, "NtFindAtom returned %#lx\n", status );
+
+    for (ATOM atom = 0xc000; atom != 0; atom++)
+    {
+        memset( name.Buffer, 0xcc, name.MaximumLength );
+        ret = NtUserGetAtomName( atom, &name );
+        ok( wcscmp( buf, L"WineTestProp" ), "buf = %s\n", debugstr_w(buf) );
+    }
+
+    prop = NtUserGetProp( hwnd, L"WineTestProp" );
+    todo_wine ok( prop == NULL, "NtUserGetProp returned %#lx\n", status );
+    status = NtAddAtom( L"WineTestProp", sizeof(L"WineTestProp"), &global );
+    ok( !status, "NtAddAtom returned %#lx\n", status );
+    prop = NtUserGetProp( hwnd, MAKEINTRESOURCEW(global) );
+    todo_wine ok( prop == (void *)0xdeadbeef, "NtUserGetProp returned %#lx\n", status );
+    status = NtDeleteAtom( global );
+    ok( !status, "NtDeleteAtom returned %#lx\n", status );
+
+    cls.lpszClassName = L"WineTestProp";
+    class = RegisterClassW( &cls );
+    ok( class != 0, "RegisterClassW returned %#x\n", class );
+    prop = NtUserGetProp( hwnd, MAKEINTRESOURCEW(class) );
+    todo_wine ok( prop == NULL, "NtUserGetProp returned %#lx\n", status );
+    ret = UnregisterClassW( L"WineTestProp", GetModuleHandleW( NULL ) );
+    ok( ret, "UnregisterClassW failed: %lu\n", GetLastError() );
+    cls.lpszClassName = L"test";
+
+    RemovePropW( hwnd, L"WineTestProp" );
 
     DestroyWindow( hwnd );
 
