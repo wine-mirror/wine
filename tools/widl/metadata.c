@@ -2115,6 +2115,20 @@ static void add_eventremove_method( const type_t *iface, const var_t *method )
     add_methodsemantics_row( METHOD_SEM_REMOVEON, methoddef, has_semantics(TABLE_EVENT, event) );
 }
 
+static void add_method( const type_t *iface, const var_t *method )
+{
+    UINT paramlist, sig_size, attrs;
+    BYTE sig[256];
+
+    paramlist = add_method_params_step2( type_function_get_args(method->declspec.type) );
+    sig_size = make_method_sig( method, sig );
+
+    attrs = METHOD_ATTR_PUBLIC  | METHOD_ATTR_VIRTUAL | METHOD_ATTR_HIDEBYSIG |
+            METHOD_ATTR_NEWSLOT | METHOD_ATTR_ABSTRACT;
+
+    add_methoddef_row( 0, attrs, add_string(method->name), add_blob(sig, sig_size), paramlist );
+}
+
 static void add_interface_type_step2( type_t *type )
 {
     UINT name, namespace, interface, flags = TYPE_ATTR_INTERFACE | TYPE_ATTR_ABSTRACT | TYPE_ATTR_UNKNOWN;
@@ -2141,6 +2155,7 @@ static void add_interface_type_step2( type_t *type )
         else if (is_attr( method->attrs, ATTR_PROPPUT )) add_propput_method( type, method );
         else if (is_attr( method->attrs, ATTR_EVENTADD )) add_eventadd_method( type, method );
         else if (is_attr( method->attrs, ATTR_EVENTREMOVE )) add_eventremove_method( type, method );
+        else add_method( type, method );
     }
 
     add_contract_attr_step2( type );
