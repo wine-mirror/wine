@@ -2350,7 +2350,8 @@ static const ConsonantComponents Devanagari_consonants[] ={
     {{0x0921, 0x093C, 0x00000}, 0x095C},
     {{0x0922, 0x093C, 0x00000}, 0x095D},
     {{0x092B, 0x093C, 0x00000}, 0x095E},
-    {{0x092F, 0x093C, 0x00000}, 0x095F}};
+    {{0x092F, 0x093C, 0x00000}, 0x095F},
+    {{0x0000, 0x0000, 0x00000}, 0x0000}};
 
 static void ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
