@@ -35,6 +35,8 @@
 
 #define NTDLL_TLS_ERRNO 16  /* TLS slot for _errno() */
 
+#define NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED 0x8 /* RTL_ACTIVATION_CONTEXT_STACK_FRAME.Flags */
+
 #ifdef __i386__
 static const USHORT current_machine = IMAGE_FILE_MACHINE_I386;
 #elif defined(__x86_64__)

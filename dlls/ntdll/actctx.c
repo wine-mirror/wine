@@ -5443,7 +5443,7 @@ NTSTATUS WINAPI RtlActivateActivationContextEx( ULONG flags, TEB *teb, ACTIVATIO
     frame = RtlAllocateHeap( GetProcessHeap(), HEAP_GENERATE_EXCEPTIONS, sizeof(*frame) );
     frame->Previous = actctx_stack->ActiveFrame;
     frame->ActivationContext = actctx;
-    frame->Flags = 0;
+    frame->Flags = NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED;
     actctx_stack->ActiveFrame = frame;
     RtlAddRefActivationContext( actctx );
 
@@ -5508,7 +5508,8 @@ void WINAPI RtlFreeActivationContextStack( ACTIVATION_CONTEXT_STACK *actctx_stac
     {
         RTL_ACTIVATION_CONTEXT_STACK_FRAME *prev = frame->Previous;
         RtlReleaseActivationContext( frame->ActivationContext );
-        RtlFreeHeap( GetProcessHeap(), 0, frame );
+        if (frame->Flags & NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED)
+            RtlFreeHeap( GetProcessHeap(), 0, frame );
         frame = prev;
     }
     actctx_stack->ActiveFrame = NULL;

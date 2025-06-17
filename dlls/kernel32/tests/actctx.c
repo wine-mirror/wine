@@ -2236,7 +2236,6 @@ static void test_actctx(void)
         frame = NtCurrentTeb()->ActivationContextStackPointer->ActiveFrame;
         ok(!frame->Previous, "Got unexpected Previous.\n");
         ok(frame->ActivationContext == handle, "Got unexpected ActivationContext.\n");
-        todo_wine
         ok(frame->Flags & NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED, "Got unexpected Flags %#lx.\n", frame->Flags);
 
         b = DeactivateActCtx(0, cookie);
@@ -2251,7 +2250,6 @@ static void test_actctx(void)
         frame = NtCurrentTeb()->ActivationContextStackPointer->ActiveFrame;
         ok(!frame->Previous, "Got unexpected Previous.\n");
         ok(frame->ActivationContext == handle, "Got unexpected ActivationContext.\n");
-        todo_wine
         ok(frame->Flags & NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED, "Got unexpected Flags %#lx.\n", frame->Flags);
 
         b = DeactivateActCtx(0, cookie);
@@ -2266,7 +2264,6 @@ static void test_actctx(void)
         frame = NtCurrentTeb()->ActivationContextStackPointer->ActiveFrame;
         ok(!frame->Previous, "Got unexpected Previous.\n");
         ok(frame->ActivationContext == handle, "Got unexpected ActivationContext.\n");
-        todo_wine
         ok(frame->Flags & NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED, "Got unexpected Flags %#lx.\n", frame->Flags);
 
         b = DeactivateActCtx(0, cookie);
