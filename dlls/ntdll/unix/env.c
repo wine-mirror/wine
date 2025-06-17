@@ -1675,6 +1675,30 @@ static inline void put_unicode_string( WCHAR *src, WCHAR **dst, UNICODE_STRING *
     copy_unicode_string( &src, dst, str, wcslen(src) * sizeof(WCHAR) );
 }
 
+static void copy_dos_path_string( WCHAR **src, WCHAR **dst, UNICODE_STRING *str,
+                                  UNICODE_STRING *nt_str, UINT len )
+{
+    /* copy the original string into nt_str */
+    nt_str->Buffer = malloc( len + sizeof(WCHAR) );
+    memcpy( nt_str->Buffer, *src, len );
+    nt_str->Buffer[len / sizeof(WCHAR)] = 0;
+    nt_str->Length = len;
+    nt_str->MaximumLength = len + sizeof(WCHAR);
+
+    if (len > 5 * sizeof(WCHAR) && (*src)[5] == ':') /* skip the \??\ prefix */
+    {
+        *src += 4;
+        len -= 4 * sizeof(WCHAR);
+        copy_unicode_string( src, dst, str, len );
+    }
+    else
+    {
+        WCHAR *ptr = *dst;
+        copy_unicode_string( src, dst, str, len );
+        ptr[1] = '\\'; /* change \??\ to \\?\ */
+    }
+}
+
 static inline WCHAR *get_dos_path( WCHAR *nt_path )
 {
     if (nt_path[4] && nt_path[5] == ':') return nt_path + 4; /* skip the \??\ prefix */
@@ -1948,7 +1972,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     add_registry_environment( &env, &env_pos, &env_size );
     env[env_pos++] = 0;
 
-    status = load_main_exe( NULL, main_argv[1], curdir, 0, &nt_name, module );
+    status = load_main_exe( &nt_name, main_argv[1], curdir, 0, module );
     if (NT_SUCCESS(status))
     {
         char *loader;
@@ -2107,7 +2131,7 @@ void init_startup_info(void)
     dst = params->CurrentDirectory.DosPath.Buffer + MAX_PATH;
 
     if (info->dllpath_len) copy_unicode_string( &src, &dst, &params->DllPath, info->dllpath_len );
-    copy_unicode_string( &src, &dst, &params->ImagePathName, info->imagepath_len );
+    copy_dos_path_string( &src, &dst, &params->ImagePathName, &nt_name, info->imagepath_len );
     copy_unicode_string( &src, &dst, &params->CommandLine, info->cmdline_len );
     copy_unicode_string( &src, &dst, &params->WindowTitle, info->title_len );
     copy_unicode_string( &src, &dst, &params->Desktop, info->desktop_len );
@@ -2129,15 +2153,14 @@ void init_startup_info(void)
     free( env );
     free( info );
 
-    status = load_main_exe( params->ImagePathName.Buffer, NULL, params->CommandLine.Buffer,
-                            machine, &nt_name, &module );
+    status = load_main_exe( &nt_name, NULL, NULL, machine, &module );
     if (!NT_SUCCESS(status))
     {
         MESSAGE( "wine: failed to start %s\n", debugstr_us(&params->ImagePathName) );
         NtTerminateProcess( GetCurrentProcess(), status );
     }
     rebuild_argv();
-    main_wargv = build_wargv( get_dos_path( nt_name.Buffer ));
+    main_wargv = build_wargv( params->ImagePathName.Buffer );
     free( nt_name.Buffer );
     init_peb( params, module );
 }
@@ -2161,17 +2184,13 @@ void *create_startup_info( const UNICODE_STRING *nt_image, ULONG process_flags,
                            const struct pe_image_info *pe_info, DWORD *info_size )
 {
     struct startup_info_data *info;
-    UNICODE_STRING dos_image = *nt_image;
     DWORD size;
     void *ptr;
-
-    dos_image.Buffer = get_dos_path( nt_image->Buffer );
-    dos_image.Length = nt_image->Length - (dos_image.Buffer - nt_image->Buffer) * sizeof(WCHAR);
 
     size = sizeof(*info);
     size += params->CurrentDirectory.DosPath.Length;
     size += params->DllPath.Length;
-    size += dos_image.Length;
+    size += nt_image->Length;
     size += params->CommandLine.Length;
     size += params->WindowTitle.Length;
     size += params->Desktop.Length;
@@ -2210,7 +2229,7 @@ void *create_startup_info( const UNICODE_STRING *nt_image, ULONG process_flags,
     ptr = info + 1;
     info->curdir_len = append_string( &ptr, params, &params->CurrentDirectory.DosPath );
     info->dllpath_len = append_string( &ptr, params, &params->DllPath );
-    info->imagepath_len = append_string( &ptr, params, &dos_image );
+    info->imagepath_len = append_string( &ptr, params, nt_image );
     info->cmdline_len = append_string( &ptr, params, &params->CommandLine );
     info->title_len = append_string( &ptr, params, &params->WindowTitle );
     info->desktop_len = append_string( &ptr, params, &params->Desktop );
