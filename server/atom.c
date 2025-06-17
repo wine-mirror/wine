@@ -51,7 +51,6 @@ struct atom_entry
     struct atom_entry *next;   /* hash table list */
     struct atom_entry *prev;   /* hash table list */
     int                count;  /* reference count */
-    short              pinned; /* whether the atom is pinned or not */
     atom_t             atom;   /* atom handle */
     unsigned short     hash;   /* string hash */
     unsigned short     len;    /* string len */
@@ -146,8 +145,8 @@ static void atom_table_dump( struct object *obj, int verbose )
     {
         struct atom_entry *entry = table->atoms[i];
         if (!entry) continue;
-        fprintf( stderr, "  %04x: ref=%d pinned=%c hash=%d \"",
-                 entry->atom, entry->count, entry->pinned ? 'Y' : 'N', entry->hash );
+        fprintf( stderr, "  %04x: ref=%d hash=%d \"",
+                 entry->atom, entry->count, entry->hash );
         dump_strW( entry->str, entry->len, stderr, "\"\"");
         fprintf( stderr, "\"\n" );
     }
@@ -208,7 +207,6 @@ static atom_t add_atom( struct atom_table *table, const struct unicode_str *str 
             if ((entry->next = table->entries[hash])) entry->next->prev = entry;
             table->entries[hash] = entry;
             entry->count  = 1;
-            entry->pinned = 0;
             entry->hash   = hash;
             entry->len    = str->len;
             memcpy( entry->str, str->str, str->len );
@@ -228,8 +226,7 @@ static void delete_atom( struct atom_table *table, atom_t atom, int if_pinned )
 {
     struct atom_entry *entry = get_atom_entry( table, atom );
     if (!entry) return;
-    if (entry->pinned && !if_pinned) set_error( STATUS_WAS_LOCKED );
-    else if (!--entry->count)
+    if (!--entry->count)
     {
         if (entry->next) entry->next->prev = entry->prev;
         if (entry->prev) entry->prev->next = entry->next;
@@ -373,7 +370,7 @@ DECL_HANDLER(get_atom_information)
         {
             set_reply_data( entry->str, min( entry->len, get_reply_max_size() ));
             reply->count = entry->count;
-            reply->pinned = entry->pinned;
+            reply->pinned = 0;
             reply->total = entry->len;
         }
         else reply->count = -1;
