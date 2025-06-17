@@ -35,6 +35,7 @@ namespace Windows.Devices.Bluetooth {
     typedef enum BluetoothCacheMode BluetoothCacheMode;
     typedef enum BluetoothError BluetoothError;
 
+    runtimeclass BluetoothLEDevice;
     runtimeclass BluetoothDeviceId;
 }
 
@@ -241,6 +242,19 @@ namespace Windows.Devices.Bluetooth.GenericAttributeProfile {
         [propget] HRESULT DeviceId([out, retval] HSTRING *value);
         [propget] HRESULT Uuid([out, retval] GUID *value);
         [propget] HRESULT AttributeHandle([out, retval] UINT16 *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceService),
+        uuid(fc54520b-0b0d-4708-bae0-9ffd9489bc59)
+    ]
+    interface IGattDeviceService2 : IInspectable requires Windows.Devices.Bluetooth.GenericAttributeProfile.IGattDeviceService, Windows.Foundation.IClosable
+    {
+        [propget] HRESULT Device([out, retval] Windows.Devices.Bluetooth.BluetoothLEDevice **value);
+        [propget] HRESULT ParentServices([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceService *> **value);
+        HRESULT GetAllCharacteristics([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristic *> **value);
+        HRESULT GetAllIncludedServices([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Bluetooth.GenericAttributeProfile.GattDeviceService *> **value);
     }
 
     [
