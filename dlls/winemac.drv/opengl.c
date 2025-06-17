@@ -2383,14 +2383,14 @@ static BOOL macdrv_pbuffer_swap(struct opengl_drawable *base)
     return FALSE;
 }
 
-static BOOL macdrv_context_make_current(HDC draw_hdc, HDC read_hdc, void *private)
+static BOOL macdrv_make_current(struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *private)
 {
+    struct gl_drawable *draw = impl_from_opengl_drawable(draw_base), *read = impl_from_opengl_drawable(read_base);
     struct macdrv_context *context = private;
     struct macdrv_win_data *data;
     HWND hwnd;
 
-    TRACE("draw_hdc %p read_hdc %p context %p/%p/%p\n", draw_hdc, read_hdc, context,
-          (context ? context->context : NULL), (context ? context->cglcontext : NULL));
+    TRACE("draw %s, read %s, context %p\n", debugstr_opengl_drawable(draw_base), debugstr_opengl_drawable(read_base), private);
 
     if (!private)
     {
@@ -2399,7 +2399,7 @@ static BOOL macdrv_context_make_current(HDC draw_hdc, HDC read_hdc, void *privat
         return TRUE;
     }
 
-    if ((hwnd = NtUserWindowFromDC(draw_hdc)))
+    if ((hwnd = draw->base.hwnd))
     {
         if (!(data = get_win_data(hwnd)))
         {
@@ -2420,7 +2420,7 @@ static BOOL macdrv_context_make_current(HDC draw_hdc, HDC read_hdc, void *privat
         CGLPBufferObj pbuffer;
 
         pthread_mutex_lock(&dc_pbuffers_mutex);
-        pbuffer = (CGLPBufferObj)CFDictionaryGetValue(dc_pbuffers, draw_hdc);
+        pbuffer = (CGLPBufferObj)CFDictionaryGetValue(dc_pbuffers, draw->base.hdc);
         if (!pbuffer)
         {
             WARN("no window or pbuffer for DC\n");
@@ -2437,9 +2437,9 @@ static BOOL macdrv_context_make_current(HDC draw_hdc, HDC read_hdc, void *privat
 
     context->read_view = NULL;
     context->read_pbuffer = NULL;
-    if (read_hdc && read_hdc != draw_hdc)
+    if (read != draw)
     {
-        if ((hwnd = NtUserWindowFromDC(read_hdc)))
+        if ((hwnd = read->base.hwnd))
         {
             if ((data = get_win_data(hwnd)))
             {
@@ -2455,7 +2455,7 @@ static BOOL macdrv_context_make_current(HDC draw_hdc, HDC read_hdc, void *privat
         else
         {
             pthread_mutex_lock(&dc_pbuffers_mutex);
-            context->read_pbuffer = (CGLPBufferObj)CFDictionaryGetValue(dc_pbuffers, read_hdc);
+            context->read_pbuffer = (CGLPBufferObj)CFDictionaryGetValue(dc_pbuffers, read->base.hdc);
             pthread_mutex_unlock(&dc_pbuffers_mutex);
         }
     }
@@ -3012,7 +3012,7 @@ static const struct opengl_driver_funcs macdrv_driver_funcs =
     .p_surface_create = macdrv_surface_create,
     .p_context_create = macdrv_context_create,
     .p_context_destroy = macdrv_context_destroy,
-    .p_context_make_current = macdrv_context_make_current,
+    .p_make_current = macdrv_make_current,
     .p_pbuffer_create = macdrv_pbuffer_create,
     .p_pbuffer_updated = macdrv_pbuffer_updated,
     .p_pbuffer_bind = macdrv_pbuffer_bind,

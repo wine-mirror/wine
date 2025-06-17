@@ -176,7 +176,7 @@ struct opengl_driver_funcs
     BOOL (*p_surface_create)( HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable );
     BOOL (*p_context_create)( int format, void *share, const int *attribs, void **context );
     BOOL (*p_context_destroy)(void*);
-    BOOL (*p_context_make_current)(HDC,HDC,void*);
+    BOOL (*p_make_current)( struct opengl_drawable *draw, struct opengl_drawable *read, void *private );
     BOOL (*p_pbuffer_create)( HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
                               GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **drawable );
     BOOL (*p_pbuffer_updated)( HDC hdc, struct opengl_drawable *drawable, GLenum cube_face, GLint mipmap_level );

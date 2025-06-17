@@ -821,12 +821,6 @@ static struct glx_pixel_format *glx_pixel_format_from_format( int format )
     return &pixel_formats[format - 1];
 }
 
-static struct gl_drawable *grab_gl_drawable( struct gl_drawable *gl )
-{
-    opengl_drawable_add_ref( &gl->base );
-    return gl;
-}
-
 static void x11drv_surface_destroy( struct opengl_drawable *base )
 {
     struct gl_drawable *gl = impl_from_opengl_drawable( base );
@@ -877,21 +871,6 @@ static BOOL set_swap_interval( struct gl_drawable *gl, int interval )
     }
 
     return ret;
-}
-
-static struct gl_drawable *get_gl_drawable( HWND hwnd, HDC hdc )
-{
-    struct gl_drawable *gl;
-
-    pthread_mutex_lock( &context_mutex );
-    if (hwnd && !XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&gl ))
-        gl = grab_gl_drawable( gl );
-    else if (hdc && !XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&gl ))
-        gl = grab_gl_drawable( gl );
-    else
-        gl = NULL;
-    pthread_mutex_unlock( &context_mutex );
-    return gl;
 }
 
 static GLXContext create_glxcontext( struct x11drv_context *context, int format, GLXContext share, const int *attribs )
@@ -1272,26 +1251,13 @@ static void *x11drv_get_proc_address( const char *name )
     return pglXGetProcAddressARB( (const GLubyte *)name );
 }
 
-static void set_context_drawables( struct x11drv_context *ctx, struct gl_drawable **draw,
-                                   struct gl_drawable **read )
+static BOOL x11drv_make_current( struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *private )
 {
-    struct gl_drawable *old_draw, *old_read;
-
-    old_draw = ctx->draw;
-    old_read = ctx->read;
-    ctx->draw = *draw;
-    ctx->read = *read;
-    *draw = old_draw;
-    *read = old_read;
-}
-
-static BOOL x11drv_context_make_current( HDC draw_hdc, HDC read_hdc, void *private )
-{
+    struct gl_drawable *old_draw, *old_read, *draw = impl_from_opengl_drawable( draw_base ), *read = impl_from_opengl_drawable( read_base );
     struct x11drv_context *ctx = private;
     BOOL ret = FALSE;
-    struct gl_drawable *draw_gl, *read_gl = NULL;
 
-    TRACE("(%p,%p,%p)\n", draw_hdc, read_hdc, ctx);
+    TRACE( "draw %s, read %s, context %p\n", debugstr_opengl_drawable( draw_base ), debugstr_opengl_drawable( read_base ), private );
 
     if (!private)
     {
@@ -1300,28 +1266,22 @@ static BOOL x11drv_context_make_current( HDC draw_hdc, HDC read_hdc, void *priva
         return TRUE;
     }
 
-    if ((draw_gl = get_gl_drawable( NtUserWindowFromDC( draw_hdc ), draw_hdc )))
-    {
-        read_gl = get_gl_drawable( NtUserWindowFromDC( read_hdc ), read_hdc );
+    if (!pglXMakeContextCurrent) ret = pglXMakeCurrent( gdi_display, draw->drawable, ctx->ctx );
+    else ret = pglXMakeContextCurrent( gdi_display, draw->drawable, read->drawable, ctx->ctx );
+    if (!ret) return FALSE;
 
-        pthread_mutex_lock( &context_mutex );
-        if (!pglXMakeContextCurrent) ret = pglXMakeCurrent( gdi_display, draw_gl->drawable, ctx->ctx );
-        else ret = pglXMakeContextCurrent( gdi_display, draw_gl->drawable, read_gl ? read_gl->drawable : 0, ctx->ctx );
-        if (ret)
-        {
-            set_context_drawables( ctx, &draw_gl, &read_gl );
-            NtCurrentTeb()->glReserved2 = ctx;
-            pthread_mutex_unlock( &context_mutex );
-            goto done;
-        }
-        pthread_mutex_unlock( &context_mutex );
-    }
-    RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-done:
-    if (read_gl) opengl_drawable_release( &read_gl->base );
-    if (draw_gl) opengl_drawable_release( &draw_gl->base );
-    TRACE( "%p,%p,%p returning %d\n", draw_hdc, read_hdc, ctx, ret );
-    return ret;
+    pthread_mutex_lock( &context_mutex );
+    old_draw = ctx->draw;
+    old_read = ctx->read;
+    if ((ctx->draw = draw)) opengl_drawable_add_ref( &draw->base );
+    if ((ctx->read = read)) opengl_drawable_add_ref( &read->base );
+    pthread_mutex_unlock( &context_mutex );
+
+    if (old_draw) opengl_drawable_release( &old_draw->base );
+    if (old_read) opengl_drawable_release( &old_read->base );
+
+    NtCurrentTeb()->glReserved2 = ctx;
+    return TRUE;
 }
 
 static void present_gl_drawable( struct gl_drawable *gl, BOOL flush, BOOL gl_finish )
@@ -1684,7 +1644,7 @@ static const struct opengl_driver_funcs x11drv_driver_funcs =
     .p_surface_create = x11drv_surface_create,
     .p_context_create = x11drv_context_create,
     .p_context_destroy = x11drv_context_destroy,
-    .p_context_make_current = x11drv_context_make_current,
+    .p_make_current = x11drv_make_current,
     .p_pbuffer_create = x11drv_pbuffer_create,
     .p_pbuffer_updated = x11drv_pbuffer_updated,
     .p_pbuffer_bind = x11drv_pbuffer_bind,

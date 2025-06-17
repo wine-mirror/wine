@@ -236,28 +236,20 @@ static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
     }
 }
 
-static BOOL wayland_context_make_current(HDC draw_hdc, HDC read_hdc, void *private)
+static BOOL wayland_make_current(struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *private)
 {
+    struct wayland_gl_drawable *draw = impl_from_opengl_drawable(draw_base), *read = impl_from_opengl_drawable(read_base);
     BOOL ret;
     struct wayland_context *ctx = private;
-    struct wayland_gl_drawable *draw, *read;
     struct wayland_gl_drawable *old_draw = NULL, *old_read = NULL;
 
-    TRACE("draw_hdc=%p read_hdc=%p ctx=%p\n", draw_hdc, read_hdc, ctx);
+    TRACE("draw %s, read %s, context %p\n", debugstr_opengl_drawable(draw_base), debugstr_opengl_drawable(read_base), private);
 
     if (!private)
     {
         funcs->p_eglMakeCurrent(egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         return TRUE;
     }
-
-    draw = wayland_gl_drawable_get(NtUserWindowFromDC(draw_hdc), draw_hdc);
-    read = wayland_gl_drawable_get(NtUserWindowFromDC(read_hdc), read_hdc);
-
-    TRACE("%p/%p context %p surface %p/%p\n",
-          draw_hdc, read_hdc, ctx->context,
-          draw ? draw->surface : EGL_NO_SURFACE,
-          read ? read->surface : EGL_NO_SURFACE);
 
     /* Since making an EGL surface current may latch the native size,
      * perform any pending resizes before calling it. */
@@ -273,13 +265,8 @@ static BOOL wayland_context_make_current(HDC draw_hdc, HDC read_hdc, void *priva
     {
         old_draw = ctx->draw;
         old_read = ctx->read;
-        ctx->draw = draw;
-        ctx->read = read;
-    }
-    else
-    {
-        old_draw = draw;
-        old_read = read;
+        if ((ctx->draw = draw)) opengl_drawable_add_ref(&draw->base);
+        if ((ctx->read = read)) opengl_drawable_add_ref(&read->base);
     }
 
     pthread_mutex_unlock(&gl_object_mutex);
@@ -481,7 +468,7 @@ static struct opengl_driver_funcs wayland_driver_funcs =
     .p_surface_create = wayland_opengl_surface_create,
     .p_context_create = wayland_context_create,
     .p_context_destroy = wayland_context_destroy,
-    .p_context_make_current = wayland_context_make_current,
+    .p_make_current = wayland_make_current,
     .p_pbuffer_create = wayland_pbuffer_create,
     .p_pbuffer_updated = wayland_pbuffer_updated,
     .p_pbuffer_bind = wayland_pbuffer_bind,

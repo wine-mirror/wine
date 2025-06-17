@@ -438,7 +438,7 @@ static BOOL egldrv_context_destroy( void *private )
     return FALSE;
 }
 
-static BOOL egldrv_context_make_current( HDC draw_hdc, HDC read_hdc, void *private )
+static BOOL egldrv_make_current( struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *private )
 {
     FIXME( "stub!\n" );
     return FALSE;
@@ -456,7 +456,7 @@ static const struct opengl_driver_funcs egldrv_funcs =
     .p_pbuffer_bind = egldrv_pbuffer_bind,
     .p_context_create = egldrv_context_create,
     .p_context_destroy = egldrv_context_destroy,
-    .p_context_make_current = egldrv_context_make_current,
+    .p_make_current = egldrv_make_current,
 };
 
 static BOOL egl_init( const struct opengl_driver_funcs **driver_funcs )
@@ -627,7 +627,7 @@ static BOOL nulldrv_context_destroy( void *private )
     return FALSE;
 }
 
-static BOOL nulldrv_context_make_current( HDC draw, HDC read, void *context )
+static BOOL nulldrv_make_current( struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *private )
 {
     return FALSE;
 }
@@ -644,7 +644,7 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_pbuffer_bind = nulldrv_pbuffer_bind,
     .p_context_create = nulldrv_context_create,
     .p_context_destroy = nulldrv_context_destroy,
-    .p_context_make_current = nulldrv_context_make_current,
+    .p_make_current = nulldrv_make_current,
 };
 
 static const struct opengl_driver_funcs *driver_funcs = &nulldrv_funcs;
@@ -965,7 +965,7 @@ static BOOL context_set_drawables( struct wgl_context *context, void *private, H
         WARN( "Unexpected drawables with NULL context\n" );
     else if (!force && new_draw == context->draw && new_read == context->read)
         TRACE( "Drawables didn't change, nothing to do\n" );
-    else if (driver_funcs->p_context_make_current( draw_hdc, read_hdc, private ))
+    else if (driver_funcs->p_make_current( new_draw, new_read, private ))
     {
         if ((context->draw = new_draw)) opengl_drawable_add_ref( new_draw );
         if ((context->read = new_read)) opengl_drawable_add_ref( new_read );
