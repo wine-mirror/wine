@@ -31,10 +31,14 @@
 
 static BOOL   (WINAPI *pQueryActCtxSettingsW)(DWORD,HANDLE,LPCWSTR,LPCWSTR,LPWSTR,SIZE_T,SIZE_T*);
 
+static NTSTATUS (NTAPI *pRtlActivateActivationContext)(ULONG,struct _ACTIVATION_CONTEXT *,ULONG_PTR *);
+static NTSTATUS (NTAPI *pRtlActivateActivationContextEx)(ULONG,TEB *,struct _ACTIVATION_CONTEXT *,ULONG_PTR *);
 static NTSTATUS(NTAPI *pRtlFindActivationContextSectionString)(DWORD,const GUID *,ULONG,PUNICODE_STRING,PACTCTX_SECTION_KEYED_DATA);
 static BOOLEAN (NTAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING, PCSZ);
 static VOID    (NTAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
 static NTSTATUS(NTAPI *pRtlQueryInformationActiveActivationContext)(ULONG,PVOID,SIZE_T,SIZE_T *);
+
+#define NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED 0x8 /* RTL_ACTIVATION_CONTEXT_STACK_FRAME.Flags */
 
 #ifdef __i386__
 #define ARCH "x86"
@@ -2197,7 +2201,9 @@ static void test_allowDelayedBinding(void)
 
 static void test_actctx(void)
 {
+    RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
     ULONG_PTR cookie;
+    NTSTATUS status;
     HANDLE handle;
     BOOL b;
 
@@ -2210,6 +2216,65 @@ static void test_actctx(void)
         test_basic_info(handle, __LINE__);
         test_detailed_info(handle, &detailed_info0, __LINE__);
         test_runlevel_info(handle, &runlevel_info0, __LINE__);
+        ReleaseActCtx(handle);
+    }
+
+    /* Test flags for normal frames */
+    if (!create_manifest_file("test1.manifest", manifest1, -1, NULL, NULL))
+    {
+        skip("Could not create manifest file\n");
+        return;
+    }
+    handle = test_create("test1.manifest");
+    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %lu\n", GetLastError());
+    DeleteFileA("test1.manifest");
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        b = ActivateActCtx(handle, &cookie);
+        ok(b, "ActivateActCtx failed: %lu\n", GetLastError());
+
+        frame = NtCurrentTeb()->ActivationContextStackPointer->ActiveFrame;
+        ok(!frame->Previous, "Got unexpected Previous.\n");
+        ok(frame->ActivationContext == handle, "Got unexpected ActivationContext.\n");
+        todo_wine
+        ok(frame->Flags & NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED, "Got unexpected Flags %#lx.\n", frame->Flags);
+
+        b = DeactivateActCtx(0, cookie);
+        ok(b, "DeactivateActCtx failed: %lu\n", GetLastError());
+        b = GetCurrentActCtx(&handle);
+        ok(handle == NULL, "handle = %p, expected NULL\n", handle);
+        ok(b, "GetCurrentActCtx failed: %lu\n", GetLastError());
+
+        status = pRtlActivateActivationContext(0, handle, &cookie);
+        ok(status == STATUS_SUCCESS,  "Got unexpected status %#lx.\n", status);
+
+        frame = NtCurrentTeb()->ActivationContextStackPointer->ActiveFrame;
+        ok(!frame->Previous, "Got unexpected Previous.\n");
+        ok(frame->ActivationContext == handle, "Got unexpected ActivationContext.\n");
+        todo_wine
+        ok(frame->Flags & NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED, "Got unexpected Flags %#lx.\n", frame->Flags);
+
+        b = DeactivateActCtx(0, cookie);
+        ok(b, "DeactivateActCtx failed: %lu\n", GetLastError());
+        b = GetCurrentActCtx(&handle);
+        ok(handle == NULL, "handle = %p, expected NULL\n", handle);
+        ok(b, "GetCurrentActCtx failed: %lu\n", GetLastError());
+
+        status = pRtlActivateActivationContextEx(0, NtCurrentTeb(), handle, &cookie);
+        ok(status == STATUS_SUCCESS,  "Got unexpected status %#lx.\n", status);
+
+        frame = NtCurrentTeb()->ActivationContextStackPointer->ActiveFrame;
+        ok(!frame->Previous, "Got unexpected Previous.\n");
+        ok(frame->ActivationContext == handle, "Got unexpected ActivationContext.\n");
+        todo_wine
+        ok(frame->Flags & NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED, "Got unexpected Flags %#lx.\n", frame->Flags);
+
+        b = DeactivateActCtx(0, cookie);
+        ok(b, "DeactivateActCtx failed: %lu\n", GetLastError());
+        b = GetCurrentActCtx(&handle);
+        ok(handle == NULL, "handle = %p, expected NULL\n", handle);
+        ok(b, "GetCurrentActCtx failed: %lu\n", GetLastError());
+
         ReleaseActCtx(handle);
     }
 
@@ -3096,6 +3161,8 @@ static BOOL init_funcs(void)
     pQueryActCtxSettingsW = (void *)GetProcAddress( hLibrary, "QueryActCtxSettingsW" );
 
     hLibrary = GetModuleHandleA("ntdll.dll");
+    X(RtlActivateActivationContext);
+    X(RtlActivateActivationContextEx);
     X(RtlFindActivationContextSectionString);
     X(RtlCreateUnicodeStringFromAsciiz);
     X(RtlFreeUnicodeString);
