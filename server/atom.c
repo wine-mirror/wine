@@ -42,7 +42,6 @@
 #define MIN_HASH_SIZE 4
 #define MAX_HASH_SIZE 0x200
 
-#define MAX_ATOM_LEN  (255 * sizeof(WCHAR))
 #define MIN_STR_ATOM  0xc000
 #define MAX_ATOMS     0x4000
 
@@ -289,7 +288,7 @@ atom_t add_atom( struct atom_table *table, const struct unicode_str *str )
         set_error( STATUS_OBJECT_NAME_INVALID );
         return 0;
     }
-    if (str->len > MAX_ATOM_LEN)
+    if (str->len > MAX_ATOM_LEN * sizeof(WCHAR))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return 0;
@@ -352,7 +351,7 @@ atom_t find_atom( struct atom_table *table, const struct unicode_str *str )
         set_error( STATUS_OBJECT_NAME_INVALID );
         return 0;
     }
-    if (str->len > MAX_ATOM_LEN)
+    if (str->len > MAX_ATOM_LEN * sizeof(WCHAR))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return 0;

@@ -955,6 +955,8 @@ union udp_endpoint
 
 
 
+#define MAX_ATOM_LEN     255
+
 struct shared_cursor
 {
     int                  x;
@@ -1000,7 +1002,9 @@ typedef volatile struct
 
 typedef volatile struct
 {
-    int placeholder;
+    data_size_t          name_offset;
+    data_size_t          name_len;
+    WCHAR                name[MAX_ATOM_LEN];
 } class_shm_t;
 
 typedef volatile struct
@@ -6893,6 +6897,6 @@ union generic_reply
     struct get_inproc_sync_fd_reply get_inproc_sync_fd_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 894
+#define SERVER_PROTOCOL_VERSION 895
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

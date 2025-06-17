@@ -57,7 +57,8 @@ struct window_class
     char                extra_bytes[1];  /* extra bytes storage */
 };
 
-static struct window_class *create_class( struct process *process, int extra_bytes, int local )
+static struct window_class *create_class( struct process *process, int extra_bytes, int local,
+                                          struct unicode_str *name, unsigned int name_offset )
 {
     struct window_class *class;
 
@@ -72,7 +73,9 @@ static struct window_class *create_class( struct process *process, int extra_byt
     if (!(class->shared = alloc_shared_object())) goto failed;
     SHARED_WRITE_BEGIN( class->shared, class_shm_t )
     {
-        shared->placeholder = 0;
+        memcpy( (void *)shared->name, name->str, name->len );
+        shared->name_offset = name_offset;
+        shared->name_len = name->len;
     }
     SHARED_WRITE_END;
 
@@ -174,6 +177,17 @@ client_ptr_t get_class_client_ptr( struct window_class *class )
     return class->client_ptr;
 }
 
+static struct unicode_str integral_atom_name( WCHAR *buffer, atom_t atom )
+{
+    struct unicode_str name;
+    char tmp[16];
+    int ret = snprintf( tmp, sizeof(tmp), "#%u", atom );
+    for (int i = ret; i >= 0; i--) buffer[i] = tmp[i];
+    name.len = ret * sizeof(WCHAR);
+    name.str = buffer;
+    return name;
+}
+
 /* create a window class */
 DECL_HANDLER(create_class)
 {
@@ -181,14 +195,21 @@ DECL_HANDLER(create_class)
     struct unicode_str name = get_req_unicode_str();
     struct atom_table *table = get_user_atom_table();
     atom_t atom = req->atom, base_atom;
+    unsigned int offset = 0;
+    WCHAR buffer[16];
 
+    if (atom && !name.len) name = integral_atom_name( buffer, atom );
     if (!atom && !(atom = add_atom( table, &name ))) return;
 
     if (req->name_offset && req->name_offset < name.len / sizeof(WCHAR))
     {
-        name.str += req->name_offset;
-        name.len -= req->name_offset * sizeof(WCHAR);
-        if (!(base_atom = add_atom( table, &name )))
+        struct unicode_str base = name;
+
+        offset = req->name_offset;
+        base.str += offset;
+        base.len -= offset * sizeof(WCHAR);
+
+        if (!(base_atom = add_atom( table, &base )))
         {
             release_atom( table, atom );
             return;
@@ -216,7 +237,7 @@ DECL_HANDLER(create_class)
         return;
     }
 
-    if (!(class = create_class( current->process, req->extra, req->local )))
+    if (!(class = create_class( current->process, req->extra, req->local, &name, offset )))
     {
         release_atom( table, atom );
         release_atom( table, base_atom );

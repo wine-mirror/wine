@@ -971,6 +971,8 @@ union udp_endpoint
 /****************************************************************/
 /* shared session mapping structures */
 
+#define MAX_ATOM_LEN     255
+
 struct shared_cursor
 {
     int                  x;                /* cursor position */
@@ -1016,7 +1018,9 @@ typedef volatile struct
 
 typedef volatile struct
 {
-    int placeholder;
+    data_size_t          name_offset;        /* offset in WCHAR of the unversioned class name, constant */
+    data_size_t          name_len;           /* len in bytes of the class name, constant */
+    WCHAR                name[MAX_ATOM_LEN]; /* class name, constant */
 } class_shm_t;
 
 typedef volatile struct
