@@ -342,44 +342,33 @@ void release_global_atom( struct winstation *winstation, atom_t atom )
 DECL_HANDLER(add_atom)
 {
     struct unicode_str name = get_req_unicode_str();
-    struct atom_table *table = get_global_table( NULL, 1 );
-
-    if (table) reply->atom = add_atom( table, &name );
+    reply->atom = add_atom( global_table, &name );
 }
 
 /* delete a global atom */
 DECL_HANDLER(delete_atom)
 {
-    struct atom_table *table = get_global_table( NULL, 0 );
-
-    if (table) delete_atom( table, req->atom, 0 );
+    delete_atom( global_table, req->atom, 0 );
 }
 
 /* find a global atom */
 DECL_HANDLER(find_atom)
 {
     struct unicode_str name = get_req_unicode_str();
-    struct atom_table *table = get_global_table( NULL, 0 );
-
-    if (table) reply->atom = find_atom( table, &name );
+    reply->atom = find_atom( global_table, &name );
 }
 
 /* get global atom name */
 DECL_HANDLER(get_atom_information)
 {
-    struct atom_table *table = get_global_table( NULL, 0 );
+    struct atom_entry *entry;
 
-    if (table)
+    if ((entry = get_atom_entry( global_table, req->atom )))
     {
-        struct atom_entry *entry;
-
-        if ((entry = get_atom_entry( table, req->atom )))
-        {
-            set_reply_data( entry->str, min( entry->len, get_reply_max_size() ));
-            reply->count = entry->count;
-            reply->pinned = 0;
-            reply->total = entry->len;
-        }
-        else reply->count = -1;
+        set_reply_data( entry->str, min( entry->len, get_reply_max_size() ));
+        reply->count = entry->count;
+        reply->pinned = 0;
+        reply->total = entry->len;
     }
+    else reply->count = -1;
 }
