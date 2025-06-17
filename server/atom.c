@@ -98,6 +98,14 @@ static const struct object_ops atom_table_ops =
 static struct atom_table *global_table;
 static struct atom_table *user_table;
 
+static void add_atom_asciiz( struct atom_table *table, const char *name )
+{
+    WCHAR buffer[MAX_ATOM_LEN + 1];
+    struct unicode_str str = { buffer, strlen( name ) * sizeof(WCHAR) };
+    for (int i = 0; i < str.len / sizeof(WCHAR); i++) buffer[i] = name[i];
+    add_atom( table, &str );
+}
+
 struct object *create_atom_table(void)
 {
     struct atom_table *table;
@@ -116,6 +124,30 @@ void set_global_atom_table( struct object *obj )
     global_table = (struct atom_table *)obj;
     make_object_permanent( obj );
     grab_object( obj );
+
+    add_atom_asciiz( global_table, "StdExit" );
+    add_atom_asciiz( global_table, "StdNewDocument" );
+    add_atom_asciiz( global_table, "StdOpenDocument" );
+    add_atom_asciiz( global_table, "StdEditDocument" );
+    add_atom_asciiz( global_table, "StdNewfromTemplate" );
+    add_atom_asciiz( global_table, "StdCloseDocument" );
+    add_atom_asciiz( global_table, "StdShowItem" );
+    add_atom_asciiz( global_table, "StdDoVerbItem" );
+    add_atom_asciiz( global_table, "System" );
+    add_atom_asciiz( global_table, "OLEsystem" );
+    add_atom_asciiz( global_table, "StdDocumentName" );
+    add_atom_asciiz( global_table, "Protocols" );
+    add_atom_asciiz( global_table, "Topics" );
+    add_atom_asciiz( global_table, "Formats" );
+    add_atom_asciiz( global_table, "Status" );
+    add_atom_asciiz( global_table, "EditEnvItems" );
+    add_atom_asciiz( global_table, "True" );
+    add_atom_asciiz( global_table, "False" );
+    add_atom_asciiz( global_table, "Change" );
+    add_atom_asciiz( global_table, "Save" );
+    add_atom_asciiz( global_table, "Close" );
+    add_atom_asciiz( global_table, "MSDraw" );
+    add_atom_asciiz( global_table, "CC32SubclassInfo" );
 }
 
 struct atom_table *get_global_atom_table(void)
@@ -129,6 +161,35 @@ void set_user_atom_table( struct object *obj )
     user_table = (struct atom_table *)obj;
     make_object_permanent( obj );
     grab_object( obj );
+
+    add_atom_asciiz( user_table, "USER32" );
+    add_atom_asciiz( user_table, "ObjectLink" );
+    add_atom_asciiz( user_table, "OwnerLink" );
+    add_atom_asciiz( user_table, "Native" );
+    add_atom_asciiz( user_table, "Binary" );
+    add_atom_asciiz( user_table, "FileName" );
+    add_atom_asciiz( user_table, "FileNameW" );
+    add_atom_asciiz( user_table, "NetworkName" );
+    add_atom_asciiz( user_table, "DataObject" );
+    add_atom_asciiz( user_table, "Embedded Object" );
+    add_atom_asciiz( user_table, "Embed Source" );
+    add_atom_asciiz( user_table, "Custom Link Source" );
+    add_atom_asciiz( user_table, "Link Source" );
+    add_atom_asciiz( user_table, "Object Descriptor" );
+    add_atom_asciiz( user_table, "Link Source Descriptor" );
+    add_atom_asciiz( user_table, "OleDraw" );
+    add_atom_asciiz( user_table, "PBrush" );
+    add_atom_asciiz( user_table, "MSDraw" );
+    add_atom_asciiz( user_table, "Ole Private Data" );
+    add_atom_asciiz( user_table, "Screen Picture" );
+    add_atom_asciiz( user_table, "OleClipboardPersistOnFlush" );
+    add_atom_asciiz( user_table, "MoreOlePrivateData" );
+    add_atom_asciiz( user_table, "Button" );
+    add_atom_asciiz( user_table, "Edit" );
+    add_atom_asciiz( user_table, "Static" );
+    add_atom_asciiz( user_table, "ListBox" );
+    add_atom_asciiz( user_table, "ScrollBar" );
+    add_atom_asciiz( user_table, "ComboBox" );
 }
 
 struct atom_table *get_user_atom_table(void)

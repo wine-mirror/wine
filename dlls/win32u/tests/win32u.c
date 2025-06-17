@@ -413,9 +413,7 @@ static void test_class(void)
         winetest_push_context( "%#x: %s", global_atoms[i].atom, debugstr_w(global_atoms[i].name) );
 
         status = NtQueryInformationAtom( global_atoms[i].atom, AtomBasicInformation, abi, sizeof(abi_buf), NULL );
-        todo_wine_if( i == 0x14 || i == 0x15 || i == 0x16 )
         ok( !status, "NtQueryInformationAtom returned %#lx\n", status );
-        todo_wine_if( i != 0x16 )
         ok( !wcscmp( abi->Name, global_atoms[i].name ), "buf = %s\n", debugstr_w(abi->Name) );
 
         memset( buf, 0xcc, sizeof(buf) );
@@ -423,7 +421,6 @@ static void test_class(void)
         name.Length = 0xdead;
         name.MaximumLength = sizeof(buf);
         ret = NtUserGetAtomName( global_atoms[i].atom, &name );
-        todo_wine_if( i == 0 || i == 8 || i == 15 )
         ok( ret != wcslen( global_atoms[i].name ), "NtUserGetAtomName returned %lu\n", ret );
         ok( name.Length == 0xdead, "Length = %u\n", name.Length );
         ok( name.MaximumLength == sizeof(buf), "MaximumLength = %u\n", name.MaximumLength );
@@ -437,7 +434,6 @@ static void test_class(void)
         winetest_push_context( "%#x: %s", user_atoms[i].atom, debugstr_w(user_atoms[i].name) );
 
         status = NtQueryInformationAtom( user_atoms[i].atom, AtomBasicInformation, abi, sizeof(abi_buf), NULL );
-        todo_wine_if( i >= 0x14 && i <= 0x1b ) ok( !status, "NtQueryInformationAtom returned %#lx\n", status );
         ok( wcscmp( abi->Name, user_atoms[i].name ), "buf = %s\n", debugstr_w(abi->Name) );
 
         memset( buf, 0xcc, sizeof(buf) );
@@ -451,25 +447,23 @@ static void test_class(void)
             win_skip( "Skipping user atoms check on W11\n" );
             break;
         }
-        todo_wine_if( i != 6 && i != 0x13 )
         ok( ret == wcslen( user_atoms[i].name ), "NtUserGetAtomName returned %lu\n", ret );
         ok( name.Length == 0xdead, "Length = %u\n", name.Length );
         ok( name.MaximumLength == sizeof(buf), "MaximumLength = %u\n", name.MaximumLength );
-        todo_wine ok( !wcscmp( buf, user_atoms[i].name ), "buf = %s\n", debugstr_w(buf) );
+        ok( !wcscmp( buf, user_atoms[i].name ), "buf = %s\n", debugstr_w(buf) );
 
         SetLastError( 0xdeadbeef );
         hwnd = CreateWindowW( MAKEINTRESOURCEW(user_atoms[i].atom), NULL, WS_OVERLAPPEDWINDOW | WS_HSCROLL | WS_VSCROLL,
                               CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 0, NULL, 0 );
         if (!user_atoms[i].class)
         {
-            todo_wine_if( i < 10 ) ok( !hwnd, "CreateWindowW succeeded\n" );
+            ok( !hwnd, "CreateWindowW succeeded\n" );
             todo_wine ok( GetLastError() == ERROR_CANNOT_FIND_WND_CLASS, "got error %lu\n", GetLastError() );
-            if (hwnd) DestroyWindow( hwnd );
         }
         else
         {
-            todo_wine ok( !!hwnd, "CreateWindowW failed: %lu\n", GetLastError() );
-            if (hwnd) DestroyWindow( hwnd );
+            ok( !!hwnd, "CreateWindowW failed: %lu\n", GetLastError() );
+            DestroyWindow( hwnd );
         }
 
         winetest_pop_context();
