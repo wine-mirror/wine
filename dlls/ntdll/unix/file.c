@@ -4020,7 +4020,7 @@ NTSTATUS WINAPI wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, ULON
  *
  * Simplified version of RtlGetFullPathName_U.
  */
-NTSTATUS get_full_path( const WCHAR *name, const WCHAR *curdir, WCHAR **path )
+NTSTATUS get_full_path( const WCHAR *name, const WCHAR *curdir, UNICODE_STRING *nt_name )
 {
     static const WCHAR uncW[] = {'\\','?','?','\\','U','N','C','\\',0};
     static const WCHAR devW[] = {'\\','?','?','\\',0};
@@ -4040,7 +4040,8 @@ NTSTATUS get_full_path( const WCHAR *name, const WCHAR *curdir, WCHAR **path )
                 name += 4;
                 unix_name = malloc( wcslen(name) * 3 + 1 );
                 ntdll_wcstoumbs( name, wcslen(name) + 1, unix_name, wcslen(name) * 3 + 1, FALSE );
-                status = unix_to_nt_file_name( unix_name, path );
+                status = unix_to_nt_file_name( unix_name, &ret );
+                if (!status) init_unicode_string( nt_name, ret );
                 free( unix_name );
                 return status;
             }
@@ -4065,7 +4066,7 @@ NTSTATUS get_full_path( const WCHAR *name, const WCHAR *curdir, WCHAR **path )
     wcscpy( ret, prefix );
     wcscat( ret, name );
     collapse_path( ret );
-    *path = ret;
+    init_unicode_string( nt_name, ret );
     return STATUS_SUCCESS;
 }
 

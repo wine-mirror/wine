@@ -217,8 +217,8 @@ extern NTSTATUS load_builtin( const struct pe_image_info *image_info, WCHAR *fil
                               ULONG_PTR limit_low, ULONG_PTR limit_high );
 extern BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine );
 extern NTSTATUS load_main_exe( const WCHAR *name, const char *unix_name, const WCHAR *curdir,
-                               USHORT load_machine, WCHAR **image, void **module );
-extern NTSTATUS load_start_exe( WCHAR **image, void **module );
+                               USHORT load_machine, UNICODE_STRING *nt_name, void **module );
+extern NTSTATUS load_start_exe( UNICODE_STRING *nt_name, void **module );
 extern ULONG_PTR redirect_arm64ec_rva( void *module, ULONG_PTR rva, const IMAGE_ARM64EC_METADATA *metadata );
 extern void start_server( BOOL debug );
 
@@ -360,7 +360,7 @@ extern NTSTATUS errno_to_status( int err );
 extern BOOL get_redirect( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *redir );
 extern NTSTATUS nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char **name_ret, UINT disposition );
 extern NTSTATUS unix_to_nt_file_name( const char *name, WCHAR **nt );
-extern NTSTATUS get_full_path( const WCHAR *name, const WCHAR *curdir, WCHAR **path );
+extern NTSTATUS get_full_path( const WCHAR *name, const WCHAR *curdir, UNICODE_STRING *nt_name );
 extern NTSTATUS open_unix_file( HANDLE *handle, const char *unix_name, ACCESS_MASK access,
                                 OBJECT_ATTRIBUTES *attr, ULONG attributes, ULONG sharing, ULONG disposition,
                                 ULONG options, void *ea_buffer, ULONG ea_length );

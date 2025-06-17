@@ -1921,9 +1921,10 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     static const WCHAR pathW[] = {'P','A','T','H'};
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
     SIZE_T size, env_pos, env_size;
-    WCHAR *dst, *image, *cmdline, *path, *bootstrap;
+    WCHAR *dst, *cmdline, *path, *bootstrap;
     WCHAR *env = get_initial_environment( &env_pos, &env_size );
     WCHAR *curdir = get_initial_directory();
+    UNICODE_STRING nt_name;
     NTSTATUS status;
 
     if (NtCurrentTeb64()) NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = TRUE;
@@ -1947,7 +1948,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     add_registry_environment( &env, &env_pos, &env_size );
     env[env_pos++] = 0;
 
-    status = load_main_exe( NULL, main_argv[1], curdir, 0, &image, module );
+    status = load_main_exe( NULL, main_argv[1], curdir, 0, &nt_name, module );
     if (NT_SUCCESS(status))
     {
         char *loader;
@@ -1964,9 +1965,9 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     if (status)  /* try launching it through start.exe */
     {
         static const char *args[] = { "start.exe", "/exec" };
-        free( image );
+        free( nt_name.Buffer );
         if (*module) NtUnmapViewOfSection( GetCurrentProcess(), *module );
-        load_start_exe( &image, module );
+        load_start_exe( &nt_name, module );
         prepend_argv( args, 2 );
     }
     else
@@ -1975,7 +1976,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
         if (NtCurrentTeb64()) NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = FALSE;
     }
 
-    main_wargv = build_wargv( get_dos_path( image ));
+    main_wargv = build_wargv( get_dos_path( nt_name.Buffer ));
     cmdline = build_command_line( main_wargv );
 
     TRACE( "image %s cmdline %s dir %s\n",
@@ -2006,7 +2007,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     put_unicode_string( main_wargv[0], &dst, &params->ImagePathName );
     put_unicode_string( cmdline, &dst, &params->CommandLine );
     put_unicode_string( main_wargv[0], &dst, &params->WindowTitle );
-    free( image );
+    free( nt_name.Buffer );
     free( cmdline );
     free( curdir );
 
@@ -2026,12 +2027,13 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
  */
 void init_startup_info(void)
 {
-    WCHAR *src, *dst, *env, *image;
+    WCHAR *src, *dst, *env;
     void *module = NULL;
     unsigned int status;
     SIZE_T size, info_size, env_size, env_pos;
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
     struct startup_info_data *info;
+    UNICODE_STRING nt_name;
     USHORT machine;
 
     if (!startup_info_size)
@@ -2128,15 +2130,15 @@ void init_startup_info(void)
     free( info );
 
     status = load_main_exe( params->ImagePathName.Buffer, NULL, params->CommandLine.Buffer,
-                            machine, &image, &module );
+                            machine, &nt_name, &module );
     if (!NT_SUCCESS(status))
     {
         MESSAGE( "wine: failed to start %s\n", debugstr_us(&params->ImagePathName) );
         NtTerminateProcess( GetCurrentProcess(), status );
     }
     rebuild_argv();
-    main_wargv = build_wargv( get_dos_path( image ));
-    free( image );
+    main_wargv = build_wargv( get_dos_path( nt_name.Buffer ));
+    free( nt_name.Buffer );
     init_peb( params, module );
 }
 
