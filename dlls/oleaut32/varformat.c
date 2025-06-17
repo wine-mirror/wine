@@ -690,9 +690,10 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
       }
       pFormat += 2;
       *++pOut = 0x0;
-      while (*pFormat == '0')
+      while (*pFormat == '0' || *pFormat == '#')
       {
-        *pOut = *pOut + 1;
+        if (*pFormat == '0')
+          *pOut = *pOut + 1;
         pFormat++;
       }
       pOut++;
