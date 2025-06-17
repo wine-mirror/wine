@@ -117,6 +117,11 @@ void set_global_atom_table( struct object *obj )
     grab_object( obj );
 }
 
+struct atom_table *get_global_atom_table(void)
+{
+    return global_table;
+}
+
 /* retrieve an entry pointer from its atom */
 static struct atom_entry *get_atom_entry( struct atom_table *table, atom_t atom )
 {
@@ -182,7 +187,7 @@ static struct atom_entry *find_atom_entry( struct atom_table *table, const struc
 }
 
 /* add an atom to the table */
-static atom_t add_atom( struct atom_table *table, const struct unicode_str *str )
+atom_t add_atom( struct atom_table *table, const struct unicode_str *str )
 {
     struct atom_entry *entry;
     unsigned short hash;
@@ -244,7 +249,7 @@ static void delete_atom( struct atom_table *table, atom_t atom, int if_pinned )
 }
 
 /* find an atom in the table */
-static atom_t find_atom( struct atom_table *table, const struct unicode_str *str )
+atom_t find_atom( struct atom_table *table, const struct unicode_str *str )
 {
     struct atom_entry *entry;
     unsigned short hash;
@@ -269,73 +274,22 @@ static atom_t find_atom( struct atom_table *table, const struct unicode_str *str
     return entry->atom;
 }
 
-static struct atom_table *get_global_table( struct winstation *winstation, int create )
-{
-    struct atom_table *table = winstation ? winstation->atom_table : global_table;
-    if (!table)
-    {
-        if (create)
-        {
-            table = (struct atom_table *)create_atom_table();
-            if (winstation) winstation->atom_table = table;
-            else
-            {
-                global_table = table;
-                make_object_permanent( &global_table->obj );
-            }
-        }
-        else set_error( STATUS_OBJECT_NAME_NOT_FOUND );
-    }
-    return table;
-}
-
-/* add an atom in the global table; used for window properties */
-atom_t add_global_atom( struct winstation *winstation, const struct unicode_str *str )
-{
-    struct atom_table *table = get_global_table( winstation, 1 );
-    if (!table) return 0;
-    return add_atom( table, str );
-}
-
-/* find an atom in the global table; used for window properties */
-atom_t find_global_atom( struct winstation *winstation, const struct unicode_str *str )
-{
-    struct atom_table *table = get_global_table( winstation, 0 );
-    struct atom_entry *entry;
-    unsigned short hash;
-
-    if (!str->len || str->len > MAX_ATOM_LEN || !table) return 0;
-
-    hash = hash_strW( str->str, str->len, ARRAY_SIZE(table->entries) );
-    if (!(entry = find_atom_entry( table, str, hash ))) return 0;
-    return entry->atom;
-}
-
 /* increment the ref count of a global atom; used for window properties */
-int grab_global_atom( struct winstation *winstation, atom_t atom )
+int grab_atom( struct atom_table *table, atom_t atom )
 {
     if (atom >= MIN_STR_ATOM)
     {
-        struct atom_table *table = get_global_table( winstation, 0 );
-        if (table)
-        {
-            struct atom_entry *entry = get_atom_entry( table, atom );
-            if (entry) entry->count++;
-            return (entry != NULL);
-        }
-        else return 0;
+        struct atom_entry *entry = get_atom_entry( table, atom );
+        if (entry) entry->count++;
+        return (entry != NULL);
     }
     else return 1;
 }
 
 /* decrement the ref count of a global atom; used for window properties */
-void release_global_atom( struct winstation *winstation, atom_t atom )
+void release_atom( struct atom_table *table, atom_t atom )
 {
-    if (atom >= MIN_STR_ATOM)
-    {
-        struct atom_table *table = get_global_table( winstation, 0 );
-        if (table) delete_atom( table, atom, 1 );
-    }
+    if (atom >= MIN_STR_ATOM) delete_atom( table, atom, 1 );
 }
 
 /* add a global atom */

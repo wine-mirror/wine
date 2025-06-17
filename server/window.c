@@ -471,6 +471,7 @@ static int add_handle_to_array( struct user_handle_array *array, user_handle_t h
 /* set a window property */
 static void set_property( struct window *win, atom_t atom, lparam_t data, enum property_type type )
 {
+    struct atom_table *table = get_global_atom_table();
     int i, free = -1;
     struct property *new_props;
 
@@ -491,7 +492,7 @@ static void set_property( struct window *win, atom_t atom, lparam_t data, enum p
     }
 
     /* need to add an entry */
-    if (!grab_global_atom( NULL, atom )) return;
+    if (!grab_atom( table, atom )) return;
     if (free == -1)
     {
         /* no free entry */
@@ -502,7 +503,7 @@ static void set_property( struct window *win, atom_t atom, lparam_t data, enum p
                                        sizeof(*new_props) * (win->prop_alloc + 16) )))
             {
                 set_error( STATUS_NO_MEMORY );
-                release_global_atom( NULL, atom );
+                release_atom( table, atom );
                 return;
             }
             win->prop_alloc += 16;
@@ -518,6 +519,7 @@ static void set_property( struct window *win, atom_t atom, lparam_t data, enum p
 /* remove a window property */
 static lparam_t remove_property( struct window *win, atom_t atom )
 {
+    struct atom_table *table = get_global_atom_table();
     int i;
 
     for (i = 0; i < win->prop_inuse; i++)
@@ -525,7 +527,7 @@ static lparam_t remove_property( struct window *win, atom_t atom )
         if (win->properties[i].type == PROP_TYPE_FREE) continue;
         if (win->properties[i].atom == atom)
         {
-            release_global_atom( NULL, atom );
+            release_atom( table, atom );
             win->properties[i].type = PROP_TYPE_FREE;
             return win->properties[i].data;
         }
@@ -551,13 +553,14 @@ static lparam_t get_property( struct window *win, atom_t atom )
 /* destroy all properties of a window */
 static inline void destroy_properties( struct window *win )
 {
+    struct atom_table *table = get_global_atom_table();
     int i;
 
     if (!win->properties) return;
     for (i = 0; i < win->prop_inuse; i++)
     {
         if (win->properties[i].type == PROP_TYPE_FREE) continue;
-        release_global_atom( NULL, win->properties[i].atom );
+        release_atom( table, win->properties[i].atom );
     }
     free( win->properties );
 }
@@ -2200,6 +2203,7 @@ DECL_HANDLER(create_window)
 {
     struct window *win, *parent = NULL, *owner = NULL;
     struct unicode_str cls_name = get_req_unicode_str();
+    struct atom_table *table = get_global_atom_table();
     unsigned int dpi_context;
     atom_t atom;
 
@@ -2229,7 +2233,7 @@ DECL_HANDLER(create_window)
                 owner = owner->parent;
     }
 
-    atom = cls_name.len ? find_global_atom( NULL, &cls_name ) : req->atom;
+    atom = cls_name.len ? find_atom( table, &cls_name ) : req->atom;
 
     if (!(win = create_window( parent, owner, atom, req->class_instance, req->instance ))) return;
 
@@ -2314,7 +2318,8 @@ DECL_HANDLER(get_desktop_window)
     {
         static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
         static const struct unicode_str name = { messageW, sizeof(messageW) };
-        atom_t atom = add_global_atom( NULL, &name );
+        struct atom_table *table = get_global_atom_table();
+        atom_t atom = add_atom( table, &name );
         if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0, 0 )))
         {
             detach_window_thread( desktop->msg_window );
@@ -2528,11 +2533,12 @@ DECL_HANDLER(get_class_windows)
     struct desktop *desktop = NULL;
     struct window *parent = NULL, *win = NULL;
     struct unicode_str cls_name = get_req_unicode_str();
+    struct atom_table *table = get_global_atom_table();
     atom_t atom = req->atom;
     user_handle_t *data;
     unsigned int count = 0, max_count = get_reply_max_size() / sizeof(*data);
 
-    if (cls_name.len && !(atom = find_global_atom( NULL, &cls_name ))) return;
+    if (cls_name.len && !(atom = find_atom( table, &cls_name ))) return;
     if (req->parent && !(parent = get_window( req->parent ))) return;
 
     if (req->child)
@@ -3072,17 +3078,18 @@ DECL_HANDLER(redraw_window)
 DECL_HANDLER(set_window_property)
 {
     struct unicode_str name = get_req_unicode_str();
+    struct atom_table *table = get_global_atom_table();
     struct window *win = get_window( req->window );
 
     if (!win) return;
 
     if (name.len)
     {
-        atom_t atom = add_global_atom( NULL, &name );
+        atom_t atom = add_atom( table, &name );
         if (atom)
         {
             set_property( win, atom, req->data, PROP_TYPE_STRING );
-            release_global_atom( NULL, atom );
+            release_atom( table, atom );
         }
     }
     else set_property( win, req->atom, req->data, PROP_TYPE_ATOM );
@@ -3093,11 +3100,12 @@ DECL_HANDLER(set_window_property)
 DECL_HANDLER(remove_window_property)
 {
     struct unicode_str name = get_req_unicode_str();
+    struct atom_table *table = get_global_atom_table();
     struct window *win = get_window( req->window );
 
     if (win)
     {
-        atom_t atom = name.len ? find_global_atom( NULL, &name ) : req->atom;
+        atom_t atom = name.len ? find_atom( table, &name ) : req->atom;
         if (atom) reply->data = remove_property( win, atom );
     }
 }
@@ -3107,11 +3115,12 @@ DECL_HANDLER(remove_window_property)
 DECL_HANDLER(get_window_property)
 {
     struct unicode_str name = get_req_unicode_str();
+    struct atom_table *table = get_global_atom_table();
     struct window *win = get_window( req->window );
 
     if (win)
     {
-        atom_t atom = name.len ? find_global_atom( NULL, &name ) : req->atom;
+        atom_t atom = name.len ? find_atom( table, &name ) : req->atom;
         if (atom) reply->data = get_property( win, atom );
     }
 }
