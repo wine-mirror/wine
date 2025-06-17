@@ -61,7 +61,7 @@ struct atom_entry
 struct atom_table
 {
     struct object       obj;                 /* object header */
-    int                 last;                /* last handle in-use */
+    int                 count;               /* number of used atoms */
     struct atom_entry  *atoms[MAX_ATOMS];    /* atom entries */
     int                 entries_count;       /* number of hash entries */
     struct atom_entry **entries;             /* hash table entries */
@@ -116,7 +116,7 @@ static struct atom_table *create_table(int entries_count)
         }
         memset( table->atoms, 0, sizeof(*table->atoms) * ARRAY_SIZE(table->atoms) );
         memset( table->entries, 0, sizeof(*table->entries) * table->entries_count );
-        table->last  = -1;
+        table->count = 0;
         return table;
 fail:
         release_object( table );
@@ -129,7 +129,7 @@ fail:
 static struct atom_entry *get_atom_entry( struct atom_table *table, atom_t atom )
 {
     struct atom_entry *entry = NULL;
-    if (table && (atom >= MIN_STR_ATOM) && (atom <= MIN_STR_ATOM + table->last))
+    if (table && (atom >= MIN_STR_ATOM) && (atom < MIN_STR_ATOM + table->count))
         entry = table->atoms[atom - MIN_STR_ATOM];
     if (!entry) set_error( STATUS_INVALID_HANDLE );
     return entry;
@@ -139,10 +139,9 @@ static struct atom_entry *get_atom_entry( struct atom_table *table, atom_t atom 
 static atom_t add_atom_entry( struct atom_table *table, struct atom_entry *entry )
 {
     int i;
-    for (i = 0; i <= table->last; i++) if (!table->atoms[i]) goto found;
+    for (i = 0; i < table->count; i++) if (!table->atoms[i]) break;
     if (i == ARRAY_SIZE(table->atoms)) return 0;
-    table->last = i;
- found:
+    if (i == table->count) table->count++;
     table->atoms[i] = entry;
     entry->atom = i + MIN_STR_ATOM;
     return entry->atom;
@@ -155,10 +154,9 @@ static void atom_table_dump( struct object *obj, int verbose )
     struct atom_table *table = (struct atom_table *)obj;
     assert( obj->ops == &atom_table_ops );
 
-    fprintf( stderr, "Atom table size=%d entries=%d\n",
-             table->last + 1, table->entries_count );
+    fprintf( stderr, "Atom table size=%d entries=%d\n", table->count, table->entries_count );
     if (!verbose) return;
-    for (i = 0; i <= table->last; i++)
+    for (i = 0; i < table->count; i++)
     {
         struct atom_entry *entry = table->atoms[i];
         if (!entry) continue;
@@ -175,7 +173,7 @@ static void atom_table_destroy( struct object *obj )
     int i;
     struct atom_table *table = (struct atom_table *)obj;
     assert( obj->ops == &atom_table_ops );
-    for (i = 0; i <= table->last; i++) free( table->atoms[i] );
+    for (i = 0; i < table->count; i++) free( table->atoms[i] );
     free( table->entries );
 }
 
