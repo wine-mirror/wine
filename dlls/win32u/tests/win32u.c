@@ -253,6 +253,17 @@ static void test_class(void)
     HWND hwnd;
     ULONG ret;
 
+    status = NtQueryInformationAtom( 0xc000, AtomBasicInformation, abi, sizeof(abi_buf), NULL );
+    ok( status == STATUS_INVALID_HANDLE, "NtQueryInformationAtom returned %#lx\n", status );
+
+    memset( buf, 0xcc, sizeof(buf) );
+    name.Buffer = buf;
+    name.Length = 0xdead;
+    name.MaximumLength = sizeof(buf);
+    ret = NtUserGetAtomName( 0xc000, &name );
+    ok( !ret && GetLastError() == ERROR_INVALID_HANDLE,
+        "NtUserGetAtomName returned %lx %lu\n", ret, GetLastError() );
+
     memset( &cls, 0, sizeof(cls) );
     cls.style         = CS_HREDRAW | CS_VREDRAW;
     cls.lpfnWndProc   = DefWindowProcW;
@@ -377,6 +388,7 @@ static void test_class(void)
         name.Length = 0xdead;
         name.MaximumLength = sizeof(buf);
         ret = NtUserGetAtomName( global_atoms[i].atom, &name );
+        todo_wine_if( i == 0 || i == 8 || i == 11 )
         ok( ret != wcslen( global_atoms[i].name ), "NtUserGetAtomName returned %lu\n", ret );
         ok( name.Length == 0xdead, "Length = %u\n", name.Length );
         ok( name.MaximumLength == sizeof(buf), "MaximumLength = %u\n", name.MaximumLength );
@@ -404,7 +416,7 @@ static void test_class(void)
             win_skip( "Skipping user atoms check on W11\n" );
             break;
         }
-        todo_wine_if( i != 0 && i != 2 && i != 6 )
+        todo_wine_if( i != 6 && i != 12 )
         ok( ret == wcslen( user_atoms[i].name ), "NtUserGetAtomName returned %lu\n", ret );
         ok( name.Length == 0xdead, "Length = %u\n", name.Length );
         ok( name.MaximumLength == sizeof(buf), "MaximumLength = %u\n", name.MaximumLength );
@@ -415,7 +427,7 @@ static void test_class(void)
                               CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 0, NULL, 0 );
         if (!user_atoms[i].class)
         {
-            todo_wine_if( i < 9 ) ok( !hwnd, "CreateWindowW succeeded\n" );
+            todo_wine_if( i < 10 ) ok( !hwnd, "CreateWindowW succeeded\n" );
             todo_wine ok( GetLastError() == ERROR_CANNOT_FIND_WND_CLASS, "got error %lu\n", GetLastError() );
             if (hwnd) DestroyWindow( hwnd );
         }

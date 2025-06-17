@@ -116,7 +116,7 @@ static struct atom_table *create_table(int entries_count)
         }
         memset( table->atoms, 0, sizeof(*table->atoms) * ARRAY_SIZE(table->atoms) );
         memset( table->entries, 0, sizeof(*table->entries) * table->entries_count );
-        table->count = 0;
+        table->count = 1; /* atom 0xc000 is reserved */
         return table;
 fail:
         release_object( table );
@@ -139,7 +139,7 @@ static struct atom_entry *get_atom_entry( struct atom_table *table, atom_t atom 
 static atom_t add_atom_entry( struct atom_table *table, struct atom_entry *entry )
 {
     int i;
-    for (i = 0; i < table->count; i++) if (!table->atoms[i]) break;
+    for (i = 1 /* atom 0xc000 is reserved */; i < table->count; i++) if (!table->atoms[i]) break;
     if (i == ARRAY_SIZE(table->atoms)) return 0;
     if (i == table->count) table->count++;
     table->atoms[i] = entry;
