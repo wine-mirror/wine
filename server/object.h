@@ -284,6 +284,9 @@ extern void init_signals(void);
 
 /* atom functions */
 
+extern struct object *create_atom_table(void);
+extern void set_global_atom_table( struct object *obj );
+
 extern atom_t add_global_atom( struct winstation *winstation, const struct unicode_str *str );
 extern atom_t find_global_atom( struct winstation *winstation, const struct unicode_str *str );
 extern int grab_global_atom( struct winstation *winstation, atom_t atom );

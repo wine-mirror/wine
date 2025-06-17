@@ -97,8 +97,7 @@ static const struct object_ops atom_table_ops =
 
 static struct atom_table *global_table;
 
-/* create an atom table */
-static struct atom_table *create_table(void)
+struct object *create_atom_table(void)
 {
     struct atom_table *table;
 
@@ -107,7 +106,15 @@ static struct atom_table *create_table(void)
     memset( table->entries, 0, sizeof(*table->entries) * ARRAY_SIZE(table->entries) );
     table->count = 1; /* atom 0xc000 is reserved */
 
-    return table;
+    return &table->obj;
+}
+
+void set_global_atom_table( struct object *obj )
+{
+    assert( obj->ops == &atom_table_ops );
+    global_table = (struct atom_table *)obj;
+    make_object_permanent( obj );
+    grab_object( obj );
 }
 
 /* retrieve an entry pointer from its atom */
@@ -269,7 +276,7 @@ static struct atom_table *get_global_table( struct winstation *winstation, int c
     {
         if (create)
         {
-            table = create_table();
+            table = (struct atom_table *)create_atom_table();
             if (winstation) winstation->atom_table = table;
             else
             {
