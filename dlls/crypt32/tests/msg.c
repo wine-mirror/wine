@@ -2808,6 +2808,17 @@ static void test_decode_msg_get_param(void)
         compare_signer_info((CMSG_SIGNER_INFO *)buf, &signer);
         CryptMemFree(buf);
     }
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_UNAUTH_ATTR_PARAM, 0, NULL, &size);
+    ok(!ret, "CryptMsgGetParam succeeded unexpectedly\n");
+    ok(GetLastError() == CRYPT_E_ATTRIBUTES_MISSING, "unexpected error %08lx\n", GetLastError());
+    ok(size == 0, "unexpected size: %lu\n", size);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_AUTH_ATTR_PARAM, 0, NULL, &size);
+    ok(!ret, "CryptMsgGetParam succeeded unexpectedly\n");
+    ok(GetLastError() == CRYPT_E_ATTRIBUTES_MISSING, "unexpected error %08lx\n", GetLastError());
+    ok(size == 0, "unexpected size: %lu\n", size);
     /* Getting the CMS signer info of a PKCS7 message is possible. */
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_CMS_SIGNER_INFO_PARAM, 0, NULL, &size);
