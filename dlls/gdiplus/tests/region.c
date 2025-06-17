@@ -2012,6 +2012,39 @@ static void test_isvisiblepoint(void)
     status = GdipTranslateWorldTransform(graphics, -25, -40, MatrixOrderAppend);
     expect(Ok, status);
 
+    /* fractional region */
+    rectf.X = 4.25;
+    rectf.Y = 5.25;
+    rectf.Width = 6;
+    rectf.Height = 7;
+
+    status = GdipCombineRegionRect(region, &rectf, CombineModeReplace);
+    expect(Ok, status);
+
+    x = 4;
+    y = 5;
+    status = GdipIsVisibleRegionPoint(region, x, y, graphics, &res);
+    expect(Ok, status);
+    ok(res == FALSE, "Expected (%.2f, %.2f) to not be visible\n", x, y);
+
+    x = 4.3;
+    y = 5.3;
+    status = GdipIsVisibleRegionPoint(region, x, y, graphics, &res);
+    expect(Ok, status);
+    ok(res == FALSE, "Expected (%.2f, %.2f) to not be visible\n", x, y);
+
+    /* Point is rounded in device coordinates, so this gives more precision */
+    status = GdipScaleWorldTransform(graphics, 20.0, 20.0, MatrixOrderAppend);
+    expect(Ok, status);
+
+    status = GdipIsVisibleRegionPoint(region, x, y, graphics, &res);
+    expect(Ok, status);
+todo_wine
+    ok(res == TRUE, "Expected (%.2f, %.2f) to be visible\n", x, y);
+
+    status = GdipResetWorldTransform(graphics);
+    expect(Ok, status);
+
     /* region from path */
     status = GdipCreatePath(FillModeAlternate, &path);
     expect(Ok, status);
