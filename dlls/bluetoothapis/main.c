@@ -759,7 +759,7 @@ static void bluetooth_auth_wizard_ask_response( struct bluetooth_auth_wizard_lis
     else
     {
         resource_id = IDS_AUTH_WIZARD_UNNAMED_PAIR_REQUEST;
-        swprintf( name_or_addr, ARRAY_SIZE( name_or_addr ), L"%02X:02X:%02X:%02X:%02X:%02X", addr.rgBytes[0],
+        swprintf( name_or_addr, ARRAY_SIZE( name_or_addr ), L"%02X:%02X:%02X:%02X:%02X:%02X", addr.rgBytes[0],
                   addr.rgBytes[1], addr.rgBytes[2], addr.rgBytes[3], addr.rgBytes[4], addr.rgBytes[5] );
     }
     format_args[0] = (DWORD_PTR)name_or_addr;
