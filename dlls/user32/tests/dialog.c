@@ -1456,7 +1456,7 @@ static INT_PTR CALLBACK TestControlStyleDlgProc(HWND hdlg, UINT msg,
 }
 
 static const WCHAR testtextW[] = {'W','n','d','T','e','x','t',0};
-static const char *testtext = "WndText";
+static const char *testtext = "WndText\0\0";  /* add a WCHAR null since it can be passed directly to DefWindowProcW */
 
 enum defdlgproc_text
 {
