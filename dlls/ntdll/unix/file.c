@@ -7348,34 +7348,6 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
     case ObjectNameInformation:
     {
         OBJECT_NAME_INFORMATION *p = ptr;
-        char *unix_name;
-        WCHAR *nt_name;
-
-        /* first try as a file object */
-
-        if (!(status = server_get_unix_name( handle, &unix_name )))
-        {
-            if (!(status = unix_to_nt_file_name( unix_name, &nt_name )))
-            {
-                ULONG size = (wcslen(nt_name) + 1) * sizeof(WCHAR);
-                if (len < sizeof(*p)) status = STATUS_INFO_LENGTH_MISMATCH;
-                else if (len < sizeof(*p) + size) status = STATUS_BUFFER_OVERFLOW;
-                else
-                {
-                    p->Name.Buffer = (WCHAR *)(p + 1);
-                    p->Name.Length = size - sizeof(WCHAR);
-                    p->Name.MaximumLength = size;
-                    wcscpy( p->Name.Buffer, nt_name );
-                }
-                if (used_len) *used_len = sizeof(*p) + size;
-                free( nt_name );
-            }
-            free( unix_name );
-            break;
-        }
-        else if (status != STATUS_OBJECT_TYPE_MISMATCH) break;
-
-        /* not a file, treat as a generic object */
 
         SERVER_START_REQ( get_object_name )
         {

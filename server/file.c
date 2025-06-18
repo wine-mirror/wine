@@ -100,7 +100,7 @@ static const struct object_ops file_ops =
     default_map_access,           /* map_access */
     file_get_sd,                  /* get_sd */
     file_set_sd,                  /* set_sd */
-    no_get_full_name,             /* get_full_name */
+    default_fd_get_full_name,     /* get_full_name */
     file_lookup_name,             /* lookup_name */
     no_link_name,                 /* link_name */
     NULL,                         /* unlink_name */
