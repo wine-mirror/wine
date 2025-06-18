@@ -158,6 +158,11 @@ typedef struct _RECTL
 
 typedef const RECTL *LPCRECTL;
 
+typedef struct APP_LOCAL_DEVICE_ID
+{
+    BYTE value[32];
+} APP_LOCAL_DEVICE_ID;
+
 /* DPI awareness */
 typedef enum DPI_AWARENESS
 {
