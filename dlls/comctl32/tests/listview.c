@@ -2242,6 +2242,137 @@ static void test_customdraw(void)
     DestroyWindow(hwnd);
 }
 
+static LRESULT WINAPI customdraw_background_wndproc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+{
+    if (message == WM_NOTIFY)
+    {
+        NMHDR *nmhdr = (NMHDR *)lp;
+
+        if (nmhdr->code == NM_CUSTOMDRAW)
+        {
+            NMLVCUSTOMDRAW *nmlvcd = (NMLVCUSTOMDRAW *)nmhdr;
+            struct message msg;
+
+            msg.message = message;
+            msg.flags = sent | wparam | lparam | id | custdraw;
+            msg.wParam = wp;
+            msg.lParam = lp;
+            msg.id = GetBkMode(nmlvcd->nmcd.hdc);
+            msg.stage = nmlvcd->nmcd.dwDrawStage;
+            add_message(sequences, PARENT_CD_SEQ_INDEX, &msg);
+
+            switch (nmlvcd->nmcd.dwDrawStage)
+            {
+            case CDDS_PREPAINT:
+                return CDRF_NOTIFYITEMDRAW | CDRF_NOTIFYPOSTPAINT;
+            case CDDS_ITEMPREPAINT:
+                return CDRF_NOTIFYSUBITEMDRAW | CDRF_NOTIFYPOSTPAINT;
+            case CDDS_ITEMPREPAINT | CDDS_SUBITEM:
+                return CDRF_NOTIFYPOSTPAINT;
+            case CDDS_ITEMPOSTPAINT | CDDS_SUBITEM:
+                return CDRF_NOTIFYPOSTPAINT;
+            case CDDS_POSTPAINT:
+                return CDRF_DODEFAULT;
+            }
+            return CDRF_DODEFAULT;
+        }
+    }
+
+    return DefWindowProcA(hwnd, message, wp, lp);
+}
+
+static const struct message parent_list_cd_bk_seq[] =
+{
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_PREPAINT},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_ITEMPREPAINT},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_ITEMPOSTPAINT},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_POSTPAINT},
+    {0}
+};
+
+static const struct message parent_report_cd_bk_seq[] =
+{
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_PREPAINT},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_ITEMPREPAINT},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_ITEMPREPAINT | CDDS_SUBITEM},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_ITEMPOSTPAINT | CDDS_SUBITEM},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_ITEMPREPAINT | CDDS_SUBITEM},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_ITEMPOSTPAINT | CDDS_SUBITEM},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_ITEMPOSTPAINT},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_POSTPAINT},
+    {0}
+};
+
+static void test_customdraw_background(BOOL v6)
+{
+    static const DWORD test_styles[] = {LVS_ICON, LVS_REPORT, LVS_SMALLICON, LVS_LIST, LVS_REPORT | LVS_OWNERDRAWFIXED};
+    static const COLORREF test_colors[] = {CLR_DEFAULT, CLR_NONE, RGB(255, 0, 0)};
+    BOOL is_64bit = sizeof(void *) == 8;
+    const struct message *expected_msgs;
+    WNDPROC oldwndproc;
+    unsigned int i, j;
+    LVITEMA item;
+    HWND hwnd;
+
+    for (i = 0; i < ARRAY_SIZE(test_styles); i++)
+    {
+        for (j = 0; j < ARRAY_SIZE(test_colors); j++)
+        {
+            winetest_push_context("%s %dbit style %#lx color %#lx", v6 ? "v6" : "v5",
+                                  is_64bit ? 64 : 32, test_styles[i], test_colors[j]);
+
+            if (test_styles[i] == LVS_REPORT)
+                expected_msgs = parent_report_cd_bk_seq;
+            else
+                expected_msgs = parent_list_cd_bk_seq;
+
+            /* Comctl32 v6 will send a sequence of custom draw messages with OPAQUE mode to draw
+             * headers first. Then send another sequence of custom draw messages to draw items.
+             * However, the sequence to draw headers differ with different listview styles and
+             * machine architectures so it's not easy to replicate. Comctl32 v5 doesn't send
+             * separate message sequences to draw headers. Ignore headers for now. */
+            hwnd = create_listview_control(test_styles[i] | LVS_NOCOLUMNHEADER);
+            SendMessageA(hwnd, LVM_SETTEXTBKCOLOR, 0, test_colors[j]);
+
+            insert_column(hwnd, 0);
+            insert_column(hwnd, 1);
+            insert_item(hwnd, 0);
+            flush_events();
+
+            oldwndproc = (WNDPROC)SetWindowLongPtrA(hwndparent, GWLP_WNDPROC, (LONG_PTR)customdraw_background_wndproc);
+
+            flush_sequences(sequences, NUM_MSG_SEQUENCES);
+            InvalidateRect(hwnd, NULL, TRUE);
+            UpdateWindow(hwnd);
+            ok_sequence(sequences, PARENT_CD_SEQ_INDEX, expected_msgs, "Normal", TRUE);
+
+            /* LVIS_SELECTED */
+            item.mask = LVIF_STATE;
+            item.stateMask = LVIS_SELECTED;
+            item.state = LVIS_SELECTED;
+            SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+
+            flush_sequences(sequences, NUM_MSG_SEQUENCES);
+            InvalidateRect(hwnd, NULL, TRUE);
+            UpdateWindow(hwnd);
+            ok_sequence(sequences, PARENT_CD_SEQ_INDEX, expected_msgs, "LVIS_SELECTED", TRUE);
+
+            /* LVS_SHOWSELALWAYS */
+            SetWindowLongW(hwnd, GWL_STYLE, GetWindowLongW(hwnd, GWL_STYLE) | LVS_SHOWSELALWAYS);
+
+            flush_sequences(sequences, NUM_MSG_SEQUENCES);
+            InvalidateRect(hwnd, NULL, TRUE);
+            UpdateWindow(hwnd);
+            ok_sequence(sequences, PARENT_CD_SEQ_INDEX, expected_msgs, "LVS_SHOWSELALWAYS", TRUE);
+
+            SetWindowLongPtrA(hwndparent, GWLP_WNDPROC, (LONG_PTR)oldwndproc);
+            flush_sequences(sequences, NUM_MSG_SEQUENCES);
+            DestroyWindow(hwnd);
+            winetest_pop_context();
+        }
+    }
+}
+
 static void test_icon_spacing(void)
 {
     /* LVM_SETICONSPACING */
@@ -7580,6 +7711,7 @@ START_TEST(listview)
     test_create(FALSE);
     test_redraw();
     test_customdraw();
+    test_customdraw_background(FALSE);
     test_icon_spacing();
     test_color();
     test_item_count();
@@ -7680,6 +7812,7 @@ START_TEST(listview)
     test_LVM_SETBKIMAGE(TRUE);
     test_LVM_GETHOTCURSOR();
     test_LVM_GETORIGIN(TRUE);
+    test_customdraw_background(TRUE);
 
     uninit_winevent_hook();
 
