@@ -754,7 +754,6 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
         if (ctx.flags & SERVER_CTX_CONTROL)
         {
             dump_uint64( ",rip=", &ctx.ctl.x86_64_regs.rip );
-            dump_uint64( ",rbp=", &ctx.ctl.x86_64_regs.rbp );
             dump_uint64( ",rsp=", &ctx.ctl.x86_64_regs.rsp );
             fprintf( stderr, ",cs=%04x,ss=%04x,flags=%08x",
                      ctx.ctl.x86_64_regs.cs, ctx.ctl.x86_64_regs.ss, ctx.ctl.x86_64_regs.flags );
@@ -765,6 +764,7 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
             dump_uint64( ",rbx=", &ctx.integer.x86_64_regs.rbx );
             dump_uint64( ",rcx=", &ctx.integer.x86_64_regs.rcx );
             dump_uint64( ",rdx=", &ctx.integer.x86_64_regs.rdx );
+            dump_uint64( ",rbp=", &ctx.integer.x86_64_regs.rbp );
             dump_uint64( ",rsi=", &ctx.integer.x86_64_regs.rsi );
             dump_uint64( ",rdi=", &ctx.integer.x86_64_regs.rdi );
             dump_uint64( ",r8=",  &ctx.integer.x86_64_regs.r8 );
