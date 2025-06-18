@@ -2344,7 +2344,7 @@ static void test_customdraw_background(BOOL v6)
             flush_sequences(sequences, NUM_MSG_SEQUENCES);
             InvalidateRect(hwnd, NULL, TRUE);
             UpdateWindow(hwnd);
-            ok_sequence(sequences, PARENT_CD_SEQ_INDEX, expected_msgs, "Normal", TRUE);
+            ok_sequence(sequences, PARENT_CD_SEQ_INDEX, expected_msgs, "Normal", FALSE);
 
             /* LVIS_SELECTED */
             item.mask = LVIF_STATE;
@@ -2355,7 +2355,7 @@ static void test_customdraw_background(BOOL v6)
             flush_sequences(sequences, NUM_MSG_SEQUENCES);
             InvalidateRect(hwnd, NULL, TRUE);
             UpdateWindow(hwnd);
-            ok_sequence(sequences, PARENT_CD_SEQ_INDEX, expected_msgs, "LVIS_SELECTED", TRUE);
+            ok_sequence(sequences, PARENT_CD_SEQ_INDEX, expected_msgs, "LVIS_SELECTED", FALSE);
 
             /* LVS_SHOWSELALWAYS */
             SetWindowLongW(hwnd, GWL_STYLE, GetWindowLongW(hwnd, GWL_STYLE) | LVS_SHOWSELALWAYS);
@@ -2363,7 +2363,7 @@ static void test_customdraw_background(BOOL v6)
             flush_sequences(sequences, NUM_MSG_SEQUENCES);
             InvalidateRect(hwnd, NULL, TRUE);
             UpdateWindow(hwnd);
-            ok_sequence(sequences, PARENT_CD_SEQ_INDEX, expected_msgs, "LVS_SHOWSELALWAYS", TRUE);
+            ok_sequence(sequences, PARENT_CD_SEQ_INDEX, expected_msgs, "LVS_SHOWSELALWAYS", FALSE);
 
             SetWindowLongPtrA(hwndparent, GWLP_WNDPROC, (LONG_PTR)oldwndproc);
             flush_sequences(sequences, NUM_MSG_SEQUENCES);
