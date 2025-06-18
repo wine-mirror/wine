@@ -727,6 +727,67 @@ static void test_child_device_properties(DEVICE_OBJECT *device)
     ok(status == STATUS_SUCCESS, "failed to delete device property, status %#lx\n", status);
 }
 
+static void test_device_interface_properties( UNICODE_STRING *name )
+{
+    DEVPROP_BOOLEAN val = DEVPROP_FALSE;
+    DEVPROPTYPE type = DEVPROP_TYPE_EMPTY;
+    ULONG req_size = 0;
+    NTSTATUS status;
+    SIZE_T i;
+
+    for (i = 0; i < ARRAY_SIZE( deviceprops ); i++)
+    {
+        ULONG size = deviceprops[i].size;
+        DEVPROPTYPE type = deviceprops[i].type;
+        const DEVPROPKEY *key = deviceprops[i].key;
+        void *value = &deviceprops[i].value;
+
+        winetest_push_context( "deviceprops[%lu]", (DWORD)i );
+        status = IoSetDeviceInterfacePropertyData( name, key, LOCALE_NEUTRAL, 0, type, size, value );
+        todo_wine ok( !status, "IoSetDeviceInterfacePropertyData failed: %#lx\n", status );
+        if (!status)
+        {
+            void *buf;
+            ULONG req_size = 0;
+            DEVPROPTYPE stored_type = DEVPROP_TYPE_EMPTY;
+
+            status = IoGetDeviceInterfacePropertyData( name, key, LOCALE_NEUTRAL, 0, 0, NULL, &req_size, &stored_type );
+            todo_wine ok( status == STATUS_BUFFER_TOO_SMALL, "got status %#lx != %#lx\n", status, STATUS_BUFFER_TOO_SMALL );
+            todo_wine ok( req_size == size, "got req_size %lu != %lu\n", req_size, size );
+            todo_wine ok( stored_type == type, "got stored_type %#lx != %#lx\n", stored_type, type );
+
+            buf = ExAllocatePool( NonPagedPool, size );
+            ok( !!buf, "Failed to allocate memory\n" );
+            if (buf)
+            {
+                req_size = 0;
+                stored_type = DEVPROP_TYPE_EMPTY;
+                memset( buf, 0, size );
+                status = IoGetDeviceInterfacePropertyData( name, key, LOCALE_NEUTRAL, 0, size, buf, &req_size,
+                                                           &stored_type );
+                todo_wine ok( !status, "IoGetDeviceInterfacePropertyData failed: %#lx\n", status );
+                todo_wine ok( req_size == size, "got req_size %lu != %lu\n", req_size, size );
+                todo_wine ok( stored_type == type, "got stored_type %#lx != %#lx\n", stored_type, type );
+
+                if (!status) ok( !kmemcmp( buf, value, size ), "Got unexpected device interface property value.\n" );
+                ExFreePool( buf );
+            }
+            status = IoSetDeviceInterfacePropertyData( name, key, LOCALE_NEUTRAL, 0, type, 0, NULL );
+            todo_wine ok( !status, "IoSetDeviceInterfacePropertyData failed: %#lx\n", status );
+        }
+        winetest_pop_context();
+    }
+
+    req_size = 0;
+    type = DEVPROP_TYPE_EMPTY;
+    status = IoGetDeviceInterfacePropertyData( name, &DEVPKEY_DeviceInterface_Enabled, LOCALE_NEUTRAL, 0, sizeof( val ),
+                                               &val, &req_size, &type );
+    todo_wine ok( !status, "IoGetDeviceInterfacePropertyData failed: %#lx\n", status );
+    todo_wine ok( req_size == sizeof( val ), "got req_size %lu\n", req_size );
+    todo_wine ok( type == DEVPROP_TYPE_BOOLEAN, "got type %#lx\n", type );
+    todo_wine ok( val == DEVPROP_TRUE, "got val %d\n", val );
+}
+
 static void test_enumerator_name(void)
 {
     static const WCHAR root[] = L"ROOT";
@@ -857,11 +918,25 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
 
         case IOCTL_WINETEST_BUS_ENABLE_IFACE:
             IoSetDeviceInterfaceState(&bus_symlink, TRUE);
+            test_device_interface_properties(&bus_symlink);
             return STATUS_SUCCESS;
 
         case IOCTL_WINETEST_BUS_DISABLE_IFACE:
+        {
+            DEVPROP_BOOLEAN val = DEVPROP_TRUE;
+            DEVPROPTYPE type = DEVPROP_TYPE_EMPTY;
+            NTSTATUS status;
+            DWORD req_size = 0;
+
             IoSetDeviceInterfaceState(&bus_symlink, FALSE);
+            status = IoGetDeviceInterfacePropertyData(&bus_symlink, &DEVPKEY_DeviceInterface_Enabled, LOCALE_NEUTRAL, 0,
+                                                      sizeof(val), &val, &req_size, &type);
+            todo_wine ok(!status, "IoGetDeviceInterfacePropertyData failed: %#lx\n", status);
+            todo_wine ok(req_size == sizeof(val), "got req_size = %lu\n", req_size);
+            todo_wine ok(type == DEVPROP_TYPE_BOOLEAN, "got type = %#lx\n", type);
+            todo_wine ok(val == DEVPROP_FALSE, "got val %d\n", val);
             return STATUS_SUCCESS;
+        }
 
         case IOCTL_WINETEST_BUS_ADD_CHILD:
         {

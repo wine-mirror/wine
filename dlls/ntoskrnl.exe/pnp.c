@@ -757,6 +757,28 @@ static void send_devicechange( const WCHAR *path, DWORD code, void *data, unsign
 }
 
 /***********************************************************************
+ *           IoSetDeviceInterfacePropertyData   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoSetDeviceInterfacePropertyData( UNICODE_STRING *name, const DEVPROPKEY *key, LCID lcid, ULONG flags,
+                                                  DEVPROPTYPE type, ULONG len, void *buf )
+{
+    FIXME( "name %s, key %s, lcid %#lx, flags %#lx, type %#lx, len %lu, buf %p: stub!\n", debugstr_us( name ),
+           debugstr_propkey( key ), lcid, flags, type, len, buf );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *           IoGetDeviceInterfacePropertyData   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoGetDeviceInterfacePropertyData( UNICODE_STRING *name, const DEVPROPKEY *key, LCID lcid, ULONG flags,
+                                                  ULONG size, void *buf, ULONG *required, DEVPROPTYPE *type )
+{
+    FIXME( "name %s, key %s, lcid %#lx, flags %#lx, size %lu, buf %p, required %p, type %p: stub!\n",
+           debugstr_us( name ), debugstr_propkey( key ), lcid, flags, size, buf, required, type );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
  *           IoSetDeviceInterfaceState   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable )
