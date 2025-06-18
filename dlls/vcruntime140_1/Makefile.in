@@ -1,0 +1,10 @@
+MODULE  = vcruntime140_1.dll
+IMPORTS = vcruntime140
+PARENTSRC = ../msvcrt
+
+SOURCES = \
+	except_arm64ec.c \
+	except_x86_64.c \
+	handler4.c \
+	main.c \
+	version.rc

@@ -1,0 +1,116 @@
+/*
+ * Copyright 2017 Louis Lenders
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep po
+
+#include "resource.h"
+
+#define WINE_FILEDESCRIPTION_STR "Wine oledb"
+#define WINE_FILENAME_STR "oledb32.dll"
+#define WINE_FILEVERSION 2,81,1117,0
+#define WINE_FILEVERSION_STR "2.81.1117.0"
+#define WINE_PRODUCTVERSION 2,81,1117,0
+#define WINE_PRODUCTVERSION_STR "2.81.1117.0"
+
+#include "wine/wine_common_ver.rc"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    IDS_PROPSHEET_TITLE    "Data Link Properties"
+    IDS_COL_PROVIDER       "OLE DB Provider(s)"
+    IDS_COL_NAME           "Name"
+    IDS_COL_VALUE          "Value"
+
+    IDS_PERM_READ           "Read"
+    IDS_PERM_READWRITE      "ReadWrite"
+    IDS_PERM_SHAREDENYNONE  "Share Deny None"
+    IDS_PERM_SHAREDENYREAD  "Share Deny Read"
+    IDS_PERM_SHAREDENYWRITE "Share Deny Write"
+    IDS_PERM_SHAREEXCLUSIVE "Share Exclusive"
+    IDS_PERM_WRITE          "Write"
+
+    IDS_PROVIDER_TITLE      "Data Link Error"
+    IDS_PROVIDER_ERROR      "Please select a provider."
+    IDS_PROVIDER_NOT_AVAIL  "Provider is no longer available. Ensure that the provider is installed properly."
+}
+
+IDD_PROVIDER DIALOG 0, 0, 227, 225
+STYLE DS_SETFONT | WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Provider"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Select the data you want to connect to:",-1,8,7,206,8
+    CONTROL         "",IDC_LST_CONNECTIONS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SORTASCENDING | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,14,20,206,162
+    PUSHBUTTON      "&Next >",IDC_BTN_NEXT,170,194,50,14
+END
+
+IDD_CONNECTION DIALOG 0, 0, 227, 225
+STYLE DS_SETFONT | WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Connection"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Specify the following to connect to ODBC data:",-1,7,7,213,8
+    LTEXT           "1. Specify the source of data:",IDC_LBL_SOURCE,14,18,206,8
+    CONTROL         "Use &data source name",IDC_RDO_SRC_NAME,"Button",BS_AUTORADIOBUTTON | WS_GROUP,29,29,192,10
+    COMBOBOX        IDC_CBO_NAMES,36,40,120,128,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Refresh",IDC_BTN_REFRESH,159,39,61,14
+    CONTROL         "Use c&onnection string",IDC_BTN_CONNECTION,"Button",BS_AUTORADIOBUTTON,29,57,192,10
+    LTEXT           "&Connection string:",IDC_LBL_CONNECTION,36,68,182,8
+    EDITTEXT        IDC_EDT_CONNECTION,36,78,118,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "B&uild...",IDC_BTN_BUILD,159,77,61,14
+    LTEXT           "2. Enter information to log on to the server",IDC_LBL_LOGIN,14,98,206,8
+    LTEXT           "User &name:",-1,29,110,58,8
+    EDITTEXT        IDC_EDT_NAME,87,108,133,12,ES_AUTOHSCROLL
+    LTEXT           "&Password:",-1,29,126,58,8
+    EDITTEXT        IDC_EDT_PASSWORD,87,124,133,12,ES_PASSWORD | ES_AUTOHSCROLL
+    CONTROL         "&Blank password",IDC_CHK_BLANK,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,29,140,69,10
+    CONTROL         "Allow &saving password",IDC_CHK_SAVE_PASS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,103,140,103,10
+    LTEXT           "3. Enter the &initial catalog to use:",IDC_LBL_INITIAL,14,159,206,8
+    COMBOBOX        IDC_CBO_INITIAL,29,170,191,64,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Test Connection",IDC_BTN_TEST,140,194,81,14,WS_GROUP
+END
+
+IDD_ADVANCED DIALOG 0, 0, 227, 225
+STYLE DS_SETFONT | WS_CHILD | WS_CAPTION
+CAPTION "Advanced"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        "Network settings",IDC_GRP_NETWORK,7,7,213,51
+    LTEXT           "&Impersonation level:",IDC_LBL_LEVEL,14,22,66,8
+    COMBOBOX        IDC_CBO_LEVEL,83,20,131,60,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "P&rotection level:",IDC_LBL_PROTECTION,14,39,54,8
+    COMBOBOX        IDC_CBO_PROTECTION,83,37,131,60,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Other",-1,7,62,213,92
+    LTEXT           "Connect:",-1,14,76,100,8
+    EDITTEXT        IDC_EDT_TIMEOUT,83,74,48,12,ES_RIGHT | ES_NUMBER
+    LTEXT           "seconds.",-1,133,75,28,8
+    LTEXT           "A&ccess:",-1,14,91,100,8
+    CONTROL         "",IDC_LST_PERMISSIONS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | LVS_NOLABELWRAP | LVS_NOCOLUMNHEADER | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,83,91,131,55
+END
+
+IDD_ALL DIALOG 0, 0, 227, 225
+STYLE DS_SETFONT | WS_CHILD | WS_CAPTION
+CAPTION "All"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "",IDC_LST_PROPERTIES,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SORTASCENDING | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,33,213,155
+    LTEXT           "These are the initialization properties for this type of data. To edit a value, select a property, then choose Edit Value below.",-1,7,7,213,23
+    PUSHBUTTON      "&Edit Value...",IDC_BTN_EDIT_ALL,7,194,100,14
+END

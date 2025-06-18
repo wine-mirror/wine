@@ -1,0 +1,42 @@
+MODULE    = windowscodecs.dll
+IMPORTLIB = windowscodecs
+IMPORTS   = $(TIFF_PE_LIBS) $(JPEG_PE_LIBS) $(PNG_PE_LIBS) windowscodecs uuid ole32 oleaut32 propsys rpcrt4 shlwapi user32 gdi32 advapi32
+EXTRAINCL = $(TIFF_PE_CFLAGS) $(JPEG_PE_CFLAGS) $(PNG_PE_CFLAGS)
+
+SOURCES = \
+	bitmap.c \
+	bmpdecode.c \
+	bmpencode.c \
+	clipper.c \
+	clsfactory.c \
+	colorcontext.c \
+	colortransform.c \
+	converter.c \
+	ddsformat.c \
+	decoder.c \
+	encoder.c \
+	fliprotate.c \
+	gifformat.c \
+	icoformat.c \
+	imgfactory.c \
+	info.c \
+	libjpeg.c \
+	libpng.c \
+	libtiff.c \
+	main.c \
+	metadatahandler.c \
+	metadataquery.c \
+	palette.c \
+	pngformat.c \
+	propertybag.c \
+	proxy.c \
+	regsvr.c \
+	scaler.c \
+	stream.c \
+	ungif.c \
+	uuid.c \
+	version.rc \
+	wincodecs_common.c \
+	windowscodecs_wincodec.idl
+
+dlldata_EXTRADEFS = -DENTRY_PREFIX=WIC_ -DPROXY_DELEGATION -DWINE_REGISTER_DLL

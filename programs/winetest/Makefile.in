@@ -1,0 +1,19 @@
+MODULE    = winetest.exe
+IMPORTS   = uuid comctl32 version user32 gdi32 advapi32 wsock32 msvcrt
+DELAYIMPORTS = ole32
+
+EXTRADLLFLAGS = -mconsole
+
+SOURCES = \
+	gui.c \
+	main.c \
+	send.c \
+	util.c \
+	winetest.rc \
+	winetest.svg
+
+EXTRA_OBJS = build.res
+
+EXTRA_TARGETS = build.nfo
+
+INSTALL_TEST = winetest.exe

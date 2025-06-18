@@ -1,0 +1,17 @@
+MODULE = msvcp140.dll
+EXTRADEFS = -D_MSVCP_VER=140
+PARENTSRC = ../msvcp90
+IMPORTLIB = msvcp140
+IMPORTS   = vcruntime140
+
+SOURCES = \
+	details.c \
+	exception.c \
+	ios.c \
+	locale.c \
+	math.c \
+	memory.c \
+	misc.c \
+	msvcp_main.c \
+	string.c \
+	version.rc

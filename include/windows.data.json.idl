@@ -1,0 +1,176 @@
+/*
+ * Copyright (C) 2024 Mohamad Al-Jaf
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+
+namespace Windows.Data.Json {
+    typedef enum JsonValueType JsonValueType;
+
+    interface IJsonArray;
+    interface IJsonArrayStatics;
+    interface IJsonObject;
+    interface IJsonObjectStatics;
+    interface IJsonObjectWithDefaultValues;
+    interface IJsonValue;
+    interface IJsonValueStatics;
+    interface IJsonValueStatics2;
+
+    runtimeclass JsonArray;
+    runtimeclass JsonObject;
+    runtimeclass JsonValue;
+
+    declare {
+        interface Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Data.Json.IJsonValue *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Data.Json.IJsonValue *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Data.Json.IJsonValue *> *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Data.Json.IJsonValue *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Data.Json.IJsonValue *> *>;
+        interface Windows.Foundation.Collections.IMapView<HSTRING, Windows.Data.Json.IJsonValue *>;
+        interface Windows.Foundation.Collections.IMap<HSTRING, Windows.Data.Json.IJsonValue *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Data.Json.IJsonValue *>;
+        interface Windows.Foundation.Collections.IVector<Windows.Data.Json.IJsonValue *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum JsonValueType
+    {
+        Null    = 0,
+        Boolean = 1,
+        Number  = 2,
+        String  = 3,
+        Array   = 4,
+        Object  = 5,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Data.Json.JsonArray),
+        uuid(08c1ddb6-0cbd-4a9a-b5d3-2f852dc37e81)
+    ]
+    interface IJsonArray : IInspectable
+        requires Windows.Data.Json.IJsonValue
+    {
+        HRESULT GetObjectAt([in] UINT32 index, [out, retval] Windows.Data.Json.JsonObject **value);
+        HRESULT GetArrayAt([in] UINT32 index, [out, retval] Windows.Data.Json.JsonArray **value);
+        HRESULT GetStringAt([in] UINT32 index, [out, retval] HSTRING *value);
+        HRESULT GetNumberAt([in] UINT32 index, [out, retval] DOUBLE *value);
+        HRESULT GetBooleanAt([in] UINT32 index, [out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Data.Json.JsonObject),
+        uuid(064e24dd-29c2-4f83-9ac1-9ee11578beb3)
+    ]
+    interface IJsonObject : IInspectable
+        requires Windows.Data.Json.IJsonValue
+    {
+        HRESULT GetNamedValue([in] HSTRING name, [out, retval] Windows.Data.Json.JsonValue **value);
+        HRESULT SetNamedValue([in] HSTRING name, [in] Windows.Data.Json.IJsonValue *value);
+        HRESULT GetNamedObject([in] HSTRING name, [out, retval] Windows.Data.Json.JsonObject **value);
+        HRESULT GetNamedArray([in] HSTRING name, [out, retval] Windows.Data.Json.JsonArray **value);
+        HRESULT GetNamedString([in] HSTRING name, [out, retval] HSTRING *value);
+        HRESULT GetNamedNumber([in] HSTRING name, [out, retval] DOUBLE *value);
+        HRESULT GetNamedBoolean([in] HSTRING name, [out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(a3219ecb-f0b3-4dcd-beee-19d48cd3ed1e)
+    ]
+    interface IJsonValue : IInspectable
+    {
+        [propget] HRESULT ValueType([out, retval] Windows.Data.Json.JsonValueType *value);
+        HRESULT Stringify([out, retval] HSTRING *value);
+        HRESULT GetString([out, retval] HSTRING *value);
+        HRESULT GetNumber([out, retval] DOUBLE *value);
+        HRESULT GetBoolean([out, retval] boolean *value);
+        HRESULT GetArray([out, retval] Windows.Data.Json.JsonArray **value);
+        HRESULT GetObject([out, retval] Windows.Data.Json.JsonObject **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Data.Json.JsonValue),
+        uuid(5f6b544a-2f53-48e1-91a3-f78b50a6345c)
+    ]
+    interface IJsonValueStatics : IInspectable
+    {
+        HRESULT Parse([in] HSTRING input, [out, retval] Windows.Data.Json.JsonValue **value);
+        HRESULT TryParse([in] HSTRING input, [out] Windows.Data.Json.JsonValue **result, [out, retval] boolean *succeeded);
+        HRESULT CreateBooleanValue([in] boolean input, [out, retval] Windows.Data.Json.JsonValue **value);
+        HRESULT CreateNumberValue([in] DOUBLE input, [out, retval] Windows.Data.Json.JsonValue **value);
+        HRESULT CreateStringValue([in] HSTRING input, [out, retval] Windows.Data.Json.JsonValue **value);
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Data.Json.IJsonArrayStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass JsonArray
+    {
+        [default] interface Windows.Data.Json.IJsonArray;
+        interface Windows.Data.Json.IJsonValue;
+        interface Windows.Foundation.Collections.IVector<Windows.Data.Json.IJsonValue *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Data.Json.IJsonValue *>;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Foundation.IStringable;
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Data.Json.IJsonObjectStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass JsonObject
+    {
+        [default] interface Windows.Data.Json.IJsonObject;
+        interface Windows.Data.Json.IJsonValue;
+        interface Windows.Foundation.Collections.IMap<HSTRING, Windows.Data.Json.IJsonValue *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Data.Json.IJsonValue *> *>;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Data.Json.IJsonObjectWithDefaultValues;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Foundation.IStringable;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Data.Json.IJsonValueStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.Data.Json.IJsonValueStatics2, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass JsonValue
+    {
+        [default] interface Windows.Data.Json.IJsonValue;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Foundation.IStringable;
+    }
+}

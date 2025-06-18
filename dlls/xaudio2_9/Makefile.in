@@ -1,0 +1,14 @@
+EXTRADEFS = -DXAUDIO2_VER=9
+MODULE    = xaudio2_9.dll
+IMPORTS   = $(FAUDIO_PE_LIBS) advapi32 ole32 user32 uuid
+EXTRAINCL = $(FAUDIO_PE_CFLAGS)
+PARENTSRC = ../xaudio2_7
+
+SOURCES = \
+	version.rc \
+	x3daudio.c \
+	xapo.c \
+	xapofx.c \
+	xaudio_allocator.c \
+	xaudio_classes.idl \
+	xaudio_dll.c

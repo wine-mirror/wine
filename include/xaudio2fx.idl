@@ -1,0 +1,75 @@
+/*
+ * Copyright (c) 2015 Andrew Eikum
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "unknwn.idl";
+
+#ifndef XAUDIO2_VER
+#define XAUDIO2_VER 9
+#endif
+
+#if XAUDIO2_VER < 8
+[
+    threading(both),
+#if XAUDIO2_VER == 0
+    uuid(c0c56f46-29b1-44e9-9939-a32ce86867e2)
+#elif XAUDIO2_VER == 1
+    uuid(c1e3f122-a2ea-442c-854f-20d98f8357a1)
+#elif XAUDIO2_VER == 2
+    uuid(f5ca7b34-8055-42c0-b836-216129eb7e30)
+#elif XAUDIO2_VER == 3
+    uuid(e180344b-ac83-4483-959e-18a5c56a5e19)
+#elif XAUDIO2_VER == 4
+    uuid(c7338b95-52b8-4542-aa79-42eb016c8c1c)
+#elif XAUDIO2_VER == 5
+    uuid(2139e6da-c341-4774-9ac3-b4e026347f64)
+#elif XAUDIO2_VER == 6
+    uuid(e48c5a3f-93ef-43bb-a092-2c7ceb946f27)
+#else
+    uuid(cac1105f-619b-4d04-831a-44e1cbf12d57)
+#endif
+]
+coclass AudioVolumeMeter {}
+
+[
+    threading(both),
+#if XAUDIO2_VER == 0
+    uuid(6f6ea3a9-2cf5-41cf-91c1-2170b1540063)
+#elif XAUDIO2_VER == 1
+    uuid(f4769300-b949-4df9-b333-00d33932e9a6)
+#elif XAUDIO2_VER == 2
+    uuid(629cf0de-3ecc-41e7-9926-f7e43eebec51)
+#elif XAUDIO2_VER == 3
+    uuid(9cab402c-1d37-44b4-886d-fa4f36170a4c)
+#elif XAUDIO2_VER == 4
+    uuid(8bb7778b-645b-4475-9a73-1de3170bd3af)
+#elif XAUDIO2_VER == 5
+    uuid(d06df0d0-8518-441e-822f-5451d5c595b8)
+#elif XAUDIO2_VER == 6
+    uuid(cecec95a-d894-491a-bee3-5e106fb59f2d)
+#else
+    uuid(6a93130e-1d53-41d1-a9cf-e758800bb179)
+#endif
+]
+coclass AudioReverb {}
+
+#else
+
+HRESULT __stdcall CreateAudioReverb(IUnknown **out);
+HRESULT __stdcall CreateAudioVolumeMeter(IUnknown **out);
+
+#endif

@@ -1,0 +1,665 @@
+#!/usr/bin/perl
+
+# Copyright 1999-2002 Patrik Stridvall
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+#
+
+# Note that winapi_check are using heuristics quite heavily.
+# So always remember that:
+#
+# "Heuristics are bug ridden by definition.
+#  If they didn't have bugs, then they'd be algorithms."
+#
+# In other words, reported bugs are only potential bugs not
+# real bugs, so they are called issues rather than bugs.
+#
+
+use strict;
+use warnings 'all';
+
+BEGIN {
+    $0 =~ m%^(.*?/?tools)/winapi/winapi_check$%;
+    require "$1/winapi/setup.pm";
+}
+
+use config qw(
+    files_filter files_skip
+    get_h_files
+    $current_dir $wine_dir
+);
+use output qw($output);
+use winapi_check_options qw($options);
+
+BEGIN {
+    if($options->progress) {
+	$output->enable_progress;
+    } else {
+	$output->disable_progress;
+    }
+}
+
+use modules qw($modules);
+use nativeapi qw($nativeapi);
+use winapi qw($win16api $win32api @winapis);
+
+use preprocessor;
+use type;
+use util qw(is_subset);
+use winapi_documentation;
+use winapi_function;
+use winapi_local;
+use winapi_global;
+use winapi_parser;
+
+my %include2info;
+
+if ($options->global) {
+    my @files = get_h_files("winelib");
+
+    my $progress_current = 0;
+    my $progress_max = scalar(@files);
+
+    foreach my $file (@files) {
+	$progress_current++;
+	$output->lazy_progress("$file: file $progress_current of $progress_max");
+
+	my $file_dir = $file;
+	if(!($file_dir =~ s%(.*?)/[^/]+$%$1%)) {
+	    $file_dir = ".";
+	}
+
+	$include2info{$file} = { name => $file };
+
+	open(IN, "< $wine_dir/$file") || die "Error: Can't open $wine_dir/$file: $!\n";
+	while(<IN>) {
+	    if(/^\s*\#\s*include\s*\"(.*?)\"/) {
+		my $header = $1;
+		if(-e "$wine_dir/$file_dir/$header") {
+		    $include2info{$file}{includes}{"$file_dir/$header"}++;
+		} elsif(-e "$wine_dir/$file_dir/../$header") {
+		    if($file_dir =~ m%^(.*?)/[^/]+$%) {
+			$include2info{$file}{includes}{"$1/$header"}++;
+		    } else {
+			$include2info{$file}{includes}{"$header"}++;
+		    }
+		} elsif(-e "$wine_dir/include/$header") {
+		    $include2info{$file}{includes}{"include/$header"}++;
+		} elsif ($header ne "config.h") {
+		    $output->write("$file: #include \"$header\" is not a local include\n");
+		}
+	    }
+	}
+	close(IN);
+    }
+
+    my @files2 = ("acconfig.h", "poppack.h", "pshpack1.h", "pshpack2.h", "pshpack4.h", "pshpack8.h",
+                  "storage.h", "ver.h");
+    foreach my $file2 (@files2) {
+	$include2info{"include/$file2"}{used}++;
+    }
+}
+
+my @c_files = $options->c_files;
+@c_files = files_skip(@c_files);
+@c_files = files_filter("winelib", @c_files);
+
+my @h_files = $options->h_files;
+@h_files = files_skip(@h_files);
+@h_files = files_filter("winelib", @h_files);
+
+my $all_modules = 0;
+my %complete_module;
+if($options->global) {
+    my @complete_modules = $modules->complete_modules(\@c_files);
+
+    foreach my $module (@complete_modules) {
+	$complete_module{$module}++;
+    }
+
+    $all_modules = 1;
+    foreach my $module ($modules->all_modules) {
+	if(!$complete_module{$module}) {
+	    $all_modules = 0;
+	    if($wine_dir eq ".") {
+		$output->write("*.c: module $module is not complete\n");
+	    }
+	}
+    }
+}
+
+if(1) {
+    foreach my $winapi (@winapis) {
+	foreach my $broken_forward ($winapi->all_broken_forwards) {
+	    (my $module, my $external_name, my $forward_module, my $forward_external_name) = @$broken_forward;
+	    if($complete_module{$forward_module}) {
+		$output->write("$module.spec: forward is broken: $external_name => $forward_module.$forward_external_name\n");
+	    }
+	}
+    }
+}
+
+my $progress_current = 0;
+my $progress_max = scalar(@c_files);
+
+my %declared_functions;
+
+if($options->headers) {
+    $progress_max += scalar(@h_files);
+
+    foreach my $file (@h_files) {
+	my %functions;
+
+	$progress_current++;
+	$output->progress("$file: file $progress_current of $progress_max");
+
+	my $found_c_comment = sub {
+	    my $begin_line = shift;
+	    my $end_line = shift;
+	    my $comment = shift;
+
+	    if(0) {
+		if($begin_line == $end_line) {
+		    $output->write("$file:$begin_line: $comment\n");
+		} else {
+		    $output->write("$file:$begin_line-$end_line: \\\n$comment\n");
+		}
+	    }
+	};
+
+	my $found_cplusplus_comment = sub {
+	    my $line = shift;
+	    my $comment = shift;
+
+	    if($options->comments_cplusplus) {
+		$output->write("$file:$line: C++ comments not allowed: $comment\n");
+	    }
+	};
+
+	my $create_function = sub {
+	    return 'winapi_function'->new;
+	};
+
+	my $found_function = sub {
+	    my $function = shift;
+
+	    my $internal_name = $function->internal_name;
+
+	    $output->progress("$file (file $progress_current of $progress_max): $internal_name");
+	    $output->prefix_callback(sub { return $function->prefix; });
+
+	    my $function_line = $function->function_line;
+	    my $linkage = $function->linkage;
+	    my $external_name = $function->external_name;
+	    my $statements = $function->statements;
+
+	    if($options->headers_misplaced &&
+	       !($function->is_win16 && $function->is_win32) &&
+	       (($function->is_win16 && $file =~ /^include\/[^\/]*$/) ||
+		($function->is_win32 && $file =~ /^include\/wine\/[^\/]*$/)))
+	    {
+		$output->write("declaration misplaced\n");
+	    }
+
+	    if(defined($external_name) && !defined($statements) &&
+	       ($linkage eq "" || $linkage eq "extern"))
+	    {
+		my $previous_function = $declared_functions{$internal_name};
+		if(!defined($previous_function)) {
+		    $declared_functions{$internal_name} = $function;
+		} elsif($options->headers_duplicated) {
+		    my $file = $previous_function->file;
+		    my $function_line = $previous_function->function_line;
+		    if($file =~ /\.h$/) {
+			$output->write("duplicate declaration (first declaration at $file:$function_line)\n");
+		    }
+		}
+	    }
+	    $output->prefix("");
+	};
+
+	my $create_type = sub {
+	    return 'type'->new;
+	};
+
+	my $found_type = sub {
+	    my $type = shift;
+	};
+
+	my $found_preprocessor = sub {
+	    my $directive = shift;
+	    my $argument = shift;
+	};
+
+	winapi_parser::parse_c_file($file, {
+	    c_comment_found => $found_c_comment,
+	    cplusplus_comment_found => $found_cplusplus_comment,
+	    function_create => $create_function,
+	    function_found => $found_function,
+	    type_create => $create_type,
+	    type_found => $found_type,
+	    preprocessor_found => $found_preprocessor
+	});
+    }
+}
+
+my %module2functions = ();
+
+foreach my $file (@c_files) {
+    my %functions = ();
+    my %includes = ();
+
+    $includes{$file}++;
+
+    my $file_module16 = $modules->allowed_modules_in_file("$current_dir/$file");
+    my $file_module32 = $modules->allowed_modules_in_file("$current_dir/$file");
+
+    $progress_current++;
+    $output->progress("$file (file $progress_current of $progress_max)");
+
+    my $file_dir = $file;
+    if(!($file_dir =~ s/(.*?)\/[^\/]*$/$1/)) {
+	$file_dir = ".";
+    }
+
+    my $found_c_comment = sub {
+	my $begin_line = shift;
+	my $end_line = shift;
+	my $comment = shift;
+
+	if(0) {
+	    if($begin_line == $end_line) {
+		$output->write("$file:$begin_line: $comment\n");
+	    } else {
+		$output->write("$file:$begin_line-$end_line: \\\n$comment\n");
+	    }
+	}
+    };
+
+    my $found_cplusplus_comment = sub {
+	my $line = shift;
+	my $comment = shift;
+
+	if($options->comments_cplusplus) {
+	    $output->write("$file:$line: C++ comments not allowed: $comment\n");
+	}
+    };
+
+    my $create_function = sub {
+	return 'winapi_function'->new;
+    };
+
+    my $found_function = sub {
+	my $function = shift;
+
+	my $internal_name = $function->internal_name;
+	$functions{$internal_name} = $function;
+
+	$output->progress("$file (file $progress_current of $progress_max): $internal_name");
+	$output->prefix_callback(sub { return $function->prefix; });
+
+	my $declared_function = $declared_functions{$internal_name};
+
+	my $documentation_line = $function->documentation_line;
+	my $documentation = $function->documentation;
+	my $linkage = $function->linkage;
+	my $return_type = $function->return_type;
+	my $calling_convention = $function->calling_convention;
+	my $statements = $function->statements;
+
+	my $module16 = $function->module16;
+	my $module32 = $function->module32;
+
+	my $external_name = $function->external_name;
+	my $external_name16 = $function->external_name16;
+	my $external_name32 = $function->external_name32;
+
+	if(defined($external_name) && !defined($statements) &&
+	   ($linkage eq "" || $linkage eq "extern"))
+	{
+	    my $previous_function = $declared_functions{$internal_name};
+	    if(!defined($previous_function)) {
+		$declared_functions{$internal_name} = $function;
+	    } else {
+		my $file = $previous_function->file;
+		my $function_line = $previous_function->function_line;
+
+		my $header = $file;
+		$header =~ s%^(include|$file_dir)/%%;
+		if($header !~ m%^msvcrt/% || $file_dir =~ m%^dlls/msvcrt%) {
+		    $output->write("duplicate declaration (first declaration at $file:$function_line)\n");
+		}
+	    }
+	}
+
+	if ($options->global) {
+	    foreach my $module ($function->modules) {
+		$module2functions{$module}{$internal_name} = $function;
+	    }
+	}
+
+	foreach my $module ($function->modules) {
+	    $modules->found_module_in_dir($module, $file_dir);
+	}
+
+	if($options->shared) {
+	    if($win16api->is_shared_internal_function($internal_name) ||
+	       $win32api->is_shared_internal_function($internal_name))
+	    {
+		$output->write("is shared between Win16 and Win32\n");
+	    }
+	}
+
+	if($options->headers && $options->headers_needed &&
+	   defined($declared_function) && defined($external_name) &&
+	   defined($statements))
+	{
+	    my $needed_include = $declared_function->file;
+
+	    if(!defined($includes{$needed_include})) {
+		my $header = $needed_include;
+		$header =~ s%^(include|$file_dir)/%%;
+		if($header !~ m%^msvcrt/% || $file_dir =~ m%^dlls/msvcrt%) {
+		    $output->write("prototype not included: #include \"$header\" is needed\n");
+		}
+	    }
+	}
+
+	if($options->local && $options->argument && defined($statements)) {
+	    winapi_local::check_function($function);
+	}
+
+	if($options->local && $options->statements && defined($statements)) {
+	    winapi_local::check_statements(\%functions, $function);
+	}
+
+	if($options->local && $options->documentation &&
+	   (defined($module16) || defined($module32)) &&
+	   $linkage eq "" && defined($statements))
+	{
+	    winapi_documentation::check_documentation($function);
+	}
+
+	if(1) {
+	    # FIXME: Not correct
+	    if(defined($external_name16)) {
+		$external_name16 = (split(/\s*&\s*/, $external_name16))[0];
+	    }
+
+	    # FIXME: Not correct
+	    if(defined($external_name32)) {
+		$external_name32 = (split(/\s*&\s*/, $external_name32))[0];
+	    }
+
+	    if($options->local && $options->misplaced &&
+	       $linkage ne "extern" && defined($statements))
+	    {
+		if($options->win16 && $options->report_module($module16))
+		{
+		    if($file ne "library/port.c" &&
+		       !$nativeapi->is_function($internal_name) &&
+		       !is_subset($module16, $file_module16))
+		    {
+			foreach my $module16 (split(/\s*&\s*/, $module16)) {
+			    if(!$win16api->is_function_stub($module16, $internal_name)) {
+				$output->write("is misplaced ($module16)\n");
+			    }
+			}
+		    }
+		}
+
+		if($options->win32 && $options->report_module($module32))
+		{
+		    if($file ne "library/port.c" &&
+		       !$nativeapi->is_function($internal_name) &&
+		       !is_subset($module32, $file_module32))
+		    {
+			foreach my $module32 (split(/\s*&\s*/, $module32)) {
+			    if(!$win32api->is_function_stub($module32, $internal_name)) {
+				$output->write("is misplaced ($module32)\n");
+			    }
+			}
+		    }
+		}
+	    }
+
+	    if($options->local && $options->headers && $options->prototype) {
+		if($options->win16 && $options->report_module($module16)) {
+		    if(!$nativeapi->is_function($internal_name) &&
+		       !defined($declared_functions{$internal_name}))
+		    {
+			$output->write("no prototype\n");
+		    }
+		}
+
+		if($options->win32 && $options->report_module($module32)) {
+		    if(!defined($external_name32) || (!$nativeapi->is_function($external_name32) && 						          !defined($declared_functions{$external_name32})))
+		    {
+			if(!defined($external_name32) || ($external_name32 !~ /^Dll(?:
+			   Install|CanUnloadNow|GetClassObject|GetVersion|
+			   RegisterServer|RegisterServerEx|UnregisterServer)|DriverProc$/x &&
+			   $internal_name !~ /^COMCTL32_Str/ &&
+			   $internal_name !~ /^(?:\Q$module32\E|wine)_(?:\Q$external_name32\E|\d+)$/))
+			{
+			    $output->write("no prototype\n");
+			}
+		    }
+		}
+	    }
+	}
+
+	$output->prefix("");
+    };
+
+    my $config = 0;
+    my $conditional = 0;
+    my $found_include = sub {
+	local $_ = shift;
+	if(/^\"(?:config\.h|wine\/port\.h)\"/) {
+	    $config++;
+	}
+    };
+    my $found_conditional = sub {
+	local $_ = shift;
+
+	$nativeapi->found_conditional($_);
+
+	if($options->config) {
+	    if(!$nativeapi->is_conditional($_)) {
+		if(/^HAVE_/ && !/^HAVE_(?:IPX|CORRECT_LINUXINPUT_H|OSS|OSS_MIDI|V4L2)$/)
+		{
+		    $output->write("$file: $_ is not declared as a conditional\n");
+		}
+	    } else {
+		$conditional++;
+		if(!$config) {
+		    $output->write("$file: conditional $_ used but config.h is not included\n");
+		}
+	    }
+	}
+    };
+
+    my $create_type = sub {
+	return 'type'->new;
+    };
+
+    my $found_type = sub {
+	my $type = shift;
+    };
+
+    sub recursive_include {
+	my $include = shift;
+	my $includes = shift;
+
+	if(!defined($includes->{$include})) {
+	    $includes->{$include}++;
+	    foreach my $include (keys(%{$include2info{$include}{includes}})) {
+		recursive_include($include, \%$includes);
+	    }
+	}
+    };
+
+    my $preprocessor = 'preprocessor'->new($found_include, $found_conditional);
+    my $found_preprocessor = sub {
+	my $directive = shift;
+	my $argument = shift;
+
+	$preprocessor->directive($directive, $argument);
+
+	if($options->config) {
+	    if($directive eq "include") {
+		my $header;
+		my $check_protection;
+		my $check_local;
+		if($argument =~ /^<(.*?)>$/) {
+		    $header = $1;
+		    $check_protection = 1;
+		    $check_local = 0;
+		} elsif($argument =~ /^\"(.*?)\"$/) {
+		    $header = $1;
+		    $check_protection = 0;
+		    $check_local = 1;
+		} else {
+		    $output->write("$file: #$directive $argument: is unparsable\n");
+
+		    $header = undef;
+		    $check_protection = 0;
+		    $check_local = 0;
+		}
+
+		if(defined($header)) {
+		    my $include;
+		    if(-e "$wine_dir/include/$header") {
+			$include = "include/$header";
+		    } elsif(-e "$wine_dir/include/msvcrt/$header") {
+			$include = "include/msvcrt/$header";
+		    } elsif(-e "$file_dir/$header") {
+			$include = "$file_dir/$header";
+		    } elsif(-e "$file_dir/../$header") {
+			if($file_dir =~ m%^(.*?)/[^/]+$%) {
+			    $include = "$1/$header";
+			} else {
+			    $include = "$header";
+			}
+		    } elsif($check_local && $header ne "config.h") {
+			$output->write("$file: #include \"$header\": file not found\n");
+		    }
+
+		    if(defined($include)) {
+			recursive_include($include, \%includes);
+		    }
+		}
+
+		if($check_protection && $header) {
+		    if((-e "$wine_dir/include/$header" || -e "$wine_dir/$file_dir/$header")) {
+			if($header !~ /^(?:oleauto\.h|win(?:base|def|error|gdi|nls|nt|user)\.h)$/ &&
+			   $file_dir !~ /tests$/)
+			{
+			    $output->write("$file: #include \<$header\> is a local include\n");
+			}
+		    }
+
+		    my $macro = uc($header);
+		    $macro =~ y/\.\//__/;
+		    $macro = "HAVE_" . $macro;
+
+		    if($nativeapi->is_conditional_header($header)) {
+			if(!$preprocessor->is_def($macro)) {
+			    if($macro =~ /^HAVE_X11/) {
+				# Do nothing X Windows is handled differently
+			    } elsif($macro =~ /^HAVE_(.*?)_H$/) {
+				my $name = $1;
+				if($header !~ /^alloca\.h$/ &&
+				   $file_dir !~ /tests$/)
+				{
+				    $output->write("$file: #$directive $argument: is a conditional include, " .
+						   "but is not protected\n");
+				}
+			    }
+			}
+		    } elsif($preprocessor->is_def($macro)) {
+			$output->write("$file: #$directive $argument: is protected, but there is no check for it in configure.ac\n");
+		    }
+		}
+
+		if($check_local && $header) {
+		    if(-e "$file_dir/$header") {
+			if($file_dir ne ".") {
+			    $include2info{"$file_dir/$header"}{used}++;
+			    foreach my $name (keys(%{$include2info{"$file_dir/$header"}{includes}})) {
+				$include2info{$name}{used}++;
+			    }
+			} else {
+			    $include2info{"$header"}{used}++;
+			    foreach my $name (keys(%{$include2info{"$header"}{includes}})) {
+				$include2info{$name}{used}++;
+			    }
+			}
+		    } elsif(-e "$file_dir/../$header") {
+			if($file_dir =~ m%^(.*?)/[^/]+$%) {
+			    $include2info{"$1/$header"}{used}++;
+			    foreach my $name (keys(%{$include2info{"$1/$header"}{includes}})) {
+				$include2info{$name}{used}++;
+			    }
+			} else {
+			    $include2info{"$header"}{used}++;
+			    foreach my $name (keys(%{$include2info{"$header"}{includes}})) {
+				$include2info{$name}{used}++;
+			    }
+			}
+		    } elsif(-e "$wine_dir/include/$header") {
+			$include2info{"include/$header"}{used}++;
+			foreach my $name (keys(%{$include2info{"include/$header"}{includes}})) {
+			    $include2info{$name}{used}++;
+			}
+		    } elsif(-e "$wine_dir/include/msvcrt/$header") {
+			$include2info{"include/msvcrt/$header"}{used}++;
+			foreach my $name (keys(%{$include2info{"include/msvcrt/$header"}{includes}})) {
+			    $include2info{$name}{used}++;
+			}
+		    } elsif ($header ne "config.h") {
+			$output->write("$file: #include \"$header\" is not a local include\n");
+		    }
+		}
+	    }
+	}
+    };
+
+    winapi_parser::parse_c_file($file, {
+	c_comment_found => $found_c_comment,
+	cplusplus_comment_found => $found_cplusplus_comment,
+	function_create => $create_function,
+	function_found => $found_function,
+	type_create => $create_type,
+	type_found => $found_type,
+	preprocessor_found => $found_preprocessor
+    });
+
+    if($options->config_unnecessary) {
+	if($config && $conditional == 0 && !exists($include2info{"include/wine/port.h"})) {
+	    $output->write("$file: include2info config.h but do not use any conditionals\n");
+	}
+    }
+
+    winapi_local::check_file($file, \%functions);
+}
+
+if($options->global) {
+    winapi_global::check_modules(\%complete_module, \%module2functions);
+
+    if($all_modules) {
+	winapi_global::check_all_modules(\%include2info);
+    }
+}

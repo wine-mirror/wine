@@ -1,0 +1,49 @@
+/*
+ * COM Classes for browseui
+ *
+ * Copyright 2010 Alexandre Julliard
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep register
+
+[
+    helpstring("Multiple AutoComplete List Container"),
+    threading(apartment),
+    uuid(00bb2765-6a77-11d0-a535-00c04fd7d062)
+]
+coclass ACLMulti { interface IACList; }
+
+[
+    helpstring("Progress Dialog"),
+    threading(both),
+    uuid(f8383852-fcd3-11d1-a6b9-006097df5bd4)
+]
+coclass ProgressDialog { interface IProgressDialog; }
+
+[
+    helpstring("Component Categories cache daemon"),
+    threading(apartment),
+    uuid(8c7461ef-2b13-11d2-be35-3078302c2030)
+]
+coclass CompCatCacheDaemon { interface IRunnableTask; }
+
+[
+    helpstring("Shell Folder AutoComplete List"),
+    threading(apartment),
+    uuid(03c036f1-a186-11d0-824a-00aa005b4383)
+]
+coclass ACListISF { interface IACList2; }

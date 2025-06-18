@@ -1,0 +1,60 @@
+/*
+ * Copyright 2000 Huw D M Davies
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "psdlg.h"
+
+#pragma makedep po
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+PAPER DIALOG 5, 43, 227, 230
+STYLE  WS_POPUP | WS_CAPTION | WS_CLIPSIBLINGS | WS_VISIBLE
+CAPTION "Paper"
+FONT 8, "MS Shell Dlg"
+{
+ LTEXT "Paper Si&ze:", -1, 10, 6, 200, 8
+ LISTBOX IDD_PAPERS, 10, 18, 200, 60, LBS_STANDARD | LBS_HASSTRINGS |
+	 WS_TABSTOP
+ GROUPBOX "Orientation", -1, 10, 80, 200, 50
+ CONTROL "&Portrait", IDD_ORIENT_PORTRAIT, "Button", BS_AUTORADIOBUTTON |
+	WS_TABSTOP, 20, 93, 180, 10
+ CONTROL "&Landscape", IDD_ORIENT_LANDSCAPE, "Button", BS_AUTORADIOBUTTON,
+	 20, 110, 180, 10
+ LTEXT "Duplex:", IDD_DUPLEX_NAME, 10, 140, 200, 8
+ COMBOBOX IDD_DUPLEX, 10, 151, 200, 60, CBS_DROPDOWNLIST | CBS_HASSTRINGS |
+        WS_TABSTOP
+ LTEXT "Print &Quality:", -1, 10, 170, 200, 8
+ COMBOBOX IDD_QUALITY, 10, 181, 200, 60, CBS_DROPDOWNLIST | CBS_HASSTRINGS |
+        WS_TABSTOP
+ LTEXT "Paper &Tray:", IDD_TRAY_NAME, 10, 200, 200, 8
+ COMBOBOX IDD_TRAY, 10, 211, 200, 60, CBS_DROPDOWNLIST | CBS_HASSTRINGS |
+        WS_TABSTOP
+}
+
+STRINGTABLE
+{
+ IDS_DPI "#msgctxt#unit: dots/inch#dpi"
+}
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+#define WINE_FILEDESCRIPTION_STR "Wine PostScript Driver"
+#define WINE_FILENAME_STR "wineps.drv"
+#define WINE_FILEVERSION_STR "1.0"
+
+#include "wine/wine_common_ver.rc"

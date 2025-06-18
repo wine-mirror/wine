@@ -1,0 +1,32 @@
+/*
+ * Copyright 2025 Vibhav Pant
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+#include "windef.h"
+#include "winuser.h"
+
+IDD_DEVICESDLG DIALOG 260, 200, 300, 120
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+FONT 8, "MS Shell Dlg"
+CAPTION "Select Device"
+{
+  DEFPUSHBUTTON   "Cancel", IDCANCEL, 120, 100, 50, 14
+  LTEXT           "Device", IDC_STATIC, 10, 10, 25, 8
+  COMBOBOX        IDC_CBO_DEVICES, 40, 8, 250, 60, WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWN | CBS_HASSTRINGS
+}

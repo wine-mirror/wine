@@ -1,0 +1,11 @@
+MODULE    = wineoss.drv
+UNIXLIB   = wineoss.so
+IMPORTS   = uuid ole32 user32 advapi32
+DELAYIMPORTS = winmm
+UNIX_LIBS    = $(OSS4_LIBS) $(PTHREAD_LIBS)
+UNIX_CFLAGS  = $(OSS4_CFLAGS)
+
+SOURCES = \
+	midipatch.c \
+	oss.c \
+	ossmidi.c

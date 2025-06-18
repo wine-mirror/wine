@@ -1,0 +1,220 @@
+/*
+ * Copyright (C) 2023 Biswapriyo Nath
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "windows.foundation.idl";
+import "windows.media.idl";
+import "windows.media.capture.idl";
+import "windows.media.render.idl";
+import "windows.storage.streams.idl";
+
+namespace Windows.Media.Effects {
+    typedef enum AudioEffectType AudioEffectType;
+
+    interface IAudioCaptureEffectsManager;
+    interface IAudioEffect;
+    interface IAudioEffectsManagerStatics;
+    interface IAudioRenderEffectsManager;
+    interface IAudioRenderEffectsManager2;
+
+    runtimeclass AudioCaptureEffectsManager;
+    runtimeclass AudioEffect;
+    runtimeclass AudioEffectsManager;
+    runtimeclass AudioRenderEffectsManager;
+
+    declare {
+        interface Windows.Foundation.Collections.IIterable<Windows.Media.Effects.AudioEffect *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Media.Effects.AudioEffect *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Media.Effects.AudioEffect *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Media.Effects.AudioCaptureEffectsManager *, IInspectable *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Media.Effects.AudioRenderEffectsManager *, IInspectable *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum AudioEffectType
+    {
+        Other                    = 0,
+        AcousticEchoCancellation = 1,
+        NoiseSuppression         = 2,
+        AutomaticGainControl     = 3,
+        BeamForming              = 4,
+        ConstantToneRemoval      = 5,
+        Equalizer                = 6,
+        LoudnessEqualizer        = 7,
+        BassBoost                = 8,
+        VirtualSurround          = 9,
+        VirtualHeadphones        = 10,
+        SpeakerFill              = 11,
+        RoomCorrection           = 12,
+        BassManagement           = 13,
+        EnvironmentalEffects     = 14,
+        SpeakerProtection        = 15,
+        SpeakerCompensation      = 16,
+        DynamicRangeCompression  = 17,
+        [contract(Windows.Foundation.UniversalApiContract, 12.0)]
+        FarFieldBeamForming      = 18,
+        [contract(Windows.Foundation.UniversalApiContract, 13.0)]
+        DeepNoiseSuppression     = 19,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Effects.AudioCaptureEffectsManager),
+        uuid(8f85c271-038d-4393-8298-540110608eef)
+    ]
+    interface IAudioCaptureEffectsManager : IInspectable
+    {
+        [eventadd] HRESULT AudioCaptureEffectsChanged(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.Effects.AudioCaptureEffectsManager *, IInspectable *> *handler,
+            [out, retval] EventRegistrationToken *token
+        );
+        [eventremove] HRESULT AudioCaptureEffectsChanged(
+            [in] EventRegistrationToken token
+        );
+        HRESULT GetAudioCaptureEffects(
+            [out, retval] Windows.Foundation.Collections.IVectorView<Windows.Media.Effects.AudioEffect *> **effects
+        );
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Effects.AudioEffect),
+        uuid(34aafa51-9207-4055-be93-6e5734a86ae4)
+    ]
+    interface IAudioEffect : IInspectable
+    {
+        [propget] HRESULT AudioEffectType([out, retval] Windows.Media.Effects.AudioEffectType *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Effects.AudioEffectsManager),
+        uuid(66406c04-86fa-47cc-a315-f489d8c3fe10)
+    ]
+    interface IAudioEffectsManagerStatics : IInspectable
+    {
+        [overload("CreateAudioRenderEffectsManager")]
+        HRESULT CreateAudioRenderEffectsManager(
+            [in] HSTRING device_id,
+            [in] Windows.Media.Render.AudioRenderCategory category,
+            [out, retval] Windows.Media.Effects.AudioRenderEffectsManager **value
+        );
+        [overload("CreateAudioRenderEffectsManager")]
+        HRESULT CreateAudioRenderEffectsManagerWithMode(
+            [in] HSTRING device_id,
+            [in] Windows.Media.Render.AudioRenderCategory category,
+            [in] Windows.Media.AudioProcessing mode,
+            [out, retval] Windows.Media.Effects.AudioRenderEffectsManager **value
+        );
+        [overload("CreateAudioCaptureEffectsManager")]
+        HRESULT CreateAudioCaptureEffectsManager(
+            [in] HSTRING device_id,
+            [in] Windows.Media.Capture.MediaCategory category,
+            [out, retval] Windows.Media.Effects.AudioCaptureEffectsManager **value
+        );
+        [overload("CreateAudioCaptureEffectsManager")]
+        HRESULT CreateAudioCaptureEffectsManagerWithMode(
+            [in] HSTRING device_id,
+            [in] Windows.Media.Capture.MediaCategory category,
+            [in] Windows.Media.AudioProcessing mode,
+            [out, retval] Windows.Media.Effects.AudioCaptureEffectsManager **value
+        );
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Effects.AudioRenderEffectsManager),
+        uuid(4dc98966-8751-42b2-bfcb-39ca7864bd47)
+    ]
+    interface IAudioRenderEffectsManager : IInspectable
+    {
+        [eventadd] HRESULT AudioRenderEffectsChanged(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.Effects.AudioRenderEffectsManager *, IInspectable *> *handler,
+            [out, retval] EventRegistrationToken *token
+        );
+        [eventremove] HRESULT AudioRenderEffectsChanged(
+            [in] EventRegistrationToken token
+        );
+        HRESULT GetAudioRenderEffects(
+            [out, retval] Windows.Foundation.Collections.IVectorView<Windows.Media.Effects.AudioEffect *> **effects
+        );
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Effects.AudioRenderEffectsManager),
+        uuid(a844cd09-5ecc-44b3-bb4e-1db07287139c)
+    ]
+    interface IAudioRenderEffectsManager2 : IInspectable
+    {
+        [propget] HRESULT EffectsProviderThumbnail(
+            [out, retval] Windows.Storage.Streams.IRandomAccessStreamWithContentType **value
+        );
+        [propget] HRESULT EffectsProviderSettingsLabel(
+            [out, retval] HSTRING *value
+        );
+        HRESULT ShowSettingsUI();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(mta)
+    ]
+    runtimeclass AudioCaptureEffectsManager
+    {
+        [default] interface Windows.Media.Effects.IAudioCaptureEffectsManager;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(mta)
+    ]
+    runtimeclass AudioEffect
+    {
+        [default] interface Windows.Media.Effects.IAudioEffect;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Media.Effects.IAudioEffectsManagerStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(mta)
+    ]
+    runtimeclass AudioEffectsManager
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(mta)
+    ]
+    runtimeclass AudioRenderEffectsManager
+    {
+        [default] interface Windows.Media.Effects.IAudioRenderEffectsManager;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.Effects.IAudioRenderEffectsManager2;
+    }
+}

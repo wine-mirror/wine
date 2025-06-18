@@ -1,0 +1,249 @@
+.TH WINEMAKER 1 "Jan 2012" "@PACKAGE_STRING@" "Wine Developers Manual"
+.SH NAME
+winemaker \- generate a build infrastructure for compiling Windows programs on Unix
+.SH SYNOPSIS
+.B "winemaker "
+[
+.BR               "--nobanner " "] [ " "--backup " "| " "--nobackup " "] [ "--nosource-fix "
+]
+.br
+  [
+.BR               "--lower-none " "| " "--lower-all " "| " "--lower-uppercase "
+]
+.br
+  [
+.BR               "--lower-include " "| " "--nolower-include " ]\ [ " --mfc " "| " "--nomfc "
+]
+.br
+  [
+.BR               "--guiexe " "| " "--windows " "| " "--cuiexe " "| " "--console " "| " "--dll " "| " "--lib "
+]
+.br
+  [
+.BI               "-D" macro "\fR[=\fIdefn\fR] ] [" "\ " "-I" "dir\fR ]\ [ " "-P" "dir\fR ] [ " "-i" "dll\fR ] [ " "-L" "dir\fR ] [ " "-l" "library "
+]
+.br
+  [
+.BR               "--nodlls " "] [ " "--nomsvcrt " "] [ " "--interactive " "] [ " "--single-target \fIname\fR "
+]
+.br
+  [
+.BR               "--generated-files " "] [ " "--nogenerated-files " "]
+.br
+  [
+.BR               "--wine32 " "]
+.br
+.IR               "  work_directory" " | " "project_file" " | " "workspace_file"
+
+.SH DESCRIPTION
+.PP
+.B winemaker
+is a perl script designed to help you bootstrap the
+process of converting your Windows sources to Winelib programs.
+.PP
+In order to do this \fBwinemaker\fR can perform the following operations:
+.PP
+- rename your source files and directories to lowercase in the event they
+got all uppercased during the transfer.
+.PP
+- perform DOS to Unix (CRLF to LF) conversions.
+.PP
+- scan the include statements and resource file references to replace the
+backslashes with forward slashes.
+.PP
+- during the above step \fBwinemaker\fR will also perform a case insensitive search
+of the referenced file in the include path and rewrite the include statement
+with the right case if necessary.
+.PP
+- \fBwinemaker\fR will also check other more exotic issues like \fI#pragma pack\fR
+usage, use of \fIafxres.h\fR in non MFC projects, and more. Whenever it
+encounters something out of the ordinary, it will warn you about it.
+.PP
+- \fBwinemaker\fR can also scan a complete directory tree at once, guess what are
+the executables and libraries you are trying to build, match them with
+source files, and generate the corresponding \fIMakefile\fR.
+.PP
+- finally \fBwinemaker\fR will generate a global \fIMakefile\fR for normal use.
+.PP
+- \fBwinemaker\fR knows about MFC-based project and will generate customized files.
+.PP
+- \fBwinemaker\fR can read existing project files. It supports dsp, dsw, vcproj and sln files.
+.PP
+.SH OPTIONS
+.TP
+.B --nobanner
+Disable the printing of the banner.
+.TP
+.B --backup
+Perform a backup of all the modified source files. This is the default.
+.TP
+.B --nobackup
+Do not backup modified source files.
+.TP
+.B --nosource-fix
+Do no try to fix the source files (e.g. DOS to Unix
+conversion). This prevents complaints if the files are readonly.
+.TP
+.B --lower-all
+Rename all files and directories to lowercase.
+.TP
+.B --lower-uppercase
+Only rename files and directories that have an all uppercase name.
+So \fIHELLO.C\fR would be renamed but not \fIWorld.c\fR.
+.TP
+.B --lower-none
+Do not rename files and directories to lower case. Note
+that this does not prevent the renaming of a file if its extension cannot
+be handled as is, e.g. ".Cxx". This is the default.
+.TP
+.B --lower-include
+When the file corresponding to an include statement (or other form of file reference
+for resource files) cannot be found, convert that filename to lowercase. This is the default.
+.TP
+.B --nolower-include
+Do not modify the include statement if the referenced file cannot be found.
+.TP
+.BR "--guiexe " "| " "--windows"
+Assume a graphical application when an executable target or a target of
+unknown type is found. This is the default.
+.TP
+.BR "--cuiexe " "| " "--console"
+Assume a console application when an executable target or a target of
+unknown type is found.
+.TP
+.B --dll
+Assume a dll when a target of unknown type is found, i.e. when \fBwinemaker\fR is unable to
+determine whether it is an executable, a dll, or a static library,
+.TP
+.B --lib
+Assume a static library when a target of unknown type is found, i.e. when \fBwinemaker\fR is
+unable to determine whether it is an executable, a dll, or a static library,
+.TP
+.B --mfc
+Specify that the targets are MFC based. In such a case \fBwinemaker\fR adapts
+the include and library paths accordingly, and links the target with the
+MFC library.
+.TP
+.B --nomfc
+Specify that targets are not MFC-based. This option disables use of MFC libraries
+even if \fBwinemaker\fR encounters files \fIstdafx.cpp\fR or \fIstdafx.h\fR that would cause it
+to enable MFC automatically if neither \fB--nomfc\fR nor \fB--mfc\fR was specified.
+.TP
+.BI -D macro "\fR[\fB=\fIdefn\fR]"
+Add the specified macro definition to the global list of macro definitions.
+.TP
+.BI -I dir
+Append the specified directory to the global include path.
+.TP
+.BI -P dir
+Append the specified directory to the global dll path.
+.TP
+.BI -i dll
+Add the Winelib library to the global list of Winelib libraries to import.
+.TP
+.BI -L dir
+Append the specified directory to the global library path.
+.TP
+.BI -l library
+Add the specified library to the global list of libraries to link with.
+.TP
+.B --nodlls
+Do not use the standard set of Winelib libraries for imports.
+That is, any DLL your code uses must be explicitly passed with \fB-i\fR options.
+The standard set of libraries is: \fIodbc32.dll\fR, \fIodbccp32.dll\fR, \fIole32.dll\fR,
+\fIoleaut32.dll\fR and \fIwinspool.drv\fR.
+.TP
+.B --nomsvcrt
+Set some options to tell \fBwinegcc\fR not to compile against msvcrt.
+Use this option if you have cpp-files that include \fI<string>\fR.
+.TP
+.B --interactive
+Use interactive mode. In this mode \fBwinemaker\fR will ask you to
+confirm the list of targets for each directory, and then to provide directory and
+target specific options.
+.TP
+.BI --single-target " name"
+Specify that there is only one target, called \fIname\fR.
+.TP
+.B --generated-files
+Generate the \fIMakefile\fR. This is the default.
+.TP
+.B --nogenerated-files
+Do not generate the \fIMakefile\fR.
+.TP
+.B --wine32
+Generate a 32-bit target. This is useful on wow64 systems.
+Without that option the default architecture is used.
+
+.SH EXAMPLES
+.PP
+Here is a typical \fBwinemaker\fR use:
+.PP
+$ winemaker --lower-uppercase -DSTRICT .
+.PP
+The above tells \fBwinemaker\fR to scan the current directory and its
+subdirectories for source files. Whenever if finds a file or directory which
+name is all uppercase, it should rename it to lowercase. It should then fix
+all these source files for compilation with Winelib and generate \fIMakefile\fRs.
+The \fB-DSTRICT\fR specifies that the \fBSTRICT\fR macro must be set when compiling
+these sources. Finally a \fIMakefile\fR will be created.
+.PP
+The next step would be:
+.PP
+$ make
+.PP
+If at this point you get compilation errors (which is quite likely for a
+reasonably sized project) then you should consult the Winelib User Guide to
+find tips on how to resolve them.
+.PP
+For an MFC-based project you would have to run the following commands instead:
+.PP
+$ winemaker --lower-uppercase --mfc .
+.br
+$ make
+.PP
+For an existing project-file you would have to run the following commands:
+.PP
+$ winemaker myproject.dsp
+.br
+$ make
+.PP
+
+.SH TODO / BUGS
+In some cases you will have to edit the \fIMakefile\fR or source files manually.
+.PP
+Assuming that the windows executable/library is available, we could
+use \fBwinedump\fR to determine what kind of executable it is (graphical
+or console), which libraries it is linked with, and which functions it
+exports (for libraries). We could then restore all these settings for the
+corresponding Winelib target.
+.PP
+Furthermore \fBwinemaker\fR is not very good at finding the library containing the
+executable: it must either be in the current directory or in the
+.BR LD_LIBRARY_PATH .
+.PP
+\fBwinemaker\fR does not support message files and the message compiler yet.
+.PP
+Bugs can be reported on the
+.UR https://bugs.winehq.org
+.B Wine bug tracker
+.UE .
+.SH AUTHORS
+François Gouget for CodeWeavers
+.br
+Dimitrie O. Paun
+.br
+André Hentschel
+.SH AVAILABILITY
+.B winemaker
+is part of the Wine distribution, which is available through WineHQ,
+the
+.UR https://www.winehq.org/
+.B Wine development headquarters
+.UE .
+.SH SEE ALSO
+.BR wine (1),
+.br
+.UR https://www.winehq.org/help
+.B Wine documentation and support
+.UE .

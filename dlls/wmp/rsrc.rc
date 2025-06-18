@@ -1,0 +1,35 @@
+/*
+ * Copyright 2014 Jacek Caban
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include <windef.h>
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+/* @makedep: wmp.rgs */
+2 WINE_REGISTRY wmp.rgs
+
+/* NOTE: when changing version value, update a string returned by
+   get_versionInfo() as well */
+#define WINE_FILEDESCRIPTION_STR "Wine Media Player"
+#define WINE_FILENAME_STR "wmp.dll"
+#define WINE_FILEVERSION 12,0,7601,16982
+#define WINE_FILEVERSION_STR "12.0.7601.16982"
+#define WINE_PRODUCTVERSION 12,0,7601,16982
+#define WINE_PRODUCTVERSION_STR "12.0.7601.16982"
+
+#include "wine/wine_common_ver.rc"

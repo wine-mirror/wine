@@ -1,0 +1,33 @@
+/*
+ * Hostname display utility
+ *
+ * Copyright 2011 Andrew Nguyen
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "hostname.h"
+
+#pragma makedep po
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    STRING_USAGE, "Usage: hostname\n"
+    STRING_INVALID_OPTION, "Error: Invalid option '%c'.\n"
+    STRING_CANNOT_GET_HOSTNAME, "Error: Could not get hostname: %u.\n"
+    STRING_CANNOT_SET_HOSTNAME, "Error: Setting the system hostname is not possible with the hostname utility.\n"
+}

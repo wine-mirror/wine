@@ -1,0 +1,120 @@
+/*
+ * Speech API (SAPI) classes.
+ *
+ * Copyright (C) 2017 Huw Davies
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+/*
+ * These are the classes from the typelib in sapiddk.idl.  They don't get
+ * registered because the typelib is not registered.
+ */
+
+#pragma makedep register
+
+[
+    uuid(d9f6ee60-58c9-458b-88e1-2f908fd7f87c),
+    helpstring("Data Key"),
+    progid("SAPI.SpDataKey.1"),
+    vi_progid("SAPI.SpDataKey"),
+    threading(both)
+]
+coclass SpDataKey
+{
+    interface ISpRegDataKey;
+    [default] interface ISpDataKey;
+}
+
+[
+    uuid(3918d75f-0acb-41f2-b733-92aa15bcecf6),
+    helpstring("Object Token Enumerator"),
+    progid("SAPI.SpObjectTokenEnum.1"),
+    vi_progid("SAPI.SpObjectTokenEnum"),
+    threading(both)
+]
+coclass SpObjectTokenEnum
+{
+    interface ISpObjectTokenEnumBuilder;
+    [default] interface IEnumSpObjectTokens;
+}
+
+[
+    uuid(ef411752-3736-4cb4-9c8c-8ef4ccb58efe),
+    helpstring("Object Token"),
+    progid("SAPI.SpObjectToken.1"),
+    vi_progid("SAPI.SpObjectToken"),
+    threading(both)
+]
+coclass SpObjectToken
+{
+    interface ISpObjectToken;
+    [default] interface ISpDataKey;
+}
+
+[
+    uuid(715d9c59-4442-11d2-9605-00c04f8ee628),
+    helpstring("Speech Stream"),
+    progid("SAPI.SpStream.1"),
+    vi_progid("SAPI.SpStream"),
+    threading(both),
+    restricted,
+    hidden
+]
+coclass SpStream
+{
+    interface ISpStream;
+}
+
+[
+    uuid(96749377-3391-11d2-9ee3-00c04f797396),
+    helpstring("Speech Voice"),
+    progid("SAPI.SpVoice.1"),
+    vi_progid("SAPI.SpVoice"),
+    threading(both)
+]
+coclass SpVoice
+{
+    interface ISpVoice;
+    [default] interface ISpeechVoice;
+}
+
+[
+    uuid(947812b3-2ae1-4644-ba86-9e90ded7ec91),
+    helpstring("SpFileStream"),
+    progid("SAPI.SpFileStream.1"),
+    vi_progid("SAPI.SpFileStream"),
+    threading(both)
+]
+coclass SpFileStream
+{
+    interface ISpStream;
+    [default] interface ISpeechFileStream;
+}
+
+[
+    uuid(a8c680eb-3d32-11d2-9ee7-00c04f797396),
+    helpstring("SpMMAudioOut"),
+    progid("SAPI.SpMMAudioOut.1"),
+    vi_progid("SAPI.SpMMAudioOut"),
+    threading(both)
+]
+coclass SpMMAudioOut
+{
+    interface ISpEventSource;
+    interface ISpEventSink;
+    interface ISpObjectWithToken;
+    interface ISpMMSysAudio;
+}

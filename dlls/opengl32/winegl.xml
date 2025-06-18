@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<registry>
+    <comment>
+This stores various extensions NOT part of the GL extension registry but still
+implemented by most OpenGL libraries out there.
+
+Copyright 2000 Lionel Ulmer
+Copyright 2017 Alexandre Julliard
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+    </comment>
+
+    <types>
+        <!-- Override some types for Win32 API -->
+        <type>typedef INT_PTR <name>GLintptr</name>;</type>
+        <type>typedef INT_PTR <name>GLsizeiptr</name>;</type>
+        <type>typedef INT64 <name>GLint64</name>;</type>
+        <type>typedef UINT64 <name>GLuint64</name>;</type>
+        <type>typedef INT_PTR <name>GLintptrARB</name>;</type>
+        <type>typedef INT_PTR <name>GLsizeiptrARB</name>;</type>
+        <type>typedef INT64 <name>GLint64EXT</name>;</type>
+        <type>typedef UINT64 <name>GLuint64EXT</name>;</type>
+        <type>typedef unsigned int <name>GLhandleARB</name>;</type>
+        <type>typedef void *<name>GLDEBUGPROC</name>;</type>
+        <type>typedef void *<name>GLDEBUGPROCAMD</name>;</type>
+        <type>typedef void *<name>GLDEBUGPROCARB</name>;</type>
+        <type>typedef void *<name>GLDEBUGPROCKHR</name>;</type>
+        <type>typedef void *<name>GLVULKANPROCNV</name>;</type>
+    </types>
+
+    <commands namespace="GL">
+        <command>
+            <proto>GLint <name>glDebugEntry</name></proto>
+            <param><ptype>GLint</ptype> <name>unknown1</name></param>
+            <param><ptype>GLint</ptype> <name>unknown2</name></param>
+        </command>
+        <command>
+            <proto>GLuint <name>glBufferRegionEnabled</name></proto>
+        </command>
+        <command>
+            <proto>void <name>glDeleteBufferRegion</name></proto>
+            <param><ptype>GLenum</ptype> <name>region</name></param>
+        </command>
+        <command>
+            <proto>void <name>glDrawBufferRegion</name></proto>
+            <param><ptype>GLenum</ptype> <name>region</name></param>
+            <param><ptype>GLint</ptype> <name>x</name></param>
+            <param><ptype>GLint</ptype> <name>y</name></param>
+            <param><ptype>GLsizei</ptype> <name>width</name></param>
+            <param><ptype>GLsizei</ptype> <name>height</name></param>
+            <param><ptype>GLint</ptype> <name>xDest</name></param>
+            <param><ptype>GLint</ptype> <name>yDest</name></param>
+        </command>
+        <command>
+            <proto>GLuint <name>glNewBufferRegion</name></proto>
+            <param><ptype>GLenum</ptype> <name>type</name></param>
+        </command>
+        <command>
+            <proto>void <name>glReadBufferRegion</name></proto>
+            <param><ptype>GLenum</ptype> <name>region</name></param>
+            <param><ptype>GLint</ptype> <name>x</name></param>
+            <param><ptype>GLint</ptype> <name>y</name></param>
+            <param><ptype>GLsizei</ptype> <name>width</name></param>
+            <param><ptype>GLsizei</ptype> <name>height</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMTexCoord2fSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLfloat</ptype> <name>s</name></param>
+            <param><ptype>GLfloat</ptype> <name>t</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMTexCoord2fvSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLfloat *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord1dSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLdouble</ptype> <name>s</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord1dvSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLdouble *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord1fSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLfloat</ptype> <name>s</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord1fvSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>const GLfloat *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord1iSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLint</ptype> <name>s</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord1ivSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLint *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord1sSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLshort</ptype> <name>s</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord1svSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLshort *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord2dSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLdouble</ptype> <name>s</name></param>
+            <param><ptype>GLdouble</ptype> <name>t</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord2dvSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLdouble *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord2fSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLfloat</ptype> <name>s</name></param>
+            <param><ptype>GLfloat</ptype> <name>t</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord2fvSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLfloat *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord2iSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLint</ptype> <name>s</name></param>
+            <param><ptype>GLint</ptype> <name>t</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord2ivSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLint *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord2sSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLshort</ptype> <name>s</name></param>
+            <param><ptype>GLshort</ptype> <name>t</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord2svSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLshort *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord3dSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLdouble</ptype> <name>s</name></param>
+            <param><ptype>GLdouble</ptype> <name>t</name></param>
+            <param><ptype>GLdouble</ptype> <name>r</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord3dvSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLdouble *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord3fSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLfloat</ptype> <name>s</name></param>
+            <param><ptype>GLfloat</ptype> <name>t</name></param>
+            <param><ptype>GLfloat</ptype> <name>r</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord3fvSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLfloat *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord3iSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLint</ptype> <name>s</name></param>
+            <param><ptype>GLint</ptype> <name>t</name></param>
+            <param><ptype>GLint</ptype> <name>r</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord3ivSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLint *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord3sSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLshort</ptype> <name>s</name></param>
+            <param><ptype>GLshort</ptype> <name>t</name></param>
+            <param><ptype>GLshort</ptype> <name>r</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord3svSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLshort *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord4dSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLdouble</ptype> <name>s</name></param>
+            <param><ptype>GLdouble</ptype> <name>t</name></param>
+            <param><ptype>GLdouble</ptype> <name>r</name></param>
+            <param><ptype>GLdouble</ptype> <name>q</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord4dvSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLdouble *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord4fSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLfloat</ptype> <name>s</name></param>
+            <param><ptype>GLfloat</ptype> <name>t</name></param>
+            <param><ptype>GLfloat</ptype> <name>r</name></param>
+            <param><ptype>GLfloat</ptype> <name>q</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord4fvSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLfloat *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord4iSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLint</ptype> <name>s</name></param>
+            <param><ptype>GLint</ptype> <name>t</name></param>
+            <param><ptype>GLint</ptype> <name>r</name></param>
+            <param><ptype>GLint</ptype> <name>q</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord4ivSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLint *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord4sSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLshort</ptype> <name>s</name></param>
+            <param><ptype>GLshort</ptype> <name>t</name></param>
+            <param><ptype>GLshort</ptype> <name>r</name></param>
+            <param><ptype>GLshort</ptype> <name>q</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoord4svSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLshort *</ptype> <name>v</name></param>
+        </command>
+        <command>
+            <proto>void <name>glMultiTexCoordPointerSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+            <param><ptype>GLint</ptype> <name>size</name></param>
+            <param><ptype>GLenum</ptype> <name>type</name></param>
+            <param><ptype>GLsizei</ptype> <name>stride</name></param>
+            <param><ptype>GLvoid *</ptype> <name>pointer</name></param>
+        </command>
+        <command>
+            <proto>void <name>glSelectTextureSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+        </command>
+        <command>
+            <proto>void <name>glSelectTextureCoordSetSGIS</name></proto>
+            <param><ptype>GLenum</ptype> <name>target</name></param>
+        </command>
+        <command>
+            <proto>void <name>glDeleteObjectBufferATI</name></proto>
+            <param><ptype>GLuint</ptype> <name>buffer</name></param>
+        </command>
+    </commands>
+
+    <commands namespace="WGL">
+        <command>
+            <proto>int <name>wglDescribePixelFormat</name></proto>
+            <param><ptype>HDC</ptype> <name>hdc</name></param>
+            <param>int <name>ipfd</name></param>
+            <param><ptype>UINT</ptype> <name>cjpfd</name></param>
+            <!-- pixel format is wrongly specified 'const' in wgl.xml -->
+            <param><ptype>PIXELFORMATDESCRIPTOR</ptype> *<name>ppfd</name></param>
+        </command>
+        <command>
+            <proto>BOOL <name>wglSetPixelFormatWINE</name></proto>
+            <param><ptype>HDC</ptype> <name>hdc</name></param>
+            <param>int <name>format</name></param>
+        </command>
+        <command>
+            <proto>BOOL <name>wglQueryCurrentRendererIntegerWINE</name></proto>
+            <param><ptype>GLenum</ptype> <name>attribute</name></param>
+            <param><ptype>GLuint</ptype> *<name>value</name></param>
+        </command>
+        <command>
+            <proto>const GLchar *<name>wglQueryCurrentRendererStringWINE</name></proto>
+            <param><ptype>GLenum</ptype> <name>attribute</name></param>
+        </command>
+        <command>
+            <proto>BOOL <name>wglQueryRendererIntegerWINE</name></proto>
+            <param><ptype>HDC</ptype> <name>dc</name></param>
+            <param><ptype>GLint</ptype> <name>renderer</name></param>
+            <param><ptype>GLenum</ptype> <name>attribute</name></param>
+            <param><ptype>GLuint</ptype> *<name>value</name></param>
+        </command>
+        <command>
+            <proto>const GLchar *<name>wglQueryRendererStringWINE</name></proto>
+            <param><ptype>HDC</ptype> <name>dc</name></param>
+            <param><ptype>GLint</ptype> <name>renderer</name></param>
+            <param><ptype>GLenum</ptype> <name>attribute</name></param>
+        </command>
+    </commands>
+
+    <feature api="gl" name="GL_VERSION_1_0" number="1.0">
+        <require>
+            <command name="glDebugEntry"/>
+        </require>
+    </feature>
+
+    <feature api="wgl" name="WGL_VERSION_1_0" number="1.0">
+        <require>
+            <command name="wglDescribePixelFormat"/>
+        </require>
+    </feature>
+
+    <enums namespace="WGL" group="RendererWINE">
+        <enum value="0x8183" name="WGL_RENDERER_VENDOR_ID_WINE"/>
+        <enum value="0x8184" name="WGL_RENDERER_DEVICE_ID_WINE"/>
+        <enum value="0x8185" name="WGL_RENDERER_VERSION_WINE"/>
+        <enum value="0x8186" name="WGL_RENDERER_ACCELERATED_WINE"/>
+        <enum value="0x8187" name="WGL_RENDERER_VIDEO_MEMORY_WINE"/>
+        <enum value="0x8188" name="WGL_RENDERER_UNIFIED_MEMORY_ARCHITECTURE_WINE"/>
+        <enum value="0x8189" name="WGL_RENDERER_PREFERRED_PROFILE_WINE"/>
+        <enum value="0x818A" name="WGL_RENDERER_OPENGL_CORE_PROFILE_VERSION_WINE"/>
+        <enum value="0x818B" name="WGL_RENDERER_OPENGL_COMPATIBILITY_PROFILE_VERSION_WINE"/>
+        <enum value="0x818C" name="WGL_RENDERER_OPENGL_ES_PROFILE_VERSION_WINE"/>
+        <enum value="0x818D" name="WGL_RENDERER_OPENGL_ES2_PROFILE_VERSION_WINE"/>
+        <enum value="0x818E" name="WGL_RENDERER_ID_WINE"/>
+    </enums>
+
+    <extensions>
+        <extension name="GL_KTX_buffer_region" supported="gl">
+            <require>
+                <command name="glBufferRegionEnabled"/>
+                <command name="glDeleteBufferRegion"/>
+                <command name="glDrawBufferRegion"/>
+                <command name="glNewBufferRegion"/>
+                <command name="glReadBufferRegion"/>
+            </require>
+        </extension>
+        <extension name="GL_SGIS_multitexture" supported="gl">
+            <require>
+                <command name="glMTexCoord2fSGIS"/>
+                <command name="glMTexCoord2fvSGIS"/>
+                <command name="glMultiTexCoord1dSGIS"/>
+                <command name="glMultiTexCoord1dvSGIS"/>
+                <command name="glMultiTexCoord1fSGIS"/>
+                <command name="glMultiTexCoord1fvSGIS"/>
+                <command name="glMultiTexCoord1iSGIS"/>
+                <command name="glMultiTexCoord1ivSGIS"/>
+                <command name="glMultiTexCoord1sSGIS"/>
+                <command name="glMultiTexCoord1svSGIS"/>
+                <command name="glMultiTexCoord2dSGIS"/>
+                <command name="glMultiTexCoord2dvSGIS"/>
+                <command name="glMultiTexCoord2fSGIS"/>
+                <command name="glMultiTexCoord2fvSGIS"/>
+                <command name="glMultiTexCoord2iSGIS"/>
+                <command name="glMultiTexCoord2ivSGIS"/>
+                <command name="glMultiTexCoord2sSGIS"/>
+                <command name="glMultiTexCoord2svSGIS"/>
+                <command name="glMultiTexCoord3dSGIS"/>
+                <command name="glMultiTexCoord3dvSGIS"/>
+                <command name="glMultiTexCoord3fSGIS"/>
+                <command name="glMultiTexCoord3fvSGIS"/>
+                <command name="glMultiTexCoord3iSGIS"/>
+                <command name="glMultiTexCoord3ivSGIS"/>
+                <command name="glMultiTexCoord3sSGIS"/>
+                <command name="glMultiTexCoord3svSGIS"/>
+                <command name="glMultiTexCoord4dSGIS"/>
+                <command name="glMultiTexCoord4dvSGIS"/>
+                <command name="glMultiTexCoord4fSGIS"/>
+                <command name="glMultiTexCoord4fvSGIS"/>
+                <command name="glMultiTexCoord4iSGIS"/>
+                <command name="glMultiTexCoord4ivSGIS"/>
+                <command name="glMultiTexCoord4sSGIS"/>
+                <command name="glMultiTexCoord4svSGIS"/>
+                <command name="glMultiTexCoordPointerSGIS"/>
+                <command name="glSelectTextureCoordSetSGIS"/>
+                <command name="glSelectTextureSGIS"/>
+            </require>
+        </extension>
+        <extension name="GL_ATI_vertex_array_object" supported="gl">
+            <require>
+                <command name="glDeleteObjectBufferATI"/>
+            </require>
+        </extension>
+        <extension name="WGL_WINE_pixel_format_passthrough" supported="wgl">
+            <require>
+                <command name="wglSetPixelFormatWINE"/>
+            </require>
+        </extension>
+        <extension name="WGL_WINE_query_renderer" supported="wgl">
+            <require>
+                <enum name="WGL_RENDERER_ACCELERATED_WINE"/>
+                <enum name="WGL_RENDERER_DEVICE_ID_WINE"/>
+                <enum name="WGL_RENDERER_ID_WINE"/>
+                <enum name="WGL_RENDERER_OPENGL_COMPATIBILITY_PROFILE_VERSION_WINE"/>
+                <enum name="WGL_RENDERER_OPENGL_CORE_PROFILE_VERSION_WINE"/>
+                <enum name="WGL_RENDERER_OPENGL_ES2_PROFILE_VERSION_WINE"/>
+                <enum name="WGL_RENDERER_OPENGL_ES_PROFILE_VERSION_WINE"/>
+                <enum name="WGL_RENDERER_PREFERRED_PROFILE_WINE"/>
+                <enum name="WGL_RENDERER_UNIFIED_MEMORY_ARCHITECTURE_WINE"/>
+                <enum name="WGL_RENDERER_VENDOR_ID_WINE"/>
+                <enum name="WGL_RENDERER_VERSION_WINE"/>
+                <enum name="WGL_RENDERER_VIDEO_MEMORY_WINE"/>
+                <command name="wglQueryCurrentRendererIntegerWINE"/>
+                <command name="wglQueryCurrentRendererStringWINE"/>
+                <command name="wglQueryRendererIntegerWINE"/>
+                <command name="wglQueryRendererStringWINE"/>
+            </require>
+        </extension>
+    </extensions>
+</registry>

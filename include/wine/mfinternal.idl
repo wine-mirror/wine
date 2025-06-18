@@ -1,0 +1,74 @@
+/*
+ * Copyright 2022 Nikolay Sivov for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#if 0
+#pragma makedep header install
+#endif
+
+import "unknwn.idl";
+
+interface IMFByteStream;
+interface IMFMediaSink;
+interface IMFMediaType;
+interface IMFAsyncCallback;
+
+/* Internal interface used to instantiate registered sinks. It should be compatible,
+   except for used method names. */
+
+[
+    uuid(37aa1c3b-620f-477e-bef9-ac4aa85be95d),
+    object,
+    local
+]
+interface IMFSinkClassFactory : IUnknown
+{
+    HRESULT CreateMediaSink(
+            [in] IMFByteStream *stream,
+            [in] IMFMediaType *video_type,
+            [in] IMFMediaType *audio_type,
+            [out] IMFMediaSink **sink
+    );
+}
+
+[
+    uuid(0aab315c-33a4-43db-af6b-c9c86921034e),
+    object,
+    local
+]
+interface IMFMediaShutdownNotify : IUnknown
+{
+    HRESULT set_notification_callback(
+            [in] IMFAsyncCallback *callback,
+            [in] IUnknown *state
+    );
+}
+
+cpp_quote("DEFINE_GUID(CLSID_MF3GPSinkClassFactory, 0xe54cdfaf, 0x2381, 0x4cad, 0xab, 0x99, 0xf3, 0x85, 0x17, 0x12, 0x7d, 0x5c);")
+cpp_quote("DEFINE_GUID(CLSID_MFAC3SinkClassFactory, 0x255a6fda, 0x6f93, 0x4e8a, 0x96, 0x11, 0xde, 0xd1, 0x16, 0x9e, 0xef, 0xb4);")
+cpp_quote("DEFINE_GUID(CLSID_MFADTSSinkClassFactory, 0xd7ca55ab, 0x5022, 0x4db3, 0xa5, 0x99, 0xab, 0xaf, 0xa3, 0x58, 0xe6, 0xf3);")
+cpp_quote("DEFINE_GUID(CLSID_MFAVISinkClassFactory, 0xaf4b1274, 0xb78a, 0x4979, 0xae, 0xf5, 0x20, 0xe7, 0x8f, 0xee, 0x10, 0x2e);")
+cpp_quote("DEFINE_GUID(CLSID_MFFMPEG4SinkClassFactory, 0x60f9f51e, 0x4613, 0x4b35, 0xae, 0x88, 0x33, 0x25, 0x42, 0xb5, 0x67, 0xb8);")
+cpp_quote("DEFINE_GUID(CLSID_MFMP3SinkClassFactory, 0x11275a82, 0x5e5a, 0x47fd, 0xa0, 0x1c, 0x36, 0x83, 0xc1, 0x2f, 0xb1, 0x96);")
+cpp_quote("DEFINE_GUID(CLSID_MFMPEG4SinkClassFactory, 0xa22c4fc7, 0x6e91, 0x4e1d, 0x89, 0xe9, 0x53, 0xb2, 0x66, 0x7b, 0x72, 0xba);")
+cpp_quote("DEFINE_GUID(CLSID_MFWAVESinkClassFactory, 0x36f99745, 0x23c9, 0x4c9c, 0x8d, 0xd5, 0xcc, 0x31, 0xce, 0x96, 0x43, 0x90);")
+
+cpp_quote("DEFINE_GUID(CLSID_AsfByteStreamPlugin, 0x41457294, 0x644c, 0x4298, 0xa2, 0x8a, 0xbd, 0x69, 0xf2, 0xc0, 0xcf, 0x3b);")
+cpp_quote("DEFINE_GUID(CLSID_AVIByteStreamPlugin, 0x7afa253e, 0xf823, 0x42f6, 0xa5, 0xd9, 0x71, 0x4b, 0xde, 0x46, 0x74, 0x12);")
+cpp_quote("DEFINE_GUID(CLSID_MPEG4ByteStreamHandlerPlugin, 0x271c3902, 0x6095, 0x4c45, 0xa2, 0x2f, 0x20, 0x09, 0x18, 0x16, 0xee, 0x9e);")
+cpp_quote("DEFINE_GUID(CLSID_WAVByteStreamPlugin, 0x42c9b9f5, 0x16fc, 0x47ef, 0xaf, 0x22, 0xda, 0x05, 0xf7, 0xc8, 0x42, 0xe3);")
+cpp_quote("DEFINE_GUID(CLSID_MP3ByteStreamPlugin, 0xa82e50ba, 0x8e92, 0x41eb, 0x9d, 0xf2, 0x43, 0x3f, 0x50, 0xec, 0x29, 0x93);")

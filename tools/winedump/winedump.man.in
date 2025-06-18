@@ -1,0 +1,227 @@
+.TH WINEDUMP 1 "October 2005" "@PACKAGE_STRING@" "Wine Developers Manual"
+.SH NAME
+winedump \- Wine DLL tool
+.SH SYNOPSIS
+.BR "winedump " [ "-h " "| "
+.BI "sym " sym
+|
+.BI "spec " dll
+|
+.BI "dump " file
+.RI "] [" "mode_options" ]
+.SH DESCRIPTION
+.B winedump
+is a Wine tool which aims to help:
+
+- A: Reimplementing a Win32 DLL for use within Wine, or
+.br
+- B: Compiling a Win32 application with Winelib that uses x86 DLLs
+.PP
+For both tasks in order to be able to link to the Win functions some
+glue code is needed.  This 'glue' comes in the form of a \fI.spec\fR file.
+The \fI.spec\fR file, along with some dummy code, is used to create a
+Wine \fI.so\fR corresponding to the Windows DLL.  The \fBwinebuild\fR program
+can then resolve calls made to DLL functions.
+.PP
+Creating a \fI.spec\fR file is a labour intensive task during which it is
+easy to make a mistake. The idea of \fBwinedump\fR is to automate this task
+and create the majority of the support code needed for your DLL. In
+addition you can have \fBwinedump\fR create code to help you re-implement a
+DLL, by providing tracing of calls to the DLL, and (in some cases)
+automatically determining the parameters, calling conventions, and
+return values of the DLL functions.
+.PP
+Another use for this tool is to display (dump) information about a 32bit
+DLL or PE format image file. When used in this way \fBwinedump\fR functions
+similarly to tools such as pedump provided by many Win32 compiler
+vendors.
+.PP
+Finally \fBwinedump\fR can be also used to demangle C++ symbols.
+.SH MODES
+.B winedump
+can be used in several different modes.  The first argument to the
+program determines the mode \fBwinedump\fR will run in.
+.IP \fB-h\fR
+Help mode.
+Basic usage help is printed.
+.IP \fBdump\fR
+To dump the contents of a file.
+.IP \fBspec\fR
+For generating .spec files and stub DLLs.
+.IP \fBsym\fR
+Symbol mode.
+Used to demangle C++ symbols.
+.SH OPTIONS
+Mode options depend on the mode given as the first argument.
+.PP
+.SS Help mode
+No options are used.
+The program prints the help info and then exits.
+.SS Dump mode
+.IP \fIfile\fR
+Dumps the contents of \fIfile\fR. Various file formats are supported
+(PE, NE, LE, Minidumps, .lnk).
+.IP \fB-C\fR
+Turns on symbol demangling.
+.IP \fB-f\fR
+Dumps file header information.
+This option dumps only the standard PE header structures,
+along with the COFF sections available in the file.
+.IP "\fB-j \fIdir_name\fR"
+Dumps only the content of directory \fIdir_name\fR, for files which
+header points to directories.  For PE files, the \fBimport\fR,
+\fBexport\fR, \fBdebug\fR, \fBresource\fR, \fBtls\fR, \fBloadcfg\fR,
+\fBclr\fR, \fBreloc\fR and \fBexcept\fR directories, as well as the
+\fBapiset\fR section, are implemented.  For NE files, the \fBexport\fR
+and \fBresource\fR directories are implemented.
+.IP \fB-x\fR
+Dumps everything.
+This command prints all available information (including all
+available directories - see \fB-j\fR option) about the file. You may
+wish to pipe the output through \fBmore\fR/\fBless\fR or into a file, since
+a lot of output will be produced.
+.IP \fB-G\fR
+Dumps contents of debug section if any (for now, only stabs
+information is supported).
+.SS Spec mode
+.IP \fIdll\fR
+Use \fIdll\fR for input file and generate implementation code.
+.IP "\fB-I \fIdir\fR"
+Look for prototypes in \fIdir\fR (implies \fB-c\fR). In the case of
+Windows DLLs, this could be either the standard include
+directory from your compiler, or a SDK include directory.
+If you have a text document with prototypes (such as
+documentation) that can be used also, however you may need
+to delete some non-code lines to ensure that prototypes are
+parsed correctly.
+The \fIdir\fR argument can also be a file specification (e.g.
+\fIinclude/*\fR). If it contains wildcards you must quote it to
+prevent the shell from expanding it.
+If you have no prototypes, specify \fI/dev/null\fR as \fIdir\fR.
+\fBwinedump\fR may still be able to generate some working stub
+code for you.
+.IP \fB-c\fR
+Generate skeleton code (requires \fB-I\fR).
+This option tells \fBwinedump\fR to create function stubs for each
+function in the DLL. As \fBwinedump\fR reads each exported symbol
+from the source DLL, it first tries to demangle the name. If
+the name is a C++ symbol, the arguments, class and return
+value are all encoded into the symbol name. Winedump
+converts this information into a C function prototype. If
+this fails, the file(s) specified in the \fB-I\fR argument are
+scanned for a function prototype. If one is found it is used
+for the next step of the process, code generation.
+.IP \fB-t\fR
+TRACE arguments (implies \fB-c\fR).
+This option produces the same code as \fB-c\fR, except that
+arguments are printed out when the function is called.
+Structs that are passed by value are printed as "struct",
+and functions that take variable argument lists print "...".
+.IP "\fB-f \fIdll\fR"
+Forward calls to \fIdll\fR (implies \fB-t\fR).
+This is the most complicated level of code generation. The
+same code is generated as \fB-t\fR, however support is added for
+forwarding calls to another DLL. The DLL to forward to is
+given as \fIdll\fR.
+.IP \fB-D\fR
+Generate documentation.
+By default, \fBwinedump\fR generates a standard comment at the
+header of each function it generates. Passing this option
+makes \fBwinedump\fR output a full header template for standard
+Wine documentation, listing the parameters and return value
+of the function.
+.IP "\fB-o \fIname\fR"
+Set the output dll name (default: \fBdll\fR).
+By default, if \fBwinedump\fR is run on DLL \fIfoo\fR, it creates
+files \fIfoo.spec\fR, \fIfoo_main.c\fR etc, and prefixes any
+functions generated with \fIFOO_\fR.  If \fB-o \fIbar\fR is given,
+these will become \fIbar.spec\fR, \fIbar_main.c\fR and \fIBAR_\fR
+respectively.
+This option is mostly useful when generating a forwarding DLL.
+.IP \fB-C\fR
+Assume __cdecl calls (default: __stdcall).
+If winebuild cannot determine the calling convention,
+__stdcall is used by default, unless this option has
+been given.
+Unless \fB-q\fR is given, a warning will be printed for every
+function that \fBwinedump\fR determines the calling convention
+for and which does not match the assumed calling convention.
+.IP "\fB-s \fInum\fR"
+Start prototype search after symbol \fInum\fR.
+.IP "\fB-e \fInum\fR"
+End prototype search after symbol \fInum\fR.
+By passing the \fB-s\fR or \fB-e\fR options you can have \fBwinedump\fR try to
+generate code for only some functions in your DLL. This may
+be used to generate a single function, for example, if you
+wanted to add functionality to an existing DLL.
+.IP "\fB-S \fIsymfile\fR"
+Search only prototype names found in \fIsymfile\fR.
+If you want to only generate code for a subset of exported
+functions from your source DLL, you can use this option to
+provide a text file containing the names of the symbols to
+extract, one per line. Only the symbols present in this file
+will be used in your output DLL.
+.IP \fB-q\fR
+Don't show progress (quiet).
+No output is printed unless a fatal error is encountered.
+.IP \fB-v\fR
+Show lots of detail while working (verbose).
+There are 3 levels of output while \fBwinedump\fR is running. The
+default level, when neither \fB-q\fR or \fB-v\fR are given, prints the
+number of exported functions found in the dll, followed by
+the name of each function as it is processed, and a status
+indication of whether it was processed OK.  With \fB-v\fR given, a
+lot of information is dumped while \fBwinedump\fR works: this is
+intended to help debug any problems.
+.SS Sym mode
+.IP \fIsym\fR
+Demangles C++ symbol \fIsym\fR and then exits.
+.SH FILES
+.IP function_grep.pl
+Perl script used to retrieve a function prototype.
+.PP
+Files output in
+.BR spec " mode"
+for
+.IR foo.dll :
+.IP foo.spec
+.RS
+This is the \fI.spec\fR file.
+.RE
+.IP foo_dll.h,\ foo_main.c
+.RS
+These are the source code files containing the minimum set
+of code to build a stub DLL. The C file contains one
+function, \fIFOO_Init\fR, which does nothing (but must be
+present).
+.RE
+.IP Makefile.in
+.RS
+This is a template for \fBconfigure\fR to produce a makefile. It
+is designed for a DLL that will be inserted into the Wine
+source tree.
+.SH BUGS
+C++ name demangling is not fully in sync with the implementation in msvcrt.
+It might be useful to submit your C++ name to the testsuite for msvcrt.
+.PP
+Bugs can be reported on the
+.UR https://bugs.winehq.org
+.B Wine bug tracker
+.UE .
+.SH AUTHORS
+Jon P. Griffiths <jon_p_griffiths at yahoo dot com>
+.br
+Michael Stefaniuc <mstefani at redhat dot com>
+.SH AVAILABILITY
+.B winedump
+is part of the Wine distribution, which is available through WineHQ,
+the
+.UR https://www.winehq.org/
+.B Wine development headquarters
+.UE .
+.SH "SEE ALSO"
+.BR wine (1)
+.br
+.UR https://www.winehq.org/help
+.B Wine documentation and support
+.UE .

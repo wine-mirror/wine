@@ -1,0 +1,94 @@
+/*
+ * Copyright 2022 Rémi Bernon for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "windows.foundation.idl";
+
+namespace Windows.Devices.Haptics {
+    interface ISimpleHapticsControllerFeedback;
+    interface ISimpleHapticsController;
+    runtimeclass SimpleHapticsControllerFeedback;
+    runtimeclass SimpleHapticsController;
+
+    declare {
+        interface Windows.Foundation.Collections.IIterator<Windows.Devices.Haptics.SimpleHapticsController *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Devices.Haptics.SimpleHapticsController *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Haptics.SimpleHapticsController *>;
+        interface Windows.Foundation.Collections.IVector<Windows.Devices.Haptics.SimpleHapticsController *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Haptics.SimpleHapticsControllerFeedback *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Devices.Haptics.SimpleHapticsControllerFeedback),
+        uuid(3d577ef8-4cee-11e6-b535-001bdc06ab3b)
+    ]
+    interface ISimpleHapticsControllerFeedback : IInspectable
+    {
+        [propget] HRESULT Waveform([out, retval] UINT16 *value);
+        [propget] HRESULT Duration([out, retval] Windows.Foundation.TimeSpan *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Devices.Haptics.SimpleHapticsController),
+        uuid(3d577ef9-4cee-11e6-b535-001bdc06ab3b)
+    ]
+    interface ISimpleHapticsController : IInspectable
+    {
+        [propget] HRESULT Id([out, retval] HSTRING *value);
+        [propget] HRESULT SupportedFeedback([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Haptics.SimpleHapticsControllerFeedback *> **value);
+        [propget] HRESULT IsIntensitySupported([out, retval] boolean *value);
+        [propget] HRESULT IsPlayCountSupported([out, retval] boolean *value);
+        [propget] HRESULT IsPlayDurationSupported([out, retval] boolean *value);
+        [propget] HRESULT IsReplayPauseIntervalSupported([out, retval] boolean *value);
+        HRESULT StopFeedback();
+        [overload("SendHapticFeedback")]
+        HRESULT SendHapticFeedback([in] Windows.Devices.Haptics.SimpleHapticsControllerFeedback *feedback);
+        [overload("SendHapticFeedback")]
+        HRESULT SendHapticFeedbackWithIntensity([in] Windows.Devices.Haptics.SimpleHapticsControllerFeedback *feedback,
+                                                [in] DOUBLE intensity);
+        HRESULT SendHapticFeedbackForDuration([in] Windows.Devices.Haptics.SimpleHapticsControllerFeedback *feedback,
+                                              [in] DOUBLE intensity, [in] Windows.Foundation.TimeSpan duration);
+        HRESULT SendHapticFeedbackForPlayCount([in] Windows.Devices.Haptics.SimpleHapticsControllerFeedback *feedback,
+                                               [in] DOUBLE intensity, [in] INT32 count,
+                                               [in] Windows.Foundation.TimeSpan interval);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass SimpleHapticsControllerFeedback
+    {
+        [default] interface Windows.Devices.Haptics.ISimpleHapticsControllerFeedback;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass SimpleHapticsController
+    {
+        [default] interface Windows.Devices.Haptics.ISimpleHapticsController;
+    }
+}

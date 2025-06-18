@@ -1,0 +1,8 @@
+MODULE    = tapi32.dll
+IMPORTLIB = tapi32
+IMPORTS   = advapi32
+
+SOURCES = \
+	assisted.c \
+	line.c \
+	phone.c

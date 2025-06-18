@@ -1,0 +1,17 @@
+# CI script for creating releases
+
+create-release:
+  stage: deploy
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  rules:
+    - if: $CI_COMMIT_TAG && $CI_PROJECT_PATH == "wine/wine"
+  script:
+    - VERSION=$(expr "$CI_COMMIT_TAG" ":" 'wine-\(.*\)')
+    - test -n "$VERSION" || exit 1
+    - URL=$(grep -o "https://dl.winehq.org/[^>]*" ANNOUNCE.md)
+    - FILEPATH=$(expr "$URL" ":" '.*\(/.*\)')
+    - release-cli create
+        --name "Wine $VERSION"
+        --tag-name "$CI_COMMIT_TAG"
+        --description ANNOUNCE.md
+        --assets-link "{\"name\":\"Source code\",\"url\":\"$URL\",\"link_type\":\"other\",\"filepath\":\"$FILEPATH\"}"

@@ -1,0 +1,114 @@
+.TH WINEGCC 1 "October 2005" "@PACKAGE_STRING@" "Wine Developers Manual"
+.SH NAME
+winegcc \- Wine C and C++ MinGW Compatible Compiler
+.SH SYNOPSIS
+.B winegcc
+.RI [ options "] " infile\fR...
+.SH DESCRIPTION
+.B winegcc 
+is a gcc wrapper which tries to provide a MinGW compatible compiler 
+under Linux. This is most useful to Win32 developers who can simply 
+take their MinGW code from Windows, and recompile it without 
+modifications under Winelib on Linux. 
+wineg++ accepts mostly the same options as winegcc.
+.PP
+The goal of winegcc is to be able to simply replace gcc/g++/windres
+with winegcc/wineg++/wrc in a MinGW Makefile, and just recompile
+the application using Winelib under Wine. While typically there are 
+small adjustments that must be made to the application source code 
+and/or Makefile, it is quite easy to do them in a fashion that is
+compatible between the MinGW and Wine environments.
+.PP
+This manual will document only the differences from gcc; please consult
+the gcc manual for more information on those options.
+.PP
+.SH OPTIONS
+.B gcc options:
+All gcc options are supported, and are passed along to the backend
+compiler.
+.IP "\fB-b,--target \fItarget\fR"
+Specify the target architecture triplet for cross-compiling. winegcc
+will then invoke \fItarget\fR-gcc instead of gcc.
+.IP "\fB--wine-objdir \fIdir\fR"
+Specify the Wine object directory. This is used when building Wine
+itself, to use the includes and libraries from inside the build tree.
+.IP "\fB--winebuild \fIname\fR"
+Specifies the path and name of the \fBwinebuild\fR binary that will be
+launched automatically by \fBwinegcc\fR.  If not set, \fBwinegcc\fR
+will look for a file named \fIwinebuild\fR in the path. This takes
+precedence over the \fBWINEBUILD\fR environment variable.
+.IP \fB-fno-short-wchar\fR
+Override the underlying type for wchar_t to be the default for the 
+target, instead of using short unsigned int, which is the default 
+for Win32.
+.IP \fB-mconsole\fR
+This option passes '--subsystem console' to winebuild, to build
+console applications. It is the default.
+.IP \fB-mno-cygwin\fR
+Use Wine implementation of MSVCRT, instead of linking against
+the host system libc. This is necessary for the vast majority
+of Win32 applications, as they typically depend on various features
+of MSVCRT. This switch is also used by the MinGW compiler to link
+against MSVCRT on Windows, instead of linking against Cygwin
+libc. Sharing the syntax with MinGW makes it very easy to write 
+Makefiles that work under Wine, MinGW+MSYS, or MinGW+Cygwin.
+.IP \fB-municode\fR
+Set the default entry point of the application to be the Unicode
+\fBwmain()\fR instead of the standard \fBmain()\fR.
+.IP \fB-mwindows\fR
+This option adds -lgdi32, -lcomdlg32, and -lshell32 to the list of
+default libraries, and passes '--subsystem windows' to winebuild
+to build graphical applications.
+.IP \fB-nodefaultlibs\fR
+Do not use the standard system libraries when linking. These
+include at a minimum -lkernel32, -luser32, -ladvapi32, and 
+any default libraries used by the backend compiler. The -mwindows
+option augments the list of default libraries as described above.
+.IP \fB-nostartfiles\fR
+Do not add the winecrt0 library when linking.
+.IP \fB-Wb,\fIoption\fR
+Pass an option to winebuild.  If \fIoption\fR contains
+commas, it is split into multiple options at the commas.
+.IP \fB-Wl,--out-implib,\fIlib.a\fR
+When linking a dll, also create its corresponding import library.
+.SH ENVIRONMENT
+.TP
+.B WINEBUILD
+Specifies the path and name of the \fBwinebuild\fR binary that will be
+launched automatically by \fBwinegcc\fR.  If not set, \fBwinegcc\fR
+will look for a file named \fIwinebuild\fR in the path.
+.SH DEFINES
+winegcc defines __WINE__, for code that needs to know when it is
+being compiled under Wine. It also defines WIN32, _WIN32, __WIN32, 
+__WIN32__, __WINNT, and __WINNT__ for compatibility with MinGW.
+.SH BUGS
+The dllimport/dllexport attributes are not supported at the moment,
+due to lack of support for these features in the ELF version of gcc.
+.PP
+Static linking is not currently supported against Wine DLLs. As a
+result, the -static, --static, and -Wl,-static options will generate
+an error.
+.PP
+Bugs can be reported on the
+.UR https://bugs.winehq.org
+.B Wine bug tracker
+.UE .
+.SH AUTHORS
+.B winegcc
+was written by Dimitrie O. Paun.
+.SH AVAILABILITY
+.B winegcc
+is part of the Wine distribution, which is available through WineHQ,
+the
+.UR https://www.winehq.org/
+.B Wine development headquarters
+.UE .
+.SH "SEE ALSO"
+.BR gcc (1),
+.BR winebuild (1),
+.BR wrc (1),
+.BR wine (1),
+.br
+.UR https://www.winehq.org/help
+.B Wine documentation and support
+.UE .

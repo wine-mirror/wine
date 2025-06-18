@@ -1,0 +1,53 @@
+/*
+ * View resources
+ *
+ * Copyright 1998 Douglas Ridgway
+ * Copyright 2003 Marcelo Duarte
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+#pragma makedep po
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+VIEW MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+	MENUITEM "&Open...",			IDM_OPEN
+        MENUITEM "E&xit",                       IDM_EXIT
+    END
+    POPUP "&Pan"
+    BEGIN
+      MENUITEM "&Scale to Window",              IDM_SET_EXT_TO_WIN
+      MENUITEM SEPARATOR
+      MENUITEM "&Left",				IDM_LEFT
+      MENUITEM "&Right",			IDM_RIGHT
+      MENUITEM "&Up",				IDM_UP
+      MENUITEM "&Down",				IDM_DOWN
+    END
+END
+
+STRINGTABLE
+BEGIN
+    IDS_DESCRIPTION         "Regular Metafile Viewer"
+    IDS_OPEN_META_STRING    "Metafiles (*.wmf, *.emf)"
+END
+
+/* @makedep: view.manifest */
+1 RT_MANIFEST view.manifest

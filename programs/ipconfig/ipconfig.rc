@@ -1,0 +1,51 @@
+/*
+ * IP configuration utility
+ *
+ * Copyright 2010 Andrew Nguyen
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "ipconfig.h"
+
+#pragma makedep po
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    STRING_USAGE, "Usage: ipconfig [ /? | /all ]\n"
+    STRING_INVALID_CMDLINE, "Error: Unknown or invalid command line parameters specified\n"
+    STRING_ADAPTER_FRIENDLY, "%1 adapter %2\n"
+    STRING_ETHERNET, "Ethernet"
+    STRING_UNKNOWN, "Unknown"
+    STRING_CONN_DNS_SUFFIX, "Connection-specific DNS suffix"
+    STRING_IP_ADDRESS, "IPv4 address"
+    STRING_HOSTNAME, "Hostname"
+    STRING_PRIMARY_DNS_SUFFIX, "Primary DNS suffix"
+    STRING_NODE_TYPE, "Node type"
+    STRING_BROADCAST, "Broadcast"
+    STRING_PEER_TO_PEER, "Peer-to-peer"
+    STRING_MIXED, "Mixed"
+    STRING_HYBRID, "Hybrid"
+    STRING_IP_ROUTING, "IP routing enabled"
+    STRING_DESCRIPTION, "Description"
+    STRING_PHYS_ADDR, "Physical address"
+    STRING_DHCP_ENABLED, "DHCP enabled"
+    STRING_YES, "Yes"
+    STRING_NO, "No"
+    STRING_DEFAULT_GATEWAY, "Default gateway"
+    STRING_IP6_ADDRESS, "IPv6 address"
+}

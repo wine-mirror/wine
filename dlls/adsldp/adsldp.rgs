@@ -1,0 +1,16 @@
+HKLM
+{
+    NoRemove Software
+    {
+        NoRemove Microsoft
+        {
+            NoRemove ADs
+            {
+                NoRemove Providers
+                {
+                    ForceRemove 'LDAP' = s 'LDAPNamespace'
+                }
+            }
+        }
+    }
+}

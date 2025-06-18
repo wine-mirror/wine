@@ -1,0 +1,36 @@
+/*
+ * Copyright 2019 Hans Leidekker for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+cpp_quote("DECLARE_HANDLE(HAMSICONTEXT);")
+cpp_quote("DECLARE_HANDLE(HAMSISESSION);")
+
+typedef [v1_enum] enum AMSI_RESULT
+{
+    AMSI_RESULT_CLEAN                  = 0x00,
+    AMSI_RESULT_NOT_DETECTED           = 0x01,
+    AMSI_RESULT_BLOCKED_BY_ADMIN_START = 0x4000,
+    AMSI_RESULT_BLOCKED_BY_ADMIN_END   = 0x4fff,
+    AMSI_RESULT_DETECTED               = 0x8000,
+} AMSI_RESULT;
+
+cpp_quote("void WINAPI AmsiCloseSession(HAMSICONTEXT,HAMSISESSION);")
+cpp_quote("HRESULT WINAPI AmsiInitialize(const WCHAR*,HAMSICONTEXT*);")
+cpp_quote("HRESULT WINAPI AmsiOpenSession(HAMSICONTEXT,HAMSISESSION*);")
+cpp_quote("HRESULT WINAPI AmsiScanBuffer(HAMSICONTEXT,void*,ULONG,const WCHAR*,HAMSISESSION,AMSI_RESULT*);")
+cpp_quote("HRESULT WINAPI AmsiScanString(HAMSICONTEXT,const WCHAR*,const WCHAR *,HAMSISESSION,AMSI_RESULT*);")
+cpp_quote("void WINAPI AmsiUninitialize(HAMSICONTEXT);")

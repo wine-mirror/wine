@@ -1,0 +1,26 @@
+MODULE    = dmime.dll
+IMPORTS   = dxguid uuid dsound ole32 user32 advapi32
+PARENTSRC = ../dmusic
+
+SOURCES = \
+	audiopath.c \
+	band.c \
+	dmime.idl \
+	dmime_main.c \
+	dmobject.c \
+	graph.c \
+	lyricstrack.c \
+	markertrack.c \
+	midi.c \
+	paramcontroltrack.c \
+	performance.c \
+	segment.c \
+	segmentstate.c \
+	segtriggertrack.c \
+	seqtrack.c \
+	sysextrack.c \
+	tempotrack.c \
+	timesigtrack.c \
+	version.rc \
+	wave.c \
+	wavetrack.c

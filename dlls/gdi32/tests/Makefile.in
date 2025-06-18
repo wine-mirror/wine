@@ -1,0 +1,32 @@
+TESTDLL   = gdi32.dll
+IMPORTS   = setupapi user32 gdi32 advapi32
+
+SOURCES = \
+	bitmap.c \
+	brush.c \
+	clipping.c \
+	dc.c \
+	dib.c \
+	driver.c \
+	font.c \
+	gdiobj.c \
+	generated.c \
+	icm.c \
+	mapping.c \
+	metafile.c \
+	palette.c \
+	path.c \
+	pen.c \
+	resource.rc \
+	vertical.sfd \
+	vertical2.sfd \
+	wine_heavy.sfd \
+	wine_langnames.sfd \
+	wine_langnames2.sfd \
+	wine_langnames3.sfd \
+	wine_longname.sfd \
+	wine_nul.sfd \
+	wine_test.sfd \
+	wine_ttfnames.sfd \
+	wine_ttfnames_bold.sfd \
+	wine_vdmx.sfd

@@ -1,0 +1,10 @@
+MODULE    = bluetoothapis.dll
+IMPORTLIB = bluetoothapis
+IMPORTS = setupapi cfgmgr32 user32
+
+EXTRADLLFLAGS = -Wb,--prefer-native
+
+SOURCES = \
+	bluetoothapis.rc \
+	main.c \
+	sdp.c

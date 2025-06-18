@@ -1,0 +1,17 @@
+EXTRADEFS = -D_ADVAPI32_
+MODULE    = advapi32.dll
+IMPORTLIB = advapi32
+IMPORTS   = kernelbase sechost msvcrt
+DELAYIMPORTS = cryptsp rpcrt4 user32 userenv
+
+SOURCES = \
+	advapi.c \
+	cred.c \
+	crypt.c \
+	eventlog.c \
+	lsa.c \
+	registry.c \
+	security.c \
+	service.c \
+	version.rc \
+	wmi.c

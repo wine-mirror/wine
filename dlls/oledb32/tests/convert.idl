@@ -1,0 +1,3 @@
+#pragma makedep ident
+
+#include "msdadc.idl"

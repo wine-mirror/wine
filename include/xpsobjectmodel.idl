@@ -1,0 +1,546 @@
+/*
+ * Copyright 2021 Nikolay Sivov for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "msopc.idl";
+
+interface IXpsOMPrintTicketResource;
+interface IXpsOMDocumentStructureResource;
+interface IXpsOMSignatureBlockResourceCollection;
+interface IXpsOMPartUriCollection;
+interface IXpsOMPage;
+interface IXpsOMStoryFragmentsResource;
+interface IXpsOMImageResource;
+interface IXpsOMResource;
+interface IXpsOMObjectFactory;
+interface IXpsOMSignatureBlockResource;
+interface IXpsOMDictionary;
+interface IXpsOMRemoteDictionaryResource;
+interface IXpsOMPartResources;
+interface IXpsOMDocument;
+interface IXpsOMPageReference;
+interface IXpsOMCanvas;
+interface IXpsOMFontResource;
+interface IXpsOMGlyphs;
+interface IXpsOMPath;
+interface IXpsOMGeometry;
+interface IXpsOMGeometryFigure;
+interface IXpsOMMatrixTransform;
+interface IXpsOMColorProfileResource;
+interface IXpsOMSolidColorBrush;
+interface IXpsOMImageBrush;
+interface IXpsOMVisualBrush;
+interface IXpsOMGradientStop;
+interface IXpsOMLinearGradientBrush;
+interface IXpsOMRadialGradientBrush;
+interface IXpsOMCoreProperties;
+interface IXpsOMPackageWriter;
+interface IXpsOMPackage;
+
+typedef [v1_enum] enum
+{
+    XPS_COLOR_TYPE_SRGB = 1,
+    XPS_COLOR_TYPE_SCRGB,
+    XPS_COLOR_TYPE_CONTEXT
+} XPS_COLOR_TYPE;
+
+typedef [v1_enum] enum
+{
+    XPS_IMAGE_TYPE_JPEG = 1,
+    XPS_IMAGE_TYPE_PNG,
+    XPS_IMAGE_TYPE_TIFF,
+    XPS_IMAGE_TYPE_WDP,
+    XPS_IMAGE_TYPE_JXR
+} XPS_IMAGE_TYPE;
+
+typedef [v1_enum] enum
+{
+    XPS_FONT_EMBEDDING_NORMAL = 1,
+    XPS_FONT_EMBEDDING_OBFUSCATED,
+    XPS_FONT_EMBEDDING_RESTRICTED,
+    XPS_FONT_EMBEDDING_RESTRICTED_UNOBFUSCATED
+} XPS_FONT_EMBEDDING;
+
+typedef [v1_enum] enum
+{
+    XPS_INTERLEAVING_OFF = 1,
+    XPS_INTERLEAVING_ON,
+} XPS_INTERLEAVING;
+
+typedef struct
+{
+    FLOAT width;
+    FLOAT height;
+} XPS_SIZE;
+
+typedef struct
+{
+    FLOAT x;
+    FLOAT y;
+} XPS_POINT;
+
+typedef struct
+{
+    FLOAT x;
+    FLOAT y;
+    FLOAT width;
+    FLOAT height;
+} XPS_RECT;
+
+typedef struct
+{
+    FLOAT m11;
+    FLOAT m12;
+    FLOAT m21;
+    FLOAT m22;
+    FLOAT m31;
+    FLOAT m32;
+} XPS_MATRIX;
+
+typedef union switch (XPS_COLOR_TYPE colorType) value
+{
+    case XPS_COLOR_TYPE_SRGB:
+        struct
+        {
+            UINT8 alpha, red, green, blue;
+        } sRGB;
+    case XPS_COLOR_TYPE_SCRGB:
+        struct
+        {
+            FLOAT alpha, red, green, blue;
+        } scRGB;
+    case XPS_COLOR_TYPE_CONTEXT:
+        struct
+        {
+            UINT8 channelCount;
+            FLOAT channels[9];
+        } context;
+} XPS_COLOR;
+
+[
+    object,
+    uuid(74eb2f0b-a91e-4486-afac-0fabeca3dfc6)
+]
+interface IXpsOMPart : IUnknown
+{
+    HRESULT GetPartName(
+        [out, retval] IOpcPartUri **partUri
+    );
+
+    HRESULT SetPartName(
+        [in] IOpcPartUri *partUri
+    );
+}
+
+[
+    object,
+    pointer_default(ref),
+    uuid(d1c87f0d-e947-4754-8a25-971478f7e83e)
+]
+interface IXpsOMDocumentCollection : IUnknown
+{
+    HRESULT GetCount(
+        [out, retval] UINT32 *count
+    );
+
+    HRESULT GetAt(
+        [in] UINT32 index,
+        [out, retval] IXpsOMDocument **document
+    );
+
+    HRESULT InsertAt(
+        [in] UINT32 index,
+        [in] IXpsOMDocument *document
+    );
+
+    HRESULT RemoveAt(
+        [in] UINT32 index
+    );
+
+    HRESULT SetAt(
+        [in] UINT32 index,
+        [in] IXpsOMDocument *document
+    );
+
+    HRESULT Append(
+        [in] IXpsOMDocument *document
+    );
+}
+
+[
+    object,
+    pointer_default(ref),
+    uuid(56492eb4-d8d5-425e-8256-4c2b64ad0264)
+]
+interface IXpsOMDocumentSequence : IXpsOMPart
+{
+    HRESULT GetOwner(
+        [out, retval] IXpsOMPackage **package
+    );
+
+    HRESULT GetDocuments(
+        [out, retval] IXpsOMDocumentCollection **documents
+    );
+
+    HRESULT GetPrintTicketResource(
+        [out, retval] IXpsOMPrintTicketResource **printTicketResource
+    );
+
+    HRESULT SetPrintTicketResource(
+        [in] IXpsOMPrintTicketResource *printTicketResource
+    );
+}
+
+[
+    object,
+    local,
+    pointer_default(ref),
+    uuid(18c3df65-81e1-4674-91dc-fc452f5a416f)
+]
+interface IXpsOMPackage : IUnknown
+{
+    HRESULT GetDocumentSequence(
+        [out, retval] IXpsOMDocumentSequence **documentSequence
+    );
+
+    HRESULT SetDocumentSequence(
+        [in] IXpsOMDocumentSequence *documentSequence
+    );
+
+    HRESULT GetCoreProperties(
+        [out, retval] IXpsOMCoreProperties **coreProperties
+    );
+
+    HRESULT SetCoreProperties(
+        [in] IXpsOMCoreProperties *coreProperties
+    );
+
+    HRESULT GetDiscardControlPartName(
+        [out, retval] IOpcPartUri **discardControlPartUri
+    );
+
+    HRESULT SetDiscardControlPartName(
+        [in] IOpcPartUri *discardControlPartUri
+    );
+
+    HRESULT GetThumbnailResource(
+        [out, retval] IXpsOMImageResource **imageResource
+    );
+
+    HRESULT SetThumbnailResource(
+        [in] IXpsOMImageResource *imageResource
+    );
+
+    HRESULT WriteToFile(
+        [in, string] LPCWSTR fileName,
+        [in, unique] LPSECURITY_ATTRIBUTES securityAttributes,
+        [in] DWORD flagsAndAttributes,
+        [in] BOOL optimizeMarkupSize
+    );
+
+    HRESULT WriteToStream(
+        [in] ISequentialStream *stream,
+        [in] BOOL optimizeMarkupSize
+    );
+}
+
+[
+    object,
+    local,
+    pointer_default(ref),
+    uuid(f9b2a685-a50d-4fc2-b764-b56e093ea0ca),
+]
+interface IXpsOMObjectFactory : IUnknown
+{
+    HRESULT CreatePackage(
+        [out, retval] IXpsOMPackage **package
+    );
+
+    HRESULT CreatePackageFromFile(
+        [in, string] LPCWSTR filename,
+        [in] BOOL reuseObjects,
+        [out, retval] IXpsOMPackage **package
+    );
+
+    HRESULT CreatePackageFromStream(
+        [in] IStream *stream,
+        [in] BOOL reuseObjects,
+        [out, retval] IXpsOMPackage **package
+    );
+
+    HRESULT CreateStoryFragmentsResource(
+        [in] IStream *acquiredStream,
+        [in] IOpcPartUri *partUri,
+        [out, retval] IXpsOMStoryFragmentsResource **storyFragmentsResource
+    );
+
+    HRESULT CreateDocumentStructureResource(
+        [in] IStream *acquiredStream,
+        [in] IOpcPartUri *partUri,
+        [out, retval] IXpsOMDocumentStructureResource **documentStructureResource
+    );
+
+    HRESULT CreateSignatureBlockResource(
+        [in] IStream *acquiredStream,
+        [in] IOpcPartUri *partUri,
+        [out, retval] IXpsOMSignatureBlockResource **signatureBlockResource
+    );
+
+    HRESULT CreateRemoteDictionaryResource(
+        [in] IXpsOMDictionary *dictionary,
+        [in] IOpcPartUri *partUri,
+        [out, retval] IXpsOMRemoteDictionaryResource **remoteDictionaryResource
+    );
+
+    HRESULT CreateRemoteDictionaryResourceFromStream(
+        [in] IStream *dictionaryMarkupStream,
+        [in] IOpcPartUri *dictionaryPartUri,
+        [in] IXpsOMPartResources *resources,
+        [out, retval] IXpsOMRemoteDictionaryResource **dictionaryResource
+    );
+
+    HRESULT CreatePartResources(
+        [out, retval] IXpsOMPartResources **partResources
+    );
+
+    HRESULT CreateDocumentSequence(
+        [in] IOpcPartUri *partUri,
+        [out, retval] IXpsOMDocumentSequence **documentSequence
+    );
+
+    HRESULT CreateDocument(
+        [in] IOpcPartUri *partUri,
+        [out, retval] IXpsOMDocument **document
+    );
+
+    HRESULT CreatePageReference(
+        [in] const XPS_SIZE *advisoryPageDimensions,
+        [out, retval] IXpsOMPageReference **pageReference
+    );
+
+    HRESULT CreatePage(
+        [in] const XPS_SIZE *pageDimensions,
+        [in, string] LPCWSTR language,
+        [in] IOpcPartUri *partUri,
+        [out, retval] IXpsOMPage **page
+    );
+
+    HRESULT CreatePageFromStream(
+        [in] IStream *pageMarkupStream,
+        [in] IOpcPartUri *partUri,
+        [in] IXpsOMPartResources *resources,
+        [in] BOOL reuseObjects,
+        [out, retval] IXpsOMPage **page
+    );
+
+    HRESULT CreateCanvas(
+        [out, retval] IXpsOMCanvas **canvas
+    );
+
+    HRESULT CreateGlyphs(
+        [in] IXpsOMFontResource *fontResource,
+        [out, retval] IXpsOMGlyphs **glyphs
+    );
+
+    HRESULT CreatePath(
+        [out, retval] IXpsOMPath **path
+    );
+
+    HRESULT CreateGeometry(
+        [out, retval] IXpsOMGeometry **geometry
+    );
+
+    HRESULT CreateGeometryFigure(
+        [in] const XPS_POINT *startPoint,
+        [out, retval] IXpsOMGeometryFigure **figure
+    );
+
+    HRESULT CreateMatrixTransform(
+        [in]  const XPS_MATRIX *matrix,
+        [out, retval] IXpsOMMatrixTransform **transform
+    );
+
+    HRESULT CreateSolidColorBrush(
+        [in] const XPS_COLOR *color,
+        [in] IXpsOMColorProfileResource *colorProfile,
+        [out, retval] IXpsOMSolidColorBrush **solidColorBrush
+    );
+
+    HRESULT CreateColorProfileResource(
+        [in] IStream *acquiredStream,
+        [in] IOpcPartUri *partUri,
+        [out, retval] IXpsOMColorProfileResource **colorProfileResource
+    );
+
+    HRESULT CreateImageBrush(
+        [in] IXpsOMImageResource *image,
+        [in] const XPS_RECT *viewBox,
+        [in] const XPS_RECT *viewPort,
+        [out, retval] IXpsOMImageBrush **imageBrush
+    );
+
+    HRESULT CreateVisualBrush(
+        [in] const XPS_RECT *viewBox,
+        [in] const XPS_RECT *viewPort,
+        [out, retval] IXpsOMVisualBrush **visualBrush
+    );
+
+    HRESULT CreateImageResource(
+        [in] IStream *acquiredStream,
+        [in] XPS_IMAGE_TYPE contentType,
+        [in] IOpcPartUri *partUri,
+        [out, retval] IXpsOMImageResource **imageResource
+    );
+
+    HRESULT CreatePrintTicketResource(
+        [in] IStream *acquiredStream,
+        [in] IOpcPartUri *partUri,
+        [out, retval] IXpsOMPrintTicketResource **printTicketResource
+    );
+
+    HRESULT CreateFontResource(
+        [in] IStream *acquiredStream,
+        [in] XPS_FONT_EMBEDDING fontEmbedding,
+        [in] IOpcPartUri *partUri,
+        [in] BOOL isObfSourceStream,
+        [out, retval] IXpsOMFontResource **fontResource
+    );
+
+    HRESULT CreateGradientStop(
+        [in] const XPS_COLOR *color,
+        [in] IXpsOMColorProfileResource *colorProfile,
+        [in] FLOAT offset,
+        [out, retval] IXpsOMGradientStop **gradientStop
+    );
+
+    HRESULT CreateLinearGradientBrush(
+        [in] IXpsOMGradientStop *gradStop1,
+        [in] IXpsOMGradientStop *gradStop2,
+        [in] const XPS_POINT *startPoint,
+        [in] const XPS_POINT *endPoint,
+        [out, retval] IXpsOMLinearGradientBrush **linearGradientBrush
+    );
+
+    HRESULT CreateRadialGradientBrush
+    (
+        [in] IXpsOMGradientStop *gradStop1,
+        [in] IXpsOMGradientStop *gradStop2,
+        [in] const XPS_POINT *centerPoint,
+        [in] const XPS_POINT *gradientOrigin,
+        [in] const XPS_SIZE *radiiSizes,
+        [out, retval] IXpsOMRadialGradientBrush **radialGradientBrush
+    );
+
+    HRESULT CreateCoreProperties(
+        [in] IOpcPartUri *partUri,
+        [out, retval] IXpsOMCoreProperties **coreProperties
+    );
+
+    HRESULT CreateDictionary(
+        [out, retval] IXpsOMDictionary **dictionary
+    );
+
+    HRESULT CreatePartUriCollection(
+        [out, retval] IXpsOMPartUriCollection **partUriCollection
+    );
+
+    HRESULT CreatePackageWriterOnFile(
+        [in, string] LPCWSTR fileName,
+        [in, unique] LPSECURITY_ATTRIBUTES securityAttributes,
+        [in] DWORD flagsAndAttributes,
+        [in] BOOL optimizeMarkupSize,
+        [in] XPS_INTERLEAVING interleaving,
+        [in] IOpcPartUri *documentSequencePartName,
+        [in] IXpsOMCoreProperties *coreProperties,
+        [in] IXpsOMImageResource *packageThumbnail,
+        [in] IXpsOMPrintTicketResource *documentSequencePrintTicket,
+        [in] IOpcPartUri *discardControlPartName,
+        [out, retval] IXpsOMPackageWriter **packageWriter
+    );
+
+    HRESULT CreatePackageWriterOnStream
+    (
+        [in] ISequentialStream *outputStream,
+        [in] BOOL optimizeMarkupSize,
+        [in] XPS_INTERLEAVING interleaving,
+        [in] IOpcPartUri *documentSequencePartName,
+        [in] IXpsOMCoreProperties *coreProperties,
+        [in] IXpsOMImageResource *packageThumbnail,
+        [in] IXpsOMPrintTicketResource *documentSequencePrintTicket,
+        [in] IOpcPartUri *discardControlPartName,
+        [out, retval] IXpsOMPackageWriter **packageWriter
+    );
+
+    HRESULT CreatePartUri(
+        [in, string] LPCWSTR uri,
+        [out, retval] IOpcPartUri **partUri
+    );
+
+    HRESULT CreateReadOnlyStreamOnFile(
+        [in, string] LPCWSTR filename,
+        [out, retval] IStream **stream
+    );
+}
+
+[
+    object,
+    uuid(4e2aa182-a443-42c6-b41b-4f8e9de73ff9)
+]
+interface IXpsOMPackageWriter : IUnknown
+{
+    HRESULT StartNewDocument(
+        [in] IOpcPartUri *documentPartName,
+        [in] IXpsOMPrintTicketResource *documentPrintTicket,
+        [in] IXpsOMDocumentStructureResource *documentStructure,
+        [in] IXpsOMSignatureBlockResourceCollection *signatureBlockResources,
+        [in] IXpsOMPartUriCollection *restrictedFonts
+    );
+
+    HRESULT AddPage(
+        [in] IXpsOMPage *page,
+        [in] const XPS_SIZE *advisoryPageDimensions,
+        [in] IXpsOMPartUriCollection *discardableResourceParts,
+        [in] IXpsOMStoryFragmentsResource *storyFragments,
+        [in] IXpsOMPrintTicketResource *pagePrintTicket,
+        [in] IXpsOMImageResource *pageThumbnail
+    );
+
+    HRESULT AddResource(
+        [in] IXpsOMResource *resource
+    );
+
+    HRESULT Close();
+
+    HRESULT IsClosed(
+        [out, retval] BOOL *isClosed
+    );
+}
+
+[
+    uuid(b47491a0-cf33-4fe4-9a48-b0acdae207e8)
+]
+library MSXPS
+{
+[
+    uuid(e974d26d-3d9b-4d47-88cc-3872f2dc3585)
+]
+coclass XpsOMObjectFactory
+{
+    interface IXpsOMObjectFactory;
+}
+
+}

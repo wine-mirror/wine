@@ -1,0 +1,487 @@
+/*
+ * Copyright 2021 Rémi Bernon for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+
+namespace Windows.System
+{
+    typedef enum DispatcherQueuePriority DispatcherQueuePriority;
+    typedef enum ProcessorArchitecture ProcessorArchitecture;
+    typedef enum VirtualKey VirtualKey;
+    typedef enum VirtualKeyModifiers VirtualKeyModifiers;
+
+    interface IDispatcherQueue;
+    interface IDispatcherQueue2;
+    interface IDispatcherQueueController;
+    interface IDispatcherQueueControllerStatics;
+    interface IDispatcherQueueShutdownStartingEventArgs;
+    interface IDispatcherQueueStatics;
+    interface IDispatcherQueueTimer;
+    interface IUser;
+    interface IUserStatics;
+    interface IUserChangedEventArgs;
+    interface IUserChangedEventArgs2;
+
+    runtimeclass DispatcherQueue;
+    runtimeclass DispatcherQueueController;
+    runtimeclass DispatcherQueueShutdownStartingEventArgs;
+    runtimeclass DispatcherQueueTimer;
+    runtimeclass User;
+    runtimeclass UserChangedEventArgs;
+
+    declare
+    {
+        interface Windows.Foundation.TypedEventHandler<Windows.System.DispatcherQueue *, IInspectable *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.System.DispatcherQueue *, Windows.System.DispatcherQueueShutdownStartingEventArgs *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.System.DispatcherQueueTimer *, IInspectable *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0)
+    ]
+    enum DispatcherQueuePriority
+    {
+        Low    = -10,
+        Normal = 0,
+        High   = 10,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum ProcessorArchitecture
+    {
+        X86        = 0,
+        Arm        = 5,
+        X64        = 9,
+        Neutral    = 11,
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)]
+        Arm64      = 12,
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)]
+        X86OnArm64 = 14,
+        Unknown    = 65535
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum VirtualKey
+    {
+        None                         = 0,
+        LeftButton                   = 1,
+        RightButton                  = 2,
+        Cancel                       = 3,
+        MiddleButton                 = 4,
+        XButton1                     = 5,
+        XButton2                     = 6,
+        Back                         = 8,
+        Tab                          = 9,
+        Clear                        = 12,
+        Enter                        = 13,
+        Shift                        = 16,
+        Control                      = 17,
+        Menu                         = 18,
+        Pause                        = 19,
+        CapitalLock                  = 20,
+        Kana                         = 21,
+        Hangul                       = 21,
+        [contract(Windows.Foundation.UniversalApiContract, 10.0)]
+        ImeOn                        = 22,
+        Junja                        = 23,
+        Final                        = 24,
+        Hanja                        = 25,
+        Kanji                        = 25,
+        [contract(Windows.Foundation.UniversalApiContract, 10.0)]
+        ImeOff                       = 26,
+        Escape                       = 27,
+        Convert                      = 28,
+        NonConvert                   = 29,
+        Accept                       = 30,
+        ModeChange                   = 31,
+        Space                        = 32,
+        PageUp                       = 33,
+        PageDown                     = 34,
+        End                          = 35,
+        Home                         = 36,
+        Left                         = 37,
+        Up                           = 38,
+        Right                        = 39,
+        Down                         = 40,
+        Select                       = 41,
+        Print                        = 42,
+        Execute                      = 43,
+        Snapshot                     = 44,
+        Insert                       = 45,
+        Delete                       = 46,
+        Help                         = 47,
+        Number0                      = 48,
+        Number1                      = 49,
+        Number2                      = 50,
+        Number3                      = 51,
+        Number4                      = 52,
+        Number5                      = 53,
+        Number6                      = 54,
+        Number7                      = 55,
+        Number8                      = 56,
+        Number9                      = 57,
+        A                            = 65,
+        B                            = 66,
+        C                            = 67,
+        D                            = 68,
+        E                            = 69,
+        F                            = 70,
+        G                            = 71,
+        H                            = 72,
+        I                            = 73,
+        J                            = 74,
+        K                            = 75,
+        L                            = 76,
+        M                            = 77,
+        N                            = 78,
+        O                            = 79,
+        P                            = 80,
+        Q                            = 81,
+        R                            = 82,
+        S                            = 83,
+        T                            = 84,
+        U                            = 85,
+        V                            = 86,
+        W                            = 87,
+        X                            = 88,
+        Y                            = 89,
+        Z                            = 90,
+        LeftWindows                  = 91,
+        RightWindows                 = 92,
+        Application                  = 93,
+        Sleep                        = 95,
+        NumberPad0                   = 96,
+        NumberPad1                   = 97,
+        NumberPad2                   = 98,
+        NumberPad3                   = 99,
+        NumberPad4                   = 100,
+        NumberPad5                   = 101,
+        NumberPad6                   = 102,
+        NumberPad7                   = 103,
+        NumberPad8                   = 104,
+        NumberPad9                   = 105,
+        Multiply                     = 106,
+        Add                          = 107,
+        Separator                    = 108,
+        Subtract                     = 109,
+        Decimal                      = 110,
+        Divide                       = 111,
+        F1                           = 112,
+        F2                           = 113,
+        F3                           = 114,
+        F4                           = 115,
+        F5                           = 116,
+        F6                           = 117,
+        F7                           = 118,
+        F8                           = 119,
+        F9                           = 120,
+        F10                          = 121,
+        F11                          = 122,
+        F12                          = 123,
+        F13                          = 124,
+        F14                          = 125,
+        F15                          = 126,
+        F16                          = 127,
+        F17                          = 128,
+        F18                          = 129,
+        F19                          = 130,
+        F20                          = 131,
+        F21                          = 132,
+        F22                          = 133,
+        F23                          = 134,
+        F24                          = 135,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        NavigationView               = 136,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        NavigationMenu               = 137,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        NavigationUp                 = 138,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        NavigationDown               = 139,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        NavigationLeft               = 140,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        NavigationRight              = 141,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        NavigationAccept             = 142,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        NavigationCancel             = 143,
+        NumberKeyLock                = 144,
+        Scroll                       = 145,
+        LeftShift                    = 160,
+        RightShift                   = 161,
+        LeftControl                  = 162,
+        RightControl                 = 163,
+        LeftMenu                     = 164,
+        RightMenu                    = 165,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GoBack                       = 166,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GoForward                    = 167,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        Refresh                      = 168,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        Stop                         = 169,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        Search                       = 170,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        Favorites                    = 171,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GoHome                       = 172,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadA                     = 195,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadB                     = 196,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadX                     = 197,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadY                     = 198,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadRightShoulder         = 199,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadLeftShoulder          = 200,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadLeftTrigger           = 201,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadRightTrigger          = 202,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadDPadUp                = 203,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadDPadDown              = 204,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadDPadLeft              = 205,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadDPadRight             = 206,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadMenu                  = 207,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadView                  = 208,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadLeftThumbstickButton  = 209,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadRightThumbstickButton = 210,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadLeftThumbstickUp      = 211,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadLeftThumbstickDown    = 212,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadLeftThumbstickRight   = 213,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadLeftThumbstickLeft    = 214,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadRightThumbstickUp     = 215,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadRightThumbstickDown   = 216,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadRightThumbstickRight  = 217,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        GamepadRightThumbstickLeft   = 218
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        flags
+    ]
+    enum VirtualKeyModifiers
+    {
+        None    = 0x0,
+        Control = 0x1,
+        Menu    = 0x2,
+        Shift   = 0x4,
+        Windows = 0x8
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        uuid(dfa2dc9c-1a2d-4917-98f2-939af1d6e0c8)
+    ]
+    delegate HRESULT DispatcherQueueHandler();
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.System.DispatcherQueue),
+        uuid(603e88e4-a338-4ffe-a457-a5cfb9ceb899)
+    ]
+    interface IDispatcherQueue : IInspectable
+    {
+        HRESULT CreateTimer([out, retval] Windows.System.DispatcherQueueTimer **result);
+        [overload("TryEnqueue")] HRESULT TryEnqueue([in] Windows.System.DispatcherQueueHandler *callback, [out, retval] boolean *result);
+        [overload("TryEnqueue")] HRESULT TryEnqueueWithPriority([in] Windows.System.DispatcherQueuePriority priority, [in] Windows.System.DispatcherQueueHandler *callback,
+                                                                [out, retval] boolean *result);
+        [eventadd] HRESULT ShutdownStarting([in] Windows.Foundation.TypedEventHandler<Windows.System.DispatcherQueue *, Windows.System.DispatcherQueueShutdownStartingEventArgs *> *handler,
+                                            [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT ShutdownStarting([in] EventRegistrationToken token);
+        [eventadd] HRESULT ShutdownCompleted([in] Windows.Foundation.TypedEventHandler<Windows.System.DispatcherQueue *, IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT ShutdownCompleted([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.System.DispatcherQueue),
+        uuid(c822c647-30ef-506e-bd1e-a647ae6675ff)
+    ]
+    interface IDispatcherQueue2 : IInspectable
+    {
+        [propget] HRESULT HasThreadAccess([out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.System.DispatcherQueueController),
+        uuid(22f34e66-50db-4e36-a98d-61c01b384d20)
+    ]
+    interface IDispatcherQueueController : IInspectable
+    {
+        [propget] HRESULT DispatcherQueue([out, retval] Windows.System.DispatcherQueue **value);
+        HRESULT ShutdownQueueAsync([out, retval] Windows.Foundation.IAsyncAction **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.System.DispatcherQueueController),
+        uuid(0a6c98e0-5198-49a2-a313-3f70d1f13c27)
+    ]
+    interface IDispatcherQueueControllerStatics : IInspectable
+    {
+        HRESULT CreateOnDedicatedThread([out, retval] Windows.System.DispatcherQueueController **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.System.DispatcherQueueShutdownStartingEventArgs),
+        uuid(c4724c4c-ff97-40c0-a226-cc0aaa545e89)
+    ]
+    interface IDispatcherQueueShutdownStartingEventArgs : IInspectable
+    {
+        HRESULT GetDeferral([out, retval] Windows.Foundation.Deferral **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.System.DispatcherQueue),
+        uuid(a96d83d7-9371-4517-9245-d0824ac12c74)
+    ]
+    interface IDispatcherQueueStatics : IInspectable
+    {
+        HRESULT GetForCurrentThread([out, retval] Windows.System.DispatcherQueue **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.System.DispatcherQueueTimer),
+        uuid(5feabb1d-a31c-4727-b1ac-37454649d56a)
+    ]
+    interface IDispatcherQueueTimer : IInspectable
+    {
+        [propget] HRESULT Interval([out, retval] Windows.Foundation.TimeSpan *value);
+        [propput] HRESULT Interval([in] Windows.Foundation.TimeSpan value);
+        [propget] HRESULT IsRunning([out, retval] boolean *value);
+        [propget] HRESULT IsRepeating([out, retval] boolean *value);
+        [propput] HRESULT IsRepeating([in] boolean value);
+        HRESULT Start();
+        HRESULT Stop();
+        [eventadd] HRESULT Tick([in] Windows.Foundation.TypedEventHandler<Windows.System.DispatcherQueueTimer *, IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT Tick([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.System.UserChangedEventArgs),
+        uuid(086459dc-18c6-48db-bc99-724fb9203ccc)
+    ]
+    interface IUserChangedEventArgs : IInspectable
+    {
+        [propget] HRESULT User([out, retval] Windows.System.User **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        marshaling_behavior(agile),
+        static(Windows.System.IDispatcherQueueStatics, Windows.Foundation.UniversalApiContract, 5.0),
+        threading(both)
+    ]
+    runtimeclass DispatcherQueue
+    {
+        [default] interface Windows.System.IDispatcherQueue;
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.System.IDispatcherQueue2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        marshaling_behavior(agile),
+        static(Windows.System.IDispatcherQueueControllerStatics, Windows.Foundation.UniversalApiContract, 5.0),
+        threading(both)
+    ]
+    runtimeclass DispatcherQueueController
+    {
+        [default] interface Windows.System.IDispatcherQueueController;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass DispatcherQueueShutdownStartingEventArgs
+    {
+        [default] interface Windows.System.IDispatcherQueueShutdownStartingEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass DispatcherQueueTimer
+    {
+        [default] interface Windows.System.IDispatcherQueueTimer;
+    }
+
+#ifndef _CORE_MESSAGING
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.System.IUserStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both),
+    ]
+    runtimeclass User
+    {
+        [default] interface Windows.System.IUser;
+    }
+#endif
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass UserChangedEventArgs
+    {
+        [default] interface Windows.System.IUserChangedEventArgs;
+        [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.System.IUserChangedEventArgs2;
+    }
+}

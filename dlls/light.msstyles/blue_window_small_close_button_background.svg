@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="bitmap:13-32" width="13" height="104" version="1.1" viewBox="0 0 3.4395 27.517" xmlns="http://www.w3.org/2000/svg">
+ <g fill="#fff" stroke-width=".26458">
+  <g>
+   <rect x=".39685" y=".39687" width="2.6458" height="2.6458" stroke="#aeaeae"/>
+   <rect x=".39685" y="10.716" width="2.6458" height="2.6458" stroke="#aeaeae"/>
+   <rect x=".39685" y="3.8365" width="2.6458" height="2.6458" stroke="#ff1744"/>
+  </g>
+  <rect x=".39685" y="7.276" width="2.6458" height="2.6458" stroke="#d50000"/>
+  <g>
+   <rect x=".39685" y="14.155" width="2.6458" height="2.6458" stroke="#aeaeae"/>
+   <rect x=".39685" y="24.474" width="2.6458" height="2.6458" stroke="#aeaeae"/>
+   <rect x=".39685" y="17.595" width="2.6458" height="2.6458" stroke="#ff1744"/>
+  </g>
+  <rect x=".39685" y="21.034" width="2.6458" height="2.6458" stroke="#d50000"/>
+ </g>
+</svg>

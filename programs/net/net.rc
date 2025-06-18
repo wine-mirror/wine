@@ -1,0 +1,53 @@
+/*
+ * NET.EXE - Wine-compatible net program
+ *
+ * Copyright (C) 2007 Tim Schwartz
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resources.h"
+
+#pragma makedep po
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    STRING_USAGE, "The syntax of this command is:\n\nNET command [arguments]\n    -or-\nNET command /HELP\n\nWhere 'command' is one of HELP, START, STOP or USE.\n"
+    STRING_START_USAGE, "The syntax of this command is:\n\nNET START [service]\n\nDisplays the list of running services if 'service' is omitted. Otherwise 'service' is the name of the service to start.\n"
+    STRING_STOP_USAGE, "The syntax of this command is:\n\nNET STOP service\n\nWhere 'service' is the name of the service to stop.\n"
+    STRING_STOP_DEP, "Stopping dependent service: %1\n"
+    STRING_CANT_STOP, "Could not stop service %1\n"
+    STRING_NO_SCM, "Could not get handle to service control manager.\n"
+    STRING_NO_SVCHANDLE, "Could not get handle to service.\n"
+    STRING_START_SVC, "The %1 service is starting.\n"
+    STRING_START_SVC_SUCCESS, "The %1 service was started successfully.\n"
+    STRING_START_SVC_FAIL, "The %1 service failed to start.\n"
+    STRING_STOP_SVC, "The %1 service is stopping.\n"
+    STRING_STOP_SVC_SUCCESS, "The %1 service was stopped successfully.\n"
+    STRING_STOP_SVC_FAIL, "The %1 service failed to stop.\n"
+    STRING_RUNNING_HEADER, "The following services are running:\n"
+    STRING_CONFLICT_SWITCHES, "A command was used with conflicting switches.\n"
+    STRING_NO_ENTRIES, "There are no entries in the list.\n"
+    STRING_USE_HEADER, "\nStatus  Local   Remote\n---------------------------------------------------------------\n"
+    STRING_USE_ENTRY,  "%1      %2      %3      Open resources: %4!u!\n"
+    STRING_OK, "OK"
+    STRING_PAUSED, "Paused"
+    STRING_SESSLOST, "Disconnected"
+    STRING_NETERR "A network error occurred"
+    STRING_CONN "Connection is being made"
+    STRING_RECONN, "Reconnecting"
+}

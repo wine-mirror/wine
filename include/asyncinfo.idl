@@ -1,0 +1,45 @@
+/*
+ * Copyright 2021 Rémi Bernon for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+
+typedef [v1_enum] enum AsyncStatus
+{
+    Started = 0,
+    Completed,
+    Canceled,
+    Error,
+} AsyncStatus;
+
+[
+    object,
+    uuid(00000036-0000-0000-c000-000000000046),
+    pointer_default(unique)
+]
+interface IAsyncInfo : IInspectable
+{
+    [propget] HRESULT Id([out, retval] unsigned __int32 *id);
+    [propget] HRESULT Status([out, retval] AsyncStatus *status);
+    [propget] HRESULT ErrorCode([out, retval] HRESULT *error_code);
+    HRESULT Cancel();
+    HRESULT Close();
+}

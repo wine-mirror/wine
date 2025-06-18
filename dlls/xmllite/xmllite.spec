@@ -1,0 +1,6 @@
+@ stdcall CreateXmlReader(ptr ptr ptr)
+@ stdcall CreateXmlReaderInputWithEncodingCodePage(ptr ptr long long wstr ptr)
+@ stdcall CreateXmlReaderInputWithEncodingName(ptr ptr wstr long wstr ptr)
+@ stdcall CreateXmlWriter(ptr ptr ptr)
+@ stdcall CreateXmlWriterOutputWithEncodingCodePage(ptr ptr long ptr)
+@ stdcall CreateXmlWriterOutputWithEncodingName(ptr ptr wstr ptr)

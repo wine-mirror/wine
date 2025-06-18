@@ -1,0 +1,9 @@
+MODULE    = wow64win.dll
+IMPORTS   = wow64 win32u ntdll
+
+EXTRADLLFLAGS = -nodefaultlibs
+
+SOURCES = \
+	gdi.c \
+	syscall.c \
+	user.c

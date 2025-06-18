@@ -1,0 +1,9 @@
+MODULE    = coremessaging.dll
+IMPORTS   = combase
+IMPORTLIB = coremessaging
+
+SOURCES = \
+	async.c \
+	async_private.idl \
+	classes.idl \
+	main.c

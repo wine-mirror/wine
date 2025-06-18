@@ -1,0 +1,132 @@
+/*
+ * COM classes for winegstreamer
+ *
+ * Copyright 2019 Nikolay Sivov
+ * Copyright 2019 Zebediah Figura
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep register
+
+[
+    threading(both),
+    uuid(272bfbfb-50d0-4078-b600-1e959c301337)
+]
+coclass wg_avi_splitter {}
+
+[
+    threading(both),
+    uuid(c9f285f8-4380-4121-971f-49a95316c27b)
+]
+coclass wg_mpeg_audio_decoder {}
+
+[
+    threading(both),
+    uuid(5ed2e5f6-bf3e-4180-83a4-4847cc5b4ea3)
+]
+coclass wg_mpeg_video_decoder {}
+
+[
+    threading(both),
+    uuid(84cd8e3e-b221-434a-8882-9d6c8df490e1)
+]
+coclass wg_mp3_decoder {}
+
+[
+    threading(both),
+    uuid(a8edbf98-2442-42c5-85a1-ab05a580df53)
+]
+coclass wg_mpeg1_splitter {}
+
+[
+    threading(both),
+    uuid(3f839ec7-5ea6-49e1-80c2-1ea300f8b0e0)
+]
+coclass wg_wave_parser {}
+
+[
+    helpstring("GStreamer parser using decodebin"),
+    threading(both),
+    uuid(f9d8d64e-a144-47dc-8ee0-f53498372c29)
+]
+coclass decodebin_parser {}
+
+[
+    threading(both),
+    uuid(d527607f-89cb-4e94-9571-bcfe62175613)
+]
+coclass wg_video_processor {}
+
+[
+    helpstring("Generic Decodebin Byte Stream Handler"),
+    threading(both),
+    uuid(317df618-5e5a-468a-9f15-d827a9a08162)
+]
+coclass GStreamerByteStreamHandler {}
+
+[
+    threading(both),
+    uuid(5b4d4e54-0620-4cf9-94ae-7823965c28b6)
+]
+coclass wg_wma_decoder {};
+
+[
+    threading(both),
+    uuid(e7889a8a-2083-4844-8370-5ee349b14503)
+]
+coclass wg_aac_decoder {}
+
+[
+    threading(both),
+    uuid(62ee5ddb-4f52-48e2-8928-787b0253a0bc)
+]
+coclass wg_wmv_decoder {}
+
+[
+    threading(both),
+    uuid(1f1e273d-12c0-4b3a-8e9b-1933c2498aea)
+]
+coclass wg_h264_decoder {}
+
+[
+    threading(both),
+    uuid(6c34de69-4670-46cd-8cb4-1f2fa1dffb65)
+]
+coclass wg_h264_encoder {}
+
+[
+    threading(both),
+    uuid(92f35e78-15a5-486b-888e-575f99651ce2)
+]
+coclass wg_resampler {}
+
+[
+    threading(both),
+    uuid(f47e2da5-e370-47b7-903a-078ddd45a5cc)
+]
+coclass wg_color_converter {}
+
+[
+    threading(both),
+    uuid(1f302877-aaab-40a3-b9e0-9f48daf35bc8)
+]
+coclass wg_mp3_sink_factory {}
+
+[
+    threading(both),
+    uuid(5d5407d9-c6ca-4770-a7cc-27c0cb8a7627)
+]
+coclass wg_mpeg4_sink_factory {}

@@ -1,0 +1,282 @@
+/*
+ * Copyright (C) 2023 Mohamad Al-Jaf
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.graphics.idl";
+import "windows.graphics.directx.idl";
+import "windows.graphics.directx.direct3d11.idl";
+/* import "windows.security.authorization.appcapabilityaccess.idl"; */
+import "windows.system.idl";
+import "windows.ui.idl";
+import "windows.ui.composition.idl";
+
+namespace Windows.Graphics.Capture {
+    typedef enum GraphicsCaptureDirtyRegionMode GraphicsCaptureDirtyRegionMode;
+
+    interface IDirect3D11CaptureFrame;
+    interface IDirect3D11CaptureFrame2;
+    interface IDirect3D11CaptureFramePool;
+    interface IDirect3D11CaptureFramePoolStatics;
+    interface IDirect3D11CaptureFramePoolStatics2;
+    interface IGraphicsCaptureItem;
+    interface IGraphicsCaptureItemStatics;
+    interface IGraphicsCaptureItemStatics2;
+    interface IGraphicsCaptureSession;
+    interface IGraphicsCaptureSession2;
+    interface IGraphicsCaptureSession3;
+    interface IGraphicsCaptureSessionStatics;
+
+    runtimeclass Direct3D11CaptureFrame;
+    runtimeclass Direct3D11CaptureFramePool;
+    runtimeclass GraphicsCaptureItem;
+    runtimeclass GraphicsCaptureSession;
+
+    declare {
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Graphics.Capture.GraphicsCaptureItem *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Graphics.Capture.GraphicsCaptureItem *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Graphics.Capture.Direct3D11CaptureFramePool *, IInspectable *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Graphics.Capture.GraphicsCaptureItem *, IInspectable *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 19.0)
+    ]
+    enum GraphicsCaptureDirtyRegionMode
+    {
+        ReportOnly = 0,
+        ReportAndRender = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        exclusiveto(Windows.Graphics.Capture.Direct3D11CaptureFrame),
+        uuid(fa50c623-38da-4b32-acf3-fa9734ad800e)
+    ]
+    interface IDirect3D11CaptureFrame : IInspectable
+    {
+        [propget] HRESULT Surface([out, retval] Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface **value);
+        [propget] HRESULT SystemRelativeTime([out, retval] Windows.Foundation.TimeSpan *value);
+        [propget] HRESULT ContentSize([out, retval] Windows.Graphics.SizeInt32 *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 19.0),
+        exclusiveto(Windows.Graphics.Capture.Direct3D11CaptureFrame),
+        uuid(37869cfa-2b48-5ebf-9afb-dffd805defdb)
+    ]
+    interface IDirect3D11CaptureFrame2 : IInspectable
+    {
+        [propget] HRESULT DirtyRegions([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Graphics.RectInt32> **value);
+        [propget] HRESULT DirtyRegionMode([out, retval] Windows.Graphics.Capture.GraphicsCaptureDirtyRegionMode *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        exclusiveto(Windows.Graphics.Capture.Direct3D11CaptureFramePool),
+        uuid(24eb6d22-1975-422e-82e7-780dbd8ddf24)
+    ]
+    interface IDirect3D11CaptureFramePool : IInspectable
+    {
+        HRESULT Recreate(
+            [in] Windows.Graphics.DirectX.Direct3D11.IDirect3DDevice *device,
+            [in] Windows.Graphics.DirectX.DirectXPixelFormat pixel_format,
+            [in] INT32 number_of_buffers, [in] Windows.Graphics.SizeInt32 size);
+        HRESULT TryGetNextFrame(
+            [out, retval] Windows.Graphics.Capture.Direct3D11CaptureFrame **result);
+        [eventadd] HRESULT FrameArrived(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Graphics.Capture.Direct3D11CaptureFramePool *, IInspectable *> *handler,
+            [out, retval] EventRegistrationToken* token);
+        [eventremove] HRESULT FrameArrived([in] EventRegistrationToken token);
+        HRESULT CreateCaptureSession(
+            [in] Windows.Graphics.Capture.GraphicsCaptureItem *item,
+            [out, retval] Windows.Graphics.Capture.GraphicsCaptureSession **result);
+        [propget] HRESULT DispatcherQueue([out, retval] Windows.System.DispatcherQueue **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        exclusiveto(Windows.Graphics.Capture.Direct3D11CaptureFramePool),
+        uuid(7784056a-67aa-4d53-ae54-1088d5a8ca21)
+    ]
+    interface IDirect3D11CaptureFramePoolStatics : IInspectable
+    {
+        HRESULT Create(
+            [in] Windows.Graphics.DirectX.Direct3D11.IDirect3DDevice *device,
+            [in] Windows.Graphics.DirectX.DirectXPixelFormat pixel_format,
+            [in] INT32 number_of_buffers,
+            [in] Windows.Graphics.SizeInt32 size,
+            [out, retval] Windows.Graphics.Capture.Direct3D11CaptureFramePool **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 7.0),
+        exclusiveto(Windows.Graphics.Capture.Direct3D11CaptureFramePool),
+        uuid(589b103f-6bbc-5df5-a991-02e28b3b66d5)
+    ]
+    interface IDirect3D11CaptureFramePoolStatics2 : IInspectable
+    {
+        HRESULT CreateFreeThreaded(
+            [in] Windows.Graphics.DirectX.Direct3D11.IDirect3DDevice *device,
+            [in] Windows.Graphics.DirectX.DirectXPixelFormat pixel_format,
+            [in] INT32 number_of_buffers,
+            [in] Windows.Graphics.SizeInt32 size,
+            [out, retval] Windows.Graphics.Capture.Direct3D11CaptureFramePool **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        exclusiveto(Windows.Graphics.Capture.GraphicsCaptureItem),
+        uuid(79c3f95b-31f7-4ec2-a464-632ef5d30760)
+    ]
+    interface IGraphicsCaptureItem : IInspectable
+    {
+        [propget] HRESULT DisplayName([out, retval] HSTRING *value);
+        [propget] HRESULT Size([out, retval] Windows.Graphics.SizeInt32 *value);
+        [eventadd] HRESULT Closed(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Graphics.Capture.GraphicsCaptureItem *, IInspectable *> *handler,
+            [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT Closed([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 7.0),
+        exclusiveto(Windows.Graphics.Capture.GraphicsCaptureItem),
+        uuid(a87ebea5-457c-5788-ab47-0cf1d3637e74)
+    ]
+    interface IGraphicsCaptureItemStatics : IInspectable
+    {
+        HRESULT CreateFromVisual(
+            [in] Windows.UI.Composition.Visual *visual,
+            [out, retval] Windows.Graphics.Capture.GraphicsCaptureItem **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 12.0),
+        exclusiveto(Windows.Graphics.Capture.GraphicsCaptureItem),
+        uuid(3b92acc9-e584-5862-bf5c-9c316c6d2dbb)
+    ]
+    interface IGraphicsCaptureItemStatics2 : IInspectable
+    {
+        HRESULT TryCreateFromWindowId(
+            [in] Windows.UI.WindowId window_id,
+            [out, retval] Windows.Graphics.Capture.GraphicsCaptureItem **result);
+        HRESULT TryCreateFromDisplayId(
+            [in] Windows.Graphics.DisplayId display_id,
+            [out, retval] Windows.Graphics.Capture.GraphicsCaptureItem **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        exclusiveto(Windows.Graphics.Capture.GraphicsCaptureSession),
+        uuid(814e42a9-f70f-4ad7-939b-fddcc6eb880d)
+    ]
+    interface IGraphicsCaptureSession : IInspectable
+    {
+        HRESULT StartCapture();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 10.0),
+        exclusiveto(Windows.Graphics.Capture.GraphicsCaptureSession),
+        uuid(2c39ae40-7d2e-5044-804e-8b6799d4cf9e)
+    ]
+    interface IGraphicsCaptureSession2 : IInspectable
+    {
+        [propget] HRESULT IsCursorCaptureEnabled([out, retval] boolean *value);
+        [propput] HRESULT IsCursorCaptureEnabled([in] boolean value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 12.0),
+        exclusiveto(Windows.Graphics.Capture.GraphicsCaptureSession),
+        uuid(f2cdd966-22ae-5ea1-9596-3a289344c3be)
+    ]
+    interface IGraphicsCaptureSession3 : IInspectable
+    {
+        [propget] HRESULT IsBorderRequired([out, retval] boolean *value);
+        [propput] HRESULT IsBorderRequired([in] boolean value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        exclusiveto(Windows.Graphics.Capture.GraphicsCaptureSession),
+        uuid(2224a540-5974-49aa-b232-0882536f4cb5)
+    ]
+    interface IGraphicsCaptureSessionStatics : IInspectable
+    {
+        HRESULT IsSupported([out, retval] boolean *result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass Direct3D11CaptureFrame
+    {
+        [default] interface Windows.Graphics.Capture.IDirect3D11CaptureFrame;
+        [contract(Windows.Foundation.UniversalApiContract, 19.0)] interface Windows.Graphics.Capture.IDirect3D11CaptureFrame2;
+        interface Windows.Foundation.IClosable;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        marshaling_behavior(agile),
+        static(Windows.Graphics.Capture.IDirect3D11CaptureFramePoolStatics, Windows.Foundation.UniversalApiContract, 6.0),
+        static(Windows.Graphics.Capture.IDirect3D11CaptureFramePoolStatics2, Windows.Foundation.UniversalApiContract, 7.0),
+        threading(both)
+    ]
+    runtimeclass Direct3D11CaptureFramePool
+    {
+        [default] interface Windows.Graphics.Capture.IDirect3D11CaptureFramePool;
+        interface Windows.Foundation.IClosable;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        marshaling_behavior(agile),
+        static(Windows.Graphics.Capture.IGraphicsCaptureItemStatics, Windows.Foundation.UniversalApiContract, 7.0),
+        static(Windows.Graphics.Capture.IGraphicsCaptureItemStatics2, Windows.Foundation.UniversalApiContract, 12.0),
+        threading(both)
+    ]
+    runtimeclass GraphicsCaptureItem
+    {
+        [default] interface Windows.Graphics.Capture.IGraphicsCaptureItem;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        marshaling_behavior(agile),
+        static(Windows.Graphics.Capture.IGraphicsCaptureSessionStatics, Windows.Foundation.UniversalApiContract, 6.0),
+        threading(both)
+    ]
+    runtimeclass GraphicsCaptureSession
+    {
+        [default] interface Windows.Graphics.Capture.IGraphicsCaptureSession;
+        [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.Graphics.Capture.IGraphicsCaptureSession2;
+        [contract(Windows.Foundation.UniversalApiContract, 12.0)] interface Windows.Graphics.Capture.IGraphicsCaptureSession3;
+        interface Windows.Foundation.IClosable;
+    }
+}

@@ -1,0 +1,17 @@
+MODULE    = dmstyle.dll
+IMPORTS   = dxguid uuid ole32 advapi32
+PARENTSRC = ../dmusic
+
+SOURCES = \
+	auditiontrack.c \
+	chordtrack.c \
+	commandtrack.c \
+	dmobject.c \
+	dmstyle.idl \
+	dmstyle_main.c \
+	dmutils.c \
+	motiftrack.c \
+	mutetrack.c \
+	style.c \
+	styletrack.c \
+	version.rc

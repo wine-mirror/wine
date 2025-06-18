@@ -1,0 +1,1 @@
+﻿document.wineTestProp = 1;

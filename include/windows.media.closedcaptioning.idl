@@ -1,0 +1,139 @@
+/*
+ * Copyright 2022 Mohamad Al-Jaf
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.ui.idl";
+
+namespace Windows.Media.ClosedCaptioning {
+    typedef enum ClosedCaptionColor ClosedCaptionColor;
+    typedef enum ClosedCaptionEdgeEffect ClosedCaptionEdgeEffect;
+    typedef enum ClosedCaptionOpacity ClosedCaptionOpacity;
+    typedef enum ClosedCaptionSize ClosedCaptionSize;
+    typedef enum ClosedCaptionStyle ClosedCaptionStyle;
+
+    interface IClosedCaptionPropertiesStatics;
+
+    runtimeclass ClosedCaptionProperties;
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum ClosedCaptionColor
+    {
+        Default = 0,
+        White   = 1,
+        Black   = 2,
+        Red     = 3,
+        Green   = 4,
+        Blue    = 5,
+        Yellow  = 6,
+        Magenta = 7,
+        Cyan    = 8,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum ClosedCaptionEdgeEffect
+    {
+        Default    = 0,
+        None       = 1,
+        Raised     = 2,
+        Depressed  = 3,
+        Uniform    = 4,
+        DropShadow = 5,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum ClosedCaptionOpacity
+    {
+        Default            = 0,
+        OneHundredPercent  = 1,
+        SeventyFivePercent = 2,
+        TwentyFivePercent  = 3,
+        ZeroPercent        = 4,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum ClosedCaptionSize
+    {
+        Default                = 0,
+        FiftyPercent           = 1,
+        OneHundredPercent      = 2,
+        OneHundredFiftyPercent = 3,
+        TwoHundredPercent      = 4,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum ClosedCaptionStyle
+    {
+        Default                   = 0,
+        MonospacedWithSerifs      = 1,
+        ProportionalWithSerifs    = 2,
+        MonospacedWithoutSerifs   = 3,
+        ProportionalWithoutSerifs = 4,
+        Casual                    = 5,
+        Cursive                   = 6,
+        SmallCapitals             = 7,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.ClosedCaptioning.ClosedCaptionProperties),
+        uuid(10aa1f84-cc30-4141-b503-5272289e0c20)
+    ]
+    interface IClosedCaptionPropertiesStatics : IInspectable
+    {
+        [propget] HRESULT FontColor([out, retval] Windows.Media.ClosedCaptioning.ClosedCaptionColor *value);
+        [propget] HRESULT ComputedFontColor([out, retval] Windows.UI.Color *value);
+        [propget] HRESULT FontOpacity([out, retval] Windows.Media.ClosedCaptioning.ClosedCaptionOpacity *value);
+        [propget] HRESULT FontSize([out, retval] Windows.Media.ClosedCaptioning.ClosedCaptionSize *value);
+        [propget] HRESULT FontStyle([out, retval] Windows.Media.ClosedCaptioning.ClosedCaptionStyle *value);
+        [propget] HRESULT FontEffect([out, retval] Windows.Media.ClosedCaptioning.ClosedCaptionEdgeEffect *value);
+        [propget] HRESULT BackgroundColor([out, retval] Windows.Media.ClosedCaptioning.ClosedCaptionColor *value);
+        [propget] HRESULT ComputedBackgroundColor([out, retval] Windows.UI.Color *value);
+        [propget] HRESULT BackgroundOpacity([out, retval] Windows.Media.ClosedCaptioning.ClosedCaptionOpacity *value);
+        [propget] HRESULT RegionColor([out, retval] Windows.Media.ClosedCaptioning.ClosedCaptionColor *value);
+        [propget] HRESULT ComputedRegionColor([out, retval] Windows.UI.Color *value);
+        [propget] HRESULT RegionOpacity([out, retval] Windows.Media.ClosedCaptioning.ClosedCaptionOpacity *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Media.ClosedCaptioning.IClosedCaptionPropertiesStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass ClosedCaptionProperties
+    {
+    }
+}

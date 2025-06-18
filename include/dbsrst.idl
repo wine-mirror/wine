@@ -1,0 +1,115 @@
+/*
+ * Copyright (C) 2025 Piotr Caban
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#if 0
+#pragma makedep install
+#endif
+
+[
+    object,
+    uuid(0c733a7b-2a1c-11ce-ade5-00aa0044773d),
+    pointer_default(unique)
+]
+interface IDBSchemaRowset : IUnknown
+{
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_ASSERTIONS 3")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_CATALOGS 1")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_CHARACTER_SETS 3")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_COLLATIONS 3")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_COLUMNS 4")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_CHECK_CONSTRAINTS 3")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_CONSTRAINT_COLUMN_USAGE 4")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_CONSTRAINT_TABLE_USAGE 3")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_KEY_COLUMN_USAGE 7")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_REFERENTIAL_CONSTRAINTS 3")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_TABLE_CONSTRAINTS 7")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_COLUMN_DOMAIN_USAGE 4")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_INDEXES 5")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_OBJECT_ACTIONS 1")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_OBJECTS 1")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_COLUMN_PRIVILEGES 6")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_TABLE_PRIVILEGES 5")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_USAGE_PRIVILEGES 6")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_PROCEDURES 4")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_SCHEMATA 3")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_SQL_LANGUAGES 0")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_STATISTICS 3")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_TABLES 4")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_TRANSLATIONS 3")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_PROVIDER_TYPES 2")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_VIEWS 3")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_VIEW_COLUMN_USAGE 3")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_VIEW_TABLE_USAGE 3")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_PROCEDURE_PARAMETERS 4")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_FOREIGN_KEYS 6")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_PRIMARY_KEYS 3")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_PROCEDURE_COLUMNS 4")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_TABLES_INFO 4")
+    cpp_quote("#define CRESTRICTIONS_MDSCHEMA_CUBES 3")
+    cpp_quote("#define CRESTRICTIONS_MDSCHEMA_DIMENSIONS 5")
+    cpp_quote("#define CRESTRICTIONS_MDSCHEMA_HIERARCHIES 6")
+    cpp_quote("#define CRESTRICTIONS_MDSCHEMA_LEVELS 7")
+    cpp_quote("#define CRESTRICTIONS_MDSCHEMA_MEASURES 5")
+    cpp_quote("#define CRESTRICTIONS_MDSCHEMA_PROPERTIES 9")
+    cpp_quote("#define CRESTRICTIONS_MDSCHEMA_MEMBERS 12")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_TRUSTEE 4")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_TABLE_STATISTICS 7")
+    cpp_quote("#define CRESTRICTIONS_DBSCHEMA_CHECK_CONSTRAINTS_BY_TABLE 6")
+    cpp_quote("#define CRESTRICTIONS_MDSCHEMA_FUNCTIONS 4")
+    cpp_quote("#define CRESTRICTIONS_MDSCHEMA_ACTIONS 8")
+    cpp_quote("#define CRESTRICTIONS_MDSCHEMA_COMMANDS 5")
+    cpp_quote("#define CRESTRICTIONS_MDSCHEMA_SETS 5")
+
+    [local]
+    HRESULT GetRowset(
+            [in] IUnknown *pUnkOuter,
+            [in] REFGUID rguidSchema,
+            [in] ULONG cRestrictions,
+            [in, size_is(cRestrictions)] const VARIANT rgRestrictions[],
+            [in] REFIID riid,
+            [in] ULONG cPropertySets,
+            [in, out, unique, size_is(cPropertySets)] DBPROPSET rgPropertySets[],
+            [out, iid_is(riid)] IUnknown **ppRowset);
+
+    [call_as(GetRowset)]
+    HRESULT RemoteGetRowset(
+            [in] IUnknown *pUnkOuter,
+            [in] REFGUID rguidSchema,
+            [in] ULONG cRestrictions,
+            [in, unique, size_is(cRestrictions)] const VARIANT *rgRestrictions,
+            [in] REFIID riid,
+            [in] ULONG cPropertySets,
+            [in, unique, size_is(cPropertySets)] DBPROPSET *rgPropertySets,
+            [out, iid_is(riid)] IUnknown **ppRowset,
+            [in] ULONG cTotalProps,
+            [out, size_is(cTotalProps)] DBPROPSTATUS *rgPropStatus,
+            [out] IErrorInfo **ppErrorInfoRem);
+
+    [local]
+    HRESULT GetSchemas(
+            [in, out] ULONG *pcSchemas,
+            [out, size_is(,*pcSchemas)] GUID **prgSchemas,
+            [out, size_is(,*pcSchemas)] ULONG **prgRestrictionSupport);
+
+    [call_as(GetSchemas)]
+    HRESULT RemoteGetSchemas(
+            [in, out] ULONG *pcSchemas,
+            [out, size_is(,*pcSchemas)] GUID **prgSchemas,
+            [out, size_is(,*pcSchemas)] ULONG **prgRestrictionSupport,
+            [out] IErrorInfo **ppErrorInfoRem);
+}

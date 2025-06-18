@@ -1,0 +1,419 @@
+	This is the core of the Wine debugger.  The reverse assembler
+was stolen from Mach more or less intact.  It turns out that there are
+two variables that are set differently if you are reverse assembling
+16 bit code, and on the whole it seems to work.
+
+NEWS:
+
+	The internal debugger has *tons* more capability than it did before.
+I have enclosed some examples that show usage at the end of this file.
+New features include:
+
+	1) Ability of debugger to read debug information from wine executable
+*and* from Win32 executables.  Local variable and line number information is
+also read and processed.
+
+	2) The internal debugger is capable of 'stepping' to the next
+line number, just like gdb.  Examples of the commands are:
+
+	step
+	stepi
+	si
+	step 3
+	si 5
+	next
+	nexti
+	cont 4
+	finish
+
+All of these should be exactly like how gdb does things.
+
+	3) The internal debugger now has a sense of what source file and line
+number a given PC is at.  New commands to support this are just like gdb,
+and include:
+
+	list
+	dir
+	show dir
+
+there are a variety of formats of arguments for the list command.  All
+permutations supported by gdb should also be supported.
+
+	4) The internal debugger knows about datatypes of various objects,
+for both Win32 *and* the debugging information in the wine executable itself.
+I have enclosed an example of how this works at the end.
+
+	5) There are more ways the 'b' command can be used to set breakpoints.
+Examples are:
+
+	b *0x8190000
+	b 1100
+	b Usage
+	b
+
+I don't think this covers all of the permutations that gdb accepts (this should
+be cleaned up someday so that all possibilities are acceptable).
+
+	6)  The 'print' and 'x' commands should behave more or less exactly
+as they do under gdb.  The difference is that the way the data is presented
+will be slightly different, but the content should be fundamentally the same.
+
+	7) The internal debugger now supports conditional breakpoints, and
+automatic display expressions.  An example is at the end of this file.  The
+syntax and usage should be identical to that of gdb.
+
+	8) Type casts can be made from within the debugger, but they currently
+don't work with typedef'ed types.  They only work with builtin types and
+named structures unions, etc.  The problem is that internally we don't always
+record the typedefed names of structures, so we have no guarantee that we
+would know what each type is.  This can be fixed, of course -  it just takes
+more memory.  Note that in some cases, typedefed structures could be cast
+using '(struct typedfname)' instead of '(typedfname)'.   Technically this
+isn't quite correct, but if and when the rest of this stuff gets fixed,
+this would need to get corrected too.
+
+NOTES:
+
+	If it weren't for the fact that gdb doesn't grok the Win32 debug
+information, you could just use gdb.  The internal debugger should be able
+to read and use debugging information for both Win32 and also for the
+Wine executable, making it possible to debug the combination of the two
+together as if it were one large (very large) entity.
+
+LIMITATIONS AND DIFFERENCES FROM GDB:
+
+	You cannot set a breakpoint by file and line number as you can
+with gdb.  Adding support for this wouldn't be all that tough, I guess, but
+it would be a nuisance.   You can set a breakpoint given a function and
+line number, however.  An example would be 'b main:2993'.  It turns out
+that the way the internal data structures are arranged it is a whole lot
+easier to do things in this way than it would be to try and get the
+source:line type of breakpoint working, but it would probably be worth it
+to try.
+
+	Getting stack traces through Wine itself can be a bit tricky.
+This is because by default the thing is built with optimization
+enabled, and as a result sometimes functions don't get frames, and
+lots of variables are optimized into registers.  You can turn off
+optimization for a few key source files if it will help you.
+
+	Memory consumption is getting to be a real problem.  I think 32Mb is
+no longer sufficient to debug wine - 48 or 64 is probably a whole lot better.
+Unfortunately I cannot shut down X to save memory :-).
+
+*************************************************************************
+EXAMPLES:
+
+	Here is an example of how I tracked down a bug in Wine.  The program
+is something that just maps and dumps the contents of a Win32 executable.
+It was dying for some reason.
+Note that this example is rather old and does not necessarily use current
+syntax !
+
+Start the first time through.
+
+bash$ ls -l dumpexe.exe 
+-rw-rw-r--   1 eric     devel      168448 Jan  4 13:51 dumpexe.exe
+bash$ ./wine -debug './dumpexe.exe -symbol ./dumpexe.exe'
+Warning: invalid dir 'e:\test' in path, deleting it.
+Win32 task 'W32SXXXX': Breakpoint 1 at 0x081a3450
+Loading symbols from ELF file ./wine...
+Loading symbols from ELF file /usr/X11R6/lib/libXpm.so.4.6...
+Loading symbols from ELF file /usr/X11R6/lib/libSM.so.6.0...
+Loading symbols from ELF file /usr/X11R6/lib/libICE.so.6.0...
+Loading symbols from ELF file /usr/X11R6/lib/libXext.so.6.0...
+Loading symbols from ELF file /usr/X11R6/lib/libX11.so.6.0...
+Loading symbols from ELF file /lib/libm.so.5.0.5...
+Loading symbols from ELF file /lib/libc.so.5.2.18...
+Loading symbols from ELF file /lib/ld-linux.so.1...
+Loading symbols from Win32 file ./dumpexe.exe...
+Stopped on breakpoint 1 at 0x081a3450 (_mainCRTStartup)
+In 32 bit mode.
+*** Invalid address 0x414c5ff8 (KERNEL32_NULL_THUNK_DATA+0x3930ee6c)
+0x081a3450 (_mainCRTStartup):  movl	%fs:0,%eax
+Wine-dbg>b DumpFile
+Breakpoint 2 at 0x081a0078 (DumpFile+0x9 [dumpexe.c:2723])
+Wine-dbg>c
+Dump File: ./dumpexe.exe
+Stopped on breakpoint 2 at 0x081a0078 (DumpFile+0x9 [dumpexe.c:2723])
+Enter path to file dumpexe.c: ../de
+2723		HANDLE			  hFile = NULL;
+0x081a0078 (DumpFile+0x9 [dumpexe.c:2723]):  movl	$0x0,0xfffffff4(%ebp)
+Wine-dbg>list
+2723		HANDLE			  hFile = NULL;
+2724		HANDLE			  hMap  = NULL;
+2725		PSTR			  lpMap = NULL;
+2726		DWORD			  dwFileSize     = 0;
+2727		DWORD			  dwFileSizeHigh = 0;
+2728	
+2729		PIMAGE_DOS_HEADER	  lpImageDOS  = NULL;
+2730		PIMAGE_FILE_HEADER	  lpImageFile = NULL;
+2731		PIMAGE_NT_HEADERS	  lpImageNT   = NULL;
+2732	
+2733		/*
+Wine-dbg>n 10
+2747		dwFileSize = GetFileSize(hFile, &dwFileSizeHigh);
+0x081a00ea (DumpFile+0x7b [dumpexe.c:2747]):  leal	0xfffffff0(%ebp),%eax
+Wine-dbg>n
+2749		    && (GetLastError() != NO_ERROR) )
+0x081a00fb (DumpFile+0x8c [dumpexe.c:2749]):  cmpl	$-1,0xffffffe8(%ebp)
+Wine-dbg>x/d dwFileSize
+x/d dwFileSize
+ 168448
+Wine-dbg>n
+2758					 PAGE_READONLY, 0, 0, (LPSTR) NULL);
+0x081a0124 (DumpFile+0xb5 [dumpexe.c:2758]):  pushl	$0x0
+Wine-dbg>list 2750
+list 2750
+2750		{
+2751			Fatal("Cannot get size of file %s", lpFileName);
+2752		}
+2753		
+2754		/*
+2755		 * map the file
+2756		 */
+2757		hMap = CreateFileMapping(hFile, (LPSECURITY_ATTRIBUTES) NULL,
+2758					 PAGE_READONLY, 0, 0, (LPSTR) NULL);
+2759		if( hMap == NULL )
+2760		{
+Wine-dbg>n
+2759		if( hMap == NULL )
+0x081a013b (DumpFile+0xcc [dumpexe.c:2759]):  cmpl	$0,0xfffffffc(%ebp)
+Wine-dbg>x hMap
+ 08e48c30
+Wine-dbg>n
+2767		lpMap = (LPSTR) MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0);
+0x081a0156 (DumpFile+0xe7 [dumpexe.c:2767]):  pushl	$0x0
+Wine-dbg>n
+2768		if( lpMap == NULL )
+0x081a016b (DumpFile+0xfc [dumpexe.c:2768]):  cmpl	$0,0xffffffe0(%ebp)
+Wine-dbg>print lpMap
+0x414c5f40
+Wine-dbg>x lpMap
+ 40007000
+Wine-dbg> x/10x 0x40007000
+ x/10x 0x40007000
+0x40007000 (KERNEL32_NULL_THUNK_DATA+0x37e4fe74): *** Invalid address 0x40007000 (KERNEL32_NULL_THUNK_DATA+0x37e4fe74)
+Wine-dbg>quit
+$
+
+*******************************************************************
+The first time through, we find that MapViewOfFile isn't mapping the file
+correctly into the virtual address space.  Try running again, and step into
+MapViewOfFile to figure out what went wrong.
+*******************************************************************
+
+
+bash$ ./wine -debug './dumpexe.exe -symbol ./dumpexe.exe'
+Warning: invalid dir 'e:\test' in path, deleting it.
+Win32 task 'W32SXXXX': Breakpoint 1 at 0x081a3450
+Loading symbols from ELF file ./wine...
+Loading symbols from ELF file /usr/X11R6/lib/libXpm.so.4.6...
+Loading symbols from ELF file /usr/X11R6/lib/libSM.so.6.0...
+Loading symbols from ELF file /usr/X11R6/lib/libICE.so.6.0...
+Loading symbols from ELF file /usr/X11R6/lib/libXext.so.6.0...
+Loading symbols from ELF file /usr/X11R6/lib/libX11.so.6.0...
+Loading symbols from ELF file /lib/libm.so.5.0.5...
+Loading symbols from ELF file /lib/libc.so.5.2.18...
+Loading symbols from ELF file /lib/ld-linux.so.1...
+Loading symbols from Win32 file ./dumpexe.exe...
+Stopped on breakpoint 1 at 0x081a3450 (_mainCRTStartup)
+In 32 bit mode.
+*** Invalid address 0x414c5ff8 (KERNEL32_NULL_THUNK_DATA+0x3930ee6c)
+0x081a3450 (_mainCRTStartup):  movl	%fs:0,%eax
+Wine-dbg>b DumpFile:2767
+Breakpoint 2 at 0x081a0156 (DumpFile+0xe7 [dumpexe.c:2767])
+Wine-dbg>c
+Dump File: ./dumpexe.exe
+Stopped on breakpoint 2 at 0x081a0156 (DumpFile+0xe7 [dumpexe.c:2767])
+Enter path to file dumpexe.c: ../de
+2767		lpMap = (LPSTR) MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0);
+0x081a0156 (DumpFile+0xe7 [dumpexe.c:2767]):  pushl	$0x0
+Wine-dbg>step
+390	0385 stdcall MapViewOfFile(long long long long long) MapViewOfFile
+0x080d793c (KERNEL32_385 [kernel32.spec:390]):  pushl	%ebp
+Wine-dbg>step
+223	    if (!debugging_relay) return;
+0x080c83dc (RELAY_DebugCallFrom32+0xc [relay.c:223]):  cmpw	$0,0x644a
+Wine-dbg>
+244	}
+0x080c848e (RELAY_DebugCallFrom32+0xbe [relay.c:244]):  leal	0xfffffff4(%ebp),%esp
+Wine-dbg>
+103	    return MapViewOfFileEx(handle,access,offhi,offlo,size,0);
+0x080911a4 (MapViewOfFile+0x14 [file.c:103]):  pushl	$0x0
+Wine-dbg>
+113	    FILEMAP_OBJECT *fmap = (FILEMAP_OBJECT*)handle;
+0x080911cf (MapViewOfFileEx+0xf [file.c:113]):  movl	0x8(%ebp),%esi
+Wine-dbg>n
+115	    if (!size) size = fmap->size;
+0x080911d2 (MapViewOfFileEx+0x12 [file.c:115]):  testl	%ebx,%ebx
+Wine-dbg>list
+list
+115	    if (!size) size = fmap->size;
+116	    if (!size) size = 1;
+117	    return mmap ((caddr_t)st, size, fmap->prot, 
+118	                 MAP_ANON|MAP_PRIVATE, 
+119			 FILE_GetUnixHandle(fmap->hfile),
+120			 offlo);
+121	}
+122	
+123	/***********************************************************************
+124	 *           UnmapViewOfFile                  (KERNEL32.385)
+125	 */
+Wine-dbg>x size
+ 00000000
+Wine-dbg>n
+116	    if (!size) size = 1;
+0x080911d9 (MapViewOfFileEx+0x19 [file.c:116]):  testl	%ebx,%ebx
+Wine-dbg>x size
+ 00000000
+Wine-dbg>n
+117	    return mmap ((caddr_t)st, size, fmap->prot, 
+0x080911e2 (MapViewOfFileEx+0x22 [file.c:117]):  pushl	%eax
+Wine-dbg>x size
+ 00000000
+Wine-dbg>info local
+MapViewOfFileEx:handle == 0x08e48c90
+MapViewOfFileEx:access == 0x00000004
+MapViewOfFileEx:offhi == 0x00000000
+MapViewOfFileEx:offlo == 0x00000000
+MapViewOfFileEx:size == 0x00000000
+MapViewOfFileEx:st == 0x00000000
+MapViewOfFileEx:offlo optimized into register $eax 
+MapViewOfFileEx:size optimized into register $ebx 
+MapViewOfFileEx:st optimized into register $edi 
+MapViewOfFileEx:fmap optimized into register $esi 
+Wine-dbg>print $ebx
+0x0001
+Wine-dbg>bt
+bt
+Backtrace:
+=>0 0x080911e2 (MapViewOfFileEx+0x22 [file.c:117])
+  1 0x080911b0 (MapViewOfFile+0x20(handle=0x8e48c90, access=0x4, offhi=0x0, offlo=0x0, size=0x0) [file.c:104])
+  2 0x08104ab5 (CallFrom32_stdcall_5+0x25 [callfrom32.s])
+  3 0x081a0168 (DumpFile+0xf9(lpFileName=0x414c61ed) [dumpexe.c:2767])
+  4 0x081a0c35 (main+0x410(argc=0x3, argv=0x414c61cc) [dumpexe.c:3078])
+  5 0x081a3514 (_mainCRTStartup+0xc4)
+  6 0x0810549f (Code_Start+0x13 [callto32.s])
+  7 0x0802fdac (TASK_CallToStart+0x8c [task.c:373])
+
+Wine-dbg>
+
+*******************************************************************
+Notice that you can step through the thunks into our own transfer
+routines.   You will notice that the source line displays as something
+like:
+
+390	0385 stdcall MapViewOfFile(long long long long long) MapViewOfFile
+
+This is just the source line from the spec file that caused the transfer
+routine to be generated.  From this you can step again, and you step
+into the relay logging code - keep stepping and you eventually step into
+the actual function that does the dirty work.
+
+	At this point an examination of the source to the Win32 program
+and an examination of the source to win32/file.s showed where the problem
+was.  When you specify 0 for the size of the object in CreateFileMapping,
+it is supposed to use the entire size of the file as the size of the
+object.  Instead we were just blindly copying the number over.
+
+*******************************************************************
+
+Wine-dbg>b main
+Breakpoint 1 at 0x080108c0 (main [dbgmain.c:213])
+Wine-dbg>print breakpoints[1]
+{addr={type=0x08043000, seg=0, off=134285504}, addrlen=' ', opcode='U', enabled=1, skipcount=0, in_use=1}
+
+Wine-dbg> print breakpoints[1].enabled
+1
+Wine-dbg>set breakpoints[0].enabled = 0
+Wine-dbg>print breakpoints[0].enabled
+0
+
+Wine-dbg>print type_hash_table[1]->type
+STRUCT
+
+Wine-dbg>print type_hash_table[1]
+0x08072020
+Wine-dbg>print *type_hash_table[1]
+print *type_hash_table[1]
+{type=STRUCT, next=0x00000000, name="LOGPALETTE", un={basic={basic_type=8, output_format=" V M", basic_size=-128, b_signed=0}, bitfield={bitoff=8, nbits=0, basetype=0x081d56c0}, pointer={pointsto=0x00000008}, funct={rettype=0x00000008}, array={start=8, end=136140480, basictype=0x08043e80}, structure={size=8, members=0x081d56c0}, enumeration={members=0x00000008}}}
+Wine-dbg>
+
+*******************************************************************
+
+	This example shows how you can print out various data structures.
+Note that enumerated types are displayed in the symbolic form, and strings
+are displayed in the expected manner.
+
+	You can use the set command to set more or less anything.  Note
+however that you cannot use enumerated types on the RHS of the expression.
+
+*******************************************************************
+
+
+Wine-dbg>list
+2986            if( argc <= 1 )
+2987            {
+2988                    Usage(argv[0]);
+2989            }
+2990
+2991            for( i = 1; i < argc; i++ )
+2992            {
+2993                    if( strncmp(argv[i], "-dos", sizeof("-dos") - 1) == 0 )
+2994                    {
+2995                            DmpCtrl.bDumpDOSHeader = TRUE;
+2996                    }
+Wine-dbg>b 2993
+Breakpoint 3 at 0x081a8861 (main+0x3c [dumpexe.c:2993])
+Wine-dbg>condition 3 i == 2
+Wine-dbg>c
+Stopped on breakpoint 3 at 0x081a8861 (main+0x3c [dumpexe.c:2993])
+2993                    if( strncmp(argv[i], "-dos", sizeof("-dos") - 1) == 0 )
+0x081a8861 (main+0x3c [dumpexe.c:2993]):  pushl $0x4
+Wine-dbg>print i
+2
+Wine-dbg>print argv[i]
+"./dumpexe.exe"
+
+*******************************************************************
+
+	This example shows how to use conditional breakpoints.
+	Here is another one that demonstrates another cool feature
+	conditional breakpoints that involve a function call:
+
+		condition 3 strcmp(argv[i], "./dumpexe.exe") == 0
+
+*******************************************************************
+
+
+Wine-dbg>list
+2986            if( argc <= 1 )
+2987            {
+2988                    Usage(argv[0]);
+2989            }
+2990
+2991            for( i = 1; i < argc; i++ )
+2992            {
+2993                    if( strncmp(argv[i], "-dos", sizeof("-dos") - 1) == 0 )
+2994                    {
+2995                            DmpCtrl.bDumpDOSHeader = TRUE;
+2996                    }
+Wine-dbg>b 2993
+Breakpoint 3 at 0x081a8861 (main+0x3c [dumpexe.c:2993])
+Wine-dbg>condition 3 strcmp(argv[i], "./dumpexe.exe") == 0
+Wine-dbg>info break
+Breakpoints:
+1: y 0x081ab450 (_mainCRTStartup)
+2: y 0x081a882e (main+0x9 [dumpexe.c:2986])
+3: y 0x081a8861 (main+0x3c [dumpexe.c:2993])
+                stop when  ( strcmp(( argv[i] ), "./dumpexe.exe") == 0 )
+Wine-dbg>c
+Stopped on breakpoint 3 at 0x081a8861 (main+0x3c [dumpexe.c:2993])
+2993                    if( strncmp(argv[i], "-dos", sizeof("-dos") - 1) == 0 )
+0x081a8861 (main+0x3c [dumpexe.c:2993]):  pushl $0x4
+Wine-dbg>print i
+2
+Wine-dbg>print argv[i]  
+"./dumpexe.exe"
+Wine-dbg>

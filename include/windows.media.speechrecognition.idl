@@ -1,0 +1,643 @@
+/*
+ * Copyright 2022 Bernhard Kölbl
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.globalization.idl";
+/*import "windows.phone.idl";*/
+/*import "windows.storage.idl";*/
+
+namespace Windows {
+    namespace Media {
+        namespace SpeechRecognition {
+            typedef enum SpeechContinuousRecognitionMode SpeechContinuousRecognitionMode;
+            typedef enum SpeechRecognitionAudioProblem SpeechRecognitionAudioProblem;
+            typedef enum SpeechRecognitionConfidence SpeechRecognitionConfidence;
+            typedef enum SpeechRecognitionConstraintProbability SpeechRecognitionConstraintProbability;
+            typedef enum SpeechRecognitionConstraintType SpeechRecognitionConstraintType;
+            typedef enum SpeechRecognitionResultStatus SpeechRecognitionResultStatus;
+            typedef enum SpeechRecognizerState SpeechRecognizerState;
+            interface ISpeechContinuousRecognitionCompletedEventArgs;
+            interface ISpeechContinuousRecognitionResultGeneratedEventArgs;
+            interface ISpeechContinuousRecognitionSession;
+            interface ISpeechRecognitionCompilationResult;
+            interface ISpeechRecognitionConstraint;
+            interface ISpeechRecognitionHypothesis;
+            interface ISpeechRecognitionHypothesisGeneratedEventArgs;
+            interface ISpeechRecognitionListConstraint;
+            interface ISpeechRecognitionListConstraintFactory;
+            interface ISpeechRecognitionQualityDegradingEventArgs;
+            interface ISpeechRecognitionResult;
+            interface ISpeechRecognitionResult2;
+            interface ISpeechRecognitionSemanticInterpretation;
+            interface ISpeechRecognizer;
+            interface ISpeechRecognizer2;
+            interface ISpeechRecognizerFactory;
+            interface ISpeechRecognizerStateChangedEventArgs;
+            interface ISpeechRecognizerStatics;
+            interface ISpeechRecognizerStatics2;
+            interface ISpeechRecognizerTimeouts;
+            interface ISpeechRecognizerUIOptions;
+            interface IVoiceCommandSet;
+            runtimeclass SpeechContinuousRecognitionCompletedEventArgs;
+            runtimeclass SpeechContinuousRecognitionResultGeneratedEventArgs;
+            runtimeclass SpeechContinuousRecognitionSession;
+            runtimeclass SpeechRecognitionCompilationResult;
+            runtimeclass SpeechRecognitionHypothesis;
+            runtimeclass SpeechRecognitionHypothesisGeneratedEventArgs;
+            runtimeclass SpeechRecognitionListConstraint;
+            runtimeclass SpeechRecognitionQualityDegradingEventArgs;
+            runtimeclass SpeechRecognitionResult;
+            runtimeclass SpeechRecognitionSemanticInterpretation;
+            runtimeclass SpeechRecognizer;
+            runtimeclass SpeechRecognizerStateChangedEventArgs;
+            runtimeclass SpeechRecognizerTimeouts;
+            runtimeclass SpeechRecognizerUIOptions;
+            runtimeclass VoiceCommandSet;
+        }
+    }
+}
+
+namespace Windows {
+    namespace Media {
+        namespace SpeechRecognition {
+            declare {
+                interface Windows.Foundation.Collections.IIterable<Windows.Media.SpeechRecognition.ISpeechRecognitionConstraint*>;
+                interface Windows.Foundation.Collections.IIterator<Windows.Media.SpeechRecognition.ISpeechRecognitionConstraint*>;
+                interface Windows.Foundation.Collections.IVectorView<Windows.Media.SpeechRecognition.ISpeechRecognitionConstraint*>;
+                interface Windows.Foundation.Collections.IVector<Windows.Media.SpeechRecognition.ISpeechRecognitionConstraint*>;
+                interface Windows.Foundation.Collections.IIterable<Windows.Media.SpeechRecognition.SpeechRecognitionResult*>;
+                interface Windows.Foundation.Collections.IIterator<Windows.Media.SpeechRecognition.SpeechRecognitionResult*>;
+                interface Windows.Foundation.Collections.IVectorView<Windows.Media.SpeechRecognition.SpeechRecognitionResult*>;
+                interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Media.SpeechRecognition.SpeechRecognitionCompilationResult*>;
+                interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Media.SpeechRecognition.SpeechRecognitionResult*>;
+                interface Windows.Foundation.IAsyncOperation<Windows.Media.SpeechRecognition.SpeechRecognitionCompilationResult*>;
+                interface Windows.Foundation.IAsyncOperation<Windows.Media.SpeechRecognition.SpeechRecognitionResult*>;
+                interface Windows.Foundation.TypedEventHandler<Windows.Media.SpeechRecognition.SpeechContinuousRecognitionSession*, Windows.Media.SpeechRecognition.SpeechContinuousRecognitionCompletedEventArgs*>;
+                interface Windows.Foundation.TypedEventHandler<Windows.Media.SpeechRecognition.SpeechContinuousRecognitionSession*, Windows.Media.SpeechRecognition.SpeechContinuousRecognitionResultGeneratedEventArgs*>;
+                interface Windows.Foundation.TypedEventHandler<Windows.Media.SpeechRecognition.SpeechRecognizer*, Windows.Media.SpeechRecognition.SpeechRecognitionHypothesisGeneratedEventArgs*>;
+                interface Windows.Foundation.TypedEventHandler<Windows.Media.SpeechRecognition.SpeechRecognizer*, Windows.Media.SpeechRecognition.SpeechRecognitionQualityDegradingEventArgs*>;
+                interface Windows.Foundation.TypedEventHandler<Windows.Media.SpeechRecognition.SpeechRecognizer*, Windows.Media.SpeechRecognition.SpeechRecognizerStateChangedEventArgs*>;
+            }
+        }
+    }
+}
+
+namespace Windows {
+    namespace Media {
+        namespace SpeechRecognition {
+
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+            enum SpeechContinuousRecognitionMode
+            {
+                Default = 0,
+                PauseOnRecognition = 1,
+            };
+
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+            enum SpeechRecognitionAudioProblem
+            {
+                None = 0,
+                TooNoisy = 1,
+                NoSignal = 2,
+                TooLoud = 3,
+                TooQuiet = 4,
+                TooFast = 5,
+                TooSlow = 6,
+            };
+
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+            enum SpeechRecognitionConfidence
+            {
+                High = 0,
+                Medium = 1,
+                Low = 2,
+                Rejected = 3,
+            };
+
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+            enum SpeechRecognitionConstraintProbability
+            {
+                Default = 0,
+                Min = 1,
+                Max = 2,
+            };
+
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+            enum SpeechRecognitionConstraintType
+            {
+                Topic = 0,
+                List = 1,
+                Grammar = 2,
+                VoiceCommandDefinition = 3,
+            };
+
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+            enum SpeechRecognitionResultStatus
+            {
+                Success = 0,
+                TopicLanguageNotSupported = 1,
+                GrammarLanguageMismatch = 2,
+                GrammarCompilationFailure = 3,
+                AudioQualityFailure = 4,
+                UserCanceled = 5,
+                Unknown = 6,
+                [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+                TimeoutExceeded = 7,
+                [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+                PauseLimitExceeded = 8,
+                [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+                NetworkFailure = 9,
+                [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+                MicrophoneUnavailable = 10,
+            };
+
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+            enum SpeechRecognizerState
+            {
+                Idle = 0,
+                Capturing = 1,
+                Processing = 2,
+                SoundStarted = 3,
+                SoundEnded = 4,
+                [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+                SpeechDetected = 5,
+                [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+                Paused = 6,
+            };
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechContinuousRecognitionCompletedEventArgs),
+                uuid(e3d069bb-e30c-5e18-424b-7fbe81f8fbd0)
+            ]
+            interface ISpeechContinuousRecognitionCompletedEventArgs : IInspectable
+            {
+                [propget] HRESULT Status([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus *value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechContinuousRecognitionResultGeneratedEventArgs),
+                uuid(19091e1e-6e7e-5a46-40fb-76594f786504)
+            ]
+            interface ISpeechContinuousRecognitionResultGeneratedEventArgs : IInspectable
+            {
+                [propget] HRESULT Result([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionResult **value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechContinuousRecognitionSession),
+                uuid(6a213c04-6614-49f8-99a2-b5e9b3a085c8)
+            ]
+            interface ISpeechContinuousRecognitionSession : IInspectable
+            {
+                [propget] HRESULT AutoStopSilenceTimeout([out, retval] Windows.Foundation.TimeSpan *value);
+                [propput] HRESULT AutoStopSilenceTimeout([in] Windows.Foundation.TimeSpan value);
+                [overload("StartAsync")] HRESULT StartAsync([out, retval] Windows.Foundation.IAsyncAction **action);
+                [overload("StartAsync")] HRESULT StartWithModeAsync([in] Windows.Media.SpeechRecognition.SpeechContinuousRecognitionMode mode, [out, retval] Windows.Foundation.IAsyncAction **action);
+                HRESULT StopAsync([out, retval] Windows.Foundation.IAsyncAction **action);
+                HRESULT CancelAsync([out, retval] Windows.Foundation.IAsyncAction **action);
+                HRESULT PauseAsync([out, retval] Windows.Foundation.IAsyncAction **action);
+                HRESULT Resume();
+                [eventadd] HRESULT Completed(
+                    [in] Windows.Foundation.TypedEventHandler<Windows.Media.SpeechRecognition.SpeechContinuousRecognitionSession*, Windows.Media.SpeechRecognition.SpeechContinuousRecognitionCompletedEventArgs*> *value,
+                    [out, retval] EventRegistrationToken *token);
+                [eventremove] HRESULT Completed([in] EventRegistrationToken token);
+                [eventadd] HRESULT ResultGenerated(
+                    [in] Windows.Foundation.TypedEventHandler<Windows.Media.SpeechRecognition.SpeechContinuousRecognitionSession*, Windows.Media.SpeechRecognition.SpeechContinuousRecognitionResultGeneratedEventArgs*> *value,
+                    [out, retval] EventRegistrationToken *token);
+                [eventremove] HRESULT ResultGenerated([in] EventRegistrationToken token);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionCompilationResult),
+                uuid(407e6c5d-6ac7-4da4-9cc1-2fce32cf7489)
+            ]
+            interface ISpeechRecognitionCompilationResult : IInspectable
+            {
+                [propget] HRESULT Status([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus *value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                uuid(79ac1628-4d68-43c4-8911-40dc4101b55b)
+            ]
+            interface ISpeechRecognitionConstraint : IInspectable
+            {
+                [propget] HRESULT IsEnabled([out, retval] boolean *value);
+                [propput] HRESULT IsEnabled([in] boolean value);
+                [propget] HRESULT Tag([out, retval] HSTRING *value);
+                [propput] HRESULT Tag([in] HSTRING value);
+                [propget] HRESULT Type([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionConstraintType *value);
+                [propget] HRESULT Probability([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionConstraintProbability *value);
+                [propput] HRESULT Probability([in] Windows.Media.SpeechRecognition.SpeechRecognitionConstraintProbability value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionHypothesis),
+                uuid(7a7b25b0-99c5-4f7d-bf84-10aa1302b634)
+            ]
+            interface ISpeechRecognitionHypothesis : IInspectable
+            {
+                [propget] HRESULT Text([out, retval] HSTRING *value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionHypothesisGeneratedEventArgs),
+                uuid(55161a7a-8023-5866-411d-1213bb271476)
+            ]
+            interface ISpeechRecognitionHypothesisGeneratedEventArgs : IInspectable
+            {
+                [propget] HRESULT Hypothesis([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionHypothesis **value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionListConstraint),
+                uuid(09c487e9-e4ad-4526-81f2-4946fb481d98)
+            ]
+            interface ISpeechRecognitionListConstraint : IInspectable
+                requires
+                    Windows.Media.SpeechRecognition.ISpeechRecognitionConstraint
+            {
+                [propget] HRESULT Commands([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionListConstraint),
+                uuid(40f3cdc7-562a-426a-9f3b-3b4e282be1d5)
+            ]
+            interface ISpeechRecognitionListConstraintFactory : IInspectable
+            {
+                HRESULT Create(
+                    [in] Windows.Foundation.Collections.IIterable<HSTRING> *commands,
+                    [out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionListConstraint **listconstraint);
+
+                HRESULT CreateWithTag(
+                    [in] Windows.Foundation.Collections.IIterable<HSTRING> *commands,
+                    [in] HSTRING tag,
+                    [out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionListConstraint **listconstraint);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionQualityDegradingEventArgs),
+                uuid(4fe24105-8c3a-4c7e-8d0a-5bd4f5b14ad8)
+            ]
+            interface ISpeechRecognitionQualityDegradingEventArgs : IInspectable
+            {
+                [propget] HRESULT Problem([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionAudioProblem *value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionResult),
+                uuid(4e303157-034e-4652-857e-d0454cc4beec)
+            ]
+            interface ISpeechRecognitionResult : IInspectable
+            {
+                [propget] HRESULT Status([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus *value);
+                [propget] HRESULT Text([out, retval] HSTRING *value);
+                [propget] HRESULT Confidence([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionConfidence *value);
+                [propget] HRESULT SemanticInterpretation([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionSemanticInterpretation **value);
+                HRESULT GetAlternates([in] UINT32 max_amount, [out, retval] Windows.Foundation.Collections.IVectorView<Windows.Media.SpeechRecognition.SpeechRecognitionResult*> **results);
+                [propget] HRESULT Constraint([out, retval] Windows.Media.SpeechRecognition.ISpeechRecognitionConstraint **value);
+                [propget] HRESULT RulePath([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING> **value);
+                [propget] HRESULT RawConfidence([out, retval] DOUBLE *value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionResult),
+                uuid(af7ed1ba-451b-4166-a0c1-1ffe84032d03)
+            ]
+            interface ISpeechRecognitionResult2 : IInspectable
+            {
+                [propget] HRESULT PhraseStartTime([out, retval] Windows.Foundation.DateTime *value);
+                [propget] HRESULT PhraseDuration([out, retval] Windows.Foundation.TimeSpan *value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognitionSemanticInterpretation),
+                uuid(aae1da9b-7e32-4c1f-89fe-0c65f486f52e)
+            ]
+            interface ISpeechRecognitionSemanticInterpretation : IInspectable
+            {
+                [propget] HRESULT Properties([out, retval] Windows.Foundation.Collections.IMapView<HSTRING, Windows.Foundation.Collections.IVectorView<HSTRING>*> **value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognizer),
+                uuid(0bc3c9cb-c26a-40f2-aeb5-8096b2e48073)
+            ]
+            interface ISpeechRecognizer : IInspectable
+                requires
+                    Windows.Foundation.IClosable
+            {
+                [propget] HRESULT CurrentLanguage([out, retval] Windows.Globalization.Language **value);
+                [propget] HRESULT Constraints([out, retval] Windows.Foundation.Collections.IVector<Windows.Media.SpeechRecognition.ISpeechRecognitionConstraint*> **value);
+                [propget] HRESULT Timeouts([out, retval] Windows.Media.SpeechRecognition.SpeechRecognizerTimeouts **value);
+                [propget] HRESULT UIOptions([out, retval] Windows.Media.SpeechRecognition.SpeechRecognizerUIOptions **value);
+                HRESULT CompileConstraintsAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Media.SpeechRecognition.SpeechRecognitionCompilationResult*> **operation);
+                HRESULT RecognizeAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Media.SpeechRecognition.SpeechRecognitionResult*> **operation);
+                HRESULT RecognizeWithUIAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Media.SpeechRecognition.SpeechRecognitionResult*> **operation);
+                [eventadd] HRESULT RecognitionQualityDegrading(
+                    [in] Windows.Foundation.TypedEventHandler<Windows.Media.SpeechRecognition.SpeechRecognizer*, Windows.Media.SpeechRecognition.SpeechRecognitionQualityDegradingEventArgs*> *handler,
+                    [out, retval] EventRegistrationToken *token);
+                [eventremove] HRESULT RecognitionQualityDegrading([in] EventRegistrationToken token);
+                [eventadd] HRESULT StateChanged(
+                    [in] Windows.Foundation.TypedEventHandler<Windows.Media.SpeechRecognition.SpeechRecognizer*, Windows.Media.SpeechRecognition.SpeechRecognizerStateChangedEventArgs*> *handler,
+                    [out, retval] EventRegistrationToken *token);
+                [eventremove] HRESULT StateChanged([in] EventRegistrationToken token);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognizer),
+                uuid(63c9baf1-91e3-4ea4-86a1-7c3867d084a6)
+            ]
+            interface ISpeechRecognizer2 : IInspectable
+            {
+                [propget] HRESULT ContinuousRecognitionSession([out, retval] Windows.Media.SpeechRecognition.SpeechContinuousRecognitionSession **value);
+                [propget] HRESULT State([out, retval] Windows.Media.SpeechRecognition.SpeechRecognizerState *value);
+                HRESULT StopRecognitionAsync([out, retval] Windows.Foundation.IAsyncAction **action);
+                [eventadd] HRESULT HypothesisGenerated(
+                    [in] Windows.Foundation.TypedEventHandler<Windows.Media.SpeechRecognition.SpeechRecognizer*, Windows.Media.SpeechRecognition.SpeechRecognitionHypothesisGeneratedEventArgs*> *handler,
+                    [out, retval] EventRegistrationToken *token);
+                [eventremove] HRESULT HypothesisGenerated([in] EventRegistrationToken token);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognizer),
+                uuid(60c488dd-7fb8-4033-ac70-d046f64818e1)
+            ]
+            interface ISpeechRecognizerFactory : IInspectable
+            {
+                HRESULT Create(
+                    [in] Windows.Globalization.Language *language,
+                    [out, retval] Windows.Media.SpeechRecognition.SpeechRecognizer **speechrecognizer);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognizerStateChangedEventArgs),
+                uuid(563d4f09-ba03-4bad-ad81-ddc6c4dab0c3)
+            ]
+            interface ISpeechRecognizerStateChangedEventArgs : IInspectable
+            {
+                [propget] HRESULT State([out, retval] Windows.Media.SpeechRecognition.SpeechRecognizerState *value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognizer),
+                uuid(87a35eac-a7dc-4b0b-bcc9-24f47c0b7ebf)
+            ]
+            interface ISpeechRecognizerStatics : IInspectable
+            {
+                [propget] HRESULT SystemSpeechLanguage([out, retval] Windows.Globalization.Language **language);
+                [propget] HRESULT SupportedTopicLanguages([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Globalization.Language*> **languages);
+                [propget] HRESULT SupportedGrammarLanguages([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Globalization.Language*> **languages);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 5.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognizer),
+                uuid(1d1b0d95-7565-4ef9-a2f3-ba15162a96cf)
+            ]
+            interface ISpeechRecognizerStatics2 : IInspectable
+            {
+                HRESULT TrySetSystemSpeechLanguageAsync([in] Windows.Globalization.Language *language, [out, retval] Windows.Foundation.IAsyncOperation<boolean> **operation);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognizerTimeouts),
+                uuid(2ef76fca-6a3c-4dca-a153-df1bc88a79af)
+            ]
+            interface ISpeechRecognizerTimeouts : IInspectable
+            {
+                [propget] HRESULT InitialSilenceTimeout([out, retval] Windows.Foundation.TimeSpan *value);
+                [propput] HRESULT InitialSilenceTimeout([in] Windows.Foundation.TimeSpan value);
+                [propget] HRESULT EndSilenceTimeout([out, retval] Windows.Foundation.TimeSpan *value);
+                [propput] HRESULT EndSilenceTimeout([in] Windows.Foundation.TimeSpan value);
+                [propget] HRESULT BabbleTimeout([out, retval] Windows.Foundation.TimeSpan *value);
+                [propput] HRESULT BabbleTimeout([in] Windows.Foundation.TimeSpan value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.SpeechRecognizerUIOptions),
+                uuid(7888d641-b92b-44ba-a25f-d1864630641f)
+            ]
+            interface ISpeechRecognizerUIOptions : IInspectable
+            {
+                [propget] HRESULT ExampleText([out, retval] HSTRING *value);
+                [propput] HRESULT ExampleText([in] HSTRING value);
+                [propget] HRESULT AudiblePrompt([out, retval] HSTRING *value);
+                [propput] HRESULT AudiblePrompt([in] HSTRING value);
+                [propget] HRESULT IsReadBackEnabled([out, retval] boolean *value);
+                [propput] HRESULT IsReadBackEnabled([in] boolean value);
+                [propget] HRESULT ShowConfirmation([out, retval] boolean *value);
+                [propput] HRESULT ShowConfirmation([in] boolean value);
+            }
+
+            [
+                contract(Windows.Phone.PhoneContract, 1.0),
+                deprecated("Use Windows.ApplicationModel.VoiceCommands.VoiceCommandDefinition", deprecate, Windows.Phone.PhoneContract, 1.0),
+                exclusiveto(Windows.Media.SpeechRecognition.VoiceCommandSet),
+                uuid(0bedda75-46e6-4b11-a088-5c68632899b5)
+            ]
+            interface IVoiceCommandSet : IInspectable
+            {
+                [deprecated("Use Windows.ApplicationModel.VoiceCommands.VoiceCommandDefinition", deprecate, Windows.Phone.PhoneContract, 1.0)]
+                [propget] HRESULT Language([out, retval] HSTRING *value);
+                [deprecated("Use Windows.ApplicationModel.VoiceCommands.VoiceCommandDefinition", deprecate, Windows.Phone.PhoneContract, 1.0)]
+                [propget] HRESULT Name([out, retval] HSTRING *value);
+                [deprecated("Use Windows.ApplicationModel.VoiceCommands.VoiceCommandDefinition", deprecate, Windows.Phone.PhoneContract, 1.0)]
+                HRESULT SetPhraseListAsync([in] HSTRING phrase_list_name, [in] Windows.Foundation.Collections.IIterable<HSTRING> *phrase_list, [out, retval] Windows.Foundation.IAsyncAction **update_action);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile),
+                threading(both)
+            ]
+            runtimeclass SpeechContinuousRecognitionCompletedEventArgs
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechContinuousRecognitionCompletedEventArgs;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile),
+                threading(both)
+            ]
+            runtimeclass SpeechContinuousRecognitionResultGeneratedEventArgs
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechContinuousRecognitionResultGeneratedEventArgs;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile),
+                threading(both)
+            ]
+            runtimeclass SpeechContinuousRecognitionSession
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechContinuousRecognitionSession;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechRecognitionCompilationResult
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionCompilationResult;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile),
+                threading(both)
+            ]
+            runtimeclass SpeechRecognitionHypothesis
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionHypothesis;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile),
+                threading(both)
+            ]
+            runtimeclass SpeechRecognitionHypothesisGeneratedEventArgs
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionHypothesisGeneratedEventArgs;
+            }
+
+            [
+                activatable(Windows.Media.SpeechRecognition.ISpeechRecognitionListConstraintFactory, Windows.Foundation.UniversalApiContract, 1.0),
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechRecognitionListConstraint
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionListConstraint;
+                interface Windows.Media.SpeechRecognition.ISpeechRecognitionConstraint;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechRecognitionQualityDegradingEventArgs
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionQualityDegradingEventArgs;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechRecognitionResult
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionResult;
+                [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.SpeechRecognition.ISpeechRecognitionResult2;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechRecognitionSemanticInterpretation
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognitionSemanticInterpretation;
+            }
+
+            [
+                activatable(Windows.Foundation.UniversalApiContract, 1.0),
+                activatable(Windows.Media.SpeechRecognition.ISpeechRecognizerFactory, Windows.Foundation.UniversalApiContract, 1.0),
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile),
+                static(Windows.Media.SpeechRecognition.ISpeechRecognizerStatics, Windows.Foundation.UniversalApiContract, 1.0),
+                static(Windows.Media.SpeechRecognition.ISpeechRecognizerStatics2, Windows.Foundation.UniversalApiContract, 5.0)
+            ]
+            runtimeclass SpeechRecognizer
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognizer;
+                interface Windows.Foundation.IClosable;
+                [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.SpeechRecognition.ISpeechRecognizer2;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechRecognizerStateChangedEventArgs
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognizerStateChangedEventArgs;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechRecognizerTimeouts
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognizerTimeouts;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechRecognizerUIOptions
+            {
+                [default] interface Windows.Media.SpeechRecognition.ISpeechRecognizerUIOptions;
+            }
+
+            [
+                contract(Windows.Phone.PhoneContract, 1.0),
+                deprecated("Use Windows.ApplicationModel.VoiceCommands.VoiceCommandDefinition", deprecate, Windows.Phone.PhoneContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass VoiceCommandSet
+            {
+                [default] interface Windows.Media.SpeechRecognition.IVoiceCommandSet;
+            }
+        }
+    }
+}

@@ -1,0 +1,33 @@
+MODULE    = winegstreamer.dll
+UNIXLIB   = winegstreamer.so
+IMPORTLIB = winegstreamer
+IMPORTS   = strmbase ole32 oleaut32 msdmo msvcrt user32
+DELAYIMPORTS = mfplat mf
+UNIX_CFLAGS  = $(GSTREAMER_CFLAGS)
+UNIX_LIBS    = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)
+
+SOURCES = \
+	aac_decoder.c \
+	color_convert.c \
+	main.c \
+	media_sink.c \
+	media_source.c \
+	mfplat.c \
+	quartz_parser.c \
+	quartz_transform.c \
+	resampler.c \
+	rsrc.rc \
+	unixlib.c \
+	video_decoder.c \
+	video_encoder.c \
+	video_processor.c \
+	wg_allocator.c \
+	wg_format.c \
+	wg_media_type.c \
+	wg_muxer.c \
+	wg_parser.c \
+	wg_sample.c \
+	wg_transform.c \
+	winegstreamer_classes.idl \
+	wm_reader.c \
+	wma_decoder.c

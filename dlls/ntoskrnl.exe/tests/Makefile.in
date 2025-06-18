@@ -1,0 +1,21 @@
+TESTDLL   = ntoskrnl.exe
+IMPORTS   = advapi32 crypt32 newdev setupapi user32 wintrust ws2_32 hid
+
+driver_IMPORTS = winecrt0 ntoskrnl hal fltmgr
+driver_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
+driver2_IMPORTS = winecrt0 ntoskrnl hal
+driver2_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
+driver3_IMPORTS = winecrt0 ntoskrnl hal
+driver3_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
+driver_netio_IMPORTS = winecrt0 ntoskrnl hal netio
+driver_netio_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
+driver_pnp_IMPORTS = winecrt0 ntoskrnl hal
+driver_pnp_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
+
+SOURCES = \
+	driver.c \
+	driver2.c \
+	driver3.c \
+	driver_netio.c \
+	driver_pnp.c \
+	ntoskrnl.c

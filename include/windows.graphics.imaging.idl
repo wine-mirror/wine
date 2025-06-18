@@ -1,0 +1,246 @@
+/*
+ * Copyright (C) 2024 Biswapriyo Nath
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.graphics.directx.direct3d11.idl";
+import "windows.storage.streams.idl";
+
+namespace Windows.Graphics.Imaging {
+    typedef enum BitmapAlphaMode BitmapAlphaMode;
+    typedef enum BitmapBufferAccessMode BitmapBufferAccessMode;
+    typedef enum BitmapPixelFormat BitmapPixelFormat;
+    typedef struct BitmapBounds BitmapBounds;
+    typedef struct BitmapPlaneDescription BitmapPlaneDescription;
+    typedef struct BitmapSize BitmapSize;
+
+    interface IBitmapBuffer;
+    interface ISoftwareBitmap;
+    interface ISoftwareBitmapFactory;
+    interface ISoftwareBitmapStatics;
+
+    runtimeclass BitmapBuffer;
+    runtimeclass SoftwareBitmap;
+
+    declare {
+        interface Windows.Foundation.Collections.IIterable<Windows.Graphics.Imaging.BitmapPixelFormat>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Graphics.Imaging.SoftwareBitmap *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Graphics.Imaging.BitmapPixelFormat>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Graphics.Imaging.SoftwareBitmap *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Graphics.Imaging.BitmapPixelFormat>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Graphics.Imaging.SoftwareBitmap *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Graphics.Imaging.SoftwareBitmap *>;
+        interface Windows.Foundation.IReference<Windows.Graphics.Imaging.BitmapBounds>;
+    }
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    enum BitmapAlphaMode
+    {
+        Premultiplied = 0,
+        Straight      = 1,
+        Ignore        = 2,
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    enum BitmapBufferAccessMode
+    {
+        Read      = 0,
+        ReadWrite = 1,
+        Write     = 2,
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    enum BitmapPixelFormat
+    {
+        Unknown = 0,
+        Rgba16  = 12,
+        Rgba8   = 30,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        Gray16  = 57,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        Gray8   = 62,
+        Bgra8   = 87,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        Nv12    = 103,
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)]
+        P010    = 104,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        Yuy2    = 107,
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    struct BitmapBounds
+    {
+        UINT32 X;
+        UINT32 Y;
+        UINT32 Width;
+        UINT32 Height;
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    struct BitmapPlaneDescription
+    {
+        INT32 StartIndex;
+        INT32 Width;
+        INT32 Height;
+        INT32 Stride;
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    struct BitmapSize
+    {
+        UINT32 Width;
+        UINT32 Height;
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Graphics.Imaging.BitmapBuffer),
+        uuid(a53e04c4-399c-438c-b28f-a63a6b83d1a1)
+    ]
+    interface IBitmapBuffer : IInspectable
+        requires Windows.Foundation.IMemoryBuffer, Windows.Foundation.IClosable
+    {
+        HRESULT GetPlaneCount([out, retval] INT32 *value);
+        HRESULT GetPlaneDescription([in] INT32 index, [out, retval] Windows.Graphics.Imaging.BitmapPlaneDescription *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Graphics.Imaging.SoftwareBitmap),
+        uuid(689e0708-7eef-483f-963f-da938818e073)
+    ]
+    interface ISoftwareBitmap : IInspectable
+        requires Windows.Foundation.IClosable
+    {
+        [propget] HRESULT BitmapPixelFormat([out, retval] Windows.Graphics.Imaging.BitmapPixelFormat *value);
+        [propget] HRESULT BitmapAlphaMode([out, retval] Windows.Graphics.Imaging.BitmapAlphaMode *value);
+        [propget] HRESULT PixelWidth([out, retval] INT32 *value);
+        [propget] HRESULT PixelHeight([out, retval] INT32 *value);
+        [propget] HRESULT IsReadOnly([out, retval] boolean *value);
+        [propput] HRESULT DpiX([in] DOUBLE value);
+        [propget] HRESULT DpiX([out, retval] DOUBLE *value);
+        [propput] HRESULT DpiY([in] DOUBLE value);
+        [propget] HRESULT DpiY([out, retval] DOUBLE *value);
+        HRESULT LockBuffer([in] Windows.Graphics.Imaging.BitmapBufferAccessMode mode,
+            [out, retval] Windows.Graphics.Imaging.BitmapBuffer **value);
+        HRESULT CopyTo([in] Windows.Graphics.Imaging.SoftwareBitmap *bitmap);
+        HRESULT CopyFromBuffer([in] Windows.Storage.Streams.IBuffer *buffer);
+        HRESULT CopyToBuffer([in] Windows.Storage.Streams.IBuffer *buffer);
+        HRESULT GetReadOnlyView([out, retval] Windows.Graphics.Imaging.SoftwareBitmap **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Graphics.Imaging.SoftwareBitmap),
+        uuid(c99feb69-2d62-4d47-a6b3-4fdb6a07fdf8)
+    ]
+    interface ISoftwareBitmapFactory : IInspectable
+    {
+        HRESULT Create(
+            [in] Windows.Graphics.Imaging.BitmapPixelFormat format,
+            [in] INT32 width,
+            [in] INT32 height,
+            [out, retval] Windows.Graphics.Imaging.SoftwareBitmap **value);
+        HRESULT CreateWithAlpha(
+            [in] Windows.Graphics.Imaging.BitmapPixelFormat format,
+            [in] INT32 width,
+            [in] INT32 height,
+            [in] Windows.Graphics.Imaging.BitmapAlphaMode alpha,
+            [out, retval] Windows.Graphics.Imaging.SoftwareBitmap **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Graphics.Imaging.SoftwareBitmap),
+        uuid(df0385db-672f-4a9d-806e-c2442f343e86)
+    ]
+    interface ISoftwareBitmapStatics : IInspectable
+    {
+        HRESULT Copy(
+            [in] Windows.Graphics.Imaging.SoftwareBitmap *source,
+            [out, retval] Windows.Graphics.Imaging.SoftwareBitmap **value);
+        [overload("Convert")]
+        HRESULT Convert(
+            [in] Windows.Graphics.Imaging.SoftwareBitmap *source,
+            [in] Windows.Graphics.Imaging.BitmapPixelFormat format,
+            [out, retval] Windows.Graphics.Imaging.SoftwareBitmap **value);
+        [overload("Convert")]
+        HRESULT ConvertWithAlpha(
+            [in] Windows.Graphics.Imaging.SoftwareBitmap *source,
+            [in] Windows.Graphics.Imaging.BitmapPixelFormat format,
+            [in] Windows.Graphics.Imaging.BitmapAlphaMode alpha,
+            [out, retval] Windows.Graphics.Imaging.SoftwareBitmap **value);
+        [overload("CreateCopyFromBuffer")]
+        HRESULT CreateCopyFromBuffer(
+            [in] Windows.Storage.Streams.IBuffer *source,
+            [in] Windows.Graphics.Imaging.BitmapPixelFormat format,
+            [in] INT32 width,
+            [in] INT32 height,
+            [out, retval] Windows.Graphics.Imaging.SoftwareBitmap **value);
+        [overload("CreateCopyFromBuffer")]
+        HRESULT CreateCopyWithAlphaFromBuffer(
+            [in] Windows.Storage.Streams.IBuffer *source,
+            [in] Windows.Graphics.Imaging.BitmapPixelFormat format,
+            [in] INT32 width,
+            [in] INT32 height,
+            [in] Windows.Graphics.Imaging.BitmapAlphaMode alpha,
+            [out, retval] Windows.Graphics.Imaging.SoftwareBitmap **value);
+        [overload("CreateCopyFromSurfaceAsync")]
+        HRESULT CreateCopyFromSurfaceAsync(
+            [in] Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface *surface,
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Graphics.Imaging.SoftwareBitmap *> **value);
+        [overload("CreateCopyFromSurfaceAsync")]
+        HRESULT CreateCopyWithAlphaFromSurfaceAsync(
+            [in] Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface *surface,
+            [in] Windows.Graphics.Imaging.BitmapAlphaMode alpha,
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Graphics.Imaging.SoftwareBitmap *> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass BitmapBuffer
+    {
+        [default] interface Windows.Graphics.Imaging.IBitmapBuffer;
+        interface Windows.Foundation.IMemoryBuffer;
+        interface Windows.Foundation.IClosable;
+    }
+
+    [
+        activatable(Windows.Graphics.Imaging.ISoftwareBitmapFactory, Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Graphics.Imaging.ISoftwareBitmapStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass SoftwareBitmap
+    {
+        [default] interface Windows.Graphics.Imaging.ISoftwareBitmap;
+        interface Windows.Foundation.IClosable;
+    }
+}

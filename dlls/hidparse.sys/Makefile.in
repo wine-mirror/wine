@@ -1,0 +1,11 @@
+MODULE = hidparse.sys
+IMPORTLIB = hidparse
+IMPORTS = ntoskrnl
+PARENTSRC = ../hid
+
+EXTRADLLFLAGS = -Wl,--subsystem,native
+
+SOURCES = \
+	hidp.c \
+	hidparse.sys.spec \
+	main.c

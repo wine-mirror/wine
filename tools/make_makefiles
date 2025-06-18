@@ -1,0 +1,382 @@
+#!/usr/bin/perl -w
+#
+# Build the auto-generated parts of the Wine makefiles.
+#
+# Copyright 2006 Alexandre Julliard
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+#
+
+use strict;
+
+my (@makefiles, %makefiles);
+my @nls_files;
+my %deleted_files;
+
+sub dirname($)
+{
+    my $ret = shift;
+    return "" unless $ret =~ /\//;
+    $ret =~ s!/[^/]*$!!;
+    return $ret;
+}
+
+# update a file if changed
+sub update_file($$)
+{
+    my $file = shift;
+    my $new = shift;
+
+    open FILE, ">$file.new" or die "cannot create $file.new";
+    print FILE $new;
+    close FILE;
+    rename "$file.new", "$file";
+    print "$file updated\n";
+    if ($file eq "configure.ac")
+    {
+        system "autoconf";
+        print "configure updated\n";
+    }
+}
+
+# replace some lines in a file between two markers
+sub replace_in_file($$$@)
+{
+    my $file = shift;
+    my $start = shift;
+    my $end = shift;
+    my ($old, $new);
+
+    open OLD_FILE, "$file" or die "cannot open $file";
+    while (<OLD_FILE>)
+    {
+        $old .= $_;
+        last if /$start/;
+        $new .= $_;
+    }
+
+    $new .= join "", @_;
+
+    my $skip = 1;
+    while (<OLD_FILE>)
+    {
+        $old .= $_;
+        $new .= $_ unless $skip;
+        $skip = 0 if /$end/;
+    }
+
+    close OLD_FILE;
+    update_file($file, $new) if $old ne $new;
+}
+
+# replace all source variables in a makefile
+sub replace_makefile_variables($)
+{
+    my $file = shift;
+    my $make = $makefiles{$file};
+    my $old;
+    my $new;
+    my $replaced = 0;
+    my $value = "";
+
+    $value = "\\\n\t" . join(" \\\n\t", sort @{${$make}{"=SOURCES"}}) if defined ${$make}{"=SOURCES"};
+
+    open OLD_FILE, $file or die "cannot open $file";
+    while (<OLD_FILE>)
+    {
+        $old .= $_;
+        if (/^\s*SOURCES\s*=/)
+        {
+            my $old_str = $_;
+            while (/\\$/)
+            {
+                $_ = <OLD_FILE>;
+                last unless $_;
+                $old .= $_;
+                $old_str .= $_;
+            }
+            $new .= "SOURCES = $value\n" if $value;
+            $replaced = 1;
+            next;
+        }
+        $new .= $_;
+    }
+    unless ($replaced)
+    {
+        $new .= "\nSOURCES = $value\n" if $value;
+    }
+    close OLD_FILE;
+    update_file($file, $new) if $old ne $new;
+}
+
+# parse the specified makefile and load the variables
+sub parse_makefile($)
+{
+    my $file = shift;
+    my %make;
+
+    ($make{"=dir"} = $file) =~ s/[^\/]+$//;
+
+    open MAKE, $file or die "cannot open $file\n";
+
+    while (<MAKE>)
+    {
+        chomp;
+        next if (/^\s*#/);
+        while (/\\$/) { chop; $_ .= <MAKE>; chomp; }  # merge continued lines
+        next if (/^\s*$/);
+
+        if (/^\s*(MODULE|IMPORTLIB|TESTDLL|STATICLIB|PARENTSRC|EXTRADLLFLAGS)\s*=\s*(.*)/)
+        {
+            my $var = $1;
+            $make{$var} = $2;
+            next;
+        }
+        if (/^\s*(SOURCES)\s*=\s*(.*)/)
+        {
+            my $var = $1;
+            my @list = split(/\s+/, $2);
+            $make{$var} = \@list;
+            next;
+        }
+    }
+
+    return %make;
+}
+
+# read pragma makedep flags from a source file
+sub get_makedep_flags($)
+{
+    my $file = shift;
+    my %flags;
+
+    open FILE, $file or die "cannot open $file";
+    if ($file =~ /\.sfd$/)
+    {
+        while (<FILE>)
+        {
+            next unless /^UComments:\s*\"(.*)\"$/;
+            foreach my $pragma (split /\+AAoA/, $1)
+            {
+                next unless $pragma =~ /^#\s*pragma\s+makedep\s+(.*)/;
+                foreach my $flag (split /\s+/, $1)
+                {
+                    $flags{$flag} = 1;
+                    last if $flag eq "font";
+                }
+            }
+        }
+    }
+    else
+    {
+        while (<FILE>)
+        {
+            next unless /^#\s*pragma\s+makedep\s+(.*)/;
+            foreach my $flag (split /\s+/, $1)
+            {
+                last if $flag eq "depend";
+                $flags{$flag} = 1;
+            }
+        }
+    }
+    close FILE;
+    return %flags;
+}
+
+sub get_parent_makefile($)
+{
+    my $file = shift;
+    my %make = %{$makefiles{$file}};
+    my $reldir = $make{"PARENTSRC"} || "";
+    return "" unless $reldir;
+    (my $path = $file) =~ s/\/Makefile\.in$/\//;
+    while ($reldir =~ /^\.\.\//)
+    {
+        $reldir =~ s/^\.\.\///;
+        $path =~ s/[^\/]+\/$//;
+    }
+    return "$path$reldir/Makefile.in";
+}
+
+# preserve shared source files that are listed in the existing makefile
+sub preserve_shared_source_files($$)
+{
+    my ($make, $parent) = @_;
+    my %srcs;
+
+    return unless defined ${$parent}{"=SOURCES"};
+    foreach my $file (@{${$parent}{"=SOURCES"}}) { $srcs{$file} = 1; }
+    foreach my $file (@{${$make}{"=SOURCES"}}) { $srcs{$file} = 0; }
+
+    foreach my $file (@{${$make}{SOURCES}})
+    {
+        next unless defined $srcs{$file} && $srcs{$file} == 1;
+        push @{${$make}{"=SOURCES"}}, $file;
+    }
+}
+
+# assign source files to their respective makefile
+sub assign_sources_to_makefiles(@)
+{
+    foreach my $file (@_)
+    {
+        next if defined $deleted_files{$file};
+        next if $file =~ /Makefile\.in$/;
+        my $dir = dirname( $file );
+        my $subdir = $dir;
+
+        while ($dir && !defined $makefiles{"$dir/Makefile.in"}) { $dir = dirname( $dir ); }
+        $subdir =~ s/^$dir\/?//;
+        next unless $dir;
+
+        die "no makefile found for $file\n" unless defined $makefiles{"$dir/Makefile.in"};
+
+        my $make = $makefiles{"$dir/Makefile.in"};
+        my $name = substr( $file, length($dir) + 1 );
+
+        if ($name =~ /\.h$/)
+        {
+            next if $dir ne "include";
+        }
+        elsif ($name =~ /\.idl$/)
+        {
+            die "no makedep flags specified in $file" unless $dir eq "include" || get_makedep_flags($file);
+        }
+        elsif ($name =~ /\.spec$/)
+        {
+            my $dllflags = ${$make}{"EXTRADLLFLAGS"} || "";
+            next unless defined ${$make}{"TESTDLL"} ||
+                ${$make}{"MODULE"} =~ /\.drv$/ ||
+                ($dllflags =~ /-Wb,--data-only/) ||
+                ($dllflags =~ /-Wl,--subsystem,native/);
+        }
+        elsif ($name =~ /\.nls$/)
+        {
+            push @nls_files, $name if $dir eq "nls";
+        }
+        elsif ($name =~ /\.xml$/)
+        {
+            next unless $dir eq "dlls/winewayland.drv";
+        }
+        elsif ($name !~ /\.(S|c|in|inl|l|m|mc|po|rc|rh|sfd|svg|x|y)$/)
+        {
+            next unless $dir eq "loader";  # loader dir contains misc files
+        }
+        push @{${$make}{"=SOURCES"}}, $name;
+    }
+
+    # preserve shared source files from the parent makefile
+    foreach my $file (@makefiles)
+    {
+        my $make = $makefiles{$file};
+        my $parent = get_parent_makefile( $file );
+        next unless $parent;
+        preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent} );
+    }
+}
+
+################################################################
+# update the makefile list in configure.ac
+
+sub update_makefiles(@)
+{
+    my (@lines);
+
+    foreach my $file (sort @_)
+    {
+        next if $file eq "Makefile.in";
+        my %make = %{$makefiles{$file}};
+        (my $dir = $file) =~ s/^(.*)\/Makefile\.in/$1/;
+        if (defined($make{"TESTDLL"}))  # test
+        {
+            die "TESTDLL should not be defined in $file" unless $file =~ /\/tests\/Makefile\.in$/;
+            die "MODULE should not be defined in $file" if defined $make{"MODULE"};
+            die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
+        }
+        elsif (defined($make{"STATICLIB"}))
+        {
+            die "MODULE should not be defined in $file" if defined $make{"MODULE"};
+            die "invalid STATICLIB name" unless $make{"STATICLIB"} =~ /\.a$/;
+        }
+        elsif (defined($make{"MODULE"}))  # dll or program
+        {
+            (my $name = $file) =~ s/^(dlls|programs)\/(.*)\/Makefile\.in/$2/;
+            my $dllflags = $make{"EXTRADLLFLAGS"} || "";
+            die "invalid MODULE name" if $make{"MODULE"} =~ /\.a$/;
+            die "MODULE should not be defined in $file" unless $file =~ /^(dlls|programs)\//;
+            die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
+            if ($file =~ /^programs\//)
+            {
+                die "EXTRADLLFLAGS should be defined in $file" unless $dllflags;
+                die "EXTRADLLFLAGS should contain -mconsole or -mwindows in $file" unless $dllflags =~ /-m(console|windows)/;
+                die "Invalid MODULE in $file" unless ($name =~ /\./ && $make{"MODULE"} eq $name) || $make{"MODULE"} eq "$name.exe";
+            }
+            else
+            {
+                die "EXTRADLLFLAGS should not contain -mconsole or -mwindows in $file" if $dllflags =~ /-m(console|windows)/;
+                die "Invalid MODULE in $file" unless ($name =~ /\./ && $make{"MODULE"} eq $name) || $make{"MODULE"} eq "$name.dll";
+            }
+            if (defined $make{"IMPORTLIB"})
+            {
+                die "IMPORTLIB not allowed in programs\n" if $file =~ /^programs\//;
+                die "Invalid IMPORTLIB name in $file" if $make{"IMPORTLIB"} =~ /\./;
+            }
+            if ($name =~ /\.sys$/)
+            {
+                die "Subsystem should be set to native in $file" unless $dllflags =~ /-Wl,--subsystem,native/;
+            }
+        }
+        elsif ($file =~ /^tools.*\/Makefile\.in$/)
+        {
+            die "MODULE should not be defined in $file" if defined $make{"MODULE"};
+            die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
+            die "EXTRADLLFLAGS should not be defined in $file" if defined $make{"EXTRADLLFLAGS"};
+        }
+        push @lines, "WINE_CONFIG_MAKEFILE($dir)\n";
+    }
+
+    # update the source variables in all the makefiles
+
+    foreach my $file (sort @_) { replace_makefile_variables( $file ); }
+
+    push @lines, "dnl End of auto-generated output commands\n";
+    replace_in_file( "configure.ac", '^WINE_CONFIG_MAKEFILE', '^dnl End of auto-generated output commands\n$', @lines);
+}
+
+sub update_wine_inf()
+{
+    my @lines;
+    push @lines, "[NlsFiles]", sort grep(!/^sort/, @nls_files);
+    push @lines, "\n[SortFiles]", sort grep(/^sort/, @nls_files);
+    push @lines, "\n[WineSourceDirs]\n";
+    replace_in_file "loader/wine.inf.in", '^\[NlsFiles\]', '^\[WineSourceDirs\]', join( "\n", @lines );
+}
+
+my $git_dir = $ENV{GIT_DIR} || ".git";
+die "needs to be run from a git checkout" unless -e $git_dir;
+
+my @all_files = split /\0/, `git ls-files -c -z` or die "cannot get files list";
+map { $deleted_files{$_} = 1; } split /\0/, `git ls-files -d -z`;
+@makefiles = grep /Makefile.in$/, @all_files;
+
+foreach my $file (sort @makefiles)
+{
+    my %make = parse_makefile( $file );
+    $makefiles{$file} = \%make;
+}
+
+assign_sources_to_makefiles( @all_files );
+update_makefiles( @makefiles );
+update_wine_inf();

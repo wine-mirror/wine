@@ -1,0 +1,51 @@
+/*
+ * Copyright 2019 Hans Leidekker for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep register
+
+[
+    threading(apartment),
+    progid("ADODB.Command.6.0"),
+    vi_progid("ADODB.Command"),
+    uuid(00000507-0000-0010-8000-00aa006d2ea4)
+]
+coclass Command { interface _Command; }
+
+[
+    threading(apartment),
+    progid("ADODB.Connection.6.0"),
+    vi_progid("ADODB.Connection"),
+    uuid(00000514-0000-0010-8000-00aa006d2ea4)
+]
+coclass Connection { interface _Connection; }
+
+[
+    threading(both),
+    progid("ADODB.Recordset.6.0"),
+    vi_progid("ADODB.Recordset"),
+    uuid(00000535-0000-0010-8000-00aa006d2ea4)
+]
+coclass Recordset { interface _Recordset; }
+
+[
+    threading(both),
+    progid("ADODB.Stream.6.0"),
+    vi_progid("ADODB.Stream"),
+    uuid(00000566-0000-0010-8000-00aa006d2ea4)
+]
+coclass Stream { interface _Stream; }

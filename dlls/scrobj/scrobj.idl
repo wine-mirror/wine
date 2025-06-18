@@ -1,0 +1,97 @@
+/*
+ * Copyright 2017 Nikolay Sivov
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep regtypelib
+#pragma makedep header
+
+import "unknwn.idl";
+import "objidl.idl";
+import "oaidl.idl";
+
+[
+    uuid(06290c00-48aa-11d2-8432-006008c3fbfc),
+    version(1.0)
+]
+library Scriptlet
+{
+    importlib("stdole2.tlb");
+
+    [
+        uuid(2de0a190-a1a4-11d1-b382-00a0c911e8b2),
+        dual,
+        oleautomation
+    ]
+    interface IGenScriptletTLib : IDispatch
+    {
+        [id(0x1)]
+        HRESULT AddURL([in] BSTR url);
+
+        [id(0x2), propput]
+        HRESULT Path([in] BSTR path);
+
+        [id(0x2), propget]
+        HRESULT Path([out, retval] BSTR *path);
+
+        [id(0x4), propput]
+        HRESULT Doc([in] BSTR doc);
+
+        [id(0x4), propget]
+        HRESULT Doc([out, retval] BSTR *doc);
+
+        [id(0x5), propput]
+        HRESULT Name([in] BSTR name);
+
+        [id(0x5), propget]
+        HRESULT Name([out, retval] BSTR *name);
+
+        [id(0x6), propput]
+        HRESULT MajorVersion([in] WORD version);
+
+        [id(0x6), propget]
+        HRESULT MajorVersion([out, retval] WORD *version);
+
+        [id(0x7), propput]
+        HRESULT MinorVersion([in] WORD version);
+
+        [id(0x7), propget]
+        HRESULT MinorVersion([out, retval] WORD *version);
+
+        [id(0x3)]
+        HRESULT Write();
+
+        [id(0x8)]
+        HRESULT Reset();
+
+        [id(0x9), propput]
+        HRESULT GUID([in] BSTR guid);
+
+        [id(0x9), propget]
+        HRESULT GUID([out, retval] BSTR *guid);
+    }
+
+    [
+        uuid(06290bd5-48aa-11d2-8432-006008c3fbfc ),
+        version(1.0),
+        threading(apartment),
+        progid("Scriptlet.TypeLib")
+    ]
+    coclass TypeLib
+    {
+        [default] interface IGenScriptletTLib;
+    }
+}
