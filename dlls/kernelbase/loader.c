@@ -1173,7 +1173,7 @@ void WINAPI DECLSPEC_HOTPATCH AddRefActCtx( HANDLE context )
  */
 HANDLE WINAPI DECLSPEC_HOTPATCH CreateActCtxW( PCACTCTXW ctx )
 {
-    HANDLE context;
+    struct _ACTIVATION_CONTEXT *context;
 
     TRACE( "%p %08lx\n", ctx, ctx ? ctx->dwFlags : 0 );
 
@@ -1225,7 +1225,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH FindActCtxSectionStringW( DWORD flags, const GUID 
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetCurrentActCtx( HANDLE *pcontext )
 {
-    return set_ntstatus( RtlGetActiveActivationContext( pcontext ));
+    return set_ntstatus( RtlGetActiveActivationContext( (struct _ACTIVATION_CONTEXT **)pcontext ));
 }
 
 

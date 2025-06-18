@@ -1074,11 +1074,11 @@ static WCHAR *build_assembly_id( const struct assembly_identity *ai )
     return ret;
 }
 
-static ACTIVATION_CONTEXT *check_actctx( HANDLE h )
+static ACTIVATION_CONTEXT *check_actctx( ACTIVATION_CONTEXT *actctx )
 {
-    ACTIVATION_CONTEXT *ret = NULL, *actctx = h;
+    ACTIVATION_CONTEXT *ret = NULL;
 
-    if (!h || h == INVALID_HANDLE_VALUE) return NULL;
+    if (!actctx || actctx == INVALID_HANDLE_VALUE) return NULL;
     __TRY
     {
         if (actctx->magic == ACTCTX_MAGIC) ret = actctx;
@@ -3414,7 +3414,7 @@ static NTSTATUS parse_depend_manifests(struct actctx_loader* acl)
     return status;
 }
 
-static HANDLE get_current_actctx_no_addref(void)
+static ACTIVATION_CONTEXT * get_current_actctx_no_addref(void)
 {
     ACTIVATION_CONTEXT_STACK *actctx_stack = NtCurrentTeb()->ActivationContextStackPointer;
 
@@ -3425,36 +3425,36 @@ static HANDLE get_current_actctx_no_addref(void)
 }
 
 /* find the appropriate activation context for RtlQueryInformationActivationContext */
-static NTSTATUS find_query_actctx( HANDLE *handle, DWORD flags, ULONG class )
+static NTSTATUS find_query_actctx( ACTIVATION_CONTEXT **actctx, DWORD flags, ULONG class )
 {
     NTSTATUS status = STATUS_SUCCESS;
 
     if (flags & QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX)
     {
-        if (*handle) return STATUS_INVALID_PARAMETER;
+        if (*actctx) return STATUS_INVALID_PARAMETER;
 
-        *handle = get_current_actctx_no_addref();
+        *actctx = get_current_actctx_no_addref();
     }
     else if (flags & (QUERY_ACTCTX_FLAG_ACTCTX_IS_ADDRESS|QUERY_ACTCTX_FLAG_ACTCTX_IS_HMODULE))
     {
         ULONG_PTR magic;
         LDR_DATA_TABLE_ENTRY *pldr;
 
-        if (!*handle) return STATUS_INVALID_PARAMETER;
+        if (!*actctx) return STATUS_INVALID_PARAMETER;
 
         LdrLockLoaderLock( 0, NULL, &magic );
-        if (!LdrFindEntryForAddress( *handle, &pldr ))
+        if (!LdrFindEntryForAddress( *actctx, &pldr ))
         {
-            if ((flags & QUERY_ACTCTX_FLAG_ACTCTX_IS_HMODULE) && *handle != pldr->DllBase)
+            if ((flags & QUERY_ACTCTX_FLAG_ACTCTX_IS_HMODULE) && *actctx != pldr->DllBase)
                 status = STATUS_DLL_NOT_FOUND;
             else
-                *handle = pldr->ActivationContext;
+                *actctx = pldr->ActivationContext;
         }
         else status = STATUS_DLL_NOT_FOUND;
         LdrUnlockLoaderLock( 0, magic );
     }
-    else if (!*handle && (class != ActivationContextBasicInformation))
-        *handle = process_actctx;
+    else if (!*actctx && (class != ActivationContextBasicInformation))
+        *actctx = process_actctx;
 
     return status;
 }
@@ -5227,7 +5227,7 @@ static const WCHAR *find_app_settings( ACTIVATION_CONTEXT *actctx, const WCHAR *
 void actctx_init(void)
 {
     ACTCTXW ctx;
-    HANDLE handle;
+    ACTIVATION_CONTEXT *actctx;
 
     ctx.cbSize   = sizeof(ctx);
     ctx.lpSource = NULL;
@@ -5235,7 +5235,7 @@ void actctx_init(void)
     ctx.hModule  = NtCurrentTeb()->Peb->ImageBaseAddress;
     ctx.lpResourceName = (LPCWSTR)CREATEPROCESS_MANIFEST_RESOURCE_ID;
 
-    if (!RtlCreateActivationContext( &handle, &ctx )) process_actctx = check_actctx(handle);
+    if (!RtlCreateActivationContext( &actctx, &ctx )) process_actctx = check_actctx( actctx );
 
     NtCurrentTeb()->Peb->ActivationContextData = process_actctx;
 }
@@ -5248,7 +5248,7 @@ void actctx_init(void)
  *
  * FIXME: function signature/prototype is wrong
  */
-NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
+NTSTATUS WINAPI RtlCreateActivationContext( ACTIVATION_CONTEXT **new_actctx, const void *ptr )
 {
     const ACTCTXW *pActCtx = ptr;  /* FIXME: not the right structure */
     const WCHAR *directory = NULL;
@@ -5384,7 +5384,7 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
     if (status == STATUS_SUCCESS) status = parse_depend_manifests(&acl);
     free_depend_manifests( &acl );
 
-    if (status == STATUS_SUCCESS) *handle = actctx;
+    if (status == STATUS_SUCCESS) *new_actctx = actctx;
     else actctx_release( actctx );
     return status;
 
@@ -5398,22 +5398,18 @@ error:
 /***********************************************************************
  *		RtlAddRefActivationContext (NTDLL.@)
  */
-void WINAPI RtlAddRefActivationContext( HANDLE handle )
+void WINAPI RtlAddRefActivationContext( ACTIVATION_CONTEXT *actctx )
 {
-    ACTIVATION_CONTEXT *actctx;
-
-    if ((actctx = check_actctx( handle ))) actctx_addref( actctx );
+    if (check_actctx( actctx )) actctx_addref( actctx );
 }
 
 
 /******************************************************************
  *		RtlReleaseActivationContext (NTDLL.@)
  */
-void WINAPI RtlReleaseActivationContext( HANDLE handle )
+void WINAPI RtlReleaseActivationContext( ACTIVATION_CONTEXT *actctx )
 {
-    ACTIVATION_CONTEXT *actctx;
-
-    if ((actctx = check_actctx( handle ))) actctx_release( actctx );
+    if (check_actctx( actctx )) actctx_release( actctx );
 }
 
 /******************************************************************
@@ -5421,38 +5417,38 @@ void WINAPI RtlReleaseActivationContext( HANDLE handle )
  *
  * FIXME: function prototype might be wrong
  */
-NTSTATUS WINAPI RtlZombifyActivationContext( HANDLE handle )
+NTSTATUS WINAPI RtlZombifyActivationContext( ACTIVATION_CONTEXT *actctx )
 {
-    FIXME("%p: stub\n", handle);
+    FIXME("%p: stub\n", actctx);
     return STATUS_NOT_IMPLEMENTED;
 }
 
 /******************************************************************
  *		RtlActivateActivationContext (NTDLL.@)
  */
-NTSTATUS WINAPI RtlActivateActivationContext( ULONG unknown, HANDLE handle, PULONG_PTR cookie )
+NTSTATUS WINAPI RtlActivateActivationContext( ULONG unknown, ACTIVATION_CONTEXT *actctx, PULONG_PTR cookie )
 {
-    return RtlActivateActivationContextEx( 0, NtCurrentTeb(), handle, cookie );
+    return RtlActivateActivationContextEx( 0, NtCurrentTeb(), actctx, cookie );
 }
 
 
 /******************************************************************
  *		RtlActivateActivationContextEx (NTDLL.@)
  */
-NTSTATUS WINAPI RtlActivateActivationContextEx( ULONG flags, TEB *teb, HANDLE handle, ULONG_PTR *cookie )
+NTSTATUS WINAPI RtlActivateActivationContextEx( ULONG flags, TEB *teb, ACTIVATION_CONTEXT *actctx, ULONG_PTR *cookie )
 {
     ACTIVATION_CONTEXT_STACK *actctx_stack = teb->ActivationContextStackPointer;
     RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
 
     frame = RtlAllocateHeap( GetProcessHeap(), HEAP_GENERATE_EXCEPTIONS, sizeof(*frame) );
     frame->Previous = actctx_stack->ActiveFrame;
-    frame->ActivationContext = handle;
+    frame->ActivationContext = actctx;
     frame->Flags = 0;
     actctx_stack->ActiveFrame = frame;
-    RtlAddRefActivationContext( handle );
+    RtlAddRefActivationContext( actctx );
 
     *cookie = (ULONG_PTR)frame;
-    TRACE( "%p cookie=%Ix\n", handle, *cookie );
+    TRACE( "%p cookie=%Ix\n", actctx, *cookie );
     return STATUS_SUCCESS;
 }
 
@@ -5522,9 +5518,9 @@ void WINAPI RtlFreeActivationContextStack( ACTIVATION_CONTEXT_STACK *actctx_stac
 /******************************************************************
  *		RtlGetActiveActivationContext (NTDLL.@)
  */
-NTSTATUS WINAPI RtlGetActiveActivationContext( HANDLE *handle )
+NTSTATUS WINAPI RtlGetActiveActivationContext( ACTIVATION_CONTEXT **actctx )
 {
-    RtlAddRefActivationContext( *handle = get_current_actctx_no_addref() );
+    RtlAddRefActivationContext( *actctx = get_current_actctx_no_addref() );
     return STATUS_SUCCESS;
 }
 
@@ -5532,13 +5528,13 @@ NTSTATUS WINAPI RtlGetActiveActivationContext( HANDLE *handle )
 /******************************************************************
  *		RtlIsActivationContextActive (NTDLL.@)
  */
-BOOLEAN WINAPI RtlIsActivationContextActive( HANDLE handle )
+BOOLEAN WINAPI RtlIsActivationContextActive( ACTIVATION_CONTEXT *actctx )
 {
     ACTIVATION_CONTEXT_STACK *actctx_stack = NtCurrentTeb()->ActivationContextStackPointer;
     RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
 
     for (frame = actctx_stack->ActiveFrame; frame; frame = frame->Previous)
-        if (frame->ActivationContext == handle) return TRUE;
+        if (frame->ActivationContext == actctx) return TRUE;
     return FALSE;
 }
 
@@ -5549,18 +5545,17 @@ BOOLEAN WINAPI RtlIsActivationContextActive( HANDLE handle )
  * Get information about an activation context.
  * FIXME: function signature/prototype may be wrong
  */
-NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle, PVOID subinst,
+NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, ACTIVATION_CONTEXT *actctx, PVOID subinst,
                                                       ULONG class, PVOID buffer,
                                                       SIZE_T bufsize, SIZE_T *retlen )
 {
-    ACTIVATION_CONTEXT *actctx;
     NTSTATUS status;
 
-    TRACE("%08lx %p %p %lu %p %Id %p\n", flags, handle,
+    TRACE("%08lx %p %p %lu %p %Id %p\n", flags, actctx,
           subinst, class, buffer, bufsize, retlen);
 
     if (retlen) *retlen = 0;
-    if ((status = find_query_actctx( &handle, flags, class ))) return status;
+    if ((status = find_query_actctx( &actctx, flags, class ))) return status;
 
     switch (class)
     {
@@ -5571,9 +5566,9 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
             if (retlen) *retlen = sizeof(*info);
             if (!info || bufsize < sizeof(*info)) return STATUS_BUFFER_TOO_SMALL;
 
-            info->hActCtx = handle;
+            info->hActCtx = actctx;
             info->dwFlags = 0;  /* FIXME */
-            if (!(flags & QUERY_ACTCTX_FLAG_NO_ADDREF)) RtlAddRefActivationContext( handle );
+            if (!(flags & QUERY_ACTCTX_FLAG_NO_ADDREF)) RtlAddRefActivationContext( actctx );
         }
         break;
 
@@ -5584,7 +5579,7 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
             SIZE_T len, manifest_len = 0, config_len = 0, appdir_len = 0;
             LPWSTR ptr;
 
-            if (!(actctx = check_actctx(handle))) return STATUS_INVALID_PARAMETER;
+            if (!check_actctx(actctx)) return STATUS_INVALID_PARAMETER;
 
             if (actctx->num_assemblies) assembly = actctx->assemblies;
 
@@ -5639,7 +5634,7 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
             SIZE_T len, id_len = 0, ad_len = 0, path_len = 0;
             LPWSTR ptr;
 
-            if (!(actctx = check_actctx(handle))) return STATUS_INVALID_PARAMETER;
+            if (!check_actctx(actctx)) return STATUS_INVALID_PARAMETER;
             if (!subinst) return STATUS_INVALID_PARAMETER;
 
             index = *(DWORD*)subinst;
@@ -5708,7 +5703,7 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
             SIZE_T len, dll_len = 0;
             LPWSTR ptr;
 
-            if (!(actctx = check_actctx(handle))) return STATUS_INVALID_PARAMETER;
+            if (!check_actctx(actctx)) return STATUS_INVALID_PARAMETER;
             if (!acqi) return STATUS_INVALID_PARAMETER;
 
             if (acqi->ulAssemblyIndex >= actctx->num_assemblies)
@@ -5752,7 +5747,7 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
             ULONG num_compat_contexts = 0, n;
             SIZE_T len;
 
-            if (!(actctx = check_actctx(handle))) return STATUS_INVALID_PARAMETER;
+            if (!check_actctx(actctx)) return STATUS_INVALID_PARAMETER;
 
             if (actctx->num_assemblies) assembly = actctx->assemblies;
 
@@ -5777,7 +5772,7 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
             struct assembly *assembly;
             SIZE_T len;
 
-            if (!(actctx = check_actctx(handle))) return STATUS_INVALID_PARAMETER;
+            if (!check_actctx(actctx)) return STATUS_INVALID_PARAMETER;
 
             len = sizeof(*acrli);
             if (retlen) *retlen = len;
@@ -5894,11 +5889,10 @@ NTSTATUS WINAPI RtlFindActivationContextSectionGuid( ULONG flags, const GUID *ex
 /***********************************************************************
  *		RtlQueryActivationContextApplicationSettings (NTDLL.@)
  */
-NTSTATUS WINAPI RtlQueryActivationContextApplicationSettings( DWORD flags, HANDLE handle, const WCHAR *ns,
+NTSTATUS WINAPI RtlQueryActivationContextApplicationSettings( DWORD flags, ACTIVATION_CONTEXT *actctx, const WCHAR *ns,
                                                               const WCHAR *settings, WCHAR *buffer,
                                                               SIZE_T size, SIZE_T *written )
 {
-    ACTIVATION_CONTEXT *actctx;
     const WCHAR *res;
 
     if (flags)
@@ -5919,8 +5913,8 @@ NTSTATUS WINAPI RtlQueryActivationContextApplicationSettings( DWORD flags, HANDL
     }
     else ns = windowsSettings2005NSW;
 
-    if (!handle) handle = process_actctx;
-    if (!(actctx = check_actctx( handle ))) return STATUS_INVALID_PARAMETER;
+    if (!actctx) actctx = process_actctx;
+    if (!check_actctx( actctx )) return STATUS_INVALID_PARAMETER;
 
     if (!(res = find_app_settings( actctx, settings, ns ))) return STATUS_SXS_KEY_NOT_FOUND;
 

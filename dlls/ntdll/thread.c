@@ -257,7 +257,8 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
     ULONG flags = suspended ? THREAD_CREATE_FLAGS_CREATE_SUSPENDED : 0;
     ULONG_PTR buffer[offsetof( PS_ATTRIBUTE_LIST, Attributes[2] ) / sizeof(ULONG_PTR)];
     PS_ATTRIBUTE_LIST *attr_list = (PS_ATTRIBUTE_LIST *)buffer;
-    HANDLE handle, actctx;
+    struct _ACTIVATION_CONTEXT *actctx;
+    HANDLE handle;
     TEB *teb;
     ULONG ret;
     NTSTATUS status;
