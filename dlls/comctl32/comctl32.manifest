@@ -6,9 +6,9 @@
     <windowClass>ButtonListBox</windowClass>
     <windowClass>ComboBoxEx32</windowClass>
     <windowClass>ComboLBox</windowClass>
-    <windowClass>Combobox</windowClass>
+    <windowClass>ComboBox</windowClass>
     <windowClass>Edit</windowClass>
-    <windowClass>Listbox</windowClass>
+    <windowClass>ListBox</windowClass>
     <windowClass>NativeFontCtl</windowClass>
     <windowClass>ReBarWindow32</windowClass>
     <windowClass>ScrollBar</windowClass>

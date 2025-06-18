@@ -56,7 +56,7 @@ static void CALLBACK msg_winevent_proc(HWINEVENTHOOK hevent,
 
     /* ignore events not from a listbox control */
     if (!GetClassNameA(hwnd, class_name, ARRAY_SIZE(class_name)) ||
-        strcmp(class_name, WC_LISTBOXA) != 0)
+        stricmp(class_name, WC_LISTBOXA) != 0)
         return;
 
     msg.message = event;
