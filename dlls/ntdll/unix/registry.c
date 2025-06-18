@@ -733,13 +733,12 @@ NTSTATUS WINAPI NtLoadKeyEx( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *f
     if (roothandle) FIXME("roothandle is not filled\n");
     if (iostatus) FIXME("iostatus is not filled\n");
 
-    get_redirect( &new_attr, &nt_name );
-    if (!(ret = nt_to_unix_file_name( &new_attr, &unix_name, FILE_OPEN )))
+    if (!(ret = get_nt_and_unix_names( &new_attr, &nt_name, &unix_name, FILE_OPEN )))
     {
         ret = open_unix_file( &key, unix_name, GENERIC_READ | SYNCHRONIZE,
                               &new_attr, 0, 0, FILE_OPEN, 0, NULL, 0 );
-        free( unix_name );
     }
+    free( unix_name );
     free( nt_name.Buffer );
 
     if (ret) return ret;
