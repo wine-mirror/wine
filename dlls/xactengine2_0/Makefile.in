@@ -1,9 +1,0 @@
-MODULE    = xactengine2_0.dll
-IMPORTS   = $(FAUDIO_PE_LIBS) ole32 uuid
-EXTRAINCL = $(FAUDIO_PE_CFLAGS)
-EXTRADEFS = -DXACT3_VER=0x0200
-PARENTSRC = ../xactengine3_7
-
-SOURCES = \
-	xact_classes.idl \
-	xact_dll.c

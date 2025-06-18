@@ -1,3 +1,0 @@
-#pragma makedep server
-
-#include "wine/schrpc.idl"

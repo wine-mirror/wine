@@ -1,8 +1,0 @@
-MODULE    = timeout.exe
-IMPORTS   = user32
-
-EXTRADLLFLAGS = -mconsole -municode
-
-SOURCES = \
-	main.c \
-	timeout.rc

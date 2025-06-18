@@ -1,3 +1,0 @@
-#pragma makedep client
-
-#include "wine/svcctl.idl"

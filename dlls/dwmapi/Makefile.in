@@ -1,7 +1,0 @@
-MODULE    = dwmapi.dll
-IMPORTS   = user32
-IMPORTLIB = dwmapi
-
-SOURCES = \
-	dwmapi_main.c \
-	version.rc

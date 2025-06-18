@@ -1,8 +1,0 @@
-MODULE  = windows.security.credentials.ui.userconsentverifier.dll
-IMPORTS = combase
-
-SOURCES = \
-	async.c \
-	async_private.idl \
-	classes.idl \
-	main.c

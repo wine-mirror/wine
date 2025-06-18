@@ -1,1 +1,0 @@
-@ cdecl GetDispenserManager(ptr)

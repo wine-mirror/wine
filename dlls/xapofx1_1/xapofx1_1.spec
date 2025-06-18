@@ -1,1 +1,0 @@
-@ cdecl CreateFX(ptr ptr)

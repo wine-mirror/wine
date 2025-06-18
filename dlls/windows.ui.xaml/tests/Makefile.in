@@ -1,5 +1,0 @@
-TESTDLL = windows.ui.xaml.dll
-IMPORTS = combase
-
-SOURCES = \
-	xaml.c

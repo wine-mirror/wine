@@ -1,5 +1,0 @@
-TESTDLL   = msvcr120.dll
-IMPORTS   = msvcr120
-
-SOURCES = \
-	msvcr120.c

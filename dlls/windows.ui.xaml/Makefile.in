@@ -1,7 +1,0 @@
-MODULE  = windows.ui.xaml.dll
-IMPORTS = combase
-
-SOURCES = \
-	classes.idl \
-	color_helper.c \
-	main.c

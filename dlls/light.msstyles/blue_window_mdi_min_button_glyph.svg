@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg id="bitmap:10-32" width="10" height="40" version="1.1" viewBox="0 0 2.6458 10.583" xmlns="http://www.w3.org/2000/svg">
- <g transform="matrix(.8182 0 0 1 .3127 0)" stroke-width="1.2222">
-  <rect transform="scale(-1,1)" x="-1.8814" y="2.1167" width="1.9402" height=".52917" fill="#aeaeae"/>
-  <rect transform="scale(-1,1)" x="-1.8814" y="10.054" width="1.9403" height=".52917" fill="#aeaeae"/>
-  <rect transform="scale(-1,1)" x="-1.8814" y="4.7626" width="1.9403" height=".52917" fill="#3096fa"/>
-  <rect transform="scale(-1,1)" x="-1.8814" y="7.4084" width="1.9403" height=".52917" fill="#2979ff"/>
- </g>
-</svg>

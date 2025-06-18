@@ -1,8 +1,0 @@
-MODULE    = mp3dmod.dll
-IMPORTS   = $(MPG123_PE_LIBS) dmoguids mfplat mfuuid msdmo ole32 uuid wmcodecdspuuid kernelbase
-EXTRAINCL = $(MPG123_PE_CFLAGS)
-EXTRADEFS = -DMPG123_NO_LARGENAME
-
-SOURCES = \
-	mp3dmod.c \
-	mp3dmod.idl

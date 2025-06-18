@@ -1,8 +1,0 @@
-MODULE = cryptsp.dll
-IMPORTLIB = cryptsp
-IMPORTS = advapi32
-
-SOURCES = \
-	arc4.c \
-	crypt.c \
-	lmhash.c
