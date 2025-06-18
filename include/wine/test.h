@@ -84,6 +84,7 @@ struct winetest_thread_data
     char strings[2000];              /* buffer for debug strings */
     char context[8][128];            /* data to print before messages */
     unsigned int context_count;      /* number of context prefixes */
+    int condition;                   /* current condition */
 };
 
 extern struct winetest_thread_data *winetest_get_thread_data(void);
@@ -364,15 +365,26 @@ static int winetest_vok( int condition, const char *msg, va_list args )
     }
 }
 
-static void winetest_ok( int condition, const char *msg, ... ) __WINE_PRINTF_ATTR(2,3);
-static inline void winetest_ok( int condition, const char *msg, ... )
+static void winetest_ok_( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
+static inline void winetest_ok_( const char *msg, ... )
 {
     va_list valist;
 
     va_start(valist, msg);
-    winetest_vok(condition, msg, valist);
+    winetest_vok(winetest_get_thread_data()->condition, msg, valist);
     va_end(valist);
 }
+
+static inline int winetest_should_log( int condition )
+{
+    struct winetest_thread_data *data = winetest_get_thread_data();
+    data->condition = condition;
+
+    /* if test is todo, then we would always log, otherwise we only log if test failed. */
+    return data->todo_level || !condition;
+}
+
+#define winetest_ok(cond, ...) (winetest_should_log(cond) ? winetest_ok_(__VA_ARGS__) : winetest_ok_(NULL))
 
 static void winetest_trace( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
 static inline void winetest_trace( const char *msg, ... )
