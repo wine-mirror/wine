@@ -356,7 +356,6 @@ extern NTSTATUS tape_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTI
 extern struct async_fileio *alloc_fileio( DWORD size, async_callback_t callback, HANDLE handle );
 extern void release_fileio( struct async_fileio *io );
 extern NTSTATUS errno_to_status( int err );
-extern BOOL get_redirect( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *redir );
 extern NTSTATUS get_nt_and_unix_names( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name,
                                        char **unix_name, UINT disposition );
 extern NTSTATUS unix_to_nt_file_name( const char *name, WCHAR **nt );

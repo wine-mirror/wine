@@ -3121,72 +3121,61 @@ static void init_redirects(void)
 /***********************************************************************
  *           get_redirect
  */
-BOOL get_redirect( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *redir )
+static void get_redirect( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *redir )
 {
     const WCHAR *name = attr->ObjectName->Buffer;
     unsigned int i, prefix_len = 0, len = attr->ObjectName->Length / sizeof(WCHAR);
 
-    redir->Buffer = NULL;
-    if (!NtCurrentTeb64()) return FALSE;
-    if (!len) return FALSE;
+    if (!NtCurrentTeb64()) return;
 
     if (!attr->RootDirectory)
     {
         prefix_len = wcslen( windirW );
-        if (len < prefix_len || wcsnicmp( name, windirW, prefix_len )) return FALSE;
+        if (len < prefix_len || wcsnicmp( name, windirW, prefix_len )) return;
     }
     else
     {
         int fd, needs_close;
         struct stat st;
 
-        if (server_get_unix_fd( attr->RootDirectory, 0, &fd, &needs_close, NULL, NULL )) return FALSE;
+        if (!len) return;
+        if (server_get_unix_fd( attr->RootDirectory, 0, &fd, &needs_close, NULL, NULL )) return;
         fstat( fd, &st );
         if (needs_close) close( fd );
         if (!is_same_file( &windir, &st ))
         {
-            if (!is_same_file( &sysdir, &st )) return FALSE;
-            if (NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR]) return FALSE;
-            if (name[0] == '\\') return FALSE;
+            if (!is_same_file( &sysdir, &st )) return;
+            if (NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR]) return;
+            if (name[0] == '\\') return;
 
             /* only check for paths that should NOT be redirected */
             for (i = 0; i < ARRAY_SIZE( no_redirect ); i++)
-                if (starts_with_path( name, len, no_redirect[i] + 9 /* "system32\\" */)) return FALSE;
+                if (starts_with_path( name, len, no_redirect[i] + 9 /* "system32\\" */)) return;
 
             /* redirect everything else */
             redir->Length = sizeof(syswow64dirW) + len * sizeof(WCHAR);
             redir->MaximumLength = redir->Length + sizeof(WCHAR);
-            if (!(redir->Buffer = malloc( redir->MaximumLength ))) return FALSE;
+            if (!(redir->Buffer = malloc( redir->MaximumLength ))) return;
             memcpy( redir->Buffer, syswow64dirW, sizeof(syswow64dirW) );
             memcpy( redir->Buffer + ARRAY_SIZE(syswow64dirW), name, len * sizeof(WCHAR) );
             redir->Buffer[redir->Length / sizeof(WCHAR)] = 0;
             attr->RootDirectory = 0;
             attr->ObjectName = redir;
-            return TRUE;
+            return;
         }
     }
 
     /* sysnative is redirected even when redirection is disabled */
 
-    if (replace_path( attr, redir, prefix_len, sysnativeW, system32W )) return TRUE;
+    if (replace_path( attr, redir, prefix_len, sysnativeW, system32W )) return;
 
-    if (NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR]) return FALSE;
+    if (NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR]) return;
 
     for (i = 0; i < ARRAY_SIZE( no_redirect ); i++)
-        if (starts_with_path( name + prefix_len, len - prefix_len, no_redirect[i] )) return FALSE;
+        if (starts_with_path( name + prefix_len, len - prefix_len, no_redirect[i] )) return;
 
-    if (replace_path( attr, redir, prefix_len, system32W, syswow64W )) return TRUE;
-    if (replace_path( attr, redir, prefix_len, regeditW, syswow64_regeditW )) return TRUE;
-    return FALSE;
-}
-
-#else  /* _WIN64 */
-
-/* there are no redirects on 64-bit */
-BOOL get_redirect( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *redir )
-{
-    redir->Buffer = NULL;
-    return FALSE;
+    if (replace_path( attr, redir, prefix_len, system32W, syswow64W )) return;
+    if (replace_path( attr, redir, prefix_len, regeditW, syswow64_regeditW )) return;
 }
 
 #endif
@@ -4034,7 +4023,9 @@ NTSTATUS get_nt_and_unix_names( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name
     nt_name->Buffer = NULL;
     *unix_name_ret = NULL;
 
+#ifndef _WIN64
     get_redirect( attr, nt_name );
+#endif
     status = nt_to_unix_file_name( attr, unix_name_ret, disposition );
 
     if (status && status != STATUS_NO_SUCH_FILE)
