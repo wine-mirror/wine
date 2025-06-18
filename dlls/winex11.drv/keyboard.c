@@ -226,6 +226,15 @@ static const char main_key_US_dvorak[MAIN_LEN][4] =
  ";:","qQ","jJ","kK","xX","bB","mM","wW","vV","zZ"
 };
 
+/*** United States keyboard layout (programmer dvorak version) */
+static const char main_key_US_programmer_dvorak[MAIN_LEN][4] =
+{
+    "$~","&%","[7","{5","}3","(1","=9","*0",")2","+4","]6","!8","#`",
+    ";:",",<",".>","pP","yY","fF","gG","cC","rR","lL","/?","@^",
+    "aA","oO","eE","uU","iI","dD","hH","tT","nN","sS","-_","\\|",
+    "'\"","qQ","jJ","kK","xX","bB","mM","wW","vV","zZ"
+};
+
 /*** United States keyboard layout (dvorak phantom key version) */
 static const char main_key_US_dvorak_phantom[MAIN_LEN][4] =
 {
@@ -865,6 +874,7 @@ static const struct {
  {0x0409, "United States keyboard layout (phantom key version)", &main_key_US_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  /* Dvorak users tend to run QWERTY keyboards and rely on Windows/X11/Wayland to translate to the correct keysyms */
  {0x0409, "United States keyboard layout (dvorak)", &main_key_US_dvorak, &main_key_scan_qwerty, &main_key_vkey_dvorak},
+ {0x0409, "United States keyboard layout (programmer dvorak)", &main_key_US_programmer_dvorak, &main_key_scan_qwerty, &main_key_vkey_dvorak},
  {0x0409, "United States keyboard layout (dvorak with phantom key)", &main_key_US_dvorak_phantom, &main_key_scan_qwerty, &main_key_vkey_dvorak},
  {0x0409, "United States International keyboard layout", &main_key_US_intl, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x0809, "British keyboard layout", &main_key_UK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
