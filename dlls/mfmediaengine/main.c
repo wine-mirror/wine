@@ -1397,6 +1397,7 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
         }
 
         IMFTopology_SetUINT32(topology, &MF_TOPOLOGY_ENUMERATE_SOURCE_TYPES, TRUE);
+        IMFTopology_SetUINT32(topology, &MF_TOPOLOGY_ENABLE_XVP_FOR_PLAYBACK, TRUE);
 
         if (SUCCEEDED(hr))
             hr = IMFMediaSession_SetTopology(engine->session, MFSESSION_SETTOPOLOGY_IMMEDIATE, topology);
