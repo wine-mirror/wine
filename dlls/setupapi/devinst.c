@@ -3106,6 +3106,26 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(HDEVINFO devinfo, SP_DEVICE_INTERFA
     return ret;
 }
 
+BOOL WINAPI SetupDiGetDeviceInterfacePropertyW( HDEVINFO devinfo, SP_DEVICE_INTERFACE_DATA *iface_data,
+                                                const DEVPROPKEY *key, DEVPROPTYPE *type, BYTE *buf, DWORD buf_size,
+                                                DWORD *req_size, DWORD flags )
+{
+    FIXME( "devinfo %p, iface_data %p, key %p, type %p, buf %p, buf_size %lu, req_size %p, flags %#lx: stub!\n",
+           devinfo, iface_data, key, type, buf, buf_size, req_size, flags );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+BOOL WINAPI SetupDiSetDeviceInterfacePropertyW( HDEVINFO devinfo, SP_DEVICE_INTERFACE_DATA *iface_data,
+                                                const DEVPROPKEY *key, DEVPROPTYPE type, const BYTE *buf,
+                                                DWORD buf_size, DWORD flags )
+{
+    FIXME( "devinfo %p, iface_data %p, key %p, type %#lx, buf %p, buf_size %lu, flags %#lx: stub!\n", devinfo,
+           iface_data, key, type, buf, buf_size, flags );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 /***********************************************************************
  *		SetupDiGetDeviceRegistryPropertyA (SETUPAPI.@)
  */

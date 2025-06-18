@@ -357,6 +357,7 @@
 @ stub SetupDiGetDeviceInterfaceAlias
 @ stdcall SetupDiGetDeviceInterfaceDetailA(long ptr ptr long ptr ptr)
 @ stdcall SetupDiGetDeviceInterfaceDetailW(long ptr ptr long ptr ptr)
+@ stdcall SetupDiGetDeviceInterfacePropertyW(ptr ptr ptr ptr ptr long ptr long)
 @ stdcall SetupDiGetDevicePropertyKeys(ptr ptr ptr long ptr long)
 @ stdcall SetupDiGetDevicePropertyW(ptr ptr ptr ptr ptr long ptr long)
 @ stdcall SetupDiGetDeviceRegistryPropertyA(long ptr long ptr ptr long ptr)
@@ -407,6 +408,7 @@
 @ stdcall SetupDiSetClassInstallParamsW(ptr ptr ptr long)
 @ stdcall SetupDiSetDeviceInstallParamsA(ptr ptr ptr)
 @ stdcall SetupDiSetDeviceInstallParamsW(ptr ptr ptr)
+@ stdcall SetupDiSetDeviceInterfacePropertyW(ptr ptr ptr long ptr long long)
 @ stdcall SetupDiSetDevicePropertyW(ptr ptr ptr long ptr long long)
 @ stdcall SetupDiSetDeviceRegistryPropertyA(ptr ptr long ptr long)
 @ stdcall SetupDiSetDeviceRegistryPropertyW(ptr ptr long ptr long)
