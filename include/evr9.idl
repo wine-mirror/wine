@@ -1,0 +1,125 @@
+/*
+ * Copyright 2020 Nikolay Sivov for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "unknwn.idl";
+import "evr.idl";
+import "dxva2api.idl";
+
+typedef struct MFVideoAlphaBitmapParams
+{
+    DWORD dwFlags;
+    COLORREF clrSrcKey;
+    RECT rcSrc;
+    MFVideoNormalizedRect nrcDest;
+    FLOAT fAlpha;
+    DWORD dwFilterMode;
+} MFVideoAlphaBitmapParams;
+
+typedef struct MFVideoAlphaBitmap
+{
+    BOOL GetBitmapFromDC;
+    union
+    {
+        HDC hdc;
+        IDirect3DSurface9 *pDDS;
+    } bitmap;
+    MFVideoAlphaBitmapParams params;
+} MFVideoAlphaBitmap;
+
+typedef enum
+{
+    MFVideoAlphaBitmap_EntireDDS = 0x1,
+    MFVideoAlphaBitmap_SrcColorKey = 0x2,
+    MFVideoAlphaBitmap_SrcRect = 0x4,
+    MFVideoAlphaBitmap_DestRect = 0x8,
+    MFVideoAlphaBitmap_FilterMode = 0x10,
+    MFVideoAlphaBitmap_Alpha = 0x20,
+    MFVideoAlphaBitmap_BitMask = 0x3f
+} MFVideoAlphaBitmapFlags;
+
+[
+    object,
+    uuid(814c7b20-0fdb-4eec-af8f-f957c8f69edc),
+    local
+]
+interface IMFVideoMixerBitmap : IUnknown
+{
+    HRESULT SetAlphaBitmap(
+        [in] const MFVideoAlphaBitmap *bitmap
+    );
+    HRESULT ClearAlphaBitmap(void);
+    HRESULT UpdateAlphaBitmapParameters(
+        [in] const MFVideoAlphaBitmapParams *params
+    );
+    HRESULT GetAlphaBitmapParameters(
+        [out] MFVideoAlphaBitmapParams *params
+    );
+}
+
+[
+    object,
+    uuid(6ab0000c-fece-4d1f-a2ac-a9573530656e),
+    pointer_default(unique)
+]
+interface IMFVideoProcessor : IUnknown
+{
+    HRESULT GetAvailableVideoProcessorModes(
+        [out] UINT *count,
+        [out, size_is(*count)] GUID **modes
+    );
+    HRESULT GetVideoProcessorCaps(
+        [in] GUID *mode,
+        [out] DXVA2_VideoProcessorCaps *caps
+    );
+    HRESULT GetVideoProcessorMode(
+        [out] GUID *mode
+    );
+    HRESULT SetVideoProcessorMode(
+        [in] GUID *mode
+    );
+    HRESULT GetProcAmpRange(
+        [in] DWORD prop,
+        [out] DXVA2_ValueRange *range
+    );
+    HRESULT GetProcAmpValues(
+        [in] DWORD flags,
+        [out] DXVA2_ProcAmpValues *values
+    );
+    HRESULT SetProcAmpValues(
+        [in] DWORD flags,
+        [in] DXVA2_ProcAmpValues *values
+    );
+    HRESULT GetFilteringRange(
+        [in] DWORD prop,
+        [out] DXVA2_ValueRange *range
+    );
+    HRESULT GetFilteringValue(
+        [in] DWORD prop,
+        [out] DXVA2_Fixed32 *value
+    );
+    HRESULT SetFilteringValue(
+        [in] DWORD prop,
+        [in] DXVA2_Fixed32 *value
+    );
+    HRESULT GetBackgroundColor(
+        [out] COLORREF *color
+    );
+    HRESULT SetBackgroundColor(
+        [in] COLORREF color
+    );
+}

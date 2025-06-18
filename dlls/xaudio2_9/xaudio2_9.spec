@@ -1,0 +1,6 @@
+1 stdcall -ordinal XAudio2Create(ptr long long)
+2 stdcall -ordinal CreateAudioReverb(ptr)
+3 stdcall -ordinal CreateAudioVolumeMeter(ptr)
+4 cdecl -ordinal CreateFX(ptr ptr ptr long)
+5 cdecl -ordinal X3DAudioCalculate(ptr ptr ptr long ptr)
+6 cdecl -ordinal X3DAudioInitialize(long float ptr)

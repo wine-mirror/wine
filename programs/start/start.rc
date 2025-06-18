@@ -1,0 +1,60 @@
+/*
+ * Start
+ *
+ * Copyright 2003 Dan Kegel
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resources.h"
+
+#pragma makedep po
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+STRING_USAGE, "Start a program, or open a document in the program normally used for files\n\
+with that suffix.\n\
+Usage:\n\
+start [options] program_filename [...]\n\
+start [options] document_filename\n\
+\n\
+Options:\n\
+\"title\"        Specifies the title of the child windows.\n\
+/d directory   Start the program in the specified directory.\n\
+/b             Don't create a new console for the program.\n\
+/i             Start the program with fresh environment variables.\n\
+/min           Start the program minimized.\n\
+/max           Start the program maximized.\n\
+/low           Start the program in the idle priority class.\n\
+/normal        Start the program in the normal priority class.\n\
+/high          Start the program in the high priority class.\n\
+/realtime      Start the program in the realtime priority class.\n\
+/abovenormal   Start the program in the abovenormal priority class.\n\
+/belownormal   Start the program in the belownormal priority class.\n\
+/node n        Start the program on the specified NUMA node.\n\
+/affinity mask Start the program with the specified affinity mask.\n\
+/machine arch  Force using a specific architecture (x86,arm,amd64,arm64).\n\
+/wait          Wait for the program to finish, then exit with its exit code.\n\
+/unix          Use a Unix filename and start the file like Windows Explorer.\n\
+/exec          Exec the specified file (for internal Wine usage).\n\
+/ProgIDOpen    Open a document using the specified progID.\n\
+/?             Display this help and exit.\n"
+
+STRING_EXECFAIL, "Application could not be started, or no application associated with the specified file.\nShellExecuteEx failed"
+
+STRING_UNIXFAIL "Could not translate the specified Unix filename to a DOS filename."
+}

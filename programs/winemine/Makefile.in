@@ -1,0 +1,12 @@
+MODULE    = winemine.exe
+IMPORTS   = user32 gdi32 advapi32 comctl32
+DELAYIMPORTS = shell32
+
+EXTRADLLFLAGS = -mwindows -municode
+
+SOURCES = \
+	dialog.c \
+	main.c \
+	winemine.man.in \
+	winemine.rc \
+	winemine.svg

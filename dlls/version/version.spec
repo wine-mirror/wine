@@ -1,0 +1,16 @@
+@ stdcall -import GetFileVersionInfoA(str long long ptr)
+@ stdcall -import GetFileVersionInfoExA(long str long long ptr)
+@ stdcall -import GetFileVersionInfoExW(long wstr long long ptr)
+@ stdcall -import GetFileVersionInfoSizeA(str ptr)
+@ stdcall -import GetFileVersionInfoSizeExA(long str ptr)
+@ stdcall -import GetFileVersionInfoSizeExW(long wstr ptr)
+@ stdcall -import GetFileVersionInfoSizeW(wstr ptr)
+@ stdcall -import GetFileVersionInfoW(wstr long long ptr)
+@ stdcall -import VerFindFileA(long str str str ptr ptr ptr ptr)
+@ stdcall -import VerFindFileW(long wstr wstr wstr ptr ptr ptr ptr)
+@ stdcall VerInstallFileA(long str str str str str ptr ptr)
+@ stdcall VerInstallFileW(long wstr wstr wstr wstr wstr ptr ptr)
+@ stdcall VerLanguageNameA(long str long) kernel32.VerLanguageNameA
+@ stdcall VerLanguageNameW(long wstr long) kernel32.VerLanguageNameW
+@ stdcall -import VerQueryValueA(ptr str ptr ptr)
+@ stdcall -import VerQueryValueW(ptr wstr ptr ptr)

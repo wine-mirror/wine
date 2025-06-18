@@ -1,0 +1,264 @@
+.\" -*- nroff -*-
+.TH WINEMAKER 1 "Januar 2012" "@PACKAGE_STRING@" "Wine Entwicklerhandbuch"
+.SH NAME
+winemaker \- Erzeugt eine Build-Infrastruktur, um Windows Programme unter Unix zu kompilieren
+.SH ÜBERSICHT
+.B "winemaker "
+[
+.BR               "--nobanner " "] [ " "--backup " "| " "--nobackup " "] [ "--nosource-fix "
+]
+.br
+  [
+.BR               "--lower-none " "| " "--lower-all " "| " "--lower-uppercase "
+]
+.br
+  [
+.BR               "--lower-include " "| " "--nolower-include " ]\ [ " --mfc " "| " "--nomfc "
+]
+.br
+  [
+.BR               "--guiexe " "| " "--windows " "| " "--cuiexe " "| " "--console " "| " "--dll " "| " "--lib "
+]
+.br
+  [
+.BI               "-D" macro "\fR[=\fIdefn\fR] ] [" "\ " "-I" "dir\fR ]\ [ " "-P" "dir\fR ] [ " "-i" "dll\fR ] [ " "-L" "dir\fR ] [ " "-l" "library "
+]
+.br
+  [
+.BR               "--nodlls " "] [ " "--nomsvcrt " "] [ " "--interactive " "] [ " "--single-target \fIname\fR "
+]
+.br
+  [
+.BR               "--generated-files " "] [ " "--nogenerated-files " "]
+.br
+  [
+.BR               "--wine32 " "]
+.br
+.IR               "  Arbeitsverzeichnis" " | " "Projektdatei" " | " "Workspacedatei"
+
+.SH BESCHREIBUNG
+.PP
+.B winemaker
+ist ein Perl-Script um Ihnen das Konvertieren von Windows-Quellcode
+zu einem Winelib-Programm zu erleichtern.
+.PP
+Zu diesem Zweck beherrscht \fBwinemaker\fR folgende Operationen:
+.PP
+- Quellcodedateien und Verzeichnisse in Kleinbuchstaben umbenennen, falls
+diese beim Übertragen komplett in Großbuchstaben angekommen sind.
+.PP
+- Konvertierung von DOS- zu Unix-Zeilenenden (CRLF nach LF).
+.PP
+- Include-Anweisungen und Resourcenreferenzen durchsuchen, um Backslashes
+durch Slashes zu ersetzen.
+.PP
+- Während des obigen Schrittes wird \fBwinemaker\fR ebenfalls nach der angegebenen Datei
+im Includepfad suchen und die entsprechende Zeile, falls nötig, mit der korrekten
+Groß-/Kleinschreibweise austauschen.
+.PP
+- \fBwinemaker\fR wird ebenso andere, exotischere Probleme wie die Benutzung von
+\fI#pragma pack\fR, \fIafxres.h\fR in nicht-MFC-Projekten und mehr untersuchen.
+Sollte etwas ungwöhnliches vorkommen, wird \fBwinemaker\fR Sie warnen.
+.PP
+- \fBwinemaker\fR kann eine ganze Verzeichnisstruktur auf einmal durchsuchen,
+schätzen welche ausführbaren Dateien und Bibliotheken Sie zu erstellen
+gedenken, diese den passenden Quelldateien zuordnen und entsprechende \fIMakefile\fR
+generieren.
+.PP
+- letztendlich wird \fBwinemaker\fR eine globale \fIMakefile\fR für den normalen Gebrauch erzeugen.
+.PP
+- \fBwinemaker\fR erkennt MFC-basierte Projekte und erstellt angepasste Dateien.
+.PP
+- Existierende Projektdateien können von \fBwinemaker\fR gelesen werden.
+Unterstützt sind dsp, dsw, vcproj und sln-Dateien.
+.PP
+.SH ARGUMENTE
+.TP
+.B --nobanner
+Unterdrückt die Anzeige des Banners.
+.TP
+.B --backup
+Lässt \fBwinemaker\fR Backups von allen Quellcodedateien anlegen, an denen
+Änderungen vorgenommen werden. Diese Option ist Standard.
+.TP
+.B --nobackup
+Lässt \fBwinemaker\fR keine Backups anlegen.
+.TP
+.B --nosource-fix
+Weist \fBwinemaker\fR an, keine Quellcodedateien zu ändern (z.B. DOS zu Unix
+Konvertierung). Verhindert Fehlermeldungen bei schreibgeschützten Dateien.
+.TP
+.B --lower-all
+Alle Dateien und Verzeichnisse werden in Kleinschreibung umbenannt.
+.TP
+.B --lower-uppercase
+Nur Dateien und Verzeichnisse, die komplett groß geschrieben sind, werden
+in Kleinschreibung umbenannt.
+\fIHALLO.C\fR würde beispielsweise umbenannt werden, \fIWelt.c\fR jedoch nicht.
+.TP
+.B --lower-none
+Keine Dateien und Verzeichnisse werden in Kleinschreibung umbenannt.
+Beachten Sie, dass dies nicht die Umbenennung von Dateien verhindert, deren
+Erweiterungen nicht unverändert verarbeitet werden können, z.B. ".Cxx".
+Diese Option ist Standard.
+.TP
+.B "--lower-include "
+Wenn die Datei zu einer Include-Anweisung (oder einer anderen Form von
+Dateireferenz für Resourcen) nicht auffindbar ist, wird der Dateiname in
+Kleinschreibung umbenannt. Diese Option ist Standard.
+.TP
+.B "--nolower-include "
+Es werden keine Änderungen an Include-Anweisungen oder Referenzen vorgenommen,
+wenn die entsprechende Datei nicht auffindbar ist.
+.TP
+.BR "--guiexe " "| " "--windows"
+Legt fest, dass für jedes gefundene, ausführbare Target, oder Target unbekannten
+Typs angenommen wird, dass es sich um eine grafische Anwendung handelt.
+Diese Option ist Standard.
+.TP
+.BR "--cuiexe " "| " "--console"
+Legt fest, dass für jedes gefundene, ausführbare Target, oder Target unbekannten
+Typs angenommen wird, dass es sich um eine Konsolenanwendung handelt.
+.TP
+.B --dll
+\fBwinemaker\fR wird im Zweifelsfall annehmen, dass es sich bei einem unbekannten
+Target um eine DLL handelt.
+.TP
+.B --lib
+\fBwinemaker\fR wird im Zweifelsfall annehmen, dass es sich bei einem unbekannten
+Target um eine statische Bibliothek handelt.
+.TP
+.B --mfc
+Teilt \fBwinemaker\fR mit, dass es sich um MFC-basierte Ziele handelt. In solch einem
+Fall passt \fBwinemaker\fR Pfade für Header und Bibliotheken entsprechend an und
+verlinkt die Ziele mit der MFC-Bibliothek.
+.TP
+.B --nomfc
+Teilt \fBwinemaker\fR mit, dass es sich nicht um MFC-basierte Ziele handelt. Diese
+Option verhindert die Benutzung von MFC-Bibliotheken, selbst wenn \fBwinemaker\fR
+Dateien wie \fIstdafx.cpp\fR oder \fIstdafx.h\fR begegnet, was normalerweise automatisch
+MFC aktivieren würde, wenn weder \fB--nomfc\fR noch \fB--mfc\fR angegeben wurden.
+.TP
+.BI -D macro "\fR[=\fIdefn\fR]"
+Fügt diese Makrodefinition zur globalen Makroliste hinzu.
+.TP
+.BI -I dir
+Hängt das angegebene Verzeichnis dem globalen Include-Pfad an.
+.TP
+.BI -P dir
+Hängt das angegebene Verzeichnis dem globalen DLL-Pfad an.
+.TP
+.BI -i dll
+Fügt die angegebene Winelib-Bibliothek zur globalen Liste der zu importierenden
+Winelib-Bibliotheken hinzu.
+.TP
+.BI -L dir
+Hängt das angegebene Verzeichnis dem globalen Bibliotheks-Pfad an.
+.TP
+.BI -l library
+Fügt die angegebene Bibliothek zur globalen Liste der zu verlinkenden
+Bibliotheken hinzu.
+.TP
+.B --nodlls
+Diese Option teilt \fBwinemaker\fR mit, nicht den Standardsatz an Winelib-Bibliotheken
+zu importieren. Dies bedeutet, dass jede DLL, die Ihr Quellcode nutzt, explizit
+mit \fB-i\fR an \fBwinemaker\fR übergeben werden muss.
+Die Standard-Bibliotheken sind: \fIodbc32.dll\fR, \fIodbccp32.dll\fR, \fIole32.dll\fR,
+\fIoleaut32.dll\fR und \fIwinspool.drv\fR.
+.TP
+.B --nomsvcrt
+Setzt einige Optionen, die \fBwinegcc\fR daran hindern, gegen msvcrt zu kompilieren.
+Nutzen Sie diese Option bei cpp-Dateien, die \fI<string>\fR einbinden.
+.TP
+.B --interactive
+Versetzt \fBwinemaker\fR in einen interaktiven Modus. In diesem Modus wird \fBwinemaker\fR
+Sie für die Targetliste jedes Verzeichnisses nach Bestätigung und jeweils
+target- und verzeichnisspezifischen Optionen fragen.
+.TP
+.BI --single-target " name"
+Gibt an, dass es nur ein einziges Target gibt, namens \fIname\fR.
+.TP
+.B --generated-files
+Weist \fBwinemaker\fR an, eine \fIMakefile\fR zu erzeugen. Diese Option ist Standard.
+.TP
+.B --nogenerated-files
+Weist \fBwinemaker\fR an, keine \fIMakefile\fR zu erzeugen.
+.TP
+.B --wine32
+Weist \fBwinemaker\fR an, ein 32-Bit Target zu erstellen. Dies ist nützlich bei
+wow64-Systemen. Ohne diese Option wird die Standardarchitektur benutzt.
+
+.SH BEISPIELE
+.PP
+Ein typischer \fBwinemaker\fR Aufruf:
+.PP
+$ winemaker --lower-uppercase -DSTRICT .
+.PP
+Damit scannt \fBwinemaker\fR das aktuelle Verzeichnis und die Unterverzeichnisse nach
+Quellcodedateien. Jede Datei und jedes Verzeichnis, das ganz in Großbuchstaben
+geschrieben ist, wird in Kleinbuchstaben umbenannt. Danach werden alle Quellcodedateien
+an die Kompilierung mit Winelib angepasst und \fIMakefile\fRs erzeugt. \fB-DSTRICT\fR gibt
+an, dass das \fBSTRICT\fR-Makro gesetzt sein muss, um diesen Quellcode zu kompilieren.
+Letztendlich wird \fBwinemaker\fR die globale \fIMakefile\fR erzeugen.
+.PP
+Der nächste Schritt wäre dann:
+.PP
+$ make
+.PP
+Wenn Sie an diesem Punkt Compilerfehler erhalten (was recht wahrscheinlich ist,
+ab einer gewissen Projektgröße), sollten Sie den Winelib User Guide zu Rate
+ziehen, um Problemlösungen und Tipps zu finden.
+.PP
+Bei einem MFC-basierten Projekt sollten Sie stattdessen folgenden Befehl ausführen:
+.PP
+$ winemaker --lower-uppercase --mfc .
+.br
+$ make
+.PP
+Mit einer existierenden Projektdatei lautet der passende Befehl:
+.PP
+$ winemaker meinprojekt.dsp
+.br
+$ make
+.PP
+
+.SH TODO / FEHLER
+.PP
+In einigen Fällen werden Sie die \fIMakefile\fR oder den Quellcode von Hand
+nachbearbeiten müssen.
+.PP
+Angenommen, die fertigen Windows-Bibliotheken oder Binärdateien sind vorhanden,
+könnte mit \fBwinedump\fR ermittelt werden, um welche Art von ausführbarer Datei es
+sich handelt (grafisch oder Konsole), gegen welche Bibliotheken sie gelinkt
+sind und welche Funktionen exportiert werden (bei Bibliotheken). All diese
+Informationen könnten dann für das Winelib-Projekt verwendet werden.
+.PP
+Weiterhin ist \fBwinemaker\fR nicht sehr gut darin, die Bibliothek zu finden, die
+die Anwendung enthält: Sie muss entweder im aktuellen Verzeichnis oder im
+.IR LD_LIBRARY_PATH liegen.
+.PP
+\fBwinemaker\fR unterstützt noch keine Messagedateien und deren Compiler.
+.PP
+Fehler können im
+.UR https://bugs.winehq.org
+.B Wine Bugtracker
+.UE
+gemeldet werden.
+.SH AUTOREN
+François Gouget für CodeWeavers
+.br
+Dimitrie O. Paun
+.br
+André Hentschel
+.SH VERFÜGBARKEIT
+.B winemaker
+ist Teil der Wine-Distribution, verfügbar im WineHQ, dem
+.UR https://www.winehq.org/
+.B Hauptquartier der Wine-Entwicklung
+.UE .
+.SH SIEHE AUCH
+.BR wine (1),
+.br
+.UR https://www.winehq.org/help
+.B Wine-Dokumentation und Support
+.UE .

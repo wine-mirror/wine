@@ -1,0 +1,68 @@
+/*
+ * Copyright 2024 Zhiyi Zhang for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "windows.foundation.idl";
+
+declare {
+    interface Windows.Foundation.IReference<HSTRING>;
+}
+
+cpp_quote("#define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \\")
+cpp_quote("    static inline impl_type *impl_from( iface_type *iface )                                        \\")
+cpp_quote("    {                                                                                              \\")
+cpp_quote("        return CONTAINING_RECORD( iface, impl_type, iface_mem );                                   \\")
+cpp_quote("    }                                                                                              \\")
+cpp_quote("    static HRESULT WINAPI pfx##_QueryInterface( iface_type *iface, REFIID iid, void **out )        \\")
+cpp_quote("    {                                                                                              \\")
+cpp_quote("        impl_type *impl = impl_from( iface );                                                      \\")
+cpp_quote("        return IInspectable_QueryInterface( (IInspectable *)(expr), iid, out );                    \\")
+cpp_quote("    }                                                                                              \\")
+cpp_quote("    static ULONG WINAPI pfx##_AddRef( iface_type *iface )                                          \\")
+cpp_quote("    {                                                                                              \\")
+cpp_quote("        impl_type *impl = impl_from( iface );                                                      \\")
+cpp_quote("        return IInspectable_AddRef( (IInspectable *)(expr) );                                      \\")
+cpp_quote("    }                                                                                              \\")
+cpp_quote("    static ULONG WINAPI pfx##_Release( iface_type *iface )                                         \\")
+cpp_quote("    {                                                                                              \\")
+cpp_quote("        impl_type *impl = impl_from( iface );                                                      \\")
+cpp_quote("        return IInspectable_Release( (IInspectable *)(expr) );                                     \\")
+cpp_quote("    }                                                                                              \\")
+cpp_quote("    static HRESULT WINAPI pfx##_GetIids( iface_type *iface, ULONG *iid_count, IID **iids )         \\")
+cpp_quote("    {                                                                                              \\")
+cpp_quote("        impl_type *impl = impl_from( iface );                                                      \\")
+cpp_quote("        return IInspectable_GetIids( (IInspectable *)(expr), iid_count, iids );                    \\")
+cpp_quote("    }                                                                                              \\")
+cpp_quote("    static HRESULT WINAPI pfx##_GetRuntimeClassName( iface_type *iface, HSTRING *class_name )      \\")
+cpp_quote("    {                                                                                              \\")
+cpp_quote("        impl_type *impl = impl_from( iface );                                                      \\")
+cpp_quote("        return IInspectable_GetRuntimeClassName( (IInspectable *)(expr), class_name );             \\")
+cpp_quote("    }                                                                                              \\")
+cpp_quote("    static HRESULT WINAPI pfx##_GetTrustLevel( iface_type *iface, TrustLevel *trust_level )        \\")
+cpp_quote("    {                                                                                              \\")
+cpp_quote("        impl_type *impl = impl_from( iface );                                                      \\")
+cpp_quote("        return IInspectable_GetTrustLevel( (IInspectable *)(expr), trust_level );                  \\")
+cpp_quote("    }")
+
+cpp_quote("#define DEFINE_IINSPECTABLE( pfx, iface_type, impl_type, base_iface )                              \\")
+cpp_quote("    DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, &impl->base_iface )")

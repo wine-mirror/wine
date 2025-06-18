@@ -1,0 +1,37 @@
+MODULE    = jscript.dll
+IMPORTS   = oleaut32 ole32 user32 advapi32
+
+SOURCES = \
+	activex.c \
+	array.c \
+	arraybuf.c \
+	bool.c \
+	cc_parser.y \
+	compile.c \
+	date.c \
+	decode.c \
+	dispex.c \
+	engine.c \
+	enumerator.c \
+	error.c \
+	function.c \
+	global.c \
+	jscript.c \
+	jscript.rc \
+	jscript_classes.idl \
+	jscript_main.c \
+	jsdisp.idl \
+	jsglobal.idl \
+	json.c \
+	jsregexp.c \
+	jsstr.c \
+	jsutils.c \
+	lex.c \
+	math.c \
+	number.c \
+	object.c \
+	parser.y \
+	regexp.c \
+	set.c \
+	string.c \
+	vbarray.c

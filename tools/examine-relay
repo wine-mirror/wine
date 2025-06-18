@@ -1,0 +1,171 @@
+#!/usr/bin/perl -w
+# -----------------------------------------------------------------------------
+#
+# Relay-checker.
+#
+# This program will inspect a log file with relay information and tell you
+# whether calls and returns match.  If not, this suggests that the parameter
+# list might be incorrect.  (It could be something else also.)
+#
+# This program now accepts a second command line parameter, which will enable
+# a "full" listing format; otherwise a trimmed down simplified listing is 
+# generated. It does not matter what the second command line parameter is;
+# anything will enable the full listing. 
+#
+# Copyright 1997-1998 Morten Welinder (terra@diku.dk)
+#           2001      Eric Pouech
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+# -----------------------------------------------------------------------------
+
+use strict;
+
+my $srcfile = $ARGV[0];
+my $fullformat = $ARGV[1];
+my %tid_callstack = ();
+my $newlineerror = 0;
+my $indentp = 1;
+my $lasttid = 0;
+
+open (IN, "<$srcfile") || die "Cannot open $srcfile for reading: $!\n";
+LINE:
+while (<IN>) {
+
+
+    if (/^([0-9a-f]+):Call ([A-Za-z0-9_]+\.[A-Za-z0-9_.]+)\((.*\)) .*/) {
+	my $tid = $1;
+	my $func = $2;
+        if (defined $fullformat) {
+	    if ($lasttid ne $tid) {
+	        print "******** thread change\n"
+	    }
+	    $lasttid = $tid;
+
+	    print ($indentp ? (' ' x 2 x (1 + $#{$tid_callstack{$tid}})) : '');
+	    print "$_";
+	}
+#	print "have call func=$func $_";
+	if (/ ret=(........)$/ ||
+	    / ret=(....:....) (ds=....)$/ ||
+	    / ret=(........) fs=....$/) {
+	    my $retaddr = $1;
+	    my $segreg = $2;
+
+	    $segreg = "none" unless defined $segreg;
+
+	    push @{$tid_callstack{$tid}}, [$func, $retaddr, $segreg];
+	    next;
+	} elsif (not eof IN) {
+	    # Assume a line got cut by a line feed in a string.
+	    $_ .= scalar (<IN>);
+	    if (!$newlineerror) {
+		print "Err[$tid] string probably cut by newline at line $. .\n";
+		$newlineerror = 1;
+	    }
+	    # print "[$_]";
+	    redo;
+	}
+    }
+
+    elsif (/^([0-9a-f]+):Call (window proc) ([0-9a-fx]+) .*/) {
+	my $tid = $1;
+	my $func = $2;
+	my $retaddr = $3;
+	my $segreg = "none";
+        if (defined $fullformat) {
+	    if ($lasttid ne $tid) {
+	        print "******** thread change\n"
+	    }
+	    $lasttid = $tid;
+	    print ($indentp ? (' ' x 2 x (1 + $#{$tid_callstack{$tid}})) : '');
+	    print "$_";
+	}
+
+	push @{$tid_callstack{$tid}}, [$func, $retaddr, $segreg];
+    }
+
+    elsif (/^([0-9a-f]+):Ret  ([A-Za-z0-9_]+\.[A-Za-z0-9_.]+)\(.*\) .* ret=(........)$/ ||
+	/^([0-9a-f]+):Ret  ([A-Za-z0-9_]+\.[A-Za-z0-9_.]+)\(.*\) .* ret=(....:....) (ds=....)$/ ||
+	/^([0-9a-f]+):Ret  ([A-Za-z0-9_]+\.[A-Za-z0-9_.]+)\(.*\) .* ret=(........) fs=....$/ ||
+        /^([0-9a-f]+):RET  ([A-Za-z0-9_]+\.[A-Za-z0-9_.]+: [A-Za-z0-9]+)\(.*\) .* ret=(........)$/ ||
+        /^([0-9a-f]+):Ret  (window proc) ([0-9a-fx]+) .*/) {
+	my $tid = $1;
+	my $func = $2;
+	my $retaddr = $3;
+	my $segreg = $4;
+	my ($topfunc,$topaddr,$topseg);
+        if (defined $fullformat) {
+	    if ($lasttid ne $tid) {
+	        print "******** thread change\n"
+	    }
+	    $lasttid = $tid;
+	}
+
+#	print "have ret func=$func <$_>\n";
+	if (!defined($tid_callstack{$tid}))
+	{
+	    print "Err[$tid]: unknown tid\n";
+	    next;
+	}
+
+	$segreg = "none" unless defined $segreg;
+
+      POP:
+	while (1) {
+	    if ($#{$tid_callstack{$tid}} == -1) {
+		print "Err[$tid]: Return from $func to $retaddr with empty stack.\n";
+		next LINE;
+	    }
+
+	    ($topfunc,$topaddr,$topseg) = @{pop @{$tid_callstack{$tid}}};
+
+	    if ($topfunc ne $func) {
+		print "Err[$tid]: Return from $topfunc, but call from $func.\n";
+		next POP;
+	    }
+	    last POP;
+	}
+
+	my $addrok = ($topaddr eq $retaddr);
+	my $segok = ($topseg eq $segreg);
+	if ($addrok && $segok) {
+            if (defined $fullformat) {
+	        print ($indentp ? (' ' x 2 x (1 + $#{$tid_callstack{$tid}})) : '');
+	        print "$_";
+	    } else {
+	        print "Ok [$tid]: ", ($indentp ? (' ' x (1 + $#{$tid_callstack{$tid}})) : '');
+	        print "$func from $retaddr with $segreg.\n";
+	    }
+	} else {
+	    print "Err[$tid]: Return from $func is to $retaddr, not $topaddr.\n"
+		if !$addrok;
+	    print "Err[$tid]: Return from $func with segreg $segreg, not $topseg.\n"
+		if !$segok;
+	}
+    }
+    
+    else {
+	print "$_";
+    }
+}
+
+foreach my $tid (keys %tid_callstack) {
+    while ($#{$tid_callstack{$tid}} != -1) {
+	my ($topfunc,$topaddr,$topseg) = @{pop @{$tid_callstack{$tid}}};
+	print "Err[$tid]: leftover call to $topfunc from $topaddr.\n";
+    }
+}
+
+close (IN);

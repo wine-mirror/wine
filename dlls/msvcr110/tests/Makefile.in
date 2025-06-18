@@ -1,0 +1,5 @@
+TESTDLL   = msvcr110.dll
+IMPORTS   = msvcr110
+
+SOURCES = \
+	msvcr110.c

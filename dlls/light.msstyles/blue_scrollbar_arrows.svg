@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="bitmap:17-24" width="17" height="340" version="1.1" viewBox="0 0 4.4979 89.959" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <rect x="-1.875e-5" width="4.4979" height="89.959" fill="#fefefe"/>
+ <g stroke-width=".26458">
+  <g fill="#fefefe">
+   <rect x=".13229" y=".13229" width="4.2333" height="4.2333" rx=".52917" ry=".52917" stroke="#aeaeae"/>
+   <g stroke="#3096fa">
+    <rect x=".13229" y="4.6302" width="4.2334" height="4.2333" rx=".52917" ry=".52917"/>
+    <rect x=".13227" y="72.099" width="4.2334" height="4.2333" rx=".52917" ry=".52917"/>
+    <rect x=".13227" y="76.597" width="4.2334" height="4.2333" rx=".52917" ry=".52917"/>
+    <rect x=".13227" y="81.095" width="4.2334" height="4.2333" rx=".52917" ry=".52917"/>
+    <rect x=".13227" y="85.593" width="4.2334" height="4.2333" rx=".52917" ry=".52917"/>
+   </g>
+  </g>
+  <rect x=".13229" y="9.1281" width="4.2333" height="4.2333" rx=".52917" ry=".52917" fill="#2979ff" stroke="#2979ff"/>
+  <g fill="#fefefe">
+   <rect x=".13229" y="13.626" width="4.2333" height="4.2333" rx=".52917" ry=".52917" stroke="#aeaeae"/>
+   <rect x=".13229" y="18.124" width="4.2333" height="4.2333" rx=".52917" ry=".52917" stroke="#aeaeae"/>
+   <rect x=".13229" y="22.622" width="4.2333" height="4.2333" rx=".52917" ry=".52917" stroke="#3096fa"/>
+  </g>
+  <rect x=".13229" y="27.12" width="4.2333" height="4.2333" rx=".52917" ry=".52917" fill="#2979ff" stroke="#2979ff"/>
+  <g fill="#fefefe">
+   <rect x=".13229" y="31.618" width="4.2333" height="4.2333" rx=".52917" ry=".52917" stroke="#aeaeae"/>
+   <rect x=".13229" y="36.116" width="4.2333" height="4.2333" rx=".52917" ry=".52917" stroke="#aeaeae"/>
+   <rect x=".13229" y="40.614" width="4.2333" height="4.2333" rx=".52917" ry=".52917" stroke="#3096fa"/>
+  </g>
+  <rect x=".13229" y="45.111" width="4.2333" height="4.2333" rx=".52917" ry=".52917" fill="#2979ff" stroke="#2979ff"/>
+  <g fill="#fefefe">
+   <rect x=".13229" y="49.609" width="4.2333" height="4.2333" rx=".52917" ry=".52917" stroke="#aeaeae"/>
+   <rect x=".13229" y="54.107" width="4.2333" height="4.2333" rx=".52917" ry=".52917" stroke="#aeaeae"/>
+   <rect x=".13229" y="58.605" width="4.2333" height="4.2333" rx=".52917" ry=".52917" stroke="#3096fa"/>
+  </g>
+  <rect x=".13229" y="63.103" width="4.2333" height="4.2333" rx=".52917" ry=".52917" fill="#2979ff" stroke="#2979ff"/>
+  <rect x=".13229" y="67.601" width="4.2333" height="4.2333" rx=".52917" ry=".52917" fill="#fefefe" stroke="#aeaeae"/>
+ </g>
+</svg>

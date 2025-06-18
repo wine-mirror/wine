@@ -1,0 +1,310 @@
+/*
+ * Copyright (C) 2024 Zhiyi Zhang for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+#ifndef DO_NO_IMPORTS
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.applicationmodel.activation.idl";
+import "windows.storage.idl";
+import "windows.system.idl";
+#endif
+
+namespace Windows.ApplicationModel.Activation {
+    runtimeclass BackgroundActivatedEventArgs;
+}
+
+namespace Windows.ApplicationModel.Background {
+    runtimeclass BackgroundTaskRegistrationGroup;
+}
+
+namespace Windows.ApplicationModel.Activation {
+    declare {
+        interface Windows.Foundation.EventHandler<Windows.ApplicationModel.Activation.BackgroundActivatedEventArgs *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.ApplicationModel.Background.BackgroundTaskRegistrationGroup *, Windows.ApplicationModel.Activation.BackgroundActivatedEventArgs *>;
+    }
+}
+
+namespace Windows.ApplicationModel.Background {
+    typedef enum BackgroundTaskCancellationReason BackgroundTaskCancellationReason;
+
+    interface IBackgroundTaskCompletedEventArgs;
+    interface IBackgroundTaskDeferral;
+    interface IBackgroundTaskProgressEventArgs;
+    interface IBackgroundTaskInstance;
+    interface IBackgroundTaskRegistration;
+    interface IBackgroundTaskRegistration2;
+    interface IBackgroundTaskRegistration3;
+    interface IBackgroundTaskRegistrationGroup;
+    interface IBackgroundTaskRegistrationGroupFactory;
+    interface IBackgroundTaskRegistrationStatics;
+    interface IBackgroundTaskRegistrationStatics2;
+    interface IBackgroundTrigger;
+
+    runtimeclass BackgroundTaskCompletedEventArgs;
+    runtimeclass BackgroundTaskDeferral;
+    runtimeclass BackgroundTaskProgressEventArgs;
+    runtimeclass BackgroundTaskRegistration;
+    runtimeclass BackgroundTaskRegistrationGroup;
+
+    declare {
+        interface Windows.Foundation.Collections.IMapView<GUID, Windows.ApplicationModel.Background.BackgroundTaskRegistration *>;
+        interface Windows.Foundation.Collections.IMapView<GUID, Windows.ApplicationModel.Background.IBackgroundTaskRegistration *>;
+        interface Windows.Foundation.Collections.IMapView<HSTRING, Windows.ApplicationModel.Background.BackgroundTaskRegistrationGroup *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum BackgroundTaskCancellationReason
+    {
+        Abort = 0,
+        Terminating = 1,
+        LoggingOff = 2,
+        ServicingUpdate = 3,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] IdleTask = 4,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] Uninstall = 5,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] ConditionLoss = 6,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] SystemPolicy = 7,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] QuietHoursEntered = 8,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] ExecutionTimeExceeded = 9,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] ResourceRevocation = 10,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] EnergySaver = 11
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(a6c4bac0-51f8-4c57-ac3f-156dd1680c4f)
+    ]
+    delegate
+    HRESULT BackgroundTaskCanceledEventHandler([in] Windows.ApplicationModel.Background.IBackgroundTaskInstance *sender, [in] Windows.ApplicationModel.Background.BackgroundTaskCancellationReason reason);
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(5B38E929-A086-46A7-A678-439135822BCF)
+    ]
+    delegate
+    HRESULT BackgroundTaskCompletedEventHandler([in] Windows.ApplicationModel.Background.BackgroundTaskRegistration *sender, [in] Windows.ApplicationModel.Background.BackgroundTaskCompletedEventArgs *args);
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(46e0683c-8a88-4c99-804c-76897f6277a6)
+    ]
+    delegate
+    HRESULT BackgroundTaskProgressEventHandler([in] Windows.ApplicationModel.Background.BackgroundTaskRegistration *sender, [in] Windows.ApplicationModel.Background.BackgroundTaskProgressEventArgs *args);
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.Background.BackgroundTaskCompletedEventArgs),
+        uuid(565d25cf-f209-48f4-9967-2b184f7bfbf0)
+    ]
+    interface IBackgroundTaskCompletedEventArgs : IInspectable
+    {
+        [propget] HRESULT InstanceId([out, retval] GUID *value);
+        HRESULT CheckResult();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.Background.BackgroundTaskDeferral),
+        uuid(93cc156d-af27-4dd3-846e-24ee40cadd25)
+    ]
+    interface IBackgroundTaskDeferral : IInspectable
+    {
+        HRESULT Complete();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.Background.BackgroundTaskProgressEventArgs),
+        uuid(fb1468ac-8332-4d0a-9532-03eae684da31)
+    ]
+    interface IBackgroundTaskProgressEventArgs : IInspectable
+    {
+        [propget] HRESULT InstanceId([out, retval] GUID *value);
+        [propget] HRESULT Progress([out, retval] UINT32 *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(865bda7a-21d8-4573-8f32-928a1b0641f6)
+    ]
+    interface IBackgroundTaskInstance : IInspectable
+    {
+        [propget] HRESULT InstanceId([out, retval] GUID *value);
+        [propget] HRESULT Task([out, retval] Windows.ApplicationModel.Background.BackgroundTaskRegistration **task);
+        [propget] HRESULT Progress([out, retval] UINT32 *value);
+        [propput] HRESULT Progress([in] UINT32 value);
+        [propget] HRESULT TriggerDetails([out, retval] IInspectable **details);
+        [eventadd] HRESULT Canceled([in] Windows.ApplicationModel.Background.BackgroundTaskCanceledEventHandler *handler, [out, retval] EventRegistrationToken *cookie);
+        [eventremove] HRESULT Canceled([in] EventRegistrationToken cookie);
+        [propget] HRESULT SuspendedCount([out, retval] UINT32 *value);
+        HRESULT GetDeferral([out, retval] Windows.ApplicationModel.Background.BackgroundTaskDeferral **deferral);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(10654cc2-a26e-43bf-8c12-1fb40dbfbfa0)
+    ]
+    interface IBackgroundTaskRegistration : IInspectable
+    {
+        [propget] HRESULT TaskId([out, retval] GUID *value);
+        [propget] HRESULT Name([out, retval] HSTRING *value);
+        [eventadd] HRESULT Progress([in] Windows.ApplicationModel.Background.BackgroundTaskProgressEventHandler *handler, [out, retval] EventRegistrationToken *cookie);
+        [eventremove] HRESULT Progress([in] EventRegistrationToken cookie);
+        [eventadd] HRESULT Completed([in] Windows.ApplicationModel.Background.BackgroundTaskCompletedEventHandler *handler, [out, retval] EventRegistrationToken *cookie);
+        [eventremove] HRESULT Completed([in] EventRegistrationToken cookie);
+        HRESULT Unregister([in] boolean cancel_task);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(6138c703-bb86-4112-afc3-7f939b166e3b)
+    ]
+    interface IBackgroundTaskRegistration2 : IInspectable
+        requires Windows.ApplicationModel.Background.IBackgroundTaskRegistration
+    {
+        [propget] HRESULT Trigger([out, retval] Windows.ApplicationModel.Background.IBackgroundTrigger **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        uuid(fe338195-9423-4d8b-830d-b1dd2c7badd5)
+    ]
+    interface IBackgroundTaskRegistration3 : IInspectable
+        requires Windows.ApplicationModel.Background.IBackgroundTaskRegistration
+    {
+        [propget] HRESULT TaskGroup([out, retval] Windows.ApplicationModel.Background.BackgroundTaskRegistrationGroup **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.ApplicationModel.Background.BackgroundTaskRegistrationGroup),
+        uuid(2ab1919a-871b-4167-8a76-055cd67b5b23)
+    ]
+    interface IBackgroundTaskRegistrationGroup : IInspectable
+    {
+        [propget] HRESULT Id([out, retval] HSTRING *value);
+        [propget] HRESULT Name([out, retval] HSTRING *value);
+        [eventadd] HRESULT BackgroundActivated([in] Windows.Foundation.TypedEventHandler<Windows.ApplicationModel.Background.BackgroundTaskRegistrationGroup *, Windows.ApplicationModel.Activation.BackgroundActivatedEventArgs *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT BackgroundActivated([in] EventRegistrationToken token);
+        [propget] HRESULT AllTasks([out, retval] Windows.Foundation.Collections.IMapView<GUID, Windows.ApplicationModel.Background.BackgroundTaskRegistration *> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.ApplicationModel.Background.BackgroundTaskRegistrationGroup),
+        uuid(83d92b69-44cf-4631-9740-03c7d8741bc5)
+    ]
+    interface IBackgroundTaskRegistrationGroupFactory : IInspectable
+    {
+        HRESULT Create([in] HSTRING id, [out, retval] Windows.ApplicationModel.Background.BackgroundTaskRegistrationGroup **group);
+        HRESULT CreateWithName([in] HSTRING id, [in] HSTRING name, [out, retval] Windows.ApplicationModel.Background.BackgroundTaskRegistrationGroup **group);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.Background.BackgroundTaskRegistration),
+        uuid(4c542f69-b000-42ba-a093-6a563c65e3f8)
+    ]
+    interface IBackgroundTaskRegistrationStatics : IInspectable
+    {
+        [propget] HRESULT AllTasks([out, retval] Windows.Foundation.Collections.IMapView<GUID, Windows.ApplicationModel.Background.IBackgroundTaskRegistration *> **tasks);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.ApplicationModel.Background.BackgroundTaskRegistration),
+        uuid(174b671e-b20d-4fa9-ad9a-e93ad6c71e01)
+    ]
+    interface IBackgroundTaskRegistrationStatics2 : IInspectable
+    {
+        [propget] HRESULT AllTaskGroups([out, retval] Windows.Foundation.Collections.IMapView<HSTRING, Windows.ApplicationModel.Background.BackgroundTaskRegistrationGroup *> **value);
+        HRESULT GetTaskGroup([in] HSTRING groupId, [out, retval] Windows.ApplicationModel.Background.BackgroundTaskRegistrationGroup **value);
+    }
+
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(84b3a058-6027-4b87-9790-bdf3f757dbd7)
+    ]
+    interface IBackgroundTrigger : IInspectable
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass BackgroundTaskCompletedEventArgs
+    {
+        [default] interface Windows.ApplicationModel.Background.IBackgroundTaskCompletedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(mta)
+    ]
+    runtimeclass BackgroundTaskDeferral
+    {
+        [default] interface Windows.ApplicationModel.Background.IBackgroundTaskDeferral;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass BackgroundTaskProgressEventArgs
+    {
+        [default] interface Windows.ApplicationModel.Background.IBackgroundTaskProgressEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.ApplicationModel.Background.IBackgroundTaskRegistrationStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.ApplicationModel.Background.IBackgroundTaskRegistrationStatics2, Windows.Foundation.UniversalApiContract, 4.0),
+        threading(both)
+    ]
+    runtimeclass BackgroundTaskRegistration
+    {
+        [default] interface Windows.ApplicationModel.Background.IBackgroundTaskRegistration;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.Background.IBackgroundTaskRegistration2;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.ApplicationModel.Background.IBackgroundTaskRegistration3;
+    }
+
+    [
+        activatable(Windows.ApplicationModel.Background.IBackgroundTaskRegistrationGroupFactory, Windows.Foundation.UniversalApiContract, 4.0),
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass BackgroundTaskRegistrationGroup
+    {
+        [default] interface Windows.ApplicationModel.Background.IBackgroundTaskRegistrationGroup;
+    }
+}

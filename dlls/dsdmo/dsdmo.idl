@@ -1,0 +1,91 @@
+/*
+ * Copyright 2020 Zebediah Figura
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep register
+
+[
+    threading(both),
+    progid("Microsoft.DirectSoundI3DL2ReverbDMO.1"),
+    vi_progid("Microsoft.DirectSoundI3DL2ReverbDMO"),
+    uuid(ef985e71-d5c7-42d4-ba4d-2d073e2e96f4)
+]
+coclass DirectSoundI3DL2ReverbDMO {}
+
+[
+    threading(both),
+    progid("Microsoft.DirectSoundParamEqDMO.1"),
+    vi_progid("Microsoft.DirectSoundParamEqDMO"),
+    uuid(120ced89-3bf4-4173-a132-3cb406cf3231)
+]
+coclass DirectSoundParamEqDMO {}
+
+[
+    threading(both),
+    progid("Microsoft.DirectSoundWavesReverbDMO.1"),
+    vi_progid("Microsoft.DirectSoundWavesReverbDMO"),
+    uuid(87fc0268-9a55-4360-95aa-004a1d9de26c)
+]
+coclass DirectSoundWavesReverbDMO {}
+
+[
+    uuid(ef3e932c-d40b-4f51-8ccf-3f98f1b29d5d),
+    threading(both),
+    progid("Microsoft.DirectSoundEchoDMO.1"),
+    vi_progid("Microsoft.DirectSoundEchoDMO")
+]
+coclass DirectSoundEchoDMO {}
+
+[
+    uuid(ef011f79-4000-406d-87af-bffb3fc39d57),
+    threading(both),
+    progid("Microsoft.DirectSoundCompressorDMO.1"),
+    vi_progid("Microsoft.DirectSoundCompressorDMO")
+]
+coclass DirectSoundCompressorDMO {}
+
+[
+    uuid(efe6629c-81f7-4281-bd91-c9d604a95af6),
+    threading(both),
+    progid("Microsoft.DirectSoundChorusDMO.1"),
+    vi_progid("Microsoft.DirectSoundChorusDMO")
+]
+coclass DirectSoundChorusDMO {}
+
+[
+    uuid(efca3d92-dfd8-4672-a603-7420894bad98),
+    threading(both),
+    progid("Microsoft.DirectSoundFlangerDMO.1"),
+    vi_progid("Microsoft.DirectSoundFlangerDMO")
+]
+coclass DirectSoundFlangerDMO {}
+
+[
+    uuid(ef114c90-cd1d-484e-96e5-09cfaf912a21),
+    threading(both),
+    progid("Microsoft.DirectSoundDistortionDMO.1"),
+    vi_progid("Microsoft.DirectSoundDistortionDMO")
+]
+coclass DirectSoundDistortionDMO {}
+
+[
+    uuid(dafd8210-5711-4b91-9fe3-f75b7ae279bf),
+    threading(both),
+    progid("Microsoft.DirectSoundGargleDMO.1"),
+    vi_progid("Microsoft.DirectSoundGargleDMO")
+]
+coclass DirectSoundGargleDMO {}

@@ -1,0 +1,51 @@
+HKCR
+{
+    NoRemove CLSID
+    {
+        '{00021400-0000-0000-C000-000000000046}' { val LocalizedString = s '@%MODULE%,-20' }
+        '{20D04FE0-3AEA-1069-A2D8-08002B30309D}' { val LocalizedString = s '@%MODULE%,-21' }
+        '{21EC2020-3AEA-1069-A2DD-08002B30309D}' { val LocalizedString = s '@%MODULE%,-22' }
+        '{450D8FBA-AD25-11D0-98A8-0800361B1103}' { val LocalizedString = s '@%MODULE%,-46' }
+        '{645FF040-5081-101B-9F08-00AA002F954E}'
+        {
+            val LocalizedString = s '@%MODULE%,-8964'
+            DefaultIcon = s '%MODULE%,-33'
+        }
+        '{00021401-0000-0000-C000-000000000046}' { shellex { MayChangeDefaultMenu } }
+    }
+}
+
+HKLM
+{
+    NoRemove Software
+    {
+        NoRemove Microsoft
+        {
+            NoRemove Windows
+            {
+                NoRemove CurrentVersion
+                {
+                    NoRemove Explorer
+                    {
+                        NoRemove Desktop
+                        {
+                            NoRemove Namespace
+                            {
+                                '{450D8FBA-AD25-11D0-98A8-0800361B1103}' = s 'My Documents'
+                                '{645FF040-5081-101B-9F08-00AA002F954E}' = s 'Trash'
+                                '{9D20AAE8-0625-44B0-9CA7-71889C2254D9}' = s '/'
+                            }
+                        }
+                        NoRemove MyComputer
+                        {
+                            NoRemove Namespace
+                            {
+                                '{21EC2020-3AEA-1069-A2DD-08002B30309D}' = s 'Control Panel'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

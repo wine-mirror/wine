@@ -1,0 +1,8 @@
+MODULE    = xtajit64.dll
+IMPORTS   = ntdll
+EXTRADEFS = -D_CRTIMP=
+
+EXTRADLLFLAGS = -nodefaultlibs
+
+SOURCES = \
+	cpu.c

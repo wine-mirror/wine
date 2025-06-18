@@ -1,0 +1,344 @@
+/*
+ * Copyright (C) 2023 Mohamad Al-Jaf
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+#ifndef DO_NO_IMPORTS
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+/* import "windows.devices.bluetooth.genericattributeprofile.idl"; */
+import "windows.devices.bluetooth.rfcomm.idl";
+import "windows.devices.enumeration.idl";
+import "windows.devices.radios.idl";
+import "windows.networking.idl";
+import "windows.storage.streams.idl";
+#endif
+
+namespace Windows.Devices.Bluetooth {
+    typedef enum BluetoothCacheMode BluetoothCacheMode;
+    typedef enum BluetoothConnectionStatus BluetoothConnectionStatus;
+    typedef enum BluetoothMajorClass BluetoothMajorClass;
+    typedef enum BluetoothMinorClass BluetoothMinorClass;
+    typedef enum BluetoothServiceCapabilities BluetoothServiceCapabilities;
+
+    interface IBluetoothAdapter;
+    interface IBluetoothAdapter2;
+    interface IBluetoothAdapter3;
+    interface IBluetoothAdapterStatics;
+    interface IBluetoothClassOfDevice;
+    interface IBluetoothClassOfDeviceStatics;
+    interface IBluetoothDevice;
+    interface IBluetoothDevice2;
+    interface IBluetoothDevice3;
+    interface IBluetoothDevice4;
+    interface IBluetoothDevice5;
+    interface IBluetoothDeviceStatics;
+    interface IBluetoothDeviceStatics2;
+
+    runtimeclass BluetoothAdapter;
+    runtimeclass BluetoothClassOfDevice;
+    runtimeclass BluetoothDevice;
+
+    namespace Rfcomm {
+        runtimeclass RfcommDeviceService;
+    }
+
+    declare {
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Devices.Bluetooth.BluetoothAdapter *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.BluetoothAdapter *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Devices.Bluetooth.BluetoothDevice *, IInspectable *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Devices.Bluetooth.BluetoothDevice *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.BluetoothDevice *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Storage.Streams.IBuffer *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Bluetooth.Rfcomm.RfcommDeviceService *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum BluetoothCacheMode
+    {
+        Cached = 0,
+        Uncached = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum BluetoothConnectionStatus
+    {
+        Disconnected = 0,
+        Connected = 1,
+    };
+
+    [
+         contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum BluetoothMajorClass
+    {
+        Miscellaneous = 0,
+        Computer = 1,
+        Phone = 2,
+        NetworkAccessPoint = 3,
+        AudioVideo = 4,
+        Peripheral = 5,
+        Imaging = 6,
+        Wearable = 7,
+        Toy = 8,
+        Health = 9,
+    };
+
+    [
+         contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum BluetoothMinorClass
+    {
+        Uncategorized = 0,
+        ComputerDesktop = 1,
+        ComputerServer = 2,
+        ComputerLaptop = 3,
+        ComputerHandheld = 4,
+        ComputerPalmSize = 5,
+        ComputerWearable = 6,
+        ComputerTablet = 7,
+        PhoneCellular = 1,
+        PhoneCordless = 2,
+        PhoneSmartPhone = 3,
+        PhoneWired = 4,
+        PhoneIsdn = 5,
+        NetworkFullyAvailable = 0,
+        NetworkUsed01To17Percent = 8,
+        NetworkUsed17To33Percent = 16,
+        NetworkUsed33To50Percent = 24,
+        NetworkUsed50To67Percent = 32,
+        NetworkUsed67To83Percent = 40,
+        NetworkUsed83To99Percent = 48,
+        NetworkNoServiceAvailable = 56,
+        AudioVideoWearableHeadset = 1,
+        AudioVideoHandsFree = 2,
+        AudioVideoMicrophone = 4,
+        AudioVideoLoudspeaker = 5,
+        AudioVideoHeadphones = 6,
+        AudioVideoPortableAudio = 7,
+        AudioVideoCarAudio = 8,
+        AudioVideoSetTopBox = 9,
+        AudioVideoHifiAudioDevice = 10,
+        AudioVideoVcr = 11,
+        AudioVideoVideoCamera = 12,
+        AudioVideoCamcorder = 13,
+        AudioVideoVideoMonitor = 14,
+        AudioVideoVideoDisplayAndLoudspeaker = 15,
+        AudioVideoVideoConferencing = 16,
+        AudioVideoGamingOrToy = 18,
+        PeripheralJoystick = 1,
+        PeripheralGamepad = 2,
+        PeripheralRemoteControl = 3,
+        PeripheralSensing = 4,
+        PeripheralDigitizerTablet = 5,
+        PeripheralCardReader = 6,
+        PeripheralDigitalPen = 7,
+        PeripheralHandheldScanner = 8,
+        PeripheralHandheldGesture = 9,
+        WearableWristwatch = 1,
+        WearablePager = 2,
+        WearableJacket = 3,
+        WearableHelmet = 4,
+        WearableGlasses = 5,
+        ToyRobot = 1,
+        ToyVehicle = 2,
+        ToyDoll = 3,
+        ToyController = 4,
+        ToyGame = 5,
+        HealthBloodPressureMonitor = 1,
+        HealthThermometer = 2,
+        HealthWeighingScale = 3,
+        HealthGlucoseMeter = 4,
+        HealthPulseOximeter = 5,
+        HealthHeartRateMonitor = 6,
+        HealthHealthDataDisplay = 7,
+        HealthStepCounter = 8,
+        HealthBodyCompositionAnalyzer = 9,
+        HealthPeakFlowMonitor = 10,
+        HealthMedicationMonitor = 11,
+        HealthKneeProsthesis = 12,
+        HealthAnkleProsthesis = 13,
+        HealthGenericHealthManager = 14,
+        HealthPersonalMobilityDevice = 15,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        flags
+    ]
+    enum BluetoothServiceCapabilities
+    {
+        None = 0x0,
+        LimitedDiscoverableMode = 0x1,
+        PositioningService = 0x8,
+        NetworkingService = 0x10,
+        RenderingService = 0x20,
+        CapturingService = 0x40,
+        ObjectTransferService = 0x80,
+        AudioService = 0x100,
+        TelephoneService = 0x200,
+        InformationService = 0x400,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Devices.Bluetooth.BluetoothAdapter),
+        uuid(7974f04c-5f7a-4a34-9225-a855f84b1a8b)
+    ]
+    interface IBluetoothAdapter : IInspectable
+    {
+        [propget] HRESULT DeviceId([out, retval] HSTRING *value);
+        [propget] HRESULT BluetoothAddress([out, retval] UINT64 *value);
+        [propget] HRESULT IsClassicSupported([out, retval] boolean *value);
+        [propget] HRESULT IsLowEnergySupported([out, retval] boolean *value);
+        [propget] HRESULT IsPeripheralRoleSupported([out, retval] boolean *value);
+        [propget] HRESULT IsCentralRoleSupported([out, retval] boolean *value);
+        [propget] HRESULT IsAdvertisementOffloadSupported([out, retval] boolean *value);
+        HRESULT GetRadioAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Radios.Radio *> **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Devices.Bluetooth.BluetoothAdapter),
+        uuid(8b02fb6a-ac4c-4741-8661-8eab7d17ea9f)
+    ]
+    interface IBluetoothAdapterStatics : IInspectable
+    {
+        HRESULT GetDeviceSelector([out, retval] HSTRING *result);
+        HRESULT FromIdAsync([in] HSTRING id, [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.BluetoothAdapter *> **operation);
+        HRESULT GetDefaultAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.BluetoothAdapter *> **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        marshaling_behavior(agile),
+        static(Windows.Devices.Bluetooth.IBluetoothAdapterStatics, Windows.Foundation.UniversalApiContract, 4.0),
+        threading(both)
+    ]
+    runtimeclass BluetoothAdapter
+    {
+        [default] interface Windows.Devices.Bluetooth.IBluetoothAdapter;
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Devices.Bluetooth.IBluetoothAdapter2;
+        [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.Devices.Bluetooth.IBluetoothAdapter3;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Bluetooth.BluetoothClassOfDevice),
+        uuid(d640227e-d7d7-4661-9454-65039ca17a2b)
+    ]
+    interface IBluetoothClassOfDevice : IInspectable
+    {
+        [propget] HRESULT RawValue([out, retval] UINT32 *value);
+        [propget] HRESULT MajorClass([out, retval] Windows.Devices.Bluetooth.BluetoothMajorClass *value);
+        [propget] HRESULT MinorClass([out, retval] Windows.Devices.Bluetooth.BluetoothMinorClass *value);
+        [propget] HRESULT ServiceCapabilities([out, retval] Windows.Devices.Bluetooth.BluetoothServiceCapabilities *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Bluetooth.BluetoothClassOfDevice),
+        uuid(e46135bd-0fa2-416c-91b4-c1e48ca061c1)
+    ]
+    interface IBluetoothClassOfDeviceStatics : IInspectable
+    {
+        HRESULT FromRawValue([in] UINT32 raw_value, [out, retval] Windows.Devices.Bluetooth.BluetoothClassOfDevice **cod);
+        HRESULT FromParts([in] Windows.Devices.Bluetooth.BluetoothMajorClass major,
+                          [in] Windows.Devices.Bluetooth.BluetoothMinorClass minor,
+                          [in] Windows.Devices.Bluetooth.BluetoothServiceCapabilities capabilities,
+                          [out, retval] Windows.Devices.Bluetooth.BluetoothClassOfDevice **cod);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Devices.Bluetooth.IBluetoothClassOfDeviceStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass BluetoothClassOfDevice
+    {
+        [default] interface Windows.Devices.Bluetooth.IBluetoothClassOfDevice;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Bluetooth.BluetoothDevice),
+        uuid(2335b156-90d2-4a04-aef5-0e20b9e6b707)
+    ]
+    interface IBluetoothDevice : IInspectable
+    {
+        [propget] HRESULT DeviceId([out, retval] HSTRING *value);
+        [propget] HRESULT HostName([out, retval] Windows.Networking.HostName **value);
+        [propget] HRESULT Name([out, retval] HSTRING *value);
+        [propget] HRESULT ClassOfDevice([out, retval] Windows.Devices.Bluetooth.BluetoothClassOfDevice **value);
+        [propget] HRESULT SdpRecords([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Storage.Streams.IBuffer *> **value);
+        [propget] HRESULT RfcommServices([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Bluetooth.Rfcomm.RfcommDeviceService *> **value);
+        [propget] HRESULT ConnectionStatus([out, retval] Windows.Devices.Bluetooth.BluetoothConnectionStatus *value);
+        [propget] HRESULT BluetoothAddress([out, retval] UINT64 *value);
+        [eventadd] HRESULT NameChanged([in] Windows.Foundation.TypedEventHandler<Windows.Devices.Bluetooth.BluetoothDevice *, IInspectable *> *handler,
+                                       [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT NameChanged([in] EventRegistrationToken token);
+        [eventadd] HRESULT SdpRecordsChanged([in] Windows.Foundation.TypedEventHandler<Windows.Devices.Bluetooth.BluetoothDevice*, IInspectable *> *handler,
+                                             [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT SdpRecordsChanged([in] EventRegistrationToken token);
+        [eventadd] HRESULT ConnectionStatusChanged([in] Windows.Foundation.TypedEventHandler<Windows.Devices.Bluetooth.BluetoothDevice *, IInspectable *> *handler,
+                                                   [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT ConnectionStatusChanged([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Bluetooth.BluetoothDevice),
+        uuid(0991df51-57db-4725-bbd7-84f64327ec2c)
+    ]
+    interface IBluetoothDeviceStatics : IInspectable
+    {
+        HRESULT FromIdAsync([in] HSTRING id, [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.BluetoothDevice *> **operation);
+        HRESULT FromHostNameAsync([in] Windows.Networking.HostName *name,
+                                  [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.BluetoothDevice *> **operation);
+        HRESULT FromBluetoothAddressAsync([in] UINT64 address,
+                                          [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.BluetoothDevice *> **operation);
+        HRESULT GetDeviceSelector([out, retval] HSTRING *selector);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Devices.Bluetooth.IBluetoothDeviceStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.Devices.Bluetooth.IBluetoothDeviceStatics2, Windows.Foundation.UniversalApiContract, 2.0),
+        threading(both)
+    ]
+    runtimeclass BluetoothDevice
+    {
+        [default] interface Windows.Devices.Bluetooth.IBluetoothDevice;
+        [contract(Windows.Foundation.UniversalApiContract, 2.0)] interface Windows.Devices.Bluetooth.IBluetoothDevice2;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Devices.Bluetooth.IBluetoothDevice3;
+        [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.Devices.Bluetooth.IBluetoothDevice4;
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Devices.Bluetooth.IBluetoothDevice5;
+        interface Windows.Foundation.IClosable;
+    }
+}

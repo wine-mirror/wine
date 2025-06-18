@@ -1,0 +1,2 @@
+MODULE    = comm.drv16
+EXTRADLLFLAGS = -m16

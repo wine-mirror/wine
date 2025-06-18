@@ -1,0 +1,115 @@
+/*
+ * Copyright 2022 Rémi Bernon for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+
+namespace Windows.Foundation.Numerics {
+    typedef struct Matrix3x2 Matrix3x2;
+    typedef struct Matrix4x4 Matrix4x4;
+    typedef struct Plane Plane;
+    typedef struct Quaternion Quaternion;
+    typedef struct Vector2 Vector2;
+    typedef struct Vector3 Vector3;
+    typedef struct Vector4 Vector4;
+
+    declare {
+        interface Windows.Foundation.IReference<Windows.Foundation.Numerics.Matrix4x4>;
+        interface Windows.Foundation.IReference<Windows.Foundation.Numerics.Vector2>;
+        interface Windows.Foundation.IReference<Windows.Foundation.Numerics.Vector3>;
+    }
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    struct Matrix3x2
+    {
+        FLOAT M11;
+        FLOAT M12;
+        FLOAT M21;
+        FLOAT M22;
+        FLOAT M31;
+        FLOAT M32;
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    struct Matrix4x4
+    {
+        FLOAT M11;
+        FLOAT M12;
+        FLOAT M13;
+        FLOAT M14;
+        FLOAT M21;
+        FLOAT M22;
+        FLOAT M23;
+        FLOAT M24;
+        FLOAT M31;
+        FLOAT M32;
+        FLOAT M33;
+        FLOAT M34;
+        FLOAT M41;
+        FLOAT M42;
+        FLOAT M43;
+        FLOAT M44;
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    struct Vector3
+    {
+        FLOAT X;
+        FLOAT Y;
+        FLOAT Z;
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    struct Plane
+    {
+        Windows.Foundation.Numerics.Vector3 Normal;
+        FLOAT D;
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    struct Quaternion
+    {
+        FLOAT X;
+        FLOAT Y;
+        FLOAT Z;
+        FLOAT W;
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    struct Vector2
+    {
+        FLOAT X;
+        FLOAT Y;
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    struct Vector4
+    {
+        FLOAT X;
+        FLOAT Y;
+        FLOAT Z;
+        FLOAT W;
+    };
+}

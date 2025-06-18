@@ -1,0 +1,6 @@
+TESTDLL   = msvcr90.dll
+IMPORTS   = msvcr90
+
+SOURCES = \
+	msvcr90.c \
+	msvcr90.rc

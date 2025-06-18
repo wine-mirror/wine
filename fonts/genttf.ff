@@ -1,0 +1,6 @@
+Open($1)
+flags = 0
+if ($1 == "symbol.sfd")
+    flags = 0x2000
+endif
+Generate($2, "ttf", flags)

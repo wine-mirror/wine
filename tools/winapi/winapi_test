@@ -1,0 +1,897 @@
+#!/usr/bin/perl
+
+# Copyright 2002 Patrik Stridvall
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+#
+
+use strict;
+use warnings 'all';
+
+BEGIN {
+    $0 =~ m%^(.*?/?tools)/winapi/winapi_test$%;
+    require "$1/winapi/setup.pm";
+}
+
+use config qw(
+    file_type files_skip files_filter
+    $current_dir $wine_dir $winapi_dir
+);
+use output qw($output);
+use winapi_test_options qw($options);
+
+if($options->progress) {
+    $output->enable_progress;
+} else {
+    $output->disable_progress;
+}
+
+use c_parser;
+use tests qw($tests);
+use type;
+use util qw(replace_file);
+
+my $pointer_size = 4;
+
+my @tests = ();
+if ($options->pack) {
+    push @tests, "pack";
+}
+
+my @files;
+{
+    my %files;
+
+    foreach my $test (@tests)
+    {
+	foreach my $test_dir ($tests->get_test_dirs($test))
+        {
+	    foreach my $header ($tests->get_section($test_dir, $test, "header"))
+            {
+                if (!$files{$header})
+                {
+		    push @files, "include/$header";
+                    $files{$header} = 1;
+                }
+            }
+        }
+    }
+}
+
+if (0) {
+    my $file = "tests.dat";
+
+    $file .= "2"; # FIXME: For tests
+
+    open(OUT, "> $winapi_dir/$file") || die "Error: Can't open $winapi_dir/$file: $!\n";
+
+    my $x = 0;
+    my @test_dirs = $tests->get_test_dirs();
+    foreach my $test_dir (@test_dirs) {
+	print OUT "\n" if $x++;
+	print OUT "%%%$test_dir\n";
+	print OUT "\n";
+
+	my $y = 0;
+	my @tests = $tests->get_tests($test_dir);
+	foreach my $test (@tests) {
+	    print OUT "\n" if $y++;
+	    print OUT "%%$test\n";
+	    print OUT "\n";
+
+	    my @types;
+
+	    my $z = 0;
+	    my @sections = $tests->get_sections($test_dir, $test);
+	    foreach my $section (@sections) {
+		my @lines = $tests->get_section($test_dir, $test, $section);
+
+		if ($section =~ /^(?:struct|type)$/) {
+		    foreach my $line (@lines) {
+			push @types, $line;
+		    }
+		    next;
+		}
+
+		print OUT "\n" if $z++;
+		print OUT "%$section\n";
+		print OUT "\n";
+		foreach my $line (@lines) {
+			print OUT "$line\n";
+		}
+	    }
+
+	    @types = sort { $x = $a; $y = $b; $x =~ s/^!//;  $y =~ s/^!//; $x cmp $y } @types;
+
+	    print OUT "\n" if $z++;
+	    print OUT "%type\n";
+	    print OUT "\n";
+	    foreach my $type (@types) {
+		print OUT "$type\n";
+	    }
+	}
+    }
+
+    close(OUT);
+    exit(0);
+}
+
+
+my %file2types;
+
+my $progress_output;
+my $progress_current = 0;
+my $progress_max = scalar(@files);
+
+########################################################################
+# find_type
+
+my %type_name2type;
+
+my %defines = (
+    "ANYSIZE_ARRAY" => 1,
+    "CCHDEVICENAME" => 32,
+    "CCHILDREN_TITLEBAR+1" => 6,
+    "ELF_VENDOR_SIZE" => 4,
+    "EXCEPTION_MAXIMUM_PARAMETERS" => 15,
+    "HW_PROFILE_GUIDLEN" => 39,
+    "IMAGE_NUMBEROF_DIRECTORY_ENTRIES" => 16,
+    "IMAGE_SIZEOF_SHORT_NAME" => 8,
+    "LF_FACESIZE" => 32,
+    "LF_FULLFACESIZE" => 64,
+    "MAXIMUM_SUPPORTED_EXTENSION" => 512,
+    "MAX_GOPHER_DISPLAY_TEXT + 1" => 129,
+    "MAX_GOPHER_LOCATOR_LENGTH + 1" => 654,
+    "MAX_PATH" => 260,
+    "MAX_PROFILE_LEN" => 80,
+    "NUM_POINTS" => 3,
+    "OFS_MAXPATHNAME" => 128,
+    "SIZE_OF_80387_REGISTERS" => 80,
+    "TOKEN_SOURCE_LENGTH" => 8,
+);
+
+my %align_kludge_reported = ("FILETIME" => 1, "LARGE_INTEGER" => 1);
+my %size_kludge_reported = ("FILETIME" => 1, "LARGE_INTEGER" => 1);
+my %size_parse_reported;
+
+sub _find_align_kind_size($) {
+    my $type_name = shift;
+
+    local $_ = $type_name;
+
+    my $align;
+    my $kind;
+    my $size;
+    if (/\*+$/) {
+	$align = $pointer_size;
+	$kind = "pointer";
+	$size = $pointer_size;
+    } elsif (/^(?:void|VOID)$/) {
+	$align = 4;
+	$kind = "signed";
+	$size = 4;
+    } elsif(/^char$/) {
+	$align = 1;
+	$kind = "char";
+	$size = 1;
+    } elsif(/^(?:(signed|unsigned)\s+)?(?:__int8|char)$/) {
+	$align = 1;
+	$kind = defined($1) ? $1 : "signed";
+	$size = 1;
+    } elsif(/^CHAR$/) {
+	$align = 1;
+	$kind = "signed";
+	$size = 1;
+    } elsif(/^(?:byte|BOOLEAN|BYTE|UCHAR)$/) {
+	$align = 1;
+	$kind = "unsigned";
+	$size = 1;
+    } elsif (/^(?:(signed|unsigned)\s+)?(?:__int16|short(?:\s+int)?)$/) {
+	$align = 2;
+	$kind = defined($1) ? $1 : "signed";
+	$size = 2;
+    } elsif (/^SHORT$/) {
+	$align = 2;
+	$kind = "signed";
+	$size = 2;
+    } elsif (/^(?:char16_t|wchar_t|USHORT|WCHAR|WORD)$/) {
+	$align = 2;
+	$kind = "unsigned";
+	$size = 2;
+    } elsif (/^(signed|unsigned)$/) {
+	$align = 4;
+	$kind = $1;
+	$size = 4;
+    } elsif (/^(?:(signed|unsigned)\s+)?(?:__int32|int)$/) {
+	$align = 4;
+	$kind = defined($1) ? $1 : "signed";
+	$size = 4;
+    } elsif (/^(?:BOOL|INT|LONG)$/) {
+	$align = 4;
+	$kind = "signed";
+	$size = 4;
+    } elsif (/^(?:DWORD|FOURCC|LCID|UINT|ULONG)$/) {
+	$align = 4;
+	$kind = "unsigned";
+	$size = 4;
+    } elsif (/^(?:float|FLOAT)$/) {
+	$align = 4;
+	$kind = "float";
+	$size = 4;
+    } elsif (/^(?:(signed|unsigned)\s+)?(?:long(?:\s+int)?)$/) {
+        # 'long' is always 4 bytes on Windows.
+	$align = 4;
+	$kind = defined($1) ? $1 : "signed";
+	$size = 4;
+    } elsif (/^(?:(signed|unsigned)\s+)?__int64$/) {
+	$align = 8;
+	$kind = defined($1) ? $1 : "signed";
+	$size = 8;
+    } elsif (/^(?:INT64|LONG64|LONGLONG)$/) {
+	$align = 8;
+	$kind = "signed";
+	$size = 8;
+    } elsif (/^(?:UINT64|ULONG64|DWORD64|ULONGLONG|DWORDLONG)$/) {
+	$align = 8;
+	$kind = "unsigned";
+	$size = 8;
+    } elsif (/^(?:double|DOUBLE|DATE)$/) {
+	$align = 8;
+	$kind = "float";
+	$size = 8;
+    } elsif (/^(?:long\s+double)$/) {
+	$align = 4;
+	$kind = "float";
+	$size = 12;
+    } elsif (/^(?:INT|LONG)_PTR$/) {
+	$align = $pointer_size;
+	$kind = "signed";
+	$size = $pointer_size;
+    } elsif (/^(?:UINT|MMVERSION|ULONG|DWORD)_PTR$/) {
+	$align = $pointer_size;
+	$kind = "unsigned";
+	$size = $pointer_size;
+    } elsif (/^H(?:ANDLE|DC|BITMAP|BRUSH|ICON|INSTANCE|KEY|MENU|METAFILE|MMIO|TASK|WND)$/) {
+	$align = $pointer_size;
+	$kind = "pointer";
+	$size = $pointer_size;
+    } elsif (/^(?:HPSTR|LP[A-Z0-9_]+|PVOID)$/) {
+	$align = $pointer_size;
+	$kind = "pointer";
+	$size = $pointer_size;
+    } elsif (/^POINTS$/) {
+	$align = 2;
+	$kind = "struct";
+	$size = 4;
+    } elsif (/^(?:FILETIME|LUID|POINT|POINTL)$/) {
+	$align = 4;
+	$kind = "struct";
+	$size = 8;
+    } elsif (/^(?:CLSID|GUID|RECT|RECTL)$/) {
+	$align = 4;
+	$kind = "struct";
+	$size = 16;
+    } elsif (/^(?:LARGE_INTEGER)$/) {
+	$align = 8;
+	$kind = "union";
+	$size = 8;
+    } elsif (/^(struct|union)$/) {
+	$kind = $1;
+	if (!$size_parse_reported{$_}) {
+	    $output->write("cannot compute the size and alignment of $type_name types\n");
+	    $size_parse_reported{$_} = 1;
+	}
+    } elsif (/^\w+\s*\((?:\s*CALLBACK|\s*NTAPI|\s*WINAPI)?\s*\*\s*\)\s*\(.*?\)$/) {
+	$align = $pointer_size;
+	$kind = "pointer";
+	$size = $pointer_size;
+    }
+
+    my $align2;
+    if (defined(my $type = $type_name2type{$pointer_size}{$_})) {
+	$align2 = $type->align;
+    }
+
+    if (!defined($align)) {
+	$align = $align2;
+    } elsif (defined($align2) && !$align_kludge_reported{$_}) {
+	$align_kludge_reported{$_} = 1;
+	$output->write("$type_name: type needn't be kludged\n");
+    }
+
+    if (!defined($align)) {
+	# $output->write("$type_name: can't find type\n");
+    }
+
+    my $size2;
+    if (defined(my $type = $type_name2type{$pointer_size}{$_})) {
+	$size2 = $type->size;
+    }
+
+    if (!defined($size)) {
+	$size = $size2;
+    } elsif (defined($size2) && !$size_kludge_reported{$_}) {
+	$size_kludge_reported{$_} = 1;
+	$output->write("$type_name: type needn't be kludged\n");
+    }
+
+    return ($align, $kind, $size);
+}
+
+sub find_align($) {
+    my $type_name = shift;
+    (my $align, my $kind, my $size) = _find_align_kind_size($type_name);
+    return $align;
+}
+
+sub find_kind($) {
+    my $type_name = shift;
+    (my $align, my $kind, my $size) = _find_align_kind_size($type_name);
+
+    return $kind;
+}
+
+sub find_size($) {
+    my $type_name = shift;
+    (my $align, my $kind, my $size) = _find_align_kind_size($type_name);
+    return $size;
+}
+
+sub find_count($) {
+    my $count = shift;
+    return $defines{$count};
+}
+
+foreach my $file (@files) {
+  $progress_current++;
+  foreach my $ptr (4, 8) {
+    $pointer_size = $ptr;
+
+    {
+	open(IN, "< $wine_dir/$file") || die "Error: Can't open $wine_dir/$file: $!\n";
+	local $/ = undef;
+	$_ = <IN>;
+	close(IN);
+    }
+
+    my $max_line = 0;
+    {
+      local $_ = $_;
+      while(s/^.*?\n//) { $max_line++; }
+      if($_) { $max_line++; }
+    }
+
+    my $parser = new c_parser($file);
+
+    my $line;
+    my $type;
+    my @packs = ();
+    my @ifdefs = ();
+
+    my $update_output = sub {
+	my $progress = "";
+	my $prefix = "";
+
+	$progress .= "$file (file $progress_current of $progress_max" . sprintf ", %u-bit)", $pointer_size * 8;
+	$prefix .= "$file: ";
+
+	if(defined($line)) {
+	    $progress .= ": line $line of $max_line";
+	}
+
+	$output->progress($progress);
+	$output->prefix($prefix);
+    };
+
+    &$update_output();
+
+    my $found_line = sub {
+	$line = shift;
+
+	&$update_output;
+    };
+    $parser->set_found_line_callback($found_line);
+
+    my $found_preprocessor = sub {
+	my $begin_line = shift;
+	my $begin_column = shift;
+	my $preprocessor = shift;
+
+        #print "found_preprocessor: $begin_line: [$_]\n";
+	if ($preprocessor =~ /^\#\s*include\s+[\"<]pshpack(\d)\.h[\">]$/) {
+	    push @packs, $1 unless @ifdefs && !$ifdefs[$#ifdefs];
+            #print "found pack $1 on line $begin_line\n";
+	} elsif($preprocessor =~ /^\#\s*include\s+[\"<]poppack\.h[\">]$/) {
+	    pop @packs unless @ifdefs && !$ifdefs[$#ifdefs];
+            #print "found poppack on line $begin_line\n";
+	} elsif ($preprocessor =~ /^\#\s*ifdef\s+_WIN64/) {
+            push @ifdefs, ($pointer_size == 8);
+	} elsif ($preprocessor =~ /^\#\s*ifndef\s+_WIN64/) {
+            push @ifdefs, ($pointer_size != 8);
+	} elsif ($preprocessor =~ /^\#\s*elif\s+defined\s*\(\s*_WIN64\s*\)/) {
+            $ifdefs[$#ifdefs] = ($pointer_size == 8);
+	} elsif ($preprocessor =~ /^\#\s*ifdef\s/) {
+            push @ifdefs, 2;
+	} elsif ($preprocessor =~ /^\#\s*ifndef\s/) {
+            push @ifdefs, 2;
+	} elsif ($preprocessor =~ /^\#\s*if/) {
+            push @ifdefs, 2;
+	} elsif ($preprocessor =~ /^\#\s*else/) {
+            $ifdefs[$#ifdefs] = $ifdefs[$#ifdefs] ^ 1;
+	} elsif ($preprocessor =~ /^\#\s*elif/) {
+            $ifdefs[$#ifdefs] = 2;
+	} elsif ($preprocessor =~ /^\#\s*endif/) {
+            pop @ifdefs;
+        }
+	return 1;
+    };
+    $parser->set_found_preprocessor_callback($found_preprocessor);
+
+    my $found_type = sub {
+	$type = shift;
+        return if @ifdefs && !$ifdefs[$#ifdefs];
+
+	&$update_output();
+
+	my $name = $type->name;
+	$file2types{$pointer_size}{$file}{$name} = $type;
+
+	$type->set_find_align_callback(\&find_align);
+	$type->set_find_kind_callback(\&find_kind);
+	$type->set_find_size_callback(\&find_size);
+	$type->set_find_count_callback(\&find_count);
+
+	my $pack = $packs[$#packs];
+	if (!defined($type->pack) && $type->kind =~ /^(?:struct|union)$/) {
+	    $type->pack($pack);
+	}
+	my $size = $type->size();
+	if (defined($size)) {
+	    my $max_field_base_size = 0;
+
+	    foreach my $field ($type->fields()) {
+		my $field_type_name = $field->type_name;
+		my $field_name = $field->name;
+		my $field_size = $field->size;
+		my $field_base_size = $field->base_size;
+		my $field_offset = $field->offset;
+		my $field_align = $field->align;
+
+		# $output->write("$name: $field_type_name: $field_name: $field_offset: $field_size($field_base_size): $field_align\n");
+	    }
+	    # $output->write("$name: $size\n");
+
+	    $type_name2type{$pointer_size}{$name} = $type;
+	} else {
+	    # $output->write("$name: can't find size\n");
+	}
+
+	return 1;
+    };
+    $parser->set_found_type_callback($found_type);
+
+    {
+	my $line = 1;
+	my $column = 0;
+	if(!$parser->parse_c_file(\$_, \$line, \$column)) {
+	    $output->write("can't parse file\n");
+	}
+    }
+
+    $output->prefix("");
+  }
+}
+
+########################################################################
+# output_header
+
+sub output_header($$$) {
+    local *OUT = shift; 
+
+    my $test_dir = shift;
+    my @tests = @{(shift)};
+
+    print OUT "/* File generated automatically from tools/winapi/tests.dat; do not edit! */\n";
+    print OUT "/* This file can be copied, modified and distributed without restriction. */\n";
+    print OUT "\n";
+
+    print OUT "/*\n";
+    foreach my $test (@tests) {
+	my @description = $tests->get_section($test_dir, $test, "description");
+	foreach my $description (@description) {
+	    print OUT " * $description\n";
+	}
+    }
+    print OUT " */\n";
+    print OUT "\n";
+
+    foreach my $test (@tests) {
+	my @includes = $tests->get_section($test_dir, $test, "include");
+	foreach my $include (@includes) {
+	    print OUT "#include $include\n";
+	}
+    }
+    print OUT "\n";
+    print OUT "#include \"wine/test.h\"\n";
+    print OUT "\n";
+
+    print OUT "/***********************************************************************\n";
+    print OUT " * Compatibility macros\n";
+    print OUT " */\n";
+    print OUT "\n";
+    print OUT "#define DWORD_PTR UINT_PTR\n";
+    print OUT "#define LONG_PTR INT_PTR\n";
+    print OUT "#define ULONG_PTR UINT_PTR\n";
+    print OUT "\n";
+
+    print OUT "/***********************************************************************\n";
+    print OUT " * Windows API extension\n";
+    print OUT " */\n";
+    print OUT "\n";
+    print OUT "#if defined(_MSC_VER) && (_MSC_VER >= 1300) && defined(__cplusplus)\n";
+    print OUT "# define _TYPE_ALIGNMENT(type) __alignof(type)\n";
+    print OUT "#elif defined(__GNUC__) || defined(__clang__)\n";
+    print OUT "# define _TYPE_ALIGNMENT(type) __alignof__(type)\n";
+    print OUT "#else\n";
+    print OUT "/*\n";
+    print OUT " * FIXME: May not be possible without a compiler extension\n";
+    print OUT " *        (if type is not just a name that is, otherwise the normal\n";
+    print OUT " *         TYPE_ALIGNMENT can be used)\n";
+    print OUT " */\n";
+    print OUT "#endif\n";
+    print OUT "\n";
+    print OUT "#if defined(TYPE_ALIGNMENT) && defined(_MSC_VER) && _MSC_VER >= 800 && !defined(__cplusplus)\n";
+    print OUT "#pragma warning(disable:4116)\n";
+    print OUT "#endif\n";
+    print OUT "\n";
+    print OUT "#if !defined(TYPE_ALIGNMENT) && defined(_TYPE_ALIGNMENT)\n";
+    print OUT "# define TYPE_ALIGNMENT _TYPE_ALIGNMENT\n";
+    print OUT "#endif\n";
+    print OUT "\n";
+
+    print OUT "/***********************************************************************\n";
+    print OUT " * Test helper macros\n";
+    print OUT " */\n";
+    print OUT "\n";
+    print OUT "#define TEST_TYPE_SIZE(type, size)              C_ASSERT(sizeof(type) == size);\n";
+    print OUT "\n";
+    print OUT "#ifdef TYPE_ALIGNMENT\n";
+    print OUT "# define TEST_TYPE_ALIGN(type, align)           C_ASSERT(TYPE_ALIGNMENT(type) == align);\n";
+    print OUT "#else\n";
+    print OUT "# define TEST_TYPE_ALIGN(type, align)\n";
+    print OUT "#endif\n";
+    print OUT "\n";
+    print OUT "#ifdef _TYPE_ALIGNMENT\n";
+    print OUT "# define TEST_TARGET_ALIGN(type, align)         C_ASSERT(_TYPE_ALIGNMENT(*(type)0) == align);\n";
+    print OUT "# define TEST_FIELD_ALIGN(type, field, align)   C_ASSERT(_TYPE_ALIGNMENT(((type*)0)->field) == align);\n";
+    print OUT "#else\n";
+    print OUT "# define TEST_TARGET_ALIGN(type, align)\n";
+    print OUT "# define TEST_FIELD_ALIGN(type, field, align)\n";
+    print OUT "#endif\n";
+    print OUT "\n";
+    print OUT "#define TEST_FIELD_OFFSET(type, field, offset)  C_ASSERT(FIELD_OFFSET(type, field) == offset);\n";
+    print OUT "\n";
+    print OUT "#define TEST_TARGET_SIZE(type, size)            TEST_TYPE_SIZE(*(type)0, size)\n";
+    print OUT "#define TEST_FIELD_SIZE(type, field, size)      TEST_TYPE_SIZE((((type*)0)->field), size)\n";
+    print OUT "#define TEST_TYPE_SIGNED(type)                  C_ASSERT((type) -1 < 0);\n";
+    print OUT "#define TEST_TYPE_UNSIGNED(type)                C_ASSERT((type) -1 > 0);\n";
+    print OUT "\n";
+    print OUT "\n";
+}
+
+########################################################################
+# output_footer
+
+sub output_footer($$$) {
+    local *OUT = shift; 
+
+    my $test_dir = shift;
+    my @tests = @{(shift)};
+
+    print OUT "START_TEST(generated)\n";
+    print OUT "{\n";
+    foreach my $test (@tests) {
+	print OUT "    test_$test();\n";
+    }
+    print OUT "}\n";
+}
+
+########################################################################
+# output_test_pack_type
+
+sub output_test_pack_type($$$$$$) {
+    local *OUT = shift;
+
+    my $type_name2type = shift;
+    my $type_name2optional = shift;
+    my $type_name2optional_fields = shift;
+    my $type_name = shift;
+    my $type = shift;
+
+    my $optional_fields = $$type_name2optional_fields{$type_name};
+
+    my $type_align = $type->align;
+    my $type_pack = $type->pack;
+    my $type_size = $type->size;
+    my $type_kind = $type->kind;
+
+    if (defined($type_pack)) {
+	print OUT "    /* $type_name (pack $type_pack) */\n";
+    } else {
+	print OUT "    /* $type_name */\n";
+    }
+
+    if (!scalar(keys(%$optional_fields)) && defined($type_align) && defined($type_size)) {
+	print OUT "    TEST_TYPE_SIZE   ($type_name, $type_size)\n";
+	print OUT "    TEST_TYPE_ALIGN  ($type_name, $type_align)\n";
+    }
+
+    if ($type_kind eq "float") {
+	# Nothing
+    } elsif ($type_kind eq "pointer") {
+	my $dereference_type;
+	$dereference_type = sub {
+	    my $type = shift;
+
+	    my @fields = $type->fields;
+	    my $type_name2 =$fields[0]->type_name;
+
+	    if ($type_name2 =~ s/\s*\*$//) {
+		my $type2 = $$type_name2type{$type_name2};
+		if (defined($type2)) {
+		    return $type2;
+		} else {
+		    if ($type_name2 !~ /^(?:PVOID|VOID|void)$/) {
+			$output->write("$type_name2: warning: type not found 1\n");
+		    }
+		    return undef;
+		}
+	    } elsif ($type_name2 =~ /^\w+$/) {
+		my $type2 = $$type_name2type{$type_name2};
+		if (defined($type2)) {
+		    return &$dereference_type($type2);
+		} else {
+		    $output->write("$type_name2: warning: type not found\n");
+		    return undef;
+		}
+	    } elsif ($type_name2 =~ /^\w+\s*\((?:\s*CALLBACK|\s*NTAPI|\s*WINAPI)?\s*\*\s*\)\s*\(.*?\)$/) {
+		return undef;
+	    } else {
+		$output->write("$type_name2: warning: type can't be parsed\n");
+		return undef;
+	    }
+	};
+
+	my $type2 = &$dereference_type($type);
+	if (defined($type2)) {
+	    my $type_name2 = $type2->name;
+	    my $type_align2 = $type2->align;
+	    my $type_size2 = $type2->size;
+
+	    my $optional = $$type_name2optional{$type_name};
+	    my $optional_fields2 = $$type_name2optional_fields{$type_name2};
+
+	    if (!$optional && !scalar(keys(%$optional_fields2)) && defined($type_align2) && defined($type_size2)) {
+		print OUT "    TEST_TARGET_SIZE ($type_name, $type_size2)\n";
+		print OUT "    TEST_TARGET_ALIGN($type_name, $type_align2)\n";
+	    } else {
+		# $output->write("$type_name: warning: type size not found\n");
+	    }
+	}
+    } elsif ($type_kind eq "signed") {
+        print OUT "    TEST_TYPE_SIGNED ($type_name)\n";
+    } elsif ($type_kind eq "unsigned") {
+	print OUT "    TEST_TYPE_UNSIGNED($type_name)\n";
+    }
+}
+
+sub output_test_pack_fields($$$$$$$);
+sub output_test_pack_fields($$$$$$$) {
+    local *OUT = shift;
+
+    my $type_name2type = shift;
+    my $type_name2optional = shift;
+    my $type_name2optional_fields = shift;
+    my $type_name = shift;
+    my $type = shift;
+    my $offset = shift;
+
+    my $optional_fields = $$type_name2optional_fields{$type_name};
+
+    foreach my $field ($type->fields()) {
+	my $field_type_name = $field->type_name;
+	$field_type_name =~ s/\s+DECLSPEC_ALIGN\(\d+\)//;
+	my $field_name = $field->name;
+	my $field_size = $field->size;
+	my $field_offset = $field->offset;
+	my $field_align = $field->align;
+
+	next if $field_name eq "" || (defined($field_size) && $field_size < 0);
+        # We cannot take the address of a bitfield with MSVC
+        next if ($field_type_name =~ /:/);
+
+	if ($$optional_fields{$field_name}) {
+	    # Nothing
+	} elsif (defined($field_size) && defined($field_offset)) {
+	    $field_offset += $offset;
+	    if ($field_name eq "DUMMYSTRUCTNAME") {
+		print OUT "#ifdef NONAMELESSSTRUCT\n";
+		print OUT "    TEST_TYPE_SIZE   ($type_name.$field_name, $field_size)\n";
+		print OUT "    TEST_FIELD_ALIGN ($type_name, $field_name, $field_align)\n";
+		print OUT "    TEST_FIELD_OFFSET($type_name, $field_name, $field_offset)\n";
+		print OUT "#else\n";
+		output_test_pack_fields(\*OUT, $type_name2type, $type_name2optional, $type_name2optional_fields,
+					$type_name, $$type_name2type{$field_type_name}, $field_offset);	
+		print OUT "#endif\n";
+	    } else {
+		print OUT "    TEST_FIELD_SIZE  ($type_name, $field_name, $field_size)\n";
+		print OUT "    TEST_FIELD_ALIGN ($type_name, $field_name, $field_align)\n";
+		print OUT "    TEST_FIELD_OFFSET($type_name, $field_name, $field_offset)\n";
+	    }
+	} else {
+	    # $output->write("$type_name: $field_type_name: $field_name: test not generated (offset not defined)\n");
+	}
+    }
+}
+
+########################################################################
+# output_test_pack
+
+sub output_test_pack($$$$) {
+    local *OUT = shift;
+
+    my $test_dir = shift;
+    my $test = shift;
+
+    my $type_names_used = shift;
+
+    $output->prefix("$test_dir: $test: ");
+
+    my @headers = $tests->get_section($test_dir, $test, "header");
+    my @type_names = $tests->get_section($test_dir, $test, "type");
+
+    my %type_name2optional;
+    my %type_name2optional_fields;
+
+    foreach my $_type_name (@type_names) {
+	my $type_name = $_type_name;
+
+	if ($type_name =~ s/^!//) {
+	    $type_name2optional{$type_name}++;
+	}
+
+	my $optional_fields = {};
+	if ($type_name =~ s/:\s*(.*?)$//) {
+	    my @fields = split /\s+/, $1;
+	    foreach my $field (@fields) {
+		if ($field =~ s/^!//) {
+		    $$optional_fields{$field}++;
+		}
+	    }
+	} 
+
+	$type_name2optional_fields{$type_name} = $optional_fields;
+    }
+
+    foreach my $header (@headers) {
+	my $type_name2type = $file2types{$pointer_size}{"include/$header"};
+	
+	foreach my $_type_name (@type_names) {
+	    my $type_name = $_type_name;
+
+	    my $skip = ($type_name =~ s/^!//);
+	    $type_name =~ s/:.*?$//;
+	    my $type = $$type_name2type{$type_name};
+	    if (!defined($type)) {
+		next;
+	    }
+	    $$type_names_used{$type_name} = $skip ? -1 : 1;
+	    next if $skip;
+
+	    print OUT "static void test_${test}_$type_name(void)\n";
+	    print OUT "{\n";
+	    output_test_pack_type(\*OUT, $type_name2type, \%type_name2optional, \%type_name2optional_fields,
+				  $type_name, $type);
+	    output_test_pack_fields(\*OUT, $type_name2type, \%type_name2optional, \%type_name2optional_fields, 
+				    $type_name, $type, 0);
+	    print OUT "}\n";
+	    print OUT "\n";
+	}
+    }
+}
+
+
+########################################################################
+# output_file
+
+sub output_file($$$$) {
+    local *OUT = shift;
+
+    my $test_dir = shift;
+    my @tests = @{(shift)};
+
+    my $type_names_used = shift;
+
+    output_header(\*OUT, $test_dir, \@tests);
+
+    foreach my $test (@tests) {
+	my %type_names_used2;
+
+	if ($test eq "pack") {
+            print OUT "#ifdef _WIN64\n\n";
+            $pointer_size = 8;
+            output_test_pack(\*OUT, $test_dir, $test, \%type_names_used2);
+            print OUT "#else /* _WIN64 */\n\n";
+            $pointer_size = 4;
+            output_test_pack(\*OUT, $test_dir, $test, \%type_names_used2);
+            print OUT "#endif /* _WIN64 */\n\n";
+	} else {
+	    die "no such test ($test)\n";
+	}
+
+	print OUT "static void test_$test(void)\n";
+	print OUT "{\n";
+	foreach my $type_name (sort(keys(%type_names_used2))) {
+	    $$type_names_used{$type_name} = $type_names_used2{$type_name};
+	    if ($type_names_used2{$type_name} > 0) {
+		print OUT "    test_${test}_$type_name();\n";
+	    }
+	}
+	print OUT "}\n";
+	print OUT "\n";
+    }
+
+    output_footer(\*OUT, $test_dir, \@tests);
+
+    return 1;
+}
+
+########################################################################
+# main
+
+my %type_names_used = ();
+
+my @test_dirs = $tests->get_test_dirs();
+foreach my $test_dir (@test_dirs) {
+    my $file = "$wine_dir/$test_dir/generated.c";
+    replace_file($file, \&output_file, $test_dir, \@tests, \%type_names_used);
+}
+
+foreach my $header (sort(keys(%{$file2types{$pointer_size}}))) {
+    $output->prefix("$header: ");
+    my $type_name2type = $file2types{$pointer_size}{$header};
+    foreach my $_type_name (sort(keys(%$type_name2type))) {
+	my $type_name = $_type_name;
+
+	if (!exists($type_names_used{$type_name})) {
+	    $output->write("$type_name: type not used\n");
+	}
+    }
+}
+
+$output->prefix("$winapi_dir/tests.dat: ");
+foreach my $type_name (sort(keys(%type_names_used))) {
+    my $found = 0;
+    foreach my $header (sort(keys(%{$file2types{$pointer_size}}))) {
+        if (exists($file2types{$pointer_size}{$header}{$type_name})) {
+            $found = 1;
+            last;
+        }
+    }
+
+    if (!$found) {
+	$output->write("$type_name: type not used\n");
+    }
+}

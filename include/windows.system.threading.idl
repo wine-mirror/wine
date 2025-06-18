@@ -1,0 +1,96 @@
+/*
+ * Copyright 2022 Nikolay Sivov for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+
+namespace Windows.System.Threading
+{
+    typedef enum WorkItemPriority WorkItemPriority;
+    typedef enum WorkItemOptions WorkItemOptions;
+
+    runtimeclass ThreadPool;
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum WorkItemPriority
+    {
+        Low = -1,
+        Normal = 0,
+        High = 1
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        flags
+    ]
+    enum WorkItemOptions
+    {
+        None = 0x0,
+        TimeSliced = 0x1
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(1d1a8b8b-fa66-414f-9cbd-b65fc99d17fa)
+    ]
+    delegate HRESULT WorkItemHandler([in] Windows.Foundation.IAsyncAction *operation);
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.System.Threading.ThreadPool),
+        uuid(b6bf67dd-84bd-44f8-ac1c-93ebcb9dba91)
+    ]
+    interface IThreadPoolStatics : IInspectable
+    {
+        [overload("RunAsync")] HRESULT RunAsync(
+                [in] Windows.System.Threading.WorkItemHandler *handler,
+                [out, retval] Windows.Foundation.IAsyncAction **operation
+        );
+
+        [overload("RunAsync")] HRESULT RunWithPriorityAsync(
+                [in] Windows.System.Threading.WorkItemHandler *handler,
+                [in] Windows.System.Threading.WorkItemPriority priority,
+                [out, retval] Windows.Foundation.IAsyncAction **operation
+        );
+
+        [overload("RunAsync")] HRESULT RunWithPriorityAndOptionsAsync(
+                [in] Windows.System.Threading.WorkItemHandler *handler,
+                [in] Windows.System.Threading.WorkItemPriority priority,
+                [in] Windows.System.Threading.WorkItemOptions options,
+                [out, retval] Windows.Foundation.IAsyncAction **operation
+        );
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.System.Threading.IThreadPoolStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass ThreadPool
+    {
+    }
+}

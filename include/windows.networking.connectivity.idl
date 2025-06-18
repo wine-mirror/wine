@@ -1,0 +1,670 @@
+/*
+ * Copyright (C) 2021 Alistair Leslie-Hughes
+ * Copyright (C) 2023 Mohamad Al-Jaf
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.networking.idl";
+import "windows.storage.streams.idl";
+
+namespace Windows.Foundation
+{
+    interface IClosable;
+
+    runtimeclass Uri;
+}
+
+namespace Windows.Networking
+{
+    typedef enum DomainNameType DomainNameType;
+    typedef enum HostNameSortOptions HostNameSortOptions;
+
+    runtimeclass EndpointPair;
+    runtimeclass HostName;
+}
+
+namespace Windows.Networking.Connectivity
+{
+    runtimeclass ConnectionCost;
+    runtimeclass ConnectionProfile;
+    runtimeclass DataPlanStatus;
+    runtimeclass DataPlanUsage;
+    runtimeclass DataUsage;
+    runtimeclass IPInformation;
+    runtimeclass LanIdentifier;
+    runtimeclass LanIdentifierData;
+    runtimeclass NetworkAdapter;
+    runtimeclass NetworkInformation;
+    runtimeclass NetworkItem;
+    runtimeclass NetworkSecuritySettings;
+    runtimeclass ProxyConfiguration;
+    runtimeclass WwanConnectionProfileDetails;
+    runtimeclass WlanConnectionProfileDetails;
+    runtimeclass NetworkUsage;
+    runtimeclass ConnectivityInterval;
+
+    typedef enum NetworkAuthenticationType NetworkAuthenticationType;
+    typedef enum NetworkConnectivityLevel NetworkConnectivityLevel;
+    typedef enum NetworkCostType NetworkCostType;
+    typedef enum NetworkEncryptionType NetworkEncryptionType;
+    typedef enum NetworkTypes NetworkTypes;
+    typedef enum RoamingStates RoamingStates;
+    typedef enum DomainConnectivityLevel DomainConnectivityLevel;
+    typedef enum DataUsageGranularity DataUsageGranularity;
+    typedef enum TriStates TriStates;
+    typedef enum WwanNetworkRegistrationState WwanNetworkRegistrationState;
+    typedef enum WwanDataClass WwanDataClass;
+
+    typedef struct NetworkUsageStates NetworkUsageStates;
+
+    declare
+    {
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Networking.Connectivity.ConnectionProfile *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Networking.Connectivity.ProxyConfiguration *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Networking.Connectivity.ConnectionProfile *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Networking.Connectivity.ProxyConfiguration *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Networking.EndpointPair *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.ConnectionProfile *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.LanIdentifier *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Networking.HostName *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Networking.EndpointPair *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.NetworkUsage*>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.NetworkUsage*>*>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.ConnectivityInterval*>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.ConnectivityInterval*>*>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.ConnectivityInterval*>*>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Networking.Connectivity.ConnectionProfile*>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.NetworkUsage*>*>;
+    }
+
+    [
+        contractversion(2.0),
+    ]
+    apicontract WwanContract
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+    ]
+    enum NetworkAuthenticationType
+    {
+        None            = 0,
+        Unknown         = 1,
+        Open80211       = 2,
+        SharedKey80211  = 3,
+        Wpa             = 4,
+        WpaPsk          = 5,
+        WpaNone         = 6,
+        Rsna            = 7,
+        RsnaPsk         = 8,
+        Ihv             = 9,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+    ]
+    enum NetworkConnectivityLevel
+    {
+        None                        = 0,
+        LocalAccess                 = 1,
+        ConstrainedInternetAccess   = 2,
+        InternetAccess              = 3,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+    ]
+    enum NetworkCostType
+    {
+        Unknown         = 0,
+        Unrestricted    = 1,
+        Fixed           = 2,
+        Variable        = 3,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+    ]
+    enum NetworkEncryptionType
+    {
+        None        = 0,
+        Unknown     = 1,
+        Wep         = 2,
+        Wep40       = 3,
+        Wep104      = 4,
+        Tkip        = 5,
+        Ccmp        = 6,
+        WpaUseGroup = 7,
+        RsnUseGroup = 8,
+        Ihv         = 9,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        flags,
+    ]
+    enum NetworkTypes
+    {
+        None            = 0x0,
+        Internet        = 0x1,
+        PrivateNetwork  = 0x2,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        flags,
+    ]
+    enum RoamingStates
+    {
+        None        = 0x0,
+        NotRoaming  = 0x1,
+        Roaming     = 0x2,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+    ]
+    enum DomainConnectivityLevel
+    {
+        None            = 0,
+        Unauthenticated = 1,
+        Authenticated   = 2
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+    ]
+    enum DataUsageGranularity
+    {
+        PerMinute = 0,
+        PerHour   = 1,
+        PerDay    = 2,
+        Total     = 3
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+    ]
+    enum TriStates
+    {
+        DoNotCare = 0,
+        No        = 1,
+        Yes       = 2
+    };
+
+    [
+        contract(Windows.Networking.Connectivity.WwanContract, 1.0),
+    ]
+    enum WwanNetworkRegistrationState
+    {
+        None         = 0,
+        Deregistered = 1,
+        Searching    = 2,
+        Home         = 3,
+        Roaming      = 4,
+        Partner      = 5,
+        Denied       = 6
+    };
+
+    [
+        contract(Windows.Networking.Connectivity.WwanContract, 1.0),
+        flags,
+    ]
+    enum WwanDataClass
+    {
+        None           = 0x0,
+        Gprs           = 0x1,
+        Edge           = 0x2,
+        Umts           = 0x4,
+        Hsdpa          = 0x8,
+        Hsupa          = 0x10,
+        LteAdvanced    = 0x20,
+        Cdma1xRtt      = 0x10000,
+        Cdma1xEvdo     = 0x20000,
+        Cdma1xEvdoRevA = 0x40000,
+        Cdma1xEvdv     = 0x80000,
+        Cdma3xRtt      = 0x100000,
+        Cdma1xEvdoRevB = 0x200000,
+        CdmaUmb        = 0x400000,
+        Custom         = 0x80000000
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+    ]
+    struct NetworkUsageStates
+    {
+        Windows.Networking.Connectivity.TriStates Roaming;
+        Windows.Networking.Connectivity.TriStates Shared;
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(71ba143f-598e-49d0-84eb-8febaedcc195),
+    ]
+    delegate HRESULT NetworkStatusChangedEventHandler([in] IInspectable *sender);
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.ConnectionCost),
+        uuid(bad7d829-3416-4b10-a202-bac0b075bdae),
+    ]
+    interface IConnectionCost : IInspectable
+    {
+        [propget] HRESULT NetworkCostType([out, retval] Windows.Networking.Connectivity.NetworkCostType *value);
+        [propget] HRESULT Roaming([out, retval] boolean *value);
+        [propget] HRESULT OverDataLimit([out, retval] boolean *value);
+        [propget] HRESULT ApproachingDataLimit([out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.ConnectionProfile),
+        uuid(71ba143c-598e-49d0-84eb-8febaedcc195),
+    ]
+    interface IConnectionProfile : IInspectable
+    {
+        [propget] HRESULT ProfileName([out, retval] HSTRING *value);
+        HRESULT GetNetworkConnectivityLevel([out, retval] Windows.Networking.Connectivity.NetworkConnectivityLevel *value);
+        HRESULT GetNetworkNames([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING> **value);
+        HRESULT GetConnectionCost([out, retval] Windows.Networking.Connectivity.ConnectionCost **value);
+        HRESULT GetDataPlanStatus([out, retval] Windows.Networking.Connectivity.DataPlanStatus **value);
+        [propget] HRESULT NetworkAdapter([out, retval] Windows.Networking.Connectivity.NetworkAdapter **value);
+        HRESULT GetLocalUsage([in] Windows.Foundation.DateTime start, [in] Windows.Foundation.DateTime end,
+                [out, retval] Windows.Networking.Connectivity.DataUsage **value);
+        HRESULT GetLocalUsagePerRoamingStates([in] Windows.Foundation.DateTime start,
+                [in] Windows.Foundation.DateTime end, [in] Windows.Networking.Connectivity.RoamingStates states,
+                [out, retval] Windows.Networking.Connectivity.DataUsage **value);
+        [propget] HRESULT NetworkSecuritySettings([out, retval] Windows.Networking.Connectivity.NetworkSecuritySettings **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.ConnectionProfile),
+        uuid(e2045145-4c9f-400c-9150-7ec7d6e2888a),
+    ]
+    interface IConnectionProfile2 : IInspectable
+    {
+        [propget] HRESULT IsWwanConnectionProfile([out, retval] boolean *value);
+        [propget] HRESULT IsWlanConnectionProfile([out, retval] boolean *value);
+        [propget] HRESULT WwanConnectionProfileDetails([out, retval] Windows.Networking.Connectivity.WwanConnectionProfileDetails **value);
+        [propget] HRESULT WlanConnectionProfileDetails([out, retval] Windows.Networking.Connectivity.WlanConnectionProfileDetails **value);
+        [propget] HRESULT ServiceProviderGuid([out, retval] Windows.Foundation.IReference<GUID> **value);
+        HRESULT GetSignalBars([out, retval] Windows.Foundation.IReference<BYTE> **value);
+        HRESULT GetDomainConnectivityLevel([out, retval] Windows.Networking.Connectivity.DomainConnectivityLevel *value);
+        HRESULT GetNetworkUsageAsync([in] Windows.Foundation.DateTime time_start, [in] Windows.Foundation.DateTime time_end,
+                [in] Windows.Networking.Connectivity.DataUsageGranularity granularity, [in] Windows.Networking.Connectivity.NetworkUsageStates states,
+                [out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.NetworkUsage*>*> **value);
+        HRESULT GetConnectivityIntervalsAsync([in] Windows.Foundation.DateTime time_start, [in] Windows.Foundation.DateTime time_end,
+                [in] Windows.Networking.Connectivity.NetworkUsageStates states,
+                [out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.ConnectivityInterval*>*> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.DataPlanStatus),
+        uuid(977a8b8c-3885-40f3-8851-42cd2bd568bb),
+    ]
+    interface IDataPlanStatus : IInspectable
+    {
+        [propget] HRESULT DataPlanUsage([out, retval] Windows.Networking.Connectivity.DataPlanUsage **value);
+        [propget] HRESULT DataLimitInMegabytes([out, retval] Windows.Foundation.IReference<UINT32> **value);
+        [propget] HRESULT InboundBitsPerSecond([out, retval] Windows.Foundation.IReference<UINT64> **value);
+        [propget] HRESULT OutboundBitsPerSecond([out, retval] Windows.Foundation.IReference<UINT64> **value);
+        [propget] HRESULT NextBillingCycle([out, retval] Windows.Foundation.IReference<Windows.Foundation.DateTime> **value);
+        [propget] HRESULT MaxTransferSizeInMegabytes([out, retval] Windows.Foundation.IReference<UINT32> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.DataPlanUsage),
+        uuid(b921492d-3b44-47ff-b361-be59e69ed1b0),
+    ]
+    interface IDataPlanUsage : IInspectable
+    {
+        [propget] HRESULT MegabytesUsed([out, retval] UINT32 *value);
+        [propget] HRESULT LastSyncTime([out, retval] Windows.Foundation.DateTime *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.DataUsage),
+        uuid(c1431dd3-b146-4d39-b959-0c69b096c512),
+    ]
+    interface IDataUsage : IInspectable
+    {
+        [propget] HRESULT BytesSent([out, retval] UINT64 *value);
+        [propget] HRESULT BytesReceived([out, retval] UINT64 *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.IPInformation),
+        uuid(d85145e0-138f-47d7-9b3a-36bb488cef33),
+    ]
+    interface IIPInformation : IInspectable
+    {
+        [propget] HRESULT NetworkAdapter([out, retval] Windows.Networking.Connectivity.NetworkAdapter **value);
+        [propget] HRESULT PrefixLength([out, retval] Windows.Foundation.IReference<BYTE> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.LanIdentifier),
+        uuid(48aa53aa-1108-4546-a6cb-9a74da4b7ba0),
+    ]
+    interface ILanIdentifier : IInspectable
+    {
+        [propget] HRESULT InfrastructureId([out, retval] Windows.Networking.Connectivity.LanIdentifierData **value);
+        [propget] HRESULT PortId([out, retval] Windows.Networking.Connectivity.LanIdentifierData **value);
+        [propget] HRESULT NetworkAdapterId([out, retval] GUID *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.LanIdentifierData),
+        uuid(a74e83c3-d639-45be-a36a-c4e4aeaf6d9b),
+    ]
+    interface ILanIdentifierData : IInspectable
+    {
+        [propget] HRESULT Type([out, retval] UINT32 *value);
+        [propget] HRESULT Value([out,retval] Windows.Foundation.Collections.IVectorView<BYTE> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.NetworkAdapter),
+        uuid(3b542e03-5388-496c-a8a3-affd39aec2e6),
+    ]
+    interface INetworkAdapter : IInspectable
+    {
+        [propget] HRESULT OutboundMaxBitsPerSecond([out, retval] UINT64 *value);
+        [propget] HRESULT InboundMaxBitsPerSecond([out, retval] UINT64 *value);
+        [propget] HRESULT IanaInterfaceType([out, retval] UINT32 *value);
+        [propget] HRESULT NetworkItem([out, retval] Windows.Networking.Connectivity.NetworkItem **value);
+        [propget] HRESULT NetworkAdapterId([out, retval] GUID *value);
+        HRESULT GetConnectedProfileAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Networking.Connectivity.ConnectionProfile *> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.NetworkInformation),
+        uuid(5074f851-950d-4165-9c15-365619481eea),
+    ]
+    interface INetworkInformationStatics : IInspectable
+    {
+        HRESULT GetConnectionProfiles([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.ConnectionProfile *> **value);
+        HRESULT GetInternetConnectionProfile([out, retval] Windows.Networking.Connectivity.ConnectionProfile **value);
+        HRESULT GetLanIdentifiers([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.LanIdentifier *> **value);
+        HRESULT GetHostNames([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Networking.HostName *> **value);
+        HRESULT GetProxyConfigurationAsync([in] Windows.Foundation.Uri *uri,
+                [out, retval] Windows.Foundation.IAsyncOperation<Windows.Networking.Connectivity.ProxyConfiguration *> **value);
+        HRESULT GetSortedEndpointPairs([in] Windows.Foundation.Collections.IIterable<Windows.Networking.EndpointPair *> *endpoint,
+                [in] Windows.Networking.HostNameSortOptions options,
+                [out, retval] Windows.Foundation.Collections.IVectorView<Windows.Networking.EndpointPair *> **value);
+        [eventadd] HRESULT NetworkStatusChanged([in] Windows.Networking.Connectivity.NetworkStatusChangedEventHandler *handler,
+                        [out, retval] EventRegistrationToken *cookie);
+        [eventremove] HRESULT NetworkStatusChanged([in] EventRegistrationToken cookie);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.NetworkItem),
+        uuid(01bc4d39-f5e0-4567-a28c-42080c831b2b),
+    ]
+    interface INetworkItem : IInspectable
+    {
+        [propget] HRESULT NetworkId([out, retval] GUID *value);
+        HRESULT GetNetworkTypes([out, retval] NetworkTypes *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.NetworkSecuritySettings),
+        uuid(7ca07e8d-917b-4b5f-b84d-28f7a5ac5402),
+    ]
+    interface INetworkSecuritySettings : IInspectable
+    {
+        [propget] HRESULT NetworkAuthenticationType([out, retval] Windows.Networking.Connectivity.NetworkAuthenticationType *value);
+        [propget] HRESULT NetworkEncryptionType([out, retval] Windows.Networking.Connectivity.NetworkEncryptionType *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.ProxyConfiguration),
+        uuid(ef3a60b4-9004-4dd6-b7d8-b3e502f4aad0),
+    ]
+    interface IProxyConfiguration : IInspectable
+    {
+        [propget] HRESULT ProxyUris([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Foundation.Uri *> **value);
+        [propget] HRESULT CanConnectDirectly([out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.NetworkUsage),
+        uuid(49da8fce-9985-4927-bf5b-072b5c65f8d9),
+    ]
+    interface INetworkUsage : IInspectable
+    {
+        [propget] HRESULT BytesSent([out, retval] UINT64 *value);
+        [propget] HRESULT BytesReceived([out, retval] UINT64 *value);
+        [propget] HRESULT ConnectionDuration([out, retval] Windows.Foundation.TimeSpan *duration);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.ConnectivityInterval),
+        uuid(4faa3fff-6746-4824-a964-eed8e87f8709),
+    ]
+    interface IConnectivityInterval : IInspectable
+    {
+        [propget] HRESULT StartTime([out, retval] Windows.Foundation.DateTime *time_start);
+        [propget] HRESULT ConnectionDuration([out, retval] Windows.Foundation.TimeSpan *duration);
+    }
+
+    [
+        contract(Windows.Networking.Connectivity.WwanContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.WwanConnectionProfileDetails),
+        uuid(0e4da8fe-835f-4df3-82fd-df556ebc09ef),
+    ]
+    interface IWwanConnectionProfileDetails : IInspectable
+    {
+        [propget] HRESULT HomeProviderId([out, retval] HSTRING *value);
+        [propget] HRESULT AccessPointName([out, retval] HSTRING *value);
+        HRESULT GetNetworkRegistrationState([out, retval] Windows.Networking.Connectivity.WwanNetworkRegistrationState *value);
+        HRESULT GetCurrentDataClass([out, retval] Windows.Networking.Connectivity.WwanDataClass *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Networking.Connectivity.WlanConnectionProfileDetails),
+        uuid(562098cb-b35a-4bf1-a884-b7557e88ff86),
+    ]
+    interface IWlanConnectionProfileDetails : IInspectable
+    {
+        HRESULT GetConnectedSsid([out] [retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass ConnectionCost
+    {
+        [default] interface Windows.Networking.Connectivity.IConnectionCost;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Networking.Connectivity.IConnectionCost2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass ConnectionProfile
+    {
+        [default] interface Windows.Networking.Connectivity.IConnectionProfile;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Networking.Connectivity.IConnectionProfile2;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Networking.Connectivity.IConnectionProfile3;
+        [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.Networking.Connectivity.IConnectionProfile4;
+        [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.Networking.Connectivity.IConnectionProfile5;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass DataPlanStatus
+    {
+        [default] interface Windows.Networking.Connectivity.IDataPlanStatus;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass DataPlanUsage
+    {
+        [default] interface Windows.Networking.Connectivity.IDataPlanUsage;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass DataUsage
+    {
+        [default] interface Windows.Networking.Connectivity.IDataUsage;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass IPInformation
+    {
+        [default] interface Windows.Networking.Connectivity.IIPInformation;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass LanIdentifier
+    {
+        [default] interface Windows.Networking.Connectivity.ILanIdentifier;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass LanIdentifierData
+    {
+        [default] interface Windows.Networking.Connectivity.ILanIdentifierData;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass NetworkAdapter
+    {
+        [default] interface Windows.Networking.Connectivity.INetworkAdapter;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Networking.Connectivity.INetworkInformationStatics, Windows.Foundation.UniversalApiContract, 1.0),
+    ]
+    runtimeclass NetworkInformation
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass NetworkItem
+    {
+        [default] interface Windows.Networking.Connectivity.INetworkItem;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass NetworkSecuritySettings
+    {
+        [default] interface Windows.Networking.Connectivity.INetworkSecuritySettings;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass ProxyConfiguration
+    {
+        [default] interface Windows.Networking.Connectivity.IProxyConfiguration;
+    }
+
+    [
+        contract(Windows.Networking.Connectivity.WwanContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass WwanConnectionProfileDetails
+    {
+        [default] interface Windows.Networking.Connectivity.IWwanConnectionProfileDetails;
+        [contract(Windows.Networking.Connectivity.WwanContract, 2.0)] interface Windows.Networking.Connectivity.IWwanConnectionProfileDetails2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass WlanConnectionProfileDetails
+    {
+        [default] interface Windows.Networking.Connectivity.IWlanConnectionProfileDetails;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass NetworkUsage
+    {
+        [default] interface Windows.Networking.Connectivity.INetworkUsage;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass ConnectivityInterval
+    {
+        [default] interface Windows.Networking.Connectivity.IConnectivityInterval;
+    }
+}

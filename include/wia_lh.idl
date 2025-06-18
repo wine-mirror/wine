@@ -1,0 +1,442 @@
+/*
+ * Copyright 2009 Damjan Jovanovic
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "unknwn.idl";
+import "oaidl.idl";
+import "propidl.idl";
+
+typedef struct _WIA_DITHER_PATTERN_DATA
+{
+    LONG lSize;
+    BSTR bstrPatternName;
+    LONG lPatternWidth;
+    LONG lPatternLength;
+    LONG cbPattern;
+    [size_is(cbPattern)] BYTE *pbPattern;
+} WIA_DITHER_PATTERN_DATA, *PWIA_DITHER_PATTERN_DATA;
+
+typedef struct _WIA_PROPID_TO_NAME
+{
+    PROPID propid;
+    LPOLESTR pszName;
+} WIA_PROPID_TO_NAME, *PWIA_PROPID_TO_NAME;
+
+typedef struct _WIA_FORMAT_INFO
+{
+    GUID guidFormatID;
+    LONG lTymed;
+} WIA_FORMAT_INFO, *PWIA_FORMAT_INFO;
+
+cpp_quote("#include <wiadef.h>")
+
+interface IEnumWIA_DEV_INFO;
+interface IWiaPropertyStorage;
+interface IWiaItem;
+interface IWiaEventCallback;
+interface IEnumWIA_DEV_CAPS;
+interface IWiaTransferCallback;
+interface IWiaPreview;
+interface IEnumWiaItem2;
+interface IWiaItem2;
+interface IWiaDevMgr2;
+
+cpp_quote("DEFINE_GUID(CLSID_WiaDevMgr, 0xa1f4e726,0x8cf1,0x11d1,0xbf,0x92,0x00,0x60,0x08,0x1e,0xd8,0x11);")
+
+[
+    object,
+    uuid(5eb2502a-8cf1-11d1-bf92-0060081ed811)
+]
+interface IWiaDevMgr : IUnknown
+{
+    HRESULT EnumDeviceInfo(
+        [in] LONG lFlag,
+        [retval, out] IEnumWIA_DEV_INFO **ppIEnum);
+
+    HRESULT CreateDevice(
+        [in] BSTR bstrDeviceID,
+        [out] IWiaItem **ppWiaItemRoot);
+
+    HRESULT SelectDeviceDlg(
+        [in] HWND hwndParent,
+        [in] LONG lDeviceType,
+        [in] LONG lFlags,
+        [in, out, unique] BSTR *pbstrDeviceID,
+        [retval, out] IWiaItem **ppItemRoot);
+
+    HRESULT SelectDeviceDlgID(
+        [in] HWND hwndParent,
+        [in] LONG lDeviceType,
+        [in] LONG lFlags,
+        [retval, out] BSTR *pbstrDeviceID);
+
+    HRESULT GetImageDlg(
+        [in] HWND hwndParent,
+        [in] LONG lDeviceType,
+        [in] LONG lFlags,
+        [in] LONG lIntent,
+        [in] IWiaItem *pItemRoot,
+        [in] BSTR bstrFilename,
+        [in, out] GUID *pguidFormat);
+
+    HRESULT RegisterEventCallbackProgram(
+        [in] LONG lFlags,
+        [in] BSTR bstrDeviceID,
+        [in] const GUID *pEventGUID,
+        [in] BSTR bstrCommandline,
+        [in] BSTR bstrName,
+        [in] BSTR bstrDescription,
+        [in] BSTR bstrIcon);
+
+    HRESULT RegisterEventCallbackInterface(
+        [in] LONG lFlags,
+        [in] BSTR bstrDeviceID,
+        [in] const GUID *pEventGUID,
+        [unique, in] IWiaEventCallback *pIWiaEventCallback,
+        [out] IUnknown **pEventObject);
+
+    HRESULT RegisterEventCallbackCLSID(
+        [in] LONG lFlags,
+        [in] BSTR bstrDeviceID,
+        [in] const GUID *pEventGUID,
+        [unique, in] const GUID *pClsID,
+        [in] BSTR bstrName,
+        [in] BSTR bstrDescription,
+        [in] BSTR bstrIcon);
+
+    HRESULT AddDeviceDlg(
+        [in] HWND hwndParent,
+        [in] LONG lFlags);
+}
+
+[
+    object,
+    uuid(5e38b83c-8cf1-11d1-bf92-0060081ed811)
+]
+interface IEnumWIA_DEV_INFO : IUnknown
+{
+  HRESULT Next(
+    [in] ULONG celt,
+    [out, size_is(celt), length_is(*pceltFetched)] IWiaPropertyStorage **rgelt,
+    [out] ULONG *pceltFetched
+  );
+
+  HRESULT Skip(
+    [in]  ULONG celt
+  );
+
+  HRESULT Reset();
+
+  HRESULT Clone(
+    [out] IEnumWIA_DEV_INFO **ppIEnum
+  );
+
+  HRESULT GetCount(
+    [out] ULONG *celt
+  );
+}
+
+[
+    object,
+    uuid(98B5E8A0-29CC-491a-AAC0-E6DB4FDCCEB6)
+]
+interface IWiaPropertyStorage : IUnknown
+{
+    /* FIXME: fill in */
+}
+
+[
+    object,
+    uuid(4db1ad10-3391-11d2-9a33-00c04fa36145)
+]
+interface IWiaItem : IUnknown
+{
+    /* FIXME: fill in */
+}
+
+[
+    object,
+    uuid(ae6287b0-0084-11d2-973b-00a0c9068f2e)
+]
+interface IWiaEventCallback : IUnknown
+{
+    HRESULT ImageEventCallback(
+        [in] const GUID *pEventGUID,
+        [in] BSTR bstrEventDescription,
+        [in] BSTR bstrDeviceID,
+        [in] BSTR bstrDeviceDescription,
+        [in] DWORD dwDeviceType,
+        [in] BSTR bstrFullItemName,
+        [in,out] ULONG *pulEventType,
+        [in] ULONG ulReserved);
+}
+
+typedef struct _WIA_DEV_CAP
+{
+    GUID guid;
+    ULONG ulFlags;
+    BSTR bstrName;
+    BSTR bstrDescription;
+    BSTR bstrIcon;
+    BSTR bstrCommandline;
+} WIA_DEV_CAP, *PWIA_DEV_CAP, WIA_EVENT_HANDLER, *PWIA_EVENT_HANDLER;
+
+[
+    object,
+    uuid(1fcc4287-aca6-11d2-a093-00c04f72dc3c)
+]
+interface IEnumWIA_DEV_CAPS : IUnknown
+{
+    HRESULT Next(
+        [in] ULONG celt,
+        [out, size_is(celt), length_is(*pceltFetched)] WIA_DEV_CAP *rgelt,
+        [in, out, unique] ULONG *pceltFetched);
+
+    HRESULT Skip(
+        [in] ULONG celt);
+
+    HRESULT Reset(void);
+
+    HRESULT Clone(
+        [out] IEnumWIA_DEV_CAPS **ppIEnum);
+
+    HRESULT GetCount(
+        [out] ULONG *pcelt);
+}
+
+typedef struct _WiaTransferParams
+{
+    LONG lMessage;
+    LONG lPercentComplete;
+    ULONG64 ulTransferredBytes;
+    HRESULT hrErrorStatus;
+} WiaTransferParams;
+
+[
+    object,
+    uuid(27d4eaaf-28a6-4ca5-9aab-e678168b9527)
+]
+interface IWiaTransferCallback : IUnknown
+{
+    HRESULT TransferCallback(
+        [in] LONG lFlags,
+        [in] WiaTransferParams *pWiaTransferParams);
+
+    HRESULT GetNextStream(
+        [in] LONG lFlags,
+        [in] BSTR bstrItemName,
+        [in] BSTR bstrFullItemName,
+        [out] IStream **ppDestination);
+}
+
+[
+    object,
+    uuid(95c2b4fd-33f2-4d86-ad40-9431f0df08f7)
+]
+interface IWiaPreview : IUnknown
+{
+    HRESULT GetNewPreview(
+        [in] LONG lFlags,
+        [in] IWiaItem2 *pWiaItem2,
+        [in] IWiaTransferCallback *pWiaTransferCallback);
+
+    HRESULT UpdatePreview(
+        [in] LONG lFlags,
+        [in] IWiaItem2 *pChildWiaItem2,
+        [in] IWiaTransferCallback *pWiaTransferCallback);
+
+    HRESULT DetectRegions(
+        [in] LONG lFlags);
+
+    HRESULT Clear(void);
+}
+
+[
+    object,
+    uuid(59970af4-cd0d-44d9-ab24-52295630e582)
+]
+interface IEnumWiaItem2 : IUnknown
+{
+    HRESULT Next(
+        [in] ULONG cElt,
+        [out, size_is(cElt), length_is(*pcEltFetched)] IWiaItem2 **ppIWiaItem2,
+        [in, out, unique] ULONG *pcEltFetched);
+
+    HRESULT Skip(
+        [in] ULONG cElt);
+
+    HRESULT Reset(void);
+
+    HRESULT Clone(
+        [out] IEnumWiaItem2 **ppIEnum);
+
+    HRESULT GetCount(
+        [out] ULONG *cElt);
+}
+
+[
+    object,
+    uuid(6cba0075-1287-407d-9b77-cf0e030435cc)
+]
+interface IWiaItem2 : IUnknown
+{
+    HRESULT CreateChildItem(
+        [in] LONG lItemFlags,
+        [in] LONG lCreationFlags,
+        [in] BSTR bstrItemName,
+        [out] IWiaItem2 **ppIWiaItem2);
+
+    HRESULT DeleteItem(
+        [in] LONG lFlags);
+
+    HRESULT EnumChildItems(
+        [in, unique] const GUID *pCategoryGUID,
+        [out] IEnumWiaItem2 **ppIEnumWiaItem2);
+
+    HRESULT FindItemByName(
+        [in] LONG lFlags,
+        [in] BSTR bstrFullItemName,
+        [out] IWiaItem2 **ppIWiaItem2);
+
+    HRESULT GetItemCategory(
+        [out] GUID *pItemCategoryGUID);
+
+    HRESULT GetItemType(
+        [out] LONG *pItemType);
+
+    HRESULT DeviceDlg(
+        [in] LONG lFlags,
+        [in] HWND hwndParent,
+        [in] BSTR bstrFolderName,
+        [in] BSTR bstrFilename,
+        [out] LONG *plNumFiles,
+        [out, size_is(*plNumFiles)] BSTR **ppbstrFilePaths,
+        [in, out, optional] IWiaItem2 **ppItem);
+
+    HRESULT DeviceCommand(
+        [in] LONG lFlags,
+        [in] const GUID *pCmdGUID,
+        [in, out] IWiaItem2 **ppIWiaItem2);
+
+    HRESULT EnumDeviceCapabilities(
+        [in] LONG lFlags,
+        [out] IEnumWIA_DEV_CAPS **ppIEnumWIA_DEV_CAPS);
+
+    HRESULT CheckExtension(
+        [in] LONG lFlags,
+        [in] BSTR bstrName,
+        [in] REFIID riidExtensionInterface,
+        [out] BOOL *pbExtensionExists);
+
+    HRESULT GetExtension(
+        [in] LONG lFlags,
+        [in] BSTR bstrName,
+        [in] REFIID riidExtensionInterface,
+        [out, iid_is(riidExtensionInterface)] void **ppOut);
+
+    HRESULT GetParentItem(
+        [out] IWiaItem2 **ppIWiaItem2);
+
+    HRESULT GetRootItem(
+        [out] IWiaItem2 **ppIWiaItem2);
+
+    HRESULT GetPreviewComponent(
+        [in] LONG lFlags,
+        [out] IWiaPreview **ppWiaPreview);
+
+    HRESULT EnumRegisterEventInfo(
+        [in] LONG lFlags,
+        [in] const GUID *pEventGUID,
+        [out] IEnumWIA_DEV_CAPS **ppIEnum);
+
+    HRESULT Diagnostic(
+        [in] ULONG ulSize,
+        [in, size_is(ulSize)] BYTE *pBuffer);
+}
+
+[
+    object,
+    uuid(79c07cf1-cbdd-41ee-8ec3-f00080cada7a)
+]
+interface IWiaDevMgr2 : IUnknown
+{
+    HRESULT EnumDeviceInfo(
+        [in] LONG lFlags,
+        [out, retval] IEnumWIA_DEV_INFO **ppIEnum);
+
+    HRESULT CreateDevice(
+        [in] LONG lFlags,
+        [in] BSTR bstrDeviceID,
+        [out] IWiaItem2 **ppWiaItem2Root);
+
+    HRESULT SelectDeviceDlg(
+        [in] HWND hwndParent,
+        [in] LONG lDeviceType,
+        [in] LONG lFlags,
+        [in, out] BSTR *pbstrDeviceID,
+        [out, retval] IWiaItem2 **ppItemRoot);
+
+    HRESULT SelectDeviceDlgID(
+        [in] HWND hwndParent,
+        [in] LONG lDeviceType,
+        [in] LONG lFlags,
+        [out, retval] BSTR *pbstrDeviceID);
+
+    HRESULT RegisterEventCallbackInterface(
+        [in] LONG lFlags,
+        [in] BSTR bstrDeviceID,
+        [in] const GUID *pEventGUID,
+        [in, unique] IWiaEventCallback *pIWiaEventCallback,
+        [out] IUnknown **pEventObject);
+
+    HRESULT RegisterEventCallbackProgram(
+        [in] LONG lFlags,
+        [in] BSTR bstrDeviceID,
+        [in] const GUID *pEventGUID,
+        [in] BSTR bstrFullAppName,
+        [in] BSTR bstrCommandLineArg,
+        [in] BSTR bstrName,
+        [in] BSTR bstrDescription,
+        [in] BSTR bstrIcon);
+
+    HRESULT RegisterEventCallbackCLSID(
+        [in] LONG lFlags,
+        [in] BSTR bstrDeviceID,
+        [in] const GUID *pEventGUID,
+        [in, unique] const GUID *pClsID,
+        [in] BSTR bstrName,
+        [in] BSTR bstrDescription,
+        [in] BSTR bstrIcon);
+
+    HRESULT GetImageDlg(
+        [in] LONG lFlags,
+        [in] BSTR bstrDeviceID,
+        [in] HWND hwndParent,
+        [in] BSTR bstrFolderName,
+        [in] BSTR bstrFilename,
+        [out] LONG *plNumFiles,
+        [out, size_is(*plNumFiles)] BSTR **ppbstrFilePaths,
+        [in, out] IWiaItem2 **ppItem);
+}
+
+[
+    uuid(b6c292bc-7c88-41ee-8b54-8ec92617e599)
+]
+coclass WiaDevMgr2
+{
+    interface IWiaDevMgr2;
+}

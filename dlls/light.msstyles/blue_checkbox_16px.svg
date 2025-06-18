@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="bitmap:16-24" width="16" height="320" fill="#000000" version="1.1" viewBox="0 0 16 320" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <rect width="16" height="320" fill="#fff" fill-opacity=".98444"/>
+ <g fill="none">
+  <rect x=".5" y=".5" width="15" height="15" rx="2" ry="2" stroke="#aeaeae"/>
+  <rect x=".5" y="16.5" width="15" height="15" rx="2" ry="2" stroke="#3096fa"/>
+  <rect x=".5" y="32.5" width="15" height="15" rx="2" ry="2" stroke="#2979ff"/>
+  <rect x=".5" y="48.5" width="15" height="15" rx="2" ry="2" stroke="#aeaeae"/>
+  <rect x=".5" y="256.5" width="15" height="15" rx="2" ry="2" stroke="#aeaeae"/>
+  <rect x=".5" y="272.5" width="15" height="15" rx="2" ry="2" stroke="#3096fa"/>
+  <rect x=".5" y="288.5" width="15" height="15" rx="2" ry="2" stroke="#2979ff"/>
+  <rect x=".5" y="304.5" width="15" height="15" rx="2" ry="2" stroke="#aeaeae"/>
+  <g stroke-width="3.7795">
+   <path d="m13 260.01-1.0071-1.0072-3.9929 3.9929-3.9929-3.9929-1.0071 1.0072 3.9929 3.9928-3.9929 3.9929 1.0071 1.0071 3.9929-3.9928 3.9929 3.9928 1.0071-1.0071-3.9929-3.9929z" fill="#000"/>
+   <path d="m13 276.01-1.0071-1.0072-3.9929 3.9928-3.9929-3.9928-1.0071 1.0072 3.9929 3.9928-3.9929 3.9928 1.0071 1.0072 3.9929-3.9928 3.9929 3.9928 1.0071-1.0072-3.9929-3.9928z" fill="#3096fa"/>
+   <path d="m13 292.01-1.0071-1.0072-3.9929 3.9928-3.9929-3.9928-1.0071 1.0072 3.9929 3.9928-3.9929 3.9928 1.0071 1.0072 3.9929-3.9928 3.9929 3.9928 1.0071-1.0072-3.9929-3.9928z" fill="#2979ff"/>
+   <path d="m13 308.01-1.0071-1.0072-3.9929 3.9928-3.9929-3.9928-1.0071 1.0072 3.9929 3.9928-3.9929 3.9928 1.0071 1.0072 3.9929-3.9928 3.9929 3.9928 1.0071-1.0072-3.9929-3.9928z" fill="#aeaeae"/>
+  </g>
+  <rect x=".5" y="64.5" width="15" height="15" rx="2" ry="2" stroke="#aeaeae"/>
+  <rect x=".5" y="80.5" width="15" height="15" rx="2" ry="2" stroke="#3096fa"/>
+  <rect x=".5" y="96.5" width="15" height="15" rx="2" ry="2" stroke="#2979ff"/>
+  <rect x=".5" y="112.5" width="15" height="15" rx="2" ry="2" stroke="#aeaeae"/>
+  <rect x=".5" y="128.5" width="15" height="15" rx="2" ry="2" stroke="#aeaeae"/>
+  <rect x=".5" y="144.5" width="15" height="15" rx="2" ry="2" stroke="#3096fa"/>
+  <rect x=".5" y="160.5" width="15" height="15" rx="2" ry="2" stroke="#2979ff"/>
+  <rect x=".5" y="176.5" width="15" height="15" rx="2" ry="2" stroke="#aeaeae"/>
+ </g>
+ <path d="m5.8182 74.91-2.8636-3.1343-0.95455 1.0448 3.8182 4.1791 8.1818-8.9552-0.95455-1.0448z"/>
+ <path d="m5.8182 90.91-2.8636-3.1343-0.95455 1.0448 3.8182 4.1791 8.1818-8.9552-0.95455-1.0448z" fill="#3096fa"/>
+ <path d="m5.8182 106.91-2.8636-3.1343-0.95455 1.0448 3.8182 4.1791 8.1818-8.9552-0.95455-1.0448z" fill="#2979ff"/>
+ <path d="m5.8182 122.91-2.8636-3.1343-0.95454 1.0448 3.8182 4.1791 8.1818-8.9552-0.95455-1.0448z"/>
+ <g fill="none">
+  <rect x=".5" y="192.5" width="15" height="15" rx="2" ry="2" stroke="#aeaeae"/>
+  <rect x=".5" y="208.5" width="15" height="15" rx="2" ry="2" stroke="#3096fa"/>
+  <rect x=".5" y="224.5" width="15" height="15" rx="2" ry="2" stroke="#2979ff"/>
+  <rect x=".5" y="240.5" width="15" height="15" rx="2" ry="2" stroke="#aeaeae"/>
+ </g>
+ <path d="m5.8182 202.91-2.8636-3.1343-0.95455 1.0448 3.8182 4.1791 8.1818-8.9552-0.95455-1.0448z"/>
+ <path d="m5.8182 218.91-2.8636-3.1343-0.95455 1.0448 3.8182 4.1791 8.1818-8.9552-0.95455-1.0448z" fill="#3096fa"/>
+ <path d="m5.8182 234.91-2.8636-3.1343-0.95455 1.0448 3.8182 4.1791 8.1818-8.9552-0.95455-1.0448z" fill="#2979ff"/>
+ <path d="m5.8182 250.91-2.8636-3.1343-0.95454 1.0448 3.8182 4.1791 8.1818-8.9552-0.95455-1.0448z"/>
+ <path d="m2 135h12v2h-12z"/>
+ <path d="m2 151h12v2h-12z" fill="#3096fa"/>
+ <path d="m2 167h12v2h-12z" fill="#2979ff"/>
+ <path d="m2 183h12v2h-12z"/>
+</svg>

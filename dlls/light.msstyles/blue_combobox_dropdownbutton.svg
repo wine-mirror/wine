@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="bitmap:7-24" width="7" height="84" version="1.1" viewBox="0 0 1.8521 22.225" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <rect y="-7e-5" width="1.8521" height="22.225" fill="#fff" stroke-width=".26458"/>
+ <g transform="translate(5.0184e-6,-6.4982e-5)" stroke-width=".26458">
+  <rect x=".13228" y=".13228" width="1.5875" height="5.2917" rx=".52917" ry=".52917" fill="none" stroke="#aeaeae"/>
+  <rect x=".13228" y="5.6886" width="1.5875" height="5.2917" rx=".52917" ry=".52917" fill="none" stroke="#3096fa"/>
+  <rect x=".13228" y="11.245" width="1.5875" height="5.2917" rx=".52917" ry=".52917" fill="#2979ff" stroke="#2979ff"/>
+  <rect x=".13228" y="16.801" width="1.5875" height="5.2917" rx=".52917" ry=".52917" fill="none" stroke="#aeaeae"/>
+ </g>
+</svg>

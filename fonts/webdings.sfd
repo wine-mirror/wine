@@ -1,0 +1,198 @@
+SplineFontDB: 3.0
+FontName: WineWebdings
+FullName: Webdings
+FamilyName: Webdings
+Weight: Regular
+Copyright: Copyright (C) 2020 Dmitry Timoshkov
+UComments: "#pragma makedep install"
+Version: 001.000
+ItalicAngle: 0
+UnderlinePosition: 0
+UnderlineWidth: 0
+Ascent: 2048
+Descent: 0
+LayerCount: 2
+Layer: 0 1 "Back" 1
+Layer: 1 1 "Fore" 0
+FSType: 0
+OS2Version: 0
+OS2_WeightWidthSlopeOnly: 0
+OS2_UseTypoMetrics: 0
+PfmFamily: 81
+TTFWeight: 500
+TTFWidth: 5
+LineGap: 0
+VLineGap: 0
+Panose: 0 0 0 0 0 0 0 0 0 0
+OS2TypoAscent: 0
+OS2TypoAOffset: 1
+OS2TypoDescent: 0
+OS2TypoDOffset: 1
+OS2TypoLinegap: 0
+OS2WinAscent: 0
+OS2WinAOffset: 1
+OS2WinDescent: 0
+OS2WinDOffset: 1
+HheadAscent: 0
+HheadAOffset: 1
+HheadDescent: 0
+HheadDOffset: 1
+OS2Vendor: 'Wine'
+DEI: 91125
+ShortTable: cvt  2
+  68
+  1297
+EndShort
+LangName: 1033 "" "" "" "" "" "" "" "" "" "" "" "http://www.winehq.org" "" "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.+AAoACgAA-This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.+AAoACgAA-You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA+AAoA" "http://www.gnu.org/licenses/lgpl.html"
+Encoding: Symbol
+Compacted: 1
+UnicodeInterp: none
+NameList: Adobe Glyph List
+DisplaySize: -72
+AntiAlias: 1
+FitToEm: 1
+WinInfo: 0 26 10
+TeXData: 1 0 0 708670 354335 236222 1342177 -2147484 236222 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
+BeginChars: 257 8
+
+StartChar: .notdef
+Encoding: 0 61472 0
+AltUni2: 000000.ffffffff.0
+Width: 1024
+Flags: W
+LayerCount: 2
+Fore
+SplineSet
+41 41 m 1,0,-1
+ 819 41 l 1,1,-1
+ 819 1324 l 1,2,-1
+ 41 1324 l 1,3,-1
+ 41 41 l 1,0,-1
+0 0 m 1,4,-1
+ 0 1365 l 1,5,-1
+ 860 1365 l 1,6,-1
+ 860 0 l 1,7,-1
+ 0 0 l 1,4,-1
+EndSplineSet
+EndChar
+
+StartChar: UIminimize
+Encoding: 48 48 1
+Width: 2048
+LayerCount: 2
+Fore
+SplineSet
+256 256 m 1,0,-1
+ 256 512 l 1,1,-1
+ 1280 512 l 1,2,-1
+ 1280 256 l 1,3,-1
+ 256 256 l 1,0,-1
+EndSplineSet
+EndChar
+
+StartChar: UImaximize
+Encoding: 49 49 2
+Width: 2048
+LayerCount: 2
+Fore
+SplineSet
+256 384 m 1,0,-1
+ 1536 384 l 1,1,-1
+ 1536 1408 l 1,2,-1
+ 256 1408 l 1,3,-1
+ 256 384 l 1,0,-1
+128 256 m 1,4,-1
+ 128 1664 l 1,5,-1
+ 1664 1664 l 1,6,-1
+ 1664 256 l 1,7,-1
+ 128 256 l 1,4,-1
+EndSplineSet
+EndChar
+
+StartChar: UItile
+Encoding: 50 50 3
+Width: 2048
+LayerCount: 2
+Fore
+SplineSet
+128 256 m 1,0,-1
+ 128 1152 l 1,1,-1
+ 512 1152 l 1,2,-1
+ 512 1664 l 1,3,-1
+ 1664 1664 l 1,4,-1
+ 1664 768 l 1,5,-1
+ 1280 768 l 1,6,-1
+ 1280 256 l 1,7,-1
+ 128 256 l 1,0,-1
+256 384 m 1,8,-1
+ 1152 384 l 1,9,-1
+ 1152 896 l 1,10,-1
+ 256 896 l 1,11,-1
+ 256 384 l 1,8,-1
+640 1152 m 1,12,-1
+ 1280 1152 l 1,13,-1
+ 1280 896 l 1,14,-1
+ 1536 896 l 1,15,-1
+ 1536 1408 l 1,16,-1
+ 640 1408 l 1,17,-1
+ 640 1152 l 1,12,-1
+EndSplineSet
+EndChar
+
+StartChar: UIback
+Encoding: 51 51 4
+Width: 2048
+Flags: W
+LayerCount: 2
+Fore
+SplineSet
+1150 1726 m 25,0,-1
+ 1150 446 l 25,1,-1
+ 510 1086 l 25,2,-1
+ 1150 1726 l 25,0,-1
+EndSplineSet
+EndChar
+
+StartChar: UIforward
+Encoding: 52 52 5
+Width: 2048
+Flags: W
+LayerCount: 2
+Fore
+SplineSet
+842 1732 m 25,0,-1
+ 842 452 l 25,1,-1
+ 1482 1092 l 25,2,-1
+ 842 1732 l 25,0,-1
+EndSplineSet
+EndChar
+
+StartChar: UIup
+Encoding: 53 53 6
+Width: 2048
+Flags: W
+LayerCount: 2
+Fore
+SplineSet
+320 768 m 25,0,-1
+ 1600 768 l 25,1,-1
+ 960 1408 l 25,2,-1
+ 320 768 l 25,0,-1
+EndSplineSet
+EndChar
+
+StartChar: UIdown
+Encoding: 54 54 7
+Width: 2048
+Flags: W
+LayerCount: 2
+Fore
+SplineSet
+320 1282 m 25,0,-1
+ 1600 1282 l 25,1,-1
+ 960 642 l 25,2,-1
+ 320 1282 l 25,0,-1
+EndSplineSet
+EndChar
+EndChars
+EndSplineFont

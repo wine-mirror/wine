@@ -1,0 +1,17 @@
+MODULE    = dmusic.dll
+IMPORTS   = dxguid uuid ole32 advapi32 dsound user32 winmm
+
+SOURCES = \
+	band.c \
+	buffer.c \
+	clock.c \
+	collection.c \
+	dmobject.c \
+	dmusic.c \
+	dmusic.idl \
+	dmusic_main.c \
+	download.c \
+	instrument.c \
+	port.c \
+	version.rc \
+	wave.c

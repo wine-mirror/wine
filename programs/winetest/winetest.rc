@@ -1,0 +1,98 @@
+/*
+ * Winetest resources
+ *
+ * Copyright 2004 Ferenc Wagner
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include <windef.h>
+#include <winuser.h>
+#include <commctrl.h>
+
+#include "resource.h"
+
+IDD_TAG DIALOG 0, 0, 150, 65
+STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "No tag supplied"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CTEXT "Please supply a tag for your report.  You can use letters, digits, dashes and periods."
+        IDC_STATIC, 5, 5, 130, 30
+    EDITTEXT IDC_TAG, 35, 30, 80, 10, ES_AUTOHSCROLL
+    DEFPUSHBUTTON "Start", IDOK, 25, 45, 40, 14
+    PUSHBUTTON    "Abort", IDABORT, 85, 45, 40, 14
+END
+
+IDD_EMAIL DIALOG 0, 0, 150, 65
+STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "No email supplied"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CTEXT "Please supply an email address to enable developers to contact you about your report."
+        IDC_STATIC, 5, 5, 130, 30
+    EDITTEXT IDC_EMAIL, 10, 30, 130, 10, ES_AUTOHSCROLL
+    DEFPUSHBUTTON "Start", IDOK, 25, 45, 40, 14
+    PUSHBUTTON    "Abort", IDABORT, 85, 45, 40, 14
+END
+
+IDD_STATUS DIALOG 0, 0, 160, 150
+STYLE WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
+CAPTION "Wine Test Shell"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT   "Extracting:",       IDC_ST0,         5,   5, 140, 10
+    CONTROL "PB0", IDC_PB0, PROGRESS_CLASSA, 0,   5,  15, 150, 10
+    LTEXT   "Running:",          IDC_ST1,         5,  30, 140, 10
+    CONTROL "PB1", IDC_PB1, PROGRESS_CLASSA, 0,   5,  40, 150, 10
+    LTEXT   "Network transfer:", IDC_ST2,         5,  55, 140, 10
+    CONTROL "PB2", IDC_PB2, PROGRESS_CLASSA, 0,   5,  65, 150, 10
+                                               
+    LTEXT   "Tag:",               IDC_STATIC,     5,  89, 100, 10
+    EDITTEXT                      IDC_TAG,       25,  88, 125, 10,
+             ES_READONLY
+    LTEXT   "Working directory:", IDC_STATIC,     5, 100, 100, 10
+    EDITTEXT                      IDC_DIR,       71,  99,  79, 10,
+             ES_READONLY | ES_AUTOHSCROLL
+    LTEXT   "Output file:",       IDC_STATIC,     5, 111, 100, 10
+    EDITTEXT                      IDC_OUT,       46, 110, 104, 10,
+             ES_READONLY | ES_AUTOHSCROLL
+
+    DEFPUSHBUTTON "About", IDHELP,               20, 123,  30, 14
+    PUSHBUTTON    "Edit",  IDCANCEL,             65, 123,  30, 14,
+                   WS_DISABLED
+    PUSHBUTTON    "Stop",  IDABORT,             110, 123,  30, 14
+
+    CONTROL "Created", IDC_SB, STATUSCLASSNAMEA, 0, 0,0,0,0
+END
+
+IDD_ABOUT DIALOG 0, 0, 150, 60
+STYLE WS_POPUP
+CAPTION "About Wine Test Shell"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CTEXT "This program extracts and runs a series of tests which check Wine's conformance to the Windows API.",
+        IDC_STATIC, 5, 5, 130, 30
+    DEFPUSHBUTTON "Close", IDCANCEL, 55, 40, 40, 14
+END
+
+/* @makedep: winetest.manifest */
+1 RT_MANIFEST winetest.manifest
+
+/* @makedep: winetest.ico */
+IDI_WINE ICON "winetest.ico"
+
+/* @makedep: build.nfo */
+BUILD_INFO STRINGRES "build.nfo"

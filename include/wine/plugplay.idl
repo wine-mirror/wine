@@ -1,0 +1,49 @@
+/*
+ * Copyright (C) 2020 Zebediah Figura for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "wtypes.idl";
+
+cpp_quote("#if 0")
+typedef void *HDEVNOTIFY;
+typedef struct _DEV_BROADCAST_HDR DEV_BROADCAST_HDR;
+cpp_quote("#else")
+cpp_quote("#include \"dbt.h\"")
+cpp_quote("#endif")
+
+typedef DWORD (__stdcall *device_notify_callback)(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header);
+HDEVNOTIFY __stdcall I_ScRegisterDeviceNotification(HANDLE handle, DEV_BROADCAST_HDR *filter, device_notify_callback callback);
+BOOL __stdcall I_ScUnregisterDeviceNotification(HDEVNOTIFY handle);
+
+[
+    uuid(57c680ac-7bce-4f39-97fd-ffea566754d5),
+    endpoint("ncacn_np:[\\pipe\\wine_plugplay]"),
+    implicit_handle(handle_t plugplay_binding_handle)
+]
+interface plugplay
+{
+    typedef [context_handle] void *plugplay_rpc_handle;
+
+    plugplay_rpc_handle plugplay_register_listener();
+    DWORD plugplay_get_event([in] plugplay_rpc_handle handle, [out, string] WCHAR **path,
+                             [out, size_is(,*size)] BYTE **data, [out] unsigned int *size);
+    void plugplay_unregister_listener([in] plugplay_rpc_handle handle);
+    void plugplay_send_event([in, string] const WCHAR *path, [in] DWORD event_code,
+                             [in, size_is(size)] const BYTE *data, [in] unsigned int size);
+}

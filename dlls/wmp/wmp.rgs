@@ -1,0 +1,37 @@
+HKCR
+{
+    NoRemove CLSID
+    {
+        '{6BF52A52-394A-11D3-B153-00C04F79FAA6}'
+        {
+            Control
+            Insertable
+            MiscStatus = s '0'
+            {
+                1 = s '131473'
+            }
+            Programmable
+        }
+    }
+    'WMPlayer.OCX.7' = s 'Windows Media Player'
+    {
+        Insertable
+    }
+}
+
+HKLM
+{
+    NoRemove Software
+    {
+        NoRemove Microsoft
+        {
+            NoRemove Multimedia
+            {
+                WMPlayer
+                {
+                    Extensions
+                }
+            }
+        }
+    }
+}

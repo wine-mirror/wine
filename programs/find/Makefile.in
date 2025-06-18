@@ -1,0 +1,8 @@
+MODULE    = find.exe
+IMPORTS   = user32 kernelbase
+
+EXTRADLLFLAGS = -mconsole -municode
+
+SOURCES = \
+	find.c \
+	find.rc

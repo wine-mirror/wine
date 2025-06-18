@@ -1,0 +1,151 @@
+#!/bin/sh
+#
+# Wrapper script to run tests from inside the Wine tree
+#
+# Usage: runtest [options] input_file
+#
+# Copyright 2002 Alexandre Julliard
+# Copyright 2002 Dimitrie O. Paun
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+#
+
+usage()
+{
+    cat >&2 <<EOF
+
+Usage: $0 [options] [input_file]
+
+input_file:  the source code for the test program
+
+Options:
+    -q       quiet mode
+    -v       verbose mode (can be specified multiple times)
+    -i       interactive mode (runs even more tests)
+    -s       announce successful tests
+    -p prog  name of the program to run for C tests
+    -P name  set the current platform name
+    -M names set the module names to be tested
+    -T dir   set Wine tree top directory (autodetected if not specified)
+
+EOF
+    exit 1
+}
+
+# Default values
+platform=$WINETEST_PLATFORM
+WINETEST_DEBUG=${WINETEST_DEBUG:-1}
+
+# parse command-line options
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+    -h)
+	usage
+    ;;
+    -p)
+	shift; program="$1"
+    ;;
+    -q)
+	WINETEST_DEBUG=0
+    ;;
+    -v)
+	WINETEST_DEBUG=`expr $WINETEST_DEBUG + 1`
+    ;;
+    -i)
+	WINETEST_INTERACTIVE=1
+	export WINETEST_INTERACTIVE
+    ;;
+    -s)
+	WINETEST_REPORT_SUCCESS=1
+	export WINETEST_REPORT_SUCCESS
+    ;;
+    -P)
+	shift; platform="$1"
+    ;;
+    -M)
+	shift; modules="$1"
+    ;;
+    -T)
+	shift; topobjdir="$1"
+	if [ ! -d "$topobjdir" ]; then usage; fi
+    ;;
+    *)
+	break
+    ;;
+    esac
+    shift
+done	    
+	
+if [ -z "$program" ]; then
+    # try to autodetect the test program name based on the working directory
+    working_path=`pwd`
+    case $working_path in
+        */dlls/*/tests)
+          parent_path=`dirname "$working_path"`
+          program=`basename "$parent_path"`_test.exe
+          ;;
+        */dlls/*)
+          program=tests/`basename "$working_path"`_test.exe
+          ;;
+        */programs/*/tests)
+          parent_path=`dirname "$working_path"`
+          program=`basename "$parent_path"`.exe_test.exe
+          ;;
+        */programs/*)
+          program=tests/`basename "$working_path"`.exe_test.exe
+          ;;
+    esac
+    test -f "$program" || program="$program".so
+fi
+
+if [ ! -f "$program" ]; then
+    echo "Can't find the test program, use the -p argument to specify one" 1>&2
+    usage
+fi
+
+# check/detect topobjdir
+if [ -n "$topobjdir" ]; then
+    if [ ! -f "$topobjdir/server/wineserver" ]
+    then
+	echo "Wrong -T argument, $topobjdir/server/wineserver does not exist" 1>&2
+	usage
+    fi
+else
+    if [ -f "./server/wineserver" ]; then topobjdir="."
+    elif [ -f "../server/wineserver" ]; then topobjdir=".."
+    elif [ -f "../../server/wineserver" ]; then topobjdir="../.."
+    elif [ -f "../../../server/wineserver" ]; then topobjdir="../../.."
+    else
+        echo "Can't find the top of the Wine tree (use the -T argument)" 1>&2
+        usage
+    fi
+fi
+
+# set environment variables needed for Wine
+
+if [ -n "$modules" ]; then
+    WINEDLLOVERRIDES="$WINEDLLOVERRIDES;$modules=b"
+    export WINEDLLOVERRIDES
+fi
+WINETEST_PLATFORM=${platform:-wine}
+export WINETEST_PLATFORM WINETEST_DEBUG
+
+# WINETEST_WRAPPER is normally empty, but can be set by caller, e.g.
+#  WINETEST_WRAPPER=time
+# would give data about how long each test takes, and
+#  WINETEST_WRAPPER=valgrind
+# would run the tests under valgrind to look for memory errors.
+
+exec $WINETEST_WRAPPER "$topobjdir/wine" "$program" "$@"

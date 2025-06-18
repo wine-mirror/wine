@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="bitmap:24-32" width="24" height="192" version="1.1" viewBox="0 0 6.35 50.8" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="matrix(1.5 0 0 1.5 -.1323 -.52924)" fill="#bdbdbd" stroke-width="0">
+  <rect x="3.4396" y="3.7042" width=".52917" height=".52917"/>
+  <rect x="2.734" y="3.7042" width=".52917" height=".52917"/>
+  <rect x="2.0285" y="3.7042" width=".52917" height=".52917"/>
+  <rect x="2.734" y="2.9987" width=".52917" height=".52917"/>
+  <rect x="3.4396" y="2.9987" width=".52917" height=".52917"/>
+  <rect x="3.4396" y="2.2931" width=".52917" height=".52917"/>
+  <rect transform="scale(1,-1)" x="3.4396" y="-9.7015" width=".52917" height=".52917"/>
+  <rect transform="scale(1,-1)" x="2.734" y="-9.7014" width=".52917" height=".52917"/>
+  <rect transform="scale(1,-1)" x="2.0285" y="-9.7014" width=".52917" height=".52917"/>
+  <rect transform="scale(1,-1)" x="2.734" y="-10.407" width=".52917" height=".52917"/>
+  <rect transform="scale(1,-1)" x="3.4396" y="-10.407" width=".52917" height=".52917"/>
+  <rect transform="scale(1,-1)" x="3.4396" y="-11.113" width=".52917" height=".52917"/>
+  <rect transform="scale(-1,1)" x="-.97013" y="7.9375" width=".52917" height=".52917"/>
+  <rect transform="scale(-1,1)" x="-1.6757" y="7.9376" width=".52917" height=".52917"/>
+  <rect transform="scale(-1,1)" x="-2.3813" y="7.9375" width=".52917" height=".52917"/>
+  <rect transform="scale(-1,1)" x="-1.6757" y="7.232" width=".52917" height=".52917"/>
+  <rect transform="scale(-1,1)" x="-.97014" y="7.232" width=".52917" height=".52917"/>
+  <rect transform="scale(-1,1)" x="-.97015" y="6.5264" width=".52917" height=".52917"/>
+  <rect transform="scale(-1)" x="-.97013" y="-13.935" width=".52917" height=".52917"/>
+  <rect transform="scale(-1)" x="-1.6757" y="-13.935" width=".52917" height=".52917"/>
+  <rect transform="scale(-1)" x="-2.3813" y="-13.935" width=".52917" height=".52917"/>
+  <rect transform="scale(-1)" x="-1.6757" y="-14.64" width=".52917" height=".52917"/>
+  <rect transform="scale(-1)" x="-.97014" y="-14.64" width=".52917" height=".52917"/>
+  <rect transform="scale(-1)" x="-.97014" y="-15.346" width=".52917" height=".52917"/>
+  <rect x="3.4396" y="20.638" width=".52917" height=".52917"/>
+  <rect x="2.734" y="20.638" width=".52917" height=".52917"/>
+  <rect x="2.0285" y="20.638" width=".52917" height=".52917"/>
+  <rect x="2.734" y="19.932" width=".52917" height=".52917"/>
+  <rect x="3.4396" y="19.932" width=".52917" height=".52917"/>
+  <rect x="3.4396" y="19.226" width=".52917" height=".52917"/>
+  <rect transform="scale(1,-1)" x="3.4396" y="-26.635" width=".52917" height=".52917"/>
+  <rect transform="scale(1,-1)" x="2.734" y="-26.635" width=".52917" height=".52917"/>
+  <rect transform="scale(1,-1)" x="2.0285" y="-26.635" width=".52917" height=".52917"/>
+  <rect transform="scale(1,-1)" x="2.734" y="-27.34" width=".52917" height=".52917"/>
+  <rect transform="scale(1,-1)" x="3.4396" y="-27.34" width=".52917" height=".52917"/>
+  <rect transform="scale(1,-1)" x="3.4396" y="-28.046" width=".52917" height=".52917"/>
+  <rect transform="scale(-1,1)" x="-.97013" y="24.871" width=".52917" height=".52917"/>
+  <rect transform="scale(-1,1)" x="-1.6757" y="24.871" width=".52917" height=".52917"/>
+  <rect transform="scale(-1,1)" x="-2.3813" y="24.871" width=".52917" height=".52917"/>
+  <rect transform="scale(-1,1)" x="-1.6757" y="24.165" width=".52917" height=".52917"/>
+  <rect transform="scale(-1,1)" x="-.97014" y="24.165" width=".52917" height=".52917"/>
+  <rect transform="scale(-1,1)" x="-.97015" y="23.46" width=".52917" height=".52917"/>
+  <rect transform="scale(-1)" x="-.97013" y="-30.868" width=".52917" height=".52917"/>
+  <rect transform="scale(-1)" x="-1.6757" y="-30.868" width=".52917" height=".52917"/>
+  <rect transform="scale(-1)" x="-2.3813" y="-30.868" width=".52917" height=".52917"/>
+  <rect transform="scale(-1)" x="-1.6757" y="-31.574" width=".52917" height=".52917"/>
+  <rect transform="scale(-1)" x="-.97014" y="-31.574" width=".52917" height=".52917"/>
+  <rect transform="scale(-1)" x="-.97014" y="-32.279" width=".52917" height=".52917"/>
+ </g>
+</svg>

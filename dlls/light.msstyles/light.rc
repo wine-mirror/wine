@@ -1,0 +1,4623 @@
+/*
+ * Copyright 2021-2024 Zhiyi Zhang for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resources.h"
+
+#pragma makedep po
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+/* Theme color display names */
+STRINGTABLE
+{
+    IDS_COLOR_DISPLAY_NAME_BLUE         "Blue"
+}
+
+/* Theme color tooltips */
+STRINGTABLE
+{
+    IDS_COLOR_TOOLTIP_BLUE         "Blue"
+}
+
+/* Theme size display names */
+STRINGTABLE
+{
+    IDS_SIZE_DISPLAY_NAME_NORMAL "Normal"
+}
+
+/* Theme size tooltips */
+STRINGTABLE
+{
+    IDS_SIZE_TOOLTIP_NORMAL "Normal"
+}
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+/* Theme version */
+1 PACKTHEM_VERSION {0x3}
+
+/* Theme color names */
+1 COLORNAMES
+{
+"Blue\0"
+"\0"
+}
+
+/* Theme size names */
+1 SIZENAMES
+{
+"NormalSize\0"
+"\0"
+}
+
+/* Theme ini files */
+1 FILERESNAMES
+{
+"BLUE_INI\0"
+"\0"
+}
+
+/* Theme definition */
+THEMES_INI TEXTFILE
+{
+"[documentation]\r\n"
+"DisplayName = Light\r\n"
+"ToolTip = Light Visual Style\r\n"
+}
+
+/* Light theme definition */
+/* Blue theme */
+BLUE_INI TEXTFILE
+{
+"[Globals]\r\n"
+"EdgeLightColor = 255 255 255\r\n"
+"EdgeHighLightColor = 255 255 255\r\n"
+"EdgeShadowColor = 189 189 189\r\n"
+"EdgeDkShadowColor = 158 158 158\r\n"
+"EdgeFillColor = 255 255 255\r\n"
+
+"\r\n[SysMetrics]\r\n"
+"ScrollbarWidth = 17\r\n"
+"ScrollbarHeight = 17\r\n"
+
+"\r\n; System colors\r\n"
+"Scrollbar = 255 255 255\r\n"
+"Background = 37 111 149\r\n"
+"ActiveCaption = 50 150 250\r\n"
+"InactiveCaption = 128 128 128\r\n"
+"Menu = 255 255 255\r\n"
+"Window = 255 255 255\r\n"
+"WindowFrame = 158 158 158\r\n"
+"MenuText = 0 0 0\r\n"
+"WindowText = 0 0 0\r\n"
+"CaptionText = 0 0 0\r\n"
+"ActiveBorder = 255 255 255\r\n"
+"InactiveBorder = 255 255 255\r\n"
+"AppWorkSpace = 128 128 128\r\n"
+"Highlight = 48 150 250\r\n"
+"HighlightText = 255 255 255\r\n"
+"BtnFace = 245 245 245\r\n"
+"BtnShadow = 166 166 166\r\n"
+"GrayText = 106 106 106\r\n"
+"BtnText = 0 0 0\r\n"
+"InactiveCaptionText = 200 200 200\r\n"
+"BtnHighlight = 255 255 255\r\n"
+"DkShadow3d = 106 106 106\r\n"
+"Light3d = 227 227 227\r\n"
+"InfoText = 0 0 0\r\n"
+"InfoBk = 255 255 255\r\n"
+"ButtonAlternateFace = 255 255 255\r\n"
+"HotTracking = 48 150 250\r\n"
+"GradientActiveCaption = 50 150 250\r\n"
+"GradientInactiveCaption = 128 128 128\r\n"
+"MenuHilight = 48 150 250\r\n"
+"MenuBar = 255 255 255\r\n"
+
+"\r\n; Nonclient metrics\r\n"
+"CaptionFont = Tahoma, 10, bold\r\n"
+"CaptionBarHeight = 25\r\n"
+"SmallCaptionFont = Tahoma, 8, bold\r\n"
+"SMCaptionBarHeight = 17\r\n"
+"SMCaptionBarWidth = 17\r\n"
+"MenuFont = Tahoma, 8\r\n"
+"StatusFont = Tahoma, 8\r\n"
+"MsgBoxFont = Tahoma, 8\r\n"
+"IconTitleFont = Tahoma, 8\r\n"
+
+"\r\n; Flat menus\r\n"
+"FlatMenus = true\r\n"
+
+"\r\n; Button\r\n"
+"[Button.Pushbutton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingMargins = 8, 8, 8, 8\r\n"
+"SizingType = Stretch\r\n"
+"ContentMargins = 3, 3, 3, 3\r\n"
+"ImageFile = blue_button.bmp\r\n"
+"ImageCount = 6\r\n"
+"ImageLayout = Vertical\r\n"
+"TextColor = 0 0 0\r\n"
+"MinSize = 10, 5\r\n"
+"TransitionDurations = 6, "
+"0, 100, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, 100, "
+"100, 100, 0, 100, 100, 100, "
+"100, 100, 100, 0, 100, 100, "
+"100, 100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 100, 0\r\n"
+
+"[Button.Pushbutton(Pressed)]\r\n"
+"TextColor = 255 255 255\r\n"
+
+"[Button.Pushbutton(Disabled)]\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[Button.Checkbox]\r\n"
+"BgType = ImageFile\r\n"
+"ImageLayout = Vertical\r\n"
+"SizingType = TrueSize\r\n"
+"SizingMargins = 0, 0, 0, 0\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageCount = 20\r\n"
+"MirrorImage = False\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"UniformSizing = True\r\n"
+"Transparent = True\r\n"
+"ImageFile1 = blue_checkbox_13px.bmp\r\n"
+"ImageFile2 = blue_checkbox_16px.bmp\r\n"
+"ImageFile3 = blue_checkbox_20px.bmp\r\n"
+"ImageFile4 = blue_checkbox_26px.bmp\r\n"
+"ImageFile5 = blue_checkbox_32px.bmp\r\n"
+"ImageFile6 = blue_checkbox_40px.bmp\r\n"
+"ImageFile7 = blue_checkbox_52px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+"TransitionDurations = 20, "
+"0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, "
+"100, 100, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, "
+"100, 100, 100, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, "
+"100, 100, 100, 100, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, "
+"100, 100, 100, 100, 100, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, "
+"100, 100, 100, 100, 100, 100, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, "
+"100, 100, 100, 100, 100, 100, 100, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, "
+"100, 100, 100, 100, 100, 100, 100, 100, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, "
+"100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, "
+"100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, "
+"100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 100, 100, 100, 100, 100, 100, 100, 100, "
+"100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 100, 100, 100, 100, 100, 100, 100, "
+"100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 100, 100, 100, 100, 100, 100, "
+"100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 100, 100, 100, 100, 100, "
+"100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 100, 100, 100, 100, "
+"100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 100, 100, 100, "
+"100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 100, 100, "
+"100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 0\r\n"
+
+"[Button.Checkbox(Checkeddisabled)]\r\n"
+"TextColor = 189 189 189\r\n"
+
+"[Button.Checkbox(Uncheckeddisabled)]\r\n"
+"TextColor = 189 189 189\r\n"
+
+"[Button.Checkbox(Mixeddisabled)]\r\n"
+"TextColor = 189 189 189\r\n"
+
+"[Button.Checkbox(ImplicitDisabled)]\r\n"
+"TextColor = 189 189 189\r\n"
+
+"[Button.Checkbox(ExcludedDisabled)]\r\n"
+"TextColor = 189 189 189\r\n"
+
+"[Button.Radiobutton]\r\n"
+"BgType = ImageFile\r\n"
+"ImageLayout = Vertical\r\n"
+"Transparent = True\r\n"
+"SizingType = TrueSize\r\n"
+"SizingMargins = 0, 0, 0, 0\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageCount = 8\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_radiobutton_13px.bmp\r\n"
+"ImageFile2 = blue_radiobutton_16px.bmp\r\n"
+"ImageFile3 = blue_radiobutton_19px.bmp\r\n"
+"ImageFile4 = blue_radiobutton_22px.bmp\r\n"
+"ImageFile5 = blue_radiobutton_25px.bmp\r\n"
+"ImageFile6 = blue_radiobutton_28px.bmp\r\n"
+"ImageFile7 = blue_radiobutton_31px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
+"TransitionDurations = 8, "
+"0, 100, 100, 100, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, 100, 100, 100, "
+"100, 100, 0, 100, 100, 100, 100, 100, "
+"100, 100, 100, 0, 100, 100, 100, 100, "
+"100, 100, 100, 100, 0, 100, 100, 100, "
+"100, 100, 100, 100, 100, 0, 100, 100, "
+"100, 100, 100, 100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 100, 100, 100, 0\r\n"
+
+"[Button.Radiobutton(Checkeddisabled)]\r\n"
+"TextColor = 189 189 189\r\n"
+
+"[Button.Radiobutton(Uncheckeddisabled)]\r\n"
+"TextColor = 189 189 189\r\n"
+
+"[Button.Groupbox]\r\n"
+"TextColor = 0 0 0\r\n"
+"BgType = ImageFile\r\n"
+"SizingMargins = 5, 5, 5, 5\r\n"
+"SizingType = Tile\r\n"
+"ImageFile = blue_groupbox.bmp\r\n"
+"BorderOnly = True\r\n"
+"Transparent = True\r\n"
+
+"[Button.Commandlink]\r\n"
+"BgType = ImageFile\r\n"
+"BorderSize = 0\r\n"
+"ContentMargins = 7, 7, 10, 10\r\n"
+"Font = Tahoma, 10\r\n"
+"BodyFont = Tahoma, 8\r\n"
+"ImageFile = blue_commandlink.bmp\r\n"
+"ImageCount = 6\r\n"
+"ImageLayout = Vertical\r\n"
+"SizingType = Stretch\r\n"
+"SizingMargins = 5, 5, 24, 24\r\n"
+"Transparent = True\r\n"
+"TextColor = 0 0 0\r\n"
+"MinSize = 10, 5\r\n"
+"TransitionDurations = 6, "
+"0, 100, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, 100, "
+"100, 100, 0, 100, 100, 100, "
+"100, 100, 100, 0, 100, 100, "
+"100, 100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 100, 0\r\n"
+
+"[Button.Commandlink(Hot)]\r\n"
+"TextColor = 48 150 250\r\n"
+
+"[Button.Commandlink(Pressed)]\r\n"
+"TextColor = 41 121 255\r\n"
+
+"[Button.Commandlink(Disabled)]\r\n"
+"TextColor = 174 174 174\r\n"
+
+"[Button.CommandlinkGlyph]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageCount = 5\r\n"
+"Transparent = True\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"Transparent = True\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_commandlink_glyph_30px.bmp\r\n"
+"ImageFile2 = blue_commandlink_glyph_37px.bmp\r\n"
+"ImageFile3 = blue_commandlink_glyph_45px.bmp\r\n"
+"ImageFile4 = blue_commandlink_glyph_52px.bmp\r\n"
+"ImageFile5 = blue_commandlink_glyph_60px.bmp\r\n"
+"ImageFile6 = blue_commandlink_glyph_67px.bmp\r\n"
+"ImageFile7 = blue_commandlink_glyph_75px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
+
+"; These *HCDisabled parts don't have images \r\n"
+"[Button.RadioButton_HCDisabled]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 8\r\n"
+"Transparent = True\r\n"
+"UniformSizing = True\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+
+"[Button.CheckBox_HCDisabled]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 20\r\n"
+"Transparent = True\r\n"
+"MirrorImage = False\r\n"
+"UniformSizing = True\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+
+"[Button.GroupBox_HCDisabled]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Tile\r\n"
+"Transparent = True\r\n"
+"BorderOnly = True\r\n"
+"SizingMargins = 5, 5, 5, 5\r\n"
+
+"[Button.PushButtonDropDown(Normal)]\r\n"
+"TextColor = 0 0 0\r\n"
+
+"[Button.PushButtonDropDown(Disabled)]\r\n"
+"TextColor = 255 255 255\r\n"
+
+"\r\n; ComboBox\r\n"
+"[ComboBox]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 1\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderColor = 174 174 174\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"TransitionDurations = 4, "
+"0, 100, 100, 100, "
+"100, 0, 100, 100, "
+"100, 100, 0, 100, "
+"100, 100, 100, 0\r\n"
+
+"[ComboBox.DropDownButton]\r\n"
+"BgType = ImageFile\r\n"
+"ImageLayout = Vertical\r\n"
+"SizingType = Stretch\r\n"
+"SizingMargins = 3, 3, 7, 8\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageCount = 4\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageFile = blue_combobox_dropdownbutton.bmp\r\n"
+"; 10x76px \r\n"
+"ImageFile1 = blue_combobox_dropdownbutton_glyph_10px.bmp\r\n"
+"ImageFile2 = blue_combobox_dropdownbutton_glyph_9px.bmp\r\n"
+"ImageFile3 = blue_combobox_dropdownbutton_glyph_11px.bmp\r\n"
+"ImageFile4 = blue_combobox_dropdownbutton_glyph_14px.bmp\r\n"
+"ImageFile5 = blue_combobox_dropdownbutton_glyph_17px.bmp\r\n"
+"ImageFile6 = blue_combobox_dropdownbutton_glyph_21px.bmp\r\n"
+"ImageFile7 = blue_combobox_dropdownbutton_glyph_27px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+"TransitionDurations = 4, "
+"0, 100, 100, 100, "
+"100, 0, 100, 100, "
+"100, 100, 0, 100, "
+"100, 100, 100, 0\r\n"
+
+"[ComboBox.Border]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 4\r\n"
+"BorderSize = 0\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 2, 2, 2, 2\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_combobox_border.bmp\r\n"
+
+"[ComboBox.ReadOnly]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 4\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 4, 4\r\n"
+"ContentMargins = 3, 3, 3, 3\r\n"
+"ImageFile = blue_combobox_readonly.bmp\r\n"
+
+"[ComboBox.ReadOnly(Disabled)]\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[ComboBox.DropDownButtonRight]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 4\r\n"
+"SizingMargins = 2, 2, 7, 8\r\n"
+"ContentMargins = 0, 0, 1, 0\r\n"
+"ImageFile = blue_combobox_dropdownbutton_right.bmp\r\n"
+"; 10x76px \r\n"
+"ImageFile1 = blue_combobox_dropdownbutton_right_glyph_10px.bmp\r\n"
+"ImageFile2 = blue_combobox_dropdownbutton_right_glyph_9px.bmp\r\n"
+"ImageFile3 = blue_combobox_dropdownbutton_right_glyph_11px.bmp\r\n"
+"ImageFile4 = blue_combobox_dropdownbutton_right_glyph_14px.bmp\r\n"
+"ImageFile5 = blue_combobox_dropdownbutton_right_glyph_17px.bmp\r\n"
+"ImageFile6 = blue_combobox_dropdownbutton_right_glyph_21px.bmp\r\n"
+"ImageFile7 = blue_combobox_dropdownbutton_right_glyph_27px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[ComboBox.DropDownButtonLeft]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 4\r\n"
+"SizingMargins = 3, 2, 7, 8\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_combobox_dropdownbutton_left.bmp\r\n"
+"; 10x76px \r\n"
+"ImageFile1 = blue_combobox_dropdownbutton_left_glyph_10px.bmp\r\n"
+"ImageFile2 = blue_combobox_dropdownbutton_left_glyph_9px.bmp\r\n"
+"ImageFile3 = blue_combobox_dropdownbutton_left_glyph_11px.bmp\r\n"
+"ImageFile4 = blue_combobox_dropdownbutton_left_glyph_14px.bmp\r\n"
+"ImageFile5 = blue_combobox_dropdownbutton_left_glyph_17px.bmp\r\n"
+"ImageFile6 = blue_combobox_dropdownbutton_left_glyph_21px.bmp\r\n"
+"ImageFile7 = blue_combobox_dropdownbutton_left_glyph_27px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[ComboBox.CueBanner]\r\n"
+"TextColor = 174 174 174\r\n"
+
+"[ComboBox.DropDownItem(Normal)]\r\n"
+"FillColor = 255 255 255\r\n"
+"TextColor = 0 0 0\r\n"
+
+"[ComboBox.DropDownItem(HighLighted)]\r\n"
+"FillColor = 48 150 250\r\n"
+"TextColor = 255 255 255\r\n"
+
+"\r\n; Edit\r\n"
+"[Edit]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 1\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"[Edit.Edittext(Disabled)]\r\n"
+"FillColor = 245 245 245\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[Edit.Edittext(ReadOnly)]\r\n"
+"FillColor = 245 245 245\r\n"
+"TextColor = 0 0 0\r\n"
+
+"[Edit.EditText(CueBanner)]\r\n"
+"TextColor = 0 0 0\r\n"
+
+"; No ImageSelectType \r\n"
+"[Edit.Background]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 6\r\n"
+"SizingMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_edit_background_1x6px.bmp\r\n"
+"ImageFile1 = blue_edit_background_1x12px.bmp\r\n"
+"ImageFile2 = blue_edit_background_1x15px.bmp\r\n"
+"ImageFile3 = blue_edit_background_1x18px.bmp\r\n"
+"ImageFile4 = blue_edit_background_1x24px.bmp\r\n"
+"MinDpi1 = 192\r\n"
+"MinDpi2 = 240\r\n"
+"MinDpi3 = 288\r\n"
+"MinDpi4 = 384\r\n"
+"TransitionDurations = 6, "
+"0, 100, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, 100, "
+"100, 100, 0, 100, 100, 100, "
+"100, 100, 100, 0, 100, 100, "
+"100, 100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 100, 0\r\n"
+
+"[Edit.Password]\r\n"
+"GlyphType = FontGlyph\r\n"
+"GlyphIndex = 9679\r\n"
+"GlyphFont = Tahoma, 9\r\n"
+
+"[Edit.EditBorder_NoScroll]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 4\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 2, 2, 2, 2\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_edit_border_noscroll.bmp\r\n"
+"TransitionDurations = 4, "
+"0, 100, 100, 100, "
+"100, 0, 100, 100, "
+"100, 100, 0, 100, "
+"100, 100, 100, 0\r\n"
+
+"[Edit.EditBorder_HScroll]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 4\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 2, 2, 2, 2\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_edit_border_hscroll.bmp\r\n"
+"TransitionDurations = 4, "
+"0, 100, 100, 100, "
+"100, 0, 100, 100, "
+"100, 100, 0, 100, "
+"100, 100, 100, 0\r\n"
+
+"[Edit.EditBorder_VScroll]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 4\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 2, 2, 2, 2\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_edit_border_vscroll.bmp\r\n"
+"TransitionDurations = 4, "
+"0, 100, 100, 100, "
+"100, 0, 100, 100, "
+"100, 100, 0, 100, "
+"100, 100, 100, 0\r\n"
+
+"[Edit.EditBorder_HVScroll]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 4\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 2, 2, 2, 2\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_edit_border_hvscroll.bmp\r\n"
+"TransitionDurations = 4, "
+"0, 100, 100, 100, "
+"100, 0, 100, 100, "
+"100, 100, 0, 100, "
+"100, 100, 100, 0\r\n"
+
+"\r\n; Header\r\n"
+"[Header]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"SizingMargins = 2, 0, 9, 14\r\n"
+"ImageFile = blue_header.bmp\r\n"
+
+"[Header.HeaderItem]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 12\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 2, 3, 9, 14\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_header_item.bmp\r\n"
+
+"[Header.HeaderSortArrow]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 2\r\n"
+"Transparent = True\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile1 = blue_header_sort_arrow_13px.bmp\r\n"
+"ImageFile2 = blue_header_sort_arrow_16px.bmp\r\n"
+"ImageFile3 = blue_header_sort_arrow_20px.bmp\r\n"
+"ImageFile4 = blue_header_sort_arrow_26px.bmp\r\n"
+"; 17x32px \r\n"
+"ImageFile5 = blue_header_sort_arrow_17px.bmp\r\n"
+"ImageFile6 = blue_header_sort_arrow_39px.bmp\r\n"
+"ImageFile7 = blue_header_sort_arrow_52px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Header.HeaderDropDown]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 3\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"SizingMargins = 2, 0, 9, 14\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_header_dropdown.bmp\r\n"
+"ImageFile1 = blue_header_dropdown_glyph_7px.bmp\r\n"
+"ImageFile2 = blue_header_dropdown_glyph_9px.bmp\r\n"
+"ImageFile3 = blue_header_dropdown_glyph_10px.bmp\r\n"
+"ImageFile4 = blue_header_dropdown_glyph_13px.bmp\r\n"
+"ImageFile5 = blue_header_dropdown_glyph_17px.bmp\r\n"
+"ImageFile6 = blue_header_dropdown_glyph_21px.bmp\r\n"
+"ImageFile7 = blue_header_dropdown_glyph_29px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Header.HeaderDropDownFilter]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 3\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"MirrorImage = False\r\n"
+"SizingMargins = 2, 0, 9, 14\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_header_dropdown_filter.bmp\r\n"
+"ImageFile1 = blue_header_dropdown_filter_glyph_10px.bmp\r\n"
+"ImageFile2 = blue_header_dropdown_filter_glyph_12px.bmp\r\n"
+"ImageFile3 = blue_header_dropdown_filter_glyph_15px.bmp\r\n"
+"ImageFile4 = blue_header_dropdown_filter_glyph_19px.bmp\r\n"
+"ImageFile5 = blue_header_dropdown_filter_glyph_23px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+
+"[Header.HeaderOverflow]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 2\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"SizingMargins = 3, 4, 9, 11\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_header_overflow.bmp\r\n"
+"ImageFile1 = blue_header_overflow_glyph_8px.bmp\r\n"
+"ImageFile2 = blue_header_overflow_glyph_10px.bmp\r\n"
+"ImageFile3 = blue_header_overflow_glyph_12px.bmp\r\n"
+"ImageFile4 = blue_header_overflow_glyph_16px.bmp\r\n"
+"ImageFile5 = blue_header_overflow_glyph_20px.bmp\r\n"
+"ImageFile6 = blue_header_overflow_glyph_24px.bmp\r\n"
+"ImageFile7 = blue_header_overflow_glyph_32px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"\r\n; ListBox\r\n"
+"[ListBox]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 1\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"\r\n; ListView\r\n"
+"[ListView]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 1\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"[ListView.GroupHeader]\r\n"
+"BgType = None\r\n"
+"Heading1TextColor = 0 0 0\r\n"
+"Heading2TextColor = 0 0 0\r\n"
+"BodyTextColor = 0 0 0\r\n"
+"ContentMargins = 10, 10, 2, 3\r\n"
+"Font = Tahoma, 9\r\n"
+"Heading1Font = Tahoma, 9\r\n"
+"Heading2Font = Tahoma, 9\r\n"
+"BodyFont = Tahoma, 9\r\n"
+
+"[ListView.GroupHeader(OpenHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_open_hot.bmp\r\n"
+
+"[ListView.GroupHeader(OpenSelectedHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_open_selected_hot.bmp\r\n"
+
+"[ListView.GroupHeader(OpenSelectedNotFocusedHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_open_selected_not_focused_hot.bmp\r\n"
+
+"[ListView.GroupHeader(OpenMixedSelectionHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_open_mixed_selection_hot.bmp\r\n"
+
+"[ListView.GroupHeader(CloseHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_hot.bmp\r\n"
+
+"[ListView.GroupHeader(CloseSelected)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_selected.bmp\r\n"
+
+"[ListView.GroupHeader(CloseSelectedHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_selected_hot.bmp\r\n"
+
+"[ListView.GroupHeader(CloseSelectedNotFocused)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_selected_not_focused.bmp\r\n"
+
+"[ListView.GroupHeader(CloseSelectedNotFocusedHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_selected_not_focused_hot.bmp\r\n"
+
+"[ListView.GroupHeader(CloseMixedSelection)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_mixed_selection.bmp\r\n"
+
+"[ListView.GroupHeader(CloseMixedSelectionHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_mixed_selection_hot.bmp\r\n"
+
+"[ListView.GroupHeaderLine]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 16\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_listview_group_header_line.bmp\r\n"
+
+"[ListView.ExpandButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 3\r\n"
+"ImageFile1 = blue_listview_expand_button_15px.bmp\r\n"
+"ImageFile2 = blue_listview_expand_button_19px.bmp\r\n"
+"ImageFile3 = blue_listview_expand_button_23px.bmp\r\n"
+"ImageFile4 = blue_listview_expand_button_30px.bmp\r\n"
+"ImageFile5 = blue_listview_expand_button_37px.bmp\r\n"
+"ImageFile6 = blue_listview_expand_button_46px.bmp\r\n"
+"ImageFile7 = blue_listview_expand_button_60px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[ListView.CollapseButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 3\r\n"
+"ImageFile1 = blue_listview_collapse_button_15px.bmp\r\n"
+"ImageFile2 = blue_listview_collapse_button_19px.bmp\r\n"
+"ImageFile3 = blue_listview_collapse_button_23px.bmp\r\n"
+"ImageFile4 = blue_listview_collapse_button_30px.bmp\r\n"
+"ImageFile5 = blue_listview_collapse_button_37px.bmp\r\n"
+"ImageFile6 = blue_listview_collapse_button_46px.bmp\r\n"
+"ImageFile7 = blue_listview_collapse_button_60px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[ListView.ColumnDetail]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 1\r\n"
+"SizingMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_listview_column_detail.bmp\r\n"
+
+"\r\n; Explorer::ListView\r\n"
+"[Explorer::ListView]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 1\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"[Explorer::ListView.ListItem(Hot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_explorer_listview_item_hot.bmp\r\n"
+
+"[Explorer::ListView.ListItem(Selected)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"TextColor = 0 0 0\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_explorer_listview_item_selected.bmp\r\n"
+
+"[Explorer::ListView.ListItem(SelectedNotFocus)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_explorer_listview_item_selected_not_focus.bmp\r\n"
+
+"[Explorer::ListView.ListItem(HotSelected)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_explorer_listview_item_hot_selected.bmp\r\n"
+
+"[Explorer::ListView.GroupHeader]\r\n"
+"BgType = None\r\n"
+"Heading1TextColor = 0 0 0\r\n"
+"Heading2TextColor = 0 0 0\r\n"
+"BodyTextColor = 0 0 0\r\n"
+"ContentMargins = 10, 10, 2, 3\r\n"
+"Font = Tahoma, 9\r\n"
+"Heading1Font = Tahoma, 9\r\n"
+"Heading2Font = Tahoma, 9\r\n"
+"BodyFont = Tahoma, 9\r\n"
+
+"[Explorer::ListView.GroupHeader(OpenHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_open_hot.bmp\r\n"
+
+"[Explorer::ListView.GroupHeader(OpenSelectedHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_open_selected_hot.bmp\r\n"
+
+"[Explorer::ListView.GroupHeader(OpenSelectedNotFocusedHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_open_selected_not_focused_hot.bmp\r\n"
+
+"[Explorer::ListView.GroupHeader(OpenMixedSelectionHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_open_mixed_selection_hot.bmp\r\n"
+
+"[Explorer::ListView.GroupHeader(CloseHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_hot.bmp\r\n"
+
+"[Explorer::ListView.GroupHeader(CloseSelected)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_selected.bmp\r\n"
+
+"[Explorer::ListView.GroupHeader(CloseSelectedHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_selected_hot.bmp\r\n"
+
+"[Explorer::ListView.GroupHeader(CloseSelectedNotFocused)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_selected_not_focused.bmp\r\n"
+
+"[Explorer::ListView.GroupHeader(CloseSelectedNotFocusedHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_selected_not_focused_hot.bmp\r\n"
+
+"[Explorer::ListView.GroupHeader(CloseMixedSelection)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_mixed_selection.bmp\r\n"
+
+"[Explorer::ListView.GroupHeader(CloseMixedSelectionHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_mixed_selection_hot.bmp\r\n"
+
+"[Explorer::ListView.GroupHeaderLine]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 16\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_listview_group_header_line.bmp\r\n"
+
+"[Explorer::ListView.ExpandButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 3\r\n"
+"ImageFile1 = blue_listview_expand_button_15px.bmp\r\n"
+"ImageFile2 = blue_listview_expand_button_19px.bmp\r\n"
+"ImageFile3 = blue_listview_expand_button_23px.bmp\r\n"
+"ImageFile4 = blue_listview_expand_button_30px.bmp\r\n"
+"ImageFile5 = blue_listview_expand_button_37px.bmp\r\n"
+"ImageFile6 = blue_listview_expand_button_46px.bmp\r\n"
+"ImageFile7 = blue_listview_expand_button_60px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Explorer::ListView.CollapseButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 3\r\n"
+"ImageFile1 = blue_listview_collapse_button_15px.bmp\r\n"
+"ImageFile2 = blue_listview_collapse_button_19px.bmp\r\n"
+"ImageFile3 = blue_listview_collapse_button_23px.bmp\r\n"
+"ImageFile4 = blue_listview_collapse_button_30px.bmp\r\n"
+"ImageFile5 = blue_listview_collapse_button_37px.bmp\r\n"
+"ImageFile6 = blue_listview_collapse_button_46px.bmp\r\n"
+"ImageFile7 = blue_listview_collapse_button_60px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Explorer::ListView.ColumnDetail]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 1\r\n"
+"SizingMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_listview_column_detail.bmp\r\n"
+
+"\r\n; Menu\r\n"
+"[Menu]\r\n"
+"BgType = None\r\n"
+
+"[Menu.BarBackground]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"SizingMargins = 1, 1, 9, 15\r\n"
+"ImageFile = blue_menu_bar_background.bmp\r\n"
+
+"[Menu.BarItem]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 6\r\n"
+"BorderSize = 4\r\n"
+"UniformSizing = True\r\n"
+"TextColor = 0 0 0\r\n"
+"SizingMargins = 4, 4, 4, 4\r\n"
+"ContentMargins = 7, 7, 3, 3\r\n"
+"ImageFile = blue_menu_bar_item.bmp\r\n"
+
+"[Menu.BarItem(Hot)]\r\n"
+"TextColor = 0 0 0\r\n"
+
+"[Menu.BarItem(Pushed)]\r\n"
+"TextColor = 0 0 0\r\n"
+
+"[Menu.BarItem(Disabled)]\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[Menu.BarItem(DisabledHot)]\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[Menu.BarItem(DisabledPushed)]\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[Menu.PopupBackground]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"BorderSize = 4\r\n"
+"SizingMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_menu_popup_background.bmp\r\n"
+
+"[Menu.PopupBorders]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"SizingMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_menu_popup_borders.bmp\r\n"
+
+"[Menu.PopupCheck]\r\n"
+"BgType = ImageFile\r\n"
+"ContentMargins = 3, 3, 3, 3\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 4\r\n"
+"MirrorImage = False\r\n"
+"ImageFile1 = blue_menu_popup_check_16px.bmp\r\n"
+"ImageFile2 = blue_menu_popup_check_18px.bmp\r\n"
+"ImageFile3 = blue_menu_popup_check_25px.bmp\r\n"
+"ImageFile4 = blue_menu_popup_check_32px.bmp\r\n"
+"ImageFile5 = blue_menu_popup_check_40px.bmp\r\n"
+"ImageFile6 = blue_menu_popup_check_48px.bmp\r\n"
+"ImageFile7 = blue_menu_popup_check_64px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Menu.PopupCheckBackground]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 3\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 0, 6, 0, 0\r\n"
+"ImageFile = blue_menu_popup_check_background.bmp\r\n"
+
+"[Menu.PopupGutter]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"SizingMargins = 0, 2, 0, 0\r\n"
+"ImageFile = blue_menu_popup_gutter.bmp\r\n"
+
+"[Menu.PopupItem]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 4\r\n"
+"BorderSize = 20\r\n"
+"TextColor = 0 0 0\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 0, 0, 1, 1\r\n"
+"ImageFile = blue_menu_popup_item.bmp\r\n"
+
+"[Menu.PopupItem(Hot)]\r\n"
+"TextColor = 255 255 255\r\n"
+
+"[Menu.PopupItem(Disabled)]\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[Menu.PopupItem(DisabledHot)]\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[Menu.PopupSeparator]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_menu_popup_separator.bmp\r\n"
+"SizingMargins = 0, 0, 3, 1\r\n"
+"SizingType = Stretch\r\n"
+
+"[Menu.PopupSubmenu]\r\n"
+"BgType = ImageFile\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 2\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ContentMargins = 2, 7, 3, 3\r\n"
+"ImageFile1 = blue_menu_popup_submenu_9px.bmp\r\n"
+"ImageFile2 = blue_menu_popup_submenu_11px.bmp\r\n"
+"ImageFile3 = blue_menu_popup_submenu_14px.bmp\r\n"
+"ImageFile4 = blue_menu_popup_submenu_18px.bmp\r\n"
+"ImageFile5 = blue_menu_popup_submenu_23px.bmp\r\n"
+"ImageFile6 = blue_menu_popup_submenu_27px.bmp\r\n"
+"ImageFile7 = blue_menu_popup_submenu_36px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Menu.SystemClose]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 2\r\n"
+"SizingType = TrueSize\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageFile1 = blue_menu_system_close_11px.bmp\r\n"
+"ImageFile2 = blue_menu_system_close_14px.bmp\r\n"
+"ImageFile3 = blue_menu_system_close_17px.bmp\r\n"
+"ImageFile4 = blue_menu_system_close_22px.bmp\r\n"
+"ImageFile5 = blue_menu_system_close_28px.bmp\r\n"
+"ImageFile6 = blue_menu_system_close_34px.bmp\r\n"
+"ImageFile7 = blue_menu_system_close_44px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Menu.SystemMaximize]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 2\r\n"
+"SizingType = TrueSize\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageFile1 = blue_menu_system_maximize_11px.bmp\r\n"
+"ImageFile2 = blue_menu_system_maximize_14px.bmp\r\n"
+"ImageFile3 = blue_menu_system_maximize_17px.bmp\r\n"
+"ImageFile4 = blue_menu_system_maximize_22px.bmp\r\n"
+"ImageFile5 = blue_menu_system_maximize_28px.bmp\r\n"
+"ImageFile6 = blue_menu_system_maximize_34px.bmp\r\n"
+"ImageFile7 = blue_menu_system_maximize_44px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Menu.SystemMinimize]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 2\r\n"
+"SizingType = TrueSize\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageFile1 = blue_menu_system_minimize_11px.bmp\r\n"
+"ImageFile2 = blue_menu_system_minimize_14px.bmp\r\n"
+"ImageFile3 = blue_menu_system_minimize_17px.bmp\r\n"
+"ImageFile4 = blue_menu_system_minimize_22px.bmp\r\n"
+"ImageFile5 = blue_menu_system_minimize_28px.bmp\r\n"
+"ImageFile6 = blue_menu_system_minimize_34px.bmp\r\n"
+"ImageFile7 = blue_menu_system_minimize_44px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Menu.SystemRestore]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 2\r\n"
+"SizingType = TrueSize\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageFile1 = blue_menu_system_restore_11px.bmp\r\n"
+"ImageFile2 = blue_menu_system_restore_14px.bmp\r\n"
+"ImageFile3 = blue_menu_system_restore_17px.bmp\r\n"
+"ImageFile4 = blue_menu_system_restore_22px.bmp\r\n"
+"ImageFile5 = blue_menu_system_restore_28px.bmp\r\n"
+"ImageFile6 = blue_menu_system_restore_34px.bmp\r\n"
+"ImageFile7 = blue_menu_system_restore_44px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"\r\n; Navigation\r\n"
+"[Navigation.BackButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 4\r\n"
+"Width = 30\r\n"
+"Height = 30\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_navigation_back_button_30px.bmp\r\n"
+"ImageFile2 = blue_navigation_back_button_38px.bmp\r\n"
+"ImageFile3 = blue_navigation_back_button_45px.bmp\r\n"
+"ImageFile4 = blue_navigation_back_button_60px.bmp\r\n"
+"ImageFile5 = blue_navigation_back_button_74px.bmp\r\n"
+"ImageFile6 = blue_navigation_back_button_90px.bmp\r\n"
+"ImageFile7 = blue_navigation_back_button_120px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Navigation.ForwardButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 4\r\n"
+"Width = 30\r\n"
+"Height = 30\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_navigation_forward_button_30px.bmp\r\n"
+"ImageFile2 = blue_navigation_forward_button_38px.bmp\r\n"
+"ImageFile3 = blue_navigation_forward_button_45px.bmp\r\n"
+"ImageFile4 = blue_navigation_forward_button_60px.bmp\r\n"
+"ImageFile5 = blue_navigation_forward_button_74px.bmp\r\n"
+"ImageFile6 = blue_navigation_forward_button_90px.bmp\r\n"
+"ImageFile7 = blue_navigation_forward_button_120px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Navigation.MenuButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 4\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_navigation_menu_button_13px.bmp\r\n"
+"ImageFile2 = blue_navigation_menu_button_17px.bmp\r\n"
+"ImageFile3 = blue_navigation_menu_button_19px.bmp\r\n"
+"ImageFile4 = blue_navigation_menu_button_26px.bmp\r\n"
+"ImageFile5 = blue_navigation_menu_button_32px.bmp\r\n"
+"ImageFile6 = blue_navigation_menu_button_39px.bmp\r\n"
+"ImageFile7 = blue_navigation_menu_button_52px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"\r\n; Progress\r\n"
+"[Progress]\r\n"
+"ProgressChunkSize = 1\r\n"
+"ProgressSpaceSize = 0\r\n"
+"BgType = BorderFill\r\n"
+"FillType = Solid\r\n"
+"FillColor = 48 150 250\r\n"
+"BorderSize = 1\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"[Progress.Bar]\r\n"
+"MinSize = 10, 10\r\n"
+"FillColor = 255 255 255\r\n"
+
+"[Progress.BarVert]\r\n"
+"FillColor = 255 255 255\r\n"
+
+"[Progress.Chunk]\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 48 150 250\r\n"
+
+"[Progress.ChunkVert]\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 48 150 250\r\n"
+
+"[Progress.Fill]\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 48 150 250\r\n"
+
+"[Progress.FillVert]\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 48 150 250\r\n"
+
+"[Progress.Fill(Error)]\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 213 0 0\r\n"
+
+"[Progress.FillVert(Error)]\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 213 0 0\r\n"
+
+"[Progress.Fill(Paused)]\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 255 238 88\r\n"
+
+"[Progress.FillVert(Paused)]\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 255 238 88\r\n"
+
+"[Progress.Fill(Partial)]\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 189 189 189\r\n"
+
+"[Progress.FillVert(Partial)]\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 189 189 189\r\n"
+
+"[Progress.PulseOverlay]\r\n"
+"BgType = None\r\n"
+
+"[Progress.MoveOverlay]\r\n"
+"BgType = None\r\n"
+
+"[Progress.PulseOverlayVert]\r\n"
+"BgType = None\r\n"
+
+"[Progress.MoveOverlayVert]\r\n"
+"BgType = None\r\n"
+
+"[Progress.TransparentBar]\r\n"
+"FillColor = 255 255 255\r\n"
+
+"[Progress.TransparentBarVert]\r\n"
+"FillColor = 255 255 255\r\n"
+
+"\r\n; Rebar\r\n"
+"[Rebar]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageFile = blue_rebar_background.bmp\r\n"
+"SizingMargins = 1, 1, 9, 2\r\n"
+"Font = Tahoma, 8\r\n"
+"TextColor = 0 0 0\r\n"
+
+"[Rebar.Band]\r\n"
+"BgType = None\r\n"
+"ContentMargins = 2, 0, 0, 0\r\n"
+
+"[Rebar.Gripper]\r\n"
+"Bgtype = imagefile\r\n"
+"SizingMargins = 2, 1, 4, 2\r\n"
+"ContentMargins = 2, 1, 0, 0\r\n"
+"ImageFile = blue_rebar_gripper_horizontal.bmp\r\n"
+"SizingType = Tile\r\n"
+"Transparent = True\r\n"
+
+"[Rebar.GripperVert]\r\n"
+"Bgtype = ImageFile\r\n"
+"SizingMargins = 3, 3, 2, 1\r\n"
+"ContentMargins = 1, 2, 0, 0\r\n"
+"ImageFile = blue_rebar_gripper_vertical.bmp\r\n"
+"SizingType = Tile\r\n"
+"Transparent = True\r\n"
+
+"[Rebar.Chevron]\r\n"
+"SizingMargins = 4, 4, 4, 4\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"Bgtype = ImageFile\r\n"
+"Imagelayout = Vertical\r\n"
+"ImageCount = 3\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"VAlign = Top\r\n"
+"ImageFile = blue_rebar_chevron_background.bmp\r\n"
+"ImageFile1 = blue_rebar_chevron_glyph_10px.bmp\r\n"
+"ImageFile2 = blue_rebar_chevron_glyph_13px.bmp\r\n"
+"ImageFile3 = blue_rebar_chevron_glyph_15px.bmp\r\n"
+"ImageFile4 = blue_rebar_chevron_glyph_20px.bmp\r\n"
+"ImageFile5 = blue_rebar_chevron_glyph_25px.bmp\r\n"
+"ImageFile6 = blue_rebar_chevron_glyph_30px.bmp\r\n"
+"ImageFile7 = blue_rebar_chevron_glyph_40px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Rebar.ChevronVert]\r\n"
+"SizingMargins = 4, 4, 4, 4\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"Bgtype = ImageFile\r\n"
+"Imagelayout = Vertical\r\n"
+"ImageCount = 3\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"VAlign = Top\r\n"
+"ImageFile = blue_rebar_chevron_vertical_background.bmp\r\n"
+"ImageFile1 = blue_rebar_chevron_vertical_glyph_10px.bmp\r\n"
+"ImageFile2 = blue_rebar_chevron_vertical_glyph_13px.bmp\r\n"
+"ImageFile3 = blue_rebar_chevron_vertical_glyph_15px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+
+"[Rebar.Splitter]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 3\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_rebar_splitter.bmp\r\n"
+
+"[Rebar.SplitterVert]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 3\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_rebar_splitter_vertical.bmp\r\n"
+
+"\r\n; Scroll Bar\r\n"
+"[ScrollBar]\r\n"
+"TransitionDurations = 5, "
+"0, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, "
+"100, 100, 0, 100, 100, "
+"100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 0\r\n"
+
+"[ScrollBar.ArrowBtn]\r\n"
+"BgType = ImageFile\r\n"
+"SizingMargins = 8, 8, 8, 8\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"SizingType = Stretch\r\n"
+"ImageFile = blue_scrollbar_arrows.bmp\r\n"
+"ImageCount = 20\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"ImageSelectType = Size\r\n"
+"UniformSizing = False\r\n"
+"SourceShrink = True\r\n"
+"ImageFile1 = blue_scrollbar_arrow_glyphs_13px.bmp\r\n"
+"ImageFile2 = blue_scrollbar_arrow_glyphs_16px.bmp\r\n"
+"ImageFile3 = blue_scrollbar_arrow_glyphs_20px.bmp\r\n"
+"ImageFile4 = blue_scrollbar_arrow_glyphs_26px.bmp\r\n"
+"ImageFile5 = blue_scrollbar_arrow_glyphs_32px.bmp\r\n"
+"ImageFile6 = blue_scrollbar_arrow_glyphs_39px.bmp\r\n"
+"ImageFile7 = blue_scrollbar_arrow_glyphs_52px.bmp\r\n"
+"MinSize1 = 17, 17\r\n"
+"MinSize2 = 21, 21\r\n"
+"MinSize3 = 26, 26\r\n"
+"MinSize4 = 34, 34\r\n"
+"MinSize5 = 43, 43\r\n"
+"MinSize6 = 51, 51\r\n"
+"MinSize7 = 68, 68\r\n"
+
+"[ScrollBar.ThumbBtnHorz]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"SizingMargins = 11, 8, 8, 8\r\n"
+"ContentMargins = 4, 4, 1, 1\r\n"
+"ImageFile = blue_scrollbar_thumb_horizontal.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[ScrollBar.ThumbBtnVert]\r\n"
+"BgType = ImageFile\r\n"
+"SizingMargins = 8, 8, 5, 5\r\n"
+"ContentMargins = 0, 0, 4, 4\r\n"
+"ImageFile = blue_scrollbar_thumb_vertical.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[ScrollBar.GripperHorz]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 5\r\n"
+"Transparent = True\r\n"
+"ImageFile1 = blue_scrollbar_gripper_horizontal_10px.bmp\r\n"
+"ImageFile2 = blue_scrollbar_gripper_horizontal_12px.bmp\r\n"
+"ImageFile3 = blue_scrollbar_gripper_horizontal_16px.bmp\r\n"
+"ImageFile4 = blue_scrollbar_gripper_horizontal_20px.bmp\r\n"
+"ImageFile5 = blue_scrollbar_gripper_horizontal_25px.bmp\r\n"
+"ImageFile6 = blue_scrollbar_gripper_horizontal_30px.bmp\r\n"
+"ImageFile7 = blue_scrollbar_gripper_horizontal_40px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[ScrollBar.GripperVert]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 5\r\n"
+"Transparent = True\r\n"
+"ImageFile1 = blue_scrollbar_gripper_vertical_9px.bmp\r\n"
+"ImageFile2 = blue_scrollbar_gripper_vertical_11px.bmp\r\n"
+"ImageFile3 = blue_scrollbar_gripper_vertical_14px.bmp\r\n"
+"ImageFile4 = blue_scrollbar_gripper_vertical_22px.bmp\r\n"
+"ImageFile5 = blue_scrollbar_gripper_vertical_27px.bmp\r\n"
+"ImageFile6 = blue_scrollbar_gripper_vertical_36px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 240\r\n"
+"MinDpi5 = 288\r\n"
+"MinDpi6 = 384\r\n"
+
+"[ScrollBar.LowerTrackHorz]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_scrollbar_lower_track_horizontal.bmp\r\n"
+"SizingMargins = 0, 0, 4, 3\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[ScrollBar.LowerTrackVert]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_scrollbar_lower_track_vertical.bmp\r\n"
+"SizingMargins = 10, 3, 0, 0\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[ScrollBar.UpperTrackHorz]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_scrollbar_upper_track_horizontal.bmp\r\n"
+"SizingMargins = 0, 0, 4, 3\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[ScrollBar.UpperTrackVert]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_scrollbar_upper_track_vertical.bmp\r\n"
+"SizingMargins = 10, 3, 0, 0\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[ScrollBar.SizeBox]\r\n"
+"BgType = ImageFile\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 8\r\n"
+"SizingType = TrueSize\r\n"
+"Transparent = True\r\n"
+"VAlign = Bottom\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageFile1 = blue_scrollbar_resizebox_grip_16px.bmp\r\n"
+"ImageFile2 = blue_scrollbar_resizebox_grip_20px.bmp\r\n"
+"ImageFile3 = blue_scrollbar_resizebox_grip_24px.bmp\r\n"
+"ImageFile4 = blue_scrollbar_resizebox_grip_32px.bmp\r\n"
+"ImageFile5 = blue_scrollbar_resizebox_grip_40px.bmp\r\n"
+"ImageFile6 = blue_scrollbar_resizebox_grip_48px.bmp\r\n"
+"ImageFile7 = blue_scrollbar_resizebox_grip_64px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[ScrollBar.SizeBoxBkgnd]\r\n"
+"FillColor = 245 245 245\r\n"
+
+"\r\n; Spin\r\n"
+"[Spin]\r\n"
+"BgType = BorderFill\r\n"
+"FillType = Solid\r\n"
+"BorderSize = 1\r\n"
+"BorderColor = 174 174 174\r\n"
+"FillColor = 227 227 227\r\n"
+
+"[Spin.Up]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageFile = blue_spin_background_up.bmp\r\n"
+"SizingMargins = 4, 3, 9, 3\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageCount = 4\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"GlyphTransparent = True\r\n"
+"; The glyphs are actually smaller in blue_spin_glyph_up_7x24px.bmp \r\n"
+"ImageFile1 = blue_spin_glyph_up_7x24px.bmp\r\n"
+"ImageFile2 = blue_spin_glyph_up_7x20px.bmp\r\n"
+"ImageFile3 = blue_spin_glyph_up_11px.bmp\r\n"
+"ImageFile4 = blue_spin_glyph_up_14px.bmp\r\n"
+"ImageFile5 = blue_spin_glyph_up_18px.bmp\r\n"
+"ImageFile6 = blue_spin_glyph_up_21px.bmp\r\n"
+"ImageFile7 = blue_spin_glyph_up_28px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+"TransitionDurations = 4, "
+"0, 100, 100, 100, "
+"100, 0, 100, 100, "
+"100, 100, 0, 100, "
+"100, 100, 100, 0\r\n"
+
+"[Spin.Down]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageFile = blue_spin_background_down.bmp\r\n"
+"SizingMargins = 4, 3, 8, 3\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageCount = 4\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"GlyphTransparent = True\r\n"
+"; The glyphs are actually smaller in blue_spin_glyph_down_7x24px.bmp \r\n"
+"ImageFile1 = blue_spin_glyph_down_7x24px.bmp\r\n"
+"ImageFile2 = blue_spin_glyph_down_7x16px.bmp\r\n"
+"ImageFile3 = blue_spin_glyph_down_11px.bmp\r\n"
+"ImageFile4 = blue_spin_glyph_down_14px.bmp\r\n"
+"ImageFile5 = blue_spin_glyph_down_18px.bmp\r\n"
+"ImageFile6 = blue_spin_glyph_down_21px.bmp\r\n"
+"ImageFile7 = blue_spin_glyph_down_28px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+"TransitionDurations = 4, "
+"0, 100, 100, 100, "
+"100, 0, 100, 100, "
+"100, 100, 0, 100, "
+"100, 100, 100, 0\r\n"
+
+"[Spin.Uphorz]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageFile = blue_spin_background_right.bmp\r\n"
+"SizingMargins = 3, 3, 9, 3\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageCount = 4\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"GlyphTransparent = True\r\n"
+"; The glyphs are actually smaller in blue_spin_glyph_right_6px.bmp \r\n"
+"ImageFile1 = blue_spin_glyph_right_6px.bmp\r\n"
+"ImageFile2 = blue_spin_glyph_right_4px.bmp\r\n"
+"ImageFile3 = blue_spin_glyph_right_9px.bmp\r\n"
+"ImageFile4 = blue_spin_glyph_right_12px.bmp\r\n"
+"ImageFile5 = blue_spin_glyph_right_15px.bmp\r\n"
+"ImageFile6 = blue_spin_glyph_right_18px.bmp\r\n"
+"ImageFile7 = blue_spin_glyph_right_24px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+"TransitionDurations = 4, "
+"0, 100, 100, 100, "
+"100, 0, 100, 100, "
+"100, 100, 0, 100, "
+"100, 100, 100, 0\r\n"
+
+"[Spin.Downhorz]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageFile = blue_spin_background_left.bmp\r\n"
+"SizingMargins = 4, 2, 9, 3\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageCount = 4\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"GlyphTransparent = True\r\n"
+"; The glyphs are actually smaller in blue_spin_glyph_left_6px.bmp \r\n"
+"ImageFile1 = blue_spin_glyph_left_6px.bmp\r\n"
+"ImageFile2 = blue_spin_glyph_left_4px.bmp\r\n"
+"ImageFile3 = blue_spin_glyph_left_9px.bmp\r\n"
+"ImageFile4 = blue_spin_glyph_left_12px.bmp\r\n"
+"ImageFile5 = blue_spin_glyph_left_15px.bmp\r\n"
+"ImageFile6 = blue_spin_glyph_left_18px.bmp\r\n"
+"ImageFile7 = blue_spin_glyph_left_24px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+"TransitionDurations = 4, "
+"0, 100, 100, 100, "
+"100, 0, 100, 100, "
+"100, 100, 0, 100, "
+"100, 100, 100, 0\r\n"
+
+"\r\n; Status\r\n"
+"[Status]\r\n"
+"SizingMargins = 1, 1, 2, 1\r\n"
+"ImageFile = blue_status_background.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Stretch\r\n"
+
+"[Status.Pane]\r\n"
+"SizingMargins = 0, 2, 2, 2\r\n"
+"ImageFile = blue_status_pane.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Tile\r\n"
+"Transparent = True\r\n"
+
+"[Status.GripperPane]\r\n"
+"BgType = None\r\n"
+
+"[Status.Gripper]\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 8\r\n"
+"SizingType = TrueSize\r\n"
+"Transparent = True\r\n"
+"VAlign = Bottom\r\n"
+"ImageLayout = Vertical\r\n"
+"; Same as scrollbar resize box gripper \r\n"
+"ImageFile1 = blue_scrollbar_resizebox_grip_16px.bmp\r\n"
+"ImageFile2 = blue_scrollbar_resizebox_grip_20px.bmp\r\n"
+"ImageFile3 = blue_scrollbar_resizebox_grip_24px.bmp\r\n"
+"ImageFile4 = blue_scrollbar_resizebox_grip_32px.bmp\r\n"
+"ImageFile5 = blue_scrollbar_resizebox_grip_40px.bmp\r\n"
+"ImageFile6 = blue_scrollbar_resizebox_grip_48px.bmp\r\n"
+"ImageFile7 = blue_scrollbar_resizebox_grip_64px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"\r\n; Tab\r\n"
+"[Tab]\r\n"
+"BgType = BorderFill\r\n"
+"FillType = Solid\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderSize = 0\r\n"
+
+"[Tab.Pane]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_pane_edge.bmp\r\n"
+"SizingMargins = 2, 4, 2, 4\r\n"
+"SizingType = Stretch\r\n"
+"ImageCount = 1\r\n"
+
+"[Tab.TabItem]\r\n"
+"SizingMargins = 2, 2, 6, 6\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_item.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"TransitionDurations = 5, "
+"0, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, "
+"100, 100, 0, 100, 100, "
+"100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 0\r\n"
+
+"[Tab.TabItemLeftEdge]\r\n"
+"SizingMargins = 2, 2, 6, 6\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_item_left.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"Transparent = True\r\n"
+"TransitionDurations = 5, "
+"0, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, "
+"100, 100, 0, 100, 100, "
+"100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 0\r\n"
+
+"[Tab.TabItemRightEdge]\r\n"
+"SizingMargins = 2, 2, 6, 6\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_item_right.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"Transparent = True\r\n"
+"TransitionDurations = 5, "
+"0, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, "
+"100, 100, 0, 100, 100, "
+"100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 0\r\n"
+
+"[Tab.TabItemBothEdge]\r\n"
+"SizingMargins = 2, 2, 6, 6\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_item.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"TransitionDurations = 5, "
+"0, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, "
+"100, 100, 0, 100, 100, "
+"100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 0\r\n"
+
+"[Tab.TopTabItem]\r\n"
+"SizingMargins = 2, 2, 6, 6\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_item.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"Transparent = True\r\n"
+"TransitionDurations = 5, "
+"0, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, "
+"100, 100, 0, 100, 100, "
+"100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 0\r\n"
+
+"[Tab.TopTabItemLeftEdge]\r\n"
+"SizingMargins = 2, 2, 6, 6\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_item_left.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"Transparent = True\r\n"
+"TransitionDurations = 5, "
+"0, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, "
+"100, 100, 0, 100, 100, "
+"100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 0\r\n"
+
+"[Tab.TopTabItemRightEdge]\r\n"
+"SizingMargins = 2, 2, 6, 6\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_item_right.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"Transparent = True\r\n"
+"TransitionDurations = 5, "
+"0, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, "
+"100, 100, 0, 100, 100, "
+"100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 0\r\n"
+
+"[Tab.TopTabItemBothEdge]\r\n"
+"SizingMargins = 2, 2, 6, 6\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_item.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"Transparent = True\r\n"
+"TransitionDurations = 5, "
+"0, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, "
+"100, 100, 0, 100, 100, "
+"100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 0\r\n"
+
+"[Tab.Body]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_background.bmp\r\n"
+
+"[Tab.AeroWizardBody]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 255 255 255\r\n"
+
+"\r\n; TaskDialog\r\n"
+"[TaskDialog.PrimaryPanel]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 255 255 255\r\n"
+"ContentMargins = 10, 10, 10, 10\r\n"
+
+"[TaskDialog.MainInstructionPane]\r\n"
+"TextColor = 41 121 255\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"Font = Tahoma, -16\r\n"
+
+"[TaskDialog.MainIcon]\r\n"
+"ContentMargins = 0, 10, 0, 0\r\n"
+
+"[TaskDialog.ContentPane]\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 0, 0, 10, 0\r\n"
+"Font = Tahoma, -12\r\n"
+
+"[TaskDialog.ContentPane(Standalone)]\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+
+"[TaskDialog.ExpandedContent]\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 0, 0, 10, 0\r\n"
+"Font = Tahoma, -12\r\n"
+
+"[TaskDialog.CommandLinkPane]\r\n"
+"ContentMargins = 0, 0, 10, 0\r\n"
+
+"[TaskDialog.SecondaryPanel]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingMargins = 0, 0, 1, 0\r\n"
+"ContentMargins = 0, 0, 9, 9\r\n"
+"ImageFile = blue_taskdialog_secondary_panel.bmp\r\n"
+
+"[TaskDialog.ControlPane]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 245 245 245\r\n"
+"ContentMargins = 10, 10, 0, 0\r\n"
+
+"[TaskDialog.ButtonSection]\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 22, 0, 0, 0\r\n"
+"Font = Tahoma, -12\r\n"
+
+"[TaskDialog.ButtonWrapper]\r\n"
+"Width = 200\r\n"
+"ContentMargins = 6, 0, 0, 0\r\n"
+
+"[TaskDialog.ExpandoText]\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 0, 0, 2, 0\r\n"
+"Font = Tahoma, -12\r\n"
+
+"[TaskDialog.ExpandoButton]\r\n"
+"Width = 19\r\n"
+"Height = 21\r\n"
+
+"[TaskDialog.ExpandoButton(Normal)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageFile1 = blue_taskdialog_expando_button_normal_19px.bmp\r\n"
+"ImageFile2 = blue_taskdialog_expando_button_normal_24px.bmp\r\n"
+"ImageFile3 = blue_taskdialog_expando_button_normal_29px.bmp\r\n"
+"ImageFile4 = blue_taskdialog_expando_button_normal_33px.bmp\r\n"
+"ImageFile5 = blue_taskdialog_expando_button_normal_38px.bmp\r\n"
+"ImageFile6 = blue_taskdialog_expando_button_normal_43px.bmp\r\n"
+"ImageFile7 = blue_taskdialog_expando_button_normal_48px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
+
+"[TaskDialog.ExpandoButton(Hover)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageFile1 = blue_taskdialog_expando_button_hover_19px.bmp\r\n"
+"ImageFile2 = blue_taskdialog_expando_button_hover_24px.bmp\r\n"
+"ImageFile3 = blue_taskdialog_expando_button_hover_29px.bmp\r\n"
+"ImageFile4 = blue_taskdialog_expando_button_hover_33px.bmp\r\n"
+"ImageFile5 = blue_taskdialog_expando_button_hover_38px.bmp\r\n"
+"ImageFile6 = blue_taskdialog_expando_button_hover_43px.bmp\r\n"
+"ImageFile7 = blue_taskdialog_expando_button_hover_48px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
+
+"[TaskDialog.ExpandoButton(Pressed)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageFile1 = blue_taskdialog_expando_button_pressed_19px.bmp\r\n"
+"ImageFile2 = blue_taskdialog_expando_button_pressed_24px.bmp\r\n"
+"ImageFile3 = blue_taskdialog_expando_button_pressed_29px.bmp\r\n"
+"ImageFile4 = blue_taskdialog_expando_button_pressed_33px.bmp\r\n"
+"ImageFile5 = blue_taskdialog_expando_button_pressed_38px.bmp\r\n"
+"ImageFile6 = blue_taskdialog_expando_button_pressed_43px.bmp\r\n"
+"ImageFile7 = blue_taskdialog_expando_button_pressed_48px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
+
+"[TaskDialog.ExpandoButton(ExpandedNormal)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageFile1 = blue_taskdialog_expando_button_expanded_normal_19px.bmp\r\n"
+"ImageFile2 = blue_taskdialog_expando_button_expanded_normal_24px.bmp\r\n"
+"ImageFile3 = blue_taskdialog_expando_button_expanded_normal_29px.bmp\r\n"
+"ImageFile4 = blue_taskdialog_expando_button_expanded_normal_33px.bmp\r\n"
+"ImageFile5 = blue_taskdialog_expando_button_expanded_normal_38px.bmp\r\n"
+"ImageFile6 = blue_taskdialog_expando_button_expanded_normal_43px.bmp\r\n"
+"ImageFile7 = blue_taskdialog_expando_button_expanded_normal_48px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
+
+"[TaskDialog.ExpandoButton(ExpandedHover)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageFile1 = blue_taskdialog_expando_button_expanded_hover_19px.bmp\r\n"
+"ImageFile2 = blue_taskdialog_expando_button_expanded_hover_24px.bmp\r\n"
+"ImageFile3 = blue_taskdialog_expando_button_expanded_hover_29px.bmp\r\n"
+"ImageFile4 = blue_taskdialog_expando_button_expanded_hover_33px.bmp\r\n"
+"ImageFile5 = blue_taskdialog_expando_button_expanded_hover_38px.bmp\r\n"
+"ImageFile6 = blue_taskdialog_expando_button_expanded_hover_43px.bmp\r\n"
+"ImageFile7 = blue_taskdialog_expando_button_expanded_hover_48px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
+
+"[TaskDialog.ExpandoButton(ExpandedPressed)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageFile1 = blue_taskdialog_expando_button_expanded_pressed_19px.bmp\r\n"
+"ImageFile2 = blue_taskdialog_expando_button_expanded_pressed_24px.bmp\r\n"
+"ImageFile3 = blue_taskdialog_expando_button_expanded_pressed_29px.bmp\r\n"
+"ImageFile4 = blue_taskdialog_expando_button_expanded_pressed_33px.bmp\r\n"
+"ImageFile5 = blue_taskdialog_expando_button_expanded_pressed_38px.bmp\r\n"
+"ImageFile6 = blue_taskdialog_expando_button_expanded_pressed_43px.bmp\r\n"
+"ImageFile7 = blue_taskdialog_expando_button_expanded_pressed_48px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
+
+"[TaskDialog.VerificationText]\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 10, 0, 0, 0\r\n"
+"Font = Tahoma, -12\r\n"
+
+"[TaskDialog.FootnotePane]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 245 245 245\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 10, 10, 0, 0\r\n"
+"Font = Tahoma, -12\r\n"
+
+"[TaskDialog.FootnoteSeparator]\r\n"
+"BgType = ImageFile\r\n"
+"Height = 2\r\n"
+"SizingMargins = 0, 0, 0, 0\r\n"
+"ContentMargins = 0, 0, 9, 9\r\n"
+"ImageFile = blue_taskdialog_footnote_separator.bmp\r\n"
+
+"[TaskDialog.ExpandedFootArea]\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 10, 10, 0, 0\r\n"
+"Font = Tahoma, -12\r\n"
+
+"[TaskDialog.ProgressBar]\r\n"
+"Height = 15\r\n"
+"ContentMargins = 0, 0, 10, 0\r\n"
+
+"[TaskDialog.ImageAlignment]\r\n"
+"Width = 20\r\n"
+"ContentMargins = 0, 5, 0, 0\r\n"
+
+"[TaskDialog.RadioButtonPane]\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 10, 10, 10, 0\r\n"
+"Font = Tahoma, -12\r\n"
+
+"\r\n; Toolbar\r\n"
+"[Toolbar]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 244 244 244\r\n"
+"TextColor = 0 0 0\r\n"
+"TransitionDurations = 8, "
+"0, 100, 100, 100, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, 100, 100, 100, "
+"100, 100, 0, 100, 100, 100, 100, 100, "
+"100, 100, 100, 0, 100, 100, 100, 100, "
+"100, 100, 100, 100, 0, 100, 100, 100, "
+"100, 100, 100, 100, 100, 0, 100, 100, "
+"100, 100, 100, 100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 100, 100, 100, 0\r\n"
+
+"[Toolbar(Pressed)]\r\n"
+"TextColor = 0 0 0\r\n"
+
+"[Toolbar.Button]\r\n"
+"SizingMargins = 3, 3, 13, 4\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_toolbar_buttons.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 8\r\n"
+"BorderSize = 0\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"FillColor = 244 244 244\r\n"
+"TextColor = 0 0 0\r\n"
+"TransitionDurations = 8, "
+"0, 100, 100, 100, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, 100, 100, 100, "
+"100, 100, 0, 100, 100, 100, 100, 100, "
+"100, 100, 100, 0, 100, 100, 100, 100, "
+"100, 100, 100, 100, 0, 100, 100, 100, "
+"100, 100, 100, 100, 100, 0, 100, 100, "
+"100, 100, 100, 100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 100, 100, 100, 0\r\n"
+
+"[Toolbar.Separator]\r\n"
+"SizingMargins = 4, 1, 2, 2\r\n"
+"ImageFile = blue_toolbar_separator_horizontal.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 244 244 244\r\n"
+"TextColor = 0 0 0\r\n"
+"TransitionDurations = 8, "
+"0, 100, 100, 100, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, 100, 100, 100, "
+"100, 100, 0, 100, 100, 100, 100, 100, "
+"100, 100, 100, 0, 100, 100, 100, 100, "
+"100, 100, 100, 100, 0, 100, 100, 100, "
+"100, 100, 100, 100, 100, 0, 100, 100, "
+"100, 100, 100, 100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 100, 100, 100, 0\r\n"
+
+"[Toolbar.SeparatorVert]\r\n"
+"SizingMargins = 2, 2, 4, 1\r\n"
+"ImageFile = blue_toolbar_separator_vertical.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Tile\r\n"
+"Transparent = True\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 244 244 244\r\n"
+"TextColor = 0 0 0\r\n"
+"TransitionDurations = 8, "
+"0, 100, 100, 100, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, 100, 100, 100, "
+"100, 100, 0, 100, 100, 100, 100, 100, "
+"100, 100, 100, 0, 100, 100, 100, 100, "
+"100, 100, 100, 100, 0, 100, 100, 100, "
+"100, 100, 100, 100, 100, 0, 100, 100, "
+"100, 100, 100, 100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 100, 100, 100, 0\r\n"
+
+"[Toolbar.DropdownButton]\r\n"
+"SizingMargins = 3, 3, 13, 4\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_toolbar_buttons.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 8\r\n"
+"BorderSize = 0\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"FillColor = 244 244 244\r\n"
+"TextColor = 0 0 0\r\n"
+"TransitionDurations = 8, "
+"0, 100, 100, 100, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, 100, 100, 100, "
+"100, 100, 0, 100, 100, 100, 100, 100, "
+"100, 100, 100, 0, 100, 100, 100, 100, "
+"100, 100, 100, 100, 0, 100, 100, 100, "
+"100, 100, 100, 100, 100, 0, 100, 100, "
+"100, 100, 100, 100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 100, 100, 100, 0\r\n"
+
+"[Toolbar.DropDownButtonGlyph]\r\n"
+"BgType = ImageFile\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 8\r\n"
+"BorderSize = 0\r\n"
+"Transparent = True\r\n"
+"GlyphOnly = True\r\n"
+"FillColor = 244 244 244\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 0, 0, 1, 0\r\n"
+"ImageFile = blue_toolbar_dropdown_button_glyph_7px.bmp\r\n"
+"ImageFile1 = blue_toolbar_dropdown_button_glyph_7px.bmp\r\n"
+"ImageFile2 = blue_toolbar_dropdown_button_glyph_9px.bmp\r\n"
+"ImageFile3 = blue_toolbar_dropdown_button_glyph_11px.bmp\r\n"
+"ImageFile4 = blue_toolbar_dropdown_button_glyph_14px.bmp\r\n"
+"ImageFile5 = blue_toolbar_dropdown_button_glyph_17px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"TransitionDurations = 8, "
+"0, 100, 100, 100, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, 100, 100, 100, "
+"100, 100, 0, 100, 100, 100, 100, 100, "
+"100, 100, 100, 0, 100, 100, 100, 100, "
+"100, 100, 100, 100, 0, 100, 100, 100, "
+"100, 100, 100, 100, 100, 0, 100, 100, "
+"100, 100, 100, 100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 100, 100, 100, 0\r\n"
+
+"[Toolbar.SplitButton]\r\n"
+"SizingMargins = 3, 2, 13, 4\r\n"
+"ImageFile = blue_toolbar_buttons_split.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 8\r\n"
+"BorderSize = 0\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"FillColor = 244 244 244\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 4, 2, 4, 4\r\n"
+"TransitionDurations = 8, "
+"0, 100, 100, 100, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, 100, 100, 100, "
+"100, 100, 0, 100, 100, 100, 100, 100, "
+"100, 100, 100, 0, 100, 100, 100, 100, "
+"100, 100, 100, 100, 0, 100, 100, 100, "
+"100, 100, 100, 100, 100, 0, 100, 100, "
+"100, 100, 100, 100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 100, 100, 100, 0\r\n"
+
+"[Toolbar.SplitButtonDropdown]\r\n"
+"SizingMargins = 1, 3, 13, 4\r\n"
+"ImageFile = blue_toolbar_buttons_split_dropdown.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 8\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 244 244 244\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 0, 0, 1, 0\r\n"
+"ImageFile1 = blue_toolbar_buttons_split_dropdown_glyph_7px.bmp\r\n"
+"ImageFile2 = blue_toolbar_buttons_split_dropdown_glyph_9px.bmp\r\n"
+"ImageFile3 = blue_toolbar_buttons_split_dropdown_glyph_11px.bmp\r\n"
+"ImageFile4 = blue_toolbar_buttons_split_dropdown_glyph_14px.bmp\r\n"
+"ImageFile5 = blue_toolbar_buttons_split_dropdown_glyph_17px.bmp\r\n"
+"ImageFile6 = blue_toolbar_buttons_split_dropdown_glyph_21px.bmp\r\n"
+"ImageFile7 = blue_toolbar_buttons_split_dropdown_glyph_28px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+"TransitionDurations = 8, "
+"0, 100, 100, 100, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, 100, 100, 100, "
+"100, 100, 0, 100, 100, 100, 100, 100, "
+"100, 100, 100, 0, 100, 100, 100, 100, "
+"100, 100, 100, 100, 0, 100, 100, 100, "
+"100, 100, 100, 100, 100, 0, 100, 100, "
+"100, 100, 100, 100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 100, 100, 100, 0\r\n"
+
+"\r\n; TrackBar\r\n"
+"[TrackBar]\r\n"
+"BgType = BorderFill\r\n"
+"FillType = Solid\r\n"
+"FillColor = 245 245 245\r\n"
+"BorderSize = 1\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"[TrackBar.Thumb]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_trackbar_thumb_horizontal.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"SizingMargins = 1, 1, 1, 1\r\n"
+"SizingType = Tile\r\n"
+
+"[TrackBar.ThumbVert]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_trackbar_thumb_vertical.bmp\r\n"
+"SizingMargins = 1, 1, 1, 1\r\n"
+"SizingType = Stretch\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[TrackBar.ThumbTop]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"Transparent = True\r\n"
+"SizingType = TrueSize\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"UniformSizing = true\r\n"
+"ImageFile1 = blue_trackbar_thumb_up_11px.bmp\r\n"
+"ImageFile2 = blue_trackbar_thumb_up_15px.bmp\r\n"
+"ImageFile3 = blue_trackbar_thumb_up_17px.bmp\r\n"
+"ImageFile4 = blue_trackbar_thumb_up_22px.bmp\r\n"
+"ImageFile5 = blue_trackbar_thumb_up_28px.bmp\r\n"
+"ImageFile6 = blue_trackbar_thumb_up_33px.bmp\r\n"
+"ImageFile7 = blue_trackbar_thumb_up_44px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[TrackBar.ThumbBottom]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 5\r\n"
+"Transparent = True\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"UniformSizing = True\r\n"
+"SizingMargins = 4, 5, 8, 6\r\n"
+"ImageFile1 = blue_trackbar_thumb_down_11px.bmp\r\n"
+"ImageFile2 = blue_trackbar_thumb_down_15px.bmp\r\n"
+"ImageFile3 = blue_trackbar_thumb_down_17px.bmp\r\n"
+"ImageFile4 = blue_trackbar_thumb_down_22px.bmp\r\n"
+"ImageFile5 = blue_trackbar_thumb_down_28px.bmp\r\n"
+"ImageFile6 = blue_trackbar_thumb_down_33px.bmp\r\n"
+"ImageFile7 = blue_trackbar_thumb_down_44px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[TrackBar.ThumbLeft]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageCount = 5\r\n"
+"Transparent = True\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_trackbar_thumb_left_19px.bmp\r\n"
+"ImageFile2 = blue_trackbar_thumb_left_25px.bmp\r\n"
+"ImageFile3 = blue_trackbar_thumb_left_29px.bmp\r\n"
+"ImageFile4 = blue_trackbar_thumb_left_38px.bmp\r\n"
+"ImageFile5 = blue_trackbar_thumb_left_48px.bmp\r\n"
+"ImageFile6 = blue_trackbar_thumb_left_57px.bmp\r\n"
+"ImageFile7 = blue_trackbar_thumb_left_76px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[TrackBar.ThumbRight]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageCount = 5\r\n"
+"Transparent = True\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_trackbar_thumb_right_19px.bmp\r\n"
+"ImageFile2 = blue_trackbar_thumb_right_25px.bmp\r\n"
+"ImageFile3 = blue_trackbar_thumb_right_29px.bmp\r\n"
+"ImageFile4 = blue_trackbar_thumb_right_38px.bmp\r\n"
+"ImageFile5 = blue_trackbar_thumb_right_48px.bmp\r\n"
+"ImageFile6 = blue_trackbar_thumb_right_57px.bmp\r\n"
+"ImageFile7 = blue_trackbar_thumb_right_76px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[TrackBar.Track]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_trackbar_slider_track.bmp\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Stretch\r\n"
+"SizingMargins = 2, 2, 2, 2\r\n"
+
+"[TrackBar.TrackVert]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_trackbar_slider_track.bmp\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Stretch\r\n"
+"SizingMargins = 2, 2, 2, 2\r\n"
+
+"[TrackBar.Tics]\r\n"
+"Color = 174 174 174\r\n"
+
+"[TrackBar.TicsVert]\r\n"
+"Color = 174 174 174\r\n"
+
+"\r\n; Tooltip\r\n"
+"[Tooltip.Standard]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 1\r\n"
+"AlphaThreshold = 128\r\n"
+"Transparent = True\r\n"
+"TextColor = 166 166 166\r\n"
+"SizingMargins = 4, 4, 4, 4\r\n"
+"ContentMargins = 4, 4, 1, 1\r\n"
+"Font = Tahoma, -12\r\n"
+"ImageFile = blue_tooltip_standard.bmp\r\n"
+
+"[Tooltip.StandardTitle]\r\n"
+"TextColor = 166 166 166\r\n"
+"Font = Tahoma, -12, bold\r\n"
+
+"[Tooltip.Ballon]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 1\r\n"
+"AlphaThreshold = 128\r\n"
+"Transparent = True\r\n"
+"TextColor = 0 0 0\r\n"
+"SizingMargins = 4, 4, 4, 4\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"Font = Tahoma, -12\r\n"
+"ImageFile = blue_tooltip_ballon.bmp\r\n"
+
+"[Tooltip.BallonTitle]\r\n"
+"TextColor = 41 121 255\r\n"
+"Font = Tahoma, -16\r\n"
+
+"[Tooltip.Close]\r\n"
+"BgType = ImageFile\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 3\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageFile1 = blue_tooltip_close_16px.bmp\r\n"
+"ImageFile2 = blue_tooltip_close_20px.bmp\r\n"
+"ImageFile3 = blue_tooltip_close_24px.bmp\r\n"
+"ImageFile4 = blue_tooltip_close_28px.bmp\r\n"
+"ImageFile5 = blue_tooltip_close_32px.bmp\r\n"
+"ImageFile6 = blue_tooltip_close_36px.bmp\r\n"
+"ImageFile7 = blue_tooltip_close_40px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
+
+"[Tooltip.BallonStem]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 6\r\n"
+"AlphaThreshold = 128\r\n"
+"Transparent = True\r\n"
+"ImageFile1 = blue_tooltip_ballon_stem_21px.bmp\r\n"
+"ImageFile2 = blue_tooltip_ballon_stem_26px.bmp\r\n"
+"ImageFile3 = blue_tooltip_ballon_stem_32px.bmp\r\n"
+"ImageFile4 = blue_tooltip_ballon_stem_42px.bmp\r\n"
+"ImageFile5 = blue_tooltip_ballon_stem_53px.bmp\r\n"
+"ImageFile6 = blue_tooltip_ballon_stem_63px.bmp\r\n"
+"ImageFile7 = blue_tooltip_ballon_stem_84px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Tooltip.Wrench]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 3\r\n"
+"ImageFile1 = blue_tooltip_wrench_17px.bmp\r\n"
+"ImageFile2 = blue_tooltip_wrench_21px.bmp\r\n"
+"ImageFile3 = blue_tooltip_wrench_26px.bmp\r\n"
+"ImageFile4 = blue_tooltip_wrench_34px.bmp\r\n"
+"ImageFile5 = blue_tooltip_wrench_42px.bmp\r\n"
+"ImageFile6 = blue_tooltip_wrench_51px.bmp\r\n"
+"ImageFile7 = blue_tooltip_wrench_68px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"\r\n; TreeView\r\n"
+"[TreeView]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 1\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"[TreeView.Glyph]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageCount = 2\r\n"
+"ImageLayout = vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_treeview_expand_collapse_9px.bmp\r\n"
+"ImageFile2 = blue_treeview_expand_collapse_11px.bmp\r\n"
+"ImageFile3 = blue_treeview_expand_collapse_13px.bmp\r\n"
+"ImageFile4 = blue_treeview_expand_collapse_16px.bmp\r\n"
+"ImageFile5 = blue_treeview_expand_collapse_18px.bmp\r\n"
+"ImageFile6 = blue_treeview_expand_collapse_20px.bmp\r\n"
+"ImageFile7 = blue_treeview_expand_collapse_23px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
+
+"\r\n; Explorer::TreeView\r\n"
+"[Explorer::TreeView]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 1\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"[Explorer::TreeView.TreeItem(Hot)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Stretch\r\n"
+"TextColor = 0 0 0\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_explorer_treeview_item_hot.bmp\r\n"
+
+"[Explorer::TreeView.TreeItem(Selected)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Stretch\r\n"
+"TextColor = 0 0 0\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_explorer_treeview_item_selected.bmp\r\n"
+
+"[Explorer::TreeView.TreeItem(Disabled)]\r\n"
+"BgType = None\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[Explorer::TreeView.TreeItem(SelectedNotFocus)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Stretch\r\n"
+"TextColor = 0 0 0\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_explorer_treeview_item_selected_not_focus.bmp\r\n"
+
+"[Explorer::TreeView.TreeItem(HotSelected)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Stretch\r\n"
+"TextColor = 0 0 0\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_explorer_treeview_item_hot_selected.bmp\r\n"
+
+"[Explorer::TreeView.Glyph]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageCount = 2\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageFile1 = blue_explorer_treeview_glyph_16px.bmp\r\n"
+"ImageFile2 = blue_explorer_treeview_glyph_20px.bmp\r\n"
+"ImageFile3 = blue_explorer_treeview_glyph_24px.bmp\r\n"
+"ImageFile4 = blue_explorer_treeview_glyph_32px.bmp\r\n"
+"ImageFile5 = blue_explorer_treeview_glyph_40px.bmp\r\n"
+"ImageFile4 = blue_explorer_treeview_glyph_48px.bmp\r\n"
+"ImageFile5 = blue_explorer_treeview_glyph_64px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Explorer::TreeView.HotGlyph]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageCount = 2\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageFile1 = blue_explorer_treeview_hot_glyph_16px.bmp\r\n"
+"ImageFile2 = blue_explorer_treeview_hot_glyph_20px.bmp\r\n"
+"ImageFile3 = blue_explorer_treeview_hot_glyph_24px.bmp\r\n"
+"ImageFile4 = blue_explorer_treeview_hot_glyph_32px.bmp\r\n"
+"ImageFile5 = blue_explorer_treeview_hot_glyph_40px.bmp\r\n"
+"ImageFile6 = blue_explorer_treeview_hot_glyph_48px.bmp\r\n"
+"ImageFile7 = blue_explorer_treeview_hot_glyph_64px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"\r\n; Window\r\n"
+"[Window]\r\n"
+"; No image specified here \r\n"
+"BgType = ImageFile\r\n"
+"Transparent = True\r\n"
+
+"[Window.Caption]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = True\r\n"
+"TextColor = 0 0 0\r\n"
+"SizingMargins = 28, 35, 9, 17\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"CaptionMargins = 4, 3, 0, 0\r\n"
+"ImageFile = blue_window_caption.bmp\r\n"
+
+"[Window.SmallCaption]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"SizingMargins = 2, 2, 2, 0\r\n"
+"ContentMargins = 3, 3, 12, 1\r\n"
+"ImageFile = blue_window_small_caption.bmp\r\n"
+
+"[Window.MinCaption]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 6, 6, 6, 2\r\n"
+"ContentMargins = 3, 3, 0, 3\r\n"
+"CaptionMargins = 4, 3, 0, 0\r\n"
+"ImageFile = blue_window_min_caption.bmp\r\n"
+
+"[Window.MaxCaption]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 0, 0, 6, 0\r\n"
+"ContentMargins = 1, 1, 0, 1\r\n"
+"CaptionMargins = 8, 4, 6, 0\r\n"
+"ImageFile = blue_window_max_caption.bmp\r\n"
+
+"[Window.FrameLeft]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = False\r\n"
+"BorderOnly = False\r\n"
+"SizingMargins = 2, 1, 91, 0\r\n"
+"ImageFile = blue_window_frame_left.bmp\r\n"
+
+"[Window.FrameRight]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = False\r\n"
+"BorderOnly = False\r\n"
+"SizingMargins = 1, 2, 91, 0\r\n"
+"ImageFile = blue_window_frame_right.bmp\r\n"
+
+"[Window.FrameBottom]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = False\r\n"
+"BorderOnly = False\r\n"
+"SizingMargins = 2, 2, 0, 2\r\n"
+"ImageFile = blue_window_frame_bottom.bmp\r\n"
+
+"[Window.SmallFrameLeft]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = False\r\n"
+"BorderOnly = False\r\n"
+"SizingMargins = 2, 0, 0, 0\r\n"
+"ImageFile = blue_window_small_frame_left.bmp\r\n"
+
+"[Window.SmallFrameRight]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = False\r\n"
+"BorderOnly = False\r\n"
+"SizingMargins = 0, 2, 0, 0\r\n"
+"ImageFile = blue_window_small_frame_right.bmp\r\n"
+
+"[Window.SmallFrameBottom]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = False\r\n"
+"BorderOnly = False\r\n"
+"SizingMargins = 2, 2, 0, 2\r\n"
+"ImageFile = blue_window_small_frame_bottom.bmp\r\n"
+
+"[Window.MinButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"; This part has 4 states but 8 images \r\n"
+"ImageCount = 8\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"UniformSizing = True\r\n"
+"SizingMargins = 2, 2, 7, 7\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_min_button_background.bmp\r\n"
+"ImageFile1 = blue_window_min_button_glyph_13px.bmp\r\n"
+"ImageFile2 = blue_window_min_button_glyph_19px.bmp\r\n"
+"ImageFile3 = blue_window_min_button_glyph_23px.bmp\r\n"
+"ImageFile4 = blue_window_min_button_glyph_26px.bmp\r\n"
+"ImageFile5 = blue_window_min_button_glyph_32px.bmp\r\n"
+"ImageFile6 = blue_window_min_button_glyph_39px.bmp\r\n"
+"ImageFile7 = blue_window_min_button_glyph_52px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Window.MdiMinButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageCount = 4\r\n"
+"GlyphTransparent = True\r\n"
+"SizingMargins = 2, 3, 5, 4\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_mdi_min_button_background.bmp\r\n"
+"GlyphImageFile = blue_window_mdi_min_button_glyph.bmp\r\n"
+
+"[Window.MaxButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"; This part has 4 states but 8 images \r\n"
+"ImageCount = 8\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"UniformSizing = True\r\n"
+"SizingMargins = 2, 2, 7, 7\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_max_button_background.bmp\r\n"
+"ImageFile1 = blue_window_max_button_glyph_13px.bmp\r\n"
+"ImageFile2 = blue_window_max_button_glyph_19px.bmp\r\n"
+"ImageFile3 = blue_window_max_button_glyph_23px.bmp\r\n"
+"ImageFile4 = blue_window_max_button_glyph_26px.bmp\r\n"
+"ImageFile5 = blue_window_max_button_glyph_32px.bmp\r\n"
+"ImageFile6 = blue_window_max_button_glyph_39px.bmp\r\n"
+"ImageFile7 = blue_window_max_button_glyph_52px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Window.CloseButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"; This part has 4 states but 8 images \r\n"
+"ImageCount = 8\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"UniformSizing = True\r\n"
+"SizingMargins = 2, 2, 7, 7\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_close_button_background.bmp\r\n"
+"ImageFile1 = blue_window_close_button_glyph_13px.bmp\r\n"
+"ImageFile2 = blue_window_close_button_glyph_19px.bmp\r\n"
+"ImageFile3 = blue_window_close_button_glyph_23px.bmp\r\n"
+"ImageFile4 = blue_window_close_button_glyph_26px.bmp\r\n"
+"ImageFile5 = blue_window_close_button_glyph_32px.bmp\r\n"
+"ImageFile6 = blue_window_close_button_glyph_39px.bmp\r\n"
+"ImageFile7 = blue_window_close_button_glyph_52px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Window.SmallCloseButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"; This part has 4 states but 8 images \r\n"
+"ImageCount = 8\r\n"
+"GlyphTransparent = True\r\n"
+"SizingMargins = 2, 2, 5, 7\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_small_close_button_background.bmp\r\n"
+"GlyphImageFile = blue_window_small_close_button_glyph.bmp\r\n"
+
+"[Window.MdiCloseButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageCount = 4\r\n"
+"GlyphTransparent = True\r\n"
+"SizingMargins = 2, 3, 5, 4\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_mdi_close_button_background.bmp\r\n"
+"GlyphImageFile = blue_window_mdi_close_button_glyph.bmp\r\n"
+
+"[Window.RestoreButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"; This part has 4 states but 8 images \r\n"
+"ImageCount = 8\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"UniformSizing = True\r\n"
+"SizingMargins = 2, 2, 7, 7\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_restore_button_background.bmp\r\n"
+"ImageFile1 = blue_window_restore_button_glyph_13px.bmp\r\n"
+"ImageFile2 = blue_window_restore_button_glyph_19px.bmp\r\n"
+"ImageFile3 = blue_window_restore_button_glyph_23px.bmp\r\n"
+"ImageFile4 = blue_window_restore_button_glyph_26px.bmp\r\n"
+"ImageFile5 = blue_window_restore_button_glyph_32px.bmp\r\n"
+"ImageFile6 = blue_window_restore_button_glyph_39px.bmp\r\n"
+"ImageFile7 = blue_window_restore_button_glyph_52px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Window.MdiRestoreButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageCount = 4\r\n"
+"GlyphTransparent = True\r\n"
+"SizingMargins = 2, 3, 5, 4\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_mdi_restore_button_background.bmp\r\n"
+"GlyphImageFile = blue_window_mdi_restore_button_glyph.bmp\r\n"
+
+"[Window.HelpButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"; This part has 4 states but 8 images \r\n"
+"ImageCount = 8\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"UniformSizing = True\r\n"
+"SizingMargins = 2, 2, 7, 7\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_help_button_background.bmp\r\n"
+"ImageFile1 = blue_window_help_button_glyph_13px.bmp\r\n"
+"ImageFile2 = blue_window_help_button_glyph_19px.bmp\r\n"
+"ImageFile3 = blue_window_help_button_glyph_23px.bmp\r\n"
+"ImageFile4 = blue_window_help_button_glyph_26px.bmp\r\n"
+"ImageFile5 = blue_window_help_button_glyph_32px.bmp\r\n"
+"ImageFile6 = blue_window_help_button_glyph_39px.bmp\r\n"
+"ImageFile7 = blue_window_help_button_glyph_52px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Window.Dialog]\r\n"
+"BgType = BorderFill\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"[Window.CaptionSizingTemplate]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Tile\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 28, 35, 9, 17\r\n"
+"ContentMargins = 18, 18, 8, 0\r\n"
+"ImageFile = blue_window_caption_sizing_template.bmp\r\n"
+
+"[Window.SmallCaptionSizingTemplate]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Tile\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 24, 37, 9, 8\r\n"
+"ContentMargins = 14, 14, 16, 0\r\n"
+"ImageFile = blue_window_small_caption_sizing_template.bmp\r\n"
+
+"[Window.Border]\r\n"
+"Width = 1\r\n"
+}
+
+/* Button */
+/* @makedep: blue_button.bmp */
+BLUE_BUTTON_BMP BITMAP "blue_button.bmp"
+
+/* @makedep: blue_checkbox_13px.bmp */
+BLUE_CHECKBOX_13PX_BMP BITMAP "blue_checkbox_13px.bmp"
+
+/* @makedep: blue_checkbox_16px.bmp */
+BLUE_CHECKBOX_16PX_BMP BITMAP "blue_checkbox_16px.bmp"
+
+/* @makedep: blue_checkbox_20px.bmp */
+BLUE_CHECKBOX_20PX_BMP BITMAP "blue_checkbox_20px.bmp"
+
+/* @makedep: blue_checkbox_26px.bmp */
+BLUE_CHECKBOX_26PX_BMP BITMAP "blue_checkbox_26px.bmp"
+
+/* @makedep: blue_checkbox_32px.bmp */
+BLUE_CHECKBOX_32PX_BMP BITMAP "blue_checkbox_32px.bmp"
+
+/* @makedep: blue_checkbox_40px.bmp */
+BLUE_CHECKBOX_40PX_BMP BITMAP "blue_checkbox_40px.bmp"
+
+/* @makedep: blue_checkbox_52px.bmp */
+BLUE_CHECKBOX_52PX_BMP BITMAP "blue_checkbox_52px.bmp"
+
+/* @makedep: blue_radiobutton_13px.bmp */
+BLUE_RADIOBUTTON_13PX_BMP BITMAP "blue_radiobutton_13px.bmp"
+
+/* @makedep: blue_radiobutton_16px.bmp */
+BLUE_RADIOBUTTON_16PX_BMP BITMAP "blue_radiobutton_16px.bmp"
+
+/* @makedep: blue_radiobutton_19px.bmp */
+BLUE_RADIOBUTTON_19PX_BMP BITMAP "blue_radiobutton_19px.bmp"
+
+/* @makedep: blue_radiobutton_22px.bmp */
+BLUE_RADIOBUTTON_22PX_BMP BITMAP "blue_radiobutton_22px.bmp"
+
+/* @makedep: blue_radiobutton_25px.bmp */
+BLUE_RADIOBUTTON_25PX_BMP BITMAP "blue_radiobutton_25px.bmp"
+
+/* @makedep: blue_radiobutton_28px.bmp */
+BLUE_RADIOBUTTON_28PX_BMP BITMAP "blue_radiobutton_28px.bmp"
+
+/* @makedep: blue_radiobutton_31px.bmp */
+BLUE_RADIOBUTTON_31PX_BMP BITMAP "blue_radiobutton_31px.bmp"
+
+/* @makedep: blue_groupbox.bmp */
+BLUE_GROUPBOX_BMP BITMAP "blue_groupbox.bmp"
+
+/* @makedep: blue_commandlink.bmp */
+BLUE_COMMANDLINK_BMP BITMAP "blue_commandlink.bmp"
+
+/* @makedep: blue_commandlink_glyph_30px.bmp */
+BLUE_COMMANDLINK_GLYPH_30PX_BMP BITMAP "blue_commandlink_glyph_30px.bmp"
+
+/* @makedep: blue_commandlink_glyph_37px.bmp */
+BLUE_COMMANDLINK_GLYPH_37PX_BMP BITMAP "blue_commandlink_glyph_37px.bmp"
+
+/* @makedep: blue_commandlink_glyph_45px.bmp */
+BLUE_COMMANDLINK_GLYPH_45PX_BMP BITMAP "blue_commandlink_glyph_45px.bmp"
+
+/* @makedep: blue_commandlink_glyph_52px.bmp */
+BLUE_COMMANDLINK_GLYPH_52PX_BMP BITMAP "blue_commandlink_glyph_52px.bmp"
+
+/* @makedep: blue_commandlink_glyph_60px.bmp */
+BLUE_COMMANDLINK_GLYPH_60PX_BMP BITMAP "blue_commandlink_glyph_60px.bmp"
+
+/* @makedep: blue_commandlink_glyph_67px.bmp */
+BLUE_COMMANDLINK_GLYPH_67PX_BMP BITMAP "blue_commandlink_glyph_67px.bmp"
+
+/* @makedep: blue_commandlink_glyph_75px.bmp */
+BLUE_COMMANDLINK_GLYPH_75PX_BMP BITMAP "blue_commandlink_glyph_75px.bmp"
+
+/* ComboBox */
+/* @makedep: blue_combobox_border.bmp */
+BLUE_COMBOBOX_BORDER_BMP BITMAP "blue_combobox_border.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_BMP BITMAP "blue_combobox_dropdownbutton.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_glyph_9px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_GLYPH_9PX_BMP BITMAP "blue_combobox_dropdownbutton_glyph_9px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_glyph_10px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_GLYPH_10PX_BMP BITMAP "blue_combobox_dropdownbutton_glyph_10px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_glyph_11px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_GLYPH_11PX_BMP BITMAP "blue_combobox_dropdownbutton_glyph_11px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_glyph_14px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_GLYPH_14PX_BMP BITMAP "blue_combobox_dropdownbutton_glyph_14px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_glyph_17px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_GLYPH_17PX_BMP BITMAP "blue_combobox_dropdownbutton_glyph_17px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_glyph_21px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_GLYPH_21PX_BMP BITMAP "blue_combobox_dropdownbutton_glyph_21px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_glyph_27px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_GLYPH_27PX_BMP BITMAP "blue_combobox_dropdownbutton_glyph_27px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_left.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_LEFT_BMP BITMAP "blue_combobox_dropdownbutton_left.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_left_glyph_9px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_LEFT_GLYPH_9PX_BMP BITMAP "blue_combobox_dropdownbutton_left_glyph_9px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_left_glyph_10px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_LEFT_GLYPH_10PX_BMP BITMAP "blue_combobox_dropdownbutton_left_glyph_10px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_left_glyph_11px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_LEFT_GLYPH_11PX_BMP BITMAP "blue_combobox_dropdownbutton_left_glyph_11px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_left_glyph_14px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_LEFT_GLYPH_14PX_BMP BITMAP "blue_combobox_dropdownbutton_left_glyph_14px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_left_glyph_17px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_LEFT_GLYPH_17PX_BMP BITMAP "blue_combobox_dropdownbutton_left_glyph_17px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_left_glyph_21px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_LEFT_GLYPH_21PX_BMP BITMAP "blue_combobox_dropdownbutton_left_glyph_21px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_left_glyph_27px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_LEFT_GLYPH_27PX_BMP BITMAP "blue_combobox_dropdownbutton_left_glyph_27px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_right.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_BMP BITMAP "blue_combobox_dropdownbutton_right.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_right_glyph_9px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_GLYPH_9PX_BMP BITMAP "blue_combobox_dropdownbutton_right_glyph_9px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_right_glyph_10px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_GLYPH_10PX_BMP BITMAP "blue_combobox_dropdownbutton_right_glyph_10px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_right_glyph_11px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_GLYPH_11PX_BMP BITMAP "blue_combobox_dropdownbutton_right_glyph_11px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_right_glyph_14px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_GLYPH_14PX_BMP BITMAP "blue_combobox_dropdownbutton_right_glyph_14px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_right_glyph_17px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_GLYPH_17PX_BMP BITMAP "blue_combobox_dropdownbutton_right_glyph_17px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_right_glyph_21px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_GLYPH_21PX_BMP BITMAP "blue_combobox_dropdownbutton_right_glyph_21px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_right_glyph_27px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_GLYPH_27PX_BMP BITMAP "blue_combobox_dropdownbutton_right_glyph_27px.bmp"
+
+/* @makedep: blue_combobox_readonly.bmp */
+BLUE_COMBOBOX_READONLY_BMP BITMAP "blue_combobox_readonly.bmp"
+
+/* Edit */
+/* @makedep: blue_edit_background_1x6px.bmp */
+BLUE_EDIT_BACKGROUND_1X6PX_BMP BITMAP "blue_edit_background_1x6px.bmp"
+
+/* @makedep: blue_edit_background_1x12px.bmp */
+BLUE_EDIT_BACKGROUND_1X12PX_BMP BITMAP "blue_edit_background_1x12px.bmp"
+
+/* @makedep: blue_edit_background_1x15px.bmp */
+BLUE_EDIT_BACKGROUND_1X15PX_BMP BITMAP "blue_edit_background_1x15px.bmp"
+
+/* @makedep: blue_edit_background_1x18px.bmp */
+BLUE_EDIT_BACKGROUND_1X18PX_BMP BITMAP "blue_edit_background_1x18px.bmp"
+
+/* @makedep: blue_edit_background_1x24px.bmp */
+BLUE_EDIT_BACKGROUND_1X24PX_BMP BITMAP "blue_edit_background_1x24px.bmp"
+
+/* @makedep: blue_edit_border_noscroll.bmp */
+BLUE_EDIT_BORDER_NOSCROLL_BMP BITMAP "blue_edit_border_noscroll.bmp"
+
+/* @makedep: blue_edit_border_hscroll.bmp */
+BLUE_EDIT_BORDER_HSCROLL_BMP BITMAP "blue_edit_border_hscroll.bmp"
+
+/* @makedep: blue_edit_border_vscroll.bmp */
+BLUE_EDIT_BORDER_VSCROLL_BMP BITMAP "blue_edit_border_vscroll.bmp"
+
+/* @makedep: blue_edit_border_hvscroll.bmp */
+BLUE_EDIT_BORDER_HVSCROLL_BMP BITMAP "blue_edit_border_hvscroll.bmp"
+
+/* Header */
+/* @makedep: blue_header.bmp */
+BLUE_HEADER_BMP BITMAP "blue_header.bmp"
+
+/* @makedep: blue_header_dropdown.bmp */
+BLUE_HEADER_DROPDOWN_BMP BITMAP "blue_header_dropdown.bmp"
+
+/* @makedep: blue_header_dropdown_glyph_7px.bmp */
+BLUE_HEADER_DROPDOWN_GLYPH_7PX_BMP BITMAP "blue_header_dropdown_glyph_7px.bmp"
+
+/* @makedep: blue_header_dropdown_glyph_9px.bmp */
+BLUE_HEADER_DROPDOWN_GLYPH_9PX_BMP BITMAP "blue_header_dropdown_glyph_9px.bmp"
+
+/* @makedep: blue_header_dropdown_glyph_10px.bmp */
+BLUE_HEADER_DROPDOWN_GLYPH_10PX_BMP BITMAP "blue_header_dropdown_glyph_10px.bmp"
+
+/* @makedep: blue_header_dropdown_glyph_13px.bmp */
+BLUE_HEADER_DROPDOWN_GLYPH_13PX_BMP BITMAP "blue_header_dropdown_glyph_13px.bmp"
+
+/* @makedep: blue_header_dropdown_glyph_17px.bmp */
+BLUE_HEADER_DROPDOWN_GLYPH_17PX_BMP BITMAP "blue_header_dropdown_glyph_17px.bmp"
+
+/* @makedep: blue_header_dropdown_glyph_21px.bmp */
+BLUE_HEADER_DROPDOWN_GLYPH_21PX_BMP BITMAP "blue_header_dropdown_glyph_21px.bmp"
+
+/* @makedep: blue_header_dropdown_glyph_29px.bmp */
+BLUE_HEADER_DROPDOWN_GLYPH_29PX_BMP BITMAP "blue_header_dropdown_glyph_29px.bmp"
+
+/* @makedep: blue_header_dropdown_filter.bmp */
+BLUE_HEADER_DROPDOWN_FILTER_BMP BITMAP "blue_header_dropdown_filter.bmp"
+
+/* @makedep: blue_header_dropdown_filter_glyph_10px.bmp */
+BLUE_HEADER_DROPDOWN_FILTER_GLYPH_10PX_BMP BITMAP "blue_header_dropdown_filter_glyph_10px.bmp"
+
+/* @makedep: blue_header_dropdown_filter_glyph_12px.bmp */
+BLUE_HEADER_DROPDOWN_FILTER_GLYPH_12PX_BMP BITMAP "blue_header_dropdown_filter_glyph_12px.bmp"
+
+/* @makedep: blue_header_dropdown_filter_glyph_15px.bmp */
+BLUE_HEADER_DROPDOWN_FILTER_GLYPH_15PX_BMP BITMAP "blue_header_dropdown_filter_glyph_15px.bmp"
+
+/* @makedep: blue_header_dropdown_filter_glyph_19px.bmp */
+BLUE_HEADER_DROPDOWN_FILTER_GLYPH_19PX_BMP BITMAP "blue_header_dropdown_filter_glyph_19px.bmp"
+
+/* @makedep: blue_header_dropdown_filter_glyph_23px.bmp */
+BLUE_HEADER_DROPDOWN_FILTER_GLYPH_23PX_BMP BITMAP "blue_header_dropdown_filter_glyph_23px.bmp"
+
+/* @makedep: blue_header_item.bmp */
+BLUE_HEADER_ITEM_BMP BITMAP "blue_header_item.bmp"
+
+/* @makedep: blue_header_overflow.bmp */
+BLUE_HEADER_OVERFLOW_BMP BITMAP "blue_header_overflow.bmp"
+
+/* @makedep: blue_header_overflow_glyph_8px.bmp */
+BLUE_HEADER_OVERFLOW_GLYPH_8PX_BMP BITMAP "blue_header_overflow_glyph_8px.bmp"
+
+/* @makedep: blue_header_overflow_glyph_10px.bmp */
+BLUE_HEADER_OVERFLOW_GLYPH_10PX_BMP BITMAP "blue_header_overflow_glyph_10px.bmp"
+
+/* @makedep: blue_header_overflow_glyph_12px.bmp */
+BLUE_HEADER_OVERFLOW_GLYPH_12PX_BMP BITMAP "blue_header_overflow_glyph_12px.bmp"
+
+/* @makedep: blue_header_overflow_glyph_16px.bmp */
+BLUE_HEADER_OVERFLOW_GLYPH_16PX_BMP BITMAP "blue_header_overflow_glyph_16px.bmp"
+
+/* @makedep: blue_header_overflow_glyph_20px.bmp */
+BLUE_HEADER_OVERFLOW_GLYPH_20PX_BMP BITMAP "blue_header_overflow_glyph_20px.bmp"
+
+/* @makedep: blue_header_overflow_glyph_24px.bmp */
+BLUE_HEADER_OVERFLOW_GLYPH_24PX_BMP BITMAP "blue_header_overflow_glyph_24px.bmp"
+
+/* @makedep: blue_header_overflow_glyph_32px.bmp */
+BLUE_HEADER_OVERFLOW_GLYPH_32PX_BMP BITMAP "blue_header_overflow_glyph_32px.bmp"
+
+/* @makedep: blue_header_sort_arrow_13px.bmp */
+BLUE_HEADER_SORT_ARROW_13PX_BMP BITMAP "blue_header_sort_arrow_13px.bmp"
+
+/* @makedep: blue_header_sort_arrow_16px.bmp */
+BLUE_HEADER_SORT_ARROW_16PX_BMP BITMAP "blue_header_sort_arrow_16px.bmp"
+
+/* @makedep: blue_header_sort_arrow_17px.bmp */
+BLUE_HEADER_SORT_ARROW_17PX_BMP BITMAP "blue_header_sort_arrow_17px.bmp"
+
+/* @makedep: blue_header_sort_arrow_20px.bmp */
+BLUE_HEADER_SORT_ARROW_20PX_BMP BITMAP "blue_header_sort_arrow_20px.bmp"
+
+/* @makedep: blue_header_sort_arrow_26px.bmp */
+BLUE_HEADER_SORT_ARROW_26PX_BMP BITMAP "blue_header_sort_arrow_26px.bmp"
+
+/* @makedep: blue_header_sort_arrow_39px.bmp */
+BLUE_HEADER_SORT_ARROW_39PX_BMP BITMAP "blue_header_sort_arrow_39px.bmp"
+
+/* @makedep: blue_header_sort_arrow_52px.bmp */
+BLUE_HEADER_SORT_ARROW_52PX_BMP BITMAP "blue_header_sort_arrow_52px.bmp"
+
+/* ListView */
+/* @makedep: blue_listview_collapse_button_15px.bmp */
+BLUE_LISTVIEW_COLLAPSE_BUTTON_15PX_BMP BITMAP "blue_listview_collapse_button_15px.bmp"
+
+/* @makedep: blue_listview_collapse_button_19px.bmp */
+BLUE_LISTVIEW_COLLAPSE_BUTTON_19PX_BMP BITMAP "blue_listview_collapse_button_19px.bmp"
+
+/* @makedep: blue_listview_collapse_button_23px.bmp */
+BLUE_LISTVIEW_COLLAPSE_BUTTON_23PX_BMP BITMAP "blue_listview_collapse_button_23px.bmp"
+
+/* @makedep: blue_listview_collapse_button_30px.bmp */
+BLUE_LISTVIEW_COLLAPSE_BUTTON_30PX_BMP BITMAP "blue_listview_collapse_button_30px.bmp"
+
+/* @makedep: blue_listview_collapse_button_37px.bmp */
+BLUE_LISTVIEW_COLLAPSE_BUTTON_37PX_BMP BITMAP "blue_listview_collapse_button_37px.bmp"
+
+/* @makedep: blue_listview_collapse_button_45px.bmp */
+BLUE_LISTVIEW_COLLAPSE_BUTTON_45PX_BMP BITMAP "blue_listview_collapse_button_45px.bmp"
+
+/* @makedep: blue_listview_collapse_button_60px.bmp */
+BLUE_LISTVIEW_COLLAPSE_BUTTON_60PX_BMP BITMAP "blue_listview_collapse_button_60px.bmp"
+
+/* @makedep: blue_listview_column_detail.bmp */
+BLUE_LISTVIEW_COLUMN_DETAIL_BMP BITMAP "blue_listview_column_detail.bmp"
+
+/* @makedep: blue_listview_expand_button_15px.bmp */
+BLUE_LISTVIEW_EXPAND_BUTTON_15PX_BMP BITMAP "blue_listview_expand_button_15px.bmp"
+
+/* @makedep: blue_listview_expand_button_19px.bmp */
+BLUE_LISTVIEW_EXPAND_BUTTON_19PX_BMP BITMAP "blue_listview_expand_button_19px.bmp"
+
+/* @makedep: blue_listview_expand_button_23px.bmp */
+BLUE_LISTVIEW_EXPAND_BUTTON_23PX_BMP BITMAP "blue_listview_expand_button_23px.bmp"
+
+/* @makedep: blue_listview_expand_button_30px.bmp */
+BLUE_LISTVIEW_EXPAND_BUTTON_30PX_BMP BITMAP "blue_listview_expand_button_30px.bmp"
+
+/* @makedep: blue_listview_expand_button_37px.bmp */
+BLUE_LISTVIEW_EXPAND_BUTTON_37PX_BMP BITMAP "blue_listview_expand_button_37px.bmp"
+
+/* @makedep: blue_listview_expand_button_45px.bmp */
+BLUE_LISTVIEW_EXPAND_BUTTON_45PX_BMP BITMAP "blue_listview_expand_button_45px.bmp"
+
+/* @makedep: blue_listview_expand_button_60px.bmp */
+BLUE_LISTVIEW_EXPAND_BUTTON_60PX_BMP BITMAP "blue_listview_expand_button_60px.bmp"
+
+/* @makedep: blue_listview_group_header_close_hot.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_CLOSE_HOT_BMP BITMAP "blue_listview_group_header_close_hot.bmp"
+
+/* @makedep: blue_listview_group_header_close_mixed_selection.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_CLOSE_MIXED_SELECTION_BMP BITMAP "blue_listview_group_header_close_mixed_selection.bmp"
+
+/* @makedep: blue_listview_group_header_close_mixed_selection_hot.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_CLOSE_MIXED_SELECTION_HOT_BMP BITMAP "blue_listview_group_header_close_mixed_selection_hot.bmp"
+
+/* @makedep: blue_listview_group_header_close_selected.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_CLOSE_SELECTED_BMP BITMAP "blue_listview_group_header_close_selected.bmp"
+
+/* @makedep: blue_listview_group_header_close_selected_hot.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_CLOSE_SELECTED_HOT_BMP BITMAP "blue_listview_group_header_close_selected_hot.bmp"
+
+/* @makedep: blue_listview_group_header_close_selected_not_focused.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_CLOSE_SELECTED_NOT_FOCUSED_BMP BITMAP "blue_listview_group_header_close_selected_not_focused.bmp"
+
+/* @makedep: blue_listview_group_header_close_selected_not_focused_hot.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_CLOSE_SELECTED_NOT_FOCUSED_HOT_BMP BITMAP "blue_listview_group_header_close_selected_not_focused_hot.bmp"
+
+/* @makedep: blue_listview_group_header_line.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_LINE_BMP BITMAP "blue_listview_group_header_line.bmp"
+
+/* @makedep: blue_listview_group_header_open_hot.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_OPEN_HOT_BMP BITMAP "blue_listview_group_header_open_hot.bmp"
+
+/* @makedep: blue_listview_group_header_open_mixed_selection_hot.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_OPEN_MIXED_SELECTION_HOT_BMP BITMAP "blue_listview_group_header_open_mixed_selection_hot.bmp"
+
+/* @makedep: blue_listview_group_header_open_selected_hot.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_OPEN_SELECTED_HOT_BMP BITMAP "blue_listview_group_header_open_selected_hot.bmp"
+
+/* @makedep: blue_listview_group_header_open_selected_not_focused_hot.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_OPEN_SELECTED_NOT_FOCUSED_HOT_BMP BITMAP "blue_listview_group_header_open_selected_not_focused_hot.bmp"
+
+/* Explorer::ListView */
+/* @makedep: blue_explorer_listview_item_hot.bmp */
+BLUE_EXPLORER_LISTVIEW_ITEM_HOT_BMP BITMAP "blue_explorer_listview_item_hot.bmp"
+
+/* @makedep: blue_explorer_listview_item_hot_selected.bmp */
+BLUE_EXPLORER_LISTVIEW_ITEM_HOT_SELECTED_BMP BITMAP "blue_explorer_listview_item_hot_selected.bmp"
+
+/* @makedep: blue_explorer_listview_item_selected.bmp */
+BLUE_EXPLORER_LISTVIEW_ITEM_SELECTED_BMP BITMAP "blue_explorer_listview_item_selected.bmp"
+
+/* @makedep: blue_explorer_listview_item_selected_not_focus.bmp */
+BLUE_EXPLORER_LISTVIEW_ITEM_SELECTED_NOT_FOCUS_BMP BITMAP "blue_explorer_listview_item_selected_not_focus.bmp"
+
+/* Menu */
+/* @makedep: blue_menu_bar_background.bmp */
+BLUE_MENU_BAR_BACKGROUND_BMP BITMAP "blue_menu_bar_background.bmp"
+
+/* @makedep: blue_menu_bar_item.bmp */
+BLUE_MENU_BAR_ITEM_BMP BITMAP "blue_menu_bar_item.bmp"
+
+/* @makedep: blue_menu_popup_background.bmp */
+BLUE_MENU_POPUP_BACKGROUND_BMP BITMAP "blue_menu_popup_background.bmp"
+
+/* @makedep: blue_menu_popup_borders.bmp */
+BLUE_MENU_POPUP_BORDERS_BMP BITMAP "blue_menu_popup_borders.bmp"
+
+/* @makedep: blue_menu_popup_check_16px.bmp */
+BLUE_MENU_POPUP_CHECK_16PX_BMP BITMAP "blue_menu_popup_check_16px.bmp"
+
+/* @makedep: blue_menu_popup_check_18px.bmp */
+BLUE_MENU_POPUP_CHECK_18PX_BMP BITMAP "blue_menu_popup_check_18px.bmp"
+
+/* @makedep: blue_menu_popup_check_25px.bmp */
+BLUE_MENU_POPUP_CHECK_25PX_BMP BITMAP "blue_menu_popup_check_25px.bmp"
+
+/* @makedep: blue_menu_popup_check_32px.bmp */
+BLUE_MENU_POPUP_CHECK_32PX_BMP BITMAP "blue_menu_popup_check_32px.bmp"
+
+/* @makedep: blue_menu_popup_check_40px.bmp */
+BLUE_MENU_POPUP_CHECK_40PX_BMP BITMAP "blue_menu_popup_check_40px.bmp"
+
+/* @makedep: blue_menu_popup_check_48px.bmp */
+BLUE_MENU_POPUP_CHECK_48PX_BMP BITMAP "blue_menu_popup_check_48px.bmp"
+
+/* @makedep: blue_menu_popup_check_64px.bmp */
+BLUE_MENU_POPUP_CHECK_64PX_BMP BITMAP "blue_menu_popup_check_64px.bmp"
+
+/* @makedep: blue_menu_popup_check_background.bmp */
+BLUE_MENU_POPUP_CHECK_BACKGROUND_BMP BITMAP "blue_menu_popup_check_background.bmp"
+
+/* @makedep: blue_menu_popup_gutter.bmp */
+BLUE_MENU_POPUP_GUTTER_BMP BITMAP "blue_menu_popup_gutter.bmp"
+
+/* @makedep: blue_menu_popup_item.bmp */
+BLUE_MENU_POPUP_ITEM_BMP BITMAP "blue_menu_popup_item.bmp"
+
+/* @makedep: blue_menu_popup_separator.bmp */
+BLUE_MENU_POPUP_SEPARATOR_BMP BITMAP "blue_menu_popup_separator.bmp"
+
+/* @makedep: blue_menu_popup_submenu_9px.bmp */
+BLUE_MENU_POPUP_SUBMENU_9PX_BMP BITMAP "blue_menu_popup_submenu_9px.bmp"
+
+/* @makedep: blue_menu_popup_submenu_11px.bmp */
+BLUE_MENU_POPUP_SUBMENU_11PX_BMP BITMAP "blue_menu_popup_submenu_11px.bmp"
+
+/* @makedep: blue_menu_popup_submenu_14px.bmp */
+BLUE_MENU_POPUP_SUBMENU_14PX_BMP BITMAP "blue_menu_popup_submenu_14px.bmp"
+
+/* @makedep: blue_menu_popup_submenu_18px.bmp */
+BLUE_MENU_POPUP_SUBMENU_18PX_BMP BITMAP "blue_menu_popup_submenu_18px.bmp"
+
+/* @makedep: blue_menu_popup_submenu_23px.bmp */
+BLUE_MENU_POPUP_SUBMENU_23PX_BMP BITMAP "blue_menu_popup_submenu_23px.bmp"
+
+/* @makedep: blue_menu_popup_submenu_27px.bmp */
+BLUE_MENU_POPUP_SUBMENU_27PX_BMP BITMAP "blue_menu_popup_submenu_27px.bmp"
+
+/* @makedep: blue_menu_popup_submenu_36px.bmp */
+BLUE_MENU_POPUP_SUBMENU_36PX_BMP BITMAP "blue_menu_popup_submenu_36px.bmp"
+
+/* @makedep: blue_menu_system_close_11px.bmp */
+BLUE_MENU_SYSTEM_CLOSE_11PX_BMP BITMAP "blue_menu_system_close_11px.bmp"
+
+/* @makedep: blue_menu_system_close_14px.bmp */
+BLUE_MENU_SYSTEM_CLOSE_14PX_BMP BITMAP "blue_menu_system_close_14px.bmp"
+
+/* @makedep: blue_menu_system_close_17px.bmp */
+BLUE_MENU_SYSTEM_CLOSE_17PX_BMP BITMAP "blue_menu_system_close_17px.bmp"
+
+/* @makedep: blue_menu_system_close_22px.bmp */
+BLUE_MENU_SYSTEM_CLOSE_22PX_BMP BITMAP "blue_menu_system_close_22px.bmp"
+
+/* @makedep: blue_menu_system_close_28px.bmp */
+BLUE_MENU_SYSTEM_CLOSE_28PX_BMP BITMAP "blue_menu_system_close_28px.bmp"
+
+/* @makedep: blue_menu_system_close_34px.bmp */
+BLUE_MENU_SYSTEM_CLOSE_34PX_BMP BITMAP "blue_menu_system_close_34px.bmp"
+
+/* @makedep: blue_menu_system_close_44px.bmp */
+BLUE_MENU_SYSTEM_CLOSE_44PX_BMP BITMAP "blue_menu_system_close_44px.bmp"
+
+/* @makedep: blue_menu_system_maximize_11px.bmp */
+BLUE_MENU_SYSTEM_MAXIMIZE_11PX_BMP BITMAP "blue_menu_system_maximize_11px.bmp"
+
+/* @makedep: blue_menu_system_maximize_14px.bmp */
+BLUE_MENU_SYSTEM_MAXIMIZE_14PX_BMP BITMAP "blue_menu_system_maximize_14px.bmp"
+
+/* @makedep: blue_menu_system_maximize_17px.bmp */
+BLUE_MENU_SYSTEM_MAXIMIZE_17PX_BMP BITMAP "blue_menu_system_maximize_17px.bmp"
+
+/* @makedep: blue_menu_system_maximize_22px.bmp */
+BLUE_MENU_SYSTEM_MAXIMIZE_22PX_BMP BITMAP "blue_menu_system_maximize_22px.bmp"
+
+/* @makedep: blue_menu_system_maximize_28px.bmp */
+BLUE_MENU_SYSTEM_MAXIMIZE_28PX_BMP BITMAP "blue_menu_system_maximize_28px.bmp"
+
+/* @makedep: blue_menu_system_maximize_34px.bmp */
+BLUE_MENU_SYSTEM_MAXIMIZE_34PX_BMP BITMAP "blue_menu_system_maximize_34px.bmp"
+
+/* @makedep: blue_menu_system_maximize_44px.bmp */
+BLUE_MENU_SYSTEM_MAXIMIZE_44PX_BMP BITMAP "blue_menu_system_maximize_44px.bmp"
+
+/* @makedep: blue_menu_system_minimize_11px.bmp */
+BLUE_MENU_SYSTEM_MINIMIZE_11PX_BMP BITMAP "blue_menu_system_minimize_11px.bmp"
+
+/* @makedep: blue_menu_system_minimize_14px.bmp */
+BLUE_MENU_SYSTEM_MINIMIZE_14PX_BMP BITMAP "blue_menu_system_minimize_14px.bmp"
+
+/* @makedep: blue_menu_system_minimize_17px.bmp */
+BLUE_MENU_SYSTEM_MINIMIZE_17PX_BMP BITMAP "blue_menu_system_minimize_17px.bmp"
+
+/* @makedep: blue_menu_system_minimize_22px.bmp */
+BLUE_MENU_SYSTEM_MINIMIZE_22PX_BMP BITMAP "blue_menu_system_minimize_22px.bmp"
+
+/* @makedep: blue_menu_system_minimize_28px.bmp */
+BLUE_MENU_SYSTEM_MINIMIZE_28PX_BMP BITMAP "blue_menu_system_minimize_28px.bmp"
+
+/* @makedep: blue_menu_system_minimize_34px.bmp */
+BLUE_MENU_SYSTEM_MINIMIZE_34PX_BMP BITMAP "blue_menu_system_minimize_34px.bmp"
+
+/* @makedep: blue_menu_system_minimize_44px.bmp */
+BLUE_MENU_SYSTEM_MINIMIZE_44PX_BMP BITMAP "blue_menu_system_minimize_44px.bmp"
+
+/* @makedep: blue_menu_system_restore_11px.bmp */
+BLUE_MENU_SYSTEM_RESTORE_11PX_BMP BITMAP "blue_menu_system_restore_11px.bmp"
+
+/* @makedep: blue_menu_system_restore_14px.bmp */
+BLUE_MENU_SYSTEM_RESTORE_14PX_BMP BITMAP "blue_menu_system_restore_14px.bmp"
+
+/* @makedep: blue_menu_system_restore_17px.bmp */
+BLUE_MENU_SYSTEM_RESTORE_17PX_BMP BITMAP "blue_menu_system_restore_17px.bmp"
+
+/* @makedep: blue_menu_system_restore_22px.bmp */
+BLUE_MENU_SYSTEM_RESTORE_22PX_BMP BITMAP "blue_menu_system_restore_22px.bmp"
+
+/* @makedep: blue_menu_system_restore_28px.bmp */
+BLUE_MENU_SYSTEM_RESTORE_28PX_BMP BITMAP "blue_menu_system_restore_28px.bmp"
+
+/* @makedep: blue_menu_system_restore_34px.bmp */
+BLUE_MENU_SYSTEM_RESTORE_34PX_BMP BITMAP "blue_menu_system_restore_34px.bmp"
+
+/* @makedep: blue_menu_system_restore_44px.bmp */
+BLUE_MENU_SYSTEM_RESTORE_44PX_BMP BITMAP "blue_menu_system_restore_44px.bmp"
+
+/* Navigation */
+/* @makedep: blue_navigation_back_button_30px.bmp */
+BLUE_NAVIGATION_BACK_BUTTON_30PX_BMP BITMAP "blue_navigation_back_button_30px.bmp"
+
+/* @makedep: blue_navigation_back_button_38px.bmp */
+BLUE_NAVIGATION_BACK_BUTTON_38PX_BMP BITMAP "blue_navigation_back_button_38px.bmp"
+
+/* @makedep: blue_navigation_back_button_45px.bmp */
+BLUE_NAVIGATION_BACK_BUTTON_45PX_BMP BITMAP "blue_navigation_back_button_45px.bmp"
+
+/* @makedep: blue_navigation_back_button_60px.bmp */
+BLUE_NAVIGATION_BACK_BUTTON_60PX_BMP BITMAP "blue_navigation_back_button_60px.bmp"
+
+/* @makedep: blue_navigation_back_button_74px.bmp */
+BLUE_NAVIGATION_BACK_BUTTON_74PX_BMP BITMAP "blue_navigation_back_button_74px.bmp"
+
+/* @makedep: blue_navigation_back_button_90px.bmp */
+BLUE_NAVIGATION_BACK_BUTTON_90PX_BMP BITMAP "blue_navigation_back_button_90px.bmp"
+
+/* @makedep: blue_navigation_back_button_120px.bmp */
+BLUE_NAVIGATION_BACK_BUTTON_120PX_BMP BITMAP "blue_navigation_back_button_120px.bmp"
+
+/* @makedep: blue_navigation_forward_button_30px.bmp */
+BLUE_NAVIGATION_FORWARD_BUTTON_30PX_BMP BITMAP "blue_navigation_forward_button_30px.bmp"
+
+/* @makedep: blue_navigation_forward_button_38px.bmp */
+BLUE_NAVIGATION_FORWARD_BUTTON_38PX_BMP BITMAP "blue_navigation_forward_button_38px.bmp"
+
+/* @makedep: blue_navigation_forward_button_45px.bmp */
+BLUE_NAVIGATION_FORWARD_BUTTON_45PX_BMP BITMAP "blue_navigation_forward_button_45px.bmp"
+
+/* @makedep: blue_navigation_forward_button_60px.bmp */
+BLUE_NAVIGATION_FORWARD_BUTTON_60PX_BMP BITMAP "blue_navigation_forward_button_60px.bmp"
+
+/* @makedep: blue_navigation_forward_button_74px.bmp */
+BLUE_NAVIGATION_FORWARD_BUTTON_74PX_BMP BITMAP "blue_navigation_forward_button_74px.bmp"
+
+/* @makedep: blue_navigation_forward_button_90px.bmp */
+BLUE_NAVIGATION_FORWARD_BUTTON_90PX_BMP BITMAP "blue_navigation_forward_button_90px.bmp"
+
+/* @makedep: blue_navigation_forward_button_120px.bmp */
+BLUE_NAVIGATION_FORWARD_BUTTON_120PX_BMP BITMAP "blue_navigation_forward_button_120px.bmp"
+
+/* @makedep: blue_navigation_menu_button_13px.bmp */
+BLUE_NAVIGATION_MENU_BUTTON_13PX_BMP BITMAP "blue_navigation_menu_button_13px.bmp"
+
+/* @makedep: blue_navigation_menu_button_17px.bmp */
+BLUE_NAVIGATION_MENU_BUTTON_17PX_BMP BITMAP "blue_navigation_menu_button_17px.bmp"
+
+/* @makedep: blue_navigation_menu_button_19px.bmp */
+BLUE_NAVIGATION_MENU_BUTTON_19PX_BMP BITMAP "blue_navigation_menu_button_19px.bmp"
+
+/* @makedep: blue_navigation_menu_button_26px.bmp */
+BLUE_NAVIGATION_MENU_BUTTON_26PX_BMP BITMAP "blue_navigation_menu_button_26px.bmp"
+
+/* @makedep: blue_navigation_menu_button_32px.bmp */
+BLUE_NAVIGATION_MENU_BUTTON_32PX_BMP BITMAP "blue_navigation_menu_button_32px.bmp"
+
+/* @makedep: blue_navigation_menu_button_39px.bmp */
+BLUE_NAVIGATION_MENU_BUTTON_39PX_BMP BITMAP "blue_navigation_menu_button_39px.bmp"
+
+/* @makedep: blue_navigation_menu_button_52px.bmp */
+BLUE_NAVIGATION_MENU_BUTTON_52PX_BMP BITMAP "blue_navigation_menu_button_52px.bmp"
+
+/* Rebar */
+/* @makedep: blue_rebar_background.bmp */
+BLUE_REBAR_BACKGROUND_BMP BITMAP "blue_rebar_background.bmp"
+
+/* @makedep: blue_rebar_chevron_background.bmp */
+BLUE_REBAR_CHEVRON_BACKGROUND_BMP BITMAP "blue_rebar_chevron_background.bmp"
+
+/* @makedep: blue_rebar_chevron_glyph_10px.bmp */
+BLUE_REBAR_CHEVRON_GLYPH_10PX_BMP BITMAP "blue_rebar_chevron_glyph_10px.bmp"
+
+/* @makedep: blue_rebar_chevron_glyph_13px.bmp */
+BLUE_REBAR_CHEVRON_GLYPH_13PX_BMP BITMAP "blue_rebar_chevron_glyph_13px.bmp"
+
+/* @makedep: blue_rebar_chevron_glyph_15px.bmp */
+BLUE_REBAR_CHEVRON_GLYPH_15PX_BMP BITMAP "blue_rebar_chevron_glyph_15px.bmp"
+
+/* @makedep: blue_rebar_chevron_glyph_20px.bmp */
+BLUE_REBAR_CHEVRON_GLYPH_20PX_BMP BITMAP "blue_rebar_chevron_glyph_20px.bmp"
+
+/* @makedep: blue_rebar_chevron_glyph_25px.bmp */
+BLUE_REBAR_CHEVRON_GLYPH_25PX_BMP BITMAP "blue_rebar_chevron_glyph_25px.bmp"
+
+/* @makedep: blue_rebar_chevron_glyph_30px.bmp */
+BLUE_REBAR_CHEVRON_GLYPH_30PX_BMP BITMAP "blue_rebar_chevron_glyph_30px.bmp"
+
+/* @makedep: blue_rebar_chevron_glyph_40px.bmp */
+BLUE_REBAR_CHEVRON_GLYPH_40PX_BMP BITMAP "blue_rebar_chevron_glyph_40px.bmp"
+
+/* @makedep: blue_rebar_chevron_vertical_background.bmp */
+BLUE_REBAR_CHEVRON_VERTICAL_BACKGROUND_BMP BITMAP "blue_rebar_chevron_vertical_background.bmp"
+
+/* @makedep: blue_rebar_chevron_vertical_glyph_10px.bmp */
+BLUE_REBAR_CHEVRON_VERTICAL_GLYPH_10PX_BMP BITMAP "blue_rebar_chevron_vertical_glyph_10px.bmp"
+
+/* @makedep: blue_rebar_chevron_vertical_glyph_13px.bmp */
+BLUE_REBAR_CHEVRON_VERTICAL_GLYPH_13PX_BMP BITMAP "blue_rebar_chevron_vertical_glyph_13px.bmp"
+
+/* @makedep: blue_rebar_chevron_vertical_glyph_15px.bmp */
+BLUE_REBAR_CHEVRON_VERTICAL_GLYPH_15PX_BMP BITMAP "blue_rebar_chevron_vertical_glyph_15px.bmp"
+
+/* @makedep: blue_rebar_gripper_horizontal.bmp */
+BLUE_REBAR_GRIPPER_HORIZONTAL_BMP BITMAP "blue_rebar_gripper_horizontal.bmp"
+
+/* @makedep: blue_rebar_gripper_vertical.bmp */
+BLUE_REBAR_GRIPPER_VERTICAL_BMP BITMAP "blue_rebar_gripper_vertical.bmp"
+
+/* @makedep: blue_rebar_splitter.bmp */
+BLUE_REBAR_SPLITTER_BMP BITMAP "blue_rebar_splitter.bmp"
+
+/* @makedep: blue_rebar_splitter_vertical.bmp */
+BLUE_REBAR_SPLITTER_VERTICAL_BMP BITMAP "blue_rebar_splitter_vertical.bmp"
+
+/* Scroll Bar */
+/* @makedep: blue_scrollbar_arrows.bmp */
+BLUE_SCROLLBAR_ARROWS_BMP BITMAP "blue_scrollbar_arrows.bmp"
+
+/* @makedep: blue_scrollbar_arrow_glyphs_13px.bmp */
+BLUE_SCROLLBAR_ARROW_GLYPHS_13PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_13px.bmp"
+
+/* @makedep: blue_scrollbar_arrow_glyphs_16px.bmp */
+BLUE_SCROLLBAR_ARROW_GLYPHS_16PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_16px.bmp"
+
+/* @makedep: blue_scrollbar_arrow_glyphs_20px.bmp */
+BLUE_SCROLLBAR_ARROW_GLYPHS_20PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_20px.bmp"
+
+/* @makedep: blue_scrollbar_arrow_glyphs_26px.bmp */
+BLUE_SCROLLBAR_ARROW_GLYPHS_26PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_26px.bmp"
+
+/* @makedep: blue_scrollbar_arrow_glyphs_32px.bmp */
+BLUE_SCROLLBAR_ARROW_GLYPHS_32PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_32px.bmp"
+
+/* @makedep: blue_scrollbar_arrow_glyphs_39px.bmp */
+BLUE_SCROLLBAR_ARROW_GLYPHS_39PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_39px.bmp"
+
+/* @makedep: blue_scrollbar_arrow_glyphs_52px.bmp */
+BLUE_SCROLLBAR_ARROW_GLYPHS_52PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_52px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_horizontal_10px.bmp */
+BLUE_SCROLLBAR_GRIPPER_HORIZONTAL_10PX_BMP BITMAP "blue_scrollbar_gripper_horizontal_10px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_horizontal_12px.bmp */
+BLUE_SCROLLBAR_GRIPPER_HORIZONTAL_12PX_BMP BITMAP "blue_scrollbar_gripper_horizontal_12px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_horizontal_16px.bmp */
+BLUE_SCROLLBAR_GRIPPER_HORIZONTAL_16PX_BMP BITMAP "blue_scrollbar_gripper_horizontal_16px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_horizontal_20px.bmp */
+BLUE_SCROLLBAR_GRIPPER_HORIZONTAL_20PX_BMP BITMAP "blue_scrollbar_gripper_horizontal_20px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_horizontal_25px.bmp */
+BLUE_SCROLLBAR_GRIPPER_HORIZONTAL_25PX_BMP BITMAP "blue_scrollbar_gripper_horizontal_25px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_horizontal_30px.bmp */
+BLUE_SCROLLBAR_GRIPPER_HORIZONTAL_30PX_BMP BITMAP "blue_scrollbar_gripper_horizontal_30px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_horizontal_40px.bmp */
+BLUE_SCROLLBAR_GRIPPER_HORIZONTAL_40PX_BMP BITMAP "blue_scrollbar_gripper_horizontal_40px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_vertical_9px.bmp */
+BLUE_SCROLLBAR_GRIPPER_VERTICAL_9PX_BMP BITMAP "blue_scrollbar_gripper_vertical_9px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_vertical_11px.bmp */
+BLUE_SCROLLBAR_GRIPPER_VERTICAL_11PX_BMP BITMAP "blue_scrollbar_gripper_vertical_11px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_vertical_14px.bmp */
+BLUE_SCROLLBAR_GRIPPER_VERTICAL_14PX_BMP BITMAP "blue_scrollbar_gripper_vertical_14px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_vertical_22px.bmp */
+BLUE_SCROLLBAR_GRIPPER_VERTICAL_22PX_BMP BITMAP "blue_scrollbar_gripper_vertical_22px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_vertical_27px.bmp */
+BLUE_SCROLLBAR_GRIPPER_VERTICAL_27PX_BMP BITMAP "blue_scrollbar_gripper_vertical_27px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_vertical_36px.bmp */
+BLUE_SCROLLBAR_GRIPPER_VERTICAL_36PX_BMP BITMAP "blue_scrollbar_gripper_vertical_36px.bmp"
+
+/* @makedep: blue_scrollbar_lower_track_horizontal.bmp */
+BLUE_SCROLLBAR_LOWER_TRACK_HORIZONTAL_BMP BITMAP "blue_scrollbar_lower_track_horizontal.bmp"
+
+/* @makedep: blue_scrollbar_lower_track_vertical.bmp */
+BLUE_SCROLLBAR_LOWER_TRACK_VERTICAL_BMP BITMAP "blue_scrollbar_lower_track_vertical.bmp"
+
+/* @makedep: blue_scrollbar_resizebox_grip_16px.bmp */
+BLUE_SCROLLBAR_RESIZEBOX_GRIP_16PX_BMP BITMAP "blue_scrollbar_resizebox_grip_16px.bmp"
+
+/* @makedep: blue_scrollbar_resizebox_grip_20px.bmp */
+BLUE_SCROLLBAR_RESIZEBOX_GRIP_20PX_BMP BITMAP "blue_scrollbar_resizebox_grip_20px.bmp"
+
+/* @makedep: blue_scrollbar_resizebox_grip_24px.bmp */
+BLUE_SCROLLBAR_RESIZEBOX_GRIP_24PX_BMP BITMAP "blue_scrollbar_resizebox_grip_24px.bmp"
+
+/* @makedep: blue_scrollbar_resizebox_grip_32px.bmp */
+BLUE_SCROLLBAR_RESIZEBOX_GRIP_32PX_BMP BITMAP "blue_scrollbar_resizebox_grip_32px.bmp"
+
+/* @makedep: blue_scrollbar_resizebox_grip_40px.bmp */
+BLUE_SCROLLBAR_RESIZEBOX_GRIP_40PX_BMP BITMAP "blue_scrollbar_resizebox_grip_40px.bmp"
+
+/* @makedep: blue_scrollbar_resizebox_grip_48px.bmp */
+BLUE_SCROLLBAR_RESIZEBOX_GRIP_48PX_BMP BITMAP "blue_scrollbar_resizebox_grip_48px.bmp"
+
+/* @makedep: blue_scrollbar_resizebox_grip_64px.bmp */
+BLUE_SCROLLBAR_RESIZEBOX_GRIP_64PX_BMP BITMAP "blue_scrollbar_resizebox_grip_64px.bmp"
+
+/* @makedep: blue_scrollbar_thumb_horizontal.bmp */
+BLUE_SCROLLBAR_THUMB_HORIZONTAL_BMP BITMAP "blue_scrollbar_thumb_horizontal.bmp"
+
+/* @makedep: blue_scrollbar_thumb_vertical.bmp */
+BLUE_SCROLLBAR_THUMB_VERTICAL_BMP BITMAP "blue_scrollbar_thumb_vertical.bmp"
+
+/* @makedep: blue_scrollbar_upper_track_horizontal.bmp */
+BLUE_SCROLLBAR_UPPER_TRACK_HORIZONTAL_BMP BITMAP "blue_scrollbar_upper_track_horizontal.bmp"
+
+/* @makedep: blue_scrollbar_upper_track_vertical.bmp */
+BLUE_SCROLLBAR_UPPER_TRACK_VERTICAL_BMP BITMAP "blue_scrollbar_upper_track_vertical.bmp"
+
+/* Spin */
+/* @makedep: blue_spin_background_down.bmp */
+BLUE_SPIN_BACKGROUND_DOWN_BMP BITMAP "blue_spin_background_down.bmp"
+
+/* @makedep: blue_spin_background_right.bmp */
+BLUE_SPIN_BACKGROUND_RIGHT_BMP BITMAP "blue_spin_background_right.bmp"
+
+/* @makedep: blue_spin_background_left.bmp */
+BLUE_SPIN_BACKGROUND_LEFT_BMP BITMAP "blue_spin_background_left.bmp"
+
+/* @makedep: blue_spin_background_up.bmp */
+BLUE_SPIN_BACKGROUND_UP_BMP BITMAP "blue_spin_background_up.bmp"
+
+/* @makedep: blue_spin_glyph_down_7x16px.bmp */
+BLUE_SPIN_GLYPH_DOWN_7X16PX_BMP BITMAP "blue_spin_glyph_down_7x16px.bmp"
+
+/* @makedep: blue_spin_glyph_down_7x24px.bmp */
+BLUE_SPIN_GLYPH_DOWN_7X24PX_BMP BITMAP "blue_spin_glyph_down_7x24px.bmp"
+
+/* @makedep: blue_spin_glyph_down_11px.bmp */
+BLUE_SPIN_GLYPH_DOWN_11PX_BMP BITMAP "blue_spin_glyph_down_11px.bmp"
+
+/* @makedep: blue_spin_glyph_down_14px.bmp */
+BLUE_SPIN_GLYPH_DOWN_14PX_BMP BITMAP "blue_spin_glyph_down_14px.bmp"
+
+/* @makedep: blue_spin_glyph_down_18px.bmp */
+BLUE_SPIN_GLYPH_DOWN_18PX_BMP BITMAP "blue_spin_glyph_down_18px.bmp"
+
+/* @makedep: blue_spin_glyph_down_21px.bmp */
+BLUE_SPIN_GLYPH_DOWN_21PX_BMP BITMAP "blue_spin_glyph_down_21px.bmp"
+
+/* @makedep: blue_spin_glyph_down_28px.bmp */
+BLUE_SPIN_GLYPH_DOWN_28PX_BMP BITMAP "blue_spin_glyph_down_28px.bmp"
+
+/* @makedep: blue_spin_glyph_left_4px.bmp */
+BLUE_SPIN_GLYPH_LEFT_4PX_BMP BITMAP "blue_spin_glyph_left_4px.bmp"
+
+/* @makedep: blue_spin_glyph_left_6px.bmp */
+BLUE_SPIN_GLYPH_LEFT_6PX_BMP BITMAP "blue_spin_glyph_left_6px.bmp"
+
+/* @makedep: blue_spin_glyph_left_9px.bmp */
+BLUE_SPIN_GLYPH_LEFT_9PX_BMP BITMAP "blue_spin_glyph_left_9px.bmp"
+
+/* @makedep: blue_spin_glyph_left_12px.bmp */
+BLUE_SPIN_GLYPH_LEFT_12PX_BMP BITMAP "blue_spin_glyph_left_12px.bmp"
+
+/* @makedep: blue_spin_glyph_left_15px.bmp */
+BLUE_SPIN_GLYPH_LEFT_15PX_BMP BITMAP "blue_spin_glyph_left_15px.bmp"
+
+/* @makedep: blue_spin_glyph_left_18px.bmp */
+BLUE_SPIN_GLYPH_LEFT_18PX_BMP BITMAP "blue_spin_glyph_left_18px.bmp"
+
+/* @makedep: blue_spin_glyph_left_24px.bmp */
+BLUE_SPIN_GLYPH_LEFT_24PX_BMP BITMAP "blue_spin_glyph_left_24px.bmp"
+
+/* @makedep: blue_spin_glyph_right_4px.bmp */
+BLUE_SPIN_GLYPH_RIGHT_4PX_BMP BITMAP "blue_spin_glyph_right_4px.bmp"
+
+/* @makedep: blue_spin_glyph_right_6px.bmp */
+BLUE_SPIN_GLYPH_RIGHT_6PX_BMP BITMAP "blue_spin_glyph_right_6px.bmp"
+
+/* @makedep: blue_spin_glyph_right_9px.bmp */
+BLUE_SPIN_GLYPH_RIGHT_9PX_BMP BITMAP "blue_spin_glyph_right_9px.bmp"
+
+/* @makedep: blue_spin_glyph_right_12px.bmp */
+BLUE_SPIN_GLYPH_RIGHT_12PX_BMP BITMAP "blue_spin_glyph_right_12px.bmp"
+
+/* @makedep: blue_spin_glyph_right_15px.bmp */
+BLUE_SPIN_GLYPH_RIGHT_15PX_BMP BITMAP "blue_spin_glyph_right_15px.bmp"
+
+/* @makedep: blue_spin_glyph_right_18px.bmp */
+BLUE_SPIN_GLYPH_RIGHT_18PX_BMP BITMAP "blue_spin_glyph_right_18px.bmp"
+
+/* @makedep: blue_spin_glyph_right_24px.bmp */
+BLUE_SPIN_GLYPH_RIGHT_24PX_BMP BITMAP "blue_spin_glyph_right_24px.bmp"
+
+/* @makedep: blue_spin_glyph_up_7x20px.bmp */
+BLUE_SPIN_GLYPH_UP_7X20PX_BMP BITMAP "blue_spin_glyph_up_7x20px.bmp"
+
+/* @makedep: blue_spin_glyph_up_7x24px.bmp */
+BLUE_SPIN_GLYPH_UP_7X24PX_BMP BITMAP "blue_spin_glyph_up_7x24px.bmp"
+
+/* @makedep: blue_spin_glyph_up_11px.bmp */
+BLUE_SPIN_GLYPH_UP_11PX_BMP BITMAP "blue_spin_glyph_up_11px.bmp"
+
+/* @makedep: blue_spin_glyph_up_14px.bmp */
+BLUE_SPIN_GLYPH_UP_14PX_BMP BITMAP "blue_spin_glyph_up_14px.bmp"
+
+/* @makedep: blue_spin_glyph_up_18px.bmp */
+BLUE_SPIN_GLYPH_UP_18PX_BMP BITMAP "blue_spin_glyph_up_18px.bmp"
+
+/* @makedep: blue_spin_glyph_up_21px.bmp */
+BLUE_SPIN_GLYPH_UP_21PX_BMP BITMAP "blue_spin_glyph_up_21px.bmp"
+
+/* @makedep: blue_spin_glyph_up_28px.bmp */
+BLUE_SPIN_GLYPH_UP_28PX_BMP BITMAP "blue_spin_glyph_up_28px.bmp"
+
+/* Status */
+/* @makedep: blue_status_background.bmp */
+BLUE_STATUS_BACKGROUND_BMP BITMAP "blue_status_background.bmp"
+
+/* @makedep: blue_status_pane.bmp */
+BLUE_STATUS_PANE_BMP BITMAP "blue_status_pane.bmp"
+
+/* Tab */
+/* @makedep: blue_tab_background.bmp */
+BLUE_TAB_BACKGROUND_BMP BITMAP "blue_tab_background.bmp"
+
+/* @makedep: blue_tab_item.bmp */
+BLUE_TAB_ITEM_BMP BITMAP "blue_tab_item.bmp"
+
+/* @makedep: blue_tab_item_left.bmp */
+BLUE_TAB_ITEM_LEFT_BMP BITMAP "blue_tab_item_left.bmp"
+
+/* @makedep: blue_tab_item_right.bmp */
+BLUE_TAB_ITEM_RIGHT_BMP BITMAP "blue_tab_item_right.bmp"
+
+/* @makedep: blue_tab_pane_edge.bmp */
+BLUE_TAB_PANE_EDGE_BMP BITMAP "blue_tab_pane_edge.bmp"
+
+/* TaskDialog */
+/* @makedep: blue_taskdialog_expando_button_expanded_hover_19px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_HOVER_19PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_hover_19px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_hover_24px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_HOVER_24PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_hover_24px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_hover_29px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_HOVER_29PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_hover_29px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_hover_33px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_HOVER_33PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_hover_33px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_hover_38px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_HOVER_38PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_hover_38px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_hover_43px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_HOVER_43PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_hover_43px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_hover_48px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_HOVER_48PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_hover_48px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_normal_19px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_NORMAL_19PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_normal_19px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_normal_24px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_NORMAL_24PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_normal_24px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_normal_29px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_NORMAL_29PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_normal_29px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_normal_33px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_NORMAL_33PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_normal_33px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_normal_38px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_NORMAL_38PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_normal_38px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_normal_43px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_NORMAL_43PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_normal_43px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_normal_48px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_NORMAL_48PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_normal_48px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_pressed_19px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_PRESSED_19PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_pressed_19px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_pressed_24px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_PRESSED_24PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_pressed_24px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_pressed_29px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_PRESSED_29PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_pressed_29px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_pressed_33px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_PRESSED_33PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_pressed_33px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_pressed_38px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_PRESSED_38PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_pressed_38px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_pressed_43px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_PRESSED_43PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_pressed_43px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_pressed_48px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_PRESSED_48PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_pressed_48px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_hover_19px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_HOVER_19PX_BMP BITMAP "blue_taskdialog_expando_button_hover_19px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_hover_24px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_HOVER_24PX_BMP BITMAP "blue_taskdialog_expando_button_hover_24px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_hover_29px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_HOVER_29PX_BMP BITMAP "blue_taskdialog_expando_button_hover_29px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_hover_33px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_HOVER_33PX_BMP BITMAP "blue_taskdialog_expando_button_hover_33px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_hover_38px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_HOVER_38PX_BMP BITMAP "blue_taskdialog_expando_button_hover_38px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_hover_43px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_HOVER_43PX_BMP BITMAP "blue_taskdialog_expando_button_hover_43px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_hover_48px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_HOVER_48PX_BMP BITMAP "blue_taskdialog_expando_button_hover_48px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_normal_19px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_NORMAL_19PX_BMP BITMAP "blue_taskdialog_expando_button_normal_19px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_normal_24px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_NORMAL_24PX_BMP BITMAP "blue_taskdialog_expando_button_normal_24px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_normal_29px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_NORMAL_29PX_BMP BITMAP "blue_taskdialog_expando_button_normal_29px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_normal_33px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_NORMAL_33PX_BMP BITMAP "blue_taskdialog_expando_button_normal_33px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_normal_38px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_NORMAL_38PX_BMP BITMAP "blue_taskdialog_expando_button_normal_38px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_normal_43px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_NORMAL_43PX_BMP BITMAP "blue_taskdialog_expando_button_normal_43px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_normal_48px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_NORMAL_48PX_BMP BITMAP "blue_taskdialog_expando_button_normal_48px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_pressed_19px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_PRESSED_19PX_BMP BITMAP "blue_taskdialog_expando_button_pressed_19px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_pressed_24px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_PRESSED_24PX_BMP BITMAP "blue_taskdialog_expando_button_pressed_24px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_pressed_29px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_PRESSED_29PX_BMP BITMAP "blue_taskdialog_expando_button_pressed_29px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_pressed_33px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_PRESSED_33PX_BMP BITMAP "blue_taskdialog_expando_button_pressed_33px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_pressed_38px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_PRESSED_38PX_BMP BITMAP "blue_taskdialog_expando_button_pressed_38px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_pressed_43px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_PRESSED_43PX_BMP BITMAP "blue_taskdialog_expando_button_pressed_43px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_pressed_48px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_PRESSED_48PX_BMP BITMAP "blue_taskdialog_expando_button_pressed_48px.bmp"
+
+/* @makedep: blue_taskdialog_footnote_separator.bmp */
+BLUE_TASKDIALOG_FOOTNOTE_SEPARATOR_BMP BITMAP "blue_taskdialog_footnote_separator.bmp"
+
+/* @makedep: blue_taskdialog_secondary_panel.bmp */
+BLUE_TASKDIALOG_SECONDARY_PANEL_BMP BITMAP "blue_taskdialog_secondary_panel.bmp"
+
+/* ToolBar */
+/* @makedep: blue_toolbar_buttons.bmp */
+BLUE_TOOLBAR_BUTTONS_BMP BITMAP "blue_toolbar_buttons.bmp"
+
+/* @makedep: blue_toolbar_buttons_split.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_BMP BITMAP "blue_toolbar_buttons_split.bmp"
+
+/* @makedep: blue_toolbar_separator_horizontal.bmp */
+BLUE_TOOLBAR_SEPARATOR_HORIZONTAL_BMP BITMAP "blue_toolbar_separator_horizontal.bmp"
+
+/* @makedep: blue_toolbar_separator_vertical.bmp */
+BLUE_TOOLBAR_SEPARATOR_VERTICAL_BMP BITMAP "blue_toolbar_separator_vertical.bmp"
+
+/* @makedep: blue_toolbar_buttons_split_dropdown.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_BMP BITMAP "blue_toolbar_buttons_split_dropdown.bmp"
+
+/* @makedep: blue_toolbar_buttons_split_dropdown_glyph_7px.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_7PX_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph_7px.bmp"
+
+/* @makedep: blue_toolbar_buttons_split_dropdown_glyph_9px.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_9PX_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph_9px.bmp"
+
+/* @makedep: blue_toolbar_buttons_split_dropdown_glyph_11px.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_11PX_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph_11px.bmp"
+
+/* @makedep: blue_toolbar_buttons_split_dropdown_glyph_14px.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_14PX_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph_14px.bmp"
+
+/* @makedep: blue_toolbar_buttons_split_dropdown_glyph_17px.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_17PX_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph_17px.bmp"
+
+/* @makedep: blue_toolbar_buttons_split_dropdown_glyph_21px.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_21PX_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph_21px.bmp"
+
+/* @makedep: blue_toolbar_buttons_split_dropdown_glyph_28px.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_28PX_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph_28px.bmp"
+
+/* @makedep: blue_toolbar_dropdown_button_glyph_7px.bmp */
+BLUE_TOOLBAR_DROPDOWN_BUTTON_GLYPH_7PX_BMP BITMAP "blue_toolbar_dropdown_button_glyph_7px.bmp"
+
+/* @makedep: blue_toolbar_dropdown_button_glyph_9px.bmp */
+BLUE_TOOLBAR_DROPDOWN_BUTTON_GLYPH_9PX_BMP BITMAP "blue_toolbar_dropdown_button_glyph_9px.bmp"
+
+/* @makedep: blue_toolbar_dropdown_button_glyph_11px.bmp */
+BLUE_TOOLBAR_DROPDOWN_BUTTON_GLYPH_11PX_BMP BITMAP "blue_toolbar_dropdown_button_glyph_11px.bmp"
+
+/* @makedep: blue_toolbar_dropdown_button_glyph_14px.bmp */
+BLUE_TOOLBAR_DROPDOWN_BUTTON_GLYPH_14PX_BMP BITMAP "blue_toolbar_dropdown_button_glyph_14px.bmp"
+
+/* @makedep: blue_toolbar_dropdown_button_glyph_17px.bmp */
+BLUE_TOOLBAR_DROPDOWN_BUTTON_GLYPH_17PX_BMP BITMAP "blue_toolbar_dropdown_button_glyph_17px.bmp"
+
+/* Tooltip */
+/* @makedep: blue_tooltip_ballon.bmp */
+BLUE_TOOLTIP_BALLON_BMP BITMAP "blue_tooltip_ballon.bmp"
+
+/* @makedep: blue_tooltip_ballon_stem_21px.bmp */
+BLUE_TOOLTIP_BALLON_STEM_21PX_BMP BITMAP "blue_tooltip_ballon_stem_21px.bmp"
+
+/* @makedep: blue_tooltip_ballon_stem_26px.bmp */
+BLUE_TOOLTIP_BALLON_STEM_26PX_BMP BITMAP "blue_tooltip_ballon_stem_26px.bmp"
+
+/* @makedep: blue_tooltip_ballon_stem_32px.bmp */
+BLUE_TOOLTIP_BALLON_STEM_32PX_BMP BITMAP "blue_tooltip_ballon_stem_32px.bmp"
+
+/* @makedep: blue_tooltip_ballon_stem_42px.bmp */
+BLUE_TOOLTIP_BALLON_STEM_42PX_BMP BITMAP "blue_tooltip_ballon_stem_42px.bmp"
+
+/* @makedep: blue_tooltip_ballon_stem_53px.bmp */
+BLUE_TOOLTIP_BALLON_STEM_53PX_BMP BITMAP "blue_tooltip_ballon_stem_53px.bmp"
+
+/* @makedep: blue_tooltip_ballon_stem_63px.bmp */
+BLUE_TOOLTIP_BALLON_STEM_63PX_BMP BITMAP "blue_tooltip_ballon_stem_63px.bmp"
+
+/* @makedep: blue_tooltip_ballon_stem_84px.bmp */
+BLUE_TOOLTIP_BALLON_STEM_84PX_BMP BITMAP "blue_tooltip_ballon_stem_84px.bmp"
+
+/* @makedep: blue_tooltip_close_16px.bmp */
+BLUE_TOOLTIP_CLOSE_16PX_BMP BITMAP "blue_tooltip_close_16px.bmp"
+
+/* @makedep: blue_tooltip_close_20px.bmp */
+BLUE_TOOLTIP_CLOSE_20PX_BMP BITMAP "blue_tooltip_close_20px.bmp"
+
+/* @makedep: blue_tooltip_close_24px.bmp */
+BLUE_TOOLTIP_CLOSE_24PX_BMP BITMAP "blue_tooltip_close_24px.bmp"
+
+/* @makedep: blue_tooltip_close_28px.bmp */
+BLUE_TOOLTIP_CLOSE_28PX_BMP BITMAP "blue_tooltip_close_28px.bmp"
+
+/* @makedep: blue_tooltip_close_32px.bmp */
+BLUE_TOOLTIP_CLOSE_32PX_BMP BITMAP "blue_tooltip_close_32px.bmp"
+
+/* @makedep: blue_tooltip_close_36px.bmp */
+BLUE_TOOLTIP_CLOSE_36PX_BMP BITMAP "blue_tooltip_close_36px.bmp"
+
+/* @makedep: blue_tooltip_close_40px.bmp */
+BLUE_TOOLTIP_CLOSE_40PX_BMP BITMAP "blue_tooltip_close_40px.bmp"
+
+/* @makedep: blue_tooltip_standard.bmp */
+BLUE_TOOLTIP_STANDARD_BMP BITMAP "blue_tooltip_standard.bmp"
+
+/* @makedep: blue_tooltip_wrench_17px.bmp */
+BLUE_TOOLTIP_WRENCH_17PX_BMP BITMAP "blue_tooltip_wrench_17px.bmp"
+
+/* @makedep: blue_tooltip_wrench_21px.bmp */
+BLUE_TOOLTIP_WRENCH_21PX_BMP BITMAP "blue_tooltip_wrench_21px.bmp"
+
+/* @makedep: blue_tooltip_wrench_26px.bmp */
+BLUE_TOOLTIP_WRENCH_26PX_BMP BITMAP "blue_tooltip_wrench_26px.bmp"
+
+/* @makedep: blue_tooltip_wrench_34px.bmp */
+BLUE_TOOLTIP_WRENCH_34PX_BMP BITMAP "blue_tooltip_wrench_34px.bmp"
+
+/* @makedep: blue_tooltip_wrench_42px.bmp */
+BLUE_TOOLTIP_WRENCH_42PX_BMP BITMAP "blue_tooltip_wrench_42px.bmp"
+
+/* @makedep: blue_tooltip_wrench_51px.bmp */
+BLUE_TOOLTIP_WRENCH_51PX_BMP BITMAP "blue_tooltip_wrench_51px.bmp"
+
+/* @makedep: blue_tooltip_wrench_68px.bmp */
+BLUE_TOOLTIP_WRENCH_68PX_BMP BITMAP "blue_tooltip_wrench_68px.bmp"
+
+/* TrackBar */
+/* @makedep: blue_trackbar_thumb_horizontal.bmp */
+BLUE_TRACKBAR_THUMB_HORIZONTAL_BMP BITMAP "blue_trackbar_thumb_horizontal.bmp"
+
+/* @makedep: blue_trackbar_thumb_vertical.bmp */
+BLUE_TRACKBAR_THUMB_VERTICAL_BMP BITMAP "blue_trackbar_thumb_vertical.bmp"
+
+/* @makedep: blue_trackbar_slider_track.bmp */
+BLUE_TRACKBAR_SLIDER_TRACK_BMP BITMAP "blue_trackbar_slider_track.bmp"
+
+/* @makedep: blue_trackbar_thumb_down_11px.bmp */
+BLUE_TRACKBAR_THUMB_DOWN_11PX_BMP BITMAP "blue_trackbar_thumb_down_11px.bmp"
+
+/* @makedep: blue_trackbar_thumb_down_15px.bmp */
+BLUE_TRACKBAR_THUMB_DOWN_15PX_BMP BITMAP "blue_trackbar_thumb_down_15px.bmp"
+
+/* @makedep: blue_trackbar_thumb_down_17px.bmp */
+BLUE_TRACKBAR_THUMB_DOWN_17PX_BMP BITMAP "blue_trackbar_thumb_down_17px.bmp"
+
+/* @makedep: blue_trackbar_thumb_down_22px.bmp */
+BLUE_TRACKBAR_THUMB_DOWN_22PX_BMP BITMAP "blue_trackbar_thumb_down_22px.bmp"
+
+/* @makedep: blue_trackbar_thumb_down_28px.bmp */
+BLUE_TRACKBAR_THUMB_DOWN_28PX_BMP BITMAP "blue_trackbar_thumb_down_28px.bmp"
+
+/* @makedep: blue_trackbar_thumb_down_33px.bmp */
+BLUE_TRACKBAR_THUMB_DOWN_33PX_BMP BITMAP "blue_trackbar_thumb_down_33px.bmp"
+
+/* @makedep: blue_trackbar_thumb_down_44px.bmp */
+BLUE_TRACKBAR_THUMB_DOWN_44PX_BMP BITMAP "blue_trackbar_thumb_down_44px.bmp"
+
+/* @makedep: blue_trackbar_thumb_left_19px.bmp */
+BLUE_TRACKBAR_THUMB_LEFT_19PX_BMP BITMAP "blue_trackbar_thumb_left_19px.bmp"
+
+/* @makedep: blue_trackbar_thumb_left_25px.bmp */
+BLUE_TRACKBAR_THUMB_LEFT_25PX_BMP BITMAP "blue_trackbar_thumb_left_25px.bmp"
+
+/* @makedep: blue_trackbar_thumb_left_29px.bmp */
+BLUE_TRACKBAR_THUMB_LEFT_29PX_BMP BITMAP "blue_trackbar_thumb_left_29px.bmp"
+
+/* @makedep: blue_trackbar_thumb_left_38px.bmp */
+BLUE_TRACKBAR_THUMB_LEFT_38PX_BMP BITMAP "blue_trackbar_thumb_left_38px.bmp"
+
+/* @makedep: blue_trackbar_thumb_left_48px.bmp */
+BLUE_TRACKBAR_THUMB_LEFT_48PX_BMP BITMAP "blue_trackbar_thumb_left_48px.bmp"
+
+/* @makedep: blue_trackbar_thumb_left_57px.bmp */
+BLUE_TRACKBAR_THUMB_LEFT_57PX_BMP BITMAP "blue_trackbar_thumb_left_57px.bmp"
+
+/* @makedep: blue_trackbar_thumb_left_76px.bmp */
+BLUE_TRACKBAR_THUMB_LEFT_76PX_BMP BITMAP "blue_trackbar_thumb_left_76px.bmp"
+
+/* @makedep: blue_trackbar_thumb_right_19px.bmp */
+BLUE_TRACKBAR_THUMB_RIGHT_19PX_BMP BITMAP "blue_trackbar_thumb_right_19px.bmp"
+
+/* @makedep: blue_trackbar_thumb_right_25px.bmp */
+BLUE_TRACKBAR_THUMB_RIGHT_25PX_BMP BITMAP "blue_trackbar_thumb_right_25px.bmp"
+
+/* @makedep: blue_trackbar_thumb_right_29px.bmp */
+BLUE_TRACKBAR_THUMB_RIGHT_29PX_BMP BITMAP "blue_trackbar_thumb_right_29px.bmp"
+
+/* @makedep: blue_trackbar_thumb_right_38px.bmp */
+BLUE_TRACKBAR_THUMB_RIGHT_38PX_BMP BITMAP "blue_trackbar_thumb_right_38px.bmp"
+
+/* @makedep: blue_trackbar_thumb_right_48px.bmp */
+BLUE_TRACKBAR_THUMB_RIGHT_48PX_BMP BITMAP "blue_trackbar_thumb_right_48px.bmp"
+
+/* @makedep: blue_trackbar_thumb_right_57px.bmp */
+BLUE_TRACKBAR_THUMB_RIGHT_57PX_BMP BITMAP "blue_trackbar_thumb_right_57px.bmp"
+
+/* @makedep: blue_trackbar_thumb_right_76px.bmp */
+BLUE_TRACKBAR_THUMB_RIGHT_76PX_BMP BITMAP "blue_trackbar_thumb_right_76px.bmp"
+
+/* @makedep: blue_trackbar_thumb_up_11px.bmp */
+BLUE_TRACKBAR_THUMB_UP_11PX_BMP BITMAP "blue_trackbar_thumb_up_11px.bmp"
+
+/* @makedep: blue_trackbar_thumb_up_15px.bmp */
+BLUE_TRACKBAR_THUMB_UP_15PX_BMP BITMAP "blue_trackbar_thumb_up_15px.bmp"
+
+/* @makedep: blue_trackbar_thumb_up_17px.bmp */
+BLUE_TRACKBAR_THUMB_UP_17PX_BMP BITMAP "blue_trackbar_thumb_up_17px.bmp"
+
+/* @makedep: blue_trackbar_thumb_up_22px.bmp */
+BLUE_TRACKBAR_THUMB_UP_22PX_BMP BITMAP "blue_trackbar_thumb_up_22px.bmp"
+
+/* @makedep: blue_trackbar_thumb_up_28px.bmp */
+BLUE_TRACKBAR_THUMB_UP_28PX_BMP BITMAP "blue_trackbar_thumb_up_28px.bmp"
+
+/* @makedep: blue_trackbar_thumb_up_33px.bmp */
+BLUE_TRACKBAR_THUMB_UP_33PX_BMP BITMAP "blue_trackbar_thumb_up_33px.bmp"
+
+/* @makedep: blue_trackbar_thumb_up_44px.bmp */
+BLUE_TRACKBAR_THUMB_UP_44PX_BMP BITMAP "blue_trackbar_thumb_up_44px.bmp"
+
+/* TreeView */
+/* @makedep: blue_treeview_expand_collapse_9px.bmp */
+BLUE_TREEVIEW_EXPAND_COLLAPSE_9PX_BMP BITMAP "blue_treeview_expand_collapse_9px.bmp"
+
+/* @makedep: blue_treeview_expand_collapse_11px.bmp */
+BLUE_TREEVIEW_EXPAND_COLLAPSE_11PX_BMP BITMAP "blue_treeview_expand_collapse_11px.bmp"
+
+/* @makedep: blue_treeview_expand_collapse_13px.bmp */
+BLUE_TREEVIEW_EXPAND_COLLAPSE_13PX_BMP BITMAP "blue_treeview_expand_collapse_13px.bmp"
+
+/* @makedep: blue_treeview_expand_collapse_16px.bmp */
+BLUE_TREEVIEW_EXPAND_COLLAPSE_16PX_BMP BITMAP "blue_treeview_expand_collapse_16px.bmp"
+
+/* @makedep: blue_treeview_expand_collapse_18px.bmp */
+BLUE_TREEVIEW_EXPAND_COLLAPSE_18PX_BMP BITMAP "blue_treeview_expand_collapse_18px.bmp"
+
+/* @makedep: blue_treeview_expand_collapse_20px.bmp */
+BLUE_TREEVIEW_EXPAND_COLLAPSE_20PX_BMP BITMAP "blue_treeview_expand_collapse_20px.bmp"
+
+/* @makedep: blue_treeview_expand_collapse_23px.bmp */
+BLUE_TREEVIEW_EXPAND_COLLAPSE_23PX_BMP BITMAP "blue_treeview_expand_collapse_23px.bmp"
+
+/* Explorer::TreeView */
+/* @makedep: blue_explorer_treeview_glyph_16px.bmp */
+BLUE_EXPLORER_TREEVIEW_GLYPH_16PX_BMP BITMAP "blue_explorer_treeview_glyph_16px.bmp"
+
+/* @makedep: blue_explorer_treeview_glyph_20px.bmp */
+BLUE_EXPLORER_TREEVIEW_GLYPH_20PX_BMP BITMAP "blue_explorer_treeview_glyph_20px.bmp"
+
+/* @makedep: blue_explorer_treeview_glyph_24px.bmp */
+BLUE_EXPLORER_TREEVIEW_GLYPH_24PX_BMP BITMAP "blue_explorer_treeview_glyph_24px.bmp"
+
+/* @makedep: blue_explorer_treeview_glyph_32px.bmp */
+BLUE_EXPLORER_TREEVIEW_GLYPH_32PX_BMP BITMAP "blue_explorer_treeview_glyph_32px.bmp"
+
+/* @makedep: blue_explorer_treeview_glyph_40px.bmp */
+BLUE_EXPLORER_TREEVIEW_GLYPH_40PX_BMP BITMAP "blue_explorer_treeview_glyph_40px.bmp"
+
+/* @makedep: blue_explorer_treeview_glyph_48px.bmp */
+BLUE_EXPLORER_TREEVIEW_GLYPH_48PX_BMP BITMAP "blue_explorer_treeview_glyph_48px.bmp"
+
+/* @makedep: blue_explorer_treeview_glyph_64px.bmp */
+BLUE_EXPLORER_TREEVIEW_GLYPH_64PX_BMP BITMAP "blue_explorer_treeview_glyph_64px.bmp"
+
+/* @makedep: blue_explorer_treeview_hot_glyph_16px.bmp */
+BLUE_EXPLORER_TREEVIEW_HOT_GLYPH_16PX_BMP BITMAP "blue_explorer_treeview_hot_glyph_16px.bmp"
+
+/* @makedep: blue_explorer_treeview_hot_glyph_20px.bmp */
+BLUE_EXPLORER_TREEVIEW_HOT_GLYPH_20PX_BMP BITMAP "blue_explorer_treeview_hot_glyph_20px.bmp"
+
+/* @makedep: blue_explorer_treeview_hot_glyph_24px.bmp */
+BLUE_EXPLORER_TREEVIEW_HOT_GLYPH_24PX_BMP BITMAP "blue_explorer_treeview_hot_glyph_24px.bmp"
+
+/* @makedep: blue_explorer_treeview_hot_glyph_32px.bmp */
+BLUE_EXPLORER_TREEVIEW_HOT_GLYPH_32PX_BMP BITMAP "blue_explorer_treeview_hot_glyph_32px.bmp"
+
+/* @makedep: blue_explorer_treeview_hot_glyph_40px.bmp */
+BLUE_EXPLORER_TREEVIEW_HOT_GLYPH_40PX_BMP BITMAP "blue_explorer_treeview_hot_glyph_40px.bmp"
+
+/* @makedep: blue_explorer_treeview_hot_glyph_48px.bmp */
+BLUE_EXPLORER_TREEVIEW_HOT_GLYPH_48PX_BMP BITMAP "blue_explorer_treeview_hot_glyph_48px.bmp"
+
+/* @makedep: blue_explorer_treeview_hot_glyph_64px.bmp */
+BLUE_EXPLORER_TREEVIEW_HOT_GLYPH_64PX_BMP BITMAP "blue_explorer_treeview_hot_glyph_64px.bmp"
+
+/* @makedep: blue_explorer_treeview_item_hot.bmp */
+BLUE_EXPLORER_TREEVIEW_ITEM_HOT_BMP BITMAP "blue_explorer_treeview_item_hot.bmp"
+
+/* @makedep: blue_explorer_treeview_item_hot_selected.bmp */
+BLUE_EXPLORER_TREEVIEW_ITEM_HOT_SELECTED_BMP BITMAP "blue_explorer_treeview_item_hot_selected.bmp"
+
+/* @makedep: blue_explorer_treeview_item_selected.bmp */
+BLUE_EXPLORER_TREEVIEW_ITEM_SELECTED_BMP BITMAP "blue_explorer_treeview_item_selected.bmp"
+
+/* @makedep: blue_explorer_treeview_item_selected_not_focus.bmp */
+BLUE_EXPLORER_TREEVIEW_ITEM_SELECTED_NOT_FOCUS_BMP BITMAP "blue_explorer_treeview_item_selected_not_focus.bmp"
+
+/* Window */
+/* @makedep: blue_window_caption.bmp */
+BLUE_WINDOW_CAPTION_BMP BITMAP "blue_window_caption.bmp"
+
+/* @makedep: blue_window_caption_sizing_template.bmp */
+BLUE_WINDOW_CAPTION_SIZING_TEMPLATE_BMP BITMAP "blue_window_caption_sizing_template.bmp"
+
+/* @makedep: blue_window_close_button_background.bmp */
+BLUE_WINDOW_CLOSE_BUTTON_BACKGROUND_BMP BITMAP "blue_window_close_button_background.bmp"
+
+/* @makedep: blue_window_close_button_glyph_13px.bmp */
+BLUE_WINDOW_CLOSE_BUTTON_GLYPH_13PX_BMP BITMAP "blue_window_close_button_glyph_13px.bmp"
+
+/* @makedep: blue_window_close_button_glyph_19px.bmp */
+BLUE_WINDOW_CLOSE_BUTTON_GLYPH_19PX_BMP BITMAP "blue_window_close_button_glyph_19px.bmp"
+
+/* @makedep: blue_window_close_button_glyph_23px.bmp */
+BLUE_WINDOW_CLOSE_BUTTON_GLYPH_23PX_BMP BITMAP "blue_window_close_button_glyph_23px.bmp"
+
+/* @makedep: blue_window_close_button_glyph_26px.bmp */
+BLUE_WINDOW_CLOSE_BUTTON_GLYPH_26PX_BMP BITMAP "blue_window_close_button_glyph_26px.bmp"
+
+/* @makedep: blue_window_close_button_glyph_32px.bmp */
+BLUE_WINDOW_CLOSE_BUTTON_GLYPH_32PX_BMP BITMAP "blue_window_close_button_glyph_32px.bmp"
+
+/* @makedep: blue_window_close_button_glyph_39px.bmp */
+BLUE_WINDOW_CLOSE_BUTTON_GLYPH_39PX_BMP BITMAP "blue_window_close_button_glyph_39px.bmp"
+
+/* @makedep: blue_window_close_button_glyph_52px.bmp */
+BLUE_WINDOW_CLOSE_BUTTON_GLYPH_52PX_BMP BITMAP "blue_window_close_button_glyph_52px.bmp"
+
+/* @makedep: blue_window_frame_bottom.bmp */
+BLUE_WINDOW_FRAME_BOTTOM_BMP BITMAP "blue_window_frame_bottom.bmp"
+
+/* @makedep: blue_window_frame_left.bmp */
+BLUE_WINDOW_FRAME_LEFT_BMP BITMAP "blue_window_frame_left.bmp"
+
+/* @makedep: blue_window_frame_right.bmp */
+BLUE_WINDOW_FRAME_RIGHT_BMP BITMAP "blue_window_frame_right.bmp"
+
+/* @makedep: blue_window_help_button_background.bmp */
+BLUE_WINDOW_HELP_BUTTON_BACKGROUND_BMP BITMAP "blue_window_help_button_background.bmp"
+
+/* @makedep: blue_window_help_button_glyph_13px.bmp */
+BLUE_WINDOW_HELP_BUTTON_GLYPH_13PX_BMP BITMAP "blue_window_help_button_glyph_13px.bmp"
+
+/* @makedep: blue_window_help_button_glyph_19px.bmp */
+BLUE_WINDOW_HELP_BUTTON_GLYPH_19PX_BMP BITMAP "blue_window_help_button_glyph_19px.bmp"
+
+/* @makedep: blue_window_help_button_glyph_23px.bmp */
+BLUE_WINDOW_HELP_BUTTON_GLYPH_23PX_BMP BITMAP "blue_window_help_button_glyph_23px.bmp"
+
+/* @makedep: blue_window_help_button_glyph_26px.bmp */
+BLUE_WINDOW_HELP_BUTTON_GLYPH_26PX_BMP BITMAP "blue_window_help_button_glyph_26px.bmp"
+
+/* @makedep: blue_window_help_button_glyph_32px.bmp */
+BLUE_WINDOW_HELP_BUTTON_GLYPH_32PX_BMP BITMAP "blue_window_help_button_glyph_32px.bmp"
+
+/* @makedep: blue_window_help_button_glyph_39px.bmp */
+BLUE_WINDOW_HELP_BUTTON_GLYPH_39PX_BMP BITMAP "blue_window_help_button_glyph_39px.bmp"
+
+/* @makedep: blue_window_help_button_glyph_52px.bmp */
+BLUE_WINDOW_HELP_BUTTON_GLYPH_52PX_BMP BITMAP "blue_window_help_button_glyph_52px.bmp"
+
+/* @makedep: blue_window_max_button_background.bmp */
+BLUE_WINDOW_MAX_BUTTON_BACKGROUND_BMP BITMAP "blue_window_max_button_background.bmp"
+
+/* @makedep: blue_window_max_button_glyph_13px.bmp */
+BLUE_WINDOW_MAX_BUTTON_GLYPH_13PX_BMP BITMAP "blue_window_max_button_glyph_13px.bmp"
+
+/* @makedep: blue_window_max_button_glyph_19px.bmp */
+BLUE_WINDOW_MAX_BUTTON_GLYPH_19PX_BMP BITMAP "blue_window_max_button_glyph_19px.bmp"
+
+/* @makedep: blue_window_max_button_glyph_23px.bmp */
+BLUE_WINDOW_MAX_BUTTON_GLYPH_23PX_BMP BITMAP "blue_window_max_button_glyph_23px.bmp"
+
+/* @makedep: blue_window_max_button_glyph_26px.bmp */
+BLUE_WINDOW_MAX_BUTTON_GLYPH_26PX_BMP BITMAP "blue_window_max_button_glyph_26px.bmp"
+
+/* @makedep: blue_window_max_button_glyph_32px.bmp */
+BLUE_WINDOW_MAX_BUTTON_GLYPH_32PX_BMP BITMAP "blue_window_max_button_glyph_32px.bmp"
+
+/* @makedep: blue_window_max_button_glyph_39px.bmp */
+BLUE_WINDOW_MAX_BUTTON_GLYPH_39PX_BMP BITMAP "blue_window_max_button_glyph_39px.bmp"
+
+/* @makedep: blue_window_max_button_glyph_52px.bmp */
+BLUE_WINDOW_MAX_BUTTON_GLYPH_52PX_BMP BITMAP "blue_window_max_button_glyph_52px.bmp"
+
+/* @makedep: blue_window_max_caption.bmp */
+BLUE_WINDOW_MAX_CAPTION_BMP BITMAP "blue_window_max_caption.bmp"
+
+/* @makedep: blue_window_mdi_close_button_background.bmp */
+BLUE_WINDOW_MDI_CLOSE_BUTTON_BACKGROUND_BMP BITMAP "blue_window_mdi_close_button_background.bmp"
+
+/* @makedep: blue_window_mdi_close_button_glyph.bmp */
+BLUE_WINDOW_MDI_CLOSE_BUTTON_GLYPH_BMP BITMAP "blue_window_mdi_close_button_glyph.bmp"
+
+/* @makedep: blue_window_mdi_min_button_background.bmp */
+BLUE_WINDOW_MDI_MIN_BUTTON_BACKGROUND_BMP BITMAP "blue_window_mdi_min_button_background.bmp"
+
+/* @makedep: blue_window_mdi_min_button_glyph.bmp */
+BLUE_WINDOW_MDI_MIN_BUTTON_GLYPH_BMP BITMAP "blue_window_mdi_min_button_glyph.bmp"
+
+/* @makedep: blue_window_mdi_restore_button_background.bmp */
+BLUE_WINDOW_MDI_RESTORE_BUTTON_BACKGROUND_BMP BITMAP "blue_window_mdi_restore_button_background.bmp"
+
+/* @makedep: blue_window_mdi_restore_button_glyph.bmp */
+BLUE_WINDOW_MDI_RESTORE_BUTTON_GLYPH_BMP BITMAP "blue_window_mdi_restore_button_glyph.bmp"
+
+/* @makedep: blue_window_min_button_background.bmp */
+BLUE_WINDOW_MIN_BUTTON_BACKGROUND_BMP BITMAP "blue_window_min_button_background.bmp"
+
+/* @makedep: blue_window_min_button_glyph_13px.bmp */
+BLUE_WINDOW_MIN_BUTTON_GLYPH_13PX_BMP BITMAP "blue_window_min_button_glyph_13px.bmp"
+
+/* @makedep: blue_window_min_button_glyph_19px.bmp */
+BLUE_WINDOW_MIN_BUTTON_GLYPH_19PX_BMP BITMAP "blue_window_min_button_glyph_19px.bmp"
+
+/* @makedep: blue_window_min_button_glyph_23px.bmp */
+BLUE_WINDOW_MIN_BUTTON_GLYPH_23PX_BMP BITMAP "blue_window_min_button_glyph_23px.bmp"
+
+/* @makedep: blue_window_min_button_glyph_26px.bmp */
+BLUE_WINDOW_MIN_BUTTON_GLYPH_26PX_BMP BITMAP "blue_window_min_button_glyph_26px.bmp"
+
+/* @makedep: blue_window_min_button_glyph_32px.bmp */
+BLUE_WINDOW_MIN_BUTTON_GLYPH_32PX_BMP BITMAP "blue_window_min_button_glyph_32px.bmp"
+
+/* @makedep: blue_window_min_button_glyph_39px.bmp */
+BLUE_WINDOW_MIN_BUTTON_GLYPH_39PX_BMP BITMAP "blue_window_min_button_glyph_39px.bmp"
+
+/* @makedep: blue_window_min_button_glyph_52px.bmp */
+BLUE_WINDOW_MIN_BUTTON_GLYPH_52PX_BMP BITMAP "blue_window_min_button_glyph_52px.bmp"
+
+/* @makedep: blue_window_min_caption.bmp */
+BLUE_WINDOW_MIN_CAPTION_BMP BITMAP "blue_window_min_caption.bmp"
+
+/* @makedep: blue_window_restore_button_background.bmp */
+BLUE_WINDOW_RESTORE_BUTTON_BACKGROUND_BMP BITMAP "blue_window_restore_button_background.bmp"
+
+/* @makedep: blue_window_restore_button_glyph_13px.bmp */
+BLUE_WINDOW_RESTORE_BUTTON_GLYPH_13PX_BMP BITMAP "blue_window_restore_button_glyph_13px.bmp"
+
+/* @makedep: blue_window_restore_button_glyph_19px.bmp */
+BLUE_WINDOW_RESTORE_BUTTON_GLYPH_19PX_BMP BITMAP "blue_window_restore_button_glyph_19px.bmp"
+
+/* @makedep: blue_window_restore_button_glyph_23px.bmp */
+BLUE_WINDOW_RESTORE_BUTTON_GLYPH_23PX_BMP BITMAP "blue_window_restore_button_glyph_23px.bmp"
+
+/* @makedep: blue_window_restore_button_glyph_26px.bmp */
+BLUE_WINDOW_RESTORE_BUTTON_GLYPH_26PX_BMP BITMAP "blue_window_restore_button_glyph_26px.bmp"
+
+/* @makedep: blue_window_restore_button_glyph_32px.bmp */
+BLUE_WINDOW_RESTORE_BUTTON_GLYPH_32PX_BMP BITMAP "blue_window_restore_button_glyph_32px.bmp"
+
+/* @makedep: blue_window_restore_button_glyph_39px.bmp */
+BLUE_WINDOW_RESTORE_BUTTON_GLYPH_39PX_BMP BITMAP "blue_window_restore_button_glyph_39px.bmp"
+
+/* @makedep: blue_window_restore_button_glyph_52px.bmp */
+BLUE_WINDOW_RESTORE_BUTTON_GLYPH_52PX_BMP BITMAP "blue_window_restore_button_glyph_52px.bmp"
+
+/* @makedep: blue_window_small_caption.bmp */
+BLUE_WINDOW_SMALL_CAPTION_BMP BITMAP "blue_window_small_caption.bmp"
+
+/* @makedep: blue_window_small_caption_sizing_template.bmp */
+BLUE_WINDOW_SMALL_CAPTION_SIZING_TEMPLATE_BMP BITMAP "blue_window_small_caption_sizing_template.bmp"
+
+/* @makedep: blue_window_small_close_button_background.bmp */
+BLUE_WINDOW_SMALL_CLOSE_BUTTON_BACKGROUND_BMP BITMAP "blue_window_small_close_button_background.bmp"
+
+/* @makedep: blue_window_small_close_button_glyph.bmp */
+BLUE_WINDOW_SMALL_CLOSE_BUTTON_GLYPH_BMP BITMAP "blue_window_small_close_button_glyph.bmp"
+
+/* @makedep: blue_window_small_frame_bottom.bmp */
+BLUE_WINDOW_SMALL_FRAME_BOTTOM_BMP BITMAP "blue_window_small_frame_bottom.bmp"
+
+/* @makedep: blue_window_small_frame_left.bmp */
+BLUE_WINDOW_SMALL_FRAME_LEFT_BMP BITMAP "blue_window_small_frame_left.bmp"
+
+/* @makedep: blue_window_small_frame_right.bmp */
+BLUE_WINDOW_SMALL_FRAME_RIGHT_BMP BITMAP "blue_window_small_frame_right.bmp"
+
+/* File version */
+#define WINE_FILEDESCRIPTION_STR "Light Theme"
+#define WINE_FILENAME_STR "light.msstyles"
+#define WINE_FILEVERSION 1,0,0,1
+#define WINE_FILEVERSION_STR "1.0.0.1"
+#define WINE_PRODUCTVERSION 1,0,0,1
+#define WINE_PRODUCTVERSION_STR "1.0.0.1"
+
+#include "wine/wine_common_ver.rc"

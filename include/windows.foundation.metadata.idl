@@ -1,0 +1,77 @@
+/*
+ * Copyright 2022 Zhiyi Zhang for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+#ifndef DO_NO_IMPORTS
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+#endif
+
+namespace Windows.Foundation.Metadata
+{
+    typedef enum GCPressureAmount GCPressureAmount;
+
+    interface IApiInformationStatics;
+
+    runtimeclass ApiInformation;
+
+    [
+        contract(Windows.Foundation.FoundationContract, 1.0)
+    ]
+    enum GCPressureAmount
+    {
+        Low    = 0,
+        Medium = 1,
+        High   = 2
+    };
+
+    [
+        contract(Windows.Foundation.FoundationContract, 1.0),
+        exclusiveto(Windows.Foundation.Metadata.ApiInformation),
+        uuid(997439fe-f681-4a11-b416-c13a47e8ba36)
+    ]
+    interface IApiInformationStatics : IInspectable
+    {
+        HRESULT IsTypePresent([in] HSTRING type_name, [out, retval] boolean *value);
+        [overload("IsMethodPresent")] HRESULT IsMethodPresent([in] HSTRING type_name, [in] HSTRING method_name, [out, retval] boolean *value);
+        [overload("IsMethodPresent")] HRESULT IsMethodPresentWithArity([in] HSTRING type_name, [in] HSTRING method_name, [in] UINT32 parameter_count, [out, retval] boolean *value);
+        HRESULT IsEventPresent([in] HSTRING type_name, [in] HSTRING event_name, [out, retval] boolean *value);
+        HRESULT IsPropertyPresent([in] HSTRING type_name, [in] HSTRING property_name, [out, retval] boolean *value);
+        HRESULT IsReadOnlyPropertyPresent([in] HSTRING type_name, [in] HSTRING property_name, [out, retval] boolean *value);
+        HRESULT IsWriteablePropertyPresent([in] HSTRING type_name, [in] HSTRING property_name, [out, retval] boolean *value);
+        HRESULT IsEnumNamedValuePresent([in] HSTRING enum_type_name, [in] HSTRING value_name, [out, retval] boolean *value);
+        [overload("IsApiContractPresent")] HRESULT IsApiContractPresentByMajor([in] HSTRING contract_name, [in] UINT16 major_version, [out, retval] boolean *value);
+        [overload("IsApiContractPresent")] HRESULT IsApiContractPresentByMajorAndMinor([in] HSTRING contract_name, [in] UINT16 major_version, [in] UINT16 minor_version, [out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.FoundationContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Foundation.Metadata.IApiInformationStatics, Windows.Foundation.FoundationContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass ApiInformation
+    {
+    }
+}

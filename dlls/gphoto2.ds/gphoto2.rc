@@ -1,0 +1,55 @@
+/*
+ * English resources for Twain
+ *
+ * Copyright 2006 CodeWeavers, Aric Stewart
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+#pragma makedep po
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+IDD_CAMERAUI DIALOG  0, 0, 382, 275
+STYLE DS_MODALFRAME | DS_SETFOREGROUND | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Files on Camera"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "",IDC_LIST1,"SysListView32", LVS_ICON | WS_BORDER | WS_TABSTOP,7,7,368,229
+    DEFPUSHBUTTON   "Import Selected",IDC_IMPORT,255,240,120,14
+    PUSHBUTTON      "Preview",IDC_FETCH,7,240,120,14
+    PUSHBUTTON      "Import All",IDC_IMPORTALL,131,240,120,14
+    CONTROL         "Skip This Dialog",IDC_SKIP,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,7,258,76,14
+    PUSHBUTTON      "Exit",IDC_EXIT,325,258,50,14
+END
+
+IDD_DIALOG1 DIALOG 0, 0, 186, 46
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE | DS_CENTER | DS_SETFOREGROUND
+CAPTION "Transferring"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT   "Transferring... Please Wait",IDC_STATIC,5,19,176,8, SS_CENTER
+END
+
+IDD_CONNECTING DIALOG  0, 0, 280, 116
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU| WS_VISIBLE | DS_CENTER
+CAPTION "Connecting to camera"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "",IDC_BITMAP,"Static",SS_BITMAP|SS_CENTERIMAGE,4,4,110,110
+    LTEXT           "Connecting to camera... Please Wait",IDC_STATIC,128,58,150,8
+END

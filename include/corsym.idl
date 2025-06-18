@@ -1,0 +1,147 @@
+/*
+ * Copyright (C) 2022 Esme Povirk
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "unknwn.idl";
+import "objidl.idl";
+import "oaidl.idl";
+
+cpp_quote("#if 0")
+/* defined in corhdr.h */
+typedef UINT32 mdToken;
+typedef mdToken mdMethodDef;
+typedef mdToken mdTypeDef;
+typedef mdToken mdSignature;
+/* defined in winnt.h */
+typedef SIZE_T IMAGE_DEBUG_DIRECTORY;
+cpp_quote("#endif")
+
+[
+    object,
+    uuid(b01fafeb-c450-3a4d-beec-b4ceec01e006),
+    pointer_default(unique)
+]
+interface ISymUnmanagedDocumentWriter : IUnknown
+{
+    HRESULT SetSource([in] ULONG32 sourceSize, [in, size_is(sourceSize)] BYTE source[]);
+    HRESULT SetCheckSum([in] GUID algorithmId,
+                        [in] ULONG32 checkSumSize, [in, size_is(checkSumSize)] BYTE checkSum[]);
+}
+
+[
+    object,
+    uuid(ed14aa72-78e2-4884-84e2-334293ae5214),
+    pointer_default(unique)
+]
+interface ISymUnmanagedWriter : IUnknown
+{
+    HRESULT DefineDocument([in] const WCHAR *url, [in] const GUID *language, [in] const GUID *languageVendor,
+                           [in] const GUID *documentType, [out, retval] ISymUnmanagedDocumentWriter** pRetVal);
+    HRESULT SetUserEntryPoint([in] mdMethodDef entryMethod);
+    HRESULT OpenMethod([in] mdMethodDef method);
+    HRESULT CloseMethod();
+    HRESULT OpenScope([in] ULONG32 startOffset, [out, retval] ULONG32 *pRetVal);
+    HRESULT CloseScope([in] ULONG32 endOffset);
+    HRESULT SetScopeRange([in] ULONG32 scopeID, [in] ULONG32 startOffset, [in] ULONG32 endOffset);
+    HRESULT DefineLocalVariable([in] const WCHAR *name, [in] ULONG32 attributes, [in] ULONG32 cSig,
+                                [in, size_is(cSig)] unsigned char signature[], [in] ULONG32 addrKind,
+                                [in] ULONG32 addr1, [in] ULONG32 addr2, [in] ULONG32 addr3,
+                                [in] ULONG32 startOffset, [in] ULONG32 endOffset);
+    HRESULT DefineParameter([in] const WCHAR *name, [in] ULONG32 attributes, [in] ULONG32 sequence,
+                            [in] ULONG32 addrKind,
+                            [in] ULONG32 addr1, [in] ULONG32 addr2, [in] ULONG32 addr3);
+    HRESULT DefineField([in] mdTypeDef parent, [in] const WCHAR *name, [in] ULONG32 attributes, [in] ULONG32 cSig,
+                        [in, size_is(cSig)] unsigned char signature[], [in] ULONG32 addrKind,
+                        [in] ULONG32 addr1, [in] ULONG32 addr2, [in] ULONG32 addr3);
+    HRESULT DefineGlobalVariable([in] const WCHAR *name, [in] ULONG32 attributes, [in] ULONG32 cSig,
+                                 [in, size_is(cSig)] unsigned char signature[], [in] ULONG32 addrKind,
+                                 [in] ULONG32 addr1, [in] ULONG32 addr2, [in] ULONG32 addr3);
+    HRESULT Close();
+    HRESULT SetSymAttributes([in] mdToken parent, [in] const WCHAR *name,
+                             [in] ULONG32 cData, [in, size_is(cData)] unsigned char data[]);
+    HRESULT OpenNamespace([in] const WCHAR *name);
+    HRESULT CloseNamespace();
+    HRESULT UsingNamespace([in] const WCHAR *fullName);
+    HRESULT SetMethodSourceRange([in] ISymUnmanagedDocumentWriter *startDoc, ULONG32 startLine, ULONG32 startColumn,
+                                 [in] ISymUnmanagedDocumentWriter *endDoc, ULONG32 endLine, ULONG32 endColumn);
+    HRESULT Initialize([in] IUnknown *emitter, [in] const WCHAR *filename, [in] IStream *pIStream,
+                       [in] BOOL fFullBuild);
+    HRESULT GetDebugInfo([in, out] IMAGE_DEBUG_DIRECTORY *pIDD, [in] DWORD cData, [out] DWORD *pcData,
+                         [out, size_is(cData), length_is(*pcData)] BYTE data[]);
+    HRESULT DefineSequencePoints([in] ISymUnmanagedDocumentWriter *document, [in] ULONG32 spCount,
+                                 [in, size_is(spCount)] ULONG32 offsets[], [in, size_is(spCount)] ULONG32 lines[],
+                                 [in, size_is(spCount)] ULONG32 columns[], [in, size_is(spCount)] ULONG32 endLines[],
+                                 [in, size_is(spCount)] ULONG32 endColumns[]);
+    HRESULT RemapToken([in] mdToken oldToken, [in] mdToken newToken);
+    HRESULT Initialize2([in] IUnknown *emitter, [in] const WCHAR *tempFilename, [in] IStream *pIStream,
+                        [in] BOOL fFullBuild, [in] const WCHAR *finalFilename);
+    HRESULT DefineConstant([in] const WCHAR *name, [in] VARIANT value, [in] ULONG32 cSig,
+                           [in, size_is(cSig)] unsigned char signature[]);
+    HRESULT Abort();
+}
+
+[
+    object,
+    uuid(0b97726e-9e6d-4f05-9a26-424022093caa),
+    pointer_default(unique)
+]
+interface ISymUnmanagedWriter2 : ISymUnmanagedWriter
+{
+    HRESULT DefineLocalVariable2([in] const WCHAR *name, [in] ULONG32 attributes, [in] mdSignature sigToken,
+                                 [in] ULONG32 addrKind, [in] ULONG32 addr1, [in] ULONG32 addr2, [in] ULONG32 addr3,
+                                 [in] ULONG32 startOffset, [in] ULONG32 endOffset);
+    HRESULT DefineGlobalVariable2([in] const WCHAR *name, [in] ULONG32 attributes, [in] mdSignature sigToken,
+                                  [in] ULONG32 addrKind, [in] ULONG32 addr1, [in] ULONG32 addr2, [in] ULONG32 addr3);
+    HRESULT DefineConstant2([in] const WCHAR *name, [in] VARIANT value, [in] mdSignature sigToken);
+}
+
+[
+    object,
+    uuid(12f1e02c-1e05-4b0e-9468-ebc9d1bb040f),
+    pointer_default(unique)
+]
+interface ISymUnmanagedWriter3 : ISymUnmanagedWriter2
+{
+    HRESULT OpenMethod2([in] mdMethodDef method, [in] ULONG32 isect, [in] ULONG32 offset);
+    HRESULT Commit();
+}
+
+[
+    object,
+    uuid(bc7e3f53-f458-4c23-9dbd-a189e6e96594),
+    pointer_default(unique)
+]
+interface ISymUnmanagedWriter4 : ISymUnmanagedWriter3
+{
+    HRESULT GetDebugInfoWithPadding([in, out] IMAGE_DEBUG_DIRECTORY *pIDD, [in] DWORD cbData, [out] DWORD* pcData,
+                                    [out, size_is(cbData), length_is(*pcData)] BYTE data[]);
+}
+
+[
+    object,
+    uuid(dcf7780d-bde9-45df-acfe-21731a32000c),
+    pointer_default(unique)
+]
+interface ISymUnmanagedWriter5 : ISymUnmanagedWriter4
+{
+    HRESULT OpenMapTokensToSourceSpans();
+    HRESULT CloseMapTokensToSourceSpans();
+    HRESULT MapTokenToSourceSpan([in] mdToken token, [in] ISymUnmanagedDocumentWriter* document,
+                                 [in] ULONG32 line, [in] ULONG32 column, [in] ULONG32 endLine, [in] ULONG32 endColumn);
+}
+
+cpp_quote("DEFINE_GUID(CLSID_CorSymWriter_SxS, 0x0ae2deb0,0xf901,0x478b,0xbb,0x9f,0x88,0x1e,0xe8,0x06,0x67,0x88);")

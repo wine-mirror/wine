@@ -1,0 +1,21 @@
+MODULE = windows.gaming.input.dll
+IMPORTS = combase uuid user32 dinput8 setupapi hid
+
+SOURCES = \
+	async.c \
+	async_private.idl \
+	classes.idl \
+	condition_effect.c \
+	constant_effect.c \
+	controller.c \
+	event_handlers.c \
+	force_feedback.c \
+	gamepad.c \
+	main.c \
+	manager.c \
+	periodic_effect.c \
+	provider.c \
+	provider.idl \
+	racing_wheel.c \
+	ramp_effect.c \
+	vector.c

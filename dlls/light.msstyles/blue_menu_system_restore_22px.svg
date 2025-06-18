@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="bitmap:22-32" width="22" height="40" version="1.1" viewBox="0 0 5.8207 10.583" xmlns="http://www.w3.org/2000/svg">
+ <rect x=".92597" y="1.9844" width="2.3812" height="2.3812" fill="none" stroke="#000" stroke-width=".79375"/>
+ <g transform="translate(-4.5575e-5 .52917)">
+  <path d="m1.5875-3.33e-6h3.175v0.52917h-3.175z" stroke-width=".26458"/>
+  <path d="m1.5875 5.2917h3.175v0.52917h-3.175z" fill="#aeaeae" stroke-width=".26458"/>
+  <path d="m4.2333 0.52916h0.52917v2.6458h-0.52917z" stroke-width=".26458"/>
+  <path d="m4.2333 5.8208h0.52917v2.6458h-0.52917z" fill="#aeaeae" stroke-width=".26458"/>
+ </g>
+ <rect x=".92597" y="7.276" width="2.3812" height="2.3812" fill="none" stroke="#aeaeae" stroke-width=".79375"/>
+</svg>

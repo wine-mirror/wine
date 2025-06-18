@@ -1,0 +1,33 @@
+/*
+ * Copyright 2017 Alistair Leslie-Hughes
+ * Copyright 2019 Vijay Kiran Kamuju
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "wmdrmsdk.idl";
+
+typedef enum WMT_RIGHTS {
+    WMT_RIGHT_PLAYBACK                = 0x00000001,
+    WMT_RIGHT_COPY_TO_NON_SDMI_DEVICE = 0x00000002,
+    WMT_RIGHT_COPY_TO_CD              = 0x00000008,
+    WMT_RIGHT_COPY_TO_SDMI_DEVICE     = 0x00000010,
+    WMT_RIGHT_ONE_TIME                = 0x00000020,
+    WMT_RIGHT_SAVE_STREAM_PROTECTED   = 0x00000040,
+    WMT_RIGHT_COPY                    = 0x00000080,
+    WMT_RIGHT_COLLABORATIVE_PLAY      = 0x00000100,
+    WMT_RIGHT_SDMI_TRIGGER            = 0x00010000,
+    WMT_RIGHT_SDMI_NOMORECOPIES       = 0x00020000
+} WMT_RIGHTS;

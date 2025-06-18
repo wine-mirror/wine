@@ -1,0 +1,2323 @@
+SplineFontDB: 3.0
+FontName: small_fonts
+FullName: Small Fonts
+FamilyName: Small Fonts
+Weight: Medium
+Copyright: Copyright (C) 2006 Huw D M Davies, Dmitry Timoshkov, Aric Stewart
+UComments: "#pragma makedep font jsmalle.fon -d 128 11,932,7"
+Version: 001.000
+ItalicAngle: 0
+UnderlinePosition: -18618.2
+UnderlineWidth: 9309.09
+Ascent: 1676
+Descent: 372
+InvalidEm: 0
+LayerCount: 2
+Layer: 0 0 "Back" 1
+Layer: 1 0 "Fore" 0
+XUID: [1021 180 78732788 213171]
+FSType: 8
+OS2Version: 0
+OS2_WeightWidthSlopeOnly: 0
+OS2_UseTypoMetrics: 0
+PfmFamily: 33
+TTFWeight: 400
+TTFWidth: 5
+LineGap: 16756
+VLineGap: 0
+Panose: 2 11 6 3 0 0 0 0 0 0
+OS2TypoAscent: 0
+OS2TypoAOffset: 1
+OS2TypoDescent: 0
+OS2TypoDOffset: 1
+OS2TypoLinegap: 16756
+OS2WinAscent: 0
+OS2WinAOffset: 1
+OS2WinDescent: 0
+OS2WinDOffset: 1
+HheadAscent: 0
+HheadAOffset: 1
+HheadDescent: 0
+HheadDOffset: 1
+OS2SubXSize: -5213
+OS2SubYSize: 13964
+OS2SubXOff: -14336
+OS2SubYOff: -19363
+OS2SupXSize: 20480
+OS2SupYSize: -21597
+OS2SupXOff: -12660
+OS2SupYOff: 7447
+OS2StrikeYSize: 7075
+OS2StrikeYPos: 11729
+OS2Vendor: 'Wine'
+Lookup: 4 0 0 "'frac' Diagonal Fractions lookup 0" {"'frac' Diagonal Fractions lookup 0 subtable" } ['frac' ('DFLT' <'dflt' > ) ]
+DEI: 91125
+LangName: 1033 "" "" "" "" "" "" "" "" "Created with FontForge (http://fontforge.sourceforge.net)" "Huw D M Davies" "" "http://www.winehq.org" "" "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.+AAoA +AAoA-This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.+AAoA +AAoA-You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA+AAoA" "http://www.gnu.org/licenses/lgpl.html"
+Encoding: UnicodeBmp
+UnicodeInterp: none
+NameList: Adobe Glyph List
+DisplaySize: 11
+AntiAlias: 1
+FitToEm: 1
+WinInfo: 64 32 21
+OnlyBitmaps: 1
+TeXData: 1 0 0 189792 94896 63264 0 1048576 63264 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
+BeginChars: 65536 228
+
+StartChar: A
+Encoding: 65 65 0
+Width: 1303
+Flags: W
+TeX: 12102 0
+LayerCount: 2
+EndChar
+
+StartChar: exclam
+Encoding: 33 33 1
+Width: 1303
+Flags: W
+TeX: 18804 0
+LayerCount: 2
+EndChar
+
+StartChar: quotedbl
+Encoding: 34 34 2
+Width: 1303
+Flags: W
+TeX: 21039 0
+LayerCount: 2
+EndChar
+
+StartChar: space
+Encoding: 32 32 3
+Width: 1303
+Flags: W
+TeX: 21411 0
+LayerCount: 2
+EndChar
+
+StartChar: numbersign
+Encoding: 35 35 4
+Width: 1303
+Flags: W
+TeX: 20480 0
+LayerCount: 2
+EndChar
+
+StartChar: dollar
+Encoding: 36 36 5
+Width: 1303
+Flags: W
+TeX: 18618 0
+LayerCount: 2
+EndChar
+
+StartChar: percent
+Encoding: 37 37 6
+Width: 1303
+Flags: W
+TeX: 20852 0
+LayerCount: 2
+EndChar
+
+StartChar: ampersand
+Encoding: 38 38 7
+Width: 1303
+Flags: W
+TeX: 18060 0
+LayerCount: 2
+EndChar
+
+StartChar: quotesingle
+Encoding: 39 39 8
+Width: 1303
+Flags: W
+TeX: 21039 0
+LayerCount: 2
+EndChar
+
+StartChar: parenleft
+Encoding: 40 40 9
+Width: 1303
+Flags: W
+TeX: 20852 0
+LayerCount: 2
+EndChar
+
+StartChar: parenright
+Encoding: 41 41 10
+Width: 1303
+Flags: W
+TeX: 20852 0
+LayerCount: 2
+EndChar
+
+StartChar: asterisk
+Encoding: 42 42 11
+Width: 1303
+Flags: W
+TeX: 18060 0
+LayerCount: 2
+EndChar
+
+StartChar: plus
+Encoding: 43 43 12
+Width: 1303
+Flags: W
+TeX: 20852 0
+LayerCount: 2
+EndChar
+
+StartChar: comma
+Encoding: 44 44 13
+Width: 1303
+Flags: W
+TeX: 18432 0
+LayerCount: 2
+EndChar
+
+StartChar: hyphen
+Encoding: 45 45 14
+Width: 1303
+Flags: W
+TeX: 19363 0
+LayerCount: 2
+EndChar
+
+StartChar: period
+Encoding: 46 46 15
+Width: 1303
+Flags: W
+TeX: 20852 0
+LayerCount: 2
+EndChar
+
+StartChar: slash
+Encoding: 47 47 16
+Width: 1303
+Flags: W
+TeX: 21411 0
+LayerCount: 2
+EndChar
+
+StartChar: zero
+Encoding: 48 48 17
+Width: 1303
+Flags: W
+TeX: 22714 0
+LayerCount: 2
+EndChar
+
+StartChar: one
+Encoding: 49 49 18
+Width: 1303
+Flags: W
+TeX: 20666 0
+LayerCount: 2
+EndChar
+
+StartChar: two
+Encoding: 50 50 19
+Width: 1303
+Flags: W
+TeX: 21597 0
+LayerCount: 2
+EndChar
+
+StartChar: three
+Encoding: 51 51 20
+Width: 1303
+Flags: W
+TeX: 21597 0
+LayerCount: 2
+EndChar
+
+StartChar: four
+Encoding: 52 52 21
+Width: 1303
+Flags: W
+TeX: 18991 0
+LayerCount: 2
+EndChar
+
+StartChar: five
+Encoding: 53 53 22
+Width: 1303
+Flags: W
+TeX: 18991 0
+LayerCount: 2
+EndChar
+
+StartChar: six
+Encoding: 54 54 23
+Width: 1303
+Flags: W
+TeX: 21411 0
+LayerCount: 2
+EndChar
+
+StartChar: seven
+Encoding: 55 55 24
+Width: 1303
+Flags: W
+TeX: 21411 0
+LayerCount: 2
+EndChar
+
+StartChar: eight
+Encoding: 56 56 25
+Width: 1303
+Flags: W
+TeX: 18804 0
+LayerCount: 2
+EndChar
+
+StartChar: nine
+Encoding: 57 57 26
+Width: 1303
+Flags: W
+TeX: 20480 0
+LayerCount: 2
+EndChar
+
+StartChar: colon
+Encoding: 58 58 27
+Width: 1303
+Flags: W
+TeX: 18432 0
+LayerCount: 2
+EndChar
+
+StartChar: semicolon
+Encoding: 59 59 28
+Width: 1303
+Flags: W
+TeX: 21411 0
+LayerCount: 2
+EndChar
+
+StartChar: less
+Encoding: 60 60 29
+Width: 1303
+Flags: W
+TeX: 20108 0
+LayerCount: 2
+EndChar
+
+StartChar: equal
+Encoding: 61 61 30
+Width: 1303
+Flags: W
+TeX: 18804 0
+LayerCount: 2
+EndChar
+
+StartChar: greater
+Encoding: 62 62 31
+Width: 1303
+Flags: W
+TeX: 19177 0
+LayerCount: 2
+EndChar
+
+StartChar: question
+Encoding: 63 63 32
+Width: 1303
+Flags: W
+TeX: 21039 0
+LayerCount: 2
+EndChar
+
+StartChar: at
+Encoding: 64 64 33
+Width: 1303
+Flags: W
+TeX: 18060 0
+LayerCount: 2
+EndChar
+
+StartChar: B
+Encoding: 66 66 34
+Width: 1303
+Flags: W
+TeX: 12288 0
+LayerCount: 2
+EndChar
+
+StartChar: C
+Encoding: 67 67 35
+Width: 1303
+Flags: W
+TeX: 12474 0
+LayerCount: 2
+EndChar
+
+StartChar: D
+Encoding: 68 68 36
+Width: 1303
+Flags: W
+TeX: 12660 0
+LayerCount: 2
+EndChar
+
+StartChar: E
+Encoding: 69 69 37
+Width: 1303
+Flags: W
+TeX: 12847 0
+LayerCount: 2
+EndChar
+
+StartChar: F
+Encoding: 70 70 38
+Width: 1303
+Flags: W
+TeX: 13033 0
+LayerCount: 2
+EndChar
+
+StartChar: G
+Encoding: 71 71 39
+Width: 1303
+Flags: W
+TeX: 13219 0
+LayerCount: 2
+EndChar
+
+StartChar: H
+Encoding: 72 72 40
+Width: 1303
+Flags: W
+TeX: 13405 0
+LayerCount: 2
+EndChar
+
+StartChar: I
+Encoding: 73 73 41
+Width: 1303
+Flags: W
+TeX: 13591 0
+LayerCount: 2
+EndChar
+
+StartChar: J
+Encoding: 74 74 42
+Width: 1303
+Flags: W
+TeX: 13777 0
+LayerCount: 2
+EndChar
+
+StartChar: K
+Encoding: 75 75 43
+Width: 1303
+Flags: W
+TeX: 13964 0
+LayerCount: 2
+EndChar
+
+StartChar: L
+Encoding: 76 76 44
+Width: 1303
+Flags: W
+TeX: 14150 0
+LayerCount: 2
+EndChar
+
+StartChar: M
+Encoding: 77 77 45
+Width: 1303
+Flags: W
+TeX: 14336 0
+LayerCount: 2
+EndChar
+
+StartChar: N
+Encoding: 78 78 46
+Width: 1303
+Flags: W
+TeX: 14522 0
+LayerCount: 2
+EndChar
+
+StartChar: O
+Encoding: 79 79 47
+Width: 1303
+Flags: W
+TeX: 14708 0
+LayerCount: 2
+EndChar
+
+StartChar: P
+Encoding: 80 80 48
+Width: 1303
+Flags: W
+TeX: 14895 0
+LayerCount: 2
+EndChar
+
+StartChar: Q
+Encoding: 81 81 49
+Width: 1303
+Flags: W
+TeX: 15081 0
+LayerCount: 2
+EndChar
+
+StartChar: R
+Encoding: 82 82 50
+Width: 1303
+Flags: W
+TeX: 15267 0
+LayerCount: 2
+EndChar
+
+StartChar: S
+Encoding: 83 83 51
+Width: 1303
+Flags: W
+TeX: 15453 0
+LayerCount: 2
+EndChar
+
+StartChar: T
+Encoding: 84 84 52
+Width: 1303
+Flags: W
+TeX: 15639 0
+LayerCount: 2
+EndChar
+
+StartChar: U
+Encoding: 85 85 53
+Width: 1303
+Flags: W
+TeX: 15825 0
+LayerCount: 2
+EndChar
+
+StartChar: V
+Encoding: 86 86 54
+Width: 1303
+Flags: W
+TeX: 16012 0
+LayerCount: 2
+EndChar
+
+StartChar: W
+Encoding: 87 87 55
+Width: 1303
+Flags: W
+TeX: 16198 0
+LayerCount: 2
+EndChar
+
+StartChar: X
+Encoding: 88 88 56
+Width: 1303
+Flags: W
+TeX: 16384 0
+LayerCount: 2
+EndChar
+
+StartChar: Y
+Encoding: 89 89 57
+Width: 1303
+Flags: W
+TeX: 16570 0
+LayerCount: 2
+EndChar
+
+StartChar: Z
+Encoding: 90 90 58
+Width: 1303
+Flags: W
+TeX: 16756 0
+LayerCount: 2
+EndChar
+
+StartChar: bracketleft
+Encoding: 91 91 59
+Width: 1303
+Flags: W
+TeX: 18246 0
+LayerCount: 2
+EndChar
+
+StartChar: backslash
+Encoding: 92 92 60
+Width: 1303
+Flags: W
+TeX: 18246 0
+LayerCount: 2
+EndChar
+
+StartChar: bracketright
+Encoding: 93 93 61
+Width: 1303
+Flags: W
+TeX: 18246 0
+LayerCount: 2
+EndChar
+
+StartChar: asciicircum
+Encoding: 94 94 62
+Width: 1303
+Flags: W
+TeX: 18060 0
+LayerCount: 2
+EndChar
+
+StartChar: underscore
+Encoding: 95 95 63
+Width: 1303
+Flags: W
+TeX: 21783 0
+LayerCount: 2
+EndChar
+
+StartChar: grave
+Encoding: 96 96 64
+Width: 1303
+Flags: W
+TeX: 19177 0
+LayerCount: 2
+EndChar
+
+StartChar: a
+Encoding: 97 97 65
+Width: 1303
+Flags: W
+TeX: 18060 0
+LayerCount: 2
+EndChar
+
+StartChar: b
+Encoding: 98 98 66
+Width: 1303
+Flags: W
+TeX: 18246 0
+LayerCount: 2
+EndChar
+
+StartChar: c
+Encoding: 99 99 67
+Width: 1303
+Flags: W
+TeX: 18432 0
+LayerCount: 2
+EndChar
+
+StartChar: d
+Encoding: 100 100 68
+Width: 1303
+Flags: W
+TeX: 18618 0
+LayerCount: 2
+EndChar
+
+StartChar: e
+Encoding: 101 101 69
+Width: 1303
+Flags: W
+TeX: 18804 0
+LayerCount: 2
+EndChar
+
+StartChar: f
+Encoding: 102 102 70
+Width: 1303
+Flags: W
+TeX: 18991 0
+LayerCount: 2
+EndChar
+
+StartChar: g
+Encoding: 103 103 71
+Width: 1303
+Flags: W
+TeX: 19177 0
+LayerCount: 2
+EndChar
+
+StartChar: h
+Encoding: 104 104 72
+Width: 1303
+Flags: W
+TeX: 19363 0
+LayerCount: 2
+EndChar
+
+StartChar: i
+Encoding: 105 105 73
+Width: 1303
+Flags: W
+TeX: 19549 0
+LayerCount: 2
+EndChar
+
+StartChar: j
+Encoding: 106 106 74
+Width: 1303
+Flags: W
+TeX: 19735 0
+LayerCount: 2
+EndChar
+
+StartChar: k
+Encoding: 107 107 75
+Width: 1303
+Flags: W
+TeX: 19921 0
+LayerCount: 2
+EndChar
+
+StartChar: l
+Encoding: 108 108 76
+Width: 1303
+Flags: W
+TeX: 20108 0
+LayerCount: 2
+EndChar
+
+StartChar: m
+Encoding: 109 109 77
+Width: 1303
+Flags: W
+TeX: 20294 0
+LayerCount: 2
+EndChar
+
+StartChar: n
+Encoding: 110 110 78
+Width: 1303
+Flags: W
+TeX: 20480 0
+LayerCount: 2
+EndChar
+
+StartChar: o
+Encoding: 111 111 79
+Width: 1303
+Flags: W
+TeX: 20666 0
+LayerCount: 2
+EndChar
+
+StartChar: p
+Encoding: 112 112 80
+Width: 1303
+Flags: W
+TeX: 20852 0
+LayerCount: 2
+EndChar
+
+StartChar: q
+Encoding: 113 113 81
+Width: 1303
+Flags: W
+TeX: 21039 0
+LayerCount: 2
+EndChar
+
+StartChar: r
+Encoding: 114 114 82
+Width: 1303
+Flags: W
+TeX: 21225 0
+LayerCount: 2
+EndChar
+
+StartChar: s
+Encoding: 115 115 83
+Width: 1303
+Flags: W
+TeX: 21411 0
+LayerCount: 2
+EndChar
+
+StartChar: t
+Encoding: 116 116 84
+Width: 1303
+Flags: W
+TeX: 21597 0
+LayerCount: 2
+EndChar
+
+StartChar: u
+Encoding: 117 117 85
+Width: 1303
+Flags: W
+TeX: 21783 0
+LayerCount: 2
+EndChar
+
+StartChar: v
+Encoding: 118 118 86
+Width: 1303
+Flags: W
+TeX: 21969 0
+LayerCount: 2
+EndChar
+
+StartChar: w
+Encoding: 119 119 87
+Width: 1303
+Flags: W
+TeX: 22156 0
+LayerCount: 2
+EndChar
+
+StartChar: x
+Encoding: 120 120 88
+Width: 1303
+Flags: W
+TeX: 22342 0
+LayerCount: 2
+EndChar
+
+StartChar: y
+Encoding: 121 121 89
+Width: 1303
+Flags: W
+TeX: 22528 0
+LayerCount: 2
+EndChar
+
+StartChar: z
+Encoding: 122 122 90
+Width: 1303
+Flags: W
+TeX: 22714 0
+LayerCount: 2
+EndChar
+
+StartChar: braceleft
+Encoding: 123 123 91
+Width: 1303
+Flags: W
+TeX: 18246 0
+LayerCount: 2
+EndChar
+
+StartChar: bar
+Encoding: 124 124 92
+Width: 1303
+Flags: W
+TeX: 18246 0
+LayerCount: 2
+EndChar
+
+StartChar: braceright
+Encoding: 125 125 93
+Width: 1303
+Flags: W
+TeX: 18246 0
+LayerCount: 2
+EndChar
+
+StartChar: asciitilde
+Encoding: 126 126 94
+Width: 1303
+Flags: W
+TeX: 18060 0
+LayerCount: 2
+EndChar
+
+StartChar: NameMe-127
+Encoding: 127 127 95
+Width: 1303
+Flags: W
+TeX: 14522 0
+LayerCount: 2
+EndChar
+
+StartChar: NameMe-128
+Encoding: 128 128 96
+Width: 1861
+Flags: W
+TeX: 14522 0
+LayerCount: 2
+EndChar
+
+StartChar: NameMe-129
+Encoding: 129 129 97
+Width: 372
+Flags: W
+TeX: 14522 0
+LayerCount: 2
+EndChar
+
+StartChar: NameMe-130
+Encoding: 130 130 98
+Width: 1861
+Flags: W
+TeX: 14522 0
+LayerCount: 2
+EndChar
+
+StartChar: NameMe-131
+Encoding: 131 131 99
+Width: 372
+Flags: W
+TeX: 14522 0
+LayerCount: 2
+EndChar
+
+StartChar: NameMe-132
+Encoding: 132 132 100
+Width: 1861
+Flags: W
+TeX: 14522 0
+LayerCount: 2
+EndChar
+
+StartChar: Euro
+Encoding: 8364 8364 101
+Width: 372
+Flags: W
+TeX: 12847 0
+LayerCount: 2
+EndChar
+
+StartChar: quotesinglbase
+Encoding: 8218 8218 102
+Width: 372
+Flags: W
+TeX: 21039 0
+LayerCount: 2
+EndChar
+
+StartChar: florin
+Encoding: 402 402 103
+Width: 2048
+Flags: W
+TeX: 18991 0
+LayerCount: 2
+EndChar
+
+StartChar: quotedblbase
+Encoding: 8222 8222 104
+Width: 744
+Flags: W
+TeX: 21039 0
+LayerCount: 2
+EndChar
+
+StartChar: ellipsis
+Encoding: 8230 8230 105
+Width: 1117
+Flags: W
+TeX: 18804 0
+LayerCount: 2
+EndChar
+
+StartChar: dagger
+Encoding: 8224 8224 106
+Width: 1117
+Flags: W
+TeX: 18618 0
+LayerCount: 2
+EndChar
+
+StartChar: daggerdbl
+Encoding: 8225 8225 107
+Width: 1117
+Flags: W
+TeX: 18618 0
+LayerCount: 2
+EndChar
+
+StartChar: perthousand
+Encoding: 8240 8240 108
+Width: 1489
+Flags: W
+TeX: 20852 0
+LayerCount: 2
+EndChar
+
+StartChar: guilsinglleft
+Encoding: 8249 8249 109
+Width: 930
+Flags: W
+TeX: 19177 0
+LayerCount: 2
+EndChar
+
+StartChar: quoteleft
+Encoding: 8216 8216 110
+Width: 558
+Flags: W
+TeX: 21039 0
+LayerCount: 2
+EndChar
+
+StartChar: quoteright
+Encoding: 8217 8217 111
+Width: 558
+Flags: W
+TeX: 21039 0
+LayerCount: 2
+EndChar
+
+StartChar: quotedblleft
+Encoding: 8220 8220 112
+Width: 930
+Flags: W
+TeX: 21039 0
+LayerCount: 2
+EndChar
+
+StartChar: quotedblright
+Encoding: 8221 8221 113
+Width: 930
+Flags: W
+TeX: 21039 0
+LayerCount: 2
+EndChar
+
+StartChar: bullet
+Encoding: 8226 8226 114
+Width: 558
+Flags: W
+TeX: 18246 0
+LayerCount: 2
+EndChar
+
+StartChar: endash
+Encoding: 8211 8211 115
+Width: 930
+Flags: W
+TeX: 18804 0
+LayerCount: 2
+EndChar
+
+StartChar: emdash
+Encoding: 8212 8212 116
+Width: 1489
+Flags: W
+TeX: 18804 0
+LayerCount: 2
+EndChar
+
+StartChar: trademark
+Encoding: 8482 8482 117
+Width: 1675
+Flags: W
+TeX: 21597 0
+LayerCount: 2
+EndChar
+
+StartChar: guilsinglright
+Encoding: 8250 8250 118
+Width: 930
+Flags: W
+TeX: 19177 0
+LayerCount: 2
+EndChar
+
+StartChar: circumflex
+Encoding: 710 710 119
+Width: 744
+Flags: W
+TeX: 18432 0
+LayerCount: 2
+EndChar
+
+StartChar: tilde
+Encoding: 732 732 120
+Width: 930
+Flags: W
+TeX: 21597 0
+LayerCount: 2
+EndChar
+
+StartChar: Scaron
+Encoding: 352 352 121
+Width: 2048
+Flags: W
+TeX: 15453 0
+LayerCount: 2
+EndChar
+
+StartChar: OE
+Encoding: 338 338 122
+Width: 2048
+Flags: W
+TeX: 14708 0
+LayerCount: 2
+EndChar
+
+StartChar: Zcaron
+Encoding: 381 381 123
+Width: 2048
+Flags: W
+TeX: 16756 0
+LayerCount: 2
+EndChar
+
+StartChar: scaron
+Encoding: 353 353 124
+Width: 2048
+Flags: W
+TeX: 21411 0
+LayerCount: 2
+EndChar
+
+StartChar: oe
+Encoding: 339 339 125
+Width: 2048
+Flags: W
+TeX: 20666 0
+LayerCount: 2
+EndChar
+
+StartChar: zcaron
+Encoding: 382 382 126
+Width: 2048
+Flags: W
+TeX: 22714 0
+LayerCount: 2
+EndChar
+
+StartChar: Ydieresis
+Encoding: 376 376 127
+Width: 2048
+Flags: W
+TeX: 16570 0
+LayerCount: 2
+EndChar
+
+StartChar: NameMe-141
+Encoding: 141 141 128
+Width: 372
+Flags: W
+TeX: 14522 0
+LayerCount: 2
+EndChar
+
+StartChar: NameMe-143
+Encoding: 143 143 129
+Width: 372
+Flags: W
+TeX: 14522 0
+LayerCount: 2
+EndChar
+
+StartChar: NameMe-144
+Encoding: 144 144 130
+Width: 372
+Flags: W
+TeX: 14522 0
+LayerCount: 2
+EndChar
+
+StartChar: NameMe-157
+Encoding: 157 157 131
+Width: 372
+Flags: W
+TeX: 14522 0
+LayerCount: 2
+EndChar
+
+StartChar: nonbreakingspace
+Encoding: 160 160 132
+Width: 372
+Flags: W
+TeX: 20480 0
+LayerCount: 2
+EndChar
+
+StartChar: exclamdown
+Encoding: 161 161 133
+Width: 1303
+Flags: W
+TeX: 18804 0
+LayerCount: 2
+EndChar
+
+StartChar: cent
+Encoding: 162 162 134
+Width: 1303
+Flags: W
+TeX: 18432 0
+LayerCount: 2
+EndChar
+
+StartChar: sterling
+Encoding: 163 163 135
+Width: 1303
+Flags: W
+TeX: 21411 0
+LayerCount: 2
+EndChar
+
+StartChar: currency
+Encoding: 164 164 136
+Width: 1303
+Flags: W
+TeX: 18432 0
+LayerCount: 2
+EndChar
+
+StartChar: yen
+Encoding: 165 165 137
+Width: 1303
+Flags: W
+TeX: 22528 0
+LayerCount: 2
+EndChar
+
+StartChar: brokenbar
+Encoding: 166 166 138
+Width: 1303
+Flags: W
+TeX: 18246 0
+LayerCount: 2
+EndChar
+
+StartChar: section
+Encoding: 167 167 139
+Width: 1303
+Flags: W
+TeX: 21411 0
+LayerCount: 2
+EndChar
+
+StartChar: dieresis
+Encoding: 168 168 140
+Width: 1303
+Flags: W
+TeX: 18618 0
+LayerCount: 2
+EndChar
+
+StartChar: copyright
+Encoding: 169 169 141
+Width: 1303
+Flags: W
+TeX: 18432 0
+LayerCount: 2
+EndChar
+
+StartChar: ordfeminine
+Encoding: 170 170 142
+Width: 1303
+Flags: W
+TeX: 20666 0
+LayerCount: 2
+EndChar
+
+StartChar: guillemotleft
+Encoding: 171 171 143
+Width: 1303
+Flags: W
+TeX: 19177 0
+LayerCount: 2
+EndChar
+
+StartChar: logicalnot
+Encoding: 172 172 144
+Width: 1303
+Flags: W
+TeX: 20108 0
+LayerCount: 2
+EndChar
+
+StartChar: softhyphen
+Encoding: 173 173 145
+Width: 1303
+Flags: W
+TeX: 21411 0
+LayerCount: 2
+EndChar
+
+StartChar: registered
+Encoding: 174 174 146
+Width: 1303
+Flags: W
+TeX: 21225 0
+LayerCount: 2
+EndChar
+
+StartChar: macron
+Encoding: 175 175 147
+Width: 1303
+Flags: W
+TeX: 20294 0
+LayerCount: 2
+EndChar
+
+StartChar: degree
+Encoding: 176 176 148
+Width: 1303
+Flags: W
+TeX: 18618 0
+LayerCount: 2
+EndChar
+
+StartChar: plusminus
+Encoding: 177 177 149
+Width: 1303
+Flags: W
+TeX: 20852 0
+LayerCount: 2
+EndChar
+
+StartChar: uni00B2
+Encoding: 178 178 150
+Width: 1303
+Flags: W
+TeX: 21783 0
+LayerCount: 2
+EndChar
+
+StartChar: uni00B3
+Encoding: 179 179 151
+Width: 1303
+Flags: W
+TeX: 21783 0
+LayerCount: 2
+EndChar
+
+StartChar: acute
+Encoding: 180 180 152
+Width: 1303
+Flags: W
+TeX: 18060 0
+LayerCount: 2
+EndChar
+
+StartChar: uni00B5
+Encoding: 181 181 153
+Width: 1303
+Flags: W
+TeX: 21783 0
+LayerCount: 2
+EndChar
+
+StartChar: paragraph
+Encoding: 182 182 154
+Width: 1303
+Flags: W
+TeX: 20852 0
+LayerCount: 2
+EndChar
+
+StartChar: periodcentered
+Encoding: 183 183 155
+Width: 1303
+Flags: W
+TeX: 20852 0
+LayerCount: 2
+EndChar
+
+StartChar: cedilla
+Encoding: 184 184 156
+Width: 1303
+Flags: W
+TeX: 18432 0
+LayerCount: 2
+EndChar
+
+StartChar: uni00B9
+Encoding: 185 185 157
+Width: 1303
+Flags: W
+TeX: 21783 0
+LayerCount: 2
+EndChar
+
+StartChar: ordmasculine
+Encoding: 186 186 158
+Width: 1303
+Flags: W
+TeX: 20666 0
+LayerCount: 2
+EndChar
+
+StartChar: guillemotright
+Encoding: 187 187 159
+Width: 1303
+Flags: W
+TeX: 19177 0
+LayerCount: 2
+EndChar
+
+StartChar: onequarter
+Encoding: 188 188 160
+Width: 1303
+Flags: W
+TeX: 20666 0
+LayerCount: 2
+Ligature2: "'frac' Diagonal Fractions lookup 0 subtable" one slash four
+Ligature2: "'frac' Diagonal Fractions lookup 0 subtable" one fraction four
+EndChar
+
+StartChar: onehalf
+Encoding: 189 189 161
+Width: 1303
+Flags: W
+TeX: 20666 0
+LayerCount: 2
+Ligature2: "'frac' Diagonal Fractions lookup 0 subtable" one slash two
+Ligature2: "'frac' Diagonal Fractions lookup 0 subtable" one fraction two
+EndChar
+
+StartChar: threequarters
+Encoding: 190 190 162
+Width: 1303
+Flags: W
+TeX: 21597 0
+LayerCount: 2
+Ligature2: "'frac' Diagonal Fractions lookup 0 subtable" three slash four
+Ligature2: "'frac' Diagonal Fractions lookup 0 subtable" three fraction four
+EndChar
+
+StartChar: questiondown
+Encoding: 191 191 163
+Width: 1303
+Flags: W
+TeX: 21039 0
+LayerCount: 2
+EndChar
+
+StartChar: Agrave
+Encoding: 192 192 164
+Width: 1303
+Flags: W
+TeX: 12102 0
+LayerCount: 2
+EndChar
+
+StartChar: Aacute
+Encoding: 193 193 165
+Width: 1303
+Flags: W
+TeX: 12102 0
+LayerCount: 2
+EndChar
+
+StartChar: Acircumflex
+Encoding: 194 194 166
+Width: 1303
+Flags: W
+TeX: 12102 0
+LayerCount: 2
+EndChar
+
+StartChar: Atilde
+Encoding: 195 195 167
+Width: 1303
+Flags: W
+TeX: 12102 0
+LayerCount: 2
+EndChar
+
+StartChar: Adieresis
+Encoding: 196 196 168
+Width: 1303
+Flags: W
+TeX: 12102 0
+LayerCount: 2
+EndChar
+
+StartChar: Aring
+Encoding: 197 197 169
+Width: 1303
+Flags: W
+TeX: 12102 0
+LayerCount: 2
+EndChar
+
+StartChar: AE
+Encoding: 198 198 170
+Width: 1303
+Flags: W
+TeX: 12102 0
+LayerCount: 2
+EndChar
+
+StartChar: Ccedilla
+Encoding: 199 199 171
+Width: 1303
+Flags: W
+TeX: 12474 0
+LayerCount: 2
+EndChar
+
+StartChar: Egrave
+Encoding: 200 200 172
+Width: 1303
+Flags: W
+TeX: 12847 0
+LayerCount: 2
+EndChar
+
+StartChar: Eacute
+Encoding: 201 201 173
+Width: 1303
+Flags: W
+TeX: 12847 0
+LayerCount: 2
+EndChar
+
+StartChar: Ecircumflex
+Encoding: 202 202 174
+Width: 1303
+Flags: W
+TeX: 12847 0
+LayerCount: 2
+EndChar
+
+StartChar: Edieresis
+Encoding: 203 203 175
+Width: 1303
+Flags: W
+TeX: 12847 0
+LayerCount: 2
+EndChar
+
+StartChar: Igrave
+Encoding: 204 204 176
+Width: 1303
+Flags: W
+TeX: 13591 0
+LayerCount: 2
+EndChar
+
+StartChar: Iacute
+Encoding: 205 205 177
+Width: 1303
+Flags: W
+TeX: 13591 0
+LayerCount: 2
+EndChar
+
+StartChar: Icircumflex
+Encoding: 206 206 178
+Width: 1303
+Flags: W
+TeX: 13591 0
+LayerCount: 2
+EndChar
+
+StartChar: Idieresis
+Encoding: 207 207 179
+Width: 1303
+Flags: W
+TeX: 13591 0
+LayerCount: 2
+EndChar
+
+StartChar: Eth
+Encoding: 208 208 180
+Width: 1303
+Flags: W
+TeX: 12847 0
+LayerCount: 2
+EndChar
+
+StartChar: Ntilde
+Encoding: 209 209 181
+Width: 1303
+Flags: W
+TeX: 14522 0
+LayerCount: 2
+EndChar
+
+StartChar: Ograve
+Encoding: 210 210 182
+Width: 1303
+Flags: W
+TeX: 14708 0
+LayerCount: 2
+EndChar
+
+StartChar: Oacute
+Encoding: 211 211 183
+Width: 1303
+Flags: W
+TeX: 14708 0
+LayerCount: 2
+EndChar
+
+StartChar: Ocircumflex
+Encoding: 212 212 184
+Width: 1303
+Flags: W
+TeX: 14708 0
+LayerCount: 2
+EndChar
+
+StartChar: Otilde
+Encoding: 213 213 185
+Width: 1303
+Flags: W
+TeX: 14708 0
+LayerCount: 2
+EndChar
+
+StartChar: Odieresis
+Encoding: 214 214 186
+Width: 1303
+Flags: W
+TeX: 14708 0
+LayerCount: 2
+EndChar
+
+StartChar: multiply
+Encoding: 215 215 187
+Width: 1303
+Flags: W
+TeX: 20294 0
+LayerCount: 2
+EndChar
+
+StartChar: Oslash
+Encoding: 216 216 188
+Width: 1303
+Flags: W
+TeX: 14708 0
+LayerCount: 2
+EndChar
+
+StartChar: Ugrave
+Encoding: 217 217 189
+Width: 1303
+Flags: W
+TeX: 15825 0
+LayerCount: 2
+EndChar
+
+StartChar: Uacute
+Encoding: 218 218 190
+Width: 1303
+Flags: W
+TeX: 15825 0
+LayerCount: 2
+EndChar
+
+StartChar: Ucircumflex
+Encoding: 219 219 191
+Width: 1303
+Flags: W
+TeX: 15825 0
+LayerCount: 2
+EndChar
+
+StartChar: Udieresis
+Encoding: 220 220 192
+Width: 1303
+Flags: W
+TeX: 15825 0
+LayerCount: 2
+EndChar
+
+StartChar: Yacute
+Encoding: 221 221 193
+Width: 1303
+Flags: W
+TeX: 16570 0
+LayerCount: 2
+EndChar
+
+StartChar: Thorn
+Encoding: 222 222 194
+Width: 1303
+Flags: W
+TeX: 15639 0
+LayerCount: 2
+EndChar
+
+StartChar: germandbls
+Encoding: 223 223 195
+Width: 1303
+Flags: W
+TeX: 19177 0
+LayerCount: 2
+EndChar
+
+StartChar: agrave
+Encoding: 224 224 196
+Width: -25321
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: aacute
+Encoding: 225 225 197
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: acircumflex
+Encoding: 226 226 198
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: atilde
+Encoding: 227 227 199
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: adieresis
+Encoding: 228 228 200
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: aring
+Encoding: 229 229 201
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: ae
+Encoding: 230 230 202
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: ccedilla
+Encoding: 231 231 203
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: egrave
+Encoding: 232 232 204
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: eacute
+Encoding: 233 233 205
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: ecircumflex
+Encoding: 234 234 206
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: edieresis
+Encoding: 235 235 207
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: igrave
+Encoding: 236 236 208
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: iacute
+Encoding: 237 237 209
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: icircumflex
+Encoding: 238 238 210
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: idieresis
+Encoding: 239 239 211
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: eth
+Encoding: 240 240 212
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: ntilde
+Encoding: 241 241 213
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: ograve
+Encoding: 242 242 214
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: oacute
+Encoding: 243 243 215
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: ocircumflex
+Encoding: 244 244 216
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: otilde
+Encoding: 245 245 217
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: odieresis
+Encoding: 246 246 218
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: oslash
+Encoding: 248 248 219
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: ugrave
+Encoding: 249 249 220
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: uacute
+Encoding: 250 250 221
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: ucircumflex
+Encoding: 251 251 222
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: udieresis
+Encoding: 252 252 223
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: yacute
+Encoding: 253 253 224
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: ydieresis
+Encoding: 255 255 225
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: divide
+Encoding: 247 247 226
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: thorn
+Encoding: 254 254 227
+Width: 2048
+Flags: W
+LayerCount: 2
+EndChar
+EndChars
+BitmapFont: 11 229 9 2 1
+BDFChar: 0 65 7 1 6 0 6
+0JH$gG_C_M
+BDFChar: 1 33 7 3 3 0 6
+J:N0#J,k*"
+BDFChar: 2 34 7 2 4 6 8
+TV.qX
+BDFChar: 3 32 7 0 0 0 0
+z
+BDFChar: 4 35 7 1 5 0 6
+:f-p`peXce
+BDFChar: 5 36 7 1 5 -1 6
++E48e0W8q5
+BDFChar: 6 37 7 1 6 0 5
+`5iK49T/rO
+BDFChar: 7 38 7 1 5 0 6
+5bLB@OH=,U
+BDFChar: 8 39 7 3 3 5 6
+J:IV"
+BDFChar: 9 40 7 2 3 -2 6
+5_+B8J:N0#5QCca
+BDFChar: 10 41 7 3 4 -2 6
+J3Z@b5X7S"J,fQL
+BDFChar: 11 42 7 2 4 4 6
+5iA:8
+BDFChar: 12 43 7 2 4 1 3
+5i=m-
+BDFChar: 13 44 7 3 3 -1 0
+J:IV"
+BDFChar: 14 45 7 2 3 2 2
+^]4?7
+BDFChar: 15 46 7 3 3 0 0
+J,fQL
+BDFChar: 16 47 7 2 3 0 7
+5X7S"J:N0#
+BDFChar: 17 48 7 1 4 0 6
+@$$J3OH<iM
+BDFChar: 18 49 7 2 3 0 6
+5eoWM5X7R7
+BDFChar: 19 50 7 1 4 0 6
+@#tpB5_/>(
+BDFChar: 20 51 7 1 4 0 6
+@#tpB&<L9"
+BDFChar: 21 52 7 1 4 0 6
++CJTMn/rhR
+BDFChar: 22 53 7 1 4 0 6
+n:9F.&<L9"
+BDFChar: 23 54 7 1 4 0 6
+@"<dcOH<iM
+BDFChar: 24 55 7 1 4 0 6
+n.6]b5X7R7
+BDFChar: 25 56 7 1 4 0 6
+@$$IXOH<iM
+BDFChar: 26 57 7 1 4 0 6
+@$$Ih&.i4L
+BDFChar: 27 58 7 3 3 0 3
+J,fS"
+BDFChar: 28 59 7 3 3 -1 3
+J,fS"J,fQL
+BDFChar: 29 60 7 2 4 0 4
++@(HB+92BA
+BDFChar: 30 61 7 2 4 1 3
+huM[8
+BDFChar: 31 62 7 2 4 0 4
+J3Y5BJ,fQL
+BDFChar: 32 63 7 1 4 0 6
+@#tpB5QF%L
+BDFChar: 33 64 7 0 7 -1 6
+4@5I8WKoe3
+BDFChar: 34 66 7 1 6 0 6
+pk4=qKS9+#
+BDFChar: 35 67 7 1 6 0 6
+G_CTtJ:r.I
+BDFChar: 36 68 7 1 6 0 6
+pk4<RKS9+#
+BDFChar: 37 69 7 1 5 0 6
+pjdnaJ:RCp
+BDFChar: 38 70 7 1 5 0 6
+pjdnaJ:N.M
+BDFChar: 39 71 7 1 6 0 6
+G_CU;KT(!Q
+BDFChar: 40 72 7 1 6 0 6
+KS5$VKS5!Y
+BDFChar: 41 73 7 3 3 0 6
+J:N0#J:N.M
+BDFChar: 42 74 7 1 4 0 6
+&.fBaOH<iM
+BDFChar: 43 75 7 1 5 0 6
+Lle:FTTFs0
+BDFChar: 44 76 7 1 4 0 6
+J:N0#J:R+h
+BDFChar: 45 77 7 1 6 0 6
+KZqZI["O)4
+BDFChar: 46 78 7 1 6 0 6
+`5JIIPa%+,
+BDFChar: 47 79 7 1 6 0 6
+G_Ca'KS4RM
+BDFChar: 48 80 7 1 6 0 6
+pk4=qJ:N.M
+BDFChar: 49 81 7 1 6 -1 6
+G_Ca'P`0hi
+BDFChar: 50 82 7 1 6 0 6
+pk4=qLkLE]
+BDFChar: 51 83 7 1 5 0 6
+E/9$`#`*F"
+BDFChar: 52 84 7 1 5 0 6
+p`L\%+<Vd,
+BDFChar: 53 85 7 1 5 0 6
+LkpkCLkp!M
+BDFChar: 54 86 7 1 5 0 6
+Lknl(:`pk\
+BDFChar: 55 87 7 0 6 0 6
+Jq?Bi<%'-p
+BDFChar: 56 88 7 1 5 0 6
+LknkM:l'o-
+BDFChar: 57 89 7 1 5 0 6
+LknkM+<Vd,
+BDFChar: 58 90 7 1 5 0 6
+p]qER5_/V0
+BDFChar: 59 91 7 2 3 -2 6
+^jprcJ:N0#^]4?7
+BDFChar: 60 92 7 1 5 0 8
+LknkMp`T>S+92BA
+BDFChar: 61 93 7 2 3 -2 6
+^d(.M5X7S"^]4?7
+BDFChar: 62 94 7 2 4 5 6
+5bJ)W
+BDFChar: 63 95 7 0 6 -2 -2
+rVuou
+BDFChar: 64 96 7 2 3 5 6
+J3X)7
+BDFChar: 65 97 7 1 4 0 4
+?k@:=Du]k<
+BDFChar: 66 98 7 1 4 0 6
+J:QR>OHAB#
+BDFChar: 67 99 7 1 4 0 4
+@$#o#?iU0,
+BDFChar: 68 100 7 1 4 0 6
+&.ifBOH=D]
+BDFChar: 69 101 7 1 4 0 4
+@$'l.?iU0,
+BDFChar: 70 102 7 2 3 0 6
+5_+C#J:N.M
+BDFChar: 71 103 7 1 4 -2 4
+E0-0CE"Lq-
+BDFChar: 72 104 7 1 4 0 6
+J:O<>OH>P(
+BDFChar: 73 105 7 3 3 0 6
+J,k+MJ:N.M
+BDFChar: 74 106 7 3 3 -2 6
+J,k+MJ:N0#J,fQL
+BDFChar: 75 107 7 1 4 0 6
+J:O<.^n?bh
+BDFChar: 76 108 7 3 3 0 6
+J:N0#J:N.M
+BDFChar: 77 109 7 0 6 0 4
+r0!5+OoPI^
+BDFChar: 78 110 7 1 4 0 4
+i/j%^O8o7\
+BDFChar: 79 111 7 1 5 0 4
+E/9=+Du]k<
+BDFChar: 80 112 7 1 4 -2 4
+i/j%^i.-=X
+BDFChar: 81 113 7 1 4 -2 4
+E0-0CE"EQ\
+BDFChar: 82 114 7 2 3 0 4
+^jprcJ,fQL
+BDFChar: 83 115 7 1 4 0 4
+E.D=-huE`W
+BDFChar: 84 116 7 2 3 0 5
+JA?\cJ3X)7
+BDFChar: 85 117 7 1 4 0 4
+OH>QcDu]k<
+BDFChar: 86 118 7 1 4 0 4
+OH>Q3?iU0,
+BDFChar: 87 119 7 1 5 0 4
+Lo@7K:]LIq
+BDFChar: 88 120 7 2 4 0 4
+TV+QCTE"rl
+BDFChar: 89 121 7 2 4 -2 4
+TV.sN?m*5b
+BDFChar: 90 122 7 2 4 0 4
+i#k:8huE`W
+BDFChar: 91 123 7 2 3 -2 6
+5X7S"J3Z@b5QCca
+BDFChar: 92 124 7 3 3 -1 5
+J:N0#J:N.M
+BDFChar: 93 125 7 3 4 -2 6
+J:N0#5_+B8J,fQL
+BDFChar: 94 126 7 1 4 4 5
+:nRdg
+BDFChar: 95 127 7 3 3 -1 5
+J:N0#J:N.M
+BDFChar: 96 128 2 1 1 -1 -1
+z
+BDFChar: 97 129 2 1 1 -1 5
+J:N0#J:N.M
+BDFChar: 98 130 2 1 1 -1 -1
+z
+BDFChar: 99 131 2 1 1 -1 5
+J:N0#J:N.M
+BDFChar: 100 132 11 0 0 0 0
+z
+BDFChar: 101 8364 2 1 1 -1 5
+J:N0#J:N.M
+BDFChar: 102 8218 2 1 1 -1 0
+J:IV"
+BDFChar: 103 402 7 1 6 -1 6
+$kNtp+<VfB
+BDFChar: 104 8222 4 1 3 -1 0
+TV)8b
+BDFChar: 105 8230 6 1 5 0 0
+VuQet
+BDFChar: 106 8224 6 1 5 -2 6
++<^G%+<VdL+92BA
+BDFChar: 107 8225 6 1 5 -2 6
++<^G%+<^G%+92BA
+BDFChar: 108 8240 8 1 7 0 6
+8>o?=A6Pc/
+BDFChar: 109 8249 5 1 3 0 4
++@(HB+92BA
+BDFChar: 110 8216 3 1 2 3 5
+5_-WM
+BDFChar: 111 8217 3 1 2 3 5
+^d*DM
+BDFChar: 112 8220 5 1 4 3 5
+:n[:X
+BDFChar: 113 8221 5 1 4 3 5
+n5,bX
+BDFChar: 114 8226 3 1 2 2 3
+^q]pM
+BDFChar: 115 8211 5 1 4 2 2
+n,NFg
+BDFChar: 116 8212 8 1 7 2 2
+rVuou
+BDFChar: 117 8482 9 1 8 3 6
+nQT!j
+BDFChar: 118 8250 5 1 3 0 4
+J3Y5BJ,fQL
+BDFChar: 119 710 4 1 3 5 6
+5bJ)W
+BDFChar: 120 732 5 1 4 4 5
+:nRdg
+BDFChar: 121 352 7 1 5 0 8
+:`s_5J8bdMDu]k<
+BDFChar: 122 338 7 1 6 0 6
+I#sG[OH=hi
+BDFChar: 123 381 7 1 5 0 8
+:a#N=&0O5gp](9o
+BDFChar: 124 353 7 1 4 0 7
+:`oaWJ7&rH
+BDFChar: 125 339 7 1 6 0 4
+=JWU&=9&=$
+BDFChar: 126 382 7 2 4 0 7
+TKiM8+@(J8
+BDFChar: 127 376 7 1 5 0 8
+:]Q<-:`pl'+92BA
+BDFChar: 128 141 2 1 1 -1 5
+J:N0#J:N.M
+BDFChar: 129 143 2 1 1 -1 5
+J:N0#J:N.M
+BDFChar: 130 144 2 1 1 -1 5
+J:N0#J:N.M
+BDFChar: 131 157 2 1 1 -1 5
+J:N0#J:N.M
+BDFChar: 132 160 2 0 0 0 0
+z
+BDFChar: 133 161 7 2 4 0 2
+5bL@B
+BDFChar: 134 162 7 1 4 3 8
+n:6%>J:IV"
+BDFChar: 135 163 7 1 4 0 6
+&.fBa&.n=2
+BDFChar: 136 164 7 2 4 0 2
+J3Y4W
+BDFChar: 137 165 7 3 3 4 4
+J,fQL
+BDFChar: 138 166 7 1 6 0 8
+qud.M"9\uAhuE`W
+BDFChar: 139 167 7 2 6 0 6
+p]q.%?pK5B
+BDFChar: 140 168 7 1 6 0 5
+":-\XO:VBl
+BDFChar: 141 169 7 1 5 0 5
++S^`u&7>J<
+BDFChar: 142 170 7 1 5 0 5
+p`L\%+SYp:
+BDFChar: 143 171 7 1 6 0 6
+#RL>F-qK-o
+BDFChar: 144 172 7 1 6 0 6
+5X>6883fE?
+BDFChar: 145 173 7 1 6 0 5
+E"EQl&GuM.
+BDFChar: 146 174 7 1 5 0 5
+p]u*M#l"B"
+BDFChar: 147 175 7 1 6 0 5
+Une,!&7>J<
+BDFChar: 148 176 7 1 5 4 4
+p](9o
+BDFChar: 149 177 7 1 6 0 8
+qud-:(_@6$5QCca
+BDFChar: 150 178 7 1 6 0 8
+":-\XO:Vs7&-)\1
+BDFChar: 151 179 7 0 6 0 8
+&H77_!X&c??iU0,
+BDFChar: 152 180 7 0 6 0 8
+Hk6i#&.fBarVuou
+BDFChar: 153 181 7 1 6 0 8
+#RL>6(aqq2L]@DT
+BDFChar: 154 182 7 1 6 0 8
++T*K1,U>b`&-)\1
+BDFChar: 155 183 7 1 5 0 8
+5X>*0+S['%&-)\1
+BDFChar: 156 184 7 1 6 0 8
+Hpg@jL^47t+92BA
+BDFChar: 157 185 7 0 6 0 8
+5^l+S"9\u9&-)\1
+BDFChar: 158 186 7 1 5 0 8
+p]q-2#RC\Ap](9o
+BDFChar: 159 187 7 1 6 0 8
+84`YL8-fJ4+92BA
+BDFChar: 160 188 7 1 6 0 8
+"N2Pg`$>Hkn,NFg
+BDFChar: 161 189 7 1 6 0 8
+qud-*#S8CTKE(uP
+BDFChar: 162 190 7 0 6 0 8
++<^Y-+s\9R)uos=
+BDFChar: 163 191 7 1 6 0 8
+"GDFr#RC\I+92BA
+BDFChar: 164 192 7 1 6 0 8
+HpgB0$j6\=0E;(Q
+BDFChar: 165 193 7 0 6 0 8
+!dk7ZrWic@+92BA
+BDFChar: 166 194 7 1 6 0 8
+Unjf^":,8E+92BA
+BDFChar: 167 195 7 0 6 0 8
+HiO0G"9\u9&-)\1
+BDFChar: 168 196 7 2 5 0 8
+J:N0#^n?d>J,fQL
+BDFChar: 169 197 7 1 6 0 8
+&.naN&.fBq5QCca
+BDFChar: 170 198 7 0 6 0 8
+HiO-HzrVuou
+BDFChar: 171 199 7 0 6 0 8
+rW3-&,SUM@63$uc
+BDFChar: 172 200 7 0 6 0 8
+&.ngD#S8spO8o7\
+BDFChar: 173 201 7 3 5 0 8
++<VdL+<Wp7J,fQL
+BDFChar: 174 202 7 1 6 0 8
+&.hB'6pu]]KE(uP
+BDFChar: 175 203 7 1 6 0 8
+J:N1FJ:N0#HiO-H
+BDFChar: 176 204 7 1 6 0 8
+qud-*#RCta5QCca
+BDFChar: 177 205 7 0 6 0 8
++AbTsKRs7,!WW3#
+BDFChar: 178 206 7 0 6 0 8
+&.ngP&6+gU&-)\1
+BDFChar: 179 207 7 1 6 0 8
+qud-*Leo3*#QOi)
+BDFChar: 180 208 7 1 5 0 8
+n-B#%&-)_"#QOi)
+BDFChar: 181 209 7 0 6 0 8
+&.fBa+='@6nc/Xi
+BDFChar: 182 210 7 1 6 0 8
+#RC],-kI4@^]4?7
+BDFChar: 183 211 7 1 5 0 8
+pcq)0pcq)00E;(Q
+BDFChar: 184 212 7 0 6 0 8
++<Vg++s[^2&-)\1
+BDFChar: 185 213 7 0 6 0 7
+GR+Q\#RC_8
+BDFChar: 186 214 7 1 6 0 8
+qud-*HisQTqu?]s
+BDFChar: 187 215 7 1 6 0 8
+quHWt"9\uA?iU0,
+BDFChar: 188 216 7 1 5 0 8
+LkpkCLklTb5QCca
+BDFChar: 189 217 7 1 6 0 8
+&5Z2":fN[HO8o7\
+BDFChar: 190 218 7 1 6 0 8
+J:N0#J:r`?huE`W
+BDFChar: 191 219 7 1 6 0 7
+r.K`VKS5$V
+BDFChar: 192 220 7 1 6 0 8
+r.K_+"9\uA?iU0,
+BDFChar: 193 221 7 1 6 0 7
+`$>Hg"9]!L
+BDFChar: 194 222 7 1 5 6 8
+OH<!5
+BDFChar: 195 223 7 1 3 6 8
+5bL@B
+BDFChar: 196 224 7 1 4 0 7
+5Tg&7&9*_M
+BDFChar: 197 225 7 1 4 0 7
+&0Ls\&9*_M
+BDFChar: 198 226 7 1 4 0 7
++A`&G&9*_M
+BDFChar: 199 227 7 1 4 0 7
+:nRer&9*_M
+BDFChar: 200 228 7 1 4 0 6
+:]Ol7E0,#=
+BDFChar: 201 229 7 1 4 0 8
++Aa0\?k@:=Du]k<
+BDFChar: 202 230 7 1 6 0 4
+GSGOeHiO-H
+BDFChar: 203 231 7 1 4 -2 4
+@$#o#?m%]7
+BDFChar: 204 232 7 1 4 0 7
+5Tg&7ORRd.
+BDFChar: 205 233 7 1 4 0 7
+&0Ls\ORRd.
+BDFChar: 206 234 7 1 4 0 7
++A`&GORRd.
+BDFChar: 207 235 7 1 4 0 6
+O8r[Mn:4mH
+BDFChar: 208 236 7 2 3 0 7
+J3X*"5X7S"
+BDFChar: 209 237 7 3 4 0 7
+5_&ibJ:N0#
+BDFChar: 210 238 7 2 4 0 7
+5bJ*B5X7S"
+BDFChar: 211 239 7 2 4 0 6
+TE%5B5X7R7
+BDFChar: 212 240 7 1 5 0 7
+BFkGoLkpk+
+BDFChar: 213 241 7 1 4 0 7
+:nRgHOH>Qc
+BDFChar: 214 242 7 1 5 0 7
+5Tg&GLkpk+
+BDFChar: 215 243 7 1 5 0 7
+&0LslLkpk+
+BDFChar: 216 244 7 1 5 0 7
++A`&WLkpk+
+BDFChar: 217 245 7 1 5 0 7
+-r9n_Lkpk+
+BDFChar: 218 246 7 1 5 0 6
+:]PHjLkp!M
+BDFChar: 219 248 7 1 5 0 4
+GaPGNn,NFg
+BDFChar: 220 249 7 1 4 0 7
+5Tg&gOH>QC
+BDFChar: 221 250 7 1 4 0 7
+&0Lt7OH>QC
+BDFChar: 222 251 7 1 4 0 7
++A`'"OH>QC
+BDFChar: 223 252 7 1 4 0 6
+O8tB(OH=D]
+BDFChar: 224 253 7 2 4 -2 7
++@#q"TV.rc+M[sW
+BDFChar: 225 255 7 2 4 -2 6
+TE(XXTV,[8^]4?7
+BDFChar: 226 247 7 1 5 0 4
++9;0:+92BA
+BDFChar: 227 254 7 1 4 -2 6
+J:QR>OHACNJ,fQL
+EndBitmapFont
+EndSplineFont

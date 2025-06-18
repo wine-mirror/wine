@@ -1,0 +1,666 @@
+#!/usr/bin/perl -w
+use strict;
+use XML::LibXML;
+use File::Basename;
+
+# Copyright 2021 Zebediah Figura
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+
+# Files to generate
+my $spec_file = "opencl.spec";
+my $pe_file = "pe_thunks.c";
+my $types_file = "opencl_types.h";
+my $unix_file = "unix_thunks.c";
+my $unixheader_file = "unixlib.h";
+
+# If set to 1, generate TRACEs for each OpenGL function
+my $gen_traces = 1;
+
+# List of categories to put in the 'opengl_core.c' file
+my %cat_1_0 = ( "CL_VERSION_1_0" => 1 );
+my %cat_1_1 = ( %cat_1_0, "CL_VERSION_1_1" => 1 );
+my %cat_1_2 = ( %cat_1_1, "CL_VERSION_1_2" => 1 );
+
+my %core_categories = ();
+
+my %arg_types =
+    (
+        #                      spec      unixlib         format
+        "cl_bitfield"    => [ "int64",  "ULONGLONG",    "wine_dbgstr_longlong(%s)" ],
+        "double"         => [ "double", "DOUBLE",       "%.16e" ],
+        "float"          => [ "float",  "float",        "%.8e" ],
+        "int"            => [ "long",   "int",          "%d" ],
+        "int8_t"         => [ "long",   "int8_t",       "%d" ],
+        "int16_t"        => [ "long",   "int16_t",      "%d" ],
+        "int32_t"        => [ "long",   "int32_t",      "%d" ],
+        "int64_t"        => [ "int64",  "LONGLONG",     "wine_dbgstr_longlong(%s)" ],
+        "intptr_t"       => [ "long",   "INT_PTR",      "%Id" ],
+        "size_t"         => [ "long",   "SIZE_T",       "%Iu" ],
+        "uint8_t"        => [ "long",   "uint8_t",      "%u" ],
+        "uint16_t"       => [ "long",   "uint16_t",     "%u" ],
+        "uint32_t"       => [ "long",   "uint32_t",     "%u" ],
+        "uint64_t"       => [ "int64",  "ULONGLONG",    "wine_dbgstr_longlong(%s)" ],
+        "unsigned int"   => [ "long",   "unsigned int", "%u" ],
+    );
+
+my %unsupported_extensions =
+    (
+        # Needs wined3d integration.
+        "cl_intel_d3d11_nv12_media_sharing" => 1,
+        "cl_intel_dx9_media_sharing" => 1,
+        "cl_khr_d3d10_sharing" => 1,
+        "cl_khr_d3d11_sharing" => 1,
+        "cl_khr_dx9_media_sharing" => 1,
+        "cl_nv_d3d9_sharing" => 1,
+        "cl_nv_d3d10_sharing" => 1,
+        "cl_nv_d3d11_sharing" => 1,
+
+        # Needs a loader/ICD split.
+        "cl_khr_icd" => 1,
+        "cl_loader_layers" => 1,
+
+        # Needs callback conversion.
+        "cl_apple_setmemobjectdestructor" => 1,
+        "cl_arm_shared_virtual_memory" => 1,
+    );
+
+sub generate_pe_thunk($$)
+{
+    my ($name, $func_ref) = @_;
+    my $call_arg = "";
+    my $trace_call_arg = "";
+    my $trace_arg = "";
+
+    my $ret = get_func_proto( "%s WINAPI %s(%s)", $name, $func_ref );
+    my $proto = $func_ref->[0]->textContent();
+    $proto =~ s/ +$//;
+    foreach my $arg (@{$func_ref->[1]})
+    {
+        my $ptype = get_arg_type( $arg );
+        next unless $arg->findnodes("./name");
+        my $pname = get_arg_name( $arg );
+        my $param = $arg->textContent();
+        $call_arg .= " " . $pname . ",";
+        if ($param =~ /\*/ || $param =~ /\[/)
+        {
+            $trace_arg .= ", %p";
+            $trace_call_arg .= ", " . $pname;
+        }
+        elsif (defined $arg_types{$ptype})
+        {
+            my $format = ${$arg_types{$ptype}}[2];
+            $trace_arg .= ", " . ($format =~ /^%/ ? $format : "%s");
+            $trace_call_arg .= ", " . sprintf $format =~ /^%/ ? "%s" : $format, $pname;
+        }
+        else
+        {
+            die "Unknown type %s in %s\n", $param, $name;
+        }
+    }
+    $call_arg =~ s/,$/ /;
+    $trace_arg =~ s/^, //;
+    $ret .= "\n{\n";
+    if (is_void_func( $func_ref ))
+    {
+        $ret .= "    struct ${name}_params params = {$call_arg};\n";
+        $ret .= "    TRACE( \"($trace_arg)\\n\"$trace_call_arg );\n" if $gen_traces;
+        $ret .= "    OPENCL_CALL( $name, &params );\n"
+    }
+    elsif ($proto eq "cl_int")
+    {
+        $ret .= "    struct ${name}_params params = {$call_arg};\n";
+        $ret .= "    TRACE( \"($trace_arg)\\n\"$trace_call_arg );\n" if $gen_traces;
+        $ret .= "    return OPENCL_CALL( $name, &params );\n";
+    }
+    else
+    {
+        $ret .= "    $proto __retval;\n";
+        $ret .= "    struct ${name}_params params = { &__retval,$call_arg};\n";
+        $ret .= "    TRACE( \"($trace_arg)\\n\"$trace_call_arg );\n" if $gen_traces;
+        $ret .= "    OPENCL_CALL( $name, &params );\n";
+        $ret .= "    return __retval;\n";
+    }
+    $ret .= "}\n";
+    return $ret;
+}
+
+sub generate_unix_thunk($$)
+{
+    my ($name, $func_ref) = @_;
+    my $call_arg = "";
+
+    my $ret = "static NTSTATUS wrap_$name( void *args )\n";
+    my $proto = $func_ref->[0]->textContent();
+    $proto =~ s/ +$//;
+    foreach my $arg (@{$func_ref->[1]})
+    {
+        my $ptype = get_arg_type( $arg );
+        next unless $arg->findnodes("./name");
+        my $pname = get_arg_name( $arg );
+        my $param = $arg->textContent();
+        $call_arg .= " params->" . $pname . ",";
+    }
+    $call_arg =~ s/,$/ /;
+    $ret .= "{\n";
+    $ret .= "    struct ${name}_params *params = args;\n\n" if $call_arg;
+    if (is_void_func( $func_ref ))
+    {
+        $ret .= "    $name($call_arg);\n";
+    }
+    elsif ($proto eq "cl_int")
+    {
+        $ret .= "    return $name($call_arg);\n";
+    }
+    else
+    {
+        $ret .= "    *params->__retval = $name($call_arg);\n";
+        $ret .= "    return STATUS_SUCCESS;\n";
+    }
+    $ret .= "}\n";
+    return $ret;
+}
+
+sub is_void_func($)
+{
+    my $func = shift;
+    return 0 if @{$func->[0]->findnodes("./type")};
+    return $func->[0]->textContent() eq "void";
+}
+
+sub get_arg_type($)
+{
+    my $p = shift;
+    my @type = $p->findnodes("./type");
+    return @type ? $type[0]->textContent() : "cl_int";
+}
+
+sub get_arg_name($)
+{
+    my $p = shift;
+    my @name = $p->findnodes("./name");
+    return $name[0]->textContent();
+}
+
+sub get_func_proto($$$)
+{
+    my ($format, $name, $func) = @_;
+    die "unknown func $name" unless defined $func->[0];
+    my $proto = $func->[0]->textContent();
+    $proto =~ s/ +$//;
+    my $args = "";
+    foreach my $arg (@{$func->[1]})
+    {
+        (my $argtext = $arg->textContent()) =~ s/ +/ /g;
+        $argtext =~ s/CL_CALLBACK/WINAPI/g;
+        $args .= " " . $argtext . ",";
+    }
+    $args =~ s/,$/ /;
+    $args ||= "void";
+    return sprintf $format, $proto, $name, $args;
+}
+
+sub get_func_params($$)
+{
+    my ($name, $func) = @_;
+    die "unknown func $name" unless defined $func->[0];
+    my $proto = $func->[0]->textContent();
+    $proto =~ s/ +$//;
+    my $params = "struct ${name}_params\n{\n";
+    $params .= "    $proto* __retval;\n" unless $proto eq "cl_int";
+    foreach my $arg (@{$func->[1]})
+    {
+        my $ptype = get_arg_type( $arg );
+        next unless $arg->findnodes("./name");
+        my $pname = get_arg_name( $arg );
+        (my $param = $arg->textContent()) =~ s/ +/ /g;
+        $param =~ s/CL_CALLBACK/WINAPI/g;
+        if ($param =~ /[[*]/)
+        {
+            $params .= "    $param;\n";
+        }
+        elsif (defined $arg_types{$ptype})
+        {
+            $params .= "    ${$arg_types{$ptype}}[1] $pname;\n";
+        }
+        else
+        {
+            die "Unknown type %s in %s\n", $param, $name;
+        }
+    }
+    return $params . "};\n";
+}
+
+# extract and check the number of arguments
+if (@ARGV > 1)
+{
+    my $name0 = $0;
+    $name0 =~ s%^.*/%%;
+    die "Usage: $name0 [version]\n";
+}
+my $version = $ARGV[0] || "1.2";
+if ($version eq "1.0")
+{
+    %core_categories = %cat_1_0;
+}
+elsif ($version eq "1.1")
+{
+    %core_categories = %cat_1_1;
+}
+elsif ($version eq "1.2")
+{
+    %core_categories = %cat_1_2;
+}
+else
+{
+    die "Incorrect OpenCL version.\n";
+}
+
+my $url = "https://raw.githubusercontent.com/KhronosGroup/OpenCL-Docs";
+my $commit = "514965312a65e5d01ae17e23119dc95427b7149e";
+my $cache = ($ENV{XDG_CACHE_HOME} || "$ENV{HOME}/.cache") . "/wine";
+system "mkdir", "-p", $cache;
+-f "$cache/cl-$commit.xml" || system "wget", "-q", "-O", "$cache/cl-$commit.xml", "$url/$commit/xml/cl.xml" || die "cannot download cl.xml";
+chdir(dirname($0));
+
+sub generate_spec_entry($$)
+{
+    my ($name, $func) = @_;
+    my $args=" ";
+    foreach my $arg (@{$func->[1]})
+    {
+        my $ptype = get_arg_type( $arg );
+        my $param = $arg->textContent();
+        if ($param =~ /[[*]/)
+        {
+            $args .= "ptr ";
+        }
+        elsif (defined($arg_types{$ptype}))
+        {
+            $args .= "$@$arg_types{$ptype}[0] ";
+        }
+        elsif ($ptype ne "void")
+        {
+            die "No conversion for func $name type $param\n";
+        }
+    }
+    $args = substr($args,1,-1);
+    return "@ stdcall $_($args)";
+}
+
+my %core_functions;
+my %header_enums;
+my (%header_types, @header_types);  # also use an array to preserve declaration order
+
+# some functions need a hand-written wrapper
+sub needs_pe_wrapper($)
+{
+    my %funcs =
+        (
+            # need extension filtering
+            "clGetDeviceInfo" => 1,
+            "clGetPlatformInfo" => 1,
+
+            # needs function pointer conversion
+            "clGetExtensionFunctionAddress" => 1,
+            "clGetExtensionFunctionAddressForPlatform" => 1,
+
+            # deprecated and absent from headers
+            "clSetCommandQueueProperty" => 1,
+
+            # needs GL object unwrapping
+            "clCreateFromGLBuffer" => 1,
+            "clCreateFromGLRenderbuffer" => 1,
+            "clCreateFromGLTexture" => 1,
+            "clCreateFromGLTexture2D" => 1,
+            "clCreateFromGLTexture3D" => 1,
+            "clEnqueueAcquireGLObjects" => 1,
+            "clEnqueueReleaseGLObjects" => 1,
+            "clGetGLObjectInfo" => 1,
+            "clGetGLTextureInfo" => 1,
+        );
+    my $name = shift;
+
+    return defined $funcs{$name};
+}
+
+# some functions need a hand-written wrapper
+sub needs_unix_wrapper($)
+{
+    my %funcs =
+        (
+            # need callback conversion
+            "clBuildProgram" => 1,
+            "clCompileProgram" => 1,
+            "clCreateContext" => 1,
+            "clCreateContextFromType" => 1,
+            "clEnqueueNativeKernel" => 1,
+            "clLinkProgram" => 1,
+            "clSetEventCallback" => 1,
+            "clSetMemObjectDestructorCallback" => 1,
+        );
+    my $name = shift;
+
+    return defined $funcs{$name};
+}
+
+# don't bother putting unused functions in the interface
+sub needs_unix_function($)
+{
+    my %funcs =
+        (
+            "clGetExtensionFunctionAddress" => 1,
+            "clGetExtensionFunctionAddressForPlatform" => 1,
+            "clSetCommandQueueProperty" => 1,
+
+            # not yet implemented
+            "clCreateFromGLBuffer" => 1,
+            "clCreateFromGLRenderbuffer" => 1,
+            "clCreateFromGLTexture" => 1,
+            "clCreateFromGLTexture2D" => 1,
+            "clCreateFromGLTexture3D" => 1,
+            "clEnqueueAcquireGLObjects" => 1,
+            "clEnqueueReleaseGLObjects" => 1,
+            "clGetGLObjectInfo" => 1,
+            "clGetGLTextureInfo" => 1,
+        );
+    my $name = shift;
+
+    return not defined $funcs{$name};
+}
+
+sub generate_struct($)
+{
+    my $type = shift;
+    my $name = $type->{name};
+    my $ret = "typedef struct _$name\n{\n";
+    foreach my $member ($type->findnodes("./member"))
+    {
+        ($member = $member->textContent()) =~ s/ +/ /g;
+        $ret .= "    $member;\n";
+    }
+    $ret .= "} $name;\n";
+    return $ret;
+}
+
+my %all_functions;
+my %all_enums;
+my %all_types;
+
+sub parse_feature($$)
+{
+    my ($feature, $is_core) = @_;
+
+    my %extra_core_functions =
+        (
+            # these are not core, but exported from the loader anyway
+            "clCreateFromGLBuffer" => 1,
+            "clCreateFromGLRenderbuffer" => 1,
+            "clCreateFromGLTexture" => 1,
+            "clCreateFromGLTexture2D" => 1,
+            "clCreateFromGLTexture3D" => 1,
+            "clEnqueueAcquireGLObjects" => 1,
+            "clEnqueueReleaseGLObjects" => 1,
+            "clGetGLObjectInfo" => 1,
+            "clGetGLTextureInfo" => 1,
+        );
+
+    foreach my $cmd ($feature->findnodes("./require/command"))
+    {
+        # TODO: store these in a separate list
+        next unless $is_core or defined $extra_core_functions{$cmd->{name}};
+
+        $core_functions{$cmd->{name}} = $all_functions{$cmd->{name}};
+    }
+    foreach my $enum ($feature->findnodes("./require/enum"))
+    {
+        $header_enums{$enum->{name}} = $all_enums{$enum->{name}};
+    }
+    foreach my $type ($feature->findnodes("./require/type"))
+    {
+        next unless $all_types{$type->{name}};
+        push @header_types, $type->{name} unless $header_types{$type->{name}};
+        $header_types{$type->{name}} = $all_types{$type->{name}};
+    }
+}
+
+sub parse_file($)
+{
+    my $file = shift;
+    my $xml = XML::LibXML->load_xml( location => $file );
+
+    # save all functions
+    foreach my $command ($xml->findnodes("/registry/commands/command"))
+    {
+        my $proto = @{$command->findnodes("./proto")}[0];
+        my $name = @{$command->findnodes("./proto/name")}[0];
+        $proto->removeChild( $name );
+        my @params = $command->findnodes("./param");
+        $all_functions{$name->textContent()} = [ $proto, \@params ];
+    }
+
+    # save all enums
+    foreach my $enum ($xml->findnodes("/registry/enums/enum"))
+    {
+        if (defined $enum->{value})
+        {
+            $all_enums{$enum->{name}} = $enum->{value};
+        }
+        else
+        {
+            $all_enums{$enum->{name}} = "(1 << " . $enum->{bitpos} . ")";
+        }
+    }
+
+    # save all types
+    foreach my $type ($xml->findnodes("/registry/types/type"))
+    {
+        if ($type->{category} eq "define")
+        {
+            my $name = @{$type->findnodes("./name")}[0];
+            $name = $name->textContent;
+            $all_types{$name} = $type;
+
+            my $basetype = @{$type->findnodes("./type")}[0];
+            if ($type->textContent() =~ /[[*]/)
+            {
+                $arg_types{$name} = ["ptr", $name, "%p"];
+            }
+            elsif (defined($basetype) and defined($arg_types{$basetype->textContent}))
+            {
+                $arg_types{$name} = $arg_types{$basetype->textContent};
+            }
+            elsif ($name ne "cl_icd_dispatch")
+            {
+                die "No conversion for type $name\n"
+            }
+        }
+        elsif ($type->{category} eq "struct")
+        {
+            my $name = $type->{name};
+            $all_types{$name} = $type;
+        }
+    }
+
+    # generate core functions
+    foreach my $feature ($xml->findnodes("/registry/feature"))
+    {
+        parse_feature($feature, 1) if defined $core_categories{$feature->{name}};
+    }
+
+    # generate extension list and functions
+    foreach my $ext ($xml->findnodes("/registry/extensions/extension"))
+    {
+        # we currently don't support clGetExtensionFunctionAddress, and
+        # implementing clGetExtensionFunctionAddressForPlatform is nontrivial;
+        # we need to generate a table of thunks per platform and retrieve the
+        # platform from the called object
+        $unsupported_extensions{lc($ext->{name})} = 1 if $ext->findnodes("./require/command");
+
+        # FIXME: Parse all supported extensions. Note that we don't actually
+        # support KHR_gl_sharing yet, but we need to export the functions anyway
+        # (some applications expect them to be present).
+        parse_feature($ext, 0) if lc($ext->{name}) eq "cl_khr_gl_sharing";
+    }
+}
+
+parse_file( "$cache/cl-$commit.xml" );
+
+# generate the spec file
+open(SPEC, ">$spec_file") or die "cannot create $spec_file";
+
+foreach (sort keys %core_functions)
+{
+    printf SPEC "%s\n", generate_spec_entry( $_, $core_functions{$_} );
+}
+
+close(SPEC);
+
+
+# generate the PE thunks
+open(PE, ">$pe_file") or die "cannot create $pe_file";
+
+print PE "/* Automatically generated from OpenCL registry files; DO NOT EDIT! */\n\n";
+
+print PE "#include \"opencl_private.h\"\n";
+print PE "#include \"opencl_types.h\"\n";
+print PE "#include \"unixlib.h\"\n\n";
+
+print PE "WINE_DEFAULT_DEBUG_CHANNEL(opencl);\n" if $gen_traces;
+
+foreach (sort keys %core_functions)
+{
+    next if needs_pe_wrapper( $_ );
+    print PE "\n", generate_pe_thunk( $_, $core_functions{$_} );
+}
+
+print PE <<EOF
+
+BOOL extension_is_supported( const char *name, size_t len )
+{
+    unsigned int i;
+
+    static const char *const unsupported[] =
+    {
+EOF
+;
+
+foreach (sort keys %unsupported_extensions)
+{
+    print PE "        \"$_\",\n";
+}
+
+print PE <<EOF
+    };
+
+    for (i = 0; i < ARRAY_SIZE(unsupported); ++i)
+    {
+        if (!strncasecmp( name, unsupported[i], len ))
+            return FALSE;
+    }
+    return TRUE;
+}
+EOF
+;
+
+close(PE);
+
+# generate the unix library thunks
+open(UNIX, ">$unix_file") or die "cannot create $unix_file";
+
+print UNIX <<EOF
+/* Automatically generated from OpenCL registry files; DO NOT EDIT! */
+
+#if 0
+#pragma makedep unix
+#endif
+
+#include "config.h"
+#include "unix_private.h"
+EOF
+;
+
+foreach (sort keys %core_functions)
+{
+    next unless needs_unix_function( $_ );
+    next if needs_unix_wrapper( $_ );
+    print UNIX "\n", generate_unix_thunk( $_, $core_functions{$_} );
+}
+
+print UNIX "\nconst unixlib_entry_t __wine_unix_call_funcs[] =\n{\n";
+foreach (sort keys %core_functions)
+{
+    next unless needs_unix_function( $_ );
+    print UNIX "    wrap_" . $_ . ",\n";
+}
+print UNIX "};\n";
+
+close(UNIX);
+
+# generate the unix library header
+open(UNIXHEADER, ">$unixheader_file") or die "cannot create $unixheader_file";
+
+print UNIXHEADER "/* Automatically generated from OpenCL registry files; DO NOT EDIT! */\n\n";
+
+foreach (sort keys %core_functions)
+{
+    next unless needs_unix_function( $_ );
+    print UNIXHEADER get_func_params( $_, $core_functions{$_} ), "\n";
+}
+
+print UNIXHEADER "enum opencl_funcs\n{\n";
+foreach (sort keys %core_functions)
+{
+    next unless needs_unix_function( $_ );
+    print UNIXHEADER "    unix_$_,\n";
+}
+print UNIXHEADER "};\n";
+
+close(UNIXHEADER);
+
+# generate the Win32 type definitions
+open(TYPES, ">$types_file") or die "cannot create $types_file";
+
+print TYPES <<END
+/* Automatically generated from OpenCL registry files; DO NOT EDIT! */
+
+typedef int32_t DECLSPEC_ALIGN(4) cl_int;
+typedef uint32_t DECLSPEC_ALIGN(4) cl_uint;
+typedef uint64_t DECLSPEC_ALIGN(8) cl_ulong;
+
+END
+;
+
+foreach (@header_types)
+{
+    my $type = $header_types{$_};
+    if ($type->{category} eq "define")
+    {
+        print TYPES $type->textContent() . "\n";
+    }
+    elsif ($type->{category} eq "struct")
+    {
+        print TYPES generate_struct( $type );
+    }
+}
+
+print TYPES "\n";
+
+foreach (sort keys %header_enums)
+{
+    printf TYPES "#define %s %s\n", $_, $header_enums{$_};
+}
+
+close(TYPES);

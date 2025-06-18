@@ -1,0 +1,173 @@
+.TH WIDL 1 "October 2007" "@PACKAGE_STRING@" "Wine Developers Manual"
+.SH NAME
+widl \- Wine Interface Definition Language (IDL) compiler
+.SH SYNOPSIS
+.B widl
+[\fIoptions\fR] \fIIDL_file\fR
+.br
+.B widl
+[\fIoptions\fR] \fB--dlldata-only\fR \fIname1\fR [\fIname2\fR...]
+.SH DESCRIPTION
+When no options are used the program will generate a header file, and possibly
+client and server stubs, proxy and dlldata files, a typelib, and a UUID file,
+depending on the contents of the IDL file.  If any of the options \fB-c\fR,
+\fB-h\fR, \fB-p\fR, \fB-s\fR, \fB-t\fR, \fB-u\fR or \fB--local-stubs\fR is given,
+.B widl
+will only generate the requested files, and no others.  When run with
+\fB--dlldata-only\fR, widl will only generate a dlldata file, and it will
+contain a list of the names passed as arguments.  Usually the way this file
+is updated is that each time
+.B widl
+is run, it reads any existing dlldata file, and if necessary regenerates it
+with the same list of names, but with the present proxy file included.
+.PP
+When run without any arguments,
+.B widl
+will print a help message.
+.PP
+.SH OPTIONS
+.PP
+.B General options:
+.IP "\fB-V\fR"
+Print version number and exit.
+.IP "\fB-o, --output=\fIname"
+Set the name of the output file. When generating multiple output
+files, this sets only the base name of the file; the respective output
+files are then named \fIname\fR.h, \fIname\fR_p.c, etc.  If a full
+file name with extension is specified, only that file is generated.
+.IP "\fB-b, --target=\fIcpu-manufacturer\fR[\fI-kernel\fR]\fI-os\fR"
+Set the target architecture when cross-compiling. The target
+specification is in the standard autoconf format as returned by
+\fBconfig.sub\fR.
+.IP "\fB-m32, -m64, --win32, --win64\fR"
+Force the target architecture to 32-bit or 64-bit.
+.IP \fB\-\-sysroot=\fIdir\fR
+Prefix the standard include paths with \fIdir\fR.
+.IP \fB\-\-nostdinc\fR
+Do not search standard include paths like /usr/include and
+/usr/local/include.
+.PP
+.B Header options:
+.IP "\fB-h\fR"
+Generate header files. The default output filename is \fIinfile\fB.h\fR.
+.IP "\fB--oldnames\fR"
+Use old naming conventions.
+.PP
+.B Type library options:
+.IP \fB-t\fR
+Generate a type library. The default output filename is
+\fIinfile\fB.tlb\fR.  If the output file name ends in \fB.res\fR, a
+binary resource file containing the type library is generated instead.
+.IP "\fB-L \fIpath\fR"
+Add a directory to the library search path for imported typelibs. The
+option can be specified multiple times.
+.IP \fB--oldtlb\fR
+Generate a type library in the old format (SLTG format).
+.PP
+.B UUID file options:
+.IP "\fB-u\fR"
+Generate a UUID file. The default output filename is \fIinfile\fB_i.c\fR.
+.PP
+.B Proxy/stub generation options:
+.IP "\fB--align=\fIn\fB, --packing=\fIn\fR"
+Set the structure packing to \fIn\fR. Supported values are 2, 4, and 8.
+.IP "\fB-c\fR"
+Generate a client stub file. The default output filename is \fIinfile\fB_c.c\fR.
+.IP "\fB-Os\fR"
+Generate inline stubs.
+.IP "\fB-Oi\fR"
+Generate old-style interpreted stubs.
+.IP "\fB-Oif, -Oic, -Oicf\fR"
+Generate new-style fully interpreted stubs. This is the default.
+.IP "\fB-p\fR"
+Generate a proxy. The default output filename is \fIinfile\fB_p.c\fR.
+.IP "\fB--prefix-all=\fIprefix\fR"
+Prefix to put on the name of both client and server stubs.
+.IP "\fB--prefix-client=\fIprefix\fR"
+Prefix to put on the name of client stubs.
+.IP "\fB--prefix-server=\fIprefix\fR"
+Prefix to put on the name of server stubs.
+.IP "\fB-s\fR"
+Generate a server stub file. The default output filename is
+\fIinfile\fB_s.c\fR.
+.PP
+.IP "\fB--winrt\fR"
+Enable Windows Runtime mode.
+.IP "\fB--ns_prefix\fR"
+Prefix namespaces with ABI namespace.
+.PP
+.B Registration script options:
+.IP "\fB-r\fR"
+Generate a registration script. The default output filename is
+\fIinfile\fB_r.rgs\fR. If the output file name ends in \fB.res\fR, a
+binary resource file containing the script is generated instead.
+.PP
+.B Dlldata file options:
+.IP "\fB--dlldata-only\fI name1 \fR[\fIname2\fR...]"
+Regenerate the dlldata file from scratch using the specified proxy
+names. The default output filename is \fBdlldata.c\fR.
+.PP
+.B Metadata file options:
+.IP "\fB--winmd\fR"
+Generate a Windows Runtime Metadata file. This implies the
+\fB--winrt\fR mode. The default output filename is
+\fIinfile\fB.winmd\fR.
+.PP
+.B Preprocessor options:
+.IP "\fB-I \fIpath\fR"
+Add a directory to the include search path. Multiple include
+directories are allowed.
+.IP "\fB-D \fIid\fR[\fB=\fIval\fR]"
+Define preprocessor macro \fIid\fR with value \fIval\fR.
+.IP "\fB-E\fR"
+Preprocess only.
+.IP "\fB-N\fR"
+Do not preprocess input.
+.PP
+.B Debug options:
+.IP "\fB-W\fR"
+Enable pedantic warnings.
+.IP "\fB-d \fIn\fR"
+Set debug level to the non negative integer \fIn\fR.  If
+prefixed with \fB0x\fR, it will be interpreted as an hexadecimal
+number.  For the meaning of values, see the \fBDEBUG\fR section.
+.PP
+.B Miscellaneous options:
+.IP "\fB-app_config\fR"
+Ignored, present for midl compatibility.
+.IP "\fB--acf=\fIfile\fR"
+Use specified application configuration file.
+.IP "\fB--local-stubs=\fIfile\fR"
+Generate empty stubs for call_as/local methods in an object interface and
+write them to \fIfile\fR.
+.PP
+.SH DEBUG
+Debug level \fIn\fR is a bitmask with the following meaning:
+  - 0x01 Tell which resource is parsed (verbose mode)
+  - 0x02 Dump internal structures
+  - 0x04 Create a parser trace (yydebug=1)
+  - 0x08 Preprocessor messages
+  - 0x10 Preprocessor lex messages
+  - 0x20 Preprocessor yacc trace
+.SH BUGS
+Bugs can be reported on the
+.UR https://bugs.winehq.org
+.B Wine bug tracker
+.UE .
+.SH AUTHORS
+.B widl
+was originally written by Ove Kåven.  It has been improved by Rob Shearman,
+Dan Hipschman, and others.  For a complete list, see the git commit logs.
+This man page was originally written by Hannu Valtonen and then updated by
+Dan Hipschman.
+.SH AVAILABILITY
+.B widl
+is part of the Wine distribution, which is available through WineHQ,
+the
+.UR https://www.winehq.org/
+.B Wine development headquarters
+.UE .
+.SH "SEE ALSO"
+.UR https://www.winehq.org/help
+.B Wine documentation and support
+.UE .

@@ -1,0 +1,54 @@
+/*
+ * Copyright 2022 Rémi Bernon for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "windows.foundation.idl";
+import "windows.system.power.idl";
+
+namespace Windows.Devices.Power {
+    interface IBatteryReport;
+    runtimeclass BatteryReport;
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Power.BatteryReport),
+        uuid(c9858c3a-4e13-420a-a8d0-24f18f395401)
+    ]
+    interface IBatteryReport : IInspectable
+    {
+        [propget] HRESULT ChargeRateInMilliwatts([out, retval] Windows.Foundation.IReference<INT32> **value);
+        [propget] HRESULT DesignCapacityInMilliwattHours([out, retval] Windows.Foundation.IReference<INT32> **value);
+        [propget] HRESULT FullChargeCapacityInMilliwattHours([out, retval] Windows.Foundation.IReference<INT32> **value);
+        [propget] HRESULT RemainingCapacityInMilliwattHours([out, retval] Windows.Foundation.IReference<INT32> **value);
+        [propget] HRESULT Status([out, retval] Windows.System.Power.BatteryStatus *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass BatteryReport
+    {
+        [default] interface Windows.Devices.Power.IBatteryReport;
+    }
+}

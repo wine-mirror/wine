@@ -1,0 +1,333 @@
+/*
+ * WineCfg resources
+ *
+ * Copyright 2002 Jaco Greeff
+ * Copyright 2003 Dimitrie O. Paun
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
+ */
+
+#include "resource.h"
+
+#pragma makedep po
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+BEGIN
+    IDS_TAB_APPLICATIONS    "Applications"
+    IDS_TAB_DLLS            "Libraries"
+    IDS_TAB_DRIVES          "Drives"
+    IDS_CHOOSE_PATH         "Select the Unix target directory, please."
+    IDS_HIDE_ADVANCED       "Hide Advan&ced"
+    IDS_SHOW_ADVANCED       "Show Advan&ced"
+    IDS_NOTHEME             "(No Theme)"
+    IDS_TAB_GRAPHICS        "Graphics"
+    IDS_TAB_DESKTOP_INTEGRATION "Desktop Integration"
+    IDS_TAB_AUDIO           "Audio"
+    IDS_TAB_ABOUT           "About"
+    IDS_WINECFG_TITLE       "Wine configuration"
+    IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
+    IDS_THEMEFILE           "Theme files (*.msstyles; *.theme)"
+    IDS_THEMEFILE_SELECT    "Select a theme file"
+    IDS_SHELL_FOLDER        "Folder"
+    IDS_LINKS_TO            "Links to"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_DLL_WARNING         "Changing the load order of this library is not recommended.\nAre you sure you want to do this?"
+    IDS_DLL_WARNING_CAPTION "Warning: system library"
+    IDS_DLL_NATIVE          "native"
+    IDS_DLL_BUILTIN         "builtin"
+    IDS_DLL_NATIVE_BUILTIN  "native, builtin"
+    IDS_DLL_BUILTIN_NATIVE  "builtin, native"
+    IDS_DLL_DISABLED        "disabled"
+    IDS_DEFAULT_SETTINGS    "Default Settings"
+    IDS_EXECUTABLE_FILTER   "Wine Programs (*.exe; *.exe.so)"
+    IDS_USE_GLOBAL_SETTINGS "Use global settings"
+    IDS_SELECT_EXECUTABLE   "Select an executable file"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_DRIVE_UNKNOWN           "Autodetect"
+    IDS_DRIVE_FIXED             "Local hard disk"
+    IDS_DRIVE_REMOTE            "Network share"
+    IDS_DRIVE_REMOVABLE         "Floppy disk"
+    IDS_DRIVE_CDROM             "CD-ROM"
+    IDS_DRIVE_LETTERS_EXCEEDED  "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26."
+    IDS_SYSTEM_DRIVE_LABEL      "System drive"
+    IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed, remember to recreate it!"
+    IDS_COL_DRIVELETTER         "#msgctxt#Drive letter#Letter"
+    IDS_COL_DRIVEMAPPING        "Target folder"
+    IDS_NO_DRIVE_C              "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_AUDIO_DRIVER "Selected driver: %s"
+    IDS_AUDIO_DRIVER_NONE "(None)"
+    IDS_AUDIO_TEST_FAILED "Audio test failed!"
+    IDS_AUDIO_TEST_FAILED_TITLE "Error"
+    IDS_AUDIO_SYSDEFAULT "(System default)"
+    IDS_AUDIO_DEVICE "Device"
+    IDS_AUDIO_SPEAKER_CONFIG "Speaker configuration"
+    IDS_AUDIO_SPEAKER_5POINT1 "5.1 Surround"
+    IDS_AUDIO_SPEAKER_QUAD "Quadraphonic"
+    IDS_AUDIO_SPEAKER_STEREO "Stereo"
+    IDS_AUDIO_SPEAKER_MONO "Mono"
+END
+
+STRINGTABLE
+BEGIN
+    IDC_THEME_APPCOMBO_LIGHT "Light"
+    IDC_THEME_APPCOMBO_DARK  "Dark"
+END
+
+STRINGTABLE
+BEGIN
+    IDC_SYSPARAMS_BUTTON            "Controls Background"
+    IDC_SYSPARAMS_BUTTON_TEXT       "Controls Text"
+    IDC_SYSPARAMS_DESKTOP           "#msgctxt#display name#Desktop"
+    IDC_SYSPARAMS_MENU              "Menu Background"
+    IDC_SYSPARAMS_MENU_TEXT         "Menu Text"
+    IDC_SYSPARAMS_SCROLLBAR         "Scrollbar"
+    IDC_SYSPARAMS_SELECTION         "Selection Background"
+    IDC_SYSPARAMS_SELECTION_TEXT    "Selection Text"
+    IDC_SYSPARAMS_TOOLTIP           "Tooltip Background"
+    IDC_SYSPARAMS_TOOLTIP_TEXT      "Tooltip Text"
+    IDC_SYSPARAMS_WINDOW            "Window Background"
+    IDC_SYSPARAMS_WINDOW_TEXT       "Window Text"
+    IDC_SYSPARAMS_ACTIVE_TITLE      "Active Title Bar"
+    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Active Title Text"
+    IDC_SYSPARAMS_INACTIVE_TITLE    "Inactive Title Bar"
+    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Inactive Title Text"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Message Box Text"
+    IDC_SYSPARAMS_APPWORKSPACE      "Application Workspace"
+    IDC_SYSPARAMS_WINDOW_FRAME      "Window Frame"
+    IDC_SYSPARAMS_ACTIVE_BORDER     "Active Border"
+    IDC_SYSPARAMS_INACTIVE_BORDER   "Inactive Border"
+    IDC_SYSPARAMS_BUTTON_SHADOW     "Controls Shadow"
+    IDC_SYSPARAMS_GRAY_TEXT         "Gray Text"
+    IDC_SYSPARAMS_BUTTON_HIGHLIGHT  "Controls Highlight"
+    IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Controls Dark Shadow"
+    IDC_SYSPARAMS_BUTTON_LIGHT      "Controls Light"
+    IDC_SYSPARAMS_BUTTON_ALTERNATE  "Controls Alternate Background"
+    IDC_SYSPARAMS_HOT_TRACKING      "Hot Tracked Item"
+    IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "Active Title Bar Gradient"
+    IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "Inactive Title Bar Gradient"
+    IDC_SYSPARAMS_MENU_HIGHLIGHT    "Menu Highlight"
+    IDC_SYSPARAMS_MENUBAR           "Menu Bar"
+END
+
+IDD_ABOUTCFG DIALOGEX 0, 0, 260, 220
+STYLE WS_CHILD
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "", IDC_ABT_PANEL, "STATIC", SS_OWNERDRAW, 0, 0, 260, 140
+    LTEXT           "Wine",IDC_ABT_TITLE_TEXT,105,30,55,30
+    LTEXT           "",IDC_ABT_PANEL_TEXT,160,43,140,8
+    CONTROL         "#msgctxt#do not translate#<a href=\"https://www.winehq.org\">https://www.winehq.org</a>",IDC_ABT_WEB_LINK,"SysLink", LWS_TRANSPARENT, 105,53,106,8
+    LTEXT           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
+                    IDC_ABT_LICENSE_TEXT,105,64,145,66
+    GROUPBOX        "Windows registration information", IDC_STATIC, 15, 155, 230, 55
+    LTEXT           "&Owner:", IDC_STATIC, 22, 171, 40, 20
+    EDITTEXT        IDC_ABT_OWNER, 75, 171, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "Organi&zation:", IDC_STATIC, 22, 185, 50, 20
+    EDITTEXT        IDC_ABT_ORG, 75, 185, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
+END
+
+IDD_APPCFG DIALOG  0, 0, 260, 220
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        "Application settings",IDC_STATIC, 8,4,244,210
+    LTEXT           "Wine can mimic different Windows versions for each application. This tab is linked to the Libraries and Graphics tabs to allow you to change system-wide or per-application settings in those tabs as well.",
+                    IDC_STATIC,15,15,227,45
+    CONTROL         "",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
+                    15,60,230,110
+    PUSHBUTTON	    "Add appli&cation...",IDC_APP_ADDAPP, 15,174,112,14
+    PUSHBUTTON	    "&Remove application",IDC_APP_REMOVEAPP, 133,174,112,14
+    LTEXT           "&Windows Version:",IDC_STATIC,17,196,80,8
+    COMBOBOX        IDC_WINVER,100,194,145,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_GRAPHCFG DIALOG  0, 0, 260, 220
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX    "Window settings",IDC_STATIC,8,4,244,84
+    CONTROL     "Automatically capture the &mouse in full-screen windows",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,10
+    CONTROL     "Allow the window manager to &decorate the windows",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,10
+    CONTROL     "Allow the &window manager to control the windows",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,10
+    CONTROL     "&Emulate a virtual desktop",IDC_ENABLE_DESKTOP,"Button",
+                BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,10
+    LTEXT       "Desktop &size:",IDC_DESKTOP_SIZE,15,70,64,16,WS_DISABLED
+    LTEXT       "#msgctxt#do not translate#X",IDC_DESKTOP_BY,129,70,8,8,WS_DISABLED
+    EDITTEXT    IDC_DESKTOP_WIDTH,84,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT    IDC_DESKTOP_HEIGHT,137,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+
+    GROUPBOX    "Screen resolution",IDC_STATIC,8,95,244,84
+    CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,105,171,15
+    EDITTEXT    IDC_RES_DPIEDIT,188,105,23,13,ES_NUMBER|WS_TABSTOP
+    LTEXT       "#msgctxt#unit: dots/inch#dpi",IDC_STATIC,215,107,30,8
+    LTEXT       "This is a sample text using 10 point Tahoma",IDC_RES_FONT_PREVIEW,15,124,230,49
+END
+
+IDD_DLLCFG DIALOG  0, 0, 260, 220
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        "DLL overrides",IDC_STATIC,8,4,244,210
+    LTEXT           "Dynamic Link Libraries can be specified individually to be either builtin (provided by Wine) or native (taken from Windows or provided by the application)."
+                    ,IDC_STATIC,16,16,228,32
+    LTEXT           "&New override for library:",IDC_STATIC,16,58,220,8
+    COMBOBOX        IDC_DLLCOMBO,16,68,140,60,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
+    PUSHBUTTON      "A&dd",IDC_DLLS_ADDDLL, 164,68,82,13
+    LTEXT           "Existing &overrides:",IDC_STATIC,16,86,100,8
+    LISTBOX         IDC_DLLS_LIST,16,96,140,112,WS_BORDER | WS_TABSTOP | WS_VSCROLL
+    PUSHBUTTON      "&Edit...",IDC_DLLS_EDITDLL,164,96,82,14
+    PUSHBUTTON      "&Remove",IDC_DLLS_REMOVEDLL,164,114,82,14
+END
+
+IDD_LOADORDER DIALOG 80, 90, 160, 92
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Edit Override"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        "Load order",IDC_STATIC,8,4,144,66
+    CONTROL         "&Builtin (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,125,10
+    CONTROL         "&Native (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,125,10
+    CONTROL         "Buil&tin then Native",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,125,10
+    CONTROL         "Nati&ve then Builtin",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,125,10
+    CONTROL         "&Disable",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,125,10
+    DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,57,74,45,14,WS_GROUP
+END
+
+IDD_DRIVECHOOSE DIALOG  60, 70, 170, 60
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Select Drive Letter"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    COMBOBOX IDC_DRIVESA2Z,15,10,75,230,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,105,10,45,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,105,30,45,14,WS_GROUP
+END
+
+IDD_DRIVECFG DIALOG  0, 0, 260, 220
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        "Drive configuration",IDC_STATIC,8,4,244,195
+    LTEXT           "Failed to connect to the mount manager; the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,190,76
+    CONTROL         "",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                    LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
+    PUSHBUTTON      "A&dd...",IDC_BUTTON_ADD,15,98,53,14
+    PUSHBUTTON      "&Remove",IDC_BUTTON_REMOVE,72,98,53,14
+
+    /* editing drive details */
+    LTEXT           "&Path:",IDC_STATIC_PATH,15,123,42,9
+    EDITTEXT        IDC_EDIT_PATH,59,120,122,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Browse...",IDC_BUTTON_BROWSE_PATH,186,120,60,13
+
+    LTEXT           "&Type:",IDC_STATIC_TYPE,15,138,42,10
+    COMBOBOX        IDC_COMBO_TYPE,59,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    PUSHBUTTON      "Show Advan&ced",IDC_BUTTON_SHOW_HIDE_ADVANCED,146,135,100,13
+    LTEXT           "De&vice:",IDC_STATIC_DEVICE,15,153,42,9
+    EDITTEXT        IDC_EDIT_DEVICE,59,150,122,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Bro&wse...",IDC_BUTTON_BROWSE_DEVICE,186,150,60,13
+
+    LTEXT           "&Label:",IDC_STATIC_LABEL,15,168,42,12
+    EDITTEXT        IDC_EDIT_LABEL,59,165,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "S&erial:",IDC_STATIC_SERIAL,15,183,42,12
+    EDITTEXT        IDC_EDIT_SERIAL,59,180,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+
+    CONTROL         "&Show dot files",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,10
+END
+
+IDD_AUDIOCFG DIALOG  0, 0, 260, 220
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        "Driver diagnostics",IDC_STATIC,8,4,244,27
+    LTEXT           "",IDC_AUDIO_DRIVER,18,16,230,8
+    GROUPBOX        "Defaults",IDC_STATIC,8,33,244,76
+    LTEXT           "Output device:",IDC_STATIC,18,45,230,8
+    LTEXT           "Voice output device:",IDC_STATIC,18,61,230,8
+    LTEXT           "Input device:",IDC_STATIC,18,77,230,8
+    LTEXT           "Voice input device:",IDC_STATIC,18,93,230,8
+    COMBOBOX        IDC_AUDIOOUT_DEVICE,110,43,135,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_VOICEOUT_DEVICE,110,59,135,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_AUDIOIN_DEVICE,110,75,135,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_VOICEIN_DEVICE,110,91,135,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Test Sound",IDC_AUDIO_TEST,8,113,69,14
+    GROUPBOX        "Speaker configuration",IDC_STATIC,8,132,244,86
+    CONTROL         "",IDC_LIST_AUDIO_DEVICES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                    LVS_SINGLESEL | WS_BORDER | WS_TABSTOP | LVS_NOSORTHEADER, 15,146,230,52
+    LTEXT           "Speakers:",IDC_STATIC,18,202,230,8
+    COMBOBOX        IDC_SPEAKERCONFIG_SPEAKERS,110,200,135,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_DESKTOP_INTEGRATION DIALOG  0, 0, 260, 220
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        "Appearance",IDC_STATIC,8,4,244,90
+    LTEXT           "&Theme:",IDC_STATIC,15,15,105,8
+    COMBOBOX        IDC_THEME_THEMECOMBO,15,25,105,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&WinRT theme:",IDC_STATIC,126,15,119,8
+    COMBOBOX        IDC_THEME_APPCOMBO,126,25,119,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Install theme...",IDC_THEME_INSTALL,157,50,88,13
+    LTEXT           "&Color:",IDC_THEME_COLORTEXT,15,40,60,8
+    COMBOBOX        IDC_THEME_COLORCOMBO,15,50,60,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Size:",IDC_THEME_SIZETEXT,80,40,71,8
+    COMBOBOX        IDC_THEME_SIZECOMBO,80,50,71,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "It&em:",IDC_STATIC,15,65,105,8
+    COMBOBOX        IDC_SYSPARAM_COMBO,15,75,105,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
+    LTEXT           "C&olor:",IDC_SYSPARAM_COLOR_TEXT,126,65,25,8,WS_DISABLED
+    PUSHBUTTON      "",IDC_SYSPARAM_COLOR,126,75,25,13,WS_DISABLED | BS_OWNERDRAW
+    LTEXT           "Si&ze:",IDC_SYSPARAM_SIZE_TEXT,157,65,30,8,WS_DISABLED
+    EDITTEXT        IDC_SYSPARAM_SIZE,157,75,30,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
+    CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASSA,UDS_SETBUDDYINT | UDS_ALIGNRIGHT | WS_DISABLED, 185,75,15,13
+
+    GROUPBOX        "MIME types",IDC_STATIC,8,95,244,23
+    CONTROL         "Manage file and protocol &associations",IDC_ENABLE_FILE_ASSOCIATIONS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,105,230,10
+
+    PUSHBUTTON      "&Font...",IDC_SYSPARAM_FONT,190,75,55,13,WS_DISABLED
+    GROUPBOX        "Folders",IDC_STATIC,8,120,244,94
+    CONTROL         "",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,132,230,58
+    CONTROL         "&Link to:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,65,13
+    EDITTEXT         IDC_EDIT_SFPATH,80,195,110,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
+    PUSHBUTTON      "B&rowse...",IDC_BROWSE_SFPATH,195,195,50,13,WS_DISABLED
+END
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+/* @makedep: winecfg.ico */
+IDI_WINECFG ICON winecfg.ico
+
+/* @makedep: logo.ico */
+IDI_LOGO ICON logo.ico
+
+/* @makedep: idw_testsound.wav */
+IDW_TESTSOUND WAVE idw_testsound.wav
+
+/* @makedep: winecfg.manifest */
+1 RT_MANIFEST winecfg.manifest

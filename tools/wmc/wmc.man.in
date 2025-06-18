@@ -1,0 +1,119 @@
+.TH WMC 1 "October 2005" "@PACKAGE_STRING@" "Wine Developers Manual"
+.SH NAME
+wmc \- Wine Message Compiler
+.SH SYNOPSIS
+.B wmc
+.RI [ options ]\ [ inputfile ]
+.SH DESCRIPTION
+.B wmc
+compiles messages from
+.B inputfile
+into FormatMessage[AW] compatible format encapsulated in a resourcescript
+format.
+.B wmc
+outputs the data either in a standard \fI.bin\fR formatted binary
+file, or can generated inline resource data.
+.PP
+.B wmc
+takes only one \fIinputfile\fR as argument (see \fBBUGS\fR). The
+\fIinputfile\fR normally has extension \fI.mc\fR. The messages are read from
+standard input if no inputfile is given. If the outputfile is not specified
+with \fB-o\fR, then \fBwmc\fR will write the output to \fIinputfile.{rc,h}\fR.
+The outputfile is named \fIwmc.tab.{rc,h}\fR if no inputfile was given.
+.SH OPTIONS
+.TP
+.B \-c
+Set 'custom-bit' in message-code values.
+.TP
+.B \-d
+NON-FUNCTIONAL; Use decimal values in output
+.TP
+.B \-D
+Set debug flag. This results is a parser trace and a lot of extra messages.
+.TP
+.BR \-h ,\  \-\-help
+Print an informative usage message and exits.
+.TP
+.BI \-H\  file
+Write headerfile to \fIfile\fR. Default is \fIinputfile.h\fR.
+.TP
+.B \-i
+Inline messagetable(s). This option skips the generation of all \fI.bin\fR files
+and writes all output into the \fI.rc\fR file. This encoding is parsable with
+wrc(1).
+.TP
+.BI \-\-nls-dir= directory
+Specify the directory to search for the NLS files containing the
+codepage mapping tables.
+.TP
+.BR \-o ,\  \-\-output =\fIfile
+Output to \fIfile\fR. Default is \fIinputfile.rc\fR.
+.TP
+.BR \-O ,\  \-\-output\-format =\fIformat
+Set the output format. Supported formats are \fBrc\fR (the default),
+\fBres\fR, and \fBpot\fR.
+.TP
+.BR \-P ,\  \-\-po-dir =\fIdirectory
+Enable the generation of resource translations based on po files
+loaded from the specified directory. That directory must follow the
+gettext convention, in particular in must contain one \fI.po\fR file for
+each language, and a LINGUAS file listing the available languages.
+.TP
+.B \-u
+Assume that the input file is in Unicode or UTF-8 format and skip
+codepage conversions.
+.TP
+.B \-v
+Show all supported codepages and languages.
+.TP
+.BR \-V ,\  \-\-version
+Print version end exit.
+.TP
+.BR \-W ,\  \-\-pedantic
+Enable pedantic warnings.
+.SH EXTENSIONS
+The original syntax is extended to support codepages more smoothly. Normally,
+codepages are based on the DOS codepage from the language setting. The
+original syntax only allows the destination codepage to be set. However, this
+is not enough for non\-DOS systems which do not use unicode source-files.
+.PP
+A new keyword \fBCodepages\fR is introduced to set both input and output
+codepages to anything one wants for each language. The syntax is similar to
+the other constructs:
+.PP
+Codepages '=' '(' language '=' cpin ':' cpout ... ')'
+.PP
+The \fIlanguage\fR is the numerical language\-ID or the alias set with
+LanguageNames. The input codepage \fIcpin\fR and output codepage
+\fIcpout\fR are the numerical codepage IDs. There can be multiple mappings
+within the definition and the definition may occur more than once.
+.SH AUTHORS
+.B wmc
+was written by Bertho A. Stultiens.
+.SH BUGS
+The message compiler should be able to have multiple input files and combine
+them into one output file. This would enable the splitting of languages into
+separate files.
+.PP
+Decimal output is completely lacking. Don't know whether it should be
+implemented because it is a, well, non-informative format change. It is
+recognized on the commandline for some form of compatibility.
+.PP
+Bugs can be reported on the
+.UR https://bugs.winehq.org
+.B Wine bug tracker
+.UE .
+.SH AVAILABILITY
+.B wmc
+is part of the Wine distribution, which is available through WineHQ,
+the
+.UR https://www.winehq.org/
+.B Wine development headquarters
+.UE .
+.SH "SEE ALSO"
+.BR wine (1),
+.BR wrc (1),
+.br
+.UR https://www.winehq.org/help
+.B Wine documentation and support
+.UE .

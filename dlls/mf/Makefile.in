@@ -1,0 +1,22 @@
+MODULE    = mf.dll
+IMPORTLIB = mf
+IMPORTS   = advapi32 mfplat ole32 uuid mfuuid strmiids
+DELAYIMPORTS = evr urlmon user32
+
+EXTRADLLFLAGS = -Wb,--prefer-native
+
+SOURCES = \
+	clock.c \
+	copier.c \
+	evr.c \
+	main.c \
+	mf.idl \
+	mf.rc \
+	quality.c \
+	sac.c \
+	samplegrabber.c \
+	sar.c \
+	scheme_handler.c \
+	session.c \
+	topology.c \
+	topology_loader.c

@@ -1,0 +1,44 @@
+/*
+ * Resources for the SANE backend
+ *
+ * Copyright 2006 CodeWeavers, Aric Stewart
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+#pragma makedep po
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+ 0 ""
+ 1 "#msgctxt#unit: pixels#px"
+ 2 "#msgctxt#unit: bits#b"
+ 3 "#msgctxt#unit: millimeters#mm"
+ 4 "#msgctxt#unit: dots/inch#dpi"
+ 5 "#msgctxt#unit: percent#%"
+ 6 "#msgctxt#unit: microseconds#us"
+}
+
+IDD_DIALOG1 DIALOG 0, 0, 186, 46
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE | DS_CENTER | DS_SETFOREGROUND
+CAPTION "Scanning"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT   "SCANNING... Please Wait",IDC_STATIC,5,19,176,8, SS_CENTER
+END

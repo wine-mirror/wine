@@ -1,0 +1,64 @@
+/*
+ * Copyright (C) 2020 Alistair Leslie-Hughes
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#if 0
+#pragma makedep install
+#endif
+
+[
+    object,
+    uuid(0c733a64-2a1c-11ce-ade5-00aa0044773d),
+    pointer_default(unique)
+]
+interface ICommandWithParameters : IUnknown
+{
+
+    typedef struct tagDBPARAMBINDINFO
+    {
+        LPOLESTR pwszDataSourceType;
+        LPOLESTR pwszName;
+        DBLENGTH ulParamSize;
+        DBPARAMFLAGS dwFlags;
+        BYTE bPrecision;
+        BYTE bScale;
+    } DBPARAMBINDINFO;
+
+    [local]
+    HRESULT GetParameterInfo([in, out] DB_UPARAMS *uparams, [out, size_is(,*uparams)] DBPARAMINFO **info, [out] OLECHAR **buffer);
+
+    [call_as(GetParameterInfo)]
+    HRESULT RemoteGetParameterInfo([in, out] DB_UPARAMS *uparams, [out, size_is(,(ULONG)*uparams)] DBPARAMINFO **param_info,
+            [out, size_is(,(ULONG)*uparams)] DBBYTEOFFSET **offsets, [in, out] DBLENGTH *buff_len,
+            [in, out, unique, size_is(,(ULONG)*buff_len)] OLECHAR **buffer, [out] IErrorInfo **error);
+
+    [local]
+    HRESULT MapParameterNames([in] DB_UPARAMS uparams, [in, size_is((ULONG)uparams)] LPCWSTR names[],
+            [out, size_is((ULONG)uparams)] DB_LPARAMS ordinals[]);
+
+    [call_as(MapParameterNames)]
+        HRESULT RemoteMapParameterNames([in] DB_UPARAMS uparams, [in, size_is((ULONG)uparams)] LPCOLESTR *names,
+                [out, size_is((ULONG)uparams)] DB_LPARAMS *ordinals, [out] IErrorInfo **error);
+
+    [local]
+    HRESULT SetParameterInfo([in] DB_UPARAMS uparams, [in, unique, size_is((ULONG)uparams)] const DB_UPARAMS ordinals[],
+            [in, unique, size_is((ULONG)uparams)] const DBPARAMBINDINFO bindinfo[]);
+
+    [call_as(SetParameterInfo)]
+    HRESULT RemoteSetParameterInfo([in] DB_UPARAMS uparams, [in, unique, size_is((ULONG)uparams)] const DB_UPARAMS *ordinals,
+            [in, unique, size_is((ULONG)uparams)] const DBPARAMBINDINFO *bindinfo, [out] IErrorInfo **error);
+}

@@ -1,0 +1,115 @@
+/*
+ * Copyright (C) 2024 Biswapriyo Nath
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.graphics.imaging.idl";
+import "windows.media.idl";
+
+namespace Windows.Media.FaceAnalysis {
+    interface IDetectedFace;
+    interface IFaceDetector;
+    interface IFaceDetectorStatics;
+
+    runtimeclass DetectedFace;
+    runtimeclass FaceDetector;
+
+    declare {
+        interface Windows.Foundation.Collections.IIterable<Windows.Media.FaceAnalysis.DetectedFace *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Media.FaceAnalysis.DetectedFace *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Media.FaceAnalysis.DetectedFace *>;
+        interface Windows.Foundation.Collections.IVector<Windows.Media.FaceAnalysis.DetectedFace *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Media.FaceAnalysis.FaceDetector *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Media.FaceAnalysis.FaceDetector *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVector<Windows.Media.FaceAnalysis.DetectedFace *> *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVector<Windows.Media.FaceAnalysis.DetectedFace *> *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.FaceAnalysis.DetectedFace),
+        uuid(8200d454-66bc-34df-9410-e89400195414)
+    ]
+    interface IDetectedFace : IInspectable
+    {
+        [propget] HRESULT FaceBox([out, retval] Windows.Graphics.Imaging.BitmapBounds *return_value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.FaceAnalysis.FaceDetector),
+        uuid(16b672dc-fe6f-3117-8d95-c3f04d51630c)
+    ]
+    interface IFaceDetector : IInspectable
+    {
+        [overload("DetectFacesAsync")]
+        HRESULT DetectFacesAsync(
+            [in] Windows.Graphics.Imaging.SoftwareBitmap *image,
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVector<Windows.Media.FaceAnalysis.DetectedFace *> *> **return_value);
+        [overload("DetectFacesAsync")]
+        HRESULT DetectFacesWithSearchAreaAsync(
+            [in] Windows.Graphics.Imaging.SoftwareBitmap *image,
+            [in] Windows.Graphics.Imaging.BitmapBounds search_area,
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVector<Windows.Media.FaceAnalysis.DetectedFace *> *> **return_value);
+        [propget] HRESULT MinDetectableFaceSize([out, retval] Windows.Graphics.Imaging.BitmapSize *return_value);
+        [propput] HRESULT MinDetectableFaceSize([in] Windows.Graphics.Imaging.BitmapSize value);
+        [propget] HRESULT MaxDetectableFaceSize([out, retval] Windows.Graphics.Imaging.BitmapSize *return_value);
+        [propput] HRESULT MaxDetectableFaceSize([in] Windows.Graphics.Imaging.BitmapSize value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.FaceAnalysis.FaceDetector),
+        uuid(bc042d67-9047-33f6-881b-6746c1b218b8)
+    ]
+    interface IFaceDetectorStatics : IInspectable
+    {
+        HRESULT CreateAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Media.FaceAnalysis.FaceDetector *> **return_value);
+        HRESULT GetSupportedBitmapPixelFormats([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Graphics.Imaging.BitmapPixelFormat> **result);
+        HRESULT IsBitmapPixelFormatSupported([in] Windows.Graphics.Imaging.BitmapPixelFormat bitmap_pixel_format, [out, retval] boolean *result);
+        [propget] HRESULT IsSupported([out, retval] boolean *return_value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass DetectedFace
+    {
+        [default] interface Windows.Media.FaceAnalysis.IDetectedFace;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Media.FaceAnalysis.IFaceDetectorStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass FaceDetector
+    {
+        [default] interface Windows.Media.FaceAnalysis.IFaceDetector;
+    }
+}

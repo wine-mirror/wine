@@ -1,0 +1,112 @@
+/*
+ * Copyright 2025 Vibhav Pant
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+#ifndef DO_NO_IMPORTS
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.devices.bluetooth.idl";
+import "windows.networking.idl";
+import "windows.networking.sockets.idl";
+import "windows.storage.streams.idl";
+#endif
+
+namespace Windows.Devices.Bluetooth {
+    typedef enum BluetoothCacheMode BluetoothCacheMode;
+}
+
+namespace Windows.Devices.Bluetooth.Rfcomm {
+    interface IRfcommDeviceService;
+    interface IRfcommDeviceService2;
+    interface IRfcommDeviceService3;
+    interface IRfcommDeviceServiceStatics;
+    interface IRfcommDeviceServiceStatics2;
+    interface IRfcommServiceId;
+    interface IRfcommServiceIdStatics;
+
+    runtimeclass RfcommDeviceService;
+    runtimeclass RfcommServiceId;
+
+    declare {
+        interface Windows.Foundation.Collections.IMapView<UINT32, Windows.Storage.Streams.IBuffer *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IMapView<UINT32, Windows.Storage.Streams.IBuffer *> *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IMapView<UINT32, Windows.Storage.Streams.IBuffer *> *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Devices.Bluetooth.Rfcomm.RfcommDeviceService *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.Rfcomm.RfcommDeviceService *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Bluetooth.Rfcomm.RfcommDeviceService),
+        uuid(ae81ff1f-c5a1-4c40-8c28-f3efd69062f3)
+    ]
+    interface IRfcommDeviceService : IInspectable
+    {
+        [propget] HRESULT ConnectionHostName([out, retval] Windows.Networking.HostName **value);
+        [propget] HRESULT ConnectionServiceName([out, retval] HSTRING *value);
+        [propget] HRESULT ServiceId([out, retval] Windows.Devices.Bluetooth.Rfcomm.RfcommServiceId **value);
+        [propget] HRESULT ProtectionLevel([out, retval] Windows.Networking.Sockets.SocketProtectionLevel *value);
+        [propget] HRESULT MaxProtectionLevel([out, retval] Windows.Networking.Sockets.SocketProtectionLevel *value);
+        [overload("GetSdpRawAttributesAsync")] HRESULT GetSdpRawAttributesAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IMapView<UINT32, Windows.Storage.Streams.IBuffer *> *> **operation);
+        [overload("GetSdpRawAttributesAsync")] HRESULT GetSdpRawAttributesWithCacheModeAsync([in] Windows.Devices.Bluetooth.BluetoothCacheMode cache_mode,
+                                                                                             [out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IMapView<UINT32, Windows.Storage.Streams.IBuffer *> *> **operation);
+    }
+
+    [
+         contract(Windows.Foundation.UniversalApiContract, 1.0),
+         exclusiveto(Windows.Devices.Bluetooth.Rfcomm.RfcommDeviceService),
+         uuid(a4a149ef-626d-41ac-b253-87ac5c27e28a)
+    ]
+    interface IRfcommDeviceServiceStatics : IInspectable
+    {
+        HRESULT FromIdAsync([in] HSTRING id, [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.Rfcomm.RfcommDeviceService *> **operation);
+        HRESULT GetDeviceSelector([in] Windows.Devices.Bluetooth.Rfcomm.RfcommServiceId *id, [out] [retval] HSTRING *selector);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Devices.Bluetooth.Rfcomm.IRfcommDeviceServiceStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.Devices.Bluetooth.Rfcomm.IRfcommDeviceServiceStatics2, Windows.Foundation.UniversalApiContract, 3.0),
+        threading(both)
+    ]
+    runtimeclass RfcommDeviceService
+    {
+        [default] interface Windows.Devices.Bluetooth.Rfcomm.IRfcommDeviceService;
+        interface Windows.Devices.Bluetooth.Rfcomm.IRfcommDeviceService2;
+        interface Windows.Foundation.IClosable;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Devices.Bluetooth.Rfcomm.IRfcommDeviceService3;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Devices.Bluetooth.Rfcomm.IRfcommServiceIdStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass RfcommServiceId
+    {
+        [default] interface Windows.Devices.Bluetooth.Rfcomm.IRfcommServiceId;
+    }
+}
