@@ -3871,7 +3871,7 @@ NTSTATUS WINAPI wine_nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *
  *
  * Get rid of . and .. components in the path.
  */
-static void collapse_path( WCHAR *path )
+static WCHAR *collapse_path( WCHAR *path )
 {
     WCHAR *p, *start, *next;
 
@@ -3941,6 +3941,66 @@ static void collapse_path( WCHAR *path )
     /* remove trailing spaces and dots (yes, Windows really does that, don't ask) */
     while (p > start && (p[-1] == ' ' || p[-1] == '.')) p--;
     *p = 0;
+    return path;
+}
+
+
+/***********************************************************************
+ *           find_drive_nt_root
+ */
+static NTSTATUS find_drive_nt_root( char *unix_name, unsigned int len,
+                                    WCHAR **nt_name, UINT disposition )
+{
+    static const WCHAR dos_prefixW[] = {'\\','?','?','\\','A',':','\\'};
+    unsigned int i, pos, lenW;
+    WCHAR *buffer;
+    NTSTATUS status = STATUS_SUCCESS;
+    struct stat st;
+    struct file_identity info[MAX_DOS_DRIVES];
+
+    *nt_name = NULL;
+
+    /* get device and inode of all drives */
+    if (!get_drives_info( info )) return STATUS_OBJECT_PATH_NOT_FOUND;
+
+    /* strip off trailing slashes */
+    while (len > 1 && unix_name[len - 1] == '/') len--;
+    unix_name[len] = 0;
+
+    for (pos = len; pos; pos = remove_last_componentA( unix_name, pos ))
+    {
+        char prev = unix_name[pos];
+        unix_name[pos] = 0;
+        if (stat( unix_name, &st ))
+        {
+            if (pos < len) return STATUS_OBJECT_PATH_NOT_FOUND;
+            if (disposition == FILE_OPEN || disposition == FILE_OVERWRITE)
+                return STATUS_OBJECT_NAME_NOT_FOUND;
+            status = STATUS_NO_SUCH_FILE;
+            continue;
+        }
+        unix_name[pos] = prev;
+        if (!S_ISDIR( st.st_mode )) continue;
+
+        /* find the drive */
+        for (i = 0; i < MAX_DOS_DRIVES; i++)
+        {
+            if (info[i].dev != st.st_dev || info[i].ino != st.st_ino) continue;
+            while (pos < len && unix_name[pos] == '/') pos++;
+            len -= pos;
+            buffer = malloc( (len + ARRAY_SIZE(dos_prefixW) + 1) * sizeof(WCHAR) );
+            if (!buffer) return STATUS_NO_MEMORY;
+            memcpy( buffer, dos_prefixW, sizeof(dos_prefixW) );
+            buffer[4] += i;
+            lenW = ARRAY_SIZE(dos_prefixW);
+            lenW += ntdll_umbstowcs( unix_name + pos, len, buffer + lenW, len );
+            buffer[lenW] = 0;
+            *nt_name = collapse_path( buffer );
+            return status;
+        }
+        if (pos <= 1) break;
+    }
+    return status;
 }
 
 
@@ -4017,17 +4077,41 @@ NTSTATUS WINAPI wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, ULON
 NTSTATUS get_nt_and_unix_names( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name,
                                 char **unix_name_ret, UINT disposition )
 {
+    static const WCHAR unix_prefixW[] = {'\\','?','?','\\','u','n','i','x'};
+    ULONG lenA, lenW = attr->ObjectName->Length / sizeof(WCHAR);
     UNICODE_STRING *orig = attr->ObjectName;
     NTSTATUS status;
 
     nt_name->Buffer = NULL;
     *unix_name_ret = NULL;
 
-#ifndef _WIN64
-    get_redirect( attr, nt_name );
-#endif
-    status = nt_to_unix_file_name( attr, unix_name_ret, disposition );
+    if (!attr->RootDirectory && lenW > ARRAY_SIZE(unix_prefixW) &&
+        !wcsncmp( attr->ObjectName->Buffer, unix_prefixW, ARRAY_SIZE(unix_prefixW) ))
+    {
+        const WCHAR *name = attr->ObjectName->Buffer + ARRAY_SIZE(unix_prefixW);
+        char *unix_name;
+        WCHAR *buffer;
 
+        lenW -= ARRAY_SIZE(unix_prefixW);
+        *unix_name_ret = unix_name = malloc( lenW * 3 + 1 );
+        if (!unix_name) return STATUS_NO_MEMORY;
+        lenA = ntdll_wcstoumbs( name, lenW, unix_name, lenW * 3, FALSE );
+        for (ULONG i = 0; i < lenA; i++) if (unix_name[i] == '\\') unix_name[i] = '/';
+
+        status = find_drive_nt_root( unix_name, lenA, &buffer, disposition );
+        if (buffer)
+        {
+            init_unicode_string( nt_name, buffer );
+            attr->ObjectName = nt_name;
+        }
+    }
+    else
+    {
+#ifndef _WIN64
+        get_redirect( attr, nt_name );
+#endif
+        status = nt_to_unix_file_name( attr, unix_name_ret, disposition );
+    }
     if (status && status != STATUS_NO_SUCH_FILE)
         TRACE( "%s -> ret %x\n", debugstr_us(orig), status );
     else
@@ -4042,25 +4126,21 @@ NTSTATUS get_nt_and_unix_names( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name
  *
  * Simplified version of RtlGetFullPathName_U.
  */
-NTSTATUS get_full_path( const char *name, const WCHAR *curdir, UNICODE_STRING *nt_name )
+NTSTATUS get_full_path( char *name, const WCHAR *curdir, UNICODE_STRING *nt_name )
 {
     static const WCHAR unix_prefixW[] = {'\\','?','?','\\','u','n','i','x'};
     static const WCHAR uncW[] = {'\\','?','?','\\','U','N','C','\\'};
     static const WCHAR devW[] = {'\\','?','?','\\'};
     static const WCHAR rootW[] = {'\\','?','?','\\','C',':','\\'};
     WCHAR *ret;
-    struct stat st;
     ULONG prefix_len, len = max( ARRAY_SIZE(unix_prefixW), wcslen(curdir) ) + strlen(name) + 1;
+
+    /* special case for Unix file name */
+    if (name[0] == '/' && !find_drive_nt_root( name, strlen(name), &ret, FILE_OPEN )) goto done;
 
     if (!(ret = malloc( len * sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
 
-    /* special case for Unix file name */
-    if (name && name[0] == '/' && !stat( name, &st ))
-    {
-        memcpy( ret, unix_prefixW, sizeof(unix_prefixW) );
-        prefix_len = ARRAY_SIZE(unix_prefixW);
-    }
-    else if (IS_SEPARATOR(name[0]) && name[1] == '?' && name[2] == '?' && IS_SEPARATOR(name[3]))  /* \??\ */
+    if (IS_SEPARATOR(name[0]) && name[1] == '?' && name[2] == '?' && IS_SEPARATOR(name[3]))  /* \??\ */
     {
         prefix_len = 0;
     }
@@ -4100,6 +4180,7 @@ NTSTATUS get_full_path( const char *name, const WCHAR *curdir, UNICODE_STRING *n
 
     ntdll_umbstowcs( name, strlen(name) + 1, ret + prefix_len, len - prefix_len );
     collapse_path( ret );
+ done:
     init_unicode_string( nt_name, ret );
     return STATUS_SUCCESS;
 }
