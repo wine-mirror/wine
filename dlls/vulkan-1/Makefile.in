@@ -1,9 +1,0 @@
-MODULE    = vulkan-1.dll
-IMPORTS   = user32
-IMPORTLIB = vulkan-1
-
-EXTRADLLFLAGS = -Wb,--prefer-native
-
-SOURCES = \
-	version.rc \
-	vulkan.c

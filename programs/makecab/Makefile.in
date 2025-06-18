@@ -1,6 +1,0 @@
-MODULE = makecab.exe
-
-EXTRADLLFLAGS = -mconsole -municode
-
-SOURCES = \
-	makecab.c

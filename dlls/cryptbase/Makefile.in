@@ -1,5 +1,0 @@
-MODULE    = cryptbase.dll
-
-SOURCES = \
-	cryptbase_main.c \
-	des.c

@@ -1,6 +1,0 @@
-TESTDLL   = ir50_32.dll
-IMPORTS   = msvfw32
-
-SOURCES = \
-	ir50_32.c \
-	resource.rc

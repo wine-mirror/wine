@@ -1,8 +1,0 @@
-TESTDLL = bluetoothapis.dll
-IMPORTS = bluetoothapis user32
-
-SOURCES = \
-	device.c \
-	radio.c \
-	resource.rc \
-	sdp.c

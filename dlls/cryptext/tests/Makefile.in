@@ -1,4 +1,0 @@
-TESTDLL = cryptext.dll
-
-SOURCES = \
-	cryptext.c

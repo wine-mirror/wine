@@ -1,6 +1,0 @@
-MODULE = dataexchange.dll
-IMPORTS = combase user32
-
-SOURCES = \
-	classes.idl \
-	main.c
