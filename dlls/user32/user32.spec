@@ -642,7 +642,7 @@
 @ stdcall GetPointerInfo(long ptr)
 # @ stub GetPointerInfoHistory
 # @ stub GetPointerInputTransform
-# @ stub GetPointerPenInfo
+@ stdcall GetPointerPenInfo(long ptr)
 # @ stub GetPointerPenInfoHistory
 @ stdcall GetPointerTouchInfo(long ptr)
 @ stdcall GetPointerTouchInfoHistory(long ptr ptr)
