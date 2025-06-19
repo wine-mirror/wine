@@ -60,12 +60,6 @@ static struct wayland_gl_drawable *impl_from_opengl_drawable(struct opengl_drawa
     return CONTAINING_RECORD(base, struct wayland_gl_drawable, base);
 }
 
-struct wayland_context
-{
-    EGLConfig config;
-    EGLContext context;
-};
-
 static void wayland_drawable_destroy(struct opengl_drawable *base)
 {
     struct wayland_gl_drawable *gl = impl_from_opengl_drawable(base);
@@ -169,20 +163,11 @@ static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
     wl_egl_window_resize(gl->wl_egl_window, client_width, client_height, 0, 0);
 }
 
-static BOOL wayland_make_current(struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *private)
+static BOOL wayland_make_current(struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *context)
 {
     struct wayland_gl_drawable *draw = impl_from_opengl_drawable(draw_base), *read = impl_from_opengl_drawable(read_base);
-    struct wayland_context *ctx = private;
-
-    TRACE("draw %s, read %s, context %p\n", debugstr_opengl_drawable(draw_base), debugstr_opengl_drawable(read_base), private);
-
-    if (!private)
-    {
-        funcs->p_eglMakeCurrent(egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-        return TRUE;
-    }
-
-    return funcs->p_eglMakeCurrent(egl->display, draw->surface, read->surface, ctx->context);
+    TRACE("draw %s, read %s, context %p\n", debugstr_opengl_drawable(draw_base), debugstr_opengl_drawable(read_base), context);
+    return funcs->p_eglMakeCurrent(egl->display, context ? draw->surface : EGL_NO_SURFACE, context ? read->surface : EGL_NO_SURFACE, context);
 }
 
 static BOOL wayland_opengl_surface_create(HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable)
@@ -203,9 +188,8 @@ static BOOL wayland_opengl_surface_create(HWND hwnd, HDC hdc, int format, struct
     return TRUE;
 }
 
-static BOOL wayland_context_create(int format, void *share_private, const int *attribs, void **private)
+static BOOL wayland_context_create(int format, void *share, const int *attribs, void **context)
 {
-    struct wayland_context *share = share_private, *ctx;
     EGLint egl_attribs[16], *attribs_end = egl_attribs;
 
     TRACE("format=%d share=%p attribs=%p\n", format, share, attribs);
@@ -261,12 +245,6 @@ static BOOL wayland_context_create(int format, void *share_private, const int *a
     }
     *attribs_end = EGL_NONE;
 
-    if (!(ctx = calloc(1, sizeof(*ctx))))
-    {
-        ERR("Failed to allocate memory for GL context\n");
-        return FALSE;
-    }
-
     /* For now only OpenGL is supported. It's enough to set the API only for
      * context creation, since:
      * 1. the default API is EGL_OPENGL_ES_API
@@ -275,20 +253,15 @@ static BOOL wayland_context_create(int format, void *share_private, const int *a
      *    > purposes except eglCreateContext.
      */
     funcs->p_eglBindAPI(EGL_OPENGL_API);
-    ctx->context = funcs->p_eglCreateContext(egl->display, EGL_NO_CONFIG_KHR,
-                                             share ? share->context : EGL_NO_CONTEXT,
-                                             attribs ? egl_attribs : NULL);
-    TRACE("ctx=%p egl_context=%p\n", ctx, ctx->context);
-
-    *private = ctx;
+    *context = funcs->p_eglCreateContext(egl->display, EGL_NO_CONFIG_KHR, share,
+                                         attribs ? egl_attribs : NULL);
+    TRACE("egl_context=%p\n", *context);
     return TRUE;
 }
 
-static BOOL wayland_context_destroy(void *private)
+static BOOL wayland_context_destroy(void *context)
 {
-    struct wayland_context *ctx = private;
-    funcs->p_eglDestroyContext(egl->display, ctx->context);
-    free(ctx);
+    funcs->p_eglDestroyContext(egl->display, context);
     return TRUE;
 }
 
