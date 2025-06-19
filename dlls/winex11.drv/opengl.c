@@ -194,11 +194,6 @@ struct glx_pixel_format
     DWORD       dwFlags; /* We store some PFD_* flags in here for emulated bitmap formats */
 };
 
-struct x11drv_context
-{
-    GLXContext ctx;
-};
-
 struct gl_drawable
 {
     struct opengl_drawable         base;
@@ -860,7 +855,7 @@ static BOOL set_swap_interval( struct gl_drawable *gl, int interval )
     return ret;
 }
 
-static GLXContext create_glxcontext( struct x11drv_context *context, int format, GLXContext share, const int *attribs )
+static GLXContext create_glxcontext( int format, GLXContext share, const int *attribs )
 {
     struct glx_pixel_format *fmt = glx_pixel_format_from_format( format );
     GLXContext ctx;
@@ -1178,14 +1173,10 @@ static BOOL x11drv_describe_pixel_format( int format, struct wgl_pixel_format *p
 /***********************************************************************
  *		glxdrv_wglDeleteContext
  */
-static BOOL x11drv_context_destroy(void *private)
+static BOOL x11drv_context_destroy( void *context )
 {
-    struct x11drv_context *ctx = private;
-
-    TRACE("(%p)\n", ctx);
-
-    if (ctx->ctx) pglXDestroyContext( gdi_display, ctx->ctx );
-    free( ctx );
+    TRACE("(%p)\n", context);
+    pglXDestroyContext( gdi_display, context );
     return TRUE;
 }
 
@@ -1196,24 +1187,16 @@ static void *x11drv_get_proc_address( const char *name )
     return pglXGetProcAddressARB( (const GLubyte *)name );
 }
 
-static BOOL x11drv_make_current( struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *private )
+static BOOL x11drv_make_current( struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *context )
 {
     struct gl_drawable *draw = impl_from_opengl_drawable( draw_base ), *read = impl_from_opengl_drawable( read_base );
-    struct x11drv_context *ctx = private;
     BOOL ret;
 
-    TRACE( "draw %s, read %s, context %p\n", debugstr_opengl_drawable( draw_base ), debugstr_opengl_drawable( read_base ), private );
+    TRACE( "draw %s, read %s, context %p\n", debugstr_opengl_drawable( draw_base ), debugstr_opengl_drawable( read_base ), context );
 
-    if (!private)
-    {
-        pglXMakeCurrent( gdi_display, None, NULL );
-        NtCurrentTeb()->glReserved2 = NULL;
-        return TRUE;
-    }
-
-    if (!pglXMakeContextCurrent) ret = pglXMakeCurrent( gdi_display, draw->drawable, ctx->ctx );
-    else ret = pglXMakeContextCurrent( gdi_display, draw->drawable, read->drawable, ctx->ctx );
-    NtCurrentTeb()->glReserved2 = ctx;
+    if (!pglXMakeContextCurrent || !context) ret = pglXMakeCurrent( gdi_display, context ? draw->drawable : None, context );
+    else ret = pglXMakeContextCurrent( gdi_display, draw->drawable, read->drawable, context );
+    if (ret) NtCurrentTeb()->glReserved2 = context;
     return ret;
 }
 
@@ -1271,78 +1254,71 @@ static void x11drv_surface_flush( struct opengl_drawable *base, UINT flags )
 /***********************************************************************
  *		X11DRV_wglCreateContextAttribsARB
  */
-static BOOL x11drv_context_create( int format, void *share_private, const int *attribList, void **private )
+static BOOL x11drv_context_create( int format, void *share, const int *attribList, void **context )
 {
-    struct x11drv_context *ret, *hShareContext = share_private;
     int glx_attribs[16] = {0}, *pContextAttribList = glx_attribs;
     int err = 0;
 
-    TRACE("(%d %p %p)\n", format, hShareContext, attribList);
+    TRACE("(%d %p %p)\n", format, share, attribList);
 
-    if ((ret = calloc( 1, sizeof(*ret) )))
+    if (attribList)
     {
-        if (attribList)
+        /* attribList consists of pairs {token, value] terminated with 0 */
+        while(attribList[0] != 0)
         {
-            /* attribList consists of pairs {token, value] terminated with 0 */
-            while(attribList[0] != 0)
+            TRACE("%#x %#x\n", attribList[0], attribList[1]);
+            switch(attribList[0])
             {
-                TRACE("%#x %#x\n", attribList[0], attribList[1]);
-                switch(attribList[0])
-                {
-                case WGL_CONTEXT_MAJOR_VERSION_ARB:
-                    pContextAttribList[0] = GLX_CONTEXT_MAJOR_VERSION_ARB;
-                    pContextAttribList[1] = attribList[1];
-                    pContextAttribList += 2;
-                    break;
-                case WGL_CONTEXT_MINOR_VERSION_ARB:
-                    pContextAttribList[0] = GLX_CONTEXT_MINOR_VERSION_ARB;
-                    pContextAttribList[1] = attribList[1];
-                    pContextAttribList += 2;
-                    break;
-                case WGL_CONTEXT_LAYER_PLANE_ARB:
-                    break;
-                case WGL_CONTEXT_FLAGS_ARB:
-                    pContextAttribList[0] = GLX_CONTEXT_FLAGS_ARB;
-                    pContextAttribList[1] = attribList[1];
-                    pContextAttribList += 2;
-                    break;
-                case WGL_CONTEXT_OPENGL_NO_ERROR_ARB:
-                    pContextAttribList[0] = GLX_CONTEXT_OPENGL_NO_ERROR_ARB;
-                    pContextAttribList[1] = attribList[1];
-                    pContextAttribList += 2;
-                    break;
-                case WGL_CONTEXT_PROFILE_MASK_ARB:
-                    pContextAttribList[0] = GLX_CONTEXT_PROFILE_MASK_ARB;
-                    pContextAttribList[1] = attribList[1];
-                    pContextAttribList += 2;
-                    break;
-                case WGL_RENDERER_ID_WINE:
-                    pContextAttribList[0] = GLX_RENDERER_ID_MESA;
-                    pContextAttribList[1] = attribList[1];
-                    pContextAttribList += 2;
-                    break;
-                default:
-                    ERR("Unhandled attribList pair: %#x %#x\n", attribList[0], attribList[1]);
-                }
-                attribList += 2;
+            case WGL_CONTEXT_MAJOR_VERSION_ARB:
+                pContextAttribList[0] = GLX_CONTEXT_MAJOR_VERSION_ARB;
+                pContextAttribList[1] = attribList[1];
+                pContextAttribList += 2;
+                break;
+            case WGL_CONTEXT_MINOR_VERSION_ARB:
+                pContextAttribList[0] = GLX_CONTEXT_MINOR_VERSION_ARB;
+                pContextAttribList[1] = attribList[1];
+                pContextAttribList += 2;
+                break;
+            case WGL_CONTEXT_LAYER_PLANE_ARB:
+                break;
+            case WGL_CONTEXT_FLAGS_ARB:
+                pContextAttribList[0] = GLX_CONTEXT_FLAGS_ARB;
+                pContextAttribList[1] = attribList[1];
+                pContextAttribList += 2;
+                break;
+            case WGL_CONTEXT_OPENGL_NO_ERROR_ARB:
+                pContextAttribList[0] = GLX_CONTEXT_OPENGL_NO_ERROR_ARB;
+                pContextAttribList[1] = attribList[1];
+                pContextAttribList += 2;
+                break;
+            case WGL_CONTEXT_PROFILE_MASK_ARB:
+                pContextAttribList[0] = GLX_CONTEXT_PROFILE_MASK_ARB;
+                pContextAttribList[1] = attribList[1];
+                pContextAttribList += 2;
+                break;
+            case WGL_RENDERER_ID_WINE:
+                pContextAttribList[0] = GLX_RENDERER_ID_MESA;
+                pContextAttribList[1] = attribList[1];
+                pContextAttribList += 2;
+                break;
+            default:
+                ERR("Unhandled attribList pair: %#x %#x\n", attribList[0], attribList[1]);
             }
-        }
-
-        X11DRV_expect_error(gdi_display, GLXErrorHandler, NULL);
-        ret->ctx = create_glxcontext( ret, format, hShareContext ? hShareContext->ctx : NULL,
-                                      attribList ? glx_attribs : NULL );
-        XSync(gdi_display, False);
-        if ((err = X11DRV_check_error()) || !ret->ctx)
-        {
-            /* In the future we should convert the GLX error to a win32 one here if needed */
-            WARN("Context creation failed (error %#x).\n", err);
-            free( ret );
-            return FALSE;
+            attribList += 2;
         }
     }
 
-    TRACE( "-> %p\n", ret );
-    *private = ret;
+    X11DRV_expect_error(gdi_display, GLXErrorHandler, NULL);
+    *context = create_glxcontext( format, share, attribList ? glx_attribs : NULL );
+    XSync(gdi_display, False);
+    if ((err = X11DRV_check_error()) || !*context)
+    {
+        /* In the future we should convert the GLX error to a win32 one here if needed */
+        WARN("Context creation failed (error %#x).\n", err);
+        return FALSE;
+    }
+
+    TRACE( "-> %p\n", *context );
     return TRUE;
 }
 
@@ -1533,7 +1509,7 @@ static const char *x11drv_init_wgl_extensions( struct opengl_funcs *funcs )
 
 static BOOL x11drv_surface_swap( struct opengl_drawable *base )
 {
-    struct x11drv_context *ctx = NtCurrentTeb()->glReserved2;
+    GLXContext ctx = NtCurrentTeb()->glReserved2;
     struct gl_drawable *gl = impl_from_opengl_drawable( base );
     INT64 ust, msc, sbc, target_sbc = 0;
 
