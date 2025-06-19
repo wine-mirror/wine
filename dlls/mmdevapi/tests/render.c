@@ -368,6 +368,20 @@ static void test_audioclient(void)
         hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
                 NULL, (void**)&ac);
         ok(hr == S_OK, "Activation failed with %08lx\n", hr);
+
+        hr = IAudioClient_QueryInterface(ac, &IID_IAudioClient3, (void**)&ac3);
+        ok(hr == S_OK, "Failed to query IAudioClient3 interface: %08lx\n", hr);
+
+        hr = IAudioClient3_InitializeSharedAudioStream(
+            ac3, AUDCLNT_SHAREMODE_SHARED, min_period, pwfx, NULL);
+        ok(hr == S_OK, "InitializeSharedAudioStream returns %08lx\n", hr);
+
+        IAudioClient3_Release(ac3);
+        IAudioClient_Release(ac);
+
+        hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+                NULL, (void**)&ac);
+        ok(hr == S_OK, "Activation failed with %08lx\n", hr);
     }
     else
         win_skip("IAudioClient3 is not present\n");
