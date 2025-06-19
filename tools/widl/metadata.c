@@ -1618,6 +1618,22 @@ static UINT make_property_sig( const var_t *method, BYTE *buf )
     return len;
 }
 
+static UINT make_deprecated_sig( UINT token, BYTE *buf )
+{
+    UINT len = 5;
+
+    buf[0] = SIG_TYPE_HASTHIS;
+    buf[1] = 4;
+    buf[2] = ELEMENT_TYPE_VOID;
+    buf[3] = ELEMENT_TYPE_STRING;
+    buf[4] = ELEMENT_TYPE_VALUETYPE;
+    len += encode_int( token, buf + 5 );
+    buf[len++] = ELEMENT_TYPE_U4;
+    buf[len++] = ELEMENT_TYPE_STRING;
+
+    return len;
+}
+
 static UINT make_contract_value( const type_t *type, BYTE *buf )
 {
     const expr_t *contract = get_attrp( type->attrs, ATTR_CONTRACT );
@@ -1986,6 +2002,77 @@ static void add_default_overload_attr_step2( const var_t *method )
     add_customattribute_row( parent, attr_type, add_blob(value, sizeof(value)) );
 }
 
+static UINT make_deprecated_value( const var_t *method, BYTE **ret_buf )
+{
+    static const BYTE zero[] = { 0x00, 0x00, 0x00, 0x00 }, one[] = { 0x01, 0x00, 0x00, 0x00 };
+    const expr_t *attr = get_attrp( method->attrs, ATTR_DEPRECATED );
+    const char *text = attr->ref->u.sval;
+    const char *kind = attr->u.ext->u.sval;
+    BYTE encoded[4];
+    UINT len, len_text = strlen( text ), len_encoded = encode_int( len_text, encoded );
+    BYTE *buf = xmalloc( 2 + len_encoded + len_text + 6 + MAX_NAME + 5 );
+    char *contract;
+
+    buf[0] = 1;
+    buf[1] = 0;
+    memcpy( buf + 2, encoded, len_encoded );
+    len = 2 + len_encoded;
+    memcpy( buf + len, text, len_text );
+    len += len_text;
+    if (!strcmp( kind, "remove" )) memcpy( buf + len, one, sizeof(one) );
+    else memcpy( buf + len, zero, sizeof(zero) );
+    len += 4;
+    buf[len++] = 0;
+    buf[len++] = 0;
+
+    buf[len++] = 1;
+    buf[len++] = 0;
+    contract = format_namespace( attr->ext2->u.tref.type->namespace, "", ".", attr->ext2->u.tref.type->name, NULL );
+    len_text = strlen( contract );
+    buf[len++] = len_text;
+    memcpy( buf + len, contract, len_text );
+    free( contract );
+    len += len_text;
+    buf[len++] = 0;
+    buf[len++] = 0;
+
+    *ret_buf = buf;
+    return len;
+}
+
+static void add_deprecated_attr_step1( const var_t *method )
+{
+    UINT assemblyref, scope, typeref_type, typeref, class, sig_size;
+    type_t *type = method->declspec.type;
+    BYTE sig[32];
+
+    if (!is_attr( method->attrs, ATTR_DEPRECATED )) return;
+
+    assemblyref = add_assemblyref_row( 0x200, 0, add_string("Windows.Foundation") );
+    scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+    typeref_type = add_typeref_row( scope, add_string("DeprecationType"), add_string("Windows.Foundation.Metadata") );
+    typeref = add_typeref_row( scope, add_string("DeprecatedAttribute"), add_string("Windows.Foundation.Metadata") );
+
+    sig_size = make_deprecated_sig( typedef_or_ref(TABLE_TYPEREF, typeref_type), sig );
+    class = memberref_parent( TABLE_TYPEREF, typeref );
+    type->md.member[MD_ATTR_DEPRECATED] = add_memberref_row( class, add_string(".ctor"), add_blob(sig, sig_size) );
+}
+
+static void add_deprecated_attr_step2( const var_t *method )
+{
+    const type_t *type = method->declspec.type;
+    UINT parent, attr_type, value_size;
+    BYTE *value;
+
+    if (!is_attr( method->attrs, ATTR_DEPRECATED )) return;
+
+    parent = has_customattribute( TABLE_METHODDEF, type->md.def );
+    attr_type = customattribute_type( TABLE_MEMBERREF, type->md.member[MD_ATTR_DEPRECATED] );
+    value_size = make_deprecated_value( method, &value );
+    add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
+    free( value );
+}
+
 static void add_method_params_step1( var_list_t *arg_list )
 {
     var_t *arg;
@@ -2029,6 +2116,7 @@ static void add_interface_type_step1( type_t *type )
 
         add_overload_attr_step1( method );
         add_default_overload_attr_step1( method );
+        add_deprecated_attr_step1( method );
     }
 }
 
@@ -2245,6 +2333,7 @@ static void add_interface_type_step2( type_t *type )
         else if (is_attr( method->attrs, ATTR_EVENTREMOVE )) add_eventremove_method( type, method );
         else add_method( method );
 
+        add_deprecated_attr_step2( method );
         add_default_overload_attr_step2( method );
         add_overload_attr_step2( method );
     }
