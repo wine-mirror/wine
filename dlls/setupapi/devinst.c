@@ -46,6 +46,8 @@
 
 #include "setupapi_private.h"
 
+#include "initguid.h"
+#include "devpkey.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
@@ -3116,14 +3118,99 @@ BOOL WINAPI SetupDiGetDeviceInterfacePropertyW( HDEVINFO devinfo, SP_DEVICE_INTE
     return FALSE;
 }
 
+static DWORD set_device_reg_property( HKEY base_key, const DEVPROPKEY *key, DEVPROPTYPE type, const BYTE *buf,
+                                      DWORD buf_size )
+{
+    HKEY properties, property;
+    WCHAR prop_path[44];
+    LSTATUS ret;
+
+    ret = RegCreateKeyExW( base_key, L"Properties", 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &properties, NULL );
+    if (ret)
+    {
+        SetLastError( ret );
+        return FALSE;
+    }
+
+    SETUPDI_GuidToString( &key->fmtid, prop_path );
+    swprintf( &prop_path[38], ARRAY_SIZE( prop_path ) - 38, L"\\%04X", key->pid );
+    switch (type)
+    {
+    case DEVPROP_TYPE_EMPTY:
+        ret = RegDeleteKeyW( properties, prop_path );
+        SetLastError( ret == ERROR_FILE_NOT_FOUND ? ERROR_NOT_FOUND : ret );
+        break;
+    case DEVPROP_TYPE_NULL:
+        if (!(ret = RegOpenKeyW( properties, prop_path, &property )))
+        {
+            ret = RegDeleteValueW( property, NULL );
+            RegCloseKey( property );
+        }
+        break;
+    default:
+        if (!(ret = RegCreateKeyExW( properties, prop_path, 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &property, NULL )))
+        {
+            ret = RegSetValueExW( property, NULL, 0, 0xffff0000 | (0xffff & type), buf, buf_size );
+            RegCloseKey( property );
+        }
+        break;
+    }
+
+    RegCloseKey( properties );
+    return ret == ERROR_FILE_NOT_FOUND ? ERROR_NOT_FOUND : ret;
+}
+
 BOOL WINAPI SetupDiSetDeviceInterfacePropertyW( HDEVINFO devinfo, SP_DEVICE_INTERFACE_DATA *iface_data,
                                                 const DEVPROPKEY *key, DEVPROPTYPE type, const BYTE *buf,
                                                 DWORD buf_size, DWORD flags )
 {
-    FIXME( "devinfo %p, iface_data %p, key %p, type %#lx, buf %p, buf_size %lu, flags %#lx: stub!\n", devinfo,
+    struct device_iface *iface;
+    DWORD ret;
+
+    TRACE( "devinfo %p, iface_data %p, key %p, type %#lx, buf %p, buf_size %lu, flags %#lx\n", devinfo,
            iface_data, key, type, buf, buf_size, flags );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+
+    if (!(iface = get_device_iface( devinfo, iface_data )))
+        return FALSE;
+    if (buf_size && !buf)
+    {
+        SetLastError( ERROR_INVALID_USER_BUFFER );
+        return FALSE;
+    }
+    if (!key || !is_valid_property_type(type)
+        || (!(buf && buf_size) && !(type == DEVPROP_TYPE_EMPTY || type == DEVPROP_TYPE_NULL))
+        || (buf && buf_size && (type == DEVPROP_TYPE_EMPTY || type == DEVPROP_TYPE_NULL)))
+    {
+        SetLastError( ERROR_INVALID_DATA );
+        return FALSE;
+    }
+    if (flags)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return FALSE;
+    }
+
+
+    if (IsEqualDevPropKey( *key, DEVPKEY_DeviceInterface_Enabled ))
+    {
+        DEVPROP_BOOLEAN val = *(DEVPROP_BOOLEAN *)buf;
+
+        if (type != DEVPROP_TYPE_BOOLEAN || buf_size != sizeof( DEVPROP_BOOLEAN )
+            || !(val == DEVPROP_FALSE || val == DEVPROP_TRUE))
+        {
+            SetLastError( ERROR_INVALID_DATA );
+            return FALSE;
+        }
+
+        ret = !!(iface->flags & SPINT_ACTIVE) == !!val ? ERROR_SUCCESS : ERROR_ACCESS_DENIED;
+        /* Setting this to the interface's current status is a no-op, otherwise return ERROR_ACCESS_DENEID. */
+        SetLastError( ret );
+        return !ret;
+    }
+
+    ret = set_device_reg_property( iface->refstr_key, key, type, buf, buf_size );
+    SetLastError( ret );
+    return !ret;
 }
 
 /***********************************************************************
@@ -4092,9 +4179,7 @@ BOOL WINAPI SetupDiSetDevicePropertyW(HDEVINFO devinfo, PSP_DEVINFO_DATA device_
                                       DEVPROPTYPE type, const BYTE *buffer, DWORD size, DWORD flags)
 {
     struct device *device;
-    HKEY properties_hkey, property_hkey;
-    WCHAR property_hkey_path[44];
-    LSTATUS ls;
+    DWORD ret;
 
     TRACE("%p %p %p %#lx %p %ld %#lx\n", devinfo, device_data, key, type, buffer, size, flags);
 
@@ -4121,48 +4206,9 @@ BOOL WINAPI SetupDiSetDevicePropertyW(HDEVINFO devinfo, PSP_DEVINFO_DATA device_
         return FALSE;
     }
 
-    ls = RegCreateKeyExW(device->key, L"Properties", 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &properties_hkey, NULL);
-    if (ls)
-    {
-        SetLastError(ls);
-        return FALSE;
-    }
-
-    SETUPDI_GuidToString(&key->fmtid, property_hkey_path);
-    swprintf(property_hkey_path + 38, ARRAY_SIZE(property_hkey_path) - 38, L"\\%04X", key->pid);
-
-    if (type == DEVPROP_TYPE_EMPTY)
-    {
-        ls = RegDeleteKeyW(properties_hkey, property_hkey_path);
-        RegCloseKey(properties_hkey);
-        SetLastError(ls == ERROR_FILE_NOT_FOUND ? ERROR_NOT_FOUND : ls);
-        return !ls;
-    }
-    else if (type == DEVPROP_TYPE_NULL)
-    {
-        if (!(ls = RegOpenKeyW(properties_hkey, property_hkey_path, &property_hkey)))
-        {
-            ls = RegDeleteValueW(property_hkey, NULL);
-            RegCloseKey(property_hkey);
-        }
-
-        RegCloseKey(properties_hkey);
-        SetLastError(ls == ERROR_FILE_NOT_FOUND ? ERROR_NOT_FOUND : ls);
-        return !ls;
-    }
-    else
-    {
-        if (!(ls = RegCreateKeyExW(properties_hkey, property_hkey_path, 0, NULL, 0, KEY_READ | KEY_WRITE, NULL,
-                                  &property_hkey, NULL)))
-        {
-            ls = RegSetValueExW(property_hkey, NULL, 0, 0xffff0000 | (0xffff & type), buffer, size);
-            RegCloseKey(property_hkey);
-        }
-
-        RegCloseKey(properties_hkey);
-        SetLastError(ls);
-        return !ls;
-    }
+    ret = set_device_reg_property( device->key, key, type, buffer, size );
+    SetLastError( ret );
+    return !ret;
 }
 
 /***********************************************************************
