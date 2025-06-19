@@ -188,83 +188,6 @@ static BOOL wayland_opengl_surface_create(HWND hwnd, HDC hdc, int format, struct
     return TRUE;
 }
 
-static BOOL wayland_context_create(int format, void *share, const int *attribs, void **context)
-{
-    EGLint egl_attribs[16], *attribs_end = egl_attribs;
-
-    TRACE("format=%d share=%p attribs=%p\n", format, share, attribs);
-
-    for (; attribs && attribs[0] != 0; attribs += 2)
-    {
-        EGLint name;
-
-        TRACE("%#x %#x\n", attribs[0], attribs[1]);
-
-        /* Find the EGL attribute names corresponding to the WGL names.
-         * For all of the attributes below, the values match between the two
-         * systems, so we can use them directly. */
-        switch (attribs[0])
-        {
-        case WGL_CONTEXT_MAJOR_VERSION_ARB:
-            name = EGL_CONTEXT_MAJOR_VERSION_KHR;
-            break;
-        case WGL_CONTEXT_MINOR_VERSION_ARB:
-            name = EGL_CONTEXT_MINOR_VERSION_KHR;
-            break;
-        case WGL_CONTEXT_FLAGS_ARB:
-            name = EGL_CONTEXT_FLAGS_KHR;
-            break;
-        case WGL_CONTEXT_OPENGL_NO_ERROR_ARB:
-            name = EGL_CONTEXT_OPENGL_NO_ERROR_KHR;
-            break;
-        case WGL_CONTEXT_PROFILE_MASK_ARB:
-            if (attribs[1] & WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
-            {
-                ERR("OpenGL ES contexts are not supported\n");
-                return FALSE;
-            }
-            name = EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR;
-            break;
-        default:
-            name = EGL_NONE;
-            FIXME("Unhandled attributes: %#x %#x\n", attribs[0], attribs[1]);
-        }
-
-        if (name != EGL_NONE)
-        {
-            EGLint *dst = egl_attribs;
-            /* Check if we have already set the same attribute and replace it. */
-            for (; dst != attribs_end && *dst != name; dst += 2) continue;
-            /* Our context attribute array should have enough space for all the
-             * attributes we support (we merge repetitions), plus EGL_NONE. */
-            assert(dst - egl_attribs <= ARRAY_SIZE(egl_attribs) - 3);
-            dst[0] = name;
-            dst[1] = attribs[1];
-            if (dst == attribs_end) attribs_end += 2;
-        }
-    }
-    *attribs_end = EGL_NONE;
-
-    /* For now only OpenGL is supported. It's enough to set the API only for
-     * context creation, since:
-     * 1. the default API is EGL_OPENGL_ES_API
-     * 2. the EGL specification says in section 3.7:
-     *    > EGL_OPENGL_API and EGL_OPENGL_ES_API are interchangeable for all
-     *    > purposes except eglCreateContext.
-     */
-    funcs->p_eglBindAPI(EGL_OPENGL_API);
-    *context = funcs->p_eglCreateContext(egl->display, EGL_NO_CONFIG_KHR, share,
-                                         attribs ? egl_attribs : NULL);
-    TRACE("egl_context=%p\n", *context);
-    return TRUE;
-}
-
-static BOOL wayland_context_destroy(void *context)
-{
-    funcs->p_eglDestroyContext(egl->display, context);
-    return TRUE;
-}
-
 static EGLenum wayland_init_egl_platform(const struct egl_platform *platform, EGLNativeDisplayType *platform_display)
 {
     egl = platform;
@@ -328,8 +251,6 @@ static struct opengl_driver_funcs wayland_driver_funcs =
 {
     .p_init_egl_platform = wayland_init_egl_platform,
     .p_surface_create = wayland_opengl_surface_create,
-    .p_context_create = wayland_context_create,
-    .p_context_destroy = wayland_context_destroy,
     .p_make_current = wayland_make_current,
     .p_pbuffer_create = wayland_pbuffer_create,
     .p_pbuffer_updated = wayland_pbuffer_updated,
@@ -364,6 +285,8 @@ UINT WAYLAND_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, c
     wayland_driver_funcs.p_init_pixel_formats = (*driver_funcs)->p_init_pixel_formats;
     wayland_driver_funcs.p_describe_pixel_format = (*driver_funcs)->p_describe_pixel_format;
     wayland_driver_funcs.p_init_wgl_extensions = (*driver_funcs)->p_init_wgl_extensions;
+    wayland_driver_funcs.p_context_create = (*driver_funcs)->p_context_create;
+    wayland_driver_funcs.p_context_destroy = (*driver_funcs)->p_context_destroy;
 
     *driver_funcs = &wayland_driver_funcs;
     return STATUS_SUCCESS;

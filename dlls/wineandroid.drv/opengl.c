@@ -49,7 +49,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(android);
 static const struct egl_platform *egl;
 static const struct opengl_funcs *funcs;
 static const struct opengl_drawable_funcs android_drawable_funcs;
-static const int egl_client_version = 2;
 
 struct gl_drawable
 {
@@ -150,61 +149,11 @@ static BOOL android_surface_create( HWND hwnd, HDC hdc, int format, struct openg
     return TRUE;
 }
 
-static BOOL android_context_create( int format, void *share, const int *attribs, void **context )
-{
-    int count = 0, egl_attribs[3];
-    BOOL opengl_es = FALSE;
-
-    if (!attribs) opengl_es = TRUE;
-    while (attribs && *attribs && count < 2)
-    {
-        switch (*attribs)
-        {
-        case WGL_CONTEXT_PROFILE_MASK_ARB:
-            if (attribs[1] == WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
-                opengl_es = TRUE;
-            break;
-        case WGL_CONTEXT_MAJOR_VERSION_ARB:
-            egl_attribs[count++] = EGL_CONTEXT_CLIENT_VERSION;
-            egl_attribs[count++] = attribs[1];
-            break;
-        default:
-            FIXME("Unhandled attributes: %#x %#x\n", attribs[0], attribs[1]);
-        }
-        attribs += 2;
-    }
-    if (!opengl_es)
-    {
-        WARN("Requested creation of an OpenGL (non ES) context, that's not supported.\n");
-        return FALSE;
-    }
-    if (!count)  /* FIXME: force version if not specified */
-    {
-        egl_attribs[count++] = EGL_CONTEXT_CLIENT_VERSION;
-        egl_attribs[count++] = egl_client_version;
-    }
-    egl_attribs[count] = EGL_NONE;
-    attribs = egl_attribs;
-
-    *context = funcs->p_eglCreateContext( egl->display, egl_config_for_format(format), share, attribs );
-    TRACE( "fmt %d ctx %p\n", format, *context );
-    return TRUE;
-}
-
 static BOOL android_make_current( struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *context )
 {
     struct gl_drawable *draw = impl_from_opengl_drawable( draw_base ), *read = impl_from_opengl_drawable( read_base );
     TRACE( "draw %s, read %s, context %p\n", debugstr_opengl_drawable( draw_base ), debugstr_opengl_drawable( read_base ), context );
     return funcs->p_eglMakeCurrent( egl->display, context ? draw->surface : EGL_NO_SURFACE, context ? read->surface : EGL_NO_SURFACE, context );
-}
-
-/***********************************************************************
- *		android_wglDeleteContext
- */
-static BOOL android_context_destroy( void *context )
-{
-    funcs->p_eglDestroyContext( egl->display, context );
-    return TRUE;
 }
 
 static EGLenum android_init_egl_platform( const struct egl_platform *platform, EGLNativeDisplayType *platform_display )
@@ -251,8 +200,6 @@ static struct opengl_driver_funcs android_driver_funcs =
     .p_get_proc_address = android_get_proc_address,
     .p_init_wgl_extensions = android_init_wgl_extensions,
     .p_surface_create = android_surface_create,
-    .p_context_create = android_context_create,
-    .p_context_destroy = android_context_destroy,
     .p_make_current = android_make_current,
 };
 
@@ -285,6 +232,8 @@ UINT ANDROID_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, 
 
     android_driver_funcs.p_init_pixel_formats = (*driver_funcs)->p_init_pixel_formats;
     android_driver_funcs.p_describe_pixel_format = (*driver_funcs)->p_describe_pixel_format;
+    android_driver_funcs.p_context_create = (*driver_funcs)->p_context_create;
+    android_driver_funcs.p_context_destroy = (*driver_funcs)->p_context_destroy;
 
     *driver_funcs = &android_driver_funcs;
     return STATUS_SUCCESS;
