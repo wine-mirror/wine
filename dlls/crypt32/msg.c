@@ -992,10 +992,10 @@ static BOOL CSignedMsgData_ConstructSignerHandles(CSignedMsgData *msg_data,
     }
 
     ret = CryptCreateHash(*crypt_prov, algID, 0, 0,
-     &msg_data->signerHandles->contentHash);
+     &msg_data->signerHandles[signerIndex].contentHash);
     if (ret && msg_data->info->rgSignerInfo[signerIndex].AuthAttrs.cAttr > 0)
         ret = CryptCreateHash(*crypt_prov, algID, 0, 0,
-         &msg_data->signerHandles->authAttrHash);
+         &msg_data->signerHandles[signerIndex].authAttrHash);
     return ret;
 }
 

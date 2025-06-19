@@ -1919,7 +1919,7 @@ static void test_signed_msg_get_param(void)
     ok(ret, "CryptMsgGetParam failed: %lx\n", GetLastError());
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 1, NULL, &size);
-    todo_wine ok(ret, "CryptMsgGetParam failed: %lx\n", GetLastError());
+    ok(ret, "CryptMsgGetParam failed: %lx\n", GetLastError());
     size = 0;
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetParam(msg, CMSG_ENCODED_SIGNER, 2, NULL, &size);
