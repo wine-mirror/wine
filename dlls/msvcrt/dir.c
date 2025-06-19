@@ -839,10 +839,14 @@ char* CDECL _getdcwd(int drive, char * buf, int size)
 
     if (!_wgetdcwd(drive, dirW, ARRAY_SIZE(dirW))) return NULL;
 
-    if (!buf) return astrdupw_utf8(dirW);
     len = convert_wcs_to_acp_utf8(dirW, NULL, 0);
     if (!len) return NULL;
-    if (len > size)
+    if (!buf)
+    {
+        if (size < len) size = len;
+        if (!(buf = malloc(size))) return NULL;
+    }
+    else if (len > size)
     {
         *_errno() = ERANGE;
         return NULL;
