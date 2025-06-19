@@ -51,17 +51,6 @@ static const struct opengl_funcs *funcs;
 static const struct opengl_drawable_funcs android_drawable_funcs;
 static const int egl_client_version = 2;
 
-struct egl_pixel_format
-{
-    EGLConfig config;
-};
-
-struct android_context
-{
-    EGLConfig  config;
-    EGLContext context;
-};
-
 struct gl_drawable
 {
     struct opengl_drawable base;
@@ -161,9 +150,8 @@ static BOOL android_surface_create( HWND hwnd, HDC hdc, int format, struct openg
     return TRUE;
 }
 
-static BOOL android_context_create( int format, void *share, const int *attribs, void **private )
+static BOOL android_context_create( int format, void *share, const int *attribs, void **context )
 {
-    struct android_context *ctx, *shared_ctx = share;
     int count = 0, egl_attribs[3];
     BOOL opengl_es = FALSE;
 
@@ -198,41 +186,24 @@ static BOOL android_context_create( int format, void *share, const int *attribs,
     egl_attribs[count] = EGL_NONE;
     attribs = egl_attribs;
 
-    ctx = malloc( sizeof(*ctx) );
-
-    ctx->config  = egl_config_for_format(format);
-    ctx->context = funcs->p_eglCreateContext( egl->display, ctx->config, shared_ctx ? shared_ctx->context : EGL_NO_CONTEXT, attribs );
-    TRACE( "fmt %d ctx %p\n", format, ctx->context );
-
-    *private = ctx;
+    *context = funcs->p_eglCreateContext( egl->display, egl_config_for_format(format), share, attribs );
+    TRACE( "fmt %d ctx %p\n", format, *context );
     return TRUE;
 }
 
-static BOOL android_make_current( struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *private )
+static BOOL android_make_current( struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *context )
 {
     struct gl_drawable *draw = impl_from_opengl_drawable( draw_base ), *read = impl_from_opengl_drawable( read_base );
-    struct android_context *ctx = private;
-
-    TRACE( "draw %s, read %s, context %p\n", debugstr_opengl_drawable( draw_base ), debugstr_opengl_drawable( read_base ), private );
-
-    if (!private)
-    {
-        funcs->p_eglMakeCurrent( egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT );
-        return TRUE;
-    }
-
-    if (!funcs->p_eglMakeCurrent( egl->display, draw->surface, read->surface, ctx->context )) return FALSE;
-    return TRUE;
+    TRACE( "draw %s, read %s, context %p\n", debugstr_opengl_drawable( draw_base ), debugstr_opengl_drawable( read_base ), context );
+    return funcs->p_eglMakeCurrent( egl->display, context ? draw->surface : EGL_NO_SURFACE, context ? read->surface : EGL_NO_SURFACE, context );
 }
 
 /***********************************************************************
  *		android_wglDeleteContext
  */
-static BOOL android_context_destroy( void *private )
+static BOOL android_context_destroy( void *context )
 {
-    struct android_context *ctx = private;
-    funcs->p_eglDestroyContext( egl->display, ctx->context );
-    free( ctx );
+    funcs->p_eglDestroyContext( egl->display, context );
     return TRUE;
 }
 
