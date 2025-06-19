@@ -3,12 +3,28 @@
 #include <stdint.h>
 #include "libm.h"
 
-static const float_t toint = 1 / FLT_EPSILON;
+static const float_t tointf = 1 / FLT_EPSILON;
+static const double_t toint = 1 / DBL_EPSILON;
 
 double __cdecl rint(double x)
 {
 #if defined(__GNUC__) && !defined(__clang__)
     return __builtin_rint(x);
+#elif defined(__SSE_MATH__)
+    union {double f; uint64_t i;} u = {x};
+    int e = u.i>>52 & 0x7ff;
+    int s = u.i>>63;
+    double_t y;
+
+    if (e >= 0x3ff+52)
+        return x;
+    if (s)
+        y = x - toint + toint;
+    else
+        y = x + toint - toint;
+    if (y == 0)
+        return s ? -0.0 : 0;
+    return y;
 #else
     union {double f; uint64_t i;} u = {x};
     int e = (u.i >> 52 & 0x7ff) - 0x3ff;
@@ -32,7 +48,7 @@ double __cdecl rint(double x)
         else f = 0.0;
 
         f = (even ? -0.0 : -1.0) + f;
-        f = fp_barrierf(f - toint) + toint;
+        f = fp_barrierf(f - tointf) + tointf;
         if (f == (even ? 0.0 : -1.0)) z = y;
         else z = floor(x);
     }
@@ -46,7 +62,7 @@ double __cdecl rint(double x)
         else f = 0.0;
 
         f = (even ? 0.0 : 1.0) + f;
-        f = fp_barrierf(f + toint) - toint;
+        f = fp_barrierf(f + tointf) - tointf;
         if (f == (even ? 0.0 : 1.0)) z = y;
         else z = ceil(x);
     }
