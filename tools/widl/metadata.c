@@ -1957,6 +1957,35 @@ static void add_overload_attr_step2( const var_t *method )
     add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
 }
 
+static void add_default_overload_attr_step1( const var_t *method )
+{
+    static const BYTE sig[] = { SIG_TYPE_HASTHIS, 0, ELEMENT_TYPE_VOID };
+    UINT assemblyref, scope, typeref, class;
+    type_t *type = method->declspec.type;
+
+    if (!is_attr( method->attrs, ATTR_DEFAULT_OVERLOAD ) || !is_attr( method->attrs, ATTR_OVERLOAD )) return;
+
+    assemblyref = add_assemblyref_row( 0x200, 0, add_string("Windows.Foundation") );
+    scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+    typeref = add_typeref_row( scope, add_string("DefaultOverloadAttribute"), add_string("Windows.Foundation.Metadata") );
+
+    class = memberref_parent( TABLE_TYPEREF, typeref );
+    type->md.member[MD_ATTR_DEFAULT_OVERLOAD] = add_memberref_row( class, add_string(".ctor"), add_blob(sig, sizeof(sig)) );
+}
+
+static void add_default_overload_attr_step2( const var_t *method )
+{
+    static const BYTE value[] = { 0x01, 0x00, 0x00, 0x00 };
+    const type_t *type = method->declspec.type;
+    UINT parent, attr_type;
+
+    if (!is_attr( method->attrs, ATTR_DEFAULT_OVERLOAD ) || !is_attr( method->attrs, ATTR_OVERLOAD )) return;
+
+    parent = has_customattribute( TABLE_METHODDEF, type->md.def );
+    attr_type = customattribute_type( TABLE_MEMBERREF, type->md.member[MD_ATTR_DEFAULT_OVERLOAD] );
+    add_customattribute_row( parent, attr_type, add_blob(value, sizeof(value)) );
+}
+
 static void add_method_params_step1( var_list_t *arg_list )
 {
     var_t *arg;
@@ -1999,6 +2028,7 @@ static void add_interface_type_step1( type_t *type )
         add_method_params_step1( type_function_get_args(method->declspec.type) );
 
         add_overload_attr_step1( method );
+        add_default_overload_attr_step1( method );
     }
 }
 
@@ -2215,6 +2245,7 @@ static void add_interface_type_step2( type_t *type )
         else if (is_attr( method->attrs, ATTR_EVENTREMOVE )) add_eventremove_method( type, method );
         else add_method( method );
 
+        add_default_overload_attr_step2( method );
         add_overload_attr_step2( method );
     }
 
