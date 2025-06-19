@@ -102,7 +102,7 @@ enum
 #define USER32_CALLBACK_ENTRY(name) NtUser##name,
     ALL_USER32_CALLBACKS
 #undef USER32_CALLBACK_ENTRY
-    NtUserCallCount
+    NtUserCallCount = 256
 };
 
 /* NtUserCallDispatchCallback params */

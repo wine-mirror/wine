@@ -1505,14 +1505,12 @@ static NTSTATUS WINAPI wow64_NtUserDragDropPost( void *arg, ULONG size )
     return dispatch_callback( NtUserDragDropPost, params32, size );
 }
 
-ntuser_callback user_callbacks[] =
+ntuser_callback user_callbacks[NtUserCallCount] =
 {
 #define USER32_CALLBACK_ENTRY(name) wow64_NtUser##name,
     ALL_USER32_CALLBACKS
 #undef USER32_CALLBACK_ENTRY
 };
-
-C_ASSERT( ARRAYSIZE(user_callbacks) == NtUserCallCount );
 
 NTSTATUS WINAPI wow64_NtUserActivateKeyboardLayout( UINT *args )
 {
