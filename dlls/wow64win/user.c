@@ -4086,6 +4086,13 @@ NTSTATUS WINAPI wow64_NtUserReplyMessage( UINT *args )
     return NtUserReplyMessage( result );
 }
 
+NTSTATUS WINAPI wow64_NtUserScheduleDispatchNotification( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+
+    return NtUserScheduleDispatchNotification( hwnd );
+}
+
 NTSTATUS WINAPI wow64_NtUserScrollDC( UINT *args )
 {
     HDC hdc = get_handle( &args );

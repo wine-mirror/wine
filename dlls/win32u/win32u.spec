@@ -1320,7 +1320,7 @@
 @ stub NtUserRestoreWindowDpiChanges
 @ stub NtUserSBGetParms
 @ stub NtUserScaleSystemMetricForDPIWithoutCache
-@ stub NtUserScheduleDispatchNotification
+@ stdcall -syscall NtUserScheduleDispatchNotification(ptr)
 @ stdcall -syscall NtUserScrollDC(long long long ptr ptr long ptr)
 @ stdcall -syscall NtUserScrollWindowEx(long long long ptr ptr long ptr long)
 @ stdcall -syscall NtUserSelectPalette(long long long)

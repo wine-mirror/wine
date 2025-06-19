@@ -2057,6 +2057,11 @@ BOOL SYSCALL_API NtUserReplyMessage( LRESULT result )
     SYSCALL_FUNC( NtUserReplyMessage );
 }
 
+INT SYSCALL_API NtUserScheduleDispatchNotification( HWND hwnd )
+{
+    SYSCALL_FUNC( NtUserScheduleDispatchNotification );
+}
+
 BOOL SYSCALL_API NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                                  HRGN ret_update_rgn, RECT *update_rect )
 {

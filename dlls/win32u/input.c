@@ -2782,3 +2782,16 @@ BOOL WINAPI NtUserRegisterTouchPadCapable( BOOL capable )
     RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
+
+/**********************************************************************
+ *       NtUserScheduleDispatchNotification    (win32u.@)
+ */
+INT WINAPI NtUserScheduleDispatchNotification( HWND hwnd )
+{
+    FIXME("hwnd %p stub!\n", hwnd);
+
+    if (is_window(hwnd))
+        return 2;
+
+    return 0;
+}

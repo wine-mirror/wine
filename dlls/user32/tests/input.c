@@ -430,6 +430,7 @@ static UINT (WINAPI *pGetRawInputDeviceInfoW) (HANDLE, UINT, void *, UINT *);
 static UINT (WINAPI *pGetRawInputDeviceInfoA) (HANDLE, UINT, void *, UINT *);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static HKL (WINAPI *pLoadKeyboardLayoutEx)(HKL, const WCHAR *, UINT);
+static INT (WINAPI *pScheduleDispatchNotification)(HWND);
 
 /**********************adapted from input.c **********************************/
 
@@ -438,6 +439,8 @@ static BOOL is_wow64;
 static void init_function_pointers(void)
 {
     HMODULE hdll = GetModuleHandleA("user32");
+
+    pScheduleDispatchNotification = (void *)GetProcAddress(hdll, (LPCSTR)2582);
 
 #define GET_PROC(func) \
     if (!(p ## func = (void*)GetProcAddress(hdll, #func))) \
@@ -6308,6 +6311,29 @@ static void test_SetFocus_process(void)
     DestroyWindow( hwnd );
 }
 
+static void test_ScheduleDispatchNotification(void)
+{
+    HWND hwnd;
+    INT ret;
+
+    if (!pScheduleDispatchNotification)
+    {
+        win_skip("ScheduleDispatchNotification is unavailable.\n");
+        return;
+    }
+
+    hwnd = CreateWindowW(L"static", NULL, WS_POPUP | WS_VISIBLE, 100, 100, 200, 200, NULL, NULL,
+                         NULL, NULL);
+
+    ret = pScheduleDispatchNotification(NULL);
+    ok(!ret, "Got unexpected %d.\n", ret);
+
+    ret = pScheduleDispatchNotification(hwnd);
+    ok(ret == 2, "Got unexpected %d.\n", ret);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(input)
 {
     char **argv;
@@ -6352,6 +6378,7 @@ START_TEST(input)
     test_OemKeyScan();
     test_rawinput(argv[0]);
     test_DefRawInputProc();
+    test_ScheduleDispatchNotification();
 
     if(pGetMouseMovePointsEx)
         test_GetMouseMovePointsEx( argv );
