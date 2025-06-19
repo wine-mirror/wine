@@ -3611,7 +3611,7 @@ static BOOL WINAPI fpSetJob(HANDLE hprinter, DWORD job_id,
         break;
     case 1:
     {
-        JOB_INFO_1W *info1 = (JOB_INFO_1W *)job;
+        JOB_INFO_1W *info1 = (JOB_INFO_1W *)data;
         WCHAR *title = wcsdup(info1->pDocument);
 
         if (title)
@@ -3624,7 +3624,7 @@ static BOOL WINAPI fpSetJob(HANDLE hprinter, DWORD job_id,
     }
     case 2:
     {
-        JOB_INFO_2W *info2 = (JOB_INFO_2W *)job;
+        JOB_INFO_2W *info2 = (JOB_INFO_2W *)data;
         WCHAR *title = wcsdup(info2->pDocument);
         DEVMODEW *devmode = dup_devmode(info2->pDevMode);
 
