@@ -3108,14 +3108,98 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(HDEVINFO devinfo, SP_DEVICE_INTERFA
     return ret;
 }
 
+static DWORD get_device_reg_property( HKEY base_key, const DEVPROPKEY *prop_key, DEVPROPTYPE *prop_type,
+                                      BYTE *buf, DWORD buf_size, DWORD *req_size, DWORD flags )
+{
+    WCHAR prop_path[55] = L"Properties\\";
+    HKEY property;
+    DWORD size = 0, val_type;
+    LSTATUS ret;
+
+    if (!prop_key)
+        return ERROR_INVALID_DATA;
+    if (!prop_type || (!buf && buf_size))
+        return ERROR_INVALID_USER_BUFFER;
+    if (flags)
+        return ERROR_INVALID_FLAGS;
+
+    SETUPDI_GuidToString( &prop_key->fmtid, prop_path + 11 );
+    swprintf( prop_path + 49, ARRAY_SIZE( prop_path ) - 49, L"\\%04X", prop_key->pid );
+    if (!(ret = RegOpenKeyExW( base_key, prop_path, 0, KEY_QUERY_VALUE, &property )))
+    {
+        size = buf_size;
+        ret = RegQueryValueExW( property, NULL, NULL, &val_type, buf, &size );
+        RegCloseKey( property );
+    }
+
+    switch (ret)
+    {
+    case ERROR_SUCCESS:
+    case ERROR_MORE_DATA:
+        *prop_type = val_type & 0xffff;
+        ret = (ret == ERROR_MORE_DATA || !buf) ? ERROR_INSUFFICIENT_BUFFER : ERROR_SUCCESS;
+        break;
+    case ERROR_FILE_NOT_FOUND:
+        *prop_type = DEVPROP_TYPE_EMPTY;
+        size = 0;
+        ret = ERROR_NOT_FOUND;
+        break;
+    default:
+        *prop_type = DEVPROP_TYPE_EMPTY;
+        size = 0;
+        FIXME( "Unhandled error: %lu\n", ret );
+        break;
+    }
+
+    if (req_size)
+        *req_size = size;
+    return ret;
+}
+
 BOOL WINAPI SetupDiGetDeviceInterfacePropertyW( HDEVINFO devinfo, SP_DEVICE_INTERFACE_DATA *iface_data,
                                                 const DEVPROPKEY *key, DEVPROPTYPE *type, BYTE *buf, DWORD buf_size,
                                                 DWORD *req_size, DWORD flags )
 {
-    FIXME( "devinfo %p, iface_data %p, key %p, type %p, buf %p, buf_size %lu, req_size %p, flags %#lx: stub!\n",
+    struct device_iface *iface;
+    LSTATUS ret;
+
+    TRACE( "devinfo %p, iface_data %p, key %p, type %p, buf %p, buf_size %lu, req_size %p, flags %#lx\n",
            devinfo, iface_data, key, type, buf, buf_size, req_size, flags );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+
+    if (!(iface = get_device_iface( devinfo, iface_data )))
+        return FALSE;
+    if (!type || (!buf && buf_size))
+    {
+        SetLastError( ERROR_INVALID_USER_BUFFER );
+        return FALSE;
+    }
+    if (!key)
+    {
+        SetLastError( ERROR_INVALID_DATA );
+        return FALSE;
+    }
+    if (flags)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return FALSE;
+    }
+
+    if (IsEqualDevPropKey( *key, DEVPKEY_DeviceInterface_Enabled ))
+    {
+        *type = DEVPROP_TYPE_BOOLEAN;
+        ret = ERROR_SUCCESS;
+        if (buf_size >= sizeof( DEVPROP_BOOLEAN ))
+            *buf = (iface->flags & SPINT_ACTIVE) ? DEVPROP_TRUE : DEVPROP_FALSE;
+        else
+            ret = ERROR_INSUFFICIENT_BUFFER;
+        if (req_size)
+            *req_size = sizeof( DEVPROP_BOOLEAN );
+    }
+    else
+        ret = get_device_reg_property( iface->refstr_key, key, type, buf, buf_size, req_size, flags );
+
+    SetLastError( ret );
+    return !ret;
 }
 
 static DWORD set_device_reg_property( HKEY base_key, const DEVPROPKEY *key, DEVPROPTYPE type, const BYTE *buf,
@@ -5021,60 +5105,6 @@ out:
     return retval;
 }
 
-static LSTATUS get_device_property(struct device *device, const DEVPROPKEY *prop_key, DEVPROPTYPE *prop_type,
-                BYTE *prop_buff, DWORD prop_buff_size, DWORD *required_size, DWORD flags)
-{
-    WCHAR key_path[55] = L"Properties\\";
-    HKEY hkey;
-    DWORD value_type;
-    DWORD value_size = 0;
-    LSTATUS ls;
-
-    if (!prop_key)
-        return ERROR_INVALID_DATA;
-
-    if (!prop_type || (!prop_buff && prop_buff_size))
-        return ERROR_INVALID_USER_BUFFER;
-
-    if (flags)
-        return ERROR_INVALID_FLAGS;
-
-    SETUPDI_GuidToString(&prop_key->fmtid, key_path + 11);
-    swprintf(key_path + 49, ARRAY_SIZE(key_path) - 49, L"\\%04X", prop_key->pid);
-
-    ls = RegOpenKeyExW(device->key, key_path, 0, KEY_QUERY_VALUE, &hkey);
-    if (!ls)
-    {
-        value_size = prop_buff_size;
-        ls = RegQueryValueExW(hkey, NULL, NULL, &value_type, prop_buff, &value_size);
-        RegCloseKey(hkey);
-    }
-
-    switch (ls)
-    {
-    case NO_ERROR:
-    case ERROR_MORE_DATA:
-        *prop_type = 0xffff & value_type;
-        ls = (ls == ERROR_MORE_DATA || !prop_buff) ? ERROR_INSUFFICIENT_BUFFER : NO_ERROR;
-        break;
-    case ERROR_FILE_NOT_FOUND:
-        *prop_type = DEVPROP_TYPE_EMPTY;
-        value_size = 0;
-        ls = ERROR_NOT_FOUND;
-        break;
-    default:
-        *prop_type = DEVPROP_TYPE_EMPTY;
-        value_size = 0;
-        FIXME("Unhandled error %#lx\n", ls);
-        break;
-    }
-
-    if (required_size)
-        *required_size = value_size;
-
-    return ls;
-}
-
 BOOL WINAPI SetupDiGetDevicePropertyKeys( HDEVINFO devinfo, PSP_DEVINFO_DATA device_data,
                                           DEVPROPKEY *prop_keys, DWORD prop_keys_len,
                                           DWORD *required_prop_keys, DWORD flags )
@@ -5205,7 +5235,7 @@ BOOL WINAPI SetupDiGetDevicePropertyW(HDEVINFO devinfo, PSP_DEVINFO_DATA device_
     if (!(device = get_device(devinfo, device_data)))
         return FALSE;
 
-    ls = get_device_property(device, prop_key, prop_type, prop_buff, prop_buff_size, required_size, flags);
+    ls = get_device_reg_property(device->key, prop_key, prop_type, prop_buff, prop_buff_size, required_size, flags);
 
     SetLastError(ls);
     return !ls;
@@ -5233,7 +5263,7 @@ CONFIGRET WINAPI CM_Get_DevNode_Property_ExW(DEVINST devnode, const DEVPROPKEY *
     if (!(device = get_devnode_device(devnode, &set)))
         return CR_NO_SUCH_DEVINST;
 
-    ls = get_device_property(device, prop_key, prop_type, prop_buff, *prop_buff_size, prop_buff_size, flags);
+    ls = get_device_reg_property(device->key, prop_key, prop_type, prop_buff, *prop_buff_size, prop_buff_size, flags);
     SetupDiDestroyDeviceInfoList(set);
     switch (ls)
     {
