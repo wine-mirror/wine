@@ -189,7 +189,7 @@ static void set_advanced_option( const WCHAR *option, DWORD value )
 
 static DWORD get_advanced_option( const WCHAR *option, DWORD default_value )
 {
-    DWORD value, size;
+    DWORD value, size = sizeof(value);
     HKEY hkey;
     if (!get_advanced_key( &hkey )) return default_value;
     if (RegGetValueW( hkey, NULL, option, RRF_RT_REG_DWORD, NULL, (BYTE *)&value, &size ))
