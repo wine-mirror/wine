@@ -990,9 +990,9 @@ static HRESULT video_frame_sink_set_state(struct video_frame_sink *sink, enum si
 {
     static const DWORD events[] =
     {
-        MEStreamSinkStopped, /* SINK_STATE_STOPPED */
-        MEStreamSinkPaused,  /* SINK_STATE_PAUSED */
-        MEStreamSinkStarted, /* SINK_STATE_RUNNING */
+        [SINK_STATE_STOPPED] = MEStreamSinkStopped,
+        [SINK_STATE_PAUSED] = MEStreamSinkPaused,
+        [SINK_STATE_RUNNING] = MEStreamSinkStarted,
     };
     HRESULT hr = S_OK;
 
