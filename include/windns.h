@@ -680,7 +680,7 @@ typedef struct _DnsRRSet
 {                                      \
     PDNS_RRSET  _prrset = &(rrset);    \
     PDNS_RECORD _prrnew = (pnewRR);    \
-    _prrset->pLastRR->pNext = _prrnew; \
+    *(PDNS_RECORD *)_prrset->pLastRR = _prrnew; \
     _prrset->pLastRR = _prrnew;        \
 }
 
