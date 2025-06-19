@@ -39,8 +39,5 @@ STRINGTABLE
 #define WINE_FILEDESCRIPTION_STR "Wine tasklist"
 #define WINE_FILENAME_STR "tasklist.exe"
 #define WINE_FILEVERSION 6,1,7601,16385
-#define WINE_FILEVERSION_STR "6.1.7601.16385"
-#define WINE_PRODUCTVERSION 6,1,7601,16385
-#define WINE_PRODUCTVERSION_STR "6.1.7601.16385"
 
 #include "wine/wine_common_ver.rc"

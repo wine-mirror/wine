@@ -19,8 +19,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine powershell plugin"
 #define WINE_FILENAME_STR "pwrshplugin.dll"
 #define WINE_FILEVERSION 6,3,9600,16384
-#define WINE_FILEVERSION_STR "6.3.9600.16384"
-#define WINE_PRODUCTVERSION 6,3,9600,16384
-#define WINE_PRODUCTVERSION_STR "6.3.9600.16384"
 
 #include "wine/wine_common_ver.rc"

@@ -21,8 +21,5 @@
 
 /* these values come from Windows 7 SP1 */
 #define WINE_FILEVERSION 6,1,7600,16385
-#define WINE_FILEVERSION_STR "6.1.7600.16385"
-#define WINE_PRODUCTVERSION 6,1,7600,16385
-#define WINE_PRODUCTVERSION_STR "6.1.7600.16385"
 
 #include "wine/wine_common_ver.rc"

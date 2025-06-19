@@ -276,7 +276,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "No especificat"
 
-#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:38
+#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:35
 #: dlls/shell32/shell32.rc:141 dlls/shell32/shell32.rc:243
 #: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
@@ -452,7 +452,7 @@ msgstr "Assistent"
 msgid "< &Back"
 msgstr "< &Enrere"
 
-#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:61
+#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:58
 msgid "&Next >"
 msgstr "&Següent >"
 
@@ -1412,7 +1412,7 @@ msgid "&User name:"
 msgstr "&Nom d'usuari:"
 
 #: dlls/credui/credui.rc:48 dlls/cryptui/cryptui.rc:402
-#: dlls/oledb32/version.rc:81
+#: dlls/oledb32/version.rc:78
 msgid "&Password:"
 msgstr "&Contrasenya:"
 
@@ -2755,7 +2755,7 @@ msgstr "Aquest certificat està bé."
 msgid "Field"
 msgstr "Camp"
 
-#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:39
+#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:36
 msgid "Value"
 msgstr "Valor"
 
@@ -3369,7 +3369,7 @@ msgstr "Símbol"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:100
+#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:97
 #: dlls/wldap32/wldap32.rc:112
 msgid "Other"
 msgstr "Altra"
@@ -3437,7 +3437,7 @@ msgid "&Stop"
 msgstr "&Atura"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:66 dlls/hhctrl.ocx/hhctrl.rc:83
-#: dlls/oledb32/version.rc:73 dlls/shdoclc/shdoclc.rc:59
+#: dlls/oledb32/version.rc:70 dlls/shdoclc/shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Actualitza"
 
@@ -4246,11 +4246,11 @@ msgstr "S'esperava un objecte Array"
 msgid "Property cannot have both accessors and a value"
 msgstr "La propietat no pot tenir ambdós mètodes d'accés i un valor"
 
-#: include/wine/wine_common_ver.rc:138
+#: include/wine/wine_common_ver.rc:123
 msgid "Wine kernel DLL"
 msgstr "DLL de nucli del Wine"
 
-#: include/wine/wine_common_ver.rc:143 dlls/winemac.drv/winemac.rc:32
+#: include/wine/wine_common_ver.rc:128 dlls/winemac.drv/winemac.rc:32
 #: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:143
 msgid "Wine"
 msgstr "Wine"
@@ -9315,99 +9315,99 @@ msgstr "Actiu"
 msgid "Off"
 msgstr "Inactiu"
 
-#: dlls/oledb32/version.rc:56
+#: dlls/oledb32/version.rc:53
 msgid "Provider"
 msgstr "Proveïdor"
 
-#: dlls/oledb32/version.rc:59
+#: dlls/oledb32/version.rc:56
 msgid "Select the data you want to connect to:"
 msgstr "Seleccioneu les dades a les qualles voleu connectar:"
 
-#: dlls/oledb32/version.rc:66
+#: dlls/oledb32/version.rc:63
 msgid "Connection"
 msgstr "Connexió"
 
-#: dlls/oledb32/version.rc:69
+#: dlls/oledb32/version.rc:66
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Especifiqueu ho següent per a connectar a les dades ODBC:"
 
-#: dlls/oledb32/version.rc:70
+#: dlls/oledb32/version.rc:67
 msgid "1. Specify the source of data:"
 msgstr "1. Especifiqueu la font de dades:"
 
-#: dlls/oledb32/version.rc:71
+#: dlls/oledb32/version.rc:68
 msgid "Use &data source name"
 msgstr "Utilitza el nom de font de &dades"
 
-#: dlls/oledb32/version.rc:74
+#: dlls/oledb32/version.rc:71
 msgid "Use c&onnection string"
 msgstr "Utilitza una cadena de c&onnexió"
 
-#: dlls/oledb32/version.rc:75
+#: dlls/oledb32/version.rc:72
 msgid "&Connection string:"
 msgstr "Cadena de &connexió:"
 
-#: dlls/oledb32/version.rc:77
+#: dlls/oledb32/version.rc:74
 msgid "B&uild..."
 msgstr "Constr&ueix..."
 
-#: dlls/oledb32/version.rc:78
+#: dlls/oledb32/version.rc:75
 msgid "2. Enter information to log on to the server"
 msgstr "2. Introduïu la informació per a entrar al servidor"
 
-#: dlls/oledb32/version.rc:79
+#: dlls/oledb32/version.rc:76
 msgid "User &name:"
 msgstr "&Nom d'usuari:"
 
-#: dlls/oledb32/version.rc:83
+#: dlls/oledb32/version.rc:80
 msgid "&Blank password"
 msgstr "Contrasenya en &blanc"
 
-#: dlls/oledb32/version.rc:84
+#: dlls/oledb32/version.rc:81
 msgid "Allow &saving password"
 msgstr "Permet &desar la contrasenya"
 
-#: dlls/oledb32/version.rc:85
+#: dlls/oledb32/version.rc:82
 msgid "3. Enter the &initial catalog to use:"
 msgstr "3. Introduïu el catàleg &inicial per a utilitzar:"
 
-#: dlls/oledb32/version.rc:87
+#: dlls/oledb32/version.rc:84
 msgid "&Test Connection"
 msgstr "&Prova la connexió"
 
-#: dlls/oledb32/version.rc:92
+#: dlls/oledb32/version.rc:89
 msgid "Advanced"
 msgstr "Avançat"
 
-#: dlls/oledb32/version.rc:95
+#: dlls/oledb32/version.rc:92
 msgid "Network settings"
 msgstr "Opcions de xarxa"
 
-#: dlls/oledb32/version.rc:96
+#: dlls/oledb32/version.rc:93
 msgid "&Impersonation level:"
 msgstr "Nivell de &suplantació:"
 
-#: dlls/oledb32/version.rc:98
+#: dlls/oledb32/version.rc:95
 msgid "P&rotection level:"
 msgstr "Nivell de p&rotecció:"
 
-#: dlls/oledb32/version.rc:101
+#: dlls/oledb32/version.rc:98
 msgid "Connect:"
 msgstr "Connecta:"
 
-#: dlls/oledb32/version.rc:103
+#: dlls/oledb32/version.rc:100
 msgid "seconds."
 msgstr "segons."
 
-#: dlls/oledb32/version.rc:104
+#: dlls/oledb32/version.rc:101
 msgid "A&ccess:"
 msgstr "A&ccés:"
 
-#: dlls/oledb32/version.rc:110
+#: dlls/oledb32/version.rc:107
 msgid "All"
 msgstr "Tot"
 
-#: dlls/oledb32/version.rc:114
+#: dlls/oledb32/version.rc:111
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
@@ -9416,19 +9416,19 @@ msgstr ""
 "Per a editar un valor, seleccioneu una propietat, llavors trieu \"Edita el "
 "valor\" a sota."
 
-#: dlls/oledb32/version.rc:115
+#: dlls/oledb32/version.rc:112
 msgid "&Edit Value..."
 msgstr "&Edita el valor..."
 
-#: dlls/oledb32/version.rc:49
+#: dlls/oledb32/version.rc:46
 msgid "Data Link Error"
 msgstr "Error d'enllaç de dades"
 
-#: dlls/oledb32/version.rc:50
+#: dlls/oledb32/version.rc:47
 msgid "Please select a provider."
 msgstr "Si us plau, seleccioneu un proveïdor."
 
-#: dlls/oledb32/version.rc:51
+#: dlls/oledb32/version.rc:48
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
@@ -9436,39 +9436,39 @@ msgstr ""
 "El proveïdor ja no està disponible. Assegureu-vos que el proveïdor estigui "
 "instal·lat correctament."
 
-#: dlls/oledb32/version.rc:36
+#: dlls/oledb32/version.rc:33
 msgid "Data Link Properties"
 msgstr "Propietats d'enllaç de dades"
 
-#: dlls/oledb32/version.rc:37
+#: dlls/oledb32/version.rc:34
 msgid "OLE DB Provider(s)"
 msgstr "Proveïdors de base de dades OLE"
 
-#: dlls/oledb32/version.rc:41
+#: dlls/oledb32/version.rc:38
 msgid "Read"
 msgstr "Lectura"
 
-#: dlls/oledb32/version.rc:42
+#: dlls/oledb32/version.rc:39
 msgid "ReadWrite"
 msgstr "Lectura i escriptura"
 
-#: dlls/oledb32/version.rc:43
+#: dlls/oledb32/version.rc:40
 msgid "Share Deny None"
 msgstr "No deneguis res de la compartició"
 
-#: dlls/oledb32/version.rc:44
+#: dlls/oledb32/version.rc:41
 msgid "Share Deny Read"
 msgstr "Denega lectura de la compartició"
 
-#: dlls/oledb32/version.rc:45
+#: dlls/oledb32/version.rc:42
 msgid "Share Deny Write"
 msgstr "Denega escriptura a la compartició"
 
-#: dlls/oledb32/version.rc:46
+#: dlls/oledb32/version.rc:43
 msgid "Share Exclusive"
 msgstr "Compartició exclusiva"
 
-#: dlls/oledb32/version.rc:47
+#: dlls/oledb32/version.rc:44
 msgid "Write"
 msgstr "Escriptura"
 
@@ -17718,7 +17718,7 @@ msgstr ""
 "S'han enviat el senyal de terminació al procès amb PID %1!u!, fil del PID %2!"
 "u!.\n"
 
-#: include/wine/wine_common_ver.rc:138
+#: include/wine/wine_common_ver.rc:123
 msgid "Wine tasklist"
 msgstr "Llista de tasques del Wine"
 

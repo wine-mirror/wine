@@ -55,9 +55,6 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* Same Version as WinXP_sp2 */
 #define WINE_FILEVERSION      5,1,2600,2180
-#define WINE_FILEVERSION_STR "5.1.2600.2180"
 
-#define WINE_PRODUCTVERSION      5,1,2600,2180
-#define WINE_PRODUCTVERSION_STR "5.1.2600.2180"
 
 #include "wine/wine_common_ver.rc"

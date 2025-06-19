@@ -19,8 +19,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine dpwsockx"
 #define WINE_FILENAME_STR "dpwsockx.dll"
 #define WINE_FILEVERSION 5,3,1,904
-#define WINE_FILEVERSION_STR "5.3.1.904"
-#define WINE_PRODUCTVERSION 5,3,1,904
-#define WINE_PRODUCTVERSION_STR "5.3.1.904"
 
 #include "wine/wine_common_ver.rc"

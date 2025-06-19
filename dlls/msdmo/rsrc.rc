@@ -19,8 +19,5 @@
 #define WINE_FILEDESCRIPTION_STR "DMO Runtime"
 #define WINE_FILENAME_STR "msdmo.dll"
 #define WINE_FILEVERSION 6,5,1,900
-#define WINE_FILEVERSION_STR "6.5.1.900"
-#define WINE_PRODUCTVERSION 6,5,1,900
-#define WINE_PRODUCTVERSION_STR "6.5"
 
 #include "wine/wine_common_ver.rc"

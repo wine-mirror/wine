@@ -19,8 +19,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine runtime library"
 #define WINE_FILENAME_STR "vcruntime140_1.dll"
 #define WINE_FILEVERSION 14,42,34433,0
-#define WINE_FILEVERSION_STR "14.42.34433.0"
-#define WINE_PRODUCTVERSION 14,42,34433,0
-#define WINE_PRODUCTVERSION_STR "14.42.34433.0"
 
 #include "wine/wine_common_ver.rc"

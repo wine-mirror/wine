@@ -19,8 +19,5 @@
 #define WINE_FILEDESCRIPTION_STR "DirectX Files dll"
 #define WINE_FILENAME_STR "d3dxof.dll"
 #define WINE_FILEVERSION 5,0,2135,1
-#define WINE_FILEVERSION_STR "5.0.2135.1"
-#define WINE_PRODUCTVERSION 5,0,2135,1
-#define WINE_PRODUCTVERSION_STR "5.0.2135.1"
 
 #include "wine/wine_common_ver.rc"

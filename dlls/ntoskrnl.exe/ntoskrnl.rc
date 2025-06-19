@@ -20,8 +20,5 @@
 
 /* Version as of Win 7 SP1 */
 #define WINE_FILEVERSION 6,1,7601,21863
-#define WINE_FILEVERSION_STR "6.1.7601.21863"
-#define WINE_PRODUCTVERSION 6,1,7601,21863
-#define WINE_PRODUCTVERSION_STR "6.1.7601.21863"
 
 #include "wine/wine_common_ver.rc"

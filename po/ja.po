@@ -276,7 +276,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "指定されていません"
 
-#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:38
+#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:35
 #: dlls/shell32/shell32.rc:141 dlls/shell32/shell32.rc:243
 #: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
@@ -450,7 +450,7 @@ msgstr "ウィザード"
 msgid "< &Back"
 msgstr "< 戻る(&B)"
 
-#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:61
+#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:58
 msgid "&Next >"
 msgstr "次へ(&N) >"
 
@@ -1411,7 +1411,7 @@ msgid "&User name:"
 msgstr "ユーザー名(&U):"
 
 #: dlls/credui/credui.rc:48 dlls/cryptui/cryptui.rc:402
-#: dlls/oledb32/version.rc:81
+#: dlls/oledb32/version.rc:78
 msgid "&Password:"
 msgstr "パスワード(&P):"
 
@@ -2741,7 +2741,7 @@ msgstr "この証明書は問題ありません。"
 msgid "Field"
 msgstr "フィールド"
 
-#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:39
+#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:36
 msgid "Value"
 msgstr "値"
 
@@ -3338,7 +3338,7 @@ msgstr "シンボル"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:100
+#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:97
 #: dlls/wldap32/wldap32.rc:112
 msgid "Other"
 msgstr "その他"
@@ -3406,7 +3406,7 @@ msgid "&Stop"
 msgstr "中止(&S)"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:66 dlls/hhctrl.ocx/hhctrl.rc:83
-#: dlls/oledb32/version.rc:73 dlls/shdoclc/shdoclc.rc:59
+#: dlls/oledb32/version.rc:70 dlls/shdoclc/shdoclc.rc:59
 msgid "&Refresh"
 msgstr "更新(&R)"
 
@@ -4197,11 +4197,11 @@ msgstr "ArrayBuffer オブジェクトを期待していました"
 msgid "Property cannot have both accessors and a value"
 msgstr "プロパティはアクセサーと値の両方になることはできません"
 
-#: include/wine/wine_common_ver.rc:138
+#: include/wine/wine_common_ver.rc:123
 msgid "Wine kernel DLL"
 msgstr ""
 
-#: include/wine/wine_common_ver.rc:143 dlls/winemac.drv/winemac.rc:32
+#: include/wine/wine_common_ver.rc:128 dlls/winemac.drv/winemac.rc:32
 #: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:143
 msgid "Wine"
 msgstr "Wine"
@@ -9264,99 +9264,99 @@ msgstr "On"
 msgid "Off"
 msgstr "Off"
 
-#: dlls/oledb32/version.rc:56
+#: dlls/oledb32/version.rc:53
 msgid "Provider"
 msgstr "プロバイダー"
 
-#: dlls/oledb32/version.rc:59
+#: dlls/oledb32/version.rc:56
 msgid "Select the data you want to connect to:"
 msgstr "接続したいデータを選択してください:"
 
-#: dlls/oledb32/version.rc:66
+#: dlls/oledb32/version.rc:63
 msgid "Connection"
 msgstr "接続"
 
-#: dlls/oledb32/version.rc:69
+#: dlls/oledb32/version.rc:66
 msgid "Specify the following to connect to ODBC data:"
 msgstr "ODBC データに接続するため以下を指定してください:"
 
-#: dlls/oledb32/version.rc:70
+#: dlls/oledb32/version.rc:67
 msgid "1. Specify the source of data:"
 msgstr "1. データ ソース:"
 
-#: dlls/oledb32/version.rc:71
+#: dlls/oledb32/version.rc:68
 msgid "Use &data source name"
 msgstr "利用するデータ ソース名(&D)"
 
-#: dlls/oledb32/version.rc:74
+#: dlls/oledb32/version.rc:71
 msgid "Use c&onnection string"
 msgstr "利用する接続文字列(&O)"
 
-#: dlls/oledb32/version.rc:75
+#: dlls/oledb32/version.rc:72
 msgid "&Connection string:"
 msgstr "接続文字列:"
 
-#: dlls/oledb32/version.rc:77
+#: dlls/oledb32/version.rc:74
 msgid "B&uild..."
 msgstr "構築(&U)..."
 
-#: dlls/oledb32/version.rc:78
+#: dlls/oledb32/version.rc:75
 msgid "2. Enter information to log on to the server"
 msgstr "2. サーバーにログオンするための情報"
 
-#: dlls/oledb32/version.rc:79
+#: dlls/oledb32/version.rc:76
 msgid "User &name:"
 msgstr "ユーザー名(&N):"
 
-#: dlls/oledb32/version.rc:83
+#: dlls/oledb32/version.rc:80
 msgid "&Blank password"
 msgstr "空のパスワード(&B)"
 
-#: dlls/oledb32/version.rc:84
+#: dlls/oledb32/version.rc:81
 msgid "Allow &saving password"
 msgstr "パスワードを保存する(&S)"
 
-#: dlls/oledb32/version.rc:85
+#: dlls/oledb32/version.rc:82
 msgid "3. Enter the &initial catalog to use:"
 msgstr "3. 最初に利用するカタログ(&I):"
 
-#: dlls/oledb32/version.rc:87
+#: dlls/oledb32/version.rc:84
 msgid "&Test Connection"
 msgstr "接続をテスト(&T)"
 
-#: dlls/oledb32/version.rc:92
+#: dlls/oledb32/version.rc:89
 msgid "Advanced"
 msgstr "高度"
 
-#: dlls/oledb32/version.rc:95
+#: dlls/oledb32/version.rc:92
 msgid "Network settings"
 msgstr "ネットワーク設定"
 
-#: dlls/oledb32/version.rc:96
+#: dlls/oledb32/version.rc:93
 msgid "&Impersonation level:"
 msgstr "偽装レベル(&I):"
 
-#: dlls/oledb32/version.rc:98
+#: dlls/oledb32/version.rc:95
 msgid "P&rotection level:"
 msgstr "保護レベル(&R):"
 
-#: dlls/oledb32/version.rc:101
+#: dlls/oledb32/version.rc:98
 msgid "Connect:"
 msgstr "接続:"
 
-#: dlls/oledb32/version.rc:103
+#: dlls/oledb32/version.rc:100
 msgid "seconds."
 msgstr "秒"
 
-#: dlls/oledb32/version.rc:104
+#: dlls/oledb32/version.rc:101
 msgid "A&ccess:"
 msgstr "アクセス(&C):"
 
-#: dlls/oledb32/version.rc:110
+#: dlls/oledb32/version.rc:107
 msgid "All"
 msgstr "すべて"
 
-#: dlls/oledb32/version.rc:114
+#: dlls/oledb32/version.rc:111
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
@@ -9364,19 +9364,19 @@ msgstr ""
 "このデータ型には初期プロパティがあります。値を編集するには、プロパティを選ん"
 "でから、下にある[値の編集]を選択してください。"
 
-#: dlls/oledb32/version.rc:115
+#: dlls/oledb32/version.rc:112
 msgid "&Edit Value..."
 msgstr "値の編集(&E)..."
 
-#: dlls/oledb32/version.rc:49
+#: dlls/oledb32/version.rc:46
 msgid "Data Link Error"
 msgstr "データ リンク エラー"
 
-#: dlls/oledb32/version.rc:50
+#: dlls/oledb32/version.rc:47
 msgid "Please select a provider."
 msgstr "プロバイダーを選択してください。"
 
-#: dlls/oledb32/version.rc:51
+#: dlls/oledb32/version.rc:48
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
@@ -9384,39 +9384,39 @@ msgstr ""
 "プロバイダーは使用できません。当該プロバイダーが正しくインストールされている"
 "か確かめてください。"
 
-#: dlls/oledb32/version.rc:36
+#: dlls/oledb32/version.rc:33
 msgid "Data Link Properties"
 msgstr "データ リンク プロパティ"
 
-#: dlls/oledb32/version.rc:37
+#: dlls/oledb32/version.rc:34
 msgid "OLE DB Provider(s)"
 msgstr "OLE DB プロバイダー"
 
-#: dlls/oledb32/version.rc:41
+#: dlls/oledb32/version.rc:38
 msgid "Read"
 msgstr "読み取り"
 
-#: dlls/oledb32/version.rc:42
+#: dlls/oledb32/version.rc:39
 msgid "ReadWrite"
 msgstr "読み書き"
 
-#: dlls/oledb32/version.rc:43
+#: dlls/oledb32/version.rc:40
 msgid "Share Deny None"
 msgstr "共有(拒否なし)"
 
-#: dlls/oledb32/version.rc:44
+#: dlls/oledb32/version.rc:41
 msgid "Share Deny Read"
 msgstr "共有(読取拒否)"
 
-#: dlls/oledb32/version.rc:45
+#: dlls/oledb32/version.rc:42
 msgid "Share Deny Write"
 msgstr "共有(書込拒否)"
 
-#: dlls/oledb32/version.rc:46
+#: dlls/oledb32/version.rc:43
 msgid "Share Exclusive"
 msgstr "共有の排他制御"
 
-#: dlls/oledb32/version.rc:47
+#: dlls/oledb32/version.rc:44
 msgid "Write"
 msgstr "書き込み"
 
@@ -17541,7 +17541,7 @@ msgid ""
 msgstr ""
 "終了シグナルが PID %1!u! のプロセス (PID %2!u! の子) に送られました。\n"
 
-#: include/wine/wine_common_ver.rc:138
+#: include/wine/wine_common_ver.rc:123
 msgid "Wine tasklist"
 msgstr "Wine tasklist"
 

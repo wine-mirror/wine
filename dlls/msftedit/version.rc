@@ -19,8 +19,5 @@
 #define WINE_FILEDESCRIPTION_STR "Rich Text Edit Control"
 #define WINE_FILENAME_STR "msftedit.dll"
 #define WINE_FILEVERSION 5,41,15,1509
-#define WINE_FILEVERSION_STR "5,41,15,1509"
-#define WINE_PRODUCTVERSION 5,41,15,1509
-#define WINE_PRODUCTVERSION_STR "5,41,15,1509"
 
 #include "wine/wine_common_ver.rc"

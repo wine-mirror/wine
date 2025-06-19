@@ -274,7 +274,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Belirlenmedi"
 
-#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:38
+#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:35
 #: dlls/shell32/shell32.rc:141 dlls/shell32/shell32.rc:243
 #: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
@@ -448,7 +448,7 @@ msgstr "Sihirbazı"
 msgid "< &Back"
 msgstr "< &Geri"
 
-#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:61
+#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:58
 msgid "&Next >"
 msgstr "&İleri >"
 
@@ -1407,7 +1407,7 @@ msgid "&User name:"
 msgstr "&Kullanıcı adı:"
 
 #: dlls/credui/credui.rc:48 dlls/cryptui/cryptui.rc:402
-#: dlls/oledb32/version.rc:81
+#: dlls/oledb32/version.rc:78
 msgid "&Password:"
 msgstr "&Parola:"
 
@@ -2740,7 +2740,7 @@ msgstr "Bu sertifika sorunsuz."
 msgid "Field"
 msgstr "Alan"
 
-#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:39
+#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:36
 msgid "Value"
 msgstr "Değer"
 
@@ -3351,7 +3351,7 @@ msgstr "Simge"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:100
+#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:97
 #: dlls/wldap32/wldap32.rc:112
 msgid "Other"
 msgstr "Diğer"
@@ -3419,7 +3419,7 @@ msgid "&Stop"
 msgstr "&Durdur"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:66 dlls/hhctrl.ocx/hhctrl.rc:83
-#: dlls/oledb32/version.rc:73 dlls/shdoclc/shdoclc.rc:59
+#: dlls/oledb32/version.rc:70 dlls/shdoclc/shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Yenile"
 
@@ -4232,11 +4232,11 @@ msgstr "Beklenen dizi nesnesi"
 msgid "Property cannot have both accessors and a value"
 msgstr "Nesnenin erişimcisi ve değeri birden olamaz"
 
-#: include/wine/wine_common_ver.rc:138
+#: include/wine/wine_common_ver.rc:123
 msgid "Wine kernel DLL"
 msgstr "Wine çekirdek DLL'si"
 
-#: include/wine/wine_common_ver.rc:143 dlls/winemac.drv/winemac.rc:32
+#: include/wine/wine_common_ver.rc:128 dlls/winemac.drv/winemac.rc:32
 #: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:143
 msgid "Wine"
 msgstr "Wine"
@@ -9296,99 +9296,99 @@ msgstr "Açık"
 msgid "Off"
 msgstr "Kapalı"
 
-#: dlls/oledb32/version.rc:56
+#: dlls/oledb32/version.rc:53
 msgid "Provider"
 msgstr "Sağlayıcı"
 
-#: dlls/oledb32/version.rc:59
+#: dlls/oledb32/version.rc:56
 msgid "Select the data you want to connect to:"
 msgstr "Bağlanmak istediğiniz veriyi seçin:"
 
-#: dlls/oledb32/version.rc:66
+#: dlls/oledb32/version.rc:63
 msgid "Connection"
 msgstr "Bağlantı"
 
-#: dlls/oledb32/version.rc:69
+#: dlls/oledb32/version.rc:66
 msgid "Specify the following to connect to ODBC data:"
 msgstr "ODBC verisine bağlanmak için şunları belirtin:"
 
-#: dlls/oledb32/version.rc:70
+#: dlls/oledb32/version.rc:67
 msgid "1. Specify the source of data:"
 msgstr "1. Verinin kaynağını belirtin:"
 
-#: dlls/oledb32/version.rc:71
+#: dlls/oledb32/version.rc:68
 msgid "Use &data source name"
 msgstr "&Veri kaynağı adını kullan"
 
-#: dlls/oledb32/version.rc:74
+#: dlls/oledb32/version.rc:71
 msgid "Use c&onnection string"
 msgstr "&Bağlantı dizesini kullan"
 
-#: dlls/oledb32/version.rc:75
+#: dlls/oledb32/version.rc:72
 msgid "&Connection string:"
 msgstr "B&ağlantı dizesi:"
 
-#: dlls/oledb32/version.rc:77
+#: dlls/oledb32/version.rc:74
 msgid "B&uild..."
 msgstr "&Derle..."
 
-#: dlls/oledb32/version.rc:78
+#: dlls/oledb32/version.rc:75
 msgid "2. Enter information to log on to the server"
 msgstr "2. Sunucuya bağlanmak için bilgileri girin"
 
-#: dlls/oledb32/version.rc:79
+#: dlls/oledb32/version.rc:76
 msgid "User &name:"
 msgstr "&Kullanıcı adı:"
 
-#: dlls/oledb32/version.rc:83
+#: dlls/oledb32/version.rc:80
 msgid "&Blank password"
 msgstr "B&oş parola"
 
-#: dlls/oledb32/version.rc:84
+#: dlls/oledb32/version.rc:81
 msgid "Allow &saving password"
 msgstr "&Parolayı kaydetmeye izin ver"
 
-#: dlls/oledb32/version.rc:85
+#: dlls/oledb32/version.rc:82
 msgid "3. Enter the &initial catalog to use:"
 msgstr "3. Kullanılacak &ilk kataloğu girin:"
 
-#: dlls/oledb32/version.rc:87
+#: dlls/oledb32/version.rc:84
 msgid "&Test Connection"
 msgstr "Bağlantıyı &Sına"
 
-#: dlls/oledb32/version.rc:92
+#: dlls/oledb32/version.rc:89
 msgid "Advanced"
 msgstr "Gelişmiş"
 
-#: dlls/oledb32/version.rc:95
+#: dlls/oledb32/version.rc:92
 msgid "Network settings"
 msgstr "Ağ ayarları"
 
-#: dlls/oledb32/version.rc:96
+#: dlls/oledb32/version.rc:93
 msgid "&Impersonation level:"
 msgstr "Tak&lit seviyesi:"
 
-#: dlls/oledb32/version.rc:98
+#: dlls/oledb32/version.rc:95
 msgid "P&rotection level:"
 msgstr "Ko&ruma seviyesi:"
 
-#: dlls/oledb32/version.rc:101
+#: dlls/oledb32/version.rc:98
 msgid "Connect:"
 msgstr "Bağlan:"
 
-#: dlls/oledb32/version.rc:103
+#: dlls/oledb32/version.rc:100
 msgid "seconds."
 msgstr "saniye."
 
-#: dlls/oledb32/version.rc:104
+#: dlls/oledb32/version.rc:101
 msgid "A&ccess:"
 msgstr "&Erişim:"
 
-#: dlls/oledb32/version.rc:110
+#: dlls/oledb32/version.rc:107
 msgid "All"
 msgstr "Tümü"
 
-#: dlls/oledb32/version.rc:114
+#: dlls/oledb32/version.rc:111
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
@@ -9396,58 +9396,58 @@ msgstr ""
 "Bunlar, bu türden verinin başlatılma özellikleridir. Bir değeri düzenlemek "
 "için, bir özelliği seçin, sonra alttan Değeri Düzenle'yi tıklatın."
 
-#: dlls/oledb32/version.rc:115
+#: dlls/oledb32/version.rc:112
 msgid "&Edit Value..."
 msgstr "Değeri Dü&zenle..."
 
-#: dlls/oledb32/version.rc:49
+#: dlls/oledb32/version.rc:46
 msgid "Data Link Error"
 msgstr "Veri Bağlama Hatası"
 
-#: dlls/oledb32/version.rc:50
+#: dlls/oledb32/version.rc:47
 msgid "Please select a provider."
 msgstr "Lütfen bir sağlayıcı seçin."
 
-#: dlls/oledb32/version.rc:51
+#: dlls/oledb32/version.rc:48
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr ""
 "Sağlayıcı kullanılamıyor. Sağlayıcının düzgün yüklendiğinden emin olun."
 
-#: dlls/oledb32/version.rc:36
+#: dlls/oledb32/version.rc:33
 msgid "Data Link Properties"
 msgstr "Veri Bağlantısı Özellikleri"
 
-#: dlls/oledb32/version.rc:37
+#: dlls/oledb32/version.rc:34
 msgid "OLE DB Provider(s)"
 msgstr "OLE Veritabanı Sağlayıcısı"
 
-#: dlls/oledb32/version.rc:41
+#: dlls/oledb32/version.rc:38
 msgid "Read"
 msgstr "Okuma"
 
-#: dlls/oledb32/version.rc:42
+#: dlls/oledb32/version.rc:39
 msgid "ReadWrite"
 msgstr "Okuma-yazma"
 
-#: dlls/oledb32/version.rc:43
+#: dlls/oledb32/version.rc:40
 msgid "Share Deny None"
 msgstr "Yasak olmadan paylaş"
 
-#: dlls/oledb32/version.rc:44
+#: dlls/oledb32/version.rc:41
 msgid "Share Deny Read"
 msgstr "Okuma iznini yasakla"
 
-#: dlls/oledb32/version.rc:45
+#: dlls/oledb32/version.rc:42
 msgid "Share Deny Write"
 msgstr "Yazma iznini yasakla"
 
-#: dlls/oledb32/version.rc:46
+#: dlls/oledb32/version.rc:43
 msgid "Share Exclusive"
 msgstr "Okuma ve yazmayı yasakla"
 
-#: dlls/oledb32/version.rc:47
+#: dlls/oledb32/version.rc:44
 msgid "Write"
 msgstr "Yazma"
 
@@ -17678,7 +17678,7 @@ msgid ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 msgstr ""
 
-#: include/wine/wine_common_ver.rc:138
+#: include/wine/wine_common_ver.rc:123
 #, fuzzy
 #| msgid "page tab list"
 msgid "Wine tasklist"

@@ -20,8 +20,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine Common Controller API"
 #define WINE_FILENAME_STR "xinput1_4.dll"
 #define WINE_FILEVERSION 6,3,9600,16384
-#define WINE_FILEVERSION_STR "6.3.9600.16384"
-#define WINE_PRODUCTVERSION 6,3,9600,16384
-#define WINE_PRODUCTVERSION_STR "6.3"
 
 #include "wine/wine_common_ver.rc"

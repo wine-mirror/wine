@@ -4616,8 +4616,5 @@ BLUE_WINDOW_SMALL_FRAME_RIGHT_BMP BITMAP "blue_window_small_frame_right.bmp"
 #define WINE_FILEDESCRIPTION_STR "Light Theme"
 #define WINE_FILENAME_STR "light.msstyles"
 #define WINE_FILEVERSION 1,0,0,1
-#define WINE_FILEVERSION_STR "1.0.0.1"
-#define WINE_PRODUCTVERSION 1,0,0,1
-#define WINE_PRODUCTVERSION_STR "1.0.0.1"
 
 #include "wine/wine_common_ver.rc"

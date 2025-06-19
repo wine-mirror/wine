@@ -20,9 +20,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine Cabinet File API"
 #define WINE_FILENAME_STR "cabinet.dll"
 #define WINE_FILEVERSION 5,0,2147,1
-#define WINE_FILEVERSION_STR "5.0.2147.1"
-
-#define WINE_PRODUCTVERSION 5,0,2147,1
-#define WINE_PRODUCTVERSION_STR "5.0"
 
 #include "wine/wine_common_ver.rc"

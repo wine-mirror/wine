@@ -20,8 +20,5 @@
 
 #define WINE_FILENAME_STR "wintrust.dll"
 #define WINE_FILEVERSION 6,1,7601,23769
-#define WINE_FILEVERSION_STR "6.1.7601.23769"
-#define WINE_PRODUCTVERSION 6,1,7601,23769
-#define WINE_PRODUCTVERSION_STR "6.1.7601.23769"
 
 #include "wine/wine_common_ver.rc"

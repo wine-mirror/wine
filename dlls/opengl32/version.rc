@@ -19,9 +19,6 @@
 #define WINE_FILEDESCRIPTION_STR "Wine OpenGL Client"
 #define WINE_FILENAME_STR "opengl32.dll"
 #define WINE_FILEVERSION 5,1,2600,2082
-#define WINE_FILEVERSION_STR "5.1.2600.2082"
 #define WINE_LEGALCOPYRIGHT "Copyright (c) 1993-2025 the Wine project. Not Microsoft" /* CATIA needs 'Microsoft' in both CompanyName _and_ LegalCopyright */
-#define WINE_PRODUCTVERSION 5,1,2600,2082
-#define WINE_PRODUCTVERSION_STR "5.1"
 
 #include "wine/wine_common_ver.rc"

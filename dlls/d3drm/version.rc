@@ -19,8 +19,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine Direct3D Retained Mode Utility Functions"
 #define WINE_FILENAME_STR "d3drm.dll"
 #define WINE_FILEVERSION 5,0,2134,14
-#define WINE_FILEVERSION_STR "5.0.2134.14"
-#define WINE_PRODUCTVERSION 5,0,2134,14
-#define WINE_PRODUCTVERSION_STR "5.0"
 
 #include "wine/wine_common_ver.rc"

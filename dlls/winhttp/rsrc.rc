@@ -18,9 +18,6 @@
 
 #define WINE_FILEDESCRIPTION_STR "Wine HTTP Library"
 #define WINE_FILENAME_STR "winhttp.dll"
-#define WINE_FILEVERSION_MAJOR 5
-#define WINE_FILEVERSION_MINOR 1
-#define WINE_FILEVERSION_BUILD 2600
-#define WINE_FILEVERSION_PLATFORMID 2180
+#define WINE_FILEVERSION 5,1,2600,2180
 
 #include "wine/wine_common_ver.rc"

@@ -275,7 +275,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Não especificado"
 
-#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:38
+#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:35
 #: dlls/shell32/shell32.rc:141 dlls/shell32/shell32.rc:243
 #: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
@@ -449,7 +449,7 @@ msgstr "Assistente"
 msgid "< &Back"
 msgstr "< &Voltar"
 
-#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:61
+#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:58
 msgid "&Next >"
 msgstr "&Avançar >"
 
@@ -1411,7 +1411,7 @@ msgid "&User name:"
 msgstr "&Nome de usuário:"
 
 #: dlls/credui/credui.rc:48 dlls/cryptui/cryptui.rc:402
-#: dlls/oledb32/version.rc:81
+#: dlls/oledb32/version.rc:78
 msgid "&Password:"
 msgstr "&Senha:"
 
@@ -2748,7 +2748,7 @@ msgstr "Este certificado está OK."
 msgid "Field"
 msgstr "Campo"
 
-#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:39
+#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:36
 msgid "Value"
 msgstr "Valor"
 
@@ -3365,7 +3365,7 @@ msgstr "Símbolo"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:100
+#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:97
 #: dlls/wldap32/wldap32.rc:112
 msgid "Other"
 msgstr "Outro"
@@ -3433,7 +3433,7 @@ msgid "&Stop"
 msgstr "&Parar"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:66 dlls/hhctrl.ocx/hhctrl.rc:83
-#: dlls/oledb32/version.rc:73 dlls/shdoclc/shdoclc.rc:59
+#: dlls/oledb32/version.rc:70 dlls/shdoclc/shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Recarregar"
 
@@ -4252,11 +4252,11 @@ msgstr "Objeto tipo vetor esperado"
 msgid "Property cannot have both accessors and a value"
 msgstr "Propriedade não pode ter ambos acessores e valor"
 
-#: include/wine/wine_common_ver.rc:138
+#: include/wine/wine_common_ver.rc:123
 msgid "Wine kernel DLL"
 msgstr "Biblioteca de kernel Wine"
 
-#: include/wine/wine_common_ver.rc:143 dlls/winemac.drv/winemac.rc:32
+#: include/wine/wine_common_ver.rc:128 dlls/winemac.drv/winemac.rc:32
 #: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:143
 msgid "Wine"
 msgstr "Wine"
@@ -9333,99 +9333,99 @@ msgstr "Ligado"
 msgid "Off"
 msgstr "Desligado"
 
-#: dlls/oledb32/version.rc:56
+#: dlls/oledb32/version.rc:53
 msgid "Provider"
 msgstr "Provedor"
 
-#: dlls/oledb32/version.rc:59
+#: dlls/oledb32/version.rc:56
 msgid "Select the data you want to connect to:"
 msgstr "Selecione os dados que você deseja conectar:"
 
-#: dlls/oledb32/version.rc:66
+#: dlls/oledb32/version.rc:63
 msgid "Connection"
 msgstr "Conexão"
 
-#: dlls/oledb32/version.rc:69
+#: dlls/oledb32/version.rc:66
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Escolha o seguinte para conectar dados ODBC:"
 
-#: dlls/oledb32/version.rc:70
+#: dlls/oledb32/version.rc:67
 msgid "1. Specify the source of data:"
 msgstr "1. Especifique a origem dos dados:"
 
-#: dlls/oledb32/version.rc:71
+#: dlls/oledb32/version.rc:68
 msgid "Use &data source name"
 msgstr "Usar nome da origem de &dados"
 
-#: dlls/oledb32/version.rc:74
+#: dlls/oledb32/version.rc:71
 msgid "Use c&onnection string"
 msgstr "Usar string de conexão"
 
-#: dlls/oledb32/version.rc:75
+#: dlls/oledb32/version.rc:72
 msgid "&Connection string:"
 msgstr "Dados de &Conexão:"
 
-#: dlls/oledb32/version.rc:77
+#: dlls/oledb32/version.rc:74
 msgid "B&uild..."
 msgstr "&Gerar..."
 
-#: dlls/oledb32/version.rc:78
+#: dlls/oledb32/version.rc:75
 msgid "2. Enter information to log on to the server"
 msgstr "2. Entre com as informações para logar no servidor"
 
-#: dlls/oledb32/version.rc:79
+#: dlls/oledb32/version.rc:76
 msgid "User &name:"
 msgstr "&Nome de usuário:"
 
-#: dlls/oledb32/version.rc:83
+#: dlls/oledb32/version.rc:80
 msgid "&Blank password"
 msgstr "Senha em &branco"
 
-#: dlls/oledb32/version.rc:84
+#: dlls/oledb32/version.rc:81
 msgid "Allow &saving password"
 msgstr "Permitir &salvar senha"
 
-#: dlls/oledb32/version.rc:85
+#: dlls/oledb32/version.rc:82
 msgid "3. Enter the &initial catalog to use:"
 msgstr "3. Entre o catalogo &inicial para uso use:"
 
-#: dlls/oledb32/version.rc:87
+#: dlls/oledb32/version.rc:84
 msgid "&Test Connection"
 msgstr "&Testar Conexão"
 
-#: dlls/oledb32/version.rc:92
+#: dlls/oledb32/version.rc:89
 msgid "Advanced"
 msgstr "Avançado"
 
-#: dlls/oledb32/version.rc:95
+#: dlls/oledb32/version.rc:92
 msgid "Network settings"
 msgstr "Configuração de rede"
 
-#: dlls/oledb32/version.rc:96
+#: dlls/oledb32/version.rc:93
 msgid "&Impersonation level:"
 msgstr "N&ível de representação:"
 
-#: dlls/oledb32/version.rc:98
+#: dlls/oledb32/version.rc:95
 msgid "P&rotection level:"
 msgstr "Nível de p&roteção:"
 
-#: dlls/oledb32/version.rc:101
+#: dlls/oledb32/version.rc:98
 msgid "Connect:"
 msgstr "Conectar:"
 
-#: dlls/oledb32/version.rc:103
+#: dlls/oledb32/version.rc:100
 msgid "seconds."
 msgstr "segundos."
 
-#: dlls/oledb32/version.rc:104
+#: dlls/oledb32/version.rc:101
 msgid "A&ccess:"
 msgstr "A&cesso:"
 
-#: dlls/oledb32/version.rc:110
+#: dlls/oledb32/version.rc:107
 msgid "All"
 msgstr "Todos"
 
-#: dlls/oledb32/version.rc:114
+#: dlls/oledb32/version.rc:111
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
@@ -9433,19 +9433,19 @@ msgstr ""
 "Estas são as propriedades de inicialização para este tipo de dados. Para "
 "editar, selecione a propriedade, e escolha Editar Valor abaixo."
 
-#: dlls/oledb32/version.rc:115
+#: dlls/oledb32/version.rc:112
 msgid "&Edit Value..."
 msgstr "&Editar Valor..."
 
-#: dlls/oledb32/version.rc:49
+#: dlls/oledb32/version.rc:46
 msgid "Data Link Error"
 msgstr "Erro de conexão"
 
-#: dlls/oledb32/version.rc:50
+#: dlls/oledb32/version.rc:47
 msgid "Please select a provider."
 msgstr "Por favor, selecione um provedor."
 
-#: dlls/oledb32/version.rc:51
+#: dlls/oledb32/version.rc:48
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
@@ -9453,39 +9453,39 @@ msgstr ""
 "Provedor não esta mais disponível. Tenha certeza que o provedor está "
 "instalado adequadamente."
 
-#: dlls/oledb32/version.rc:36
+#: dlls/oledb32/version.rc:33
 msgid "Data Link Properties"
 msgstr "Propriedades da Conexão de Dados"
 
-#: dlls/oledb32/version.rc:37
+#: dlls/oledb32/version.rc:34
 msgid "OLE DB Provider(s)"
 msgstr "Provedor(es) OLE DB"
 
-#: dlls/oledb32/version.rc:41
+#: dlls/oledb32/version.rc:38
 msgid "Read"
 msgstr "Ler"
 
-#: dlls/oledb32/version.rc:42
+#: dlls/oledb32/version.rc:39
 msgid "ReadWrite"
 msgstr "LeituraEscrita"
 
-#: dlls/oledb32/version.rc:43
+#: dlls/oledb32/version.rc:40
 msgid "Share Deny None"
 msgstr "Compartilhamento Nada Negado"
 
-#: dlls/oledb32/version.rc:44
+#: dlls/oledb32/version.rc:41
 msgid "Share Deny Read"
 msgstr "Compartilhamento Leitura Negada"
 
-#: dlls/oledb32/version.rc:45
+#: dlls/oledb32/version.rc:42
 msgid "Share Deny Write"
 msgstr "Compartilhamento Escrita Negada"
 
-#: dlls/oledb32/version.rc:46
+#: dlls/oledb32/version.rc:43
 msgid "Share Exclusive"
 msgstr "Compartilhamento Exclusivo"
 
-#: dlls/oledb32/version.rc:47
+#: dlls/oledb32/version.rc:44
 msgid "Write"
 msgstr "Gravação"
 
@@ -17914,7 +17914,7 @@ msgid ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 msgstr ""
 
-#: include/wine/wine_common_ver.rc:138
+#: include/wine/wine_common_ver.rc:123
 #, fuzzy
 #| msgid "page tab list"
 msgid "Wine tasklist"

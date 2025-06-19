@@ -339,8 +339,5 @@ OIC_SHIELD ICON resources/oic_shield.ico
 
 /* these values come from Windows XP SP2 */
 #define WINE_FILEVERSION 5,1,2600,2180
-#define WINE_FILEVERSION_STR "5.01.2600.2180"
-#define WINE_PRODUCTVERSION 5,1,2600,2180
-#define WINE_PRODUCTVERSION_STR "5.01.2600.2180"
 
 #include "wine/wine_common_ver.rc"

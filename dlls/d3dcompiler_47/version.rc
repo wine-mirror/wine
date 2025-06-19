@@ -20,8 +20,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine D3DCompiler"
 #define WINE_FILENAME_STR "d3dcompiler_47.dll"
 #define WINE_FILEVERSION 6,3,9600,16984
-#define WINE_FILEVERSION_STR "6.3.9600.16984"
-#define WINE_PRODUCTVERSION 6,3,9600,16984
-#define WINE_PRODUCTVERSION_STR "6.3.9600.16984"
 
 #include "wine/wine_common_ver.rc"

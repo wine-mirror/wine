@@ -55,6 +55,5 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 #define WINE_FILEDESCRIPTION_STR "Wine PostScript Driver"
 #define WINE_FILENAME_STR "wineps.drv"
-#define WINE_FILEVERSION_STR "1.0"
 
 #include "wine/wine_common_ver.rc"

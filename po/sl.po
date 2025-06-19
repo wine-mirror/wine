@@ -296,7 +296,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Ni navedeno"
 
-#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:38
+#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:35
 #: dlls/shell32/shell32.rc:141 dlls/shell32/shell32.rc:243
 #: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
@@ -472,7 +472,7 @@ msgstr "Čarovnik"
 msgid "< &Back"
 msgstr "< Na&zaj"
 
-#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:61
+#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:58
 msgid "&Next >"
 msgstr "&Naprej >"
 
@@ -1442,7 +1442,7 @@ msgid "&User name:"
 msgstr "&Uporabniško ime:"
 
 #: dlls/credui/credui.rc:48 dlls/cryptui/cryptui.rc:402
-#: dlls/oledb32/version.rc:81
+#: dlls/oledb32/version.rc:78
 msgid "&Password:"
 msgstr "&Geslo:"
 
@@ -2793,7 +2793,7 @@ msgstr "To potrdilo je v redu."
 msgid "Field"
 msgstr "Polje"
 
-#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:39
+#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:36
 msgid "Value"
 msgstr "Vrednost"
 
@@ -3414,7 +3414,7 @@ msgstr "Simbol"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:100
+#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:97
 #: dlls/wldap32/wldap32.rc:112
 msgid "Other"
 msgstr "Drugo"
@@ -3482,7 +3482,7 @@ msgid "&Stop"
 msgstr "&Zaustavi"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:66 dlls/hhctrl.ocx/hhctrl.rc:83
-#: dlls/oledb32/version.rc:73 dlls/shdoclc/shdoclc.rc:59
+#: dlls/oledb32/version.rc:70 dlls/shdoclc/shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Osveži"
 
@@ -4337,11 +4337,11 @@ msgstr "Pričakovan je bil predmet polja"
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 
-#: include/wine/wine_common_ver.rc:138
+#: include/wine/wine_common_ver.rc:123
 msgid "Wine kernel DLL"
 msgstr ""
 
-#: include/wine/wine_common_ver.rc:143 dlls/winemac.drv/winemac.rc:32
+#: include/wine/wine_common_ver.rc:128 dlls/winemac.drv/winemac.rc:32
 #: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:143
 msgid "Wine"
 msgstr "Wine"
@@ -9826,203 +9826,203 @@ msgstr "Vključeno"
 msgid "Off"
 msgstr "Izključeno"
 
-#: dlls/oledb32/version.rc:56
+#: dlls/oledb32/version.rc:53
 #, fuzzy
 #| msgid "video"
 msgid "Provider"
 msgstr "video"
 
-#: dlls/oledb32/version.rc:59
+#: dlls/oledb32/version.rc:56
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "Izberite obliko, ki jo želite uporabiti:"
 
-#: dlls/oledb32/version.rc:66
+#: dlls/oledb32/version.rc:63
 #, fuzzy
 #| msgid "LAN Connection"
 msgid "Connection"
 msgstr "Povezava LAN"
 
-#: dlls/oledb32/version.rc:69
+#: dlls/oledb32/version.rc:66
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Izberite obliko, ki jo želite uporabiti:"
 
-#: dlls/oledb32/version.rc:70
+#: dlls/oledb32/version.rc:67
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:71
+#: dlls/oledb32/version.rc:68
 #, fuzzy
 #| msgid "Please enter your name"
 msgid "Use &data source name"
 msgstr "Vnesite svoje ime"
 
-#: dlls/oledb32/version.rc:74
+#: dlls/oledb32/version.rc:71
 #, fuzzy
 #| msgid "LAN Connection"
 msgid "Use c&onnection string"
 msgstr "Povezava LAN"
 
-#: dlls/oledb32/version.rc:75
+#: dlls/oledb32/version.rc:72
 #, fuzzy
 #| msgid "LAN Connection"
 msgid "&Connection string:"
 msgstr "Povezava LAN"
 
-#: dlls/oledb32/version.rc:77
+#: dlls/oledb32/version.rc:74
 #, fuzzy
 #| msgid "&Add..."
 msgid "B&uild..."
 msgstr "&Dodaj ..."
 
-#: dlls/oledb32/version.rc:78
+#: dlls/oledb32/version.rc:75
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: dlls/oledb32/version.rc:79
+#: dlls/oledb32/version.rc:76
 #, fuzzy
 #| msgid "&User name:"
 msgid "User &name:"
 msgstr "&Uporabniško ime:"
 
-#: dlls/oledb32/version.rc:83
+#: dlls/oledb32/version.rc:80
 #, fuzzy
 #| msgid "&Blank page"
 msgid "&Blank password"
 msgstr "&Prazna stran"
 
-#: dlls/oledb32/version.rc:84
+#: dlls/oledb32/version.rc:81
 #, fuzzy
 #| msgid "Wrong password.\n"
 msgid "Allow &saving password"
 msgstr "Napačno geslo.\n"
 
-#: dlls/oledb32/version.rc:85
+#: dlls/oledb32/version.rc:82
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:87
+#: dlls/oledb32/version.rc:84
 #, fuzzy
 #| msgid "LAN Connection"
 msgid "&Test Connection"
 msgstr "Povezava LAN"
 
-#: dlls/oledb32/version.rc:92
+#: dlls/oledb32/version.rc:89
 msgid "Advanced"
 msgstr "Srednje"
 
-#: dlls/oledb32/version.rc:95
+#: dlls/oledb32/version.rc:92
 #, fuzzy
 #| msgid "Network share"
 msgid "Network settings"
 msgstr "Omrežna souporaba"
 
-#: dlls/oledb32/version.rc:96
+#: dlls/oledb32/version.rc:93
 #, fuzzy
 #| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
 msgstr "Slaba raven oponašanja.\n"
 
-#: dlls/oledb32/version.rc:98
+#: dlls/oledb32/version.rc:95
 msgid "P&rotection level:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:101
+#: dlls/oledb32/version.rc:98
 #, fuzzy
 #| msgid "Disconnected"
 msgid "Connect:"
 msgstr "Povezava je bila prekinjena"
 
-#: dlls/oledb32/version.rc:103
+#: dlls/oledb32/version.rc:100
 #, fuzzy
 #| msgid "&Seconds"
 msgid "seconds."
 msgstr "&Sekunde"
 
-#: dlls/oledb32/version.rc:104
+#: dlls/oledb32/version.rc:101
 #, fuzzy
 #| msgid "Success"
 msgid "A&ccess:"
 msgstr "Uspeh"
 
-#: dlls/oledb32/version.rc:110
+#: dlls/oledb32/version.rc:107
 #, fuzzy
 #| msgid "&All"
 msgid "All"
 msgstr "&Vse"
 
-#: dlls/oledb32/version.rc:114
+#: dlls/oledb32/version.rc:111
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
 
-#: dlls/oledb32/version.rc:115
+#: dlls/oledb32/version.rc:112
 #, fuzzy
 #| msgid "&Edit..."
 msgid "&Edit Value..."
 msgstr "&Uredi ..."
 
-#: dlls/oledb32/version.rc:49
+#: dlls/oledb32/version.rc:46
 #, fuzzy
 #| msgid "Properties"
 msgid "Data Link Error"
 msgstr "Lastnosti"
 
-#: dlls/oledb32/version.rc:50
+#: dlls/oledb32/version.rc:47
 #, fuzzy
 #| msgid "Please select a file."
 msgid "Please select a provider."
 msgstr "Izberite datoteko."
 
-#: dlls/oledb32/version.rc:51
+#: dlls/oledb32/version.rc:48
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr ""
 
-#: dlls/oledb32/version.rc:36
+#: dlls/oledb32/version.rc:33
 #, fuzzy
 #| msgid "Properties"
 msgid "Data Link Properties"
 msgstr "Lastnosti"
 
-#: dlls/oledb32/version.rc:37
+#: dlls/oledb32/version.rc:34
 msgid "OLE DB Provider(s)"
 msgstr ""
 
-#: dlls/oledb32/version.rc:41
+#: dlls/oledb32/version.rc:38
 #, fuzzy
 #| msgid "Ready"
 msgid "Read"
 msgstr "Pripravljen"
 
-#: dlls/oledb32/version.rc:42
+#: dlls/oledb32/version.rc:39
 #, fuzzy
 #| msgid "Readme:"
 msgid "ReadWrite"
 msgstr "Preberi me:"
 
-#: dlls/oledb32/version.rc:43
+#: dlls/oledb32/version.rc:40
 msgid "Share Deny None"
 msgstr ""
 
-#: dlls/oledb32/version.rc:44
+#: dlls/oledb32/version.rc:41
 msgid "Share Deny Read"
 msgstr ""
 
-#: dlls/oledb32/version.rc:45
+#: dlls/oledb32/version.rc:42
 msgid "Share Deny Write"
 msgstr ""
 
-#: dlls/oledb32/version.rc:46
+#: dlls/oledb32/version.rc:43
 msgid "Share Exclusive"
 msgstr ""
 
-#: dlls/oledb32/version.rc:47
+#: dlls/oledb32/version.rc:44
 #, fuzzy
 #| msgid "I/O Writes"
 msgid "Write"
@@ -18742,7 +18742,7 @@ msgid ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 msgstr ""
 
-#: include/wine/wine_common_ver.rc:138
+#: include/wine/wine_common_ver.rc:123
 #, fuzzy
 #| msgid "page tab list"
 msgid "Wine tasklist"

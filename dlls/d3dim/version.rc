@@ -19,8 +19,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine Direct3D Immediate Mode Utility Functions"
 #define WINE_FILENAME_STR "d3dim.dll"
 #define WINE_FILEVERSION 5,3,2180,14
-#define WINE_FILEVERSION_STR "5.3.2180.14"
-#define WINE_PRODUCTVERSION 5,3,2180,14
-#define WINE_PRODUCTVERSION_STR "5.3"
 
 #include "wine/wine_common_ver.rc"

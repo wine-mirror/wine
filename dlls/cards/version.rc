@@ -21,8 +21,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine Cards Library"
 #define WINE_FILENAME_STR "cards.dll"
 #define WINE_FILEVERSION 5,0,2134,1
-#define WINE_FILEVERSION_STR "5.00.2134.1"
-#define WINE_PRODUCTVERSION 5,0,2134,1
-#define WINE_PRODUCTVERSION_STR "5.00.2134.1"
 
 #include "wine/wine_common_ver.rc"

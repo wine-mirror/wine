@@ -594,7 +594,6 @@ IDI_WINDOWSM            ICON windowsm.ico
 */
 
 #define WINE_FILEVERSION 1,0,0,1
-#define WINE_FILEVERSION_STR "1.0.0.1"
 #define WINE_FILETYPE VFT_APP
 #define WINE_FILEDESCRIPTION_STR "Wine Task Manager"
 #define WINE_FILENAME "taskmgr"

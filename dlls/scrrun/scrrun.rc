@@ -22,8 +22,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine ScrRun dll"
 #define WINE_FILENAME_STR "scrrun.dll"
 #define WINE_FILEVERSION 5,8,7600,16385
-#define WINE_FILEVERSION_STR "5.8.7600.16385"
-#define WINE_PRODUCTVERSION 5,8,7600,16385
-#define WINE_PRODUCTVERSION_STR "5.8.7600.16385"
 
 #include "wine/wine_common_ver.rc"

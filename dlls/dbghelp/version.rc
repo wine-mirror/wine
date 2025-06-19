@@ -19,8 +19,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine Image Helper"
 #define WINE_FILENAME_STR "dbghelp.dll"
 #define WINE_FILEVERSION 6,1,7601,17514
-#define WINE_FILEVERSION_STR "6.1.7601.17514"
-#define WINE_PRODUCTVERSION 6,1,7601,17514
-#define WINE_PRODUCTVERSION_STR "6.1.7601.17514"
 
 #include "wine/wine_common_ver.rc"

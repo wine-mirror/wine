@@ -27,8 +27,5 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #define WINE_FILEDESCRIPTION_STR "Wine Device Enumerator Library"
 #define WINE_FILENAME_STR "devenum.dll"
 #define WINE_FILEVERSION 6,5,1,902
-#define WINE_FILEVERSION_STR "6.5.1.902"
-#define WINE_PRODUCTVERSION 6,5,1,902
-#define WINE_PRODUCTVERSION_STR "6.5"
 
 #include "wine/wine_common_ver.rc"

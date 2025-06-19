@@ -27,8 +27,5 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 /* these values come from Windows 10 Version 2009 */
 #define WINE_FILEVERSION 10,0,19045,5796
-#define WINE_FILEVERSION_STR "10.0.19045.5796"
-#define WINE_PRODUCTVERSION 10,0,19045,5796
-#define WINE_PRODUCTVERSION_STR "10.0.19045.5796"
 
 #include "wine/wine_common_ver.rc"

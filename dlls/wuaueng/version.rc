@@ -19,8 +19,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine Update Agent"
 #define WINE_FILENAME_STR "wuaueng.dll"
 #define WINE_FILEVERSION 7,2,6001,788
-#define WINE_FILEVERSION_STR "7.2.6001.788"
-#define WINE_PRODUCTVERSION 7,2,6001,788
-#define WINE_PRODUCTVERSION_STR "7.2.6001.788"
 
 #include "wine/wine_common_ver.rc"

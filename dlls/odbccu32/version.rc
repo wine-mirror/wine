@@ -20,8 +20,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine ODBC Cursor Library"
 #define WINE_FILENAME_STR "odbccu32.dll"
 #define WINE_FILEVERSION 6,1,7601,17632
-#define WINE_FILEVERSION_STR "6.1.7601.17632"
-#define WINE_PRODUCTVERSION 6,1,7601,17632
-#define WINE_PRODUCTVERSION_STR "6.1.7601.17632"
 
 #include "wine/wine_common_ver.rc"

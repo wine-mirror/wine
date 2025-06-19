@@ -20,8 +20,5 @@
 #define WINE_FILENAME_STR "prntpvt.dll"
 #define WINE_FILEDESCRIPTION_STR "Print Ticket Services Module"
 #define WINE_FILEVERSION 10,0,19041,3636
-#define WINE_FILEVERSION_STR "10.0.19041.3636"
-#define WINE_PRODUCTVERSION 10,0,19041,3636
-#define WINE_PRODUCTVERSION_STR "10.0.19041.3636"
 
 #include "wine/wine_common_ver.rc"

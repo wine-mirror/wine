@@ -19,8 +19,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine dx8vb"
 #define WINE_FILENAME_STR "dx8vb.dll"
 #define WINE_FILEVERSION 5,3,1,902
-#define WINE_FILEVERSION_STR "5.3.1.902"
-#define WINE_PRODUCTVERSION 5,3,1,902
-#define WINE_PRODUCTVERSION_STR "5.3.1.902"
 
 #include "wine/wine_common_ver.rc"

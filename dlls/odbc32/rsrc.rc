@@ -19,8 +19,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine ODBC Library"
 #define WINE_FILENAME_STR "odbc32.dll"
 #define WINE_FILEVERSION 3,520,6301,0
-#define WINE_FILEVERSION_STR "3.520.6301.0"
-#define WINE_PRODUCTVERSION 3,520,6301,0
-#define WINE_PRODUCTVERSION_STR "3.520.6301.0"
 
 #include "wine/wine_common_ver.rc"

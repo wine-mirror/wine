@@ -19,8 +19,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine dcomp"
 #define WINE_FILENAME_STR "dcomp.dll"
 #define WINE_FILEVERSION 10,0,14393,0
-#define WINE_FILEVERSION_STR "10.0.14393.0"
-#define WINE_PRODUCTVERSION 10,0,14393,0
-#define WINE_PRODUCTVERSION_STR "10.0.14393.0"
 
 #include "wine/wine_common_ver.rc"

@@ -284,7 +284,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "לא מוגדר"
 
-#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:38
+#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:35
 #: dlls/shell32/shell32.rc:141 dlls/shell32/shell32.rc:243
 #: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
@@ -457,7 +457,7 @@ msgstr ""
 msgid "< &Back"
 msgstr "< ה&קודם"
 
-#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:61
+#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:58
 msgid "&Next >"
 msgstr "ה&בא >"
 
@@ -1430,7 +1430,7 @@ msgid "&User name:"
 msgstr "&שם המשתמש:"
 
 #: dlls/credui/credui.rc:48 dlls/cryptui/cryptui.rc:402
-#: dlls/oledb32/version.rc:81
+#: dlls/oledb32/version.rc:78
 msgid "&Password:"
 msgstr "&ססמה:"
 
@@ -2773,7 +2773,7 @@ msgstr "אישור זה תקין."
 msgid "Field"
 msgstr "שדה"
 
-#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:39
+#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:36
 msgid "Value"
 msgstr "ערך"
 
@@ -3366,7 +3366,7 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
-#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:100
+#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:97
 #: dlls/wldap32/wldap32.rc:112
 msgid "Other"
 msgstr "אחר"
@@ -3434,7 +3434,7 @@ msgid "&Stop"
 msgstr "ע&צירה"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:66 dlls/hhctrl.ocx/hhctrl.rc:83
-#: dlls/oledb32/version.rc:73 dlls/shdoclc/shdoclc.rc:59
+#: dlls/oledb32/version.rc:70 dlls/shdoclc/shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&רענון"
 
@@ -4261,11 +4261,11 @@ msgstr ""
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 
-#: include/wine/wine_common_ver.rc:138
+#: include/wine/wine_common_ver.rc:123
 msgid "Wine kernel DLL"
 msgstr ""
 
-#: include/wine/wine_common_ver.rc:143 dlls/winemac.drv/winemac.rc:32
+#: include/wine/wine_common_ver.rc:128 dlls/winemac.drv/winemac.rc:32
 #: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:143
 msgid "Wine"
 msgstr "Wine"
@@ -9748,193 +9748,193 @@ msgstr "פעיל"
 msgid "Off"
 msgstr "כבוי"
 
-#: dlls/oledb32/version.rc:56
+#: dlls/oledb32/version.rc:53
 #, fuzzy
 #| msgid "video"
 msgid "Provider"
 msgstr "וידאו"
 
-#: dlls/oledb32/version.rc:59
+#: dlls/oledb32/version.rc:56
 #, fuzzy
 msgid "Select the data you want to connect to:"
 msgstr "נא לציין את הקובץ אותו ברצונך לייבא."
 
-#: dlls/oledb32/version.rc:66
+#: dlls/oledb32/version.rc:63
 #, fuzzy
 #| msgid "LAN Connection"
 msgid "Connection"
 msgstr "חיבור רשת מקומית"
 
-#: dlls/oledb32/version.rc:69
+#: dlls/oledb32/version.rc:66
 #, fuzzy
 msgid "Specify the following to connect to ODBC data:"
 msgstr "נא לציין את הקובץ אותו ברצונך לייבא."
 
-#: dlls/oledb32/version.rc:70
+#: dlls/oledb32/version.rc:67
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:71
+#: dlls/oledb32/version.rc:68
 #, fuzzy
 #| msgid "Please enter your name"
 msgid "Use &data source name"
 msgstr "נא להזין את שמך"
 
-#: dlls/oledb32/version.rc:74
+#: dlls/oledb32/version.rc:71
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "Use c&onnection string"
 msgstr "Reset Connections"
 
-#: dlls/oledb32/version.rc:75
+#: dlls/oledb32/version.rc:72
 #, fuzzy
 #| msgid "LAN Connection"
 msgid "&Connection string:"
 msgstr "חיבור רשת מקומית"
 
-#: dlls/oledb32/version.rc:77
+#: dlls/oledb32/version.rc:74
 #, fuzzy
 msgid "B&uild..."
 msgstr "הו&ספה"
 
-#: dlls/oledb32/version.rc:78
+#: dlls/oledb32/version.rc:75
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: dlls/oledb32/version.rc:79
+#: dlls/oledb32/version.rc:76
 #, fuzzy
 #| msgid "&User name:"
 msgid "User &name:"
 msgstr "&שם המשתמש:"
 
-#: dlls/oledb32/version.rc:83
+#: dlls/oledb32/version.rc:80
 #, fuzzy
 #| msgid "&Blank page"
 msgid "&Blank password"
 msgstr "עמוד &ריק"
 
-#: dlls/oledb32/version.rc:84
+#: dlls/oledb32/version.rc:81
 #, fuzzy
 msgid "Allow &saving password"
 msgstr "נא להזין ססמה.\n"
 
-#: dlls/oledb32/version.rc:85
+#: dlls/oledb32/version.rc:82
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:87
+#: dlls/oledb32/version.rc:84
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "&Test Connection"
 msgstr "Reset Connections"
 
-#: dlls/oledb32/version.rc:92
+#: dlls/oledb32/version.rc:89
 msgid "Advanced"
 msgstr "מתקדמים"
 
-#: dlls/oledb32/version.rc:95
+#: dlls/oledb32/version.rc:92
 #, fuzzy
 msgid "Network settings"
 msgstr "שיתוף רשת"
 
-#: dlls/oledb32/version.rc:96
+#: dlls/oledb32/version.rc:93
 msgid "&Impersonation level:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:98
+#: dlls/oledb32/version.rc:95
 msgid "P&rotection level:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:101
+#: dlls/oledb32/version.rc:98
 #, fuzzy
 #| msgid "Disconnected"
 msgid "Connect:"
 msgstr "Disconnected"
 
-#: dlls/oledb32/version.rc:103
+#: dlls/oledb32/version.rc:100
 #, fuzzy
 #| msgid "&Seconds"
 msgid "seconds."
 msgstr "&שניות"
 
-#: dlls/oledb32/version.rc:104
+#: dlls/oledb32/version.rc:101
 #, fuzzy
 #| msgid "Success"
 msgid "A&ccess:"
 msgstr "הצלחה"
 
-#: dlls/oledb32/version.rc:110
+#: dlls/oledb32/version.rc:107
 #, fuzzy
 #| msgid "&All"
 msgid "All"
 msgstr "ה&כול"
 
-#: dlls/oledb32/version.rc:114
+#: dlls/oledb32/version.rc:111
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
 
-#: dlls/oledb32/version.rc:115
+#: dlls/oledb32/version.rc:112
 #, fuzzy
 msgid "&Edit Value..."
 msgstr "&עריכה"
 
-#: dlls/oledb32/version.rc:49
+#: dlls/oledb32/version.rc:46
 #, fuzzy
 #| msgid "Properties"
 msgid "Data Link Error"
 msgstr "מאפיינים"
 
-#: dlls/oledb32/version.rc:50
+#: dlls/oledb32/version.rc:47
 msgid "Please select a provider."
 msgstr ""
 
-#: dlls/oledb32/version.rc:51
+#: dlls/oledb32/version.rc:48
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr ""
 
-#: dlls/oledb32/version.rc:36
+#: dlls/oledb32/version.rc:33
 #, fuzzy
 #| msgid "Properties"
 msgid "Data Link Properties"
 msgstr "מאפיינים"
 
-#: dlls/oledb32/version.rc:37
+#: dlls/oledb32/version.rc:34
 msgid "OLE DB Provider(s)"
 msgstr ""
 
-#: dlls/oledb32/version.rc:41
+#: dlls/oledb32/version.rc:38
 #, fuzzy
 #| msgid "Ready"
 msgid "Read"
 msgstr "מוכן"
 
-#: dlls/oledb32/version.rc:42
+#: dlls/oledb32/version.rc:39
 #, fuzzy
 #| msgid "Readme:"
 msgid "ReadWrite"
 msgstr "מידע לקריאה:"
 
-#: dlls/oledb32/version.rc:43
+#: dlls/oledb32/version.rc:40
 msgid "Share Deny None"
 msgstr ""
 
-#: dlls/oledb32/version.rc:44
+#: dlls/oledb32/version.rc:41
 msgid "Share Deny Read"
 msgstr ""
 
-#: dlls/oledb32/version.rc:45
+#: dlls/oledb32/version.rc:42
 msgid "Share Deny Write"
 msgstr ""
 
-#: dlls/oledb32/version.rc:46
+#: dlls/oledb32/version.rc:43
 msgid "Share Exclusive"
 msgstr ""
 
-#: dlls/oledb32/version.rc:47
+#: dlls/oledb32/version.rc:44
 #, fuzzy
 #| msgid "I/O Writes"
 msgid "Write"
@@ -18216,7 +18216,7 @@ msgid ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 msgstr ""
 
-#: include/wine/wine_common_ver.rc:138
+#: include/wine/wine_common_ver.rc:123
 #, fuzzy
 #| msgid "Wine &license"
 msgid "Wine tasklist"

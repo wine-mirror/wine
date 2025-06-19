@@ -19,9 +19,6 @@
 #define WINE_FILEDESCRIPTION_STR "Wine Quartz dll"
 #define WINE_FILENAME_STR "quartz.dll"
 #define WINE_FILEVERSION 6,5,1,902
-#define WINE_FILEVERSION_STR "6.5.1.902"
-#define WINE_PRODUCTVERSION 6,5,1,902
-#define WINE_PRODUCTVERSION_STR "6.5"
 #define WINE_EXTRAVALUES VALUE "OLESelfRegister",""
 
 #include "wine/wine_common_ver.rc"

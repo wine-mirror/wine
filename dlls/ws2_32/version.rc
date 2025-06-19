@@ -31,8 +31,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine core dll"
 #define WINE_FILENAME_STR "ws2_32.dll"
 #define WINE_FILEVERSION 5,1,2600,5512
-#define WINE_FILEVERSION_STR "5.1.2600.5512"
-#define WINE_PRODUCTVERSION 5,1,2600,5512
-#define WINE_PRODUCTVERSION_STR "5.1.2600.5512"
 
 #include "wine/wine_common_ver.rc"

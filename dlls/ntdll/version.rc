@@ -19,8 +19,5 @@
 #define WINE_FILEDESCRIPTION_STR "Wine ntdll"
 #define WINE_FILENAME_STR "ntdll.dll"
 #define WINE_FILEVERSION 6,1,7601,24059
-#define WINE_FILEVERSION_STR "6.1.7601.24059"
-#define WINE_PRODUCTVERSION 6,1,7601,24059
-#define WINE_PRODUCTVERSION_STR "6.1.7601.24059"
 
 #include "wine/wine_common_ver.rc"

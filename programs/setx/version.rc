@@ -20,8 +20,5 @@
 #define WINE_FILENAME_STR "setx.exe"
 #define WINE_FILETYPE VFT_APP
 #define WINE_FILEVERSION 10,0,19041,1
-#define WINE_FILEVERSION_STR "10.0.19041.1"
-#define WINE_PRODUCTVERSION 10,0,19041,1
-#define WINE_PRODUCTVERSION_STR "10.0.19041.1"
 
 #include "wine/wine_common_ver.rc"
