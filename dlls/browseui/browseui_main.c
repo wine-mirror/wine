@@ -28,7 +28,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
-#include "shlwapi.h"
 #include "shlguid.h"
 #include "rpcproxy.h"
 
@@ -178,35 +177,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     return BROWSEUI_refCount ? S_FALSE : S_OK;
-}
-
-/***********************************************************************
- *              DllGetVersion (BROWSEUI.@)
- */
-HRESULT WINAPI DllGetVersion(DLLVERSIONINFO *info)
-{
-    if(info->cbSize == sizeof(DLLVERSIONINFO) ||
-       info->cbSize == sizeof(DLLVERSIONINFO2))
-    {
-        /* this is what IE6 on Windows 98 reports */
-        info->dwMajorVersion = 6;
-        info->dwMinorVersion = 0;
-        info->dwBuildNumber = 2600;
-        info->dwPlatformID = DLLVER_PLATFORM_WINDOWS;
-        if(info->cbSize == sizeof(DLLVERSIONINFO2))
-        {
-            DLLVERSIONINFO2 *info2 = (DLLVERSIONINFO2*) info;
-            info2->dwFlags = 0;
-            info2->ullVersion = MAKEDLLVERULL(info->dwMajorVersion,
-                                              info->dwMinorVersion,
-                                              info->dwBuildNumber,
-                                              0); /* FIXME: correct hotfix number */
-        }
-        return S_OK;
-    }
-
-    WARN("wrong DLLVERSIONINFO size from app.\n");
-    return E_INVALIDARG;
 }
 
 /***********************************************************************

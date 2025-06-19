@@ -30,7 +30,6 @@
 #include "winerror.h"
 #include "winuser.h"
 #include "richedit.h"
-#include "shlwapi.h"
 
 #include "wine/debug.h"
 
@@ -75,24 +74,4 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         break;
     }
     return TRUE;
-}
-
-/***********************************************************************
- * DllGetVersion [RICHED32.2]
- *
- * Retrieves version information
- */
-HRESULT WINAPI DllGetVersion (DLLVERSIONINFO *pdvi)
-{
-    TRACE("\n");
-
-    if (pdvi->cbSize != sizeof(DLLVERSIONINFO))
-	return E_INVALIDARG;
-
-    pdvi->dwMajorVersion = 4;
-    pdvi->dwMinorVersion = 0;
-    pdvi->dwBuildNumber = 0;
-    pdvi->dwPlatformID = 0;
-
-    return S_OK;
 }

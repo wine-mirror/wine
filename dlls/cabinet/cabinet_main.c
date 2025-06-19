@@ -26,9 +26,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#define NO_SHLWAPI_REG
-#include "shlwapi.h"
-#undef NO_SHLWAPI_REG
 
 #include "cabinet.h"
 
@@ -36,35 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cabinet);
 
-
-/***********************************************************************
- * DllGetVersion (CABINET.2)
- *
- * Retrieves version information of the 'CABINET.DLL'
- *
- * PARAMS
- *     pdvi [O] pointer to version information structure.
- *
- * RETURNS
- *     Success: S_OK
- *     Failure: E_INVALIDARG
- *
- * NOTES
- *     Supposedly returns version from IE6SP1RP1
- */
-HRESULT WINAPI DllGetVersion (DLLVERSIONINFO *pdvi)
-{
-  WARN("hmmm... not right version number \"5.1.1106.1\"?\n");
-
-  if (pdvi->cbSize != sizeof(DLLVERSIONINFO)) return E_INVALIDARG;
-
-  pdvi->dwMajorVersion = 5;
-  pdvi->dwMinorVersion = 1;
-  pdvi->dwBuildNumber = 1106;
-  pdvi->dwPlatformID = 1;
-
-  return S_OK;
-}
 
 /* FDI callback functions */
 

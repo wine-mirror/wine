@@ -67,8 +67,6 @@
 #include "commctrl.h"
 #include "winerror.h"
 #include "winreg.h"
-#define NO_SHLWAPI_STREAM
-#include "shlwapi.h"
 #include "comctl32.h"
 #include "uxtheme.h"
 #include "wine/debug.h"
@@ -944,40 +942,6 @@ CreateToolbar (HWND hwnd, DWORD style, UINT wID, INT nBitmaps,
 			    iNumButtons, 0, 0, 0, 0, CCSIZEOF_STRUCT(TBBUTTON, dwData));
 }
 
-
-/***********************************************************************
- * DllGetVersion [COMCTL32.@]
- *
- * Retrieves version information of the 'COMCTL32.DLL'
- *
- * PARAMS
- *     pdvi [O] pointer to version information structure.
- *
- * RETURNS
- *     Success: S_OK
- *     Failure: E_INVALIDARG
- *
- * NOTES
- *     Returns version of a comctl32.dll from IE4.01 SP1.
- */
-
-HRESULT WINAPI DllGetVersion (DLLVERSIONINFO *pdvi)
-{
-    if (pdvi->cbSize != sizeof(DLLVERSIONINFO)) {
-        WARN("wrong DLLVERSIONINFO size from app\n");
-	return E_INVALIDARG;
-    }
-
-    pdvi->dwMajorVersion = COMCTL32_VERSION;
-    pdvi->dwMinorVersion = COMCTL32_VERSION_MINOR;
-    pdvi->dwBuildNumber = 2919;
-    pdvi->dwPlatformID = 6304;
-
-    TRACE("%lu.%lu.%lu.%lu\n", pdvi->dwMajorVersion, pdvi->dwMinorVersion,
-            pdvi->dwBuildNumber, pdvi->dwPlatformID);
-
-    return S_OK;
-}
 
 /***********************************************************************
  *		DllInstall (COMCTL32.@)

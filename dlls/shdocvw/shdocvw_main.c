@@ -28,7 +28,6 @@
 #include "shdocvw.h"
 
 #include "winreg.h"
-#include "shlwapi.h"
 #include "wininet.h"
 #include "isguids.h"
 
@@ -141,22 +140,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     return SHDOCVW_refCount ? S_FALSE : S_OK;
-}
-
-/***********************************************************************
- *              DllGetVersion (SHDOCVW.@)
- */
-HRESULT WINAPI DllGetVersion(DLLVERSIONINFO *info)
-{
-    if (info->cbSize != sizeof(DLLVERSIONINFO)) FIXME("support DLLVERSIONINFO2\n");
-
-    /* this is what IE6 on Windows 98 reports */
-    info->dwMajorVersion = 6;
-    info->dwMinorVersion = 0;
-    info->dwBuildNumber = 2600;
-    info->dwPlatformID = DLLVER_PLATFORM_WINDOWS;
-
-    return NOERROR;
 }
 
 /*************************************************************************

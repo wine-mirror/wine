@@ -171,50 +171,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
     return TRUE;
 }
 
-/***********************************************************************
- * DllGetVersion [SHLWAPI.@]
- *
- * Retrieve "shlwapi.dll" version information.
- *
- * PARAMS
- *     pdvi [O] pointer to version information structure.
- *
- * RETURNS
- *     Success: S_OK. pdvi is updated with the version information
- *     Failure: E_INVALIDARG, if pdvi->cbSize is not set correctly.
- *
- * NOTES
- *     You may pass either a DLLVERSIONINFO of DLLVERSIONINFO2 structure
- *     as pdvi, provided that the size is set correctly.
- *     Returns version as shlwapi.dll from IE5.01.
- */
-HRESULT WINAPI DllGetVersion (DLLVERSIONINFO *pdvi)
-{
-  DLLVERSIONINFO2 *pdvi2 = (DLLVERSIONINFO2*)pdvi;
-
-  TRACE("(%p)\n",pdvi);
-
-  if (!pdvi)
-    return E_INVALIDARG;
-
-  switch (pdvi2->info1.cbSize)
-  {
-  case sizeof(DLLVERSIONINFO2):
-    pdvi2->dwFlags = 0;
-    pdvi2->ullVersion = MAKEDLLVERULL(6, 0, 2800, 1612);
-    /* Fall through */
-  case sizeof(DLLVERSIONINFO):
-    pdvi2->info1.dwMajorVersion = 6;
-    pdvi2->info1.dwMinorVersion = 0;
-    pdvi2->info1.dwBuildNumber = 2800;
-    pdvi2->info1.dwPlatformID = DLLVER_PLATFORM_WINDOWS;
-    return S_OK;
- }
-
- WARN("pdvi->cbSize = %ld, unhandled\n", pdvi2->info1.cbSize);
- return E_INVALIDARG;
-}
-
 /*************************************************************************
  *      WhichPlatform()        [SHLWAPI.276]
  */

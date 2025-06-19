@@ -11,6 +11,7 @@ SOURCES = \
 	dll_main.c \
 	dll_register.c \
 	dll_soinit.c \
+	dll_version.c \
 	exception.c \
 	exe16_entry.c \
 	exe_entry.c \
