@@ -883,7 +883,6 @@ static BOOL x11drv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl
     NtUserGetClientRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) );
 
     if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_surface_funcs, format, hwnd, hdc ))) return FALSE;
-    /* Default GLX and WGL swap interval is 1, but in case of glXSwapIntervalSGI there is no way to query it. */
     gl->rect = rect;
 
     gl->colormap = XCreateColormap( gdi_display, get_dummy_parent(), fmt->visual->visual,

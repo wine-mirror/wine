@@ -51,7 +51,6 @@ struct wayland_gl_drawable
     struct opengl_drawable base;
     struct wayland_client_surface *client;
     struct wl_egl_window *wl_egl_window;
-    EGLSurface surface;
     BOOL double_buffered;
 };
 
@@ -64,7 +63,6 @@ static void wayland_drawable_destroy(struct opengl_drawable *base)
 {
     struct wayland_gl_drawable *gl = impl_from_opengl_drawable(base);
 
-    if (gl->surface) funcs->p_eglDestroySurface(egl->display, gl->surface);
     if (gl->wl_egl_window) wl_egl_window_destroy(gl->wl_egl_window);
     if (gl->client)
     {
@@ -131,9 +129,9 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, HDC hdc
         goto err;
     }
 
-    gl->surface = funcs->p_eglCreateWindowSurface(egl->display, egl_config_for_format(format),
-                                                  gl->wl_egl_window, attribs);
-    if (!gl->surface)
+    gl->base.surface = funcs->p_eglCreateWindowSurface(egl->display, egl_config_for_format(format),
+                                                       gl->wl_egl_window, attribs);
+    if (!gl->base.surface)
     {
         ERR("Failed to create EGL surface\n");
         goto err;
@@ -141,7 +139,7 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, HDC hdc
 
     gl->double_buffered = is_onscreen_format(format);
 
-    TRACE("Created drawable %s with egl_surface %p\n", debugstr_opengl_drawable(&gl->base), gl->surface);
+    TRACE("Created drawable %s with egl_surface %p\n", debugstr_opengl_drawable(&gl->base), gl->base.surface);
 
     return gl;
 
@@ -167,7 +165,7 @@ static BOOL wayland_make_current(struct opengl_drawable *draw_base, struct openg
 {
     struct wayland_gl_drawable *draw = impl_from_opengl_drawable(draw_base), *read = impl_from_opengl_drawable(read_base);
     TRACE("draw %s, read %s, context %p\n", debugstr_opengl_drawable(draw_base), debugstr_opengl_drawable(read_base), context);
-    return funcs->p_eglMakeCurrent(egl->display, context ? draw->surface : EGL_NO_SURFACE, context ? read->surface : EGL_NO_SURFACE, context);
+    return funcs->p_eglMakeCurrent(egl->display, context ? draw->base.surface : EGL_NO_SURFACE, context ? read->base.surface : EGL_NO_SURFACE, context);
 }
 
 static BOOL wayland_opengl_surface_create(HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable)
@@ -218,7 +216,7 @@ static BOOL wayland_drawable_swap(struct opengl_drawable *base)
 
     /* Although all the EGL surfaces we create are double-buffered, we want to
      * use some as single-buffered, so avoid swapping those. */
-    if (gl->double_buffered) funcs->p_eglSwapBuffers(egl->display, gl->surface);
+    if (gl->double_buffered) funcs->p_eglSwapBuffers(egl->display, gl->base.surface);
 
     return TRUE;
 }

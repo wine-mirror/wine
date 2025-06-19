@@ -157,6 +157,7 @@ struct opengl_drawable
     HDC         hdc;            /* DC the drawable was created for */
     struct list entry;          /* entry in win32u managed list */
     LONG        updated;        /* has been moved / resized / reparented */
+    EGLSurface  surface;        /* surface for EGL based drivers */
 };
 
 static inline const char *debugstr_opengl_drawable( struct opengl_drawable *drawable )

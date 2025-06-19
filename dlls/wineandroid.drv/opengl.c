@@ -53,9 +53,7 @@ static const struct opengl_drawable_funcs android_drawable_funcs;
 struct gl_drawable
 {
     struct opengl_drawable base;
-    struct list     entry;
     ANativeWindow  *window;
-    EGLSurface      surface;
 };
 
 static struct gl_drawable *impl_from_opengl_drawable( struct opengl_drawable *base )
@@ -82,8 +80,8 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, HDC hdc, int format, A
     if (!window) gl->window = create_ioctl_window( hwnd, TRUE, 1.0f );
     else gl->window = grab_ioctl_window( window );
 
-    if (!window) gl->surface = funcs->p_eglCreatePbufferSurface( egl->display, egl_config_for_format(gl->base.format), attribs );
-    else gl->surface = funcs->p_eglCreateWindowSurface( egl->display, egl_config_for_format(gl->base.format), gl->window, NULL );
+    if (!window) gl->base.surface = funcs->p_eglCreatePbufferSurface( egl->display, egl_config_for_format(gl->base.format), attribs );
+    else gl->base.surface = funcs->p_eglCreateWindowSurface( egl->display, egl_config_for_format(gl->base.format), gl->window, NULL );
 
     TRACE( "Created drawable %s with client window %p\n", debugstr_opengl_drawable( &gl->base ), gl->window );
     return gl;
@@ -92,7 +90,6 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, HDC hdc, int format, A
 static void android_drawable_destroy( struct opengl_drawable *base )
 {
     struct gl_drawable *gl = impl_from_opengl_drawable( base );
-    if (gl->surface) funcs->p_eglDestroySurface( egl->display, gl->surface );
     release_ioctl_window( gl->window );
 }
 
@@ -153,7 +150,7 @@ static BOOL android_make_current( struct opengl_drawable *draw_base, struct open
 {
     struct gl_drawable *draw = impl_from_opengl_drawable( draw_base ), *read = impl_from_opengl_drawable( read_base );
     TRACE( "draw %s, read %s, context %p\n", debugstr_opengl_drawable( draw_base ), debugstr_opengl_drawable( read_base ), context );
-    return funcs->p_eglMakeCurrent( egl->display, context ? draw->surface : EGL_NO_SURFACE, context ? read->surface : EGL_NO_SURFACE, context );
+    return funcs->p_eglMakeCurrent( egl->display, context ? draw->base.surface : EGL_NO_SURFACE, context ? read->base.surface : EGL_NO_SURFACE, context );
 }
 
 static EGLenum android_init_egl_platform( const struct egl_platform *platform, EGLNativeDisplayType *platform_display )
@@ -174,9 +171,9 @@ static BOOL android_drawable_swap( struct opengl_drawable *base )
 {
     struct gl_drawable *gl = impl_from_opengl_drawable( base );
 
-    TRACE( "drawable %s surface %p\n", debugstr_opengl_drawable( base ), gl->surface );
+    TRACE( "drawable %s surface %p\n", debugstr_opengl_drawable( base ), gl->base.surface );
 
-    funcs->p_eglSwapBuffers( egl->display, gl->surface );
+    funcs->p_eglSwapBuffers( egl->display, gl->base.surface );
     return TRUE;
 }
 
@@ -184,7 +181,7 @@ static void android_drawable_flush( struct opengl_drawable *base, UINT flags )
 {
     struct gl_drawable *gl = impl_from_opengl_drawable( base );
 
-    TRACE( "drawable %s, surface %p, flags %#x\n", debugstr_opengl_drawable( base ), gl->surface, flags );
+    TRACE( "drawable %s, surface %p, flags %#x\n", debugstr_opengl_drawable( base ), gl->base.surface, flags );
 
     if (flags & GL_FLUSH_INTERVAL) funcs->p_eglSwapInterval( egl->display, abs( base->interval ) );
 }

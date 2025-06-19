@@ -243,11 +243,15 @@ void opengl_drawable_release( struct opengl_drawable *drawable )
 
     if (!ref)
     {
+        const struct opengl_funcs *funcs = &display_funcs;
+        const struct egl_platform *egl = &display_egl;
+
         pthread_mutex_lock( &drawables_lock );
         opengl_drawable_detach( drawable );
         pthread_mutex_unlock( &drawables_lock );
 
         drawable->funcs->destroy( drawable );
+        if (drawable->surface) funcs->p_eglDestroySurface( egl->display, drawable->surface );
         free( drawable );
     }
 }
