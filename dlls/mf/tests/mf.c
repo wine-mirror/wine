@@ -1460,7 +1460,7 @@ static const IMFMediaStreamVtbl test_media_stream_vtbl =
 
 #define TEST_SOURCE_NUM_STREAMS 3
 
-struct test_seek_source
+struct test_source
 {
     IMFMediaSource IMFMediaSource_iface;
     IMFMediaEventQueue *event_queue;
@@ -1473,12 +1473,12 @@ struct test_seek_source
     LONG refcount;
 };
 
-static struct test_seek_source *impl_test_seek_source_from_IMFMediaSource(IMFMediaSource *iface)
+static struct test_source *impl_test_source_from_IMFMediaSource(IMFMediaSource *iface)
 {
-    return CONTAINING_RECORD(iface, struct test_seek_source, IMFMediaSource_iface);
+    return CONTAINING_RECORD(iface, struct test_source, IMFMediaSource_iface);
 }
 
-static HRESULT WINAPI test_seek_source_QueryInterface(IMFMediaSource *iface, REFIID riid, void **out)
+static HRESULT WINAPI test_source_QueryInterface(IMFMediaSource *iface, REFIID riid, void **out)
 {
     if (IsEqualIID(riid, &IID_IMFMediaSource)
             || IsEqualIID(riid, &IID_IMFMediaEventGenerator)
@@ -1496,15 +1496,15 @@ static HRESULT WINAPI test_seek_source_QueryInterface(IMFMediaSource *iface, REF
     return S_OK;
 }
 
-static ULONG WINAPI test_seek_source_AddRef(IMFMediaSource *iface)
+static ULONG WINAPI test_source_AddRef(IMFMediaSource *iface)
 {
-    struct test_seek_source *source = impl_test_seek_source_from_IMFMediaSource(iface);
+    struct test_source *source = impl_test_source_from_IMFMediaSource(iface);
     return InterlockedIncrement(&source->refcount);
 }
 
-static ULONG WINAPI test_seek_source_Release(IMFMediaSource *iface)
+static ULONG WINAPI test_source_Release(IMFMediaSource *iface)
 {
-    struct test_seek_source *source = impl_test_seek_source_from_IMFMediaSource(iface);
+    struct test_source *source = impl_test_source_from_IMFMediaSource(iface);
     ULONG refcount = InterlockedDecrement(&source->refcount);
 
     if (!refcount)
@@ -1516,34 +1516,34 @@ static ULONG WINAPI test_seek_source_Release(IMFMediaSource *iface)
     return refcount;
 }
 
-static HRESULT WINAPI test_seek_source_GetEvent(IMFMediaSource *iface, DWORD flags, IMFMediaEvent **event)
+static HRESULT WINAPI test_source_GetEvent(IMFMediaSource *iface, DWORD flags, IMFMediaEvent **event)
 {
-    struct test_seek_source *source = impl_test_seek_source_from_IMFMediaSource(iface);
+    struct test_source *source = impl_test_source_from_IMFMediaSource(iface);
     return IMFMediaEventQueue_GetEvent(source->event_queue, flags, event);
 }
 
-static HRESULT WINAPI test_seek_source_BeginGetEvent(IMFMediaSource *iface, IMFAsyncCallback *callback, IUnknown *state)
+static HRESULT WINAPI test_source_BeginGetEvent(IMFMediaSource *iface, IMFAsyncCallback *callback, IUnknown *state)
 {
-    struct test_seek_source *source = impl_test_seek_source_from_IMFMediaSource(iface);
+    struct test_source *source = impl_test_source_from_IMFMediaSource(iface);
     return IMFMediaEventQueue_BeginGetEvent(source->event_queue, callback, state);
 }
 
-static HRESULT WINAPI test_seek_source_EndGetEvent(IMFMediaSource *iface, IMFAsyncResult *result, IMFMediaEvent **event)
+static HRESULT WINAPI test_source_EndGetEvent(IMFMediaSource *iface, IMFAsyncResult *result, IMFMediaEvent **event)
 {
-    struct test_seek_source *source = impl_test_seek_source_from_IMFMediaSource(iface);
+    struct test_source *source = impl_test_source_from_IMFMediaSource(iface);
     return IMFMediaEventQueue_EndGetEvent(source->event_queue, result, event);
 }
 
-static HRESULT WINAPI test_seek_source_QueueEvent(IMFMediaSource *iface, MediaEventType event_type, REFGUID ext_type,
+static HRESULT WINAPI test_source_QueueEvent(IMFMediaSource *iface, MediaEventType event_type, REFGUID ext_type,
         HRESULT hr, const PROPVARIANT *value)
 {
-    struct test_seek_source *source = impl_test_seek_source_from_IMFMediaSource(iface);
+    struct test_source *source = impl_test_source_from_IMFMediaSource(iface);
     return IMFMediaEventQueue_QueueEventParamVar(source->event_queue, event_type, ext_type, hr, value);
 }
 
-static HRESULT WINAPI test_seek_source_GetCharacteristics(IMFMediaSource *iface, DWORD *flags)
+static HRESULT WINAPI test_source_GetCharacteristics(IMFMediaSource *iface, DWORD *flags)
 {
-    struct test_seek_source *source = impl_test_seek_source_from_IMFMediaSource(iface);
+    struct test_source *source = impl_test_source_from_IMFMediaSource(iface);
 
     if (source->seekable)
         *flags = MFMEDIASOURCE_CAN_PAUSE | MFMEDIASOURCE_CAN_SEEK;
@@ -1552,9 +1552,9 @@ static HRESULT WINAPI test_seek_source_GetCharacteristics(IMFMediaSource *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI test_seek_source_CreatePresentationDescriptor(IMFMediaSource *iface, IMFPresentationDescriptor **pd)
+static HRESULT WINAPI test_source_CreatePresentationDescriptor(IMFMediaSource *iface, IMFPresentationDescriptor **pd)
 {
-    struct test_seek_source *source = impl_test_seek_source_from_IMFMediaSource(iface);
+    struct test_source *source = impl_test_source_from_IMFMediaSource(iface);
     IMFStreamDescriptor *sds[ARRAY_SIZE(source->streams)];
     IMFMediaType *media_type;
     HRESULT hr = S_OK;
@@ -1616,10 +1616,10 @@ static BOOL is_stream_selected(IMFPresentationDescriptor *pd, DWORD index)
     return selected;
 }
 
-static HRESULT WINAPI test_seek_source_Start(IMFMediaSource *iface, IMFPresentationDescriptor *pd, const GUID *time_format,
+static HRESULT WINAPI test_source_Start(IMFMediaSource *iface, IMFPresentationDescriptor *pd, const GUID *time_format,
         const PROPVARIANT *start_position)
 {
-    struct test_seek_source *source = impl_test_seek_source_from_IMFMediaSource(iface);
+    struct test_source *source = impl_test_source_from_IMFMediaSource(iface);
     MediaEventType event_type;
     PROPVARIANT var;
     HRESULT hr;
@@ -1670,9 +1670,9 @@ static HRESULT WINAPI test_seek_source_Start(IMFMediaSource *iface, IMFPresentat
     return S_OK;
 }
 
-static HRESULT WINAPI test_seek_source_Stop(IMFMediaSource *iface)
+static HRESULT WINAPI test_source_Stop(IMFMediaSource *iface)
 {
-    struct test_seek_source *source = impl_test_seek_source_from_IMFMediaSource(iface);
+    struct test_source *source = impl_test_source_from_IMFMediaSource(iface);
     MediaEventType event_type;
     HRESULT hr;
     int i;
@@ -1703,9 +1703,9 @@ static HRESULT WINAPI test_seek_source_Stop(IMFMediaSource *iface)
     return S_OK;
 }
 
-static HRESULT WINAPI test_seek_source_Pause(IMFMediaSource *iface)
+static HRESULT WINAPI test_source_Pause(IMFMediaSource *iface)
 {
-    struct test_seek_source *source = impl_test_seek_source_from_IMFMediaSource(iface);
+    struct test_source *source = impl_test_source_from_IMFMediaSource(iface);
     MediaEventType event_type;
     HRESULT hr;
     int i;
@@ -1735,9 +1735,9 @@ static HRESULT WINAPI test_seek_source_Pause(IMFMediaSource *iface)
     return S_OK;
 }
 
-static HRESULT WINAPI test_seek_source_Shutdown(IMFMediaSource *iface)
+static HRESULT WINAPI test_source_Shutdown(IMFMediaSource *iface)
 {
-    struct test_seek_source *source = impl_test_seek_source_from_IMFMediaSource(iface);
+    struct test_source *source = impl_test_source_from_IMFMediaSource(iface);
     HRESULT hr;
 
     add_object_state(&actual_object_state_record, SOURCE_SHUTDOWN);
@@ -1748,21 +1748,21 @@ static HRESULT WINAPI test_seek_source_Shutdown(IMFMediaSource *iface)
     return S_OK;
 }
 
-static const IMFMediaSourceVtbl test_seek_source_vtbl =
+static const IMFMediaSourceVtbl test_source_vtbl =
 {
-    test_seek_source_QueryInterface,
-    test_seek_source_AddRef,
-    test_seek_source_Release,
-    test_seek_source_GetEvent,
-    test_seek_source_BeginGetEvent,
-    test_seek_source_EndGetEvent,
-    test_seek_source_QueueEvent,
-    test_seek_source_GetCharacteristics,
-    test_seek_source_CreatePresentationDescriptor,
-    test_seek_source_Start,
-    test_seek_source_Stop,
-    test_seek_source_Pause,
-    test_seek_source_Shutdown,
+    test_source_QueryInterface,
+    test_source_AddRef,
+    test_source_Release,
+    test_source_GetEvent,
+    test_source_BeginGetEvent,
+    test_source_EndGetEvent,
+    test_source_QueueEvent,
+    test_source_GetCharacteristics,
+    test_source_CreatePresentationDescriptor,
+    test_source_Start,
+    test_source_Stop,
+    test_source_Pause,
+    test_source_Shutdown,
 };
 
 static HRESULT WINAPI test_seek_clock_sink_QueryInterface(IMFClockStateSink *iface, REFIID riid, void **obj)
@@ -1854,13 +1854,13 @@ static struct test_media_stream *create_test_stream(DWORD stream_index, IMFMedia
     return stream;
 }
 
-static IMFMediaSource *create_test_seek_source(BOOL seekable)
+static IMFMediaSource *create_test_source(BOOL seekable)
 {
-    struct test_seek_source *source;
+    struct test_source *source;
     int i;
 
     source = calloc(1, sizeof(*source));
-    source->IMFMediaSource_iface.lpVtbl = &test_seek_source_vtbl;
+    source->IMFMediaSource_iface.lpVtbl = &test_source_vtbl;
     source->refcount = 1;
     source->stream_count = 1;
     source->seekable = seekable;
@@ -6288,7 +6288,7 @@ static void test_media_session_Start(void)
     IMFSampleGrabberSinkCallback_Release(&grabber_callback->IMFSampleGrabberSinkCallback_iface);
 
     /* Unseekable media source */
-    source = create_test_seek_source(FALSE);
+    source = create_test_source(FALSE);
     hr = IMFMediaSource_GetCharacteristics(source, &caps);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok((caps & MFMEDIASOURCE_CAN_SEEK) == 0, "Got unexpected caps %#lx.\n", caps);
@@ -6359,7 +6359,7 @@ static void test_media_session_Start(void)
     {
         winetest_push_context("Test %d", initial_state);
 
-        source = create_test_seek_source(TRUE);
+        source = create_test_source(TRUE);
         callback = create_test_callback(TRUE);
 
         grabber_callback = impl_from_IMFSampleGrabberSinkCallback(create_test_grabber_callback());
