@@ -89,7 +89,7 @@ extern ATOM get_class_info( HINSTANCE instance, const WCHAR *name, WNDCLASSEXW *
 NTSTATUS WINAPI User32CallEnumDisplayMonitor( void *args, ULONG size );
 NTSTATUS WINAPI User32CallSendAsyncCallback( void *args, ULONG size );
 NTSTATUS WINAPI User32CallWinEventHook( void *args, ULONG size );
-NTSTATUS WINAPI User32CallWindowProc( void *args, ULONG size );
+NTSTATUS WINAPI User32CallWinProc( void *args, ULONG size );
 NTSTATUS WINAPI User32CallWindowsHook( void *args, ULONG size );
 NTSTATUS WINAPI User32InitBuiltinClasses( void *args, ULONG size );
 

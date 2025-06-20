@@ -120,7 +120,7 @@ static NTSTATUS WINAPI User32PostDDEMessage( void *args, ULONG size )
                              params->dest_tid );
 }
 
-static NTSTATUS WINAPI User32RenderSsynthesizedFormat( void *args, ULONG size )
+static NTSTATUS WINAPI User32RenderSynthesizedFormat( void *args, ULONG size )
 {
     const struct render_synthesized_format_params *params = args;
     render_synthesized_format( params->format, params->from );
@@ -192,31 +192,9 @@ static NTSTATUS WINAPI User32DragDropPost( void *args, ULONG size )
 
 static KERNEL_CALLBACK_PROC kernel_callback_table[NtUserCallCount] =
 {
-    User32CallDispatchCallback,
-    User32CallEnumDisplayMonitor,
-    User32CallSendAsyncCallback,
-    User32CallWinEventHook,
-    User32CallWindowProc,
-    User32CallWindowsHook,
-    User32CopyImage,
-    User32DrawNonClientButton,
-    User32DrawScrollBar,
-    User32DrawText,
-    User32FreeCachedClipboardData,
-    User32ImmProcessKey,
-    User32ImmTranslateMessage,
-    User32InitBuiltinClasses,
-    User32LoadDriver,
-    User32LoadImage,
-    User32LoadSysMenu,
-    User32PostDDEMessage,
-    User32RenderSsynthesizedFormat,
-    User32UnpackDDEMessage,
-    User32DragDropEnter,
-    User32DragDropLeave,
-    User32DragDropDrag,
-    User32DragDropDrop,
-    User32DragDropPost,
+#define USER32_CALLBACK_ENTRY(name) User32##name,
+    ALL_USER32_CALLBACKS
+#undef USER32_CALLBACK_ENTRY
 };
 
 

@@ -807,7 +807,7 @@ void unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam, vo
     *lparam = (LPARAM)buffer;
 }
 
-NTSTATUS WINAPI User32CallWindowProc( void *args, ULONG size )
+NTSTATUS WINAPI User32CallWinProc( void *args, ULONG size )
 {
     struct win_proc_params *params = args;
     size_t packed_size = 0;

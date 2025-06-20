@@ -1507,32 +1507,9 @@ static NTSTATUS WINAPI wow64_NtUserDragDropPost( void *arg, ULONG size )
 
 ntuser_callback user_callbacks[] =
 {
-    /* user32 callbacks */
-    wow64_NtUserCallDispatchCallback,
-    wow64_NtUserCallEnumDisplayMonitor,
-    wow64_NtUserCallSendAsyncCallback,
-    wow64_NtUserCallWinEventHook,
-    wow64_NtUserCallWinProc,
-    wow64_NtUserCallWindowsHook,
-    wow64_NtUserCopyImage,
-    wow64_NtUserDrawNonClientButton,
-    wow64_NtUserDrawScrollBar,
-    wow64_NtUserDrawText,
-    wow64_NtUserFreeCachedClipboardData,
-    wow64_NtUserImmProcessKey,
-    wow64_NtUserImmTranslateMessage,
-    wow64_NtUserInitBuiltinClasses,
-    wow64_NtUserLoadDriver,
-    wow64_NtUserLoadImage,
-    wow64_NtUserLoadSysMenu,
-    wow64_NtUserPostDDEMessage,
-    wow64_NtUserRenderSynthesizedFormat,
-    wow64_NtUserUnpackDDEMessage,
-    wow64_NtUserDragDropEnter,
-    wow64_NtUserDragDropLeave,
-    wow64_NtUserDragDropDrag,
-    wow64_NtUserDragDropDrop,
-    wow64_NtUserDragDropPost,
+#define USER32_CALLBACK_ENTRY(name) wow64_NtUser##name,
+    ALL_USER32_CALLBACKS
+#undef USER32_CALLBACK_ENTRY
 };
 
 C_ASSERT( ARRAYSIZE(user_callbacks) == NtUserCallCount );

@@ -69,34 +69,39 @@ struct user_entry
    All of these functions must live inside user32.dll. Overwatch 2's
    KiUserCallbackDispatcher hook verifies this and prevents the callback from
    running if that check fails. */
+
+#define ALL_USER32_CALLBACKS \
+    USER32_CALLBACK_ENTRY(CallDispatchCallback) \
+    USER32_CALLBACK_ENTRY(CallEnumDisplayMonitor) \
+    USER32_CALLBACK_ENTRY(CallSendAsyncCallback) \
+    USER32_CALLBACK_ENTRY(CallWinEventHook) \
+    USER32_CALLBACK_ENTRY(CallWinProc) \
+    USER32_CALLBACK_ENTRY(CallWindowsHook) \
+    USER32_CALLBACK_ENTRY(CopyImage) \
+    USER32_CALLBACK_ENTRY(DrawNonClientButton) \
+    USER32_CALLBACK_ENTRY(DrawScrollBar) \
+    USER32_CALLBACK_ENTRY(DrawText) \
+    USER32_CALLBACK_ENTRY(FreeCachedClipboardData) \
+    USER32_CALLBACK_ENTRY(ImmProcessKey) \
+    USER32_CALLBACK_ENTRY(ImmTranslateMessage) \
+    USER32_CALLBACK_ENTRY(InitBuiltinClasses) \
+    USER32_CALLBACK_ENTRY(LoadDriver) \
+    USER32_CALLBACK_ENTRY(LoadImage) \
+    USER32_CALLBACK_ENTRY(LoadSysMenu) \
+    USER32_CALLBACK_ENTRY(PostDDEMessage) \
+    USER32_CALLBACK_ENTRY(RenderSynthesizedFormat) \
+    USER32_CALLBACK_ENTRY(UnpackDDEMessage) \
+    USER32_CALLBACK_ENTRY(DragDropEnter) \
+    USER32_CALLBACK_ENTRY(DragDropLeave) \
+    USER32_CALLBACK_ENTRY(DragDropDrag) \
+    USER32_CALLBACK_ENTRY(DragDropDrop) \
+    USER32_CALLBACK_ENTRY(DragDropPost)
+
 enum
 {
-    /* user32 callbacks */
-    NtUserCallDispatchCallback,
-    NtUserCallEnumDisplayMonitor,
-    NtUserCallSendAsyncCallback,
-    NtUserCallWinEventHook,
-    NtUserCallWinProc,
-    NtUserCallWindowsHook,
-    NtUserCopyImage,
-    NtUserDrawNonClientButton,
-    NtUserDrawScrollBar,
-    NtUserDrawText,
-    NtUserFreeCachedClipboardData,
-    NtUserImmProcessKey,
-    NtUserImmTranslateMessage,
-    NtUserInitBuiltinClasses,
-    NtUserLoadDriver,
-    NtUserLoadImage,
-    NtUserLoadSysMenu,
-    NtUserPostDDEMessage,
-    NtUserRenderSynthesizedFormat,
-    NtUserUnpackDDEMessage,
-    NtUserDragDropEnter,
-    NtUserDragDropLeave,
-    NtUserDragDropDrag,
-    NtUserDragDropDrop,
-    NtUserDragDropPost,
+#define USER32_CALLBACK_ENTRY(name) NtUser##name,
+    ALL_USER32_CALLBACKS
+#undef USER32_CALLBACK_ENTRY
     NtUserCallCount
 };
 

@@ -59,31 +59,9 @@ static const char *syscall_names[] =
 
 static const char *usercall_names[NtUserCallCount] =
 {
-    "NtUserCallDispatchCallback",
-    "NtUserCallEnumDisplayMonitor",
-    "NtUserCallSendAsyncCallback",
-    "NtUserCallWinEventHook",
-    "NtUserCallWinProc",
-    "NtUserCallWindowsHook",
-    "NtUserCopyImage",
-    "NtUserDrawNonClientButton",
-    "NtUserDrawScrollBar",
-    "NtUserDrawText",
-    "NtUserFreeCachedClipboardData",
-    "NtUserImmProcessKey",
-    "NtUserImmTranslateMessage",
-    "NtUserInitBuiltinClasses",
-    "NtUserLoadDriver",
-    "NtUserLoadImage",
-    "NtUserLoadSysMenu",
-    "NtUserPostDDEMessage",
-    "NtUserRenderSynthesizedFormat",
-    "NtUserUnpackDDEMessage",
-    "NtUserDragDropEnter",
-    "NtUserDragDropLeave",
-    "NtUserDragDropDrag",
-    "NtUserDragDropDrop",
-    "NtUserDragDropPost",
+#define USER32_CALLBACK_ENTRY(name) "NtUser" #name,
+    ALL_USER32_CALLBACKS
+#undef USER32_CALLBACK_ENTRY
 };
 
 static NTSTATUS init( void *args )
