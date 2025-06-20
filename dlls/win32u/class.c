@@ -297,7 +297,7 @@ ATOM get_int_atom_value( UNICODE_STRING *name )
     {
         if (*ptr < '0' || *ptr > '9') return 0;
         ret = ret * 10 + *ptr++ - '0';
-        if (ret > 0xffff) return 0;
+        if (ret >= MAXINTATOM) return 0;
     }
     return ret;
 }
