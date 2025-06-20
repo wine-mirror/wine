@@ -1458,6 +1458,29 @@ static const IMFMediaStreamVtbl test_media_stream_vtbl =
     test_media_stream_RequestSample,
 };
 
+static struct test_media_stream *create_test_stream(DWORD stream_index, IMFMediaSource *source)
+{
+    struct test_media_stream *stream;
+    IMFPresentationDescriptor *pd;
+    BOOL selected;
+    HRESULT hr;
+
+    stream = calloc(1, sizeof(*stream));
+    stream->IMFMediaStream_iface.lpVtbl = &test_media_stream_vtbl;
+    stream->refcount = 1;
+    hr = MFCreateEventQueue(&stream->event_queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    stream->source = source;
+    IMFMediaSource_AddRef(stream->source);
+    stream->is_new = TRUE;
+
+    IMFMediaSource_CreatePresentationDescriptor(source, &pd);
+    IMFPresentationDescriptor_GetStreamDescriptorByIndex(pd, stream_index, &selected, &stream->sd);
+    IMFPresentationDescriptor_Release(pd);
+
+    return stream;
+}
+
 #define TEST_SOURCE_NUM_STREAMS 3
 
 struct test_source
@@ -1765,6 +1788,24 @@ static const IMFMediaSourceVtbl test_source_vtbl =
     test_source_Shutdown,
 };
 
+static IMFMediaSource *create_test_source(BOOL seekable)
+{
+    struct test_source *source;
+    int i;
+
+    source = calloc(1, sizeof(*source));
+    source->IMFMediaSource_iface.lpVtbl = &test_source_vtbl;
+    source->refcount = 1;
+    source->stream_count = 1;
+    source->seekable = seekable;
+    MFCreateEventQueue(&source->event_queue);
+    InitializeCriticalSection(&source->cs);
+    for (i = 0; i < source->stream_count; ++i)
+        source->streams[i] = create_test_stream(i, &source->IMFMediaSource_iface);
+
+    return &source->IMFMediaSource_iface;
+}
+
 static HRESULT WINAPI test_seek_clock_sink_QueryInterface(IMFClockStateSink *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IMFClockStateSink) ||
@@ -1830,47 +1871,6 @@ static const IMFClockStateSinkVtbl test_seek_clock_sink_vtbl =
    test_seek_clock_sink_OnClockRestart,
    test_seek_clock_sink_OnClockSetRate,
 };
-
-static struct test_media_stream *create_test_stream(DWORD stream_index, IMFMediaSource *source)
-{
-    struct test_media_stream *stream;
-    IMFPresentationDescriptor *pd;
-    BOOL selected;
-    HRESULT hr;
-
-    stream = calloc(1, sizeof(*stream));
-    stream->IMFMediaStream_iface.lpVtbl = &test_media_stream_vtbl;
-    stream->refcount = 1;
-    hr = MFCreateEventQueue(&stream->event_queue);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    stream->source = source;
-    IMFMediaSource_AddRef(stream->source);
-    stream->is_new = TRUE;
-
-    IMFMediaSource_CreatePresentationDescriptor(source, &pd);
-    IMFPresentationDescriptor_GetStreamDescriptorByIndex(pd, stream_index, &selected, &stream->sd);
-    IMFPresentationDescriptor_Release(pd);
-
-    return stream;
-}
-
-static IMFMediaSource *create_test_source(BOOL seekable)
-{
-    struct test_source *source;
-    int i;
-
-    source = calloc(1, sizeof(*source));
-    source->IMFMediaSource_iface.lpVtbl = &test_source_vtbl;
-    source->refcount = 1;
-    source->stream_count = 1;
-    source->seekable = seekable;
-    MFCreateEventQueue(&source->event_queue);
-    InitializeCriticalSection(&source->cs);
-    for (i = 0; i < source->stream_count; ++i)
-        source->streams[i] = create_test_stream(i, &source->IMFMediaSource_iface);
-
-    return &source->IMFMediaSource_iface;
-}
 
 static void test_media_session_events(void)
 {
