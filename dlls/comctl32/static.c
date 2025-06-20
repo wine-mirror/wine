@@ -587,6 +587,11 @@ static LRESULT CALLBACK STATIC_WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, 
         }
         break;
 
+    case WM_GETOBJECT:
+        if ((LONG)lParam == OBJID_QUERYCLASSNAMEIDX)
+            return 0x10003;
+        break;
+
     case WM_SETFONT:
         if (hasTextStyle( full_style ))
         {
