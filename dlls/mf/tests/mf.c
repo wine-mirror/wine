@@ -7081,7 +7081,6 @@ static void test_media_session_thinning(void)
 
     hr = IMFRateControl_GetRate(rate_control, &thin, &rate);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(thin == TRUE, "got thin %d\n", !!thin);
     ok(rate == 2.0, "got rate %f\n", rate);
 
