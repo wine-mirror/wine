@@ -372,12 +372,16 @@ static void test_item_height(void)
     HFONT font;
     HWND hLB;
     HDC hdc;
+    DWORD idx;
 
     hLB = create_listbox (0, 0);
     ok ((hdc = GetDCEx( hLB, 0, DCX_CACHE )) != 0, "Can't get hdc\n");
     ok ((font = GetCurrentObject(hdc, OBJ_FONT)) != 0, "Can't get the current font\n");
     ok (GetTextMetricsA( hdc, &tm ), "Can't read font metrics\n");
     ReleaseDC( hLB, hdc);
+
+    idx = SendMessageA(hLB, WM_GETOBJECT, 0, OBJID_QUERYCLASSNAMEIDX);
+    ok(idx == 0x10000, "Got index 0x%08lx\n", idx);
 
     ok (SendMessageA(hLB, WM_SETFONT, (WPARAM)font, 0) == 0, "Can't set font\n");
 

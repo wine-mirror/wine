@@ -2991,6 +2991,11 @@ static LRESULT CALLBACK LISTBOX_WindowProc( HWND hwnd, UINT msg, WPARAM wParam, 
     case WM_NCPAINT:
         return LISTBOX_NCPaint( descr, (HRGN)wParam );
 
+    case WM_GETOBJECT:
+        if ((LONG)lParam == OBJID_QUERYCLASSNAMEIDX)
+            return 0x10000;
+        break;
+
     case WM_SIZE:
         LISTBOX_UpdateSize( descr );
         return 0;
