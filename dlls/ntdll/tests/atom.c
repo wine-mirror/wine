@@ -246,6 +246,53 @@ static void test_NtAtom(void)
 /* Test Adding integer atoms to atom table */
 static void test_NtIntAtom(void)
 {
+    struct atom_test
+    {
+        const WCHAR *str;
+        NTSTATUS status;
+        UINT value;
+    }
+    integral_atom_tests[] =
+    {
+        {(PWSTR)0,     STATUS_INVALID_PARAMETER, 0},
+        {L"#",         STATUS_SUCCESS, 0xc000},
+        {L"0",         STATUS_SUCCESS, 0xc000},
+        {L"#0",        STATUS_INVALID_PARAMETER, 0},
+        {L"#0000",     STATUS_INVALID_PARAMETER, 0},
+        {L"0x0",       STATUS_SUCCESS, 0xc000},
+        {(PWSTR)1,     STATUS_SUCCESS, 1},
+        {L"1",         STATUS_SUCCESS, 0xc000},
+        {L"#1",        STATUS_SUCCESS, 1},
+        {L"0x1",       STATUS_SUCCESS, 0xc000},
+        {L"#01",       STATUS_SUCCESS, 1},
+        {L"#00001",    STATUS_SUCCESS, 1},
+        {L"#00001",    STATUS_SUCCESS, 1},
+        {L"#000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          "00000000000000000000000000000000000000000000000000000000000000000000000000000001", STATUS_SUCCESS, 1},
+        {(PWSTR)123,   STATUS_SUCCESS, 123},
+        {L"123",       STATUS_SUCCESS, 0xc000},
+        {L"#123",      STATUS_SUCCESS, 123},
+        {L"#0123",     STATUS_SUCCESS, 123},
+        {L"#0000123",  STATUS_SUCCESS, 123},
+        {L"#7b",       STATUS_SUCCESS, 0xc000},
+        {L"#0x7b",     STATUS_SUCCESS, 0xc000},
+        {L"# 123",     STATUS_SUCCESS, 0xc000},
+        {L"#+123",     STATUS_SUCCESS, 0xc000},
+        {(PWSTR)49151, STATUS_SUCCESS, 49151},
+        {L"#49151",    STATUS_SUCCESS, 49151},
+        {L"#0xbfff",   STATUS_SUCCESS, 0xc000},
+        {(PWSTR)49152, STATUS_ACCESS_VIOLATION, 0xdead},
+        {L"#49152",    STATUS_INVALID_PARAMETER, 0},
+        {L"#c000",     STATUS_SUCCESS, 0xc000},
+        {L"#0xc000",   STATUS_SUCCESS, 0xc000},
+        {L"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          "0000000000000000000000000000000000000000000000000000000", STATUS_SUCCESS, 0xc000},
+        {L"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          "00000000000000000000000000000000000000000000000000000000", STATUS_INVALID_PARAMETER, 0xdead},
+    };
     NTSTATUS res;
     RTL_ATOM_TABLE AtomTable;
     RTL_ATOM testAtom;
@@ -322,6 +369,46 @@ static void test_NtIntAtom(void)
     ok( !res, "Unable to query atom in atom table, retval: %lx\n", res );
     ok( PinCount == 1, "Expected pincount 1 but got %lx\n", PinCount );
     ok( RefCount == 1, "Expected refcount 1 but got %lx\n", RefCount );
+
+    res = RtlDestroyAtomTable( AtomTable );
+    ok( !res, "Unable to destroy atom table, retval: %lx\n", res );
+
+
+    AtomTable = NULL;
+    res = RtlCreateAtomTable( 37, &AtomTable );
+    ok(!res, "Unable to create atom table, %lx\n", res);
+
+    res = RtlQueryAtomInAtomTable( AtomTable, 0, &RefCount, &PinCount, NULL, NULL );
+    ok( res == STATUS_INVALID_PARAMETER, "got status %#lx\n", res );
+    res = RtlQueryAtomInAtomTable( AtomTable, 1, &RefCount, &PinCount, NULL, NULL );
+    ok( !res, "got status %#lx\n", res );
+    ok( PinCount == 1, "Expected pincount 1 but got %lx\n", PinCount );
+    ok( RefCount == 1, "Expected refcount 1 but got %lx\n", RefCount );
+    res = RtlQueryAtomInAtomTable( AtomTable, 0xbfff, &RefCount, &PinCount, NULL, NULL );
+    ok( !res, "got status %#lx\n", res );
+    ok( PinCount == 1, "Expected pincount 1 but got %lx\n", PinCount );
+    ok( RefCount == 1, "Expected refcount 1 but got %lx\n", RefCount );
+    res = RtlQueryAtomInAtomTable( AtomTable, 0xc000, &RefCount, &PinCount, NULL, NULL );
+    ok( res == STATUS_INVALID_HANDLE, "got status %#lx\n", res );
+
+    for (int i = 0; i < ARRAY_SIZE(integral_atom_tests); i++)
+    {
+        struct atom_test *test = integral_atom_tests + i;
+
+        winetest_push_context( "%s", debugstr_w(test->str) );
+
+        testAtom = 0xdead;
+        res = RtlAddAtomToAtomTable( AtomTable, test->str, &testAtom );
+        todo_wine_if( test->status == STATUS_ACCESS_VIOLATION )
+        ok( res == test->status, "RtlAddAtomToAtomTable returned %#lx\n", res );
+        todo_wine_if( test->value != 0xdead )
+        ok( testAtom == test->value, "got %#x\n", testAtom );
+        res = RtlDeleteAtomFromAtomTable( AtomTable, testAtom );
+        if (testAtom && testAtom != 0xdead) todo_wine_if( testAtom < 0xc000 ) ok( !res, "RtlDeleteAtomFromAtomTable returned %#lx\n", res );
+        else ok( res == STATUS_INVALID_HANDLE, "RtlDeleteAtomFromAtomTable returned %#lx\n", res );
+
+        winetest_pop_context();
+    }
 
     res = RtlDestroyAtomTable( AtomTable );
     ok( !res, "Unable to destroy atom table, retval: %lx\n", res );
