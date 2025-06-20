@@ -868,20 +868,18 @@ static BOOL get_volume_device_info( struct volume *volume )
 
     if (MOUNTMGR_CALL( check_device_access, volume->device->unix_device )) return FALSE;
 
-    if (!(name = wine_get_dos_file_name( unix_device )))
-    {
-        ERR("Failed to convert %s to NT, err %lu\n", debugstr_a(unix_device), GetLastError());
-        return FALSE;
-    }
+    size = 8 + strlen(unix_device) + 1;
+    if (!(name = malloc( size * sizeof(WCHAR )))) return FALSE;
+    wcscpy( name, L"\\\\?\\unix" );
+    MultiByteToWideChar( CP_UNIXCP, 0, unix_device, -1, name + 8, size - 8 );
     handle = CreateFileW( name, GENERIC_READ | SYNCHRONIZE, FILE_SHARE_READ | FILE_SHARE_WRITE,
                           NULL, OPEN_EXISTING, 0, 0 );
-    HeapFree( GetProcessHeap(), 0, name );
+    free( name );
     if (handle == INVALID_HANDLE_VALUE)
     {
         WARN("Failed to open %s, err %lu\n", debugstr_a(unix_device), GetLastError());
         return FALSE;
     }
-
     if (DeviceIoControl( handle, IOCTL_CDROM_READ_TOC, NULL, 0, &toc, sizeof(toc), &size, 0 ))
     {
         if (!(toc.TrackData[0].Control & 0x04))  /* audio track */
