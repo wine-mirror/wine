@@ -844,7 +844,7 @@ static BOOL flush_memory_pbuffer( struct wgl_context *context, HDC hdc, BOOL wri
 
         if (!get_image_from_bitmap( bmp, info, &bits, &src ))
         {
-            int width = info->bmiHeader.biWidth, height = abs( info->bmiHeader.biHeight );
+            int width = info->bmiHeader.biWidth, height = info->bmiHeader.biSizeImage / 4 / width;
             if (write) funcs->p_glDrawPixels( width, height, GL_BGRA, GL_UNSIGNED_BYTE, bits.ptr );
             else funcs->p_glReadPixels( 0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, bits.ptr );
         }
