@@ -131,20 +131,25 @@ struct opengl_drawable;
 struct opengl_drawable_funcs
 {
     void (*destroy)( struct opengl_drawable *iface );
-    /* flush the drawable and the opengl context, called from render thread */
-    BOOL (*flush)( struct opengl_drawable *iface, int interval, void (*flush)(void) );
+    /* flush and update the drawable front buffer, called from render thread */
+    void (*flush)( struct opengl_drawable *iface, UINT flags );
     /* swap and present the drawable buffers, called from render thread */
-    BOOL (*swap)( struct opengl_drawable *iface, int interval );
+    BOOL (*swap)( struct opengl_drawable *iface );
 };
+
+/* flags for opengl_drawable flush */
+#define GL_FLUSH_FINISHED      0x01
+#define GL_FLUSH_INTERVAL      0x02
 
 struct opengl_drawable
 {
     const struct opengl_drawable_funcs *funcs;
     LONG ref;
 
-    int format;  /* pixel format of the drawable */
-    HWND hwnd;   /* window the drawable was created for */
-    HDC hdc;     /* DC the drawable was created for */
+    int         format;         /* pixel format of the drawable */
+    int         interval;       /* last set surface swap interval */
+    HWND        hwnd;           /* window the drawable was created for */
+    HDC         hdc;            /* DC the drawable was created for */
 };
 
 static inline const char *debugstr_opengl_drawable( struct opengl_drawable *drawable )

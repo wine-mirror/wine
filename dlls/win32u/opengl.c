@@ -174,6 +174,7 @@ void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *fun
     drawable->ref = 1;
 
     drawable->format = format;
+    drawable->interval = INT_MIN;
     drawable->hwnd = hwnd;
     drawable->hdc = hdc;
 
@@ -1470,10 +1471,11 @@ static int get_window_swap_interval( HWND hwnd )
 static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)(void) )
 {
     HDC draw_hdc = NtCurrentTeb()->glReserved1[0], read_hdc = NtCurrentTeb()->glReserved1[1];
+    const struct opengl_funcs *funcs = &display_funcs;
     struct opengl_drawable *draw;
+    UINT flags = 0;
     int interval;
     HWND hwnd;
-    BOOL ret;
 
     if (!(hwnd = NtUserWindowFromDC( draw_hdc ))) interval = 0;
     else interval = get_window_swap_interval( hwnd );
@@ -1484,10 +1486,19 @@ static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)
     if (context->memory_pbuffer) return flush_memory_pbuffer( context, draw_hdc, FALSE, flush );
 
     if (!(draw = get_dc_opengl_drawable( draw_hdc ))) return FALSE;
-    ret = draw->funcs->flush( draw, interval, flush );
+    if (interval != draw->interval)
+    {
+        draw->interval = interval;
+        flags = GL_FLUSH_INTERVAL;
+    }
+
+    if (flush) flush();
+    if (flush == funcs->p_glFinish) flags |= GL_FLUSH_FINISHED;
+
+    if (flags) draw->funcs->flush( draw, flags );
     opengl_drawable_release( draw );
 
-    return ret;
+    return TRUE;
 }
 
 static BOOL win32u_wglSwapBuffers( HDC hdc )
@@ -1496,6 +1507,7 @@ static BOOL win32u_wglSwapBuffers( HDC hdc )
     struct wgl_context *context = NtCurrentTeb()->glContext;
     const struct opengl_funcs *funcs = &display_funcs;
     struct opengl_drawable *draw;
+    UINT flags = 0;
     int interval;
     HWND hwnd;
     BOOL ret;
@@ -1507,7 +1519,18 @@ static BOOL win32u_wglSwapBuffers( HDC hdc )
     if (context->memory_pbuffer) return flush_memory_pbuffer( context, hdc, FALSE, funcs->p_glFlush );
 
     if (!(draw = get_dc_opengl_drawable( draw_hdc ))) return FALSE;
-    ret = draw->funcs->swap( draw, interval );
+    if (interval != draw->interval)
+    {
+        draw->interval = interval;
+        flags = GL_FLUSH_INTERVAL;
+    }
+
+    if (!draw->hwnd || !draw->funcs->swap) ret = TRUE; /* pbuffer, nothing to do */
+    else
+    {
+        if (flags) draw->funcs->flush( draw, flags );
+        ret = draw->funcs->swap( draw );
+    }
     opengl_drawable_release( draw );
 
     return ret;

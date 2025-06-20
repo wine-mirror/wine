@@ -58,7 +58,6 @@ struct wayland_gl_drawable
     struct wl_egl_window *wl_egl_window;
     EGLSurface surface;
     LONG resized;
-    int swap_interval;
     BOOL double_buffered;
 };
 
@@ -174,7 +173,6 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, HDC hdc
     *attrib++ = EGL_NONE;
 
     if (!(gl = opengl_drawable_create(sizeof(*gl), &wayland_drawable_funcs, format, hwnd, hdc))) return NULL;
-    gl->swap_interval = 1;
 
     /* Get the client surface for the HWND. If don't have a wayland surface
      * (e.g., HWND_MESSAGE windows) just create a dummy surface to act as the
@@ -419,31 +417,23 @@ static EGLenum wayland_init_egl_platform(const struct egl_platform *platform, EG
     return EGL_PLATFORM_WAYLAND_KHR;
 }
 
-static BOOL wayland_drawable_flush(struct opengl_drawable *base, int interval, void (*flush)(void))
+static void wayland_drawable_flush(struct opengl_drawable *base, UINT flags)
 {
     struct wayland_gl_drawable *gl = impl_from_opengl_drawable(base);
 
-    TRACE("drawable %s\n", debugstr_opengl_drawable(base));
+    TRACE("drawable %s, flags %#x\n", debugstr_opengl_drawable(base), flags);
+
+    if (flags & GL_FLUSH_INTERVAL) funcs->p_eglSwapInterval(egl->display, abs(base->interval));
 
     /* Since context_flush is called from operations that may latch the native size,
      * perform any pending resizes before calling them. */
     wayland_gl_drawable_sync_size(gl);
-
-    if (flush) flush();
-    return TRUE;
 }
 
-static BOOL wayland_drawable_swap(struct opengl_drawable *base, int interval)
+static BOOL wayland_drawable_swap(struct opengl_drawable *base)
 {
     HWND hwnd = base->hwnd, toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
     struct wayland_gl_drawable *gl = impl_from_opengl_drawable(base);
-
-    if (interval < 0) interval = -interval;
-    if (gl->swap_interval != interval)
-    {
-        funcs->p_eglSwapInterval(egl->display, interval);
-        gl->swap_interval = interval;
-    }
 
     ensure_window_surface_contents(toplevel);
     set_client_surface(hwnd, gl->client);

@@ -210,7 +210,6 @@ struct gl_drawable
     Window                         window;       /* window if drawable is a GLXWindow */
     Colormap                       colormap;     /* colormap for the client window */
     Pixmap                         pixmap;       /* base pixmap if drawable is a GLXPixmap */
-    int                            swap_interval;
     BOOL                           offscreen;
     HDC                            hdc_src;
     HDC                            hdc_dst;
@@ -846,7 +845,6 @@ static BOOL set_swap_interval( struct gl_drawable *gl, int interval )
     BOOL ret = TRUE;
 
     if (interval < 0 && !has_swap_control_tear) interval = -interval;
-    if (gl->swap_interval == interval) return TRUE;
 
     switch (swap_control_method)
     {
@@ -920,7 +918,6 @@ static BOOL x11drv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl
 
     if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_surface_funcs, format, hwnd, hdc ))) return FALSE;
     /* Default GLX and WGL swap interval is 1, but in case of glXSwapIntervalSGI there is no way to query it. */
-    gl->swap_interval = INT_MIN;
     gl->rect = rect;
 
     gl->colormap = XCreateColormap( gdi_display, get_dummy_parent(), fmt->visual->visual,
@@ -1364,21 +1361,23 @@ static void present_gl_drawable( struct gl_drawable *gl, BOOL flush, BOOL gl_fin
     if (region) NtGdiDeleteObjectApp( region );
 }
 
-static BOOL x11drv_surface_flush( struct opengl_drawable *base, int interval, void (*flush)(void) )
+static void x11drv_surface_flush( struct opengl_drawable *base, UINT flags )
 {
     struct gl_drawable *gl = impl_from_opengl_drawable( base );
 
-    pthread_mutex_lock( &context_mutex );
-    set_swap_interval( gl, interval );
-    pthread_mutex_unlock( &context_mutex );
+    TRACE( "%s flags %#x\n", debugstr_opengl_drawable( base ), flags );
 
-    if (flush) flush();
+    if (flags & GL_FLUSH_INTERVAL)
+    {
+        pthread_mutex_lock( &context_mutex );
+        set_swap_interval( gl, base->interval );
+        pthread_mutex_unlock( &context_mutex );
+    }
 
     update_gl_drawable_size( gl );
     update_gl_drawable_offscreen( gl );
 
-    present_gl_drawable( gl, TRUE, flush != funcs->p_glFinish );
-    return TRUE;
+    present_gl_drawable( gl, TRUE, !(flags & GL_FLUSH_FINISHED) );
 }
 
 /***********************************************************************
@@ -1521,12 +1520,11 @@ static void x11drv_pbuffer_destroy( struct opengl_drawable *base )
     pglXDestroyPbuffer( gdi_display, gl->drawable );
 }
 
-static BOOL x11drv_pbuffer_flush( struct opengl_drawable *base, int interval, void (*flush)(void) )
+static void x11drv_pbuffer_flush( struct opengl_drawable *base, UINT flags )
 {
-    return FALSE;
 }
 
-static BOOL x11drv_pbuffer_swap( struct opengl_drawable *base, int interval )
+static BOOL x11drv_pbuffer_swap( struct opengl_drawable *base )
 {
     return FALSE;
 }
@@ -1654,17 +1652,13 @@ static const char *x11drv_init_wgl_extensions( struct opengl_funcs *funcs )
     return wglExtensions;
 }
 
-static BOOL x11drv_surface_swap( struct opengl_drawable *base, int interval )
+static BOOL x11drv_surface_swap( struct opengl_drawable *base )
 {
     struct x11drv_context *ctx = NtCurrentTeb()->glReserved2;
     struct gl_drawable *gl = impl_from_opengl_drawable( base );
     INT64 ust, msc, sbc, target_sbc = 0;
 
-    TRACE( "drawable %s, interval %d\n", debugstr_opengl_drawable( base ), interval );
-
-    pthread_mutex_lock( &context_mutex );
-    set_swap_interval( gl, interval );
-    pthread_mutex_unlock( &context_mutex );
+    TRACE( "drawable %s\n", debugstr_opengl_drawable( base ) );
 
     if (!ctx || gl->offscreen || !pglXSwapBuffersMscOML) pglXSwapBuffers( gdi_display, gl->drawable );
     else

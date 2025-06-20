@@ -2075,13 +2075,13 @@ static void macdrv_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 }
 
 
-static BOOL macdrv_surface_flush(struct opengl_drawable *base, int interval, void (*flush)(void))
+static void macdrv_surface_flush(struct opengl_drawable *base, UINT flags)
 {
     struct macdrv_context *context = NtCurrentTeb()->glReserved2;
 
-    set_swap_interval(context, interval);
+    TRACE("%s flags %#x\n", debugstr_opengl_drawable(base), flags);
 
-    return FALSE;
+    if (flags & GL_FLUSH_INTERVAL) set_swap_interval(context, base->interval);
 }
 
 
@@ -2374,12 +2374,11 @@ static void macdrv_pbuffer_destroy(struct opengl_drawable *base)
     CGLReleasePBuffer(gl->pbuffer);
 }
 
-static BOOL macdrv_pbuffer_flush(struct opengl_drawable *base, int interval, void (*flush)(void))
+static void macdrv_pbuffer_flush(struct opengl_drawable *base, UINT flags)
 {
-    return FALSE;
 }
 
-static BOOL macdrv_pbuffer_swap(struct opengl_drawable *base, int interval)
+static BOOL macdrv_pbuffer_swap(struct opengl_drawable *base)
 {
     return FALSE;
 }
@@ -2951,7 +2950,7 @@ static void *macdrv_get_proc_address(const char *name)
     return dlsym(opengl_handle, name);
 }
 
-static BOOL macdrv_surface_swap(struct opengl_drawable *base, int interval)
+static BOOL macdrv_surface_swap(struct opengl_drawable *base)
 {
     struct macdrv_context *context = NtCurrentTeb()->glReserved2;
     HWND hwnd = base->hwnd;
@@ -2960,8 +2959,6 @@ static BOOL macdrv_surface_swap(struct opengl_drawable *base, int interval)
 
     TRACE("hdc %p context %p/%p/%p\n", hdc, context, (context ? context->context : NULL),
           (context ? context->cglcontext : NULL));
-
-    if (context) set_swap_interval(context, interval);
 
     if (hwnd)
     {

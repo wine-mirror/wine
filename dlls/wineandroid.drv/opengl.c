@@ -68,7 +68,6 @@ struct gl_drawable
     struct list     entry;
     ANativeWindow  *window;
     EGLSurface      surface;
-    int             swap_interval;
 };
 
 static struct gl_drawable *impl_from_opengl_drawable( struct opengl_drawable *base )
@@ -305,34 +304,23 @@ static void *android_get_proc_address( const char *name )
     return funcs->p_eglGetProcAddress( name );
 }
 
-static void set_swap_interval( struct gl_drawable *gl, int interval )
-{
-    if (interval < 0) interval = -interval;
-    if (gl->swap_interval == interval) return;
-    funcs->p_eglSwapInterval( egl->display, interval );
-    gl->swap_interval = interval;
-}
-
-static BOOL android_drawable_swap( struct opengl_drawable *base, int interval )
+static BOOL android_drawable_swap( struct opengl_drawable *base )
 {
     struct gl_drawable *gl = impl_from_opengl_drawable( base );
 
     TRACE( "drawable %s surface %p\n", debugstr_opengl_drawable( base ), gl->surface );
 
-    set_swap_interval( gl, interval );
     funcs->p_eglSwapBuffers( egl->display, gl->surface );
     return TRUE;
 }
 
-static BOOL android_drawable_flush( struct opengl_drawable *base, int interval, void (*flush)(void) )
+static void android_drawable_flush( struct opengl_drawable *base, UINT flags )
 {
     struct gl_drawable *gl = impl_from_opengl_drawable( base );
 
-    TRACE( "drawable %s surface %p\n", debugstr_opengl_drawable( base ), gl->surface );
+    TRACE( "drawable %s, surface %p, flags %#x\n", debugstr_opengl_drawable( base ), gl->surface, flags );
 
-    set_swap_interval( gl, interval );
-    if (flush) flush();
-    return TRUE;
+    if (flags & GL_FLUSH_INTERVAL) funcs->p_eglSwapInterval( egl->display, abs( base->interval ) );
 }
 
 static const char *android_init_wgl_extensions( struct opengl_funcs *funcs )
