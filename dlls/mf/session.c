@@ -1578,7 +1578,7 @@ static void session_complete_rate_change(struct media_session *session)
     session->presentation.flags &= ~SESSION_FLAG_PENDING_RATE_CHANGE;
     session_set_presentation_clock(session);
 
-    hr = IMFRateControl_SetRate(session->clock_rate_control, session->presentation.thin,
+    hr = IMFRateControl_SetRate(session->clock_rate_control, FALSE,
             session->presentation.rate);
 
     param.vt = VT_R4;
@@ -4743,7 +4743,10 @@ static HRESULT WINAPI session_rate_control_GetRate(IMFRateControl *iface, BOOL *
 
     TRACE("%p, %p, %p.\n", iface, thin, rate);
 
-    return IMFRateControl_GetRate(session->clock_rate_control, thin, rate);
+    if (thin)
+        *thin = FALSE;
+
+    return IMFRateControl_GetRate(session->clock_rate_control, NULL, rate);
 }
 
 static const IMFRateControlVtbl session_rate_control_vtbl =
