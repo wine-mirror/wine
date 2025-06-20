@@ -1746,6 +1746,11 @@ static LRESULT CALLBACK COMBO_WindowProc( HWND hwnd, UINT message, WPARAM wParam
         COMBO_Size( lphc );
         return  TRUE;
 
+    case WM_GETOBJECT:
+        if ((LONG)lParam == OBJID_QUERYCLASSNAMEIDX)
+            return 0x10005;
+        break;
+
     case WM_SETFONT:
         COMBO_Font( lphc, (HFONT)wParam, (BOOL)lParam );
         return TRUE;
