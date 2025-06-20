@@ -87,7 +87,7 @@ static const struct object_ops event_sync_ops =
     no_destroy                 /* destroy */
 };
 
-static struct event_sync *create_event_sync( int manual, int signaled )
+struct event_sync *create_event_sync( int manual, int signaled )
 {
     struct event_sync *event;
 
@@ -113,14 +113,14 @@ static int event_sync_signaled( struct object *obj, struct wait_queue_entry *ent
     return event->signaled;
 }
 
-static void signal_sync( struct event_sync *event )
+void signal_sync( struct event_sync *event )
 {
     event->signaled = 1;
     /* wake up all waiters if manual reset, a single one otherwise */
     wake_up( &event->obj, !event->manual );
 }
 
-static void reset_sync( struct event_sync *event )
+void reset_sync( struct event_sync *event )
 {
     event->signaled = 0;
 }
