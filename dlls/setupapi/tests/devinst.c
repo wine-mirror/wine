@@ -2881,23 +2881,23 @@ static void test_device_interface_properties(void)
 
     ret = SetupDiGetDeviceInterfacePropertyKeys(NULL, NULL, NULL, 0, NULL, 0);
     err = GetLastError();
-    todo_wine ok(!ret && err == ERROR_INVALID_HANDLE, "%lu != %d\n", err, ERROR_INVALID_HANDLE);
+    ok(!ret && err == ERROR_INVALID_HANDLE, "%lu != %d\n", err, ERROR_INVALID_HANDLE);
 
     ret = SetupDiGetDeviceInterfacePropertyKeys(set, NULL, NULL, 0, NULL, 0);
     err = GetLastError();
-    todo_wine ok(!ret && err == ERROR_INVALID_PARAMETER, "%lu != %d\n", err, ERROR_INVALID_PARAMETER);
+    ok(!ret && err == ERROR_INVALID_PARAMETER, "%lu != %d\n", err, ERROR_INVALID_PARAMETER);
 
     ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, NULL, 0, NULL, 0);
     err = GetLastError();
-    todo_wine ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INSUFFICIENT_BUFFER);
+    ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INSUFFICIENT_BUFFER);
 
     ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, NULL, 0, &req, 1);
     err = GetLastError();
-    todo_wine ok(!ret && err == ERROR_INVALID_FLAGS, "%lu != %d\n", err, ERROR_INVALID_FLAGS);
+    ok(!ret && err == ERROR_INVALID_FLAGS, "%lu != %d\n", err, ERROR_INVALID_FLAGS);
 
     ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, NULL, 1, &req, 0);
     err = GetLastError();
-    todo_wine ok(!ret && err == ERROR_INVALID_USER_BUFFER, "%lu != %d\n", err, ERROR_INVALID_USER_BUFFER);
+    ok(!ret && err == ERROR_INVALID_USER_BUFFER, "%lu != %d\n", err, ERROR_INVALID_USER_BUFFER);
 
     ret = SetupDiSetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, DEVPROP_TYPE_STRING,
                                              (const BYTE *)str, sizeof(str), 0);
@@ -2908,14 +2908,14 @@ static void test_device_interface_properties(void)
     req = 0;
     ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, NULL, 0, &req, 0);
     err = GetLastError();
-    todo_wine ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INVALID_FLAGS);
+    ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INVALID_FLAGS);
 
     size = req;
     keys = calloc(size, sizeof(*keys));
     ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, keys, size, &req, 0);
-    todo_wine ok(ret, "SetupDiGetDeviceInterfacePropertyKeys failed: %lu\n", GetLastError());
-    todo_wine_if(ret) ok(size == req, "%lu != %lu\n", size, req);
-    todo_wine ok(size >= ARRAY_SIZE(default_keys), "got size %lu, should be >= %lu\n", size, (DWORD)ARRAY_SIZE(default_keys));
+    ok(ret, "SetupDiGetDeviceInterfacePropertyKeys failed: %lu\n", GetLastError());
+    ok(size == req, "%lu != %lu\n", size, req);
+    ok(size >= ARRAY_SIZE(default_keys), "got size %lu, should be >= %lu\n", size, (DWORD)ARRAY_SIZE(default_keys));
 
     for (i = 0; i < size && rem; i++)
     {
@@ -2955,7 +2955,7 @@ static void test_device_interface_properties(void)
         if (IsEqualDevPropKey(keys[i], DEVPKEY_DeviceInterface_FriendlyName) && rem) rem--;
     }
     free(keys);
-    todo_wine ok(!rem, "got rem %lu, should be 0\n", rem);
+    ok(!rem, "got rem %lu, should be 0\n", rem);
 
     ret = SetupDiRemoveDeviceInterface(set, &iface);
     ok(ret, "Failed to remove device interface, error %#lx.\n", GetLastError());
