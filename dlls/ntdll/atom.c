@@ -162,8 +162,9 @@ NTSTATUS WINAPI RtlDeleteAtomFromAtomTable( RTL_ATOM_TABLE table, RTL_ATOM atom 
 
     if ((status = lock_atom_table( table ))) return status;
 
-    if (atom >= MAXINTATOM && RtlIsValidIndexHandle( &table->HandleTable, atom - MAXINTATOM,
-                                                     (RTL_HANDLE **)&handle ))
+    if (!atom) status = STATUS_INVALID_HANDLE;
+    else if (atom < MAXINTATOM) status = STATUS_SUCCESS;
+    else if (RtlIsValidIndexHandle( &table->HandleTable, atom - MAXINTATOM, (RTL_HANDLE **)&handle ))
     {
         if (handle->entry->Flags) status = STATUS_WAS_LOCKED;
         else if (!--handle->entry->ReferenceCount)

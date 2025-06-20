@@ -2455,7 +2455,9 @@ NTSTATUS WINAPI NtDeleteAtom( RTL_ATOM atom )
 {
     unsigned int status;
 
-    SERVER_START_REQ( delete_atom )
+    if (!atom) status = STATUS_INVALID_HANDLE;
+    else if (atom < MAXINTATOM) status = STATUS_SUCCESS;
+    else SERVER_START_REQ( delete_atom )
     {
         req->atom = atom;
         status = wine_server_call( req );
