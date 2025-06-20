@@ -145,10 +145,10 @@ static NTSTATUS is_integral_atom( LPCWSTR atomstr, size_t len, RTL_ATOM* pAtom )
         if (len > MAX_ATOM_LEN) return STATUS_INVALID_PARAMETER;
         return STATUS_MORE_ENTRIES;
     }
-    else atom = LOWORD( atomstr );
+    else if ((atom = LOWORD( atomstr )) >= MAXINTATOM) return STATUS_INVALID_PARAMETER;
 done:
-    if (!atom || atom >= MAXINTATOM) return STATUS_INVALID_PARAMETER;
-    *pAtom = atom;
+    if (atom >= MAXINTATOM) atom = 0;
+    if (!(*pAtom = atom)) return STATUS_INVALID_PARAMETER;
     return STATUS_SUCCESS;
 }
 

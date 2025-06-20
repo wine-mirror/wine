@@ -401,7 +401,6 @@ static void test_NtIntAtom(void)
         res = RtlAddAtomToAtomTable( AtomTable, test->str, &testAtom );
         todo_wine_if( test->status == STATUS_ACCESS_VIOLATION )
         ok( res == test->status, "RtlAddAtomToAtomTable returned %#lx\n", res );
-        todo_wine_if( test->value != 0xdead )
         ok( testAtom == test->value, "got %#x\n", testAtom );
         res = RtlDeleteAtomFromAtomTable( AtomTable, testAtom );
         if (testAtom && testAtom != 0xdead) todo_wine_if( testAtom < 0xc000 ) ok( !res, "RtlDeleteAtomFromAtomTable returned %#lx\n", res );

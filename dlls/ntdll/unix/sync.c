@@ -2403,10 +2403,10 @@ static unsigned int is_integral_atom( const WCHAR *atomstr, ULONG len, RTL_ATOM 
         if (len > MAX_ATOM_LEN) return STATUS_INVALID_PARAMETER;
         return STATUS_MORE_ENTRIES;
     }
-    else atom = LOWORD( atomstr );
+    else if ((atom = LOWORD( atomstr )) >= MAXINTATOM) return STATUS_INVALID_PARAMETER;
 done:
-    if (!atom || atom >= MAXINTATOM) return STATUS_INVALID_PARAMETER;
-    *ret_atom = atom;
+    if (atom >= MAXINTATOM) atom = 0;
+    if (!(*ret_atom = atom)) return STATUS_INVALID_PARAMETER;
     return STATUS_SUCCESS;
 }
 
