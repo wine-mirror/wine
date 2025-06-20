@@ -76,7 +76,6 @@ struct macdrv_context
     CGLPBufferObj           read_pbuffer;
     int                     swap_interval;
     LONG                    view_moved;
-    unsigned int            last_flush_time;
     UINT                    major;
 };
 
@@ -106,7 +105,6 @@ static const struct opengl_drawable_funcs macdrv_pbuffer_funcs;
 static void (*pglCopyColorTable)(GLenum target, GLenum internalformat, GLint x, GLint y,
                                  GLsizei width);
 static void (*pglCopyPixels)(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type);
-static void (*pglFlushRenderAPPLE)(void);
 static const GLubyte *(*pglGetString)(GLenum name);
 static PFN_glGetIntegerv pglGetIntegerv;
 static void (*pglReadPixels)(GLint x, GLint y, GLsizei width, GLsizei height,
@@ -2083,26 +2081,6 @@ static BOOL macdrv_context_flush( void *private, HWND hwnd, HDC hdc, int interva
 
     set_swap_interval(context, interval);
 
-    if (skip_single_buffer_flushes)
-    {
-        const pixel_format *pf = &pixel_formats[context->format - 1];
-        unsigned int now = NtGetTickCount();
-
-        TRACE("double buffer %d last flush time %d now %d\n", pf->double_buffer,
-              context->last_flush_time, now);
-        if (pglFlushRenderAPPLE && !pf->double_buffer && (now - context->last_flush_time) < 17)
-        {
-            TRACE("calling glFlushRenderAPPLE()\n");
-            pglFlushRenderAPPLE();
-            return TRUE;
-        }
-        else
-        {
-            TRACE("calling glFlush()\n");
-            context->last_flush_time = now;
-        }
-    }
-
     return FALSE;
 }
 
@@ -2812,8 +2790,6 @@ UINT macdrv_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, co
     if (!init_gl_info())
         goto failed;
 
-    if (gluCheckExtension((GLubyte*)"GL_APPLE_flush_render", (GLubyte*)gl_info.glExtensions))
-        LOAD_FUNCPTR(glFlushRenderAPPLE);
 #undef LOAD_FUNCPTR
 
     *driver_funcs = &macdrv_driver_funcs;

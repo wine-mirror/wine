@@ -39,7 +39,6 @@
 #include "unixlib.h"
 
 
-extern BOOL skip_single_buffer_flushes;
 extern BOOL allow_vsync;
 extern BOOL allow_set_gamma;
 extern BOOL allow_software_rendering;
