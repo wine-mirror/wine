@@ -40,6 +40,7 @@
 #include "dbt.h"
 #include "initguid.h"
 #include "devguid.h"
+#include "devpkey.h"
 #include "ddk/hidclass.h"
 #include "ddk/hidsdi.h"
 #include "ddk/hidpi.h"
@@ -1456,6 +1457,8 @@ static void test_pnp_devices(void)
     SP_DEVICE_INTERFACE_DETAIL_DATA_A *iface_detail = (void *)buffer;
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
     SP_DEVINFO_DATA device = {sizeof(device)};
+    DEVPROP_BOOLEAN enabled = DEVPROP_FALSE;
+    DEVPROPTYPE prop_type = DEVPROP_TYPE_EMPTY;
     DEV_BROADCAST_DEVICEINTERFACE_A filter =
     {
         .dbcc_size = sizeof(filter),
@@ -1467,7 +1470,7 @@ static void test_pnp_devices(void)
         .lpfnWndProc = device_notify_proc,
     };
     HDEVNOTIFY notify_handle;
-    DWORD size, type, dword;
+    DWORD size = 0, type, dword;
     HANDLE bus, child, tmp;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING string;
@@ -1509,6 +1512,13 @@ static void test_pnp_devices(void)
     ok(ret, "failed to get interface path, error %#lx\n", GetLastError());
     ok(!strcmp(iface_detail->DevicePath, "\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}"),
             "wrong path %s\n", debugstr_a(iface_detail->DevicePath));
+
+    ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_Enabled, &prop_type,
+                                             (BYTE *)&enabled, sizeof(enabled), &size, 0);
+    ok(ret, "failed to get device interface property, got error %lu\n", GetLastError());
+    ok(prop_type == DEVPROP_TYPE_BOOLEAN, "got prop_type %#lx\n", prop_type);
+    ok(size == sizeof(enabled), "got size %lu\n", size);
+    ok(enabled == DEVPROP_TRUE, "got enabled %d\n", enabled);
 
     /* Create a device parameter for testing IoOpenDeviceRegistryKey */
     key = SetupDiCreateDevRegKeyA(set, &device, DICS_FLAG_GLOBAL, 0, DIREG_DEV, NULL, NULL);
@@ -1688,6 +1698,16 @@ static void test_pnp_devices(void)
     ok(ret, "failed to get interface path, error %#lx\n", GetLastError());
     ok(!strcmp(iface_detail->DevicePath, "\\\\?\\wine#test#1#{deadbeef-29ef-4538-a5fd-b69573a362c2}"),
             "wrong path %s\n", debugstr_a(iface_detail->DevicePath));
+
+    prop_type = DEVPROP_TYPE_EMPTY;
+    size = 0;
+    enabled = DEVPROP_FALSE;
+    ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_Enabled, &prop_type,
+                                             (BYTE *)&enabled, sizeof(enabled), &size, 0);
+    ok(ret, "failed to get device interface property, got error %lu\n", GetLastError());
+    ok(prop_type == DEVPROP_TYPE_BOOLEAN, "got prop_type %#lx\n", prop_type);
+    ok(size == sizeof(enabled), "got size %lu\n", size);
+    ok(enabled == DEVPROP_TRUE, "got enabled %d\n", enabled);
 
     /* Create a device parameter for testing IoOpenDeviceRegistryKey */
     key = SetupDiCreateDevRegKeyA(set, &device, DICS_FLAG_GLOBAL, 0, DIREG_DEV, NULL, NULL);
