@@ -768,6 +768,7 @@ static void test_edit_control_1(void)
     MSG msMessage;
     int i;
     LONG r;
+    DWORD idx;
 
     msMessage.message = WM_KEYDOWN;
 
@@ -775,6 +776,10 @@ static void test_edit_control_1(void)
     hwEdit = create_editcontrol(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     r = get_edit_style(hwEdit);
     ok(r == (ES_AUTOVSCROLL | ES_AUTOHSCROLL), "Wrong style expected 0xc0 got: 0x%lx\n", r);
+
+    idx = SendMessageA(hwEdit, WM_GETOBJECT, 0, OBJID_QUERYCLASSNAMEIDX);
+    ok(idx == 0x10004, "Got index 0x%08lx\n", idx);
+
     for (i = 0; i < 65535; i++)
     {
         msMessage.wParam = i;

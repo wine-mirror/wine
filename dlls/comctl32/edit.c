@@ -4824,6 +4824,11 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         result = (LRESULT)es->font;
         break;
 
+    case WM_GETOBJECT:
+        if ((LONG)lParam == OBJID_QUERYCLASSNAMEIDX)
+            return 0x10004;
+        break;
+
     case WM_GETTEXT:
         result = (LRESULT)EDIT_WM_GetText(es, (INT)wParam, (LPWSTR)lParam);
         break;
