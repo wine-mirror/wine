@@ -71,8 +71,8 @@ typedef struct {
     const WCHAR *subdir_name;
     const char *sha;
     const char *url_default;
-    const char *config_key;
-    const char *url_config_key;
+    const WCHAR *config_key;
+    const WCHAR *url_config_key;
     const char *dir_config_key;
     LPCWSTR dialog_template;
 } addon_info_t;
@@ -87,7 +87,7 @@ static const addon_info_t addons_info[] = {
         L"gecko",
         GECKO_SHA,
         "http://source.winehq.org/winegecko.php",
-        "MSHTML", "GeckoUrl", "GeckoCabDir",
+        L"MSHTML", L"GeckoUrl", "GeckoCabDir",
         MAKEINTRESOURCEW(ID_DWL_GECKO_DIALOG)
     },
     {
@@ -96,7 +96,7 @@ static const addon_info_t addons_info[] = {
         L"mono",
         MONO_SHA,
         "http://source.winehq.org/winemono.php",
-        "Dotnet", "MonoUrl", "MonoCabDir",
+        L"Dotnet", L"MonoUrl", "MonoCabDir",
         MAKEINTRESOURCEW(ID_DWL_MONO_DIALOG)
     }
 };
@@ -245,7 +245,7 @@ static HKEY open_config_key(void)
     if(res != ERROR_SUCCESS)
         return NULL;
 
-    res = RegOpenKeyA(hkey, addon->config_key, &ret);
+    res = RegOpenKeyW(hkey, addon->config_key, &ret);
     RegCloseKey(hkey);
     return res == ERROR_SUCCESS ? ret : NULL;
 }
@@ -624,7 +624,7 @@ static void append_url_params( WCHAR *url )
 static LPWSTR get_url(void)
 {
     DWORD size = INTERNET_MAX_URL_LENGTH*sizeof(WCHAR);
-    WCHAR *url, *config_key;
+    WCHAR *url;
     HKEY hkey;
     DWORD res, type;
     DWORD returned_size;
@@ -637,9 +637,7 @@ static LPWSTR get_url(void)
     hkey = open_config_key();
     if (hkey)
     {
-        config_key = strdupAtoW(addon->url_config_key);
-        res = RegQueryValueExW(hkey, config_key, NULL, &type, (LPBYTE)url, &returned_size);
-        free(config_key);
+        res = RegQueryValueExW(hkey, addon->url_config_key, NULL, &type, (LPBYTE)url, &returned_size);
         RegCloseKey(hkey);
         if(res == ERROR_SUCCESS && type == REG_SZ) goto found;
     }
