@@ -2727,12 +2727,21 @@ static void test_open_device_interface_key(void)
 
 static void test_device_interface_properties(void)
 {
+    struct {
+        DEVPROPKEY key;
+        DEVPROPTYPE type;
+    } default_keys[] = {
+        { DEVPKEY_DeviceInterface_Enabled, DEVPROP_TYPE_BOOLEAN },
+        { DEVPKEY_DeviceInterface_ClassGuid, DEVPROP_TYPE_GUID },
+        { DEVPKEY_Device_InstanceId, DEVPROP_TYPE_STRING }
+    };
     const WCHAR str[] = L"Wine is not an emulator.";
     DEVPROPTYPE type = DEVPROP_TYPE_EMPTY;
     DEVPROP_BOOLEAN boolean = DEVPROP_TRUE;
     SP_DEVICE_INTERFACE_DATA iface;
     SP_DEVINFO_DATA device;
-    DWORD err, req;
+    DEVPROPKEY *keys;
+    DWORD err, req, size, i, rem = ARRAY_SIZE(default_keys);
     WCHAR buf[50];
     HDEVINFO set;
     BOOL ret;
@@ -2869,6 +2878,84 @@ static void test_device_interface_properties(void)
                                              (const BYTE *)&boolean, sizeof(boolean), 0);
     err = GetLastError();
     ok(!ret && err == ERROR_INVALID_DATA, "%lu != %d\n", err, ERROR_INVALID_DATA);
+
+    ret = SetupDiGetDeviceInterfacePropertyKeys(NULL, NULL, NULL, 0, NULL, 0);
+    err = GetLastError();
+    todo_wine ok(!ret && err == ERROR_INVALID_HANDLE, "%lu != %d\n", err, ERROR_INVALID_HANDLE);
+
+    ret = SetupDiGetDeviceInterfacePropertyKeys(set, NULL, NULL, 0, NULL, 0);
+    err = GetLastError();
+    todo_wine ok(!ret && err == ERROR_INVALID_PARAMETER, "%lu != %d\n", err, ERROR_INVALID_PARAMETER);
+
+    ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, NULL, 0, NULL, 0);
+    err = GetLastError();
+    todo_wine ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INSUFFICIENT_BUFFER);
+
+    ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, NULL, 0, &req, 1);
+    err = GetLastError();
+    todo_wine ok(!ret && err == ERROR_INVALID_FLAGS, "%lu != %d\n", err, ERROR_INVALID_FLAGS);
+
+    ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, NULL, 1, &req, 0);
+    err = GetLastError();
+    todo_wine ok(!ret && err == ERROR_INVALID_USER_BUFFER, "%lu != %d\n", err, ERROR_INVALID_USER_BUFFER);
+
+    ret = SetupDiSetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, DEVPROP_TYPE_STRING,
+                                             (const BYTE *)str, sizeof(str), 0);
+    err = GetLastError();
+    ok(ret, "SetupDiSetDeviceInterfacePropertyW failed: %lu\n", err);
+    if (ret) rem += 1;
+
+    req = 0;
+    ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, NULL, 0, &req, 0);
+    err = GetLastError();
+    todo_wine ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INVALID_FLAGS);
+
+    size = req;
+    keys = calloc(size, sizeof(*keys));
+    ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, keys, size, &req, 0);
+    todo_wine ok(ret, "SetupDiGetDeviceInterfacePropertyKeys failed: %lu\n", GetLastError());
+    todo_wine_if(ret) ok(size == req, "%lu != %lu\n", size, req);
+    todo_wine ok(size >= ARRAY_SIZE(default_keys), "got size %lu, should be >= %lu\n", size, (DWORD)ARRAY_SIZE(default_keys));
+
+    for (i = 0; i < size && rem; i++)
+    {
+        DWORD j;
+        for (j = 0; j < ARRAY_SIZE(default_keys); j++)
+        {
+            DEVPROPKEY key = default_keys[j].key;
+            DEVPROPTYPE exp_type = default_keys[j].type;
+
+            if (IsEqualDevPropKey(key, keys[i]))
+            {
+                BYTE *buf;
+                DWORD size, req = 0;
+
+                winetest_push_context("default_keys[%lu]", j);
+
+                type = DEVPROP_TYPE_EMPTY;
+                ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &key, &type, NULL, 0, &req, 0);
+                err = GetLastError();
+                todo_wine_if(!ret && err == ERROR_NOT_FOUND)
+                    ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INSUFFICIENT_BUFFER);
+                todo_wine_if(!ret && err == ERROR_NOT_FOUND) ok(type == exp_type, "%#lx != %#lx\n", type, exp_type);
+
+                size = req;
+                buf = calloc( 1, size );
+                ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &key, &type, buf, size, &req, 0);
+                err = GetLastError();
+                todo_wine_if(!ret && err == ERROR_NOT_FOUND) ok(ret, "SetupDiGetDeviceInterfacePropertyW failed: %lu\n", err);
+                free(buf);
+
+                winetest_pop_context();
+
+                rem--;
+                break;
+            }
+        }
+        if (IsEqualDevPropKey(keys[i], DEVPKEY_DeviceInterface_FriendlyName) && rem) rem--;
+    }
+    free(keys);
+    todo_wine ok(!rem, "got rem %lu, should be 0\n", rem);
 
     ret = SetupDiRemoveDeviceInterface(set, &iface);
     ok(ret, "Failed to remove device interface, error %#lx.\n", GetLastError());

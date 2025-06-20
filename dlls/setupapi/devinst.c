@@ -3108,6 +3108,15 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(HDEVINFO devinfo, SP_DEVICE_INTERFA
     return ret;
 }
 
+BOOL WINAPI SetupDiGetDeviceInterfacePropertyKeys( HDEVINFO devinfo, SP_DEVICE_INTERFACE_DATA *iface_data,
+                                                   DEVPROPKEY *buf, DWORD buf_len, DWORD *req_len, DWORD flags )
+{
+    FIXME( "devinfo %p, iface_data %p, buf %p, buf_len %lu, req_len %p, flags %#lx: stub!\n", devinfo, iface_data, buf,
+           buf_len, req_len, flags );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 static DWORD get_device_reg_property( HKEY base_key, const DEVPROPKEY *prop_key, DEVPROPTYPE *prop_type,
                                       BYTE *buf, DWORD buf_size, DWORD *req_size, DWORD flags )
 {
