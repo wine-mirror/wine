@@ -52,6 +52,10 @@
   interruptible: true
   variables:
     GIT_STRATEGY: none
+    # Non-ascii characters in authors name may get into the output of kernel32:process test which cause
+    # qemu-agent.py in Windows to fail with: UnicodeDecodeError: 'utf-8' codec can't decode byte ...
+    CI_COMMIT_AUTHOR: ""
+    GITLAB_USER_NAME: ""
 
 test-linux-64:
   extends: .wine-test
