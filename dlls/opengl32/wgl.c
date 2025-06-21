@@ -125,6 +125,7 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
     PIXELFORMATDESCRIPTOR format, best;
     int i, count, best_format;
     int bestDBuffer = -1, bestStereo = -1;
+    DWORD is_memdc;
 
     TRACE( "%p %p: size %u version %u flags %lu type %u color %u %u,%u,%u,%u "
            "accum %u depth %u stencil %u aux %u\n",
@@ -134,6 +135,8 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
 
     count = wglDescribePixelFormat( hdc, 0, 0, NULL );
     if (!count) return 0;
+
+    if (!NtGdiGetDCDword( hdc, NtGdiIsMemDC, &is_memdc )) is_memdc = 0;
 
     best_format = 0;
     best.dwFlags = 0;
@@ -172,6 +175,11 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
         if ((ppfd->dwFlags & PFD_SUPPORT_OPENGL) && !(format.dwFlags & PFD_SUPPORT_OPENGL))
         {
             TRACE( "PFD_SUPPORT_OPENGL required but not found for iPixelFormat=%d\n", i );
+            continue;
+        }
+        if (is_memdc && ppfd->cColorBits == 16 && ppfd->cAlphaBits != 1)
+        {
+            TRACE( "Ignoring iPixelFormat=%d RGB565 format on memory DC\n", i );
             continue;
         }
 
@@ -709,9 +717,12 @@ BOOL WINAPI wglChoosePixelFormatARB( HDC hdc, const int *attribs_int, const FLOA
     UINT i, num_wgl_formats, num_wgl_onscreen_formats;
     const struct wgl_pixel_format **format_array;
     struct compare_formats_ctx ctx = { 0 };
+    DWORD is_memdc;
 
     TRACE( "hdc %p, attribs_int %p, attribs_float %p, max_formats %u, formats %p, num_formats %p\n",
            hdc, attribs_int, attribs_float, max_formats, formats, num_formats );
+
+    if (!NtGdiGetDCDword( hdc, NtGdiIsMemDC, &is_memdc )) is_memdc = 0;
 
     wgl_formats = get_pixel_formats( hdc, &num_wgl_formats, &num_wgl_onscreen_formats );
 
@@ -752,7 +763,12 @@ BOOL WINAPI wglChoosePixelFormatARB( HDC hdc, const int *attribs_int, const FLOA
     /* Initialize the format_array with (pointers to) all wgl formats */
     format_array = malloc( num_wgl_formats * sizeof(*format_array) );
     if (!format_array) return FALSE;
-    for (i = 0; i < num_wgl_formats; ++i) format_array[i] = &wgl_formats[i];
+    for (i = 0; i < num_wgl_formats; ++i)
+    {
+        struct wgl_pixel_format *format = wgl_formats + i;
+        if (is_memdc && format->pfd.cColorBits == 16 && format->pfd.cAlphaBits != 1) format_array[i] = NULL;
+        else format_array[i] = &wgl_formats[i];
+    }
 
     /* Remove formats that are not acceptable */
     for (i = 0; i < ctx.num_attribs; ++i)
