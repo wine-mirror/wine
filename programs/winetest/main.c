@@ -927,16 +927,15 @@ static void *filter_data( const char *data, DWORD size, DWORD *output_size )
 }
 
 static void report_test_done( struct wine_test *test, const char *subtest, const char *file, DWORD pid, DWORD ticks,
-                              HANDLE out_file, UINT status, const char *data, DWORD size )
+                              HANDLE out_file, UINT status, const char *data, DWORD size, DWORD *output_size )
 {
     char *filtered_data;
-    DWORD output_size;
 
-    if (!(filtered_data = filter_data( data, size, &output_size ))) return;
+    if (!(filtered_data = filter_data( data, size, output_size ))) return;
 
-    if (quiet_mode <= 1 || status || output_size > MAX_OUTPUT_SIZE) WriteFile( out_file, data, size, &size, NULL );
+    if (quiet_mode <= 1 || status || *output_size > MAX_OUTPUT_SIZE) WriteFile( out_file, data, size, &size, NULL );
     xprintf( "%s:%s:%04lx done (%d) in %lds %luB\n", test->name, subtest, pid, status, ticks / 1000, size );
-    if (output_size > MAX_OUTPUT_SIZE) xprintf( "%s:%s:%04lx The test prints too much data (%lu bytes)\n", test->name, subtest, pid, size );
+    if (*output_size > MAX_OUTPUT_SIZE) xprintf( "%s:%s:%04lx The test prints too much data (%lu bytes)\n", test->name, subtest, pid, size );
 
     if (filtered_data && junit)
     {
@@ -1028,7 +1027,7 @@ static void report_test_done( struct wine_test *test, const char *subtest, const
             output( junit, "<system-out>Test exited with status %d</system-out><failure/>", status );
             output( junit, "</testcase>\n" );
         }
-        if (output_size > MAX_OUTPUT_SIZE)
+        if (*output_size > MAX_OUTPUT_SIZE)
         {
             output( junit, "    <testcase classname=\"%s:%s\" name=\"%s:%s output overflow\" file=\"%s\" assertions=\"%d\" time=\"%f\">",
                      test->name, subtest, test->name, subtest, file, total, ticks / 1000.0 );
@@ -1065,7 +1064,7 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
         char *data, tmpname[MAX_PATH];
         HANDLE tmpfile = create_temp_file( tmpname );
         int status;
-        DWORD pid, size, start = GetTickCount();
+        DWORD pid, size, output_size = 0, start = GetTickCount();
         char *cmd = strmake("%s %s", test->exename, subtest);
 
         report_test_start( test, subtest, file );
@@ -1077,10 +1076,10 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
         free(cmd);
 
         data = flush_temp_file( tmpname, tmpfile, &size );
-        report_test_done( test, subtest, file, pid, GetTickCount() - start, out_file, status, data, size );
+        report_test_done( test, subtest, file, pid, GetTickCount() - start, out_file, status, data, size, &output_size );
         free( data );
 
-        if (status || size > MAX_OUTPUT_SIZE) failures++;
+        if (status || output_size > MAX_OUTPUT_SIZE) failures++;
     }
     if (failures) report (R_STATUS, "Running tests - %u failures", failures);
 }
