@@ -1183,7 +1183,7 @@ struct msi_scrolltext_info
 static LRESULT WINAPI MSIScrollText_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     struct msi_scrolltext_info *info;
-    HRESULT r;
+    LRESULT r;
 
     TRACE( "%p %04x %#Ix %#Ix\n", hWnd, msg, wParam, lParam );
 
@@ -1760,7 +1760,7 @@ static void mask_next_control( struct msi_maskedit_info *info, HWND hWnd )
 static LRESULT WINAPI MSIMaskedEdit_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     struct msi_maskedit_info *info;
-    HRESULT r;
+    LRESULT r;
 
     TRACE("%p %04x %#Ix %#Ix\n", hWnd, msg, wParam, lParam);
 
@@ -2383,7 +2383,7 @@ static LRESULT WINAPI MSISelectionTree_WndProc(HWND hWnd, UINT msg, WPARAM wPara
 {
     struct msi_selection_tree_info *info;
     TVHITTESTINFO tvhti;
-    HRESULT r;
+    LRESULT r;
 
     TRACE("%p %04x %#Ix %#Ix\n", hWnd, msg, wParam, lParam);
 
