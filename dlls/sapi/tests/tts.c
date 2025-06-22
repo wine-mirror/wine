@@ -151,60 +151,67 @@ struct test_engine
     BOOL speak_called;
     DWORD flags;
     GUID fmtid;
-    SPVTEXTFRAG *frag_list;
+    SPVTEXTFRAG *frags;
+    size_t frag_count;
     LONG rate;
     USHORT volume;
 };
 
-static void copy_frag_list(const SPVTEXTFRAG *frag_list, SPVTEXTFRAG **ret_frag_list)
+/* Copy frag_list into a contiguous array allocated by a single malloc().
+ * The texts are allocated at the end of the array. */
+static void copy_frag_list(const SPVTEXTFRAG *frag_list, SPVTEXTFRAG **ret_frags, size_t *frag_count)
 {
-    SPVTEXTFRAG *frag, *prev = NULL;
+    const SPVTEXTFRAG *frag;
+    SPVTEXTFRAG *cur;
+    WCHAR *cur_text;
+    size_t size = 0;
+
+    *frag_count = 0;
 
     if (!frag_list)
     {
-        *ret_frag_list = NULL;
+        *ret_frags = NULL;
         return;
     }
 
-    while (frag_list)
+    for (frag = frag_list; frag; frag = frag->pNext)
     {
-        frag = malloc(sizeof(*frag) + frag_list->ulTextLen * sizeof(WCHAR));
-        memcpy(frag, frag_list, sizeof(*frag));
+        size += sizeof(*frag) + (frag->ulTextLen + 1) * sizeof(WCHAR);
+        (*frag_count)++;
+    }
 
-        if (frag_list->pTextStart)
+    *ret_frags = malloc(size);
+    cur = *ret_frags;
+    cur_text = (WCHAR *)(*ret_frags + (*frag_count));
+
+    for (frag = frag_list; frag; frag = frag->pNext, ++cur)
+    {
+        memcpy(cur, frag, sizeof(*frag));
+
+        cur->pNext = frag->pNext ? cur + 1 : NULL;
+
+        if (frag->pTextStart)
         {
-            frag->pTextStart = (WCHAR *)(frag + 1);
-            memcpy(frag + 1, frag_list->pTextStart, frag->ulTextLen * sizeof(WCHAR));
+            memcpy(cur_text, frag->pTextStart, frag->ulTextLen * sizeof(WCHAR));
+            cur_text[frag->ulTextLen] = L'\0';
+
+            cur->pTextStart = (WCHAR *)cur_text;
+            cur_text += frag->ulTextLen + 1;
         }
-
-        frag->pNext = NULL;
-
-        if (prev)
-            prev->pNext = frag;
-        else
-            *ret_frag_list = frag;
-
-        prev = frag;
-        frag_list = frag_list->pNext;
     }
 }
 
 static void reset_engine_params(struct test_engine *engine)
 {
-    SPVTEXTFRAG *frag, *next;
-
     engine->speak_called = FALSE;
     engine->flags = 0xdeadbeef;
     memset(&engine->fmtid, 0xde, sizeof(engine->fmtid));
     engine->rate = 0xdeadbeef;
     engine->volume = 0xbeef;
 
-    for (frag = engine->frag_list; frag; frag = next)
-    {
-        next = frag->pNext;
-        free(frag);
-    }
-    engine->frag_list = NULL;
+    free(engine->frags);
+    engine->frags = NULL;
+    engine->frag_count = 0;
 }
 
 static inline struct test_engine *impl_from_ISpTTSEngine(ISpTTSEngine *iface)
@@ -257,7 +264,7 @@ static HRESULT WINAPI test_engine_Speak(ISpTTSEngine *iface, DWORD flags, REFGUI
 
     engine->flags = flags;
     engine->fmtid = *fmtid;
-    copy_frag_list(frag_list, &engine->frag_list);
+    copy_frag_list(frag_list, &engine->frags, &engine->frag_count);
     engine->speak_called = TRUE;
 
     actions = ISpTTSEngineSite_GetActions(site);
@@ -637,11 +644,9 @@ static void test_spvoice(void)
     ok(hr == S_OK, "got %#lx.\n", hr);
     ok(test_engine.speak_called, "ISpTTSEngine::Speak was not called.\n");
     ok(test_engine.flags == SPF_DEFAULT, "got %#lx.\n", test_engine.flags);
-    ok(test_engine.frag_list != NULL, "frag_list is NULL.\n");
-    ok(test_engine.frag_list->pNext == NULL, "frag_list->pNext != NULL.\n");
-    ok(test_engine.frag_list->ulTextLen == wcslen(test_text), "got %lu.\n", test_engine.frag_list->ulTextLen);
-    ok(!wcsncmp(test_text, test_engine.frag_list->pTextStart, wcslen(test_text)),
-       "got %s.\n", wine_dbgstr_w(test_engine.frag_list->pTextStart));
+    ok(test_engine.frag_count == 1, "got %Iu.\n", test_engine.frag_count);
+    ok(!wcscmp(test_engine.frags[0].pTextStart, test_text),
+       "got %s.\n", wine_dbgstr_w(test_engine.frags[0].pTextStart));
     ok(test_engine.rate == 0, "got %ld.\n", test_engine.rate);
     ok(test_engine.volume == 100, "got %d.\n", test_engine.volume);
     ok(stream_num == 1, "got %lu.\n", stream_num);
@@ -677,11 +682,9 @@ static void test_spvoice(void)
 
     ok(test_engine.speak_called, "ISpTTSEngine::Speak was not called.\n");
     ok(test_engine.flags == SPF_NLP_SPEAK_PUNC, "got %#lx.\n", test_engine.flags);
-    ok(test_engine.frag_list != NULL, "frag_list is NULL.\n");
-    ok(test_engine.frag_list->pNext == NULL, "frag_list->pNext != NULL.\n");
-    ok(test_engine.frag_list->ulTextLen == wcslen(test_text), "got %lu.\n", test_engine.frag_list->ulTextLen);
-    ok(!wcsncmp(test_text, test_engine.frag_list->pTextStart, wcslen(test_text)),
-       "got %s.\n", wine_dbgstr_w(test_engine.frag_list->pTextStart));
+    ok(test_engine.frag_count == 1, "got %Iu.\n", test_engine.frag_count);
+    ok(!wcscmp(test_engine.frags[0].pTextStart, test_text),
+       "got %s.\n", wine_dbgstr_w(test_engine.frags[0].pTextStart));
     ok(test_engine.rate == 0, "got %ld.\n", test_engine.rate);
     ok(test_engine.volume == 100, "got %d.\n", test_engine.volume);
 
