@@ -148,6 +148,7 @@ struct test_engine
 
     ISpObjectToken *token;
 
+    BOOL simulate_output;
     BOOL speak_called;
     DWORD flags;
     GUID fmtid;
@@ -203,6 +204,7 @@ static void copy_frag_list(const SPVTEXTFRAG *frag_list, SPVTEXTFRAG **ret_frags
 
 static void reset_engine_params(struct test_engine *engine)
 {
+    engine->simulate_output = FALSE;
     engine->speak_called = FALSE;
     engine->flags = 0xdeadbeef;
     memset(&engine->fmtid, 0xde, sizeof(engine->fmtid));
@@ -279,6 +281,9 @@ static HRESULT WINAPI test_engine_Speak(ISpTTSEngine *iface, DWORD flags, REFGUI
     ok(hr == S_OK, "got %#lx.\n", hr);
     actions = ISpTTSEngineSite_GetActions(site);
     ok(actions == SPVES_CONTINUE, "got %#lx.\n", actions);
+
+    if (!engine->simulate_output)
+        return S_OK;
 
     buf = calloc(1, 22050 * 2 / 5);
     for (i = 0; i < 5; i++)
@@ -637,6 +642,7 @@ static void test_spvoice(void)
     ISpVoice_SetVolume(voice, 100);
 
     reset_engine_params(&test_engine);
+    test_engine.simulate_output = TRUE;
     stream_num = 0xdeadbeef;
     start = GetTickCount();
     hr = ISpVoice_Speak(voice, test_text, SPF_DEFAULT, &stream_num);
@@ -664,6 +670,7 @@ static void test_spvoice(void)
     ok(duration < 200, "took %lu ms.\n", duration);
 
     reset_engine_params(&test_engine);
+    test_engine.simulate_output = TRUE;
     stream_num = 0xdeadbeef;
     start = GetTickCount();
     hr = ISpVoice_Speak(voice, test_text, SPF_DEFAULT | SPF_ASYNC | SPF_NLP_SPEAK_PUNC, &stream_num);
@@ -689,6 +696,7 @@ static void test_spvoice(void)
     ok(test_engine.volume == 100, "got %d.\n", test_engine.volume);
 
     reset_engine_params(&test_engine);
+    test_engine.simulate_output = TRUE;
     hr = ISpVoice_Speak(voice, test_text, SPF_DEFAULT | SPF_ASYNC, NULL);
     ok(hr == S_OK, "got %#lx.\n", hr);
 
