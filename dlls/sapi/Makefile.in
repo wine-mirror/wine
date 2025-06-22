@@ -14,4 +14,5 @@ SOURCES = \
 	sapi_typelib.idl \
 	stream.c \
 	token.c \
-	tts.c
+	tts.c \
+	xml.c

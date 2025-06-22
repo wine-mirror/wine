@@ -49,6 +49,7 @@ struct speech_voice
     DWORD actions;
     USHORT volume;
     LONG rate;
+    SPVSTATE state;
     struct async_queue queue;
     CRITICAL_SECTION cs;
 };
@@ -811,6 +812,18 @@ struct speak_task
     DWORD flags;
 };
 
+static void free_frag_list(SPVTEXTFRAG *frag)
+{
+    SPVTEXTFRAG *next;
+
+    while (frag)
+    {
+        next = frag->pNext;
+        free(frag);
+        frag = next;
+    }
+}
+
 static HRESULT set_output_format(ISpStreamFormat *output, ISpTTSEngine *engine, GUID *fmtid, WAVEFORMATEX **wfx)
 {
     GUID output_fmtid;
@@ -894,7 +907,7 @@ done:
     }
     CoTaskMemFree(wfx);
     ISpTTSEngine_Release(speak_task->engine);
-    free(speak_task->frag_list);
+    free_frag_list(speak_task->frag_list);
     ISpTTSEngineSite_Release(speak_task->site);
 
     if (speak_task->result)
@@ -911,23 +924,52 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
     struct speech_voice *This = impl_from_ISpVoice(iface);
     ISpTTSEngineSite *site = NULL;
     ISpTTSEngine *engine = NULL;
-    SPVTEXTFRAG *frag;
+    SPVTEXTFRAG *frag_list;
+    BOOL async, purge, persist_xml;
+    DWORD parse_flag, nlp_flags;
+    BOOL xml;
     struct speak_task *speak_task = NULL;
     struct async_result *result = NULL;
-    size_t contents_len, contents_size;
+    size_t contents_len;
     ULONG stream_num;
     HRESULT hr;
 
     TRACE("(%p, %p, %#lx, %p).\n", iface, contents, flags, stream_num_out);
 
-    flags &= ~SPF_IS_NOT_XML;
-    if (flags & ~(SPF_ASYNC | SPF_PURGEBEFORESPEAK | SPF_NLP_SPEAK_PUNC))
+    async = flags & SPF_ASYNC;
+    purge = flags & SPF_PURGEBEFORESPEAK;
+    persist_xml = flags & SPF_PERSIST_XML;
+    parse_flag = flags & SPF_PARSE_MASK;
+    nlp_flags = flags & SPF_NLP_MASK;
+
+    xml = FALSE;
+    if ((flags & SPF_IS_XML) && (flags & SPF_IS_NOT_XML))
+        return E_INVALIDARG;
+    else if (flags & SPF_IS_XML)
+        xml = TRUE;
+    else if (!(flags & SPF_IS_NOT_XML))
     {
-        FIXME("flags %#lx not implemented.\n", flags & ~(SPF_ASYNC | SPF_PURGEBEFORESPEAK | SPF_NLP_SPEAK_PUNC));
+        if (contents)
+        {
+            const WCHAR *c = contents;
+
+            while (*c && isxmlspace(*c)) c++;
+            xml = *c == '<';
+        }
+    }
+
+    if (parse_flag == SPF_PARSE_MASK)
+        return E_INVALIDARG;
+
+    flags &= ~(SPF_ASYNC | SPF_PURGEBEFORESPEAK | SPF_IS_XML | SPF_IS_NOT_XML | SPF_PERSIST_XML |
+               SPF_PARSE_MASK | SPF_NLP_MASK);
+    if (flags)
+    {
+        FIXME("flags %#lx not implemented.\n", flags);
         return E_NOTIMPL;
     }
 
-    if (flags & SPF_PURGEBEFORESPEAK)
+    if (purge)
     {
         ISpAudio *audio;
 
@@ -954,14 +996,33 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
     else if (!contents)
         return E_POINTER;
 
-    contents_len = wcslen(contents);
-    contents_size = sizeof(WCHAR) * (contents_len + 1);
-
     if (!This->output)
     {
         /* Create a new output stream with the default output. */
         if (FAILED(hr = ISpVoice_SetOutput(iface, NULL, TRUE)))
             return hr;
+    }
+
+    if (xml)
+    {
+        if (FAILED(hr = parse_sapi_xml(contents, parse_flag, persist_xml, &This->state, &frag_list)))
+            return hr;
+    }
+    else
+    {
+        contents_len = wcslen(contents);
+
+        if (!(frag_list = malloc(sizeof(*frag_list) + (contents_len + 1) * sizeof(WCHAR))))
+            return E_OUTOFMEMORY;
+
+        memcpy(frag_list + 1, contents, (contents_len + 1) * sizeof(WCHAR));
+        memcpy(&frag_list->State, &This->state, sizeof(This->state));
+
+        frag_list->pNext           = NULL;
+        frag_list->State.eAction   = SPVA_Speak;
+        frag_list->pTextStart      = (WCHAR *)(frag_list + 1);
+        frag_list->ulTextLen       = contents_len;
+        frag_list->ulTextSrcOffset = 0;
     }
 
     EnterCriticalSection(&This->cs);
@@ -972,30 +1033,21 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
         if (FAILED(hr = ISpVoice_SetVoice(iface, NULL)))
         {
             LeaveCriticalSection(&This->cs);
-            return hr;
+            goto fail;
         }
     }
+
     if (!This->engine &&
         FAILED(hr = ISpObjectToken_CreateInstance(This->engine_token, NULL, CLSCTX_ALL, &IID_ISpTTSEngine, (void **)&This->engine)))
     {
         LeaveCriticalSection(&This->cs);
         ERR("Failed to create engine: %#lx.\n", hr);
-        return hr;
+        goto fail;
     }
     engine = This->engine;
     ISpTTSEngine_AddRef(engine);
 
     LeaveCriticalSection(&This->cs);
-
-    if (!(frag = malloc(sizeof(*frag) + contents_size)))
-        return E_OUTOFMEMORY;
-    memset(frag, 0, sizeof(*frag));
-    memcpy(frag + 1, contents, contents_size);
-    frag->State.eAction = SPVA_Speak;
-    frag->State.Volume  = 100;
-    frag->pTextStart    = (WCHAR *)(frag + 1);
-    frag->ulTextLen     = contents_len;
-    frag->ulTextSrcOffset = 0;
 
     stream_num = InterlockedIncrement(&This->cur_stream_num);
     if (FAILED(hr = ttsenginesite_create(This, stream_num, &site)))
@@ -1010,11 +1062,11 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
     speak_task->result    = NULL;
     speak_task->voice     = This;
     speak_task->engine    = engine;
-    speak_task->frag_list = frag;
+    speak_task->frag_list = frag_list;
     speak_task->site      = site;
-    speak_task->flags     = flags & SPF_NLP_SPEAK_PUNC;
+    speak_task->flags     = nlp_flags;
 
-    if (!(flags & SPF_ASYNC))
+    if (!async)
     {
         if (!(result = malloc(sizeof(*result))))
         {
@@ -1035,7 +1087,7 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
     if (stream_num_out)
         *stream_num_out = stream_num;
 
-    if (flags & SPF_ASYNC)
+    if (async)
         return S_OK;
     else
     {
@@ -1049,7 +1101,7 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
 fail:
     if (site) ISpTTSEngineSite_Release(site);
     if (engine) ISpTTSEngine_Release(engine);
-    free(frag);
+    free_frag_list(frag_list);
     free(speak_task);
     if (result)
     {
@@ -1499,6 +1551,10 @@ HRESULT speech_voice_create(IUnknown *outer, REFIID iid, void **obj)
     This->actions = SPVES_CONTINUE;
     This->volume = 100;
     This->rate = 0;
+
+    memset(&This->state, 0, sizeof(This->state));
+    This->state.Volume = 100;
+
     memset(&This->queue, 0, sizeof(This->queue));
 
     InitializeCriticalSection(&This->cs);

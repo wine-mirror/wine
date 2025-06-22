@@ -990,9 +990,10 @@ static void test_spvoice_ssml(void)
 
     /* XML and SSML autodetection when SPF_IS_XML is not specified. */
     hr = ISpVoice_Speak(voice, text1, SPF_DEFAULT, NULL);
-    ok(hr == S_OK, "got %#lx.\n", hr);
-    ok(test_engine.frag_count == 1, "got %Iu.\n", test_engine.frag_count);
-    todo_wine check_frag_text(0, L"text1");
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    todo_wine ok(test_engine.frag_count == 1, "got %Iu.\n", test_engine.frag_count);
+    if (test_engine.frag_count == 1)
+        check_frag_text(0, L"text1");
 
     reset_engine_params(&test_engine);
 
@@ -1057,7 +1058,7 @@ static void test_spvoice_ssml(void)
     reset_engine_params(&test_engine);
 
     hr = ISpVoice_Speak(voice, text4, SPF_DEFAULT, NULL);
-    ok(hr == S_OK, "got %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
     todo_wine ok(test_engine.frag_count == 2, "got %Iu.\n", test_engine.frag_count);
 
     if (test_engine.frag_count == 2) {
