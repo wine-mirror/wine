@@ -2935,15 +2935,14 @@ static void test_device_interface_properties(void)
                 type = DEVPROP_TYPE_EMPTY;
                 ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &key, &type, NULL, 0, &req, 0);
                 err = GetLastError();
-                todo_wine_if(!ret && err == ERROR_NOT_FOUND)
-                    ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INSUFFICIENT_BUFFER);
-                todo_wine_if(!ret && err == ERROR_NOT_FOUND) ok(type == exp_type, "%#lx != %#lx\n", type, exp_type);
+                ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INSUFFICIENT_BUFFER);
+                ok(type == exp_type, "%#lx != %#lx\n", type, exp_type);
 
                 size = req;
                 buf = calloc( 1, size );
                 ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &key, &type, buf, size, &req, 0);
                 err = GetLastError();
-                todo_wine_if(!ret && err == ERROR_NOT_FOUND) ok(ret, "SetupDiGetDeviceInterfacePropertyW failed: %lu\n", err);
+                ok(ret, "SetupDiGetDeviceInterfacePropertyW failed: %lu\n", err);
                 free(buf);
 
                 winetest_pop_context();

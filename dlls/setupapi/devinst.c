@@ -3301,16 +3301,38 @@ BOOL WINAPI SetupDiGetDeviceInterfacePropertyW( HDEVINFO devinfo, SP_DEVICE_INTE
         return FALSE;
     }
 
+    ret = ERROR_SUCCESS;
     if (IsEqualDevPropKey( *key, DEVPKEY_DeviceInterface_Enabled ))
     {
         *type = DEVPROP_TYPE_BOOLEAN;
-        ret = ERROR_SUCCESS;
         if (buf_size >= sizeof( DEVPROP_BOOLEAN ))
             *buf = (iface->flags & SPINT_ACTIVE) ? DEVPROP_TRUE : DEVPROP_FALSE;
         else
             ret = ERROR_INSUFFICIENT_BUFFER;
         if (req_size)
             *req_size = sizeof( DEVPROP_BOOLEAN );
+    }
+    else if (IsEqualDevPropKey( *key, DEVPKEY_DeviceInterface_ClassGuid ))
+    {
+        *type = DEVPROP_TYPE_GUID;
+        if (buf_size >= sizeof( iface->class ))
+            memcpy( buf, &iface->class, sizeof( iface->class ) );
+        else
+            ret = ERROR_INSUFFICIENT_BUFFER;
+        if (req_size)
+            *req_size = sizeof( GUID );
+    }
+    else if (IsEqualDevPropKey( *key, DEVPKEY_Device_InstanceId ))
+    {
+        DWORD size = (wcslen( iface->device->instanceId ) + 1) * sizeof( WCHAR );
+
+        *type = DEVPROP_TYPE_STRING;
+        if (buf_size >= size)
+            wcscpy( (WCHAR *)buf, iface->device->instanceId );
+        else
+            ret = ERROR_INSUFFICIENT_BUFFER;
+        if (req_size)
+            *req_size = size;
     }
     else
         ret = get_device_reg_property( iface->refstr_key, key, type, buf, buf_size, req_size, flags );
