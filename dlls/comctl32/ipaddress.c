@@ -529,7 +529,7 @@ IPADDRESS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
  	    if(isdigit(c)) {
 		if(len == 2 && startsel==endsel && endsel==len) {
 		    /* process the digit press before we check the field */
-		    int return_val = CallWindowProcW (part->OrigProc, hwnd, uMsg, wParam, lParam);
+		    LRESULT return_val = CallWindowProcW (part->OrigProc, hwnd, uMsg, wParam, lParam);
 
 		    /* if the field value was changed stay at the current field */
 		    if(!IPADDRESS_ConstrainField(infoPtr, index))
