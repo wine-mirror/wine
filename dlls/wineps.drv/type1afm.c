@@ -1039,25 +1039,17 @@ static BOOL ReadAFMFile(LPCWSTR filename)
  *  Reads all Type 1 AFM files in a directory.
  *
  */
-static BOOL ReadAFMDir(LPCSTR dirname)
+static BOOL ReadAFMDir(const WCHAR *dirname)
 {
-    WCHAR *path = wine_get_dos_file_name( dirname );
     struct _wfinddata_t data;
     intptr_t handle;
     WCHAR *p, *filename;
     BOOL ret = TRUE;
+    DWORD size = 8 + wcslen(dirname) + 2 + 1;
 
-    if (!path) return TRUE;
-    if (!(filename = HeapAlloc( GetProcessHeap(), 0, lstrlenW(path) + 256 )))
-    {
-        HeapFree( GetProcessHeap(), 0, path );
-        return FALSE;
-    }
-    lstrcpyW( filename, path );
-    HeapFree( GetProcessHeap(), 0, path );
-    p = filename + lstrlenW(filename);
-    *p++ = '\\';
-    lstrcpyW( p, L"*" );
+    if (!(filename = malloc( size * sizeof(WCHAR) ))) return FALSE;
+    swprintf( filename, size, L"\\\\?\\unix%s\\*", dirname );
+    p = filename + wcslen(filename) - 1;
 
     handle = _wfindfirst( filename, &data );
     if (handle != -1)
@@ -1071,8 +1063,7 @@ static BOOL ReadAFMDir(LPCSTR dirname)
         } while (!_wfindnext( handle, &data ));
     }
     _findclose( handle );
-
-    HeapFree( GetProcessHeap(), 0, filename );
+    free( filename );
     return ret;
 }
 
@@ -1091,8 +1082,7 @@ BOOL PSDRV_GetType1Metrics(void)
 {
     HKEY hkey;
     DWORD len;
-    LPWSTR valueW;
-    LPSTR valueA, ptr;
+    WCHAR *value, *ptr, *next;
 
     /* @@ Wine registry key: HKCU\Software\Wine\Fonts */
     if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Fonts", &hkey) != ERROR_SUCCESS)
@@ -1101,28 +1091,21 @@ BOOL PSDRV_GetType1Metrics(void)
     if (RegQueryValueExW( hkey, L"AFMPath", NULL, NULL, NULL, &len ) == ERROR_SUCCESS)
     {
         len += sizeof(WCHAR);
-        valueW = HeapAlloc( PSDRV_Heap, 0, len );
-        if (RegQueryValueExW( hkey, L"AFMPath", NULL, NULL, (BYTE *)valueW, &len ) == ERROR_SUCCESS)
+        value = HeapAlloc( PSDRV_Heap, 0, len );
+        if (RegQueryValueExW( hkey, L"AFMPath", NULL, NULL, (BYTE *)value, &len ) == ERROR_SUCCESS)
         {
-            len = WideCharToMultiByte( CP_UNIXCP, 0, valueW, -1, NULL, 0, NULL, NULL );
-            valueA = HeapAlloc( PSDRV_Heap, 0, len );
-            WideCharToMultiByte( CP_UNIXCP, 0, valueW, -1, valueA, len, NULL, NULL );
-            TRACE( "got AFM font path %s\n", debugstr_a(valueA) );
-            ptr = valueA;
-            while (ptr)
+            for (ptr = value; ptr; ptr = next)
             {
-                LPSTR next = strchr( ptr, ':' );
+                next = wcschr( ptr, ':' );
                 if (next) *next++ = 0;
                 if (!ReadAFMDir( ptr ))
                 {
                     RegCloseKey(hkey);
                     return FALSE;
                 }
-                ptr = next;
             }
-            HeapFree( PSDRV_Heap, 0, valueA );
         }
-        HeapFree( PSDRV_Heap, 0, valueW );
+        HeapFree( PSDRV_Heap, 0, value );
     }
 
     RegCloseKey(hkey);
