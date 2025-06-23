@@ -1815,6 +1815,9 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetFinalPathNameByHandleW( HANDLE file, LPWSTR pa
     info->Name.Buffer[info->Name.Length / sizeof(WCHAR)] = 0;
     info->Name.Length -= 4 * sizeof(WCHAR);
     info->Name.Buffer += 4;
+    /* convert slashes in case of \??\unix path */
+    for (ULONG i = 0; i < info->Name.Length / sizeof(WCHAR); i++)
+        if (info->Name.Buffer[i] == '/') info->Name.Buffer[i] = '\\';
 
     /* FILE_NAME_OPENED is not supported yet, and would require Wineserver changes */
     if (flags & FILE_NAME_OPENED)
