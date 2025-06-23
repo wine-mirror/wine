@@ -179,7 +179,7 @@ static struct atom_entry *find_atom_entry( struct atom_table *table, const struc
 static atom_t add_atom( struct atom_table *table, const struct unicode_str *str )
 {
     struct atom_entry *entry;
-    unsigned short hash = hash_strW( str->str, str->len, ARRAY_SIZE(table->entries) );
+    unsigned short hash;
     atom_t atom = 0;
 
     if (!str->len)
@@ -192,6 +192,8 @@ static atom_t add_atom( struct atom_table *table, const struct unicode_str *str 
         set_error( STATUS_INVALID_PARAMETER );
         return 0;
     }
+
+    hash = hash_strW( str->str, str->len, ARRAY_SIZE(table->entries) );
     if ((entry = find_atom_entry( table, str, hash )))  /* exists already */
     {
         entry->count++;
@@ -241,6 +243,7 @@ static void delete_atom( struct atom_table *table, atom_t atom, int if_pinned )
 static atom_t find_atom( struct atom_table *table, const struct unicode_str *str )
 {
     struct atom_entry *entry;
+    unsigned short hash;
 
     if (!str->len)
     {
@@ -252,11 +255,14 @@ static atom_t find_atom( struct atom_table *table, const struct unicode_str *str
         set_error( STATUS_INVALID_PARAMETER );
         return 0;
     }
-    if (table && (entry = find_atom_entry( table, str,
-                                           hash_strW( str->str, str->len, ARRAY_SIZE(table->entries) ))))
-        return entry->atom;
-    set_error( STATUS_OBJECT_NAME_NOT_FOUND );
-    return 0;
+
+    hash = hash_strW( str->str, str->len, ARRAY_SIZE(table->entries) );
+    if (!(entry = find_atom_entry( table, str, hash )))
+    {
+        set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+        return 0;
+    }
+    return entry->atom;
 }
 
 static struct atom_table *get_global_table( struct winstation *winstation, int create )
@@ -292,11 +298,13 @@ atom_t find_global_atom( struct winstation *winstation, const struct unicode_str
 {
     struct atom_table *table = get_global_table( winstation, 0 );
     struct atom_entry *entry;
+    unsigned short hash;
 
     if (!str->len || str->len > MAX_ATOM_LEN || !table) return 0;
-    if ((entry = find_atom_entry( table, str, hash_strW( str->str, str->len, ARRAY_SIZE(table->entries) ))))
-        return entry->atom;
-    return 0;
+
+    hash = hash_strW( str->str, str->len, ARRAY_SIZE(table->entries) );
+    if (!(entry = find_atom_entry( table, str, hash ))) return 0;
+    return entry->atom;
 }
 
 /* increment the ref count of a global atom; used for window properties */
