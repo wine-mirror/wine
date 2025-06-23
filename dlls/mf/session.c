@@ -19,6 +19,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include <float.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -92,19 +93,24 @@ struct queued_topology
 enum session_state
 {
     SESSION_STATE_STOPPED = 0,
-    SESSION_STATE_STARTING_SOURCES,
-    SESSION_STATE_PREROLLING_SINKS,
-    SESSION_STATE_STARTING_SINKS,
-    SESSION_STATE_RESTARTING_SOURCES,
     SESSION_STATE_STARTED,
-    SESSION_STATE_PAUSING_SINKS,
-    SESSION_STATE_PAUSING_SOURCES,
     SESSION_STATE_PAUSED,
-    SESSION_STATE_STOPPING_SINKS,
-    SESSION_STATE_STOPPING_SOURCES,
-    SESSION_STATE_FINALIZING_SINKS,
     SESSION_STATE_CLOSED,
     SESSION_STATE_SHUT_DOWN,
+
+    /* STOPPED | PAUSED | STARTED -> STARTED transition */
+    SESSION_STATE_RESTARTING_SOURCES, /* -> SESSION_STATE_STARTING_SOURCES */
+    SESSION_STATE_STARTING_SOURCES,   /* -> SESSION_STATE_PREROLLING_SINKS | SESSION_STATE_STARTING_SINKS */
+    SESSION_STATE_PREROLLING_SINKS,   /* -> SESSION_STATE_STARTING_SINKS */
+    SESSION_STATE_STARTING_SINKS,     /* -> SESSION_STATE_STARTED */
+    /* STARTED -> PAUSED transition */
+    SESSION_STATE_PAUSING_SINKS,      /* -> SESSION_STATE_PAUSING_SOURCES */
+    SESSION_STATE_PAUSING_SOURCES,    /* -> SESSION_STATE_PAUSED */
+    /* STARTED | PAUSED -> STOPPED transition */
+    SESSION_STATE_STOPPING_SINKS,     /* -> SESSION_STATE_STOPPING_SOURCES */
+    SESSION_STATE_STOPPING_SOURCES,   /* -> SESSION_STATE_STOPPED */
+    /* STARTED | PAUSED | STOPPED -> CLOSED transition */
+    SESSION_STATE_FINALIZING_SINKS,
 };
 
 enum object_state
@@ -1154,11 +1160,14 @@ static void session_start(struct media_session *session, const GUID *time_format
             session->presentation.start_position.vt = VT_EMPTY;
             PropVariantCopy(&session->presentation.start_position, start_position);
 
-            /* SESSION_STATE_STARTED -> SESSION_STATE_RESTARTING_SOURCES -> SESSION_STATE_STARTED */
             session->state = SESSION_STATE_RESTARTING_SOURCES;
             break;
-        default:
+        case SESSION_STATE_CLOSED:
+        case SESSION_STATE_SHUT_DOWN:
             session_command_complete_with_event(session, MESessionStarted, MF_E_INVALIDREQUEST, NULL);
+            break;
+        default:
+            assert(0);
             break;
     }
 }
@@ -1235,8 +1244,14 @@ static void session_pause(struct media_session *session)
         case SESSION_STATE_STOPPED:
             hr = MF_E_SESSION_PAUSEWHILESTOPPED;
             break;
-        default:
+        case SESSION_STATE_PAUSED:
+        case SESSION_STATE_CLOSED:
+        case SESSION_STATE_SHUT_DOWN:
             hr = MF_E_INVALIDREQUEST;
+            break;
+        default:
+            assert(0);
+            break;
     }
 
     if (FAILED(hr))
@@ -1298,8 +1313,12 @@ static void session_stop(struct media_session *session)
         case SESSION_STATE_STOPPED:
             hr = S_OK;
             /* fallthrough */
-        default:
+        case SESSION_STATE_CLOSED:
+        case SESSION_STATE_SHUT_DOWN:
             session_command_complete_with_event(session, MESessionStopped, hr, NULL);
+            break;
+        default:
+            assert(0);
             break;
     }
 }
@@ -1342,7 +1361,6 @@ static void session_close(struct media_session *session)
     switch (session->state)
     {
         case SESSION_STATE_STOPPED:
-        case SESSION_STATE_RESTARTING_SOURCES:
             hr = session_finalize_sinks(session);
             break;
         case SESSION_STATE_STARTED:
@@ -1351,8 +1369,12 @@ static void session_close(struct media_session *session)
             if (SUCCEEDED(hr = IMFPresentationClock_Stop(session->clock)))
                 session->state = SESSION_STATE_STOPPING_SINKS;
             break;
-        default:
+        case SESSION_STATE_CLOSED:
+        case SESSION_STATE_SHUT_DOWN:
             hr = MF_E_INVALIDREQUEST;
+            break;
+        default:
+            assert(0);
             break;
     }
 
@@ -2808,6 +2830,7 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
         LeaveCriticalSection(&session->cs);
         return S_OK;
     }
+    assert( session->state <= SESSION_STATE_SHUT_DOWN );
 
     list_remove(&op->entry);
     session->presentation.flags |= SESSION_FLAG_PENDING_COMMAND;
@@ -3308,6 +3331,7 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
                 break;
 
             session_flush_nodes(session);
+            session->state = SESSION_STATE_STOPPED;
 
             /* Start sources */
             LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
