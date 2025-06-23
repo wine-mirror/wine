@@ -1540,17 +1540,20 @@ static UINT make_type_sig( const type_t *type, BYTE *buf )
         len += make_type_sig( type_array_get_element_type(type), buf + len );
         break;
 
-    case TYPE_DELEGATE:
     case TYPE_INTERFACE:
+        buf[len++] = ELEMENT_TYPE_OBJECT;
+        break;
+
+    case TYPE_DELEGATE:
     case TYPE_RUNTIMECLASS:
-        buf[0] = ELEMENT_TYPE_CLASS;
-        len = encode_int( typedef_or_ref(TABLE_TYPEREF, type->md.ref), buf + 1 ) + 1;
+        buf[len++] = ELEMENT_TYPE_CLASS;
+        len += encode_int( typedef_or_ref(TABLE_TYPEREF, type->md.ref), buf + 1 );
         break;
 
     case TYPE_ENUM:
     case TYPE_STRUCT:
-        buf[0] = ELEMENT_TYPE_VALUETYPE;
-        len = encode_int( typedef_or_ref(TABLE_TYPEREF, type->md.ref), buf + 1 ) + 1;
+        buf[len++] = ELEMENT_TYPE_VALUETYPE;
+        len += encode_int( typedef_or_ref(TABLE_TYPEREF, type->md.ref), buf + 1 );
         break;
 
     case TYPE_BASIC:
