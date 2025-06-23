@@ -188,3 +188,5 @@
 @ stub CM_Unregister_Device_Interface_ExA
 @ stub CM_Unregister_Device_Interface_ExW
 @ stdcall CM_Unregister_Notification(ptr)
+@ stdcall DevFreeObjects(long ptr)
+@ stdcall DevGetObjects(long long long ptr long ptr ptr ptr)

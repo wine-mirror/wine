@@ -24,6 +24,8 @@
 #include "dbt.h"
 #include "wine/plugplay.h"
 #include "setupapi.h"
+#include "devfiltertypes.h"
+#include "devquery.h"
 
 #include "initguid.h"
 #include "devpkey.h"
@@ -291,4 +293,17 @@ CONFIGRET WINAPI CM_Get_Device_Interface_PropertyW( LPCWSTR device_interface, co
     default:
         return CR_FAILURE;
     }
+}
+
+HRESULT WINAPI DevGetObjects( DEV_OBJECT_TYPE type, ULONG flags, ULONG props_len, const DEVPROPCOMPKEY *props, ULONG filters_len,
+                              const DEVPROP_FILTER_EXPRESSION *filters, ULONG *objs_len, const DEV_OBJECT **objs )
+{
+    FIXME( "(%d, %#lx, %lu, %p, %lu, %p, %p, %p): stub!\n", type, flags, props_len, props, filters_len, filters, objs_len, objs );
+    return E_NOTIMPL;
+}
+
+void WINAPI DevFreeObjects( ULONG objs_len, const DEV_OBJECT *objs )
+{
+    FIXME( "(%lu, %p): stub!\n", objs_len, objs );
+    return;
 }

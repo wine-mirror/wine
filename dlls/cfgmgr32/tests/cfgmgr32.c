@@ -28,6 +28,8 @@
 #include "setupapi.h"
 #include "cfgmgr32.h"
 #include "ntddvdeo.h"
+#include "devfiltertypes.h"
+#include "devquery.h"
 
 static void test_CM_MapCrToWin32Err(void)
 {
@@ -498,10 +500,162 @@ static void test_CM_Get_Device_Interface_List(void)
     ok(ret == CR_NO_SUCH_DEVICE_INTERFACE || broken(ret == CR_INVALID_DATA) /* w7 */, "got %#lx.\n", ret);
 }
 
+static void test_DevGetObjects( void )
+{
+    struct {
+        DEV_OBJECT_TYPE object_type;
+        struct {
+            DEVPROPKEY key;
+            DEVPROPTYPE type;
+        } exp_props[3];
+        ULONG props_len;
+    } test_cases[] = {
+        {
+            DevObjectTypeDeviceInterface,
+            {
+                { DEVPKEY_DeviceInterface_ClassGuid, DEVPROP_TYPE_GUID },
+                { DEVPKEY_DeviceInterface_Enabled, DEVPROP_TYPE_BOOLEAN },
+                { DEVPKEY_Device_InstanceId, DEVPROP_TYPE_STRING }
+            },
+            3,
+        },
+        {
+            DevObjectTypeDeviceInterfaceDisplay,
+            {
+                { DEVPKEY_DeviceInterface_ClassGuid, DEVPROP_TYPE_GUID },
+                { DEVPKEY_DeviceInterface_Enabled, DEVPROP_TYPE_BOOLEAN },
+                { DEVPKEY_Device_InstanceId, DEVPROP_TYPE_STRING }
+            },
+            3,
+        },
+    };
+    const DEV_OBJECT *objects = NULL;
+    HDEVINFO set;
+    HRESULT hr;
+    ULONG i, len = 0;
+
+    hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 1, NULL, 0, NULL, &len, &objects );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+
+    hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 1, NULL, &len, &objects );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+
+    hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, (void *)0xdeadbeef, 0, NULL, &len, &objects );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+
+    hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 0, (void *)0xdeadbeef, &len, &objects );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+
+    hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagUpdateResults, 0, NULL, 0, (void *)0xdeadbeef, &len, &objects );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+
+    hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagAsyncClose, 0, NULL, 0, (void *)0xdeadbeef, &len, &objects );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+
+    hr = DevGetObjects( DevObjectTypeDeviceInterface, 0xdeadbeef, 0, NULL, 0, (void *)0xdeadbeef, &len, &objects );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+
+    len = 0xdeadbeef;
+    objects = (DEV_OBJECT *)0xdeadbeef;
+    hr = DevGetObjects( DevObjectTypeUnknown, DevQueryFlagNone, 0, NULL, 0, NULL, &len, &objects );
+    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    todo_wine ok( len == 0, "got len %lu\n", len );
+    todo_wine ok( !objects, "got objects %p\n", objects );
+
+    len = 0xdeadbeef;
+    objects = (DEV_OBJECT *)0xdeadbeef;
+    hr = DevGetObjects( 0xdeadbeef, DevQueryFlagNone, 0, NULL, 0, NULL, &len, &objects );
+    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    todo_wine ok( len == 0, "got len %lu\n", len );
+    todo_wine ok( !objects, "got objects %p\n", objects );
+
+    set = SetupDiCreateDeviceInfoListExW( NULL, NULL, NULL, NULL );
+    ok( set != INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed: %lu\n", GetLastError() );
+
+    for (i = 0; i < ARRAY_SIZE( test_cases ); i++)
+    {
+        const DEV_OBJECT *objects = NULL;
+        ULONG j, len = 0;
+
+        objects = NULL;
+        len = 0;
+        winetest_push_context( "test_cases[%lu]", i );
+        hr = DevGetObjects( test_cases[i].object_type, DevQueryFlagAllProperties, 0, NULL, 0, NULL, &len, &objects );
+        todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+        for (j = 0; j < len; j++)
+        {
+            ULONG rem_props = test_cases[i].props_len, k;
+            const DEV_OBJECT *obj = &objects[j];
+
+            winetest_push_context( "device %s", debugstr_w( obj->pszObjectId ) );
+            ok( obj->ObjectType == test_cases[i].object_type, "got ObjectType %d\n", obj->ObjectType );
+            todo_wine ok( obj->cPropertyCount >= test_cases[i].props_len, "got cPropertyCount %lu, should be >= %lu\n",
+                          obj->cPropertyCount, test_cases[i].props_len );
+            for (k = 0; k < obj->cPropertyCount && rem_props; k++)
+            {
+                const DEVPROPERTY *property = &obj->pProperties[k];
+                ULONG l;
+
+                for (l = 0; l < test_cases[i].props_len; l++)
+                {
+                    if (IsEqualDevPropKey( property->CompKey.Key, test_cases[i].exp_props[l].key ))
+                    {
+                        SP_INTERFACE_DEVICE_DATA iface_data = {0};
+                        DEVPROPTYPE type = DEVPROP_TYPE_EMPTY;
+                        ULONG size = 0;
+                        CONFIGRET ret;
+                        BYTE *buf;
+
+                        winetest_push_context( "exp_props[%lu]", l );
+                        rem_props--;
+                        ok( property->Type == test_cases[i].exp_props[l].type, "got type %#lx\n", property->Type );
+
+                        /* Ensure the value matches the value retrieved via SetupDiGetDeviceInterfacePropertyW */
+                        buf = calloc( property->BufferSize, 1 );
+                        iface_data.cbSize = sizeof( iface_data );
+                        ret = SetupDiOpenDeviceInterfaceW( set, obj->pszObjectId, 0, &iface_data );
+                        ok( ret, "SetupDiOpenDeviceInterfaceW failed: %lu\n", GetLastError() );
+                        ret = SetupDiGetDeviceInterfacePropertyW( set, &iface_data, &property->CompKey.Key, &type, buf,
+                                                                  property->BufferSize, &size, 0 );
+                        ok( ret, "SetupDiGetDeviceInterfacePropertyW failed: %lu\n", GetLastError() );
+                        SetupDiDeleteDeviceInterfaceData( set, &iface_data );
+
+                        ok( size == property->BufferSize, "got size %lu\n", size );
+                        ok( type == property->Type, "got type %#lx\n", type );
+                        if (size == property->BufferSize)
+                        {
+                            switch (type)
+                            {
+                            case DEVPROP_TYPE_STRING:
+                                ok( !wcsicmp( (WCHAR *)buf, (WCHAR *)property->Buffer ), "got instance id %s != %s\n",
+                                    debugstr_w( (WCHAR *)buf ), debugstr_w( (WCHAR *)property->Buffer ) );
+                                break;
+                            default:
+                                ok( !memcmp( buf, property->Buffer, size ), "got mistmatching property values\n" );
+                                break;
+                            }
+                        }
+                        free( buf );
+                        winetest_pop_context();
+                        break;
+                    }
+                }
+            }
+            todo_wine ok( rem_props == 0, "got rem %lu != 0\n", rem_props );
+            winetest_pop_context();
+        }
+        winetest_pop_context();
+        DevFreeObjects( len, objects );
+    }
+
+    SetupDiDestroyDeviceInfoList( set );
+}
+
 START_TEST(cfgmgr32)
 {
     test_CM_MapCrToWin32Err();
     test_CM_Get_Device_ID_List();
     test_CM_Register_Notification();
     test_CM_Get_Device_Interface_List();
+    test_DevGetObjects();
 }
