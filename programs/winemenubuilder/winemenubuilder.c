@@ -2715,8 +2715,7 @@ static void cleanup_menus(void)
 
 static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
 {
-    char *utf8lnkPath = NULL;
-    WCHAR *winLnkPath = NULL;
+    WCHAR *winLnkPath;
     IShellLinkW *shellLink = NULL;
     IPersistFile *persistFile = NULL;
     WCHAR szTmp[MAX_PATH];
@@ -2728,14 +2727,15 @@ static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
     ICONDIRENTRY *pIconDirEntries = NULL;
     int numEntries;
     HRESULT hr;
+    DWORD size = 8 + wcslen(lnkPath) + 1;
 
-    utf8lnkPath = wchars_to_utf8_chars(lnkPath);
-    winLnkPath = wine_get_dos_file_name(utf8lnkPath);
+    winLnkPath = malloc( size * sizeof(WCHAR) );
     if (winLnkPath == NULL)
     {
-        WINE_ERR("could not convert %s to DOS path\n", utf8lnkPath);
+        WINE_ERR("could not convert %s to DOS path\n", debugstr_w(lnkPath));
         goto end;
     }
+    swprintf( winLnkPath, size, L"\\\\?\\unix%s", lnkPath );
 
     hr = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IShellLinkW, (LPVOID*)&shellLink);
@@ -2787,8 +2787,7 @@ static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
     }
 
 end:
-    free(utf8lnkPath);
-    heap_free(winLnkPath);
+    free(winLnkPath);
     if (shellLink != NULL)
         IShellLinkW_Release(shellLink);
     if (persistFile != NULL)
