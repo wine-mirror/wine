@@ -5068,6 +5068,7 @@ LRESULT destroy_window( HWND hwnd )
         window_surface_release( surface );
     }
 
+    detach_opengl_drawables( hwnd );
     vulkan_detach_surfaces( &vulkan_surfaces );
     if (win->opengl_drawable) opengl_drawable_release( win->opengl_drawable );
     user_driver->pDestroyWindow( hwnd );
@@ -5225,6 +5226,7 @@ void destroy_thread_windows(void)
         free_list = entry->next;
         TRACE( "destroying %p\n", entry );
 
+        detach_opengl_drawables( entry->handle );
         user_driver->pDestroyWindow( entry->handle );
         if (entry->opengl_drawable) opengl_drawable_release( entry->opengl_drawable );
 

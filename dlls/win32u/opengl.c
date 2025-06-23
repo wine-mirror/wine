@@ -163,6 +163,31 @@ static void register_extension( char *list, size_t size, const char *name )
     }
 }
 
+static pthread_mutex_t drawables_lock = PTHREAD_MUTEX_INITIALIZER;
+static struct list drawables = LIST_INIT( drawables );
+
+/* drawables_lock must be held */
+static void opengl_drawable_detach( struct opengl_drawable *drawable )
+{
+    list_remove( &drawable->entry );
+    list_init( &drawable->entry );
+}
+
+void detach_opengl_drawables( HWND hwnd )
+{
+    struct opengl_drawable *drawable, *next;
+
+    pthread_mutex_lock( &drawables_lock );
+
+    LIST_FOR_EACH_ENTRY_SAFE( drawable, next, &drawables, struct opengl_drawable, entry )
+    {
+        if (drawable->hwnd != hwnd) continue;
+        opengl_drawable_detach( drawable );
+    }
+
+    pthread_mutex_unlock( &drawables_lock );
+}
+
 void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *funcs, int format, HWND hwnd, HDC hdc )
 {
     struct opengl_drawable *drawable;
@@ -175,6 +200,14 @@ void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *fun
     drawable->interval = INT_MIN;
     drawable->hwnd = hwnd;
     drawable->hdc = hdc;
+
+    if (!hwnd) list_init( &drawable->entry ); /* pbuffer, keep it unlinked */
+    else
+    {
+        pthread_mutex_lock( &drawables_lock );
+        list_add_tail( &drawables, &drawable->entry );
+        pthread_mutex_unlock( &drawables_lock );
+    }
 
     TRACE( "created %s\n", debugstr_opengl_drawable( drawable ) );
     return drawable;
@@ -193,6 +226,10 @@ void opengl_drawable_release( struct opengl_drawable *drawable )
 
     if (!ref)
     {
+        pthread_mutex_lock( &drawables_lock );
+        opengl_drawable_detach( drawable );
+        pthread_mutex_unlock( &drawables_lock );
+
         drawable->funcs->destroy( drawable );
         free( drawable );
     }

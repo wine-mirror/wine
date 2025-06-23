@@ -150,6 +150,7 @@ struct opengl_drawable
     int         interval;       /* last set surface swap interval */
     HWND        hwnd;           /* window the drawable was created for */
     HDC         hdc;            /* DC the drawable was created for */
+    struct list entry;          /* entry in win32u managed list */
 };
 
 static inline const char *debugstr_opengl_drawable( struct opengl_drawable *drawable )
