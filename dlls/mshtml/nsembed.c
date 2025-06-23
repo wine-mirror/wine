@@ -749,24 +749,24 @@ static WCHAR *find_wine_gecko_datadir(void)
     return ret;
 }
 
-static WCHAR *find_wine_gecko_unix(const char *unix_path)
+static WCHAR *find_wine_gecko_unix(const WCHAR *dir)
 {
-    static WCHAR * (CDECL *p_wine_get_dos_file_name)(const char*);
-    WCHAR *dos_dir, *ret;
+    HANDLE handle;
+    WCHAR *path, *ret = NULL;
+    DWORD len, size = wcslen( dir ) + 1;
 
-    if(!p_wine_get_dos_file_name) {
-        p_wine_get_dos_file_name = (void*)GetProcAddress(GetModuleHandleA("kernel32"), "wine_get_dos_file_name");
-        if(!p_wine_get_dos_file_name)
-            return FALSE;
+    /* get a DOS path for that directory */
+
+    handle = CreateFileW( dir, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                          NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 );
+    if (handle == INVALID_HANDLE_VALUE) return NULL;
+    if ((path = malloc( size * sizeof(WCHAR) )))
+    {
+        len = GetFinalPathNameByHandleW( handle, path, size, VOLUME_NAME_DOS );
+        if (len > 6 && len <= size && path[5] == ':') ret = check_version(path + 4);
+        free( path );
     }
-
-    dos_dir = p_wine_get_dos_file_name(unix_path);
-    if(!dos_dir)
-        return FALSE;
-
-    ret = check_version(dos_dir);
-
-    HeapFree(GetProcessHeap(), 0, dos_dir);
+    CloseHandle( handle );
     return ret;
 }
 
@@ -805,10 +805,10 @@ BOOL load_gecko(void)
 
         if(!(gecko_path = find_wine_gecko_reg())
            && !(gecko_path = find_wine_gecko_datadir())
-           && !(gecko_path = find_wine_gecko_unix(INSTALL_DATADIR "/wine/gecko/" GECKO_DIR_NAME))
+           && !(gecko_path = find_wine_gecko_unix(L"\\\\?\\unix" INSTALL_DATADIR "/wine/gecko/" GECKO_DIR_NAME))
            && (!strcmp(INSTALL_DATADIR, "/usr/share") ||
-               !(gecko_path = find_wine_gecko_unix("/usr/share/wine/gecko/" GECKO_DIR_NAME)))
-           && !(gecko_path = find_wine_gecko_unix("/opt/wine/gecko/" GECKO_DIR_NAME))
+               !(gecko_path = find_wine_gecko_unix(L"\\\\?\\unix/usr/share/wine/gecko/" GECKO_DIR_NAME)))
+           && !(gecko_path = find_wine_gecko_unix(L"\\\\?\\unix/opt/wine/gecko/" GECKO_DIR_NAME))
            && install_wine_gecko())
             gecko_path = find_wine_gecko_reg();
 
