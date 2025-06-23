@@ -20,5 +20,20 @@
 
 #pragma makedep register
 
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windows.foundation.idl";
+import "windowscontracts.idl";
+import "windows.system.idl";
+
 #define _WINDOWS_STORAGE
+#define DO_NO_IMPORTS
+#include "windows.storage.fileproperties.idl"
+#include "windows.storage.search.idl"
 #include "windows.storage.streams.idl"
+#include "windows.storage.idl"

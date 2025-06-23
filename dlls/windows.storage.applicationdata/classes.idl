@@ -20,4 +20,5 @@
 
 #pragma makedep register
 
+#define _WINDOWS_APPLICATIONDATA
 #include "windows.storage.idl"

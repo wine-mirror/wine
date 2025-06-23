@@ -20,6 +20,7 @@
 #pragma winrt ns_prefix
 #endif
 
+#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
@@ -30,6 +31,7 @@ import "windows.storage.fileproperties.idl";
 import "windows.storage.search.idl";
 import "windows.storage.streams.idl";
 import "windows.system.idl";
+#endif
 
 namespace Windows.Storage {
     typedef enum ApplicationDataCreateDisposition ApplicationDataCreateDisposition;
@@ -77,17 +79,20 @@ namespace Windows.Storage {
     declare {
         interface Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Storage.ApplicationDataContainer *>;
         interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Storage.ApplicationDataContainer *> *>;
-        interface Windows.Foundation.Collections.IIterable<Windows.Storage.IStorageItem *>;
         interface Windows.Foundation.Collections.IIterator<Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Storage.ApplicationDataContainer *> *>;
-        interface Windows.Foundation.Collections.IIterator<Windows.Storage.IStorageItem *>;
         interface Windows.Foundation.Collections.IMapView<HSTRING, Windows.Storage.ApplicationDataContainer *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.ApplicationData *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Storage.ApplicationData *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Storage.ApplicationData *, IInspectable *>;
+#ifndef _WINDOWS_APPLICATIONDATA
+        interface Windows.Foundation.Collections.IIterable<Windows.Storage.IStorageItem *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Storage.IStorageItem *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Storage.IStorageItem *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFile *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFolder *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.Storage.IStorageItem *> *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFile *> *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFolder *> *>;
-        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.ApplicationData *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.KnownFoldersAccessStatus>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.IStorageItem *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.StorageFile *>;
@@ -96,13 +101,12 @@ namespace Windows.Storage {
         interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Storage.IStorageItem *> *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFile *> *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFolder *> *>;
-        interface Windows.Foundation.IAsyncOperation<Windows.Storage.ApplicationData *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.KnownFoldersAccessStatus>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.IStorageItem *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.StorageFile *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.StorageFolder *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.StorageStreamTransaction *>;
-        interface Windows.Foundation.TypedEventHandler<Windows.Storage.ApplicationData *, IInspectable *>;
+#endif
     }
 
     [
@@ -127,6 +131,7 @@ namespace Windows.Storage {
         SharedLocal = 4,
     };
 
+#ifndef _WINDOWS_APPLICATIONDATA
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0)
     ]
@@ -232,6 +237,7 @@ namespace Windows.Storage {
         File   = 0x1,
         Folder = 0x2,
     };
+#endif
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -345,6 +351,7 @@ namespace Windows.Storage {
         );
     }
 
+#ifndef _WINDOWS_APPLICATIONDATA
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.Storage.KnownFolders),
@@ -438,6 +445,7 @@ namespace Windows.Storage {
             [out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.StorageFolder *> **operation
         );
     }
+#endif
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -461,6 +469,7 @@ namespace Windows.Storage {
         HRESULT GetDeferral([out, retval] Windows.Storage.SetVersionDeferral **deferral);
     }
 
+#ifndef _WINDOWS_APPLICATIONDATA
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         uuid(fa3f6186-4214-428c-a64c-14c9ac7315ea)
@@ -591,6 +600,7 @@ namespace Windows.Storage {
         [propget] HRESULT Stream([out, retval] Windows.Storage.Streams.IRandomAccessStream **value);
         HRESULT CommitAsync([out, retval] Windows.Foundation.IAsyncAction **operation);
     }
+#endif
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -617,6 +627,7 @@ namespace Windows.Storage {
         [contract(Windows.Foundation.UniversalApiContract, 12.0)] interface Windows.Foundation.IClosable;
     }
 
+#ifndef _WINDOWS_APPLICATIONDATA
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
@@ -695,4 +706,5 @@ namespace Windows.Storage {
         [default] interface Windows.Storage.IStorageStreamTransaction;
         interface Windows.Foundation.IClosable;
     }
+#endif
 }
