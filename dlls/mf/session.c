@@ -114,6 +114,8 @@ enum command_state
     COMMAND_STATE_STOPPING_SINKS,     /* -> COMMAND_STATE_STOPPING_SOURCES */
     COMMAND_STATE_STOPPING_SOURCES,   /* -> SESSION_STATE_STOPPED */
     /* STARTED | PAUSED | STOPPED -> CLOSED transition */
+    COMMAND_STATE_CLOSING_SINKS,      /* -> COMMAND_STATE_CLOSING_SOURCES */
+    COMMAND_STATE_CLOSING_SOURCES,    /* -> COMMAND_STATE_FINALIZING_SINKS */
     COMMAND_STATE_FINALIZING_SINKS,   /* -> SESSION_STATE_CLOSED */
 };
 
@@ -227,7 +229,6 @@ enum presentation_flags
 {
     SESSION_FLAG_SOURCES_SUBSCRIBED = 0x1,
     SESSION_FLAG_PRESENTATION_CLOCK_SET = 0x2,
-    SESSION_FLAG_FINALIZE_SINKS = 0x4,
     SESSION_FLAG_NEEDS_PREROLL = 0x8,
     SESSION_FLAG_END_OF_PRESENTATION = 0x10,
     SESSION_FLAG_PENDING_RATE_CHANGE = 0x20,
@@ -1322,7 +1323,6 @@ static HRESULT session_finalize_sinks(struct media_session *session)
     struct media_sink *sink;
     HRESULT hr = S_OK;
 
-    session->presentation.flags &= ~SESSION_FLAG_FINALIZE_SINKS;
     session->command_state = COMMAND_STATE_FINALIZING_SINKS;
 
     LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
@@ -1357,9 +1357,8 @@ static void session_close(struct media_session *session)
             break;
         case SESSION_STATE_STARTED:
         case SESSION_STATE_PAUSED:
-            session->presentation.flags |= SESSION_FLAG_FINALIZE_SINKS;
             if (SUCCEEDED(hr = IMFPresentationClock_Stop(session->clock)))
-                session->command_state = COMMAND_STATE_STOPPING_SINKS;
+                session->command_state = COMMAND_STATE_CLOSING_SINKS;
             break;
         case SESSION_STATE_CLOSED:
         case SESSION_STATE_SHUT_DOWN:
@@ -2934,8 +2933,6 @@ static const IMFAsyncCallbackVtbl session_sa_ready_callback_vtbl =
 
 static void session_handle_source_shutdown(struct media_session *session)
 {
-    BOOL finalize_sinks;
-
     EnterCriticalSection(&session->cs);
 
     /* Shutdown may be notified via a dedicated callback or by Begin/EndGetEvent() failure. */
@@ -2945,8 +2942,6 @@ static void session_handle_source_shutdown(struct media_session *session)
         return;
     }
     session->source_shutdown_handled = TRUE;
-
-    finalize_sinks = session->presentation.flags & SESSION_FLAG_FINALIZE_SINKS;
 
     /* When stopping the session, MESessionStopped is sent without waiting
      * for MESourceStopped, so we need do nothing in that case. */
@@ -2961,12 +2956,13 @@ static void session_handle_source_shutdown(struct media_session *session)
             break;
         case COMMAND_STATE_STOPPING_SINKS:
         case COMMAND_STATE_STOPPING_SOURCES:
-            if (!finalize_sinks)
-                IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStopped, &GUID_NULL,
-                        MF_E_INVALIDREQUEST, NULL);
+            IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStopped, &GUID_NULL,
+                    MF_E_INVALIDREQUEST, NULL);
             break;
         case COMMAND_STATE_PAUSING_SINKS:
         case COMMAND_STATE_PAUSING_SOURCES:
+        case COMMAND_STATE_CLOSING_SINKS:
+        case COMMAND_STATE_CLOSING_SOURCES:
         case COMMAND_STATE_FINALIZING_SINKS:
         case COMMAND_STATE_COMPLETE:
             WARN("Ignoring source shutdown in command state %#x\n", session->command_state);
@@ -2975,7 +2971,7 @@ static void session_handle_source_shutdown(struct media_session *session)
 
     if (session->state != SESSION_STATE_CLOSED || session->command_state != COMMAND_STATE_COMPLETE)
     {
-        if (finalize_sinks)
+        if (session->command_state == COMMAND_STATE_CLOSING_SINKS || session->command_state == COMMAND_STATE_CLOSING_SOURCES)
             session_finalize_sinks(session);
         else
             session_reset(session);
@@ -3348,18 +3344,22 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
 
             session_flush_nodes(session);
             session_set_caps(session, session->caps & ~MFSESSIONCAP_PAUSE);
+            session_set_stopped(session, S_OK);
+            break;
+        case COMMAND_STATE_CLOSING_SOURCES:
+            if (!session_is_source_nodes_state(session, OBJ_STATE_STOPPED))
+                break;
 
-            if (session->presentation.flags & SESSION_FLAG_FINALIZE_SINKS)
-                session_finalize_sinks(session);
-            else
-                session_set_stopped(session, S_OK);
-
+            session_flush_nodes(session);
+            session_set_caps(session, session->caps & ~MFSESSIONCAP_PAUSE);
+            session_finalize_sinks(session);
             break;
         case COMMAND_STATE_COMPLETE:
         case COMMAND_STATE_PREROLLING_SINKS:
         case COMMAND_STATE_STARTING_SINKS:
         case COMMAND_STATE_PAUSING_SINKS:
         case COMMAND_STATE_STOPPING_SINKS:
+        case COMMAND_STATE_CLOSING_SINKS:
         case COMMAND_STATE_FINALIZING_SINKS:
             WARN("Ignoring source state change in command state %#x\n", session->command_state);
             break;
@@ -3428,19 +3428,27 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
             if (session->presentation.flags & SESSION_FLAG_END_OF_PRESENTATION)
                 session_set_stopped(session, hr);
             else if (FAILED(hr))
-            {
-                if (session->presentation.flags & SESSION_FLAG_FINALIZE_SINKS)
-                    session_set_closed(session, hr);
-                else
-                    session_set_stopped(session, hr);
-            }
+                session_set_stopped(session, hr);
+            break;
+        case COMMAND_STATE_CLOSING_SINKS:
+            if (!session_is_output_nodes_state(session, OBJ_STATE_STOPPED))
+                break;
 
+            session->command_state = COMMAND_STATE_CLOSING_SOURCES;
+
+            LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+                if (FAILED(hr = IMFMediaSource_Stop(source->source)))
+                    break;
+
+            if (FAILED(hr))
+                session_set_closed(session, hr);
             break;
         case COMMAND_STATE_COMPLETE:
         case COMMAND_STATE_RESTARTING_SOURCES:
         case COMMAND_STATE_STARTING_SOURCES:
         case COMMAND_STATE_PAUSING_SOURCES:
         case COMMAND_STATE_STOPPING_SOURCES:
+        case COMMAND_STATE_CLOSING_SOURCES:
         case COMMAND_STATE_FINALIZING_SINKS:
             WARN("Ignoring sink state change in command state %#x\n", session->command_state);
             break;
