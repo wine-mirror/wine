@@ -63,8 +63,7 @@ struct atom_table
     struct object       obj;                 /* object header */
     int                 count;               /* number of used atoms */
     struct atom_entry  *atoms[MAX_ATOMS];    /* atom entries */
-    int                 entries_count;       /* number of hash entries */
-    struct atom_entry **entries;             /* hash table entries */
+    struct atom_entry  *entries[HASH_SIZE];  /* hash table entries */
 };
 
 C_ASSERT( sizeof(struct atom_table) <= 256 * 1024 );
@@ -100,28 +99,15 @@ static const struct object_ops atom_table_ops =
 static struct atom_table *global_table;
 
 /* create an atom table */
-static struct atom_table *create_table(int entries_count)
+static struct atom_table *create_table(void)
 {
     struct atom_table *table;
 
-    if ((table = alloc_object( &atom_table_ops )))
-    {
-        if ((entries_count < MIN_HASH_SIZE) ||
-            (entries_count > MAX_HASH_SIZE)) entries_count = HASH_SIZE;
-        table->entries_count = entries_count;
-        if (!(table->entries = malloc( sizeof(*table->entries) * table->entries_count )))
-        {
-            set_error( STATUS_NO_MEMORY );
-            goto fail;
-        }
-        memset( table->atoms, 0, sizeof(*table->atoms) * ARRAY_SIZE(table->atoms) );
-        memset( table->entries, 0, sizeof(*table->entries) * table->entries_count );
-        table->count = 1; /* atom 0xc000 is reserved */
-        return table;
-fail:
-        release_object( table );
-        table = NULL;
-    }
+    if (!(table = alloc_object( &atom_table_ops ))) return NULL;
+    memset( table->atoms, 0, sizeof(*table->atoms) * ARRAY_SIZE(table->atoms) );
+    memset( table->entries, 0, sizeof(*table->entries) * ARRAY_SIZE(table->entries) );
+    table->count = 1; /* atom 0xc000 is reserved */
+
     return table;
 }
 
@@ -154,7 +140,7 @@ static void atom_table_dump( struct object *obj, int verbose )
     struct atom_table *table = (struct atom_table *)obj;
     assert( obj->ops == &atom_table_ops );
 
-    fprintf( stderr, "Atom table size=%d entries=%d\n", table->count, table->entries_count );
+    fprintf( stderr, "Atom table size=%d\n", table->count );
     if (!verbose) return;
     for (i = 0; i < table->count; i++)
     {
@@ -174,7 +160,6 @@ static void atom_table_destroy( struct object *obj )
     struct atom_table *table = (struct atom_table *)obj;
     assert( obj->ops == &atom_table_ops );
     for (i = 0; i < table->count; i++) free( table->atoms[i] );
-    free( table->entries );
 }
 
 /* find an atom entry in its hash list */
@@ -194,7 +179,7 @@ static struct atom_entry *find_atom_entry( struct atom_table *table, const struc
 static atom_t add_atom( struct atom_table *table, const struct unicode_str *str )
 {
     struct atom_entry *entry;
-    unsigned short hash = hash_strW( str->str, str->len, table->entries_count );
+    unsigned short hash = hash_strW( str->str, str->len, ARRAY_SIZE(table->entries) );
     atom_t atom = 0;
 
     if (!str->len)
@@ -268,7 +253,7 @@ static atom_t find_atom( struct atom_table *table, const struct unicode_str *str
         return 0;
     }
     if (table && (entry = find_atom_entry( table, str,
-                                           hash_strW( str->str, str->len, table->entries_count ))))
+                                           hash_strW( str->str, str->len, ARRAY_SIZE(table->entries) ))))
         return entry->atom;
     set_error( STATUS_OBJECT_NAME_NOT_FOUND );
     return 0;
@@ -281,7 +266,7 @@ static struct atom_table *get_global_table( struct winstation *winstation, int c
     {
         if (create)
         {
-            table = create_table( HASH_SIZE );
+            table = create_table();
             if (winstation) winstation->atom_table = table;
             else
             {
@@ -309,7 +294,7 @@ atom_t find_global_atom( struct winstation *winstation, const struct unicode_str
     struct atom_entry *entry;
 
     if (!str->len || str->len > MAX_ATOM_LEN || !table) return 0;
-    if ((entry = find_atom_entry( table, str, hash_strW( str->str, str->len, table->entries_count ))))
+    if ((entry = find_atom_entry( table, str, hash_strW( str->str, str->len, ARRAY_SIZE(table->entries) ))))
         return entry->atom;
     return 0;
 }
