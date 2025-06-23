@@ -1632,7 +1632,7 @@ static void test_image_mapping(const char *dll_name, DWORD scn_page_access, BOOL
     addr1 = NULL;
     size = 0;
     status = pNtMapViewOfSection(hmap, GetCurrentProcess(), &addr1, 0, 0, &offset,
-                                 &size, 1 /* ViewShare */, 0, PAGE_READONLY);
+                                 &size, ViewShare, 0, PAGE_READONLY);
     ok(NT_SUCCESS(status), "NtMapViewOfSection error %lx\n", status);
     ok(addr1 != 0, "mapped address should be valid\n");
 
@@ -1650,7 +1650,7 @@ static void test_image_mapping(const char *dll_name, DWORD scn_page_access, BOOL
     addr2 = NULL;
     size = 0;
     status = pNtMapViewOfSection(hmap, GetCurrentProcess(), &addr2, 0, 0, &offset,
-                                 &size, 1 /* ViewShare */, 0, PAGE_READONLY);
+                                 &size, ViewShare, 0, PAGE_READONLY);
     ok(status == STATUS_IMAGE_NOT_AT_BASE, "expected STATUS_IMAGE_NOT_AT_BASE, got %lx\n", status);
     ok(addr2 != 0, "mapped address should be valid\n");
     ok(addr2 != addr1, "mapped addresses should be different\n");
@@ -2370,7 +2370,7 @@ static void test_import_resolution(void)
             size = 0;
             offset.QuadPart = 0;
             status = pNtMapViewOfSection( mapping, GetCurrentProcess(), (void **)&mod, 0, 0, &offset,
-                                          &size, 1 /* ViewShare */, 0, PAGE_READONLY );
+                                          &size, ViewShare, 0, PAGE_READONLY );
             todo_wine_if (test == 5)
             ok( status == (test == 6 ? STATUS_IMAGE_NOT_AT_BASE : STATUS_SUCCESS),
                 "NtMapViewOfSection failed %lx\n", status );
@@ -3259,7 +3259,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         addr = NULL;
         size = 0;
         ret = pNtMapViewOfSection(handle, process, &addr, 0, 0, &offset,
-                                  &size, 1 /* ViewShare */, 0, PAGE_READONLY);
+                                  &size, ViewShare, 0, PAGE_READONLY);
         ok(ret == STATUS_SUCCESS, "NtMapViewOfSection error %#lx\n", ret);
         ret = pNtUnmapViewOfSection(process, addr);
         ok(ret == STATUS_SUCCESS, "NtUnmapViewOfSection error %#lx\n", ret);
@@ -4029,7 +4029,7 @@ static void test_ExitProcess(void)
     addr = NULL;
     size = 0;
     ret = pNtMapViewOfSection(hmap, pi.hProcess, &addr, 0, 0, &offset,
-                              &size, 1 /* ViewShare */, 0, PAGE_READONLY);
+                              &size, ViewShare, 0, PAGE_READONLY);
     ok(!ret, "NtMapViewOfSection error %#lx\n", ret);
     ret = pNtUnmapViewOfSection(pi.hProcess, addr);
     ok(!ret, "NtUnmapViewOfSection error %#lx\n", ret);
@@ -4172,7 +4172,7 @@ if (0)
     addr = NULL;
     size = 0;
     ret = pNtMapViewOfSection(hmap, pi.hProcess, &addr, 0, 0, &offset,
-                              &size, 1 /* ViewShare */, 0, PAGE_READONLY);
+                              &size, ViewShare, 0, PAGE_READONLY);
     ok(ret == STATUS_PROCESS_IS_TERMINATING, "expected STATUS_PROCESS_IS_TERMINATING, got %#lx\n", ret);
 
     SetLastError(0xdeadbeef);
