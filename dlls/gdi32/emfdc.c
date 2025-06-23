@@ -319,6 +319,8 @@ static BOOL emf_parse_user_bitmapinfo( BITMAPINFOHEADER *dst, const BITMAPINFOHE
         UINT elm_size = coloruse == DIB_PAL_COLORS ? sizeof(WORD) : sizeof(DWORD);
         UINT colours = dst->biClrUsed;
 
+        if (!colours) colours = 1 << dst->biBitCount;
+
         /* Windows never truncates colour tables, even if they are
          * unnecessarily big (> 1<<bpp).  We emulate this behaviour. */
 
