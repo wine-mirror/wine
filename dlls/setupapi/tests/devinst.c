@@ -2736,6 +2736,7 @@ static void test_device_interface_properties(void)
         { DEVPKEY_Device_InstanceId, DEVPROP_TYPE_STRING }
     };
     const WCHAR str[] = L"Wine is not an emulator.";
+    const WCHAR instance_id[] = L"ROOT\\LEGACY_BOGUS\\0000";
     DEVPROPTYPE type = DEVPROP_TYPE_EMPTY;
     DEVPROP_BOOLEAN boolean = DEVPROP_TRUE;
     SP_DEVICE_INTERFACE_DATA iface;
@@ -2745,12 +2746,13 @@ static void test_device_interface_properties(void)
     WCHAR buf[50];
     HDEVINFO set;
     BOOL ret;
+    GUID guid_val = {0};
 
     set = SetupDiCreateDeviceInfoList(&guid, NULL);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#lx\n", GetLastError());
 
     device.cbSize = sizeof(device);
-    ret = SetupDiCreateDeviceInfoA(set, "ROOT\\LEGACY_BOGUS\\0000", &guid, NULL, NULL, 0, &device);
+    ret = SetupDiCreateDeviceInfoW(set, instance_id, &guid, NULL, NULL, 0, &device);
     ok(ret, "Failed to create device, error %#lx.\n", GetLastError());
 
     iface.cbSize = sizeof(iface);
@@ -2955,6 +2957,25 @@ static void test_device_interface_properties(void)
     }
     free(keys);
     ok(!rem, "got rem %lu, should be 0\n", rem);
+
+    type = DEVPROP_TYPE_EMPTY;
+    req = 0;
+    ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_ClassGuid, &type, (BYTE *)&guid_val,
+                                             sizeof(guid_val), &req, 0);
+    ok(ret, "SetupDiGetDeviceInterfacePropertyW failed: %lu\n", GetLastError());
+    ok(type == DEVPROP_TYPE_GUID, "%#lx != %#x\n", type, DEVPROP_TYPE_GUID);
+    ok(req == sizeof(guid), "%lu != %lu\n", req, (DWORD)sizeof(guid));
+    ok(IsEqualGUID(&guid_val, &guid), "%s != %s", debugstr_guid( &guid_val ), debugstr_guid( &guid ));
+
+    type = DEVPROP_TYPE_EMPTY;
+    req = 0;
+    buf[0] = '\0';
+    ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_Device_InstanceId, &type, (BYTE *)buf,
+                                             sizeof(instance_id), &req, 0);
+    ok(ret, "SetupDiGetDeviceInterfacePropertyW failed: %lu\n", GetLastError());
+    ok(type == DEVPROP_TYPE_STRING, "%#lx != %#x", type, DEVPROP_TYPE_STRING);
+    ok(req == sizeof(instance_id), "%lu != %lu\n", req, (DWORD)sizeof(instance_id));
+    ok(!wcscmp(buf, instance_id), "%s != %s\n", debugstr_w(buf), debugstr_w(instance_id));
 
     ret = SetupDiRemoveDeviceInterface(set, &iface);
     ok(ret, "Failed to remove device interface, error %#lx.\n", GetLastError());
