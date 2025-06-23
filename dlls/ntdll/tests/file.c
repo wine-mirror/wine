@@ -6054,6 +6054,52 @@ static void test_set_io_completion_ex(void)
     CloseHandle(completion);
 }
 
+static void test_file_map_large_size(void)
+{
+    char temp_path[MAX_PATH], source[MAX_PATH];
+    HANDLE hfile, hmapfile;
+    NTSTATUS status;
+    SIZE_T size;
+    void *addr;
+    DWORD ret;
+
+    ret = GetTempPathA(MAX_PATH, temp_path);
+    ok(!!ret, "GetTempPath() failed error %ld\n", GetLastError());
+
+    ret = GetTempFileNameA(temp_path, "pfx", 0, source);
+    ok(!!ret, "GetTempFileName() failed %ld\n", GetLastError());
+
+    hfile = CreateFileA(source, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok(hfile != INVALID_HANDLE_VALUE, "Failed to create a test file.\n");
+
+    SetFilePointer(hfile, 0x400, NULL, FILE_BEGIN);
+    SetEndOfFile(hfile);
+
+    status = NtCreateSection(&hmapfile, SECTION_MAP_READ, NULL, NULL, PAGE_READWRITE, SEC_RESERVE, hfile);
+    ok(!status, "Failed to create a section %#lx.\n", status);
+
+    size = 0x400 * 4;
+    addr = 0;
+    status = NtMapViewOfSection(hmapfile, GetCurrentProcess(), &addr, 0, 0, NULL, &size,
+            ViewUnmap, MEM_RESERVE, PAGE_READONLY);
+    todo_wine
+    ok(!status, "Failed to map the section %#lx.\n", status);
+
+    ret = GetFileSize(hfile, NULL);
+    ok(ret == 0x400, "Unexpected size %lu.\n", ret);
+
+    addr = VirtualAlloc(addr, 0x400 * 2, MEM_COMMIT, PAGE_READWRITE);
+    ok(!!addr, "Failed to resize.\n");
+
+    ret = GetFileSize(hfile, NULL);
+    todo_wine
+    ok(ret == 4 * 0x400, "Unexpected size %lu.\n", ret);
+
+    CloseHandle(hmapfile);
+    CloseHandle(hfile);
+    DeleteFileA(source);
+}
+
 START_TEST(file)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
@@ -6137,4 +6183,5 @@ START_TEST(file)
     test_flush_buffers_file();
     test_mailslot_name();
     test_reparse_points();
+    test_file_map_large_size();
 }
