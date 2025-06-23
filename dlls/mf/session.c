@@ -233,6 +233,7 @@ enum presentation_flags
     SESSION_FLAG_SOURCES_SUBSCRIBED = 0x1,
     SESSION_FLAG_PRESENTATION_CLOCK_SET = 0x2,
     SESSION_FLAG_NEEDS_PREROLL = 0x8,
+    SESSION_FLAG_SOURCE_SHUTDOWN = 0x10,
     SESSION_FLAG_PENDING_RATE_CHANGE = 0x20,
 };
 
@@ -1068,6 +1069,7 @@ static void session_reset(struct media_session *session)
      * forced source shutdown, but we try to clean up as well as possible. */
     session->state = SESSION_STATE_STOPPED;
     session_clear_presentation(session);
+    session->presentation.flags |= SESSION_FLAG_SOURCE_SHUTDOWN;
     session_purge_pending_commands(session);
     session_command_complete(session);
 }
@@ -2822,26 +2824,43 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
     switch (op->command)
     {
         case SESSION_CMD_CLEAR_TOPOLOGIES:
+            session->presentation.flags &= ~SESSION_FLAG_SOURCE_SHUTDOWN;
             session_clear_topologies(session);
             break;
         case SESSION_CMD_SET_TOPOLOGY:
+            session->presentation.flags &= ~SESSION_FLAG_SOURCE_SHUTDOWN;
             session_set_topology(session, op->set_topology.flags, op->set_topology.topology);
             session_command_complete(session);
             break;
         case SESSION_CMD_START:
-            session_start(session, &op->start.time_format, &op->start.start_position);
+            if (session->presentation.flags & SESSION_FLAG_SOURCE_SHUTDOWN)
+                session_command_complete_with_event(session, MESessionStarted, MF_E_INVALIDREQUEST, NULL);
+            else
+                session_start(session, &op->start.time_format, &op->start.start_position);
             break;
         case SESSION_CMD_PAUSE:
-            session_pause(session);
+            if (session->presentation.flags & SESSION_FLAG_SOURCE_SHUTDOWN)
+                session_command_complete_with_event(session, MESessionPaused, MF_E_SHUTDOWN, NULL);
+            else
+                session_pause(session);
             break;
         case SESSION_CMD_STOP:
-            session_stop(session);
+            if (session->presentation.flags & SESSION_FLAG_SOURCE_SHUTDOWN)
+                session_command_complete_with_event(session, MESessionStopped, MF_E_SHUTDOWN, NULL);
+            else
+                session_stop(session);
             break;
         case SESSION_CMD_CLOSE:
-            session_close(session);
+            if (session->presentation.flags & SESSION_FLAG_SOURCE_SHUTDOWN)
+                session_command_complete_with_event(session, MESessionClosed, MF_E_SHUTDOWN, NULL);
+            else
+                session_close(session);
             break;
         case SESSION_CMD_SET_RATE:
-            session_set_rate(session, op->set_rate.thin, op->set_rate.rate);
+            if (session->presentation.flags & SESSION_FLAG_SOURCE_SHUTDOWN)
+                session_command_complete_with_event(session, MESessionRateChanged, MF_E_SHUTDOWN, NULL);
+            else
+                session_set_rate(session, op->set_rate.thin, op->set_rate.rate);
             break;
         case SESSION_CMD_SHUTDOWN:
             session_clear_command_list(session);
@@ -2977,6 +2996,8 @@ static void session_handle_source_shutdown(struct media_session *session)
         else
             session_reset(session);
     }
+
+    session->presentation.flags |= SESSION_FLAG_SOURCE_SHUTDOWN;
 
     LeaveCriticalSection(&session->cs);
 }
