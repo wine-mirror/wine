@@ -195,7 +195,7 @@ static WCHAR *build_command_line( WCHAR **wargv )
     return ret;
 }
 
-static WCHAR *get_parent_dir(WCHAR* path)
+static WCHAR *get_parent_dir(const WCHAR* path)
 {
 	WCHAR *last_slash;
 	WCHAR *result;
@@ -247,6 +247,23 @@ static WCHAR *parse_title(const WCHAR *arg)
     for (next = 0; *p; p++) if (*p != '"') title[next++] = *p;
     title[next] = 0;
     return title;
+}
+
+static WCHAR *get_dos_filename( const WCHAR *unix_file )
+{
+    HANDLE handle;
+    DWORD len, size = 8 + wcslen( unix_file ) + 1;
+    WCHAR *path = malloc( size * sizeof(WCHAR) );
+
+    wcscpy( path, L"\\\\?\\unix" );
+    wcscat( path, unix_file );
+    handle = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                          NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 );
+    if (handle == INVALID_HANDLE_VALUE) fatal_string( STRING_UNIXFAIL );
+    len = GetFinalPathNameByHandleW( handle, path, size, VOLUME_NAME_DOS );
+    CloseHandle( handle );
+    if (len > 6 && len <= size && path[5] == ':') path += 4;
+    return path;
 }
 
 static BOOL search_path(const WCHAR *firstParam, WCHAR **full_path)
@@ -518,27 +535,10 @@ static void parse_command_line( int argc, WCHAR *argv[] )
 
     opts.sei.lpParameters = build_command_line( &argv[i] );
 
-    if (unix_mode || progid_open)
+    if ((unix_mode || progid_open) && file[0] == '/')
     {
-        LPWSTR (*CDECL wine_get_dos_file_name_ptr)(LPCSTR);
-	WCHAR *dos_filename;
-        char *unixpath;
-        int unixpath_len;
-
-        wine_get_dos_file_name_ptr = (void*)GetProcAddress(GetModuleHandleA("KERNEL32"), "wine_get_dos_file_name");
-        if (!wine_get_dos_file_name_ptr) fatal_string(STRING_UNIXFAIL);
-
-        unixpath_len = WideCharToMultiByte(CP_UNIXCP, 0, file, -1, NULL, 0, NULL, NULL);
-        unixpath = malloc( unixpath_len );
-        WideCharToMultiByte(CP_UNIXCP, 0, file, -1, unixpath, unixpath_len, NULL, NULL);
-        dos_filename = wine_get_dos_file_name_ptr(unixpath);
-        free( unixpath );
-
-        if (!dos_filename)
-            fatal_string(STRING_UNIXFAIL);
-
-        opts.sei.lpFile = dos_filename;
-        if (!opts.sei.lpDirectory) opts.sei.lpDirectory = get_parent_dir(dos_filename);
+        opts.sei.lpFile = get_dos_filename( file );
+        if (!opts.sei.lpDirectory) opts.sei.lpDirectory = get_parent_dir(opts.sei.lpFile);
         opts.sei.fMask &= ~SEE_MASK_FLAG_NO_UI;
     }
     else
