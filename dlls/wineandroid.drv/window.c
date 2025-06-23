@@ -984,8 +984,6 @@ void ANDROID_DestroyWindow( HWND hwnd )
     struct android_win_data *data;
 
     if (!(data = get_win_data( hwnd ))) return;
-
-    destroy_gl_drawable( hwnd );
     free_win_data( data );
 }
 

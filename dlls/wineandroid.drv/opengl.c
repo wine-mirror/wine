@@ -108,6 +108,11 @@ static void android_drawable_destroy( struct opengl_drawable *base )
     release_ioctl_window( gl->window );
 }
 
+static void android_drawable_detach( struct opengl_drawable *base )
+{
+    TRACE( "%s\n", debugstr_opengl_drawable( base ) );
+}
+
 void update_gl_drawable( HWND hwnd )
 {
     struct gl_drawable *old, *new;
@@ -278,6 +283,7 @@ static struct opengl_driver_funcs android_driver_funcs =
 static const struct opengl_drawable_funcs android_drawable_funcs =
 {
     .destroy = android_drawable_destroy,
+    .detach = android_drawable_detach,
     .flush = android_drawable_flush,
     .swap = android_drawable_swap,
 };

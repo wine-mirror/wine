@@ -682,7 +682,6 @@ extern Window X11DRV_get_whole_window( HWND hwnd );
 extern Window get_dummy_parent(void);
 
 extern void sync_gl_drawable( HWND hwnd );
-extern void destroy_gl_drawable( HWND hwnd );
 
 extern BOOL window_is_reparenting( HWND hwnd );
 extern BOOL window_should_take_focus( HWND hwnd, Time time );

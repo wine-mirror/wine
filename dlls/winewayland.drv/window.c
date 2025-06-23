@@ -403,7 +403,6 @@ void WAYLAND_DestroyWindow(HWND hwnd)
 
     if (!(data = wayland_win_data_get(hwnd))) return;
     wayland_win_data_destroy(data);
-    wayland_destroy_gl_drawable(hwnd);
 }
 
 /***********************************************************************

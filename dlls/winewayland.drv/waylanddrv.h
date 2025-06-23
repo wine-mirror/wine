@@ -416,7 +416,6 @@ void wayland_data_device_init(void);
  *          OpenGL
  */
 
-void wayland_destroy_gl_drawable(HWND hwnd);
 void wayland_resize_gl_drawable(HWND hwnd);
 
 /**********************************************************************

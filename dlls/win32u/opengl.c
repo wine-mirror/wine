@@ -169,6 +169,7 @@ static struct list drawables = LIST_INIT( drawables );
 /* drawables_lock must be held */
 static void opengl_drawable_detach( struct opengl_drawable *drawable )
 {
+    drawable->funcs->detach( drawable );
     list_remove( &drawable->entry );
     list_init( &drawable->entry );
 }

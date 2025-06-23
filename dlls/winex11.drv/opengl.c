@@ -914,10 +914,10 @@ static BOOL x11drv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl
     TRACE( "Created drawable %s with client window %lx\n", debugstr_opengl_drawable( &gl->base ), gl->window );
 
     pthread_mutex_lock( &context_mutex );
-    if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&prev ))
-        opengl_drawable_release( &prev->base );
+    if (XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&prev )) prev = NULL;
     XSaveContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char *)gl );
     pthread_mutex_unlock( &context_mutex );
+    if (prev) opengl_drawable_release( &prev->base );
 
     XFlush( gdi_display );
 
@@ -1020,20 +1020,19 @@ void sync_gl_drawable( HWND hwnd )
 }
 
 
-/***********************************************************************
- *              destroy_gl_drawable
- */
-void destroy_gl_drawable( HWND hwnd )
+static void x11drv_surface_detach( struct opengl_drawable *base )
 {
-    struct gl_drawable *gl;
+    struct gl_drawable *gl = impl_from_opengl_drawable( base ), *current;
+    HWND hwnd = base->hwnd;
+
+    TRACE( "%s\n", debugstr_opengl_drawable( base ) );
 
     pthread_mutex_lock( &context_mutex );
-    if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&gl ))
-    {
-        XDeleteContext( gdi_display, (XID)hwnd, gl_hwnd_context );
-        opengl_drawable_release( &gl->base );
-    }
+    if (XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&current )) current = NULL;
+    else if (current == gl) XDeleteContext( gdi_display, (XID)hwnd, gl_hwnd_context );
     pthread_mutex_unlock( &context_mutex );
+
+    if (current == gl) opengl_drawable_release( &current->base );
 }
 
 
@@ -1480,6 +1479,10 @@ static void x11drv_pbuffer_destroy( struct opengl_drawable *base )
     if (gl->drawable) pglXDestroyPbuffer( gdi_display, gl->drawable );
 }
 
+static void x11drv_pbuffer_detach( struct opengl_drawable *base )
+{
+}
+
 static void x11drv_pbuffer_flush( struct opengl_drawable *base, UINT flags )
 {
 }
@@ -1653,6 +1656,7 @@ static const struct opengl_driver_funcs x11drv_driver_funcs =
 static const struct opengl_drawable_funcs x11drv_surface_funcs =
 {
     .destroy = x11drv_surface_destroy,
+    .detach = x11drv_surface_detach,
     .flush = x11drv_surface_flush,
     .swap = x11drv_surface_swap,
 };
@@ -1660,6 +1664,7 @@ static const struct opengl_drawable_funcs x11drv_surface_funcs =
 static const struct opengl_drawable_funcs x11drv_pbuffer_funcs =
 {
     .destroy = x11drv_pbuffer_destroy,
+    .detach = x11drv_pbuffer_detach,
     .flush = x11drv_pbuffer_flush,
     .swap = x11drv_pbuffer_swap,
 };

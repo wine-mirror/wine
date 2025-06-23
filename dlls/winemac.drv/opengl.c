@@ -2074,6 +2074,10 @@ static void macdrv_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height,
         make_context_current(context, FALSE);
 }
 
+static void macdrv_surface_detach(struct opengl_drawable *base)
+{
+    TRACE("%s\n", debugstr_opengl_drawable(base));
+}
 
 static void macdrv_surface_flush(struct opengl_drawable *base, UINT flags)
 {
@@ -2372,6 +2376,10 @@ static void macdrv_pbuffer_destroy(struct opengl_drawable *base)
     pthread_mutex_unlock(&dc_pbuffers_mutex);
 
     CGLReleasePBuffer(gl->pbuffer);
+}
+
+static void macdrv_pbuffer_detach(struct opengl_drawable *base)
+{
 }
 
 static void macdrv_pbuffer_flush(struct opengl_drawable *base, UINT flags)
@@ -3021,6 +3029,7 @@ static const struct opengl_driver_funcs macdrv_driver_funcs =
 static const struct opengl_drawable_funcs macdrv_surface_funcs =
 {
     .destroy = macdrv_surface_destroy,
+    .detach = macdrv_surface_detach,
     .flush = macdrv_surface_flush,
     .swap = macdrv_surface_swap,
 };
@@ -3028,6 +3037,7 @@ static const struct opengl_drawable_funcs macdrv_surface_funcs =
 static const struct opengl_drawable_funcs macdrv_pbuffer_funcs =
 {
     .destroy = macdrv_pbuffer_destroy,
+    .detach = macdrv_pbuffer_detach,
     .flush = macdrv_pbuffer_flush,
     .swap = macdrv_pbuffer_swap,
 };

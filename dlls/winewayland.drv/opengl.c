@@ -144,6 +144,20 @@ static void wayland_drawable_destroy(struct opengl_drawable *base)
     }
 }
 
+static void wayland_drawable_detach(struct opengl_drawable *base)
+{
+    struct wayland_gl_drawable *gl = impl_from_opengl_drawable(base), *old;
+    HWND hwnd = base->hwnd;
+
+    TRACE("%s\n", debugstr_opengl_drawable(base));
+
+    pthread_mutex_lock(&gl_object_mutex);
+    if ((old = find_drawable(hwnd, 0)) && old == gl) list_remove(&gl->entry);
+    pthread_mutex_unlock(&gl_object_mutex);
+
+    if (gl) opengl_drawable_release(&gl->base);
+}
+
 static inline BOOL is_onscreen_format(int format)
 {
     return format > 0 && format <= egl->config_count;
@@ -477,6 +491,7 @@ static struct opengl_driver_funcs wayland_driver_funcs =
 static const struct opengl_drawable_funcs wayland_drawable_funcs =
 {
     .destroy = wayland_drawable_destroy,
+    .detach = wayland_drawable_detach,
     .flush = wayland_drawable_flush,
     .swap = wayland_drawable_swap,
 };
@@ -506,14 +521,6 @@ UINT WAYLAND_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, c
 }
 
 /**********************************************************************
- *           wayland_destroy_gl_drawable
- */
-void wayland_destroy_gl_drawable(HWND hwnd)
-{
-    wayland_update_gl_drawable(hwnd, NULL);
-}
-
-/**********************************************************************
  *           wayland_resize_gl_drawable
  */
 void wayland_resize_gl_drawable(HWND hwnd)
@@ -532,10 +539,6 @@ void wayland_resize_gl_drawable(HWND hwnd)
 UINT WAYLAND_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, const struct opengl_driver_funcs **driver_funcs)
 {
     return STATUS_NOT_IMPLEMENTED;
-}
-
-void wayland_destroy_gl_drawable(HWND hwnd)
-{
 }
 
 void wayland_resize_gl_drawable(HWND hwnd)

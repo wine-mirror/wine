@@ -2551,7 +2551,6 @@ void X11DRV_DestroyWindow( HWND hwnd )
     XDeleteContext( gdi_display, (XID)hwnd, win_data_context );
     release_win_data( data );
     free( data );
-    destroy_gl_drawable( hwnd );
 }
 
 

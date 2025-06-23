@@ -131,6 +131,8 @@ struct opengl_drawable;
 struct opengl_drawable_funcs
 {
     void (*destroy)( struct opengl_drawable *iface );
+    /* detach the drawable from its window, called from window owner thread */
+    void (*detach)( struct opengl_drawable *drawable );
     /* flush and update the drawable front buffer, called from render thread */
     void (*flush)( struct opengl_drawable *iface, UINT flags );
     /* swap and present the drawable buffers, called from render thread */
