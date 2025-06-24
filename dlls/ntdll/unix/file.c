@@ -238,6 +238,8 @@ static unsigned int dir_data_cache_size;
 static BOOL show_dot_files;
 static mode_t start_umask;
 
+static const WCHAR unix_prefixW[] = {'\\','?','?','\\','u','n','i','x'};
+
 /* at some point we may want to allow Winelib apps to set this */
 static const BOOL is_case_sensitive = FALSE;
 
@@ -4062,6 +4064,38 @@ NTSTATUS WINAPI wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, ULON
 }
 
 
+/******************************************************************
+ *           ntdll_get_dos_file_name
+ */
+NTSTATUS ntdll_get_dos_file_name( const char *unix_name, WCHAR **dos, UINT disposition )
+{
+    NTSTATUS status;
+    WCHAR *buffer;
+    ULONG len = strlen(unix_name) + 1;
+    char *name = strdup( unix_name );
+
+    *dos = NULL;
+    if (!name) return STATUS_NO_MEMORY;
+    status = find_drive_nt_root( name, len - 1, &buffer, disposition );
+    free( name );
+    if (status && status != STATUS_NO_SUCH_FILE) return status;
+
+    if (!buffer)  /* conversion failed, return \\?\unix path */
+    {
+        if (!(buffer = malloc( sizeof(unix_prefixW) + len * sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
+        memcpy( buffer, unix_prefixW, sizeof(unix_prefixW) );
+        ntdll_umbstowcs( unix_name, len, buffer + ARRAY_SIZE(unix_prefixW), len );
+        collapse_path( buffer );
+    }
+
+    if (buffer[5] == ':') memmove( buffer, buffer + 4, (wcslen(buffer + 4) + 1) * sizeof(WCHAR) );
+    else buffer[1] = '\\';
+
+    *dos = buffer;
+    return status;
+}
+
+
 /***********************************************************************
  *           get_nt_and_unix_names
  *
@@ -4077,7 +4111,6 @@ NTSTATUS WINAPI wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, ULON
 NTSTATUS get_nt_and_unix_names( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name,
                                 char **unix_name_ret, UINT disposition )
 {
-    static const WCHAR unix_prefixW[] = {'\\','?','?','\\','u','n','i','x'};
     ULONG lenA, lenW = attr->ObjectName->Length / sizeof(WCHAR);
     UNICODE_STRING *orig = attr->ObjectName;
     NTSTATUS status;
@@ -4128,7 +4161,6 @@ NTSTATUS get_nt_and_unix_names( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name
  */
 NTSTATUS get_full_path( char *name, const WCHAR *curdir, UNICODE_STRING *nt_name )
 {
-    static const WCHAR unix_prefixW[] = {'\\','?','?','\\','u','n','i','x'};
     static const WCHAR uncW[] = {'\\','?','?','\\','U','N','C','\\'};
     static const WCHAR devW[] = {'\\','?','?','\\'};
     static const WCHAR rootW[] = {'\\','?','?','\\','C',':','\\'};

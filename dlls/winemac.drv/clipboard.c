@@ -588,29 +588,6 @@ static CPTABLEINFO *get_ansi_cp(void)
 }
 
 
-/* based on wine_get_dos_file_name */
-static WCHAR *get_dos_file_name(const char *path)
-{
-    ULONG len = strlen(path) + 9; /* \??\unix prefix */
-    WCHAR *ret;
-
-    if (!(ret = malloc(len * sizeof(WCHAR)))) return NULL;
-    if (wine_unix_to_nt_file_name(path, ret, &len))
-    {
-        free(ret);
-        return NULL;
-    }
-
-    if (ret[5] == ':')
-    {
-        /* get rid of the \??\ prefix */
-        memmove(ret, ret + 4, (len - 4) * sizeof(WCHAR));
-    }
-    else ret[1] = '\\';
-    return ret;
-}
-
-
 /***********************************************************************
  *           get_nt_pathname
  *
@@ -750,8 +727,7 @@ static void *import_nsfilenames_to_hdrop(CFDataRef data, size_t *ret_size)
             WARN("failed to get file-system representation for %s\n", debugstr_cf(name));
             goto done;
         }
-        paths[i] = get_dos_file_name(buffer);
-        if (!paths[i])
+        if (ntdll_get_dos_file_name( buffer, &paths[i], FILE_OPEN ))
         {
             WARN("failed to get DOS path for %s\n", debugstr_a(buffer));
             goto done;

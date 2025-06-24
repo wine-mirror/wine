@@ -1312,21 +1312,6 @@ static int add_unix_face( const char *unix_name, const WCHAR *file, void *data_p
     return ret;
 }
 
-static WCHAR *get_dos_file_name( LPCSTR str )
-{
-    WCHAR *buffer;
-    ULONG len = strlen(str) + 1;
-
-    len += 8;  /* \??\unix prefix */
-    if (!(buffer = malloc( len * sizeof(WCHAR) ))) return NULL;
-    if (wine_unix_to_nt_file_name( str, buffer, &len ))
-    {
-        free( buffer );
-        return NULL;
-    }
-    return buffer;
-}
-
 static char *get_unix_file_name( LPCWSTR path )
 {
     UNICODE_STRING nt_name;
@@ -1384,7 +1369,8 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
     }
 #endif /* __APPLE__ */
 
-    if (!dos_name && unix_name) dos_name = filename = get_dos_file_name( unix_name );
+    if (!dos_name && unix_name && !ntdll_get_dos_file_name( unix_name, &filename, FILE_OPEN ))
+        dos_name = filename;
 
     do
         ret += add_unix_face( unix_name, dos_name, font_data_ptr, font_data_size, face_index, flags, &num_faces );
@@ -1550,7 +1536,7 @@ static void fontconfig_add_font( FcPattern *pattern, UINT flags )
     if (pFcPatternGetInteger( pattern, FC_INDEX, 0, &face_index ) != FcResultMatch)
         face_index = 0;
 
-    dos_name = get_dos_file_name( unix_name );
+    ntdll_get_dos_file_name( unix_name, &dos_name, FILE_OPEN );
     add_unix_face( unix_name, dos_name, NULL, 0, face_index, flags, NULL );
     free( dos_name );
 }

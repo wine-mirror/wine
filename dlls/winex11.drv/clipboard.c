@@ -580,29 +580,6 @@ static void *create_dib_from_bitmap( HBITMAP hBmp, size_t *size )
 }
 
 
-/* based on wine_get_dos_file_name */
-static WCHAR *get_dos_file_name( const char *path )
-{
-    ULONG len = strlen( path ) + 9; /* \??\unix prefix */
-    WCHAR *ret;
-
-    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
-    if (wine_unix_to_nt_file_name( path, ret, &len ))
-    {
-        free( ret );
-        return NULL;
-    }
-
-    if (ret[5] == ':')
-    {
-        /* get rid of the \??\ prefix */
-        memmove( ret, ret + 4, (len - 4) * sizeof(WCHAR) );
-    }
-    else ret[1] = '\\';
-    return ret;
-}
-
-
 /***********************************************************************
  *           get_nt_pathname
  *
@@ -751,7 +728,7 @@ static WCHAR* uri_to_dos(char *encodedURI)
             if (uri[7] == '/')
             {
                 /* file:///path/to/file (nautilus, thunar) */
-                ret = get_dos_file_name( &uri[7] );
+                ntdll_get_dos_file_name( &uri[7], &ret, FILE_OPEN );
             }
             else if (uri[7])
             {
@@ -761,18 +738,11 @@ static WCHAR* uri_to_dos(char *encodedURI)
                 if (path)
                 {
                     *path = '\0';
-                    if (strcmp(&uri[7], "localhost") == 0)
+                    if (!strcmp(&uri[7], "localhost") ||
+                        (!gethostname(hostname, sizeof(hostname)) && !strcmp(hostname, &uri[7])))
                     {
                         *path = '/';
-                        ret = get_dos_file_name( path );
-                    }
-                    else if (gethostname(hostname, sizeof(hostname)) == 0)
-                    {
-                        if (strcmp(hostname, &uri[7]) == 0)
-                        {
-                            *path = '/';
-                            ret = get_dos_file_name( path );
-                        }
+                        ntdll_get_dos_file_name( path, &ret, FILE_OPEN );
                     }
                 }
             }
@@ -780,7 +750,7 @@ static WCHAR* uri_to_dos(char *encodedURI)
         else if (uri[6])
         {
             /* file:/path/to/file (konqueror) */
-            ret = get_dos_file_name( &uri[5] );
+            ntdll_get_dos_file_name( &uri[5], &ret, FILE_OPEN );
         }
     }
     free( uri );
@@ -1057,7 +1027,7 @@ DROPFILES *file_list_to_drop_files( const void *data, size_t size, size_t *ret_s
 
     for (ptr = data; ptr < (const char *)data + size; ptr += strlen( ptr ) + 1)
     {
-        path = get_dos_file_name( ptr );
+        ntdll_get_dos_file_name( ptr, &path, FILE_OPEN );
 
         TRACE( "converted URI %s to DOS path %s\n", debugstr_a(ptr), debugstr_w(path) );
 
