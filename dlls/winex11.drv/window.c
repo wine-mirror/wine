@@ -1360,7 +1360,7 @@ static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL abo
     data->desired_state.rect = *new_rect;
     data->desired_state.above = above;
     if (!data->whole_window) return; /* no window, nothing to update */
-    if (EqualRect( old_rect, new_rect ) && (old_above || !above)) return; /* rects are the same, no need to be raised, nothing to update */
+    if (EqualRect( old_rect, new_rect ) && (old_above || !above || data->managed)) return; /* rects are the same, no need to be raised, nothing to update */
     if (window_needs_config_change_delay( data ))
     {
         TRACE( "window %p/%lx is updating _NET_WM_STATE/_MOTIF_WM_HINTS, delaying request\n", data->hwnd, data->whole_window );
