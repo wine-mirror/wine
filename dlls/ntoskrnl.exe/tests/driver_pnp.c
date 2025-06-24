@@ -782,10 +782,10 @@ static void test_device_interface_properties( UNICODE_STRING *name )
     type = DEVPROP_TYPE_EMPTY;
     status = IoGetDeviceInterfacePropertyData( name, &DEVPKEY_DeviceInterface_Enabled, LOCALE_NEUTRAL, 0, sizeof( val ),
                                                &val, &req_size, &type );
-    todo_wine ok( !status, "IoGetDeviceInterfacePropertyData failed: %#lx\n", status );
-    todo_wine ok( req_size == sizeof( val ), "got req_size %lu\n", req_size );
-    todo_wine ok( type == DEVPROP_TYPE_BOOLEAN, "got type %#lx\n", type );
-    todo_wine ok( val == DEVPROP_TRUE, "got val %d\n", val );
+    ok( !status, "IoGetDeviceInterfacePropertyData failed: %#lx\n", status );
+    ok( req_size == sizeof( val ), "got req_size %lu\n", req_size );
+    ok( type == DEVPROP_TYPE_BOOLEAN, "got type %#lx\n", type );
+    ok( val == DEVPROP_TRUE, "got val %d\n", val );
 }
 
 static void test_enumerator_name(void)
@@ -931,10 +931,10 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
             IoSetDeviceInterfaceState(&bus_symlink, FALSE);
             status = IoGetDeviceInterfacePropertyData(&bus_symlink, &DEVPKEY_DeviceInterface_Enabled, LOCALE_NEUTRAL, 0,
                                                       sizeof(val), &val, &req_size, &type);
-            todo_wine ok(!status, "IoGetDeviceInterfacePropertyData failed: %#lx\n", status);
-            todo_wine ok(req_size == sizeof(val), "got req_size = %lu\n", req_size);
-            todo_wine ok(type == DEVPROP_TYPE_BOOLEAN, "got type = %#lx\n", type);
-            todo_wine ok(val == DEVPROP_FALSE, "got val %d\n", val);
+            ok(!status, "IoGetDeviceInterfacePropertyData failed: %#lx\n", status);
+            ok(req_size == sizeof(val), "got req_size = %lu\n", req_size);
+            ok(type == DEVPROP_TYPE_BOOLEAN, "got type = %#lx\n", type);
+            ok(val == DEVPROP_FALSE, "got val %d\n", val);
             return STATUS_SUCCESS;
         }
 
