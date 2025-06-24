@@ -762,9 +762,64 @@ static void send_devicechange( const WCHAR *path, DWORD code, void *data, unsign
 NTSTATUS WINAPI IoSetDeviceInterfacePropertyData( UNICODE_STRING *name, const DEVPROPKEY *key, LCID lcid, ULONG flags,
                                                   DEVPROPTYPE type, ULONG len, void *buf )
 {
-    FIXME( "name %s, key %s, lcid %#lx, flags %#lx, type %#lx, len %lu, buf %p: stub!\n", debugstr_us( name ),
+    SP_DEVICE_INTERFACE_DATA iface_data = {0};
+    WCHAR device_path[MAX_PATH];
+    struct wine_rb_entry *entry;
+    DWORD err = ERROR_SUCCESS;
+    HDEVINFO set;
+
+    TRACE( "name %s, key %s, lcid %#lx, flags %#lx, type %#lx, len %lu, buf %p\n", debugstr_us( name ),
            debugstr_propkey( key ), lcid, flags, type, len, buf );
-    return STATUS_NOT_IMPLEMENTED;
+
+    if (lcid != LOCALE_NEUTRAL) FIXME( "only LOCALE_NEUTRAL is supported\n" );
+
+    if (!(entry = wine_rb_get( &device_interfaces, name )))
+        return STATUS_OBJECT_NAME_NOT_FOUND;
+
+    swprintf( device_path, ARRAY_SIZE( device_path ), L"\\\\%s", &name->Buffer[2] );
+
+    if ((set = SetupDiCreateDeviceInfoListExW( NULL, NULL, NULL, NULL )) == INVALID_HANDLE_VALUE)
+    {
+        err = GetLastError();
+        ERR( "Failed to create device list, error %lu.\n", err );
+        goto done;
+    }
+    iface_data.cbSize = sizeof( iface_data );
+    if (!SetupDiOpenDeviceInterfaceW( set, device_path, 0, &iface_data ))
+    {
+        err = GetLastError();
+        ERR( "Failed to open device interface, error %lu.\n", err );
+        goto done;
+    }
+    if (!SetupDiSetDeviceInterfacePropertyW( set, &iface_data, key, buf ? type : DEVPROP_TYPE_EMPTY, (BYTE *)buf, len, 0 ))
+        err = GetLastError();
+
+done:
+    if (set != INVALID_HANDLE_VALUE)
+    {
+        SetupDiDeleteDeviceInterfaceData( set, &iface_data );
+        SetupDiDestroyDeviceInfoList( set );
+    }
+    switch (err)
+    {
+    case ERROR_SUCCESS:
+        return STATUS_SUCCESS;
+    case ERROR_INVALID_PARAMETER:
+    case ERROR_INVALID_DATA:
+    case ERROR_INVALID_FLAGS:
+        return STATUS_INVALID_PARAMETER;
+    case ERROR_NOT_ENOUGH_MEMORY:
+        return STATUS_NO_MEMORY;
+    case ERROR_NO_SUCH_DEVICE_INTERFACE:
+        return STATUS_OBJECT_NAME_NOT_FOUND;
+    case ERROR_INSUFFICIENT_BUFFER:
+        return STATUS_BUFFER_TOO_SMALL;
+    case ERROR_INVALID_ACCESS:
+        return STATUS_ACCESS_DENIED;
+    default:
+        FIXME( "Unhandled error: %lu\n", err );
+        return STATUS_INTERNAL_ERROR;
+    }
 }
 
 /***********************************************************************

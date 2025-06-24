@@ -744,7 +744,7 @@ static void test_device_interface_properties( UNICODE_STRING *name )
 
         winetest_push_context( "deviceprops[%lu]", (DWORD)i );
         status = IoSetDeviceInterfacePropertyData( name, key, LOCALE_NEUTRAL, 0, type, size, value );
-        todo_wine ok( !status, "IoSetDeviceInterfacePropertyData failed: %#lx\n", status );
+        ok( !status, "IoSetDeviceInterfacePropertyData failed: %#lx\n", status );
         if (!status)
         {
             void *buf;
@@ -752,9 +752,9 @@ static void test_device_interface_properties( UNICODE_STRING *name )
             DEVPROPTYPE stored_type = DEVPROP_TYPE_EMPTY;
 
             status = IoGetDeviceInterfacePropertyData( name, key, LOCALE_NEUTRAL, 0, 0, NULL, &req_size, &stored_type );
-            todo_wine ok( status == STATUS_BUFFER_TOO_SMALL, "got status %#lx != %#lx\n", status, STATUS_BUFFER_TOO_SMALL );
-            todo_wine ok( req_size == size, "got req_size %lu != %lu\n", req_size, size );
-            todo_wine ok( stored_type == type, "got stored_type %#lx != %#lx\n", stored_type, type );
+            ok( status == STATUS_BUFFER_TOO_SMALL, "got status %#lx != %#lx\n", status, STATUS_BUFFER_TOO_SMALL );
+            ok( req_size == size, "got req_size %lu != %lu\n", req_size, size );
+            ok( stored_type == type, "got stored_type %#lx != %#lx\n", stored_type, type );
 
             buf = ExAllocatePool( NonPagedPool, size );
             ok( !!buf, "Failed to allocate memory\n" );
@@ -765,15 +765,15 @@ static void test_device_interface_properties( UNICODE_STRING *name )
                 memset( buf, 0, size );
                 status = IoGetDeviceInterfacePropertyData( name, key, LOCALE_NEUTRAL, 0, size, buf, &req_size,
                                                            &stored_type );
-                todo_wine ok( !status, "IoGetDeviceInterfacePropertyData failed: %#lx\n", status );
-                todo_wine ok( req_size == size, "got req_size %lu != %lu\n", req_size, size );
-                todo_wine ok( stored_type == type, "got stored_type %#lx != %#lx\n", stored_type, type );
+                ok( !status, "IoGetDeviceInterfacePropertyData failed: %#lx\n", status );
+                ok( req_size == size, "got req_size %lu != %lu\n", req_size, size );
+                ok( stored_type == type, "got stored_type %#lx != %#lx\n", stored_type, type );
 
                 if (!status) ok( !kmemcmp( buf, value, size ), "Got unexpected device interface property value.\n" );
                 ExFreePool( buf );
             }
             status = IoSetDeviceInterfacePropertyData( name, key, LOCALE_NEUTRAL, 0, type, 0, NULL );
-            todo_wine ok( !status, "IoSetDeviceInterfacePropertyData failed: %#lx\n", status );
+            ok( !status, "IoSetDeviceInterfacePropertyData failed: %#lx\n", status );
         }
         winetest_pop_context();
     }
