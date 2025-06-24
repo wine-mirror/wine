@@ -32,13 +32,12 @@ typedef NTSTATUS (*unixlib_entry_t)( void *args );
 extern DECLSPEC_EXPORT const unixlib_entry_t __wine_unix_call_funcs[];
 extern DECLSPEC_EXPORT const unixlib_entry_t __wine_unix_call_wow64_funcs[];
 
-/* some useful helpers from ntdll */
+/* some useful private helpers from ntdll */
+
+#ifdef __WINESRC__
+
 NTSYSAPI const char *ntdll_get_build_dir(void);
 NTSYSAPI const char *ntdll_get_data_dir(void);
-NTSYSAPI DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen );
-NTSYSAPI int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict );
-NTSYSAPI int ntdll_wcsicmp( const WCHAR *str1, const WCHAR *str2 );
-NTSYSAPI int ntdll_wcsnicmp( const WCHAR *str1, const WCHAR *str2, int n );
 
 /* exception handling */
 
@@ -74,6 +73,8 @@ NTSYSAPI BOOLEAN KeAddSystemServiceTable( ULONG_PTR *funcs, ULONG_PTR *counters,
                                           BYTE *arguments, ULONG index );
 NTSYSAPI void ntdll_add_syscall_debug_info( UINT idx, const char **syscall_names,
                                             const char **usercall_names );
+
+#endif  /* __WINESRC__ */
 
 /* wide char string functions */
 
@@ -240,6 +241,11 @@ static inline ULONG ntdll_wcstoul( const WCHAR *s, WCHAR **end, int base )
     if (end && !empty) *end = (WCHAR *)s;
     return negative ? -ret : ret;
 }
+
+NTSYSAPI DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen );
+NTSYSAPI int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict );
+NTSYSAPI int ntdll_wcsicmp( const WCHAR *str1, const WCHAR *str2 );
+NTSYSAPI int ntdll_wcsnicmp( const WCHAR *str1, const WCHAR *str2, int n );
 
 #define iswspace(ch)       ntdll_iswspace(ch)
 #define wcslen(str)        ntdll_wcslen(str)
