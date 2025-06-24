@@ -1206,7 +1206,7 @@ static DWORD register_menus_entry(const WCHAR *menu_file, const WCHAR *windows_f
     return ret;
 }
 
-/* This escapes reserved characters in .desktop files' Exec keys. */
+/* This escapes required characters in .desktop files' Exec keys. */
 static LPSTR escape(LPCWSTR arg)
 {
     int i, j;
@@ -1224,24 +1224,9 @@ static LPSTR escape(LPCWSTR arg)
             escaped_string[j++] = '\\';
             escaped_string[j++] = '\\';
             break;
-        case ' ':
-        case '\t':
-        case '\n':
         case '"':
-        case '\'':
-        case '>':
-        case '<':
-        case '~':
-        case '|':
-        case '&':
-        case ';':
-        case '$':
-        case '*':
-        case '?':
-        case '#':
-        case '(':
-        case ')':
         case '`':
+        case '$':
             escaped_string[j++] = '\\';
             escaped_string[j++] = '\\';
             /* fall through */
@@ -1288,11 +1273,11 @@ static BOOL write_desktop_entry(const WCHAR *link, const WCHAR *location, const 
     if (prefix)
     {
         char *path = wine_get_unix_file_name( prefix );
-        fprintf(file, "env WINEPREFIX=\"%s\" ", path);
+        fprintf(file, "env \"WINEPREFIX=%s\" ", path);
         heap_free( path );
     }
-    fprintf(file, "wine %s", escape(path));
-    if (args) fprintf(file, " %s", escape(args) );
+    fprintf(file, "wine \"%s\"", escape(path));
+    if (args) fprintf(file, " \"%s\"", escape(args) );
     fputc( '\n', file );
     fprintf(file, "Type=Application\n");
     fprintf(file, "StartupNotify=true\n");
@@ -2050,13 +2035,13 @@ static BOOL write_freedesktop_association_entry(const WCHAR *desktopPath, const 
         if (prefix)
         {
             char *path = wine_get_unix_file_name( prefix );
-            fprintf(desktop, "Exec=env WINEPREFIX=\"%s\" wine start ", path);
+            fprintf(desktop, "Exec=env \"WINEPREFIX=%s\" wine start ", path);
             heap_free( path );
         }
         else
             fprintf(desktop, "Exec=wine start ");
         if (progId) /* file association */
-            fprintf(desktop, "/ProgIDOpen %s %%f\n", escape(progId));
+            fprintf(desktop, "/ProgIDOpen \"%s\" %%f\n", escape(progId));
         else /* protocol association */
             fprintf(desktop, "%%u\n");
         fprintf(desktop, "NoDisplay=true\n");
