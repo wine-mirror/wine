@@ -193,8 +193,8 @@ static void test_D3DXLoadVolumeFromMemory(IDirect3DDevice9 *device)
 
     IDirect3DVolumeTexture9_GetVolumeLevel(volume_texture, 0, &volume);
 
-    set_box(&src_box, 1, 1, 7, 7, 0, 1);
-    set_box(&dst_box, 1, 1, 7, 7, 0, 1);
+    set_box(&src_box, 1, 1, 5, 3, 0, 1);
+    set_box(&dst_box, 1, 1, 5, 3, 0, 1);
     hr = D3DXLoadVolumeFromMemory(volume, NULL, &dst_box, pixels, D3DFMT_A8R8G8B8, 16, 32, NULL, &src_box, D3DX_DEFAULT, 0);
     ok(hr == D3D_OK, "D3DXLoadVolumeFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
 
