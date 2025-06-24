@@ -1337,12 +1337,14 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
     }
     source->state = SOURCE_SHUTDOWN;
 
+    IMFMediaEventQueue_QueueEventParamVar(source->queue, MEError, &GUID_NULL, MF_E_SHUTDOWN, NULL);
     IMFMediaEventQueue_Shutdown(source->queue);
     IMFByteStream_Close(source->stream);
 
     while (source->stream_count--)
     {
         struct media_stream *stream = source->streams[source->stream_count];
+        IMFMediaEventQueue_QueueEventParamVar(stream->queue, MEError, &GUID_NULL, MF_E_SHUTDOWN, NULL);
         IMFMediaEventQueue_Shutdown(stream->queue);
         IMFMediaStream_Release(&stream->IMFMediaStream_iface);
     }
