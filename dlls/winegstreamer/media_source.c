@@ -1666,6 +1666,7 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
     WaitForSingleObject(source->read_thread, INFINITE);
     CloseHandle(source->read_thread);
 
+    IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MEError, &GUID_NULL, MF_E_SHUTDOWN, NULL);
     IMFMediaEventQueue_Shutdown(source->event_queue);
     IMFByteStream_Close(source->byte_stream);
 
@@ -1673,6 +1674,7 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
     {
         struct media_stream *stream = source->streams[source->stream_count];
         IMFStreamDescriptor_Release(source->descriptors[source->stream_count]);
+        IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEError, &GUID_NULL, MF_E_SHUTDOWN, NULL);
         IMFMediaEventQueue_Shutdown(stream->event_queue);
         IMFMediaStream_Release(&stream->IMFMediaStream_iface);
     }
