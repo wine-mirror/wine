@@ -78,6 +78,8 @@ WCHAR **main_wargv = NULL;
 
 static LCID user_lcid, system_lcid;
 static LANGID user_ui_language;
+static WCHAR *nt_build_dir;
+static WCHAR *nt_data_dir;
 
 static char system_locale[LOCALE_NAME_MAX_LENGTH];
 static char user_locale[LOCALE_NAME_MAX_LENGTH];
@@ -467,18 +469,18 @@ int ntdll_wcsnicmp( const WCHAR *str1, const WCHAR *str2, int n )
 /***********************************************************************
  *           ntdll_get_build_dir  (ntdll.so)
  */
-const char *ntdll_get_build_dir(void)
+const WCHAR *ntdll_get_build_dir(void)
 {
-    return build_dir;
+    return nt_build_dir;
 }
 
 
 /***********************************************************************
  *           ntdll_get_data_dir  (ntdll.so)
  */
-const char *ntdll_get_data_dir(void)
+const WCHAR *ntdll_get_data_dir(void)
 {
-    return data_dir;
+    return nt_data_dir;
 }
 
 
@@ -1085,9 +1087,12 @@ static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
     unsigned int i;
     char str[22];
 
-    add_path_var( env, pos, size, "WINEDATADIR", data_dir );
+    if (build_dir) unix_to_nt_file_name( build_dir, &nt_build_dir );
+    if (data_dir) unix_to_nt_file_name( data_dir, &nt_data_dir );
+
+    append_envW( env, pos, size, "WINEBUILDDIR", nt_build_dir );
+    append_envW( env, pos, size, "WINEDATADIR", nt_data_dir );
     add_path_var( env, pos, size, "WINEHOMEDIR", home_dir );
-    add_path_var( env, pos, size, "WINEBUILDDIR", build_dir );
     add_path_var( env, pos, size, "WINECONFIGDIR", config_dir );
     add_path_var( env, pos, size, "WINELOADER", wineloader );
     for (i = 0; dll_paths[i]; i++)

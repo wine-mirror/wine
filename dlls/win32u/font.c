@@ -473,12 +473,11 @@ static pthread_mutex_t font_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static void get_fonts_data_dir_path( const WCHAR *file, WCHAR *path )
 {
-    const char *dir = ntdll_get_build_dir();
-    ULONG len = MAX_PATH;
+    const WCHAR *dir = ntdll_get_build_dir();
 
     if (!dir) dir = ntdll_get_data_dir();
-    wine_unix_to_nt_file_name( dir, path, &len );
-    asciiz_to_unicode( path + len - 1, "\\fonts\\" );
+    wcscpy( path, dir );
+    asciiz_to_unicode( path + wcslen(path), "\\fonts\\" );
     if (file) lstrcatW( path, file );
 }
 

@@ -36,8 +36,8 @@ extern DECLSPEC_EXPORT const unixlib_entry_t __wine_unix_call_wow64_funcs[];
 
 #ifdef __WINESRC__
 
-NTSYSAPI const char *ntdll_get_build_dir(void);
-NTSYSAPI const char *ntdll_get_data_dir(void);
+NTSYSAPI const WCHAR *ntdll_get_build_dir(void);
+NTSYSAPI const WCHAR *ntdll_get_data_dir(void);
 NTSYSAPI NTSTATUS ntdll_get_dos_file_name( const char *unix_name, WCHAR **dos, UINT disposition );
 
 /* exception handling */
