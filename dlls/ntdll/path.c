@@ -503,6 +503,86 @@ static const WCHAR *skip_unc_prefix( const WCHAR *ptr )
 
 
 /******************************************************************
+ *		get_unix_full_path
+ *
+ * Get a full path for a Unix path name. Helper for RtlGetFullPathName_UEx.
+ */
+static BOOL get_unix_full_path( LPCWSTR name, LPWSTR buffer, ULONG size, ULONG *reqsize )
+{
+    WCHAR *nt_str;
+    NTSTATUS status;
+    UNICODE_STRING str;
+    OBJECT_ATTRIBUTES attr;
+    HANDLE handle;
+    IO_STATUS_BLOCK io;
+    BOOL ret = FALSE;
+    ULONG file_len = 0;
+
+    nt_str = RtlAllocateHeap( GetProcessHeap(), 0, (wcslen(name) + 9) * sizeof(WCHAR) );
+    wcscpy( nt_str, L"\\??\\unix" );
+    wcscat( nt_str, name );
+    for (WCHAR *p = nt_str; *p; p++) if (*p == '/') *p = '\\';
+    RtlInitUnicodeString( &str, nt_str );
+    InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
+
+    status = NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                         FILE_SYNCHRONOUS_IO_NONALERT );
+    if (status)
+    {
+        ULONG i = str.Length / sizeof(WCHAR);
+        while (i && str.Buffer[i - 1] != '\\') i--;
+        while (i && str.Buffer[i - 1] == '\\') i--;
+        if (i > 9)
+        {
+            file_len = str.Length - i * sizeof(WCHAR);
+            str.Length = i * sizeof(WCHAR);
+            status = NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                 FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+        }
+    }
+
+    if (!status)
+    {
+        ULONG retsize, bufsize = sizeof(OBJECT_NAME_INFORMATION) + size + 4 * sizeof(WCHAR);
+        OBJECT_NAME_INFORMATION *info = RtlAllocateHeap( GetProcessHeap(), 0, bufsize );
+
+        if (!(status = NtQueryObject( handle, ObjectNameInformation, info, bufsize, &retsize )))
+        {
+            ULONG len = info->Name.Length;
+            WCHAR *name = info->Name.Buffer;
+
+            if (len >= 6 * sizeof(WCHAR) && name[5] == ':')
+            {
+                len -= 4 * sizeof(WCHAR);
+                name += 4;
+            }
+            else name[1] = '\\';
+
+            *reqsize = len + file_len + sizeof(WCHAR);
+            if (*reqsize <= size)
+            {
+                memcpy( buffer, name, len );
+                memcpy( buffer + len / sizeof(WCHAR), str.Buffer + str.Length / sizeof(WCHAR),
+                        file_len + sizeof(WCHAR) );
+                *reqsize -= sizeof(WCHAR);
+            }
+            ret = TRUE;
+        }
+        else if (status == STATUS_BUFFER_OVERFLOW)
+        {
+            retsize -= sizeof(OBJECT_NAME_INFORMATION) - 4 * sizeof(WCHAR);
+            *reqsize = retsize + file_len;
+            ret = TRUE;
+        }
+        RtlFreeHeap( GetProcessHeap(), 0, info );
+        NtClose( handle );
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, nt_str );
+    return ret;
+}
+
+
+/******************************************************************
  *		get_full_path_helper
  *
  * Helper for RtlGetFullPathName_UEx.
@@ -535,6 +615,10 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size, RTL_P
         break;
 
     case RtlPathTypeLocalDevice:    /* \\.\foo */
+        if (!wcsncmp( name + 4, L"unix", 4 ) && IS_SEPARATOR(name[8]) &&
+            get_unix_full_path( name + 8, buffer, size, &reqsize ))
+            goto done;
+
         mark = 4;
         break;
 
@@ -607,43 +691,8 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size, RTL_P
         break;
 
     case RtlPathTypeRooted:     /* \xxx    */
-        if (name[0] == '/')  /* may be a Unix path */
-        {
-            char *unix_name;
-            WCHAR *nt_str;
-            ULONG buflen;
-            NTSTATUS status;
-            UNICODE_STRING str;
-            OBJECT_ATTRIBUTES attr;
+        if (name[0] == '/' && get_unix_full_path( name, buffer, size, &reqsize )) goto done;
 
-            nt_str = RtlAllocateHeap( GetProcessHeap(), 0, (wcslen(name) + 9) * sizeof(WCHAR) );
-            wcscpy( nt_str, L"\\??\\unix" );
-            wcscat( nt_str, name );
-            RtlInitUnicodeString( &str, nt_str );
-            InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
-            buflen = 3 * wcslen(name) + 1;
-            unix_name = RtlAllocateHeap( GetProcessHeap(), 0, buflen );
-            status = wine_nt_to_unix_file_name( &attr, unix_name, &buflen, FILE_OPEN_IF );
-            if (!status || status == STATUS_NO_SUCH_FILE)
-            {
-                buflen = wcslen(name) + 9;
-                status = wine_unix_to_nt_file_name( unix_name, nt_str, &buflen );
-            }
-            RtlFreeHeap( GetProcessHeap(), 0, unix_name );
-            if (!status && buflen > 6 && nt_str[5] == ':')
-            {
-                reqsize = (buflen - 4) * sizeof(WCHAR);
-                if (reqsize <= size)
-                {
-                    memcpy( buffer, nt_str + 4, reqsize );
-                    collapse_path( buffer, 3 );
-                    reqsize -= sizeof(WCHAR);
-                }
-                RtlFreeHeap( GetProcessHeap(), 0, nt_str );
-                goto done;
-            }
-            RtlFreeHeap( GetProcessHeap(), 0, nt_str );
-        }
         if (cd->Buffer[1] == ':')
         {
             reqsize = 2 * sizeof(WCHAR);
