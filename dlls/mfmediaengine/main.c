@@ -153,6 +153,7 @@ struct media_engine
     double default_playback_rate;
     double volume;
     double duration;
+    double next_seek;
     MF_MEDIA_ENGINE_NETWORK network_state;
     MF_MEDIA_ENGINE_ERR error_code;
     HRESULT extended_code;
@@ -911,6 +912,8 @@ static HRESULT WINAPI media_engine_callback_GetParameters(IMFAsyncCallback *ifac
     return E_NOTIMPL;
 }
 
+static HRESULT media_engine_set_current_time(struct media_engine *engine, double seektime);
+
 static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct media_engine *engine = impl_from_session_events_IMFAsyncCallback(iface);
@@ -989,6 +992,8 @@ static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface
                 media_engine_set_flag(engine, FLAGS_ENGINE_SEEKING | FLAGS_ENGINE_IS_ENDED, FALSE);
                 IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_SEEKED, 0, 0);
                 IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_TIMEUPDATE, 0, 0);
+                if (isfinite(engine->next_seek))
+                    media_engine_set_current_time(engine, engine->next_seek);
             }
             LeaveCriticalSection(&engine->cs);
             IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PLAYING, 0, 0);
@@ -1864,6 +1869,14 @@ static HRESULT media_engine_set_current_time(struct media_engine *engine, double
     hr = IMFMediaSession_GetSessionCapabilities(engine->session, &caps);
     if (FAILED(hr) || !(caps & MFSESSIONCAP_SEEK))
         return hr;
+
+    if (engine->flags & FLAGS_ENGINE_SEEKING)
+    {
+        engine->next_seek = seektime;
+        return S_OK;
+    }
+
+    engine->next_seek = NAN;
 
     position.vt = VT_I8;
     position.hVal.QuadPart = min(max(0, seektime), engine->duration) * 10000000;
@@ -3378,6 +3391,7 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
     engine->playback_rate = 1.0;
     engine->volume = 1.0;
     engine->duration = NAN;
+    engine->next_seek = NAN;
     engine->video_frame.pts = MINLONGLONG;
     InitializeCriticalSection(&engine->cs);
 
