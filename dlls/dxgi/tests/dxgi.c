@@ -6912,8 +6912,9 @@ static void test_cursor_clipping(IUnknown *device, BOOL is_d3d12)
                 if (modes[mode_idx].Width != width && modes[mode_idx].Height != height)
                     break;
             }
-            ok(modes[mode_idx].Width != width && modes[mode_idx].Height != height,
-                    "Failed to find a different mode than %ux%u.\n", width, height);
+            ok(mode_idx < mode_count, "Failed to find a different mode than %ux%u.\n", width, height);
+            if (mode_idx >= mode_count)
+                continue;
 
             ret = ClipCursor(NULL);
             ok(ret, "ClipCursor failed, error %#lx.\n", GetLastError());
