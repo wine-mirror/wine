@@ -493,7 +493,7 @@ static void test__sopen_dispatch(void)
 
 static void test__sopen_s(void)
 {
-    int ret, fd;
+    int ret, fd, fd2;
     char *tempf;
 
     tempf = _tempnam(".", "wne");
@@ -522,6 +522,32 @@ static void test__sopen_s(void)
     ok(ret == EINVAL, "got %d\n", ret);
     ok(fd == -1, "got fd %d\n", fd);
     CHECK_CALLED(global_invalid_parameter_handler);
+
+    fd = 0;
+    ret = _sopen_s(&fd, tempf, _O_CREAT | _O_WRONLY, _SH_SECURE, _S_IWRITE);
+    ok(!ret, "got %d\n", ret);
+    ok(fd > 0, "got fd %d\n", fd);
+    fd2 = 0;
+    ret = _sopen_s(&fd2, tempf, _O_RDONLY, _SH_SECURE, 0);
+    ok(ret == EACCES, "got %d\n", ret);
+    ok(fd2 == -1, "got fd %d\n", fd2);
+    ret = _close(fd);
+    ok(!ret, "close() returned %d\n", ret);
+
+    fd = 0;
+    ret = _sopen_s(&fd, tempf, _O_RDONLY, _SH_SECURE, 0);
+    ok(!ret, "got %d\n", ret);
+    ok(fd > 0, "got fd %d\n", fd);
+    fd2 = 0;
+    ret = _sopen_s(&fd2, tempf, _O_RDONLY, _SH_SECURE, 0);
+    ok(!ret, "got %d\n", ret);
+    ok(fd2 > 0, "got fd %d\n", fd2);
+    ret = close(fd);
+    ok(!ret, "_close() returned %d\n", ret);
+    ret = close(fd2);
+    ok(!ret, "_close() returned %d\n", ret);
+    ret = unlink(tempf);
+    ok(!ret, "unlink() returned %d\n", ret);
 
     free(tempf);
 }

@@ -32,11 +32,13 @@
 #define	SH_DENYWR	0x20	/* Deny write */
 #define	SH_DENYRD	0x30	/* Deny read */
 #define	SH_DENYNO	0x40	/* Deny nothing */
+#define	SH_SECURE	0x80	/* Share read access if read-only */
 
 #define _SH_COMPAT SH_COMPAT
 #define _SH_DENYRW SH_DENYRW
 #define _SH_DENYWR SH_DENYWR
 #define _SH_DENYRD SH_DENYRD
 #define _SH_DENYNO SH_DENYNO
+#define _SH_SECURE SH_SECURE
 
 #endif	/* __WINE_SHARE_H_ */

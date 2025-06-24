@@ -2452,6 +2452,9 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
     case _SH_DENYNO:
       sharing = FILE_SHARE_READ | FILE_SHARE_WRITE;
       break;
+    case _SH_SECURE:
+      sharing = (access == GENERIC_READ ? FILE_SHARE_READ : 0);
+      break;
     default:
       ERR( "Unhandled shflags %#x\n", shflags );
       return EINVAL;
