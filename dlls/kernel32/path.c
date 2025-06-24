@@ -424,29 +424,49 @@ char * CDECL wine_get_unix_file_name( LPCWSTR dosW )
 WCHAR * CDECL wine_get_dos_file_name( LPCSTR str )
 {
     UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
     NTSTATUS status;
-    WCHAR *buffer;
-    ULONG len = strlen(str) + 1;
+    HANDLE handle = 0;
+    WCHAR *buffer = NULL, *nt_str = NULL;
+    ULONG res, len = strlen(str) + 1;
 
     if (str[0] != '/')  /* relative path name */
     {
         if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return NULL;
         MultiByteToWideChar( CP_UNIXCP, 0, str, len, buffer, len );
         status = RtlDosPathNameToNtPathName_U_WithStatus( buffer, &nt_name, NULL, NULL );
-        RtlFreeHeap( GetProcessHeap(), 0, buffer );
-        if (!set_ntstatus( status )) return NULL;
+        if (!set_ntstatus( status )) goto failed;
         buffer = nt_name.Buffer;
         len = nt_name.Length / sizeof(WCHAR) + 1;
     }
     else
     {
-        len += 8;  /* \??\unix prefix */
-        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return NULL;
-        if (!set_ntstatus( wine_unix_to_nt_file_name( str, buffer, &len )))
+        if (!(nt_str = RtlAllocateHeap( GetProcessHeap(), 0, (len + 8) * sizeof(WCHAR) ))) return NULL;
+        wcscpy( nt_str, L"\\??\\unix" );
+        MultiByteToWideChar( CP_UNIXCP, 0, str, len, nt_str + 8, len );
+        for (WCHAR *p = nt_str; *p; p++) if (*p == '/') *p = '\\';
+        RtlInitUnicodeString( &nt_name, nt_str );
+        InitializeObjectAttributes( &attr, &nt_name, 0, 0, NULL );
+        status = NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                             FILE_SYNCHRONOUS_IO_NONALERT );
+        while (status)
         {
-            HeapFree( GetProcessHeap(), 0, buffer );
-            return NULL;
+            ULONG i = nt_name.Length / sizeof(WCHAR);
+            while (i && nt_name.Buffer[i - 1] != '\\') i--;
+            while (i && nt_name.Buffer[i - 1] == '\\') i--;
+            if (i <= 9) break;
+            nt_name.Length = i * sizeof(WCHAR);
+            status = NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                 FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
         }
+        if (!set_ntstatus( status )) goto failed;
+        if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, (len + 8) * sizeof(WCHAR) ))) goto failed;
+        res = GetFinalPathNameByHandleW( handle, buffer, len + 8, VOLUME_NAME_DOS );
+        if (!res || res > len + 8) goto failed;
+        wcscat( buffer, nt_name.Buffer + nt_name.Length / sizeof(WCHAR) );
+        NtClose( handle );
+        RtlFreeHeap( GetProcessHeap(), 0, nt_str );
     }
     if (buffer[5] == ':')
     {
@@ -456,6 +476,12 @@ WCHAR * CDECL wine_get_dos_file_name( LPCSTR str )
     }
     else buffer[1] = '\\';
     return buffer;
+
+ failed:
+    if (handle) NtClose( handle );
+    RtlFreeHeap( GetProcessHeap(), 0, buffer );
+    RtlFreeHeap( GetProcessHeap(), 0, nt_str );
+    return NULL;
 }
 
 /*************************************************************************
