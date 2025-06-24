@@ -827,9 +827,9 @@ static void x11drv_surface_destroy( struct opengl_drawable *base )
 
     TRACE( "drawable %s\n", debugstr_opengl_drawable( base ) );
 
-    pglXDestroyWindow( gdi_display, gl->drawable );
-    destroy_client_window( gl->base.hwnd, gl->window );
-    XFreeColormap( gdi_display, gl->colormap );
+    if (gl->drawable) pglXDestroyWindow( gdi_display, gl->drawable );
+    if (gl->window) destroy_client_window( gl->base.hwnd, gl->window );
+    if (gl->colormap) XFreeColormap( gdi_display, gl->colormap );
     if (gl->hdc_src) NtGdiDeleteObjectApp( gl->hdc_src );
     if (gl->hdc_dst) NtGdiDeleteObjectApp( gl->hdc_dst );
 }
@@ -907,7 +907,7 @@ static BOOL x11drv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl
 
     if (!gl->drawable)
     {
-        free( gl );
+        opengl_drawable_release( &gl->base );
         return FALSE;
     }
 
@@ -1450,7 +1450,7 @@ static BOOL x11drv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum tex
     TRACE( "new Pbuffer drawable as %p (%lx)\n", gl, gl->drawable );
     if (!gl->drawable)
     {
-        free( gl );
+        opengl_drawable_release( &gl->base );
         return FALSE;
     }
     pglXQueryDrawable( gdi_display, gl->drawable, GLX_WIDTH, (unsigned int *)width );
@@ -1477,7 +1477,7 @@ static void x11drv_pbuffer_destroy( struct opengl_drawable *base )
     XDeleteContext( gdi_display, (XID)hdc, gl_pbuffer_context );
     pthread_mutex_unlock( &context_mutex );
 
-    pglXDestroyPbuffer( gdi_display, gl->drawable );
+    if (gl->drawable) pglXDestroyPbuffer( gdi_display, gl->drawable );
 }
 
 static void x11drv_pbuffer_flush( struct opengl_drawable *base, UINT flags )
