@@ -499,17 +499,21 @@ static void test__sopen_s(void)
     tempf = _tempnam(".", "wne");
 
     fd = 0;
-    ret = _sopen_s(&fd, tempf, _O_CREAT, _SH_DENYWR, 0);
+    ret = _sopen_s(&fd, tempf, _O_CREAT, _SH_DENYWR, _S_IWRITE);
     ok(!ret, "got %d\n", ret);
     ok(fd > 0, "got fd %d\n", fd);
-    _close(fd);
-    unlink(tempf);
+    ret = _close(fd);
+    ok(!ret, "_close() returned %d\n", ret);
+    ret = unlink(tempf);
+    ok(!ret, "unlink() returned %d\n", ret);
 
     /* _open() does not validate pmode */
     fd = _open(tempf, _O_CREAT, 0xff);
     ok(fd > 0, "got fd %d\n", fd);
-    _close(fd);
-    unlink(tempf);
+    ret = _close(fd);
+    ok(!ret, "_close() returned %d\n", ret);
+    ret = unlink(tempf);
+    ok(!ret, "unlink() returned %d\n", ret);
 
     /* _sopen_s() invokes invalid parameter handler on invalid pmode */
     SET_EXPECT(global_invalid_parameter_handler);
