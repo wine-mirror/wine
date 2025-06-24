@@ -121,7 +121,11 @@ static void _ok_path_fudge(GpPath* path, const path_test_t *expected, INT expect
         if (match || expected[eidx].todo != 2)
             idx++;
         if (match || !numskip--)
-            numskip = expected[++eidx].wine_only_entries_preceding;
+        {
+            eidx++;
+            if (eidx < expected_size)
+                numskip = expected[eidx].wine_only_entries_preceding;
+        }
     }
 
 end:
