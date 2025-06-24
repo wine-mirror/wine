@@ -1015,8 +1015,8 @@ static void test_spvoice_ssml(void)
     reset_engine_params(&test_engine);
 
     hr = ISpVoice_Speak(voice, text3, SPF_IS_XML, NULL);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine ok(test_engine.frag_count == 7 || broken(test_engine.frag_count == 1) /* win7 */,
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(test_engine.frag_count == 7 || broken(test_engine.frag_count == 1) /* win7 */,
        "got %Iu.\n", test_engine.frag_count);
 
     if (test_engine.frag_count == 7) {

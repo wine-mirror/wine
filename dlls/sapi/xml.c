@@ -459,8 +459,9 @@ static HRESULT add_sapi_text_fragment(struct xml_parser *parser, const SPVSTATE 
 
 static HRESULT parse_ssml_elems(struct xml_parser *parser, const SPVSTATE *state, const struct xml_elem *parent)
 {
+    struct xml_attr attr;
     struct xml_elem elem;
-    BOOL is_text;
+    BOOL is_text, end;
     HRESULT hr = S_OK;
 
     while (SUCCEEDED(hr) && next_text_or_xml_elem(parser, &is_text, &elem, parent))
@@ -468,6 +469,12 @@ static HRESULT parse_ssml_elems(struct xml_parser *parser, const SPVSTATE *state
         if (is_text)
         {
             hr = add_sapi_text_fragment(parser, state);
+        }
+        else if (xml_elem_eq(&elem, ssml_ns, L"p") || xml_elem_eq(&elem, ssml_ns, L"s"))
+        {
+            while (next_xml_attr(parser, &attr, &end)) ;
+            if (end) continue;
+            hr = parse_ssml_elems(parser, state, &elem);
         }
         else
         {
