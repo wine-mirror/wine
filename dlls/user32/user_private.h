@@ -81,8 +81,8 @@ extern INT_PTR WINPROC_CallDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 extern void winproc_init(void);
 extern LRESULT dispatch_win_proc_params( struct win_proc_params *params );
 
-extern ATOM get_class_info( HINSTANCE instance, const WCHAR *name, WNDCLASSEXW *info,
-                            UNICODE_STRING *name_str, BOOL ansi );
+extern void init_class_name( UNICODE_STRING *str, const WCHAR *name );
+extern void get_class_version( UNICODE_STRING *name, UNICODE_STRING *version, BOOL load );
 
 /* kernel callbacks */
 

@@ -121,7 +121,7 @@ static BOOL is_builtin_class( const WCHAR *name )
 }
 
 
-static void init_class_name( UNICODE_STRING *str, const WCHAR *name )
+void init_class_name( UNICODE_STRING *str, const WCHAR *name )
 {
     if (IS_INTRESOURCE( name ))
     {
@@ -194,7 +194,7 @@ static ULONG_PTR set_menu_nameA( HWND hwnd, INT offset, ULONG_PTR newval )
     return 0;
 }
 
-static void get_class_version( UNICODE_STRING *name, UNICODE_STRING *version, BOOL load )
+void get_class_version( UNICODE_STRING *name, UNICODE_STRING *version, BOOL load )
 {
     ACTCTX_SECTION_KEYED_DATA data = {.cbSize = sizeof(data)};
     const WCHAR *class_name = name->Buffer;
@@ -563,31 +563,12 @@ BOOL WINAPI GetClassInfoW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSW *wc )
     return ret;
 }
 
-ATOM get_class_info( HINSTANCE instance, const WCHAR *class_name, WNDCLASSEXW *info,
-                     UNICODE_STRING *name_str, BOOL ansi )
-{
-    UNICODE_STRING name;
-    ATOM atom;
-
-    init_class_name( &name, class_name );
-    get_class_version( &name, NULL, TRUE );
-
-    if (!(atom = NtUserGetClassInfoEx( instance, &name, info, NULL, ansi )))
-    {
-        TRACE( "%s %p -> not found\n", debugstr_w(class_name), instance );
-        SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
-        return 0;
-    }
-
-    if (name_str) *name_str = name;
-    return atom;
-}
-
 /***********************************************************************
  *		GetClassInfoExA (USER32.@)
  */
 BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
 {
+    UNICODE_STRING name_str;
     ATOM atom;
 
     TRACE("%p %s %p\n", hInstance, debugstr_a(name), wc);
@@ -604,11 +585,20 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
         WCHAR nameW[MAX_ATOM_LEN + 1];
         if (!MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, ARRAY_SIZE( nameW )))
             return FALSE;
-        atom = get_class_info( hInstance, nameW, (WNDCLASSEXW *)wc, NULL, TRUE );
+        RtlInitUnicodeString( &name_str, nameW );
     }
-    else atom = get_class_info( hInstance, (const WCHAR *)name, (WNDCLASSEXW *)wc, NULL, TRUE );
-    if (atom) wc->lpszClassName = name;
+    else init_class_name( &name_str, (const WCHAR *)name );
 
+    get_class_version( &name_str, NULL, TRUE );
+
+    if (!(atom = NtUserGetClassInfoEx( hInstance, &name_str, (WNDCLASSEXW *)wc, NULL, TRUE )))
+    {
+        TRACE( "%s %p -> not found\n", debugstr_us(&name_str), hInstance );
+        SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
+        return 0;
+    }
+
+    wc->lpszClassName = name;
     /* We must return the atom of the class here instead of just TRUE. */
     return atom;
 }
@@ -619,6 +609,7 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
  */
 BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc )
 {
+    UNICODE_STRING name_str;
     ATOM atom;
 
     TRACE("%p %s %p\n", hInstance, debugstr_w(name), wc);
@@ -630,9 +621,17 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc 
     }
 
     if (!hInstance) hInstance = user32_module;
-    atom = get_class_info( hInstance, name, wc, NULL, FALSE );
-    if (atom) wc->lpszClassName = name;
+    init_class_name( &name_str, name );
+    get_class_version( &name_str, NULL, TRUE );
 
+    if (!(atom = NtUserGetClassInfoEx( hInstance, &name_str, wc, NULL, FALSE )))
+    {
+        TRACE( "%s %p -> not found\n", debugstr_us(&name_str), hInstance );
+        SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
+        return 0;
+    }
+
+    wc->lpszClassName = name;
     /* We must return the atom of the class here instead of just TRUE. */
     return atom;
 }
