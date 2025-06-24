@@ -296,12 +296,22 @@ struct morecontext
 static BOOL CALLBACK a_to_w_callback(LPGUID guid, LPCWSTR descW, LPCWSTR modW, LPVOID data)
 {
     struct morecontext *context = data;
-    char descA[MAXPNAMELEN], modA[MAXPNAMELEN];
+    char *descA, *modA;
+    DWORD len;
+    BOOL ret;
 
-    WideCharToMultiByte(CP_ACP, 0, descW, -1, descA, sizeof(descA), NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, modW, -1, modA, sizeof(modA), NULL, NULL);
+    len = WideCharToMultiByte(CP_ACP, 0, descW, -1, NULL, 0, NULL, NULL);
+    if ((descA = malloc(len)))
+        WideCharToMultiByte(CP_ACP, 0, descW, -1, descA, len, NULL, NULL);
+    len = WideCharToMultiByte(CP_ACP, 0, modW, -1, NULL, 0, NULL, NULL);
+    if ((modA = malloc(len)))
+        WideCharToMultiByte(CP_ACP, 0, modW, -1, modA, len, NULL, NULL);
 
-    return context->callA(guid, descA, modA, context->data);
+    ret = context->callA(guid, descA, modA, context->data);
+
+    free(descA);
+    free(modA);
+    return ret;
 }
 
 /***************************************************************************
