@@ -29,6 +29,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
+#define MAX_ATOM_LEN 255 /* from dlls/kernel32/atom.c */
+
 static const char *debugstr_us( const UNICODE_STRING *us )
 {
     if (!us) return "<null>";
@@ -280,7 +282,8 @@ static BOOL is_default_coord( int x )
  */
 HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, BOOL unicode )
 {
-    UNICODE_STRING class, window_name = {0};
+    WCHAR nameW[MAX_ATOM_LEN + 1];
+    UNICODE_STRING class = RTL_CONSTANT_STRING(nameW), version, window_name = {0};
     HWND hwnd, top_child = 0;
     MDICREATESTRUCTW mdi_cs;
     WNDCLASSEXW info;
@@ -288,7 +291,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     HMENU menu;
 
     init_class_name( &class, className );
-    get_class_version( &class, NULL, TRUE );
+    get_class_version( &class, &version, TRUE );
 
     if (!NtUserGetClassInfoEx( module, &class, &info, NULL, FALSE ))
     {
