@@ -61,7 +61,7 @@ static void test_device_info(HANDLE device)
     status = HidP_GetLinkCollectionNodes(nodes, &nodes_count, ppd);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetLinkCollectionNodes failed:%lx\n", status);
 
-    for (i = 0; i < nodes_count; ++i)
+    for (i = 0; i < min(nodes_count, ARRAY_SIZE(nodes)); ++i)
     {
         trace("  [%d] LinkUsage: %x LinkUsagePage: %x Parent: %x "
               "NumberOfChildren: %x NextSibling: %x FirstChild: %x "
