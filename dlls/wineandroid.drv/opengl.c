@@ -146,13 +146,6 @@ static BOOL android_surface_create( HWND hwnd, HDC hdc, int format, struct openg
     return TRUE;
 }
 
-static BOOL android_make_current( struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *context )
-{
-    struct gl_drawable *draw = impl_from_opengl_drawable( draw_base ), *read = impl_from_opengl_drawable( read_base );
-    TRACE( "draw %s, read %s, context %p\n", debugstr_opengl_drawable( draw_base ), debugstr_opengl_drawable( read_base ), context );
-    return funcs->p_eglMakeCurrent( egl->display, context ? draw->base.surface : EGL_NO_SURFACE, context ? read->base.surface : EGL_NO_SURFACE, context );
-}
-
 static EGLenum android_init_egl_platform( const struct egl_platform *platform, EGLNativeDisplayType *platform_display )
 {
     egl = platform;
@@ -197,7 +190,6 @@ static struct opengl_driver_funcs android_driver_funcs =
     .p_get_proc_address = android_get_proc_address,
     .p_init_wgl_extensions = android_init_wgl_extensions,
     .p_surface_create = android_surface_create,
-    .p_make_current = android_make_current,
 };
 
 static const struct opengl_drawable_funcs android_drawable_funcs =
@@ -231,6 +223,7 @@ UINT ANDROID_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, 
     android_driver_funcs.p_describe_pixel_format = (*driver_funcs)->p_describe_pixel_format;
     android_driver_funcs.p_context_create = (*driver_funcs)->p_context_create;
     android_driver_funcs.p_context_destroy = (*driver_funcs)->p_context_destroy;
+    android_driver_funcs.p_make_current = (*driver_funcs)->p_make_current;
 
     *driver_funcs = &android_driver_funcs;
     return STATUS_SUCCESS;

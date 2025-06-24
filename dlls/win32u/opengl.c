@@ -575,10 +575,14 @@ static BOOL egldrv_context_destroy( void *context )
     return TRUE;
 }
 
-static BOOL egldrv_make_current( struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *private )
+static BOOL egldrv_make_current( struct opengl_drawable *draw, struct opengl_drawable *read, void *context )
 {
-    FIXME( "stub!\n" );
-    return FALSE;
+    const struct opengl_funcs *funcs = &display_funcs;
+    const struct egl_platform *egl = &display_egl;
+
+    TRACE( "draw %s, read %s, context %p\n", debugstr_opengl_drawable( draw ), debugstr_opengl_drawable( read ), context );
+
+    return funcs->p_eglMakeCurrent( egl->display, context ? draw->surface : EGL_NO_SURFACE, context ? read->surface : EGL_NO_SURFACE, context );
 }
 
 static const struct opengl_driver_funcs egldrv_funcs =

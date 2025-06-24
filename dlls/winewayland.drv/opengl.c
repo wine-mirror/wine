@@ -161,13 +161,6 @@ static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
     wl_egl_window_resize(gl->wl_egl_window, client_width, client_height, 0, 0);
 }
 
-static BOOL wayland_make_current(struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *context)
-{
-    struct wayland_gl_drawable *draw = impl_from_opengl_drawable(draw_base), *read = impl_from_opengl_drawable(read_base);
-    TRACE("draw %s, read %s, context %p\n", debugstr_opengl_drawable(draw_base), debugstr_opengl_drawable(read_base), context);
-    return funcs->p_eglMakeCurrent(egl->display, context ? draw->base.surface : EGL_NO_SURFACE, context ? read->base.surface : EGL_NO_SURFACE, context);
-}
-
 static BOOL wayland_opengl_surface_create(HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable)
 {
     struct opengl_drawable *previous;
@@ -249,7 +242,6 @@ static struct opengl_driver_funcs wayland_driver_funcs =
 {
     .p_init_egl_platform = wayland_init_egl_platform,
     .p_surface_create = wayland_opengl_surface_create,
-    .p_make_current = wayland_make_current,
     .p_pbuffer_create = wayland_pbuffer_create,
     .p_pbuffer_updated = wayland_pbuffer_updated,
     .p_pbuffer_bind = wayland_pbuffer_bind,
@@ -285,6 +277,7 @@ UINT WAYLAND_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, c
     wayland_driver_funcs.p_init_wgl_extensions = (*driver_funcs)->p_init_wgl_extensions;
     wayland_driver_funcs.p_context_create = (*driver_funcs)->p_context_create;
     wayland_driver_funcs.p_context_destroy = (*driver_funcs)->p_context_destroy;
+    wayland_driver_funcs.p_make_current = (*driver_funcs)->p_make_current;
 
     *driver_funcs = &wayland_driver_funcs;
     return STATUS_SUCCESS;
