@@ -4461,6 +4461,16 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
             }
 
             break;
+
+        case MEError:
+            /* Wine-specific extension */
+            EnterCriticalSection(&session->cs);
+            if (SUCCEEDED(IMFMediaEvent_GetStatus(event, &hr)) && hr == MF_E_SHUTDOWN &&
+                    session_get_media_source(session, (IMFMediaSource *)event_source))
+                session_handle_source_shutdown(session);
+            LeaveCriticalSection(&session->cs);
+            break;
+
         default:
             ;
     }
