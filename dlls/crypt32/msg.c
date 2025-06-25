@@ -1227,6 +1227,7 @@ typedef struct _CSignedEncodeMsg
     LPSTR           innerOID;
     CRYPT_DATA_BLOB data;
     CSignedMsgData  msg_data;
+    HCRYPTPROV      prov[];
 } CSignedEncodeMsg;
 
 static void CSignedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
@@ -1243,6 +1244,10 @@ static void CSignedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
     for (i = 0; i < msg->msg_data.info->cSignerInfo; i++)
         CSignerInfo_Free(&msg->msg_data.info->rgSignerInfo[i]);
     CSignedMsgData_CloseHandles(&msg->msg_data);
+    if (msg->base.open_flags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
+        for (i = 0; i < msg->msg_data.info->cSignerInfo; i++)
+            if (msg->prov[i])
+                CryptReleaseContext(msg->prov[i], 0);
     CryptMemFree(msg->msg_data.info->signerKeySpec);
     CryptMemFree(msg->msg_data.info->rgSignerInfo);
     CryptMemFree(msg->msg_data.info);
@@ -1403,7 +1408,7 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
  PCMSG_STREAM_INFO pStreamInfo)
 {
     const CMSG_SIGNED_ENCODE_INFO_WITH_CMS *info = pvMsgEncodeInfo;
-    DWORD i;
+    DWORD i, saved_prov_count = 0;
     CSignedEncodeMsg *msg;
 
     if (info->cbSize != sizeof(CMSG_SIGNED_ENCODE_INFO) &&
@@ -1421,7 +1426,9 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
     for (i = 0; i < info->cSigners; i++)
         if (!CRYPT_IsValidSigner(&info->rgSigners[i]))
             return NULL;
-    msg = CryptMemAlloc(sizeof(CSignedEncodeMsg));
+    if (dwFlags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
+        saved_prov_count = info->cSigners;
+    msg = CryptMemAlloc(offsetof(CSignedEncodeMsg, prov) + sizeof(HCRYPTPROV) * saved_prov_count);
     if (msg)
     {
         BOOL ret = TRUE;
@@ -1478,11 +1485,10 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
                          &info->rgSigners[i]);
                         if (ret)
                         {
+                            if (saved_prov_count)
+                                msg->prov[i] = info->rgSigners[i].hCryptProv;
                             ret = CSignedMsgData_ConstructSignerHandles(
                              &msg->msg_data, i, &info->rgSigners[i].hCryptProv, &dwFlags);
-                            if (dwFlags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
-                                CryptReleaseContext(info->rgSigners[i].hCryptProv,
-                                 0);
                         }
                         msg->msg_data.info->signerKeySpec[i] =
                          info->rgSigners[i].dwKeySpec;
