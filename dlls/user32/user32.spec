@@ -660,7 +660,7 @@
 @ stdcall GetRawInputDeviceInfoA(ptr long ptr ptr)
 @ stdcall GetRawInputDeviceInfoW(ptr long ptr ptr) NtUserGetRawInputDeviceInfo
 @ stdcall GetRawInputDeviceList(ptr ptr long) NtUserGetRawInputDeviceList
-# @ stub GetRawPointerDeviceData
+@ stdcall GetRawPointerDeviceData(long long long ptr ptr)
 # @ stub GetReasonTitleFromReasonCode
 @ stdcall GetRegisteredRawInputDevices(ptr ptr long) NtUserGetRegisteredRawInputDevices
 @ stdcall GetScrollBarInfo(long long ptr) NtUserGetScrollBarInfo

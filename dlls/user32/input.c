@@ -772,6 +772,15 @@ BOOL WINAPI GetPointerTouchInfo( UINT32 id, POINTER_TOUCH_INFO *info )
     return FALSE;
 }
 
+BOOL WINAPI GetRawPointerDeviceData( UINT32 id, UINT32 hist_count, UINT32 prop_count,
+                                     POINTER_DEVICE_PROPERTY *properties, LONG *values )
+{
+    FIXME( "id %u, count %u, prop_count %u, properties %p, values %p stub!\n",
+           id, hist_count, prop_count, properties, values );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 BOOL WINAPI GetPointerTouchInfoHistory( UINT32 id, UINT32 *count, POINTER_TOUCH_INFO *info )
 {
     FIXME( "id %u, count %p, info %p stub!\n", id, count, info );
