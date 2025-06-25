@@ -487,6 +487,24 @@ static void get_fonts_win_dir_path( const WCHAR *file, WCHAR *path )
     if (file) lstrcatW( path, file );
 }
 
+static WCHAR *get_nt_path( const WCHAR *path )
+{
+    WCHAR *ret;
+
+    if (path[0] && path[1] == ':')
+    {
+        ret = malloc( (wcslen(path) + 1 + ARRAY_SIZE(nt_prefixW)) * sizeof(WCHAR) );
+        memcpy( ret, nt_prefixW, sizeof(nt_prefixW) );
+        wcscpy( ret + ARRAY_SIZE(nt_prefixW), path );
+    }
+    else
+    {
+        ret = wcsdup( path );
+        if (ret[0] == '\\') ret[1] = '?';
+    }
+    return ret;
+}
+
 HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len )
 {
     UNICODE_STRING nameW = { name_len, name_len, (WCHAR *)name };
@@ -1181,7 +1199,7 @@ static struct gdi_font_face *create_face( struct gdi_font_family *family, const 
     face->flags      = flags;
     face->data_ptr   = data_ptr;
     face->data_size  = data_size;
-    if (file) face->file = wcsdup( file );
+    if (file) face->file = get_nt_path( file );
     if (size) face->size = *size;
     else face->scalable = TRUE;
     if (insert_face_in_family_list( face, family )) return face;
@@ -6516,7 +6534,7 @@ static void load_file_system_fonts(void)
 {
     char value_buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[1024 * sizeof(WCHAR)])];
     KEY_VALUE_PARTIAL_INFORMATION *info = (void *)value_buffer;
-    WCHAR *ptr, *next, path[MAX_PATH];
+    WCHAR *ptr, *next, *dir, path[MAX_PATH];
 
     /* Windows directory */
     get_fonts_win_dir_path( NULL, path );
@@ -6535,13 +6553,9 @@ static void load_file_system_fonts(void)
         {
             if ((next = wcschr( ptr, ';' ))) *next++ = 0;
             if (next && next - ptr < 2) continue;
-            lstrcpynW( path, ptr, MAX_PATH );
-            if (path[1] == ':')
-            {
-                memmove( path + ARRAYSIZE(nt_prefixW), path, (lstrlenW( path ) + 1) * sizeof(WCHAR) );
-                memcpy( path, nt_prefixW, sizeof(nt_prefixW) );
-            }
-            load_directory_fonts( path, ADDFONT_EXTERNAL_FONT );
+            dir = get_nt_path( ptr );
+            load_directory_fonts( dir, ADDFONT_EXTERNAL_FONT );
+            free( dir );
         }
     }
 }
@@ -6576,28 +6590,23 @@ static void update_external_font_keys(void)
     if (!(hkey = reg_create_key( wine_fonts_key, external_fontsW, sizeof(external_fontsW), 0, NULL )))
         return;
 
-    while (reg_enum_value( hkey, i++, info, sizeof(buffer) - sizeof(nt_prefixW),
-                           value, LF_FULLFACESIZE * sizeof(WCHAR) ))
+    while (reg_enum_value( hkey, i++, info, sizeof(buffer), value, LF_FULLFACESIZE * sizeof(WCHAR) ))
     {
         if (info->Type != REG_SZ) continue;
 
-        path = (WCHAR *)(buffer + info->DataOffset);
-        if (path[0] && path[1] == ':')
-        {
-            memmove( path + ARRAYSIZE(nt_prefixW), path, info->DataLength );
-            memcpy( path, nt_prefixW, sizeof(nt_prefixW) );
-        }
-
+        path = get_nt_path( (WCHAR *)(buffer + info->DataOffset) );
         if ((tmp = wcsrchr( value, ' ' )) && !facename_compare( tmp, true_type_suffixW, -1 )) *tmp = 0;
         if ((face = find_face_from_full_name( value )) && !wcsicmp( face->file, path ))
         {
             face->flags |= ADDFONT_EXTERNAL_FOUND;
+            free( path );
             continue;
         }
         if (tmp && !*tmp) *tmp = ' ';
         if (!(key = malloc( sizeof(*key) ))) break;
         lstrcpyW( key->value, value );
         list_add_tail( &external_keys, &key->entry );
+        free( path );
     }
 
     LIST_FOR_EACH_ENTRY_SAFE( key, next, &external_keys, struct external_key, entry )
@@ -6667,26 +6676,20 @@ static void load_registry_fonts(void)
         if (find_face_from_full_name( value )) continue;
         if (tmp && !*tmp) *tmp = ' ';
 
-        if (!(dlen = query_reg_value( hkey, value, info, sizeof(value_buffer) - sizeof(nt_prefixW) )) ||
+        if (!(dlen = query_reg_value( hkey, value, info, sizeof(value_buffer) )) ||
             info->Type != REG_SZ)
         {
             WARN( "Unable to get face path %s\n", debugstr_w(value) );
             continue;
         }
 
-        path = (WCHAR *)info->Data;
-        if (path[0] && path[1] == ':')
-        {
-            memmove( path + ARRAYSIZE(nt_prefixW), path, dlen );
-            memcpy( path, nt_prefixW, sizeof(nt_prefixW) );
-            dlen += sizeof(nt_prefixW);
-        }
-
-        dlen /= sizeof(WCHAR);
+        path = get_nt_path( (WCHAR *)info->Data );
+        dlen = wcslen( path );
         if (*path == '\\')
             add_font_resource( path, ADDFONT_ALLOW_BITMAP );
         else if (dlen >= 6 && !wcsicmp( path + dlen - 5, dot_fonW ))
             add_system_font_resource( path, ADDFONT_ALLOW_BITMAP );
+        free( path );
     }
     NtClose( hkey );
 }
