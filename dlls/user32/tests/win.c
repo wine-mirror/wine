@@ -127,6 +127,17 @@ static void flush_events( BOOL remove_messages )
     }
 }
 
+static void pump_messages(void)
+{
+    MSG msg;
+
+    while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE ))
+    {
+        TranslateMessage( &msg );
+        DispatchMessageA( &msg );
+    }
+}
+
 /* check the values returned by the various parent/owner functions on a given window */
 static void check_parents( HWND hwnd, HWND ga_parent, HWND gwl_parent, HWND get_parent,
                            HWND gw_owner, HWND ga_root, HWND ga_root_owner )
@@ -13585,6 +13596,160 @@ static void test_SetProcessLaunchForegroundPolicy(void)
     ok(!ret && (GetLastError() == ERROR_ACCESS_DENIED), "SetProcessLaunchForegroundPolicy failed: %d error %lu\n", ret, GetLastError());
 }
 
+struct test_startupinfo_showwindow_test
+{
+    DWORD style;
+    enum
+    {
+        TEST_SHOW_WS_VISIBLE,
+        TEST_SHOW_SHOWWINDOW,
+        TEST_SHOW_SETWINDOWPOS,
+    }
+    show_type;
+    HWND parent;
+    int cmd_show;
+    BOOL counted_as_first;
+    BOOL show_affected;
+};
+
+static const struct test_startupinfo_showwindow_test test_startupinfo_showwindow_tests[] =
+{
+    /* Affected window types. */
+    { WS_OVERLAPPED, TEST_SHOW_SHOWWINDOW, NULL, SW_SHOW, TRUE, TRUE },
+    { WS_POPUP | WS_CAPTION, TEST_SHOW_SHOWWINDOW, NULL, SW_SHOW, TRUE, TRUE },
+    { 0, TEST_SHOW_SHOWWINDOW, HWND_MESSAGE, SW_SHOW, TRUE, TRUE },
+
+    /* Types of showing window. */
+    { WS_OVERLAPPED, TEST_SHOW_WS_VISIBLE, NULL, SW_SHOW, TRUE, TRUE },
+    { WS_OVERLAPPED, TEST_SHOW_SETWINDOWPOS, NULL, SW_SHOW, FALSE, FALSE },
+
+    /* Various cmd_show values */
+    { WS_OVERLAPPED, TEST_SHOW_SHOWWINDOW, NULL, SW_NORMAL, TRUE, TRUE },
+    { WS_OVERLAPPED, TEST_SHOW_SHOWWINDOW, NULL, SW_SHOWDEFAULT, TRUE, TRUE },
+    { WS_OVERLAPPED, TEST_SHOW_SHOWWINDOW, NULL, SW_SHOWMAXIMIZED, TRUE, FALSE },
+    { WS_OVERLAPPED, TEST_SHOW_SHOWWINDOW, NULL, SW_FORCEMINIMIZE, TRUE, FALSE },
+    { WS_OVERLAPPED, TEST_SHOW_SHOWWINDOW, NULL, SW_HIDE, TRUE, FALSE },
+    { WS_OVERLAPPED, TEST_SHOW_SHOWWINDOW, NULL, SW_SHOWMINIMIZED, TRUE, FALSE },
+    { WS_OVERLAPPED, TEST_SHOW_SHOWWINDOW, NULL, SW_SHOWNOACTIVATE, TRUE, FALSE },
+    { WS_OVERLAPPED, TEST_SHOW_SHOWWINDOW, NULL, SW_MINIMIZE, TRUE, FALSE },
+    { WS_OVERLAPPED, TEST_SHOW_SHOWWINDOW, NULL, SW_SHOWMINNOACTIVE, TRUE, FALSE },
+    { WS_OVERLAPPED, TEST_SHOW_SHOWWINDOW, NULL, SW_SHOWNA, TRUE, FALSE },
+    { WS_OVERLAPPED, TEST_SHOW_SHOWWINDOW, NULL, SW_RESTORE, TRUE, FALSE },
+};
+
+static void test_startupinfo_showwindow_proc( int test_id )
+{
+    const struct test_startupinfo_showwindow_test *test = &test_startupinfo_showwindow_tests[test_id];
+    static const DWORD ignored_window_styles[] =
+    {
+        WS_CHILD,
+        WS_POPUP, /* WS_POPUP windows are not ignored when used with WS_CAPTION (which is WS_BORDER | WS_DLGFRAME) */
+        WS_CHILD | WS_POPUP,
+        WS_POPUP | WS_BORDER,
+        WS_POPUP | WS_DLGFRAME,
+        WS_POPUP | WS_SYSMENU | WS_THICKFRAME| WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
+    };
+    BOOL bval, expected;
+    STARTUPINFOW sa;
+    unsigned int i;
+    DWORD style;
+    HWND hwnd;
+
+    GetStartupInfoW( &sa );
+
+    winetest_push_context( "show %u, test %d", sa.wShowWindow, test_id );
+
+    ok( sa.dwFlags & STARTF_USESHOWWINDOW, "got %#lx.\n", sa.dwFlags );
+    ok( sa.wShowWindow == SW_HIDE, "got %u.\n.", sa.wShowWindow );
+
+    /* First test windows which are not affected by startup info. ShowWindow() called for those doesn't count as
+     * consuming startup info, it is still used with the next applicable window.
+     *
+     * SW_ variants for ShowWindow() which are not altered by startup info still consume startup info usage so can
+     * only be tested once per process. */
+
+    hwnd = CreateWindowA( "static", "parent", WS_OVERLAPPED, 0, 0, 0, 0, NULL, NULL,
+                           GetModuleHandleW( NULL ), NULL );
+    pump_messages();
+    for (i = 0; i < ARRAY_SIZE(ignored_window_styles); ++i)
+    {
+        winetest_push_context( "%u", i );
+        hwnd = CreateWindowA( "static", "overlapped", ignored_window_styles[i], 0, 0, 0, 0,
+                               ignored_window_styles[i] & WS_CHILD ? hwnd : NULL, NULL,
+                               GetModuleHandleW( NULL ), NULL );
+        ok( !!hwnd, "got NULL.\n" );
+        ShowWindow( hwnd, SW_SHOW );
+        bval = IsWindowVisible( hwnd );
+        if ((ignored_window_styles[i] & (WS_CHILD | WS_POPUP)) == WS_CHILD)
+            ok( !bval, "unexpectedly visible.\n" );
+        else
+            ok( bval, "unexpectedly invisible.\n" );
+        pump_messages();
+        winetest_pop_context();
+    }
+    DestroyWindow( hwnd );
+    pump_messages();
+
+    style = test->style;
+    if (test->show_type == TEST_SHOW_WS_VISIBLE) style |= WS_VISIBLE;
+    hwnd = CreateWindowA( "static", "overlapped", style, 0, 0, 0, 0, NULL, NULL,
+                           GetModuleHandleW( NULL ), NULL );
+    ok( !!hwnd, "got NULL.\n" );
+    pump_messages();
+    if (test->show_type == TEST_SHOW_SHOWWINDOW)
+        ShowWindow( hwnd, test->cmd_show );
+    else if (test->show_type == TEST_SHOW_SETWINDOWPOS)
+        SetWindowPos( hwnd, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_SHOWWINDOW );
+    pump_messages();
+    expected = test->cmd_show != SW_HIDE && test->cmd_show != SW_FORCEMINIMIZE && !test->show_affected;
+    bval = !!IsWindowVisible( hwnd );
+
+    todo_wine_if((test->show_affected && sa.wShowWindow == SW_HIDE) || test->cmd_show == SW_FORCEMINIMIZE)
+    ok( bval == expected, "got %d, expected %d.\n", bval, expected );
+
+    /* After default args were used once SW_SHOWDEFAULT doesn't use startupinfo. */
+    ShowWindow( hwnd, SW_SHOWDEFAULT );
+    bval = !!IsWindowVisible( hwnd );
+    expected = test->counted_as_first;
+    todo_wine_if(!test->counted_as_first && sa.wShowWindow == SW_HIDE) ok( bval == expected, "got %d, expected %d.\n", bval, expected );
+    DestroyWindow( hwnd );
+    pump_messages();
+
+    hwnd = CreateWindowA( "static", "overlapped2", WS_OVERLAPPED, 0, 0, 0, 0, NULL, NULL, GetModuleHandleW(NULL), NULL );
+    ok( !!hwnd, "got NULL.\n" );
+    pump_messages();
+    /* After default args were used once SW_SHOWDEFAULT doesn't use startupinfo, even with another window. */
+    ShowWindow( hwnd, SW_SHOWDEFAULT );
+    bval = IsWindowVisible( hwnd );
+    ok( bval, "got %d, expected %d.\n", bval, expected );
+    DestroyWindow( hwnd );
+    pump_messages();
+
+    winetest_pop_context();
+}
+
+static void test_startupinfo_showwindow( char **argv )
+{
+    STARTUPINFOA sa = {.cb = sizeof(STARTUPINFOA)};
+    PROCESS_INFORMATION info;
+    char cmdline[MAX_PATH];
+    unsigned int i;
+    BOOL ret;
+
+    sa.dwFlags = STARTF_USESHOWWINDOW;
+
+    sa.wShowWindow = SW_HIDE;
+    for (i = 0; i < ARRAY_SIZE(test_startupinfo_showwindow_tests); ++i)
+    {
+        sprintf( cmdline, "%s %s showwindow_proc %d", argv[0], argv[1], i );
+        ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &sa, &info );
+        ok( ret, "got error %lu\n", GetLastError() );
+        wait_child_process( info.hProcess );
+        CloseHandle( info.hProcess );
+        CloseHandle( info.hThread );
+    }
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -13637,6 +13802,12 @@ START_TEST(win)
     if (argc == 4 && !strcmp( argv[2], "SetActiveWindow_0" ))
     {
         test_SetActiveWindow_0_proc( argv );
+        return;
+    }
+
+    if (argc == 4 && !strcmp(argv[2], "showwindow_proc"))
+    {
+        test_startupinfo_showwindow_proc( atoi( argv[3] ));
         return;
     }
 
@@ -13771,6 +13942,7 @@ START_TEST(win)
     test_WM_NCCALCSIZE();
     test_ReleaseCapture();
     test_SetProcessLaunchForegroundPolicy();
+    test_startupinfo_showwindow(argv);
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
