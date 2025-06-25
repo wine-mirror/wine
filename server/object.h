@@ -242,7 +242,17 @@ extern void abandon_mutexes( struct thread *thread );
 
 /* in-process synchronization functions */
 
+enum inproc_sync_type
+{
+    INPROC_SYNC_UNKNOWN,
+    INPROC_SYNC_EVENT,
+};
+
+struct inproc_sync;
 extern int get_inproc_device_fd(void);
+extern struct inproc_sync *create_inproc_event_sync( int manual, int signaled );
+extern void signal_inproc_sync( struct inproc_sync *sync );
+extern void reset_inproc_sync( struct inproc_sync *sync );
 
 /* serial functions */
 

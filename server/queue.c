@@ -116,6 +116,7 @@ struct msg_queue
 {
     struct object          obj;             /* object header */
     struct fd             *fd;              /* optional file descriptor to poll */
+    struct inproc_sync    *inproc_sync;     /* inproc sync for client-side waits */
     int                    signaled;        /* queue is signaled from fd POLLIN or masks */
     int                    paint_count;     /* pending paint messages count */
     int                    hotkey_count;    /* pending hotkey messages count */
@@ -307,6 +308,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
     if ((queue = alloc_object( &msg_queue_ops )))
     {
         queue->fd              = NULL;
+        queue->inproc_sync     = NULL;
         queue->signaled        = 0;
         queue->paint_count     = 0;
         queue->hotkey_count    = 0;
@@ -326,11 +328,8 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         list_init( &queue->expired_timers );
         for (i = 0; i < NB_MSG_KINDS; i++) list_init( &queue->msg_list[i] );
 
-        if (!(queue->shared = alloc_shared_object()))
-        {
-            release_object( queue );
-            return NULL;
-        }
+        if (get_inproc_device_fd() >= 0 && !(queue->inproc_sync = create_inproc_event_sync( 1, 0 ))) goto error;
+        if (!(queue->shared = alloc_shared_object())) goto error;
 
         SHARED_WRITE_BEGIN( queue->shared, queue_shm_t )
         {
@@ -352,6 +351,10 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
     }
     if (new_input) release_object( new_input );
     return queue;
+
+error:
+    release_object( queue );
+    return NULL;
 }
 
 /* free the message queue of a thread at thread exit */
@@ -716,11 +719,13 @@ static void signal_queue_sync( struct msg_queue *queue )
     if (queue->signaled) return;
     queue->signaled = 1;
     wake_up( &queue->obj, 0 );
+    if (queue->inproc_sync) signal_inproc_sync( queue->inproc_sync );
 }
 
 static void reset_queue_sync( struct msg_queue *queue )
 {
     queue->signaled = 0;
+    if (queue->inproc_sync) reset_inproc_sync( queue->inproc_sync );
 }
 
 /* check the queue status */
@@ -1397,6 +1402,7 @@ static void msg_queue_destroy( struct object *obj )
     if (queue->hooks) release_object( queue->hooks );
     if (queue->fd) release_object( queue->fd );
     if (queue->shared) free_shared_object( queue->shared );
+    if (queue->inproc_sync) release_object( queue->inproc_sync );
 }
 
 static void msg_queue_poll_event( struct fd *fd, int event )
