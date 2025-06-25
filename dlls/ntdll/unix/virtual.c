@@ -2178,9 +2178,8 @@ static void *map_reserved_area( void *limit_low, void *limit_high, size_t size, 
  * Map a memory area at a fixed address.
  * virtual_mutex must be held by caller.
  */
-static NTSTATUS map_fixed_area( void *base, size_t size, unsigned int vprot )
+static NTSTATUS map_fixed_area( void *base, size_t size, int unix_prot )
 {
-    int unix_prot = get_unix_prot(vprot);
     struct reserved_area *area;
     NTSTATUS status;
     char *start = base, *end = (char *)base + ROUND_SIZE( 0, size, host_page_mask );
@@ -2241,6 +2240,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
 {
     int top_down = alloc_type & MEM_TOP_DOWN;
     void *ptr;
+    int unix_prot = get_unix_prot( vprot );
     NTSTATUS status;
 
     if (!align_mask) align_mask = granularity_mask;
@@ -2275,7 +2275,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
         if (limit_low && base < (void *)limit_low) return STATUS_CONFLICTING_ADDRESSES;
         if (limit_high && is_beyond_limit( base, size, (void *)limit_high )) return STATUS_CONFLICTING_ADDRESSES;
         if (is_beyond_limit( base, size, host_addr_space_limit )) return STATUS_CONFLICTING_ADDRESSES;
-        if ((status = map_fixed_area( base, size, vprot ))) return status;
+        if ((status = map_fixed_area( base, size, unix_prot ))) return status;
         if (is_beyond_limit( base, size, working_set_limit )) working_set_limit = address_space_limit;
         ptr = base;
     }
@@ -2289,7 +2289,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
         if (limit_low && (void *)limit_low > start) start = (void *)limit_low;
         if (limit_high && (void *)limit_high < end) end = (char *)limit_high + 1;
 
-        if ((ptr = map_reserved_area( start, end, host_size, top_down, get_unix_prot(vprot), align_mask )))
+        if ((ptr = map_reserved_area( start, end, host_size, top_down, unix_prot, align_mask )))
         {
             TRACE( "got mem in reserved area %p-%p\n", ptr, (char *)ptr + size );
             goto done;
@@ -2297,7 +2297,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
 
         if (start > address_space_start || end < host_addr_space_limit || top_down)
         {
-            if (!(ptr = map_free_area( start, end, host_size, top_down, get_unix_prot(vprot), align_mask )))
+            if (!(ptr = map_free_area( start, end, host_size, top_down, unix_prot, align_mask )))
                 return STATUS_NO_MEMORY;
             TRACE( "got mem with map_free_area %p-%p\n", ptr, (char *)ptr + size );
             goto done;
@@ -2305,11 +2305,11 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
 
         for (;;)
         {
-            if ((ptr = anon_mmap_alloc( view_size, get_unix_prot(vprot) )) == MAP_FAILED)
+            if ((ptr = anon_mmap_alloc( view_size, unix_prot )) == MAP_FAILED)
             {
                 status = (errno == ENOMEM) ? STATUS_NO_MEMORY : STATUS_INVALID_PARAMETER;
                 ERR( "anon mmap error %s, size %p, unix_prot %#x\n",
-                     strerror(errno), (void *)view_size, get_unix_prot( vprot ) );
+                     strerror(errno), (void *)view_size, unix_prot );
                 return status;
             }
             TRACE( "got mem with anon mmap %p-%p\n", ptr, (char *)ptr + size );
