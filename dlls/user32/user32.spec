@@ -630,7 +630,7 @@
 # @ stub GetPointerDeviceInputSpace
 # @ stub GetPointerDeviceOrientation
 @ stdcall GetPointerDeviceProperties(ptr ptr ptr)
-# @ stub GetPointerDeviceRects
+@ stdcall GetPointerDeviceRects(ptr ptr ptr)
 @ stdcall GetPointerDevices(ptr ptr)
 # @ stub GetPointerFrameInfo
 # @ stub GetPointerFrameInfoHistory

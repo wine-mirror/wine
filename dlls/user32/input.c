@@ -750,6 +750,14 @@ BOOL WINAPI GetPointerDeviceProperties( HANDLE device, UINT32 *count,
     return FALSE;
 }
 
+BOOL WINAPI GetPointerDeviceRects( HANDLE device, RECT *device_rect, RECT *display_rect )
+{
+    FIXME( "device %p, device_rect %p, display_rect %p stub!\n",
+           device, device_rect, display_rect );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 BOOL WINAPI GetPointerPenInfo( UINT32 id, POINTER_PEN_INFO *info )
 {
     FIXME( "id %u, info %p stub!\n", id, info );
