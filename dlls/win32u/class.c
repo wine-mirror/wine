@@ -302,6 +302,21 @@ ATOM get_int_atom_value( UNICODE_STRING *name )
     return ret;
 }
 
+static ULONG integral_atom_name( WCHAR *buffer, ULONG len, RTL_ATOM atom )
+{
+    char tmp[16];
+    int ret = snprintf( tmp, sizeof(tmp), "#%u", atom );
+
+    len /= sizeof(WCHAR);
+    if (len)
+    {
+        if (len <= ret) ret = len - 1;
+        ascii_to_unicode( buffer, tmp, ret );
+        buffer[ret] = 0;
+    }
+    return ret * sizeof(WCHAR);
+}
+
 /***********************************************************************
  *           get_class_ptr
  */
@@ -575,13 +590,34 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
  */
 ULONG WINAPI NtUserGetAtomName( ATOM atom, UNICODE_STRING *name )
 {
-    char buf[sizeof(ATOM_BASIC_INFORMATION) + MAX_ATOM_LEN * sizeof(WCHAR)];
-    ATOM_BASIC_INFORMATION *abi = (ATOM_BASIC_INFORMATION *)buf;
-    UINT size;
+    WCHAR buffer[MAX_ATOM_LEN];
+    UINT size = 0;
 
-    if (!set_ntstatus( NtQueryInformationAtom( atom, AtomBasicInformation,
-                                               buf, sizeof(buf), NULL )))
-        return 0;
+    if (atom < MAXINTATOM)
+    {
+        if (!atom)
+        {
+            set_ntstatus( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+
+        size = integral_atom_name( buffer, sizeof(buffer), atom );
+    }
+    else
+    {
+        SERVER_START_REQ( get_user_atom_name )
+        {
+            req->atom = atom;
+            wine_server_set_reply( req, buffer, sizeof(buffer) );
+            if (!wine_server_call_err( req ))
+            {
+                size = wine_server_reply_size( reply );
+                buffer[size / sizeof(WCHAR)] = 0;
+            }
+        }
+        SERVER_END_REQ;
+        if (!size) return 0;
+    }
 
     if (name->MaximumLength < sizeof(WCHAR))
     {
@@ -589,8 +625,8 @@ ULONG WINAPI NtUserGetAtomName( ATOM atom, UNICODE_STRING *name )
         return 0;
     }
 
-    size = min( abi->NameLength, name->MaximumLength - sizeof(WCHAR) );
-    if (size) memcpy( name->Buffer, abi->Name, size );
+    size = min( size, name->MaximumLength - sizeof(WCHAR) );
+    if (size) memcpy( name->Buffer, buffer, size );
     name->Buffer[size / sizeof(WCHAR)] = 0;
     return size / sizeof(WCHAR);
 }

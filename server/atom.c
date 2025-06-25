@@ -326,3 +326,15 @@ DECL_HANDLER(get_atom_information)
     }
     else reply->count = -1;
 }
+
+/* get a user atom name */
+DECL_HANDLER(get_user_atom_name)
+{
+    struct atom_entry *entry;
+
+    if ((entry = get_atom_entry( global_table, req->atom )))
+    {
+        set_reply_data( (void *)entry->str, min( entry->len, get_reply_max_size() ));
+        reply->total = entry->len;
+    }
+}

@@ -1343,6 +1343,17 @@ static void dump_get_atom_information_reply( const struct get_atom_information_r
     dump_varargs_unicode_str( ", name=", cur_size );
 }
 
+static void dump_get_user_atom_name_request( const struct get_user_atom_name_request *req )
+{
+    fprintf( stderr, " atom=%04x", req->atom );
+}
+
+static void dump_get_user_atom_name_reply( const struct get_user_atom_name_reply *req )
+{
+    fprintf( stderr, " total=%u", req->total );
+    dump_varargs_unicode_str( ", name=", cur_size );
+}
+
 static void dump_get_msg_queue_handle_request( const struct get_msg_queue_handle_request *req )
 {
 }
@@ -3473,6 +3484,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_delete_atom_request,
     (dump_func)dump_find_atom_request,
     (dump_func)dump_get_atom_information_request,
+    (dump_func)dump_get_user_atom_name_request,
     (dump_func)dump_get_msg_queue_handle_request,
     (dump_func)dump_get_msg_queue_request,
     (dump_func)dump_set_queue_fd_request,
@@ -3771,6 +3783,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     NULL,
     (dump_func)dump_find_atom_reply,
     (dump_func)dump_get_atom_information_reply,
+    (dump_func)dump_get_user_atom_name_reply,
     (dump_func)dump_get_msg_queue_handle_reply,
     (dump_func)dump_get_msg_queue_reply,
     NULL,
@@ -4069,6 +4082,7 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "delete_atom",
     "find_atom",
     "get_atom_information",
+    "get_user_atom_name",
     "get_msg_queue_handle",
     "get_msg_queue",
     "set_queue_fd",
@@ -4387,7 +4401,6 @@ static const struct
     { "USER_APC",                    STATUS_USER_APC },
     { "USER_MAPPED_FILE",            STATUS_USER_MAPPED_FILE },
     { "VOLUME_DISMOUNTED",           STATUS_VOLUME_DISMOUNTED },
-    { "WAS_LOCKED",                  STATUS_WAS_LOCKED },
     { "WSAEACCES",                   0xc0010000 | WSAEACCES },
     { "WSAEADDRINUSE",               0xc0010000 | WSAEADDRINUSE },
     { "WSAEADDRNOTAVAIL",            0xc0010000 | WSAEADDRNOTAVAIL },

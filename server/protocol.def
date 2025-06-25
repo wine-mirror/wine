@@ -2233,6 +2233,15 @@ struct process_info
 @END
 
 
+/* Get a user atom name */
+@REQ(get_user_atom_name)
+    atom_t       atom;         /* atom handle */
+@REPLY
+    data_size_t  total;        /* actual length of atom name */
+    VARARG(name,unicode_str);  /* atom name */
+@END
+
+
 /* Get a handle for the current thread message queue */
 @REQ(get_msg_queue_handle)
 @REPLY
