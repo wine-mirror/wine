@@ -16922,8 +16922,8 @@ static void test_d3d_state_reset(void)
 
     IDirect3DViewport2_Release(viewport);
     IDirectDrawSurface_Release(surface);
-    IDirectDraw2_Release(ddraw);
     IDirect3DDevice2_Release(device);
+    IDirectDraw2_Release(ddraw);
     DestroyWindow(window);
 }
 
