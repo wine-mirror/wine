@@ -4515,6 +4515,7 @@ void update_window_state( HWND hwnd )
  */
 static BOOL show_window( HWND hwnd, INT cmd )
 {
+    static volatile LONG first_window = 1;
     WND *win;
     HWND parent;
     DWORD style = get_window_long( hwnd, GWL_STYLE ), new_style;
@@ -4526,6 +4527,19 @@ static BOOL show_window( HWND hwnd, INT cmd )
     TRACE( "hwnd=%p, cmd=%d, was_visible %d\n", hwnd, cmd, was_visible );
 
     context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
+
+    if ((!(style & (WS_POPUP | WS_CHILD))
+         || ((style & (WS_POPUP | WS_CHILD | WS_CAPTION)) == (WS_POPUP | WS_CAPTION)))
+        && InterlockedExchange( &first_window, 0 ))
+    {
+        RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
+
+        if (params->dwFlags & STARTF_USESHOWWINDOW && (cmd == SW_SHOW || cmd == SW_SHOWNORMAL || cmd == SW_SHOWDEFAULT))
+        {
+            cmd = params->wShowWindow;
+            TRACE( "hwnd=%p, using cmd %d from startup info.\n", hwnd, cmd );
+        }
+    }
 
     switch(cmd)
     {
