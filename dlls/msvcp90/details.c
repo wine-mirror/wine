@@ -497,12 +497,12 @@ static void concurrent_vector_alloc_segment(_Concurrent_vector_base_v4 *this,
             __TRY
             {
                 if(seg == 0)
-                    this->segment[seg] = this->allocator(this, element_size * (1 << this->first_block));
+                    this->segment[seg] = this->allocator(this, 1 << this->first_block);
                 else if(seg < this->first_block)
                     this->segment[seg] = (BYTE**)this->segment[0]
                         + element_size * (1 << seg);
                 else
-                    this->segment[seg] = this->allocator(this, element_size * (1 << seg));
+                    this->segment[seg] = this->allocator(this, 1 << seg);
             }
             __EXCEPT_ALL
             {
