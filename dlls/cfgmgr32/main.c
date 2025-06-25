@@ -255,7 +255,6 @@ CONFIGRET WINAPI CM_Get_Device_Interface_PropertyW( LPCWSTR device_interface, co
                                                     ULONG *property_buffer_size, ULONG flags )
 {
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
-    SP_DEVINFO_DATA device = { sizeof(device) };
     HDEVINFO set;
     DWORD err;
     BOOL ret;
@@ -268,12 +267,6 @@ CONFIGRET WINAPI CM_Get_Device_Interface_PropertyW( LPCWSTR device_interface, co
     if (*property_buffer_size && !property_buffer) return CR_INVALID_POINTER;
     if (flags) return CR_INVALID_FLAG;
 
-    if (memcmp( property_key, &DEVPKEY_Device_InstanceId, sizeof(*property_key) ))
-    {
-        FIXME( "property %s\\%lx.\n", debugstr_guid( &property_key->fmtid ), property_key->pid );
-        return CR_NO_SUCH_VALUE;
-    }
-
     set = SetupDiCreateDeviceInfoListExW( NULL, NULL, NULL, NULL );
     if (set == INVALID_HANDLE_VALUE) return CR_OUT_OF_MEMORY;
     if (!SetupDiOpenDeviceInterfaceW( set, device_interface, 0, &iface ))
@@ -282,17 +275,20 @@ CONFIGRET WINAPI CM_Get_Device_Interface_PropertyW( LPCWSTR device_interface, co
         TRACE( "No interface %s, err %lu.\n", debugstr_w( device_interface ), GetLastError());
         return CR_NO_SUCH_DEVICE_INTERFACE;
     }
-    if (!SetupDiEnumDeviceInfo( set, 0, &device ))
-    {
-        SetupDiDestroyDeviceInfoList( set );
-        return CR_FAILURE;
-    }
-    ret = SetupDiGetDeviceInstanceIdW( set, &device, (WCHAR *)property_buffer, *property_buffer_size / sizeof(WCHAR),
-                                       property_buffer_size );
+
+    ret = SetupDiGetDeviceInterfacePropertyW( set, &iface, property_key, property_type, property_buffer,
+                                              *property_buffer_size, property_buffer_size, 0 );
     err = ret ? 0 : GetLastError();
     SetupDiDestroyDeviceInfoList( set );
-    *property_type = DEVPROP_TYPE_STRING;
-    *property_buffer_size *= sizeof(WCHAR);
-    if (!err) return CR_SUCCESS;
-    return err == ERROR_INSUFFICIENT_BUFFER ? CR_BUFFER_SMALL : CR_FAILURE;
+    switch (err)
+    {
+    case ERROR_SUCCESS:
+        return CR_SUCCESS;
+    case ERROR_INSUFFICIENT_BUFFER:
+        return CR_BUFFER_SMALL;
+    case ERROR_NOT_FOUND:
+        return CR_NO_SUCH_VALUE;
+    default:
+        return CR_FAILURE;
+    }
 }
