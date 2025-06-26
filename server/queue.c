@@ -116,6 +116,7 @@ struct msg_queue
 {
     struct object          obj;             /* object header */
     struct fd             *fd;              /* optional file descriptor to poll */
+    int                    signaled;        /* queue is signaled from fd POLLIN or masks */
     int                    paint_count;     /* pending paint messages count */
     int                    hotkey_count;    /* pending hotkey messages count */
     int                    quit_message;    /* is there a pending quit message? */
@@ -305,6 +306,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
     if ((queue = alloc_object( &msg_queue_ops )))
     {
         queue->fd              = NULL;
+        queue->signaled        = 0;
         queue->paint_count     = 0;
         queue->hotkey_count    = 0;
         queue->quit_message    = 0;
@@ -707,6 +709,18 @@ void add_queue_hook_count( struct thread *thread, unsigned int index, int count 
     assert( thread->queue->shared->hooks_count[index] >= 0 );
 }
 
+static void signal_queue_sync( struct msg_queue *queue )
+{
+    if (queue->signaled) return;
+    queue->signaled = 1;
+    wake_up( &queue->obj, 0 );
+}
+
+static void reset_queue_sync( struct msg_queue *queue )
+{
+    queue->signaled = 0;
+}
+
 /* check the queue status */
 static inline int is_signaled( struct msg_queue *queue )
 {
@@ -733,7 +747,7 @@ static inline void set_queue_bits( struct msg_queue *queue, unsigned int bits )
     }
     SHARED_WRITE_END;
 
-    if (is_signaled( queue )) wake_up( &queue->obj, 0 );
+    if (is_signaled( queue )) signal_queue_sync( queue );
 }
 
 /* clear some queue bits */
@@ -753,6 +767,7 @@ static inline void clear_queue_bits( struct msg_queue *queue, unsigned int bits 
         if (queue->keystate_lock) unlock_input_keystate( queue->input );
         queue->keystate_lock = 0;
     }
+    if (!is_signaled( queue )) reset_queue_sync( queue );
 }
 
 /* check if message is matched by the filter */
@@ -1276,7 +1291,11 @@ static int msg_queue_select( struct msg_queue *queue, int events )
     }
     queue->waiting = !!events;
 
-    if (queue->fd) set_fd_events( queue->fd, events );
+    if (queue->fd)
+    {
+        if (events && check_fd_events( queue->fd, POLLIN )) signal_queue_sync( queue );
+        else set_fd_events( queue->fd, events );
+    }
     return 1;
 }
 
@@ -1315,18 +1334,8 @@ static void msg_queue_dump( struct object *obj, int verbose )
 static int msg_queue_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct msg_queue *queue = (struct msg_queue *)obj;
-    int ret = 0;
-
-    if (queue->fd)
-    {
-        if ((ret = check_fd_events( queue->fd, POLLIN )))
-            /* stop waiting on select() if we are signaled */
-            set_fd_events( queue->fd, 0 );
-        else if (queue->waiting)
-            /* restart waiting on poll() if we are no longer signaled */
-            set_fd_events( queue->fd, POLLIN );
-    }
-    return ret || is_signaled( queue );
+    assert( obj->ops == &msg_queue_ops );
+    return queue->signaled;
 }
 
 static void msg_queue_satisfied( struct object *obj, struct wait_queue_entry *entry )
@@ -1340,6 +1349,7 @@ static void msg_queue_satisfied( struct object *obj, struct wait_queue_entry *en
         shared->changed_mask = 0;
     }
     SHARED_WRITE_END;
+    reset_queue_sync( queue );
 }
 
 static void msg_queue_destroy( struct object *obj )
@@ -1394,7 +1404,7 @@ static void msg_queue_poll_event( struct fd *fd, int event )
 
     if (event & (POLLERR | POLLHUP)) set_fd_events( fd, -1 );
     else set_fd_events( queue->fd, 0 );
-    wake_up( &queue->obj, 0 );
+    signal_queue_sync( queue );
 }
 
 static void thread_input_dump( struct object *obj, int verbose )
@@ -3159,20 +3169,9 @@ DECL_HANDLER(set_queue_mask)
         reply->wake_bits    = queue_shm->wake_bits;
         reply->changed_bits = queue_shm->changed_bits;
 
-        if (is_signaled( queue ))
-        {
-            /* if skip wait is set, do what would have been done in the subsequent wait */
-            if (req->skip_wait)
-            {
-                SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
-                {
-                    shared->wake_mask = 0;
-                    shared->changed_mask = 0;
-                }
-                SHARED_WRITE_END;
-            }
-            else wake_up( &queue->obj, 0 );
-        }
+        if (!is_signaled( queue )) reset_queue_sync( queue );
+        else if (!req->skip_wait) signal_queue_sync( queue );
+        else msg_queue_satisfied( &queue->obj, NULL );
     }
 }
 
@@ -3193,6 +3192,8 @@ DECL_HANDLER(get_queue_status)
             shared->changed_bits &= ~req->clear_bits;
         }
         SHARED_WRITE_END;
+
+        if (!is_signaled( queue )) reset_queue_sync( queue );
     }
     else reply->wake_bits = reply->changed_bits = 0;
 }
@@ -3390,6 +3391,8 @@ DECL_HANDLER(get_message)
     }
     SHARED_WRITE_END;
 
+    if (!is_signaled( queue )) reset_queue_sync( queue );
+
     /* then check for posted messages */
     if ((filter & QS_POSTMESSAGE) &&
         get_posted_message( queue, get_win, req->get_first, req->get_last, req->flags, reply ))
@@ -3449,6 +3452,7 @@ DECL_HANDLER(get_message)
     }
     SHARED_WRITE_END;
 
+    reset_queue_sync( queue );
     set_error( STATUS_PENDING );  /* FIXME */
 }
 
