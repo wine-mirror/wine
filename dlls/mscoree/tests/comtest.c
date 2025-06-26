@@ -176,13 +176,13 @@ static void run_registry_test(run_type run)
     }
     ok(ret == ERROR_SUCCESS, "RegCreateKeyA returned %lx\n", ret);
 
-    ret = RegSetKeyValueA(hkey, "InprocServer32", NULL, REG_SZ, "mscoree.dll", 11);
+    ret = RegSetKeyValueA(hkey, "InprocServer32", NULL, REG_SZ, "mscoree.dll", 12);
     ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %lx\n", ret);
-    ret = RegSetKeyValueA(hkey, "InprocServer32", "Assembly", REG_SZ, "comtest, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null", 74);
+    ret = RegSetKeyValueA(hkey, "InprocServer32", "Assembly", REG_SZ, "comtest, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null", 63);
     ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %lx\n", ret);
-    ret = RegSetKeyValueA(hkey, "InprocServer32", "Class", REG_SZ, "DLL.Test", 8);
+    ret = RegSetKeyValueA(hkey, "InprocServer32", "Class", REG_SZ, "DLL.Test", 9);
     ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %lx\n", ret);
-    ret = RegSetKeyValueA(hkey, "InprocServer32", "CodeBase", REG_SZ, "file:///U:/invalid/path/to/comtest.dll", 41);
+    ret = RegSetKeyValueA(hkey, "InprocServer32", "CodeBase", REG_SZ, "file:///U:/invalid/path/to/comtest.dll", 39);
     ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %lx\n", ret);
 
     hr = CoCreateInstance(&CLSID_Test, NULL, CLSCTX_INPROC_SERVER, &IID_ITest, (void**)&test);
