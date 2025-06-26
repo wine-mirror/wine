@@ -1211,6 +1211,11 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_GETFONT:
 	    return (LRESULT)(infoPtr->hFont? infoPtr->hFont : infoPtr->hDefaultFont);
 
+        case WM_GETOBJECT:
+            if ((LONG)lParam == OBJID_QUERYCLASSNAMEIDX)
+                return 0x1000b;
+	    return DefWindowProcW (hwnd, msg, wParam, lParam);
+
 	case WM_GETTEXT:
             return STATUSBAR_WMGetText (infoPtr, (INT)wParam, (LPWSTR)lParam);
 
