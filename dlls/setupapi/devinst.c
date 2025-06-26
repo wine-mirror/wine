@@ -3115,8 +3115,10 @@ static DWORD get_device_reg_properties( HKEY base_key, DEVPROPKEY *buf, DWORD bu
     LSTATUS ls;
     DWORD i, count = 0;
 
+    if (req_len)
+        *req_len = 0;
     if ((ls = RegOpenKeyExW( base_key, L"Properties", 0, KEY_ENUMERATE_SUB_KEYS, &properties )))
-        return ls;
+        return ls == ERROR_FILE_NOT_FOUND ? ERROR_SUCCESS : ls;
 
     keys = malloc( sizeof( *keys ) * buf_len );
     if (!keys && buf_len)

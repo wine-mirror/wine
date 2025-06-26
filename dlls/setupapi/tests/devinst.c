@@ -2823,6 +2823,13 @@ static void test_device_interface_properties(void)
     err = GetLastError();
     ok(!ret && err == ERROR_NOT_FOUND, "%lu != %d\n", err, ERROR_NOT_FOUND);
 
+    /* Should return built-in property keys even when the "Properties" subkey for the interface hasn't been created */
+    req = 0;
+    ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, NULL, 0, &req, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INSUFFICIENT_BUFFER);
+    ok(req >= ARRAY_SIZE(default_keys), "got req %lu, should be >= %lu\n", req, (DWORD)ARRAY_SIZE(default_keys));
+
     ret = SetupDiSetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, DEVPROP_TYPE_STRING,
                                              (const BYTE *)str, sizeof(str), 0);
     err = GetLastError();
@@ -2910,7 +2917,7 @@ static void test_device_interface_properties(void)
     req = 0;
     ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, NULL, 0, &req, 0);
     err = GetLastError();
-    ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INVALID_FLAGS);
+    ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INSUFFICIENT_BUFFER);
 
     size = req;
     keys = calloc(size, sizeof(*keys));
