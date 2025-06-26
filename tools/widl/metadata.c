@@ -458,7 +458,7 @@ static UINT add_row( enum table table, const BYTE *row, UINT row_size )
 {
     const struct index *idx;
     UINT insert_idx, offset = tables[table].offset;
-    BOOL sort = (table != TABLE_PARAM && table != TABLE_FIELD);
+    BOOL sort = (table != TABLE_PARAM && table != TABLE_FIELD && table != TABLE_PROPERTY && table != TABLE_EVENT);
 
     if (sort && (idx = find_index( &tables_idx[table], &tables[table], row, row_size, FALSE, &insert_idx )))
         return idx->offset / row_size + 1;
