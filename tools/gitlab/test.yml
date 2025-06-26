@@ -55,6 +55,8 @@
     # Non-ascii characters in authors name may get into the output of kernel32:process test which cause
     # qemu-agent.py in Windows to fail with: UnicodeDecodeError: 'utf-8' codec can't decode byte ...
     CI_COMMIT_AUTHOR: ""
+    CI_COMMIT_DESCRIPTION: ""
+    CI_COMMIT_MESSAGE: ""
     GITLAB_USER_NAME: ""
 
 test-linux-64:
