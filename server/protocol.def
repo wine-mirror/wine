@@ -4092,7 +4092,7 @@ struct handle_info
     obj_handle_t handle;       /* process handle */
 @END
 
-/* Itererate processes using global process list */
+/* Iterate processes using global process list */
 @REQ(get_next_process)
     obj_handle_t last;         /* process handle to start with */
     unsigned int access;       /* desired access for returned handle */
@@ -4121,4 +4121,18 @@ struct handle_info
     int period;                /* auto-repeat period in ms */
 @REPLY
     int enable;                /* previous state of auto-repeat enable */
+@END
+
+
+enum inproc_sync_type
+{
+    INPROC_SYNC_UNKNOWN = 0,
+    INPROC_SYNC_EVENT = 1,
+};
+
+/* Get the in-process synchronization fd associated with the waitable handle */
+@REQ(get_inproc_sync_fd)
+    obj_handle_t handle;        /* handle to the object */
+@REPLY
+    int           type;         /* inproc sync type */
 @END

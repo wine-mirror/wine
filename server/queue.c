@@ -1492,6 +1492,12 @@ int init_thread_queue( struct thread *thread )
     return (create_msg_queue( thread, NULL ) != NULL);
 }
 
+struct object *thread_queue_inproc_sync( struct thread *thread )
+{
+    if (!thread->queue) return NULL;
+    return grab_object( thread->queue->inproc_sync );
+}
+
 /* attach two thread input data structures */
 int attach_thread_input( struct thread *thread_from, struct thread *thread_to )
 {

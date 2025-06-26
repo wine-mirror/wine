@@ -307,6 +307,45 @@ static unsigned int validate_open_object_attributes( const OBJECT_ATTRIBUTES *at
 }
 
 
+struct inproc_sync
+{
+    int fd;
+    unsigned int type : 2;
+};
+
+static void release_inproc_sync( struct inproc_sync *sync )
+{
+    close( sync->fd );
+}
+
+static NTSTATUS get_inproc_sync( HANDLE handle, struct inproc_sync *sync )
+{
+    sigset_t sigset;
+    NTSTATUS ret;
+
+    /* We need to use fd_cache_mutex here to protect against races with
+     * other threads trying to receive fds for the fd cache,
+     * and we need to use an uninterrupted section to prevent reentrancy. */
+    server_enter_uninterrupted_section( &fd_cache_mutex, &sigset );
+
+    SERVER_START_REQ( get_inproc_sync_fd )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        if (!(ret = wine_server_call( req )))
+        {
+            obj_handle_t fd_handle;
+            sync->fd = wine_server_receive_fd( &fd_handle );
+            assert( wine_server_ptr_handle(fd_handle) == handle );
+            sync->type = reply->type;
+        }
+    }
+    SERVER_END_REQ;
+
+    server_leave_uninterrupted_section( &fd_cache_mutex, &sigset );
+
+    return ret;
+}
+
 static NTSTATUS inproc_release_semaphore( HANDLE handle, ULONG count, ULONG *prev_count )
 {
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
@@ -358,7 +397,23 @@ static NTSTATUS inproc_query_mutex( HANDLE handle, MUTANT_BASIC_INFORMATION *inf
 static NTSTATUS inproc_wait( DWORD count, const HANDLE *handles, BOOLEAN wait_any,
                              BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
+    struct inproc_sync *syncs[64], stack[ARRAY_SIZE(syncs)];
+    NTSTATUS ret;
+
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
+
+    assert( count <= ARRAY_SIZE(syncs) );
+    for (int i = 0; i < count; ++i)
+    {
+        if ((ret = get_inproc_sync( handles[i], stack + i )))
+        {
+            while (i--) release_inproc_sync( syncs[i] );
+            return ret;
+        }
+        syncs[i] = stack + i;
+    }
+
+    while (count--) release_inproc_sync( syncs[count] );
     return STATUS_NOT_IMPLEMENTED;
 }
 

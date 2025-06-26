@@ -32,6 +32,7 @@
 #include "handle.h"
 #include "request.h"
 #include "thread.h"
+#include "user.h"
 
 #ifdef HAVE_LINUX_NTSYNC_H
 # include <linux/ntsync.h>
@@ -126,6 +127,26 @@ static void inproc_sync_destroy( struct object *obj )
     close( sync->fd );
 }
 
+static int get_inproc_sync_fd( struct object *obj, int *type )
+{
+    struct object *sync;
+    int fd = -1;
+
+    if (obj != (struct object *)current->queue) sync = get_obj_sync( obj );
+    else sync = thread_queue_inproc_sync( current );
+    if (!sync) return -1;
+
+    if (sync->ops == &inproc_sync_ops)
+    {
+        struct inproc_sync *inproc = (struct inproc_sync *)sync;
+        *type = inproc->type;
+        fd = inproc->fd;
+    }
+
+    release_object( sync );
+    return fd;
+}
+
 #else /* NTSYNC_IOC_EVENT_READ */
 
 int get_inproc_device_fd(void)
@@ -146,4 +167,22 @@ void reset_inproc_sync( struct inproc_sync *sync )
 {
 }
 
+static int get_inproc_sync_fd( struct object *obj, int *type )
+{
+    return -1;
+}
+
 #endif /* NTSYNC_IOC_EVENT_READ */
+
+DECL_HANDLER(get_inproc_sync_fd)
+{
+    struct object *obj;
+    int fd;
+
+    if (!(obj = get_handle_obj( current->process, req->handle, 0, NULL ))) return;
+
+    if ((fd = get_inproc_sync_fd( obj, &reply->type )) < 0) set_error( STATUS_NOT_IMPLEMENTED );
+    else send_client_fd( current->process, fd, req->handle );
+
+    release_object( obj );
+}

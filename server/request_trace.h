@@ -3384,6 +3384,16 @@ static void dump_set_keyboard_repeat_reply( const struct set_keyboard_repeat_rep
     fprintf( stderr, " enable=%d", req->enable );
 }
 
+static void dump_get_inproc_sync_fd_request( const struct get_inproc_sync_fd_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
+static void dump_get_inproc_sync_fd_reply( const struct get_inproc_sync_fd_reply *req )
+{
+    fprintf( stderr, " type=%d", req->type );
+}
+
 typedef void (*dump_func)( const void *req );
 
 static const dump_func req_dumpers[REQ_NB_REQUESTS] =
@@ -3685,6 +3695,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_get_next_process_request,
     (dump_func)dump_get_next_thread_request,
     (dump_func)dump_set_keyboard_repeat_request,
+    (dump_func)dump_get_inproc_sync_fd_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
@@ -3986,6 +3997,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_get_next_process_reply,
     (dump_func)dump_get_next_thread_reply,
     (dump_func)dump_set_keyboard_repeat_reply,
+    (dump_func)dump_get_inproc_sync_fd_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] =
@@ -4287,6 +4299,7 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "get_next_process",
     "get_next_thread",
     "set_keyboard_repeat",
+    "get_inproc_sync_fd",
 };
 
 static const struct
