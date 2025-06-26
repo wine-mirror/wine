@@ -370,6 +370,7 @@ static void test_CM_Get_Device_Interface_List(void)
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *iface_data;
     SP_DEVINFO_DATA device = { sizeof(device) };
     WCHAR instance_id[256], expected_id[256];
+    DEVPROPKEY zero_key = {{0}, 0};
     unsigned int count, count2;
     char *buffera, *pa;
     WCHAR *buffer, *p;
@@ -415,6 +416,8 @@ static void test_CM_Get_Device_Interface_List(void)
     p = buffer;
     while (*p)
     {
+        DEVPROP_BOOLEAN val = DEVPROP_FALSE;
+
         set = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
         ok(set != INVALID_HANDLE_VALUE, "got %p.\n", set);
         bret = SetupDiOpenDeviceInterfaceW(set, p, 0, &iface);
@@ -466,6 +469,18 @@ static void test_CM_Get_Device_Interface_List(void)
         ok(!ret, "got %#lx.\n", ret);
         ok(type == DEVPROP_TYPE_STRING, "got type %#lx.\n", type);
         ok(!wcsicmp(instance_id, expected_id), "got %s, expected %s.\n", debugstr_w(instance_id), debugstr_w(expected_id));
+
+        type = 0xdeadbeef;
+        size = sizeof(val);
+        ret = CM_Get_Device_Interface_PropertyW(p, &DEVPKEY_DeviceInterface_Enabled, &type, (BYTE *)&val, &size, 0);
+        ok(!ret, "got %#lx.\n", ret);
+        ok(type == DEVPROP_TYPE_BOOLEAN, "got type %#lx.\n", type);
+        ok(size == sizeof(val), "got size %lu.\n", size);
+        ok(val == DEVPROP_TRUE, "got val %d.\n", val);
+
+        size = 0;
+        ret = CM_Get_Device_Interface_PropertyW(p, &zero_key, &type, NULL, &size, 0);
+        ok(ret == CR_NO_SUCH_VALUE, "got %#lx.\n", ret);
         p += wcslen(p) + 1;
         ++count;
     }
