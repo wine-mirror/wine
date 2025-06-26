@@ -269,8 +269,12 @@ static void test_setcolors(void)
 {
     HWND progress;
     COLORREF clr;
+    DWORD idx;
 
     progress = create_progress(PBS_SMOOTH);
+
+    idx = SendMessageA(progress, WM_GETOBJECT, 0, OBJID_QUERYCLASSNAMEIDX);
+    ok(idx == 0x1000d, "Got index 0x%08lx\n", idx);
 
     clr = SendMessageA(progress, PBM_SETBARCOLOR, 0, 0);
     ok(clr == CLR_DEFAULT, "got %lx\n", clr);

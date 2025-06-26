@@ -614,6 +614,11 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
     case WM_SETFONT:
         return (LRESULT)PROGRESS_SetFont(infoPtr, (HFONT)wParam, (BOOL)lParam);
 
+    case WM_GETOBJECT:
+        if ((LONG)lParam == OBJID_QUERYCLASSNAMEIDX)
+            return 0x1000d;
+        return DefWindowProcW( hwnd, message, wParam, lParam );
+
     case WM_PRINTCLIENT:
     case WM_PAINT:
         return PROGRESS_Paint (infoPtr, (HDC)wParam);
