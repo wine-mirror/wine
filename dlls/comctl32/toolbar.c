@@ -6866,6 +6866,11 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_GETFONT:
 		return TOOLBAR_GetFont (infoPtr);
 
+        case WM_GETOBJECT:
+            if ((LONG)lParam == OBJID_QUERYCLASSNAMEIDX)
+                return 0x1000c;
+	    return DefWindowProcW (hwnd, uMsg, wParam, lParam);
+
 	case WM_KEYDOWN:
 	    return TOOLBAR_KeyDown (infoPtr, wParam, lParam);
 
