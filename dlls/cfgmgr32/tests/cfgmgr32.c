@@ -535,39 +535,39 @@ static void test_DevGetObjects( void )
     ULONG i, len = 0;
 
     hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 1, NULL, 0, NULL, &len, &objects );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
     hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 1, NULL, &len, &objects );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
     hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, (void *)0xdeadbeef, 0, NULL, &len, &objects );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
     hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 0, (void *)0xdeadbeef, &len, &objects );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
     hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagUpdateResults, 0, NULL, 0, (void *)0xdeadbeef, &len, &objects );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
     hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagAsyncClose, 0, NULL, 0, (void *)0xdeadbeef, &len, &objects );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
     hr = DevGetObjects( DevObjectTypeDeviceInterface, 0xdeadbeef, 0, NULL, 0, (void *)0xdeadbeef, &len, &objects );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
     len = 0xdeadbeef;
     objects = (DEV_OBJECT *)0xdeadbeef;
     hr = DevGetObjects( DevObjectTypeUnknown, DevQueryFlagNone, 0, NULL, 0, NULL, &len, &objects );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
-    todo_wine ok( len == 0, "got len %lu\n", len );
-    todo_wine ok( !objects, "got objects %p\n", objects );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( len == 0, "got len %lu\n", len );
+    ok( !objects, "got objects %p\n", objects );
 
     len = 0xdeadbeef;
     objects = (DEV_OBJECT *)0xdeadbeef;
     hr = DevGetObjects( 0xdeadbeef, DevQueryFlagNone, 0, NULL, 0, NULL, &len, &objects );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
-    todo_wine ok( len == 0, "got len %lu\n", len );
-    todo_wine ok( !objects, "got objects %p\n", objects );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( len == 0, "got len %lu\n", len );
+    ok( !objects, "got objects %p\n", objects );
 
     set = SetupDiCreateDeviceInfoListExW( NULL, NULL, NULL, NULL );
     ok( set != INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed: %lu\n", GetLastError() );
@@ -581,7 +581,7 @@ static void test_DevGetObjects( void )
         len = 0;
         winetest_push_context( "test_cases[%lu]", i );
         hr = DevGetObjects( test_cases[i].object_type, DevQueryFlagAllProperties, 0, NULL, 0, NULL, &len, &objects );
-        todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
         for (j = 0; j < len; j++)
         {
             ULONG rem_props = test_cases[i].props_len, k;

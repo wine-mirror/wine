@@ -1,6 +1,6 @@
 MODULE    = cfgmgr32.dll
 IMPORTLIB = cfgmgr32
-IMPORTS   = setupapi sechost
+IMPORTS   = advapi32 rpcrt4 sechost setupapi
 
 SOURCES = \
 	main.c

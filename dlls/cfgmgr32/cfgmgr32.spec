@@ -190,3 +190,4 @@
 @ stdcall CM_Unregister_Notification(ptr)
 @ stdcall DevFreeObjects(long ptr)
 @ stdcall DevGetObjects(long long long ptr long ptr ptr ptr)
+@ stdcall DevGetObjectsEx(long long long ptr long ptr long ptr ptr ptr)
