@@ -608,6 +608,16 @@ static const struct message listview_end_label_edit_kill_focus[] = {
     { 0 }
 };
 
+static const struct message subclassed_header_no_validate_wmpaint[] = {
+    { WM_PAINT, sent|id, 0, 0, LISTVIEW_ID },
+    { WM_PAINT, sent|id, 0, 0, HEADER_ID },
+    { WM_NCPAINT, sent|id, 0, 0, HEADER_ID },
+    { WM_ERASEBKGND, sent|id, 0, 0, HEADER_ID },
+    { WM_ERASEBKGND, sent|id|defwinproc, 0, 0, LISTVIEW_ID },
+    { LVM_GETHEADER, sent|id|defwinproc, 0, 0, LISTVIEW_ID },
+    { 0 }
+};
+
 static void hold_key(int vk)
 {
     BYTE kstate[256];
@@ -7689,6 +7699,99 @@ static void test_LVM_GETHOTCURSOR(void)
     DestroyWindow(hwnd);
 }
 
+static LRESULT WINAPI header_subclass_wmpaint_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+{
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    static LONG defwndproc_counter = 0;
+    struct message msg = {0};
+    LRESULT ret;
+
+    msg.message = message;
+    msg.flags = sent | wparam | lparam;
+    if (defwndproc_counter)
+        msg.flags |= defwinproc;
+    msg.wParam = wp;
+    msg.lParam = lp;
+    msg.id = HEADER_ID;
+    add_message(sequences, LISTVIEW_SEQ_INDEX, &msg);
+
+    /* Handle WM_PAINT by returning directly and not validating update regions */
+    if (message == WM_PAINT)
+        return 0;
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(oldproc, hwnd, message, wp, lp);
+    defwndproc_counter--;
+    return ret;
+}
+
+static LRESULT WINAPI listview_subclass_wmpaint_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+{
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    RECT rect, header_client_rect, tmp_rect;
+    static LONG defwndproc_counter = 0;
+    struct message msg = {0};
+    int region_type;
+    HWND header;
+    LRESULT ret;
+
+    msg.message = message;
+    msg.flags = sent | wparam | lparam;
+    if (defwndproc_counter)
+        msg.flags |= defwinproc;
+    msg.wParam = wp;
+    msg.lParam = lp;
+    msg.id = LISTVIEW_ID;
+    add_message(sequences, LISTVIEW_SEQ_INDEX, &msg);
+
+    if (message == WM_ERASEBKGND)
+    {
+        region_type = GetClipBox((HDC)wp, &rect);
+        ok(region_type == SIMPLEREGION, "Got unexpected region type %d.\n", region_type);
+
+        header = (HWND)SendMessageA(hwnd, LVM_GETHEADER, 0, 0);
+        GetClientRect(header, &header_client_rect);
+        todo_wine
+        ok(!IntersectRect(&tmp_rect, &header_client_rect, &rect),
+           "WM_ERASEBKGND dc clip box intersects with the header rectangle.\n");
+    }
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(oldproc, hwnd, message, wp, lp);
+    defwndproc_counter--;
+    return ret;
+}
+
+static void test_WM_PAINT(void)
+{
+    HWND hwnd, header;
+    LVCOLUMNA column;
+    WNDPROC oldproc;
+    LRESULT lr;
+
+    /* Test WM_PAINT with a subclassed header that paints without validating update regions */
+    hwnd = create_listview_control(LVS_REPORT);
+    column.mask = LVCF_WIDTH;
+    column.cx = 100;
+    lr = SendMessageA(hwnd, LVM_INSERTCOLUMNA, 0, (LPARAM)&column);
+    ok(!lr, "LVM_INSERTCOLUMNA failed.\n");
+    flush_events();
+
+    header = (HWND)SendMessageA(hwnd, LVM_GETHEADER, 0, 0);
+    oldproc = (WNDPROC)SetWindowLongPtrA(header, GWLP_WNDPROC, (LONG_PTR)header_subclass_wmpaint_proc);
+    SetWindowLongPtrA(header, GWLP_USERDATA, (LONG_PTR)oldproc);
+    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)listview_subclass_wmpaint_proc);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    InvalidateRect(hwnd, NULL, TRUE);
+    lr = SendMessageA(hwnd, WM_PAINT, 0, 0);
+    ok(!lr, "WM_PAINT failed.\n");
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, subclassed_header_no_validate_wmpaint,
+                "Subclassed header WM_PAINT without validating update regions", TRUE);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     ULONG_PTR ctx_cookie;
@@ -7760,6 +7863,7 @@ START_TEST(listview)
     test_custom_sort();
     test_LVM_GETNEXTITEM();
     test_LVM_GETHOTCURSOR();
+    test_WM_PAINT();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
@@ -7813,6 +7917,7 @@ START_TEST(listview)
     test_LVM_GETHOTCURSOR();
     test_LVM_GETORIGIN(TRUE);
     test_customdraw_background(TRUE);
+    test_WM_PAINT();
 
     uninit_winevent_hook();
 
