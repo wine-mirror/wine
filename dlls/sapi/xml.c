@@ -496,6 +496,13 @@ static HRESULT parse_double_value(const xmlstr_t *value, double *res, size_t *re
     return S_OK;
 }
 
+static inline long lclamp(long value, long value_min, long value_max)
+{
+    if (value < value_min) return value_min;
+    if (value > value_max) return value_max;
+    return value;
+}
+
 static HRESULT parse_ssml_elems(struct xml_parser *parser, const SPVSTATE *state, const struct xml_elem *parent);
 
 static HRESULT parse_ssml_prosody_elem(struct xml_parser *parser, SPVSTATE state, const struct xml_elem *parent)
@@ -507,6 +514,16 @@ static HRESULT parse_ssml_prosody_elem(struct xml_parser *parser, SPVSTATE state
         { L"medium",  0 },
         { L"fast",    4 },
         { L"x-fast",  9 },
+    };
+
+    static const struct string_value volume_values[] =
+    {
+        { L"silent",   0 },
+        { L"x-soft",  20 },
+        { L"soft",    40 },
+        { L"medium",  60 },
+        { L"loud",    80 },
+        { L"x-loud", 100 },
     };
 
     struct xml_attr attr;
@@ -541,6 +558,29 @@ static HRESULT parse_ssml_prosody_elem(struct xml_parser *parser, SPVSTATE state
                 state.RateAdj = -10;
             else
                 state.RateAdj = lround(log(rate) * (10 / log(3)));
+        }
+        else if (xml_attr_eq(&attr, L"volume"))
+        {
+            double volume;
+
+            if (lookup_string_value(volume_values, ARRAY_SIZE(volume_values), &attr.value, (LONG *)&state.Volume))
+                continue;
+
+            if (FAILED(hr = parse_double_value(&attr.value, &volume, &read_len)))
+                return hr;
+            if (read_len < attr.value.len - 1 ||
+                (read_len == attr.value.len - 1 && attr.value.ptr[read_len] != '%'))
+            {
+                ERR("Invalid value %s for the volume attribute in <prosody>.\n", debugstr_xmlstr(&attr.value));
+                return SPERR_UNSUPPORTED_FORMAT;
+            }
+
+            if (attr.value.ptr[attr.value.len - 1] == '%')
+                volume = state.Volume * (1 + volume / 100);
+            else if (attr.value.ptr[0] == '+' || attr.value.ptr[0] == '-')
+                volume = state.Volume + volume;
+
+            state.Volume = lclamp(lround(volume), 0, 100);
         }
         else
         {
