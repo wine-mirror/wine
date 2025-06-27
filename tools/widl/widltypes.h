@@ -722,6 +722,11 @@ static inline enum type_type type_get_type_detect_alias(const type_t *type)
     if (stmt->type == STMT_DECLARATION && stmt->u.var->declspec.stgclass == STG_NONE && \
         type_get_type_detect_alias(stmt->u.var->declspec.type) == TYPE_FUNCTION)
 
+#define STATEMENTS_FOR_EACH_FUNC_REV(stmt, stmts) \
+  if (stmts) LIST_FOR_EACH_ENTRY_REV( stmt, stmts, statement_t, entry ) \
+    if (stmt->type == STMT_DECLARATION && stmt->u.var->declspec.stgclass == STG_NONE && \
+        type_get_type_detect_alias(stmt->u.var->declspec.type) == TYPE_FUNCTION)
+
 static inline int statements_has_func(const statement_list_t *stmts)
 {
   const statement_t *stmt;

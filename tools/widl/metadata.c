@@ -541,6 +541,16 @@ static enum table typedef_or_ref_to_table( UINT token )
     }
 }
 
+static enum table methoddef_or_ref_to_table( UINT token )
+{
+    switch (token & 0x1)
+    {
+    case 0: return TABLE_METHODDEF;
+    case 1: return TABLE_MEMBERREF;
+    default: assert( 0 );
+    }
+}
+
 static enum table memberref_parent_to_table( UINT token )
 {
     switch (token & 0x7)
@@ -1151,6 +1161,33 @@ static void serialize_methodsemantics_table( void )
     }
 }
 
+struct methodimpl_row
+{
+    UINT class;
+    UINT body;
+    UINT declaration;
+};
+
+static UINT add_methodimpl_row( UINT class, UINT body, UINT declaration )
+{
+    struct methodimpl_row row = { class, body, declaration };
+    return add_row( TABLE_METHODIMPL, (const BYTE *)&row, sizeof(row) );
+}
+
+static void serialize_methodimpl_table( void )
+{
+    const struct methodimpl_row *row = (const struct methodimpl_row *)tables[TABLE_METHODIMPL].ptr;
+    UINT i;
+
+    for (i = 0; i < tables[TABLE_METHODIMPL].count; i++)
+    {
+        serialize_table_idx( row->class, row->class );
+        serialize_table_idx( row->body, methoddef_or_ref_to_table(row->body) );
+        serialize_table_idx( row->declaration, methoddef_or_ref_to_table(row->declaration) );
+        row++;
+    }
+}
+
 static UINT typedef_or_ref( enum table table, UINT row )
 {
     switch (table)
@@ -1158,6 +1195,16 @@ static UINT typedef_or_ref( enum table table, UINT row )
     case TABLE_TYPEDEF: return row << 2;
     case TABLE_TYPEREF: return row << 2 | 1;
     case TABLE_TYPESPEC: return row << 2 | 2;
+    default: assert( 0 );
+    }
+}
+
+static UINT methoddef_or_ref( enum table table, UINT row )
+{
+    switch (table)
+    {
+    case TABLE_METHODDEF: return row << 1;
+    case TABLE_MEMBERREF: return row << 1 | 1;
     default: assert( 0 );
     }
 }
@@ -2511,6 +2558,101 @@ static void add_apicontract_type_step2( type_t *type )
     add_apicontract_attr_step2( type );
 }
 
+static void add_runtimeclass_type_step1( type_t *type )
+{
+    UINT name, namespace;
+
+    name = add_name( type, &namespace );
+
+    type->md.ref = add_typeref_row( resolution_scope(TABLE_MODULE, MODULE_ROW), name, namespace );
+}
+
+static void add_method_impl( const type_t *class, const type_t *iface, const var_t *method )
+{
+    UINT parent, memberref, body, decl, sig_size;
+    char *name = get_method_name( method );
+    type_t *type = method->declspec.type;
+    BYTE sig[256];
+
+    parent = memberref_parent( TABLE_TYPEREF, iface->md.ref );
+    sig_size = make_method_sig( method, sig );
+
+    memberref = add_memberref_row( parent, add_string(name), add_blob(sig, sig_size) );
+    free( name );
+
+    body = methoddef_or_ref( TABLE_METHODDEF, type->md.def );
+    decl = methoddef_or_ref( TABLE_MEMBERREF, memberref );
+
+    add_methodimpl_row( class->md.def, body, decl );
+}
+
+static void add_method_contract_attrs( const type_t *class, const type_t *iface, const type_t *method )
+{
+    UINT parent, attr_type, value_size;
+    BYTE value[MAX_NAME + sizeof(UINT) + 5];
+
+    parent = has_customattribute( TABLE_METHODDEF, method->md.def );
+    attr_type = customattribute_type( TABLE_MEMBERREF, iface->md.member[MD_ATTR_CONTRACT] );
+    value_size = make_contract_value( class, value );
+    add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
+
+    if (method->md.class_property)
+    {
+        parent = has_customattribute( TABLE_PROPERTY, method->md.class_property );
+        add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
+    }
+
+    if (method->md.class_event)
+    {
+        parent = has_customattribute( TABLE_EVENT, method->md.class_event );
+        add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
+    }
+}
+
+static void add_runtimeclass_type_step2( type_t *type )
+{
+    UINT name, namespace, scope, extends, typeref, interface, flags;
+    typeref_list_t *iface_list = type_runtimeclass_get_ifaces( type );
+    typeref_t *iface;
+    const statement_t *stmt;
+
+    name = add_name( type, &namespace );
+
+    scope = resolution_scope( TABLE_ASSEMBLYREF, MSCORLIB_ROW );
+    typeref = add_typeref_row( scope, add_string("Object"), add_string("System") );
+
+    extends = typedef_or_ref( TABLE_TYPEREF, typeref );
+    flags = TYPE_ATTR_PUBLIC | TYPE_ATTR_SEALED | TYPE_ATTR_UNKNOWN;
+    type->md.def = add_typedef_row( flags, name, namespace, extends, 0, 0 );
+
+    if (iface_list) LIST_FOR_EACH_ENTRY( iface, iface_list, typeref_t, entry )
+    {
+        interface = typedef_or_ref( TABLE_TYPEREF, iface->type->md.ref );
+        add_interfaceimpl_row( type->md.def, interface );
+
+        /* add properties in reverse order like midlrt */
+        STATEMENTS_FOR_EACH_FUNC_REV( stmt, type_iface_get_stmts(iface->type) )
+        {
+            const var_t *method = stmt->u.var;
+
+            add_property( type, iface->type, method );
+        }
+
+        STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface->type) )
+        {
+            const var_t *method = stmt->u.var;
+
+            add_event( type, iface->type, method );
+            add_method( type, iface->type, method );
+            add_method_impl( type, iface->type, method );
+            add_method_contract_attrs( type, iface->type, method->declspec.type );
+        }
+    }
+
+    add_contract_attr_step1( type );
+    add_contract_attr_step2( type );
+}
+
 static void add_delegate_type_step1( type_t *type )
 {
     UINT name, namespace, scope, typeref;
@@ -2598,6 +2740,9 @@ static void build_tables( const statement_list_t *stmt_list )
         case TYPE_APICONTRACT:
             add_apicontract_type_step1( type );
             break;
+        case TYPE_RUNTIMECLASS:
+            add_runtimeclass_type_step1( type );
+            break;
         case TYPE_DELEGATE:
             add_delegate_type_step1( type );
             break;
@@ -2631,6 +2776,9 @@ static void build_tables( const statement_list_t *stmt_list )
             break;
         case TYPE_APICONTRACT:
             add_apicontract_type_step2( type );
+            break;
+        case TYPE_RUNTIMECLASS:
+            add_runtimeclass_type_step2( type );
             break;
         case TYPE_DELEGATE:
             add_delegate_type_step2( type );
@@ -2690,6 +2838,7 @@ static void build_table_stream( const statement_list_t *stmts )
     serialize_propertymap_table();
     serialize_property_table();
     serialize_methodsemantics_table();
+    serialize_methodimpl_table();
     serialize_assembly_table();
     serialize_assemblyref_table();
 }
