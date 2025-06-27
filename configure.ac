@@ -373,6 +373,7 @@ AS_VAR_SET_IF([enable_archs],
      do
          case $arch in
            i386|x86_64|arm|aarch64|arm64ec) cross_archs="$cross_archs $arch" ;;
+           no|none) PE_ARCHS=none ;;
            *) AC_MSG_ERROR([Unknown cross-compilation architecture '$arch']) ;;
          esac
      done],
@@ -380,6 +381,8 @@ AS_VAR_SET_IF([enable_archs],
      then
          test $HOST_ARCH = unknown || cross_archs=$HOST_ARCH
      fi])
+
+AS_VAR_IF([PE_ARCHS],[none],[cross_archs=])
 
 saved_CC=$CC
 saved_CFLAGS=$CFLAGS

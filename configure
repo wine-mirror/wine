@@ -7383,6 +7383,7 @@ then :
      do
          case $arch in
            i386|x86_64|arm|aarch64|arm64ec) cross_archs="$cross_archs $arch" ;;
+           no|none) PE_ARCHS=none ;;
            *) as_fn_error $? "Unknown cross-compilation architecture '$arch'" "$LINENO" 5 ;;
          esac
      done
@@ -7392,6 +7393,11 @@ else case e in #(
          test $HOST_ARCH = unknown || cross_archs=$HOST_ARCH
      fi ;;
 esac
+fi
+
+if test "x$PE_ARCHS" = xnone
+then :
+  cross_archs=
 fi
 
 saved_CC=$CC
@@ -11324,7 +11330,7 @@ wine_fn_config_makefile ()
       no) as_fn_append DISABLED_SUBDIRS " $1" ;;
       yes) ;;
       *aarch64*|*arm*|*i386*|*x86_64*)
-        if test -n "$PE_ARCHS"
+        if test -n "$PE_ARCHS" -a "$PE_ARCHS" != none
         then
             for i in $PE_ARCHS
             do

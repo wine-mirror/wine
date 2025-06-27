@@ -291,7 +291,7 @@ wine_fn_config_makefile ()
       no) AS_VAR_APPEND([DISABLED_SUBDIRS],[" $[1]"]) ;;
       yes) ;;
       *aarch64*|*arm*|*i386*|*x86_64*)
-        if test -n "$PE_ARCHS"
+        if test -n "$PE_ARCHS" -a "$PE_ARCHS" != none
         then
             for i in $PE_ARCHS
             do
