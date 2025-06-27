@@ -2087,12 +2087,13 @@ static void add_method_params_step1( var_list_t *arg_list )
         type_t *type = arg->declspec.type;
 
         if (type_get_type( type ) == TYPE_POINTER) type = type_pointer_get_ref_type( type );
-
         if (type->name && !strcmp( type->name, "EventRegistrationToken" ))
         {
             UINT assemblyref, scope;
+
             assemblyref = add_assemblyref_row( 0x200, 0, add_string("Windows.Foundation") );
             scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+            type = type_get_real_type( type );
             type->md.ref = add_typeref_row( scope, add_string("EventRegistrationToken"), add_string("Windows.Foundation") );
         }
     }
