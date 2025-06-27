@@ -2254,24 +2254,21 @@ static void add_propput_method( const type_t *class, const type_t *iface, const 
 
 static void add_eventadd_method( const type_t *class, const type_t *iface, const var_t *method )
 {
-    UINT methoddef, event, sig_size, paramlist, flags, attrs= get_method_attrs( class == NULL, TRUE, &flags );
+    UINT event, sig_size, paramlist, flags, attrs = get_method_attrs( class == NULL, TRUE, &flags );
     char *name = get_method_name( method );
+    type_t *type = method->declspec.type;
     BYTE sig[256];
 
-    event = add_event_row( 0, add_string(method->name), typedef_or_ref(TABLE_TYPEREF, method->declspec.type->md.ref) );
-    method->declspec.type->md.event = event;
-    add_eventmap_row( iface->md.def, event );
+    if (class) event = type->md.class_event;
+    else event = type->md.iface_event;
 
-    /* method may already have been added by add_eventremove_method() */
-    if (method->declspec.type->md.event) return;
-
-    paramlist = add_method_params_step2( type_function_get_args(method->declspec.type) );
+    paramlist = add_method_params_step2( type_function_get_args(type) );
     sig_size = make_method_sig( method, sig );
 
-    methoddef = add_methoddef_row( flags, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
+    type->md.def = add_methoddef_row( flags, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
     free( name );
 
-    add_methodsemantics_row( METHOD_SEM_ADDON, methoddef, has_semantics(TABLE_EVENT, event) );
+    add_methodsemantics_row( METHOD_SEM_ADDON, type->md.def, has_semantics(TABLE_EVENT, event) );
 }
 
 static const var_t *find_eventadd_method( const type_t *iface, const char *name )
@@ -2289,21 +2286,30 @@ static const var_t *find_eventadd_method( const type_t *iface, const char *name 
 static void add_eventremove_method( const type_t *class, const type_t *iface, const var_t *method )
 {
     const var_t *eventadd = find_eventadd_method( iface, method->name );
-    UINT methoddef, event, sig_size, paramlist, flags, attrs = get_method_attrs( class == NULL, TRUE, &flags );
+    UINT event, sig_size, paramlist, flags, attrs = get_method_attrs( class == NULL, TRUE, &flags );
     char *name = get_method_name( method );
+    type_t *type = method->declspec.type;
     BYTE sig[256];
 
-    paramlist = add_method_params_step2( type_function_get_args(method->declspec.type) );
+    paramlist = add_method_params_step2( type_function_get_args(type) );
     sig_size = make_method_sig( method, sig );
 
-    methoddef = add_methoddef_row( flags, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
+    type->md.def = add_methoddef_row( flags, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
     free( name );
 
-    /* add eventadd method if not already added */
-    if (!eventadd->declspec.type->md.event) add_eventadd_method( NULL, iface, eventadd );
-    event = eventadd->declspec.type->md.event;
+    /* add eventadd method first if not already added */
+    if (class)
+    {
+        if (!eventadd->declspec.type->md.class_event) add_eventadd_method( class, iface, eventadd );
+        event = type->md.class_event = eventadd->declspec.type->md.class_event;
+    }
+    else
+    {
+        if (!eventadd->declspec.type->md.iface_event) add_eventadd_method( class, iface, eventadd );
+        event = type->md.iface_event = eventadd->declspec.type->md.iface_event;
+    }
 
-    add_methodsemantics_row( METHOD_SEM_REMOVEON, methoddef, has_semantics(TABLE_EVENT, event) );
+    add_methodsemantics_row( METHOD_SEM_REMOVEON, type->md.def, has_semantics(TABLE_EVENT, event) );
 }
 
 static void add_regular_method( const type_t *class, const type_t *iface, const var_t *method )
@@ -2341,6 +2347,35 @@ static void add_property( type_t *class, type_t *iface, const var_t *method )
     }
 }
 
+static void add_event( type_t *class, type_t *iface, const var_t *method )
+{
+    UINT event_type = 0;
+    type_t *type = method->declspec.type;
+    var_t *arg;
+
+    if (!is_attr( method->attrs, ATTR_EVENTADD )) return;
+
+    LIST_FOR_EACH_ENTRY( arg, type_function_get_args(type), var_t, entry )
+    {
+        type_t *arg_type = arg->declspec.type;
+
+        arg_type = type_pointer_get_ref_type( arg_type ); /* first arg must be a delegate pointer */
+        event_type = typedef_or_ref( TABLE_TYPEREF, arg_type->md.ref );
+        break;
+    }
+
+    if (class)
+    {
+        type->md.class_event = add_event_row( 0, add_string(method->name), event_type );
+        if (!class->md.eventmap) class->md.eventmap = add_eventmap_row( class->md.def, type->md.class_event );
+    }
+    else
+    {
+        type->md.iface_event = add_event_row( 0, add_string(method->name), event_type );
+        if (!iface->md.eventmap) iface->md.eventmap = add_eventmap_row( iface->md.def, type->md.iface_event );
+    }
+}
+
 static void add_method( type_t *class, type_t *iface, const var_t *method )
 {
     if (is_attr( method->attrs, ATTR_PROPGET )) add_propget_method( class, iface, method );
@@ -2373,6 +2408,7 @@ static void add_interface_type_step2( type_t *type )
         const var_t *method = stmt->u.var;
 
         add_property( NULL, type, method );
+        add_event( NULL, type, method );
         add_method( NULL, type, method );
 
         add_deprecated_attr_step2( method );

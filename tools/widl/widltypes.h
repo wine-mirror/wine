@@ -525,7 +525,10 @@ struct metadata
     unsigned int class_property;
     unsigned int iface_property;
     unsigned int propertymap;
-    unsigned int event;    /* add/remove methods */
+    /* add/remove methods */
+    unsigned int class_event;
+    unsigned int iface_event;
+    unsigned int eventmap;
 };
 
 struct _type_t {
