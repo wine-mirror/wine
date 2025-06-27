@@ -439,3 +439,28 @@ void WINAPI DevFreeObjects( ULONG objs_len, const DEV_OBJECT *objs )
     free( objects );
     return;
 }
+
+HRESULT WINAPI DevCreateObjectQuery( DEV_OBJECT_TYPE type, ULONG flags, ULONG props_len, const DEVPROPCOMPKEY *props,
+                                     ULONG filters_len, const DEVPROP_FILTER_EXPRESSION *filters,
+                                     PDEV_QUERY_RESULT_CALLBACK callback, void *user_data, HDEVQUERY *devquery )
+{
+    TRACE( "(%d, %#lx, %lu, %p, %lu, %p, %p, %p, %p)\n", type, flags, props_len, props, filters_len, filters, callback,
+           user_data, devquery );
+    return DevCreateObjectQueryEx( type, flags, props_len, props, filters_len, filters, 0, NULL, callback, user_data,
+                                   devquery );
+}
+
+HRESULT WINAPI DevCreateObjectQueryEx( DEV_OBJECT_TYPE type, ULONG flags, ULONG props_len, const DEVPROPCOMPKEY *props,
+                                       ULONG filters_len, const DEVPROP_FILTER_EXPRESSION *filters, ULONG params_len,
+                                       const DEV_QUERY_PARAMETER *params, PDEV_QUERY_RESULT_CALLBACK callback,
+                                       void *user_data, HDEVQUERY *devquery )
+{
+    FIXME( "(%d, %#lx, %lu, %p, %lu, %p, %lu, %p, %p, %p, %p): stub!\n", type, flags, props_len, props, filters_len,
+           filters, params_len, params, callback, user_data, devquery );
+    return E_NOTIMPL;
+}
+
+void WINAPI DevCloseObjectQuery( HDEVQUERY query )
+{
+    FIXME( "(%p): stub!\n", query );
+}

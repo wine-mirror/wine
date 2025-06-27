@@ -782,6 +782,144 @@ static void test_DevGetObjects( void )
     }
 }
 
+struct query_callback_data
+{
+    int line;
+    DEV_OBJECT_TYPE exp_type;
+    const struct test_property *exp_props;
+    DWORD props_len;
+
+    HANDLE enum_completed;
+    HANDLE closed;
+};
+
+static void WINAPI query_result_callback( HDEVQUERY query, void *user_data, const DEV_QUERY_RESULT_ACTION_DATA *action_data )
+{
+    struct query_callback_data *data = user_data;
+
+    ok( !!data, "got null user_data\n" );
+    if (!data) return;
+
+    switch (action_data->Action)
+    {
+    case DevQueryResultStateChange:
+    {
+        DEV_QUERY_STATE state = action_data->Data.State;
+        ok( state == DevQueryStateEnumCompleted || state == DevQueryStateClosed,
+            "got unexpected Data.State value: %d\n", state );
+        switch (state)
+        {
+        case DevQueryStateEnumCompleted:
+            SetEvent( data->enum_completed );
+            break;
+        case DevQueryStateClosed:
+            SetEvent( data->closed );
+        default:
+            break;
+        }
+        break;
+    }
+    case DevQueryResultAdd:
+    {
+        const DEV_OBJECT *obj = &action_data->Data.DeviceObject;
+        winetest_push_context( "device %s", debugstr_w( obj->pszObjectId ) );
+        ok_( __FILE__, data->line )( obj->ObjectType == data->exp_type, "got DeviceObject.ObjectType %d != %d",
+                                     obj->ObjectType, data->exp_type );
+        test_dev_object_iface_props( data->line, &action_data->Data.DeviceObject, data->exp_props, data->props_len );
+        winetest_pop_context();
+        break;
+    }
+    default:
+        ok( action_data->Action == DevQueryResultUpdate || action_data->Action == DevQueryResultRemove,
+            "got unexpected Action %d\n", action_data->Action );
+        break;
+    }
+}
+
+#define call_DevCreateObjectQuery( a, b, c, d, e, f, g, h, i ) \
+    call_DevCreateObjectQuery_(__LINE__, (a), (b), (c), (d), (e), (f), (g), (h), (i))
+
+static HRESULT call_DevCreateObjectQuery_( int line, DEV_OBJECT_TYPE type, ULONG flags, ULONG props_len,
+                                           const DEVPROPCOMPKEY *props, ULONG filters_len,
+                                           const DEVPROP_FILTER_EXPRESSION *filters, PDEV_QUERY_RESULT_CALLBACK callback,
+                                           struct query_callback_data *data, HDEVQUERY *devquery )
+{
+    data->line = line;
+    return DevCreateObjectQuery( type, flags, props_len, props, filters_len, filters, callback, data, devquery );
+}
+
+static void test_DevCreateObjectQuery( void )
+{
+    struct test_property iface_props[3] = {
+        { DEVPKEY_DeviceInterface_ClassGuid, DEVPROP_TYPE_GUID },
+        { DEVPKEY_DeviceInterface_Enabled, DEVPROP_TYPE_BOOLEAN },
+        { DEVPKEY_Device_InstanceId, DEVPROP_TYPE_STRING }
+    };
+    struct query_callback_data data = {0};
+    HDEVQUERY query = NULL;
+    HRESULT hr;
+    DWORD ret;
+
+    hr = DevCreateObjectQuery( DevObjectTypeDeviceInterface, 0, 0, NULL, 0, NULL, NULL, NULL, &query );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+    ok( !query, "got query %p\n", query );
+
+    hr = DevCreateObjectQuery( DevObjectTypeDeviceInterface, 0xdeadbeef, 0, NULL, 0, NULL, query_result_callback,
+                               NULL, &query );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+    ok( !query, "got query %p\n", query );
+
+    data.enum_completed = CreateEventW( NULL, FALSE, FALSE, NULL );
+    data.closed = CreateEventW( NULL, FALSE, FALSE, NULL );
+
+    hr = call_DevCreateObjectQuery( DevObjectTypeUnknown, 0, 0, NULL, 0, NULL, &query_result_callback, &data, &query );
+    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ret = WaitForSingleObject( data.enum_completed, 1000 );
+    todo_wine ok( !ret, "got ret %lu\n", ret );
+    DevCloseObjectQuery( query );
+
+    hr = call_DevCreateObjectQuery( 0xdeadbeef, 0, 0, NULL, 0, NULL, &query_result_callback, &data, &query );
+    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ret = WaitForSingleObject( data.enum_completed, 1000 );
+    todo_wine ok( !ret, "got ret %lu\n", ret );
+    DevCloseObjectQuery( query );
+
+    hr = call_DevCreateObjectQuery( DevObjectTypeUnknown, DevQueryFlagAsyncClose, 0, NULL, 0, NULL, &query_result_callback,
+                                    &data, &query );
+    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ret = WaitForSingleObject( data.enum_completed, 1000 );
+    todo_wine ok( !ret, "got ret %lu\n", ret );
+    DevCloseObjectQuery( query );
+    ret = WaitForSingleObject( data.closed, 1000 );
+    todo_wine ok( !ret, "got ret %lu\n", ret );
+
+    data.exp_props = iface_props;
+    data.props_len = ARRAY_SIZE( iface_props );
+
+    data.exp_type = DevObjectTypeDeviceInterface;
+    hr = call_DevCreateObjectQuery( DevObjectTypeDeviceInterface, DevQueryFlagAllProperties | DevQueryFlagAsyncClose, 0,
+                                    NULL, 0, NULL, &query_result_callback, &data, &query );
+    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ret = WaitForSingleObject( data.enum_completed, 5000 );
+    todo_wine ok( !ret, "got ret %lu\n", ret );
+    DevCloseObjectQuery( query );
+    ret = WaitForSingleObject( data.closed, 1000 );
+    todo_wine ok( !ret, "got ret %lu\n", ret );
+
+    data.exp_type = DevObjectTypeDeviceInterfaceDisplay;
+    hr = call_DevCreateObjectQuery( DevObjectTypeDeviceInterfaceDisplay, DevQueryFlagAllProperties | DevQueryFlagAsyncClose,
+                                    0, NULL, 0, NULL, &query_result_callback, &data, &query );
+    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ret = WaitForSingleObject( data.enum_completed, 5000 );
+    todo_wine ok( !ret, "got ret %lu\n", ret );
+    DevCloseObjectQuery( query );
+    ret = WaitForSingleObject( data.closed, 1000 );
+    todo_wine ok( !ret, "got ret %lu\n", ret );
+
+    CloseHandle( data.enum_completed );
+    CloseHandle( data.closed );
+}
+
 START_TEST(cfgmgr32)
 {
     test_CM_MapCrToWin32Err();
@@ -789,4 +927,5 @@ START_TEST(cfgmgr32)
     test_CM_Register_Notification();
     test_CM_Get_Device_Interface_List();
     test_DevGetObjects();
+    test_DevCreateObjectQuery();
 }
