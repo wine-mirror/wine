@@ -1055,6 +1055,8 @@ static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffe
 
         TRACE("INTERNET_OPTION_USER_AGENT\n");
 
+        if(!size) return ERROR_INVALID_PARAMETER;
+
         bufsize = *size;
 
         if (unicode) {
