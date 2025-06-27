@@ -2160,11 +2160,24 @@ static UINT add_method_params_step2( var_list_t *arg_list )
     return first;
 }
 
+static char *get_method_name( const var_t *method )
+{
+    const char *overload;
+
+    if (is_attr( method->attrs, ATTR_PROPGET )) return strmake( "get_%s", method->name );
+    else if (is_attr( method->attrs, ATTR_PROPPUT )) return strmake( "put_%s", method->name );
+    else if (is_attr( method->attrs, ATTR_EVENTADD )) return strmake( "add_%s", method->name );
+    else if (is_attr( method->attrs, ATTR_EVENTREMOVE )) return strmake( "remove_%s", method->name );
+
+    if ((overload = get_attrp( method->attrs, ATTR_OVERLOAD ))) return strmake( "%s", overload );
+    return strmake( "%s", method->name );
+}
+
 static void add_propget_method( const type_t *iface, const var_t *method )
 {
     UINT methoddef, property, sig_size, paramlist, attrs;
+    char *name = get_method_name( method );
     BYTE sig[256];
-    char *name;
 
     /* method may already have been added by add_propput_method() */
     if (method->declspec.type->md.property) return;
@@ -2180,7 +2193,6 @@ static void add_propget_method( const type_t *iface, const var_t *method )
     attrs = METHOD_ATTR_PUBLIC  | METHOD_ATTR_VIRTUAL  | METHOD_ATTR_HIDEBYSIG |
             METHOD_ATTR_NEWSLOT | METHOD_ATTR_ABSTRACT | METHOD_ATTR_SPECIALNAME;
 
-    name = strmake( "get_%s", method->name );
     methoddef = add_methoddef_row( 0, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
     free( name );
 
@@ -2203,8 +2215,8 @@ static void add_propput_method( const type_t *iface, const var_t *method )
 {
     const var_t *propget = find_propget_method( iface, method->name );
     UINT methoddef, property, sig_size, paramlist, attrs;
+    char *name = get_method_name( method );
     BYTE sig[256];
-    char *name;
 
     paramlist = add_method_params_step2( type_function_get_args(method->declspec.type) );
     sig_size = make_method_sig( method, sig );
@@ -2212,7 +2224,6 @@ static void add_propput_method( const type_t *iface, const var_t *method )
     attrs = METHOD_ATTR_PUBLIC  | METHOD_ATTR_VIRTUAL  | METHOD_ATTR_HIDEBYSIG |
             METHOD_ATTR_NEWSLOT | METHOD_ATTR_ABSTRACT | METHOD_ATTR_SPECIALNAME;
 
-    name = strmake( "put_%s", method->name );
     methoddef = add_methoddef_row( 0, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
     free( name );
 
@@ -2226,8 +2237,8 @@ static void add_propput_method( const type_t *iface, const var_t *method )
 static void add_eventadd_method( const type_t *iface, const var_t *method )
 {
     UINT methoddef, event, sig_size, paramlist, attrs;
+    char *name = get_method_name( method );
     BYTE sig[256];
-    char *name;
 
     event = add_event_row( 0, add_string(method->name), typedef_or_ref(TABLE_TYPEREF, method->declspec.type->md.ref) );
     method->declspec.type->md.event = event;
@@ -2242,7 +2253,6 @@ static void add_eventadd_method( const type_t *iface, const var_t *method )
     attrs = METHOD_ATTR_PUBLIC  | METHOD_ATTR_VIRTUAL  | METHOD_ATTR_HIDEBYSIG |
             METHOD_ATTR_NEWSLOT | METHOD_ATTR_ABSTRACT | METHOD_ATTR_SPECIALNAME;
 
-    name = strmake( "add_%s", method->name );
     methoddef = add_methoddef_row( 0, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
     free( name );
 
@@ -2265,8 +2275,8 @@ static void add_eventremove_method( const type_t *iface, const var_t *method )
 {
     const var_t *eventadd = find_eventadd_method( iface, method->name );
     UINT methoddef, event, sig_size, paramlist, attrs;
+    char *name = get_method_name( method );
     BYTE sig[256];
-    char *name;
 
     paramlist = add_method_params_step2( type_function_get_args(method->declspec.type) );
     sig_size = make_method_sig( method, sig );
@@ -2274,7 +2284,6 @@ static void add_eventremove_method( const type_t *iface, const var_t *method )
     attrs = METHOD_ATTR_PUBLIC  | METHOD_ATTR_VIRTUAL  | METHOD_ATTR_HIDEBYSIG |
             METHOD_ATTR_NEWSLOT | METHOD_ATTR_ABSTRACT | METHOD_ATTR_SPECIALNAME;
 
-    name = strmake( "remove_%s", method->name );
     methoddef = add_methoddef_row( 0, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
     free( name );
 
@@ -2285,18 +2294,11 @@ static void add_eventremove_method( const type_t *iface, const var_t *method )
     add_methodsemantics_row( METHOD_SEM_REMOVEON, methoddef, has_semantics(TABLE_EVENT, event) );
 }
 
-static const char *get_method_name( const var_t *method )
-{
-    const char *name = get_attrp( method->attrs, ATTR_OVERLOAD );
-    if (name) return name;
-    return method->name;
-}
-
 static void add_method( const var_t *method )
 {
-    const char *name = get_method_name( method );
     type_t *type = method->declspec.type;
     UINT paramlist, sig_size, attrs;
+    char *name = get_method_name( method );
     BYTE sig[256];
 
     paramlist = add_method_params_step2( type_function_get_args(method->declspec.type) );
@@ -2306,6 +2308,7 @@ static void add_method( const var_t *method )
             METHOD_ATTR_NEWSLOT | METHOD_ATTR_ABSTRACT;
 
     type->md.def = add_methoddef_row( 0, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
+    free( name );
 }
 
 static void add_interface_type_step2( type_t *type )
