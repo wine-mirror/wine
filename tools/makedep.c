@@ -3781,7 +3781,7 @@ static void output_programs( struct makefile *make )
         strarray_addall( &make->all_targets[arch], symlinks );
 
         install_dir = !strcmp( make->obj_dir, "loader" ) ? arch_install_dirs[arch] : "$(bindir)/";
-        add_install_rule( make, program, arch, program, strmake( "p%s%s", install_dir, program ));
+        add_install_rule( make, make->programs.str[i], arch, program, strmake( "p%s%s", install_dir, program ));
         for (j = 0; j < symlinks.count; j++)
             add_install_rule( make, symlinks.str[j], arch, program,
                               strmake( "y$(bindir)/%s%s", symlinks.str[j], exe_ext ));
