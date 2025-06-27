@@ -861,37 +861,37 @@ static void test_DevCreateObjectQuery( void )
     DWORD ret;
 
     hr = DevCreateObjectQuery( DevObjectTypeDeviceInterface, 0, 0, NULL, 0, NULL, NULL, NULL, &query );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
     ok( !query, "got query %p\n", query );
 
     hr = DevCreateObjectQuery( DevObjectTypeDeviceInterface, 0xdeadbeef, 0, NULL, 0, NULL, query_result_callback,
                                NULL, &query );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
     ok( !query, "got query %p\n", query );
 
     data.enum_completed = CreateEventW( NULL, FALSE, FALSE, NULL );
     data.closed = CreateEventW( NULL, FALSE, FALSE, NULL );
 
     hr = call_DevCreateObjectQuery( DevObjectTypeUnknown, 0, 0, NULL, 0, NULL, &query_result_callback, &data, &query );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
     ret = WaitForSingleObject( data.enum_completed, 1000 );
-    todo_wine ok( !ret, "got ret %lu\n", ret );
+    ok( !ret, "got ret %lu\n", ret );
     DevCloseObjectQuery( query );
 
     hr = call_DevCreateObjectQuery( 0xdeadbeef, 0, 0, NULL, 0, NULL, &query_result_callback, &data, &query );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
     ret = WaitForSingleObject( data.enum_completed, 1000 );
-    todo_wine ok( !ret, "got ret %lu\n", ret );
+    ok( !ret, "got ret %lu\n", ret );
     DevCloseObjectQuery( query );
 
     hr = call_DevCreateObjectQuery( DevObjectTypeUnknown, DevQueryFlagAsyncClose, 0, NULL, 0, NULL, &query_result_callback,
                                     &data, &query );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
     ret = WaitForSingleObject( data.enum_completed, 1000 );
-    todo_wine ok( !ret, "got ret %lu\n", ret );
+    ok( !ret, "got ret %lu\n", ret );
     DevCloseObjectQuery( query );
     ret = WaitForSingleObject( data.closed, 1000 );
-    todo_wine ok( !ret, "got ret %lu\n", ret );
+    ok( !ret, "got ret %lu\n", ret );
 
     data.exp_props = iface_props;
     data.props_len = ARRAY_SIZE( iface_props );
@@ -899,22 +899,22 @@ static void test_DevCreateObjectQuery( void )
     data.exp_type = DevObjectTypeDeviceInterface;
     hr = call_DevCreateObjectQuery( DevObjectTypeDeviceInterface, DevQueryFlagAllProperties | DevQueryFlagAsyncClose, 0,
                                     NULL, 0, NULL, &query_result_callback, &data, &query );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
     ret = WaitForSingleObject( data.enum_completed, 5000 );
-    todo_wine ok( !ret, "got ret %lu\n", ret );
+    ok( !ret, "got ret %lu\n", ret );
     DevCloseObjectQuery( query );
     ret = WaitForSingleObject( data.closed, 1000 );
-    todo_wine ok( !ret, "got ret %lu\n", ret );
+    ok( !ret, "got ret %lu\n", ret );
 
     data.exp_type = DevObjectTypeDeviceInterfaceDisplay;
     hr = call_DevCreateObjectQuery( DevObjectTypeDeviceInterfaceDisplay, DevQueryFlagAllProperties | DevQueryFlagAsyncClose,
                                     0, NULL, 0, NULL, &query_result_callback, &data, &query );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
     ret = WaitForSingleObject( data.enum_completed, 5000 );
-    todo_wine ok( !ret, "got ret %lu\n", ret );
+    ok( !ret, "got ret %lu\n", ret );
     DevCloseObjectQuery( query );
     ret = WaitForSingleObject( data.closed, 1000 );
-    todo_wine ok( !ret, "got ret %lu\n", ret );
+    ok( !ret, "got ret %lu\n", ret );
 
     CloseHandle( data.enum_completed );
     CloseHandle( data.closed );

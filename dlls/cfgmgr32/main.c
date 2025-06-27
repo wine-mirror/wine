@@ -295,28 +295,112 @@ CONFIGRET WINAPI CM_Get_Device_Interface_PropertyW( LPCWSTR device_interface, co
     }
 }
 
-BOOL dev_objects_append_iface( DEV_OBJECT **objects, ULONG *len, const WCHAR *path, DEV_OBJECT_TYPE type )
-{
-    DEV_OBJECT *tmp;
-    WCHAR *id;
+typedef HRESULT (*enum_device_object_cb)( DEV_OBJECT object, void *context );
 
-    if (!(id = wcsdup( path )))
-        return FALSE;
-    if (!(tmp = realloc( *objects, (*len + 1) * sizeof( **objects ) )))
+static HRESULT enum_dev_objects( DEV_OBJECT_TYPE type, enum_device_object_cb callback, void *data )
+{
+    HKEY iface_key;
+    HRESULT hr = S_OK;
+
+    DWORD i;
+
+    switch (type)
+    {
+    case DevObjectTypeDeviceInterface:
+    case DevObjectTypeDeviceInterfaceDisplay:
+        break;
+    case DevObjectTypeDeviceContainer:
+    case DevObjectTypeDevice:
+    case DevObjectTypeDeviceInterfaceClass:
+    case DevObjectTypeAEP:
+    case DevObjectTypeAEPContainer:
+    case DevObjectTypeDeviceInstallerClass:
+    case DevObjectTypeDeviceContainerDisplay:
+    case DevObjectTypeAEPService:
+    case DevObjectTypeDevicePanel:
+    case DevObjectTypeAEPProtocol:
+        FIXME("Unsupported DEV_OJBECT_TYPE: %d\n", type );
+    default:
+        return S_OK;
+    }
+
+    if (!(iface_key = SetupDiOpenClassRegKeyExW( NULL, KEY_ENUMERATE_SUB_KEYS, DIOCR_INTERFACE, NULL, NULL )))
+        return HRESULT_FROM_WIN32( GetLastError() );
+
+    for (i = 0; SUCCEEDED( hr ); i++)
+    {
+        char buffer[sizeof( SP_DEVICE_INTERFACE_DETAIL_DATA_W ) + MAX_PATH * sizeof( WCHAR )];
+        SP_DEVICE_INTERFACE_DATA iface = {.cbSize = sizeof( iface )};
+        SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (void *)buffer;
+        HDEVINFO set = INVALID_HANDLE_VALUE;
+        WCHAR iface_guid_str[40];
+        DWORD ret, len, j;
+        GUID iface_class;
+
+        len = ARRAY_SIZE( iface_guid_str );
+        ret = RegEnumKeyExW( iface_key, i, iface_guid_str, &len, NULL, NULL, NULL, NULL );
+        if (ret)
+        {
+            hr = (ret == ERROR_NO_MORE_ITEMS) ? S_OK : HRESULT_FROM_WIN32( ret );
+            break;
+        }
+
+        iface_guid_str[37] = '\0';
+        if (!UuidFromStringW( &iface_guid_str[1], &iface_class ))
+        {
+            set = SetupDiGetClassDevsW( &iface_class, NULL, NULL, DIGCF_DEVICEINTERFACE );
+            if (set == INVALID_HANDLE_VALUE) hr = HRESULT_FROM_WIN32( GetLastError() );
+        }
+        else
+        {
+            ERR( "Could not parse device interface GUID %s\n", debugstr_w( iface_guid_str ) );
+            continue;
+        }
+
+        for (j = 0; SUCCEEDED( hr ) && SetupDiEnumDeviceInterfaces( set, NULL, &iface_class, j, &iface ); j++)
+        {
+            DEV_OBJECT obj = {0};
+
+            detail->cbSize = sizeof( *detail );
+            if (!SetupDiGetDeviceInterfaceDetailW( set, &iface, detail, sizeof( buffer ), NULL, NULL )) continue;
+
+            obj.ObjectType = type;
+            obj.pszObjectId = detail->DevicePath;
+            hr = callback( obj, data );
+        }
+
+        if (set != INVALID_HANDLE_VALUE)
+            SetupDiDestroyDeviceInfoList( set );
+    }
+    RegCloseKey( iface_key );
+    return hr;
+}
+
+struct objects_list
+{
+    DEV_OBJECT *objects;
+    ULONG len;
+};
+
+static HRESULT dev_objects_append( DEV_OBJECT obj, void *data )
+{
+    struct objects_list *objects = data;
+    WCHAR *id;
+    DEV_OBJECT *tmp;
+
+    if (!(id = wcsdup( obj.pszObjectId )))
+        return E_OUTOFMEMORY;
+    if (!(tmp = realloc( objects->objects, (objects->len + 1) * sizeof( obj ) )))
     {
         free( id );
-        return FALSE;
+        return E_OUTOFMEMORY;
     }
-    *objects = tmp;
 
-    tmp = &tmp[*len];
-    tmp->ObjectType = type;
+    objects->objects = tmp;
+    tmp = &tmp[objects->len++];
+    *tmp = obj;
     tmp->pszObjectId = id;
-    tmp->cPropertyCount = 0;
-    tmp->pProperties = NULL;
-
-    *len += 1;
-    return TRUE;
+    return S_OK;
 }
 
 HRESULT WINAPI DevGetObjects( DEV_OBJECT_TYPE type, ULONG flags, ULONG props_len, const DEVPROPCOMPKEY *props,
@@ -331,10 +415,9 @@ HRESULT WINAPI DevGetObjectsEx( DEV_OBJECT_TYPE type, ULONG flags, ULONG props_l
                                 ULONG filters_len, const DEVPROP_FILTER_EXPRESSION *filters, ULONG params_len,
                                 const DEV_QUERY_PARAMETER *params, ULONG *objs_len, const DEV_OBJECT **objs )
 {
-    ULONG objects_len = 0, valid_flags = DevQueryFlagAllProperties | DevQueryFlagLocalize;
-    DEV_OBJECT *objects = NULL;
+    ULONG valid_flags = DevQueryFlagAllProperties | DevQueryFlagLocalize;
+    struct objects_list objects = {0};
     HRESULT hr = S_OK;
-    HKEY iface_key;
 
     TRACE( "(%d, %#lx, %lu, %p, %lu, %p, %lu, %p, %p, %p)\n", type, flags, props_len, props, filters_len, filters,
            params_len, params, objs_len, objs );
@@ -351,78 +434,14 @@ HRESULT WINAPI DevGetObjectsEx( DEV_OBJECT_TYPE type, ULONG flags, ULONG props_l
     *objs = NULL;
     *objs_len = 0;
 
-    switch (type)
+    hr = enum_dev_objects( type, dev_objects_append, &objects );
+    if (SUCCEEDED( hr ))
     {
-    case DevObjectTypeDeviceInterface:
-    case DevObjectTypeDeviceInterfaceDisplay:
-    {
-        DWORD i;
-
-        if (!(iface_key = SetupDiOpenClassRegKeyExW( NULL, KEY_ENUMERATE_SUB_KEYS, DIOCR_INTERFACE, NULL, NULL )))
-            return HRESULT_FROM_WIN32( GetLastError() );
-
-        for (i = 0; SUCCEEDED( hr ); i++)
-        {
-            char buffer[sizeof( SP_DEVICE_INTERFACE_DETAIL_DATA_W ) + MAX_PATH * sizeof( WCHAR )];
-            SP_DEVICE_INTERFACE_DATA iface = {.cbSize = sizeof( iface )};
-            SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (void *)buffer;
-            HDEVINFO set = INVALID_HANDLE_VALUE;
-            WCHAR iface_guid_str[40];
-            DWORD ret, len, j;
-            GUID iface_class;
-
-            len = ARRAY_SIZE( iface_guid_str );
-            ret = RegEnumKeyExW( iface_key, i, iface_guid_str, &len, NULL, NULL, NULL, NULL );
-            if (ret)
-            {
-                hr = (ret == ERROR_NO_MORE_ITEMS) ? S_OK : HRESULT_FROM_WIN32( ret );
-                break;
-            }
-
-            iface_guid_str[37] = '\0';
-            if (!UuidFromStringW( &iface_guid_str[1], &iface_class ))
-            {
-                set = SetupDiGetClassDevsW( &iface_class, NULL, NULL, DIGCF_DEVICEINTERFACE );
-                if (set == INVALID_HANDLE_VALUE) hr = HRESULT_FROM_WIN32( GetLastError() );
-            }
-            else
-                ERR( "Could not parse device interface GUID %s\n", debugstr_w( iface_guid_str ) );
-
-            for (j = 0; SUCCEEDED( hr ) && SetupDiEnumDeviceInterfaces( set, NULL, &iface_class, j, &iface ); j++)
-            {
-                detail->cbSize = sizeof( *detail );
-                if (!SetupDiGetDeviceInterfaceDetailW( set, &iface, detail, sizeof( buffer ), NULL, NULL )) continue;
-                if (!dev_objects_append_iface( &objects, &objects_len, detail->DevicePath, type )) hr = E_OUTOFMEMORY;
-            }
-
-            if (set != INVALID_HANDLE_VALUE)
-                SetupDiDestroyDeviceInfoList( set );
-        }
-        RegCloseKey( iface_key );
-        break;
-    }
-    case DevObjectTypeDeviceContainer:
-    case DevObjectTypeDevice:
-    case DevObjectTypeDeviceInterfaceClass:
-    case DevObjectTypeAEP:
-    case DevObjectTypeAEPContainer:
-    case DevObjectTypeDeviceInstallerClass:
-    case DevObjectTypeDeviceContainerDisplay:
-    case DevObjectTypeAEPService:
-    case DevObjectTypeDevicePanel:
-    case DevObjectTypeAEPProtocol:
-        FIXME( "Unsupported DEV_OBJECT_TYPE: %d\n", type );
-    default:
-        break;
-    }
-
-    if (hr == S_OK)
-    {
-        *objs = objects;
-        *objs_len = objects_len;
+        *objs = objects.objects;
+        *objs_len = objects.len;
     }
     else
-        DevFreeObjects( objects_len, objects );
+        DevFreeObjects( objects.len, objects.objects );
 
     return hr;
 }
@@ -440,6 +459,157 @@ void WINAPI DevFreeObjects( ULONG objs_len, const DEV_OBJECT *objs )
     return;
 }
 
+struct device_query_context
+{
+    LONG ref;
+    DEV_OBJECT_TYPE type;
+    ULONG flags;
+
+    CRITICAL_SECTION cs;
+    PDEV_QUERY_RESULT_CALLBACK callback;
+    void *user_data;
+    DEV_QUERY_STATE state;
+    HANDLE closed;
+};
+
+static HRESULT device_query_context_add_object( DEV_OBJECT obj, void *data )
+{
+    DEVPROPERTY *props = (DEVPROPERTY *)obj.pProperties;
+    DEV_QUERY_RESULT_ACTION_DATA action_data = {0};
+    struct device_query_context *ctx = data;
+    HRESULT hr = S_OK;
+    ULONG i;
+
+    action_data.Action = DevQueryResultAdd;
+    action_data.Data.DeviceObject = obj;
+    ctx->callback( (HDEVQUERY)ctx, ctx->user_data, &action_data );
+
+    EnterCriticalSection( &ctx->cs );
+    if (ctx->state == DevQueryStateClosed)
+        hr = E_CHANGED_STATE;
+    LeaveCriticalSection( &ctx->cs );
+
+    for (i = 0; i < obj.cPropertyCount; i++)
+        free( props->Buffer );
+    free( props );
+    return hr;
+}
+
+static HRESULT device_query_context_create( struct device_query_context **query, DEV_OBJECT_TYPE type, ULONG flags,
+                                            PDEV_QUERY_RESULT_CALLBACK callback, void *user_data )
+{
+    struct device_query_context *ctx;
+
+    if (!(ctx = calloc( 1, sizeof( *ctx ))))
+        return E_OUTOFMEMORY;
+    ctx->ref = 1;
+    if (!(flags & DevQueryFlagAsyncClose))
+    {
+        ctx->closed = CreateEventW( NULL, FALSE, FALSE, NULL );
+        if (ctx->closed == INVALID_HANDLE_VALUE)
+        {
+            free( ctx );
+            return HRESULT_FROM_WIN32( GetLastError() );
+        }
+    }
+    InitializeCriticalSectionEx( &ctx->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
+    ctx->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": device_query_context.cs");
+    ctx->type = type;
+    ctx->flags = flags;
+    ctx->callback = callback;
+    ctx->user_data = user_data;
+    ctx->state = DevQueryStateInitialized;
+
+    *query = ctx;
+    return S_OK;
+}
+
+static void device_query_context_addref( struct device_query_context *ctx )
+{
+    InterlockedIncrement( &ctx->ref );
+}
+
+static void device_query_context_release( struct device_query_context *ctx )
+{
+    if (!InterlockedDecrement( &ctx->ref ))
+    {
+        ctx->cs.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection( &ctx->cs );
+        if (ctx->closed) CloseHandle( ctx->closed );
+        free( ctx );
+    }
+}
+
+static void device_query_context_notify_state_change( struct device_query_context *ctx, DEV_QUERY_STATE state )
+{
+    DEV_QUERY_RESULT_ACTION_DATA action_data = {0};
+
+    action_data.Action = DevQueryResultStateChange;
+    action_data.Data.State = state;
+    ctx->callback( (HDEVQUERY)ctx, ctx->user_data, &action_data );
+}
+
+static void CALLBACK device_query_context_notify_enum_completed_async( TP_CALLBACK_INSTANCE *instance, void *data )
+{
+    device_query_context_notify_state_change( data, DevQueryStateEnumCompleted );
+    device_query_context_release( data );
+}
+
+static void CALLBACK device_query_context_notify_closed_async( TP_CALLBACK_INSTANCE *instance, void *data )
+{
+    device_query_context_notify_state_change( data, DevQueryStateClosed );
+    device_query_context_release( data );
+}
+
+static void CALLBACK device_query_context_notify_aborted_async( TP_CALLBACK_INSTANCE *instance, void *data )
+{
+    device_query_context_notify_state_change( data, DevQueryStateAborted );
+    device_query_context_release( data );
+}
+
+static void CALLBACK device_query_enum_objects_async( TP_CALLBACK_INSTANCE *instance, void *data )
+{
+    struct device_query_context *ctx = data;
+    BOOL success = TRUE;
+    HRESULT hr;
+
+    hr = enum_dev_objects( ctx->type, device_query_context_add_object, ctx );
+
+    EnterCriticalSection( &ctx->cs );
+    if (ctx->state == DevQueryStateClosed)
+        hr = E_CHANGED_STATE;
+
+    switch (hr)
+    {
+    case S_OK:
+        ctx->state = DevQueryStateEnumCompleted;
+        success = TrySubmitThreadpoolCallback( device_query_context_notify_enum_completed_async, ctx, NULL );
+        LeaveCriticalSection( &ctx->cs );
+        break;
+    case E_CHANGED_STATE:
+        if (ctx->flags & DevQueryFlagAsyncClose)
+        {
+            success = TrySubmitThreadpoolCallback( device_query_context_notify_closed_async, ctx, NULL );
+            LeaveCriticalSection( &ctx->cs );
+        }
+        else
+        {
+            LeaveCriticalSection( &ctx->cs );
+            SetEvent( ctx->closed );
+            device_query_context_release( ctx );
+        }
+        break;
+    default:
+        ctx->state = DevQueryStateAborted;
+        success = TrySubmitThreadpoolCallback( device_query_context_notify_aborted_async, ctx, NULL );
+        LeaveCriticalSection( &ctx->cs );
+        break;
+    }
+
+    if (!success)
+        device_query_context_release( ctx );
+}
+
 HRESULT WINAPI DevCreateObjectQuery( DEV_OBJECT_TYPE type, ULONG flags, ULONG props_len, const DEVPROPCOMPKEY *props,
                                      ULONG filters_len, const DEVPROP_FILTER_EXPRESSION *filters,
                                      PDEV_QUERY_RESULT_CALLBACK callback, void *user_data, HDEVQUERY *devquery )
@@ -455,12 +625,72 @@ HRESULT WINAPI DevCreateObjectQueryEx( DEV_OBJECT_TYPE type, ULONG flags, ULONG 
                                        const DEV_QUERY_PARAMETER *params, PDEV_QUERY_RESULT_CALLBACK callback,
                                        void *user_data, HDEVQUERY *devquery )
 {
-    FIXME( "(%d, %#lx, %lu, %p, %lu, %p, %lu, %p, %p, %p, %p): stub!\n", type, flags, props_len, props, filters_len,
+    ULONG valid_flags = DevQueryFlagUpdateResults | DevQueryFlagAllProperties | DevQueryFlagLocalize | DevQueryFlagAsyncClose;
+    struct device_query_context *ctx = NULL;
+    HRESULT hr;
+
+    TRACE( "(%d, %#lx, %lu, %p, %lu, %p, %lu, %p, %p, %p, %p)\n", type, flags, props_len, props, filters_len,
            filters, params_len, params, callback, user_data, devquery );
-    return E_NOTIMPL;
+
+    if (!!props_len != !!props || !!filters_len != !!filters || !!params_len != !!params || (flags & ~valid_flags) || !callback
+        || (props_len && (flags & DevQueryFlagAllProperties)))
+        return E_INVALIDARG;
+    if (props_len || (flags & DevQueryFlagAllProperties))
+        FIXME( "Object properties are not supported!\n" );
+    if (filters)
+        FIXME( "Query filters are not supported!\n" );
+    if (params)
+        FIXME( "Query parameters are not supported!\n" );
+
+    hr = device_query_context_create( &ctx, type, flags, callback, user_data );
+    if (FAILED( hr ))
+        return hr;
+
+    device_query_context_addref( ctx );
+    if (!TrySubmitThreadpoolCallback( device_query_enum_objects_async, ctx, NULL ))
+        hr = HRESULT_FROM_WIN32( GetLastError() );
+    if (FAILED( hr ))
+    {
+        device_query_context_release( ctx );
+        ctx = NULL;
+    }
+
+    *devquery = (HDEVQUERY)ctx;
+    return hr;
 }
 
 void WINAPI DevCloseObjectQuery( HDEVQUERY query )
 {
-    FIXME( "(%p): stub!\n", query );
+    struct device_query_context *ctx = (struct device_query_context *)query;
+    BOOL async = ctx->flags & DevQueryFlagAsyncClose;
+    DEV_QUERY_STATE old;
+
+    TRACE( "(%p)\n", query );
+
+    if (!query)
+        return;
+
+    EnterCriticalSection( &ctx->cs );
+    old = ctx->state;
+    ctx->state = DevQueryStateClosed;
+
+    if (async && old == DevQueryStateEnumCompleted)
+    {
+        /* No asynchronous operation involving this query is active, so we need to notify DevQueryStateClosed. */
+        BOOL success = TrySubmitThreadpoolCallback( device_query_context_notify_closed_async, ctx, NULL );
+        LeaveCriticalSection( &ctx->cs );
+        if (success)
+            return;
+    }
+    else if (!async && old == DevQueryStateInitialized)
+    {
+        LeaveCriticalSection( &ctx->cs );
+        /* Wait for the active async operation to end. */
+        WaitForSingleObject( ctx->closed, INFINITE );
+    }
+    else
+        LeaveCriticalSection( &ctx->cs );
+
+    device_query_context_release( ctx );
+    return;
 }
