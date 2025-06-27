@@ -10828,7 +10828,15 @@ static LRESULT LISTVIEW_Paint(LISTVIEW_INFO *infoPtr, HDC hdc)
 	LISTVIEW_UpdateScroll(infoPtr);
     }
 
-    if (infoPtr->hwndHeader)  UpdateWindow(infoPtr->hwndHeader);
+    if (infoPtr->hwndHeader)
+    {
+        RECT rect;
+
+        UpdateWindow(infoPtr->hwndHeader);
+        GetClientRect(infoPtr->hwndHeader, &rect);
+        MapWindowPoints(infoPtr->hwndHeader, infoPtr->hwndSelf, (POINT *)&rect, 2);
+        ValidateRect(infoPtr->hwndSelf, &rect);
+    }
 
     if (hdc) 
         LISTVIEW_Refresh(infoPtr, hdc, NULL);

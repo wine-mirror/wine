@@ -7751,7 +7751,6 @@ static LRESULT WINAPI listview_subclass_wmpaint_proc(HWND hwnd, UINT message, WP
 
         header = (HWND)SendMessageA(hwnd, LVM_GETHEADER, 0, 0);
         GetClientRect(header, &header_client_rect);
-        todo_wine
         ok(!IntersectRect(&tmp_rect, &header_client_rect, &rect),
            "WM_ERASEBKGND dc clip box intersects with the header rectangle.\n");
     }
