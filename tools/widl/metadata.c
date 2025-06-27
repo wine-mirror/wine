@@ -2193,27 +2193,22 @@ static UINT get_method_attrs( BOOL abstract, BOOL special, UINT *flags )
     return attrs;
 }
 
-static void add_propget_method( const type_t *iface, const var_t *method )
+static void add_propget_method( const type_t *class, const type_t *iface, const var_t *method )
 {
-    UINT methoddef, property, sig_size, paramlist, flags, attrs = get_method_attrs( TRUE, TRUE, &flags );
+    UINT sig_size, property, paramlist, flags, attrs = get_method_attrs( class == NULL, TRUE, &flags );
     char *name = get_method_name( method );
+    type_t *type = method->declspec.type;
     BYTE sig[256];
 
-    /* method may already have been added by add_propput_method() */
-    if (method->declspec.type->md.property) return;
+    if (class) property = type->md.class_property;
+    else property = type->md.iface_property;
 
-    sig_size = make_property_sig( method, sig );
-    property = add_property_row( 0, add_string(method->name), add_blob(sig, sig_size) );
-    method->declspec.type->md.property = property;
-    add_propertymap_row( iface->md.def, property );
-
-    paramlist = add_method_params_step2( type_function_get_args(method->declspec.type) );
+    paramlist = add_method_params_step2( type_function_get_args(type) );
     sig_size = make_method_sig( method, sig );
 
-    methoddef = add_methoddef_row( flags, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
+    type->md.def = add_methoddef_row( flags, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
+    add_methodsemantics_row( METHOD_SEM_GETTER, type->md.def, has_semantics(TABLE_PROPERTY, property) );
     free( name );
-
-    add_methodsemantics_row( METHOD_SEM_GETTER, methoddef, has_semantics(TABLE_PROPERTY, property) );
 }
 
 static const var_t *find_propget_method( const type_t *iface, const char *name )
@@ -2228,29 +2223,38 @@ static const var_t *find_propget_method( const type_t *iface, const char *name )
     return NULL;
 }
 
-static void add_propput_method( const type_t *iface, const var_t *method )
+static void add_propput_method( const type_t *class, const type_t *iface, const var_t *method )
 {
     const var_t *propget = find_propget_method( iface, method->name );
-    UINT methoddef, property, sig_size, paramlist, flags, attrs = get_method_attrs( TRUE, TRUE, &flags );
+    UINT sig_size, paramlist, property, flags, attrs = get_method_attrs( class == NULL, TRUE, &flags );
     char *name = get_method_name( method );
+    type_t *type = method->declspec.type;
     BYTE sig[256];
 
     paramlist = add_method_params_step2( type_function_get_args(method->declspec.type) );
     sig_size = make_method_sig( method, sig );
 
-    methoddef = add_methoddef_row( flags, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
+    type->md.def = add_methoddef_row( flags, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
     free( name );
 
-    /* add propget method if not already added */
-    if (!propget->declspec.type->md.property) add_propget_method( iface, propget );
-    property = propget->declspec.type->md.property;
+    /* add propget method first if not already added */
+    if (class)
+    {
+        if (!propget->declspec.type->md.class_property) add_propget_method( class, iface, propget );
+        property = type->md.class_property = propget->declspec.type->md.class_property;
+    }
+    else
+    {
+        if (!propget->declspec.type->md.iface_property) add_propget_method( class, iface, propget );
+        property = type->md.iface_property = propget->declspec.type->md.iface_property;
+    }
 
-    add_methodsemantics_row( METHOD_SEM_SETTER, methoddef, has_semantics(TABLE_PROPERTY, property) );
+    add_methodsemantics_row( METHOD_SEM_SETTER, type->md.def, has_semantics(TABLE_PROPERTY, property) );
 }
 
-static void add_eventadd_method( const type_t *iface, const var_t *method )
+static void add_eventadd_method( const type_t *class, const type_t *iface, const var_t *method )
 {
-    UINT methoddef, event, sig_size, paramlist, flags, attrs= get_method_attrs( TRUE, TRUE, &flags );
+    UINT methoddef, event, sig_size, paramlist, flags, attrs= get_method_attrs( class == NULL, TRUE, &flags );
     char *name = get_method_name( method );
     BYTE sig[256];
 
@@ -2282,10 +2286,10 @@ static const var_t *find_eventadd_method( const type_t *iface, const char *name 
     return NULL;
 }
 
-static void add_eventremove_method( const type_t *iface, const var_t *method )
+static void add_eventremove_method( const type_t *class, const type_t *iface, const var_t *method )
 {
     const var_t *eventadd = find_eventadd_method( iface, method->name );
-    UINT methoddef, event, sig_size, paramlist, flags, attrs = get_method_attrs( TRUE, TRUE, &flags );
+    UINT methoddef, event, sig_size, paramlist, flags, attrs = get_method_attrs( class == NULL, TRUE, &flags );
     char *name = get_method_name( method );
     BYTE sig[256];
 
@@ -2296,24 +2300,54 @@ static void add_eventremove_method( const type_t *iface, const var_t *method )
     free( name );
 
     /* add eventadd method if not already added */
-    if (!eventadd->declspec.type->md.event) add_eventadd_method( iface, eventadd );
+    if (!eventadd->declspec.type->md.event) add_eventadd_method( NULL, iface, eventadd );
     event = eventadd->declspec.type->md.event;
 
     add_methodsemantics_row( METHOD_SEM_REMOVEON, methoddef, has_semantics(TABLE_EVENT, event) );
 }
 
-static void add_method( const var_t *method )
+static void add_regular_method( const type_t *class, const type_t *iface, const var_t *method )
 {
-    type_t *type = method->declspec.type;
-    UINT paramlist, sig_size, flags, attrs= get_method_attrs( TRUE, FALSE, &flags );
+    UINT paramlist, sig_size, flags, attrs = get_method_attrs( class == NULL, FALSE, &flags );
     char *name = get_method_name( method );
+    type_t *type = method->declspec.type;
     BYTE sig[256];
 
-    paramlist = add_method_params_step2( type_function_get_args(method->declspec.type) );
+    paramlist = add_method_params_step2( type_function_get_args(type) );
     sig_size = make_method_sig( method, sig );
 
     type->md.def = add_methoddef_row( flags, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
     free( name );
+}
+
+static void add_property( type_t *class, type_t *iface, const var_t *method )
+{
+    UINT sig_size;
+    type_t *type = method->declspec.type;
+    BYTE sig[256];
+
+    if (!is_attr( method->attrs, ATTR_PROPGET )) return;
+
+    sig_size = make_property_sig( method, sig );
+    if (class)
+    {
+        type->md.class_property = add_property_row( 0, add_string(method->name), add_blob(sig, sig_size) );
+        if (!class->md.propertymap) class->md.propertymap = add_propertymap_row( class->md.def, type->md.class_property );
+    }
+    else
+    {
+        type->md.iface_property = add_property_row( 0, add_string(method->name), add_blob(sig, sig_size) );
+        if (!iface->md.propertymap) iface->md.propertymap = add_propertymap_row( iface->md.def, type->md.iface_property );
+    }
+}
+
+static void add_method( type_t *class, type_t *iface, const var_t *method )
+{
+    if (is_attr( method->attrs, ATTR_PROPGET )) add_propget_method( class, iface, method );
+    else if (is_attr( method->attrs, ATTR_PROPPUT )) add_propput_method( class, iface, method );
+    else if (is_attr( method->attrs, ATTR_EVENTADD )) add_eventadd_method( class, iface, method );
+    else if (is_attr( method->attrs, ATTR_EVENTREMOVE )) add_eventremove_method( class, iface, method );
+    else add_regular_method( class, iface, method );
 }
 
 static void add_interface_type_step2( type_t *type )
@@ -2338,11 +2372,8 @@ static void add_interface_type_step2( type_t *type )
     {
         const var_t *method = stmt->u.var;
 
-        if (is_attr( method->attrs, ATTR_PROPGET )) add_propget_method( type, method );
-        else if (is_attr( method->attrs, ATTR_PROPPUT )) add_propput_method( type, method );
-        else if (is_attr( method->attrs, ATTR_EVENTADD )) add_eventadd_method( type, method );
-        else if (is_attr( method->attrs, ATTR_EVENTREMOVE )) add_eventremove_method( type, method );
-        else add_method( method );
+        add_property( NULL, type, method );
+        add_method( NULL, type, method );
 
         add_deprecated_attr_step2( method );
         add_default_overload_attr_step2( method );
