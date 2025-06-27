@@ -64,11 +64,14 @@ struct xml_attr
 
 struct xml_parser
 {
+    const WCHAR     *base;
     const WCHAR     *ptr;
     const WCHAR     *end;
     struct xml_attr  namespaces[MAX_NAMESPACES];
     int              ns_pos;
     BOOL             error;
+
+    SPVTEXTFRAG     *tail_frag;
 };
 
 static const xmlstr_t empty_xmlstr;
@@ -418,8 +421,40 @@ static BOOL next_text_or_xml_elem(struct xml_parser *parser, BOOL *is_text, stru
 
 static HRESULT add_sapi_text_fragment(struct xml_parser *parser, const SPVSTATE *state)
 {
-    FIXME("stub.\n");
-    return E_NOTIMPL;
+    const WCHAR *text, *ptr;
+    SPVTEXTFRAG *frag;
+    size_t len;
+    WCHAR *buf;
+
+    if (parser->error)
+        return SPERR_UNSUPPORTED_FORMAT;
+
+    text = parser->ptr;
+
+    for (ptr = parser->ptr; ptr < parser->end; ptr++) if (*ptr == '<') break;
+    len = ptr - parser->ptr;
+    parser->ptr = ptr;
+
+    if (!len)
+        return S_OK;
+
+    if (!(frag = malloc(sizeof(*frag) + (len + 1) * sizeof(WCHAR))))
+        return E_OUTOFMEMORY;
+
+    buf = (WCHAR *)(frag + 1);
+    memcpy(buf, text, len * sizeof(WCHAR));
+    buf[len] = 0;
+
+    frag->pNext           = NULL;
+    frag->State           = *state;
+    frag->pTextStart      = buf;
+    frag->ulTextLen       = len;
+    frag->ulTextSrcOffset = text - parser->base;
+
+    parser->tail_frag->pNext = frag;
+    parser->tail_frag = frag;
+
+    return S_OK;
 }
 
 static HRESULT parse_ssml_elems(struct xml_parser *parser, const SPVSTATE *state, const struct xml_elem *parent)
@@ -504,11 +539,13 @@ static HRESULT parse_ssml_contents(const WCHAR *contents, const WCHAR *end, SPVS
 {
     struct xml_parser parser = {0};
     struct xml_elem parent = {0};
+    SPVTEXTFRAG head_frag = {0};
     struct xml_elem elem;
     HRESULT hr;
 
-    parser.ptr = contents;
+    parser.base = parser.ptr = contents;
     parser.end = end;
+    parser.tail_frag = &head_frag;
 
     /* Default SSML namespace. */
     parser.namespaces[0].name = empty_xmlstr;
@@ -541,6 +578,7 @@ static HRESULT parse_ssml_contents(const WCHAR *contents, const WCHAR *end, SPVS
         return SPERR_UNSUPPORTED_FORMAT;
     }
 
+    *frag_list = head_frag.pNext;
     return S_OK;
 }
 

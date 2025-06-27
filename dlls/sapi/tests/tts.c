@@ -958,42 +958,36 @@ static void test_spvoice_ssml(void)
     reset_engine_params(&test_engine);
 
     hr = ISpVoice_Speak(voice, text1, SPF_IS_XML | SPF_PARSE_SSML, NULL);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine ok(test_engine.frag_count == 1, "got %Iu.\n", test_engine.frag_count);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(test_engine.frag_count == 1, "got %Iu.\n", test_engine.frag_count);
+    check_frag_text(0, L"text1");
 
-    if (test_engine.frag_count == 1) {
-        check_frag_text(0, L"text1");
-
-        check_frag_state_field(0, eAction, SPVA_Speak, "%d");
-        ok(test_engine.frags[0].State.LangID == 0x409 || broken(test_engine.frags[0].State.LangID == 0) /* win7 */,
-           "got %#hx.\n", test_engine.frags[0].State.LangID);
-        check_frag_state_field(0, EmphAdj, 0, "%ld");
-        check_frag_state_field(0, RateAdj, 0, "%ld");
-        check_frag_state_field(0, Volume, 100, "%lu");
-        check_frag_state_field(0, PitchAdj.MiddleAdj, 0, "%ld");
-        check_frag_state_field(0, PitchAdj.RangeAdj, 0, "%ld");
-        check_frag_state_field(0, SilenceMSecs, 0, "%lu");
-        check_frag_state_field(0, ePartOfSpeech, SPPS_Unknown, "%#x");
-    }
+    check_frag_state_field(0, eAction, SPVA_Speak, "%d");
+    ok(test_engine.frags[0].State.LangID == 0x409 || broken(test_engine.frags[0].State.LangID == 0) /* win7 */,
+       "got %#hx.\n", test_engine.frags[0].State.LangID);
+    check_frag_state_field(0, EmphAdj, 0, "%ld");
+    check_frag_state_field(0, RateAdj, 0, "%ld");
+    check_frag_state_field(0, Volume, 100, "%lu");
+    check_frag_state_field(0, PitchAdj.MiddleAdj, 0, "%ld");
+    check_frag_state_field(0, PitchAdj.RangeAdj, 0, "%ld");
+    check_frag_state_field(0, SilenceMSecs, 0, "%lu");
+    check_frag_state_field(0, ePartOfSpeech, SPPS_Unknown, "%#x");
 
     reset_engine_params(&test_engine);
 
     /* SSML autodetection when SPF_PARSE_SSML is not specified. */
     hr = ISpVoice_Speak(voice, text1, SPF_IS_XML, NULL);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine ok(test_engine.frag_count == 1, "got %Iu.\n", test_engine.frag_count);
-
-    if (test_engine.frag_count == 1)
-        check_frag_text(0, L"text1");
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(test_engine.frag_count == 1, "got %Iu.\n", test_engine.frag_count);
+    check_frag_text(0, L"text1");
 
     reset_engine_params(&test_engine);
 
     /* XML and SSML autodetection when SPF_IS_XML is not specified. */
     hr = ISpVoice_Speak(voice, text1, SPF_DEFAULT, NULL);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine ok(test_engine.frag_count == 1, "got %Iu.\n", test_engine.frag_count);
-    if (test_engine.frag_count == 1)
-        check_frag_text(0, L"text1");
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(test_engine.frag_count == 1, "got %Iu.\n", test_engine.frag_count);
+    check_frag_text(0, L"text1");
 
     reset_engine_params(&test_engine);
 
@@ -1009,7 +1003,7 @@ static void test_spvoice_ssml(void)
     reset_engine_params(&test_engine);
 
     hr = ISpVoice_Speak(voice, text2, SPF_IS_XML | SPF_PARSE_SSML, NULL);
-    todo_wine ok(hr == S_OK || broken(hr == SPERR_UNSUPPORTED_FORMAT) /* win7 */, "got %#lx.\n", hr);
+    ok(hr == S_OK || broken(hr == SPERR_UNSUPPORTED_FORMAT) /* win7 */, "got %#lx.\n", hr);
 
     if (hr == S_OK) {
         ok(test_engine.frag_count == 1, "got %Iu.\n", test_engine.frag_count);
