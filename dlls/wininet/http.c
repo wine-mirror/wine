@@ -1964,13 +1964,17 @@ static void HTTPREQ_CloseConnection(object_header_t *hdr)
 static DWORD str_to_buffer(const WCHAR *str, void *buffer, DWORD *size, BOOL unicode)
 {
     int len;
+
+    if (!size)
+        return ERROR_INVALID_PARAMETER;
+
     if (unicode)
     {
         WCHAR *buf = buffer;
 
         if (str) len = lstrlenW(str);
         else len = 0;
-        if (*size < (len + 1) * sizeof(WCHAR))
+        if (!buf || *size < (len + 1) * sizeof(WCHAR))
         {
             *size = (len + 1) * sizeof(WCHAR);
             return ERROR_INSUFFICIENT_BUFFER;
@@ -1987,7 +1991,7 @@ static DWORD str_to_buffer(const WCHAR *str, void *buffer, DWORD *size, BOOL uni
 
         if (str) len = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
         else len = 1;
-        if (*size < len)
+        if (!buf || *size < len)
         {
             *size = len;
             return ERROR_INSUFFICIENT_BUFFER;
