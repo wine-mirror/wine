@@ -5760,7 +5760,7 @@ NTSTATUS WINAPI NtReadFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, vo
            skip the synchronous read to make sure that the server starts the read
            interval timer after the first read */
         if ((status = get_io_timeouts( handle, type, length, TRUE, &timeouts ))) goto err;
-        if (timeouts.interval)
+        if (timeouts.interval > 0)
         {
             status = register_async_file_read( handle, event, apc, apc_user, iosb_ptr,
                                                buffer, total, length, FALSE );
