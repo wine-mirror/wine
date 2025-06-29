@@ -2581,6 +2581,23 @@ static void add_runtimeclass_type_step1( type_t *type )
     type->md.ref = add_typeref_row( resolution_scope(TABLE_MODULE, MODULE_ROW), name, namespace );
 }
 
+static void add_default_attr( const type_t *type, UINT interfaceimpl_ref )
+{
+    static const BYTE sig[] = { SIG_TYPE_HASTHIS, 0, ELEMENT_TYPE_VOID };
+    static const BYTE value[] = { 0x01, 0x00, 0x00, 0x00 };
+    UINT assemblyref, scope, typeref, class, memberref, parent, attr_type;
+
+    assemblyref = add_assemblyref_row( 0x200, 0, add_string("Windows.Foundation") );
+    scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+    typeref = add_typeref_row( scope, add_string("DefaultAttribute"), add_string("Windows.Foundation.Metadata") );
+    class = memberref_parent( TABLE_TYPEREF, typeref );
+    memberref = add_memberref_row( class, add_string(".ctor"), add_blob(sig, sizeof(sig)) );
+
+    parent = has_customattribute( TABLE_INTERFACEIMPL, interfaceimpl_ref );
+    attr_type = customattribute_type( TABLE_MEMBERREF, memberref );
+    add_customattribute_row( parent, attr_type, add_blob(value, sizeof(value)) );
+}
+
 static void add_method_impl( const type_t *class, const type_t *iface, const var_t *method )
 {
     UINT parent, memberref, body, decl, sig_size;
@@ -2690,7 +2707,7 @@ static void add_static_attr_step2( type_t *type )
 
 static void add_runtimeclass_type_step2( type_t *type )
 {
-    UINT name, namespace, scope, extends, typeref, interface, flags;
+    UINT name, namespace, scope, extends, typeref, interface, interfaceimpl_ref, flags;
     typeref_list_t *iface_list = type_runtimeclass_get_ifaces( type );
     typeref_t *iface;
     const statement_t *stmt;
@@ -2709,7 +2726,9 @@ static void add_runtimeclass_type_step2( type_t *type )
     if (iface_list) LIST_FOR_EACH_ENTRY( iface, iface_list, typeref_t, entry )
     {
         interface = typedef_or_ref( TABLE_TYPEREF, iface->type->md.ref );
-        add_interfaceimpl_row( type->md.def, interface );
+        interfaceimpl_ref = add_interfaceimpl_row( type->md.def, interface );
+
+        if (is_attr( iface->attrs, ATTR_DEFAULT )) add_default_attr( type, interfaceimpl_ref );
 
         /* add properties in reverse order like midlrt */
         STATEMENTS_FOR_EACH_FUNC_REV( stmt, type_iface_get_stmts(iface->type) )
