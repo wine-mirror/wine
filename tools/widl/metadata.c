@@ -2702,6 +2702,8 @@ static void add_runtimeclass_type_step2( type_t *type )
 
     extends = typedef_or_ref( TABLE_TYPEREF, typeref );
     flags = TYPE_ATTR_PUBLIC | TYPE_ATTR_SEALED | TYPE_ATTR_UNKNOWN;
+    if (!iface_list) flags |= TYPE_ATTR_ABSTRACT;
+
     type->md.def = add_typedef_row( flags, name, namespace, extends, 0, 0 );
 
     if (iface_list) LIST_FOR_EACH_ENTRY( iface, iface_list, typeref_t, entry )
