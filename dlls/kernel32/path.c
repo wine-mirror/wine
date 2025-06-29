@@ -438,7 +438,6 @@ WCHAR * CDECL wine_get_dos_file_name( LPCSTR str )
         status = RtlDosPathNameToNtPathName_U_WithStatus( buffer, &nt_name, NULL, NULL );
         if (!set_ntstatus( status )) goto failed;
         buffer = nt_name.Buffer;
-        len = nt_name.Length / sizeof(WCHAR) + 1;
     }
     else
     {
@@ -472,7 +471,7 @@ WCHAR * CDECL wine_get_dos_file_name( LPCSTR str )
     {
         /* get rid of the \??\ prefix */
         /* FIXME: should implement RtlNtPathNameToDosPathName and use that instead */
-        memmove( buffer, buffer + 4, (len - 4) * sizeof(WCHAR) );
+        memmove( buffer, buffer + 4, (wcslen(buffer + 4) + 1) * sizeof(WCHAR) );
     }
     else buffer[1] = '\\';
     return buffer;
