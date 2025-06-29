@@ -1555,6 +1555,20 @@ static UINT make_member_sig2( UINT type, UINT token, BYTE *buf )
     return len;
 }
 
+static UINT make_member_sig3( UINT token, BYTE *buf )
+{
+    UINT len = 4;
+
+    buf[0] = SIG_TYPE_HASTHIS;
+    buf[1] = 3;
+    buf[2] = ELEMENT_TYPE_VOID;
+    buf[3] = ELEMENT_TYPE_CLASS;
+    len += encode_int( token, buf + 4 );
+    buf[len++] = ELEMENT_TYPE_U4;
+    buf[len++] = ELEMENT_TYPE_STRING;
+    return len;
+}
+
 static UINT make_type_sig( const type_t *type, BYTE *buf )
 {
     UINT len = 0;
@@ -2609,6 +2623,71 @@ static void add_method_contract_attrs( const type_t *class, const type_t *iface,
     }
 }
 
+static UINT make_static_value( const expr_t *attr, BYTE *buf )
+{
+    const expr_t *contract = attr->ref;
+    char *name_iface = format_namespace( attr->u.tref.type->namespace, "", ".", attr->u.tref.type->name, NULL );
+    char *name_contract = format_namespace( contract->u.tref.type->namespace, "", ".", contract->u.tref.type->name, NULL );
+    UINT len_iface = strlen( name_iface ), len_contract = strlen( name_contract );
+    BYTE *ptr = buf;
+
+    ptr[0] = 1;
+    ptr[1] = 0;
+    ptr[2] = len_iface;
+    memcpy( ptr + 3, name_iface, len_iface );
+    ptr += len_iface + 3;
+    ptr[0] = ptr[1] = 0;
+
+    ptr += 2;
+    ptr[0] = 1;
+    ptr[1] = 0;
+    ptr[2] = len_contract;
+    memcpy( ptr + 3, name_contract, len_contract );
+    ptr += len_contract + 3;
+    ptr[0] = ptr[1] = 0;
+
+    free( name_iface );
+    free( name_contract );
+    return len_iface + len_contract + 10;
+}
+
+static void add_static_attr_step1( type_t *type )
+{
+    UINT assemblyref, scope, typeref, typeref_type, class, sig_size;
+    BYTE sig[32];
+
+    if (!is_attr( type->attrs, ATTR_STATIC )) return;
+
+    assemblyref = add_assemblyref_row( 0x200, 0, add_string("Windows.Foundation") );
+    scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+    typeref = add_typeref_row( scope, add_string("StaticAttribute"), add_string("Windows.Foundation.Metadata") );
+
+    scope = resolution_scope( TABLE_ASSEMBLYREF, MSCORLIB_ROW );
+    typeref_type = add_typeref_row( scope, add_string("Type"), add_string("System") );
+
+    class = memberref_parent( TABLE_TYPEREF, typeref );
+    sig_size = make_member_sig3( typedef_or_ref(TABLE_TYPEREF, typeref_type), sig );
+    type->md.member[MD_ATTR_STATIC] = add_memberref_row( class, add_string(".ctor"), add_blob(sig, sig_size) );
+}
+
+static void add_static_attr_step2( type_t *type )
+{
+    const attr_t *attr;
+
+    if (type->attrs) LIST_FOR_EACH_ENTRY_REV( attr, type->attrs, const attr_t, entry )
+    {
+        UINT parent, attr_type, value_size;
+        BYTE value[MAX_NAME * 2 + 10];
+
+        if (attr->type != ATTR_STATIC) continue;
+
+        parent = has_customattribute( TABLE_TYPEDEF, type->md.def );
+        attr_type = customattribute_type( TABLE_MEMBERREF, type->md.member[MD_ATTR_STATIC] );
+        value_size = make_static_value( attr->u.pval, value );
+        add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
+    }
+}
+
 static void add_runtimeclass_type_step2( type_t *type )
 {
     UINT name, namespace, scope, extends, typeref, interface, flags;
@@ -2650,7 +2729,10 @@ static void add_runtimeclass_type_step2( type_t *type )
     }
 
     add_contract_attr_step1( type );
+    add_static_attr_step1( type );
+
     add_contract_attr_step2( type );
+    add_static_attr_step2( type );
 }
 
 static void add_delegate_type_step1( type_t *type )
