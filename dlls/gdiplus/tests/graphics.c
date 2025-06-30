@@ -6849,6 +6849,7 @@ static void test_GdipDrawImagePointsRectOnMemoryDC(void)
     RECT rect = {100, 100, 180, 180};
     UINT width = rect.right - rect.left;
     UINT height = rect.bottom - rect.top;
+    ColorPalette palette;
     GpStatus status = 0;
     union
     {
@@ -6896,7 +6897,6 @@ static void test_GdipDrawImagePointsRectOnMemoryDC(void)
     expect(Ok, status);
 
     GdipDisposeImage(src_img.image);
-    GdipDeleteGraphics(graphics);
     GdipFree(src_img_data);
 
     pixel = GetBitmapPixelBuffer(hdc, bmp, width, height);
@@ -6914,6 +6914,50 @@ static void test_GdipDrawImagePointsRectOnMemoryDC(void)
        "Expected GdipDrawImageRectRectI take effect!\n" );
     GdipFree(pixel);
 
+    /* Draw a PixelFormat8bppIndexed bitmap with a palette that has alpha */
+    src_img_data = GdipAlloc(src_img_width * src_img_height);
+    memset(src_img_data, 0, src_img_width * src_img_height);
+    status = GdipCreateBitmapFromScan0(src_img_width, src_img_height, src_img_width,
+                                       PixelFormat8bppIndexed, src_img_data, &src_img.bitmap);
+    expect(Ok, status);
+
+    palette.Flags = PaletteFlagsHasAlpha;
+    palette.Count = 1;
+    palette.Entries[0] = 0x00ffffff;
+    status = GdipSetImagePalette(src_img.image, &palette);
+    expect(Ok, status);
+
+    status = GdipDrawImageRectRectI(graphics, src_img.image, rect.left + width / 2,
+                                    rect.top + height / 2, width / 2, height / 2, 0, 0,
+                                    src_img_width, src_img_height, UnitPixel, NULL, NULL, NULL);
+    expect(Ok, status);
+
+    pixel = GetBitmapPixelBuffer(hdc, bmp, width, height);
+    color[0] = get_bitmap_pixel(width / 2, height / 2);
+    todo_wine
+    ok(is_blue_color(color[0]), "Got unexpected color %#lx.\n", color[0]);
+    GdipFree(pixel);
+
+    /* Draw a PixelFormat8bppIndexed bitmap with a palette that has alpha without PaletteFlagsHasAlpha */
+    palette.Flags = PaletteFlagsGrayScale;
+    status = GdipSetImagePalette(src_img.image, &palette);
+    expect(Ok, status);
+
+    status = GdipDrawImageRectRectI(graphics, src_img.image, rect.left + width / 2,
+                                    rect.top + height / 2, width / 2, height / 2, 0, 0,
+                                    src_img_width, src_img_height, UnitPixel, NULL, NULL, NULL);
+    expect(Ok, status);
+
+    pixel = GetBitmapPixelBuffer(hdc, bmp, width, height);
+    color[0] = get_bitmap_pixel(width / 2, height / 2);
+    todo_wine
+    ok(is_blue_color(color[0]), "Got unexpected color %#lx.\n", color[0]);
+    GdipFree(pixel);
+
+    GdipDisposeImage(src_img.image);
+    GdipFree(src_img_data);
+
+    GdipDeleteGraphics(graphics);
     SelectObject(hdc, old);
     DeleteObject(bmp);
     DeleteDC(hdc);
