@@ -924,7 +924,7 @@ case $host_os in
     LDDLLFLAGS="-fPIC"
     enable_winemac_drv=${enable_winemac_drv:-yes}
     dnl declare needed frameworks
-    AC_SUBST(CARBON_LIBS,"-framework Carbon")
+    AC_SUBST(CORETEXT_LIBS,"-framework CoreText")
     AC_SUBST(COREFOUNDATION_LIBS,"-framework CoreFoundation")
     AC_SUBST(DISKARBITRATION_LIBS,"-framework DiskArbitration -framework CoreFoundation")
     AC_SUBST(IOKIT_LIBS,"-framework IOKit -framework CoreFoundation")
