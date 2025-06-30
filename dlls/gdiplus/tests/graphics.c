@@ -6934,7 +6934,6 @@ static void test_GdipDrawImagePointsRectOnMemoryDC(void)
 
     pixel = GetBitmapPixelBuffer(hdc, bmp, width, height);
     color[0] = get_bitmap_pixel(width / 2, height / 2);
-    todo_wine
     ok(is_blue_color(color[0]), "Got unexpected color %#lx.\n", color[0]);
     GdipFree(pixel);
 
@@ -6950,7 +6949,6 @@ static void test_GdipDrawImagePointsRectOnMemoryDC(void)
 
     pixel = GetBitmapPixelBuffer(hdc, bmp, width, height);
     color[0] = get_bitmap_pixel(width / 2, height / 2);
-    todo_wine
     ok(is_blue_color(color[0]), "Got unexpected color %#lx.\n", color[0]);
     GdipFree(pixel);
 

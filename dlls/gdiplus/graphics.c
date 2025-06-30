@@ -3451,7 +3451,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             if (bitmap->format == PixelFormat16bppRGB555 ||
                 bitmap->format == PixelFormat24bppRGB)
                 dst_format = bitmap->format;
-            else if (bitmap->format & (PixelFormatAlpha|PixelFormatPAlpha))
+            else if (bitmap->image.flags & ImageFlagsHasAlpha)
                 dst_format = PixelFormat32bppPARGB;
             else
                 dst_format = PixelFormat32bppRGB;
@@ -3494,7 +3494,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
             gdi_transform_acquire(graphics);
 
-            if (bitmap->format & (PixelFormatAlpha|PixelFormatPAlpha))
+            if (bitmap->image.flags & ImageFlagsHasAlpha)
             {
                 gdi_alpha_blend(graphics, pti[0].x, pti[0].y, pti[1].x - pti[0].x, pti[2].y - pti[0].y,
                                 src_hdc, srcx, srcy, srcwidth, srcheight);
