@@ -829,9 +829,49 @@ HRESULT WINAPI DevGetObjectPropertiesEx( DEV_OBJECT_TYPE type, const WCHAR *id, 
                                          const DEVPROPCOMPKEY *props, ULONG params_len,
                                          const DEV_QUERY_PARAMETER *params, ULONG *buf_len, const DEVPROPERTY **buf )
 {
-    FIXME( "(%d, %s, %#lx, %lu, %p, %lu, %p, %p, %p): stub!\n", type, debugstr_w( id ), flags, props_len, props,
+    HRESULT hr;
+    ULONG valid_flags = DevQueryFlagAllProperties | DevQueryFlagLocalize;
+
+    TRACE( "(%d, %s, %#lx, %lu, %p, %lu, %p, %p, %p)\n", type, debugstr_w( id ), flags, props_len, props,
            params_len, params, buf_len, buf );
-    return E_NOTIMPL;
+
+    if (flags & ~valid_flags)
+        return E_INVALIDARG;
+    if (type == DevObjectTypeUnknown || type > DevObjectTypeAEPProtocol)
+        return HRESULT_FROM_WIN32( ERROR_FILE_NOT_FOUND );
+    if (!id || !!props_len != !!props || !!params_len != !!params
+        || (props_len && (flags & DevQueryFlagAllProperties)))
+        return E_INVALIDARG;
+
+    switch (type)
+    {
+    case DevObjectTypeDeviceInterface:
+    case DevObjectTypeDeviceInterfaceDisplay:
+    {
+        SP_DEVICE_INTERFACE_DATA iface = {.cbSize = sizeof( iface )};
+        DEV_OBJECT obj = {0};
+        HDEVINFO set;
+
+        set = SetupDiCreateDeviceInfoListExW( NULL, NULL, NULL, NULL );
+        if (set == INVALID_HANDLE_VALUE) return HRESULT_FROM_WIN32( GetLastError() );
+        if (!SetupDiOpenDeviceInterfaceW( set, id, 0, &iface ))
+        {
+            DWORD err = GetLastError();
+            SetupDiDestroyDeviceInfoList( set );
+            return HRESULT_FROM_WIN32(err == ERROR_NO_SUCH_DEVICE_INTERFACE ? ERROR_FILE_NOT_FOUND : err);
+        }
+
+        hr = dev_object_iface_get_props( &obj, set, &iface, props_len, props, !!(flags & DevQueryFlagAllProperties) );
+        *buf = obj.pProperties;
+        *buf_len = obj.cPropertyCount;
+        break;
+    }
+    default:
+        FIXME( "Unsupported DEV_OBJECT_TYPE: %d\n", type );
+        hr = HRESULT_FROM_WIN32( ERROR_FILE_NOT_FOUND );
+    }
+
+    return hr;
 }
 
 void WINAPI DevFreeObjectProperties( ULONG len, const DEVPROPERTY *props )
