@@ -709,11 +709,19 @@ static inline ULONG safe_multiply(ULONG a, ULONG b)
     return ret;
 }
 
+static inline void validate_size(MIDL_STUB_MESSAGE *msg, unsigned char *end, ULONG size)
+{
+    if ((ULONG_PTR)msg->Buffer + size < (ULONG_PTR)msg->Buffer || msg->Buffer + size > end)
+    {
+        ERR( "buffer overflow - Buffer = %p, end = %p, size = %lu\n",
+             msg->Buffer, end, size);
+        RpcRaiseException( RPC_X_BAD_STUB_DATA );
+    }
+}
+
 static inline void safe_buffer_increment(MIDL_STUB_MESSAGE *pStubMsg, ULONG size)
 {
-    if ((pStubMsg->Buffer + size < pStubMsg->Buffer) || /* integer overflow of pStubMsg->Buffer */
-        (pStubMsg->Buffer + size > (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength))
-        RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    validate_size( pStubMsg, (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength, size );
     pStubMsg->Buffer += size;
 }
 
@@ -732,13 +740,7 @@ static inline void safe_buffer_length_increment(MIDL_STUB_MESSAGE *pStubMsg, ULO
  * to do so */
 static inline void safe_copy_from_buffer(MIDL_STUB_MESSAGE *pStubMsg, void *p, ULONG size)
 {
-    if ((pStubMsg->Buffer + size < pStubMsg->Buffer) || /* integer overflow of pStubMsg->Buffer */
-        (pStubMsg->Buffer + size > pStubMsg->BufferEnd))
-    {
-        ERR("buffer overflow - Buffer = %p, BufferEnd = %p, size = %lu\n",
-            pStubMsg->Buffer, pStubMsg->BufferEnd, size);
-        RpcRaiseException(RPC_X_BAD_STUB_DATA);
-    }
+    validate_size( pStubMsg, pStubMsg->BufferEnd, size );
     if (p == pStubMsg->Buffer)
         ERR("pointer is the same as the buffer\n");
     memcpy(p, pStubMsg->Buffer, size);
@@ -758,14 +760,7 @@ static void validate_string_data(MIDL_STUB_MESSAGE *pStubMsg, ULONG bufsize, ULO
 {
     ULONG i;
 
-    /* verify the buffer is safe to access */
-    if ((pStubMsg->Buffer + bufsize < pStubMsg->Buffer) ||
-        (pStubMsg->Buffer + bufsize > pStubMsg->BufferEnd))
-    {
-        ERR("bufsize 0x%lx exceeded buffer end %p of buffer %p\n", bufsize,
-            pStubMsg->BufferEnd, pStubMsg->Buffer);
-        RpcRaiseException(RPC_X_BAD_STUB_DATA);
-    }
+    validate_size( pStubMsg, pStubMsg->BufferEnd, bufsize );
 
     /* strings must always have null terminating bytes */
     if (bufsize < esize)
