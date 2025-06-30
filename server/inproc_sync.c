@@ -181,6 +181,8 @@ DECL_HANDLER(get_inproc_sync_fd)
 
     if (!(obj = get_handle_obj( current->process, req->handle, 0, NULL ))) return;
 
+    reply->access = get_handle_access( current->process, req->handle );
+
     if ((fd = get_inproc_sync_fd( obj, &reply->type )) < 0) set_error( STATUS_NOT_IMPLEMENTED );
     else send_client_fd( current->process, fd, req->handle );
 

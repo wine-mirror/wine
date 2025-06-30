@@ -2297,4 +2297,5 @@ C_ASSERT( sizeof(struct set_keyboard_repeat_reply) == 16 );
 C_ASSERT( offsetof(struct get_inproc_sync_fd_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_inproc_sync_fd_request) == 16 );
 C_ASSERT( offsetof(struct get_inproc_sync_fd_reply, type) == 8 );
+C_ASSERT( offsetof(struct get_inproc_sync_fd_reply, access) == 12 );
 C_ASSERT( sizeof(struct get_inproc_sync_fd_reply) == 16 );

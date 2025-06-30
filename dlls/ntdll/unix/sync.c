@@ -310,6 +310,7 @@ static unsigned int validate_open_object_attributes( const OBJECT_ATTRIBUTES *at
 struct inproc_sync
 {
     int fd;
+    unsigned int access;
     unsigned int type : 2;
 };
 
@@ -318,7 +319,7 @@ static void release_inproc_sync( struct inproc_sync *sync )
     close( sync->fd );
 }
 
-static NTSTATUS get_inproc_sync( HANDLE handle, struct inproc_sync *sync )
+static NTSTATUS get_inproc_sync( HANDLE handle, ACCESS_MASK desired_access, struct inproc_sync *sync )
 {
     sigset_t sigset;
     NTSTATUS ret;
@@ -336,6 +337,7 @@ static NTSTATUS get_inproc_sync( HANDLE handle, struct inproc_sync *sync )
             obj_handle_t fd_handle;
             sync->fd = wine_server_receive_fd( &fd_handle );
             assert( wine_server_ptr_handle(fd_handle) == handle );
+            sync->access = reply->access;
             sync->type = reply->type;
         }
     }
@@ -343,7 +345,14 @@ static NTSTATUS get_inproc_sync( HANDLE handle, struct inproc_sync *sync )
 
     server_leave_uninterrupted_section( &fd_cache_mutex, &sigset );
 
-    return ret;
+    if (ret) return ret;
+    if ((sync->access & desired_access) != desired_access)
+    {
+        release_inproc_sync( sync );
+        return STATUS_ACCESS_DENIED;
+    }
+
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS inproc_release_semaphore( HANDLE handle, ULONG count, ULONG *prev_count )
@@ -405,7 +414,7 @@ static NTSTATUS inproc_wait( DWORD count, const HANDLE *handles, BOOLEAN wait_an
     assert( count <= ARRAY_SIZE(syncs) );
     for (int i = 0; i < count; ++i)
     {
-        if ((ret = get_inproc_sync( handles[i], stack + i )))
+        if ((ret = get_inproc_sync( handles[i], SYNCHRONIZE, stack + i )))
         {
             while (i--) release_inproc_sync( syncs[i] );
             return ret;

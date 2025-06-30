@@ -3392,6 +3392,7 @@ static void dump_get_inproc_sync_fd_request( const struct get_inproc_sync_fd_req
 static void dump_get_inproc_sync_fd_reply( const struct get_inproc_sync_fd_reply *req )
 {
     fprintf( stderr, " type=%d", req->type );
+    fprintf( stderr, ", access=%08x", req->access );
 }
 
 typedef void (*dump_func)( const void *req );
