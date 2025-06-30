@@ -829,3 +829,24 @@ void WINAPI DevCloseObjectQuery( HDEVQUERY query )
     device_query_context_release( ctx );
     return;
 }
+
+HRESULT WINAPI DevGetObjectProperties( DEV_OBJECT_TYPE type, const WCHAR *id, ULONG flags, ULONG props_len,
+                                       const DEVPROPCOMPKEY *props, ULONG *buf_len, const DEVPROPERTY **buf )
+{
+    TRACE( "(%d, %s, %#lx, %lu, %p, %p, %p)\n", type, debugstr_w( id ), flags, props_len, props, buf_len, buf );
+    return DevGetObjectPropertiesEx( type, id, flags, props_len, props, 0, NULL, buf_len, buf );
+}
+
+HRESULT WINAPI DevGetObjectPropertiesEx( DEV_OBJECT_TYPE type, const WCHAR *id, ULONG flags, ULONG props_len,
+                                         const DEVPROPCOMPKEY *props, ULONG params_len,
+                                         const DEV_QUERY_PARAMETER *params, ULONG *buf_len, const DEVPROPERTY **buf )
+{
+    FIXME( "(%d, %s, %#lx, %lu, %p, %lu, %p, %p, %p): stub!\n", type, debugstr_w( id ), flags, props_len, props,
+           params_len, params, buf_len, buf );
+    return E_NOTIMPL;
+}
+
+void WINAPI DevFreeObjectProperties( ULONG len, const DEVPROPERTY *props )
+{
+    FIXME( "(%lu, %p): stub!\n", len, props );
+}

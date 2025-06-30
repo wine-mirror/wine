@@ -25,6 +25,7 @@
 #include "devguid.h"
 #include "initguid.h"
 #include "devpkey.h"
+#include "propkey.h"
 #include "setupapi.h"
 #include "cfgmgr32.h"
 #include "ntddvdeo.h"
@@ -123,6 +124,9 @@ void (WINAPI *pDevCloseObjectQuery)(HDEVQUERY);
 HRESULT (WINAPI *pDevGetObjects)(DEV_OBJECT_TYPE, ULONG, ULONG, const DEVPROPCOMPKEY*, ULONG,
                                  const DEVPROP_FILTER_EXPRESSION*, ULONG*, const DEV_OBJECT**);
 void (WINAPI *pDevFreeObjects)(ULONG, const DEV_OBJECT*);
+HRESULT (WINAPI *pDevGetObjectProperties)(DEV_OBJECT_TYPE, const WCHAR *, ULONG, ULONG, const DEVPROPCOMPKEY *, ULONG *,
+                                          const DEVPROPERTY **);
+void (WINAPI *pDevFreeObjectProperties)(ULONG, const DEVPROPERTY *);
 
 DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
 
@@ -556,6 +560,134 @@ struct test_property
 
 DEFINE_DEVPROPKEY(DEVPKEY_dummy, 0xdeadbeef, 0xdead, 0xbeef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 1);
 
+static BOOL dev_property_val_equal( const DEVPROPERTY *p1, const DEVPROPERTY *p2 )
+{
+    if (!(p1->Type == p2->Type && p1->BufferSize == p2->BufferSize))
+        return FALSE;
+    switch (p1->Type)
+    {
+    case DEVPROP_TYPE_STRING:
+        return !wcsicmp( (WCHAR *)p1->Buffer, (WCHAR *)p2->Buffer );
+    default:
+        return !memcmp( p1->Buffer, p2->Buffer, p1->BufferSize );
+    }
+}
+
+static const char *debugstr_DEVPROP_val( const DEVPROPERTY *prop )
+{
+    switch (prop->Type)
+    {
+    case DEVPROP_TYPE_STRING:
+        return wine_dbg_sprintf( "{type=%#lx buf=%s buf_len=%lu}", prop->Type, debugstr_w( prop->Buffer ), prop->BufferSize );
+    default:
+        return wine_dbg_sprintf( "{type=%#lx buf=%p buf_len=%lu}", prop->Type, prop->Buffer, prop->BufferSize );
+    }
+}
+
+static void test_DevGetObjectProperties( DEV_OBJECT_TYPE type, const WCHAR *id, const DEVPROPERTY *exp_props, ULONG props_len )
+{
+    static const DEVPROPKEY dummy_propkey = { { 0xdeadbeef, 0xdead, 0xbeef, { 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef } }, 0x1 };
+    static const DEVPROPCOMPKEY dummy_propcompkey = { dummy_propkey, DEVPROP_STORE_SYSTEM, NULL };
+    ULONG buf_len, rem_props = props_len, i;
+    const DEVPROPERTY *buf;
+    DEVPROPCOMPKEY *keys;
+    HRESULT hr;
+
+    if (!pDevGetObjectProperties || !pDevFreeObjectProperties)
+    {
+        win_skip( "Functions unavailable, skipping test. (%p %p)\n", pDevGetObjects, pDevFreeObjects );
+        return;
+    }
+
+    hr = pDevGetObjectProperties( type, id, DevQueryFlagUpdateResults, 0, NULL, NULL, NULL );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+
+    hr = pDevGetObjectProperties( type, id, DevQueryFlagAsyncClose, 0, NULL, &buf_len, &buf );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+
+    hr = pDevGetObjectProperties( type, id, DevQueryFlagAsyncClose, 0, NULL, &buf_len, &buf );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+
+    hr = pDevGetObjectProperties( type, id, DevQueryFlagNone, 1, NULL, &buf_len, &buf );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+
+    hr = pDevGetObjectProperties( type, id, DevQueryFlagNone, 0, (DEVPROPCOMPKEY *)0xdeadbeef, &buf_len, &buf );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+
+    buf = NULL;
+    buf_len = 0;
+    hr = pDevGetObjectProperties( type, id, DevQueryFlagAllProperties, 0, NULL, &buf_len, &buf );
+    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    todo_wine ok( buf_len == props_len, "%lu != %lu\n", buf_len, props_len );
+    for (i = 0; i < props_len; i++)
+    {
+        ULONG j;
+        for (j = 0; j < buf_len; j++)
+        {
+            if (IsEqualDevPropKey( exp_props[i].CompKey.Key, buf[j].CompKey.Key ) && rem_props)
+            {
+                winetest_push_context( "{%s,%#lx}", debugstr_guid( &exp_props[i].CompKey.Key.fmtid ),
+                                       exp_props[i].CompKey.Key.pid );
+                /* ItemNameDisplay for software devices has different values for properties obtained from DevGetObjects
+                 * and DevGetObjectProperties. */
+                if (!IsEqualDevPropKey(PKEY_ItemNameDisplay, buf[j].CompKey.Key))
+                    ok( dev_property_val_equal( &exp_props[i], &buf[j] ), "%s != %s\n", debugstr_DEVPROP_val( &buf[j] ),
+                        debugstr_DEVPROP_val( &exp_props[i] ) );
+                winetest_pop_context();
+                rem_props--;
+            }
+        }
+    }
+    todo_wine ok( rem_props == 0, "got rem_props %lu\n", rem_props );
+    pDevFreeObjectProperties( buf_len, buf );
+
+    buf = (DEVPROPERTY *)0xdeadbeef;
+    buf_len = 0xdeadbeef;
+    rem_props = props_len;
+    hr = pDevGetObjectProperties( type, id, DevQueryFlagNone, 0, NULL, &buf_len, &buf );
+    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    todo_wine ok( buf_len == 0, "got buf_len %lu\n", buf_len );
+    todo_wine ok( !buf, "got buf %p\n", buf );
+
+    buf = NULL;
+    buf_len = 0;
+    keys = calloc( props_len, sizeof( *keys ) );
+    for (i = 0; i < props_len; i++)
+        keys[i] = exp_props[i].CompKey;
+    hr = pDevGetObjectProperties( type, id, DevQueryFlagNone, props_len, keys, &buf_len, &buf );
+    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    todo_wine ok( buf_len == props_len, "%lu != %lu\n", buf_len, props_len );
+    for (i = 0; i < props_len; i++)
+    {
+        ULONG j;
+        for (j = 0; j < buf_len; j++)
+        {
+            if (IsEqualDevPropKey( exp_props[i].CompKey.Key, buf[j].CompKey.Key ))
+            {
+                rem_props--;
+                break;
+            }
+        }
+    }
+    todo_wine ok( rem_props == 0, "got rem_props %lu\n", rem_props );
+    pDevFreeObjectProperties( buf_len, buf );
+
+    buf_len = 0;
+    buf = NULL;
+    hr = pDevGetObjectProperties( type, id, DevQueryFlagNone, 1, &dummy_propcompkey, &buf_len, &buf );
+    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    todo_wine ok( !!buf, "got buf %p", buf );
+    todo_wine ok( buf_len == 1, "got buf_len %lu\n", buf_len );
+    if (buf)
+    {
+        ok( IsEqualDevPropKey( buf[0].CompKey.Key, dummy_propkey ), "got propkey {%s, %#lx}\n",
+            debugstr_guid( &buf[0].CompKey.Key.fmtid ), buf[0].CompKey.Key.pid );
+        ok( buf[0].Type == DEVPROP_TYPE_EMPTY, "got Type %#lx\n", buf[0].Type );
+        pDevFreeObjectProperties( buf_len, buf );
+    }
+    free( keys );
+}
+
 static void test_dev_object_iface_props( int line, const DEV_OBJECT *obj, const struct test_property *exp_props,
                                          DWORD props_len )
 {
@@ -726,6 +858,9 @@ static void test_DevGetObjects( void )
             winetest_push_context( "device %s", debugstr_w( obj->pszObjectId ) );
             ok( obj->ObjectType == test_cases[i].object_type, "got ObjectType %d\n", obj->ObjectType );
             test_dev_object_iface_props( __LINE__, obj, test_cases[i].exp_props, test_cases[i].props_len );
+            winetest_push_context( "%d", __LINE__ );
+            test_DevGetObjectProperties( obj->ObjectType, obj->pszObjectId, obj->pProperties, obj->cPropertyCount );
+            winetest_pop_context();
             winetest_pop_context();
         }
         pDevFreeObjects( len, objects );
@@ -939,6 +1074,47 @@ static void test_DevCreateObjectQuery( void )
     CloseHandle( data.closed );
 }
 
+static void test_DevGetObjectProperties_invalid( void )
+{
+    HRESULT hr;
+
+    if (!pDevGetObjectProperties)
+    {
+        win_skip( "Functions unavailable, skipping test. (%p)\n", pDevGetObjectProperties );
+        return;
+    }
+
+    hr = pDevGetObjectProperties( DevObjectTypeUnknown, NULL, 0, 0, NULL, NULL, NULL );
+    todo_wine ok( hr == HRESULT_FROM_WIN32( ERROR_FILE_NOT_FOUND ), "got hr %#lx\n", hr );
+
+    hr = pDevGetObjectProperties( DevObjectTypeUnknown, L"", 0, 0, NULL, NULL, NULL );
+    todo_wine ok( hr == HRESULT_FROM_WIN32( ERROR_FILE_NOT_FOUND ), "got hr %#lx\n", hr );
+
+    hr = pDevGetObjectProperties( DevObjectTypeUnknown, NULL, DevQueryFlagAsyncClose, 0, NULL, NULL, NULL );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+
+    hr = pDevGetObjectProperties( DevObjectTypeDeviceInterface, L"foobar", DevQueryFlagUpdateResults, 0, NULL, NULL, NULL );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+
+    hr = pDevGetObjectProperties( DevObjectTypeDeviceInterface, L"foobar", 0xdeadbeef, 0, NULL, NULL, NULL );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+
+    hr = pDevGetObjectProperties( DevObjectTypeUnknown, NULL, 0, 1, NULL, NULL, NULL );
+    todo_wine ok( hr == HRESULT_FROM_WIN32( ERROR_FILE_NOT_FOUND ), "got hr %#lx\n", hr );
+
+    hr = pDevGetObjectProperties( DevObjectTypeUnknown, NULL, 0, 0, (DEVPROPCOMPKEY *)0xdeadbeef, NULL, NULL );
+    todo_wine ok( hr == HRESULT_FROM_WIN32( ERROR_FILE_NOT_FOUND ), "got hr %#lx\n", hr );
+
+    hr = pDevGetObjectProperties( DevObjectTypeDeviceInterface, L"foobar", 0, 0, NULL, NULL, NULL );
+    todo_wine ok( hr == HRESULT_FROM_WIN32( ERROR_FILE_NOT_FOUND ), "got hr %#lx\n", hr );
+
+    hr = pDevGetObjectProperties( DevObjectTypeDeviceInterfaceDisplay, L"foobar", 0, 0, NULL, NULL, NULL );
+    todo_wine ok( hr == HRESULT_FROM_WIN32( ERROR_FILE_NOT_FOUND ), "got hr %#lx\n", hr );
+
+    hr = pDevGetObjectProperties( DevObjectTypeDeviceInterface, NULL, 0, 0, NULL, NULL, NULL );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+}
+
 START_TEST(cfgmgr32)
 {
     HMODULE mod = GetModuleHandleA("cfgmgr32.dll");
@@ -946,6 +1122,8 @@ START_TEST(cfgmgr32)
     pDevCloseObjectQuery = (void *)GetProcAddress(mod, "DevCloseObjectQuery");
     pDevGetObjects = (void *)GetProcAddress(mod, "DevGetObjects");
     pDevFreeObjects = (void *)GetProcAddress(mod, "DevFreeObjects");
+    pDevGetObjectProperties = (void *)GetProcAddress(mod, "DevGetObjectProperties");
+    pDevFreeObjectProperties = (void *)GetProcAddress(mod, "DevFreeObjectProperties");
 
     test_CM_MapCrToWin32Err();
     test_CM_Get_Device_ID_List();
@@ -953,4 +1131,5 @@ START_TEST(cfgmgr32)
     test_CM_Get_Device_Interface_List();
     test_DevGetObjects();
     test_DevCreateObjectQuery();
+    test_DevGetObjectProperties_invalid();
 }
