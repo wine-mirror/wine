@@ -351,6 +351,8 @@ static const IClassFactoryVtbl ClassFactoryVtbl =
     CF_LockServer
 };
 
+static ClassFactory PersistentZoneIdentifierCF =
+    { { &ClassFactoryVtbl }, PersistentZoneIdentifier_Construct};
 static ClassFactory FileProtocolCF =
     { { &ClassFactoryVtbl }, FileProtocol_Construct};
 static ClassFactory FtpProtocolCF =
@@ -383,6 +385,7 @@ struct object_creation_info
 
 static const struct object_creation_info object_creation[] =
 {
+    { &CLSID_PersistentZoneIdentifier,            &PersistentZoneIdentifierCF.IClassFactory_iface,    NULL },
     { &CLSID_FileProtocol,            &FileProtocolCF.IClassFactory_iface,    L"file" },
     { &CLSID_FtpProtocol,             &FtpProtocolCF.IClassFactory_iface,     L"ftp"  },
     { &CLSID_GopherProtocol,          &GopherProtocolCF.IClassFactory_iface,  L"gopher" },

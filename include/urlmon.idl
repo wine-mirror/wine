@@ -1299,6 +1299,23 @@ interface IInternetHostSecurityManager : IUnknown
             [in] DWORD dwReserved);
 }
 
+/*****************************************************************************
+ * IZoneIdentifier interface
+ */
+[
+    object,
+    uuid(cd45f185-1b21-48e2-967b-ead743a8914e),
+    pointer_default(unique)
+]
+interface IZoneIdentifier : IUnknown
+{
+    HRESULT GetId(
+            [out] DWORD *pdwZone);
+    HRESULT SetId(
+            [in] DWORD dwZone);
+    HRESULT Remove();
+};
+
 cpp_quote("#define URLACTION_MIN                        0x00001000")
 cpp_quote("#define URLACTION_DOWNLOAD_MIN               0x00001000")
 cpp_quote("#define URLACTION_DOWNLOAD_SIGNED_ACTIVEX    0x00001001")
@@ -2148,6 +2165,7 @@ cpp_quote("#define UAS_EXACTLEGACY 0x1000")
 
 cpp_quote("EXTERN_C const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY;")
 
+cpp_quote("DEFINE_GUID(CLSID_PersistentZoneIdentifier, 0x0968e258, 0x16c7, 0x4dba, 0xaa, 0x86, 0x46, 0x2d, 0xd6, 0x1e, 0x31, 0xa3);")
 cpp_quote("DEFINE_GUID(CLSID_InternetSecurityManager, 0x7b8a2d94, 0x0ac9, 0x11d1, 0x89, 0x6c, 0x00, 0xc0, 0x4f, 0xB6, 0xbf, 0xc4);")
 cpp_quote("DEFINE_GUID(CLSID_InternetZoneManager, 0x7B8A2D95, 0x0AC9, 0x11D1, 0x89, 0x6C, 0x00, 0xC0, 0x4F, 0xB6, 0xBF, 0xC4);")
 cpp_quote("DEFINE_GUID(IID_IAsyncMoniker, 0x79EAC9D3, 0xBAF9, 0x11CE, 0x8C, 0x82, 0x00, 0xAA, 0x00, 0x4B, 0xA9, 0x0B);")

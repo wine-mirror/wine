@@ -34,6 +34,7 @@
 #include "wine/list.h"
 
 extern HINSTANCE hProxyDll;
+extern HRESULT PersistentZoneIdentifier_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
 extern HRESULT SecManagerImpl_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
 extern HRESULT ZoneMgrImpl_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
 extern HRESULT StdURLMoniker_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
