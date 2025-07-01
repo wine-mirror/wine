@@ -2508,20 +2508,22 @@ uint32_t FAudioVoice_DestroyVoiceSafeEXT(FAudioVoice *voice)
 {
 	uint32_t ret;
 
-	LOG_API_ENTER(voice->audio)
+	FAudio* audio = voice->audio;
+
+	LOG_API_ENTER(audio)
 
 	if ((ret = check_for_sends_to_voice(voice)))
 	{
 		LOG_ERROR(
-			voice->audio,
+			audio,
 			"Voice %p is an output for other voice(s)",
 			voice
 		)
-		LOG_API_EXIT(voice->audio)
+		LOG_API_EXIT(audio)
 		return ret;
 	}
 	destroy_voice(voice);
-	LOG_API_EXIT(voice->audio)
+	LOG_API_EXIT(audio)
 	return 0;
 }
 
