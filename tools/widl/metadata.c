@@ -2857,6 +2857,49 @@ static void add_threading_attr_step2( type_t *type )
     add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
 }
 
+static UINT make_marshalingbehavior_value( const type_t *type, BYTE *buf )
+{
+    UINT marshaling = get_attrv( type->attrs, ATTR_MARSHALING_BEHAVIOR );
+
+    buf[0] = 1;
+    buf[1] = 0;
+    memcpy( buf + 2, &marshaling, sizeof(marshaling) );
+    buf[6] = buf[7] = 0;
+    return 8;
+}
+
+static void add_marshalingbehavior_attr_step1( type_t *type )
+{
+    UINT assemblyref, scope, typeref, typeref_attr, class, sig_size;
+    BYTE sig[32];
+
+    if (!is_attr( type->attrs, ATTR_MARSHALING_BEHAVIOR )) return;
+
+    assemblyref = add_assemblyref_row( 0x200, 0, add_string("Windows.Foundation") );
+    scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+    typeref = add_typeref_row( scope, add_string("MarshalingType"), add_string("Windows.Foundation.Metadata") );
+
+    scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+    typeref_attr = add_typeref_row( scope, add_string("MarshalingBehaviorAttribute"), add_string("Windows.Foundation.Metadata") );
+
+    class = memberref_parent( TABLE_TYPEREF, typeref_attr );
+    sig_size = make_member_sig2( ELEMENT_TYPE_VALUETYPE, typedef_or_ref(TABLE_TYPEREF, typeref), sig );
+    type->md.member[MD_ATTR_MARSHALINGBEHAVIOR] = add_memberref_row( class, add_string(".ctor"), add_blob(sig, sig_size) );
+}
+
+static void add_marshalingbehavior_attr_step2( type_t *type )
+{
+    UINT parent, attr_type, value_size;
+    BYTE value[8];
+
+    if (!is_attr( type->attrs, ATTR_MARSHALING_BEHAVIOR )) return;
+
+    parent = has_customattribute( TABLE_TYPEDEF, type->md.def );
+    attr_type = customattribute_type( TABLE_MEMBERREF, type->md.member[MD_ATTR_MARSHALINGBEHAVIOR] );
+    value_size = make_marshalingbehavior_value( type, value );
+    add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
+}
+
 static void add_runtimeclass_type_step2( type_t *type )
 {
     UINT name, namespace, scope, extends, typeref, interface, interfaceimpl_ref, flags;
@@ -2905,11 +2948,13 @@ static void add_runtimeclass_type_step2( type_t *type )
     add_static_attr_step1( type );
     add_activatable_attr_step1( type );
     add_threading_attr_step1( type );
+    add_marshalingbehavior_attr_step1( type );
 
     add_contract_attr_step2( type );
     add_static_attr_step2( type );
     add_activatable_attr_step2( type );
     add_threading_attr_step2( type );
+    add_marshalingbehavior_attr_step2( type );
 }
 
 static void add_delegate_type_step1( type_t *type )
