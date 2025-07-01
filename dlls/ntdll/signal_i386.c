@@ -215,7 +215,6 @@ void WINAPI KiUserCallbackDispatcher( ULONG id, void *args, ULONG len )
  */
 static inline void save_fpu( CONTEXT *context )
 {
-#ifdef __GNUC__
     struct
     {
         DWORD ControlWord;
@@ -236,7 +235,6 @@ static inline void save_fpu( CONTEXT *context )
     float_status.StatusWord &= float_status.ControlWord | 0xffffff80;
 
     __asm__ __volatile__( "fldenv %0" : : "m" (float_status) );
-#endif
 }
 
 
@@ -247,7 +245,6 @@ static inline void save_fpu( CONTEXT *context )
  */
 static inline void save_fpux( CONTEXT *context )
 {
-#ifdef __GNUC__
     /* we have to enforce alignment by hand */
     char buffer[sizeof(XSAVE_FORMAT) + 16];
     XSAVE_FORMAT *state = (XSAVE_FORMAT *)(((ULONG_PTR)buffer + 15) & ~15);
@@ -255,7 +252,6 @@ static inline void save_fpux( CONTEXT *context )
     context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
     __asm__ __volatile__( "fxsave %0" : "=m" (*state) );
     memcpy( context->ExtendedRegisters, state, sizeof(*state) );
-#endif
 }
 
 

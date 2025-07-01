@@ -256,7 +256,7 @@ ULONGLONG WINAPI RtlEnlargedUnsignedMultiply( UINT a, UINT b )
  */
 UINT WINAPI RtlEnlargedUnsignedDivide( ULONGLONG a, UINT b, UINT *remptr )
 {
-#if defined(__i386__) && defined(__GNUC__)
+#ifdef __i386__
     UINT ret, rem;
 
     __asm__("divl %4"
