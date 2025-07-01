@@ -346,6 +346,7 @@ struct _attr_t {
   /* parser-internal */
   struct list entry;
   struct location where;
+  unsigned int md_member;
 };
 
 struct integer
@@ -506,7 +507,6 @@ enum
     MD_ATTR_UUID,
     MD_ATTR_EXCLUSIVETO,
     MD_ATTR_STATIC,
-    MD_ATTR_ACTIVATABLE,
     MD_ATTR_THREADING,
     MD_ATTR_MARSHALINGBEHAVIOR,
     MD_ATTR_OVERLOAD,

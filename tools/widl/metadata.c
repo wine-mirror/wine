@@ -2705,6 +2705,99 @@ static void add_static_attr_step2( type_t *type )
     }
 }
 
+static UINT make_activatable_value( const expr_t *attr, BYTE *buf )
+{
+    char *name_iface = NULL, *name_contract;
+    UINT len_iface = 0, len_contract, len_extra = 5;
+    const type_t *contract;
+    BYTE *ptr = buf;
+
+    if (attr->u.tref.type->type_type != TYPE_INTERFACE) contract = attr->u.tref.type;
+    else
+    {
+        name_iface = format_namespace( attr->u.tref.type->namespace, "", ".", attr->u.tref.type->name, NULL );
+        len_iface = strlen( name_iface );
+        contract = attr->ref->u.tref.type;
+    }
+
+    name_contract = format_namespace( contract->namespace, "", ".", contract->name, NULL );
+    len_contract = strlen( name_contract );
+
+    if (len_iface)
+    {
+        ptr[0] = 1;
+        ptr[1] = 0;
+        ptr[2] = len_iface;
+        memcpy( ptr + 3, name_iface, len_iface );
+        ptr += len_iface + 3;
+        ptr[0] = ptr[1] = 0;
+        ptr += 2;
+        len_extra += 5;
+    }
+    ptr[0] = 1;
+    ptr[1] = 0;
+    ptr[2] = len_contract;
+    memcpy( ptr + 3, name_contract, len_contract );
+    ptr += len_contract + 3;
+    ptr[0] = ptr[1] = 0;
+
+    free( name_iface );
+    free( name_contract );
+    return len_iface + len_contract + len_extra;
+}
+
+static void add_activatable_attr_step1( type_t *type )
+{
+    static const BYTE sig_default[] = { SIG_TYPE_HASTHIS, 2, ELEMENT_TYPE_VOID, ELEMENT_TYPE_U4, ELEMENT_TYPE_STRING };
+    attr_t *attr;
+
+    if (type->attrs) LIST_FOR_EACH_ENTRY_REV( attr, type->attrs, attr_t, entry )
+    {
+        UINT assemblyref, scope, typeref, typeref_type, class, sig_size;
+        const expr_t *value = attr->u.pval;
+        BYTE sig[32];
+
+        if (attr->type != ATTR_ACTIVATABLE) continue;
+
+        assemblyref = add_assemblyref_row( 0x200, 0, add_string("Windows.Foundation") );
+        scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+        typeref = add_typeref_row( scope, add_string("ActivatableAttribute"), add_string("Windows.Foundation.Metadata") );
+
+        scope = resolution_scope( TABLE_ASSEMBLYREF, MSCORLIB_ROW );
+        typeref_type = add_typeref_row( scope, add_string("Type"), add_string("System") );
+
+        class = memberref_parent( TABLE_TYPEREF, typeref );
+
+        if (value->u.tref.type->type_type == TYPE_INTERFACE)
+            sig_size = make_member_sig3( typedef_or_ref(TABLE_TYPEREF, typeref_type), sig );
+        else
+        {
+            memcpy( sig, sig_default, sizeof(sig_default) );
+            sig_size = sizeof(sig_default);
+        }
+
+        attr->md_member = add_memberref_row( class, add_string(".ctor"), add_blob(sig, sig_size) );
+    }
+}
+
+static void add_activatable_attr_step2( type_t *type )
+{
+    const attr_t *attr;
+
+    if (type->attrs) LIST_FOR_EACH_ENTRY_REV( attr, type->attrs, const attr_t, entry )
+    {
+        UINT parent, attr_type, value_size;
+        BYTE value[MAX_NAME * 2 + 10];
+
+        if (attr->type != ATTR_ACTIVATABLE) continue;
+
+        parent = has_customattribute( TABLE_TYPEDEF, type->md.def );
+        attr_type = customattribute_type( TABLE_MEMBERREF, attr->md_member );
+        value_size = make_activatable_value( attr->u.pval, value );
+        add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
+    }
+}
+
 static void add_runtimeclass_type_step2( type_t *type )
 {
     UINT name, namespace, scope, extends, typeref, interface, interfaceimpl_ref, flags;
@@ -2751,9 +2844,11 @@ static void add_runtimeclass_type_step2( type_t *type )
 
     add_contract_attr_step1( type );
     add_static_attr_step1( type );
+    add_activatable_attr_step1( type );
 
     add_contract_attr_step2( type );
     add_static_attr_step2( type );
+    add_activatable_attr_step2( type );
 }
 
 static void add_delegate_type_step1( type_t *type )
