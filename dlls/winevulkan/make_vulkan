@@ -2203,8 +2203,10 @@ class VkStruct(Sequence):
         if self.name == "VkAllocationCallbacks":
             return False
 
-        # pFixedRateFlags field is missing const, but it doesn't need output conversion
-        if direction == Direction.OUTPUT and self.name == "VkImageCompressionControlEXT":
+        # avoid some unneded conversions
+        if direction == Direction.INPUT and self.name == "VkPerformanceValueDataINTEL":
+            return False
+        if direction == Direction.OUTPUT and re.match("^VkClusterAccelerationStructure",self.name):
             return False
 
         needs_output_copy = False

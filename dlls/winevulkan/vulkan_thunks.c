@@ -12327,14 +12327,6 @@ static inline void convert_VkClusterAccelerationStructureClustersBottomLevelInpu
         FIXME("Unexpected pNext\n");
 }
 
-static inline void convert_VkClusterAccelerationStructureClustersBottomLevelInputNV_host_to_win32(const VkClusterAccelerationStructureClustersBottomLevelInputNV *in, VkClusterAccelerationStructureClustersBottomLevelInputNV32 *out)
-{
-    if (!in) return;
-
-    out->maxTotalClusterCount = in->maxTotalClusterCount;
-    out->maxClusterCountPerAccelerationStructure = in->maxClusterCountPerAccelerationStructure;
-}
-
 static inline VkClusterAccelerationStructureClustersBottomLevelInputNV *convert_VkClusterAccelerationStructureClustersBottomLevelInputNV_array_win32_to_host(struct conversion_context *ctx, const VkClusterAccelerationStructureClustersBottomLevelInputNV32 *in, uint32_t count)
 {
     VkClusterAccelerationStructureClustersBottomLevelInputNV *out;
@@ -12349,18 +12341,6 @@ static inline VkClusterAccelerationStructureClustersBottomLevelInputNV *convert_
     }
 
     return out;
-}
-
-static inline void convert_VkClusterAccelerationStructureClustersBottomLevelInputNV_array_host_to_win32(const VkClusterAccelerationStructureClustersBottomLevelInputNV *in, VkClusterAccelerationStructureClustersBottomLevelInputNV32 *out, uint32_t count)
-{
-    unsigned int i;
-
-    if (!in) return;
-
-    for (i = 0; i < count; i++)
-    {
-        convert_VkClusterAccelerationStructureClustersBottomLevelInputNV_host_to_win32(&in[i], &out[i]);
-    }
 }
 
 static inline void convert_VkClusterAccelerationStructureTriangleClusterInputNV_win32_to_host(const VkClusterAccelerationStructureTriangleClusterInputNV32 *in, VkClusterAccelerationStructureTriangleClusterInputNV *out)
@@ -12381,20 +12361,6 @@ static inline void convert_VkClusterAccelerationStructureTriangleClusterInputNV_
         FIXME("Unexpected pNext\n");
 }
 
-static inline void convert_VkClusterAccelerationStructureTriangleClusterInputNV_host_to_win32(const VkClusterAccelerationStructureTriangleClusterInputNV *in, VkClusterAccelerationStructureTriangleClusterInputNV32 *out)
-{
-    if (!in) return;
-
-    out->vertexFormat = in->vertexFormat;
-    out->maxGeometryIndexValue = in->maxGeometryIndexValue;
-    out->maxClusterUniqueGeometryCount = in->maxClusterUniqueGeometryCount;
-    out->maxClusterTriangleCount = in->maxClusterTriangleCount;
-    out->maxClusterVertexCount = in->maxClusterVertexCount;
-    out->maxTotalTriangleCount = in->maxTotalTriangleCount;
-    out->maxTotalVertexCount = in->maxTotalVertexCount;
-    out->minPositionTruncateBitCount = in->minPositionTruncateBitCount;
-}
-
 static inline VkClusterAccelerationStructureTriangleClusterInputNV *convert_VkClusterAccelerationStructureTriangleClusterInputNV_array_win32_to_host(struct conversion_context *ctx, const VkClusterAccelerationStructureTriangleClusterInputNV32 *in, uint32_t count)
 {
     VkClusterAccelerationStructureTriangleClusterInputNV *out;
@@ -12411,18 +12377,6 @@ static inline VkClusterAccelerationStructureTriangleClusterInputNV *convert_VkCl
     return out;
 }
 
-static inline void convert_VkClusterAccelerationStructureTriangleClusterInputNV_array_host_to_win32(const VkClusterAccelerationStructureTriangleClusterInputNV *in, VkClusterAccelerationStructureTriangleClusterInputNV32 *out, uint32_t count)
-{
-    unsigned int i;
-
-    if (!in) return;
-
-    for (i = 0; i < count; i++)
-    {
-        convert_VkClusterAccelerationStructureTriangleClusterInputNV_host_to_win32(&in[i], &out[i]);
-    }
-}
-
 static inline void convert_VkClusterAccelerationStructureMoveObjectsInputNV_win32_to_host(const VkClusterAccelerationStructureMoveObjectsInputNV32 *in, VkClusterAccelerationStructureMoveObjectsInputNV *out)
 {
     if (!in) return;
@@ -12434,15 +12388,6 @@ static inline void convert_VkClusterAccelerationStructureMoveObjectsInputNV_win3
     out->maxMovedBytes = in->maxMovedBytes;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
-}
-
-static inline void convert_VkClusterAccelerationStructureMoveObjectsInputNV_host_to_win32(const VkClusterAccelerationStructureMoveObjectsInputNV *in, VkClusterAccelerationStructureMoveObjectsInputNV32 *out)
-{
-    if (!in) return;
-
-    out->type = in->type;
-    out->noMoveOverlap = in->noMoveOverlap;
-    out->maxMovedBytes = in->maxMovedBytes;
 }
 
 static inline VkClusterAccelerationStructureMoveObjectsInputNV *convert_VkClusterAccelerationStructureMoveObjectsInputNV_array_win32_to_host(struct conversion_context *ctx, const VkClusterAccelerationStructureMoveObjectsInputNV32 *in, uint32_t count)
@@ -12461,18 +12406,6 @@ static inline VkClusterAccelerationStructureMoveObjectsInputNV *convert_VkCluste
     return out;
 }
 
-static inline void convert_VkClusterAccelerationStructureMoveObjectsInputNV_array_host_to_win32(const VkClusterAccelerationStructureMoveObjectsInputNV *in, VkClusterAccelerationStructureMoveObjectsInputNV32 *out, uint32_t count)
-{
-    unsigned int i;
-
-    if (!in) return;
-
-    for (i = 0; i < count; i++)
-    {
-        convert_VkClusterAccelerationStructureMoveObjectsInputNV_host_to_win32(&in[i], &out[i]);
-    }
-}
-
 static inline void convert_VkClusterAccelerationStructureOpInputNV_win32_to_host(struct conversion_context *ctx, const VkClusterAccelerationStructureOpInputNV32 *in, VkClusterAccelerationStructureOpInputNV *out, VkFlags selector)
 {
     if (!in) return;
@@ -12483,18 +12416,6 @@ static inline void convert_VkClusterAccelerationStructureOpInputNV_win32_to_host
         out->pTriangleClusters = convert_VkClusterAccelerationStructureTriangleClusterInputNV_array_win32_to_host(ctx, (VkClusterAccelerationStructureTriangleClusterInputNV32 *)UlongToPtr(in->pTriangleClusters), 1);
     if (selector == VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_MOVE_OBJECTS_NV)
         out->pMoveObjects = convert_VkClusterAccelerationStructureMoveObjectsInputNV_array_win32_to_host(ctx, (VkClusterAccelerationStructureMoveObjectsInputNV32 *)UlongToPtr(in->pMoveObjects), 1);
-}
-
-static inline void convert_VkClusterAccelerationStructureOpInputNV_host_to_win32(const VkClusterAccelerationStructureOpInputNV *in, const VkClusterAccelerationStructureOpInputNV32 *out, VkFlags selector)
-{
-    if (!in) return;
-
-    if (selector == VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_CLUSTERS_BOTTOM_LEVEL_NV)
-        convert_VkClusterAccelerationStructureClustersBottomLevelInputNV_array_host_to_win32(in->pClustersBottomLevel, (VkClusterAccelerationStructureClustersBottomLevelInputNV32 *)UlongToPtr(out->pClustersBottomLevel), 1);
-    if (selector == VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_TRIANGLE_CLUSTER_NV || selector == VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_TRIANGLE_CLUSTER_TEMPLATE_NV || selector == VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_INSTANTIATE_TRIANGLE_CLUSTER_NV)
-        convert_VkClusterAccelerationStructureTriangleClusterInputNV_array_host_to_win32(in->pTriangleClusters, (VkClusterAccelerationStructureTriangleClusterInputNV32 *)UlongToPtr(out->pTriangleClusters), 1);
-    if (selector == VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_MOVE_OBJECTS_NV)
-        convert_VkClusterAccelerationStructureMoveObjectsInputNV_array_host_to_win32(in->pMoveObjects, (VkClusterAccelerationStructureMoveObjectsInputNV32 *)UlongToPtr(out->pMoveObjects), 1);
 }
 
 static inline void convert_VkClusterAccelerationStructureInputInfoNV_win32_to_host(struct conversion_context *ctx, const VkClusterAccelerationStructureInputInfoNV32 *in, VkClusterAccelerationStructureInputInfoNV *out)
@@ -28581,22 +28502,6 @@ static inline void convert_VkMicromapBuildSizesInfoEXT_host_to_win32(const VkMic
     out->micromapSize = in->micromapSize;
     out->buildScratchSize = in->buildScratchSize;
     out->discardable = in->discardable;
-}
-
-static inline void convert_VkPerformanceValueDataINTEL_win32_to_host(const VkPerformanceValueDataINTEL32 *in, VkPerformanceValueDataINTEL *out, VkFlags selector)
-{
-    if (!in) return;
-
-    if (selector == VK_PERFORMANCE_VALUE_TYPE_UINT32_INTEL)
-        out->value32 = in->value32;
-    if (selector == VK_PERFORMANCE_VALUE_TYPE_UINT64_INTEL)
-        out->value64 = in->value64;
-    if (selector == VK_PERFORMANCE_VALUE_TYPE_FLOAT_INTEL)
-        out->valueFloat = in->valueFloat;
-    if (selector == VK_PERFORMANCE_VALUE_TYPE_BOOL_INTEL)
-        out->valueBool = in->valueBool;
-    if (selector == VK_PERFORMANCE_VALUE_TYPE_STRING_INTEL)
-        out->valueString = UlongToPtr(in->valueString);
 }
 
 static inline void convert_VkPerformanceValueDataINTEL_host_to_win32(const VkPerformanceValueDataINTEL *in, VkPerformanceValueDataINTEL32 *out, VkFlags selector)
