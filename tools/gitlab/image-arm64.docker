@@ -1,0 +1,39 @@
+# FROM line will be added dynamically
+
+WORKDIR /tmp
+
+RUN export DEBIAN_FRONTEND=noninteractive; \
+    echo 'path-exclude=/usr/share/doc/*' > /etc/dpkg/dpkg.cfg.d/99-exclude-cruft && \
+    echo 'path-exclude=/usr/share/locale/*' >> /etc/dpkg/dpkg.cfg.d/99-exclude-cruft && \
+    echo 'path-exclude=/usr/share/man/*' >> /etc/dpkg/dpkg.cfg.d/99-exclude-cruft && \
+    echo 'APT::Install-Recommends "false";' > /etc/apt/apt.conf && \
+    echo '#!/bin/sh' > /usr/sbin/policy-rc.d && \
+    echo 'exit 101' >> /usr/sbin/policy-rc.d && \
+    chmod +x /usr/sbin/policy-rc.d && \
+    apt-get update && \
+    apt-get install -y clang git autoconf flex bison perl gettext \
+                       libasound2-dev libavutil-dev libavformat-dev libavcodec-dev \
+                       libcapi20-dev libcups2-dev libdbus-1-dev libfontconfig-dev \
+                       libfreetype-dev libgl1-mesa-dev libgnutls28-dev libgphoto2-dev \
+                       libice-dev libkrb5-dev libpcap-dev libpcsclite-dev libpulse-dev \
+                       libsane-dev libsdl2-dev libswresample-dev libswscale-dev \
+                       libudev-dev libusb-1.0-0-dev libv4l-dev libvulkan-dev \
+                       libwayland-dev libx11-dev libxcomposite-dev libxcursor-dev \
+                       libxext-dev libxi-dev libxinerama-dev libxkbcommon-dev \
+                       libxkbregistry-dev libxrandr-dev libxrender-dev libxxf86vm-dev \
+                       linux-libc-dev ocl-icd-opencl-dev samba-dev unixodbc-dev \
+                       x11proto-dev && \
+    apt-get install -y ccache netbase curl ca-certificates xserver-xorg-video-dummy xserver-xorg xfonts-base xinit fvwm \
+                       winbind fonts-liberation2 fonts-noto-core fonts-noto-cjk pulseaudio unzip && \
+    curl -O https://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2024.9.1_all.deb && \
+    dpkg -i deb-multimedia-keyring_2024.9.1_all.deb && \
+    echo 'deb https://www.deb-multimedia.org bookworm main' >> /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y libgstreamer-plugins-base1.0-dev libasound2-plugins libmjpegutils-2.1-0 gstreamer1.0-libav \
+                       gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly && \
+    apt-get clean && \
+    curl -s -L https://github.com/mstorsjo/llvm-mingw/releases/download/20250613/llvm-mingw-20250613-ucrt-ubuntu-22.04-aarch64.tar.xz | tar xJ && \
+    mv llvm-mingw-20250613-ucrt-ubuntu-22.04-aarch64 /usr/local/llvm-mingw && \
+    useradd -m gitlab
+
+USER gitlab
