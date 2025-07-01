@@ -230,8 +230,8 @@ static HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, UIN
         return D3DERR_INVALIDCALL;
     }
 
-    if (part > D3D_BLOB_TEST_COMPILE_PERF
-            || (part < D3D_BLOB_TEST_ALTERNATE_SHADER && part > D3D_BLOB_XNA_SHADER))
+    if (part > D3D_BLOB_TEST_COMPILE_REPORT
+            || (part < D3D_BLOB_TEST_ALTERNATE_SHADER && part > D3D_BLOB_DEBUG_NAME))
     {
         WARN("Invalid D3D_BLOB_PART: part %s\n", debug_d3dcompiler_d3d_blob_part(part));
         return D3DERR_INVALIDCALL;
