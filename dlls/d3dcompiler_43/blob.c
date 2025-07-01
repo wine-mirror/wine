@@ -214,7 +214,7 @@ static BOOL check_blob_part(DWORD tag, D3D_BLOB_PART part)
     return add;
 }
 
-static HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D_BLOB_PART part, UINT flags, ID3DBlob **blob)
+static HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, UINT part, UINT flags, ID3DBlob **blob)
 {
     const struct vkd3d_shader_code src_dxbc = {.code = data, .size = data_size};
     struct vkd3d_shader_dxbc_section_desc *sections;
