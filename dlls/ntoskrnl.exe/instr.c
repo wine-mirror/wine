@@ -64,12 +64,7 @@ static LDT_ENTRY idt[256];
 static inline struct idtr get_idtr(void)
 {
     struct idtr ret;
-#ifdef __GNUC__
     __asm__( "sidtl %0" : "=m" (ret) );
-#else
-    ret.base = (BYTE *)idt;
-    ret.limit = sizeof(idt) - 1;
-#endif
     return ret;
 }
 
