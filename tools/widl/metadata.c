@@ -1628,13 +1628,13 @@ static UINT make_type_sig( const type_t *type, BYTE *buf )
     return len;
 }
 
-static UINT make_method_sig( const var_t *method, BYTE *buf )
+static UINT make_method_sig( const var_t *method, BYTE *buf, BOOL is_static )
 {
     const var_t *arg;
     const var_list_t *arg_list = type_function_get_args( method->declspec.type );
     UINT len = 3;
 
-    buf[0] = SIG_TYPE_HASTHIS;
+    buf[0] = is_static ? SIG_TYPE_DEFAULT : SIG_TYPE_HASTHIS;
     buf[1] = 0;
     buf[2] = ELEMENT_TYPE_VOID;
 
@@ -1660,13 +1660,13 @@ static UINT make_method_sig( const var_t *method, BYTE *buf )
     return len;
 }
 
-static UINT make_property_sig( const var_t *method, BYTE *buf )
+static UINT make_property_sig( const var_t *method, BYTE *buf, BOOL is_static )
 {
     const var_t *arg;
     const var_list_t *arg_list = type_function_get_args( method->declspec.type );
     UINT len = 3;
 
-    buf[0] = SIG_TYPE_HASTHIS | SIG_TYPE_PROPERTY;
+    buf[0] = is_static ? SIG_TYPE_PROPERTY : SIG_TYPE_HASTHIS | SIG_TYPE_PROPERTY;
     buf[1] = 0;
     buf[2] = ELEMENT_TYPE_VOID;
 
@@ -2237,28 +2237,53 @@ static char *get_method_name( const var_t *method )
     return strmake( "%s", method->name );
 }
 
-static UINT get_method_attrs( BOOL abstract, BOOL special, UINT *flags )
+static BOOL is_special_method( const var_t *method )
 {
-    UINT attrs = METHOD_ATTR_PUBLIC | METHOD_ATTR_VIRTUAL | METHOD_ATTR_HIDEBYSIG | METHOD_ATTR_NEWSLOT;
+    if (is_attr( method->attrs, ATTR_PROPGET )  || is_attr( method->attrs, ATTR_PROPPUT ) ||
+        is_attr( method->attrs, ATTR_EVENTADD ) || is_attr( method->attrs, ATTR_EVENTREMOVE )) return TRUE;
+    return FALSE;
+}
 
-    if (abstract)
+static BOOL is_static_iface( const type_t *class, const type_t *iface )
+{
+    const attr_t *attr;
+
+    if (!class || !class->attrs) return FALSE;
+
+    LIST_FOR_EACH_ENTRY( attr, class->attrs, const attr_t, entry )
+    {
+        const expr_t *value = attr->u.pval;
+
+        if (attr->type != ATTR_STATIC) continue;
+        if (value->u.var->declspec.type == iface) return TRUE;
+    }
+
+    return FALSE;
+}
+
+static UINT get_method_attrs( const type_t *class, const type_t *iface, const var_t *method, UINT *flags )
+{
+    UINT attrs = METHOD_ATTR_PUBLIC | METHOD_ATTR_HIDEBYSIG;
+
+    if (!class)
     {
         *flags = 0;
-        attrs |= METHOD_ATTR_ABSTRACT;
+        attrs |= METHOD_ATTR_ABSTRACT | METHOD_ATTR_VIRTUAL | METHOD_ATTR_NEWSLOT;
     }
     else
     {
         *flags = METHOD_IMPL_RUNTIME;
-        attrs |= METHOD_ATTR_FINAL;
+        if (is_static_iface( class, iface )) attrs |= METHOD_ATTR_STATIC;
+        else attrs |= METHOD_ATTR_VIRTUAL | METHOD_ATTR_NEWSLOT | METHOD_ATTR_FINAL;
     }
 
-    if (special) attrs |= METHOD_ATTR_SPECIALNAME;
+    if (is_special_method( method )) attrs |= METHOD_ATTR_SPECIALNAME;
     return attrs;
 }
 
 static void add_propget_method( const type_t *class, const type_t *iface, const var_t *method )
 {
-    UINT sig_size, property, paramlist, flags, attrs = get_method_attrs( class == NULL, TRUE, &flags );
+    UINT sig_size, property, paramlist, flags, attrs = get_method_attrs( class, iface, method, &flags );
     char *name = get_method_name( method );
     type_t *type = method->declspec.type;
     BYTE sig[256];
@@ -2267,7 +2292,7 @@ static void add_propget_method( const type_t *class, const type_t *iface, const 
     else property = type->md.iface_property;
 
     paramlist = add_method_params_step2( type_function_get_args(type) );
-    sig_size = make_method_sig( method, sig );
+    sig_size = make_method_sig( method, sig, is_static_iface(class, iface) );
 
     type->md.def = add_methoddef_row( flags, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
     add_methodsemantics_row( METHOD_SEM_GETTER, type->md.def, has_semantics(TABLE_PROPERTY, property) );
@@ -2289,13 +2314,13 @@ static const var_t *find_propget_method( const type_t *iface, const char *name )
 static void add_propput_method( const type_t *class, const type_t *iface, const var_t *method )
 {
     const var_t *propget = find_propget_method( iface, method->name );
-    UINT sig_size, paramlist, property, flags, attrs = get_method_attrs( class == NULL, TRUE, &flags );
+    UINT sig_size, paramlist, property, flags, attrs = get_method_attrs( class, iface, method, &flags );
     char *name = get_method_name( method );
     type_t *type = method->declspec.type;
     BYTE sig[256];
 
     paramlist = add_method_params_step2( type_function_get_args(method->declspec.type) );
-    sig_size = make_method_sig( method, sig );
+    sig_size = make_method_sig( method, sig, is_static_iface(class, iface) );
 
     type->md.def = add_methoddef_row( flags, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
     free( name );
@@ -2317,7 +2342,7 @@ static void add_propput_method( const type_t *class, const type_t *iface, const 
 
 static void add_eventadd_method( const type_t *class, const type_t *iface, const var_t *method )
 {
-    UINT event, sig_size, paramlist, flags, attrs = get_method_attrs( class == NULL, TRUE, &flags );
+    UINT event, sig_size, paramlist, flags, attrs = get_method_attrs( class, iface, method, &flags );
     char *name = get_method_name( method );
     type_t *type = method->declspec.type;
     BYTE sig[256];
@@ -2326,7 +2351,7 @@ static void add_eventadd_method( const type_t *class, const type_t *iface, const
     else event = type->md.iface_event;
 
     paramlist = add_method_params_step2( type_function_get_args(type) );
-    sig_size = make_method_sig( method, sig );
+    sig_size = make_method_sig( method, sig, is_static_iface(class, iface) );
 
     type->md.def = add_methoddef_row( flags, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
     free( name );
@@ -2349,13 +2374,13 @@ static const var_t *find_eventadd_method( const type_t *iface, const char *name 
 static void add_eventremove_method( const type_t *class, const type_t *iface, const var_t *method )
 {
     const var_t *eventadd = find_eventadd_method( iface, method->name );
-    UINT event, sig_size, paramlist, flags, attrs = get_method_attrs( class == NULL, TRUE, &flags );
+    UINT event, sig_size, paramlist, flags, attrs = get_method_attrs( class, iface, method, &flags );
     char *name = get_method_name( method );
     type_t *type = method->declspec.type;
     BYTE sig[256];
 
     paramlist = add_method_params_step2( type_function_get_args(type) );
-    sig_size = make_method_sig( method, sig );
+    sig_size = make_method_sig( method, sig, is_static_iface(class, iface) );
 
     type->md.def = add_methoddef_row( flags, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
     free( name );
@@ -2377,13 +2402,13 @@ static void add_eventremove_method( const type_t *class, const type_t *iface, co
 
 static void add_regular_method( const type_t *class, const type_t *iface, const var_t *method )
 {
-    UINT paramlist, sig_size, flags, attrs = get_method_attrs( class == NULL, FALSE, &flags );
+    UINT paramlist, sig_size, flags, attrs = get_method_attrs( class, iface, method, &flags );
     char *name = get_method_name( method );
     type_t *type = method->declspec.type;
     BYTE sig[256];
 
     paramlist = add_method_params_step2( type_function_get_args(type) );
-    sig_size = make_method_sig( method, sig );
+    sig_size = make_method_sig( method, sig, is_static_iface(class, iface) );
 
     type->md.def = add_methoddef_row( flags, attrs, add_string(name), add_blob(sig, sig_size), paramlist );
     free( name );
@@ -2397,7 +2422,7 @@ static void add_property( type_t *class, type_t *iface, const var_t *method )
 
     if (!is_attr( method->attrs, ATTR_PROPGET )) return;
 
-    sig_size = make_property_sig( method, sig );
+    sig_size = make_property_sig( method, sig, is_static_iface(class, iface) );
     if (class)
     {
         type->md.class_property = add_property_row( 0, add_string(method->name), add_blob(sig, sig_size) );
@@ -2608,7 +2633,7 @@ static void add_method_impl( const type_t *class, const type_t *iface, const var
     BYTE sig[256];
 
     parent = memberref_parent( TABLE_TYPEREF, iface->md.ref );
-    sig_size = make_method_sig( method, sig );
+    sig_size = make_method_sig( method, sig, FALSE );
 
     memberref = add_memberref_row( parent, add_string(name), add_blob(sig, sig_size) );
     free( name );
@@ -2936,6 +2961,32 @@ static void add_member_interfaces( type_t *class )
     }
 }
 
+static void add_static_interfaces( type_t *class )
+{
+    const attr_t *attr;
+
+    if (class->attrs) LIST_FOR_EACH_ENTRY( attr, class->attrs, const attr_t, entry )
+    {
+        const expr_t *value = attr->u.pval;
+        const statement_t *stmt;
+        type_t *iface;
+
+        if (attr->type != ATTR_STATIC) continue;
+
+        iface = value->u.var->declspec.type;
+
+        STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
+        {
+            const var_t *method = stmt->u.var;
+
+            add_property( class, iface, method );
+            add_event( class, iface, method );
+            add_method( class, iface, method );
+            add_method_contract_attrs( class, iface, method->declspec.type );
+        }
+    }
+}
+
 static void add_runtimeclass_type_step2( type_t *type )
 {
     const typeref_list_t *iface_list = type_runtimeclass_get_ifaces( type );
@@ -2953,6 +3004,7 @@ static void add_runtimeclass_type_step2( type_t *type )
     type->md.def = add_typedef_row( flags, name, namespace, extends, 0, 0 );
 
     add_member_interfaces( type );
+    add_static_interfaces( type );
 
     add_contract_attr_step1( type );
     add_static_attr_step1( type );
@@ -3008,7 +3060,7 @@ static void add_delegate_type_step2( type_t *type )
         UINT sig_size;
         BYTE sig[256];
 
-        sig_size = make_method_sig( method, sig );
+        sig_size = make_method_sig( method, sig, FALSE );
         paramlist = add_method_params_step2( type_function_get_args(method->declspec.type) );
 
         add_methoddef_row( METHOD_IMPL_RUNTIME, flags, add_string("Invoke"), add_blob(sig, sig_size), paramlist );
