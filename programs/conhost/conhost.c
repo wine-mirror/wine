@@ -774,6 +774,45 @@ static void edit_line_find_in_history( struct console *console )
     while (ctx->history_index != start_pos);
 }
 
+static void edit_line_copy_from_history( struct console *console, int copycount )
+{
+    if (console->edit_line.history_index)
+    {
+        struct edit_line *ctx = &console->edit_line;
+        unsigned int index = ctx->history_index - 1;
+        WCHAR *line = console->history[index]->text;
+        unsigned int len = console->history[index]->len / sizeof(WCHAR);
+
+        if (len > ctx->cursor)
+        {
+            unsigned int ccount = (copycount > 0) ? copycount : len - ctx->cursor;
+
+            if (ctx->cursor == ctx->len)
+            {
+                /* Insert new string. */
+                if (edit_line_grow(console, ccount))
+                {
+                    edit_line_insert( console, &line[ctx->cursor], ccount );
+                }
+            }
+            else
+            {
+                ctx->cursor += ccount;
+            }
+        }
+    }
+}
+
+static void edit_line_copy_one_from_history( struct console *console )
+{
+    edit_line_copy_from_history(console, 1);
+}
+
+static void edit_line_copy_all_from_history( struct console *console )
+{
+    edit_line_copy_from_history(console, -1);
+}
+
 static void edit_line_move_left( struct console *console )
 {
     if (console->edit_line.cursor > 0) console->edit_line.cursor--;
@@ -1137,15 +1176,17 @@ static const struct edit_line_key_map emacs_key_map[] =
 
 static const struct edit_line_key_entry win32_std_key_map[] =
 {
-    { VK_LEFT,   edit_line_move_left         },
-    { VK_RIGHT,  edit_line_move_right        },
-    { VK_HOME,   edit_line_move_home         },
-    { VK_END,    edit_line_move_end          },
-    { VK_UP,     edit_line_move_to_prev_hist },
-    { VK_DOWN,   edit_line_move_to_next_hist },
-    { VK_INSERT, edit_line_toggle_insert     },
-    { VK_F8,     edit_line_find_in_history   },
-    { VK_ESCAPE, edit_line_clear             },
+    { VK_LEFT,   edit_line_move_left             },
+    { VK_RIGHT,  edit_line_move_right            },
+    { VK_HOME,   edit_line_move_home             },
+    { VK_END,    edit_line_move_end              },
+    { VK_UP,     edit_line_move_to_prev_hist     },
+    { VK_DOWN,   edit_line_move_to_next_hist     },
+    { VK_INSERT, edit_line_toggle_insert         },
+    { VK_F8,     edit_line_find_in_history       },
+    { VK_ESCAPE, edit_line_clear                 },
+    { VK_F1,     edit_line_copy_one_from_history },
+    { VK_F3,     edit_line_copy_all_from_history },
     { 0 }
 };
 
