@@ -516,12 +516,13 @@ static BOOL get_unix_full_path( LPCWSTR name, LPWSTR buffer, ULONG size, ULONG *
     HANDLE handle;
     IO_STATUS_BLOCK io;
     BOOL ret = FALSE;
+    WCHAR *file;
     ULONG file_len = 0;
 
     nt_str = RtlAllocateHeap( GetProcessHeap(), 0, (wcslen(name) + 9) * sizeof(WCHAR) );
     wcscpy( nt_str, L"\\??\\unix" );
     wcscat( nt_str, name );
-    for (WCHAR *p = nt_str; *p; p++) if (*p == '/') *p = '\\';
+    for (file = nt_str; *file; file++) if (*file == '/') *file = '\\';
     RtlInitUnicodeString( &str, nt_str );
     InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
 
@@ -529,13 +530,14 @@ static BOOL get_unix_full_path( LPCWSTR name, LPWSTR buffer, ULONG size, ULONG *
                          FILE_SYNCHRONOUS_IO_NONALERT );
     if (status)
     {
-        ULONG i = str.Length / sizeof(WCHAR);
-        while (i && str.Buffer[i - 1] != '\\') i--;
-        while (i && str.Buffer[i - 1] == '\\') i--;
+        ULONG i = str.Length / sizeof(WCHAR) - 1;
+        while (i && str.Buffer[i] != '\\') i--;
+        file = str.Buffer + i;
+        file_len = str.Length - i * sizeof(WCHAR);
+        while (i && str.Buffer[i] == '\\') i--;
         if (i > 9)
         {
-            file_len = str.Length - i * sizeof(WCHAR);
-            str.Length = i * sizeof(WCHAR);
+            str.Length = (i + 1) * sizeof(WCHAR);
             status = NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
                                  FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
         }
@@ -562,8 +564,7 @@ static BOOL get_unix_full_path( LPCWSTR name, LPWSTR buffer, ULONG size, ULONG *
             if (*reqsize <= size)
             {
                 memcpy( buffer, name, len );
-                memcpy( buffer + len / sizeof(WCHAR), str.Buffer + str.Length / sizeof(WCHAR),
-                        file_len + sizeof(WCHAR) );
+                memcpy( buffer + len / sizeof(WCHAR), file, file_len + sizeof(WCHAR) );
                 *reqsize -= sizeof(WCHAR);
             }
             ret = TRUE;
