@@ -4090,7 +4090,7 @@ static void test_wave_pmsg(unsigned num_repeats)
     hr = IDirectMusicPerformance_ReferenceToMusicTime(performance, 1000000, &length);
     ok(hr == S_OK, "got %#lx\n", hr);
     /* assuming not modified tempo */
-    length = round((1000000 * 120.0 * DMUS_PPQ) / 600000000.0);
+    length = ceil((1000000 * 120.0 * DMUS_PPQ) / 600000000.0);
 
     for (i = 0; i <= num_repeats; i++)
     {
