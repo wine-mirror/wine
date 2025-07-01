@@ -43,14 +43,14 @@ build-linux:
     - git diff --name-only $CI_MERGE_REQUEST_DIFF_BASE_SHA | sed -re '/\/tests\//!d; s@/tests/.*@/tests/Makefile.in@' |
       (xargs -r ls 2>/dev/null || true) | xargs -r sed '/TESTDLL/!d; s@.dll@@; s@.*= *@@' >usr/local/share/wine/winetest.args
 
-build-clang:
+build-linux-arm64:
   extends: .wine-build
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   tags:
-    - build
+    - arm64-build
   script:
-    - ./tools/gitlab/build-clang
+    - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-linux-arm64
 
 build-mac:
   extends: .wine-build

@@ -5,12 +5,16 @@ echo "---"
 
 set -Eeuxo pipefail
 
+PATH=/usr/local/llvm-mingw/bin:$PATH
+
 ./tools/make_requests
 ./tools/make_specfiles
 ./tools/make_makefiles
 autoreconf -f
 
 cd build64
-../configure -q -C --enable-werror --enable-archs=i386,x86_64,aarch64 --with-mingw=clang
+../configure -q -C --enable-werror --enable-archs=i386,x86_64,aarch64,arm64ec,arm --with-mingw=clang CC=clang
 make -s
 cd ..
+
+git reset --hard
