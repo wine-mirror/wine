@@ -1072,12 +1072,10 @@ static const BYTE direction_flag_code[] = {
 static DWORD direction_flag_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
                                      CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
-#ifdef __GNUC__
     unsigned int flags;
     __asm__("pushfl; popl %0; cld" : "=r" (flags) );
     /* older windows versions don't clear DF properly so don't test */
     if (flags & 0x400) trace( "eflags has DF bit set\n" );
-#endif
     ok( context->EFlags & 0x400, "context eflags has DF bit cleared\n" );
     got_exception++;
     context->Eip++;  /* skip cli */
@@ -3175,7 +3173,7 @@ static const BYTE align_check_code[] =
 static DWORD WINAPI align_check_handler( EXCEPTION_RECORD *rec, ULONG64 frame,
                                          CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
 {
-#ifdef __GNUC__
+#ifndef __arm64ec__
     __asm__ volatile( "pushfq; andl $~0x40000,(%rsp); popfq" );
 #endif
     ok (context->EFlags & 0x40000, "eflags has AC bit unset\n");
@@ -3199,7 +3197,7 @@ static const BYTE direction_flag_code[] =
 static DWORD WINAPI direction_flag_handler( EXCEPTION_RECORD *rec, ULONG64 frame,
                                             CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
 {
-#ifdef __GNUC__
+#ifndef __arm64ec__
     ULONG_PTR flags;
     __asm__("pushfq; popq %0; cld" : "=r" (flags) );
     /* older windows versions don't clear DF properly so don't test */
@@ -5199,7 +5197,7 @@ static void test_KiUserExceptionDispatcher(void)
         test_kiuserexceptiondispatcher_saved_r12 = ctx.R12;
         ctx.R12 = (ULONG64)0xdeadbeeffeedcafe;
 
-#ifdef __GNUC__
+#ifndef __arm64ec__
         /* Spoil r12 value to make sure it doesn't come from the current userspace registers. */
         __asm__ volatile("movq $0xdeadcafe, %%r12" : : : "%r12");
 #endif
@@ -10124,7 +10122,7 @@ static DWORD test_extended_context_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGI
     }
 
 done:
-#ifdef __GNUC__
+#ifndef __arm64ec__
     __asm__ volatile("vmovups (%0),%%ymm0" : : "r"(test_extended_context_spoil_data2));
 #endif
 #ifdef __x86_64__
