@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-05-30 16:31+0200\n"
+"PO-Revision-Date: 2025-07-01 20:49+0200\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -14756,10 +14756,8 @@ msgid "End of file"
 msgstr "Koniec pliku"
 
 #: programs/cmd/cmd.rc:410
-#, fuzzy
-#| msgid "%1!d! file(s) copied\n"
 msgid "%t%1!u! file(s) copied\n"
-msgstr "Skopiowano %1!d! plik(ów)\n"
+msgstr "Skopiowano %t%1!u! plik(ów)\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
