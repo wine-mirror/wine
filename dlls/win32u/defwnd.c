@@ -2831,11 +2831,39 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
         if ((lparam & PRF_CHECKVISIBLE) && !is_window_visible ( hwnd )) break;
         result = 1;
 
-        if (lparam & (PRF_CHILDREN | PRF_OWNED | PRF_NONCLIENT))
+        if (lparam & (PRF_OWNED | PRF_NONCLIENT))
             WARN( "WM_PRINT message with unsupported lparam %lx\n", lparam );
 
         if (lparam & PRF_ERASEBKGND) send_message( hwnd, WM_ERASEBKGND, wparam, 0 );
-        if (lparam & PRF_CLIENT) send_message(hwnd, WM_PRINTCLIENT, wparam, lparam );
+        if (lparam & PRF_CLIENT)
+        {
+            send_message( hwnd, WM_PRINTCLIENT, wparam, lparam );
+
+            if (lparam & PRF_CHILDREN)
+            {
+                HWND *list, *child;
+                POINT org;
+                RECT rect;
+                UINT dpi;
+
+                if ((list = list_window_children( hwnd )))
+                {
+                    for (child = list; *child; child++)
+                    {
+                        if (!is_window_visible( *child ))
+                            continue;
+
+                        dpi = NtUserGetDpiForWindow( *child );
+                        NtUserGetClientRect( *child, &rect, dpi );
+                        NtUserMapWindowPoints( *child, hwnd, (POINT *)&rect, 2, dpi );
+                        offset_viewport_org( (HDC)wparam, rect.left, rect.top, &org );
+                        send_message( *child, WM_PRINT, wparam, PRF_NONCLIENT | PRF_CLIENT | PRF_ERASEBKGND | PRF_CHILDREN );
+                        set_viewport_org( (HDC)wparam, org.x, org.y, NULL );
+                    }
+                    free( list );
+                }
+            }
+        }
         break;
 
     case WM_APPCOMMAND:

@@ -185,6 +185,7 @@ extern struct dce *get_dc_dce( HDC hdc );
 extern void set_dc_dce( HDC hdc, struct dce *dce );
 extern WORD set_dce_flags( HDC hdc, WORD flags );
 extern DWORD set_stretch_blt_mode( HDC hdc, DWORD mode );
+extern BOOL offset_viewport_org( HDC hdc, INT x, INT y, POINT *point );
 extern BOOL set_viewport_org( HDC hdc, INT x, INT y, POINT *point );
 extern void DC_InitDC( DC * dc );
 extern void DC_UpdateXforms( DC * dc );

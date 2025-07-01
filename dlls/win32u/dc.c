@@ -1095,6 +1095,19 @@ BOOL WINAPI NtGdiSetBrushOrg( HDC hdc, INT x, INT y, POINT *oldorg )
 }
 
 
+BOOL offset_viewport_org( HDC hdc, INT x, INT y, POINT *point )
+{
+    DC *dc;
+
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+    if (point) *point = dc->attr->vport_org;
+    dc->attr->vport_org.x += x;
+    dc->attr->vport_org.y += y;
+    release_dc_ptr( dc );
+    return NtGdiComputeXformCoefficients( hdc );
+}
+
+
 BOOL set_viewport_org( HDC hdc, INT x, INT y, POINT *point )
 {
     DC *dc;
