@@ -399,11 +399,11 @@ static const char *legacy_extensions[] =
     NULL,
 };
 
-static GLubyte *filter_extensions_list( const char *extensions, const char *disabled )
+static GLubyte *filter_extensions_list( const char *extensions, const char *disabled, const char *enabled )
 {
     const char *end, **extra;
     char *p, *str;
-    size_t size;
+    size_t size, len;
 
     size = strlen( extensions ) + 2;
     for (extra = legacy_extensions; *extra; extra++) size += strlen( *extra ) + 1;
@@ -418,7 +418,8 @@ static GLubyte *filter_extensions_list( const char *extensions, const char *disa
 
         if (!(end = strchr( extensions, ' ' ))) end = extensions + strlen( extensions );
         memcpy( p, extensions, end - extensions );
-        p[end - extensions] = 0;
+        len = end - extensions;
+        p[len] = 0;
 
         /* We do not support GL_MAP_PERSISTENT_BIT, and hence
          * ARB_buffer_storage, on wow64. */
@@ -426,7 +427,7 @@ static GLubyte *filter_extensions_list( const char *extensions, const char *disa
         {
             TRACE( "-- %s (disabled due to wow64)\n", p );
         }
-        else if (!has_extension( disabled, p, strlen( p ) ))
+        else if (!has_extension( disabled, p, len ) && (!*enabled || has_extension( enabled, p, len )))
         {
             TRACE( "++ %s\n", p );
             p += end - extensions;
@@ -470,13 +471,13 @@ static const char *parse_gl_version( const char *gl_version, int *major, int *mi
     return ptr;
 }
 
-static GLuint *filter_extensions_index( TEB *teb, const char *disabled )
+static GLuint *filter_extensions_index( TEB *teb, const char *disabled, const char *enabled )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     const char *ext, *version;
     GLuint *disabled_index;
     GLint extensions_count;
-    unsigned int i = 0, j;
+    unsigned int i = 0, j, len;
     int major, minor;
 
     if (!funcs->p_glGetStringi)
@@ -500,6 +501,7 @@ static GLuint *filter_extensions_index( TEB *teb, const char *disabled )
     for (j = 0; j < extensions_count; ++j)
     {
         ext = (const char *)funcs->p_glGetStringi( GL_EXTENSIONS, j );
+        len = strlen( ext );
 
         /* We do not support GL_MAP_PERSISTENT_BIT, and hence
          * ARB_buffer_storage, on wow64. */
@@ -508,7 +510,7 @@ static GLuint *filter_extensions_index( TEB *teb, const char *disabled )
             TRACE( "-- %s (disabled due to wow64)\n", ext );
             disabled_index[i++] = j;
         }
-        else if (!has_extension( disabled, ext, strlen( ext ) ))
+        else if (!has_extension( disabled, ext, len ) && (!*enabled || has_extension( enabled, ext, len )))
         {
             TRACE( "++ %s\n", ext );
         }
@@ -678,7 +680,7 @@ static char *query_opengl_option( const char *name )
 /* build the extension string by filtering out the disabled extensions */
 static BOOL filter_extensions( TEB * teb, const char *extensions, GLubyte **exts_list, GLuint **disabled_exts )
 {
-    static const char *disabled;
+    static const char *disabled, *enabled;
     char *str;
 
     if (!disabled)
@@ -686,9 +688,14 @@ static BOOL filter_extensions( TEB * teb, const char *extensions, GLubyte **exts
         if (!(str = query_opengl_option( "DisabledExtensions" ))) disabled = "";
         else if (InterlockedCompareExchangePointer( (void **)&disabled, str, NULL )) free( str );
     }
+    if (!enabled)
+    {
+        if (!(str = query_opengl_option( "EnabledExtensions" ))) enabled = "";
+        else if (InterlockedCompareExchangePointer( (void **)&enabled, str, NULL )) free( str );
+    }
 
-    if (extensions && !*exts_list) *exts_list = filter_extensions_list( extensions, disabled );
-    if (!*disabled_exts) *disabled_exts = filter_extensions_index( teb, disabled );
+    if (extensions && !*exts_list) *exts_list = filter_extensions_list( extensions, disabled, enabled );
+    if (!*disabled_exts) *disabled_exts = filter_extensions_index( teb, disabled, enabled );
     return (exts_list && *exts_list) || *disabled_exts;
 }
 
