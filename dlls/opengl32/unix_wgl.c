@@ -411,10 +411,10 @@ static GLubyte *filter_extensions_list( const char *extensions, const char *disa
 
     TRACE( "GL_EXTENSIONS:\n" );
 
-    for (extra = legacy_extensions;;)
+    for (;;)
     {
         while (*extensions == ' ') extensions++;
-        if (!*extensions && !(extensions = *extra++)) break;
+        if (!*extensions) break;
 
         if (!(end = strchr( extensions, ' ' ))) end = extensions + strlen( extensions );
         memcpy( p, extensions, end - extensions );
@@ -438,6 +438,16 @@ static GLubyte *filter_extensions_list( const char *extensions, const char *disa
         }
         extensions = end;
     }
+
+    for (extra = legacy_extensions; *extra; extra++)
+    {
+        size = strlen( *extra );
+        memcpy( p, *extra, size );
+        p += size;
+        *p++ = ' ';
+    }
+
+    if (p != str) --p;
     *p = 0;
     return (GLubyte *)str;
 }
