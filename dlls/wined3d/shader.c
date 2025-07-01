@@ -2345,7 +2345,6 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const struct w
         if (!(shader->frontend = shader_select_frontend(shader->source_type)))
         {
             FIXME("Unable to find frontend for shader.\n");
-            shader_cleanup(shader);
             return WINED3DERR_INVALIDCALL;
         }
 
@@ -2353,7 +2352,6 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const struct w
         if (!(fe_data = fe->shader_init(desc->byte_code, desc->byte_code_size, &shader->output_signature)))
         {
             WARN("Failed to initialise frontend data.\n");
-            shader_cleanup(shader);
             return WINED3DERR_INVALIDCALL;
         }
 
@@ -2366,10 +2364,7 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const struct w
         shader->byte_code_size = (ptr - desc->byte_code) * sizeof(*ptr);
 
         if (!(shader->byte_code = malloc(shader->byte_code_size)))
-        {
-            shader_cleanup(shader);
             return E_OUTOFMEMORY;
-        }
         memcpy(shader->byte_code, desc->byte_code, shader->byte_code_size);
 
         shader->function = shader->byte_code;
@@ -2380,24 +2375,17 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const struct w
         unsigned int max_version;
 
         if (!(shader->byte_code = malloc(desc->byte_code_size)))
-        {
-            shader_cleanup(shader);
             return E_OUTOFMEMORY;
-        }
         memcpy(shader->byte_code, desc->byte_code, desc->byte_code_size);
         shader->byte_code_size = desc->byte_code_size;
 
         max_version = shader_max_version_from_feature_level(shader->device->cs->c.state->feature_level);
         if (FAILED(hr = wined3d_shader_extract_from_dxbc(shader, max_version, &shader->source_type)))
-        {
-            shader_cleanup(shader);
             return hr;
-        }
 
         if (!(shader->frontend = shader_select_frontend(shader->source_type)))
         {
             FIXME("Unable to find frontend for shader.\n");
-            shader_cleanup(shader);
             return WINED3DERR_INVALIDCALL;
         }
     }
@@ -2558,8 +2546,12 @@ static void wined3d_shader_init_object(void *object)
         if (!ffp_hlsl_compile_vs(settings, &desc, device))
             return;
         free(settings);
-        shader_set_function(shader, &desc, WINED3D_SHADER_TYPE_VERTEX, NULL,
-                device->adapter->d3d_info.limits.vs_uniform_count);
+        if (FAILED(shader_set_function(shader, &desc, WINED3D_SHADER_TYPE_VERTEX, NULL,
+                device->adapter->d3d_info.limits.vs_uniform_count)))
+        {
+            shader_cleanup(shader);
+            return;
+        }
     }
 
     if (shader->is_ffp_ps)
@@ -2570,8 +2562,12 @@ static void wined3d_shader_init_object(void *object)
         if (!ffp_hlsl_compile_ps(settings, &desc))
             return;
         free(settings);
-        shader_set_function(shader, &desc, WINED3D_SHADER_TYPE_PIXEL, NULL,
-                device->adapter->d3d_info.limits.ps_uniform_count);
+        if (FAILED(shader_set_function(shader, &desc, WINED3D_SHADER_TYPE_PIXEL, NULL,
+                device->adapter->d3d_info.limits.ps_uniform_count)))
+        {
+            shader_cleanup(shader);
+            return;
+        }
     }
 
     device->shader_backend->shader_precompile(device->shader_priv, shader);
