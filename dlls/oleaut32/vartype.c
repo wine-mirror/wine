@@ -3496,7 +3496,7 @@ HRESULT WINAPI VarCyFromR4(FLOAT fltIn, CY* pCyOut)
  */
 HRESULT WINAPI VarCyFromR8(DOUBLE dblIn, CY* pCyOut)
 {
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
   /* This code gives identical results to Win32 on Intel.
    * Here we use fp exceptions to catch overflows when storing the value.
    */
