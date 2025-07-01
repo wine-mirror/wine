@@ -11338,6 +11338,42 @@ static LRESULT WINAPI WmCopyDataProcA(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     return DefWindowProcA(hwnd,msg,wp,lp);
 }
 
+static LRESULT WINAPI WmPrintProcA(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+{
+    static LONG defwndproc_counter = 0;
+    struct recvd_message msg;
+    LRESULT lr;
+
+    msg.hwnd = hwnd;
+    msg.message = message;
+    msg.flags = sent | wparam | lparam;
+    if (defwndproc_counter)
+        msg.flags |= defwinproc;
+    msg.wParam = wp;
+    msg.lParam = lp;
+    msg.descr = "WmPrintProcA";
+    add_message(&msg);
+
+    switch (message)
+    {
+    case WM_PRINT:
+    {
+        static RECT rect = {0, 0, 1, 1};
+        HBRUSH brush;
+
+        brush = CreateSolidBrush(RGB(0xff, 0, 0));
+        FillRect((HDC)wp, &rect, brush);
+        DeleteObject(brush);
+        return 0;
+    }
+    }
+
+    defwndproc_counter++;
+    lr = DefWindowProcA(hwnd, message, wp, lp);
+    defwndproc_counter--;
+    return lr;
+}
+
 static void register_classes(void)
 {
     WNDCLASSA cls;
@@ -11385,6 +11421,10 @@ static void register_classes(void)
 
     cls.lpfnWndProc = WmCopyDataProcA;
     cls.lpszClassName = "WmCopyDataWindowClass";
+    register_class(&cls);
+
+    cls.lpfnWndProc = WmPrintProcA;
+    cls.lpszClassName = "WmPrintClass";
     register_class(&cls);
 
     cls.style = CS_NOCLOSE;
@@ -21103,6 +21143,79 @@ static void test_WM_COPYDATA(char **argv)
     CloseHandle(pi.hThread);
 }
 
+static const struct message wm_print_prf_children[] =
+{
+    { WM_PRINT, sent|lparam, 0, PRF_NONCLIENT|PRF_CLIENT|PRF_ERASEBKGND|PRF_CHILDREN },
+    { 0 }
+};
+
+static void test_defwinproc_wm_print(void)
+{
+    HWND hwnd, child;
+    COLORREF color;
+    LRESULT lr;
+    HDC hdc;
+
+    hwnd = CreateWindowA("SimpleWindowClass", "test_defwinproc_wm_print", WS_POPUP, 0,
+                         0, 100, 100, 0, 0, 0, NULL);
+    ok(!!hwnd, "CreateWindowA failed, error %lu.\n", GetLastError());
+    child = CreateWindowA("WmPrintClass", "test_defwinproc_wm_print_child", WS_VISIBLE | WS_CHILD,
+                          50, 50, 50, 50, hwnd, 0, 0, NULL);
+    ok(!!child, "CreateWindowA failed, error %lu.\n", GetLastError());
+
+    hdc = GetDC(hwnd);
+
+    /* Check the return code when no flags are specified */
+    lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, 0);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %Id.\n", lr);
+
+    /* Check the return code when PRF_CHECKVISIBLE is specified and the window is invisible */
+    lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_CHECKVISIBLE);
+    ok(lr == 0, "Got unexpected lr %Id.\n", lr);
+
+    ShowWindow(hwnd, SW_SHOWNORMAL);
+    flush_events();
+    flush_sequence();
+
+    /* Check the return code when PRF_CHECKVISIBLE is specified and the window is visible */
+    lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_CHECKVISIBLE);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %Id.\n", lr);
+
+    /* Check the return code when PRF_ERASEBKGND is specified */
+    lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_ERASEBKGND);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %Id.\n", lr);
+
+    /* Check the return code when PRF_CLIENT is specified */
+    lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_CLIENT);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %Id.\n", lr);
+
+    /* PRF_CHILDREN needs to be used with PRF_CLIENT */
+    lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_CHILDREN);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %Id.\n", lr);
+    color = GetPixel(hdc, 50, 50);
+    ok(color == RGB(0xff, 0xff, 0xff), "Got unexpected color %#lx.\n", color);
+    ok_sequence(WmEmptySeq, "DefWindowProc WM_PRINT PRF_CHILDREN", FALSE);
+    flush_sequence();
+
+    /* PRF_CHILDREN | PRF_CLIENT */
+    lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_CHILDREN | PRF_CLIENT);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %Id.\n", lr);
+    color = GetPixel(hdc, 50, 50);
+    todo_wine
+    ok(color == RGB(0xff, 0, 0), "Got unexpected color %#lx.\n", color);
+    ok_sequence(wm_print_prf_children, "DefWindowProc WM_PRINT with PRF_CHILDREN | PRF_CLIENT", TRUE);
+    flush_sequence();
+
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(msg)
 {
     char **test_argv;
@@ -21221,6 +21334,7 @@ START_TEST(msg)
     test_dbcs_wm_char();
     test_unicode_wm_char();
     test_defwinproc();
+    test_defwinproc_wm_print();
     test_desktop_winproc();
     test_clipboard_viewers();
     test_keyflags();
