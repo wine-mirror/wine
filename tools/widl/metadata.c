@@ -2903,12 +2903,43 @@ static void add_marshalingbehavior_attr_step2( type_t *type )
     add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
 }
 
+static void add_member_interfaces( type_t *class )
+{
+    const typeref_list_t *iface_list = type_runtimeclass_get_ifaces( class );
+    const typeref_t *iface;
+
+    if (iface_list) LIST_FOR_EACH_ENTRY( iface, iface_list, typeref_t, entry )
+    {
+        UINT interface = typedef_or_ref( TABLE_TYPEREF, iface->type->md.ref );
+        UINT interfaceimpl_ref = add_interfaceimpl_row( class->md.def, interface );
+        const statement_t *stmt;
+
+        if (is_attr( iface->attrs, ATTR_DEFAULT )) add_default_attr( class, interfaceimpl_ref );
+
+        /* add properties in reverse order like midlrt */
+        STATEMENTS_FOR_EACH_FUNC_REV( stmt, type_iface_get_stmts(iface->type) )
+        {
+            const var_t *method = stmt->u.var;
+
+            add_property( class, iface->type, method );
+        }
+
+        STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface->type) )
+        {
+            const var_t *method = stmt->u.var;
+
+            add_event( class, iface->type, method );
+            add_method( class, iface->type, method );
+            add_method_impl( class, iface->type, method );
+            add_method_contract_attrs( class, iface->type, method->declspec.type );
+        }
+    }
+}
+
 static void add_runtimeclass_type_step2( type_t *type )
 {
-    UINT name, namespace, scope, extends, typeref, interface, interfaceimpl_ref, flags;
-    typeref_list_t *iface_list = type_runtimeclass_get_ifaces( type );
-    typeref_t *iface;
-    const statement_t *stmt;
+    const typeref_list_t *iface_list = type_runtimeclass_get_ifaces( type );
+    UINT name, namespace, scope, extends, typeref, flags;
 
     name = add_name( type, &namespace );
 
@@ -2921,31 +2952,7 @@ static void add_runtimeclass_type_step2( type_t *type )
 
     type->md.def = add_typedef_row( flags, name, namespace, extends, 0, 0 );
 
-    if (iface_list) LIST_FOR_EACH_ENTRY( iface, iface_list, typeref_t, entry )
-    {
-        interface = typedef_or_ref( TABLE_TYPEREF, iface->type->md.ref );
-        interfaceimpl_ref = add_interfaceimpl_row( type->md.def, interface );
-
-        if (is_attr( iface->attrs, ATTR_DEFAULT )) add_default_attr( type, interfaceimpl_ref );
-
-        /* add properties in reverse order like midlrt */
-        STATEMENTS_FOR_EACH_FUNC_REV( stmt, type_iface_get_stmts(iface->type) )
-        {
-            const var_t *method = stmt->u.var;
-
-            add_property( type, iface->type, method );
-        }
-
-        STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface->type) )
-        {
-            const var_t *method = stmt->u.var;
-
-            add_event( type, iface->type, method );
-            add_method( type, iface->type, method );
-            add_method_impl( type, iface->type, method );
-            add_method_contract_attrs( type, iface->type, method->declspec.type );
-        }
-    }
+    add_member_interfaces( type );
 
     add_contract_attr_step1( type );
     add_static_attr_step1( type );
