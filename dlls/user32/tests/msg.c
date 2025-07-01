@@ -21167,7 +21167,6 @@ static void test_defwinproc_wm_print(void)
 
     /* Check the return code when no flags are specified */
     lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, 0);
-    todo_wine
     ok(lr == 1, "Got unexpected lr %Id.\n", lr);
 
     /* Check the return code when PRF_CHECKVISIBLE is specified and the window is invisible */
@@ -21180,22 +21179,18 @@ static void test_defwinproc_wm_print(void)
 
     /* Check the return code when PRF_CHECKVISIBLE is specified and the window is visible */
     lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_CHECKVISIBLE);
-    todo_wine
     ok(lr == 1, "Got unexpected lr %Id.\n", lr);
 
     /* Check the return code when PRF_ERASEBKGND is specified */
     lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_ERASEBKGND);
-    todo_wine
     ok(lr == 1, "Got unexpected lr %Id.\n", lr);
 
     /* Check the return code when PRF_CLIENT is specified */
     lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_CLIENT);
-    todo_wine
     ok(lr == 1, "Got unexpected lr %Id.\n", lr);
 
     /* PRF_CHILDREN needs to be used with PRF_CLIENT */
     lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_CHILDREN);
-    todo_wine
     ok(lr == 1, "Got unexpected lr %Id.\n", lr);
     color = GetPixel(hdc, 50, 50);
     ok(color == RGB(0xff, 0xff, 0xff), "Got unexpected color %#lx.\n", color);
@@ -21204,7 +21199,6 @@ static void test_defwinproc_wm_print(void)
 
     /* PRF_CHILDREN | PRF_CLIENT */
     lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_CHILDREN | PRF_CLIENT);
-    todo_wine
     ok(lr == 1, "Got unexpected lr %Id.\n", lr);
     color = GetPixel(hdc, 50, 50);
     todo_wine

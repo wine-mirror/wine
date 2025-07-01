@@ -2829,6 +2829,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
     case WM_PRINT:
         if ((lparam & PRF_CHECKVISIBLE) && !is_window_visible ( hwnd )) break;
+        result = 1;
 
         if (lparam & (PRF_CHILDREN | PRF_OWNED | PRF_NONCLIENT))
             WARN( "WM_PRINT message with unsupported lparam %lx\n", lparam );
