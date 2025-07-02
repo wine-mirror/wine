@@ -563,8 +563,6 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
         }
 
         ok((hr == S_FALSE)^(pwfx2 == NULL), "hr %lx<->suggest %p\n", hr, pwfx2);
-        if (pwfx2 == (WAVEFORMATEX*)0xDEADF00D)
-            pwfx2 = NULL; /* broken in Wine < 1.3.28 */
         if (pwfx2) {
             ok(pwfx2->nSamplesPerSec == pwfx->nSamplesPerSec &&
                pwfx2->nChannels      == pwfx->nChannels &&
