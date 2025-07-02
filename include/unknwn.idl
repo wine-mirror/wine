@@ -60,6 +60,9 @@ cpp_quote("        }")
 cpp_quote("        END_INTERFACE")
 cpp_quote("    };")
 cpp_quote("}")
+cpp_quote("#ifdef __CRT_UUID_DECL")
+cpp_quote("__CRT_UUID_DECL(IUnknown, 0x00000000, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46)")
+cpp_quote("#endif")
 cpp_quote("#else")
   HRESULT QueryInterface(
     [in] REFIID riid,
