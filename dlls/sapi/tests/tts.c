@@ -922,6 +922,28 @@ static void test_spvoice_ssml(void)
         L"<prosody volume='loud'><prosody volume='soft'>soft.</prosody></prosody>"
         L"</speak>";
 
+    static const WCHAR text10[] =
+        L"<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-us'>"
+        L"<prosody pitch='300Hz'>300Hz.</prosody>"
+        L"<prosody pitch='600Hz'>600Hz.</prosody>"
+        L"<prosody pitch='+300Hz'>+300Hz.</prosody>"
+        L"<prosody pitch='-300Hz'>-300Hz.</prosody>"
+        L"<prosody pitch='41.4%'>41.4%.</prosody>"
+        L"<prosody pitch='+41.4%'>+41.4%.</prosody>"
+        L"<prosody pitch='-50%'>-50%.</prosody>"
+        L"<prosody pitch='-98.99999%'>-98.99999%.</prosody>"
+        L"<prosody pitch='-99%'>-99%.</prosody>"
+        L"<prosody pitch='-101%'>-101%.</prosody>"
+        L"<prosody pitch='41.4%'><prosody pitch='+41.4%'>+100%.</prosody></prosody>"
+        L"<prosody pitch='41.4%'><prosody pitch='-50%'>-29%.</prosody></prosody>"
+        L"<prosody pitch='x-low'>x-low.</prosody>"
+        L"<prosody pitch='low'>low.</prosody>"
+        L"<prosody pitch='medium'>medium.</prosody>"
+        L"<prosody pitch='high'>high.</prosody>"
+        L"<prosody pitch='x-high'>x-high.</prosody>"
+        L"<prosody pitch='high'><prosody pitch='low'>high-low.</prosody></prosody>"
+        L"</speak>";
+
 
     ISpVoice *voice;
     ISpObjectToken *token;
@@ -1161,6 +1183,37 @@ static void test_spvoice_ssml(void)
 
         check_frag_state_field(6, Volume,  40, "%lu"); /* soft   */
     }
+
+    reset_engine_params(&test_engine);
+
+    hr = ISpVoice_Speak(voice, text10, SPF_IS_XML | SPF_PARSE_SSML, NULL);
+    ok(hr == S_OK || broken(hr == SPERR_UNSUPPORTED_FORMAT) /* win7 */, "got %#lx.\n", hr);
+
+    if (hr == S_OK) {
+        ok(test_engine.frag_count == 18, "got %Iu.\n", test_engine.frag_count);
+
+        check_frag_state_field(0,  PitchAdj.MiddleAdj,    0, "%ld"); /* Absolute Hz values are ignored. */
+        check_frag_state_field(1,  PitchAdj.MiddleAdj,    0, "%ld");
+        check_frag_state_field(2,  PitchAdj.MiddleAdj,    0, "%ld");
+        check_frag_state_field(3,  PitchAdj.MiddleAdj,    0, "%ld");
+        check_frag_state_field(4,  PitchAdj.MiddleAdj,   12, "%ld"); /* 2^(12/24)   ~= 1.414. */
+        check_frag_state_field(5,  PitchAdj.MiddleAdj,   12, "%ld"); /* 2^(12/24)   ~= 1.414. */
+        check_frag_state_field(6,  PitchAdj.MiddleAdj,  -24, "%ld"); /* 2^(-24/24)   = 0.5.   */
+        check_frag_state_field(7,  PitchAdj.MiddleAdj, -159, "%ld"); /* 2^(-159/24) ~= 0.0100001. */
+        check_frag_state_field(8,  PitchAdj.MiddleAdj,  -10, "%ld"); /* -99%.  */
+        check_frag_state_field(9,  PitchAdj.MiddleAdj,  -10, "%ld"); /* -101%. */
+        check_frag_state_field(10, PitchAdj.MiddleAdj,   24, "%ld"); /* 2^(24/24)   = 1.     */
+        check_frag_state_field(11, PitchAdj.MiddleAdj,  -12, "%ld"); /* 2^(-12/24) ~= 0.707. */
+
+        check_frag_state_field(12, PitchAdj.MiddleAdj, -9, "%ld"); /* x-low  */
+        check_frag_state_field(13, PitchAdj.MiddleAdj, -4, "%ld"); /* low    */
+        check_frag_state_field(14, PitchAdj.MiddleAdj,  0, "%ld"); /* medium */
+        check_frag_state_field(15, PitchAdj.MiddleAdj,  4, "%ld"); /* high   */
+        check_frag_state_field(16, PitchAdj.MiddleAdj,  9, "%ld"); /* x-high */
+
+        check_frag_state_field(17, PitchAdj.MiddleAdj, -4, "%ld"); /* low    */
+    }
+
 
     reset_engine_params(&test_engine);
     ISpVoice_Release(voice);

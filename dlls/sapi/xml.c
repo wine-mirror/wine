@@ -526,6 +526,15 @@ static HRESULT parse_ssml_prosody_elem(struct xml_parser *parser, SPVSTATE state
         { L"x-loud", 100 },
     };
 
+    static const struct string_value pitch_values[] =
+    {
+        { L"x-low", -9 },
+        { L"low",   -4 },
+        { L"medium", 0 },
+        { L"high",   4 },
+        { L"x-high", 9 },
+    };
+
     struct xml_attr attr;
     BOOL end = FALSE;
     size_t read_len;
@@ -581,6 +590,33 @@ static HRESULT parse_ssml_prosody_elem(struct xml_parser *parser, SPVSTATE state
                 volume = state.Volume + volume;
 
             state.Volume = lclamp(lround(volume), 0, 100);
+        }
+        else if (xml_attr_eq(&attr, L"pitch"))
+        {
+            double pitch;
+
+            if (lookup_string_value(pitch_values, ARRAY_SIZE(pitch_values), &attr.value, &state.PitchAdj.MiddleAdj))
+                continue;
+
+            if (FAILED(hr = parse_double_value(&attr.value, &pitch, &read_len)))
+                return hr;
+
+            if (attr.value.len > 2 && read_len == attr.value.len - 2 &&
+                attr.value.ptr[read_len] == 'H' && attr.value.ptr[read_len + 1] == 'z')
+            {
+                WARN("Ignoring Hz pitch value %s in <prosody>.\n", debugstr_xmlstr(&attr.value));
+                continue;
+            }
+            else if (read_len != attr.value.len - 1 || attr.value.ptr[read_len] != '%')
+            {
+                ERR("Invalid value %s for the pitch attribute in <prosody>.\n", debugstr_xmlstr(&attr.value));
+                return SPERR_UNSUPPORTED_FORMAT;
+            }
+
+            if (pitch > -99)
+                state.PitchAdj.MiddleAdj += lround(log2(1 + pitch / 100) * 24);
+            else
+                state.PitchAdj.MiddleAdj -= 10;
         }
         else
         {
