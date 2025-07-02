@@ -4212,8 +4212,8 @@ static inline void wined3d_lock_cleanup(CRITICAL_SECTION *lock)
     DeleteCriticalSection(lock);
 }
 
-#ifdef __GNUC__
-#define PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
+#ifdef __WINE_CRT_PRINTF_ATTR
+#define PRINTF_ATTR(fmt,args) __WINE_CRT_PRINTF_ATTR(fmt, args)
 #else
 #define PRINTF_ATTR(fmt,args)
 #endif
