@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2024-12-15 22:00+0900\n"
+"PO-Revision-Date: 2025-07-02 23:08+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -331,10 +331,8 @@ msgid "Please wait until the current uninstall/modify process is complete."
 msgstr "実行中のアンインストール・変更が完了するのをお待ちください。"
 
 #: dlls/appwiz.cpl/appwiz.rc:55
-#, fuzzy
-#| msgid "Downloading..."
 msgid "Download failed."
-msgstr "ダウンロードしています..."
+msgstr "ダウンロードに失敗しました。"
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"
@@ -389,19 +387,18 @@ msgid "uncompressed"
 msgstr "未圧縮"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:31
-#, fuzzy
-#| msgid "&Confirm password:"
 msgid "Confirm pairing"
-msgstr "パスワードの確認(&C):"
+msgstr "ペアリングの確認"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:32
 msgid "Pair with '%1!s!' using the following PIN/passkey value: %2!lu!?"
-msgstr ""
+msgstr "'%1!s!' と次の PIN/パスキー値を用いてペアリングしますか: %2!lu!?"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:33
 msgid ""
 "Pair with unnamed device %1!s! using the following PIN/passkey value: %2!lu!?"
 msgstr ""
+"無名のデバイス %1!s! と次の PIN/パスキー値を用いてペアリングしますか: %2!lu!?"
 
 #: dlls/browseui/browseui.rc:28
 msgid "Canceling..."
@@ -595,7 +592,7 @@ msgstr "読み取り専用(&R)"
 
 #: dlls/comdlg32/comdlg32.rc:180
 msgid "Save As..."
-msgstr "名前をつけて保存..."
+msgstr "名前を付けて保存..."
 
 #: dlls/comdlg32/comdlg32.rc:193 dlls/comdlg32/comdlg32.rc:146
 msgid "Save As"
@@ -1370,41 +1367,32 @@ msgid "Default"
 msgstr "デフォルト"
 
 #: dlls/compstui/compstui.rc:35
-#, fuzzy
-#| msgid "&Copy Background"
 msgid "&Copy count"
-msgstr "背景をコピー(&C)"
+msgstr "印刷部数(&C)"
 
 #: dlls/compstui/compstui.rc:36
-#, fuzzy
-#| msgid "Print to File"
 msgid "Print on Both Sides"
-msgstr "ファイルに出力"
+msgstr "両面印刷"
 
 #: dlls/compstui/compstui.rc:32
-#, fuzzy
-#| msgid "C&olor:"
 msgid "C&olor"
-msgstr "色(&O):"
+msgstr "カラー印刷(&O)"
 
 #: dlls/compstui/compstui.rc:34
 msgid "Bla&ck && White"
-msgstr ""
+msgstr "モノクロ(&C)"
 
 #: dlls/compstui/compstui.rc:37
-#, fuzzy
-#| msgctxt "hotkey"
-#| msgid "None"
 msgid "&None"
-msgstr "なし"
+msgstr "なし(&N)"
 
 #: dlls/compstui/compstui.rc:38 dlls/compstui/compstui.rc:41
 msgid "Flip on Shor&t Edge"
-msgstr ""
+msgstr "短辺とじ(&T)"
 
 #: dlls/compstui/compstui.rc:39 dlls/compstui/compstui.rc:40
 msgid "Flip on Long E&dge"
-msgstr ""
+msgstr "長辺とじ(&D)"
 
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
@@ -3480,10 +3468,8 @@ msgid "Show &Tabs"
 msgstr "タブを表示(&T)"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:39
-#, fuzzy
-#| msgid "Select Source"
 msgid "Select Topic"
-msgstr "ソースの選択"
+msgstr "トピックを選択"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:44
 msgid "Show"
@@ -12518,30 +12504,22 @@ msgid "Install"
 msgstr "インストール"
 
 #: dlls/urlmon/urlmon.rc:58
-#, fuzzy
-#| msgid "Local Port"
 msgid "Local intranet"
-msgstr "ローカル ポート"
+msgstr "ローカル イントラネット"
 
 #: dlls/urlmon/urlmon.rc:60
-#, fuzzy
-#| msgid "Trusted Publishers"
 msgid "Trusted sites"
-msgstr "信頼された発行元"
+msgstr "信頼済みサイト"
 
 #: dlls/urlmon/urlmon.rc:62
-#, fuzzy
-#| msgid "Ethernet"
 msgid "Internet"
-msgstr "イーサネット"
+msgstr "インターネット"
 
 #: dlls/urlmon/urlmon.rc:64
 msgid "Restricted sites"
-msgstr ""
+msgstr "制限済みサイト"
 
 #: dlls/urlmon/urlmon.rc:57
-#, fuzzy
-#| msgid "My Computer"
 msgid "Your computer"
 msgstr "マイ コンピューター"
 
@@ -12549,22 +12527,27 @@ msgstr "マイ コンピューター"
 msgid ""
 "This zone contains all Web sites that are on your organization's intranet."
 msgstr ""
+"このゾーンには組織のイントラネット上にあるすべての Web サイトが含まれます。"
 
 #: dlls/urlmon/urlmon.rc:61
 msgid ""
 "This zone contains Web sites that you trust not to damage your computer or "
 "data."
 msgstr ""
+"このゾーンにはコンピューターやデータに損害を与えないと信頼する Web サイトが含"
+"まれます。"
 
 #: dlls/urlmon/urlmon.rc:63
 msgid "This zone contains all Web sites you haven't placed in other zones"
-msgstr ""
+msgstr "このゾーンには他のゾーンに含まれないすべての Web サイトが含まれます。"
 
 #: dlls/urlmon/urlmon.rc:65
 msgid ""
 "This zone contains Web sites that could potentially damage your computer or "
 "data."
 msgstr ""
+"このゾーンにはコンピューターやデータに損害を与える可能性のある Web サイトが含"
+"まれます。"
 
 #: dlls/user32/user32.rc:30 dlls/user32/user32.rc:43
 #: programs/taskmgr/taskmgr.rc:138
@@ -14717,10 +14700,8 @@ msgid "End of file"
 msgstr "ファイルの終端"
 
 #: programs/cmd/cmd.rc:410
-#, fuzzy
-#| msgid "%1!d! file(s) copied\n"
 msgid "%t%1!u! file(s) copied\n"
-msgstr "%1!d! ファイルをコピーしました\n"
+msgstr "%t%1!d! ファイルをコピーしました\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
@@ -15343,10 +15324,8 @@ msgid "&Save\tCtrl+S"
 msgstr "保存(&S)\tCtrl+S"
 
 #: programs/notepad/notepad.rc:33
-#, fuzzy
-#| msgid "Save As..."
 msgid "Save &As..."
-msgstr "名前をつけて保存..."
+msgstr "名前を付けて保存(&A)..."
 
 #: programs/notepad/notepad.rc:35 programs/regedit/regedit.rc:39
 #: programs/wordpad/wordpad.rc:36
@@ -15378,10 +15357,8 @@ msgid "&Paste\tCtrl+V"
 msgstr "貼り付け(&P)\tCtrl+V"
 
 #: programs/notepad/notepad.rc:47
-#, fuzzy
-#| msgid "&Delete\tDel"
 msgid "De&lete\tDel"
-msgstr "削除(&D)\tDel"
+msgstr "削除(&L)\tDel"
 
 #: programs/notepad/notepad.rc:49 programs/regedit/regedit.rc:62
 #: programs/regedit/regedit.rc:109 programs/wordpad/wordpad.rc:53
@@ -15389,8 +15366,6 @@ msgid "&Find...\tCtrl+F"
 msgstr "検索(&F)...\tCtrl+F"
 
 #: programs/notepad/notepad.rc:50
-#, fuzzy
-#| msgid "Find &next\tF3"
 msgid "Find &Next\tF3"
 msgstr "次を検索(&N)\tF3"
 
@@ -15403,16 +15378,12 @@ msgid "&Go To...\tCtrl+G"
 msgstr "指定行に移動(&G)...\tCtrl+G"
 
 #: programs/notepad/notepad.rc:54
-#, fuzzy
-#| msgid "Select &all\tCtrl+A"
 msgid "Select &All\tCtrl+A"
 msgstr "すべて選択(&A)\tCtrl+A"
 
 #: programs/notepad/notepad.rc:55
-#, fuzzy
-#| msgid "&Time/Date\tF5"
 msgid "Time/&Date\tF5"
-msgstr "日付と時刻(&T)\tF5"
+msgstr "日付と時刻(&D)\tF5"
 
 #: programs/notepad/notepad.rc:57 programs/wordpad/wordpad.rc:82
 msgid "F&ormat"
@@ -15420,7 +15391,7 @@ msgstr "書式(&O)"
 
 #: programs/notepad/notepad.rc:58
 msgid "&Word Wrap"
-msgstr ""
+msgstr "右端で折り返す(&W)"
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -18377,37 +18348,35 @@ msgstr "タスク"
 
 #: programs/timeout/timeout.rc:28
 msgid "Usage: timeout /T <timeout> [</NOBREAK>]\n"
-msgstr ""
+msgstr "使い方: timeout /T <タイムアウト> [</NOBREAK>]\n"
 
 #: programs/timeout/timeout.rc:29
-#, fuzzy
-#| msgid "FINDSTR: Bad command line\n"
 msgid "TIMEOUT: Bad command line\n"
-msgstr "FINDSTR: コマンド ラインが正しくありません\n"
+msgstr "TIMEOUT: コマンド ラインが正しくありません\n"
 
 #: programs/timeout/timeout.rc:30
 msgid "waiting since %d sec. "
-msgstr ""
+msgstr "%d 秒待機中です。"
 
 #: programs/timeout/timeout.rc:31
 msgid "press CTRL+C..."
-msgstr ""
+msgstr "CTRL+C を押してください..."
 
 #: programs/timeout/timeout.rc:32
-#, fuzzy
-#| msgid "Press any key to continue... "
 msgid "press a key to continue..."
-msgstr "続けるには何かキーを押して下さい... "
+msgstr "続けるにはキーを押して下さい..."
 
 #: programs/timeout/timeout.rc:33
 msgid "ERROR: not possible to redirect input\n"
-msgstr ""
+msgstr "エラー: 入力はリダイレクトできません\n"
 
 #: programs/timeout/timeout.rc:34
 msgid ""
 "ERROR: Timeout value out of range or invalid number. Valid range is -1 to "
 "99999.\n"
 msgstr ""
+"エラー: タイムアウト値が範囲外か正しくない数値です。妥当な範囲は -1 から "
+"99999 です。\n"
 
 #: programs/uninstaller/uninstaller.rc:29
 msgid "Wine Application Uninstaller"
