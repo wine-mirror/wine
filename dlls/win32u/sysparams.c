@@ -1989,6 +1989,7 @@ static void monitor_get_info( struct monitor *monitor, MONITORINFO *info, UINT d
 {
     info->rcMonitor = monitor_get_rect( monitor, dpi, MDT_DEFAULT );
     info->rcWork = map_monitor_rect( monitor, monitor->rc_work, 0, MDT_RAW_DPI, dpi, MDT_DEFAULT );
+    intersect_rect( &info->rcWork, &info->rcWork, &info->rcMonitor );
     info->dwFlags = is_monitor_primary( monitor ) ? MONITORINFOF_PRIMARY : 0;
 
     if (info->cbSize >= sizeof(MONITORINFOEXW))
