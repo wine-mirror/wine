@@ -553,11 +553,14 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
                   mode == AUDCLNT_SHAREMODE_SHARED ? "shared " : "exclus.",
                   fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels);
 
-        /* Change GetMixFormat wBitsPerSample only => S_OK */
-        if (mode == AUDCLNT_SHAREMODE_SHARED
-            && fmt.nSamplesPerSec == pwfx->nSamplesPerSec
-            && fmt.nChannels == pwfx->nChannels)
-            ok(hr == S_OK, "Varying BitsPerSample %u\n", fmt.wBitsPerSample);
+        /* In shared mode you can only change bit width, not sampling rate or channel count. */
+        if (mode == AUDCLNT_SHAREMODE_SHARED)
+        {
+            BOOL compatible = fmt.nSamplesPerSec == pwfx->nSamplesPerSec && fmt.nChannels == pwfx->nChannels;
+            HRESULT expected = compatible ? S_OK : S_FALSE;
+            todo_wine_if(expected == S_FALSE)
+            ok(hr == expected, "Got %lx expected %lx\n", hr, expected);
+        }
 
         ok((hr == S_FALSE)^(pwfx2 == NULL), "hr %lx<->suggest %p\n", hr, pwfx2);
         if (pwfx2 == (WAVEFORMATEX*)0xDEADF00D)
