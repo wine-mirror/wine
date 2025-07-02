@@ -1478,7 +1478,7 @@ static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_siz
         if (FAILED(hr))
             goto exit;
 
-        dst_desc = get_format_info(D3DFMT_A8B8G8R8);
+        dst_desc = get_d3dx_pixel_format_info(D3DX_PIXEL_FORMAT_R8G8B8A8_UNORM);
         d3dx_calculate_pixels_size(dst_desc->format, 256, 1, &dst_row_pitch, &dst_slice_pitch);
         convert_argb_pixels(src_palette, src_row_pitch, src_slice_pitch, &image_map_size, src_desc, (BYTE *)palette,
                 dst_row_pitch, dst_slice_pitch, &image_map_size, dst_desc, NULL, NULL);
@@ -2607,7 +2607,7 @@ static void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_sl
         const PALETTEENTRY *palette)
 {
     /* Color keys are always represented in D3DFMT_A8R8G8B8 format. */
-    const struct pixel_format_desc *ck_format = color_key ? get_format_info(D3DFMT_A8R8G8B8) : NULL;
+    const struct pixel_format_desc *ck_format = color_key ? get_d3dx_pixel_format_info(D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM) : NULL;
     struct argb_conversion_info conv_info, ck_conv_info;
     UINT min_width, min_height, min_depth;
     UINT x, y, z;
@@ -2666,7 +2666,7 @@ static void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT s
         const struct d3dx_color_key *color_key, const PALETTEENTRY *palette)
 {
     /* Color keys are always represented in D3DFMT_A8R8G8B8 format. */
-    const struct pixel_format_desc *ck_format = color_key ? get_format_info(D3DFMT_A8R8G8B8) : NULL;
+    const struct pixel_format_desc *ck_format = color_key ? get_d3dx_pixel_format_info(D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM) : NULL;
     struct argb_conversion_info conv_info, ck_conv_info;
     UINT x, y, z;
 
@@ -2718,19 +2718,19 @@ static HRESULT d3dx_pixels_decompress(struct d3dx_pixels *pixels, const struct p
     switch (desc->format)
     {
         case D3DX_PIXEL_FORMAT_DXT1_UNORM:
-            uncompressed_desc = get_format_info(D3DFMT_A8B8G8R8);
+            uncompressed_desc = get_d3dx_pixel_format_info(D3DX_PIXEL_FORMAT_R8G8B8A8_UNORM);
             decompress_bcn_block = bcdec_bc1;
             break;
 
         case D3DX_PIXEL_FORMAT_DXT2_UNORM:
         case D3DX_PIXEL_FORMAT_DXT3_UNORM:
-            uncompressed_desc = get_format_info(D3DFMT_A8B8G8R8);
+            uncompressed_desc = get_d3dx_pixel_format_info(D3DX_PIXEL_FORMAT_R8G8B8A8_UNORM);
             decompress_bcn_block = bcdec_bc2;
             break;
 
         case D3DX_PIXEL_FORMAT_DXT4_UNORM:
         case D3DX_PIXEL_FORMAT_DXT5_UNORM:
-            uncompressed_desc = get_format_info(D3DFMT_A8B8G8R8);
+            uncompressed_desc = get_d3dx_pixel_format_info(D3DX_PIXEL_FORMAT_R8G8B8A8_UNORM);
             decompress_bcn_block = bcdec_bc3;
             break;
 
