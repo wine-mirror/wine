@@ -10,6 +10,7 @@ EXTRADLLFLAGS = -Wb,--prefer-native
 SOURCES = \
 	animation.c \
 	core.c \
+	d3dx_helpers.c \
 	effect.c \
 	font.c \
 	line.c \
