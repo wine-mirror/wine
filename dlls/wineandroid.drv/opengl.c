@@ -146,11 +146,11 @@ static BOOL android_surface_create( HWND hwnd, HDC hdc, int format, struct openg
     return TRUE;
 }
 
-static EGLenum android_init_egl_platform( const struct egl_platform *platform, EGLNativeDisplayType *platform_display )
+static void android_init_egl_platform( struct egl_platform *platform )
 {
+    platform->type = EGL_PLATFORM_ANDROID_KHR;
+    platform->native_display = EGL_DEFAULT_DISPLAY;
     egl = platform;
-    *platform_display = EGL_DEFAULT_DISPLAY;
-    return EGL_PLATFORM_ANDROID_KHR;
 }
 
 static void *android_get_proc_address( const char *name )

@@ -281,6 +281,15 @@ static void opengl_drawable_flush( struct opengl_drawable *drawable, int interva
 
 #ifdef SONAME_LIBEGL
 
+static const struct opengl_drawable_funcs egldrv_pbuffer_funcs;
+
+static inline EGLConfig egl_config_for_format( const struct egl_platform *egl, int format )
+{
+    assert(format > 0 && format <= 2 * egl->config_count);
+    if (format <= egl->config_count) return egl->configs[format - 1];
+    return egl->configs[format - egl->config_count - 1];
+}
+
 static void *egldrv_get_proc_address( const char *name )
 {
     return display_funcs.p_eglGetProcAddress( name );
@@ -293,7 +302,6 @@ static UINT egldrv_init_pixel_formats( UINT *onscreen_count )
     const EGLint attribs[] =
     {
         EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
-        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
         EGL_NONE
     };
     EGLConfig *configs;
@@ -420,7 +428,10 @@ static BOOL describe_egl_config( EGLConfig config, struct wgl_pixel_format *fmt,
     }
     else fmt->pixel_type = -1;
 
-    fmt->draw_to_pbuffer = TRUE;
+    if (egl->force_pbuffer_formats) fmt->draw_to_pbuffer = TRUE;
+    else if (surface_type & EGL_PBUFFER_BIT) fmt->draw_to_pbuffer = TRUE;
+    if (fmt->draw_to_pbuffer) pfd->dwFlags |= PFD_DRAW_TO_BITMAP;
+
     /* Use some arbitrary but reasonable limits (4096 is also Mesa's default) */
     fmt->max_pbuffer_width = 4096;
     fmt->max_pbuffer_height = 4096;
@@ -489,19 +500,81 @@ static BOOL egldrv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl
 static BOOL egldrv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
                                    GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **drawable )
 {
-    FIXME( "stub!\n" );
-    return FALSE;
+    const struct opengl_funcs *funcs = &display_funcs;
+    const struct egl_platform *egl = &display_egl;
+    EGLint attribs[13], *attrib = attribs;
+    struct opengl_drawable *gl;
+
+    TRACE( "hdc %p, format %d, largest %u, texture_format %#x, texture_target %#x, max_level %#x, width %d, height %d, drawable %p\n",
+           hdc, format, largest, texture_format, texture_target, max_level, *width, *height, drawable );
+
+    *attrib++ = EGL_WIDTH;
+    *attrib++ = *width;
+    *attrib++ = EGL_HEIGHT;
+    *attrib++ = *height;
+    if (largest)
+    {
+        *attrib++ = EGL_LARGEST_PBUFFER;
+        *attrib++ = 1;
+    }
+    switch (texture_format)
+    {
+    case 0: break;
+    case GL_RGB:
+        *attrib++ = EGL_TEXTURE_FORMAT;
+        *attrib++ = EGL_TEXTURE_RGB;
+        break;
+    case GL_RGBA:
+        *attrib++ = EGL_TEXTURE_FORMAT;
+        *attrib++ = EGL_TEXTURE_RGBA;
+        break;
+    default:
+        FIXME( "Unsupported format %#x\n", texture_format );
+        *attrib++ = EGL_TEXTURE_FORMAT;
+        *attrib++ = EGL_TEXTURE_RGBA;
+        break;
+    }
+    switch (texture_target)
+    {
+    case 0: break;
+    case GL_TEXTURE_2D:
+        *attrib++ = EGL_TEXTURE_TARGET;
+        *attrib++ = EGL_TEXTURE_2D;
+        break;
+    default:
+        FIXME( "Unsupported target %#x\n", texture_target );
+        *attrib++ = EGL_TEXTURE_TARGET;
+        *attrib++ = EGL_TEXTURE_2D;
+        break;
+    }
+    if (max_level)
+    {
+        *attrib++ = EGL_MIPMAP_TEXTURE;
+        *attrib++ = GL_TRUE;
+    }
+    *attrib++ = EGL_NONE;
+
+    if (!(gl = opengl_drawable_create( sizeof(*gl), &egldrv_pbuffer_funcs, format, 0, hdc ))) return FALSE;
+    if (!(gl->surface = funcs->p_eglCreatePbufferSurface( egl->display, egl_config_for_format( egl, gl->format ), attribs )))
+    {
+        opengl_drawable_release( gl );
+        return FALSE;
+    }
+
+    funcs->p_eglQuerySurface( egl->display, gl->surface, EGL_WIDTH, width );
+    funcs->p_eglQuerySurface( egl->display, gl->surface, EGL_HEIGHT, height );
+
+    *drawable = gl;
+    return TRUE;
 }
 
 static BOOL egldrv_pbuffer_updated( HDC hdc, struct opengl_drawable *drawable, GLenum cube_face, GLint mipmap_level )
 {
-    FIXME( "stub!\n" );
     return GL_TRUE;
 }
 
 static UINT egldrv_pbuffer_bind( HDC hdc, struct opengl_drawable *drawable, GLenum buffer )
 {
-    FIXME( "stub!\n" );
     return -1; /* use default implementation */
 }
 
@@ -596,6 +669,16 @@ static BOOL egldrv_make_current( struct opengl_drawable *draw, struct opengl_dra
     return funcs->p_eglMakeCurrent( egl->display, context ? draw->surface : EGL_NO_SURFACE, context ? read->surface : EGL_NO_SURFACE, context );
 }
 
+static void egldrv_pbuffer_destroy( struct opengl_drawable *drawable )
+{
+    TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
+}
+
+static const struct opengl_drawable_funcs egldrv_pbuffer_funcs =
+{
+    .destroy = egldrv_pbuffer_destroy,
+};
+
 static const struct opengl_driver_funcs egldrv_funcs =
 {
     .p_get_proc_address = egldrv_get_proc_address,
@@ -671,16 +754,14 @@ failed:
 static void init_egl_platform( struct egl_platform *egl, struct opengl_funcs *funcs,
                                const struct opengl_driver_funcs *driver_funcs )
 {
-    EGLNativeDisplayType platform_display;
     const char *extensions;
     EGLint major, minor;
-    EGLenum platform;
 
     if (!funcs->egl_handle || !driver_funcs->p_init_egl_platform) return;
 
-    platform = driver_funcs->p_init_egl_platform( egl, &platform_display );
-    if (!platform) egl->display = funcs->p_eglGetDisplay( EGL_DEFAULT_DISPLAY );
-    else egl->display = funcs->p_eglGetPlatformDisplay( platform, platform_display, NULL );
+    driver_funcs->p_init_egl_platform( egl );
+    if (!egl->type) egl->display = funcs->p_eglGetDisplay( EGL_DEFAULT_DISPLAY );
+    else egl->display = funcs->p_eglGetPlatformDisplay( egl->type, egl->native_display, NULL );
 
     if (!egl->display)
     {

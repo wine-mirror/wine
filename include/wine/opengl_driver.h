@@ -119,6 +119,11 @@ struct opengl_funcs
 
 struct egl_platform
 {
+    EGLenum              type;
+    EGLNativeDisplayType native_display;
+    BOOL                 force_pbuffer_formats;
+
+    /* filled by win32u after init_egl_platform */
     EGLDisplay  display;
     UINT        config_count;
     EGLConfig  *configs;
@@ -176,7 +181,7 @@ W32KAPI void set_window_opengl_drawable( HWND hwnd, struct opengl_drawable *draw
 /* interface between win32u and the user drivers */
 struct opengl_driver_funcs
 {
-    GLenum (*p_init_egl_platform)(const struct egl_platform*,EGLNativeDisplayType*);
+    void (*p_init_egl_platform)(struct egl_platform*);
     void *(*p_get_proc_address)(const char *);
     UINT (*p_init_pixel_formats)(UINT*);
     BOOL (*p_describe_pixel_format)(int,struct wgl_pixel_format*);

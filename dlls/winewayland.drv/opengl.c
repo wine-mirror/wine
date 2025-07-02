@@ -179,11 +179,12 @@ static BOOL wayland_opengl_surface_create(HWND hwnd, HDC hdc, int format, struct
     return TRUE;
 }
 
-static EGLenum wayland_init_egl_platform(const struct egl_platform *platform, EGLNativeDisplayType *platform_display)
+static void wayland_init_egl_platform(struct egl_platform *platform)
 {
+    platform->type = EGL_PLATFORM_WAYLAND_KHR;
+    platform->native_display = process_wayland.wl_display;
+    platform->force_pbuffer_formats = TRUE;
     egl = platform;
-    *platform_display = process_wayland.wl_display;
-    return EGL_PLATFORM_WAYLAND_KHR;
 }
 
 static void wayland_drawable_flush(struct opengl_drawable *base, UINT flags)

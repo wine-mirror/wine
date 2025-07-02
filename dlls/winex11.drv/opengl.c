@@ -470,11 +470,11 @@ done:
     return ret;
 }
 
-static EGLenum x11drv_init_egl_platform( const struct egl_platform *platform, EGLNativeDisplayType *platform_display )
+static void x11drv_init_egl_platform( struct egl_platform *platform )
 {
+    platform->type = EGL_PLATFORM_X11_KHR;
+    platform->native_display = gdi_display;
     egl = platform;
-    *platform_display = gdi_display;
-    return EGL_PLATFORM_X11_KHR;
 }
 
 static inline EGLConfig egl_config_for_format(int format)
