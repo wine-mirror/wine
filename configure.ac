@@ -3660,7 +3660,7 @@ fi
 AC_CONFIG_COMMANDS([Makefile], [wine_fn_output_makefile Makefile],
 [wine_fn_output_makefile ()
 {
-    cat <<\_WINE_EOF >\$tmp/makefile && mv -f \$tmp/makefile \$[]1 && "$wine_makedep"$makedep_flags && return
+    cat <<\_WINE_EOF >\$tmp/makefile && "$wine_makedep"$makedep_flags -i\$tmp/makefile && return
 # This Makefile understands the following targets:
 #
 # all (default):   build wine

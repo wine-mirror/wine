@@ -239,6 +239,7 @@ static struct makefile **submakes;
 
 static const char separator[] = "### Dependencies";
 static const char *output_makefile_name = "Makefile";
+static const char *input_makefile_name;
 static const char *input_file_name;
 static const char *output_file_name;
 static const char *temp_file_name;
@@ -1697,6 +1698,8 @@ static FILE *open_input_makefile( const struct makefile *make )
 
     if (make->obj_dir)
         input_file_name = root_src_dir_path( obj_dir_path( make, "Makefile.in" ));
+    else if (input_makefile_name)
+        input_file_name = input_makefile_name;
     else
         input_file_name = output_makefile_name;  /* always use output name for main Makefile */
 
@@ -4384,6 +4387,7 @@ static void output_top_makefile( struct makefile *make )
     /* add special targets for makefile and dependencies */
 
     output( ".INIT: Makefile\n" );
+    output( ".PRECIOUS: Makefile\n" );
     output( ".MAKEFILEDEPS:\n" );
     output( ".SUFFIXES:\n" );
     makedep = strmake( "%s%s",tools_dir_path( make, "makedep" ), tools_ext );
@@ -4606,6 +4610,9 @@ static int parse_option( const char *opt )
     {
     case 'f':
         if (opt[2]) output_makefile_name = opt + 2;
+        break;
+    case 'i':
+        if (opt[2]) input_makefile_name = opt + 2;
         break;
     case 'C':
         compile_commands_mode = 1;
