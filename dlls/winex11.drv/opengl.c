@@ -203,6 +203,7 @@ struct gl_drawable
     Colormap                       colormap;     /* colormap for the client window */
     Pixmap                         pixmap;       /* base pixmap if drawable is a GLXPixmap */
     BOOL                           offscreen;
+    HDC                            hdc;
     HDC                            hdc_src;
     HDC                            hdc_dst;
 };
@@ -493,16 +494,16 @@ static BOOL x11drv_egl_surface_create( HWND hwnd, HDC hdc, int format, struct op
     if ((previous = *drawable) && previous->format == format) return TRUE;
     NtUserGetClientRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) );
 
-    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_egl_surface_funcs, format, hwnd, hdc ))) return FALSE;
+    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_egl_surface_funcs, format, hwnd ))) return FALSE;
     gl->rect = rect;
+    gl->hdc = hdc;
 
     gl->window = create_client_window( hwnd, &default_visual, default_colormap );
     gl->base.surface = funcs->p_eglCreateWindowSurface( egl->display, egl_config_for_format(format),
                                                         (void *)gl->window, NULL );
     if (!gl->base.surface)
     {
-        destroy_client_window( hwnd, gl->window );
-        free( gl );
+        opengl_drawable_release( &gl->base );
         return FALSE;
     }
 
@@ -934,8 +935,9 @@ static BOOL x11drv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl
     if ((previous = *drawable) && previous->format == format) return TRUE;
     NtUserGetClientRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) );
 
-    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_surface_funcs, format, hwnd, hdc ))) return FALSE;
+    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_surface_funcs, format, hwnd ))) return FALSE;
     gl->rect = rect;
+    gl->hdc = hdc;
 
     gl->colormap = XCreateColormap( gdi_display, get_dummy_parent(), fmt->visual->visual,
                                     (fmt->visual->class == PseudoColor || fmt->visual->class == GrayScale ||
@@ -1261,15 +1263,14 @@ static void present_gl_drawable( struct gl_drawable *gl, BOOL flush, BOOL gl_fin
 {
     HWND hwnd = gl->base.hwnd, toplevel = NtUserGetAncestor( hwnd, GA_ROOT );
     struct x11drv_win_data *data;
-    HDC hdc = gl->base.hdc;
     Drawable window;
     RECT rect_dst, rect;
     HRGN region;
 
     if (!gl->offscreen) return;
 
-    window = get_dc_drawable( hdc, &rect );
-    region = get_dc_monitor_region( hwnd, hdc );
+    window = get_dc_drawable( gl->hdc, &rect );
+    region = get_dc_monitor_region( hwnd, gl->hdc );
 
     if (gl_finish) funcs->p_glFinish();
     if (flush) XFlush( gdi_display );
@@ -1401,7 +1402,7 @@ static BOOL x11drv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum tex
     }
     glx_attribs[count++] = 0;
 
-    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_pbuffer_funcs, format, 0, hdc ))) return FALSE;
+    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_pbuffer_funcs, format, 0 ))) return FALSE;
 
     gl->drawable = pglXCreatePbuffer( gdi_display, fmt->fbconfig, glx_attribs );
     TRACE( "new Pbuffer drawable as %p (%lx)\n", gl, gl->drawable );

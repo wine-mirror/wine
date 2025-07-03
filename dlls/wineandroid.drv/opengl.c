@@ -75,7 +75,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, HDC hdc, int format, A
     static const int attribs[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };
     struct gl_drawable *gl;
 
-    if (!(gl = opengl_drawable_create( sizeof(*gl), &android_drawable_funcs, format, hwnd, hdc ))) return NULL;
+    if (!(gl = opengl_drawable_create( sizeof(*gl), &android_drawable_funcs, format, hwnd ))) return NULL;
 
     if (!window) gl->window = create_ioctl_window( hwnd, TRUE, 1.0f );
     else gl->window = grab_ioctl_window( window );
@@ -134,7 +134,6 @@ static BOOL android_surface_create( HWND hwnd, HDC hdc, int format, struct openg
         funcs->p_eglGetConfigAttrib( egl->display, egl_config_for_format(format), EGL_NATIVE_VISUAL_ID, &pf );
         gl->window->perform( gl->window, NATIVE_WINDOW_SET_BUFFERS_FORMAT, pf );
         gl->base.hwnd = hwnd;
-        gl->base.hdc = hdc;
         gl->base.format = format;
 
         TRACE( "Updated drawable %s\n", debugstr_opengl_drawable( *drawable ) );

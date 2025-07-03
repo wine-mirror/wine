@@ -1484,7 +1484,7 @@ static BOOL macdrv_surface_create(HWND hwnd, HDC hdc, int format, struct opengl_
     data->pixel_format = format;
     release_win_data(data);
 
-    if (!(gl = opengl_drawable_create(sizeof(*gl), &macdrv_surface_funcs, format, hwnd, hdc))) return FALSE;
+    if (!(gl = opengl_drawable_create(sizeof(*gl), &macdrv_surface_funcs, format, hwnd))) return FALSE;
     *drawable = &gl->base;
 
     return TRUE;
@@ -2357,7 +2357,7 @@ static BOOL macdrv_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum text
         texture_format = GL_RGB;
     }
 
-    if (!(gl = opengl_drawable_create(sizeof(*gl), &macdrv_pbuffer_funcs, format, 0, hdc))) return FALSE;
+    if (!(gl = opengl_drawable_create(sizeof(*gl), &macdrv_pbuffer_funcs, format, 0))) return FALSE;
 
     err = CGLCreatePBuffer(*width, *height, texture_target, texture_format, max_level, &gl->pbuffer);
     if (err != kCGLNoError)

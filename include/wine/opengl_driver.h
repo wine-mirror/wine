@@ -159,7 +159,6 @@ struct opengl_drawable
     int         format;         /* pixel format of the drawable */
     int         interval;       /* last set surface swap interval */
     HWND        hwnd;           /* window the drawable was created for */
-    HDC         hdc;            /* DC the drawable was created for */
     struct list entry;          /* entry in win32u managed list */
     LONG        updated;        /* has been moved / resized / reparented */
     EGLSurface  surface;        /* surface for EGL based drivers */
@@ -168,10 +167,10 @@ struct opengl_drawable
 static inline const char *debugstr_opengl_drawable( struct opengl_drawable *drawable )
 {
     if (!drawable) return "(null)";
-    return wine_dbg_sprintf( "%p (format %u, hwnd %p, hdc %p)", drawable, drawable->format, drawable->hwnd, drawable->hdc );
+    return wine_dbg_sprintf( "%p (format %u, hwnd %p)", drawable, drawable->format, drawable->hwnd );
 }
 
-W32KAPI void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *funcs, int format, HWND hwnd, HDC hdc );
+W32KAPI void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *funcs, int format, HWND hwnd );
 W32KAPI void opengl_drawable_add_ref( struct opengl_drawable *drawable );
 W32KAPI void opengl_drawable_release( struct opengl_drawable *drawable );
 
