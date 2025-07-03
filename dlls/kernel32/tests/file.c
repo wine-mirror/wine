@@ -4849,6 +4849,22 @@ static void test_ReOpenFile(void)
     ret = DeleteFileA(filename);
     ok(ret, "failed to delete file, error %lu\n", GetLastError());
 
+    /* FILE_FLAG_BACKUP_SEMANTICS is allowed, but unlike with CreateFile(),
+     * it cannot be used to open a directory. */
+
+    ret = CreateDirectoryA(filename, NULL);
+    ok(ret == TRUE, "got error %lu\n", GetLastError());
+    file = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
+    new = pReOpenFile(file, GENERIC_READ, FILE_SHARE_READ, FILE_FLAG_BACKUP_SEMANTICS);
+    todo_wine ok(new == INVALID_HANDLE_VALUE, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %lu\n", GetLastError());
+    CloseHandle(new);
+    CloseHandle(file);
+
+    ret = RemoveDirectoryA(filename);
+    ok(ret == TRUE, "got error %lu\n", GetLastError());
+
     file = CreateNamedPipeA("\\\\.\\pipe\\test_pipe", PIPE_ACCESS_DUPLEX, 0, 1, 1000, 1000, 1000, NULL);
     ok(file != INVALID_HANDLE_VALUE, "failed to create pipe, error %lu\n", GetLastError());
 
