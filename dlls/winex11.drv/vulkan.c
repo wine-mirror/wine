@@ -212,7 +212,7 @@ static void vulkan_surface_update_offscreen( HWND hwnd, struct x11drv_vulkan_sur
     }
 }
 
-static void X11DRV_vulkan_surface_update( struct client_surface *client )
+static void x11drv_vulkan_surface_update( struct client_surface *client )
 {
     struct x11drv_vulkan_surface *surface = impl_from_client_surface( client );
     HWND hwnd = client->hwnd;
@@ -280,12 +280,12 @@ static const struct client_surface_funcs x11drv_vulkan_surface_funcs =
 {
     .destroy = x11drv_vulkan_surface_destroy,
     .detach = x11drv_vulkan_surface_detach,
+    .update = x11drv_vulkan_surface_update,
 };
 
 static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = X11DRV_vulkan_surface_create,
-    .p_vulkan_surface_update = X11DRV_vulkan_surface_update,
     .p_vulkan_surface_presented = X11DRV_vulkan_surface_presented,
 
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR,

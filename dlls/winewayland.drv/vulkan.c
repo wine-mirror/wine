@@ -161,12 +161,12 @@ static const struct client_surface_funcs wayland_vulkan_surface_funcs =
 {
     .destroy = wayland_vulkan_surface_destroy,
     .detach = wayland_vulkan_surface_detach,
+    .update = wayland_vulkan_surface_update,
 };
 
 static const struct vulkan_driver_funcs wayland_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = wayland_vulkan_surface_create,
-    .p_vulkan_surface_update = wayland_vulkan_surface_update,
     .p_vulkan_surface_presented = wayland_vulkan_surface_presented,
 
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR,

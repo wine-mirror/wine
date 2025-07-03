@@ -267,6 +267,22 @@ static void detach_client_surfaces( HWND hwnd )
     }
 }
 
+static void update_client_surfaces( HWND hwnd )
+{
+    struct client_surface *surface, *next;
+
+    pthread_mutex_lock( &surfaces_lock );
+
+    LIST_FOR_EACH_ENTRY_SAFE( surface, next, &client_surfaces, struct client_surface, entry )
+    {
+        if (surface->hwnd != hwnd) continue;
+        surface->funcs->update( surface );
+        InterlockedExchange( &surface->updated, 1 );
+    }
+
+    pthread_mutex_unlock( &surfaces_lock );
+}
+
 void *client_surface_create( UINT size, const struct client_surface_funcs *funcs, HWND hwnd )
 {
     struct client_surface *surface;
@@ -2225,6 +2241,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         user_driver->pWindowPosChanged( hwnd, insert_after, owner_hint, swp_flags, is_fullscreen, &monitor_rects,
                                         get_driver_window_surface( new_surface, raw_dpi ) );
         update_opengl_drawables( hwnd );
+        update_client_surfaces( hwnd );
 
         update_children_window_state( hwnd );
     }
