@@ -246,9 +246,12 @@ void opengl_drawable_release( struct opengl_drawable *drawable )
         const struct opengl_funcs *funcs = &display_funcs;
         const struct egl_platform *egl = &display_egl;
 
-        pthread_mutex_lock( &drawables_lock );
-        opengl_drawable_detach( drawable );
-        pthread_mutex_unlock( &drawables_lock );
+        if (drawable->hwnd)
+        {
+            pthread_mutex_lock( &drawables_lock );
+            opengl_drawable_detach( drawable );
+            pthread_mutex_unlock( &drawables_lock );
+        }
 
         drawable->funcs->destroy( drawable );
         if (drawable->surface) funcs->p_eglDestroySurface( egl->display, drawable->surface );
@@ -258,6 +261,8 @@ void opengl_drawable_release( struct opengl_drawable *drawable )
 
 static void opengl_drawable_flush( struct opengl_drawable *drawable, int interval, UINT flags )
 {
+    if (!drawable->hwnd) return;
+
     if (InterlockedCompareExchange( &drawable->updated, 0, 1 )) flags |= GL_FLUSH_UPDATED;
     if (interval != drawable->interval)
     {
@@ -1658,7 +1663,8 @@ static BOOL win32u_wglSwapBuffers( HDC hdc )
 
     if (!(draw = get_dc_opengl_drawable( draw_hdc, FALSE ))) return FALSE;
     opengl_drawable_flush( draw, interval, 0 );
-    ret = draw->funcs->swap( draw );
+    if (!draw->hwnd) ret = FALSE; /* pbuffer, nothing to do */
+    else ret = draw->funcs->swap( draw );
     opengl_drawable_release( draw );
 
     return ret;

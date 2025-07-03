@@ -2381,19 +2381,6 @@ static void macdrv_pbuffer_destroy(struct opengl_drawable *base)
     CGLReleasePBuffer(gl->pbuffer);
 }
 
-static void macdrv_pbuffer_detach(struct opengl_drawable *base)
-{
-}
-
-static void macdrv_pbuffer_flush(struct opengl_drawable *base, UINT flags)
-{
-}
-
-static BOOL macdrv_pbuffer_swap(struct opengl_drawable *base)
-{
-    return FALSE;
-}
-
 static BOOL macdrv_make_current(struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *private)
 {
     struct gl_drawable *draw = impl_from_opengl_drawable(draw_base), *read = impl_from_opengl_drawable(read_base);
@@ -2973,7 +2960,4 @@ static const struct opengl_drawable_funcs macdrv_surface_funcs =
 static const struct opengl_drawable_funcs macdrv_pbuffer_funcs =
 {
     .destroy = macdrv_pbuffer_destroy,
-    .detach = macdrv_pbuffer_detach,
-    .flush = macdrv_pbuffer_flush,
-    .swap = macdrv_pbuffer_swap,
 };

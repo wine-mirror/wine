@@ -1428,19 +1428,6 @@ static void x11drv_pbuffer_destroy( struct opengl_drawable *base )
     if (gl->drawable) pglXDestroyPbuffer( gdi_display, gl->drawable );
 }
 
-static void x11drv_pbuffer_detach( struct opengl_drawable *base )
-{
-}
-
-static void x11drv_pbuffer_flush( struct opengl_drawable *base, UINT flags )
-{
-}
-
-static BOOL x11drv_pbuffer_swap( struct opengl_drawable *base )
-{
-    return FALSE;
-}
-
 static BOOL x11drv_pbuffer_updated( HDC hdc, struct opengl_drawable *base, GLenum cube_face, GLint mipmap_level )
 {
     return GL_TRUE;
@@ -1669,9 +1656,6 @@ static const struct opengl_drawable_funcs x11drv_surface_funcs =
 static const struct opengl_drawable_funcs x11drv_pbuffer_funcs =
 {
     .destroy = x11drv_pbuffer_destroy,
-    .detach = x11drv_pbuffer_detach,
-    .flush = x11drv_pbuffer_flush,
-    .swap = x11drv_pbuffer_swap,
 };
 
 static const struct opengl_drawable_funcs x11drv_egl_surface_funcs =
