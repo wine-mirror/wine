@@ -166,16 +166,9 @@ static void register_extension( char *list, size_t size, const char *name )
 static pthread_mutex_t drawables_lock = PTHREAD_MUTEX_INITIALIZER;
 static struct list drawables = LIST_INIT( drawables );
 
-/* drawables_lock must be held */
-static void opengl_drawable_detach( struct opengl_drawable *drawable )
-{
-    drawable->funcs->detach( drawable );
-    list_remove( &drawable->entry );
-    list_init( &drawable->entry );
-}
-
 void detach_opengl_drawables( HWND hwnd )
 {
+    struct list detached = LIST_INIT( detached );
     struct opengl_drawable *drawable, *next;
 
     pthread_mutex_lock( &drawables_lock );
@@ -183,10 +176,22 @@ void detach_opengl_drawables( HWND hwnd )
     LIST_FOR_EACH_ENTRY_SAFE( drawable, next, &drawables, struct opengl_drawable, entry )
     {
         if (drawable->hwnd != hwnd) continue;
-        opengl_drawable_detach( drawable );
+
+        list_remove( &drawable->entry );
+        list_add_tail( &detached, &drawable->entry );
+        opengl_drawable_add_ref( drawable );
+
+        drawable->funcs->detach( drawable );
+        drawable->hwnd = NULL;
     }
 
     pthread_mutex_unlock( &drawables_lock );
+
+    LIST_FOR_EACH_ENTRY_SAFE( drawable, next, &detached, struct opengl_drawable, entry )
+    {
+        list_remove( &drawable->entry );
+        opengl_drawable_release( drawable );
+    }
 }
 
 void update_opengl_drawables( HWND hwnd )
@@ -246,12 +251,13 @@ void opengl_drawable_release( struct opengl_drawable *drawable )
         const struct opengl_funcs *funcs = &display_funcs;
         const struct egl_platform *egl = &display_egl;
 
+        pthread_mutex_lock( &drawables_lock );
         if (drawable->hwnd)
         {
-            pthread_mutex_lock( &drawables_lock );
-            opengl_drawable_detach( drawable );
-            pthread_mutex_unlock( &drawables_lock );
+            drawable->funcs->detach( drawable );
+            list_remove( &drawable->entry );
         }
+        pthread_mutex_unlock( &drawables_lock );
 
         drawable->funcs->destroy( drawable );
         if (drawable->surface) funcs->p_eglDestroySurface( egl->display, drawable->surface );
