@@ -239,8 +239,7 @@ struct wayland_window_config
 
 struct wayland_client_surface
 {
-    LONG ref;
-    HWND hwnd;
+    struct client_surface client;
     HWND toplevel;
     struct wl_surface *wl_surface;
     struct wl_subsurface *wl_subsurface;
@@ -330,9 +329,7 @@ void wayland_surface_coords_to_window(struct wayland_surface *surface,
                                       double surface_x, double surface_y,
                                       int *window_x, int *window_y);
 struct wayland_client_surface *wayland_client_surface_create(HWND hwnd);
-BOOL wayland_client_surface_release(struct wayland_client_surface *client);
 void wayland_client_surface_attach(struct wayland_client_surface *client, HWND toplevel);
-void wayland_client_surface_detach(struct wayland_client_surface *client);
 void wayland_surface_ensure_contents(struct wayland_surface *surface);
 void wayland_surface_set_title(struct wayland_surface *surface, LPCWSTR title);
 void wayland_surface_set_icon(struct wayland_surface *surface, UINT type, ICONINFO *ii);

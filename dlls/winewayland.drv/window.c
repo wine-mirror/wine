@@ -207,7 +207,7 @@ static BOOL wayland_win_data_create_wayland_surface(struct wayland_win_data *dat
     /* we can temporarily clear the role of a surface but cannot assign a different one after it's set */
     if ((surface = data->wayland_surface) && role && surface->role && surface->role != role)
     {
-        if (client) wayland_client_surface_detach(client);
+        if (client) wayland_client_surface_attach(client, NULL);
         wayland_surface_destroy(data->wayland_surface);
         data->wayland_surface = NULL;
     }
@@ -481,7 +481,7 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UIN
             if (toplevel && NtUserIsWindowVisible(hwnd))
                 wayland_client_surface_attach(client, toplevel);
             else
-                wayland_client_surface_detach(client);
+                wayland_client_surface_attach(client, NULL);
         }
 
         if (data->wayland_surface)
@@ -821,14 +821,14 @@ void set_client_surface(HWND hwnd, struct wayland_client_surface *new_client)
     if (new_client != data->client_surface)
     {
         if ((old_client = data->client_surface))
-            wayland_client_surface_detach(old_client);
+            wayland_client_surface_attach(old_client, NULL);
 
         if ((data->client_surface = new_client))
         {
             if (toplevel && NtUserIsWindowVisible(hwnd))
                 wayland_client_surface_attach(new_client, toplevel);
             else
-                wayland_client_surface_detach(new_client);
+                wayland_client_surface_attach(new_client, NULL);
         }
     }
 

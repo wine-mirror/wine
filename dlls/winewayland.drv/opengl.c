@@ -65,13 +65,8 @@ static void wayland_drawable_destroy(struct opengl_drawable *base)
     if (gl->wl_egl_window) wl_egl_window_destroy(gl->wl_egl_window);
     if (gl->client)
     {
-        HWND hwnd = wl_surface_get_user_data(gl->client->wl_surface);
-        struct wayland_win_data *data = wayland_win_data_get(hwnd);
-
-        if (wayland_client_surface_release(gl->client) && data)
-            data->client_surface = NULL;
-
-        if (data) wayland_win_data_release(data);
+        gl->client->client.funcs->detach( &gl->client->client );
+        client_surface_release( &gl->client->client );
     }
 }
 
@@ -170,11 +165,9 @@ static void wayland_drawable_flush(struct opengl_drawable *base, UINT flags)
 
 static BOOL wayland_drawable_swap(struct opengl_drawable *base)
 {
-    HWND hwnd = base->hwnd, toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
     struct wayland_gl_drawable *gl = impl_from_opengl_drawable(base);
 
-    ensure_window_surface_contents(toplevel);
-    set_client_surface(hwnd, gl->client);
+    client_surface_present(&gl->client->client, NULL);
     funcs->p_eglSwapBuffers(egl->display, gl->base.surface);
 
     return TRUE;
