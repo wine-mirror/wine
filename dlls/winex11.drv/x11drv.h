@@ -359,6 +359,7 @@ extern BOOL needs_offscreen_rendering( HWND hwnd );
 extern void set_dc_drawable( HDC hdc, Drawable drawable, const RECT *rect, int mode );
 extern Drawable get_dc_drawable( HDC hdc, RECT *rect );
 extern HRGN get_dc_monitor_region( HWND hwnd, HDC hdc );
+extern Window x11drv_client_surface_create( HWND hwnd, struct client_surface **client );
 
 /**************************************************************************
  * X11 USER driver
