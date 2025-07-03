@@ -525,7 +525,7 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
         features[PF_3DNOW_INSTRUCTIONS_AVAILABLE]   = !!(regs[3] & (1u << 31));
     }
 
-    if (features[PF_AVX_INSTRUCTIONS_AVAILABLE] && features[PF_XSAVE_ENABLED])
+    if (features[PF_XSAVE_ENABLED])
         init_xstate_features( &data->XState );
 }
 
