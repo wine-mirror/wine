@@ -4857,9 +4857,8 @@ static void test_ReOpenFile(void)
     file = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
     ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
     new = pReOpenFile(file, GENERIC_READ, FILE_SHARE_READ, FILE_FLAG_BACKUP_SEMANTICS);
-    todo_wine ok(new == INVALID_HANDLE_VALUE, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %lu\n", GetLastError());
-    CloseHandle(new);
+    ok(new == INVALID_HANDLE_VALUE, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %lu\n", GetLastError());
     CloseHandle(file);
 
     ret = RemoveDirectoryA(filename);

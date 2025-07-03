@@ -3382,7 +3382,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH ReOpenFile( HANDLE handle, DWORD access, DWORD s
     }
 
     status = NtCreateFile( &file, access | SYNCHRONIZE | FILE_READ_ATTRIBUTES, &attr, &io, NULL,
-                           0, sharing, FILE_OPEN, get_nt_file_options( attributes ), NULL, 0 );
+                           0, sharing, FILE_OPEN, FILE_NON_DIRECTORY_FILE | get_nt_file_options( attributes ), NULL, 0 );
     if (!set_ntstatus( status ))
         return INVALID_HANDLE_VALUE;
     return file;
