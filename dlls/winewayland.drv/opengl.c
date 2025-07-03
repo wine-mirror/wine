@@ -51,7 +51,6 @@ struct wayland_gl_drawable
     struct opengl_drawable base;
     struct wayland_client_surface *client;
     struct wl_egl_window *wl_egl_window;
-    BOOL double_buffered;
 };
 
 static struct wayland_gl_drawable *impl_from_opengl_drawable(struct opengl_drawable *base)
@@ -86,66 +85,11 @@ static void wayland_drawable_update(struct opengl_drawable *base)
     TRACE("%s\n", debugstr_opengl_drawable(base));
 }
 
-static inline BOOL is_onscreen_format(int format)
-{
-    return format > 0 && format <= egl->config_count;
-}
-
-static inline EGLConfig egl_config_for_format(int format)
+static EGLConfig egl_config_for_format(int format)
 {
     assert(format > 0 && format <= 2 * egl->config_count);
     if (format <= egl->config_count) return egl->configs[format - 1];
     return egl->configs[format - egl->config_count - 1];
-}
-
-static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, HDC hdc, int format, int width, int height)
-{
-    struct wayland_gl_drawable *gl;
-    EGLint attribs[4], *attrib = attribs;
-
-    TRACE("hwnd=%p format=%d\n", hwnd, format);
-
-    if (!egl->has_EGL_EXT_present_opaque)
-        WARN("Missing EGL_EXT_present_opaque extension\n");
-    else
-    {
-        *attrib++ = EGL_PRESENT_OPAQUE_EXT;
-        *attrib++ = EGL_TRUE;
-    }
-    *attrib++ = EGL_NONE;
-
-    if (!(gl = opengl_drawable_create(sizeof(*gl), &wayland_drawable_funcs, format, hwnd, hdc))) return NULL;
-
-    /* Get the client surface for the HWND. If don't have a wayland surface
-     * (e.g., HWND_MESSAGE windows) just create a dummy surface to act as the
-     * target render surface. */
-    if (!(gl->client = wayland_client_surface_create(hwnd))) goto err;
-    set_client_surface(hwnd, gl->client);
-
-    gl->wl_egl_window = wl_egl_window_create(gl->client->wl_surface, width, height);
-    if (!gl->wl_egl_window)
-    {
-        ERR("Failed to create wl_egl_window\n");
-        goto err;
-    }
-
-    gl->base.surface = funcs->p_eglCreateWindowSurface(egl->display, egl_config_for_format(format),
-                                                       gl->wl_egl_window, attribs);
-    if (!gl->base.surface)
-    {
-        ERR("Failed to create EGL surface\n");
-        goto err;
-    }
-
-    gl->double_buffered = is_onscreen_format(format);
-
-    TRACE("Created drawable %s with egl_surface %p\n", debugstr_opengl_drawable(&gl->base), gl->base.surface);
-
-    return gl;
-
-err:
-    opengl_drawable_release(&gl->base);
-    return NULL;
 }
 
 static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
@@ -163,9 +107,13 @@ static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
 
 static BOOL wayland_opengl_surface_create(HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable)
 {
+    EGLConfig config = egl_config_for_format(format);
+    EGLint attribs[4], *attrib = attribs;
     struct opengl_drawable *previous;
     struct wayland_gl_drawable *gl;
     RECT rect;
+
+    TRACE("hwnd=%p format=%d\n", hwnd, format);
 
     if ((previous = *drawable) && previous->format == format) return TRUE;
 
@@ -173,10 +121,30 @@ static BOOL wayland_opengl_surface_create(HWND hwnd, HDC hdc, int format, struct
     if (rect.right == rect.left) rect.right = rect.left + 1;
     if (rect.bottom == rect.top) rect.bottom = rect.top + 1;
 
-    if (!(gl = wayland_gl_drawable_create(hwnd, 0, format, rect.right - rect.left, rect.bottom - rect.top))) return FALSE;
+    if (!egl->has_EGL_EXT_present_opaque)
+        WARN("Missing EGL_EXT_present_opaque extension\n");
+    else
+    {
+        *attrib++ = EGL_PRESENT_OPAQUE_EXT;
+        *attrib++ = EGL_TRUE;
+    }
+    *attrib++ = EGL_NONE;
+
+    if (!(gl = opengl_drawable_create(sizeof(*gl), &wayland_drawable_funcs, format, hwnd, hdc))) return FALSE;
+    if (!(gl->client = wayland_client_surface_create(hwnd))) goto err;
+    if (!(gl->wl_egl_window = wl_egl_window_create(gl->client->wl_surface, rect.right, rect.bottom))) goto err;
+    if (!(gl->base.surface = funcs->p_eglCreateWindowSurface(egl->display, config, gl->wl_egl_window, attribs))) goto err;
+    set_client_surface(hwnd, gl->client);
+
+    TRACE("Created drawable %s with egl_surface %p\n", debugstr_opengl_drawable(&gl->base), gl->base.surface);
+
     if (previous) opengl_drawable_release( previous );
     *drawable = &gl->base;
     return TRUE;
+
+err:
+    opengl_drawable_release(&gl->base);
+    return FALSE;
 }
 
 static void wayland_init_egl_platform(struct egl_platform *platform)
@@ -207,26 +175,62 @@ static BOOL wayland_drawable_swap(struct opengl_drawable *base)
 
     ensure_window_surface_contents(toplevel);
     set_client_surface(hwnd, gl->client);
-
-    /* Although all the EGL surfaces we create are double-buffered, we want to
-     * use some as single-buffered, so avoid swapping those. */
-    if (gl->double_buffered) funcs->p_eglSwapBuffers(egl->display, gl->base.surface);
+    funcs->p_eglSwapBuffers(egl->display, gl->base.surface);
 
     return TRUE;
 }
 
+struct wayland_pbuffer
+{
+    struct opengl_drawable base;
+    struct wl_surface *surface;
+    struct wl_egl_window *window;
+};
+
+static struct wayland_pbuffer *pbuffer_from_opengl_drawable(struct opengl_drawable *base)
+{
+    return CONTAINING_RECORD(base, struct wayland_pbuffer, base);
+}
+
+static void wayland_pbuffer_destroy(struct opengl_drawable *base)
+{
+    struct wayland_pbuffer *gl = pbuffer_from_opengl_drawable(base);
+
+    TRACE("%s\n", debugstr_opengl_drawable(base));
+
+    if (gl->window)
+        wl_egl_window_destroy(gl->window);
+    if (gl->surface)
+        wl_surface_destroy(gl->surface);
+}
+
+static const struct opengl_drawable_funcs wayland_pbuffer_funcs =
+{
+    .destroy = wayland_pbuffer_destroy,
+};
+
 static BOOL wayland_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
                                    GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **surface)
 {
-    struct wayland_gl_drawable *drawable;
+    EGLConfig config = egl_config_for_format(format);
+    struct wayland_pbuffer *gl;
 
     TRACE("hdc %p, format %d, largest %u, texture_format %#x, texture_target %#x, max_level %#x, width %d, height %d, private %p\n",
           hdc, format, largest, texture_format, texture_target, max_level, *width, *height, surface);
 
-    /* Use an unmapped wayland surface as our offscreen "pbuffer" surface. */
-    if (!(drawable = wayland_gl_drawable_create(0, hdc, format, *width, *height))) return FALSE;
-    *surface = &drawable->base;
+    if (!(gl = opengl_drawable_create(sizeof(*gl), &wayland_pbuffer_funcs, format, NULL, hdc))) return FALSE;
+    /* Wayland EGL doesn't support pixmap or pbuffer, create a dummy window surface to act as the target render surface. */
+    if (!(gl->surface = wl_compositor_create_surface(process_wayland.wl_compositor))) goto err;
+    if (!(gl->window = wl_egl_window_create(gl->surface, *width, *height))) goto err;
+    if (!(gl->base.surface = funcs->p_eglCreateWindowSurface(egl->display, config, gl->window, NULL))) goto err;
+
+    TRACE("Created pbuffer %s with egl_surface %p\n", debugstr_opengl_drawable(&gl->base), gl->base.surface);
+    *surface = &gl->base;
     return TRUE;
+
+err:
+    opengl_drawable_release(&gl->base);
+    return FALSE;
 }
 
 static BOOL wayland_pbuffer_updated(HDC hdc, struct opengl_drawable *base, GLenum cube_face, GLint mipmap_level)
