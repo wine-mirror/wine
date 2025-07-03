@@ -178,8 +178,6 @@ struct macdrv_win_data
 {
     HWND                hwnd;                   /* hwnd that this private data belongs to */
     macdrv_window       cocoa_window;
-    macdrv_view         cocoa_view;
-    macdrv_view         client_cocoa_view;
     macdrv_view         client_view;
     struct window_rects rects;                  /* window rects in monitor DPI, relative to parent client area */
     int                 pixel_format;           /* pixel format for GL */
