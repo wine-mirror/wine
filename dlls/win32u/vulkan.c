@@ -49,7 +49,7 @@ static const struct vulkan_driver_funcs *driver_funcs;
 struct surface
 {
     struct vulkan_surface obj;
-    void *driver_private;
+    struct client_surface *client;
     HWND hwnd;
 
     struct list entry;
@@ -100,7 +100,7 @@ static VkResult win32u_vkCreateWin32SurfaceKHR( VkInstance client_instance, cons
         surface->hwnd = dummy;
     }
 
-    if ((res = driver_funcs->p_vulkan_surface_create( surface->hwnd, instance, &host_surface, &surface->driver_private )))
+    if ((res = driver_funcs->p_vulkan_surface_create( surface->hwnd, instance, &host_surface, &surface->client )))
     {
         if (dummy) NtUserDestroyWindow( dummy );
         free( surface );
@@ -144,7 +144,7 @@ static void win32u_vkDestroySurfaceKHR( VkInstance client_instance, VkSurfaceKHR
     }
 
     instance->p_vkDestroySurfaceKHR( instance->host.instance, surface->obj.host.surface, NULL /* allocator */ );
-    driver_funcs->p_vulkan_surface_destroy( surface->hwnd, surface->driver_private );
+    client_surface_release( surface->client );
 
     instance->p_remove_object( instance, &surface->obj.obj );
 
@@ -310,7 +310,7 @@ static VkResult win32u_vkCreateSwapchainKHR( VkDevice client_device, const VkSwa
     if (old_swapchain) create_info_host.oldSwapchain = old_swapchain->obj.host.swapchain;
 
     /* update the host surface to commit any pending size change */
-    driver_funcs->p_vulkan_surface_update( surface->hwnd, surface->driver_private );
+    driver_funcs->p_vulkan_surface_update( surface->client );
 
     /* Windows allows client rect to be empty, but host Vulkan often doesn't, adjust extents back to the host capabilities */
     res = instance->p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR( physical_device->host.physical_device, surface->obj.host.surface, &capabilities );
@@ -437,8 +437,7 @@ static VkResult win32u_vkQueuePresentKHR( VkQueue client_queue, const VkPresentI
         struct surface *surface = swapchain->surface;
         RECT client_rect;
 
-        if (surface->hwnd)
-            driver_funcs->p_vulkan_surface_presented( surface->hwnd, surface->driver_private );
+        if (surface->hwnd) driver_funcs->p_vulkan_surface_presented( surface->client );
 
         if (swapchain_res < VK_SUCCESS) continue;
         if (!NtUserGetClientRect( surface->hwnd, &client_rect, NtUserGetDpiForWindow( surface->hwnd ) ))
@@ -507,25 +506,37 @@ static struct vulkan_funcs vulkan_funcs =
     .p_get_host_surface_extension = win32u_get_host_surface_extension,
 };
 
-static VkResult nulldrv_vulkan_surface_create( HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *surface, void **private )
+static const struct client_surface_funcs nulldrv_vulkan_surface_funcs;
+
+static VkResult nulldrv_vulkan_surface_create( HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *surface,
+                                               struct client_surface **client )
 {
     VkHeadlessSurfaceCreateInfoEXT create_info = {.sType = VK_STRUCTURE_TYPE_HEADLESS_SURFACE_CREATE_INFO_EXT};
-    return instance->p_vkCreateHeadlessSurfaceEXT( instance->host.instance, &create_info, NULL, surface );
+    VkResult res;
+
+    if (!(*client = client_surface_create(sizeof(**client), &nulldrv_vulkan_surface_funcs, hwnd))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    if ((res = instance->p_vkCreateHeadlessSurfaceEXT( instance->host.instance, &create_info, NULL, surface )))
+    {
+        client_surface_release(*client);
+        *client = NULL;
+    }
+
+    return res;
 }
 
-static void nulldrv_vulkan_surface_destroy( HWND hwnd, void *private )
+static void nulldrv_vulkan_surface_destroy( struct client_surface *client )
 {
 }
 
-static void nulldrv_vulkan_surface_detach( HWND hwnd, void *private )
+static void nulldrv_vulkan_surface_detach( struct client_surface *client )
 {
 }
 
-static void nulldrv_vulkan_surface_update( HWND hwnd, void *private )
+static void nulldrv_vulkan_surface_update( struct client_surface *client )
 {
 }
 
-static void nulldrv_vulkan_surface_presented( HWND hwnd, void *private )
+static void nulldrv_vulkan_surface_presented( struct client_surface *client )
 {
 }
 
@@ -539,10 +550,14 @@ static const char *nulldrv_get_host_surface_extension(void)
     return "VK_EXT_headless_surface";
 }
 
+static const struct client_surface_funcs nulldrv_vulkan_surface_funcs =
+{
+    .destroy = nulldrv_vulkan_surface_destroy,
+};
+
 static const struct vulkan_driver_funcs nulldrv_funcs =
 {
     .p_vulkan_surface_create = nulldrv_vulkan_surface_create,
-    .p_vulkan_surface_destroy = nulldrv_vulkan_surface_destroy,
     .p_vulkan_surface_detach = nulldrv_vulkan_surface_detach,
     .p_vulkan_surface_update = nulldrv_vulkan_surface_update,
     .p_vulkan_surface_presented = nulldrv_vulkan_surface_presented,
@@ -571,34 +586,29 @@ static void vulkan_driver_load(void)
     pthread_once( &init_once, vulkan_driver_init );
 }
 
-static VkResult lazydrv_vulkan_surface_create( HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *surface, void **private )
+static VkResult lazydrv_vulkan_surface_create( HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *surface,
+                                               struct client_surface **client )
 {
     vulkan_driver_load();
-    return driver_funcs->p_vulkan_surface_create( hwnd, instance, surface, private );
+    return driver_funcs->p_vulkan_surface_create( hwnd, instance, surface, client );
 }
 
-static void lazydrv_vulkan_surface_destroy( HWND hwnd, void *private )
+static void lazydrv_vulkan_surface_detach( struct client_surface *client )
 {
     vulkan_driver_load();
-    return driver_funcs->p_vulkan_surface_destroy( hwnd, private );
+    return driver_funcs->p_vulkan_surface_detach( client );
 }
 
-static void lazydrv_vulkan_surface_detach( HWND hwnd, void *private )
+static void lazydrv_vulkan_surface_update( struct client_surface *client )
 {
     vulkan_driver_load();
-    return driver_funcs->p_vulkan_surface_detach( hwnd, private );
+    return driver_funcs->p_vulkan_surface_update( client );
 }
 
-static void lazydrv_vulkan_surface_update( HWND hwnd, void *private )
+static void lazydrv_vulkan_surface_presented( struct client_surface *client )
 {
     vulkan_driver_load();
-    return driver_funcs->p_vulkan_surface_update( hwnd, private );
-}
-
-static void lazydrv_vulkan_surface_presented( HWND hwnd, void *private )
-{
-    vulkan_driver_load();
-    driver_funcs->p_vulkan_surface_presented( hwnd, private );
+    driver_funcs->p_vulkan_surface_presented( client );
 }
 
 static VkBool32 lazydrv_vkGetPhysicalDeviceWin32PresentationSupportKHR( VkPhysicalDevice device, uint32_t queue )
@@ -616,7 +626,6 @@ static const char *lazydrv_get_host_surface_extension(void)
 static const struct vulkan_driver_funcs lazydrv_funcs =
 {
     .p_vulkan_surface_create = lazydrv_vulkan_surface_create,
-    .p_vulkan_surface_destroy = lazydrv_vulkan_surface_destroy,
     .p_vulkan_surface_detach = lazydrv_vulkan_surface_detach,
     .p_vulkan_surface_update = lazydrv_vulkan_surface_update,
     .p_vulkan_surface_presented = lazydrv_vulkan_surface_presented,
@@ -656,7 +665,7 @@ void vulkan_detach_surfaces( struct list *surfaces )
 
     LIST_FOR_EACH_ENTRY_SAFE( surface, next, surfaces, struct surface, entry )
     {
-        driver_funcs->p_vulkan_surface_detach( surface->hwnd, surface->driver_private );
+        driver_funcs->p_vulkan_surface_detach( surface->client );
         list_remove( &surface->entry );
         list_init( &surface->entry );
         surface->hwnd = NULL;

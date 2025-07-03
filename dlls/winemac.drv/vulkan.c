@@ -51,9 +51,15 @@ typedef VkFlags VkMetalSurfaceCreateFlagsEXT;
 
 struct wine_vk_surface
 {
+    struct client_surface client;
     macdrv_metal_device device;
     macdrv_metal_view view;
 };
+
+static struct wine_vk_surface *impl_from_client_surface(struct client_surface *client)
+{
+    return CONTAINING_RECORD(client, struct wine_vk_surface, client);
+}
 
 typedef struct VkMacOSSurfaceCreateInfoMVK
 {
@@ -73,28 +79,18 @@ typedef struct VkMetalSurfaceCreateInfoEXT
 
 static VkResult (*pvkCreateMacOSSurfaceMVK)(VkInstance, const VkMacOSSurfaceCreateInfoMVK*, const VkAllocationCallbacks *, VkSurfaceKHR *);
 static VkResult (*pvkCreateMetalSurfaceEXT)(VkInstance, const VkMetalSurfaceCreateInfoEXT*, const VkAllocationCallbacks *, VkSurfaceKHR *);
-static VkResult (*pvkGetPhysicalDeviceSurfaceCapabilities2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *, VkSurfaceCapabilities2KHR *);
 
+static const struct client_surface_funcs macdrv_vulkan_surface_funcs;
 static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs;
 
-static void wine_vk_surface_destroy(struct wine_vk_surface *surface)
-{
-    if (surface->view)
-        macdrv_view_release_metal_view(surface->view);
-
-    if (surface->device)
-        macdrv_release_metal_device(surface->device);
-
-    free(surface);
-}
-
-static VkResult macdrv_vulkan_surface_create(HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *surface, void **private)
+static VkResult macdrv_vulkan_surface_create(HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *handle,
+                                             struct client_surface **client)
 {
     VkResult res;
-    struct wine_vk_surface *mac_surface;
+    struct wine_vk_surface *surface;
     struct macdrv_win_data *data;
 
-    TRACE("%p %p %p %p\n", hwnd, instance, surface, private);
+    TRACE("%p %p %p %p\n", hwnd, instance, handle, client);
 
     if (!(data = get_win_data(hwnd)))
     {
@@ -102,23 +98,22 @@ static VkResult macdrv_vulkan_surface_create(HWND hwnd, const struct vulkan_inst
         return VK_ERROR_INCOMPATIBLE_DRIVER;
     }
 
-    mac_surface = calloc(1, sizeof(*mac_surface));
-    if (!mac_surface)
+    if (!(surface = client_surface_create(sizeof(*surface), &macdrv_vulkan_surface_funcs, hwnd)))
     {
         release_win_data(data);
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
 
-    mac_surface->device = macdrv_create_metal_device();
-    if (!mac_surface->device)
+    surface->device = macdrv_create_metal_device();
+    if (!surface->device)
     {
         ERR("Failed to allocate Metal device for hwnd=%p\n", hwnd);
         res = VK_ERROR_OUT_OF_HOST_MEMORY;
         goto err;
     }
 
-    mac_surface->view = macdrv_view_create_metal_view(data->client_cocoa_view, mac_surface->device);
-    if (!mac_surface->view)
+    surface->view = macdrv_view_create_metal_view(data->client_cocoa_view, surface->device);
+    if (!surface->view)
     {
         ERR("Failed to allocate Metal view for hwnd=%p\n", hwnd);
 
@@ -133,9 +128,9 @@ static VkResult macdrv_vulkan_surface_create(HWND hwnd, const struct vulkan_inst
         create_info_host.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
         create_info_host.pNext = NULL;
         create_info_host.flags = 0; /* reserved */
-        create_info_host.pLayer = macdrv_view_get_metal_layer(mac_surface->view);
+        create_info_host.pLayer = macdrv_view_get_metal_layer(surface->view);
 
-        res = pvkCreateMetalSurfaceEXT(instance->host.instance, &create_info_host, NULL /* allocator */, surface);
+        res = pvkCreateMetalSurfaceEXT(instance->host.instance, &create_info_host, NULL /* allocator */, handle);
     }
     else
     {
@@ -143,9 +138,9 @@ static VkResult macdrv_vulkan_surface_create(HWND hwnd, const struct vulkan_inst
         create_info_host.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
         create_info_host.pNext = NULL;
         create_info_host.flags = 0; /* reserved */
-        create_info_host.pView = macdrv_view_get_metal_layer(mac_surface->view);
+        create_info_host.pView = macdrv_view_get_metal_layer(surface->view);
 
-        res = pvkCreateMacOSSurfaceMVK(instance->host.instance, &create_info_host, NULL /* allocator */, surface);
+        res = pvkCreateMacOSSurfaceMVK(instance->host.instance, &create_info_host, NULL /* allocator */, handle);
     }
     if (res != VK_SUCCESS)
     {
@@ -155,35 +150,38 @@ static VkResult macdrv_vulkan_surface_create(HWND hwnd, const struct vulkan_inst
 
     release_win_data(data);
 
-    *private = mac_surface;
+    *client = &surface->client;
 
-    TRACE("Created surface=0x%s, private=%p\n", wine_dbgstr_longlong(*surface), *private);
+    TRACE("Created surface=0x%s, client=%p\n", wine_dbgstr_longlong(*handle), *client);
     return VK_SUCCESS;
 
 err:
-    wine_vk_surface_destroy(mac_surface);
+    client_surface_release(&surface->client);
     release_win_data(data);
     return res;
 }
 
-static void macdrv_vulkan_surface_destroy(HWND hwnd, void *private)
+static void macdrv_vulkan_surface_destroy(struct client_surface *client)
 {
-    struct wine_vk_surface *mac_surface = private;
+    struct wine_vk_surface *surface = impl_from_client_surface(client);
 
-    TRACE("%p %p\n", hwnd, private);
+    TRACE("%s\n", debugstr_client_surface(client));
 
-    wine_vk_surface_destroy(mac_surface);
+    if (surface->view)
+        macdrv_view_release_metal_view(surface->view);
+    if (surface->device)
+        macdrv_release_metal_device(surface->device);
 }
 
-static void macdrv_vulkan_surface_detach(HWND hwnd, void *private)
+static void macdrv_vulkan_surface_detach(struct client_surface *client)
 {
 }
 
-static void macdrv_vulkan_surface_update(HWND hwnd, void *private)
+static void macdrv_vulkan_surface_update(struct client_surface *client)
 {
 }
 
-static void macdrv_vulkan_surface_presented(HWND hwnd, void *private)
+static void macdrv_vulkan_surface_presented(struct client_surface *client)
 {
 }
 
@@ -200,10 +198,14 @@ static const char *macdrv_get_host_surface_extension(void)
     return pvkCreateMetalSurfaceEXT ? "VK_EXT_metal_surface" : "VK_MVK_macos_surface";
 }
 
+static const struct client_surface_funcs macdrv_vulkan_surface_funcs =
+{
+    .destroy = macdrv_vulkan_surface_destroy,
+};
+
 static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = macdrv_vulkan_surface_create,
-    .p_vulkan_surface_destroy = macdrv_vulkan_surface_destroy,
     .p_vulkan_surface_detach = macdrv_vulkan_surface_detach,
     .p_vulkan_surface_update = macdrv_vulkan_surface_update,
     .p_vulkan_surface_presented = macdrv_vulkan_surface_presented,

@@ -236,6 +236,37 @@ void *free_user_handle( HANDLE handle, unsigned short type )
     return ptr;
 }
 
+void *client_surface_create( UINT size, const struct client_surface_funcs *funcs, HWND hwnd )
+{
+    struct client_surface *surface;
+
+    if (!(surface = calloc( 1, size ))) return NULL;
+    surface->funcs = funcs;
+    surface->ref = 1;
+    surface->hwnd = hwnd;
+
+    TRACE( "created %s\n", debugstr_client_surface( surface ) );
+    return surface;
+}
+
+void client_surface_add_ref( struct client_surface *surface )
+{
+    ULONG ref = InterlockedIncrement( &surface->ref );
+    TRACE( "%s increasing refcount to %u\n", debugstr_client_surface( surface ), ref );
+}
+
+void client_surface_release( struct client_surface *surface )
+{
+    ULONG ref = InterlockedDecrement( &surface->ref );
+    TRACE( "%s decreasing refcount to %u\n", debugstr_client_surface( surface ), ref );
+
+    if (!ref)
+    {
+        surface->funcs->destroy( surface );
+        free( surface );
+    }
+}
+
 /*******************************************************************
  *           get_hwnd_message_parent
  *

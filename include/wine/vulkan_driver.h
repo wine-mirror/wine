@@ -173,13 +173,13 @@ struct vulkan_funcs
 };
 
 /* interface between win32u and the user drivers */
+struct client_surface;
 struct vulkan_driver_funcs
 {
-    VkResult (*p_vulkan_surface_create)(HWND, const struct vulkan_instance *, VkSurfaceKHR *, void **);
-    void (*p_vulkan_surface_destroy)(HWND, void *);
-    void (*p_vulkan_surface_detach)(HWND, void *);
-    void (*p_vulkan_surface_update)(HWND, void *);
-    void (*p_vulkan_surface_presented)(HWND, void *);
+    VkResult (*p_vulkan_surface_create)(HWND, const struct vulkan_instance *, VkSurfaceKHR *, struct client_surface **);
+    void (*p_vulkan_surface_detach)(struct client_surface *);
+    void (*p_vulkan_surface_update)(struct client_surface *);
+    void (*p_vulkan_surface_presented)(struct client_surface *);
 
     VkBool32 (*p_vkGetPhysicalDeviceWin32PresentationSupportKHR)(VkPhysicalDevice, uint32_t);
     const char *(*p_get_host_surface_extension)(void);
