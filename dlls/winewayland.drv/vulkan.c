@@ -67,17 +67,6 @@ static VkBool32 (*pvkGetPhysicalDeviceWaylandPresentationSupportKHR)(VkPhysicalD
 static const struct client_surface_funcs wayland_vulkan_surface_funcs;
 static const struct vulkan_driver_funcs wayland_vulkan_driver_funcs;
 
-static void wine_vk_surface_destroy(struct wayland_client_surface *client)
-{
-    HWND hwnd = wl_surface_get_user_data(client->wl_surface);
-    struct wayland_win_data *data = wayland_win_data_get(hwnd);
-
-    if (wayland_client_surface_release(client) && data)
-        data->client_surface = NULL;
-
-    if (data) wayland_win_data_release(data);
-}
-
 static VkResult wayland_vulkan_surface_create(HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *handle,
                                               struct client_surface **client)
 {
@@ -124,11 +113,21 @@ static void wayland_vulkan_surface_destroy(struct client_surface *client)
 
     TRACE("%s\n", debugstr_client_surface(client));
 
-    if (surface->wayland_client) wine_vk_surface_destroy(surface->wayland_client);
+    if (surface->wayland_client) wayland_client_surface_release(surface->wayland_client);
 }
 
 static void wayland_vulkan_surface_detach(struct client_surface *client)
 {
+    struct wayland_vulkan_surface *surface = impl_from_client_surface(client);
+    struct wayland_win_data *data;
+
+    if ((data = wayland_win_data_get(client->hwnd)))
+    {
+        if (data->client_surface == surface->wayland_client)
+            data->client_surface = NULL;
+        wayland_client_surface_detach(surface->wayland_client);
+        wayland_win_data_release(data);
+    }
 }
 
 static void wayland_vulkan_surface_update(struct client_surface *client)
