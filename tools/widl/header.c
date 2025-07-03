@@ -2028,7 +2028,7 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
       case STMT_TYPEREF:
         /* FIXME: shouldn't write out forward declarations for undefined
         * interfaces but a number of our IDL files depend on this */
-        if (type_get_type(stmt->u.type) == TYPE_INTERFACE && !stmt->u.type->written)
+        if (type_get_type(stmt->u.type) == TYPE_INTERFACE)
           write_forward(header, stmt->u.type);
         break;
       case STMT_IMPORTLIB:
