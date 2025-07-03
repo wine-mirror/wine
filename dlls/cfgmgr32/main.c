@@ -18,6 +18,7 @@
  */
 
 #include "wine/debug.h"
+#include "wine/rbtree.h"
 #include "winreg.h"
 #include "cfgmgr32.h"
 #include "winuser.h"
@@ -570,6 +571,18 @@ void WINAPI DevFreeObjects( ULONG objs_len, const DEV_OBJECT *objs )
     return;
 }
 
+struct device_iface_path
+{
+    struct rb_entry entry;
+    WCHAR *path;
+};
+
+static int device_iface_path_cmp( const void *key, const struct rb_entry *entry )
+{
+    const struct device_iface_path *iface = RB_ENTRY_VALUE( entry, struct device_iface_path, entry );
+    return wcsicmp( key, iface->path );
+}
+
 struct device_query_context
 {
     LONG ref;
@@ -577,19 +590,25 @@ struct device_query_context
     ULONG flags;
     ULONG prop_keys_len;
     DEVPROPCOMPKEY *prop_keys;
+    BOOL filters;
 
     CRITICAL_SECTION cs;
     PDEV_QUERY_RESULT_CALLBACK callback;
     void *user_data;
     DEV_QUERY_STATE state;
     HANDLE closed;
+    struct rb_tree known_ifaces;
+    HCMNOTIFICATION notify;
 };
 
 static HRESULT device_query_context_add_object( DEV_OBJECT obj, void *data )
 {
     DEV_QUERY_RESULT_ACTION_DATA action_data = {0};
     struct device_query_context *ctx = data;
+    struct device_iface_path *iface_entry = NULL;
     HRESULT hr = S_OK;
+
+    TRACE( "(%s, %p)\n", debugstr_w( obj.pszObjectId ), data );
 
     action_data.Action = DevQueryResultAdd;
     action_data.Data.DeviceObject = obj;
@@ -598,6 +617,20 @@ static HRESULT device_query_context_add_object( DEV_OBJECT obj, void *data )
     EnterCriticalSection( &ctx->cs );
     if (ctx->state == DevQueryStateClosed)
         hr = E_CHANGED_STATE;
+    else if (obj.ObjectType == DevObjectTypeDeviceInterface || obj.ObjectType == DevObjectTypeDeviceInterfaceDisplay)
+    {
+        if (!(iface_entry = calloc( 1, sizeof( *iface_entry ) )) || !(iface_entry->path = wcsdup( obj.pszObjectId )))
+        {
+            if (iface_entry) free( iface_entry->path );
+            free( iface_entry );
+            hr = E_OUTOFMEMORY;
+        }
+        else if (rb_put( &ctx->known_ifaces, iface_entry->path, &iface_entry->entry ))
+        {
+            free( iface_entry->path );
+            free( iface_entry );
+        }
+    }
     LeaveCriticalSection( &ctx->cs );
 
     DevFreeObjectProperties( obj.cPropertyCount, obj.pProperties );
@@ -642,6 +675,7 @@ static HRESULT device_query_context_create( struct device_query_context **query,
     ctx->callback = callback;
     ctx->user_data = user_data;
     ctx->state = DevQueryStateInitialized;
+    rb_init( &ctx->known_ifaces, device_iface_path_cmp );
 
     *query = ctx;
     return S_OK;
@@ -652,6 +686,13 @@ static void device_query_context_addref( struct device_query_context *ctx )
     InterlockedIncrement( &ctx->ref );
 }
 
+static void device_iface_path_free( struct rb_entry *entry, void *data )
+{
+    struct device_iface_path *path = RB_ENTRY_VALUE( entry, struct device_iface_path, entry );
+    free( path->path );
+    free( path );
+}
+
 static void device_query_context_release( struct device_query_context *ctx )
 {
     if (!InterlockedDecrement( &ctx->ref ))
@@ -660,6 +701,7 @@ static void device_query_context_release( struct device_query_context *ctx )
         ctx->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection( &ctx->cs );
         if (ctx->closed) CloseHandle( ctx->closed );
+        rb_destroy( &ctx->known_ifaces, device_iface_path_free, NULL );
         free( ctx );
     }
 }
@@ -691,14 +733,171 @@ static void CALLBACK device_query_context_notify_aborted_async( TP_CALLBACK_INST
     device_query_context_release( data );
 }
 
+struct devquery_notify_data
+{
+    DEV_QUERY_RESULT_ACTION_DATA action_data;
+    struct device_query_context *ctx;
+};
+
+static void CALLBACK device_query_notify_dev_async( TP_CALLBACK_INSTANCE *instance, void *notify_data )
+{
+    struct devquery_notify_data *data = notify_data;
+
+    data->ctx->callback( (HDEVQUERY)data->ctx, data->ctx->user_data, &data->action_data );
+    if (data->action_data.Action != DevQueryResultStateChange)
+        DevFreeObjectProperties( data->action_data.Data.DeviceObject.cPropertyCount,
+                                 data->action_data.Data.DeviceObject.pProperties );
+    device_query_context_release( data->ctx );
+    free( data );
+}
+
+static const char *debugstr_CM_NOTIFY_ACTION( CM_NOTIFY_ACTION action )
+{
+    static const char *str[] = {
+        "CM_NOTIFY_ACTION_DEVICEINTERFACEARRIVAL",
+        "CM_NOTIFY_ACTION_DEVICEINTERFACEREMOVAL",
+        "CM_NOTIFY_ACTION_DEVICEQUERYREMOVE",
+        "CM_NOTIFY_ACTION_DEVICEQUERYREMOVEFAILED",
+        "CM_NOTIFY_ACTION_DEVICEREMOVEPENDING",
+        "CM_NOTIFY_ACTION_DEVICEREMOVECOMPLETE",
+        "CM_NOTIFY_ACTION_DEVICECUSTOMEVENT",
+        "CM_NOTIFY_ACTION_DEVICEINSTANCEENUMERATED",
+        "CM_NOTIFY_ACTION_DEVICEINSTANCESTARTED",
+        "CM_NOTIFY_ACTION_DEVICEINSTANCEREMOVED",
+    };
+
+    return action < ARRAY_SIZE( str ) ? str[action] : wine_dbg_sprintf( "(unknown %d)", action );
+}
+
+static const char *debugstr_CM_NOTIFY_EVENT_DATA( const CM_NOTIFY_EVENT_DATA *event )
+{
+    if (!event) return wine_dbg_sprintf( "(null)" );
+    switch (event->FilterType)
+    {
+    case CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE:
+        return wine_dbg_sprintf( "{CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE %lu {{%s %s}}}", event->Reserved,
+                                 debugstr_guid( &event->u.DeviceInterface.ClassGuid ),
+                                 debugstr_w( event->u.DeviceInterface.SymbolicLink ) );
+    case CM_NOTIFY_FILTER_TYPE_DEVICEHANDLE:
+        if (event->u.DeviceHandle.NameOffset == -1)
+        {
+            return wine_dbg_sprintf( "{CM_NOTIFY_FILTER_TYPE_DEVICEHANDLE %lu {{%s -1 %lu %p}}}", event->Reserved,
+                                     debugstr_guid( &event->u.DeviceHandle.EventGuid ),
+                                     event->u.DeviceHandle.DataSize, event->u.DeviceHandle.Data );
+        }
+        return wine_dbg_sprintf( "{CM_NOTIFY_FILTER_TYPE_DEVICEHANDLE %lu {{%s %ld %lu %p %s}}}", event->Reserved,
+                                 debugstr_guid( &event->u.DeviceHandle.EventGuid ), event->u.DeviceHandle.NameOffset,
+                                 event->u.DeviceHandle.DataSize, event->u.DeviceHandle.Data,
+                                 debugstr_w( (WCHAR *)&event->u.DeviceHandle.Data[event->u.DeviceHandle.NameOffset] ) );
+    case CM_NOTIFY_FILTER_TYPE_DEVICEINSTANCE:
+        return wine_dbg_sprintf( "{CM_NOTIFY_FILTER_TYPE_DEVICEINSTANCE %lu %s}", event->Reserved,
+                                 debugstr_w( event->u.DeviceInstance.InstanceId ) );
+    default:
+        return wine_dbg_sprintf( "{(unknown %d) %lu}", event->FilterType, event->Reserved );
+    }
+}
+
+static DWORD CALLBACK device_query_context_cm_notify_callback( HCMNOTIFICATION notify, void *data,
+                                                               CM_NOTIFY_ACTION action,
+                                                               CM_NOTIFY_EVENT_DATA *event, DWORD event_size )
+{
+    struct device_query_context *ctx = data;
+    const ULONG prop_flags = ctx->flags & (DevQueryFlagAllProperties | DevQueryFlagLocalize);
+    DEV_QUERY_RESULT_ACTION_DATA *action_data;
+    struct devquery_notify_data *notify_data;
+    struct device_iface_path *iface_entry;
+    const WCHAR *iface_path;
+    struct rb_entry *entry;
+    HRESULT hr = S_OK;
+
+    TRACE( "(%p, %p, %s, %s, %lu)\n", notify, data, debugstr_CM_NOTIFY_ACTION( action ),
+           debugstr_CM_NOTIFY_EVENT_DATA( event ), event_size );
+
+    if (action != CM_NOTIFY_ACTION_DEVICEINTERFACEARRIVAL && action != CM_NOTIFY_ACTION_DEVICEINTERFACEREMOVAL)
+    {
+        FIXME( "Unexpected CM_NOTIFY_ACTION value: %d\n", action );
+        return 0;
+    }
+
+    iface_path = event->u.DeviceInterface.SymbolicLink;
+    EnterCriticalSection( &ctx->cs );
+    if (ctx->state == DevQueryStateClosed || ctx->state == DevQueryStateAborted)
+    {
+        LeaveCriticalSection( &ctx->cs );
+        return 0;
+    }
+
+    if (!(notify_data = calloc( 1, sizeof ( *notify_data ) )))
+        goto abort;
+    action_data = &notify_data->action_data;
+    notify_data->ctx = ctx;
+    action_data->Data.DeviceObject.ObjectType = ctx->type;
+
+    /* Interface removal and arrival for objects that have already been enumerated. */
+    if ((entry = rb_get( &ctx->known_ifaces, iface_path )))
+    {
+        const DEVPROP_BOOLEAN enabled = action == CM_NOTIFY_ACTION_DEVICEINTERFACEARRIVAL ? DEVPROP_TRUE : DEVPROP_FALSE;
+        DEVPROPERTY *prop;
+
+        if (!(prop = calloc( 1, sizeof( *prop ))))
+            goto abort;
+        if (!(prop->Buffer = calloc( 1, sizeof( enabled ) )))
+        {
+            free( prop );
+            goto abort;
+        }
+        prop->CompKey.Key = DEVPKEY_DeviceInterface_Enabled;
+        prop->Type = DEVPROP_TYPE_BOOLEAN;
+        prop->BufferSize = sizeof( enabled );
+        memcpy( prop->Buffer, &enabled, sizeof( enabled ) );
+        iface_entry =  RB_ENTRY_VALUE( entry, struct device_iface_path, entry );
+        action_data->Action = DevQueryResultUpdate;
+        action_data->Data.DeviceObject.cPropertyCount = 1;
+        action_data->Data.DeviceObject.pProperties = prop;
+    }
+    else
+    {
+        if (!(iface_entry = calloc( 1, sizeof( *iface_entry ) )))
+            goto abort;
+        if (!(iface_entry->path = wcsdup( iface_path )))
+        {
+            free( iface_entry );
+            goto abort;
+        }
+        rb_put( &ctx->known_ifaces, iface_path, &iface_entry->entry );
+        hr = DevGetObjectProperties( ctx->type, iface_path, prop_flags, ctx->prop_keys_len, ctx->prop_keys,
+                                     &action_data->Data.DeviceObject.cPropertyCount,
+                                     &action_data->Data.DeviceObject.pProperties );
+        if (FAILED( hr ))
+            goto abort;
+        action_data->Action = DevQueryResultAdd;
+    }
+
+    action_data->Data.DeviceObject.pszObjectId = iface_entry->path;
+    device_query_context_addref( ctx );
+    if (!TrySubmitThreadpoolCallback( device_query_notify_dev_async, notify_data, NULL ))
+        device_query_context_release( ctx );
+    LeaveCriticalSection( &ctx->cs );
+    return 0;
+abort:
+    free( notify_data );
+    ctx->state = DevQueryStateAborted;
+    device_query_context_addref( ctx );
+    if (!TrySubmitThreadpoolCallback( device_query_context_notify_aborted_async, ctx, NULL ))
+        device_query_context_release( ctx );
+    LeaveCriticalSection( &ctx->cs );
+    return 0;
+}
+
 static void CALLBACK device_query_enum_objects_async( TP_CALLBACK_INSTANCE *instance, void *data )
 {
     struct device_query_context *ctx = data;
-    BOOL success = TRUE;
-    HRESULT hr;
+    BOOL success;
+    HRESULT hr = S_OK;
 
-    hr = enum_dev_objects( ctx->type, ctx->prop_keys_len, ctx->prop_keys, !!(ctx->flags & DevQueryFlagAllProperties),
-                           device_query_context_add_object, ctx );
+    if (!ctx->filters)
+        hr = enum_dev_objects( ctx->type, ctx->prop_keys_len, ctx->prop_keys, !!(ctx->flags & DevQueryFlagAllProperties),
+                               device_query_context_add_object, ctx );
 
     EnterCriticalSection( &ctx->cs );
     if (ctx->state == DevQueryStateClosed)
@@ -709,28 +908,56 @@ static void CALLBACK device_query_enum_objects_async( TP_CALLBACK_INSTANCE *inst
     case S_OK:
         ctx->state = DevQueryStateEnumCompleted;
         success = TrySubmitThreadpoolCallback( device_query_context_notify_enum_completed_async, ctx, NULL );
-        LeaveCriticalSection( &ctx->cs );
+        if (ctx->filters || !(ctx->flags & DevQueryFlagUpdateResults))
+            break;
+        switch (ctx->type)
+        {
+        case DevObjectTypeDeviceInterface:
+        case DevObjectTypeDeviceInterfaceDisplay:
+        {
+            CM_NOTIFY_FILTER filter = { 0 };
+            CONFIGRET ret;
+
+            filter.cbSize = sizeof( filter );
+            filter.Flags = CM_NOTIFY_FILTER_FLAG_ALL_INTERFACE_CLASSES;
+            filter.FilterType = CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE;
+            device_query_context_addref( ctx );
+            ret = CM_Register_Notification( &filter, ctx, device_query_context_cm_notify_callback, &ctx->notify );
+            if (ret)
+            {
+                ERR( "CM_Register_Notification failed: %lu\n", ret );
+                device_query_context_release( ctx );
+                goto abort;
+            }
+            break;
+        }
+        default:
+            FIXME( "Device updates not supported for object type %d\n", ctx->type );
+            break;
+        }
         break;
     case E_CHANGED_STATE:
-        if (ctx->flags & DevQueryFlagAsyncClose)
-        {
-            success = TrySubmitThreadpoolCallback( device_query_context_notify_closed_async, ctx, NULL );
-            LeaveCriticalSection( &ctx->cs );
-        }
-        else
+        if (!(ctx->flags & DevQueryFlagAsyncClose))
         {
             LeaveCriticalSection( &ctx->cs );
             SetEvent( ctx->closed );
             device_query_context_release( ctx );
+            return;
         }
+        success = TrySubmitThreadpoolCallback( device_query_context_notify_closed_async, ctx, NULL );
         break;
     default:
-        ctx->state = DevQueryStateAborted;
-        success = TrySubmitThreadpoolCallback( device_query_context_notify_aborted_async, ctx, NULL );
-        LeaveCriticalSection( &ctx->cs );
-        break;
+        goto abort;
     }
 
+    LeaveCriticalSection( &ctx->cs );
+    if (!success)
+        device_query_context_release( ctx );
+    return;
+abort:
+    ctx->state = DevQueryStateAborted;
+    success = TrySubmitThreadpoolCallback( device_query_context_notify_aborted_async, ctx, NULL );
+    LeaveCriticalSection( &ctx->cs );
     if (!success)
         device_query_context_release( ctx );
 }
@@ -769,6 +996,7 @@ HRESULT WINAPI DevCreateObjectQueryEx( DEV_OBJECT_TYPE type, ULONG flags, ULONG 
     if (FAILED( hr ))
         return hr;
 
+    ctx->filters = !!filters;
     device_query_context_addref( ctx );
     if (!TrySubmitThreadpoolCallback( device_query_enum_objects_async, ctx, NULL ))
         hr = HRESULT_FROM_WIN32( GetLastError() );
@@ -797,6 +1025,11 @@ void WINAPI DevCloseObjectQuery( HDEVQUERY query )
     old = ctx->state;
     ctx->state = DevQueryStateClosed;
 
+    if (ctx->notify)
+    {
+        CM_Unregister_Notification( ctx->notify );
+        device_query_context_release( ctx ); /* Reference held by CM_Register_Notification. */
+    }
     if (async && old == DevQueryStateEnumCompleted)
     {
         /* No asynchronous operation involving this query is active, so we need to notify DevQueryStateClosed. */

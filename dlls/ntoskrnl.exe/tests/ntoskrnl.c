@@ -1790,9 +1790,9 @@ static void test_pnp_devices(void)
     if (have_devquery)
     {
         status = WaitForSingleObject(devquery_data.device_added_sem, 1000);
-        todo_wine ok(!status, "WaitForSingleObject failed, error %lu\n", status);
-        todo_wine ok(devquery_data.bus_dev_added == 1, "got %lu new bus device objects\n", devquery_data.bus_dev_added);
-        todo_wine_if (!status) ok(!devquery_data.bus_dev_removed, "got %lu bus device object removals\n", devquery_data.bus_dev_removed);
+        ok(!status, "WaitForSingleObject failed, error %lu\n", status);
+        ok(devquery_data.bus_dev_added == 1, "got %lu new bus device objects\n", devquery_data.bus_dev_added);
+        ok(!devquery_data.bus_dev_removed, "got %lu bus device object removals\n", devquery_data.bus_dev_removed);
     }
 
     set = SetupDiGetClassDevsA(&bus_class, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
@@ -1813,9 +1813,9 @@ static void test_pnp_devices(void)
     if (have_devquery)
     {
         status = WaitForSingleObject(devquery_data.device_removed_sem, 1000);
-        todo_wine ok(!status, "WaitForSingleObject failed, error %lu\n", status);
-        todo_wine ok(devquery_data.bus_dev_added == 1, "got %lu new bus device objects\n", devquery_data.bus_dev_added);
-        todo_wine ok(devquery_data.bus_dev_removed == 1, "got %lu bus device object removals\n", devquery_data.bus_dev_removed);
+        ok(!status, "WaitForSingleObject failed, error %lu\n", status);
+        ok(devquery_data.bus_dev_added == 1, "got %lu new bus device objects\n", devquery_data.bus_dev_added);
+        ok(devquery_data.bus_dev_removed == 1, "got %lu bus device object removals\n", devquery_data.bus_dev_removed);
     }
 
     set = SetupDiGetClassDevsA(&bus_class, NULL, NULL, DIGCF_DEVICEINTERFACE);
@@ -1846,9 +1846,9 @@ static void test_pnp_devices(void)
     if (have_devquery)
     {
         status = WaitForSingleObject(devquery_data.device_added_sem, 1000);
-        todo_wine ok(!status, "WaitForSingleObject failed, error %lu\n", status);
-        todo_wine ok(devquery_data.child_dev_added == 1, "got %lu new bus device objects\n", devquery_data.child_dev_added);
-        todo_wine_if(!status) ok(!devquery_data.child_dev_removed, "got %lu bus device object removals\n", devquery_data.child_dev_removed);
+        ok(!status, "WaitForSingleObject failed, error %lu\n", status);
+        ok(devquery_data.child_dev_added == 1, "got %lu new bus device objects\n", devquery_data.child_dev_added);
+        ok(!devquery_data.child_dev_removed, "got %lu bus device object removals\n", devquery_data.child_dev_removed);
     }
 
     set = SetupDiGetClassDevsA(&child_class, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
@@ -2021,9 +2021,9 @@ static void test_pnp_devices(void)
     if (have_devquery)
     {
         status = WaitForSingleObject(devquery_data.device_removed_sem, 1000);
-        todo_wine ok(!status, "WaitForSingleObject failed, error %lu\n", status);
-        todo_wine ok(devquery_data.child_dev_added == 1, "got %lu new bus device objects\n", devquery_data.child_dev_added);
-        todo_wine ok(devquery_data.child_dev_removed == 1, "got %lu bus device object removals\n", devquery_data.child_dev_removed);
+        ok(!status, "WaitForSingleObject failed, error %lu\n", status);
+        ok(devquery_data.child_dev_added == 1, "got %lu new bus device objects\n", devquery_data.child_dev_added);
+        ok(devquery_data.child_dev_removed == 1, "got %lu bus device object removals\n", devquery_data.child_dev_removed);
     }
 
     ret = DeviceIoControl(child, IOCTL_WINETEST_CHILD_CHECK_REMOVED, NULL, 0, NULL, 0, &size, NULL);
@@ -2048,8 +2048,8 @@ static void test_pnp_devices(void)
         ok(status == WAIT_TIMEOUT, "got status %#lx\n", status);
         status = WaitForSingleObject(devquery_data.device_removed_sem, 1000);
         ok(status == WAIT_TIMEOUT, "got status %#lx\n", status);
-        todo_wine ok(devquery_data.child_dev_added == 1, "got %lu new bus device objects\n", devquery_data.child_dev_added);
-        todo_wine ok(devquery_data.child_dev_removed == 1, "got %lu bus device object removals\n", devquery_data.child_dev_removed);
+        ok(devquery_data.child_dev_added == 1, "got %lu new bus device objects\n", devquery_data.child_dev_added);
+        ok(devquery_data.child_dev_removed == 1, "got %lu bus device object removals\n", devquery_data.child_dev_removed);
     }
 
     ret = NtOpenFile(&tmp, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT);
