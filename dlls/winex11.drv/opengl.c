@@ -197,9 +197,9 @@ struct glx_pixel_format
 struct gl_drawable
 {
     struct opengl_drawable         base;
+    struct client_surface         *client;
     RECT                           rect;         /* current size of the GL drawable */
     GLXDrawable                    drawable;     /* drawable for rendering with GL */
-    Window                         window;       /* window if drawable is a GLXWindow */
     Colormap                       colormap;     /* colormap for the client window */
     Pixmap                         pixmap;       /* base pixmap if drawable is a GLXPixmap */
     BOOL                           offscreen;
@@ -489,6 +489,7 @@ static BOOL x11drv_egl_surface_create( HWND hwnd, HDC hdc, int format, struct op
 {
     struct opengl_drawable *previous;
     struct gl_drawable *gl;
+    Window window;
     RECT rect;
 
     if ((previous = *drawable) && previous->format == format) return TRUE;
@@ -498,16 +499,21 @@ static BOOL x11drv_egl_surface_create( HWND hwnd, HDC hdc, int format, struct op
     gl->rect = rect;
     gl->hdc = hdc;
 
-    gl->window = create_client_window( hwnd, &default_visual, default_colormap );
-    gl->base.surface = funcs->p_eglCreateWindowSurface( egl->display, egl_config_for_format(format),
-                                                        (void *)gl->window, NULL );
+    if (!(window = x11drv_client_surface_create( hwnd, &default_visual, default_colormap, &gl->client )))
+    {
+        opengl_drawable_release( &gl->base );
+        return FALSE;
+    }
+
+    gl->base.surface = funcs->p_eglCreateWindowSurface( egl->display, egl_config_for_format( format ),
+                                                        (void *)window, NULL );
     if (!gl->base.surface)
     {
         opengl_drawable_release( &gl->base );
         return FALSE;
     }
 
-    TRACE( "Created drawable %s with client window %lx\n", debugstr_opengl_drawable( &gl->base ), gl->window );
+    TRACE( "Created drawable %s with client window %lx\n", debugstr_opengl_drawable( &gl->base ), window );
     XFlush( gdi_display );
 
     if (previous) opengl_drawable_release( previous );
@@ -868,10 +874,10 @@ static void x11drv_surface_destroy( struct opengl_drawable *base )
     TRACE( "drawable %s\n", debugstr_opengl_drawable( base ) );
 
     if (gl->drawable) pglXDestroyWindow( gdi_display, gl->drawable );
-    if (gl->window) destroy_client_window( gl->base.hwnd, gl->window );
     if (gl->colormap) XFreeColormap( gdi_display, gl->colormap );
     if (gl->hdc_src) NtGdiDeleteObjectApp( gl->hdc_src );
     if (gl->hdc_dst) NtGdiDeleteObjectApp( gl->hdc_dst );
+    if (gl->client) client_surface_release( gl->client );
 }
 
 static BOOL set_swap_interval( struct gl_drawable *gl, int interval )
@@ -930,6 +936,7 @@ static BOOL x11drv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl
     struct glx_pixel_format *fmt = glx_pixel_format_from_format( format );
     struct opengl_drawable *previous;
     struct gl_drawable *gl;
+    Window window;
     RECT rect;
 
     if ((previous = *drawable) && previous->format == format) return TRUE;
@@ -938,20 +945,18 @@ static BOOL x11drv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl
     if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_surface_funcs, format, hwnd ))) return FALSE;
     gl->rect = rect;
     gl->hdc = hdc;
-
     gl->colormap = XCreateColormap( gdi_display, get_dummy_parent(), fmt->visual->visual,
                                     (fmt->visual->class == PseudoColor || fmt->visual->class == GrayScale ||
                                      fmt->visual->class == DirectColor) ? AllocAll : AllocNone );
-    gl->window = create_client_window( hwnd, fmt->visual, gl->colormap );
-    if (gl->window) gl->drawable = pglXCreateWindow( gdi_display, fmt->fbconfig, gl->window, NULL );
 
-    if (!gl->drawable)
+    if (!gl->colormap || !(window = x11drv_client_surface_create( hwnd, fmt->visual, gl->colormap, &gl->client )) ||
+        !(gl->drawable = pglXCreateWindow( gdi_display, fmt->fbconfig, window, NULL )))
     {
         opengl_drawable_release( &gl->base );
         return FALSE;
     }
 
-    TRACE( "Created drawable %s with client window %lx\n", debugstr_opengl_drawable( &gl->base ), gl->window );
+    TRACE( "Created drawable %s with client window %lx\n", debugstr_opengl_drawable( &gl->base ), window );
     XFlush( gdi_display );
 
     if (previous) opengl_drawable_release( previous );
@@ -959,82 +964,10 @@ static BOOL x11drv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl
     return TRUE;
 }
 
-static void update_gl_drawable_size( struct gl_drawable *gl )
-{
-    XWindowChanges changes;
-    RECT rect = {0};
-
-    NtUserGetClientRect( gl->base.hwnd, &rect, NtUserGetDpiForWindow( gl->base.hwnd ) );
-    if (EqualRect( &gl->rect, &rect )) return;
-
-    changes.width  = min( max( 1, rect.right ), 65535 );
-    changes.height = min( max( 1, rect.bottom ), 65535 );
-    XConfigureWindow( gdi_display, gl->window, CWWidth | CWHeight, &changes );
-    gl->rect = rect;
-}
-
-static void update_gl_drawable_offscreen( struct gl_drawable *gl )
-{
-    BOOL offscreen = needs_offscreen_rendering( gl->base.hwnd );
-    struct x11drv_win_data *data;
-
-    if (offscreen == gl->offscreen)
-    {
-        if (!offscreen && (data = get_win_data( gl->base.hwnd )))
-        {
-            attach_client_window( data, gl->window );
-            release_win_data( data );
-        }
-        return;
-    }
-    gl->offscreen = offscreen;
-
-    TRACE( "Moving hwnd %p client %lx drawable %lx %sscreen\n", gl->base.hwnd, gl->window, gl->drawable, offscreen ? "off" : "on" );
-
-    if (!gl->offscreen)
-    {
-#ifdef SONAME_LIBXCOMPOSITE
-        if (usexcomposite) pXCompositeUnredirectWindow( gdi_display, gl->window, CompositeRedirectManual );
-#endif
-        if (gl->hdc_dst)
-        {
-            NtGdiDeleteObjectApp( gl->hdc_dst );
-            gl->hdc_dst = NULL;
-        }
-        if (gl->hdc_src)
-        {
-            NtGdiDeleteObjectApp( gl->hdc_src );
-            gl->hdc_src = NULL;
-        }
-    }
-    else
-    {
-        static const WCHAR displayW[] = {'D','I','S','P','L','A','Y'};
-        UNICODE_STRING device_str = RTL_CONSTANT_STRING(displayW);
-        gl->hdc_dst = NtGdiOpenDCW( &device_str, NULL, NULL, 0, TRUE, NULL, NULL, NULL );
-        gl->hdc_src = NtGdiOpenDCW( &device_str, NULL, NULL, 0, TRUE, NULL, NULL, NULL );
-        set_dc_drawable( gl->hdc_src, gl->window, &gl->rect, IncludeInferiors );
-#ifdef SONAME_LIBXCOMPOSITE
-        if (usexcomposite) pXCompositeRedirectWindow( gdi_display, gl->window, CompositeRedirectManual );
-#endif
-    }
-
-    if ((data = get_win_data( gl->base.hwnd )))
-    {
-        if (gl->offscreen) detach_client_window( data, gl->window );
-        else attach_client_window( data, gl->window );
-        release_win_data( data );
-    }
-}
-
 static void x11drv_surface_update( struct opengl_drawable *base )
 {
-    struct gl_drawable *gl = impl_from_opengl_drawable( base );
-
-    update_gl_drawable_size( gl );
-    update_gl_drawable_offscreen( gl );
+    TRACE( "%s\n", debugstr_opengl_drawable( base ) );
 }
-
 
 static void x11drv_surface_detach( struct opengl_drawable *base )
 {
@@ -1259,42 +1192,6 @@ static BOOL x11drv_make_current( struct opengl_drawable *draw_base, struct openg
     return ret;
 }
 
-static void present_gl_drawable( struct gl_drawable *gl, BOOL flush, BOOL gl_finish )
-{
-    HWND hwnd = gl->base.hwnd, toplevel = NtUserGetAncestor( hwnd, GA_ROOT );
-    struct x11drv_win_data *data;
-    Drawable window;
-    RECT rect_dst, rect;
-    HRGN region;
-
-    if (!gl->offscreen) return;
-
-    window = get_dc_drawable( gl->hdc, &rect );
-    region = get_dc_monitor_region( hwnd, gl->hdc );
-
-    if (gl_finish) funcs->p_glFinish();
-    if (flush) XFlush( gdi_display );
-
-    NtUserGetClientRect( hwnd, &rect_dst, NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) );
-    NtUserMapWindowPoints( hwnd, toplevel, (POINT *)&rect_dst, 2, NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) );
-
-    if ((data = get_win_data( toplevel )))
-    {
-        OffsetRect( &rect_dst, data->rects.client.left - data->rects.visible.left,
-                    data->rects.client.top - data->rects.visible.top );
-        release_win_data( data );
-    }
-
-    if (get_dc_drawable( gl->hdc_dst, &rect ) != window || !EqualRect( &rect, &rect_dst ))
-        set_dc_drawable( gl->hdc_dst, window, &rect_dst, IncludeInferiors );
-    if (region) NtGdiExtSelectClipRgn( gl->hdc_dst, region, RGN_COPY );
-
-    NtGdiStretchBlt( gl->hdc_dst, 0, 0, rect_dst.right - rect_dst.left, rect_dst.bottom - rect_dst.top,
-                     gl->hdc_src, 0, 0, gl->rect.right, gl->rect.bottom, SRCCOPY, 0 );
-
-    if (region) NtGdiDeleteObjectApp( region );
-}
-
 static void x11drv_surface_flush( struct opengl_drawable *base, UINT flags )
 {
     struct gl_drawable *gl = impl_from_opengl_drawable( base );
@@ -1303,10 +1200,12 @@ static void x11drv_surface_flush( struct opengl_drawable *base, UINT flags )
 
     if (flags & GL_FLUSH_INTERVAL) set_swap_interval( gl, base->interval );
 
-    update_gl_drawable_size( gl );
-    update_gl_drawable_offscreen( gl );
-
-    present_gl_drawable( gl, TRUE, !(flags & GL_FLUSH_FINISHED) );
+    if (InterlockedCompareExchange( &gl->client->offscreen, 0, 0 ))
+    {
+        if (!(flags & GL_FLUSH_FINISHED)) funcs->p_glFinish();
+        XFlush( gdi_display );
+        client_surface_present( gl->client, gl->hdc );
+    }
 }
 
 /***********************************************************************
@@ -1568,10 +1467,12 @@ static BOOL x11drv_surface_swap( struct opengl_drawable *base )
         if (pglXWaitForSbcOML) pglXWaitForSbcOML( gdi_display, gl->drawable, target_sbc, &ust, &msc, &sbc );
     }
 
-    update_gl_drawable_size( gl );
-    update_gl_drawable_offscreen( gl );
+    if (InterlockedCompareExchange( &gl->client->offscreen, 0, 0 ))
+    {
+        if (!pglXWaitForSbcOML) XFlush( gdi_display );
+        client_surface_present( gl->client, gl->hdc );
+    }
 
-    present_gl_drawable( gl, !pglXWaitForSbcOML, FALSE );
     return TRUE;
 }
 
@@ -1579,9 +1480,9 @@ static void x11drv_egl_surface_destroy( struct opengl_drawable *base )
 {
     struct gl_drawable *gl = impl_from_opengl_drawable( base );
 
-    TRACE( "drawable %s\n", debugstr_opengl_drawable( base ) );
+    TRACE( "%s\n", debugstr_opengl_drawable( base ) );
 
-    destroy_client_window( gl->base.hwnd, gl->window );
+    if (gl->client) client_surface_release( gl->client );
 }
 
 static void x11drv_egl_surface_detach( struct opengl_drawable *base )
@@ -1591,12 +1492,7 @@ static void x11drv_egl_surface_detach( struct opengl_drawable *base )
 
 static void x11drv_egl_surface_update( struct opengl_drawable *base )
 {
-    struct gl_drawable *gl = impl_from_opengl_drawable( base );
-
     TRACE( "%s\n", debugstr_opengl_drawable( base ) );
-
-    update_gl_drawable_size( gl );
-    update_gl_drawable_offscreen( gl );
 }
 
 static void x11drv_egl_surface_flush( struct opengl_drawable *base, UINT flags )
@@ -1606,13 +1502,13 @@ static void x11drv_egl_surface_flush( struct opengl_drawable *base, UINT flags )
     TRACE( "%s\n", debugstr_opengl_drawable( base ) );
 
     if (flags & GL_FLUSH_INTERVAL) funcs->p_eglSwapInterval( egl->display, abs( base->interval ) );
-    if (flags & GL_FLUSH_UPDATED)
-    {
-        update_gl_drawable_size( gl );
-        update_gl_drawable_offscreen( gl );
-    }
 
-    present_gl_drawable( gl, TRUE, !(flags & GL_FLUSH_FINISHED) );
+    if (InterlockedCompareExchange( &gl->client->offscreen, 0, 0 ))
+    {
+        if (!(flags & GL_FLUSH_FINISHED)) funcs->p_glFinish();
+        XFlush( gdi_display );
+        client_surface_present( gl->client, gl->hdc );
+    }
 }
 
 static BOOL x11drv_egl_surface_swap( struct opengl_drawable *base )
@@ -1623,10 +1519,12 @@ static BOOL x11drv_egl_surface_swap( struct opengl_drawable *base )
 
     funcs->p_eglSwapBuffers( egl->display, gl->base.surface );
 
-    update_gl_drawable_size( gl );
-    update_gl_drawable_offscreen( gl );
+    if (InterlockedCompareExchange( &gl->client->offscreen, 0, 0 ))
+    {
+        XFlush( gdi_display );
+        client_surface_present( gl->client, gl->hdc );
+    }
 
-    present_gl_drawable( gl, TRUE, FALSE );
     return TRUE;
 }
 
