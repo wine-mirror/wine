@@ -201,12 +201,12 @@ static const char *macdrv_get_host_surface_extension(void)
 static const struct client_surface_funcs macdrv_vulkan_surface_funcs =
 {
     .destroy = macdrv_vulkan_surface_destroy,
+    .detach = macdrv_vulkan_surface_detach,
 };
 
 static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = macdrv_vulkan_surface_create,
-    .p_vulkan_surface_detach = macdrv_vulkan_surface_detach,
     .p_vulkan_surface_update = macdrv_vulkan_surface_update,
     .p_vulkan_surface_presented = macdrv_vulkan_surface_presented,
 

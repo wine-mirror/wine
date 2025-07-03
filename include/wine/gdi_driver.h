@@ -251,11 +251,14 @@ struct client_surface;
 struct client_surface_funcs
 {
     void (*destroy)( struct client_surface *surface );
+    /* detach the surface from its window, called from window owner thread */
+    void (*detach)( struct client_surface *surface );
 };
 
 struct client_surface
 {
     const struct client_surface_funcs *funcs;
+    struct list                        entry;          /* entry in win32u managed list */
     LONG                               ref;            /* reference count */
     HWND                               hwnd;           /* window the surface was created for */
 };

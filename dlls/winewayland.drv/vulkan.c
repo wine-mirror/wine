@@ -160,12 +160,12 @@ static const char *wayland_get_host_surface_extension(void)
 static const struct client_surface_funcs wayland_vulkan_surface_funcs =
 {
     .destroy = wayland_vulkan_surface_destroy,
+    .detach = wayland_vulkan_surface_detach,
 };
 
 static const struct vulkan_driver_funcs wayland_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = wayland_vulkan_surface_create,
-    .p_vulkan_surface_detach = wayland_vulkan_surface_detach,
     .p_vulkan_surface_update = wayland_vulkan_surface_update,
     .p_vulkan_surface_presented = wayland_vulkan_surface_presented,
 

@@ -130,7 +130,7 @@ static void x11drv_vulkan_surface_destroy( struct client_surface *client )
     if (surface->hdc_src) NtGdiDeleteObjectApp( surface->hdc_src );
 }
 
-static void X11DRV_vulkan_surface_detach( struct client_surface *client )
+static void x11drv_vulkan_surface_detach( struct client_surface *client )
 {
     struct x11drv_vulkan_surface *surface = impl_from_client_surface( client );
     Window client_window = surface->window;
@@ -279,12 +279,12 @@ static const char *X11DRV_get_host_surface_extension(void)
 static const struct client_surface_funcs x11drv_vulkan_surface_funcs =
 {
     .destroy = x11drv_vulkan_surface_destroy,
+    .detach = x11drv_vulkan_surface_detach,
 };
 
 static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = X11DRV_vulkan_surface_create,
-    .p_vulkan_surface_detach = X11DRV_vulkan_surface_detach,
     .p_vulkan_surface_update = X11DRV_vulkan_surface_update,
     .p_vulkan_surface_presented = X11DRV_vulkan_surface_presented,
 

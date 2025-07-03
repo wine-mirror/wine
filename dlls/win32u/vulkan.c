@@ -51,8 +51,6 @@ struct surface
     struct vulkan_surface obj;
     struct client_surface *client;
     HWND hwnd;
-
-    struct list entry;
 };
 
 static struct surface *surface_from_handle( VkSurfaceKHR handle )
@@ -82,7 +80,6 @@ static VkResult win32u_vkCreateWin32SurfaceKHR( VkInstance client_instance, cons
     struct surface *surface;
     HWND dummy = NULL;
     VkResult res;
-    WND *win;
 
     TRACE( "client_instance %p, create_info %p, allocator %p, ret %p\n", client_instance, create_info, allocator, ret );
     if (allocator) FIXME( "Support for allocation callbacks not implemented yet\n" );
@@ -107,14 +104,6 @@ static VkResult win32u_vkCreateWin32SurfaceKHR( VkInstance client_instance, cons
         return res;
     }
 
-    if (!(win = get_win_ptr( surface->hwnd )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS)
-        list_init( &surface->entry );
-    else
-    {
-        list_add_tail( &win->vulkan_surfaces, &surface->entry );
-        release_win_ptr( win );
-    }
-
     vulkan_object_init( &surface->obj.obj, host_surface );
     surface->obj.instance = instance;
     instance->p_insert_object( instance, &surface->obj.obj );
@@ -130,18 +119,11 @@ static void win32u_vkDestroySurfaceKHR( VkInstance client_instance, VkSurfaceKHR
 {
     struct vulkan_instance *instance = vulkan_instance_from_handle( client_instance );
     struct surface *surface = surface_from_handle( client_surface );
-    WND *win;
 
     if (!surface) return;
 
     TRACE( "instance %p, handle 0x%s, allocator %p\n", instance, wine_dbgstr_longlong( client_surface ), allocator );
     if (allocator) FIXME( "Support for allocation callbacks not implemented yet\n" );
-
-    if ((win = get_win_ptr( surface->hwnd )) && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
-    {
-        list_remove( &surface->entry );
-        release_win_ptr( win );
-    }
 
     instance->p_vkDestroySurfaceKHR( instance->host.instance, surface->obj.host.surface, NULL /* allocator */ );
     client_surface_release( surface->client );
@@ -553,12 +535,12 @@ static const char *nulldrv_get_host_surface_extension(void)
 static const struct client_surface_funcs nulldrv_vulkan_surface_funcs =
 {
     .destroy = nulldrv_vulkan_surface_destroy,
+    .detach = nulldrv_vulkan_surface_detach,
 };
 
 static const struct vulkan_driver_funcs nulldrv_funcs =
 {
     .p_vulkan_surface_create = nulldrv_vulkan_surface_create,
-    .p_vulkan_surface_detach = nulldrv_vulkan_surface_detach,
     .p_vulkan_surface_update = nulldrv_vulkan_surface_update,
     .p_vulkan_surface_presented = nulldrv_vulkan_surface_presented,
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = nulldrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
@@ -593,12 +575,6 @@ static VkResult lazydrv_vulkan_surface_create( HWND hwnd, const struct vulkan_in
     return driver_funcs->p_vulkan_surface_create( hwnd, instance, surface, client );
 }
 
-static void lazydrv_vulkan_surface_detach( struct client_surface *client )
-{
-    vulkan_driver_load();
-    return driver_funcs->p_vulkan_surface_detach( client );
-}
-
 static void lazydrv_vulkan_surface_update( struct client_surface *client )
 {
     vulkan_driver_load();
@@ -626,7 +602,6 @@ static const char *lazydrv_get_host_surface_extension(void)
 static const struct vulkan_driver_funcs lazydrv_funcs =
 {
     .p_vulkan_surface_create = lazydrv_vulkan_surface_create,
-    .p_vulkan_surface_detach = lazydrv_vulkan_surface_detach,
     .p_vulkan_surface_update = lazydrv_vulkan_surface_update,
     .p_vulkan_surface_presented = lazydrv_vulkan_surface_presented,
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = lazydrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
@@ -659,24 +634,7 @@ static void vulkan_init_once(void)
     vulkan_funcs.p_vkGetDeviceProcAddr = p_vkGetDeviceProcAddr;
 }
 
-void vulkan_detach_surfaces( struct list *surfaces )
-{
-    struct surface *surface, *next;
-
-    LIST_FOR_EACH_ENTRY_SAFE( surface, next, surfaces, struct surface, entry )
-    {
-        driver_funcs->p_vulkan_surface_detach( surface->client );
-        list_remove( &surface->entry );
-        list_init( &surface->entry );
-        surface->hwnd = NULL;
-    }
-}
-
 #else /* SONAME_LIBVULKAN */
-
-void vulkan_detach_surfaces( struct list *surfaces )
-{
-}
 
 static void vulkan_init_once(void)
 {

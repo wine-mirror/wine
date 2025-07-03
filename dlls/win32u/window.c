@@ -236,6 +236,37 @@ void *free_user_handle( HANDLE handle, unsigned short type )
     return ptr;
 }
 
+static pthread_mutex_t surfaces_lock = PTHREAD_MUTEX_INITIALIZER;
+static struct list client_surfaces = LIST_INIT( client_surfaces );
+
+static void detach_client_surfaces( HWND hwnd )
+{
+    struct list detached = LIST_INIT( detached );
+    struct client_surface *surface, *next;
+
+    pthread_mutex_lock( &surfaces_lock );
+
+    LIST_FOR_EACH_ENTRY_SAFE( surface, next, &client_surfaces, struct client_surface, entry )
+    {
+        if (surface->hwnd != hwnd) continue;
+
+        list_remove( &surface->entry );
+        list_add_tail( &detached, &surface->entry );
+        client_surface_add_ref( surface );
+
+        surface->funcs->detach( surface );
+        surface->hwnd = NULL;
+    }
+
+    pthread_mutex_unlock( &surfaces_lock );
+
+    LIST_FOR_EACH_ENTRY_SAFE( surface, next, &detached, struct client_surface, entry )
+    {
+        list_remove( &surface->entry );
+        client_surface_release( surface );
+    }
+}
+
 void *client_surface_create( UINT size, const struct client_surface_funcs *funcs, HWND hwnd )
 {
     struct client_surface *surface;
@@ -244,6 +275,10 @@ void *client_surface_create( UINT size, const struct client_surface_funcs *funcs
     surface->funcs = funcs;
     surface->ref = 1;
     surface->hwnd = hwnd;
+
+    pthread_mutex_lock( &surfaces_lock );
+    list_add_tail( &client_surfaces, &surface->entry );
+    pthread_mutex_unlock( &surfaces_lock );
 
     TRACE( "created %s\n", debugstr_client_surface( surface ) );
     return surface;
@@ -262,6 +297,14 @@ void client_surface_release( struct client_surface *surface )
 
     if (!ref)
     {
+        pthread_mutex_lock( &surfaces_lock );
+        if (surface->hwnd)
+        {
+            surface->funcs->detach( surface );
+            list_remove( &surface->entry );
+        }
+        pthread_mutex_unlock( &surfaces_lock );
+
         surface->funcs->destroy( surface );
         free( surface );
     }
@@ -1475,13 +1518,19 @@ int get_window_pixel_format( HWND hwnd, BOOL internal )
 
 static int window_has_client_surface( HWND hwnd )
 {
+    struct client_surface *surface;
     WND *win = get_win_ptr( hwnd );
     BOOL ret;
 
     if (!win || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return FALSE;
-    ret = win->pixel_format || win->internal_pixel_format || !list_empty(&win->vulkan_surfaces);
+    ret = win->pixel_format || win->internal_pixel_format;
     release_win_ptr( win );
+    if (ret) return TRUE;
 
+    pthread_mutex_lock( &surfaces_lock );
+    LIST_FOR_EACH_ENTRY( surface, &client_surfaces, struct client_surface, entry )
+        if ((ret = surface->hwnd == hwnd)) break;
+    pthread_mutex_unlock( &surfaces_lock );
     return ret;
 }
 
@@ -5097,7 +5146,6 @@ LRESULT destroy_window( HWND hwnd )
     free_dce( win->dce, hwnd );
     win->dce = NULL;
     NtUserDestroyCursor( win->hIconSmall2, 0 );
-    list_move_tail( &vulkan_surfaces, &win->vulkan_surfaces );
     surface = win->surface;
     win->surface = NULL;
     release_win_ptr( win );
@@ -5111,7 +5159,7 @@ LRESULT destroy_window( HWND hwnd )
     }
 
     detach_opengl_drawables( hwnd );
-    vulkan_detach_surfaces( &vulkan_surfaces );
+    detach_client_surfaces( hwnd );
     if (win->opengl_drawable) opengl_drawable_release( win->opengl_drawable );
     user_driver->pDestroyWindow( hwnd );
 
@@ -5212,7 +5260,6 @@ BOOL WINAPI NtUserDestroyWindow( HWND hwnd )
  */
 void destroy_thread_windows(void)
 {
-    struct list vulkan_surfaces = LIST_INIT(vulkan_surfaces);
     struct destroy_entry
     {
         HWND handle;
@@ -5242,7 +5289,6 @@ void destroy_thread_windows(void)
         /* recycle the WND struct as a destroy_entry struct */
         entry = (struct destroy_entry *)win;
         tmp.handle = win->handle;
-        list_move_tail( &vulkan_surfaces, &win->vulkan_surfaces );
         if (!is_child) tmp.menu = (HMENU)win->wIDmenu;
         tmp.sys_menu = win->hSysMenu;
         tmp.opengl_drawable = win->opengl_drawable;
@@ -5269,6 +5315,7 @@ void destroy_thread_windows(void)
         TRACE( "destroying %p\n", entry );
 
         detach_opengl_drawables( entry->handle );
+        detach_client_surfaces( entry->handle );
         user_driver->pDestroyWindow( entry->handle );
         if (entry->opengl_drawable) opengl_drawable_release( entry->opengl_drawable );
 
@@ -5281,8 +5328,6 @@ void destroy_thread_windows(void)
         }
         free( entry );
     }
-
-    vulkan_detach_surfaces( &vulkan_surfaces );
 }
 
 /***********************************************************************
@@ -5367,7 +5412,6 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
     win->winproc    = get_class_winproc( class );
     win->hInstance  = instance;
     win->cbWndExtra = extra_bytes;
-    list_init( &win->vulkan_surfaces );
     set_user_handle_ptr( handle, win );
     if (is_winproc_unicode( win->winproc, !ansi )) win->flags |= WIN_ISUNICODE;
     return win;
