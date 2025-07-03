@@ -177,8 +177,6 @@ struct client_surface;
 struct vulkan_driver_funcs
 {
     VkResult (*p_vulkan_surface_create)(HWND, const struct vulkan_instance *, VkSurfaceKHR *, struct client_surface **);
-    void (*p_vulkan_surface_presented)(struct client_surface *);
-
     VkBool32 (*p_vkGetPhysicalDeviceWin32PresentationSupportKHR)(VkPhysicalDevice, uint32_t);
     const char *(*p_get_host_surface_extension)(void);
 };

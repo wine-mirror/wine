@@ -326,6 +326,22 @@ void client_surface_release( struct client_surface *surface )
     }
 }
 
+void client_surface_present( struct client_surface *surface, HDC hdc )
+{
+    HWND hwnd;
+    HDC tmp;
+
+    pthread_mutex_lock( &surfaces_lock );
+    if ((hwnd = surface->hwnd))
+    {
+        if (hdc || !surface->offscreen) tmp = hdc;
+        else tmp = NtUserGetDCEx( hwnd, 0, DCX_CACHE | DCX_USESTYLE );
+        surface->funcs->present( surface, surface->offscreen ? tmp : NULL );
+        if (tmp && tmp != hdc) NtUserReleaseDC( hwnd, tmp );
+    }
+    pthread_mutex_unlock( &surfaces_lock );
+}
+
 /*******************************************************************
  *           get_hwnd_message_parent
  *

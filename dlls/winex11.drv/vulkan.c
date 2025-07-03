@@ -69,7 +69,6 @@ struct x11drv_vulkan_surface
     Window window;
     RECT rect;
 
-    BOOL offscreen;
     HDC hdc_src;
     HDC hdc_dst;
 };
@@ -165,7 +164,7 @@ static void vulkan_surface_update_offscreen( HWND hwnd, struct x11drv_vulkan_sur
     BOOL offscreen = needs_offscreen_rendering( hwnd );
     struct x11drv_win_data *data;
 
-    if (offscreen == surface->offscreen)
+    if (InterlockedExchange(&surface->client.offscreen, offscreen) == offscreen)
     {
         if (!offscreen && (data = get_win_data( hwnd )))
         {
@@ -174,9 +173,8 @@ static void vulkan_surface_update_offscreen( HWND hwnd, struct x11drv_vulkan_sur
         }
         return;
     }
-    surface->offscreen = offscreen;
 
-    if (!surface->offscreen)
+    if (!offscreen)
     {
 #ifdef SONAME_LIBXCOMPOSITE
         if (usexcomposite) pXCompositeUnredirectWindow( gdi_display, surface->window, CompositeRedirectManual );
@@ -206,7 +204,7 @@ static void vulkan_surface_update_offscreen( HWND hwnd, struct x11drv_vulkan_sur
 
     if ((data = get_win_data( hwnd )))
     {
-        if (surface->offscreen) detach_client_window( data, surface->window );
+        if (offscreen) detach_client_window( data, surface->window );
         else attach_client_window( data, surface->window );
         release_win_data( data );
     }
@@ -223,7 +221,7 @@ static void x11drv_vulkan_surface_update( struct client_surface *client )
     vulkan_surface_update_offscreen( hwnd, surface );
 }
 
-static void X11DRV_vulkan_surface_presented( struct client_surface *client )
+static void X11DRV_vulkan_surface_present( struct client_surface *client, HDC hdc )
 {
     struct x11drv_vulkan_surface *surface = impl_from_client_surface( client );
     HWND hwnd = client->hwnd, toplevel = NtUserGetAncestor( hwnd, GA_ROOT );
@@ -231,13 +229,11 @@ static void X11DRV_vulkan_surface_presented( struct client_surface *client )
     RECT rect_dst, rect;
     Drawable window;
     HRGN region;
-    HDC hdc;
 
     vulkan_surface_update_size( hwnd, surface );
     vulkan_surface_update_offscreen( hwnd, surface );
 
-    if (!surface->offscreen) return;
-    if (!(hdc = NtUserGetDCEx( hwnd, 0, DCX_CACHE | DCX_USESTYLE ))) return;
+    if (!hdc) return;
     window = X11DRV_get_whole_window( toplevel );
     region = get_dc_monitor_region( hwnd, hdc );
 
@@ -259,7 +255,6 @@ static void X11DRV_vulkan_surface_presented( struct client_surface *client )
                      surface->hdc_src, 0, 0, surface->rect.right, surface->rect.bottom, SRCCOPY, 0 );
 
     if (region) NtGdiDeleteObjectApp( region );
-    if (hdc) NtUserReleaseDC( hwnd, hdc );
 }
 
 static VkBool32 X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
@@ -281,13 +276,12 @@ static const struct client_surface_funcs x11drv_vulkan_surface_funcs =
     .destroy = x11drv_vulkan_surface_destroy,
     .detach = x11drv_vulkan_surface_detach,
     .update = x11drv_vulkan_surface_update,
+    .present = X11DRV_vulkan_surface_present,
 };
 
 static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = X11DRV_vulkan_surface_create,
-    .p_vulkan_surface_presented = X11DRV_vulkan_surface_presented,
-
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_get_host_surface_extension = X11DRV_get_host_surface_extension,
 };

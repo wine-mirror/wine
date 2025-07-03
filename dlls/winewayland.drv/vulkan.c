@@ -135,7 +135,7 @@ static void wayland_vulkan_surface_update(struct client_surface *client)
 {
 }
 
-static void wayland_vulkan_surface_presented(struct client_surface *client)
+static void wayland_vulkan_surface_present(struct client_surface *client, HDC hdc)
 {
     struct wayland_vulkan_surface *surface = impl_from_client_surface(client);
     HWND hwnd = client->hwnd, toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
@@ -162,13 +162,12 @@ static const struct client_surface_funcs wayland_vulkan_surface_funcs =
     .destroy = wayland_vulkan_surface_destroy,
     .detach = wayland_vulkan_surface_detach,
     .update = wayland_vulkan_surface_update,
+    .present = wayland_vulkan_surface_present,
 };
 
 static const struct vulkan_driver_funcs wayland_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = wayland_vulkan_surface_create,
-    .p_vulkan_surface_presented = wayland_vulkan_surface_presented,
-
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_get_host_surface_extension = wayland_get_host_surface_extension,
 };

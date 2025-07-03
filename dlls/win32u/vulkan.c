@@ -416,7 +416,7 @@ static VkResult win32u_vkQueuePresentKHR( VkQueue client_queue, const VkPresentI
         struct surface *surface = swapchain->surface;
         RECT client_rect;
 
-        if (surface->hwnd) driver_funcs->p_vulkan_surface_presented( surface->client );
+        client_surface_present( surface->client, NULL );
 
         if (swapchain_res < VK_SUCCESS) continue;
         if (!NtUserGetClientRect( surface->hwnd, &client_rect, NtUserGetDpiForWindow( surface->hwnd ) ))
@@ -515,7 +515,7 @@ static void nulldrv_vulkan_surface_update( struct client_surface *client )
 {
 }
 
-static void nulldrv_vulkan_surface_presented( struct client_surface *client )
+static void nulldrv_vulkan_surface_present( struct client_surface *client, HDC hdc )
 {
 }
 
@@ -534,12 +534,12 @@ static const struct client_surface_funcs nulldrv_vulkan_surface_funcs =
     .destroy = nulldrv_vulkan_surface_destroy,
     .detach = nulldrv_vulkan_surface_detach,
     .update = nulldrv_vulkan_surface_update,
+    .present = nulldrv_vulkan_surface_present,
 };
 
 static const struct vulkan_driver_funcs nulldrv_funcs =
 {
     .p_vulkan_surface_create = nulldrv_vulkan_surface_create,
-    .p_vulkan_surface_presented = nulldrv_vulkan_surface_presented,
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = nulldrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_get_host_surface_extension = nulldrv_get_host_surface_extension,
 };
@@ -572,12 +572,6 @@ static VkResult lazydrv_vulkan_surface_create( HWND hwnd, const struct vulkan_in
     return driver_funcs->p_vulkan_surface_create( hwnd, instance, surface, client );
 }
 
-static void lazydrv_vulkan_surface_presented( struct client_surface *client )
-{
-    vulkan_driver_load();
-    driver_funcs->p_vulkan_surface_presented( client );
-}
-
 static VkBool32 lazydrv_vkGetPhysicalDeviceWin32PresentationSupportKHR( VkPhysicalDevice device, uint32_t queue )
 {
     vulkan_driver_load();
@@ -593,7 +587,6 @@ static const char *lazydrv_get_host_surface_extension(void)
 static const struct vulkan_driver_funcs lazydrv_funcs =
 {
     .p_vulkan_surface_create = lazydrv_vulkan_surface_create,
-    .p_vulkan_surface_presented = lazydrv_vulkan_surface_presented,
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = lazydrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_get_host_surface_extension = lazydrv_get_host_surface_extension,
 };

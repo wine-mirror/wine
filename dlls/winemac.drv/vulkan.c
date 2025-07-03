@@ -181,7 +181,7 @@ static void macdrv_vulkan_surface_update(struct client_surface *client)
 {
 }
 
-static void macdrv_vulkan_surface_presented(struct client_surface *client)
+static void macdrv_vulkan_surface_present(struct client_surface *client, HDC hdc)
 {
 }
 
@@ -203,13 +203,12 @@ static const struct client_surface_funcs macdrv_vulkan_surface_funcs =
     .destroy = macdrv_vulkan_surface_destroy,
     .detach = macdrv_vulkan_surface_detach,
     .update = macdrv_vulkan_surface_update,
+    .present = macdrv_vulkan_surface_present,
 };
 
 static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = macdrv_vulkan_surface_create,
-    .p_vulkan_surface_presented = macdrv_vulkan_surface_presented,
-
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_get_host_surface_extension = macdrv_get_host_surface_extension,
 };
