@@ -854,9 +854,8 @@ type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs,
     runtimeclass->attrs = check_runtimeclass_attrs(runtimeclass->name, attrs);
     runtimeclass->details.runtimeclass.ifaces = ifaces;
     define_type(runtimeclass, where);
-    if (!type_runtimeclass_get_default_iface(runtimeclass, FALSE) &&
-        !get_attrp(runtimeclass->attrs, ATTR_STATIC))
-        error_loc("runtimeclass %s must have a default interface or static factory\n", runtimeclass->name);
+    if (!type_runtimeclass_get_ifaces(runtimeclass) && !get_attrp(runtimeclass->attrs, ATTR_STATIC))
+        error_loc("runtimeclass %s must have at least one interface or static factory\n", runtimeclass->name);
 
     if (ifaces) LIST_FOR_EACH_ENTRY(ref, ifaces, typeref_t, entry)
     {
