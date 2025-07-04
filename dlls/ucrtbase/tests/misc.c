@@ -136,6 +136,23 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
     return compare_uint(x, y, ulps);
 }
 
+static inline BOOL compare_double(double f, double g, unsigned int ulps)
+{
+    ULONGLONG x = *(ULONGLONG *)&f;
+    ULONGLONG y = *(ULONGLONG *)&g;
+
+    if (f < 0)
+        x = ~x + 1;
+    else
+        x |= ((ULONGLONG)1)<<63;
+    if (g < 0)
+        y = ~y + 1;
+    else
+        y |= ((ULONGLONG)1)<<63;
+
+    return (x>y ? x-y : y-x) <= ulps;
+}
+
 static void test__initialize_onexit_table(void)
 {
     _onexit_table_t table, table2;
@@ -1775,6 +1792,52 @@ static void test__get_heap_handle(void)
     ok((HANDLE)_get_heap_handle() == GetProcessHeap(), "Expected _get_heap_handle() to return GetProcessHeap()\n");
 }
 
+static void test_exp(void)
+{
+    static const struct {
+        double x, exp;
+        int type;
+        errno_t e;
+    } tests[] = {
+        {  NAN,               NAN,                     _DOMAIN,  EDOM   },
+        { -NAN,              -NAN,                     _DOMAIN,  EDOM   },
+        {  INFINITY,          INFINITY                                  },
+        { -INFINITY,          0.0                                       },
+        {  0.0,               1.0                                       },
+        {  1.0,               2.7182818284590451                        },
+        {  709.7,             1.6549840276802644e+308                   },
+        {  709.782712893384,  1.7976931348622732e+308                   },
+        {  709.782712893385,  INFINITY,               _OVERFLOW, ERANGE },
+    };
+    errno_t e;
+    double r;
+    int i;
+
+    __setusermatherr(matherr_callback);
+
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        errno = -1;
+        exception.type = -1;
+        r = exp(tests[i].x);
+        e = errno;
+
+        if(_isnan(tests[i].exp))
+            ok(_isnan(r), "expected NAN, got %0.16e for %d\n", r, i);
+        else
+            ok(compare_double(r, tests[i].exp, 16), "expected %0.16e, got %0.16e for %d\n", tests[i].exp, r, i);
+        ok(signbit(r) == signbit(tests[i].exp), "expected sign %x, got %x for %d\n",
+            signbit(tests[i].exp), signbit(r), i);
+
+        ok(e == tests[i].e ? tests[i].e : -1,
+            "expected errno %d, but got %d for %d\n", tests[i].e, e, i);
+
+        ok(exception.type == tests[i].type ? tests[i].type : -1,
+            "expected %d, got %d for %d\n", tests[i].type, exception.type, i);
+    }
+
+    __setusermatherr(NULL);
+}
+
 static void test_expf(void)
 {
     static const struct {
@@ -1871,5 +1934,6 @@ START_TEST(misc)
 #endif
     test_gmtime64();
     test__get_heap_handle();
+    test_exp();
     test_expf();
 }
