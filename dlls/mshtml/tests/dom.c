@@ -6910,6 +6910,144 @@ static void test_default_selection(IHTMLDocument2 *doc)
     IHTMLTxtRange_Release(range);
 }
 
+static void test_doc_open(IHTMLDocument2 *doc)
+{
+    IHTMLElementCollection *col;
+    IHTMLDocument3 *doc3;
+    LONG len, index = 0;
+    IHTMLElement *elem;
+    IDispatch *disp;
+    SAFEARRAY *sa;
+    HRESULT hres;
+    VARIANT v;
+    BSTR bstr;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
+    ok(hres == S_OK, "QueryInterface(IID_IHTMLDocument3) failed: %08lx\n", hres);
+
+    hres = IHTMLDocument3_get_documentElement(doc3, &elem);
+    ok(hres == S_OK, "get_documentElement failed: %08lx\n", hres);
+    test_elem_tag((IUnknown*)elem, L"HTML");
+    IHTMLElement_Release(elem);
+
+    sa = SafeArrayCreateVector(VT_VARIANT, 0, 1);
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"<p>test</p>");
+    hres = SafeArrayPutElement(sa, &index, &v);
+    ok(hres == S_OK, "SafeArrayPutElement failed: %08lx\n", hres);
+    VariantClear(&v);
+
+    disp = NULL;
+    hres = IHTMLDocument2_open(doc, NULL, v, v, v, &disp);
+    ok(hres == S_OK, "open failed: %08lx\n", hres);
+    ok(disp != NULL, "disp = NULL\n");
+    IDispatch_Release(disp);
+
+    hres = IHTMLDocument3_get_documentElement(doc3, &elem);
+    ok(hres == S_OK, "get_documentElement failed: %08lx\n", hres);
+    ok(elem == NULL, "elem != NULL\n");
+
+    hres = IHTMLDocument2_write(doc, sa);
+    ok(hres == S_OK, "write failed: %08lx\n", hres);
+
+    hres = IHTMLDocument3_get_documentElement(doc3, &elem);
+    ok(hres == S_OK, "get_documentElement failed: %08lx\n", hres);
+    test_elem_tag((IUnknown*)elem, L"HTML");
+    IHTMLElement_Release(elem);
+
+    hres = IHTMLDocument2_close(doc);
+    ok(hres == S_OK, "close failed: %08lx\n", hres);
+
+    hres = IHTMLDocument3_get_documentElement(doc3, &elem);
+    ok(hres == S_OK, "get_documentElement failed: %08lx\n", hres);
+    test_elem_tag((IUnknown*)elem, L"HTML");
+    IHTMLElement_Release(elem);
+
+    disp = NULL;
+    hres = IHTMLDocument2_open(doc, NULL, v, v, v, &disp);
+    ok(hres == S_OK, "open failed: %08lx\n", hres);
+    ok(disp != NULL, "disp = NULL\n");
+    IDispatch_Release(disp);
+
+    hres = IHTMLDocument3_get_documentElement(doc3, &elem);
+    ok(hres == S_OK, "get_documentElement failed: %08lx\n", hres);
+    ok(elem == NULL, "elem != NULL\n");
+
+    hres = IHTMLDocument2_write(doc, sa);
+    ok(hres == S_OK, "write failed: %08lx\n", hres);
+
+    hres = IHTMLDocument3_get_documentElement(doc3, &elem);
+    ok(hres == S_OK, "get_documentElement failed: %08lx\n", hres);
+    test_elem_tag((IUnknown*)elem, L"HTML");
+    IHTMLElement_Release(elem);
+
+    disp = NULL;
+    hres = IHTMLDocument2_open(doc, NULL, v, v, v, &disp);
+    ok(hres == S_OK, "open failed: %08lx\n", hres);
+    ok(disp != NULL, "disp = NULL\n");
+    IDispatch_Release(disp);
+
+    hres = IHTMLDocument3_get_documentElement(doc3, &elem);
+    ok(hres == S_OK, "get_documentElement failed: %08lx\n", hres);
+    ok(elem == NULL, "elem != NULL\n");
+
+    hres = IHTMLDocument2_write(doc, sa);
+    ok(hres == S_OK, "write failed: %08lx\n", hres);
+
+    hres = IHTMLDocument3_get_documentElement(doc3, &elem);
+    ok(hres == S_OK, "get_documentElement failed: %08lx\n", hres);
+    test_elem_tag((IUnknown*)elem, L"HTML");
+    IHTMLElement_Release(elem);
+
+    hres = IHTMLDocument2_clear(doc);
+    ok(hres == S_OK, "clear failed: %08lx\n", hres);
+
+    hres = IHTMLDocument3_get_documentElement(doc3, &elem);
+    ok(hres == S_OK, "get_documentElement failed: %08lx\n", hres);
+    test_elem_tag((IUnknown*)elem, L"HTML");
+    IHTMLElement_Release(elem);
+
+    hres = IHTMLDocument2_close(doc);
+    ok(hres == S_OK, "close failed: %08lx\n", hres);
+
+    bstr = SysAllocString(L"p");
+    hres = IHTMLDocument3_getElementsByTagName(doc3, bstr, &col);
+    ok(hres == S_OK, "getElementsByTagName failed: %08lx\n", hres);
+    hres = IHTMLElementCollection_get_length(col, &len);
+    ok(hres == S_OK, "get_length failed: %08lx\n", hres);
+    ok(len == 1, "len = %ld\n", len);
+    IHTMLElementCollection_Release(col);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"<div>wine</div>");
+    hres = SafeArrayPutElement(sa, &index, &v);
+    ok(hres == S_OK, "SafeArrayPutElement failed: %08lx\n", hres);
+    VariantClear(&v);
+
+    hres = IHTMLDocument2_write(doc, sa);
+    ok(hres == S_OK, "write failed: %08lx\n", hres);
+
+    hres = IHTMLDocument3_getElementsByTagName(doc3, bstr, &col);
+    ok(hres == S_OK, "getElementsByTagName failed: %08lx\n", hres);
+    hres = IHTMLElementCollection_get_length(col, &len);
+    ok(hres == S_OK, "get_length failed: %08lx\n", hres);
+    ok(len == 0, "len = %ld\n", len);
+    IHTMLElementCollection_Release(col);
+    SysFreeString(bstr);
+
+    bstr = SysAllocString(L"div");
+    hres = IHTMLDocument3_getElementsByTagName(doc3, bstr, &col);
+    ok(hres == S_OK, "getElementsByTagName failed: %08lx\n", hres);
+    hres = IHTMLElementCollection_get_length(col, &len);
+    ok(hres == S_OK, "get_length failed: %08lx\n", hres);
+    ok(len == 1, "len = %ld\n", len);
+    IHTMLElementCollection_Release(col);
+    SysFreeString(bstr);
+
+    IHTMLDocument3_Release(doc3);
+    SafeArrayDestroy(sa);
+}
+
 static void test_doc_dir(IHTMLDocument2 *doc2)
 {
     IHTMLDocument3 *doc = get_doc3_iface(doc2);
@@ -12526,6 +12664,7 @@ START_TEST(dom)
 
     run_domtest(doc_str1, test_doc_elem);
     run_domtest(doc_str1, test_get_set_attr);
+    run_domtest(doc_blank, test_doc_open);
     run_domtest(doc_blank, test_range);
     if (winetest_interactive || ! is_ie_hardened()) {
         run_domtest(elem_test_str, test_elems);
@@ -12534,6 +12673,7 @@ START_TEST(dom)
         run_domtest(doc_blank, test_about_blank_storage);
         if(is_ie9plus) {
             compat_mode = COMPAT_IE9;
+            run_domtest(doc_blank_ie9, test_doc_open);
             run_domtest(doc_blank_ie9, test_dom_elements);
             run_domtest(doc_blank_ie9, test_about_blank_storage);
             compat_mode = COMPAT_NONE;

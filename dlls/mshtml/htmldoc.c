@@ -1384,6 +1384,8 @@ static HRESULT WINAPI HTMLDocument_open(IHTMLDocument2 *iface, BSTR url, VARIANT
        || V_VT(&features) != VT_ERROR || V_VT(&replace) != VT_ERROR)
         FIXME("unsupported args\n");
 
+    nsIDOMHTMLDocument_Close(This->html_document);
+
     nsres = nsIDOMHTMLDocument_Open(This->html_document, NULL, NULL, NULL,
             get_context_from_document(This->dom_document), 0, &tmp);
     if(NS_FAILED(nsres)) {
