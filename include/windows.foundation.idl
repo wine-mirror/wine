@@ -142,7 +142,6 @@ namespace Windows.Foundation {
         interface Windows.Foundation.IAsyncOperation<HSTRING>;
         interface Windows.Foundation.IAsyncOperation<IInspectable *>;
         interface Windows.Foundation.IAsyncOperation<boolean>;
-        interface Windows.Foundation.IAsyncOperation<HSTRING>;
         interface Windows.Foundation.IAsyncOperation<UINT32>;
 #ifndef _WINTYPES
         interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Uri *>;

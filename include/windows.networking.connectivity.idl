@@ -95,7 +95,6 @@ namespace Windows.Networking.Connectivity
         interface Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.ConnectivityInterval*>;
         interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.ConnectivityInterval*>*>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.ConnectivityInterval*>*>;
-        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Networking.Connectivity.ConnectionProfile*>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.NetworkUsage*>*>;
     }
 
