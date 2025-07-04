@@ -365,6 +365,46 @@ static void test_CM_Register_Notification( void )
     }
 }
 
+static void check_device_path_casing(const WCHAR *original_path)
+{
+    HKEY current_key, tmp;
+    WCHAR *path = wcsdup(original_path);
+    WCHAR key_name[MAX_PATH];
+    WCHAR separator[] = L"#";
+    WCHAR *token, *context = NULL;
+    LSTATUS ret;
+    DWORD i;
+
+    ret = RegOpenKeyW(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Enum", &current_key);
+    ok(!ret, "Failed to open enum key: %#lx.\n", ret);
+
+    token = wcstok_s(path + 4, separator, &context);  /* skip \\?\ */
+    while (token)
+    {
+        if (token[0] == L'{' && wcslen(token) == 38) break; /* reached GUID part, done */
+
+        i = 0;
+        while (!(ret = RegEnumKeyW(current_key, i++, key_name, ARRAY_SIZE(key_name))))
+        {
+            if(!wcscmp(token, key_name))
+            {
+                ret = RegOpenKeyW(current_key, token, &tmp);
+                ok(!ret, "Failed to open registry key %s: %#lx.\n", debugstr_w(token), ret);
+                RegCloseKey(current_key);
+                current_key = tmp;
+                break;
+            }
+        }
+        ok(!ret, "Failed to find %s in registry: %#lx.\n", debugstr_w(token), ret);
+        if (ret) break;
+
+        token = wcstok_s(NULL, separator, &context);
+    }
+
+    RegCloseKey(current_key);
+    free(path);
+}
+
 static void test_CM_Get_Device_Interface_List(void)
 {
     BYTE iface_detail_buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + 256 * sizeof(WCHAR)];
@@ -420,6 +460,7 @@ static void test_CM_Get_Device_Interface_List(void)
     {
         DEVPROP_BOOLEAN val = DEVPROP_FALSE;
 
+        check_device_path_casing(p);
         set = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
         ok(set != INVALID_HANDLE_VALUE, "got %p.\n", set);
         bret = SetupDiOpenDeviceInterfaceW(set, p, 0, &iface);

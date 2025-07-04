@@ -1,5 +1,5 @@
 TESTDLL = cfgmgr32.dll
-IMPORTS = cfgmgr32 setupapi ole32 uuid
+IMPORTS = cfgmgr32 setupapi ole32 uuid advapi32
 
 SOURCES = \
 	cfgmgr32.c

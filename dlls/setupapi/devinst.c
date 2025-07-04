@@ -407,8 +407,6 @@ static LPWSTR SETUPDI_CreateSymbolicLinkPath(LPCWSTR instanceId,
         }
     }
 
-    CharLowerW(ret);
-
     return ret;
 }
 
@@ -3037,6 +3035,8 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(HDEVINFO devinfo, SP_DEVICE_INTERFA
         else
             DeviceInterfaceDetailData->DevicePath[0] = '\0';
 
+        CharLowerA(DeviceInterfaceDetailData->DevicePath);
+
         ret = TRUE;
     }
     else
@@ -3094,6 +3094,8 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(HDEVINFO devinfo, SP_DEVICE_INTERFA
             lstrcpyW(DeviceInterfaceDetailData->DevicePath, iface->symlink);
         else
             DeviceInterfaceDetailData->DevicePath[0] = '\0';
+
+        CharLowerW(DeviceInterfaceDetailData->DevicePath);
 
         ret = TRUE;
     }
@@ -4883,12 +4885,9 @@ static CONFIGRET get_device_interface_list(const GUID *class_guid, DEVINSTID_W d
 {
     const ULONG supported_flags = CM_GET_DEVICE_INTERFACE_LIST_ALL_DEVICES;
 
-    BYTE iface_detail_buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + 256 * sizeof(WCHAR)];
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
-    SP_DEVICE_INTERFACE_DETAIL_DATA_W *iface_data;
     SP_DEVINFO_DATA device = { sizeof(device) };
     ULONG query_flags = DIGCF_DEVICEINTERFACE;
-    CONFIGRET ret = CR_SUCCESS;
     unsigned int i, id_len;
     HDEVINFO set;
     ULONG needed;
@@ -4915,15 +4914,12 @@ static CONFIGRET get_device_interface_list(const GUID *class_guid, DEVINSTID_W d
     if (set == INVALID_HANDLE_VALUE)
         return CR_SUCCESS;
 
-    iface_data = (SP_DEVICE_INTERFACE_DETAIL_DATA_W *)iface_detail_buffer;
-    iface_data->cbSize = sizeof(*iface_data);
-
     p = buffer;
     for (i = 0; SetupDiEnumDeviceInterfaces(set, NULL, class_guid, i, &iface); ++i)
     {
-        ret = SetupDiGetDeviceInterfaceDetailW(set, &iface, iface_data, sizeof(iface_detail_buffer), NULL, &device);
-        if (!ret) continue;
-        id_len = wcslen(iface_data->DevicePath) + 1;
+        struct device_iface *device_iface;
+        device_iface = get_device_iface(set, &iface);
+        id_len = wcslen(device_iface->symlink) + 1;
         needed += id_len;
         if (buffer)
         {
@@ -4933,7 +4929,7 @@ static CONFIGRET get_device_interface_list(const GUID *class_guid, DEVINSTID_W d
                 *buffer = 0;
                 return CR_BUFFER_SMALL;
             }
-            memcpy(p, iface_data->DevicePath, sizeof(*p) * id_len);
+            memcpy(p, device_iface->symlink, sizeof(*p) * id_len);
             p += id_len;
         }
     }
