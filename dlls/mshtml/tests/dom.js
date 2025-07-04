@@ -395,6 +395,10 @@ sync_test("document_style_props", function() {
     ok(document.linkColor === "#deadb8", "linkColor = " + document.linkColor);
     r = window.getComputedStyle(elem).color;
     ok(r === "rgb(222, 173, 184)", "style color = " + r);
+
+    ok(document.vLinkColor === undefined, "default vLinkColor = " + document.vLinkColor);
+    document.vLinkColor = "#b8dead";
+    ok(document.vLinkColor === "#b8dead", "vLinkColor = " + document.vLinkColor);
 });
 
 sync_test("style_properties", function() {
