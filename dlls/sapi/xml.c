@@ -25,6 +25,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <math.h>
 #include <assert.h>
 
 #define COBJMACROS
@@ -457,6 +458,101 @@ static HRESULT add_sapi_text_fragment(struct xml_parser *parser, const SPVSTATE 
     return S_OK;
 }
 
+struct string_value
+{
+    const WCHAR *str;
+    LONG value;
+};
+
+static BOOL lookup_string_value(const struct string_value *table, size_t count, const xmlstr_t *str, LONG *res)
+{
+    size_t i;
+
+    for (i = 0; i < count; i++)
+    {
+        if (xmlstr_eq(str, table[i].str))
+        {
+            *res = table[i].value;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static HRESULT parse_double_value(const xmlstr_t *value, double *res, size_t *read_len)
+{
+    WCHAR *buf, *end;
+
+    if (!value->len)
+        return SPERR_UNSUPPORTED_FORMAT;
+
+    if (!(buf = xmlstrdupW(value)))
+        return E_OUTOFMEMORY;
+
+    *res = wcstod(buf, &end);
+    *read_len = end - buf;
+
+    free(buf);
+    return S_OK;
+}
+
+static HRESULT parse_ssml_elems(struct xml_parser *parser, const SPVSTATE *state, const struct xml_elem *parent);
+
+static HRESULT parse_ssml_prosody_elem(struct xml_parser *parser, SPVSTATE state, const struct xml_elem *parent)
+{
+    static const struct string_value rate_values[] =
+    {
+        { L"x-slow", -9 },
+        { L"slow",   -4 },
+        { L"medium",  0 },
+        { L"fast",    4 },
+        { L"x-fast",  9 },
+    };
+
+    struct xml_attr attr;
+    BOOL end = FALSE;
+    size_t read_len;
+    HRESULT hr;
+
+    while (next_xml_attr(parser, &attr, &end))
+    {
+        if (xml_attr_eq(&attr, L"rate"))
+        {
+            double rate;
+
+            if (lookup_string_value(rate_values, ARRAY_SIZE(rate_values), &attr.value, &state.RateAdj))
+                continue;
+
+            if (FAILED(hr = parse_double_value(&attr.value, &rate, &read_len)))
+                return hr;
+            if (read_len < attr.value.len - 1 ||
+                (read_len == attr.value.len - 1 && attr.value.ptr[read_len] != '%'))
+            {
+                ERR("Invalid value %s for the rate attribute in <prosody>.\n", debugstr_xmlstr(&attr.value));
+                return SPERR_UNSUPPORTED_FORMAT;
+            }
+
+            if (attr.value.ptr[attr.value.len - 1] == '%')
+                rate = 1 + rate / 100;
+
+            if (rate < 0)
+                state.RateAdj = 0;
+            else if (rate <= 0.01)
+                state.RateAdj = -10;
+            else
+                state.RateAdj = lround(log(rate) * (10 / log(3)));
+        }
+        else
+        {
+            FIXME("Unknown <prosody> attribute %s.\n", debugstr_xmlstr(&attr.name));
+            return E_NOTIMPL;
+        }
+    }
+
+    if (end) return S_OK;
+    return parse_ssml_elems(parser, &state, parent);
+}
+
 static HRESULT parse_ssml_elems(struct xml_parser *parser, const SPVSTATE *state, const struct xml_elem *parent)
 {
     struct xml_attr attr;
@@ -475,6 +571,10 @@ static HRESULT parse_ssml_elems(struct xml_parser *parser, const SPVSTATE *state
             while (next_xml_attr(parser, &attr, &end)) ;
             if (end) continue;
             hr = parse_ssml_elems(parser, state, &elem);
+        }
+        else if (xml_elem_eq(&elem, ssml_ns, L"prosody"))
+        {
+            hr = parse_ssml_prosody_elem(parser, *state, &elem);
         }
         else
         {

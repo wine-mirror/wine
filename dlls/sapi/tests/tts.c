@@ -1052,24 +1052,22 @@ static void test_spvoice_ssml(void)
     reset_engine_params(&test_engine);
 
     hr = ISpVoice_Speak(voice, text4, SPF_DEFAULT, NULL);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine ok(test_engine.frag_count == 2, "got %Iu.\n", test_engine.frag_count);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(test_engine.frag_count == 2, "got %Iu.\n", test_engine.frag_count);
 
-    if (test_engine.frag_count == 2) {
-        check_frag_text(0, L"One, ");
-        check_frag_state_field(0, eAction, SPVA_Speak, "%d");
-        check_frag_state_field(0, RateAdj, 0, "%ld");
+    check_frag_text(0, L"One, ");
+    check_frag_state_field(0, eAction, SPVA_Speak, "%d");
+    check_frag_state_field(0, RateAdj, 0, "%ld");
 
-        check_frag_text(1, L"two.");
-        check_frag_state_field(1, eAction, SPVA_Speak, "%d");
-        check_frag_state_field(1, RateAdj, -17, "%ld"); /* 3^(-17/10) ~= 0.15 */
-    }
+    check_frag_text(1, L"two.");
+    check_frag_state_field(1, eAction, SPVA_Speak, "%d");
+    check_frag_state_field(1, RateAdj, -17, "%ld"); /* 3^(-17/10) ~= 0.15 */
 
     reset_engine_params(&test_engine);
 
     hr = ISpVoice_Speak(voice, text5, SPF_IS_XML | SPF_PARSE_SSML, NULL);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine ok(test_engine.frag_count == 8 || broken(test_engine.frag_count == 3) /* win7 */,
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(test_engine.frag_count == 8 || broken(test_engine.frag_count == 3) /* win7 */,
        "got %Iu.\n", test_engine.frag_count);
 
     if (test_engine.frag_count == 8) {
@@ -1086,7 +1084,7 @@ static void test_spvoice_ssml(void)
     reset_engine_params(&test_engine);
 
     hr = ISpVoice_Speak(voice, text6, SPF_IS_XML | SPF_PARSE_SSML, NULL);
-    todo_wine ok(hr == S_OK || broken(hr == SPERR_UNSUPPORTED_FORMAT) /* win7 */, "got %#lx.\n", hr);
+    ok(hr == S_OK || broken(hr == SPERR_UNSUPPORTED_FORMAT) /* win7 */, "got %#lx.\n", hr);
 
     if (hr == S_OK) {
         ok(test_engine.frag_count == 5, "got %Iu.\n", test_engine.frag_count);
@@ -1101,7 +1099,7 @@ static void test_spvoice_ssml(void)
     reset_engine_params(&test_engine);
 
     hr = ISpVoice_Speak(voice, text7, SPF_IS_XML | SPF_PARSE_SSML, NULL);
-    todo_wine ok(hr == S_OK || broken(hr == SPERR_UNSUPPORTED_FORMAT) /* win7 */, "got %#lx.\n", hr);
+    ok(hr == S_OK || broken(hr == SPERR_UNSUPPORTED_FORMAT) /* win7 */, "got %#lx.\n", hr);
 
     if (hr == S_OK) {
         ok(test_engine.frag_count == 5, "got %Iu.\n", test_engine.frag_count);
