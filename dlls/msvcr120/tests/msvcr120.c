@@ -195,23 +195,6 @@ static _Cancellation_beacon* (__thiscall *p__Cancellation_beacon_ctor)(_Cancella
 static void (__thiscall *p__Cancellation_beacon_dtor)(_Cancellation_beacon*);
 static MSVCRT_bool (__thiscall *p__Cancellation_beacon__Confirm_cancel)(_Cancellation_beacon*);
 
-static inline BOOL compare_double(double f, double g, unsigned int ulps)
-{
-    ULONGLONG x = *(ULONGLONG *)&f;
-    ULONGLONG y = *(ULONGLONG *)&g;
-
-    if (f < 0)
-        x = ~x + 1;
-    else
-        x |= ((ULONGLONG)1)<<63;
-    if (g < 0)
-        y = ~y + 1;
-    else
-        y |= ((ULONGLONG)1)<<63;
-
-    return (x>y ? x-y : y-x) <= ulps;
-}
-
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(module,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 
@@ -1803,113 +1786,6 @@ static void test__fsopen(void)
     setlocale(LC_ALL, "C");
 }
 
-static int matherr_called;
-static int CDECL matherr_callback(struct _exception *e)
-{
-    matherr_called = 1;
-    return 0;
-}
-
-static void test_cexp(void)
-{
-    static const struct {
-        double r, i;
-        double rexp, iexp;
-        errno_t e;
-    } tests[] = {
-        {  INFINITY,  0.0,       INFINITY,  0.0           },
-        {  INFINITY, -0.0,       INFINITY, -0.0           },
-        { -INFINITY,  0.0,       0.0,       0.0           },
-        { -INFINITY, -0.0,       0.0,      -0.0           },
-        {    0.0,     INFINITY,  NAN,       NAN,     EDOM },
-        {   -0.0,     INFINITY,  NAN,       NAN,     EDOM },
-        {    0.0,    -INFINITY,  NAN,       NAN,     EDOM },
-        {   -0.0,    -INFINITY,  NAN,       NAN,     EDOM },
-        {  100.0,     INFINITY,  NAN,       NAN,     EDOM },
-        { -100.0,     INFINITY,  NAN,       NAN,     EDOM },
-        {  100.0,    -INFINITY,  NAN,       NAN,     EDOM },
-        { -100.0,    -INFINITY,  NAN,       NAN,     EDOM },
-        { -INFINITY,  2.0,      -0.0,       0.0           },
-        { -INFINITY,  4.0,      -0.0,      -0.0           },
-        {  INFINITY,  2.0,      -INFINITY,  INFINITY      },
-        {  INFINITY,  4.0,      -INFINITY, -INFINITY      },
-        {  INFINITY,  INFINITY,  INFINITY,  NAN,     EDOM },
-        {  INFINITY, -INFINITY,  INFINITY,  NAN,     EDOM },
-        { -INFINITY,  INFINITY,  0.0,       0.0           },
-        { -INFINITY, -INFINITY,  0.0,      -0.0           },
-        { -INFINITY,  NAN,       0.0,       0.0           },
-        {  INFINITY,  NAN,       INFINITY,  NAN           },
-        {  NAN,       0.0,       NAN,       0.0           },
-        {  NAN,      -0.0,       NAN,      -0.0           },
-        {  NAN,       1.0,       NAN,       NAN           },
-        {  NAN,       INFINITY,  NAN,       NAN           },
-        {  0.0,       NAN,       NAN,       NAN           },
-        {  1.0,       NAN,       NAN,       NAN           },
-        {  NAN,       NAN,       NAN,       NAN           },
-    };
-    static const struct {
-        double r, i;
-        double rexp, iexp;
-        errno_t e;
-    } tests2[] = {
-        { 0.0,                M_PI, -1.0,                     1.2246467991473532e-016          },
-        { 709.7,              0.0,   1.6549840276802644e+308, 0.0                              },
-        { 709.78271289338397, 0.0,   1.7976931348622734e+308, 0.0                              },
-        { 709.8,              0.0,   INFINITY,                0.0,                      ERANGE },
-        { 746.0,              0.0,   INFINITY,                0.0,                      ERANGE },
-        { 747.0,              0.0,   INFINITY,                0.0,                      ERANGE },
-        { 1454.3,             0.0,   INFINITY,                0.0,                      ERANGE },
-        { 709.7,              M_PI, -1.6549840276802644e+308, 2.0267708921386307e+292          },
-        { 709.78271289338397, M_PI, -1.7976931348622734e+308, 2.2015391434582545e+292          },
-        { 709.8,              M_PI, -INFINITY,                2.2399282475936458e+292,  ERANGE },
-        { 746.0,              M_PI, -INFINITY,                1.1794902399837951e+308,  ERANGE },
-        { 747.0,              M_PI, -INFINITY,                INFINITY,                 ERANGE },
-        { 1454.3,             M_PI, -INFINITY,                INFINITY,                 ERANGE },
-    };
-    _Dcomplex c, r;
-    errno_t e;
-    int i;
-
-    __setusermatherr(matherr_callback);
-
-    for(i=0; i<ARRAY_SIZE(tests); i++) {
-        c = _Cbuild(tests[i].r, tests[i].i);
-        errno = 0;
-        matherr_called = 0;
-        r = cexp(c);
-        e = errno;
-        if(_isnan(tests[i].rexp))
-            ok(_isnan(r._Val[0]), "expected NAN, got %0.16e for %d\n", r._Val[0], i);
-        else
-            ok(r._Val[0] == tests[i].rexp, "expected %0.16e, got %0.16e for %d\n", tests[i].rexp, r._Val[0], i);
-        if(_isnan(tests[i].iexp))
-            ok(_isnan(r._Val[1]), "expected NAN, got %0.16e for %d\n", r._Val[1], i);
-        else
-            ok(r._Val[1] == tests[i].iexp, "expected %0.16e, got %0.16e for %d\n", tests[i].iexp, r._Val[1], i);
-        ok(signbit(r._Val[0]) == signbit(tests[i].rexp), "expected sign %x, got %x for %d\n",
-            signbit(tests[i].rexp), signbit(r._Val[0]), i);
-        ok((signbit(r._Val[1]) == signbit(tests[i].iexp)) ||
-            broken(tests[i].r == -INFINITY && tests[i].i == -0.0) /* older win10 */,
-            "expected sign %x, got %x for %d\n", signbit(tests[i].iexp), signbit(r._Val[1]), i);
-        ok(e == tests[i].e, "expected errno %i, but got %i for %d\n", tests[i].e, e, i);
-        ok(!matherr_called, "matherr was called for %d\n", i);
-    }
-
-    for(i=0; i<ARRAY_SIZE(tests2); i++) {
-        errno = 0;
-        matherr_called = 0;
-        c = _Cbuild(tests2[i].r, tests2[i].i);
-        r = cexp(c);
-        e = errno;
-        ok(compare_double(r._Val[0], tests2[i].rexp, 16), "expected %0.16e, got %0.16e for real %d\n", tests2[i].rexp, r._Val[0], i);
-        ok(compare_double(r._Val[1], tests2[i].iexp, 16), "expected %0.16e, got %0.16e for imag %d\n", tests2[i].iexp, r._Val[1], i);
-        ok(e == tests2[i].e, "expected errno %i, but got %i for %d\n", tests2[i].e, e, i);
-        ok(!matherr_called, "matherr was called for %d\n", i);
-    }
-
-    __setusermatherr(NULL);
-}
-
 START_TEST(msvcr120)
 {
     if (!init()) return;
@@ -1937,5 +1813,4 @@ START_TEST(msvcr120)
     test_strcmp();
     test_gmtime64();
     test__fsopen();
-    test_cexp();
 }

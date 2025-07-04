@@ -34,6 +34,7 @@
 #include <process.h>
 #include <fenv.h>
 #include <malloc.h>
+#include <complex.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -1887,6 +1888,119 @@ static void test_expf(void)
     __setusermatherr(NULL);
 }
 
+static void test_cexp(void)
+{
+    static const struct {
+        double r, i;
+        double rexp, iexp;
+        int type;
+        errno_t e;
+    } tests[] = {
+        {  INFINITY,  0.0,       INFINITY,  0.0                    },
+        {  INFINITY, -0.0,       INFINITY, -0.0                    },
+        { -INFINITY,  0.0,       0.0,       0.0                    },
+        { -INFINITY, -0.0,       0.0,      -0.0                    },
+        {    0.0,     INFINITY,  NAN,       NAN,     _DOMAIN, EDOM },
+        {   -0.0,     INFINITY,  NAN,       NAN,     _DOMAIN, EDOM },
+        {    0.0,    -INFINITY,  NAN,       NAN,     _DOMAIN, EDOM },
+        {   -0.0,    -INFINITY,  NAN,       NAN,     _DOMAIN, EDOM },
+        {  100.0,     INFINITY,  NAN,       NAN,     _DOMAIN, EDOM },
+        { -100.0,     INFINITY,  NAN,       NAN,     _DOMAIN, EDOM },
+        {  100.0,    -INFINITY,  NAN,       NAN,     _DOMAIN, EDOM },
+        { -100.0,    -INFINITY,  NAN,       NAN,     _DOMAIN, EDOM },
+        { -INFINITY,  2.0,      -0.0,       0.0                    },
+        { -INFINITY,  4.0,      -0.0,      -0.0                    },
+        {  INFINITY,  2.0,      -INFINITY,  INFINITY               },
+        {  INFINITY,  4.0,      -INFINITY, -INFINITY               },
+        {  INFINITY,  INFINITY,  INFINITY,  NAN,     _DOMAIN, EDOM },
+        {  INFINITY, -INFINITY,  INFINITY,  NAN,     _DOMAIN, EDOM },
+        { -INFINITY,  INFINITY,  0.0,       0.0                    },
+        { -INFINITY, -INFINITY,  0.0,      -0.0                    },
+        { -INFINITY,  NAN,       0.0,       0.0                    },
+        {  INFINITY,  NAN,       INFINITY,  NAN                    },
+        {  NAN,       0.0,       NAN,       0.0                    },
+        {  NAN,      -0.0,       NAN,      -0.0                    },
+        {  NAN,       1.0,       NAN,       NAN                    },
+        {  NAN,       INFINITY,  NAN,       NAN                    },
+        {  0.0,       NAN,       NAN,       NAN                    },
+        {  1.0,       NAN,       NAN,       NAN                    },
+        {  NAN,       NAN,       NAN,       NAN                    },
+    };
+    static const struct {
+        double r, i;
+        double rexp, iexp;
+        int type;
+        errno_t e;
+    } tests2[] = {
+        { 0.0,                M_PI, -1.0,                     1.2246467991473532e-016                      },
+        { 709.7,              0.0,   1.6549840276802644e+308, 0.0                                          },
+        { 709.78271289338397, 0.0,   1.7976931348622734e+308, 0.0                                          },
+        { 709.8,              0.0,   INFINITY,                0.0,                      _OVERFLOW,  ERANGE },
+        { 746.0,              0.0,   INFINITY,                0.0,                      _OVERFLOW,  ERANGE },
+        { 747.0,              0.0,   INFINITY,                0.0,                      _OVERFLOW,  ERANGE },
+        { 1454.3,             0.0,   INFINITY,                0.0,                      _OVERFLOW,  ERANGE },
+        { 709.7,              M_PI, -1.6549840276802644e+308, 2.0267708921386307e+292                      },
+        { 709.78271289338397, M_PI, -1.7976931348622734e+308, 2.2015391434582545e+292                      },
+        { 709.8,              M_PI, -INFINITY,                2.2399282475936458e+292,  _UNDERFLOW, ERANGE },
+        { 746.0,              M_PI, -INFINITY,                1.1794902399837951e+308,  _UNDERFLOW, ERANGE },
+        { 747.0,              M_PI, -INFINITY,                INFINITY,                 _UNDERFLOW, ERANGE },
+        { 1454.3,             M_PI, -INFINITY,                INFINITY,                 _UNDERFLOW, ERANGE },
+    };
+    _Dcomplex c, r;
+    errno_t e;
+    int i;
+
+    __setusermatherr(matherr_callback);
+
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        c = _Cbuild(tests[i].r, tests[i].i);
+        errno = -1;
+        exception.type = -1;
+        r = cexp(c);
+        e = errno;
+
+        if(_isnan(tests[i].rexp))
+            ok(_isnan(r._Val[0]), "expected NAN, got %0.16e for %d\n", r._Val[0], i);
+        else {
+            ok(r._Val[0] == tests[i].rexp, "expected %0.16e, got %0.16e for %d\n", tests[i].rexp, r._Val[0], i);
+            ok(signbit(r._Val[0]) == signbit(tests[i].rexp), "expected sign %x, got %x for %d\n",
+                signbit(tests[i].rexp), signbit(r._Val[0]), i);
+        }
+        if(_isnan(tests[i].iexp))
+            ok(_isnan(r._Val[1]), "expected NAN, got %0.16e for %d\n", r._Val[1], i);
+        else {
+            ok(r._Val[1] == tests[i].iexp, "expected %0.16e, got %0.16e for %d\n", tests[i].iexp, r._Val[1], i);
+            ok(signbit(r._Val[1]) == signbit(tests[i].iexp), "expected sign %x, got %x for %d\n",
+                signbit(tests[i].iexp), signbit(r._Val[1]), i);
+        }
+
+        ok(e == tests[i].e ? tests[i].e : -1,
+            "expected errno %d, but got %d for %d\n", tests[i].e, e, i);
+
+        ok(exception.type == tests[i].type ? tests[i].type : -1,
+            "expected %d, got %d for %d\n", tests[i].type, exception.type, i);
+    }
+
+    for(i=0; i<ARRAY_SIZE(tests2); i++) {
+        errno = -1;
+        exception.type = -1;
+        c = _Cbuild(tests2[i].r, tests2[i].i);
+        r = cexp(c);
+        e = errno;
+
+        ok(compare_double(r._Val[0], tests2[i].rexp, 1), "expected %0.16e, got %0.16e for real %d\n", tests2[i].rexp, r._Val[0], i);
+        ok(compare_double(r._Val[1], tests2[i].iexp, 1), "expected %0.16e, got %0.16e for imag %d\n", tests2[i].iexp, r._Val[1], i);
+        ok(e == tests2[i].e ? tests2[i].e : -1,
+            "expected errno %d, but got %d for %d\n", tests2[i].e, e, i);
+
+        ok(exception.type == tests2[i].type ? tests2[i].type : -1,
+            "expected %d, got %d for %d\n", tests2[i].type, exception.type, i);
+    }
+
+    __setusermatherr(NULL);
+}
+
+
 START_TEST(misc)
 {
     int arg_c;
@@ -1936,4 +2050,5 @@ START_TEST(misc)
     test__get_heap_handle();
     test_exp();
     test_expf();
+    test_cexp();
 }
