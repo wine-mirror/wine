@@ -385,6 +385,18 @@ sync_test("document_owner", function() {
     ok(node.ownerDocument === document, "text.ownerDocument = " + node.ownerDocument);
 });
 
+sync_test("document_style_props", function() {
+    document.body.innerHTML = '<a href="#"></a>';
+    var r, elem = document.getElementsByTagName("a")[0];
+    todo_wine.
+    ok(document.linkColor === "#0000ff", "default linkColor = " + document.linkColor);
+
+    document.linkColor = "#deadb8";
+    ok(document.linkColor === "#deadb8", "linkColor = " + document.linkColor);
+    r = window.getComputedStyle(elem).color;
+    ok(r === "rgb(222, 173, 184)", "style color = " + r);
+});
+
 sync_test("style_properties", function() {
     document.body.innerHTML = '<div>test</div><svg></svg>';
     var elem = document.body.firstChild;
