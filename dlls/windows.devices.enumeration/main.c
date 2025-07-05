@@ -21,6 +21,8 @@
 #include "initguid.h"
 #include "private.h"
 #include "setupapi.h"
+#include "devfiltertypes.h"
+#include "devquery.h"
 
 #include "wine/debug.h"
 
@@ -519,12 +521,6 @@ static HRESULT WINAPI device_statics_CreateFromIdAsyncAdditionalProperties( IDev
     return E_NOTIMPL;
 }
 
-static HRESULT append_device_information( IDeviceInformation *info, void *context )
-{
-    IVector_IInspectable *vector = context;
-    return IVector_IInspectable_Append( vector, (IInspectable *)info );
-}
-
 static HRESULT find_all_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
 {
     static const struct vector_iids iids =
@@ -536,13 +532,28 @@ static HRESULT find_all_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *
     };
     IVectorView_DeviceInformation *view;
     IVector_IInspectable *vector;
+    const DEV_OBJECT *objects;
+    ULONG len, i;
     HRESULT hr;
 
     TRACE( "invoker %p, param %p, result %p\n", invoker, param, result );
 
     if (FAILED(hr = vector_create( &iids, (void *)&vector ))) return hr;
-    hr = enum_device_information( append_device_information, vector );
-
+    if (FAILED(hr = DevGetObjects( DevObjectTypeDeviceInterfaceDisplay, DevQueryFlagNone, 0, NULL, 0, NULL, &len, &objects )))
+    {
+        IVector_IInspectable_Release( vector );
+        return hr;
+    }
+    for (i = 0; i < len && SUCCEEDED(hr); i++)
+    {
+        IDeviceInformation *info;
+        if (SUCCEEDED(hr = device_information_create( objects[i].pszObjectId, &info )))
+        {
+            hr = IVector_IInspectable_Append( vector, (IInspectable *)info );
+            IDeviceInformation_Release( info );
+        }
+    }
+    DevFreeObjects( len, objects );
     if (SUCCEEDED(hr)) hr = IVector_IInspectable_GetView( vector, (void *)&view );
     IVector_IInspectable_Release( vector );
     if (FAILED(hr)) return hr;
