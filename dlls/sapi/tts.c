@@ -49,6 +49,7 @@ struct speech_voice
 
     ISpStreamFormat *output;
     IMFTransform *resampler;
+    BOOL allow_format_changes;
     ISpObjectToken *engine_token;
     ISpTTSEngine *engine;
     LONG cur_stream_num;
@@ -683,9 +684,6 @@ static HRESULT WINAPI spvoice_SetOutput(ISpVoice *iface, IUnknown *unk, BOOL all
 
     TRACE("(%p, %p, %d).\n", iface, unk, allow_format_changes);
 
-    if (!allow_format_changes)
-        FIXME("ignoring allow_format_changes = FALSE.\n");
-
     if (FAILED(hr = async_start_queue(&This->queue)))
         return hr;
 
@@ -718,6 +716,8 @@ static HRESULT WINAPI spvoice_SetOutput(ISpVoice *iface, IUnknown *unk, BOOL all
     if (This->output)
         ISpStreamFormat_Release(This->output);
     This->output = stream;
+
+    This->allow_format_changes = allow_format_changes;
 
     LeaveCriticalSection(&This->cs);
 
@@ -925,7 +925,8 @@ static HRESULT set_output_format(struct speech_voice *voice, GUID *fmtid, WAVEFO
     if (memcmp(output_wfx, *engine_wfx, sizeof(WAVEFORMATEX)) ||
         memcmp(output_wfx + 1, *engine_wfx + 1, output_wfx->cbSize))
     {
-        if (SUCCEEDED(ISpStreamFormat_QueryInterface(voice->output, &IID_ISpAudio, (void **)&audio)))
+        if (voice->allow_format_changes &&
+            SUCCEEDED(ISpStreamFormat_QueryInterface(voice->output, &IID_ISpAudio, (void **)&audio)))
         {
             hr = ISpAudio_SetFormat(audio, &SPDFID_WaveFormatEx, *engine_wfx);
             if (hr == SPERR_UNSUPPORTED_FORMAT)
@@ -1706,6 +1707,7 @@ HRESULT speech_voice_create(IUnknown *outer, REFIID iid, void **obj)
 
     This->output = NULL;
     This->resampler = NULL;
+    This->allow_format_changes = TRUE;
     This->engine_token = NULL;
     This->engine = NULL;
     This->cur_stream_num = 0;
