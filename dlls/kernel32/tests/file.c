@@ -31,9 +31,11 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winioctl.h"
 #include "winternl.h"
 #include "winnls.h"
 #include "fileapi.h"
+#include "ddk/ntifs.h"
 
 static HANDLE (WINAPI *pFindFirstFileExA)(LPCSTR,FINDEX_INFO_LEVELS,LPVOID,FINDEX_SEARCH_OPS,LPVOID,DWORD);
 static BOOL (WINAPI *pReplaceFileW)(LPCWSTR, LPCWSTR, LPCWSTR, DWORD, LPVOID, LPVOID);
@@ -6332,6 +6334,164 @@ static void test_eof(void)
     ok(ret, "failed to delete %s, error %lu\n", debugstr_a(filename), GetLastError());
 }
 
+static void test_symbolic_link(void)
+{
+    WCHAR temp_path[MAX_PATH], path[MAX_PATH], path2[MAX_PATH], expect_path[MAX_PATH];
+    char buffer[1024];
+    const REPARSE_DATA_BUFFER *data = (void *)buffer;
+    TOKEN_PRIVILEGES privs;
+    const WCHAR *ret_path;
+    IO_STATUS_BLOCK io;
+    HANDLE file, token;
+    LUID luid;
+    BOOL ret;
+
+    ret = OpenProcessToken( GetCurrentProcess(), TOKEN_ALL_ACCESS, &token );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+    ret = LookupPrivilegeValueA( NULL, "SeCreateSymbolicLinkPrivilege", &luid );
+    todo_wine ok( ret == TRUE, "got error %lu\n", GetLastError() );
+
+    privs.PrivilegeCount = 1;
+    privs.Privileges[0].Luid = luid;
+    privs.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+    ret = AdjustTokenPrivileges( token, FALSE, &privs, 0, NULL, NULL );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+    if (GetLastError() == ERROR_NOT_ALL_ASSIGNED)
+    {
+        todo_wine win_skip( "Insufficient permissions to perform symlink tests.\n" );
+        CloseHandle( token );
+        return;
+    }
+    CloseHandle( token );
+
+    GetTempPathW( ARRAY_SIZE( temp_path ), temp_path );
+
+    swprintf( path, ARRAY_SIZE(path), L"%s/testsymlink\\", temp_path );
+    swprintf( path2, ARRAY_SIZE(path2), L"%s/target\\", temp_path );
+
+    SetLastError( 0xdeadbeef );
+    ret = CreateSymbolicLinkW( path, path2, TRUE );
+    todo_wine ok( ret == TRUE, "got %d\n", ret );
+    todo_wine ok( !GetLastError(), "got error %lu\n", GetLastError() );
+    if (!ret)
+        return;
+
+    ret = GetFileAttributesW( path );
+    ok( ret == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT), "got attrs %#x\n", ret );
+
+    file = CreateFileW( path, FILE_READ_DATA, 0, NULL, OPEN_EXISTING,
+                        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, NULL );
+    ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
+
+    ret = NtFsControlFile( file, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, buffer, sizeof(buffer) );
+    ok( !ret, "got %#x\n", ret );
+    ok( data->ReparseTag == IO_REPARSE_TAG_SYMLINK, "got tag %#lx\n", data->ReparseTag );
+    ok( !data->Reserved, "got reserved %#x\n", data->Reserved );
+    ok( data->ReparseDataLength == io.Information - offsetof( REPARSE_DATA_BUFFER, SymbolicLinkReparseBuffer ),
+        "got information %Iu, length %u\n", io.Information, data->ReparseDataLength );
+    ok( !data->SymbolicLinkReparseBuffer.Flags, "got flags %#lx\n", data->SymbolicLinkReparseBuffer.Flags );
+    ret_path = data->SymbolicLinkReparseBuffer.PathBuffer + (data->SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(WCHAR));
+    swprintf( expect_path, ARRAY_SIZE(expect_path), L"\\??\\%starget\\", temp_path );
+    ok( data->SymbolicLinkReparseBuffer.SubstituteNameLength == wcslen( expect_path ) * 2,
+        "got length %u\n", data->SymbolicLinkReparseBuffer.SubstituteNameLength );
+    ok( !memcmp( ret_path, expect_path, data->SymbolicLinkReparseBuffer.SubstituteNameLength ),
+        "expected %s, got %s\n", debugstr_w( expect_path ),
+        debugstr_wn( ret_path, data->SymbolicLinkReparseBuffer.SubstituteNameLength ));
+    ret_path = data->SymbolicLinkReparseBuffer.PathBuffer + (data->SymbolicLinkReparseBuffer.PrintNameOffset / sizeof(WCHAR));
+    ok( data->SymbolicLinkReparseBuffer.PrintNameLength == wcslen( path2 ) * 2,
+        "got length %u\n", data->SymbolicLinkReparseBuffer.PrintNameLength );
+    ok( !memcmp( ret_path, path2, data->SymbolicLinkReparseBuffer.PrintNameLength ),
+        "expected %s, got %s\n", debugstr_w( path2 ),
+        debugstr_wn( ret_path, data->SymbolicLinkReparseBuffer.PrintNameLength ));
+    CloseHandle( file );
+
+    SetLastError( 0xdeadbeef );
+    ret = CreateSymbolicLinkW( path, L"target", TRUE );
+    ok( ret == FALSE, "got %d\n", ret );
+    ok( GetLastError() == ERROR_ALREADY_EXISTS, "got error %lu\n", GetLastError() );
+
+    ret = RemoveDirectoryW( path );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = CreateSymbolicLinkW( path, L".\\target", TRUE );
+    ok( ret == TRUE, "got %d\n", ret );
+    ok( !GetLastError(), "got error %lu\n", GetLastError() );
+
+    ret = GetFileAttributesW( path );
+    ok( ret == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT), "got attrs %#x\n", ret );
+
+    file = CreateFileW( path, FILE_READ_DATA, 0, NULL, OPEN_EXISTING,
+                        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, NULL );
+    ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
+
+    ret = NtFsControlFile( file, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, buffer, sizeof(buffer) );
+    ok( !ret, "got %#x\n", ret );
+    ok( data->ReparseTag == IO_REPARSE_TAG_SYMLINK, "got tag %#lx\n", data->ReparseTag );
+    ok( !data->Reserved, "got reserved %#x\n", data->Reserved );
+    ok( data->ReparseDataLength == io.Information - offsetof( REPARSE_DATA_BUFFER, SymbolicLinkReparseBuffer ),
+        "got information %Iu, length %u\n", io.Information, data->ReparseDataLength );
+    ok( data->SymbolicLinkReparseBuffer.Flags == SYMLINK_FLAG_RELATIVE, "got flags %#lx\n", data->SymbolicLinkReparseBuffer.Flags );
+    ret_path = data->SymbolicLinkReparseBuffer.PathBuffer + (data->SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(WCHAR));
+    ok( data->SymbolicLinkReparseBuffer.SubstituteNameLength == wcslen( L".\\target" ) * 2,
+        "got length %u\n", data->SymbolicLinkReparseBuffer.SubstituteNameLength );
+    ok( !memcmp( ret_path, L".\\target", data->SymbolicLinkReparseBuffer.SubstituteNameLength ),
+        "expected %s, got %s\n", debugstr_w( L".\\target" ),
+        debugstr_wn( ret_path, data->SymbolicLinkReparseBuffer.SubstituteNameLength ));
+    ret_path = data->SymbolicLinkReparseBuffer.PathBuffer + (data->SymbolicLinkReparseBuffer.PrintNameOffset / sizeof(WCHAR));
+    ok( data->SymbolicLinkReparseBuffer.PrintNameLength == wcslen( L".\\target" ) * 2,
+        "got length %u\n", data->SymbolicLinkReparseBuffer.PrintNameLength );
+    ok( !memcmp( ret_path, L".\\target", data->SymbolicLinkReparseBuffer.PrintNameLength ),
+        "expected %s, got %s\n", debugstr_w( L".\\target" ),
+        debugstr_wn( ret_path, data->SymbolicLinkReparseBuffer.PrintNameLength ));
+    CloseHandle( file );
+
+    ret = RemoveDirectoryW( path );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = CreateSymbolicLinkW( path, L".\\target\\", FALSE );
+    ok( !ret, "got %d\n", ret );
+    ok( GetLastError() == ERROR_INVALID_NAME, "got error %lu\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    swprintf( path, ARRAY_SIZE(path), L"%s/testsymlink", temp_path );
+    ret = CreateSymbolicLinkW( path, L".\\target\\", FALSE );
+    ok( ret == TRUE, "got %d\n", ret );
+    ok( !GetLastError(), "got error %lu\n", GetLastError() );
+
+    ret = GetFileAttributesW( path );
+    ok( ret == (FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_REPARSE_POINT), "got attrs %#x\n", ret );
+
+    file = CreateFileW( path, FILE_READ_DATA, 0, NULL, OPEN_EXISTING,
+                        FILE_FLAG_OPEN_REPARSE_POINT, NULL );
+    ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
+
+    ret = NtFsControlFile( file, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, buffer, sizeof(buffer) );
+    ok( !ret, "got %#x\n", ret );
+    ok( data->ReparseTag == IO_REPARSE_TAG_SYMLINK, "got tag %#lx\n", data->ReparseTag );
+    ok( !data->Reserved, "got reserved %#x\n", data->Reserved );
+    ok( data->ReparseDataLength == io.Information - offsetof( REPARSE_DATA_BUFFER, SymbolicLinkReparseBuffer ),
+        "got information %Iu, length %u\n", io.Information, data->ReparseDataLength );
+    ok( data->SymbolicLinkReparseBuffer.Flags == SYMLINK_FLAG_RELATIVE, "got flags %#lx\n", data->SymbolicLinkReparseBuffer.Flags );
+    ret_path = data->SymbolicLinkReparseBuffer.PathBuffer + (data->SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(WCHAR));
+    ok( data->SymbolicLinkReparseBuffer.SubstituteNameLength == wcslen( L".\\target\\" ) * 2,
+        "got length %u\n", data->SymbolicLinkReparseBuffer.SubstituteNameLength );
+    ok( !memcmp( ret_path, L".\\target\\", data->SymbolicLinkReparseBuffer.SubstituteNameLength ),
+        "expected %s, got %s\n", debugstr_w( L".\\target\\" ),
+        debugstr_wn( ret_path, data->SymbolicLinkReparseBuffer.SubstituteNameLength ));
+    ret_path = data->SymbolicLinkReparseBuffer.PathBuffer + (data->SymbolicLinkReparseBuffer.PrintNameOffset / sizeof(WCHAR));
+    ok( data->SymbolicLinkReparseBuffer.PrintNameLength == wcslen( L".\\target\\" ) * 2,
+        "got length %u\n", data->SymbolicLinkReparseBuffer.PrintNameLength );
+    ok( !memcmp( ret_path, L".\\target\\", data->SymbolicLinkReparseBuffer.PrintNameLength ),
+        "expected %s, got %s\n", debugstr_w( L".\\target\\" ),
+        debugstr_wn( ret_path, data->SymbolicLinkReparseBuffer.PrintNameLength ));
+    CloseHandle( file );
+
+    ret = DeleteFileW( path );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+}
+
 START_TEST(file)
 {
     char temp_path[MAX_PATH];
@@ -6410,4 +6570,5 @@ START_TEST(file)
     test_hard_link();
     test_move_file();
     test_eof();
+    test_symbolic_link();
 }
