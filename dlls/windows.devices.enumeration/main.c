@@ -2,6 +2,7 @@
  *
  * Copyright 2021 Gijs Vermeulen
  * Copyright 2022 Julian Klemann for CodeWeavers
+ * Copyright 2025 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,67 +19,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
+
 #include "initguid.h"
 #include "private.h"
-#include "setupapi.h"
+#include "devpropdef.h"
 #include "devfiltertypes.h"
 #include "devquery.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(enumeration);
-
-typedef HRESULT (*enum_device_information_cb)( IDeviceInformation *info, void *context );
-
-static HRESULT enum_device_information( enum_device_information_cb callback, void *context )
-{
-    HKEY iface_key;
-    HRESULT hr;
-    DWORD i;
-
-    if (!(iface_key = SetupDiOpenClassRegKeyExW( NULL, KEY_ENUMERATE_SUB_KEYS, DIOCR_INTERFACE, NULL, NULL )))
-        return HRESULT_FROM_WIN32( GetLastError() );
-
-    for (i = 0, hr = S_OK; SUCCEEDED(hr); i++)
-    {
-        char buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + MAX_PATH * sizeof(WCHAR)];
-        SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (void *)buffer;
-        SP_DEVICE_INTERFACE_DATA iface = {.cbSize = sizeof(iface)};
-        HDEVINFO set = INVALID_HANDLE_VALUE;
-        GUID iface_class;
-        WCHAR name[40];
-        DWORD j, len;
-        LSTATUS ret;
-
-        len = ARRAY_SIZE(name);
-        ret = RegEnumKeyExW( iface_key, i, name, &len, NULL, NULL, NULL, NULL );
-        if (ret == ERROR_NO_MORE_ITEMS) break;
-        if (ret) hr = HRESULT_FROM_WIN32( ret );
-
-        if (SUCCEEDED(hr) && SUCCEEDED(hr = CLSIDFromString( name, &iface_class )))
-        {
-            set = SetupDiGetClassDevsW( &iface_class, NULL, NULL, DIGCF_DEVICEINTERFACE );
-            if (set == INVALID_HANDLE_VALUE) hr = HRESULT_FROM_WIN32( GetLastError() );
-        }
-
-        for (j = 0; SUCCEEDED(hr) && SetupDiEnumDeviceInterfaces( set, NULL, &iface_class, j, &iface ); j++)
-        {
-            IDeviceInformation *info;
-
-            detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
-            if (!SetupDiGetDeviceInterfaceDetailW( set, &iface, detail, sizeof(buffer), NULL, NULL )) continue;
-
-            if (SUCCEEDED(hr = device_information_create( detail->DevicePath, &info )))
-            {
-                hr = callback( info, context );
-                IDeviceInformation_Release( info );
-            }
-        }
-    }
-
-    RegCloseKey( iface_key );
-    return hr;
-}
 
 struct device_watcher
 {
@@ -92,6 +43,7 @@ struct device_watcher
 
     CRITICAL_SECTION cs;
     DeviceWatcherStatus status;
+    HDEVQUERY query;
 };
 
 static inline struct device_watcher *impl_from_IDeviceWatcher( IDeviceWatcher *iface )
@@ -148,6 +100,7 @@ static ULONG WINAPI device_watcher_Release( IDeviceWatcher *iface )
         WindowsDeleteString( impl->filter );
         impl->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection( &impl->cs );
+        if (impl->query) DevCloseObjectQuery( impl->query );
         free( impl );
     }
 
@@ -255,37 +208,86 @@ static HRESULT WINAPI device_watcher_get_Status( IDeviceWatcher *iface, DeviceWa
     return S_OK;
 }
 
-static HRESULT add_device_information( IDeviceInformation *info, void *invoker )
+static const char *debugstr_DEV_QUERY_RESULT_ACTION_DATA( const DEV_QUERY_RESULT_ACTION_DATA *data )
 {
-    struct device_watcher *impl = impl_from_IDeviceWatcher( (IDeviceWatcher *)invoker );
-    typed_event_handlers_notify( &impl->added_handlers, (IInspectable *)invoker, (IInspectable *)info );
-    return S_OK;
+    const DEV_OBJECT *obj = &data->Data.DeviceObject;
+    if (!data) return wine_dbg_sprintf( "(null)" );
+    if (data->Action == DevQueryResultStateChange)
+        return wine_dbg_sprintf( "{%d {%d}}", data->Action, data->Data.State );
+    return wine_dbg_sprintf( "{%d {{%d %s %lu %p}}}", data->Action, obj->ObjectType, debugstr_w( obj->pszObjectId ), obj->cPropertyCount, obj->pProperties );
 }
 
-static HRESULT device_watcher_start_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+static void WINAPI device_object_query_callback( HDEVQUERY query, void *data,
+                                                 const DEV_QUERY_RESULT_ACTION_DATA *action_data )
 {
-    struct device_watcher *impl = impl_from_IDeviceWatcher( (IDeviceWatcher *)invoker );
-    DeviceWatcherStatus status;
+    struct device_watcher *watcher;
+    IWeakReference *weak = data;
+    IDeviceWatcher *iface;
     HRESULT hr;
 
-    hr = enum_device_information( add_device_information, invoker );
+    TRACE( "query %p, data %p, action_data %s.\n", query, data, debugstr_DEV_QUERY_RESULT_ACTION_DATA( action_data ) );
 
-    EnterCriticalSection( &impl->cs );
-    if (FAILED(hr)) status = DeviceWatcherStatus_Aborted;
-    else if (impl->status == DeviceWatcherStatus_Stopping) status = DeviceWatcherStatus_Stopped;
-    else status = DeviceWatcherStatus_EnumerationCompleted;
-    impl->status = status;
-    LeaveCriticalSection( &impl->cs );
+    if (FAILED(hr = IWeakReference_Resolve( weak, &IID_IDeviceWatcher, (IInspectable **)&iface )) || !iface)
+    {
+        if (action_data->Action == DevQueryResultStateChange &&
+            (action_data->Data.State == DevQueryStateClosed || action_data->Data.State == DevQueryStateAborted))
+            IWeakReference_Release( weak ); /* No more callbacks are expected, so we can release the weak ref. */
+        return;
+    }
+    watcher = impl_from_IDeviceWatcher( iface );
 
-    if (status == DeviceWatcherStatus_Stopped) typed_event_handlers_notify( &impl->stopped_handlers, (IInspectable *)invoker, NULL );
-    if (status == DeviceWatcherStatus_EnumerationCompleted) typed_event_handlers_notify( &impl->enumerated_handlers, (IInspectable *)invoker, NULL );
-    return S_OK;
+    switch (action_data->Action)
+    {
+    case DevQueryResultStateChange:
+        switch (action_data->Data.State)
+        {
+        case DevQueryStateClosed:
+            EnterCriticalSection( &watcher->cs );
+            watcher->status = DeviceWatcherStatus_Stopped;
+            LeaveCriticalSection( &watcher->cs );
+            typed_event_handlers_notify( &watcher->stopped_handlers, (IInspectable *)iface, NULL );
+            IWeakReference_Release( weak );
+            break;
+        case DevQueryStateAborted:
+            EnterCriticalSection( &watcher->cs );
+            watcher->status = DeviceWatcherStatus_Aborted;
+            DevCloseObjectQuery( watcher->query );
+            watcher->query = NULL;
+            LeaveCriticalSection( &watcher->cs );
+            IWeakReference_Release( weak );
+            break;
+        case DevQueryStateEnumCompleted:
+            EnterCriticalSection( &watcher->cs );
+            watcher->status = DeviceWatcherStatus_EnumerationCompleted;
+            LeaveCriticalSection( &watcher->cs );
+
+            typed_event_handlers_notify( &watcher->enumerated_handlers, (IInspectable *)iface, NULL );
+            break;
+        default:
+            FIXME( "Unhandled DEV_QUERY_STATE value: %d\n", action_data->Data.State );
+            break;
+        }
+        break;
+    case DevQueryResultAdd:
+    {
+        IDeviceInformation *info;
+        if (FAILED(hr = device_information_create( action_data->Data.DeviceObject.pszObjectId, &info )))
+            break;
+        typed_event_handlers_notify( &watcher->added_handlers, (IInspectable *)iface, (IInspectable *)info );
+        IDeviceInformation_Release( info );
+        break;
+    }
+    default:
+        FIXME( "Unhandled DEV_QUERY_RESULT_ACTION value: %d\n", action_data->Action );
+        break;
+    }
+
+    IDeviceWatcher_Release( iface );
 }
 
 static HRESULT WINAPI device_watcher_Start( IDeviceWatcher *iface )
 {
     struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
-    IAsyncAction *async;
     HRESULT hr = S_OK;
 
     FIXME( "iface %p: semi-stub!\n", iface );
@@ -302,37 +304,35 @@ static HRESULT WINAPI device_watcher_Start( IDeviceWatcher *iface )
     case DeviceWatcherStatus_EnumerationCompleted: hr = E_ILLEGAL_METHOD_CALL; break;
     case DeviceWatcherStatus_Started: hr = E_ILLEGAL_METHOD_CALL; break;
     case DeviceWatcherStatus_Stopping: hr = E_ILLEGAL_METHOD_CALL; break;
-    default: hr = E_ILLEGAL_METHOD_CALL;
-
+    default: assert( FALSE ); break;
     case DeviceWatcherStatus_Aborted:
     case DeviceWatcherStatus_Created:
     case DeviceWatcherStatus_Stopped:
+    {
+        IWeakReference *weak;
+        HRESULT hr;
+
+        IWeakReferenceSource_GetWeakReference( &impl->weak_reference_source.IWeakReferenceSource_iface, &weak );
+        hr = DevCreateObjectQuery( DevObjectTypeDeviceInterfaceDisplay, DevQueryFlagAsyncClose, 0, NULL, 0, NULL, device_object_query_callback, weak,
+                                   &impl->query );
+        if (FAILED(hr))
+        {
+            ERR( "Failed to create device query: %#lx\n", hr );
+            IWeakReference_Release( weak );
+            break;
+        }
         impl->status = DeviceWatcherStatus_Started;
-        hr = async_action_create( (IUnknown *)iface, device_watcher_start_async, &async );
-        if (SUCCEEDED(hr)) IAsyncAction_Release( async );
         break;
+    }
     }
     LeaveCriticalSection( &impl->cs );
 
     return hr;
 }
 
-static HRESULT device_watcher_stop_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
-{
-    struct device_watcher *impl = impl_from_IDeviceWatcher( (IDeviceWatcher *)invoker );
-
-    EnterCriticalSection( &impl->cs );
-    impl->status = DeviceWatcherStatus_Stopped;
-    LeaveCriticalSection( &impl->cs );
-
-    typed_event_handlers_notify( &impl->stopped_handlers, (IInspectable *)invoker, NULL );
-    return S_OK;
-}
-
 static HRESULT WINAPI device_watcher_Stop( IDeviceWatcher *iface )
 {
     struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
-    IAsyncAction *async;
     HRESULT hr = S_OK;
 
     TRACE( "iface %p\n", iface );
@@ -344,16 +344,12 @@ static HRESULT WINAPI device_watcher_Stop( IDeviceWatcher *iface )
     case DeviceWatcherStatus_Created: hr = E_ILLEGAL_METHOD_CALL; break;
     case DeviceWatcherStatus_Stopped: hr = E_ILLEGAL_METHOD_CALL; break;
     case DeviceWatcherStatus_Stopping: hr = E_ILLEGAL_METHOD_CALL; break;
-    default: hr = E_ILLEGAL_METHOD_CALL;
-
+    default: assert( FALSE ); break;
     case DeviceWatcherStatus_EnumerationCompleted:
-        impl->status = DeviceWatcherStatus_Stopping;
-        hr = async_action_create( (IUnknown *)iface, device_watcher_stop_async, &async );
-        if (SUCCEEDED(hr)) IAsyncAction_Release( async );
-        break;
     case DeviceWatcherStatus_Started:
         impl->status = DeviceWatcherStatus_Stopping;
-        /* an async start is in progress, let it handle stopped state change */
+        DevCloseObjectQuery( impl->query );
+        impl->query = NULL;
         break;
     }
     LeaveCriticalSection( &impl->cs );
