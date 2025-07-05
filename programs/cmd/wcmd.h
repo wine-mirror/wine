@@ -263,6 +263,14 @@ struct batch_file
 {
     unsigned            ref_count;     /* number of BATCH_CONTEXT attached to this */
     WCHAR              *path_name;     /* Name of self */
+    FILETIME            last_modified;
+    struct
+    {
+        LARGE_INTEGER   from;
+        LARGE_INTEGER   position;
+        unsigned        age;
+        const WCHAR    *label;
+    } cache[8];
 };
 
 struct batch_context

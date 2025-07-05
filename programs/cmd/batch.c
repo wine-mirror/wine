@@ -60,6 +60,8 @@ static struct batch_file *find_or_alloc_batch_file(const WCHAR *file)
 {
     struct batch_file *batchfile;
     struct batch_context *ctx;
+    HANDLE h;
+    unsigned int i;
 
     for (ctx = context; ctx; ctx = ctx->prev_context)
     {
@@ -70,6 +72,17 @@ static struct batch_file *find_or_alloc_batch_file(const WCHAR *file)
     batchfile->ref_count = 0;
     batchfile->path_name = xstrdupW(file);
 
+    h = CreateFileW(file, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (h == INVALID_HANDLE_VALUE || !GetFileTime(h, NULL, NULL, &batchfile->last_modified))
+        memset(&batchfile->last_modified, 0, sizeof(batchfile->last_modified));
+    CloseHandle(h);
+
+    for (i = 0; i < ARRAY_SIZE(batchfile->cache); i++)
+    {
+        batchfile->cache[i].label = NULL;
+        batchfile->cache[i].age = 0;
+    }
     return batchfile;
 }
 
@@ -95,6 +108,10 @@ static struct batch_context *pop_batch_context(struct batch_context *ctx)
     struct batch_file *batchfile = ctx->batch_file;
     if (batchfile && --batchfile->ref_count == 0)
     {
+        unsigned int i;
+
+        for (i = 0; i < ARRAY_SIZE(batchfile->cache); i++)
+            free((void *)batchfile->cache[i].label);
         free(batchfile->path_name);
         free(batchfile);
         ctx->batch_file = NULL;
@@ -733,6 +750,89 @@ static BOOL find_next_label(HANDLE h, ULONGLONG end, WCHAR candidate[MAXSTRING],
     return FALSE;
 }
 
+static LARGE_INTEGER li_not_found = {.QuadPart = 0x7fffffffffffffffll};
+
+static void insert_label_cache_entry(const WCHAR *label, LARGE_INTEGER from, LARGE_INTEGER at)
+{
+    struct batch_file *batchfile = context->batch_file;
+    unsigned int i, worst_index = ~0u, worst_age = 0;
+
+    for (i = 0; i < ARRAY_SIZE(batchfile->cache); i++)
+        if (batchfile->cache[i].label)
+            batchfile->cache[i].age++;
+        else
+            worst_index = i;
+    for (i = 0; i < ARRAY_SIZE(batchfile->cache); i++)
+    {
+        if (batchfile->cache[i].label && !lstrcmpiW(batchfile->cache[i].label, label) &&
+            batchfile->cache[i].position.QuadPart == at.QuadPart)
+        {
+            batchfile->cache[i].age = 0;
+            /* decrease 'from' position if we have a larger match */
+            if (batchfile->cache[i].from.QuadPart > from.QuadPart)
+                batchfile->cache[i].from.QuadPart = from.QuadPart;
+            return;
+        }
+    }
+    if (worst_index == ~0u) /* all cache lines are used, find lru */
+    {
+        for (i = 0; i < ARRAY_SIZE(batchfile->cache); i++)
+        {
+            if (batchfile->cache[i].age > worst_age)
+            {
+                worst_index = i;
+                worst_age = batchfile->cache[i].age;
+            }
+        }
+    }
+    free((void*)batchfile->cache[worst_index].label);
+    batchfile->cache[worst_index].label = xstrdupW(label);
+    batchfile->cache[worst_index].from = from;
+    batchfile->cache[worst_index].position = at;
+    batchfile->cache[worst_index].age = 0;
+}
+
+static BOOL find_label_cache_entry(const WCHAR *label, LARGE_INTEGER from, LARGE_INTEGER *at)
+{
+    struct batch_file *batchfile = context->batch_file;
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(batchfile->cache); i++)
+        batchfile->cache[i].age++;
+    for (i = 0; i < ARRAY_SIZE(batchfile->cache); i++)
+    {
+        if (batchfile->cache[i].label && !lstrcmpiW(batchfile->cache[i].label, label) &&
+            batchfile->cache[i].from.QuadPart <= from.QuadPart &&
+            from.QuadPart <= batchfile->cache[i].position.QuadPart)
+        {
+            *at = batchfile->cache[i].position;
+            batchfile->cache[i].age = 0;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static void check_if_valid_label_cache(HANDLE h)
+{
+    struct batch_file *batchfile = context->batch_file;
+    FILETIME last;
+    unsigned int i;
+
+    if (!GetFileTime(h, NULL, NULL, &last) ||
+        batchfile->last_modified.dwHighDateTime != last.dwHighDateTime ||
+        batchfile->last_modified.dwLowDateTime  != last.dwLowDateTime)
+    {
+        TRACE("Invalidating cache\n");
+        batchfile->last_modified = last;
+        for (i = 0; i < ARRAY_SIZE(batchfile->cache); i++)
+        {
+            free((void *)batchfile->cache[i].label);
+            batchfile->cache[i].label = NULL;
+        }
+    }
+}
+
 BOOL WCMD_find_label(HANDLE h, const WCHAR *label, LARGE_INTEGER *pos)
 {
     LARGE_INTEGER where = *pos, zeroli = {.QuadPart = 0};
@@ -741,20 +841,48 @@ BOOL WCMD_find_label(HANDLE h, const WCHAR *label, LARGE_INTEGER *pos)
 
     if (!*label) return FALSE;
 
+    check_if_valid_label_cache(h);
+
     if (!SetFilePointerEx(h, *pos, NULL, FILE_BEGIN)) return FALSE;
-    while (find_next_label(h, ~(ULONGLONG)0, candidate, code_page))
+    if (find_label_cache_entry(label, *pos, pos))
     {
-        TRACE("comparing found label %s\n", wine_dbgstr_w(candidate));
-        if (!lstrcmpiW(candidate, label))
-            return SetFilePointerEx(h, zeroli, pos, FILE_CURRENT);
+        if (pos->QuadPart != li_not_found.QuadPart) return TRUE;
+    }
+    else
+    {
+        while (find_next_label(h, ~(ULONGLONG)0, candidate, code_page))
+        {
+            TRACE("comparing found label %s\n", wine_dbgstr_w(candidate));
+            if (!lstrcmpiW(candidate, label))
+            {
+                BOOL ret = SetFilePointerEx(h, zeroli, pos, FILE_CURRENT);
+                if (ret)
+                    insert_label_cache_entry(label, where, *pos);
+                return ret;
+            }
+        }
+        insert_label_cache_entry(label, where, li_not_found);
     }
     TRACE("Label not found, trying from beginning of file\n");
     if (!SetFilePointerEx(h, zeroli, NULL, FILE_BEGIN)) return FALSE;
-    while (find_next_label(h, where.QuadPart, candidate, code_page))
+    if (find_label_cache_entry(label, zeroli, pos))
     {
-        TRACE("comparing found label %s\n", wine_dbgstr_w(candidate));
-        if (!lstrcmpiW(candidate, label))
-            return SetFilePointerEx(h, zeroli, pos, FILE_CURRENT);
+        if (pos->QuadPart != li_not_found.QuadPart) return TRUE;
+    }
+    else
+    {
+        while (find_next_label(h, where.QuadPart, candidate, code_page))
+        {
+            TRACE("comparing found label %s\n", wine_dbgstr_w(candidate));
+            if (!lstrcmpiW(candidate, label))
+            {
+                BOOL ret = SetFilePointerEx(h, zeroli, pos, FILE_CURRENT);
+                if (ret)
+                    insert_label_cache_entry(label, zeroli, *pos);
+                return ret;
+            }
+        }
+        insert_label_cache_entry(label, where, li_not_found);
     }
     TRACE("Reached wrap point, label not found\n");
     return FALSE;
