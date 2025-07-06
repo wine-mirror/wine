@@ -742,7 +742,6 @@ static void test_DoDragDrop(void)
 
             cursor = GetCursor();
             hr = DoDragDrop(&DataObject, &DropSource, effect_in, &effect);
-            todo_wine_if(seq == 1 || seq == 2 || GetCursor() != cursor)
             ok(GetCursor() == cursor, "cursor not restored\n");
             check_expect(DoDragDrop_ret, hr, NULL);
             check_expect(DoDragDrop_effect_out, effect, NULL);

@@ -733,6 +733,7 @@ HRESULT WINAPI DoDragDrop (
   TrackerWindowInfo trackerInfo;
   HWND            hwndTrackWindow;
   MSG             msg;
+  HCURSOR         cursor;
 
   TRACE("%p, %p, %#lx, %p.\n", pDataObject, pDropSource, dwOKEffect, pdwEffect);
 
@@ -766,6 +767,9 @@ HRESULT WINAPI DoDragDrop (
     SetCapture(hwndTrackWindow);
 
     msg.message = 0;
+
+    /* save cursor */
+    cursor = GetCursor();
 
     /*
      * Pump messages. All mouse input should go to the capture window.
@@ -812,6 +816,9 @@ HRESULT WINAPI DoDragDrop (
      * Destroy the temporary window.
      */
     DestroyWindow(hwndTrackWindow);
+
+    /* restore cursor */
+    SetCursor(cursor);
 
     return trackerInfo.returnValue;
   }
