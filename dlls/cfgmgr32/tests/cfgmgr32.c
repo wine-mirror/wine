@@ -558,8 +558,8 @@ static void test_dev_object_iface_props( int line, const DEV_OBJECT *obj, const 
     set = SetupDiCreateDeviceInfoListExW( NULL, NULL, NULL, NULL );
     ok_( __FILE__, line )( set != INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed: %lu\n",
                            GetLastError() );
-    todo_wine ok_( __FILE__, line )( obj->cPropertyCount >= props_len, "got cPropertyCount %lu, should be >= %lu\n",
-                                     obj->cPropertyCount, props_len );
+    ok_( __FILE__, line )( obj->cPropertyCount >= props_len, "got cPropertyCount %lu, should be >= %lu\n",
+                           obj->cPropertyCount, props_len );
     for (i = 0; i < obj->cPropertyCount && rem_props; i++)
     {
         const DEVPROPERTY *property = &obj->pProperties[i];
@@ -618,7 +618,7 @@ static void test_dev_object_iface_props( int line, const DEV_OBJECT *obj, const 
             }
         }
     }
-    todo_wine ok_( __FILE__, line )( rem_props == 0, "got rem %lu != 0\n", rem_props );
+    ok_( __FILE__, line )( rem_props == 0, "got rem %lu != 0\n", rem_props );
     SetupDiDestroyDeviceInfoList( set );
 }
 
@@ -679,7 +679,7 @@ static void test_DevGetObjects( void )
     prop_key.LocaleName = NULL;
     /* DevQueryFlagAllProperties is mutually exlusive with requesting specific properties. */
     hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagAllProperties, 1, &prop_key, 0, NULL, &len, &objects );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
     len = 0xdeadbeef;
     objects = (DEV_OBJECT *)0xdeadbeef;
@@ -739,8 +739,8 @@ static void test_DevGetObjects( void )
                 const DEV_OBJECT *obj = &objects[k];
 
                 winetest_push_context( "objects[%lu]", k );
-                todo_wine ok( obj->cPropertyCount == 1, "got cPropertyCount %lu != 1\n", obj->cPropertyCount );
-                todo_wine ok( !!obj->pProperties, "got pProperties %p\n", obj->pProperties );
+                ok( obj->cPropertyCount == 1, "got cPropertyCount %lu != 1\n", obj->cPropertyCount );
+                ok( !!obj->pProperties, "got pProperties %p\n", obj->pProperties );
                 if (obj->pProperties)
                     ok( IsEqualDevPropKey( obj->pProperties[0].CompKey.Key, prop->key ), "got property {%s, %#lx} != {%s, %#lx}\n",
                         debugstr_guid( &obj->pProperties[0].CompKey.Key.fmtid ), obj->pProperties[0].CompKey.Key.pid,
@@ -766,8 +766,8 @@ static void test_DevGetObjects( void )
             const DEV_OBJECT *obj = &objects[j];
 
             winetest_push_context( "objects[%lu]", j );
-            todo_wine ok( obj->cPropertyCount == 1, "got cPropertyCount %lu != 1\n", obj->cPropertyCount );
-            todo_wine ok( !!obj->pProperties, "got pProperties %p\n", obj->pProperties );
+            ok( obj->cPropertyCount == 1, "got cPropertyCount %lu != 1\n", obj->cPropertyCount );
+            ok( !!obj->pProperties, "got pProperties %p\n", obj->pProperties );
             if (obj->pProperties)
             {
                 ok( IsEqualDevPropKey( obj->pProperties[0].CompKey.Key, DEVPKEY_dummy ),
