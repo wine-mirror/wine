@@ -1445,8 +1445,11 @@ static void pump_messages(void)
 
 static void test_pnp_devices(void)
 {
+    static const GUID expect_container_id_guid = {0x12345678, 0x1234, 0x1234, {0x12, 0x34, 0x12, 0x34, 0x56, 0x78, 0x91, 0x23}};
     static const char expect_hardware_id[] = "winetest_hardware\0winetest_hardware_1\0";
+    static const WCHAR expect_hardware_id_w[] = L"winetest_hardware\0winetest_hardware_1\0";
     static const char expect_compat_id[] = "winetest_compat\0winetest_compat_1\0";
+    static const WCHAR expect_compat_id_w[] = L"winetest_compat\0winetest_compat_1\0";
     static const WCHAR expect_container_id_w[] = L"{12345678-1234-1234-1234-123456789123}";
     static const char foobar[] = "foobar";
     static const char foo[] = "foo";
@@ -1454,6 +1457,7 @@ static void test_pnp_devices(void)
 
     char buffer[200];
     WCHAR buffer_w[200];
+    GUID buffer_guid = {0};
     SP_DEVICE_INTERFACE_DETAIL_DATA_A *iface_detail = (void *)buffer;
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
     SP_DEVINFO_DATA device = {sizeof(device)};
@@ -1686,6 +1690,36 @@ static void test_pnp_devices(void)
         ok(type == REG_SZ, "got type %lu\n", type);
         ok(!strcmp(buffer, "\\Device\\winetest_pnp_1"), "got PDO name %s\n", debugstr_a(buffer));
     }
+
+    prop_type = DEVPROP_TYPE_EMPTY;
+    size = 0;
+    memset(buffer_w, 0, sizeof(buffer_w));
+    ret = SetupDiGetDevicePropertyW(set, &device, &DEVPKEY_Device_HardwareIds, &prop_type, (BYTE *)buffer_w,
+                                    sizeof(buffer_w), &size, 0);
+    todo_wine ok(ret, "failed to get device property, error %#lx\n", GetLastError());
+    todo_wine ok(prop_type == DEVPROP_TYPE_STRING_LIST, "got type %#lx\n", prop_type);
+    todo_wine ok(size == sizeof(expect_hardware_id_w), "got size %lu\n", size);
+    todo_wine ok(!memcmp(buffer_w, expect_hardware_id_w, size), "got hardware IDs %s\n", debugstr_wn(buffer_w, size));
+
+    prop_type = DEVPROP_TYPE_EMPTY;
+    size = 0;
+    memset(buffer_w, 0, sizeof(buffer_w));
+    ret = SetupDiGetDevicePropertyW(set, &device, &DEVPKEY_Device_CompatibleIds, &prop_type, (BYTE *)buffer_w,
+                                    sizeof(buffer_w), &size, 0);
+    todo_wine ok(ret, "failed to get device property, error %#lx\n", GetLastError());
+    todo_wine ok(prop_type == DEVPROP_TYPE_STRING_LIST, "got type %#lx\n", prop_type);
+    todo_wine ok(size == sizeof(expect_compat_id_w), "got size %lu\n", size);
+    todo_wine ok(!memcmp(buffer_w, expect_compat_id_w, size), "got compatible IDs %s\n", debugstr_wn(buffer_w, size));
+
+    prop_type = DEVPROP_TYPE_EMPTY;
+    size = 0;
+    ret = SetupDiGetDevicePropertyW(set, &device, &DEVPKEY_Device_ContainerId, &prop_type, (BYTE *)&buffer_guid,
+                                    sizeof(buffer_guid), &size, 0);
+    todo_wine ok(ret, "failed to get device property, error %#lx\n", GetLastError());
+    todo_wine ok(prop_type == DEVPROP_TYPE_GUID, "got type %#lx\n", prop_type);
+    todo_wine ok(size == sizeof(expect_container_id_guid), "got size %lu\n", size);
+    todo_wine ok(IsEqualGUID(&buffer_guid, &expect_container_id_guid), "got container ID %s != %s\n",
+                 debugstr_guid(&buffer_guid), debugstr_guid(&expect_container_id_guid));
 
     ret = SetupDiEnumDeviceInterfaces(set, NULL, &child_class, 0, &iface);
     ok(ret, "failed to get interface, error %#lx\n", GetLastError());
