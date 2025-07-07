@@ -1798,6 +1798,26 @@ typedef struct _FILE_IO_COMPLETION_NOTIFICATION_INFORMATION {
 #define FILE_SKIP_SET_EVENT_ON_HANDLE        0x2
 #define FILE_SKIP_SET_USER_EVENT_ON_FAST_IO  0x4
 
+typedef struct _FILE_ID_EXTD_BOTH_DIRECTORY_INFORMATION
+{
+    ULONG               NextEntryOffset;
+    ULONG               FileIndex;
+    LARGE_INTEGER       CreationTime;
+    LARGE_INTEGER       LastAccessTime;
+    LARGE_INTEGER       LastWriteTime;
+    LARGE_INTEGER       ChangeTime;
+    LARGE_INTEGER       EndOfFile;
+    LARGE_INTEGER       AllocationSize;
+    ULONG               FileAttributes;
+    ULONG               FileNameLength;
+    ULONG               EaSize;
+    ULONG               ReparsePointTag;
+    FILE_ID_128         FileId;
+    CHAR                ShortNameLength;
+    WCHAR               ShortName[12];
+    WCHAR               FileName[ANYSIZE_ARRAY];
+} FILE_ID_EXTD_BOTH_DIRECTORY_INFORMATION, *PFILE_ID_EXTD_BOTH_DIRECTORY_INFORMATION;
+
 #ifdef __WINESRC__
 /* data for WineFileUnixNameInformation */
 typedef struct
