@@ -1700,9 +1700,10 @@ static UINT make_deprecated_sig( UINT token, BYTE *buf )
 
 static UINT make_contract_value( const type_t *type, BYTE *buf )
 {
-    const expr_t *contract = get_attrp( type->attrs, ATTR_CONTRACT );
-    char *name = format_namespace( contract->u.tref.type->namespace, "", ".", contract->u.tref.type->name, NULL );
-    UINT version = contract->ref->u.integer.value, len = strlen( name );
+    const expr_t *attr = get_attrp( type->attrs, ATTR_CONTRACT );
+    const type_t *contract = attr->u.var->declspec.type;
+    char *name = format_namespace( contract->namespace, "", ".", contract->name, NULL );
+    UINT version = attr->ref->u.integer.value, len = strlen( name );
 
     buf[0] = 1;
     buf[1] = 0;
@@ -2070,6 +2071,7 @@ static UINT make_deprecated_value( const var_t *method, BYTE **ret_buf )
 {
     static const BYTE zero[] = { 0x00, 0x00, 0x00, 0x00 }, one[] = { 0x01, 0x00, 0x00, 0x00 };
     const expr_t *attr = get_attrp( method->attrs, ATTR_DEPRECATED );
+    const type_t *type = attr->ext2->u.var->declspec.type;
     const char *text = attr->ref->u.sval;
     const char *kind = attr->u.ext->u.sval;
     BYTE encoded[4];
@@ -2091,7 +2093,7 @@ static UINT make_deprecated_value( const var_t *method, BYTE **ret_buf )
 
     buf[len++] = 1;
     buf[len++] = 0;
-    contract = format_namespace( attr->ext2->u.tref.type->namespace, "", ".", attr->ext2->u.tref.type->name, NULL );
+    contract = format_namespace( type->namespace, "", ".", type->name, NULL );
     len_text = strlen( contract );
     buf[len++] = len_text;
     memcpy( buf + len, contract, len_text );
@@ -2643,8 +2645,9 @@ static void add_method_contract_attrs( const type_t *class, const type_t *iface,
 static UINT make_static_value( const expr_t *attr, BYTE *buf )
 {
     const expr_t *contract = attr->ref;
-    char *name_iface = format_namespace( attr->u.tref.type->namespace, "", ".", attr->u.tref.type->name, NULL );
-    char *name_contract = format_namespace( contract->u.tref.type->namespace, "", ".", contract->u.tref.type->name, NULL );
+    const type_t *type_iface = attr->u.var->declspec.type, *type_contract = contract->u.var->declspec.type;
+    char *name_iface = format_namespace( type_iface->namespace, "", ".", type_iface->name, NULL );
+    char *name_contract = format_namespace( type_contract->namespace, "", ".", type_contract->name, NULL );
     UINT len_iface = strlen( name_iface ), len_contract = strlen( name_contract );
     BYTE *ptr = buf;
 
@@ -2709,18 +2712,18 @@ static UINT make_activatable_value( const expr_t *attr, BYTE *buf )
 {
     char *name_iface = NULL, *name_contract;
     UINT len_iface = 0, len_contract, len_extra = 5;
-    const type_t *contract;
+    const type_t *type_iface = attr->u.var->declspec.type, *type_contract;
     BYTE *ptr = buf;
 
-    if (attr->u.tref.type->type_type != TYPE_INTERFACE) contract = attr->u.tref.type;
+    if (attr->type != EXPR_MEMBER) type_contract = attr->u.var->declspec.type;
     else
     {
-        name_iface = format_namespace( attr->u.tref.type->namespace, "", ".", attr->u.tref.type->name, NULL );
+        name_iface = format_namespace( type_iface->namespace, "", ".", type_iface->name, NULL );
         len_iface = strlen( name_iface );
-        contract = attr->ref->u.tref.type;
+        type_contract = attr->ref->u.var->declspec.type;
     }
 
-    name_contract = format_namespace( contract->namespace, "", ".", contract->name, NULL );
+    name_contract = format_namespace( type_contract->namespace, "", ".", type_contract->name, NULL );
     len_contract = strlen( name_contract );
 
     if (len_iface)
@@ -2768,7 +2771,7 @@ static void add_activatable_attr_step1( type_t *type )
 
         class = memberref_parent( TABLE_TYPEREF, typeref );
 
-        if (value->u.tref.type->type_type == TYPE_INTERFACE)
+        if (value->type == EXPR_MEMBER)
             sig_size = make_member_sig3( typedef_or_ref(TABLE_TYPEREF, typeref_type), sig );
         else
         {
