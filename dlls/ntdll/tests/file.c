@@ -6961,7 +6961,7 @@ static void test_reparse_points(void)
         "got attributes %#x\n", ret );
 
     ret = GetFileAttributesW( path2 );
-    todo_wine ok( ret == FILE_ATTRIBUTE_ARCHIVE, "got attributes %#x\n", ret );
+    ok( ret == FILE_ATTRIBUTE_ARCHIVE, "got attributes %#x\n", ret );
 
     status = NtQueryAttributesFile( &attr, &basic_info );
     todo_wine ok( !status, "got %#lx\n", status );
