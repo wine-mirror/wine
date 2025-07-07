@@ -49,6 +49,8 @@ static GUID guid2 = {0x6a55b5a5, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,
 static GUID iface_guid = {0xdeadbeef, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,0x2b,0xdb}};
 static GUID iface_guid2 = {0xdeadf00d, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,0x2b,0xdb}};
 
+static const WCHAR guid_strw[] = L"{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
+
 static HRESULT (WINAPI *pDriverStoreAddDriverPackageA)(const char *inf_path, void *unk1,
         void *unk2, WORD architecture, char *ret_path, DWORD *ret_len);
 static HRESULT (WINAPI *pDriverStoreDeleteDriverPackageA)(const char *path, void *unk1, void *unk2);
@@ -872,17 +874,74 @@ static void test_device_info(void)
     SetupDiDestroyDeviceInfoList(set);
 }
 
+struct reg_property
+{
+    DWORD reg_prop;
+    DWORD reg_type;
+    BYTE *reg_value;
+    DWORD reg_size;
+    DEVPROPTYPE devprop_type;
+    BYTE *devprop_value;
+    DWORD devprop_size;
+
+    /* Error returned by SetupDiSetDevicePropertyW. */
+    DWORD error;
+};
+
+static const LONG dword = 0xdeadbeef;
+static const WCHAR strw[] = L"dummy";
+static const WCHAR multi_strw[] = L"dummy1\0dummy2\0";
+
+/* SPDRP_* properties that can be set and have an associated DEVPROPKEY.
+ * The property key is {{a45c254e-df1c-4efd-8020-67d146a850e0}, reg_prop + 2} */
+static const struct reg_property reg_props[] = {
+    { SPDRP_DEVICEDESC, REG_SZ, (BYTE *)strw, sizeof(strw), DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw) },
+    { SPDRP_SERVICE, REG_SZ, (BYTE *)strw, sizeof(strw), DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw) },
+    { SPDRP_DRIVER, REG_SZ, (BYTE *)strw, sizeof(strw), DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw) },
+    { SPDRP_MFG, REG_SZ, (BYTE *)strw, sizeof(strw), DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw) },
+    { SPDRP_LOCATION_INFORMATION, REG_SZ, (BYTE *)strw, sizeof(strw), DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw) },
+    { SPDRP_CONFIGFLAGS, REG_DWORD, (BYTE *)&dword, sizeof(dword), DEVPROP_TYPE_UINT32, (BYTE *)&dword, sizeof(dword) },
+    { SPDRP_UPPERFILTERS, REG_MULTI_SZ, (BYTE *)multi_strw, sizeof(multi_strw), DEVPROP_TYPE_STRING_LIST, (BYTE *)multi_strw, sizeof(multi_strw) },
+    { SPDRP_HARDWAREID, REG_MULTI_SZ, (BYTE *)multi_strw, sizeof(multi_strw), DEVPROP_TYPE_STRING_LIST,  (BYTE *)multi_strw, sizeof(multi_strw) },
+    { SPDRP_COMPATIBLEIDS, REG_MULTI_SZ, (BYTE *)multi_strw, sizeof(multi_strw), DEVPROP_TYPE_STRING_LIST, (BYTE *)multi_strw, sizeof(multi_strw) },
+    { SPDRP_CLASSGUID, REG_SZ, (BYTE *)guid_strw, sizeof(guid_strw), DEVPROP_TYPE_GUID, (BYTE *)&guid, sizeof(guid) },
+};
+
+/* These properties cannot be set through SetupDiSetDevice(Registry)Property. */
+static const struct reg_property invalid_reg_props[] = {
+    { SPDRP_CAPABILITIES, REG_DWORD, (BYTE *)&dword, sizeof(dword), DEVPROP_TYPE_INT32, (BYTE *)&dword, sizeof(dword), ERROR_ACCESS_DENIED },
+    { SPDRP_UI_NUMBER, REG_DWORD, (BYTE *)&dword, sizeof(dword), DEVPROP_TYPE_INT32, (BYTE *)&dword, sizeof(dword), ERROR_ACCESS_DENIED },
+    { SPDRP_PHYSICAL_DEVICE_OBJECT_NAME, REG_SZ, (BYTE *)strw, sizeof(strw), DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw), ERROR_ACCESS_DENIED },
+    { SPDRP_BASE_CONTAINERID, REG_SZ, (BYTE *)guid_strw, sizeof(guid_strw), DEVPROP_TYPE_GUID, (BYTE *)&guid, sizeof(guid), ERROR_INVALID_REG_PROPERTY },
+};
+
 static void test_device_property(void)
 {
+    static const struct property {
+        const DEVPROPKEY *key;
+        DEVPROPTYPE type;
+        BYTE *value;
+        DWORD size;
+        BOOL exists;
+    } inbuilt_props[] = {
+        { &DEVPKEY_Device_InstanceId, DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw), TRUE },
+        { &DEVPKEY_Device_Parent, DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw), TRUE },
+        { &DEVPKEY_Device_Siblings, DEVPROP_TYPE_STRING_LIST, (BYTE *)multi_strw, sizeof(multi_strw), TRUE },
+        { &DEVPKEY_Device_BusReportedDeviceDesc, DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw), FALSE },
+        { &DEVPKEY_Device_Children, DEVPROP_TYPE_STRING_LIST, (BYTE *)multi_strw, sizeof(multi_strw), FALSE },
+        { &DEVPKEY_Device_ContainerId, DEVPROP_TYPE_GUID, (BYTE *)&guid, sizeof(guid), FALSE },
+    };
     static const WCHAR valueW[] = {'d', 'e', 'a', 'd', 'b', 'e', 'e', 'f', 0};
+    static const WCHAR instance_id[] = L"Root\\LEGACY_BOGUS\\0000";
     SP_DEVINFO_DATA device_data = {sizeof(device_data)};
     HMODULE hmod;
     HDEVINFO set;
     DEVPROPTYPE type;
-    DWORD size;
+    DWORD size, i;
     BYTE buffer[256];
     DWORD err;
     BOOL ret;
+    GUID guid_val = {0};
 
     hmod = LoadLibraryA("setupapi.dll");
     pSetupDiSetDevicePropertyW = (void *)GetProcAddress(hmod, "SetupDiSetDevicePropertyW");
@@ -899,7 +958,7 @@ static void test_device_property(void)
     set = SetupDiCreateDeviceInfoList(&guid, NULL);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#lx.\n", GetLastError());
 
-    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid, NULL, NULL, 0, &device_data);
+    ret = SetupDiCreateDeviceInfoW(set, instance_id, &guid, NULL, NULL, 0, &device_data);
     ok(ret, "Failed to create device, error %#lx.\n", GetLastError());
 
     /* SetupDiSetDevicePropertyW */
@@ -1193,9 +1252,84 @@ static void test_device_property(void)
     ok(size == sizeof(valueW), "Got size %ld\n", size);
     ok(!lstrcmpW((WCHAR *)buffer, valueW), "Expect buffer %s, got %s\n", wine_dbgstr_w(valueW), wine_dbgstr_w((WCHAR *)buffer));
 
+    /* #15 Innate properties */
+    type = DEVPROP_TYPE_EMPTY;
+    size = 0;
+    memset(buffer, 0, sizeof(buffer));
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDevicePropertyW(set, &device_data, &DEVPKEY_Device_InstanceId, &type, buffer, sizeof(buffer), &size, 0);
+    err = GetLastError();
+    todo_wine ok(ret, "Expect success\n");
+    todo_wine ok(err == NO_ERROR, "Expect last error %#x, got %#lx\n", NO_ERROR, err);
+    todo_wine ok(type == DEVPROP_TYPE_STRING, "Expect type %#x, got %#lx\n", DEVPROP_TYPE_STRING, type);
+    todo_wine ok(size == sizeof(instance_id), "Got size %lu\n", size);
+    todo_wine ok(!wcsicmp(instance_id, (WCHAR *)buffer), "Expect buffer %s, got %s\n", debugstr_w(instance_id), debugstr_w((WCHAR*)buffer));
+
+    type = DEVPROP_TYPE_EMPTY;
+    size = 0;
+    ret = pSetupDiGetDevicePropertyW(set, &device_data, &DEVPKEY_Device_ClassGuid, &type, (BYTE *)&guid_val, sizeof(guid_val), &size, 0);
+    err = GetLastError();
+    todo_wine ok(ret, "Expect success\n");
+    todo_wine ok(err == NO_ERROR, "Expect last error %#x, got %#lx\n", NO_ERROR, err);
+    todo_wine ok(type == DEVPROP_TYPE_GUID, "Expect type %#x, got %#lx\n", DEVPROP_TYPE_GUID, type);
+    todo_wine ok(size == sizeof(guid_val), "Got size %lu\n", size);
+    todo_wine ok(IsEqualGUID(&guid_val, &guid), "Expect buffer %s, got %s\n", debugstr_guid(&guid), debugstr_guid(&guid_val));
+
+    for (i = 0; i < ARRAY_SIZE(inbuilt_props); i++)
+    {
+        const DEVPROPKEY *key = inbuilt_props[i].key;
+        DEVPROPTYPE type = inbuilt_props[i].type;
+        const BYTE *val = inbuilt_props[i].value;
+        DWORD size = inbuilt_props[i].size;
+        BYTE *buf;
+
+        winetest_push_context("inbuilt_props[%lu]", i);
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiSetDevicePropertyW(set, &device_data, key, type, val, size, 0);
+        err = GetLastError();
+        todo_wine ok(!ret, "Expected failure.\n");
+        todo_wine ok(err == ERROR_ACCESS_DENIED, "Expect last error %#x, got %#lx.\n", ERROR_ACCESS_DENIED, err);
+        if (ret)
+        {
+            winetest_pop_context();
+            continue;
+        }
+        /* However, setting this property to its existing value (if it has one) succeeds. */
+        size = 0;
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDevicePropertyW(set, &device_data, key, &type, NULL, 0, &size, 0);
+        err = GetLastError();
+        ok(!ret, "Expect failure.\n");
+        if (inbuilt_props[i].exists)
+            todo_wine ok(err == ERROR_INSUFFICIENT_BUFFER, "Expect last error %#x, got %#lx\n", ERROR_INSUFFICIENT_BUFFER, err);
+        else
+        {
+            todo_wine_if(inbuilt_props[i].exists) ok(err == ERROR_NOT_FOUND, "Expect last error %#x, got %#lx\n",
+                                                     ERROR_NOT_FOUND, err);
+            winetest_pop_context();
+            continue;
+        }
+
+        buf = calloc(1, size);
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDevicePropertyW(set, &device_data, key, &type, buf, size, &size, 0);
+        err = GetLastError();
+        ok(ret, "Expect success.\n");
+        ok(err == NO_ERROR, "Expect last error %#x, got %#lx\n", NO_ERROR, err);
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiSetDevicePropertyW(set, &device_data, key, type, buf, size, 0);
+        err = GetLastError();
+        ok(ret, "Expect success.\n");
+        ok(err == NO_ERROR, "Expect last error %#x, got %#lx\n", NO_ERROR, err);
+        free(buf);
+        winetest_pop_context();
+    }
+
     if (pSetupDiGetDevicePropertyKeys)
     {
-        DWORD keys_len = 0, n, required_len, expected_keys = 1;
+        DEVPROPKEY expected_keys[] = { DEVPKEY_Device_ClassGuid, DEVPKEY_Device_InstanceId, DEVPKEY_Device_FriendlyName };
+        DWORD keys_len = 0, n, required_len;
         DEVPROPKEY *keys;
 
         ret = pSetupDiGetDevicePropertyKeys(NULL, NULL, NULL, 0, NULL, 0);
@@ -1255,19 +1389,27 @@ static void test_device_property(void)
         err = GetLastError();
         ok(!err, "Expect last error %#x, got %#lx\n", ERROR_SUCCESS, err);
         ok(keys_len == required_len, "%lu != %lu\n", keys_len, required_len);
-        ok(keys_len >= expected_keys, "Expected %lu >= %lu\n", keys_len, expected_keys);
+        ok(keys_len >= ARRAY_SIZE(expected_keys), "Expected %lu >= %Iu\n", keys_len, ARRAY_SIZE(expected_keys));
 
         keys_len = 0;
         if (keys)
         {
             for (n = 0; n < required_len; n++)
             {
-                if (!memcmp(&keys[n], &DEVPKEY_Device_FriendlyName, sizeof(keys[n])))
-                    keys_len++;
+                DWORD i;
+
+                for (i = 0; i < ARRAY_SIZE(expected_keys); i++)
+                {
+                    if (!memcmp(&keys[n], &expected_keys[i], sizeof(keys[n])))
+                    {
+                        keys_len++;
+                        break;
+                    }
+                }
             }
 
         }
-        ok(keys_len == expected_keys, "%lu != %lu\n", keys_len, expected_keys);
+        todo_wine ok(keys_len == ARRAY_SIZE(expected_keys), "%lu != %Iu\n", keys_len, ARRAY_SIZE(expected_keys));
         free(keys);
     }
     else
@@ -1277,6 +1419,57 @@ static void test_device_property(void)
     ok(ret, "Got unexpected error %#lx.\n", GetLastError());
 
     SetupDiDestroyDeviceInfoList(set);
+
+    set = SetupDiCreateDeviceInfoList(NULL, NULL);
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#lx.\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInfoW(set, L"display", &GUID_DEVCLASS_DISPLAY, NULL, NULL, DICD_GENERATE_ID, &device_data);
+    ok(ret, "Failed to create device, error %#lx.\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(reg_props); i++)
+    {
+        const struct reg_property *prop = &reg_props[i];
+        BOOL todo = prop->reg_prop != SPDRP_CLASSGUID;
+        DWORD size = 0, type = 0;
+        DEVPROPKEY key = { DEVPKEY_Device_DeviceDesc.fmtid, prop->reg_prop + 2 };
+        BYTE buf[80] = { 0 };
+
+        winetest_push_context("reg_props[%lu] (%#lx)", i, prop->reg_prop);
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiSetDevicePropertyW(set, &device_data, &key, prop->devprop_type, prop->devprop_value,
+                                         prop->devprop_size, 0);
+        err = GetLastError();
+        ok(ret, "Expect success.\n");
+        ok(!err, "Expect last error %#x, got %#lx\n", ERROR_SUCCESS, err);
+
+        ret = SetupDiGetDeviceRegistryPropertyW(set, &device_data, prop->reg_prop, &type, buf, sizeof(buf), &size);
+        todo_wine_if(todo) ok(ret, "Failed to get property, error %#lx.\n", GetLastError());
+        todo_wine_if(todo) ok(type == prop->reg_type, "Got unexpected type %#lx.\n", type);
+        todo_wine_if(todo) ok(size == prop->reg_size, "Got unexpected size %lu.\n", size);
+        if (size == prop->reg_size)
+            todo_wine ok(!memcmp(buf, prop->reg_value, size), "Got unexpected property value.\n");
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < ARRAY_SIZE(invalid_reg_props); i++)
+    {
+        const struct reg_property *prop = &invalid_reg_props[i];
+        DEVPROPKEY key = { DEVPKEY_Device_DeviceDesc.fmtid, prop->reg_prop + 2 };
+
+        winetest_push_context("invalid_reg_props[%lu] (%#lx)", i, prop->reg_prop);
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiSetDevicePropertyW(set, &device_data, &key, prop->devprop_type, prop->devprop_value,
+                                         prop->devprop_size, 0);
+        todo_wine ok(!ret, "Expect failure.\n");
+        todo_wine ok(GetLastError() == prop->error, "Got unexpected error %#lx.\n", GetLastError());
+        winetest_pop_context();
+    }
+
+    ret = SetupDiRemoveDevice(set, &device_data);
+    ok(ret, "Got unexpected error %#lx.\n", GetLastError());
+
+    SetupDiDestroyDeviceInfoList(set);
+
     FreeLibrary(hmod);
 }
 
@@ -2268,7 +2461,7 @@ static void test_registry_property_w(void)
     WCHAR friendly_name[] = {'B','o','g','u','s',0};
     SP_DEVINFO_DATA device = {sizeof(device)};
     WCHAR buf[64] = {0};
-    DWORD size, type;
+    DWORD size, type, i;
     HDEVINFO set;
     BOOL ret;
     LONG res;
@@ -2420,6 +2613,57 @@ todo_wine {
     ok(ret, "Failed to get property, error %#lx.\n", GetLastError());
     ok(!lstrcmpW(buf, L"Display"), "Got unexpected value %s.\n", wine_dbgstr_w(buf));
 
+    SetupDiDestroyDeviceInfoList(set);
+
+    set = SetupDiCreateDeviceInfoList(NULL, NULL);
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#lx.\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInfoW(set, L"display", &GUID_DEVCLASS_DISPLAY, NULL, NULL, DICD_GENERATE_ID, &device);
+    ok(ret, "Failed to create device, error %#lx.\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(reg_props); i++)
+    {
+        const struct reg_property *prop = &reg_props[i];
+        DEVPROPKEY key = { DEVPKEY_Device_DeviceDesc.fmtid, prop->reg_prop + 2 };
+        DEVPROPTYPE type = DEVPROP_TYPE_EMPTY;
+        BYTE buf[80] = {0};
+        DWORD size = 0, err;
+
+        winetest_push_context("reg_props[%lu] (%#lx)", i, prop->reg_prop);
+        SetLastError(0xdeadbeef);
+        ret = SetupDiSetDeviceRegistryPropertyW(set, &device, prop->reg_prop, prop->reg_value, prop->reg_size);
+        ok(ret, "Failed to set property, error %#lx.\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = SetupDiGetDevicePropertyW(set, &device, &key, &type, buf, sizeof(buf), &size, 0);
+        err = GetLastError();
+        todo_wine ok(ret, "Expect success.\n");
+        todo_wine ok(!err, "Got unexpected error %#lx.\n", err);
+        todo_wine ok(type == prop->devprop_type, "Got unexpected type %#lx.\n", type);
+        todo_wine ok(size == prop->devprop_size, "Got unexpected size %lu.\n", size);
+        if (size == prop->devprop_size)
+            ok(!memcmp(buf, prop->devprop_value, size), "Got unexpected property value.\n");
+        winetest_pop_context();
+    }
+    SetupDiDestroyDeviceInfoList(set);
+
+    set = SetupDiCreateDeviceInfoList(NULL, NULL);
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#lx.\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInfoW(set, L"display", &GUID_DEVCLASS_DISPLAY, NULL, NULL, DICD_GENERATE_ID, &device);
+    ok(ret, "Failed to create device, error %#lx.\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(invalid_reg_props); i++)
+    {
+        const struct reg_property *prop = &invalid_reg_props[i];
+
+        /* SetupDiSetDeviceRegistryPropertyW seems to only return ERROR_INVALID_REG_PROPERTY. */
+        winetest_push_context("invalid_reg_props[%lu] (%#lx)", i, prop->reg_prop);
+        SetLastError(0xdeadbeef);
+        ret = SetupDiSetDeviceRegistryPropertyW(set, &device, prop->reg_prop, prop->reg_value, prop->reg_size);
+        todo_wine_if(prop->reg_prop != SPDRP_PHYSICAL_DEVICE_OBJECT_NAME) ok(!ret, "Expected failure.\n");
+        todo_wine ok(GetLastError() == ERROR_INVALID_REG_PROPERTY, "Got unexpected error %#lx.\n", GetLastError());
+        winetest_pop_context();
+    }
     SetupDiDestroyDeviceInfoList(set);
 }
 
