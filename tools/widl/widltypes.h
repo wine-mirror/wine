@@ -403,6 +403,7 @@ struct iface_details
   struct _type_t *inherit;
   struct _type_t *disp_inherit;
   struct _type_t *async_iface;
+  struct _type_t *runtime_class;
   typeref_list_t *requires;
 };
 

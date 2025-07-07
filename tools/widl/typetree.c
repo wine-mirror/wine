@@ -748,6 +748,7 @@ type_t *type_interface_define(type_t *iface, attr_list_t *attrs, type_t *inherit
     iface->details.iface->inherit = inherit;
     iface->details.iface->disp_inherit = NULL;
     iface->details.iface->async_iface = NULL;
+    iface->details.iface->runtime_class = NULL;
     iface->details.iface->requires = requires;
     define_type(iface, where);
     compute_method_indexes(iface);
@@ -845,6 +846,24 @@ type_t *type_runtimeclass_declare(char *name, struct namespace *namespace)
     return type;
 }
 
+static void set_constructor_runtimeclass(type_t *runtimeclass, attr_list_t *attrs)
+{
+    const attr_t *attr;
+    if (!attrs) return;
+    LIST_FOR_EACH_ENTRY(attr, attrs, const attr_t, entry)
+    {
+        if (attr->type == ATTR_ACTIVATABLE || attr->type == ATTR_COMPOSABLE)
+        {
+            const expr_t *value = attr->u.pval;
+            if (value->type == EXPR_MEMBER && value->u.var->declspec.type->type_type == TYPE_INTERFACE &&
+                value->u.var->declspec.type->details.iface)
+            {
+                value->u.var->declspec.type->details.iface->runtime_class = runtimeclass;
+            }
+        }
+    }
+}
+
 type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs,
         typeref_list_t *ifaces, const struct location *where)
 {
@@ -853,6 +872,7 @@ type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs,
 
     runtimeclass->attrs = check_runtimeclass_attrs(runtimeclass->name, attrs);
     runtimeclass->details.runtimeclass.ifaces = ifaces;
+    set_constructor_runtimeclass(runtimeclass, attrs);
     define_type(runtimeclass, where);
     if (!type_runtimeclass_get_ifaces(runtimeclass) && !get_attrp(runtimeclass->attrs, ATTR_STATIC))
         error_loc("runtimeclass %s must have at least one interface or static factory\n", runtimeclass->name);
