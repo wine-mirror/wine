@@ -3634,7 +3634,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH RemoveDirectoryW( LPCWSTR path )
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtOpenFile( &handle, DELETE | SYNCHRONIZE, &attr, &io,
                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+                         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT );
     RtlFreeUnicodeString( &nt_name );
 
     if (!status)
