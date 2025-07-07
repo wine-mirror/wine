@@ -6528,13 +6528,8 @@ static void test_reparse_points(void)
      * FILE_OPEN_REPARSE_POINT under the hood. */
     swprintf( path, ARRAY_SIZE(path), L"%stestreparse_dirlink", temp_path );
     ret = CreateDirectoryW( path, NULL );
-    todo_wine ok( ret == FALSE, "got %d\n", ret );
-    todo_wine ok( GetLastError() == ERROR_ALREADY_EXISTS, "got error %lu\n", GetLastError() );
-    if (ret)
-    {
-        ret = RemoveDirectoryW( path );
-        ok( ret == TRUE, "got error %lu\n", GetLastError() );
-    }
+    ok( ret == FALSE, "got %d\n", ret );
+    ok( GetLastError() == ERROR_ALREADY_EXISTS, "got error %lu\n", GetLastError() );
 
     /* Test FindFirstFile(). */
 

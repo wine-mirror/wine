@@ -683,7 +683,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateDirectoryW( LPCWSTR path, LPSECURITY_ATTRIBU
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, sa ? sa->lpSecurityDescriptor : NULL );
     status = NtCreateFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL,
                            FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, FILE_CREATE,
-                           FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+                           FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT, NULL, 0 );
     if (status == STATUS_SUCCESS) NtClose( handle );
 
     RtlFreeUnicodeString( &nt_name );
