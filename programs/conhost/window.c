@@ -61,6 +61,7 @@ struct console_window
     unsigned int      sb_width;        /* active screen buffer width */
     unsigned int      sb_height;       /* active screen buffer height */
     COORD             cursor_pos;      /* cursor position */
+    unsigned int      close_on_exit;   /* whether conhost closes when all children have terminated */
 
     RECT              update;          /* screen buffer update rect */
     enum update_state update_state;    /* update state */
@@ -86,6 +87,7 @@ struct console_config
     unsigned int  win_height;
     COORD         win_pos;        /* position (in cells) of visible part of screen buffer in window */
     unsigned int  edition_mode;   /* edition mode flavor while line editing */
+    unsigned int  close_on_exit;  /* whether conhost closes when all children have terminated */
     unsigned int  font_pitch_family;
     unsigned int  font_weight;
     WCHAR         face_name[LF_FACESIZE];
@@ -94,7 +96,8 @@ struct console_config
 static const char *debugstr_config( const struct console_config *config )
 {
     return wine_dbg_sprintf( "cell=(%u,%u) cursor=(%d,%d) attr=%02x pop-up=%02x font=%s/%u/%u "
-                             "hist=%u/%d flags=%c%c msk=%08x sb=(%u,%u) win=(%u,%u)x(%u,%u) edit=%u",
+                             "hist=%u/%d flags=%c%c msk=%08x sb=(%u,%u) win=(%u,%u)x(%u,%u) edit=%u "
+                             "close_on_exit=%u",
                              config->cell_width, config->cell_height, config->cursor_size,
                              config->cursor_visible, config->attr, config->popup_attr,
                              wine_dbgstr_w(config->face_name), config->font_pitch_family,
@@ -104,7 +107,7 @@ static const char *debugstr_config( const struct console_config *config )
                              config->quick_edit ? 'Q' : 'q',
                              config->menu_mask, config->sb_width, config->sb_height,
                              config->win_pos.X, config->win_pos.Y, config->win_width,
-                             config->win_height, config->edition_mode );
+                             config->win_height, config->edition_mode, config->close_on_exit );
 }
 
 static const char *debugstr_logfont( const LOGFONTW *lf, unsigned int ft )
@@ -140,6 +143,10 @@ static void load_registry_key( HKEY key, struct console_config *config )
 {
     DWORD type, count, val, i;
     WCHAR color_name[13];
+
+    count = sizeof(val);
+    if (!RegQueryValueExW( key, L"CloseOnExit", 0, &type, (BYTE *)&val, &count ))
+        config->close_on_exit = val;
 
     for (i = 0; i < ARRAY_SIZE(config->color_map); i++)
     {
@@ -264,6 +271,7 @@ static void load_config( const WCHAR *key_name, struct console_config *config )
     config->win_pos.X    = 0;
     config->win_pos.Y    = 0;
     config->edition_mode = 0;
+    config->close_on_exit= 1;
 
     /* Load default console settings */
     if (!RegOpenKeyW( HKEY_CURRENT_USER, L"Console", &key ))
@@ -292,6 +300,12 @@ static void save_registry_key( HKEY key, const struct console_config *config, BO
 
     if (!save_all)
         load_config( NULL, &default_config );
+
+    if (save_all || config->close_on_exit != default_config.close_on_exit)
+    {
+        val = config->close_on_exit;
+        RegSetValueExW( key, L"CloseOnExit", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+    }
 
     for (i = 0; i < ARRAY_SIZE(config->color_map); i++)
     {
@@ -1673,7 +1687,7 @@ static INT_PTR WINAPI config_dialog_proc( HWND dialog, UINT msg, WPARAM wparam, 
         SendMessageW( GetDlgItem(dialog, IDC_CNF_SB_HEIGHT_UD),  UDM_SETRANGE, 0, MAKELPARAM(max_ud, 0));
         SendMessageW( GetDlgItem(dialog, IDC_CNF_SB_WIDTH_UD),   UDM_SETRANGE, 0, MAKELPARAM(max_ud, 0));
 
-        SendDlgItemMessageW( dialog, IDC_CNF_CLOSE_EXIT, BM_SETCHECK, BST_CHECKED, 0 );
+        SendDlgItemMessageW( dialog, IDC_CNF_CLOSE_EXIT, BM_SETCHECK, di->config.close_on_exit ? BST_CHECKED : BST_UNCHECKED, 0 );
 
         SendDlgItemMessageW( dialog, IDC_CNF_EDITION_MODE, CB_ADDSTRING, 0, (LPARAM)L"Win32" );
         SendDlgItemMessageW( dialog, IDC_CNF_EDITION_MODE, CB_ADDSTRING, 0, (LPARAM)L"Emacs" );
@@ -1685,6 +1699,7 @@ static INT_PTR WINAPI config_dialog_proc( HWND dialog, UINT msg, WPARAM wparam, 
             NMHDR *nmhdr = (NMHDR*)lparam;
             int win_w, win_h, sb_w, sb_h;
             BOOL st1, st2;
+            DWORD val;
 
             di = (struct dialog_info *)GetWindowLongPtrW( dialog, DWLP_USER );
             switch (nmhdr->code)
@@ -1724,6 +1739,9 @@ static INT_PTR WINAPI config_dialog_proc( HWND dialog, UINT msg, WPARAM wparam, 
                 di->config.sb_width  = sb_w;
                 di->config.sb_height = sb_h;
 
+                val = (IsDlgButtonChecked( dialog, IDC_CNF_CLOSE_EXIT ) & BST_CHECKED) != 0;
+                di->config.close_on_exit = val;
+
                 di->config.edition_mode = SendDlgItemMessageW( dialog, IDC_CNF_EDITION_MODE,
                                                                CB_GETCURSEL, 0, 0 );
                 SetWindowLongPtrW( dialog, DWLP_MSGRESULT, PSNRET_NOERROR );
@@ -1744,8 +1762,9 @@ static void apply_config( struct console *console, const struct console_config *
     if (console->active->width != config->sb_width || console->active->height != config->sb_height)
         change_screen_buffer_size( console->active, config->sb_width, config->sb_height );
 
-    console->window->menu_mask  = config->menu_mask;
-    console->window->quick_edit = config->quick_edit;
+    console->window->menu_mask     = config->menu_mask;
+    console->window->quick_edit    = config->quick_edit;
+    console->window->close_on_exit = config->close_on_exit;
 
     console->edition_mode = config->edition_mode;
     console->history_mode = config->history_mode;
@@ -1813,8 +1832,9 @@ static void current_config( struct console *console, struct console_config *conf
 {
     size_t len;
 
-    config->menu_mask  = console->window->menu_mask;
-    config->quick_edit = console->window->quick_edit;
+    config->menu_mask     = console->window->menu_mask;
+    config->quick_edit    = console->window->quick_edit;
+    config->close_on_exit = console->window->close_on_exit;
 
     config->edition_mode = console->edition_mode;
     config->history_mode = console->history_mode;
@@ -2457,4 +2477,19 @@ void init_message_window( struct console *console )
                    WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MINIMIZEBOX|
                    WS_MAXIMIZEBOX|WS_HSCROLL|WS_VSCROLL, CW_USEDEFAULT, CW_USEDEFAULT,
                    0, 0, HWND_MESSAGE, 0, wndclass.hInstance, console );
+}
+
+void teardown_window( struct console *console )
+{
+    if (console->window && !console->window->close_on_exit)
+    {
+        MSG msg;
+
+        while (GetMessageW( &msg, 0, 0, 0 ))
+        {
+            if (msg.message == WM_QUIT) return;
+            TranslateMessage( &msg );
+            DispatchMessageW( &msg );
+        }
+    }
 }

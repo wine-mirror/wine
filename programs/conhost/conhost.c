@@ -2985,6 +2985,8 @@ static void teardown( struct console *console )
         set_tty_attr( console, empty_char_info.attr );
         tty_flush( console );
     }
+    if (console->win)
+        teardown_window( console );
 }
 
 int __cdecl wmain(int argc, WCHAR *argv[])

@@ -149,6 +149,7 @@ BOOL init_window( struct console *console );
 void init_message_window( struct console *console );
 void update_window_region( struct console *console, const RECT *update );
 void update_window_config( struct console *console, BOOL delay );
+void teardown_window( struct console *console );
 
 static inline void empty_update_rect( struct screen_buffer *screen_buffer, RECT *rect )
 {
