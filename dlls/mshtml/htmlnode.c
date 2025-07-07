@@ -389,7 +389,6 @@ dispex_static_data_t NodeList_dispex = {
     .vtbl       = &HTMLDOMChildrenCollection_dispex_vtbl,
     .disp_tid   = DispDOMChildrenCollection_tid,
     .iface_tids = NodeList_iface_tids,
-    .init_info  = HTMLDOMNode_init_dispex_info,
 };
 
 HRESULT create_child_collection(nsIDOMNodeList *nslist, DispatchEx *owner, IHTMLDOMChildrenCollection **ret)
