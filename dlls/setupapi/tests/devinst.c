@@ -1259,21 +1259,21 @@ static void test_device_property(void)
     SetLastError(0xdeadbeef);
     ret = pSetupDiGetDevicePropertyW(set, &device_data, &DEVPKEY_Device_InstanceId, &type, buffer, sizeof(buffer), &size, 0);
     err = GetLastError();
-    todo_wine ok(ret, "Expect success\n");
-    todo_wine ok(err == NO_ERROR, "Expect last error %#x, got %#lx\n", NO_ERROR, err);
-    todo_wine ok(type == DEVPROP_TYPE_STRING, "Expect type %#x, got %#lx\n", DEVPROP_TYPE_STRING, type);
-    todo_wine ok(size == sizeof(instance_id), "Got size %lu\n", size);
-    todo_wine ok(!wcsicmp(instance_id, (WCHAR *)buffer), "Expect buffer %s, got %s\n", debugstr_w(instance_id), debugstr_w((WCHAR*)buffer));
+    ok(ret, "Expect success\n");
+    ok(err == NO_ERROR, "Expect last error %#x, got %#lx\n", NO_ERROR, err);
+    ok(type == DEVPROP_TYPE_STRING, "Expect type %#x, got %#lx\n", DEVPROP_TYPE_STRING, type);
+    ok(size == sizeof(instance_id), "Got size %lu\n", size);
+    ok(!wcsicmp(instance_id, (WCHAR *)buffer), "Expect buffer %s, got %s\n", debugstr_w(instance_id), debugstr_w((WCHAR*)buffer));
 
     type = DEVPROP_TYPE_EMPTY;
     size = 0;
     ret = pSetupDiGetDevicePropertyW(set, &device_data, &DEVPKEY_Device_ClassGuid, &type, (BYTE *)&guid_val, sizeof(guid_val), &size, 0);
     err = GetLastError();
-    todo_wine ok(ret, "Expect success\n");
-    todo_wine ok(err == NO_ERROR, "Expect last error %#x, got %#lx\n", NO_ERROR, err);
-    todo_wine ok(type == DEVPROP_TYPE_GUID, "Expect type %#x, got %#lx\n", DEVPROP_TYPE_GUID, type);
-    todo_wine ok(size == sizeof(guid_val), "Got size %lu\n", size);
-    todo_wine ok(IsEqualGUID(&guid_val, &guid), "Expect buffer %s, got %s\n", debugstr_guid(&guid), debugstr_guid(&guid_val));
+    ok(ret, "Expect success\n");
+    ok(err == NO_ERROR, "Expect last error %#x, got %#lx\n", NO_ERROR, err);
+    ok(type == DEVPROP_TYPE_GUID, "Expect type %#x, got %#lx\n", DEVPROP_TYPE_GUID, type);
+    ok(size == sizeof(guid_val), "Got size %lu\n", size);
+    ok(IsEqualGUID(&guid_val, &guid), "Expect buffer %s, got %s\n", debugstr_guid(&guid), debugstr_guid(&guid_val));
 
     for (i = 0; i < ARRAY_SIZE(inbuilt_props); i++)
     {
@@ -2636,10 +2636,10 @@ todo_wine {
         SetLastError(0xdeadbeef);
         ret = SetupDiGetDevicePropertyW(set, &device, &key, &type, buf, sizeof(buf), &size, 0);
         err = GetLastError();
-        todo_wine ok(ret, "Expect success.\n");
-        todo_wine ok(!err, "Got unexpected error %#lx.\n", err);
-        todo_wine ok(type == prop->devprop_type, "Got unexpected type %#lx.\n", type);
-        todo_wine ok(size == prop->devprop_size, "Got unexpected size %lu.\n", size);
+        ok(ret, "Expect success.\n");
+        ok(!err, "Got unexpected error %#lx.\n", err);
+        ok(type == prop->devprop_type, "Got unexpected type %#lx.\n", type);
+        ok(size == prop->devprop_size, "Got unexpected size %lu.\n", size);
         if (size == prop->devprop_size)
             ok(!memcmp(buf, prop->devprop_value, size), "Got unexpected property value.\n");
         winetest_pop_context();
