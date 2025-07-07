@@ -6873,20 +6873,20 @@ static void test_reparse_points(void)
     ok( handle2 != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
     status = NtQueryInformationFile( handle2, &io, &tag_info, sizeof(tag_info), FileAttributeTagInformation );
     ok( !status, "got %#lx\n", status );
-    todo_wine ok( tag_info.FileAttributes == (FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_REPARSE_POINT),
+    ok( tag_info.FileAttributes == (FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_REPARSE_POINT),
         "got attributes %#lx\n", tag_info.FileAttributes );
-    todo_wine ok( tag_info.ReparseTag == IO_REPARSE_TAG_SYMLINK, "got tag %#lx\n", tag_info.ReparseTag );
+    ok( tag_info.ReparseTag == IO_REPARSE_TAG_SYMLINK, "got tag %#lx\n", tag_info.ReparseTag );
     status = NtQueryInformationFile( handle2, &io, &std_info, sizeof(std_info), FileStandardInformation );
     ok( !status, "got %#lx\n", status );
     todo_wine ok( !std_info.AllocationSize.QuadPart, "got size %#I64x\n", std_info.AllocationSize.QuadPart );
-    todo_wine ok( !std_info.EndOfFile.QuadPart, "got eof %#I64x\n", std_info.EndOfFile.QuadPart );
+    ok( !std_info.EndOfFile.QuadPart, "got eof %#I64x\n", std_info.EndOfFile.QuadPart );
     ok( std_info.NumberOfLinks == 2, "got %lu links\n", std_info.NumberOfLinks );
     ok( !std_info.Directory, "got directory %u\n", std_info.Directory );
     status = NtQueryInformationFile( handle, &io, &internal_info, sizeof(internal_info), FileInternalInformation );
     ok( !status, "got %#lx\n", status );
     status = NtQueryInformationFile( handle2, &io, &internal_info2, sizeof(internal_info2), FileInternalInformation );
     ok( !status, "got %#lx\n", status );
-    todo_wine ok( internal_info.IndexNumber.QuadPart == internal_info2.IndexNumber.QuadPart, "got ids %#I64x vs %#I64x\n",
+    ok( internal_info.IndexNumber.QuadPart == internal_info2.IndexNumber.QuadPart, "got ids %#I64x vs %#I64x\n",
         internal_info.IndexNumber.QuadPart, internal_info2.IndexNumber.QuadPart );
     CloseHandle( handle2 );
 
@@ -6901,14 +6901,14 @@ static void test_reparse_points(void)
 
     /* Clean up the hard link, and show in the process that DeleteFile()
      * deletes the symlink, not the target. */
-
     ret = DeleteFileW( path2 );
     ok( ret == TRUE, "got error %lu\n", GetLastError() );
 
     handle2 = CreateFileW( path2, GENERIC_ALL, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            NULL, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT, 0 );
-    ok( handle2 == INVALID_HANDLE_VALUE, "expected failure\n" );
-    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError() );
+    todo_wine ok( handle2 == INVALID_HANDLE_VALUE, "expected failure\n" );
+    todo_wine ok( GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError() );
+    if (handle2 != INVALID_HANDLE_VALUE) CloseHandle( handle2 );
 
     handle2 = CreateFileW( path2, GENERIC_ALL, 0, NULL, CREATE_ALWAYS, 0, 0 );
     ok( handle2 != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
@@ -6922,6 +6922,10 @@ static void test_reparse_points(void)
     ok( ret == TRUE, "got error %lu\n", GetLastError() );
 
     /* MoveFile(). */
+
+    /* FIXME: our deletion logic is broken where hardlinks are concerned;
+     * use a new path to work around that */
+    swprintf( path2, ARRAY_SIZE(path2), L"%stestreparse_filelink3", temp_path );
 
     ret = MoveFileW( path, path2 );
     ok( ret == TRUE, "got error %lu\n", GetLastError() );
