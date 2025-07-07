@@ -2553,7 +2553,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH MoveFileWithProgressW( const WCHAR *source, const 
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtOpenFile( &source_handle, DELETE | SYNCHRONIZE, &attr, &io,
                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                         FILE_SYNCHRONOUS_IO_NONALERT );
+                         FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT );
     RtlFreeUnicodeString( &nt_name );
     if (!set_ntstatus( status )) goto error;
 
@@ -2672,7 +2672,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReplaceFileW( const WCHAR *replaced, const WCHAR *
     }
     attr.ObjectName = &nt_replacement_name;
     status = NtOpenFile( &hReplacement, GENERIC_READ | GENERIC_WRITE | DELETE | WRITE_DAC | SYNCHRONIZE,
-                         &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE );
+                         &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE | FILE_OPEN_REPARSE_POINT );
     RtlFreeUnicodeString(&nt_replacement_name);
     if (!set_ntstatus( status )) return FALSE;
     NtClose( hReplacement );

@@ -6928,20 +6928,11 @@ static void test_reparse_points(void)
 
     handle2 = CreateFileW( path, GENERIC_ALL, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            NULL, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT, 0 );
-    todo_wine ok( handle2 == INVALID_HANDLE_VALUE, "expected failure\n" );
-    todo_wine ok( GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError() );
-    if (handle2 != INVALID_HANDLE_VALUE) CloseHandle( handle2 );
+    ok( handle2 == INVALID_HANDLE_VALUE, "expected failure\n" );
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError() );
 
     ret = MoveFileW( path2, path );
-    todo_wine ok( ret == TRUE, "got error %lu\n", GetLastError() );
-    if (!ret)
-    {
-        /* undo what we incorrectly did above */
-        WCHAR target[MAX_PATH];
-        swprintf( target, ARRAY_SIZE(target), L"%stestreparse_file", temp_path );
-        ret = MoveFileW( path2, target );
-        ok( ret == TRUE, "got error %lu\n", GetLastError() );
-    }
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
 
     handle2 = CreateFileW( path2, GENERIC_ALL, 0, NULL, CREATE_ALWAYS, 0, 0 );
     ok( handle2 != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
