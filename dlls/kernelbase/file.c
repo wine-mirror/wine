@@ -776,6 +776,8 @@ static UINT get_nt_file_options( DWORD attributes, DWORD creation )
         options |= FILE_DELETE_ON_CLOSE;
     if (attributes & FILE_FLAG_NO_BUFFERING)
         options |= FILE_NO_INTERMEDIATE_BUFFERING;
+    if (attributes & FILE_FLAG_OPEN_REPARSE_POINT)
+        options |= FILE_OPEN_REPARSE_POINT;
     if (!(attributes & FILE_FLAG_OVERLAPPED))
         options |= FILE_SYNCHRONOUS_IO_NONALERT;
     if (attributes & FILE_FLAG_RANDOM_ACCESS)

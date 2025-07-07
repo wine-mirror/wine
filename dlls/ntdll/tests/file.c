@@ -6470,7 +6470,7 @@ static void test_reparse_points(void)
     ret = GetFinalPathNameByHandleW( handle2, ret_path, ARRAY_SIZE( ret_path ), VOLUME_NAME_DOS );
     ok( ret > 0, "got error %lu\n", GetLastError() );
     swprintf( path, ARRAY_SIZE(path), L"\\\\?\\%stestreparse_dirlink", temp_path );
-    todo_wine ok( !wcscmp( ret_path, path ), "expected path %s, got %s\n", debugstr_w( path ), debugstr_w( ret_path ));
+    ok( !wcscmp( ret_path, path ), "expected path %s, got %s\n", debugstr_w( path ), debugstr_w( ret_path ));
     CloseHandle( handle2 );
 
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, NULL, 0, NULL, 0 );
@@ -6541,11 +6541,8 @@ static void test_reparse_points(void)
     swprintf( path, ARRAY_SIZE(path), L"%s/testreparse_dirlink", temp_path );
     handle2 = CreateFileW( path, DELETE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
                            OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, 0 );
-    todo_wine ok( handle2 != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
-    if (handle2 != INVALID_HANDLE_VALUE)
-        status = NtSetInformationFile( handle2, &io, &fdi, sizeof(fdi), FileDispositionInformation );
-    else
-        status = NtSetInformationFile( handle, &io, &fdi, sizeof(fdi), FileDispositionInformation );
+    ok( handle2 != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
+    status = NtSetInformationFile( handle2, &io, &fdi, sizeof(fdi), FileDispositionInformation );
     ok( !status, "got %#lx\n", status );
     CloseHandle( handle2 );
 
