@@ -81,6 +81,8 @@ static ULONG STDMETHODCALLTYPE Site_Release(IOleClientSite *iface)
             IOleObject_Release(This->ole_obj);
         if(This->web_browser)
             IWebBrowser2_Release(This->web_browser);
+        if(This->WebBrowser_events_sink)
+            IDispatch_Release(&This->WebBrowser_events_sink->WebBrowserEvents2Impl_iface);
         free(This);
     }
 
