@@ -45,6 +45,7 @@ struct wayland_window_surface
 {
     struct window_surface header;
     struct wayland_buffer_queue *wayland_buffer_queue;
+    BOOL layered;
 };
 
 static struct wayland_window_surface *wayland_window_surface_cast(
@@ -387,7 +388,7 @@ static BOOL wayland_window_surface_flush(struct window_surface *window_surface, 
         goto done;
     }
 
-    buffer_format = shape_bits ? WL_SHM_FORMAT_ARGB8888 : WL_SHM_FORMAT_XRGB8888;
+    buffer_format = (shape_bits || wws->layered) ? WL_SHM_FORMAT_ARGB8888 : WL_SHM_FORMAT_XRGB8888;
     if (wws->wayland_buffer_queue->format != buffer_format)
     {
         int width = wws->wayland_buffer_queue->width;
@@ -439,7 +440,7 @@ static BOOL wayland_window_surface_flush(struct window_surface *window_surface, 
     }
 
     wayland_shm_buffer_copy_data(shm_buffer, color_bits, &surface_rect, copy_from_window_region,
-                                 !!shape_bits);
+                                 shape_bits && !wws->layered);
     if (shape_bits) wayland_shm_buffer_copy_shape(shm_buffer, rect, shape_info, shape_bits);
 
     NtGdiSetRectRgn(shm_buffer->damage_region, 0, 0, 0, 0);
@@ -474,7 +475,8 @@ static const struct window_surface_funcs wayland_window_surface_funcs =
 /***********************************************************************
  *           wayland_window_surface_create
  */
-static struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect)
+static struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect,
+                                                            BOOL layered)
 {
     char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
@@ -497,7 +499,11 @@ static struct window_surface *wayland_window_surface_create(HWND hwnd, const REC
     if ((window_surface = window_surface_create(sizeof(*wws), &wayland_window_surface_funcs, hwnd, rect, info, 0)))
     {
         struct wayland_window_surface *wws = wayland_window_surface_cast(window_surface);
-        wws->wayland_buffer_queue = wayland_buffer_queue_create(width, height, WL_SHM_FORMAT_XRGB8888);
+        wws->wayland_buffer_queue =
+            wayland_buffer_queue_create(width, height,
+                                        layered ? WL_SHM_FORMAT_ARGB8888 :
+                                                  WL_SHM_FORMAT_XRGB8888);
+        wws->layered = layered;
     }
 
     return window_surface;
@@ -517,7 +523,8 @@ BOOL WAYLAND_CreateWindowSurface(HWND hwnd, BOOL layered, const RECT *surface_re
     if (!(data = wayland_win_data_get(hwnd))) return TRUE; /* use default surface */
     if (previous) window_surface_release(previous);
 
-    *surface = wayland_window_surface_create(data->hwnd, surface_rect);
+    if (layered) data->layered_attribs_set = TRUE;
+    *surface = wayland_window_surface_create(data->hwnd, surface_rect, data->layered_attribs_set);
 
     wayland_win_data_release(data);
     return TRUE;
