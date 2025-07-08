@@ -649,6 +649,8 @@ static HRESULT avi_decompressor_cleanup_stream(struct strmbase_filter *iface)
     if (!filter->source.pin.peer)
         return S_OK;
 
+    IMemAllocator_Decommit(filter->source.pAllocator);
+
     if (filter->hvid)
     {
         EnterCriticalSection(&filter->filter.stream_cs);
@@ -660,8 +662,6 @@ static HRESULT avi_decompressor_cleanup_stream(struct strmbase_filter *iface)
             return E_FAIL;
         }
     }
-
-    IMemAllocator_Decommit(filter->source.pAllocator);
 
     return S_OK;
 }
