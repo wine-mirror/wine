@@ -1682,6 +1682,25 @@ static UINT make_property_sig( const var_t *method, BYTE *buf, BOOL is_static )
     return len;
 }
 
+static UINT make_activation_sig( const var_t *method, BYTE *buf )
+{
+    const var_t *arg;
+    UINT len = 3;
+
+    buf[0] = SIG_TYPE_HASTHIS;
+    buf[1] = 0;
+    buf[2] = ELEMENT_TYPE_VOID;
+
+    if (method) LIST_FOR_EACH_ENTRY( arg, type_function_get_args(method->declspec.type), var_t, entry )
+    {
+        if (is_attr( arg->attrs, ATTR_RETVAL )) continue;
+        len += make_type_sig( arg->declspec.type, buf + len );
+        buf[1]++;
+    }
+
+    return len;
+}
+
 static UINT make_deprecated_sig( UINT token, BYTE *buf )
 {
     UINT len = 5;
@@ -2162,18 +2181,24 @@ static void add_method_params_step1( var_list_t *arg_list )
     }
 }
 
+static void add_runtimeclass_type_step1( type_t * );
+
 static void add_interface_type_step1( type_t *type )
 {
     const statement_t *stmt;
     UINT name, namespace;
+    type_t *class;
 
     name = add_name( type, &namespace );
 
     type->md.ref = add_typeref_row( resolution_scope(TABLE_MODULE, MODULE_ROW), name, namespace );
 
+    add_exclusiveto_attr_step1( type );
+
+    if ((class = type->details.iface->runtime_class)) add_runtimeclass_type_step1( class );
+
     add_contract_attr_step1( type );
     add_uuid_attr_step1( type );
-    add_exclusiveto_attr_step1( type );
 
     STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(type) )
     {
@@ -2473,12 +2498,15 @@ static void add_method( type_t *class, type_t *iface, const var_t *method )
     else add_regular_method( class, iface, method );
 }
 
+static void add_runtimeclass_type_step2( type_t *type );
+
 static void add_interface_type_step2( type_t *type )
 {
     UINT name, namespace, interface, flags = TYPE_ATTR_INTERFACE | TYPE_ATTR_ABSTRACT | TYPE_ATTR_UNKNOWN;
     const typeref_list_t *require_list = type_iface_get_requires( type );
     const typeref_t *require;
     const statement_t *stmt;
+    type_t *class;
 
     name = add_name( type, &namespace );
 
@@ -2503,6 +2531,8 @@ static void add_interface_type_step2( type_t *type )
         add_default_overload_attr_step2( method );
         add_overload_attr_step2( method );
     }
+
+    if ((class = type->details.iface->runtime_class)) add_runtimeclass_type_step2( class );
 
     add_contract_attr_step2( type );
     add_uuid_attr_step2( type );
@@ -2603,8 +2633,9 @@ static void add_runtimeclass_type_step1( type_t *type )
 {
     UINT name, namespace;
 
-    name = add_name( type, &namespace );
+    if (type->md.ref) return;
 
+    name = add_name( type, &namespace );
     type->md.ref = add_typeref_row( resolution_scope(TABLE_MODULE, MODULE_ROW), name, namespace );
 }
 
@@ -2998,12 +3029,95 @@ static void add_static_interfaces( type_t *class )
     }
 }
 
+static void add_activation_interfaces( const type_t *class )
+{
+    UINT flags = METHOD_ATTR_PUBLIC | METHOD_ATTR_HIDEBYSIG | METHOD_ATTR_SPECIALNAME | METHOD_ATTR_RTSPECIALNAME;
+    const attr_t *attr;
+
+    if (class->attrs) LIST_FOR_EACH_ENTRY_REV( attr, class->attrs, const attr_t, entry )
+    {
+        UINT methoddef, parent, attr_type, value_size, paramlist = 0, sig_size;
+        BYTE value[MAX_NAME + sizeof(UINT) + 5], sig[256];
+        const expr_t *activatable = attr->u.pval;
+        const type_t *iface = NULL;
+        const var_t *method = NULL, *arg;
+        const statement_t *stmt;
+
+        if (attr->type != ATTR_ACTIVATABLE) continue;
+
+        /* interface is optional */
+        if (activatable->type == EXPR_MEMBER) iface = activatable->u.var->declspec.type;
+
+        if (iface) STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
+        {
+            UINT seq = 1, row;
+
+            method = stmt->u.var;
+
+            LIST_FOR_EACH_ENTRY( arg, type_function_get_args(method->declspec.type), var_t, entry )
+            {
+                if (is_attr( arg->attrs, ATTR_RETVAL )) continue;
+                row = add_param_row( get_param_attrs(arg), seq++, add_string(arg->name) );
+                if (!paramlist) paramlist = row;
+            }
+            break;
+        }
+
+        sig_size = make_activation_sig( method, sig );
+        methoddef = add_methoddef_row( METHOD_IMPL_RUNTIME, flags, add_string(".ctor"), add_blob(sig, sig_size), paramlist );
+
+        parent = has_customattribute( TABLE_METHODDEF, methoddef );
+        attr_type = customattribute_type( TABLE_MEMBERREF, class->md.member[MD_ATTR_CONTRACT] );
+        value_size = make_contract_value( class, value );
+        add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
+    }
+}
+
+static void add_constructor_overload( const type_t *type )
+{
+    static const BYTE sig_default[] = { SIG_TYPE_HASTHIS, 0, ELEMENT_TYPE_VOID };
+    static const BYTE sig_overload[] = { SIG_TYPE_HASTHIS, 1, ELEMENT_TYPE_VOID, ELEMENT_TYPE_STRING };
+    UINT name, namespace;
+    const attr_t *attr;
+
+    if (type->attrs) LIST_FOR_EACH_ENTRY_REV( attr, type->attrs, const attr_t, entry )
+    {
+        const expr_t *value = attr->u.pval;
+
+        if (attr->type == ATTR_ACTIVATABLE && value->type == EXPR_MEMBER)
+        {
+            UINT assemblyref, scope, typeref_default, typeref_overload, class;
+
+            assemblyref = add_assemblyref_row( 0x200, 0, add_string("Windows.Foundation") );
+            scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+
+            name = add_string( "DefaultOverloadAttribute" );
+            namespace = add_string( "Windows.Foundation.Metadata" );
+            typeref_default = add_typeref_row( scope, name, namespace );
+
+            class = memberref_parent( TABLE_TYPEREF, typeref_default );
+            add_memberref_row( class, add_string(".ctor"), add_blob(sig_default, sizeof(sig_default)) );
+
+            name = add_string( "OverloadAttribute" );
+            typeref_overload = add_typeref_row( scope, name, namespace );
+
+            class = memberref_parent( TABLE_TYPEREF, typeref_overload );
+            add_memberref_row( class, add_string(".ctor"), add_blob(sig_overload, sizeof(sig_overload)) );
+            break;
+        }
+    }
+}
+
 static void add_runtimeclass_type_step2( type_t *type )
 {
     const typeref_list_t *iface_list = type_runtimeclass_get_ifaces( type );
     UINT name, namespace, scope, extends, typeref, flags;
 
+    if (type->md.def) return;
+
     name = add_name( type, &namespace );
+
+    add_constructor_overload( type );
 
     scope = resolution_scope( TABLE_ASSEMBLYREF, MSCORLIB_ROW );
     typeref = add_typeref_row( scope, add_string("Object"), add_string("System") );
@@ -3014,10 +3128,13 @@ static void add_runtimeclass_type_step2( type_t *type )
 
     type->md.def = add_typedef_row( flags, name, namespace, extends, 0, 0 );
 
+    /* add contract first so activation/composition constructors can inherit it */
+    add_contract_attr_step1( type );
+
+    add_activation_interfaces( type );
     add_member_interfaces( type );
     add_static_interfaces( type );
 
-    add_contract_attr_step1( type );
     add_static_attr_step1( type );
     add_activatable_attr_step1( type );
     add_threading_attr_step1( type );
