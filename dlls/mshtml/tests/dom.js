@@ -399,6 +399,10 @@ sync_test("document_style_props", function() {
     ok(document.vLinkColor === undefined, "default vLinkColor = " + document.vLinkColor);
     document.vLinkColor = "#b8dead";
     ok(document.vLinkColor === "#b8dead", "vLinkColor = " + document.vLinkColor);
+
+    ok(document.aLinkColor === undefined, "default aLinkColor = " + document.aLinkColor);
+    document.aLinkColor = "#deb8ad";
+    ok(document.aLinkColor === "#deb8ad", "aLinkColor = " + document.aLinkColor);
 });
 
 sync_test("style_properties", function() {

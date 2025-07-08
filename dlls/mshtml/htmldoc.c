@@ -838,15 +838,42 @@ static HRESULT WINAPI HTMLDocument_get_plugins(IHTMLDocument2 *iface, IHTMLEleme
 static HRESULT WINAPI HTMLDocument_put_alinkColor(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocumentNode *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    if(!This->html_document) {
+        FIXME("Not implemented for XML document\n");
+        return E_NOTIMPL;
+    }
+
+    hres = variant_to_nsstr(&v, FALSE, &nsstr);
+    if(FAILED(hres))
+        return hres;
+
+    nsres = nsIDOMHTMLDocument_SetAlinkColor(This->html_document, &nsstr);
+    nsAString_Finish(&nsstr);
+    return map_nsresult(nsres);
 }
 
 static HRESULT WINAPI HTMLDocument_get_alinkColor(IHTMLDocument2 *iface, VARIANT *p)
 {
     HTMLDocumentNode *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->html_document) {
+        FIXME("Not implemented for XML document\n");
+        return E_NOTIMPL;
+    }
+
+    nsAString_Init(&nsstr, NULL);
+    nsres = nsIDOMHTMLDocument_GetAlinkColor(This->html_document, &nsstr);
+    return return_nsstr_variant(nsres, &nsstr, NSSTR_COLOR, p);
 }
 
 static HRESULT WINAPI HTMLDocument_put_bgColor(IHTMLDocument2 *iface, VARIANT v)
