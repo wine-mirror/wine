@@ -794,7 +794,7 @@ static HRESULT WINAPI MFTransform_GetInputAvailableType(IMFTransform *iface, DWO
         IMFMediaType **type)
 {
     struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
-    DMO_MEDIA_TYPE pt;
+    DMO_MEDIA_TYPE pt = {0};
     HRESULT hr;
 
     TRACE("iface %p, id %#lx, index %#lx, type %p.\n", iface, id, index, type);
@@ -926,7 +926,7 @@ static HRESULT WINAPI MFTransform_SetOutputType(IMFTransform *iface, DWORD id, I
 static HRESULT WINAPI MFTransform_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **out)
 {
     struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
-    DMO_MEDIA_TYPE mt;
+    DMO_MEDIA_TYPE mt = {0};
     HRESULT hr;
 
     TRACE("iface %p, id %#lx, out %p.\n", iface, id, out);
@@ -945,7 +945,7 @@ static HRESULT WINAPI MFTransform_GetInputCurrentType(IMFTransform *iface, DWORD
 static HRESULT WINAPI MFTransform_GetOutputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **out)
 {
     struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
-    DMO_MEDIA_TYPE mt;
+    DMO_MEDIA_TYPE mt = {0};
     HRESULT hr;
 
     TRACE("iface %p, id %#lx, out %p.\n", iface, id, out);
