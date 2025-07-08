@@ -134,6 +134,7 @@ typedef struct {
     HWND hwndEdit;
     HWND hwndList;
     HWND hwndContainer;
+    HWND hwndSearchBtn;
 } SearchTab;
 
 typedef struct {

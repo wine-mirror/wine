@@ -47,6 +47,8 @@ static void ExpandContract(HHInfo *pHHInfo);
 #define TAB_RIGHT_PADDING   4
 #define TAB_MARGIN  8
 #define EDIT_HEIGHT         20
+#define BUTTON_HEIGHT       25
+#define BUTTON_WIDTH        65
 
 struct list window_list = LIST_INIT(window_list);
 
@@ -506,11 +508,19 @@ static void ResizeTabChild(HHInfo *info, int tab)
         int scroll_width = GetSystemMetrics(SM_CXVSCROLL);
         int border_width = GetSystemMetrics(SM_CXBORDER);
         int edge_width = GetSystemMetrics(SM_CXEDGE);
+
+        int right_pos = rect.right - TAB_MARGIN - BUTTON_WIDTH;
         int top_pos = 0;
 
         SetWindowPos(info->search.hwndEdit, NULL, 0, top_pos, width,
                       EDIT_HEIGHT, SWP_NOZORDER | SWP_NOACTIVATE);
         top_pos += EDIT_HEIGHT + TAB_MARGIN;
+
+        if (0 > right_pos)
+            right_pos = 0;
+        SetWindowPos(info->search.hwndSearchBtn, NULL, right_pos, top_pos, BUTTON_WIDTH, BUTTON_HEIGHT, SWP_NOZORDER | SWP_NOACTIVATE);
+        top_pos += BUTTON_HEIGHT + TAB_MARGIN;
+
         SetWindowPos(info->search.hwndList, NULL, 0, top_pos, width,
                       height-top_pos, SWP_NOZORDER | SWP_NOACTIVATE);
         /* Resize the tab widget column to perfectly fit the tab window and
@@ -677,6 +687,25 @@ static LRESULT CALLBACK EditChild_WndProc(HWND hWnd, UINT message, WPARAM wParam
     return editWndProc(hWnd, message, wParam, lParam);
 }
 
+static void do_search(HHInfo *info)
+{
+    char needle[100];
+    DWORD i, len;
+
+    len = GetWindowTextA(info->search.hwndEdit, needle, sizeof(needle));
+    if(!len)
+    {
+        FIXME("Unable to get search text.\n");
+        return;
+    }
+    /* Convert the requested text for comparison later against the
+     * lower case version of HTML file contents.
+     */
+    for(i=0;i<len;i++)
+        needle[i] = tolower(needle[i]);
+    InitSearch(info, needle);
+}
+
 static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -739,21 +768,7 @@ static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
             }
             case TAB_SEARCH: {
                 if(nmhdr->hwndFrom == info->search.hwndEdit) {
-                    char needle[100];
-                    DWORD i, len;
-
-                    len = GetWindowTextA(info->search.hwndEdit, needle, sizeof(needle));
-                    if(!len)
-                    {
-                        FIXME("Unable to get search text.\n");
-                        return 0;
-                    }
-                    /* Convert the requested text for comparison later against the
-                     * lower case version of HTML file contents.
-                     */
-                    for(i=0;i<len;i++)
-                        needle[i] = tolower(needle[i]);
-                    InitSearch(info, needle);
+                    do_search(info);
                     return 0;
                 }else if(nmhdr->hwndFrom == info->search.hwndList) {
                     HWND hwndList = info->search.hwndList;
@@ -771,6 +786,12 @@ static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
             break;
         }
         break;
+    }
+    case WM_COMMAND:
+    {
+        HHInfo *info = (HHInfo*)GetWindowLongPtrW(hWnd, 0);
+        if (info->current_tab == TAB_SEARCH && LOWORD(wParam) == IDC_SEARCH_BTN && HIWORD(wParam) == BN_CLICKED)
+            do_search(info);
     }
     default:
         return DefWindowProcW(hWnd, message, wParam, lParam);
@@ -1228,7 +1249,7 @@ static BOOL AddIndexTab(HHInfo *info)
 
 static BOOL AddSearchTab(HHInfo *info)
 {
-    HWND hwndList, hwndEdit, hwndContainer;
+    HWND hwndList, hwndEdit, hwndContainer, hwndSearchBtn;
     char hidden_column[] = "Column";
     WNDPROC editWndProc;
     LVCOLUMNA lvc;
@@ -1260,6 +1281,15 @@ static BOOL AddSearchTab(HHInfo *info)
         return FALSE;
     }
     SetWindowLongPtrW(hwndEdit, GWLP_USERDATA, (LONG_PTR)editWndProc);
+    hwndSearchBtn = CreateWindowExW(WS_EX_NOPARENTNOTIFY, WC_BUTTONW, szEmpty,
+                                    WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_GROUP,
+                                    0, 0, 0, 0, hwndContainer, IDC_SEARCH_BTN, hhctrl_hinstance, NULL);
+    if (SendMessageW(hwndSearchBtn, WM_SETFONT, (WPARAM) info->hFont, (LPARAM) FALSE) == -1)
+    {
+        ERR("Could not set font for \"List Topics\" button.\n");
+        return FALSE;
+    }
+    SetWindowTextW(hwndSearchBtn, L"&List Topics");
     hwndList = CreateWindowExW(WS_EX_CLIENTEDGE, WC_LISTVIEWW, szEmpty,
                                WS_CHILD | WS_VISIBLE | WS_BORDER | LVS_SINGLESEL
                                 | LVS_REPORT | LVS_NOCOLUMNHEADER, 0, 0, 0, 0,
@@ -1280,6 +1310,7 @@ static BOOL AddSearchTab(HHInfo *info)
     info->search.hwndEdit = hwndEdit;
     info->search.hwndList = hwndList;
     info->search.hwndContainer = hwndContainer;
+    info->search.hwndSearchBtn = hwndSearchBtn;
     info->tabs[TAB_SEARCH].hwnd = hwndContainer;
 
     SetWindowLongPtrW(hwndContainer, 0, (LONG_PTR)info);
