@@ -10647,7 +10647,6 @@ static void test_video_processor_with_dxgi_manager(void)
 
     /* native wants a dxgi buffer on input */
     input_sample = create_d3d_sample(allocator, nv12frame_data, nv12frame_data_len);
-
     hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
 
@@ -10778,8 +10777,6 @@ static void test_video_processor_with_dxgi_manager(void)
     nv12frame_data = nv12frame_data + length;
     ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
 
-    input_sample = create_d3d_sample(allocator, nv12frame_data, nv12frame_data_len);
-
     hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
 
@@ -10844,8 +10841,6 @@ skip_rgb32:
     nv12frame_data_len = nv12frame_data_len - length;
     nv12frame_data = nv12frame_data + length;
     ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
-
-    input_sample = create_d3d_sample(allocator, nv12frame_data, nv12frame_data_len);
 
     hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
