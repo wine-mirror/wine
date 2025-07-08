@@ -4241,6 +4241,12 @@ static void test_h264_encoder(void)
     ULONG ret;
     DWORD i;
 
+    if (sizeof(void *) == 4 && winetest_platform_is_wine)
+    {
+        skip("Skipping 32bit H264 encoder tests\n");
+        return;
+    }
+
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
 
