@@ -1041,7 +1041,7 @@ static void add_path_var( WCHAR **env, SIZE_T *pos, SIZE_T *size, const char *na
 {
     WCHAR *nt_name = NULL;
 
-    if (path && unix_to_nt_file_name( path, &nt_name )) return;
+    if (path && unix_to_nt_file_name( path, &nt_name, FILE_OPEN )) return;
     append_envW( env, pos, size, name, nt_name );
     free( nt_name );
 }
@@ -1057,7 +1057,7 @@ static void add_system_dll_path_var( WCHAR **env, SIZE_T *pos, SIZE_T *size )
     {
         WCHAR *nt_name = NULL;
 
-        if (!unix_to_nt_file_name( system_dll_paths[i], &nt_name ))
+        if (!unix_to_nt_file_name( system_dll_paths[i], &nt_name, FILE_OPEN ))
         {
             size_t len = wcslen( nt_name );
             path = realloc( path, (path_len + len + 1) * sizeof(WCHAR) );
@@ -1087,8 +1087,8 @@ static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
     unsigned int i;
     char str[22];
 
-    if (build_dir) unix_to_nt_file_name( build_dir, &nt_build_dir );
-    if (data_dir) unix_to_nt_file_name( data_dir, &nt_data_dir );
+    if (build_dir) unix_to_nt_file_name( build_dir, &nt_build_dir, FILE_OPEN );
+    if (data_dir) unix_to_nt_file_name( data_dir, &nt_data_dir, FILE_OPEN );
 
     append_envW( env, pos, size, "WINEBUILDDIR", nt_build_dir );
     append_envW( env, pos, size, "WINEDATADIR", nt_data_dir );
@@ -1478,7 +1478,7 @@ static WCHAR *get_initial_directory(void)
 
     if (pwd)
     {
-        if (!unix_to_nt_file_name( pwd, &ret ))
+        if (!unix_to_nt_file_name( pwd, &ret, FILE_OPEN ))
         {
             ULONG len = wcslen( ret );
             if (len && ret[len - 1] != '\\')
