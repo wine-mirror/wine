@@ -6687,7 +6687,7 @@ static void load_registry_fonts(void)
         dlen = wcslen( path );
         if (*path == '\\')
             add_font_resource( path, ADDFONT_ALLOW_BITMAP );
-        else if (dlen >= 6 && !wcsicmp( path + dlen - 5, dot_fonW ))
+        else if (dlen >= 5 && !wcsicmp( path + dlen - 4, dot_fonW ))
             add_system_font_resource( path, ADDFONT_ALLOW_BITMAP );
         free( path );
     }
