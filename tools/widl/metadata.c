@@ -1569,6 +1569,22 @@ static UINT make_member_sig3( UINT token, BYTE *buf )
     return len;
 }
 
+static UINT make_member_sig4( UINT token, UINT token2, BYTE *buf )
+{
+    UINT len = 4;
+
+    buf[0] = SIG_TYPE_HASTHIS;
+    buf[1] = 4;
+    buf[2] = ELEMENT_TYPE_VOID;
+    buf[3] = ELEMENT_TYPE_CLASS;
+    len += encode_int( token, buf + 4 );
+    buf[len++] = ELEMENT_TYPE_VALUETYPE;
+    len += encode_int( token2, buf + len );
+    buf[len++] = ELEMENT_TYPE_U4;
+    buf[len++] = ELEMENT_TYPE_STRING;
+    return len;
+}
+
 static UINT make_type_sig( const type_t *type, BYTE *buf )
 {
     UINT len = 0;
@@ -2970,6 +2986,88 @@ static void add_marshalingbehavior_attr_step2( type_t *type )
     add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
 }
 
+static UINT make_composable_value( const expr_t *attr, BYTE *buf )
+{
+    char *name_iface, *name_contract;
+    const expr_t *contract = attr->ref;
+    const type_t *type_iface = attr->u.var->declspec.type;
+    const type_t *type_contract = contract->u.var->declspec.type;
+    UINT access_type = 1, contract_version = contract->ref->u.integer.value;
+    UINT len_iface, len_contract;
+    BYTE *ptr = buf;
+
+    name_iface = format_namespace( type_iface->namespace, "", ".", type_iface->name, NULL );
+    len_iface = strlen( name_iface );
+
+    name_contract = format_namespace( type_contract->namespace, "", ".", type_contract->name, NULL );
+    len_contract = strlen( name_contract );
+
+    ptr[0] = 1;
+    ptr[1] = 0;
+    ptr[2] = len_iface;
+    memcpy( ptr + 3, name_iface, len_iface );
+    ptr += len_iface + 3;
+
+    if (is_attr( attr->u.var->attrs, ATTR_PUBLIC)) access_type = 2;
+    memcpy( ptr, &access_type, sizeof(access_type) );
+    ptr += sizeof(access_type);
+
+    memcpy( ptr, &contract_version, sizeof(contract_version) );
+    ptr += sizeof(contract_version);
+
+    ptr[0] = len_contract;
+    memcpy( ptr + 1, name_contract, len_contract );
+    ptr += len_contract + 1;
+    ptr[0] = ptr[1] = 0;
+
+    free( name_iface );
+    free( name_contract );
+    return len_iface + sizeof(access_type) + sizeof(contract_version) + len_contract + 6;
+}
+
+static void add_composable_attr_step1( type_t *type )
+{
+    attr_t *attr;
+
+    if (type->attrs) LIST_FOR_EACH_ENTRY( attr, type->attrs, attr_t, entry )
+    {
+        UINT assemblyref, scope, typeref, typeref_attr, typeref_type, class, sig_size;
+        BYTE sig[64];
+
+        if (attr->type != ATTR_COMPOSABLE) continue;
+
+        scope = resolution_scope( TABLE_ASSEMBLYREF, MSCORLIB_ROW );
+        typeref_type = add_typeref_row( scope, add_string("Type"), add_string("System") );
+
+        assemblyref = add_assemblyref_row( 0x200, 0, add_string("Windows.Foundation") );
+        scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
+        typeref = add_typeref_row( scope, add_string("CompositionType"), add_string("Windows.Foundation.Metadata") );
+        typeref_attr = add_typeref_row( scope, add_string("ComposableAttribute"), add_string("Windows.Foundation.Metadata") );
+
+        class = memberref_parent( TABLE_TYPEREF, typeref_attr );
+        sig_size = make_member_sig4( typedef_or_ref(TABLE_TYPEREF, typeref_type), typedef_or_ref(TABLE_TYPEREF, typeref), sig );
+        attr->md_member = add_memberref_row( class, add_string(".ctor"), add_blob(sig, sig_size) );
+    }
+}
+
+static void add_composable_attr_step2( type_t *type )
+{
+    const attr_t *attr;
+
+    if (type->attrs) LIST_FOR_EACH_ENTRY( attr, type->attrs, const attr_t, entry )
+    {
+        UINT parent, attr_type, value_size;
+        BYTE value[MAX_NAME + sizeof(UINT) * 2 + 6];
+
+        if (attr->type != ATTR_COMPOSABLE) continue;
+
+        parent = has_customattribute( TABLE_TYPEDEF, type->md.def );
+        attr_type = customattribute_type( TABLE_MEMBERREF, attr->md_member );
+        value_size = make_composable_value( attr->u.pval, value );
+        add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
+    }
+}
+
 static void add_member_interfaces( type_t *class )
 {
     const typeref_list_t *iface_list = type_runtimeclass_get_ifaces( class );
@@ -3135,12 +3233,14 @@ static void add_runtimeclass_type_step2( type_t *type )
     add_member_interfaces( type );
     add_static_interfaces( type );
 
+    add_composable_attr_step1( type );
     add_static_attr_step1( type );
     add_activatable_attr_step1( type );
     add_threading_attr_step1( type );
     add_marshalingbehavior_attr_step1( type );
 
     add_contract_attr_step2( type );
+    add_composable_attr_step2( type );
     add_static_attr_step2( type );
     add_activatable_attr_step2( type );
     add_threading_attr_step2( type );
