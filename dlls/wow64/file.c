@@ -971,16 +971,3 @@ NTSTATUS WINAPI wow64_wine_nt_to_unix_file_name( UINT *args )
 
     return wine_nt_to_unix_file_name( objattr_32to64_redirect( &attr, attr32 ), nameA, size, disposition );
 }
-
-
-/**********************************************************************
- *           wow64_wine_unix_to_nt_file_name
- */
-NTSTATUS WINAPI wow64_wine_unix_to_nt_file_name( UINT *args )
-{
-    const char *name = get_ptr( &args );
-    WCHAR *buffer = get_ptr( &args );
-    ULONG *size = get_ptr( &args );
-
-    return wine_unix_to_nt_file_name( name, buffer, size );
-}

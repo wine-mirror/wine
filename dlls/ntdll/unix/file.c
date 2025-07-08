@@ -4043,28 +4043,6 @@ NTSTATUS unix_to_nt_file_name( const char *name, WCHAR **nt )
 
 
 /******************************************************************
- *           wine_unix_to_nt_file_name
- */
-NTSTATUS WINAPI wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, ULONG *size )
-{
-    WCHAR *nt_name = NULL;
-    NTSTATUS status;
-
-    if (name[0] != '/') return STATUS_INVALID_PARAMETER;  /* relative paths are not supported */
-
-    status = unix_to_nt_file_name( name, &nt_name );
-    if (nt_name)
-    {
-        if (*size > wcslen(nt_name)) wcscpy( buffer, nt_name );
-        else status = STATUS_BUFFER_TOO_SMALL;
-        *size = wcslen(nt_name) + 1;
-        free( nt_name );
-    }
-    return status;
-}
-
-
-/******************************************************************
  *           ntdll_get_dos_file_name
  */
 NTSTATUS ntdll_get_dos_file_name( const char *unix_name, WCHAR **dos, UINT disposition )

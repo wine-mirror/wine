@@ -249,8 +249,7 @@
     SYSCALL_ENTRY( 0x00f5, NtWow64QueryInformationProcess64, 20 ) \
     SYSCALL_ENTRY( 0x00f6, NtWow64ReadVirtualMemory64, 28 ) \
     SYSCALL_ENTRY( 0x00f7, NtWow64WriteVirtualMemory64, 28 ) \
-    SYSCALL_ENTRY( 0x00f8, wine_nt_to_unix_file_name, 16 ) \
-    SYSCALL_ENTRY( 0x00f9, wine_unix_to_nt_file_name, 12 )
+    SYSCALL_ENTRY( 0x00f8, wine_nt_to_unix_file_name, 16 )
 #ifdef _WIN64
 #define ALL_SYSCALLS \
     SYSCALL_ENTRY( 0x0000, NtAccessCheck, 64 ) \
@@ -495,8 +494,7 @@
     SYSCALL_ENTRY( 0x00ef, NtWaitForAlertByThreadId, 16 ) \
     SYSCALL_ENTRY( 0x00f0, NtWaitForDebugEvent, 32 ) \
     SYSCALL_ENTRY( 0x00f1, NtWaitForKeyedEvent, 32 ) \
-    SYSCALL_ENTRY( 0x00f2, wine_nt_to_unix_file_name, 32 ) \
-    SYSCALL_ENTRY( 0x00f3, wine_unix_to_nt_file_name, 24 )
+    SYSCALL_ENTRY( 0x00f2, wine_nt_to_unix_file_name, 32 )
 #else
 #define ALL_SYSCALLS ALL_SYSCALLS32
 #endif
