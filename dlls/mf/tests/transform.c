@@ -4057,12 +4057,15 @@ static void test_wma_decoder_dmo_output_type(void)
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputCurrentType(dmo, 0, &type);
     ok(hr == S_OK, "GetOutputCurrentType returned %#lx.\n", hr);
+    MoFreeMediaType(input_type);
+    MoFreeMediaType(&type);
 
     init_dmo_media_type_audio(input_type, input_subtype, channel_count, rate * 2, 32);
     hr = IMediaObject_SetInputType(dmo, 0, input_type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputCurrentType(dmo, 0, &type);
     todo_wine ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputCurrentType returned %#lx.\n", hr);
+    if (hr == S_OK) MoFreeMediaType(&type);
 
     /* Cleanup. */
     ret = IMediaObject_Release(dmo);
@@ -4361,6 +4364,8 @@ static void test_h264_encoder(void)
         winetest_pop_context();
     }
 
+    IMFMediaType_Release(media_type);
+
     hr = IMFTransform_QueryInterface(transform, &IID_ICodecAPI, (void **)&codec_api);
     ok(hr == S_OK, "QueryInterface returned %#lx.\n", hr);
     for (desc = &expect_codec_api_attributes[0]; desc->key; ++desc)
@@ -4426,6 +4431,9 @@ static void test_h264_encoder(void)
     ok(hr == S_OK, "ProcessOutput returned %#lx.\n", hr);
     if (hr != S_OK)
     {
+        ret = IMFTransform_Release(transform);
+        ok(ret == 0, "Release returned %lu\n", ret);
+        IMFCollection_Release(output_sample_collection);
         IMFSample_Release(output_sample);
         goto failed;
     }
@@ -4444,7 +4452,6 @@ static void test_h264_encoder(void)
     ok(ret == 0, "Got %lu%% diff\n", ret);
     IMFCollection_Release(output_sample_collection);
 
-    IMFMediaType_Release(media_type);
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %lu\n", ret);
 
