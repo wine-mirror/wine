@@ -2736,16 +2736,23 @@ static void add_static_attr_step2( type_t *type )
 static UINT make_activatable_value( const expr_t *attr, BYTE *buf )
 {
     char *name_iface = NULL, *name_contract;
-    UINT len_iface = 0, len_contract, len_extra = 5;
-    const type_t *type_iface = attr->u.var->declspec.type, *type_contract;
+    const type_t *type_iface, *type_contract;
+    UINT version, len_iface = 0, len_contract, len_extra = 5;
     BYTE *ptr = buf;
 
-    if (attr->type != EXPR_MEMBER) type_contract = attr->u.var->declspec.type;
-    else
+    if (attr->type == EXPR_MEMBER)
     {
+        type_iface = attr->u.var->declspec.type;
         name_iface = format_namespace( type_iface->namespace, "", ".", type_iface->name, NULL );
         len_iface = strlen( name_iface );
+
         type_contract = attr->ref->u.var->declspec.type;
+        version = attr->ref->ref->u.integer.value;
+    }
+    else
+    {
+        type_contract = attr->u.var->declspec.type;
+        version = attr->ref->u.integer.value;
     }
 
     name_contract = format_namespace( type_contract->namespace, "", ".", type_contract->name, NULL );
@@ -2762,16 +2769,20 @@ static UINT make_activatable_value( const expr_t *attr, BYTE *buf )
         ptr += 2;
         len_extra += 5;
     }
+
     ptr[0] = 1;
     ptr[1] = 0;
-    ptr[2] = len_contract;
-    memcpy( ptr + 3, name_contract, len_contract );
-    ptr += len_contract + 3;
+    memcpy( ptr + 2, &version, sizeof(version) );
+    ptr += sizeof(version) + 2;
+
+    ptr[0] = len_contract;
+    memcpy( ptr + 1, name_contract, len_contract );
+    ptr += len_contract + 1;
     ptr[0] = ptr[1] = 0;
 
     free( name_iface );
     free( name_contract );
-    return len_iface + len_contract + len_extra;
+    return len_iface + sizeof(version) + len_contract + len_extra;
 }
 
 static void add_activatable_attr_step1( type_t *type )
@@ -2815,7 +2826,7 @@ static void add_activatable_attr_step2( type_t *type )
     if (type->attrs) LIST_FOR_EACH_ENTRY_REV( attr, type->attrs, const attr_t, entry )
     {
         UINT parent, attr_type, value_size;
-        BYTE value[MAX_NAME * 2 + 10];
+        BYTE value[MAX_NAME * 2 + sizeof(UINT) + 10];
 
         if (attr->type != ATTR_ACTIVATABLE) continue;
 
