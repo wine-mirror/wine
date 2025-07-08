@@ -1717,6 +1717,29 @@ static UINT make_activation_sig( const var_t *method, BYTE *buf )
     return len;
 }
 
+static UINT make_composition_sig( const var_t *method, BYTE *buf )
+{
+    const var_t *arg;
+    UINT len = 3, count = 0;
+
+    buf[0] = SIG_TYPE_HASTHIS;
+    buf[1] = 0;
+    buf[2] = ELEMENT_TYPE_VOID;
+
+    if (method) LIST_FOR_EACH_ENTRY( arg, type_function_get_args(method->declspec.type), var_t, entry ) count++;
+
+    if (method) assert( count >= 3 );
+
+    if (count > 3) LIST_FOR_EACH_ENTRY( arg, type_function_get_args(method->declspec.type), var_t, entry )
+    {
+        if (--count < 3) break; /* omit last 3 standard composition args */
+        len += make_type_sig( arg->declspec.type, buf + len );
+        buf[1]++;
+    }
+
+    return len;
+}
+
 static UINT make_deprecated_sig( UINT token, BYTE *buf )
 {
     UINT len = 5;
@@ -3171,6 +3194,51 @@ static void add_activation_interfaces( const type_t *class )
     }
 }
 
+static void add_composition_interfaces( const type_t *class )
+{
+    UINT flags = METHOD_ATTR_FAMILY | METHOD_ATTR_HIDEBYSIG | METHOD_ATTR_SPECIALNAME | METHOD_ATTR_RTSPECIALNAME;
+    const attr_t *attr;
+
+    if (class->attrs) LIST_FOR_EACH_ENTRY_REV( attr, class->attrs, const attr_t, entry )
+    {
+        UINT methoddef, parent, attr_type, value_size, paramlist = 0, sig_size;
+        BYTE value[MAX_NAME + sizeof(UINT) + 5], sig[256];
+        const expr_t *composable = attr->u.pval;
+        const var_t *method = NULL, *arg;
+        const statement_t *stmt;
+        const type_t *iface;
+
+        if (attr->type != ATTR_COMPOSABLE) continue;
+
+        iface = composable->u.var->declspec.type;
+
+        STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
+        {
+            UINT seq = 1, row, count = 0;
+
+            method = stmt->u.var;
+
+            LIST_FOR_EACH_ENTRY( arg, type_function_get_args(method->declspec.type), var_t, entry ) count++;
+
+            if (count > 3) LIST_FOR_EACH_ENTRY( arg, type_function_get_args(method->declspec.type), var_t, entry )
+            {
+                if (--count < 3) break; /* omit last 3 standard composition args */
+                row = add_param_row( get_param_attrs(arg), seq++, add_string(arg->name) );
+                if (!paramlist) paramlist = row;
+            }
+            break;
+        }
+
+        sig_size = make_composition_sig( method, sig );
+        methoddef = add_methoddef_row( METHOD_IMPL_RUNTIME, flags, add_string(".ctor"), add_blob(sig, sig_size), paramlist );
+
+        parent = has_customattribute( TABLE_METHODDEF, methoddef );
+        attr_type = customattribute_type( TABLE_MEMBERREF, class->md.member[MD_ATTR_CONTRACT] );
+        value_size = make_contract_value( class, value );
+        add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
+    }
+}
+
 static void add_constructor_overload( const type_t *type )
 {
     static const BYTE sig_default[] = { SIG_TYPE_HASTHIS, 0, ELEMENT_TYPE_VOID };
@@ -3182,7 +3250,7 @@ static void add_constructor_overload( const type_t *type )
     {
         const expr_t *value = attr->u.pval;
 
-        if (attr->type == ATTR_ACTIVATABLE && value->type == EXPR_MEMBER)
+        if (attr->type == ATTR_COMPOSABLE || (attr->type == ATTR_ACTIVATABLE && value->type == EXPR_MEMBER))
         {
             UINT assemblyref, scope, typeref_default, typeref_overload, class;
 
@@ -3219,9 +3287,10 @@ static void add_runtimeclass_type_step2( type_t *type )
 
     scope = resolution_scope( TABLE_ASSEMBLYREF, MSCORLIB_ROW );
     typeref = add_typeref_row( scope, add_string("Object"), add_string("System") );
-
     extends = typedef_or_ref( TABLE_TYPEREF, typeref );
-    flags = TYPE_ATTR_PUBLIC | TYPE_ATTR_SEALED | TYPE_ATTR_UNKNOWN;
+
+    flags = TYPE_ATTR_PUBLIC | TYPE_ATTR_UNKNOWN;
+    if (!is_attr( type->attrs, ATTR_COMPOSABLE )) flags |= TYPE_ATTR_SEALED;
     if (!iface_list) flags |= TYPE_ATTR_ABSTRACT;
 
     type->md.def = add_typedef_row( flags, name, namespace, extends, 0, 0 );
@@ -3230,6 +3299,7 @@ static void add_runtimeclass_type_step2( type_t *type )
     add_contract_attr_step1( type );
 
     add_activation_interfaces( type );
+    add_composition_interfaces( type );
     add_member_interfaces( type );
     add_static_interfaces( type );
 
