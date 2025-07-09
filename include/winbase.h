@@ -1575,7 +1575,7 @@ WINBASEAPI HANDLE      WINAPI CreateActCtxA(PCACTCTXA);
 WINBASEAPI HANDLE      WINAPI CreateActCtxW(PCACTCTXW);
 #define                       CreateActCtx WINELIB_NAME_AW(CreateActCtx)
 WINBASEAPI HANDLE      WINAPI CreateBoundaryDescriptorA(LPCSTR,ULONG);
-WINBASEAPI HANDLE      WINAPI CreateBoundaryDescriptorW(LPCWSTR,ULONG);
+                           /* CreateBoundaryDescriptorW is in namespaceapi.h */
 #define                       CreateBoundaryDescriptor WINELIB_NAME_AW(CreateBoundaryDescriptor)
 WINBASEAPI BOOL        WINAPI CreateDirectoryA(LPCSTR,LPSECURITY_ATTRIBUTES);
 WINBASEAPI BOOL        WINAPI CreateDirectoryW(LPCWSTR,LPSECURITY_ATTRIBUTES);
