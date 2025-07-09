@@ -160,6 +160,11 @@ debian-32:
   script:
     - wine usr/local/lib/wine/i386-windows/winetest.exe -q
 
+debian-wow64:
+  extends: debian-32
+  variables:
+    WINEARCH: "wow64"
+
 debian-64:
   extends: .wine-test
   rules:
