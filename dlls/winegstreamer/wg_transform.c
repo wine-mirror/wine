@@ -495,7 +495,15 @@ static GstCaps *transform_get_parsed_caps(GstCaps *caps, const char *media_type)
     else if (gst_structure_get_int(structure, "wmvversion", &value))
         gst_caps_set_simple(parsed_caps, "parsed", G_TYPE_BOOLEAN, true, "wmvversion", G_TYPE_INT, value, NULL);
     else
+    {
+        if (!strcmp(media_type, "video/x-h264"))
+        {
+            gst_caps_set_simple(parsed_caps, "stream-format", G_TYPE_STRING, "byte-stream", NULL);
+            gst_caps_set_simple(parsed_caps, "alignment", G_TYPE_STRING, "au", NULL);
+        }
+
         gst_caps_set_simple(parsed_caps, "parsed", G_TYPE_BOOLEAN, true, NULL);
+    }
 
     return parsed_caps;
 }
@@ -506,6 +514,7 @@ static bool transform_create_decoder_elements(struct wg_transform *transform,
     GstCaps *parsed_caps = NULL, *sink_caps = NULL;
     GstElement *element;
     bool ret = false;
+    char *str;
 
     if (!strcmp(input_mime, "audio/x-raw") || !strcmp(input_mime, "video/x-raw"))
         return true;
@@ -526,6 +535,15 @@ static bool transform_create_decoder_elements(struct wg_transform *transform,
 
     if (element)
     {
+        if (!(element = create_element("capsfilter", "good")) ||
+                !append_element(transform->container, element, first, last))
+            goto done;
+        if ((str = gst_caps_to_string(parsed_caps)))
+        {
+            gst_util_set_object_arg(G_OBJECT(element), "caps", str);
+            free(str);
+        }
+
         /* We try to intercept buffers produced by the parser, so if we push a large buffer into the
          * parser, it won't push everything into the decoder all in one go.
          */
