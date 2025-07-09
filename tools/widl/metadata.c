@@ -3569,7 +3569,7 @@ void write_metadata( const statement_list_t *stmts )
     static const BYTE pad[FILE_ALIGNMENT];
     UINT image_size, file_size, i;
 
-    if (!do_metadata) return;
+    if (!do_metadata || !winrt_mode) return;
 
     build_streams( stmts );
 
