@@ -1208,6 +1208,12 @@ if (0)   /* Crashes on windows */
     ok(hr == E_INVALIDARG, "Unexpected hr 0x%08lx\n", hr);
 }
 
+    str = NULL;
+    hr = _Connection_get_Version(connection, &str);
+    ok(hr == S_OK, "Failed to get state, hr 0x%08lx\n", hr);
+    ok(str != NULL, "got %p\n", str);
+    SysFreeString(str);
+
     state = -1;
     hr = _Connection_get_State(connection, &state);
     ok(hr == S_OK, "Failed to get state, hr 0x%08lx\n", hr);
