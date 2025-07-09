@@ -35,6 +35,11 @@
 #include "wine/debug.h"
 #include "wintab.h"
 
+#ifdef SONAME_LIBXI
+
+#include <X11/Xlib.h>
+#include <X11/extensions/XInput.h>
+
 WINE_DEFAULT_DEBUG_CHANNEL(wintab32);
 
 #define WT_MAX_NAME_LEN 256
@@ -251,12 +256,6 @@ typedef struct tagWTPACKET {
         ORIENTATION pkOrientation;
         ROTATION pkRotation; /* 1.1 */
 } WTPACKET, *LPWTPACKET;
-
-
-#ifdef SONAME_LIBXI
-
-#include <X11/Xlib.h>
-#include <X11/extensions/XInput.h>
 
 static int           motion_type;
 static int           button_press_type;
