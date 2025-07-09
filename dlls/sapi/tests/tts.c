@@ -998,13 +998,13 @@ static void test_spvoice_ssml(void)
     reset_engine_params(&test_engine);
 
     hr = ISpVoice_Speak(voice, bad_text1, SPF_IS_XML | SPF_PARSE_SSML, NULL);
-    todo_wine ok(hr == SPERR_UNSUPPORTED_FORMAT, "got %#lx.\n", hr);
+    ok(hr == SPERR_UNSUPPORTED_FORMAT, "got %#lx.\n", hr);
 
     hr = ISpVoice_Speak(voice, bad_text2, SPF_IS_XML | SPF_PARSE_SSML, NULL);
-    todo_wine ok(hr == SPERR_UNSUPPORTED_FORMAT, "got %#lx.\n", hr);
+    ok(hr == SPERR_UNSUPPORTED_FORMAT, "got %#lx.\n", hr);
 
     hr = ISpVoice_Speak(voice, bad_text3, SPF_IS_XML | SPF_PARSE_SSML, NULL);
-    todo_wine ok(hr == SPERR_UNSUPPORTED_FORMAT || broken(hr == S_OK) /* win7 */, "got %#lx.\n", hr);
+    ok(hr == SPERR_UNSUPPORTED_FORMAT || broken(hr == S_OK) /* win7 */, "got %#lx.\n", hr);
 
     reset_engine_params(&test_engine);
 

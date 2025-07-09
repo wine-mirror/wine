@@ -80,9 +80,30 @@ static inline const char *debugstr_xmlstr(const xmlstr_t *str)
     return debugstr_wn(str->ptr, str->len);
 }
 
+static WCHAR *xmlstrcpyW(WCHAR *dst, const xmlstr_t* src)
+{
+    memcpy(dst, src->ptr, src->len * sizeof(WCHAR));
+    dst[src->len] = 0;
+    return dst;
+}
+
+static WCHAR *xmlstrdupW(const xmlstr_t* str)
+{
+    WCHAR *strW;
+
+    if (!(strW = malloc((str->len + 1) * sizeof(WCHAR))))
+        return NULL;
+    return xmlstrcpyW(strW, str);
+}
+
 static inline BOOL xmlstr_eq(const xmlstr_t* xmlstr, const WCHAR *str)
 {
     return !wcsncmp(xmlstr->ptr, str, xmlstr->len) && !str[xmlstr->len];
+}
+
+static inline BOOL xml_attr_eq(const struct xml_attr *attr, const WCHAR *name)
+{
+    return xmlstr_eq(&attr->name, name);
 }
 
 static inline BOOL xml_elem_eq(const struct xml_elem *elem, const WCHAR *ns, const WCHAR *name)
@@ -367,9 +388,116 @@ static BOOL next_xml_elem(struct xml_parser *parser, struct xml_elem *elem, cons
     else return set_error(parser);
 }
 
-static HRESULT parse_ssml_speak_elem(struct xml_parser *parser, SPVSTATE *state)
+static BOOL next_text_or_xml_elem(struct xml_parser *parser, BOOL *is_text, struct xml_elem *elem,
+        const struct xml_elem *parent)
 {
+    if (parser->error) return FALSE;
+
+    while (parser->ptr < parser->end)
+    {
+        if (*parser->ptr == '<')
+        {
+            *is_text = FALSE;
+
+            if (!next_xml_elem(parser, elem, parent))
+                return FALSE;
+
+            if (!is_special_xml_markup(elem))
+                return TRUE;
+            else if (!skip_special_xml_markup(parser, elem))
+                return set_error(parser);
+        }
+        else
+        {
+            *is_text = TRUE;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static HRESULT add_sapi_text_fragment(struct xml_parser *parser, const SPVSTATE *state)
+{
+    FIXME("stub.\n");
     return E_NOTIMPL;
+}
+
+static HRESULT parse_ssml_elems(struct xml_parser *parser, const SPVSTATE *state, const struct xml_elem *parent)
+{
+    struct xml_elem elem;
+    BOOL is_text;
+    HRESULT hr = S_OK;
+
+    while (SUCCEEDED(hr) && next_text_or_xml_elem(parser, &is_text, &elem, parent))
+    {
+        if (is_text)
+        {
+            hr = add_sapi_text_fragment(parser, state);
+        }
+        else
+        {
+            FIXME("Unknown element %s.\n", debugstr_xmlstr(&elem.name));
+            hr = E_NOTIMPL;
+        }
+    }
+
+    if (SUCCEEDED(hr) && parser->error)
+        return SPERR_UNSUPPORTED_FORMAT;
+    return hr;
+}
+
+static HRESULT parse_ssml_speak_elem(struct xml_parser *parser, const struct xml_elem *parent, SPVSTATE *state)
+{
+    struct xml_attr attr;
+    BOOL end = FALSE;
+    BOOL has_version = FALSE;
+    LCID lcid = 0;
+
+    while (next_xml_attr(parser, &attr, &end))
+    {
+        if (xml_attr_eq(&attr, L"version"))
+        {
+            if (!xmlstr_eq(&attr.value, L"1.0"))
+            {
+                ERR("Invalid SSML version %s.\n", debugstr_xmlstr(&attr.value));
+                return SPERR_UNSUPPORTED_FORMAT;
+            }
+
+            has_version = TRUE;
+        }
+        else if (xml_attr_eq(&attr, L"xml:lang"))
+        {
+            WCHAR *lang = xmlstrdupW(&attr.value);
+
+            if (!lang) return E_OUTOFMEMORY;
+            lcid = LocaleNameToLCID(lang, 0);
+            free(lang);
+
+            if (!lcid)
+            {
+                ERR("Invalid xml:lang %s.\n", debugstr_xmlstr(&attr.value));
+                return SPERR_UNSUPPORTED_FORMAT;
+            }
+        }
+    }
+
+    if (!has_version)
+    {
+        ERR("Missing version attribute.\n");
+        return SPERR_UNSUPPORTED_FORMAT;
+    }
+    if (!lcid)
+    {
+        ERR("Missing xml:lang attribute.\n");
+        return SPERR_UNSUPPORTED_FORMAT;
+    }
+
+    if (end) return S_OK;
+
+    state->eAction = SPVA_Speak;
+    state->LangID  = LANGIDFROMLCID(lcid);
+
+    return parse_ssml_elems(parser, state, parent);
 }
 
 static HRESULT parse_ssml_contents(const WCHAR *contents, const WCHAR *end, SPVSTATE *state, SPVTEXTFRAG **frag_list)
@@ -404,7 +532,7 @@ static HRESULT parse_ssml_contents(const WCHAR *contents, const WCHAR *end, SPVS
 
     if (!xml_elem_eq(&elem, ssml_ns, L"speak"))
         return SPERR_UNSUPPORTED_FORMAT;
-    if (FAILED(hr = parse_ssml_speak_elem(&parser, state)))
+    if (FAILED(hr = parse_ssml_speak_elem(&parser, &elem, state)))
         return hr;
 
     if (next_xml_elem(&parser, &elem, &parent))
@@ -412,9 +540,6 @@ static HRESULT parse_ssml_contents(const WCHAR *contents, const WCHAR *end, SPVS
         ERR("Unexpected element %s after <speak>.\n", debugstr_xmlstr(&elem.name));
         return SPERR_UNSUPPORTED_FORMAT;
     }
-
-    if (parser.error)
-        return SPERR_UNSUPPORTED_FORMAT;
 
     return S_OK;
 }
