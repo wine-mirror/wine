@@ -48,6 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(android);
 
 static const struct egl_platform *egl;
 static const struct opengl_funcs *funcs;
+static const struct client_surface_funcs android_client_surface_funcs;
 static const struct opengl_drawable_funcs android_drawable_funcs;
 
 struct gl_drawable
@@ -73,9 +74,13 @@ static inline EGLConfig egl_config_for_format(int format)
 static struct gl_drawable *create_gl_drawable( HWND hwnd, HDC hdc, int format, ANativeWindow *window )
 {
     static const int attribs[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };
+    struct client_surface *client;
     struct gl_drawable *gl;
 
-    if (!(gl = opengl_drawable_create( sizeof(*gl), &android_drawable_funcs, format, hwnd ))) return NULL;
+    if (!(client = client_surface_create( sizeof(*client), &android_client_surface_funcs, hwnd ))) return NULL;
+    gl = opengl_drawable_create( sizeof(*gl), &android_drawable_funcs, format, client );
+    client_surface_release( client );
+    if (!gl) return NULL;
 
     if (!window) gl->window = create_ioctl_window( hwnd, TRUE, 1.0f );
     else gl->window = grab_ioctl_window( window );
@@ -91,16 +96,6 @@ static void android_drawable_destroy( struct opengl_drawable *base )
 {
     struct gl_drawable *gl = impl_from_opengl_drawable( base );
     release_ioctl_window( gl->window );
-}
-
-static void android_drawable_detach( struct opengl_drawable *base )
-{
-    TRACE( "%s\n", debugstr_opengl_drawable( base ) );
-}
-
-static void android_drawable_update( struct opengl_drawable *base )
-{
-    TRACE( "%s\n", debugstr_opengl_drawable( base ) );
 }
 
 void update_gl_drawable( HWND hwnd )
@@ -133,7 +128,6 @@ static BOOL android_surface_create( HWND hwnd, HDC hdc, int format, struct openg
         gl = impl_from_opengl_drawable( *drawable );
         funcs->p_eglGetConfigAttrib( egl->display, egl_config_for_format(format), EGL_NATIVE_VISUAL_ID, &pf );
         gl->window->perform( gl->window, NATIVE_WINDOW_SET_BUFFERS_FORMAT, pf );
-        gl->base.hwnd = hwnd;
         gl->base.format = format;
 
         TRACE( "Updated drawable %s\n", debugstr_opengl_drawable( *drawable ) );
@@ -191,11 +185,34 @@ static struct opengl_driver_funcs android_driver_funcs =
     .p_surface_create = android_surface_create,
 };
 
+static void android_client_surface_destroy( struct client_surface *client )
+{
+    TRACE( "%s\n", debugstr_client_surface( client ) );
+}
+
+static void android_client_surface_detach( struct client_surface *client )
+{
+}
+
+static void android_client_surface_update( struct client_surface *client )
+{
+}
+
+static void android_client_surface_present( struct client_surface *client, HDC hdc )
+{
+}
+
+static const struct client_surface_funcs android_client_surface_funcs =
+{
+    .destroy = android_client_surface_destroy,
+    .detach = android_client_surface_detach,
+    .update = android_client_surface_update,
+    .present = android_client_surface_present,
+};
+
 static const struct opengl_drawable_funcs android_drawable_funcs =
 {
     .destroy = android_drawable_destroy,
-    .detach = android_drawable_detach,
-    .update = android_drawable_update,
     .flush = android_drawable_flush,
     .swap = android_drawable_swap,
 };

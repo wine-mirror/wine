@@ -49,7 +49,6 @@ static const struct opengl_drawable_funcs wayland_drawable_funcs;
 struct wayland_gl_drawable
 {
     struct opengl_drawable base;
-    struct wayland_client_surface *client;
     struct wl_egl_window *wl_egl_window;
 };
 
@@ -61,23 +60,7 @@ static struct wayland_gl_drawable *impl_from_opengl_drawable(struct opengl_drawa
 static void wayland_drawable_destroy(struct opengl_drawable *base)
 {
     struct wayland_gl_drawable *gl = impl_from_opengl_drawable(base);
-
     if (gl->wl_egl_window) wl_egl_window_destroy(gl->wl_egl_window);
-    if (gl->client)
-    {
-        gl->client->client.funcs->detach( &gl->client->client );
-        client_surface_release( &gl->client->client );
-    }
-}
-
-static void wayland_drawable_detach(struct opengl_drawable *base)
-{
-    TRACE("%s\n", debugstr_opengl_drawable(base));
-}
-
-static void wayland_drawable_update(struct opengl_drawable *base)
-{
-    TRACE("%s\n", debugstr_opengl_drawable(base));
 }
 
 static EGLConfig egl_config_for_format(int format)
@@ -92,7 +75,7 @@ static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
     int client_width, client_height;
     RECT client_rect = {0};
 
-    NtUserGetClientRect(gl->base.hwnd, &client_rect, NtUserGetDpiForWindow(gl->base.hwnd));
+    NtUserGetClientRect(gl->base.client->hwnd, &client_rect, NtUserGetDpiForWindow(gl->base.client->hwnd));
     client_width = client_rect.right - client_rect.left;
     client_height = client_rect.bottom - client_rect.top;
     if (client_width == 0 || client_height == 0) client_width = client_height = 1;
@@ -103,6 +86,7 @@ static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
 static BOOL wayland_opengl_surface_create(HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable)
 {
     EGLConfig config = egl_config_for_format(format);
+    struct wayland_client_surface *client;
     EGLint attribs[4], *attrib = attribs;
     struct opengl_drawable *previous;
     struct wayland_gl_drawable *gl;
@@ -125,11 +109,14 @@ static BOOL wayland_opengl_surface_create(HWND hwnd, HDC hdc, int format, struct
     }
     *attrib++ = EGL_NONE;
 
-    if (!(gl = opengl_drawable_create(sizeof(*gl), &wayland_drawable_funcs, format, hwnd))) return FALSE;
-    if (!(gl->client = wayland_client_surface_create(hwnd))) goto err;
-    if (!(gl->wl_egl_window = wl_egl_window_create(gl->client->wl_surface, rect.right, rect.bottom))) goto err;
+    if (!(client = wayland_client_surface_create(hwnd))) return FALSE;
+    gl = opengl_drawable_create(sizeof(*gl), &wayland_drawable_funcs, format, &client->client);
+    client_surface_release(&client->client);
+    if (!gl) return FALSE;
+
+    if (!(gl->wl_egl_window = wl_egl_window_create(client->wl_surface, rect.right, rect.bottom))) goto err;
     if (!(gl->base.surface = funcs->p_eglCreateWindowSurface(egl->display, config, gl->wl_egl_window, attribs))) goto err;
-    set_client_surface(hwnd, gl->client);
+    set_client_surface(hwnd, client);
 
     TRACE("Created drawable %s with egl_surface %p\n", debugstr_opengl_drawable(&gl->base), gl->base.surface);
 
@@ -167,7 +154,7 @@ static BOOL wayland_drawable_swap(struct opengl_drawable *base)
 {
     struct wayland_gl_drawable *gl = impl_from_opengl_drawable(base);
 
-    client_surface_present(&gl->client->client, NULL);
+    client_surface_present(base->client, NULL);
     funcs->p_eglSwapBuffers(egl->display, gl->base.surface);
 
     return TRUE;
@@ -248,8 +235,6 @@ static struct opengl_driver_funcs wayland_driver_funcs =
 static const struct opengl_drawable_funcs wayland_drawable_funcs =
 {
     .destroy = wayland_drawable_destroy,
-    .detach = wayland_drawable_detach,
-    .update = wayland_drawable_update,
     .flush = wayland_drawable_flush,
     .swap = wayland_drawable_swap,
 };

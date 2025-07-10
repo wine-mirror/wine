@@ -221,10 +221,6 @@ extern PFN_vkGetInstanceProcAddr p_vkGetInstanceProcAddr;
 
 extern BOOL vulkan_init(void);
 
-/* opengl.c */
-extern void update_opengl_drawables( HWND hwnd );
-extern void detach_opengl_drawables( HWND hwnd );
-
 /* window.c */
 HANDLE alloc_user_handle( void *ptr, unsigned short type );
 void *free_user_handle( HANDLE handle, unsigned short type );

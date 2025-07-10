@@ -136,10 +136,6 @@ struct opengl_drawable;
 struct opengl_drawable_funcs
 {
     void (*destroy)( struct opengl_drawable *iface );
-    /* detach the drawable from its window, called from window owner thread */
-    void (*detach)( struct opengl_drawable *drawable );
-    /* update the drawable to match its window state, called from window owner thread */
-    void (*update)( struct opengl_drawable *drawable );
     /* flush and update the drawable front buffer, called from render thread */
     void (*flush)( struct opengl_drawable *iface, UINT flags );
     /* swap and present the drawable buffers, called from render thread */
@@ -154,23 +150,20 @@ struct opengl_drawable_funcs
 struct opengl_drawable
 {
     const struct opengl_drawable_funcs *funcs;
-    LONG ref;
-
-    int         format;         /* pixel format of the drawable */
-    int         interval;       /* last set surface swap interval */
-    HWND        hwnd;           /* window the drawable was created for */
-    struct list entry;          /* entry in win32u managed list */
-    LONG        updated;        /* has been moved / resized / reparented */
-    EGLSurface  surface;        /* surface for EGL based drivers */
+    LONG                                ref;            /* reference count */
+    struct client_surface              *client;         /* underlying client surface */
+    int                                 format;         /* pixel format of the drawable */
+    int                                 interval;       /* last set surface swap interval */
+    EGLSurface                          surface;        /* surface for EGL based drivers */
 };
 
 static inline const char *debugstr_opengl_drawable( struct opengl_drawable *drawable )
 {
     if (!drawable) return "(null)";
-    return wine_dbg_sprintf( "%p (format %u, hwnd %p)", drawable, drawable->format, drawable->hwnd );
+    return wine_dbg_sprintf( "%s/%p (format %u)", debugstr_client_surface( drawable->surface ), drawable, drawable->format );
 }
 
-W32KAPI void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *funcs, int format, HWND hwnd );
+W32KAPI void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *funcs, int format, struct client_surface *client );
 W32KAPI void opengl_drawable_add_ref( struct opengl_drawable *drawable );
 W32KAPI void opengl_drawable_release( struct opengl_drawable *drawable );
 

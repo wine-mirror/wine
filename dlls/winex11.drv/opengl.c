@@ -197,7 +197,6 @@ struct glx_pixel_format
 struct gl_drawable
 {
     struct opengl_drawable         base;
-    struct client_surface         *client;
     RECT                           rect;         /* current size of the GL drawable */
     GLXDrawable                    drawable;     /* drawable for rendering with GL */
     Colormap                       colormap;     /* colormap for the client window */
@@ -488,6 +487,7 @@ static inline EGLConfig egl_config_for_format(int format)
 static BOOL x11drv_egl_surface_create( HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable )
 {
     struct opengl_drawable *previous;
+    struct client_surface *client;
     struct gl_drawable *gl;
     Window window;
     RECT rect;
@@ -495,19 +495,15 @@ static BOOL x11drv_egl_surface_create( HWND hwnd, HDC hdc, int format, struct op
     if ((previous = *drawable) && previous->format == format) return TRUE;
     NtUserGetClientRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) );
 
-    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_egl_surface_funcs, format, hwnd ))) return FALSE;
+    if (!(window = x11drv_client_surface_create( hwnd, &default_visual, default_colormap, &client ))) return FALSE;
+    gl = opengl_drawable_create( sizeof(*gl), &x11drv_egl_surface_funcs, format, client );
+    client_surface_release( client );
+    if (!gl) return FALSE;
     gl->rect = rect;
     gl->hdc = hdc;
 
-    if (!(window = x11drv_client_surface_create( hwnd, &default_visual, default_colormap, &gl->client )))
-    {
-        opengl_drawable_release( &gl->base );
-        return FALSE;
-    }
-
-    gl->base.surface = funcs->p_eglCreateWindowSurface( egl->display, egl_config_for_format( format ),
-                                                        (void *)window, NULL );
-    if (!gl->base.surface)
+    if (!(gl->base.surface = funcs->p_eglCreateWindowSurface( egl->display, egl_config_for_format( format ),
+                                                              (void *)window, NULL )))
     {
         opengl_drawable_release( &gl->base );
         return FALSE;
@@ -877,7 +873,6 @@ static void x11drv_surface_destroy( struct opengl_drawable *base )
     if (gl->colormap) XFreeColormap( gdi_display, gl->colormap );
     if (gl->hdc_src) NtGdiDeleteObjectApp( gl->hdc_src );
     if (gl->hdc_dst) NtGdiDeleteObjectApp( gl->hdc_dst );
-    if (gl->client) client_surface_release( gl->client );
 }
 
 static BOOL set_swap_interval( struct gl_drawable *gl, int interval )
@@ -935,22 +930,29 @@ static BOOL x11drv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl
 {
     struct glx_pixel_format *fmt = glx_pixel_format_from_format( format );
     struct opengl_drawable *previous;
+    struct client_surface *client;
     struct gl_drawable *gl;
+    Colormap colormap;
     Window window;
     RECT rect;
 
     if ((previous = *drawable) && previous->format == format) return TRUE;
     NtUserGetClientRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) );
 
-    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_surface_funcs, format, hwnd ))) return FALSE;
+    colormap = XCreateColormap( gdi_display, get_dummy_parent(), fmt->visual->visual,
+                                (fmt->visual->class == PseudoColor || fmt->visual->class == GrayScale ||
+                                 fmt->visual->class == DirectColor) ? AllocAll : AllocNone );
+    if (!colormap) return FALSE;
+
+    if (!(window = x11drv_client_surface_create( hwnd, fmt->visual, colormap, &client ))) goto failed;
+    gl = opengl_drawable_create( sizeof(*gl), &x11drv_surface_funcs, format, client );
+    client_surface_release( client );
+    if (!gl) goto failed;
     gl->rect = rect;
     gl->hdc = hdc;
-    gl->colormap = XCreateColormap( gdi_display, get_dummy_parent(), fmt->visual->visual,
-                                    (fmt->visual->class == PseudoColor || fmt->visual->class == GrayScale ||
-                                     fmt->visual->class == DirectColor) ? AllocAll : AllocNone );
+    gl->colormap = colormap;
 
-    if (!gl->colormap || !(window = x11drv_client_surface_create( hwnd, fmt->visual, gl->colormap, &gl->client )) ||
-        !(gl->drawable = pglXCreateWindow( gdi_display, fmt->fbconfig, window, NULL )))
+    if (!(gl->drawable = pglXCreateWindow( gdi_display, fmt->fbconfig, window, NULL )))
     {
         opengl_drawable_release( &gl->base );
         return FALSE;
@@ -962,18 +964,11 @@ static BOOL x11drv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl
     if (previous) opengl_drawable_release( previous );
     *drawable = &gl->base;
     return TRUE;
-}
 
-static void x11drv_surface_update( struct opengl_drawable *base )
-{
-    TRACE( "%s\n", debugstr_opengl_drawable( base ) );
+failed:
+    XFreeColormap( gdi_display, colormap );
+    return FALSE;
 }
-
-static void x11drv_surface_detach( struct opengl_drawable *base )
-{
-    TRACE( "%s\n", debugstr_opengl_drawable( base ) );
-}
-
 
 static BOOL x11drv_describe_pixel_format( int format, struct wgl_pixel_format *pf )
 {
@@ -1200,11 +1195,11 @@ static void x11drv_surface_flush( struct opengl_drawable *base, UINT flags )
 
     if (flags & GL_FLUSH_INTERVAL) set_swap_interval( gl, base->interval );
 
-    if (InterlockedCompareExchange( &gl->client->offscreen, 0, 0 ))
+    if (InterlockedCompareExchange( &base->client->offscreen, 0, 0 ))
     {
         if (!(flags & GL_FLUSH_FINISHED)) funcs->p_glFinish();
         XFlush( gdi_display );
-        client_surface_present( gl->client, gl->hdc );
+        client_surface_present( base->client, gl->hdc );
     }
 }
 
@@ -1301,7 +1296,7 @@ static BOOL x11drv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum tex
     }
     glx_attribs[count++] = 0;
 
-    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_pbuffer_funcs, format, 0 ))) return FALSE;
+    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_pbuffer_funcs, format, NULL ))) return FALSE;
 
     gl->drawable = pglXCreatePbuffer( gdi_display, fmt->fbconfig, glx_attribs );
     TRACE( "new Pbuffer drawable as %p (%lx)\n", gl, gl->drawable );
@@ -1467,10 +1462,10 @@ static BOOL x11drv_surface_swap( struct opengl_drawable *base )
         if (pglXWaitForSbcOML) pglXWaitForSbcOML( gdi_display, gl->drawable, target_sbc, &ust, &msc, &sbc );
     }
 
-    if (InterlockedCompareExchange( &gl->client->offscreen, 0, 0 ))
+    if (InterlockedCompareExchange( &base->client->offscreen, 0, 0 ))
     {
         if (!pglXWaitForSbcOML) XFlush( gdi_display );
-        client_surface_present( gl->client, gl->hdc );
+        client_surface_present( base->client, gl->hdc );
     }
 
     return TRUE;
@@ -1478,21 +1473,7 @@ static BOOL x11drv_surface_swap( struct opengl_drawable *base )
 
 static void x11drv_egl_surface_destroy( struct opengl_drawable *base )
 {
-    struct gl_drawable *gl = impl_from_opengl_drawable( base );
-
-    TRACE( "%s\n", debugstr_opengl_drawable( base ) );
-
-    if (gl->client) client_surface_release( gl->client );
-}
-
-static void x11drv_egl_surface_detach( struct opengl_drawable *base )
-{
-    TRACE( "%s\n", debugstr_opengl_drawable( base ) );
-}
-
-static void x11drv_egl_surface_update( struct opengl_drawable *base )
-{
-    TRACE( "%s\n", debugstr_opengl_drawable( base ) );
+    TRACE( "drawable %s\n", debugstr_opengl_drawable( base ) );
 }
 
 static void x11drv_egl_surface_flush( struct opengl_drawable *base, UINT flags )
@@ -1503,11 +1484,11 @@ static void x11drv_egl_surface_flush( struct opengl_drawable *base, UINT flags )
 
     if (flags & GL_FLUSH_INTERVAL) funcs->p_eglSwapInterval( egl->display, abs( base->interval ) );
 
-    if (InterlockedCompareExchange( &gl->client->offscreen, 0, 0 ))
+    if (InterlockedCompareExchange( &base->client->offscreen, 0, 0 ))
     {
         if (!(flags & GL_FLUSH_FINISHED)) funcs->p_glFinish();
         XFlush( gdi_display );
-        client_surface_present( gl->client, gl->hdc );
+        client_surface_present( base->client, gl->hdc );
     }
 }
 
@@ -1519,10 +1500,10 @@ static BOOL x11drv_egl_surface_swap( struct opengl_drawable *base )
 
     funcs->p_eglSwapBuffers( egl->display, gl->base.surface );
 
-    if (InterlockedCompareExchange( &gl->client->offscreen, 0, 0 ))
+    if (InterlockedCompareExchange( &base->client->offscreen, 0, 0 ))
     {
         XFlush( gdi_display );
-        client_surface_present( gl->client, gl->hdc );
+        client_surface_present( base->client, gl->hdc );
     }
 
     return TRUE;
@@ -1546,8 +1527,6 @@ static struct opengl_driver_funcs x11drv_driver_funcs =
 static const struct opengl_drawable_funcs x11drv_surface_funcs =
 {
     .destroy = x11drv_surface_destroy,
-    .detach = x11drv_surface_detach,
-    .update = x11drv_surface_update,
     .flush = x11drv_surface_flush,
     .swap = x11drv_surface_swap,
 };
@@ -1560,8 +1539,6 @@ static const struct opengl_drawable_funcs x11drv_pbuffer_funcs =
 static const struct opengl_drawable_funcs x11drv_egl_surface_funcs =
 {
     .destroy = x11drv_egl_surface_destroy,
-    .detach = x11drv_egl_surface_detach,
-    .update = x11drv_egl_surface_update,
     .flush = x11drv_egl_surface_flush,
     .swap = x11drv_egl_surface_swap,
 };
