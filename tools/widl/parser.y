@@ -2604,6 +2604,48 @@ static void check_eventremove_args( const var_t *func, const var_list_t *args )
     }
 }
 
+static int is_size_parameter( const var_t *param, const var_list_t *args )
+{
+    const var_t *arg;
+
+    LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
+    {
+        const type_t *type = arg->declspec.type;
+        const expr_t *size_is;
+
+        if (is_ptr( type )) type = type_pointer_get_ref_type( type );
+        if (type->type_type != TYPE_ARRAY || !(size_is = type_array_get_conformance( type ))) continue;
+
+        if (size_is->type == EXPR_PPTR) size_is = size_is->ref;
+        if (!strcmp( param->name, size_is->u.sval )) return 1;
+    }
+    return 0;
+}
+
+static void check_propget_args( const var_t *func, const var_list_t *args )
+{
+    const var_t *arg;
+    unsigned int count = 0;
+
+    LIST_FOR_EACH_ENTRY_REV( arg, args, const var_t, entry )
+    {
+        const type_t *type = arg->declspec.type;
+        int is_size = is_size_parameter( arg, args );
+
+        count++;
+        if (count == 1 && (!is_ptr( type ) || !is_attr( arg->attrs, ATTR_RETVAL )))
+            error_at( &arg->where, "last parameter '%s' of function '%s' must be an [out, retval] pointer\n",
+                      arg->name, func->name );
+
+        if (count == 2 && !is_size)
+            error_at( &arg->where, "parameter '%s' of function '%s' must be a size_is parameter\n",
+                      arg->name, func->name );
+
+        if ((is_size && count > 2) || (!is_size && count > 1))
+            error_at( &arg->where, "propget function '%s' has too many parameters\n", func->name );
+    }
+}
+
 /* checks that arguments for a function make sense for marshalling and unmarshalling */
 static void check_remoting_args(const var_t *func)
 {
@@ -2738,6 +2780,7 @@ static void check_functions(const type_t *iface, int is_inside_library)
 
             if (args && is_attr( func->attrs, ATTR_EVENTADD )) check_eventadd_args( func, args );
             if (args && is_attr( func->attrs, ATTR_EVENTREMOVE )) check_eventremove_args( func, args );
+            if (args && is_attr( func->attrs, ATTR_PROPGET )) check_propget_args( func, args );
         }
     }
 }
