@@ -971,8 +971,8 @@ static void test_DevGetObjects( void )
     objects = (DEV_OBJECT *)0xdeadbeef;
     hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagAllProperties, 0, NULL, 1, &filters[0], &len, &objects );
     ok( hr == S_OK, "got hr %#lx\n", hr );
-    todo_wine ok( !len, "got len %lu\n", len );
-    todo_wine ok( !objects, "got objects %p\n", objects );
+    ok( !len, "got len %lu\n", len );
+    ok( !objects, "got objects %p\n", objects );
 
     filters[1] = valid_filter;
     /* DEVPROP_OPERATOR_NONE preceeding the next filter expression has the same result. */
@@ -980,8 +980,8 @@ static void test_DevGetObjects( void )
     objects = (DEV_OBJECT *)0xdeadbeef;
     hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagAllProperties, 0, NULL, 2, filters, &len, &objects );
     ok( hr == S_OK, "got hr %#lx\n", hr );
-    todo_wine ok( !len, "got len %lu\n", len );
-    todo_wine ok( !objects, "got objects %p\n", objects );
+    ok( !len, "got len %lu\n", len );
+    ok( !objects, "got objects %p\n", objects );
 
     /* However, filter expressions are still validated. */
     filters[1].Property.Buffer = NULL;
@@ -1181,7 +1181,7 @@ static void test_DevGetObjects( void )
              * unique pair, so there should only be one object. */
             if (test_cases[i].object_type == DevObjectTypeDeviceInterface
                 || test_cases[i].object_type == DevObjectTypeDeviceInterfaceDisplay)
-                todo_wine ok( len2 == 1, "got len2 %lu\n", len2 );
+                ok( len2 == 1, "got len2 %lu\n", len2 );
             else
                 ok( len2, "got len2 %lu\n", len2 );
             for (k = 0; k < len2; k++)
