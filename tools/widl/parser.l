@@ -136,7 +136,10 @@ static int token_uuid( const char *str, YYSTYPE *yylval )
 
 static int token_str( int token, const char *str, YYSTYPE *yylval )
 {
-    char *tmp = xstrdup( str );
+    int len = strlen( str );
+    char *tmp = xmalloc( len + 1 );
+
+    strcpy( tmp, str );
 
     if (token == aWSTRING || token == aSTRING || token == aSQSTRING)
     {
@@ -148,6 +151,14 @@ static int token_str( int token, const char *str, YYSTYPE *yylval )
             *dst++ = *src++;
         }
         dst[-1] = 0; /* strip last quote */
+    }
+    else if (token == aIDENTIFIER)
+    {
+        if (len > 255)
+        {
+            warning( "truncating identifier that exceeds 255 character limit\n" );
+            tmp[255] = 0;
+        }
     }
 
     yylval->str = tmp;
