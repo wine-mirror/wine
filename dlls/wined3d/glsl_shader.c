@@ -1954,7 +1954,7 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
             if (prog->ps.bumpenv_mat_location[i] == -1)
                 continue;
 
-            GL_EXTCALL(glUniformMatrix2fv(prog->ps.bumpenv_mat_location[i], 1, 0,
+            GL_EXTCALL(glUniformMatrix2fv(prog->ps.bumpenv_mat_location[i], 1, GL_TRUE,
                     &constants->bumpenv.matrices[i]._00));
 
             if (prog->ps.bumpenv_lum_scale_location[i] != -1)
