@@ -758,11 +758,37 @@ static NTSTATUS CDROM_GetDriveGeometry(int dev, int fd, DISK_GEOMETRY* dg)
  *		CDROM_GetMediaType
  *
  */
-static NTSTATUS CDROM_GetMediaType(int dev, GET_MEDIA_TYPES* medtype)
+static NTSTATUS CDROM_GetMediaType(int dev, int fd, GET_MEDIA_TYPES* medtype)
 {
-    FIXME(": faking success\n");
+    FIXME("semi-stub\n");
     medtype->DeviceType = FILE_DEVICE_CD_ROM;
     medtype->MediaInfoCount = 0;
+
+#if defined(HAVE_SG_IO_HDR_T_INTERFACE_ID) && defined(HAVE_LINUX_CDROM_H)
+    {
+        unsigned char drive_config[8];
+        unsigned char get_config_cmd[10] = { GPCMD_GET_CONFIGURATION, 0, 0xff, 0xff,
+                                             0, 0, 0, 0, sizeof(drive_config), 0 };
+        sg_io_hdr_t iocmd =
+        {
+            .interface_id = 'S',
+            .dxfer_direction = SG_DXFER_FROM_DEV,
+            .cmd_len = sizeof(get_config_cmd),
+            .dxfer_len = sizeof(drive_config),
+            .dxferp = drive_config,
+            .cmdp = get_config_cmd,
+            .timeout = 1000,
+        };
+        int err;
+
+        if ((err = ioctl(fd, SG_IO, &iocmd)))
+            return CDROM_GetStatusCode(err);
+
+        if (iocmd.status == 0 && (drive_config[6] || drive_config[7] >= 0x10))
+            medtype->DeviceType = FILE_DEVICE_DVD;
+    }
+#endif
+
     return STATUS_SUCCESS;
 }
 
@@ -2908,7 +2934,7 @@ NTSTATUS cdrom_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc
         sz = sizeof(GET_MEDIA_TYPES);
         if (in_buffer != NULL || in_size != 0) status = STATUS_INVALID_PARAMETER;
         else if (out_size < sz) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_GetMediaType(dev, out_buffer);
+        else status = CDROM_GetMediaType(dev, fd, out_buffer);
         break;
 
     case IOCTL_STORAGE_GET_DEVICE_NUMBER:
