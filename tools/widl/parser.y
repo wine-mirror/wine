@@ -2646,6 +2646,24 @@ static void check_propget_args( const var_t *func, const var_list_t *args )
     }
 }
 
+static void check_propput_args( const var_t *func, const var_list_t *args )
+{
+    const var_t *arg;
+    unsigned int count = 0;
+
+    LIST_FOR_EACH_ENTRY_REV( arg, args, const var_t, entry )
+    {
+        int is_size = is_size_parameter( arg, args );
+
+        count++;
+        if (is_attr( arg->attrs, ATTR_OUT ))
+            error_at( &arg->where, "parameter '%s' of function '%s' must be an [in] parameter\n", arg->name, func->name );
+
+        if ((is_size && count > 2) || (!is_size && count > 1))
+            error_at( &arg->where, "propput function '%s' has too many parameters\n", func->name );
+    }
+}
+
 /* checks that arguments for a function make sense for marshalling and unmarshalling */
 static void check_remoting_args(const var_t *func)
 {
@@ -2781,6 +2799,7 @@ static void check_functions(const type_t *iface, int is_inside_library)
             if (args && is_attr( func->attrs, ATTR_EVENTADD )) check_eventadd_args( func, args );
             if (args && is_attr( func->attrs, ATTR_EVENTREMOVE )) check_eventremove_args( func, args );
             if (args && is_attr( func->attrs, ATTR_PROPGET )) check_propget_args( func, args );
+            if (args && is_attr( func->attrs, ATTR_PROPPUT )) check_propput_args( func, args );
         }
     }
 }
