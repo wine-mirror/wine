@@ -387,7 +387,7 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
   BOOL  doneModifier    = FALSE;
 
   /* Search forwards until find invalid character modifier */
-  for (; wcschr(validmodifiers, towlower(*lastModifier)); lastModifier = pos++) {
+  for (; *lastModifier && wcschr(validmodifiers, towlower(*lastModifier)); lastModifier = pos++) {
     /* Special case '$' to skip until : found */
     if (*lastModifier == L'$') {
       if (!(pos = wcschr(pos, L':'))) return; /* Invalid syntax */
