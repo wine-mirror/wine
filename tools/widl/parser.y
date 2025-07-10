@@ -2612,6 +2612,8 @@ static void check_remoting_args(const var_t *func)
                 break;
             }
         }
+        else if (is_attr( arg->attrs, ATTR_RETVAL ))
+            error_at( &arg->where, "retval parameter \'%s\' of function \'%s\' must have out attribute\n", arg->name, funcname );
 
         check_field_common(func->declspec.type, funcname, arg);
     }
