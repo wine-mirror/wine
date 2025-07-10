@@ -2586,6 +2586,24 @@ static void check_eventadd_args( const var_t *func, const var_list_t *args )
     }
 }
 
+static void check_eventremove_args( const var_t *func, const var_list_t *args )
+{
+    const var_t *arg;
+    unsigned int count = 0;
+
+    LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
+    {
+        const type_t *type = arg->declspec.type;
+
+        count++;
+        if (count == 1 && (!type->name || strcmp( type->name, "EventRegistrationToken" )))
+            error_at( &arg->where, "first parameter '%s' of function '%s' must be an EventRegistrationToken\n",
+                      arg->name, func->name );
+
+        if (count > 1) error_at( &arg->where, "eventremove function '%s' has too many parameters\n", func->name );
+    }
+}
+
 /* checks that arguments for a function make sense for marshalling and unmarshalling */
 static void check_remoting_args(const var_t *func)
 {
@@ -2719,6 +2737,7 @@ static void check_functions(const type_t *iface, int is_inside_library)
             const var_list_t *args = type_function_get_args( func->declspec.type );
 
             if (args && is_attr( func->attrs, ATTR_EVENTADD )) check_eventadd_args( func, args );
+            if (args && is_attr( func->attrs, ATTR_EVENTREMOVE )) check_eventremove_args( func, args );
         }
     }
 }
