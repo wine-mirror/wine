@@ -2645,7 +2645,7 @@ static void test_DateFromUDate( int line, WORD d, WORD m, WORD y, WORD h, WORD m
                                 WORD dw, WORD dy, ULONG flags, HRESULT r, DATE dt )
 {
     UDATE ud;
-    double out;
+    DOUBLE out;
     HRESULT res;
 
     ud.st.wYear = y;
@@ -2721,7 +2721,7 @@ static void test_st2dt(int line, WORD d, WORD m, WORD y, WORD h, WORD mn,
                        WORD s, WORD ms, INT r, double dt, double dt2)
 {
     SYSTEMTIME st;
-    double out;
+    DOUBLE out;
     INT res;
 
     st.wYear = y;
@@ -2795,7 +2795,7 @@ static void test_dos2dt(int line, WORD d, WORD m, WORD y, WORD h, WORD mn,
                         WORD s, INT r, double dt)
 {
     unsigned short dosDate, dosTime;
-    double out;
+    DOUBLE out;
     INT res;
 
     out = 0.0;
@@ -3157,7 +3157,7 @@ static void test_VarSub(void)
     VARTYPE i;
     BSTR lbstr, rbstr;
     HRESULT hres, expectedhres;
-    double r;
+    DOUBLE r;
 
     CHECKPTR(VarSub);
 
@@ -6031,7 +6031,7 @@ static void test_VarMul(void)
     VARTYPE i;
     BSTR lbstr, rbstr;
     HRESULT hres;
-    double r;
+    DOUBLE r;
 
     CHECKPTR(VarMul);
 
@@ -6202,7 +6202,7 @@ static void test_VarAdd(void)
     VARTYPE i;
     BSTR lbstr, rbstr;
     HRESULT hres;
-    double r;
+    DOUBLE r;
 
     CHECKPTR(VarAdd);
 
@@ -8271,7 +8271,7 @@ static void test_VarDiv(void)
     BSTR num1_str, num2_str;
     VARTYPE i;
     HRESULT hres;
-    double r;
+    DOUBLE r;
 
     CHECKPTR(VarDiv);
 

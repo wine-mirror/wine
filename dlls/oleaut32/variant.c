@@ -1186,7 +1186,7 @@ static HRESULT VARIANT_RollUdate(UDATE *lpUd)
  *| 11-15  0-23    Hours (24 hour clock). 24-32 are invalid.
  */
 INT WINAPI DosDateTimeToVariantTime(USHORT wDosDate, USHORT wDosTime,
-                                    double *pDateOut)
+                                    DOUBLE *pDateOut)
 {
   UDATE ud;
 
@@ -1226,7 +1226,7 @@ INT WINAPI DosDateTimeToVariantTime(USHORT wDosDate, USHORT wDosTime,
  * NOTES
  *   See DosDateTimeToVariantTime() for Dos format details and bugs.
  */
-INT WINAPI VariantTimeToDosDateTime(double dateIn, USHORT *pwDosDate, USHORT *pwDosTime)
+INT WINAPI VariantTimeToDosDateTime(DOUBLE dateIn, USHORT *pwDosDate, USHORT *pwDosTime)
 {
   UDATE ud;
 
@@ -1260,7 +1260,7 @@ INT WINAPI VariantTimeToDosDateTime(double dateIn, USHORT *pwDosDate, USHORT *pw
  *  Success: TRUE. *pDateOut contains the converted value.
  *  Failure: FALSE, if lpSt cannot be represented in VT_DATE format.
  */
-INT WINAPI SystemTimeToVariantTime(LPSYSTEMTIME lpSt, double *pDateOut)
+INT WINAPI SystemTimeToVariantTime(LPSYSTEMTIME lpSt, DOUBLE *pDateOut)
 {
   UDATE ud;
 
@@ -1291,7 +1291,7 @@ INT WINAPI SystemTimeToVariantTime(LPSYSTEMTIME lpSt, double *pDateOut)
  *  Success: TRUE. *lpSt contains the converted value.
  *  Failure: FALSE, if dateIn is too large or small.
  */
-INT WINAPI VariantTimeToSystemTime(double dateIn, LPSYSTEMTIME lpSt)
+INT WINAPI VariantTimeToSystemTime(DOUBLE dateIn, LPSYSTEMTIME lpSt)
 {
   UDATE ud;
 
@@ -3106,7 +3106,7 @@ HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         V_VT(&varLeft) = VT_I4; /* Don't overflow */
     else
     {
-        double d;
+        DOUBLE d;
 
         if (V_VT(&varLeft) == VT_BSTR &&
             FAILED(VarR8FromStr(V_BSTR(&varLeft),
@@ -3122,7 +3122,7 @@ HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         V_VT(&varRight) = VT_I4; /* Don't overflow */
     else
     {
-        double d;
+        DOUBLE d;
 
         if (V_VT(&varRight) == VT_BSTR &&
             FAILED(VarR8FromStr(V_BSTR(&varRight),
@@ -4252,7 +4252,7 @@ VarOr_AsEmpty:
         V_VT(&varLeft) = VT_I4; /* Don't overflow */
     else
     {
-        double d;
+        DOUBLE d;
 
         if (V_VT(&varLeft) == VT_BSTR &&
             FAILED(VarR8FromStr(V_BSTR(&varLeft), LOCALE_USER_DEFAULT, 0, &d)))
@@ -4267,7 +4267,7 @@ VarOr_AsEmpty:
         V_VT(&varRight) = VT_I4; /* Don't overflow */
     else
     {
-        double d;
+        DOUBLE d;
 
         if (V_VT(&varRight) == VT_BSTR &&
             FAILED(VarR8FromStr(V_BSTR(&varRight), LOCALE_USER_DEFAULT, 0, &d)))
@@ -4614,7 +4614,7 @@ HRESULT WINAPI VarXor(LPVARIANT pVarLeft, LPVARIANT pVarRight, LPVARIANT pVarOut
     VARTYPE vt;
     VARIANT varLeft, varRight;
     VARIANT tempLeft, tempRight;
-    double d;
+    DOUBLE d;
     HRESULT hRet;
 
     TRACE("(%s,%s,%p)\n", debugstr_variant(pVarLeft), debugstr_variant(pVarRight), pVarOut);
@@ -5198,7 +5198,7 @@ HRESULT WINAPI VarRound(LPVARIANT pVarIn, int deci, LPVARIANT pVarOut)
 	break;
     case VT_DECIMAL:
     {
-        double dbl;
+        DOUBLE dbl;
 
         hRet = VarR8FromDec(&V_DECIMAL(pVarIn), &dbl);
         if (FAILED(hRet))
@@ -5757,7 +5757,7 @@ HRESULT WINAPI VarImp(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     VARTYPE leftvt,rightvt;
     VARTYPE rightExtraFlags,leftExtraFlags,ExtraFlags;
     VARIANT lv,rv;
-    double d;
+    DOUBLE d;
     VARIANT tempLeft, tempRight;
 
     VariantInit(&lv);

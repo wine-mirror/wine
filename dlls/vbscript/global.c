@@ -402,7 +402,7 @@ static inline HRESULT return_null(VARIANT *res)
     return S_OK;
 }
 
-static inline HRESULT return_date(VARIANT *res, double date)
+static inline HRESULT return_date(VARIANT *res, DATE date)
 {
     if(res) {
         V_VT(res) = VT_DATE;
@@ -2024,7 +2024,7 @@ static HRESULT Global_Sgn(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
 static HRESULT Global_Now(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     SYSTEMTIME lt;
-    double date;
+    DATE date;
 
     TRACE("\n");
 
@@ -2204,7 +2204,7 @@ static HRESULT Global_DateSerial(BuiltinDisp *This, VARIANT *args, unsigned args
     int year, month, day;
     UDATE ud = {{ 0 }};
     HRESULT hres;
-    double date;
+    DATE date;
 
     TRACE("\n");
 
@@ -2238,7 +2238,7 @@ static HRESULT Global_TimeSerial(BuiltinDisp *This, VARIANT *args, unsigned args
     int hour, minute, second;
     UDATE ud = {{ 0 }};
     HRESULT hres;
-    double date;
+    DATE date;
 
     TRACE("\n");
 
@@ -2399,7 +2399,7 @@ static HRESULT Global_DateAdd(BuiltinDisp *This, VARIANT *args, unsigned args_cn
     BSTR interval = NULL;
     UDATE ud = {{ 0 }};
     HRESULT hres;
-    double date;
+    DATE date;
     int count;
 
     TRACE("\n");

@@ -2457,7 +2457,7 @@ static void test_InitVariantFromFileTime(void)
     SYSTEMTIME st;
     VARIANT var;
     HRESULT hr;
-    double d;
+    DOUBLE d;
 
     VariantInit(&var);
     if (0) /* crash on Windows */
