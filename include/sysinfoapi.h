@@ -50,13 +50,13 @@ typedef struct _SYSTEM_INFO
 typedef struct tagMEMORYSTATUSEX {
   DWORD dwLength;
   DWORD dwMemoryLoad;
-  DWORDLONG DECLSPEC_ALIGN(8) ullTotalPhys;
-  DWORDLONG DECLSPEC_ALIGN(8) ullAvailPhys;
-  DWORDLONG DECLSPEC_ALIGN(8) ullTotalPageFile;
-  DWORDLONG DECLSPEC_ALIGN(8) ullAvailPageFile;
-  DWORDLONG DECLSPEC_ALIGN(8) ullTotalVirtual;
-  DWORDLONG DECLSPEC_ALIGN(8) ullAvailVirtual;
-  DWORDLONG DECLSPEC_ALIGN(8) ullAvailExtendedVirtual;
+  DWORDLONG ullTotalPhys;
+  DWORDLONG ullAvailPhys;
+  DWORDLONG ullTotalPageFile;
+  DWORDLONG ullAvailPageFile;
+  DWORDLONG ullTotalVirtual;
+  DWORDLONG ullAvailVirtual;
+  DWORDLONG ullAvailExtendedVirtual;
 } MEMORYSTATUSEX, *LPMEMORYSTATUSEX;
 #pragma pack(pop)
 

@@ -95,18 +95,23 @@ typedef unsigned int     ULONG32, *PULONG32;
 typedef unsigned int     DWORD32, *PDWORD32;
 
 #ifdef _MSC_VER
-typedef signed __int64   INT64, *PINT64;
-typedef unsigned __int64 UINT64, *PUINT64;
-typedef signed __int64   LONG64, *PLONG64;
-typedef unsigned __int64 ULONG64, *PULONG64;
-typedef unsigned __int64 DWORD64, *PDWORD64;
+typedef signed __int64   INT64;
+typedef unsigned __int64 UINT64;
+typedef signed __int64   LONG64;
+typedef unsigned __int64 ULONG64;
+typedef unsigned __int64 DWORD64;
 #else
-typedef signed __int64   DECLSPEC_ALIGN(8) INT64, *PINT64;
-typedef unsigned __int64 DECLSPEC_ALIGN(8) UINT64, *PUINT64;
-typedef signed __int64   DECLSPEC_ALIGN(8) LONG64, *PLONG64;
-typedef unsigned __int64 DECLSPEC_ALIGN(8) ULONG64, *PULONG64;
-typedef unsigned __int64 DECLSPEC_ALIGN(8) DWORD64, *PDWORD64;
+typedef signed __int64   DECLSPEC_ALIGN(8) INT64;
+typedef unsigned __int64 DECLSPEC_ALIGN(8) UINT64;
+typedef signed __int64   DECLSPEC_ALIGN(8) LONG64;
+typedef unsigned __int64 DECLSPEC_ALIGN(8) ULONG64;
+typedef unsigned __int64 DECLSPEC_ALIGN(8) DWORD64;
 #endif
+typedef INT64 *PINT64;
+typedef UINT64 *PUINT64;
+typedef LONG64 *PLONG64;
+typedef ULONG64 *PULONG64;
+typedef DWORD64 *PDWORD64;
 
 /* Basic pointer-sized integer types */
 

@@ -1103,7 +1103,7 @@ HRESULT WINAPI DllGetVersion(DLLVERSIONINFO *);
 typedef struct _DLLVERSIONINFO2 {
     DLLVERSIONINFO info1;
     DWORD          dwFlags;    /* Reserved */
-    ULONGLONG DECLSPEC_ALIGN(8) ullVersion; /* 16 bits each for Major, Minor, Build, QFE */
+    ULONGLONG      ullVersion; /* 16 bits each for Major, Minor, Build, QFE */
 } DLLVERSIONINFO2;
 
 #define DLLVER_MAJOR_MASK 0xFFFF000000000000
