@@ -97,6 +97,7 @@ static void do_grab( struct mutex_sync *mutex, struct thread *thread )
     if (!mutex->count++)  /* FIXME: avoid wrap-around */
     {
         assert( !mutex->owner );
+        grab_object( mutex );
         mutex->owner = thread;
         list_add_head( &thread->mutex_list, &mutex->entry );
     }
@@ -116,6 +117,7 @@ static int do_release( struct mutex_sync *mutex, struct thread *thread, int coun
         list_remove( &mutex->entry );
         mutex->owner = NULL;
         wake_up( &mutex->obj, 0 );
+        release_object( mutex );
     }
     return 1;
 }
@@ -131,8 +133,7 @@ static void mutex_sync_destroy( struct object *obj )
 {
     struct mutex_sync *mutex = (struct mutex_sync *)obj;
     assert( obj->ops == &mutex_sync_ops );
-
-    if (mutex->count) do_release( mutex, current, mutex->count );
+    assert( !mutex->count );
 }
 
 static int mutex_sync_signaled( struct object *obj, struct wait_queue_entry *entry )

@@ -228,12 +228,35 @@ static void test_temporary_objects(void)
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %lu\n", GetLastError());
 }
 
+struct test_mutex_thread_params
+{
+    HANDLE mutex;
+    HANDLE start_event;
+    HANDLE stop_event;
+    BOOL owner;
+};
+
+static DWORD WINAPI test_mutex_thread(void *arg)
+{
+    struct test_mutex_thread_params *params = arg;
+    DWORD ret;
+
+    ret = WaitForSingleObject(params->mutex, INFINITE);
+    if (params->owner) ok(!ret, "got %#lx\n", ret);
+    else ok(ret == WAIT_ABANDONED, "got %#lx\n", ret);
+    SetEvent(params->start_event);
+
+    ret = WaitForSingleObject(params->stop_event, INFINITE);
+    ok(!ret, "got %#lx\n", ret);
+    return 0;
+}
+
 static void test_mutex(void)
 {
     DWORD wait_ret;
     BOOL ret;
-    HANDLE hCreated;
-    HANDLE hOpened;
+    HANDLE hCreated, hOpened, owner_thread, waiter_thread;
+    struct test_mutex_thread_params params;
     int i;
     DWORD failed = 0;
 
@@ -336,6 +359,43 @@ static void test_mutex(void)
     CloseHandle(hOpened);
 
     CloseHandle(hCreated);
+
+    params.start_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    params.stop_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    params.mutex = CreateMutexA(NULL, FALSE, NULL);
+
+    params.owner = TRUE;
+    owner_thread = CreateThread(NULL, 0, test_mutex_thread, &params, 0, NULL);
+    ok(!!owner_thread, "CreateThread failed, error %lu\n", GetLastError());
+    ret = WaitForSingleObject(params.start_event, 1000);
+    ok(!ret, "got %#x\n", ret);
+
+    params.owner = FALSE;
+    waiter_thread = CreateThread(NULL, 0, test_mutex_thread, &params, 0, NULL);
+    ok(!!waiter_thread, "CreateThread failed, error %lu\n", GetLastError());
+    ret = WaitForSingleObject(params.start_event, 100);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    CloseHandle(params.mutex);
+    ret = WaitForSingleObject(params.start_event, 100);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    TerminateThread(owner_thread, 0);
+    ret = WaitForSingleObject(owner_thread, 1000);
+    ok(!ret, "got %#x\n", ret);
+    ret = WaitForSingleObject(params.start_event, 1000);
+    ok(!ret, "got %#x\n", ret);
+
+    SetEvent(params.stop_event);
+    ret = WaitForSingleObject(waiter_thread, 1000);
+    ok(!ret, "got %#x\n", ret);
+
+    CloseHandle(owner_thread);
+    CloseHandle(waiter_thread);
+
+    CloseHandle(params.start_event);
+    CloseHandle(params.stop_event);
+    CloseHandle(params.mutex);
 }
 
 static void test_slist(void)
