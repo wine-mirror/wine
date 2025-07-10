@@ -129,7 +129,7 @@ static HRESULT WINAPI effect_SetParameters( IConditionForceEffect *iface, Vector
     TRACE( "iface %p, direction %s, positive_coeff %f, negative_coeff %f, max_positive_magnitude %f, max_negative_magnitude %f, deadzone %f, bias %f.\n",
            iface, debugstr_vector3( &direction ), positive_coeff, negative_coeff, max_positive_magnitude, max_negative_magnitude, deadzone, bias );
 
-    return IWineForceFeedbackEffectImpl_put_Parameters( impl->IWineForceFeedbackEffectImpl_inner, params, NULL );
+    return IWineForceFeedbackEffectImpl_SetParameters( impl->IWineForceFeedbackEffectImpl_inner, params, NULL );
 }
 
 static const struct IConditionForceEffectVtbl effect_vtbl =

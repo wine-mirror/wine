@@ -116,7 +116,7 @@ static HRESULT WINAPI effect_SetParameters( IRampForceEffect *iface, Vector3 sta
     TRACE( "iface %p, start_vector %s, end_vector %s, duration %I64u.\n", iface,
            debugstr_vector3( &start_vector ), debugstr_vector3( &end_vector ), duration.Duration );
 
-    return IWineForceFeedbackEffectImpl_put_Parameters( impl->IWineForceFeedbackEffectImpl_inner, params, NULL );
+    return IWineForceFeedbackEffectImpl_SetParameters( impl->IWineForceFeedbackEffectImpl_inner, params, NULL );
 }
 
 static HRESULT WINAPI effect_SetParametersWithEnvelope( IRampForceEffect *iface, Vector3 start_vector, Vector3 end_vector, FLOAT attack_gain,
@@ -151,7 +151,7 @@ static HRESULT WINAPI effect_SetParametersWithEnvelope( IRampForceEffect *iface,
            attack_gain, sustain_gain, release_gain, start_delay.Duration, attack_duration.Duration, sustain_duration.Duration,
            release_duration.Duration, repeat_count );
 
-    return IWineForceFeedbackEffectImpl_put_Parameters( impl->IWineForceFeedbackEffectImpl_inner, params, &envelope );
+    return IWineForceFeedbackEffectImpl_SetParameters( impl->IWineForceFeedbackEffectImpl_inner, params, &envelope );
 }
 
 static const struct IRampForceEffectVtbl effect_vtbl =

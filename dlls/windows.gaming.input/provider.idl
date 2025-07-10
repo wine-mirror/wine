@@ -187,8 +187,8 @@ namespace Windows.Gaming.Input.Custom {
     interface IWineForceFeedbackEffectImpl : IUnknown
         requires Windows.Gaming.Input.ForceFeedback.IForceFeedbackEffect
     {
-        [propput] HRESULT Parameters([in] WineForceFeedbackEffectParameters parameters,
-                                     [in, optional] WineForceFeedbackEffectEnvelope *envelope);
+        HRESULT SetParameters([in] WineForceFeedbackEffectParameters parameters,
+                              [in, optional] WineForceFeedbackEffectEnvelope *envelope);
     }
 
     [
