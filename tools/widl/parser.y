@@ -2562,6 +2562,30 @@ static void check_remoting_fields(const var_t *var, type_t *type)
         if (field->declspec.type) check_field_common(type, type->name, field);
 }
 
+static void check_eventadd_args( const var_t *func, const var_list_t *args )
+{
+    const var_t *arg;
+    unsigned int count = 0;
+
+    LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
+    {
+        const type_t *type = arg->declspec.type;
+        const type_t *ref_type = is_ptr( type ) ? type_pointer_get_ref_type( type ) : NULL;
+
+        count++;
+        if (count == 1 && (!ref_type || ref_type->type_type != TYPE_DELEGATE))
+            error_at( &arg->where, "first parameter '%s' of function '%s' must be a delegate pointer\n",
+                      arg->name, func->name );
+
+        if (count == 2 && (!ref_type || !ref_type->name || strcmp( ref_type->name, "EventRegistrationToken" ) ||
+            !is_attr( arg->attrs, ATTR_RETVAL )))
+            error_at( &arg->where, "second parameter '%s' of function '%s' must be an [out, retval] EventRegistrationToken pointer\n",
+                      arg->name, func->name );
+
+        if (count > 2) error_at( &arg->where, "eventadd function '%s' has too many parameters\n", func->name );
+    }
+}
+
 /* checks that arguments for a function make sense for marshalling and unmarshalling */
 static void check_remoting_args(const var_t *func)
 {
@@ -2685,6 +2709,16 @@ static void check_functions(const type_t *iface, int is_inside_library)
             const var_t *func = stmt->u.var;
             if (!is_attr(func->attrs, ATTR_LOCAL))
                 check_remoting_args(func);
+        }
+    }
+    if (winrt_mode)
+    {
+        STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts( iface ) )
+        {
+            const var_t *func = stmt->u.var;
+            const var_list_t *args = type_function_get_args( func->declspec.type );
+
+            if (args && is_attr( func->attrs, ATTR_EVENTADD )) check_eventadd_args( func, args );
         }
     }
 }
