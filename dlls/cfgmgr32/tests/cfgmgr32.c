@@ -923,10 +923,10 @@ static void test_DevGetObjects( void )
     len = 0xdeadbeef;
     objects = (DEV_OBJECT *)0xdeadbeef;
     hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagAllProperties, 0, NULL, 1, &filters[0], &len, &objects );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
     /* Filters are validated before len and objects are modified. */
-    todo_wine ok( len == 0xdeadbeef, "got len %lu\n", len );
-    todo_wine ok( objects == (DEV_OBJECT *)0xdeadbeef, "got objects %p\n", objects );
+    ok( len == 0xdeadbeef, "got len %lu\n", len );
+    ok( objects == (DEV_OBJECT *)0xdeadbeef, "got objects %p\n", objects );
 
     /* Mismatching BufferSize */
     len = 0xdeadbeef;
@@ -935,9 +935,9 @@ static void test_DevGetObjects( void )
     filters[0].Property.BufferSize = 0;
     hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagAllProperties, 0, NULL, 1, &filters[0], &len, &objects );
     /* BufferSize is not validated in Windows 10 and before, but no objects are returned. */
-    todo_wine ok( hr == E_INVALIDARG || broken( hr == S_OK ), "got hr %#lx\n", hr );
-    todo_wine ok( len == 0xdeadbeef || broken( !len ), "got len %lu\n", len );
-    todo_wine ok( objects == (DEV_OBJECT *)0xdeadbeef || broken( !objects ), "got objects %p\n", objects );
+    ok( hr == E_INVALIDARG || broken( hr == S_OK ), "got hr %#lx\n", hr );
+    ok( len == 0xdeadbeef || broken( !len ), "got len %lu\n", len );
+    ok( objects == (DEV_OBJECT *)0xdeadbeef || broken( !objects ), "got objects %p\n", objects );
 
     len = 0xdeadbeef;
     objects = (DEV_OBJECT *)0xdeadbeef;
@@ -945,9 +945,9 @@ static void test_DevGetObjects( void )
     filters[0].Property.BufferSize = sizeof( bool_val_extra );
     hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagAllProperties, 0, NULL, 1, &filters[0], &len, &objects );
     /* The extra bytes are ignored in Windows 10 and before. */
-    todo_wine ok( hr == E_INVALIDARG || broken( hr == S_OK ), "got hr %#lx\n", hr );
-    todo_wine ok( len == 0xdeadbeef || broken( len ), "got len %lu\n", len );
-    todo_wine ok( objects == (DEV_OBJECT *)0xdeadbeef || broken( !!objects ), "got objects %p\n", objects );
+    ok( hr == E_INVALIDARG || broken( hr == S_OK ), "got hr %#lx\n", hr );
+    ok( len == 0xdeadbeef || broken( len ), "got len %lu\n", len );
+    ok( objects == (DEV_OBJECT *)0xdeadbeef || broken( !!objects ), "got objects %p\n", objects );
     if (SUCCEEDED( hr )) pDevFreeObjects( len, objects );
 
     for (i = 0; i < ARRAY_SIZE( invalid_ops ); i++)
@@ -956,10 +956,10 @@ static void test_DevGetObjects( void )
         filters[0].Operator = invalid_ops[i];
 
         hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagAllProperties, 0, NULL, 1, filters, &len, &objects );
-        todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+        ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
         hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagAllProperties, 0, NULL, 2, filters, &len, &objects );
-        todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+        ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
         winetest_pop_context();
     }
@@ -988,9 +988,9 @@ static void test_DevGetObjects( void )
     len = 0xdeadbeef;
     objects = (DEV_OBJECT *)0xdeadbeef;
     hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagAllProperties, 0, NULL, 2, filters, &len, &objects );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
-    todo_wine ok( len == 0xdeadbeef, "got len %lu\n", len );
-    todo_wine ok( objects == (DEV_OBJECT *)0xdeadbeef, "got objects %p\n", objects );
+    ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+    ok( len == 0xdeadbeef, "got len %lu\n", len );
+    ok( objects == (DEV_OBJECT *)0xdeadbeef, "got objects %p\n", objects );
 
     filters[0] = valid_filter;
     /* DEVPROP_OPERATOR_EXISTS ignores the property type. */
@@ -1085,8 +1085,8 @@ static void test_DevGetObjects( void )
     objects = (DEV_OBJECT *)0xdeadbeef;
     hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 1, &filters[0], &len, &objects );
     ok( hr == S_OK, "got hr %#lx\n", hr );
-    todo_wine ok( len == 0, "got len %lu\n", len );
-    todo_wine ok( !objects, "got objects %p\n", objects );
+    ok( len == 0, "got len %lu\n", len );
+    ok( !objects, "got objects %p\n", objects );
 
     /* Empty expressions */
     memset( filters, 0, sizeof( filters ) );
@@ -1101,9 +1101,9 @@ static void test_DevGetObjects( void )
         len = 0xdeadbeef;
         objects = (DEV_OBJECT *)0xdeadbeef;
         hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 2, filters, &len, &objects );
-        todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
-        todo_wine ok( len == 0xdeadbeef, "got len %lu\n", len );
-        todo_wine ok( objects == (DEV_OBJECT *)0xdeadbeef, "got objects %p\n", objects );
+        ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+        ok( len == 0xdeadbeef, "got len %lu\n", len );
+        ok( objects == (DEV_OBJECT *)0xdeadbeef, "got objects %p\n", objects );
 
         /* Empty nested expressions */
         filters[0].Operator = filters[1].Operator = open;
@@ -1111,9 +1111,9 @@ static void test_DevGetObjects( void )
         len = 0xdeadbeef;
         objects = (DEV_OBJECT *)0xdeadbeef;
         hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 4, filters, &len, &objects );
-        todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
-        todo_wine ok( len == 0xdeadbeef, "got len %lu\n", len );
-        todo_wine ok( objects == (DEV_OBJECT *)0xdeadbeef, "got objects %p\n", objects );
+        ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+        ok( len == 0xdeadbeef, "got len %lu\n", len );
+        ok( objects == (DEV_OBJECT *)0xdeadbeef, "got objects %p\n", objects );
 
         winetest_pop_context();
     }
@@ -1137,9 +1137,9 @@ static void test_DevGetObjects( void )
             len = 0xdeadbeef;
             objects = (DEV_OBJECT *)0xdeadbeef;
             hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 3, filters, &len, &objects );
-            todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
-            todo_wine ok( len == 0xdeadbeef, "got len %lu\n", len );
-            todo_wine ok( objects == (DEV_OBJECT *)0xdeadbeef, "got objects %p\n", objects );
+            ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+            ok( len == 0xdeadbeef, "got len %lu\n", len );
+            ok( objects == (DEV_OBJECT *)0xdeadbeef, "got objects %p\n", objects );
 
             winetest_pop_context();
         }

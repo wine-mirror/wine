@@ -20,6 +20,7 @@
 #include "wine/debug.h"
 #include "wine/rbtree.h"
 #include "winreg.h"
+#include "winternl.h"
 #include "cfgmgr32.h"
 #include "winuser.h"
 #include "dbt.h"
@@ -318,6 +319,175 @@ static BOOL dev_properties_append( DEVPROPERTY **properties, ULONG *props_len, c
     return TRUE;
 }
 
+static HRESULT stack_push( DEVPROP_OPERATOR **stack, ULONG *len, DEVPROP_OPERATOR op )
+{
+    DEVPROP_OPERATOR *tmp;
+
+    if (!(tmp = realloc( *stack, (*len + 1) * sizeof( op ) )))
+        return E_OUTOFMEMORY;
+    *stack = tmp;
+    tmp[*len] = op;
+    *len += 1;
+    return S_OK;
+}
+
+static DEVPROP_OPERATOR stack_pop( DEVPROP_OPERATOR **stack, ULONG *len )
+{
+    DEVPROP_OPERATOR op = DEVPROP_OPERATOR_NONE;
+
+    if (*len)
+    {
+        op = (*stack)[*len - 1];
+        *len -= 1;
+    }
+    return op;
+}
+
+static BOOL devprop_type_validate( DEVPROPTYPE type, ULONG buf_size )
+{
+    static const DWORD type_size[] = {
+        0, 0,
+        sizeof( BYTE ), sizeof( BYTE ),
+        sizeof( INT16 ), sizeof( INT16 ),
+        sizeof( INT32 ), sizeof( INT32 ),
+        sizeof( INT64 ), sizeof( INT64 ),
+        sizeof( FLOAT ), sizeof( DOUBLE ), sizeof( DECIMAL ),
+        sizeof( GUID ),
+        sizeof( CURRENCY ),
+        sizeof( DATE ),
+        sizeof( FILETIME ),
+        sizeof( DEVPROP_BOOLEAN ),
+        [DEVPROP_TYPE_DEVPROPKEY] = sizeof( DEVPROPKEY ),
+        [DEVPROP_TYPE_DEVPROPTYPE] = sizeof( DEVPROPTYPE ),
+        [DEVPROP_TYPE_ERROR] = sizeof( ULONG ),
+        [DEVPROP_TYPE_NTSTATUS] = sizeof( NTSTATUS )
+    };
+    DWORD mod = type & DEVPROP_MASK_TYPEMOD, size;
+
+    if (mod && mod != DEVPROP_TYPEMOD_ARRAY && mod != DEVPROP_TYPEMOD_LIST)
+    {
+        FIXME( "Unknown DEVPROPTYPE value: %#lx\n", type );
+        return FALSE;
+    }
+
+    switch (type & DEVPROP_MASK_TYPE)
+    {
+    case DEVPROP_TYPE_EMPTY:
+    case DEVPROP_TYPE_NULL:
+        return !mod;
+    case DEVPROP_TYPE_SECURITY_DESCRIPTOR:
+    case DEVPROP_TYPE_STRING_INDIRECT:
+        return !mod && !!buf_size;
+
+    case DEVPROP_TYPE_STRING:
+    case DEVPROP_TYPE_SECURITY_DESCRIPTOR_STRING:
+        return mod != DEVPROP_TYPEMOD_ARRAY && !!buf_size;
+    default:
+        /* The only valid modifier for the remaining types is DEVPROP_TYPEMOD_ARRAY */
+        if ((type & DEVPROP_MASK_TYPE) > DEVPROP_TYPE_NTSTATUS ||
+            (mod && mod != DEVPROP_TYPEMOD_ARRAY))
+        {
+            FIXME( "Unknown DEVPROPTYPE value: %#lx\n", type );
+            return FALSE;
+        }
+        size = type_size[type & DEVPROP_MASK_TYPE];
+    }
+
+    return mod == DEVPROP_TYPEMOD_ARRAY ? buf_size >= size : buf_size == size;
+}
+
+static HRESULT devprop_filters_validate( ULONG filters_len, const DEVPROP_FILTER_EXPRESSION *filters )
+{
+    DEVPROP_OPERATOR *stack = NULL;
+    ULONG i, logical_open = 0, stack_top = 0;
+    HRESULT hr = S_OK;
+
+    for (i = 0; i < filters_len; i++)
+    {
+        const DEVPROP_FILTER_EXPRESSION *filter = &filters[i];
+        const DEVPROPERTY *prop = &filter->Property;
+        DEVPROP_OPERATOR op = filter->Operator;
+        DWORD compare = op & DEVPROP_OPERATOR_MASK_EVAL;
+        DWORD list = op & DEVPROP_OPERATOR_MASK_LIST;
+        DWORD modifier = op & DEVPROP_OPERATOR_MASK_MODIFIER;
+        DWORD logical = op & DEVPROP_OPERATOR_MASK_LOGICAL;
+        DWORD array = op & DEVPROP_OPERATOR_MASK_ARRAY;
+
+        if ((compare && compare > DEVPROP_OPERATOR_CONTAINS)
+            || (logical && (op & DEVPROP_OPERATOR_MASK_NOT_LOGICAL))
+            || (array && (op != DEVPROP_OPERATOR_ARRAY_CONTAINS))
+            || !!prop->Buffer != !!prop->BufferSize)
+        {
+            FIXME( "Unknown operator: %#x\n", op );
+            hr = E_INVALIDARG;
+            break;
+        }
+        if (!op) continue;
+        if (compare && compare != DEVPROP_OPERATOR_EXISTS
+            && !devprop_type_validate( prop->Type, prop->BufferSize ))
+        {
+            hr = E_INVALIDARG;
+            break;
+        }
+
+        switch (modifier)
+        {
+        case DEVPROP_OPERATOR_NONE:
+        case DEVPROP_OPERATOR_MODIFIER_NOT:
+        case DEVPROP_OPERATOR_MODIFIER_IGNORE_CASE:
+            break;
+        default:
+            hr = E_INVALIDARG;
+            break;
+        }
+
+        switch (list)
+        {
+        case DEVPROP_OPERATOR_NONE:
+        case DEVPROP_OPERATOR_LIST_CONTAINS:
+        case DEVPROP_OPERATOR_LIST_ELEMENT_BEGINS_WITH:
+        case DEVPROP_OPERATOR_LIST_ELEMENT_ENDS_WITH:
+        case DEVPROP_OPERATOR_LIST_ELEMENT_CONTAINS:
+            break;
+        default:
+            hr = E_INVALIDARG;
+            break;
+        }
+
+        switch (logical)
+        {
+        case DEVPROP_OPERATOR_NONE:
+            break;
+        case DEVPROP_OPERATOR_AND_OPEN:
+        case DEVPROP_OPERATOR_OR_OPEN:
+        case DEVPROP_OPERATOR_NOT_OPEN:
+            hr = stack_push( &stack, &stack_top, logical );
+            logical_open = i;
+            break;
+        case DEVPROP_OPERATOR_AND_CLOSE:
+        case DEVPROP_OPERATOR_OR_CLOSE:
+        case DEVPROP_OPERATOR_NOT_CLOSE:
+        {
+            DEVPROP_OPERATOR top = stack_pop( &stack, &stack_top );
+            /* The operator should be correct paired, and shouldn't be empty. */
+            if (logical - top != (DEVPROP_OPERATOR_AND_CLOSE - DEVPROP_OPERATOR_AND_OPEN) || logical_open == i - 1)
+                hr = E_INVALIDARG;
+            break;
+        }
+        default:
+            hr = E_INVALIDARG;
+            break;
+        }
+
+        if (FAILED( hr )) break;
+    }
+
+    if (stack_top)
+        hr = E_INVALIDARG;
+    free( stack );
+    return hr;
+}
+
 static HRESULT dev_object_iface_get_props( DEV_OBJECT *obj, HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface_data,
                                            ULONG props_len, const DEVPROPCOMPKEY *props, BOOL all_props )
 {
@@ -534,7 +704,8 @@ HRESULT WINAPI DevGetObjectsEx( DEV_OBJECT_TYPE type, ULONG flags, ULONG props_l
            params_len, params, objs_len, objs );
 
     if (!!props_len != !!props || !!filters_len != !!filters || !!params_len != !!params || (flags & ~valid_flags)
-        || (props_len && (flags & DevQueryFlagAllProperties)))
+        || (props_len && (flags & DevQueryFlagAllProperties))
+        || FAILED( devprop_filters_validate( filters_len, filters ) ))
         return E_INVALIDARG;
     if (filters)
         FIXME( "Query filters are not supported!\n" );
@@ -986,7 +1157,8 @@ HRESULT WINAPI DevCreateObjectQueryEx( DEV_OBJECT_TYPE type, ULONG flags, ULONG 
            filters, params_len, params, callback, user_data, devquery );
 
     if (!!props_len != !!props || !!filters_len != !!filters || !!params_len != !!params || (flags & ~valid_flags) || !callback
-        || (props_len && (flags & DevQueryFlagAllProperties)))
+        || (props_len && (flags & DevQueryFlagAllProperties))
+        || FAILED( devprop_filters_validate( filters_len, filters ) ))
         return E_INVALIDARG;
     if (filters)
         FIXME( "Query filters are not supported!\n" );
