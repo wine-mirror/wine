@@ -241,6 +241,50 @@ BOOL d3dximage_info_from_d3dx_image(D3DXIMAGE_INFO *info, struct d3dx_image *ima
     return TRUE;
 }
 
+static void d3dx9_buffer_destroy(struct d3dx_buffer *d3dx_buffer)
+{
+    ID3DXBuffer *buffer_iface = (ID3DXBuffer *)d3dx_buffer->buffer_iface;
+
+    if (buffer_iface)
+        ID3DXBuffer_Release(buffer_iface);
+    d3dx_buffer->buffer_iface = d3dx_buffer->buffer_data = NULL;
+}
+
+static HRESULT d3dx9_buffer_create(unsigned int size, struct d3dx_buffer *buffer)
+{
+    ID3DXBuffer *buffer_iface;
+    HRESULT hr;
+
+    hr = D3DXCreateBuffer(size, &buffer_iface);
+    if (FAILED(hr))
+        return hr;
+
+    buffer->buffer_iface = buffer_iface;
+    buffer->buffer_data = ID3DXBuffer_GetBufferPointer(buffer_iface);
+    return S_OK;
+}
+
+static const struct d3dx_buffer_wrapper d3dx9_buffer_wrapper =
+{
+    d3dx9_buffer_create,
+    d3dx9_buffer_destroy,
+};
+
+HRESULT d3dx9_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct pixel_format_desc *src_fmt_desc,
+        D3DXIMAGE_FILEFORMAT file_format, ID3DXBuffer **dst_buffer)
+{
+    struct d3dx_buffer buffer;
+    HRESULT hr;
+
+    *dst_buffer = NULL;
+    hr = d3dx_save_pixels_to_memory(src_pixels, src_fmt_desc,
+            d3dx_image_file_format_from_d3dximage_fileformat(file_format), &d3dx9_buffer_wrapper, &buffer);
+    if (SUCCEEDED(hr))
+        *dst_buffer = (ID3DXBuffer *)buffer.buffer_iface;
+
+    return hr;
+}
+
 /************************************************************
  * map_view_of_file
  *

@@ -859,8 +859,7 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
         return hr;
     }
 
-    hr = d3dx_save_pixels_to_memory(&src_pixels, src_fmt_desc,
-            d3dx_image_file_format_from_d3dximage_fileformat(file_format), &buffer);
+    hr = d3dx9_save_pixels_to_memory(&src_pixels, src_fmt_desc, file_format, &buffer);
     if (FAILED(hr))
     {
         unlock_surface(src_surface, NULL, temp_surface, FALSE);

@@ -727,17 +727,17 @@ static enum d3dx_pixel_format_id d3dx_get_closest_d3dx_pixel_format_id(const enu
 }
 
 HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct pixel_format_desc *src_fmt_desc,
-        enum d3dx_image_file_format file_format, ID3DXBuffer **dst_buffer)
+        enum d3dx_image_file_format file_format, const struct d3dx_buffer_wrapper *wrapper,
+        struct d3dx_buffer *dst_buffer)
 {
     enum d3dx_pixel_format_id dst_format = src_fmt_desc->format;
     const struct pixel_format_desc *dst_fmt_desc;
     uint32_t dst_row_pitch, dst_slice_pitch;
     struct d3dx_pixels dst_pixels;
     uint8_t *pixels, *tmp_buf;
-    ID3DXBuffer *buffer;
     HRESULT hr;
 
-    *dst_buffer = buffer = NULL;
+    memset(dst_buffer, 0, sizeof(*dst_buffer));
     pixels = tmp_buf = NULL;
     switch (file_format)
     {
@@ -812,18 +812,17 @@ HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct 
             uint32_t header_size;
 
             header_size = is_index_format(dst_fmt_desc) ? sizeof(*header) + DDS_PALETTE_SIZE : sizeof(*header);
-            hr = D3DXCreateBuffer((dst_slice_pitch * src_pixels->size.depth) + header_size, &buffer);
+            hr = wrapper->d3dx_buffer_create((dst_slice_pitch * src_pixels->size.depth) + header_size, dst_buffer);
             if (FAILED(hr))
                 return hr;
 
-            header = ID3DXBuffer_GetBufferPointer(buffer);
-            pixels = (uint8_t *)ID3DXBuffer_GetBufferPointer(buffer) + header_size;
+            header = dst_buffer->buffer_data;
+            pixels = (uint8_t *)dst_buffer->buffer_data + header_size;
             hr = d3dx_init_dds_header(header, D3DX_RESOURCE_TYPE_TEXTURE_2D, dst_format, &src_pixels->size, 1);
             if (FAILED(hr))
                 goto exit;
             if (is_index_format(dst_fmt_desc))
-                memcpy((uint8_t *)ID3DXBuffer_GetBufferPointer(buffer) + sizeof(*header), src_pixels->palette,
-                        DDS_PALETTE_SIZE);
+                memcpy((uint8_t *)dst_buffer->buffer_data + sizeof(*header), src_pixels->palette, DDS_PALETTE_SIZE);
             break;
         }
 
@@ -831,12 +830,12 @@ HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct 
         {
             struct tga_header *header;
 
-            hr = D3DXCreateBuffer(dst_slice_pitch + sizeof(*header), &buffer);
+            hr = wrapper->d3dx_buffer_create(dst_slice_pitch + sizeof(*header), dst_buffer);
             if (FAILED(hr))
                 return hr;
 
-            header = ID3DXBuffer_GetBufferPointer(buffer);
-            pixels = (uint8_t *)ID3DXBuffer_GetBufferPointer(buffer) + sizeof(*header);
+            header = dst_buffer->buffer_data;
+            pixels = (uint8_t *)dst_buffer->buffer_data + sizeof(*header);
 
             memset(header, 0, sizeof(*header));
             header->image_type = TGA_IMAGETYPE_TRUECOLOR;
@@ -879,7 +878,7 @@ HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct 
         }
 
         /* WIC path, encode the image. */
-        if (!buffer)
+        if (!dst_buffer->buffer_data)
         {
             IStream *wic_file = NULL;
             uint32_t buf_size = 0;
@@ -887,33 +886,32 @@ HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct 
             hr = d3dx_pixels_save_wic(&dst_pixels, dst_fmt_desc, file_format, &wic_file, &buf_size);
             if (FAILED(hr))
                 goto exit;
-            hr = D3DXCreateBuffer(buf_size, &buffer);
+            hr = wrapper->d3dx_buffer_create(buf_size, dst_buffer);
             if (FAILED(hr))
             {
                 IStream_Release(wic_file);
                 goto exit;
             }
 
-            hr = IStream_Read(wic_file, ID3DXBuffer_GetBufferPointer(buffer), buf_size, NULL);
+            hr = IStream_Read(wic_file, dst_buffer->buffer_data, buf_size, NULL);
             IStream_Release(wic_file);
             if (FAILED(hr))
                 goto exit;
         }
     }
     /* Return an empty buffer for size 0 images via WIC. */
-    else if (!buffer)
+    else if (!dst_buffer->buffer_data)
     {
         FIXME("Returning empty buffer for size 0 image.\n");
-        hr = D3DXCreateBuffer(64, &buffer);
+        hr = wrapper->d3dx_buffer_create(64, dst_buffer);
         if (FAILED(hr))
             goto exit;
     }
 
-    *dst_buffer = buffer;
 exit:
     free(tmp_buf);
-    if (*dst_buffer != buffer)
-        ID3DXBuffer_Release(buffer);
+    if (FAILED(hr))
+        wrapper->d3dx_buffer_destroy(dst_buffer);
     return hr;
 }
 

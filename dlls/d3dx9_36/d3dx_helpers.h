@@ -359,8 +359,6 @@ uint32_t d3dx_calculate_layer_pixels_size(enum d3dx_pixel_format_id format, uint
         uint32_t depth, uint32_t mip_levels);
 HRESULT d3dx_init_dds_header(struct dds_header *header, enum d3dx_resource_type resource_type,
         enum d3dx_pixel_format_id format, const struct volume *size, uint32_t mip_levels);
-HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct pixel_format_desc *src_fmt_desc,
-        enum d3dx_image_file_format file_format, ID3DXBuffer **dst_buffer);
 const char *debug_d3dx_image_file_format(enum d3dx_image_file_format format);
 HRESULT d3dx_pixels_init(const void *data, uint32_t row_pitch, uint32_t slice_pitch,
         const PALETTEENTRY *palette, enum d3dx_pixel_format_id format, uint32_t left, uint32_t top, uint32_t right,
@@ -373,6 +371,21 @@ void get_aligned_rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bott
 
 unsigned short float_32_to_16(const float in);
 float float_16_to_32(const unsigned short in);
+
+struct d3dx_buffer
+{
+    void *buffer_iface;
+    void *buffer_data;
+};
+
+struct d3dx_buffer_wrapper
+{
+    HRESULT (*d3dx_buffer_create)(unsigned int size, struct d3dx_buffer *d3dx_buffer);
+    void (*d3dx_buffer_destroy)(struct d3dx_buffer *d3dx_buffer);
+};
+
+HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct pixel_format_desc *src_fmt_desc,
+        enum d3dx_image_file_format file_format, const struct d3dx_buffer_wrapper *wrapper, struct d3dx_buffer *dst_buffer);
 
 /* debug helpers */
 const char *debug_d3dx_image_file_format(enum d3dx_image_file_format format);
