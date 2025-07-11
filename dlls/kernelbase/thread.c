@@ -370,6 +370,15 @@ DWORD WINAPI DECLSPEC_HOTPATCH QueueUserAPC( PAPCFUNC func, HANDLE thread, ULONG
 
 
 /***********************************************************************
+ *	     QueueUserAPC2   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH QueueUserAPC2( PAPCFUNC func, HANDLE thread, ULONG_PTR data, QUEUE_USER_APC_FLAGS flags )
+{
+    return set_ntstatus( NtQueueApcThreadEx2( thread, NULL, flags, call_user_apc, (ULONG_PTR)func, data, 0 ));
+}
+
+
+/***********************************************************************
  *           QueryThreadCycleTime   (kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH QueryThreadCycleTime( HANDLE thread, ULONG64 *cycle )

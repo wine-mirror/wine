@@ -1213,6 +1213,7 @@
 @ stdcall -import QueryUnbiasedInterruptTime(ptr)
 @ stub QueryWin31IniFilesMappedToRegistry
 @ stdcall -import QueueUserAPC(ptr long long)
+@ stdcall -import QueueUserAPC2(ptr long long long)
 @ stdcall -import QueueUserWorkItem(ptr ptr long)
 @ stdcall -import RaiseException(long long long ptr)
 @ stdcall -import RaiseFailFastException(ptr ptr long)
