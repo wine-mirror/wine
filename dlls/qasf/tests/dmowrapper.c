@@ -75,6 +75,7 @@ static BOOL testdmo_input_mt_set, testdmo_output_mt_set;
 
 static HRESULT testdmo_GetInputSizeInfo_hr = E_NOTIMPL;
 static HRESULT testdmo_GetOutputSizeInfo_hr = S_OK;
+static HRESULT testdmo_AllocateStreamingResources_hr = S_OK;
 static DWORD testdmo_output_size = 123;
 static DWORD testdmo_output_alignment = 1;
 
@@ -274,14 +275,14 @@ static HRESULT WINAPI dmo_AllocateStreamingResources(IMediaObject *iface)
 {
     if (winetest_debug > 1) trace("AllocateStreamingResources()\n");
     ++got_AllocateStreamingResources;
-    return S_OK;
+    return testdmo_AllocateStreamingResources_hr;
 }
 
 static HRESULT WINAPI dmo_FreeStreamingResources(IMediaObject *iface)
 {
     if (winetest_debug > 1) trace("FreeStreamingResources()\n");
     ++got_FreeStreamingResources;
-    return S_OK;
+    return 0xdeadbeef;
 }
 
 static HRESULT WINAPI dmo_GetInputStatus(IMediaObject *iface, DWORD index, DWORD *flags)
@@ -1825,10 +1826,29 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
     IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
 }
 
-static void test_filter_state(IMediaControl *control)
+static void test_filter_state(IMediaControl *control, IBaseFilter *filter)
 {
+    FILTER_STATE base_state;
     OAFilterState state;
     HRESULT hr;
+
+    testdmo_AllocateStreamingResources_hr = 0xdeadbeef;
+    hr = IBaseFilter_Pause(filter);
+    ok(hr == 0xdeadbeef, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_GetState(filter, 0, &base_state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(base_state == State_Stopped, "Got state %#x.\n", base_state);
+
+    testdmo_AllocateStreamingResources_hr = 0xbeef;
+    hr = IBaseFilter_Pause(filter);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_GetState(filter, 0, &base_state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(base_state == State_Paused, "Got state %#x.\n", base_state);
+    hr = IBaseFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    testdmo_AllocateStreamingResources_hr = S_OK;
 
     got_Flush = 0;
 
@@ -2389,7 +2409,7 @@ static void test_connect_pin(void)
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    test_filter_state(control);
+    test_filter_state(control, filter);
     test_sample_processing(control, meminput, &testsink, filter);
 
     /* Streaming event tests are more interesting if multiple source pins are
