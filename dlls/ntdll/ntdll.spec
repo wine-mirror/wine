@@ -345,6 +345,7 @@
 @ stdcall -syscall=0x0049 NtQueryVolumeInformationFile(long ptr ptr long long)
 @ stdcall -syscall=0x0045 NtQueueApcThread(long ptr long long long)
 @ stdcall -syscall NtQueueApcThreadEx(long long ptr long long long)
+@ stdcall -syscall NtQueueApcThreadEx2(long long long ptr long long long)
 @ stdcall -syscall NtRaiseException(ptr ptr long)
 @ stdcall -syscall NtRaiseHardError(long long long ptr long ptr)
 @ stdcall -syscall=0x0006 NtReadFile(long long ptr ptr ptr ptr long ptr ptr)
@@ -1412,6 +1413,7 @@
 @ stdcall -private ZwQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
 @ stdcall -private ZwQueueApcThread(long ptr long long long) NtQueueApcThread
 @ stdcall -private ZwQueueApcThreadEx(long long ptr long long long) NtQueueApcThreadEx
+@ stdcall -private ZwQueueApcThreadEx2(long long long ptr long long long) NtQueueApcThreadEx2
 @ stdcall -private ZwRaiseException(ptr ptr long) NtRaiseException
 @ stdcall -private ZwRaiseHardError(long long long ptr long ptr) NtRaiseHardError
 @ stdcall -private ZwReadFile(long long ptr ptr ptr ptr long ptr ptr) NtReadFile

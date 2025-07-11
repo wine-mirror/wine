@@ -834,8 +834,26 @@ NTSTATUS WINAPI wow64_NtQueueApcThreadEx( UINT *args )
     ULONG arg2 = get_ulong( &args );
     ULONG arg3 = get_ulong( &args );
 
-    return NtQueueApcThreadEx( handle, reserve_handle, apc_32to64( func ),
-                             (ULONG_PTR)apc_param_32to64( func, arg1 ), arg2, arg3 );
+    return NtQueueApcThreadEx2( handle, reserve_handle, 0, apc_32to64( func ),
+                                (ULONG_PTR)apc_param_32to64( func, arg1 ), arg2, arg3 );
+}
+
+
+/**********************************************************************
+ *           wow64_NtQueueApcThreadEx
+ */
+NTSTATUS WINAPI wow64_NtQueueApcThreadEx2( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    HANDLE reserve_handle = get_handle( &args );
+    ULONG flags = get_ulong( &args );
+    ULONG func = get_ulong( &args );
+    ULONG arg1 = get_ulong( &args );
+    ULONG arg2 = get_ulong( &args );
+    ULONG arg3 = get_ulong( &args );
+
+    return NtQueueApcThreadEx2( handle, reserve_handle, flags, apc_32to64( func ),
+                                (ULONG_PTR)apc_param_32to64( func, arg1 ), arg2, arg3 );
 }
 
 

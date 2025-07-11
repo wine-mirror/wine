@@ -1721,13 +1721,16 @@ NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
 
 
 /******************************************************************************
- *              NtQueueApcThread  (NTDLL.@)
+ *              NtQueueApcThreadEx2  (NTDLL.@)
  */
-NTSTATUS WINAPI NtQueueApcThread( HANDLE handle, PNTAPCFUNC func, ULONG_PTR arg1,
-                                  ULONG_PTR arg2, ULONG_PTR arg3 )
+NTSTATUS WINAPI NtQueueApcThreadEx2( HANDLE handle, HANDLE reserve_handle, ULONG flags,
+                                     PNTAPCFUNC func, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
 {
     unsigned int ret;
     union apc_call call;
+
+    TRACE( "%p %p %#x %p %p %p %p.\n", handle, reserve_handle, flags, func, (void *)arg1, (void *)arg2, (void *)arg3 );
+    if (reserve_handle || flags) FIXME( "Unsupported reserve_handle %p, flags %#x.\n", reserve_handle, flags );
 
     SERVER_START_REQ( queue_apc )
     {
@@ -1754,8 +1757,21 @@ NTSTATUS WINAPI NtQueueApcThread( HANDLE handle, PNTAPCFUNC func, ULONG_PTR arg1
 NTSTATUS WINAPI NtQueueApcThreadEx( HANDLE handle, HANDLE reserve_handle, PNTAPCFUNC func,
                                     ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
 {
-    FIXME( "reserve handle should be used: %p\n", reserve_handle );
-    return NtQueueApcThread( handle, func, arg1, arg2, arg3 );
+    ULONG flags = 0;
+
+    flags = (ULONG_PTR)reserve_handle & (ULONG_PTR)3;
+    reserve_handle = (HANDLE)((ULONG_PTR)reserve_handle & ~(ULONG_PTR)3);
+    return NtQueueApcThreadEx2( handle, reserve_handle, flags, func, arg1, arg2, arg3 );
+}
+
+
+/******************************************************************************
+ *              NtQueueApcThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueueApcThread( HANDLE handle, PNTAPCFUNC func, ULONG_PTR arg1,
+                                  ULONG_PTR arg2, ULONG_PTR arg3 )
+{
+    return NtQueueApcThreadEx2( handle, NULL, QUEUE_USER_APC_FLAGS_NONE, func, arg1, arg2, arg3 );
 }
 
 
