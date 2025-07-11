@@ -29,6 +29,7 @@
 #define WIN32_NO_STATUS
 #include "ntgdi_private.h"
 #include "ntuser_private.h"
+#include "wine/opengl_driver.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
@@ -885,6 +886,7 @@ static void release_dce( struct dce *dce )
 
     set_visible_region( dce->hdc, 0, &dummy_surface.rect, &dummy_surface.rect, &dummy_surface );
     user_driver->pReleaseDC( dce->hwnd, dce->hdc );
+    set_dc_opengl_drawable( dce->hdc, NULL );
 
     if (dce->clip_rgn) NtGdiDeleteObjectApp( dce->clip_rgn );
     dce->clip_rgn = 0;
@@ -1362,6 +1364,12 @@ HDC WINAPI NtUserGetDCEx( HWND hwnd, HRGN clip_rgn, DWORD flags )
     if (get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
         NtGdiSetLayout( dce->hdc, -1, LAYOUT_RTL );
 
+    if (dce->hwnd != hwnd)
+    {
+        struct opengl_drawable *drawable = get_window_opengl_drawable( hwnd );
+        set_dc_opengl_drawable( dce->hdc, drawable );
+        if (drawable) opengl_drawable_release( drawable );
+    }
     dce->hwnd = hwnd;
     dce->flags = (dce->flags & ~user_flags) | (flags & user_flags);
 
