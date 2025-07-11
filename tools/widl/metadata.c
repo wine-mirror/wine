@@ -108,12 +108,12 @@ metadata_header =
 
 enum
 {
-    STREAM_TABLE,
-    STREAM_STRING,
-    STREAM_USERSTRING,
-    STREAM_GUID,
-    STREAM_BLOB,
-    STREAM_MAX
+    WINMD_STREAM_TABLE,
+    WINMD_STREAM_STRING,
+    WINMD_STREAM_USERSTRING,
+    WINMD_STREAM_GUID,
+    WINMD_STREAM_BLOB,
+    WINMD_STREAM_MAX
 };
 
 static struct
@@ -146,7 +146,7 @@ static void write_headers( UINT image_size )
 
     put_data( &nt_header, sizeof(nt_header) );
 
-    for (i = 0; i < STREAM_MAX; i++)
+    for (i = 0; i < WINMD_STREAM_MAX; i++)
     {
         if (!streams[i].data_size) continue;
         streams_size += streams[i].header_size + streams[i].data_size;
@@ -171,7 +171,7 @@ static void write_headers( UINT image_size )
 
     metadata_header.num_streams = num_streams;
     put_data( &metadata_header, sizeof(metadata_header) );
-    for (i = 0; i < STREAM_MAX; i++)
+    for (i = 0; i < WINMD_STREAM_MAX; i++)
     {
         if (!streams[i].data_size) continue;
         put_data( &streams[i], streams[i].header_size );
@@ -3517,36 +3517,36 @@ static void build_streams( const statement_list_t *stmts )
     len = (tables_disk.offset + 3) & ~3;
     add_bytes( &tables_disk, pad, len - tables_disk.offset );
 
-    streams[STREAM_TABLE].data_size = tables_disk.offset;
-    streams[STREAM_TABLE].data = tables_disk.ptr;
+    streams[WINMD_STREAM_TABLE].data_size = tables_disk.offset;
+    streams[WINMD_STREAM_TABLE].data = tables_disk.ptr;
 
     len = (strings.offset + 3) & ~3;
     add_bytes( &strings, pad, len - strings.offset );
 
-    streams[STREAM_STRING].data_size = strings.offset;
-    streams[STREAM_STRING].data = strings.ptr;
+    streams[WINMD_STREAM_STRING].data_size = strings.offset;
+    streams[WINMD_STREAM_STRING].data = strings.ptr;
 
     len = (userstrings.offset + 3) & ~3;
     add_bytes( &userstrings, pad, len - userstrings.offset );
 
-    streams[STREAM_USERSTRING].data_size = userstrings.offset;
-    streams[STREAM_USERSTRING].data = userstrings.ptr;
+    streams[WINMD_STREAM_USERSTRING].data_size = userstrings.offset;
+    streams[WINMD_STREAM_USERSTRING].data = userstrings.ptr;
 
     len = (blobs.offset + 3) & ~3;
     add_bytes( &blobs, pad, len - blobs.offset );
 
-    streams[STREAM_BLOB].data_size = blobs.offset;
-    streams[STREAM_BLOB].data = blobs.ptr;
+    streams[WINMD_STREAM_BLOB].data_size = blobs.offset;
+    streams[WINMD_STREAM_BLOB].data = blobs.ptr;
 
-    streams[STREAM_GUID].data_size = guids.offset;
-    streams[STREAM_GUID].data = guids.ptr;
+    streams[WINMD_STREAM_GUID].data_size = guids.offset;
+    streams[WINMD_STREAM_GUID].data = guids.ptr;
 
-    for (i = 0; i < STREAM_MAX; i++)
+    for (i = 0; i < WINMD_STREAM_MAX; i++)
     {
         if (!streams[i].data_size) continue;
         offset += streams[i].header_size;
     }
-    for (i = 0; i < STREAM_MAX; i++)
+    for (i = 0; i < WINMD_STREAM_MAX; i++)
     {
         if (!streams[i].data_size) continue;
         streams[i].data_offset = offset;
@@ -3557,7 +3557,7 @@ static void build_streams( const statement_list_t *stmts )
 static void write_streams( void )
 {
     UINT i;
-    for (i = 0; i < STREAM_MAX; i++)
+    for (i = 0; i < WINMD_STREAM_MAX; i++)
     {
         if (!streams[i].data_size) continue;
         put_data( streams[i].data, streams[i].data_size );
@@ -3574,7 +3574,7 @@ void write_metadata( const statement_list_t *stmts )
     build_streams( stmts );
 
     image_size = FILE_ALIGNMENT + sizeof(cor_header) + 8 + sizeof(metadata_header);
-    for (i = 0; i < STREAM_MAX; i++) image_size += streams[i].header_size + streams[i].data_size;
+    for (i = 0; i < WINMD_STREAM_MAX; i++) image_size += streams[i].header_size + streams[i].data_size;
 
     init_output_buffer();
 
