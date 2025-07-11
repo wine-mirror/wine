@@ -8113,7 +8113,7 @@ static void test_wmv_decoder_media_object(void)
     ok(diff == 0, "Got %lu%% diff.\n", diff);
 
     hr = IMediaObject_AllocateStreamingResources(media_object);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaObject_FreeStreamingResources(media_object);
     todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
