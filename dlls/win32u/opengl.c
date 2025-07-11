@@ -1152,7 +1152,7 @@ static BOOL context_set_drawables( struct wgl_context *context, void *private, H
             if (old_read) opengl_drawable_release( old_read );
 
             /* update the current window drawable to the last used draw surface */
-            if ((hwnd = NtUserWindowFromDC( draw_hdc ))) set_window_opengl_drawable( hwnd, new_draw );
+            if (new_draw && (hwnd = NtUserWindowFromDC( draw_hdc ))) set_window_opengl_drawable( hwnd, new_draw );
         }
     }
 
