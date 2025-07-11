@@ -1,11 +1,13 @@
-The Wine development release 10.11 is now available.
+The Wine development release 10.12 is now available.
 
 What's new in this release:
-  - Preparation work for NTSync support.
+  - Optional EGL backend in the X11 driver.
+  - Support for Bluetooth Low Energy services.
   - More support for generating Windows Runtime metadata in WIDL.
+  - ARM64 builds enabled in Gitlab CI.
   - Various bug fixes.
 
-The source is available at <https://dl.winehq.org/wine/source/10.x/wine-10.11.tar.xz>
+The source is available at <https://dl.winehq.org/wine/source/10.x/wine-10.12.tar.xz>
 
 Binary packages for various distributions will be available
 from the respective [download sites][1].
@@ -17,375 +19,307 @@ See the file [AUTHORS][3] for the complete list.
 
 [1]: https://gitlab.winehq.org/wine/wine/-/wikis/Download
 [2]: https://gitlab.winehq.org/wine/wine/-/wikis/Documentation
-[3]: https://gitlab.winehq.org/wine/wine/-/raw/wine-10.11/AUTHORS
+[3]: https://gitlab.winehq.org/wine/wine/-/raw/wine-10.12/AUTHORS
 
 ----------------------------------------------------------------
 
-### Bugs fixed in 10.11 (total 25):
+### Bugs fixed in 10.12 (total 17):
 
- - #31212  Some VST instruments crash when reloaded in Mixcraft
- - #37131  Clang Static Analyzer:  Division by zero
- - #42033  Fallout 3: Radio music not playing
- - #50278  Diggles: The Myth of Fenris (GOG version) crashes on launch
- - #50577  Saya no Uta: hangs on RtlpWaitForCriticalSection
- - #55019  kernel32:process - Accents cause test_Environment() to fail on Windows
- - #56086  C&C Generals Zero Hour has graphic errors in menu
- - #56128  Genshin Impact: after changing to another window and back, input does not work anymore
- - #56517  osu!: Does not launch since 9.3
- - #57020  Anritsu Software Toolbox doesn't install properly
- - #57656  CryptMsgGetParam() with CMSG_SIGNER_AUTH_ATTR_PARAM/CMSG_SIGNER_UNAUTH_ATTR_PARAM returns success with 0 buffer size
- - #57802  WordPro's "view Settings" not saving properly
- - #58321  Purple Place exits
- - #58343  Multiple games have rendering errors after d0fd9e87c (Kathy Rain 2, Among Us, Green Hell)
- - #58344  Magic The Gathering Arena: Black screen in wine-10.9
- - #58345  Far File Manager 3 x86-64's product features during installation cannot be configured/are missing
- - #58356  Doom I & II Enhanced (2019 re-release based on Unity engine) crashes after the intro videos
- - #58363  Thief II crashes
- - #58364  Pegasus Email draws incorrectly
- - #58372  EZNEC pro2+ 7.0 runs, but calculations have errornous exponential values
- - #58373  Bejeweled 3 runs but the screen is black
- - #58381  "musl: Use __builtin_rint if available" breaks clang builds (except aarch64)
- - #58384  Sid Meier's Civilization III becomes unresponsive
- - #58402  Sid Meier's Civilization III: severe discoloration
- - #58412  winedbg recursively forks until the memory is exhausted
+ - #19561  Very large memory leak when doing overlapped reads
+ - #38337  clang compiling warnings
+ - #42882  HDX server software: rs232 port access not working
+ - #52720  Speed up cmd.exe:batch in Wine
+ - #55776  Some game use video as intro will stock after video is finished
+ - #57204  after enable winedmo, Little Witch Nobeta video wont play anymore
+ - #57244  Train capacity 300% 2 will crash after enable the winedmo
+ - #57489  GetPointerPenInfo not located in USER32.dll when attempting to run Clip Studio Paint 3.0
+ - #57790  FindVUK doesn't show drive details
+ - #58263  Wine Internet Settings crashes on unimplemented function shdocvw.dll.ParseURLFromOutsideSourceW
+ - #58422  Soldier of Fortune II crashes on start
+ - #58423  Flickering in games using dxvk/vkd3d-proton on sway
+ - #58429  Betfair Poker setup never gets past the splash screen
+ - #58435  winepath -w conversion outputs wrong filenames
+ - #58436  x11, kotor keeps minimizing
+ - #58437  Total Commander 11.55 complains "Access denied" for EVERY file >= 1 MB in "Compare files by content"
+ - #58475  Wine Mono corlib tests cause wineserver to assert
 
-### Changes since 10.10:
+### Changes since 10.11:
 ```
-Alexandre Julliard (36):
-      winebuild: Refuse to do non-PE builds on platforms that don't support it.
-      winegcc: Refuse to do non-PE builds on platforms that don't support it.
-      ntdll: Use NtOpenFile to open nls files in the system directory.
-      ntdll: Use UNICODE_STRINGs in the main image loading helpers.
-      ntdll: Pass the full image NT path through the server startup information.
-      ntdll: Move resolving the initial image name to the get_full_path() helper.
-      ntdll: Add a helper to return both NT and Unix names to open a file.
-      ntdll: Make get_redirect() static.
-      ntdll: Try to build a proper NT name when opening files with \??\unix.
-      server: Return the NT file name in ObjectNameInformation for file objects.
-      winecrt0: Add a default implementation for DllGetVersion().
-      resources: Generate version strings from the corresponding version number.
-      mountmgr: Use the \\?\unix prefix to open device files.
-      appwiz.cpl: Store the registry key name in Unicode.
-      appwiz.cpl: Use GetFinalPathNameByHandleW to get the DOS path of the package to install.
-      user32: Add a macro to define the list of user callbacks.
-      mscoree: Use GetFinalPathNameByHandleW to get the DOS path of the Mono directory.
-      mshtml: Use GetFinalPathNameByHandleW to get the DOS path of the Gecko directory.
-      start: Use GetFinalPathNameByHandleW to get the DOS path of a Unix file.
-      kernelbase: Convert slashes in Unix paths in GetFinalPathNameByHandleW.
-      wineps.drv: Use \\?\unix paths to load the AFM files.
-      winemenubuilder: Use \\?\unix paths to load the link files.
-      kernel32: Reimplement conversion to DOS name using GetFinalPathNameByHandleW.
-      ntdll: Reimplement the RtlGetFullPathName_U Unix path heuristic using ObjectNameInformation.
-      ntdll: Restrict some Unixlib helpers to Wine internal usage.
-      ntdll: Add a private helper to retrieve a DOS file name.
-      ntdll: Return NT paths in the get build/data dir helpers.
-      ntdll: Fix get_core_id_regs_arm64() prototype for non-Linux platforms.
-      ntdll: Pass the Unix prot flags to the map_fixed_area() helper.
-      ntdll: Don't set VPROT_WRITEWATCH flag on pages when using kernel write watches.
-      win32u: Add a helper to convert file names to NT format consistently.
-      ntdll: Only reset the reported write watch range in NtGetWriteWatch.
-      ntdll: Correctly report execute faults on ARM64.
-      ntdll: Correctly report execute faults on ARM.
-      makefiles: Support specifying the PE architecture as "none".
-      makefiles: Fix program installation for Windows builds.
+Adam Markowski (1):
+      po: Update Polish translation.
 
-Bernhard Kölbl (1):
-      mfmediaengine: Enable XVP for playback topology.
+Akihiro Sagawa (1):
+      po: Update Japanese translation.
 
-Bernhard Übelacker (10):
-      msvcrt/tests: Add broken to new j modifier tests.
-      oleaut32: In VarFormat do not count '#' in exponent into fractional digits.
-      msi: Use LRESULT to store return value from CallWindowProcW.
-      winetest: Fail only if output_size exceeds the limit.
-      gitlab: Derive the windows tests from a common .wine-test-windows.
-      gitlab: Remove name containing CI environment variables in windows tests.
-      comctl32: Use LRESULT to store return value from CallWindowProcW.
-      comdlg32: Use LRESULT/INT_PTR to store return value from CallWindowProcA.
-      winetest: Use LRESULT to return value from CallWindowProcA.
-      gitlab: Remove other user controlled CI environment variables.
+Alex Henrie (3):
+      ntdll: Don't skip synchronous read when serial read timeout is infinite.
+      inetcpl: Restore parse_url_from_outside implementation.
+      ntdll: Detect the optical disc type on Linux using a SCSI command.
 
-Bradan Fleming (1):
-      winemenubuilder: Quote Exec arguments in desktop entries.
+Alexandre Julliard (16):
+      server: Always use the thread Unix id in ptrace().
+      rpcrt4: Silence compiler warnings about pointer wraparound.
+      gitlab: Build an arm64 image.
+      ntdll: Remove duplicate backslashes in get_unix_full_path().
+      winevulkan: Skip a couple of unneeded conversion functions.
+      gitlab: Add an ARM64 build.
+      faudio: Import upstream release 25.07.
+      gitlab: Update sarif-converter URL.
+      ntdll: Get rid of the wine_unix_to_nt_file_name syscall.
+      ntdll: Unify the Unix to NT path conversion helpers.
+      gitlab: Add a daily test run for new wow64 mode.
+      winetest: Use compiler macros to generate the compiler version info.
+      winex11: Disable more wintab code when support is missing.
+      oleaut32: Use DOUBLE type where appropriate to match the PSDK.
+      include: Use aligned int64 types where possible.
+      setupapi/tests: Don't test an uninitialized value.
+
+Alexandros Frantzis (2):
+      winewayland: Use system cursor shapes when possible.
+      winewayland: Support layered windows with per-pixel alpha.
+
+Alfred Agrell (1):
+      include: Enable __uuidof(IUnknown).
+
+Alistair Leslie-Hughes (2):
+      shell32: Avoid closing a handle twice.
+      msado15: Implement _Connection::get_version.
+
+Anton Baskanov (1):
+      quartz: Decommit the allocator before entering the streaming CS in AVIDec.
+
+Arkadiusz Hiler (1):
+      cfgmgr32: Preserve registry casing when getting device interface list.
+
+Aurimas Fišeras (1):
+      po: Update Lithuanian translation.
+
+Bernhard Übelacker (1):
+      dxcore/tests: Skip tests when there is no display available.
 
 Brendan McGrath (3):
-      mfmediaengine: Only forward the most recent seek time.
-      mfreadwrite/tests: Check DEFAULT_STRIDE is not always present.
-      mfreadwrite: Fix media type output when video processor is used.
+      winegstreamer: Remove 'au' alignment for h264.
+      winegstreamer: Signal eos on disconnect.
+      winegstreamer: Don't hold lock during wg_parser_stream_get_buffer.
 
-Charlotte Pabst (9):
-      mf: Clear pending MFT stream requests when flushing.
-      Revert "mf: Release pending items when sample grabber is stopped.".
-      ntdll: Treat Rbp as CONTEXT_INTEGER register.
-      mf/tests: Rename test_source to test_stub_source.
-      mf/tests: Rename test_seek_source to test_source.
-      mf/tests: Move some functions.
-      mf/tests: Add tests for thinning.
-      mf: Don't forward thinning to clock.
-      mf: Handle thinning in media session.
+Connor McAdams (2):
+      d3dx9: Replace txc_fetch_dxtn with bcdec.
+      d3dx9: Replace txc_compress_dxtn with stb_dxt.
 
-Connor McAdams (4):
-      comctl32/tests: Add tests for iImage value for listview subitems.
-      comctl32/listview: Don't touch iImage value for subitems if LVS_EX_SUBITEMIMAGES is not set.
-      comctl32/tests: Add item state value tests for LVS_OWNERDATA controls.
-      comctl32/listview: Properly handle item state value for LVS_OWNERDATA controls.
+Daniel Lehman (3):
+      ucrtbase/tests: Add tests for expf.
+      ucrtbase/tests: Move exp tests from msvcr120.
+      include: Add _wcstod_l declaration.
 
-Conor McCarthy (4):
-      rtworkq/tests: Test closing a timer or event handle after submission.
-      ntdll/tests: Test early closure of handles used for threadpool waits.
-      ntdll: Initialise waitable handles with NULL.
-      ntdll: Duplicate handles for thread pool waits.
+Dmitry Timoshkov (1):
+      ntdll: Initialization of XState features should not depend on AVX support.
 
-Dylan Donnell (1):
-      kernelbase: Allocate a new buffer for the module name in LoadLibraryExA.
+Elizabeth Figura (5):
+      kernel32/tests: Test opening a directory with ReOpenFile().
+      kernelbase: Use FILE_NON_DIRECTORY_FILE in ReOpenFile().
+      ntdll/tests: Add comprehensive reparse point tests.
+      kernel32/tests: Test CreateSymbolicLink().
+      xaudio2: Do not register classes from xapofx or x3daudio dlls.
 
-Elizabeth Figura (34):
-      qasf/tests: Test AllocateStreamingResources()/FreeStreamingResources() calls.
-      qasf/dmowrapper: Fail Pause() if there is no DMO.
-      qasf/dmowrapper: Call AllocateStreamingResources() and FreeStreamingResources().
-      qasf/dmowrapper: Handle a NULL output buffer in GetBufferAndLength().
-      ir50_32/tests: Add tests.
-      ir50_32/tests: Move compression and decompression tests from mf:transform.
-      ir50_32: Use case-insensitive comparison for the compression fourcc.
-      ir50_32: Do not handle a NULL input pointer in ICM_DECOMPRESS_GET_FORMAT.
-      ir50_32: Return ICERR_OK from ICM_DECOMPRESS_END.
-      ir50_32: Suggest 24-bit RGB.
-      ir50_32: Do not validate biPlanes.
-      ir50_32: Explicitly fill the whole BITMAPINFOHEADER in ICM_DECOMPRESS_GET_FORMAT.
-      ir50_32: Fix the return value of ICM_DECOMPRESS_GET_FORMAT.
-      ir50_32: Fix the error value for mismatching dimensions.
-      ir50_32: Support decoding to RGB565.
-      qasf/tests: Test dynamic format change on the DMO wrapper.
-      qasf/dmowrapper: Delay SetActualDataLength().
-      qasf/dmowrapper: Handle dynamic format change.
-      quartz/tests: Port test_source_allocator() to avidec.
-      quartz/avidec: Don't set the data length to 0.
-      quartz/tests: Test dynamic format change on the AVI decoder.
-      quartz: Add a copy_bitmap_header() helper.
-      quartz/avidec: Correctly calculate the BITMAPINFOHEADER size for BI_BITFIELDS.
-      quartz/avidec: Handle dynamic format change.
-      winegstreamer: Support the Indeo 5.0 format in DirectShow.
-      server: Use an event sync for thread objects.
-      server: Use an event sync for job objects.
-      server: Use an event sync for process objects.
-      server: Use an event sync for debug objects.
-      server: Use an event sync for device manager objects.
-      server: Use an event sync for completion port objects.
-      server: Use an event sync for timer objects.
-      server: Use an event sync for console objects.
-      server: Use an event sync for console server objects.
+Eric Pouech (7):
+      cmd: Introduce struct batch_file to hold information about a .cmd file.
+      cmd: Add a cache for the labels lookup.
+      cmd/tests: Add tests about .cmd file alteration while executing it.
+      widl: Fix segfault when inheriting from an incomplete interface.
+      widl: Remove unneeded condition.
+      widl: Ensure inherited interface is declared before using it.
+      include: Remove duplicated declarations in .idl files.
 
-Esme Povirk (10):
-      gdiplus: Account for gdi32 clipping in GdipFillRegion.
-      gdiplus: Don't clip the HRGN passed to alpha_blend_pixels_hrgn.
-      comctl32: Implement MSAA events for updown controls.
-      gdiplus/tests: Region hit-testing is done in device coordinates.
-      gdiplus: Use graphics transform in GdipIsVisibleRegionPoint.
-      gdiplus: Do not create HRGN in GdipIsVisibleRegionPoint.
-      comctl32: Implement OBJID_QUERYCLASSNAMEIDX for list boxes.
-      comctl32: Implement OBJID_QUERYCLASSNAMEIDX for static controls.
-      comctl32: Implement OBJID_QUERYCLASSNAMEIDX for edit controls.
-      comctl32: Implement OBJID_QUERYCLASSNAMEIDX for combo boxes.
+Esme Povirk (3):
+      comctl32: Implement OBJID_QUERYCLASSNAMEIDX for status controls.
+      comctl32: Implement OBJID_QUERYCLASSNAMEIDX for toolbars.
+      comctl32: Implement OBJID_QUERYCLASSNAMEIDX for progress bars.
 
-Hans Leidekker (19):
-      widl: Add rows for the delegate type.
-      widl: Handle NULL type name.
-      widl: Add rows for propget methods.
-      widl: Add rows for propput methods.
-      widl: Add rows for eventadd methods.
-      widl: Add rows for eventremove methods.
-      widl: Add rows for regular methods.
-      widl: Use a define for maximum name length.
-      widl: Add rows for the overload attribute.
-      widl: Add rows for the default_overload attribute.
-      widl: Add rows for the deprecated attribute.
-      widl: Correct element type for interface signature.
-      widl: Don't sort the property and event tables.
-      widl: Add a helper to build the method name.
-      widl: Add a helper to retrieve method attributes and flags.
-      widl: Store EventRegistrationToken reference in the real type.
-      widl: Add separate property rows for interfaces and classes.
-      widl: Add separate event rows for interfaces and classes.
-      widl: Add rows for the runtimeclass type.
+Gabriel Ivăncescu (4):
+      mshtml: Clear the document before opening it for writing.
+      mshtml: Implement document.linkColor.
+      mshtml: Implement document.vLinkColor.
+      mshtml: Don't add HTMLDOMNode props to the NodeList.
 
-Ignacy Kuchciński (4):
-      user32: Add GetPointerPenInfo stub.
-      user32: Add GetPointerDeviceProperties stub.
-      user32: Add GetPointerDeviceRects stub.
-      user32: Add GetRawPointerDeviceData stub.
+Hans Leidekker (16):
+      widl: Add rows for the static attribute.
+      widl: Add TYPE_ATTR_ABSTRACT flag if a runtime class has no member interfaces.
+      widl: Add rows for the default attribute.
+      widl: Add rows for the activatable attribute.
+      widl: Add rows for the threading attribute.
+      widl: Add rows for the marshalingbehavior attribute.
+      widl: Relax check on runtimeclass definitions.
+      widl: Store a variable pointer instead of a declaration in expressions.
+      widl: Store the runtimeclass for constructor interfaces.
+      widl: Factor out an add_member_interfaces() helper.
+      widl: Add rows for static interfaces.
+      widl: Include version in activatable attribute value.
+      widl: Add rows for activation interfaces.
+      widl: Add rows for the composable attribute.
+      widl: Add rows for composition interfaces.
+      widl: Skip writing metadata if winrt_mode is not set.
 
-Julius Bettin (1):
-      kernelbase: Implement HeapSummary.
+Huw D. M. Davies (1):
+      kernel32: Use the correct buffer length.
 
-Nikolay Sivov (9):
-      bluetoothapis: Fix typo in a format string (Coverity).
-      version/tests: Fix a typo (Coverity).
-      amstream/tests: Add a few return value checks (Coverity).
-      widl: Always use NdrClientCall2() for interpreted stubs.
-      widl: Do not write "const" modifiers for _PARAM_STRUCT fields.
-      mfmediaengine: Simplify state -> event mapping.
-      kernel32/tests: Use ViewShare value instead of a literal constant.
-      ntdll/tests: Add a test for automatically resizing a mapped disk file.
-      ntdll/tests: Tweak mapped file test to better match actual use case.
+Jacek Caban (8):
+      webservices: Don't assume that enum is unsigned in WsInitializeMessage.
+      dmime/tests: Use ceil instead of round.
+      configure: Build PEs with -ffp-exception-behavior=maytrap.
+      d3dcompiler: Don't assume that enum is unsigned in d3dcompiler_get_blob_part.
+      d3dcompiler: Handle all D3D_BLOB_PART values in d3dcompiler_get_blob_part validation.
+      d3dcompiler: Use __WINE_CRT_PRINTF_ATTR.
+      wined3d: Use __WINE_CRT_PRINTF_ATTR.
+      widl: Rename metadata stream type enum values to avoid conflict with Cygwin limits.h.
 
-Paul Gofman (4):
-      avifil32/tests: Test creating AVI file with OF_CREATE but without access mode.
-      avifil32: Assume OF_WRITE for OF_CREATE in AVIFileOpenW().
-      avifil32: Fix dwLength counting for fixed size samples.
-      user32: Reserve more space in the kernel callback table.
+Joe Souza (3):
+      cmd: COPY should output file names as they are copied.
+      cmd/tests: Add tests to verify COPY command output.
+      cmd: Allow '+' as delimiter for tab-completion, e.g. 'copy file+file2'.
 
-Piotr Caban (10):
-      musl: Reimplement rint so it doesn't depend on floating point operations precision.
-      musl: Use __builtin_rint if available.
-      msvcrt: Use rint() from the bundled musl library.
-      msvcrt: Fix allocated buffer size in _getcwd.
-      include: Add errlup.idl.
-      musl: Don't use __builtin_rint in clang builds.
-      musl: Optimize rint when floating point operations use 53-bit precision.
-      msvcrt: Fix allocated buffer size in _getdcwd.
-      ucrtbase/tests: Cleanup temporary files in _sopen_s tests.
-      msvcrt: Support _SH_SECURE in _wsopen_dispatch().
+Mike Kozelkov (1):
+      urlmon: Add PersistentZoneIdentifier COM object stubs.
 
-Rémi Bernon (80):
-      winex11: Update GL drawable offscreen status instead of recreating.
-      winex11: Update every window GL drawable on resize / reparent.
-      winex11: Update drawable size and offscreen when presenting.
-      winex11: Drop pixmap-based child window workaround.
-      winex11: Rename context drawables to draw / read.
-      winex11: Remove unnecessary glx_pixel_format pointers.
-      winex11: Remove unnecessary hdc context member.
-      win32u: Introduce an opengl_drawable base struct.
-      win32u: Return an opengl_drawable from pbuffer_create.
-      wineandroid: Add a refcount to struct gl_drawable.
-      win32u: Add a refcount to struct opengl_drawable.
-      include: Add APP_LOCAL_DEVICE_ID definition.
-      opengl32: Hook and flush context on glClear.
-      winewayland: Update the drawable size on context_flush.
-      winex11: Use a separate drawable vtable for pbuffers.
-      win32u: Use the drawable vtable to destroy pbuffers.
-      win32u: Allocate GL drawables on behalf of the drivers.
-      winewayland: Switch client surfaces when presenting.
-      win32u: Keep a reference to the GL drawables in the windows.
-      win32u: Keep a reference to the pbuffer drawables in the DCs.
-      win32u: Track and update opengl drawables in the contexts.
-      wineandroid: Remove now unnecessary context sync.
-      winemac: Remove now unnecessary context sync.
-      winewayland: Remove now unnecessary context sync.
-      win32u: Avoid reading GL data past the end of the memory DC bitmap.
-      server: Move object grab/release out of (add|remove)_queue.
-      server: Add an operation to retrieve an object sync.
-      server: Redirect fd-based objects sync to the fd.
-      server: Introduce a new event sync object.
-      server: Use an event sync for fd objects.
-      user32/tests: Cleanup window class versioning tests.
-      user32/tests: Test window class versioned name with integer atom.
-      user32/tests: Test that window class atom cannot be changed.
-      win32u/tests: Test window class name with integer atom.
-      win32u: Use the right pointer when destroying window.
-      user32/tests: Call flush_event after SetForegroundWindow calls.
-      server: Use an event sync for thread apc objects.
-      server: Use an event sync for context objects.
-      server: Use an event sync for startup info objects.
-      ntdll/tests: Link atom functions directly.
-      ntdll/tests: Add more integral atom tests.
-      ntdll: Set returned atom to 0 when we should.
-      ntdll: Allow deleting integral atoms from tables.
-      user32: Clamp atom to MAXINTATOM in get_int_atom_value.
-      win32u: Clamp atom to MAXINTATOM in get_int_atom_value.
-      winemac: Drop the SkipSingleBufferFlushes option.
-      win32u: Use the drawable vtable for flush and swap.
-      win32u: Add a flags parameter to opengl_drawable flush.
-      win32u: Pass opengl_drawable pointers to make_current.
-      win32u: Use the DC opengl drawable for the memory DC surface.
-      win32u: Keep track of the most recent window GL drawable.
-      opengl32: Ignore RGB565 pixel formats with memory DCs.
-      server: Use an event sync for file lock objects.
-      server: Use an event sync for debug event objects.
-      server: Use a static array for atom table atoms.
-      server: Use a count instead of last atom index.
-      server: Forbid using string atom 0xc000.
-      server: Use a static array for atom table hash.
-      server: Keep computed atom hash in local variables.
-      server: Remove unused atom pinned member.
-      winex11: Avoid requesting CWStackMode alone with managed windows.
-      server: Use the console sync for screen buffers objects.
-      server: Use the console sync for console input objects.
-      server: Use the console sync for console output objects.
-      server: Get rid of the console signaled flag.
-      server: Create a global atom table on startup.
-      server: Remove now unnecessary global table checks.
-      server: Pass atom table parameter to atom functions.
-      server: Introduce a new get_user_atom_name request.
-      server: Introduce a new add_user_atom request.
-      server: Move some checks inside of mutex do_release.
-      server: Split mutex to a dedicated sync object.
-      server: Split semaphore to a dedicated sync object.
-      server: Use a flag to keep track of message queue waits.
-      server: Use a signaled flag for message queue sync.
-      win32u/tests: Test that window properties are global atoms.
-      user32: Implement GetClipboardFormatNameA with NtUserGetClipboardFormatName.
-      win32u: Implement NtUserGetClipboardFormatName using NtUserGetAtomName.
-      server: Create and use a user atom table for class names.
-      server: Initialize global and user tables with some atoms.
+Nikolay Sivov (2):
+      kernel32: Add a stub for CreateBoundaryDescriptorA().
+      include: Remove duplicated CreateBoundaryDescriptorW() definition.
 
-Santino Mazza (1):
-      winex11.drv: Add programmer dvorak layout.
+Owen Rudge (1):
+      mshtml: Implement document.aLinkColor.
+
+Paul Gofman (5):
+      user32/tests: Add tests for STARTF_USESHOWWINDOW.
+      win32u: Respect STARTF_USESHOWWINDOW in show_window().
+      winepulse.drv: Avoid hangs on exit when pulse main loop thread gets killed.
+      winebus.sys: Check for udev_device_get_subsystem() error in udev_add_device().
+      winebus.sys: Close fd if device is not handled in udev_add_device().
+
+Ryan Houdek (1):
+      wineboot: Detect TSC frequency on Arm64.
+
+Rémi Bernon (64):
+      winex11: Release the GL drawable on creation failure.
+      win32u: Keep window GL drawables in a global linked list.
+      win32u: Notify the drivers when GL drawables are detached.
+      win32u: Update opengl drawables with window state.
+      win32u: Update the window state in more places.
+      winewayland: Drop now unnecessary GL drawable tracking.
+      winex11: Remove now unnecessary drawable tracking.
+      winewayland: Remove unnecessary context config.
+      wineandroid: Remove unnecessary context config.
+      win32u: Move EGL context creation out of the drivers.
+      winewayland: Only detach/attach client surface if it is different.
+      opengl32: Do not filter legacy extensions.
+      opengl32: Add a helper to read OpenGL registry options.
+      opengl32: Add an EnabledExtensions registry option.
+      user32: Init class name outside of get_versioned_name.
+      user32: Move user32_module default out of get_class_info.
+      user32: Load class module in get_class_version.
+      user32: Move get_class_version out of get_class_info.
+      comctl32: Fix class name case in manifest.
+      user32: Always copy class names to a temporary buffer.
+      win32u: Add traces to wglGetExtensionsString*.
+      win32u: Add an EGLSurface pointer to opengl_drawable struct.
+      win32u: Move EGL make_current context function out of the drivers.
+      winex11: Remove now unnecessary x11drv_context structure.
+      winex11: Add an option to use the new EGL OpenGL backend.
+      winemac: Remove now unnecessary pbuffer tracking.
+      win32u: Avoid calling detach, flush or swap on pbuffer drawables.
+      win32u: Avoid releasing opengl drawable within drawables_lock.
+      win32u: Implement generic EGL driver pbuffer surface.
+      winewayland: Use a distinct wayland_pbuffer struct for pbuffers.
+      win32u: Remove now unnecessary opengl_drawable hdc member.
+      win32u: Remove VkResult from surface_presented functions.
+      win32u: Introduce a new client_surface struct for vulkan surfaces.
+      win32u: Keep client surfaces in a global list.
+      win32u: Update client surfaces when window state changes.
+      win32u: Present client surfaces through the vtable.
+      mf/session: Clarify internal states from session states separation.
+      mf/session: Move internal states to a separate command_state enum.
+      mf/session: Remove unnecessary SESSION_FLAG_PENDING_COMMAND flag.
+      mf/session: Replace SESSION_FLAG_FINALIZE_SINKS with dedicated states.
+      mf/session: Replace SESSION_FLAG_END_OF_PRESENTATION with dedicated states.
+      mf/session: Introduce a SESSION_FLAG_SOURCE_SHUTDOWN presentation flag.
+      mf/session: Simplify the media session shutdown event handling.
+      win32u: Fix incorrect length in font extension check.
+      winegstreamer: Force h264parse to output 'au' aligned byte-stream.
+      mp3dmod: Fix some media type leaks.
+      mp3dmod: Avoid uninitialized variable access.
+      winegstreamer: Fix some video decoder media type leaks.
+      mf/tests: Fix some leaks in transform tests.
+      mf/tests: Avoid leaking D3D resources through IMFTrackedSample.
+      mf/tests: Skip memory-hungry H264 encoder tests on 32bit.
+      mfplat/tests: Add more tests for event queue shutdown.
+      mfsrcsnk: Queue an event before shutting down the event queues.
+      winegstreamer: Queue an event before shutting down the event queues.
+      mf/session: Handle an optional MEError event from sources on shutdown.
+      winegstreamer: Remove now unnecessary IMFMediaShutdownNotify.
+      mf/session: Remove now unnecessary IMFMediaShutdownNotify.
+      include: Remove now unnecessary IMFMediaShutdownNotify interface.
+      winewayland: Clear the current client surface on vulkan detach.
+      winewayland: Merge the vulkan client surface with wayland_client_surface.
+      winex11: Move client surface code out of vulkan ifdef.
+      winex11: Create client surfaces for opengl drawables.
+      win32u: Replace opengl drawables tracking with client surfaces.
+      server: Keep owned mutex syncs alive until abandoned.
+
+Shaun Ren (11):
+      sapi/tests: Copy SPVTEXTFRAG list into a contiguous array.
+      sapi/tests: Introduce simulate_output option in tts.
+      sapi/tests: Add some SSML tests in tts.
+      sapi/tts: Support XML-related flags in ISpVoice::Speak.
+      sapi/xml: Add a stub SSML parser.
+      sapi/xml: Parse the <speak> SSML root element.
+      sapi/xml: Implement add_sapi_text_fragement().
+      sapi/xml: Parse the <p> and <s> SSML elements.
+      sapi/xml: Parse the rate attribute in the SSML <prosody> element.
+      sapi/xml: Parse the volume attribute in the <prosody> SSML element.
+      sapi/xml: Parse the pitch attribute in the <prosody> SSML element.
 
 Vibhav Pant (17):
-      include: Add definitions for IBluetoothDeviceId, BluetoothError.
-      include: Add windows.devices.bluetooth.genericattributeprofile.idl.
-      include: Add definitions for IBluetoothLEDevice.
-      include: Add definitions for IGattDeviceService2.
-      windows.devices.bluetooth/tests: Add tests for BluetoothLEDeviceStatics.
-      windows.devices.bluetooth: Add stubs for BluetoothLEDeviceStatics.
-      setupapi/tests: Add tests for SetupDi{Set,Get}DeviceInterfacePropertyW.
-      setupapi: Implement SetupDiSetDeviceInterfacePropertyW.
-      setupapi: Implement SetupDiGetDeviceInterfacePropertyW.
-      ntoskrnl.exe/tests: Add tests for SetupDiGetDeviceInterfacePropertyW with enabled interfaces.
-      setupapi/tests: Add tests for SetupDiGetDeviceInterfacePropertyKeys.
-      setupapi: Implement SetupDiGetDeviceInterfacePropertyKeys.
-      setupapi: Implement additional built-in properties in SetupDiGetDeviceInterfacePropertyW.
-      setupapi/tests: Add additional tests for device instance properties DEVPKEY_{DeviceInterface_ClassGuid, Device_InstanceId}.
-      cfgmgr32: Implement CM_Get_Device_Interface_PropertyW for all property keys.
-      cfgmgr32/tests: Add additional tests for CM_Get_Device_Interface_PropertyW.
-      setupapi: Return built-in property keys for device interfaces even when the Properties subkey for the interface doesn't exist.
+      include: Add devquerydef.h.
+      include: Add devfiltertypes.h.
+      include: Add devquery.h.
+      cfgmgr32/tests: Add tests for DevGetObjects.
+      cfgmgr32: Add a basic implementation for DevGetObjects(Ex) for device interface objects.
+      ntoskrnl.exe/tests: Add tests for Io{Get,Set}DeviceInterfacePropertyData.
+      ntoskrnl.exe: Implement IoGetDeviceInterfacePropertyData.
+      ntoskrnl.exe: Implement IoSetDeviceInterfacePropertyData.
+      cfgmgr32/tests: Add tests for fetching specific properties in DevGetObjects.
+      cfgmgr32: Stub DevCreateObjectQuery(Ex) functions.
+      cfgmgr32: Implement initial device enumeration for DevCreateObjectQuery.
+      cfgmgr32: Support fetching properties for device objects in Dev{GetObjects, CreateObjectQueryEx}.
+      winebth.sys: Create PDOs for remote Bluetooth devices.
+      winebth.sys: Store a list of GATT services discovered on LE devices.
+      winebth.sys: Implement IOCTL_WINEBTH_LE_DEVICE_GET_GATT_SERVICES.
+      bluetoothapis: Implement BluetoothGATTGetServices.
+      bluetoothapis/tests: Add tests for BluetoothGATTGetServices.
 
-William Horvath (1):
-      wow64win: Fix UNICODE_STRING thunking in wow64_NtUserRegisterWindowMessage.
-
-Yuxuan Shui (23):
-      msvcirt/tests: Fix use-after-free in test_ifstream.
-      msvcirt/tests: Avoid out-of-bound access in test_strstreambuf.
-      mshtml: Fix misuse of IWinInetHttpInfo_QueryInfo.
-      shell32: Fix use-after-free in ShellView_WndProc.
-      shell32/tests: Add missing double null termination in shlfileop.
-      kernelbase: Handle short urls in UrlIsA.
-      uiautomationcore/tests: Fix missing terminators in some nav_seqs.
-      wintrust: Fix data length mix-up in asn decoder.
-      gdi32: Fix missing terminator element in Devanagari_consonants.
-      xcopy: Fix out-of-bound access when parsing arguments.
-      usp10/tests: Avoid out-of-bound use of glyphItems when nGlyphs mismatches.
-      rpcrt4/tests: Fix out-of-bound write in test_pointer_marshal.
-      wininet: Fix handling of empty strings in urlcache_hash_key.
-      wininet: Use BYTE instead of char for hash calculation.
-      crypt32: Fix missing size check in CSignedEncodeMsg_Open.
-      crypt32: Handle missing attributes in CDecodeSignedMsg_GetParam.
-      crypt32/tests: Add signed message CryptMsgGetParam tests with > 1 signers.
-      crypt32: Fix creating signed message with > 1 signers.
-      gdiplus/tests: Fix out-of-bound use of expected in ok_path_fudge.
-      hid/tests: Fix out-of-bound use of nodes in test_device_info.
-      crypt32: Don't release context in CSignedEncodeMsg_Open.
-      find/tests: Fix out-of-bound access to input in mangle_text.
-      kernelbase: Fix array underflow when checking for trailing spaces.
+Yuxuan Shui (11):
+      mscoree/tests: Fix string lengths passed to RegSetKeyValueA.
+      msvcp90: Fix vector_base_v4 allocation sizes.
+      msvcp90: Fix calculation of segment addresses in vector.
+      msvcrt: Don't release io memory during process shutdown.
+      wined3d: Fix missing data/resource type bounds check.
+      dxgi/tests: Fix out-of-bound in test_cursor_clipping.
+      ddraw/tests: Release device after ddraw.
+      d3dx9/tests: Fix volume test boxes.
+      wined3d: Fix double-free when shader_set_function fails.
+      quartz/tests: Fix out-of-bound use of video_types in test_connect_pin.
+      dsound: Make sure to null-terminate strings for callbacks.
 
 Zhiyi Zhang (10):
-      include: Fix dcomp.idl method name and order.
-      user32: Add ScheduleDispatchNotification() stub.
-      ntdll: Use explicit ACTIVATION_CONTEXT type instead of HANDLE.
-      kernel32/tests: Add tests for normal activation context stack frame flags.
-      ntdll: Set and check 0x8 flag for activation context stack frames.
-      ntdll: Implement RtlActivateActivationContextUnsafeFast().
-      ntdll: Implement RtlDeactivateActivationContextUnsafeFast().
-      kernel32/tests: Add tests for RtlActivateActivationContextUnsafe() and RtlDeactivateActivationContextUnsafeFast().
-      comctl32/tests: Test listview background mix mode.
-      comctl32/listview: Set the initial background mix mode to TRANSPARENT.
+      comctl32/listview: Test WM_PAINT with a subclassed header that paints without validating update regions.
+      comctl32/listview: Validate header region after painting it.
+      bcp47langs: Add GetFontFallbackLanguageList() stub.
+      gdiplus/tests: Test drawing indexed bitmaps with a palette that has alpha.
+      gdiplus: Fix drawing indexed bitmaps with a palette that has alpha.
+      gdiplus: Don't zero out allocated memory in GdipAlloc().
+      win32u: Limit the work area to the monitor rect.
+      user32/tests: Add some tests for DefWindowProc() WM_PRINT message handling.
+      win32u: Fix the return value for WM_PRINT handling in DefWindowProc().
+      win32u: Support PRF_CHILDREN when handling WM_PRINT for DefWindowProc().
+
+Ziqing Hui (1):
+      shell32: Rework FO_MOVE operation for SHFileOperationW.
 ```
