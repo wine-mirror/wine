@@ -1332,6 +1332,10 @@ static void udev_add_device(struct udev_device *dev, int fd)
         bus_event_queue_device_created(&event_queue, &impl->unix_device, &desc);
     }
 #endif
+    else
+    {
+        close(fd);
+    }
 }
 
 #ifdef HAVE_SYS_INOTIFY_H
