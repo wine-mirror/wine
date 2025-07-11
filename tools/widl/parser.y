@@ -2901,6 +2901,50 @@ static statement_list_t *append_parameterized_type_stmts(statement_list_t *stmts
     return stmts;
 }
 
+static void check_activation_interface( const type_t *iface )
+{
+    const statement_t *stmt;
+
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts( iface ) )
+    {
+        const var_t *arg, *func = stmt->u.var;
+        const var_list_t *arg_list = type_function_get_args( func->declspec.type );
+        unsigned int count = 0;
+
+        if (arg_list) LIST_FOR_EACH_ENTRY_REV( arg, arg_list, const var_t, entry )
+        {
+            const type_t *type = arg->declspec.type;
+
+            count++;
+            if (count == 1 && (!is_ptr( type ) || !is_attr( arg->attrs, ATTR_RETVAL )))
+                error_at( &arg->where, "last parameter '%s' of function '%s' must be an [out, retval] pointer\n",
+                          arg->name, func->name );
+
+            if (count > 1 && is_attr( arg->attrs, ATTR_OUT ))
+                error_at( &arg->where, "parameter '%s' of function '%s' must be an IN parameter\n",
+                          arg->name, func->name );
+        }
+        if (count < 2)
+            error_at( &func->where, "activation function '%s' must have at least 2 parameters\n", func->name );
+    }
+}
+
+static void check_constructor_interfaces( const type_t *runtimeclass )
+{
+    const attr_t *attr;
+
+    LIST_FOR_EACH_ENTRY( attr, runtimeclass->attrs, const attr_t, entry )
+    {
+        const expr_t *value = attr->u.pval;
+
+        if (attr->type == ATTR_ACTIVATABLE)
+        {
+            if (value->type != EXPR_MEMBER) continue;
+            check_activation_interface( value->u.var->declspec.type );
+        }
+    }
+}
+
 static void check_statements(const statement_list_t *stmts, int is_inside_library)
 {
     const statement_t *stmt;
@@ -2920,6 +2964,8 @@ static void check_statements(const statement_list_t *stmts, int is_inside_librar
                 if(winrt_mode)
                     error_loc("coclass is not allowed in Windows Runtime mode\n");
                 break;
+            case TYPE_RUNTIMECLASS:
+                check_constructor_interfaces( stmt->u.type );
             default:
                 break;
             }
