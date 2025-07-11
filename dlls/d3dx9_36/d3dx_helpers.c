@@ -18,10 +18,9 @@
  */
 
 #include "wine/debug.h"
-#define COBJMACROS
-#include "d3dx9.h"
 #include "d3dx_helpers.h"
 
+#define COBJMACROS
 #include "ole2.h"
 #include "wincodec.h"
 
@@ -34,6 +33,25 @@
 #include <assert.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
+
+#define D3DERR_INVALIDCALL  0x8876086c
+#define D3DXERR_INVALIDDATA 0x88760b59
+#define D3D_OK              S_OK
+
+#define D3DX_FILTER_NONE             0x00000001
+#define D3DX_FILTER_POINT            0x00000002
+#define D3DX_FILTER_LINEAR           0x00000003
+#define D3DX_FILTER_TRIANGLE         0x00000004
+#define D3DX_FILTER_BOX              0x00000005
+#define D3DX_FILTER_MIRROR_U         0x00010000
+#define D3DX_FILTER_MIRROR_V         0x00020000
+#define D3DX_FILTER_MIRROR_W         0x00040000
+#define D3DX_FILTER_MIRROR           0x00070000
+#define D3DX_FILTER_DITHER           0x00080000
+#define D3DX_FILTER_DITHER_DIFFUSION 0x00100000
+#define D3DX_FILTER_SRGB_IN          0x00200000
+#define D3DX_FILTER_SRGB_OUT         0x00400000
+#define D3DX_FILTER_SRGB             0x00600000
 
 HRESULT WINAPI WICCreateImagingFactory_Proxy(UINT, IWICImagingFactory**);
 
@@ -176,6 +194,12 @@ struct tga_header
     uint8_t  image_descriptor;
 };
 #pragma pack(pop)
+
+#ifndef MAKEFOURCC
+#define MAKEFOURCC(ch0, ch1, ch2, ch3)  \
+    ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) |  \
+    ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24 ))
+#endif
 
 static const struct
 {
