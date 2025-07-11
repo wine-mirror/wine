@@ -1233,7 +1233,13 @@ static void udev_add_device(struct udev_device *dev, int fd)
     get_device_subsystem_info(dev, "usb", "usb_device", &desc, &bus);
     if (bus == BUS_BLUETOOTH) desc.is_bluetooth = TRUE;
 
-    subsystem = udev_device_get_subsystem(dev);
+    if (!(subsystem = udev_device_get_subsystem(dev)))
+    {
+        WARN("udev_device_get_subsystem failed for %s.\n", debugstr_a(devnode));
+        close(fd);
+        return;
+    }
+
     if (!strcmp(subsystem, "hidraw"))
     {
         static const WCHAR hidraw[] = {'h','i','d','r','a','w',0};
