@@ -38,6 +38,7 @@ static LPVOID (WINAPI *pMapViewOfFile3)(HANDLE, HANDLE, PVOID, ULONG64 offset, S
 static LPVOID (WINAPI *pVirtualAlloc2)(HANDLE, void *, SIZE_T, DWORD, DWORD, MEM_EXTENDED_PARAMETER *, ULONG);
 static LPVOID (WINAPI *pVirtualAlloc2FromApp)(HANDLE, void *, SIZE_T, DWORD, DWORD, MEM_EXTENDED_PARAMETER *, ULONG);
 static PVOID (WINAPI *pVirtualAllocFromApp)(PVOID, SIZE_T, DWORD, DWORD);
+static BOOL (WINAPI *pVirtualProtectFromApp)(LPVOID,SIZE_T,ULONG,PULONG);
 static HANDLE (WINAPI *pOpenFileMappingFromApp)( ULONG, BOOL, LPCWSTR);
 static HANDLE (WINAPI *pCreateFileMappingFromApp)(HANDLE, PSECURITY_ATTRIBUTES, ULONG, ULONG64, PCWSTR);
 static LPVOID (WINAPI *pMapViewOfFileFromApp)(HANDLE, ULONG, ULONG64, SIZE_T);
@@ -481,6 +482,44 @@ static void test_VirtualAlloc2FromApp(void)
     }
 }
 
+static void test_VirtualProtectFromApp(void)
+{
+    ULONG old_prot;
+    void *p;
+    BOOL ret;
+
+    if (!pVirtualProtectFromApp)
+    {
+        win_skip("VirtualProtectFromApp is not available.\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    p = VirtualAlloc(NULL, 0x1000, MEM_COMMIT, PAGE_READWRITE);
+    ok(p != NULL, "VirtualAlloc failed err %lu.\n", GetLastError());
+    ret = pVirtualProtectFromApp(p, 0x1000, PAGE_READONLY, &old_prot);
+    ok(ret, "Failed to change protection err %lu\n", GetLastError());
+    ok(old_prot == PAGE_READWRITE, "wrong old_prot %lu\n", old_prot);
+
+    ret = pVirtualProtectFromApp(p, 0x100000, PAGE_READWRITE, &old_prot);
+    ok(!ret, "Call worked with overflowing size\n");
+    ok(old_prot == PAGE_NOACCESS, "wrong old_prot %lu\n", old_prot);
+
+    ret = pVirtualProtectFromApp(p, 0x1000, PAGE_EXECUTE_READ, NULL);
+    ok(!ret, "Call worked without old_prot\n");
+
+    ret = pVirtualProtectFromApp(p, 0x1000, PAGE_GUARD, &old_prot);
+    ok(!ret, "Call worked with an invalid new_prot parameter old_prot %lu\n", old_prot);
+
+    /* Works on desktop, but not on UWP */
+    ret = pVirtualProtectFromApp(p, 0x1000, PAGE_EXECUTE_READWRITE, &old_prot);
+    ok(ret, "Failed err %lu\n", GetLastError());
+    ok(old_prot == PAGE_READONLY, "wrong old_prot %lu\n", old_prot);
+
+    ret = VirtualFree(p, 0, MEM_RELEASE);
+    ok(ret, "Failed to free mem error %lu.\n", GetLastError());
+}
+
 static void test_OpenFileMappingFromApp(void)
 {
     OBJECT_BASIC_INFORMATION info;
@@ -601,6 +640,7 @@ static void init_funcs(void)
     X(VirtualAlloc2);
     X(VirtualAlloc2FromApp);
     X(VirtualAllocFromApp);
+    X(VirtualProtectFromApp);
     X(UnmapViewOfFile2);
 
     hmod = GetModuleHandleA("ntdll.dll");
@@ -618,6 +658,7 @@ START_TEST(process)
     test_VirtualAlloc2();
     test_VirtualAllocFromApp();
     test_VirtualAlloc2FromApp();
+    test_VirtualProtectFromApp();
     test_OpenFileMappingFromApp();
     test_CreateFileMappingFromApp();
     test_MapViewOfFileFromApp();
