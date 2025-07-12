@@ -1,0 +1,152 @@
+/*
+ * Copyright (C) 2025 Mohamad Al-Jaf
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.media.core.idl";
+import "windows.media.mediaproperties.idl";
+import "windows.storage.idl";
+import "windows.storage.streams.idl";
+
+namespace Windows.Media.Transcoding {
+    typedef enum MediaVideoProcessingAlgorithm MediaVideoProcessingAlgorithm;
+    typedef enum TranscodeFailureReason TranscodeFailureReason;
+
+    interface IMediaTranscoder;
+    interface IMediaTranscoder2;
+    interface IPrepareTranscodeResult;
+
+    runtimeclass MediaTranscoder;
+    runtimeclass PrepareTranscodeResult;
+
+    declare {
+        interface Windows.Foundation.IAsyncActionWithProgress<DOUBLE>;
+        interface Windows.Foundation.AsyncActionProgressHandler<DOUBLE>;
+        interface Windows.Foundation.AsyncActionWithProgressCompletedHandler<DOUBLE>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Media.Transcoding.PrepareTranscodeResult *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Media.Transcoding.TranscodeFailureReason>;
+        interface Windows.Foundation.IAsyncOperationWithProgress<Windows.Media.Transcoding.TranscodeFailureReason, DOUBLE>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Media.Transcoding.PrepareTranscodeResult *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Media.Transcoding.TranscodeFailureReason>;
+        interface Windows.Foundation.AsyncOperationWithProgressCompletedHandler<Windows.Media.Transcoding.TranscodeFailureReason, DOUBLE>;
+        interface Windows.Foundation.AsyncOperationProgressHandler<Windows.Media.Transcoding.TranscodeFailureReason, DOUBLE>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum MediaVideoProcessingAlgorithm
+    {
+        Default   = 0,
+        MrfCrf444 = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum TranscodeFailureReason
+    {
+        None           = 0,
+        Unknown        = 1,
+        InvalidProfile = 2,
+        CodecNotFound  = 3,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Transcoding.MediaTranscoder),
+        uuid(190c99d2-a0aa-4d34-86bc-eed1b12c2f5b)
+    ]
+    interface IMediaTranscoder : IInspectable
+    {
+        [propput] HRESULT TrimStartTime([in] Windows.Foundation.TimeSpan value);
+        [propget] HRESULT TrimStartTime([out, retval] Windows.Foundation.TimeSpan *value);
+        [propput] HRESULT TrimStopTime([in] Windows.Foundation.TimeSpan value);
+        [propget] HRESULT TrimStopTime([out, retval] Windows.Foundation.TimeSpan *value);
+        [propput] HRESULT AlwaysReencode([in] boolean value);
+        [propget] HRESULT AlwaysReencode([out, retval] boolean *value);
+        [propput] HRESULT HardwareAccelerationEnabled([in] boolean value);
+        [propget] HRESULT HardwareAccelerationEnabled([out, retval] boolean *value);
+        [overload("AddAudioEffect")] HRESULT AddAudioEffect([in] HSTRING activatable_class_id);
+        [overload("AddAudioEffect")] HRESULT AddAudioEffectWithSettings([in] HSTRING activatable_class_id, [in] boolean effect_required, [in] Windows.Foundation.Collections.IPropertySet *configuration);
+        [overload("AddVideoEffect")] HRESULT AddVideoEffect([in] HSTRING activatable_class_id);
+        [overload("AddVideoEffect")] HRESULT AddVideoEffectWithSettings([in] HSTRING activatable_class_id, [in] boolean effect_required, [in] Windows.Foundation.Collections.IPropertySet *configuration);
+        HRESULT ClearEffects();
+        HRESULT PrepareFileTranscodeAsync([in] Windows.Storage.IStorageFile *source, [in] Windows.Storage.IStorageFile *destination,
+                                          [in] Windows.Media.MediaProperties.MediaEncodingProfile *profile,
+                                          [out, retval] Windows.Foundation.IAsyncOperation<Windows.Media.Transcoding.PrepareTranscodeResult *> **operation);
+        HRESULT PrepareStreamTranscodeAsync([in] Windows.Storage.Streams.IRandomAccessStream *source, [in] Windows.Storage.Streams.IRandomAccessStream *destination,
+                                            [in] Windows.Media.MediaProperties.MediaEncodingProfile *profile,
+                                            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Media.Transcoding.PrepareTranscodeResult *> **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Transcoding.MediaTranscoder),
+        uuid(40531d74-35e0-4f04-8574-ca8bc4e5a082)
+    ]
+    interface IMediaTranscoder2 : IInspectable
+    {
+        HRESULT PrepareMediaStreamSourceTranscodeAsync([in] Windows.Media.Core.IMediaSource *source, [in] Windows.Storage.Streams.IRandomAccessStream *destination,
+                                                       [in] Windows.Media.MediaProperties.MediaEncodingProfile *profile,
+                                                       [out, retval] Windows.Foundation.IAsyncOperation<Windows.Media.Transcoding.PrepareTranscodeResult *> **operation);
+        [propput] HRESULT VideoProcessingAlgorithm([in] Windows.Media.Transcoding.MediaVideoProcessingAlgorithm value);
+        [propget] HRESULT VideoProcessingAlgorithm([out, retval] Windows.Media.Transcoding.MediaVideoProcessingAlgorithm *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Transcoding.PrepareTranscodeResult),
+        uuid(05f25dce-994f-4a34-9d68-97ccce1730d6)
+    ]
+    interface IPrepareTranscodeResult : IInspectable
+    {
+        [propget] HRESULT CanTranscode([out, retval] boolean *value);
+        [propget] HRESULT FailureReason([out, retval] Windows.Media.Transcoding.TranscodeFailureReason *value);
+        HRESULT TranscodeAsync([out, retval] Windows.Foundation.IAsyncActionWithProgress<DOUBLE> **operation);
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass MediaTranscoder
+    {
+        [default] interface Windows.Media.Transcoding.IMediaTranscoder;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.Transcoding.IMediaTranscoder2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass PrepareTranscodeResult
+    {
+        [default] interface Windows.Media.Transcoding.IPrepareTranscodeResult;
+    }
+}
