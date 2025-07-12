@@ -395,7 +395,6 @@ static void test_mutex(void)
 
     CloseHandle(params.start_event);
     CloseHandle(params.stop_event);
-    CloseHandle(params.mutex);
 }
 
 static void test_slist(void)
