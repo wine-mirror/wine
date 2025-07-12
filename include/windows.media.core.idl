@@ -35,7 +35,7 @@ import "windows.media.devices.idl";
 /* import "windows.media.devices.core.idl"; */
 import "windows.media.effects.idl";
 import "windows.media.faceanalysis.idl";
-/* import "windows.media.mediaproperties.idl"; */
+import "windows.media.mediaproperties.idl";
 /* import "windows.media.playback.idl"; */
 /* import "windows.media.protection.idl"; */
 /* import "windows.media.streaming.adaptive.idl"; */

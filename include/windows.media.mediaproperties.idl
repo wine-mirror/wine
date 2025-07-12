@@ -1,0 +1,210 @@
+/*
+ * Copyright (C) 2025 Mohamad Al-Jaf
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.media.core.idl";
+import "windows.storage.idl";
+import "windows.storage.streams.idl";
+
+namespace Windows.Media.MediaProperties {
+    interface IAudioEncodingProperties;
+    interface IAudioEncodingProperties2;
+    interface IAudioEncodingProperties3;
+    interface IAudioEncodingPropertiesStatics;
+    interface IAudioEncodingPropertiesStatics2;
+    interface IAudioEncodingPropertiesWithFormatUserData;
+    interface IContainerEncodingProperties;
+    interface IContainerEncodingProperties2;
+    interface IMediaEncodingProfile;
+    interface IMediaEncodingProfile2;
+    interface IMediaEncodingProfile3;
+    interface IMediaEncodingProfileStatics;
+    interface IMediaEncodingProfileStatics2;
+    interface IMediaEncodingProfileStatics3;
+    interface IMediaEncodingProperties;
+    interface IMediaRatio;
+    interface IVideoEncodingProperties;
+    interface IVideoEncodingProperties2;
+    interface IVideoEncodingProperties3;
+    interface IVideoEncodingProperties4;
+    interface IVideoEncodingProperties5;
+    interface IVideoEncodingPropertiesStatics;
+    interface IVideoEncodingPropertiesStatics2;
+
+    runtimeclass AudioEncodingProperties;
+    runtimeclass ContainerEncodingProperties;
+    runtimeclass MediaEncodingProfile;
+    runtimeclass MediaRatio;
+    runtimeclass VideoEncodingProperties;
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.MediaProperties.AudioEncodingProperties),
+        uuid(62bc7a16-005c-4b3b-8a0b-0a090e9687f3)
+    ]
+    interface IAudioEncodingProperties : IInspectable
+        requires Windows.Media.MediaProperties.IMediaEncodingProperties
+    {
+        [propput] HRESULT Bitrate([in] UINT32 value);
+        [propget] HRESULT Bitrate([out, retval] UINT32 *value);
+        [propput] HRESULT ChannelCount([in] UINT32 value);
+        [propget] HRESULT ChannelCount([out, retval] UINT32 *value);
+        [propput] HRESULT SampleRate([in] UINT32 value);
+        [propget] HRESULT SampleRate([out, retval] UINT32 *value);
+        [propput] HRESULT BitsPerSample([in] UINT32 value);
+        [propget] HRESULT BitsPerSample([out, retval] UINT32 *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.MediaProperties.ContainerEncodingProperties),
+        uuid(59ac2a57-b32a-479e-8a61-4b7f2e9e7ea0)
+    ]
+    interface IContainerEncodingProperties : IInspectable
+        requires Windows.Media.MediaProperties.IMediaEncodingProperties
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.MediaProperties.MediaEncodingProfile),
+        uuid(e7dbf5a8-1db9-4783-876b-3dfe12acfdb3)
+    ]
+    interface IMediaEncodingProfile : IInspectable
+    {
+        [propput] HRESULT Audio([in] Windows.Media.MediaProperties.AudioEncodingProperties *value);
+        [propget] HRESULT Audio([out, retval] Windows.Media.MediaProperties.AudioEncodingProperties **value);
+        [propput] HRESULT Video([in] Windows.Media.MediaProperties.VideoEncodingProperties *value);
+        [propget] HRESULT Video([out, retval] Windows.Media.MediaProperties.VideoEncodingProperties **value);
+        [propput] HRESULT Container([in] Windows.Media.MediaProperties.ContainerEncodingProperties *value);
+        [propget] HRESULT Container([out, retval] Windows.Media.MediaProperties.ContainerEncodingProperties **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.MediaProperties.MediaRatio),
+        uuid(d2d0fee5-8929-401d-ac78-7d357e378163)
+    ]
+    interface IMediaRatio : IInspectable
+    {
+        [propput] HRESULT Numerator([in] UINT32 value);
+        [propget] HRESULT Numerator([out, retval] UINT32 *value);
+        [propput] HRESULT Denominator([in] UINT32 value);
+        [propget] HRESULT Denominator([out, retval] UINT32 *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.MediaProperties.VideoEncodingProperties),
+        uuid(76ee6c9a-37c2-4f2a-880a-1282bbb4373d)
+    ]
+    interface IVideoEncodingProperties : IInspectable
+        requires Windows.Media.MediaProperties.IMediaEncodingProperties
+    {
+        [propput] HRESULT Bitrate([in] UINT32 value);
+        [propget] HRESULT Bitrate([out, retval] UINT32 *value);
+        [propput] HRESULT Width([in] UINT32 value);
+        [propget] HRESULT Width([out, retval] UINT32 *value);
+        [propput] HRESULT Height([in] UINT32 value);
+        [propget] HRESULT Height([out, retval] UINT32 *value);
+        [propget] HRESULT FrameRate([out, retval] Windows.Media.MediaProperties.MediaRatio **value);
+        [propget] HRESULT PixelAspectRatio([out, retval] Windows.Media.MediaProperties.MediaRatio **value);
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Media.MediaProperties.IAudioEncodingPropertiesStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.Media.MediaProperties.IAudioEncodingPropertiesStatics2, Windows.Foundation.UniversalApiContract, 4.0),
+        threading(both)
+    ]
+    runtimeclass AudioEncodingProperties
+    {
+        [default] interface Windows.Media.MediaProperties.IAudioEncodingProperties;
+        interface Windows.Media.MediaProperties.IMediaEncodingProperties;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.MediaProperties.IAudioEncodingPropertiesWithFormatUserData;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Media.MediaProperties.IAudioEncodingProperties2;
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Media.MediaProperties.IAudioEncodingProperties3;
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass ContainerEncodingProperties
+    {
+        [default] interface Windows.Media.MediaProperties.IContainerEncodingProperties;
+        interface Windows.Media.MediaProperties.IMediaEncodingProperties;
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Media.MediaProperties.IContainerEncodingProperties2;
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Media.MediaProperties.IMediaEncodingProfileStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.Media.MediaProperties.IMediaEncodingProfileStatics2, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.Media.MediaProperties.IMediaEncodingProfileStatics3, Windows.Foundation.UniversalApiContract, 4.0),
+        threading(mta)
+    ]
+    runtimeclass MediaEncodingProfile
+    {
+        [default] interface Windows.Media.MediaProperties.IMediaEncodingProfile;
+        [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.Media.MediaProperties.IMediaEncodingProfile2;
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Media.MediaProperties.IMediaEncodingProfile3;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass MediaRatio
+    {
+        [default] interface Windows.Media.MediaProperties.IMediaRatio;
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Media.MediaProperties.IVideoEncodingPropertiesStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.Media.MediaProperties.IVideoEncodingPropertiesStatics2, Windows.Foundation.UniversalApiContract, 4.0),
+        threading(both)
+    ]
+    runtimeclass VideoEncodingProperties
+    {
+        [default] interface Windows.Media.MediaProperties.IVideoEncodingProperties;
+        interface Windows.Media.MediaProperties.IMediaEncodingProperties;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.MediaProperties.IVideoEncodingProperties2;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Media.MediaProperties.IVideoEncodingProperties3;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Media.MediaProperties.IVideoEncodingProperties4;
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Media.MediaProperties.IVideoEncodingProperties5;
+    }
+}
