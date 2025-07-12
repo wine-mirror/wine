@@ -572,6 +572,15 @@ BOOL WINAPI DECLSPEC_HOTPATCH VirtualProtectEx( HANDLE process, void *addr, SIZE
     return set_ntstatus( NtProtectVirtualMemory( process, &addr, &size, new_prot, old_prot ));
 }
 
+/***********************************************************************
+ *             VirtualProtectFromApp   (kernelbase.@)
+ */
+BOOL WINAPI VirtualProtectFromApp( void *addr, SIZE_T size,
+                                   ULONG new_prot, ULONG *old_prot )
+{
+    /* Contrary to the documentation, VirtualProtectFromApp allows write+execute on desktop. */
+    return VirtualProtect( addr, size, new_prot, old_prot );
+}
 
 /***********************************************************************
  *             VirtualQuery   (kernelbase.@)
