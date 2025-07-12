@@ -56,6 +56,14 @@ typedef enum _QUEUE_USER_APC_FLAGS
     QUEUE_USER_APC_CALLBACK_DATA_CONTEXT = 0x00010000,
 } QUEUE_USER_APC_FLAGS;
 
+typedef struct _APC_CALLBACK_DATA
+{
+    ULONG_PTR Parameter;
+    CONTEXT *ContextRecord;
+    ULONG_PTR Reserved0;
+    ULONG_PTR Reserved1;
+} APC_CALLBACK_DATA, *PAPC_CALLBACK_DATA;
+
 #ifdef __cplusplus
 }
 #endif

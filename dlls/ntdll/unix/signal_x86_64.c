@@ -376,11 +376,16 @@ C_ASSERT( sizeof(struct exc_stack_layout) == 0x5c0 );
 struct apc_stack_layout
 {
     CONTEXT              context;        /* 000 */
-    struct machine_frame machine_frame;  /* 4d0 */
-    ULONG64              align;          /* 4f8 */
+    CONTEXT_EX           context_ex;     /* 4d0 */
+    KCONTINUE_ARGUMENT   continue_arg;   /* 4f0 */
+    ULONG64              align1;         /* 508 */
+    APC_CALLBACK_DATA    callback_data;  /* 510 */
+    struct machine_frame machine_frame;  /* 530 */
+    ULONG64              align2;         /* 558 */
 };
-C_ASSERT( offsetof(struct apc_stack_layout, machine_frame) == 0x4d0 );
-C_ASSERT( sizeof(struct apc_stack_layout) == 0x500 );
+C_ASSERT( offsetof(struct apc_stack_layout, continue_arg) == 0x4f0 );
+C_ASSERT( offsetof(struct apc_stack_layout, machine_frame) == 0x530 );
+C_ASSERT( sizeof(struct apc_stack_layout) == 0x560 );
 
 /* stack layout when calling KiUserCallbackDispatcher */
 struct callback_stack_layout
@@ -1548,7 +1553,7 @@ NTSTATUS call_user_apc_dispatcher( CONTEXT *context, unsigned int flags, ULONG_P
     ULONG64 rsp = context ? context->Rsp : frame->rsp;
     struct apc_stack_layout *stack;
 
-    if (flags) FIXME( "flags %#x are not supported.\n", flags );
+    if (flags & ~SERVER_USER_APC_CALLBACK_DATA_CONTEXT) FIXME( "flags %#x are not supported.\n", flags );
 
     rsp &= ~15;
     stack = (struct apc_stack_layout *)rsp - 1;
@@ -1563,8 +1568,19 @@ NTSTATUS call_user_apc_dispatcher( CONTEXT *context, unsigned int flags, ULONG_P
         NtGetContextThread( GetCurrentThread(), &stack->context );
         stack->context.Rax = status;
     }
+    memset( &stack->continue_arg, 0, sizeof(stack->continue_arg) );
+    stack->continue_arg.ContinueType = KCONTINUE_RESUME;
+    stack->continue_arg.ContinueFlags = KCONTINUE_FLAG_TEST_ALERT | KCONTINUE_FLAG_DELIVER_APC;
     stack->context.P1Home    = arg1;
-    stack->context.P2Home    = arg2;
+    if (flags & SERVER_USER_APC_CALLBACK_DATA_CONTEXT)
+    {
+        stack->callback_data.ContextRecord = &stack->context;
+        stack->callback_data.Parameter = arg2;
+        stack->callback_data.Reserved0 = 0;
+        stack->callback_data.Reserved1 = 0;
+        stack->context.P2Home = (ULONG_PTR)&stack->callback_data;
+    }
+    else stack->context.P2Home = arg2;
     stack->context.P3Home    = arg3;
     stack->context.P4Home    = (ULONG64)func;
     stack->machine_frame.rip = stack->context.Rip;

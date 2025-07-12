@@ -348,7 +348,7 @@ __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
  */
 __ASM_GLOBAL_FUNC( KiUserApcDispatcher,
                    __ASM_SEH(".seh_pushframe\n\t")
-                   __ASM_SEH(".seh_stackalloc 0x4d0\n\t")  /* sizeof(CONTEXT) */
+                   __ASM_SEH(".seh_stackalloc 0x530\n\t")  /* machine_frame offset */
                    __ASM_SEH(".seh_savereg %rbx,0x90\n\t")
                    __ASM_SEH(".seh_savereg %rbp,0xa0\n\t")
                    __ASM_SEH(".seh_savereg %rsi,0xa8\n\t")
@@ -368,8 +368,8 @@ __ASM_GLOBAL_FUNC( KiUserApcDispatcher,
                    __ASM_CFI(".cfi_offset %r13,0xe0\n\t")
                    __ASM_CFI(".cfi_offset %r14,0xe8\n\t")
                    __ASM_CFI(".cfi_offset %r15,0xf0\n\t")
-                   __ASM_CFI(".cfi_offset %rip,0x4d0\n\t")
-                   __ASM_CFI(".cfi_offset %rsp,0x4e8\n\t")
+                   __ASM_CFI(".cfi_offset %rip,0x530\n\t")
+                   __ASM_CFI(".cfi_offset %rsp,0x548\n\t")
                    "movq 0x00(%rsp),%rcx\n\t"  /* context->P1Home = arg1 */
                    "movq 0x08(%rsp),%rdx\n\t"  /* context->P2Home = arg2 */
                    "movq 0x10(%rsp),%r8\n\t"   /* context->P3Home = arg3 */
