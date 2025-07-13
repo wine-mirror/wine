@@ -897,6 +897,7 @@ SOURCES = \
 	windows.management.deployment.idl \
 	windows.media.capture.idl \
 	windows.media.closedcaptioning.idl \
+	windows.media.core.idl \
 	windows.media.devices.idl \
 	windows.media.effects.idl \
 	windows.media.faceanalysis.idl \
