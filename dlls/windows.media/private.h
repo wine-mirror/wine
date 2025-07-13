@@ -36,8 +36,14 @@
 #include "windows.ui.h"
 #define WIDL_using_Windows_Media_ClosedCaptioning
 #include "windows.media.closedcaptioning.h"
+#define WIDL_using_Windows_Storage_Streams
+#define WIDL_using_Windows_Storage
+#define WIDL_using_Windows_Media_MediaProperties
+#define WIDL_using_Windows_Media_Transcoding
+#include "windows.media.transcoding.h"
 
 extern IActivationFactory *captions_factory;
+extern IActivationFactory *media_transcoder_factory;
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \

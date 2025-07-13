@@ -32,6 +32,8 @@
 #include "windows.ui.h"
 #define WIDL_using_Windows_Media_ClosedCaptioning
 #include "windows.media.closedcaptioning.h"
+#define WIDL_using_Windows_Media_Transcoding
+#include "windows.media.transcoding.h"
 
 #include "wine/test.h"
 
@@ -151,7 +153,51 @@ static void test_CaptionStatics(void)
     ok( ref == 1, "got ref %ld.\n", ref );
 }
 
-START_TEST(captions)
+static void test_MediaTranscoderStatics(void)
+{
+    static const WCHAR *media_transcoder_name = L"Windows.Media.Transcoding.MediaTranscoder";
+    IMediaTranscoder *media_transcoder = (void *)0xdeadbeef;
+    IActivationFactory *factory = (void *)0xdeadbeef;
+    IInspectable *inspectable = (void *)0xdeadbeef;
+    HSTRING str;
+    HRESULT hr;
+    LONG ref;
+
+    hr = WindowsCreateString( media_transcoder_name, wcslen( media_transcoder_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    ok( hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "got hr %#lx.\n", hr );
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        WindowsDeleteString( str );
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( media_transcoder_name ));
+        return;
+    }
+
+    check_interface( factory, &IID_IUnknown, TRUE );
+    check_interface( factory, &IID_IInspectable, TRUE );
+    check_interface( factory, &IID_IAgileObject, FALSE );
+    check_interface( factory, &IID_IMediaTranscoder, FALSE );
+
+    hr = RoActivateInstance( str, &inspectable );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+
+    hr = IInspectable_QueryInterface( inspectable, &IID_IMediaTranscoder, (void **)&media_transcoder );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    check_interface( media_transcoder, &IID_IAgileObject, TRUE );
+
+    ref = IMediaTranscoder_Release( media_transcoder );
+    ok( ref == 1, "got ref %ld.\n", ref );
+    ref = IInspectable_Release( inspectable );
+    ok( ref == 0, "got ref %ld.\n", ref );
+    ref = IActivationFactory_Release( factory );
+    ok( ref == 1, "got ref %ld.\n", ref );
+}
+
+START_TEST(media)
 {
     HRESULT hr;
 
@@ -159,6 +205,7 @@ START_TEST(captions)
     ok( hr == S_OK, "RoInitialize failed, hr %#lx\n", hr );
 
     test_CaptionStatics();
+    test_MediaTranscoderStatics();
 
     RoUninitialize();
 }

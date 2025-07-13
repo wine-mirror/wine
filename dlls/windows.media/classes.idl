@@ -21,3 +21,4 @@
 #pragma makedep register
 
 #include "windows.media.closedcaptioning.idl"
+#include "windows.media.transcoding.idl"
