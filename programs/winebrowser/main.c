@@ -357,10 +357,6 @@ static WCHAR *encode_unix_path(const char *src)
 
 static WCHAR *convert_file_uri(IUri *uri)
 {
-    UNICODE_STRING nt_name;
-    OBJECT_ATTRIBUTES attr;
-    NTSTATUS status;
-    ULONG size = 256;
     char *buffer;
     WCHAR *new_path = NULL;
     BSTR filename;
@@ -372,23 +368,9 @@ static WCHAR *convert_file_uri(IUri *uri)
 
     WINE_TRACE("Windows path: %s\n", wine_dbgstr_w(filename));
 
-    if (!RtlDosPathNameToNtPathName_U( filename, &nt_name, NULL, NULL )) return NULL;
-    InitializeObjectAttributes( &attr, &nt_name, 0, 0, NULL );
-    for (;;)
-    {
-        if (!(buffer = malloc( size )))
-        {
-            RtlFreeUnicodeString( &nt_name );
-            return NULL;
-        }
-        status = wine_nt_to_unix_file_name( &attr, buffer, &size, FILE_OPEN );
-        if (status != STATUS_BUFFER_TOO_SMALL) break;
-        free( buffer );
-    }
-
-    if (!status) new_path = encode_unix_path( buffer );
-    SysFreeString(filename);
-    free( buffer );
+    if (GetFileAttributesW( filename ) == INVALID_FILE_ATTRIBUTES) return NULL;
+    if (!(buffer = wine_get_unix_file_name( filename ))) return NULL;
+    new_path = encode_unix_path( buffer );
 
     WINE_TRACE("New path: %s\n", wine_dbgstr_w(new_path));
 
