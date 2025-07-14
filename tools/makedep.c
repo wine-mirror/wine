@@ -2592,8 +2592,12 @@ static void output_install_commands( struct makefile *make, struct strarray file
             output( "\t%s $(INSTALL_SCRIPT_FLAGS) %s %s\n",
                     install_sh, src_dir_path( make, file ), dest );
             break;
+        case 't':  /* tools file */
+            output( "\tSTRIPPROG=\"$(STRIP)\" %s $(INSTALL_PROGRAM_FLAGS) %s %s\n",
+                    install_sh, tools_path( make, file ), dest );
+            break;
         case 'y':  /* symlink */
-            output_symlink_rule( files.str[i], dest, 1 );
+            output_symlink_rule( file, dest, 1 );
             break;
         default:
             assert(0);
@@ -2628,6 +2632,9 @@ static void output_install_rules( struct makefile *make, enum install_rules rule
         case 'p':  /* program file */
         case 's':  /* script */
             strarray_add_uniq( &targets, obj_dir_path( make, file ));
+            break;
+        case 't':  /* tools file */
+            strarray_add_uniq( &targets, tools_path( make, file ));
             break;
         }
     }
@@ -4001,7 +4008,8 @@ static void output_sources( struct makefile *make )
         if (make->is_exe && !make->is_win16 && unix_lib_supported && strendswith( make->module, ".exe" ))
         {
             char *binary = replace_extension( make->module, ".exe", "" );
-            add_install_rule( make, binary, 0, "wine", strmake( "y$(bindir)/%s", binary ));
+            add_install_rule( make, binary, 0, "wine",
+                              strmake( "%c$(bindir)/%s", strcmp( ln_s, "ln -s" ) ? 't' : 'y', binary ));
         }
     }
     else if (make->testdll)
