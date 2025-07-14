@@ -491,10 +491,13 @@ enum apc_type
 struct user_apc
 {
     enum apc_type    type;
-    int              __pad;
+    unsigned int     flags;
     client_ptr_t     func;
     apc_param_t      args[3];
 };
+
+#define SERVER_USER_APC_SPECIAL               0x01
+#define SERVER_USER_APC_CALLBACK_DATA_CONTEXT 0x02
 
 union apc_call
 {
@@ -6852,6 +6855,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 883
+#define SERVER_PROTOCOL_VERSION 884
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

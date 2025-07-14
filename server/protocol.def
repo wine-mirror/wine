@@ -507,10 +507,13 @@ enum apc_type
 struct user_apc
 {
     enum apc_type    type;     /* APC_USER */
-    int              __pad;
+    unsigned int     flags;    /* SERVER_USER_APC_* flags */
     client_ptr_t     func;     /* void (__stdcall *func)(ULONG_PTR,ULONG_PTR,ULONG_PTR); */
     apc_param_t      args[3];  /* arguments for user function */
 };
+
+#define SERVER_USER_APC_SPECIAL               0x01
+#define SERVER_USER_APC_CALLBACK_DATA_CONTEXT 0x02
 
 union apc_call
 {

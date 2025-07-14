@@ -1508,12 +1508,14 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 /***********************************************************************
  *           call_user_apc_dispatcher
  */
-NTSTATUS call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
+NTSTATUS call_user_apc_dispatcher( CONTEXT *context, unsigned int flags, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
                                    PNTAPCFUNC func, NTSTATUS status )
 {
     struct syscall_frame *frame = get_syscall_frame();
     ULONG esp = context ? context->Esp : frame->esp;
     struct apc_stack_layout *stack = (struct apc_stack_layout *)esp - 1;
+
+    if (flags) FIXME( "flags %#x are not supported.\n", flags );
 
     if (!context)
     {

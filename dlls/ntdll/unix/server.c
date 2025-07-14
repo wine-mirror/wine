@@ -385,7 +385,7 @@ static int wait_select_reply( void *cookie )
  */
 static NTSTATUS invoke_user_apc( CONTEXT *context, const struct user_apc *apc, NTSTATUS status )
 {
-    return call_user_apc_dispatcher( context, apc->args[0], apc->args[1], apc->args[2],
+    return call_user_apc_dispatcher( context, apc->flags, apc->args[0], apc->args[1], apc->args[2],
                                      wine_server_get_ptr( apc->func ), status );
 }
 

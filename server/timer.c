@@ -136,6 +136,7 @@ static void timer_callback( void *private )
         assert (timer->callback);
         memset( &data, 0, sizeof(data) );
         data.type         = APC_USER;
+        data.user.flags   = 0;
         data.user.func    = timer->callback;
         data.user.args[0] = timer->arg;
         data.user.args[1] = (unsigned int)timer->when;

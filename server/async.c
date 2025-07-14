@@ -519,6 +519,7 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
                 union apc_call data;
                 memset( &data, 0, sizeof(data) );
                 data.type         = APC_USER;
+                data.user.flags   = 0;
                 data.user.func    = async->data.apc;
                 data.user.args[0] = async->data.apc_context;
                 data.user.args[1] = async->data.iosb;
