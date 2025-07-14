@@ -66,7 +66,6 @@ static HRESULT WINAPI spstream_QueryInterface(ISpStream *iface, REFIID iid, void
     else
     {
         *obj = NULL;
-        FIXME("interface %s not implemented.\n", debugstr_guid(iid));
         return E_NOINTERFACE;
     }
 
