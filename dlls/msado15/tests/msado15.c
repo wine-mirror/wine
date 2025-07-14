@@ -789,6 +789,8 @@ static void test_Fields(void)
 {
     _Recordset *recordset;
     ISupportErrorInfo *errorinfo;
+    Field20 *field20;
+    _ADO *ado;
     Fields20 *fields20;
     Fields15 *fields15;
     _Collection *collection;
@@ -872,6 +874,14 @@ static void test_Fields(void)
     hr = Field_QueryInterface( field, &IID_ISupportErrorInfo, (void **)&errorinfo );
     ok( hr == S_OK, "got %08lx\n", hr );
     if (errorinfo) ISupportErrorInfo_Release( errorinfo );
+
+    hr = Field_QueryInterface( field, &IID_Field20, (void **)&field20 );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    Field20_Release( field20 );
+
+    hr = Field_QueryInterface( field, &IID__ADO, (void **)&ado );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    _ADO_Release( ado );
 
     /* verify values set with _Append */
     hr = Field_get_Name( field, &name );

@@ -123,7 +123,10 @@ static HRESULT WINAPI field_QueryInterface( Field *iface, REFIID riid, void **ob
     struct field *field = impl_from_Field( iface );
     TRACE( "%p, %s, %p\n", iface, debugstr_guid(riid), obj );
 
-    if (IsEqualGUID( riid, &IID_Field ) || IsEqualGUID( riid, &IID_IDispatch ) ||
+    if (IsEqualGUID( riid, &IID_Field ) ||
+        IsEqualGUID( riid, &IID_Field20 ) ||
+        IsEqualGUID( riid, &IID__ADO ) ||
+        IsEqualGUID( riid, &IID_IDispatch ) ||
         IsEqualGUID( riid, &IID_IUnknown ))
     {
         *obj = iface;
