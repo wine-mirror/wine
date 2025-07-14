@@ -6104,14 +6104,12 @@ static LRESULT unwinding_wnd_proc(HWND w, UINT msg, WPARAM p2, LPARAM p3)
                 found = TRUE;
 
                 /* check that non-volatile registers are set properly before entering user callback. */
-                todo_wine {
                 ok(!context.Rbx, "unexpected register value, %%rbx = %#I64x\n", context.Rbx);
                 ok(!context.R12, "unexpected register value, %%r12 = %#I64x\n", context.R12);
                 ok(!context.R13, "unexpected register value, %%r13 = %#I64x\n", context.R13);
                 ok(!context.R14, "unexpected register value, %%r14 = %#I64x\n", context.R14);
                 ok(!context.R15, "unexpected register value, %%r15 = %#I64x\n", context.R15);
                 ok(context.Rbp == 0xdeadbeef, "unexpected register value, %%rbp = %#I64x\n", context.Rbp);
-                }
                 break;
             }
         }
