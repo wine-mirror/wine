@@ -377,8 +377,8 @@ __ASM_GLOBAL_FUNC( KiUserApcDispatcher,
                    "movq %rsp,%r9\n\t"         /* context */
                    "callq *%rax\n\t"
                    "movq %rsp,%rcx\n\t"        /* context */
-                   "movl $1,%edx\n\t"          /* alertable */
-                   "call " __ASM_NAME("NtContinue") "\n\t"
+                   "leaq 0x4f0(%rsp),%rdx\n\t" /* continue_arg */
+                   "call " __ASM_NAME("NtContinueEx") "\n\t"
                    "int3" )
 
 
