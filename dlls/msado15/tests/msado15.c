@@ -1201,6 +1201,8 @@ static void test_Connection(void)
     ISupportErrorInfo *errorinfo;
     IConnectionPointContainer *pointcontainer;
     ADOConnectionConstruction15 *construct;
+    Connection15 *conn15;
+    _ADO *ado;
     LONG state, timeout;
     BSTR str, str2, str3;
     ConnectModeEnum mode;
@@ -1208,6 +1210,14 @@ static void test_Connection(void)
 
     hr = CoCreateInstance(&CLSID_Connection, NULL, CLSCTX_INPROC_SERVER, &IID__Connection, (void**)&connection);
     ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = _Connection_QueryInterface(connection, &IID_Connection15, (void**)&conn15);
+    ok(hr == S_OK, "Unexpected IRunnableObject interface\n");
+    Connection15_Release(conn15);
+
+    hr = _Connection_QueryInterface(connection, &IID__ADO, (void**)&ado);
+    ok(hr == S_OK, "Unexpected IRunnableObject interface\n");
+    _ADO_Release(ado);
 
     hr = _Connection_QueryInterface(connection, &IID_IRunnableObject, (void**)&runtime);
     ok(hr == E_NOINTERFACE, "Unexpected IRunnableObject interface\n");

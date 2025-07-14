@@ -122,7 +122,10 @@ static HRESULT WINAPI connection_QueryInterface( _Connection *iface, REFIID riid
 
     *obj = NULL;
 
-    if (IsEqualGUID( riid, &IID__Connection ) || IsEqualGUID( riid, &IID_IDispatch ) ||
+    if (IsEqualGUID( riid, &IID__Connection ) ||
+        IsEqualGUID( riid, &IID_Connection15) ||
+        IsEqualGUID( riid, &IID__ADO) ||
+        IsEqualGUID( riid, &IID_IDispatch ) ||
         IsEqualGUID( riid, &IID_IUnknown ))
     {
         *obj = iface;
