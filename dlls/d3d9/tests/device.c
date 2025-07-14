@@ -15292,8 +15292,9 @@ static void test_d3d9on12(void)
     ok(ref == 0, "Got refcount %lu.\n", ref);
     ref = IDirect3DDevice9_Release(device);
     ok(ref == 0, "Got refcount %lu.\n", ref);
-out:
     IDirect3D9_Release(d3d9);
+
+out:
     DestroyWindow(window);
 }
 
