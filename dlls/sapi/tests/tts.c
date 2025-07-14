@@ -18,7 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdint.h>
+#include <math.h>
+
 #define COBJMACROS
+
+#include "objbase.h"
 
 #include "sapiddk.h"
 #include "sperror.h"
@@ -141,6 +146,8 @@ static void test_interfaces(void)
 #define TESTENGINE_CLSID L"{57C7E6B1-2FC2-4E8E-B968-1410A39E7198}"
 static const GUID CLSID_TestEngine = {0x57C7E6B1,0x2FC2,0x4E8E,{0xB9,0x68,0x14,0x10,0xA3,0x9E,0x71,0x98}};
 
+static const unsigned int test_engine_sample_rate = 22050;
+
 struct test_engine
 {
     ISpTTSEngine ISpTTSEngine_iface;
@@ -148,7 +155,10 @@ struct test_engine
 
     ISpObjectToken *token;
 
-    BOOL simulate_output;
+
+    const char *output_data;
+    size_t output_len;
+
     BOOL speak_called;
     DWORD flags;
     GUID fmtid;
@@ -204,7 +214,8 @@ static void copy_frag_list(const SPVTEXTFRAG *frag_list, SPVTEXTFRAG **ret_frags
 
 static void reset_engine_params(struct test_engine *engine)
 {
-    engine->simulate_output = FALSE;
+    engine->output_data = NULL;
+    engine->output_len = 0;
     engine->speak_called = FALSE;
     engine->flags = 0xdeadbeef;
     memset(&engine->fmtid, 0xde, sizeof(engine->fmtid));
@@ -214,6 +225,32 @@ static void reset_engine_params(struct test_engine *engine)
     free(engine->frags);
     engine->frags = NULL;
     engine->frag_count = 0;
+}
+
+static char *make_sin_data(int sin_freq, size_t time_ms, size_t sample_rate, size_t *len)
+{
+    double ang_freq;
+    char *data;
+    size_t i;
+    int val;
+
+    *len = sample_rate * sizeof(int16_t) * time_ms / 1000;
+    if (!(data = malloc(*len)))
+        return NULL;
+
+    if (!sin_freq)
+    {
+        memset(data, 0, *len);
+        return data;
+    }
+
+    ang_freq = 2 * M_PI * sin_freq / sample_rate;
+    for (i = 0; i < *len / sizeof(int16_t); i++)
+    {
+        val = floor(32768 * sin(ang_freq * i) + 0.5);
+        ((int16_t *)data)[i] = min(max(-32768, val), 32767);
+    }
+    return data;
 }
 
 static inline struct test_engine *impl_from_ISpTTSEngine(ISpTTSEngine *iface)
@@ -258,9 +295,11 @@ static HRESULT WINAPI test_engine_Speak(ISpTTSEngine *iface, DWORD flags, REFGUI
                                         const WAVEFORMATEX *wfx, const SPVTEXTFRAG *frag_list,
                                         ISpTTSEngineSite *site)
 {
+    static const int num_out_iters = 5;
+
     struct test_engine *engine = impl_from_ISpTTSEngine(iface);
+    size_t out_iter_len;
     DWORD actions;
-    char *buf;
     int i;
     HRESULT hr;
 
@@ -282,19 +321,18 @@ static HRESULT WINAPI test_engine_Speak(ISpTTSEngine *iface, DWORD flags, REFGUI
     actions = ISpTTSEngineSite_GetActions(site);
     ok(actions == SPVES_CONTINUE, "got %#lx.\n", actions);
 
-    if (!engine->simulate_output)
+    if (!engine->output_len)
         return S_OK;
 
-    buf = calloc(1, 22050 * 2 / 5);
-    for (i = 0; i < 5; i++)
+    out_iter_len = engine->output_len / num_out_iters;
+    for (i = 0; i < num_out_iters; i++)
     {
         if (ISpTTSEngineSite_GetActions(site) & SPVES_ABORT)
             break;
-        hr = ISpTTSEngineSite_Write(site, buf, 22050 * 2 / 5, NULL);
+        hr = ISpTTSEngineSite_Write(site, engine->output_data + i * out_iter_len, out_iter_len, NULL);
         ok(hr == S_OK || hr == SP_AUDIO_STOPPED, "got %#lx.\n", hr);
-        Sleep(100);
+        Sleep(20);
     }
-    free(buf);
 
     return S_OK;
 }
@@ -307,10 +345,10 @@ static HRESULT WINAPI test_engine_GetOutputFormat(ISpTTSEngine *iface, const GUI
     *out_wfx = CoTaskMemAlloc(sizeof(WAVEFORMATEX));
     (*out_wfx)->wFormatTag = WAVE_FORMAT_PCM;
     (*out_wfx)->nChannels = 1;
-    (*out_wfx)->nSamplesPerSec = 22050;
+    (*out_wfx)->nSamplesPerSec = test_engine_sample_rate;
     (*out_wfx)->wBitsPerSample = 16;
     (*out_wfx)->nBlockAlign = 2;
-    (*out_wfx)->nAvgBytesPerSec = 22050 * 2;
+    (*out_wfx)->nAvgBytesPerSec = test_engine_sample_rate * 2;
     (*out_wfx)->cbSize = 0;
 
     return S_OK;
@@ -458,6 +496,12 @@ static void test_spvoice(void)
     USHORT volume;
     ULONG stream_num;
     DWORD regid;
+    WAVEFORMATEX wfx;
+    ISpStream *spstream;
+    IStream *mem_stream;
+    char *wave_data = NULL;
+    size_t wave_len = 0;
+    STATSTG statstg;
     DWORD start, duration;
     ISpeechVoice *speech_voice;
     ISpeechObjectTokens *speech_tokens;
@@ -470,6 +514,7 @@ static void test_spvoice(void)
     DISPID dispid;
     DISPPARAMS params;
     VARIANT args[2], ret;
+    int i;
     HRESULT hr;
 
     if (waveOutGetNumDevs() == 0) {
@@ -656,8 +701,12 @@ static void test_spvoice(void)
     ISpVoice_SetRate(voice, 0);
     ISpVoice_SetVolume(voice, 100);
 
+    wave_data = make_sin_data(0, 1000, test_engine_sample_rate, &wave_len);
+
     reset_engine_params(&test_engine);
-    test_engine.simulate_output = TRUE;
+    test_engine.output_data = wave_data;
+    test_engine.output_len = wave_len;
+
     stream_num = 0xdeadbeef;
     start = GetTickCount();
     hr = ISpVoice_Speak(voice, test_text, SPF_DEFAULT, &stream_num);
@@ -684,7 +733,9 @@ static void test_spvoice(void)
     ok(duration < 200, "took %lu ms.\n", duration);
 
     reset_engine_params(&test_engine);
-    test_engine.simulate_output = TRUE;
+    test_engine.output_data = wave_data;
+    test_engine.output_len = wave_len;
+
     stream_num = 0xdeadbeef;
     start = GetTickCount();
     hr = ISpVoice_Speak(voice, test_text, SPF_DEFAULT | SPF_ASYNC | SPF_NLP_SPEAK_PUNC, &stream_num);
@@ -710,7 +761,9 @@ static void test_spvoice(void)
     ok(test_engine.volume == 100, "got %d.\n", test_engine.volume);
 
     reset_engine_params(&test_engine);
-    test_engine.simulate_output = TRUE;
+    test_engine.output_data = wave_data;
+    test_engine.output_len = wave_len;
+
     hr = ISpVoice_Speak(voice, test_text, SPF_DEFAULT | SPF_ASYNC, NULL);
     ok(hr == S_OK, "got %#lx.\n", hr);
 
@@ -720,6 +773,73 @@ static void test_spvoice(void)
     duration = GetTickCount() - start;
     ok(hr == S_OK, "got %#lx.\n", hr);
     ok(duration < 300, "took %lu ms.\n", duration);
+
+    free(wave_data);
+    wave_data = NULL;
+
+    /* Test ISPVoice resampler */
+    hr = CoCreateInstance(&CLSID_SpStream, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_ISpStream, (void **)&spstream);
+    ok(hr == S_OK, "Failed to create SpStream: %#lx.\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &mem_stream);
+    ok(hr == S_OK, "Failed to create memory stream: %#lx.\n", hr);
+
+    wfx.wFormatTag = WAVE_FORMAT_PCM;
+    wfx.nChannels = 1;
+    wfx.nSamplesPerSec = 16000;
+    wfx.nAvgBytesPerSec = 16000 * 2;
+    wfx.nBlockAlign = 2;
+    wfx.wBitsPerSample = 16;
+    wfx.cbSize = 0;
+
+    hr = ISpStream_SetBaseStream(spstream, mem_stream, &SPDFID_WaveFormatEx, &wfx);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = ISpVoice_SetOutput(voice, (IUnknown *)spstream, TRUE);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    wave_data = make_sin_data(50, 200, test_engine_sample_rate, &wave_len);
+    reset_engine_params(&test_engine);
+    test_engine.output_data = wave_data;
+    test_engine.output_len = wave_len;
+
+    hr = ISpVoice_Speak(voice, test_text, SPF_DEFAULT, NULL);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    todo_wine ok(test_engine.speak_called, "ISpTTSEngine::Speak was not called.\n");
+
+    hr = ISpVoice_SetOutput(voice, NULL, TRUE);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    free(wave_data);
+    wave_data = make_sin_data(50, 200, 16000, &wave_len);
+
+    hr = IStream_Stat(mem_stream, &statstg, STATFLAG_DEFAULT);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    todo_wine ok(fabs((double)statstg.cbSize.QuadPart / wave_len - 1) < 0.02,
+            "got %I64u, expected %Iu (+/-2%%).\n", statstg.cbSize.QuadPart, wave_len);
+
+    if (statstg.cbSize.QuadPart > 0) {
+        size_t check_len = min((size_t)statstg.cbSize.QuadPart, wave_len) / sizeof(int16_t);
+        unsigned int max_diff = 0;
+        const void *mem_data;
+        HGLOBAL mem_global;
+
+        hr = GetHGlobalFromStream(mem_stream, &mem_global);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+
+        mem_data = GlobalLock(mem_global);
+        for (i = 0; i < check_len; i++) {
+            int out = ((int16_t *)mem_data)[i], exp = ((int16_t *)wave_data)[i];
+            max_diff = max(max_diff, abs(out - exp));
+        }
+        GlobalUnlock(mem_global);
+
+        ok(max_diff < 32768 * 0.02, "got max_diff %u.\n", max_diff);
+    }
+
+    ISpStream_Release(spstream);
+    IStream_Release(mem_stream);
 
     hr = ISpVoice_QueryInterface(voice, &IID_ISpeechVoice, (void **)&speech_voice);
     ok(hr == S_OK, "got %#lx.\n", hr);
@@ -823,6 +943,7 @@ done:
     ISpVoice_Release(voice);
     ISpObjectToken_Release(token);
     ISpMMSysAudio_Release(audio_out);
+    free(wave_data);
     SysFreeString(req);
     SysFreeString(opt);
 }
