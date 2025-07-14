@@ -789,6 +789,9 @@ static void test_Fields(void)
 {
     _Recordset *recordset;
     ISupportErrorInfo *errorinfo;
+    Fields20 *fields20;
+    Fields15 *fields15;
+    _Collection *collection;
     unsigned char prec, scale;
     Fields *fields;
     Field *field, *field2;
@@ -808,6 +811,17 @@ static void test_Fields(void)
 
     hr = _Recordset_get_Fields( recordset, &fields );
     ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = Fields_QueryInterface( fields, &IID_Fields20, (void **)&fields20 );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    Fields20_Release( fields20 );
+
+    hr = Fields_QueryInterface( fields, &IID_Fields15, (void **)&fields15 );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    Fields15_Release( fields15 );
+
+    hr = Fields_QueryInterface( fields, &IID__Collection, (void **)&collection );
+    ok( hr == E_NOINTERFACE, "got %08lx\n", hr );
 
     /* Fields object supports ISupportErrorInfo */
     errorinfo = NULL;

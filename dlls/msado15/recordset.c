@@ -865,10 +865,18 @@ static HRESULT WINAPI fields_QueryInterface( Fields *iface, REFIID riid, void **
     struct fields *fields = impl_from_Fields( iface );
     TRACE( "%p, %s, %p\n", iface, debugstr_guid(riid), obj );
 
-    if (IsEqualGUID( riid, &IID_Fields ) || IsEqualGUID( riid, &IID_IDispatch ) ||
+    if (IsEqualGUID( riid, &IID_Fields ) ||
+        IsEqualGUID( riid, &IID_Fields20 ) ||
+        IsEqualGUID( riid, &IID_Fields15 ) ||
+        IsEqualGUID( riid, &IID_IDispatch ) ||
         IsEqualGUID( riid, &IID_IUnknown ))
     {
         *obj = iface;
+    }
+    else if (IsEqualGUID( riid, &IID__Collection ))
+    {
+        TRACE( "interface _Collection cannot be queried returning NULL\n" );
+        return E_NOINTERFACE;
     }
     else if (IsEqualGUID( riid, &IID_ISupportErrorInfo ))
     {
