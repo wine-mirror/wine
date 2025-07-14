@@ -310,21 +310,21 @@ static void test_NtQueueApcThreadEx(void)
     }
 
     status = pNtQueueApcThreadEx( GetCurrentThread(), (HANDLE)QUEUE_USER_APC_CALLBACK_DATA_CONTEXT, apc_func, 0x1234, 0x5678, 0xdeadbeef );
-    todo_wine_if(!status) ok( status == STATUS_INVALID_HANDLE, "got %#lx, expected %#lx.\n", status, STATUS_INVALID_HANDLE );
+    ok( status == STATUS_INVALID_HANDLE, "got %#lx, expected %#lx.\n", status, STATUS_INVALID_HANDLE );
 
     status = pNtQueueApcThreadEx( GetCurrentThread(), (HANDLE)QUEUE_USER_APC_FLAGS_SPECIAL_USER_APC, apc_func, 0x1234, 0x5678, 0xdeadbeef );
     ok( status == STATUS_SUCCESS || status == STATUS_INVALID_HANDLE /* wow64 and win64 on Win version before Win10 1809 */,
         "got %#lx.\n", status );
 
     status = pNtQueueApcThreadEx( GetCurrentThread(), GetCurrentThread(), apc_func, 0x1234, 0x5678, 0xdeadbeef );
-    todo_wine_if(!status) ok( status == STATUS_OBJECT_TYPE_MISMATCH, "got %#lx.\n", status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "got %#lx.\n", status );
 
     status = pNtAllocateReserveObject( &reserve, NULL, MemoryReserveObjectTypeUserApc );
     ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
     status = pNtQueueApcThreadEx( GetCurrentThread(), reserve, apc_func, 0x1234, 0x5678, 0xdeadbeef );
     ok( !status, "got %#lx.\n", status );
     status = pNtQueueApcThreadEx( GetCurrentThread(), reserve, apc_func, 0x1234, 0x5678, 0xdeadbeef );
-    todo_wine_if(!status) ok( status == STATUS_INVALID_PARAMETER_2, "got %#lx.\n", status );
+    ok( status == STATUS_INVALID_PARAMETER_2, "got %#lx.\n", status );
     SleepEx( 0, TRUE );
     status = pNtQueueApcThreadEx( GetCurrentThread(), reserve, apc_func, 0x1234, 0x5678, 0xdeadbeef );
     ok( !status, "got %#lx.\n", status );
@@ -334,7 +334,7 @@ static void test_NtQueueApcThreadEx(void)
     status = pNtAllocateReserveObject( &reserve, NULL, MemoryReserveObjectTypeIoCompletion );
     ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
     status = pNtQueueApcThreadEx( GetCurrentThread(), reserve, apc_func, 0x1234, 0x5678, 0xdeadbeef );
-    todo_wine_if(!status) ok( status == STATUS_OBJECT_TYPE_MISMATCH, "got %#lx.\n", status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "got %#lx.\n", status );
     NtClose( reserve );
 
     SleepEx( 0, TRUE );
@@ -349,7 +349,7 @@ static void test_NtQueueApcThreadEx(void)
     todo_wine_if(is_wow64) ok( status == expected, "got %#lx, expected %#lx.\n", status, expected );
 
     status = pNtQueueApcThreadEx2( GetCurrentThread(), (HANDLE)QUEUE_USER_APC_CALLBACK_DATA_CONTEXT, 0, apc_func, 0x1234, 0x5678, 0xdeadbeef );
-    todo_wine_if(!status) ok( status == STATUS_INVALID_HANDLE, "got %#lx.\n", status );
+    ok( status == STATUS_INVALID_HANDLE, "got %#lx.\n", status );
 
     SleepEx( 0, TRUE );
 }

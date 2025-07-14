@@ -194,6 +194,9 @@ extern void dump_objects(void);
 extern void close_objects(void);
 #endif
 
+struct reserve *reserve_obj_associate_apc( struct process *process, obj_handle_t handle, struct object *apc );
+void reserve_obj_unbind( struct reserve *reserve );
+
 static inline void make_object_permanent( struct object *obj ) { obj->is_permanent = 1; }
 static inline void make_object_temporary( struct object *obj ) { obj->is_permanent = 0; }
 

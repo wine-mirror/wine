@@ -1730,11 +1730,12 @@ NTSTATUS WINAPI NtQueueApcThreadEx2( HANDLE handle, HANDLE reserve_handle, ULONG
     union apc_call call;
 
     TRACE( "%p %p %#x %p %p %p %p.\n", handle, reserve_handle, flags, func, (void *)arg1, (void *)arg2, (void *)arg3 );
-    if (reserve_handle || flags) FIXME( "Unsupported reserve_handle %p, flags %#x.\n", reserve_handle, flags );
+    if (flags) FIXME( "Unsupported flags %#x.\n", flags );
 
     SERVER_START_REQ( queue_apc )
     {
         req->handle = wine_server_obj_handle( handle );
+        req->reserve_handle = wine_server_obj_handle( reserve_handle );
         if (func)
         {
             call.type         = APC_USER;

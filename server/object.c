@@ -68,6 +68,7 @@ struct reserve
 {
     struct object obj;          /* object header */
     int    type;                /* reserve object type. See MEMORY_RESERVE_OBJECT_TYPE */
+    struct object *bound_obj;   /* object using reserve object */
     /* BYTE *memory */;         /* reserved memory */
 };
 
@@ -857,7 +858,11 @@ static struct reserve *create_reserve( struct object *root, const struct unicode
         return NULL;
     }
 
-    if (reserve && get_error() != STATUS_OBJECT_NAME_EXISTS) reserve->type = type;
+    if (reserve && get_error() != STATUS_OBJECT_NAME_EXISTS)
+    {
+        reserve->type = type;
+        reserve->bound_obj = NULL;
+    }
 
     return reserve;
 }
@@ -865,6 +870,28 @@ static struct reserve *create_reserve( struct object *root, const struct unicode
 struct reserve *get_completion_reserve_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct reserve *)get_handle_obj( process, handle, access, &completion_reserve_ops );
+}
+
+struct reserve *reserve_obj_associate_apc( struct process *process, obj_handle_t handle, struct object *apc )
+{
+    struct reserve *reserve;
+
+    if (!(reserve = (struct reserve *)get_handle_obj( process, handle, 0, &apc_reserve_ops ))) return NULL;
+    if (reserve->bound_obj)
+    {
+        release_object( reserve );
+        set_error( STATUS_INVALID_PARAMETER_2 );
+        return NULL;
+    }
+    reserve->bound_obj = apc;
+    return reserve;
+}
+
+void reserve_obj_unbind( struct reserve *reserve )
+{
+    if (!reserve) return;
+    reserve->bound_obj = NULL;
+    release_object( reserve );
 }
 
 /* Allocate a reserve object for pre-allocating memory for object types */

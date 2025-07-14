@@ -1401,7 +1401,9 @@ struct queue_apc_request
 {
     struct request_header __header;
     obj_handle_t handle;
+    obj_handle_t reserve_handle;
     /* VARARG(call,apc_call); */
+    char __pad_20[4];
 };
 struct queue_apc_reply
 {
@@ -6850,6 +6852,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 882
+#define SERVER_PROTOCOL_VERSION 883
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
