@@ -75,6 +75,7 @@ enum attr_type
     ATTR_AGGREGATABLE,
     ATTR_ALLOCATE,
     ATTR_ANNOTATION,
+    ATTR_APICONTRACT, /* implicit attribute */
     ATTR_APPOBJECT,
     ATTR_ASYNC,
     ATTR_ASYNCUUID,

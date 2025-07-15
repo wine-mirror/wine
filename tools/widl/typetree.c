@@ -913,6 +913,7 @@ type_t *type_apicontract_declare(char *name, struct namespace *namespace)
 type_t *type_apicontract_define(type_t *apicontract, attr_list_t *attrs, const struct location *where)
 {
     apicontract->attrs = check_apicontract_attrs(apicontract->name, attrs);
+    apicontract->attrs = append_attr(apicontract->attrs, attr_int(*where, ATTR_APICONTRACT, 1));
     define_type(apicontract, where);
     return apicontract;
 }
