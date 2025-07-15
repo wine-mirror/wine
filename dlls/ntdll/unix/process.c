@@ -325,35 +325,6 @@ static ULONG get_env_size( const RTL_USER_PROCESS_PARAMETERS *params, char **win
 
 
 /***********************************************************************
- *           get_nt_pathname
- *
- * Simplified version of RtlDosPathNameToNtPathName_U.
- */
-static WCHAR *get_nt_pathname( const UNICODE_STRING *str )
-{
-    static const WCHAR ntprefixW[] = {'\\','?','?','\\',0};
-    static const WCHAR uncprefixW[] = {'U','N','C','\\',0};
-    const WCHAR *name = str->Buffer;
-    WCHAR *ret;
-
-    if (!(ret = malloc( str->Length + 8 * sizeof(WCHAR) ))) return NULL;
-
-    wcscpy( ret, ntprefixW );
-    if (name[0] == '\\' && name[1] == '\\')
-    {
-        if ((name[2] == '.' || name[2] == '?') && name[3] == '\\') name += 4;
-        else
-        {
-            wcscat( ret, uncprefixW );
-            name += 2;
-        }
-    }
-    wcscat( ret, name );
-    return ret;
-}
-
-
-/***********************************************************************
  *           get_unix_curdir
  */
 static int get_unix_curdir( const RTL_USER_PROCESS_PARAMETERS *params )
@@ -365,7 +336,7 @@ static int get_unix_curdir( const RTL_USER_PROCESS_PARAMETERS *params )
     int fd = -1;
     char *unix_name;
 
-    if (!(nt_name.Buffer = get_nt_pathname( &params->CurrentDirectory.DosPath ))) return -1;
+    if (get_nt_path( params->CurrentDirectory.DosPath.Buffer, &nt_name )) return -1;
     nt_name.Length = wcslen( nt_name.Buffer ) * sizeof(WCHAR);
 
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );

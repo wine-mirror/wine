@@ -4114,6 +4114,46 @@ NTSTATUS get_full_path( char *name, const WCHAR *curdir, UNICODE_STRING *nt_name
 
 
 /***********************************************************************
+ *           get_nt_path
+ *
+ * Simplified version of RtlDosPathNameToNtPathName_U.
+ */
+NTSTATUS get_nt_path( const WCHAR *name, UNICODE_STRING *nt_name )
+{
+    ULONG len = wcslen( name );
+    WCHAR *ret, *p;
+
+    nt_name->Buffer = NULL;
+    if (!(ret = p = malloc( (len + 8) * sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
+
+    if (name[0] == '\\' && name[1] == '\\')
+    {
+        if ((name[2] == '.' || name[2] == '?') && name[3] == '\\')
+        {
+            memcpy( p, nt_prefixW, sizeof(nt_prefixW) );
+            p += ARRAY_SIZE( nt_prefixW );
+            name += 4;
+        }
+        else
+        {
+            memcpy( p, unc_prefixW, sizeof(unc_prefixW) );
+            p += ARRAY_SIZE( unc_prefixW );
+            name += 2;
+        }
+    }
+    else if (wcsncmp( name, nt_prefixW, ARRAY_SIZE(nt_prefixW) ))
+    {
+        memcpy( p, nt_prefixW, sizeof(nt_prefixW) );
+        p += ARRAY_SIZE( nt_prefixW );
+    }
+    wcscpy( p, name );
+    collapse_path( ret );
+    init_unicode_string( nt_name, ret );
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
  *           unmount_device
  *
  * Unmount the specified device.

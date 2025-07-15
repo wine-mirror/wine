@@ -360,6 +360,7 @@ extern NTSTATUS get_nt_and_unix_names( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *
                                        char **unix_name, UINT disposition );
 extern NTSTATUS unix_to_nt_file_name( const char *unix_name, WCHAR **nt, UINT disposition );
 extern NTSTATUS get_full_path( char *name, const WCHAR *curdir, UNICODE_STRING *nt_name );
+extern NTSTATUS get_nt_path( const WCHAR *name, UNICODE_STRING *nt_name );
 extern NTSTATUS open_unix_file( HANDLE *handle, const char *unix_name, ACCESS_MASK access,
                                 OBJECT_ATTRIBUTES *attr, ULONG attributes, ULONG sharing, ULONG disposition,
                                 ULONG options, void *ea_buffer, ULONG ea_length );
