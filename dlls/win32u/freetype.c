@@ -1312,32 +1312,6 @@ static int add_unix_face( const char *unix_name, const WCHAR *file, void *data_p
     return ret;
 }
 
-static char *get_unix_file_name( LPCWSTR path )
-{
-    UNICODE_STRING nt_name;
-    OBJECT_ATTRIBUTES attr;
-    NTSTATUS status;
-    ULONG size = 256;
-    char *buffer;
-
-    nt_name.Buffer = (WCHAR *)path;
-    nt_name.MaximumLength = nt_name.Length = lstrlenW( path ) * sizeof(WCHAR);
-    InitializeObjectAttributes( &attr, &nt_name, 0, 0, NULL );
-    for (;;)
-    {
-        if (!(buffer = malloc( size ))) return NULL;
-        status = wine_nt_to_unix_file_name( &attr, buffer, &size, FILE_OPEN_IF );
-        if (status != STATUS_BUFFER_TOO_SMALL) break;
-        free( buffer );
-    }
-    if (status && status != STATUS_NO_SUCH_FILE)
-    {
-        free( buffer );
-        return NULL;
-    }
-    return buffer;
-}
-
 static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *font_data_ptr,
                          UINT font_data_size, UINT flags)
 {
@@ -1386,8 +1360,9 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
 static INT freetype_add_font( const WCHAR *file, UINT flags )
 {
     int ret = 0;
-    char *unixname = get_unix_file_name( file );
+    char *unixname = NULL;
 
+    ntdll_get_unix_file_name( file, &unixname, FILE_OPEN_IF );
     if (unixname)
     {
         ret = AddFontToList( file, unixname, NULL, 0, flags );
@@ -2374,9 +2349,12 @@ static BOOL freetype_load_font( struct gdi_font *font )
 
     if (font->file[0])
     {
-        char *filename = get_unix_file_name( font->file );
-        data->mapping = map_font_file( filename );
-        free( filename );
+        char *filename;
+        if (!ntdll_get_unix_file_name( font->file, &filename, FILE_OPEN ))
+        {
+            data->mapping = map_font_file( filename );
+            free( filename );
+        }
         if (!data->mapping)
         {
             WARN("failed to map %s\n", debugstr_w(font->file));
