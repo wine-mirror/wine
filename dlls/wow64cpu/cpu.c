@@ -255,6 +255,7 @@ __ASM_GLOBAL_FUNC( unix_call_32to64,
                    "movl 12(%r14),%edx\n\t"     /* code */
                    "movl 16(%r14),%r8d\n\t"     /* args */
                    "callq *__wine_unix_call_dispatcher(%rip)\n\t"
+                   "movl %eax,0xb0(%r13)\n\t"   /* context->Eax */
                    "btrl $0,-4(%r13)\n\t"       /* cpu->Flags & WOW64_CPURESERVED_FLAG_RESET_STATE */
                    "jc .Lsyscall_32to64_return\n\t"
                    "movl 0xb8(%r13),%edx\n\t"   /* context->Eip */
