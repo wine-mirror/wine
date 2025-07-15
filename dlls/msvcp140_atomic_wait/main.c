@@ -83,6 +83,18 @@ BOOL __stdcall __std_atomic_wait_direct(volatile void *addr, void *cmp,
     return WaitOnAddress(addr, cmp, size, timeout);
 }
 
+void __stdcall __std_execution_wait_on_uchar(void *addr, unsigned char val)
+{
+    TRACE("(%p %d)\n", addr, val);
+    WaitOnAddress(addr, &val, sizeof(val), INFINITE);
+}
+
+void __stdcall __std_execution_wake_by_address_all(void *addr)
+{
+    TRACE("(%p)\n", addr);
+    WakeByAddressAll(addr);
+}
+
 typedef struct
 {
     SRWLOCK srwlock;

@@ -15,8 +15,8 @@
 @ stdcall __std_calloc_crt(long long)
 @ stdcall __std_close_threadpool_work(ptr)
 @ stdcall __std_create_threadpool_work(ptr ptr ptr)
-@ stub __std_execution_wait_on_uchar
-@ stub __std_execution_wake_by_address_all
+@ stdcall __std_execution_wait_on_uchar(ptr long)
+@ stdcall __std_execution_wake_by_address_all(ptr)
 @ stdcall __std_free_crt(ptr)
 @ stdcall __std_parallel_algorithms_hw_threads()
 @ stdcall __std_release_shared_mutex_for_instance(ptr)
