@@ -136,47 +136,47 @@ static void build_search_string(WCHAR *inputBuffer, int len, SEARCH_CONTEXT *sc)
 
     sc->searchstr[0] = L'\0';
 
-    /* If inputBuffer ends in one of our delimiters then use that as the search
-     * pos (i.e. a wildcard search).
-     * Otherwise, parse the buffer to find the last parameter in the buffer,
-     * where tab was pressed.
-     */
-    if (len && wcschr(PATH_SEPARATION_DELIMS, inputBuffer[len-1])) {
-        cc = len;
-    } else {
-        /* Handle spaces in directory names.  Need to quote paths if they contain spaces.
-         * Also, there can be multiple quoted paths on a command line, so find the current
-         * one.
+    /* Parse the buffer to find the last parameter in the buffer, where tab was pressed. */
+    do {
+        last_param = param;
+        if (stripped_copy) {
+            wcsncpy_s(last_stripped_copy, ARRAY_SIZE(last_stripped_copy), stripped_copy, _TRUNCATE);
+        }
+        stripped_copy = WCMD_parameter_with_delims(inputBuffer, nn++, &param, FALSE, FALSE, PATH_SEPARATION_DELIMS);
+    } while (param);
+
+    if (last_param) {
+        cc = last_param - inputBuffer;
+    }
+
+    if (inputBuffer[cc] == L'\"') {
+        sc->user_specified_quotes = TRUE;
+        sc->have_quotes = TRUE;
+        cc++;
+    }
+
+    if (last_stripped_copy[0]) {
+        /* We used the stripped version of the path for the search string, and also use
+         * it to replace the user's text in case and only if we find a match.
+         * It's legal to have quotes in strange places in the path, and WCMD_parameter
+         * removes them for us.
          */
-        do {
-            last_param = param;
-            if (stripped_copy) {
-                wcsncpy_s(last_stripped_copy, ARRAY_SIZE(last_stripped_copy), stripped_copy, _TRUNCATE);
-            }
-            stripped_copy = WCMD_parameter_with_delims(inputBuffer, nn++, &param, FALSE, FALSE, PATH_SEPARATION_DELIMS);
-        } while (param);
-
-        if (last_param) {
-            cc = last_param - inputBuffer;
+        wcsncpy_s(sc->searchstr, ARRAY_SIZE(sc->searchstr), last_stripped_copy, _TRUNCATE);
+        if (wcschr(sc->searchstr, L'?') || wcschr(sc->searchstr, L'*')) {
+            need_wildcard = FALSE;
         }
+    }
 
-        if (inputBuffer[cc] == L'\"') {
-            sc->user_specified_quotes = TRUE;
-            sc->have_quotes = TRUE;
-            cc++;
-        }
-
-        if (last_stripped_copy[0]) {
-            /* We used the stripped version of the path for the search string, and also use
-             * it to replace the user's text in case and only if we find a match.
-             * It's legal to have quotes in strange places in the path, and WCMD_parameter
-             * removes them for us.
-             */
-            wcsncpy_s(sc->searchstr, ARRAY_SIZE(sc->searchstr), last_stripped_copy, _TRUNCATE);
-            if (wcschr(sc->searchstr, L'?') || wcschr(sc->searchstr, L'*')) {
-                need_wildcard = FALSE;
-            }
-        }
+    /* If the user specified quotes then we treat delimiters in the path as literals and ignore them.
+     * Otherwise if inputBuffer ends in one of our delimiters then override the parsing above and use
+     * that as the search pos (i.e. a wildcard search).
+     * We do this after the parsing because the parsing is needed to determine if the user specified
+     * quotes on the current path that is subject to tab completion.
+     */
+    if (!sc->user_specified_quotes && len && wcschr(PATH_SEPARATION_DELIMS, inputBuffer[len-1])) {
+        cc = len;
+        sc->searchstr[0] = L'\0';
+        need_wildcard = TRUE;
     }
 
     sc->search_pos = cc;
@@ -192,12 +192,25 @@ static void find_insert_pos(const WCHAR *inputBuffer, int len, SEARCH_CONTEXT *s
     /* Handle paths here.  Find last '\\' or other delimiter.
      * If not found then insert pos is the same as search pos.
      */
-    while (cc > sc->search_pos && !wcschr(INTRA_PATH_DELIMS, inputBuffer[cc])) {
-        cc--;
-    }
+    if (sc->user_specified_quotes) {
+        /* If the user specified quotes then treat the usual delimiters as literals
+         * and ignore them.
+         */
+        while (cc > sc->search_pos && inputBuffer[cc] != L'\\') {
+            cc--;
+        }
 
-    if (inputBuffer[cc] == L'\"' || wcschr(INTRA_PATH_DELIMS, inputBuffer[cc])) {
-        cc++;
+        if (inputBuffer[cc] == L'\"' || inputBuffer[cc] == L'\\') {
+            cc++;
+        }
+    } else {
+        while (cc > sc->search_pos && !wcschr(INTRA_PATH_DELIMS, inputBuffer[cc])) {
+            cc--;
+        }
+
+        if (inputBuffer[cc] == L'\"' || wcschr(INTRA_PATH_DELIMS, inputBuffer[cc])) {
+            cc++;
+        }
     }
 
     sc->insert_pos = cc;
@@ -265,19 +278,19 @@ static void update_input_buffer(WCHAR *inputBuffer, const DWORD inputBufferLengt
     /* We have found the insert position for the results.  Terminate the string here. */
     inputBuffer[sc->insert_pos] = L'\0';
 
-    /* If there are no spaces in the path then we can remove quotes when appending
+    /* If there are no spaces or delimiters in the path then we can remove quotes when appending
      * the search result, unless the search result itself requires them.
      */
-    if (sc->have_quotes && !sc->user_specified_quotes && !wcschr(&inputBuffer[sc->search_pos], L' ')) {
+    if (sc->have_quotes && !sc->user_specified_quotes && !wcspbrk(&inputBuffer[sc->search_pos], PATH_SEPARATION_DELIMS)) {
         TRACE("removeQuotes = TRUE\n");
         removeQuotes = TRUE;
     }
 
     /* Online documentation states that paths or filenames should be quoted if they are long
      * file names or contain spaces.  In practice, modern Windows seems to quote paths/files
-     * only if they contain spaces.
+     * only if they contain spaces or delimiters.
      */
-    needQuotes = wcschr(sc->fd[sc->current_entry].cFileName, L' ') ? TRUE : FALSE;
+    needQuotes = !!wcspbrk(sc->fd[sc->current_entry].cFileName, PATH_SEPARATION_DELIMS);
     len = lstrlenW(inputBuffer);
     /* Remove starting quotes, if able. */
     if (removeQuotes && !needQuotes) {
