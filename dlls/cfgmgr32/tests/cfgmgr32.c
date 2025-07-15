@@ -117,6 +117,13 @@ static void test_CM_MapCrToWin32Err(void)
     }
 }
 
+HRESULT (WINAPI *pDevCreateObjectQuery)(DEV_OBJECT_TYPE, ULONG, ULONG, const DEVPROPCOMPKEY*, ULONG,
+                                        const DEVPROP_FILTER_EXPRESSION*, PDEV_QUERY_RESULT_CALLBACK, void*, HDEVQUERY*);
+void (WINAPI *pDevCloseObjectQuery)(HDEVQUERY);
+HRESULT (WINAPI *pDevGetObjects)(DEV_OBJECT_TYPE, ULONG, ULONG, const DEVPROPCOMPKEY*, ULONG,
+                                 const DEVPROP_FILTER_EXPRESSION*, ULONG*, const DEV_OBJECT**);
+void (WINAPI *pDevFreeObjects)(ULONG, const DEV_OBJECT*);
+
 DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
 
 static void test_CM_Get_Device_ID_List(void)
@@ -653,44 +660,50 @@ static void test_DevGetObjects( void )
     HRESULT hr;
     ULONG i, len = 0;
 
-    hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 1, NULL, 0, NULL, &len, &objects );
+    if (!pDevGetObjects || !pDevFreeObjects)
+    {
+        win_skip("Functions unavailable, skipping test. (%p %p)\n", pDevGetObjects, pDevFreeObjects);
+        return;
+    }
+
+    hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 1, NULL, 0, NULL, &len, &objects );
     ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
-    hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 1, NULL, &len, &objects );
+    hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 1, NULL, &len, &objects );
     ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
-    hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, (void *)0xdeadbeef, 0, NULL, &len, &objects );
+    hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, (void *)0xdeadbeef, 0, NULL, &len, &objects );
     ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
-    hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 0, (void *)0xdeadbeef, &len, &objects );
+    hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 0, (void *)0xdeadbeef, &len, &objects );
     ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
-    hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagUpdateResults, 0, NULL, 0, (void *)0xdeadbeef, &len, &objects );
+    hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagUpdateResults, 0, NULL, 0, (void *)0xdeadbeef, &len, &objects );
     ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
-    hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagAsyncClose, 0, NULL, 0, (void *)0xdeadbeef, &len, &objects );
+    hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagAsyncClose, 0, NULL, 0, (void *)0xdeadbeef, &len, &objects );
     ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
-    hr = DevGetObjects( DevObjectTypeDeviceInterface, 0xdeadbeef, 0, NULL, 0, (void *)0xdeadbeef, &len, &objects );
+    hr = pDevGetObjects( DevObjectTypeDeviceInterface, 0xdeadbeef, 0, NULL, 0, (void *)0xdeadbeef, &len, &objects );
     ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
     prop_key.Key = test_cases[0].exp_props[0].key;
     prop_key.Store = DEVPROP_STORE_SYSTEM;
     prop_key.LocaleName = NULL;
     /* DevQueryFlagAllProperties is mutually exlusive with requesting specific properties. */
-    hr = DevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagAllProperties, 1, &prop_key, 0, NULL, &len, &objects );
+    hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagAllProperties, 1, &prop_key, 0, NULL, &len, &objects );
     ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 
     len = 0xdeadbeef;
     objects = (DEV_OBJECT *)0xdeadbeef;
-    hr = DevGetObjects( DevObjectTypeUnknown, DevQueryFlagNone, 0, NULL, 0, NULL, &len, &objects );
+    hr = pDevGetObjects( DevObjectTypeUnknown, DevQueryFlagNone, 0, NULL, 0, NULL, &len, &objects );
     ok( hr == S_OK, "got hr %#lx\n", hr );
     ok( len == 0, "got len %lu\n", len );
     ok( !objects, "got objects %p\n", objects );
 
     len = 0xdeadbeef;
     objects = (DEV_OBJECT *)0xdeadbeef;
-    hr = DevGetObjects( 0xdeadbeef, DevQueryFlagNone, 0, NULL, 0, NULL, &len, &objects );
+    hr = pDevGetObjects( 0xdeadbeef, DevQueryFlagNone, 0, NULL, 0, NULL, &len, &objects );
     ok( hr == S_OK, "got hr %#lx\n", hr );
     ok( len == 0, "got len %lu\n", len );
     ok( !objects, "got objects %p\n", objects );
@@ -704,7 +717,7 @@ static void test_DevGetObjects( void )
         objects = NULL;
         len = 0;
         winetest_push_context( "test_cases[%lu]", i );
-        hr = DevGetObjects( test_cases[i].object_type, DevQueryFlagAllProperties, 0, NULL, 0, NULL, &len, &objects );
+        hr = pDevGetObjects( test_cases[i].object_type, DevQueryFlagAllProperties, 0, NULL, 0, NULL, &len, &objects );
         ok( hr == S_OK, "got hr %#lx\n", hr );
         for (j = 0; j < len; j++)
         {
@@ -715,7 +728,7 @@ static void test_DevGetObjects( void )
             test_dev_object_iface_props( __LINE__, obj, test_cases[i].exp_props, test_cases[i].props_len );
             winetest_pop_context();
         }
-        DevFreeObjects( len, objects );
+        pDevFreeObjects( len, objects );
 
 
         /* Get all objects of this type, but only with a single requested property. */
@@ -730,7 +743,7 @@ static void test_DevGetObjects( void )
             prop_key.Key = prop->key;
             prop_key.LocaleName = NULL;
             prop_key.Store = DEVPROP_STORE_SYSTEM;
-            hr = DevGetObjects( test_cases[i].object_type, 0, 1, &prop_key, 0, NULL, &len, &objects );
+            hr = pDevGetObjects( test_cases[i].object_type, 0, 1, &prop_key, 0, NULL, &len, &objects );
             ok( hr == S_OK, "got hr %#lx\n", hr );
             ok( len, "got buf_len %lu\n", len );
             ok( !!objects, "got objects %p\n", objects );
@@ -747,7 +760,7 @@ static void test_DevGetObjects( void )
                         debugstr_guid( &prop->key.fmtid ), prop->key.pid );
                 winetest_pop_context();
             }
-            DevFreeObjects( len, objects );
+            pDevFreeObjects( len, objects );
             winetest_pop_context();
         }
         winetest_pop_context();
@@ -757,7 +770,7 @@ static void test_DevGetObjects( void )
         len = 0;
         objects = NULL;
         prop_key.Key = DEVPKEY_dummy;
-        hr = DevGetObjects( test_cases[i].object_type, 0, 1, &prop_key, 0, NULL, &len, &objects );
+        hr = pDevGetObjects( test_cases[i].object_type, 0, 1, &prop_key, 0, NULL, &len, &objects );
         ok( hr == S_OK, "got hr %#lx\n", hr );
         ok( len, "got len %lu\n", len );
         ok( !!objects, "got objects %p\n", objects );
@@ -778,7 +791,7 @@ static void test_DevGetObjects( void )
             }
             winetest_pop_context();
         }
-        DevFreeObjects( len, objects );
+        pDevFreeObjects( len, objects );
     }
 }
 
@@ -845,7 +858,7 @@ static HRESULT call_DevCreateObjectQuery_( int line, DEV_OBJECT_TYPE type, ULONG
                                            struct query_callback_data *data, HDEVQUERY *devquery )
 {
     data->line = line;
-    return DevCreateObjectQuery( type, flags, props_len, props, filters_len, filters, callback, data, devquery );
+    return pDevCreateObjectQuery( type, flags, props_len, props, filters_len, filters, callback, data, devquery );
 }
 
 static void test_DevCreateObjectQuery( void )
@@ -860,11 +873,17 @@ static void test_DevCreateObjectQuery( void )
     HRESULT hr;
     DWORD ret;
 
-    hr = DevCreateObjectQuery( DevObjectTypeDeviceInterface, 0, 0, NULL, 0, NULL, NULL, NULL, &query );
+    if (!pDevCreateObjectQuery || !pDevCloseObjectQuery)
+    {
+        win_skip("Functions unavailable, skipping test. (%p %p)\n", pDevCreateObjectQuery, pDevCloseObjectQuery);
+        return;
+    }
+
+    hr = pDevCreateObjectQuery( DevObjectTypeDeviceInterface, 0, 0, NULL, 0, NULL, NULL, NULL, &query );
     ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
     ok( !query, "got query %p\n", query );
 
-    hr = DevCreateObjectQuery( DevObjectTypeDeviceInterface, 0xdeadbeef, 0, NULL, 0, NULL, query_result_callback,
+    hr = pDevCreateObjectQuery( DevObjectTypeDeviceInterface, 0xdeadbeef, 0, NULL, 0, NULL, query_result_callback,
                                NULL, &query );
     ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
     ok( !query, "got query %p\n", query );
@@ -876,20 +895,20 @@ static void test_DevCreateObjectQuery( void )
     ok( hr == S_OK, "got hr %#lx\n", hr );
     ret = WaitForSingleObject( data.enum_completed, 1000 );
     ok( !ret, "got ret %lu\n", ret );
-    DevCloseObjectQuery( query );
+    pDevCloseObjectQuery( query );
 
     hr = call_DevCreateObjectQuery( 0xdeadbeef, 0, 0, NULL, 0, NULL, &query_result_callback, &data, &query );
     ok( hr == S_OK, "got hr %#lx\n", hr );
     ret = WaitForSingleObject( data.enum_completed, 1000 );
     ok( !ret, "got ret %lu\n", ret );
-    DevCloseObjectQuery( query );
+    pDevCloseObjectQuery( query );
 
     hr = call_DevCreateObjectQuery( DevObjectTypeUnknown, DevQueryFlagAsyncClose, 0, NULL, 0, NULL, &query_result_callback,
                                     &data, &query );
     ok( hr == S_OK, "got hr %#lx\n", hr );
     ret = WaitForSingleObject( data.enum_completed, 1000 );
     ok( !ret, "got ret %lu\n", ret );
-    DevCloseObjectQuery( query );
+    pDevCloseObjectQuery( query );
     ret = WaitForSingleObject( data.closed, 1000 );
     ok( !ret, "got ret %lu\n", ret );
 
@@ -902,7 +921,7 @@ static void test_DevCreateObjectQuery( void )
     ok( hr == S_OK, "got hr %#lx\n", hr );
     ret = WaitForSingleObject( data.enum_completed, 5000 );
     ok( !ret, "got ret %lu\n", ret );
-    DevCloseObjectQuery( query );
+    pDevCloseObjectQuery( query );
     ret = WaitForSingleObject( data.closed, 1000 );
     ok( !ret, "got ret %lu\n", ret );
 
@@ -912,7 +931,7 @@ static void test_DevCreateObjectQuery( void )
     ok( hr == S_OK, "got hr %#lx\n", hr );
     ret = WaitForSingleObject( data.enum_completed, 5000 );
     ok( !ret, "got ret %lu\n", ret );
-    DevCloseObjectQuery( query );
+    pDevCloseObjectQuery( query );
     ret = WaitForSingleObject( data.closed, 1000 );
     ok( !ret, "got ret %lu\n", ret );
 
@@ -922,6 +941,12 @@ static void test_DevCreateObjectQuery( void )
 
 START_TEST(cfgmgr32)
 {
+    HMODULE mod = GetModuleHandleA("cfgmgr32.dll");
+    pDevCreateObjectQuery = (void *)GetProcAddress(mod, "DevCreateObjectQuery");
+    pDevCloseObjectQuery = (void *)GetProcAddress(mod, "DevCloseObjectQuery");
+    pDevGetObjects = (void *)GetProcAddress(mod, "DevGetObjects");
+    pDevFreeObjects = (void *)GetProcAddress(mod, "DevFreeObjects");
+
     test_CM_MapCrToWin32Err();
     test_CM_Get_Device_ID_List();
     test_CM_Register_Notification();
