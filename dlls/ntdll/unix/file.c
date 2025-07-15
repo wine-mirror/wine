@@ -4154,6 +4154,45 @@ NTSTATUS get_nt_path( const WCHAR *name, UNICODE_STRING *nt_name )
 
 
 /***********************************************************************
+ *           ntdll_get_unix_file_name
+ */
+NTSTATUS ntdll_get_unix_file_name( const WCHAR *dos, char **unix_name, UINT disposition )
+{
+    UNICODE_STRING nt_name, true_nt_name;
+    OBJECT_ATTRIBUTES attr;
+    char *buffer = NULL;
+    NTSTATUS status = get_nt_path( dos, &nt_name );
+
+    if (status) return status;
+    InitializeObjectAttributes( &attr, &nt_name, 0, 0, NULL );
+    status = get_nt_and_unix_names( &attr, &true_nt_name, &buffer, disposition );
+    free( nt_name.Buffer );
+    free( true_nt_name.Buffer );
+
+    if (!status || status == STATUS_NO_SUCH_FILE)
+    {
+        /* remove dosdevices prefix for z: drive if it points to the Unix root */
+        if (!strncmp( buffer, config_dir, strlen(config_dir) ) &&
+            !strncmp( buffer + strlen(config_dir), "/dosdevices/z:/", 15 ))
+        {
+            struct stat st1, st2;
+            BOOL is_root;
+            char *p = buffer + strlen(config_dir) + 14;
+            *p = 0;
+            is_root = !stat( buffer, &st1 ) && !stat( "/", &st2 ) &&
+                      st1.st_dev == st2.st_dev && st1.st_ino == st2.st_ino;
+            *p = '/';
+            if (is_root) memmove( buffer, p, strlen(p) + 1 );
+        }
+        *unix_name = buffer;
+    }
+    else free( buffer );
+
+    return status;
+}
+
+
+/***********************************************************************
  *           unmount_device
  *
  * Unmount the specified device.
