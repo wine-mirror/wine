@@ -1715,7 +1715,7 @@
 @ stub cacosl
 @ cdecl calloc(long long) msvcr120.calloc
 @ cdecl carg(int128) msvcr120.carg
-@ stub cargf
+@ cdecl cargf(int64) msvcr120.cargf
 @ stub cargl
 @ stub casin
 @ stub casinf

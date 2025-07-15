@@ -6,6 +6,7 @@ EXTRADEFS = -D_ACRTIMP= -D_NO_CRT_MATH_INLINE \
 SOURCES = \
 	src/complex/__cexp.c \
 	src/complex/carg.c \
+	src/complex/cargf.c \
 	src/complex/cexp.c \
 	src/math/__cos.c \
 	src/math/__cosdf.c \

@@ -2048,7 +2048,7 @@
 @ stub cacosl
 @ cdecl calloc(long long)
 @ cdecl carg(int128)
-@ stub cargf
+@ cdecl cargf(int64)
 @ stub cargl
 @ stub casin
 @ stub casinf
