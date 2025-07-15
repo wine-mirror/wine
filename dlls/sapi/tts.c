@@ -26,6 +26,11 @@
 #include "winbase.h"
 #include "objbase.h"
 
+#include "mfapi.h"
+#include "mferror.h"
+#include "mftransform.h"
+#include "wmcodecdsp.h"
+
 #include "sapiddk.h"
 #include "sperror.h"
 
@@ -43,6 +48,7 @@ struct speech_voice
     LONG ref;
 
     ISpStreamFormat *output;
+    IMFTransform *resampler;
     ISpObjectToken *engine_token;
     ISpTTSEngine *engine;
     LONG cur_stream_num;
@@ -76,11 +82,31 @@ struct tts_engine_site
 
     struct speech_voice *voice;
     ULONG stream_num;
+    BOOL use_resampler;
+    IMFSample *out_sample;
+    IMFMediaBuffer *out_buf;
 };
 
 static inline struct tts_engine_site *impl_from_ISpTTSEngineSite(ISpTTSEngineSite *iface)
 {
     return CONTAINING_RECORD(iface, struct tts_engine_site, ISpTTSEngineSite_iface);
+}
+
+static const char *debugstr_wfx(const WAVEFORMATEX *wfx)
+{
+    if (!wfx) return "(null)";
+    if (wfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+    {
+        const WAVEFORMATEXTENSIBLE *wfxe = (const WAVEFORMATEXTENSIBLE *)wfx;
+
+        return wine_dbg_sprintf(
+                "tag: %#x (%s), ch: %u (mask: %#lx), rate: %lu, avgbps: %lu, align: %u, depth: %u",
+                wfx->wFormatTag, debugstr_guid(&wfxe->SubFormat), wfx->nChannels, wfxe->dwChannelMask,
+                wfx->nSamplesPerSec, wfx->nAvgBytesPerSec, wfx->nBlockAlign, wfx->wBitsPerSample);
+    }
+    return wine_dbg_sprintf("tag: %#x, ch: %u, rate: %lu, avgbps: %lu, align: %u, depth: %u",
+                            wfx->wFormatTag, wfx->nChannels, wfx->nSamplesPerSec,
+                            wfx->nAvgBytesPerSec, wfx->nBlockAlign, wfx->wBitsPerSample);
 }
 
 static HRESULT create_token_category(const WCHAR *cat_id, ISpObjectTokenCategory **cat)
@@ -170,6 +196,7 @@ static ULONG WINAPI speech_voice_Release(ISpeechVoice *iface)
     {
         async_cancel_queue(&This->queue);
         if (This->output) ISpStreamFormat_Release(This->output);
+        if (This->resampler) IMFTransform_Release(This->resampler);
         if (This->engine_token) ISpObjectToken_Release(This->engine_token);
         if (This->engine) ISpTTSEngine_Release(This->engine);
         DeleteCriticalSection(&This->cs);
@@ -824,16 +851,68 @@ static void free_frag_list(SPVTEXTFRAG *frag)
     }
 }
 
-static HRESULT set_output_format(ISpStreamFormat *output, ISpTTSEngine *engine, GUID *fmtid, WAVEFORMATEX **wfx)
+static HRESULT setup_resampler(struct speech_voice *voice, const WAVEFORMATEX *in_wfx,
+        const WAVEFORMATEX *out_wfx)
+{
+    IMFMediaType *cur_in_type = NULL, *cur_out_type = NULL;
+    IMFMediaType *in_type = NULL, *out_type = NULL;
+    DWORD flags;
+    HRESULT hr;
+
+    TRACE("Resampling TTS engine output\n");
+    TRACE("  in_wfx:  %s\n", debugstr_wfx(in_wfx));
+    TRACE("to\n");
+    TRACE("  out_wfx: %s\n", debugstr_wfx(out_wfx));
+
+    if (!voice->resampler &&
+        FAILED(hr = CoCreateInstance(&CLSID_CResamplerMediaObject, NULL, CLSCTX_INPROC_SERVER,
+                                     &IID_IMFTransform, (void **)&voice->resampler)))
+    {
+        ERR("Failed to create CResamplerMediaObject: %#lx.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = MFCreateMediaType(&in_type)) ||
+        FAILED(hr = MFInitMediaTypeFromWaveFormatEx(in_type, in_wfx, sizeof(WAVEFORMATEX) + in_wfx->cbSize)))
+        goto done;
+
+    if (FAILED(hr = MFCreateMediaType(&out_type)) ||
+        FAILED(hr = MFInitMediaTypeFromWaveFormatEx(out_type, out_wfx, sizeof(WAVEFORMATEX) + out_wfx->cbSize)))
+        goto done;
+
+    if (FAILED(IMFTransform_GetInputCurrentType(voice->resampler, 0, &cur_in_type)) ||
+        IMFMediaType_IsEqual(cur_in_type, in_type, &flags) != S_OK)
+    {
+        if (FAILED(hr = IMFTransform_SetInputType(voice->resampler, 0, in_type, 0)))
+            goto done;
+    }
+
+    if (FAILED(IMFTransform_GetOutputCurrentType(voice->resampler, 0, &cur_out_type)) ||
+        IMFMediaType_IsEqual(cur_out_type, out_type, &flags) != S_OK)
+    {
+        if (FAILED(hr = IMFTransform_SetOutputType(voice->resampler, 0, out_type, 0)))
+            goto done;
+    }
+
+done:
+    if (in_type) IMFMediaType_Release(in_type);
+    if (out_type) IMFMediaType_Release(out_type);
+    if (cur_in_type) IMFMediaType_Release(cur_in_type);
+    if (cur_out_type) IMFMediaType_Release(cur_out_type);
+    return hr;
+}
+
+static HRESULT set_output_format(struct speech_voice *voice, GUID *fmtid, WAVEFORMATEX **engine_wfx,
+                                 BOOL *use_resampler)
 {
     GUID output_fmtid;
     WAVEFORMATEX *output_wfx = NULL;
     ISpAudio *audio = NULL;
     HRESULT hr;
 
-    if (FAILED(hr = ISpStreamFormat_GetFormat(output, &output_fmtid, &output_wfx)))
+    if (FAILED(hr = ISpStreamFormat_GetFormat(voice->output, &output_fmtid, &output_wfx)))
         return hr;
-    if (FAILED(hr = ISpTTSEngine_GetOutputFormat(engine, &output_fmtid, output_wfx, fmtid, wfx)))
+    if (FAILED(hr = ISpTTSEngine_GetOutputFormat(voice->engine, &output_fmtid, output_wfx, fmtid, engine_wfx)))
         goto done;
     if (!IsEqualGUID(fmtid, &SPDFID_WaveFormatEx))
     {
@@ -841,12 +920,22 @@ static HRESULT set_output_format(ISpStreamFormat *output, ISpTTSEngine *engine, 
         goto done;
     }
 
-    if (memcmp(output_wfx, *wfx, sizeof(WAVEFORMATEX)) ||
-        memcmp(output_wfx + 1, *wfx + 1, output_wfx->cbSize))
+    *use_resampler = FALSE;
+
+    if (memcmp(output_wfx, *engine_wfx, sizeof(WAVEFORMATEX)) ||
+        memcmp(output_wfx + 1, *engine_wfx + 1, output_wfx->cbSize))
     {
-        if (FAILED(hr = ISpStreamFormat_QueryInterface(output, &IID_ISpAudio, (void **)&audio)) ||
-            FAILED(hr = ISpAudio_SetFormat(audio, &SPDFID_WaveFormatEx, *wfx)))
-            goto done;
+        if (SUCCEEDED(ISpStreamFormat_QueryInterface(voice->output, &IID_ISpAudio, (void **)&audio)))
+        {
+            hr = ISpAudio_SetFormat(audio, &SPDFID_WaveFormatEx, *engine_wfx);
+            if (hr == SPERR_UNSUPPORTED_FORMAT)
+                *use_resampler = TRUE;
+        }
+        else
+            *use_resampler = TRUE;
+
+        if (*use_resampler)
+            hr = setup_resampler(voice, *engine_wfx, output_wfx);
     }
 
 done:
@@ -859,6 +948,7 @@ static void speak_proc(struct async_task *task)
 {
     struct speak_task *speak_task = (struct speak_task *)task;
     struct speech_voice *This = speak_task->voice;
+    struct tts_engine_site *site = impl_from_ISpTTSEngineSite(speak_task->site);
     GUID fmtid;
     WAVEFORMATEX *wfx = NULL;
     ISpAudio *audio = NULL;
@@ -875,7 +965,7 @@ static void speak_proc(struct async_task *task)
         goto done;
     }
 
-    if (FAILED(hr = set_output_format(This->output, This->engine, &fmtid, &wfx)))
+    if (FAILED(hr = set_output_format(This, &fmtid, &wfx, &site->use_resampler)))
     {
         LeaveCriticalSection(&This->cs);
         ERR("failed setting output format: %#lx.\n", hr);
@@ -1356,8 +1446,9 @@ static ULONG WINAPI ttsenginesite_Release(ISpTTSEngineSite *iface)
 
     if (!ref)
     {
-        if (This->voice)
-            ISpeechVoice_Release(&This->voice->ISpeechVoice_iface);
+        if (This->voice) ISpeechVoice_Release(&This->voice->ISpeechVoice_iface);
+        if (This->out_sample) IMFSample_Release(This->out_sample);
+        if (This->out_buf) IMFMediaBuffer_Release(This->out_buf);
         free(This);
     }
 
@@ -1392,6 +1483,69 @@ static DWORD WINAPI ttsenginesite_GetActions(ISpTTSEngineSite *iface)
     return actions;
 }
 
+static HRESULT resample_engine_output(struct tts_engine_site *This, const void *buf, ULONG cb, ULONG *cb_written)
+{
+    MFT_OUTPUT_DATA_BUFFER mft_buf;
+    IMFMediaBuffer *in_buf = NULL;
+    IMFSample *in_sample = NULL;
+    BYTE *in_data, *out_data;
+    DWORD out_len;
+    DWORD status;
+    HRESULT hr;
+
+    if (FAILED(hr = MFCreateSample(&in_sample)) ||
+        FAILED(hr = MFCreateMemoryBuffer(cb, &in_buf)) ||
+        FAILED(hr = IMFSample_AddBuffer(in_sample, in_buf)))
+        goto done;
+
+    if (!This->out_sample)
+    {
+        if (FAILED(hr = MFCreateSample(&This->out_sample)) ||
+            FAILED(hr = MFCreateMemoryBuffer(16384, &This->out_buf)) ||
+            FAILED(hr = IMFSample_AddBuffer(This->out_sample, This->out_buf)))
+            goto done;
+    }
+
+    if (FAILED(hr = IMFMediaBuffer_Lock(in_buf, &in_data, NULL, NULL)))
+        goto done;
+    memcpy(in_data, buf, cb);
+    IMFMediaBuffer_Unlock(in_buf);
+
+    IMFMediaBuffer_SetCurrentLength(in_buf, cb);
+
+    if (FAILED(hr = IMFTransform_ProcessInput(This->voice->resampler, 0, in_sample, 0)))
+        goto done;
+
+    while (SUCCEEDED(hr))
+    {
+        memset(&mft_buf, 0, sizeof(mft_buf));
+        mft_buf.pSample = This->out_sample;
+
+        if (FAILED(hr = IMFTransform_ProcessOutput(This->voice->resampler, 0, 1, &mft_buf, &status)))
+        {
+            if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
+                hr = S_OK;
+            break;
+        }
+
+        if (FAILED(hr = IMFMediaBuffer_GetCurrentLength(This->out_buf, &out_len)) ||
+            FAILED(hr = IMFMediaBuffer_Lock(This->out_buf, &out_data, NULL, NULL)))
+            break;
+
+        hr = ISpStreamFormat_Write(This->voice->output, out_data, out_len, NULL);
+        IMFMediaBuffer_Unlock(This->out_buf);
+    }
+
+done:
+    if (in_sample) IMFSample_Release(in_sample);
+    if (in_buf) IMFMediaBuffer_Release(in_buf);
+
+    if (cb_written)
+        *cb_written = SUCCEEDED(hr) ? cb : 0;
+
+    return hr;
+}
+
 static HRESULT WINAPI ttsenginesite_Write(ISpTTSEngineSite *iface, const void *buf, ULONG cb, ULONG *cb_written)
 {
     struct tts_engine_site *This = impl_from_ISpTTSEngineSite(iface);
@@ -1400,6 +1554,9 @@ static HRESULT WINAPI ttsenginesite_Write(ISpTTSEngineSite *iface, const void *b
 
     if (!This->voice->output)
         return SPERR_UNINITIALIZED;
+
+    if (This->use_resampler)
+        return resample_engine_output(This, buf, cb, cb_written);
 
     return ISpStreamFormat_Write(This->voice->output, buf, cb, cb_written);
 }
@@ -1472,6 +1629,9 @@ static HRESULT ttsenginesite_create(struct speech_voice *voice, ULONG stream_num
     This->ref = 1;
     This->voice = voice;
     This->stream_num = stream_num;
+    This->use_resampler = FALSE;
+    This->out_sample = NULL;
+    This->out_buf = NULL;
 
     ISpeechVoice_AddRef(&This->voice->ISpeechVoice_iface);
 
@@ -1545,6 +1705,7 @@ HRESULT speech_voice_create(IUnknown *outer, REFIID iid, void **obj)
     This->ref = 1;
 
     This->output = NULL;
+    This->resampler = NULL;
     This->engine_token = NULL;
     This->engine = NULL;
     This->cur_stream_num = 0;

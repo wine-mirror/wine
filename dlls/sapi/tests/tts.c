@@ -805,8 +805,8 @@ static void test_spvoice(void)
     test_engine.output_len = wave_len;
 
     hr = ISpVoice_Speak(voice, test_text, SPF_DEFAULT, NULL);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine ok(test_engine.speak_called, "ISpTTSEngine::Speak was not called.\n");
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(test_engine.speak_called, "ISpTTSEngine::Speak was not called.\n");
 
     hr = ISpVoice_SetOutput(voice, NULL, TRUE);
     ok(hr == S_OK, "got %#lx.\n", hr);
@@ -816,8 +816,8 @@ static void test_spvoice(void)
 
     hr = IStream_Stat(mem_stream, &statstg, STATFLAG_DEFAULT);
     ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine ok(fabs((double)statstg.cbSize.QuadPart / wave_len - 1) < 0.02,
-            "got %I64u, expected %Iu (+/-2%%).\n", statstg.cbSize.QuadPart, wave_len);
+    ok(fabs((double)statstg.cbSize.QuadPart / wave_len - 1) < 0.02,
+            "got %I64u, expected %Iu.\n", statstg.cbSize.QuadPart, wave_len);
 
     if (statstg.cbSize.QuadPart > 0) {
         size_t check_len = min((size_t)statstg.cbSize.QuadPart, wave_len) / sizeof(int16_t);

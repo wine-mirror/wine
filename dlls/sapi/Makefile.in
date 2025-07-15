@@ -1,6 +1,6 @@
 MODULE    = sapi.dll
-IMPORTS   = uuid ole32 oleaut32 user32 advapi32
-DELAYIMPORTS = winmm
+IMPORTS   = uuid ole32 oleaut32 user32 advapi32 mfuuid wmcodecdspuuid
+DELAYIMPORTS = winmm mfplat
 
 SOURCES = \
 	async.c \
