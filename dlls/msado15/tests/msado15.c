@@ -25,10 +25,14 @@
 #include <msado15_backcompat.h>
 #include "wine/test.h"
 #include "msdasql.h"
+#include "odbcinst.h"
 
 DEFINE_GUID(DBPROPSET_ROWSET,            0xc8b522be, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
 
 #define MAKE_ADO_HRESULT( err ) MAKE_HRESULT( SEVERITY_ERROR, FACILITY_CONTROL, err )
+
+static BOOL db_created;
+static char mdbpath[MAX_PATH];
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -1403,7 +1407,14 @@ static void test_Connection(void)
     hr = _Connection_QueryInterface(connection, &IID_ADOConnectionConstruction15, (void**)&construct);
     ok(hr == S_OK, "Failed to get ADOConnectionConstruction15 interface %08lx\n", hr);
     if (hr == S_OK)
+    {
+        IUnknown *dso =( IUnknown *)0xdeadbeef;
+
+        hr = ADOConnectionConstruction15_get_DSO(construct, &dso);
+        ok(hr == S_OK, "Unexpected hr 0x%08lx\n", hr);
+        ok(dso == NULL, "Unexpected value\n");
         ADOConnectionConstruction15_Release(construct);
+    }
 
 if (0)   /* Crashes on windows */
 {
@@ -1558,6 +1569,57 @@ if (0) /* Crashes on windows */
     hr = _Connection_get_ConnectionString(connection, &str);
     ok(hr == S_OK, "Failed, hr 0x%08lx\n", hr);
     ok(str == NULL, "got %p\n", str);
+    ok(!_Connection_Release(connection), "_Connection not released\n");
+}
+
+static void test_Connection_Open(void)
+{
+    HRESULT hr;
+    _Connection *connection;
+    ADOConnectionConstruction15 *construct = NULL;
+    IUnknown *dso = NULL;
+    IDBInitialize *dbinit;
+    BSTR str;
+
+    if (!db_created)
+    {
+        skip("Database not available, skipping tests\n");
+        return;
+    }
+
+    hr = CoCreateInstance(&CLSID_Connection, NULL, CLSCTX_INPROC_SERVER, &IID__Connection, (void**)&connection);
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    str = SysAllocString(L"Provider=MSDASQL.1;Persist Security Info=False;Data Source=wine_msado_test;");
+    hr = _Connection_Open(connection, str, NULL, NULL, adConnectUnspecified);
+    ok(hr == S_OK, "Failed, hr 0x%08lx\n", hr);
+    if( hr != S_OK)
+        goto done;
+
+    hr = _Connection_QueryInterface(connection, &IID_ADOConnectionConstruction15, (void**)&construct);
+    ok(hr == S_OK, "Failed to get ADOConnectionConstruction15 interface %08lx\n", hr);
+
+    hr = ADOConnectionConstruction15_get_DSO(construct, &dso);
+    ok(hr == S_OK, "Unexpected hr 0x%08lx\n", hr);
+    ok(dso != NULL, "Unexpected value\n");
+
+    hr = IUnknown_QueryInterface(dso, &IID_IDBInitialize, (void**)&dbinit);
+    ok(hr == S_OK, "Unexpected hr 0x%08lx\n", hr);
+    IDBInitialize_Release(dbinit);
+
+    IUnknown_Release(dso);
+
+    hr = _Connection_Close(connection);
+    ok(hr == S_OK, "Failed, hr 0x%08lx\n", hr);
+
+    dso = (IUnknown *)0xdeadbeef;
+    hr = ADOConnectionConstruction15_get_DSO(construct, &dso);
+    ok(hr == S_OK, "Unexpected hr 0x%08lx\n", hr);
+    ok(dso == NULL, "Unexpected value\n");
+
+    ADOConnectionConstruction15_Release(construct);
+
+done:
     ok(!_Connection_Release(connection), "_Connection not released\n");
 }
 
@@ -1884,10 +1946,84 @@ static void test_ConnectionPoint(void)
     ok( !conn_event.refs, "got %ld\n", conn_event.refs );
 }
 
+static void setup_database(void)
+{
+    char *driver;
+    DWORD code;
+    char buffer[1024];
+    WORD size;
+
+    if (winetest_interactive)
+    {
+        trace("assuming odbc 'wine_msado_test' is available\n");
+        db_created = TRUE;
+        return;
+    }
+
+    /*
+     * 32 bit Windows has a default driver for "Microsoft Access Driver" (Windows 7+)
+     *  and has the ability to create files on the fly.
+     *
+     * 64 bit Windows ONLY has a driver for "SQL Server", which we cannot use since we don't have a
+     *   server to connect to.
+     *
+     * The filename passed to CREATE_DB must end in mdb.
+     */
+    GetTempPathA(sizeof(mdbpath), mdbpath);
+    strcat(mdbpath, "wine_msado_test.mdb");
+
+    driver = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof("DSN=wine_msado_test\0CREATE_DB=") + strlen(mdbpath) + 2);
+    memcpy(driver, "DSN=wine_msado_test\0CREATE_DB=", sizeof("DSN=wine_msado_test\0CREATE_DB="));
+    strcat(driver+sizeof("DSN=wine_msado_test\0CREATE_DB=")-1, mdbpath);
+
+    SQLSetConfigMode(ODBC_USER_DSN);
+    db_created = SQLConfigDataSource(NULL, ODBC_ADD_DSN, "Microsoft Access Driver (*.mdb)", driver);
+    if (!db_created)
+    {
+        SQLInstallerError(1, &code, buffer, sizeof(buffer), &size);
+        trace("code  %ld, buffer %s, size %d\n", code, debugstr_a(buffer), size);
+
+        HeapFree(GetProcessHeap(), 0, driver);
+
+        return;
+    }
+
+    memcpy(driver, "DSN=wine_msado_test\0DBQ=", sizeof("DSN=wine_msado_test\0DBQ="));
+    strcat(driver+sizeof("DSN=wine_msado_test\0DBQ=")-1, mdbpath);
+    db_created = SQLConfigDataSource(NULL, ODBC_ADD_DSN, "Microsoft Access Driver (*.mdb)", driver);
+
+    HeapFree(GetProcessHeap(), 0, driver);
+}
+
+static void cleanup_database(void)
+{
+    BOOL ret;
+
+    if (winetest_interactive)
+        return;
+
+    ret = SQLConfigDataSource(NULL, ODBC_REMOVE_DSN, "Microsoft Access Driver (*.mdb)", "DSN=wine_msado_test\0\0");
+    if (!ret)
+    {
+        DWORD code;
+        char buffer[1024];
+        WORD size;
+
+        SQLInstallerError(1, &code, buffer, sizeof(buffer), &size);
+        trace("code  %ld, buffer %s, size %d\n", code, debugstr_a(buffer), size);
+    }
+
+    DeleteFileA(mdbpath);
+}
+
 START_TEST(msado15)
 {
     CoInitialize( NULL );
+
+    setup_database();
+
     test_Connection();
+    test_Connection_Open();
     test_ConnectionPoint();
     test_ADORecordsetConstruction(FALSE);
     test_ADORecordsetConstruction(TRUE);
@@ -1895,5 +2031,8 @@ START_TEST(msado15)
     test_Recordset();
     test_Stream();
     test_Command();
+
+    cleanup_database();
+
     CoUninitialize();
 }

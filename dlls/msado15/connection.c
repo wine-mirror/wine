@@ -59,6 +59,7 @@ struct connection
     ConnectModeEnum           mode;
     CursorLocationEnum        location;
     IUnknown                 *session;
+    IDBInitialize            *dso;
     struct connection_point   cp_connev;
 };
 
@@ -107,6 +108,11 @@ static ULONG WINAPI connection_Release( _Connection *iface )
                 IUnknown_Release( connection->cp_connev.sinks[i] );
         }
         if (connection->session) IUnknown_Release( connection->session );
+        if (connection->dso)
+        {
+            IDBInitialize_Uninitialize( connection->dso );
+            IDBInitialize_Release( connection->dso );
+        }
         free( connection->cp_connev.sinks );
         free( connection->provider );
         free( connection->datasource );
@@ -291,6 +297,12 @@ static HRESULT WINAPI connection_Close( _Connection *iface )
         IUnknown_Release( connection->session );
         connection->session = NULL;
     }
+    if (connection->dso)
+    {
+        IDBInitialize_Uninitialize( connection->dso );
+        IDBInitialize_Release( connection->dso );
+        connection->dso = NULL;
+    }
 
     connection->state = adStateClosed;
     return S_OK;
@@ -374,7 +386,6 @@ static HRESULT WINAPI connection_Open( _Connection *iface, BSTR connect_str, BST
 {
     struct connection *connection = impl_from_Connection( iface );
     IDBProperties *props;
-    IDBInitialize *dbinit = NULL;
     IDataInitialize *datainit;
     IDBCreateSession *session = NULL;
     HRESULT hr;
@@ -387,15 +398,15 @@ static HRESULT WINAPI connection_Open( _Connection *iface, BSTR connect_str, BST
     if ((hr = CoCreateInstance( &CLSID_MSDAINITIALIZE, NULL, CLSCTX_INPROC_SERVER, &IID_IDataInitialize,
                                 (void **)&datainit )) != S_OK) return hr;
     if ((hr = IDataInitialize_GetDataSource( datainit, NULL, CLSCTX_INPROC_SERVER, connect_str, &IID_IDBInitialize,
-                                             (IUnknown **)&dbinit )) != S_OK) goto done;
-    if ((hr = IDBInitialize_QueryInterface( dbinit, &IID_IDBProperties, (void **)&props )) != S_OK) goto done;
+                                             (IUnknown **)&connection->dso )) != S_OK) goto done;
+    if ((hr = IDBInitialize_QueryInterface( connection->dso, &IID_IDBProperties, (void **)&props )) != S_OK) goto done;
 
     /* TODO - Update username/password if required. */
     if ((userid && *userid) || (password && *password))
         FIXME("Username/password parameters currently not supported\n");
 
-    if ((hr = IDBInitialize_Initialize( dbinit )) != S_OK) goto done;
-    if ((hr = IDBInitialize_QueryInterface( dbinit, &IID_IDBCreateSession, (void **)&session )) != S_OK) goto done;
+    if ((hr = IDBInitialize_Initialize( connection->dso )) != S_OK) goto done;
+    if ((hr = IDBInitialize_QueryInterface( connection->dso, &IID_IDBCreateSession, (void **)&session )) != S_OK) goto done;
     if ((hr = IDBCreateSession_CreateSession( session, NULL, &IID_IUnknown, &connection->session )) == S_OK)
     {
         connection->state = adStateOpen;
@@ -403,16 +414,20 @@ static HRESULT WINAPI connection_Open( _Connection *iface, BSTR connect_str, BST
     IDBCreateSession_Release( session );
 
 done:
-    if (hr != S_OK && connection->session)
+    if (hr != S_OK)
     {
-        IUnknown_Release( connection->session );
+        if(connection->session)
+            IUnknown_Release( connection->session );
         connection->session = NULL;
+
+        if (connection->dso)
+        {
+            IDBInitialize_Uninitialize( connection->dso );
+            IDBInitialize_Release( connection->dso );
+        }
+        connection->dso = NULL;
     }
-    if (dbinit)
-    {
-        IDBInitialize_Uninitialize( dbinit );
-        IDBInitialize_Release( dbinit );
-    }
+
     IDataInitialize_Release( datainit );
 
     TRACE("ret 0x%08lx\n", hr);
@@ -914,8 +929,13 @@ static ULONG WINAPI adoconstruct_Release(ADOConnectionConstruction15 *iface)
 static HRESULT WINAPI adoconstruct_get_DSO(ADOConnectionConstruction15 *iface, IUnknown **dso)
 {
     struct connection *connection = impl_from_ADOConnectionConstruction15( iface );
-    FIXME("%p, %p\n", connection, dso);
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", connection, dso);
+
+    *dso = NULL;
+    if (connection->dso)
+        IDBInitialize_QueryInterface( connection->dso, &IID_IUnknown, (void**)dso );
+
+    return S_OK;
 }
 
 static HRESULT WINAPI adoconstruct_get_Session(ADOConnectionConstruction15 *iface, IUnknown **session)
@@ -968,6 +988,7 @@ HRESULT Connection_create( void **obj )
     connection->mode = adModeUnknown;
     connection->location = adUseServer;
     connection->session = NULL;
+    connection->dso = NULL;
 
     connection->cp_connev.conn = connection;
     connection->cp_connev.riid = &DIID_ConnectionEvents;
