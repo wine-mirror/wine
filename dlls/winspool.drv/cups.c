@@ -119,32 +119,6 @@ static NTSTATUS process_attach( void *args )
 #endif /* SONAME_LIBCUPS */
 }
 
-static char *get_unix_file_name( LPCWSTR path )
-{
-    UNICODE_STRING nt_name;
-    OBJECT_ATTRIBUTES attr;
-    NTSTATUS status;
-    ULONG size = 256;
-    char *buffer;
-
-    nt_name.Buffer = (WCHAR *)path;
-    nt_name.MaximumLength = nt_name.Length = wcslen( path ) * sizeof(WCHAR);
-    InitializeObjectAttributes( &attr, &nt_name, 0, 0, NULL );
-    for (;;)
-    {
-        if (!(buffer = malloc( size ))) return NULL;
-        status = wine_nt_to_unix_file_name( &attr, buffer, &size, FILE_OPEN_IF );
-        if (status != STATUS_BUFFER_TOO_SMALL) break;
-        free( buffer );
-    }
-    if (status && status != STATUS_NO_SUCH_FILE)
-    {
-        free( buffer );
-        return NULL;
-    }
-    return buffer;
-}
-
 
 #ifdef SONAME_LIBCUPS
 static WCHAR *cups_get_optionW( const char *opt_name, int num_options, cups_option_t *options )
@@ -304,12 +278,13 @@ static NTSTATUS enum_printers( void *args )
 static NTSTATUS get_ppd( void *args )
 {
     const struct get_ppd_params *params = args;
-    char *unix_ppd = get_unix_file_name( params->ppd );
-    NTSTATUS status = STATUS_SUCCESS;
+    char *unix_ppd;
+    NTSTATUS status = ntdll_get_unix_file_name( params->ppd, &unix_ppd, FILE_OPEN_IF );
 
     TRACE( "(%s, %s)\n", debugstr_w( params->printer ), debugstr_w( params->ppd ) );
 
-    if (!unix_ppd) return STATUS_NO_SUCH_FILE;
+    if (status == STATUS_NO_SUCH_FILE) status = STATUS_SUCCESS;
+    if (status) return status;
 
     if (!params->printer) /* unlink */
     {
