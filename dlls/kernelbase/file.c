@@ -3252,35 +3252,38 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetOverlappedResult( HANDLE file, LPOVERLAPPED ove
 BOOL WINAPI DECLSPEC_HOTPATCH GetOverlappedResultEx( HANDLE file, OVERLAPPED *overlapped,
                                                      DWORD *result, DWORD timeout, BOOL alertable )
 {
-    NTSTATUS status;
+    NTSTATUS status = STATUS_PENDING;
+    BOOL compat_mode;
     DWORD ret;
 
     TRACE( "(%p %p %p %lu %d)\n", file, overlapped, result, timeout, alertable );
 
-    /* Paired with the write-release in set_async_iosb() in ntdll; see the
-     * latter for details. */
-    status = ReadAcquire( (LONG *)&overlapped->Internal );
-    if (status == STATUS_PENDING)
+    compat_mode = (ULONG_PTR)file & 1;
+    if (compat_mode || !timeout)
     {
-        if (!timeout)
-        {
-            SetLastError( ERROR_IO_INCOMPLETE );
-            return FALSE;
-        }
+        /* Paired with the write-release in set_async_iosb() in ntdll; see the
+         * latter for details. */
+        status = ReadAcquire( (LONG *)&overlapped->Internal );
+    }
+
+    if (timeout && status == STATUS_PENDING)
+    {
         ret = WaitForSingleObjectEx( overlapped->hEvent ? overlapped->hEvent : file, timeout, alertable );
-        if (ret == WAIT_FAILED)
-            return FALSE;
-        else if (ret)
+        if (ret == WAIT_FAILED) return FALSE;
+        if (ret && !(compat_mode && ret == WAIT_TIMEOUT))
         {
             SetLastError( ret );
             return FALSE;
         }
-
         /* We don't need to give this load acquire semantics; the wait above
          * already guarantees that the IOSB and output buffer are filled. */
         status = overlapped->Internal;
     }
-
+    else if (status == STATUS_PENDING)
+    {
+        SetLastError( ERROR_IO_INCOMPLETE );
+        return FALSE;
+    }
     *result = overlapped->InternalHigh;
     SetLastError( RtlNtStatusToDosError( status ));
     return !status || status == STATUS_PENDING;
