@@ -238,6 +238,9 @@ static unsigned int dir_data_cache_size;
 static BOOL show_dot_files;
 static mode_t start_umask;
 
+static const WCHAR nt_prefixW[] = {'\\','?','?','\\'};
+static const WCHAR dos_prefixW[] = {'\\','?','?','\\','A',':','\\'};
+static const WCHAR unc_prefixW[] = {'\\','?','?','\\','U','N','C','\\'};
 static const WCHAR unix_prefixW[] = {'\\','?','?','\\','u','n','i','x'};
 
 /* at some point we may want to allow Winelib apps to set this */
@@ -3281,7 +3284,6 @@ failed:
 /* return the length of the DOS namespace prefix if any */
 static inline int get_dos_prefix_len( const UNICODE_STRING *name )
 {
-    static const WCHAR nt_prefixW[] = {'\\','?','?','\\'};
     static const WCHAR dosdev_prefixW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\'};
 
     if (name->Length >= sizeof(nt_prefixW) &&
@@ -3893,7 +3895,6 @@ static WCHAR *collapse_path( WCHAR *path )
 static NTSTATUS find_drive_nt_root( char *unix_name, unsigned int len,
                                     WCHAR **nt_name, UINT disposition )
 {
-    static const WCHAR dos_prefixW[] = {'\\','?','?','\\','A',':','\\'};
     unsigned int i, pos, lenW;
     WCHAR *buffer;
     NTSTATUS status = STATUS_SUCCESS;
@@ -4058,9 +4059,6 @@ NTSTATUS get_nt_and_unix_names( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name
  */
 NTSTATUS get_full_path( char *name, const WCHAR *curdir, UNICODE_STRING *nt_name )
 {
-    static const WCHAR uncW[] = {'\\','?','?','\\','U','N','C','\\'};
-    static const WCHAR devW[] = {'\\','?','?','\\'};
-    static const WCHAR rootW[] = {'\\','?','?','\\','C',':','\\'};
     WCHAR *ret;
     ULONG prefix_len, len = max( ARRAY_SIZE(unix_prefixW), wcslen(curdir) ) + strlen(name) + 1;
 
@@ -4078,26 +4076,26 @@ NTSTATUS get_full_path( char *name, const WCHAR *curdir, UNICODE_STRING *nt_name
         if ((name[2] == '.' || name[2] == '?') && IS_SEPARATOR(name[3])) /* \\?\ device */
         {
             name += 4;
-            memcpy( ret, devW, sizeof(devW) );
-            prefix_len = ARRAY_SIZE(devW);
+            memcpy( ret, nt_prefixW, sizeof(nt_prefixW) );
+            prefix_len = ARRAY_SIZE(nt_prefixW);
         }
         else  /* UNC path */
         {
             name += 2;
-            memcpy( ret, uncW, sizeof(uncW) );
-            prefix_len = ARRAY_SIZE(uncW);
+            memcpy( ret, unc_prefixW, sizeof(unc_prefixW) );
+            prefix_len = ARRAY_SIZE(unc_prefixW);
         }
     }
     else if (IS_SEPARATOR(name[0]))  /* absolute path */
     {
-        memcpy( ret, rootW, sizeof(rootW) );
-        prefix_len = ARRAY_SIZE(rootW);
+        memcpy( ret, dos_prefixW, sizeof(dos_prefixW) );
+        prefix_len = ARRAY_SIZE(dos_prefixW);
         ret[4] = curdir[4];
     }
     else if (name[0] && name[1] == ':')  /* drive letter */
     {
-        memcpy( ret, rootW, sizeof(rootW) );
-        prefix_len = ARRAY_SIZE(rootW);
+        memcpy( ret, dos_prefixW, sizeof(dos_prefixW) );
+        prefix_len = ARRAY_SIZE(dos_prefixW);
         ret[4] = towupper(name[0]);
         name += 2;
     }
