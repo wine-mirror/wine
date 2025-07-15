@@ -6,7 +6,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
 "PO-Revision-Date: N/A\n"
-"Last-Translator: Automatically generated\n"
+"Last-Translator: Ken Sharp\n"
 "Language-Team: English\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
@@ -4840,7 +4840,7 @@ msgstr "Auto data segment exceeds 64k.\n"
 
 #: dlls/kernelbase/winerror.mc:793
 msgid "Ring 2 segment must be movable.\n"
-msgstr "Ring 2 segment must be movable.\n"
+msgstr "Ring 2 segment must be moveable.\n"
 
 #: dlls/kernelbase/winerror.mc:798
 msgid "Relocation chain exceeds segment limit in %1.\n"
@@ -7782,7 +7782,7 @@ msgstr "Clock was stopped\n"
 
 #: dlls/mferror/mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
-msgstr "Media Foundation platform is not initialized.\n"
+msgstr "Media Foundation platform is not initialised.\n"
 
 #: dlls/mferror/mferror.mc:39
 msgid "Buffer is too small.\n"
@@ -7806,7 +7806,7 @@ msgstr "No more input is accepted.\n"
 
 #: dlls/mferror/mferror.mc:74
 msgid "Object is not initialized.\n"
-msgstr "Object is not initialized.\n"
+msgstr "Object is not initialised.\n"
 
 #: dlls/mferror/mferror.mc:81
 msgid "Representation is not supported.\n"
@@ -8018,7 +8018,7 @@ msgstr "Media stream has no duration set.\n"
 
 #: dlls/mferror/mferror.mc:473
 msgid "Media format was recognized but is invalid.\n"
-msgstr "Media format was recognized but is invalid.\n"
+msgstr "Media format was recognised but is invalid.\n"
 
 #: dlls/mferror/mferror.mc:480
 msgid "Property wasn't found.\n"
@@ -8070,7 +8070,7 @@ msgstr "Stream sink already exists.\n"
 
 #: dlls/mferror/mferror.mc:564
 msgid "Sample allocation was canceled.\n"
-msgstr "Sample allocation was canceled.\n"
+msgstr "Sample allocation was cancelled.\n"
 
 #: dlls/mferror/mferror.mc:571
 msgid "Sample allocator is empty.\n"
@@ -8520,7 +8520,7 @@ msgstr "Unregistering modules"
 
 #: dlls/msi/msi.rc:140
 msgid "Initializing ODBC directories"
-msgstr "Initializing ODBC directories"
+msgstr "Initialising ODBC directories"
 
 #: dlls/msi/msi.rc:141
 msgid "Starting services"
@@ -12859,7 +12859,7 @@ msgstr "The URL is invalid.\n"
 
 #: dlls/wininet/winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
-msgstr "The URL scheme could not be recognized or is not supported.\n"
+msgstr "The URL scheme could not be recognised or is not supported.\n"
 
 #: dlls/wininet/winineterror.mc:46
 msgid "The server name could not be resolved.\n"
@@ -16674,7 +16674,7 @@ msgstr "The file '%1' already exists. Do you want to overwrite it?"
 
 #: programs/reg/reg.rc:151
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "reg: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr "reg: Unrecognised escape sequence [\\%1!c!]\n"
 
 #: programs/reg/reg.rc:175
 msgid "reg: Unable to import the registry key '%1'\n"
@@ -17027,7 +17027,7 @@ msgstr ""
 
 #: programs/regedit/regedit.rc:414
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr "regedit: Invalid or unrecognized switch [%1]\n"
+msgstr "regedit: Invalid or unrecognised switch [%1]\n"
 
 #: programs/regedit/regedit.rc:415
 msgid "Type \"regedit /?\" for help.\n"
@@ -17071,7 +17071,7 @@ msgstr ""
 
 #: programs/regedit/regedit.rc:424
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "regedit: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr "regedit: Unrecognised escape sequence [\\%1!c!]\n"
 
 #: programs/regedit/regedit.rc:425
 msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
@@ -17083,7 +17083,7 @@ msgstr "regedit: Unexpected end of line in '%1'.\n"
 
 #: programs/regedit/regedit.rc:427
 msgid "regedit: The line '%1' was not recognized.\n"
-msgstr "regedit: The line '%1' was not recognized.\n"
+msgstr "regedit: The line '%1' was not recognised.\n"
 
 #: programs/regedit/regedit.rc:428
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
@@ -17557,7 +17557,7 @@ msgstr "ERROR: Invalid syntax\n"
 
 #: programs/tasklist/tasklist.rc:37
 msgid "ERROR: The search filter cannot be recognized.\n"
-msgstr "ERROR: The search filter cannot be recognized.\n"
+msgstr "ERROR: The search filter cannot be recognised.\n"
 
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
