@@ -8321,7 +8321,7 @@ msgstr ""
 #: dlls/mferror/mferror.mc:389
 #, fuzzy
 #| msgid "Operation canceled by user.\n"
-msgid "Operation was cancelled.\n"
+msgid "Operation was canceled.\n"
 msgstr "Operația a fost anulată de utilizator.\n"
 
 #: dlls/mferror/mferror.mc:396
@@ -9624,12 +9624,12 @@ msgstr ""
 #, fuzzy
 #| msgid "&enable"
 msgctxt "object state"
-msgid "sizeable"
+msgid "sizable"
 msgstr "activ&ează"
 
 #: dlls/oleacc/oleacc.rc:116
 msgctxt "object state"
-msgid "moveable"
+msgid "movable"
 msgstr "mutabil"
 
 #: dlls/oleacc/oleacc.rc:117
@@ -17308,7 +17308,7 @@ msgstr "Operațiunea a fost finalizată cu succes\n"
 #: programs/reg/reg.rc:131
 #, fuzzy
 #| msgid "The registry operation was cancelled\n"
-msgid "reg: The registry operation was cancelled\n"
+msgid "reg: The registry operation was canceled\n"
 msgstr "Operația pe registru a fost anulată\n"
 
 #: programs/reg/reg.rc:174

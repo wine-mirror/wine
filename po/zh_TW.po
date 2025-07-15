@@ -7969,7 +7969,7 @@ msgid "Vector property is required.\n"
 msgstr "需要使用向量屬性。\n"
 
 #: dlls/mferror/mferror.mc:389
-msgid "Operation was cancelled.\n"
+msgid "Operation was canceled.\n"
 msgstr "操作已取消。\n"
 
 #: dlls/mferror/mferror.mc:396
@@ -9165,12 +9165,12 @@ msgstr "螢幕不可見"
 
 #: dlls/oleacc/oleacc.rc:115
 msgctxt "object state"
-msgid "sizeable"
+msgid "sizable"
 msgstr "可調大小"
 
 #: dlls/oleacc/oleacc.rc:116
 msgctxt "object state"
-msgid "moveable"
+msgid "movable"
 msgstr "可移動"
 
 #: dlls/oleacc/oleacc.rc:117
@@ -16096,7 +16096,7 @@ msgid "reg: The operation completed successfully\n"
 msgstr "reg: 操作成功完成\n"
 
 #: programs/reg/reg.rc:131
-msgid "reg: The registry operation was cancelled\n"
+msgid "reg: The registry operation was canceled\n"
 msgstr "reg: 登錄操作已經取消\n"
 
 #: programs/reg/reg.rc:174

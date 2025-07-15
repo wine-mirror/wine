@@ -8000,7 +8000,7 @@ msgstr ""
 
 #: dlls/mferror/mferror.mc:389
 #, fuzzy
-msgid "Operation was cancelled.\n"
+msgid "Operation was canceled.\n"
 msgstr "&Rafacer\tDel.\n"
 
 #: dlls/mferror/mferror.mc:396
@@ -9195,13 +9195,13 @@ msgstr ""
 #: dlls/oleacc/oleacc.rc:115
 #, fuzzy
 msgctxt "object state"
-msgid "sizeable"
+msgid "sizable"
 msgstr "&Tchwezi totafwait"
 
 #: dlls/oleacc/oleacc.rc:116
 #, fuzzy
 msgctxt "object state"
-msgid "moveable"
+msgid "movable"
 msgstr "&Sicrîre..."
 
 #: dlls/oleacc/oleacc.rc:117
@@ -16102,7 +16102,7 @@ msgstr ""
 
 #: programs/reg/reg.rc:131
 #, fuzzy
-msgid "reg: The registry operation was cancelled\n"
+msgid "reg: The registry operation was canceled\n"
 msgstr "&Rafacer\tDel.\n"
 
 #: programs/reg/reg.rc:174

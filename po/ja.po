@@ -7966,7 +7966,7 @@ msgid "Vector property is required.\n"
 msgstr "配列プロパティが必要です。\n"
 
 #: dlls/mferror/mferror.mc:389
-msgid "Operation was cancelled.\n"
+msgid "Operation was canceled.\n"
 msgstr "操作は中断されました。\n"
 
 #: dlls/mferror/mferror.mc:396
@@ -9166,12 +9166,12 @@ msgstr "offscreen"
 
 #: dlls/oleacc/oleacc.rc:115
 msgctxt "object state"
-msgid "sizeable"
+msgid "sizable"
 msgstr "sizeable"
 
 #: dlls/oleacc/oleacc.rc:116
 msgctxt "object state"
-msgid "moveable"
+msgid "movable"
 msgstr "moveable"
 
 #: dlls/oleacc/oleacc.rc:117
@@ -16157,7 +16157,7 @@ msgid "reg: The operation completed successfully\n"
 msgstr "reg: 操作は正常に完了しました\n"
 
 #: programs/reg/reg.rc:131
-msgid "reg: The registry operation was cancelled\n"
+msgid "reg: The registry operation was canceled\n"
 msgstr "reg: レジストリ操作は取り消されました\n"
 
 #: programs/reg/reg.rc:174

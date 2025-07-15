@@ -7978,7 +7978,7 @@ msgid "Vector property is required.\n"
 msgstr "Vektorinė savybė būtina.\n"
 
 #: dlls/mferror/mferror.mc:389
-msgid "Operation was cancelled.\n"
+msgid "Operation was canceled.\n"
 msgstr "Operacija nutraukta.\n"
 
 #: dlls/mferror/mferror.mc:396
@@ -9177,12 +9177,12 @@ msgstr "ne ekrane"
 
 #: dlls/oleacc/oleacc.rc:115
 msgctxt "object state"
-msgid "sizeable"
+msgid "sizable"
 msgstr "didinamas"
 
 #: dlls/oleacc/oleacc.rc:116
 msgctxt "object state"
-msgid "moveable"
+msgid "movable"
 msgstr "perkeliamas"
 
 #: dlls/oleacc/oleacc.rc:117
@@ -16170,7 +16170,7 @@ msgid "reg: The operation completed successfully\n"
 msgstr "reg: Operacija sėkmingai įvykdyta\n"
 
 #: programs/reg/reg.rc:131
-msgid "reg: The registry operation was cancelled\n"
+msgid "reg: The registry operation was canceled\n"
 msgstr "reg: Registro operacija buvo nutraukta\n"
 
 #: programs/reg/reg.rc:174

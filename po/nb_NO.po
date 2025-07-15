@@ -8190,7 +8190,7 @@ msgid "Vector property is required.\n"
 msgstr ""
 
 #: dlls/mferror/mferror.mc:389
-msgid "Operation was cancelled.\n"
+msgid "Operation was canceled.\n"
 msgstr "Operasjonen ble avbrutt.\n"
 
 #: dlls/mferror/mferror.mc:396
@@ -9441,12 +9441,12 @@ msgstr "utenfor skjermen"
 
 #: dlls/oleacc/oleacc.rc:115
 msgctxt "object state"
-msgid "sizeable"
+msgid "sizable"
 msgstr "skalerbar"
 
 #: dlls/oleacc/oleacc.rc:116
 msgctxt "object state"
-msgid "moveable"
+msgid "movable"
 msgstr "flyttbar"
 
 #: dlls/oleacc/oleacc.rc:117
@@ -17043,7 +17043,7 @@ msgstr "Operasjonen ble utført\n"
 #: programs/reg/reg.rc:131
 #, fuzzy
 #| msgid "The registry operation was cancelled\n"
-msgid "reg: The registry operation was cancelled\n"
+msgid "reg: The registry operation was canceled\n"
 msgstr "Register-operasjonen ble avbrutt\n"
 
 #: programs/reg/reg.rc:174

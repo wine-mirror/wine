@@ -8049,7 +8049,7 @@ msgid "Vector property is required.\n"
 msgstr "Propriedade do vetor necessária.\n"
 
 #: dlls/mferror/mferror.mc:389
-msgid "Operation was cancelled.\n"
+msgid "Operation was canceled.\n"
 msgstr "Operação cancelada.\n"
 
 #: dlls/mferror/mferror.mc:396
@@ -9249,12 +9249,12 @@ msgstr "fora da tela"
 
 #: dlls/oleacc/oleacc.rc:115
 msgctxt "object state"
-msgid "sizeable"
+msgid "sizable"
 msgstr "expansível"
 
 #: dlls/oleacc/oleacc.rc:116
 msgctxt "object state"
-msgid "moveable"
+msgid "movable"
 msgstr "movimentável"
 
 #: dlls/oleacc/oleacc.rc:117
@@ -16448,7 +16448,7 @@ msgid "reg: The operation completed successfully\n"
 msgstr "reg: A operação foi completada com sucesso\n"
 
 #: programs/reg/reg.rc:131
-msgid "reg: The registry operation was cancelled\n"
+msgid "reg: The registry operation was canceled\n"
 msgstr "reg: A operação de registro foi cancelada\n"
 
 #: programs/reg/reg.rc:174

@@ -8030,7 +8030,7 @@ msgid "Vector property is required.\n"
 msgstr "Cal una propietat vectora.\n"
 
 #: dlls/mferror/mferror.mc:389
-msgid "Operation was cancelled.\n"
+msgid "Operation was canceled.\n"
 msgstr "S'ha cancel·lat l'operació.\n"
 
 #: dlls/mferror/mferror.mc:396
@@ -9231,12 +9231,12 @@ msgstr "fora de pantalla"
 
 #: dlls/oleacc/oleacc.rc:115
 msgctxt "object state"
-msgid "sizeable"
+msgid "sizable"
 msgstr "dimensionable"
 
 #: dlls/oleacc/oleacc.rc:116
 msgctxt "object state"
-msgid "moveable"
+msgid "movable"
 msgstr "desplaçable"
 
 #: dlls/oleacc/oleacc.rc:117
@@ -16332,7 +16332,7 @@ msgid "reg: The operation completed successfully\n"
 msgstr "reg: L'operació s'ha acabat amb èxit\n"
 
 #: programs/reg/reg.rc:131
-msgid "reg: The registry operation was cancelled\n"
+msgid "reg: The registry operation was canceled\n"
 msgstr "reg: S'ha cancel·lat l'operació de registre\n"
 
 #: programs/reg/reg.rc:174
