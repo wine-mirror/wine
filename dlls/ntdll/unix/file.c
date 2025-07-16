@@ -4653,6 +4653,8 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
 
     io->Information = 0;
 
+    if (class == WineFileUnixNameInformation)
+        return server_get_file_info( handle, io, ptr, len, class );
     if (class <= 0 || class >= FileMaximumInformation)
         return io->Status = STATUS_INVALID_INFO_CLASS;
     if (!info_sizes[class])

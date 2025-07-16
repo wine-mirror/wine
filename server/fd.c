@@ -2448,6 +2448,29 @@ void default_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int 
             set_reply_data( &info, sizeof(info) );
             break;
         }
+    case WineFileUnixNameInformation:
+        if (fd->unix_name)
+        {
+            data_size_t len = strlen( fd->unix_name );
+            data_size_t data_len = offsetof( WINE_FILE_UNIX_NAME_INFORMATION, Name[len] );
+            WINE_FILE_UNIX_NAME_INFORMATION *info;
+
+            if (get_reply_max_size() < sizeof(*info))
+            {
+                set_error( STATUS_INFO_LENGTH_MISMATCH );
+                return;
+            }
+            if (get_reply_max_size() < data_len)
+            {
+                set_error( STATUS_BUFFER_OVERFLOW );
+                data_len = sizeof(*info);
+            }
+            if (!(info = set_reply_data_size( data_len ))) break;
+            info->Length = len;
+            memcpy( info->Name, fd->unix_name, data_len - sizeof(*info) );
+        }
+        else set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        break;
     default:
         set_error( STATUS_NOT_IMPLEMENTED );
     }

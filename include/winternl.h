@@ -1362,7 +1362,10 @@ typedef enum _FILE_INFORMATION_CLASS {
     FileStorageReserveIdInformation,
     FileCaseSensitiveInformationForceAccessCheck,
     FileKnownFolderInformation,
-    FileMaximumInformation
+    FileMaximumInformation,
+#ifdef __WINESRC__
+    WineFileUnixNameInformation = 1000
+#endif
 } FILE_INFORMATION_CLASS, *PFILE_INFORMATION_CLASS;
 
 typedef struct _FILE_DIRECTORY_INFORMATION {
@@ -1732,6 +1735,15 @@ typedef struct _FILE_IO_COMPLETION_NOTIFICATION_INFORMATION {
 #define FILE_SKIP_COMPLETION_PORT_ON_SUCCESS 0x1
 #define FILE_SKIP_SET_EVENT_ON_HANDLE        0x2
 #define FILE_SKIP_SET_USER_EVENT_ON_FAST_IO  0x4
+
+#ifdef __WINESRC__
+/* data for WineFileUnixNameInformation */
+typedef struct
+{
+    ULONG Length;
+    char  Name[];
+} WINE_FILE_UNIX_NAME_INFORMATION;
+#endif
 
 typedef struct _PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION
 {
