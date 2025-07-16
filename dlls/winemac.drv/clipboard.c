@@ -860,6 +860,7 @@ static CFDataRef export_hdrop_to_filenames(void *data, size_t size)
     {
         char *unixname;
         CFStringRef filename;
+        NTSTATUS status;
 
         TRACE("    %s\n", dropfiles->fWide ? debugstr_w(p) : debugstr_a(p));
 
