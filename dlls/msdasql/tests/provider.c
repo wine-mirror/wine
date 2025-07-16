@@ -848,6 +848,7 @@ static void setup_database(void)
     memcpy(driver, "DSN=wine_test\0CREATE_DB=", sizeof("DSN=wine_test\0CREATE_DB="));
     strcat(driver+sizeof("DSN=wine_test\0CREATE_DB=")-1, mdbpath);
 
+    SQLSetConfigMode(ODBC_USER_DSN);
     db_created = SQLConfigDataSource(NULL, ODBC_ADD_DSN, "Microsoft Access Driver (*.mdb)", driver);
     if (!db_created)
     {
