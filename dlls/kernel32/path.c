@@ -396,7 +396,6 @@ char * CDECL wine_get_unix_file_name( LPCWSTR dosW )
     WINE_FILE_UNIX_NAME_INFORMATION *info = NULL;
 
     if (!RtlDosPathNameToNtPathName_U( dosW, &nt_name, NULL, NULL )) return NULL;
-    ERR("trying %s\n", debugstr_w(nt_name.Buffer));
     InitializeObjectAttributes( &attr, &nt_name, 0, 0, NULL );
     status = NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
                          FILE_SYNCHRONOUS_IO_NONALERT );
@@ -411,12 +410,10 @@ char * CDECL wine_get_unix_file_name( LPCWSTR dosW )
         if (i > 5)
         {
             nt_name.Length = i * sizeof(WCHAR);
-            ERR("trying %s\n", debugstr_wn(nt_name.Buffer,nt_name.Length/2));
             status = NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
                                  FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
         }
     }
-    if (status) ERR("got %lx for %s\n", status, debugstr_w(dosW));
     if (!set_ntstatus( status )) goto failed;
 
     for (;;)
@@ -453,8 +450,6 @@ char * CDECL wine_get_unix_file_name( LPCWSTR dosW )
         }
         break;
     }
-    ERR("got %s for %s + %s\n", debugstr_a(buffer),
-         debugstr_wn(nt_name.Buffer, nt_name.Length/2), debugstr_wn(file, lenW));
     CloseHandle( handle );
     RtlFreeUnicodeString( &nt_name );
     return buffer;
