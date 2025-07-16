@@ -554,11 +554,17 @@ done:
 static NTSTATUS get_shell_folder( void *args )
 {
     const struct get_shell_folder_params *params = args;
-    int ret = readlink( params->folder, params->buffer, params->size - 1 );
+    char *folder = NULL;
+    NTSTATUS status = ntdll_get_unix_file_name( params->folder, &folder, FILE_OPEN );
 
-    if (ret < 0) return STATUS_OBJECT_NAME_NOT_FOUND;
-    params->buffer[ret] = 0;
-    return STATUS_SUCCESS;
+    if (!status)
+    {
+        int ret = readlink( folder, params->buffer, params->size - 1 );
+        free( folder );
+        if (ret < 0) return STATUS_OBJECT_NAME_NOT_FOUND;
+        params->buffer[ret] = 0;
+    }
+    return status;
 }
 
 const unixlib_entry_t __wine_unix_call_funcs[] =

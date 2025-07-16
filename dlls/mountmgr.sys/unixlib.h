@@ -128,7 +128,7 @@ struct set_shell_folder_params
 
 struct get_shell_folder_params
 {
-    const char *folder;
+    const WCHAR *folder;
     char *buffer;
     ULONG size;
 };
