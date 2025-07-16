@@ -35,6 +35,8 @@
 
 #define URLZONE_CUSTOM  URLZONE_USER_MIN+1
 #define URLZONE_CUSTOM2 URLZONE_CUSTOM+1
+#define URLZONE_CUSTOM3 URLZONE_UNTRUSTED + 1
+#define URLZONE_CUSTOM4 URLZONE_USER_MAX + 1
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -1951,6 +1953,442 @@ static void test_CoInternetIsFeatureZoneElevationEnabled(void)
     }
 }
 
+static void test_uninitialized_zone_identifier(IPersistFile *persist_file, IZoneIdentifier *zone_id)
+{
+    HRESULT hres;
+    DWORD zone;
+    CLSID clsid;
+    LPWSTR file_name;
+
+    hres = IZoneIdentifier_GetId(zone_id, &zone);
+    ok(hres == HRESULT_FROM_WIN32(ERROR_NOT_FOUND),
+        "Unexpected GetId result: 0x%08lx, expected result: 0x%08lx\n",
+        hres, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
+    ok(zone == URLZONE_UNTRUSTED,
+        "Unexpected GetId default zone: 0x%08lx, expected zone: 0x%08x\n", zone, URLZONE_UNTRUSTED);
+
+    hres = IPersistFile_GetClassID(persist_file, &clsid);
+    ok(hres == S_OK,
+        "Unexpected GetClassId result: 0x%08lx, expected result: 0x%08lx\n",
+        hres, S_OK);
+    ok(IsEqualCLSID(&clsid, &CLSID_PersistentZoneIdentifier),
+        "Unexpected GetClassId id: %s, expected class id: %s\n",
+        debugstr_guid(&clsid), debugstr_guid(&CLSID_PersistentZoneIdentifier));
+
+    hres = IPersistFile_GetCurFile(persist_file, &file_name);
+    ok(hres == E_NOTIMPL,
+        "Unexpected GetCurFile result: 0x%08lx, expected result: 0x%08lx\n", hres, E_NOTIMPL);
+    ok(!file_name,
+        "Unexpected GetCurFile file name: %s, expected NULL\n", debugstr_w(file_name));
+
+    hres = IPersistFile_IsDirty(persist_file);
+    ok(hres == S_OK,
+        "Unexpected IsDirty result: 0x%08lx, expected result: 0x%08lx\n", hres, S_OK);
+
+    hres = IZoneIdentifier_SetId(zone_id, URLZONE_INTERNET);
+    ok(hres == S_OK,
+        "Unexpected SetId result: 0x%08lx, expected result: 0x%08lx\n", hres, S_OK);
+
+    hres = IPersistFile_IsDirty(persist_file);
+    ok(hres == S_OK,
+        "Unexpected IsDirty result after SetId: 0x%08lx, expected result: 0x%08lx\n", hres, S_OK);
+
+    hres = IPersistFile_Save(persist_file, NULL, FALSE);
+    ok(hres == E_INVALIDARG,
+        "Unexpected Save result: 0x%08lx, expected result: 0x%08lx\n", hres, E_INVALIDARG);
+
+    hres = IPersistFile_Load(persist_file, NULL, STGM_READ);
+    ok(hres == E_INVALIDARG,
+        "Unexpected Load result: 0x%08lx, expected result: 0x%08lx\n", hres, E_INVALIDARG);
+}
+
+typedef struct _zone_id_op_test {
+    URLZONE id;
+    HRESULT hres;
+} zone_id_op_test;
+
+typedef struct _zone_id_test {
+    zone_id_op_test set;
+    zone_id_op_test get;
+} zone_id_test;
+
+static const zone_id_test zone_id_tests[] = {
+    {
+        { URLZONE_INVALID, E_INVALIDARG },
+        { URLZONE_UNTRUSTED, E_ACCESSDENIED }
+    },
+    {
+        { URLZONE_LOCAL_MACHINE, S_OK },
+        { URLZONE_LOCAL_MACHINE, S_OK }
+    },
+    {
+        { URLZONE_INTRANET, S_OK },
+        { URLZONE_INTRANET, S_OK }
+    },
+    {
+        { URLZONE_TRUSTED, S_OK },
+        { URLZONE_TRUSTED, S_OK }
+    },
+    {
+        { URLZONE_INTERNET, S_OK },
+        { URLZONE_INTERNET, S_OK }
+    },
+    {
+        { URLZONE_UNTRUSTED, S_OK },
+        { URLZONE_UNTRUSTED, S_OK }
+    },
+    {
+        { URLZONE_CUSTOM3, E_INVALIDARG },
+        { URLZONE_UNTRUSTED, E_ACCESSDENIED }
+    },
+    {
+        { URLZONE_USER_MIN, E_INVALIDARG },
+        { URLZONE_UNTRUSTED, E_ACCESSDENIED }
+    },
+    {
+        { URLZONE_USER_MAX, E_INVALIDARG },
+        { URLZONE_UNTRUSTED, E_ACCESSDENIED }
+    },
+    {
+        { URLZONE_CUSTOM4, E_INVALIDARG },
+        { URLZONE_UNTRUSTED, E_ACCESSDENIED }
+    }
+};
+
+static void test_IZoneIdentifier_iface(IZoneIdentifier *zone_id)
+{
+    zone_id_op_test set;
+    zone_id_op_test get;
+    HRESULT hres;
+    DWORD i, zone;
+
+    for(i = 0; i < ARRAY_SIZE(zone_id_tests); ++i)
+    {
+        set = zone_id_tests[i].set;
+        get = zone_id_tests[i].get;
+
+        hres = IZoneIdentifier_SetId(zone_id, set.id);
+        ok(hres == set.hres,
+           "%lu) Unexpected SetId result: 0x%08lx, expected result: 0x%08lx\n",
+            i, hres, set.hres);
+
+        hres = IZoneIdentifier_GetId(zone_id, &zone);
+        ok(hres == get.hres,
+            "%lu) Unexpected GetId id result: 0x%08lx, expected result: 0x%08lx\n",
+            i, hres, get.hres);
+        ok(zone == get.id,
+            "%lu) Unexpected GetId zone: 0x%08lx, expected zone: 0x%08x\n",
+            i, zone, get.id);
+    }
+
+    hres = IZoneIdentifier_Remove(zone_id);
+    ok(hres == S_OK,
+        "Unexpected Remove result: 0x%08lx, expected result: 0x%08lx\n",
+        hres, S_OK);
+
+    hres = IZoneIdentifier_GetId(zone_id, &zone);
+    ok(hres == HRESULT_FROM_WIN32(ERROR_NOT_FOUND),
+        "Unexpected GetId result after Remove: 0x%08lx, expected result: 0x%08lx\n",
+        hres, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
+    ok(zone == URLZONE_UNTRUSTED,
+        "Unexpected GetId zone after Remove: 0x%08lx, expected zone: 0x%08x\n",
+        zone, URLZONE_UNTRUSTED);
+}
+
+typedef struct load_file_test {
+    LPCWSTR name;
+    DWORD mode;
+    HRESULT hres;
+} load_file_test;
+
+typedef struct _save_file_test {
+    LPCWSTR name;
+    BOOL remember;
+    HRESULT hres;
+} save_file_test;
+
+typedef struct _persist_file_test {
+    zone_id_op_test set;
+    save_file_test save;
+    load_file_test load;
+    zone_id_op_test get;
+} persist_file_test;
+
+static const persist_file_test persist_file_tests[] = {
+    {
+        { URLZONE_UNTRUSTED, S_OK },
+        { NULL, FALSE, E_INVALIDARG },
+        { NULL, 0, E_INVALIDARG },
+        { URLZONE_UNTRUSTED, __HRESULT_FROM_WIN32(ERROR_NOT_FOUND) }
+    },
+    {
+        { URLZONE_INTERNET, S_OK },
+        { L"00000000-0000-0000-0000-000000000000", FALSE, S_OK },
+        { L"00000000-0000-0000-0000-000000000000", STGM_READWRITE | STGM_SHARE_DENY_NONE, S_OK },
+        { URLZONE_INTERNET, S_OK }
+    },
+    {
+        { URLZONE_LOCAL_MACHINE, S_OK },
+        { L"00000000-0000-0000-0000-000000000000", TRUE, S_OK },
+        { L"00000000-0000-0000-0000-000000000000", STGM_READWRITE | STGM_SHARE_DENY_NONE, S_OK },
+        { URLZONE_LOCAL_MACHINE, S_OK }
+    },
+    {
+        { URLZONE_TRUSTED, S_OK },
+        { NULL, FALSE, S_OK },
+        { L"00000000-0000-0000-0000-000000000000", STGM_READWRITE | STGM_SHARE_DENY_NONE, S_OK },
+        { URLZONE_TRUSTED, S_OK }
+    },
+    {
+        { URLZONE_INTRANET, S_OK },
+        { NULL, TRUE, S_OK },
+        { L"00000000-0000-0000-0000-000000000000", STGM_READWRITE | STGM_SHARE_DENY_NONE, S_OK },
+        { URLZONE_INTRANET, S_OK }
+    },
+    {
+        { URLZONE_INTERNET, S_OK },
+        { L"11111111-1111-1111-1111-111111111111", FALSE, S_OK },
+        { L"11111111-1111-1111-1111-111111111111", STGM_READWRITE | STGM_SHARE_DENY_NONE, S_OK },
+        { URLZONE_INTERNET, S_OK }
+    },
+    {
+        { URLZONE_LOCAL_MACHINE, S_OK },
+        { L"00000000-0000-0000-0000-000000000000", TRUE, S_OK },
+        { NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) },
+        { URLZONE_UNTRUSTED, __HRESULT_FROM_WIN32(ERROR_NOT_FOUND) }
+    },
+    {
+        { URLZONE_LOCAL_MACHINE, S_OK },
+        { L"00000000-0000-0000-0000-000000000000", TRUE, S_OK },
+        { L"00000000-0000-0000-0000-000000000000", STGM_READ | STGM_SHARE_EXCLUSIVE, S_OK },
+        { URLZONE_LOCAL_MACHINE, S_OK }
+    },
+};
+
+static void remove_dir(const WCHAR* dir_path)
+{
+    WCHAR files_mask[MAX_PATH];
+    WCHAR file_path[MAX_PATH];
+    HANDLE hfiles;
+    WIN32_FIND_DATAW file_data;
+
+    wsprintfW(files_mask, L"%s\\*-*-*-*", dir_path);
+
+    hfiles = FindFirstFileW(files_mask, &file_data);
+    if (hfiles != INVALID_HANDLE_VALUE)
+        do {
+            wsprintfW(file_path, L"%s\\%s", dir_path, file_data.cFileName);
+            DeleteFileW(file_path);
+        } while(FindNextFileW(hfiles, &file_data));
+
+    RemoveDirectoryW(dir_path);
+}
+
+static void test_IPersistFile_iface(IPersistFile *persist_file_save, IZoneIdentifier* zone_id_save,
+    IPersistFile *persist_file_load, IZoneIdentifier *zone_id_load)
+{
+    HRESULT hres;
+    WCHAR tmp_dir[MAX_PATH];
+    WCHAR sub_dir [] = L"PersistentZoneIdentifier";
+    WCHAR tmp_file_path[MAX_PATH];
+    WCHAR *file_path;
+    HANDLE hfile;
+    DWORD i, zone;
+    LPWSTR file_name;
+    persist_file_test test;
+
+    hres = IZoneIdentifier_Remove(zone_id_save);
+    ok(hres == S_OK,
+        "Unexpected Remove result: 0x%08lx, expected result: 0x%08lx\n", hres, S_OK);
+
+    ok(GetTempPathW(sizeof(tmp_dir), tmp_dir),
+        "GetTempPathW failed with: 0x%08lx\n", GetLastError());
+
+    ok(lstrcatW(tmp_dir, sub_dir) == tmp_dir, "lstrcatW failed\n");
+
+    ok(CreateDirectoryW(tmp_dir, NULL),
+        "CreateDirectoryW failed with: 0x%08lx\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(persist_file_tests); ++i) {
+        test = persist_file_tests[i];
+        hres = IZoneIdentifier_SetId(zone_id_save, test.set.id);
+        ok(hres == test.set.hres,
+            "%lu) Unexpected SetId result: 0x%08lx, expected result: 0x%08lx\n",
+            i, hres, test.set.hres);
+
+        hres = IPersistFile_IsDirty(persist_file_save);
+        ok(hres == S_OK,
+            "%lu) Unexpected IsDirty result before Save: 0x%08lx, expected result: 0x%08lx\n",
+            i, hres, S_OK);
+
+        if (test.save.name)
+        {
+            wsprintfW(tmp_file_path, L"%s\\%s", tmp_dir, test.save.name);
+            file_path = tmp_file_path;
+        }
+        else
+            file_path = NULL;
+
+        if (file_path)
+        {
+            hfile = CreateFileW(file_path, GENERIC_READ | GENERIC_WRITE,
+                FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+            ok(hfile != INVALID_HANDLE_VALUE,
+                "%lu) CreateFileW failed for %s, error: 0x%08lx\n",
+                i, debugstr_w(file_path), GetLastError());
+            CloseHandle(hfile);
+        }
+
+        hres = IPersistFile_Save(persist_file_save, file_path, test.save.remember);
+        ok(hres == test.save.hres,
+            "%lu) Unexpected Save result: 0x%08lx, expected result: 0x%08lx\n",
+            i, hres, test.save.hres);
+
+        hres = IPersistFile_IsDirty(persist_file_save);
+        ok(hres == S_OK,
+            "%lu) Unexpected IsDirty result after Save: 0x%08lx, expected result: 0x%08lx\n",
+            i, hres, S_OK);
+
+        file_name = NULL;
+
+        hres = IPersistFile_GetCurFile(persist_file_save, &file_name);
+        ok(hres == E_NOTIMPL,
+            "%lu) Unexpected GetCurFile result: 0x%08lx, expected result: 0x%08lx\n",
+            i, hres, E_NOTIMPL);
+        ok(!file_name,
+            "%lu) Unexpected GetCurFile file name: %s, expected NULL\n",
+            i, debugstr_w(file_name));
+
+        hres = IZoneIdentifier_Remove(zone_id_load);
+        ok(hres == S_OK,
+            "%lu) Unexpected Remove result: 0x%08lx, expected result: 0x%08lx\n",
+            i, hres, S_OK);
+
+        hres = IPersistFile_IsDirty(persist_file_load);
+        ok(hres == S_OK,
+            "%lu) Unexpected IsDirty result before Load: 0x%08lx, expected result: 0x%08lx\n",
+            i, hres, S_OK);
+
+        if (test.load.name)
+        {
+            wsprintfW(tmp_file_path, L"%s\\%s", tmp_dir, test.load.name);
+            file_path = tmp_file_path;
+        }
+        else
+            file_path = NULL;
+
+        hres = IPersistFile_Load(persist_file_load, file_path, test.load.mode);
+        ok(hres == test.load.hres,
+            "%lu) Unexpected Load result: 0x%08lx, expected result: 0x%08lx\n",
+            i, hres, test.load.hres);
+
+        hres = IPersistFile_IsDirty(persist_file_load);
+        ok(hres == S_OK,
+            "%lu) Unexpected IsDirty result after Load: 0x%08lx, expected result: 0x%08lx\n",
+            i, hres, S_OK);
+
+        hres = IZoneIdentifier_GetId(zone_id_load, &zone);
+
+        /* GetId checks after expected Load falure shouldn't be marked as todo_wine */
+        todo_wine_if (test.get.hres != __HRESULT_FROM_WIN32(ERROR_NOT_FOUND))
+        {
+            ok(hres == test.get.hres,
+                "%lu) Unexpected GetId result after Load: 0x%08lx, expected result: 0x%08lx\n",
+                i, hres, test.get.hres);
+            ok(zone == test.get.id,
+                "%lu) Unexpected GetId zone after Load: 0x%08lx, expected zone: 0x%08x\n",
+                i, zone, test.get.id);
+        }
+
+        if (test.save.name)
+        {
+            wsprintfW(tmp_file_path, L"%s\\%s", tmp_dir, test.save.name);
+            file_path = tmp_file_path;
+        }
+        else
+            file_path = NULL;
+
+        if (file_path)
+            DeleteFileW(file_path);
+    }
+
+    remove_dir(tmp_dir);
+}
+
+static void test_PersistentZoneIdentifier(void)
+{
+    IUnknown *unk, *unk2;
+    IPersistFile *persist_file, *persist_file2;
+    IZoneIdentifier *zone_id, *zone_id2;
+    HRESULT hres;
+
+    trace("Testing uninitialized state of PersistentZoneIdetifier...\n");
+
+    hres = CoCreateInstance(&CLSID_PersistentZoneIdentifier, NULL,
+        CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "Failed to obtain IUnknown iface: 0x%08lx\n", hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IZoneIdentifier, (void**)&zone_id);
+    ok(hres == S_OK, "Failed to obtain IZoneIdentifier iface: 0x%08lx\n", hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IPersistFile, (void**)&persist_file);
+    ok(hres == S_OK, "Failed to obtain IPersistFile iface: 0x%08lx\n", hres);
+
+    test_uninitialized_zone_identifier(persist_file, zone_id);
+
+    IPersistFile_Release(persist_file);
+    IZoneIdentifier_Release(zone_id);
+    IUnknown_Release(unk);
+
+
+    trace("Testing IZoneIdentifier interface of PersistentZoneIdetifier...\n");
+
+    hres = CoCreateInstance(&CLSID_PersistentZoneIdentifier, NULL,
+        CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "Failed to obtain IUnknown iface: 0x%08lx\n", hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IZoneIdentifier, (void**)&zone_id);
+    ok(hres == S_OK, "Failed to obtain IZoneIdentifier: 0x%08lx\n", hres);
+
+    test_IZoneIdentifier_iface(zone_id);
+
+    IPersistFile_Release(persist_file);
+    IUnknown_Release(unk);
+
+
+    trace("Testing IPersistFile interface of PersistentZoneIdetifier...\n");
+
+    hres = CoCreateInstance(&CLSID_PersistentZoneIdentifier, NULL,
+        CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "Failed to obtain first IUnknown iface: 0x%08lx\n", hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IZoneIdentifier, (void**)&zone_id);
+    ok(hres == S_OK, "Failed to obtain first IZoneIdentifier iface: 0x%08lx\n", hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IPersistFile, (void**)&persist_file);
+    ok(hres == S_OK, "Failed to obtain first IPersistFile iface: 0x%08lx\n", hres);
+
+    hres = CoCreateInstance(&CLSID_PersistentZoneIdentifier, NULL,
+        CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&unk2);
+    ok(hres == S_OK, "Failed to obtain second IUnknown iface: 0x%08lx\n", hres);
+
+    hres = IUnknown_QueryInterface(unk2, &IID_IZoneIdentifier, (void**)&zone_id2);
+    ok(hres == S_OK, "Failed to obtain second IZoneIdentifier iface: 0x%08lx\n", hres);
+
+    hres = IUnknown_QueryInterface(unk2, &IID_IPersistFile, (void**)&persist_file2);
+    ok(hres == S_OK, "Failed to obtain second IPersistFile iface: 0x%08lx\n", hres);
+
+    test_IPersistFile_iface(persist_file, zone_id, persist_file2, zone_id2);
+
+    IPersistFile_Release(persist_file);
+    IZoneIdentifier_Release(zone_id);
+    IUnknown_Release(unk);
+
+    IPersistFile_Release(persist_file2);
+    IZoneIdentifier_Release(zone_id2);
+    IUnknown_Release(unk2);
+}
+
 START_TEST(sec_mgr)
 {
     HMODULE hurlmon;
@@ -2004,6 +2442,8 @@ START_TEST(sec_mgr)
     test_SetZoneAttributes();
     test_InternetSecurityMarshalling();
     test_CoInternetIsFeatureZoneElevationEnabled();
+
+    test_PersistentZoneIdentifier();
 
     unregister_protocols();
     OleUninitialize();
