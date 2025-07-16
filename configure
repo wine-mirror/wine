@@ -20528,7 +20528,7 @@ fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_64bit_compare_swap" >&5
 printf "%s\n" "$wine_cv_64bit_compare_swap" >&6; }
   case "$wine_cv_64bit_compare_swap" in
-      unknown) as_fn_error $? "gcc doesn't support 64-bit compare-and-swap on this platform" "$LINENO" 5 ;;
+      unknown) as_fn_error $? "64-bit compare-and-swap is not supported on this platform" "$LINENO" 5 ;;
       "none needed") ;;
       *) EXTRACFLAGS="$EXTRACFLAGS $wine_cv_64bit_compare_swap" ;;
   esac
