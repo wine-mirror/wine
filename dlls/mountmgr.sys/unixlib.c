@@ -491,12 +491,10 @@ static NTSTATUS detect_parallel_ports( void *args )
 static NTSTATUS set_shell_folder( void *args )
 {
     const struct set_shell_folder_params *params = args;
-    const char *folder = params->folder;
-    const char *backup = params->backup;
     const char *link = params->link;
     struct stat st;
     const char *home;
-    char *homelink = NULL;
+    char *folder = NULL, *backup = NULL, *homelink = NULL;
     NTSTATUS status = STATUS_SUCCESS;
 
     if (link && (!strcmp( link, "$HOME" ) || !strncmp( link, "$HOME/", 6 )) && (home = getenv( "HOME" )))
@@ -512,6 +510,12 @@ static NTSTATUS set_shell_folder( void *args )
         status = STATUS_OBJECT_NAME_NOT_FOUND;
         goto done;
     }
+
+    status = ntdll_get_unix_file_name( params->folder, &folder, FILE_OPEN_IF );
+    if (status == STATUS_NO_SUCH_FILE) status = STATUS_SUCCESS;
+    if (status) goto done;
+
+    if (params->create_backup) asprintf( &backup, "%s.backup", folder );
 
     if (!lstat( folder, &st )) /* move old folder/link out of the way */
     {
@@ -541,6 +545,8 @@ static NTSTATUS set_shell_folder( void *args )
     }
 
 done:
+    free( backup );
+    free( folder );
     free( homelink );
     return status;
 }
