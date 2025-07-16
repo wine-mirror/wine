@@ -29,6 +29,7 @@
 #include "wine/test.h"
 
 static BOOL is_wow64;
+static BOOL old_wow64;
 
 static NTSTATUS (WINAPI *pNtAllocateReserveObject)( HANDLE *, const OBJECT_ATTRIBUTES *, MEMORY_RESERVE_OBJECT_TYPE );
 static NTSTATUS (WINAPI *pNtCreateThreadEx)( HANDLE *, ACCESS_MASK, OBJECT_ATTRIBUTES *,
@@ -313,6 +314,7 @@ static void test_NtQueueApcThreadEx(void)
     ok( status == STATUS_INVALID_HANDLE, "got %#lx, expected %#lx.\n", status, STATUS_INVALID_HANDLE );
 
     status = pNtQueueApcThreadEx( GetCurrentThread(), (HANDLE)QUEUE_USER_APC_FLAGS_SPECIAL_USER_APC, apc_func, 0x1234, 0x5678, 0xdeadbeef );
+    todo_wine_if(old_wow64)
     ok( status == STATUS_SUCCESS || status == STATUS_INVALID_HANDLE /* wow64 and win64 on Win version before Win10 1809 */,
         "got %#lx.\n", status );
 
@@ -346,7 +348,7 @@ static void test_NtQueueApcThreadEx(void)
     }
     expected = is_wow64 ? STATUS_NOT_SUPPORTED : STATUS_SUCCESS;
     status = pNtQueueApcThreadEx2( GetCurrentThread(), NULL, QUEUE_USER_APC_FLAGS_SPECIAL_USER_APC, apc_func, 0x1234, 0x5678, 0xdeadbeef );
-    todo_wine_if(is_wow64) ok( status == expected, "got %#lx, expected %#lx.\n", status, expected );
+    ok( status == expected, "got %#lx, expected %#lx.\n", status, expected );
 
     status = pNtQueueApcThreadEx2( GetCurrentThread(), (HANDLE)QUEUE_USER_APC_CALLBACK_DATA_CONTEXT, 0, apc_func, 0x1234, 0x5678, 0xdeadbeef );
     ok( status == STATUS_INVALID_HANDLE, "got %#lx.\n", status );
@@ -359,6 +361,16 @@ START_TEST(thread)
     init_function_pointers();
 
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
+    if (is_wow64)
+    {
+        TEB64 *teb64 = ULongToPtr( NtCurrentTeb()->GdiBatchCount );
+
+        if (teb64)
+        {
+            PEB64 *peb64 = ULongToPtr(teb64->Peb);
+            old_wow64 = !peb64->LdrData;
+        }
+    }
 
     test_dbg_hidden_thread_creation();
     test_unique_teb();

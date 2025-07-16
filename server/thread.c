@@ -2039,6 +2039,14 @@ DECL_HANDLER(queue_apc)
             return;
         }
         thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT );
+        if (call->user.flags & SERVER_USER_APC_SPECIAL
+            && !is_machine_64bit( thread->process->machine ) && is_machine_64bit( native_machine ))
+        {
+            release_object( apc );
+            release_object( thread );
+            set_error( STATUS_NOT_SUPPORTED );
+            return;
+        }
         break;
     case APC_VIRTUAL_ALLOC:
     case APC_VIRTUAL_ALLOC_EX:
