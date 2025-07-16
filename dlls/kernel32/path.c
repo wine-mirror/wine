@@ -387,31 +387,82 @@ char * CDECL wine_get_unix_file_name( LPCWSTR dosW )
 {
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    HANDLE handle;
     NTSTATUS status;
-    ULONG size = 256;
-    char *buffer;
+    ULONG size = 256, lenW = 0;
+    WCHAR *file = NULL;
+    char *p, *buffer = NULL;
+    WINE_FILE_UNIX_NAME_INFORMATION *info = NULL;
 
     if (!RtlDosPathNameToNtPathName_U( dosW, &nt_name, NULL, NULL )) return NULL;
+    ERR("trying %s\n", debugstr_w(nt_name.Buffer));
     InitializeObjectAttributes( &attr, &nt_name, 0, 0, NULL );
+    status = NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                         FILE_SYNCHRONOUS_IO_NONALERT );
+    if (status)
+    {
+        ULONG i = nt_name.Length / sizeof(WCHAR);
+        while (i && nt_name.Buffer[i - 1] != '\\') i--;
+        file = nt_name.Buffer + i;
+        lenW = nt_name.Length / sizeof(WCHAR) - i;
+        while (i && nt_name.Buffer[i - 1] == '\\') i--;
+        if (i == 6 && nt_name.Buffer[i - 1] == ':') i++;  /* keep backslash after drive */
+        if (i > 5)
+        {
+            nt_name.Length = i * sizeof(WCHAR);
+            ERR("trying %s\n", debugstr_wn(nt_name.Buffer,nt_name.Length/2));
+            status = NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                 FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+        }
+    }
+    if (status) ERR("got %lx for %s\n", status, debugstr_w(dosW));
+    if (!set_ntstatus( status )) goto failed;
+
     for (;;)
     {
-        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size )))
+        if (!(info = RtlAllocateHeap( GetProcessHeap(), 0, size ))) goto failed;
+        status = NtQueryInformationFile( handle, &io, info, size, WineFileUnixNameInformation );
+        if (status == STATUS_BUFFER_OVERFLOW)
         {
-            RtlFreeUnicodeString( &nt_name );
-            return NULL;
+            size = offsetof( WINE_FILE_UNIX_NAME_INFORMATION, Name[info->Length] );
+            RtlFreeHeap( GetProcessHeap(), 0, info );
+            continue;
         }
-        status = wine_nt_to_unix_file_name( &attr, buffer, &size, FILE_OPEN_IF );
-        if (status != STATUS_BUFFER_TOO_SMALL) break;
-        HeapFree( GetProcessHeap(), 0, buffer );
+        if (status) goto failed;
+        if (file)
+        {
+            ULONG lenA = WideCharToMultiByte( CP_UNIXCP, 0, file, lenW, NULL, 0, NULL, NULL );
+            if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, info->Length + lenA + 2 ))) goto failed;
+            memcpy( buffer, info->Name, info->Length );
+            p = buffer + info->Length;
+            if (lenA)
+            {
+                *p++ = '/';
+                p += WideCharToMultiByte( CP_UNIXCP, 0, file, lenW, p, lenA, NULL, NULL );
+            }
+            *p = 0;
+            RtlFreeHeap( GetProcessHeap(), 0, info );
+        }
+        else
+        {
+            ULONG lenA = info->Length;
+            buffer = (char *)info;
+            memmove( buffer, info->Name, lenA );
+            buffer[lenA] = 0;
+        }
+        break;
     }
+    ERR("got %s for %s + %s\n", debugstr_a(buffer),
+         debugstr_wn(nt_name.Buffer, nt_name.Length/2), debugstr_wn(file, lenW));
+    CloseHandle( handle );
     RtlFreeUnicodeString( &nt_name );
-    if (status && status != STATUS_NO_SUCH_FILE)
-    {
-        HeapFree( GetProcessHeap(), 0, buffer );
-        SetLastError( RtlNtStatusToDosError( status ) );
-        return NULL;
-    }
     return buffer;
+
+ failed:
+    RtlFreeHeap( GetProcessHeap(), 0, info );
+    RtlFreeUnicodeString( &nt_name );
+    return NULL;
 }
 
 
