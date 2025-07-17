@@ -153,7 +153,6 @@
 @ stdcall -syscall NtAreMappedFilesTheSame(ptr ptr)
 @ stdcall -syscall NtAssignProcessToJobObject(long long)
 @ stdcall -syscall=0x0005 NtCallbackReturn(ptr long long)
-# @ stub NtCancelDeviceWakeupRequest
 @ stdcall -syscall=0x005d NtCancelIoFile(long ptr)
 @ stdcall -syscall NtCancelIoFileEx(long ptr ptr)
 @ stdcall -syscall NtCancelSynchronousIoFile(long ptr ptr)
@@ -217,7 +216,6 @@
 @ stdcall -syscall=0x003c NtDuplicateObject(long long long ptr long long long)
 @ stdcall -syscall=0x0042 NtDuplicateToken(long long ptr long long ptr)
 # @ stub NtEnumerateBootEntries
-# @ stub NtEnumerateBus
 @ stdcall -syscall=0x0032 NtEnumerateKey(long long long ptr long ptr)
 # @ stub NtEnumerateSystemEnvironmentValuesEx
 @ stdcall -syscall=0x0013 NtEnumerateValueKey(long long long ptr long ptr)
@@ -352,11 +350,9 @@
 @ stdcall -syscall=0x002e NtReadFileScatter(long long ptr ptr ptr ptr long ptr ptr)
 # @ stub NtReadRequestData
 @ stdcall -syscall=0x003f NtReadVirtualMemory(long ptr ptr long ptr)
-# @ stub NtRegisterNewDevice
 @ stdcall -syscall NtRegisterThreadTerminatePort(ptr)
 @ stdcall -syscall NtReleaseKeyedEvent(long ptr long ptr)
 @ stdcall -syscall=0x0020 NtReleaseMutant(long ptr)
-# @ stub NtReleaseProcessMutant
 @ stdcall -syscall=0x000a NtReleaseSemaphore(long long ptr)
 @ stdcall -syscall=0x0009 NtRemoveIoCompletion(ptr ptr ptr ptr ptr)
 @ stdcall -syscall NtRemoveIoCompletionEx(ptr ptr long ptr ptr long)
@@ -367,10 +363,8 @@
 @ stdcall -syscall=0x000b NtReplyWaitReceivePort(ptr ptr ptr ptr)
 # @ stub NtReplyWaitReceivePortEx
 # @ stub NtReplyWaitReplyPort
-# @ stub NtRequestDeviceWakeup
 # @ stub NtRequestPort
 @ stdcall -syscall=0x0022 NtRequestWaitReplyPort(ptr ptr ptr)
-# @ stub NtRequestWakeupLatency
 @ stdcall -syscall NtResetEvent(long ptr)
 @ stdcall -syscall NtResetWriteWatch(long ptr long)
 @ stdcall -syscall NtRestoreKey(long long long)
@@ -393,7 +387,6 @@
 # @ stub NtSetEventBoostPriority
 # @ stub NtSetHighEventPair
 # @ stub NtSetHighWaitLowEventPair
-# @ stub NtSetHighWaitLowThread
 @ stdcall -syscall NtSetInformationDebugObject(long long ptr long ptr)
 @ stdcall -syscall=0x0027 NtSetInformationFile(long ptr ptr long long)
 @ stdcall -syscall NtSetInformationJobObject(long long ptr long)
@@ -409,7 +402,6 @@
 @ stdcall -syscall NtSetLdtEntries(long int64 long int64)
 # @ stub NtSetLowEventPair
 # @ stub NtSetLowWaitHighEventPair
-# @ stub NtSetLowWaitHighThread
 # @ stub NtSetQuotaInformationFile
 @ stdcall -syscall NtSetSecurityObject(long long ptr)
 # @ stub NtSetSystemEnvironmentValue
@@ -445,12 +437,10 @@
 @ stdcall -syscall=0x002a NtUnmapViewOfSection(long ptr)
 @ stdcall -syscall NtUnmapViewOfSectionEx(long ptr long)
 # @ stub NtVdmControl
-# @ stub NtW32Call
 @ stdcall -syscall NtWaitForAlertByThreadId(ptr ptr)
 @ stdcall -syscall NtWaitForDebugEvent(long long ptr ptr)
 @ stdcall -syscall NtWaitForKeyedEvent(long ptr long ptr)
 @ stdcall -syscall=0x005b NtWaitForMultipleObjects(long ptr long long ptr)
-# @ stub NtWaitForProcessMutant
 @ stdcall -syscall=0x0004 NtWaitForSingleObject(long long ptr)
 # @ stub NtWaitHighEventPair
 # @ stub NtWaitLowEventPair
@@ -1229,7 +1219,6 @@
 @ stdcall -private ZwAreMappedFilesTheSame(ptr ptr) NtAreMappedFilesTheSame
 @ stdcall -private ZwAssignProcessToJobObject(long long) NtAssignProcessToJobObject
 @ stdcall -private ZwCallbackReturn(ptr long long) NtCallbackReturn
-# @ stub ZwCancelDeviceWakeupRequest
 @ stdcall -private ZwCancelIoFile(long ptr) NtCancelIoFile
 @ stdcall -private ZwCancelIoFileEx(long ptr ptr) NtCancelIoFileEx
 @ stdcall -private ZwCancelSynchronousIoFile(long ptr ptr) NtCancelSynchronousIoFile
@@ -1292,7 +1281,6 @@
 @ stdcall -private ZwDuplicateObject(long long long ptr long long long) NtDuplicateObject
 @ stdcall -private ZwDuplicateToken(long long ptr long long ptr) NtDuplicateToken
 # @ stub ZwEnumerateBootEntries
-# @ stub ZwEnumerateBus
 @ stdcall -private ZwEnumerateKey(long long long ptr long ptr) NtEnumerateKey
 # @ stub ZwEnumerateSystemEnvironmentValuesEx
 @ stdcall -private ZwEnumerateValueKey(long long long ptr long ptr) NtEnumerateValueKey
@@ -1426,11 +1414,9 @@
 @ stdcall -private ZwReadFileScatter(long long ptr ptr ptr ptr long ptr ptr) NtReadFileScatter
 # @ stub ZwReadRequestData
 @ stdcall -private ZwReadVirtualMemory(long ptr ptr long ptr) NtReadVirtualMemory
-# @ stub ZwRegisterNewDevice
 @ stdcall -private ZwRegisterThreadTerminatePort(ptr) NtRegisterThreadTerminatePort
 @ stdcall -private ZwReleaseKeyedEvent(long ptr long ptr) NtReleaseKeyedEvent
 @ stdcall -private ZwReleaseMutant(long ptr) NtReleaseMutant
-# @ stub ZwReleaseProcessMutant
 @ stdcall -private ZwReleaseSemaphore(long long ptr) NtReleaseSemaphore
 @ stdcall -private ZwRemoveIoCompletion(ptr ptr ptr ptr ptr) NtRemoveIoCompletion
 @ stdcall -private ZwRemoveIoCompletionEx(ptr ptr long ptr ptr long) NtRemoveIoCompletionEx
@@ -1441,10 +1427,8 @@
 @ stdcall -private ZwReplyWaitReceivePort(ptr ptr ptr ptr) NtReplyWaitReceivePort
 # @ stub ZwReplyWaitReceivePortEx
 # @ stub ZwReplyWaitReplyPort
-# @ stub ZwRequestDeviceWakeup
 # @ stub ZwRequestPort
 @ stdcall -private ZwRequestWaitReplyPort(ptr ptr ptr) NtRequestWaitReplyPort
-# @ stub ZwRequestWakeupLatency
 @ stdcall -private ZwResetEvent(long ptr) NtResetEvent
 @ stdcall -private ZwResetWriteWatch(long ptr long) NtResetWriteWatch
 @ stdcall -private ZwRestoreKey(long long long) NtRestoreKey
@@ -1467,7 +1451,6 @@
 # @ stub ZwSetEventBoostPriority
 # @ stub ZwSetHighEventPair
 # @ stub ZwSetHighWaitLowEventPair
-# @ stub ZwSetHighWaitLowThread
 @ stdcall -private ZwSetInformationDebugObject(long long ptr long ptr) NtSetInformationDebugObject
 @ stdcall -private ZwSetInformationFile(long ptr ptr long long) NtSetInformationFile
 @ stdcall -private ZwSetInformationJobObject(long long ptr long) NtSetInformationJobObject
@@ -1483,7 +1466,6 @@
 @ stdcall -private ZwSetLdtEntries(long int64 long int64) NtSetLdtEntries
 # @ stub ZwSetLowEventPair
 # @ stub ZwSetLowWaitHighEventPair
-# @ stub ZwSetLowWaitHighThread
 # @ stub ZwSetQuotaInformationFile
 @ stdcall -private ZwSetSecurityObject(long long ptr) NtSetSecurityObject
 # @ stub ZwSetSystemEnvironmentValue
@@ -1519,12 +1501,10 @@
 @ stdcall -private ZwUnmapViewOfSection(long ptr) NtUnmapViewOfSection
 @ stdcall -private ZwUnmapViewOfSectionEx(long ptr long) NtUnmapViewOfSectionEx
 # @ stub ZwVdmControl
-# @ stub ZwW32Call
 @ stdcall -private ZwWaitForAlertByThreadId(ptr ptr) NtWaitForAlertByThreadId
 @ stdcall -private ZwWaitForDebugEvent(long long ptr ptr) NtWaitForDebugEvent
 @ stdcall -private ZwWaitForKeyedEvent(long ptr long ptr) NtWaitForKeyedEvent
 @ stdcall -private ZwWaitForMultipleObjects(long ptr long long ptr) NtWaitForMultipleObjects
-# @ stub ZwWaitForProcessMutant
 @ stdcall -private ZwWaitForSingleObject(long long ptr) NtWaitForSingleObject
 # @ stub ZwWaitHighEventPair
 # @ stub ZwWaitLowEventPair
