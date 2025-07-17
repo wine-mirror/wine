@@ -344,17 +344,26 @@ static HRESULT WINAPI HTMLDOMAttribute2_cloneNode(IHTMLDOMAttribute2 *iface, VAR
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute2(iface);
     HTMLDOMAttribute *new_attr;
     HRESULT hres;
+    BSTR name;
 
     TRACE("(%p)->(%x %p)\n", This, fDeep, clonedNode);
 
-    hres = HTMLDOMAttribute_Create(This->name, NULL, 0, This->doc, &new_attr);
-    if(FAILED(hres))
-        return hres;
-
-    if(This->elem)
+    if(This->elem) {
+        hres = dispex_prop_name(&This->elem->node.event_target.dispex, This->dispid, &name);
+        if(FAILED(hres))
+            return hres;
+        hres = HTMLDOMAttribute_Create(name, NULL, 0, This->doc, &new_attr);
+        SysFreeString(name);
+        if(FAILED(hres))
+            return hres;
         hres = get_elem_attr_value_by_dispid(This->elem, This->dispid, &new_attr->value);
-    else
+    }else {
+        hres = HTMLDOMAttribute_Create(This->name, NULL, 0, This->doc, &new_attr);
+        if(FAILED(hres))
+            return hres;
         hres = VariantCopy(&new_attr->value, &This->value);
+    }
+
     if(FAILED(hres)) {
         IHTMLDOMAttribute_Release(&new_attr->IHTMLDOMAttribute_iface);
         return hres;

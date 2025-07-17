@@ -10093,9 +10093,9 @@ static void test_attr_node(IHTMLDOMAttribute *test_attr, IHTMLDocument2 *doc)
     IHTMLElement *elem;
     VARIANT_BOOL vbool;
     VARIANT v, v_clone;
+    BSTR bstr, bstr2;
     IDispatch *disp;
     HRESULT hres;
-    BSTR bstr;
     LONG type;
 
     hres = IHTMLDOMAttribute_QueryInterface(test_attr, &IID_IHTMLDOMAttribute2, (void**)&attr);
@@ -10126,6 +10126,14 @@ static void test_attr_node(IHTMLDOMAttribute *test_attr, IHTMLDocument2 *doc)
     hres = IHTMLDOMAttribute2_cloneNode(attr, VARIANT_TRUE, &clone);
     ok(hres == S_OK, "cloneNode failed: %08lx\n", hres);
     ok(!iface_cmp((IUnknown*)attr, (IUnknown*)clone), "attr == cloned attr\n");
+
+    hres = IHTMLDOMAttribute_get_nodeName(test_attr, &bstr);
+    ok(hres == S_OK, "get_nodeName failed: %08lx\n", hres);
+    hres = IHTMLDOMAttribute_get_nodeName(clone, &bstr2);
+    ok(hres == S_OK, "get_nodeName failed: %08lx\n", hres);
+    ok(!wcscmp(bstr, bstr2), "attr name %s != cloned attr name %s\n", wine_dbgstr_w(bstr), wine_dbgstr_w(bstr2));
+    SysFreeString(bstr2);
+    SysFreeString(bstr);
 
     V_VT(&v) = VT_EMPTY;
     V_VT(&v_clone) = VT_EMPTY;
