@@ -29,6 +29,39 @@ DEFINE_GUID(DBPROPSET_ROWSET,            0xc8b522be, 0x5cf3, 0x11ce, 0xad, 0xe5,
 
 #define MAKE_ADO_HRESULT( err ) MAKE_HRESULT( SEVERITY_ERROR, FACILITY_CONTROL, err )
 
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    expect_ ## func = TRUE
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_NOT_CALLED(func) \
+    do { \
+        ok(!called_ ## func, "unexpected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+DEFINE_EXPECT(rowset_info_GetProperties);
+DEFINE_EXPECT(column_info_GetColumnInfo);
+
 static BOOL is_bof( _Recordset *recordset )
 {
     VARIANT_BOOL bof = VARIANT_FALSE;
@@ -489,6 +522,7 @@ static ULONG WINAPI rowset_info_Release(IRowsetInfo *iface)
 static HRESULT WINAPI rowset_info_GetProperties(IRowsetInfo *iface, const ULONG count,
         const DBPROPIDSET propertyidsets[], ULONG *out_count, DBPROPSET **propertysets1)
 {
+    CHECK_EXPECT(rowset_info_GetProperties);
     ok( count == 2, "got %ld\n", count );
 
     ok( IsEqualIID(&DBPROPSET_ROWSET, &propertyidsets[0].guidPropertySet), "got %s\n", wine_dbgstr_guid(&propertyidsets[0].guidPropertySet));
@@ -546,8 +580,10 @@ static HRESULT WINAPI column_info_GetColumnInfo(IColumnsInfo *This, DBORDINAL *c
         DBCOLUMNINFO **colinfo, OLECHAR **stringsbuffer)
 {
     DBCOLUMNINFO *dbcolumn;
-    *columns = 1;
 
+    CHECK_EXPECT(column_info_GetColumnInfo);
+
+    *columns = 1;
     *stringsbuffer = CoTaskMemAlloc(sizeof(L"Column1"));
     lstrcpyW(*stringsbuffer, L"Column1");
 
@@ -732,7 +768,11 @@ static void test_ADORecordsetConstruction(void)
 
     ref = get_refcount( rowset );
     ok( ref == 1, "got %ld\n", ref );
+    SET_EXPECT( rowset_info_GetProperties );
+    SET_EXPECT( column_info_GetColumnInfo );
     hr = ADORecordsetConstruction_put_Rowset( construct, (IUnknown*)rowset );
+    todo_wine CHECK_CALLED( rowset_info_GetProperties );
+    todo_wine CHECK_NOT_CALLED( column_info_GetColumnInfo );
     ok( hr == S_OK, "got %08lx\n", hr );
 
     ref = get_refcount( rowset );
@@ -742,7 +782,9 @@ static void test_ADORecordsetConstruction(void)
     ok( ref == 2, "got %ld\n", ref );
 
     count = -1;
+    SET_EXPECT( column_info_GetColumnInfo );
     hr = Fields_get_Count( fields, &count );
+    todo_wine CHECK_CALLED( column_info_GetColumnInfo );
     ok( count == 1, "got %ld\n", count );
     if (count > 0)
     {
