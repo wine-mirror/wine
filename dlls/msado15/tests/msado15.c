@@ -747,7 +747,7 @@ static void test_ADORecordsetConstruction(void)
     struct test_rowset testrowset;
     IRowset *rowset;
     HRESULT hr;
-    LONG ref, count;
+    LONG ref, count, state;
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
     ok( hr == S_OK, "got %08lx\n", hr );
@@ -758,6 +758,10 @@ static void test_ADORecordsetConstruction(void)
     hr = _Recordset_get_Fields( recordset, &fields );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( fields != NULL, "NULL value\n");
+
+    hr = _Recordset_get_State( recordset, &state );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( state == adStateClosed, "state = %ld\n", state );
 
     testrowset.IRowset_iface.lpVtbl = &rowset_vtbl;
     testrowset.IRowsetInfo_iface.lpVtbl = &rowset_info;
@@ -778,8 +782,9 @@ static void test_ADORecordsetConstruction(void)
     ref = get_refcount( rowset );
     ok( ref == 2, "got %ld\n", ref );
 
-    ref = get_refcount( rowset );
-    ok( ref == 2, "got %ld\n", ref );
+    hr = _Recordset_get_State( recordset, &state );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    todo_wine ok( state == adStateOpen, "state = %ld\n", state );
 
     count = -1;
     SET_EXPECT( column_info_GetColumnInfo );
