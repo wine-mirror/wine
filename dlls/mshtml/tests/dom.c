@@ -10391,6 +10391,7 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     hres = IHTMLElement_removeAttribute(elem, bstr, 0, &vbool);
     ok(hres == S_OK, "removeAttribute failed: %08lx\n", hres);
     ok(vbool == VARIANT_TRUE, "removeAttribute returned %x\n", vbool);
+    test_attr_specified(attr, VARIANT_FALSE);
     test_attr_expando(attr, VARIANT_FALSE);
     SysFreeString(bstr);
 
@@ -10410,6 +10411,7 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     test_no_iface((IUnknown*)attr, &IID_IHTMLDOMNode);
 
     test_attr_node_name(attr, L"Test");
+    test_attr_specified(attr, VARIANT_FALSE);
     test_attr_expando(attr, VARIANT_FALSE);
 
     get_attr_node_value(attr, &v, VT_EMPTY);
