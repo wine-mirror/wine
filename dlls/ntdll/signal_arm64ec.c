@@ -582,7 +582,6 @@ DEFINE_SYSCALL(NtWriteFile, (HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, v
 DEFINE_SYSCALL(NtWriteFileGather, (HANDLE file, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io, FILE_SEGMENT_ELEMENT *segments, ULONG length, LARGE_INTEGER *offset, ULONG *key))
 DEFINE_SYSCALL(NtWriteVirtualMemory, (HANDLE process, void *addr, const void *buffer, SIZE_T size, SIZE_T *bytes_written))
 DEFINE_SYSCALL(NtYieldExecution, (void))
-DEFINE_SYSCALL(wine_nt_to_unix_file_name, (const OBJECT_ATTRIBUTES *attr, char *nameA, ULONG *size, UINT disposition))
 
 NTSTATUS SYSCALL_API NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR zero_bits,
                                               SIZE_T *size_ptr, ULONG type, ULONG protect )

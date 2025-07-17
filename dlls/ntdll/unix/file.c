@@ -3765,51 +3765,6 @@ static NTSTATUS nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char **name
 }
 
 
-/******************************************************************************
- *           wine_nt_to_unix_file_name
- *
- * Convert a file name from NT namespace to Unix namespace.
- *
- * If disposition is not FILE_OPEN or FILE_OVERWRITE, the last path
- * element doesn't have to exist; in that case STATUS_NO_SUCH_FILE is
- * returned, but the unix name is still filled in properly.
- */
-NTSTATUS WINAPI wine_nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *nameA, ULONG *size,
-                                          UINT disposition )
-{
-    char *buffer = NULL;
-    NTSTATUS status;
-    UNICODE_STRING nt_name;
-    OBJECT_ATTRIBUTES new_attr = *attr;
-
-    status = get_nt_and_unix_names( &new_attr, &nt_name, &buffer, disposition );
-    if (!status || status == STATUS_NO_SUCH_FILE)
-    {
-        struct stat st1, st2;
-        char *name = buffer;
-
-        /* remove dosdevices prefix for z: drive if it points to the Unix root */
-        if (!strncmp( buffer, config_dir, strlen(config_dir) ) &&
-            !strncmp( buffer + strlen(config_dir), "/dosdevices/z:/", 15 ))
-        {
-            char *p = buffer + strlen(config_dir) + 14;
-            *p = 0;
-            if (!stat( buffer, &st1 ) && !stat( "/", &st2 ) &&
-                st1.st_dev == st2.st_dev && st1.st_ino == st2.st_ino)
-                name = p;
-            *p = '/';
-        }
-
-        if (*size > strlen(name)) strcpy( nameA, name );
-        else status = STATUS_BUFFER_TOO_SMALL;
-        *size = strlen(name) + 1;
-    }
-    free( buffer );
-    free( nt_name.Buffer );
-    return status;
-}
-
-
 /******************************************************************
  *		collapse_path
  *
