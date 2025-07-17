@@ -87,9 +87,9 @@ static HRESULT WINAPI HTMLDOMAttribute_get_nodeValue(IHTMLDOMAttribute *iface, V
 static HRESULT WINAPI HTMLDOMAttribute_get_specified(IHTMLDOMAttribute *iface, VARIANT_BOOL *p)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
-    nsIDOMAttr *nsattr;
     nsAString nsname;
     nsresult nsres;
+    cpp_bool r;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -105,19 +105,10 @@ static HRESULT WINAPI HTMLDOMAttribute_get_specified(IHTMLDOMAttribute *iface, V
 
     /* FIXME: This is not exactly right, we have some attributes that don't map directly to Gecko attributes. */
     nsAString_InitDepend(&nsname, dispex_builtin_prop_name(&This->elem->node.event_target.dispex, This->dispid));
-    nsres = nsIDOMElement_GetAttributeNode(This->elem->dom_element, &nsname, &nsattr);
+    nsres = nsIDOMElement_HasAttribute(This->elem->dom_element, &nsname, &r);
     nsAString_Finish(&nsname);
-    if(NS_FAILED(nsres))
-        return E_FAIL;
 
-    /* If the Gecko attribute node can be found, we know that the attribute is specified.
-       There is no point in calling GetSpecified */
-    if(nsattr) {
-        nsIDOMAttr_Release(nsattr);
-        *p = VARIANT_TRUE;
-    }else {
-        *p = VARIANT_FALSE;
-    }
+    *p = variant_bool(NS_SUCCEEDED(nsres) && r);
     return S_OK;
 }
 
