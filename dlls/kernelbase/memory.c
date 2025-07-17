@@ -164,8 +164,8 @@ static void fill_system_info( SYSTEM_INFO *si, const SYSTEM_BASIC_INFORMATION *b
     si->lpMinimumApplicationAddress = basic_info->LowestUserAddress;
     si->lpMaximumApplicationAddress = basic_info->HighestUserAddress;
     si->dwActiveProcessorMask       = basic_info->ActiveProcessorsAffinityMask;
-    si->dwNumberOfProcessors        = basic_info->NumberOfProcessors;
     si->dwAllocationGranularity     = basic_info->AllocationGranularity;
+    si->dwNumberOfProcessors        = cpu_info->MaximumProcessors;
     si->wProcessorLevel             = cpu_info->ProcessorLevel;
     si->wProcessorRevision          = cpu_info->ProcessorRevision;
 
