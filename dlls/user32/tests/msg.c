@@ -21151,10 +21151,11 @@ static const struct message wm_print_prf_children[] =
 
 static void test_defwinproc_wm_print(void)
 {
+    HDC hwnd_hdc, hdc;
     HWND hwnd, child;
     COLORREF color;
+    HBITMAP bitmap;
     LRESULT lr;
-    HDC hdc;
 
     hwnd = CreateWindowA("SimpleWindowClass", "test_defwinproc_wm_print", WS_POPUP, 0,
                          0, 100, 100, 0, 0, 0, NULL);
@@ -21163,7 +21164,10 @@ static void test_defwinproc_wm_print(void)
                           50, 50, 50, 50, hwnd, 0, 0, NULL);
     ok(!!child, "CreateWindowA failed, error %lu.\n", GetLastError());
 
-    hdc = GetDC(hwnd);
+    hwnd_hdc = GetDC(hwnd);
+    hdc = CreateCompatibleDC(hwnd_hdc);
+    bitmap = CreateCompatibleBitmap(hwnd_hdc, 100, 100);
+    SelectObject(hdc, bitmap);
 
     /* Check the return code when no flags are specified */
     lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, 0);
@@ -21190,14 +21194,16 @@ static void test_defwinproc_wm_print(void)
     ok(lr == 1, "Got unexpected lr %Id.\n", lr);
 
     /* PRF_CHILDREN needs to be used with PRF_CLIENT */
+    PatBlt(hdc, 0, 0, 100, 100, BLACKNESS);
     lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_CHILDREN);
     ok(lr == 1, "Got unexpected lr %Id.\n", lr);
     color = GetPixel(hdc, 50, 50);
-    ok(color == RGB(0xff, 0xff, 0xff), "Got unexpected color %#lx.\n", color);
+    ok(color == RGB(0, 0, 0), "Got unexpected color %#lx.\n", color);
     ok_sequence(WmEmptySeq, "DefWindowProc WM_PRINT PRF_CHILDREN", FALSE);
     flush_sequence();
 
     /* PRF_CHILDREN | PRF_CLIENT */
+    PatBlt(hdc, 0, 0, 100, 100, BLACKNESS);
     lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_CHILDREN | PRF_CLIENT);
     ok(lr == 1, "Got unexpected lr %Id.\n", lr);
     color = GetPixel(hdc, 50, 50);
@@ -21205,7 +21211,41 @@ static void test_defwinproc_wm_print(void)
     ok_sequence(wm_print_prf_children, "DefWindowProc WM_PRINT with PRF_CHILDREN | PRF_CLIENT", FALSE);
     flush_sequence();
 
-    ReleaseDC(hwnd, hdc);
+    /* PRF_CHILDREN | PRF_CLIENT with an invisible parent. Expect children to still draw to the HDC */
+    ShowWindow(hwnd, SW_HIDE);
+    flush_events();
+    flush_sequence();
+    ok(!IsWindowVisible(hwnd), "Expected hwnd invisible.\n");
+    ok(!IsWindowVisible(child), "Expected child invisible.\n");
+
+    PatBlt(hdc, 0, 0, 100, 100, BLACKNESS);
+    lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_CHILDREN | PRF_CLIENT);
+    ok(lr == 1, "Got unexpected lr %Id.\n", lr);
+    color = GetPixel(hdc, 50, 50);
+    todo_wine
+    ok(color == RGB(0xff, 0, 0), "Got unexpected color %#lx.\n", color);
+    ok_sequence(wm_print_prf_children, "DefWindowProc WM_PRINT with PRF_CHILDREN | PRF_CLIENT with an invisible parent", TRUE);
+    flush_sequence();
+
+    /* PRF_CHILDREN | PRF_CLIENT with an invisible child window */
+    ShowWindow(hwnd, SW_NORMAL);
+    ShowWindow(child, SW_HIDE);
+    flush_events();
+    flush_sequence();
+    ok(IsWindowVisible(hwnd), "Expected hwnd invisible.\n");
+    ok(!IsWindowVisible(child), "Expected child invisible.\n");
+
+    PatBlt(hdc, 0, 0, 100, 100, BLACKNESS);
+    lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_CHILDREN | PRF_CLIENT);
+    ok(lr == 1, "Got unexpected lr %Id.\n", lr);
+    color = GetPixel(hdc, 50, 50);
+    ok(color == RGB(0, 0, 0), "Got unexpected color %#lx.\n", color);
+    ok_sequence(WmEmptySeq, "DefWindowProc WM_PRINT with PRF_CHILDREN | PRF_CLIENT with an invisible child", FALSE);
+    flush_sequence();
+
+    DeleteObject(bitmap);
+    DeleteDC(hdc);
+    ReleaseDC(hwnd, hwnd_hdc);
     DestroyWindow(hwnd);
 }
 
