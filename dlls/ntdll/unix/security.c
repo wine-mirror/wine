@@ -944,12 +944,42 @@ NTSTATUS WINAPI NtAccessCheckAndAuditAlarm( UNICODE_STRING *subsystem, HANDLE ha
                                             UNICODE_STRING *typename, UNICODE_STRING *objectname,
                                             PSECURITY_DESCRIPTOR descr, ACCESS_MASK access,
                                             GENERIC_MAPPING *mapping, BOOLEAN creation,
-                                            ACCESS_MASK *access_granted, BOOLEAN *access_status,
+                                            ACCESS_MASK *access_granted, NTSTATUS *access_status,
                                             BOOLEAN *onclose )
 {
     FIXME( "(%s, %p, %s, %p, 0x%08x, %p, %d, %p, %p, %p), stub\n",
            debugstr_us(subsystem), handle, debugstr_us(typename), descr, access,
            mapping, creation, access_granted, access_status, onclose );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *             NtAccessCheckByTypeAndAuditAlarm  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAccessCheckByTypeAndAuditAlarm( UNICODE_STRING *subsystem, HANDLE handle,
+                                                  UNICODE_STRING *typename, UNICODE_STRING *objectname,
+                                                  PSECURITY_DESCRIPTOR descr, PSID sid, ACCESS_MASK access,
+                                                  AUDIT_EVENT_TYPE audit_type, ULONG flags,
+                                                  OBJECT_TYPE_LIST *obj_list, ULONG list_len,
+                                                  GENERIC_MAPPING *mapping, BOOLEAN creation,
+                                                  ACCESS_MASK *access_granted, NTSTATUS *access_status,
+                                                  BOOLEAN *onclose )
+{
+    FIXME( "(%s, %p, %s, %s, %p, 0x%08x, %u, %x, %p, %u, %p, %d, %p, %p, %p), stub\n",
+           debugstr_us(subsystem), handle, debugstr_us(typename), debugstr_us(objectname),
+           descr, access, audit_type, flags, obj_list, list_len,
+           mapping, creation, access_granted, access_status, onclose );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *             NtCloseObjectAuditAlarm  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCloseObjectAuditAlarm( UNICODE_STRING *subsystem, HANDLE handle, BOOLEAN onclose )
+{
+    FIXME( "%s %p %u: stub\n", debugstr_us(subsystem), handle, onclose );
     return STATUS_NOT_IMPLEMENTED;
 }
 

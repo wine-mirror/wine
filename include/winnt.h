@@ -6163,6 +6163,14 @@ typedef struct _OBJECT_TYPE_LIST {
     GUID *ObjectType;
 } OBJECT_TYPE_LIST, *POBJECT_TYPE_LIST;
 
+typedef enum _AUDIT_EVENT_TYPE
+{
+    AuditEventObjectAccess,
+    AuditEventDirectoryServiceAccess
+} AUDIT_EVENT_TYPE, *PAUDIT_EVENT_TYPE;
+
+#define AUDIT_ALLOW_NO_PRIVILEGE 0x1
+
 typedef struct _RTL_CRITICAL_SECTION_DEBUG
 {
   WORD   Type;

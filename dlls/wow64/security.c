@@ -48,6 +48,15 @@ static TOKEN_GROUPS *token_groups_32to64( const TOKEN_GROUPS32 *groups32 )
     return groups;
 }
 
+static inline OBJECT_TYPE_LIST *objtypelist_32to64( OBJECT_TYPE_LIST *list, const OBJECT_TYPE_LIST32 *list32 )
+{
+    if (!list32) return NULL;
+    list->Level      = list32->Level;
+    list->Sbz        = list32->Sbz;
+    list->ObjectType = ULongToPtr( list32->ObjectType );
+    return list;
+}
+
 
 /**********************************************************************
  *           wow64_NtAccessCheck
@@ -84,7 +93,7 @@ NTSTATUS WINAPI wow64_NtAccessCheckAndAuditAlarm( UINT *args )
     GENERIC_MAPPING *mapping = get_ptr( &args );
     BOOLEAN creation = get_ulong( &args );
     ACCESS_MASK *access_granted = get_ptr( &args );
-    BOOLEAN *access_status = get_ptr( &args );
+    NTSTATUS *access_status = get_ptr( &args );
     BOOLEAN *onclose = get_ptr( &args );
 
     UNICODE_STRING subsystem, typename, objname;
@@ -95,6 +104,41 @@ NTSTATUS WINAPI wow64_NtAccessCheckAndAuditAlarm( UINT *args )
                                        unicode_str_32to64( &objname, objname32 ),
                                        secdesc_32to64( &sd, sd32 ), access, mapping, creation,
                                        access_granted, access_status, onclose );
+}
+
+
+/**********************************************************************
+ *           wow64_NtAccessCheckByTypeAndAuditAlarm
+ */
+NTSTATUS WINAPI wow64_NtAccessCheckByTypeAndAuditAlarm( UINT *args )
+{
+    UNICODE_STRING32 *subsystem32 = get_ptr( &args );
+    HANDLE handle = get_handle( &args );
+    UNICODE_STRING32 *typename32 = get_ptr( &args );
+    UNICODE_STRING32 *objname32 = get_ptr( &args );
+    SECURITY_DESCRIPTOR *sd32 = get_ptr( &args );
+    SID *sid = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    AUDIT_EVENT_TYPE audit_type = get_ulong( &args );
+    ULONG flags = get_ulong( &args );
+    OBJECT_TYPE_LIST32 *list32 = get_ptr( &args );
+    ULONG list_len = get_ulong( &args );
+    GENERIC_MAPPING *mapping = get_ptr( &args );
+    BOOLEAN creation = get_ulong( &args );
+    ACCESS_MASK *access_granted = get_ptr( &args );
+    NTSTATUS *access_status = get_ptr( &args );
+    BOOLEAN *onclose = get_ptr( &args );
+
+    UNICODE_STRING subsystem, typename, objname;
+    SECURITY_DESCRIPTOR sd;
+    OBJECT_TYPE_LIST obj_list;
+
+    return NtAccessCheckByTypeAndAuditAlarm( unicode_str_32to64( &subsystem, subsystem32 ), handle,
+                                             unicode_str_32to64( &typename, typename32 ),
+                                             unicode_str_32to64( &objname, objname32 ),
+                                             secdesc_32to64( &sd, sd32 ), sid, access, audit_type, flags,
+                                             objtypelist_32to64( &obj_list, list32 ), list_len,
+                                             mapping, creation, access_granted, access_status, onclose );
 }
 
 
@@ -128,6 +172,21 @@ NTSTATUS WINAPI wow64_NtAdjustPrivilegesToken( UINT *args )
     ULONG *retlen = get_ptr( &args );
 
     return NtAdjustPrivilegesToken( handle, disable, privs, len, prev, retlen );
+}
+
+
+/**********************************************************************
+ *           wow64_NtCloseObjectAuditAlarm
+ */
+NTSTATUS WINAPI wow64_NtCloseObjectAuditAlarm( UINT *args )
+{
+    UNICODE_STRING32 *subsystem32 = get_ptr( &args );
+    HANDLE handle = get_handle( &args );
+    BOOLEAN onclose = get_ulong( &args );
+
+    UNICODE_STRING subsystem;
+
+    return NtCloseObjectAuditAlarm( unicode_str_32to64( &subsystem, subsystem32 ), handle, onclose );
 }
 
 

@@ -75,6 +75,13 @@ typedef struct
 
 typedef struct
 {
+    WORD  Level;
+    WORD  Sbz;
+    ULONG ObjectType;
+} OBJECT_TYPE_LIST32;
+
+typedef struct
+{
     CONTEXT_CHUNK All;
     CONTEXT_CHUNK Legacy;
     CONTEXT_CHUNK XState;

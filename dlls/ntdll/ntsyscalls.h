@@ -60,7 +60,7 @@
     SYSCALL_ENTRY( 0x0038, NtQueryTimer, 20 ) \
     SYSCALL_ENTRY( 0x0039, NtFsControlFile, 40 ) \
     SYSCALL_ENTRY( 0x003a, NtWriteVirtualMemory, 20 ) \
-    SYSCALL_ENTRY( 0x003b, NtAllocateVirtualMemoryEx, 28 ) \
+    SYSCALL_ENTRY( 0x003b, NtCloseObjectAuditAlarm, 12 ) \
     SYSCALL_ENTRY( 0x003c, NtDuplicateObject, 28 ) \
     SYSCALL_ENTRY( 0x003d, NtQueryAttributesFile, 8 ) \
     SYSCALL_ENTRY( 0x003e, NtClearEvent, 4 ) \
@@ -77,178 +77,180 @@
     SYSCALL_ENTRY( 0x0049, NtQueryVolumeInformationFile, 20 ) \
     SYSCALL_ENTRY( 0x004a, NtCreateSection, 28 ) \
     SYSCALL_ENTRY( 0x004b, NtFlushBuffersFile, 8 ) \
-    SYSCALL_ENTRY( 0x004c, NtAreMappedFilesTheSame, 8 ) \
-    SYSCALL_ENTRY( 0x004d, NtAssignProcessToJobObject, 8 ) \
+    SYSCALL_ENTRY( 0x004c, NtAllocateVirtualMemoryEx, 28 ) \
+    SYSCALL_ENTRY( 0x004d, NtAreMappedFilesTheSame, 8 ) \
     SYSCALL_ENTRY( 0x004e, NtCreateThread, 32 ) \
     SYSCALL_ENTRY( 0x004f, NtIsProcessInJob, 8 ) \
     SYSCALL_ENTRY( 0x0050, NtProtectVirtualMemory, 20 ) \
     SYSCALL_ENTRY( 0x0051, NtQuerySection, 20 ) \
     SYSCALL_ENTRY( 0x0052, NtResumeThread, 8 ) \
     SYSCALL_ENTRY( 0x0053, NtTerminateThread, 8 ) \
-    SYSCALL_ENTRY( 0x0054, NtCancelIoFileEx, 12 ) \
+    SYSCALL_ENTRY( 0x0054, NtAssignProcessToJobObject, 8 ) \
     SYSCALL_ENTRY( 0x0055, NtCreateFile, 44 ) \
     SYSCALL_ENTRY( 0x0056, NtQueryEvent, 20 ) \
-    SYSCALL_ENTRY( 0x0057, NtCancelSynchronousIoFile, 12 ) \
+    SYSCALL_ENTRY( 0x0057, NtCancelIoFileEx, 12 ) \
     SYSCALL_ENTRY( 0x0058, NtOpenDirectoryObject, 12 ) \
-    SYSCALL_ENTRY( 0x0059, NtCommitTransaction, 8 ) \
+    SYSCALL_ENTRY( 0x0059, NtAccessCheckByTypeAndAuditAlarm, 64 ) \
     SYSCALL_ENTRY_NtQuerySystemTime( 0x005a, NtQuerySystemTime, 4 ) \
     SYSCALL_ENTRY( 0x005b, NtWaitForMultipleObjects, 20 ) \
     SYSCALL_ENTRY( 0x005c, NtSetInformationObject, 16 ) \
     SYSCALL_ENTRY( 0x005d, NtCancelIoFile, 8 ) \
-    SYSCALL_ENTRY( 0x005e, NtCompareObjects, 8 ) \
+    SYSCALL_ENTRY( 0x005e, NtCancelSynchronousIoFile, 12 ) \
     SYSCALL_ENTRY( 0x005f, NtPowerInformation, 20 ) \
     SYSCALL_ENTRY( 0x0060, NtSetValueKey, 24 ) \
     SYSCALL_ENTRY( 0x0061, NtCancelTimer, 8 ) \
     SYSCALL_ENTRY( 0x0062, NtSetTimer, 28 ) \
-    SYSCALL_ENTRY( 0x0063, NtCompareTokens, 12 ) \
-    SYSCALL_ENTRY( 0x0064, NtCompleteConnectPort, 4 ) \
-    SYSCALL_ENTRY( 0x0065, NtConnectPort, 32 ) \
-    SYSCALL_ENTRY( 0x0066, NtContinueEx, 8 ) \
-    SYSCALL_ENTRY( 0x0067, NtConvertBetweenAuxiliaryCounterAndPerformanceCounter, 16 ) \
-    SYSCALL_ENTRY( 0x0068, NtCreateDirectoryObject, 12 ) \
-    SYSCALL_ENTRY( 0x0069, NtCreateIoCompletion, 16 ) \
-    SYSCALL_ENTRY( 0x006a, NtCreateJobObject, 12 ) \
-    SYSCALL_ENTRY( 0x006b, NtCreateKeyTransacted, 32 ) \
-    SYSCALL_ENTRY( 0x006c, NtCreateKeyedEvent, 16 ) \
-    SYSCALL_ENTRY( 0x006d, NtCreateLowBoxToken, 36 ) \
-    SYSCALL_ENTRY( 0x006e, NtCreateMailslotFile, 32 ) \
-    SYSCALL_ENTRY( 0x006f, NtCreateMutant, 16 ) \
-    SYSCALL_ENTRY( 0x0070, NtCreateNamedPipeFile, 56 ) \
-    SYSCALL_ENTRY( 0x0071, NtCreatePagingFile, 16 ) \
-    SYSCALL_ENTRY( 0x0072, NtCreatePort, 20 ) \
-    SYSCALL_ENTRY( 0x0073, NtCreateSectionEx, 36 ) \
-    SYSCALL_ENTRY( 0x0074, NtCreateSemaphore, 20 ) \
-    SYSCALL_ENTRY( 0x0075, NtCreateSymbolicLinkObject, 16 ) \
-    SYSCALL_ENTRY( 0x0076, NtCreateThreadEx, 44 ) \
-    SYSCALL_ENTRY( 0x0077, NtCreateTimer, 16 ) \
-    SYSCALL_ENTRY( 0x0078, NtCreateToken, 52 ) \
-    SYSCALL_ENTRY( 0x0079, NtCreateTransaction, 40 ) \
-    SYSCALL_ENTRY( 0x007a, NtCreateUserProcess, 44 ) \
-    SYSCALL_ENTRY( 0x007b, NtDebugActiveProcess, 8 ) \
-    SYSCALL_ENTRY( 0x007c, NtDebugContinue, 12 ) \
-    SYSCALL_ENTRY( 0x007d, NtDeleteAtom, 4 ) \
-    SYSCALL_ENTRY( 0x007e, NtDeleteFile, 4 ) \
-    SYSCALL_ENTRY( 0x007f, NtDeleteKey, 4 ) \
-    SYSCALL_ENTRY( 0x0080, NtDeleteValueKey, 8 ) \
-    SYSCALL_ENTRY( 0x0081, NtDisplayString, 4 ) \
-    SYSCALL_ENTRY( 0x0082, NtFilterToken, 24 ) \
-    SYSCALL_ENTRY( 0x0083, NtFlushBuffersFileEx, 20 ) \
-    SYSCALL_ENTRY( 0x0084, NtFlushInstructionCache, 12 ) \
-    SYSCALL_ENTRY( 0x0085, NtFlushKey, 4 ) \
-    SYSCALL_ENTRY( 0x0086, NtFlushProcessWriteBuffers, 0 ) \
-    SYSCALL_ENTRY( 0x0087, NtFlushVirtualMemory, 16 ) \
-    SYSCALL_ENTRY( 0x0088, NtGetContextThread, 8 ) \
-    SYSCALL_ENTRY( 0x0089, NtGetCurrentProcessorNumber, 0 ) \
-    SYSCALL_ENTRY( 0x008a, NtGetNextProcess, 20 ) \
-    SYSCALL_ENTRY( 0x008b, NtGetNextThread, 24 ) \
-    SYSCALL_ENTRY( 0x008c, NtGetNlsSectionPtr, 20 ) \
-    SYSCALL_ENTRY( 0x008d, NtGetWriteWatch, 28 ) \
-    SYSCALL_ENTRY( 0x008e, NtImpersonateAnonymousToken, 4 ) \
-    SYSCALL_ENTRY( 0x008f, NtInitializeNlsFiles, 12 ) \
-    SYSCALL_ENTRY( 0x0090, NtInitiatePowerAction, 16 ) \
-    SYSCALL_ENTRY( 0x0091, NtListenPort, 8 ) \
-    SYSCALL_ENTRY( 0x0092, NtLoadDriver, 4 ) \
-    SYSCALL_ENTRY( 0x0093, NtLoadKey, 8 ) \
-    SYSCALL_ENTRY( 0x0094, NtLoadKey2, 12 ) \
-    SYSCALL_ENTRY( 0x0095, NtLoadKeyEx, 32 ) \
-    SYSCALL_ENTRY( 0x0096, NtLockFile, 40 ) \
-    SYSCALL_ENTRY( 0x0097, NtLockVirtualMemory, 16 ) \
-    SYSCALL_ENTRY( 0x0098, NtMakePermanentObject, 4 ) \
-    SYSCALL_ENTRY( 0x0099, NtMakeTemporaryObject, 4 ) \
-    SYSCALL_ENTRY( 0x009a, NtMapViewOfSectionEx, 36 ) \
-    SYSCALL_ENTRY( 0x009b, NtNotifyChangeDirectoryFile, 36 ) \
-    SYSCALL_ENTRY( 0x009c, NtNotifyChangeKey, 40 ) \
-    SYSCALL_ENTRY( 0x009d, NtNotifyChangeMultipleKeys, 48 ) \
-    SYSCALL_ENTRY( 0x009e, NtOpenIoCompletion, 12 ) \
-    SYSCALL_ENTRY( 0x009f, NtOpenJobObject, 12 ) \
-    SYSCALL_ENTRY( 0x00a0, NtOpenKeyEx, 16 ) \
-    SYSCALL_ENTRY( 0x00a1, NtOpenKeyTransacted, 16 ) \
-    SYSCALL_ENTRY( 0x00a2, NtOpenKeyTransactedEx, 20 ) \
-    SYSCALL_ENTRY( 0x00a3, NtOpenKeyedEvent, 12 ) \
-    SYSCALL_ENTRY( 0x00a4, NtOpenMutant, 12 ) \
-    SYSCALL_ENTRY( 0x00a5, NtOpenProcessToken, 12 ) \
+    SYSCALL_ENTRY( 0x0063, NtCommitTransaction, 8 ) \
+    SYSCALL_ENTRY( 0x0064, NtCompareObjects, 8 ) \
+    SYSCALL_ENTRY( 0x0065, NtCompareTokens, 12 ) \
+    SYSCALL_ENTRY( 0x0066, NtCompleteConnectPort, 4 ) \
+    SYSCALL_ENTRY( 0x0067, NtConnectPort, 32 ) \
+    SYSCALL_ENTRY( 0x0068, NtContinueEx, 8 ) \
+    SYSCALL_ENTRY( 0x0069, NtConvertBetweenAuxiliaryCounterAndPerformanceCounter, 16 ) \
+    SYSCALL_ENTRY( 0x006a, NtCreateDirectoryObject, 12 ) \
+    SYSCALL_ENTRY( 0x006b, NtCreateIoCompletion, 16 ) \
+    SYSCALL_ENTRY( 0x006c, NtCreateJobObject, 12 ) \
+    SYSCALL_ENTRY( 0x006d, NtCreateKeyTransacted, 32 ) \
+    SYSCALL_ENTRY( 0x006e, NtCreateKeyedEvent, 16 ) \
+    SYSCALL_ENTRY( 0x006f, NtCreateLowBoxToken, 36 ) \
+    SYSCALL_ENTRY( 0x0070, NtCreateMailslotFile, 32 ) \
+    SYSCALL_ENTRY( 0x0071, NtCreateMutant, 16 ) \
+    SYSCALL_ENTRY( 0x0072, NtCreateNamedPipeFile, 56 ) \
+    SYSCALL_ENTRY( 0x0073, NtCreatePagingFile, 16 ) \
+    SYSCALL_ENTRY( 0x0074, NtCreatePort, 20 ) \
+    SYSCALL_ENTRY( 0x0075, NtCreateSectionEx, 36 ) \
+    SYSCALL_ENTRY( 0x0076, NtCreateSemaphore, 20 ) \
+    SYSCALL_ENTRY( 0x0077, NtCreateSymbolicLinkObject, 16 ) \
+    SYSCALL_ENTRY( 0x0078, NtCreateThreadEx, 44 ) \
+    SYSCALL_ENTRY( 0x0079, NtCreateTimer, 16 ) \
+    SYSCALL_ENTRY( 0x007a, NtCreateToken, 52 ) \
+    SYSCALL_ENTRY( 0x007b, NtCreateTransaction, 40 ) \
+    SYSCALL_ENTRY( 0x007c, NtCreateUserProcess, 44 ) \
+    SYSCALL_ENTRY( 0x007d, NtDebugActiveProcess, 8 ) \
+    SYSCALL_ENTRY( 0x007e, NtDebugContinue, 12 ) \
+    SYSCALL_ENTRY( 0x007f, NtDeleteAtom, 4 ) \
+    SYSCALL_ENTRY( 0x0080, NtDeleteFile, 4 ) \
+    SYSCALL_ENTRY( 0x0081, NtDeleteKey, 4 ) \
+    SYSCALL_ENTRY( 0x0082, NtDeleteValueKey, 8 ) \
+    SYSCALL_ENTRY( 0x0083, NtDisplayString, 4 ) \
+    SYSCALL_ENTRY( 0x0084, NtFilterToken, 24 ) \
+    SYSCALL_ENTRY( 0x0085, NtFlushBuffersFileEx, 20 ) \
+    SYSCALL_ENTRY( 0x0086, NtFlushInstructionCache, 12 ) \
+    SYSCALL_ENTRY( 0x0087, NtFlushKey, 4 ) \
+    SYSCALL_ENTRY( 0x0088, NtFlushProcessWriteBuffers, 0 ) \
+    SYSCALL_ENTRY( 0x0089, NtFlushVirtualMemory, 16 ) \
+    SYSCALL_ENTRY( 0x008a, NtGetContextThread, 8 ) \
+    SYSCALL_ENTRY( 0x008b, NtGetCurrentProcessorNumber, 0 ) \
+    SYSCALL_ENTRY( 0x008c, NtGetNextProcess, 20 ) \
+    SYSCALL_ENTRY( 0x008d, NtGetNextThread, 24 ) \
+    SYSCALL_ENTRY( 0x008e, NtGetNlsSectionPtr, 20 ) \
+    SYSCALL_ENTRY( 0x008f, NtGetWriteWatch, 28 ) \
+    SYSCALL_ENTRY( 0x0090, NtImpersonateAnonymousToken, 4 ) \
+    SYSCALL_ENTRY( 0x0091, NtInitializeNlsFiles, 12 ) \
+    SYSCALL_ENTRY( 0x0092, NtInitiatePowerAction, 16 ) \
+    SYSCALL_ENTRY( 0x0093, NtListenPort, 8 ) \
+    SYSCALL_ENTRY( 0x0094, NtLoadDriver, 4 ) \
+    SYSCALL_ENTRY( 0x0095, NtLoadKey, 8 ) \
+    SYSCALL_ENTRY( 0x0096, NtLoadKey2, 12 ) \
+    SYSCALL_ENTRY( 0x0097, NtLoadKeyEx, 32 ) \
+    SYSCALL_ENTRY( 0x0098, NtLockFile, 40 ) \
+    SYSCALL_ENTRY( 0x0099, NtLockVirtualMemory, 16 ) \
+    SYSCALL_ENTRY( 0x009a, NtMakePermanentObject, 4 ) \
+    SYSCALL_ENTRY( 0x009b, NtMakeTemporaryObject, 4 ) \
+    SYSCALL_ENTRY( 0x009c, NtMapViewOfSectionEx, 36 ) \
+    SYSCALL_ENTRY( 0x009d, NtNotifyChangeDirectoryFile, 36 ) \
+    SYSCALL_ENTRY( 0x009e, NtNotifyChangeKey, 40 ) \
+    SYSCALL_ENTRY( 0x009f, NtNotifyChangeMultipleKeys, 48 ) \
+    SYSCALL_ENTRY( 0x00a0, NtOpenIoCompletion, 12 ) \
+    SYSCALL_ENTRY( 0x00a1, NtOpenJobObject, 12 ) \
+    SYSCALL_ENTRY( 0x00a2, NtOpenKeyEx, 16 ) \
+    SYSCALL_ENTRY( 0x00a3, NtOpenKeyTransacted, 16 ) \
+    SYSCALL_ENTRY( 0x00a4, NtOpenKeyTransactedEx, 20 ) \
+    SYSCALL_ENTRY( 0x00a5, NtOpenKeyedEvent, 12 ) \
     SYSCALL_ENTRY( 0x00a6, NtCreateDebugObject, 16 ) \
-    SYSCALL_ENTRY( 0x00a7, NtOpenSemaphore, 12 ) \
-    SYSCALL_ENTRY( 0x00a8, NtOpenSymbolicLinkObject, 12 ) \
-    SYSCALL_ENTRY( 0x00a9, NtOpenThread, 16 ) \
-    SYSCALL_ENTRY( 0x00aa, NtOpenTimer, 12 ) \
-    SYSCALL_ENTRY( 0x00ab, NtPrivilegeCheck, 12 ) \
-    SYSCALL_ENTRY( 0x00ac, NtPulseEvent, 8 ) \
-    SYSCALL_ENTRY( 0x00ad, NtQueryDirectoryObject, 28 ) \
-    SYSCALL_ENTRY( 0x00ae, NtQueryEaFile, 36 ) \
-    SYSCALL_ENTRY( 0x00af, NtQueryFullAttributesFile, 8 ) \
-    SYSCALL_ENTRY( 0x00b0, NtQueryInformationAtom, 20 ) \
-    SYSCALL_ENTRY( 0x00b1, NtQueryInformationJobObject, 20 ) \
-    SYSCALL_ENTRY( 0x00b2, NtQueryInstallUILanguage, 4 ) \
-    SYSCALL_ENTRY( 0x00b3, NtQueryIoCompletion, 20 ) \
-    SYSCALL_ENTRY( 0x00b4, NtQueryLicenseValue, 20 ) \
-    SYSCALL_ENTRY( 0x00b5, NtQueryMultipleValueKey, 24 ) \
-    SYSCALL_ENTRY( 0x00b6, NtQueryMutant, 20 ) \
-    SYSCALL_ENTRY( 0x00b7, NtQuerySecurityObject, 20 ) \
-    SYSCALL_ENTRY( 0x00b8, NtQuerySemaphore, 20 ) \
-    SYSCALL_ENTRY( 0x00b9, NtQuerySymbolicLinkObject, 12 ) \
-    SYSCALL_ENTRY( 0x00ba, NtQuerySystemEnvironmentValue, 16 ) \
-    SYSCALL_ENTRY( 0x00bb, NtQuerySystemEnvironmentValueEx, 20 ) \
-    SYSCALL_ENTRY( 0x00bc, NtQuerySystemInformationEx, 24 ) \
-    SYSCALL_ENTRY( 0x00bd, NtQueryTimerResolution, 12 ) \
-    SYSCALL_ENTRY( 0x00be, NtQueueApcThreadEx, 24 ) \
-    SYSCALL_ENTRY( 0x00bf, NtRaiseException, 12 ) \
-    SYSCALL_ENTRY( 0x00c0, NtRaiseHardError, 24 ) \
-    SYSCALL_ENTRY( 0x00c1, NtRegisterThreadTerminatePort, 4 ) \
-    SYSCALL_ENTRY( 0x00c2, NtReleaseKeyedEvent, 16 ) \
-    SYSCALL_ENTRY( 0x00c3, NtRemoveIoCompletionEx, 24 ) \
-    SYSCALL_ENTRY( 0x00c4, NtRemoveProcessDebug, 8 ) \
-    SYSCALL_ENTRY( 0x00c5, NtRenameKey, 8 ) \
-    SYSCALL_ENTRY( 0x00c6, NtReplaceKey, 12 ) \
-    SYSCALL_ENTRY( 0x00c7, NtResetEvent, 8 ) \
-    SYSCALL_ENTRY( 0x00c8, NtResetWriteWatch, 12 ) \
-    SYSCALL_ENTRY( 0x00c9, NtRestoreKey, 12 ) \
-    SYSCALL_ENTRY( 0x00ca, NtResumeProcess, 4 ) \
-    SYSCALL_ENTRY( 0x00cb, NtRollbackTransaction, 8 ) \
-    SYSCALL_ENTRY( 0x00cc, NtSaveKey, 8 ) \
-    SYSCALL_ENTRY( 0x00cd, NtSecureConnectPort, 36 ) \
-    SYSCALL_ENTRY( 0x00ce, NtSetContextThread, 8 ) \
-    SYSCALL_ENTRY( 0x00cf, NtSetDebugFilterState, 12 ) \
-    SYSCALL_ENTRY( 0x00d0, NtSetDefaultLocale, 8 ) \
-    SYSCALL_ENTRY( 0x00d1, NtSetDefaultUILanguage, 4 ) \
-    SYSCALL_ENTRY( 0x00d2, NtSetEaFile, 16 ) \
-    SYSCALL_ENTRY( 0x00d3, NtSetInformationDebugObject, 20 ) \
-    SYSCALL_ENTRY( 0x00d4, NtSetInformationJobObject, 16 ) \
-    SYSCALL_ENTRY( 0x00d5, NtSetInformationKey, 16 ) \
-    SYSCALL_ENTRY( 0x00d6, NtSetInformationToken, 16 ) \
-    SYSCALL_ENTRY( 0x00d7, NtSetInformationVirtualMemory, 24 ) \
-    SYSCALL_ENTRY( 0x00d8, NtSetIntervalProfile, 8 ) \
-    SYSCALL_ENTRY( 0x00d9, NtSetIoCompletion, 20 ) \
-    SYSCALL_ENTRY( 0x00da, NtSetIoCompletionEx, 24 ) \
-    SYSCALL_ENTRY( 0x00db, NtSetLdtEntries, 24 ) \
-    SYSCALL_ENTRY( 0x00dc, NtSetSecurityObject, 12 ) \
-    SYSCALL_ENTRY( 0x00dd, NtSetSystemInformation, 12 ) \
-    SYSCALL_ENTRY( 0x00de, NtSetSystemTime, 8 ) \
-    SYSCALL_ENTRY( 0x00df, NtSetThreadExecutionState, 8 ) \
-    SYSCALL_ENTRY( 0x00e0, NtSetTimerResolution, 12 ) \
-    SYSCALL_ENTRY( 0x00e1, NtSetVolumeInformationFile, 20 ) \
-    SYSCALL_ENTRY( 0x00e2, NtShutdownSystem, 4 ) \
-    SYSCALL_ENTRY( 0x00e3, NtSignalAndWaitForSingleObject, 16 ) \
-    SYSCALL_ENTRY( 0x00e4, NtSuspendProcess, 4 ) \
-    SYSCALL_ENTRY( 0x00e5, NtSuspendThread, 8 ) \
-    SYSCALL_ENTRY( 0x00e6, NtSystemDebugControl, 24 ) \
-    SYSCALL_ENTRY( 0x00e7, NtTerminateJobObject, 8 ) \
-    SYSCALL_ENTRY( 0x00e8, NtTestAlert, 0 ) \
-    SYSCALL_ENTRY( 0x00e9, NtTraceControl, 24 ) \
-    SYSCALL_ENTRY( 0x00ea, NtUnloadDriver, 4 ) \
-    SYSCALL_ENTRY( 0x00eb, NtUnloadKey, 4 ) \
-    SYSCALL_ENTRY( 0x00ec, NtUnlockFile, 20 ) \
-    SYSCALL_ENTRY( 0x00ed, NtUnlockVirtualMemory, 16 ) \
-    SYSCALL_ENTRY( 0x00ee, NtUnmapViewOfSectionEx, 12 ) \
-    SYSCALL_ENTRY( 0x00ef, NtWaitForAlertByThreadId, 8 ) \
-    SYSCALL_ENTRY( 0x00f0, NtWaitForDebugEvent, 16 ) \
-    SYSCALL_ENTRY( 0x00f1, NtWaitForKeyedEvent, 16 ) \
-    SYSCALL_ENTRY( 0x00f2, NtWow64AllocateVirtualMemory64, 28 ) \
-    SYSCALL_ENTRY( 0x00f3, NtWow64GetNativeSystemInformation, 16 ) \
-    SYSCALL_ENTRY( 0x00f4, NtWow64IsProcessorFeaturePresent, 4 ) \
-    SYSCALL_ENTRY( 0x00f5, NtWow64QueryInformationProcess64, 20 ) \
-    SYSCALL_ENTRY( 0x00f6, NtWow64ReadVirtualMemory64, 28 ) \
-    SYSCALL_ENTRY( 0x00f7, NtWow64WriteVirtualMemory64, 28 )
+    SYSCALL_ENTRY( 0x00a7, NtOpenMutant, 12 ) \
+    SYSCALL_ENTRY( 0x00a8, NtOpenProcessToken, 12 ) \
+    SYSCALL_ENTRY( 0x00a9, NtOpenSemaphore, 12 ) \
+    SYSCALL_ENTRY( 0x00aa, NtOpenSymbolicLinkObject, 12 ) \
+    SYSCALL_ENTRY( 0x00ab, NtOpenThread, 16 ) \
+    SYSCALL_ENTRY( 0x00ac, NtOpenTimer, 12 ) \
+    SYSCALL_ENTRY( 0x00ad, NtPrivilegeCheck, 12 ) \
+    SYSCALL_ENTRY( 0x00ae, NtPulseEvent, 8 ) \
+    SYSCALL_ENTRY( 0x00af, NtQueryDirectoryObject, 28 ) \
+    SYSCALL_ENTRY( 0x00b0, NtQueryEaFile, 36 ) \
+    SYSCALL_ENTRY( 0x00b1, NtQueryFullAttributesFile, 8 ) \
+    SYSCALL_ENTRY( 0x00b2, NtQueryInformationAtom, 20 ) \
+    SYSCALL_ENTRY( 0x00b3, NtQueryInformationJobObject, 20 ) \
+    SYSCALL_ENTRY( 0x00b4, NtQueryInstallUILanguage, 4 ) \
+    SYSCALL_ENTRY( 0x00b5, NtQueryIoCompletion, 20 ) \
+    SYSCALL_ENTRY( 0x00b6, NtQueryLicenseValue, 20 ) \
+    SYSCALL_ENTRY( 0x00b7, NtQueryMultipleValueKey, 24 ) \
+    SYSCALL_ENTRY( 0x00b8, NtQueryMutant, 20 ) \
+    SYSCALL_ENTRY( 0x00b9, NtQuerySecurityObject, 20 ) \
+    SYSCALL_ENTRY( 0x00ba, NtQuerySemaphore, 20 ) \
+    SYSCALL_ENTRY( 0x00bb, NtQuerySymbolicLinkObject, 12 ) \
+    SYSCALL_ENTRY( 0x00bc, NtQuerySystemEnvironmentValue, 16 ) \
+    SYSCALL_ENTRY( 0x00bd, NtQuerySystemEnvironmentValueEx, 20 ) \
+    SYSCALL_ENTRY( 0x00be, NtQuerySystemInformationEx, 24 ) \
+    SYSCALL_ENTRY( 0x00bf, NtQueryTimerResolution, 12 ) \
+    SYSCALL_ENTRY( 0x00c0, NtQueueApcThreadEx, 24 ) \
+    SYSCALL_ENTRY( 0x00c1, NtRaiseException, 12 ) \
+    SYSCALL_ENTRY( 0x00c2, NtRaiseHardError, 24 ) \
+    SYSCALL_ENTRY( 0x00c3, NtRegisterThreadTerminatePort, 4 ) \
+    SYSCALL_ENTRY( 0x00c4, NtReleaseKeyedEvent, 16 ) \
+    SYSCALL_ENTRY( 0x00c5, NtRemoveIoCompletionEx, 24 ) \
+    SYSCALL_ENTRY( 0x00c6, NtRemoveProcessDebug, 8 ) \
+    SYSCALL_ENTRY( 0x00c7, NtRenameKey, 8 ) \
+    SYSCALL_ENTRY( 0x00c8, NtReplaceKey, 12 ) \
+    SYSCALL_ENTRY( 0x00c9, NtResetEvent, 8 ) \
+    SYSCALL_ENTRY( 0x00ca, NtResetWriteWatch, 12 ) \
+    SYSCALL_ENTRY( 0x00cb, NtRestoreKey, 12 ) \
+    SYSCALL_ENTRY( 0x00cc, NtResumeProcess, 4 ) \
+    SYSCALL_ENTRY( 0x00cd, NtRollbackTransaction, 8 ) \
+    SYSCALL_ENTRY( 0x00ce, NtSaveKey, 8 ) \
+    SYSCALL_ENTRY( 0x00cf, NtSecureConnectPort, 36 ) \
+    SYSCALL_ENTRY( 0x00d0, NtSetContextThread, 8 ) \
+    SYSCALL_ENTRY( 0x00d1, NtSetDebugFilterState, 12 ) \
+    SYSCALL_ENTRY( 0x00d2, NtSetDefaultLocale, 8 ) \
+    SYSCALL_ENTRY( 0x00d3, NtSetDefaultUILanguage, 4 ) \
+    SYSCALL_ENTRY( 0x00d4, NtSetEaFile, 16 ) \
+    SYSCALL_ENTRY( 0x00d5, NtSetInformationDebugObject, 20 ) \
+    SYSCALL_ENTRY( 0x00d6, NtSetInformationJobObject, 16 ) \
+    SYSCALL_ENTRY( 0x00d7, NtSetInformationKey, 16 ) \
+    SYSCALL_ENTRY( 0x00d8, NtSetInformationToken, 16 ) \
+    SYSCALL_ENTRY( 0x00d9, NtSetInformationVirtualMemory, 24 ) \
+    SYSCALL_ENTRY( 0x00da, NtSetIntervalProfile, 8 ) \
+    SYSCALL_ENTRY( 0x00db, NtSetIoCompletion, 20 ) \
+    SYSCALL_ENTRY( 0x00dc, NtSetIoCompletionEx, 24 ) \
+    SYSCALL_ENTRY( 0x00dd, NtSetLdtEntries, 24 ) \
+    SYSCALL_ENTRY( 0x00de, NtSetSecurityObject, 12 ) \
+    SYSCALL_ENTRY( 0x00df, NtSetSystemInformation, 12 ) \
+    SYSCALL_ENTRY( 0x00e0, NtSetSystemTime, 8 ) \
+    SYSCALL_ENTRY( 0x00e1, NtSetThreadExecutionState, 8 ) \
+    SYSCALL_ENTRY( 0x00e2, NtSetTimerResolution, 12 ) \
+    SYSCALL_ENTRY( 0x00e3, NtSetVolumeInformationFile, 20 ) \
+    SYSCALL_ENTRY( 0x00e4, NtShutdownSystem, 4 ) \
+    SYSCALL_ENTRY( 0x00e5, NtSignalAndWaitForSingleObject, 16 ) \
+    SYSCALL_ENTRY( 0x00e6, NtSuspendProcess, 4 ) \
+    SYSCALL_ENTRY( 0x00e7, NtSuspendThread, 8 ) \
+    SYSCALL_ENTRY( 0x00e8, NtSystemDebugControl, 24 ) \
+    SYSCALL_ENTRY( 0x00e9, NtTerminateJobObject, 8 ) \
+    SYSCALL_ENTRY( 0x00ea, NtTestAlert, 0 ) \
+    SYSCALL_ENTRY( 0x00eb, NtTraceControl, 24 ) \
+    SYSCALL_ENTRY( 0x00ec, NtUnloadDriver, 4 ) \
+    SYSCALL_ENTRY( 0x00ed, NtUnloadKey, 4 ) \
+    SYSCALL_ENTRY( 0x00ee, NtUnlockFile, 20 ) \
+    SYSCALL_ENTRY( 0x00ef, NtUnlockVirtualMemory, 16 ) \
+    SYSCALL_ENTRY( 0x00f0, NtUnmapViewOfSectionEx, 12 ) \
+    SYSCALL_ENTRY( 0x00f1, NtWaitForAlertByThreadId, 8 ) \
+    SYSCALL_ENTRY( 0x00f2, NtWaitForDebugEvent, 16 ) \
+    SYSCALL_ENTRY( 0x00f3, NtWaitForKeyedEvent, 16 ) \
+    SYSCALL_ENTRY( 0x00f4, NtWow64AllocateVirtualMemory64, 28 ) \
+    SYSCALL_ENTRY( 0x00f5, NtWow64GetNativeSystemInformation, 16 ) \
+    SYSCALL_ENTRY( 0x00f6, NtWow64IsProcessorFeaturePresent, 4 ) \
+    SYSCALL_ENTRY( 0x00f7, NtWow64QueryInformationProcess64, 20 ) \
+    SYSCALL_ENTRY( 0x00f8, NtWow64ReadVirtualMemory64, 28 ) \
+    SYSCALL_ENTRY( 0x00f9, NtWow64WriteVirtualMemory64, 28 )
 #ifdef _WIN64
 #define ALL_SYSCALLS \
     SYSCALL_ENTRY( 0x0000, NtAccessCheck, 64 ) \
@@ -310,7 +312,7 @@
     SYSCALL_ENTRY( 0x0038, NtQueryTimer, 40 ) \
     SYSCALL_ENTRY( 0x0039, NtFsControlFile, 80 ) \
     SYSCALL_ENTRY( 0x003a, NtWriteVirtualMemory, 40 ) \
-    SYSCALL_ENTRY( 0x003b, NtAllocateVirtualMemoryEx, 56 ) \
+    SYSCALL_ENTRY( 0x003b, NtCloseObjectAuditAlarm, 24 ) \
     SYSCALL_ENTRY( 0x003c, NtDuplicateObject, 56 ) \
     SYSCALL_ENTRY( 0x003d, NtQueryAttributesFile, 16 ) \
     SYSCALL_ENTRY( 0x003e, NtClearEvent, 8 ) \
@@ -327,172 +329,174 @@
     SYSCALL_ENTRY( 0x0049, NtQueryVolumeInformationFile, 40 ) \
     SYSCALL_ENTRY( 0x004a, NtCreateSection, 56 ) \
     SYSCALL_ENTRY( 0x004b, NtFlushBuffersFile, 16 ) \
-    SYSCALL_ENTRY( 0x004c, NtAreMappedFilesTheSame, 16 ) \
-    SYSCALL_ENTRY( 0x004d, NtAssignProcessToJobObject, 16 ) \
+    SYSCALL_ENTRY( 0x004c, NtAllocateVirtualMemoryEx, 56 ) \
+    SYSCALL_ENTRY( 0x004d, NtAreMappedFilesTheSame, 16 ) \
     SYSCALL_ENTRY( 0x004e, NtCreateThread, 64 ) \
     SYSCALL_ENTRY( 0x004f, NtIsProcessInJob, 16 ) \
     SYSCALL_ENTRY( 0x0050, NtProtectVirtualMemory, 40 ) \
     SYSCALL_ENTRY( 0x0051, NtQuerySection, 40 ) \
     SYSCALL_ENTRY( 0x0052, NtResumeThread, 16 ) \
     SYSCALL_ENTRY( 0x0053, NtTerminateThread, 16 ) \
-    SYSCALL_ENTRY( 0x0054, NtCancelIoFileEx, 24 ) \
+    SYSCALL_ENTRY( 0x0054, NtAssignProcessToJobObject, 16 ) \
     SYSCALL_ENTRY( 0x0055, NtCreateFile, 88 ) \
     SYSCALL_ENTRY( 0x0056, NtQueryEvent, 40 ) \
-    SYSCALL_ENTRY( 0x0057, NtCancelSynchronousIoFile, 24 ) \
+    SYSCALL_ENTRY( 0x0057, NtCancelIoFileEx, 24 ) \
     SYSCALL_ENTRY( 0x0058, NtOpenDirectoryObject, 24 ) \
-    SYSCALL_ENTRY( 0x0059, NtCommitTransaction, 16 ) \
+    SYSCALL_ENTRY( 0x0059, NtAccessCheckByTypeAndAuditAlarm, 128 ) \
     SYSCALL_ENTRY_NtQuerySystemTime( 0x005a, NtQuerySystemTime, 8 ) \
     SYSCALL_ENTRY( 0x005b, NtWaitForMultipleObjects, 40 ) \
     SYSCALL_ENTRY( 0x005c, NtSetInformationObject, 32 ) \
     SYSCALL_ENTRY( 0x005d, NtCancelIoFile, 16 ) \
-    SYSCALL_ENTRY( 0x005e, NtCompareObjects, 16 ) \
+    SYSCALL_ENTRY( 0x005e, NtCancelSynchronousIoFile, 24 ) \
     SYSCALL_ENTRY( 0x005f, NtPowerInformation, 40 ) \
     SYSCALL_ENTRY( 0x0060, NtSetValueKey, 48 ) \
     SYSCALL_ENTRY( 0x0061, NtCancelTimer, 16 ) \
     SYSCALL_ENTRY( 0x0062, NtSetTimer, 56 ) \
-    SYSCALL_ENTRY( 0x0063, NtCompareTokens, 24 ) \
-    SYSCALL_ENTRY( 0x0064, NtCompleteConnectPort, 8 ) \
-    SYSCALL_ENTRY( 0x0065, NtConnectPort, 64 ) \
-    SYSCALL_ENTRY( 0x0066, NtContinueEx, 16 ) \
-    SYSCALL_ENTRY( 0x0067, NtConvertBetweenAuxiliaryCounterAndPerformanceCounter, 32 ) \
-    SYSCALL_ENTRY( 0x0068, NtCreateDirectoryObject, 24 ) \
-    SYSCALL_ENTRY( 0x0069, NtCreateIoCompletion, 32 ) \
-    SYSCALL_ENTRY( 0x006a, NtCreateJobObject, 24 ) \
-    SYSCALL_ENTRY( 0x006b, NtCreateKeyTransacted, 64 ) \
-    SYSCALL_ENTRY( 0x006c, NtCreateKeyedEvent, 32 ) \
-    SYSCALL_ENTRY( 0x006d, NtCreateLowBoxToken, 72 ) \
-    SYSCALL_ENTRY( 0x006e, NtCreateMailslotFile, 64 ) \
-    SYSCALL_ENTRY( 0x006f, NtCreateMutant, 32 ) \
-    SYSCALL_ENTRY( 0x0070, NtCreateNamedPipeFile, 112 ) \
-    SYSCALL_ENTRY( 0x0071, NtCreatePagingFile, 32 ) \
-    SYSCALL_ENTRY( 0x0072, NtCreatePort, 40 ) \
-    SYSCALL_ENTRY( 0x0073, NtCreateSectionEx, 72 ) \
-    SYSCALL_ENTRY( 0x0074, NtCreateSemaphore, 40 ) \
-    SYSCALL_ENTRY( 0x0075, NtCreateSymbolicLinkObject, 32 ) \
-    SYSCALL_ENTRY( 0x0076, NtCreateThreadEx, 88 ) \
-    SYSCALL_ENTRY( 0x0077, NtCreateTimer, 32 ) \
-    SYSCALL_ENTRY( 0x0078, NtCreateToken, 104 ) \
-    SYSCALL_ENTRY( 0x0079, NtCreateTransaction, 80 ) \
-    SYSCALL_ENTRY( 0x007a, NtCreateUserProcess, 88 ) \
-    SYSCALL_ENTRY( 0x007b, NtDebugActiveProcess, 16 ) \
-    SYSCALL_ENTRY( 0x007c, NtDebugContinue, 24 ) \
-    SYSCALL_ENTRY( 0x007d, NtDeleteAtom, 8 ) \
-    SYSCALL_ENTRY( 0x007e, NtDeleteFile, 8 ) \
-    SYSCALL_ENTRY( 0x007f, NtDeleteKey, 8 ) \
-    SYSCALL_ENTRY( 0x0080, NtDeleteValueKey, 16 ) \
-    SYSCALL_ENTRY( 0x0081, NtDisplayString, 8 ) \
-    SYSCALL_ENTRY( 0x0082, NtFilterToken, 48 ) \
-    SYSCALL_ENTRY( 0x0083, NtFlushBuffersFileEx, 40 ) \
-    SYSCALL_ENTRY( 0x0084, NtFlushInstructionCache, 24 ) \
-    SYSCALL_ENTRY( 0x0085, NtFlushKey, 8 ) \
-    SYSCALL_ENTRY( 0x0086, NtFlushProcessWriteBuffers, 0 ) \
-    SYSCALL_ENTRY( 0x0087, NtFlushVirtualMemory, 32 ) \
-    SYSCALL_ENTRY( 0x0088, NtGetContextThread, 16 ) \
-    SYSCALL_ENTRY( 0x0089, NtGetCurrentProcessorNumber, 0 ) \
-    SYSCALL_ENTRY( 0x008a, NtGetNextProcess, 40 ) \
-    SYSCALL_ENTRY( 0x008b, NtGetNextThread, 48 ) \
-    SYSCALL_ENTRY( 0x008c, NtGetNlsSectionPtr, 40 ) \
-    SYSCALL_ENTRY( 0x008d, NtGetWriteWatch, 56 ) \
-    SYSCALL_ENTRY( 0x008e, NtImpersonateAnonymousToken, 8 ) \
-    SYSCALL_ENTRY( 0x008f, NtInitializeNlsFiles, 24 ) \
-    SYSCALL_ENTRY( 0x0090, NtInitiatePowerAction, 32 ) \
-    SYSCALL_ENTRY( 0x0091, NtListenPort, 16 ) \
-    SYSCALL_ENTRY( 0x0092, NtLoadDriver, 8 ) \
-    SYSCALL_ENTRY( 0x0093, NtLoadKey, 16 ) \
-    SYSCALL_ENTRY( 0x0094, NtLoadKey2, 24 ) \
-    SYSCALL_ENTRY( 0x0095, NtLoadKeyEx, 64 ) \
-    SYSCALL_ENTRY( 0x0096, NtLockFile, 80 ) \
-    SYSCALL_ENTRY( 0x0097, NtLockVirtualMemory, 32 ) \
-    SYSCALL_ENTRY( 0x0098, NtMakePermanentObject, 8 ) \
-    SYSCALL_ENTRY( 0x0099, NtMakeTemporaryObject, 8 ) \
-    SYSCALL_ENTRY( 0x009a, NtMapViewOfSectionEx, 72 ) \
-    SYSCALL_ENTRY( 0x009b, NtNotifyChangeDirectoryFile, 72 ) \
-    SYSCALL_ENTRY( 0x009c, NtNotifyChangeKey, 80 ) \
-    SYSCALL_ENTRY( 0x009d, NtNotifyChangeMultipleKeys, 96 ) \
-    SYSCALL_ENTRY( 0x009e, NtOpenIoCompletion, 24 ) \
-    SYSCALL_ENTRY( 0x009f, NtOpenJobObject, 24 ) \
-    SYSCALL_ENTRY( 0x00a0, NtOpenKeyEx, 32 ) \
-    SYSCALL_ENTRY( 0x00a1, NtOpenKeyTransacted, 32 ) \
-    SYSCALL_ENTRY( 0x00a2, NtOpenKeyTransactedEx, 40 ) \
-    SYSCALL_ENTRY( 0x00a3, NtOpenKeyedEvent, 24 ) \
-    SYSCALL_ENTRY( 0x00a4, NtOpenMutant, 24 ) \
-    SYSCALL_ENTRY( 0x00a5, NtOpenProcessToken, 24 ) \
+    SYSCALL_ENTRY( 0x0063, NtCommitTransaction, 16 ) \
+    SYSCALL_ENTRY( 0x0064, NtCompareObjects, 16 ) \
+    SYSCALL_ENTRY( 0x0065, NtCompareTokens, 24 ) \
+    SYSCALL_ENTRY( 0x0066, NtCompleteConnectPort, 8 ) \
+    SYSCALL_ENTRY( 0x0067, NtConnectPort, 64 ) \
+    SYSCALL_ENTRY( 0x0068, NtContinueEx, 16 ) \
+    SYSCALL_ENTRY( 0x0069, NtConvertBetweenAuxiliaryCounterAndPerformanceCounter, 32 ) \
+    SYSCALL_ENTRY( 0x006a, NtCreateDirectoryObject, 24 ) \
+    SYSCALL_ENTRY( 0x006b, NtCreateIoCompletion, 32 ) \
+    SYSCALL_ENTRY( 0x006c, NtCreateJobObject, 24 ) \
+    SYSCALL_ENTRY( 0x006d, NtCreateKeyTransacted, 64 ) \
+    SYSCALL_ENTRY( 0x006e, NtCreateKeyedEvent, 32 ) \
+    SYSCALL_ENTRY( 0x006f, NtCreateLowBoxToken, 72 ) \
+    SYSCALL_ENTRY( 0x0070, NtCreateMailslotFile, 64 ) \
+    SYSCALL_ENTRY( 0x0071, NtCreateMutant, 32 ) \
+    SYSCALL_ENTRY( 0x0072, NtCreateNamedPipeFile, 112 ) \
+    SYSCALL_ENTRY( 0x0073, NtCreatePagingFile, 32 ) \
+    SYSCALL_ENTRY( 0x0074, NtCreatePort, 40 ) \
+    SYSCALL_ENTRY( 0x0075, NtCreateSectionEx, 72 ) \
+    SYSCALL_ENTRY( 0x0076, NtCreateSemaphore, 40 ) \
+    SYSCALL_ENTRY( 0x0077, NtCreateSymbolicLinkObject, 32 ) \
+    SYSCALL_ENTRY( 0x0078, NtCreateThreadEx, 88 ) \
+    SYSCALL_ENTRY( 0x0079, NtCreateTimer, 32 ) \
+    SYSCALL_ENTRY( 0x007a, NtCreateToken, 104 ) \
+    SYSCALL_ENTRY( 0x007b, NtCreateTransaction, 80 ) \
+    SYSCALL_ENTRY( 0x007c, NtCreateUserProcess, 88 ) \
+    SYSCALL_ENTRY( 0x007d, NtDebugActiveProcess, 16 ) \
+    SYSCALL_ENTRY( 0x007e, NtDebugContinue, 24 ) \
+    SYSCALL_ENTRY( 0x007f, NtDeleteAtom, 8 ) \
+    SYSCALL_ENTRY( 0x0080, NtDeleteFile, 8 ) \
+    SYSCALL_ENTRY( 0x0081, NtDeleteKey, 8 ) \
+    SYSCALL_ENTRY( 0x0082, NtDeleteValueKey, 16 ) \
+    SYSCALL_ENTRY( 0x0083, NtDisplayString, 8 ) \
+    SYSCALL_ENTRY( 0x0084, NtFilterToken, 48 ) \
+    SYSCALL_ENTRY( 0x0085, NtFlushBuffersFileEx, 40 ) \
+    SYSCALL_ENTRY( 0x0086, NtFlushInstructionCache, 24 ) \
+    SYSCALL_ENTRY( 0x0087, NtFlushKey, 8 ) \
+    SYSCALL_ENTRY( 0x0088, NtFlushProcessWriteBuffers, 0 ) \
+    SYSCALL_ENTRY( 0x0089, NtFlushVirtualMemory, 32 ) \
+    SYSCALL_ENTRY( 0x008a, NtGetContextThread, 16 ) \
+    SYSCALL_ENTRY( 0x008b, NtGetCurrentProcessorNumber, 0 ) \
+    SYSCALL_ENTRY( 0x008c, NtGetNextProcess, 40 ) \
+    SYSCALL_ENTRY( 0x008d, NtGetNextThread, 48 ) \
+    SYSCALL_ENTRY( 0x008e, NtGetNlsSectionPtr, 40 ) \
+    SYSCALL_ENTRY( 0x008f, NtGetWriteWatch, 56 ) \
+    SYSCALL_ENTRY( 0x0090, NtImpersonateAnonymousToken, 8 ) \
+    SYSCALL_ENTRY( 0x0091, NtInitializeNlsFiles, 24 ) \
+    SYSCALL_ENTRY( 0x0092, NtInitiatePowerAction, 32 ) \
+    SYSCALL_ENTRY( 0x0093, NtListenPort, 16 ) \
+    SYSCALL_ENTRY( 0x0094, NtLoadDriver, 8 ) \
+    SYSCALL_ENTRY( 0x0095, NtLoadKey, 16 ) \
+    SYSCALL_ENTRY( 0x0096, NtLoadKey2, 24 ) \
+    SYSCALL_ENTRY( 0x0097, NtLoadKeyEx, 64 ) \
+    SYSCALL_ENTRY( 0x0098, NtLockFile, 80 ) \
+    SYSCALL_ENTRY( 0x0099, NtLockVirtualMemory, 32 ) \
+    SYSCALL_ENTRY( 0x009a, NtMakePermanentObject, 8 ) \
+    SYSCALL_ENTRY( 0x009b, NtMakeTemporaryObject, 8 ) \
+    SYSCALL_ENTRY( 0x009c, NtMapViewOfSectionEx, 72 ) \
+    SYSCALL_ENTRY( 0x009d, NtNotifyChangeDirectoryFile, 72 ) \
+    SYSCALL_ENTRY( 0x009e, NtNotifyChangeKey, 80 ) \
+    SYSCALL_ENTRY( 0x009f, NtNotifyChangeMultipleKeys, 96 ) \
+    SYSCALL_ENTRY( 0x00a0, NtOpenIoCompletion, 24 ) \
+    SYSCALL_ENTRY( 0x00a1, NtOpenJobObject, 24 ) \
+    SYSCALL_ENTRY( 0x00a2, NtOpenKeyEx, 32 ) \
+    SYSCALL_ENTRY( 0x00a3, NtOpenKeyTransacted, 32 ) \
+    SYSCALL_ENTRY( 0x00a4, NtOpenKeyTransactedEx, 40 ) \
+    SYSCALL_ENTRY( 0x00a5, NtOpenKeyedEvent, 24 ) \
     SYSCALL_ENTRY( 0x00a6, NtCreateDebugObject, 32 ) \
-    SYSCALL_ENTRY( 0x00a7, NtOpenSemaphore, 24 ) \
-    SYSCALL_ENTRY( 0x00a8, NtOpenSymbolicLinkObject, 24 ) \
-    SYSCALL_ENTRY( 0x00a9, NtOpenThread, 32 ) \
-    SYSCALL_ENTRY( 0x00aa, NtOpenTimer, 24 ) \
-    SYSCALL_ENTRY( 0x00ab, NtPrivilegeCheck, 24 ) \
-    SYSCALL_ENTRY( 0x00ac, NtPulseEvent, 16 ) \
-    SYSCALL_ENTRY( 0x00ad, NtQueryDirectoryObject, 56 ) \
-    SYSCALL_ENTRY( 0x00ae, NtQueryEaFile, 72 ) \
-    SYSCALL_ENTRY( 0x00af, NtQueryFullAttributesFile, 16 ) \
-    SYSCALL_ENTRY( 0x00b0, NtQueryInformationAtom, 40 ) \
-    SYSCALL_ENTRY( 0x00b1, NtQueryInformationJobObject, 40 ) \
-    SYSCALL_ENTRY( 0x00b2, NtQueryInstallUILanguage, 8 ) \
-    SYSCALL_ENTRY( 0x00b3, NtQueryIoCompletion, 40 ) \
-    SYSCALL_ENTRY( 0x00b4, NtQueryLicenseValue, 40 ) \
-    SYSCALL_ENTRY( 0x00b5, NtQueryMultipleValueKey, 48 ) \
-    SYSCALL_ENTRY( 0x00b6, NtQueryMutant, 40 ) \
-    SYSCALL_ENTRY( 0x00b7, NtQuerySecurityObject, 40 ) \
-    SYSCALL_ENTRY( 0x00b8, NtQuerySemaphore, 40 ) \
-    SYSCALL_ENTRY( 0x00b9, NtQuerySymbolicLinkObject, 24 ) \
-    SYSCALL_ENTRY( 0x00ba, NtQuerySystemEnvironmentValue, 32 ) \
-    SYSCALL_ENTRY( 0x00bb, NtQuerySystemEnvironmentValueEx, 40 ) \
-    SYSCALL_ENTRY( 0x00bc, NtQuerySystemInformationEx, 48 ) \
-    SYSCALL_ENTRY( 0x00bd, NtQueryTimerResolution, 24 ) \
-    SYSCALL_ENTRY( 0x00be, NtQueueApcThreadEx, 48 ) \
-    SYSCALL_ENTRY( 0x00bf, NtRaiseException, 24 ) \
-    SYSCALL_ENTRY( 0x00c0, NtRaiseHardError, 48 ) \
-    SYSCALL_ENTRY( 0x00c1, NtRegisterThreadTerminatePort, 8 ) \
-    SYSCALL_ENTRY( 0x00c2, NtReleaseKeyedEvent, 32 ) \
-    SYSCALL_ENTRY( 0x00c3, NtRemoveIoCompletionEx, 48 ) \
-    SYSCALL_ENTRY( 0x00c4, NtRemoveProcessDebug, 16 ) \
-    SYSCALL_ENTRY( 0x00c5, NtRenameKey, 16 ) \
-    SYSCALL_ENTRY( 0x00c6, NtReplaceKey, 24 ) \
-    SYSCALL_ENTRY( 0x00c7, NtResetEvent, 16 ) \
-    SYSCALL_ENTRY( 0x00c8, NtResetWriteWatch, 24 ) \
-    SYSCALL_ENTRY( 0x00c9, NtRestoreKey, 24 ) \
-    SYSCALL_ENTRY( 0x00ca, NtResumeProcess, 8 ) \
-    SYSCALL_ENTRY( 0x00cb, NtRollbackTransaction, 16 ) \
-    SYSCALL_ENTRY( 0x00cc, NtSaveKey, 16 ) \
-    SYSCALL_ENTRY( 0x00cd, NtSecureConnectPort, 72 ) \
-    SYSCALL_ENTRY( 0x00ce, NtSetContextThread, 16 ) \
-    SYSCALL_ENTRY( 0x00cf, NtSetDebugFilterState, 24 ) \
-    SYSCALL_ENTRY( 0x00d0, NtSetDefaultLocale, 16 ) \
-    SYSCALL_ENTRY( 0x00d1, NtSetDefaultUILanguage, 8 ) \
-    SYSCALL_ENTRY( 0x00d2, NtSetEaFile, 32 ) \
-    SYSCALL_ENTRY( 0x00d3, NtSetInformationDebugObject, 40 ) \
-    SYSCALL_ENTRY( 0x00d4, NtSetInformationJobObject, 32 ) \
-    SYSCALL_ENTRY( 0x00d5, NtSetInformationKey, 32 ) \
-    SYSCALL_ENTRY( 0x00d6, NtSetInformationToken, 32 ) \
-    SYSCALL_ENTRY( 0x00d7, NtSetInformationVirtualMemory, 48 ) \
-    SYSCALL_ENTRY( 0x00d8, NtSetIntervalProfile, 16 ) \
-    SYSCALL_ENTRY( 0x00d9, NtSetIoCompletion, 40 ) \
-    SYSCALL_ENTRY( 0x00da, NtSetIoCompletionEx, 48 ) \
-    SYSCALL_ENTRY( 0x00db, NtSetLdtEntries, 32 ) \
-    SYSCALL_ENTRY( 0x00dc, NtSetSecurityObject, 24 ) \
-    SYSCALL_ENTRY( 0x00dd, NtSetSystemInformation, 24 ) \
-    SYSCALL_ENTRY( 0x00de, NtSetSystemTime, 16 ) \
-    SYSCALL_ENTRY( 0x00df, NtSetThreadExecutionState, 16 ) \
-    SYSCALL_ENTRY( 0x00e0, NtSetTimerResolution, 24 ) \
-    SYSCALL_ENTRY( 0x00e1, NtSetVolumeInformationFile, 40 ) \
-    SYSCALL_ENTRY( 0x00e2, NtShutdownSystem, 8 ) \
-    SYSCALL_ENTRY( 0x00e3, NtSignalAndWaitForSingleObject, 32 ) \
-    SYSCALL_ENTRY( 0x00e4, NtSuspendProcess, 8 ) \
-    SYSCALL_ENTRY( 0x00e5, NtSuspendThread, 16 ) \
-    SYSCALL_ENTRY( 0x00e6, NtSystemDebugControl, 48 ) \
-    SYSCALL_ENTRY( 0x00e7, NtTerminateJobObject, 16 ) \
-    SYSCALL_ENTRY( 0x00e8, NtTestAlert, 0 ) \
-    SYSCALL_ENTRY( 0x00e9, NtTraceControl, 48 ) \
-    SYSCALL_ENTRY( 0x00ea, NtUnloadDriver, 8 ) \
-    SYSCALL_ENTRY( 0x00eb, NtUnloadKey, 8 ) \
-    SYSCALL_ENTRY( 0x00ec, NtUnlockFile, 40 ) \
-    SYSCALL_ENTRY( 0x00ed, NtUnlockVirtualMemory, 32 ) \
-    SYSCALL_ENTRY( 0x00ee, NtUnmapViewOfSectionEx, 24 ) \
-    SYSCALL_ENTRY( 0x00ef, NtWaitForAlertByThreadId, 16 ) \
-    SYSCALL_ENTRY( 0x00f0, NtWaitForDebugEvent, 32 ) \
-    SYSCALL_ENTRY( 0x00f1, NtWaitForKeyedEvent, 32 )
+    SYSCALL_ENTRY( 0x00a7, NtOpenMutant, 24 ) \
+    SYSCALL_ENTRY( 0x00a8, NtOpenProcessToken, 24 ) \
+    SYSCALL_ENTRY( 0x00a9, NtOpenSemaphore, 24 ) \
+    SYSCALL_ENTRY( 0x00aa, NtOpenSymbolicLinkObject, 24 ) \
+    SYSCALL_ENTRY( 0x00ab, NtOpenThread, 32 ) \
+    SYSCALL_ENTRY( 0x00ac, NtOpenTimer, 24 ) \
+    SYSCALL_ENTRY( 0x00ad, NtPrivilegeCheck, 24 ) \
+    SYSCALL_ENTRY( 0x00ae, NtPulseEvent, 16 ) \
+    SYSCALL_ENTRY( 0x00af, NtQueryDirectoryObject, 56 ) \
+    SYSCALL_ENTRY( 0x00b0, NtQueryEaFile, 72 ) \
+    SYSCALL_ENTRY( 0x00b1, NtQueryFullAttributesFile, 16 ) \
+    SYSCALL_ENTRY( 0x00b2, NtQueryInformationAtom, 40 ) \
+    SYSCALL_ENTRY( 0x00b3, NtQueryInformationJobObject, 40 ) \
+    SYSCALL_ENTRY( 0x00b4, NtQueryInstallUILanguage, 8 ) \
+    SYSCALL_ENTRY( 0x00b5, NtQueryIoCompletion, 40 ) \
+    SYSCALL_ENTRY( 0x00b6, NtQueryLicenseValue, 40 ) \
+    SYSCALL_ENTRY( 0x00b7, NtQueryMultipleValueKey, 48 ) \
+    SYSCALL_ENTRY( 0x00b8, NtQueryMutant, 40 ) \
+    SYSCALL_ENTRY( 0x00b9, NtQuerySecurityObject, 40 ) \
+    SYSCALL_ENTRY( 0x00ba, NtQuerySemaphore, 40 ) \
+    SYSCALL_ENTRY( 0x00bb, NtQuerySymbolicLinkObject, 24 ) \
+    SYSCALL_ENTRY( 0x00bc, NtQuerySystemEnvironmentValue, 32 ) \
+    SYSCALL_ENTRY( 0x00bd, NtQuerySystemEnvironmentValueEx, 40 ) \
+    SYSCALL_ENTRY( 0x00be, NtQuerySystemInformationEx, 48 ) \
+    SYSCALL_ENTRY( 0x00bf, NtQueryTimerResolution, 24 ) \
+    SYSCALL_ENTRY( 0x00c0, NtQueueApcThreadEx, 48 ) \
+    SYSCALL_ENTRY( 0x00c1, NtRaiseException, 24 ) \
+    SYSCALL_ENTRY( 0x00c2, NtRaiseHardError, 48 ) \
+    SYSCALL_ENTRY( 0x00c3, NtRegisterThreadTerminatePort, 8 ) \
+    SYSCALL_ENTRY( 0x00c4, NtReleaseKeyedEvent, 32 ) \
+    SYSCALL_ENTRY( 0x00c5, NtRemoveIoCompletionEx, 48 ) \
+    SYSCALL_ENTRY( 0x00c6, NtRemoveProcessDebug, 16 ) \
+    SYSCALL_ENTRY( 0x00c7, NtRenameKey, 16 ) \
+    SYSCALL_ENTRY( 0x00c8, NtReplaceKey, 24 ) \
+    SYSCALL_ENTRY( 0x00c9, NtResetEvent, 16 ) \
+    SYSCALL_ENTRY( 0x00ca, NtResetWriteWatch, 24 ) \
+    SYSCALL_ENTRY( 0x00cb, NtRestoreKey, 24 ) \
+    SYSCALL_ENTRY( 0x00cc, NtResumeProcess, 8 ) \
+    SYSCALL_ENTRY( 0x00cd, NtRollbackTransaction, 16 ) \
+    SYSCALL_ENTRY( 0x00ce, NtSaveKey, 16 ) \
+    SYSCALL_ENTRY( 0x00cf, NtSecureConnectPort, 72 ) \
+    SYSCALL_ENTRY( 0x00d0, NtSetContextThread, 16 ) \
+    SYSCALL_ENTRY( 0x00d1, NtSetDebugFilterState, 24 ) \
+    SYSCALL_ENTRY( 0x00d2, NtSetDefaultLocale, 16 ) \
+    SYSCALL_ENTRY( 0x00d3, NtSetDefaultUILanguage, 8 ) \
+    SYSCALL_ENTRY( 0x00d4, NtSetEaFile, 32 ) \
+    SYSCALL_ENTRY( 0x00d5, NtSetInformationDebugObject, 40 ) \
+    SYSCALL_ENTRY( 0x00d6, NtSetInformationJobObject, 32 ) \
+    SYSCALL_ENTRY( 0x00d7, NtSetInformationKey, 32 ) \
+    SYSCALL_ENTRY( 0x00d8, NtSetInformationToken, 32 ) \
+    SYSCALL_ENTRY( 0x00d9, NtSetInformationVirtualMemory, 48 ) \
+    SYSCALL_ENTRY( 0x00da, NtSetIntervalProfile, 16 ) \
+    SYSCALL_ENTRY( 0x00db, NtSetIoCompletion, 40 ) \
+    SYSCALL_ENTRY( 0x00dc, NtSetIoCompletionEx, 48 ) \
+    SYSCALL_ENTRY( 0x00dd, NtSetLdtEntries, 32 ) \
+    SYSCALL_ENTRY( 0x00de, NtSetSecurityObject, 24 ) \
+    SYSCALL_ENTRY( 0x00df, NtSetSystemInformation, 24 ) \
+    SYSCALL_ENTRY( 0x00e0, NtSetSystemTime, 16 ) \
+    SYSCALL_ENTRY( 0x00e1, NtSetThreadExecutionState, 16 ) \
+    SYSCALL_ENTRY( 0x00e2, NtSetTimerResolution, 24 ) \
+    SYSCALL_ENTRY( 0x00e3, NtSetVolumeInformationFile, 40 ) \
+    SYSCALL_ENTRY( 0x00e4, NtShutdownSystem, 8 ) \
+    SYSCALL_ENTRY( 0x00e5, NtSignalAndWaitForSingleObject, 32 ) \
+    SYSCALL_ENTRY( 0x00e6, NtSuspendProcess, 8 ) \
+    SYSCALL_ENTRY( 0x00e7, NtSuspendThread, 16 ) \
+    SYSCALL_ENTRY( 0x00e8, NtSystemDebugControl, 48 ) \
+    SYSCALL_ENTRY( 0x00e9, NtTerminateJobObject, 16 ) \
+    SYSCALL_ENTRY( 0x00ea, NtTestAlert, 0 ) \
+    SYSCALL_ENTRY( 0x00eb, NtTraceControl, 48 ) \
+    SYSCALL_ENTRY( 0x00ec, NtUnloadDriver, 8 ) \
+    SYSCALL_ENTRY( 0x00ed, NtUnloadKey, 8 ) \
+    SYSCALL_ENTRY( 0x00ee, NtUnlockFile, 40 ) \
+    SYSCALL_ENTRY( 0x00ef, NtUnlockVirtualMemory, 32 ) \
+    SYSCALL_ENTRY( 0x00f0, NtUnmapViewOfSectionEx, 24 ) \
+    SYSCALL_ENTRY( 0x00f1, NtWaitForAlertByThreadId, 16 ) \
+    SYSCALL_ENTRY( 0x00f2, NtWaitForDebugEvent, 32 ) \
+    SYSCALL_ENTRY( 0x00f3, NtWaitForKeyedEvent, 32 )
 #else
 #define ALL_SYSCALLS ALL_SYSCALLS32
 #endif
