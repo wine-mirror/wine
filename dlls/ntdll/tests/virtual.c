@@ -2503,6 +2503,80 @@ static void test_NtFreeVirtualMemory(void)
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
 }
 
+static void test_NtProtectVirtualMemory(void)
+{
+    void *addr, *addr2;
+    NTSTATUS status;
+    SIZE_T size;
+    DWORD old_prot;
+
+    size = page_size * 16;
+    addr = NULL;
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr, 0, &size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+    old_prot = 0;
+    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_READONLY, &old_prot);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    ok(old_prot == PAGE_READWRITE, "Unexpected old_prot %lx.\n", old_prot);
+
+    status = NtProtectVirtualMemory(NULL, &addr, &size, PAGE_READONLY, &old_prot);
+    ok(status == STATUS_INVALID_HANDLE, "Unexpected status %08lx.\n", status);
+
+    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_READONLY, NULL);
+    ok(status == STATUS_ACCESS_VIOLATION, "Unexpected status %08lx.\n", status);
+
+    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, 0, &old_prot);
+    ok(status == STATUS_INVALID_PAGE_PROTECTION, "Unexpected status %08lx.\n", status);
+
+    size = page_size * 8;
+    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_READWRITE, &old_prot);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    ok(old_prot == PAGE_READONLY, "Unexpected old_prot %lx.\n", old_prot);
+    addr = (char *)addr + page_size * 8;
+    old_prot = 0;
+    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_EXECUTE_READWRITE, &old_prot);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    ok(old_prot == PAGE_READONLY, "Unexpected old_prot %lx.\n", old_prot);
+    addr = (char *)addr - page_size * 8;
+    size = page_size * 16;
+    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_EXECUTE_READ, &old_prot);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    ok(old_prot == PAGE_READWRITE, "Unexpected old_prot %lx.\n", old_prot);
+
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+    addr = NULL;
+    size = page_size;
+    old_prot = 0;
+    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_READONLY, &old_prot);
+    /* todo: STATUS_INVALID_PARAMETER in wine, STATUS_CONFLICTING_ADDRESSES in win64 */
+    ok(status, "Unexpected status %08lx.\n", status);
+    ok(old_prot == PAGE_NOACCESS || broken(old_prot) /* win7 */, "Unexpected old_prot %lx.\n", old_prot);
+
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr, 0, &size, MEM_RESERVE, PAGE_READWRITE);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    old_prot = 0;
+    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_READONLY, &old_prot);
+    ok(status == STATUS_NOT_COMMITTED, "Unexpected status %08lx.\n", status);
+    ok(old_prot == PAGE_NOACCESS || broken(old_prot) /* win7 */, "Unexpected old_prot %lx.\n", old_prot);
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr, 0, &size, MEM_COMMIT, PAGE_READWRITE);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+    addr2 = addr;
+    addr = (char *)addr + 1;
+    size = 1;
+    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_READONLY, &old_prot);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    ok(old_prot == PAGE_READWRITE, "Unexpected old_prot %lx.\n", old_prot);
+    ok(size == page_size, "Unexpected size %p.\n",  (void *)size);
+    ok(addr == addr2, "Got addr %p, addr2 %p.\n", addr, addr2);
+
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+}
+
 static void test_prefetch(void)
 {
     NTSTATUS status;
@@ -3251,6 +3325,7 @@ START_TEST(virtual)
     test_NtAllocateVirtualMemoryEx();
     test_NtAllocateVirtualMemoryEx_address_requirements();
     test_NtFreeVirtualMemory();
+    test_NtProtectVirtualMemory();
     test_RtlCreateUserStack();
     test_NtMapViewOfSection();
     test_NtMapViewOfSectionEx();
