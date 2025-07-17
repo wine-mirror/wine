@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-07-01 20:49+0200\n"
+"PO-Revision-Date: 2025-07-17 02:54+0200\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -177,12 +177,11 @@ msgid ""
 "gitlab.winehq.org/wine/wine/-/wikis/Gecko</a> for details."
 msgstr ""
 "Nie znaleziono paczki Gecko potrzebnej do prawidłowego działania aplikacji "
-"zawierających kod HTML. Wine może sam pobrać i zainstalować tą paczkę dla "
-"ciebie.\n"
+"zawierających kod HTML. Wine może automatycznie ją pobrać i zainstalować.\n"
 "\n"
-"Uwaga: zalecamy użycie paczki z twojej dystrybucji. Po szczegóły zajrzyj na "
-"<a href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://"
-"gitlab.winehq.org/wine/wine/-/wikis/Gecko</a>."
+"Uwaga: zalecane jest użycie paczki z używanej dystrybucji. Po szczegóły "
+"zajrzyj na <a href=\"https://gitlab.winehq.org/wine/wine/-/wikis/"
+"Gecko\">https://gitlab.winehq.org/wine/wine/-/wikis/Gecko</a>."
 
 #: dlls/appwiz.cpl/appwiz.rc:111 dlls/appwiz.cpl/appwiz.rc:126
 msgid "&Install"
@@ -245,13 +244,12 @@ msgid ""
 "href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Wine-Mono\">https://"
 "gitlab.winehq.org/wine/wine/-/wikis/Wine-Mono</a> for details."
 msgstr ""
-"Wine nie znalazło pakietu wine-mono, potrzebnego do poprawnego działania "
-"aplikacji .NET. Wine może samodzielnie pobrać i wgrać ten pakiet dla "
-"ciebie.\n"
+"Wine nie znalazł pakietu wine-mono, który jest niezbędny do prawidłowego "
+"działania aplikacji .NET. Wine może go automatycznie pobrać i zainstalować.\n"
 "\n"
-"Uwaga: zaleca się użycie pakietu z twojej dystrybucji. Po szczegóły zajrzyj "
-"na stronę <a href=\"https://gitlab.winehq.org/wine/wine/-/wikis/"
-"Gecko\">https://gitlab.winehq.org/wine/wine/-/wikis/Wine-Mono</a>."
+"Uwaga: zalecane jest użycie paczki z używanej dystrybucji. Po szczegóły "
+"zajrzyj na <a href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Wine-"
+"Mono\">https://gitlab.winehq.org/wine/wine/-/wikis/Wine-Mono</a>."
 
 #: dlls/appwiz.cpl/appwiz.rc:31
 msgid "Add/Remove Programs"
@@ -262,8 +260,8 @@ msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
-"Umożliwia wgranie nowego lub usunięcie już wgranego oprogramowania z twojego "
-"komputera."
+"Umożliwia instalację nowego oprogramowania lub usunięcie istniejącego "
+"oprogramowania z komputera."
 
 #: dlls/appwiz.cpl/appwiz.rc:33 programs/taskmgr/taskmgr.rc:262
 #: programs/winecfg/winecfg.rc:32
@@ -276,7 +274,7 @@ msgid ""
 "entry for this program from the registry?"
 msgstr ""
 "Nie można uruchomić programu odinstalowującego, '%s'. Czy chcesz usunąć wpis "
-"o tym programie z rejestru?"
+"tego programu z rejestru?"
 
 #: dlls/appwiz.cpl/appwiz.rc:36
 msgid "Not specified"
@@ -335,8 +333,7 @@ msgstr ""
 #: dlls/appwiz.cpl/appwiz.rc:47
 msgid "Please wait until the current uninstall/modify process is complete."
 msgstr ""
-"Poczekaj, aż bieżący proces odinstalowywania/modyfikowania zostanie "
-"zakończony."
+"Poczekaj, aż bieżący proces odinstalowywania/zmieniania zostanie zakończony."
 
 #: dlls/appwiz.cpl/appwiz.rc:55
 msgid "Download failed."
@@ -380,11 +377,11 @@ msgstr "Wszystkie pliki multimedialne"
 
 #: dlls/avifil32/avifil32.rc:34
 msgid "video"
-msgstr "obraz"
+msgstr "wideo"
 
 #: dlls/avifil32/avifil32.rc:35
 msgid "audio"
-msgstr "dźwięk"
+msgstr "audio"
 
 #: dlls/avifil32/avifil32.rc:36
 msgid "Wine AVI-default-filehandler"
@@ -1232,7 +1229,7 @@ msgstr "Otwórz plik"
 
 #: dlls/comdlg32/comdlg32.rc:148
 msgid "Select Folder"
-msgstr "Zaznacz katalog"
+msgstr "Wybierz katalog"
 
 #: dlls/comdlg32/comdlg32.rc:149
 msgid "Font size has to be a number."
@@ -1276,7 +1273,7 @@ msgstr "Drukarka jest odłączona; "
 
 #: dlls/comdlg32/comdlg32.rc:93
 msgid "I/O Active; "
-msgstr "We/Wy aktywne; "
+msgstr "We/wy aktywne; "
 
 #: dlls/comdlg32/comdlg32.rc:94
 msgid "Busy; "
@@ -1572,11 +1569,11 @@ msgstr "Protokół stanu certyfikatu online"
 
 #: dlls/crypt32/crypt32.rc:59
 msgid "Certification Authority Issuer"
-msgstr "Urząd certyfikacji - wystawca"
+msgstr "Wystawca urzędu certyfikacji"
 
 #: dlls/crypt32/crypt32.rc:60
 msgid "Certification Template Name"
-msgstr "Nazwa szablonu certyfikatu"
+msgstr "Nazwa szablonu certyfikacji"
 
 #: dlls/crypt32/crypt32.rc:61
 msgid "Certificate Type"
@@ -3648,7 +3645,7 @@ msgstr "Strona domowa"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:50
 msgid "You can choose the address that will be used as your home page."
-msgstr "Możesz wybrać adres strony, która będzie twoją stroną domową."
+msgstr "Możesz wybrać adres strony, która będzie stroną domową."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:53
 msgid "&Current page"
@@ -3668,7 +3665,7 @@ msgstr "Historia przeglądania"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:57
 msgid "You can delete cached pages, cookies and other data."
-msgstr "Możesz usunąć przechowywane strony, ciasteczka i inne dane."
+msgstr "Możesz usunąć przechowywane strony, ciasteczka i inne dane."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:59
 msgid "Delete &files..."
@@ -3688,7 +3685,7 @@ msgid ""
 "Cached copies of web pages, images and certificates."
 msgstr ""
 "Tymczasowe pliki internetowe\n"
-"Kopie stron sieci Web, obrazów i certyfikatów."
+"Kopie stron sieci Web, obrazów i certyfikatów."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:73
 msgid ""
@@ -3795,7 +3792,7 @@ msgstr "Dostosuj"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:35
 msgid "Very Low"
-msgstr "Bardzo nisko"
+msgstr "Bardzo niski"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:36 dlls/wininet/wininet.rc:42
 msgid "Low"
@@ -3815,7 +3812,7 @@ msgstr "Najwyższy"
 
 #: dlls/ir50_32/ir50_32.rc:28
 msgid "Indeo5"
-msgstr "Indeo5"
+msgstr "Indeo 5"
 
 #: dlls/ir50_32/ir50_32.rc:29
 msgid "Indeo Video Interactive version 5 video codec"
@@ -3916,32 +3913,32 @@ msgid ""
 "No user detected on slot #0, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
-"Nie wykryto użytkownika na slocie #0. Upewnij się że twój pad jest "
-"podłączony i nie nadpisany dla DInput, w zakładce Dżojstiki."
+"Nie wykryto użytkownika w slocie nr 0, upewnij się, że gamepad jest "
+"podłączony i nie został nadpisany dla DInput na karcie Dżojstiki."
 
 #: dlls/joy.cpl/joy.rc:85
 msgid ""
 "No user detected on slot #1, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
-"Nie wykryto użytkownika na slocie #1. Upewnij się że twój pad jest "
-"podłączony i nie nadpisany dla DInput, w zakładce Dżojstiki."
+"Nie wykryto użytkownika w slocie nr 1, upewnij się, że gamepad jest "
+"podłączony i nie został nadpisany dla DInput na karcie Dżojstiki."
 
 #: dlls/joy.cpl/joy.rc:89
 msgid ""
 "No user detected on slot #2, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
-"Nie wykryto użytkownika na slocie #2. Upewnij się że twój pad jest "
-"podłączony i nie nadpisany dla DInput, w zakładce Dżojstiki."
+"Nie wykryto użytkownika w slocie nr 2 upewnij się, że gamepad jest "
+"podłączony i nie został nadpisany dla DInput na karcie Dżojstiki."
 
 #: dlls/joy.cpl/joy.rc:93
 msgid ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
-"Nie wykryto użytkownika na slocie #3. Upewnij się że twój pad jest "
-"podłączony i nie nadpisany dla DInput, w zakładce Dżojstiki."
+"Nie wykryto użytkownika w slocie nr 3 upewnij się, że gamepad jest "
+"podłączony i nie został nadpisany dla DInput na karcie Dżojstiki."
 
 #: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
 #: dlls/joy.cpl/joy.rc:101
@@ -4042,11 +4039,11 @@ msgstr "Nie można umieścić 'continue' poza pętlą"
 
 #: dlls/jscript/jscript.rc:49
 msgid "Label redefined"
-msgstr "Etykieta zdefiniowana ponownie"
+msgstr "Etykieta zdefiniowana na nowo"
 
 #: dlls/jscript/jscript.rc:50
 msgid "Label not found"
-msgstr "Nie znaleziono etykiety"
+msgstr "Etykieta nie została znaleziona"
 
 #: dlls/jscript/jscript.rc:51
 msgid "Expected '@end'"
@@ -4161,7 +4158,7 @@ msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
-"nie można ustawić atrybutu 'writable' na opisie własności na 'true' na tym "
+"Nie można ustawić atrybutu 'writable' na opisie własności na 'true' na tym "
 "obiekcie"
 
 #: dlls/jscript/jscript.rc:76
@@ -4292,7 +4289,7 @@ msgstr "Nieprawidłowy uchwyt.\n"
 
 #: dlls/kernelbase/winerror.mc:63
 msgid "Memory trashed.\n"
-msgstr "Pamięć zaśmiecona.\n"
+msgstr "Pamięć zniszczona.\n"
 
 #: dlls/kernelbase/winerror.mc:68
 msgid "Not enough memory.\n"
@@ -5032,15 +5029,15 @@ msgstr "Dostęp rozszerzonego atrybutu zastrzeżony.\n"
 
 #: dlls/kernelbase/winerror.mc:998
 msgid "I/O operation aborted.\n"
-msgstr "Operacja We/Wy przerwana.\n"
+msgstr "Operacja we/wy przerwana.\n"
 
 #: dlls/kernelbase/winerror.mc:1003
 msgid "Overlapped I/O incomplete.\n"
-msgstr "Zachodzące operacje We/Wy niekompletne.\n"
+msgstr "Zachodzące operacje we/wy niekompletne.\n"
 
 #: dlls/kernelbase/winerror.mc:1008
 msgid "Overlapped I/O pending.\n"
-msgstr "Zachodzące operacje We/Wy w toku.\n"
+msgstr "Zachodzące operacje we/wy w toku.\n"
 
 #: dlls/kernelbase/winerror.mc:1013
 msgid "No access to memory location.\n"
@@ -5112,7 +5109,7 @@ msgstr "Rejestr jest zepsuty.\n"
 
 #: dlls/kernelbase/winerror.mc:1098
 msgid "I/O to registry failed.\n"
-msgstr "Operacje We/Wy do rejestru nieudane.\n"
+msgstr "Operacje we/wy do rejestru nieudane.\n"
 
 #: dlls/kernelbase/winerror.mc:1103
 msgid "Not registry file.\n"
@@ -5316,7 +5313,7 @@ msgstr "Zmieniono nośnik.\n"
 
 #: dlls/kernelbase/winerror.mc:1353
 msgid "I/O bus reset.\n"
-msgstr "Reset szyny We/Wy.\n"
+msgstr "Reset szyny we/wy.\n"
 
 #: dlls/kernelbase/winerror.mc:1358
 msgid "No media in drive.\n"
@@ -5352,11 +5349,11 @@ msgstr "Współdzielone IRQ zajęte.\n"
 
 #: dlls/kernelbase/winerror.mc:1398
 msgid "Serial I/O completed.\n"
-msgstr "Szeregowe operacje We/Wy ukończone.\n"
+msgstr "Szeregowe operacje we/wy ukończone.\n"
 
 #: dlls/kernelbase/winerror.mc:1403
 msgid "Serial I/O counter timeout.\n"
-msgstr "Czas wygaśnięcia licznika szeregowych operacji We/Wy.\n"
+msgstr "Czas wygaśnięcia licznika szeregowych operacji we/wy.\n"
 
 #: dlls/kernelbase/winerror.mc:1408
 msgid "Floppy ID address mark not found.\n"
@@ -6196,7 +6193,7 @@ msgstr "Klasa ma otwarte okna.\n"
 
 #: dlls/kernelbase/winerror.mc:2463 dlls/mferror/mferror.mc:130
 msgid "Invalid index.\n"
-msgstr "Niepoprawny index.\n"
+msgstr "Niepoprawny indeks.\n"
 
 #: dlls/kernelbase/winerror.mc:2468
 msgid "Invalid icon handle.\n"
@@ -6204,7 +6201,7 @@ msgstr "Niepoprawny uchwyt ikony.\n"
 
 #: dlls/kernelbase/winerror.mc:2473
 msgid "Private dialog index.\n"
-msgstr "Index prywatnego dialogu.\n"
+msgstr "Indeks prywatnego okna dialogowego\n"
 
 #: dlls/kernelbase/winerror.mc:2478
 msgid "List box ID not found.\n"
@@ -6272,7 +6269,7 @@ msgstr "Procedura zaczepu niezainstalowana.\n"
 
 #: dlls/kernelbase/winerror.mc:2558
 msgid "Invalid list box message.\n"
-msgstr "Niepoprawna wiadomość listbox'a.\n"
+msgstr "Niepoprawny komunikat w polu listy.\n"
 
 #: dlls/kernelbase/winerror.mc:2563
 msgid "Invalid LB_SETCOUNT sent.\n"
@@ -6280,7 +6277,7 @@ msgstr "Wysłano niepoprawny LB_SETCOUNT.\n"
 
 #: dlls/kernelbase/winerror.mc:2568
 msgid "No tab stops on this list box.\n"
-msgstr "Brak punktów tabulacyjnych w tym listbox'ie.\n"
+msgstr "Brak punktów tabulacyjnych w tym polu listy.\n"
 
 #: dlls/kernelbase/winerror.mc:2573
 msgid "Can't destroy object owned by another thread.\n"
@@ -6288,7 +6285,7 @@ msgstr "Nie można zniszczyć obiektu należącego do innego wątku.\n"
 
 #: dlls/kernelbase/winerror.mc:2578
 msgid "Child window menus not allowed.\n"
-msgstr "Menu okna potomnego nie dozwolone.\n"
+msgstr "Menu okna potomnego nie są dozwolone.\n"
 
 #: dlls/kernelbase/winerror.mc:2583
 msgid "Window has no system menu.\n"
@@ -6296,7 +6293,7 @@ msgstr "Okno nie ma menu systemowego.\n"
 
 #: dlls/kernelbase/winerror.mc:2588
 msgid "Invalid message box style.\n"
-msgstr "Niepoprawny styl messagebox'a.\n"
+msgstr "Niepoprawny styl pola wiadomości.\n"
 
 #: dlls/kernelbase/winerror.mc:2593
 msgid "Invalid SPI parameter.\n"
@@ -6540,7 +6537,7 @@ msgstr "Platforma instalacyjna niewspierana.\n"
 
 #: dlls/kernelbase/winerror.mc:2893
 msgid "Installer not used.\n"
-msgstr "Instalator nie użyty.\n"
+msgstr "Instalator nieużywany.\n"
 
 #: dlls/kernelbase/winerror.mc:2898
 msgid "Failed to open the patch package.\n"
@@ -6680,7 +6677,7 @@ msgstr "Wywołanie RPC nieudane.\n"
 
 #: dlls/kernelbase/winerror.mc:3068
 msgid "RPC call failed and didn't execute.\n"
-msgstr "Wywołanie RPC nieudane i nie wykonane.\n"
+msgstr "Wywołanie RPC nieudane i niewykonane.\n"
 
 #: dlls/kernelbase/winerror.mc:3073
 msgid "RPC protocol error.\n"
@@ -6700,7 +6697,7 @@ msgstr "Niepoprawne granice macierzy.\n"
 
 #: dlls/kernelbase/winerror.mc:3098
 msgid "No entry name.\n"
-msgstr "Brak nazwy entry.\n"
+msgstr "Brak nazwy wpisu.\n"
 
 #: dlls/kernelbase/winerror.mc:3103
 msgid "Invalid name syntax.\n"
@@ -6852,7 +6849,7 @@ msgstr "Otwarcie tablicy tłumaczenia znaków nieudane.\n"
 
 #: dlls/kernelbase/winerror.mc:3288
 msgid "Character translation table file too small.\n"
-msgstr "Plik tablicy tłumaczenia znaków zbyt mały.\n"
+msgstr "Plik tablicy tłumaczenia znaków jest zbyt mały.\n"
 
 #: dlls/kernelbase/winerror.mc:3293
 msgid "Null context handle.\n"
@@ -6980,7 +6977,7 @@ msgstr "Nie ma więcej bindingów.\n"
 
 #: dlls/kernelbase/winerror.mc:3448
 msgid "Can't log on with inter-domain trust account.\n"
-msgstr "Nie można zalogować z kontem zaufanym interdomain.\n"
+msgstr "Nie można zalogować się z międzydomenowym kontem zaufanym.\n"
 
 #: dlls/kernelbase/winerror.mc:3453
 msgid "Can't log on with workstation trust account.\n"
@@ -7056,7 +7053,7 @@ msgstr "Błąd pakietu zabezpieczeń.\n"
 
 #: dlls/kernelbase/winerror.mc:3543
 msgid "Thread not canceled.\n"
-msgstr "Wątek nie anulowany.\n"
+msgstr "Wątek nie został anulowany.\n"
 
 #: dlls/kernelbase/winerror.mc:3548
 msgid "Invalid handle operation.\n"
@@ -7437,15 +7434,15 @@ msgstr "Koperta 6 3/4"
 
 #: dlls/localspl/localspl.rc:75
 msgid "US Std Fanfold"
-msgstr "USA standard wachlarz"
+msgstr "Amerykańska standardowa składanka"
 
 #: dlls/localspl/localspl.rc:76
 msgid "German Std Fanfold"
-msgstr "Niemiecki standardowy wachlarz"
+msgstr "Niemiecka standardowa składanka"
 
 #: dlls/localspl/localspl.rc:77
 msgid "German Legal Fanfold"
-msgstr "Niemiecki urzędowy wachlarz"
+msgstr "Niemiecka urzędowa składanka"
 
 #: dlls/localspl/localspl.rc:78
 msgid "B4 (ISO)"
@@ -7791,12 +7788,12 @@ msgstr "Ten port nie ma opcji do ustawienia"
 #: dlls/mapi32/mapi32.rc:31
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
 msgstr ""
-"Wysyłanie maila zakończyło się niepowodzeniem, ponieważ nie masz "
-"zainstalowanego klienta mailowego MAPI."
+"Wysyłanie wiadomości e-mail nie powiodło się, ponieważ nie masz "
+"zainstalowanego klienta poczty MAPI."
 
 #: dlls/mapi32/mapi32.rc:32
 msgid "Send Mail"
-msgstr "Wysyłanie maila"
+msgstr "Wysyłanie wiadomości e-mail"
 
 #: dlls/mferror/mferror.mc:249 dlls/mferror/mferror.mc:256
 msgid "Begin request has already been made.\n"
@@ -8267,8 +8264,8 @@ msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
-"Nie udało się otworzyć wybranego pakietu instalacyjnego. Sprawdź czy ścieżka "
-"jest poprawna i spróbuj ponownie."
+"Nie można otworzyć wskazanego pakietu instalacyjnego. Sprawdź ścieżkę "
+"dostępu do pliku i spróbuj ponownie."
 
 #: dlls/msi/msi.rc:32
 msgid "path %s not found"
@@ -8538,7 +8535,7 @@ msgstr "Usuwanie wartości rejestru systemu"
 
 #: dlls/msi/msi.rc:136
 msgid "Removing shortcuts"
-msgstr "Usuwanie skrótóœ"
+msgstr "Usuwanie skrótów"
 
 #: dlls/msi/msi.rc:138
 msgid "Registering modules"
@@ -8754,9 +8751,9 @@ msgid ""
 "This may indicate a problem with this package. The error code is [1]. {{The "
 "arguments are: [2], [3], [4]}}"
 msgstr ""
-"Instalator napotkał na nieoczekiwany błąd podczas instalacji tego pakietu. "
-"Może to oznaczać problem z pakietem. Kod błędu to [1]. {{Argumenty to: [2], "
-"[3], [4]}}"
+"Instalator napotkał nieoczekiwany błąd podczas instalacji tego pakietu. Może "
+"to oznaczać problem z pakietem. Kod błędu to [1]. {{Argumenty to: [2], [3], "
+"[4]}}"
 
 #: dlls/msi/msi.rc:77
 msgid "{{Disk full: }}"
@@ -8768,7 +8765,7 @@ msgstr "Działanie [Time]: [1]. [2]"
 
 #: dlls/msi/msi.rc:79
 msgid "Message type: [1], Argument: [2]{, [3]}"
-msgstr "Rodzaj wiadomości: [1], Argument: [2]{, [3]}"
+msgstr "Rodzaj komunikatu: [1], Argument: [2]{, [3]}"
 
 #: dlls/msi/msi.rc:82
 msgid "=== Logging started: [Date]  [Time] ==="
@@ -9340,7 +9337,7 @@ msgstr "3. Wp&isz katalog używany na początku:"
 
 #: dlls/oledb32/version.rc:84
 msgid "&Test Connection"
-msgstr "&Próba połączenia"
+msgstr "&Test połączenia"
 
 #: dlls/oledb32/version.rc:89
 msgid "Advanced"
@@ -9384,7 +9381,7 @@ msgstr ""
 
 #: dlls/oledb32/version.rc:112
 msgid "&Edit Value..."
-msgstr "Zmi&eń wartość..."
+msgstr "&Edytuj wartość..."
 
 #: dlls/oledb32/version.rc:46
 msgid "Data Link Error"
@@ -9520,7 +9517,7 @@ msgid ""
 "Insert the contents of the file as an object into your document so that you "
 "may activate it using the program which created it."
 msgstr ""
-"Wstaw zawartość pliku jako obiekt do dokumentu. Będzie można go aktywować "
+"Wstaw zawartość pliku jako obiekt do dokumentu. Będzie można go aktywować, "
 "używając programu, który go stworzył."
 
 #: dlls/oledlg/oledlg.rc:30 dlls/shell32/shell32.rc:197
@@ -9627,7 +9624,7 @@ msgstr "Skanowanie"
 
 #: dlls/sane.ds/sane.rc:44
 msgid "SCANNING... Please Wait"
-msgstr "TRWA SKANOWANIE... Proszę czekać"
+msgstr "SKANOWANIE... Proszę czekać"
 
 #: dlls/sane.ds/sane.rc:31
 msgctxt "unit: pixels"
@@ -10027,19 +10024,19 @@ msgstr "&Rozmieść ikony"
 
 #: dlls/shell32/shell32.rc:53
 msgid "By &Name"
-msgstr "Według &nazw"
+msgstr "Według &nazwy"
 
 #: dlls/shell32/shell32.rc:54
 msgid "By &Type"
-msgstr "Według &rodzajów"
+msgstr "Według &rodzaju"
 
 #: dlls/shell32/shell32.rc:55
 msgid "By &Size"
-msgstr "Według &rozmiarów"
+msgstr "Według roz&miaru"
 
 #: dlls/shell32/shell32.rc:56
 msgid "By &Date"
-msgstr "Według &dat"
+msgstr "Według &daty"
 
 #: dlls/shell32/shell32.rc:58
 msgid "&Auto Arrange"
@@ -10121,7 +10118,7 @@ msgstr "Tak na &wszystkie"
 
 #: dlls/shell32/shell32.rc:321
 msgid "About %s"
-msgstr "O %s"
+msgstr "Informacje o %s"
 
 #: dlls/shell32/shell32.rc:325
 msgid "Wine &license"
@@ -10511,7 +10508,7 @@ msgstr "Czy na pewno chcesz trwale usunąć '%1'?"
 
 #: dlls/shell32/shell32.rc:249
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr "Czy na pewno chcesz trwale usunąć te %1 elementy?"
+msgstr "Czy na pewno chcesz trwale usunąć te elementy: %1?"
 
 #: dlls/shell32/shell32.rc:250
 msgid "Confirm deletion"
@@ -12633,7 +12630,7 @@ msgstr "Nas&tępny\tCtrl+F6"
 
 #: dlls/user32/user32.rc:92 dlls/user32/user32.rc:75
 msgid "&Abort"
-msgstr "&Zaniechaj"
+msgstr "&Przerwij"
 
 #: dlls/user32/user32.rc:96 dlls/user32/user32.rc:77
 msgid "&Ignore"
@@ -12657,7 +12654,7 @@ msgstr "&Więcej okien..."
 
 #: dlls/vbscript/vbscript.rc:30
 msgid "Overflow"
-msgstr "Przepełnienie w górę"
+msgstr "Przepełnienie"
 
 #: dlls/vbscript/vbscript.rc:31
 msgid "Out of memory"
@@ -12673,7 +12670,7 @@ msgstr "Niezgodność rodzajów"
 
 #: dlls/vbscript/vbscript.rc:36
 msgid "Device I/O error"
-msgstr "Błąd We/Wy urządzenia"
+msgstr "Błąd we/wy urządzenia"
 
 #: dlls/vbscript/vbscript.rc:37
 msgid "File already exists"
@@ -12793,7 +12790,7 @@ msgstr "Minimalizuj"
 
 #: dlls/winemac.drv/winemac.rc:42
 msgid "Zoom"
-msgstr "Zbliż"
+msgstr "Przybliż"
 
 #: dlls/winemac.drv/winemac.rc:43
 msgid "Enter Full Screen"
@@ -13553,7 +13550,7 @@ msgstr "Wydrukuj do pliku"
 
 #: dlls/winspool.drv/winspool.rc:40
 msgid "&Output File Name:"
-msgstr "&Nazwa pliku do którego ma być zapisany wydruk:"
+msgstr "&Nazwa pliku wyjściowego:"
 
 #: dlls/winspool.drv/winspool.rc:31
 msgid "The output file already exists. Click OK to overwrite."
@@ -14593,7 +14590,8 @@ msgstr "Więcej..."
 
 #: programs/cmd/cmd.rc:369
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr "Linia przy przetwarzaniu pliku bat prawdopodobnie obcięta. Używam:\n"
+msgstr ""
+"Linia przy przetwarzaniu pliku wsadowego prawdopodobnie obcięta. Używam:\n"
 
 #: programs/cmd/cmd.rc:371
 msgid "Argument missing\n"
@@ -14617,7 +14615,7 @@ msgstr "Obecna data to %1\n"
 
 #: programs/cmd/cmd.rc:377
 msgid "Current Time is %1\n"
-msgstr "Obecny czas to %1\n"
+msgstr "Obecna godzina to %1\n"
 
 #: programs/cmd/cmd.rc:378
 msgid "Enter new date: "
@@ -14625,7 +14623,7 @@ msgstr "Wpisz nową datę: "
 
 #: programs/cmd/cmd.rc:379
 msgid "Enter new time: "
-msgstr "Wpisz nowy czas: "
+msgstr "Wpisz nową godzinę: "
 
 #: programs/cmd/cmd.rc:380
 msgid "Environment variable %1 not defined\n"
@@ -14637,7 +14635,7 @@ msgstr "Nieudane otwarcie '%1'\n"
 
 #: programs/cmd/cmd.rc:382
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr "Nie można wywołać etykiety bat poza skryptem bat\n"
+msgstr "Nie można wywołać etykiety wsadowej poza skryptem wsadowym\n"
 
 #: programs/cmd/cmd.rc:383 programs/reg/reg.rc:128 programs/xcopy/xcopy.rc:45
 msgctxt "All key"
@@ -14674,7 +14672,7 @@ msgstr ""
 
 #: programs/cmd/cmd.rc:390
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr "Etykieta wolumenu (11 znaków, <Enter> aby pominąć)?"
+msgstr "Etykieta wolumenu (11 znaków, <Enter>, aby pominąć)?"
 
 #: programs/cmd/cmd.rc:391
 msgid "Press any key to continue... "
@@ -15065,7 +15063,7 @@ msgstr "Adres fizyczny"
 
 #: programs/ipconfig/ipconfig.rc:47
 msgid "DHCP enabled"
-msgstr "DHCP włączone"
+msgstr "DHCP włączony"
 
 #: programs/ipconfig/ipconfig.rc:50
 msgid "Default gateway"
@@ -15271,7 +15269,7 @@ msgstr "Adres lokalny"
 
 #: programs/netstat/netstat.rc:33
 msgid "Foreign Address"
-msgstr "Adres zagraniczny"
+msgstr "Adres zdalny"
 
 #: programs/netstat/netstat.rc:34
 msgid "State"
@@ -15635,7 +15633,7 @@ msgid ""
 "Continue?"
 msgstr ""
 "%1\n"
-"Plik ten zawiera znaki Unicode, które zostaną utracone jeżeli\n"
+"Plik ten zawiera znaki Unicode, które zostaną utracone, jeżeli\n"
 "zapiszesz ten plik przy użyciu kodowania %2.\n"
 "Aby zachować te znaki, naciśnij Anuluj, a później zaznacz\n"
 "jedną z opcji Unicode z rozwijalnej listy kodowań.\n"
@@ -16212,7 +16210,7 @@ msgstr "reg: nie można otworzyć, ani stworzyć danego klucza rejestru\n"
 
 #: programs/reg/reg.rc:116
 msgid "reg: The operation completed successfully\n"
-msgstr "reg: pomyślnie zakończono działanie\n"
+msgstr "reg: pomyślnie ukończono działanie\n"
 
 #: programs/reg/reg.rc:131
 msgid "reg: The registry operation was canceled\n"
@@ -16220,11 +16218,13 @@ msgstr "reg: zaniechano działania rejestru\n"
 
 #: programs/reg/reg.rc:174
 msgid "reg: Unable to find the specified registry key\n"
-msgstr "reg: nie można znaleźć danej klucza rejestru\n"
+msgstr ""
+"reg: nie można znaleźć określonego klucza rejestru\n"
+"\n"
 
 #: programs/reg/reg.rc:120
 msgid "reg: Unable to find the specified registry value\n"
-msgstr "reg: nie można znaleźć danej wartości rejestru\n"
+msgstr "reg: nie można znaleźć określonej wartości rejestru\n"
 
 #: programs/reg/reg.rc:132 programs/regedit/regedit.rc:244
 msgid "(Default)"
@@ -16753,7 +16753,7 @@ msgstr "reg: nie znaleziono pliku '%1'.\n"
 
 #: programs/reg/reg.rc:143 programs/regedit/regedit.rc:245
 msgid "(value not set)"
-msgstr "(wartość nie ustalona)"
+msgstr "(wartość nieustawiona)"
 
 #: programs/reg/reg.rc:138
 msgid "Search complete. Number of matches found: %1!d!\n"
@@ -16779,7 +16779,7 @@ msgstr "&Klucz"
 #: programs/regedit/regedit.rc:49 programs/regedit/regedit.rc:102
 #: programs/regedit/regedit.rc:125
 msgid "&String Value"
-msgstr "&Wartość ciągu"
+msgstr "Wartość &ciągu"
 
 #: programs/regedit/regedit.rc:50 programs/regedit/regedit.rc:103
 #: programs/regedit/regedit.rc:126
@@ -16799,7 +16799,7 @@ msgstr "Wartość &QWORD"
 #: programs/regedit/regedit.rc:53 programs/regedit/regedit.rc:106
 #: programs/regedit/regedit.rc:129
 msgid "&Multi-String Value"
-msgstr "&Dana wielotekstowa (MULTISZ)"
+msgstr "Wartość ciągu &wielokrotnego"
 
 #: programs/regedit/regedit.rc:54 programs/regedit/regedit.rc:107
 #: programs/regedit/regedit.rc:130
@@ -16829,7 +16829,7 @@ msgstr "Po&dziel"
 
 #: programs/regedit/regedit.rc:76
 msgid "&Remove Favorite..."
-msgstr "&Usuń ulubiony..."
+msgstr "&Usuń z ulubionych..."
 
 #: programs/regedit/regedit.rc:81
 msgid "&About Registry Editor"
@@ -16874,7 +16874,7 @@ msgstr "Treści wartości"
 
 #: programs/regedit/regedit.rc:289
 msgid "Whole string only"
-msgstr "Tylko cały ciąg znaków"
+msgstr "Tylko całych ciągach"
 
 #: programs/regedit/regedit.rc:296
 msgid "Add Favorite"
@@ -16890,7 +16890,7 @@ msgstr "Usuń ulubiony"
 
 #: programs/regedit/regedit.rc:318
 msgid "Edit String"
-msgstr "Edycja danej tekstowej"
+msgstr "Edycja ciągu"
 
 #: programs/regedit/regedit.rc:321 programs/regedit/regedit.rc:334
 #: programs/regedit/regedit.rc:350 programs/regedit/regedit.rc:363
@@ -16904,7 +16904,7 @@ msgstr "Wartość:"
 
 #: programs/regedit/regedit.rc:331
 msgid "Edit DWORD"
-msgstr "Edycja danej liczbowej (DWORD)"
+msgstr "Edycja DWORD"
 
 #: programs/regedit/regedit.rc:338
 msgid "Base"
@@ -16920,11 +16920,11 @@ msgstr "Dziesiętny"
 
 #: programs/regedit/regedit.rc:347
 msgid "Edit Binary"
-msgstr "Edycja danej binarnej"
+msgstr "Edycja binarnego"
 
 #: programs/regedit/regedit.rc:360
 msgid "Edit Multi-String"
-msgstr "Edycja danej wielotekstowej"
+msgstr "Edycja ciągu wielokrotnego"
 
 #: programs/regedit/regedit.rc:162
 msgid "Contains commands for working with the whole registry"
@@ -17638,7 +17638,7 @@ msgstr "&Nowe zadanie (Uruchom...)"
 
 #: programs/taskmgr/taskmgr.rc:39
 msgid "E&xit Task Manager"
-msgstr "&Zakończ zarządzanie zadaniami"
+msgstr "&Zakończ Menedżer zadań"
 
 #: programs/taskmgr/taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -17723,7 +17723,7 @@ msgstr "&Przesuń na wierzch"
 
 #: programs/taskmgr/taskmgr.rc:90
 msgid "&About Task Manager"
-msgstr "Zarządzanie zadaniami - i&nformacje"
+msgstr "Menedżer zadań - i&nformacje"
 
 #: programs/taskmgr/taskmgr.rc:120 programs/taskmgr/taskmgr.rc:352
 msgid "&Switch To"
@@ -17731,7 +17731,7 @@ msgstr "P&rzełącz na"
 
 #: programs/taskmgr/taskmgr.rc:129 programs/taskmgr/taskmgr.rc:353
 msgid "&End Task"
-msgstr "&Zakończy zadanie"
+msgstr "&Zakończ zadanie"
 
 #: programs/taskmgr/taskmgr.rc:130
 msgid "&Go To Process"
@@ -17776,7 +17776,7 @@ msgstr "Zmiana kanałów diagnosty&cznych..."
 #: programs/taskmgr/taskmgr.rc:338 programs/taskmgr/taskmgr.rc:180
 #: programs/taskmgr/taskmgr.rc:181
 msgid "Task Manager"
-msgstr "Zarządzanie zadaniami"
+msgstr "Menedżer zadań"
 
 #: programs/taskmgr/taskmgr.rc:351
 msgid "&New Task..."
@@ -18007,8 +18007,8 @@ msgstr "Wybierz kolumny"
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
 msgstr ""
-"Wybierz kolumny, które będą widoczne na zakładce Procesy w zarządzaniu "
-"zadaniami."
+"Wybierz kolumny, które będą wyświetlane na stronie Procesy w Menedżerze "
+"zadań."
 
 #: programs/taskmgr/taskmgr.rc:521
 msgid "&Image Name"
@@ -18048,11 +18048,11 @@ msgstr "Obiekty US&ER"
 
 #: programs/taskmgr/taskmgr.rc:539 programs/taskmgr/taskmgr.rc:281
 msgid "I/O Reads"
-msgstr "Odczyty We/Wy"
+msgstr "Odczyty we/wy"
 
 #: programs/taskmgr/taskmgr.rc:541 programs/taskmgr/taskmgr.rc:282
 msgid "I/O Read Bytes"
-msgstr "Odczyty We/Wy w bajtach"
+msgstr "Odczyty we/wy w bajtach"
 
 #: programs/taskmgr/taskmgr.rc:543
 msgid "&Session ID"
@@ -18096,19 +18096,19 @@ msgstr "Obiekty GDI"
 
 #: programs/taskmgr/taskmgr.rc:563 programs/taskmgr/taskmgr.rc:293
 msgid "I/O Writes"
-msgstr "Zapisy We/Wy"
+msgstr "Zapisy we/wy"
 
 #: programs/taskmgr/taskmgr.rc:565 programs/taskmgr/taskmgr.rc:294
 msgid "I/O Write Bytes"
-msgstr "Zapisy We/Wy w bajtach"
+msgstr "Zapisy we/wy w bajtach"
 
 #: programs/taskmgr/taskmgr.rc:567 programs/taskmgr/taskmgr.rc:295
 msgid "I/O Other"
-msgstr "Inne We/Wy"
+msgstr "Inne we/wy"
 
 #: programs/taskmgr/taskmgr.rc:569 programs/taskmgr/taskmgr.rc:296
 msgid "I/O Other Bytes"
-msgstr "Inne We/Wy w bajtach"
+msgstr "Inne we/wy w bajtach"
 
 #: programs/taskmgr/taskmgr.rc:182
 msgid "Create New Task"
@@ -18120,21 +18120,22 @@ msgstr "Uruchamia nowy program"
 
 #: programs/taskmgr/taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
-msgstr "Zarządzanie zadaniami wyświetlane jest na wierzchu wszystkich okien"
+msgstr "Menedżer zadań wyświetlany jest na wierzchu wszystkich okien"
 
 #: programs/taskmgr/taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
 msgstr ""
-"Zarządzanie zadaniami jest minimalizowane podczas operacji przełączania zadań"
+"Menedżer zadań jest zminimalizowany podczas operacji przełączania zadań"
 
 #: programs/taskmgr/taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"
-msgstr "Ukrywa zarządzanie zadaniami, gdy jest zminimalizowane"
+msgstr "Ukrywa Menedżer zadań, gdy jest zminimalizowany"
 
 #: programs/taskmgr/taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
 msgstr ""
-"Wymuś, odświeżenie listy teraz, niezależnie od częstotliwości odświeżania"
+"Wymuś odświeżanie Menedżera zadań teraz, niezależnie od ustawienia prędkości "
+"aktualizacji"
 
 #: programs/taskmgr/taskmgr.rc:193
 msgid "Displays tasks by using large icons"
@@ -18190,7 +18191,7 @@ msgstr "Przenosi okno na wierzch, lecz nie przełącza na nie"
 
 #: programs/taskmgr/taskmgr.rc:211
 msgid "Displays Task Manager help topics"
-msgstr "Wyświetla tematy pomocy dotyczące zarządzania zadaniami"
+msgstr "Wyświetla tematy pomocy Menedżera zadań"
 
 #: programs/taskmgr/taskmgr.rc:212
 msgid "Displays program information, version number, and copyright"
@@ -18198,7 +18199,7 @@ msgstr "Wyświetla informacje o programie, numerze wersji i prawach autorskich"
 
 #: programs/taskmgr/taskmgr.rc:213
 msgid "Exits the Task Manager application"
-msgstr "Kończy pracę aplikacji do zarządzania zadaniami"
+msgstr "Zamyka aplikację Menedżera zadań"
 
 #: programs/taskmgr/taskmgr.rc:215
 msgid "Shows 16-bit tasks under the associated ntvdm.exe"
@@ -18207,7 +18208,7 @@ msgstr ""
 
 #: programs/taskmgr/taskmgr.rc:216
 msgid "Select which columns will be visible on the Process page"
-msgstr "Wybierz kolumny, które będą widoczne na zakładce Procesy"
+msgstr "Wybierz kolumny, które będą widoczne na stronie Procesy"
 
 #: programs/taskmgr/taskmgr.rc:217
 msgid "Displays kernel time in the performance graphs"
@@ -18235,7 +18236,7 @@ msgstr "Przełącza na proces wybranego zadania"
 
 #: programs/taskmgr/taskmgr.rc:229
 msgid "Restores the Task Manager from its hidden state"
-msgstr "Przywraca zarządzanie zadaniami ze stanu ukrycia"
+msgstr "Przywraca Menedżer zadań ze stanu ukrycia"
 
 #: programs/taskmgr/taskmgr.rc:230
 msgid "Removes the process from the system"
@@ -18351,7 +18352,7 @@ msgstr "Priorytet podstawowy"
 
 #: programs/taskmgr/taskmgr.rc:301
 msgid "Task Manager Warning"
-msgstr "Ostrzeżenie zarządzania zadaniami"
+msgstr "Ostrzeżenie Menedżera zadań"
 
 #: programs/taskmgr/taskmgr.rc:304
 msgid ""
@@ -18604,10 +18605,10 @@ msgid ""
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine może udawać różne wersje Windows dla każdej aplikacji osobno. Ta "
-"zakładka jest powiązana z zakładkami Biblioteki i Grafika, aby umożliwić ci "
-"zmianę ustawień w całym systemie lub tylko dla aplikacji we wspominanych "
-"zakładkach."
+"Wine może naśladować różne wersje systemu Windows dla każdej aplikacji. Ta "
+"karta jest połączona z kartami Biblioteki i Grafika, co umożliwia zmianę "
+"ustawień dla całego systemu lub dla poszczególnych aplikacji również na tych "
+"kartach."
 
 #: programs/winecfg/winecfg.rc:164
 msgid "Add appli&cation..."
@@ -19043,7 +19044,7 @@ msgid ""
 msgstr ""
 "Nie masz dysku C. To może powodować problemy.\n"
 "\n"
-"Nie zapomnij użyć 'Dodaj' w zakładce 'Dyski', aby go utworzyć!\n"
+"Pamiętaj, aby kliknąć „Dodaj” na karcie Dyski, aby je utworzyć!\n"
 
 #: programs/winecfg/winecfg.rc:104
 msgid "Controls Background"
@@ -19225,8 +19226,8 @@ msgid ""
 "A program on your system has crashed, but WineDbg was unable to attach to "
 "the process to obtain a backtrace."
 msgstr ""
-"Wysypał się program na twoim systemie, lecz WineDbg nie był w stanie "
-"dołączyć się do procesu, aby uzyskać jego ślad wykonywania."
+"Program w tym systemie uległ awarii, ale WineDbg nie mógł nawiązać "
+"połączenia z procesem, aby uzyskać śledzenie wsteczne."
 
 #: programs/winedbg/winedbg.rc:41
 msgid "(unidentified)"
@@ -19278,23 +19279,23 @@ msgstr "Wszystki&e szczegóły pliku"
 
 #: programs/winefile/winefile.rc:54
 msgid "&Sort by Name"
-msgstr "Uszereguj wg &nazw"
+msgstr "Sortuj wg &nazwy"
 
 #: programs/winefile/winefile.rc:55
 msgid "Sort &by Type"
-msgstr "Uszereguj wg &rodzajów"
+msgstr "Sortuj wg &rodzaju"
 
 #: programs/winefile/winefile.rc:56
 msgid "Sort by Si&ze"
-msgstr "Uszereguj wg &rozmiarów"
+msgstr "Sortuj wg &rozmiaru"
 
 #: programs/winefile/winefile.rc:57
 msgid "Sort by &Date"
-msgstr "Uszereguj wg &dat"
+msgstr "Sortuj wg &daty"
 
 #: programs/winefile/winefile.rc:59
 msgid "Filter by&..."
-msgstr "Odfiltruj po&..."
+msgstr "Filtruj wg&..."
 
 #: programs/winefile/winefile.rc:66
 msgid "&Drive Bar"
@@ -19318,7 +19319,7 @@ msgstr "&Sąsiadująco w poziomie\tCtrl+F4"
 
 #: programs/winefile/winefile.rc:84
 msgid "&About Wine File Manager"
-msgstr "Zarządzanie plikami Wine - i&nformacje"
+msgstr "Menedżer plików Wine - i&nformacje"
 
 #: programs/winefile/winefile.rc:121
 msgid "Select destination"
@@ -19326,7 +19327,7 @@ msgstr "Wybór celu"
 
 #: programs/winefile/winefile.rc:134
 msgid "By File Type"
-msgstr "Wg rodzaju pliku"
+msgstr "Według rodzaju pliku"
 
 #: programs/winefile/winefile.rc:139
 msgid "File type"
@@ -19415,7 +19416,7 @@ msgstr "Data dostępu"
 
 #: programs/winefile/winefile.rc:110
 msgid "Modification date"
-msgstr "Data zmiany"
+msgstr "Data modyfikacji"
 
 #: programs/winefile/winefile.rc:111
 msgid "Index/Inode"
@@ -19435,7 +19436,7 @@ msgstr "&Nowa\tF2"
 
 #: programs/winemine/winemine.rc:42
 msgid "Question &Marks"
-msgstr "Znaki &pytające"
+msgstr "Znaki za&pytania"
 
 #: programs/winemine/winemine.rc:44
 msgid "&Beginner"
@@ -19928,7 +19929,7 @@ msgstr "Jedna strona"
 
 #: programs/wordpad/wordpad.rc:178
 msgid "Zoom in"
-msgstr "Zbliż"
+msgstr "Przybliż"
 
 #: programs/wordpad/wordpad.rc:179
 msgid "Zoom out"
@@ -20032,7 +20033,7 @@ msgstr "Nieprawidłowy parametr '%1' - Użyj xcopy /? aby uzyskać pomoc\n"
 
 #: programs/xcopy/xcopy.rc:32
 msgid "Press <Enter> to begin copying\n"
-msgstr "Naciśnij <Enter> aby rozpocząć kopiowanie\n"
+msgstr "Naciśnij <Enter>, aby rozpocząć kopiowanie\n"
 
 #: programs/xcopy/xcopy.rc:33
 msgid "%1!d! file(s) would be copied\n"
