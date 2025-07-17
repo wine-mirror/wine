@@ -636,6 +636,11 @@ static HRESULT WINAPI rowset_QueryInterface(IRowset *iface, REFIID riid, void **
         trace("Requested interface IID_IRowset\n");
         *obj = &rowset->IRowset_iface;
     }
+    else if (IsEqualIID(riid, &IID_IRowsetExactScroll))
+    {
+        trace("Requested interface IID_IRowsetExactScroll\n");
+        return E_NOINTERFACE;
+    }
     else if (IsEqualIID(riid, &IID_IRowsetInfo))
     {
         trace("Requested interface IID_IRowsetInfo\n");
@@ -837,6 +842,10 @@ static void test_ADORecordsetConstruction(void)
     ok( scale == 1, "got %u\n", scale );
 
     Field_Release( field );
+
+    hr = _Recordset_get_RecordCount( recordset, &size );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    todo_wine ok( size == -1, "size = %Id\n", size );
 
     SET_EXPECT( rowset_GetNextRows );
     SET_EXPECT( rowset_ReleaseRows );
