@@ -3745,39 +3745,42 @@ static LONG test_attr_collection_attr(IDispatch *attr, LONG i)
     return ret;
 }
 
-static void test_attr_collection_disp(IDispatch *disp)
+static void test_attr_collection_disp(IDispatch *disp, LONG len, IHTMLElement *elem)
 {
+    DISPID dispid, dispid2, dispid_attr1, dispid_attr2, dispid_attr3;
     IDispatchEx *dispex;
     IHTMLDOMAttribute *attr;
     DISPPARAMS dp = {NULL, NULL, 0, 0};
+    VARIANT_BOOL vbool;
+    WCHAR buf[11];
     VARIANT var;
     EXCEPINFO ei;
-    DISPID id;
-    BSTR bstr;
     HRESULT hres;
+    BSTR bstr;
 
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     ok(hres == S_OK, "QueryInterface failed: %08lx\n", hres);
 
-    bstr = SysAllocString(L"0");
-    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &id);
+    swprintf(buf, ARRAY_SIZE(buf), L"%lu", len - 2);
+    bstr = SysAllocString(buf);
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &dispid);
     ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
     SysFreeString(bstr);
 
     VariantInit(&var);
-    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, INVOKE_PROPERTYGET, &dp, &var, &ei, NULL);
+    hres = IDispatchEx_InvokeEx(dispex, dispid, LOCALE_NEUTRAL, INVOKE_PROPERTYGET, &dp, &var, &ei, NULL);
     ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
     ok(V_VT(&var) == VT_DISPATCH, "V_VT(var)=%d\n", V_VT(&var));
     ok(V_DISPATCH(&var) != NULL, "V_DISPATCH(var) == NULL\n");
     VariantClear(&var);
 
     bstr = SysAllocString(L"attr1");
-    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &id);
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &dispid_attr1);
     ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
     SysFreeString(bstr);
 
     VariantInit(&var);
-    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, INVOKE_PROPERTYGET, &dp, &var, &ei, NULL);
+    hres = IDispatchEx_InvokeEx(dispex, dispid_attr1, LOCALE_NEUTRAL, INVOKE_PROPERTYGET, &dp, &var, &ei, NULL);
     ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
     ok(V_VT(&var) == VT_DISPATCH, "V_VT(var)=%d\n", V_VT(&var));
     ok(V_DISPATCH(&var) != NULL, "V_DISPATCH(var) == NULL\n");
@@ -3788,6 +3791,72 @@ static void test_attr_collection_disp(IDispatch *disp)
 
     IHTMLDOMAttribute_Release(attr);
     VariantClear(&var);
+
+    bstr = SysAllocString(L"attr2");
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &dispid_attr2);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    bstr = SysAllocString(L"attr3");
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &dispid_attr3);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    ok(dispid == dispid_attr1 || dispid == dispid_attr2 || dispid == dispid_attr3,
+        "indexed dispid isn't one of the attr dispids\n");
+
+    bstr = SysAllocString(L"attr1");
+    hres = IHTMLElement_removeAttribute(elem, bstr, 0, &vbool);
+    ok(hres == S_OK, "removeAttribute failed: %08lx\n", hres);
+    ok(vbool == VARIANT_TRUE, "removeAttribute returned %x\n", vbool);
+    SysFreeString(bstr);
+
+    hres = IDispatchEx_GetMemberName(dispex, dispid_attr1, &bstr);
+    ok(hres == S_OK, "GetMemberName failed: %08lx\n", hres);
+    ok(wcscmp(bstr, L"attr1"), "GetMemberName still returned attr1 after removal\n");
+    SysFreeString(bstr);
+
+    bstr = SysAllocString(buf);
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &dispid2);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    ok(dispid, "indexed dispid is not the same after removal\n");
+    SysFreeString(bstr);
+
+    bstr = SysAllocString(L"attr2");
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &dispid);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    ok(dispid == dispid_attr2, "dispid != dispid_attr2\n");
+    SysFreeString(bstr);
+
+    bstr = SysAllocString(L"attr1");
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &dispid);
+    ok(hres == DISP_E_UNKNOWNNAME, "GetDispID returned: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    bstr = SysAllocString(L"added_attr");
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(L"test");
+    hres = IHTMLElement_setAttribute(elem, bstr, var, 0);
+    ok(hres == S_OK, "setAttribute failed: %08lx\n", hres);
+
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &dispid);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    ok(dispid != dispid_attr1, "added attr dispid == dispid_attr1\n");
+    ok(dispid != dispid_attr2, "added attr dispid == dispid_attr2\n");
+    ok(dispid != dispid_attr3, "added attr dispid == dispid_attr3\n");
+    SysFreeString(bstr);
+
+    bstr = SysAllocString(L"attr1");
+    hres = IHTMLElement_setAttribute(elem, bstr, var, 0);
+    ok(hres == S_OK, "setAttribute failed: %08lx\n", hres);
+    VariantClear(&var);
+
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &dispid);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    ok(dispid != dispid_attr1, "attr1 after re-added dispid == dispid_attr1\n");
+    ok(dispid != dispid_attr2, "attr1 after re-added dispid == dispid_attr2\n");
+    ok(dispid != dispid_attr3, "attr1 after re-added dispid == dispid_attr3\n");
+    SysFreeString(bstr);
 
     IDispatchEx_Release(dispex);
 }
@@ -3886,7 +3955,7 @@ static void test_attr_collection(IHTMLElement *elem)
     ok(hres == E_INVALIDARG, "item failed: %08lx\n", hres);
     VariantClear(&id);
 
-    test_attr_collection_disp(disp);
+    test_attr_collection_disp(disp, len, elem);
 
     IDispatch_Release(disp);
     IHTMLAttributeCollection_Release(attr_col);
@@ -10224,8 +10293,10 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
 {
     IHTMLDOMAttribute *attr, *attr2, *attr3;
     IHTMLElement4 *elem4;
-    VARIANT v;
+    VARIANT_BOOL vbool;
     HRESULT hres;
+    VARIANT v;
+    BSTR bstr;
 
     get_elem_attr_node((IUnknown*)elem, L"noattr", FALSE);
 
@@ -10311,6 +10382,24 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     test_attr_specified(attr, VARIANT_FALSE);
     test_attr_expando(attr, VARIANT_FALSE);
     test_attr_node(attr, doc);
+
+    attr = get_elem_attr_node((IUnknown*)elem, L"emptyattr", TRUE);
+    test_attr_specified(attr, VARIANT_TRUE);
+    test_attr_expando(attr, VARIANT_TRUE);
+
+    bstr = SysAllocString(L"emptyattr");
+    hres = IHTMLElement_removeAttribute(elem, bstr, 0, &vbool);
+    ok(hres == S_OK, "removeAttribute failed: %08lx\n", hres);
+    ok(vbool == VARIANT_TRUE, "removeAttribute returned %x\n", vbool);
+    test_attr_expando(attr, VARIANT_FALSE);
+    SysFreeString(bstr);
+
+    elem4 = get_elem4_iface((IUnknown*)elem);
+    hres = IHTMLElement4_setAttributeNode(elem4, attr, &attr2);
+    ok(hres == S_OK, "setAttributeNode failed: %08lx\n", hres);
+    ok(!attr2, "attr2 != NULL\n");
+    test_attr_specified(attr, VARIANT_TRUE);
+    test_attr_expando(attr, VARIANT_TRUE);
     IHTMLDOMAttribute_Release(attr);
 
     /* Test created, detached attribute. */
@@ -10342,8 +10431,6 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     put_attr_node_value(attr, v);
     SysFreeString(V_BSTR(&v));
     test_attr_value(attr, L"testing");
-
-    elem4 = get_elem4_iface((IUnknown*)elem);
 
     hres = IHTMLElement4_setAttributeNode(elem4, attr, &attr2);
     ok(hres == S_OK, "setAttributeNode failed: %08lx\n", hres);

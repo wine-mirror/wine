@@ -1331,6 +1331,9 @@ static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strA
     TRACE("(%p)->(%s %lx %p)\n", This, debugstr_w(strAttributeName), lFlags, pfSuccess);
 
     if(compat_mode < COMPAT_MODE_IE9 || !This->dom_element) {
+        HTMLAttributeCollection *attrs;
+        HTMLDOMAttribute *attr;
+
         hres = dispex_get_id(&This->node.event_target.dispex, translate_attr_name(strAttributeName, compat_mode),
                              lFlags & ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &id);
         if(hres == DISP_E_UNKNOWNNAME) {
@@ -1339,6 +1342,26 @@ static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strA
         }
         if(FAILED(hres))
             return hres;
+
+        hres = HTMLElement_get_attr_col(&This->node, &attrs);
+        if(FAILED(hres))
+            return hres;
+        attr = find_attr_in_list(attrs, id, NULL);
+        IHTMLAttributeCollection_Release(&attrs->IHTMLAttributeCollection_iface);
+
+        if(attr) {
+            hres = get_elem_attr_value_by_dispid(This, id, &attr->value);
+            if(FAILED(hres))
+                return hres;
+            if(!attr->name) {
+                hres = dispex_prop_name(&This->node.event_target.dispex, id, &attr->name);
+                if(FAILED(hres))
+                    return hres;
+            }
+            list_remove(&attr->entry);
+            IHTMLDOMNode_Release(&attr->elem->node.IHTMLDOMNode_iface);
+            attr->elem = NULL;
+        }
 
         if(id == DISPID_IHTMLELEMENT_STYLE) {
             IHTMLStyle *style;
@@ -8203,6 +8226,8 @@ static HRESULT HTMLAttributeCollection_get_dispid(DispatchEx *dispex, const WCHA
         return hres;
     IHTMLDOMAttribute_Release(&attr->IHTMLDOMAttribute_iface);
 
+    /* Even though this breaks DISPID rules where the same name must return the same DISPID, because the pos can change
+     * as attributes are removed (and re-added), it's how native works (see test_attr_collection_disp in tests). */
     *dispid = MSHTML_DISPID_CUSTOM_MIN+pos;
     return S_OK;
 }
