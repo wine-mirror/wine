@@ -1779,13 +1779,16 @@ static UINT make_contract_value( const type_t *type, BYTE *buf )
 
 static UINT make_version_value( const type_t *type, BYTE *buf )
 {
-    UINT version = get_attrv( type->attrs, ATTR_VERSION );
+    const version_t *version = get_attrp( type->attrs, ATTR_VERSION );
+    UINT value;
+
+    if (version) value = (version->major << 16) | version->minor;
+    else value = 1;
 
     buf[0] = 1;
     buf[1] = 0;
-    buf[2] = is_attr( type->attrs, ATTR_VERSION ) ? 0 : 1;
-    buf[3] = 0;
-    memcpy( buf + 4, &version, sizeof(version) );
+    memcpy( buf + 2, &value, sizeof(value) );
+    buf[6] = buf[7] = 0;
     return 8;
 }
 
