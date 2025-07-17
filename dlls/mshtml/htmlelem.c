@@ -525,6 +525,24 @@ HRESULT create_element(HTMLDocumentNode *doc, const WCHAR *tag, HTMLElement **re
     return hres;
 }
 
+static HTMLDOMAttribute *find_attr_in_list(HTMLAttributeCollection *attrs, DISPID dispid, LONG *pos)
+{
+    HTMLDOMAttribute *iter, *ret = NULL;
+    struct list *list = &attrs->attrs;
+    unsigned i = 0;
+
+    LIST_FOR_EACH_ENTRY(iter, list, HTMLDOMAttribute, entry) {
+        if(iter->dispid == dispid) {
+            ret = iter;
+            break;
+        }
+        i++;
+    }
+    if(pos)
+        *pos = i;
+    return ret;
+}
+
 typedef struct {
     DispatchEx dispex;
     IHTMLRect IHTMLRect_iface;
@@ -4390,7 +4408,7 @@ static HRESULT WINAPI HTMLElement4_setAttributeNode(IHTMLElement4 *iface, IHTMLD
         IHTMLDOMAttribute **ppretAttribute)
 {
     HTMLElement *This = impl_from_IHTMLElement4(iface);
-    HTMLDOMAttribute *attr, *iter, *replace = NULL;
+    HTMLDOMAttribute *attr, *replace;
     HTMLAttributeCollection *attrs;
     DISPID dispid;
     HRESULT hres;
@@ -4414,13 +4432,7 @@ static HRESULT WINAPI HTMLElement4_setAttributeNode(IHTMLElement4 *iface, IHTMLD
     if(FAILED(hres))
         return hres;
 
-    LIST_FOR_EACH_ENTRY(iter, &attrs->attrs, HTMLDOMAttribute, entry) {
-        if(iter->dispid == dispid) {
-            replace = iter;
-            break;
-        }
-    }
-
+    replace = find_attr_in_list(attrs, dispid, NULL);
     if(replace) {
         hres = get_elem_attr_value_by_dispid(This, dispid, &replace->value);
         if(FAILED(hres)) {
@@ -7732,28 +7744,15 @@ static inline HRESULT get_attr_dispid_by_name(HTMLAttributeCollection *This, con
 
 static inline HRESULT get_domattr(HTMLAttributeCollection *This, DISPID id, LONG *list_pos, HTMLDOMAttribute **attr)
 {
-    HTMLDOMAttribute *iter;
-    LONG pos = 0;
     HRESULT hres;
 
-    *attr = NULL;
-    LIST_FOR_EACH_ENTRY(iter, &This->attrs, HTMLDOMAttribute, entry) {
-        if(iter->dispid == id) {
-            *attr = iter;
-            break;
-        }
-        pos++;
-    }
-
-    if(!*attr) {
+    if(!(*attr = find_attr_in_list(This, id, list_pos))) {
         hres = HTMLDOMAttribute_Create(NULL, This->elem, id, This->elem->node.doc, attr);
         if(FAILED(hres))
             return hres;
     }
 
     IHTMLDOMAttribute_AddRef(&(*attr)->IHTMLDOMAttribute_iface);
-    if(list_pos)
-        *list_pos = pos;
     return S_OK;
 }
 
