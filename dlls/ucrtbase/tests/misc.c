@@ -2000,6 +2000,61 @@ static void test_cexp(void)
     __setusermatherr(NULL);
 }
 
+static void test_carg(void)
+{
+    const double M_PI_3_4 = M_PI_2 + M_PI_4;
+    static const struct {
+        double r, i, expect;
+    } tests[] = {
+        {  NAN,       NAN,       NAN      },
+        {  INFINITY,   2.0,      0.0      },
+        {  INFINITY,  -2.0,     -0.0      },
+        {  10.0,      INFINITY,  M_PI_2   },
+        {  10.0,     -INFINITY, -M_PI_2   },
+        { -INFINITY,  10.0,      M_PI     },
+        { -INFINITY, -10.0,     -M_PI     },
+        {  INFINITY, -INFINITY, -M_PI_4   },
+        { -INFINITY,  INFINITY,  M_PI_3_4 },
+        {  INFINITY,  INFINITY,  M_PI_4   },
+        { -INFINITY, -INFINITY, -M_PI_3_4 },
+        {  2.0,       0.0,       0.0      },
+        {  2.0,      -0.0,      -0.0      },
+        {  0.0,       0.0,       0.0      },
+        {  0.0,      -0.0,      -0.0      },
+        { -2.0,       0.0,       M_PI     },
+        { -2.0,      -0.0,      -M_PI     },
+        { -0.0,       0.0,       M_PI     },
+        { -0.0,      -0.0,      -M_PI     },
+        {  0.0,       2.0,       M_PI_2   },
+        { -0.0,       2.0,       M_PI_2   },
+        {  0.0,      -2.0,      -M_PI_2   },
+        { -0.0,      -2.0,      -M_PI_2   },
+    };
+    _Dcomplex c;
+    errno_t e;
+    double z;
+    int i;
+
+    __setusermatherr(matherr_callback);
+
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        c = _Cbuild(tests[i].r, tests[i].i);
+        errno = -1;
+        exception.type = -1;
+        z = carg(c);
+        e = errno;
+
+        ok(compare_double(z, tests[i].expect, 0),
+            "expected %0.16e, got %0.16e for %d\n", tests[i].expect, z, i);
+        ok(signbit(z) == signbit(tests[i].expect), "expected sign %x, got %x for %d\n",
+            signbit(tests[i].expect), signbit(z), i);
+
+        ok(e == -1, "expected errno -1, but got %d for %d\n", e, i);
+        ok(exception.type == -1, "expected -1, got %d for %d\n", exception.type, i);
+    }
+
+    __setusermatherr(NULL);
+}
 
 START_TEST(misc)
 {
@@ -2051,4 +2106,5 @@ START_TEST(misc)
     test_exp();
     test_expf();
     test_cexp();
+    test_carg();
 }

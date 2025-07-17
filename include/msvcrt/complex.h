@@ -27,6 +27,7 @@ typedef _C_float_complex _Fcomplex;
 _ACRTIMP _Dcomplex __cdecl _Cbuild(double, double);
 _ACRTIMP _Dcomplex __cdecl cexp(_Dcomplex);
 
+_ACRTIMP double __cdecl carg(_Dcomplex);
 _ACRTIMP double __cdecl cimag(_Dcomplex);
 _ACRTIMP double __cdecl creal(_Dcomplex);
 
