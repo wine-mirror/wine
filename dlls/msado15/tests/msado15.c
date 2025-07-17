@@ -20,6 +20,7 @@
 #define COBJMACROS
 #include <initguid.h>
 #include <oledb.h>
+#include <oledberr.h>
 #include <olectl.h>
 #include <msado15_backcompat.h>
 #include "wine/test.h"
@@ -61,6 +62,8 @@ DEFINE_GUID(DBPROPSET_ROWSET,            0xc8b522be, 0x5cf3, 0x11ce, 0xad, 0xe5,
 
 DEFINE_EXPECT(rowset_info_GetProperties);
 DEFINE_EXPECT(column_info_GetColumnInfo);
+DEFINE_EXPECT(rowset_GetNextRows);
+DEFINE_EXPECT(rowset_ReleaseRows);
 
 static BOOL is_bof( _Recordset *recordset )
 {
@@ -702,15 +705,31 @@ static HRESULT WINAPI rowset_GetData(IRowset *iface, HROW hRow, HACCESSOR hAcces
 static HRESULT WINAPI rowset_GetNextRows(IRowset *iface, HCHAPTER hReserved, DBROWOFFSET lRowsOffset,
     DBROWCOUNT cRows, DBCOUNTITEM *pcRowObtained, HROW **prghRows)
 {
-    ok(0, "Unexpected call\n");
-    return E_NOTIMPL;
+    static int idx;
+
+    CHECK_EXPECT2(rowset_GetNextRows);
+    ok(!hReserved, "hReserved = %Ix\n", hReserved);
+    ok(pcRowObtained != NULL, "pcRowObtained = NULL\n");
+    ok(prghRows != NULL, "prghRows = NULL\n");
+    ok(*prghRows != NULL, "*prghRows = NULL\n");
+
+    if (idx == 2)
+    {
+        *pcRowObtained = 0;
+        return DB_S_ENDOFROWSET;
+    }
+
+    ok(!lRowsOffset, "lRowsOffset = %Id\n", lRowsOffset);
+    *pcRowObtained = 1;
+    (*prghRows)[0] = idx++;
+    return S_OK;
 }
 
 static HRESULT WINAPI rowset_ReleaseRows(IRowset *iface, DBCOUNTITEM cRows, const HROW rghRows[],
     DBROWOPTIONS rgRowOptions[], DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
 {
-    ok(0, "Unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(rowset_ReleaseRows);
+    return S_OK;
 }
 
 static HRESULT WINAPI rowset_RestartPosition(IRowset *iface, HCHAPTER hReserved)
@@ -818,6 +837,27 @@ static void test_ADORecordsetConstruction(void)
     ok( scale == 1, "got %u\n", scale );
 
     Field_Release( field );
+
+    SET_EXPECT( rowset_GetNextRows );
+    SET_EXPECT( rowset_ReleaseRows );
+    hr = _Recordset_MoveNext( recordset );
+    todo_wine CHECK_CALLED( rowset_GetNextRows );
+    todo_wine CHECK_CALLED( rowset_ReleaseRows );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    todo_wine ok( !is_eof( recordset ), "at eof\n" );
+
+    SET_EXPECT( rowset_GetNextRows );
+    SET_EXPECT( rowset_ReleaseRows );
+    hr = _Recordset_MoveNext( recordset );
+    todo_wine CHECK_CALLED( rowset_GetNextRows );
+    todo_wine CHECK_CALLED( rowset_ReleaseRows );
+    todo_wine ok( hr == S_OK, "got %08lx\n", hr );
+    ok( is_eof( recordset ), "unexpected records\n" );
+
+    SET_EXPECT( rowset_GetNextRows );
+    hr = _Recordset_MoveNext( recordset );
+    todo_wine CHECK_CALLED( rowset_GetNextRows );
+    ok( hr == MAKE_ADO_HRESULT(adErrNoCurrentRecord), "got %08lx\n", hr );
 
     ref = get_refcount(rowset);
     ok( ref == 2, "got %ld\n", ref );
@@ -1763,8 +1803,8 @@ START_TEST(msado15)
 {
     CoInitialize( NULL );
     test_Connection();
-    test_ADORecordsetConstruction();
     test_ConnectionPoint();
+    test_ADORecordsetConstruction();
     test_Fields();
     test_Recordset();
     test_Stream();
