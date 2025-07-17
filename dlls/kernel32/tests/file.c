@@ -5617,12 +5617,11 @@ static void test_SetFileRenameInfo(void)
     CloseHandle(file);
 
     DeleteFileW(tempFileFrom);
-    DeleteFileW(tempFileTo1);
     DeleteFileW(tempFileTo2);
 
     /* repeat test again with FileRenameInfoEx */
 
-    file = CreateFileW(tempFileFrom, GENERIC_READ | GENERIC_WRITE | DELETE, 0, 0, OPEN_EXISTING, 0, 0);
+    file = CreateFileW(tempFileFrom, GENERIC_READ | GENERIC_WRITE | DELETE, 0, 0, CREATE_ALWAYS, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "failed to create temp file, error %lu.\n", GetLastError());
 
     fri->Flags = 0;

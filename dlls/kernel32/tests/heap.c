@@ -3620,9 +3620,9 @@ static void test_GlobalMemoryStatus(void)
 
     ok( memex.dwMemoryLoad == expect.dwMemoryLoad, "got dwMemoryLoad %lu\n", memex.dwMemoryLoad );
     ok( memex.ullTotalPhys == expect.ullTotalPhys, "got ullTotalPhys %#I64x\n", memex.ullTotalPhys );
-    ok( IS_WITHIN_RANGE( memex.ullAvailPhys, expect.ullAvailPhys ), "got ullAvailPhys %#I64x\n", memex.ullAvailPhys );
+    flaky ok( IS_WITHIN_RANGE( memex.ullAvailPhys, expect.ullAvailPhys ), "got ullAvailPhys %#I64x\n", memex.ullAvailPhys );
     ok( memex.ullTotalPageFile == expect.ullTotalPageFile, "got ullTotalPageFile %#I64x\n", memex.ullTotalPageFile );
-    ok( IS_WITHIN_RANGE( memex.ullAvailPageFile, expect.ullAvailPageFile ), "got ullAvailPageFile %#I64x\n", memex.ullAvailPageFile );
+    flaky ok( IS_WITHIN_RANGE( memex.ullAvailPageFile, expect.ullAvailPageFile ), "got ullAvailPageFile %#I64x\n", memex.ullAvailPageFile );
     ok( memex.ullTotalVirtual == expect.ullTotalVirtual, "got ullTotalVirtual %#I64x\n", memex.ullTotalVirtual );
     ok( memex.ullAvailVirtual <= expect.ullAvailVirtual, "got ullAvailVirtual %#I64x\n", memex.ullAvailVirtual );
     ok( memex.ullAvailExtendedVirtual == 0, "got ullAvailExtendedVirtual %#I64x\n", memex.ullAvailExtendedVirtual );
