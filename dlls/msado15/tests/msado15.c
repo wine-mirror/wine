@@ -748,6 +748,10 @@ static void test_ADORecordsetConstruction(void)
     IRowset *rowset;
     HRESULT hr;
     LONG ref, count, state;
+    unsigned char prec, scale;
+    VARIANT index;
+    ADO_LONGPTR size;
+    DataTypeEnum type;
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
     ok( hr == S_OK, "got %08lx\n", hr );
@@ -791,36 +795,29 @@ static void test_ADORecordsetConstruction(void)
     hr = Fields_get_Count( fields, &count );
     todo_wine CHECK_CALLED( column_info_GetColumnInfo );
     ok( count == 1, "got %ld\n", count );
-    if (count > 0)
-    {
-        unsigned char prec, scale;
-        VARIANT index;
-        ADO_LONGPTR size;
-        DataTypeEnum type;
 
-        V_VT( &index ) = VT_BSTR;
-        V_BSTR( &index ) = SysAllocString( L"Column1" );
+    V_VT( &index ) = VT_BSTR;
+    V_BSTR( &index ) = SysAllocString( L"Column1" );
 
-        hr = Fields_get_Item( fields, index, &field );
-        VariantClear(&index);
-        ok( hr == S_OK, "got %08lx\n", hr );
+    hr = Fields_get_Item( fields, index, &field );
+    VariantClear(&index);
+    ok( hr == S_OK, "got %08lx\n", hr );
 
-        hr = Field_get_Type( field, &type );
-        ok( hr == S_OK, "got %08lx\n", hr );
-        ok( type == adInteger, "got %d\n", type );
-        size = -1;
-        hr = Field_get_DefinedSize( field, &size );
-        ok( hr == S_OK, "got %08lx\n", hr );
-        ok( size == 5, "got %Id\n", size );
-        hr = Field_get_Precision( field, &prec );
-        ok( hr == S_OK, "got %08lx\n", hr );
-        ok( prec == 1, "got %u\n", prec );
-        hr = Field_get_NumericScale( field, &scale );
-        ok( hr == S_OK, "got %08lx\n", hr );
-        ok( scale == 1, "got %u\n", scale );
+    hr = Field_get_Type( field, &type );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( type == adInteger, "got %d\n", type );
+    size = -1;
+    hr = Field_get_DefinedSize( field, &size );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( size == 5, "got %Id\n", size );
+    hr = Field_get_Precision( field, &prec );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( prec == 1, "got %u\n", prec );
+    hr = Field_get_NumericScale( field, &scale );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( scale == 1, "got %u\n", scale );
 
-        Field_Release(field);
-    }
+    Field_Release( field );
 
     ref = get_refcount(rowset);
     ok( ref == 2, "got %ld\n", ref );
