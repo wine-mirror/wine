@@ -1341,7 +1341,7 @@ typedef struct {
     /* value is valid only for detached attributes (when elem == NULL). */
     VARIANT value;
     /* name must be valid for detached attributes */
-    WCHAR *name;
+    BSTR name;
 
     HTMLDocumentNode *doc;
     HTMLElement *elem;

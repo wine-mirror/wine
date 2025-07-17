@@ -51,7 +51,7 @@ static HRESULT WINAPI HTMLDOMAttribute_get_nodeName(IHTMLDOMAttribute *iface, BS
             return E_FAIL;
         }
 
-        *p = SysAllocString(This->name);
+        *p = SysAllocStringLen(This->name, SysStringLen(This->name));
         return *p ? S_OK : E_OUTOFMEMORY;
     }
 
@@ -537,7 +537,7 @@ static void HTMLDOMAttribute_destructor(DispatchEx *dispex)
 {
     HTMLDOMAttribute *This = impl_from_DispatchEx(dispex);
     VariantClear(&This->value);
-    free(This->name);
+    SysFreeString(This->name);
     free(This);
 }
 
@@ -609,7 +609,7 @@ HRESULT HTMLDOMAttribute_Create(const WCHAR *name, HTMLElement *elem, DISPID dis
 
     /* For detached attributes we may still do most operations if we have its name available. */
     if(name) {
-        ret->name = wcsdup(name);
+        ret->name = SysAllocString(name);
         if(!ret->name) {
             IHTMLDOMAttribute_Release(&ret->IHTMLDOMAttribute_iface);
             return E_OUTOFMEMORY;
