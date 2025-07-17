@@ -21222,9 +21222,8 @@ static void test_defwinproc_wm_print(void)
     lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_CHILDREN | PRF_CLIENT);
     ok(lr == 1, "Got unexpected lr %Id.\n", lr);
     color = GetPixel(hdc, 50, 50);
-    todo_wine
     ok(color == RGB(0xff, 0, 0), "Got unexpected color %#lx.\n", color);
-    ok_sequence(wm_print_prf_children, "DefWindowProc WM_PRINT with PRF_CHILDREN | PRF_CLIENT with an invisible parent", TRUE);
+    ok_sequence(wm_print_prf_children, "DefWindowProc WM_PRINT with PRF_CHILDREN | PRF_CLIENT with an invisible parent", FALSE);
     flush_sequence();
 
     /* PRF_CHILDREN | PRF_CLIENT with an invisible child window */
