@@ -22,6 +22,7 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <uxtheme.h>
+#include <shlwapi.h>
 
 #include "wine/test.h"
 #include "v6util.h"
@@ -37,6 +38,7 @@ static BOOL (WINAPI * pStr_SetPtrA)(LPSTR, LPCSTR);
 static INT (WINAPI * pStr_GetPtrW)(LPCWSTR, LPWSTR, INT);
 static BOOL (WINAPI * pStr_SetPtrW)(LPWSTR, LPCWSTR);
 
+static HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO *);
 static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
 static BOOL (WINAPI *pRemoveWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR);
 static LRESULT (WINAPI *pDefSubclassProc)(HWND, UINT, WPARAM, LPARAM);
@@ -92,6 +94,8 @@ static BOOL InitFunctionPtrs(void)
     COMCTL32_GET_PROC(235, Str_GetPtrW)
     COMCTL32_GET_PROC(236, Str_SetPtrW)
 
+    pDllGetVersion = (void *)GetProcAddress(hComctl32, "DllGetVersion");
+
     return TRUE;
 }
 
@@ -107,6 +111,8 @@ static BOOL init_functions_v6(void)
     COMCTL32_GET_PROC(410, SetWindowSubclass)
     COMCTL32_GET_PROC(412, RemoveWindowSubclass)
     COMCTL32_GET_PROC(413, DefSubclassProc)
+
+    pDllGetVersion = (void *)GetProcAddress(hComctl32, "DllGetVersion");
 
     return TRUE;
 }
@@ -1284,6 +1290,19 @@ static void test_WM_SETFONT(void)
     DestroyWindow(parent);
 }
 
+static void test_version(BOOL v6)
+{
+    DLLVERSIONINFO info;
+    HRESULT hr;
+
+    info.cbSize = sizeof(info);
+    hr = pDllGetVersion(&info);
+    ok(hr == S_OK, "DllGetVersion failed, hr %#lx.\n", hr);
+
+    todo_wine_if(v6)
+    ok(info.dwMajorVersion == (v6 ? 6 : 5), "Got unexpected major version %lu.\n", info.dwMajorVersion);
+}
+
 START_TEST(misc)
 {
     ULONG_PTR ctx_cookie;
@@ -1298,6 +1317,7 @@ START_TEST(misc)
     test_comctl32_classes(FALSE);
     test_WM_STYLECHANGED();
     test_WM_SETFONT();
+    test_version(FALSE);
 
     FreeLibrary(hComctl32);
 
@@ -1314,6 +1334,7 @@ START_TEST(misc)
     test_WM_SYSCOLORCHANGE();
     test_WM_STYLECHANGED();
     test_WM_SETFONT();
+    test_version(TRUE);
 
     unload_v6_module(ctx_cookie, hCtx);
     FreeLibrary(hComctl32);
