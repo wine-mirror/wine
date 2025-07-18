@@ -150,6 +150,7 @@
 @ stdcall -syscall NtAllocateUuids(ptr ptr ptr ptr)
 @ stdcall -syscall=0x0018 NtAllocateVirtualMemory(long ptr long ptr long long)
 @ stdcall -syscall NtAllocateVirtualMemoryEx(long ptr ptr long long ptr long)
+@ stub -syscall=0x004c NtApphelpCacheControl
 @ stdcall -syscall NtAreMappedFilesTheSame(ptr ptr)
 @ stdcall -syscall NtAssignProcessToJobObject(long long)
 @ stdcall -syscall=0x0005 NtCallbackReturn(ptr long long)
@@ -188,7 +189,7 @@
 @ stdcall -syscall NtCreatePagingFile(ptr ptr ptr ptr)
 @ stdcall -syscall NtCreatePort(ptr ptr long long ptr)
 # @ stub NtCreateProcess
-# @ stub NtCreateProcessEx
+@ stub -syscall=0x004d NtCreateProcessEx
 # @ stub NtCreateProfile
 @ stdcall -syscall=0x004a NtCreateSection(ptr long ptr ptr long long long)
 @ stdcall -syscall NtCreateSectionEx(ptr long ptr ptr long long long ptr long)
@@ -261,7 +262,7 @@
 @ stdcall -syscall NtMakePermanentObject(long)
 @ stdcall -syscall NtMakeTemporaryObject(long)
 # @ stub NtMapUserPhysicalPages
-# @ stub NtMapUserPhysicalPagesScatter
+@ stub -syscall=0x0003 NtMapUserPhysicalPagesScatter
 @ stdcall -syscall=0x0028 NtMapViewOfSection(long long ptr long long ptr ptr long long long)
 @ stdcall -syscall NtMapViewOfSectionEx(long long ptr ptr ptr long long ptr long)
 # @ stub NtModifyBootEntry
@@ -384,7 +385,7 @@
 @ stdcall -syscall NtSetDefaultUILanguage(long)
 @ stdcall -syscall NtSetEaFile(long ptr ptr long)
 @ stdcall -syscall=0x000e NtSetEvent(long ptr)
-# @ stub NtSetEventBoostPriority
+@ stub -syscall=0x002d NtSetEventBoostPriority
 # @ stub NtSetHighEventPair
 # @ stub NtSetHighWaitLowEventPair
 @ stdcall -syscall NtSetInformationDebugObject(long long ptr long ptr)
@@ -427,7 +428,7 @@
 @ stdcall -syscall=0x0053 NtTerminateThread(long long)
 @ stdcall -syscall NtTestAlert()
 @ stdcall -syscall NtTraceControl(long ptr long ptr long long)
-# @ stub NtTraceEvent
+@ stub -syscall=0x005e NtTraceEvent
 # @ stub NtTranslateFilePath
 @ stdcall -syscall NtUnloadDriver(ptr)
 @ stdcall -syscall NtUnloadKey(ptr)
@@ -441,9 +442,11 @@
 @ stdcall -syscall NtWaitForDebugEvent(long long ptr ptr)
 @ stdcall -syscall NtWaitForKeyedEvent(long ptr long ptr)
 @ stdcall -syscall=0x005b NtWaitForMultipleObjects(long ptr long long ptr)
+@ stub -syscall=0x001a NtWaitForMultipleObjects32
 @ stdcall -syscall=0x0004 NtWaitForSingleObject(long long ptr)
 # @ stub NtWaitHighEventPair
 # @ stub NtWaitLowEventPair
+@ stub -syscall=0x0001 NtWorkerFactoryWorkerReady
 @ stdcall -syscall -arch=win32 NtWow64AllocateVirtualMemory64(long ptr int64 ptr long long)
 @ stdcall -syscall -arch=win32 NtWow64GetNativeSystemInformation(long ptr long ptr)
 @ stdcall -syscall -arch=win32 NtWow64IsProcessorFeaturePresent(long)
@@ -1216,6 +1219,7 @@
 @ stdcall -private ZwAllocateUuids(ptr ptr ptr ptr) NtAllocateUuids
 @ stdcall -private ZwAllocateVirtualMemory(long ptr long ptr long long) NtAllocateVirtualMemory
 @ stdcall -private ZwAllocateVirtualMemoryEx(long ptr ptr long long ptr long) NtAllocateVirtualMemoryEx
+@ stdcall -private ZwApphelpCacheControl() NtApphelpCacheControl
 @ stdcall -private ZwAreMappedFilesTheSame(ptr ptr) NtAreMappedFilesTheSame
 @ stdcall -private ZwAssignProcessToJobObject(long long) NtAssignProcessToJobObject
 @ stdcall -private ZwCallbackReturn(ptr long long) NtCallbackReturn
@@ -1254,7 +1258,7 @@
 @ stdcall -private ZwCreatePagingFile(ptr ptr ptr ptr) NtCreatePagingFile
 @ stdcall -private ZwCreatePort(ptr ptr long long ptr) NtCreatePort
 # @ stub ZwCreateProcess
-# @ stub ZwCreateProcessEx
+@ stdcall -private ZwCreateProcessEx() NtCreateProcessEx
 # @ stub ZwCreateProfile
 @ stdcall -private ZwCreateSection(ptr long ptr ptr long long long) NtCreateSection
 @ stdcall -private ZwCreateSectionEx(ptr long ptr ptr long long long ptr long) NtCreateSectionEx
@@ -1325,7 +1329,7 @@
 @ stdcall -private ZwMakePermanentObject(long) NtMakePermanentObject
 @ stdcall -private ZwMakeTemporaryObject(long) NtMakeTemporaryObject
 # @ stub ZwMapUserPhysicalPages
-# @ stub ZwMapUserPhysicalPagesScatter
+@ stdcall -private ZwMapUserPhysicalPagesScatter() NtMapUserPhysicalPagesScatter
 @ stdcall -private ZwMapViewOfSection(long long ptr long long ptr ptr long long long) NtMapViewOfSection
 @ stdcall -private ZwMapViewOfSectionEx(long long ptr ptr ptr long long ptr long) NtMapViewOfSectionEx
 # @ stub ZwModifyBootEntry
@@ -1448,7 +1452,7 @@
 @ stdcall -private ZwSetDefaultUILanguage(long) NtSetDefaultUILanguage
 @ stdcall -private ZwSetEaFile(long ptr ptr long) NtSetEaFile
 @ stdcall -private ZwSetEvent(long ptr) NtSetEvent
-# @ stub ZwSetEventBoostPriority
+@ stdcall -private ZwSetEventBoostPriority() NtSetEventBoostPriority
 # @ stub ZwSetHighEventPair
 # @ stub ZwSetHighWaitLowEventPair
 @ stdcall -private ZwSetInformationDebugObject(long long ptr long ptr) NtSetInformationDebugObject
@@ -1491,7 +1495,7 @@
 @ stdcall -private ZwTerminateThread(long long) NtTerminateThread
 @ stdcall -private ZwTestAlert() NtTestAlert
 @ stdcall -private ZwTraceControl(long ptr long ptr long long) NtTraceControl
-# @ stub ZwTraceEvent
+@ stdcall -private ZwTraceEvent() NtTraceEvent
 # @ stub ZwTranslateFilePath
 @ stdcall -private ZwUnloadDriver(ptr) NtUnloadDriver
 @ stdcall -private ZwUnloadKey(ptr) NtUnloadKey
@@ -1505,9 +1509,11 @@
 @ stdcall -private ZwWaitForDebugEvent(long long ptr ptr) NtWaitForDebugEvent
 @ stdcall -private ZwWaitForKeyedEvent(long ptr long ptr) NtWaitForKeyedEvent
 @ stdcall -private ZwWaitForMultipleObjects(long ptr long long ptr) NtWaitForMultipleObjects
+@ stdcall -private ZwWaitForMultipleObjects32() NtWaitForMultipleObjects32
 @ stdcall -private ZwWaitForSingleObject(long long ptr) NtWaitForSingleObject
 # @ stub ZwWaitHighEventPair
 # @ stub ZwWaitLowEventPair
+@ stdcall -private ZwWorkerFactoryWorkerReady() NtWorkerFactoryWorkerReady
 @ stdcall -private -arch=win32 ZwWow64AllocateVirtualMemory64(long ptr int64 ptr long long) NtWow64AllocateVirtualMemory64
 @ stdcall -private -arch=win32 ZwWow64GetNativeSystemInformation(long ptr long ptr) NtWow64GetNativeSystemInformation
 @ stdcall -private -arch=win32 ZwWow64IsProcessorFeaturePresent(long) NtWow64IsProcessorFeaturePresent

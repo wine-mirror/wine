@@ -124,7 +124,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, void *reserved )
     return TRUE;
 }
 
-void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *function )
+void __cdecl DECLSPEC_NORETURN __wine_spec_unimplemented_stub( const char *module, const char *function )
 {
     EXCEPTION_RECORD record;
 
@@ -138,6 +138,13 @@ void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *fun
     for (;;) RtlRaiseException( &record );
 }
 
+static void DECLSPEC_NORETURN stub_syscall( const char *name )
+{
+    __wine_spec_unimplemented_stub( "ntdll", name );
+}
+
+#define SYSCALL_STUB(name) NTSTATUS WINAPI wow64_ ## name( UINT *args ) { stub_syscall( #name ); }
+ALL_SYSCALL_STUBS
 
 static EXCEPTION_RECORD *exception_record_32to64( const EXCEPTION_RECORD32 *rec32 )
 {
