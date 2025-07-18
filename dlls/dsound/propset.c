@@ -475,6 +475,8 @@ static HRESULT DSPROPERTY_Description1(
         *pcbReturned = sizeof(*ppd);
     if (!pPropData)
         return S_OK;
+    if (cbPropData < sizeof(*ppd))
+        return E_INVALIDARG;
 
     data.DeviceId = ppd->DeviceId;
     data.DataFlow = ppd->DataFlow;
