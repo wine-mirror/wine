@@ -1072,6 +1072,7 @@ void output_stubs( DLLSPEC *spec )
     {
         ORDDEF *odp = exports->entry_points[i];
         if (odp->type != TYPE_STUB) continue;
+        if (odp->flags & FLAG_SYSCALL) continue;
 
         name = get_link_name( odp );
         exp_name = odp->name ? odp->name : odp->export_name;
@@ -1177,6 +1178,7 @@ void output_stubs( DLLSPEC *spec )
     {
         ORDDEF *odp = exports->entry_points[i];
         if (odp->type != TYPE_STUB) continue;
+        if (odp->flags & FLAG_SYSCALL) continue;
         exp_name = odp->name ? odp->name : odp->export_name;
         if (exp_name)
         {

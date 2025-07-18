@@ -704,6 +704,7 @@ const char *get_abi_name( const ORDDEF *odp, const char *name )
 
     switch (odp->type)
     {
+    case TYPE_STUB:
     case TYPE_STDCALL:
         if (is_pe())
         {
@@ -741,7 +742,7 @@ const char *get_abi_name( const ORDDEF *odp, const char *name )
 
 const char *get_link_name( const ORDDEF *odp )
 {
-    if (odp->type == TYPE_STUB) return get_stub_name( odp );
+    if (odp->type == TYPE_STUB && !(odp->flags & FLAG_SYSCALL)) return get_stub_name( odp );
 
     return get_abi_name( odp, odp->link_name );
 }
