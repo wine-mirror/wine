@@ -2636,13 +2636,23 @@ ULONG WINAPI NtGetCurrentProcessorNumber(void)
 #if defined(HAVE_SCHED_GETCPU)
     int res = sched_getcpu();
     if (res >= 0) return res;
-#elif defined(__APPLE__) && (defined(__x86_64__) || defined(__i386__))
-    struct {
-        unsigned long p1, p2;
-    } p;
-    __asm__ __volatile__("sidt %[p]" : [p] "=&m"(p));
-    processor = (ULONG)(p.p1 & 0xfff);
-    return processor;
+#elif defined(__APPLE__) && defined(MAC_OS_VERSION_11_0)
+    if (__builtin_available( macOS 11.0, * ))
+    {
+        size_t cpu_id;
+        pthread_cpu_number_np( &cpu_id );
+        return cpu_id;
+    }
+#endif
+#if defined(__APPLE__) && (defined(__x86_64__) || defined(__i386__))
+    {
+        struct {
+            unsigned long p1, p2;
+        } p;
+        __asm__ __volatile__("sidt %[p]" : [p] "=&m"(p));
+        processor = (ULONG)(p.p1 & 0xfff);
+        return processor;
+    }
 #endif
 
     if (peb->NumberOfProcessors > 1)
