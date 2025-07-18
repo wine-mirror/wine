@@ -487,21 +487,56 @@ static unsigned long get_mwm_decorations( struct x11drv_win_data *data, DWORD st
  */
 static int get_window_attributes( struct x11drv_win_data *data, XSetWindowAttributes *attr )
 {
+    DWORD ex_style = NtUserGetWindowLongW( data->hwnd, GWL_EXSTYLE );
+
     attr->colormap          = data->whole_colormap ? data->whole_colormap : default_colormap;
     attr->save_under        = ((NtUserGetClassLongW( data->hwnd, GCL_STYLE ) & CS_SAVEBITS) != 0);
     attr->bit_gravity       = NorthWestGravity;
     attr->backing_store     = NotUseful;
     attr->border_pixel      = 0;
     attr->background_pixel  = 0;
-    attr->event_mask        = (ExposureMask | PointerMotionMask |
-                               ButtonPressMask | ButtonReleaseMask | EnterWindowMask |
-                               KeyPressMask | KeyReleaseMask | FocusChangeMask |
-                               KeymapStateMask | StructureNotifyMask | PropertyChangeMask);
+    attr->event_mask        = (ExposureMask | KeyPressMask | KeyReleaseMask |
+                               FocusChangeMask | KeymapStateMask | StructureNotifyMask | PropertyChangeMask);
+    /* for transparent windows, exclude mouse events to allow mouse pass-through */
+    if (!(ex_style & WS_EX_TRANSPARENT)) attr->event_mask |= (PointerMotionMask | ButtonPressMask |
+                                                              ButtonReleaseMask | EnterWindowMask);
 
     return (CWSaveUnder | CWColormap | CWBorderPixel | CWBackPixel |
             CWEventMask | CWBitGravity | CWBackingStore);
 }
 
+/***********************************************************************
+ *              sync_window_input_shape
+ *
+ * Update the X11 window input shape for WS_EX_TRANSPARENT windows.
+ * This uses the ShapeInput extension to control which areas of the window
+ * can receive input events.
+ */
+static void sync_window_input_shape( struct x11drv_win_data *data )
+{
+#ifdef HAVE_LIBXSHAPE
+    DWORD ex_style = NtUserGetWindowLongW( data->hwnd, GWL_EXSTYLE );
+
+    if (!data->whole_window) return;
+
+    if (ex_style & WS_EX_TRANSPARENT)
+    {
+        /* For transparent windows, set an empty input shape to allow mouse pass-through */
+        static XRectangle empty_rect;
+        XShapeCombineRectangles( data->display, data->whole_window, ShapeInput, 0, 0,
+                                 &empty_rect, 1, ShapeSet, YXBanded );
+        TRACE( "window %p/%lx set empty input shape for WS_EX_TRANSPARENT\n",
+               data->hwnd, data->whole_window );
+    }
+    else
+    {
+        /* For normal windows, reset input shape to default (full window) */
+        XShapeCombineMask( data->display, data->whole_window, ShapeInput, 0, 0, None, ShapeSet );
+        TRACE( "window %p/%lx reset input shape to default\n",
+               data->hwnd, data->whole_window );
+    }
+#endif
+}
 
 /***********************************************************************
  *              sync_window_style
@@ -519,6 +554,7 @@ static void sync_window_style( struct x11drv_win_data *data )
                data->whole_window, mask, NextRequest( data->display ) );
         XChangeWindowAttributes( data->display, data->whole_window, mask, &attr );
         x11drv_xinput2_enable( data->display, data->whole_window );
+        sync_window_input_shape( data );
     }
 }
 
@@ -2346,6 +2382,7 @@ static void create_whole_window( struct x11drv_win_data *data )
     /* set the window opacity */
     if (!NtUserGetLayeredWindowAttributes( data->hwnd, &key, &alpha, &layered_flags )) layered_flags = 0;
     sync_window_opacity( data->display, data->whole_window, alpha, layered_flags );
+    sync_window_input_shape( data );
 
     XFlush( data->display );  /* make sure the window exists before we start painting to it */
 
@@ -2472,11 +2509,15 @@ void X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
 
     if (offset == GWL_STYLE && (changed & WS_DISABLED)) set_wm_hints( data );
 
-    if (offset == GWL_EXSTYLE && (changed & WS_EX_LAYERED)) /* changing WS_EX_LAYERED resets attributes */
+    if (offset == GWL_EXSTYLE)
     {
-        data->layered = FALSE;
-        set_window_visual( data, &default_visual, FALSE );
-        sync_window_opacity( data->display, data->whole_window, 0, 0 );
+        if (changed & WS_EX_LAYERED) /* changing WS_EX_LAYERED resets attributes */
+        {
+            data->layered = FALSE;
+            set_window_visual( data, &default_visual, FALSE );
+            sync_window_opacity( data->display, data->whole_window, 0, 0 );
+        }
+        if (changed & WS_EX_TRANSPARENT) sync_window_style( data );
     }
 done:
     release_win_data( data );
