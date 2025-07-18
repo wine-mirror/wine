@@ -249,6 +249,8 @@ static int parse_spec_arguments( ORDDEF *odp, DLLSPEC *spec, int optional )
     unsigned int i, arg;
     int is_win32 = (spec->type == SPEC_WIN32) || (odp->flags & FLAG_EXPORT32);
 
+    odp->u.func.nb_args = 0;
+
     if (!(token = GetToken( optional ))) return optional;
     if (*token != '(')
     {
@@ -256,7 +258,6 @@ static int parse_spec_arguments( ORDDEF *odp, DLLSPEC *spec, int optional )
         return 0;
     }
 
-    odp->u.func.nb_args = 0;
     for (i = 0; i < MAX_ARGUMENTS; i++)
     {
         if (!(token = GetToken(0))) return 0;
@@ -426,10 +427,16 @@ static int parse_spec_equate( ORDDEF *odp, DLLSPEC *spec )
  */
 static int parse_spec_stub( ORDDEF *odp, DLLSPEC *spec )
 {
-    odp->u.func.nb_args = -1;
-    odp->link_name = xstrdup("");
+    const char *token;
 
-    return parse_spec_arguments( odp, spec, 1 );
+    if (!parse_spec_arguments( odp, spec, 1 )) return 0;
+
+    if (!(token = GetToken(1)))
+        odp->link_name = xstrdup( odp->name );
+    else
+        odp->link_name = xstrdup( token );
+
+    return 1;
 }
 
 

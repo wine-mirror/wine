@@ -736,8 +736,7 @@ static void output_module16( DLLSPEC *spec )
         if (!odp || !is_function( odp )) continue;
         output( ".L__wine_%s_%u:\n", spec->c_name, i );
         output( "\tpushw %%bp\n" );
-        output( "\tpushl $%s\n",
-                asm_name( odp->type == TYPE_STUB ? get_stub_name( odp, spec ) : get_link_name( odp )));
+        output( "\tpushl $%s\n", asm_name( get_link_name( odp )));
         output( "\tcallw .L__wine_spec_callfrom16_%s\n", get_callfrom16_name( odp ) );
     }
     output( ".L__wine_spec_code_segment_end:\n" );

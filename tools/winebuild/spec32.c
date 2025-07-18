@@ -423,26 +423,12 @@ void output_exports( DLLSPEC *spec )
             const char *symbol;
 
             if (!odp) continue;
-
-            switch (odp->type)
-            {
-            case TYPE_EXTERN:
-            case TYPE_STDCALL:
-            case TYPE_VARARGS:
-            case TYPE_CDECL:
-                if (odp->flags & FLAG_FORWARD)
-                    symbol = odp->link_name;
-                else if (odp->flags & FLAG_EXT_LINK)
-                    symbol = strmake( "%s_%s", asm_name("__wine_spec_ext_link"), odp->link_name );
-                else
-                    symbol = asm_name( get_link_name( odp ));
-                break;
-            case TYPE_STUB:
-                symbol = asm_name( get_stub_name( odp, spec ));
-                break;
-            default:
-                assert( 0 );
-            }
+            if (odp->flags & FLAG_FORWARD)
+                symbol = odp->link_name;
+            else if (odp->flags & FLAG_EXT_LINK)
+                symbol = strmake( "%s_%s", asm_name("__wine_spec_ext_link"), odp->link_name );
+            else
+                symbol = asm_name( get_link_name( odp ));
 
             output( "\t.ascii \" -export:%s=%s,@%u%s%s\"\n",
                     odp->name ? odp->name : strmake( "_noname%u", i ),
@@ -486,38 +472,25 @@ void output_exports( DLLSPEC *spec )
     {
         ORDDEF *odp = exports->ordinals[i];
         if (!odp) output( "\t%s 0\n", is_pe() ? ".long" : get_asm_ptr_keyword() );
-        else switch(odp->type)
+        else if (odp->flags & FLAG_FORWARD)
         {
-        case TYPE_EXTERN:
-        case TYPE_STDCALL:
-        case TYPE_VARARGS:
-        case TYPE_CDECL:
-            if (odp->flags & FLAG_FORWARD)
-            {
-                output( "\t%s .L__wine_spec_forwards+%u\n", func_ptr, fwd_size );
-                fwd_size += strlen(odp->link_name) + 1;
-            }
-            else if ((odp->flags & FLAG_IMPORT) && (target.cpu == CPU_i386 || target.cpu == CPU_x86_64))
-            {
-                name = odp->name ? odp->name : odp->export_name;
-                if (name) output( "\t%s %s_%s\n", func_ptr, asm_name("__wine_spec_imp"), name );
-                else output( "\t%s %s_%u\n", func_ptr, asm_name("__wine_spec_imp"), i );
-                needs_imports = 1;
-            }
-            else if (odp->flags & FLAG_EXT_LINK)
-            {
-                output( "\t%s %s_%s\n", func_ptr, asm_name("__wine_spec_ext_link"), odp->link_name );
-            }
-            else
-            {
-                output( "\t%s %s\n", func_ptr, asm_name( get_link_name( odp )));
-            }
-            break;
-        case TYPE_STUB:
-            output( "\t%s %s\n", func_ptr, asm_name( get_stub_name( odp, spec )) );
-            break;
-        default:
-            assert(0);
+            output( "\t%s .L__wine_spec_forwards+%u\n", func_ptr, fwd_size );
+            fwd_size += strlen(odp->link_name) + 1;
+        }
+        else if ((odp->flags & FLAG_IMPORT) && (target.cpu == CPU_i386 || target.cpu == CPU_x86_64))
+        {
+            name = odp->name ? odp->name : odp->export_name;
+            if (name) output( "\t%s %s_%s\n", func_ptr, asm_name("__wine_spec_imp"), name );
+            else output( "\t%s %s_%u\n", func_ptr, asm_name("__wine_spec_imp"), i );
+            needs_imports = 1;
+        }
+        else if (odp->flags & FLAG_EXT_LINK)
+        {
+            output( "\t%s %s_%s\n", func_ptr, asm_name("__wine_spec_ext_link"), odp->link_name );
+        }
+        else
+        {
+            output( "\t%s %s\n", func_ptr, asm_name( get_link_name( odp )));
         }
     }
 
@@ -1432,30 +1405,22 @@ void output_def_file( DLLSPEC *spec, struct exports *exports, int import_only )
         {
         case TYPE_EXTERN:
             is_data = 1;
-            /* fall through */
-        case TYPE_VARARGS:
-        case TYPE_CDECL:
-            /* try to reduce output */
-            if(!import_only && (strcmp(name, odp->link_name) || (odp->flags & FLAG_FORWARD)))
-                output( "=%s", odp->link_name );
             break;
+        case TYPE_STUB:
+            is_private = 1;
+            /* fall through */
         case TYPE_STDCALL:
+            if (!kill_at && target.cpu == CPU_i386) output( "@%d", get_args_size( odp ));
+            break;
+        default:
+            break;
+        }
+        if (!import_only)
         {
-            int at_param = get_args_size( odp );
-            if (!kill_at && target.cpu == CPU_i386) output( "@%d", at_param );
-            if (import_only) break;
-            if  (odp->flags & FLAG_FORWARD)
+            if (odp->flags & FLAG_FORWARD)
                 output( "=%s", odp->link_name );
             else if (strcmp(name, odp->link_name)) /* try to reduce output */
                 output( "=%s", get_link_name( odp ));
-            break;
-        }
-        case TYPE_STUB:
-            if (!kill_at && target.cpu == CPU_i386) output( "@%d", get_args_size( odp ));
-            is_private = 1;
-            break;
-        default:
-            assert(0);
         }
         output( " @%d", odp->ordinal );
         if (!odp->name || (odp->flags & FLAG_ORDINAL)) output( " NONAME" );
