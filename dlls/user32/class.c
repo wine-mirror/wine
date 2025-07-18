@@ -202,7 +202,8 @@ void get_class_version( UNICODE_STRING *name, UNICODE_STRING *version, BOOL load
     {
         if (load && !(hmod = GetModuleHandleW( L"comctl32" ))) hmod = LoadLibraryW( L"comctl32" );
     }
-    else if (!RtlFindActivationContextSectionString( 0, NULL, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, name, &data ))
+
+    if (!RtlFindActivationContextSectionString( 0, NULL, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, name, &data ))
     {
         struct wndclass_redirect_data
         {
