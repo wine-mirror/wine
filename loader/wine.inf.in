@@ -788,6 +788,7 @@ HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86,"Version",2,"14.42.344
 12,,*.sys,-
 11,,*.msstyles,-
 11,,*
+11,,comctl32_v6.dll,-
 
 [FakeDlls]
 ; create some directories first
@@ -853,6 +854,7 @@ HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86,"Version",2,"14.42.344
 55,,winprint.dll
 12,,*.sys
 11,,*
+11,,comctl32_v6.dll,-
 
 [SystemIni]
 system.ini, mci,,"MPEGVideo=mciqtz32.dll"

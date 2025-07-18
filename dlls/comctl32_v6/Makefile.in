@@ -1,8 +1,8 @@
-EXTRADEFS = -D_COMCTL32_ -D__WINE_COMCTL32_VERSION=5
-MODULE    = comctl32.dll
-IMPORTLIB = comctl32
+MODULE    = comctl32_v6.dll
 IMPORTS   = uuid user32 gdi32 advapi32 imm32 kernelbase oleaut32
 DELAYIMPORTS = oleacc winmm uxtheme
+EXTRADEFS = -D_COMCTL32_ -D__WINE_COMCTL32_VERSION=6
+PARENTSRC = ../comctl32
 
 SOURCES = \
 	animate.c \

@@ -57,7 +57,7 @@ F:      dlls/bluetoothapis/
 Common Controls Library
 P:	Nikolay Sivov <nsivov@codeweavers.com> @nsivov
 P:	Zhiyi Zhang <zzhang@codeweavers.com> @zhiyi
-F:	dlls/comctl32/
+F:	dlls/comctl32*/
 
 Common Item Dialog
 P:	Esme Povirk <esme@codeweavers.com> @madewokherd

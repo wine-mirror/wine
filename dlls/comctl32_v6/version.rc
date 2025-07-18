@@ -21,6 +21,9 @@
 
 #define WINE_FILEDESCRIPTION_STR "Wine Common Controls"
 #define WINE_FILENAME_STR "comctl32.dll"
-#define WINE_FILEVERSION 5,81,4704,1100
+#define WINE_FILEVERSION 6,0,2600,2982
 
 #include "wine/wine_common_ver.rc"
+
+/* @makedep: comctl32.manifest */
+WINE_MANIFEST RT_MANIFEST comctl32.manifest

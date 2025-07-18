@@ -1299,7 +1299,6 @@ static void test_version(BOOL v6)
     hr = pDllGetVersion(&info);
     ok(hr == S_OK, "DllGetVersion failed, hr %#lx.\n", hr);
 
-    todo_wine_if(v6)
     ok(info.dwMajorVersion == (v6 ? 6 : 5), "Got unexpected major version %lu.\n", info.dwMajorVersion);
 }
 
