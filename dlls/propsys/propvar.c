@@ -767,6 +767,14 @@ HRESULT WINAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT p
         return hr;
     }
 
+    case VT_CLSID:
+    {
+        GUID guid;
+        if (SUCCEEDED((hr = PropVariantToGUID(propvarSrc, &guid))))
+            hr = InitPropVariantFromCLSID(&guid, ppropvarDest);
+        return hr;
+    }
+
     default:
         FIXME("Unhandled dest type: %d\n", vt);
         return E_FAIL;

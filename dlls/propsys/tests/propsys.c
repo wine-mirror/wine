@@ -1649,8 +1649,7 @@ static void test_PropVariantChangeType_CLSID(void)
         src.pwszVal = CoTaskMemAlloc((wcslen(test_cases[i].str) + 1) * sizeof(WCHAR));
         wcscpy(src.pwszVal, test_cases[i].str);
         hr = PropVariantChangeType(&dest, &src, 0, VT_CLSID);
-        todo_wine
-            ok(hr == test_cases[i].hr, "Unexpected hr %#lx.\n", hr);
+        ok(hr == test_cases[i].hr, "Unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
         {
             ok(dest.vt == VT_CLSID, "Unexecpted type %d.\n", dest.vt);
@@ -1662,8 +1661,7 @@ static void test_PropVariantChangeType_CLSID(void)
         src.vt = VT_BSTR;
         src.bstrVal = SysAllocString(test_cases[i].str);
         hr = PropVariantChangeType(&dest, &src, 0, VT_CLSID);
-        todo_wine
-            ok(hr == test_cases[i].hr, "Unexpected hr %#lx.\n", hr);
+        ok(hr == test_cases[i].hr, "Unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
         {
             ok(dest.vt == VT_CLSID, "Unexpected type %d.\n", dest.vt);
