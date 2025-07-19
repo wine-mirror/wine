@@ -1621,11 +1621,97 @@ static void test_PropVariantChangeType_R8(void)
        "Unexpected value %f.\n", dest.dblVal);
 }
 
+static void test_PropVariantChangeType_CLSID(void)
+{
+    static const struct {
+        const WCHAR *str;
+        const GUID *guid;
+        HRESULT hr;
+    } test_cases[] = {
+        {dummy_guid_str, &dummy_guid, S_OK},
+        {L"{deadbeef-dead-beef-dead-beefcafebabe}", &dummy_guid, S_OK},
+        {L"DEADBEEF-DEAD-BEEF-DEAD-BEEFCAFEBABE", NULL, E_INVALIDARG},
+        {L"foo", NULL, E_INVALIDARG},
+        {L"", NULL, E_INVALIDARG},
+    };
+    SAFEARRAYBOUND arrbounds;
+    PROPVARIANT src, dest;
+    SAFEARRAY *arr;
+    HRESULT hr;
+    void *buf;
+    SIZE_T i;
+
+    for (i = 0; i < ARRAY_SIZE(test_cases); i++)
+    {
+        winetest_push_context("test_cases[%Iu]", i);
+        PropVariantInit(&src);
+        src.vt = VT_LPWSTR;
+        src.pwszVal = CoTaskMemAlloc((wcslen(test_cases[i].str) + 1) * sizeof(WCHAR));
+        wcscpy(src.pwszVal, test_cases[i].str);
+        hr = PropVariantChangeType(&dest, &src, 0, VT_CLSID);
+        todo_wine
+            ok(hr == test_cases[i].hr, "Unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(dest.vt == VT_CLSID, "Unexecpted type %d.\n", dest.vt);
+            ok(IsEqualGUID(dest.puuid, test_cases[i].guid), "Unexpected value %s.\n", debugstr_guid(dest.puuid));
+        }
+
+        PropVariantClear(&src);
+        PropVariantClear(&dest);
+        src.vt = VT_BSTR;
+        src.bstrVal = SysAllocString(test_cases[i].str);
+        hr = PropVariantChangeType(&dest, &src, 0, VT_CLSID);
+        todo_wine
+            ok(hr == test_cases[i].hr, "Unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(dest.vt == VT_CLSID, "Unexpected type %d.\n", dest.vt);
+            ok(IsEqualGUID(dest.puuid, test_cases[i].guid), "Unexpected value %s.\n", debugstr_guid(dest.puuid));
+        }
+        PropVariantClear(&src);
+        PropVariantClear(&dest);
+        winetest_pop_context();
+    }
+
+    arrbounds.lLbound = 0;
+    arrbounds.cElements = sizeof(GUID);
+    arr = SafeArrayCreate(VT_UI1, 1, &arrbounds);
+    ok(!!arr, "SafeArrayCreate failed.\n");
+    hr = SafeArrayAccessData(arr, &buf);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    memcpy(buf, &dummy_guid, sizeof(GUID));
+    hr = SafeArrayUnaccessData(arr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    src.vt = VT_ARRAY | VT_UI1;
+    src.parray = arr;
+    hr = PropVariantChangeType(&dest, &src, 0, VT_CLSID);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(dest.vt == VT_CLSID, "Unexpected type %d.\n", dest.vt);
+        ok(IsEqualGUID(dest.puuid, &dummy_guid), "Unexpected value %s.\n", debugstr_guid(dest.puuid));
+    }
+    PropVariantClear(&src);
+    PropVariantClear(&dest);
+
+    hr = InitPropVariantFromCLSID(&dummy_guid, &src);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = PropVariantChangeType(&dest, &src, 0, VT_CLSID);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(dest.vt == VT_CLSID, "Unexpected type %d.\n", dest.vt);
+    ok(IsEqualGUID(dest.puuid, &dummy_guid), "Unexpected value %s.\n", debugstr_guid(dest.puuid));
+    PropVariantClear(&src);
+    PropVariantClear(&dest);
+}
+
 static void test_PropVariantChangeType(void)
 {
     test_PropVariantChangeType_LPWSTR();
     test_PropVariantChangeType_UI4();
     test_PropVariantChangeType_R8();
+    test_PropVariantChangeType_CLSID();
 }
 
 static void test_InitPropVariantFromCLSID(void)
