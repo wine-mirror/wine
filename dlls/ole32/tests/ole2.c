@@ -3158,6 +3158,7 @@ static void test_OleDraw(void)
     hr = OleDraw(NULL, 0, (HDC)0x1, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
 
+    SetRect(&rect, 0, 0, 1, 1);
     hr = OleDraw(NULL, 0, (HDC)0x1, &rect);
     ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
 }
