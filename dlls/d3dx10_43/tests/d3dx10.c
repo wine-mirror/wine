@@ -2110,7 +2110,7 @@ static void test_D3DX10CreateAsyncMemoryLoader(void)
 {
     ID3DX10DataLoader *loader;
     SIZE_T size;
-    DWORD data;
+    DWORD data = 0;
     HRESULT hr;
     void *ptr;
 
@@ -2136,7 +2136,6 @@ static void test_D3DX10CreateAsyncMemoryLoader(void)
     hr = ID3DX10DataLoader_Destroy(loader);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    data = 0;
     hr = D3DX10CreateAsyncMemoryLoader(&data, sizeof(data), &loader);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
