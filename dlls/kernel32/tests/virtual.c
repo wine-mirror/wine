@@ -1629,7 +1629,7 @@ static void test_IsBadReadPtr(void)
 {
     BOOL ret;
     void *ptr = (void *)0xdeadbeef;
-    char stackvar;
+    char stackvar = 0;
 
     ret = IsBadReadPtr(NULL, 0);
     ok(ret == FALSE, "Expected IsBadReadPtr to return FALSE, got %d\n", ret);
