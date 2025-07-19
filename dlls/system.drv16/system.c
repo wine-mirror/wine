@@ -232,9 +232,7 @@ WORD WINAPI Get80x87SaveSize16(void)
  */
 void WINAPI Save80x87State16( char *ptr )
 {
-#ifdef __i386__
     __asm__(".byte 0x66; fsave %0; fwait" : "=m" (ptr) );
-#endif
 }
 
 
@@ -243,9 +241,7 @@ void WINAPI Save80x87State16( char *ptr )
  */
 void WINAPI Restore80x87State16( const char *ptr )
 {
-#ifdef __i386__
     __asm__(".byte 0x66; frstor %0" : : "m" (ptr) );
-#endif
 }
 
 
