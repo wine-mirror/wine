@@ -2417,7 +2417,7 @@ static void test_IUnknown_ProfferService(void)
     static const GUID dummy_serviceid = { 0xdeadbeef };
     call_trace_t trace_expected;
     HRESULT hr;
-    DWORD cookie;
+    DWORD cookie = 0;
 
     provider = IServiceProviderImpl_Construct();
     proff = IProfferServiceImpl_Construct();
@@ -2445,7 +2445,6 @@ static void test_IUnknown_ProfferService(void)
     add_call(&trace_expected, 3, &dummy_serviceid, provider, &cookie, 0, 0);
 
     init_call_trace(&trace_got);
-    cookie = 0;
     hr = pIUnknown_ProfferService((IUnknown*)proff, &dummy_serviceid, provider, &cookie);
     ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(cookie == 0xdeadbeef, "got %lx\n", cookie);
