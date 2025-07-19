@@ -10045,6 +10045,7 @@ static void test_copy_subresource_region(void)
     if (!is_warp_device(device))
     {
         /* Broken on Win2008 Warp */
+        set_box(&box, 0, 0, 0, 1, 1, 1);
         ID3D10Device_CopySubresourceRegion(device, (ID3D10Resource *)dst_texture, 0,
                 1, 1, 0, NULL, 0, &box);
         ID3D10Device_CopySubresourceRegion(device, NULL, 0,
