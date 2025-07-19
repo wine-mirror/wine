@@ -3123,7 +3123,7 @@ static void test_connect_direct(void)
 
     IFilterGraph2 *graph = create_graph();
     IMediaControl *control;
-    AM_MEDIA_TYPE mt;
+    AM_MEDIA_TYPE mt = {0};
     HRESULT hr;
     ULONG ref;
 
