@@ -574,7 +574,10 @@ static void test_InitPropVariantFromBuffer(void)
 
 static void test_PropVariantToGUID(void)
 {
+    SAFEARRAYBOUND arrbounds;
     PROPVARIANT propvar;
+    SAFEARRAY *arr;
+    void *buf;
     VARIANT var;
     GUID guid;
     HRESULT hres;
@@ -642,6 +645,25 @@ static void test_PropVariantToGUID(void)
     hres = PropVariantToGUID(&propvar, &guid);
     ok(hres == S_OK, "PropVariantToGUID failed %lx\n", hres);
     ok(IsEqualGUID(&dummy_guid, &guid), "incorrect GUID created: %s\n", wine_dbgstr_guid(&guid));
+    PropVariantClear(&propvar);
+
+    arrbounds.lLbound = 0;
+    arrbounds.cElements = sizeof(GUID);
+    arr = SafeArrayCreate(VT_UI1, 1, &arrbounds);
+    ok(!!arr, "SafeArrayCreate failed\n");
+    hres = SafeArrayAccessData(arr, &buf);
+    ok(hres == S_OK, "SafeArrayAccessData failed %lx\n", hres);
+    memcpy(buf, &dummy_guid, sizeof(GUID));
+    hres = SafeArrayUnaccessData(arr);
+    ok(hres == S_OK, "SafeArrayUnaccessData failed %lx\n", hres);
+    propvar.vt = VT_ARRAY | VT_UI1;
+    propvar.parray = arr;
+    memset(&guid, 0, sizeof(guid));
+    hres = PropVariantToGUID(&propvar, &guid);
+    todo_wine
+    ok(hres == S_OK, "PropVariantToGUID failed %lx\n", hres);
+    if (SUCCEEDED(hres))
+        ok(IsEqualGUID(&guid, &dummy_guid), "incorrect GUID created: %s\n", debugstr_guid(&guid));
     PropVariantClear(&propvar);
 }
 
