@@ -5221,6 +5221,8 @@ static void test_create_skin_info(void)
         D3DXMATRIX *transform;
         D3DXMATRIX identity_matrix;
 
+        D3DXMatrixIdentity(&identity_matrix);
+
         /* test initial values */
         hr = skininfo->lpVtbl->GetDeclaration(skininfo, declaration_out);
         ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
@@ -5260,7 +5262,6 @@ static void test_create_skin_info(void)
             hr = skininfo->lpVtbl->SetBoneOffsetMatrix(skininfo, 0, NULL);
             ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
-            D3DXMatrixIdentity(&identity_matrix);
             hr = skininfo->lpVtbl->SetBoneOffsetMatrix(skininfo, 0, &identity_matrix);
             ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
 
