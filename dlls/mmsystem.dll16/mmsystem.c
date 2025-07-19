@@ -2147,10 +2147,8 @@ BOOL16	WINAPI	mmShowMMCPLPropertySheet16(HWND hWnd, LPCSTR lpStrDevice,
  */
 void WINAPI StackEnter16(void)
 {
-#ifdef __i386__
     /* mmsystem.dll from Win 95 does only this: so does Wine */
     __asm__("stc");
-#endif
 }
 
 /**************************************************************************
@@ -2158,10 +2156,8 @@ void WINAPI StackEnter16(void)
  */
 void WINAPI StackLeave16(void)
 {
-#ifdef __i386__
     /* mmsystem.dll from Win 95 does only this: so does Wine */
     __asm__("stc");
-#endif
 }
 
 /**************************************************************************
