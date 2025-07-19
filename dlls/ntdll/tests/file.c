@@ -3886,13 +3886,16 @@ static void test_file_name_information(void)
 {
     WCHAR *file_name, *volume_prefix, *expected;
     FILE_NAME_INFORMATION *info;
+    OBJECT_NAME_INFORMATION *nameinfo;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nt_name;
     ULONG old_redir = 1, tmp;
     UINT file_name_size;
     IO_STATUS_BLOCK io;
     UINT info_size;
-    HRESULT hr;
+    NTSTATUS status;
     HANDLE h;
-    UINT len;
+    ULONG len;
 
     /* GetVolumePathName is not present before w2k */
     if (!pGetVolumePathNameW) {
@@ -3907,8 +3910,7 @@ static void test_file_name_information(void)
 
     len = GetSystemDirectoryW( file_name, file_name_size );
     ok(len == file_name_size - 1,
-            "GetSystemDirectoryW returned %u, expected %u.\n",
-            len, file_name_size - 1);
+        "GetSystemDirectoryW returned %lu, expected %u.\n", len, file_name_size - 1);
 
     len = pGetVolumePathNameW( file_name, volume_prefix, file_name_size );
     ok(len, "GetVolumePathNameW failed.\n");
@@ -3929,13 +3931,13 @@ static void test_file_name_information(void)
     if (pRtlWow64EnableFsRedirectionEx) pRtlWow64EnableFsRedirectionEx( old_redir, &tmp );
     ok(h != INVALID_HANDLE_VALUE, "Failed to open file.\n");
 
-    hr = pNtQueryInformationFile( h, &io, info, sizeof(*info) - 1, FileNameInformation );
-    ok(hr == STATUS_INFO_LENGTH_MISMATCH, "NtQueryInformationFile returned %#lx.\n", hr);
+    status = pNtQueryInformationFile( h, &io, info, sizeof(*info) - 1, FileNameInformation );
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryInformationFile returned %#lx.\n", status);
 
     memset( info, 0xcc, info_size );
-    hr = pNtQueryInformationFile( h, &io, info, sizeof(*info), FileNameInformation );
-    ok(hr == STATUS_BUFFER_OVERFLOW, "NtQueryInformationFile returned %#lx, expected %#lx.\n",
-            hr, STATUS_BUFFER_OVERFLOW);
+    status = pNtQueryInformationFile( h, &io, info, sizeof(*info), FileNameInformation );
+    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryInformationFile returned %#lx, expected %#lx.\n",
+            status, STATUS_BUFFER_OVERFLOW);
     ok(io.Status == STATUS_BUFFER_OVERFLOW, "io.Status is %#lx, expected %#lx.\n",
             io.Status, STATUS_BUFFER_OVERFLOW);
     ok(info->FileNameLength == lstrlenW( expected ) * sizeof(WCHAR), "info->FileNameLength is %lu\n", info->FileNameLength);
@@ -3946,8 +3948,8 @@ static void test_file_name_information(void)
     ok(io.Information == sizeof(*info), "io.Information is %Iu\n", io.Information);
 
     memset( info, 0xcc, info_size );
-    hr = pNtQueryInformationFile( h, &io, info, info_size, FileNameInformation );
-    ok(hr == STATUS_SUCCESS, "NtQueryInformationFile returned %#lx, expected %#lx.\n", hr, STATUS_SUCCESS);
+    status = pNtQueryInformationFile( h, &io, info, info_size, FileNameInformation );
+    ok(status == STATUS_SUCCESS, "NtQueryInformationFile returned %#lx, expected %#lx.\n", status, STATUS_SUCCESS);
     ok(io.Status == STATUS_SUCCESS, "io.Status is %#lx, expected %#lx.\n", io.Status, STATUS_SUCCESS);
     ok(info->FileNameLength == lstrlenW( expected ) * sizeof(WCHAR), "info->FileNameLength is %lu\n", info->FileNameLength);
     ok(info->FileName[info->FileNameLength / sizeof(WCHAR)] == 0xcccc, "info->FileName[len] is %#x, expected 0xcccc.\n",
@@ -3963,6 +3965,53 @@ static void test_file_name_information(void)
     HeapFree( GetProcessHeap(), 0, info );
     HeapFree( GetProcessHeap(), 0, expected );
     HeapFree( GetProcessHeap(), 0, volume_prefix );
+
+    info_size = sizeof(*nameinfo) + MAX_PATH * sizeof(WCHAR);
+    nameinfo = malloc( info_size );
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
+
+    RtlInitUnicodeString( &nt_name, L"\\??\\C:\\windows" );
+    status = pNtOpenFile( &h, GENERIC_READ, &attr, &io, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                          FILE_DIRECTORY_FILE );
+    ok( !status, "open failed %lx\n", status );
+    status = NtQueryObject( h, ObjectNameInformation, nameinfo, info_size, &len );
+    ok( status == STATUS_SUCCESS, "NtQueryObject returned %#lx\n", status );
+    ok( nameinfo->Name.Buffer[nameinfo->Name.Length / sizeof(WCHAR) - 1] != '\\',
+        "name ends with backslash %s\n", debugstr_w(nameinfo->Name.Buffer) );
+    CloseHandle( h );
+
+    RtlInitUnicodeString( &nt_name, L"\\??\\C:\\windows\\" );
+    status = pNtOpenFile( &h, GENERIC_READ, &attr, &io, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                          FILE_DIRECTORY_FILE );
+    ok( !status, "open failed %lx\n", status );
+    status = NtQueryObject( h, ObjectNameInformation, nameinfo, info_size, &len );
+    ok( status == STATUS_SUCCESS, "NtQueryObject returned %#lx\n", status );
+    ok( nameinfo->Name.Buffer[nameinfo->Name.Length / sizeof(WCHAR) - 1] != '\\',
+        "name ends with backslash %s\n", debugstr_w(nameinfo->Name.Buffer) );
+    CloseHandle( h );
+
+    RtlInitUnicodeString( &nt_name, L"\\??\\C:\\" );
+    status = pNtOpenFile( &h, GENERIC_READ, &attr, &io, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                          FILE_DIRECTORY_FILE );
+    ok( !status, "open failed %lx\n", status );
+    status = NtQueryObject( h, ObjectNameInformation, nameinfo, info_size, &len );
+    ok( status == STATUS_SUCCESS, "NtQueryObject returned %#lx\n", status );
+    ok( nameinfo->Name.Buffer[nameinfo->Name.Length / sizeof(WCHAR) - 1] == '\\',
+        "name doesn't end with backslash %s\n", debugstr_w(nameinfo->Name.Buffer) );
+
+    RtlInitUnicodeString( &nt_name, L"windows\\" );
+    attr.RootDirectory = h;
+    status = pNtOpenFile( &h, GENERIC_READ, &attr, &io, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                          FILE_DIRECTORY_FILE );
+    ok( !status, "open failed %lx\n", status );
+    status = NtQueryObject( h, ObjectNameInformation, nameinfo, info_size, &len );
+    ok( status == STATUS_SUCCESS, "NtQueryObject returned %#lx\n", status );
+    ok( nameinfo->Name.Buffer[nameinfo->Name.Length / sizeof(WCHAR) - 1] != '\\',
+        "name ends with backslash %s\n", debugstr_w(nameinfo->Name.Buffer) );
+    CloseHandle( attr.RootDirectory );
+    CloseHandle( h );
+
+    free( nameinfo );
 
     if (old_redir || !pGetSystemWow64DirectoryW || !(file_name_size = pGetSystemWow64DirectoryW( NULL, 0 )))
     {
@@ -3983,8 +4032,7 @@ static void test_file_name_information(void)
 
     len = pGetSystemWow64DirectoryW( file_name, file_name_size );
     ok(len == file_name_size - 1,
-            "GetSystemWow64DirectoryW returned %u, expected %u.\n",
-            len, file_name_size - 1);
+        "GetSystemWow64DirectoryW returned %lu, expected %u.\n", len, file_name_size - 1);
 
     len = pGetVolumePathNameW( file_name, volume_prefix, file_name_size );
     ok(len, "GetVolumePathNameW failed.\n");
@@ -3998,8 +4046,8 @@ static void test_file_name_information(void)
     info = HeapAlloc( GetProcessHeap(), 0, info_size );
 
     memset( info, 0xcc, info_size );
-    hr = pNtQueryInformationFile( h, &io, info, info_size, FileNameInformation );
-    ok(hr == STATUS_SUCCESS, "NtQueryInformationFile returned %#lx, expected %#lx.\n", hr, STATUS_SUCCESS);
+    status = pNtQueryInformationFile( h, &io, info, info_size, FileNameInformation );
+    ok(status == STATUS_SUCCESS, "NtQueryInformationFile returned %#lx, expected %#lx.\n", status, STATUS_SUCCESS);
     info->FileName[info->FileNameLength / sizeof(WCHAR)] = '\0';
     ok(!lstrcmpiW( info->FileName, expected ), "info->FileName is %s, expected %s.\n",
             wine_dbgstr_w( info->FileName ), wine_dbgstr_w( expected ));

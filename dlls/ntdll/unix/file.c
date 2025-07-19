@@ -3949,6 +3949,31 @@ NTSTATUS ntdll_get_dos_file_name( const char *unix_name, WCHAR **dos, UINT dispo
 }
 
 
+/* remove trailing backslash from NT name; helper for get_nt_and_unix_names */
+static void remove_trailing_backslash( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name )
+{
+    UNICODE_STRING *obj_name = attr->ObjectName;
+    ULONG len = obj_name->Length / sizeof(WCHAR);
+
+    if (!len || obj_name->Buffer[len - 1] != '\\') return;
+    if (!attr->RootDirectory)
+    {
+        ULONG i, count = 0;
+        for (i = 0; i < len; i++) if (obj_name->Buffer[i] == '\\') count++;
+        if (count <= 3) return;
+    }
+    if (obj_name != nt_name)  /* not already redirected, make a copy */
+    {
+        nt_name->Length = nt_name->MaximumLength = obj_name->Length;
+        if (!(nt_name->Buffer = malloc( nt_name->MaximumLength ))) return;
+        memcpy( nt_name->Buffer, obj_name->Buffer, nt_name->Length );
+        attr->ObjectName = nt_name;
+    }
+
+    nt_name->Length -= sizeof(WCHAR);
+    nt_name->Buffer[len - 1] = 0;
+}
+
 /***********************************************************************
  *           get_nt_and_unix_names
  *
@@ -3998,11 +4023,14 @@ NTSTATUS get_nt_and_unix_names( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name
 #endif
         status = nt_to_unix_file_name( attr, unix_name_ret, disposition );
     }
-    if (status && status != STATUS_NO_SUCH_FILE)
-        TRACE( "%s -> ret %x\n", debugstr_us(orig), status );
-    else
+
+    if (!status || status == STATUS_NO_SUCH_FILE)
+    {
+        remove_trailing_backslash( attr, nt_name );
         TRACE( "%s -> ret %x nt %s unix %s\n", debugstr_us(orig),
                status, debugstr_us(attr->ObjectName), debugstr_a(*unix_name_ret) );
+    }
+    else TRACE( "%s -> ret %x\n", debugstr_us(orig), status );
     return status;
 }
 

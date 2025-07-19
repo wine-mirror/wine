@@ -5436,6 +5436,30 @@ static void test_GetFinalPathNameByHandleW(void)
        wine_dbgstr_w(nt_path), wine_dbgstr_w(result_path));
 
     CloseHandle(file);
+
+    /* Roots of drives should come back with a trailing slash. */
+    file = CreateFileW(L"C:\\", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
+                       OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileW error %lu\n", GetLastError());
+    memset(result_path, 0x11, sizeof(result_path));
+    count = pGetFinalPathNameByHandleW(file, result_path, MAX_PATH, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    lstrcpyW(dos_path, L"\\\\?\\C:\\");
+    ok(count == lstrlenW(dos_path), "Expected length %u, got %lu\n", lstrlenW(dos_path), count);
+    ok(lstrcmpiW(dos_path, result_path) == 0, "Expected %s, got %s\n",
+       wine_dbgstr_w(dos_path), wine_dbgstr_w(result_path));
+    CloseHandle(file);
+
+    /* Other directories should not have a trailing slash. */
+    file = CreateFileW(L"C:\\windows\\", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
+                       OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileW error %lu\n", GetLastError());
+    memset(result_path, 0x11, sizeof(result_path));
+    count = pGetFinalPathNameByHandleW(file, result_path, MAX_PATH, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    lstrcpyW(dos_path, L"\\\\?\\C:\\windows");
+    ok(count == lstrlenW(dos_path), "Expected length %u, got %lu\n", lstrlenW(dos_path), count);
+    ok(lstrcmpiW(dos_path, result_path) == 0, "Expected %s, got %s\n",
+       wine_dbgstr_w(dos_path), wine_dbgstr_w(result_path));
+    CloseHandle(file);
 }
 
 static void test_SetFileInformationByHandle(void)
