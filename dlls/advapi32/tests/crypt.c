@@ -256,7 +256,7 @@ static void test_incorrect_api_usage(void)
     HCRYPTPROV hProv, hProv2;
     HCRYPTHASH hHash, hHash2;
     HCRYPTKEY hKey, hKey2;
-    BYTE temp;
+    BYTE temp = 0;
     DWORD dwLen, dwTemp;
 
     /* This is to document incorrect api usage in the 
