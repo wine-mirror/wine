@@ -147,7 +147,14 @@ struct _DIRECTORY_STACK *WCMD_dir_stack_free(struct _DIRECTORY_STACK *dir);
 typedef int RETURN_CODE;
 #define RETURN_CODE_SYNTAX_ERROR         255
 #define RETURN_CODE_CANT_LAUNCH          9009
-#define RETURN_CODE_ABORTED              (-999999)
+#define RETURN_CODE_ABORTED              (-999999) /* generated for exit /b so that all loops (and al.) are exited*/
+#define RETURN_CODE_GOTO                 (-999998) /* generated when changing file position (and break from if/for instructions) */
+#define RETURN_CODE_EXITED               (-999997) /* generated when batch file terminates because child has terminated */
+/* to test if one shall break from instruction within a batch file */
+static inline BOOL WCMD_is_break(RETURN_CODE return_code)
+{
+    return return_code == RETURN_CODE_ABORTED || return_code == RETURN_CODE_GOTO;
+}
 
 BOOL WCMD_print_volume_information(const WCHAR *);
 

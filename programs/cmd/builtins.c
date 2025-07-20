@@ -1750,7 +1750,7 @@ RETURN_CODE WCMD_goto(void)
         if (lstrcmpiW(L":eof", param1) == 0)
         {
             context->file_position.QuadPart = WCMD_FILE_POSITION_EOF;
-            return RETURN_CODE_ABORTED;
+            return RETURN_CODE_GOTO;
         }
         h = CreateFileW(context->batch_file->path_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
                         NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -1768,7 +1768,7 @@ RETURN_CODE WCMD_goto(void)
 
         ret = WCMD_find_label(h, paramStart, &context->file_position);
         CloseHandle(h);
-        if (ret) return RETURN_CODE_ABORTED;
+        if (ret) return RETURN_CODE_GOTO;
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOTARGET));
         context->file_position.QuadPart = WCMD_FILE_POSITION_EOF;
     }

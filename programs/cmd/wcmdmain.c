@@ -1832,10 +1832,6 @@ static RETURN_CODE run_command_file(const WCHAR *file, WCHAR *full_cmdline)
     BOOL prev_echo_mode = echo_mode;
 
     return_code = WCMD_call_batch(file, full_cmdline);
-    if (return_code == RETURN_CODE_ABORTED)
-        return_code = errorlevel;
-    else if (return_code != NO_ERROR)
-        errorlevel = return_code;
 
     if (!context)
         echo_mode = prev_echo_mode;
@@ -2364,6 +2360,17 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
                 {
                     TRACE("Batch completed, but was not 'called' so skipping outer batch too\n");
                     context->file_position.QuadPart = WCMD_FILE_POSITION_EOF;
+                    if (return_code == RETURN_CODE_ABORTED)
+                        return_code = RETURN_CODE_EXITED;
+                }
+                else
+                {
+                    if (return_code == RETURN_CODE_ABORTED || return_code == RETURN_CODE_EXITED)
+                        return_code = errorlevel;
+                    else if (return_code == RETURN_CODE_GOTO)
+                        return_code = NO_ERROR;
+                    else if (return_code != NO_ERROR)
+                        errorlevel = return_code;
                 }
             }
             else
@@ -2385,7 +2392,13 @@ RETURN_CODE WCMD_call_command(WCHAR *command)
   {
       if (!*sc.path) return NO_ERROR;
       if (sc.is_command_file)
+      {
           return_code = run_command_file(sc.path, command);
+          if (WCMD_is_break(return_code))
+              return_code = errorlevel;
+          else if (return_code != NO_ERROR)
+              errorlevel = return_code;
+      }
       else
           return_code = run_external_full_path(sc.path, command);
       return return_code;
@@ -3836,7 +3849,7 @@ static RETURN_CODE for_control_execute_from_FILE(CMD_FOR_CONTROL *for_ctrl, FILE
     RETURN_CODE return_code = NO_ERROR;
 
     /* Read line by line until end of file */
-    while (return_code != RETURN_CODE_ABORTED && fgetws(buffer, ARRAY_SIZE(buffer), input))
+    while (!WCMD_is_break(return_code) && fgetws(buffer, ARRAY_SIZE(buffer), input))
     {
         size_t len;
 
@@ -3904,7 +3917,7 @@ static RETURN_CODE for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NO
     }
     else
     {
-        for (i = 0; return_code != RETURN_CODE_ABORTED; i++)
+        for (i = 0; !WCMD_is_break(return_code); i++)
         {
             WCHAR *element = WCMD_parameter(args, i, NULL, TRUE, FALSE);
             if (!element || !*element) break;
@@ -3945,7 +3958,7 @@ static RETURN_CODE for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHA
 
     wcscpy(set, for_ctrl->set);
     handleExpansion(set, TRUE);
-    for (i = 0; return_code != RETURN_CODE_ABORTED; i++)
+    for (i = 0; !WCMD_is_break(return_code); i++)
     {
         WCHAR *element = WCMD_parameter(set, i, NULL, TRUE, FALSE);
         if (!element || !*element) break;
@@ -3981,7 +3994,7 @@ static RETURN_CODE for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHA
                 wcscpy(&buffer[insert_pos], fd.cFileName);
                 WCMD_set_for_loop_variable(for_ctrl->variable_index, buffer);
                 return_code = node_execute(node);
-            } while (return_code != RETURN_CODE_ABORTED && FindNextFileW(hff, &fd) != 0);
+            } while (!WCMD_is_break(return_code) && FindNextFileW(hff, &fd) != 0);
             FindClose(hff);
         }
         else
@@ -4010,7 +4023,7 @@ static RETURN_CODE for_control_execute_walk_files(CMD_FOR_CONTROL *for_ctrl, CMD
     else dirs_to_walk = WCMD_dir_stack_create(NULL, NULL);
     ref_len = wcslen(dirs_to_walk->dirName);
 
-    while (return_code != RETURN_CODE_ABORTED && dirs_to_walk)
+    while (!WCMD_is_break(return_code) && dirs_to_walk)
     {
         TRACE("About to walk %p %ls for %s\n", dirs_to_walk, dirs_to_walk->dirName, debugstr_for_control(for_ctrl));
         if (for_ctrl->flags & CMD_FOR_FLAG_TREE_RECURSE)
@@ -4054,7 +4067,7 @@ static RETURN_CODE for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NO
     }
 
     for (var = numbers[0];
-         return_code != RETURN_CODE_ABORTED && ((numbers[1] < 0) ? var >= numbers[2] : var <= numbers[2]);
+         !WCMD_is_break(return_code) && ((numbers[1] < 0) ? var >= numbers[2] : var <= numbers[2]);
          var += numbers[1])
     {
         WCHAR tmp[32];
@@ -4122,7 +4135,7 @@ RETURN_CODE node_execute(CMD_NODE *node)
         break;
     case CMD_CONCAT:
         return_code = node_execute(node->left);
-        if (return_code != RETURN_CODE_ABORTED)
+        if (!WCMD_is_break(return_code))
             return_code = node_execute(node->right);
         break;
     case CMD_ONSUCCESS:
@@ -4132,7 +4145,7 @@ RETURN_CODE node_execute(CMD_NODE *node)
         break;
     case CMD_ONFAILURE:
         return_code = node_execute(node->left);
-        if (return_code != NO_ERROR && return_code != RETURN_CODE_ABORTED)
+        if (return_code != NO_ERROR && !WCMD_is_break(return_code))
         {
             /* that's needed for commands (POPD, RMDIR) that don't set errorlevel in case of failure. */
             errorlevel = return_code;
@@ -4175,7 +4188,7 @@ RETURN_CODE node_execute(CMD_NODE *node)
                 if (errorlevel == RETURN_CODE_CANT_LAUNCH && saved_context)
                     ExitProcess(255);
                 return_code = ERROR_INVALID_FUNCTION;
-                if (return_code_left != RETURN_CODE_ABORTED && errorlevel != RETURN_CODE_CANT_LAUNCH)
+                if (!WCMD_is_break(return_code_left) && errorlevel != RETURN_CODE_CANT_LAUNCH)
                 {
                     HANDLE h = CreateFileW(filename, GENERIC_READ,
                                            FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING,
@@ -4505,10 +4518,11 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
 
   if (opt_c)
   {
-      RETURN_CODE return_code = WCMD_call_batch(NULL, cmd);
-      if (return_code != RETURN_CODE_ABORTED && return_code != NO_ERROR)
-          return return_code;
-      return errorlevel;
+    RETURN_CODE return_code = WCMD_call_batch(NULL, cmd);
+    if (return_code == RETURN_CODE_GOTO) return NO_ERROR;
+    if (return_code != RETURN_CODE_ABORTED && return_code != RETURN_CODE_EXITED && return_code != NO_ERROR)
+      return return_code;
+    return errorlevel;
   }
   GetStartupInfoW(&startupInfo);
   if (startupInfo.lpTitle != NULL)
