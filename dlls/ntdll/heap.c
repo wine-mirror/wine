@@ -2577,6 +2577,15 @@ NTSTATUS WINAPI RtlQueryHeapInformation( HANDLE handle, HEAP_INFORMATION_CLASS i
 }
 
 /***********************************************************************
+ *           RtlQueryProcessHeapInformation    (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlQueryProcessHeapInformation( PDEBUG_BUFFER debug_buffer )
+{
+    FIXME("(%p): stub\n", debug_buffer);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
  *           RtlSetHeapInformation    (NTDLL.@)
  */
 NTSTATUS WINAPI RtlSetHeapInformation( HANDLE handle, HEAP_INFORMATION_CLASS info_class, void *info, SIZE_T size )
