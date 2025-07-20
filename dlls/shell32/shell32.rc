@@ -590,6 +590,9 @@ IDI_SHELL_BLANK4 ICON resources/blank.ico
 /* @makedep: resources/drive.ico */
 IDI_SHELL_UNKNOWN_DRIVE ICON resources/drive.ico
 
+/* @makedep: resources/shield.ico */
+IDI_SHELL_SHIELD ICON resources/shield.ico
+
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/document.ico */
 IDI_SHELL_FILES ICON resources/document.ico

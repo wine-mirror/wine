@@ -61,6 +61,7 @@ SOURCES = \
 	resources/restricted.svg \
 	resources/search.svg \
 	resources/security.svg \
+	resources/shield.svg \
 	resources/shortcut.svg \
 	resources/shut_down.svg \
 	resources/sleep.svg \
