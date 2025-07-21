@@ -4024,6 +4024,11 @@ static BOOL calc_year(SYSTEMTIME* time, const WCHAR **s)
 
     if (**s == '\0') return TRUE;
     time->wYear = wcstol( *s, &end, 10 );
+    if (80 > time->wYear)
+        time->wYear += 2000;
+    else if (100 > time->wYear)
+        time->wYear += 1900;
+
     *s = end;
     return FALSE;
 }

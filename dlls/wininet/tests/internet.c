@@ -1137,13 +1137,13 @@ static void test_InternetTimeToSystemTime(void)
         { "Fri Jan 7 12:06:35 2005",       &expect1, TRUE },
         { "Fri Jan 7 12:06:35 2005 GMT",   &expect1, TRUE },
         { "Fri Jan 7 12:06:35 2005 UTC",   &expect1, TRUE },
-        { "Fri, 7-Jan-05 12:06:35 GMT",    &expect1, TRUE, TRUE },
-        { "Fri Jan 7 12:06:35 99 UTC",     &expect3, TRUE, TRUE },
+        { "Fri, 7-Jan-05 12:06:35 GMT",    &expect1, TRUE },
+        { "Fri Jan 7 12:06:35 99 UTC",     &expect3, TRUE },
         { "Fri Jan 7 12:06:35 100 UTC",    &expect4, TRUE },
         { "Fri Jan 7 12:06:35 1600 UTC",   &expect5, TRUE },
         { "Fri Jan 7 12:06:35 30828 UTC",  &expect6, TRUE },
-        { "Fri Jan 7 12:06:35 79 UTC",     &expect7, TRUE, TRUE },
-        { "Fri Jan 7 12:06:35 80 UTC",     &expect8, TRUE, TRUE }
+        { "Fri Jan 7 12:06:35 79 UTC",     &expect7, TRUE },
+        { "Fri Jan 7 12:06:35 80 UTC",     &expect8, TRUE }
     };
 
     ret = pInternetTimeToSystemTimeA(NULL, NULL, 0);
