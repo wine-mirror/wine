@@ -879,7 +879,7 @@ BOOL WINAPI CertSetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
 static BOOL CRYPT_AcquirePrivateKeyFromProvInfo(PCCERT_CONTEXT pCert, DWORD dwFlags,
  PCRYPT_KEY_PROV_INFO info, HCRYPTPROV *phCryptProv, DWORD *pdwKeySpec)
 {
-    DWORD size = 0;
+    DWORD size = 0, flags = (dwFlags & CRYPT_ACQUIRE_SILENT_FLAG) ? CRYPT_SILENT : 0;
     BOOL allocated = FALSE, ret = TRUE;
 
     if (!info)
@@ -906,8 +906,12 @@ static BOOL CRYPT_AcquirePrivateKeyFromProvInfo(PCCERT_CONTEXT pCert, DWORD dwFl
     }
     if (ret)
     {
-        ret = CryptAcquireContextW(phCryptProv, info->pwszContainerName,
-         info->pwszProvName, info->dwProvType, (dwFlags & CRYPT_ACQUIRE_SILENT_FLAG) ? CRYPT_SILENT : 0);
+        ret = CryptAcquireContextW(phCryptProv, info->pwszContainerName, info->pwszProvName, info->dwProvType, flags);
+        if (!ret)
+        {
+            flags |= CRYPT_MACHINE_KEYSET;
+            ret = CryptAcquireContextW(phCryptProv, info->pwszContainerName, info->pwszProvName, info->dwProvType, flags);
+        }
         if (ret)
         {
             DWORD i;
