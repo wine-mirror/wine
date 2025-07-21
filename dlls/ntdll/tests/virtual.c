@@ -2820,8 +2820,8 @@ static void test_query_region_information(void)
     ok(!info.MappedPageFile, "Unexpected flag %d.\n", info.MappedPageFile);
     ok(!info.MappedPhysical, "Unexpected flag %d.\n", info.MappedPhysical);
     ok(!info.DirectMapped, "Unexpected flag %d.\n", info.DirectMapped);
-    todo_wine ok(info.RegionSize == 0x10000, "Unexpected region size %#Ix.\n", info.RegionSize);
-    todo_wine ok(info.CommitSize == 0x10000, "Unexpected commit size %#Ix.\n", info.CommitSize);
+    ok(info.RegionSize == 0x10000, "Unexpected region size %#Ix.\n", info.RegionSize);
+    ok(info.CommitSize == 0x10000, "Unexpected commit size %#Ix.\n", info.CommitSize);
 
     status = NtQueryVirtualMemory(NtCurrentProcess(), (char *)ptr + 0x1000, MemoryRegionInformation, &info, sizeof(info), &len);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
@@ -2833,8 +2833,8 @@ static void test_query_region_information(void)
     ok(!info.MappedPageFile, "Unexpected flag %d.\n", info.MappedPageFile);
     ok(!info.MappedPhysical, "Unexpected flag %d.\n", info.MappedPhysical);
     ok(!info.DirectMapped, "Unexpected flag %d.\n", info.DirectMapped);
-    todo_wine ok(info.RegionSize == 0x10000, "Unexpected region size %#Ix.\n", info.RegionSize);
-    todo_wine ok(info.CommitSize == 0x10000, "Unexpected commit size %#Ix.\n", info.CommitSize);
+    ok(info.RegionSize == 0x10000, "Unexpected region size %#Ix.\n", info.RegionSize);
+    ok(info.CommitSize == 0x10000, "Unexpected commit size %#Ix.\n", info.CommitSize);
 
     size = 0;
     status = NtFreeVirtualMemory(NtCurrentProcess(), &ptr, &size, MEM_RELEASE);
@@ -2842,13 +2842,13 @@ static void test_query_region_information(void)
 
     memset(&info, 0xcc, sizeof(info));
     status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info, sizeof(info), &len);
-    todo_wine ok(status == STATUS_INVALID_ADDRESS, "Unexpected status %08lx.\n", status);
-    todo_wine ok(info.AllocationBase == (void *)(ULONG_PTR)0xcccccccccccccccc, "got %p.\n", info.AllocationBase);
-    todo_wine ok(info.AllocationProtect == 0xcccccccc, "Unexpected protection %lu.\n", info.AllocationProtect);
-    todo_wine ok(info.RegionType == 0xcccccccc, "got %#lx.\n", info.RegionType);
+    ok(status == STATUS_INVALID_ADDRESS, "Unexpected status %08lx.\n", status);
+    ok(info.AllocationBase == (void *)(ULONG_PTR)0xcccccccccccccccc, "got %p.\n", info.AllocationBase);
+    ok(info.AllocationProtect == 0xcccccccc, "Unexpected protection %lu.\n", info.AllocationProtect);
+    ok(info.RegionType == 0xcccccccc, "got %#lx.\n", info.RegionType);
 
     /* Pagefile mapping */
-    mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, NULL);
+    mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE | SEC_COMMIT, 0, 4096, NULL);
     ok(mapping != 0, "CreateFileMapping failed\n");
 
     ptr = NULL;
@@ -2869,7 +2869,7 @@ static void test_query_region_information(void)
     ok(!info.MappedPhysical, "Unexpected flag %d.\n", info.MappedPhysical);
     ok(!info.DirectMapped, "Unexpected flag %d.\n", info.DirectMapped);
     ok(info.RegionSize == 4096, "Unexpected region size.\n");
-    todo_wine ok(!info.CommitSize, "Unexpected commit size %#Ix.\n", info.CommitSize);
+    ok(!info.CommitSize, "Unexpected commit size %#Ix.\n", info.CommitSize);
 
     status = NtUnmapViewOfSection(NtCurrentProcess(), ptr);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
@@ -2894,7 +2894,7 @@ static void test_query_region_information(void)
     ok(info.RegionSize == 4096, "Unexpected region size.\n");
     ok(info.CommitSize == 4096, "Unexpected commit size %#Ix.\n", info.CommitSize);
 
-    *(int *)ptr = 1;
+    *(volatile int *)ptr = 1;
     memset(&info, 0x11, sizeof(info));
     status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info, sizeof(info), &len);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
@@ -2917,6 +2917,7 @@ static void test_query_region_information(void)
     offset.QuadPart = 0;
     status = NtMapViewOfSection(mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    *(volatile int *)ptr = 1;
 
     memset(&info, 0x11, sizeof(info));
     status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info, sizeof(info), &len);
@@ -2930,7 +2931,7 @@ static void test_query_region_information(void)
     ok(!info.MappedPhysical, "Unexpected flag %d.\n", info.MappedPhysical);
     ok(!info.DirectMapped, "Unexpected flag %d.\n", info.DirectMapped);
     ok(info.RegionSize == 4096, "Unexpected region size.\n");
-    todo_wine ok(!info.CommitSize, "Unexpected commit size %#Ix.\n", info.CommitSize);
+    ok(!info.CommitSize, "Unexpected commit size %#Ix.\n", info.CommitSize);
 
     status = NtUnmapViewOfSection(NtCurrentProcess(), ptr);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);

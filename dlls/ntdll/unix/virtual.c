@@ -5589,8 +5589,12 @@ static unsigned int get_basic_memory_info( HANDLE process, LPCVOID addr,
 static unsigned int get_memory_region_info( HANDLE process, LPCVOID addr, MEMORY_REGION_INFORMATION *info,
                                             SIZE_T len, SIZE_T *res_len )
 {
-    MEMORY_BASIC_INFORMATION basic_info;
-    unsigned int status;
+    char *base, *region_start, *region_end;
+    struct file_view *view;
+    BYTE vprot, vprot_mask;
+    BOOL fake_reserved;
+    sigset_t sigset;
+    SIZE_T size;
 
     if (len < FIELD_OFFSET(MEMORY_REGION_INFORMATION, CommitSize))
         return STATUS_INFO_LENGTH_MISMATCH;
@@ -5601,15 +5605,48 @@ static unsigned int get_memory_region_info( HANDLE process, LPCVOID addr, MEMORY
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if ((status = fill_basic_memory_info( addr, &basic_info ))) return status;
+    base = ROUND_ADDR( addr, page_mask );
 
-    info->AllocationBase = basic_info.AllocationBase;
-    info->AllocationProtect = basic_info.AllocationProtect;
-    info->RegionType = 0; /* FIXME */
-    if (len >= FIELD_OFFSET(MEMORY_REGION_INFORMATION, CommitSize))
-        info->RegionSize = basic_info.RegionSize;
-    if (len >= FIELD_OFFSET(MEMORY_REGION_INFORMATION, PartitionId))
-        info->CommitSize = basic_info.State == MEM_COMMIT ? basic_info.RegionSize : 0;
+    if (is_beyond_limit( base, 1, working_set_limit )) return STATUS_INVALID_PARAMETER;
+
+    server_enter_uninterrupted_section( &virtual_mutex, &sigset );
+
+    if ((view = get_memory_region_size( base, &region_start, &region_end, &fake_reserved )))
+    {
+        info->AllocationBase = view->base;
+        info->AllocationProtect = get_win32_prot( view->protect, view->protect );
+        info->RegionType = 0; /* FIXME */
+        if (len >= FIELD_OFFSET(MEMORY_REGION_INFORMATION, CommitSize))
+            info->RegionSize = view->size;
+        if (len >= FIELD_OFFSET(MEMORY_REGION_INFORMATION, PartitionId))
+        {
+            base = region_start;
+            info->CommitSize = 0;
+            vprot_mask = VPROT_COMMITTED;
+            if (!is_view_valloc( view )) vprot_mask |= PAGE_WRITECOPY;
+            while (base != region_end &&
+                   (size = get_committed_size( view, base, ~(size_t)0, &vprot, vprot_mask )))
+            {
+                if ((vprot & vprot_mask) == vprot_mask) info->CommitSize += size;
+                base += size;
+            }
+        }
+    }
+    else
+    {
+        if (!fake_reserved)
+        {
+            server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+            return STATUS_INVALID_ADDRESS;
+        }
+        info->AllocationBase = region_start;
+        info->AllocationProtect = PAGE_NOACCESS;
+        info->RegionType = 0; /* FIXME */
+        info->RegionSize = region_end - region_start;
+        info->CommitSize = 0;
+    }
+
+    server_leave_uninterrupted_section( &virtual_mutex, &sigset );
 
     if (res_len) *res_len = sizeof(*info);
     return STATUS_SUCCESS;
