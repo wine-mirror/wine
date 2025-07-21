@@ -490,13 +490,13 @@ static HRESULT parse_part_list(struct style *This, IStream *stream, struct chunk
             break;
 
         case DMUS_FOURCC_NOTE_CHUNK:
-            hr = stream_chunk_get_array(stream, &chunk, (void **)&part->notes,
-                    &part->notes_count, sizeof(*part->notes));
+            hr = stream_chunk_get_array_alt(stream, &chunk, (void **)&part->notes,
+                    &part->notes_count, sizeof(*part->notes), offsetof(DMUS_IO_STYLENOTE, bNoteFlags));
             break;
 
         case DMUS_FOURCC_CURVE_CHUNK:
-            hr = stream_chunk_get_array(stream, &chunk, (void **)&part->curves,
-                    &part->curves_count, sizeof(*part->curves));
+            hr = stream_chunk_get_array_alt(stream, &chunk, (void **)&part->curves,
+                    &part->curves_count, sizeof(*part->curves), offsetof(DMUS_IO_STYLECURVE, wParamType));
             break;
 
         case DMUS_FOURCC_MARKER_CHUNK:

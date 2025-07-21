@@ -39,6 +39,8 @@ HRESULT stream_skip_chunk(IStream *stream, const struct chunk_entry *chunk);
 
 HRESULT stream_chunk_get_array(IStream *stream, const struct chunk_entry *chunk, void **array,
         unsigned int *count, DWORD elem_size);
+HRESULT stream_chunk_get_array_alt(IStream *stream, const struct chunk_entry *chunk, void **array,
+        unsigned int *count, DWORD elem_size, DWORD alt_size);
 HRESULT stream_chunk_get_data(IStream *stream, const struct chunk_entry *chunk, void *data,
         ULONG size);
 HRESULT stream_chunk_get_wstr(IStream *stream, const struct chunk_entry *chunk, WCHAR *str,
