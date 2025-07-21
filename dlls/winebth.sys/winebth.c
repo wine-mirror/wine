@@ -29,8 +29,10 @@
 #include <winbase.h>
 #include <winternl.h>
 #include <winnls.h>
+#include <wtypes.h>
 #include <initguid.h>
 #include <devpkey.h>
+#include <propkey.h>
 #include <bthsdpdef.h>
 #include <bluetoothapis.h>
 #include <bthdef.h>
@@ -950,6 +952,57 @@ static void bluetooth_radio_remove_remote_device( struct winebluetooth_watcher_e
     winebluetooth_device_free( event.device );
 }
 
+/* Caller should hold device->props_cs. */
+static void bluetooth_device_set_properties( struct bluetooth_remote_device *device,
+                                             const BYTE *adapter_addr,
+                                             const struct winebluetooth_device_properties *props,
+                                             winebluetooth_device_props_mask_t mask )
+{
+    if (mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS)
+    {
+        WCHAR addr_str[18], aep_id[59];
+        const WCHAR *connection;
+        const BYTE *device_addr = device->props.address.rgBytes;
+
+        connection = device->bthle_symlink_name.Buffer ? L"BluetoothLE#BluetoothLE" : L"Bluetooth#Bluetooth";
+        swprintf( aep_id, ARRAY_SIZE( aep_id ), L"%s#%s%02x:%02x:%02x:%02x:%02x:%02x-%02x:%02x:%02x:%02x:%02x:%02x",
+                  connection, connection, adapter_addr[0], adapter_addr[1], adapter_addr[2], adapter_addr[3],
+                  adapter_addr[4], adapter_addr[5], device_addr[0], device_addr[1], device_addr[2], device_addr[3],
+                  device_addr[4], device_addr[5] );
+        IoSetDevicePropertyData( device->device_obj, (DEVPROPKEY *)&PKEY_Devices_Aep_AepId, LOCALE_NEUTRAL, 0,
+                                 DEVPROP_TYPE_STRING, sizeof( aep_id ), aep_id );
+
+        swprintf( addr_str, ARRAY_SIZE( addr_str ), L"%02x%02x%02x%02x%02x%02x", device_addr[0], device_addr[1],
+                  device_addr[2], device_addr[3], device_addr[4], device_addr[5] );
+        IoSetDevicePropertyData( device->device_obj, &DEVPKEY_Bluetooth_DeviceAddress, LOCALE_NEUTRAL, 0,
+                                 DEVPROP_TYPE_STRING, 26, addr_str );
+        if (device->bthle_symlink_name.Buffer)
+            IoSetDeviceInterfacePropertyData( &device->bthle_symlink_name,
+                                              (DEVPROPKEY *)&PKEY_DeviceInterface_Bluetooth_DeviceAddress,
+                                              LOCALE_NEUTRAL, 0, DEVPROP_TYPE_STRING, 26, addr_str );
+
+        swprintf( addr_str, ARRAY_SIZE( addr_str ), L"%02x:%02x:%02x:%02x:%02x:%02x", device_addr[0], device_addr[1],
+                  device_addr[2], device_addr[3], device_addr[4], device_addr[5] );
+        IoSetDevicePropertyData( device->device_obj, (DEVPROPKEY *)&PKEY_Devices_Aep_DeviceAddress, LOCALE_NEUTRAL, 0,
+                                 DEVPROP_TYPE_STRING, sizeof( addr_str ), addr_str );
+    }
+    if (mask & WINEBLUETOOTH_DEVICE_PROPERTY_CLASS)
+         IoSetDevicePropertyData( device->device_obj, &DEVPKEY_Bluetooth_ClassOfDevice, LOCALE_NEUTRAL, 0,
+                                  DEVPROP_TYPE_UINT32, sizeof( props->class ), (void *)&props->class );
+    if (mask & WINEBLUETOOTH_DEVICE_PROPERTY_CONNECTED && props->connected)
+    {
+        FILETIME time = {0};
+
+        GetSystemTimeAsFileTime( &time );
+        IoSetDevicePropertyData( device->device_obj, &DEVPKEY_Bluetooth_LastConnectedTime, LOCALE_NEUTRAL, 0,
+                                 DEVPROP_TYPE_FILETIME, sizeof( time ), (void *)&time );
+        if (device->bthle_symlink_name.Buffer)
+            IoSetDeviceInterfacePropertyData( &device->bthle_symlink_name,
+                                              (DEVPROPKEY *)&PKEY_DeviceInterface_Bluetooth_LastConnectedTime,
+                                              LOCALE_NEUTRAL, 0, DEVPROP_TYPE_FILETIME, sizeof( time ), (void *)&time );
+    }
+}
+
 static void bluetooth_radio_update_device_props( struct winebluetooth_watcher_event_device_props_changed event )
 {
     BTH_DEVICE_INFO device_new_info = {0};
@@ -968,8 +1021,12 @@ static void bluetooth_radio_update_device_props( struct winebluetooth_watcher_ev
             if (winebluetooth_device_equal( event.device, device->device ))
             {
                 BTH_DEVICE_INFO old_info = {0};
+                BLUETOOTH_ADDRESS adapter_addr;
 
                 radio_obj = radio->device_obj;
+                EnterCriticalSection( &radio->props_cs );
+                adapter_addr = radio->props.address;
+                LeaveCriticalSection( &radio->props_cs );
 
                 EnterCriticalSection( &device->props_cs );
                 winebluetooth_device_properties_to_info( device->props_mask, &device->props, &old_info );
@@ -991,6 +1048,7 @@ static void bluetooth_radio_update_device_props( struct winebluetooth_watcher_ev
                 if (event.changed_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_CLASS)
                     device->props.class = event.props.class;
                 winebluetooth_device_properties_to_info( device->props_mask, &device->props, &device_new_info );
+                bluetooth_device_set_properties( device, adapter_addr.rgBytes, &device->props, device->props_mask );
                 LeaveCriticalSection( &device->props_cs );
                 LeaveCriticalSection( &radio->remote_devices_cs );
 
@@ -1619,8 +1677,11 @@ static NTSTATUS WINAPI remote_device_pdo_pnp( DEVICE_OBJECT *device_obj, struct 
     }
     case IRP_MN_START_DEVICE:
     {
-        WCHAR addr_str[13];
-        BLUETOOTH_ADDRESS addr;
+        BLUETOOTH_ADDRESS adapter_addr;
+
+        EnterCriticalSection( &ext->radio->props_cs );
+        adapter_addr = ext->radio->props.address;
+        LeaveCriticalSection( &ext->radio->props_cs );
 
         EnterCriticalSection( &ext->props_cs );
         if (ext->le &&
@@ -1628,12 +1689,8 @@ static NTSTATUS WINAPI remote_device_pdo_pnp( DEVICE_OBJECT *device_obj, struct 
                                         &ext->bthle_symlink_name ))
             IoSetDeviceInterfaceState( &ext->bthle_symlink_name, TRUE );
         ext->started = TRUE;
-        addr = ext->props.address;
+        bluetooth_device_set_properties( ext, adapter_addr.rgBytes, &ext->props, ext->props_mask );
         LeaveCriticalSection( &ext->props_cs );
-        swprintf( addr_str, ARRAY_SIZE( addr_str ), L"%02x%02x%02x%02x%02x%02x", addr.rgBytes[0], addr.rgBytes[1],
-                  addr.rgBytes[2], addr.rgBytes[3], addr.rgBytes[4], addr.rgBytes[5] );
-        IoSetDevicePropertyData( device_obj, &DEVPKEY_Bluetooth_DeviceAddress, LOCALE_NEUTRAL, 0, DEVPROP_TYPE_STRING,
-                                 sizeof( addr_str ), addr_str );
         ret = STATUS_SUCCESS;
         break;
     }
