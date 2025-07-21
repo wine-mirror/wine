@@ -1105,6 +1105,12 @@ static void test_InternetTimeToSystemTime(void)
     WCHAR buffer[64];
     static const SYSTEMTIME expect1 = { 2005, 1, 5, 7,  12, 6,  35, 0 };
     static const SYSTEMTIME expect2 = { 2022, 1, 2, 11, 11, 13, 5,  0 };
+    static const SYSTEMTIME expect3 = { 1999, 1, 5, 7,  12, 6,  35, 0 };
+    static const SYSTEMTIME expect4 = { 100, 1, 5, 7,  12, 6,  35, 0 };
+    static const SYSTEMTIME expect5 = { 1600, 1, 5, 7,  12, 6,  35, 0 };
+    static const SYSTEMTIME expect6 = { 30828, 1, 5, 7,  12, 6,  35, 0 };
+    static const SYSTEMTIME expect7 = { 2079, 1, 5, 7,  12, 6,  35, 0 };
+    static const SYSTEMTIME expect8 = { 1980, 1, 5, 7,  12, 6,  35, 0 };
 
     static const struct test_data
     {
@@ -1131,6 +1137,13 @@ static void test_InternetTimeToSystemTime(void)
         { "Fri Jan 7 12:06:35 2005",       &expect1, TRUE, TRUE },
         { "Fri Jan 7 12:06:35 2005 GMT",   &expect1, TRUE, TRUE },
         { "Fri Jan 7 12:06:35 2005 UTC",   &expect1, TRUE, TRUE },
+        { "Fri, 7-Jan-05 12:06:35 GMT",    &expect1, TRUE, TRUE },
+        { "Fri Jan 7 12:06:35 99 UTC",     &expect3, TRUE, TRUE },
+        { "Fri Jan 7 12:06:35 100 UTC",    &expect4, TRUE, TRUE },
+        { "Fri Jan 7 12:06:35 1600 UTC",   &expect5, TRUE, TRUE },
+        { "Fri Jan 7 12:06:35 30828 UTC",  &expect6, TRUE, TRUE },
+        { "Fri Jan 7 12:06:35 79 UTC",     &expect7, TRUE, TRUE },
+        { "Fri Jan 7 12:06:35 80 UTC",     &expect8, TRUE, TRUE }
     };
 
     ret = pInternetTimeToSystemTimeA(NULL, NULL, 0);
