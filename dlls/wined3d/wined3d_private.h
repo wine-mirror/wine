@@ -2158,6 +2158,7 @@ enum wined3d_pci_device
     CARD_AMD_RADEON_RX_NAVI_44      = 0x7590,
     CARD_AMD_RADEON_PRO_V620        = 0x73a1,
     CARD_AMD_RADEON_PRO_V620_VF     = 0x73ae,
+    CARD_AMD_RADEON_RX_6700_XT      = 0x73df,
     CARD_AMD_VANGOGH                = 0x163f,
     CARD_AMD_RAPHAEL                = 0x164e,
 
