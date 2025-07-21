@@ -611,7 +611,7 @@ static HRESULT device_query_context_add_object( DEV_OBJECT obj, void *data )
     LeaveCriticalSection( &ctx->cs );
 
     for (i = 0; i < obj.cPropertyCount; i++)
-        free( props->Buffer );
+        free( props[i].Buffer );
     free( props );
     return hr;
 }
