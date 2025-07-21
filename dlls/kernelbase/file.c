@@ -3238,11 +3238,11 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetOverlappedResult( HANDLE file, LPOVERLAPPED ove
         /* We don't need to give this load acquire semantics; the wait above
          * already guarantees that the IOSB and output buffer are filled. */
         status = overlapped->Internal;
-        if (status == STATUS_PENDING) status = STATUS_SUCCESS;
     }
 
     *result = overlapped->InternalHigh;
-    return set_ntstatus( status );
+    SetLastError( RtlNtStatusToDosError( status ));
+    return !status || status == STATUS_PENDING;
 }
 
 
@@ -3279,11 +3279,11 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetOverlappedResultEx( HANDLE file, OVERLAPPED *ov
         /* We don't need to give this load acquire semantics; the wait above
          * already guarantees that the IOSB and output buffer are filled. */
         status = overlapped->Internal;
-        if (status == STATUS_PENDING) status = STATUS_SUCCESS;
     }
 
     *result = overlapped->InternalHigh;
-    return set_ntstatus( status );
+    SetLastError( RtlNtStatusToDosError( status ));
+    return !status || status == STATUS_PENDING;
 }
 
 
