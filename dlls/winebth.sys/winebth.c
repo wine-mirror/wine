@@ -77,6 +77,7 @@ struct bluetooth_radio
     CRITICAL_SECTION props_cs;
     winebluetooth_radio_props_mask_t props_mask; /* Guarded by props_cs */
     struct winebluetooth_radio_properties props; /* Guarded by props_cs */
+    BOOL started; /* Guarded by props_cs */
     winebluetooth_radio_t radio;
     WCHAR *hw_name;
     UNICODE_STRING bthport_symlink_name;
@@ -654,6 +655,7 @@ static void add_bluetooth_radio( struct winebluetooth_watcher_event_radio_added 
     ext->radio.hw_name = hw_name;
     ext->radio.props = event.props;
     ext->radio.props_mask = event.props_mask;
+    ext->radio.started = FALSE;
     list_init( &ext->radio.remote_devices );
 
     InitializeCriticalSection( &ext->radio.props_cs );
@@ -725,8 +727,9 @@ static void update_bluetooth_radio_properties( struct winebluetooth_watcher_even
                 device->props.discovering = event.props.discovering;
             if (event.changed_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_PAIRABLE)
                 device->props.pairable = event.props.pairable;
-            bluetooth_radio_set_properties( device->device_obj, device->props_mask,
-                                            &device->props );
+            if (device->started)
+                bluetooth_radio_set_properties( device->device_obj, device->props_mask,
+                                                &device->props );
             LeaveCriticalSection( &device->props_cs );
             break;
         }
@@ -1483,6 +1486,7 @@ static NTSTATUS WINAPI radio_pdo_pnp( DEVICE_OBJECT *device_obj, struct bluetoot
         case IRP_MN_START_DEVICE:
             EnterCriticalSection( &device->props_cs );
             bluetooth_radio_set_properties( device_obj, device->props_mask, &device->props );
+            device->started = TRUE;
             LeaveCriticalSection( &device->props_cs );
 
             if (IoRegisterDeviceInterface( device_obj, &GUID_BTHPORT_DEVICE_INTERFACE, NULL,
