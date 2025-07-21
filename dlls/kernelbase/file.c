@@ -3212,7 +3212,37 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetFileType( HANDLE file )
 BOOL WINAPI DECLSPEC_HOTPATCH GetOverlappedResult( HANDLE file, LPOVERLAPPED overlapped,
                                                    LPDWORD result, BOOL wait )
 {
-    return GetOverlappedResultEx( file, overlapped, result, wait ? INFINITE : 0, FALSE );
+    NTSTATUS status;
+    DWORD ret;
+
+    TRACE( "(%p %p %p %d)\n", file, overlapped, result, wait );
+
+    /* Paired with the write-release in set_async_iosb() in ntdll; see the
+     * latter for details. */
+    status = ReadAcquire( (LONG *)&overlapped->Internal );
+    if (status == STATUS_PENDING)
+    {
+        if (!wait)
+        {
+            SetLastError( ERROR_IO_INCOMPLETE );
+            return FALSE;
+        }
+        ret = WaitForSingleObject( overlapped->hEvent ? overlapped->hEvent : file, INFINITE );
+        if (ret == WAIT_FAILED) return FALSE;
+        if (ret)
+        {
+            SetLastError( ret );
+            return FALSE;
+        }
+
+        /* We don't need to give this load acquire semantics; the wait above
+         * already guarantees that the IOSB and output buffer are filled. */
+        status = overlapped->Internal;
+        if (status == STATUS_PENDING) status = STATUS_SUCCESS;
+    }
+
+    *result = overlapped->InternalHigh;
+    return set_ntstatus( status );
 }
 
 
