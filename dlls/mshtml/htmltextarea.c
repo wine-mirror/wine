@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "wine/debug.h"
 
@@ -397,6 +398,20 @@ static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {
     .is_text_edit          = HTMLTextAreaElement_is_text_edit
 };
 
+static void HTMLTextAreaElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t hooks[] = {
+        {DISPID_IHTMLTEXTAREAELEMENT_FORM,   .noattr = TRUE},
+        {DISPID_IHTMLTEXTAREAELEMENT_VALUE,  .noattr = TRUE},
+        {DISPID_IHTMLTEXTAREAELEMENT_TYPE,   .noattr = TRUE},
+        {DISPID_IHTMLTEXTAREAELEMENT_STATUS, .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IHTMLTextAreaElement_tid, hooks);
+
+    HTMLElement_init_dispex_info(info, mode);
+}
+
 static const event_target_vtbl_t HTMLTextAreaElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
@@ -409,18 +424,12 @@ static const event_target_vtbl_t HTMLTextAreaElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static const tid_t HTMLTextAreaElement_iface_tids[] = {
-    IHTMLTextAreaElement_tid,
-    0
-};
-
 dispex_static_data_t HTMLTextAreaElement_dispex = {
     .id           = OBJID_HTMLTextAreaElement,
     .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLTextAreaElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLTextAreaElement_tid,
-    .iface_tids   = HTMLTextAreaElement_iface_tids,
-    .init_info    = HTMLElement_init_dispex_info,
+    .init_info    = HTMLTextAreaElement_init_dispex_info,
 };
 
 HRESULT HTMLTextAreaElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)

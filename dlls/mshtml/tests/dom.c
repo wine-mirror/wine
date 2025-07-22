@@ -4048,6 +4048,7 @@ static void test_attr_collection_builtins(IHTMLDocument2 *doc)
         L"tbody",     L"align", L"bgColor", L"ch", L"chOff", L"vAlign", NULL,
         L"td",        L"abbr", L"align", L"axis", L"background", L"bgColor", L"borderColor", L"borderColorDark", L"borderColorLight", L"ch", L"chOff",
                       L"colSpan", L"headers", L"height", L"noWrap", L"rowSpan", L"scope", L"vAlign", L"width", NULL,
+        L"textarea",  L"cols", L"name", L"onchange", L"onselect", L"readOnly", L"rows", L"wrap", NULL,
         L"tr",        L"align", L"bgColor", L"borderColor", L"borderColorDark", L"borderColorLight", L"ch", L"chOff", L"height", L"vAlign", NULL,
         L"ul",        L"compact", L"type", NULL,
         L"video",     NULL,
