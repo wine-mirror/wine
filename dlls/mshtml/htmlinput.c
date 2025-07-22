@@ -1429,6 +1429,17 @@ static const NodeImplVtbl HTMLLabelElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
+static void HTMLLabelElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t label_hooks[] = {
+        {DISPID_IHTMLLABELELEMENT_HTMLFOR, .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IHTMLLabelElement_tid, label_hooks);
+
+    HTMLElement_init_dispex_info(info, mode);
+}
+
 static const event_target_vtbl_t HTMLLabelElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
@@ -1441,18 +1452,12 @@ static const event_target_vtbl_t HTMLLabelElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static const tid_t HTMLLabelElement_iface_tids[] = {
-    IHTMLLabelElement_tid,
-    0
-};
-
 dispex_static_data_t HTMLLabelElement_dispex = {
     .id           = OBJID_HTMLLabelElement,
     .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLLabelElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLLabelElement_tid,
-    .iface_tids   = HTMLLabelElement_iface_tids,
-    .init_info    = HTMLElement_init_dispex_info,
+    .init_info    = HTMLLabelElement_init_dispex_info,
 };
 
 HRESULT HTMLLabelElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
