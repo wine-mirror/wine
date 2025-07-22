@@ -3976,6 +3976,20 @@ sync_test("prototype props", function() {
         "defaultPrevented", "eventPhase", "initEvent", "isTrusted", "preventDefault", "srcElement",
         "stopImmediatePropagation", "stopPropagation", "target", "timeStamp", "type"
     ], [ "AT_TARGET", "BUBBLING_PHASE", "CAPTURING_PHASE" ]);
+    check(HTMLAnchorElement, [
+        "Methods", "charset", "coords", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "hash", "host", "hostname", "href", "hreflang", "mimeType",
+        "name", "nameProp", "pathname", "port", "protocol", "protocolLong", "rel", "rev", "search", "shape", "target", ["text",10], "toString", "type", "urn"
+    ], [ "charset", "coords", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "hreflang", "shape", ["text",10], "type" ]);
+    check(HTMLAreaElement, [ "alt", "coords", "hash", "host", "hostname", "href", "noHref", "pathname", "port", "protocol", "search", "shape", "target", "toString" ], null, [ "rel" ]);
+    check(HTMLButtonElement, [
+        ["autofocus",10], ["checkValidity",10], "createTextRange", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10],
+        "form", ["formAction",10], ["formEnctype",10], ["formMethod",10], ["formNoValidate",10], ["formTarget",10], "name",
+        ["setCustomValidity",10], "status", "type", ["validationMessage",10], ["validity",10], "value", ["willValidate",10]
+    ], [
+        ["autofocus",10], ["checkValidity",10], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], ["formAction",10],
+        ["formEnctype",10], ["formMethod",10], ["formNoValidate",10], ["formTarget",10], ["setCustomValidity",10],
+        ["validationMessage",10], ["validity",10], ["willValidate",10]
+    ]);
     if(v >= 11)
         check(HTMLDocument, []);
     check(HTMLElement, [
@@ -4002,11 +4016,106 @@ sync_test("prototype props", function() {
         "scrollIntoView", "setActive", "setCapture", "sourceIndex", ["spellcheck",10], "style", "swapNode", "tabIndex", ["tagUrn",9,9], "title",
         "uniqueID", "uniqueNumber"
     ], [ ["dataset",11], ["draggable",10], ["hidden",11], ["msGetInputContext",11], ["onmscontentzoom",10] ]);
+    check(HTMLEmbedElement, [
+        "getSVGDocument", "height", "hidden", ["msPlayToDisabled",11], ["msPlayToPreferredSourceUri",11], ["msPlayToPrimary",11],
+        "name", "palette", "pluginspage", ["readyState",11], "src", "units", "width"
+    ], [ "getSVGDocument", ["msPlayToDisabled",11], ["msPlayToPreferredSourceUri",11], ["msPlayToPrimary",11], ["readyState",11] ]);
+    check(HTMLFormElement, [
+        "acceptCharset", "action", ["autocomplete",10], ["checkValidity",10], "elements", "encoding", "enctype", "item",
+        "length", "method", "name", "namedItem", ["noValidate",10], "reset", "submit", "tags", "target", "urns"
+    ], [ "_newEnum", "acceptCharset", ["autocomplete",10], ["checkValidity",10], "enctype", "namedItem", ["noValidate",10], "urns" ]);
+    check(HTMLFrameElement, [
+        "border", "borderColor", "contentDocument", "contentWindow", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "frameBorder", "frameSpacing",
+        "getSVGDocument", "height", "longDesc", "marginHeight", "marginWidth", "name", "noResize", "onload", "scrolling", "security", "src", "width"
+    ], [
+        "allowTransparency", "borderColor", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "getSVGDocument", "height", "ie8_frameBorder",
+        "ie8_longDesc", "ie8_src", "longDesc", "onload", ["onreadystatechange",11], ["readyState",11], "security", "width"
+    ]);
+    check(HTMLHeadElement, [ "profile" ]);
+    check(HTMLHtmlElement, [ "version" ]);
+    check(HTMLIFrameElement, [
+        "align", "border", "contentDocument", "contentWindow", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10],
+        "frameBorder", "frameSpacing", "getSVGDocument", "height", "hspace", "longDesc", "marginHeight", "marginWidth",
+        "name", "noResize", "onload", ["sandbox",10], "scrolling", "security", "src", "vspace", "width"
+    ], [
+        "allowTransparency", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "getSVGDocument", "ie8_frameBorder",
+        "ie8_longDesc", "ie8_src", "longDesc", "onload", ["onreadystatechange",11], ["readyState",11], ["sandbox",10], "security"
+    ]);
+    check(HTMLImageElement, [
+        "align", "alt", "border", "complete", ["crossOrigin",11], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "dynsrc", "fileCreatedDate",
+        "fileModifiedDate", ["fileSize",9,10], "fileUpdatedDate", "height", "href", "hspace", "isMap", "longDesc", "loop", "lowsrc", "mimeType",
+        ["msPlayToDisabled",10], ["msPlayToPreferredSourceUri",11], ["msPlayToPrimary",10], "name", "nameProp", "naturalHeight", "naturalWidth",
+        "protocol", "src", "start", "useMap", "vrml", "vspace", "width"
+    ], [
+        ["crossOrigin",11], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "longDesc", ["msPlayToDisabled",10], ["msPlayToPreferredSourceUri",11],
+        ["msPlayToPrimary",10], "naturalHeight", "naturalWidth", ["readyState",11]
+    ]);
+    check(HTMLInputElement, [
+        "accept", "align", "alt", ["autocomplete",10], ["autofocus",10], "border", "checked", ["checkValidity",10], "complete", "createTextRange", ["dataFld",9,10],
+        ["dataFormatAs",9,10], ["dataSrc",9,10], "defaultChecked", "defaultValue", "dynsrc", ["files",10], "form", ["formAction",10], ["formEnctype",10], ["formMethod",10],
+        ["formNoValidate",10], ["formTarget",10], "height", "hspace", "indeterminate", ["list",10], "loop", "lowsrc", ["max",10], "maxLength", ["min",10], ["multiple",10],
+        "name", ["pattern",10], ["placeholder",10], "readOnly", ["required",10], "select", "selectionEnd", "selectionStart", ["setCustomValidity",10], "setSelectionRange",
+        "size", "src", "start", "status", ["step",10], ["stepDown",10], ["stepUp",10], "type", "useMap", ["validationMessage",10], ["validity",10], "value",
+        ["valueAsNumber",10], "vrml", "vspace", "width", ["willValidate",10]
+    ], [
+        "accept", ["autocomplete",10], ["autofocus",10], ["checkValidity",10], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], ["files",10], ["formAction",10],
+        ["formEnctype",10], ["formMethod",10], ["formNoValidate",10], ["formTarget",10], ["list",10], ["max",10], ["min",10], ["multiple",10], ["pattern",10],
+        ["placeholder",10], ["readyState",11], ["required",10], ["setCustomValidity",10], ["step",10], ["stepDown",10], ["stepUp",10], "useMap", ["validationMessage",10],
+        ["validity",10], ["valueAsNumber",10], ["willValidate",10]
+    ]);
+    check(HTMLLabelElement, [ ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "form", "htmlFor" ], [ ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "form" ]);
+    check(HTMLLinkElement, [ "charset", "href", "hreflang", "media", "rel", "rev", "sheet", ["styleSheet",9,10], "target", "type" ],
+                           [ "charset", "hreflang", ["onreadystatechange",11], ["readyState",11], "sheet", ["styleSheet",11], "target" ]);
+    check(HTMLMetaElement, [ "charset", "content", "httpEquiv", "name", "scheme", "url" ], [ "scheme" ]);
+    check(HTMLObjectElement, [
+        "BaseHref", "align", "alt", "altHtml", "archive", "border", ["checkValidity",10], "classid", "code", "codeBase", "codeType", "contentDocument", "data",
+        ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "declare", "form", "getSVGDocument", "height", "hspace", ["msPlayToDisabled",11],
+        ["msPlayToPreferredSourceUri",11], ["msPlayToPrimary",11], "name", "namedRecordset", "object", ["readyState",11], "recordset", ["setCustomValidity",10],
+        "standby", "type", "useMap", ["validationMessage",10], ["validity",10], "vspace", "width", ["willValidate",10]
+    ], [
+        "alt", "archive", "border", ["checkValidity",10], "contentDocument", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "declare", "getSVGDocument",
+        ["msPlayToDisabled",11], ["msPlayToPreferredSourceUri",11], ["msPlayToPrimary",11], ["onreadystatechange",11], ["readyState",11], ["setCustomValidity",10],
+        "standby", "useMap", ["validationMessage",10], ["validity",10], ["willValidate",10]
+    ]);
+    check(HTMLOptionElement, [ ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "defaultSelected", "form", "index", "label", "selected", "text", "value" ],
+                             [ ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "label" ]);
+    check(HTMLScriptElement, [ ["async",10], "charset", "defer", "event", "htmlFor", "src", "text", "type" ], [ ["async",10], "charset", ["readyState",11] ], [ "crossOrigin" ]);
+    check(HTMLSelectElement, [
+        "add", ["autofocus",10], ["checkValidity",10], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "form", "item", "length",
+        "multiple", "name", "namedItem", "options", "remove", ["required",10], "selectedIndex", ["setCustomValidity",10], "size", "tags",
+        "type", "urns", ["validationMessage",10], ["validity",10], "value", ["willValidate",10]
+    ], [
+        ["autofocus",10], ["checkValidity",10], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "namedItem", ["required",10],
+        ["setCustomValidity",10], "urns", ["validationMessage",10], ["validity",10], ["willValidate",10]
+    ]);
+    check(HTMLStyleElement, [ "media", "sheet", ["styleSheet",9,10], "type" ], [ ["onreadystatechange",11] ]);
     check(HTMLTableCellElement, [
         "abbr", "align", "axis", "background", "bgColor", "borderColor", "borderColorDark", "borderColorLight",
         "cellIndex", "ch", "chOff", "colSpan", "headers", "height", "noWrap", "rowSpan", "scope", "vAlign", "width"
     ], [ "abbr", "axis", "ch", "chOff", "headers", "scope" ]);
     check(HTMLTableDataCellElement, []);
+    check(HTMLTableElement, [
+        "align", "background", "bgColor", "border", "borderColor", "borderColorDark", "borderColorLight", "caption", "cellPadding", "cells", "cellSpacing", "cols",
+        "createCaption", "createTBody", "createTFoot", "createTHead", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataPageSize",9,10], ["dataSrc",9,10], "deleteCaption",
+        "deleteRow", "deleteTFoot", "deleteTHead", ["firstPage",9,10], "frame", "height", "insertRow", ["lastPage",9,10], "moveRow", ["nextPage",9,10],
+        ["previousPage",9,10], ["refresh",9,10], "rows", "rules", "summary", "tBodies", "tFoot", "tHead", "width"
+    ], [
+        "createTBody", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataPageSize",11], ["dataSrc",9,10], ["firstPage",11], ["lastPage",11], ["nextPage",11],
+        ["onreadystatechange",11], ["previousPage",11], ["readyState",11], ["refresh",11]
+    ]);
+    check(HTMLTableRowElement, [
+        "align", "bgColor", "borderColor", "borderColorDark", "borderColorLight", "cells", "ch", "chOff",
+        "deleteCell", "height", "insertCell", "rowIndex", "sectionRowIndex", "vAlign"
+    ], [ "ch", "chOff", "height" ]);
+    check(HTMLTextAreaElement, [
+        ["autofocus",10], ["checkValidity",10], "cols", "createTextRange", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "defaultValue", "form",
+        ["maxLength",10], "name", ["placeholder",10], "readOnly", ["required",10], "rows", "select", "selectionEnd", "selectionStart", ["setCustomValidity",10],
+        "setSelectionRange", "status", "type", ["validationMessage",10], ["validity",10], "value", ["willValidate",10], "wrap"
+    ], [
+        ["autofocus",10], ["checkValidity",10], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], ["maxLength",10], ["placeholder",10], ["required",10],
+        "selectionEnd", "selectionStart", ["setCustomValidity",10], "setSelectionRange", ["validationMessage",10], ["validity",10], ["willValidate",10]
+    ]);
+    check(HTMLTitleElement, [ "text" ]);
     check(HTMLUnknownElement, [ "namedRecordset", "recordset" ]);
     check(KeyboardEvent, [
         "DOM_KEY_LOCATION_JOYSTICK", "DOM_KEY_LOCATION_LEFT", "DOM_KEY_LOCATION_MOBILE",
