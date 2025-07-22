@@ -943,7 +943,7 @@
 @ stub PsGetThreadFreezeCount
 @ stub PsGetThreadHardErrorsAreDisabled
 @ stdcall PsGetThreadId(ptr)
-@ stub PsGetThreadProcess
+@ stdcall PsGetThreadProcess(ptr) IoThreadToProcess
 @ stdcall PsGetThreadProcessId(ptr)
 @ stub PsGetThreadSessionId
 @ stub PsGetThreadTeb
