@@ -1271,6 +1271,27 @@ static const NodeImplVtbl HTMLInputElementImplVtbl = {
     .is_text_edit          = HTMLInputElement_is_text_edit
 };
 
+static void HTMLInputElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t input_hooks[] = {
+        {DISPID_IHTMLINPUTELEMENT_READYSTATE,          .noattr = TRUE},
+        {DISPID_IHTMLINPUTELEMENT_FORM,                .noattr = TRUE},
+        {DISPID_IHTMLINPUTELEMENT_STATUS,              .noattr = TRUE},
+        {DISPID_IHTMLINPUTELEMENT_DEFAULTCHECKED,      .noattr = TRUE},
+        {DISPID_IHTMLINPUTELEMENT_COMPLETE,            .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    static const dispex_hook_t inputtext_hooks[] = {
+        {DISPID_IHTMLINPUTTEXTELEMENT2_SELECTIONSTART, .noattr = TRUE},
+        {DISPID_IHTMLINPUTTEXTELEMENT2_SELECTIONEND,   .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IHTMLInputElement_tid, input_hooks);
+    dispex_info_add_interface(info, IHTMLInputTextElement2_tid, inputtext_hooks);
+
+    HTMLElement_init_dispex_info(info, mode);
+}
+
 static const event_target_vtbl_t HTMLInputElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
@@ -1283,18 +1304,12 @@ static const event_target_vtbl_t HTMLInputElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static const tid_t HTMLInputElement_iface_tids[] = {
-    IHTMLInputElement_tid,
-    IHTMLInputTextElement2_tid,
-    0
-};
 dispex_static_data_t HTMLInputElement_dispex = {
     .id           = OBJID_HTMLInputElement,
     .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLInputElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLInputElement_tid,
-    .iface_tids   = HTMLInputElement_iface_tids,
-    .init_info    = HTMLElement_init_dispex_info,
+    .init_info    = HTMLInputElement_init_dispex_info,
 };
 
 HRESULT HTMLInputElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
