@@ -2786,6 +2786,7 @@ static void test_DrawThemeEdge(void)
     hdc = GetDC(hwnd);
 
     /* Test BF_ADJUST with NULL content rect pointer */
+    SetRect(&rect, 0, 0, 1, 1);
     hr = DrawThemeEdge(htheme, hdc, BP_PUSHBUTTON, PBS_NORMAL, &rect, BF_ADJUST, BF_RIGHT, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
