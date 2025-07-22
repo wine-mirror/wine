@@ -746,7 +746,7 @@ sync_test("frame_props", function() {
     test_exposed("getSVGDocument", true, true);
     test_exposed("height", true);
     test_exposed("hspace", true);
-    test_exposed("longDesc", true, true);
+    test_exposed("longDesc", true);
     test_exposed("marginHeight", true);
     test_exposed("marginWidth", true);
     test_exposed("name", true);
@@ -760,9 +760,9 @@ sync_test("frame_props", function() {
     test_exposed("src", true);
     test_exposed("vspace", true);
     test_exposed("width", true);
-    test_exposed("ie8_frameBorder", false, true);
-    test_exposed("ie8_longDesc", false, true);
-    test_exposed("ie8_src", false, true);
+    test_exposed("ie8_frameBorder", false);
+    test_exposed("ie8_longDesc", false);
+    test_exposed("ie8_src", false);
 });
 
 sync_test("textnode_props", function() {
@@ -4114,8 +4114,8 @@ sync_test("prototype props", function() {
         "frameBorder", "frameSpacing", "getSVGDocument", "height", "hspace", "longDesc", "marginHeight", "marginWidth",
         "name", "noResize", "onload", ["sandbox",10], "scrolling", "security", "src", "vspace", "width"
     ], [
-        "allowTransparency", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "getSVGDocument", "ie8_frameBorder",
-        "ie8_longDesc", "ie8_src", "longDesc", "onload", ["onreadystatechange",11], ["readyState",11], ["sandbox",10], "security"
+        "allowTransparency", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "getSVGDocument", "onload",
+        ["onreadystatechange",11], ["readyState",11], ["sandbox",10], "security"
     ]);
     check(HTMLImageElement, [
         "align", "alt", "border", "complete", ["crossOrigin",11], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "dynsrc", "fileCreatedDate",

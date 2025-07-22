@@ -1352,6 +1352,25 @@ static const NodeImplVtbl HTMLIFrameImplVtbl = {
     .bind_to_tree          = HTMLIFrame_bind_to_tree,
 };
 
+static void HTMLIFrameElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t base2_hooks[] = {
+        {DISPID_IHTMLFRAMEBASE2_CONTENTWINDOW,       .noattr = TRUE},
+        {DISPID_IHTMLFRAMEBASE2_READYSTATE,          .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    static const dispex_hook_t hooks[] = {
+        {DISPID_IHTMLIFRAMEELEMENT3_CONTENTDOCUMENT, .noattr = TRUE},
+        {DISPID_IHTMLIFRAMEELEMENT3_IE8_LONGDESC,    .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IHTMLFrameBase_tid, NULL);
+    dispex_info_add_interface(info, IHTMLFrameBase2_tid, base2_hooks);
+    dispex_info_add_interface(info, IHTMLIFrameElement3_tid, hooks);
+
+    HTMLElement_init_dispex_info(info, mode);
+}
+
 static const event_target_vtbl_t HTMLIFrameElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
@@ -1368,11 +1387,8 @@ static const event_target_vtbl_t HTMLIFrameElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLIFrameElement_iface_tids[] = {
-    IHTMLFrameBase_tid,
-    IHTMLFrameBase2_tid,
     IHTMLIFrameElement_tid,
     IHTMLIFrameElement2_tid,
-    IHTMLIFrameElement3_tid,
     0
 };
 
@@ -1382,7 +1398,7 @@ dispex_static_data_t HTMLIFrameElement_dispex = {
     .vtbl         = &HTMLIFrameElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLIFrame_tid,
     .iface_tids   = HTMLIFrameElement_iface_tids,
-    .init_info    = HTMLElement_init_dispex_info,
+    .init_info    = HTMLIFrameElement_init_dispex_info,
 };
 
 HRESULT HTMLIFrame_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
