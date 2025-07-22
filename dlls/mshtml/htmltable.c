@@ -817,6 +817,19 @@ static const NodeImplVtbl HTMLTableRowImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
+static void HTMLTableRowElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t hooks[] = {
+        {DISPID_IHTMLTABLEROW_ROWINDEX,        .noattr = TRUE},
+        {DISPID_IHTMLTABLEROW_SECTIONROWINDEX, .noattr = TRUE},
+        {DISPID_IHTMLTABLEROW_CELLS,           .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IHTMLTableRow_tid, hooks);
+
+    HTMLElement_init_dispex_info(info, mode);
+}
+
 static const event_target_vtbl_t HTMLTableRowElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
@@ -829,18 +842,12 @@ static const event_target_vtbl_t HTMLTableRowElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static const tid_t HTMLTableRowElement_iface_tids[] = {
-    IHTMLTableRow_tid,
-    0
-};
-
 dispex_static_data_t HTMLTableRowElement_dispex = {
     .id           = OBJID_HTMLTableRowElement,
     .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLTableRowElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     =  DispHTMLTableRow_tid,
-    .iface_tids   = HTMLTableRowElement_iface_tids,
-    .init_info    = HTMLElement_init_dispex_info,
+    .init_info    = HTMLTableRowElement_init_dispex_info,
 };
 
 HRESULT HTMLTableRow_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
