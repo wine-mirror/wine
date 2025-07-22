@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "wine/debug.h"
 
@@ -376,6 +377,19 @@ static const NodeImplVtbl HTMLScriptElementImplVtbl = {
     .bind_to_tree          = HTMLScriptElement_bind_to_tree,
 };
 
+static void HTMLScriptElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t hooks[] = {
+        {DISPID_IHTMLSCRIPTELEMENT_HTMLFOR,    .noattr = TRUE},
+        {DISPID_IHTMLSCRIPTELEMENT_TEXT,       .noattr = TRUE},
+        {DISPID_IHTMLSCRIPTELEMENT_READYSTATE, .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IHTMLScriptElement_tid, hooks);
+
+    HTMLElement_init_dispex_info(info, mode);
+}
+
 static const event_target_vtbl_t HTMLScriptElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
@@ -408,18 +422,12 @@ HRESULT script_elem_from_nsscript(nsIDOMHTMLScriptElement *nsscript, HTMLScriptE
     return S_OK;
 }
 
-static const tid_t HTMLScriptElement_iface_tids[] = {
-    IHTMLScriptElement_tid,
-    0
-};
-
 dispex_static_data_t HTMLScriptElement_dispex = {
     .id           = OBJID_HTMLScriptElement,
     .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLScriptElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLScriptElement_tid,
-    .iface_tids   = HTMLScriptElement_iface_tids,
-    .init_info    = HTMLElement_init_dispex_info,
+    .init_info    = HTMLScriptElement_init_dispex_info,
 };
 
 HRESULT HTMLScriptElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
