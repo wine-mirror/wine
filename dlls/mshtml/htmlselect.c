@@ -1248,6 +1248,22 @@ static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     .get_disabled          = HTMLSelectElementImpl_get_disabled,
 };
 
+static void HTMLSelectElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t select_hooks[] = {
+        {DISPID_IHTMLSELECTELEMENT_FORM,          .noattr = TRUE},
+        {DISPID_IHTMLSELECTELEMENT_OPTIONS,       .noattr = TRUE},
+        {DISPID_IHTMLSELECTELEMENT_SELECTEDINDEX, .noattr = TRUE},
+        {DISPID_IHTMLSELECTELEMENT_VALUE,         .noattr = TRUE},
+        {DISPID_IHTMLSELECTELEMENT_TYPE,          .noattr = TRUE},
+        {DISPID_COLLECTION,                       .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IHTMLSelectElement_tid, select_hooks);
+
+    HTMLElement_init_dispex_info(info, mode);
+}
+
 static const event_target_vtbl_t HTMLSelectElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
@@ -1263,18 +1279,12 @@ static const event_target_vtbl_t HTMLSelectElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static const tid_t HTMLSelectElement_tids[] = {
-    IHTMLSelectElement_tid,
-    0
-};
-
 dispex_static_data_t HTMLSelectElement_dispex = {
     .id           = OBJID_HTMLSelectElement,
     .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLSelectElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLSelectElement_tid,
-    .iface_tids   = HTMLSelectElement_tids,
-    .init_info    = HTMLElement_init_dispex_info,
+    .init_info    = HTMLSelectElement_init_dispex_info,
 };
 
 HRESULT HTMLSelectElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
