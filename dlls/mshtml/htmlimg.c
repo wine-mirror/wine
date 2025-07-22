@@ -670,12 +670,25 @@ static void HTMLImgElement_init_dispex_info(dispex_data_t *info, compat_mode_t m
 {
     static const dispex_hook_t img_ie11_hooks[] = {
         {DISPID_IHTMLIMGELEMENT_FILESIZE, NULL},
+
+        /* Common for all modes */
+        {DISPID_IHTMLIMGELEMENT_READYSTATE},
+        {DISPID_IHTMLIMGELEMENT_COMPLETE,         .noattr = TRUE},
+        {DISPID_IHTMLIMGELEMENT_MIMETYPE,         .noattr = TRUE},
+        {DISPID_IHTMLIMGELEMENT_FILESIZE,         .noattr = TRUE},
+        {DISPID_IHTMLIMGELEMENT_FILECREATEDDATE,  .noattr = TRUE},
+        {DISPID_IHTMLIMGELEMENT_FILEMODIFIEDDATE, .noattr = TRUE},
+        {DISPID_IHTMLIMGELEMENT_FILEUPDATEDDATE,  .noattr = TRUE},
+        {DISPID_IHTMLIMGELEMENT_PROTOCOL,         .noattr = TRUE},
+        {DISPID_IHTMLIMGELEMENT_HREF,             .noattr = TRUE},
+        {DISPID_IHTMLIMGELEMENT_NAMEPROP,         .noattr = TRUE},
         {DISPID_UNKNOWN}
     };
+    const dispex_hook_t *const img_hooks = img_ie11_hooks + 1;
+
+    dispex_info_add_interface(info, IHTMLImgElement_tid, mode >= COMPAT_MODE_IE11 ? img_ie11_hooks : img_hooks);
 
     HTMLElement_init_dispex_info(info, mode);
-
-    dispex_info_add_interface(info, IHTMLImgElement_tid, mode >= COMPAT_MODE_IE11 ? img_ie11_hooks : NULL);
 }
 
 dispex_static_data_t HTMLImageElement_dispex = {

@@ -4124,7 +4124,7 @@ sync_test("prototype props", function() {
         "protocol", "src", "start", "useMap", "vrml", "vspace", "width"
     ], [
         ["crossOrigin",11], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "longDesc", ["msPlayToDisabled",10], ["msPlayToPreferredSourceUri",11],
-        ["msPlayToPrimary",10], "naturalHeight", "naturalWidth", ["readyState",11]
+        ["msPlayToPrimary",10], "naturalHeight", "naturalWidth"
     ]);
     check(HTMLInputElement, [
         "accept", "align", "alt", ["autocomplete",10], ["autofocus",10], "border", "checked", ["checkValidity",10], "complete", "createTextRange", ["dataFld",9,10],
