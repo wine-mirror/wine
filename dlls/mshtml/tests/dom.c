@@ -4046,6 +4046,8 @@ static void test_attr_collection_builtins(IHTMLDocument2 *doc)
         L"table",     L"align", L"background", L"bgColor", L"border", L"borderColor", L"borderColorDark", L"borderColorLight", L"cellPadding", L"cellSpacing",
                       L"cols", L"dataPageSize", L"frame", L"height", L"rules", L"summary", L"width", NULL,
         L"tbody",     L"align", L"bgColor", L"ch", L"chOff", L"vAlign", NULL,
+        L"td",        L"abbr", L"align", L"axis", L"background", L"bgColor", L"borderColor", L"borderColorDark", L"borderColorLight", L"ch", L"chOff",
+                      L"colSpan", L"headers", L"height", L"noWrap", L"rowSpan", L"scope", L"vAlign", L"width", NULL,
         L"ul",        L"compact", L"type", NULL,
         L"video",     NULL,
         L"winetest",  NULL,
@@ -4096,6 +4098,7 @@ static void test_attr_collection_builtins(IHTMLDocument2 *doc)
         L"select",    L"align", NULL,
         L"span",      L"cite", L"dateTime", L"nofocusrect", NULL,
         L"tbody",     L"align", L"bgColor", L"ch", L"chOff", L"vAlign", NULL,
+        L"td",        L"abbr", L"axis", L"ch", L"chOff", L"headers", L"scope", NULL,
         L"ul",        L"compact", L"type", NULL,
         NULL
     };
