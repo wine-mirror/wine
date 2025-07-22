@@ -68,6 +68,7 @@ static char build_id[64];
 static BOOL is_wow64;
 static int failures;
 static int quiet_mode;
+static int test_timeout = 120;
 static HANDLE logfile;
 static HANDLE junit;
 
@@ -1081,7 +1082,7 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
         /* Flush to disk so we know which test caused Windows to crash if it does */
         FlushFileBuffers(out_file);
 
-        status = run_ex( cmd, tmpfile, tempdir, 120000, FALSE, &pid );
+        status = run_ex( cmd, tmpfile, tempdir, test_timeout * 1000, FALSE, &pid );
         if (status == -2 && GetLastError()) status = -GetLastError();
         free(cmd);
 
@@ -1533,6 +1534,7 @@ usage (void)
 " -S URL    URL to submit the results to\n"
 " -t TAG    include TAG of characters [-.0-9a-zA-Z] in the report\n"
 " -u URL    include TestBot URL in the report\n"
+" -w SECS   how many seconds to wait for each test to finish (default: 120)\n"
 " -x DIR    Extract tests to DIR (default: .\\wct) and exit\n");
 }
 
@@ -1588,6 +1590,13 @@ int __cdecl main( int argc, char *argv[] )
             exit (0);
         case 'i':
             if (!(description = argv[++i]))
+            {
+                usage();
+                exit( 2 );
+            }
+            break;
+        case 'w':
+            if (!argv[++i] || !(test_timeout = atoi( argv[i] )))
             {
                 usage();
                 exit( 2 );
