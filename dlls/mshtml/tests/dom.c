@@ -4043,6 +4043,8 @@ static void test_attr_collection_builtins(IHTMLDocument2 *doc)
         L"select",    L"align", L"multiple", L"name", L"onchange", L"size", NULL,
         L"span",      L"cite", L"dateTime", L"nofocusrect", NULL,
         L"style",     L"media", L"onerror", L"onload", L"type", NULL,
+        L"table",     L"align", L"background", L"bgColor", L"border", L"borderColor", L"borderColorDark", L"borderColorLight", L"cellPadding", L"cellSpacing",
+                      L"cols", L"dataPageSize", L"frame", L"height", L"rules", L"summary", L"width", NULL,
         L"tbody",     L"align", L"bgColor", L"ch", L"chOff", L"vAlign", NULL,
         L"ul",        L"compact", L"type", NULL,
         L"video",     NULL,

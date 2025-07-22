@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "wine/debug.h"
 
@@ -1663,6 +1664,27 @@ static const NodeImplVtbl HTMLTableImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
+static void HTMLTableElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t table_hooks[] = {
+        {DISPID_IHTMLTABLE_ROWS,       .noattr = TRUE},
+        {DISPID_IHTMLTABLE_THEAD,      .noattr = TRUE},
+        {DISPID_IHTMLTABLE_TFOOT,      .noattr = TRUE},
+        {DISPID_IHTMLTABLE_TBODIES,    .noattr = TRUE},
+        {DISPID_IHTMLTABLE_CAPTION,    .noattr = TRUE},
+        {DISPID_IHTMLTABLE_READYSTATE, .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    static const dispex_hook_t table2_hooks[] = {
+        {DISPID_IHTMLTABLE2_CELLS,     .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IHTMLTable_tid, table_hooks);
+    dispex_info_add_interface(info, IHTMLTable2_tid, table2_hooks);
+
+    HTMLElement_init_dispex_info(info, mode);
+}
+
 static const event_target_vtbl_t HTMLTableElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
@@ -1676,8 +1698,6 @@ static const event_target_vtbl_t HTMLTableElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLTableElement_iface_tids[] = {
-    IHTMLTable_tid,
-    IHTMLTable2_tid,
     IHTMLTable3_tid,
     0
 };
@@ -1688,7 +1708,7 @@ dispex_static_data_t HTMLTableElement_dispex = {
     .vtbl         = &HTMLTableElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLTable_tid,
     .iface_tids   = HTMLTableElement_iface_tids,
-    .init_info    = HTMLElement_init_dispex_info,
+    .init_info    = HTMLTableElement_init_dispex_info,
 };
 
 HRESULT HTMLTable_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
