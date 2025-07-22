@@ -44,6 +44,7 @@ enum pixelformat {
     format_4bppGray,
     format_8bppGray,
     format_16bppGray,
+    format_16bppGrayHalf,
     format_16bppBGR555,
     format_16bppBGR565,
     format_16bppBGRA5551,
@@ -2091,6 +2092,51 @@ static HRESULT copypixels_to_128bppRGBFloat(struct FormatConverter *This, const 
         free(srcdata);
         return S_OK;
     }
+    case format_16bppGrayHalf:
+    {
+        UINT srcstride, srcdatasize;
+        const USHORT *srcpixel;
+        const BYTE *srcrow;
+        float *dstpixel;
+        BYTE *srcdata;
+        BYTE *dstrow;
+        INT x, y;
+
+        if (!prc)
+            return S_OK;
+
+        srcstride = 2 * prc->Width;
+        srcdatasize = srcstride * prc->Height;
+
+        srcdata = malloc(srcdatasize);
+        if (!srcdata) return E_OUTOFMEMORY;
+
+        hr = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+        if (SUCCEEDED(hr))
+        {
+            srcrow = srcdata;
+            dstrow = pbBuffer;
+            for (y = 0; y < prc->Height; y++)
+            {
+                srcpixel = (USHORT *)srcrow;
+                dstpixel= (float *)dstrow;
+                for (x = 0; x < prc->Width; x++)
+                {
+                    float f32 = float_16_to_32(*srcpixel++);
+
+                    *dstpixel++ = f32;
+                    *dstpixel++ = f32;
+                    *dstpixel++ = f32;
+                    *dstpixel++ = 1.0f;
+                }
+                srcrow += srcstride;
+                dstrow += cbStride;
+            }
+        }
+
+        free(srcdata);
+        return hr;
+    }
 
     default:
         FIXME("Unimplemented conversion path %d.\n", source_format);
@@ -2108,6 +2154,7 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_4bppGray, &GUID_WICPixelFormat4bppGray, NULL},
     {format_8bppGray, &GUID_WICPixelFormat8bppGray, copypixels_to_8bppGray},
     {format_16bppGray, &GUID_WICPixelFormat16bppGray, NULL},
+    {format_16bppGrayHalf, &GUID_WICPixelFormat16bppGrayHalf},
     {format_16bppBGR555, &GUID_WICPixelFormat16bppBGR555, NULL},
     {format_16bppBGR565, &GUID_WICPixelFormat16bppBGR565, NULL},
     {format_16bppBGRA5551, &GUID_WICPixelFormat16bppBGRA5551, copypixels_to_16bppBGRA5551},
