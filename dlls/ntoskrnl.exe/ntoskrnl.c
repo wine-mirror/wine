@@ -2575,6 +2575,15 @@ HANDLE WINAPI PsGetProcessId(PEPROCESS process)
 }
 
 /*********************************************************************
+ *           PsGetProcessPeb    (NTOSKRNL.@)
+ */
+PEB *WINAPI PsGetProcessPeb(PEPROCESS process)
+{
+    TRACE( "%p -> %p\n", process, process->info.PebBaseAddress );
+    return process->info.PebBaseAddress;
+}
+
+/*********************************************************************
  *           PsGetProcessInheritedFromUniqueProcessId  (NTOSKRNL.@)
  */
 HANDLE WINAPI PsGetProcessInheritedFromUniqueProcessId( PEPROCESS process )

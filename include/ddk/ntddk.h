@@ -290,6 +290,7 @@ void      WINAPI KeSetTargetProcessorDpc(PRKDPC,CCHAR);
 BOOLEAN   WINAPI MmIsAddressValid(void *);
 LONGLONG  WINAPI PsGetProcessCreateTimeQuadPart(PEPROCESS);
 HANDLE    WINAPI PsGetProcessId(PEPROCESS);
+PEB *     WINAPI PsGetProcessPeb(PEPROCESS);
 void *    WINAPI PsGetProcessSectionBaseAddress(PEPROCESS);
 ULONG     WINAPI PsGetProcessSessionId(PEPROCESS);
 HANDLE    WINAPI PsGetThreadId(PETHREAD);
