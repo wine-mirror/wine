@@ -586,6 +586,9 @@ static DWORD WINAPI cancelioex_thread_func(void *arg)
     res = pNtCancelIoFileEx(ctx->pipe, ctx->null_iosb ? NULL : ctx->iosb, &cancel_sb);
     ok(!res, "NtCancelIoFileEx returned %lx\n", res);
 
+    ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+    ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
+
     return 0;
 }
 
@@ -613,6 +616,8 @@ static void test_cancelio(void)
      * but before peeking at Status here. */
     status = iosb.Status;
     ok(!res, "NtCancelIoFile returned %lx\n", res);
+    ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+    ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
 
     ok(status == STATUS_CANCELLED, "Wrong iostatus %lx\n", status);
     ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
@@ -626,6 +631,8 @@ static void test_cancelio(void)
     res = pNtCancelIoFile(hPipe, &cancel_sb);
     ok(!res, "NtCancelIoFile returned %lx\n", res);
     ok(iosb.Status == STATUS_CANCELLED, "Wrong iostatus %lx\n", iosb.Status);
+    ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+    ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
 
     CloseHandle(hPipe);
 
@@ -641,6 +648,8 @@ static void test_cancelio(void)
         res = pNtCancelIoFileEx(hPipe, &iosb, &cancel_sb);
         status = iosb.Status;
         ok(!res, "NtCancelIoFileEx returned %lx\n", res);
+        ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+        ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
 
         ok(status == STATUS_CANCELLED, "Wrong iostatus %lx\n", status);
         ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
@@ -649,6 +658,8 @@ static void test_cancelio(void)
         res = pNtCancelIoFileEx(hPipe, NULL, &cancel_sb);
         ok(res == STATUS_NOT_FOUND, "NtCancelIoFileEx returned %lx\n", res);
         ok(iosb.Status == 0xdeadbeef, "Wrong iostatus %lx\n", iosb.Status);
+        ok(cancel_sb.Status == STATUS_NOT_FOUND, "Unexpected Status %lx\n", cancel_sb.Status);
+        ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
 
         memset(&iosb, 0x55, sizeof(iosb));
         res = listen_pipe(hPipe, hEvent, &iosb, FALSE);
@@ -735,6 +746,8 @@ static void test_cancelsynchronousio(void)
     ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %lu (error %lu)\n", ret, GetLastError());
     memset(&iosb, 0x55, sizeof(iosb));
     res = pNtCancelSynchronousIoFile(thread, NULL, &iosb);
+    ok(ctx.iosb.Status == 0xdeadbabe, "Unexpected Status %lx\n", ctx.iosb.Status);
+    ok(ctx.iosb.Information == 0xdeadbeef, "Unexpected Information %Iu\n", ctx.iosb.Information);
     ok(res == STATUS_SUCCESS, "Failed to cancel I/O\n");
     ok(iosb.Status == STATUS_SUCCESS, "iosb.Status got changed to %lx\n", iosb.Status);
     ok(iosb.Information == 0, "iosb.Information got changed to %Iu\n", iosb.Information);
