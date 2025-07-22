@@ -4042,6 +4042,7 @@ static void test_attr_collection_builtins(IHTMLDocument2 *doc)
         L"script",    L"charset", L"defer", L"event", L"for", L"onerror", L"src", L"type", NULL,
         L"select",    L"align", L"multiple", L"name", L"onchange", L"size", NULL,
         L"span",      L"cite", L"dateTime", L"nofocusrect", NULL,
+        L"style",     L"media", L"onerror", L"onload", L"type", NULL,
         L"tbody",     L"align", L"bgColor", L"ch", L"chOff", L"vAlign", NULL,
         L"ul",        L"compact", L"type", NULL,
         L"video",     NULL,
