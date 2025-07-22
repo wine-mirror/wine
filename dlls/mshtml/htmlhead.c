@@ -402,6 +402,17 @@ static const NodeImplVtbl HTMLMetaElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col
 };
 
+static void HTMLMetaElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t hooks[] = {
+        {DISPID_IHTMLMETAELEMENT_HTTPEQUIV, .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IHTMLMetaElement_tid, hooks);
+
+    HTMLElement_init_dispex_info(info, mode);
+}
+
 static const event_target_vtbl_t HTMLMetaElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
@@ -414,18 +425,12 @@ static const event_target_vtbl_t HTMLMetaElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static const tid_t HTMLMetaElement_iface_tids[] = {
-    IHTMLMetaElement_tid,
-    0
-};
-
 dispex_static_data_t HTMLMetaElement_dispex = {
     .id           = OBJID_HTMLMetaElement,
     .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLMetaElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLMetaElement_tid,
-    .iface_tids   = HTMLMetaElement_iface_tids,
-    .init_info    = HTMLElement_init_dispex_info,
+    .init_info    = HTMLMetaElement_init_dispex_info,
 };
 
 HRESULT HTMLMetaElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
