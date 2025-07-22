@@ -62,6 +62,7 @@ typedef struct {
     SHORT func_disp_idx;
     USHORT argc;
     USHORT default_value_cnt;
+    BOOLEAN noattr;
     VARTYPE prop_vt;
     VARTYPE *arg_types;
     func_arg_info_t *arg_info;
@@ -281,15 +282,14 @@ static BOOL is_arg_type_supported(VARTYPE vt)
     return FALSE;
 }
 
-static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, ITypeInfo *dti,
-                          dispex_hook_invoke_t hook, const WCHAR *name_override)
+static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, ITypeInfo *dti, const dispex_hook_t *hook)
 {
     func_info_t *info;
     BSTR name;
     HRESULT hres;
 
-    if(name_override)
-        name = SysAllocString(name_override);
+    if(hook && hook->name)
+        name = SysAllocString(hook->name);
     else if(desc->wFuncFlags & FUNCFLAG_FRESTRICTED)
         return;
     else {
@@ -332,7 +332,8 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
         info->tid = tid;
         info->func_disp_idx = -1;
         info->prop_vt = VT_EMPTY;
-        info->hook = hook;
+        info->hook = hook ? hook->invoke : NULL;
+        info->noattr = hook ? hook->noattr : FALSE;
     }else {
         SysFreeString(name);
     }
@@ -342,6 +343,7 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
 
         info->func_disp_idx = data->func_disp_cnt++;
         info->argc = desc->cParams;
+        info->noattr = TRUE;
 
         assert(info->argc < MAX_ARGS);
         assert(desc->funckind == FUNC_DISPATCH);
@@ -480,10 +482,8 @@ static HRESULT process_interface(dispex_data_t *data, tid_t tid, ITypeInfo *disp
             }
         }
 
-        if(!hook || hook->invoke || hook->name) {
-            add_func_info(data, tid, funcdesc, disp_typeinfo ? disp_typeinfo : typeinfo,
-                          hook ? hook->invoke : NULL, hook ? hook->name : NULL);
-        }
+        if(!hook || hook->invoke || hook->name || hook->noattr)
+            add_func_info(data, tid, funcdesc, disp_typeinfo ? disp_typeinfo : typeinfo, hook);
 
         ITypeInfo_ReleaseFuncDesc(typeinfo, funcdesc);
     }
@@ -1994,6 +1994,17 @@ HRESULT dispex_to_string(DispatchEx *dispex, BSTR *ret)
 
     *ret = SysAllocString(buf);
     return *ret ? S_OK : E_OUTOFMEMORY;
+}
+
+BOOL dispex_builtin_is_noattr(DispatchEx *dispex, DISPID id)
+{
+    func_info_t *func;
+    HRESULT hres;
+
+    hres = get_builtin_func(dispex->info, id, &func);
+    assert(SUCCEEDED(hres));
+
+    return func->noattr;
 }
 
 static inline DispatchEx *impl_from_IWineJSDispatchHost(IWineJSDispatchHost *iface)

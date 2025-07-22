@@ -1295,15 +1295,43 @@ void HTMLDOMNode_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         {DISPID_IHTMLDOMNODE_REMOVENODE,  NULL},
         {DISPID_IHTMLDOMNODE_REPLACENODE, NULL},
         {DISPID_IHTMLDOMNODE_SWAPNODE,    NULL},
+
+        /* Common for all modes */
+        {DISPID_IHTMLDOMNODE_NODETYPE,           .noattr = TRUE},
+        {DISPID_IHTMLDOMNODE_PARENTNODE,         .noattr = TRUE},
+        {DISPID_IHTMLDOMNODE_CHILDNODES,         .noattr = TRUE},
+        {DISPID_IHTMLDOMNODE_ATTRIBUTES,         .noattr = TRUE},
+        {DISPID_IHTMLDOMNODE_NODENAME,           .noattr = TRUE},
+        {DISPID_IHTMLDOMNODE_NODEVALUE,          .noattr = TRUE},
+        {DISPID_IHTMLDOMNODE_FIRSTCHILD,         .noattr = TRUE},
+        {DISPID_IHTMLDOMNODE_LASTCHILD,          .noattr = TRUE},
+        {DISPID_IHTMLDOMNODE_PREVIOUSSIBLING,    .noattr = TRUE},
+        {DISPID_IHTMLDOMNODE_NEXTSIBLING,        .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    const dispex_hook_t *const hooks = ie9_hooks + 3;
+    static const dispex_hook_t node2_hooks[] = {
+        {DISPID_IHTMLDOMNODE2_OWNERDOCUMENT,     .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    static const dispex_hook_t node3_hooks[] = {
+        {DISPID_IHTMLDOMNODE3_LOCALNAME,         .noattr = TRUE},
+        {DISPID_IHTMLDOMNODE3_NAMESPACEURI,      .noattr = TRUE},
+        {DISPID_IHTMLDOMNODE3_PREFIX,            .noattr = TRUE},
+        {DISPID_IHTMLDOMNODE3_TEXTCONTENT,       .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    static const dispex_hook_t priv_hooks[] = {
+        {DISPID_IHTMLELEMENT6_IE9_HASATTRIBUTES, .noattr = TRUE},
         {DISPID_UNKNOWN}
     };
 
-    dispex_info_add_interface(info, IHTMLDOMNode_tid, mode >= COMPAT_MODE_IE9 ? ie9_hooks : NULL);
-    dispex_info_add_interface(info, IHTMLDOMNode2_tid, NULL);
+    dispex_info_add_interface(info, IHTMLDOMNode_tid, mode >= COMPAT_MODE_IE9 ? ie9_hooks : hooks);
+    dispex_info_add_interface(info, IHTMLDOMNode2_tid, node2_hooks);
 
     if(mode >= COMPAT_MODE_IE9) {
-        dispex_info_add_interface(info, IHTMLDOMNode3_tid, NULL);
-        dispex_info_add_interface(info, IWineHTMLDOMNodePrivate_tid, NULL);
+        dispex_info_add_interface(info, IHTMLDOMNode3_tid, node3_hooks);
+        dispex_info_add_interface(info, IWineHTMLDOMNodePrivate_tid, priv_hooks);
     }
 
     EventTarget_init_dispex_info(info, mode);

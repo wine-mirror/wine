@@ -6702,6 +6702,14 @@ static HRESULT IHTMLElement6_setAttribute_hook(DispatchEx *dispex, WORD flags, D
     return hres;
 }
 
+static const dispex_hook_t elem_traversal_noattr_hooks[] = {
+    {DISPID_IELEMENTTRAVERSAL_FIRSTELEMENTCHILD,      .noattr = TRUE},
+    {DISPID_IELEMENTTRAVERSAL_LASTELEMENTCHILD,       .noattr = TRUE},
+    {DISPID_IELEMENTTRAVERSAL_PREVIOUSELEMENTSIBLING, .noattr = TRUE},
+    {DISPID_IELEMENTTRAVERSAL_NEXTELEMENTSIBLING,     .noattr = TRUE},
+    {DISPID_IELEMENTTRAVERSAL_CHILDELEMENTCOUNT,      .noattr = TRUE}
+};
+
 void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     static const dispex_hook_t elem6_ie9_hooks[] = {
@@ -6734,10 +6742,33 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 
         /* IE9+ */
         {DISPID_IHTMLELEMENT_TOSTRING,     NULL},
+
+        /* Common for all modes */
+        {DISPID_IHTMLELEMENT_PARENTELEMENT,  .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_CLASSNAME,      .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_TAGNAME,        .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_OFFSETLEFT,     .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_OFFSETTOP,      .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_OFFSETWIDTH,    .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_OFFSETHEIGHT,   .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_OFFSETPARENT,   .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_DOCUMENT,       .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_SOURCEINDEX,    .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_RECORDNUMBER,   .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_INNERHTML,      .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_INNERTEXT,      .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_OUTERHTML,      .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_OUTERTEXT,      .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_PARENTTEXTEDIT, .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_ISTEXTEDIT,     .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_FILTERS,        .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_CHILDREN,       .noattr = TRUE},
+        {DISPID_IHTMLELEMENT_ALL,            .noattr = TRUE},
         {DISPID_UNKNOWN}
     };
     const dispex_hook_t *const elem_ie10_hooks = elem_ie11_hooks + 10;
     const dispex_hook_t *const elem_ie9_hooks  = elem_ie10_hooks + 2;
+    const dispex_hook_t *const elem_hooks      = elem_ie9_hooks  + 1;
     static const dispex_hook_t elem2_ie11_hooks[] = {
         {DISPID_IHTMLELEMENT2_ONLOSECAPTURE},
         {DISPID_IHTMLELEMENT2_ONPROPERTYCHANGE},
@@ -6765,10 +6796,28 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         {DISPID_IHTMLELEMENT2_SETEXPRESSION,    NULL},
         {DISPID_IHTMLELEMENT2_GETEXPRESSION,    NULL},
         {DISPID_IHTMLELEMENT2_REMOVEEXPRESSION, NULL},
+
+        /* Common for all modes */
+        {DISPID_IHTMLELEMENT2_CURRENTSTYLE,    .noattr = TRUE},
+        {DISPID_IHTMLELEMENT2_SCOPENAME,       .noattr = TRUE},
+        {DISPID_IHTMLELEMENT2_SCROLLHEIGHT,    .noattr = TRUE},
+        {DISPID_IHTMLELEMENT2_SCROLLWIDTH,     .noattr = TRUE},
+        {DISPID_IHTMLELEMENT2_SCROLLTOP,       .noattr = TRUE},
+        {DISPID_IHTMLELEMENT2_SCROLLLEFT,      .noattr = TRUE},
+        {DISPID_IHTMLELEMENT2_RUNTIMESTYLE,    .noattr = TRUE},
+        {DISPID_IHTMLELEMENT2_CANHAVECHILDREN, .noattr = TRUE},
+        {DISPID_IHTMLELEMENT2_BEHAVIORURNS,    .noattr = TRUE},
+        {DISPID_IHTMLELEMENT2_TAGURN,          .noattr = TRUE},
+        {DISPID_IHTMLELEMENT2_CLIENTHEIGHT,    .noattr = TRUE},
+        {DISPID_IHTMLELEMENT2_CLIENTWIDTH,     .noattr = TRUE},
+        {DISPID_IHTMLELEMENT2_CLIENTTOP,       .noattr = TRUE},
+        {DISPID_IHTMLELEMENT2_CLIENTLEFT,      .noattr = TRUE},
+        {DISPID_IHTMLELEMENT2_READYSTATE,      .noattr = TRUE},
         {DISPID_UNKNOWN}
     };
     const dispex_hook_t *const elem2_ie10_hooks = elem2_ie11_hooks + 15;
     const dispex_hook_t *const elem2_ie9_hooks  = elem2_ie10_hooks + 4;
+    const dispex_hook_t *const elem2_hooks      = elem2_ie9_hooks  + 3;
     static const dispex_hook_t elem3_ie11_hooks[] = {
         {DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE},
         {DISPID_IHTMLELEMENT3_ONMOVE},
@@ -6781,9 +6830,17 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 
         /* IE9+ */
         {DISPID_IHTMLELEMENT3_ONPAGE},
+
+        /* Common for all modes */
+        {DISPID_IHTMLELEMENT3_ISMULTILINE,       .noattr = TRUE},
+        {DISPID_IHTMLELEMENT3_CANHAVEHTML,       .noattr = TRUE},
+        {DISPID_IHTMLELEMENT3_ISCONTENTEDITABLE, .noattr = TRUE},
+        {DISPID_IHTMLELEMENT3_ISDISABLED,        .noattr = TRUE},
+
         {DISPID_UNKNOWN}
     };
     const dispex_hook_t *const elem3_ie9_hooks = elem3_ie11_hooks + 8;
+    const dispex_hook_t *const elem3_hooks     = elem3_ie9_hooks  + 1;
     static const dispex_hook_t elem7_ie11_hooks[] = {
         {DISPID_IHTMLELEMENT7_ONMSPOINTERHOVER},
 
@@ -6798,18 +6855,22 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         {DISPID_UNKNOWN}
     };
     const dispex_hook_t *const elem7_ie10_hooks = elem7_ie11_hooks + 1;
+    static const dispex_hook_t unique_name_noattr_hooks[] = {
+        {DISPID_IHTMLUNIQUENAME_UNIQUENUMBER, .noattr = TRUE},
+        {DISPID_IHTMLUNIQUENAME_UNIQUEID,     .noattr = TRUE}
+    };
 
     HTMLDOMNode_init_dispex_info(info, mode);
 
     dispex_info_add_interface(info, IHTMLElement2_tid, mode >= COMPAT_MODE_IE11 ? elem2_ie11_hooks :
                                                        mode >= COMPAT_MODE_IE10 ? elem2_ie10_hooks :
-                                                       mode >= COMPAT_MODE_IE9  ? elem2_ie9_hooks  : NULL);
+                                                       mode >= COMPAT_MODE_IE9  ? elem2_ie9_hooks  : elem2_hooks);
     if(mode >= COMPAT_MODE_IE8)
         dispex_info_add_interface(info, IElementSelector_tid, NULL);
 
     if(mode >= COMPAT_MODE_IE9) {
         dispex_info_add_interface(info, IHTMLElement6_tid, mode >= COMPAT_MODE_IE10 ? elem6_ie10_hooks : elem6_ie9_hooks);
-        dispex_info_add_interface(info, IElementTraversal_tid, NULL);
+        dispex_info_add_interface(info, IElementTraversal_tid, elem_traversal_noattr_hooks);
     }
 
     if(mode >= COMPAT_MODE_IE10)
@@ -6820,13 +6881,13 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
     }
 
     dispex_info_add_interface(info, IHTMLElement3_tid, mode >= COMPAT_MODE_IE11 ? elem3_ie11_hooks :
-                                                       mode >= COMPAT_MODE_IE9  ? elem3_ie9_hooks  : NULL);
+                                                       mode >= COMPAT_MODE_IE9  ? elem3_ie9_hooks  : elem3_hooks);
     dispex_info_add_interface(info, IHTMLElement_tid, mode >= COMPAT_MODE_IE11 ? elem_ie11_hooks :
                                                       mode >= COMPAT_MODE_IE10 ? elem_ie10_hooks :
-                                                      mode >= COMPAT_MODE_IE9  ? elem_ie9_hooks  : NULL);
+                                                      mode >= COMPAT_MODE_IE9  ? elem_ie9_hooks  : elem_hooks);
     dispex_info_add_interface(info, IHTMLElement4_tid, NULL);
     dispex_info_add_interface(info, IHTMLDOMNode_tid, NULL);
-    dispex_info_add_interface(info, IHTMLUniqueName_tid, NULL);
+    dispex_info_add_interface(info, IHTMLUniqueName_tid, unique_name_noattr_hooks);
 }
 
 static const event_target_vtbl_t HTMLElement_event_target_vtbl = {
@@ -7442,7 +7503,7 @@ static void Element_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
     dispex_info_add_dispids(info, IHTMLElement_tid, elem_dispids);
     dispex_info_add_dispids(info, IHTMLElement4_tid, elem4_dispids);
     dispex_info_add_interface(info, IElementSelector_tid, NULL);
-    dispex_info_add_interface(info, IElementTraversal_tid, NULL);
+    dispex_info_add_interface(info, IElementTraversal_tid, elem_traversal_noattr_hooks);
 }
 
 dispex_static_data_t Element_dispex = {
@@ -7712,6 +7773,17 @@ static HRESULT create_filters_collection(compat_mode_t compat_mode, IHTMLFilters
     return S_OK;
 }
 
+static inline BOOL is_valid_attr_dispid(HTMLAttributeCollection *col, DISPID id)
+{
+    if(get_dispid_type(id) != DISPEXPROP_BUILTIN)
+        return TRUE;
+
+    if(dispex_builtin_is_noattr(&col->elem->node.event_target.dispex, id))
+        return FALSE;
+
+    return TRUE;
+}
+
 static HRESULT get_attr_dispid_by_relative_idx(HTMLAttributeCollection *This, LONG *idx, DISPID start, DISPID *dispid)
 {
     DISPID id = start;
@@ -7726,6 +7798,8 @@ static HRESULT get_attr_dispid_by_relative_idx(HTMLAttributeCollection *This, LO
             return hres;
         else if(hres == S_FALSE)
             break;
+        else if(!is_valid_attr_dispid(This, id))
+            continue;
 
         len++;
         if(len == *idx)
@@ -7762,7 +7836,8 @@ static inline HRESULT get_attr_dispid_by_name(HTMLAttributeCollection *This, con
         }
     }
 
-    return dispex_get_id(&This->elem->node.event_target.dispex, name, fdexNameCaseInsensitive, id);
+    hres = dispex_get_id(&This->elem->node.event_target.dispex, name, fdexNameCaseInsensitive, id);
+    return (FAILED(hres) || is_valid_attr_dispid(This, *id)) ? hres : DISP_E_UNKNOWNNAME;
 }
 
 static inline HRESULT get_domattr(HTMLAttributeCollection *This, DISPID id, LONG *list_pos, HTMLDOMAttribute **attr)
