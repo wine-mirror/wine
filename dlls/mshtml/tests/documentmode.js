@@ -689,6 +689,82 @@ sync_test("docfrag_props", function() {
     test_exposed("compareDocumentPosition", v >= 9);
 });
 
+sync_test("frame_props", function() {
+    var elem = document.createElement("frame");
+
+    function test_exposed(prop, expect, is_todo) {
+        var ok_ = is_todo ? todo_wine.ok : ok;
+        if(expect)
+            ok_(prop in elem, prop + " not found in element.");
+        else
+            ok_(!(prop in elem), prop + " found in element.");
+    }
+
+    var v = document.documentMode;
+
+    test_exposed("allowTransparency", v < 9, v >= 9);
+    test_exposed("border", true);
+    test_exposed("borderColor", true, true);
+    test_exposed("contentDocument", v >= 8, v < 8);
+    test_exposed("contentWindow", true);
+    test_exposed("dataFld", v < 11, v < 11);
+    test_exposed("dataFormatAs", v < 11, v < 11);
+    test_exposed("dataSrc", v < 11, v < 11);
+    test_exposed("frameBorder", true);
+    test_exposed("frameSpacing", true);
+    test_exposed("getSVGDocument", true, true);
+    test_exposed("height", true, true);
+    test_exposed("longDesc", true, true);
+    test_exposed("marginHeight", true);
+    test_exposed("marginWidth", true);
+    test_exposed("name", true);
+    test_exposed("noResize", true);
+    test_exposed("onload", true);
+    test_exposed("onreadystatechange", v < 11, v >= 11);
+    test_exposed("readyState", v < 11, v >= 11);
+    test_exposed("scrolling", true);
+    test_exposed("security", v >= 9, v >= 9);
+    test_exposed("src", true);
+    test_exposed("width", true, true);
+    test_exposed("ie8_frameBorder", false, true);
+    test_exposed("ie8_longDesc", false, true);
+    test_exposed("ie8_src", false, true);
+
+    elem = document.createElement("iframe");
+
+    test_exposed("align", true);
+    test_exposed("allowTransparency", v < 9, v >= 9);
+    test_exposed("border", true);
+    test_exposed("borderColor", false);
+    test_exposed("contentDocument", v >= 8, v < 8);
+    test_exposed("contentWindow", true);
+    test_exposed("dataFld", v < 11, v < 11);
+    test_exposed("dataFormatAs", v < 11, v < 11);
+    test_exposed("dataSrc", v < 11, v < 11);
+    test_exposed("frameBorder", true);
+    test_exposed("frameSpacing", true);
+    test_exposed("getSVGDocument", true, true);
+    test_exposed("height", true);
+    test_exposed("hspace", true);
+    test_exposed("longDesc", true, true);
+    test_exposed("marginHeight", true);
+    test_exposed("marginWidth", true);
+    test_exposed("name", true);
+    test_exposed("noResize", true);
+    test_exposed("onload", true);
+    test_exposed("onreadystatechange", v < 11, v >= 11);
+    test_exposed("readyState", v < 11, v >= 11);
+    test_exposed("sandbox", v >= 10, v >= 10);
+    test_exposed("scrolling", true);
+    test_exposed("security", v >= 9, v >= 9);
+    test_exposed("src", true);
+    test_exposed("vspace", true);
+    test_exposed("width", true);
+    test_exposed("ie8_frameBorder", false, true);
+    test_exposed("ie8_longDesc", false, true);
+    test_exposed("ie8_src", false, true);
+});
+
 sync_test("textnode_props", function() {
     var node = document.createTextNode("testNode");
 
