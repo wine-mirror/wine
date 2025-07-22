@@ -946,7 +946,7 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
 {
     struct video_decoder *decoder = impl_from_IMFTransform(iface);
     UINT32 sample_size;
-    LONGLONG duration;
+    LONGLONG duration, sample_duration;
     IMFSample *sample;
     UINT64 frame_size, frame_rate;
     bool preserve_timestamps;
@@ -1015,6 +1015,11 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
             if (FAILED(IMFSample_SetSampleDuration(sample, duration)))
                 WARN("Failed to set sample duration\n");
             decoder->sample_time += duration;
+        }
+        else if (FAILED(IMFSample_GetSampleDuration(sample, &sample_duration)) || !sample_duration)
+        {
+            if (FAILED(IMFSample_SetSampleDuration(sample, duration)))
+                WARN("Failed to set sample duration\n");
         }
     }
 

@@ -5409,7 +5409,6 @@ static void test_h264_decoder_timestamps(void)
             ok(time == exp_zero_ts[i].time, "got time %I64d, expected %I64d\n", time, exp_zero_ts[i].time);
             hr = IMFSample_GetSampleDuration(output_sample, &duration);
             ok(hr == S_OK, "Got %#lx\n", hr);
-            todo_wine
             ok(duration == exp_zero_ts[i].duration, "got duration %I64d, expected %I64d\n", duration, exp_zero_ts[i].duration);
             ret = IMFSample_Release(output_sample);
             ok(ret == 0, "Release returned %lu\n", ret);
