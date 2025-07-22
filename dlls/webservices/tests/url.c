@@ -245,6 +245,10 @@ static void test_WsEncodeUrl(void)
     hr = WsEncodeUrl( NULL, 0, heap, &str, NULL );
     ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
+    memset( &url, 0, sizeof(url) );
+    url.url.scheme  = WS_URL_HTTP_SCHEME_TYPE;
+    url.host.chars  = (WCHAR *)L"host";
+    url.host.length = 4;
     hr = WsEncodeUrl( (const WS_URL *)&url, 0, NULL, &str, NULL );
     ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
