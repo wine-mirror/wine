@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "wine/debug.h"
 
@@ -1699,6 +1700,19 @@ static const NodeImplVtbl HTMLButtonElementImplVtbl = {
     .is_text_edit          = HTMLButtonElement_is_text_edit
 };
 
+static void HTMLButtonElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t button_hooks[] = {
+        {DISPID_IHTMLBUTTONELEMENT_FORM,   .noattr = TRUE},
+        {DISPID_IHTMLBUTTONELEMENT_VALUE,  .noattr = TRUE},
+        {DISPID_IHTMLBUTTONELEMENT_STATUS, .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IHTMLButtonElement_tid, button_hooks);
+
+    HTMLElement_init_dispex_info(info, mode);
+}
+
 static const event_target_vtbl_t HTMLButtonElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
@@ -1711,18 +1725,12 @@ static const event_target_vtbl_t HTMLButtonElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static const tid_t HTMLButtonElement_iface_tids[] = {
-    IHTMLButtonElement_tid,
-    0
-};
-
 dispex_static_data_t HTMLButtonElement_dispex = {
     .id           = OBJID_HTMLButtonElement,
     .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLButtonElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLButtonElement_tid,
-    .iface_tids   = HTMLButtonElement_iface_tids,
-    .init_info    = HTMLElement_init_dispex_info,
+    .init_info    = HTMLButtonElement_init_dispex_info,
 };
 
 HRESULT HTMLButtonElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
