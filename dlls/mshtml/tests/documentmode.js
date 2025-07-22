@@ -714,7 +714,7 @@ sync_test("frame_props", function() {
     test_exposed("frameSpacing", true);
     test_exposed("getSVGDocument", true, true);
     test_exposed("height", true, true);
-    test_exposed("longDesc", true, true);
+    test_exposed("longDesc", true);
     test_exposed("marginHeight", true);
     test_exposed("marginWidth", true);
     test_exposed("name", true);
@@ -726,9 +726,9 @@ sync_test("frame_props", function() {
     test_exposed("security", v >= 9, v >= 9);
     test_exposed("src", true);
     test_exposed("width", true, true);
-    test_exposed("ie8_frameBorder", false, true);
-    test_exposed("ie8_longDesc", false, true);
-    test_exposed("ie8_src", false, true);
+    test_exposed("ie8_frameBorder", false);
+    test_exposed("ie8_longDesc", false);
+    test_exposed("ie8_src", false);
 
     elem = document.createElement("iframe");
 
@@ -4104,8 +4104,8 @@ sync_test("prototype props", function() {
         "border", "borderColor", "contentDocument", "contentWindow", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "frameBorder", "frameSpacing",
         "getSVGDocument", "height", "longDesc", "marginHeight", "marginWidth", "name", "noResize", "onload", "scrolling", "security", "src", "width"
     ], [
-        "allowTransparency", "borderColor", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "getSVGDocument", "height", "ie8_frameBorder",
-        "ie8_longDesc", "ie8_src", "longDesc", "onload", ["onreadystatechange",11], ["readyState",11], "security", "width"
+        "allowTransparency", "borderColor", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "getSVGDocument", "height", "onload",
+        ["onreadystatechange",11], ["readyState",11], "security", "width"
     ]);
     check(HTMLHeadElement, [ "profile" ]);
     check(HTMLHtmlElement, [ "version" ]);
