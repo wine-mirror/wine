@@ -6144,20 +6144,26 @@ static void test_keyboard_layout(void)
     /* Test that the high word of the keyboard layout in CJK locale is the same as the low word,
      * even when IME is on */
     lang_id = PRIMARYLANGID(GetUserDefaultLCID());
-    if (lang_id == LANG_CHINESE || lang_id == LANG_JAPANESE || lang_id == LANG_KOREAN)
+    switch (lang_id)
     {
-        hkl = GetKeyboardLayout(0);
-        ok(HIWORD(hkl) == LOWORD(hkl), "Got unexpected hkl %p.\n", hkl);
-
-        if (lang_id == LANG_CHINESE)
-            layout_name = "00000804";
-        else if (lang_id == LANG_JAPANESE)
-            layout_name = "00000411";
-        else if (lang_id == LANG_KOREAN)
-            layout_name = "00000412";
-        hkl = LoadKeyboardLayoutA(layout_name, 0);
-        ok(HIWORD(hkl) == LOWORD(hkl), "Got unexpected hkl %p.\n", hkl);
+    case LANG_CHINESE:
+        layout_name = "00000804";
+        break;
+    case LANG_JAPANESE:
+        layout_name = "00000411";
+        break;
+    case LANG_KOREAN:
+        layout_name = "00000412";
+        break;
+    default:
+        return;
     }
+
+    hkl = GetKeyboardLayout(0);
+    ok(HIWORD(hkl) == LOWORD(hkl), "Got unexpected hkl %p.\n", hkl);
+
+    hkl = LoadKeyboardLayoutA(layout_name, 0);
+    ok(HIWORD(hkl) == LOWORD(hkl), "Got unexpected hkl %p.\n", hkl);
 }
 
 static void test_system_messages_with_rawinput_nolegacy(void)
