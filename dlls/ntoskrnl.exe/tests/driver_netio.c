@@ -394,6 +394,7 @@ static void test_wsk_listen_socket(void)
 static void test_wsk_connect_socket(void)
 {
     const WSK_PROVIDER_CONNECTION_DISPATCH *connect_dispatch;
+    static const WSK_PROVIDER_CONNECTION_DISPATCH client_dispatch;
     struct socket_context context;
     struct sockaddr_in addr;
     LARGE_INTEGER timeout;
@@ -407,7 +408,7 @@ static void test_wsk_connect_socket(void)
     wsk_irp->IoStatus.Status = 0xdeadbeef;
     wsk_irp->IoStatus.Information = 0xdeadbeef;
     status = provider_npi.Dispatch->WskSocket(provider_npi.Client, AF_INET, SOCK_STREAM, IPPROTO_TCP,
-            WSK_FLAG_CONNECTION_SOCKET, &context, &connect_dispatch, NULL, NULL, NULL, wsk_irp);
+            WSK_FLAG_CONNECTION_SOCKET, &context, &client_dispatch, NULL, NULL, NULL, wsk_irp);
     ok(status == STATUS_PENDING, "Got unexpected status %#lx.\n", status);
     status = KeWaitForSingleObject(&irp_complete_event, Executive, KernelMode, FALSE, NULL);
     ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
