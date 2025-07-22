@@ -962,6 +962,8 @@ static HRESULT pulse_spec_from_waveformat(struct pulse_stream *stream, const WAV
             stream->ss.format = PA_SAMPLE_U8;
         else if (fmt->wBitsPerSample == 16)
             stream->ss.format = PA_SAMPLE_S16LE;
+        else if (fmt->wBitsPerSample == 32)
+            stream->ss.format = PA_SAMPLE_S32LE;
         else
             return AUDCLNT_E_UNSUPPORTED_FORMAT;
         pa_channel_map_init_auto(&stream->map, fmt->nChannels, PA_CHANNEL_MAP_ALSA);
