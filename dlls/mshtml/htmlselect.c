@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "wine/debug.h"
 
@@ -328,6 +329,20 @@ static const NodeImplVtbl HTMLOptionElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
+static void HTMLOptionElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t option_hooks[] = {
+        {DISPID_IHTMLOPTIONELEMENT_DEFAULTSELECTED, .noattr = TRUE},
+        {DISPID_IHTMLOPTIONELEMENT_TEXT,            .noattr = TRUE},
+        {DISPID_IHTMLOPTIONELEMENT_INDEX,           .noattr = TRUE},
+        {DISPID_IHTMLOPTIONELEMENT_FORM,            .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IHTMLOptionElement_tid, option_hooks);
+
+    HTMLElement_init_dispex_info(info, mode);
+}
+
 static const event_target_vtbl_t HTMLOptionElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
@@ -340,17 +355,12 @@ static const event_target_vtbl_t HTMLOptionElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static const tid_t HTMLOptionElement_iface_tids[] = {
-    IHTMLOptionElement_tid,
-    0
-};
 dispex_static_data_t HTMLOptionElement_dispex = {
     .id           = OBJID_HTMLOptionElement,
     .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLOptionElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLOptionElement_tid,
-    .iface_tids   = HTMLOptionElement_iface_tids,
-    .init_info    = HTMLElement_init_dispex_info,
+    .init_info    = HTMLOptionElement_init_dispex_info,
 };
 
 HRESULT HTMLOptionElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
