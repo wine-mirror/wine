@@ -5155,6 +5155,19 @@ static void test_h264_decoder_timestamps(void)
         { 3333336, 416667 },
         { 3750003, 416667 },
     };
+    static const struct timestamps exp_zero_ts[] =
+    {
+        { 0, 416667 },
+        { 0, 416667 },
+        { 0, 416667 },
+        { 0, 416667 },
+        { 0, 416667 },
+        { 0, 416667 },
+        { 0, 416667 },
+        { 0, 416667 },
+        { 0, 416667 },
+        { 0, 416667 },
+    };
     static const struct timestamps input_sample_ts[] =
     {
         { 1334666, 333667, 667333 },
@@ -5357,6 +5370,59 @@ static void test_h264_decoder_timestamps(void)
         else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
         {
             input_sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+            hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+            ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+            ret = IMFSample_Release(input_sample);
+            ok(ret <= 1, "Release returned %lu\n", ret);
+        }
+        winetest_pop_context();
+    }
+
+    ret = IMFSample_Release(output_sample);
+    ok(ret == 0, "Release returned %lu\n", ret);
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+    /* Test when 24fps framerate is provided and samples contain zero timestamp and duration */
+    hr = CoCreateInstance(&CLSID_MSH264DecoderMFT, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+    load_resource(L"h264data.bin", &h264_encoded_data, &h264_encoded_data_len);
+
+    check_mft_set_input_type(transform, input_type_24fps_desc, S_OK);
+    check_mft_set_output_type(transform, output_type_24fps_desc, S_OK);
+
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+    output_sample = create_sample(NULL, actual_width * actual_height * 2);
+    for (i = 0; i < ARRAYSIZE(exp_zero_ts);)
+    {
+        winetest_push_context("output %ld", i);
+        hr = check_mft_process_output(transform, output_sample, &output_status);
+        ok(hr == S_OK || hr == MF_E_TRANSFORM_STREAM_CHANGE || hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+        if (hr == S_OK)
+        {
+            hr = IMFSample_GetSampleTime(output_sample, &time);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            ok(time == exp_zero_ts[i].time, "got time %I64d, expected %I64d\n", time, exp_zero_ts[i].time);
+            hr = IMFSample_GetSampleDuration(output_sample, &duration);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            todo_wine
+            ok(duration == exp_zero_ts[i].duration, "got duration %I64d, expected %I64d\n", duration, exp_zero_ts[i].duration);
+            ret = IMFSample_Release(output_sample);
+            ok(ret == 0, "Release returned %lu\n", ret);
+            output_sample = create_sample(NULL, actual_width * actual_height * 2);
+            i++;
+        }
+        else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
+        {
+            input_sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+            hr = IMFSample_SetSampleTime(input_sample, 0);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            hr = IMFSample_SetSampleDuration(input_sample, 0);
+            ok(hr == S_OK, "Got %#lx\n", hr);
             hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
             ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
             ret = IMFSample_Release(input_sample);
