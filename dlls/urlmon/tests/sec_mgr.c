@@ -2352,7 +2352,7 @@ static void test_PersistentZoneIdentifier(void)
 
     test_IZoneIdentifier_iface(zone_id);
 
-    IPersistFile_Release(persist_file);
+    IZoneIdentifier_Release(zone_id);
     IUnknown_Release(unk);
 
 
