@@ -968,13 +968,9 @@ static void test_create_device(void)
     IDXCoreAdapterList_Release(dxcore_list);
 
     hr = D3D12CreateDevice((IUnknown *)dxcore_adapter, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, (void **)&device);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        refcount = ID3D12Device_Release(device);
-        ok(!refcount, "Device has %lu references left.\n", refcount);
-    }
+    refcount = ID3D12Device_Release(device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 
     IDXCoreAdapter_Release(dxcore_adapter);
 
