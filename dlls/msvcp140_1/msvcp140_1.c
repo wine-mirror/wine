@@ -34,7 +34,6 @@ CREATE_TYPE_INFO_VTABLE
 
 static HMODULE msvcp140;
 
-int CDECL _callnewh(size_t size);
 void (__cdecl *throw_bad_alloc)(void);
 
 /* non-static, needed by type_info */

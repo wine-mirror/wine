@@ -34,7 +34,6 @@ static HMODULE msvcp140;
 
 extern const vtable_ptr exception_vtable;
 
-int CDECL _callnewh(size_t size);
 void (__cdecl *_Xmem)(void);
 void (__cdecl *_Xout_of_range)(const char*);
 

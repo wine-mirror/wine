@@ -36,7 +36,6 @@ typedef SSIZE_T streamsize;
 
 void __cdecl _invalid_parameter_noinfo(void);
 BOOL __cdecl __uncaught_exception(void);
-int __cdecl _callnewh(size_t);
 
 void __cdecl operator_delete(void*);
 void* __cdecl operator_new(size_t) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(operator_delete) __WINE_MALLOC;
