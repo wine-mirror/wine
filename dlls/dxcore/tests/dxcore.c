@@ -55,8 +55,6 @@ static void test_DXCoreCreateAdapterFactory(void)
     IDXCoreAdapterList *list = (void *)0xdeadbeef;
     IDXCoreAdapter *adapter2 = (void *)0xdeadbeef;
     IDXCoreAdapter *adapter = (void *)0xdeadbeef;
-    struct DXCoreHardwareID *hardware_id;
-    void *buffer = (void *)0xdeadbeef;
     uint32_t adapter_count = 0;
     LONG refcount;
     HRESULT hr;
@@ -139,33 +137,6 @@ static void test_DXCoreCreateAdapterFactory(void)
     check_interface(adapter, &IID_IDXCoreAdapterList, FALSE);
     check_interface(adapter, &IID_IDXCoreAdapterFactory, FALSE);
 
-    hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, 0, NULL);
-    ok(hr == E_POINTER, "got hr %#lx.\n", hr);
-    hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, 0, buffer);
-    ok(hr == E_INVALIDARG, "got hr %#lx.\n", hr);
-    hr = IDXCoreAdapter_GetProperty(adapter, 0xdeadbeef, 0, buffer);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "got hr %#lx.\n", hr);
-
-    buffer = calloc(1, sizeof(HardwareID));
-    ok(buffer != NULL, "failed to allocate memory for buffer.\n");
-    hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, sizeof(HardwareID), buffer);
-    ok(hr == E_INVALIDARG, "got hr %#lx.\n", hr);
-    free(buffer);
-    buffer = calloc(1, sizeof(DXCoreHardwareID));
-    ok(buffer != NULL, "failed to allocate memory for buffer.\n");
-    hr = IDXCoreAdapter_GetProperty(adapter, 0xdeadbeef, sizeof(DXCoreHardwareID), buffer);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "got hr %#lx.\n", hr);
-    free(buffer);
-
-    buffer = calloc(1, sizeof(DXCoreHardwareID));
-    ok(buffer != NULL, "failed to allocate memory for buffer.\n");
-    hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, sizeof(DXCoreHardwareID), buffer);
-    ok(hr == S_OK, "got hr %#lx.\n", hr);
-    hardware_id = buffer;
-    ok(hardware_id->vendorID != 0, "failed to get vendorID\n");
-    ok(hardware_id->deviceID != 0, "failed to get deviceID\n");
-    free(buffer);
-
     refcount = IDXCoreAdapter_Release(adapter);
     todo_wine
     ok(refcount == 2, "got refcount %ld.\n", refcount);
@@ -173,6 +144,71 @@ static void test_DXCoreCreateAdapterFactory(void)
     ok(refcount == 0, "got refcount %ld.\n", refcount);
     refcount = IDXCoreAdapterFactory_Release(factory);
     ok(refcount == 0, "got refcount %ld.\n", refcount);
+}
+
+static void test_GetProperty(void)
+{
+    IDXCoreAdapterFactory *factory;
+    IDXCoreAdapterList *list;
+    DXCoreHardwareID hwid[2];
+    IDXCoreAdapter *adapter;
+    uint32_t count;
+    size_t size;
+    HRESULT hr;
+
+    if (FAILED(pDXCoreCreateAdapterFactory(&IID_IDXCoreAdapterFactory, (void **)&factory)))
+        return;
+
+    hr = IDXCoreAdapterFactory_CreateAdapterList(factory, 1, &DXCORE_ADAPTER_ATTRIBUTE_D3D12_GRAPHICS,
+            &IID_IDXCoreAdapterList, (void **)&list);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    count = IDXCoreAdapterList_GetAdapterCount(list);
+
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        hr = IDXCoreAdapterList_GetAdapter(list, i, &IID_IDXCoreAdapter, (void **)&adapter);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDXCoreAdapter_GetProperty(adapter, 0xdeadbeef, 0, hwid);
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Got hr %#lx.\n", hr);
+
+        /* HardwareID */
+        hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, 0, NULL);
+        ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+        hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, 0, hwid);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+        hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, sizeof(hwid[0]) - 1, hwid);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+        hr = IDXCoreAdapter_GetPropertySize(adapter, HardwareID, NULL);
+        todo_wine ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+
+        hr = IDXCoreAdapter_GetPropertySize(adapter, HardwareID, &size);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        if (hr == S_OK)
+            ok(size == sizeof(*hwid), "Got size %Iu.\n", size);
+
+        memset(hwid, 0, sizeof(hwid));
+        hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, sizeof(hwid[0]), hwid);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(!!hwid[0].vendorID, "Expected vendorID.\n");
+        ok(!!hwid[0].deviceID, "Expected deviceID.\n");
+
+        memset(hwid, 0, sizeof(hwid));
+        hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, sizeof(hwid[0]) + 1, hwid);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        todo_wine ok(!!hwid[0].vendorID, "Expected vendorID.\n");
+        todo_wine ok(!!hwid[0].deviceID, "Expected deviceID.\n");
+        ok(!hwid[1].vendorID, "Expected no vendorID.\n");
+        ok(!hwid[1].deviceID, "Expected no deviceID.\n");
+
+        IDXCoreAdapter_Release(adapter);
+    }
+
+    IDXCoreAdapterList_Release(list);
+
+    IDXCoreAdapterFactory_Release(factory);
 }
 
 START_TEST(dxcore)
@@ -198,6 +234,7 @@ START_TEST(dxcore)
     }
 
     test_DXCoreCreateAdapterFactory();
+    test_GetProperty();
 
     FreeLibrary(dxcore_handle);
 }
