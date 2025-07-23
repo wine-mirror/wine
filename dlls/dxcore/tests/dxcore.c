@@ -178,9 +178,9 @@ static void test_GetProperty(void)
         hr = IDXCoreAdapter_GetProperty(adapter, InstanceLuid, 0, NULL);
         ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
         hr = IDXCoreAdapter_GetProperty(adapter, InstanceLuid, 0, luid);
-        todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
         hr = IDXCoreAdapter_GetProperty(adapter, InstanceLuid, sizeof(luid[0]) - 1, luid);
-        todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
         hr = IDXCoreAdapter_GetPropertySize(adapter, InstanceLuid, NULL);
         todo_wine ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
@@ -191,10 +191,10 @@ static void test_GetProperty(void)
             ok(size == sizeof(*luid), "Got size %Iu.\n", size);
 
         hr = IDXCoreAdapter_GetProperty(adapter, InstanceLuid, sizeof(luid[0]), luid);
-        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IDXCoreAdapter_GetProperty(adapter, InstanceLuid, sizeof(luid[0]) + 1, luid);
-        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         /* HardwareID */
         hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, 0, NULL);

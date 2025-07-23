@@ -114,6 +114,16 @@ static HRESULT STDMETHODCALLTYPE dxcore_adapter_GetProperty(IDXCoreAdapter *ifac
 
     switch (property)
     {
+        case InstanceLuid:
+        {
+            LUID *luid = buffer;
+
+            if (buffer_size < sizeof(*luid))
+                return E_INVALIDARG;
+
+            *luid = adapter->identifier.adapter_luid;
+            break;
+        }
         case HardwareID:
         {
             struct DXCoreHardwareID *hardware_id = buffer;
