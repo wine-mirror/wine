@@ -328,7 +328,6 @@ static void test_Language(void)
         WindowsDeleteString(str);
 
         hr = ILanguage_QueryInterface(language, &IID_ILanguage2, (void **)&language2);
-        todo_wine
         ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* <= Windows 10 1507 */, "Unexpected hr %#lx.\n", hr);
         if (FAILED(hr))
         {

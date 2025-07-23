@@ -412,6 +412,7 @@ struct language_factory
 struct language
 {
     ILanguage ILanguage_iface;
+    ILanguage2 ILanguage2_iface;
     LONG ref;
     WCHAR name[LOCALE_NAME_MAX_LENGTH];
 };
@@ -449,6 +450,8 @@ static inline struct language *impl_from_ILanguage(ILanguage *iface)
 static HRESULT STDMETHODCALLTYPE language_QueryInterface(
         ILanguage *iface, REFIID iid, void **out)
 {
+    struct language *language = impl_from_ILanguage(iface);
+
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_IUnknown) ||
@@ -458,6 +461,12 @@ static HRESULT STDMETHODCALLTYPE language_QueryInterface(
     {
         IUnknown_AddRef(iface);
         *out = iface;
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_ILanguage2))
+    {
+        IUnknown_AddRef(&language->ILanguage2_iface);
+        *out = &language->ILanguage2_iface;
         return S_OK;
     }
 
@@ -555,6 +564,36 @@ static const struct ILanguageVtbl language_vtbl =
     language_get_DisplayName,
     language_get_NativeName,
     language_get_Script,
+};
+
+DEFINE_IINSPECTABLE(language2, ILanguage2, struct language, ILanguage_iface)
+
+static HRESULT STDMETHODCALLTYPE language2_get_LayoutDirection(ILanguage2 *iface, enum LanguageLayoutDirection *value)
+{
+    struct language *language = impl_from_ILanguage2(iface);
+    DWORD reading_layout;
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    if (!GetLocaleInfoEx(language->name, LOCALE_IREADINGLAYOUT | LOCALE_RETURN_NUMBER,
+            (void *)&reading_layout, sizeof(reading_layout)))
+         return E_FAIL;
+
+    *value = (enum LanguageLayoutDirection)reading_layout;
+    return S_OK;
+}
+
+static const struct ILanguage2Vtbl language2_vtbl =
+{
+    language2_QueryInterface,
+    language2_AddRef,
+    language2_Release,
+    /* IInspectable methods */
+    language2_GetIids,
+    language2_GetRuntimeClassName,
+    language2_GetTrustLevel,
+    /* ILanguage2 methods */
+    language2_get_LayoutDirection,
 };
 
 static HRESULT STDMETHODCALLTYPE windows_globalization_QueryInterface(
@@ -886,6 +925,7 @@ static HRESULT STDMETHODCALLTYPE language_factory_CreateLanguage(
         return E_OUTOFMEMORY;
 
     language->ILanguage_iface.lpVtbl = &language_vtbl;
+    language->ILanguage2_iface.lpVtbl = &language2_vtbl;
     language->ref = 1;
     wcscpy(language->name, buffer);
 
