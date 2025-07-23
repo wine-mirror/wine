@@ -127,17 +127,29 @@
         return ret;                                                                                 \
     }
 
-#define check_interface( obj, iid ) check_interface_( __LINE__, obj, iid )
-static void check_interface_( unsigned int line, void *obj, const IID *iid )
+#define check_interface( a, b, c, d ) check_interface_( __LINE__, a, b, c, d )
+static HRESULT check_interface_( unsigned int line, void *iface, REFIID iid, BOOL supported, BOOL is_broken )
 {
-    IUnknown *iface = obj;
-    IUnknown *unk;
-    HRESULT hr;
+    HRESULT hr, expected_hr, broken_hr;
+    IUnknown *unknown = iface, *out;
 
-    hr = IUnknown_QueryInterface( iface, iid, (void **)&unk );
-    ok_(__FILE__, line)( hr == S_OK, "got hr %#lx.\n", hr );
-    if (SUCCEEDED(hr))
-        IUnknown_Release( unk );
+    if (supported)
+    {
+        expected_hr = S_OK;
+        broken_hr = E_NOINTERFACE;
+    }
+    else
+    {
+        expected_hr = E_NOINTERFACE;
+        broken_hr = S_OK;
+    }
+
+    hr = IUnknown_QueryInterface( unknown, iid, (void **)&out );
+    ok_(__FILE__, line)( hr == expected_hr || broken( is_broken && hr == broken_hr ),
+                         "Got unexpected hr %#lx, expected %#lx.\n", hr, expected_hr );
+    if (SUCCEEDED( hr ))
+        IUnknown_Release( out );
+    return hr;
 }
 
 static void load_resource( const WCHAR *name, const WCHAR *type, const WCHAR *filename )
@@ -450,15 +462,15 @@ static void test_PackageManager(void)
         return;
     }
 
-    check_interface( factory, &IID_IUnknown );
-    check_interface( factory, &IID_IInspectable );
+    check_interface( factory, &IID_IUnknown, TRUE, FALSE );
+    check_interface( factory, &IID_IInspectable, TRUE, FALSE );
 
     hr = IActivationFactory_ActivateInstance( factory, &inspectable );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
-    check_interface( inspectable, &IID_IUnknown );
-    check_interface( inspectable, &IID_IInspectable );
-    check_interface( inspectable, &IID_IAgileObject );
+    check_interface( inspectable, &IID_IUnknown, TRUE, FALSE );
+    check_interface( inspectable, &IID_IInspectable, TRUE, FALSE );
+    check_interface( inspectable, &IID_IAgileObject, TRUE, FALSE );
 
     hr = IInspectable_QueryInterface( inspectable, &IID_IPackageManager, (void **)&manager );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
@@ -560,8 +572,8 @@ static void test_PackageStatics(void)
         return;
     }
 
-    check_interface( factory, &IID_IUnknown );
-    check_interface( factory, &IID_IInspectable );
+    check_interface( factory, &IID_IUnknown, TRUE, FALSE );
+    check_interface( factory, &IID_IInspectable, TRUE, FALSE );
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IPackageStatics, (void **)&package_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
@@ -579,6 +591,39 @@ static void test_PackageStatics(void)
     ok( ref == 1, "got ref %ld.\n", ref );
 }
 
+static void test_DesignMode(void)
+{
+    static const WCHAR *class_name = RuntimeClass_Windows_ApplicationModel_DesignMode;
+    IActivationFactory *factory;
+    HSTRING str;
+    HRESULT hr;
+    LONG ref;
+
+    hr = WindowsCreateString( class_name, wcslen( class_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    WindowsDeleteString( str );
+    todo_wine
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (FAILED( hr ))
+    {
+        todo_wine
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
+        return;
+    }
+
+    check_interface( factory, &IID_IUnknown, TRUE, FALSE );
+    check_interface( factory, &IID_IInspectable, TRUE, FALSE );
+    check_interface( factory, &IID_IAgileObject, TRUE, FALSE );
+    check_interface( factory, &IID_IActivationFactory, TRUE, FALSE );
+    check_interface( factory, &IID_IDesignModeStatics, TRUE, FALSE );
+    check_interface( factory, &IID_IDesignModeStatics2, TRUE, TRUE );
+
+    ref = IActivationFactory_Release( factory );
+    ok( ref == 1, "got ref %ld.\n", ref );
+}
+
 START_TEST(model)
 {
     HRESULT hr;
@@ -588,6 +633,7 @@ START_TEST(model)
 
     test_PackageManager();
     test_PackageStatics();
+    test_DesignMode();
 
     RoUninitialize();
 }
