@@ -388,6 +388,13 @@ static const struct IIterable_HSTRINGVtbl iterable_view_hstring_vtbl =
     iterable_view_hstring_First,
 };
 
+struct application_languages
+{
+    IActivationFactory IActivationFactory_iface;
+    IApplicationLanguagesStatics IApplicationLanguagesStatics_iface;
+    LONG ref;
+};
+
 struct windows_globalization
 {
     IActivationFactory IActivationFactory_iface;
@@ -412,6 +419,11 @@ struct language
 static inline struct windows_globalization *impl_from_IActivationFactory(IActivationFactory *iface)
 {
     return CONTAINING_RECORD(iface, struct windows_globalization, IActivationFactory_iface);
+}
+
+static inline struct application_languages *impl_application_languages_from_IActivationFactory(IActivationFactory *iface)
+{
+    return CONTAINING_RECORD(iface, struct application_languages, IActivationFactory_iface);
 }
 
 static inline struct language_factory *impl_language_factory_from_IActivationFactory(IActivationFactory *iface)
@@ -902,6 +914,157 @@ static struct language_factory language_factory =
     0
 };
 
+static HRESULT STDMETHODCALLTYPE application_languages_activation_factory_QueryInterface(
+        IActivationFactory *iface, REFIID iid, void **out)
+{
+    struct application_languages *languages = impl_application_languages_from_IActivationFactory(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
+        IsEqualGUID(iid, &IID_IActivationFactory))
+    {
+        IUnknown_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_IApplicationLanguagesStatics))
+    {
+        IUnknown_AddRef(&languages->IApplicationLanguagesStatics_iface);
+        *out = &languages->IApplicationLanguagesStatics_iface;
+        return S_OK;
+    }
+
+    FIXME("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE application_languages_activation_factory_AddRef(IActivationFactory *iface)
+{
+    struct application_languages *languages = impl_application_languages_from_IActivationFactory(iface);
+    ULONG ref = InterlockedIncrement(&languages->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+static ULONG STDMETHODCALLTYPE application_languages_activation_factory_Release(IActivationFactory *iface)
+{
+    struct application_languages *languages = impl_application_languages_from_IActivationFactory(iface);
+    ULONG ref = InterlockedDecrement(&languages->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+static HRESULT STDMETHODCALLTYPE application_languages_activation_factory_GetIids(
+        IActivationFactory *iface, ULONG *iid_count, IID **iids)
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE application_languages_activation_factory_GetRuntimeClassName(
+        IActivationFactory *iface, HSTRING *class_name)
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE application_languages_activation_factory_GetTrustLevel(
+        IActivationFactory *iface, TrustLevel *trust_level)
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE application_languages_activation_factory_ActivateInstance(
+        IActivationFactory *iface, IInspectable **instance)
+{
+    FIXME("iface %p, instance %p stub!\n", iface, instance);
+    return E_NOTIMPL;
+}
+
+static const struct IActivationFactoryVtbl application_languages_activation_factory_vtbl =
+{
+    /* IUnknown methods */
+    application_languages_activation_factory_QueryInterface,
+    application_languages_activation_factory_AddRef,
+    application_languages_activation_factory_Release,
+    /* IInspectable methods */
+    application_languages_activation_factory_GetIids,
+    application_languages_activation_factory_GetRuntimeClassName,
+    application_languages_activation_factory_GetTrustLevel,
+    /* IActivationFactory methods */
+    application_languages_activation_factory_ActivateInstance,
+};
+
+DEFINE_IINSPECTABLE(application_languages_statics, IApplicationLanguagesStatics, struct application_languages, IActivationFactory_iface)
+
+static HRESULT STDMETHODCALLTYPE application_languages_statics_get_PrimaryLanguageOverride(
+        IApplicationLanguagesStatics *iface, HSTRING *value)
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE application_languages_statics_put_PrimaryLanguageOverride(
+        IApplicationLanguagesStatics *iface, HSTRING value)
+{
+    FIXME("iface %p, value %s stub!\n", iface, wine_dbgstr_hstring(value));
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE application_languages_statics_get_Languages(
+        IApplicationLanguagesStatics *iface, IVectorView_HSTRING **value)
+{
+    WCHAR locale[LOCALE_NAME_MAX_LENGTH];
+    HSTRING hstring;
+    HRESULT hr;
+
+    FIXME("iface %p, out %p stub!\n", iface, value);
+
+    if (!GetUserDefaultLocaleName(locale, LOCALE_NAME_MAX_LENGTH))
+        return E_FAIL;
+
+    if (FAILED(hr = WindowsCreateString(locale, wcslen(locale), &hstring)))
+        return hr;
+
+    return hstring_vector_create(&hstring, 1, value);
+}
+
+static HRESULT STDMETHODCALLTYPE application_languages_statics_get_ManifestLanguages(
+        IApplicationLanguagesStatics *iface, IVectorView_HSTRING **value)
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static const struct IApplicationLanguagesStaticsVtbl application_languages_statics_vtbl =
+{
+    /* IUnknown methods */
+    application_languages_statics_QueryInterface,
+    application_languages_statics_AddRef,
+    application_languages_statics_Release,
+    /* IInspectable methods */
+    application_languages_statics_GetIids,
+    application_languages_statics_GetRuntimeClassName,
+    application_languages_statics_GetTrustLevel,
+    /* IApplicationLanguagesStatics methods */
+    application_languages_statics_get_PrimaryLanguageOverride,
+    application_languages_statics_put_PrimaryLanguageOverride,
+    application_languages_statics_get_Languages,
+    application_languages_statics_get_ManifestLanguages
+};
+
+static struct application_languages application_languages =
+{
+    {&application_languages_activation_factory_vtbl},
+    {&application_languages_statics_vtbl},
+    1
+};
+
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **out)
 {
     FIXME("clsid %s, riid %s, out %p stub!\n", debugstr_guid(clsid), debugstr_guid(riid), out);
@@ -929,6 +1092,11 @@ HRESULT WINAPI DllGetActivationFactory(HSTRING classid, IActivationFactory **fac
     else if (!wcscmp(name, RuntimeClass_Windows_Globalization_GeographicRegion))
     {
         *factory = geographic_region_factory;
+        IUnknown_AddRef(*factory);
+    }
+    else if (!wcscmp(name, RuntimeClass_Windows_Globalization_ApplicationLanguages))
+    {
+        *factory = &application_languages.IActivationFactory_iface;
         IUnknown_AddRef(*factory);
     }
 
