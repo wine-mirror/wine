@@ -995,6 +995,49 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
             return res;
         }
         return S_OK;
+    case format_16bppGrayHalf:
+        if (prc)
+        {
+            UINT srcstride, srcdatasize;
+            const USHORT *srcpixel;
+            const BYTE *srcrow;
+            DWORD *dstpixel;
+            BYTE *srcdata;
+            BYTE *dstrow;
+            HRESULT res;
+            INT x, y;
+
+            srcstride = 2 * prc->Width;
+            srcdatasize = srcstride * prc->Height;
+
+            srcdata = malloc(srcdatasize);
+            if (!srcdata) return E_OUTOFMEMORY;
+
+            res = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+
+            if (SUCCEEDED(res))
+            {
+                srcrow = srcdata;
+                dstrow = pbBuffer;
+                for (y = 0; y < prc->Height; y++)
+                {
+                    srcpixel = (const USHORT *)srcrow;
+                    dstpixel = (DWORD *)dstrow;
+                    for (x = 0; x < prc->Width; x++)
+                    {
+                        BYTE comp = (BYTE)floorf(to_sRGB_component(float_16_to_32(*srcpixel++)) * 255.0f + 0.51f);
+                        *dstpixel++ = 0xff000000 | comp << 16 | comp << 8 | comp;
+                    }
+                    srcrow += srcstride;
+                    dstrow += cbStride;
+                }
+            }
+
+            free(srcdata);
+
+            return res;
+        }
+        return S_OK;
     case format_48bppRGBHalf:
         if (prc)
         {

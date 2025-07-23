@@ -684,6 +684,12 @@ static const BYTE bits_32bppBGRA_3[] = {
 static const struct bitmap_data testdata_32bppBGRA_3 = {
     &GUID_WICPixelFormat32bppBGRA, 32, bits_32bppBGRA_3, 3, 2, 96.0, 96.0};
 
+static const BYTE bits_32bppBGRA_4[] = {
+    0,0,0,255, 255,255,255,255, 125,125,125,255,
+    255,255,255,255, 125,125,125,255, 0,0,0,255};
+static const struct bitmap_data testdata_32bppBGRA_4 = {
+    &GUID_WICPixelFormat32bppBGRA, 32, bits_32bppBGRA_4, 3, 2, 96.0, 96.0};
+
 static const WORD bits_48bppRGBHalf[] = {
     0,0,0, 0,0x3c00,0, 0x3c00,0,0,
     0,0,0x3c00, 0,0x3290,0, 0x3290,0,0 };
@@ -2370,6 +2376,7 @@ START_TEST(converter)
     test_conversion(&testdata_48bppRGBHalf, &testdata_32bppBGRA_3, "48bppRGBHalf -> 32bppBGRA", FALSE);
     test_conversion(&testdata_48bppRGBHalf, &testdata_128bppRGBFloat_2, "48bppRGBHalf -> 128bppRGBFloat", FALSE);
 
+    test_conversion(&testdata_16bppGrayHalf, &testdata_32bppBGRA_4, "16bppGrayHalf -> 32bppBGRA", FALSE);
     test_conversion(&testdata_16bppGrayHalf, &testdata_128bppRGBFloat_3, "16bppGrayHalf -> 128bppRGBFloat", FALSE);
 
     test_invalid_conversion();
