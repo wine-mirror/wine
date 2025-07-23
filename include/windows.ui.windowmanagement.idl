@@ -1,0 +1,188 @@
+/*
+ * Copyright 2025 Zhiyi Zhang for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+#ifndef DO_NO_IMPORTS
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.system.idl";
+import "windows.ui.idl";
+import "windows.ui.composition.idl";
+#endif
+
+namespace Windows.UI.WindowManagement
+{
+    typedef enum WindowingEnvironmentKind WindowingEnvironmentKind;
+
+    interface IDisplayRegion;
+    interface IWindowingEnvironment;
+    interface IWindowingEnvironmentAddedEventArgs;
+    interface IWindowingEnvironmentChangedEventArgs;
+    interface IWindowingEnvironmentRemovedEventArgs;
+    interface IWindowingEnvironmentStatics;
+
+    runtimeclass DisplayRegion;
+    runtimeclass WindowingEnvironment;
+    runtimeclass WindowingEnvironmentAddedEventArgs;
+    runtimeclass WindowingEnvironmentChangedEventArgs;
+    runtimeclass WindowingEnvironmentRemovedEventArgs;
+
+    declare {
+        interface Windows.Foundation.Collections.IIterable<Windows.UI.WindowManagement.DisplayRegion *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.UI.WindowManagement.WindowingEnvironment *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.UI.WindowManagement.DisplayRegion *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.UI.WindowManagement.WindowingEnvironment *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.UI.WindowManagement.DisplayRegion *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.UI.WindowManagement.WindowingEnvironment *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.WindowManagement.DisplayRegion *, IInspectable *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.WindowManagement.WindowingEnvironment *, Windows.UI.WindowManagement.WindowingEnvironmentChangedEventArgs *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0)
+    ]
+    enum WindowingEnvironmentKind
+    {
+        Unknown = 0,
+        Overlapped = 1,
+        Tiled = 2,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.UI.WindowManagement.DisplayRegion),
+        uuid(db50c3a2-4094-5f47-8cb1-ea01ddafaa94)
+    ]
+    interface IDisplayRegion : IInspectable
+    {
+        [propget] HRESULT DisplayMonitorDeviceId([out, retval] HSTRING *value);
+        [propget] HRESULT IsVisible([out, retval] boolean *value);
+        [propget] HRESULT WorkAreaOffset([out, retval] Windows.Foundation.Point *value);
+        [propget] HRESULT WorkAreaSize([out, retval] Windows.Foundation.Size *value);
+        [propget] HRESULT WindowingEnvironment([out, retval] Windows.UI.WindowManagement.WindowingEnvironment **value);
+        [eventadd] HRESULT Changed([in] Windows.Foundation.TypedEventHandler<Windows.UI.WindowManagement.DisplayRegion *, IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT Changed([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.UI.WindowManagement.WindowingEnvironment),
+        uuid(264363c0-2a49-5417-b3ae-48a71c63a3bd)
+    ]
+    interface IWindowingEnvironment : IInspectable
+    {
+        [propget] HRESULT IsEnabled([out, retval] boolean *value);
+        [propget] HRESULT Kind([out, retval] Windows.UI.WindowManagement.WindowingEnvironmentKind *value);
+        HRESULT GetDisplayRegions([out, retval] Windows.Foundation.Collections.IVectorView<Windows.UI.WindowManagement.DisplayRegion *> **result);
+        [eventadd] HRESULT Changed([in] Windows.Foundation.TypedEventHandler<Windows.UI.WindowManagement.WindowingEnvironment *, Windows.UI.WindowManagement.WindowingEnvironmentChangedEventArgs *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT Changed([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.UI.WindowManagement.WindowingEnvironmentAddedEventArgs),
+        uuid(ff2a5b7f-f183-5c66-99b2-429082069299)
+    ]
+    interface IWindowingEnvironmentAddedEventArgs : IInspectable
+    {
+        [propget] HRESULT WindowingEnvironment([out, retval] Windows.UI.WindowManagement.WindowingEnvironment **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.UI.WindowManagement.WindowingEnvironmentChangedEventArgs),
+        uuid(4160cfc6-023d-5e9a-b431-350e67dc978a)
+    ]
+    interface IWindowingEnvironmentChangedEventArgs : IInspectable
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.UI.WindowManagement.WindowingEnvironmentRemovedEventArgs),
+        uuid(2e5b5473-beff-5e53-9316-7e775fe568b3)
+    ]
+    interface IWindowingEnvironmentRemovedEventArgs : IInspectable
+    {
+        [propget] HRESULT WindowingEnvironment([out, retval] Windows.UI.WindowManagement.WindowingEnvironment **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.UI.WindowManagement.WindowingEnvironment),
+        uuid(874e9fb7-c642-55ab-8aa2-162f734a9a72)
+    ]
+    interface IWindowingEnvironmentStatics : IInspectable
+    {
+        [overload("FindAll")] HRESULT FindAll([out, retval] Windows.Foundation.Collections.IVectorView<Windows.UI.WindowManagement.WindowingEnvironment *> **result);
+        [overload("FindAll")] HRESULT FindAllWithKind([in] Windows.UI.WindowManagement.WindowingEnvironmentKind kind, [out, retval] Windows.Foundation.Collections.IVectorView<Windows.UI.WindowManagement.WindowingEnvironment *> **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass DisplayRegion
+    {
+        [default] interface Windows.UI.WindowManagement.IDisplayRegion;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        marshaling_behavior(agile),
+        static(Windows.UI.WindowManagement.IWindowingEnvironmentStatics, Windows.Foundation.UniversalApiContract, 8.0),
+        threading(both)
+    ]
+    runtimeclass WindowingEnvironment
+    {
+        [default] interface Windows.UI.WindowManagement.IWindowingEnvironment;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass WindowingEnvironmentAddedEventArgs
+    {
+        [default] interface Windows.UI.WindowManagement.IWindowingEnvironmentAddedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass WindowingEnvironmentChangedEventArgs
+    {
+        [default] interface Windows.UI.WindowManagement.IWindowingEnvironmentChangedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass WindowingEnvironmentRemovedEventArgs
+    {
+        [default] interface Windows.UI.WindowManagement.IWindowingEnvironmentRemovedEventArgs;
+    }
+}
