@@ -604,11 +604,9 @@ static void test_DesignMode(void)
 
     hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
     WindowsDeleteString( str );
-    todo_wine
     ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
     if (FAILED( hr ))
     {
-        todo_wine
         win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
         return;
     }
