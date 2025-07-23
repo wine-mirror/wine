@@ -1904,29 +1904,27 @@ static void test_lock(LPGUID lpGuid)
     test_unlock_one(__LINE__, dsb, buf, 24000, 24000, 0, 24000, DS_OK, FALSE);
     test_lock_one(__LINE__, dsb, buf, 0,48000, 0, DS_OK, 0,48000, -3,-3, 0);
     test_unlock_one(__LINE__, dsb, buf, 0,48000, -3,0, DS_OK, FALSE);
-    test_lock_one(__LINE__, dsb, buf, 0,48000, 0, DS_OK, 0,48000, -1,0, 0x00011);
+    test_lock_one(__LINE__, dsb, buf, 0,48000, 0, DS_OK, 0,48000, -1,0, 0);
     test_unlock_one(__LINE__, dsb, buf, 0,48000, -3,0, DS_OK, FALSE);
     test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DS_OK, 24000,24000, 0,24000, 0);
     test_unlock_one(__LINE__, dsb, buf, 24000,24000, 0,24000, DS_OK, FALSE);
 
-    test_lock_one(__LINE__, dsb, buf, 24000,0, 0, DSERR_INVALIDPARAM, -1,0, -1,0, 0x11011);
-    test_lock_one(__LINE__, dsb, buf, 48000,0, 0, DSERR_INVALIDPARAM, -1,0, -1,0, 0x01111);
-    test_lock_one(__LINE__, dsb, buf, 48000,12000, 0, DSERR_INVALIDPARAM, -1,0, -1,0, 0x01111);
-    test_lock_one(__LINE__, dsb, buf, 48008,8, 0, DSERR_INVALIDPARAM, -1,0, -1,0, 0x01111);
-    test_lock_one(__LINE__, dsb, buf, 0,48008, 0, DSERR_INVALIDPARAM, -1,0, -1,0, 0x01111);
+    test_lock_one(__LINE__, dsb, buf, 24000,0, 0, DSERR_INVALIDPARAM, -1,0, -1,0, 0x11000);
+    test_lock_one(__LINE__, dsb, buf, 48000,0, 0, DSERR_INVALIDPARAM, -1,0, -1,0, 0);
+    test_lock_one(__LINE__, dsb, buf, 48000,12000, 0, DSERR_INVALIDPARAM, -1,0, -1,0, 0);
+    test_lock_one(__LINE__, dsb, buf, 48008,8, 0, DSERR_INVALIDPARAM, -1,0, -1,0, 0);
+    test_lock_one(__LINE__, dsb, buf, 0,48008, 0, DSERR_INVALIDPARAM, -1,0, -1,0, 0);
 
     /* only one of buf/size */
-    if (!winetest_platform_is_wine) /* crashes on Wine */
-        test_lock_one(__LINE__, dsb, buf, 0,48000, 0, DSERR_INVALIDPARAM, -3,-2, -2,-2, 0xFFFFF);
+    test_lock_one(__LINE__, dsb, buf, 0,48000, 0, DSERR_INVALIDPARAM, -3,-2, -2,-2, 0);
     test_lock_one(__LINE__, dsb, buf, 0,48000, 0, DSERR_INVALIDPARAM, -1,-3, -2,-2, 0x01000);
-    test_lock_one(__LINE__, dsb, buf, 0,48000, 0, DS_OK, 0,48000, -3,0, 0x00001);
+    test_lock_one(__LINE__, dsb, buf, 0,48000, 0, DS_OK, 0,48000, -3,0, 0);
     test_unlock_one(__LINE__, dsb, buf, 0,48000, -1,0, DS_OK, FALSE);
-    test_lock_one(__LINE__, dsb, buf, 0,48000, 0, DS_OK, 0,48000, -1,-3, 0x00010);
+    test_lock_one(__LINE__, dsb, buf, 0,48000, 0, DS_OK, 0,48000, -1,-3, 0);
     test_unlock_one(__LINE__, dsb, buf, 0,48000, -1,0, DS_OK, FALSE);
 
     /* only one of buf/size, needs both buffers */
-    if (!winetest_platform_is_wine) /* crashes on Wine */
-        test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DSERR_INVALIDPARAM, -3,-2, -2,-2, 0xFFFFF);
+    test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DSERR_INVALIDPARAM, -3,-2, -2,-2, 0);
     test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DSERR_INVALIDPARAM, -1,-3, -2,-2, 0x01000);
     test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DS_OK, 24000,24000, -3,24000, 0);
     test_unlock_one(__LINE__, dsb, buf, 24000,24000, 0,24000, DS_OK, FALSE);
@@ -1934,7 +1932,7 @@ static void test_lock(LPGUID lpGuid)
     test_unlock_one(__LINE__, dsb, buf, 24000,24000, 0,24000, DS_OK, FALSE);
 
     /* misaligned size */
-    test_lock_one(__LINE__, dsb, buf, 0,1, 0, DS_OK, 0,1, -1,0, 0x00011);
+    test_lock_one(__LINE__, dsb, buf, 0,1, 0, DS_OK, 0,1, -1,0, 0);
     test_unlock_one(__LINE__, dsb, buf, 0,1, -1,0, DS_OK, FALSE);
 
     /* misaligned pointer */
@@ -1942,8 +1940,8 @@ static void test_lock(LPGUID lpGuid)
     test_unlock_one(__LINE__, dsb, buf, 12345,48000-12345, 0,12345, DS_OK, FALSE);
 
     /* already locked, or unlock with wrong arguments */
-    test_lock_one(__LINE__, dsb, buf, 0,0, DSBLOCK_ENTIREBUFFER, DS_OK, 0,48000, -1,0, 0x00011);
-    test_lock_one(__LINE__, dsb, buf, 0,0, DSBLOCK_ENTIREBUFFER, DSERR_INVALIDPARAM, -1,0, -1,0, 0x11111);
+    test_lock_one(__LINE__, dsb, buf, 0,0, DSBLOCK_ENTIREBUFFER, DS_OK, 0,48000, -1,0, 0);
+    test_lock_one(__LINE__, dsb, buf, 0,0, DSBLOCK_ENTIREBUFFER, DSERR_INVALIDPARAM, -1,0, -1,0, 0x11100);
     test_unlock_one(__LINE__, dsb, buf, 0,0, -1,0, DS_OK, FALSE);
     test_unlock_one(__LINE__, dsb, buf, 0,0, -1,0, DSERR_INVALIDPARAM, TRUE);
     test_unlock_one(__LINE__, dsb, buf, 0,0, -1,0, DSERR_INVALIDPARAM, TRUE);
@@ -1985,10 +1983,10 @@ static void test_lock(LPGUID lpGuid)
     test_unlock_one(__LINE__, dsb, buf, 24000,0, -1,0, DS_OK, FALSE);
 
     /* try to lock multiple separate pieces */
-    test_lock_one(__LINE__, dsb, buf, 0,12000, 0, DS_OK, 0,12000, -1,0, 0x00011);
-    test_lock_one(__LINE__, dsb, buf, 12000,12000, 0, DS_OK, 12000,12000, -1,0, 0x00011);
-    test_lock_one(__LINE__, dsb, buf, 24000,12000, 0, DS_OK, 24000,12000, -1,0, 0x00011);
-    test_lock_one(__LINE__, dsb, buf, 36000,12000, 0, DS_OK, 36000,12000, -1,0, 0x00011);
+    test_lock_one(__LINE__, dsb, buf, 0,12000, 0, DS_OK, 0,12000, -1,0, 0);
+    test_lock_one(__LINE__, dsb, buf, 12000,12000, 0, DS_OK, 12000,12000, -1,0, 0);
+    test_lock_one(__LINE__, dsb, buf, 24000,12000, 0, DS_OK, 24000,12000, -1,0, 0);
+    test_lock_one(__LINE__, dsb, buf, 36000,12000, 0, DS_OK, 36000,12000, -1,0, 0);
     test_unlock_one(__LINE__, dsb, buf, 0,0, 12000,0, DS_OK, FALSE);
     test_unlock_one(__LINE__, dsb, buf, 24000,0, 36000,0, DS_OK, FALSE);
     /* you can place 48000 different one-byte locks, if you want (performance is as you'd expect, though) */
