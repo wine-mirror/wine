@@ -236,15 +236,27 @@ static void test_GlobalizationPreferences(void)
 static void test_Language(void)
 {
     static const WCHAR *class_name = L"Windows.Globalization.Language";
-
+    static const struct
+    {
+        const WCHAR *tag;
+        enum LanguageLayoutDirection direction;
+    }
+    lang_layout_direction_tests[] =
+    {
+        {L"en-US", LanguageLayoutDirection_Ltr},
+        {L"ar-SA", LanguageLayoutDirection_Rtl},
+    };
     IAgileObject *agile_object, *tmp_agile_object;
     IInspectable *inspectable, *tmp_inspectable;
+    enum LanguageLayoutDirection direction;
     WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
     ILanguageFactory *language_factory;
     IActivationFactory *factory;
+    ILanguage2 *language2;
     ILanguage *language;
     HSTRING tag, str;
     const WCHAR *buf;
+    unsigned int i;
     HRESULT hr;
 
     hr = WindowsCreateString(class_name, wcslen(class_name), &str);
@@ -303,6 +315,37 @@ static void test_Language(void)
     WindowsDeleteString(tag);
 
     ILanguage_Release(language);
+
+    /* ILanguage2 */
+    for (i = 0; i < ARRAY_SIZE(lang_layout_direction_tests); i++)
+    {
+        winetest_push_context("%s", wine_dbgstr_w(lang_layout_direction_tests[i].tag));
+
+        hr = WindowsCreateString(lang_layout_direction_tests[i].tag, wcslen(lang_layout_direction_tests[i].tag), &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = ILanguageFactory_CreateLanguage(language_factory, str, &language);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        WindowsDeleteString(str);
+
+        hr = ILanguage_QueryInterface(language, &IID_ILanguage2, (void **)&language2);
+        todo_wine
+        ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* <= Windows 10 1507 */, "Unexpected hr %#lx.\n", hr);
+        if (FAILED(hr))
+        {
+            ILanguage_Release(language);
+            winetest_pop_context();
+            break;
+        }
+
+        hr = ILanguage2_get_LayoutDirection(language2, &direction);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(direction == lang_layout_direction_tests[i].direction, "Expected direction %d, got %d.\n",
+           lang_layout_direction_tests[i].direction, direction);
+
+        ILanguage2_Release(language2);
+        ILanguage_Release(language);
+        winetest_pop_context();
+    }
 
     ILanguageFactory_Release(language_factory);
 
