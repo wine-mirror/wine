@@ -731,7 +731,7 @@
 @ stdcall MmGetPhysicalAddress(ptr)
 @ stdcall MmGetPhysicalMemoryRanges()
 @ stdcall MmGetSystemRoutineAddress(ptr)
-@ stub MmGetVirtualForPhysical
+@ stdcall MmGetVirtualForPhysical(int64)
 @ stub MmGrowKernelStack
 @ stub MmHighestUserAddress
 @ stdcall MmIsAddressValid(ptr)

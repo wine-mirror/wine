@@ -3109,6 +3109,16 @@ PHYSICAL_MEMORY_RANGE * WINAPI MmGetPhysicalMemoryRanges(void)
 }
 
 /***********************************************************************
+ *           MmGetVirtualForPhysical   (NTOSKRNL.EXE.@)
+ */
+void *WINAPI MmGetVirtualForPhysical(PHYSICAL_ADDRESS addr)
+{
+    ULONG_PTR ret = addr.QuadPart;
+    FIXME("(%s): semi-stub\n", wine_dbgstr_longlong(addr.QuadPart));
+    return (void *)ret;
+}
+
+/***********************************************************************
  *           MmMapIoSpace   (NTOSKRNL.EXE.@)
  */
 PVOID WINAPI MmMapIoSpace( PHYSICAL_ADDRESS PhysicalAddress, DWORD NumberOfBytes, DWORD CacheType )
