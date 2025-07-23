@@ -36,11 +36,12 @@
 #include "windows.system.profile.h"
 #define WIDL_using_Windows_System_UserProfile
 #include "windows.system.userprofile.h"
+#define WIDL_using_Windows_UI_ViewManagement
+#include "windows.ui.viewmanagement.h"
 
 #include "wine/debug.h"
 
-#include "wine/debug.h"
-
+extern IActivationFactory *application_view_factory;
 extern IActivationFactory *client_device_information_factory;
 extern IActivationFactory *analytics_info_factory;
 extern IActivationFactory *advertising_manager_factory;
