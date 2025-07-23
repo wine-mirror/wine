@@ -1799,6 +1799,204 @@ static void test_notifications_noloop(LPGUID lpGuid)
     IDirectSound_Release(dso);
 }
 
+/* for the last four, -1 means expect NULL (ptr only), -2 means expect it left unchanged, -3 means pass NULL as argument */
+/* >= 0 means expect that value (size), or that offset from buffer start (ptr) */
+static void test_lock_one(int line, IDirectSoundBuffer* dsb, void* exp_buf_start, DWORD lock_at, DWORD lock_amt, DWORD flags,
+                          HRESULT exp_return, int buf1_exp_ptr, int buf1_exp_size, int buf2_exp_ptr, int buf2_exp_size,
+                          DWORD todo_bits)
+{
+    LPVOID buf_dummy = (void*)0xdeadbeef, buf = buf_dummy, buf2 = buf_dummy;
+    DWORD bufsize = 12345, bufsize2 = 12345;
+    LPVOID buf_expect;
+    HRESULT rc;
+
+    rc = IDirectSoundBuffer_Lock(dsb, lock_at, lock_amt,
+                                 buf1_exp_ptr == -3 ? NULL : &buf, buf1_exp_size == -3 ? NULL : &bufsize,
+                                 buf2_exp_ptr == -3 ? NULL : &buf2, buf2_exp_size == -3 ? NULL : &bufsize2,
+                                 flags);
+    todo_wine_if(todo_bits&0x10000)
+    ok_(__FILE__, line)(rc == exp_return, "IDirectSoundBuffer_Lock() returned %08lx, expected %08lx\n", rc, exp_return);
+
+    if (buf1_exp_ptr >= 0) buf_expect = (char*)exp_buf_start + buf1_exp_ptr;
+    else if (buf1_exp_ptr == -1) buf_expect = NULL;
+    else buf_expect = buf_dummy;
+    todo_wine_if(todo_bits&0x01000)
+    ok_(__FILE__, line)(buf == buf_expect, "got buf %p expected %p\n", buf, buf_expect);
+
+    if (buf1_exp_size <= -2) buf1_exp_size = 12345;
+    todo_wine_if(todo_bits&0x00100)
+    ok_(__FILE__, line)(bufsize == buf1_exp_size, "got bufsize %lu expected %d\n", bufsize, buf1_exp_size);
+
+    if (buf2_exp_ptr >= 0) buf_expect = (char*)exp_buf_start + buf2_exp_ptr;
+    else if (buf2_exp_ptr == -1) buf_expect = NULL;
+    else buf_expect = buf_dummy;
+    todo_wine_if(todo_bits&0x00010)
+    ok_(__FILE__, line)(buf2 == buf_expect, "got buf2 %p expected %p\n", buf2, buf_expect);
+
+    if (buf2_exp_size <= -2) buf2_exp_size = 12345;
+    todo_wine_if(todo_bits&0x00001)
+    ok_(__FILE__, line)(bufsize2 == buf2_exp_size, "got bufsize2 %lu expected %d\n", bufsize2, buf2_exp_size);
+}
+
+static void test_unlock_one(int line, IDirectSoundBuffer* dsb, void* exp_buf_start, int pos1, DWORD size1, int pos2, DWORD size2,
+                            HRESULT exp_return, BOOL todo)
+{
+    LPVOID ptr1 = (pos1 == -2 ? (void*)0xdeadbeef : pos1 < 0 ? NULL : (char*)exp_buf_start + pos1);
+    LPVOID ptr2 = (pos2 == -2 ? (void*)0xdeadbeef : pos2 < 0 ? NULL : (char*)exp_buf_start + pos2);
+    HRESULT rc;
+
+    rc = IDirectSoundBuffer_Unlock(dsb, ptr1, size1, ptr2, size2);
+    todo_wine_if(todo)
+    ok_(__FILE__, line)(rc == exp_return, "IDirectSoundBuffer_Unlock(%p, %lu, %p, %lu) returned %08lx\n", ptr1, size1, ptr2, size2, rc);
+}
+
+static void test_lock(LPGUID lpGuid)
+{
+    HRESULT rc;
+    IDirectSound *dso;
+    IDirectSoundBuffer *dsb;
+    DSBUFFERDESC dsbdesc;
+    WAVEFORMATEX wfx;
+    LPVOID buf;
+    DWORD bufsize;
+
+    rc = DirectSoundCreate(lpGuid, &dso, NULL);
+    ok(rc == DS_OK || rc == DSERR_NODRIVER || rc == DSERR_ALLOCATED,
+           "DirectSoundCreate() failed: %08lx\n", rc);
+    if(rc != DS_OK)
+        return;
+
+    rc = IDirectSound_SetCooperativeLevel(dso, get_hwnd(), DSSCL_PRIORITY);
+    ok(rc == DS_OK, "IDirectSound_SetCooperativeLevel() failed: %08lx\n", rc);
+    if(rc != DS_OK){
+        IDirectSound_Release(dso);
+        return;
+    }
+
+    wfx.wFormatTag = WAVE_FORMAT_PCM;
+    wfx.nChannels = 1;
+    wfx.nSamplesPerSec = 48000;
+    wfx.wBitsPerSample = 16;
+    wfx.nBlockAlign = wfx.nChannels * wfx.wBitsPerSample / 8;
+    wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
+    wfx.cbSize = 0;
+
+    ZeroMemory(&dsbdesc, sizeof(dsbdesc));
+    dsbdesc.dwSize = sizeof(dsbdesc);
+    dsbdesc.dwFlags = DSBCAPS_GETCURRENTPOSITION2;
+    dsbdesc.dwBufferBytes = wfx.nSamplesPerSec * wfx.nBlockAlign / 2; /* 0.5s */
+    ok(dsbdesc.dwBufferBytes == 48000, "got %lu", dsbdesc.dwBufferBytes);
+    dsbdesc.lpwfxFormat = &wfx;
+    rc = IDirectSound_CreateSoundBuffer(dso, &dsbdesc, &dsb, NULL);
+    ok(rc == DS_OK && dsb != NULL, "IDirectSound_CreateSoundBuffer() returned "
+           "to create a buffer %08lx\n", rc);
+
+    bufsize = 12345;
+    buf = (void*)0xdeadbeef;
+    rc = IDirectSoundBuffer_Lock(dsb, 0,0, &buf,&bufsize, NULL,NULL, DSBLOCK_ENTIREBUFFER);
+    ok(rc == DS_OK, "IDirectSoundBuffer_Lock() returned %08lx\n", rc);
+    ok(bufsize == 48000, "got size %lu\n", bufsize);
+    ok(buf != NULL, "got %p\n", buf);
+    rc = IDirectSoundBuffer_Unlock(dsb, buf, bufsize, NULL, 0);
+    ok(rc == DS_OK, "IDirectSoundBuffer_Unlock() returned %08lx\n", rc);
+
+    test_lock_one(__LINE__, dsb, buf, 24000,0, DSBLOCK_ENTIREBUFFER, DS_OK, 24000, 24000, 0, 24000, 0);
+    test_unlock_one(__LINE__, dsb, buf, 24000, 24000, 0, 24000, DS_OK, FALSE);
+    test_lock_one(__LINE__, dsb, buf, 0,48000, 0, DS_OK, 0,48000, -3,-3, 0);
+    test_unlock_one(__LINE__, dsb, buf, 0,48000, -3,0, DS_OK, FALSE);
+    test_lock_one(__LINE__, dsb, buf, 0,48000, 0, DS_OK, 0,48000, -1,0, 0x00011);
+    test_unlock_one(__LINE__, dsb, buf, 0,48000, -3,0, DS_OK, FALSE);
+    test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DS_OK, 24000,24000, 0,24000, 0);
+    test_unlock_one(__LINE__, dsb, buf, 24000,24000, 0,24000, DS_OK, FALSE);
+
+    test_lock_one(__LINE__, dsb, buf, 24000,0, 0, DSERR_INVALIDPARAM, -1,0, -1,0, 0x11011);
+    test_lock_one(__LINE__, dsb, buf, 48000,0, 0, DSERR_INVALIDPARAM, -1,0, -1,0, 0x01111);
+    test_lock_one(__LINE__, dsb, buf, 48000,12000, 0, DSERR_INVALIDPARAM, -1,0, -1,0, 0x01111);
+    test_lock_one(__LINE__, dsb, buf, 48008,8, 0, DSERR_INVALIDPARAM, -1,0, -1,0, 0x01111);
+    test_lock_one(__LINE__, dsb, buf, 0,48008, 0, DSERR_INVALIDPARAM, -1,0, -1,0, 0x01111);
+
+    /* only one of buf/size */
+    if (!winetest_platform_is_wine) /* crashes on Wine */
+        test_lock_one(__LINE__, dsb, buf, 0,48000, 0, DSERR_INVALIDPARAM, -3,-2, -2,-2, 0xFFFFF);
+    test_lock_one(__LINE__, dsb, buf, 0,48000, 0, DSERR_INVALIDPARAM, -1,-3, -2,-2, 0x01000);
+    test_lock_one(__LINE__, dsb, buf, 0,48000, 0, DS_OK, 0,48000, -3,0, 0x00001);
+    test_unlock_one(__LINE__, dsb, buf, 0,48000, -1,0, DS_OK, FALSE);
+    test_lock_one(__LINE__, dsb, buf, 0,48000, 0, DS_OK, 0,48000, -1,-3, 0x00010);
+    test_unlock_one(__LINE__, dsb, buf, 0,48000, -1,0, DS_OK, FALSE);
+
+    /* only one of buf/size, needs both buffers */
+    if (!winetest_platform_is_wine) /* crashes on Wine */
+        test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DSERR_INVALIDPARAM, -3,-2, -2,-2, 0xFFFFF);
+    test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DSERR_INVALIDPARAM, -1,-3, -2,-2, 0x01000);
+    test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DS_OK, 24000,24000, -3,24000, 0);
+    test_unlock_one(__LINE__, dsb, buf, 24000,24000, 0,24000, DS_OK, FALSE);
+    test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DS_OK, 24000,24000, 0,-3, 0);
+    test_unlock_one(__LINE__, dsb, buf, 24000,24000, 0,24000, DS_OK, FALSE);
+
+    /* misaligned size */
+    test_lock_one(__LINE__, dsb, buf, 0,1, 0, DS_OK, 0,1, -1,0, 0x00011);
+    test_unlock_one(__LINE__, dsb, buf, 0,1, -1,0, DS_OK, FALSE);
+
+    /* misaligned pointer */
+    test_lock_one(__LINE__, dsb, buf, 12345,48000, 0, DS_OK, 12345,48000-12345, 0,12345, 0);
+    test_unlock_one(__LINE__, dsb, buf, 12345,48000-12345, 0,12345, DS_OK, FALSE);
+
+    /* already locked, or unlock with wrong arguments */
+    test_lock_one(__LINE__, dsb, buf, 0,0, DSBLOCK_ENTIREBUFFER, DS_OK, 0,48000, -1,0, 0x00011);
+    test_lock_one(__LINE__, dsb, buf, 0,0, DSBLOCK_ENTIREBUFFER, DSERR_INVALIDPARAM, -1,0, -1,0, 0x11111);
+    test_unlock_one(__LINE__, dsb, buf, 0,0, -1,0, DS_OK, FALSE);
+    test_unlock_one(__LINE__, dsb, buf, 0,0, -1,0, DSERR_INVALIDPARAM, TRUE);
+    test_unlock_one(__LINE__, dsb, buf, 0,0, -1,0, DSERR_INVALIDPARAM, TRUE);
+
+    /* the above, but with dual buffer (size seems to be completely ignored) */
+    test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DS_OK, 24000,24000, 0,24000, 0);
+    test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DSERR_INVALIDPARAM, -1,0, -1,0, 0x11111);
+    /* you can unlock one buffer at the time */
+    test_unlock_one(__LINE__, dsb, buf, 24000,24000, -1,0, DS_OK, FALSE);
+    test_unlock_one(__LINE__, dsb, buf, 0,24000, -1,0, DS_OK, FALSE);
+
+    /* size seems to be completely ignored when unlocking */
+    test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DS_OK, 24000,24000, 0,24000, 0);
+    test_unlock_one(__LINE__, dsb, buf, 24000,48000, -1,0, DS_OK, TRUE);
+    test_unlock_one(__LINE__, dsb, buf, 0,0xDEADBEEF, -1,0, DS_OK, TRUE);
+    /* unlock them under Wine - delete these lines when the above todos are fixed */
+    test_unlock_one(__LINE__, dsb, buf, 24000,24000, -1,0, DSERR_INVALIDPARAM, TRUE);
+    test_unlock_one(__LINE__, dsb, buf, 0,24000, -1,0, DSERR_INVALIDPARAM, TRUE);
+
+    /* unlock in "wrong" order, in buf2 position */
+    test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DS_OK, 24000,24000, 0,24000, 0);
+    test_unlock_one(__LINE__, dsb, buf, -1,0, 24000,0, DS_OK, FALSE);
+    test_unlock_one(__LINE__, dsb, buf, -1,0, 0,0, DS_OK, FALSE);
+
+    /* unlock in "wrong" order, in buf2 position */
+    test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DS_OK, 24000,24000, 0,24000, 0);
+    test_unlock_one(__LINE__, dsb, buf, -1,0, 24000,24000, DS_OK, FALSE);
+    test_unlock_one(__LINE__, dsb, buf, -1,0, 0,24000, DS_OK, FALSE);
+
+    /* passing in a valid pointer then wrong one unlocks the valid one; the opposite order does not unlock */
+    test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DS_OK, 24000,24000, 0,24000, 0);
+    test_unlock_one(__LINE__, dsb, buf, -2,0, 24000,24000, DSERR_INVALIDPARAM, FALSE);
+    test_unlock_one(__LINE__, dsb, buf, 24000,0, -2,0, DSERR_INVALIDPARAM, FALSE);
+    test_unlock_one(__LINE__, dsb, buf, 0,0, -1,0, DS_OK, FALSE);
+
+    /* passing the same pointer twice counts as invalid the second time */
+    test_lock_one(__LINE__, dsb, buf, 24000,48000, 0, DS_OK, 24000,24000, 0,24000, 0);
+    test_unlock_one(__LINE__, dsb, buf, 0,0, 0,0, DSERR_INVALIDPARAM, TRUE);
+    test_unlock_one(__LINE__, dsb, buf, 24000,0, -1,0, DS_OK, FALSE);
+
+    /* try to lock multiple separate pieces */
+    test_lock_one(__LINE__, dsb, buf, 0,12000, 0, DS_OK, 0,12000, -1,0, 0x00011);
+    test_lock_one(__LINE__, dsb, buf, 12000,12000, 0, DS_OK, 12000,12000, -1,0, 0x00011);
+    test_lock_one(__LINE__, dsb, buf, 24000,12000, 0, DS_OK, 24000,12000, -1,0, 0x00011);
+    test_lock_one(__LINE__, dsb, buf, 36000,12000, 0, DS_OK, 36000,12000, -1,0, 0x00011);
+    test_unlock_one(__LINE__, dsb, buf, 0,0, 12000,0, DS_OK, FALSE);
+    test_unlock_one(__LINE__, dsb, buf, 24000,0, 36000,0, DS_OK, FALSE);
+    /* you can place 48000 different one-byte locks, if you want (performance is as you'd expect, though) */
+
+    IDirectSoundBuffer_Release(dsb);
+    IDirectSound_Release(dso);
+}
+
 static unsigned int number;
 
 static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
@@ -1831,6 +2029,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         test_invalid_fmts(lpGuid);
         test_notifications(lpGuid);
         test_notifications_noloop(lpGuid);
+        test_lock(lpGuid);
     }
 
     return TRUE;
