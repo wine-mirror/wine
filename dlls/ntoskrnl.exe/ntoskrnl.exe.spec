@@ -550,7 +550,7 @@
 @ stdcall KeBugCheck(long)
 @ stdcall KeBugCheckEx(long long long long long)
 @ stdcall KeCancelTimer(ptr)
-@ stub KeCapturePersistentThreadState
+@ stdcall KeCapturePersistentThreadState(ptr ptr long long long long long ptr)
 @ stdcall KeClearEvent(ptr)
 @ stub KeConnectInterrupt
 @ stub KeDcacheFlushCount

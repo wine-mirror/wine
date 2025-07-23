@@ -4978,6 +4978,13 @@ NTSTATUS WINAPI KdChangeOption(ULONG option, ULONG in_size, PVOID in_buffer,
     return STATUS_DEBUGGER_INACTIVE;
 }
 
+NTSTATUS WINAPI KeCapturePersistentThreadState(CONTEXT *context, PKTHREAD thread, ULONG code,
+                                               ULONG param1, ULONG param2, ULONG param3, ULONG param4, void *addr)
+{
+    FIXME("stub: %p %p %lu %lu %lu %lu %lu %p\n", context, thread, code, param1, param2, param3, param4, addr);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 NTSTATUS WINAPI KdDisableDebugger(void)
 {
     FIXME(": stub.\n");
