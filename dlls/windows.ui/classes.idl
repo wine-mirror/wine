@@ -35,6 +35,7 @@ import "windows.ui.idl";
 import "windows.devices.input.idl";
 
 #define DO_NO_IMPORTS
+#define _WINDOWS_UI
 #include "windows.ui.core.idl"
 #include "windows.ui.input.idl"
 #include "windows.ui.windowmanagement.idl"

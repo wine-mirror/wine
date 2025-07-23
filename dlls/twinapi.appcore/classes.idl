@@ -29,9 +29,11 @@ import "windowscontracts.idl";
 import "windows.foundation.idl";
 import "windows.globalization.idl";
 import "windows.storage.streams.idl";
+import "windows.ui.windowmanagement.idl";
 
 #define DO_NO_IMPORTS
 #define _TWINAPI_APPCORE
 #include "windows.security.exchangeactivesyncprovisioning.idl"
 #include "windows.system.profile.idl"
 #include "windows.system.userprofile.idl"
+#include "windows.ui.viewmanagement.idl"
