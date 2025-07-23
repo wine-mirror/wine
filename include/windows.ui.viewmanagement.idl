@@ -31,15 +31,49 @@ import "windows.devices.enumeration.idl";
 import "windows.ui.idl";
 import "windows.ui.core.idl";
 /* import "windows.ui.popups.idl"; */
-/* import "windows.ui.windowmanagement.idl"; */
+import "windows.ui.windowmanagement.idl";
 #endif
 
 namespace Windows.UI.ViewManagement
 {
+    apicontract ViewManagementViewScalingContract;
+
+    typedef enum ApplicationViewBoundsMode ApplicationViewBoundsMode;
+    typedef enum ApplicationViewMode ApplicationViewMode;
+    typedef enum ApplicationViewOrientation ApplicationViewOrientation;
+    typedef enum ApplicationViewState ApplicationViewState;
+    typedef enum ApplicationViewSwitchingOptions ApplicationViewSwitchingOptions;
+    typedef enum ApplicationViewWindowingMode ApplicationViewWindowingMode;
+    typedef enum FullScreenSystemOverlayMode FullScreenSystemOverlayMode;
     typedef enum HandPreference HandPreference;
     typedef enum UIColorType UIColorType;
     typedef enum UIElementType UIElementType;
     typedef enum UserInteractionMode UserInteractionMode;
+    typedef enum ViewSizePreference ViewSizePreference;
+
+    interface IApplicationView;
+    interface IApplicationView2;
+    interface IApplicationView3;
+    interface IApplicationView4;
+    interface IApplicationView7;
+    interface IApplicationView9;
+    interface IApplicationViewConsolidatedEventArgs;
+    interface IApplicationViewConsolidatedEventArgs2;
+    interface IApplicationViewFullscreenStatics;
+    interface IApplicationViewInteropStatics;
+    interface IApplicationViewScaling;
+    interface IApplicationViewScalingStatics;
+    interface IApplicationViewStatics;
+    interface IApplicationViewStatics2;
+    interface IApplicationViewStatics3;
+    interface IApplicationViewStatics4;
+    interface IApplicationViewSwitcherStatics;
+    interface IApplicationViewSwitcherStatics2;
+    interface IApplicationViewSwitcherStatics3;
+    interface IApplicationViewTitleBar;
+    interface IApplicationViewTransferContext;
+    interface IApplicationViewTransferContextStatics;
+    interface IApplicationViewWithContext;
 
     interface IUISettings;
     interface IUISettings2;
@@ -53,6 +87,8 @@ namespace Windows.UI.ViewManagement
 
     interface IUIViewSettings;
     interface IUIViewSettingsStatics;
+    interface IViewModePreferences;
+    interface IViewModePreferencesStatics;
 
     interface IInputPane;
     interface IInputPane2;
@@ -61,6 +97,12 @@ namespace Windows.UI.ViewManagement
     interface IInputPaneStatics;
     interface IInputPaneStatics2;
 
+    runtimeclass ApplicationView;
+    runtimeclass ApplicationViewConsolidatedEventArgs;
+    runtimeclass ApplicationViewScaling;
+    runtimeclass ApplicationViewSwitcher;
+    runtimeclass ApplicationViewTitleBar;
+    runtimeclass ApplicationViewTransferContext;
     runtimeclass UISettings;
     runtimeclass UISettingsAnimationsEnabledChangedEventArgs;
     runtimeclass UISettingsAutoHideScrollBarsChangedEventArgs;
@@ -68,14 +110,100 @@ namespace Windows.UI.ViewManagement
     runtimeclass UIViewSettings;
     runtimeclass InputPane;
     runtimeclass InputPaneVisibilityEventArgs;
+    runtimeclass ViewModePreferences;
 
     declare {
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.ApplicationView *, IInspectable *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.ApplicationView *, Windows.UI.ViewManagement.ApplicationViewConsolidatedEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.UISettings *, IInspectable *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.UISettings *, Windows.UI.ViewManagement.UISettingsAnimationsEnabledChangedEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.UISettings *, Windows.UI.ViewManagement.UISettingsAutoHideScrollBarsChangedEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.UISettings *, Windows.UI.ViewManagement.UISettingsMessageDurationChangedEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.InputPane*, Windows.UI.ViewManagement.InputPaneVisibilityEventArgs*>;
     }
+
+    [
+        contractversion(1.0)
+    ]
+    apicontract ViewManagementViewScalingContract
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum ApplicationViewBoundsMode
+    {
+        UseVisible    = 0,
+        UseCoreWindow = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0)
+    ]
+    enum ApplicationViewMode
+    {
+        Default        = 0,
+        CompactOverlay = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum ApplicationViewOrientation
+    {
+        Landscape = 0,
+        Portrait  = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum ApplicationViewState
+    {
+        FullScreenLandscape = 0,
+        Filled              = 1,
+        Snapped             = 2,
+        FullScreenPortrait  = 3,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        flags
+    ]
+    enum ApplicationViewSwitchingOptions
+    {
+        Default          = 0x0,
+        SkipAnimation    = 0x1,
+        ConsolidateViews = 0x2,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum ApplicationViewWindowingMode
+    {
+        Auto                    = 0,
+        PreferredLaunchViewSize = 1,
+        FullScreen              = 2,
+        [
+            contract(Windows.Foundation.UniversalApiContract, 7.0)
+        ]
+        CompactOverlay          = 3,
+        [
+            contract(Windows.Foundation.UniversalApiContract, 7.0)
+        ]
+        Maximized               = 4,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum FullScreenSystemOverlayMode
+    {
+        Standard = 0,
+        Minimal  = 1,
+    };
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0)
@@ -157,6 +285,323 @@ namespace Windows.UI.ViewManagement
         Mouse = 0,
         Touch = 1,
     };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum ViewSizePreference
+    {
+        Default    = 0,
+        UseLess    = 1,
+        UseHalf    = 2,
+        UseMore    = 3,
+        UseMinimum = 4,
+        UseNone    = 5,
+        [
+            contract(Windows.Foundation.UniversalApiContract, 4.0)
+        ]
+        Custom     = 6,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationView),
+        uuid(d222d519-4361-451e-96c4-60f4f9742db0)
+    ]
+    interface IApplicationView : IInspectable
+    {
+        [propget] HRESULT Orientation([out, retval] Windows.UI.ViewManagement.ApplicationViewOrientation *value);
+        [propget] HRESULT AdjacentToLeftDisplayEdge([out, retval] boolean *value);
+        [propget] HRESULT AdjacentToRightDisplayEdge([out, retval] boolean *value);
+        [propget] HRESULT IsFullScreen([out, retval] boolean *value);
+        [propget] HRESULT IsOnLockScreen([out, retval] boolean *value);
+        [propget] HRESULT IsScreenCaptureEnabled([out, retval] boolean *value);
+        [propput] HRESULT IsScreenCaptureEnabled([in] boolean value);
+        [propput] HRESULT Title([in] HSTRING value);
+        [propget] HRESULT Title([out, retval] HSTRING *value);
+        [propget] HRESULT Id([out, retval] INT32 *value);
+        [eventadd] HRESULT Consolidated([in] Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.ApplicationView *, Windows.UI.ViewManagement.ApplicationViewConsolidatedEventArgs *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT Consolidated([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationView),
+        uuid(e876b196-a545-40dc-b594-450cba68cc00)
+    ]
+    interface IApplicationView2 : IInspectable
+    {
+        [propget] HRESULT SuppressSystemOverlays([out, retval] boolean *value);
+        [propput] HRESULT SuppressSystemOverlays([in] boolean value);
+        [propget] HRESULT VisibleBounds([out, retval] Windows.Foundation.Rect *value);
+        [eventadd] HRESULT VisibleBoundsChanged([in] Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.ApplicationView *, IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT VisibleBoundsChanged([in] EventRegistrationToken token);
+        HRESULT SetDesiredBoundsMode([in] Windows.UI.ViewManagement.ApplicationViewBoundsMode mode, [out, retval] boolean *success);
+        [propget] HRESULT DesiredBoundsMode([out, retval] Windows.UI.ViewManagement.ApplicationViewBoundsMode *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationView),
+        uuid(903c9ce5-793a-4fdf-a2b2-af1ac21e3108)
+    ]
+    interface IApplicationView3 : IInspectable
+    {
+        [propget] HRESULT TitleBar([out, retval] Windows.UI.ViewManagement.ApplicationViewTitleBar **value);
+        [propget] HRESULT FullScreenSystemOverlayMode([out, retval] Windows.UI.ViewManagement.FullScreenSystemOverlayMode *value);
+        [propput] HRESULT FullScreenSystemOverlayMode([in] Windows.UI.ViewManagement.FullScreenSystemOverlayMode value);
+        [propget] HRESULT IsFullScreenMode([out, retval] boolean *value);
+        HRESULT TryEnterFullScreenMode([out, retval] boolean *success);
+        HRESULT ExitFullScreenMode();
+        HRESULT ShowStandardSystemOverlays();
+        HRESULT TryResizeView([in] Windows.Foundation.Size value, [out, retval] boolean *success);
+        HRESULT SetPreferredMinSize([in] Windows.Foundation.Size size);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationView),
+        uuid(15e5cbec-9e0f-46b5-bc3f-9bf653e74b5e)
+    ]
+    interface IApplicationView4 : IInspectable
+    {
+        [propget] HRESULT ViewMode([out, retval] Windows.UI.ViewManagement.ApplicationViewMode *value);
+        HRESULT IsViewModeSupported([in] Windows.UI.ViewManagement.ApplicationViewMode mode, [out, retval] boolean *is_mode_supported);
+        [overload("TryEnterViewModeAsync")] HRESULT TryEnterViewModeAsync([in] Windows.UI.ViewManagement.ApplicationViewMode mode, [out, retval] Windows.Foundation.IAsyncOperation<boolean> **operation);
+        [overload("TryEnterViewModeAsync")] HRESULT TryEnterViewModeWithPreferencesAsync([in] Windows.UI.ViewManagement.ApplicationViewMode mode, [in] Windows.UI.ViewManagement.ViewModePreferences *preferences, [out, retval] Windows.Foundation.IAsyncOperation<boolean> **operation);
+        HRESULT TryConsolidateAsync([out, retval] Windows.Foundation.IAsyncOperation<boolean> **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationView),
+        uuid(a0369647-5faf-5aa6-9c38-befbb12a071e)
+    ]
+    interface IApplicationView7 : IInspectable
+    {
+        [propget] HRESULT PersistedStateId([out, retval] HSTRING *value);
+        [propput] HRESULT PersistedStateId([in] HSTRING value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationView),
+        uuid(9c6516f9-021a-5f01-93e5-9bdad2647574)
+    ]
+    interface IApplicationView9 : IInspectable
+    {
+        [propget] HRESULT WindowingEnvironment([out, retval] Windows.UI.WindowManagement.WindowingEnvironment **value);
+        HRESULT GetDisplayRegions([out, retval] Windows.Foundation.Collections.IVectorView<Windows.UI.WindowManagement.DisplayRegion *> **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationViewConsolidatedEventArgs),
+        uuid(514449ec-7ea2-4de7-a6a6-7dfbaaebb6fb)
+    ]
+    interface IApplicationViewConsolidatedEventArgs : IInspectable
+    {
+        [propget] HRESULT IsUserInitiated([out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationViewConsolidatedEventArgs),
+        uuid(1c199ecc-6dc1-40f4-afee-07d9ea296430)
+    ]
+    interface IApplicationViewConsolidatedEventArgs2 : IInspectable
+    {
+        [propget] HRESULT IsAppInitiated([out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationView),
+        uuid(bc792ebd-64fe-4b65-a0c0-901ce2b68636)
+    ]
+    interface IApplicationViewFullscreenStatics : IInspectable
+    {
+        HRESULT TryUnsnapToFullscreen([out, retval] boolean *success);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationView),
+        uuid(c446fb5d-4793-4896-a8e2-be57a8bb0f50)
+    ]
+    interface IApplicationViewInteropStatics : IInspectable
+    {
+        HRESULT GetApplicationViewIdForWindow([in] Windows.UI.Core.ICoreWindow *window, [out, retval] INT32 *id);
+    }
+
+    [
+        contract(Windows.UI.ViewManagement.ViewManagementViewScalingContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationViewScaling),
+        uuid(1d0ddc23-23f3-4b2d-84fe-74bf37b48b66)
+    ]
+    interface IApplicationViewScaling : IInspectable
+    {
+    }
+
+    [
+        contract(Windows.UI.ViewManagement.ViewManagementViewScalingContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationViewScaling),
+        uuid(b08fecf0-b946-45c8-a5e3-71f5aa78f861)
+    ]
+    interface IApplicationViewScalingStatics : IInspectable
+    {
+        [propget] HRESULT DisableLayoutScaling([out, retval] boolean *value);
+        HRESULT TrySetDisableLayoutScaling([in] boolean disabled, [out, retval] boolean *success);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationView),
+        uuid(010a6306-c433-44e5-a9f2-bd84d4030a95)
+    ]
+    interface IApplicationViewStatics : IInspectable
+    {
+        [propget] HRESULT Value([out, retval] Windows.UI.ViewManagement.ApplicationViewState *value);
+        HRESULT TryUnsnap([out, retval] boolean *success);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationView),
+        uuid(af338ae5-cf64-423c-85e5-f3e72448fb23)
+    ]
+    interface IApplicationViewStatics2 : IInspectable
+    {
+        HRESULT GetForCurrentView([out, retval] Windows.UI.ViewManagement.ApplicationView **current);
+        [propget] HRESULT TerminateAppOnFinalViewClose([out, retval] boolean *value);
+        [propput] HRESULT TerminateAppOnFinalViewClose([in] boolean value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationView),
+        uuid(a28d7594-8c41-4e13-9719-5164796fe4c7)
+    ]
+    interface IApplicationViewStatics3 : IInspectable
+    {
+        [propget] HRESULT PreferredLaunchWindowingMode([out, retval] Windows.UI.ViewManagement.ApplicationViewWindowingMode *value);
+        [propput] HRESULT PreferredLaunchWindowingMode([in] Windows.UI.ViewManagement.ApplicationViewWindowingMode value);
+        [propget] HRESULT PreferredLaunchViewSize([out, retval] Windows.Foundation.Size *value);
+        [propput] HRESULT PreferredLaunchViewSize([in] Windows.Foundation.Size value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationView),
+        uuid(08fd8d33-2611-5336-a315-d98e6366c9db)
+    ]
+    interface IApplicationViewStatics4 : IInspectable
+    {
+        HRESULT ClearAllPersistedState();
+        HRESULT ClearPersistedState([in] HSTRING key);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationViewSwitcher),
+        uuid(975f2f1e-e656-4c5e-a0a1-717c6ffa7d64)
+    ]
+    interface IApplicationViewSwitcherStatics : IInspectable
+    {
+        HRESULT DisableShowingMainViewOnActivation();
+        [overload("TryShowAsStandaloneAsync")] HRESULT TryShowAsStandaloneAsync([in] INT32 view_id, [out, retval] Windows.Foundation.IAsyncOperation<boolean> **operation);
+        [overload("TryShowAsStandaloneAsync")] HRESULT TryShowAsStandaloneWithSizePreferenceAsync([in] INT32 view_id, [in] Windows.UI.ViewManagement.ViewSizePreference preference, [out, retval] Windows.Foundation.IAsyncOperation<boolean> **operation);
+        [overload("TryShowAsStandaloneAsync")] HRESULT TryShowAsStandaloneWithAnchorViewAndSizePreferenceAsync([in] INT32 view_id, [in] Windows.UI.ViewManagement.ViewSizePreference size_preference, [in] INT32 anchor_view_id, [in] Windows.UI.ViewManagement.ViewSizePreference anchor_size_preference, [out, retval] Windows.Foundation.IAsyncOperation<boolean> **operation);
+        [overload("SwitchAsync")] HRESULT SwitchAsync([in] INT32 view_id, [out, retval] Windows.Foundation.IAsyncAction **operation);
+        [overload("SwitchAsync")] HRESULT SwitchFromViewAsync([in] INT32 to_view_id, [in] INT32 from_view_id, [out, retval] Windows.Foundation.IAsyncAction **operation);
+        [overload("SwitchAsync")] HRESULT SwitchFromViewWithOptionsAsync([in] INT32 to_view_id, [in] INT32 from_view_id, [in] Windows.UI.ViewManagement.ApplicationViewSwitchingOptions options, [out, retval] Windows.Foundation.IAsyncAction **operation);
+        HRESULT PrepareForCustomAnimatedSwitchAsync([in] INT32 to_view_id, [in] INT32 from_view_id, [in] Windows.UI.ViewManagement.ApplicationViewSwitchingOptions options, [out, retval] Windows.Foundation.IAsyncOperation<boolean> **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationViewSwitcher),
+        uuid(60e995cd-4fc2-48c4-b8e3-395f2b9f0fc1)
+    ]
+    interface IApplicationViewSwitcherStatics2 : IInspectable
+    {
+        HRESULT DisableSystemViewActivationPolicy();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationViewSwitcher),
+        uuid(92059420-80a7-486d-b21f-c7a4a242a383)
+    ]
+    interface IApplicationViewSwitcherStatics3 : IInspectable
+    {
+        [overload("TryShowAsViewModeAsync")] HRESULT TryShowAsViewModeAsync([in] INT32 view_id, [in] Windows.UI.ViewManagement.ApplicationViewMode mode, [out, retval] Windows.Foundation.IAsyncOperation<boolean> **operation);
+        [overload("TryShowAsViewModeAsync")] HRESULT TryShowAsViewModeWithPreferencesAsync([in] INT32 view_id, [in] Windows.UI.ViewManagement.ApplicationViewMode mode, [in] Windows.UI.ViewManagement.ViewModePreferences *preferences, [out, retval] Windows.Foundation.IAsyncOperation<boolean> **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationViewTitleBar),
+        uuid(00924ac0-932b-4a6b-9c4b-dc38c82478ce)
+    ]
+    interface IApplicationViewTitleBar : IInspectable
+    {
+        [propput] HRESULT ForegroundColor([in] Windows.Foundation.IReference<Windows.UI.Color> *value);
+        [propget] HRESULT ForegroundColor([out, retval] Windows.Foundation.IReference<Windows.UI.Color> **value);
+        [propput] HRESULT BackgroundColor([in] Windows.Foundation.IReference<Windows.UI.Color> *value);
+        [propget] HRESULT BackgroundColor([out, retval] Windows.Foundation.IReference<Windows.UI.Color> **value);
+        [propput] HRESULT ButtonForegroundColor([in] Windows.Foundation.IReference<Windows.UI.Color> *value);
+        [propget] HRESULT ButtonForegroundColor([out, retval] Windows.Foundation.IReference<Windows.UI.Color> **value);
+        [propput] HRESULT ButtonBackgroundColor([in] Windows.Foundation.IReference<Windows.UI.Color> *value);
+        [propget] HRESULT ButtonBackgroundColor([out, retval] Windows.Foundation.IReference<Windows.UI.Color> **value);
+        [propput] HRESULT ButtonHoverForegroundColor([in] Windows.Foundation.IReference<Windows.UI.Color> *value);
+        [propget] HRESULT ButtonHoverForegroundColor([out, retval] Windows.Foundation.IReference<Windows.UI.Color> **value);
+        [propput] HRESULT ButtonHoverBackgroundColor([in] Windows.Foundation.IReference<Windows.UI.Color> *value);
+        [propget] HRESULT ButtonHoverBackgroundColor([out, retval] Windows.Foundation.IReference<Windows.UI.Color> **value);
+        [propput] HRESULT ButtonPressedForegroundColor([in] Windows.Foundation.IReference<Windows.UI.Color> *value);
+        [propget] HRESULT ButtonPressedForegroundColor([out, retval] Windows.Foundation.IReference<Windows.UI.Color> **value);
+        [propput] HRESULT ButtonPressedBackgroundColor([in] Windows.Foundation.IReference<Windows.UI.Color> *value);
+        [propget] HRESULT ButtonPressedBackgroundColor([out, retval] Windows.Foundation.IReference<Windows.UI.Color> **value);
+        [propput] HRESULT InactiveForegroundColor([in] Windows.Foundation.IReference<Windows.UI.Color> *value);
+        [propget] HRESULT InactiveForegroundColor([out, retval] Windows.Foundation.IReference<Windows.UI.Color> **value);
+        [propput] HRESULT InactiveBackgroundColor([in] Windows.Foundation.IReference<Windows.UI.Color> *value);
+        [propget] HRESULT InactiveBackgroundColor([out, retval] Windows.Foundation.IReference<Windows.UI.Color> **value);
+        [propput] HRESULT ButtonInactiveForegroundColor([in] Windows.Foundation.IReference<Windows.UI.Color> *value);
+        [propget] HRESULT ButtonInactiveForegroundColor([out, retval] Windows.Foundation.IReference<Windows.UI.Color> **value);
+        [propput] HRESULT ButtonInactiveBackgroundColor([in] Windows.Foundation.IReference<Windows.UI.Color> *value);
+        [propget] HRESULT ButtonInactiveBackgroundColor([out, retval] Windows.Foundation.IReference<Windows.UI.Color> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationViewTransferContext),
+        uuid(8574bc63-3c17-408e-9408-8a1a9ea81bfa)
+    ]
+    interface IApplicationViewTransferContext : IInspectable
+    {
+        [propget] HRESULT ViewId([out, retval] INT32 *value);
+        [propput] HRESULT ViewId([in] INT32 value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationViewTransferContext),
+        uuid(15a89d92-dd79-4b0b-bc47-d5f195f14661)
+    ]
+    interface IApplicationViewTransferContextStatics : IInspectable
+    {
+        [propget] HRESULT DataPackageFormatId([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.UI.ViewManagement.ApplicationView),
+        uuid(bd55d512-9dc1-44fc-8501-666625df60dc)
+    ]
+    interface IApplicationViewWithContext : IInspectable
+    {
+        [propget] HRESULT UIContext([out, retval] Windows.UI.UIContext **value);
+    }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -367,6 +812,101 @@ namespace Windows.UI.ViewManagement
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.UI.ViewManagement.ViewModePreferences),
+        uuid(878fcd3a-0b99-42c9-84d0-d3f1d403554b)
+    ]
+    interface IViewModePreferences : IInspectable
+    {
+        [propget] HRESULT ViewSizePreference([out, retval] Windows.UI.ViewManagement.ViewSizePreference *value);
+        [propput] HRESULT ViewSizePreference([in] Windows.UI.ViewManagement.ViewSizePreference value);
+        [propget] HRESULT CustomSize([out, retval] Windows.Foundation.Size *value);
+        [propput] HRESULT CustomSize([in] Windows.Foundation.Size value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.UI.ViewManagement.ViewModePreferences),
+        uuid(69b60a65-5de5-40d8-8306-3833df7a2274)
+    ]
+    interface IViewModePreferencesStatics : IInspectable
+    {
+        HRESULT CreateDefault([in] Windows.UI.ViewManagement.ApplicationViewMode mode, [out, retval] Windows.UI.ViewManagement.ViewModePreferences **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.UI.ViewManagement.IApplicationViewFullscreenStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.UI.ViewManagement.IApplicationViewInteropStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.UI.ViewManagement.IApplicationViewStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.UI.ViewManagement.IApplicationViewStatics2, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.UI.ViewManagement.IApplicationViewStatics3, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.UI.ViewManagement.IApplicationViewStatics4, Windows.Foundation.UniversalApiContract, 8.0),
+        threading(both)
+    ]
+    runtimeclass ApplicationView
+    {
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] [default] interface Windows.UI.ViewManagement.IApplicationView;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.ViewManagement.IApplicationView2;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.ViewManagement.IApplicationView3;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.ViewManagement.IApplicationView4;
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.ViewManagement.IApplicationView7;
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.ViewManagement.IApplicationView9;
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.ViewManagement.IApplicationViewWithContext;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass ApplicationViewConsolidatedEventArgs
+    {
+        [default] interface Windows.UI.ViewManagement.IApplicationViewConsolidatedEventArgs;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.ViewManagement.IApplicationViewConsolidatedEventArgs2;
+    }
+
+    [
+        contract(Windows.UI.ViewManagement.ViewManagementViewScalingContract, 1.0),
+        static(Windows.UI.ViewManagement.IApplicationViewScalingStatics, Windows.UI.ViewManagement.ViewManagementViewScalingContract, 1.0)
+    ]
+    runtimeclass ApplicationViewScaling
+    {
+        [default] interface Windows.UI.ViewManagement.IApplicationViewScaling;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.UI.ViewManagement.IApplicationViewSwitcherStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.UI.ViewManagement.IApplicationViewSwitcherStatics2, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.UI.ViewManagement.IApplicationViewSwitcherStatics3, Windows.Foundation.UniversalApiContract, 4.0),
+        threading(both)
+    ]
+    runtimeclass ApplicationViewSwitcher
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass ApplicationViewTitleBar
+    {
+        [contract(Windows.Foundation.UniversalApiContract, 1.0), default] interface Windows.UI.ViewManagement.IApplicationViewTitleBar;
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 2.0),
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        static(Windows.UI.ViewManagement.IApplicationViewTransferContextStatics, Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    runtimeclass ApplicationViewTransferContext
+    {
+        [contract(Windows.Foundation.UniversalApiContract, 2.0), default] interface Windows.UI.ViewManagement.IApplicationViewTransferContext;
+    }
+
+    [
         activatable(Windows.Foundation.UniversalApiContract, 1.0),
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile)
@@ -438,5 +978,14 @@ namespace Windows.UI.ViewManagement
     runtimeclass InputPaneVisibilityEventArgs
     {
         [default] interface Windows.UI.ViewManagement.IInputPaneVisibilityEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        static(Windows.UI.ViewManagement.IViewModePreferencesStatics, Windows.Foundation.UniversalApiContract, 4.0)
+    ]
+    runtimeclass ViewModePreferences
+    {
+        [contract(Windows.Foundation.UniversalApiContract, 4.0), default] interface Windows.UI.ViewManagement.IViewModePreferences;
     }
 }
