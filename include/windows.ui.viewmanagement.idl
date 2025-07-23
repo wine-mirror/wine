@@ -964,6 +964,7 @@ namespace Windows.UI.ViewManagement
         [default] interface Windows.UI.ViewManagement.IUISettingsMessageDurationChangedEventArgs;
     }
 
+#ifndef _WINDOWS_UI
     [
         static(Windows.UI.ViewManagement.IUIViewSettingsStatics, Windows.Foundation.UniversalApiContract, 1.0),
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -973,6 +974,7 @@ namespace Windows.UI.ViewManagement
     {
         [default] interface Windows.UI.ViewManagement.IUIViewSettings;
     }
+#endif
 
     [
         static(Windows.UI.ViewManagement.IInputPaneStatics, Windows.Foundation.UniversalApiContract, 1.0),
