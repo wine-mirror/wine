@@ -153,6 +153,7 @@ static void test_GetProperty(void)
     DXCoreHardwareID hwid[2];
     IDXCoreAdapter *adapter;
     uint32_t count;
+    LUID luid[2];
     size_t size;
     HRESULT hr;
 
@@ -172,6 +173,28 @@ static void test_GetProperty(void)
 
         hr = IDXCoreAdapter_GetProperty(adapter, 0xdeadbeef, 0, hwid);
         ok(hr == DXGI_ERROR_INVALID_CALL, "Got hr %#lx.\n", hr);
+
+        /* InstanceLuid */
+        hr = IDXCoreAdapter_GetProperty(adapter, InstanceLuid, 0, NULL);
+        ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+        hr = IDXCoreAdapter_GetProperty(adapter, InstanceLuid, 0, luid);
+        todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+        hr = IDXCoreAdapter_GetProperty(adapter, InstanceLuid, sizeof(luid[0]) - 1, luid);
+        todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+        hr = IDXCoreAdapter_GetPropertySize(adapter, InstanceLuid, NULL);
+        todo_wine ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+
+        hr = IDXCoreAdapter_GetPropertySize(adapter, InstanceLuid, &size);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        if (hr == S_OK)
+            ok(size == sizeof(*luid), "Got size %Iu.\n", size);
+
+        hr = IDXCoreAdapter_GetProperty(adapter, InstanceLuid, sizeof(luid[0]), luid);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDXCoreAdapter_GetProperty(adapter, InstanceLuid, sizeof(luid[0]) + 1, luid);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         /* HardwareID */
         hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, 0, NULL);
