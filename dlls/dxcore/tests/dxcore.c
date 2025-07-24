@@ -256,6 +256,45 @@ static void test_GetProperty(void)
     IDXCoreAdapterFactory_Release(factory);
 }
 
+static void test_GetAdapterByLuid(void)
+{
+    IDXCoreAdapter *adapter, *adapter2;
+    IDXCoreAdapterFactory *factory;
+    IDXCoreAdapterList *list;
+    uint32_t count;
+    HRESULT hr;
+    LUID luid;
+
+    if (FAILED(pDXCoreCreateAdapterFactory(&IID_IDXCoreAdapterFactory, (void **)&factory)))
+        return;
+
+    hr = IDXCoreAdapterFactory_CreateAdapterList(factory, 1, &DXCORE_ADAPTER_ATTRIBUTE_D3D12_GRAPHICS,
+            &IID_IDXCoreAdapterList, (void **)&list);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    count = IDXCoreAdapterList_GetAdapterCount(list);
+
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        hr = IDXCoreAdapterList_GetAdapter(list, i, &IID_IDXCoreAdapter, (void **)&adapter);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDXCoreAdapter_GetProperty(adapter, InstanceLuid, sizeof(luid), &luid);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDXCoreAdapterFactory_GetAdapterByLuid(factory, &luid, &IID_IDXCoreAdapter, (void **)&adapter2);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        if (hr == S_OK)
+            IDXCoreAdapter_Release(adapter2);
+
+        IDXCoreAdapter_Release(adapter);
+    }
+
+    IDXCoreAdapterList_Release(list);
+
+    IDXCoreAdapterFactory_Release(factory);
+}
+
 START_TEST(dxcore)
 {
     HMODULE dxcore_handle = LoadLibraryA("dxcore.dll");
@@ -280,6 +319,7 @@ START_TEST(dxcore)
 
     test_DXCoreCreateAdapterFactory();
     test_GetProperty();
+    test_GetAdapterByLuid();
 
     FreeLibrary(dxcore_handle);
 }
