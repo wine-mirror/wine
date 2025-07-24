@@ -5630,9 +5630,14 @@ static void _test_node_append_child_discard(unsigned line, IUnknown *node_unk, I
 static IHTMLDOMNode *_test_node_insertbefore(unsigned line, IUnknown *node_unk, IHTMLDOMNode *child, VARIANT *var)
 {
     IHTMLDOMNode *node = _get_node_iface(line, node_unk);
-    IHTMLDOMNode *new_child = NULL;
+    IHTMLDOMNode *new_child = (void*)0xdeadbeef;
     HRESULT hres;
 
+    hres = IHTMLDOMNode_insertBefore(node, NULL, *var, &new_child);
+    ok_(__FILE__,line) (hres == E_INVALIDARG, "insertBefore returned: %08lx\n", hres);
+    ok_(__FILE__,line) (new_child == NULL, "new_child != NULL\n");
+
+    new_child = NULL;
     hres = IHTMLDOMNode_insertBefore(node, child, *var, &new_child);
     ok_(__FILE__,line) (hres == S_OK, "insertBefore failed: %08lx\n", hres);
     ok_(__FILE__,line) (new_child != NULL, "new_child == NULL\n");

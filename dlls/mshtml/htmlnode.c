@@ -553,6 +553,10 @@ static HRESULT WINAPI HTMLDOMNode_insertBefore(IHTMLDOMNode *iface, IHTMLDOMNode
 
     TRACE("(%p)->(%p %s %p)\n", This, newChild, debugstr_variant(&refChild), node);
 
+    *node = NULL;
+    if(!newChild)
+        return E_INVALIDARG;
+
     new_child = get_node_obj(newChild);
     if(!new_child) {
         ERR("invalid newChild\n");
