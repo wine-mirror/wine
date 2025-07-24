@@ -1984,36 +1984,41 @@ StartChar: a
 Encoding: 97 97 66
 Width: 1226
 Flags: W
-HStem: -27 154<403.467 585.467> 563 157<445 647.414> 993 156<382.267 627.733>
-VStem: 57 171<249.333 463.4> 759 187<0 132.535 414 563>
+HStem: -29 238<347 599.68> 0 21G<756 1117> 503 214<447.559 756> 909 238<233.82 700.783>
+VStem: 36 361<246.663 460.183> 756 361<0 166 302.016 503 717 852.053>
 LayerCount: 2
 Fore
 SplineSet
-759 563 m 1
- 588 563 l 2
- 506.667 564.333 441.333 555.333 392 536 c 0
- 282.667 500.667 228 434 228 336 c 0
- 228 269.333 255 217.667 309 181 c 0
- 363 145 423.667 127 491 127 c 0
- 563.667 126.333 628.333 167.333 685 250 c 0
- 734.333 323.333 759 414 759 522 c 2
- 759 563 l 1
-946 639 m 2
- 946 0 l 1
- 759 0 l 1
- 766 151 l 1
- 685.333 31 578.333 -28.3333 445 -27 c 0
- 310.333 -29.6667 212 1 150 65 c 0
- 88 129 57 215.333 57 324 c 0
- 57 578 228 710 570 720 c 2
- 759 735 l 1
- 759 725 l 1
- 790.333 815 778 883 722 929 c 0
- 671.333 971.667 600.333 993 509 993 c 0
- 389.667 993 277.333 962.333 172 901 c 1
- 172 1071 l 1
- 297.333 1123 415.667 1149 527 1149 c 0
- 806.333 1147.67 946 977.667 946 639 c 2
+594 503 m 2xbc
+ 529 503 479 490 446 465 c 0
+ 413 440 397 403 397 354 c 0
+ 397 309 411 273 437 247 c 0
+ 463 221 500 209 547 209 c 0
+ 606 209 656 233 696 281 c 0
+ 736 329 756 390 756 462 c 2
+ 756 503 l 1
+ 594 503 l 2xbc
+1117 639 m 2
+ 1117 0 l 1
+ 756 0 l 1x7c
+ 756 166 l 1
+ 711 98 661 49 605 18 c 0
+ 549 -13 481 -29 401 -29 c 0
+ 293 -29 204 4 137 72 c 0
+ 70 140 36 228 36 336 c 0
+ 36 467 78 564 162 625 c 0
+ 246 686 379 717 559 717 c 2
+ 756 717 l 1
+ 756 745 l 2
+ 756 802 735 844 694 870 c 0
+ 653 896 588 909 501 909 c 0
+ 430 909 365 901 304 886 c 0
+ 243 871 186 848 134 817 c 1
+ 134 1090 l 1
+ 207 1109 280 1122 353 1132 c 0
+ 426 1142 501 1147 574 1147 c 0
+ 766 1147 904 1108 989 1028 c 0
+ 1074 948 1117 818 1117 639 c 2
 EndSplineSet
 Kerns2: 90 -14 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 88 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 87 -14 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2022,31 +2027,34 @@ StartChar: b
 Encoding: 98 98 67
 Width: 1294
 Flags: W
-HStem: -35 153<452.8 742.7> 977 153<419.667 742.7>
-VStem: 135 189<0 92 1000 1556> 900 172<402.4 692.733>
+HStem: -29 260<631.538 883.5> 0 21G<115 473> 887 260<631.538 883.5>
+VStem: 115 358<0 162 332.409 785.591 956 1556> 890 370<330.953 787.047>
 LayerCount: 2
 Fore
 SplineSet
-658 1130 m 0
- 930.73 1130 1072 865.024 1072 548 c 0
- 1072 390.667 1051.22 249.96 975 152 c 0
- 871.221 18.6267 754 -35 658 -35 c 0
- 474.667 -35 372 6.66699 324 92 c 1
- 324 -1 l 1
- 135 0 l 1
- 135 1556 l 1
- 323 1556 l 1
- 323 1000 l 1
- 363 1086.67 474.667 1130 658 1130 c 0
-900 548 m 0
- 900 659.333 881.333 753.333 844 830 c 0
- 795 928 701 977 562 977 c 0
- 410.113 977 333.275 821.128 319.5 704.5 c 0
- 314.5 662.167 312 607.333 312 540 c 0
- 312 363.676 329.254 315.311 352 268 c 0
- 410.07 150.331 478 118 562 118 c 0
- 701 118 795 167 844 265 c 0
- 881.333 341.667 900 436 900 548 c 0
+682 231 m 256xb8
+ 749 231 802 259 837 315 c 0
+ 872 371 890 452 890 559 c 256
+ 890 666 872 747 837 803 c 0
+ 802 859 749 887 682 887 c 256
+ 615 887 563 858 527 802 c 0
+ 491 746 473 665 473 559 c 256
+ 473 453 491 372 527 316 c 0
+ 563 260 615 231 682 231 c 256xb8
+473 956 m 1
+ 519 1021 570 1069 626 1100 c 0
+ 682 1131 746 1147 819 1147 c 0
+ 948 1147 1053 1092 1136 982 c 0
+ 1219 872 1260 732 1260 559 c 256
+ 1260 386 1219 246 1136 136 c 0
+ 1053 26 948 -29 819 -29 c 0xb8
+ 746 -29 682 -13 626 18 c 0
+ 570 49 519 97 473 162 c 1
+ 473 0 l 1
+ 115 0 l 1x78
+ 115 1556 l 1
+ 473 1556 l 1
+ 473 956 l 1
 EndSplineSet
 Kerns2: 248 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 90 -4 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 15 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 13 -29 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2055,26 +2063,30 @@ StartChar: c
 Encoding: 99 99 68
 Width: 1080
 Flags: W
-HStem: -22 156<435.2 735.867>
-VStem: 82 194<337.3 751.133>
+HStem: -29 256<544.116 903.226> 891 256<544.116 900.1>
+VStem: 43 373<359.818 758.182>
 LayerCount: 2
 Fore
 SplineSet
-932 1053 m 1
- 932 896 l 1
- 826.667 953.333 721.667 982 617 982 c 0
- 490.333 982 406.333 951.333 365 890 c 0
- 305.667 814.667 276 712.333 276 583 c 0
- 261 440 283 331 342 256 c 1
- 387.333 174.667 473 134 599 134 c 0
- 706.333 134 808.333 174.333 905 255 c 1
- 914 50 l 1
- 811.333 2 699.667 -22 579 -22 c 0
- 404.333 -22 278 32.3333 200 141 c 0
- 106 245.667 66.6667 393 82 583 c 0
- 82 763 134.667 902.667 240 1002 c 0
- 327.333 1081.33 455 1127 623 1139 c 1
- 729.667 1127.67 832.667 1099 932 1053 c 1
+987 1085 m 1
+ 987 793 l 1
+ 942 826 896 851 851 867 c 0
+ 806 883 759 891 710 891 c 0
+ 617 891 545 862 493 804 c 0
+ 441 746 416 664 416 559 c 256
+ 416 454 441 372 493 314 c 0
+ 545 256 617 227 710 227 c 0
+ 762 227 811 235 858 252 c 0
+ 905 269 947 293 987 326 c 1
+ 987 33 l 1
+ 934 12 879 -4 824 -14 c 0
+ 769 -24 714 -29 659 -29 c 0
+ 466 -29 315 22 206 126 c 0
+ 97 230 43 374 43 559 c 256
+ 43 744 97 888 206 992 c 0
+ 315 1096 466 1147 659 1147 c 0
+ 715 1147 770 1142 824 1132 c 0
+ 878 1122 933 1106 987 1085 c 1
 EndSplineSet
 Kerns2: 238 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 237 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 164 -6 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 68 -6 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 53 -96 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 14 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2083,32 +2095,34 @@ StartChar: d
 Encoding: 100 100 69
 Width: 1289
 Flags: W
-HStem: -24 154<409.667 634.133> 998 154<410.1 634.133>
-VStem: 59 190<404.733 713.267> 806 184<5 173 409.733 718.267 955 1561>
+HStem: -29 260<409 660.71> 0 21G<816 1176> 887 260<409 659.411>
+VStem: 33 371<330.953 787.047> 816 360<0 162 331.41 786.59 956 1556>
 LayerCount: 2
 Fore
 SplineSet
-806 955 m 1
- 806 1561 l 1
- 990 1561 l 1
- 990 5 l 1
- 806 5 l 1
- 806 173 l 1
- 730 41.6667 610.333 -24 447 -24 c 0
- 343.667 -27.3333 250.333 33.6667 167 159 c 0
- 95 267.667 59 401 59 559 c 0
- 59 717 95 850.333 167 959 c 0
- 250.333 1084.33 343.667 1148.67 447 1152 c 0
- 610.333 1152 730 1086.33 806 955 c 1
-249 559 m 0
- 249 440.333 271 343 315 267 c 0
- 369.667 172.333 428.667 126.667 492 130 c 0
- 601.333 130 683.667 177 739 271 c 0
- 783.667 347.667 806 445.333 806 564 c 0
- 806 682.667 783.667 780.333 739 857 c 0
- 683.667 951 601.333 998 492 998 c 0
- 429 995 370 946 315 851 c 0
- 271 775 249 677.667 249 559 c 0
+816 956 m 1xb8
+ 816 1556 l 1
+ 1176 1556 l 1
+ 1176 0 l 1
+ 816 0 l 1x78
+ 816 162 l 1
+ 770 96 719 48 664 17 c 0
+ 609 -14 546 -29 473 -29 c 0
+ 345 -29 239 26 157 136 c 0
+ 75 246 33 386 33 559 c 256
+ 33 732 75 872 157 982 c 0
+ 239 1092 345 1147 473 1147 c 0
+ 545 1147 609 1131 664 1100 c 0
+ 719 1069 770 1021 816 956 c 1xb8
+610 231 m 0xb8
+ 677 231 728 259 763 315 c 0
+ 798 371 816 452 816 559 c 256
+ 816 666 798 747 763 803 c 0
+ 728 859 677 887 610 887 c 0
+ 544 887 492 859 457 803 c 0
+ 422 747 404 666 404 559 c 256
+ 404 452 422 371 457 315 c 0
+ 492 259 544 231 610 231 c 0xb8
 EndSplineSet
 EndChar
 
@@ -2116,28 +2130,32 @@ StartChar: e
 Encoding: 101 101 70
 Width: 1216
 Flags: W
-HStem: -26 157<298.443 783.467> 539 144<246 866> 985 157<355.133 691.039>
-VStem: 866 174<630 812>
+HStem: -29 238<491.869 927.419> 460 222<381 824> 909 238<475.643 747.95>
 LayerCount: 2
 Fore
 SplineSet
-611 -26 m 0
- 258.527 -26 59 203.082 59 572 c 0
- 59 723.973 88.6814 841.682 183 964 c 0
- 275 1082.67 406.333 1142 577 1142 c 0
- 729.667 1142 847 1088 929 980 c 0
- 1012.86 870.114 1040 770 1040 630 c 2
- 1040 539 l 1
- 240 539 l 1
- 254.975 291.906 372.879 131 621 131 c 0
- 752 131 879 166 1002 236 c 1
- 1002 61 l 1
- 874 3 743.667 -26 611 -26 c 0
-246 683 m 1
- 866 683 l 1
- 866 815.81 797.106 942.116 707 969.5 c 0
- 673 979.833 630 985 578 985 c 0
- 378.8 985 256.797 832.014 246 683 c 1
+1174 562 m 2
+ 1174 460 l 1
+ 377 460 l 1
+ 385 376 415 314 464 272 c 0
+ 513 230 582 209 671 209 c 0
+ 743 209 817 220 892 242 c 0
+ 967 264 1045 298 1124 343 c 1
+ 1124 68 l 1
+ 1043 36 963 12 882 -4 c 0
+ 801 -20 721 -29 640 -29 c 0
+ 447 -29 297 23 190 126 c 0
+ 83 229 30 373 30 559 c 0
+ 30 742 83 885 188 990 c 0
+ 293 1095 437 1147 621 1147 c 0
+ 789 1147 922 1094 1023 988 c 0
+ 1124 882 1174 740 1174 562 c 2
+824 682 m 1
+ 824 750 805 804 767 846 c 0
+ 729 888 680 909 619 909 c 0
+ 553 909 499 889 458 850 c 0
+ 417 811 391 755 381 682 c 1
+ 824 682 l 1
 EndSplineSet
 Kerns2: 53 -131 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2146,30 +2164,30 @@ StartChar: f
 Encoding: 102 102 71
 Width: 783
 Flags: W
-HStem: 0 21G<146 331> 977 143<29 146 331 634> 1403 153<421.2 683>
-VStem: 146 185<0 977 1120 1309.68>
+HStem: 0 21G<163 521> 864 256<12 163 521 772> 1321 235<549.854 798>
+VStem: 163 358<0 864 1120 1293.15>
 LayerCount: 2
 Fore
 SplineSet
-509 1556 m 2
- 683 1556 l 1
- 683 1403 l 1
- 507 1403 l 2
- 441 1403 395 1389 369 1361 c 0
- 343.667 1333.67 331 1286.33 331 1219 c 2
- 331 1120 l 1
- 634 1120 l 1
- 634 977 l 1
- 331 977 l 1
- 331 0 l 1
- 146 0 l 1
- 146 977 l 1
- 29 980 l 1
- 29 1123 l 1
- 146 1120 l 1
- 146 1198 l 2
- 146 1322 175.333 1412.67 234 1470 c 0
- 292.667 1527.33 384.333 1556 509 1556 c 2
+798 1556 m 1
+ 798 1321 l 1
+ 646 1321 l 2
+ 599 1321 567 1312 549 1294 c 0
+ 531 1276 521 1243 521 1198 c 2
+ 521 1120 l 1
+ 772 1120 l 1
+ 772 864 l 1
+ 521 864 l 1
+ 521 0 l 1
+ 163 0 l 1
+ 163 864 l 1
+ 12 864 l 1
+ 12 1120 l 1
+ 163 1120 l 1
+ 163 1198 l 2
+ 163 1320 196 1410 261 1468 c 0
+ 326 1526 428 1556 565 1556 c 2
+ 798 1556 l 1
 EndSplineSet
 Kerns2: 248 -115 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 243 68 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 240 68 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 238 -68 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 237 -68 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 181 -20 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 171 121 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 166 -20 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 163 -25 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 94 100 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 90 -25 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 86 -20 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 84 -23 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 83 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 82 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 81 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 80 -20 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 79 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 78 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 75 -20 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 72 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 71 -14 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 70 -20 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 68 -20 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 66 -25 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 62 100 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 61 94 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 32 115 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 15 -150 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 14 -68 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 13 -150 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 11 68 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 10 100 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 8 86 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 3 86 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2178,36 +2196,42 @@ StartChar: g
 Encoding: 103 103 72
 Width: 1289
 Flags: W
-HStem: -412 150<337.653 757.867> 12 154<428.102 635.867> 1005 155.41<408.153 635.294>
-VStem: 59 190<418.733 726.4> 806 184<-211.333 209 431.6 740.133 962 1132>
+HStem: -442 237<292.113 699.223> 0 260<409.5 661.458> 887 258<409.5 661.458> 1100 20G<816 1176>
+VStem: 33 371<352.335 788.509> 816 360<-85.5131 190 358.049 788.95 954 1120>
 LayerCount: 2
 Fore
 SplineSet
-806 585 m 0
- 806 704.333 784 800 740 872 c 0
- 684.667 969.333 602 1013.67 492 1005 c 0
- 428 997 369 948.333 315 859 c 0
- 271 786.333 249 691 249 573 c 0
- 249 454.333 271 359 315 287 c 0
- 369 198.333 428 158 492 166 c 0
- 602.667 166 685 210.333 739 299 c 0
- 783.667 371.667 806 467 806 585 c 0
-990 1132 m 1
- 990 151 l 2
- 990 -224.333 818 -412 474 -412 c 0
- 392 -420 298.667 -405 194 -367 c 1
- 194 -188 l 1
- 299.333 -245.333 383 -270 445 -262 c 0
- 685.667 -262 806 -135.333 806 118 c 2
- 806 209 l 1
- 730.667 77.6667 611 12 447 12 c 0
- 343 4 249.667 60 167 180 c 0
- 95 285 59 416 59 573 c 0
- 59 731 95 862.333 167 967 c 0
- 249.667 1087 343 1151 447 1159 c 0
- 610.333 1183 730 1117.33 806 962 c 1
- 806 1132 l 1
- 990 1132 l 1
+816 190 m 1xdc
+ 770 125 719 77 664 46 c 0
+ 609 15 546 0 473 0 c 0
+ 346 0 241 54 158 162 c 0
+ 75 270 33 406 33 573 c 0
+ 33 740 75 877 158 984 c 0
+ 241 1091 346 1145 473 1145 c 0xec
+ 546 1145 609 1130 664 1099 c 0
+ 719 1068 770 1020 816 954 c 1
+ 816 1120 l 1
+ 1176 1120 l 1
+ 1176 113 l 2
+ 1176 -67 1122 -205 1015 -300 c 0
+ 908 -395 752 -442 548 -442 c 0
+ 482 -442 418 -437 356 -426 c 0
+ 294 -415 232 -399 170 -377 c 1
+ 170 -98 l 1
+ 227 -134 284 -160 339 -178 c 0
+ 394 -196 448 -205 504 -205 c 0
+ 612 -205 691 -179 741 -128 c 0
+ 791 -77 816 4 816 113 c 2
+ 816 190 l 1xdc
+610 887 m 0
+ 545 887 494 860 458 805 c 0
+ 422 750 404 673 404 573 c 0
+ 404 470 421 393 456 340 c 0
+ 491 287 543 260 610 260 c 0
+ 675 260 726 287 762 342 c 0
+ 798 397 816 474 816 573 c 0
+ 816 673 798 750 762 805 c 0
+ 726 860 675 887 610 887 c 0
 EndSplineSet
 Kerns2: 75 12 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2216,25 +2240,31 @@ StartChar: h
 Encoding: 104 104 73
 Width: 1311
 Flags: W
-HStem: 0 21G<135 320 826 1010> 987 160<506.667 801.333>
-VStem: 135 185<0 769.933 946 1556> 826 184<0 944.733>
+HStem: 0 21G<123 481 840 1200> 877 270<647.699 890.5>
+VStem: 123 358<0 770.212 956 1556> 840 360<0 830.723>
 LayerCount: 2
 Fore
 SplineSet
-1010 676 m 2
- 1010 0 l 1
- 826 0 l 1
- 826 670 l 2
- 826 881.333 764.333 987 641 987 c 0
- 537.667 987 457.333 953.333 400 886 c 0
- 346.667 822.667 320 738.333 320 633 c 2
- 320 0 l 1
- 135 0 l 1
- 135 1556 l 1
- 320 1556 l 1
- 320 946 l 1
- 406.667 1080 527.333 1147 682 1147 c 0
- 900.667 1147 1010 990 1010 676 c 2
+1200 682 m 2
+ 1200 0 l 1
+ 840 0 l 1
+ 840 111 l 1
+ 840 520 l 2
+ 840 618 838 685 834 722 c 0
+ 830 759 823 786 814 803 c 0
+ 802 826 785 845 764 858 c 0
+ 743 871 719 877 692 877 c 0
+ 626 877 575 848 537 790 c 0
+ 499 732 481 653 481 551 c 2
+ 481 0 l 1
+ 123 0 l 1
+ 123 1556 l 1
+ 481 1556 l 1
+ 481 956 l 1
+ 532 1021 585 1069 642 1100 c 0
+ 699 1131 761 1147 830 1147 c 0
+ 951 1147 1043 1107 1106 1028 c 0
+ 1169 949 1200 833 1200 682 c 2
 EndSplineSet
 Kerns2: 90 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 88 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 87 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2243,21 +2273,21 @@ StartChar: i
 Encoding: 105 105 74
 Width: 618
 Flags: W
-HStem: 0 21G<127 311> 1100 20G<127 311> 1323 233<127 311>
-VStem: 127 184<0 1120 1323 1556>
+HStem: 0 21G<130 488> 1100 20G<130 488> 1264 292<130 488>
+VStem: 130 358<0 1120 1264 1556>
 LayerCount: 2
 Fore
 SplineSet
-127 0 m 1
- 127 1120 l 1
- 311 1120 l 1
- 311 0 l 1
- 127 0 l 1
-127 1323 m 1
- 127 1556 l 1
- 311 1556 l 1
- 311 1323 l 1
- 127 1323 l 1
+130 1120 m 1
+ 488 1120 l 1
+ 488 0 l 1
+ 130 0 l 1
+ 130 1120 l 1
+130 1556 m 1
+ 488 1556 l 1
+ 488 1264 l 1
+ 130 1264 l 1
+ 130 1556 l 1
 EndSplineSet
 Kerns2: 85 4 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 77 2 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 74 2 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 71 4 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2266,27 +2296,27 @@ StartChar: j
 Encoding: 106 106 75
 Width: 743
 Flags: W
-HStem: -412 157<-90 60.4> 1115 20G<140 324> 1338 233<140 324>
-VStem: 140 184<-145.273 1135 1338 1571>
+HStem: -442 235<-54 152.852> 1100 20G<200 558> 1264 292<200 558>
+VStem: 200 358<-162.254 1120 1264 1556>
 LayerCount: 2
 Fore
 SplineSet
-140 -5 m 2
- 140 1135 l 1
- 324 1135 l 1
- 324 -5 l 2
- 324 -139 300.667 -237.333 254 -300 c 0
- 198.667 -374.667 107.333 -412 -20 -412 c 2
- -90 -412 l 1
- -90 -255 l 1
- -41 -255 l 2
- 37 -255 88.6667 -232 114 -186 c 0
- 131.333 -152.667 140 -92.3333 140 -5 c 2
-140 1338 m 1
- 140 1571 l 1
- 324 1571 l 1
- 324 1338 l 1
- 140 1338 l 1
+200 1120 m 1
+ 558 1120 l 1
+ 558 20 l 2
+ 558 -130 521 -245 447 -324 c 0
+ 373 -403 267 -442 127 -442 c 2
+ -54 -442 l 1
+ -54 -207 l 1
+ 12 -207 l 2
+ 84 -207 133 -192 160 -161 c 0
+ 187 -130 200 -70 200 20 c 2
+ 200 1120 l 1
+200 1556 m 1
+ 558 1556 l 1
+ 558 1264 l 1
+ 200 1264 l 1
+ 200 1556 l 1
 EndSplineSet
 EndChar
 
@@ -2294,23 +2324,23 @@ StartChar: k
 Encoding: 107 107 76
 Width: 1234
 Flags: W
-HStem: 0 21G<135 320 765 1005> 1100 20G<745 980>
-VStem: 135 185<0 547 637 1556>
+HStem: 0 21G<89 447 844.227 1275> 1100 20G<819.925 1234>
+VStem: 89 358<0 467 709 1556>
 LayerCount: 2
 Fore
 SplineSet
-135 0 m 1
- 135 1556 l 1
- 320 1556 l 1
- 320 637 l 1
- 745 1120 l 1
- 980 1120 l 1
- 539 609 l 1
- 1005 0 l 1
- 765 0 l 1
- 320 547 l 1
- 320 0 l 1
- 135 0 l 1
+89 1556 m 1
+ 447 1556 l 1
+ 447 709 l 1
+ 839 1120 l 1
+ 1234 1120 l 1
+ 714 606 l 1
+ 1275 0 l 1
+ 862 0 l 1
+ 447 467 l 1
+ 447 0 l 1
+ 89 0 l 1
+ 89 1556 l 1
 EndSplineSet
 Kerns2: 238 -94 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 237 -94 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 215 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 181 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 80 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 70 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 14 -94 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2319,16 +2349,16 @@ StartChar: l
 Encoding: 108 108 77
 Width: 618
 Flags: W
-HStem: 0 21G<139 323>
-VStem: 139 184<0 1556>
+HStem: 0 21G<130 488>
+VStem: 130 358<0 1556>
 LayerCount: 2
 Fore
 SplineSet
-139 0 m 1
- 139 1556 l 1
- 323 1556 l 1
- 323 0 l 1
- 139 0 l 1
+130 1556 m 1
+ 488 1556 l 1
+ 488 0 l 1
+ 130 0 l 1
+ 130 1556 l 1
 EndSplineSet
 Kerns2: 172 10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 171 10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 85 4 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 77 6 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 74 2 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 71 2 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2337,34 +2367,42 @@ StartChar: m
 Encoding: 109 109 78
 Width: 1953
 Flags: W
-HStem: 0 21G<135 323 769 957 1403 1591> 987 159<469.867 755 1078.13 1333.11>
-VStem: 135 193<0 757.067 946 1117> 769 188<0 848.169> 1403 188<0 841.267>
+HStem: 0 21G<125 485 801 1161 1477 1837> 877 270<632.047 838 1290.64 1525.5> 1100 20G<125 485>
+VStem: 125 360<0 783.967 956 1120> 801 360<0 782.207> 1477 360<0 822.296>
+CounterMasks: 1 1c
 LayerCount: 2
 Fore
 SplineSet
-911 905 m 1
- 985.667 1065.67 1095 1146 1239 1146 c 0
- 1383 1144 1481 1090 1533 984 c 0
- 1571.67 906 1591 802.667 1591 674 c 2
- 1591 0 l 1
- 1403 0 l 1
- 1403 668 l 2
- 1402.33 872.667 1333.33 979 1196 987 c 0
- 1105.33 987 1037.67 948.667 993 872 c 0
- 956.333 810 944.333 729.667 957 631 c 2
- 957 0 l 1
- 769 0 l 1
- 769 668 l 2
- 777 880.667 716 987 586 987 c 0
- 496.667 987 429.333 948.333 384 871 c 0
- 346.667 807.667 328 728.667 328 634 c 2
- 323 0 l 1
- 135 0 l 1
- 135 1117 l 1
- 328 1117 l 1
- 328 946 l 1
- 397.333 1079.33 498 1146 630 1146 c 0
- 770.667 1146 864.333 1065.67 911 905 c 1
+1120 934 m 1xdc
+ 1163 1003 1213 1056 1272 1092 c 0
+ 1331 1128 1395 1147 1465 1147 c 0
+ 1586 1147 1679 1107 1742 1028 c 0
+ 1805 949 1837 833 1837 682 c 2
+ 1837 0 l 1
+ 1477 0 l 1
+ 1477 584 l 1
+ 1478 593 1478 602 1478 611 c 0
+ 1478 620 1479 634 1479 651 c 0
+ 1479 730 1468 788 1448 824 c 0
+ 1428 860 1395 877 1349 877 c 0
+ 1289 877 1243 849 1211 793 c 0
+ 1179 737 1162 656 1161 550 c 1
+ 1161 0 l 1
+ 801 0 l 1
+ 801 584 l 2
+ 801 708 792 788 773 824 c 0
+ 754 860 721 877 673 877 c 0xdc
+ 613 877 567 848 534 792 c 0
+ 501 736 485 656 485 551 c 2
+ 485 0 l 1
+ 125 0 l 1
+ 125 1120 l 1
+ 485 1120 l 1xbc
+ 485 956 l 1
+ 526 1019 573 1067 626 1099 c 0
+ 679 1131 738 1147 802 1147 c 0
+ 874 1147 939 1128 994 1091 c 0
+ 1049 1054 1091 1001 1120 934 c 1xdc
 EndSplineSet
 Kerns2: 90 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 88 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 87 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2373,25 +2411,31 @@ StartChar: n
 Encoding: 110 110 79
 Width: 1311
 Flags: W
-HStem: 0 21G<135 323 825 1009> 987 160<479.867 821.933>
-VStem: 135 188<0 769.933 946 1120> 825 184<0 270.746>
+HStem: 0 21G<123 481 840 1200> 877 270<647.699 890.5> 1100 20G<123 481>
+VStem: 123 358<0 770.212 956 1120> 840 360<0 830.723>
 LayerCount: 2
 Fore
 SplineSet
-1009 676 m 2
- 1009 0 l 1
- 825 0 l 1
- 825 670 l 2
- 845 881.333 772.333 987 607 987 c 0
- 503 987 435 953.333 403 886 c 1
- 349.667 822.667 323 738.333 323 633 c 2
- 323 0 l 1
- 135 0 l 1
- 135 1120 l 1
- 323 1120 l 1
- 323 946 l 1
- 410.333 1080 518.667 1147 648 1147 c 0
- 908.667 1147 1029 990 1009 676 c 2
+1200 682 m 2xd8
+ 1200 0 l 1
+ 840 0 l 1
+ 840 111 l 1
+ 840 522 l 2
+ 840 619 838 685 834 722 c 0
+ 830 759 823 786 814 803 c 0
+ 802 826 785 845 764 858 c 0
+ 743 871 719 877 692 877 c 0xd8
+ 626 877 575 848 537 790 c 0
+ 499 732 481 653 481 551 c 2
+ 481 0 l 1
+ 123 0 l 1
+ 123 1120 l 1
+ 481 1120 l 1
+ 481 956 l 1
+ 532 1021 585 1069 642 1100 c 0xb8
+ 699 1131 761 1147 830 1147 c 0
+ 951 1147 1043 1107 1106 1028 c 0
+ 1169 949 1200 833 1200 682 c 2xd8
 EndSplineSet
 Kerns2: 90 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 88 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 87 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2400,29 +2444,29 @@ StartChar: o
 Encoding: 111 111 80
 Width: 1264
 Flags: W
-HStem: -29 156<424.533 686.267> 991 156<427.133 688>
-VStem: 57 194<403.867 713.267> 860 195<404.6 711.4>
+HStem: -29 256<508.018 758.218> 891 256<508.018 758.218>
+VStem: 40 374<332.574 785.426> 850 374<332.574 785.426>
 LayerCount: 2
 Fore
 SplineSet
-571 991 m 0
- 460.333 991 377 944.667 321 852 c 0
- 274.333 775.333 251 677.667 251 559 c 0
- 251 439.667 274 342 320 266 c 0
- 374.667 173.333 458.333 127 571 127 c 0
- 659.667 126.333 732.667 172.667 790 266 c 0
- 836.667 342.667 860 440 860 558 c 0
- 860 676 836.667 773.333 790 850 c 0
- 734 943 661 990 571 991 c 0
-571 1147 m 0
- 720.333 1146.33 840.333 1089 931 975 c 0
- 1013.67 872.333 1055 733.333 1055 558 c 0
- 1055 382.667 1013.67 243.667 931 141 c 0
- 841 27 721 -29.6667 571 -29 c 0
- 401 -29 271 28 181 142 c 0
- 98.3333 244.667 57 383.667 57 559 c 0
- 57 734.333 98.3333 873.333 181 976 c 0
- 271 1090 401 1147 571 1147 c 0
+634 891 m 0
+ 563 891 508 863 470 806 c 0
+ 432 749 414 666 414 559 c 256
+ 414 452 432 369 470 312 c 0
+ 508 255 563 227 634 227 c 0
+ 704 227 757 255 794 312 c 0
+ 831 369 850 452 850 559 c 256
+ 850 666 831 749 794 806 c 0
+ 757 863 704 891 634 891 c 0
+634 1147 m 0
+ 819 1147 964 1095 1068 991 c 0
+ 1172 887 1224 743 1224 559 c 256
+ 1224 375 1172 231 1068 127 c 0
+ 964 23 819 -29 634 -29 c 0
+ 448 -29 303 23 198 127 c 0
+ 93 231 40 375 40 559 c 256
+ 40 743 93 887 198 991 c 0
+ 303 1095 448 1147 634 1147 c 0
 EndSplineSet
 Kerns2: 248 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 90 -12 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 89 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 87 -12 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 15 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 13 -29 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2431,32 +2475,34 @@ StartChar: p
 Encoding: 112 112 81
 Width: 1289
 Flags: W
-HStem: 5 147<416.933 689.067> 975 147<416.933 689.067>
-VStem: 135 179<-412 86 412.23 711.471 1090.11 1097> 850 182<418.4 708.733>
+HStem: -426 21G<113 471> -29 260<629.124 880> 887 260<629.124 880> 1100 20G<113 471>
+VStem: 113 358<-426 162 332.409 785.591 956 1120> 886 370<330.953 787.047>
 LayerCount: 2
 Fore
 SplineSet
-314 86 m 1
- 311 -412 l 1
- 135 -412 l 1
- 138 1097 l 1
- 314 1097 l 1
- 314 936 l 1
- 347 1060 441 1122 596 1122 c 0
- 738.667 1122 849.667 1062.33 929 943 c 0
- 997.667 840.333 1032 714 1032 564 c 0
- 1032 413.333 997.667 286.667 929 184 c 0
- 849.667 64.6667 738.667 5 596 5 c 0
- 441 5 347 32 314 86 c 1
-850 564 m 0
- 850 675.333 829.333 767.667 788 841 c 0
- 736 930.333 657.667 975 553 975 c 0
- 448.333 975 383.667 930.667 359 842 c 0
- 329 768.667 314 676.333 314 565 c 0
- 314 453.667 327.667 360.667 355 286 c 0
- 382.333 196.667 448.333 152 553 152 c 0
- 657.667 152 736 196.667 788 286 c 0
- 829.333 359.333 850 452 850 564 c 0
+471 162 m 1xec
+ 471 -426 l 1
+ 113 -426 l 1
+ 113 1120 l 1
+ 471 1120 l 1
+ 471 956 l 1
+ 517 1021 568 1069 624 1100 c 0xdc
+ 680 1131 743 1147 816 1147 c 0
+ 944 1147 1050 1092 1132 982 c 0
+ 1214 872 1256 732 1256 559 c 256
+ 1256 386 1214 246 1132 136 c 0
+ 1050 26 944 -29 816 -29 c 0
+ 743 -29 680 -13 624 18 c 0
+ 568 49 517 97 471 162 c 1xec
+679 887 m 256xec
+ 612 887 561 858 525 802 c 0
+ 489 746 471 665 471 559 c 256
+ 471 453 489 372 525 316 c 0
+ 561 260 612 231 679 231 c 256
+ 746 231 798 259 833 315 c 0
+ 868 371 886 452 886 559 c 256
+ 886 666 868 747 833 803 c 0
+ 798 859 746 887 679 887 c 256xec
 EndSplineSet
 Kerns2: 248 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 90 -4 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 15 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 13 -29 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2465,32 +2511,34 @@ StartChar: q
 Encoding: 113 113 82
 Width: 1289
 Flags: W
-HStem: -15 154<437.799 634.133> 1007 154<436.09 634.133>
-VStem: 59 190<404.733 713.267> 806 186<-412 182 418.733 727.267 1039 1164>
+HStem: -426 21G<816 1176> -29 260<409 660.71> 887 258<409 660.71> 1100 20G<816 1176>
+VStem: 33 371<330.953 787.229> 816 360<-426 162 331.41 786.59 954 1120>
 LayerCount: 2
 Fore
 SplineSet
-249 559 m 0
- 249 440.333 271 343 315 267 c 0
- 369.667 172.333 428.667 129.667 492 139 c 1
- 601.333 139 683.667 186 739 280 c 0
- 783.667 356.667 806 454.333 806 573 c 0
- 806 691.667 783.667 789.333 739 866 c 0
- 683.667 960 601.333 1007 492 1007 c 1
- 429 998 370 946 315 851 c 0
- 271 775 249 677.667 249 559 c 0
-806 -412 m 1
- 806 182 l 1
- 730 50.6667 610.333 -15 447 -15 c 0
- 337.667 -15 244.333 43 167 159 c 0
- 95 267.667 59 401 59 559 c 0
- 59 717 95 850.333 167 959 c 0
- 256.333 1093.67 349.667 1161 447 1161 c 0
- 615.667 1161 736 1120.33 808 1039 c 1
- 808 1164 l 1
- 992 1164 l 1
- 992 -412 l 1
- 806 -412 l 1
+610 887 m 0xec
+ 544 887 492 859 457 803 c 0
+ 422 747 404 666 404 559 c 256
+ 404 452 422 371 457 315 c 0
+ 492 259 544 231 610 231 c 0
+ 677 231 728 259 763 315 c 0
+ 798 371 816 452 816 559 c 256
+ 816 666 798 747 763 803 c 0
+ 728 859 677 887 610 887 c 0xec
+816 162 m 1
+ 770 96 719 48 664 17 c 0
+ 609 -14 546 -29 473 -29 c 0
+ 345 -29 239 26 157 136 c 0
+ 75 246 33 386 33 559 c 256
+ 33 732 75 873 157 982 c 0
+ 239 1091 345 1145 473 1145 c 0xec
+ 546 1145 609 1130 664 1099 c 0
+ 719 1068 770 1020 816 954 c 1
+ 816 1120 l 1
+ 1176 1120 l 1xdc
+ 1176 -426 l 1
+ 816 -426 l 1
+ 816 162 l 1
 EndSplineSet
 EndChar
 
@@ -2498,22 +2546,26 @@ StartChar: r
 Encoding: 114 114 83
 Width: 888
 Flags: W
-HStem: 0 21G<135 323> 949 164<555.695 700.003>
-VStem: 135 188<0 929.6 945 1117>
+HStem: 0 21G<91 449> 858 289<604.966 880.26> 1100 20G<91 449>
+VStem: 91 358<0 734.077 936 1120>
 LayerCount: 2
 Fore
 SplineSet
-727 1104 m 1
- 727 915 l 1
- 712.333 937.667 680 949 630 949 c 0
- 425.333 971 323 851 323 589 c 2
- 323 0 l 1
- 135 0 l 1
- 135 1117 l 1
- 323 1117 l 1
- 323 945 l 1
- 387.667 1055.67 505.333 1111.67 676 1113 c 0
- 697 1113 714 1110 727 1104 c 1
+882 815 m 1xd0
+ 853 830 825 841 797 848 c 0
+ 769 855 740 858 711 858 c 0xd0
+ 627 858 562 829 517 770 c 0
+ 472 711 449 626 449 516 c 2
+ 449 0 l 1
+ 91 0 l 1
+ 91 1120 l 1
+ 449 1120 l 1xb0
+ 449 936 l 1
+ 491 1009 539 1062 594 1096 c 0
+ 649 1130 714 1147 790 1147 c 0
+ 801 1147 812 1147 825 1146 c 0
+ 838 1145 857 1142 881 1139 c 1
+ 882 815 l 1xd0
 EndSplineSet
 Kerns2: 248 -276 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 243 29 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 240 29 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 238 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 237 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 215 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 181 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 166 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 164 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 163 -39 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 82 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 80 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 72 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 70 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 69 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 68 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 66 -35 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 15 -276 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 14 -25 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 13 -276 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2522,34 +2574,40 @@ StartChar: s
 Encoding: 115 115 84
 Width: 1054
 Flags: W
-HStem: -41 154<298.856 587.533> 981 154<342.2 643.267>
-VStem: 76 178<740.8 952.933> 696 189<143.6 347.133>
+HStem: -29 238<205.431 629.647> 823 246<789.282 937> 909 238<399.018 799.417>
+VStem: 51 316<736.571 881.817> 672 340<241.033 397.87>
 LayerCount: 2
 Fore
 SplineSet
-825 1075 m 1
- 825 901 l 1
- 719.667 954.333 607.667 981 489 981 c 0
- 332.333 980.333 254 923.667 254 811 c 0
- 254 757 283.333 715.667 342 687 c 1
- 342.667 675 382.333 660.333 461 643 c 2
- 524 629 l 2
- 641.333 603 725.333 570.667 776 532 c 0
- 848.667 477.333 885 399 885 297 c 0
- 885 179 834.667 90.6667 734 32 c 0
- 653.333 -16.6667 549.333 -41 422 -41 c 0
- 328.667 -42.3333 210.667 -19.6667 68 27 c 1
- 68 217 l 1
- 202 146.333 321.333 111.667 426 113 c 0
- 606 113 696 169.667 696 283 c 0
- 696 332.333 679.333 370.667 646 398 c 0
- 616.667 421.333 542.667 447 424 475 c 2
- 360 490 l 2
- 280.667 512.667 217.333 543.667 170 583 c 0
- 107.333 633.667 76 707 76 803 c 0
- 76 918.333 120.667 1004.67 210 1062 c 0
- 285.333 1109.33 371 1133.67 467 1135 c 0
- 605 1135 724.333 1115 825 1075 c 1
+937 1069 m 1xd8
+ 937 823 l 1xd8
+ 860 850 786 870 715 883 c 0
+ 653 900 596 909 541 909 c 0
+ 482 909 438 901 410 884 c 0
+ 382 867 367 840 367 805 c 0
+ 367 776 379 754 402 739 c 0
+ 425 724 465 712 525 705 c 1
+ 584 696 l 1
+ 753 673 866 634 924 581 c 0
+ 982 528 1012 444 1012 330 c 0
+ 1012 211 970 121 887 61 c 0
+ 804 1 680 -29 515 -29 c 0
+ 445 -29 373 -24 298 -12 c 0
+ 223 0 147 18 68 41 c 1
+ 68 313 l 1
+ 133 278 200 252 269 235 c 0
+ 338 218 408 209 479 209 c 0
+ 543 209 591 219 623 238 c 0
+ 655 257 672 286 672 324 c 0
+ 672 356 660 380 638 396 c 0
+ 616 412 572 423 505 432 c 2
+ 447 440 l 2
+ 301 460 198 497 139 551 c 0
+ 80 605 51 687 51 797 c 0
+ 51 916 88 1004 163 1061 c 0
+ 238 1118 353 1147 508 1147 c 0xb8
+ 569 1147 633 1143 700 1134 c 0
+ 773 1120 852 1098 937 1069 c 1xd8
 EndSplineSet
 EndChar
 
@@ -2557,30 +2615,30 @@ StartChar: t
 Encoding: 116 116 85
 Width: 851
 Flags: W
-HStem: 0 154<426 719> 977 143<20 155 340 719>
-VStem: 155 185<274.336 977 1120 1438>
+HStem: 0 256<527.905 808> 864 256<-5 141 499 836>
+VStem: 141 358<284.856 864 1120 1438>
 LayerCount: 2
 Fore
 SplineSet
-155 1438 m 1
- 340 1438 l 1
- 340 1120 l 1
- 719 1120 l 1
- 719 977 l 1
- 340 977 l 1
- 340 369 l 2
- 340 284.333 350.667 228.333 372 201 c 0
- 397.333 169.667 450 154 530 154 c 2
- 719 154 l 1
- 719 0 l 1
- 530 0 l 2
- 390.667 0 293.333 26.6667 238 80 c 0
- 182.667 134 155 230.333 155 369 c 2
- 155 977 l 1
- 20 977 l 1
- 20 1120 l 1
- 155 1120 l 1
- 155 1438 l 1
+499 1438 m 1
+ 499 1120 l 1
+ 836 1120 l 1
+ 836 864 l 1
+ 499 864 l 1
+ 499 389 l 2
+ 499 337 508 302 527 284 c 0
+ 546 266 584 256 640 256 c 2
+ 808 256 l 1
+ 808 0 l 1
+ 514 0 l 2
+ 379 0 283 29 226 88 c 0
+ 169 147 141 248 141 389 c 2
+ 141 864 l 1
+ -5 864 l 1
+ -5 1120 l 1
+ 141 1120 l 1
+ 141 1438 l 1
+ 499 1438 l 1
 EndSplineSet
 Kerns2: 243 18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 240 18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 238 -39 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 237 -39 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 90 -20 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 87 -20 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 85 -16 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 14 -39 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2589,27 +2647,32 @@ StartChar: u
 Encoding: 117 117 86
 Width: 1311
 Flags: W
-HStem: -29 160<434.533 633.867> 1100 20G<817 1001>
-VStem: 127 184<332 1117> 817 184<0 172 347.2 1120>
+HStem: -29 271<422.5 663.346> 0 21G<830 1188> 1100 20G<111 471 830 1188>
+VStem: 111 360<292.77 1120> 830 358<0 162 347.527 1120>
 LayerCount: 2
 Fore
 SplineSet
-127 431 m 2
- 127 1117 l 1
- 311 1117 l 1
- 311 438 l 2
- 311 332 329.167 253.5 365.5 202.5 c 0
- 401.833 151.5 456.333 127.667 529 131 c 0
- 609.667 131 678.667 164.667 736 232 c 0
- 790 294.667 817 379 817 485 c 2
- 817 1120 l 1
- 1001 1120 l 1
- 1001 0 l 1
- 817 0 l 1
- 817 172 l 1
- 729 38 620 -29 490 -29 c 0
- 368.667 -32.3333 277.833 4.33333 217.5 81 c 0
- 157.167 157.667 127 274.333 127 431 c 2
+111 436 m 2xb8
+ 111 1120 l 1
+ 471 1120 l 1
+ 471 1008 l 2
+ 471 947 471 872 470 780 c 0
+ 469 688 469 627 469 596 c 0
+ 469 506 471 442 475 402 c 0
+ 479 362 486 333 496 315 c 0
+ 509 292 526 274 547 261 c 0
+ 568 248 592 242 619 242 c 0xb8
+ 685 242 736 271 774 328 c 0
+ 812 385 830 465 830 567 c 2
+ 830 1120 l 1
+ 1188 1120 l 1
+ 1188 0 l 1
+ 830 0 l 1x78
+ 830 162 l 1
+ 779 97 725 49 669 18 c 0
+ 613 -13 551 -29 483 -29 c 0
+ 362 -29 269 11 206 90 c 0
+ 143 169 111 285 111 436 c 2xb8
 EndSplineSet
 EndChar
 
@@ -2617,19 +2680,18 @@ StartChar: v
 Encoding: 118 118 87
 Width: 1185
 Flags: W
-HStem: 0 21G<416 584>
-VStem: 6 1000<1117 1117>
+HStem: 0 21G<440.446 744.571> 1100 20G<25 374.788 810.238 1161>
 LayerCount: 2
 Fore
 SplineSet
-416 0 m 1
- 6 1117 l 1
- 201 1117 l 1
- 512 234 l 1
- 811 1117 l 1
- 1006 1117 l 1
- 584 0 l 1
- 416 0 l 1
+25 1120 m 1
+ 369 1120 l 1
+ 593 346 l 1
+ 816 1120 l 1
+ 1161 1120 l 1
+ 737 0 l 1
+ 448 0 l 1
+ 25 1120 l 1
 EndSplineSet
 Kerns2: 248 -170 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 240 31 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 238 -39 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 237 -39 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 215 -12 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 181 -16 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 163 -39 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 80 -16 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 70 -16 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 66 -39 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 15 -170 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 14 -39 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 13 -170 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2638,24 +2700,24 @@ StartChar: w
 Encoding: 119 119 88
 Width: 1822
 Flags: W
-HStem: 0 21G<305 478 1022 1196> 1100 20G<1305 1489>
+HStem: 0 21G<317.179 738.869 1101.13 1498.93> 1100 20G<52 404.804 765.144 1072.91 1435.09 1770>
 LayerCount: 2
 Fore
 SplineSet
-305 0 m 1
- 31 1117 l 1
- 215 1117 l 1
- 412 252 l 1
- 677 1117 l 1
- 832 1117 l 1
- 1104 252 l 1
- 1305 1120 l 1
- 1489 1120 l 1
- 1196 0 l 1
- 1022 0 l 1
- 749 861 l 1
- 478 0 l 1
- 305 0 l 1
+52 1120 m 1
+ 400 1120 l 1
+ 584 354 l 1
+ 770 1120 l 1
+ 1068 1120 l 1
+ 1254 362 l 1
+ 1440 1120 l 1
+ 1770 1120 l 1
+ 1494 0 l 1
+ 1106 0 l 1
+ 920 764 l 1
+ 734 0 l 1
+ 322 0 l 1
+ 52 1120 l 1
 EndSplineSet
 Kerns2: 248 -68 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 240 20 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 238 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 237 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 163 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 66 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 15 -68 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 14 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 13 -68 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2664,24 +2726,23 @@ StartChar: x
 Encoding: 120 120 89
 Width: 1238
 Flags: W
-HStem: 0 21G<15 232 796 1013> 1100 20G<10 227>
-VStem: 10 1003<1117 1120>
+HStem: 0 21G<4 387.785 850.102 1234> 1100 20G<24 407.494 830.386 1214>
 LayerCount: 2
 Fore
 SplineSet
-796 1117 m 1
- 1013 1117 l 1
- 633 575 l 1
- 1013 0 l 1
- 796 0 l 1
- 516 440 l 1
- 232 0 l 1
- 15 0 l 1
- 408 586 l 1
- 10 1120 l 1
- 227 1120 l 1
- 524 721 l 1
- 796 1117 l 1
+418 573 m 1
+ 24 1120 l 1
+ 394 1120 l 1
+ 618 788 l 1
+ 844 1120 l 1
+ 1214 1120 l 1
+ 820 575 l 1
+ 1234 0 l 1
+ 864 0 l 1
+ 618 354 l 1
+ 374 0 l 1
+ 4 0 l 1
+ 418 573 l 1
 EndSplineSet
 Kerns2: 238 -47 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 237 -47 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 215 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 181 -25 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 164 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 80 -25 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 72 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 70 -25 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 69 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 68 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 14 -47 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2690,26 +2751,25 @@ StartChar: y
 Encoding: 121 121 90
 Width: 1179
 Flags: W
-HStem: -429 154<107 293.867>
-VStem: 6 1007<1117 1117>
+HStem: -442 235<186 418.723> 1100 20G<13 323.605 844.526 1154>
 LayerCount: 2
 Fore
 SplineSet
-1013 1117 m 1
- 573 -102 l 2
- 548 -218 518 -296 483 -336 c 0
- 427.667 -398 351.333 -429 254 -429 c 2
- 107 -429 l 1
- 107 -275 l 1
- 215 -275 l 2
- 275.667 -275 322.333 -254.667 355 -214 c 0
- 373.667 -190.667 397.333 -142.333 426 -69 c 1
- 442 0 l 1
- 6 1117 l 1
- 201 1117 l 1
- 509 238 l 1
- 818 1117 l 1
- 1013 1117 l 1
+13 1120 m 1
+ 316 1120 l 1
+ 605 360 l 1
+ 851 1120 l 1
+ 1154 1120 l 1
+ 702 -106 l 2
+ 657 -231 604 -318 544 -368 c 0
+ 484 -418 403 -442 304 -442 c 2
+ 186 -442 l 1
+ 186 -207 l 1
+ 293 -207 l 2
+ 351 -207 393 -197 420 -178 c 0
+ 447 -159 467 -124 482 -74 c 1
+ 492 -43 l 1
+ 13 1120 l 1
 EndSplineSet
 Kerns2: 248 -170 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 240 31 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 238 -39 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 237 -39 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 215 -12 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 181 -16 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 164 -16 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 163 -39 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 82 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 80 -16 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 72 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 70 -16 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 69 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 68 -16 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 66 -39 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 15 -180 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 14 -39 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 13 -180 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -2718,21 +2778,21 @@ StartChar: z
 Encoding: 122 122 91
 Width: 1030
 Flags: W
-HStem: 0 146<239 874> 972 145<72 684>
+HStem: 0 256<428 986> 864 256<62 596>
 LayerCount: 2
 Fore
 SplineSet
-72 972 m 1
- 72 1117 l 1
- 874 1117 l 1
- 874 951 l 1
- 239 146 l 1
- 874 146 l 1
- 874 0 l 1
- 49 0 l 1
- 49 167 l 1
- 684 972 l 1
- 72 972 l 1
+62 1120 m 1
+ 986 1120 l 1
+ 986 870 l 1
+ 428 256 l 1
+ 986 256 l 1
+ 986 0 l 1
+ 38 0 l 1
+ 38 250 l 1
+ 596 864 l 1
+ 62 864 l 1
+ 62 1120 l 1
 EndSplineSet
 Kerns2: 238 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 237 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 181 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 164 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 82 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 80 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 72 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 70 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 69 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 68 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 14 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -4320,7 +4380,7 @@ EndChar
 
 StartChar: agrave
 Encoding: 224 224 157
-Width: 1226
+Width: 1382
 Flags: HW
 HStem: -27 154<403.467 585.467> 563 157<445 647.414> 993 156<382.267 627.733> 1264 374<658.5 837.5>
 VStem: 57 171<249.333 463.4> 415.5 422<1264 1638> 759 187<0 132.535 414 563>
@@ -4332,8 +4392,8 @@ EndChar
 
 StartChar: aacute
 Encoding: 225 225 158
-Width: 1226
-Flags: W
+Width: 1382
+Flags: HW
 HStem: -27 154<403.467 585.467> 563 157<445 647.414> 993 156<382.267 627.733> 1262.17 375<346.667 583.667>
 VStem: 57 171<249.333 463.4> 346.667 459<1262.17 1637.17> 759 187<0 132.535 414 563>
 LayerCount: 2
@@ -4344,8 +4404,8 @@ EndChar
 
 StartChar: acircumflex
 Encoding: 226 226 159
-Width: 1226
-Flags: W
+Width: 1382
+Flags: HW
 HStem: -27 154<403.467 585.467> 563 157<445 647.414> 993 156<382.267 627.733> 1268 384<465 911>
 VStem: 57 171<249.333 463.4> 209 702<1268 1268> 759 187<0 132.535 414 563>
 LayerCount: 2
@@ -4356,8 +4416,8 @@ EndChar
 
 StartChar: atilde
 Encoding: 227 227 160
-Width: 1226
-Flags: W
+Width: 1382
+Flags: HW
 HStem: -27 154<403.467 585.467> 563 157<445 647.414> 993 156<382.267 627.733> 1347 147<676.088 815.667> 1467 148<293.333 432.653>
 VStem: 57 171<249.333 463.4> 759 187<0 132.535 414 563>
 LayerCount: 2
@@ -4368,8 +4428,8 @@ EndChar
 
 StartChar: adieresis
 Encoding: 228 228 161
-Width: 1226
-Flags: W
+Width: 1382
+Flags: HW
 HStem: -27 154<403.467 585.467> 563 157<445 647.414> 993 156<382.267 627.733> 1351 203<201 404 614 817>
 VStem: 57 171<249.333 463.4> 201 203<1351 1554> 614 203<1351 1554> 759 187<0 132.535 414 563>
 LayerCount: 2
@@ -4380,8 +4440,8 @@ EndChar
 
 StartChar: aring
 Encoding: 229 229 162
-Width: 1226
-Flags: W
+Width: 1382
+Flags: HW
 HStem: -27 154<403.467 585.467> 563 157<445 647.414> 993 156<382.267 627.733> 1147 123<434.855 551.442> 1573 123<434.855 551.442>
 VStem: 57 171<249.333 463.4> 221 122<1361.86 1481.35> 647 122<1365.55 1477.68> 759 187<0 132.535 414 563>
 LayerCount: 2
@@ -4478,7 +4538,7 @@ EndChar
 
 StartChar: egrave
 Encoding: 232 232 165
-Width: 1216
+Width: 1389
 Flags: HW
 HStem: -26 157<298.443 783.467> 539 144<246 866> 985 157<355.133 691.039> 1268 374<502 681>
 VStem: 259 422<1268 1642> 866 174<630 812>
@@ -4490,8 +4550,8 @@ EndChar
 
 StartChar: eacute
 Encoding: 233 233 166
-Width: 1216
-Flags: W
+Width: 1389
+Flags: HW
 HStem: -26 157<298.443 783.467> 539 144<246 866> 985 157<355.133 691.039> 1262 375<454 691>
 VStem: 454 459<1262 1637> 866 174<630 812>
 LayerCount: 2
@@ -4502,8 +4562,8 @@ EndChar
 
 StartChar: ecircumflex
 Encoding: 234 234 167
-Width: 1216
-Flags: W
+Width: 1389
+Flags: HW
 HStem: -26 157<298.443 783.467> 539 144<246 866> 985 157<355.133 691.039> 1260 384<468 914>
 VStem: 212 702<1260 1260> 866 174<630 812>
 LayerCount: 2
@@ -4514,8 +4574,8 @@ EndChar
 
 StartChar: edieresis
 Encoding: 235 235 168
-Width: 1216
-Flags: W
+Width: 1389
+Flags: HW
 HStem: -26 157<298.443 783.467> 539 144<246 866> 985 157<355.133 691.039> 1360 203<247 450 660 863>
 VStem: 247 203<1360 1563> 660 203<1360 1563> 866 174<630 812>
 LayerCount: 2
@@ -4642,8 +4702,8 @@ EndChar
 
 StartChar: ntilde
 Encoding: 241 241 174
-Width: 1311
-Flags: W
+Width: 1458
+Flags: HW
 HStem: 0 21<135 323 825 1009> 987 160<479.867 821.933> 1342 147<710.088 849.667> 1462 148<327.333 466.653>
 VStem: 135 188<0 769.933 946 1120> 825 184<0 270.746>
 LayerCount: 2
@@ -4654,7 +4714,7 @@ EndChar
 
 StartChar: ograve
 Encoding: 242 242 175
-Width: 1264
+Width: 1407
 Flags: HW
 HStem: -29 156<424.533 686.267> 991 156<427.133 688> 1264 374<473.167 652.167>
 VStem: 57 194<403.867 713.267> 230.167 422<1264 1638> 860 195<404.6 711.4>
@@ -4666,8 +4726,8 @@ EndChar
 
 StartChar: oacute
 Encoding: 243 243 176
-Width: 1264
-Flags: W
+Width: 1407
+Flags: HW
 HStem: -29 156<424.533 686.267> 991 156<427.133 688> 1262 375<434 671>
 VStem: 57 194<403.867 713.267> 434 459<1262 1637> 860 195<404.6 711.4>
 LayerCount: 2
@@ -4678,8 +4738,8 @@ EndChar
 
 StartChar: ocircumflex
 Encoding: 244 244 177
-Width: 1264
-Flags: W
+Width: 1407
+Flags: HW
 HStem: -29 156<424.533 686.267> 991 156<427.133 688> 1258 384<462 908>
 VStem: 57 194<403.867 713.267> 206 702<1258 1258> 860 195<404.6 711.4>
 LayerCount: 2
@@ -4690,8 +4750,8 @@ EndChar
 
 StartChar: otilde
 Encoding: 245 245 178
-Width: 1264
-Flags: W
+Width: 1407
+Flags: HW
 HStem: -29 156<424.533 686.267> 991 156<427.133 688> 1342 147<703.088 842.667> 1462 148<320.333 459.653>
 VStem: 57 194<403.867 713.267> 860 195<404.6 711.4>
 LayerCount: 2
@@ -4702,8 +4762,8 @@ EndChar
 
 StartChar: odieresis
 Encoding: 246 246 179
-Width: 1264
-Flags: W
+Width: 1407
+Flags: HW
 HStem: -29 156<424.533 686.267> 991 156<427.133 688> 1355 203<248 451 661 864>
 VStem: 57 194<403.867 713.267> 248 203<1355 1558> 661 203<1355 1558> 860 195<404.6 711.4>
 LayerCount: 2
@@ -4781,7 +4841,7 @@ EndChar
 
 StartChar: ugrave
 Encoding: 249 249 182
-Width: 1311
+Width: 1458
 Flags: HW
 HStem: -29 160<434.533 633.867> 1100 20<817 1001> 1264 374<497 676>
 VStem: 127 184<332 1117> 254 422<1264 1638> 817 184<0 172 347.2 1120>
@@ -4793,8 +4853,8 @@ EndChar
 
 StartChar: uacute
 Encoding: 250 250 183
-Width: 1311
-Flags: W
+Width: 1458
+Flags: HW
 HStem: -29 160<434.533 633.867> 1100 20<817 1001> 1262.17 375<451.667 688.667>
 VStem: 127 184<332 1117> 451.667 459<1262.17 1637.17> 817 184<0 172 347.2 1120>
 LayerCount: 2
@@ -4805,8 +4865,8 @@ EndChar
 
 StartChar: ucircumflex
 Encoding: 251 251 184
-Width: 1311
-Flags: W
+Width: 1458
+Flags: HW
 HStem: -29 160<434.533 633.867> 1100 20<817 1001> 1262 384<470 916>
 VStem: 127 184<332 1117> 214 702<1262 1262> 817 184<0 172 347.2 1120>
 LayerCount: 2
@@ -4817,8 +4877,8 @@ EndChar
 
 StartChar: udieresis
 Encoding: 252 252 185
-Width: 1311
-Flags: W
+Width: 1458
+Flags: HW
 HStem: -29 160<434.533 633.867> 1100 20<817 1001> 1350 203<258.5 461.5 671.5 874.5>
 VStem: 127 184<332 1117> 258.5 203<1350 1553> 671.5 203<1350 1553> 817 184<0 172 347.2 1120>
 LayerCount: 2
@@ -4830,7 +4890,7 @@ EndChar
 StartChar: yacute
 Encoding: 253 253 186
 Width: 1179
-Flags: W
+Flags: HW
 HStem: -429 154<107 293.867> 1262 375<432.5 669.5>
 VStem: 6 1007<1117 1117> 432.5 459<1262 1637>
 LayerCount: 2
@@ -4875,7 +4935,7 @@ EndChar
 StartChar: ydieresis
 Encoding: 255 255 188
 Width: 1179
-Flags: W
+Flags: HW
 HStem: -429 154<107 293.867> 1350 203<203 406 616 819>
 VStem: 6 1007<1117 1117> 203 203<1350 1553> 616 203<1350 1553>
 LayerCount: 2
@@ -4968,8 +5028,8 @@ EndChar
 
 StartChar: cacute
 Encoding: 263 263 192
-Width: 1080
-Flags: W
+Width: 1214
+Flags: HW
 HStem: -22 156<435.2 735.867> 1262.17 375<470.667 707.667>
 VStem: 82 194<337.3 751.133> 470.667 459<1262.17 1637.17>
 LayerCount: 2
@@ -4992,8 +5052,8 @@ EndChar
 
 StartChar: ccaron
 Encoding: 269 269 194
-Width: 1080
-Flags: W
+Width: 1214
+Flags: HW
 HStem: -22 156<435.2 735.867> 1271 376<223 468>
 VStem: 82 194<337.3 751.133> 223 638<1647 1647>
 LayerCount: 2
@@ -5005,7 +5065,7 @@ EndChar
 StartChar: dcaron
 Encoding: 271 271 195
 Width: 1674
-Flags: W
+Flags: HW
 HStem: -24 154<409.667 634.133> 998 154<410.1 634.133> 1057 509<1092 1286>
 VStem: 59 190<404.733 713.267> 806 184<5 173 409.733 718.267 955 1561> 1092 377<1057 1566>
 LayerCount: 2
@@ -5105,8 +5165,8 @@ EndChar
 
 StartChar: gbreve
 Encoding: 287 287 199
-Width: 1289
-Flags: W
+Width: 1466
+Flags: HW
 HStem: -412 150<337.653 757.867> 12 154<428.102 635.867> 1005 155.41<408.153 635.294> 1321 137<392.5 688.9>
 VStem: 59 190<418.733 726.4> 229 626<1493.38 1608 1608 1608> 806 184<-211.333 209 431.6 740.133 962 1132>
 LayerCount: 2
@@ -5347,7 +5407,7 @@ EndChar
 StartChar: lcaron
 Encoding: 318 318 211
 Width: 1003
-Flags: W
+Flags: HW
 HStem: 0 21<139 323> 1061 495<438 628>
 VStem: 139 184<0 1556> 438 367<1061 1556>
 LayerCount: 2
@@ -5594,8 +5654,8 @@ EndChar
 
 StartChar: scaron
 Encoding: 353 353 219
-Width: 1054
-Flags: W
+Width: 1219
+Flags: HW
 HStem: -41 154<298.856 587.533> 981 154<342.2 643.267> 1253 376<152 397>
 VStem: 76 178<740.8 952.933> 152 638<1629 1629> 696 189<143.6 347.133>
 LayerCount: 2
@@ -5607,7 +5667,7 @@ EndChar
 StartChar: tcaron
 Encoding: 357 357 220
 Width: 1268
-Flags: W
+Flags: HW
 HStem: 0 154<426 719> 977 143<20 155 340 719> 1192 375<581 818>
 VStem: 155 185<274.336 977 1120 1438> 581 459<1192 1567>
 LayerCount: 2
@@ -5646,7 +5706,7 @@ EndChar
 StartChar: zcaron
 Encoding: 382 382 223
 Width: 1077
-Flags: W
+Flags: HW
 HStem: 0 146<239 874> 972 145<72 684> 1262 376<155 400>
 VStem: 155 638<1638 1638>
 LayerCount: 2
@@ -7506,8 +7566,8 @@ EndChar
 
 StartChar: abreve
 Encoding: 259 259 299
-Width: 1226
-Flags: W
+Width: 1382
+Flags: HW
 HStem: -27 154<403.467 585.467> 563 157<445 647.414> 993 156<382.267 627.733> 1247 137<392.5 688.9>
 VStem: 57 171<249.333 463.4> 229 626<1419.38 1534 1534 1534> 759 187<0 132.535 414 563>
 LayerCount: 2
@@ -7518,8 +7578,8 @@ EndChar
 
 StartChar: amacron
 Encoding: 257 257 300
-Width: 1226
-Flags: W
+Width: 1382
+Flags: HW
 HStem: -27 154<403.467 585.467> 563 157<445 647.414> 993 156<382.267 627.733> 1340 149<155 893>
 VStem: 57 171<249.333 463.4> 759 187<0 132.535 414 563>
 LayerCount: 2
@@ -7536,8 +7596,8 @@ EndChar
 
 StartChar: ccircumflex
 Encoding: 265 265 301
-Width: 1080
-Flags: W
+Width: 1214
+Flags: HW
 HStem: -22 156<435.2 735.867> 1291 384<480 926>
 VStem: 82 194<337.3 751.133> 224 702<1291 1291>
 LayerCount: 2
@@ -7548,8 +7608,8 @@ EndChar
 
 StartChar: cdotaccent
 Encoding: 267 267 302
-Width: 1080
-Flags: W
+Width: 1214
+Flags: HW
 HStem: -22 156<435.2 735.867> 1309 204<454 658>
 VStem: 82 194<337.3 751.133> 454 204<1309 1513>
 LayerCount: 2
@@ -7601,8 +7661,8 @@ EndChar
 
 StartChar: ebreve
 Encoding: 277 277 304
-Width: 1216
-Flags: W
+Width: 1389
+Flags: HW
 HStem: -26 157<298.443 783.467> 539 144<246 866> 985 157<355.133 691.039> 1252.5 137<442.5 738.9>
 VStem: 279 626<1424.88 1539.5 1539.5 1539.5> 866 174<630 812>
 LayerCount: 2
@@ -7613,8 +7673,8 @@ EndChar
 
 StartChar: ecaron
 Encoding: 283 283 305
-Width: 1216
-Flags: W
+Width: 1389
+Flags: HW
 HStem: -26 157<298.443 783.467> 539 144<246 866> 985 157<355.133 691.039> 1286 376<247 492>
 VStem: 247 638<1662 1662> 866 174<630 812>
 LayerCount: 2
@@ -7625,8 +7685,8 @@ EndChar
 
 StartChar: edotaccent
 Encoding: 279 279 306
-Width: 1216
-Flags: W
+Width: 1389
+Flags: HW
 HStem: -26 157<298.443 783.467> 539 144<246 866> 985 157<355.133 691.039> 1300 204<480.5 684.5>
 VStem: 480.5 204<1300 1504> 866 174<630 812>
 LayerCount: 2
@@ -7637,8 +7697,8 @@ EndChar
 
 StartChar: emacron
 Encoding: 275 275 307
-Width: 1216
-Flags: W
+Width: 1389
+Flags: HW
 HStem: -26 157<298.443 783.467> 539 144<246 866> 985 157<355.133 691.039> 1328 161<208 960>
 VStem: 866 174<630 812>
 LayerCount: 2
@@ -7672,8 +7732,8 @@ EndChar
 
 StartChar: gcommaaccent
 Encoding: 291 291 309
-Width: 1289
-Flags: W
+Width: 1466
+Flags: HW
 HStem: -412 150<337.653 757.867> 12 154<428.102 635.867> 1005 155.41<408.153 635.294>
 VStem: 59 190<418.733 726.4> 806 184<-211.333 209 431.6 740.133 962 1132>
 LayerCount: 2
@@ -7692,8 +7752,8 @@ EndChar
 
 StartChar: gcircumflex
 Encoding: 285 285 310
-Width: 1289
-Flags: W
+Width: 1466
+Flags: HW
 HStem: -412 150<337.653 757.867> 12 154<428.102 635.867> 1005 155.41<408.153 635.294> 1296 384<473 919>
 VStem: 59 190<418.733 726.4> 217 702<1296 1296> 806 184<-211.333 209 431.6 740.133 962 1132>
 LayerCount: 2
@@ -7704,8 +7764,8 @@ EndChar
 
 StartChar: gdotaccent
 Encoding: 289 289 311
-Width: 1289
-Flags: W
+Width: 1466
+Flags: HW
 HStem: -412 150<337.653 757.867> 12 154<428.102 635.867> 1005 155.41<408.153 635.294> 1296 204<453 657>
 VStem: 59 190<418.733 726.4> 453 204<1296 1500> 806 184<-211.333 209 431.6 740.133 962 1132>
 LayerCount: 2
@@ -7716,8 +7776,8 @@ EndChar
 
 StartChar: hcircumflex
 Encoding: 293 293 312
-Width: 1311
-Flags: W
+Width: 1458
+Flags: HW
 HStem: 0 21<135 320 826 1010> 987 160<506.667 801.333> 1666 384<488 934>
 VStem: 135 185<0 769.933 946 1556> 232 702<1666 1666> 826 184<0 944.733>
 LayerCount: 2
@@ -7796,8 +7856,8 @@ EndChar
 
 StartChar: nacute
 Encoding: 324 324 317
-Width: 1311
-Flags: W
+Width: 1458
+Flags: HW
 HStem: 0 21<135 323 825 1009> 987 160<479.867 821.933> 1302 375<449 686>
 VStem: 135 188<0 769.933 946 1120> 449 459<1302 1677> 825 184<0 270.746>
 LayerCount: 2
@@ -7808,8 +7868,8 @@ EndChar
 
 StartChar: ncaron
 Encoding: 328 328 318
-Width: 1311
-Flags: W
+Width: 1458
+Flags: HW
 HStem: 0 21<135 323 825 1009> 987 160<479.867 821.933> 1291 376<268 513>
 VStem: 135 188<0 769.933 946 1120> 268 638<1667 1667> 825 184<0 270.746>
 LayerCount: 2
@@ -7820,8 +7880,8 @@ EndChar
 
 StartChar: ohungarumlaut
 Encoding: 337 337 319
-Width: 1264
-Flags: W
+Width: 1407
+Flags: HW
 HStem: -29 156<424.533 686.267> 991 156<427.133 688> 1302 376<656 861>
 VStem: 57 194<403.867 713.267> 250 789<1302 1678> 860 195<404.6 711.4>
 LayerCount: 2
@@ -7833,7 +7893,7 @@ EndChar
 StartChar: racute
 Encoding: 341 341 320
 Width: 888
-Flags: W
+Flags: HW
 HStem: 0 21<135 323> 949 164<555.695 700.003> 1289 375<237 474>
 VStem: 135 188<0 929.6 945 1117> 237 459<1289 1664>
 LayerCount: 2
@@ -7845,7 +7905,7 @@ EndChar
 StartChar: rcaron
 Encoding: 345 345 321
 Width: 888
-Flags: W
+Flags: HW
 HStem: 0 21<135 323> 949 164<555.695 700.003> 1291 376<101 346>
 VStem: 101 638<1667 1667> 135 188<0 929.6 945 1117>
 LayerCount: 2
@@ -7856,8 +7916,8 @@ EndChar
 
 StartChar: sacute
 Encoding: 347 347 322
-Width: 1054
-Flags: W
+Width: 1219
+Flags: HW
 HStem: -41 154<298.856 587.533> 981 154<342.2 643.267> 1310 375<292 529>
 VStem: 76 178<740.8 952.933> 292 459<1310 1685> 696 189<143.6 347.133>
 LayerCount: 2
@@ -7968,8 +8028,8 @@ EndChar
 
 StartChar: uhungarumlaut
 Encoding: 369 369 325
-Width: 1311
-Flags: W
+Width: 1458
+Flags: HW
 HStem: -29 160<434.533 633.867> 1100 20<817 1001> 1302 376<656 861>
 VStem: 127 184<332 1117> 250 789<1302 1678> 817 184<0 172 347.2 1120>
 LayerCount: 2
@@ -7980,8 +8040,8 @@ EndChar
 
 StartChar: uring
 Encoding: 367 367 326
-Width: 1311
-Flags: W
+Width: 1458
+Flags: HW
 HStem: -29 160<434.533 633.867> 1100 20<817 1001> 1158 123<481.855 598.442> 1584 123<481.855 598.442>
 VStem: 127 184<332 1117> 268 122<1372.86 1492.35> 694 122<1376.55 1488.68> 817 184<0 172 347.2 1120>
 LayerCount: 2
@@ -7993,7 +8053,7 @@ EndChar
 StartChar: zacute
 Encoding: 378 378 327
 Width: 1077
-Flags: W
+Flags: HW
 HStem: 0 146<239 874> 972 145<72 684> 1302 375<286 523>
 VStem: 286 459<1302 1677>
 LayerCount: 2
@@ -8005,7 +8065,7 @@ EndChar
 StartChar: zdotaccent
 Encoding: 380 380 328
 Width: 1077
-Flags: W
+Flags: HW
 HStem: 0 146<239 874> 972 145<72 684> 1289 204<345 549>
 VStem: 345 204<1289 1493>
 LayerCount: 2
@@ -8103,8 +8163,8 @@ EndChar
 
 StartChar: umacron
 Encoding: 363 363 333
-Width: 1311
-Flags: W
+Width: 1458
+Flags: HW
 HStem: -29 160<434.533 633.867> 1100 20<817 1001> 1281 161<190 942>
 VStem: 127 184<332 1117> 817 184<0 172 347.2 1120>
 LayerCount: 2
@@ -8472,7 +8532,7 @@ EndChar
 StartChar: afii10031
 Encoding: 1053 1053 349
 Width: 1714
-Flags: HW
+Flags: W
 HStem: 0 21<138.5 523.5 1041.5 1426.5> 633 291<523.5 1041.5>
 VStem: 138.5 385<0 633 924 1493> 1041.5 385<0 633 924 1493>
 LayerCount: 2
@@ -8537,7 +8597,7 @@ EndChar
 StartChar: afii10036
 Encoding: 1058 1058 354
 Width: 1254
-Flags: HW
+Flags: W
 HStem: 0 21<435 820> 1202 291<8 435 820 1246>
 VStem: 435 385<0 1202>
 LayerCount: 2
@@ -8903,8 +8963,8 @@ EndChar
 
 StartChar: afii10065
 Encoding: 1072 1072 368
-Width: 1226
-Flags: W
+Width: 1382
+Flags: HW
 HStem: -27 154<403.467 585.467> 563 157<445 647.414> 993 156<382.267 627.733>
 VStem: 57 171<249.333 463.4> 759 187<0 132.535 414 563>
 LayerCount: 2
@@ -9033,8 +9093,8 @@ EndChar
 
 StartChar: afii10070
 Encoding: 1077 1077 373
-Width: 1216
-Flags: W
+Width: 1389
+Flags: HW
 HStem: -26 157<298.443 783.467> 539 144<246 866> 985 157<355.133 691.039>
 VStem: 866 174<630 812>
 LayerCount: 2
@@ -9263,8 +9323,8 @@ EndChar
 
 StartChar: afii10080
 Encoding: 1086 1086 382
-Width: 1264
-Flags: W
+Width: 1407
+Flags: HW
 HStem: -29 156<424.533 686.267> 991 156<427.133 688>
 VStem: 57 194<403.867 713.267> 860 195<404.6 711.4>
 LayerCount: 2
@@ -9295,8 +9355,8 @@ EndChar
 
 StartChar: afii10082
 Encoding: 1088 1088 384
-Width: 1289
-Flags: W
+Width: 1466
+Flags: HW
 HStem: 5 147<416.933 689.067> 975 147<416.933 689.067>
 VStem: 135 179<-412 86 412.23 711.471 1090.11 1097> 850 182<418.4 708.733>
 LayerCount: 2
@@ -9306,8 +9366,8 @@ EndChar
 
 StartChar: afii10083
 Encoding: 1089 1089 385
-Width: 1080
-Flags: W
+Width: 1214
+Flags: HW
 HStem: -22 156<435.2 735.867>
 VStem: 82 194<337.3 751.133>
 LayerCount: 2
@@ -9411,8 +9471,8 @@ EndChar
 
 StartChar: afii10087
 Encoding: 1093 1093 389
-Width: 1238
-Flags: W
+Width: 1321
+Flags: HW
 HStem: 0 21<15 232 796 1013> 1100 20<10 227>
 VStem: 10 1003<1117 1120>
 LayerCount: 2
@@ -9701,7 +9761,7 @@ EndChar
 
 StartChar: uni0450
 Encoding: 1104 1104 400
-Width: 1216
+Width: 1389
 Flags: HW
 HStem: -26 157<298.443 783.467> 539 144<246 866> 985 157<355.133 691.039> 1268 374<502 681>
 VStem: 259 422<1268 1642> 866 174<630 812>
@@ -9712,8 +9772,8 @@ EndChar
 
 StartChar: afii10071
 Encoding: 1105 1105 401
-Width: 1216
-Flags: W
+Width: 1389
+Flags: HW
 HStem: -26 157<298.443 783.467> 539 144<246 866> 985 157<355.133 691.039> 1360 203<247 450 660 863>
 VStem: 247 203<1360 1563> 660 203<1360 1563> 866 174<630 812>
 LayerCount: 2
@@ -9757,7 +9817,7 @@ EndChar
 StartChar: afii10055
 Encoding: 1030 1030 405
 Width: 990
-Flags: HW
+Flags: W
 HStem: 0 266<131.5 319.5 666.5 858.5> 1223 266<131.5 319.5 666.5 858.5>
 VStem: 131.5 727<0 266 1223 1489>
 LayerCount: 2
@@ -19706,7 +19766,7 @@ EndChar
 StartChar: scommaaccent
 Encoding: 537 537 972
 Width: 1054
-Flags: W
+Flags: HW
 HStem: -410.056 276<374 451> -41 154<298.856 587.533> 981 154<342.2 643.267>
 VStem: 76 178<740.8 952.933> 288 308 696 189<143.6 347.133>
 LayerCount: 2
@@ -19730,9 +19790,9 @@ EndChar
 StartChar: uni021B
 Encoding: 539 539 974
 Width: 851
-Flags: W
-HStem: -398 276<300.5 377.5> 0 154<426 719> 977 143<20 155 340 719>
-VStem: 155 185<274.336 977 1120 1438> 214.5 308
+Flags: HW
+HStem: -398 276<310.5 387.5> 0 154<436 729> 977 143<30 165 350 729>
+VStem: 165 185<274.336 977 1120 1438> 224.5 308
 LayerCount: 2
 Fore
 Refer: 970 806 S 1 0 0 1 -146.5 13 2
@@ -19935,9 +19995,9 @@ BDFChar: 68 99 5 0 3 0 4
 E599)Du]k<
 BDFChar: 69 100 6 0 4 0 6
 (`7MMf[tEK
-BDFChar: 70 101 6 0 4 0 4
+BDFChar: 70 101 5 0 4 0 4
 E7js$GQ7^D
-BDFChar: 71 102 4 0 2 0 6
+BDFChar: 71 102 3 0 2 0 6
 @)1^9^qd_c
 BDFChar: 72 103 6 0 4 -2 4
 GhC[$GSkB"
@@ -19945,7 +20005,7 @@ BDFChar: 73 104 6 0 4 0 6
 ^qfHlf\"gV
 BDFChar: 74 105 3 0 1 0 5
 ^];0c^q]pM
-BDFChar: 75 106 4 0 2 -2 5
+BDFChar: 75 106 3 0 2 -2 5
 ?iXSB?smBX
 BDFChar: 76 107 5 0 4 0 6
 ^qeUli:,A!
@@ -19961,7 +20021,7 @@ BDFChar: 81 112 6 0 4 -2 4
 nCZCGnA)g>
 BDFChar: 82 113 6 0 4 -2 4
 GhC[$GSh7t
-BDFChar: 83 114 5 0 3 0 4
+BDFChar: 83 114 4 0 3 0 4
 nA)iT^]4?7
 BDFChar: 84 115 5 0 3 0 4
 E55j8huE`W
@@ -19973,9 +20033,9 @@ BDFChar: 87 118 6 0 4 0 4
 f\"hq+92BA
 BDFChar: 88 119 8 0 6 0 4
 f%/E"C]FG8
-BDFChar: 89 120 6 0 4 0 4
+BDFChar: 89 120 5 0 4 0 4
 f_BF\fDkmO
-BDFChar: 90 121 6 0 4 -2 4
+BDFChar: 90 121 5 0 4 -2 4
 f\#t<0OVZr
 BDFChar: 91 122 5 0 3 0 4
 n1\7cn,NFg
@@ -20167,11 +20227,11 @@ BDFChar: 184 251 6 0 4 0 7
 E7b0Cf\"i$
 BDFChar: 185 252 6 0 4 0 6
 fDsRVf[tEK
-BDFChar: 186 253 6 0 4 -2 7
+BDFChar: 186 253 5 0 4 -2 7
 0OOn5f_BD>@))aB
 BDFChar: 187 254 6 1 4 -2 6
 J:QR>OHACNJ,fQL
-BDFChar: 188 255 6 0 4 -2 6
+BDFChar: 188 255 5 0 4 -2 6
 fDsRVpi%op^]4?7
 BDFChar: 189 260 8 0 6 -2 6
 3&k_jI)a//"onW'
@@ -20573,7 +20633,7 @@ BDFChar: 387 1091 5 0 4 -2 4
 f\#t<0OVZr
 BDFChar: 388 1092 9 0 7 -2 6
 (`7_VgY7/o(]XO9
-BDFChar: 389 1093 5 0 4 0 4
+BDFChar: 389 1093 6 0 4 0 4
 f_BF\fDkmO
 BDFChar: 390 1094 7 0 6 -1 4
 bfn;TrWW?&
@@ -20809,49 +20869,49 @@ BDFChar: 64 95 6 0 5 -2 -2
 qu?]s
 BDFChar: 65 96 5 0 2 6 7
 ^gI-B
-BDFChar: 66 97 6 0 4 0 4
+BDFChar: 66 97 7 0 4 0 4
 E#<iPGQ7^D
 BDFChar: 67 98 6 0 4 0 7
 ^qdbTf\"jG
 BDFChar: 68 99 5 0 3 0 4
 E599)Du]k<
-BDFChar: 69 100 6 0 4 0 7
+BDFChar: 69 100 7 0 4 0 7
 (`4*7f\"i$
 BDFChar: 70 101 6 0 4 0 4
 E7js$GQ7^D
 BDFChar: 71 102 4 0 2 0 7
 @)0S9^qdb$
-BDFChar: 72 103 6 0 4 -2 4
+BDFChar: 72 103 7 0 4 -2 4
 GhC[$GSkB"
-BDFChar: 73 104 6 0 4 0 7
+BDFChar: 73 104 7 0 4 0 7
 ^qdbTf\"j/
 BDFChar: 74 105 3 0 1 0 6
 ^];0c^qd_c
 BDFChar: 75 106 4 0 2 -2 6
 ?iXSB?smAM^]4?7
-BDFChar: 76 107 7 0 5 0 7
+BDFChar: 76 107 6 0 5 0 7
 ^qdb<nF5)S
 BDFChar: 77 108 3 0 1 0 7
 ^qdb$^qdb$
-BDFChar: 78 109 9 0 7 0 4
+BDFChar: 78 109 10 0 7 0 4
 p=n?VgAh3R
-BDFChar: 79 110 6 0 4 0 4
+BDFChar: 79 110 7 0 4 0 4
 nCZCGfDkmO
 BDFChar: 80 111 6 0 4 0 4
 E7igqDu]k<
-BDFChar: 81 112 6 0 4 -2 4
+BDFChar: 81 112 7 0 4 -2 4
 nCZCGnA)g>
-BDFChar: 82 113 6 0 4 -2 4
+BDFChar: 82 113 7 0 4 -2 4
 GhC[$GSh7t
-BDFChar: 83 114 5 0 3 0 4
+BDFChar: 83 114 4 0 3 0 4
 nDM*t^]4?7
-BDFChar: 84 115 5 0 3 0 4
+BDFChar: 84 115 6 0 3 0 4
 nA&Ecn,NFg
-BDFChar: 85 116 4 0 2 0 6
+BDFChar: 85 116 5 0 2 0 6
 ^qemD^qek.
-BDFChar: 86 117 6 0 4 0 4
+BDFChar: 86 117 7 0 4 0 4
 f\"j/GQ7^D
-BDFChar: 87 118 6 0 4 0 4
+BDFChar: 87 118 7 0 4 0 4
 f[t.^+92BA
 BDFChar: 88 119 9 0 7 0 4
 gY:K_AcMf2
@@ -20859,7 +20919,7 @@ BDFChar: 89 120 6 0 4 0 4
 f[t/qfDkmO
 BDFChar: 90 121 6 0 4 -2 4
 f\"j/GVEM*
-BDFChar: 91 122 5 0 3 0 4
+BDFChar: 91 122 6 0 3 0 4
 n1\7cn,NFg
 BDFChar: 92 123 6 1 5 -2 7
 (bdWt0]4W=0Gjci
@@ -20991,29 +21051,29 @@ BDFChar: 155 222 7 0 5 0 6
 _"c-tpqXZF
 BDFChar: 156 223 6 0 5 0 7
 E7ih4nCZOk
-BDFChar: 157 224 6 0 4 0 7
+BDFChar: 157 224 7 0 4 0 7
 ?n_S"(jO\X
-BDFChar: 158 225 6 0 4 0 7
+BDFChar: 158 225 7 0 4 0 7
 (bbr/(jO\X
-BDFChar: 159 226 6 0 4 0 7
+BDFChar: 159 226 7 0 4 0 7
 0PCH*(jO\X
-BDFChar: 160 227 6 0 4 0 7
+BDFChar: 160 227 7 0 4 0 7
 BWqJU(jO\X
-BDFChar: 161 228 6 0 4 0 7
+BDFChar: 161 228 7 0 4 0 7
 f[p1C(jO\X
-BDFChar: 162 229 6 0 4 0 7
+BDFChar: 162 229 7 0 4 0 7
 E7f,K(jO\X
 BDFChar: 163 230 9 0 7 0 4
 IN*dhIfKHK
 BDFChar: 164 231 5 0 3 -2 4
 E599)E%kZ"
-BDFChar: 165 232 6 0 4 0 7
+BDFChar: 165 232 7 0 4 0 7
 ?n_S"f_E7,
-BDFChar: 166 233 6 0 4 0 7
+BDFChar: 166 233 7 0 4 0 7
 0OOm"f_E7,
-BDFChar: 167 234 6 0 4 0 7
+BDFChar: 167 234 7 0 4 0 7
 E7b/0f_E7,
-BDFChar: 168 235 6 0 4 0 7
+BDFChar: 168 235 7 0 4 0 7
 f[p1Cf_E7,
 BDFChar: 169 236 3 0 2 0 7
 ^gI/X^qdb$
@@ -21025,29 +21085,29 @@ BDFChar: 172 239 3 0 2 0 6
 TE)dC^qd_c
 BDFChar: 173 240 6 0 4 0 7
 BJ<P5f\"hq
-BDFChar: 174 241 6 0 4 0 7
+BDFChar: 174 241 7 0 4 0 7
 BWqL+f\"j/
-BDFChar: 175 242 6 0 4 0 7
+BDFChar: 175 242 7 0 4 0 7
 ?n_S"f\"hq
-BDFChar: 176 243 6 0 4 0 7
+BDFChar: 176 243 7 0 4 0 7
 (bbr/f\"hq
-BDFChar: 177 244 6 0 4 0 7
+BDFChar: 177 244 7 0 4 0 7
 E7b/0f\"hq
-BDFChar: 178 245 6 0 4 0 7
+BDFChar: 178 245 7 0 4 0 7
 BWqJUf\"hq
-BDFChar: 179 246 6 0 4 0 7
+BDFChar: 179 246 7 0 4 0 7
 f[p1Cf\"hq
 BDFChar: 180 247 8 0 5 0 6
 0E;+N!!"\Q
 BDFChar: 181 248 6 0 4 0 4
 GaPGNn,NFg
-BDFChar: 182 249 6 0 4 0 7
+BDFChar: 182 249 7 0 4 0 7
 ?n_T5f\"i$
-BDFChar: 183 250 6 0 4 0 7
+BDFChar: 183 250 7 0 4 0 7
 (bbsBf\"i$
-BDFChar: 184 251 6 0 4 0 7
+BDFChar: 184 251 7 0 4 0 7
 E7b0Cf\"i$
-BDFChar: 185 252 6 0 4 0 7
+BDFChar: 185 252 7 0 4 0 7
 f[p2Vf\"i$
 BDFChar: 186 253 6 0 4 -2 7
 0OOn5f\"i$0OOk\
@@ -21061,11 +21121,11 @@ BDFChar: 190 261 6 0 4 -2 4
 E-R1pp^e8B
 BDFChar: 191 262 7 0 5 -1 9
 ":,!P8:Z5@J4MX"
-BDFChar: 192 263 5 0 3 0 7
+BDFChar: 192 263 6 0 3 0 7
 &0LuBJ:N/h
 BDFChar: 193 268 7 0 4 -1 9
 -kHB'8:Z5@J4MX"
-BDFChar: 194 269 5 0 3 0 7
+BDFChar: 194 269 6 0 3 0 7
 :`oc-J:N/h
 BDFChar: 195 271 8 0 6 0 6
 $4M08Lkp9U
@@ -21075,7 +21135,7 @@ BDFChar: 197 281 6 0 4 -2 4
 E/=:>GT\[?
 BDFChar: 198 286 8 0 5 0 9
 -oa1SJ:O/C6oY/H
-BDFChar: 199 287 6 0 4 -2 7
+BDFChar: 199 287 7 0 4 -2 7
 :iHDZLkpk3#]KbD
 BDFChar: 200 294 8 0 6 0 6
 7/fT%6psEC
@@ -21115,7 +21175,7 @@ BDFChar: 217 351 5 0 3 -2 4
 n:5Hhi#lD-
 BDFChar: 218 352 6 0 4 0 9
 :`t"5JD`Bm#k.fo
-BDFChar: 219 353 5 0 3 0 7
+BDFChar: 219 353 6 0 3 0 7
 :`oc-J8c(X
 BDFChar: 220 357 6 0 4 0 7
 #Z*eE5X7SB
@@ -21275,33 +21335,33 @@ BDFChar: 297 377 7 0 4 0 9
 &0LuJ#S8+d5kk<Z
 BDFChar: 298 379 7 0 4 0 8
 +9;0B&0P@Gp](9o
-BDFChar: 299 259 6 0 4 0 7
+BDFChar: 299 259 7 0 4 0 7
 :iHDR(jO\X
-BDFChar: 300 257 6 0 4 0 6
+BDFChar: 300 257 7 0 4 0 6
 GQ;u5Lktg+
-BDFChar: 301 265 5 0 3 0 7
+BDFChar: 301 265 6 0 3 0 7
 +A`(-J:N/h
-BDFChar: 302 267 5 0 3 0 6
+BDFChar: 302 267 6 0 3 0 6
 +9:n]J:MS=
 BDFChar: 303 273 6 0 5 0 7
 #WrB;Lkpk3
-BDFChar: 304 277 6 0 4 0 7
+BDFChar: 304 277 7 0 4 0 7
 :iHDRM"lLF
-BDFChar: 305 283 6 0 4 0 7
+BDFChar: 305 283 7 0 4 0 7
 :`oaWM"lLF
-BDFChar: 306 279 6 0 4 0 6
+BDFChar: 306 279 7 0 4 0 6
 +96A:pjdSh
-BDFChar: 307 275 6 0 4 0 6
+BDFChar: 307 275 7 0 4 0 6
 GQ;]=pjdSh
 BDFChar: 308 8725 4 0 4 0 6
 (_AAD?pK5B
-BDFChar: 309 291 6 0 4 -2 6
+BDFChar: 309 291 7 0 4 -2 6
 0E??RLkp9]Du]k<
-BDFChar: 310 285 6 0 4 -2 7
+BDFChar: 310 285 7 0 4 -2 7
 +A`&_Lkpk3#]KbD
-BDFChar: 311 289 6 0 4 -2 6
+BDFChar: 311 289 7 0 4 -2 6
 +96YBLkp9]Du]k<
-BDFChar: 312 293 6 1 4 0 9
+BDFChar: 312 293 7 1 4 0 9
 5bJ+-JFJY^OH9GB
 BDFChar: 313 173 4 0 2 3 3
 huE`W
@@ -21311,25 +21371,25 @@ BDFChar: 315 8729 6 1 1 3 3
 J,fQL
 BDFChar: 316 183 4 1 2 3 4
 ^q]pM
-BDFChar: 317 324 6 1 4 0 7
+BDFChar: 317 324 7 1 4 0 7
 +@#qrOH>Qc
-BDFChar: 318 328 6 1 4 0 7
+BDFChar: 318 328 7 1 4 0 7
 TKiMHOH>Qc
-BDFChar: 319 337 6 0 4 0 7
+BDFChar: 319 337 7 0 4 0 7
 85K;*Lkpk+
 BDFChar: 320 341 4 1 3 0 7
 5_.dCJ:N0#
 BDFChar: 321 345 4 0 2 0 7
 TKqFcJ:N0#
-BDFChar: 322 347 5 0 3 0 7
+BDFChar: 322 347 6 0 3 0 7
 +@#qrJ8c(X
 BDFChar: 323 8542 11 1 8 0 7
 j=!Pq=!AqZ
 BDFChar: 324 355 4 0 3 -2 6
 5X=g(5X992?iU0,
-BDFChar: 325 369 6 1 4 0 7
+BDFChar: 325 369 7 1 4 0 7
 OIuT8OH>Rn
-BDFChar: 326 367 6 1 4 0 8
+BDFChar: 326 367 7 1 4 0 8
 i1Qb$OH>Qcn,NFg
 BDFChar: 327 378 5 0 3 0 7
 +@,E-+@(JH
@@ -21343,7 +21403,7 @@ BDFChar: 331 303 3 0 1 -2 6
 5QF&75X7Sb5QCca
 BDFChar: 332 362 8 1 5 0 8
 Dub]MLkpkCDu]k<
-BDFChar: 333 363 6 1 4 0 6
+BDFChar: 333 363 7 1 4 0 6
 n,SQ3OHAr3
 BDFChar: 334 370 7 1 5 -2 6
 LkpkCLkp9u0E;(Q
@@ -21413,7 +21473,7 @@ BDFChar: 366 1070 10 0 8 0 6
 cN)XKfmrmKfmqb+cN!qF
 BDFChar: 367 1071 7 0 5 0 6
 I*BgYHu.",
-BDFChar: 368 1072 6 0 4 0 4
+BDFChar: 368 1072 7 0 4 0 4
 E#<iPGQ7^D
 BDFChar: 369 1073 7 0 5 0 6
 (i[:cbfk;3
@@ -21423,7 +21483,7 @@ BDFChar: 371 1075 5 0 3 0 4
 nA)iT^]4?7
 BDFChar: 372 1076 7 0 6 -1 4
 Hu*V8rl+p<
-BDFChar: 373 1077 6 0 4 0 4
+BDFChar: 373 1077 7 0 4 0 4
 E7js$GQ7^D
 BDFChar: 374 1078 8 0 6 0 4
 epKH)ec5[M
@@ -21441,13 +21501,13 @@ BDFChar: 380 1084 8 0 6 0 4
 `pWiW`W,u=
 BDFChar: 381 1085 7 0 5 0 4
 bfp"/bQ%VC
-BDFChar: 382 1086 6 0 4 0 4
+BDFChar: 382 1086 7 0 4 0 4
 E7igqDu]k<
 BDFChar: 383 1087 7 0 5 0 4
 r63C/bQ%VC
-BDFChar: 384 1088 6 0 4 -2 4
+BDFChar: 384 1088 7 0 4 -2 4
 nCZCGnA)g>
-BDFChar: 385 1089 5 0 3 0 4
+BDFChar: 385 1089 6 0 3 0 4
 E599)Du]k<
 BDFChar: 386 1090 6 0 5 0 4
 r%KfY0E;(Q
@@ -21477,9 +21537,9 @@ BDFChar: 398 1102 9 0 7 0 4
 cJ/6Nc2[hE
 BDFChar: 399 1103 6 0 4 0 4
 Gh@7CQiI*d
-BDFChar: 400 1104 6 0 4 0 7
+BDFChar: 400 1104 7 0 4 0 7
 5Tg&Gf_E7,
-BDFChar: 401 1105 6 0 4 0 6
+BDFChar: 401 1105 7 0 4 0 6
 :]PIepqV+S
 BDFChar: 402 1024 7 0 4 0 9
 +:nPJ^qf`\_"[m0
@@ -21543,11 +21603,11 @@ BDFChar: 970 806 0 1 2 -3 -2
 ^jlCb
 BDFChar: 971 536 7 1 2 -3 -2
 ^jlCb
-BDFChar: 972 537 5 1 2 -3 -2
+BDFChar: 972 537 6 1 2 -3 -2
 ^jlCb
 BDFChar: 973 538 6 2 3 -3 -2
 ^jlCb
-BDFChar: 974 539 4 0 1 -3 -2
+BDFChar: 974 539 5 0 1 -3 -2
 ^jlCb
 BDFChar: 975 1108 6 0 4 0 4
 GeigaGQ7^D
@@ -21732,49 +21792,49 @@ BDFChar: 67 98 7 0 5 0 8
 ^qdb\bfn;Tp](9o
 BDFChar: 68 99 6 0 4 0 5
 Geh,1^j#hZ
-BDFChar: 69 100 7 0 5 0 8
+BDFChar: 69 100 8 0 5 0 8
 $k*Plbfn;THiO-H
 BDFChar: 70 101 7 0 5 0 5
 Gg-*$b]j*f
-BDFChar: 71 102 5 0 3 0 8
+BDFChar: 71 102 4 0 3 0 8
 E599Y^qdb$^]4?7
-BDFChar: 72 103 7 0 5 -2 5
+BDFChar: 72 103 8 0 5 -2 5
 I*BgYb^9hD
-BDFChar: 73 104 7 0 5 0 8
+BDFChar: 73 104 8 0 5 0 8
 ^qdb\bfn;TbQ%VC
-BDFChar: 74 105 3 0 1 0 7
+BDFChar: 74 105 4 0 1 0 7
 ^];0c^qdb$
 BDFChar: 75 106 4 0 2 -2 7
 ?iXSB?smAM@))aB
-BDFChar: 76 107 6 0 5 0 8
+BDFChar: 76 107 7 0 5 0 8
 ^qdb<nDNfgbQ%VC
-BDFChar: 77 108 3 0 1 0 8
+BDFChar: 77 108 4 0 1 0 8
 ^qdb$^qdb$^]4?7
-BDFChar: 78 109 9 0 7 0 5
+BDFChar: 78 109 10 0 7 0 5
 rnH2^gY2].
-BDFChar: 79 110 7 0 5 0 5
+BDFChar: 79 110 8 0 5 0 5
 prpt+bfg%e
 BDFChar: 80 111 7 0 5 0 5
 Gg+CUb]j*f
-BDFChar: 81 112 7 0 5 -2 5
+BDFChar: 81 112 8 0 5 -2 5
 prpt+bkSuh
-BDFChar: 82 113 7 0 5 -2 5
+BDFChar: 82 113 8 0 5 -2 5
 I*BgYb^9g-
 BDFChar: 83 114 5 0 3 0 5
 nDM*t^q]pM
-BDFChar: 84 115 6 0 4 0 5
+BDFChar: 84 115 7 0 4 0 5
 Gei5s)"7M*
 BDFChar: 85 116 5 0 3 0 7
 ^qfHT^qda)
-BDFChar: 86 117 7 0 5 0 5
+BDFChar: 86 117 8 0 5 0 5
 bfn;Tb^9Bj
 BDFChar: 87 118 7 0 5 0 5
 bfk<V0JEJ,
-BDFChar: 88 119 9 0 7 0 5
+BDFChar: 88 119 10 0 7 0 5
 gY;c.AnD#C
 BDFChar: 89 120 7 0 5 0 5
 b]kfqGg$-f
-BDFChar: 90 121 7 0 5 -2 5
+BDFChar: 90 121 6 0 5 -2 5
 bfk<V0JHmB
 BDFChar: 91 122 6 0 4 0 5
 p_Y\m_"[m0
@@ -21942,35 +22002,35 @@ BDFChar: 172 239 3 0 1 0 7
 ^];0c^qdb$
 BDFChar: 173 240 7 0 5 0 8
 ?p&ZBI*BgYGQ7^D
-BDFChar: 174 241 7 0 5 0 8
+BDFChar: 174 241 8 0 5 0 8
 oXk2!bfn;TbQ%VC
-BDFChar: 175 242 7 0 5 0 8
+BDFChar: 175 242 8 0 5 0 8
 ?n_S*bfn;TGQ7^D
-BDFChar: 176 243 7 0 5 0 8
+BDFChar: 176 243 8 0 5 0 8
 (bbr7bfn;TGQ7^D
-BDFChar: 177 244 7 0 5 0 8
+BDFChar: 177 244 8 0 5 0 8
 Gg$/4bfn;TGQ7^D
-BDFChar: 178 245 7 0 5 0 8
+BDFChar: 178 245 8 0 5 0 8
 oXk0Kbfn;TGQ7^D
-BDFChar: 179 246 7 0 5 0 7
+BDFChar: 179 246 8 0 5 0 7
 bQ)n3bfn:U
 BDFChar: 180 247 9 0 7 0 6
 (`38Q!#QOQ
 BDFChar: 181 248 7 0 5 -1 6
 %!^S*r9S[D
-BDFChar: 182 249 7 0 5 0 8
+BDFChar: 182 249 8 0 5 0 8
 ?n_T)bfn;THiO-H
-BDFChar: 183 250 7 0 5 0 8
+BDFChar: 183 250 8 0 5 0 8
 (bbs6bfn;THiO-H
-BDFChar: 184 251 7 0 5 0 8
+BDFChar: 184 251 8 0 5 0 8
 Gg$03bfn;THiO-H
-BDFChar: 185 252 7 0 5 0 7
+BDFChar: 185 252 8 0 5 0 7
 bQ,l2bfn:Y
-BDFChar: 186 253 7 0 5 -2 8
+BDFChar: 186 253 6 0 5 -2 8
 (bbs6b]n@d0OS8g
 BDFChar: 187 254 7 0 5 -2 8
 ^qdb\bfn;TpqXZF
-BDFChar: 188 255 7 0 5 -2 7
+BDFChar: 188 255 6 0 5 -2 7
 bQ,l2G^(nr?sis7
 BDFChar: 189 260 8 0 6 -2 7
 3&k_jD#VGo"9ni+
@@ -21978,11 +22038,11 @@ BDFChar: 190 261 7 0 5 -2 5
 GRSuDb^9[)
 BDFChar: 191 262 8 0 5 0 10
 ":+ue7"Bf<JA?O4
-BDFChar: 192 263 6 0 4 0 7
+BDFChar: 192 263 7 0 4 0 7
 &0Q4JJ:PF[
 BDFChar: 193 268 8 0 6 0 10
 CcDDWB#)3t^h,\/
-BDFChar: 194 269 6 0 4 0 8
+BDFChar: 194 269 7 0 4 0 8
 fPgh8^qdb$GQ7^D
 BDFChar: 195 271 9 0 6 0 7
 $4;$6Lkpk3
@@ -21992,7 +22052,7 @@ BDFChar: 197 281 7 0 5 -2 5
 Gg-*$b]j[9
 BDFChar: 198 286 9 0 6 0 10
 ,T$MD6@aTHJjMR"
-BDFChar: 199 287 7 0 4 -2 8
+BDFChar: 199 287 8 0 4 -2 8
 5]?^JLkpkCGR/6g
 BDFChar: 200 294 8 0 7 0 7
 6N9B$6:+"*
@@ -22032,7 +22092,7 @@ BDFChar: 217 351 6 0 4 -2 5
 G_"]h#k/CE
 BDFChar: 218 352 7 0 5 0 10
 CcDEB^qb1'$k2n2
-BDFChar: 219 353 6 0 4 0 8
+BDFChar: 219 353 7 0 4 0 8
 fPgh8^u.0hn,NFg
 BDFChar: 220 357 5 0 4 0 7
 85Se@5X7SR
@@ -22196,9 +22256,9 @@ BDFChar: 299 259 7 0 5 0 8
 CcDE>%"-:CHiO-H
 BDFChar: 300 257 7 0 4 0 7
 GQ;[gG_h0#
-BDFChar: 301 265 6 0 4 0 8
+BDFChar: 301 265 7 0 4 0 8
 0Lu1gJ:N0#Du]k<
-BDFChar: 302 267 6 0 3 0 7
+BDFChar: 302 267 7 0 3 0 7
 +96A2J:N/h
 BDFChar: 303 273 7 0 5 0 8
 #WrB;LkpkCGQ7^D
@@ -22212,13 +22272,13 @@ BDFChar: 307 275 7 0 4 0 7
 GQ;tZpjbVS
 BDFChar: 308 8725 5 0 4 0 7
 #S7Oi+@&2B
-BDFChar: 309 291 7 0 4 -2 8
+BDFChar: 309 291 8 0 4 -2 8
 &24*/LkpkCGR/6g
-BDFChar: 310 285 7 0 4 -2 8
+BDFChar: 310 285 8 0 4 -2 8
 0Lu1gLkpkCGR/6g
-BDFChar: 311 289 7 0 4 -2 7
+BDFChar: 311 289 8 0 4 -2 7
 +96YBLkqF3#]KbD
-BDFChar: 312 293 7 1 4 0 10
+BDFChar: 312 293 8 1 4 0 10
 @#tA=JFJY^OH>P(
 BDFChar: 313 173 5 0 3 3 3
 n,NFg
@@ -22228,25 +22288,25 @@ BDFChar: 315 8729 4 1 1 3 3
 J,fQL
 BDFChar: 316 183 5 1 2 4 5
 ^q]pM
-BDFChar: 317 324 7 1 4 0 8
+BDFChar: 317 324 8 1 4 0 8
 +@#qrOH>QcO8o7\
-BDFChar: 318 328 7 1 4 0 8
+BDFChar: 318 328 8 1 4 0 8
 TKiMHOH>QcO8o7\
-BDFChar: 319 337 7 0 5 0 8
+BDFChar: 319 337 8 0 5 0 8
 -r9ngb_1YnGQ7^D
 BDFChar: 320 341 5 1 3 0 8
 5_&jmJ:N0#J,fQL
 BDFChar: 321 345 5 1 3 0 8
 TKiM8J:N0#J,fQL
-BDFChar: 322 347 6 0 4 0 8
+BDFChar: 322 347 7 0 4 0 8
 &0LstJD_7Mn,NFg
 BDFChar: 323 8542 7 1 9 0 7
 j8^S.8,u_AP^jtY,_/C8
 BDFChar: 324 355 5 0 3 -2 7
 5X=g(5X7SR+CG0L
-BDFChar: 325 369 7 1 4 0 8
+BDFChar: 325 369 8 1 4 0 8
 :nRfMOH>Qcn,NFg
-BDFChar: 326 367 7 1 4 0 8
+BDFChar: 326 367 8 1 4 0 8
 i1T"iOH>Qcn,NFg
 BDFChar: 327 378 6 0 4 0 8
 &0LuJ&0N)\p](9o
@@ -22260,7 +22320,7 @@ BDFChar: 331 303 3 0 1 -2 7
 ^];0c^qdb$J3X)7
 BDFChar: 332 362 9 0 6 0 9
 HiV1+`l?$<`d@ad
-BDFChar: 333 363 7 0 5 0 7
+BDFChar: 333 363 8 0 5 0 7
 GQ>t3bfn:Y
 BDFChar: 334 370 8 0 6 -2 7
 `l?$<`l?#G#Rg\5
@@ -22358,13 +22418,13 @@ BDFChar: 380 1084 8 0 6 0 5
 `pW9Gf#@[i
 BDFChar: 381 1085 7 0 5 0 5
 bfp"/bfg%e
-BDFChar: 382 1086 7 0 5 0 5
+BDFChar: 382 1086 8 0 5 0 5
 Gg+CUb]j*f
 BDFChar: 383 1087 7 0 5 0 5
 r63C/bfg%e
-BDFChar: 384 1088 7 0 5 -2 5
+BDFChar: 384 1088 8 0 5 -2 5
 prpt+bkSuh
-BDFChar: 385 1089 6 0 4 0 5
+BDFChar: 385 1089 7 0 4 0 5
 Geh,1^j#hZ
 BDFChar: 386 1090 6 0 5 0 5
 r%KfY0JEJ,
@@ -22460,7 +22520,7 @@ BDFChar: 970 806 0 0 2 -3 -2
 @))aB
 BDFChar: 971 536 8 1 3 -3 -2
 @))aB
-BDFChar: 972 537 6 0 2 -3 -2
+BDFChar: 972 537 7 0 2 -3 -2
 @))aB
 BDFChar: 973 538 7 1 3 -3 -2
 @))aB
@@ -22645,49 +22705,49 @@ BDFChar: 64 95 8 0 7 -2 -2
 rr<$!
 BDFChar: 65 96 6 1 3 8 9
 ^gI-B
-BDFChar: 66 97 7 0 5 0 6
+BDFChar: 66 97 8 0 5 0 6
 GRP".bfkG7
 BDFChar: 67 98 8 0 6 0 9
 ^qdb`k/PE\`r#f:
-BDFChar: 68 99 7 0 5 0 6
+BDFChar: 68 99 6 0 5 0 6
 I)*P5^qb<t
-BDFChar: 69 100 8 0 6 0 9
+BDFChar: 69 100 9 0 6 0 9
 "pP9\`l?$<c@,`n
-BDFChar: 70 101 8 0 6 0 6
+BDFChar: 70 101 7 0 6 0 6
 I)a2*^rCa%
 BDFChar: 71 102 5 0 4 0 9
 3+-.h?smAM?sis7
-BDFChar: 72 103 8 0 6 -2 6
+BDFChar: 72 103 9 0 6 -2 6
 I`BCI`m0#;HiO-H
-BDFChar: 73 104 8 0 6 0 9
+BDFChar: 73 104 9 0 6 0 9
 ^qdb`k/PE\`l7uY
-BDFChar: 74 105 3 0 1 0 8
+BDFChar: 74 105 4 0 1 0 8
 ^];0c^qdb$^]4?7
 BDFChar: 75 106 4 0 3 -3 8
 0E<d\0JG170JG3=
 BDFChar: 76 107 7 0 5 0 9
 ^qdb0f^RhgfZX<q
-BDFChar: 77 108 3 0 1 0 9
+BDFChar: 77 108 4 0 1 0 9
 ^qdb$^qdb$^q]pM
 BDFChar: 78 109 11 0 9 0 6
 s+&>/beVH<beVH<beO2Y
-BDFChar: 79 110 8 0 6 0 6
+BDFChar: 79 110 9 0 6 0 6
 r8u#=`l?!u
-BDFChar: 80 111 8 0 6 0 6
+BDFChar: 80 111 7 0 6 0 6
 I)a1G`l<B+
-BDFChar: 81 112 8 0 6 -2 6
+BDFChar: 81 112 9 0 6 -2 6
 r8u#=`l@ql^]4?7
-BDFChar: 82 113 8 0 6 -2 6
+BDFChar: 82 113 9 0 6 -2 6
 I`BCI`m0#;"onW'
 BDFChar: 83 114 5 0 3 0 6
 nDM*t^qd_c
-BDFChar: 84 115 6 0 4 0 6
+BDFChar: 84 115 7 0 4 0 6
 Geh+6(`;`B
 BDFChar: 85 116 6 0 4 0 8
 ?srb;?smAM2uipY
-BDFChar: 86 117 8 0 6 0 6
+BDFChar: 86 117 9 0 6 0 6
 `l?$<`m0#5
-BDFChar: 87 118 7 0 5 0 6
+BDFChar: 87 118 8 0 5 0 6
 bfk<VGVCfO
 BDFChar: 88 119 11 0 9 0 6
 beVH<It3$!It0<T1B7CT
@@ -22695,7 +22755,7 @@ BDFChar: 89 120 7 0 5 0 6
 b]n@dG^.F4
 BDFChar: 90 121 7 0 5 -2 6
 bfk<VGVCg*?iU0,
-BDFChar: 91 122 6 0 4 0 6
+BDFChar: 91 122 7 0 4 0 6
 p_Y\m@)2O;
 BDFChar: 92 123 7 0 5 -2 9
 *&''#0JME=0JG1#
@@ -22827,17 +22887,17 @@ BDFChar: 155 222 8 0 6 0 8
 ^qflf`l@ql^]4?7
 BDFChar: 156 223 8 1 6 0 9
 E7ih4nF5)SbkM/<
-BDFChar: 157 224 7 0 5 0 9
+BDFChar: 157 224 8 0 5 0 9
 0Gje7$k.O-b^9Bj
-BDFChar: 158 225 7 0 5 0 9
+BDFChar: 158 225 8 0 5 0 9
 (bbr7$k.O-b^9Bj
-BDFChar: 159 226 7 0 5 0 10
+BDFChar: 159 226 8 0 5 0 10
 &3+J+GRP".bfkG7
-BDFChar: 160 227 7 0 5 0 9
+BDFChar: 160 227 8 0 5 0 9
 FLV<q$k.O-b^9Bj
-BDFChar: 161 228 7 0 5 0 8
+BDFChar: 161 228 8 0 5 0 8
 C]J\g%"-:CHiO-H
-BDFChar: 162 229 7 0 5 0 10
+BDFChar: 162 229 8 0 5 0 10
 3,ECjGRP".bfkG7
 BDFChar: 163 230 12 0 10 0 6
 H[lUA$t+SCbQ,prHb]U]
@@ -22849,7 +22909,7 @@ BDFChar: 166 233 8 0 6 0 9
 (bbr;`lA"n`d@ad
 BDFChar: 167 234 8 0 6 0 9
 3,ASB`lA"n`d@ad
-BDFChar: 168 235 7 0 6 0 8
+BDFChar: 168 235 8 0 6 0 8
 C]Jk&`r<cnHiO-H
 BDFChar: 169 236 3 0 1 0 9
 JA;0#^qdb$^q]pM
@@ -22861,7 +22921,7 @@ BDFChar: 172 239 3 0 2 0 8
 TE)dC^qdb$^]4?7
 BDFChar: 173 240 8 0 6 0 9
 ?p#9R#(FS3`d@ad
-BDFChar: 174 241 8 0 6 0 9
+BDFChar: 174 241 9 0 6 0 9
 3a;[_k/PE\`l7uY
 BDFChar: 175 242 8 0 6 0 9
 ?n_S.`l?$<`d@ad
@@ -22877,13 +22937,13 @@ BDFChar: 180 247 10 1 8 0 6
 (`38Q!#QOQ
 BDFChar: 181 248 9 0 7 -1 7
 "$U>Cg[f$)^]4?7
-BDFChar: 182 249 8 0 6 0 9
+BDFChar: 182 249 9 0 6 0 9
 0Gjf0`l?$<c@,`n
-BDFChar: 183 250 8 0 6 0 9
+BDFChar: 183 250 9 0 6 0 9
 (bbs0`l?$<c@,`n
-BDFChar: 184 251 8 0 6 0 9
+BDFChar: 184 251 9 0 6 0 9
 3,AT7`l?$<c@,`n
-BDFChar: 185 252 8 0 6 0 8
+BDFChar: 185 252 9 0 6 0 8
 C]MJp`l?$DIK0?J
 BDFChar: 186 253 7 0 5 -2 9
 (bbs6b]nAW0JG1g
@@ -22897,7 +22957,7 @@ BDFChar: 190 261 7 0 5 -2 6
 GRP".bfkG?$ig8-
 BDFChar: 193 268 9 0 6 0 11
 CcDDY@)0Rn^qa>A
-BDFChar: 194 269 6 0 5 0 9
+BDFChar: 194 269 7 0 5 0 9
 fPgh<^qdb$^jH+^
 BDFChar: 196 280 7 0 6 -2 8
 rkQ=brkQ=brWEE*
@@ -22909,7 +22969,7 @@ BDFChar: 215 339 12 0 10 0 6
 J&''3`aHjF`W4!YJ)C;,
 BDFChar: 218 352 8 0 6 0 11
 CcDEB`k]B;"pW(p
-BDFChar: 219 353 6 0 4 0 9
+BDFChar: 219 353 7 0 4 0 9
 fPgh8^qan+)"7M*
 BDFChar: 221 376 9 0 7 0 10
 AcT_\AipnI(`4(i
@@ -22963,9 +23023,9 @@ BDFChar: 272 258 8 0 7 0 11
 Aip&14?Pf>Aq%Y8
 BDFChar: 280 278 8 0 6 0 10
 &-2^F^qfrb^qfpL
-BDFChar: 299 259 7 0 5 0 9
+BDFChar: 299 259 8 0 5 0 9
 CcDE>$k.O-b^9Bj
-BDFChar: 306 279 7 0 6 0 8
+BDFChar: 306 279 8 0 6 0 8
 &-.*t`r<cnHiO-H
 BDFChar: 313 173 5 0 3 3 3
 n,NFg
@@ -22979,7 +23039,7 @@ BDFChar: 331 303 4 0 1 -2 8
 ^];0c^qdb$^jnZM
 BDFChar: 332 362 10 0 7 0 10
 IK7:'_o'C0_e)"2
-BDFChar: 333 363 8 0 6 0 8
+BDFChar: 333 363 9 0 6 0 8
 HiV1+`l?$DIK0?J
 BDFChar: 334 370 9 0 7 -2 8
 _o'C0_o'B(49Pig
@@ -23049,7 +23109,7 @@ BDFChar: 366 1070 14 0 10 0 8
 a2#o,b[AY&r*[`Vb[AY&a1qZT
 BDFChar: 367 1071 9 -1 6 0 8
 5@\255;QeZ_Z0Z:
-BDFChar: 368 1072 7 0 5 0 6
+BDFChar: 368 1072 8 0 5 0 6
 GRP".bfkG7
 BDFChar: 369 1073 8 0 6 0 8
 $ohYm`l?$<HiO-H
@@ -23081,7 +23141,7 @@ BDFChar: 382 1086 8 0 6 0 6
 I)a1G`l<B+
 BDFChar: 383 1087 8 0 6 0 6
 rl2st`l?!u
-BDFChar: 384 1088 8 0 6 -2 6
+BDFChar: 384 1088 9 0 6 -2 6
 gucVr`l@ql^]4?7
 BDFChar: 385 1089 7 0 5 0 6
 I)*P5^qb<t
@@ -23091,7 +23151,7 @@ BDFChar: 387 1091 7 0 6 -3 6
 `l;h2GW7B2?sis7
 BDFChar: 388 1092 11 -1 8 -2 8
 $ig\9It5bYbeVH<beVH<It.q-$ig8-
-BDFChar: 389 1093 7 0 5 0 6
+BDFChar: 389 1093 8 0 5 0 6
 bfk;cGg+A3
 BDFChar: 390 1094 8 0 7 -2 6
 `l?$<`lA#\!rr<$
@@ -23115,7 +23175,7 @@ BDFChar: 399 1103 7 0 5 0 6
 I*BgYHu.",
 BDFChar: 400 1104 8 0 6 0 9
 0Gje;`lA"n`d@ad
-BDFChar: 401 1105 7 0 6 0 8
+BDFChar: 401 1105 8 0 6 0 8
 C]Jk&`r<cnHiO-H
 BDFChar: 402 1024 8 0 6 0 11
 0Gjfh^qdbb^qdbb
@@ -23179,7 +23239,7 @@ BDFChar: 970 806 0 1 3 -3 -2
 @))aB
 BDFChar: 971 536 9 1 3 -3 -2
 @))aB
-BDFChar: 972 537 6 1 3 -3 -2
+BDFChar: 972 537 7 1 3 -3 -2
 @))aB
 BDFChar: 973 538 7 2 4 -3 -2
 @))aB
@@ -23362,57 +23422,57 @@ BDFChar: 64 95 8 0 6 -2 -2
 rVuou
 BDFChar: 65 96 6 2 3 8 9
 J3X)7
-BDFChar: 66 97 7 0 5 0 6
+BDFChar: 66 97 9 0 5 0 6
 GQ\.sKT(!Q
-BDFChar: 67 98 7 0 5 0 9
+BDFChar: 67 98 8 0 5 0 9
 J:N0[`.WesK_PNI
-BDFChar: 68 99 6 0 4 0 6
+BDFChar: 68 99 7 0 4 0 6
 G^t<pJ:MkE
-BDFChar: 69 100 7 0 5 0 9
+BDFChar: 69 100 9 0 5 0 9
 "9\jTKS5#3N-#%"
-BDFChar: 70 101 7 0 5 0 6
+BDFChar: 70 101 8 0 5 0 6
 G_CbJJ:r.I
-BDFChar: 71 102 4 0 3 0 9
+BDFChar: 71 102 5 0 3 0 9
 3']au5X7S"5X5;L
-BDFChar: 72 103 7 0 5 -3 6
+BDFChar: 72 103 9 0 5 -3 6
 I"[0+KT(!U"F'nH
-BDFChar: 73 104 7 0 5 0 9
+BDFChar: 73 104 9 0 5 0 9
 J:N0[`.WesKS0=*
-BDFChar: 74 105 3 1 1 0 8
+BDFChar: 74 105 4 1 1 0 8
 J,k+MJ:N0#J,fQL
-BDFChar: 75 106 4 0 2 -3 8
+BDFChar: 75 106 5 0 2 -3 8
 +93N,+<VdL+<VfB
-BDFChar: 76 107 6 0 4 0 9
+BDFChar: 76 107 8 0 4 0 9
 J:N0+OJ'C^OGEl:
-BDFChar: 77 108 3 1 1 0 9
+BDFChar: 77 108 4 1 1 0 9
 J:N0#J:N0#J:IV"
-BDFChar: 78 109 11 1 9 0 6
+BDFChar: 78 109 12 1 9 0 6
 ZN/4"Lk(;3Lk(;3Lk#I*
-BDFChar: 79 110 7 0 5 0 6
+BDFChar: 79 110 9 0 5 0 6
 \AX&RKS5!Y
-BDFChar: 80 111 7 0 5 0 6
+BDFChar: 80 111 8 0 5 0 6
 G_Ca'KS4RM
-BDFChar: 81 112 7 0 5 -3 6
+BDFChar: 81 112 9 0 5 -3 6
 \AX&RKS9,NJ:IV"
-BDFChar: 82 113 7 0 5 -3 6
+BDFChar: 82 113 9 0 5 -3 6
 I"[0+KT(!U"9\])
-BDFChar: 83 114 5 0 3 0 6
+BDFChar: 83 114 6 0 3 0 6
 YeYd>J:N.M
-BDFChar: 84 115 6 0 4 0 6
+BDFChar: 84 115 8 0 4 0 6
 E/9$`#`*F"
-BDFChar: 85 116 4 0 3 0 8
+BDFChar: 85 116 6 0 3 0 8
 5X=g(5X7S"0E;(Q
-BDFChar: 86 117 7 0 5 0 6
+BDFChar: 86 117 9 0 5 0 6
 KS5#3KT(!Q
-BDFChar: 87 118 6 0 4 0 6
+BDFChar: 87 118 8 0 4 0 6
 Lknl(:`pk\
-BDFChar: 88 119 10 0 8 0 6
+BDFChar: 88 119 12 0 8 0 6
 Lk(;3<<-#!<<+3C+ohTC
-BDFChar: 89 120 6 0 4 0 6
+BDFChar: 89 120 8 0 4 0 6
 Lepnj:f)rJ
-BDFChar: 90 121 6 0 4 -3 6
+BDFChar: 90 121 7 0 4 -3 6
 Lknl(:`pl'5X5;L
-BDFChar: 91 122 6 0 4 0 6
+BDFChar: 91 122 8 0 4 0 6
 p]qER5_/V0
 BDFChar: 92 123 8 0 4 -2 9
 (a'qD+<\HB+<VdD
@@ -23542,29 +23602,29 @@ BDFChar: 155 222 7 0 5 0 8
 J:REJKS9,NJ,fQL
 BDFChar: 156 223 7 1 6 0 9
 E/9=3TTFt_KX_!^
-BDFChar: 157 224 7 0 5 0 9
+BDFChar: 157 224 9 0 5 0 9
 +:nNt"9a+*N-#%"
-BDFChar: 158 225 7 0 5 0 9
+BDFChar: 158 225 9 0 5 0 9
 #S6u\"9a+*N-#%"
-BDFChar: 159 226 7 0 5 0 9
+BDFChar: 159 226 9 0 5 0 9
 &1@O'"9a+*N-#%"
-BDFChar: 160 227 7 0 5 0 9
+BDFChar: 160 227 9 0 5 0 9
 1fsa&"9a+*N-#%"
-BDFChar: 161 228 7 0 5 0 8
+BDFChar: 161 228 9 0 5 0 8
 8-!l;"FPl]F8u:@
-BDFChar: 162 229 7 0 5 0 10
+BDFChar: 162 229 9 0 5 0 10
 0M"_gGQ\.sKT(!Q
 BDFChar: 163 230 11 0 9 0 6
 ErZW!#XEmTL]EB!F+=5j
 BDFChar: 164 231 6 0 4 -3 6
 G^t<pJ:MkU&7>J<
-BDFChar: 165 232 7 0 5 0 9
+BDFChar: 165 232 9 0 5 0 9
 +:nNtKS98RKQmIs
-BDFChar: 166 233 7 0 5 0 9
+BDFChar: 166 233 9 0 5 0 9
 &0LstKS98RKQmIs
-BDFChar: 167 234 7 0 5 0 9
+BDFChar: 167 234 9 0 5 0 9
 0Lu1gKS98RKQmIs
-BDFChar: 168 235 8 0 5 0 8
+BDFChar: 168 235 9 0 5 0 8
 8-!mfK`$@RGQ7^D
 BDFChar: 169 236 3 0 0 0 8
 J,k+MJ:N0#J,fQL
@@ -23576,35 +23636,35 @@ BDFChar: 172 239 3 0 2 0 8
 TE%5B5X7S"5QCca
 BDFChar: 173 240 7 0 5 0 8
 -kL%pI"[0+GQ7^D
-BDFChar: 174 241 7 0 5 0 9
+BDFChar: 174 241 9 0 5 0 9
 1fsaf`.WesKS0=*
-BDFChar: 175 242 7 0 5 0 9
+BDFChar: 175 242 9 0 5 0 9
 +:nNtKS5#3KQmIs
-BDFChar: 176 243 7 0 5 0 9
+BDFChar: 176 243 9 0 5 0 9
 #S6u\KS5#3KQmIs
-BDFChar: 177 244 7 0 5 0 9
+BDFChar: 177 244 9 0 5 0 9
 0Lu1gKS5#3KQmIs
-BDFChar: 178 245 7 0 5 0 9
+BDFChar: 178 245 9 0 5 0 9
 1fsa&KS5#3KQmIs
-BDFChar: 179 246 7 0 5 0 8
+BDFChar: 179 246 9 0 5 0 8
 8-!mfKS5#3GQ7^D
 BDFChar: 180 247 9 0 6 1 7
 &.ej@!"]\A
 BDFChar: 181 248 7 0 5 -1 7
 "?8r:UngP#J,fQL
-BDFChar: 182 249 7 0 5 0 9
+BDFChar: 182 249 9 0 5 0 9
 +:nO+KS5#3N-#%"
-BDFChar: 183 250 7 0 5 0 9
+BDFChar: 183 250 9 0 5 0 9
 &0Lt+KS5#3N-#%"
-BDFChar: 184 251 7 0 5 0 9
+BDFChar: 184 251 9 0 5 0 9
 0Lu1sKS5#3N-#%"
-BDFChar: 185 252 7 0 5 0 8
+BDFChar: 185 252 9 0 5 0 8
 8-"<rKS5#;F8u:@
-BDFChar: 186 253 6 0 4 -3 9
+BDFChar: 186 253 7 0 4 -3 9
 &0Lt/LepoE+<Vdl5QCca
 BDFChar: 187 254 7 0 5 -3 9
 J:N0[`.WesK_U(JJ,fQL
-BDFChar: 188 255 6 0 4 -3 8
+BDFChar: 188 255 7 0 4 -3 8
 8-"I%:f't2+<Wp7
 BDFChar: 189 260 9 0 6 -2 8
 &.g6<6puESJcl8X
@@ -23612,7 +23672,7 @@ BDFChar: 190 261 8 0 5 -2 6
 GQ\.sKT(!Y$ig8-
 BDFChar: 193 268 10 0 6 0 11
 ,T$MD6@aT:J:KsK
-BDFChar: 194 269 7 0 5 0 9
+BDFChar: 194 269 8 0 5 0 9
 82($gJ:N0#J:%=s
 BDFChar: 196 280 8 0 5 -2 8
 r.'<Jr.'<Jr!3]2
@@ -23624,7 +23684,7 @@ BDFChar: 215 339 12 0 10 0 6
 Hbb:WKHQ'.KE-ZJHb]U]
 BDFChar: 218 352 8 0 6 0 11
 ,T$N/Jq/B!!Wmt$
-BDFChar: 219 353 6 0 4 0 9
+BDFChar: 219 353 8 0 4 0 9
 82($_Lk'FMLi<=o
 BDFChar: 221 376 9 0 6 0 10
 ,QNEa6mrTX&.fBQ
@@ -23678,9 +23738,9 @@ BDFChar: 272 258 9 0 6 0 11
 ,T$Lm3%-1C7!sT<
 BDFChar: 280 278 9 0 5 0 10
 &-2WYJ:RQJJ:ROt
-BDFChar: 299 259 8 0 5 0 9
+BDFChar: 299 259 9 0 5 0 9
 82($g"9a+*N-#%"
-BDFChar: 306 279 8 0 5 0 8
+BDFChar: 306 279 9 0 5 0 8
 &--s.K`$@RGQ7^D
 BDFChar: 313 173 5 0 3 4 4
 n,NFg
@@ -23694,7 +23754,7 @@ BDFChar: 331 303 4 0 1 -2 8
 5QF&75X7S"5_)*"
 BDFChar: 332 362 11 0 6 0 10
 HiSbMJqAT+Jj_Qu
-BDFChar: 333 363 8 0 5 0 8
+BDFChar: 333 363 9 0 5 0 8
 quDD'KS5#;F8u:@
 BDFChar: 334 370 10 0 6 -2 8
 JqAT+JqASB3!]om
@@ -23764,7 +23824,7 @@ BDFChar: 366 1070 15 0 11 0 8
 a2#o,fJ(r3pb:>SfJ(NWa1qZT
 BDFChar: 367 1071 9 0 6 0 8
 I`BCIIPteM`W,u=
-BDFChar: 368 1072 7 0 5 0 6
+BDFChar: 368 1072 9 0 5 0 6
 GRP".bfkG7
 BDFChar: 369 1073 8 0 6 0 8
 4CGu&`l?$<HiO-H
@@ -23774,7 +23834,7 @@ BDFChar: 371 1075 6 0 4 0 6
 pqX\\^qd_c
 BDFChar: 372 1076 8 -1 6 -2 6
 *]>o7AnM(\_Z0Z:
-BDFChar: 373 1077 7 0 6 0 6
+BDFChar: 373 1077 9 0 6 0 6
 I)a2*^rCa%
 BDFChar: 374 1078 12 0 9 0 6
 beS(GD1FhND1HJRbeO2Y
@@ -23792,13 +23852,13 @@ BDFChar: 380 1084 10 0 7 0 6
 _rp4;gV^o/
 BDFChar: 381 1085 8 0 6 0 6
 `l?$t`l?!u
-BDFChar: 382 1086 7 0 6 0 6
+BDFChar: 382 1086 9 0 6 0 6
 I)a1G`l<B+
 BDFChar: 383 1087 8 0 6 0 6
 rl2st`l?!u
-BDFChar: 384 1088 7 0 6 -3 6
+BDFChar: 384 1088 9 0 6 -3 6
 r5Qar`l@ql^q]pM
-BDFChar: 385 1089 6 0 4 0 6
+BDFChar: 385 1089 8 0 4 0 6
 Geh,1^qb0p
 BDFChar: 386 1090 7 0 5 0 6
 r%KfY0JG0\
@@ -23806,7 +23866,7 @@ BDFChar: 387 1091 7 0 6 -3 6
 `l;h2HoO)>E*rYG
 BDFChar: 388 1092 12 0 9 -2 8
 $ig\9It5bYbeVH<beVH<It.q-$ig8-
-BDFChar: 389 1093 6 0 5 0 6
+BDFChar: 389 1093 8 0 5 0 6
 bfk;cGg+A3
 BDFChar: 390 1094 9 0 7 -2 6
 `l?$<`lA#\!rr<$
@@ -23828,9 +23888,9 @@ BDFChar: 398 1102 12 0 9 0 6
 c[aZ`fYI9tfYH.Tc[Yuq
 BDFChar: 399 1103 8 0 5 0 6
 I*BgYHu.",
-BDFChar: 400 1104 7 0 6 0 9
+BDFChar: 400 1104 9 0 6 0 9
 0Gje;`lA"n`d@ad
-BDFChar: 401 1105 8 0 6 0 8
+BDFChar: 401 1105 9 0 6 0 8
 C]Jk&`r<cnHiO-H
 BDFChar: 402 1024 9 0 5 0 11
 +:nPNJ:N1JJ:N1J
@@ -23894,11 +23954,11 @@ BDFChar: 970 806 0 1 3 -3 -2
 @))aB
 BDFChar: 971 536 9 1 3 -3 -2
 @))aB
-BDFChar: 972 537 6 0 2 -3 -2
+BDFChar: 972 537 8 0 2 -3 -2
 @))aB
 BDFChar: 973 538 8 1 3 -3 -2
 @))aB
-BDFChar: 974 539 4 0 2 -3 -2
+BDFChar: 974 539 6 0 2 -3 -2
 @))aB
 BDFChar: 975 1108 7 0 5 0 6
 Gf7Dm^r1Ht
@@ -24077,57 +24137,57 @@ BDFChar: 64 95 10 0 7 -2 -2
 rr<$!
 BDFChar: 65 96 8 2 3 9 11
 J:Klb
-BDFChar: 66 97 8 0 6 0 7
+BDFChar: 66 97 10 0 6 0 7
 4@0*56@sr<
-BDFChar: 67 98 8 0 6 0 11
+BDFChar: 67 98 9 0 6 0 11
 J:N0#\AWuNJqA[N
-BDFChar: 68 99 7 0 5 0 7
+BDFChar: 68 99 8 0 5 0 7
 3(/:IJ:L$I
-BDFChar: 69 100 8 0 6 0 11
+BDFChar: 69 100 11 0 6 0 11
 !WiE)5!jjQJq?HQ
-BDFChar: 70 101 8 0 6 0 7
+BDFChar: 70 101 9 0 6 0 7
 3(/AtJ:KsK
-BDFChar: 71 102 5 0 4 0 11
+BDFChar: 71 102 6 0 4 0 11
 3']_on3B6(5X7S"
-BDFChar: 72 103 8 0 6 -3 7
+BDFChar: 72 103 11 0 6 -3 7
 5!jjQJq?HQ!^o!J
-BDFChar: 73 104 8 0 6 0 11
+BDFChar: 73 104 11 0 6 0 11
 J:N0#]Y]8PJqAT+
-BDFChar: 74 105 2 0 0 0 10
+BDFChar: 74 105 5 0 0 0 10
 J,fS"J:N0#J:N.M
-BDFChar: 75 106 4 0 2 -3 10
+BDFChar: 75 106 5 0 2 -3 10
 +92Ba+<VdL+<VdL+M[sW
-BDFChar: 76 107 7 0 5 0 11
+BDFChar: 76 107 9 0 5 0 11
 J:N0#Lle:FTTFt_
-BDFChar: 77 108 2 0 0 0 11
+BDFChar: 77 108 5 0 0 0 11
 J:N0#J:N0#J:N0#
-BDFChar: 78 109 13 1 11 0 7
+BDFChar: 78 109 14 1 11 0 7
 \\Q3-KHPpjKHPpjKHPpj
-BDFChar: 79 110 8 0 6 0 7
+BDFChar: 79 110 11 0 6 0 7
 ]Y]8PJqAT+
-BDFChar: 80 111 8 0 6 0 7
+BDFChar: 80 111 9 0 6 0 7
 3(/@MJq?BM
-BDFChar: 81 112 8 0 6 -3 7
+BDFChar: 81 112 11 0 6 -3 7
 \AWuNJqA[NJ:N.M
-BDFChar: 82 113 8 0 6 -3 7
+BDFChar: 82 113 11 0 6 -3 7
 5!jjQJq?HQ!WiE'
-BDFChar: 83 114 5 0 3 0 7
+BDFChar: 83 114 7 0 3 0 7
 YeYd>J:N0#
-BDFChar: 84 115 7 0 5 0 7
+BDFChar: 84 115 9 0 5 0 7
 G_CTT(^,M:
-BDFChar: 85 116 5 0 4 0 9
+BDFChar: 85 116 7 0 4 0 9
 5X>*05X7S"5WA`D
-BDFChar: 86 117 8 0 6 0 7
+BDFChar: 86 117 11 0 6 0 7
 JqAT+JqA`'
-BDFChar: 87 118 8 0 6 0 7
+BDFChar: 87 118 10 0 6 0 7
 Jq?BY-n#W<
-BDFChar: 88 119 10 0 8 0 7
+BDFChar: 88 119 13 0 8 0 7
 Lk(;3P^la6<<-M/+oiee
-BDFChar: 89 120 8 0 6 0 7
+BDFChar: 89 120 9 0 6 0 7
 Jj_!u&1Bqu
-BDFChar: 90 121 8 0 6 -3 7
+BDFChar: 90 121 9 0 6 -3 7
 Jq?BY-n#W<&0N(q
-BDFChar: 91 122 7 0 5 0 7
+BDFChar: 91 122 9 0 5 0 7
 qud9:+@(JT
 BDFChar: 92 123 9 0 5 -3 11
 *$?@H+<VfB+<VdL+<VX(
@@ -24257,29 +24317,29 @@ BDFChar: 155 222 8 0 6 0 10
 J:REJJqAT-pjdkp
 BDFChar: 156 223 8 1 6 0 10
 E/9=3OH>9OKS6i8
-BDFChar: 157 224 8 0 6 0 11
+BDFChar: 157 224 10 0 6 0 11
 &.f*I4@0*56@sr<
-BDFChar: 158 225 8 0 6 0 11
+BDFChar: 158 225 10 0 6 0 11
 #RCtA4@0*56@sr<
-BDFChar: 159 226 8 0 6 0 11
+BDFChar: 159 226 10 0 6 0 11
 &1BpH4@0*56@sr<
-BDFChar: 160 227 8 0 6 0 10
+BDFChar: 160 227 10 0 6 0 10
 1/%[1639>;JqeRO
-BDFChar: 161 228 8 0 6 0 9
+BDFChar: 161 228 10 0 6 0 9
 ,QKqn!^8r&L3`h"
-BDFChar: 162 229 8 0 6 0 11
+BDFChar: 162 229 10 0 6 0 11
 (aL@D4@0*56@sr<
 BDFChar: 163 230 13 0 11 0 7
 3P\*,";!fe6i_l?NY$3g
 BDFChar: 164 231 7 0 5 -3 7
 3(/:IJ:L$I#RGAL
-BDFChar: 165 232 8 0 6 0 11
+BDFChar: 165 232 10 0 6 0 11
 &.f*I3(/AtJ:KsK
-BDFChar: 166 233 8 0 6 0 11
+BDFChar: 166 233 10 0 6 0 11
 #RCtA3(/AtJ:KsK
-BDFChar: 167 234 8 0 6 0 11
+BDFChar: 167 234 10 0 6 0 11
 &1BpH3(/AtJ:KsK
-BDFChar: 168 235 9 0 6 0 9
+BDFChar: 168 235 10 0 6 0 9
 ,QKelK)U:N69G5J
 BDFChar: 169 236 2 1 1 -3 -3
 z
@@ -24291,35 +24351,35 @@ BDFChar: 172 239 2 0 1 0 9
 5QH=bJ:N0#J:IV"
 BDFChar: 173 240 8 0 6 0 10
 ,T%d05!jjQJj_Qu
-BDFChar: 174 241 8 0 6 0 10
+BDFChar: 174 241 11 0 6 0 10
 1/%\\_LdAkJqARS
-BDFChar: 175 242 8 0 6 0 11
+BDFChar: 175 242 10 0 6 0 11
 +<V3q3(/@MJq?BM
-BDFChar: 176 243 8 0 6 0 11
+BDFChar: 176 243 10 0 6 0 11
 #RCtA3(/@MJq?BM
-BDFChar: 177 244 8 0 6 0 11
+BDFChar: 177 244 10 0 6 0 11
 &1BpH3(/@MJq?BM
-BDFChar: 178 245 8 0 6 0 10
+BDFChar: 178 245 10 0 6 0 10
 1/%[-7"U#BJj_Qu
-BDFChar: 179 246 8 0 6 0 9
+BDFChar: 179 246 10 0 6 0 9
 6i]27JqAT+6oY/H
 BDFChar: 180 247 11 1 9 0 8
 #QP,1zs*t(L!!!9)#QOi)
 BDFChar: 181 248 9 0 7 -1 8
 !Bri(M34JuI"21s
-BDFChar: 182 249 8 0 6 0 11
+BDFChar: 182 249 11 0 6 0 11
 &.f*IJqAT+JqA`'
-BDFChar: 183 250 8 0 6 0 11
+BDFChar: 183 250 11 0 6 0 11
 #RCtAJqAT+JqA`'
-BDFChar: 184 251 8 0 6 0 11
+BDFChar: 184 251 11 0 6 0 11
 &1BpHJqAT+JqA`'
-BDFChar: 185 252 8 0 6 0 9
+BDFChar: 185 252 11 0 6 0 9
 ,QNFJJqAT+L3`h"
-BDFChar: 186 253 8 0 6 -3 11
+BDFChar: 186 253 9 0 6 -3 11
 #RCtAJq?BY-n#W<&0N(q
 BDFChar: 187 254 8 0 6 -3 11
 J:N0#\AWuNJqA[NJ:N.M
-BDFChar: 188 255 8 0 6 -3 9
+BDFChar: 188 255 9 0 6 -3 9
 ,QNFJ6prFO&.fBq+92BA
 BDFChar: 189 260 10 0 7 -2 10
 (`4MD,U>^*6@j[h!rr<$
@@ -24327,7 +24387,7 @@ BDFChar: 190 261 9 0 6 -2 7
 4@0*56@sr<"9ni+
 BDFChar: 193 268 11 0 7 0 14
 +qt:_*[*e!J:N0#5Tq0K
-BDFChar: 194 269 8 0 5 0 11
+BDFChar: 194 269 9 0 5 0 11
 6mrTH3(/:IJ:L$I
 BDFChar: 196 280 9 0 6 -2 10
 rd]NLrd]NLJ:RV%"onW'
@@ -24339,7 +24399,7 @@ BDFChar: 215 339 14 0 12 0 7
 38d4:Jd@#(JcLB&70kmB
 BDFChar: 218 352 9 0 6 0 14
 6mrTH4@4RK5WAlJ!ebdu
-BDFChar: 219 353 7 0 5 0 11
+BDFChar: 219 353 9 0 5 0 11
 6mrTHG_CTT(^,M:
 BDFChar: 221 376 11 0 8 0 12
 &c_n3J:Koc+oiee'EAC=#QP,1#QP,1#QOi)
@@ -24393,9 +24453,9 @@ BDFChar: 272 258 10 0 7 0 13
 ,T$Lu(aL@P,XQrHJUme$
 BDFChar: 280 278 10 0 6 0 12
 &-2][J:RWLJ:N0#rVuou
-BDFChar: 299 259 9 0 6 0 10
+BDFChar: 299 259 10 0 6 0 10
 ,T$MD639>;JqeRO
-BDFChar: 306 279 9 0 6 0 9
+BDFChar: 306 279 10 0 6 0 9
 &-+[XK)U:N69G5J
 BDFChar: 313 173 5 0 3 4 4
 n,NFg
@@ -24409,7 +24469,7 @@ BDFChar: 331 303 5 0 2 -3 10
 5QCdL5X7S"5X7S"J7&?W
 BDFChar: 332 362 12 0 8 0 12
 IfKHKJ:N0#J:N0#J:N0#J:N0#J:Koc4obQ_
-BDFChar: 333 363 10 0 6 0 9
+BDFChar: 333 363 11 0 6 0 9
 rW%P%JqAT+L3`h"
 BDFChar: 334 370 11 0 8 -2 10
 J:N0#J:N0#J:N0#J:N0#J:Koc4obWa!rr<$
@@ -24479,7 +24539,7 @@ BDFChar: 366 1070 17 1 12 0 10
 LVS]gO:[KbO:^mmO:[KbO:[3jLVNli
 BDFChar: 367 1071 11 0 7 0 10
 +!Ep95p7<n5s^&%
-BDFChar: 368 1072 8 0 6 0 7
+BDFChar: 368 1072 10 0 6 0 7
 4@0*56@sr<
 BDFChar: 369 1073 9 0 6 0 10
 ";i7HG_C[#Jj_Qu
@@ -24489,7 +24549,7 @@ BDFChar: 371 1075 7 0 4 0 7
 pjdmFJ:N0#
 BDFChar: 372 1076 10 0 7 -1 7
 *[2dP+sKARJH,ZM
-BDFChar: 373 1077 8 0 6 0 7
+BDFChar: 373 1077 10 0 6 0 7
 3(/AtJ:KsK
 BDFChar: 374 1078 13 1 9 0 7
 Lk&%s.KCFg)uqGg8H=Qs
@@ -24507,13 +24567,13 @@ BDFChar: 380 1084 11 0 8 0 7
 J:PIdU4AJYLk(;3J:N0#
 BDFChar: 381 1085 10 0 6 0 7
 JqAURJqAT+
-BDFChar: 382 1086 8 0 6 0 7
+BDFChar: 382 1086 10 0 6 0 7
 3(/@MJq?BM
 BDFChar: 383 1087 10 0 6 0 7
 rdo`RJqAT+
-BDFChar: 384 1088 8 0 6 -3 7
+BDFChar: 384 1088 11 0 6 -3 7
 \AWuNJqA[NJ:N.M
-BDFChar: 385 1089 7 0 5 0 7
+BDFChar: 385 1089 9 0 5 0 7
 3(/:IJ:L$I
 BDFChar: 386 1090 8 0 6 0 7
 rX]VP&.fBa
@@ -24521,7 +24581,7 @@ BDFChar: 387 1091 9 0 6 -3 7
 Jq?BY-n#W<&0N(q
 BDFChar: 388 1092 13 1 9 -3 9
 #QP,1IfP:TLk(;3Lk(;3Lk'sT#QP,1#QOi)
-BDFChar: 389 1093 8 0 6 0 7
+BDFChar: 389 1093 10 0 6 0 7
 Jj_!u&1Bqu
 BDFChar: 390 1094 10 0 7 -2 7
 JqAT+JqAUS!<E0#
@@ -24543,9 +24603,9 @@ BDFChar: 398 1102 14 1 9 0 7
 NrY8lOFZhNOFWFCOFWAl
 BDFChar: 399 1103 9 1 6 0 7
 I"[0+HmD+5
-BDFChar: 400 1104 8 0 6 0 11
+BDFChar: 400 1104 10 0 6 0 11
 &.f*I3(/AtJ:KsK
-BDFChar: 401 1105 9 0 6 0 9
+BDFChar: 401 1105 10 0 6 0 9
 ,QKelK)U:N69G5J
 BDFChar: 402 1024 10 0 6 0 14
 &.f*Ird]NLrd]NLJ:RV!
@@ -24609,11 +24669,11 @@ BDFChar: 970 806 0 2 4 -3 -2
 @))aB
 BDFChar: 971 536 11 1 3 -3 -2
 @))aB
-BDFChar: 972 537 7 1 3 -3 -2
+BDFChar: 972 537 9 1 3 -3 -2
 @))aB
 BDFChar: 973 538 9 2 4 -3 -2
 @))aB
-BDFChar: 974 539 5 1 3 -3 -2
+BDFChar: 974 539 7 1 3 -3 -2
 @))aB
 BDFChar: 975 1108 8 0 5 0 7
 3(/;dJ:L$I
@@ -24792,57 +24852,57 @@ BDFChar: 64 95 10 0 8 -2 -2
 s*t(L
 BDFChar: 65 96 8 2 3 10 12
 J:Klb
-BDFChar: 66 97 8 0 6 0 8
+BDFChar: 66 97 11 0 6 0 8
 4@0*56@sfDH2mpF
-BDFChar: 67 98 9 0 7 0 12
+BDFChar: 67 98 10 0 7 0 12
 J:N0#]Y]5NJUrB(qu?]s
-BDFChar: 68 99 7 0 5 0 8
+BDFChar: 68 99 8 0 5 0 8
 3(/:IJ:N/<2uipY
-BDFChar: 69 100 9 0 7 0 12
+BDFChar: 69 100 11 0 7 0 12
 !<E3%5='jOJUrA>4TGH^
-BDFChar: 70 101 8 0 6 0 8
+BDFChar: 70 101 10 0 6 0 8
 3(/@Mrd]Mc49,?]
-BDFChar: 71 102 5 0 4 0 12
+BDFChar: 71 102 6 0 4 0 12
 3']_on3B6(5X7S"5QCca
-BDFChar: 72 103 9 0 7 -3 8
+BDFChar: 72 103 11 0 7 -3 8
 5='jOJUrA>4TRl3
-BDFChar: 73 104 9 0 7 0 12
+BDFChar: 73 104 11 0 7 0 12
 J:N0#]Y]5NJUrB'JH,ZM
-BDFChar: 74 105 4 1 1 0 11
+BDFChar: 74 105 5 1 1 0 11
 J:IWMJ:N0#J:N0#
-BDFChar: 75 106 5 1 3 -3 11
+BDFChar: 75 106 6 1 3 -3 11
 +<UY,+<VdL+<VdL+<\H"
-BDFChar: 76 107 8 0 6 0 12
+BDFChar: 76 107 10 0 6 0 12
 J:N0#KSY__i/ibJJcGcN
-BDFChar: 77 108 4 1 1 0 12
+BDFChar: 77 108 5 1 1 0 12
 J:N0#J:N0#J:N0#J,fQL
-BDFChar: 78 109 14 1 11 0 8
+BDFChar: 78 109 15 1 11 0 8
 \\Q3-KHPpjKHPpjKHPpjKHL6p
-BDFChar: 79 110 9 0 7 0 8
+BDFChar: 79 110 11 0 7 0 8
 ]Y]5NJUrB'JH,ZM
-BDFChar: 80 111 9 0 7 0 8
+BDFChar: 80 111 10 0 7 0 8
 4@4UMJUrA=49,?]
-BDFChar: 81 112 9 0 7 -3 8
+BDFChar: 81 112 11 0 7 -3 8
 ]Y]5NJUrB(r.'<J
-BDFChar: 82 113 9 0 7 -3 8
+BDFChar: 82 113 11 0 7 -3 8
 5='jOJUrA>4TPQa
-BDFChar: 83 114 6 0 4 0 8
+BDFChar: 83 114 7 0 4 0 8
 \A3WFJ:N0#J,fQL
-BDFChar: 84 115 7 0 5 0 8
+BDFChar: 84 115 10 0 5 0 8
 G_CTtGQ\/&GQ7^D
-BDFChar: 85 116 5 0 4 0 11
+BDFChar: 85 116 8 0 4 0 11
 5X7U05X7S"5X7Ro
-BDFChar: 86 117 9 0 7 0 8
+BDFChar: 86 117 11 0 7 0 8
 JUrB'JUrA>4TGH^
-BDFChar: 87 118 8 0 6 0 8
+BDFChar: 87 118 10 0 6 0 8
 Jq?BY6msGp&-)\1
-BDFChar: 88 119 12 0 10 0 8
+BDFChar: 88 119 14 0 10 0 8
 KHPpj8jH!68jH6=0n:Bs+FjFl
-BDFChar: 89 120 8 0 6 0 8
+BDFChar: 89 120 10 0 6 0 8
 Jj_"8&1AqpJcGcN
-BDFChar: 90 121 8 0 6 -3 8
+BDFChar: 90 121 9 0 6 -3 8
 Jq?BY6msGp&0N)<
-BDFChar: 91 122 7 0 5 0 8
+BDFChar: 91 122 9 0 5 0 8
 qud9:+<Wq"qu?]s
 BDFChar: 92 123 10 0 6 -3 12
 %M00_&.fu"+:o(q&.fB_
@@ -24972,29 +25032,29 @@ BDFChar: 155 222 9 0 7 0 11
 J:RQLJUrB(r.'<J
 BDFChar: 156 223 9 1 8 0 11
 G_Ca'Lkp_9JUrBd
-BDFChar: 157 224 8 0 6 0 12
+BDFChar: 157 224 11 0 6 0 12
 &.f*I4@0*56@sfDH2mpF
-BDFChar: 158 225 8 0 6 0 12
+BDFChar: 158 225 11 0 6 0 12
 #RCtA4@0*56@sfDH2mpF
-BDFChar: 159 226 8 0 6 0 12
+BDFChar: 159 226 11 0 6 0 12
 &1BpH4@0*56@sfDH2mpF
-BDFChar: 160 227 8 0 6 0 11
+BDFChar: 160 227 11 0 6 0 11
 1/%[1639>;JqA`'
-BDFChar: 161 228 8 0 6 0 11
+BDFChar: 161 228 11 0 6 0 11
 6pq#;639>;JqA`'
-BDFChar: 162 229 8 0 6 0 13
+BDFChar: 162 229 11 0 6 0 13
 3(-/&3'9M/5!jjQL3`h"
 BDFChar: 163 230 14 0 12 0 8
 4Q&R<!XM$c63)T;JcLQ3Gjk\5
 BDFChar: 164 231 7 0 5 -3 8
 3(/:IJ:N/<3!]e/
-BDFChar: 165 232 8 0 6 0 12
+BDFChar: 165 232 11 0 6 0 12
 &.f*I3(/@Mrd]Mc49,?]
-BDFChar: 166 233 8 0 6 0 12
+BDFChar: 166 233 11 0 6 0 12
 #RCtA3(/@Mrd]Mc49,?]
-BDFChar: 167 234 8 0 6 0 12
+BDFChar: 167 234 11 0 6 0 12
 &1BpH3(/@Mrd]Mc49,?]
-BDFChar: 168 235 10 0 6 0 11
+BDFChar: 168 235 11 0 6 0 11
 6pq#77"U$iJ:KsK
 BDFChar: 169 236 4 0 0 0 10
 J,k+MJ:N0#J:N.M
@@ -25006,35 +25066,35 @@ BDFChar: 172 239 4 0 2 0 11
 TV)9M5X7S"5X7S"
 BDFChar: 173 240 9 0 7 0 11
 2@MDD4[XdOJUp-M
-BDFChar: 174 241 9 0 7 0 11
+BDFChar: 174 241 11 0 7 0 11
 1/%\\_L[8hJUrB'
-BDFChar: 175 242 9 0 7 0 12
+BDFChar: 175 242 11 0 7 0 12
 +<V3q4@4UMJUrA=49,?]
-BDFChar: 176 243 9 0 7 0 12
+BDFChar: 176 243 11 0 7 0 12
 "9\u14@4UMJUrA=49,?]
-BDFChar: 177 244 9 0 7 0 12
+BDFChar: 177 244 11 0 7 0 12
 #S\H_4@4UMJUrA=49,?]
-BDFChar: 178 245 9 0 7 0 11
+BDFChar: 178 245 11 0 7 0 11
 1/%[16@j]=JUp-M
-BDFChar: 179 246 9 0 7 0 11
+BDFChar: 179 246 11 0 7 0 11
 6:(Z76@j]=JUp-M
 BDFChar: 180 247 12 1 9 1 9
 #QP,1zs*t(L!!!9)#QOi)
 BDFChar: 181 248 9 0 7 -1 9
 !Bri(M4'L"6@=:`
-BDFChar: 182 249 9 0 7 0 12
+BDFChar: 182 249 11 0 7 0 12
 &.f*IJUrB'JUrA>4TGH^
-BDFChar: 183 250 9 0 7 0 12
+BDFChar: 183 250 11 0 7 0 12
 #RCtAJUrB'JUrA>4TGH^
-BDFChar: 184 251 9 0 7 0 12
+BDFChar: 184 251 11 0 7 0 12
 #S\H_JUrB'JUrA>4TGH^
-BDFChar: 185 252 9 0 7 0 11
+BDFChar: 185 252 11 0 7 0 11
 +sI#<JUrB'JUp0O
-BDFChar: 186 253 8 0 6 -3 12
+BDFChar: 186 253 9 0 6 -3 12
 #RCtAJq?BY6msGp&0N)<
 BDFChar: 187 254 9 0 7 -3 12
 J:N0#]Y]5NJUrB(r.'<J
-BDFChar: 188 255 8 0 6 -3 11
+BDFChar: 188 255 9 0 6 -3 11
 6pq$,Jj`!p-n#W<+<Vd,
 BDFChar: 189 260 11 0 9 -3 11
 $ign?&c`OE+TNYc+TR"B5_)+MJ3\WM!.Y(M!5JR7
@@ -25042,7 +25102,7 @@ BDFChar: 190 261 10 0 6 -3 8
 4@0*56@sfDH3=KX
 BDFChar: 193 268 12 0 8 0 15
 &HE.<"98E%*rmF65QH<7J,k*"J,k*"J,hh7+FkO6
-BDFChar: 194 269 8 0 5 0 12
+BDFChar: 194 269 9 0 5 0 12
 6mrTH3(/:IJ:N/<2uipY
 BDFChar: 196 280 10 0 7 -3 11
 s+#WMJH(.MJ:N1M!X&T*
@@ -25054,7 +25114,7 @@ BDFChar: 215 339 15 0 13 0 8
 4E*WCJHUN,Jc('!JH/#i4Epi+
 BDFChar: 218 352 10 0 7 0 15
 +qt:_5!a^LJ8bu!!<Ie"
-BDFChar: 219 353 7 0 5 0 12
+BDFChar: 219 353 10 0 5 0 12
 6mrTHG_CTtGQ\/&GQ7^D
 BDFChar: 221 376 12 0 8 0 14
 +oiee!!%P"5la1N+oi;W'EAC=#QP,1#QP,1#QOi)
@@ -25108,9 +25168,9 @@ BDFChar: 272 258 11 0 9 0 14
 &c`=?!!!E-&c`OE&ca'T+TNYcIt0e75_+AMJ3X)7
 BDFChar: 280 278 11 0 7 0 14
 (`38QJ:N0#s+#WMJ:RY"
-BDFChar: 299 259 10 0 6 0 11
+BDFChar: 299 259 11 0 6 0 11
 +rgSF639>;JqA`'
-BDFChar: 306 279 10 0 6 0 11
+BDFChar: 306 279 11 0 6 0 11
 (`3647"U$iJ:KsK
 BDFChar: 313 173 6 0 4 5 5
 p](9o
@@ -25124,7 +25184,7 @@ BDFChar: 331 303 5 0 2 -3 11
 5X5<75X7S"5X7S"5_*5B
 BDFChar: 332 362 13 0 9 0 13
 It.M!J3\WMJ3\WMJ3\WMJ3\WMJ3\WM5_)'!
-BDFChar: 333 363 10 0 7 0 10
+BDFChar: 333 363 11 0 7 0 10
 IK4qMJUrB'JO;R#
 BDFChar: 334 370 12 0 9 -3 11
 J3\WMJ3\WMJ3\WMJ3\WMJ3\WM5_)'!!<<0$!It.M
@@ -25194,7 +25254,7 @@ BDFChar: 366 1070 18 1 13 0 11
 K><-_L_,XRO9k=]O9gpRO9gXRKHPo_
 BDFChar: 367 1071 11 0 8 0 11
 ++PJa5_)+M5_'u-++OWI&:bmR5_+B8
-BDFChar: 368 1072 8 0 6 0 8
+BDFChar: 368 1072 11 0 6 0 8
 4@0*56@sfDH2mpF
 BDFChar: 369 1073 10 0 7 0 11
 !ZW=JI):GcJUp-M
@@ -25204,7 +25264,7 @@ BDFChar: 371 1075 8 1 5 0 8
 pjdmFJ:N0#J,fQL
 BDFChar: 372 1076 10 0 7 -2 8
 *[2dP+sJ3ts+,_$
-BDFChar: 373 1077 8 0 6 0 8
+BDFChar: 373 1077 11 0 6 0 8
 3(/@Mrd]Mc49,?]
 BDFChar: 374 1078 14 0 10 0 8
 KHNZJ,_-U0%KI4D,_/9JKHL6p
@@ -25222,13 +25282,13 @@ BDFChar: 380 1084 12 0 8 0 8
 J:PIdU4AJYLk(;3J:N0#J:IV"
 BDFChar: 381 1085 10 1 7 0 8
 JqAT+rdo`RJcGcN
-BDFChar: 382 1086 9 0 7 0 8
+BDFChar: 382 1086 11 0 7 0 8
 4@4UMJUrA=49,?]
 BDFChar: 383 1087 10 0 6 0 8
 rdo`RJqAT+JcGcN
-BDFChar: 384 1088 9 0 7 -3 8
+BDFChar: 384 1088 11 0 7 -3 8
 ]Y]5NJUrB(r.'<J
-BDFChar: 385 1089 7 0 5 0 8
+BDFChar: 385 1089 9 0 5 0 8
 3(/:IJ:N/<2uipY
 BDFChar: 386 1090 8 0 6 0 8
 rX]VP&.fBa&-)\1
@@ -25236,7 +25296,7 @@ BDFChar: 387 1091 9 0 6 -3 8
 Jq?BY6msGp&0N)<
 BDFChar: 388 1092 14 0 10 -3 9
 "98Q)5Cc-eKHPpjKHPpj6pNte"98Q)"98E%
-BDFChar: 389 1093 8 0 6 0 8
+BDFChar: 389 1093 10 0 6 0 8
 Jj_"8&1AqpJcGcN
 BDFChar: 390 1094 10 1 8 -2 8
 JqAT+JqAT+rrE-#
@@ -25258,9 +25318,9 @@ BDFChar: 398 1102 15 1 10 0 8
 LB*-\O?emmn3E(#O?eVPLB%;S
 BDFChar: 399 1103 10 1 6 0 8
 4@FjU6p)__KE(uP
-BDFChar: 400 1104 8 0 6 0 12
+BDFChar: 400 1104 11 0 6 0 12
 &.f*I3(/@Mrd]Mc49,?]
-BDFChar: 401 1105 10 0 6 0 11
+BDFChar: 401 1105 11 0 6 0 11
 6pq#77"U$iJ:KsK
 BDFChar: 402 1024 11 0 7 0 15
 &.f*Is+#WMJH(.MJ:N1M
@@ -25324,11 +25384,11 @@ BDFChar: 970 806 0 2 4 -3 -2
 @))aB
 BDFChar: 971 536 12 2 4 -3 -2
 @))aB
-BDFChar: 972 537 7 1 3 -3 -2
+BDFChar: 972 537 10 1 3 -3 -2
 @))aB
 BDFChar: 973 538 10 2 4 -3 -2
 @))aB
-BDFChar: 974 539 5 1 3 -3 -2
+BDFChar: 974 539 8 1 3 -3 -2
 @))aB
 BDFChar: 975 1108 8 0 5 0 8
 3(/:Ipjdl_2uipY
