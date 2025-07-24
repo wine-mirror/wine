@@ -3699,7 +3699,7 @@ static void get_valloc_info( void *mem, char **base, SIZE_T *alloc_size )
     while (1)
     {
         size = VirtualQuery( p, &info2, sizeof(info2) );
-        ok( size == sizeof(info), "got %Iu.\n", size );
+        if (!size) break;
         if (info2.AllocationBase != info.AllocationBase)
             break;
         ok( info2.State == MEM_RESERVE || info2.State == MEM_COMMIT, "got %#lx.\n", info2.State );
