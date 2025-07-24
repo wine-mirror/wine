@@ -169,8 +169,14 @@ static HRESULT STDMETHODCALLTYPE dxcore_adapter_GetProperty(IDXCoreAdapter *ifac
 static HRESULT STDMETHODCALLTYPE dxcore_adapter_GetPropertySize(IDXCoreAdapter *iface, DXCoreAdapterProperty property,
         size_t *buffer_size)
 {
-    FIXME("iface %p, property %u, buffer_size %p stub!\n", iface, property, buffer_size);
-    return E_NOTIMPL;
+    struct dxcore_adapter *adapter = impl_from_IDXCoreAdapter(iface);
+
+    TRACE("iface %p, property %u, buffer_size %p.\n", iface, property, buffer_size);
+
+    if (!buffer_size)
+        return E_POINTER;
+
+    return dxcore_adapter_get_property_size(adapter, property, buffer_size);
 }
 
 static BOOL STDMETHODCALLTYPE dxcore_adapter_IsQueryStateSupported(IDXCoreAdapter *iface, DXCoreAdapterState property)
