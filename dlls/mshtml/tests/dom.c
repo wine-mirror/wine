@@ -5642,9 +5642,14 @@ static IHTMLDOMNode *_test_node_insertbefore(unsigned line, IUnknown *node_unk, 
 static void _test_node_remove_child(unsigned line, IUnknown *unk, IHTMLDOMNode *child)
 {
     IHTMLDOMNode *node = _get_node_iface(line, unk);
-    IHTMLDOMNode *new_node = NULL;
+    IHTMLDOMNode *new_node = (void*)0xdeadbeef;
     HRESULT hres;
 
+    hres = IHTMLDOMNode_removeChild(node, NULL, &new_node);
+    ok_(__FILE__,line) (hres == E_INVALIDARG, "removeChild returned: %08lx\n", hres);
+    ok_(__FILE__,line) (new_node == NULL, "new_node != NULL\n");
+
+    new_node = NULL;
     hres = IHTMLDOMNode_removeChild(node, child, &new_node);
     ok_(__FILE__,line) (hres == S_OK, "removeChild failed: %08lx\n", hres);
     ok_(__FILE__,line) (new_node != NULL, "new_node == NULL\n");

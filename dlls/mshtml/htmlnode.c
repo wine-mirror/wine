@@ -619,6 +619,10 @@ static HRESULT WINAPI HTMLDOMNode_removeChild(IHTMLDOMNode *iface, IHTMLDOMNode 
 
     TRACE("(%p)->(%p %p)\n", This, oldChild, node);
 
+    *node = NULL;
+    if(!oldChild)
+        return E_INVALIDARG;
+
     node_obj = get_node_obj(oldChild);
     if(!node_obj)
         return E_FAIL;
