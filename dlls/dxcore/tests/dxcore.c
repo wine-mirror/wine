@@ -152,7 +152,8 @@ static void test_GetProperty(void)
     IDXCoreAdapterList *list;
     DXCoreHardwareID hwid[2];
     IDXCoreAdapter *adapter;
-    uint32_t count;
+    uint32_t count, dummy;
+    BYTE is_hardware;
     LUID luid[2];
     size_t size;
     HRESULT hr;
@@ -223,6 +224,29 @@ static void test_GetProperty(void)
         ok(!!hwid[0].deviceID, "Expected deviceID.\n");
         ok(!hwid[1].vendorID, "Expected no vendorID.\n");
         ok(!hwid[1].deviceID, "Expected no deviceID.\n");
+
+        /* IsHardware */
+        hr = IDXCoreAdapter_GetProperty(adapter, IsHardware, 0, NULL);
+        ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+        hr = IDXCoreAdapter_GetProperty(adapter, IsHardware, 0, &is_hardware);
+        todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+        hr = IDXCoreAdapter_GetPropertySize(adapter, IsHardware, NULL);
+        ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+
+        hr = IDXCoreAdapter_GetPropertySize(adapter, IsHardware, &size);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        todo_wine ok(size == sizeof(is_hardware), "Got property size.\n");
+
+        is_hardware = 3;
+        hr = IDXCoreAdapter_GetProperty(adapter, IsHardware, sizeof(is_hardware), &is_hardware);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        todo_wine ok(is_hardware == 0 || is_hardware == 1, "Got value %d.\n", is_hardware);
+
+        dummy = 0;
+        hr = IDXCoreAdapter_GetProperty(adapter, IsHardware, sizeof(dummy), &dummy);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        todo_wine ok(dummy == is_hardware, "Got value %#x.\n", dummy);
 
         IDXCoreAdapter_Release(adapter);
     }
