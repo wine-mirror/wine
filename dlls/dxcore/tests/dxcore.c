@@ -229,24 +229,24 @@ static void test_GetProperty(void)
         hr = IDXCoreAdapter_GetProperty(adapter, IsHardware, 0, NULL);
         ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
         hr = IDXCoreAdapter_GetProperty(adapter, IsHardware, 0, &is_hardware);
-        todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
         hr = IDXCoreAdapter_GetPropertySize(adapter, IsHardware, NULL);
         ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
         hr = IDXCoreAdapter_GetPropertySize(adapter, IsHardware, &size);
-        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        todo_wine ok(size == sizeof(is_hardware), "Got property size.\n");
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(size == sizeof(is_hardware), "Got property size.\n");
 
         is_hardware = 3;
         hr = IDXCoreAdapter_GetProperty(adapter, IsHardware, sizeof(is_hardware), &is_hardware);
-        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        todo_wine ok(is_hardware == 0 || is_hardware == 1, "Got value %d.\n", is_hardware);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(is_hardware == 0 || is_hardware == 1, "Got value %d.\n", is_hardware);
 
         dummy = 0;
         hr = IDXCoreAdapter_GetProperty(adapter, IsHardware, sizeof(dummy), &dummy);
-        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        todo_wine ok(dummy == is_hardware, "Got value %#x.\n", dummy);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(dummy == is_hardware, "Got value %#x.\n", dummy);
 
         IDXCoreAdapter_Release(adapter);
     }

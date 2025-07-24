@@ -109,12 +109,14 @@ static HRESULT dxcore_adapter_get_property_size(struct dxcore_adapter *adapter,
     {
         [InstanceLuid] = sizeof(LUID),
         [HardwareID] = sizeof(DXCoreHardwareID),
+        [IsHardware] = sizeof(BYTE),
     };
 
     switch (property)
     {
         case InstanceLuid:
         case HardwareID:
+        case IsHardware:
             *size = property_sizes[property];
             return S_OK;
 
@@ -158,6 +160,11 @@ static HRESULT STDMETHODCALLTYPE dxcore_adapter_GetProperty(IDXCoreAdapter *ifac
             hardware_id->revision = adapter->identifier.revision;
             break;
         }
+
+        case IsHardware:
+            FIXME("Returning all adapters as Hardware.\n");
+            *(BYTE *)buffer = 1;
+            break;
 
         default:
             break;
