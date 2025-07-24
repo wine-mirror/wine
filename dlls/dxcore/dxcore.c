@@ -102,34 +102,55 @@ static BOOL STDMETHODCALLTYPE dxcore_adapter_IsPropertySupported(IDXCoreAdapter 
     return FALSE;
 }
 
+static HRESULT dxcore_adapter_get_property_size(struct dxcore_adapter *adapter,
+        DXCoreAdapterProperty property, size_t *size)
+{
+    static const size_t property_sizes[] =
+    {
+        [InstanceLuid] = sizeof(LUID),
+        [HardwareID] = sizeof(DXCoreHardwareID),
+    };
+
+    switch (property)
+    {
+        case InstanceLuid:
+        case HardwareID:
+            *size = property_sizes[property];
+            return S_OK;
+
+        default:
+            FIXME("Property %u not implemented.\n", property);
+            return DXGI_ERROR_INVALID_CALL;
+    }
+}
+
 static HRESULT STDMETHODCALLTYPE dxcore_adapter_GetProperty(IDXCoreAdapter *iface, DXCoreAdapterProperty property,
         size_t buffer_size, void *buffer)
 {
     struct dxcore_adapter *adapter = impl_from_IDXCoreAdapter(iface);
+    size_t size;
+    HRESULT hr;
 
     TRACE("iface %p, property %u, buffer_size %Iu, buffer %p\n", iface, property, buffer_size, buffer);
 
     if (!buffer)
         return E_POINTER;
 
+    if (FAILED(hr = dxcore_adapter_get_property_size(adapter, property, &size)))
+        return hr;
+
+    if (buffer_size < size)
+        return E_INVALIDARG;
+
     switch (property)
     {
         case InstanceLuid:
-        {
-            LUID *luid = buffer;
-
-            if (buffer_size < sizeof(*luid))
-                return E_INVALIDARG;
-
-            *luid = adapter->identifier.adapter_luid;
+            *(LUID *)buffer = adapter->identifier.adapter_luid;
             break;
-        }
+
         case HardwareID:
         {
             struct DXCoreHardwareID *hardware_id = buffer;
-
-            if (buffer_size != sizeof(DXCoreHardwareID))
-                return E_INVALIDARG;
 
             hardware_id->vendorID = adapter->identifier.vendor_id;
             hardware_id->deviceID = adapter->identifier.device_id;
@@ -137,11 +158,9 @@ static HRESULT STDMETHODCALLTYPE dxcore_adapter_GetProperty(IDXCoreAdapter *ifac
             hardware_id->revision = adapter->identifier.revision;
             break;
         }
+
         default:
-        {
-            FIXME("property %u not implemented.\n", property);
-            return DXGI_ERROR_INVALID_CALL;
-        }
+            break;
     }
 
     return S_OK;
