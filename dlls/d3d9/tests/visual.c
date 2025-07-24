@@ -5241,852 +5241,6 @@ static void check_rect_(unsigned int line, struct surface_readback *rb, RECT r, 
     }
 }
 
-struct projected_textures_test_run
-{
-    const char *message;
-    DWORD flags;
-    IDirect3DVertexDeclaration9 *decl;
-    BOOL vs, ps;
-    RECT rect;
-};
-
-static void projected_textures_test(IDirect3DDevice9 *device,
-        struct projected_textures_test_run tests[4])
-{
-    unsigned int i;
-
-    static const DWORD vertex_shader[] =
-    {
-        0xfffe0101,                                     /* vs_1_1           */
-        0x0000001f, 0x80000000, 0x900f0000,             /* dcl_position v0  */
-        0x0000001f, 0x80000005, 0x900f0001,             /* dcl_texcoord0 v1 */
-        0x00000001, 0xc00f0000, 0x90e40000,             /* mov oPos, v0     */
-        0x00000001, 0xe00f0000, 0x90e40001,             /* mov oT0, v1      */
-        0x0000ffff                                      /* end              */
-    };
-    static const DWORD pixel_shader[] =
-    {
-        0xffff0103,                                     /* ps_1_3           */
-        0x00000042, 0xb00f0000,                         /* tex t0           */
-        0x00000001, 0x800f0000, 0xb0e40000,             /* mov r0, t0       */
-        0x0000ffff                                      /* end              */
-    };
-    IDirect3DVertexShader9 *vs = NULL;
-    IDirect3DPixelShader9 *ps = NULL;
-    IDirect3D9 *d3d;
-    D3DCAPS9 caps;
-    HRESULT hr;
-    IDirect3DSurface9 *backbuffer;
-    struct surface_readback rb;
-
-    IDirect3DDevice9_GetDirect3D(device, &d3d);
-    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    IDirect3D9_Release(d3d);
-
-    if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
-    {
-        hr = IDirect3DDevice9_CreateVertexShader(device, vertex_shader, &vs);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    }
-    if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 3))
-    {
-        hr = IDirect3DDevice9_CreatePixelShader(device, pixel_shader, &ps);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    }
-
-    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
-    ok(SUCCEEDED(hr), "Failed to get back buffer, hr %#lx.\n", hr);
-
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff203040, 0.0f, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#lx.\n", hr);
-
-    for (i = 0; i < 4; ++i)
-    {
-        DWORD value = 0xdeadbeef;
-        static const float proj_quads[] =
-        {
-            -1.0f, -1.0f, 0.1f, 0.0f, 0.0f, 4.0f, 6.0f,
-            -1.0f,  0.0f, 0.1f, 0.0f, 4.0f, 4.0f, 6.0f,
-             0.0f, -1.0f, 0.1f, 4.0f, 0.0f, 4.0f, 6.0f,
-             0.0f,  0.0f, 0.1f, 4.0f, 4.0f, 4.0f, 6.0f,
-
-             0.0f, -1.0f, 0.1f, 0.0f, 0.0f, 4.0f, 6.0f,
-             0.0f,  0.0f, 0.1f, 0.0f, 4.0f, 4.0f, 6.0f,
-             1.0f, -1.0f, 0.1f, 4.0f, 0.0f, 4.0f, 6.0f,
-             1.0f,  0.0f, 0.1f, 4.0f, 4.0f, 4.0f, 6.0f,
-
-            -1.0f,  0.0f, 0.1f, 0.0f, 0.0f, 4.0f, 6.0f,
-            -1.0f,  1.0f, 0.1f, 0.0f, 4.0f, 4.0f, 6.0f,
-             0.0f,  0.0f, 0.1f, 4.0f, 0.0f, 4.0f, 6.0f,
-             0.0f,  1.0f, 0.1f, 4.0f, 4.0f, 4.0f, 6.0f,
-
-             0.0f,  0.0f, 0.1f, 0.0f, 0.0f, 4.0f, 6.0f,
-             0.0f,  1.0f, 0.1f, 0.0f, 4.0f, 4.0f, 6.0f,
-             1.0f,  0.0f, 0.1f, 4.0f, 0.0f, 4.0f, 6.0f,
-             1.0f,  1.0f, 0.1f, 4.0f, 4.0f, 4.0f, 6.0f,
-        };
-
-        if (tests[i].vs)
-        {
-            if (!vs)
-            {
-                skip("Vertex shaders not supported, skipping\n");
-                continue;
-            }
-            hr = IDirect3DDevice9_SetVertexShader(device, vs);
-        }
-        else
-            hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        if (tests[i].ps)
-        {
-            if (!ps)
-            {
-                skip("Pixel shaders not supported, skipping\n");
-                continue;
-            }
-            hr = IDirect3DDevice9_SetPixelShader(device, ps);
-        }
-        else
-            hr = IDirect3DDevice9_SetPixelShader(device, NULL);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        hr = IDirect3DDevice9_SetVertexDeclaration(device, tests[i].decl);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, tests[i].flags);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_GetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, &value);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        ok(value == tests[i].flags, "Got value %#lx.\n", value);
-
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2,
-                &proj_quads[i * 4 * 7], 7 * sizeof(float));
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    }
-
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
-    if (vs) IDirect3DVertexShader9_Release(vs);
-    if (ps) IDirect3DPixelShader9_Release(ps);
-
-    get_rt_readback(backbuffer, &rb);
-    for (i = 0; i < 4; ++i)
-    {
-        if ((!tests[i].vs || vs) && (!tests[i].ps || ps))
-            check_rect(&rb, tests[i].rect, tests[i].message);
-    }
-    release_surface_readback(&rb);
-    IDirect3DSurface9_Release(backbuffer);
-}
-
-static void texture_transform_flags_test(void)
-{
-    HRESULT hr;
-    IDirect3D9 *d3d;
-    D3DFORMAT fmt = D3DFMT_X8R8G8B8;
-    D3DCAPS9 caps;
-    IDirect3DTexture9 *texture = NULL;
-    IDirect3DVolumeTexture9 *volume = NULL;
-    unsigned int color, x, y, z, w, h;
-    IDirect3DDevice9 *device;
-    D3DLOCKED_RECT lr;
-    D3DLOCKED_BOX lb;
-    ULONG refcount;
-    HWND window;
-    IDirect3DVertexDeclaration9 *decl, *decl2, *decl3, *decl4;
-
-    static const D3DVERTEXELEMENT9 decl_elements[] = {
-        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-        {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
-        D3DDECL_END()
-    };
-    static const D3DVERTEXELEMENT9 decl_elements2[] = {
-        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-        {0, 12, D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
-        D3DDECL_END()
-    };
-    static const D3DVERTEXELEMENT9 decl_elements3[] = {
-        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-        {0, 12, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
-        D3DDECL_END()
-    };
-    static const D3DVERTEXELEMENT9 decl_elements4[] = {
-        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-        {0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
-        D3DDECL_END()
-    };
-    static const unsigned char proj_texdata[] = {0x00, 0x00, 0x00, 0x00,
-                                                 0x00, 0xff, 0x00, 0x00,
-                                                 0x00, 0x00, 0x00, 0x00,
-                                                 0x00, 0x00, 0x00, 0x00};
-    static const D3DMATRIX identity =
-    {{{
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f,
-    }}};
-
-    window = create_window();
-    d3d = Direct3DCreate9(D3D_SDK_VERSION);
-    ok(!!d3d, "Failed to create a D3D object.\n");
-    if (!(device = create_device(d3d, window, window, TRUE)))
-    {
-        skip("Failed to create a D3D device, skipping tests.\n");
-        goto done;
-    }
-
-    memset(&lr, 0, sizeof(lr));
-    memset(&lb, 0, sizeof(lb));
-    if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
-            D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, D3DFMT_A16B16G16R16) == D3D_OK)
-        fmt = D3DFMT_A16B16G16R16;
-
-    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &decl);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements2, &decl2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements3, &decl3);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements4, &decl4);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, FALSE);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSW, D3DTADDRESS_CLAMP);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 1.0f, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    w = min(1024, caps.MaxTextureWidth);
-    h = min(1024, caps.MaxTextureHeight);
-    hr = IDirect3DDevice9_CreateTexture(device, w, h, 1,
-                                        0, fmt, D3DPOOL_MANAGED, &texture, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (!texture)
-    {
-        skip("Failed to create the test texture.\n");
-        IDirect3DDevice9_Release(device);
-        goto done;
-    }
-
-    /* Unfortunately there is no easy way to set up a texture coordinate passthrough
-     * in d3d fixed function pipeline, so create a texture that has a gradient from 0.0 to
-     * 1.0 in red and green for the x and y coords
-     */
-    hr = IDirect3DTexture9_LockRect(texture, 0, &lr, NULL, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    for(y = 0; y < h; y++) {
-        for(x = 0; x < w; x++) {
-            double r_f = (double) y / (double) h;
-            double g_f = (double) x / (double) w;
-            if(fmt == D3DFMT_A16B16G16R16) {
-                unsigned short r, g;
-                unsigned short *dst = (unsigned short *) (((char *) lr.pBits) + y * lr.Pitch + x * 8);
-                r = (unsigned short) (r_f * 65536.0);
-                g = (unsigned short) (g_f * 65536.0);
-                dst[0] = r;
-                dst[1] = g;
-                dst[2] = 0;
-                dst[3] = 65535;
-            } else {
-                unsigned char *dst = ((unsigned char *) lr.pBits) + y * lr.Pitch + x * 4;
-                unsigned char r = (unsigned char) (r_f * 255.0);
-                unsigned char g = (unsigned char) (g_f * 255.0);
-                dst[0] = 0;
-                dst[1] = g;
-                dst[2] = r;
-                dst[3] = 255;
-            }
-        }
-    }
-    hr = IDirect3DTexture9_UnlockRect(texture, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if(SUCCEEDED(hr))
-    {
-        static const float quad1[] =
-        {
-            -1.0f, -1.0f, 0.1f, 1.0f, 1.0f,
-            -1.0f,  0.0f, 0.1f, 1.0f, 1.0f,
-             0.0f, -1.0f, 0.1f, 1.0f, 1.0f,
-             0.0f,  0.0f, 0.1f, 1.0f, 1.0f,
-        };
-        static const float quad2[] =
-        {
-            -1.0f,  0.0f, 0.1f, 1.0f, 1.0f,
-            -1.0f,  1.0f, 0.1f, 1.0f, 1.0f,
-             0.0f,  0.0f, 0.1f, 1.0f, 1.0f,
-             0.0f,  1.0f, 0.1f, 1.0f, 1.0f,
-        };
-        static const float quad3[] =
-        {
-             0.0f,  0.0f, 0.1f, 0.5f, 0.5f,
-             0.0f,  1.0f, 0.1f, 0.5f, 0.5f,
-             1.0f,  0.0f, 0.1f, 0.5f, 0.5f,
-             1.0f,  1.0f, 0.1f, 0.5f, 0.5f,
-        };
-        static const float quad4[] =
-        {
-            320.0f, 480.0f, 0.1f, 1.0f, 0.0f, 1.0f,
-            320.0f, 240.0f, 0.1f, 1.0f, 0.0f, 1.0f,
-            640.0f, 480.0f, 0.1f, 1.0f, 0.0f, 1.0f,
-            640.0f, 240.0f, 0.1f, 1.0f, 0.0f, 1.0f,
-        };
-        D3DMATRIX mat =
-        {{{
-            0.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 0.0f,
-        }}};
-
-        /* What happens with the texture matrix if D3DTSS_TEXTURETRANSFORMFLAGS is disabled? */
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, 5 * sizeof(float));
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        /* What happens with transforms enabled? */
-        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, 5 * sizeof(float));
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        /* What happens if 4 coords are used, but only 2 given ?*/
-        mat.m[2][0] = 1.0f;
-        mat.m[3][1] = 1.0f;
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT4);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, 5 * sizeof(float));
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        /* What happens with transformed geometry? This setup lead to 0/0 coords with untransformed
-         * geometry. If the same applies to transformed vertices, the quad will be black, otherwise red,
-         * due to the coords in the vertices. (turns out red, indeed)
-         */
-        memset(&mat, 0, sizeof(mat));
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZRHW | D3DFVF_TEX1);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad4, 6 * sizeof(float));
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        hr = IDirect3DDevice9_EndScene(device);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    }
-    color = getPixelColor(device, 160, 360);
-    ok(color_match(color, 0x00ffff00, 1), "quad 1 has color %08x, expected 0x00ffff00\n", color);
-    color = getPixelColor(device, 160, 120);
-    ok(color == 0x00000000, "quad 2 has color %08x, expected 0x0000000\n", color);
-    color = getPixelColor(device, 480, 120);
-    ok(color_match(color, 0x0000ff00, 1), "quad 3 has color %08x, expected 0x0000ff00\n", color);
-    color = getPixelColor(device, 480, 360);
-    ok(color_match(color, 0x00ff0000, 1), "quad 4 has color %08x, expected 0x00ff0000\n", color);
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if(SUCCEEDED(hr))
-    {
-        static const float quad1[] =
-        {
-            -1.0f, -1.0f, 0.1f, 0.8f, 0.2f,
-            -1.0f,  0.0f, 0.1f, 0.8f, 0.2f,
-             0.0f, -1.0f, 0.1f, 0.8f, 0.2f,
-             0.0f,  0.0f, 0.1f, 0.8f, 0.2f,
-        };
-        static const float quad2[] =
-        {
-            -1.0f,  0.0f, 0.1f, 0.5f, 1.0f,
-            -1.0f,  1.0f, 0.1f, 0.5f, 1.0f,
-             0.0f,  0.0f, 0.1f, 0.5f, 1.0f,
-             0.0f,  1.0f, 0.1f, 0.5f, 1.0f,
-        };
-        static const float quad3[] =
-        {
-             0.0f,  0.0f, 0.1f, 0.5f, 1.0f,
-             0.0f,  1.0f, 0.1f, 0.5f, 1.0f,
-             1.0f,  0.0f, 0.1f, 0.5f, 1.0f,
-             1.0f,  1.0f, 0.1f, 0.5f, 1.0f,
-        };
-        static const float quad4[] =
-        {
-             0.0f, -1.0f, 0.1f, 0.8f, 0.2f,
-             0.0f,  0.0f, 0.1f, 0.8f, 0.2f,
-             1.0f, -1.0f, 0.1f, 0.8f, 0.2f,
-             1.0f,  0.0f, 0.1f, 0.8f, 0.2f,
-        };
-        D3DMATRIX mat =
-        {{{
-            0.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 0.0f,
-        }}};
-
-        /* What happens to the default 1 in the 3rd coordinate if it is disabled? */
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, 5 * sizeof(float));
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        /* D3DTFF_COUNT1 does not work on Nvidia drivers. It behaves like D3DTTFF_DISABLE. On ATI drivers
-         * it behaves like COUNT2 because normal textures require 2 coords. */
-        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT1);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad4, 5 * sizeof(float));
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        /* Just to be sure, the same as quad2 above */
-        memset(&mat, 0, sizeof(mat));
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, 5 * sizeof(float));
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        /* Now, what happens to the 2nd coordinate(that is disabled in the matrix) if it is not
-         * used? And what happens to the first? */
-        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT1);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, 5 * sizeof(float));
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        hr = IDirect3DDevice9_EndScene(device);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    }
-    color = getPixelColor(device, 160, 360);
-    ok(color_match(color, 0x00ff0000, 1), "quad 1 has color %08x, expected 0x00ff0000\n", color);
-    color = getPixelColor(device, 160, 120);
-    ok(color == 0x00000000, "quad 2 has color %08x, expected 0x0000000\n", color);
-    color = getPixelColor(device, 480, 120);
-    ok(color_match(color, 0x00ff8000, 1) || color == 0x00000000,
-       "quad 3 has color %08x, expected 0x00ff8000\n", color);
-    color = getPixelColor(device, 480, 360);
-    ok(color_match(color, 0x0033cc00, 1) || color_match(color, 0x00ff0000, 1),
-       "quad 4 has color %08x, expected 0x0033cc00\n", color);
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    IDirect3DTexture9_Release(texture);
-
-    /* Test projected textures, without any fancy matrices */
-    hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_L8, D3DPOOL_MANAGED, &texture, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        struct projected_textures_test_run projected_tests_1[4] =
-        {
-            {
-                "D3DTTFF_COUNT4 | D3DTTFF_PROJECTED - bottom left",
-                D3DTTFF_COUNT4 | D3DTTFF_PROJECTED,
-                decl3,
-                FALSE, TRUE,
-                {120, 300, 240, 390},
-            },
-            {
-                "D3DTTFF_COUNT3 | D3DTTFF_PROJECTED - bottom right",
-                D3DTTFF_COUNT3 | D3DTTFF_PROJECTED,
-                decl3,
-                FALSE, TRUE,
-                {400, 360, 480, 420},
-            },
-            /* Try with some invalid values */
-            {
-                "0xffffffff (draws like COUNT4 | PROJECTED) - top left",
-                0xffffffff,
-                decl3,
-                FALSE, TRUE,
-                {120, 60, 240, 150}
-            },
-            {
-                "D3DTTFF_COUNT3 | D3DTTFF_PROJECTED (draws non-projected) - top right",
-                D3DTTFF_COUNT3 | D3DTTFF_PROJECTED,
-                decl4,
-                FALSE, TRUE,
-                {340, 210, 360, 225},
-            }
-        };
-        struct projected_textures_test_run projected_tests_2[4] =
-        {
-            {
-                "D3DTTFF_PROJECTED (like COUNT4 | PROJECTED, texcoord has 4 components) - bottom left",
-                D3DTTFF_PROJECTED,
-                decl3,
-                FALSE, TRUE,
-                {120, 300, 240, 390},
-            },
-            {
-                "D3DTTFF_PROJECTED (like COUNT3 | PROJECTED, texcoord has only 3 components) - bottom right",
-                D3DTTFF_PROJECTED,
-                decl,
-                FALSE, TRUE,
-                {400, 360, 480, 420},
-            },
-            {
-                "0xffffffff (like COUNT3 | PROJECTED, texcoord has only 3 components) - top left",
-                0xffffffff,
-                decl,
-                FALSE, TRUE,
-                {80, 120, 160, 180},
-            },
-            {
-                "D3DTTFF_COUNT1 (draws non-projected) - top right",
-                D3DTTFF_COUNT1,
-                decl4,
-                FALSE, TRUE,
-                {340, 210, 360, 225},
-            }
-        };
-        struct projected_textures_test_run projected_tests_3[4] =
-        {
-            {
-                "D3DTTFF_COUNT3 | D3DTTFF_PROJECTED (like COUNT4 | PROJECTED) - bottom left",
-                D3DTTFF_PROJECTED,
-                decl3,
-                TRUE, FALSE,
-                {120, 300, 240, 390},
-            },
-            {
-                "D3DTTFF_COUNT3 | D3DTTFF_PROJECTED (like COUNT4 | PROJECTED) - bottom right",
-                D3DTTFF_COUNT3 | D3DTTFF_PROJECTED,
-                decl3,
-                TRUE, TRUE,
-                {440, 300, 560, 390},
-            },
-            {
-                "0xffffffff (like COUNT4 | PROJECTED) - top left",
-                0xffffffff,
-                decl3,
-                TRUE, TRUE,
-                {120, 60, 240, 150},
-            },
-            {
-                "D3DTTFF_PROJECTED (like COUNT4 | PROJECTED) - top right",
-                D3DTTFF_PROJECTED,
-                decl3,
-                FALSE, FALSE,
-                {440, 60, 560, 150},
-            },
-        };
-
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &identity);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        hr = IDirect3DTexture9_LockRect(texture, 0, &lr, NULL, 0);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        for(x = 0; x < 4; x++) {
-            memcpy(((BYTE *) lr.pBits) + lr.Pitch * x, proj_texdata + 4 * x, 4 * sizeof(proj_texdata[0]));
-        }
-        hr = IDirect3DTexture9_UnlockRect(texture, 0);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        projected_textures_test(device, projected_tests_1);
-        projected_textures_test(device, projected_tests_2);
-        projected_textures_test(device, projected_tests_3);
-
-        hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        IDirect3DTexture9_Release(texture);
-    }
-
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff203040, 0.0, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    /* Use a smaller volume texture than the biggest possible size for memory and performance reasons
-     * Thus watch out if sampling from texels between 0 and 1.
-     */
-    hr = IDirect3DDevice9_CreateVolumeTexture(device, 32, 32, 32, 1, 0, fmt, D3DPOOL_MANAGED, &volume, 0);
-    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "Got hr %#lx.\n", hr);
-    if(!volume) {
-        skip("Failed to create a volume texture\n");
-        goto out;
-    }
-
-    hr = IDirect3DVolumeTexture9_LockBox(volume, 0, &lb, NULL, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    for(z = 0; z < 32; z++) {
-        for(y = 0; y < 32; y++) {
-            for(x = 0; x < 32; x++) {
-                char size = (fmt == D3DFMT_A16B16G16R16 ? 8 : 4);
-                void *mem = ((char *)  lb.pBits) + y * lb.RowPitch + z * lb.SlicePitch + x * size;
-                float r_f = (float) x / 31.0;
-                float g_f = (float) y / 31.0;
-                float b_f = (float) z / 31.0;
-
-                if(fmt == D3DFMT_A16B16G16R16) {
-                    unsigned short *mem_s = mem;
-                    mem_s[0]  = r_f * 65535.0;
-                    mem_s[1]  = g_f * 65535.0;
-                    mem_s[2]  = b_f * 65535.0;
-                    mem_s[3]  = 65535;
-                } else {
-                    unsigned char *mem_c = mem;
-                    mem_c[0]  = b_f * 255.0;
-                    mem_c[1]  = g_f * 255.0;
-                    mem_c[2]  = r_f * 255.0;
-                    mem_c[3]  = 255;
-                }
-            }
-        }
-    }
-    hr = IDirect3DVolumeTexture9_UnlockBox(volume, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) volume);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if(SUCCEEDED(hr))
-    {
-        static const float quad1[] =
-        {
-            -1.0f, -1.0f, 0.1f, 1.0f, 1.0f, 1.0f,
-            -1.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f,
-             0.0f, -1.0f, 0.1f, 1.0f, 1.0f, 1.0f,
-             0.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f,
-        };
-        static const float quad2[] =
-        {
-            -1.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f,
-            -1.0f,  1.0f, 0.1f, 1.0f, 1.0f, 1.0f,
-             0.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f,
-             0.0f,  1.0f, 0.1f, 1.0f, 1.0f, 1.0f,
-        };
-        static const float quad3[] =
-        {
-             0.0f,  0.0f, 0.1f, 0.0f, 0.0f,
-             0.0f,  1.0f, 0.1f, 0.0f, 0.0f,
-             1.0f,  0.0f, 0.1f, 0.0f, 0.0f,
-             1.0f,  1.0f, 0.1f, 0.0f, 0.0f,
-        };
-        static const float quad4[] =
-        {
-             0.0f, -1.0f, 0.1f, 1.0f, 1.0f, 1.0f,
-             0.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f,
-             1.0f, -1.0f, 0.1f, 1.0f, 1.0f, 1.0f,
-             1.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f,
-        };
-        D3DMATRIX mat =
-        {{{
-            1.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 1.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f,
-        }}};
-        hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        /* Draw a quad with all 3 coords enabled. Nothing fancy. v and w are swapped, but have the same
-         * values
-         */
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, 6 * sizeof(float));
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        /* Now disable the w coordinate. Does that change the input, or the output. The coordinates
-         * are swapped by the matrix. If it changes the input, the v coord will be missing(green),
-         * otherwise the w will be missing(blue).
-         * turns out that on nvidia cards the blue color is missing, so it is an output modification.
-         * On ATI cards the COUNT2 is ignored, and it behaves in the same way as COUNT3. */
-        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, 6 * sizeof(float));
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        /* default values? Set up the identity matrix, pass in 2 vertex coords, and enable 3 */
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &identity);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, 5 * sizeof(float));
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        /* D3DTTFF_COUNT1. Set a NULL matrix, and count1, pass in all values as 1.0. Nvidia has count1 ==
-         * disable. ATI extends it up to the amount of values needed for the volume texture
-         */
-        memset(&mat, 0, sizeof(mat));
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT1);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad4, 6 * sizeof(float));
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        hr = IDirect3DDevice9_EndScene(device);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    }
-
-    color = getPixelColor(device, 160, 360);
-    ok(color == 0x00ffffff, "quad 1 has color %08x, expected 0x00ffffff\n", color);
-    color = getPixelColor(device, 160, 120);
-    ok(color == 0x00ffff00 /* NV*/ || color == 0x00ffffff /* ATI */,
-       "quad 2 has color %08x, expected 0x00ffff00\n", color);
-    color = getPixelColor(device, 480, 120);
-    ok(color == 0x000000ff, "quad 3 has color %08x, expected 0x000000ff\n", color);
-    color = getPixelColor(device, 480, 360);
-    ok(color == 0x00ffffff || color == 0x0000ff00, "quad 4 has color %08x, expected 0x00ffffff\n", color);
-
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff303030, 0.0, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if(SUCCEEDED(hr))
-    {
-        static const float quad1[] =
-        {
-            -1.0f, -1.0f, 0.1f, 1.0f, 1.0f, 1.0f,
-            -1.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f,
-             0.0f, -1.0f, 0.1f, 1.0f, 1.0f, 1.0f,
-             0.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f,
-        };
-        static const float quad2[] =
-        {
-            -1.0f,  0.0f, 0.1f,
-            -1.0f,  1.0f, 0.1f,
-             0.0f,  0.0f, 0.1f,
-             0.0f,  1.0f, 0.1f,
-        };
-        static const float quad3[] =
-        {
-             0.0f,  0.0f, 0.1f, 1.0f,
-             0.0f,  1.0f, 0.1f, 1.0f,
-             1.0f,  0.0f, 0.1f, 1.0f,
-             1.0f,  1.0f, 0.1f, 1.0f,
-        };
-        static const D3DMATRIX mat =
-        {{{
-            0.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f, 0.0f,
-        }}};
-        static const D3DMATRIX mat2 =
-        {{{
-            0.0f, 0.0f, 0.0f, 1.0f,
-            1.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f, 0.0f,
-        }}};
-        hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        /* Default values? 4 coords used, 3 passed. What happens to the 4th?
-         * Use COUNT3 because newer Nvidia drivers return black when there are more (output) coords
-         * than being used by the texture(volume tex -> 3). Again, as shown in earlier test the COUNTx
-         * affects the post-transformation output, so COUNT3 plus the matrix above is OK for testing the
-         * 4th *input* coordinate.
-         */
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, 6 * sizeof(float));
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        /* None passed */
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &identity);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, 3 * sizeof(float));
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        /* 4 used, 1 passed */
-        hr = IDirect3DDevice9_SetVertexDeclaration(device, decl2);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat2);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, 4 * sizeof(float));
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        hr = IDirect3DDevice9_EndScene(device);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    }
-    color = getPixelColor(device, 160, 360);
-    ok(color == 0x0000ff00, "quad 1 has color %08x, expected 0x0000ff00\n", color);
-    color = getPixelColor(device, 160, 120);
-    ok(color == 0x00000000, "quad 2 has color %08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 480, 120);
-    ok(color == 0x00ff0000, "quad 3 has color %08x, expected 0x00ff0000\n", color);
-    /* Quad4: unused */
-
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    IDirect3DVolumeTexture9_Release(volume);
-
-out:
-    IDirect3DVertexDeclaration9_Release(decl);
-    IDirect3DVertexDeclaration9_Release(decl2);
-    IDirect3DVertexDeclaration9_Release(decl3);
-    IDirect3DVertexDeclaration9_Release(decl4);
-    refcount = IDirect3DDevice9_Release(device);
-    ok(!refcount, "Device has %lu references left.\n", refcount);
-done:
-    IDirect3D9_Release(d3d);
-    DestroyWindow(window);
-}
-
 static void texdepth_test(void)
 {
     IDirect3DPixelShader9 *shader;
@@ -29304,6 +28458,401 @@ todo_wine_if ((fog_mode_tests[pixel_mode] != D3DFOG_NONE && !ortho_fog && (vs_mo
     release_test_context(&context);
 }
 
+static void test_texture_transform_flags(void)
+{
+    IDirect3DPixelShader9 *ps1, *ps2, *ps_texcoord;
+    D3DADAPTER_IDENTIFIER9 identifier;
+    struct d3d9_test_context context;
+    struct surface_readback rb;
+    IDirect3DVertexShader9 *vs;
+    IDirect3DTexture9 *texture;
+    D3DLOCKED_RECT locked_rect;
+    const struct vec4 *colour;
+    IDirect3DDevice9 *device;
+    IDirect3DSurface9 *rt;
+    HRESULT hr;
+
+    static const DWORD vs_code[] =
+    {
+        0xfffe0101,                                     /* vs_1_1           */
+        0x0000001f, 0x80000000, 0x900f0000,             /* dcl_position v0  */
+        0x0000001f, 0x80000005, 0x900f0001,             /* dcl_texcoord0 v1 */
+        0x00000001, 0xc00f0000, 0x90e40000,             /* mov oPos, v0     */
+        0x00000001, 0xe00f0000, 0x90e40001,             /* mov oT0, v1      */
+        0x0000ffff                                      /* end              */
+    };
+
+    static const DWORD ps1_code[] =
+    {
+        0xffff0101,                                     /* ps_1_1           */
+        0x00000042, 0xb00f0000,                         /* tex t0           */
+        0x00000001, 0x800f0000, 0xb0e40000,             /* mov r0, t0       */
+        0x0000ffff                                      /* end              */
+    };
+
+    static const DWORD ps2_code[] =
+    {
+        0xffff0200,                                     /* ps_2_0           */
+        0x0200001f, 0x80000000, 0xb00f0000,             /* dcl t0           */
+        0x0200001f, 0x90000000, 0xa00f0800,             /* dcl_2d s0        */
+        0x03000042, 0x800f0000, 0xb0e40000, 0xa0e40800, /* texld r0, t0, s0 */
+        0x02000001, 0x800f0800, 0x80e40000,             /* mov oC0, r0      */
+        0x0000ffff                                      /* end              */
+    };
+
+    static const DWORD ps_texcoord_code[] =
+    {
+        0xffff0200,                                     /* ps_2_0           */
+        0x0200001f, 0x80000000, 0xb00f0000,             /* dcl t0           */
+        0x02000001, 0x800f0800, 0xb0e40000,             /* mov oC0, t0      */
+        0x0000ffff                                      /* end              */
+    };
+
+    /* "Swapped" identity matrix; should simply reorder the components to [w, z, y, x]. */
+    static const D3DMATRIX texture_matrix =
+    {{{
+        0.0f, 0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f, 0.0f,
+    }}};
+
+    static const struct
+    {
+        struct vec3 position;
+        struct vec3 normal;
+        float texcoord[4];
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.5f}, {0.1f, 0.3f, 0.6f}, {0.8f, 0.2f, 0.4f, 0.5f}},
+        {{-1.0f,  1.0f, 0.5f}, {0.1f, 0.3f, 0.6f}, {0.8f, 0.2f, 0.4f, 0.5f}},
+        {{ 1.0f, -1.0f, 0.5f}, {0.1f, 0.3f, 0.6f}, {0.8f, 0.2f, 0.4f, 0.5f}},
+        {{ 1.0f,  1.0f, 0.5f}, {0.1f, 0.3f, 0.6f}, {0.8f, 0.2f, 0.4f, 0.5f}},
+    };
+
+    static const struct
+    {
+        struct vec4 position;
+        float texcoord[4];
+    }
+    rhw_quad[] =
+    {
+        {{  0.0f,   0.0f, 0.5f, 1.0f}, {0.8f, 0.2f, 0.4f, 0.5f}},
+        {{640.0f,   0.0f, 0.5f, 1.0f}, {0.8f, 0.2f, 0.4f, 0.5f}},
+        {{  0.0f, 480.0f, 0.5f, 1.0f}, {0.8f, 0.2f, 0.4f, 0.5f}},
+        {{640.0f, 480.0f, 0.5f, 1.0f}, {0.8f, 0.2f, 0.4f, 0.5f}},
+    };
+
+    static const D3DTEXTURETRANSFORMFLAGS flags_tests[] =
+    {
+        D3DTTFF_DISABLE,
+        D3DTTFF_COUNT1,
+        D3DTTFF_COUNT2,
+        D3DTTFF_COUNT3,
+        D3DTTFF_COUNT4,
+        D3DTTFF_DISABLE | D3DTTFF_PROJECTED,
+        D3DTTFF_COUNT1 | D3DTTFF_PROJECTED,
+        D3DTTFF_COUNT2 | D3DTTFF_PROJECTED,
+        D3DTTFF_COUNT3 | D3DTTFF_PROJECTED,
+        D3DTTFF_COUNT4 | D3DTTFF_PROJECTED,
+        0xffffffff & ~D3DTTFF_PROJECTED,
+        0xffffffff,
+        0xffffff03,
+    };
+
+    enum vs_mode
+    {
+        VS_MODE_RHW,
+        VS_MODE_FFP,
+        VS_MODE_FFP_NORMAL,
+        VS_MODE_VS,
+    };
+
+    enum ps_mode
+    {
+        PS_MODE_FFP,
+        PS_MODE_PS1,
+        PS_MODE_PS2,
+        PS_MODE_TEXCOORDS,
+    };
+
+    if (!init_test_context(&context))
+        return;
+    device = context.device;
+
+    hr = IDirect3D9_GetAdapterIdentifier(context.d3d, D3DADAPTER_DEFAULT, 0, &identifier);
+    ok(hr == S_OK, "Failed to get adapter identifier, hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 640, 480, D3DFMT_A32B32G32R32F,
+            D3DMULTISAMPLE_NONE, 0, FALSE, &rt, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_CreateVertexShader(device, vs_code, &vs);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_CreatePixelShader(device, ps1_code, &ps1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_CreatePixelShader(device, ps2_code, &ps2);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_CreatePixelShader(device, ps_texcoord_code, &ps_texcoord);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &texture_matrix);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 200, 200, 1, 0, D3DFMT_A32B32G32R32F, D3DPOOL_MANAGED, &texture, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DTexture9_LockRect(texture, 0, &locked_rect, NULL, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    for (unsigned int x = 0; x < 200; ++x)
+    {
+        for (unsigned int y = 0; y < 200; ++y)
+        {
+            struct vec4 *v;
+
+            v = (struct vec4 *)((char *)locked_rect.pBits + (y * locked_rect.Pitch)) + x;
+            v->x = (x / 200.0f);
+            v->y = (y / 200.0f);
+            v->z = 0.0f;
+            v->w = 0.0f;
+        }
+    }
+    hr = IDirect3DTexture9_UnlockRect(texture, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    for (unsigned int attrib_count = 1; attrib_count <= 4; ++attrib_count)
+    {
+        IDirect3DVertexDeclaration9 *vdecl, *vdecl_rhw;
+
+        const D3DVERTEXELEMENT9 decl_elements[] =
+        {
+            {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+            {0, 24, D3DDECLTYPE_FLOAT1 + (attrib_count - 1), D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+            D3DDECL_END()
+        };
+
+        const D3DVERTEXELEMENT9 decl_elements_rhw[] =
+        {
+            {0, 0,  D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITIONT, 0},
+            {0, 16, D3DDECLTYPE_FLOAT1 + (attrib_count - 1), D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+            D3DDECL_END()
+        };
+
+        hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vdecl);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_rhw, &vdecl_rhw);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        for (enum vs_mode vs_mode = 0; vs_mode < 4; ++vs_mode)
+        {
+            for (enum ps_mode ps_mode = 0; ps_mode < 4; ++ps_mode)
+            {
+                for (unsigned int i = 0; i < ARRAY_SIZE(flags_tests); ++i)
+                {
+                    D3DTEXTURETRANSFORMFLAGS flags = flags_tests[i];
+                    float texcoords[4], expect[4];
+                    DWORD ret_flags;
+                    bool equal;
+
+                    if ((flags & D3DTTFF_PROJECTED) && vs_mode == VS_MODE_RHW
+                            && (ps_mode == PS_MODE_FFP || ps_mode == PS_MODE_PS1))
+                    {
+                        /* Some cases here, but not all, texture values which
+                         * don't make any sense.
+                         * Assume it's a bug in native and skip them. */
+                        continue;
+                    }
+
+                    winetest_push_context("attrib count %u, vs_mode %u, ps_mode %u, flags %#x",
+                            attrib_count, vs_mode, ps_mode, flags);
+
+                    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, flags);
+                    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                    hr = IDirect3DDevice9_GetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, &ret_flags);
+                    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                    ok(ret_flags == flags, "Got flags %#lx.\n", ret_flags);
+
+                    hr = IDirect3DDevice9_SetVertexShader(device, vs_mode == VS_MODE_VS ? vs : NULL);
+                    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+                    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXCOORDINDEX,
+                            vs_mode == VS_MODE_FFP_NORMAL ? 0 | D3DTSS_TCI_CAMERASPACENORMAL : 0);
+                    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+                    if (ps_mode == PS_MODE_FFP)
+                        hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+                    else if (ps_mode == PS_MODE_PS1)
+                        hr = IDirect3DDevice9_SetPixelShader(device, ps1);
+                    else if (ps_mode == PS_MODE_PS2)
+                        hr = IDirect3DDevice9_SetPixelShader(device, ps2);
+                    else if (ps_mode == PS_MODE_TEXCOORDS)
+                        hr = IDirect3DDevice9_SetPixelShader(device, ps_texcoord);
+                    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+                    hr = IDirect3DDevice9_BeginScene(device);
+                    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 1.0f, 0);
+                    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                    if (vs_mode == VS_MODE_RHW)
+                    {
+                        hr = IDirect3DDevice9_SetVertexDeclaration(device, vdecl_rhw);
+                        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                        hr = IDirect3DDevice9_DrawPrimitiveUP(device,
+                                D3DPT_TRIANGLESTRIP, 2, rhw_quad, sizeof(*rhw_quad));
+                        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                    }
+                    else
+                    {
+                        hr = IDirect3DDevice9_SetVertexDeclaration(device, vdecl);
+                        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                        hr = IDirect3DDevice9_DrawPrimitiveUP(device,
+                                D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+                        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                    }
+                    hr = IDirect3DDevice9_EndScene(device);
+                    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+                    if (vs_mode == VS_MODE_FFP)
+                    {
+                        memset(&texcoords, 0, sizeof(texcoords));
+
+                        if ((flags & ~D3DTTFF_PROJECTED) >= D3DTTFF_COUNT2
+                                && (flags & ~D3DTTFF_PROJECTED) <= D3DTTFF_COUNT4)
+                        {
+                            float attrib[4] = {0};
+
+                            /* Construct a pseudo "attribute" with 1 in the
+                             * first unused component, which is then transformed
+                             * by the texture matrix and transform flags. */
+                            memcpy(&attrib, &quad[0].texcoord, attrib_count * sizeof(float));
+                            if (attrib_count < 4)
+                                attrib[attrib_count] = 1.0f;
+
+                            for (unsigned int k = 0; k < (flags & ~D3DTTFF_PROJECTED); ++k)
+                                texcoords[k] = attrib[3 - k];
+
+                            if (flags == (D3DTTFF_COUNT2 | D3DTTFF_PROJECTED))
+                                texcoords[3] = texcoords[1];
+                            else if (flags == (D3DTTFF_COUNT3 | D3DTTFF_PROJECTED))
+                                texcoords[3] = texcoords[2];
+                        }
+                        else
+                        {
+                            /* For some reason this does *not* fill the W component with 1. */
+                            memcpy(&texcoords, &quad[0].texcoord, attrib_count * sizeof(float));
+                            if (flags & D3DTTFF_PROJECTED)
+                                texcoords[3] = quad[0].texcoord[attrib_count - 1];
+                        }
+                    }
+                    else if (vs_mode == VS_MODE_FFP_NORMAL)
+                    {
+                        /* Same as above, only we draw from the normal instead,
+                         * and the attribute count is therefore always 3. */
+
+                        memset(&texcoords, 0, sizeof(texcoords));
+
+                        if ((flags & ~D3DTTFF_PROJECTED) >= D3DTTFF_COUNT2
+                                && (flags & ~D3DTTFF_PROJECTED) <= D3DTTFF_COUNT4)
+                        {
+                            float attrib[4] = {quad[0].normal.x, quad[0].normal.y, quad[0].normal.z, 1.0f};
+
+                            for (unsigned int k = 0; k < (flags & ~D3DTTFF_PROJECTED); ++k)
+                                texcoords[k] = attrib[3 - k];
+
+                            if (flags == (D3DTTFF_COUNT2 | D3DTTFF_PROJECTED))
+                                texcoords[3] = texcoords[1];
+                            else if (flags == (D3DTTFF_COUNT3 | D3DTTFF_PROJECTED))
+                                texcoords[3] = texcoords[2];
+                        }
+                        else
+                        {
+                            /* For some reason this does *not* fill the W component with 1. */
+                            memcpy(&texcoords, &quad[0].normal, sizeof(quad[0].normal));
+                            if (flags & D3DTTFF_PROJECTED)
+                                texcoords[3] = quad[0].normal.z;
+                        }
+                    }
+                    else
+                    {
+                        texcoords[1] = texcoords[2] = 0.0f;
+                        texcoords[3] = 1.0f;
+                        memcpy(&texcoords, &quad[0].texcoord, attrib_count * sizeof(float));
+                    }
+
+                    if (ps_mode == PS_MODE_TEXCOORDS)
+                    {
+                        memcpy(&expect, &texcoords, sizeof(texcoords));
+                    }
+                    else
+                    {
+                        float dummy;
+
+                        /* Default mode is WRAP. */
+                        if ((flags & D3DTTFF_PROJECTED) && ps_mode != PS_MODE_PS2)
+                        {
+                            if (texcoords[3])
+                            {
+                                expect[0] = modff(texcoords[0] / texcoords[3], &dummy);
+                                expect[1] = modff(texcoords[1] / texcoords[3], &dummy);
+                            }
+                            else
+                            {
+                                expect[0] = 0.0f;
+                                expect[1] = 0.0f;
+                            }
+                        }
+                        else
+                        {
+                            expect[0] = modff(texcoords[0], &dummy);
+                            expect[1] = modff(texcoords[1], &dummy);
+                        }
+                        expect[2] = 0.0f;
+                        expect[3] = 0.0f;
+                    }
+
+                    get_rt_readback(rt, &rb);
+                    colour = get_readback_vec4(&rb, 0, 0);
+                    /* We use point filtering, but we might have sampled the
+                     * neighbouring texel. */
+                    equal = fabsf(colour->x - expect[0]) <= 0.006f && fabsf(colour->y - expect[1]) <= 0.006f
+                            && colour->z == expect[2] && colour->w == expect[3];
+todo_wine_if ((vs_mode == VS_MODE_VS && ps_mode == PS_MODE_FFP && flags == (D3DTTFF_PROJECTED | D3DTTFF_COUNT3))
+        || ((vs_mode == VS_MODE_FFP || vs_mode == VS_MODE_FFP_NORMAL) && !equal))
+                    ok(equal, "Expected colour {%.8e, %.8e, %.8e, %.8e}; got {%.8e, %.8e, %.8e, %.8e}.\n",
+                            expect[0], expect[1], expect[2], expect[3], colour->x, colour->y, colour->z, colour->w);
+                    release_surface_readback(&rb);
+
+                    winetest_pop_context();
+                }
+            }
+        }
+
+        IDirect3DVertexDeclaration9_Release(vdecl);
+        IDirect3DVertexDeclaration9_Release(vdecl_rhw);
+    }
+
+    IDirect3DTexture9_Release(texture);
+    IDirect3DVertexShader9_Release(vs);
+    IDirect3DPixelShader9_Release(ps1);
+    IDirect3DPixelShader9_Release(ps2);
+    IDirect3DPixelShader9_Release(ps_texcoord);
+    IDirect3DSurface9_Release(rt);
+    release_test_context(&context);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -29353,7 +28902,6 @@ START_TEST(visual)
     float_texture_test();
     g16r16_texture_test();
     pixelshader_blending_test();
-    texture_transform_flags_test();
     test_generate_mipmap();
     test_mipmap_autogen();
     fixed_function_decl_test();
@@ -29463,4 +29011,5 @@ START_TEST(visual)
     test_format_conversion();
     test_ffp_w();
     test_fog();
+    test_texture_transform_flags();
 }
