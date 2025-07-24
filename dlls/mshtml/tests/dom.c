@@ -11237,6 +11237,16 @@ static void test_replacechild_elems(IHTMLDocument2 *doc)
 
     nodeBody = _get_node_iface(__LINE__, (IUnknown *)body);
 
+    nodeNew = (void*)0xdeadbeef;
+    hres = IHTMLDOMNode_replaceChild(nodeBody, node3, NULL, &nodeNew);
+    ok(hres == E_INVALIDARG, "Expected E_INVALIDARG, got 0x%08lx\n", hres);
+    ok(nodeNew == NULL, "nodeNew != NULL\n");
+
+    nodeNew = (void*)0xdeadbeef;
+    hres = IHTMLDOMNode_replaceChild(nodeBody, NULL, node2, &nodeNew);
+    ok(hres == E_INVALIDARG, "Expected E_INVALIDARG, got 0x%08lx\n", hres);
+    ok(nodeNew == NULL, "nodeNew != NULL\n");
+
     hres = IHTMLDOMNode_replaceChild(nodeBody, node3, node2, &nodeNew);
     ok(hres == S_OK, "Expected S_OK, got 0x%08lx\n", hres);
 

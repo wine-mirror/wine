@@ -651,6 +651,10 @@ static HRESULT WINAPI HTMLDOMNode_replaceChild(IHTMLDOMNode *iface, IHTMLDOMNode
 
     TRACE("(%p)->(%p %p %p)\n", This, newChild, oldChild, node);
 
+    *node = NULL;
+    if(!newChild || !oldChild)
+        return E_INVALIDARG;
+
     node_new = get_node_obj(newChild);
     if(!node_new)
         return E_FAIL;
