@@ -5600,9 +5600,14 @@ static IHTMLDOMNode *_test_node_append_child(unsigned line, IUnknown *node_unk, 
 {
     IHTMLDOMNode *node = _get_node_iface(line, node_unk);
     IHTMLDOMNode *child = _get_node_iface(line, child_unk);
-    IHTMLDOMNode *new_child = NULL;
+    IHTMLDOMNode *new_child = (void*)0xdeadbeef;
     HRESULT hres;
 
+    hres = IHTMLDOMNode_appendChild(node, NULL, &new_child);
+    ok_(__FILE__,line) (hres == E_INVALIDARG, "appendChild returned: %08lx\n", hres);
+    ok_(__FILE__,line) (new_child == NULL, "new_child != NULL\n");
+
+    new_child = NULL;
     hres = IHTMLDOMNode_appendChild(node, child, &new_child);
     ok_(__FILE__,line) (hres == S_OK, "appendChild failed: %08lx\n", hres);
     ok_(__FILE__,line) (new_child != NULL, "new_child == NULL\n");

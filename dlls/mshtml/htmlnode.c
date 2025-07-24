@@ -745,6 +745,10 @@ static HRESULT WINAPI HTMLDOMNode_appendChild(IHTMLDOMNode *iface, IHTMLDOMNode 
 
     TRACE("(%p)->(%p %p)\n", This, newChild, node);
 
+    *node = NULL;
+    if(!newChild)
+        return E_INVALIDARG;
+
     node_obj = get_node_obj(newChild);
     if(!node_obj)
         return E_FAIL;
