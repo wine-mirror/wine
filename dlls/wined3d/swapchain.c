@@ -1729,7 +1729,10 @@ HRESULT wined3d_swapchain_vk_init(struct wined3d_swapchain_vk *swapchain_vk, str
     }
 
     if (FAILED(hr = wined3d_swapchain_vk_create_vulkan_swapchain(swapchain_vk)))
+    {
         WARN("Failed to create a Vulkan swapchain, hr %#lx.\n", hr);
+        return hr;
+    }
 
     return WINED3D_OK;
 }
