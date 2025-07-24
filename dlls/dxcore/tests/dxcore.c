@@ -87,9 +87,11 @@ static void test_DXCoreCreateAdapterFactory(void)
     check_interface(factory, &IID_IDXCoreAdapter, FALSE);
     check_interface(factory, &IID_IDXCoreAdapterList, FALSE);
 
-    hr = IDXCoreAdapterFactory_CreateAdapterList(factory, 0, &DXCORE_ADAPTER_ATTRIBUTE_D3D12_GRAPHICS, &IID_IDXCoreAdapterList, (void **)&list);
+    hr = IDXCoreAdapterFactory_CreateAdapterList(factory, 0, NULL, &IID_IDXCoreAdapterList, (void **)&list);
     ok(hr == E_INVALIDARG, "got hr %#lx.\n", hr);
     ok(list == NULL, "got list %p.\n", list);
+    hr = IDXCoreAdapterFactory_CreateAdapterList(factory, 0, &DXCORE_ADAPTER_ATTRIBUTE_D3D12_GRAPHICS, &IID_IDXCoreAdapterList, (void **)&list);
+    ok(hr == E_INVALIDARG, "got hr %#lx.\n", hr);
     hr = IDXCoreAdapterFactory_CreateAdapterList(factory, 1, &DXCORE_ADAPTER_ATTRIBUTE_D3D12_GRAPHICS, &IID_IDXCoreAdapterFactory, (void **)&list);
     ok(hr == E_NOINTERFACE, "got hr %#lx.\n", hr);
     hr = IDXCoreAdapterFactory_CreateAdapterList(factory, 1, NULL, &IID_IDXCoreAdapterFactory, (void **)&list);
@@ -283,9 +285,8 @@ static void test_GetAdapterByLuid(void)
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IDXCoreAdapterFactory_GetAdapterByLuid(factory, &luid, &IID_IDXCoreAdapter, (void **)&adapter2);
-        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        if (hr == S_OK)
-            IDXCoreAdapter_Release(adapter2);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        IDXCoreAdapter_Release(adapter2);
 
         IDXCoreAdapter_Release(adapter);
     }

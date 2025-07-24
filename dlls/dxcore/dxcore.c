@@ -517,8 +517,38 @@ static HRESULT STDMETHODCALLTYPE dxcore_adapter_factory_CreateAdapterList(IDXCor
 static HRESULT STDMETHODCALLTYPE dxcore_adapter_factory_GetAdapterByLuid(IDXCoreAdapterFactory *iface, REFLUID adapter_luid,
         REFIID riid, void **out)
 {
-    FIXME("iface %p, adapter_luid %p, riid %s, out %p stub!\n", iface, adapter_luid, debugstr_guid(riid), out);
-    return E_NOTIMPL;
+    struct dxcore_adapter *adapter;
+    struct wined3d *wined3d;
+    uint32_t count;
+    HRESULT hr;
+
+    TRACE("iface %p, adapter_luid %p, riid %s, out %p.\n", iface, adapter_luid, debugstr_guid(riid), out);
+
+    if (!(wined3d = wined3d_create(0)))
+        return E_FAIL;
+
+    count = wined3d_get_adapter_count(wined3d);
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        struct wined3d_adapter_identifier adapter_id = {0};
+
+        wined3d_adapter_get_identifier(wined3d_get_adapter(wined3d, i), 0, &adapter_id);
+
+        if (!memcmp(adapter_luid, &adapter_id.adapter_luid, sizeof(LUID)))
+        {
+            wined3d_decref(wined3d);
+
+            if (FAILED(hr = dxcore_adapter_create(&adapter_id, &adapter)))
+                return hr;
+
+            hr = IDXCoreAdapter_QueryInterface(&adapter->IDXCoreAdapter_iface, riid, out);
+            IDXCoreAdapter_Release(&adapter->IDXCoreAdapter_iface);
+            return hr;
+        }
+    }
+
+    wined3d_decref(wined3d);
+    return E_INVALIDARG;
 }
 
 static BOOL STDMETHODCALLTYPE dxcore_adapter_factory_IsNotificationTypeSupported(IDXCoreAdapterFactory *iface, DXCoreNotificationType type)
