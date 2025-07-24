@@ -5680,7 +5680,7 @@ void get_modelview_matrix(const struct wined3d_stateblock_state *state, unsigned
 
 /* Setup this textures matrix according to the texture flags. */
 static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t flags, BOOL calculated_coords,
-        enum wined3d_format_id format_id, struct wined3d_matrix *out_matrix)
+        unsigned int attrib_count, struct wined3d_matrix *out_matrix)
 {
     unsigned int count = (flags & ~WINED3D_TTFF_PROJECTED);
     struct wined3d_matrix mat;
@@ -5711,44 +5711,37 @@ static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t
 
     if (!(flags & WINED3D_TTFF_PROJECTED) && !calculated_coords)
     {
-        switch (format_id)
+        switch (attrib_count)
         {
-            case WINED3DFMT_R32_FLOAT:
+            case 1:
                 mat._41 = mat._21;
                 mat._42 = mat._22;
                 mat._43 = mat._23;
                 mat._44 = mat._24;
                 break;
 
-            case WINED3DFMT_R32G32_FLOAT:
+            case 2:
                 mat._41 = mat._31;
                 mat._42 = mat._32;
                 mat._43 = mat._33;
                 mat._44 = mat._34;
                 break;
-
-            case WINED3DFMT_R32G32B32_FLOAT:
-            case WINED3DFMT_R32G32B32A32_FLOAT:
-            case WINED3DFMT_UNKNOWN:
-                break;
-            default:
-                FIXME("Unexpected fixed function texture coord input\n");
         }
     }
 
     *out_matrix = mat;
 }
 
-static enum wined3d_format_id get_texcoord_format(const struct wined3d_vertex_declaration *decl, unsigned int index)
+static unsigned int get_texcoord_attrib_count(const struct wined3d_vertex_declaration *decl, unsigned int index)
 {
     for (unsigned int i = 0; i < decl->element_count; ++i)
     {
         if (decl->elements[i].usage == WINED3D_DECL_USAGE_TEXCOORD
                 && decl->elements[i].usage_idx == index)
-            return decl->elements[i].format->id;
+            return decl->elements[i].format->component_count;
     }
 
-    return WINED3DFMT_UNKNOWN;
+    return 0;
 }
 
 void get_texture_matrix(const struct wined3d_stateblock_state *state,
@@ -5761,7 +5754,7 @@ void get_texture_matrix(const struct wined3d_stateblock_state *state,
 
     compute_texture_matrix(&state->transforms[WINED3D_TS_TEXTURE0 + tex],
             state->texture_states[tex][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS],
-            generated, get_texcoord_format(state->vertex_declaration, coord_idx), mat);
+            generated, get_texcoord_attrib_count(state->vertex_declaration, coord_idx), mat);
 }
 
 static BOOL wined3d_get_primary_display(WCHAR *display)
