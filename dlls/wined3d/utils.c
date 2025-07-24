@@ -5682,17 +5682,12 @@ void get_modelview_matrix(const struct wined3d_stateblock_state *state, unsigned
 static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t flags, BOOL calculated_coords,
         enum wined3d_format_id format_id, struct wined3d_matrix *out_matrix)
 {
+    unsigned int count = (flags & ~WINED3D_TTFF_PROJECTED);
     struct wined3d_matrix mat;
 
-    if (flags == WINED3D_TTFF_DISABLE || flags == WINED3D_TTFF_COUNT1)
+    if (count < 2 || count > 4)
     {
         get_identity_matrix(out_matrix);
-        return;
-    }
-
-    if (flags == (WINED3D_TTFF_COUNT1 | WINED3D_TTFF_PROJECTED))
-    {
-        ERR("Invalid texture transform flags: WINED3D_TTFF_COUNT1 | WINED3D_TTFF_PROJECTED.\n");
         return;
     }
 
