@@ -2651,8 +2651,11 @@ void CDECL wined3d_device_context_draw_indexed(struct wined3d_device_context *co
             context, base_vertex_index, start_index, index_count, start_instance, instance_count);
 
     wined3d_device_context_lock(context);
-    wined3d_device_context_emit_draw(context, state->primitive_type, state->patch_vertex_count,
-            base_vertex_index, start_index, index_count, start_instance, instance_count, true);
+    if (state->index_buffer)
+    {
+        wined3d_device_context_emit_draw(context, state->primitive_type, state->patch_vertex_count,
+                base_vertex_index, start_index, index_count, start_instance, instance_count, true);
+    }
     wined3d_device_context_unlock(context);
 }
 

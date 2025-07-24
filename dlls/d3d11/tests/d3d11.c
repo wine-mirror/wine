@@ -21002,6 +21002,10 @@ static void test_index_buffer_offset(void)
     }
     release_resource_readback(&rb);
 
+    /* Without index buffer */
+    ID3D11DeviceContext_IASetIndexBuffer(context, NULL, DXGI_FORMAT_R32_UINT, 0);
+    ID3D11DeviceContext_DrawIndexed(context, 4, 0, 0);
+
     /* indirect draws */
     args_buffer = create_buffer_misc(device, 0, D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS,
             sizeof(argument_data), argument_data);
