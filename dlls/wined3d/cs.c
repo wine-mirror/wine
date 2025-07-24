@@ -1204,6 +1204,13 @@ void CDECL wined3d_device_context_draw_indirect(struct wined3d_device_context *c
     struct wined3d_cs_draw *op;
 
     wined3d_device_context_lock(context);
+
+    if (indexed && !state->index_buffer)
+    {
+        wined3d_device_context_unlock(context);
+        return;
+    }
+
     op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_DRAW;
     op->primitive_type = state->primitive_type;
