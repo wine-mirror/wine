@@ -28665,7 +28665,6 @@ static void test_texture_transform_flags(void)
                     D3DTEXTURETRANSFORMFLAGS flags = flags_tests[i];
                     float texcoords[4], expect[4];
                     DWORD ret_flags;
-                    bool equal;
 
                     if ((flags & D3DTTFF_PROJECTED) && vs_mode == VS_MODE_RHW
                             && (ps_mode == PS_MODE_FFP || ps_mode == PS_MODE_PS1))
@@ -28827,11 +28826,10 @@ static void test_texture_transform_flags(void)
                     colour = get_readback_vec4(&rb, 0, 0);
                     /* We use point filtering, but we might have sampled the
                      * neighbouring texel. */
-                    equal = fabsf(colour->x - expect[0]) <= 0.006f && fabsf(colour->y - expect[1]) <= 0.006f
-                            && colour->z == expect[2] && colour->w == expect[3];
-todo_wine_if ((vs_mode == VS_MODE_VS && ps_mode == PS_MODE_FFP && flags == (D3DTTFF_PROJECTED | D3DTTFF_COUNT3))
-        || ((vs_mode == VS_MODE_FFP || vs_mode == VS_MODE_FFP_NORMAL) && !equal))
-                    ok(equal, "Expected colour {%.8e, %.8e, %.8e, %.8e}; got {%.8e, %.8e, %.8e, %.8e}.\n",
+todo_wine_if ((vs_mode == VS_MODE_VS && ps_mode == PS_MODE_FFP && flags == (D3DTTFF_PROJECTED | D3DTTFF_COUNT3)))
+                    ok(fabsf(colour->x - expect[0]) <= 0.006f && fabsf(colour->y - expect[1]) <= 0.006f
+                            && colour->z == expect[2] && colour->w == expect[3],
+                            "Expected colour {%.8e, %.8e, %.8e, %.8e}; got {%.8e, %.8e, %.8e, %.8e}.\n",
                             expect[0], expect[1], expect[2], expect[3], colour->x, colour->y, colour->z, colour->w);
                     release_surface_readback(&rb);
 

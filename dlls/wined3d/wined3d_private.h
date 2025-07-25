@@ -1458,9 +1458,6 @@ enum wined3d_ffp_ps_fog_mode
  * into the shader code
  */
 
-#define WINED3D_PSARGS_PROJECTED (1u << 3)
-#define WINED3D_PSARGS_TEXTRANSFORM_SHIFT 4
-#define WINED3D_PSARGS_TEXTRANSFORM_MASK 0xfu
 #define WINED3D_PSARGS_TEXTYPE_SHIFT 2
 #define WINED3D_PSARGS_TEXTYPE_MASK 0x3u
 
@@ -1479,16 +1476,16 @@ struct ps_compile_args
     enum wined3d_vertex_processing_mode vp_mode;
     enum wined3d_ffp_ps_fog_mode fog;
     DWORD                       tex_types; /* ps 1 - 3, 16 textures */
-    WORD                        tex_transform; /* ps 1.0-1.3, 4 textures */
-    WORD                        srgb_correction;
     WORD shadow; /* WINED3D_MAX_FRAGMENT_SAMPLERS, 16 */
     WORD texcoords_initialized; /* WINED3D_MAX_FFP_TEXTURES, 8 */
+    DWORD srgb_correction : 1;
     DWORD pointsprite : 1;
     DWORD flatshading : 1;
     DWORD alpha_test_func : 3;
     DWORD rt_alpha_swizzle : 8; /* WINED3D_MAX_RENDER_TARGETS, 8 */
     DWORD dual_source_blend : 1;
-    DWORD padding : 18;
+    DWORD projected : 4;
+    DWORD padding : 13;
 };
 
 enum fog_src_type

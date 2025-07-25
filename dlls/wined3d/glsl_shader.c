@@ -5364,29 +5364,11 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 
     if (shader_version < WINED3D_SHADER_VERSION(1,4))
     {
-        DWORD flags = (priv->cur_ps_args->tex_transform >> resource_idx * WINED3D_PSARGS_TEXTRANSFORM_SHIFT)
-                & WINED3D_PSARGS_TEXTRANSFORM_MASK;
-
         /* Projected cube textures don't make a lot of sense, the resulting coordinates stay the same. */
-        if (flags & WINED3D_PSARGS_PROJECTED && resource_type != WINED3D_SHADER_RESOURCE_TEXTURE_CUBE)
+        if ((priv->cur_ps_args->projected & (1u << resource_idx)) && resource_type != WINED3D_SHADER_RESOURCE_TEXTURE_CUBE)
         {
             sample_flags |= WINED3D_GLSL_SAMPLE_PROJECTED;
-            switch (flags & ~WINED3D_PSARGS_PROJECTED)
-            {
-                case WINED3D_TTFF_COUNT1:
-                    FIXME("WINED3D_TTFF_PROJECTED with WINED3D_TTFF_COUNT1?\n");
-                    break;
-                case WINED3D_TTFF_COUNT2:
-                    mask = WINED3DSP_WRITEMASK_1;
-                    break;
-                case WINED3D_TTFF_COUNT3:
-                    mask = WINED3DSP_WRITEMASK_2;
-                    break;
-                case WINED3D_TTFF_COUNT4:
-                case WINED3D_TTFF_DISABLE:
-                    mask = WINED3DSP_WRITEMASK_3;
-                    break;
-            }
+            mask = WINED3DSP_WRITEMASK_3;
         }
     }
     else if (shader_version < WINED3D_SHADER_VERSION(2,0))
@@ -6756,12 +6738,9 @@ static void shader_glsl_texbem(const struct wined3d_shader_instruction *ins)
     struct glsl_src_param coord_param;
     unsigned int sampler_idx;
     DWORD mask;
-    DWORD flags;
     char coord_mask[6];
 
     sampler_idx = ins->dst[0].reg.idx[0].offset;
-    flags = (priv->cur_ps_args->tex_transform >> sampler_idx * WINED3D_PSARGS_TEXTRANSFORM_SHIFT)
-            & WINED3D_PSARGS_TEXTRANSFORM_MASK;
 
     /* Dependent read, not valid with conditional NP2 */
     shader_glsl_get_sample_function(ins->ctx, sampler_idx, sampler_idx, 0, &sample_function);
@@ -6771,29 +6750,8 @@ static void shader_glsl_texbem(const struct wined3d_shader_instruction *ins)
 
     /* With projected textures, texbem only divides the static texture coord,
      * not the displacement, so we can't let GL handle this. */
-    if (flags & WINED3D_PSARGS_PROJECTED)
-    {
-        DWORD div_mask=0;
-        char coord_div_mask[3];
-        switch (flags & ~WINED3D_PSARGS_PROJECTED)
-        {
-            case WINED3D_TTFF_COUNT1:
-                FIXME("WINED3D_TTFF_PROJECTED with WINED3D_TTFF_COUNT1?\n");
-                break;
-            case WINED3D_TTFF_COUNT2:
-                div_mask = WINED3DSP_WRITEMASK_1;
-                break;
-            case WINED3D_TTFF_COUNT3:
-                div_mask = WINED3DSP_WRITEMASK_2;
-                break;
-            case WINED3D_TTFF_COUNT4:
-            case WINED3D_TTFF_DISABLE:
-                div_mask = WINED3DSP_WRITEMASK_3;
-                break;
-        }
-        shader_glsl_write_mask_to_str(div_mask, coord_div_mask);
-        shader_addline(ins->ctx->buffer, "T%u%s /= T%u%s;\n", sampler_idx, coord_mask, sampler_idx, coord_div_mask);
-    }
+    if (priv->cur_ps_args->projected & (1u << sampler_idx))
+        shader_addline(ins->ctx->buffer, "T%u%s /= T%u.w;\n", sampler_idx, coord_mask, sampler_idx);
 
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1, &coord_param);
 
