@@ -1991,7 +1991,7 @@ static HRESULT copypixels_to_128bppRGBAFloat(struct FormatConverter *This, const
         }
 
         free(srcdata);
-        return S_OK;
+        return hr;
     }
     default:
         FIXME("Unimplemented conversion path %d.\n", source_format);
