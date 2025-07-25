@@ -2047,7 +2047,7 @@ static HRESULT copypixels_to_128bppRGBFloat(struct FormatConverter *This, const 
         }
 
         free(srcdata);
-        return S_OK;
+        return hr;
     }
     case format_96bppRGBFloat:
     {
