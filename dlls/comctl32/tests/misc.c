@@ -444,7 +444,7 @@ static void test_builtin_classes(void)
 
 static void test_comctl32_classes(BOOL v6)
 {
-    check_class(ANIMATE_CLASSA,      1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x1000e, TRUE);
+    check_class(ANIMATE_CLASSA,      1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x1000e, FALSE);
     check_class(WC_COMBOBOXEXA,      1, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
     check_class(DATETIMEPICK_CLASSA, 1, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
     check_class(WC_HEADERA,          1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, v6 ? 0 : 0x10011, !v6);

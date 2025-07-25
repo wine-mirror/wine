@@ -899,6 +899,11 @@ static LRESULT WINAPI ANIMATE_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     case WM_ERASEBKGND:
 	return ANIMATE_EraseBackground(infoPtr, (HDC)wParam);
 
+    case WM_GETOBJECT:
+        if ((LONG)lParam == OBJID_QUERYCLASSNAMEIDX)
+            return 0x1000e;
+	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+
     case WM_STYLECHANGED:
         return ANIMATE_StyleChanged(infoPtr, wParam, (LPSTYLESTRUCT)lParam);
 
