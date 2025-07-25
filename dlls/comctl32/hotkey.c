@@ -543,6 +543,11 @@ HOTKEY_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_GETDLGCODE:
 	    return DLGC_WANTCHARS | DLGC_WANTARROWS;
 
+        case WM_GETOBJECT:
+            if ((LONG)lParam == OBJID_QUERYCLASSNAMEIDX)
+                return 0x10010;
+	    return DefWindowProcW (hwnd, uMsg, wParam, lParam);
+
 	case WM_GETFONT:
 	    return HOTKEY_GetFont (infoPtr);
 
