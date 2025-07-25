@@ -5679,7 +5679,7 @@ void get_modelview_matrix(const struct wined3d_stateblock_state *state, unsigned
 }
 
 /* Setup this textures matrix according to the texture flags. */
-static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t flags, BOOL calculated_coords,
+static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t flags,
         unsigned int attrib_count, struct wined3d_matrix *out_matrix)
 {
     unsigned int count = (flags & ~WINED3D_TTFF_PROJECTED);
@@ -5709,7 +5709,7 @@ static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t
      * actually has a value of 1. The coefficients for other columns don't need
      * to be modified, since the corresponding texcoord components are zero. */
 
-    if (!(flags & WINED3D_TTFF_PROJECTED) && !calculated_coords)
+    if (!(flags & WINED3D_TTFF_PROJECTED))
     {
         switch (attrib_count)
         {
@@ -5754,7 +5754,7 @@ void get_texture_matrix(const struct wined3d_stateblock_state *state,
 
     compute_texture_matrix(&state->transforms[WINED3D_TS_TEXTURE0 + tex],
             state->texture_states[tex][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS],
-            generated, get_texcoord_attrib_count(state->vertex_declaration, coord_idx), mat);
+            generated ? 3 : get_texcoord_attrib_count(state->vertex_declaration, coord_idx), mat);
 }
 
 static BOOL wined3d_get_primary_display(WCHAR *display)
