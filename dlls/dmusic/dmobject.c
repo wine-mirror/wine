@@ -428,13 +428,10 @@ HRESULT stream_chunk_get_array(IStream *stream, const struct chunk_entry *chunk,
     return stream_chunk_get_array_alt(stream, chunk, array, count, elem_size, 0);
 }
 
-HRESULT stream_chunk_get_data(IStream *stream, const struct chunk_entry *chunk, void *data,
-        ULONG size)
+HRESULT stream_chunk_get_data(IStream *stream, const struct chunk_entry *chunk, void *data, ULONG size)
 {
     if (chunk->size != size) {
-        WARN_(dmfile)("Chunk %s (size %lu, offset %s) doesn't contains the expected data size %lu\n",
-                debugstr_fourcc(chunk->id), chunk->size,
-                wine_dbgstr_longlong(chunk->offset.QuadPart), size);
+        WARN_(dmfile)("%s: doesn't contains the expected data size %lu\n", debugstr_chunk(chunk), size);
         return E_FAIL;
     }
     return stream_read(stream, data, size);
