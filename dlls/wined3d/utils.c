@@ -5709,24 +5709,19 @@ static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t
      * actually has a value of 1. The coefficients for other columns don't need
      * to be modified, since the corresponding texcoord components are zero. */
 
-    if (!(flags & WINED3D_TTFF_PROJECTED))
+    if (attrib_count == 1)
     {
-        switch (attrib_count)
-        {
-            case 1:
-                mat._41 = mat._21;
-                mat._42 = mat._22;
-                mat._43 = mat._23;
-                mat._44 = mat._24;
-                break;
-
-            case 2:
-                mat._41 = mat._31;
-                mat._42 = mat._32;
-                mat._43 = mat._33;
-                mat._44 = mat._34;
-                break;
-        }
+        mat._41 = mat._21;
+        mat._42 = mat._22;
+        mat._43 = mat._23;
+        mat._44 = mat._24;
+    }
+    else if (attrib_count == 2)
+    {
+        mat._41 = mat._31;
+        mat._42 = mat._32;
+        mat._43 = mat._33;
+        mat._44 = mat._34;
     }
 
     *out_matrix = mat;
