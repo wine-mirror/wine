@@ -5859,6 +5859,11 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_GETDLGCODE:
 	return DLGC_WANTARROWS | DLGC_WANTCHARS;
 
+    case WM_GETOBJECT:
+        if ((LONG)lParam == OBJID_QUERYCLASSNAMEIDX)
+            return 0x10019;
+	return DefWindowProcW(hwnd, uMsg, wParam, lParam);
+
     case WM_GETFONT:
 	return TREEVIEW_GetFont(infoPtr);
 
