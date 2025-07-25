@@ -437,6 +437,17 @@ HRESULT stream_chunk_get_data(IStream *stream, const struct chunk_entry *chunk, 
     return stream_read(stream, data, size);
 }
 
+HRESULT stream_chunk_get_data_alt(IStream *stream, const struct chunk_entry *chunk, void *data,
+        ULONG size, ULONG alt_size)
+{
+    if (chunk->size != size && chunk->size != alt_size) {
+        WARN_(dmfile)("%s: doesn't contains the expected data size %lu or %lu\n", debugstr_chunk(chunk),
+                size, alt_size);
+        return E_FAIL;
+    }
+    return stream_read(stream, data, chunk->size);
+}
+
 HRESULT stream_chunk_get_wstr(IStream *stream, const struct chunk_entry *chunk, WCHAR *str,
         ULONG size)
 {
