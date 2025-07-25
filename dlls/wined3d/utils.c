@@ -5688,6 +5688,17 @@ static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t
     if (count < 2 || count > 4)
     {
         get_identity_matrix(out_matrix);
+
+        if (flags & WINED3D_TTFF_PROJECTED)
+        {
+            /* As below: effectively copy the component to divide by to W. */
+            if (attrib_count == 1)
+                out_matrix->_14 = 1.0f;
+            else if (attrib_count == 2)
+                out_matrix->_24 = 1.0f;
+            else if (attrib_count == 3)
+                out_matrix->_34 = 1.0f;
+        }
         return;
     }
 
@@ -5722,6 +5733,28 @@ static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t
         mat._42 = mat._32;
         mat._43 = mat._33;
         mat._44 = mat._34;
+    }
+
+    /* Projection is handled in two steps. In the vertex pipeline, the
+     * component to be divided by is copied to W. In the fragment pipeline,
+     * sampling the projected texture always divides by W. */
+
+    if (flags & WINED3D_TTFF_PROJECTED)
+    {
+        if (count == 2)
+        {
+            mat._14 = mat._12;
+            mat._24 = mat._22;
+            mat._34 = mat._32;
+            mat._44 = mat._42;
+        }
+        else if (count == 3)
+        {
+            mat._14 = mat._13;
+            mat._24 = mat._23;
+            mat._34 = mat._33;
+            mat._44 = mat._43;
+        }
     }
 
     *out_matrix = mat;
