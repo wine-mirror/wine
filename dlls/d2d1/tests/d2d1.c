@@ -297,6 +297,7 @@ static HRESULT (WINAPI *pD2D1CreateDevice)(IDXGIDevice *dxgi_device,
 static void (WINAPI *pD2D1SinCos)(float angle, float *s, float *c);
 static float (WINAPI *pD2D1Tan)(float angle);
 static float (WINAPI *pD2D1Vec3Length)(float x, float y, float z);
+static float (WINAPI *pD2D1ComputeMaximumScaleFactor)(const D2D1_MATRIX_3X2_F *matrix);
 static D2D1_COLOR_F (WINAPI *pD2D1ConvertColorSpace)(D2D1_COLOR_SPACE src_colour_space,
         D2D1_COLOR_SPACE dst_colour_space, const D2D1_COLOR_F *colour);
 
@@ -10689,6 +10690,52 @@ static void test_math(BOOL d3d11)
         {1.0f, 2.0f, 3.0f, 3.74165750f},
     };
 
+    static const struct
+    {
+        D2D1_MATRIX_3X2_F mat;
+        float res;
+    }
+    scale_factor_tests[] =
+    {
+        {
+            .mat = {.m =
+            {{0.0f, 0.0f},
+             {0.0f, 0.0f},
+             {0.0f, 0.0f},
+            }},
+            0.0f,
+        },
+        {
+            .mat = {.m =
+            {{-3.0f, 0.0f},
+             { 0.0f, 2.0f},
+             { 2.0f, 1.0f},
+            }},
+            3.0f,
+        },
+        {
+            .mat = {.m =
+            {{-3.0f, 1.0f},
+             { 2.0f, 2.0f},
+            }},
+            3.62258267f,
+        },
+        {
+            .mat = {.m =
+            {{1.0f, -1.0f},
+             {1.0f, 1.0f},
+            }},
+            1.41421354f,
+        },
+        {
+            .mat = {.m =
+            {{0.0f, 1.0f},
+             {2.0f, 0.0f},
+            }},
+            2.0f,
+        },
+    };
+
     if (!pD2D1SinCos || !pD2D1Tan || !pD2D1Vec3Length)
     {
         win_skip("D2D1SinCos/D2D1Tan/D2D1Vec3Length not available, skipping test.\n");
@@ -10716,6 +10763,19 @@ static void test_math(BOOL d3d11)
         l = pD2D1Vec3Length(l_data[i].x, l_data[i].y, l_data[i].z);
         ok(compare_float(l, l_data[i].l, 0),
                 "Test %u: Got unexpected length %.8e, expected %.8e.\n", i, l, l_data[i].l);
+    }
+
+    if (!pD2D1ComputeMaximumScaleFactor)
+    {
+        win_skip(" D2D1ComputeMaximumScaleFactor not available, skipping test.\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(scale_factor_tests); ++i)
+    {
+        s = pD2D1ComputeMaximumScaleFactor(&scale_factor_tests[i].mat);
+        ok(compare_float(s, scale_factor_tests[i].res, 1),
+                "Test %u: Got unexpected factor %.8e, expected %.8e.\n", i, s, scale_factor_tests[i].res);
     }
 }
 
@@ -15864,6 +15924,7 @@ START_TEST(d2d1)
     pD2D1Tan = (void *)GetProcAddress(d2d1_dll, "D2D1Tan");
     pD2D1Vec3Length = (void *)GetProcAddress(d2d1_dll, "D2D1Vec3Length");
     pD2D1ConvertColorSpace = (void *)GetProcAddress(d2d1_dll, "D2D1ConvertColorSpace");
+    pD2D1ComputeMaximumScaleFactor = (void *)GetProcAddress(d2d1_dll, "D2D1ComputeMaximumScaleFactor");
 
     use_mt = !getenv("WINETEST_NO_MT_D3D");
     /* Some host drivers (MacOS, Mesa radeonsi) never unmap memory even when

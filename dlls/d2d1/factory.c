@@ -1445,6 +1445,27 @@ BOOL WINAPI D2D1InvertMatrix(D2D1_MATRIX_3X2_F *matrix)
     return d2d_matrix_invert(matrix, &m);
 }
 
+float WINAPI D2D1ComputeMaximumScaleFactor(const D2D1_MATRIX_3X2_F *matrix)
+{
+    const float (*m)[2] = matrix->m;
+    float a1, a2, c;
+
+    TRACE("matrix %p.\n", matrix);
+
+    /* 2x2 matrix, _31 and _32 are ignored. */
+    a1 = m[0][0] * m[0][0] + m[1][0] * m[1][0];
+    a2 = m[0][1] * m[0][1] + m[1][1] * m[1][1];
+    c = m[0][0] * m[0][1] + m[1][0] * m[1][1];
+
+    /* Maximum scale factor of matrix M refers to maximum value of |Mv|/|v| over all vectors v, where |.| is
+     * vector length. That is defined as matrix spectral norm. Spectral norm equals to the maximum of the
+     * singular values s1, s2 for 2x2 matrix M.
+     * s_i^2 = e_i where e_i (e1, e2) are eigenvalues of (transpose(M) * M)
+     * e1 + e2 = trace(transpose(M) * M) = a1 + a2
+     * e1 * e2 = det(transpose(M) * M) = a1 * a2 - c ^ 2. */
+    return sqrtf(0.5f * (a1 + a2 + sqrtf((a1 - a2) * (a1 - a2) + 4 * c * c)));
+}
+
 HRESULT WINAPI D2D1CreateDevice(IDXGIDevice *dxgi_device,
         const D2D1_CREATION_PROPERTIES *properties, ID2D1Device **device)
 {

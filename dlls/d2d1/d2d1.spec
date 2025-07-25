@@ -9,3 +9,4 @@
 @ stdcall D2D1SinCos(float ptr ptr)
 @ stdcall D2D1Tan(float)
 @ stdcall D2D1Vec3Length(float float float)
+@ stdcall D2D1ComputeMaximumScaleFactor(ptr)
