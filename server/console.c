@@ -861,9 +861,9 @@ static void screen_buffer_destroy( struct object *obj )
             queue_host_ioctl( screen_buffer->input->server, IOCTL_CONDRV_CLOSE_OUTPUT,
                               screen_buffer->id, NULL, NULL );
     }
+    free_async_queue( &screen_buffer->ioctl_q );
     if (screen_buffer->sync) release_object( screen_buffer->sync );
     if (screen_buffer->fd) release_object( screen_buffer->fd );
-    free_async_queue( &screen_buffer->ioctl_q );
 }
 
 static struct object *screen_buffer_open_file( struct object *obj, unsigned int access,
