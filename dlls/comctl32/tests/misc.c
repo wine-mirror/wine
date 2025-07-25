@@ -385,7 +385,7 @@ static void test_LoadIconWithScaleDown(void)
     FreeLibrary(hinst);
 }
 
-static void check_class( const char *name, int must_exist, UINT style, UINT ignore, BOOL v6 )
+static void check_class( const char *name, int must_exist, UINT style, UINT ignore, BOOL v6, DWORD classnameidx, BOOL classnameidx_todo )
 {
     WNDCLASSA wc;
 
@@ -393,6 +393,7 @@ static void check_class( const char *name, int must_exist, UINT style, UINT igno
     {
         char buff[64];
         HWND hwnd;
+        DWORD objid;
 
         todo_wine_if(!strcmp(name, "SysLink") && !must_exist && !v6)
         ok( must_exist, "System class %s should %sexist\n", name, must_exist ? "" : "NOT " );
@@ -410,6 +411,18 @@ static void check_class( const char *name, int must_exist, UINT style, UINT igno
         ok( hwnd != NULL, "Failed to create window for class %s.\n", name );
         GetClassNameA(hwnd, buff, ARRAY_SIZE(buff));
         ok( !strcmp(name, buff), "Unexpected class name %s, expected %s.\n", buff, name );
+
+        objid = SendMessageA(hwnd, WM_GETOBJECT, 0, OBJID_QUERYCLASSNAMEIDX);
+        todo_wine_if(classnameidx_todo)
+        ok(objid == classnameidx, "Class %s has nameidx %lx, expected %lx\n",
+            name, objid, classnameidx);
+
+        /* Check with upper 32 bits truncated */
+        objid = SendMessageA(hwnd, WM_GETOBJECT, 0, (DWORD)OBJID_QUERYCLASSNAMEIDX);
+        todo_wine_if(classnameidx_todo)
+        ok(objid == classnameidx, "Class %s has nameidx %lx, expected %lx\n",
+            name, objid, classnameidx);
+
         DestroyWindow(hwnd);
     }
     else
@@ -420,40 +433,40 @@ static void check_class( const char *name, int must_exist, UINT style, UINT igno
 static void test_builtin_classes(void)
 {
     /* check style bits */
-    check_class( "Button",     1, CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE );
-    check_class( "ComboBox",   1, CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE );
-    check_class( "Edit",       1, CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE );
-    check_class( "ListBox",    1, CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE );
-    check_class( "ScrollBar",  1, CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE );
-    check_class( "Static",     1, CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE );
-    check_class( "ComboLBox",  1, CS_SAVEBITS | CS_DBLCLKS | CS_DROPSHADOW | CS_GLOBALCLASS, CS_DROPSHADOW, FALSE );
+    check_class( "Button",     1, CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0x10002, FALSE );
+    check_class( "ComboBox",   1, CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0x10005, FALSE );
+    check_class( "Edit",       1, CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x10004, FALSE );
+    check_class( "ListBox",    1, CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x10000, FALSE );
+    check_class( "ScrollBar",  1, CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0x1000a, TRUE );
+    check_class( "Static",     1, CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x10003, FALSE );
+    check_class( "ComboLBox",  1, CS_SAVEBITS | CS_DBLCLKS | CS_DROPSHADOW | CS_GLOBALCLASS, CS_DROPSHADOW, FALSE, 0x10000, FALSE );
 }
 
 static void test_comctl32_classes(BOOL v6)
 {
-    check_class(ANIMATE_CLASSA,      1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE);
-    check_class(WC_COMBOBOXEXA,      1, CS_GLOBALCLASS, 0, FALSE);
-    check_class(DATETIMEPICK_CLASSA, 1, CS_GLOBALCLASS, 0, FALSE);
-    check_class(WC_HEADERA,          1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE);
-    check_class(HOTKEY_CLASSA,       1, CS_GLOBALCLASS, 0, FALSE);
-    check_class(WC_IPADDRESSA,       1, CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE);
-    check_class(WC_LISTVIEWA,        1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE);
-    check_class(MONTHCAL_CLASSA,     1, CS_GLOBALCLASS, 0, FALSE);
-    check_class(WC_NATIVEFONTCTLA,   1, CS_GLOBALCLASS, 0, FALSE);
-    check_class(WC_PAGESCROLLERA,    1, CS_GLOBALCLASS, 0, FALSE);
-    check_class(PROGRESS_CLASSA,     1, CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE);
-    check_class(REBARCLASSNAMEA,     1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE);
-    check_class(STATUSCLASSNAMEA,    1, CS_DBLCLKS | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE);
-    check_class(WC_TABCONTROLA,      1, CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE);
-    check_class(TOOLBARCLASSNAMEA,   1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE);
+    check_class(ANIMATE_CLASSA,      1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x1000e, TRUE);
+    check_class(WC_COMBOBOXEXA,      1, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
+    check_class(DATETIMEPICK_CLASSA, 1, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
+    check_class(WC_HEADERA,          1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, v6 ? 0 : 0x10011, !v6);
+    check_class(HOTKEY_CLASSA,       1, CS_GLOBALCLASS, 0, FALSE, 0x10010, TRUE);
+    check_class(WC_IPADDRESSA,       1, CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
+    check_class(WC_LISTVIEWA,        1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x10013, TRUE);
+    check_class(MONTHCAL_CLASSA,     1, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
+    check_class(WC_NATIVEFONTCTLA,   1, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
+    check_class(WC_PAGESCROLLERA,    1, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
+    check_class(PROGRESS_CLASSA,     1, CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0x1000d, FALSE);
+    check_class(REBARCLASSNAMEA,     1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
+    check_class(STATUSCLASSNAMEA,    1, CS_DBLCLKS | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0x1000b, FALSE);
+    check_class(WC_TABCONTROLA,      1, CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0x1000f, FALSE);
+    check_class(TOOLBARCLASSNAMEA,   1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x1000c, FALSE);
     if (v6)
-        check_class(TOOLTIPS_CLASSA, 1, CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS | CS_DROPSHADOW, CS_SAVEBITS | CS_HREDRAW | CS_VREDRAW /* XP */, TRUE);
+        check_class(TOOLTIPS_CLASSA, 1, CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS | CS_DROPSHADOW, CS_SAVEBITS | CS_HREDRAW | CS_VREDRAW /* XP */, TRUE, 0x10018, TRUE);
     else
-        check_class(TOOLTIPS_CLASSA, 1, CS_DBLCLKS | CS_GLOBALCLASS | CS_SAVEBITS, CS_HREDRAW | CS_VREDRAW /* XP */, FALSE);
-    check_class(TRACKBAR_CLASSA,     1, CS_GLOBALCLASS, 0, FALSE);
-    check_class(WC_TREEVIEWA,        1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE);
-    check_class(UPDOWN_CLASSA,       1, CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE);
-    check_class("SysLink", v6, CS_GLOBALCLASS, 0, FALSE);
+        check_class(TOOLTIPS_CLASSA, 1, CS_DBLCLKS | CS_GLOBALCLASS | CS_SAVEBITS, CS_HREDRAW | CS_VREDRAW /* XP */, FALSE, 0x10018, TRUE);
+    check_class(TRACKBAR_CLASSA,     1, CS_GLOBALCLASS, 0, FALSE, 0x10012, TRUE);
+    check_class(WC_TREEVIEWA,        1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x10019, TRUE);
+    check_class(UPDOWN_CLASSA,       1, CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0x10016, TRUE);
+    check_class("SysLink", v6, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
 }
 
 struct wm_themechanged_test
