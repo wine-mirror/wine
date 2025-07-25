@@ -5688,6 +5688,8 @@ static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t
     if (count < 2 || count > 4)
     {
         get_identity_matrix(out_matrix);
+        if (attrib_count < 4)
+            out_matrix->_44 = 0.0f;
 
         if (flags & WINED3D_TTFF_PROJECTED)
         {
@@ -5733,6 +5735,24 @@ static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t
         mat._42 = mat._32;
         mat._43 = mat._33;
         mat._44 = mat._34;
+    }
+
+    /* When using the FFP, components greater than the count are set to zero. */
+
+    if (count < 4)
+    {
+        mat._14 = 0.0f;
+        mat._24 = 0.0f;
+        mat._34 = 0.0f;
+        mat._44 = 0.0f;
+    }
+
+    if (count < 3)
+    {
+        mat._13 = 0.0f;
+        mat._23 = 0.0f;
+        mat._33 = 0.0f;
+        mat._43 = 0.0f;
     }
 
     /* Projection is handled in two steps. In the vertex pipeline, the
