@@ -11862,6 +11862,11 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case WM_GETFONT:
     return (LRESULT)infoPtr->hFont;
 
+  case WM_GETOBJECT:
+    if ((LONG)lParam == OBJID_QUERYCLASSNAMEIDX)
+      return 0x10013;
+    return DefWindowProcW(hwnd, uMsg, wParam, lParam);
+
   case WM_HSCROLL:
     return LISTVIEW_HScroll(infoPtr, (INT)LOWORD(wParam), 0);
 

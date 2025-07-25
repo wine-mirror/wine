@@ -450,7 +450,7 @@ static void test_comctl32_classes(BOOL v6)
     check_class(WC_HEADERA,          1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, v6 ? 0 : 0x10011, !v6);
     check_class(HOTKEY_CLASSA,       1, CS_GLOBALCLASS, 0, FALSE, 0x10010, FALSE);
     check_class(WC_IPADDRESSA,       1, CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
-    check_class(WC_LISTVIEWA,        1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x10013, TRUE);
+    check_class(WC_LISTVIEWA,        1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x10013, FALSE);
     check_class(MONTHCAL_CLASSA,     1, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
     check_class(WC_NATIVEFONTCTLA,   1, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
     check_class(WC_PAGESCROLLERA,    1, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
