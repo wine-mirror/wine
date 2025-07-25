@@ -954,6 +954,11 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	    InvalidateRect (infoPtr->Self, NULL, FALSE);
 	    break;
 
+        case WM_GETOBJECT:
+            if ((LONG)lParam == OBJID_QUERYCLASSNAMEIDX)
+                return 0x10016;
+	    return DefWindowProcW (hwnd, message, wParam, lParam);
+
         case WM_STYLECHANGED:
             if (wParam == GWL_STYLE)
                 infoPtr->dwStyle = ((LPSTYLESTRUCT)lParam)->styleNew;
