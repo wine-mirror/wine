@@ -6240,7 +6240,6 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_state *state,
         /* D3DTOP_LERP                      */  ARG1 | ARG2 | ARG0
     };
     unsigned int i;
-    DWORD ttff;
     DWORD cop, aop, carg0, carg1, carg2, aarg0, aarg1, aarg2;
     struct wined3d_texture *texture;
 
@@ -6258,7 +6257,7 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_state *state,
             settings->op[i].color_fixup = COLOR_FIXUP_IDENTITY;
             settings->op[i].tmp_dst = 0;
             settings->op[i].tex_type = WINED3D_GL_RES_TYPE_TEX_1D;
-            settings->op[i].projected = WINED3D_PROJECTION_NONE;
+            settings->op[i].projected = 0;
             i++;
             break;
         }
@@ -6350,21 +6349,9 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_state *state,
                aop = WINED3D_TOP_SELECT_ARG1;
         }
 
-        if (carg1 == WINED3DTA_TEXTURE || carg2 == WINED3DTA_TEXTURE || carg0 == WINED3DTA_TEXTURE
+        settings->op[i].projected = (carg1 == WINED3DTA_TEXTURE || carg2 == WINED3DTA_TEXTURE || carg0 == WINED3DTA_TEXTURE
                 || aarg1 == WINED3DTA_TEXTURE || aarg2 == WINED3DTA_TEXTURE || aarg0 == WINED3DTA_TEXTURE)
-        {
-            ttff = state->texture_states[i][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS];
-            if (ttff == (WINED3D_TTFF_PROJECTED | WINED3D_TTFF_COUNT3))
-                settings->op[i].projected = WINED3D_PROJECTION_COUNT3;
-            else if (ttff & WINED3D_TTFF_PROJECTED)
-                settings->op[i].projected = WINED3D_PROJECTION_COUNT4;
-            else
-                settings->op[i].projected = WINED3D_PROJECTION_NONE;
-        }
-        else
-        {
-            settings->op[i].projected = WINED3D_PROJECTION_NONE;
-        }
+                && (state->texture_states[i][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS] & WINED3D_TTFF_PROJECTED);
 
         settings->op[i].cop = cop;
         settings->op[i].aop = aop;

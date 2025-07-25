@@ -28826,7 +28826,6 @@ static void test_texture_transform_flags(void)
                     colour = get_readback_vec4(&rb, 0, 0);
                     /* We use point filtering, but we might have sampled the
                      * neighbouring texel. */
-todo_wine_if ((vs_mode == VS_MODE_VS && ps_mode == PS_MODE_FFP && flags == (D3DTTFF_PROJECTED | D3DTTFF_COUNT3)))
                     ok(fabsf(colour->x - expect[0]) <= 0.006f && fabsf(colour->y - expect[1]) <= 0.006f
                             && colour->z == expect[2] && colour->w == expect[3],
                             "Expected colour {%.8e, %.8e, %.8e, %.8e}; got {%.8e, %.8e, %.8e, %.8e}.\n",

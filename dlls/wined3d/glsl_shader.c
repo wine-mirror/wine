@@ -9867,25 +9867,10 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     for (stage = 0; stage < WINED3D_MAX_FFP_TEXTURES && settings->op[stage].cop != WINED3D_TOP_DISABLE; ++stage)
     {
         const char *texture_function, *coord_mask;
-        BOOL proj;
+        BOOL proj = settings->op[stage].projected;
 
         if (!(tex_map & (1u << stage)))
             continue;
-
-        if (settings->op[stage].projected == WINED3D_PROJECTION_NONE)
-        {
-            proj = FALSE;
-        }
-        else if (settings->op[stage].projected == WINED3D_PROJECTION_COUNT4
-                || settings->op[stage].projected == WINED3D_PROJECTION_COUNT3)
-        {
-            proj = TRUE;
-        }
-        else
-        {
-            FIXME("Unexpected projection mode %d\n", settings->op[stage].projected);
-            proj = TRUE;
-        }
 
         if (settings->op[stage].tex_type == WINED3D_GL_RES_TYPE_TEX_CUBE)
             proj = FALSE;
@@ -9928,20 +9913,11 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
              * texture coordinate, not the displacement, so multiply the
              * displacement with the dividing parameter before passing it to
              * TXP. */
-            if (settings->op[stage].projected != WINED3D_PROJECTION_NONE)
+            if (settings->op[stage].projected)
             {
-                if (settings->op[stage].projected == WINED3D_PROJECTION_COUNT4)
-                {
-                    shader_addline(buffer, "ret.xy = (ret.xy * ffp_texcoord[%u].w) + ffp_texcoord[%u].xy;\n",
-                            stage, stage);
-                    shader_addline(buffer, "ret.zw = ffp_texcoord[%u].ww;\n", stage);
-                }
-                else
-                {
-                    shader_addline(buffer, "ret.xy = (ret.xy * ffp_texcoord[%u].z) + ffp_texcoord[%u].xy;\n",
-                            stage, stage);
-                    shader_addline(buffer, "ret.zw = ffp_texcoord[%u].zz;\n", stage);
-                }
+                shader_addline(buffer, "ret.xy = (ret.xy * ffp_texcoord[%u].w) + ffp_texcoord[%u].xy;\n",
+                        stage, stage);
+                shader_addline(buffer, "ret.zw = ffp_texcoord[%u].ww;\n", stage);
             }
             else
             {
@@ -9954,11 +9930,6 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
             if (settings->op[stage - 1].cop == WINED3D_TOP_BUMPENVMAP_LUMINANCE)
                 shader_addline(buffer, "tex%u *= clamp(tex%u.z * bumpenv_lum_scale%u + bumpenv_lum_offset%u, 0.0, 1.0);\n",
                         stage, stage - 1, stage - 1, stage - 1);
-        }
-        else if (settings->op[stage].projected == WINED3D_PROJECTION_COUNT3)
-        {
-            shader_addline(buffer, "tex%u = %s%s(ps_sampler%u, ffp_texcoord[%u].xyz);\n",
-                    stage, texture_function, proj ? "Proj" : "", stage, stage);
         }
         else
         {

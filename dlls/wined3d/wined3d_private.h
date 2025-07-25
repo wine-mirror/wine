@@ -2635,16 +2635,6 @@ BOOL wined3d_adapter_no3d_init_format_info(struct wined3d_adapter *adapter);
 ssize_t adapter_adjust_mapped_memory(struct wined3d_adapter *adapter, ssize_t size);
 UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount);
 
-enum wined3d_projection_type
-{
-    WINED3D_PROJECTION_NONE    = 0,
-    WINED3D_PROJECTION_COUNT3  = 1,
-    WINED3D_PROJECTION_COUNT4  = 2
-};
-
-/*****************************************************************************
- * Fixed function pipeline replacements
- */
 #define ARG_UNUSED          0xff
 struct texture_stage_op
 {
@@ -2661,8 +2651,8 @@ struct texture_stage_op
     struct color_fixup_desc color_fixup;
     unsigned                tex_type : 3;
     unsigned                tmp_dst : 1;
-    unsigned                projected : 2;
-    unsigned                padding : 10;
+    unsigned                projected : 1;
+    unsigned                padding : 11;
 };
 
 struct ffp_frag_settings

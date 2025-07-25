@@ -740,25 +740,10 @@ static bool ffp_hlsl_generate_pixel_shader(const struct ffp_frag_settings *setti
     for (i = 0; i < WINED3D_MAX_FFP_TEXTURES && settings->op[i].cop != WINED3D_TOP_DISABLE; ++i)
     {
         const char *texture_function, *coord_mask;
-        bool proj;
+        bool proj = settings->op[i].projected;
 
         if (!(tex_map & (1u << i)))
             continue;
-
-        if (settings->op[i].projected == WINED3D_PROJECTION_NONE)
-        {
-            proj = false;
-        }
-        else if (settings->op[i].projected == WINED3D_PROJECTION_COUNT4
-                || settings->op[i].projected == WINED3D_PROJECTION_COUNT3)
-        {
-            proj = true;
-        }
-        else
-        {
-            FIXME("Unexpected projection mode %d.\n", settings->op[i].projected);
-            proj = true;
-        }
 
         switch (settings->op[i].tex_type)
         {
@@ -798,18 +783,10 @@ static bool ffp_hlsl_generate_pixel_shader(const struct ffp_frag_settings *setti
             /* With projective textures, texbem only divides the static texture
              * coordinate, not the displacement, so multiply the displacement
              * with the dividing parameter before sampling. */
-            if (settings->op[i].projected != WINED3D_PROJECTION_NONE)
+            if (settings->op[i].projected)
             {
-                if (settings->op[i].projected == WINED3D_PROJECTION_COUNT4)
-                {
-                    shader_addline(buffer, "ret.xy = (ret.xy * texcoord[%u].w) + texcoord[%u].xy;\n", i, i);
-                    shader_addline(buffer, "ret.zw = texcoord[%u].ww;\n", i);
-                }
-                else
-                {
-                    shader_addline(buffer, "ret.xy = (ret.xy * texcoord[%u].z) + texcoord[%u].xy;\n", i, i);
-                    shader_addline(buffer, "ret.zw = texcoord[%u].zz;\n", i);
-                }
+                shader_addline(buffer, "ret.xy = (ret.xy * texcoord[%u].w) + texcoord[%u].xy;\n", i, i);
+                shader_addline(buffer, "ret.zw = texcoord[%u].ww;\n", i);
             }
             else
             {
@@ -824,11 +801,6 @@ static bool ffp_hlsl_generate_pixel_shader(const struct ffp_frag_settings *setti
                 shader_addline(buffer, "tex%u *= saturate(tex%u.z * c.bumpenv_lscale[%u][%u] + c.bumpenv_loffset[%u][%u]);\n",
                         i, i - 1, (i - 1) / 4, (i - 1) % 4, (i - 1) / 4, (i - 1) % 4);
             }
-        }
-        else if (settings->op[i].projected == WINED3D_PROJECTION_COUNT3)
-        {
-            shader_addline(buffer, "    tex%u = %s%s(ps_sampler%u, texcoord[%u].xyzz);\n",
-                    i, texture_function, proj ? "proj" : "", i, i);
         }
         else
         {
