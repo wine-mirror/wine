@@ -1306,6 +1306,7 @@ cards_nvidia_binary[] =
     {"RTX 4070",                    CARD_NVIDIA_GEFORCE_RTX4070},
     {"RTX 4060 Ti 16GB",            CARD_NVIDIA_GEFORCE_RTX4060TI16G},
     {"RTX 4060 Ti 8GB",             CARD_NVIDIA_GEFORCE_RTX4060TI8G},
+    {"RTX 4060M",                   CARD_NVIDIA_GEFORCE_RTX4060M},
     {"RTX 4060",                    CARD_NVIDIA_GEFORCE_RTX4060},
     {"Tesla T4",                    CARD_NVIDIA_TESLA_T4},
     {"Ampere A10",                  CARD_NVIDIA_AMPERE_A10},
