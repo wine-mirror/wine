@@ -1946,7 +1946,7 @@ static HRESULT copypixels_to_128bppRGBAFloat(struct FormatConverter *This, const
         }
 
         free(srcdata);
-        return S_OK;
+        return hr;
     }
     case format_32bppBGRA:
     {
