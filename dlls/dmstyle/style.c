@@ -442,7 +442,8 @@ static HRESULT parse_pref_list(struct style *This, IStream *stream, struct chunk
         switch (MAKE_IDTYPE(chunk.id, chunk.type))
         {
         case DMUS_FOURCC_PARTREF_CHUNK:
-            hr = stream_chunk_get_data(stream, &chunk, &part_ref->header, sizeof(part_ref->header));
+            hr = stream_chunk_get_data_alt(stream, &chunk, &part_ref->header, sizeof(part_ref->header),
+                    offsetof(DMUS_IO_PARTREF, wPad));
             break;
 
         case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_UNFO_LIST):
@@ -482,7 +483,8 @@ static HRESULT parse_part_list(struct style *This, IStream *stream, struct chunk
         switch (MAKE_IDTYPE(chunk.id, chunk.type))
         {
         case DMUS_FOURCC_PART_CHUNK:
-            hr = stream_chunk_get_data(stream, &chunk, &part->header, sizeof(part->header));
+            hr = stream_chunk_get_data_alt(stream, &chunk, &part->header, sizeof(part->header),
+                    offsetof(DMUS_IO_STYLEPART, bPad[1]));
             break;
 
         case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_UNFO_LIST):
@@ -552,7 +554,8 @@ static HRESULT parse_pttn_list(struct style *This, IStream *stream, struct chunk
             break;
 
         case DMUS_FOURCC_PATTERN_CHUNK:
-            hr = stream_chunk_get_data(stream, &chunk, &pattern->pattern, sizeof(pattern->pattern));
+            hr = stream_chunk_get_data_alt(stream, &chunk, &pattern->pattern, sizeof(pattern->pattern),
+                    offsetof(DMUS_IO_PATTERN, bDestGrooveBottom));
             break;
 
         case DMUS_FOURCC_RHYTHM_CHUNK:
