@@ -477,13 +477,18 @@ attr_list_t *check_module_attrs( const char *name, attr_list_t *attrs )
 attr_list_t *check_runtimeclass_attrs( const char *name, attr_list_t *attrs )
 {
     const attr_t *attr;
+    bool found_version = false;
     if (!attrs) return NULL;
     LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry )
     {
         if (!allowed_attr[attr->type].on_runtimeclass)
             error_at( &attr->where, "inapplicable attribute %s for runtimeclass %s\n",
                       allowed_attr[attr->type].display_name, name );
+        if (attr->type == ATTR_CONTRACT || attr->type == ATTR_VERSION)
+            found_version = true;
     }
+    if (!found_version)
+        error_at( NULL, "runtimeclass %s requires contract or version attribute\n", name );
     return attrs;
 }
 
