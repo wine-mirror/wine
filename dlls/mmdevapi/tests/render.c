@@ -537,20 +537,13 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
                 pwfx2 = (WAVEFORMATEX*)0xDEADF00D;
                 hr = IAudioClient_IsFormatSupported(ac, mode, &fmt, &pwfx2);
                 hrs = hr;
-                /* Only shared mode suggests something ... GetMixFormat! */
-                ok(hr == S_OK || (mode == AUDCLNT_SHAREMODE_SHARED
-                   ? hr == S_FALSE || (hr == AUDCLNT_E_UNSUPPORTED_FORMAT && fmt.nChannels > 2)
-                   : (hr == AUDCLNT_E_UNSUPPORTED_FORMAT || hr == hexcl)),
-                   "IsFormatSupported(%d, %c%lux%2ux%u) returns %08lx\n", mode,
-                   format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
                 if (hr == S_OK)
                     trace("IsSupported(%s, %c%lux%2ux%u)\n",
                           mode == AUDCLNT_SHAREMODE_SHARED ? "shared " : "exclus.",
                           format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels);
 
                 /* In shared mode you can only change bit width, not sampling rate or channel count. */
-                if (mode == AUDCLNT_SHAREMODE_SHARED)
-                {
+                if (mode == AUDCLNT_SHAREMODE_SHARED) {
                     BOOL compatible = fmt.nSamplesPerSec == pwfx->nSamplesPerSec && fmt.nChannels == pwfx->nChannels;
                     HRESULT expected = compatible ? S_OK : S_FALSE;
                     if (fmt.nChannels > 2)
@@ -558,8 +551,13 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
                     todo_wine_if(hr != expected)
                     ok(hr == expected, "IsFormatSupported(shared, %c%lux%2ux%u) returns %08lx, expected %08lx\n",
                             format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr, expected);
+                } else {
+                    ok(hr == S_OK || hr == AUDCLNT_E_UNSUPPORTED_FORMAT || hr == hexcl,
+                            "IsFormatSupported(exclusive, %c%lux%2ux%u) returns %08lx\n",
+                            format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
                 }
 
+                /* Only shared mode suggests something ... GetMixFormat! */
                 ok((hr == S_FALSE)^(pwfx2 == NULL), "hr %lx<->suggest %p\n", hr, pwfx2);
                 if (pwfx2) {
                     ok(pwfx2->wFormatTag     == pwfx->wFormatTag &&
