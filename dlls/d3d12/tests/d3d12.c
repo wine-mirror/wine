@@ -23,7 +23,10 @@
 #include "d3d12.h"
 #include "d3d12sdklayers.h"
 #include "dxgi1_6.h"
+#include "dxcore.h"
 #include "wine/test.h"
+
+static HRESULT (WINAPI *pDXCoreCreateAdapterFactory)(REFIID riid, void **out);
 
 static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
 {
@@ -848,15 +851,20 @@ static void test_interfaces(void)
 
 static void test_create_device(void)
 {
+    IDXCoreAdapterFactory *dxcore_factory;
+    IDXCoreAdapterList *dxcore_list;
+    IDXCoreAdapter *dxcore_adapter;
     DXGI_ADAPTER_DESC adapter_desc;
     IDXGISwapChain3 *swapchain;
     ID3D12CommandQueue *queue;
     LUID adapter_luid, luid;
     IDXGIFactory4 *factory;
     IDXGIAdapter *adapter;
+    HMODULE dxcore_handle;
     ID3D12Device *device;
     IDXGIOutput *output;
     ULONG refcount;
+    uint32_t count;
     HWND window;
     HRESULT hr;
     RECT rect;
@@ -872,6 +880,7 @@ static void test_create_device(void)
 
     hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
     hr = IDXGIFactory4_EnumAdapters(factory, 0, &adapter);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGIFactory4_Release(factory);
@@ -927,6 +936,49 @@ static void test_create_device(void)
 
     refcount = ID3D12Device_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
+
+    /* Creating a device using DXCore adapter instance. */
+    dxcore_handle = LoadLibraryA("dxcore.dll");
+    if (!dxcore_handle)
+    {
+        win_skip("Could not load dxcore.dll\n");
+        return;
+    }
+
+    pDXCoreCreateAdapterFactory = (void *)GetProcAddress(dxcore_handle, "DXCoreCreateAdapterFactory");
+
+    hr = pDXCoreCreateAdapterFactory(&IID_IDXCoreAdapterFactory, (void **)&dxcore_factory);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IDXCoreAdapterFactory_CreateAdapterList(dxcore_factory, 1, &DXCORE_ADAPTER_ATTRIBUTE_D3D12_GRAPHICS,
+            &IID_IDXCoreAdapterList, (void **)&dxcore_list);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    count = IDXCoreAdapterList_GetAdapterCount(dxcore_list);
+    if (!count)
+    {
+        skip("DXCore was unable to enumerate adapters.\n");
+        IDXCoreAdapterList_Release(dxcore_list);
+        IDXCoreAdapterFactory_Release(dxcore_factory);
+        return;
+    }
+
+    hr = IDXCoreAdapterList_GetAdapter(dxcore_list, 0, &IID_IDXCoreAdapter, (void **)&dxcore_adapter);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    IDXCoreAdapterList_Release(dxcore_list);
+
+    hr = D3D12CreateDevice((IUnknown *)dxcore_adapter, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, (void **)&device);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        refcount = ID3D12Device_Release(device);
+        ok(!refcount, "Device has %lu references left.\n", refcount);
+    }
+
+    IDXCoreAdapter_Release(dxcore_adapter);
+
+    IDXCoreAdapterFactory_Release(dxcore_factory);
 }
 
 static void test_draw(void)
