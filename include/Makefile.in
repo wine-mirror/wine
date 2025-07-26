@@ -866,6 +866,7 @@ SOURCES = \
 	windows.applicationmodel.idl \
 	windows.data.json.idl \
 	windows.data.xml.dom.idl \
+	windows.devices.bluetooth.advertisement.idl \
 	windows.devices.bluetooth.genericattributeprofile.idl \
 	windows.devices.bluetooth.idl \
 	windows.devices.bluetooth.rfcomm.idl \

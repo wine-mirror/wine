@@ -41,6 +41,7 @@ namespace Windows.Devices.Bluetooth {
     typedef enum BluetoothMinorClass BluetoothMinorClass;
     typedef enum BluetoothServiceCapabilities BluetoothServiceCapabilities;
     typedef enum BluetoothError BluetoothError;
+    typedef enum BluetoothAddressType BluetoothAddressType;
 
     interface IBluetoothAdapter;
     interface IBluetoothAdapter2;
@@ -65,12 +66,14 @@ namespace Windows.Devices.Bluetooth {
     interface IBluetoothLEDevice6;
     interface IBluetoothLEDeviceStatics;
     interface IBluetoothLEDeviceStatics2;
+    interface IBluetoothSignalStrengthFilter;
 
     runtimeclass BluetoothAdapter;
     runtimeclass BluetoothClassOfDevice;
     runtimeclass BluetoothDevice;
     runtimeclass BluetoothDeviceId;
     runtimeclass BluetoothLEDevice;
+    runtimeclass BluetoothSignalStrengthFilter;
 
     namespace Rfcomm {
         runtimeclass RfcommDeviceService;
@@ -243,6 +246,17 @@ namespace Windows.Devices.Bluetooth {
         ConsentRequired = 8,
         [contract(Windows.Foundation.UniversalApiContract, 4.0)]
         TransportNotSupported = 9,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    enum BluetoothAddressType
+    {
+        Public = 0,
+        Random = 1,
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)]
+        Unspecified = 2,
     };
 
     [
@@ -472,5 +486,33 @@ namespace Windows.Devices.Bluetooth {
         [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Devices.Bluetooth.IBluetoothLEDevice5;
         [contract(Windows.Foundation.UniversalApiContract, 13.0)] interface Windows.Devices.Bluetooth.IBluetoothLEDevice6;
         interface Windows.Foundation.IClosable;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Bluetooth.BluetoothSignalStrengthFilter),
+        uuid(df7b7391-6bb5-4cfe-90b1-5d7324edcf7f)
+    ]
+    interface IBluetoothSignalStrengthFilter : IInspectable
+    {
+        [propget] HRESULT InRangeThresholdInDBm([out, retval] Windows.Foundation.IReference<INT16> **value);
+        [propput] HRESULT InRangeThresholdInDBm([in] Windows.Foundation.IReference<INT16> *value);
+        [propget] HRESULT OutOfRangeThresholdInDBm([out, retval] Windows.Foundation.IReference<INT16> **value);
+        [propput] HRESULT OutOfRangeThresholdInDBm([in] Windows.Foundation.IReference<INT16> *value);
+        [propget] HRESULT OutOfRangeTimeout([out, retval] Windows.Foundation.IReference<Windows.Foundation.TimeSpan> **value);
+        [propput] HRESULT OutOfRangeTimeout([in] Windows.Foundation.IReference<Windows.Foundation.TimeSpan> *value);
+        [propget] HRESULT SamplingInterval([out, retval] Windows.Foundation.IReference<Windows.Foundation.TimeSpan> **value);
+        [propput] HRESULT SamplingInterval([in] Windows.Foundation.IReference<Windows.Foundation.TimeSpan> *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        activatable(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass BluetoothSignalStrengthFilter
+    {
+        [default] interface Windows.Devices.Bluetooth.IBluetoothSignalStrengthFilter;
     }
 }
