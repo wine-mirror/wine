@@ -208,6 +208,7 @@ namespace Windows.Devices.Geolocation {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile)
     ]
     runtimeclass StatusChangedEventArgs

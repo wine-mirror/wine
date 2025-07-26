@@ -192,6 +192,7 @@ namespace Windows.Gaming.Input.Custom {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
         threading(both)
     ]

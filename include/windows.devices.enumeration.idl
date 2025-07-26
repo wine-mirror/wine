@@ -324,6 +324,7 @@ namespace Windows.Devices.Enumeration {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
     ]
     runtimeclass DeviceInformationUpdate
@@ -333,6 +334,7 @@ namespace Windows.Devices.Enumeration {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
     ]
     runtimeclass DeviceThumbnail
@@ -346,6 +348,7 @@ namespace Windows.Devices.Enumeration {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
     ]
     runtimeclass DeviceWatcher
@@ -355,6 +358,7 @@ namespace Windows.Devices.Enumeration {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile)
     ]
     runtimeclass EnclosureLocation
