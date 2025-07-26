@@ -41,10 +41,10 @@
 #include "audiopolicy.h"
 #include "endpointvolume.h"
 
-static const unsigned int sampling_rates[] = { 8000, 11025, 12000, 16000, 22050, 44100, 48000, 96000 };
-static const unsigned int channel_counts[] = { 1, 2 };
+static const unsigned int sampling_rates[] = { 8000, 16000, 22050, 44100, 48000, 96000 };
+static const unsigned int channel_counts[] = { 1, 2, 8 };
 static const unsigned int sample_formats[][2] = { {WAVE_FORMAT_PCM, 8}, {WAVE_FORMAT_PCM, 16},
-                                                  {WAVE_FORMAT_IEEE_FLOAT, 32} };
+                                                  {WAVE_FORMAT_PCM, 32}, {WAVE_FORMAT_IEEE_FLOAT, 32} };
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
@@ -539,9 +539,7 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
                 hrs = hr;
                 /* Only shared mode suggests something ... GetMixFormat! */
                 ok(hr == S_OK || (mode == AUDCLNT_SHAREMODE_SHARED
-                   ? hr == S_FALSE || broken(hr == AUDCLNT_E_UNSUPPORTED_FORMAT &&
-                       /* 5:1 card exception when asked for 1 channel at mixer rate */
-                       pwfx->nChannels > 2 && fmt.nSamplesPerSec == pwfx->nSamplesPerSec)
+                   ? hr == S_FALSE || (hr == AUDCLNT_E_UNSUPPORTED_FORMAT && fmt.nChannels > 2)
                    : (hr == AUDCLNT_E_UNSUPPORTED_FORMAT || hr == hexcl)),
                    "IsFormatSupported(%d, %c%lux%2ux%u) returns %08lx\n", mode,
                    format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
@@ -555,8 +553,11 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
                 {
                     BOOL compatible = fmt.nSamplesPerSec == pwfx->nSamplesPerSec && fmt.nChannels == pwfx->nChannels;
                     HRESULT expected = compatible ? S_OK : S_FALSE;
+                    if (fmt.nChannels > 2)
+                        expected = AUDCLNT_E_UNSUPPORTED_FORMAT;
                     todo_wine_if(hr != expected)
-                    ok(hr == expected, "Got %lx expected %lx\n", hr, expected);
+                    ok(hr == expected, "IsFormatSupported(shared, %c%lux%2ux%u) returns %08lx, expected %08lx\n",
+                            format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr, expected);
                 }
 
                 ok((hr == S_FALSE)^(pwfx2 == NULL), "hr %lx<->suggest %p\n", hr, pwfx2);
@@ -576,7 +577,8 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
                           mode == AUDCLNT_SHAREMODE_SHARED ? "shared " : "exclus.",
                           format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
                 if (mode == AUDCLNT_SHAREMODE_SHARED)
-                    ok(hrs == S_OK ? hr == S_OK : hr == AUDCLNT_E_UNSUPPORTED_FORMAT,
+                    ok(hrs == S_OK ? hr == S_OK : hr == AUDCLNT_E_UNSUPPORTED_FORMAT
+                        || (hr == E_INVALIDARG && fmt.nChannels > 2),
                        "Initialize(shared,  %c%lux%2ux%u) returns %08lx\n",
                        format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
                 else if (hrs == AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED)
@@ -588,11 +590,13 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
                     /* On testbot 48000x16x1 claims support, but does not Initialize.
                      * Some cards Initialize 44100|48000x16x1 yet claim no support;
                      * F. Gouget's w7 bots do that for 12000|96000x8|16x1|2 */
+                    todo_wine_if(fmt.nChannels > 2 && hr == AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED)
                     ok(hrs == S_OK ? hr == S_OK || broken(hr == AUDCLNT_E_ENDPOINT_CREATE_FAILED)
                        : hr == AUDCLNT_E_ENDPOINT_CREATE_FAILED || hr == AUDCLNT_E_UNSUPPORTED_FORMAT ||
                          broken(hr == S_OK &&
                              ((fmt.nChannels == 1 && fmt.wBitsPerSample == 16) ||
-                              (fmt.nSamplesPerSec == 12000 || fmt.nSamplesPerSec == 96000))),
+                              (fmt.nSamplesPerSec == 12000 || fmt.nSamplesPerSec == 96000)))
+                              || (hr == E_INVALIDARG && fmt.nChannels > 2),
                        "Initialize(exclus., %c%lux%2ux%u) returns %08lx\n",
                        format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
 
