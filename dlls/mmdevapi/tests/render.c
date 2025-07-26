@@ -574,12 +574,14 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
                     trace("Initialize (%s, %c%lux%2ux%u) returns %08lx unlike IsFormatSupported\n",
                           mode == AUDCLNT_SHAREMODE_SHARED ? "shared " : "exclus.",
                           format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
-                if (mode == AUDCLNT_SHAREMODE_SHARED)
-                    ok(hrs == S_OK ? hr == S_OK : hr == AUDCLNT_E_UNSUPPORTED_FORMAT
-                        || (hr == E_INVALIDARG && fmt.nChannels > 2),
-                       "Initialize(shared,  %c%lux%2ux%u) returns %08lx\n",
+                if (mode == AUDCLNT_SHAREMODE_SHARED) {
+                    HRESULT expected = hrs == S_OK ? S_OK : AUDCLNT_E_UNSUPPORTED_FORMAT;
+                    if (fmt.nChannels > 2)
+                        expected = E_INVALIDARG;
+                    todo_wine_if(fmt.nChannels > 2)
+                    ok(hr == expected, "Initialize(shared,  %c%lux%2ux%u) returns %08lx\n",
                        format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
-                else if (hrs == AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED)
+                } else if (hrs == AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED)
                     /* Unsupported format implies "create failed" and shadows "not allowed" */
                     ok(hrs == hexcl && (hr == AUDCLNT_E_ENDPOINT_CREATE_FAILED || hr == hrs),
                        "Initialize(noexcl., %c%lux%2ux%u) returns %08lx(%08lx)\n",
