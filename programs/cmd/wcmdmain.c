@@ -1779,15 +1779,17 @@ static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL ca
     if (ext && (!wcsicmp(ext, L".bat") || !wcsicmp(ext, L".cmd")))
     {
         RETURN_CODE return_code;
-        BOOL oldinteractive = interactive;
+        BOOL prev_interactive = interactive;
+        BOOL prev_echo_mode = echo_mode;
 
         interactive = FALSE;
         return_code = WCMD_call_batch(file, full_cmdline);
-        interactive = oldinteractive;
+        if ((interactive = prev_interactive))
+            echo_mode = prev_echo_mode;
         if (context && !called)
         {
             TRACE("Batch completed, but was not 'called' so skipping outer batch too\n");
-            context->skip_rest = TRUE;
+            context->file_position.QuadPart = WCMD_FILE_POSITION_EOF;
         }
         return return_code;
     }
@@ -2351,10 +2353,8 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = WCMD_run_builtin_command(sc.cmd_index, cmd);
     else
     {
-        BOOL prev_echo_mode = echo_mode;
         if (*sc.path)
             return_code = run_full_path(sc.path, cmd, FALSE);
-        echo_mode = prev_echo_mode;
     }
     free(cmd);
     return return_code;
@@ -2368,11 +2368,8 @@ RETURN_CODE WCMD_call_command(WCHAR *command)
   return_code = search_command(command, &sc, FALSE);
   if (return_code == NO_ERROR)
   {
-      unsigned old_echo_mode = echo_mode;
       if (!*sc.path) return NO_ERROR;
-      return_code = run_full_path(sc.path, command, TRUE);
-      if (interactive) echo_mode = old_echo_mode;
-      return return_code;
+      return run_full_path(sc.path, command, TRUE);
   }
 
   if (sc.cmd_index <= WCMD_EXIT)
@@ -4581,16 +4578,18 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
 
   if (opt_k)
   {
+      RETURN_CODE return_code = NO_ERROR;
       rpl_status = WCMD_ReadAndParseLine(cmd, &toExecute);
       /* Parse the command string, without reading any more input */
       if (rpl_status == RPL_SUCCESS && toExecute)
       {
-          node_execute(toExecute);
+          return_code = node_execute(toExecute);
           node_dispose_tree(toExecute);
       }
       else if (rpl_status == RPL_SYNTAXERROR)
           errorlevel = RETURN_CODE_SYNTAX_ERROR;
       free(cmd);
+      if (return_code == RETURN_CODE_ABORTED) return errorlevel;
   }
 
 /*

@@ -1749,7 +1749,7 @@ RETURN_CODE WCMD_goto(void)
         /* Handle special :EOF label */
         if (lstrcmpiW(L":eof", param1) == 0)
         {
-            context->skip_rest = TRUE;
+            context->file_position.QuadPart = WCMD_FILE_POSITION_EOF;
             return RETURN_CODE_ABORTED;
         }
         h = CreateFileW(context->batch_file->path_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
@@ -1770,7 +1770,7 @@ RETURN_CODE WCMD_goto(void)
         CloseHandle(h);
         if (ret) return RETURN_CODE_ABORTED;
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOTARGET));
-        context->skip_rest = TRUE;
+        context->file_position.QuadPart = WCMD_FILE_POSITION_EOF;
     }
     return ERROR_INVALID_FUNCTION;
 }
@@ -3754,7 +3754,7 @@ RETURN_CODE WCMD_exit(void)
     if (context && lstrcmpiW(quals, L"/B") == 0)
     {
         errorlevel = rc;
-        context -> skip_rest = TRUE;
+        context->file_position.QuadPart = WCMD_FILE_POSITION_EOF;
         return RETURN_CODE_ABORTED;
     }
     ExitProcess(rc);

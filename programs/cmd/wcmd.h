@@ -279,9 +279,10 @@ struct batch_context
     LARGE_INTEGER         file_position;
     int                   shift_count[10];  /* Offset in terms of shifts for %0 - %9 */
     struct batch_context *prev_context;     /* Pointer to the previous context block */
-    BOOL                  skip_rest;        /* Skip the rest of the batch program and exit */
     struct batch_file    *batch_file;       /* Reference to the file itself */
 };
+
+#define WCMD_FILE_POSITION_EOF (~(DWORD64)0)
 
 /* Data structure to handle building lists during recursive calls */
 

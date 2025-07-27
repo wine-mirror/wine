@@ -27,16 +27,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 static RETURN_CODE WCMD_batch_main_loop(void)
 {
     RETURN_CODE return_code = NO_ERROR;
-    /* Work through the file line by line until an exit is called. */
-    while (!context->skip_rest)
-    {
-        CMD_NODE *node;
+    enum read_parse_line rpl;
+    CMD_NODE *node;
 
-        switch (WCMD_ReadAndParseLine(NULL, &node))
+    /* Work through the file line by line until an exit is called. */
+    while ((rpl = WCMD_ReadAndParseLine(NULL, &node)) != RPL_EOF)
+    {
+        switch (rpl)
         {
-        case RPL_EOF:
-            context->skip_rest = TRUE;
-            break;
+        case RPL_EOF: break; /* never reached; get rid of warning */
         case RPL_SUCCESS:
             if (node)
             {
@@ -95,7 +94,6 @@ static struct batch_context *push_batch_context(WCHAR *command, struct batch_fil
     context->command = command;
     memset(context->shift_count, 0x00, sizeof(context->shift_count));
     context->prev_context = prev;
-    context->skip_rest = FALSE;
     context->batch_file = batch_file;
     batch_file->ref_count++;
 
