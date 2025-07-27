@@ -8,7 +8,7 @@
 @ stub CryptXmlGetAlgorithmInfo
 @ stdcall CryptXmlGetDocContext(ptr ptr)
 @ stub CryptXmlGetReference
-@ stub CryptXmlGetSignature
+@ stdcall CryptXmlGetSignature(ptr ptr)
 @ stub CryptXmlGetStatus
 @ stub CryptXmlGetTransforms
 @ stub CryptXmlImportPublicKey

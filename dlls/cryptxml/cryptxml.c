@@ -159,3 +159,20 @@ HRESULT WINAPI CryptXmlGetDocContext( HCRYPTXML handle, const CRYPT_XML_DOC_CTXT
     *ctx = &doc->ctx;
     return S_OK;
 }
+
+HRESULT WINAPI CryptXmlGetSignature( HCRYPTXML handle, const CRYPT_XML_SIGNATURE **ret_sig )
+{
+    struct signature *sig = (struct signature *)handle;
+
+    TRACE( "handle %p, ret_sig %p\n", handle, ret_sig );
+
+    if (!sig || !ret_sig) return E_INVALIDARG;
+    if (sig->hdr.magic != SIG_MAGIC)
+    {
+        *ret_sig = NULL;
+        return CRYPT_XML_E_HANDLE;
+    }
+
+    *ret_sig = &sig->sig;
+    return S_OK;
+}

@@ -318,6 +318,7 @@ typedef struct _CRYPT_XML_STATUS
 
 HRESULT WINAPI CryptXmlClose(HCRYPTXML handle);
 HRESULT WINAPI CryptXmlGetDocContext(HCRYPTXML handle, const CRYPT_XML_DOC_CTXT **context);
+HRESULT WINAPI CryptXmlGetSignature(HCRYPTXML handle, const CRYPT_XML_SIGNATURE **signature);
 HRESULT WINAPI CryptXmlOpenToDecode(const CRYPT_XML_TRANSFORM_CHAIN_CONFIG *config, DWORD flags, const CRYPT_XML_PROPERTY *property,
                                     ULONG property_count, const CRYPT_XML_BLOB *blob, HCRYPTXML *handle);
 
