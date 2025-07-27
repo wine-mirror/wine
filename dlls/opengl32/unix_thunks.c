@@ -12593,7 +12593,7 @@ static NTSTATUS ext_glIsStateNV( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_glIsSync( void *args )
+static NTSTATUS ext_glIsSync( void *args )
 {
     struct glIsSync_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
@@ -52859,6 +52859,21 @@ static NTSTATUS wow64_ext_glIsStateNV( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     params->ret = funcs->p_glIsStateNV( params->state );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glIsSync( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        PTR32 sync;
+        GLboolean ret;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wow64_glIsSync( teb, ULongToPtr(params->sync) );
+    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 

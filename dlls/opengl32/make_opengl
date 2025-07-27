@@ -220,7 +220,6 @@ my %manual_wow64_thunks =
      "glGetNamedBufferPointervEXT" => 1,
      "glGetString" => 1,
      "glGetStringi" => 1,
-     "glIsSync" => 1,
      "glMapBuffer" => 1,
      "glMapBufferARB" => 1,
      "glMapBufferRange" => 1,
@@ -249,6 +248,7 @@ my %manual_wow64_wrappers =
      "glDeleteSync" => 1,
      "glFenceSync" => 1,
      "glGetSynciv" => 1,
+     "glIsSync" => 1,
     );
 my %pointer_array_count =
     (
