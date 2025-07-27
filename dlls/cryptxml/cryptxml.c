@@ -177,6 +177,18 @@ HRESULT WINAPI CryptXmlGetSignature( HCRYPTXML handle, const CRYPT_XML_SIGNATURE
     return S_OK;
 }
 
+HRESULT WINAPI CryptXmlGetStatus( HCRYPTXML handle, CRYPT_XML_STATUS *status )
+{
+    struct object *obj = (struct object *)handle;
+
+    TRACE( "handle %p, status %p\n", handle, status );
+
+    if (!obj || !status) return E_INVALIDARG;
+
+    *status = obj->status;
+    return S_OK;
+}
+
 HRESULT WINAPI CryptXmlVerifySignature( HCRYPTXML handle, BCRYPT_KEY_HANDLE key, DWORD flags )
 {
     struct signature *sig = (struct signature *)handle;
