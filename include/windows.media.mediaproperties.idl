@@ -138,8 +138,8 @@ namespace Windows.Media.MediaProperties {
         activatable(Windows.Foundation.UniversalApiContract, 1.0),
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
-        static(Windows.Media.MediaProperties.IAudioEncodingPropertiesStatics, Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.Media.MediaProperties.IAudioEncodingPropertiesStatics2, Windows.Foundation.UniversalApiContract, 4.0),
+        /* static(Windows.Media.MediaProperties.IAudioEncodingPropertiesStatics, Windows.Foundation.UniversalApiContract, 1.0), */
+        /* static(Windows.Media.MediaProperties.IAudioEncodingPropertiesStatics2, Windows.Foundation.UniversalApiContract, 4.0), */
         threading(both)
     ]
     runtimeclass AudioEncodingProperties
@@ -168,9 +168,9 @@ namespace Windows.Media.MediaProperties {
         activatable(Windows.Foundation.UniversalApiContract, 1.0),
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
-        static(Windows.Media.MediaProperties.IMediaEncodingProfileStatics, Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.Media.MediaProperties.IMediaEncodingProfileStatics2, Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.Media.MediaProperties.IMediaEncodingProfileStatics3, Windows.Foundation.UniversalApiContract, 4.0),
+        /* static(Windows.Media.MediaProperties.IMediaEncodingProfileStatics, Windows.Foundation.UniversalApiContract, 1.0), */
+        /* static(Windows.Media.MediaProperties.IMediaEncodingProfileStatics2, Windows.Foundation.UniversalApiContract, 1.0), */
+        /* static(Windows.Media.MediaProperties.IMediaEncodingProfileStatics3, Windows.Foundation.UniversalApiContract, 4.0), */
         threading(mta)
     ]
     runtimeclass MediaEncodingProfile
@@ -194,8 +194,8 @@ namespace Windows.Media.MediaProperties {
         activatable(Windows.Foundation.UniversalApiContract, 1.0),
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
-        static(Windows.Media.MediaProperties.IVideoEncodingPropertiesStatics, Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.Media.MediaProperties.IVideoEncodingPropertiesStatics2, Windows.Foundation.UniversalApiContract, 4.0),
+        /* static(Windows.Media.MediaProperties.IVideoEncodingPropertiesStatics, Windows.Foundation.UniversalApiContract, 1.0), */
+        /* static(Windows.Media.MediaProperties.IVideoEncodingPropertiesStatics2, Windows.Foundation.UniversalApiContract, 4.0), */
         threading(both)
     ]
     runtimeclass VideoEncodingProperties

@@ -384,7 +384,7 @@ namespace Windows.Devices.Bluetooth {
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
         static(Windows.Devices.Bluetooth.IBluetoothDeviceStatics, Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.Devices.Bluetooth.IBluetoothDeviceStatics2, Windows.Foundation.UniversalApiContract, 2.0),
+        /* static(Windows.Devices.Bluetooth.IBluetoothDeviceStatics2, Windows.Foundation.UniversalApiContract, 2.0), */
         threading(both)
     ]
     runtimeclass BluetoothDevice
@@ -474,7 +474,7 @@ namespace Windows.Devices.Bluetooth {
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
         static(Windows.Devices.Bluetooth.IBluetoothLEDeviceStatics, Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.Devices.Bluetooth.IBluetoothLEDeviceStatics2, Windows.Foundation.UniversalApiContract, 2.0),
+        /* static(Windows.Devices.Bluetooth.IBluetoothLEDeviceStatics2, Windows.Foundation.UniversalApiContract, 2.0), */
         threading(both)
     ]
     runtimeclass BluetoothLEDevice

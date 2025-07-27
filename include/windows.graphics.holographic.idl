@@ -153,7 +153,7 @@ namespace Windows.Graphics.Holographic {
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
         marshaling_behavior(agile),
-        static(Windows.Graphics.Holographic.IHolographicSpaceStatics, Windows.Foundation.UniversalApiContract, 2.0),
+        /* static(Windows.Graphics.Holographic.IHolographicSpaceStatics, Windows.Foundation.UniversalApiContract, 2.0), */
         static(Windows.Graphics.Holographic.IHolographicSpaceStatics2, Windows.Foundation.UniversalApiContract, 4.0),
         static(Windows.Graphics.Holographic.IHolographicSpaceStatics3, Windows.Foundation.UniversalApiContract, 5.0),
         threading(both)

@@ -60,11 +60,11 @@ namespace Windows.Storage {
     interface IKnownFoldersStatics4;
     interface ISetVersionDeferral;
     interface ISetVersionRequest;
+    interface IStorageFileStatics;
+    interface IStorageFileStatics2;
     interface IStorageFolder;
     interface IStorageFolderStatics;
     interface IStorageFolderStatics2;
-    interface IStorageFileStatics;
-    interface IStorageFileStatics2;
     interface IStorageItem;
 
     runtimeclass ApplicationData;
@@ -663,8 +663,8 @@ namespace Windows.Storage {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.Storage.IStorageFileStatics, Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.Storage.IStorageFileStatics2, Windows.Foundation.UniversalApiContract, 10.0)
+        /* static(Windows.Storage.IStorageFileStatics, Windows.Foundation.UniversalApiContract, 1.0), */
+        /* static(Windows.Storage.IStorageFileStatics2, Windows.Foundation.UniversalApiContract, 10.0) */
     ]
     runtimeclass StorageFile
     {
@@ -682,8 +682,8 @@ namespace Windows.Storage {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.Storage.IStorageFolderStatics, Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.Storage.IStorageFolderStatics2, Windows.Foundation.UniversalApiContract, 10.0)
+        /* static(Windows.Storage.IStorageFolderStatics, Windows.Foundation.UniversalApiContract, 1.0), */
+        /* static(Windows.Storage.IStorageFolderStatics2, Windows.Foundation.UniversalApiContract, 10.0) */
     ]
     runtimeclass StorageFolder
     {

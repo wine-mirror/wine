@@ -753,8 +753,8 @@ namespace Windows.Devices.Bluetooth.GenericAttributeProfile {
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
-        static(Windows.Devices.Bluetooth.GenericAttributeProfile.IGattPresentationFormatStatics, Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.Devices.Bluetooth.GenericAttributeProfile.IGattPresentationFormatStatics2, Windows.Foundation.UniversalApiContract, 4.0),
+        /* static(Windows.Devices.Bluetooth.GenericAttributeProfile.IGattPresentationFormatStatics, Windows.Foundation.UniversalApiContract, 1.0), */
+        /* static(Windows.Devices.Bluetooth.GenericAttributeProfile.IGattPresentationFormatStatics2, Windows.Foundation.UniversalApiContract, 4.0), */
         threading(both)
     ]
     runtimeclass GattPresentationFormat

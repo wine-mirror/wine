@@ -88,7 +88,7 @@ namespace Windows.Devices.Bluetooth.Rfcomm {
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
         static(Windows.Devices.Bluetooth.Rfcomm.IRfcommDeviceServiceStatics, Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.Devices.Bluetooth.Rfcomm.IRfcommDeviceServiceStatics2, Windows.Foundation.UniversalApiContract, 3.0),
+        /* static(Windows.Devices.Bluetooth.Rfcomm.IRfcommDeviceServiceStatics2, Windows.Foundation.UniversalApiContract, 3.0), */
         threading(both)
     ]
     runtimeclass RfcommDeviceService
@@ -102,7 +102,7 @@ namespace Windows.Devices.Bluetooth.Rfcomm {
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
-        static(Windows.Devices.Bluetooth.Rfcomm.IRfcommServiceIdStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        /* static(Windows.Devices.Bluetooth.Rfcomm.IRfcommServiceIdStatics, Windows.Foundation.UniversalApiContract, 1.0), */
         threading(both)
     ]
     runtimeclass RfcommServiceId

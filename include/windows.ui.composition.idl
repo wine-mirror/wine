@@ -994,7 +994,7 @@ namespace Windows.UI.Composition {
         composable(Windows.UI.Composition.ICompositionEasingFunctionFactory, public, Windows.Foundation.UniversalApiContract, 2.0),
         contract(Windows.Foundation.UniversalApiContract, 2.0),
         marshaling_behavior(agile),
-        static(Windows.UI.Composition.ICompositionEasingFunctionStatics, Windows.Foundation.UniversalApiContract, 12.0),
+        /* static(Windows.UI.Composition.ICompositionEasingFunctionStatics, Windows.Foundation.UniversalApiContract, 12.0), */
         threading(both)
     ]
     runtimeclass CompositionEasingFunction : Windows.UI.Composition.CompositionObject
@@ -1039,7 +1039,7 @@ namespace Windows.UI.Composition {
         composable(Windows.UI.Composition.ICompositionObjectFactory, public, Windows.Foundation.UniversalApiContract, 2.0),
         contract(Windows.Foundation.UniversalApiContract, 2.0),
         marshaling_behavior(agile),
-        static(Windows.UI.Composition.ICompositionObjectStatics, Windows.Foundation.UniversalApiContract, 7.0),
+        /* static(Windows.UI.Composition.ICompositionObjectStatics, Windows.Foundation.UniversalApiContract, 7.0), */
         threading(both)
     ]
     runtimeclass CompositionObject
@@ -1100,7 +1100,7 @@ namespace Windows.UI.Composition {
         activatable(Windows.Foundation.UniversalApiContract, 2.0),
         contract(Windows.Foundation.UniversalApiContract, 2.0),
         marshaling_behavior(agile),
-        static(Windows.UI.Composition.ICompositorStatics, Windows.Foundation.UniversalApiContract, 6.0),
+        /* static(Windows.UI.Composition.ICompositorStatics, Windows.Foundation.UniversalApiContract, 6.0), */
         threading(both)
     ]
     runtimeclass Compositor

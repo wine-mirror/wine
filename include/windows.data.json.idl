@@ -132,7 +132,7 @@ namespace Windows.Data.Json {
         activatable(Windows.Foundation.UniversalApiContract, 1.0),
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
-        static(Windows.Data.Json.IJsonArrayStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        /* static(Windows.Data.Json.IJsonArrayStatics, Windows.Foundation.UniversalApiContract, 1.0), */
         threading(both)
     ]
     runtimeclass JsonArray
@@ -148,7 +148,7 @@ namespace Windows.Data.Json {
         activatable(Windows.Foundation.UniversalApiContract, 1.0),
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
-        static(Windows.Data.Json.IJsonObjectStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        /* static(Windows.Data.Json.IJsonObjectStatics, Windows.Foundation.UniversalApiContract, 1.0), */
         threading(both)
     ]
     runtimeclass JsonObject
@@ -165,7 +165,7 @@ namespace Windows.Data.Json {
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
         static(Windows.Data.Json.IJsonValueStatics, Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.Data.Json.IJsonValueStatics2, Windows.Foundation.UniversalApiContract, 1.0),
+        /* static(Windows.Data.Json.IJsonValueStatics2, Windows.Foundation.UniversalApiContract, 1.0), */
         threading(both)
     ]
     runtimeclass JsonValue

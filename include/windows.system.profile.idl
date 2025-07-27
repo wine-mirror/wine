@@ -113,7 +113,7 @@ namespace Windows.System.Profile {
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
         static(Windows.System.Profile.IAnalyticsInfoStatics, Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.System.Profile.IAnalyticsInfoStatics2, Windows.Foundation.UniversalApiContract, 6.0),
+        /* static(Windows.System.Profile.IAnalyticsInfoStatics2, Windows.Foundation.UniversalApiContract, 6.0), */
         threading(both)
     ]
     runtimeclass AnalyticsInfo
