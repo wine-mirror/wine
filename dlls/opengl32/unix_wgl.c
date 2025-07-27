@@ -1446,25 +1446,6 @@ NTSTATUS return_wow64_string( const void *str, PTR32 *wow64_str )
     return STATUS_BUFFER_TOO_SMALL;
 }
 
-NTSTATUS wow64_ext_wglGetPbufferDCARB( void *args )
-{
-    struct
-    {
-        PTR32 teb;
-        PTR32 hPbuffer;
-        PTR32 ret;
-    } *params32 = args;
-    struct wglGetPbufferDCARB_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .hPbuffer = (HPBUFFERARB)ULongToPtr(params32->hPbuffer),
-    };
-    NTSTATUS status;
-    if ((status = ext_wglGetPbufferDCARB( &params ))) return status;
-    params32->ret = (UINT_PTR)params.ret;
-    return STATUS_SUCCESS;
-}
-
 NTSTATUS wow64_wgl_wglGetProcAddress( void *args )
 {
     struct

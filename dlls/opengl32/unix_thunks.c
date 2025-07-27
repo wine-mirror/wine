@@ -26714,7 +26714,7 @@ static NTSTATUS ext_wglGetExtensionsStringEXT( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_wglGetPbufferDCARB( void *args )
+static NTSTATUS ext_wglGetPbufferDCARB( void *args )
 {
     struct wglGetPbufferDCARB_params *params = args;
     pthread_mutex_lock( &wgl_lock );
@@ -78696,6 +78696,21 @@ static NTSTATUS wow64_ext_wglGetExtensionsStringEXT( void *args )
     const struct opengl_funcs *funcs = teb->glTable;
     ret = funcs->p_wglGetExtensionsStringEXT();
     return return_wow64_string( ret, &params->ret );
+}
+
+static NTSTATUS wow64_ext_wglGetPbufferDCARB( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        PTR32 hPbuffer;
+        PTR32 ret;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = (UINT_PTR)wrap_wglGetPbufferDCARB( teb, ULongToPtr(params->hPbuffer) );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_ext_wglGetPixelFormatAttribfvARB( void *args )
