@@ -73,11 +73,14 @@ namespace Windows.Storage.Streams {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IRandomAccessStreamReference *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IRandomAccessStreamWithContentType *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.RandomAccessStreamReference *>;
+        interface Windows.Foundation.AsyncOperationProgressHandler<UINT64,UINT64>;
+        interface Windows.Foundation.AsyncOperationWithProgressCompletedHandler<UINT64,UINT64>;
         interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IMapView<HSTRING, Windows.Storage.Streams.RandomAccessStreamReference *> *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStream *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStreamReference *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStreamWithContentType *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.RandomAccessStreamReference *>;
+        interface Windows.Foundation.IAsyncOperationWithProgress<UINT64,UINT64>;
 #endif
     }
 
@@ -196,6 +199,18 @@ namespace Windows.Storage.Streams {
     }
 
 #ifndef _WINTYPES
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.Streams.RandomAccessStream),
+        uuid(524cedcf-6e29-4ce5-9573-6b753db66c3a)
+    ]
+    interface IRandomAccessStreamStatics : IInspectable
+    {
+        [overload("CopyAsync")] HRESULT CopyAsync([in] Windows.Storage.Streams.IInputStream *source, [in] Windows.Storage.Streams.IOutputStream *dest, [out, retval] Windows.Foundation.IAsyncOperationWithProgress<UINT64, UINT64> **operation);
+        [overload("CopyAsync")] HRESULT CopySizeAsync([in] Windows.Storage.Streams.IInputStream *source, [in] Windows.Storage.Streams.IOutputStream *dest, [in] UINT64 bytesToCopy, [out, retval] Windows.Foundation.IAsyncOperationWithProgress<UINT64, UINT64> **operation);
+        HRESULT CopyAndCloseAsync([in] Windows.Storage.Streams.IInputStream *source, [in] Windows.Storage.Streams.IOutputStream *dest, [out, retval] Windows.Foundation.IAsyncOperationWithProgress<UINT64, UINT64> **operation);
+    }
+
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         uuid(905a0fe1-bc53-11df-8c49-001e4fc686da),
