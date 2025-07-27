@@ -6,7 +6,7 @@
 @ stub CryptXmlEnumAlgorithmInfo
 @ stub CryptXmlFindAlgorithmInfo
 @ stub CryptXmlGetAlgorithmInfo
-@ stub CryptXmlGetDocContext
+@ stdcall CryptXmlGetDocContext(ptr ptr)
 @ stub CryptXmlGetReference
 @ stub CryptXmlGetSignature
 @ stub CryptXmlGetStatus

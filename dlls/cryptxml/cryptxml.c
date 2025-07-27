@@ -142,3 +142,20 @@ HRESULT WINAPI CryptXmlClose( HCRYPTXML handle )
     free( obj );
     return S_OK;
 }
+
+HRESULT WINAPI CryptXmlGetDocContext( HCRYPTXML handle, const CRYPT_XML_DOC_CTXT **ctx )
+{
+    struct xmldoc *doc = (struct xmldoc *)handle;
+
+    TRACE( "handle %p, ctx %p\n", handle, ctx );
+
+    if (!doc || !ctx) return E_INVALIDARG;
+    if (doc->hdr.magic != DOC_MAGIC)
+    {
+        *ctx = NULL;
+        return CRYPT_XML_E_HANDLE;
+    }
+
+    *ctx = &doc->ctx;
+    return S_OK;
+}
