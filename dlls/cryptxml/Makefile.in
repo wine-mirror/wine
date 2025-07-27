@@ -1,1 +1,4 @@
 MODULE = cryptxml.dll
+
+SOURCES = \
+	cryptxml.c

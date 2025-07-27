@@ -12,7 +12,7 @@
 @ stub CryptXmlGetStatus
 @ stub CryptXmlGetTransforms
 @ stub CryptXmlImportPublicKey
-@ stub CryptXmlOpenToDecode
+@ stdcall CryptXmlOpenToDecode(ptr long ptr long ptr ptr)
 @ stub CryptXmlOpenToEncode
 @ stub CryptXmlSetHMACSecret
 @ stub CryptXmlSign
