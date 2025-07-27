@@ -1446,25 +1446,6 @@ NTSTATUS return_wow64_string( const void *str, PTR32 *wow64_str )
     return STATUS_BUFFER_TOO_SMALL;
 }
 
-NTSTATUS wow64_wgl_wglGetProcAddress( void *args )
-{
-    struct
-    {
-        PTR32 teb;
-        PTR32 lpszProc;
-        PTR32 ret;
-    } *params32 = args;
-    struct wglGetProcAddress_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .lpszProc = ULongToPtr(params32->lpszProc),
-    };
-    NTSTATUS status;
-    if ((status = wgl_wglGetProcAddress( &params ))) return status;
-    params32->ret = (UINT_PTR)params.ret;
-    return STATUS_SUCCESS;
-}
-
 GLenum wow64_glClientWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64 timeout )
 {
     const struct opengl_funcs *funcs = teb->glTable;

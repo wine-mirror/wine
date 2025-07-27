@@ -61,7 +61,7 @@ static NTSTATUS wgl_wglGetPixelFormat( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS wgl_wglGetProcAddress( void *args )
+static NTSTATUS wgl_wglGetProcAddress( void *args )
 {
     struct wglGetProcAddress_params *params = args;
     params->ret = wrap_wglGetProcAddress( params->teb, params->lpszProc );
@@ -29959,6 +29959,19 @@ static NTSTATUS wow64_wgl_wglGetPixelFormat( void *args )
     const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->hdc) );
     if (!funcs || !funcs->p_wglGetPixelFormat) return STATUS_NOT_IMPLEMENTED;
     params->ret = funcs->p_wglGetPixelFormat( ULongToPtr(params->hdc) );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_wgl_wglGetProcAddress( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        PTR32 lpszProc;
+        PTR32 ret;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    params->ret = (UINT_PTR)wrap_wglGetProcAddress( teb, ULongToPtr(params->lpszProc) );
     return STATUS_SUCCESS;
 }
 

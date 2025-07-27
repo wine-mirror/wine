@@ -54,6 +54,3 @@ extern GLboolean wow64_glUnmapNamedBuffer( TEB *teb, GLuint buffer, PTR32 *clien
 extern GLboolean wow64_glUnmapNamedBufferEXT( TEB *teb, GLuint buffer, PTR32 *client_ptr );
 extern void wow64_glWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64 timeout );
 #endif
-
-extern NTSTATUS wgl_wglGetProcAddress( void *args );
-extern NTSTATUS wow64_wgl_wglGetProcAddress( void *args );

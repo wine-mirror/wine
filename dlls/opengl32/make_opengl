@@ -212,11 +212,6 @@ my %manual_unix_thunks =
      "wglGetProcAddress" => 1,
      "wglSwapBuffers" => 1,
     );
-my %manual_wow64_thunks =
-    (
-     "wglGetProcAddress" => 1,
-     "wglGetProcAddress" => 1,
-    );
 my %manual_wow64_wrappers =
     (
      "glClientWaitSync" => 0,
@@ -374,8 +369,7 @@ sub generate_unix_thunk($$$$)
         $need_lock = 1 if $arg->textContent() =~ /HGLRC|HPBUFFERARB/;
     }
 
-    $ret .= "static " unless !$is_wow64 && defined $manual_wow64_thunks{$name};
-    $ret .= "NTSTATUS ";
+    $ret .= "static NTSTATUS ";
     $ret .= "wow64_" if $is_wow64;
     $ret .= "$prefix\_$name( void *args )\n";
     $ret .= "{\n";
@@ -1350,31 +1344,7 @@ foreach (sort keys %ext_functions)
     print OUT generate_wrapper_declaration($_, $ext_functions{$_}, 1);
 }
 
-print OUT "#endif\n\n";
-
-foreach (sort keys %wgl_functions)
-{
-    next if defined $manual_win_functions{$_};
-    next unless defined $manual_wow64_thunks{$_};
-    print OUT "extern NTSTATUS wgl_$_( void *args );\n";
-    print OUT "extern NTSTATUS wow64_wgl_$_( void *args );\n";
-}
-foreach (sort keys %norm_functions)
-{
-    next if defined $manual_win_functions{$_};
-    next unless defined $manual_wow64_thunks{$_};
-    print OUT "extern NTSTATUS gl_$_( void *args );\n";
-    print OUT "extern NTSTATUS wow64_gl_$_( void *args );\n";
-}
-foreach (sort keys %ext_functions)
-{
-    next if $_ =~ /^egl/; # unix-side only API
-    next if defined $manual_win_functions{$_};
-    next unless defined $manual_wow64_thunks{$_};
-    print OUT "extern NTSTATUS ext_$_( void *args );\n";
-    print OUT "extern NTSTATUS wow64_ext_$_( void *args );\n";
-}
-
+print OUT "#endif\n";
 close OUT;
 
 #
@@ -1455,20 +1425,17 @@ print OUT "extern NTSTATUS wow64_get_pixel_formats( void *args );\n\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if defined $manual_wow64_thunks{$_};
     print OUT generate_unix_thunk($_, $wgl_functions{$_}, 1, "wgl");
 }
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if defined $manual_wow64_thunks{$_};
     print OUT generate_unix_thunk($_, $norm_functions{$_}, 1, "gl");
 }
 foreach (sort keys %ext_functions)
 {
     next if $_ =~ /^egl/; # unix-side only API
     next if defined $manual_win_functions{$_};
-    next if defined $manual_wow64_thunks{$_};
     print OUT generate_unix_thunk($_, $ext_functions{$_}, 1, "ext");
 }
 
