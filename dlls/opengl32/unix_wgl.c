@@ -1745,36 +1745,12 @@ GLboolean wow64_glIsSync( TEB *teb, GLsync sync )
     return funcs->p_glIsSync( handle->u.sync );
 }
 
-NTSTATUS wow64_ext_glWaitSync( void *args )
+void wow64_glWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64 timeout )
 {
+    const struct opengl_funcs *funcs = teb->glTable;
     struct wgl_handle *handle;
-    struct
-    {
-        PTR32 teb;
-        PTR32 sync;
-        GLbitfield flags;
-        GLuint64 timeout;
-    } *params32 = args;
-    NTSTATUS status;
 
-    pthread_mutex_lock( &wgl_lock );
-
-    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync) )))
-        status = STATUS_INVALID_HANDLE;
-    else
-    {
-        struct glWaitSync_params params =
-        {
-            .teb = get_teb64(params32->teb),
-            .sync = handle->u.sync,
-            .flags = params32->flags,
-            .timeout = params32->timeout,
-        };
-        status = ext_glWaitSync( &params );
-    }
-
-    pthread_mutex_unlock( &wgl_lock );
-    return status;
+    if ((handle = get_handle_ptr( sync ))) funcs->p_glWaitSync( handle->u.sync, flags, timeout );
 }
 
 static GLint get_buffer_param( TEB *teb, GLenum target, GLenum param )

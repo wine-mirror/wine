@@ -36,6 +36,7 @@ extern void wow64_glDeleteSync( TEB *teb , GLsync sync );
 extern GLsync wow64_glFenceSync( TEB *teb , GLenum condition, GLbitfield flags );
 extern void wow64_glGetSynciv( TEB *teb , GLsync sync, GLenum pname, GLsizei count, GLsizei *length, GLint *values );
 extern GLboolean wow64_glIsSync( TEB *teb , GLsync sync );
+extern void wow64_glWaitSync( TEB *teb , GLsync sync, GLbitfield flags, GLuint64 timeout );
 #endif
 
 extern NTSTATUS wgl_wglGetProcAddress( void *args );
@@ -76,8 +77,6 @@ extern NTSTATUS ext_glUnmapNamedBuffer( void *args );
 extern NTSTATUS wow64_ext_glUnmapNamedBuffer( void *args );
 extern NTSTATUS ext_glUnmapNamedBufferEXT( void *args );
 extern NTSTATUS wow64_ext_glUnmapNamedBufferEXT( void *args );
-extern NTSTATUS ext_glWaitSync( void *args );
-extern NTSTATUS wow64_ext_glWaitSync( void *args );
 extern NTSTATUS ext_wglCreatePbufferARB( void *args );
 extern NTSTATUS wow64_ext_wglCreatePbufferARB( void *args );
 extern NTSTATUS ext_wglGetExtensionsStringARB( void *args );
