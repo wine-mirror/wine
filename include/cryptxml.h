@@ -321,6 +321,7 @@ HRESULT WINAPI CryptXmlGetDocContext(HCRYPTXML handle, const CRYPT_XML_DOC_CTXT 
 HRESULT WINAPI CryptXmlGetSignature(HCRYPTXML handle, const CRYPT_XML_SIGNATURE **signature);
 HRESULT WINAPI CryptXmlOpenToDecode(const CRYPT_XML_TRANSFORM_CHAIN_CONFIG *config, DWORD flags, const CRYPT_XML_PROPERTY *property,
                                     ULONG property_count, const CRYPT_XML_BLOB *blob, HCRYPTXML *handle);
+HRESULT WINAPI CryptXmlVerifySignature(HCRYPTXML handle, BCRYPT_KEY_HANDLE key, DWORD flags);
 
 #ifdef __cplusplus
 }

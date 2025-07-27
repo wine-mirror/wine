@@ -176,3 +176,17 @@ HRESULT WINAPI CryptXmlGetSignature( HCRYPTXML handle, const CRYPT_XML_SIGNATURE
     *ret_sig = &sig->sig;
     return S_OK;
 }
+
+HRESULT WINAPI CryptXmlVerifySignature( HCRYPTXML handle, BCRYPT_KEY_HANDLE key, DWORD flags )
+{
+    struct signature *sig = (struct signature *)handle;
+
+    FIXME( "handle %p, key %p, flags %lx stub!\n", handle, key, flags );
+
+    if (!sig) return E_INVALIDARG;
+    if (sig->hdr.magic != SIG_MAGIC) return CRYPT_XML_E_HANDLE;
+
+    sig->hdr.status.dwErrorStatus = sig->doc->hdr.status.dwErrorStatus = CRYPT_XML_STATUS_NO_ERROR;
+    sig->hdr.status.dwInfoStatus  = sig->doc->hdr.status.dwInfoStatus  = CRYPT_XML_STATUS_SIGNATURE_VALID;
+    return S_OK;
+}

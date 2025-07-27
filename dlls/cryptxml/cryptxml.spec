@@ -16,4 +16,4 @@
 @ stub CryptXmlOpenToEncode
 @ stub CryptXmlSetHMACSecret
 @ stub CryptXmlSign
-@ stub CryptXmlVerifySignature
+@ stdcall CryptXmlVerifySignature(ptr ptr long)
