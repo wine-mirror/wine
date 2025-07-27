@@ -10799,7 +10799,7 @@ static NTSTATUS ext_glGetSubroutineUniformLocation( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_glGetSynciv( void *args )
+static NTSTATUS ext_glGetSynciv( void *args )
 {
     struct glGetSynciv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
@@ -49485,6 +49485,24 @@ static NTSTATUS wow64_ext_glGetSubroutineUniformLocation( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     params->ret = funcs->p_glGetSubroutineUniformLocation( params->program, params->shadertype, ULongToPtr(params->name) );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glGetSynciv( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        PTR32 sync;
+        GLenum pname;
+        GLsizei count;
+        PTR32 length;
+        PTR32 values;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    pthread_mutex_lock( &wgl_lock );
+    wow64_glGetSynciv( teb, ULongToPtr(params->sync), params->pname, params->count, ULongToPtr(params->length), ULongToPtr(params->values) );
+    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 

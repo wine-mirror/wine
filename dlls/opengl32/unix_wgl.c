@@ -1728,40 +1728,12 @@ GLsync wow64_glFenceSync( TEB *teb, GLenum condition, GLbitfield flags )
     return handle;
 }
 
-NTSTATUS wow64_ext_glGetSynciv( void *args )
+void wow64_glGetSynciv( TEB *teb, GLsync sync, GLenum pname, GLsizei count, GLsizei *length, GLint *values )
 {
+    const struct opengl_funcs *funcs = teb->glTable;
     struct wgl_handle *handle;
-    struct
-    {
-        PTR32 teb;
-        PTR32 sync;
-        GLenum pname;
-        GLsizei count;
-        PTR32 length;
-        PTR32 values;
-    } *params32 = args;
-    NTSTATUS status;
 
-    pthread_mutex_lock( &wgl_lock );
-
-    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync) )))
-        status = STATUS_INVALID_HANDLE;
-    else
-    {
-        struct glGetSynciv_params params =
-        {
-            .teb = get_teb64(params32->teb),
-            .sync = handle->u.sync,
-            .pname = params32->pname,
-            .count = params32->count,
-            .length = ULongToPtr(params32->length),
-            .values = ULongToPtr(params32->values),
-        };
-        status = ext_glGetSynciv( &params );
-    }
-
-    pthread_mutex_unlock( &wgl_lock );
-    return status;
+    if ((handle = get_handle_ptr( sync ))) funcs->p_glGetSynciv( handle->u.sync, pname, count, length, values );
 }
 
 NTSTATUS wow64_ext_glIsSync( void *args )
