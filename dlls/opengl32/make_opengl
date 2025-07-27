@@ -214,7 +214,6 @@ my %manual_unix_thunks =
     );
 my %manual_wow64_thunks =
     (
-     "glPathGlyphIndexRangeNV" => 1,
      "wglCreatePbufferARB" => 1,
      "wglGetPbufferDCARB" => 1,
      "wglGetProcAddress" => 1,
@@ -434,7 +433,7 @@ sub generate_unix_thunk($$$$)
             else
             {
                 $call_args .= " ULongToPtr(params->$pname),";
-                $need_manual_thunk = 1 if $arg->textContent() =~ /(\*.*\*|\[|(sizei|int)ptr.*\*)/;
+                $need_manual_thunk = 1 if $arg->textContent() =~ /(\*.*\*|(sizei|int)ptr.*\*)/;
                 $need_lock = 1 if $arg->textContent() =~ /GLsync/;
             }
         }

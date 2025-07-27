@@ -57,8 +57,6 @@ extern void wow64_glWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64 
 
 extern NTSTATUS wgl_wglGetProcAddress( void *args );
 extern NTSTATUS wow64_wgl_wglGetProcAddress( void *args );
-extern NTSTATUS ext_glPathGlyphIndexRangeNV( void *args );
-extern NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args );
 extern NTSTATUS ext_wglCreatePbufferARB( void *args );
 extern NTSTATUS wow64_ext_wglCreatePbufferARB( void *args );
 extern NTSTATUS ext_wglGetPbufferDCARB( void *args );

@@ -16183,7 +16183,7 @@ static NTSTATUS ext_glPathGlyphIndexArrayNV( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_glPathGlyphIndexRangeNV( void *args )
+static NTSTATUS ext_glPathGlyphIndexRangeNV( void *args )
 {
     struct glPathGlyphIndexRangeNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
@@ -59507,6 +59507,26 @@ static NTSTATUS wow64_ext_glPathGlyphIndexArrayNV( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     params->ret = funcs->p_glPathGlyphIndexArrayNV( params->firstPathName, params->fontTarget, ULongToPtr(params->fontName), params->fontStyle, params->firstGlyphIndex, params->numGlyphs, params->pathParameterTemplate, params->emScale );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum fontTarget;
+        PTR32 fontName;
+        GLbitfield fontStyle;
+        GLuint pathParameterTemplate;
+        GLfloat emScale;
+        PTR32 baseAndCount;
+        GLenum ret;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    params->ret = funcs->p_glPathGlyphIndexRangeNV( params->fontTarget, ULongToPtr(params->fontName), params->fontStyle, params->pathParameterTemplate, params->emScale, ULongToPtr(params->baseAndCount) );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }

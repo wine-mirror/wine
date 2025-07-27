@@ -1511,35 +1511,6 @@ NTSTATUS wow64_wgl_wglGetProcAddress( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args )
-{
-    struct
-    {
-        PTR32 teb;
-        GLenum fontTarget;
-        PTR32 fontName;
-        GLbitfield fontStyle;
-        GLuint pathParameterTemplate;
-        GLfloat emScale;
-        PTR32 baseAndCount;
-        GLenum ret;
-    } *params32 = args;
-    struct glPathGlyphIndexRangeNV_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .fontTarget = params32->fontTarget,
-        .fontName = ULongToPtr(params32->fontName),
-        .fontStyle = params32->fontStyle,
-        .pathParameterTemplate = params32->pathParameterTemplate,
-        .emScale = params32->emScale,
-        .baseAndCount = ULongToPtr(params32->baseAndCount),
-    };
-    NTSTATUS status;
-    if ((status = ext_glPathGlyphIndexRangeNV( &params ))) return status;
-    params32->ret = params.ret;
-    return status;
-}
-
 GLenum wow64_glClientWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64 timeout )
 {
     const struct opengl_funcs *funcs = teb->glTable;
