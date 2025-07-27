@@ -295,6 +295,7 @@ typedef struct _CRYPT_XML_STATUS
 #define CRYPT_XML_STATUS_SIGNATURE_VALID               0x00010000
 #define CRYPT_XML_STATUS_OPENED_TO_ENCODE              0x80000000
 
+HRESULT WINAPI CryptXmlClose(HCRYPTXML handle);
 HRESULT WINAPI CryptXmlOpenToDecode(const CRYPT_XML_TRANSFORM_CHAIN_CONFIG *config, DWORD flags, const CRYPT_XML_PROPERTY *property,
                                     ULONG property_count, const CRYPT_XML_BLOB *blob, HCRYPTXML *handle);
 

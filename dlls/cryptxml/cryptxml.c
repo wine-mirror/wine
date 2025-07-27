@@ -112,3 +112,33 @@ HRESULT WINAPI CryptXmlOpenToDecode( const CRYPT_XML_TRANSFORM_CHAIN_CONFIG *con
     *handle = (HCRYPTXML)doc;
     return S_OK;
 }
+
+HRESULT WINAPI CryptXmlClose( HCRYPTXML handle )
+{
+    struct object *obj = (struct object *)handle;
+
+    TRACE( "handle %p\n", handle );
+
+    if (!obj) return E_INVALIDARG;
+
+    switch (obj->magic)
+    {
+    case DOC_MAGIC:
+    {
+        struct xmldoc *doc = (struct xmldoc *)obj;
+        const CRYPT_XML_SIGNATURE *sig = doc->ctx.rgpSignature[0];
+        struct signature *sig_obj = CONTAINING_RECORD( sig, struct signature, sig );
+
+        free( sig_obj );
+        break;
+    }
+    case SIG_MAGIC:
+        return S_FALSE;
+    default:
+        FIXME( "unhandled object magic %lx\n", obj->magic );
+        return E_NOTIMPL;
+    }
+
+    free( obj );
+    return S_OK;
+}

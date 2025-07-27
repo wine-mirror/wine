@@ -1,5 +1,5 @@
 @ stub CryptXmlAddObject
-@ stub CryptXmlClose
+@ stdcall CryptXmlClose(ptr)
 @ stub CryptXmlCreateReference
 @ stub CryptXmlDigestReference
 @ stub CryptXmlEncode
