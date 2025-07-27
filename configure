@@ -1032,6 +1032,7 @@ enable_cryptnet
 enable_cryptowinrt
 enable_cryptsp
 enable_cryptui
+enable_cryptxml
 enable_ctapi32
 enable_ctl3d32
 enable_d2d1
@@ -22243,6 +22244,7 @@ wine_fn_config_makefile dlls/cryptowinrt/tests enable_tests
 wine_fn_config_makefile dlls/cryptsp enable_cryptsp
 wine_fn_config_makefile dlls/cryptui enable_cryptui
 wine_fn_config_makefile dlls/cryptui/tests enable_tests
+wine_fn_config_makefile dlls/cryptxml enable_cryptxml
 wine_fn_config_makefile dlls/ctapi32 enable_ctapi32
 wine_fn_config_makefile dlls/ctl3d.dll16 enable_win16
 wine_fn_config_makefile dlls/ctl3d32 enable_ctl3d32
