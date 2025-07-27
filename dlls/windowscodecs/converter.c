@@ -1828,6 +1828,7 @@ static HRESULT copypixels_to_16bppBGRA5551(struct FormatConverter *This, const W
                 }
             }
             free(srcdata);
+            return res;
         }
         return S_OK;
     default:
