@@ -1165,15 +1165,11 @@ static void filedialog_change_filetype(IFileDialog *pfd, HWND dlg_hwnd)
     const WCHAR filetype1_broken[] = {'f','n','a','m','e','1',' ', '(','*','.','t','x','t',')',0};
 
     cb_filetype = find_window(dlg_hwnd, NULL, filetype1);
-    ok(cb_filetype != NULL || broken(cb_filetype == NULL), "Could not find combobox on first attempt\n");
-
     if(!cb_filetype)
     {
-        /* Not sure when this happens. Some specific version?
-         * Seen on 32-bit English Vista */
-        trace("Didn't find combobox on first attempt, trying broken string..\n");
+        /* Verified on Windows 10: the string "(*.txt)" is required to find the combobox. */
         cb_filetype = find_window(dlg_hwnd, NULL, filetype1_broken);
-        ok(broken(cb_filetype != NULL), "Failed to find combobox on second attempt\n");
+        ok(cb_filetype != NULL, "Failed to find combobox.\n");
         if(!cb_filetype)
             return;
     }
