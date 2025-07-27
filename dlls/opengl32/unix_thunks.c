@@ -26669,7 +26669,7 @@ static NTSTATUS ext_wglCreateContextAttribsARB( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_wglCreatePbufferARB( void *args )
+static NTSTATUS ext_wglCreatePbufferARB( void *args )
 {
     struct wglCreatePbufferARB_params *params = args;
     const struct opengl_funcs *funcs = get_dc_funcs( params->hDC );
@@ -78616,6 +78616,27 @@ static NTSTATUS wow64_ext_wglCreateContextAttribsARB( void *args )
     if (!funcs || !funcs->p_wglCreateContextAttribsARB) return STATUS_NOT_IMPLEMENTED;
     pthread_mutex_lock( &wgl_lock );
     params->ret = (UINT_PTR)wrap_wglCreateContextAttribsARB( teb, ULongToPtr(params->hDC), ULongToPtr(params->hShareContext), ULongToPtr(params->attribList) );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_wglCreatePbufferARB( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        PTR32 hDC;
+        int iPixelFormat;
+        int iWidth;
+        int iHeight;
+        PTR32 piAttribList;
+        PTR32 ret;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->hDC) );
+    if (!funcs || !funcs->p_wglCreatePbufferARB) return STATUS_NOT_IMPLEMENTED;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = (UINT_PTR)wrap_wglCreatePbufferARB( teb, ULongToPtr(params->hDC), params->iPixelFormat, params->iWidth, params->iHeight, ULongToPtr(params->piAttribList) );
     pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }

@@ -214,7 +214,6 @@ my %manual_unix_thunks =
     );
 my %manual_wow64_thunks =
     (
-     "wglCreatePbufferARB" => 1,
      "wglGetPbufferDCARB" => 1,
      "wglGetProcAddress" => 1,
      "wglGetProcAddress" => 1,

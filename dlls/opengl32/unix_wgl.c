@@ -1446,33 +1446,6 @@ NTSTATUS return_wow64_string( const void *str, PTR32 *wow64_str )
     return STATUS_BUFFER_TOO_SMALL;
 }
 
-NTSTATUS wow64_ext_wglCreatePbufferARB( void *args )
-{
-    struct
-    {
-        PTR32 teb;
-        PTR32 hDC;
-        GLint iPixelFormat;
-        GLint iWidth;
-        GLint iHeight;
-        PTR32 piAttribList;
-        PTR32 ret;
-    } *params32 = args;
-    struct wglCreatePbufferARB_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .hDC = ULongToPtr(params32->hDC),
-        .iPixelFormat = params32->iPixelFormat,
-        .iWidth = params32->iWidth,
-        .iHeight = params32->iHeight,
-        .piAttribList = ULongToPtr(params32->piAttribList),
-    };
-    NTSTATUS status;
-    if ((status = ext_wglCreatePbufferARB( &params ))) return status;
-    params32->ret = (UINT_PTR)params.ret;
-    return STATUS_SUCCESS;
-}
-
 NTSTATUS wow64_ext_wglGetPbufferDCARB( void *args )
 {
     struct
