@@ -1703,33 +1703,16 @@ GLenum wow64_glClientWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64
     return funcs->p_glClientWaitSync( handle->u.sync, flags, timeout );
 }
 
-NTSTATUS wow64_ext_glDeleteSync( void *args )
+void wow64_glDeleteSync( TEB *teb, GLsync sync )
 {
+    const struct opengl_funcs *funcs = teb->glTable;
     struct wgl_handle *handle;
-    struct
-    {
-        PTR32 teb;
-        PTR32 sync;
-    } *params32 = args;
-    NTSTATUS status;
 
-    pthread_mutex_lock( &wgl_lock );
-
-    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync) )))
-        status = STATUS_INVALID_HANDLE;
-    else
+    if ((handle = get_handle_ptr( sync )))
     {
-        struct glDeleteSync_params params =
-        {
-            .teb = get_teb64(params32->teb),
-            .sync = handle->u.sync,
-        };
-        status = ext_glDeleteSync( &params );
+        funcs->p_glDeleteSync( handle->u.sync );
         free_handle_ptr( handle );
     }
-
-    pthread_mutex_unlock( &wgl_lock );
-    return status;
 }
 
 GLsync wow64_glFenceSync( TEB *teb, GLenum condition, GLbitfield flags )

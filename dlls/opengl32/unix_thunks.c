@@ -6493,7 +6493,7 @@ static NTSTATUS ext_glDeleteStatesNV( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_glDeleteSync( void *args )
+static NTSTATUS ext_glDeleteSync( void *args )
 {
     struct glDeleteSync_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
@@ -41578,6 +41578,21 @@ static NTSTATUS wow64_ext_glDeleteStatesNV( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glDeleteStatesNV( params->n, ULongToPtr(params->states) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glDeleteSync( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        PTR32 sync;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    pthread_mutex_lock( &wgl_lock );
+    wow64_glDeleteSync( teb, ULongToPtr(params->sync) );
+    pthread_mutex_unlock( &wgl_lock );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
