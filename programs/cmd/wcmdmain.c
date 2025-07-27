@@ -1762,9 +1762,8 @@ static void init_msvcrt_io_block(STARTUPINFOW* st)
 }
 
 /* Attempt to open a file at a known path. */
-static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL called)
+static RETURN_CODE run_external_full_path(const WCHAR *file, WCHAR *full_cmdline)
 {
-    const WCHAR *ext = wcsrchr(file, '.');
     STARTUPINFOW si = {.cb = sizeof(si)};
     DWORD console, exit_code;
     WCHAR exe_path[MAX_PATH];
@@ -1774,27 +1773,6 @@ static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL ca
     BOOL ret;
 
     TRACE("%s\n", debugstr_w(file));
-
-    if (ext && (!wcsicmp(ext, L".bat") || !wcsicmp(ext, L".cmd")))
-    {
-        RETURN_CODE return_code;
-        BOOL prev_echo_mode = echo_mode;
-
-        return_code = WCMD_call_batch(file, full_cmdline);
-        if (return_code == RETURN_CODE_ABORTED)
-            return_code = errorlevel;
-        else if (return_code != NO_ERROR)
-            errorlevel = return_code;
-
-        if (!context)
-            echo_mode = prev_echo_mode;
-        if (context && !called)
-        {
-            TRACE("Batch completed, but was not 'called' so skipping outer batch too\n");
-            context->file_position.QuadPart = WCMD_FILE_POSITION_EOF;
-        }
-        return return_code;
-    }
 
     if ((INT_PTR)FindExecutableW(file, NULL, exe_path) < 32)
         console = 0;
@@ -1848,11 +1826,28 @@ static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL ca
     return errorlevel;
 }
 
+static RETURN_CODE run_command_file(const WCHAR *file, WCHAR *full_cmdline)
+{
+    RETURN_CODE return_code;
+    BOOL prev_echo_mode = echo_mode;
+
+    return_code = WCMD_call_batch(file, full_cmdline);
+    if (return_code == RETURN_CODE_ABORTED)
+        return_code = errorlevel;
+    else if (return_code != NO_ERROR)
+        errorlevel = return_code;
+
+    if (!context)
+        echo_mode = prev_echo_mode;
+    return return_code;
+}
+
 struct search_command
 {
     WCHAR path[MAX_PATH];
     BOOL has_path; /* if input has path part (ie cannot be a builtin command) */
     BOOL has_extension; /* if extension was given to input */
+    BOOL is_command_file; /* when has_path is set, tells whether its a command file, or an external executable */
     int cmd_index; /* potential index to builtin command */
 };
 
@@ -2087,7 +2082,12 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
         }
         /* if foo.bat was given but not found, try to match foo.bat.bat (or any valid ext) */
         if (!found) found = search_in_pathext(sc->path);
-        if (found) return NO_ERROR;
+        if (found)
+        {
+            const WCHAR *ext = wcsrchr(sc->path, '.');
+            sc->is_command_file = ext && (!wcsicmp(ext, L".bat") || !wcsicmp(ext, L".cmd"));
+            return NO_ERROR;
+        }
     }
     return RETURN_CODE_CANT_LAUNCH;
 }
@@ -2356,7 +2356,20 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
     else
     {
         if (*sc.path)
-            return_code = run_full_path(sc.path, cmd, FALSE);
+        {
+            if (sc.is_command_file)
+            {
+                return_code = run_command_file(sc.path, cmd);
+                if (context)
+                {
+                    TRACE("Batch completed, but was not 'called' so skipping outer batch too\n");
+                    context->file_position.QuadPart = WCMD_FILE_POSITION_EOF;
+                }
+            }
+            else
+                return_code = run_external_full_path(sc.path, cmd);
+        }
+
     }
     free(cmd);
     return return_code;
@@ -2371,7 +2384,11 @@ RETURN_CODE WCMD_call_command(WCHAR *command)
   if (return_code == NO_ERROR)
   {
       if (!*sc.path) return NO_ERROR;
-      return run_full_path(sc.path, command, TRUE);
+      if (sc.is_command_file)
+          return_code = run_command_file(sc.path, command);
+      else
+          return_code = run_external_full_path(sc.path, command);
+      return return_code;
   }
 
   if (sc.cmd_index <= WCMD_EXIT)
