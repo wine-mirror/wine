@@ -214,7 +214,6 @@ my %manual_unix_thunks =
     );
 my %manual_wow64_thunks =
     (
-     "glClientWaitSync" => 1,
      "glDeleteSync" => 1,
      "glFenceSync" => 1,
      "glGetBufferPointerv" => 1,
@@ -246,6 +245,10 @@ my %manual_wow64_thunks =
      "wglGetProcAddress" => 1,
      "wglQueryCurrentRendererStringWINE" => 1,
      "wglQueryRendererStringWINE" => 1,
+    );
+my %manual_wow64_wrappers =
+    (
+     "glClientWaitSync" => 1,
     );
 my %pointer_array_count =
     (
@@ -363,7 +366,8 @@ sub generate_unix_thunk($$$$)
 {
     my ($name, $func, $is_wow64, $prefix) = @_;
     my $func_ret = get_func_ret( $func, 0 );
-    my $need_wrap = needs_wrapper( $name, $func );
+    my $manual_wow64_wrapper = $is_wow64 && defined $manual_wow64_wrappers{$name};
+    my $need_wrap = $manual_wow64_wrapper || needs_wrapper( $name, $func );
     my $need_lock = $func_ret =~ /HGLRC|HPBUFFERARB/;
     my $teb = $is_wow64 ? "teb" : "params->teb";
     my $input_conv = "";
@@ -434,6 +438,7 @@ sub generate_unix_thunk($$$$)
             {
                 $call_args .= " ULongToPtr(params->$pname),";
                 $need_manual_thunk = 1 if $arg->textContent() =~ /(\*.*\*|\[|(sizei|int)ptr.*\*)/;
+                $need_lock = 1 if $arg->textContent() =~ /GLsync/;
             }
         }
         if (!is_void_func($func))
@@ -442,7 +447,7 @@ sub generate_unix_thunk($$$$)
             $ret .= "        $ptype ret;\n";
         }
         $ret .= "    } *params = args;\n";
-        if ($need_manual_thunk || $func->[0]->textContent() =~ /(GLsync|PROC|GLintptr|\*)/)
+        if (!$need_wrap && ($need_manual_thunk || $func->[0]->textContent() =~ /(GLsync|PROC|GLintptr|\*)/))
         {
             $ret .= "    FIXME( \"params %p stub!\\n\", params );\n";
             $ret .= "    return STATUS_NOT_IMPLEMENTED;\n";
@@ -488,7 +493,11 @@ sub generate_unix_thunk($$$$)
         $ret .= "(UINT_PTR)" if $is_wow64 && get_wow64_arg_type( $func->[0] ) =~ /PTR32/;
     }
     $call_args =~ s/,$/ /;
-    if ($need_wrap)
+    if ($manual_wow64_wrapper)
+    {
+        $ret .= "wow64_$name($call_args);\n";
+    }
+    elsif ($need_wrap)
     {
         $ret .= "wrap_$name($call_args);\n";
     }
@@ -522,12 +531,13 @@ sub generate_unix_thunk($$$$)
     return $ret;
 }
 
-sub generate_wrapper_declaration($$)
+sub generate_wrapper_declaration($$$)
 {
-    my ($name, $func) = @_;
+    my ($name, $func, $is_wow64) = @_;
     my $ret = "extern " . get_func_ret( $func, 0 );
     my $decl_args = get_func_args( $func, 0 );
-    $ret .= " wrap_$name( TEB *teb";
+    $ret .= $is_wow64 ? " wow64_" : " wrap_";
+    $ret .= "$name( TEB *teb";
     $ret .= " ,$decl_args" unless $decl_args eq "void";
     $ret .= ");\n";
     return $ret;
@@ -1284,21 +1294,40 @@ print OUT "/* Automatically generated from http://www.opengl.org/registry files;
 foreach (sort keys %wgl_functions)
 {
     next if !needs_wrapper( $_, $wgl_functions{$_} );
-    print OUT generate_wrapper_declaration($_, $wgl_functions{$_});
+    print OUT generate_wrapper_declaration($_, $wgl_functions{$_}, 0);
 }
 foreach (sort keys %norm_functions)
 {
     next if !needs_wrapper( $_, $norm_functions{$_} );
-    print OUT generate_wrapper_declaration($_, $norm_functions{$_});
+    print OUT generate_wrapper_declaration($_, $norm_functions{$_}, 0);
 }
 foreach (sort keys %ext_functions)
 {
     next if $_ =~ /^egl/; # unix-side only API
     next if !needs_wrapper( $_, $ext_functions{$_} );
-    print OUT generate_wrapper_declaration($_, $ext_functions{$_});
+    print OUT generate_wrapper_declaration($_, $ext_functions{$_}, 0);
 }
 
-print OUT "\n";
+print OUT "\n#ifdef _WIN64\n";
+
+foreach (sort keys %wgl_functions)
+{
+    next unless defined $manual_wow64_wrappers{$_};
+    print OUT generate_wrapper_declaration($_, $wgl_functions{$_}, 1);
+}
+foreach (sort keys %norm_functions)
+{
+    next unless defined $manual_wow64_wrappers{$_};
+    print OUT generate_wrapper_declaration($_, $norm_functions{$_}, 1);
+}
+foreach (sort keys %ext_functions)
+{
+    next if $_ =~ /^egl/; # unix-side only API
+    next unless defined $manual_wow64_wrappers{$_};
+    print OUT generate_wrapper_declaration($_, $ext_functions{$_}, 1);
+}
+
+print OUT "#endif\n\n";
 
 foreach (sort keys %wgl_functions)
 {

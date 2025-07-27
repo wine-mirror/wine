@@ -1694,38 +1694,13 @@ NTSTATUS wow64_ext_wglQueryRendererStringWINE( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS wow64_ext_glClientWaitSync( void *args )
+GLenum wow64_glClientWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64 timeout )
 {
+    const struct opengl_funcs *funcs = teb->glTable;
     struct wgl_handle *handle;
-    struct
-    {
-        PTR32 teb;
-        PTR32 sync;
-        GLbitfield flags;
-        GLuint64 timeout;
-        GLenum ret;
-    } *params32 = args;
-    NTSTATUS status;
 
-    pthread_mutex_lock( &wgl_lock );
-
-    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync) )))
-        status = STATUS_INVALID_HANDLE;
-    else
-    {
-        struct glClientWaitSync_params params =
-        {
-            .teb = get_teb64(params32->teb),
-            .sync = handle->u.sync,
-            .flags = params32->flags,
-            .timeout = params32->timeout,
-        };
-        status = ext_glClientWaitSync( &params );
-        params32->ret = params.ret;
-    }
-
-    pthread_mutex_unlock( &wgl_lock );
-    return status;
+    if (!(handle = get_handle_ptr( sync ))) return GL_INVALID_VALUE;
+    return funcs->p_glClientWaitSync( handle->u.sync, flags, timeout );
 }
 
 NTSTATUS wow64_ext_glDeleteSync( void *args )

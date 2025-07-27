@@ -4669,7 +4669,7 @@ static NTSTATUS ext_glClientWaitSemaphoreui64NVX( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_glClientWaitSync( void *args )
+static NTSTATUS ext_glClientWaitSync( void *args )
 {
     struct glClientWaitSync_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
@@ -37996,6 +37996,24 @@ static NTSTATUS wow64_ext_glClientWaitSemaphoreui64NVX( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glClientWaitSemaphoreui64NVX( params->fenceObjectCount, ULongToPtr(params->semaphoreArray), ULongToPtr(params->fenceValueArray) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glClientWaitSync( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        PTR32 sync;
+        GLbitfield flags;
+        GLuint64 timeout;
+        GLenum ret;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wow64_glClientWaitSync( teb, ULongToPtr(params->sync), params->flags, params->timeout );
+    pthread_mutex_unlock( &wgl_lock );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
