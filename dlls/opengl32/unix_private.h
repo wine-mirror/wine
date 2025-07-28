@@ -32,6 +32,7 @@
 #include "ntgdi.h"
 
 #include "wine/opengl_driver.h"
+#include "unix_thunks.h"
 
 struct registry_entry
 {

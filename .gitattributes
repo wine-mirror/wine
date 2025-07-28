@@ -18,6 +18,7 @@ dlls/opencl/unixlib.h generated
 dlls/opengl32/opengl32.spec generated
 dlls/opengl32/thunks.c generated
 dlls/opengl32/unix_thunks.c generated
+dlls/opengl32/unix_thunks.h generated
 dlls/opengl32/unixlib.h generated
 include/wine/wgl.h generated
 

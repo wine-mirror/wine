@@ -1271,6 +1271,36 @@ print OUT "};\n";
 close OUT;
 
 #
+# Generate the unix_thunks.h file
+#
+open OUT, ">unix_thunks.h" or die "cannot create unix_thunks.h";
+print OUT "/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */\n\n";
+print OUT "#ifdef _WIN64\n\n";
+
+foreach (sort keys %wgl_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next unless defined $manual_wow64_thunks{$_};
+    print OUT "extern NTSTATUS wow64_wgl_$_( void *args );\n";
+}
+foreach (sort keys %norm_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next unless defined $manual_wow64_thunks{$_};
+    print OUT "extern NTSTATUS wow64_gl_$_( void *args );\n";
+}
+foreach (sort keys %ext_functions)
+{
+    next if $_ =~ /^egl/; # unix-side only API
+    next if defined $manual_win_functions{$_};
+    next unless defined $manual_wow64_thunks{$_};
+    print OUT "extern NTSTATUS wow64_ext_$_( void *args );\n";
+}
+
+print OUT "\n#endif\n";
+close OUT;
+
+#
 # Generate the unix_thunks.c file
 #
 open OUT, ">unix_thunks.c" or die "cannot create unix_thunks.c";
@@ -1367,26 +1397,6 @@ foreach (sort keys %ext_functions)
     next if defined $manual_win_functions{$_};
     next if defined $manual_wow64_thunks{$_};
     print OUT generate_wow64_thunk($_, $ext_functions{$_}, "ext");
-}
-
-foreach (sort keys %wgl_functions)
-{
-    next if defined $manual_win_functions{$_};
-    next unless defined $manual_wow64_thunks{$_};
-    print OUT "extern NTSTATUS wow64_wgl_$_( void *args );\n";
-}
-foreach (sort keys %norm_functions)
-{
-    next if defined $manual_win_functions{$_};
-    next unless defined $manual_wow64_thunks{$_};
-    print OUT "extern NTSTATUS wow64_gl_$_( void *args );\n";
-}
-foreach (sort keys %ext_functions)
-{
-    next if $_ =~ /^egl/; # unix-side only API
-    next if defined $manual_win_functions{$_};
-    next unless defined $manual_wow64_thunks{$_};
-    print OUT "extern NTSTATUS wow64_ext_$_( void *args );\n";
 }
 
 print OUT "\nconst unixlib_entry_t __wine_unix_call_wow64_funcs[] =\n";
