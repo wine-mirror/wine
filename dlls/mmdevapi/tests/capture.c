@@ -671,6 +671,27 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
                             format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
                 }
 
+                IAudioClient_Release(ac);
+
+                hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+                        NULL, (void**)&ac);
+                ok(hr == S_OK, "Activation failed with %08lx\n", hr);
+                if(hr != S_OK)
+                    continue;
+
+                /* With AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM it always succeeds. */
+                hr = IAudioClient_Initialize(ac, mode, AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM, 5000000, 0, &fmt, NULL);
+                if (mode == AUDCLNT_SHAREMODE_SHARED) {
+                    expected = fmt.nChannels <= 2 ? S_OK : E_INVALIDARG;
+                    todo_wine_if(hr == AUDCLNT_E_UNSUPPORTED_FORMAT)
+                    ok(hr == expected, "Initialize(shared,  %c%lux%2ux%u, AUTOCONVERTPCM) returns %08lx\n",
+                            format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
+                } else {
+                    todo_wine_if(hr != E_INVALIDARG)
+                    ok(hr == E_INVALIDARG, "Initialize(exclus.,  %c%lux%2ux%u, AUTOCONVERTPCM) returns %08lx\n",
+                            format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
+                }
+
                 CoTaskMemFree(pwfx2);
                 CoTaskMemFree(pwfx);
                 IAudioClient_Release(ac);
