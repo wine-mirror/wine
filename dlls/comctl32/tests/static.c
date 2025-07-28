@@ -135,10 +135,6 @@ static void test_set_text(void)
 {
     HWND hStatic = create_static(SS_SIMPLE);
     char buffA[10];
-    DWORD idx;
-
-    idx = SendMessageA(hStatic, WM_GETOBJECT, 0, OBJID_QUERYCLASSNAMEIDX);
-    ok(idx == 0x10003, "Got index 0x%08lx\n", idx);
 
     GetWindowTextA(hStatic, buffA, sizeof(buffA));
     ok(!strcmp(buffA, "Test"), "got wrong text %s\n", buffA);

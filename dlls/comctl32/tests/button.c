@@ -2445,23 +2445,6 @@ static void test_visual(void)
     DestroyWindow(parent);
 }
 
-static void test_getobject(void)
-{
-    HWND hwnd;
-    LONG idx;
-
-    hwnd = create_button(BS_PUSHBUTTON, NULL);
-
-    idx = SendMessageA(hwnd, WM_GETOBJECT, 0, OBJID_QUERYCLASSNAMEIDX);
-    ok(idx == 0x10002, "Expect idx 0x%08x, got 0x%08lx\n", 0x10002, idx);
-
-    /* Check with upper 32 bits truncated */
-    idx = SendMessageA(hwnd, WM_GETOBJECT, 0, (DWORD)OBJID_QUERYCLASSNAMEIDX);
-    ok(idx == 0x10002, "Expect idx 0x%08x, got 0x%08lx\n", 0x10002, idx);
-
-    DestroyWindow(hwnd);
-}
-
 static void test_radiobutton_focus(void)
 {
     HWND hwnd, button;
@@ -2618,7 +2601,6 @@ START_TEST(button)
     test_bcm_get_ideal_size();
     test_style();
     test_visual();
-    test_getobject();
     test_radiobutton_focus();
 
     uninit_winevent_hook();

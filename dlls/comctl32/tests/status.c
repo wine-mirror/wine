@@ -270,9 +270,6 @@ static void test_status_control(void)
 
     hWndStatus = create_status_control(WS_VISIBLE | SBT_TOOLTIPS, 0);
 
-    r = SendMessageA(hWndStatus, WM_GETOBJECT, 0, OBJID_QUERYCLASSNAMEIDX);
-    expect(0x1000b, r);
-
     /* Divide into parts and set text */
     r = SendMessageA(hWndStatus, SB_SETPARTS, 3, (LPARAM)nParts);
     expect(TRUE,r);

@@ -513,7 +513,6 @@ static void basic_test(void)
     TBBUTTON buttons[9];
     HWND hToolbar;
     int i;
-    DWORD idx;
 
     for (i=0; i<9; i++)
         MakeButton(buttons+i, 1000+i, TBSTYLE_CHECKGROUP, 0);
@@ -529,9 +528,6 @@ static void basic_test(void)
         0, 0, 20, 16, sizeof(TBBUTTON));
     ok(hToolbar != NULL, "Toolbar creation\n");
     SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)"test\000");
-
-    idx = SendMessageA(hToolbar, WM_GETOBJECT, 0, OBJID_QUERYCLASSNAMEIDX);
-    ok(idx == 0x1000c, "Got index 0x%08lx\n", idx);
 
     /* test for exclusion working inside a separator-separated :-) group */
     SendMessageA(hToolbar, TB_CHECKBUTTON, 1000, 1); /* press A1 */

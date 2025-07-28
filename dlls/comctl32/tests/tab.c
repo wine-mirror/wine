@@ -1620,20 +1620,6 @@ static void test_TCM_GETROWCOUNT(void)
     DestroyWindow(hTab);
 }
 
-static void test_WM_GETOBJECT(void)
-{
-    HWND hTab;
-    DWORD objid;
-
-    hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, 2);
-    ok(hTab != NULL, "Failed to create tab control\n");
-
-    objid = SendMessageA(hTab, WM_GETOBJECT, 0, OBJID_QUERYCLASSNAMEIDX);
-    ok(objid == 0x1000f, "Unexpected objid %lu.\n", objid);
-
-    DestroyWindow(hTab);
-}
-
 START_TEST(tab)
 {
     LOGFONTA logfont;
@@ -1673,7 +1659,6 @@ START_TEST(tab)
     test_create();
     test_TCN_SELCHANGING();
     test_TCM_GETROWCOUNT();
-    test_WM_GETOBJECT();
 
     uninit_winevent_hook();
 

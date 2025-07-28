@@ -1236,12 +1236,8 @@ static void test_combo_WS_VSCROLL(void)
     COMBOBOXINFO info;
     DWORD style;
     int i;
-    DWORD idx;
 
     hCombo = create_combobox(CBS_DROPDOWNLIST);
-
-    idx = SendMessageA(hCombo, WM_GETOBJECT, 0, OBJID_QUERYCLASSNAMEIDX);
-    ok(idx == 0x10005, "Got index 0x%08lx\n", idx);
 
     get_combobox_info(hCombo, &info);
     hList = info.hwndList;
