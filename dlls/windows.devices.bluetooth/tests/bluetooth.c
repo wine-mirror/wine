@@ -688,13 +688,13 @@ static void test_BluetoothLEAdvertisementWatcher( void )
 
     span.Duration = 0;
     hr = IBluetoothLEAdvertisementWatcher_get_MinOutOfRangeTimeout( watcher, &span );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( span.Duration == 10000000, "got Duration %I64d.\n", span.Duration );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( span.Duration == 10000000, "got Duration %I64d.\n", span.Duration );
 
     span.Duration = 0;
     hr = IBluetoothLEAdvertisementWatcher_get_MaxOutOfRangeTimeout( watcher, &span );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( span.Duration == 600000000, "got Duration %I64d.\n", span.Duration );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( span.Duration == 600000000, "got Duration %I64d.\n", span.Duration );
 
     status = BluetoothLEAdvertisementWatcherStatus_Aborted;
     hr = IBluetoothLEAdvertisementWatcher_get_Status( watcher, &status );
