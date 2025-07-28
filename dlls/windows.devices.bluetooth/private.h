@@ -38,10 +38,13 @@
 #define WIDL_using_Windows_Devices_Bluetooth
 #include "windows.devices.bluetooth.rfcomm.h"
 #include "windows.devices.bluetooth.h"
+#define WIDL_using_Windows_Devices_Bluetooth_Advertisement
+#include "windows.devices.bluetooth.advertisement.h"
 
 extern IActivationFactory *bluetoothadapter_factory;
 extern IActivationFactory *bluetoothdevice_statics_factory;
 extern IActivationFactory *bluetoothledevice_statics_factory;
+extern IActivationFactory *advertisement_watcher_factory;
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \
