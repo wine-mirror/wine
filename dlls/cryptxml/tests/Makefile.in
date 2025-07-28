@@ -1,0 +1,5 @@
+TESTDLL = cryptxml.dll
+IMPORTS = cryptxml
+
+SOURCES = \
+	cryptxml.c
