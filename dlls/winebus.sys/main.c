@@ -586,11 +586,11 @@ static void process_hid_report(DEVICE_OBJECT *device, BYTE *report_buf, DWORD re
          * Extended #41 report:
          *   Prefix X  Y  Z  Rz  TriggerLeft  TriggerRight  Counter  Buttons[3] ...
          */
-        if (report->buffer[0] == 0x31 && report->length >= 11)
+        if (report->buffer[0] == 0x31 && report->length >= 12)
         {
             BYTE trigger[2];
 
-            memmove(report->buffer, report->buffer + 1, 10);
+            memmove(report->buffer, report->buffer + 1, 11);
             report->buffer[0] = 1; /* fake report #1 */
             report->length = 10;
 
