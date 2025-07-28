@@ -853,6 +853,7 @@ static UINT ca_channel_layout_to_channel_mask(const AudioChannelLayout *layout)
         switch (layout->mChannelDescriptions[i].mChannelLabel) {
             default: FIXME("Unhandled channel 0x%x\n",
                            (unsigned int)layout->mChannelDescriptions[i].mChannelLabel); break;
+            case kAudioChannelLabel_Unknown: break;
             case kAudioChannelLabel_Left: mask |= SPEAKER_FRONT_LEFT; break;
             case kAudioChannelLabel_Mono:
             case kAudioChannelLabel_Center: mask |= SPEAKER_FRONT_CENTER; break;
