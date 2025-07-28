@@ -556,9 +556,10 @@ cleanup:
 static void test_formats(AUDCLNT_SHAREMODE mode)
 {
     IAudioClient *ac;
-    HRESULT hr, hrs;
+    HRESULT hr, hrs, expected;
     WAVEFORMATEX fmt, *pwfx, *pwfx2;
     int i, j, k;
+    BOOL compatible;
 
     fmt.cbSize = 0;
 
@@ -595,8 +596,8 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
 
                 /* In shared mode you can only change bit width, not sampling rate or channel count. */
                 if (mode == AUDCLNT_SHAREMODE_SHARED) {
-                    BOOL compatible = fmt.nSamplesPerSec == pwfx->nSamplesPerSec && fmt.nChannels == pwfx->nChannels;
-                    HRESULT expected = compatible ? S_OK : S_FALSE;
+                    compatible = fmt.nSamplesPerSec == pwfx->nSamplesPerSec && fmt.nChannels == pwfx->nChannels;
+                    expected = compatible ? S_OK : S_FALSE;
                     if (fmt.nChannels > 2)
                         expected = AUDCLNT_E_UNSUPPORTED_FORMAT;
                     todo_wine_if(hr != expected)
@@ -643,6 +644,32 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
                        || (hr == E_INVALIDARG && fmt.nChannels > 2),
                        "Initialize(exclus., %c%lux%2ux%u) returns %08lx\n",
                        format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
+
+                IAudioClient_Release(ac);
+
+                hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+                        NULL, (void**)&ac);
+                ok(hr == S_OK, "Activation failed with %08lx\n", hr);
+                if(hr != S_OK)
+                    continue;
+
+                /* With AUDCLNT_STREAMFLAGS_RATEADJUST channel count must match, but sampling rate doesn't. */
+                hr = IAudioClient_Initialize(ac, mode, AUDCLNT_STREAMFLAGS_RATEADJUST, 5000000, 0, &fmt, NULL);
+                if (mode == AUDCLNT_SHAREMODE_SHARED) {
+                    compatible = fmt.nChannels == pwfx->nChannels;
+                    expected = compatible ? S_OK : AUDCLNT_E_UNSUPPORTED_FORMAT;
+                    if (fmt.nChannels > 2)
+                        expected = E_INVALIDARG;
+                    todo_wine_if(hr == AUDCLNT_E_UNSUPPORTED_FORMAT && hr != expected)
+                    ok(hr == expected, "Initialize(shared,  %c%lux%2ux%u, RATEADJUST) returns %08lx, expected %08lx\n",
+                       format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr, expected);
+                } else {
+                    ok(hr == S_OK || hr == AUDCLNT_E_ENDPOINT_CREATE_FAILED || hr == AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED
+                            || hr == AUDCLNT_E_ENDPOINT_CREATE_FAILED || hr == AUDCLNT_E_UNSUPPORTED_FORMAT ||
+                            (hr == E_INVALIDARG && fmt.nChannels > 2),
+                            "Initialize(exclus., %c%lux%2ux%u, RATEADJUST) returns %08lx\n",
+                            format_chr, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
+                }
 
                 CoTaskMemFree(pwfx2);
                 CoTaskMemFree(pwfx);
