@@ -479,14 +479,16 @@ static void add_bytes( struct buffer *buf, const BYTE *data, UINT size )
     buf->offset += size;
 }
 
-static void serialize_byte( BYTE value )
+static void serialize_byte( UINT value )
 {
-    add_bytes( &tables_disk, (const BYTE *)&value, sizeof(value) );
+    assert( !(value >> 24) );
+    add_bytes( &tables_disk, (const BYTE *)&value, sizeof(BYTE) );
 }
 
-static void serialize_ushort( USHORT value )
+static void serialize_ushort( UINT value )
 {
-    add_bytes( &tables_disk, (const BYTE *)&value, sizeof(value) );
+    assert( !(value >> 16) );
+    add_bytes( &tables_disk, (const BYTE *)&value, sizeof(USHORT) );
 }
 
 static void serialize_uint( UINT value )
@@ -623,11 +625,11 @@ static enum table has_semantics_to_table( UINT token )
 
 struct module_row
 {
-    USHORT generation;
-    UINT   name;
-    UINT   mvid;
-    UINT   encid;
-    UINT   encbaseid;
+    UINT generation;
+    UINT name;
+    UINT mvid;
+    UINT encid;
+    UINT encbaseid;
 };
 
 static UINT add_module_row( UINT name, UINT mvid )
@@ -713,9 +715,9 @@ static void serialize_typedef_table( void )
 
 struct field_row
 {
-    USHORT flags;
-    UINT   name;
-    UINT   signature;
+    UINT flags;
+    UINT name;
+    UINT signature;
 };
 
 static UINT add_field_row( UINT flags, UINT name, UINT signature )
@@ -740,12 +742,12 @@ static void serialize_field_table( void )
 
 struct methoddef_row
 {
-    UINT   rva;
-    USHORT implflags;
-    USHORT flags;
-    UINT   name;
-    UINT   signature;
-    UINT   paramlist;
+    UINT rva;
+    UINT implflags;
+    UINT flags;
+    UINT name;
+    UINT signature;
+    UINT paramlist;
 };
 
 static UINT add_methoddef_row( UINT implflags, UINT flags, UINT name, UINT signature, UINT paramlist )
@@ -775,9 +777,9 @@ static void serialize_methoddef_table( void )
 
 struct param_row
 {
-    USHORT flags;
-    USHORT sequence;
-    UINT   name;
+    UINT flags;
+    UINT sequence;
+    UINT name;
 };
 
 static UINT add_param_row( USHORT flags, USHORT sequence, UINT name )
@@ -868,8 +870,8 @@ static void serialize_memberref_table( void )
 
 struct constant_row
 {
-    BYTE type;
-    BYTE padding;
+    UINT type;
+    UINT padding;
     UINT parent;
     UINT value;
 };
@@ -947,15 +949,15 @@ static void serialize_customattribute_table( void )
 
 struct assembly_row
 {
-    UINT   hashalgid;
-    USHORT majorversion;
-    USHORT minorversion;
-    USHORT buildnumber;
-    USHORT revisionnumber;
-    UINT   flags;
-    UINT   publickey;
-    UINT   name;
-    UINT   culture;
+    UINT hashalgid;
+    UINT majorversion;
+    UINT minorversion;
+    UINT buildnumber;
+    UINT revisionnumber;
+    UINT flags;
+    UINT publickey;
+    UINT name;
+    UINT culture;
 };
 
 static UINT add_assembly_row( UINT name )
@@ -981,15 +983,15 @@ static void serialize_assembly_table( void )
 
 struct assemblyref_row
 {
-    USHORT majorversion;
-    USHORT minorversion;
-    USHORT buildnumber;
-    USHORT revisionnumber;
-    UINT   flags;
-    UINT   publickey;
-    UINT   name;
-    UINT   culture;
-    UINT   hashvalue;
+    UINT majorversion;
+    UINT minorversion;
+    UINT buildnumber;
+    UINT revisionnumber;
+    UINT flags;
+    UINT publickey;
+    UINT name;
+    UINT culture;
+    UINT hashvalue;
 };
 
 static UINT add_assemblyref_row( UINT flags, UINT publickey, UINT name )
@@ -1045,9 +1047,9 @@ static void serialize_propertymap_table( void )
 
 struct property_row
 {
-    USHORT flags;
-    UINT   name;
-    UINT   type;
+    UINT flags;
+    UINT name;
+    UINT type;
 };
 
 static UINT add_property_row( USHORT flags, UINT name, UINT type )
@@ -1097,9 +1099,9 @@ static void serialize_eventmap_table( void )
 
 struct event_row
 {
-    USHORT flags;
-    UINT   name;
-    UINT   type;
+    UINT flags;
+    UINT name;
+    UINT type;
 };
 
 static UINT add_event_row( USHORT flags, UINT name, UINT type )
@@ -1124,9 +1126,9 @@ static void serialize_event_table( void )
 
 struct methodsemantics_row
 {
-    USHORT semantics;
-    UINT   method;
-    UINT   association;
+    UINT semantics;
+    UINT method;
+    UINT association;
 };
 
 static UINT add_methodsemantics_row( USHORT flags, UINT name, UINT type )
