@@ -1294,6 +1294,7 @@ foreach (sort keys %ext_functions)
     next if $_ =~ /^egl/; # unix-side only API
     next if defined $manual_win_functions{$_};
     next unless defined $manual_wow64_thunks{$_};
+    print OUT "extern NTSTATUS ext_$_( void *args );\n";
     print OUT "extern NTSTATUS wow64_ext_$_( void *args );\n";
 }
 

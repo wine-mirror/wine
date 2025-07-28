@@ -1389,35 +1389,6 @@ NTSTATUS get_pixel_formats( void *args )
 
 typedef ULONG PTR32;
 
-extern NTSTATUS ext_glClientWaitSync( void *args );
-extern NTSTATUS ext_glDeleteSync( void *args );
-extern NTSTATUS ext_glFenceSync( void *args );
-extern NTSTATUS ext_glGetBufferPointerv( void *args );
-extern NTSTATUS ext_glGetBufferPointervARB( void *args );
-extern NTSTATUS ext_glGetNamedBufferPointerv( void *args );
-extern NTSTATUS ext_glGetNamedBufferPointervEXT( void *args );
-extern NTSTATUS ext_glGetSynciv( void *args );
-extern NTSTATUS ext_glIsSync( void *args );
-extern NTSTATUS ext_glMapBuffer( void *args );
-
-extern NTSTATUS ext_glUnmapBuffer( void *args );
-extern NTSTATUS ext_glUnmapBufferARB( void *args );
-extern NTSTATUS ext_glUnmapNamedBuffer( void *args );
-extern NTSTATUS ext_glUnmapNamedBufferEXT( void *args );
-
-extern NTSTATUS ext_glMapBufferARB( void *args );
-extern NTSTATUS ext_glMapBufferRange( void *args );
-extern NTSTATUS ext_glMapNamedBuffer( void *args );
-extern NTSTATUS ext_glMapNamedBufferEXT( void *args );
-extern NTSTATUS ext_glMapNamedBufferRange( void *args );
-extern NTSTATUS ext_glMapNamedBufferRangeEXT( void *args );
-extern NTSTATUS ext_glPathGlyphIndexRangeNV( void *args );
-extern NTSTATUS ext_glWaitSync( void *args );
-extern NTSTATUS ext_wglGetExtensionsStringARB( void *args );
-extern NTSTATUS ext_wglGetExtensionsStringEXT( void *args );
-extern NTSTATUS ext_wglQueryCurrentRendererStringWINE( void *args );
-extern NTSTATUS ext_wglQueryRendererStringWINE( void *args );
-
 struct wow64_string_entry
 {
     const char *str;
