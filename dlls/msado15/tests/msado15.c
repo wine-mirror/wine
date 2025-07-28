@@ -298,11 +298,6 @@ static void test_Recordset(void)
     ok( is_eof( recordset ), "not eof\n" );
     ok( is_bof( recordset ), "not bof\n" );
 
-if (0)
-{   /* Causes a crash */
-    hr = _Recordset_get_ActiveConnection( recordset, NULL );
-}
-
     V_VT(&active) = VT_UNKNOWN;
     V_UNKNOWN(&active) = (IUnknown *)0xdeadbeef;
     hr = _Recordset_get_ActiveConnection( recordset, &active );
