@@ -89,14 +89,16 @@ static HRESULT WINAPI adv_watcher_GetTrustLevel( IBluetoothLEAdvertisementWatche
 
 static HRESULT WINAPI adv_watcher_get_MinSamplingInternal( IBluetoothLEAdvertisementWatcher *iface, TimeSpan *value )
 {
-    FIXME( "(%p, %p): stub!\n", iface, value );
-    return E_NOTIMPL;
+    TRACE( "(%p, %p)\n", iface, value );
+    value->Duration = 1000000;
+    return S_OK;
 }
 
 static HRESULT WINAPI adv_watcher_get_MaxSamplingInternal( IBluetoothLEAdvertisementWatcher *iface, TimeSpan *value )
 {
-    FIXME( "(%p, %p): stub!\n", iface, value );
-    return E_NOTIMPL;
+    TRACE( "(%p, %p)\n", iface, value );
+    value->Duration = 255000000;
+    return S_OK;
 }
 
 static HRESULT WINAPI adv_watcher_get_MinOutOfRangeTimeout( IBluetoothLEAdvertisementWatcher *iface, TimeSpan *value )

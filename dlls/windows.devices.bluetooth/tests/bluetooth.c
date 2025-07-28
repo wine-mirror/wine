@@ -678,13 +678,13 @@ static void test_BluetoothLEAdvertisementWatcher( void )
 
     span.Duration = 0;
     hr = IBluetoothLEAdvertisementWatcher_get_MinSamplingInterval( watcher, &span );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( span.Duration == 1000000, "got Duration %I64d.\n", span.Duration );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( span.Duration == 1000000, "got Duration %I64d.\n", span.Duration );
 
     span.Duration = 0;
     hr = IBluetoothLEAdvertisementWatcher_get_MaxSamplingInterval( watcher, &span );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( span.Duration == 255000000, "got Duration %I64d.\n", span.Duration );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( span.Duration == 255000000, "got Duration %I64d.\n", span.Duration );
 
     span.Duration = 0;
     hr = IBluetoothLEAdvertisementWatcher_get_MinOutOfRangeTimeout( watcher, &span );
