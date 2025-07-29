@@ -629,6 +629,7 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
         {
             BOOL compatible = fmt.nSamplesPerSec == pwfx->nSamplesPerSec && fmt.nChannels == pwfx->nChannels;
             HRESULT expected = compatible ? S_OK : S_FALSE;
+            todo_wine_if(expected == S_FALSE)
             ok(hr == expected, "Got %lx expected %lx\n", hr, expected);
         }
 

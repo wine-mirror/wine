@@ -398,22 +398,6 @@ static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_
         return E_INVALIDARG;
     }
 
-    if (mode == AUDCLNT_SHAREMODE_SHARED) {
-        WAVEFORMATEX *mix_fmt;
-        HRESULT hr;
-
-        if (FAILED(hr = IAudioClient3_GetMixFormat(&client->IAudioClient3_iface, &mix_fmt)))
-            return hr;
-
-        if (fmt->nChannels != mix_fmt->nChannels || fmt->nSamplesPerSec != mix_fmt->nSamplesPerSec)
-        {
-            CoTaskMemFree(mix_fmt);
-            return AUDCLNT_E_UNSUPPORTED_FORMAT;
-        }
-
-        CoTaskMemFree(mix_fmt);
-    }
-
     sessions_lock();
 
     if (client->stream) {
@@ -776,24 +760,8 @@ static HRESULT WINAPI client_IsFormatSupported(IAudioClient3 *iface, AUDCLNT_SHA
 
     TRACE("(%p)->(%x, %p, %p)\n", This, mode, fmt, out);
 
-    if (fmt) {
+    if (fmt)
         dump_fmt(fmt);
-
-        if (mode == AUDCLNT_SHAREMODE_SHARED) {
-            WAVEFORMATEX *mix_fmt;
-            HRESULT hr;
-
-            if (FAILED(hr = IAudioClient3_GetMixFormat(iface, &mix_fmt)))
-                return hr;
-
-            if (fmt->nChannels != mix_fmt->nChannels || fmt->nSamplesPerSec != mix_fmt->nSamplesPerSec) {
-                *out = mix_fmt;
-                return S_FALSE;
-            }
-
-            CoTaskMemFree(mix_fmt);
-        }
-    }
 
     params.device  = This->device_name;
     params.flow    = This->dataflow;
