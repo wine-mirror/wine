@@ -2177,6 +2177,7 @@ static NTSTATUS heap_resize_block_lfh( struct block *block, ULONG flags, SIZE_T 
     if (ROUND_SIZE( *old_size, BLOCK_ALIGN - 1) != ROUND_SIZE( size, BLOCK_ALIGN - 1)) return STATUS_NO_MEMORY;
     if (size >= *old_size) return STATUS_NO_MEMORY;
 
+    block_size = BLOCK_BIN_SIZE( BLOCK_SIZE_BIN( block_size ) );
     block_set_flags( block, BLOCK_FLAG_USER_MASK & ~BLOCK_FLAG_USER_INFO, BLOCK_USER_FLAGS( flags ) );
     block->tail_size = block_size - sizeof(*block) - size;
     initialize_block( block, *old_size, size, flags );
