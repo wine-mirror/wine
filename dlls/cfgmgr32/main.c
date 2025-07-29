@@ -395,9 +395,7 @@ done:
     free( all_keys );
     if (FAILED( hr ))
     {
-        for (i = 0; i < obj->cPropertyCount; i++)
-            free( ( (DEVPROPERTY *)obj[i].pProperties )->Buffer );
-        free( (DEVPROPERTY *)obj->pProperties );
+        DevFreeObjectProperties( obj->cPropertyCount, obj->pProperties );
         obj->cPropertyCount = 0;
         obj->pProperties = NULL;
     }
@@ -565,13 +563,7 @@ void WINAPI DevFreeObjects( ULONG objs_len, const DEV_OBJECT *objs )
 
     for (i = 0; i < objs_len; i++)
     {
-        DEVPROPERTY *props = (DEVPROPERTY *)objects[i].pProperties;
-        ULONG j;
-
-        for (j = 0; j < objects[i].cPropertyCount; j++)
-            free( props[j].Buffer );
-        free( props );
-
+        DevFreeObjectProperties( objects[i].cPropertyCount, objects[i].pProperties );
         free( (void *)objects[i].pszObjectId );
     }
     free( objects );
@@ -595,11 +587,9 @@ struct device_query_context
 
 static HRESULT device_query_context_add_object( DEV_OBJECT obj, void *data )
 {
-    DEVPROPERTY *props = (DEVPROPERTY *)obj.pProperties;
     DEV_QUERY_RESULT_ACTION_DATA action_data = {0};
     struct device_query_context *ctx = data;
     HRESULT hr = S_OK;
-    ULONG i;
 
     action_data.Action = DevQueryResultAdd;
     action_data.Data.DeviceObject = obj;
@@ -610,9 +600,7 @@ static HRESULT device_query_context_add_object( DEV_OBJECT obj, void *data )
         hr = E_CHANGED_STATE;
     LeaveCriticalSection( &ctx->cs );
 
-    for (i = 0; i < obj.cPropertyCount; i++)
-        free( props[i].Buffer );
-    free( props );
+    DevFreeObjectProperties( obj.cPropertyCount, obj.pProperties );
     return hr;
 }
 
@@ -848,5 +836,12 @@ HRESULT WINAPI DevGetObjectPropertiesEx( DEV_OBJECT_TYPE type, const WCHAR *id, 
 
 void WINAPI DevFreeObjectProperties( ULONG len, const DEVPROPERTY *props )
 {
-    FIXME( "(%lu, %p): stub!\n", len, props );
+    DEVPROPERTY *properties = (DEVPROPERTY *)props;
+    ULONG i;
+
+    TRACE( "(%lu, %p)\n", len, props );
+
+    for (i = 0; i < len; i++)
+        free( properties[i].Buffer );
+    free( properties );
 }
