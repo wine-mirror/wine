@@ -410,12 +410,25 @@ struct d2d_layer
 
 HRESULT d2d_layer_create(ID2D1Factory *factory, const D2D1_SIZE_F *size, struct d2d_layer **layer);
 
+enum d2d_mesh_state
+{
+    D2D_MESH_STATE_INITIAL = 0,
+    D2D_MESH_STATE_OPEN,
+    D2D_MESH_STATE_CLOSED,
+};
+
 struct d2d_mesh
 {
     ID2D1Mesh ID2D1Mesh_iface;
+    ID2D1TessellationSink ID2D1TessellationSink_iface;
     LONG refcount;
 
     ID2D1Factory *factory;
+    enum d2d_mesh_state state;
+
+    D2D1_TRIANGLE *triangles;
+    size_t count;
+    size_t size;
 };
 
 HRESULT d2d_mesh_create(ID2D1Factory *factory, struct d2d_mesh **mesh);
