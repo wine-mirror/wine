@@ -1256,15 +1256,17 @@ static void test_IPropertySet(void)
 {
     static const WCHAR *class_name = RuntimeClass_Windows_Foundation_Collections_PropertySet;
     IActivationFactory *propset_factory;
-    IInspectable *inspectable;
+    IPropertyValueStatics *propval_statics;
+    IInspectable *inspectable, *val, *val1, *val2, *val3;
     IPropertySet *propset;
     IMap_HSTRING_IInspectable *map;
     IMapView_HSTRING_IInspectable *map_view;
     IObservableMap_HSTRING_IInspectable *observable_map;
     IIterable_IKeyValuePair_HSTRING_IInspectable *iterable;
     IIterator_IKeyValuePair_HSTRING_IInspectable *iterator;
+    BOOLEAN boolean;
     HRESULT hr;
-    HSTRING name;
+    HSTRING name, key1, key2;
 
     hr = RoInitialize( RO_INIT_MULTITHREADED );
     ok( hr == S_OK, "got %#lx\n", hr );
@@ -1277,6 +1279,19 @@ static void test_IPropertySet(void)
     if (hr != S_OK)
     {
         win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
+        goto done;
+    }
+
+    class_name = RuntimeClass_Windows_Foundation_PropertyValue;
+    hr = WindowsCreateString( class_name, wcslen( class_name ), &name );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    hr = RoGetActivationFactory( name, &IID_IPropertyValueStatics, (void **)&propval_statics);
+    WindowsDeleteString( name );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "RoGetActivationFactory failed, hr %#lx.\n", hr );
+    if (hr != S_OK)
+    {
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
+        IActivationFactory_Release( propset_factory );
         goto done;
     }
 
@@ -1296,6 +1311,134 @@ static void test_IPropertySet(void)
     IPropertySet_Release( propset );
     ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
 
+    boolean = TRUE;
+    hr = IMap_HSTRING_IInspectable_HasKey( map, NULL, &boolean );
+    todo_wine
+    ok( hr == S_OK, "HasKey failed, got %#lx\n", hr );
+    todo_wine
+    ok( !boolean, "Got boolean %d.\n", boolean );
+    hr = IMap_HSTRING_IInspectable_Lookup( map, NULL, &val );
+    todo_wine
+    ok( hr == E_BOUNDS, "Got hr %#lx\n", hr );
+
+    hr = IPropertyValueStatics_CreateUInt32( propval_statics, 0xdeadbeef, &val1 );
+    ok( hr == S_OK, "CreateUInt32 failed, got %#lx\n", hr );
+    boolean = TRUE;
+    hr = IMap_HSTRING_IInspectable_Insert( map, NULL, val1, &boolean );
+    todo_wine
+    ok( hr == S_OK, "Insert failed, got %#lx\n", hr );
+    todo_wine
+    ok( !boolean, "Got boolean %d.\n", boolean );
+
+    hr = IPropertyValueStatics_CreateUInt32( propval_statics, 0xc0decafe, &val2 );
+    ok( hr == S_OK, "CreateUInt32 failed, got %#lx\n", hr );
+    boolean = FALSE;
+    hr = IMap_HSTRING_IInspectable_Insert( map, NULL, val2, &boolean );
+    IInspectable_Release( val2 );
+    todo_wine
+    ok( boolean, "Got boolean %d.\n", boolean );
+    todo_wine
+    ok( hr == S_OK, "Insert failed, got %#lx\n", hr );
+    boolean = FALSE;
+    hr = IMap_HSTRING_IInspectable_HasKey( map, NULL, &boolean );
+    todo_wine
+    ok( hr == S_OK, "HasKey failed, got %#lx\n", hr );
+    todo_wine
+    ok( boolean, "Got boolean %d.\n", boolean );
+    hr = IMap_HSTRING_IInspectable_Lookup( map, NULL, &val );
+    todo_wine
+    ok( hr == S_OK, "Lookup failed, got %#lx\n", hr );
+    if (SUCCEEDED(hr))
+    {
+        IPropertyValue *propval;
+        UINT32 uint32 = 0;
+
+        hr = IInspectable_QueryInterface( val, &IID_IPropertyValue, (void **)&propval );
+        IInspectable_Release( val );
+        ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
+        hr = IPropertyValue_GetUInt32( propval, &uint32 );
+        IPropertyValue_Release( propval );
+        ok( hr == S_OK, "GetUInt32, got %#lx\n", hr );
+        ok( uint32 == 0xc0decafe, "Got uint32 %u\n", uint32 );
+    }
+
+    hr = WindowsCreateString( L"foo", 3, &key1 );
+    ok( hr == S_OK, "WindowsCreateString failed, got %#lx\n", hr );
+    boolean = TRUE;
+    hr = IMap_HSTRING_IInspectable_Lookup( map, key1, &val );
+    todo_wine
+    ok( hr == E_BOUNDS, "Got hr %#lx\n", hr );
+    hr = IMap_HSTRING_IInspectable_Insert( map, key1, val1, &boolean );
+    IInspectable_Release( val1 );
+    todo_wine
+    ok( hr == S_OK, "Insert failed, got %#lx\n", hr );
+    todo_wine
+    ok( !boolean, "Got boolean %d.\n", boolean );
+    boolean = FALSE;
+    hr = IMap_HSTRING_IInspectable_HasKey( map, key1, &boolean );
+    todo_wine
+    ok( hr == S_OK, "HasKey failed, got %#lx\n", hr );
+    todo_wine
+    ok( boolean, "Got boolean %d.\n", boolean );
+    hr = IMap_HSTRING_IInspectable_Lookup( map, key1, &val );
+    todo_wine
+    ok( hr == S_OK, "Lookup failed, got %#lx\n", hr );
+    if (SUCCEEDED(hr))
+    {
+        IPropertyValue *propval;
+        UINT32 uint32 = 0;
+
+        hr = IInspectable_QueryInterface( val, &IID_IPropertyValue, (void **)&propval );
+        IInspectable_Release( val );
+        ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
+        hr = IPropertyValue_GetUInt32( propval, &uint32 );
+        IPropertyValue_Release( propval );
+        ok( hr == S_OK, "GetUInt32, got %#lx\n", hr );
+        ok( uint32 == 0xdeadbeef, "Got uint32 %u\n", uint32 );
+    }
+    WindowsDeleteString( key1 );
+
+    hr = WindowsCreateString( L"bar", 3, &key2 );
+    ok( hr == S_OK, "WindowsCreateString failed, got %#lx\n", hr );
+    boolean = TRUE;
+    hr = IMap_HSTRING_IInspectable_HasKey( map, key2, &boolean );
+    todo_wine
+    ok( hr == S_OK, "HasKey failed, got %#lx\n", hr );
+    todo_wine
+    ok( !boolean, "Got boolean %d.\n", boolean );
+    hr = IPropertyValueStatics_CreateUInt64( propval_statics, 0xdeadbeefdeadbeef, &val3 );
+    ok( hr == S_OK, "CreateUInt32 failed, got %#lx\n", hr );
+    boolean = TRUE;
+    hr = IMap_HSTRING_IInspectable_Insert( map, key2, val3, &boolean );
+    IInspectable_Release( val3 );
+    todo_wine
+    ok( hr == S_OK, "Insert failed, got %#lx\n", hr );
+    todo_wine
+    ok( !boolean, "Got boolean %d.\n", boolean );
+    boolean = FALSE;
+    hr = IMap_HSTRING_IInspectable_HasKey( map, key2, &boolean );
+    todo_wine
+    ok( hr == S_OK, "HasKey failed, got %#lx\n", hr );
+    todo_wine
+    ok( boolean, "Got boolean %d.\n", boolean );
+    hr = IMap_HSTRING_IInspectable_Lookup( map, key2, &val );
+    todo_wine
+    ok( hr == S_OK, "Lookup failed, got %#lx\n", hr );
+    if (SUCCEEDED(hr))
+    {
+        IPropertyValue *propval;
+        UINT64 uint64 = 0;
+
+        hr = IInspectable_QueryInterface( val, &IID_IPropertyValue, (void **)&propval );
+        IInspectable_Release( val );
+        ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
+        hr = IPropertyValue_GetUInt64( propval, &uint64 );
+        IPropertyValue_Release( propval );
+        ok( hr == S_OK, "GetUInt32, got %#lx\n", hr );
+        ok( uint64 == 0xdeadbeefdeadbeef, "Got uint64 %I64u\n", uint64 );
+    }
+    WindowsDeleteString( key2 );
+
     hr = IMap_HSTRING_IInspectable_QueryInterface( map, &IID_IIterable_IKeyValuePair_HSTRING_IInspectable,
                                                    (void **)&iterable );
     ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
@@ -1309,24 +1452,20 @@ static void test_IPropertySet(void)
     hr = IMap_HSTRING_IInspectable_GetView( map, &map_view );
     todo_wine
     ok( hr == S_OK, "GetView failed, got %#lx\n", hr );
-    if (SUCCEEDED( hr ))
-    {
-        hr = IMapView_HSTRING_IInspectable_QueryInterface( map_view, &IID_IIterable_IKeyValuePair_HSTRING_IInspectable,
-                                                           (void **)&iterable );
-        todo_wine
-        ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
-        if (SUCCEEDED( hr ))
-        {
-            hr = IIterable_IKeyValuePair_HSTRING_IInspectable_First( iterable, &iterator );
-            todo_wine
-            ok( hr == S_OK, "got %#lx\n", hr );
-            if (SUCCEEDED( hr ))
-                IIterator_IKeyValuePair_HSTRING_IInspectable_Release( iterator );
-            IIterable_IKeyValuePair_HSTRING_IInspectable_Release( iterable );
-        }
-        IMapView_HSTRING_IInspectable_Release( map_view );
-    }
+    if (FAILED( hr )) goto skip_test;
+
+    hr = IMapView_HSTRING_IInspectable_QueryInterface( map_view, &IID_IIterable_IKeyValuePair_HSTRING_IInspectable,
+                                                       (void **)&iterable );
+    ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
+    hr = IIterable_IKeyValuePair_HSTRING_IInspectable_First( iterable, &iterator );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    IIterator_IKeyValuePair_HSTRING_IInspectable_Release( iterator );
+    IIterable_IKeyValuePair_HSTRING_IInspectable_Release( iterable );
+    IMapView_HSTRING_IInspectable_Release( map_view );
+
+skip_test:
     IMap_HSTRING_IInspectable_Release( map );
+    IPropertyValueStatics_Release( propval_statics );
 done:
     RoUninitialize();
 }
