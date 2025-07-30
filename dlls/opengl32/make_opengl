@@ -1275,18 +1275,19 @@ close OUT;
 #
 open OUT, ">unix_thunks.h" or die "cannot create unix_thunks.h";
 print OUT "/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */\n\n";
-print OUT "#ifdef _WIN64\n\n";
 
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
     next unless defined $manual_wow64_thunks{$_};
+    print OUT "extern NTSTATUS wgl_$_( void *args );\n";
     print OUT "extern NTSTATUS wow64_wgl_$_( void *args );\n";
 }
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
     next unless defined $manual_wow64_thunks{$_};
+    print OUT "extern NTSTATUS gl_$_( void *args );\n";
     print OUT "extern NTSTATUS wow64_gl_$_( void *args );\n";
 }
 foreach (sort keys %ext_functions)
@@ -1298,7 +1299,6 @@ foreach (sort keys %ext_functions)
     print OUT "extern NTSTATUS wow64_ext_$_( void *args );\n";
 }
 
-print OUT "\n#endif\n";
 close OUT;
 
 #
