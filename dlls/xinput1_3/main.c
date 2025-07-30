@@ -1101,7 +1101,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetDSoundAudioDeviceGuids(DWORD index, GUID
     FIXME("index %lu, render_guid %s, capture_guid %s stub!\n", index, debugstr_guid(render_guid),
           debugstr_guid(capture_guid));
 
-    if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
+    if (index >= XUSER_MAX_COUNT || !render_guid || !capture_guid) return ERROR_BAD_ARGUMENTS;
     if (!controllers[index].device) return ERROR_DEVICE_NOT_CONNECTED;
 
     return ERROR_NOT_SUPPORTED;
