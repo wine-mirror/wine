@@ -2929,6 +2929,38 @@ static void check_activation_interface( const type_t *iface )
     }
 }
 
+static void check_composition_interface( const type_t *iface )
+{
+    const statement_t *stmt;
+
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts( iface ) )
+    {
+        const var_t *arg, *func = stmt->u.var;
+        const var_list_t *arg_list = type_function_get_args( func->declspec.type );
+        unsigned int count = 0;
+
+        if (arg_list) LIST_FOR_EACH_ENTRY_REV( arg, arg_list, const var_t, entry )
+        {
+            const type_t *type = arg->declspec.type;
+
+            count++;
+            if (count == 1 && (!is_ptr( type ) || !is_attr( arg->attrs, ATTR_RETVAL )))
+                error_at( &arg->where, "last parameter '%s' of function '%s' must be an [out, retval] pointer\n",
+                          arg->name, func->name );
+
+            if (count == 2 && !is_attr( arg->attrs, ATTR_OUT ))
+                error_at( &arg->where, "parameter '%s' of function '%s' must be an OUT parameter\n",
+                          arg->name, func->name );
+
+            if (count > 2 && is_attr( arg->attrs, ATTR_OUT ))
+                error_at( &arg->where, "parameter '%s' of function '%s' must be an IN parameter\n",
+                          arg->name, func->name );
+        }
+        if (count < 3)
+            error_at( &func->where, "composition function '%s' must have at least 3 parameters\n", func->name );
+    }
+}
+
 static void check_constructor_interfaces( const type_t *runtimeclass )
 {
     const attr_t *attr;
@@ -2941,6 +2973,10 @@ static void check_constructor_interfaces( const type_t *runtimeclass )
         {
             if (value->type != EXPR_MEMBER) continue;
             check_activation_interface( value->u.var->declspec.type );
+        }
+        else if (attr->type == ATTR_COMPOSABLE)
+        {
+            check_composition_interface( value->u.var->declspec.type );
         }
     }
 }
