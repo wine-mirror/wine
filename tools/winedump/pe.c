@@ -2913,7 +2913,7 @@ static UINT clr_blob_size( const BYTE *data, UINT data_size, UINT *skip )
         *skip = 2;
         return ((data[0] & ~0xc0) << 8) + data[1];
     }
-    if (data_size < 3) return 0;
+    if (data_size < 4) return 0;
     if (!(data[0] & 0x20))
     {
         *skip = 4;
@@ -2948,7 +2948,7 @@ static void print_clr_blobs( const BYTE *data, UINT data_size )
             }
         }
         printf( "\n" );
-        data_size -= size - skip;
+        data_size -= size + skip;
         blob += size + skip;
     }
     clr_indent -= 4;
