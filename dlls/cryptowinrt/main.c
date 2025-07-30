@@ -25,9 +25,11 @@
 #include "objbase.h"
 
 #include "bcrypt.h"
+#include "wincrypt.h"
 
 #define WIDL_using_Windows_Security_Cryptography
 #include "windows.security.cryptography.h"
+#include "robuffer.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypto);
 
@@ -203,9 +205,48 @@ static HRESULT STDMETHODCALLTYPE cryptobuffer_statics_DecodeFromBase64String(
 static HRESULT STDMETHODCALLTYPE cryptobuffer_statics_EncodeToBase64String(
         ICryptographicBufferStatics *iface, IBuffer *buffer, HSTRING *value)
 {
-    FIXME("iface %p, buffer %p, value %p stub!\n", iface, buffer, value);
+    IBufferByteAccess *buffer_access;
+    HSTRING_BUFFER str_buffer;
+    void *data = NULL;
+    UINT32 length = 0;
+    DWORD ret_length;
+    WCHAR *str;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, buffer %p, value %p.\n", iface, buffer, value);
+
+    if (buffer)
+    {
+        IBuffer_get_Length(buffer, &length);
+        if (length)
+        {
+            if (SUCCEEDED(IBuffer_QueryInterface(buffer, &IID_IBufferByteAccess, (void **)&buffer_access)))
+            {
+                IBufferByteAccess_Buffer(buffer_access, (byte **)&data);
+                IBufferByteAccess_Release(buffer_access);
+            }
+        }
+    }
+
+    if (!length)
+        return WindowsCreateString(NULL, 0, value);
+
+    if (!data)
+        return E_FAIL;
+
+    if (!CryptBinaryToStringW(data, length, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, NULL, &ret_length))
+        return E_FAIL;
+
+    if (FAILED(hr = WindowsPreallocateStringBuffer(ret_length, &str, &str_buffer)))
+        return hr;
+
+    if (!CryptBinaryToStringW(data, length, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, str, &ret_length))
+    {
+        WindowsDeleteStringBuffer(str_buffer);
+        return E_FAIL;
+    }
+
+    return WindowsPromoteStringBuffer(str_buffer, value);
 }
 
 static HRESULT STDMETHODCALLTYPE cryptobuffer_statics_ConvertStringToBinary(
