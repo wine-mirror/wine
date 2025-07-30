@@ -432,6 +432,17 @@ sub generate_unix_thunk($$$)
     return $ret;
 }
 
+sub generate_wrapper_declaration($$)
+{
+    my ($name, $func) = @_;
+    my $ret = "extern " . get_func_ret( $func, 0 );
+    my $decl_args = get_func_args( $func, 1, 0, "" );
+    $ret .= " wrap_$name( TEB *teb";
+    $ret .= " ,$decl_args" unless $decl_args eq "void";
+    $ret .= ");\n";
+    return $ret;
+}
+
 sub generate_win_thunk($$)
 {
     my ($name, $func) = @_;
@@ -1275,6 +1286,25 @@ close OUT;
 #
 open OUT, ">unix_thunks.h" or die "cannot create unix_thunks.h";
 print OUT "/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */\n\n";
+
+foreach (sort keys %wgl_functions)
+{
+    next if !needs_wrapper( $_, $wgl_functions{$_} );
+    print OUT generate_wrapper_declaration($_, $wgl_functions{$_});
+}
+foreach (sort keys %norm_functions)
+{
+    next if !needs_wrapper( $_, $norm_functions{$_} );
+    print OUT generate_wrapper_declaration($_, $norm_functions{$_});
+}
+foreach (sort keys %ext_functions)
+{
+    next if $_ =~ /^egl/; # unix-side only API
+    next if !needs_wrapper( $_, $ext_functions{$_} );
+    print OUT generate_wrapper_declaration($_, $ext_functions{$_});
+}
+
+print OUT "\n";
 
 foreach (sort keys %wgl_functions)
 {

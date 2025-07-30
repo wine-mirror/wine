@@ -1,5 +1,37 @@
 /* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */
 
+extern BOOL wrap_wglCopyContext( TEB *teb , HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask );
+extern HGLRC wrap_wglCreateContext( TEB *teb , HDC hDc );
+extern HGLRC wrap_wglCreateLayerContext( TEB *teb , HDC hDc, int level );
+extern BOOL wrap_wglDeleteContext( TEB *teb , HGLRC oldContext );
+extern HGLRC wrap_wglGetCurrentContext( TEB *teb);
+extern PROC wrap_wglGetProcAddress( TEB *teb , LPCSTR lpszProc );
+extern BOOL wrap_wglMakeCurrent( TEB *teb , HDC hDc, HGLRC newContext );
+extern BOOL wrap_wglShareLists( TEB *teb , HGLRC hrcSrvShare, HGLRC hrcSrvSource );
+extern BOOL wrap_wglSwapBuffers( TEB *teb , HDC hdc );
+extern void wrap_glClear( TEB *teb , GLbitfield mask );
+extern void wrap_glDrawPixels( TEB *teb , GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels );
+extern void wrap_glFinish( TEB *teb);
+extern void wrap_glFlush( TEB *teb);
+extern void wrap_glGetIntegerv( TEB *teb , GLenum pname, GLint *data );
+extern const GLubyte * wrap_glGetString( TEB *teb , GLenum name );
+extern void wrap_glReadPixels( TEB *teb , GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, void *pixels );
+extern void wrap_glViewport( TEB *teb , GLint x, GLint y, GLsizei width, GLsizei height );
+extern void wrap_glDebugMessageCallback( TEB *teb , GLDEBUGPROC callback, const void *userParam );
+extern void wrap_glDebugMessageCallbackAMD( TEB *teb , GLDEBUGPROCAMD callback, void *userParam );
+extern void wrap_glDebugMessageCallbackARB( TEB *teb , GLDEBUGPROCARB callback, const void *userParam );
+extern const GLubyte * wrap_glGetStringi( TEB *teb , GLenum name, GLuint index );
+extern BOOL wrap_wglBindTexImageARB( TEB *teb , HPBUFFERARB hPbuffer, int iBuffer );
+extern HGLRC wrap_wglCreateContextAttribsARB( TEB *teb , HDC hDC, HGLRC hShareContext, const int *attribList );
+extern HPBUFFERARB wrap_wglCreatePbufferARB( TEB *teb , HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList );
+extern BOOL wrap_wglDestroyPbufferARB( TEB *teb , HPBUFFERARB hPbuffer );
+extern HDC wrap_wglGetPbufferDCARB( TEB *teb , HPBUFFERARB hPbuffer );
+extern BOOL wrap_wglMakeContextCurrentARB( TEB *teb , HDC hDrawDC, HDC hReadDC, HGLRC hglrc );
+extern BOOL wrap_wglQueryPbufferARB( TEB *teb , HPBUFFERARB hPbuffer, int iAttribute, int *piValue );
+extern int wrap_wglReleasePbufferDCARB( TEB *teb , HPBUFFERARB hPbuffer, HDC hDC );
+extern BOOL wrap_wglReleaseTexImageARB( TEB *teb , HPBUFFERARB hPbuffer, int iBuffer );
+extern BOOL wrap_wglSetPbufferAttribARB( TEB *teb , HPBUFFERARB hPbuffer, const int *piAttribList );
+
 extern NTSTATUS wgl_wglCreateContext( void *args );
 extern NTSTATUS wow64_wgl_wglCreateContext( void *args );
 extern NTSTATUS wgl_wglDeleteContext( void *args );
