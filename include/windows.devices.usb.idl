@@ -165,7 +165,7 @@ namespace Windows.Devices.Usb {
     }
 
     [
-        activatable(Windows.Devices.Usb.IUsbSetupPacketFactory, Windows.Foundation.UniversalApiContract, 1.0),
+        /* activatable(Windows.Devices.Usb.IUsbSetupPacketFactory, Windows.Foundation.UniversalApiContract, 1.0), */
         activatable(Windows.Foundation.UniversalApiContract, 1.0),
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile)
