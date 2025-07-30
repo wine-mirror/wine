@@ -1314,6 +1314,15 @@ static const struct knownFolderDef known_folders[] = {
                  NULL,
                  0,
                  0),
+    KNOWN_FOLDER(FOLDERID_AccountPictures,
+                 NO_CSIDL,
+                 "AccountPictures",
+                 KF_CATEGORY_PERUSER,
+                 FOLDERID_RoamingAppData, GUID_NULL,
+                 "Microsoft\\Windows\\AccountPictures",
+                 NULL,
+                 FILE_ATTRIBUTE_READONLY,
+                 KFDF_PRECREATE | KFDF_ROAMABLE),
 };
 #undef KNOWN_FOLDER
 BOOL known_folder_found[ARRAY_SIZE(known_folders)];
