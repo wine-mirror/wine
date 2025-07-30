@@ -213,7 +213,8 @@ static void opengl_drawable_flush( struct opengl_drawable *drawable, int interva
         flags = GL_FLUSH_INTERVAL;
     }
 
-    if (flags) drawable->funcs->flush( drawable, flags );
+    if (flags || InterlockedCompareExchange( &drawable->client->offscreen, 0, 0 ))
+        drawable->funcs->flush( drawable, flags );
 }
 
 #ifdef SONAME_LIBEGL
