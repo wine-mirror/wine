@@ -1574,6 +1574,11 @@ static void dump_cancel_async_request( const struct cancel_async_request *req )
     fprintf( stderr, ", only_thread=%d", req->only_thread );
 }
 
+static void dump_cancel_async_reply( const struct cancel_async_reply *req )
+{
+    fprintf( stderr, " cancel_handle=%04x", req->cancel_handle );
+}
+
 static void dump_get_async_result_request( const struct get_async_result_request *req )
 {
     dump_uint64( " user_arg=", &req->user_arg );
@@ -3950,7 +3955,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     NULL,
     NULL,
     NULL,
-    NULL,
+    (dump_func)dump_cancel_async_reply,
     (dump_func)dump_get_async_result_reply,
     (dump_func)dump_set_async_direct_result_reply,
     (dump_func)dump_read_reply,

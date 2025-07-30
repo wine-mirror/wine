@@ -2502,6 +2502,8 @@ enum message_type
     obj_handle_t handle;        /* handle to comm port, socket or file */
     client_ptr_t iosb;          /* I/O status block (NULL=all) */
     int          only_thread;   /* cancel matching this thread */
+@REPLY
+    obj_handle_t cancel_handle;
 @END
 
 

@@ -1423,6 +1423,8 @@ C_ASSERT( offsetof(struct cancel_async_request, handle) == 12 );
 C_ASSERT( offsetof(struct cancel_async_request, iosb) == 16 );
 C_ASSERT( offsetof(struct cancel_async_request, only_thread) == 24 );
 C_ASSERT( sizeof(struct cancel_async_request) == 32 );
+C_ASSERT( offsetof(struct cancel_async_reply, cancel_handle) == 8 );
+C_ASSERT( sizeof(struct cancel_async_reply) == 16 );
 C_ASSERT( offsetof(struct get_async_result_request, user_arg) == 16 );
 C_ASSERT( sizeof(struct get_async_result_request) == 24 );
 C_ASSERT( sizeof(struct get_async_result_reply) == 8 );
