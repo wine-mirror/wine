@@ -620,6 +620,23 @@ HRESULT d2d_geometry_group_init(struct d2d_geometry *geometry, ID2D1Factory *fac
         D2D1_FILL_MODE fill_mode, ID2D1Geometry **src_geometries, unsigned int geometry_count);
 struct d2d_geometry *unsafe_impl_from_ID2D1Geometry(ID2D1Geometry *iface);
 
+struct d2d_geometry_realization
+{
+    ID2D1GeometryRealization ID2D1GeometryRealization_iface;
+    LONG refcount;
+
+    ID2D1Factory *factory;
+    ID2D1Geometry *geometry;
+    bool filled;
+
+    ID2D1StrokeStyle *stroke_style;
+    float stroke_width;
+};
+
+HRESULT d2d_geometry_realization_init(struct d2d_geometry_realization *realization,
+        ID2D1Factory *factory, ID2D1Geometry *geometry);
+struct d2d_geometry_realization *unsafe_impl_from_ID2D1GeometryRealization(ID2D1GeometryRealization *iface);
+
 struct d2d_device
 {
     ID2D1Device6 ID2D1Device6_iface;

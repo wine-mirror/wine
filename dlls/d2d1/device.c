@@ -2749,26 +2749,82 @@ static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_FillOpacityM
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateFilledGeometryRealization(ID2D1DeviceContext6 *iface,
         ID2D1Geometry *geometry, float tolerance, ID2D1GeometryRealization **realization)
 {
-    FIXME("iface %p, geometry %p, tolerance %.8e, realization %p stub!\n", iface, geometry, tolerance,
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_geometry_realization *object;
+    HRESULT hr;
+
+    TRACE("iface %p, geometry %p, tolerance %.8e, realization %p.\n", iface, geometry, tolerance,
             realization);
 
-    return E_NOTIMPL;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d2d_geometry_realization_init(object, context->factory, geometry)))
+    {
+        WARN("Failed to initialise geometry realization, hr %#lx.\n", hr);
+        free(object);
+        return hr;
+    }
+    object->filled = true;
+
+    TRACE("Created geometry realization %p.\n", object);
+    *realization = &object->ID2D1GeometryRealization_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateStrokedGeometryRealization(
         ID2D1DeviceContext6 *iface, ID2D1Geometry *geometry, float tolerance, float stroke_width,
         ID2D1StrokeStyle *stroke_style, ID2D1GeometryRealization **realization)
 {
-    FIXME("iface %p, geometry %p, tolerance %.8e, stroke_width %.8e, stroke_style %p, realization %p stub!\n",
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_geometry_realization *object;
+    HRESULT hr;
+
+    TRACE("iface %p, geometry %p, tolerance %.8e, stroke_width %.8e, stroke_style %p, realization %p.\n",
             iface, geometry, tolerance, stroke_width, stroke_style, realization);
 
-    return E_NOTIMPL;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d2d_geometry_realization_init(object, context->factory, geometry)))
+    {
+        WARN("Failed to initialise geometry realization, hr %#lx.\n", hr);
+        free(object);
+        return hr;
+    }
+    object->stroke_width = stroke_width;
+    object->stroke_style = stroke_style;
+    if (object->stroke_style)
+        ID2D1StrokeStyle_AddRef(object->stroke_style);
+
+    TRACE("Created geometry realization %p.\n", object);
+    *realization = &object->ID2D1GeometryRealization_iface;
+
+    return S_OK;
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_DrawGeometryRealization(ID2D1DeviceContext6 *iface,
         ID2D1GeometryRealization *realization, ID2D1Brush *brush)
 {
-    FIXME("iface %p, realization %p, brush %p stub!\n", iface, realization, brush);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_geometry_realization *r = unsafe_impl_from_ID2D1GeometryRealization(realization);
+
+    FIXME("iface %p, realization %p, brush %p semi-stub!\n", iface, realization, brush);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        if (r->filled)
+        {
+            d2d_command_list_fill_geometry(context->target.command_list, context, r->geometry, brush, NULL);
+        }
+        else
+        {
+            d2d_command_list_draw_geometry(context->target.command_list, context, r->geometry, brush,
+                    r->stroke_width, r->stroke_style);
+        }
+        return;
+    }
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateInk(ID2D1DeviceContext6 *iface,
