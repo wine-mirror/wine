@@ -404,6 +404,19 @@ static HRESULT WINAPI unk_no_marshal_QueryInterface(IUnknown *iface, REFIID riid
     return E_NOINTERFACE;
 }
 
+static HRESULT WINAPI unk_agile_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IAgileObject))
+    {
+        *ppv = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
 static ULONG WINAPI unk_AddRef(IUnknown *iface)
 {
     struct unk_impl *impl = impl_from_IUnknown(iface);
@@ -430,6 +443,13 @@ static const IUnknownVtbl unk_no_marshal_vtbl =
     unk_Release
 };
 
+static const IUnknownVtbl unk_agile_vtbl =
+{
+    unk_agile_QueryInterface,
+    unk_AddRef,
+    unk_Release
+};
+
 struct test_RoGetAgileReference_thread_param
 {
     enum AgileReferenceOptions option;
@@ -437,6 +457,7 @@ struct test_RoGetAgileReference_thread_param
     RO_INIT_TYPE to_type;
     IAgileReference *agile_reference;
     IUnknown *unk_obj;
+    BOOLEAN obj_is_agile;
 };
 
 static DWORD CALLBACK test_RoGetAgileReference_thread_proc(void *arg)
@@ -453,7 +474,14 @@ static DWORD CALLBACK test_RoGetAgileReference_thread_proc(void *arg)
     hr = IAgileReference_Resolve(param->agile_reference, &IID_IUnknown, (void **)&unknown);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!!unknown, "Expected pointer not NULL.\n");
-    if (param->from_type == RO_INIT_MULTITHREADED && param->to_type == RO_INIT_MULTITHREADED)
+    if (param->obj_is_agile)
+    {
+        todo_wine_if(param->from_type == RO_INIT_SINGLETHREADED || param->to_type == RO_INIT_SINGLETHREADED)
+        ok(unknown == param->unk_obj, "Expected the same object.\n");
+        todo_wine_if(param->from_type == RO_INIT_MULTITHREADED && param->to_type == RO_INIT_MULTITHREADED)
+        EXPECT_REF(param->unk_obj, 4);
+    }
+    else if (param->from_type == RO_INIT_MULTITHREADED && param->to_type == RO_INIT_MULTITHREADED)
     {
         ok(unknown == param->unk_obj, "Expected the same object.\n");
         todo_wine_if(param->option == AGILEREFERENCE_DEFAULT)
@@ -478,6 +506,7 @@ static void test_RoGetAgileReference(void)
     struct test_RoGetAgileReference_thread_param param;
     struct unk_impl unk_no_marshal_obj = {{&unk_no_marshal_vtbl}, 1};
     struct unk_impl unk_obj = {{&unk_vtbl}, 1};
+    struct unk_impl unk_agile_obj = {{&unk_agile_vtbl}, 1};
     enum AgileReferenceOptions option;
     IAgileReference *agile_reference;
     RO_INIT_TYPE from_type, to_type;
@@ -551,6 +580,7 @@ static void test_RoGetAgileReference(void)
                 param.to_type = to_type;
                 param.agile_reference = agile_reference;
                 param.unk_obj = &unk_obj.IUnknown_iface;
+                param.obj_is_agile = FALSE;
                 thread = CreateThread(NULL, 0, test_RoGetAgileReference_thread_proc, &param, 0, NULL);
                 flush_events();
                 ret = WaitForSingleObject(thread, 100);
@@ -558,6 +588,38 @@ static void test_RoGetAgileReference(void)
             }
 
             IUnknown_Release(unknown2);
+            IUnknown_Release(unknown);
+            IAgileReference_Release(agile_reference);
+            EXPECT_REF(&unk_obj, 1);
+
+            hr = RoGetAgileReference(option, &IID_IUnknown, &unk_agile_obj.IUnknown_iface, &agile_reference);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            ok(!!agile_reference, "Got unexpected agile_reference.\n");
+            todo_wine_if(option == AGILEREFERENCE_DEFAULT)
+            EXPECT_REF(&unk_agile_obj, 2);
+
+            unknown = NULL;
+            hr = IAgileReference_Resolve(agile_reference, &IID_IUnknown, (void **)&unknown);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            ok(!!unknown, "Expected pointer not NULL.\n");
+            ok(unknown == &unk_agile_obj.IUnknown_iface, "Expected the same object.\n");
+            todo_wine
+            EXPECT_REF(&unk_agile_obj, 3);
+
+            for (to_type = RO_INIT_SINGLETHREADED; to_type <= RO_INIT_MULTITHREADED; to_type++)
+            {
+                param.option = option;
+                param.from_type = from_type;
+                param.to_type = to_type;
+                param.agile_reference = agile_reference;
+                param.unk_obj = &unk_agile_obj.IUnknown_iface;
+                param.obj_is_agile = TRUE;
+                thread = CreateThread(NULL, 0, test_RoGetAgileReference_thread_proc, &param, 0, NULL);
+                flush_events();
+                ret = WaitForSingleObject(thread, 100);
+                ok(!ret, "WaitForSingleObject failed, error %ld.\n", GetLastError());
+            }
+
             IUnknown_Release(unknown);
             IAgileReference_Release(agile_reference);
             EXPECT_REF(&unk_obj, 1);
