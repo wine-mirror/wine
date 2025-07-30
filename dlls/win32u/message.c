@@ -2948,7 +2948,12 @@ int peek_message( MSG *msg, const struct peek_message_filter *filter )
             }
             else if (info.msg.message == WH_MOUSE_LL && size >= sizeof(msg_data->hardware))
             {
+                RECT rect = {info.msg.pt.x, info.msg.pt.y, info.msg.pt.x, info.msg.pt.y};
                 MSLLHOOKSTRUCT hook;
+
+                rect = map_rect_raw_to_virt( rect, 0 );
+                info.msg.pt.x = rect.left;
+                info.msg.pt.y = rect.top;
 
                 hook.pt          = info.msg.pt;
                 hook.mouseData   = info.msg.lParam;
