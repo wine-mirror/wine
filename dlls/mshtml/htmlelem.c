@@ -8231,6 +8231,94 @@ static const IHTMLAttributeCollection3Vtbl HTMLAttributeCollection3Vtbl = {
     HTMLAttributeCollection3_get_length
 };
 
+static inline HTMLAttributeCollection *impl_from_IHTMLAttributeCollection4(IHTMLAttributeCollection4 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLAttributeCollection, IHTMLAttributeCollection4_iface);
+}
+
+DISPEX_IDISPATCH_IMPL(HTMLAttributeCollection4, IHTMLAttributeCollection4,
+                      impl_from_IHTMLAttributeCollection4(iface)->dispex)
+
+static HRESULT WINAPI HTMLAttributeCollection4_getNamedItemNS(IHTMLAttributeCollection4 *iface, VARIANT *ns,
+                                                              BSTR name, IHTMLDOMAttribute2 **p)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection4(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_w(name), p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLAttributeCollection4_setNamedItemNS(IHTMLAttributeCollection4 *iface,
+        IHTMLDOMAttribute2 *node, IHTMLDOMAttribute2 **p)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection4(iface);
+    FIXME("(%p)->(%p %p)\n", This, node, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLAttributeCollection4_removeNamedItemNS(IHTMLAttributeCollection4 *iface, VARIANT *ns,
+        BSTR name, IHTMLDOMAttribute2 **p)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection4(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_w(name), p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLAttributeCollection4_getNamedItem(IHTMLAttributeCollection4 *iface, BSTR name,
+        IHTMLDOMAttribute2 **p)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection4(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_w(name), p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLAttributeCollection4_setNamedItem(IHTMLAttributeCollection4 *iface,
+        IHTMLDOMAttribute2 *node, IHTMLDOMAttribute2 **p)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection4(iface);
+    FIXME("(%p)->(%p %p)\n", This, node, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLAttributeCollection4_removeNamedItem(IHTMLAttributeCollection4 *iface,
+        BSTR name, IHTMLDOMAttribute2 **p)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection4(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_w(name), p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLAttributeCollection4_item(IHTMLAttributeCollection4 *iface, LONG index, IHTMLDOMAttribute2 **p)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection4(iface);
+    FIXME("(%p)->(%ld %p)\n", This, index, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLAttributeCollection4_get_length(IHTMLAttributeCollection4 *iface, LONG *p)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection4(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static const IHTMLAttributeCollection4Vtbl HTMLAttributeCollection4Vtbl = {
+    HTMLAttributeCollection4_QueryInterface,
+    HTMLAttributeCollection4_AddRef,
+    HTMLAttributeCollection4_Release,
+    HTMLAttributeCollection4_GetTypeInfoCount,
+    HTMLAttributeCollection4_GetTypeInfo,
+    HTMLAttributeCollection4_GetIDsOfNames,
+    HTMLAttributeCollection4_Invoke,
+    HTMLAttributeCollection4_getNamedItemNS,
+    HTMLAttributeCollection4_setNamedItemNS,
+    HTMLAttributeCollection4_removeNamedItemNS,
+    HTMLAttributeCollection4_getNamedItem,
+    HTMLAttributeCollection4_setNamedItem,
+    HTMLAttributeCollection4_removeNamedItem,
+    HTMLAttributeCollection4_item,
+    HTMLAttributeCollection4_get_length
+};
+
 static inline HTMLAttributeCollection *HTMLAttributeCollection_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLAttributeCollection, dispex);
@@ -8246,6 +8334,8 @@ static void *HTMLAttributeCollection_query_interface(DispatchEx *dispex, REFIID 
         return &This->IHTMLAttributeCollection2_iface;
     if(IsEqualGUID(&IID_IHTMLAttributeCollection3, riid))
         return &This->IHTMLAttributeCollection3_iface;
+    if(IsEqualGUID(&IID_IHTMLAttributeCollection4, riid))
+        return &This->IHTMLAttributeCollection4_iface;
 
     return NULL;
 }
@@ -8382,6 +8472,7 @@ HRESULT HTMLElement_get_attr_col(HTMLDOMNode *iface, HTMLAttributeCollection **a
     This->attrs->IHTMLAttributeCollection_iface.lpVtbl = &HTMLAttributeCollectionVtbl;
     This->attrs->IHTMLAttributeCollection2_iface.lpVtbl = &HTMLAttributeCollection2Vtbl;
     This->attrs->IHTMLAttributeCollection3_iface.lpVtbl = &HTMLAttributeCollection3Vtbl;
+    This->attrs->IHTMLAttributeCollection4_iface.lpVtbl = &HTMLAttributeCollection4Vtbl;
 
     IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
     This->attrs->elem = This;

@@ -183,6 +183,7 @@ struct constructor;
     XIID(IHTMLAttributeCollection) \
     XIID(IHTMLAttributeCollection2) \
     XIID(IHTMLAttributeCollection3) \
+    XIID(IHTMLAttributeCollection4) \
     XIID(IHTMLBodyElement) \
     XIID(IHTMLBodyElement2) \
     XIID(IHTMLButtonElement) \
@@ -1329,6 +1330,7 @@ struct HTMLAttributeCollection {
     IHTMLAttributeCollection IHTMLAttributeCollection_iface;
     IHTMLAttributeCollection2 IHTMLAttributeCollection2_iface;
     IHTMLAttributeCollection3 IHTMLAttributeCollection3_iface;
+    IHTMLAttributeCollection4 IHTMLAttributeCollection4_iface;
 
     HTMLElement *elem;
     struct list attrs;

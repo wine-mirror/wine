@@ -510,6 +510,17 @@ static const IID * const computed_style_iids[] = {
     NULL
 };
 
+static const IID * const attr_col_iids[] = {
+    &IID_IUnknown,
+    &IID_IDispatch,
+    &IID_IDispatchEx,
+    &IID_IHTMLAttributeCollection,
+    &IID_IHTMLAttributeCollection2,
+    &IID_IHTMLAttributeCollection3,
+    &IID_IHTMLAttributeCollection4,
+    NULL
+};
+
 static const IID * const img_factory_iids[] = {
     &IID_IUnknown,
     &IID_IDispatch,
@@ -3883,6 +3894,7 @@ static void test_attr_collection(IHTMLElement *elem)
     hres = IHTMLDOMNode_get_attributes(node, &attr);
     ok(hres == S_OK, "get_attributes failed: %08lx\n", hres);
     ok(iface_cmp((IUnknown*)disp, (IUnknown*)attr), "disp != attr\n");
+    test_ifaces((IUnknown *)attr, attr_col_iids);
     IDispatch_Release(attr);
     IHTMLDOMNode_Release(node);
 
