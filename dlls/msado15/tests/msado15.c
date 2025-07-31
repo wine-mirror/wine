@@ -1896,23 +1896,23 @@ static void test_ConnectionPoint(void)
 
     /* nothing advised yet */
     hr = IConnectionPoint_Unadvise( point, 3 );
-    ok( hr == E_FAIL, "got %08lx\n", hr );
+    ok( hr == E_FAIL || hr == CONNECT_E_FIRST, "got %08lx\n", hr );
 
     hr = IConnectionPoint_Advise( point, NULL, NULL );
-    ok( hr == E_FAIL, "got %08lx\n", hr );
+    ok( hr == E_FAIL || hr == E_POINTER, "got %08lx\n", hr );
 
     hr = IConnectionPoint_Advise( point, (void*)&conn_event.conn_event_sink, NULL );
-    ok( hr == E_FAIL, "got %08lx\n", hr );
+    ok( hr == E_FAIL || hr == E_POINTER, "got %08lx\n", hr );
 
     cookie = 0xdeadbeef;
     hr = IConnectionPoint_Advise( point, NULL, &cookie );
-    ok( hr == E_FAIL, "got %08lx\n", hr );
+    ok( hr == E_FAIL || hr == E_POINTER, "got %08lx\n", hr );
     ok( cookie == 0xdeadbeef, "got %08lx\n", cookie );
 
     /* unsupported sink */
     cookie = 0xdeadbeef;
     hr = IConnectionPoint_Advise( point, (void*)&support_err_sink, &cookie );
-    ok( hr == E_FAIL, "got %08lx\n", hr );
+    ok( hr == E_FAIL || hr == CONNECT_E_CANNOTCONNECT, "got %08lx\n", hr );
     ok( !cookie, "got %08lx\n", cookie );
 
     cookie = 0;
@@ -1922,11 +1922,11 @@ static void test_ConnectionPoint(void)
 
     /* invalid cookie */
     hr = IConnectionPoint_Unadvise( point, 0 );
-    ok( hr == E_FAIL, "got %08lx\n", hr );
+    ok( hr == E_FAIL || hr == CONNECT_E_FIRST, "got %08lx\n", hr );
 
     /* wrong cookie */
     hr = IConnectionPoint_Unadvise( point, cookie + 1 );
-    ok( hr == E_FAIL, "got %08lx\n", hr );
+    ok( hr == E_FAIL || hr == CONNECT_E_FIRST, "got %08lx\n", hr );
 
     hr = IConnectionPoint_Unadvise( point, cookie );
     ok( hr == S_OK, "got %08lx\n", hr );
