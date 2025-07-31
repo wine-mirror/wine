@@ -83,7 +83,7 @@ static HRESULT enum_device_information( enum_device_information_cb callback, voi
 struct device_watcher
 {
     IDeviceWatcher IDeviceWatcher_iface;
-    LONG ref;
+    struct weak_reference_source weak_reference_source;
 
     struct list added_handlers;
     struct list enumerated_handlers;
@@ -114,6 +114,13 @@ static HRESULT WINAPI device_watcher_QueryInterface( IDeviceWatcher *iface, REFI
         return S_OK;
     }
 
+    if (IsEqualGUID( iid, &IID_IWeakReferenceSource ))
+    {
+        *out = &impl->weak_reference_source.IWeakReferenceSource_iface;
+        IWeakReferenceSource_AddRef(*out);
+        return S_OK;
+    }
+
     FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
     *out = NULL;
     return E_NOINTERFACE;
@@ -122,7 +129,7 @@ static HRESULT WINAPI device_watcher_QueryInterface( IDeviceWatcher *iface, REFI
 static ULONG WINAPI device_watcher_AddRef( IDeviceWatcher *iface )
 {
     struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
-    ULONG ref = InterlockedIncrement( &impl->ref );
+    ULONG ref = weak_reference_strong_add_ref( &impl->weak_reference_source );
     TRACE( "iface %p, ref %lu.\n", iface, ref );
     return ref;
 }
@@ -130,7 +137,7 @@ static ULONG WINAPI device_watcher_AddRef( IDeviceWatcher *iface )
 static ULONG WINAPI device_watcher_Release( IDeviceWatcher *iface )
 {
     struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
-    ULONG ref = InterlockedDecrement( &impl->ref );
+    ULONG ref = weak_reference_strong_release( &impl->weak_reference_source );
     TRACE( "iface %p, ref %lu.\n", iface, ref );
 
     if (!ref)
@@ -386,10 +393,15 @@ static HRESULT device_watcher_create( HSTRING filter, IDeviceWatcher **out )
 
     if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
 
-    impl->ref = 1;
     impl->IDeviceWatcher_iface.lpVtbl = &device_watcher_vtbl;
+    if (FAILED(hr = weak_reference_source_init( &impl->weak_reference_source, (IUnknown *)&impl->IDeviceWatcher_iface )))
+    {
+        free( impl );
+        return hr;
+    }
     if (FAILED(hr = WindowsDuplicateString( filter, &impl->filter )))
     {
+        weak_reference_strong_release( &impl->weak_reference_source );
         free( impl );
         return hr;
     }

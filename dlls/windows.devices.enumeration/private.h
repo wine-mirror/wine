@@ -40,6 +40,7 @@
 #include "wine/list.h"
 
 #include "async_private.h"
+#include "weakref.h"
 
 struct vector_iids
 {

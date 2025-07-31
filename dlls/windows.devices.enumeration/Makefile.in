@@ -9,4 +9,5 @@ SOURCES = \
 	event_handlers.c \
 	information.c \
 	main.c \
-	vector.c
+	vector.c \
+	weakref.c
