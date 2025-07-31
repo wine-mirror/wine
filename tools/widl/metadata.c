@@ -1669,7 +1669,7 @@ static UINT make_method_sig( const var_t *method, BYTE *buf, BOOL is_static )
     /* add remaining parameters */
     LIST_FOR_EACH_ENTRY( arg, arg_list, var_t, entry )
     {
-        if (is_attr( arg->attrs, ATTR_RETVAL ) ) continue;
+        if (is_size_param( arg, arg_list ) || is_attr( arg->attrs, ATTR_RETVAL ) ) continue;
         len += make_type_sig( arg->declspec.type, buf + len );
         buf[1]++;
     }
@@ -2210,6 +2210,7 @@ static void add_method_params_step1( var_list_t *arg_list )
     {
         type_t *type = arg->declspec.type;
 
+        if (is_size_param( arg, arg_list )) continue;
         if (type_get_type( type ) == TYPE_POINTER) type = type_pointer_get_ref_type( type );
         if (type->name && !strcmp( type->name, "EventRegistrationToken" ))
         {
@@ -2283,7 +2284,7 @@ static UINT add_method_params_step2( var_list_t *arg_list )
 
     LIST_FOR_EACH_ENTRY( arg, arg_list, var_t, entry )
     {
-        if (is_attr( arg->attrs, ATTR_RETVAL )) continue;
+        if (is_size_param( arg, arg_list) || is_attr( arg->attrs, ATTR_RETVAL )) continue;
         row = add_param_row( get_param_attrs(arg), seq++, add_string(arg->name) );
         if (!first) first = row;
     }

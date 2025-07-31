@@ -2614,7 +2614,7 @@ static void check_eventremove_args( const var_t *func, const var_list_t *args )
     }
 }
 
-static int is_size_parameter( const var_t *param, const var_list_t *args )
+bool is_size_param( const var_t *param, const var_list_t *args )
 {
     const var_t *arg;
 
@@ -2627,9 +2627,9 @@ static int is_size_parameter( const var_t *param, const var_list_t *args )
         if (type->type_type != TYPE_ARRAY || !(size_is = type_array_get_conformance( type ))) continue;
 
         if (size_is->type == EXPR_PPTR) size_is = size_is->ref;
-        if (!strcmp( param->name, size_is->u.sval )) return 1;
+        if (!strcmp( param->name, size_is->u.sval )) return true;
     }
-    return 0;
+    return false;
 }
 
 static void check_propget_args( const var_t *func, const var_list_t *args )
@@ -2640,7 +2640,7 @@ static void check_propget_args( const var_t *func, const var_list_t *args )
     LIST_FOR_EACH_ENTRY_REV( arg, args, const var_t, entry )
     {
         const type_t *type = arg->declspec.type;
-        int is_size = is_size_parameter( arg, args );
+        bool is_size = is_size_param( arg, args );
 
         count++;
         if (count == 1 && (!is_ptr( type ) || !is_attr( arg->attrs, ATTR_RETVAL )))
@@ -2663,7 +2663,7 @@ static void check_propput_args( const var_t *func, const var_list_t *args )
 
     LIST_FOR_EACH_ENTRY_REV( arg, args, const var_t, entry )
     {
-        int is_size = is_size_parameter( arg, args );
+        bool is_size = is_size_param( arg, args );
 
         count++;
         if (is_attr( arg->attrs, ATTR_OUT ))

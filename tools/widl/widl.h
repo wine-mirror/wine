@@ -93,6 +93,8 @@ extern void write_metadata(const statement_list_t *stmts);
 extern void start_cplusplus_guard(FILE *fp);
 extern void end_cplusplus_guard(FILE *fp);
 
+extern bool is_size_param( const var_t *param, const var_list_t *args );
+
 /* attribute.c */
 
 extern attr_t *attr_int( struct location where, enum attr_type attr_type, unsigned int val );
