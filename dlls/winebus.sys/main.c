@@ -474,13 +474,10 @@ static BOOL is_hidraw_enabled(WORD vid, WORD pid, const USAGE_AND_PAGE *usages, 
         if (pid == 0x0127) prefer_hidraw = TRUE; /* VKB-Sim Space Gunfighter L */
         break;
     case 0x3344:
-        /* comes with 31 buttons in the default configuration, or 128 max */
-        if ((buttons == 31) || (buttons == 128)) prefer_hidraw = TRUE;
-        /* users may have configured button limits, usually 32/50/64 */
-        if ((buttons == 32) || (buttons == 50) || (buttons == 64)) prefer_hidraw = TRUE;
-        /* if customized, arbitrary amount of buttons may be shown, decide by PID */
-        if (pid == 0x412f) prefer_hidraw = TRUE; /* Virpil Constellation ALPHA-R */
-        if (pid == 0x812c) prefer_hidraw = TRUE; /* Virpil Constellation ALPHA-L */
+        /* all VPC devices require hidraw, have variable numbers of axis/buttons, & in many cases
+         * have functionally random PID. due to this, the only safe way to grab all VPC devices is
+         * a catch-all on VID and exclude any hypothetical future device that wants hidraw=false */
+        prefer_hidraw = TRUE;
         break;
     case 0x03eb:
         /* users may have configured button limits, usually 32/50/64 */
