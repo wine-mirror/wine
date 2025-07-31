@@ -508,13 +508,10 @@ void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, enum s
         switch (phase)
         {
         case STUBLESS_INITOUT:
-            if (*(unsigned char **)pArg)
-            {
-                if (param_needs_alloc(params[i].attr))
-                    memset( *(unsigned char **)pArg, 0, calc_arg_size( pStubMsg, pTypeFormat ));
-                else if (param_is_out_basetype(params[i].attr))
-                    memset( *(unsigned char **)pArg, 0, basetype_arg_size( params[i].u.type_format_char ));
-            }
+            if (param_needs_alloc(params[i].attr) && *(unsigned char **)pArg)
+                memset( *(unsigned char **)pArg, 0, calc_arg_size( pStubMsg, pTypeFormat ));
+            else if (param_is_out_basetype(params[i].attr) && *(unsigned char **)pArg)
+                memset( *(unsigned char **)pArg, 0, basetype_arg_size( params[i].u.type_format_char ));
             break;
         case STUBLESS_CALCSIZE:
             if (params[i].attr.IsSimpleRef && !*(unsigned char **)pArg)
