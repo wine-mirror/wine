@@ -2995,6 +2995,9 @@ static void check_constructor_interfaces( const type_t *runtimeclass )
         }
         else if (attr->type == ATTR_COMPOSABLE)
         {
+            if (!value->u.var->declspec.type->defined)
+                error_at( &attr->where, "composition interface %s is undefined\n", value->u.var->declspec.type->name );
+
             check_composition_interface( value->u.var->declspec.type );
         }
         else if (attr->type == ATTR_STATIC)
