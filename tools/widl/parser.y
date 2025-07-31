@@ -2987,6 +2987,10 @@ static void check_constructor_interfaces( const type_t *runtimeclass )
         if (attr->type == ATTR_ACTIVATABLE)
         {
             if (value->type != EXPR_MEMBER) continue;
+
+            if (!value->u.var->declspec.type->defined)
+                error_at( &attr->where, "activation interface %s is undefined\n", value->u.var->declspec.type->name );
+
             check_activation_interface( value->u.var->declspec.type );
         }
         else if (attr->type == ATTR_COMPOSABLE)
