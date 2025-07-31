@@ -2525,7 +2525,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH MoveFileWithProgressW( const WCHAR *source, const 
                                                      void *param, DWORD flag )
 {
     FILE_RENAME_INFORMATION *rename_info;
-    FILE_BASIC_INFORMATION info;
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
@@ -2551,9 +2550,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH MoveFileWithProgressW( const WCHAR *source, const 
                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                          FILE_SYNCHRONOUS_IO_NONALERT );
     RtlFreeUnicodeString( &nt_name );
-    if (!set_ntstatus( status )) goto error;
-
-    status = NtQueryInformationFile( source_handle, &io, &info, sizeof(info), FileBasicInformation );
     if (!set_ntstatus( status )) goto error;
 
     if (!RtlDosPathNameToNtPathName_U( dest, &nt_name, NULL, NULL ))
