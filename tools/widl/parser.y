@@ -2976,7 +2976,7 @@ static void check_composition_interface( const type_t *iface )
     }
 }
 
-static void check_constructor_interfaces( const type_t *runtimeclass )
+static void check_runtimeclass( const type_t *runtimeclass )
 {
     const attr_t *attr;
 
@@ -3005,6 +3005,11 @@ static void check_constructor_interfaces( const type_t *runtimeclass )
             if (!value->u.var->declspec.type->defined)
                 error_at( &attr->where, "static interface %s is undefined\n", value->u.var->declspec.type->name );
         }
+        else if (attr->type == ATTR_CONTRACT)
+        {
+            if (!value->u.var->declspec.type->defined)
+                error_at( &attr->where, "apicontract %s is undefined\n", value->u.var->declspec.type->name );
+        }
     }
 }
 
@@ -3028,7 +3033,7 @@ static void check_statements(const statement_list_t *stmts, int is_inside_librar
                     error_loc("coclass is not allowed in Windows Runtime mode\n");
                 break;
             case TYPE_RUNTIMECLASS:
-                check_constructor_interfaces( stmt->u.type );
+                check_runtimeclass( stmt->u.type );
             default:
                 break;
             }
