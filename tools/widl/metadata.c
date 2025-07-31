@@ -1644,6 +1644,15 @@ static UINT make_type_sig( const type_t *type, BYTE *buf )
     return len;
 }
 
+static BOOL is_retval( const var_t *arg )
+{
+    const type_t *type = arg->declspec.type;
+
+    /* array return values are encoded as out parameters even if the retval attribute is present */
+    if (!is_attr( arg->attrs, ATTR_RETVAL ) || type_get_type( type ) == TYPE_ARRAY) return FALSE;
+    return TRUE;
+}
+
 static UINT make_method_sig( const var_t *method, BYTE *buf, BOOL is_static )
 {
     const var_t *arg;
@@ -1661,7 +1670,7 @@ static UINT make_method_sig( const var_t *method, BYTE *buf, BOOL is_static )
     {
         const type_t *type;
 
-        if (!is_attr( arg->attrs, ATTR_RETVAL )) continue;
+        if (!is_retval( arg )) continue;
         type = type_pointer_get_ref_type( arg->declspec.type ); /* retval must be a pointer */
         len = make_type_sig( type, buf + 2 ) + 2;
     }
@@ -1669,7 +1678,7 @@ static UINT make_method_sig( const var_t *method, BYTE *buf, BOOL is_static )
     /* add remaining parameters */
     LIST_FOR_EACH_ENTRY( arg, arg_list, var_t, entry )
     {
-        if (is_size_param( arg, arg_list ) || is_attr( arg->attrs, ATTR_RETVAL ) ) continue;
+        if (is_size_param( arg, arg_list ) || is_retval( arg ) ) continue;
         len += make_type_sig( arg->declspec.type, buf + len );
         buf[1]++;
     }
@@ -1690,7 +1699,7 @@ static UINT make_property_sig( const var_t *method, BYTE *buf, BOOL is_static )
     {
         const type_t *type;
 
-        if (!is_attr( arg->attrs, ATTR_RETVAL )) continue;
+        if (!is_retval( arg )) continue;
         type = type_pointer_get_ref_type( arg->declspec.type ); /* retval must be a pointer */
         len = make_type_sig( type, buf + 2 ) + 2;
     }
@@ -1709,7 +1718,7 @@ static UINT make_activation_sig( const var_t *method, BYTE *buf )
 
     if (method) LIST_FOR_EACH_ENTRY( arg, type_function_get_args(method->declspec.type), var_t, entry )
     {
-        if (is_attr( arg->attrs, ATTR_RETVAL )) continue;
+        if (is_retval( arg )) continue;
         len += make_type_sig( arg->declspec.type, buf + len );
         buf[1]++;
     }
@@ -2275,7 +2284,7 @@ static UINT add_method_params_step2( var_list_t *arg_list )
 
     LIST_FOR_EACH_ENTRY( arg, arg_list, var_t, entry )
     {
-        if (is_attr( arg->attrs, ATTR_RETVAL ))
+        if (is_retval( arg ))
         {
             first = add_param_row( 0, 0, add_string(arg->name) );
             break;
@@ -2284,7 +2293,7 @@ static UINT add_method_params_step2( var_list_t *arg_list )
 
     LIST_FOR_EACH_ENTRY( arg, arg_list, var_t, entry )
     {
-        if (is_size_param( arg, arg_list) || is_attr( arg->attrs, ATTR_RETVAL )) continue;
+        if (is_size_param( arg, arg_list) || is_retval( arg )) continue;
         row = add_param_row( get_param_attrs(arg), seq++, add_string(arg->name) );
         if (!first) first = row;
     }
@@ -3181,7 +3190,7 @@ static void add_activation_interfaces( const type_t *class )
 
             LIST_FOR_EACH_ENTRY( arg, type_function_get_args(method->declspec.type), var_t, entry )
             {
-                if (is_attr( arg->attrs, ATTR_RETVAL )) continue;
+                if (is_retval( arg )) continue;
                 row = add_param_row( get_param_attrs(arg), seq++, add_string(arg->name) );
                 if (!paramlist) paramlist = row;
             }
