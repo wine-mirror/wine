@@ -345,10 +345,11 @@ struct _attr_t {
     unsigned int ival;
     void *pval;
   } u;
+  /* metadata */
+  unsigned int md_member;
   /* parser-internal */
   struct list entry;
   struct location where;
-  unsigned int md_member;
 };
 
 struct integer
@@ -500,30 +501,11 @@ enum type_type
     TYPE_DELEGATE,
 };
 
-enum
-{
-    MD_ATTR_CONTRACT,
-    MD_ATTR_FLAGS,
-    MD_ATTR_APICONTRACT,
-    MD_ATTR_CONTRACTVERSION,
-    MD_ATTR_VERSION,
-    MD_ATTR_UUID,
-    MD_ATTR_EXCLUSIVETO,
-    MD_ATTR_STATIC,
-    MD_ATTR_THREADING,
-    MD_ATTR_MARSHALINGBEHAVIOR,
-    MD_ATTR_OVERLOAD,
-    MD_ATTR_DEFAULT_OVERLOAD,
-    MD_ATTR_DEPRECATED,
-    MD_ATTR_MAX,
-};
-
 struct metadata
 {
     unsigned int ref;
     unsigned int def;
     unsigned int extends;
-    unsigned int member[MD_ATTR_MAX];
     /* get/put methods */
     unsigned int class_property;
     unsigned int iface_property;
