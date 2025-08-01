@@ -609,6 +609,8 @@ static const dispex_static_data_vtbl_t HTMLDOMAttribute_dispex_vtbl = {
 
 static void HTMLDOMAttribute_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
+    if(mode >= COMPAT_MODE_IE9)
+        HTMLDOMNode_init_dispex_info(info, mode);
     if(mode >= COMPAT_MODE_IE8)
         dispex_info_add_interface(info, IHTMLDOMAttribute3_tid, NULL);
 }

@@ -8465,6 +8465,46 @@ static HRESULT HTMLAttributeCollection_get_dispid(DispatchEx *dispex, const WCHA
 
     TRACE("(%p)->(%s %lx %p)\n", This, debugstr_w(name), flags, dispid);
 
+    if(dispex_compat_mode(&This->dispex) >= COMPAT_MODE_IE9) {
+        nsIDOMAttr *nsattr, *iter;
+        UINT32 length, i;
+        nsAString nsstr;
+        nsresult nsres;
+
+        if(!This->dom_attrs)
+            return DISP_E_UNKNOWNNAME;
+        nsIDOMMozNamedAttrMap_GetLength(This->dom_attrs, &length);
+
+        if(name[0] >= '0' && name[0] <= '9') {
+            WCHAR *end_ptr;
+            i = wcstoul(name, &end_ptr, 10);
+            if(!*end_ptr) {
+                if(i < length) {
+                    *dispid = MSHTML_DISPID_CUSTOM_MIN + i;
+                    return S_OK;
+                }
+            }
+        }
+
+        nsAString_Init(&nsstr, name);
+        nsres = nsIDOMMozNamedAttrMap_GetNamedItem(This->dom_attrs, &nsstr, &nsattr);
+        nsAString_Finish(&nsstr);
+        if(NS_FAILED(nsres) || !nsattr)
+            return DISP_E_UNKNOWNNAME;
+
+        for(i = 0; i < length; i++) {
+            nsres = nsIDOMMozNamedAttrMap_Item(This->dom_attrs, i, &iter);
+            assert(nsres == NS_OK);
+            nsIDOMAttr_Release(iter);
+            if(iter == nsattr)
+                break;
+        }
+
+        assert(i < length);
+        *dispid = MSHTML_DISPID_CUSTOM_MIN + i;
+        return S_OK;
+    }
+
     hres = get_attr_dispid_by_name(This, name, dispid);
     if(FAILED(hres))
         return hres;
@@ -8493,6 +8533,20 @@ static HRESULT HTMLAttributeCollection_invoke(DispatchEx *dispex, DISPID id, LCI
         DWORD pos;
 
         pos = id-MSHTML_DISPID_CUSTOM_MIN;
+
+        if(dispex_compat_mode(&This->dispex) >= COMPAT_MODE_IE9) {
+            IHTMLDOMAttribute2 *attr;
+            HRESULT hres;
+
+            hres = IHTMLAttributeCollection4_item(&This->IHTMLAttributeCollection4_iface, pos, &attr);
+            if(FAILED(hres))
+                return hres;
+            if(!attr)
+                return DISP_E_MEMBERNOTFOUND;
+            V_VT(res) = VT_DISPATCH;
+            V_DISPATCH(res) = (IDispatch *)attr;
+            return S_OK;
+        }
 
         LIST_FOR_EACH_ENTRY(iter, &This->attrs, HTMLDOMAttribute, entry) {
             if(!pos) {
@@ -8524,18 +8578,23 @@ static const dispex_static_data_vtbl_t HTMLAttributeCollection_dispex_vtbl = {
     .invoke           = HTMLAttributeCollection_invoke,
 };
 
-const tid_t NamedNodeMap_iface_tids[] = {
-    IHTMLAttributeCollection_tid,
-    IHTMLAttributeCollection2_tid,
-    IHTMLAttributeCollection3_tid,
-    0
-};
+static void NamedNodeMap_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    if(mode >= COMPAT_MODE_IE9) {
+        dispex_info_add_interface(info, IHTMLAttributeCollection4_tid, NULL);
+    }else if(mode == COMPAT_MODE_IE8) {
+        dispex_info_add_interface(info, IHTMLAttributeCollection3_tid, NULL);
+    }else {
+        dispex_info_add_interface(info, IHTMLAttributeCollection_tid, NULL);
+        dispex_info_add_interface(info, IHTMLAttributeCollection2_tid, NULL);
+    }
+}
 
 dispex_static_data_t NamedNodeMap_dispex = {
     .id         = OBJID_NamedNodeMap,
     .vtbl       = &HTMLAttributeCollection_dispex_vtbl,
     .disp_tid   = DispHTMLAttributeCollection_tid,
-    .iface_tids = NamedNodeMap_iface_tids,
+    .init_info  = NamedNodeMap_init_dispex_info,
 };
 
 HRESULT HTMLElement_get_attr_col(HTMLDOMNode *iface, HTMLAttributeCollection **ac)

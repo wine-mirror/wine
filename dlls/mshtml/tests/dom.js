@@ -1044,12 +1044,63 @@ sync_test("importNode", function() {
 sync_test("attributeNode", function() {
     document.body.innerHTML = '<div id="test" attr="wine"></div>';
     var elem = document.getElementById("test");
-    var attr = elem.attributes[0];
+    var attr, clone, prev, ret;
 
+    attr = elem.attributes["id"];
     ok(attr.ownerDocument === document, "ownerDocument = " + attr.ownerDocument);
     ok(attr.ownerElement === elem, "ownerElement = " + attr.ownerElement);
+    ok(attr.specified === true, "attr.specified = " + attr.expando);
+    ok(attr.expando === false, "attr.expando = " + attr.expando);
+    ok(attr.value === "test", "attr.value = " + attr.value);
+    ok(attr.name === "id", "attr.name = " + attr.name);
+
+    clone = attr.cloneNode(true);
+    ok(clone.ownerDocument === document, "ownerDocument = " + clone.ownerDocument);
+    ok(clone.ownerElement === null, "ownerElement = " + clone.ownerElement);
+    ok(clone.specified === true, "clone.specified = " + clone.expando);
+    ok(clone.expando === false, "clone.expando = " + clone.expando);
+    ok(clone.value === "test", "clone.value = " + clone.value);
+    ok(clone.name === "id", "clone.name = " + clone.name);
+
+    ok(elem.getAttributeNode("id") === attr, 'elem.getAttributeNode("id") = ' + elem.getAttributeNode("id"));
+    ok(elem.attributes.getNamedItem("id") === attr, "unexpected id named item");
+    ok(elem.getAttributeNode("nonexistent") === null,
+       'elem.getAttributeNode("nonexistent") = ' + elem.getAttributeNode("nonexistent"));
+    ok(elem.attributes.getNamedItem("nonexistent") === null,
+       'elem.attributes.getNamedItem("nonexistent") = ' + elem.attributes.getNamedItem("nonexistent"));
+    ok(elem.attributes.length === 2, "elem.attributes.length = " + elem.attributes.length);
+    ok(elem.attributes[0] == attr || elem.attributes[1] === attr, "attr not found in elem.attributes");
+    ok(elem.attributes.item(0) == attr || elem.attributes.item(1) === attr, "attr not found in items");
+    ok(elem.attributes.item(2) == null, "item(2) = " + elem.attributes.item(2));
+    prev = attr;
 
     attr = document.createAttribute("id");
     ok(attr.ownerDocument === document, "detached attr ownerDocument = " + attr.ownerDocument);
     ok(attr.ownerElement === null, "detached attr ownerElement = " + attr.ownerElement);
+    ok(attr.specified === true, "attr.specified = " + attr.specified);
+    ok(attr.expando === false, "attr.expando = " + attr.expando);
+    ok(attr.value === "", "attr.value = " + attr.value);
+    ok(attr.name === "id", "attr.name = " + attr.name);
+    attr.value = "new";
+
+    ret = elem.setAttributeNode(attr);
+    ok(ret === prev, "ret != prev");
+    ok(elem.getAttributeNode("id") === attr, "unexpected id attr");
+    ok(elem.getAttribute("id") === "new", "unexpected id attr value " + elem.getAttribute("id"));
+
+    attr = document.createAttribute("test");
+    attr.value = "test";
+    ret = elem.setAttributeNode(attr);
+    ok(ret === null, "ret != null");
+    ok(elem.attributes.length === 3, "elem.attributes.length = " + elem.attributes.length);
+    ok(elem.getAttributeNode("test") === attr, "unexpected test attr");
+    ok(elem.attributes.getNamedItem("test") === attr, "unexpected test named item");
+    ok(elem.getAttribute("test") === "test", "unexpected test attr value " + elem.getAttribute("id"));
+    ok(elem.attributes.item(3) == null, "item(3) = " + elem.attributes.item(3));
+
+    attr = elem.getAttributeNode("style");
+    ok(attr === null, "found style attribute node");
+    attr = elem.attributes.getNamedItem("style");
+    ok(attr === null, "found style attribute named item");
+    ok(!("style" in elem.attributes), "found style in attribute collection " + elem.attributes["style"]);
 });

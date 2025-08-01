@@ -3923,6 +3923,7 @@ sync_test("prototype props", function() {
         test_own_props(constr.prototype, name, props, todos, flaky);
     }
 
+    check(Attr, [ "expando", "name", "ownerElement", "specified", "value" ]);
     check(CharacterData, [ "appendData", "data", "deleteData", "insertData", "length", "replaceData", "substringData" ]);
     check(Comment, [ "text" ]);
     check(CSSStyleDeclaration, [
@@ -4222,6 +4223,8 @@ sync_test("prototype props", function() {
         "posHeight", "posLeft", "posRight", "posTop", "posWidth", "textDecorationBlink", "textDecorationLineThrough",
         "textDecorationNone", "textDecorationOverline", "textDecorationUnderline"
     ]);
+    check(NamedNodeMap, [ "getNamedItem", "getNamedItemNS", "item", "length", "removeNamedItem", "removeNamedItemNS",
+                          "setNamedItem", "setNamedItemNS" ]);
     check(Node, [
         "ATTRIBUTE_NODE", "CDATA_SECTION_NODE", "COMMENT_NODE", "DOCUMENT_FRAGMENT_NODE",  "DOCUMENT_NODE",
         "DOCUMENT_POSITION_CONTAINED_BY", "DOCUMENT_POSITION_CONTAINS", "DOCUMENT_POSITION_DISCONNECTED",
