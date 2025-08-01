@@ -1,5 +1,5 @@
 TESTDLL = windows.ui.dll
-IMPORTS = combase advapi32
+IMPORTS = combase advapi32 user32
 
 SOURCES = \
 	uisettings.c

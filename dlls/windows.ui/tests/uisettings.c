@@ -334,6 +334,68 @@ static void test_UISettings_weak_ref(void)
     ok( ref == 1, "got ref %ld.\n", ref );
 }
 
+static void test_AccessibilitySettings(void)
+{
+    static const WCHAR *class_name = RuntimeClass_Windows_UI_ViewManagement_AccessibilitySettings;
+    HIGHCONTRASTW high_contrast = {0};
+    IAccessibilitySettings *settings;
+    IActivationFactory *factory;
+    IInspectable *inspectable;
+    boolean value;
+    HSTRING str;
+    HRESULT hr;
+    BOOL ret;
+    LONG ref;
+
+    hr = WindowsCreateString( class_name, wcslen( class_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    todo_wine
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (FAILED( hr ))
+    {
+        todo_wine
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
+        WindowsDeleteString( str );
+        return;
+    }
+
+    check_interface( factory, &IID_IUnknown, TRUE );
+    check_interface( factory, &IID_IInspectable, TRUE );
+    check_interface( factory, &IID_IActivationFactory, TRUE );
+    check_interface( factory, &IID_IAgileObject, FALSE );
+    check_interface( factory, &IID_IAccessibilitySettings, FALSE );
+
+    hr = RoActivateInstance( str, &inspectable );
+    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+
+    hr = IInspectable_QueryInterface( inspectable, &IID_IAccessibilitySettings, (void **)&settings );
+    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
+
+    check_interface( inspectable, &IID_IUnknown, TRUE );
+    check_interface( inspectable, &IID_IInspectable, TRUE );
+    check_interface( inspectable, &IID_IAgileObject, TRUE );
+    check_interface( inspectable, &IID_IAccessibilitySettings, TRUE );
+
+    hr = IAccessibilitySettings_get_HighContrast( settings, &value );
+    todo_wine
+    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
+    if ( hr == S_OK )
+    {
+        high_contrast.cbSize = sizeof(high_contrast);
+        ret = SystemParametersInfoW( SPI_GETHIGHCONTRAST, sizeof(high_contrast), &high_contrast, 0 );
+        ok( ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError() );
+        ok( value == !!(high_contrast.dwFlags & HCF_HIGHCONTRASTON), "Got unexpected high contrast value.\n" );
+    }
+
+    IAccessibilitySettings_Release( settings );
+    IInspectable_Release( inspectable );
+    ref = IActivationFactory_Release( factory );
+    ok( ref == 1, "got ref %ld.\n", ref );
+}
+
 START_TEST(uisettings)
 {
     HRESULT hr;
@@ -343,6 +405,7 @@ START_TEST(uisettings)
 
     test_UISettings();
     test_UISettings_weak_ref();
+    test_AccessibilitySettings();
 
     RoUninitialize();
 }
