@@ -10493,6 +10493,55 @@ static void test_GetMatchingFontsByLOGFONT(void)
     ok(!refcount, "Factory wasn't released, %lu.\n", refcount);
 }
 
+static void test_font_download_queue(void)
+{
+    IDWriteFontDownloadQueue *queue, *queue2;
+    IDWriteFactory3 *factory, *factory2;
+    BOOL is_empty;
+    UINT64 count;
+    HRESULT hr;
+    ULONG ref;
+
+    factory = create_factory_iid(&IID_IDWriteFactory3);
+    if (!factory)
+    {
+        win_skip("GetFontDownloadQueue() is not supported\n");
+        return;
+    }
+
+    hr = IDWriteFactory3_GetFontDownloadQueue(factory, &queue);
+    todo_wine
+    ok(hr == S_OK, "got %#lx\n", hr);
+    if (FAILED(hr))
+    {
+        IDWriteFactory3_Release(factory);
+        return;
+    }
+
+    hr = IDWriteFactory3_GetFontDownloadQueue(factory, &queue2);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(queue == queue2, "Got unexpected object\n");
+    IDWriteFontDownloadQueue_Release(queue2);
+
+    factory2 = create_factory_iid(&IID_IDWriteFactory3);
+    ok(!!factory2, "Create factory failed\n");
+    hr = IDWriteFactory3_GetFontDownloadQueue(factory2, &queue2);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(queue != queue2, "Got unexpected object\n");
+    IDWriteFontDownloadQueue_Release(queue2);
+    IDWriteFactory3_Release(factory2);
+
+    is_empty = IDWriteFontDownloadQueue_IsEmpty(queue);
+    ok(is_empty, "Expected empty queue\n");
+
+    count = IDWriteFontDownloadQueue_GetGenerationCount(queue);
+    ok(count == 0, "Got unexpected generation count %I64u\n", count);
+
+    IDWriteFontDownloadQueue_Release(queue);
+    ref = IDWriteFactory3_Release(factory);
+    ok(ref == 0, "factory not released, %lu\n", ref);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -10568,6 +10617,7 @@ START_TEST(font)
     test_system_font_set();
     test_CreateFontCollectionFromFontSet();
     test_GetMatchingFontsByLOGFONT();
+    test_font_download_queue();
 
     IDWriteFactory_Release(factory);
 }
