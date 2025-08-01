@@ -51,6 +51,7 @@ namespace Windows.UI.ViewManagement
     typedef enum UserInteractionMode UserInteractionMode;
     typedef enum ViewSizePreference ViewSizePreference;
 
+    interface IAccessibilitySettings;
     interface IApplicationView;
     interface IApplicationView2;
     interface IApplicationView3;
@@ -97,6 +98,7 @@ namespace Windows.UI.ViewManagement
     interface IInputPaneStatics;
     interface IInputPaneStatics2;
 
+    runtimeclass AccessibilitySettings;
 #ifndef _WINDOWS_UI
     runtimeclass ApplicationView;
 #endif
@@ -117,6 +119,7 @@ namespace Windows.UI.ViewManagement
     runtimeclass ViewModePreferences;
 
     declare {
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.AccessibilitySettings *, IInspectable *>;
 #ifndef _WINDOWS_UI
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.ApplicationView *, IInspectable *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.ApplicationView *, Windows.UI.ViewManagement.ApplicationViewConsolidatedEventArgs *>;
@@ -308,6 +311,19 @@ namespace Windows.UI.ViewManagement
         ]
         Custom     = 6,
     };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.AccessibilitySettings),
+        uuid(fe0e8147-c4c0-4562-b962-1327b52ad5b9)
+    ]
+    interface IAccessibilitySettings : IInspectable
+    {
+        [propget] HRESULT HighContrast([out, retval] boolean *value);
+        [propget] HRESULT HighContrastScheme([out, retval] HSTRING *value);
+        [eventadd] HRESULT HighContrastChanged([in] Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.AccessibilitySettings *, IInspectable *> *handler, [out, retval] EventRegistrationToken *cookie);
+        [eventremove] HRESULT HighContrastChanged([in] EventRegistrationToken cookie);
+    }
 
 #ifndef _WINDOWS_UI
     [
@@ -844,6 +860,16 @@ namespace Windows.UI.ViewManagement
     interface IViewModePreferencesStatics : IInspectable
     {
         HRESULT CreateDefault([in] Windows.UI.ViewManagement.ApplicationViewMode mode, [out, retval] Windows.UI.ViewManagement.ViewModePreferences **result);
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass AccessibilitySettings
+    {
+        [default] interface Windows.UI.ViewManagement.IAccessibilitySettings;
     }
 
 #ifndef _WINDOWS_UI
