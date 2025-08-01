@@ -84,6 +84,18 @@ namespace Windows.Devices.Bluetooth.Rfcomm {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Bluetooth.Rfcomm.RfcommServiceId),
+        uuid(22629204-7e02-4017-8136-da1b6a1b9bbf)
+    ]
+    interface IRfcommServiceId : IInspectable
+    {
+        [propget] HRESULT Uuid([out, retval] GUID *value);
+        HRESULT AsShortId([out, retval] UINT32 *short_id);
+        HRESULT AsString([out, retval] HSTRING *id);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
         static(Windows.Devices.Bluetooth.Rfcomm.IRfcommDeviceServiceStatics, Windows.Foundation.UniversalApiContract, 1.0),
         /* static(Windows.Devices.Bluetooth.Rfcomm.IRfcommDeviceServiceStatics2, Windows.Foundation.UniversalApiContract, 3.0), */
