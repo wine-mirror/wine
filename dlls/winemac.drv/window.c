@@ -1295,11 +1295,6 @@ static void perform_window_command(HWND hwnd, unsigned int style_any, unsigned i
     NtUserPostMessage(hwnd, WM_SYSCOMMAND, command, 0);
 }
 
-static struct macdrv_client_surface *impl_from_client_surface(struct client_surface *client)
-{
-    return CONTAINING_RECORD(client, struct macdrv_client_surface, client);
-}
-
 static void macdrv_client_surface_destroy(struct client_surface *client)
 {
     struct macdrv_client_surface *surface = impl_from_client_surface(client);

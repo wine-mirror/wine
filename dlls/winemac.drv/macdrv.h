@@ -200,6 +200,11 @@ struct macdrv_client_surface
     macdrv_metal_view     metal_view;
 };
 
+static inline struct macdrv_client_surface *impl_from_client_surface(struct client_surface *client)
+{
+    return CONTAINING_RECORD(client, struct macdrv_client_surface, client);
+}
+
 extern struct macdrv_client_surface *macdrv_client_surface_create(HWND hwnd);
 
 extern struct macdrv_win_data *get_win_data(HWND hwnd);
