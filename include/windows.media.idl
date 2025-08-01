@@ -172,6 +172,19 @@ namespace Windows.Media
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.ImageDisplayProperties),
+        uuid(cd0bc7ef-54e7-411f-9933-f0e98b0a96d2)
+    ]
+    interface IImageDisplayProperties : IInspectable
+    {
+        [propget] HRESULT Title([out, retval] HSTRING *value);
+        [propput] HRESULT Title([in] HSTRING value);
+        [propget] HRESULT Subtitle([out, retval] HSTRING *value);
+        [propput] HRESULT Subtitle([in] HSTRING value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         uuid(1803def8-dca5-4b6f-9c20-e3d3c0643625)
     ]
     interface IMediaMarker : IInspectable
@@ -388,6 +401,19 @@ namespace Windows.Media
         [propput] HRESULT MaxSeekTime([in] Windows.Foundation.TimeSpan value);
         [propget] HRESULT Position([out, retval] Windows.Foundation.TimeSpan *value);
         [propput] HRESULT Position([in] Windows.Foundation.TimeSpan value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.VideoDisplayProperties),
+        uuid(5609fdb1-5d2d-4872-8170-45dee5bc2f5c)
+    ]
+    interface IVideoDisplayProperties : IInspectable
+    {
+        [propget] HRESULT Title([out, retval] HSTRING *value);
+        [propput] HRESULT Title([in] HSTRING value);
+        [propget] HRESULT Subtitle([out, retval] HSTRING *value);
+        [propput] HRESULT Subtitle([in] HSTRING value);
     }
 
     [
