@@ -173,22 +173,6 @@ static D3DX10_IMAGE_FILE_FORMAT d3dx10_image_file_format_from_d3dx_image_file_fo
 
 static const struct
 {
-    const GUID *wic_container_guid;
-    D3DX10_IMAGE_FILE_FORMAT d3dx_file_format;
-}
-file_formats[] =
-{
-    { &GUID_ContainerFormatBmp,  D3DX10_IFF_BMP },
-    { &GUID_ContainerFormatJpeg, D3DX10_IFF_JPG },
-    { &GUID_ContainerFormatPng,  D3DX10_IFF_PNG },
-    { &GUID_ContainerFormatDds,  D3DX10_IFF_DDS },
-    { &GUID_ContainerFormatTiff, D3DX10_IFF_TIFF },
-    { &GUID_ContainerFormatGif,  D3DX10_IFF_GIF },
-    { &GUID_ContainerFormatWmp,  D3DX10_IFF_WMP },
-};
-
-static const struct
-{
     const GUID *wic_guid;
     DXGI_FORMAT dxgi_format;
 }
@@ -212,18 +196,6 @@ wic_pixel_formats[] =
     { &GUID_WICPixelFormat96bppRGBFloat,      DXGI_FORMAT_R32G32B32_FLOAT },
     { &GUID_WICPixelFormat128bppRGBAFloat,    DXGI_FORMAT_R32G32B32A32_FLOAT }
 };
-
-static D3DX10_IMAGE_FILE_FORMAT wic_container_guid_to_file_format(GUID *container_format)
-{
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(file_formats); ++i)
-    {
-        if (IsEqualGUID(file_formats[i].wic_container_guid, container_format))
-            return file_formats[i].d3dx_file_format;
-    }
-    return D3DX10_IFF_FORCE_DWORD;
-}
 
 static const GUID *dxgi_format_to_wic_guid(DXGI_FORMAT format)
 {
@@ -582,80 +554,15 @@ static HRESULT d3dx10_image_info_from_d3dx_image(D3DX10_IMAGE_INFO *info, struct
 
 HRESULT get_image_info(const void *data, SIZE_T size, D3DX10_IMAGE_INFO *img_info)
 {
-    IWICBitmapFrameDecode *frame = NULL;
-    IWICImagingFactory *factory = NULL;
-    IWICBitmapDecoder *decoder = NULL;
-    IWICStream *stream = NULL;
-    unsigned int frame_count;
     struct d3dx_image image;
-    GUID container_format;
     HRESULT hr;
 
     if (!data || !size)
         return E_FAIL;
 
-    if (SUCCEEDED(d3dx_image_init(data, size, &image, 0, D3DX_IMAGE_INFO_ONLY | D3DX_IMAGE_SUPPORT_DXT10)))
-    {
+    hr = d3dx_image_init(data, size, &image, 0, D3DX_IMAGE_INFO_ONLY | D3DX_IMAGE_SUPPORT_DXT10);
+    if (SUCCEEDED(hr))
         hr = d3dx10_image_info_from_d3dx_image(img_info, &image);
-        if (SUCCEEDED(hr))
-            return hr;
-    }
-
-    WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory);
-    IWICImagingFactory_CreateStream(factory, &stream);
-    hr = IWICStream_InitializeFromMemory(stream, (BYTE *)data, size);
-    if (FAILED(hr))
-    {
-        WARN("Failed to initialize stream.\n");
-        goto end;
-    }
-    hr = IWICImagingFactory_CreateDecoderFromStream(factory, (IStream *)stream, NULL, 0, &decoder);
-    if (FAILED(hr))
-        goto end;
-
-    hr = IWICBitmapDecoder_GetContainerFormat(decoder, &container_format);
-    if (FAILED(hr))
-        goto end;
-    img_info->ImageFileFormat = wic_container_guid_to_file_format(&container_format);
-    if (img_info->ImageFileFormat == D3DX10_IFF_FORCE_DWORD)
-    {
-        hr = E_FAIL;
-        WARN("Unsupported image file format %s.\n", debugstr_guid(&container_format));
-        goto end;
-    }
-
-    hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
-    if (FAILED(hr) || !frame_count)
-        goto end;
-    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
-    if (FAILED(hr))
-        goto end;
-    hr = IWICBitmapFrameDecode_GetSize(frame, &img_info->Width, &img_info->Height);
-    if (FAILED(hr))
-        goto end;
-
-    if (img_info->ImageFileFormat == D3DX10_IFF_DDS)
-    {
-        hr = E_FAIL;
-        goto end;
-    }
-
-    img_info->ArraySize = 1;
-    img_info->Depth = 1;
-    img_info->MipLevels = 1;
-    img_info->ResourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
-    img_info->Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    img_info->MiscFlags = 0;
-
-end:
-    if (frame)
-        IWICBitmapFrameDecode_Release(frame);
-    if (decoder)
-        IWICBitmapDecoder_Release(decoder);
-    if (stream)
-        IWICStream_Release(stream);
-    if (factory)
-        IWICImagingFactory_Release(factory);
 
     if (hr != S_OK)
     {

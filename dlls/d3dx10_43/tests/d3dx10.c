@@ -3281,7 +3281,7 @@ static void test_get_image_info(void)
     /* 2 bpp is not a valid bit count. */
     hr2 = 0xdeadbeef;
     hr = D3DX10GetImageInfoFromMemory(test_bmp_2bpp, sizeof(test_bmp_2bpp), NULL, &image_info, &hr2);
-    todo_wine ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
 
     for (i = 0; i < ARRAY_SIZE(test_image); ++i)
