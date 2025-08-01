@@ -161,6 +161,9 @@ static D3DX10_IMAGE_FILE_FORMAT d3dx10_image_file_format_from_d3dx_image_file_fo
         case D3DX_IMAGE_FILE_FORMAT_JPG: return D3DX10_IFF_JPG;
         case D3DX_IMAGE_FILE_FORMAT_PNG: return D3DX10_IFF_PNG;
         case D3DX_IMAGE_FILE_FORMAT_DDS: return D3DX10_IFF_DDS;
+        case D3DX_IMAGE_FILE_FORMAT_TIFF: return D3DX10_IFF_TIFF;
+        case D3DX_IMAGE_FILE_FORMAT_GIF: return D3DX10_IFF_GIF;
+        case D3DX_IMAGE_FILE_FORMAT_WMP: return D3DX10_IFF_WMP;
         case D3DX_IMAGE_FILE_FORMAT_DDS_DXT10: return D3DX10_IFF_DDS;
         default:
             FIXME("No D3DX10_IMAGE_FILE_FORMAT for d3dx_image_file_format %d.\n", iff);
@@ -522,19 +525,30 @@ static HRESULT d3dx10_image_info_from_d3dx_image(D3DX10_IMAGE_INFO *info, struct
     DXGI_FORMAT format;
 
     memset(info, 0, sizeof(*info));
-    if (image->image_file_format == D3DX_IMAGE_FILE_FORMAT_DDS_DXT10)
-        format = dxgi_format_from_d3dx_pixel_format_id(image->format);
-    else
-        format = dxgi_format_from_legacy_dds_d3dx_pixel_format_id(image->format);
+    switch (image->image_file_format)
+    {
+        case D3DX_IMAGE_FILE_FORMAT_DDS_DXT10:
+            format = dxgi_format_from_d3dx_pixel_format_id(image->format);
+            break;
+
+        case D3DX_IMAGE_FILE_FORMAT_DDS:
+            format = dxgi_format_from_legacy_dds_d3dx_pixel_format_id(image->format);
+            break;
+
+        default:
+            if (iff == D3DX10_IFF_FORCE_DWORD)
+                return E_FAIL;
+
+            /* All other image file formats use the default format. */
+            format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            break;
+    }
 
     if (format == DXGI_FORMAT_UNKNOWN)
     {
-        WARN("Tried to load DDS file with unsupported format %#x.\n", image->format);
+        WARN("Tried to load file with unsupported pixel format %#x.\n", image->format);
         return E_FAIL;
     }
-
-    if (iff == D3DX10_IFF_FORCE_DWORD)
-        return E_FAIL;
 
     switch (image->resource_type)
     {
@@ -580,10 +594,12 @@ HRESULT get_image_info(const void *data, SIZE_T size, D3DX10_IMAGE_INFO *img_inf
     if (!data || !size)
         return E_FAIL;
 
-    if (SUCCEEDED(d3dx_image_init(data, size, &image, 0, D3DX_IMAGE_INFO_ONLY | D3DX_IMAGE_SUPPORT_DXT10))
-            && (image.image_file_format == D3DX_IMAGE_FILE_FORMAT_DDS
-                || (image.image_file_format == D3DX_IMAGE_FILE_FORMAT_DDS_DXT10)))
-        return d3dx10_image_info_from_d3dx_image(img_info, &image);
+    if (SUCCEEDED(d3dx_image_init(data, size, &image, 0, D3DX_IMAGE_INFO_ONLY | D3DX_IMAGE_SUPPORT_DXT10)))
+    {
+        hr = d3dx10_image_info_from_d3dx_image(img_info, &image);
+        if (SUCCEEDED(hr))
+            return hr;
+    }
 
     WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory);
     IWICImagingFactory_CreateStream(factory, &stream);

@@ -149,6 +149,10 @@ enum d3dx_image_file_format
     D3DX_IMAGE_FILE_FORMAT_DIB  = 6,
     D3DX_IMAGE_FILE_FORMAT_HDR  = 7,
     D3DX_IMAGE_FILE_FORMAT_PFM  = 8,
+    /* TIFF/GIF/WMP are only available on D3DX10/D3DX11. */
+    D3DX_IMAGE_FILE_FORMAT_TIFF = 10,
+    D3DX_IMAGE_FILE_FORMAT_GIF  = 11,
+    D3DX_IMAGE_FILE_FORMAT_WMP  = 12,
     /* This is a Wine only file format value. */
     D3DX_IMAGE_FILE_FORMAT_DDS_DXT10 = 100,
     D3DX_IMAGE_FILE_FORMAT_FORCE_DWORD = 0x7fffffff

@@ -526,6 +526,9 @@ static const GUID *wic_container_guid_from_d3dx_file_format(enum d3dx_image_file
         case D3DX_IMAGE_FILE_FORMAT_BMP: return &GUID_ContainerFormatBmp;
         case D3DX_IMAGE_FILE_FORMAT_JPG: return &GUID_ContainerFormatJpeg;
         case D3DX_IMAGE_FILE_FORMAT_PNG: return &GUID_ContainerFormatPng;
+        case D3DX_IMAGE_FILE_FORMAT_TIFF: return &GUID_ContainerFormatTiff;
+        case D3DX_IMAGE_FILE_FORMAT_GIF:  return &GUID_ContainerFormatGif;
+        case D3DX_IMAGE_FILE_FORMAT_WMP:  return &GUID_ContainerFormatWmp;
         default:
             assert(0 && "Unexpected file format.");
             return NULL;
@@ -1002,6 +1005,12 @@ static const uint8_t ppm_raw_file_signature[] =   { 'P', '6' };
 static const uint8_t hdr_file_signature[] =       { '#', '?', 'R', 'A', 'D', 'I', 'A', 'N', 'C', 'E', '\n' };
 static const uint8_t pfm_color_file_signature[] = { 'P', 'F' };
 static const uint8_t pfm_gray_file_signature[] =  { 'P', 'f' };
+static const uint8_t tiff_le_file_signature[] =  { 'I', 'I', 0x2a, 0x00 };
+static const uint8_t tiff_be_file_signature[] =  { 'M', 'M', 0x00, 0x2a };
+static const uint8_t gif_87a_file_signature[] =  { 'G', 'I', 'F', '8', '7', 'a' };
+static const uint8_t gif_89a_file_signature[] =  { 'G', 'I', 'F', '8', '9', 'a' };
+static const uint8_t wmp_v0_file_signature[] =   { 'I', 'I', 0xbc, 0x00 };
+static const uint8_t wmp_v1_file_signature[] =   { 'I', 'I', 0xbc, 0x01 };
 
 /*
  * If none of these match, the file is either DIB, TGA, or something we don't
@@ -1025,6 +1034,12 @@ static const struct d3dx_file_format_signature file_format_signatures[] =
     { hdr_file_signature,       sizeof(hdr_file_signature),       D3DX_IMAGE_FILE_FORMAT_HDR },
     { pfm_color_file_signature, sizeof(pfm_color_file_signature), D3DX_IMAGE_FILE_FORMAT_PFM },
     { pfm_gray_file_signature,  sizeof(pfm_gray_file_signature),  D3DX_IMAGE_FILE_FORMAT_PFM },
+    { tiff_le_file_signature,   sizeof(tiff_le_file_signature),   D3DX_IMAGE_FILE_FORMAT_TIFF },
+    { tiff_be_file_signature,   sizeof(tiff_be_file_signature),   D3DX_IMAGE_FILE_FORMAT_TIFF },
+    { gif_87a_file_signature,   sizeof(gif_87a_file_signature),   D3DX_IMAGE_FILE_FORMAT_GIF },
+    { gif_89a_file_signature,   sizeof(gif_89a_file_signature),   D3DX_IMAGE_FILE_FORMAT_GIF },
+    { wmp_v0_file_signature,    sizeof(wmp_v0_file_signature),    D3DX_IMAGE_FILE_FORMAT_WMP },
+    { wmp_v1_file_signature,    sizeof(wmp_v1_file_signature),    D3DX_IMAGE_FILE_FORMAT_WMP },
 };
 
 static BOOL d3dx_get_image_file_format_from_file_signature(const void *src_data, uint32_t src_data_size,
@@ -1768,6 +1783,9 @@ HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3d
         case D3DX_IMAGE_FILE_FORMAT_BMP:
         case D3DX_IMAGE_FILE_FORMAT_JPG:
         case D3DX_IMAGE_FILE_FORMAT_PNG:
+        case D3DX_IMAGE_FILE_FORMAT_TIFF:
+        case D3DX_IMAGE_FILE_FORMAT_GIF:
+        case D3DX_IMAGE_FILE_FORMAT_WMP:
             hr = d3dx_initialize_image_from_wic(src_data, src_data_size, image, iff, flags);
             break;
 
