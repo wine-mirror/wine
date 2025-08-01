@@ -43,6 +43,7 @@ namespace Windows.UI.Input {
 }
 
 namespace Windows.UI.Core {
+    typedef enum CoreAcceleratorKeyEventType CoreAcceleratorKeyEventType;
     typedef enum CoreCursorType CoreCursorType;
     typedef enum CoreDispatcherPriority CoreDispatcherPriority;
     typedef enum CoreProcessEventsOption CoreProcessEventsOption;
@@ -53,6 +54,7 @@ namespace Windows.UI.Core {
     typedef struct CorePhysicalKeyStatus CorePhysicalKeyStatus;
     typedef struct CoreProximityEvaluation CoreProximityEvaluation;
 
+    interface IAcceleratorKeyEventArgs;
     interface IAutomationProviderRequestedEventArgs;
     interface ICharacterReceivedEventArgs;
     interface IClosestInteractiveBoundsRequestedEventArgs;
@@ -97,6 +99,7 @@ namespace Windows.UI.Core {
     runtimeclass WindowSizeChangedEventArgs;
 
     declare {
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.Core.CoreDispatcher *, Windows.UI.Core.AcceleratorKeyEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.Core.CoreWindow *, IInspectable *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.Core.CoreWindow *, Windows.UI.Core.AutomationProviderRequestedEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.Core.CoreWindow *, Windows.UI.Core.CharacterReceivedEventArgs *>;
@@ -110,6 +113,22 @@ namespace Windows.UI.Core {
         interface Windows.Foundation.TypedEventHandler<Windows.UI.Core.CoreWindow *, Windows.UI.Core.WindowActivatedEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.Core.CoreWindow *, Windows.UI.Core.WindowSizeChangedEventArgs *>;
     }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum CoreAcceleratorKeyEventType
+    {
+        Character           = 2,
+        DeadCharacter       = 3,
+        KeyDown             = 0,
+        KeyUp               = 1,
+        SystemCharacter     = 6,
+        SystemDeadCharacter = 7,
+        SystemKeyDown       = 4,
+        SystemKeyUp         = 5,
+        UnicodeCharacter    = 8,
+    };
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0)
@@ -236,6 +255,19 @@ namespace Windows.UI.Core {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Core.AcceleratorKeyEventArgs),
+        uuid(ff1c4c4a-9287-470b-836e-9086e3126ade)
+    ]
+    interface IAcceleratorKeyEventArgs : IInspectable
+        requires Windows.UI.Core.ICoreWindowEventArgs
+    {
+        [propget] HRESULT EventType([out, retval] Windows.UI.Core.CoreAcceleratorKeyEventType *value);
+        [propget] HRESULT VirtualKey([out, retval] Windows.System.VirtualKey *value);
+        [propget] HRESULT KeyStatus([out, retval] Windows.UI.Core.CorePhysicalKeyStatus *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.UI.Core.AutomationProviderRequestedEventArgs),
         uuid(961ff258-21bf-4b42-a298-fa479d4c52e2)
     ]
@@ -269,6 +301,16 @@ namespace Windows.UI.Core {
         [propget] HRESULT SearchBounds([out, retval] Windows.Foundation.Rect *value);
         [propget] HRESULT ClosestInteractiveBounds([out, retval] Windows.Foundation.Rect *value);
         [propput] HRESULT ClosestInteractiveBounds([in] Windows.Foundation.Rect value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(9ffdf7f5-b8c9-4ef0-b7d2-1de626561fc8)
+    ]
+    interface ICoreAcceleratorKeys : IInspectable
+    {
+        [eventadd] HRESULT AcceleratorKeyActivated([in] Windows.Foundation.TypedEventHandler<Windows.UI.Core.CoreDispatcher *, Windows.UI.Core.AcceleratorKeyEventArgs *> *handler, [out, retval] EventRegistrationToken *cookie);
+        [eventremove] HRESULT AcceleratorKeyActivated([in] EventRegistrationToken cookie);
     }
 
     [
@@ -537,6 +579,16 @@ namespace Windows.UI.Core {
         requires Windows.UI.Core.ICoreWindowEventArgs
     {
         [propget] HRESULT Size([out, retval] Windows.Foundation.Size *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass AcceleratorKeyEventArgs
+    {
+        [default] interface Windows.UI.Core.IAcceleratorKeyEventArgs;
+        interface Windows.UI.Core.ICoreWindowEventArgs;
     }
 
     [
