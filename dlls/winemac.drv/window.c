@@ -1295,6 +1295,110 @@ static void perform_window_command(HWND hwnd, unsigned int style_any, unsigned i
     NtUserPostMessage(hwnd, WM_SYSCOMMAND, command, 0);
 }
 
+static struct macdrv_client_surface *impl_from_client_surface(struct client_surface *client)
+{
+    return CONTAINING_RECORD(client, struct macdrv_client_surface, client);
+}
+
+static void macdrv_client_surface_destroy(struct client_surface *client)
+{
+    struct macdrv_client_surface *surface = impl_from_client_surface(client);
+
+    TRACE("%s\n", debugstr_client_surface(client));
+
+    if (surface->metal_view) macdrv_view_release_metal_view(surface->metal_view);
+    if (surface->metal_device) macdrv_release_metal_device(surface->metal_device);
+}
+
+static void macdrv_client_surface_detach(struct client_surface *client)
+{
+    struct macdrv_client_surface *surface = impl_from_client_surface(client);
+
+    TRACE("%s\n", debugstr_client_surface(client));
+
+    if (surface->cocoa_view)
+    {
+        struct macdrv_win_data *data;
+
+        if ((data = get_win_data(client->hwnd)))
+        {
+            if (data->client_view == surface->cocoa_view)
+                data->client_view = NULL;
+            release_win_data(data);
+        }
+
+        macdrv_dispose_view(surface->cocoa_view);
+    }
+}
+
+static void macdrv_client_surface_update(struct client_surface *client)
+{
+    struct macdrv_client_surface *surface = impl_from_client_surface(client);
+    HWND hwnd = client->hwnd, toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
+    struct macdrv_win_data *data;
+    RECT rect;
+
+    TRACE("%s\n", debugstr_client_surface(client));
+
+    NtUserGetClientRect(hwnd, &rect, NtUserGetWinMonitorDpi(hwnd, MDT_RAW_DPI));
+    NtUserMapWindowPoints(hwnd, toplevel, (POINT *)&rect, 2, NtUserGetWinMonitorDpi(toplevel, MDT_RAW_DPI));
+
+    if (!(data = get_win_data(toplevel))) return;
+    OffsetRect(&rect, data->rects.client.left - data->rects.visible.left, data->rects.client.top - data->rects.visible.top);
+    macdrv_set_view_frame(surface->cocoa_view, cgrect_from_rect(rect));
+    macdrv_set_view_superview(surface->cocoa_view, toplevel == hwnd ? NULL : data->client_view, data->cocoa_window, NULL, NULL);
+    release_win_data(data);
+}
+
+static void macdrv_client_surface_present(struct client_surface *client, HDC hdc)
+{
+    struct macdrv_client_surface *surface = impl_from_client_surface(client);
+    struct macdrv_win_data *data;
+
+    TRACE("%s\n", debugstr_client_surface(client));
+
+    if (!(data = get_win_data(surface->client.hwnd))) return;
+    if (data->client_view != surface->cocoa_view)
+    {
+        if (data->client_view) macdrv_set_view_hidden(data->client_view, TRUE);
+        macdrv_set_view_hidden(surface->cocoa_view, FALSE);
+        data->client_view = surface->cocoa_view;
+    }
+    release_win_data(data);
+}
+
+static const struct client_surface_funcs macdrv_client_surface_funcs =
+{
+    .destroy = macdrv_client_surface_destroy,
+    .detach = macdrv_client_surface_detach,
+    .update = macdrv_client_surface_update,
+    .present = macdrv_client_surface_present,
+};
+
+struct macdrv_client_surface *macdrv_client_surface_create(HWND hwnd)
+{
+    HWND toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
+    struct macdrv_client_surface *surface;
+    struct macdrv_win_data *data;
+    RECT rect;
+
+    NtUserGetClientRect(hwnd, &rect, NtUserGetWinMonitorDpi(hwnd, MDT_RAW_DPI));
+    NtUserMapWindowPoints(hwnd, toplevel, (POINT *)&rect, 2, NtUserGetWinMonitorDpi(toplevel, MDT_RAW_DPI));
+
+    if (!(data = get_win_data(toplevel))) return FALSE;
+    surface = client_surface_create(sizeof(*surface), &macdrv_client_surface_funcs, hwnd);
+    surface->cocoa_view = macdrv_create_view(cgrect_from_rect(rect));
+    macdrv_set_view_hidden(surface->cocoa_view, TRUE);
+    release_win_data(data);
+
+    if (surface)
+    {
+        macdrv_client_surface_update(&surface->client);
+        macdrv_client_surface_present(&surface->client, 0);
+    }
+
+    return surface;
+}
 
 /**********************************************************************
  *              SetDesktopWindow   (MACDRV.@)
