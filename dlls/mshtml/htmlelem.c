@@ -8300,8 +8300,30 @@ static HRESULT WINAPI HTMLAttributeCollection4_getNamedItem(IHTMLAttributeCollec
         IHTMLDOMAttribute2 **p)
 {
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection4(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(name), p);
-    return E_NOTIMPL;
+    HTMLDOMAttribute *attr = NULL;
+    nsIDOMAttr *nsattr;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), p);
+
+    if(This->dom_attrs) {
+        nsAString nsstr;
+        nsAString_Init(&nsstr, name);
+        nsres = nsIDOMMozNamedAttrMap_GetNamedItem(This->dom_attrs, &nsstr, &nsattr);
+        nsAString_Finish(&nsstr);
+        if(NS_FAILED(nsres))
+            return map_nsresult(nsres);
+        if(nsattr) {
+            hres = get_attr_node(nsattr, &attr);
+            nsIDOMAttr_Release(nsattr);
+            if(FAILED(hres))
+               return hres;
+        }
+    }
+
+    *p = attr ? &attr->IHTMLDOMAttribute2_iface : NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLAttributeCollection4_setNamedItem(IHTMLAttributeCollection4 *iface,
