@@ -5386,7 +5386,8 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_RegisterDeviceRemovedEvent(ID3D11D
 {
     FIXME("iface %p, event %p, cookie %p stub!\n", iface, event, cookie);
 
-    return E_NOTIMPL;
+    *cookie = 0xdeadbeef;
+    return S_OK;
 }
 
 static void STDMETHODCALLTYPE d3d11_device_UnregisterDeviceRemoved(ID3D11Device5 *iface,
