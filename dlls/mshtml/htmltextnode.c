@@ -370,18 +370,6 @@ static const IHTMLDOMTextNode2Vtbl HTMLDOMTextNode2Vtbl = {
     HTMLDOMTextNode2_replaceData
 };
 
-static inline HTMLDOMTextNode *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLDOMTextNode, node);
-}
-
-static HRESULT HTMLDOMTextNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
-{
-    HTMLDOMTextNode *This = impl_from_HTMLDOMNode(iface);
-
-    return HTMLDOMTextNode_Create(This->node.doc, nsnode, ret);
-}
-
 static inline HTMLDOMTextNode *impl_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLDOMTextNode, node.event_target.dispex);
@@ -405,7 +393,6 @@ static const cpc_entry_t HTMLDOMTextNode_cpc[] = {{NULL}};
 
 static const NodeImplVtbl HTMLDOMTextNodeImplVtbl = {
     .cpc_entries           = HTMLDOMTextNode_cpc,
-    .clone                 = HTMLDOMTextNode_clone
 };
 
 static const dispex_static_data_vtbl_t Text_dispex_vtbl = {

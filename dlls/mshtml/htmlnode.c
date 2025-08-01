@@ -705,7 +705,10 @@ static HRESULT WINAPI HTMLDOMNode_cloneNode(IHTMLDOMNode *iface, VARIANT_BOOL fD
         return E_FAIL;
     }
 
-    hres = This->vtbl->clone(This, nsnode, &new_node);
+    if(This->vtbl->clone)
+        hres = This->vtbl->clone(This, nsnode, &new_node);
+    else
+        hres = create_node(This->doc, nsnode, &new_node);
     nsIDOMNode_Release(nsnode);
     if(FAILED(hres))
         return hres;
@@ -1300,11 +1303,6 @@ void HTMLDOMNode_destructor(DispatchEx *dispex)
     free(This);
 }
 
-static HRESULT HTMLDOMNode_clone(HTMLDOMNode *This, nsIDOMNode *nsnode, HTMLDOMNode **ret)
-{
-    return create_node(This->doc, nsnode, ret);
-}
-
 void HTMLDOMNode_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     static const dispex_hook_t ie9_hooks[] = {
@@ -1357,7 +1355,6 @@ static const cpc_entry_t HTMLDOMNode_cpc[] = {{NULL}};
 
 static const NodeImplVtbl HTMLDOMNodeImplVtbl = {
     .cpc_entries           = HTMLDOMNode_cpc,
-    .clone                 = HTMLDOMNode_clone
 };
 
 void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsnode, dispex_static_data_t *dispex_data)

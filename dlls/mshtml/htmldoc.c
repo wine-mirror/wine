@@ -235,28 +235,15 @@ static const IDOMDocumentTypeVtbl DocumentTypeVtbl = {
     DocumentType_get_internalSubset
 };
 
-static inline DocumentType *DocumentType_from_HTMLDOMNode(HTMLDOMNode *iface)
-{
-    return CONTAINING_RECORD(iface, DocumentType, node);
-}
-
 static inline DocumentType *DocumentType_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, DocumentType, node.event_target.dispex);
-}
-
-static HRESULT DocumentType_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
-{
-    DocumentType *This = DocumentType_from_HTMLDOMNode(iface);
-
-    return create_doctype_node(This->node.doc, nsnode, ret);
 }
 
 static const cpc_entry_t DocumentType_cpc[] = {{NULL}};
 
 static const NodeImplVtbl DocumentTypeImplVtbl = {
     .cpc_entries           = DocumentType_cpc,
-    .clone                 = DocumentType_clone
 };
 
 static void *DocumentType_query_interface(DispatchEx *dispex, REFIID riid)
