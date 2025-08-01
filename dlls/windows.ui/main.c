@@ -38,6 +38,9 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **fa
 
     *factory = NULL;
 
+    if (!wcscmp( buffer, RuntimeClass_Windows_UI_ViewManagement_AccessibilitySettings ))
+        IActivationFactory_QueryInterface( accessibilitysettings_factory, &IID_IActivationFactory, (void **)factory );
+
     if (!wcscmp( buffer, RuntimeClass_Windows_UI_ViewManagement_UISettings ))
         IActivationFactory_QueryInterface( uisettings_factory, &IID_IActivationFactory, (void **)factory );
 
