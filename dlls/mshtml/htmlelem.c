@@ -8323,8 +8323,27 @@ static HRESULT WINAPI HTMLAttributeCollection4_removeNamedItem(IHTMLAttributeCol
 static HRESULT WINAPI HTMLAttributeCollection4_item(IHTMLAttributeCollection4 *iface, LONG index, IHTMLDOMAttribute2 **p)
 {
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection4(iface);
-    FIXME("(%p)->(%ld %p)\n", This, index, p);
-    return E_NOTIMPL;
+    HTMLDOMAttribute *attr = NULL;
+    nsIDOMAttr *nsattr;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%ld %p)\n", This, index, p);
+
+    if(This->dom_attrs) {
+        nsres = nsIDOMMozNamedAttrMap_Item(This->dom_attrs, index, &nsattr);
+        if(NS_FAILED(nsres))
+            return map_nsresult(nsres);
+        if(nsattr) {
+            hres = get_attr_node(nsattr, &attr);
+            nsIDOMAttr_Release(nsattr);
+            if(FAILED(hres))
+               return hres;
+        }
+    }
+
+    *p = attr ? &attr->IHTMLDOMAttribute2_iface : NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLAttributeCollection4_get_length(IHTMLAttributeCollection4 *iface, LONG *p)
