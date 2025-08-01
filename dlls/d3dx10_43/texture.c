@@ -235,22 +235,6 @@ static const GUID *dxgi_format_to_wic_guid(DXGI_FORMAT format)
     return NULL;
 }
 
-static D3D10_RESOURCE_DIMENSION wic_dimension_to_d3dx10_dimension(WICDdsDimension wic_dimension)
-{
-    switch (wic_dimension)
-    {
-        case WICDdsTexture1D:
-            return D3D10_RESOURCE_DIMENSION_TEXTURE1D;
-        case WICDdsTexture2D:
-        case WICDdsTextureCube:
-            return D3D10_RESOURCE_DIMENSION_TEXTURE2D;
-        case WICDdsTexture3D:
-            return D3D10_RESOURCE_DIMENSION_TEXTURE3D;
-        default:
-            return D3D10_RESOURCE_DIMENSION_UNKNOWN;
-    }
-}
-
 static unsigned int get_bpp_from_format(DXGI_FORMAT format)
 {
     switch (format)
@@ -383,36 +367,6 @@ static unsigned int get_bpp_from_format(DXGI_FORMAT format)
         default:
             return 0;
     }
-}
-
-static DXGI_FORMAT get_d3dx10_dds_format(DXGI_FORMAT format)
-{
-    static const struct
-    {
-        DXGI_FORMAT src;
-        DXGI_FORMAT dst;
-    }
-    format_map[] =
-    {
-        {DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_R8G8B8A8_UNORM},
-        {DXGI_FORMAT_R8_UNORM,          DXGI_FORMAT_R8G8B8A8_UNORM},
-        {DXGI_FORMAT_R8G8_UNORM,        DXGI_FORMAT_R8G8B8A8_UNORM},
-        {DXGI_FORMAT_B5G6R5_UNORM,      DXGI_FORMAT_R8G8B8A8_UNORM},
-        {DXGI_FORMAT_B4G4R4A4_UNORM,    DXGI_FORMAT_R8G8B8A8_UNORM},
-        {DXGI_FORMAT_B5G5R5A1_UNORM,    DXGI_FORMAT_R8G8B8A8_UNORM},
-        {DXGI_FORMAT_B8G8R8X8_UNORM,    DXGI_FORMAT_R8G8B8A8_UNORM},
-        {DXGI_FORMAT_B8G8R8A8_UNORM,    DXGI_FORMAT_R8G8B8A8_UNORM},
-        {DXGI_FORMAT_R16_UNORM,         DXGI_FORMAT_R16G16B16A16_UNORM},
-    };
-
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(format_map); ++i)
-    {
-        if (format == format_map[i].src)
-            return format_map[i].dst;
-    }
-    return format;
 }
 
 HRESULT WINAPI D3DX10GetImageInfoFromFileA(const char *src_file, ID3DX10ThreadPump *pump, D3DX10_IMAGE_INFO *info,
@@ -616,9 +570,7 @@ HRESULT get_image_info(const void *data, SIZE_T size, D3DX10_IMAGE_INFO *img_inf
 {
     IWICBitmapFrameDecode *frame = NULL;
     IWICImagingFactory *factory = NULL;
-    IWICDdsDecoder *dds_decoder = NULL;
     IWICBitmapDecoder *decoder = NULL;
-    WICDdsParameters dds_params;
     IWICStream *stream = NULL;
     unsigned int frame_count;
     struct d3dx_image image;
@@ -631,13 +583,7 @@ HRESULT get_image_info(const void *data, SIZE_T size, D3DX10_IMAGE_INFO *img_inf
     if (SUCCEEDED(d3dx_image_init(data, size, &image, 0, D3DX_IMAGE_INFO_ONLY | D3DX_IMAGE_SUPPORT_DXT10))
             && (image.image_file_format == D3DX_IMAGE_FILE_FORMAT_DDS
                 || (image.image_file_format == D3DX_IMAGE_FILE_FORMAT_DDS_DXT10)))
-    {
-        if (SUCCEEDED(d3dx10_image_info_from_d3dx_image(img_info, &image)))
-        {
-            TRACE("Successfully retrieved image info from shared code.\n");
-            return S_OK;
-        }
-    }
+        return d3dx10_image_info_from_d3dx_image(img_info, &image);
 
     WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory);
     IWICImagingFactory_CreateStream(factory, &stream);
@@ -674,37 +620,18 @@ HRESULT get_image_info(const void *data, SIZE_T size, D3DX10_IMAGE_INFO *img_inf
 
     if (img_info->ImageFileFormat == D3DX10_IFF_DDS)
     {
-        hr = IWICBitmapDecoder_QueryInterface(decoder, &IID_IWICDdsDecoder, (void **)&dds_decoder);
-        if (FAILED(hr))
-            goto end;
-        hr = IWICDdsDecoder_GetParameters(dds_decoder, &dds_params);
-        if (FAILED(hr))
-            goto end;
-        img_info->ArraySize = dds_params.ArraySize;
-        img_info->Depth = dds_params.Depth;
-        img_info->MipLevels = dds_params.MipLevels;
-        img_info->ResourceDimension = wic_dimension_to_d3dx10_dimension(dds_params.Dimension);
-        img_info->Format = get_d3dx10_dds_format(dds_params.DxgiFormat);
-        img_info->MiscFlags = 0;
-        if (dds_params.Dimension == WICDdsTextureCube)
-        {
-            img_info->MiscFlags = D3D10_RESOURCE_MISC_TEXTURECUBE;
-            img_info->ArraySize *= 6;
-        }
-    }
-    else
-    {
-        img_info->ArraySize = 1;
-        img_info->Depth = 1;
-        img_info->MipLevels = 1;
-        img_info->ResourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
-        img_info->Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        img_info->MiscFlags = 0;
+        hr = E_FAIL;
+        goto end;
     }
 
+    img_info->ArraySize = 1;
+    img_info->Depth = 1;
+    img_info->MipLevels = 1;
+    img_info->ResourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
+    img_info->Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    img_info->MiscFlags = 0;
+
 end:
-    if (dds_decoder)
-        IWICDdsDecoder_Release(dds_decoder);
     if (frame)
         IWICBitmapFrameDecode_Release(frame);
     if (decoder)
