@@ -193,7 +193,7 @@ extern void user_check_not_lock(void);
 /* opengl.c */
 
 struct opengl_drawable;
-void set_dc_opengl_drawable( HDC hdc, struct opengl_drawable *new_drawable );
+extern void set_dc_opengl_drawable( HDC hdc, struct opengl_drawable *new_drawable );
 
 /* d3dkmtc. */
 

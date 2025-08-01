@@ -1224,6 +1224,7 @@ static INT release_dc( HWND hwnd, HDC hdc, BOOL end_paint )
         if (end_paint || (dce->flags & DCX_CACHE)) delete_clip_rgn( dce );
         if (dce->flags & DCX_CACHE)
         {
+            set_dc_opengl_drawable( dce->hdc, NULL );
             dce->count = 0;
             set_dce_flags( dce->hdc, DCHF_DISABLEDC );
         }
