@@ -103,6 +103,17 @@ void *get_aliaschain_attrp( const type_t *type, enum attr_type attr_type )
     }
 }
 
+void get_version( const attr_list_t *list, unsigned short *major, unsigned short *minor )
+{
+    version_t *version = get_attrp( list, ATTR_VERSION );
+    if (version)
+    {
+        *major = version->major;
+        *minor = version->minor;
+    }
+    else *major = *minor = 0;
+}
+
 struct allowed_attr
 {
     unsigned int dce_compatible : 1;

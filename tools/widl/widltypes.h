@@ -55,6 +55,7 @@ typedef struct _user_type_t context_handle_t;
 typedef struct _user_type_t generic_handle_t;
 typedef struct _statement_t statement_t;
 typedef struct _warning_t warning_t;
+typedef struct _version_t version_t;
 
 typedef struct list attr_list_t;
 typedef struct list str_list_t;
@@ -672,6 +673,11 @@ struct _statement_t {
     /* For STMT_TYPE and STMT_TYPEDEF, should we define the UDT in this
      * statement, when writing a header? */
     unsigned int is_defined : 1;
+};
+
+struct _version_t {
+    unsigned short major;
+    unsigned short minor;
 };
 
 struct _warning_t {

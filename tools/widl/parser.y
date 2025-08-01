@@ -59,6 +59,7 @@ static void append_array(declarator_t *decl, expr_t *expr);
 static void append_chain_type(declarator_t *decl, type_t *type, enum type_qualifier qual);
 static void append_chain_callconv( struct location where, type_t *chain, char *callconv );
 static warning_list_t *append_warning(warning_list_t *, int);
+static version_t *make_version( unsigned short major, unsigned short minor );
 
 static type_t *reg_typedefs( struct location where, decl_spec_t *decl_spec, var_list_t *names, attr_list_t *attrs );
 static type_t *find_type_or_error(struct namespace *parent, const char *name);
@@ -148,6 +149,7 @@ PARSER_LTYPE pop_import(void);
 	warning_list_t *warning_list;
 	typeref_t *typeref;
 	typeref_list_t *typeref_list;
+	version_t *version;
 	char *str;
 	struct uuid *uuid;
 	unsigned int num;
@@ -336,8 +338,7 @@ PARSER_LTYPE pop_import(void);
 %type <type> coclass coclassdef
 %type <type> runtimeclass runtimeclass_def
 %type <type> apicontract apicontract_def
-%type <num> contract_ver
-%type <num> pointer_type threading_type marshaling_behavior version
+%type <num> pointer_type threading_type marshaling_behavior
 %type <str> libraryhdr callconv cppquote importlib import
 %type <str> typename m_typename
 %type <str> import_start
@@ -349,6 +350,7 @@ PARSER_LTYPE pop_import(void);
 %type <warning_list> warnings
 %type <num> allocate_option_list allocate_option
 %type <namespace> namespace_pfx
+%type <version> version contract_ver
 
 %left ','
 %right '?' ':'
@@ -594,13 +596,13 @@ marshaling_behavior:
 	;
 
 contract_ver:
-	  aNUM					{ $$ = MAKEVERSION(0, $1.value); }
-	| aNUM '.' aNUM				{ $$ = MAKEVERSION($3.value, $1.value); }
+	  aNUM					{ $$ = make_version( 0, $1.value ); }
+	| aNUM '.' aNUM				{ $$ = make_version( $3.value, $1.value ); }
 	;
 
 contract_req
         : decl_spec ',' contract_ver            {
-                                                  struct integer integer = {.value = $3};
+                                                  struct integer integer = {.value = ($3->major << 16) | $3->minor };
                                                   if ($1->type->type_type != TYPE_APICONTRACT)
                                                     error_loc("type %s is not an apicontract\n", $1->type->name);
                                                   $$ = make_exprl(EXPR_NUM, &integer);
@@ -660,7 +662,7 @@ attribute
         | tCONTEXTHANDLENOSERIALIZE             { $$ = attr_int( @$, ATTR_CONTEXTHANDLE, 0 ); /* RPC_CONTEXT_HANDLE_DONT_SERIALIZE */ }
         | tCONTEXTHANDLESERIALIZE               { $$ = attr_int( @$, ATTR_CONTEXTHANDLE, 0 ); /* RPC_CONTEXT_HANDLE_SERIALIZE */ }
         | tCONTRACT '(' contract_req ')'        { $$ = attr_ptr( @$, ATTR_CONTRACT, $3 ); }
-        | tCONTRACTVERSION '(' contract_ver ')' { $$ = attr_int( @$, ATTR_CONTRACTVERSION, $3 ); }
+        | tCONTRACTVERSION '(' contract_ver ')' { $$ = attr_ptr( @$, ATTR_CONTRACTVERSION, $3 ); }
         | tCONTROL                              { $$ = attr_int( @$, ATTR_CONTROL, 0 ); }
         | tCUSTOM '(' aUUID ',' expr_const ')'  { attr_custdata_t *data = xmalloc( sizeof(*data) );
                                                   data->id = *$3; data->pval = $5;
@@ -765,7 +767,7 @@ attribute
         | tASYNCUUID '(' aUUID ')'              { $$ = attr_ptr( @$, ATTR_ASYNCUUID, $3 ); }
         | tV1ENUM                               { $$ = attr_int( @$, ATTR_V1ENUM, 0 ); }
         | tVARARG                               { $$ = attr_int( @$, ATTR_VARARG, 0 ); }
-        | tVERSION '(' version ')'              { $$ = attr_int( @$, ATTR_VERSION, $3 ); }
+        | tVERSION '(' version ')'              { $$ = attr_ptr( @$, ATTR_VERSION, $3 ); }
         | tVIPROGID '(' aSTRING ')'             { $$ = attr_ptr( @$, ATTR_VIPROGID, $3 ); }
         | tWIREMARSHAL '(' type ')'             { $$ = attr_ptr( @$, ATTR_WIREMARSHAL, $3 ); }
         | pointer_type                          { $$ = attr_int( @$, ATTR_POINTERTYPE, $1 ); }
@@ -1386,9 +1388,9 @@ uniondef: tUNION m_typename '{' ne_union_fields '}'
 	;
 
 version:
-	  aNUM					{ $$ = MAKEVERSION($1.value, 0); }
-	| aNUM '.' aNUM				{ $$ = MAKEVERSION($1.value, $3.value); }
-	| aHEXNUM				{ $$ = $1.value; }
+	  aNUM					{ $$ = make_version( $1.value, 0 ); }
+	| aNUM '.' aNUM				{ $$ = make_version( $1.value, $3.value ); }
+	| aHEXNUM				{ $$ = make_version( $1.value >> 16, $1.value & 0xffff ); }
 	;
 
 acf_statements
@@ -1988,6 +1990,14 @@ static typelib_t *make_library(const char *name, const attr_list_t *attrs)
     typelib->attrs = attrs;
     list_init( &typelib->importlibs );
     return typelib;
+}
+
+static version_t *make_version( unsigned short major, unsigned short minor )
+{
+    version_t *version = xmalloc( sizeof(*version) );
+    version->major = major;
+    version->minor = minor;
+    return version;
 }
 
 static int hash_ident(const char *name)

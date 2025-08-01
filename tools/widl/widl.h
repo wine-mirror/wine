@@ -105,6 +105,7 @@ extern int is_aliaschain_attr( const type_t *type, enum attr_type attr_type );
 extern unsigned int get_attrv( const attr_list_t *list, enum attr_type attr_type );
 extern void *get_attrp( const attr_list_t *list, enum attr_type attr_type );
 extern void *get_aliaschain_attrp( const type_t *type, enum attr_type attr_type );
+extern void get_version( const attr_list_t *list, unsigned short *major, unsigned short *minor );
 
 typedef int (*map_attrs_filter_t)( attr_list_t *, const attr_t * );
 extern attr_list_t *append_attr( attr_list_t *list, attr_t *attr );

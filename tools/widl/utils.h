@@ -41,11 +41,4 @@ extern void add_output_to_resources( const char *type, const char *name );
 extern void flush_output_resources( const char *name );
 extern void put_pword( unsigned int val );
 extern void put_str( int indent, const char *format, ... ) __attribute__((format (printf, 2, 3)));
-
-/* typelibs expect the minor version to be stored in the higher bits and
- * major to be stored in the lower bits */
-#define MAKEVERSION(major, minor) ((((minor) & 0xffff) << 16) | ((major) & 0xffff))
-#define MAJORVERSION(version) ((version) & 0xffff)
-#define MINORVERSION(version) (((version) >> 16) & 0xffff)
-
 #endif

@@ -1760,12 +1760,14 @@ static void write_com_interface_end(FILE *header, type_t *iface)
 
 static void write_rpc_interface_start(FILE *header, const type_t *iface)
 {
-  unsigned int ver = get_attrv(iface->attrs, ATTR_VERSION);
   const var_t *var = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
   expr_t *contract = get_attrp(iface->attrs, ATTR_CONTRACT);
+  unsigned short major, minor;
+
+  get_version( iface->attrs, &major, &minor );
 
   fprintf(header, "/*****************************************************************************\n");
-  fprintf(header, " * %s interface (v%d.%d)\n", iface->name, MAJORVERSION(ver), MINORVERSION(ver));
+  fprintf(header, " * %s interface (v%d.%d)\n", iface->name, major, minor);
   fprintf(header, " */\n");
   if (contract) write_apicontract_guard_start(header, contract);
   fprintf(header,"#ifndef __%s_INTERFACE_DEFINED__\n", iface->name);
@@ -1784,9 +1786,9 @@ static void write_rpc_interface_start(FILE *header, const type_t *iface)
   else
   {
       fprintf(header, "extern RPC_IF_HANDLE %s%s_v%d_%d_c_ifspec;\n",
-              prefix_client, iface->name, MAJORVERSION(ver), MINORVERSION(ver));
+              prefix_client, iface->name, major, minor);
       fprintf(header, "extern RPC_IF_HANDLE %s%s_v%d_%d_s_ifspec;\n",
-              prefix_server, iface->name, MAJORVERSION(ver), MINORVERSION(ver));
+              prefix_server, iface->name, major, minor);
   }
 }
 

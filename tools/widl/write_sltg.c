@@ -320,8 +320,13 @@ static void init_library(struct sltg_typelib *sltg)
         switch (attr->type)
         {
         case ATTR_VERSION:
-            sltg->library.version = attr->u.ival;
+        {
+            const version_t *version = attr->u.pval;
+            unsigned short major = version ? version->major : 0, minor = version ? version->minor : 0;
+
+            sltg->library.version = (minor << 16) | major;
             break;
+        }
         case ATTR_HELPSTRING:
             sltg->library.helpstring = attr->u.pval;
             break;
@@ -522,12 +527,16 @@ static const char *add_typeinfo_block(struct sltg_typelib *typelib, const type_t
 static void init_typeinfo(struct sltg_typeinfo_header *ti, const type_t *type, short kind,
                           const struct sltg_hrefmap *hrefmap)
 {
+    unsigned short major, minor;
+
+    get_version( type->attrs, &major, &minor );
+
     ti->magic = 0x0501;
     ti->href_offset = -1;
     ti->res06 = -1;
     ti->member_offset = sizeof(*ti);
     ti->res0e = -1;
-    ti->version = get_attrv(type->attrs, ATTR_VERSION);
+    ti->version = minor << 16 | major;
     ti->res16 = 0xfffe0000;
     ti->misc.unknown1 = 0x02;
     ti->misc.flags = 0; /* FIXME */

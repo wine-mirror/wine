@@ -112,7 +112,9 @@ static void write_typelib_interface( const type_t *iface, const typelib_t *typel
 {
     const struct uuid *typelib_uuid = get_attrp( typelib->attrs, ATTR_UUID );
     const struct uuid *uuid = get_attrp( iface->attrs, ATTR_UUID );
-    unsigned int version = get_attrv( typelib->attrs, ATTR_VERSION );
+    unsigned short major, minor;
+
+    get_version( iface->attrs, &major, &minor );
 
     if (!uuid) return;
     if (!is_object( iface )) return;
@@ -121,9 +123,9 @@ static void write_typelib_interface( const type_t *iface, const typelib_t *typel
     indent++;
     put_str( indent, "ProxyStubClsid = s '{00020424-0000-0000-C000-000000000046}'\n" );
     put_str( indent, "ProxyStubClsid32 = s '{00020424-0000-0000-C000-000000000046}'\n" );
-    if (version)
+    if (major || minor)
         put_str( indent, "TypeLib = s '%s' { val Version = s '%u.%u' }\n",
-                 format_uuid( typelib_uuid ), MAJORVERSION(version), MINORVERSION(version) );
+                 format_uuid( typelib_uuid ), major, minor );
     else
         put_str( indent, "TypeLib = s '%s'", format_uuid( typelib_uuid ));
     indent--;
@@ -145,7 +147,9 @@ static int write_coclass( const type_t *class, const typelib_t *typelib )
     const char *progid = get_attrp( class->attrs, ATTR_PROGID );
     const char *vi_progid = get_attrp( class->attrs, ATTR_VIPROGID );
     const char *threading = get_coclass_threading( class );
-    unsigned int version = get_attrv( class->attrs, ATTR_VERSION );
+    unsigned short major, minor;
+
+    get_version( class->attrs, &major, &minor );
 
     if (!uuid) return 0;
     if (typelib && !threading && !progid) return 0;
@@ -160,9 +164,10 @@ static int write_coclass( const type_t *class, const typelib_t *typelib )
     {
         const struct uuid *typelib_uuid = get_attrp( typelib->attrs, ATTR_UUID );
         put_str( indent, "TypeLib = s '%s'\n", format_uuid( typelib_uuid ));
-        if (!version) version = get_attrv( typelib->attrs, ATTR_VERSION );
+        if (!(major && minor))
+            get_version( typelib->attrs, &major, &minor );
     }
-    if (version) put_str( indent, "Version = s '%u.%u'\n", MAJORVERSION(version), MINORVERSION(version) );
+    if (major || minor) put_str( indent, "Version = s '%u.%u'\n", major, minor );
     if (vi_progid) put_str( indent, "VersionIndependentProgId = s '%s'\n", vi_progid );
     put_str( --indent, "}\n" );
     return 1;
@@ -336,11 +341,13 @@ void output_typelib_regscript( const typelib_t *typelib )
     const struct uuid *typelib_uuid = get_attrp( typelib->attrs, ATTR_UUID );
     const char *descr = get_attrp( typelib->attrs, ATTR_HELPSTRING );
     const expr_t *lcid_expr = get_attrp( typelib->attrs, ATTR_LIBLCID );
-    unsigned int version = get_attrv( typelib->attrs, ATTR_VERSION );
+    unsigned short major, minor;
     unsigned int flags = 0;
     char id_part[12] = "";
     char *resname = typelib_name;
     expr_t *expr;
+
+    get_version( typelib->attrs, &major, &minor );
 
     if (is_attr( typelib->attrs, ATTR_RESTRICTED )) flags |= 1; /* LIBFLAG_FRESTRICTED */
     if (is_attr( typelib->attrs, ATTR_CONTROL )) flags |= 2; /* LIBFLAG_FCONTROL */
@@ -353,8 +360,7 @@ void output_typelib_regscript( const typelib_t *typelib )
     put_str( indent++, "{\n" );
     put_str( indent, "NoRemove '%s'\n", format_uuid( typelib_uuid ));
     put_str( indent++, "{\n" );
-    put_str( indent, "'%u.%u' = s '%s'\n",
-             MAJORVERSION(version), MINORVERSION(version), descr ? descr : typelib->name );
+    put_str( indent, "'%u.%u' = s '%s'\n", major, minor, descr ? descr : typelib->name );
     put_str( indent++, "{\n" );
     expr = get_attrp( typelib->attrs, ATTR_ID );
     if (expr)
