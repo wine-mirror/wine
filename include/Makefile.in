@@ -919,6 +919,7 @@ SOURCES = \
 	windows.security.authorization.appcapabilityaccess.idl \
 	windows.security.credentials.idl \
 	windows.security.credentials.ui.idl \
+	windows.security.cryptography.core.idl \
 	windows.security.cryptography.idl \
 	windows.security.enterprisedata.idl \
 	windows.security.exchangeactivesyncprovisioning.idl \
