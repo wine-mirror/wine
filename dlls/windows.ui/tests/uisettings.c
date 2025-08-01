@@ -378,15 +378,12 @@ static void test_AccessibilitySettings(void)
     check_interface( inspectable, &IID_IAccessibilitySettings, TRUE );
 
     hr = IAccessibilitySettings_get_HighContrast( settings, &value );
-    todo_wine
     ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
-    if ( hr == S_OK )
-    {
-        high_contrast.cbSize = sizeof(high_contrast);
-        ret = SystemParametersInfoW( SPI_GETHIGHCONTRAST, sizeof(high_contrast), &high_contrast, 0 );
-        ok( ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError() );
-        ok( value == !!(high_contrast.dwFlags & HCF_HIGHCONTRASTON), "Got unexpected high contrast value.\n" );
-    }
+
+    high_contrast.cbSize = sizeof(high_contrast);
+    ret = SystemParametersInfoW( SPI_GETHIGHCONTRAST, sizeof(high_contrast), &high_contrast, 0 );
+    ok( ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError() );
+    ok( value == !!(high_contrast.dwFlags & HCF_HIGHCONTRASTON), "Got unexpected high contrast value.\n" );
 
     IAccessibilitySettings_Release( settings );
     IInspectable_Release( inspectable );

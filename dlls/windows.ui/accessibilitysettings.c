@@ -99,8 +99,15 @@ static HRESULT WINAPI accessibilitysettings_GetTrustLevel(IAccessibilitySettings
 static HRESULT WINAPI accessibilitysettings_get_HighContrast(IAccessibilitySettings *iface,
                                                              boolean *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    HIGHCONTRASTW high_contrast = {.cbSize = sizeof(high_contrast)};
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    if (!SystemParametersInfoW(SPI_GETHIGHCONTRAST, sizeof(high_contrast), &high_contrast, 0))
+        return E_FAIL;
+
+    *value = !!(high_contrast.dwFlags & HCF_HIGHCONTRASTON);
+    return S_OK;
 }
 
 static HRESULT WINAPI accessibilitysettings_get_HighContrastScheme(IAccessibilitySettings *iface,
