@@ -8330,8 +8330,14 @@ static HRESULT WINAPI HTMLAttributeCollection4_item(IHTMLAttributeCollection4 *i
 static HRESULT WINAPI HTMLAttributeCollection4_get_length(IHTMLAttributeCollection4 *iface, LONG *p)
 {
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection4(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    UINT32 length = 0;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->dom_attrs)
+        nsIDOMMozNamedAttrMap_GetLength(This->dom_attrs, &length);
+    *p = length;
+    return S_OK;
 }
 
 static const IHTMLAttributeCollection4Vtbl HTMLAttributeCollection4Vtbl = {
@@ -8378,6 +8384,8 @@ static void HTMLAttributeCollection_traverse(DispatchEx *dispex, nsCycleCollecti
     HTMLAttributeCollection *This = HTMLAttributeCollection_from_DispatchEx(dispex);
     HTMLDOMAttribute *attr;
 
+    if(This->dom_attrs)
+        note_cc_edge((nsISupports*)This->dom_attrs, "dom_attrs", cb);
     LIST_FOR_EACH_ENTRY(attr, &This->attrs, HTMLDOMAttribute, entry)
         note_cc_edge((nsISupports*)&attr->IHTMLDOMAttribute_iface, "attr", cb);
     if(This->elem)
@@ -8387,6 +8395,7 @@ static void HTMLAttributeCollection_traverse(DispatchEx *dispex, nsCycleCollecti
 static void HTMLAttributeCollection_unlink(DispatchEx *dispex)
 {
     HTMLAttributeCollection *This = HTMLAttributeCollection_from_DispatchEx(dispex);
+    unlink_ref(&This->dom_attrs);
     while(!list_empty(&This->attrs)) {
         HTMLDOMAttribute *attr = LIST_ENTRY(list_head(&This->attrs), HTMLDOMAttribute, entry);
 
@@ -8512,6 +8521,9 @@ HRESULT HTMLElement_get_attr_col(HTMLDOMNode *iface, HTMLAttributeCollection **a
     list_init(&This->attrs->attrs);
     init_dispatch(&This->attrs->dispex, &NamedNodeMap_dispex, This->node.doc->script_global,
                   dispex_compat_mode(&This->node.event_target.dispex));
+
+    if(This->dom_element)
+        nsIDOMElement_GetAttributes(This->dom_element, &This->attrs->dom_attrs);
 
     *ac = This->attrs;
     IHTMLAttributeCollection_AddRef(&This->attrs->IHTMLAttributeCollection_iface);

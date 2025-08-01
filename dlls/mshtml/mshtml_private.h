@@ -1332,6 +1332,7 @@ struct HTMLAttributeCollection {
     IHTMLAttributeCollection3 IHTMLAttributeCollection3_iface;
     IHTMLAttributeCollection4 IHTMLAttributeCollection4_iface;
 
+    nsIDOMMozNamedAttrMap *dom_attrs;
     HTMLElement *elem;
     struct list attrs;
 };
