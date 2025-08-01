@@ -476,9 +476,7 @@ static DWORD CALLBACK test_RoGetAgileReference_thread_proc(void *arg)
     ok(!!unknown, "Expected pointer not NULL.\n");
     if (param->obj_is_agile)
     {
-        todo_wine_if(param->from_type == RO_INIT_SINGLETHREADED || param->to_type == RO_INIT_SINGLETHREADED)
         ok(unknown == param->unk_obj, "Expected the same object.\n");
-        todo_wine_if(param->from_type == RO_INIT_MULTITHREADED && param->to_type == RO_INIT_MULTITHREADED)
         EXPECT_REF(param->unk_obj, 4);
     }
     else if (param->from_type == RO_INIT_MULTITHREADED && param->to_type == RO_INIT_MULTITHREADED)
@@ -595,7 +593,6 @@ static void test_RoGetAgileReference(void)
             hr = RoGetAgileReference(option, &IID_IUnknown, &unk_agile_obj.IUnknown_iface, &agile_reference);
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             ok(!!agile_reference, "Got unexpected agile_reference.\n");
-            todo_wine_if(option == AGILEREFERENCE_DEFAULT)
             EXPECT_REF(&unk_agile_obj, 2);
 
             unknown = NULL;
@@ -603,7 +600,6 @@ static void test_RoGetAgileReference(void)
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             ok(!!unknown, "Expected pointer not NULL.\n");
             ok(unknown == &unk_agile_obj.IUnknown_iface, "Expected the same object.\n");
-            todo_wine
             EXPECT_REF(&unk_agile_obj, 3);
 
             for (to_type = RO_INIT_SINGLETHREADED; to_type <= RO_INIT_MULTITHREADED; to_type++)

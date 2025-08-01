@@ -245,6 +245,7 @@ struct agile_reference
     IStream *marshal_stream;
     CRITICAL_SECTION cs;
     IUnknown *obj;
+    BOOLEAN is_agile;
     LONG ref;
 };
 
@@ -331,6 +332,9 @@ static HRESULT WINAPI agile_ref_Resolve(IAgileReference *iface, REFIID riid, voi
 
     TRACE("(%p, %s, %p)\n", iface, debugstr_guid(riid), obj);
 
+    if (impl->is_agile)
+        return IUnknown_QueryInterface(impl->obj, riid, obj);
+
     EnterCriticalSection(&impl->cs);
     if (impl->option == AGILEREFERENCE_DELAYEDMARSHAL && impl->marshal_stream == NULL)
     {
@@ -359,6 +363,17 @@ static const IAgileReferenceVtbl agile_ref_vtbl =
     agile_ref_Resolve,
 };
 
+static BOOL object_has_interface(IUnknown *obj, REFIID iid)
+{
+    IUnknown *unk;
+    HRESULT hr;
+
+    hr = IUnknown_QueryInterface(obj, iid, (void **)&unk);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+    return SUCCEEDED(hr);
+}
+
 /***********************************************************************
  *      RoGetAgileReference (combase.@)
  */
@@ -366,7 +381,6 @@ HRESULT WINAPI RoGetAgileReference(enum AgileReferenceOptions option, REFIID rii
                                    IAgileReference **agile_reference)
 {
     struct agile_reference *impl;
-    IUnknown *unknown;
     HRESULT hr;
 
     TRACE("(%d, %s, %p, %p).\n", option, debugstr_guid(riid), obj, agile_reference);
@@ -380,17 +394,10 @@ HRESULT WINAPI RoGetAgileReference(enum AgileReferenceOptions option, REFIID rii
         return CO_E_NOTINITIALIZED;
     }
 
-    hr = IUnknown_QueryInterface(obj, riid, (void **)&unknown);
-    if (FAILED(hr))
+    if (!object_has_interface(obj, riid))
         return E_NOINTERFACE;
-    IUnknown_Release(unknown);
-
-    hr = IUnknown_QueryInterface(obj, &IID_INoMarshal, (void **)&unknown);
-    if (SUCCEEDED(hr))
-    {
-        IUnknown_Release(unknown);
+    if (object_has_interface(obj, &IID_INoMarshal))
         return CO_E_NOT_SUPPORTED;
-    }
 
     impl = calloc(1, sizeof(*impl));
     if (!impl)
@@ -398,20 +405,21 @@ HRESULT WINAPI RoGetAgileReference(enum AgileReferenceOptions option, REFIID rii
 
     impl->IAgileReference_iface.lpVtbl = &agile_ref_vtbl;
     impl->option = option;
+    impl->is_agile = object_has_interface(obj, &IID_IAgileObject);
     impl->ref = 1;
 
-    if (option == AGILEREFERENCE_DEFAULT)
+    if (option == AGILEREFERENCE_DELAYEDMARSHAL || impl->is_agile)
+    {
+        impl->obj = obj;
+        IUnknown_AddRef(impl->obj);
+    }
+    else if (option == AGILEREFERENCE_DEFAULT)
     {
         if (FAILED(hr = marshal_object_in_agile_reference(impl, riid, obj)))
         {
             free(impl);
             return hr;
         }
-    }
-    else if (option == AGILEREFERENCE_DELAYEDMARSHAL)
-    {
-        impl->obj = obj;
-        IUnknown_AddRef(impl->obj);
     }
 
     InitializeCriticalSection(&impl->cs);
