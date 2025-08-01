@@ -3416,9 +3416,9 @@ static void test_get_image_info(void)
      * These formats should map 1:1 from the DXT10 header, unlike legacy DDS
      * file equivalents.
      */
-    check_dds_dxt10_format(DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8_UNORM, TRUE);
-    check_dds_dxt10_format(DXGI_FORMAT_R16_UNORM, DXGI_FORMAT_R16_UNORM, TRUE);
-    check_dds_dxt10_format(DXGI_FORMAT_R8G8_UNORM, DXGI_FORMAT_R8G8_UNORM, TRUE);
+    check_dds_dxt10_format(DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8_UNORM, FALSE);
+    check_dds_dxt10_format(DXGI_FORMAT_R16_UNORM, DXGI_FORMAT_R16_UNORM, FALSE);
+    check_dds_dxt10_format(DXGI_FORMAT_R8G8_UNORM, DXGI_FORMAT_R8G8_UNORM, FALSE);
 
     /* BGRA formats are only supported on d3dx10_40+. */
 #if D3DX10_SDK_VERSION >= 40

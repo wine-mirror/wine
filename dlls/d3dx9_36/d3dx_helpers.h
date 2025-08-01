@@ -183,6 +183,9 @@ enum d3dx_pixel_format_id
     D3DX_PIXEL_FORMAT_R10G10B10A2_UNORM,
     D3DX_PIXEL_FORMAT_R16G16B16_UNORM,
     D3DX_PIXEL_FORMAT_R16G16B16A16_UNORM,
+    D3DX_PIXEL_FORMAT_R8_UNORM,
+    D3DX_PIXEL_FORMAT_R8G8_UNORM,
+    D3DX_PIXEL_FORMAT_R16_UNORM,
     D3DX_PIXEL_FORMAT_R16G16_UNORM,
     D3DX_PIXEL_FORMAT_A8_UNORM,
     D3DX_PIXEL_FORMAT_L8A8_UNORM,
@@ -194,11 +197,16 @@ enum d3dx_pixel_format_id
     D3DX_PIXEL_FORMAT_DXT3_UNORM,
     D3DX_PIXEL_FORMAT_DXT4_UNORM,
     D3DX_PIXEL_FORMAT_DXT5_UNORM,
+    D3DX_PIXEL_FORMAT_BC4_UNORM,
+    D3DX_PIXEL_FORMAT_BC4_SNORM,
+    D3DX_PIXEL_FORMAT_BC5_UNORM,
+    D3DX_PIXEL_FORMAT_BC5_SNORM,
     D3DX_PIXEL_FORMAT_R16_FLOAT,
     D3DX_PIXEL_FORMAT_R16G16_FLOAT,
     D3DX_PIXEL_FORMAT_R16G16B16A16_FLOAT,
     D3DX_PIXEL_FORMAT_R32_FLOAT,
     D3DX_PIXEL_FORMAT_R32G32_FLOAT,
+    D3DX_PIXEL_FORMAT_R32G32B32_FLOAT,
     D3DX_PIXEL_FORMAT_R32G32B32A32_FLOAT,
     D3DX_PIXEL_FORMAT_P1_UINT,
     D3DX_PIXEL_FORMAT_P2_UINT,
@@ -244,6 +252,11 @@ enum format_flag
     FMT_FLAG_PACKED = 0x02,
     /* Internal only format, has no exact D3DFORMAT equivalent. */
     FMT_FLAG_INTERNAL = 0x04,
+    /*
+     * For formats that only have a DXGI_FORMAT mapping, no D3DFORMAT
+     * equivalent.
+     */
+    FMT_FLAG_DXGI     = 0x08,
 };
 
 struct pixel_format_desc {
@@ -351,6 +364,11 @@ static inline BOOL format_types_match(const struct pixel_format_desc *src, const
 static inline BOOL is_internal_format(const struct pixel_format_desc *format)
 {
     return !!(format->flags & FMT_FLAG_INTERNAL);
+}
+
+static inline BOOL is_dxgi_format(const struct pixel_format_desc *format)
+{
+    return !!(format->flags & FMT_FLAG_DXGI);
 }
 
 static inline BOOL is_conversion_from_supported(const struct pixel_format_desc *format)
