@@ -363,6 +363,42 @@ static HRESULT dds_pixel_format_from_d3dx_pixel_format_id(struct dds_pixel_forma
     return D3D_OK;
 }
 
+static enum d3dx_pixel_format_id d3dx_pixel_format_id_from_dxgi_format(DXGI_FORMAT format)
+{
+    switch (format)
+    {
+        case DXGI_FORMAT_R8G8B8A8_UNORM:           return D3DX_PIXEL_FORMAT_R8G8B8A8_UNORM;
+        case DXGI_FORMAT_B8G8R8A8_UNORM:           return D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM;
+        case DXGI_FORMAT_B8G8R8X8_UNORM:           return D3DX_PIXEL_FORMAT_B8G8R8X8_UNORM;
+        case DXGI_FORMAT_B5G6R5_UNORM:             return D3DX_PIXEL_FORMAT_B5G6R5_UNORM;
+        case DXGI_FORMAT_B5G5R5A1_UNORM:           return D3DX_PIXEL_FORMAT_B5G5R5A1_UNORM;
+        case DXGI_FORMAT_B4G4R4A4_UNORM:           return D3DX_PIXEL_FORMAT_B4G4R4A4_UNORM;
+        case DXGI_FORMAT_R10G10B10A2_UNORM:        return D3DX_PIXEL_FORMAT_R10G10B10A2_UNORM;
+        case DXGI_FORMAT_R16G16B16A16_UNORM:       return D3DX_PIXEL_FORMAT_R16G16B16A16_UNORM;
+        case DXGI_FORMAT_R16G16_UNORM:             return D3DX_PIXEL_FORMAT_R16G16_UNORM;
+        case DXGI_FORMAT_A8_UNORM:                 return D3DX_PIXEL_FORMAT_A8_UNORM;
+        case DXGI_FORMAT_R16_FLOAT:                return D3DX_PIXEL_FORMAT_R16_FLOAT;
+        case DXGI_FORMAT_R16G16_FLOAT:             return D3DX_PIXEL_FORMAT_R16G16_FLOAT;
+        case DXGI_FORMAT_R16G16B16A16_FLOAT:       return D3DX_PIXEL_FORMAT_R16G16B16A16_FLOAT;
+        case DXGI_FORMAT_R32_FLOAT:                return D3DX_PIXEL_FORMAT_R32_FLOAT;
+        case DXGI_FORMAT_R32G32_FLOAT:             return D3DX_PIXEL_FORMAT_R32G32_FLOAT;
+        case DXGI_FORMAT_R32G32B32A32_FLOAT:       return D3DX_PIXEL_FORMAT_R32G32B32A32_FLOAT;
+        case DXGI_FORMAT_G8R8_G8B8_UNORM:          return D3DX_PIXEL_FORMAT_G8R8_G8B8_UNORM;
+        case DXGI_FORMAT_R8G8_B8G8_UNORM:          return D3DX_PIXEL_FORMAT_R8G8_B8G8_UNORM;
+        case DXGI_FORMAT_BC1_UNORM:                return D3DX_PIXEL_FORMAT_BC1_UNORM;
+        case DXGI_FORMAT_BC2_UNORM:                return D3DX_PIXEL_FORMAT_BC2_UNORM;
+        case DXGI_FORMAT_BC3_UNORM:                return D3DX_PIXEL_FORMAT_BC3_UNORM;
+        case DXGI_FORMAT_R8G8B8A8_SNORM:           return D3DX_PIXEL_FORMAT_R8G8B8A8_SNORM;
+        case DXGI_FORMAT_R8G8_SNORM:               return D3DX_PIXEL_FORMAT_R8G8_SNORM;
+        case DXGI_FORMAT_R16G16_SNORM:             return D3DX_PIXEL_FORMAT_R16G16_SNORM;
+        case DXGI_FORMAT_R16G16B16A16_SNORM:       return D3DX_PIXEL_FORMAT_R16G16B16A16_SNORM;
+
+        default:
+            FIXME("Unhandled DXGI format %#x.\n", format);
+            return D3DX_PIXEL_FORMAT_COUNT;
+    }
+}
+
 static void d3dx_get_next_mip_level_size(struct volume *size)
 {
     size->width  = max(size->width  / 2, 1);
@@ -993,8 +1029,44 @@ static BOOL d3dx_get_image_file_format_from_file_signature(const void *src_data,
     return FALSE;
 }
 
+/* These defines match D3D10/D3D11 values. */
+#define DDS_RESOURCE_MISC_TEXTURECUBE 0x04
+#define DDS_RESOURCE_DIMENSION_TEXTURE1D 2
+#define DDS_RESOURCE_DIMENSION_TEXTURE2D 3
+#define DDS_RESOURCE_DIMENSION_TEXTURE3D 4
+struct dds_header_dxt10
+{
+    uint32_t dxgi_format;
+    uint32_t resource_dimension;
+    uint32_t misc_flags;
+    uint32_t array_size;
+    uint32_t misc_flags2;
+};
+
+static enum d3dx_resource_type dxt10_resource_dimension_to_d3dx_resource_type(uint32_t resource_dimension)
+{
+    switch (resource_dimension)
+    {
+        case DDS_RESOURCE_DIMENSION_TEXTURE1D: return D3DX_RESOURCE_TYPE_TEXTURE_1D;
+        case DDS_RESOURCE_DIMENSION_TEXTURE2D: return D3DX_RESOURCE_TYPE_TEXTURE_2D;
+        case DDS_RESOURCE_DIMENSION_TEXTURE3D: return D3DX_RESOURCE_TYPE_TEXTURE_3D;
+
+        default:
+            break;
+    }
+
+    FIXME("Unhandled DXT10 resource dimension value %u.\n", resource_dimension);
+    return D3DX_RESOURCE_TYPE_UNKNOWN;
+}
+
+static BOOL has_extended_header(const struct dds_header *header)
+{
+    return (header->pixel_format.flags & DDS_PF_FOURCC) &&
+           (header->pixel_format.fourcc == MAKEFOURCC('D', 'X', '1', '0'));
+}
+
 static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src_data_size,
-        struct d3dx_image *image, uint32_t starting_mip_level)
+        struct d3dx_image *image, uint32_t starting_mip_level, uint32_t flags)
 {
     uint32_t expected_src_data_size, header_size;
     const struct dds_header *header = src_data;
@@ -1004,40 +1076,71 @@ static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src
     if (src_data_size < sizeof(*header) || header->pixel_format.size != sizeof(header->pixel_format))
         return D3DXERR_INVALIDDATA;
 
-    TRACE("File type is DDS.\n");
     is_indexed_fmt = !!(header->pixel_format.flags & DDS_PF_INDEXED);
     header_size = is_indexed_fmt ? sizeof(*header) + DDS_PALETTE_SIZE : sizeof(*header);
 
     set_volume_struct(&image->size, header->width, header->height, 1);
     image->mip_levels = header->miplevels ? header->miplevels : 1;
-    image->format = d3dx_pixel_format_id_from_dds_pixel_format(&header->pixel_format);
-    image->layer_count = 1;
-
-    if (image->format == D3DX_PIXEL_FORMAT_COUNT)
-        return D3DXERR_INVALIDDATA;
-
-    TRACE("Pixel format is %#x.\n", image->format);
-    if (header->flags & DDS_DEPTH)
+    if (has_extended_header(header) && (flags & D3DX_IMAGE_SUPPORT_DXT10))
     {
-        image->size.depth = max(header->depth, 1);
-        image->resource_type = D3DX_RESOURCE_TYPE_TEXTURE_3D;
-    }
-    else if (header->caps2 & DDS_CAPS2_CUBEMAP)
-    {
-        if ((header->caps2 & DDS_CAPS2_CUBEMAP_ALL_FACES) != DDS_CAPS2_CUBEMAP_ALL_FACES)
+        const struct dds_header_dxt10 *dxt10 = (const struct dds_header_dxt10 *)((uint8_t *)src_data + header_size);
+
+        header_size += sizeof(*dxt10);
+        if (src_data_size < header_size)
+            return D3DXERR_INVALIDDATA;
+
+        TRACE("File type is DXT10 DDS.\n");
+        if ((image->format = d3dx_pixel_format_id_from_dxgi_format(dxt10->dxgi_format)) == D3DX_PIXEL_FORMAT_COUNT)
+            return D3DXERR_INVALIDDATA;
+
+        if (dxt10->misc_flags2)
         {
-            WARN("Tried to load a partial cubemap DDS file.\n");
+            ERR("Invalid misc_flags2 field %#x.\n", dxt10->misc_flags2);
             return D3DXERR_INVALIDDATA;
         }
 
-        image->layer_count = 6;
-        image->resource_type = D3DX_RESOURCE_TYPE_CUBE_TEXTURE;
+        image->image_file_format = D3DX_IMAGE_FILE_FORMAT_DDS_DXT10;
+        image->size.depth = (header->flags & DDS_DEPTH) ? max(header->depth, 1) : 1;
+        image->layer_count = max(1, dxt10->array_size);
+        image->resource_type = dxt10_resource_dimension_to_d3dx_resource_type(dxt10->resource_dimension);
+        if (dxt10->misc_flags & DDS_RESOURCE_MISC_TEXTURECUBE)
+        {
+            if (image->resource_type != D3DX_RESOURCE_TYPE_TEXTURE_2D)
+                return D3DXERR_INVALIDDATA;
+            image->resource_type = D3DX_RESOURCE_TYPE_CUBE_TEXTURE;
+            image->layer_count *= 6;
+        }
     }
     else
     {
-        image->resource_type = D3DX_RESOURCE_TYPE_TEXTURE_2D;
+        TRACE("File type is DDS.\n");
+
+        if ((image->format = d3dx_pixel_format_id_from_dds_pixel_format(&header->pixel_format)) == D3DX_PIXEL_FORMAT_COUNT)
+            return D3DXERR_INVALIDDATA;
+
+        image->image_file_format = D3DX_IMAGE_FILE_FORMAT_DDS;
+        image->layer_count = 1;
+        if (header->flags & DDS_DEPTH)
+        {
+            image->size.depth = max(header->depth, 1);
+            image->resource_type = D3DX_RESOURCE_TYPE_TEXTURE_3D;
+        }
+        else if (header->caps2 & DDS_CAPS2_CUBEMAP)
+        {
+            if ((header->caps2 & DDS_CAPS2_CUBEMAP_ALL_FACES) != DDS_CAPS2_CUBEMAP_ALL_FACES)
+            {
+                WARN("Tried to load a partial cubemap DDS file.\n");
+                return D3DXERR_INVALIDDATA;
+            }
+
+            image->layer_count = 6;
+            image->resource_type = D3DX_RESOURCE_TYPE_CUBE_TEXTURE;
+        }
+        else
+            image->resource_type = D3DX_RESOURCE_TYPE_TEXTURE_2D;
     }
 
+    TRACE("Pixel format is %#x.\n", image->format);
     image->layer_pitch = d3dx_calculate_layer_pixels_size(image->format, image->size.width, image->size.height,
             image->size.depth, image->mip_levels);
     if (!image->layer_pitch)
@@ -1051,7 +1154,6 @@ static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src
 
     image->palette = (is_indexed_fmt) ? (PALETTEENTRY *)(((uint8_t *)src_data) + sizeof(*header)) : NULL;
     image->pixels = ((BYTE *)src_data) + header_size;
-    image->image_file_format = D3DX_IMAGE_FILE_FORMAT_DDS;
     if (starting_mip_level && (image->mip_levels > 1))
     {
         uint32_t i, row_pitch, slice_pitch, initial_mip_levels;
@@ -1650,7 +1752,7 @@ HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3d
             break;
 
         case D3DX_IMAGE_FILE_FORMAT_DDS:
-            hr = d3dx_initialize_image_from_dds(src_data, src_data_size, image, starting_mip_level);
+            hr = d3dx_initialize_image_from_dds(src_data, src_data_size, image, starting_mip_level, flags);
             break;
 
         case D3DX_IMAGE_FILE_FORMAT_PPM:

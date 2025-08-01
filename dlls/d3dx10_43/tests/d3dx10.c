@@ -3143,7 +3143,6 @@ static void test_dxt10_dds_header_image_info(void)
             0, 4, 4, 2, (4 * 4), 1, 0, 0,
             { DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE3D, 0, 1, 0, }, (4 * 4 * 4 * 2),
             { S_OK, 4, 4, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE3D, },
-            .todo_info = TRUE
         },
         /*
          * 3D texture with an array size larger than 1. Technically there's no
@@ -3425,8 +3424,8 @@ static void test_get_image_info(void)
 
     /* BGRA formats are only supported on d3dx10_40+. */
 #if D3DX10_SDK_VERSION >= 40
-    check_dds_dxt10_format(DXGI_FORMAT_B8G8R8X8_UNORM, DXGI_FORMAT_B8G8R8X8_UNORM, TRUE);
-    check_dds_dxt10_format(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_B8G8R8A8_UNORM, TRUE);
+    check_dds_dxt10_format(DXGI_FORMAT_B8G8R8X8_UNORM, DXGI_FORMAT_B8G8R8X8_UNORM, FALSE);
+    check_dds_dxt10_format(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_B8G8R8A8_UNORM, FALSE);
 #else
     todo_wine check_dds_dxt10_format_unsupported(DXGI_FORMAT_B8G8R8X8_UNORM, E_FAIL);
     todo_wine check_dds_dxt10_format_unsupported(DXGI_FORMAT_B8G8R8A8_UNORM, E_FAIL);

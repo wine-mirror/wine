@@ -99,6 +99,48 @@ static DXGI_FORMAT dxgi_format_from_legacy_dds_d3dx_pixel_format_id(enum d3dx_pi
     }
 }
 
+static DXGI_FORMAT dxgi_format_from_d3dx_pixel_format_id(enum d3dx_pixel_format_id format)
+{
+    switch (format)
+    {
+        case D3DX_PIXEL_FORMAT_R8G8B8A8_UNORM:          return DXGI_FORMAT_R8G8B8A8_UNORM;
+        case D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM:          return DXGI_FORMAT_B8G8R8A8_UNORM;
+        case D3DX_PIXEL_FORMAT_B8G8R8X8_UNORM:          return DXGI_FORMAT_B8G8R8X8_UNORM;
+        case D3DX_PIXEL_FORMAT_R10G10B10A2_UNORM:       return DXGI_FORMAT_R10G10B10A2_UNORM;
+        case D3DX_PIXEL_FORMAT_R16G16B16A16_UNORM:      return DXGI_FORMAT_R16G16B16A16_UNORM;
+        case D3DX_PIXEL_FORMAT_R16G16_UNORM:            return DXGI_FORMAT_R16G16_UNORM;
+        case D3DX_PIXEL_FORMAT_A8_UNORM:                return DXGI_FORMAT_A8_UNORM;
+        case D3DX_PIXEL_FORMAT_R16_FLOAT:               return DXGI_FORMAT_R16_FLOAT;
+        case D3DX_PIXEL_FORMAT_R16G16_FLOAT:            return DXGI_FORMAT_R16G16_FLOAT;
+        case D3DX_PIXEL_FORMAT_R16G16B16A16_FLOAT:      return DXGI_FORMAT_R16G16B16A16_FLOAT;
+        case D3DX_PIXEL_FORMAT_R32_FLOAT:               return DXGI_FORMAT_R32_FLOAT;
+        case D3DX_PIXEL_FORMAT_R32G32_FLOAT:            return DXGI_FORMAT_R32G32_FLOAT;
+        case D3DX_PIXEL_FORMAT_R32G32B32A32_FLOAT:      return DXGI_FORMAT_R32G32B32A32_FLOAT;
+        case D3DX_PIXEL_FORMAT_G8R8_G8B8_UNORM:         return DXGI_FORMAT_G8R8_G8B8_UNORM;
+        case D3DX_PIXEL_FORMAT_R8G8_B8G8_UNORM:         return DXGI_FORMAT_R8G8_B8G8_UNORM;
+        case D3DX_PIXEL_FORMAT_BC1_UNORM:               return DXGI_FORMAT_BC1_UNORM;
+        case D3DX_PIXEL_FORMAT_BC2_UNORM:               return DXGI_FORMAT_BC2_UNORM;
+        case D3DX_PIXEL_FORMAT_BC3_UNORM:               return DXGI_FORMAT_BC3_UNORM;
+        case D3DX_PIXEL_FORMAT_R16G16B16A16_SNORM:      return DXGI_FORMAT_R16G16B16A16_SNORM;
+        case D3DX_PIXEL_FORMAT_R8G8B8A8_SNORM:          return DXGI_FORMAT_R8G8B8A8_SNORM;
+        case D3DX_PIXEL_FORMAT_R8G8_SNORM:              return DXGI_FORMAT_R8G8_SNORM;
+        case D3DX_PIXEL_FORMAT_R16G16_SNORM:            return DXGI_FORMAT_R16G16_SNORM;
+
+        /*
+         * These have DXGI_FORMAT equivalents, but are explicitly unsupported on
+         * d3dx10.
+         */
+        case D3DX_PIXEL_FORMAT_B5G6R5_UNORM:
+        case D3DX_PIXEL_FORMAT_B5G5R5A1_UNORM:
+        case D3DX_PIXEL_FORMAT_B4G4R4A4_UNORM:
+            return DXGI_FORMAT_UNKNOWN;
+
+        default:
+            FIXME("Unhandled d3dx_pixel_format_id %#x.\n", format);
+            return DXGI_FORMAT_UNKNOWN;
+    }
+}
+
 static D3DX10_IMAGE_FILE_FORMAT d3dx10_image_file_format_from_d3dx_image_file_format(enum d3dx_image_file_format iff)
 {
     switch (iff)
@@ -107,6 +149,7 @@ static D3DX10_IMAGE_FILE_FORMAT d3dx10_image_file_format_from_d3dx_image_file_fo
         case D3DX_IMAGE_FILE_FORMAT_JPG: return D3DX10_IFF_JPG;
         case D3DX_IMAGE_FILE_FORMAT_PNG: return D3DX10_IFF_PNG;
         case D3DX_IMAGE_FILE_FORMAT_DDS: return D3DX10_IFF_DDS;
+        case D3DX_IMAGE_FILE_FORMAT_DDS_DXT10: return D3DX10_IFF_DDS;
         default:
             FIXME("No D3DX10_IMAGE_FILE_FORMAT for d3dx_image_file_format %d.\n", iff);
             return D3DX10_IFF_FORCE_DWORD;
@@ -510,9 +553,14 @@ HRESULT WINAPI D3DX10GetImageInfoFromResourceW(HMODULE module, const WCHAR *reso
 static HRESULT d3dx10_image_info_from_d3dx_image(D3DX10_IMAGE_INFO *info, struct d3dx_image *image)
 {
     D3DX10_IMAGE_FILE_FORMAT iff = d3dx10_image_file_format_from_d3dx_image_file_format(image->image_file_format);
-    DXGI_FORMAT format = dxgi_format_from_legacy_dds_d3dx_pixel_format_id(image->format);
+    DXGI_FORMAT format;
 
     memset(info, 0, sizeof(*info));
+    if (image->image_file_format == D3DX_IMAGE_FILE_FORMAT_DDS_DXT10)
+        format = dxgi_format_from_d3dx_pixel_format_id(image->format);
+    else
+        format = dxgi_format_from_legacy_dds_d3dx_pixel_format_id(image->format);
+
     if (format == DXGI_FORMAT_UNKNOWN)
     {
         WARN("Tried to load DDS file with unsupported format %#x.\n", image->format);
@@ -568,8 +616,9 @@ HRESULT get_image_info(const void *data, SIZE_T size, D3DX10_IMAGE_INFO *img_inf
     if (!data || !size)
         return E_FAIL;
 
-    if (SUCCEEDED(d3dx_image_init(data, size, &image, 0, D3DX_IMAGE_INFO_ONLY))
-            && image.image_file_format == D3DX_IMAGE_FILE_FORMAT_DDS)
+    if (SUCCEEDED(d3dx_image_init(data, size, &image, 0, D3DX_IMAGE_INFO_ONLY | D3DX_IMAGE_SUPPORT_DXT10))
+            && (image.image_file_format == D3DX_IMAGE_FILE_FORMAT_DDS
+                || (image.image_file_format == D3DX_IMAGE_FILE_FORMAT_DDS_DXT10)))
     {
         if (SUCCEEDED(d3dx10_image_info_from_d3dx_image(img_info, &image)))
         {
