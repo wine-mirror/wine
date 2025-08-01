@@ -4442,6 +4442,31 @@ static HRESULT WINAPI HTMLElement4_setAttributeNode(IHTMLElement4 *iface, IHTMLD
     if(!attr)
         return E_INVALIDARG;
 
+    if(attr->dom_attr) {
+        HTMLDOMAttribute *prev_attr;
+        nsIDOMAttr *prev_nsattr;
+        nsresult nsres;
+
+        if(!This->dom_element) {
+            FIXME("no DOM element\n");
+            return E_NOTIMPL;
+        }
+
+        nsres = nsIDOMElement_SetAttributeNode(This->dom_element, attr->dom_attr, &prev_nsattr);
+        if(NS_FAILED(nsres))
+            return map_nsresult(nsres);
+        if(!prev_nsattr) {
+            *ppretAttribute = NULL;
+            return S_OK;
+        }
+
+        hres = get_attr_node(prev_nsattr, &prev_attr);
+        nsIDOMAttr_Release(prev_nsattr);
+        if(SUCCEEDED(hres))
+            *ppretAttribute = &prev_attr->IHTMLDOMAttribute_iface;
+        return hres;
+    }
+
     if(attr->elem) {
         WARN("Tried to set already attached attribute.\n");
         return E_INVALIDARG;
@@ -4752,21 +4777,29 @@ static HRESULT WINAPI HTMLElement6_removeAttribute(IHTMLElement6 *iface, BSTR st
 static HRESULT WINAPI HTMLElement6_getAttributeNode(IHTMLElement6 *iface, BSTR strAttributeName, IHTMLDOMAttribute2 **ppretAttribute)
 {
     HTMLElement *This = impl_from_IHTMLElement6(iface);
-    IHTMLDOMAttribute *attr;
+    HTMLDOMAttribute *attr;
+    nsIDOMAttr *nsattr = NULL;
+    nsresult nsres;
     HRESULT hres;
 
-    WARN("(%p)->(%s %p) forwarding to IHTMLElement4\n", This, debugstr_w(strAttributeName), ppretAttribute);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(strAttributeName), ppretAttribute);
 
-    hres = IHTMLElement4_getAttributeNode(&This->IHTMLElement4_iface, strAttributeName, &attr);
-    if(FAILED(hres))
-        return hres;
-
-    if(attr) {
-        hres = IHTMLDOMAttribute_QueryInterface(attr, &IID_IHTMLDOMAttribute2, (void**)ppretAttribute);
-        IHTMLDOMAttribute_Release(attr);
-    }else {
-        *ppretAttribute = NULL;
+    if(This->dom_element) {
+        nsAString nsstr;
+        nsAString_Init(&nsstr, strAttributeName);
+        nsres = nsIDOMElement_GetAttributeNode(This->dom_element, &nsstr, &nsattr);
+        nsAString_Finish(&nsstr);
+        if(NS_FAILED(nsres))
+            return map_nsresult(nsres);
     }
+    if(!nsattr) {
+        *ppretAttribute = NULL;
+        return S_OK;
+    }
+    hres = get_attr_node(nsattr, &attr);
+    nsIDOMAttr_Release(nsattr);
+    if(SUCCEEDED(hres))
+        *ppretAttribute = &attr->IHTMLDOMAttribute2_iface;
     return hres;
 }
 

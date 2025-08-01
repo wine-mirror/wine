@@ -3522,13 +3522,35 @@ static HRESULT WINAPI HTMLDocument7_createElement(IHTMLDocument7 *iface, BSTR bs
     return IHTMLDocument2_createElement(&This->IHTMLDocument2_iface, bstrTag, newElem);
 }
 
-static HRESULT WINAPI HTMLDocument7_createAttribute(IHTMLDocument7 *iface, BSTR bstrAttrName, IHTMLDOMAttribute **ppAttribute)
+static HRESULT WINAPI HTMLDocument7_createAttribute(IHTMLDocument7 *iface, BSTR name, IHTMLDOMAttribute **p)
 {
     HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
+    HTMLDOMAttribute *attr;
+    nsIDOMAttr *nsattr;
+    nsAString nsstr;
+    nsresult nsres;
+    HRESULT hres;
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrAttrName), ppAttribute);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), p);
 
-    return IHTMLDocument5_createAttribute(&This->IHTMLDocument5_iface, bstrAttrName, ppAttribute);
+    if(!This->dom_document) {
+        FIXME("NULL dom_document\n");
+        return E_FAIL;
+    }
+
+    nsAString_InitDepend(&nsstr, name);
+    nsres = nsIDOMDocument_CreateAttribute(This->dom_document, &nsstr, &nsattr);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+
+    hres = create_attr_node(This, nsattr, &attr);
+    nsIDOMAttr_Release(nsattr);
+    if(FAILED(hres))
+        return hres;
+
+    *p = &attr->IHTMLDOMAttribute_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument7_getElementsByClassName(IHTMLDocument7 *iface, BSTR v, IHTMLElementCollection **pel)

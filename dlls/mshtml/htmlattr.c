@@ -37,13 +37,16 @@ static inline HTMLDOMAttribute *impl_from_IHTMLDOMAttribute(IHTMLDOMAttribute *i
     return CONTAINING_RECORD(iface, HTMLDOMAttribute, IHTMLDOMAttribute_iface);
 }
 
-DISPEX_IDISPATCH_IMPL(HTMLDOMAttribute, IHTMLDOMAttribute, impl_from_IHTMLDOMAttribute(iface)->dispex)
+DISPEX_IDISPATCH_IMPL(HTMLDOMAttribute, IHTMLDOMAttribute, impl_from_IHTMLDOMAttribute(iface)->node.event_target.dispex)
 
 static HRESULT WINAPI HTMLDOMAttribute_get_nodeName(IHTMLDOMAttribute *iface, BSTR *p)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->dom_attr)
+        return IHTMLDOMNode_get_nodeName(&This->node.IHTMLDOMNode_iface, p);
 
     if(!This->elem) {
         if(!This->name) {
@@ -65,6 +68,9 @@ static HRESULT WINAPI HTMLDOMAttribute_put_nodeValue(IHTMLDOMAttribute *iface, V
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
+    if(This->dom_attr)
+        return IHTMLDOMNode_put_nodeValue(&This->node.IHTMLDOMNode_iface, v);
+
     if(!This->elem)
         return VariantCopy(&This->value, &v);
 
@@ -77,6 +83,9 @@ static HRESULT WINAPI HTMLDOMAttribute_get_nodeValue(IHTMLDOMAttribute *iface, V
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->dom_attr)
+        return IHTMLDOMNode_get_nodeValue(&This->node.IHTMLDOMNode_iface, p);
 
     if(!This->elem)
         return VariantCopy(p, &This->value);
@@ -92,6 +101,14 @@ static HRESULT WINAPI HTMLDOMAttribute_get_specified(IHTMLDOMAttribute *iface, V
     cpp_bool r;
 
     TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->dom_attr) {
+        cpp_bool b;
+        nsres = nsIDOMAttr_GetSpecified(This->dom_attr, &b);
+        assert(nsres == NS_OK);
+        *p = variant_bool(b);
+        return S_OK;
+    }
 
     if(!This->elem || !This->elem->dom_element) {
         *p = VARIANT_FALSE;
@@ -131,7 +148,7 @@ static inline HTMLDOMAttribute *impl_from_IHTMLDOMAttribute2(IHTMLDOMAttribute2 
     return CONTAINING_RECORD(iface, HTMLDOMAttribute, IHTMLDOMAttribute2_iface);
 }
 
-DISPEX_IDISPATCH_IMPL(HTMLDOMAttribute2, IHTMLDOMAttribute2, impl_from_IHTMLDOMAttribute2(iface)->dispex)
+DISPEX_IDISPATCH_IMPL(HTMLDOMAttribute2, IHTMLDOMAttribute2, impl_from_IHTMLDOMAttribute2(iface)->node.event_target.dispex)
 
 static HRESULT WINAPI HTMLDOMAttribute2_get_name(IHTMLDOMAttribute2 *iface, BSTR *p)
 {
@@ -162,6 +179,15 @@ static HRESULT WINAPI HTMLDOMAttribute2_get_value(IHTMLDOMAttribute2 *iface, BST
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(This->dom_attr) {
+        nsAString nsstr;
+        nsresult nsres;
+
+        nsAString_Init(&nsstr, NULL);
+        nsres = nsIDOMAttr_GetValue(This->dom_attr, &nsstr);
+        return return_nsstr(nsres, &nsstr, p);
+    }
+
     V_VT(&val) = VT_EMPTY;
     if(This->elem)
         hres = get_elem_attr_value_by_dispid(This->elem, This->dispid, &val);
@@ -185,7 +211,7 @@ static HRESULT WINAPI HTMLDOMAttribute2_get_expando(IHTMLDOMAttribute2 *iface, V
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = variant_bool(This->elem && get_dispid_type(This->dispid) != DISPEXPROP_BUILTIN);
+    *p = variant_bool(!This->dom_attr && This->elem && get_dispid_type(This->dispid) != DISPEXPROP_BUILTIN);
     return S_OK;
 }
 
@@ -275,6 +301,9 @@ static HRESULT WINAPI HTMLDOMAttribute2_get_ownerDocument(IHTMLDOMAttribute2 *if
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(This->dom_attr)
+        return IHTMLDOMNode2_get_ownerDocument(&This->node.IHTMLDOMNode2_iface, p);
+
     *p = (IDispatch*)&This->doc->IHTMLDocument2_iface;
     IDispatch_AddRef(*p);
     return S_OK;
@@ -348,6 +377,16 @@ static HRESULT WINAPI HTMLDOMAttribute2_cloneNode(IHTMLDOMAttribute2 *iface, VAR
 
     TRACE("(%p)->(%x %p)\n", This, fDeep, clonedNode);
 
+    if(This->dom_attr) {
+        IHTMLDOMNode *node;
+        hres = IHTMLDOMNode_cloneNode(&This->node.IHTMLDOMNode_iface, fDeep, &node);
+        if(SUCCEEDED(hres)) {
+            hres = IHTMLDOMNode_QueryInterface(node, &IID_IHTMLDOMAttribute, (void **)clonedNode);
+            IHTMLDOMNode_Release(node);
+        }
+        return hres;
+    }
+
     if(This->elem) {
         hres = dispex_prop_name(&This->elem->node.event_target.dispex, This->dispid, &name);
         if(FAILED(hres))
@@ -407,7 +446,7 @@ static inline HTMLDOMAttribute *impl_from_IHTMLDOMAttribute3(IHTMLDOMAttribute3 
     return CONTAINING_RECORD(iface, HTMLDOMAttribute, IHTMLDOMAttribute3_iface);
 }
 
-DISPEX_IDISPATCH_IMPL(HTMLDOMAttribute3, IHTMLDOMAttribute3, impl_from_IHTMLDOMAttribute3(iface)->dispex)
+DISPEX_IDISPATCH_IMPL(HTMLDOMAttribute3, IHTMLDOMAttribute3, impl_from_IHTMLDOMAttribute3(iface)->node.event_target.dispex)
 
 static HRESULT WINAPI HTMLDOMAttribute3_put_nodeValue(IHTMLDOMAttribute3 *iface, VARIANT v)
 {
@@ -460,6 +499,24 @@ static HRESULT WINAPI HTMLDOMAttribute3_get_ownerElement(IHTMLDOMAttribute3 *ifa
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(This->dom_attr) {
+        nsIDOMElement *dom_element;
+        nsresult nsres;
+        HRESULT hres = S_OK;
+
+        nsres = nsIDOMAttr_GetOwnerElement(This->dom_attr, &dom_element);
+        assert(nsres == NS_OK);
+        if(dom_element) {
+            HTMLElement *element;
+            hres = get_element(dom_element, &element);
+            if(SUCCEEDED(hres))
+                *p = &element->IHTMLElement2_iface;
+        }else {
+            *p = NULL;
+        }
+        return hres;
+    }
+
     if(!This->elem) {
         *p = NULL;
         return S_OK;
@@ -488,7 +545,7 @@ static const IHTMLDOMAttribute3Vtbl HTMLDOMAttribute3Vtbl = {
 
 static inline HTMLDOMAttribute *impl_from_DispatchEx(DispatchEx *iface)
 {
-    return CONTAINING_RECORD(iface, HTMLDOMAttribute, dispex);
+    return CONTAINING_RECORD(iface, HTMLDOMAttribute, node.event_target.dispex);
 }
 
 static void *HTMLDOMAttribute_query_interface(DispatchEx *dispex, REFIID riid)
@@ -501,8 +558,10 @@ static void *HTMLDOMAttribute_query_interface(DispatchEx *dispex, REFIID riid)
         return &This->IHTMLDOMAttribute2_iface;
     if(IsEqualGUID(&IID_IHTMLDOMAttribute3, riid))
         return &This->IHTMLDOMAttribute3_iface;
-
-    return NULL;
+    if(!This->dom_attr)
+        return NULL;
+    /* FIXME: We shouldn't expose IHTMLDOMNode* interfaces */
+    return HTMLDOMNode_query_interface(&This->node.event_target.dispex, riid);
 }
 
 static void HTMLDOMAttribute_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -573,6 +632,38 @@ HTMLDOMAttribute *unsafe_impl_from_IHTMLDOMAttribute(IHTMLDOMAttribute *iface)
     return iface->lpVtbl == &HTMLDOMAttributeVtbl ? impl_from_IHTMLDOMAttribute(iface) : NULL;
 }
 
+static const cpc_entry_t HTMLDOMAttribute_cpc[] = {{NULL}};
+
+static const NodeImplVtbl HTMLDOMAttributeNodeVtbl = {
+    .cpc_entries = HTMLDOMAttribute_cpc,
+};
+
+HRESULT get_attr_node(nsIDOMAttr *dom_attr, HTMLDOMAttribute **ret)
+{
+    HTMLDOMNode *node;
+    HRESULT hres;
+
+    hres = get_node((nsIDOMNode *)dom_attr, TRUE, &node);
+    if(FAILED(hres))
+        return hres;
+    assert(node->vtbl == &HTMLDOMAttributeNodeVtbl);
+    *ret = impl_from_DispatchEx(&node->event_target.dispex);
+    return S_OK;
+}
+
+static HTMLDOMAttribute *alloc_attribute(void)
+{
+    HTMLDOMAttribute *ret;
+
+    if (!(ret = calloc(1, sizeof(*ret))))
+        return NULL;
+
+    ret->IHTMLDOMAttribute_iface.lpVtbl = &HTMLDOMAttributeVtbl;
+    ret->IHTMLDOMAttribute2_iface.lpVtbl = &HTMLDOMAttribute2Vtbl;
+    ret->IHTMLDOMAttribute3_iface.lpVtbl = &HTMLDOMAttribute3Vtbl;
+    return ret;
+}
+
 HRESULT HTMLDOMAttribute_Create(const WCHAR *name, HTMLElement *elem, DISPID dispid,
                                 HTMLDocumentNode *doc, HTMLDOMAttribute **attr)
 {
@@ -580,17 +671,13 @@ HRESULT HTMLDOMAttribute_Create(const WCHAR *name, HTMLElement *elem, DISPID dis
     HTMLDOMAttribute *ret;
     HRESULT hres;
 
-    ret = calloc(1, sizeof(*ret));
-    if(!ret)
+    if(!(ret = alloc_attribute()))
         return E_OUTOFMEMORY;
 
-    ret->IHTMLDOMAttribute_iface.lpVtbl = &HTMLDOMAttributeVtbl;
-    ret->IHTMLDOMAttribute2_iface.lpVtbl = &HTMLDOMAttribute2Vtbl;
-    ret->IHTMLDOMAttribute3_iface.lpVtbl = &HTMLDOMAttribute3Vtbl;
     ret->dispid = dispid;
     ret->elem = elem;
 
-    init_dispatch(&ret->dispex, &Attr_dispex, doc->script_global,
+    init_dispatch(&ret->node.event_target.dispex, &Attr_dispex, doc->script_global,
                   dispex_compat_mode(&doc->script_global->event_target.dispex));
 
     /* For attributes attached to an element, (elem,dispid) pair should be valid used for its operation. */
@@ -620,5 +707,19 @@ HRESULT HTMLDOMAttribute_Create(const WCHAR *name, HTMLElement *elem, DISPID dis
     IHTMLDOMNode_AddRef(&doc->node.IHTMLDOMNode_iface);
 
     *attr = ret;
+    return S_OK;
+}
+
+HRESULT create_attr_node(HTMLDocumentNode *doc, nsIDOMAttr *dom_attr, HTMLDOMAttribute **ret)
+{
+    HTMLDOMAttribute *attr;
+
+    if(!(attr = alloc_attribute()))
+        return E_OUTOFMEMORY;
+
+    attr->node.vtbl = &HTMLDOMAttributeNodeVtbl;
+    HTMLDOMNode_Init(doc, &attr->node, (nsIDOMNode *)dom_attr, &Attr_dispex);
+    attr->dom_attr = dom_attr; /* share reference with HTMLDOMNode */
+    *ret = attr;
     return S_OK;
 }

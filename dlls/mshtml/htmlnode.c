@@ -1431,9 +1431,17 @@ static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNod
         *ret = &comment->node;
         break;
     }
-    case ATTRIBUTE_NODE:
-        ERR("Called on attribute node\n");
-        return E_UNEXPECTED;
+    case ATTRIBUTE_NODE: {
+        HTMLDOMAttribute *attr;
+        nsIDOMAttr *nsattr;
+        nsresult nsres;
+        nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMAttr, (void **)&nsattr);
+        assert(nsres == NS_OK);
+        hres = create_attr_node(doc, nsattr, &attr);
+        if(SUCCEEDED(hres))
+            *ret = &attr->node;
+        return hres;
+    }
     default: {
         HTMLDOMNode *node;
 
