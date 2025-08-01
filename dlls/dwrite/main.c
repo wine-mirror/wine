@@ -595,6 +595,7 @@ struct fileloader
 struct dwritefactory
 {
     IDWriteFactory7 IDWriteFactory7_iface;
+    IDWriteFontDownloadQueue IDWriteFontDownloadQueue_iface;
     LONG refcount;
 
     IDWriteFontCollection *system_collections[DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE + 1];
@@ -1707,9 +1708,13 @@ static HRESULT WINAPI dwritefactory3_GetSystemFontCollection(IDWriteFactory7 *if
 
 static HRESULT WINAPI dwritefactory3_GetFontDownloadQueue(IDWriteFactory7 *iface, IDWriteFontDownloadQueue **queue)
 {
-    FIXME("%p, %p: stub\n", iface, queue);
+    struct dwritefactory *factory = impl_from_IDWriteFactory7(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, queue);
+
+    *queue = &factory->IDWriteFontDownloadQueue_iface;
+    IDWriteFontDownloadQueue_AddRef(*queue);
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefactory4_TranslateColorGlyphRun(IDWriteFactory7 *iface, D2D1_POINT_2F origin,
@@ -2074,10 +2079,96 @@ static const IDWriteFactory7Vtbl shareddwritefactoryvtbl =
     dwritefactory7_GetSystemFontCollection,
 };
 
+static inline struct dwritefactory *impl_from_IDWriteFontDownloadQueue(IDWriteFontDownloadQueue *iface)
+{
+    return CONTAINING_RECORD(iface, struct dwritefactory, IDWriteFontDownloadQueue_iface);
+}
+
+static HRESULT WINAPI dwritefontdownloadqueue_QueryInterface(IDWriteFontDownloadQueue *iface,
+                                                             REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IDWriteFontDownloadQueue))
+    {
+        *out = iface;
+        IDWriteFontDownloadQueue_AddRef(iface);
+        return S_OK;
+    }
+
+    *out = NULL;
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI dwritefontdownloadqueue_AddRef(IDWriteFontDownloadQueue *iface)
+{
+    struct dwritefactory *factory = impl_from_IDWriteFontDownloadQueue(iface);
+    return IDWriteFactory7_AddRef(&factory->IDWriteFactory7_iface);
+}
+
+static ULONG WINAPI dwritefontdownloadqueue_Release(IDWriteFontDownloadQueue *iface)
+{
+    struct dwritefactory *factory = impl_from_IDWriteFontDownloadQueue(iface);
+    return IDWriteFactory7_Release(&factory->IDWriteFactory7_iface);
+}
+
+static HRESULT WINAPI dwritefontdownloadqueue_AddListener(IDWriteFontDownloadQueue *iface,
+        IDWriteFontDownloadListener *listener, UINT32 *token)
+{
+    FIXME("%p, %p, %p stub!\n", iface, listener, token);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritefontdownloadqueue_RemoveListener(IDWriteFontDownloadQueue *iface, UINT32 token)
+{
+    FIXME("%p, %#x stub!\n", iface, token);
+    return E_NOTIMPL;
+}
+
+static BOOL WINAPI dwritefontdownloadqueue_IsEmpty(IDWriteFontDownloadQueue *iface)
+{
+    FIXME("%p stub!\n", iface);
+    return TRUE;
+}
+
+static HRESULT WINAPI dwritefontdownloadqueue_BeginDownload(IDWriteFontDownloadQueue *iface, IUnknown *context)
+{
+    FIXME("%p, %p stub!\n", iface, context);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritefontdownloadqueue_CancelDownload(IDWriteFontDownloadQueue *iface)
+{
+    FIXME("%p stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static UINT64 WINAPI dwritefontdownloadqueue_GetGenerationCount(IDWriteFontDownloadQueue *iface)
+{
+    FIXME("%p stub!\n", iface);
+    return 0;
+}
+
+static const struct IDWriteFontDownloadQueueVtbl dwritefontdownloadqueue_vtbl =
+{
+    dwritefontdownloadqueue_QueryInterface,
+    dwritefontdownloadqueue_AddRef,
+    dwritefontdownloadqueue_Release,
+    /* IDWriteFontDownloadQueue methods */
+    dwritefontdownloadqueue_AddListener,
+    dwritefontdownloadqueue_RemoveListener,
+    dwritefontdownloadqueue_IsEmpty,
+    dwritefontdownloadqueue_BeginDownload,
+    dwritefontdownloadqueue_CancelDownload,
+    dwritefontdownloadqueue_GetGenerationCount,
+};
+
 static void init_dwritefactory(struct dwritefactory *factory, DWRITE_FACTORY_TYPE type)
 {
     factory->IDWriteFactory7_iface.lpVtbl = type == DWRITE_FACTORY_TYPE_SHARED ?
             &shareddwritefactoryvtbl : &dwritefactoryvtbl;
+    factory->IDWriteFontDownloadQueue_iface.lpVtbl = &dwritefontdownloadqueue_vtbl;
     factory->refcount = 1;
     factory->localfontfileloader = get_local_fontfile_loader();
 

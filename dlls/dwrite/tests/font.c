@@ -10510,13 +10510,7 @@ static void test_font_download_queue(void)
     }
 
     hr = IDWriteFactory3_GetFontDownloadQueue(factory, &queue);
-    todo_wine
     ok(hr == S_OK, "got %#lx\n", hr);
-    if (FAILED(hr))
-    {
-        IDWriteFactory3_Release(factory);
-        return;
-    }
 
     hr = IDWriteFactory3_GetFontDownloadQueue(factory, &queue2);
     ok(hr == S_OK, "got %#lx\n", hr);
