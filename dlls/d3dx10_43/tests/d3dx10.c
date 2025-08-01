@@ -2960,7 +2960,6 @@ static void test_legacy_dds_header_image_info(void)
         {
             (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT), 4, 4, 1, (4 * 4), 3, 0, 0, 0,
             { S_OK, 4, 4, 1, 1, 3, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, },
-            .todo_hr = TRUE
         },
         /* Depth value set to 4, but no caps bits are set. Depth is ignored. */
         {
@@ -3060,7 +3059,7 @@ static void test_legacy_dds_header_image_info(void)
     ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 
     hr = D3DX10GetImageInfoFromMemory(&dds, sizeof(dds), NULL, &info, NULL);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 }
 
 static void test_dxt10_dds_header_image_info(void)
@@ -3099,7 +3098,6 @@ static void test_dxt10_dds_header_image_info(void)
             0, 4, 4, 0, (4 * 4), 1, 0, 0,
             { DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, 0, 1, 0, }, 0,
             { S_OK, 4, 4, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, },
-            .todo_hr = TRUE
         },
         /*
          * Setting the misc_flags2 field to anything other than 0 results in
@@ -3232,7 +3230,7 @@ static void test_dxt10_dds_header_image_info(void)
     ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 
     hr = D3DX10GetImageInfoFromMemory(&dds, sizeof(dds), NULL, &info, NULL);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 }
 
 static void test_get_image_info(void)
