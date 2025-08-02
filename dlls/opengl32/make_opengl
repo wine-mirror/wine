@@ -288,7 +288,7 @@ my %state_attrib_funcs =
      "glDepthFunc" => "GL_DEPTH_FUNC, &params->func, sizeof(params->func)",
      "glShadeModel" => "GL_SHADE_MODEL, &params->mode, sizeof(params->mode)",
      "glClearColor" => "GL_COLOR_CLEAR_VALUE, &params->red, 4 * sizeof(GLfloat)",
-     "glLightModelfv" => "params->pname, params->params, 0 /* variable size */",
+     "glLightModelfv" => "params->pname, PARAMSPTR(params->params), 0 /* variable size */",
      "glLightModeli" => "params->pname, &params->param, sizeof(params->param)",
     );
 
@@ -375,12 +375,17 @@ sub get_func_ret($$)
     return $ret;
 }
 
-sub generate_unix_thunk($$$)
+sub generate_unix_thunk($$$$)
 {
-    my ($name, $func, $prefix) = @_;
+    my ($name, $func, $is_wow64, $prefix) = @_;
     my $func_ret = get_func_ret( $func, 0 );
     my $need_wrap = needs_wrapper( $name, $func );
     my $need_lock = $func_ret =~ /HGLRC|HPBUFFERARB/;
+    my $teb = $is_wow64 ? "teb" : "params->teb";
+    my $input_conv = "";
+    my $output_conv = "";
+    my $call_args = "";
+    my $use_dc = 0;
     my $ret = "";
 
     foreach my $arg (@{$func->[1]})
@@ -388,45 +393,145 @@ sub generate_unix_thunk($$$)
         $need_lock = 1 if $arg->textContent() =~ /HGLRC|HPBUFFERARB/;
     }
 
-    $ret .= "static " unless defined $manual_wow64_thunks{$name};
-    $ret .= "NTSTATUS $prefix\_$name( void *args )\n";
+    $ret .= "static " unless !$is_wow64 && defined $manual_wow64_thunks{$name};
+    $ret .= "NTSTATUS ";
+    $ret .= "wow64_" if $is_wow64;
+    $ret .= "$prefix\_$name( void *args )\n";
     $ret .= "{\n";
-    $ret .= "    struct $name\_params *params = args;\n";
+
     # special case for functions that take an HDC as first parameter
-    if (@{$func->[1]} && get_arg_type( ${$func->[1]}[0] ) eq "HDC" && $name !~ /wglMake(Context)?Current/)
+    $use_dc = @{$func->[1]} && get_arg_type( ${$func->[1]}[0] ) eq "HDC" && $name !~ /wglMake(Context)?Current/;
+
+    $call_args .= " $teb," if $need_wrap;
+    if ($is_wow64)
     {
-        my $pname = get_arg_name( ${$func->[1]}[0] );
-        $ret .= "    const struct opengl_funcs *funcs = get_dc_funcs( params->$pname );\n";
+        my $need_manual_thunk = 0;
+        $ret .= "    struct\n    {\n";
+        $ret .= "        PTR32 teb;\n";
+        foreach my $arg (@{$func->[1]})
+        {
+            my $ptype = get_wow64_arg_type( $arg );
+            my $pname = get_arg_name( $arg );
+            $ret .= "        $ptype $pname;\n";
+
+            if ($ptype ne "PTR32")
+            {
+                $call_args .= " params->$pname,";
+            }
+            elsif (defined $pointer_array_count{$_} &&
+                   ($arg->textContent() =~ /\*.*\*/ || $arg->textContent() =~ /(sizei|int)ptr.*\*/))
+            {
+                my $arg_type = get_arg_type( $arg );
+                if ($arg_type =~ /\*const\*$/)
+                {
+                    $arg_type =~ s/\*const\*$/**/;
+                }
+                elsif (!(($arg_type =~ /\*\*$/)))
+                {
+                    $arg_type =~ s/^const //;
+                }
+                $input_conv .= "    $arg_type$pname = copy_wow64_ptr32s( params->$pname, params->$pointer_array_count{$_} );\n";
+                $output_conv .= "    free( $pname );\n";
+                $call_args .= " $pname,";
+            }
+            elsif (defined $pointer_is_offset{$_} && $pname =~ $pointer_is_offset{$_})
+            {
+                my $offset_type = get_arg_type( $arg );
+                $offset_type =~ s/\*$//;
+                $input_conv .= "    $offset_type$pname\_arg;\n";
+                $output_conv .= "    *(PTR32 *)UlongToPtr(params->$pname) = PtrToUlong( $pname\_arg );\n";
+                $call_args .= " &$pname\_arg,";
+            }
+            elsif ($arg->textContent() =~ /(sizei|int)ptr/)
+            {
+                $call_args .= " (" . get_arg_type( $arg ) . ")ULongToPtr(params->$pname),";
+            }
+            else
+            {
+                $call_args .= " ULongToPtr(params->$pname),";
+                $need_manual_thunk = 1 if $arg->textContent() =~ /(\*.*\*|\[|(sizei|int)ptr.*\*)/;
+            }
+        }
+        if (!is_void_func($func))
+        {
+            my $ptype = get_wow64_arg_type( $func->[0] );
+            $ret .= "        $ptype ret;\n";
+        }
+        $ret .= "    } *params = args;\n";
+        if ($need_manual_thunk || get_wow64_arg_type( $func->[0] ) =~ /PTR32/)
+        {
+            $ret .= "    FIXME( \"params %p stub!\\n\", params );\n";
+            $ret .= "    return STATUS_NOT_IMPLEMENTED;\n";
+            $ret .= "}\n\n";
+            return $ret;
+        }
+        $ret .= "    TEB *teb = get_teb64( params->teb );\n" if $need_wrap || !$use_dc;
+    }
+    else
+    {
+        foreach my $arg (@{$func->[1]})
+        {
+            my $ptype = get_arg_type( $arg );
+            my $pname = get_arg_name( $arg );
+            if (!$need_wrap && defined $remap_types{$ptype})
+            {
+                $call_args .= " ($remap_types{$ptype})params->$pname,";
+            }
+            else
+            {
+                $call_args .= " params->$pname,";
+            }
+        }
+        $ret .= "    struct $name\_params *params = args;\n";
+    }
+    $ret .= $input_conv;
+    if ($use_dc)
+    {
+        my $param = "params->" . get_arg_name( ${$func->[1]}[0] );
+        $param = "ULongToPtr($param)" if $is_wow64;
+        $ret .= "    const struct opengl_funcs *funcs = get_dc_funcs( $param );\n";
         $ret .= "    if (!funcs || !funcs->p_$name) return STATUS_NOT_IMPLEMENTED;\n";
     }
     elsif (!$need_wrap)
     {
-        $ret .= "    const struct opengl_funcs *funcs = params->teb->glTable;\n";
+        $ret .= "    const struct opengl_funcs *funcs = $teb->glTable;\n";
     }
     $ret .= "    pthread_mutex_lock( &wgl_lock );\n" if $need_lock;
     $ret .= "    ";
-    $ret .= "params->ret = " unless is_void_func( $func );
+    if (!is_void_func( $func ))
+    {
+        $ret .= "params->ret = ";
+        $ret .= "(UINT_PTR)" if $is_wow64 && get_wow64_arg_type( $func->[0] ) =~ /PTR32/;
+    }
     $ret .= "($func_ret)" if defined $remap_types{$func_ret};
+    $call_args =~ s/,$/ /;
     if ($need_wrap)
     {
-        my $call_args = " params->teb," . get_func_args( $func, 0, 0, "params->" );
-        $call_args =~ s/,$/ /;
         $ret .= "wrap_$name($call_args);\n";
     }
     else
     {
-        my $call_args = get_func_args( $func, 0, 1, "params->" );
         $ret .= "funcs->p_$name($call_args);\n";
     }
     $ret .= "    pthread_mutex_unlock( &wgl_lock );\n" if $need_lock;
     if (defined $state_attrib_funcs{$name})
     {
-        $ret .= "    set_context_attribute( params->teb, $state_attrib_funcs{$name} );\n";
+        my $state_args = $state_attrib_funcs{$name};
+        if ($is_wow64)
+        {
+            $state_args =~ s/PARAMSPTR/UlongToPtr/g;
+        }
+        else
+        {
+            $state_args =~ s/PARAMSPTR//g;
+        }
+        $ret .= "    set_context_attribute( $teb, $state_args );\n";
     }
     elsif ($name !~ /^wgl|^glGet|^glIs[A-Z]|^glAre[A-Z]/)
     {
-        $ret .= "    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );\n";
+        $ret .= "    set_context_attribute( $teb, -1 /* unsupported */, NULL, 0 );\n";
     }
+    $ret .= $output_conv;
     $ret .= "    return STATUS_SUCCESS;\n";
     $ret .= "}\n\n";
 
@@ -1363,18 +1468,18 @@ print OUT "static GLboolean const_true = 1;\n\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
-    print OUT generate_unix_thunk($_, $wgl_functions{$_}, "wgl");
+    print OUT generate_unix_thunk($_, $wgl_functions{$_}, 0, "wgl");
 }
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
-    print OUT generate_unix_thunk($_, $norm_functions{$_}, "gl");
+    print OUT generate_unix_thunk($_, $norm_functions{$_}, 0, "gl");
 }
 foreach (sort keys %ext_functions)
 {
     next if $_ =~ /^egl/; # unix-side only API
     next if defined $manual_win_functions{$_};
-    print OUT generate_unix_thunk($_, $ext_functions{$_}, "ext");
+    print OUT generate_unix_thunk($_, $ext_functions{$_}, 0, "ext");
 }
 
 print OUT "const unixlib_entry_t __wine_unix_call_funcs[] =\n";
@@ -1412,7 +1517,7 @@ foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
     next if defined $manual_wow64_thunks{$_};
-    print OUT generate_wow64_thunk($_, $wgl_functions{$_}, "wgl");
+    print OUT generate_unix_thunk($_, $wgl_functions{$_}, 1, "wgl");
 }
 foreach (sort keys %norm_functions)
 {

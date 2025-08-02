@@ -1393,7 +1393,7 @@ static NTSTATUS gl_glLightModelfv( void *args )
     struct glLightModelfv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightModelfv( params->pname, params->params );
-    set_context_attribute( params->teb, params->pname, params->params, 0 /* variable size */ );
+    set_context_attribute( params->teb, params->pname, (params->params), 0 /* variable size */ );
     return STATUS_SUCCESS;
 }
 
@@ -29919,18 +29919,12 @@ static NTSTATUS wow64_wgl_wglCopyContext( void *args )
         PTR32 hglrcDst;
         UINT mask;
         BOOL ret;
-    } *params32 = args;
-    struct wglCopyContext_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .hglrcSrc = ULongToPtr(params32->hglrcSrc),
-        .hglrcDst = ULongToPtr(params32->hglrcDst),
-        .mask = params32->mask,
-    };
-    NTSTATUS status;
-    status = wgl_wglCopyContext( &params );
-    params32->ret = params.ret;
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wrap_wglCopyContext( teb, ULongToPtr(params->hglrcSrc), ULongToPtr(params->hglrcDst), params->mask );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_wgl_wglGetPixelFormat( void *args )
@@ -29940,16 +29934,11 @@ static NTSTATUS wow64_wgl_wglGetPixelFormat( void *args )
         PTR32 teb;
         PTR32 hdc;
         int ret;
-    } *params32 = args;
-    struct wglGetPixelFormat_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .hdc = ULongToPtr(params32->hdc),
-    };
-    NTSTATUS status;
-    status = wgl_wglGetPixelFormat( &params );
-    params32->ret = params.ret;
-    return status;
+    } *params = args;
+    const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->hdc) );
+    if (!funcs || !funcs->p_wglGetPixelFormat) return STATUS_NOT_IMPLEMENTED;
+    params->ret = funcs->p_wglGetPixelFormat( ULongToPtr(params->hdc) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_wgl_wglSetPixelFormat( void *args )
@@ -29961,18 +29950,11 @@ static NTSTATUS wow64_wgl_wglSetPixelFormat( void *args )
         int ipfd;
         PTR32 ppfd;
         BOOL ret;
-    } *params32 = args;
-    struct wglSetPixelFormat_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .hdc = ULongToPtr(params32->hdc),
-        .ipfd = params32->ipfd,
-        .ppfd = ULongToPtr(params32->ppfd),
-    };
-    NTSTATUS status;
-    status = wgl_wglSetPixelFormat( &params );
-    params32->ret = params.ret;
-    return status;
+    } *params = args;
+    const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->hdc) );
+    if (!funcs || !funcs->p_wglSetPixelFormat) return STATUS_NOT_IMPLEMENTED;
+    params->ret = funcs->p_wglSetPixelFormat( ULongToPtr(params->hdc), params->ipfd, ULongToPtr(params->ppfd) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_wgl_wglShareLists( void *args )
@@ -29983,17 +29965,12 @@ static NTSTATUS wow64_wgl_wglShareLists( void *args )
         PTR32 hrcSrvShare;
         PTR32 hrcSrvSource;
         BOOL ret;
-    } *params32 = args;
-    struct wglShareLists_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .hrcSrvShare = ULongToPtr(params32->hrcSrvShare),
-        .hrcSrvSource = ULongToPtr(params32->hrcSrvSource),
-    };
-    NTSTATUS status;
-    status = wgl_wglShareLists( &params );
-    params32->ret = params.ret;
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wrap_wglShareLists( teb, ULongToPtr(params->hrcSrvShare), ULongToPtr(params->hrcSrvSource) );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_wgl_wglSwapBuffers( void *args )
@@ -30003,16 +29980,12 @@ static NTSTATUS wow64_wgl_wglSwapBuffers( void *args )
         PTR32 teb;
         PTR32 hdc;
         BOOL ret;
-    } *params32 = args;
-    struct wglSwapBuffers_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .hdc = ULongToPtr(params32->hdc),
-    };
-    NTSTATUS status;
-    status = wgl_wglSwapBuffers( &params );
-    params32->ret = params.ret;
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->hdc) );
+    if (!funcs || !funcs->p_wglSwapBuffers) return STATUS_NOT_IMPLEMENTED;
+    params->ret = wrap_wglSwapBuffers( teb, ULongToPtr(params->hdc) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glAccum( void *args )
