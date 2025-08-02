@@ -388,6 +388,7 @@ sub generate_unix_thunk($$$)
         $need_lock = 1 if $arg->textContent() =~ /HGLRC|HPBUFFERARB/;
     }
 
+    $ret .= "static " unless defined $manual_wow64_thunks{$name};
     $ret .= "NTSTATUS $prefix\_$name( void *args )\n";
     $ret .= "{\n";
     $ret .= "    struct $name\_params *params = args;\n";
@@ -1362,20 +1363,17 @@ print OUT "static GLboolean const_true = 1;\n\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
-    print OUT "static " unless defined $manual_wow64_thunks{$_};
     print OUT generate_unix_thunk($_, $wgl_functions{$_}, "wgl");
 }
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
-    print OUT "static " unless defined $manual_wow64_thunks{$_};
     print OUT generate_unix_thunk($_, $norm_functions{$_}, "gl");
 }
 foreach (sort keys %ext_functions)
 {
     next if $_ =~ /^egl/; # unix-side only API
     next if defined $manual_win_functions{$_};
-    print OUT "static " unless defined $manual_wow64_thunks{$_};
     print OUT generate_unix_thunk($_, $ext_functions{$_}, "ext");
 }
 
