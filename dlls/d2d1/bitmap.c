@@ -184,9 +184,36 @@ static HRESULT STDMETHODCALLTYPE d2d_bitmap_CopyFromBitmap(ID2D1Bitmap1 *iface,
 static HRESULT STDMETHODCALLTYPE d2d_bitmap_CopyFromRenderTarget(ID2D1Bitmap1 *iface,
         const D2D1_POINT_2U *dst_point, ID2D1RenderTarget *render_target, const D2D1_RECT_U *src_rect)
 {
-    FIXME("iface %p, dst_point %p, render_target %p, src_rect %p stub!\n", iface, dst_point, render_target, src_rect);
+    ID2D1DeviceContext *device_context;
+    ID2D1Bitmap *target_bitmap = NULL;
+    ID2D1Image *target = NULL;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, dst_point %p, render_target %p, src_rect %s.\n", iface, dst_point,
+            render_target, debug_d2d_rect_u(src_rect));
+
+    if (FAILED(hr = ID2D1RenderTarget_QueryInterface(render_target, &IID_ID2D1DeviceContext,
+            (void **)&device_context)))
+    {
+        return hr;
+    }
+
+    ID2D1DeviceContext_GetTarget(device_context, &target);
+    ID2D1DeviceContext_Release(device_context);
+
+    if (target)
+    {
+        ID2D1Image_QueryInterface(target, &IID_ID2D1Bitmap, (void **)&target_bitmap);
+        ID2D1Image_Release(target);
+    }
+
+    if (!target_bitmap)
+        return D2DERR_RECREATE_TARGET;
+
+    hr = ID2D1Bitmap1_CopyFromBitmap(iface, dst_point, target_bitmap, src_rect);
+    ID2D1Bitmap_Release(target_bitmap);
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_bitmap_CopyFromMemory(ID2D1Bitmap1 *iface,

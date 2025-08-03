@@ -5521,6 +5521,141 @@ static void test_bitmap_updates(BOOL d3d11)
     ID2D1Bitmap_Release(dst_bitmap);
 
     ID2D1Bitmap_Release(bitmap);
+
+    release_test_context(&ctx);
+}
+
+static void test_bitmap_copy_from_render_target(BOOL d3d11)
+{
+    D2D1_BITMAP_PROPERTIES bitmap_desc;
+    D2D1_PIXEL_FORMAT pixel_format;
+    struct d2d1_test_context ctx;
+    struct resource_readback rb;
+    ID2D1RenderTarget *rt;
+    ID2D1Bitmap *bitmap;
+    D2D1_COLOR_F color;
+    D2D1_RECT_F rect;
+    D2D1_SIZE_U size;
+    DWORD colour;
+    HRESULT hr;
+
+    static const DWORD bitmap_data[] =
+    {
+        0xffff0000, 0xffffff00, 0xff00ff00, 0xff00ffff,
+        0xff0000ff, 0xffff00ff, 0xff000000, 0xff7f7f7f,
+        0xffffffff, 0xffffffff, 0xffffffff, 0xff000000,
+        0xffffffff, 0xff000000, 0xff000000, 0xff000000,
+    };
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    rt = ctx.rt;
+    pixel_format = ID2D1RenderTarget_GetPixelFormat(rt);
+
+    set_size_u(&size, 4, 4);
+    bitmap_desc.pixelFormat = pixel_format;
+    bitmap_desc.dpiX = 96.0f;
+    bitmap_desc.dpiY = 96.0f;
+    hr = ID2D1RenderTarget_CreateBitmap(rt, size, NULL, 0, &bitmap_desc, &bitmap);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Bitmap_CopyFromMemory(bitmap, NULL, bitmap_data, 4 * sizeof(*bitmap_data));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+    set_color(&color, 0.0f, 0.0f, 1.0f, 1.0f);
+    ID2D1RenderTarget_Clear(rt, &color);
+    set_rect(&rect, 0.0f, 0.0f, 4.0f, 4.0f);
+    ID2D1RenderTarget_DrawBitmap(rt, bitmap, &rect, 1.0f,
+            D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, NULL);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    get_surface_readback(&ctx, &rb);
+    colour = get_readback_colour(&rb, 0, 0);
+    ok(compare_colour(colour, 0xffff0000, 1), "Got unexpected colour 0x%08lx.\n", colour);
+    release_resource_readback(&rb);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+    set_color(&color, 1.0f, 0.0f, 1.0f, 1.0f);
+    ID2D1RenderTarget_Clear(rt, &color);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Bitmap_CopyFromRenderTarget(bitmap, NULL, rt, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+    set_color(&color, 0.0f, 0.0f, 1.0f, 1.0f);
+    ID2D1RenderTarget_Clear(rt, &color);
+    set_rect(&rect, 0.0f, 0.0f, 4.0f, 4.0f);
+    ID2D1RenderTarget_DrawBitmap(rt, bitmap, &rect, 1.0f,
+            D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, NULL);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    get_surface_readback(&ctx, &rb);
+    colour = get_readback_colour(&rb, 0, 0);
+    ok(compare_colour(colour, 0xffff00ff, 1), "Got unexpected colour 0x%08lx.\n", colour);
+    release_resource_readback(&rb);
+
+    /* Render target without target bitmap. */
+    if (ctx.factory1)
+    {
+        ID2D1Bitmap1 *bitmap_target, *bitmap2;
+        D2D1_BITMAP_PROPERTIES1 bitmap_desc1;
+        ID2D1DeviceContext *device_context;
+        ID2D1CommandList *command_list;
+        ID2D1Device *device;
+        D2D1_SIZE_U size;
+
+        hr = ID2D1Factory1_CreateDevice(ctx.factory1, ctx.device, &device);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID2D1Device_CreateDeviceContext(device, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &device_context);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID2D1Bitmap_CopyFromRenderTarget(bitmap, NULL, (ID2D1RenderTarget *)device_context, NULL);
+        ok(hr == D2DERR_RECREATE_TARGET, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID2D1DeviceContext_CreateCommandList(device_context, &command_list);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        ID2D1DeviceContext_SetTarget(device_context, (ID2D1Image *)command_list);
+        ID2D1CommandList_Release(command_list);
+
+        hr = ID2D1Bitmap_CopyFromRenderTarget(bitmap, NULL, (ID2D1RenderTarget *)device_context, NULL);
+        ok(hr == D2DERR_RECREATE_TARGET, "Got unexpected hr %#lx.\n", hr);
+
+        memset(&bitmap_desc1, 0, sizeof(bitmap_desc1));
+        memcpy(&bitmap_desc1, &bitmap_desc, sizeof(bitmap_desc));
+        bitmap_desc1.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET;
+        set_size_u(&size, 16, 16);
+        hr = ID2D1DeviceContext_CreateBitmap(device_context, size, NULL, 0, &bitmap_desc1, &bitmap_target);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        ID2D1DeviceContext_SetTarget(device_context, (ID2D1Image *)bitmap_target);
+        ID2D1Bitmap1_Release(bitmap_target);
+
+        hr = ID2D1Bitmap_CopyFromRenderTarget(bitmap, NULL, (ID2D1RenderTarget *)device_context, NULL);
+        todo_wine
+        ok(hr == D2DERR_WRONG_RESOURCE_DOMAIN, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID2D1DeviceContext_CreateBitmap(device_context, size, NULL, 0, &bitmap_desc1, &bitmap2);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID2D1Bitmap1_CopyFromRenderTarget(bitmap2, NULL, (ID2D1RenderTarget *)device_context, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        ID2D1Bitmap1_Release(bitmap2);
+
+        ID2D1DeviceContext_Release(device_context);
+        ID2D1Device_Release(device);
+    }
+
+    ID2D1Bitmap_Release(bitmap);
+
     release_test_context(&ctx);
 }
 
@@ -16085,6 +16220,7 @@ START_TEST(d2d1)
     queue_test(test_alpha_mode);
     queue_test(test_shared_bitmap);
     queue_test(test_bitmap_updates);
+    queue_test(test_bitmap_copy_from_render_target);
     queue_test(test_opacity_brush);
     queue_test(test_create_target);
     queue_test(test_dxgi_surface_target_gdi_interop);

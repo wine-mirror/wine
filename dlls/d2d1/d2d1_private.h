@@ -1051,6 +1051,13 @@ static inline const char *debug_d2d_rect_l(const D2D1_RECT_L *rect)
     return wine_dbg_sprintf("(%ld, %ld)-(%ld, %ld)", rect->left, rect->top, rect->right, rect->bottom);
 }
 
+static inline const char *debug_d2d_rect_u(const D2D1_RECT_U *rect)
+{
+    if (!rect)
+        return "(null)";
+    return wine_dbg_sprintf("(%u, %u)-(%u, %u)", rect->left, rect->top, rect->right, rect->bottom);
+}
+
 static inline const char *debug_d2d_rounded_rect(const D2D1_ROUNDED_RECT *rounded_rect)
 {
     if (!rounded_rect)
