@@ -29995,16 +29995,12 @@ static NTSTATUS wow64_gl_glAccum( void *args )
         PTR32 teb;
         GLenum op;
         GLfloat value;
-    } *params32 = args;
-    struct glAccum_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .op = params32->op,
-        .value = params32->value,
-    };
-    NTSTATUS status;
-    status = gl_glAccum( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glAccum( params->op, params->value );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glAlphaFunc( void *args )
@@ -30014,16 +30010,12 @@ static NTSTATUS wow64_gl_glAlphaFunc( void *args )
         PTR32 teb;
         GLenum func;
         GLfloat ref;
-    } *params32 = args;
-    struct glAlphaFunc_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .func = params32->func,
-        .ref = params32->ref,
-    };
-    NTSTATUS status;
-    status = gl_glAlphaFunc( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glAlphaFunc( params->func, params->ref );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glAreTexturesResident( void *args )
@@ -30035,18 +30027,11 @@ static NTSTATUS wow64_gl_glAreTexturesResident( void *args )
         PTR32 textures;
         PTR32 residences;
         GLboolean ret;
-    } *params32 = args;
-    struct glAreTexturesResident_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .n = params32->n,
-        .textures = ULongToPtr(params32->textures),
-        .residences = ULongToPtr(params32->residences),
-    };
-    NTSTATUS status;
-    status = gl_glAreTexturesResident( &params );
-    params32->ret = params.ret;
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    params->ret = funcs->p_glAreTexturesResident( params->n, ULongToPtr(params->textures), ULongToPtr(params->residences) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glArrayElement( void *args )
@@ -30055,15 +30040,12 @@ static NTSTATUS wow64_gl_glArrayElement( void *args )
     {
         PTR32 teb;
         GLint i;
-    } *params32 = args;
-    struct glArrayElement_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .i = params32->i,
-    };
-    NTSTATUS status;
-    status = gl_glArrayElement( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glArrayElement( params->i );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glBegin( void *args )
@@ -30072,15 +30054,12 @@ static NTSTATUS wow64_gl_glBegin( void *args )
     {
         PTR32 teb;
         GLenum mode;
-    } *params32 = args;
-    struct glBegin_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mode = params32->mode,
-    };
-    NTSTATUS status;
-    status = gl_glBegin( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glBegin( params->mode );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glBindTexture( void *args )
@@ -30090,16 +30069,12 @@ static NTSTATUS wow64_gl_glBindTexture( void *args )
         PTR32 teb;
         GLenum target;
         GLuint texture;
-    } *params32 = args;
-    struct glBindTexture_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .texture = params32->texture,
-    };
-    NTSTATUS status;
-    status = gl_glBindTexture( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glBindTexture( params->target, params->texture );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glBitmap( void *args )
@@ -30114,21 +30089,12 @@ static NTSTATUS wow64_gl_glBitmap( void *args )
         GLfloat xmove;
         GLfloat ymove;
         PTR32 bitmap;
-    } *params32 = args;
-    struct glBitmap_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .width = params32->width,
-        .height = params32->height,
-        .xorig = params32->xorig,
-        .yorig = params32->yorig,
-        .xmove = params32->xmove,
-        .ymove = params32->ymove,
-        .bitmap = ULongToPtr(params32->bitmap),
-    };
-    NTSTATUS status;
-    status = gl_glBitmap( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glBitmap( params->width, params->height, params->xorig, params->yorig, params->xmove, params->ymove, ULongToPtr(params->bitmap) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glBlendFunc( void *args )
@@ -30138,16 +30104,12 @@ static NTSTATUS wow64_gl_glBlendFunc( void *args )
         PTR32 teb;
         GLenum sfactor;
         GLenum dfactor;
-    } *params32 = args;
-    struct glBlendFunc_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .sfactor = params32->sfactor,
-        .dfactor = params32->dfactor,
-    };
-    NTSTATUS status;
-    status = gl_glBlendFunc( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glBlendFunc( params->sfactor, params->dfactor );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glCallList( void *args )
@@ -30156,15 +30118,12 @@ static NTSTATUS wow64_gl_glCallList( void *args )
     {
         PTR32 teb;
         GLuint list;
-    } *params32 = args;
-    struct glCallList_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .list = params32->list,
-    };
-    NTSTATUS status;
-    status = gl_glCallList( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glCallList( params->list );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glCallLists( void *args )
@@ -30175,17 +30134,12 @@ static NTSTATUS wow64_gl_glCallLists( void *args )
         GLsizei n;
         GLenum type;
         PTR32 lists;
-    } *params32 = args;
-    struct glCallLists_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .n = params32->n,
-        .type = params32->type,
-        .lists = ULongToPtr(params32->lists),
-    };
-    NTSTATUS status;
-    status = gl_glCallLists( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glCallLists( params->n, params->type, ULongToPtr(params->lists) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glClear( void *args )
@@ -30194,15 +30148,11 @@ static NTSTATUS wow64_gl_glClear( void *args )
     {
         PTR32 teb;
         GLbitfield mask;
-    } *params32 = args;
-    struct glClear_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mask = params32->mask,
-    };
-    NTSTATUS status;
-    status = gl_glClear( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    wrap_glClear( teb, params->mask );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glClearAccum( void *args )
@@ -30214,18 +30164,12 @@ static NTSTATUS wow64_gl_glClearAccum( void *args )
         GLfloat green;
         GLfloat blue;
         GLfloat alpha;
-    } *params32 = args;
-    struct glClearAccum_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-        .alpha = params32->alpha,
-    };
-    NTSTATUS status;
-    status = gl_glClearAccum( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glClearAccum( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glClearColor( void *args )
@@ -30237,18 +30181,12 @@ static NTSTATUS wow64_gl_glClearColor( void *args )
         GLfloat green;
         GLfloat blue;
         GLfloat alpha;
-    } *params32 = args;
-    struct glClearColor_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-        .alpha = params32->alpha,
-    };
-    NTSTATUS status;
-    status = gl_glClearColor( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glClearColor( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( teb, GL_COLOR_CLEAR_VALUE, &params->red, 4 * sizeof(GLfloat) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glClearDepth( void *args )
@@ -30257,15 +30195,12 @@ static NTSTATUS wow64_gl_glClearDepth( void *args )
     {
         PTR32 teb;
         GLdouble depth;
-    } *params32 = args;
-    struct glClearDepth_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .depth = params32->depth,
-    };
-    NTSTATUS status;
-    status = gl_glClearDepth( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glClearDepth( params->depth );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glClearIndex( void *args )
@@ -30274,15 +30209,12 @@ static NTSTATUS wow64_gl_glClearIndex( void *args )
     {
         PTR32 teb;
         GLfloat c;
-    } *params32 = args;
-    struct glClearIndex_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .c = params32->c,
-    };
-    NTSTATUS status;
-    status = gl_glClearIndex( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glClearIndex( params->c );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glClearStencil( void *args )
@@ -30291,15 +30223,12 @@ static NTSTATUS wow64_gl_glClearStencil( void *args )
     {
         PTR32 teb;
         GLint s;
-    } *params32 = args;
-    struct glClearStencil_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-    };
-    NTSTATUS status;
-    status = gl_glClearStencil( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glClearStencil( params->s );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glClipPlane( void *args )
@@ -30309,16 +30238,12 @@ static NTSTATUS wow64_gl_glClipPlane( void *args )
         PTR32 teb;
         GLenum plane;
         PTR32 equation;
-    } *params32 = args;
-    struct glClipPlane_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .plane = params32->plane,
-        .equation = ULongToPtr(params32->equation),
-    };
-    NTSTATUS status;
-    status = gl_glClipPlane( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glClipPlane( params->plane, ULongToPtr(params->equation) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor3b( void *args )
@@ -30329,17 +30254,12 @@ static NTSTATUS wow64_gl_glColor3b( void *args )
         GLbyte red;
         GLbyte green;
         GLbyte blue;
-    } *params32 = args;
-    struct glColor3b_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-    };
-    NTSTATUS status;
-    status = gl_glColor3b( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor3b( params->red, params->green, params->blue );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor3bv( void *args )
@@ -30348,15 +30268,12 @@ static NTSTATUS wow64_gl_glColor3bv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glColor3bv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glColor3bv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor3bv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor3d( void *args )
@@ -30367,17 +30284,12 @@ static NTSTATUS wow64_gl_glColor3d( void *args )
         GLdouble red;
         GLdouble green;
         GLdouble blue;
-    } *params32 = args;
-    struct glColor3d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-    };
-    NTSTATUS status;
-    status = gl_glColor3d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor3d( params->red, params->green, params->blue );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor3dv( void *args )
@@ -30386,15 +30298,12 @@ static NTSTATUS wow64_gl_glColor3dv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glColor3dv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glColor3dv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor3dv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor3f( void *args )
@@ -30405,17 +30314,12 @@ static NTSTATUS wow64_gl_glColor3f( void *args )
         GLfloat red;
         GLfloat green;
         GLfloat blue;
-    } *params32 = args;
-    struct glColor3f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-    };
-    NTSTATUS status;
-    status = gl_glColor3f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor3f( params->red, params->green, params->blue );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor3fv( void *args )
@@ -30424,15 +30328,12 @@ static NTSTATUS wow64_gl_glColor3fv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glColor3fv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glColor3fv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor3fv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor3i( void *args )
@@ -30443,17 +30344,12 @@ static NTSTATUS wow64_gl_glColor3i( void *args )
         GLint red;
         GLint green;
         GLint blue;
-    } *params32 = args;
-    struct glColor3i_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-    };
-    NTSTATUS status;
-    status = gl_glColor3i( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor3i( params->red, params->green, params->blue );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor3iv( void *args )
@@ -30462,15 +30358,12 @@ static NTSTATUS wow64_gl_glColor3iv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glColor3iv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glColor3iv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor3iv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor3s( void *args )
@@ -30481,17 +30374,12 @@ static NTSTATUS wow64_gl_glColor3s( void *args )
         GLshort red;
         GLshort green;
         GLshort blue;
-    } *params32 = args;
-    struct glColor3s_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-    };
-    NTSTATUS status;
-    status = gl_glColor3s( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor3s( params->red, params->green, params->blue );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor3sv( void *args )
@@ -30500,15 +30388,12 @@ static NTSTATUS wow64_gl_glColor3sv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glColor3sv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glColor3sv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor3sv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor3ub( void *args )
@@ -30519,17 +30404,12 @@ static NTSTATUS wow64_gl_glColor3ub( void *args )
         GLubyte red;
         GLubyte green;
         GLubyte blue;
-    } *params32 = args;
-    struct glColor3ub_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-    };
-    NTSTATUS status;
-    status = gl_glColor3ub( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor3ub( params->red, params->green, params->blue );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor3ubv( void *args )
@@ -30538,15 +30418,12 @@ static NTSTATUS wow64_gl_glColor3ubv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glColor3ubv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glColor3ubv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor3ubv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor3ui( void *args )
@@ -30557,17 +30434,12 @@ static NTSTATUS wow64_gl_glColor3ui( void *args )
         GLuint red;
         GLuint green;
         GLuint blue;
-    } *params32 = args;
-    struct glColor3ui_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-    };
-    NTSTATUS status;
-    status = gl_glColor3ui( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor3ui( params->red, params->green, params->blue );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor3uiv( void *args )
@@ -30576,15 +30448,12 @@ static NTSTATUS wow64_gl_glColor3uiv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glColor3uiv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glColor3uiv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor3uiv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor3us( void *args )
@@ -30595,17 +30464,12 @@ static NTSTATUS wow64_gl_glColor3us( void *args )
         GLushort red;
         GLushort green;
         GLushort blue;
-    } *params32 = args;
-    struct glColor3us_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-    };
-    NTSTATUS status;
-    status = gl_glColor3us( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor3us( params->red, params->green, params->blue );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor3usv( void *args )
@@ -30614,15 +30478,12 @@ static NTSTATUS wow64_gl_glColor3usv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glColor3usv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glColor3usv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor3usv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor4b( void *args )
@@ -30634,18 +30495,12 @@ static NTSTATUS wow64_gl_glColor4b( void *args )
         GLbyte green;
         GLbyte blue;
         GLbyte alpha;
-    } *params32 = args;
-    struct glColor4b_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-        .alpha = params32->alpha,
-    };
-    NTSTATUS status;
-    status = gl_glColor4b( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4b( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor4bv( void *args )
@@ -30654,15 +30509,12 @@ static NTSTATUS wow64_gl_glColor4bv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glColor4bv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glColor4bv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4bv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor4d( void *args )
@@ -30674,18 +30526,12 @@ static NTSTATUS wow64_gl_glColor4d( void *args )
         GLdouble green;
         GLdouble blue;
         GLdouble alpha;
-    } *params32 = args;
-    struct glColor4d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-        .alpha = params32->alpha,
-    };
-    NTSTATUS status;
-    status = gl_glColor4d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4d( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor4dv( void *args )
@@ -30694,15 +30540,12 @@ static NTSTATUS wow64_gl_glColor4dv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glColor4dv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glColor4dv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4dv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor4f( void *args )
@@ -30714,18 +30557,12 @@ static NTSTATUS wow64_gl_glColor4f( void *args )
         GLfloat green;
         GLfloat blue;
         GLfloat alpha;
-    } *params32 = args;
-    struct glColor4f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-        .alpha = params32->alpha,
-    };
-    NTSTATUS status;
-    status = gl_glColor4f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4f( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor4fv( void *args )
@@ -30734,15 +30571,12 @@ static NTSTATUS wow64_gl_glColor4fv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glColor4fv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glColor4fv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4fv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor4i( void *args )
@@ -30754,18 +30588,12 @@ static NTSTATUS wow64_gl_glColor4i( void *args )
         GLint green;
         GLint blue;
         GLint alpha;
-    } *params32 = args;
-    struct glColor4i_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-        .alpha = params32->alpha,
-    };
-    NTSTATUS status;
-    status = gl_glColor4i( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4i( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor4iv( void *args )
@@ -30774,15 +30602,12 @@ static NTSTATUS wow64_gl_glColor4iv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glColor4iv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glColor4iv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4iv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor4s( void *args )
@@ -30794,18 +30619,12 @@ static NTSTATUS wow64_gl_glColor4s( void *args )
         GLshort green;
         GLshort blue;
         GLshort alpha;
-    } *params32 = args;
-    struct glColor4s_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-        .alpha = params32->alpha,
-    };
-    NTSTATUS status;
-    status = gl_glColor4s( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4s( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor4sv( void *args )
@@ -30814,15 +30633,12 @@ static NTSTATUS wow64_gl_glColor4sv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glColor4sv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glColor4sv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4sv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor4ub( void *args )
@@ -30834,18 +30650,12 @@ static NTSTATUS wow64_gl_glColor4ub( void *args )
         GLubyte green;
         GLubyte blue;
         GLubyte alpha;
-    } *params32 = args;
-    struct glColor4ub_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-        .alpha = params32->alpha,
-    };
-    NTSTATUS status;
-    status = gl_glColor4ub( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4ub( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor4ubv( void *args )
@@ -30854,15 +30664,12 @@ static NTSTATUS wow64_gl_glColor4ubv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glColor4ubv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glColor4ubv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4ubv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor4ui( void *args )
@@ -30874,18 +30681,12 @@ static NTSTATUS wow64_gl_glColor4ui( void *args )
         GLuint green;
         GLuint blue;
         GLuint alpha;
-    } *params32 = args;
-    struct glColor4ui_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-        .alpha = params32->alpha,
-    };
-    NTSTATUS status;
-    status = gl_glColor4ui( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4ui( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor4uiv( void *args )
@@ -30894,15 +30695,12 @@ static NTSTATUS wow64_gl_glColor4uiv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glColor4uiv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glColor4uiv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4uiv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor4us( void *args )
@@ -30914,18 +30712,12 @@ static NTSTATUS wow64_gl_glColor4us( void *args )
         GLushort green;
         GLushort blue;
         GLushort alpha;
-    } *params32 = args;
-    struct glColor4us_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-        .alpha = params32->alpha,
-    };
-    NTSTATUS status;
-    status = gl_glColor4us( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4us( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColor4usv( void *args )
@@ -30934,15 +30726,12 @@ static NTSTATUS wow64_gl_glColor4usv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glColor4usv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glColor4usv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4usv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColorMask( void *args )
@@ -30954,18 +30743,12 @@ static NTSTATUS wow64_gl_glColorMask( void *args )
         GLboolean green;
         GLboolean blue;
         GLboolean alpha;
-    } *params32 = args;
-    struct glColorMask_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .red = params32->red,
-        .green = params32->green,
-        .blue = params32->blue,
-        .alpha = params32->alpha,
-    };
-    NTSTATUS status;
-    status = gl_glColorMask( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColorMask( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColorMaterial( void *args )
@@ -30975,16 +30758,12 @@ static NTSTATUS wow64_gl_glColorMaterial( void *args )
         PTR32 teb;
         GLenum face;
         GLenum mode;
-    } *params32 = args;
-    struct glColorMaterial_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .face = params32->face,
-        .mode = params32->mode,
-    };
-    NTSTATUS status;
-    status = gl_glColorMaterial( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColorMaterial( params->face, params->mode );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glColorPointer( void *args )
@@ -30996,18 +30775,12 @@ static NTSTATUS wow64_gl_glColorPointer( void *args )
         GLenum type;
         GLsizei stride;
         PTR32 pointer;
-    } *params32 = args;
-    struct glColorPointer_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .size = params32->size,
-        .type = params32->type,
-        .stride = params32->stride,
-        .pointer = ULongToPtr(params32->pointer),
-    };
-    NTSTATUS status;
-    status = gl_glColorPointer( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColorPointer( params->size, params->type, params->stride, ULongToPtr(params->pointer) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glCopyPixels( void *args )
@@ -31020,19 +30793,12 @@ static NTSTATUS wow64_gl_glCopyPixels( void *args )
         GLsizei width;
         GLsizei height;
         GLenum type;
-    } *params32 = args;
-    struct glCopyPixels_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .width = params32->width,
-        .height = params32->height,
-        .type = params32->type,
-    };
-    NTSTATUS status;
-    status = gl_glCopyPixels( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glCopyPixels( params->x, params->y, params->width, params->height, params->type );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glCopyTexImage1D( void *args )
@@ -31047,21 +30813,12 @@ static NTSTATUS wow64_gl_glCopyTexImage1D( void *args )
         GLint y;
         GLsizei width;
         GLint border;
-    } *params32 = args;
-    struct glCopyTexImage1D_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .level = params32->level,
-        .internalformat = params32->internalformat,
-        .x = params32->x,
-        .y = params32->y,
-        .width = params32->width,
-        .border = params32->border,
-    };
-    NTSTATUS status;
-    status = gl_glCopyTexImage1D( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glCopyTexImage1D( params->target, params->level, params->internalformat, params->x, params->y, params->width, params->border );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glCopyTexImage2D( void *args )
@@ -31077,22 +30834,12 @@ static NTSTATUS wow64_gl_glCopyTexImage2D( void *args )
         GLsizei width;
         GLsizei height;
         GLint border;
-    } *params32 = args;
-    struct glCopyTexImage2D_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .level = params32->level,
-        .internalformat = params32->internalformat,
-        .x = params32->x,
-        .y = params32->y,
-        .width = params32->width,
-        .height = params32->height,
-        .border = params32->border,
-    };
-    NTSTATUS status;
-    status = gl_glCopyTexImage2D( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glCopyTexImage2D( params->target, params->level, params->internalformat, params->x, params->y, params->width, params->height, params->border );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glCopyTexSubImage1D( void *args )
@@ -31106,20 +30853,12 @@ static NTSTATUS wow64_gl_glCopyTexSubImage1D( void *args )
         GLint x;
         GLint y;
         GLsizei width;
-    } *params32 = args;
-    struct glCopyTexSubImage1D_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .level = params32->level,
-        .xoffset = params32->xoffset,
-        .x = params32->x,
-        .y = params32->y,
-        .width = params32->width,
-    };
-    NTSTATUS status;
-    status = gl_glCopyTexSubImage1D( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glCopyTexSubImage1D( params->target, params->level, params->xoffset, params->x, params->y, params->width );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glCopyTexSubImage2D( void *args )
@@ -31135,22 +30874,12 @@ static NTSTATUS wow64_gl_glCopyTexSubImage2D( void *args )
         GLint y;
         GLsizei width;
         GLsizei height;
-    } *params32 = args;
-    struct glCopyTexSubImage2D_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .level = params32->level,
-        .xoffset = params32->xoffset,
-        .yoffset = params32->yoffset,
-        .x = params32->x,
-        .y = params32->y,
-        .width = params32->width,
-        .height = params32->height,
-    };
-    NTSTATUS status;
-    status = gl_glCopyTexSubImage2D( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glCopyTexSubImage2D( params->target, params->level, params->xoffset, params->yoffset, params->x, params->y, params->width, params->height );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glCullFace( void *args )
@@ -31159,15 +30888,12 @@ static NTSTATUS wow64_gl_glCullFace( void *args )
     {
         PTR32 teb;
         GLenum mode;
-    } *params32 = args;
-    struct glCullFace_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mode = params32->mode,
-    };
-    NTSTATUS status;
-    status = gl_glCullFace( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glCullFace( params->mode );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glDeleteLists( void *args )
@@ -31177,16 +30903,12 @@ static NTSTATUS wow64_gl_glDeleteLists( void *args )
         PTR32 teb;
         GLuint list;
         GLsizei range;
-    } *params32 = args;
-    struct glDeleteLists_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .list = params32->list,
-        .range = params32->range,
-    };
-    NTSTATUS status;
-    status = gl_glDeleteLists( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glDeleteLists( params->list, params->range );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glDeleteTextures( void *args )
@@ -31196,16 +30918,12 @@ static NTSTATUS wow64_gl_glDeleteTextures( void *args )
         PTR32 teb;
         GLsizei n;
         PTR32 textures;
-    } *params32 = args;
-    struct glDeleteTextures_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .n = params32->n,
-        .textures = ULongToPtr(params32->textures),
-    };
-    NTSTATUS status;
-    status = gl_glDeleteTextures( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glDeleteTextures( params->n, ULongToPtr(params->textures) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glDepthFunc( void *args )
@@ -31214,15 +30932,12 @@ static NTSTATUS wow64_gl_glDepthFunc( void *args )
     {
         PTR32 teb;
         GLenum func;
-    } *params32 = args;
-    struct glDepthFunc_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .func = params32->func,
-    };
-    NTSTATUS status;
-    status = gl_glDepthFunc( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glDepthFunc( params->func );
+    set_context_attribute( teb, GL_DEPTH_FUNC, &params->func, sizeof(params->func) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glDepthMask( void *args )
@@ -31231,15 +30946,12 @@ static NTSTATUS wow64_gl_glDepthMask( void *args )
     {
         PTR32 teb;
         GLboolean flag;
-    } *params32 = args;
-    struct glDepthMask_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .flag = params32->flag,
-    };
-    NTSTATUS status;
-    status = gl_glDepthMask( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glDepthMask( params->flag );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glDepthRange( void *args )
@@ -31249,16 +30961,12 @@ static NTSTATUS wow64_gl_glDepthRange( void *args )
         PTR32 teb;
         GLdouble n;
         GLdouble f;
-    } *params32 = args;
-    struct glDepthRange_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .n = params32->n,
-        .f = params32->f,
-    };
-    NTSTATUS status;
-    status = gl_glDepthRange( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glDepthRange( params->n, params->f );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glDisable( void *args )
@@ -31267,15 +30975,12 @@ static NTSTATUS wow64_gl_glDisable( void *args )
     {
         PTR32 teb;
         GLenum cap;
-    } *params32 = args;
-    struct glDisable_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .cap = params32->cap,
-    };
-    NTSTATUS status;
-    status = gl_glDisable( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glDisable( params->cap );
+    set_context_attribute( teb, params->cap, &const_false, sizeof(const_false) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glDisableClientState( void *args )
@@ -31284,15 +30989,12 @@ static NTSTATUS wow64_gl_glDisableClientState( void *args )
     {
         PTR32 teb;
         GLenum array;
-    } *params32 = args;
-    struct glDisableClientState_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .array = params32->array,
-    };
-    NTSTATUS status;
-    status = gl_glDisableClientState( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glDisableClientState( params->array );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glDrawArrays( void *args )
@@ -31303,17 +31005,12 @@ static NTSTATUS wow64_gl_glDrawArrays( void *args )
         GLenum mode;
         GLint first;
         GLsizei count;
-    } *params32 = args;
-    struct glDrawArrays_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mode = params32->mode,
-        .first = params32->first,
-        .count = params32->count,
-    };
-    NTSTATUS status;
-    status = gl_glDrawArrays( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glDrawArrays( params->mode, params->first, params->count );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glDrawBuffer( void *args )
@@ -31322,15 +31019,12 @@ static NTSTATUS wow64_gl_glDrawBuffer( void *args )
     {
         PTR32 teb;
         GLenum buf;
-    } *params32 = args;
-    struct glDrawBuffer_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .buf = params32->buf,
-    };
-    NTSTATUS status;
-    status = gl_glDrawBuffer( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glDrawBuffer( params->buf );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glDrawElements( void *args )
@@ -31342,18 +31036,12 @@ static NTSTATUS wow64_gl_glDrawElements( void *args )
         GLsizei count;
         GLenum type;
         PTR32 indices;
-    } *params32 = args;
-    struct glDrawElements_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mode = params32->mode,
-        .count = params32->count,
-        .type = params32->type,
-        .indices = ULongToPtr(params32->indices),
-    };
-    NTSTATUS status;
-    status = gl_glDrawElements( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glDrawElements( params->mode, params->count, params->type, ULongToPtr(params->indices) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glDrawPixels( void *args )
@@ -31366,19 +31054,11 @@ static NTSTATUS wow64_gl_glDrawPixels( void *args )
         GLenum format;
         GLenum type;
         PTR32 pixels;
-    } *params32 = args;
-    struct glDrawPixels_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .width = params32->width,
-        .height = params32->height,
-        .format = params32->format,
-        .type = params32->type,
-        .pixels = ULongToPtr(params32->pixels),
-    };
-    NTSTATUS status;
-    status = gl_glDrawPixels( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    wrap_glDrawPixels( teb, params->width, params->height, params->format, params->type, ULongToPtr(params->pixels) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEdgeFlag( void *args )
@@ -31387,15 +31067,12 @@ static NTSTATUS wow64_gl_glEdgeFlag( void *args )
     {
         PTR32 teb;
         GLboolean flag;
-    } *params32 = args;
-    struct glEdgeFlag_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .flag = params32->flag,
-    };
-    NTSTATUS status;
-    status = gl_glEdgeFlag( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEdgeFlag( params->flag );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEdgeFlagPointer( void *args )
@@ -31405,16 +31082,12 @@ static NTSTATUS wow64_gl_glEdgeFlagPointer( void *args )
         PTR32 teb;
         GLsizei stride;
         PTR32 pointer;
-    } *params32 = args;
-    struct glEdgeFlagPointer_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .stride = params32->stride,
-        .pointer = ULongToPtr(params32->pointer),
-    };
-    NTSTATUS status;
-    status = gl_glEdgeFlagPointer( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEdgeFlagPointer( params->stride, ULongToPtr(params->pointer) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEdgeFlagv( void *args )
@@ -31423,15 +31096,12 @@ static NTSTATUS wow64_gl_glEdgeFlagv( void *args )
     {
         PTR32 teb;
         PTR32 flag;
-    } *params32 = args;
-    struct glEdgeFlagv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .flag = ULongToPtr(params32->flag),
-    };
-    NTSTATUS status;
-    status = gl_glEdgeFlagv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEdgeFlagv( ULongToPtr(params->flag) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEnable( void *args )
@@ -31440,15 +31110,12 @@ static NTSTATUS wow64_gl_glEnable( void *args )
     {
         PTR32 teb;
         GLenum cap;
-    } *params32 = args;
-    struct glEnable_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .cap = params32->cap,
-    };
-    NTSTATUS status;
-    status = gl_glEnable( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEnable( params->cap );
+    set_context_attribute( teb, params->cap, &const_true, sizeof(const_true) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEnableClientState( void *args )
@@ -31457,15 +31124,12 @@ static NTSTATUS wow64_gl_glEnableClientState( void *args )
     {
         PTR32 teb;
         GLenum array;
-    } *params32 = args;
-    struct glEnableClientState_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .array = params32->array,
-    };
-    NTSTATUS status;
-    status = gl_glEnableClientState( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEnableClientState( params->array );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEnd( void *args )
@@ -31473,14 +31137,12 @@ static NTSTATUS wow64_gl_glEnd( void *args )
     struct
     {
         PTR32 teb;
-    } *params32 = args;
-    struct glEnd_params params =
-    {
-        .teb = get_teb64(params32->teb),
-    };
-    NTSTATUS status;
-    status = gl_glEnd( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEnd();
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEndList( void *args )
@@ -31488,14 +31150,12 @@ static NTSTATUS wow64_gl_glEndList( void *args )
     struct
     {
         PTR32 teb;
-    } *params32 = args;
-    struct glEndList_params params =
-    {
-        .teb = get_teb64(params32->teb),
-    };
-    NTSTATUS status;
-    status = gl_glEndList( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEndList();
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEvalCoord1d( void *args )
@@ -31504,15 +31164,12 @@ static NTSTATUS wow64_gl_glEvalCoord1d( void *args )
     {
         PTR32 teb;
         GLdouble u;
-    } *params32 = args;
-    struct glEvalCoord1d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .u = params32->u,
-    };
-    NTSTATUS status;
-    status = gl_glEvalCoord1d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEvalCoord1d( params->u );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEvalCoord1dv( void *args )
@@ -31521,15 +31178,12 @@ static NTSTATUS wow64_gl_glEvalCoord1dv( void *args )
     {
         PTR32 teb;
         PTR32 u;
-    } *params32 = args;
-    struct glEvalCoord1dv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .u = ULongToPtr(params32->u),
-    };
-    NTSTATUS status;
-    status = gl_glEvalCoord1dv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEvalCoord1dv( ULongToPtr(params->u) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEvalCoord1f( void *args )
@@ -31538,15 +31192,12 @@ static NTSTATUS wow64_gl_glEvalCoord1f( void *args )
     {
         PTR32 teb;
         GLfloat u;
-    } *params32 = args;
-    struct glEvalCoord1f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .u = params32->u,
-    };
-    NTSTATUS status;
-    status = gl_glEvalCoord1f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEvalCoord1f( params->u );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEvalCoord1fv( void *args )
@@ -31555,15 +31206,12 @@ static NTSTATUS wow64_gl_glEvalCoord1fv( void *args )
     {
         PTR32 teb;
         PTR32 u;
-    } *params32 = args;
-    struct glEvalCoord1fv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .u = ULongToPtr(params32->u),
-    };
-    NTSTATUS status;
-    status = gl_glEvalCoord1fv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEvalCoord1fv( ULongToPtr(params->u) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEvalCoord2d( void *args )
@@ -31573,16 +31221,12 @@ static NTSTATUS wow64_gl_glEvalCoord2d( void *args )
         PTR32 teb;
         GLdouble u;
         GLdouble v;
-    } *params32 = args;
-    struct glEvalCoord2d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .u = params32->u,
-        .v = params32->v,
-    };
-    NTSTATUS status;
-    status = gl_glEvalCoord2d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEvalCoord2d( params->u, params->v );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEvalCoord2dv( void *args )
@@ -31591,15 +31235,12 @@ static NTSTATUS wow64_gl_glEvalCoord2dv( void *args )
     {
         PTR32 teb;
         PTR32 u;
-    } *params32 = args;
-    struct glEvalCoord2dv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .u = ULongToPtr(params32->u),
-    };
-    NTSTATUS status;
-    status = gl_glEvalCoord2dv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEvalCoord2dv( ULongToPtr(params->u) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEvalCoord2f( void *args )
@@ -31609,16 +31250,12 @@ static NTSTATUS wow64_gl_glEvalCoord2f( void *args )
         PTR32 teb;
         GLfloat u;
         GLfloat v;
-    } *params32 = args;
-    struct glEvalCoord2f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .u = params32->u,
-        .v = params32->v,
-    };
-    NTSTATUS status;
-    status = gl_glEvalCoord2f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEvalCoord2f( params->u, params->v );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEvalCoord2fv( void *args )
@@ -31627,15 +31264,12 @@ static NTSTATUS wow64_gl_glEvalCoord2fv( void *args )
     {
         PTR32 teb;
         PTR32 u;
-    } *params32 = args;
-    struct glEvalCoord2fv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .u = ULongToPtr(params32->u),
-    };
-    NTSTATUS status;
-    status = gl_glEvalCoord2fv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEvalCoord2fv( ULongToPtr(params->u) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEvalMesh1( void *args )
@@ -31646,17 +31280,12 @@ static NTSTATUS wow64_gl_glEvalMesh1( void *args )
         GLenum mode;
         GLint i1;
         GLint i2;
-    } *params32 = args;
-    struct glEvalMesh1_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mode = params32->mode,
-        .i1 = params32->i1,
-        .i2 = params32->i2,
-    };
-    NTSTATUS status;
-    status = gl_glEvalMesh1( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEvalMesh1( params->mode, params->i1, params->i2 );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEvalMesh2( void *args )
@@ -31669,19 +31298,12 @@ static NTSTATUS wow64_gl_glEvalMesh2( void *args )
         GLint i2;
         GLint j1;
         GLint j2;
-    } *params32 = args;
-    struct glEvalMesh2_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mode = params32->mode,
-        .i1 = params32->i1,
-        .i2 = params32->i2,
-        .j1 = params32->j1,
-        .j2 = params32->j2,
-    };
-    NTSTATUS status;
-    status = gl_glEvalMesh2( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEvalMesh2( params->mode, params->i1, params->i2, params->j1, params->j2 );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEvalPoint1( void *args )
@@ -31690,15 +31312,12 @@ static NTSTATUS wow64_gl_glEvalPoint1( void *args )
     {
         PTR32 teb;
         GLint i;
-    } *params32 = args;
-    struct glEvalPoint1_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .i = params32->i,
-    };
-    NTSTATUS status;
-    status = gl_glEvalPoint1( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEvalPoint1( params->i );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glEvalPoint2( void *args )
@@ -31708,16 +31327,12 @@ static NTSTATUS wow64_gl_glEvalPoint2( void *args )
         PTR32 teb;
         GLint i;
         GLint j;
-    } *params32 = args;
-    struct glEvalPoint2_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .i = params32->i,
-        .j = params32->j,
-    };
-    NTSTATUS status;
-    status = gl_glEvalPoint2( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glEvalPoint2( params->i, params->j );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glFeedbackBuffer( void *args )
@@ -31728,17 +31343,12 @@ static NTSTATUS wow64_gl_glFeedbackBuffer( void *args )
         GLsizei size;
         GLenum type;
         PTR32 buffer;
-    } *params32 = args;
-    struct glFeedbackBuffer_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .size = params32->size,
-        .type = params32->type,
-        .buffer = ULongToPtr(params32->buffer),
-    };
-    NTSTATUS status;
-    status = gl_glFeedbackBuffer( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glFeedbackBuffer( params->size, params->type, ULongToPtr(params->buffer) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glFinish( void *args )
@@ -31746,14 +31356,11 @@ static NTSTATUS wow64_gl_glFinish( void *args )
     struct
     {
         PTR32 teb;
-    } *params32 = args;
-    struct glFinish_params params =
-    {
-        .teb = get_teb64(params32->teb),
-    };
-    NTSTATUS status;
-    status = gl_glFinish( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    wrap_glFinish( teb );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glFlush( void *args )
@@ -31761,14 +31368,11 @@ static NTSTATUS wow64_gl_glFlush( void *args )
     struct
     {
         PTR32 teb;
-    } *params32 = args;
-    struct glFlush_params params =
-    {
-        .teb = get_teb64(params32->teb),
-    };
-    NTSTATUS status;
-    status = gl_glFlush( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    wrap_glFlush( teb );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glFogf( void *args )
@@ -31778,16 +31382,12 @@ static NTSTATUS wow64_gl_glFogf( void *args )
         PTR32 teb;
         GLenum pname;
         GLfloat param;
-    } *params32 = args;
-    struct glFogf_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glFogf( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glFogf( params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glFogfv( void *args )
@@ -31797,16 +31397,12 @@ static NTSTATUS wow64_gl_glFogfv( void *args )
         PTR32 teb;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glFogfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glFogfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glFogfv( params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glFogi( void *args )
@@ -31816,16 +31412,12 @@ static NTSTATUS wow64_gl_glFogi( void *args )
         PTR32 teb;
         GLenum pname;
         GLint param;
-    } *params32 = args;
-    struct glFogi_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glFogi( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glFogi( params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glFogiv( void *args )
@@ -31835,16 +31427,12 @@ static NTSTATUS wow64_gl_glFogiv( void *args )
         PTR32 teb;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glFogiv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glFogiv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glFogiv( params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glFrontFace( void *args )
@@ -31853,15 +31441,12 @@ static NTSTATUS wow64_gl_glFrontFace( void *args )
     {
         PTR32 teb;
         GLenum mode;
-    } *params32 = args;
-    struct glFrontFace_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mode = params32->mode,
-    };
-    NTSTATUS status;
-    status = gl_glFrontFace( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glFrontFace( params->mode );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glFrustum( void *args )
@@ -31875,20 +31460,12 @@ static NTSTATUS wow64_gl_glFrustum( void *args )
         GLdouble top;
         GLdouble zNear;
         GLdouble zFar;
-    } *params32 = args;
-    struct glFrustum_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .left = params32->left,
-        .right = params32->right,
-        .bottom = params32->bottom,
-        .top = params32->top,
-        .zNear = params32->zNear,
-        .zFar = params32->zFar,
-    };
-    NTSTATUS status;
-    status = gl_glFrustum( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glFrustum( params->left, params->right, params->bottom, params->top, params->zNear, params->zFar );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGenLists( void *args )
@@ -31898,16 +31475,12 @@ static NTSTATUS wow64_gl_glGenLists( void *args )
         PTR32 teb;
         GLsizei range;
         GLuint ret;
-    } *params32 = args;
-    struct glGenLists_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .range = params32->range,
-    };
-    NTSTATUS status;
-    status = gl_glGenLists( &params );
-    params32->ret = params.ret;
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    params->ret = funcs->p_glGenLists( params->range );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGenTextures( void *args )
@@ -31917,16 +31490,12 @@ static NTSTATUS wow64_gl_glGenTextures( void *args )
         PTR32 teb;
         GLsizei n;
         PTR32 textures;
-    } *params32 = args;
-    struct glGenTextures_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .n = params32->n,
-        .textures = ULongToPtr(params32->textures),
-    };
-    NTSTATUS status;
-    status = gl_glGenTextures( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGenTextures( params->n, ULongToPtr(params->textures) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetBooleanv( void *args )
@@ -31936,16 +31505,11 @@ static NTSTATUS wow64_gl_glGetBooleanv( void *args )
         PTR32 teb;
         GLenum pname;
         PTR32 data;
-    } *params32 = args;
-    struct glGetBooleanv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-        .data = ULongToPtr(params32->data),
-    };
-    NTSTATUS status;
-    status = gl_glGetBooleanv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetBooleanv( params->pname, ULongToPtr(params->data) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetClipPlane( void *args )
@@ -31955,16 +31519,11 @@ static NTSTATUS wow64_gl_glGetClipPlane( void *args )
         PTR32 teb;
         GLenum plane;
         PTR32 equation;
-    } *params32 = args;
-    struct glGetClipPlane_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .plane = params32->plane,
-        .equation = ULongToPtr(params32->equation),
-    };
-    NTSTATUS status;
-    status = gl_glGetClipPlane( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetClipPlane( params->plane, ULongToPtr(params->equation) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetDoublev( void *args )
@@ -31974,16 +31533,11 @@ static NTSTATUS wow64_gl_glGetDoublev( void *args )
         PTR32 teb;
         GLenum pname;
         PTR32 data;
-    } *params32 = args;
-    struct glGetDoublev_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-        .data = ULongToPtr(params32->data),
-    };
-    NTSTATUS status;
-    status = gl_glGetDoublev( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetDoublev( params->pname, ULongToPtr(params->data) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetError( void *args )
@@ -31992,15 +31546,11 @@ static NTSTATUS wow64_gl_glGetError( void *args )
     {
         PTR32 teb;
         GLenum ret;
-    } *params32 = args;
-    struct glGetError_params params =
-    {
-        .teb = get_teb64(params32->teb),
-    };
-    NTSTATUS status;
-    status = gl_glGetError( &params );
-    params32->ret = params.ret;
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    params->ret = funcs->p_glGetError();
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetFloatv( void *args )
@@ -32010,16 +31560,11 @@ static NTSTATUS wow64_gl_glGetFloatv( void *args )
         PTR32 teb;
         GLenum pname;
         PTR32 data;
-    } *params32 = args;
-    struct glGetFloatv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-        .data = ULongToPtr(params32->data),
-    };
-    NTSTATUS status;
-    status = gl_glGetFloatv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetFloatv( params->pname, ULongToPtr(params->data) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetIntegerv( void *args )
@@ -32029,16 +31574,10 @@ static NTSTATUS wow64_gl_glGetIntegerv( void *args )
         PTR32 teb;
         GLenum pname;
         PTR32 data;
-    } *params32 = args;
-    struct glGetIntegerv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-        .data = ULongToPtr(params32->data),
-    };
-    NTSTATUS status;
-    status = gl_glGetIntegerv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    wrap_glGetIntegerv( teb, params->pname, ULongToPtr(params->data) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetLightfv( void *args )
@@ -32049,17 +31588,11 @@ static NTSTATUS wow64_gl_glGetLightfv( void *args )
         GLenum light;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glGetLightfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .light = params32->light,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glGetLightfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetLightfv( params->light, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetLightiv( void *args )
@@ -32070,17 +31603,11 @@ static NTSTATUS wow64_gl_glGetLightiv( void *args )
         GLenum light;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glGetLightiv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .light = params32->light,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glGetLightiv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetLightiv( params->light, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetMapdv( void *args )
@@ -32091,17 +31618,11 @@ static NTSTATUS wow64_gl_glGetMapdv( void *args )
         GLenum target;
         GLenum query;
         PTR32 v;
-    } *params32 = args;
-    struct glGetMapdv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .query = params32->query,
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glGetMapdv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetMapdv( params->target, params->query, ULongToPtr(params->v) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetMapfv( void *args )
@@ -32112,17 +31633,11 @@ static NTSTATUS wow64_gl_glGetMapfv( void *args )
         GLenum target;
         GLenum query;
         PTR32 v;
-    } *params32 = args;
-    struct glGetMapfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .query = params32->query,
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glGetMapfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetMapfv( params->target, params->query, ULongToPtr(params->v) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetMapiv( void *args )
@@ -32133,17 +31648,11 @@ static NTSTATUS wow64_gl_glGetMapiv( void *args )
         GLenum target;
         GLenum query;
         PTR32 v;
-    } *params32 = args;
-    struct glGetMapiv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .query = params32->query,
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glGetMapiv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetMapiv( params->target, params->query, ULongToPtr(params->v) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetMaterialfv( void *args )
@@ -32154,17 +31663,11 @@ static NTSTATUS wow64_gl_glGetMaterialfv( void *args )
         GLenum face;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glGetMaterialfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .face = params32->face,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glGetMaterialfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetMaterialfv( params->face, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetMaterialiv( void *args )
@@ -32175,17 +31678,11 @@ static NTSTATUS wow64_gl_glGetMaterialiv( void *args )
         GLenum face;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glGetMaterialiv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .face = params32->face,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glGetMaterialiv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetMaterialiv( params->face, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetPixelMapfv( void *args )
@@ -32195,16 +31692,11 @@ static NTSTATUS wow64_gl_glGetPixelMapfv( void *args )
         PTR32 teb;
         GLenum map;
         PTR32 values;
-    } *params32 = args;
-    struct glGetPixelMapfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .map = params32->map,
-        .values = ULongToPtr(params32->values),
-    };
-    NTSTATUS status;
-    status = gl_glGetPixelMapfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetPixelMapfv( params->map, ULongToPtr(params->values) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetPixelMapuiv( void *args )
@@ -32214,16 +31706,11 @@ static NTSTATUS wow64_gl_glGetPixelMapuiv( void *args )
         PTR32 teb;
         GLenum map;
         PTR32 values;
-    } *params32 = args;
-    struct glGetPixelMapuiv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .map = params32->map,
-        .values = ULongToPtr(params32->values),
-    };
-    NTSTATUS status;
-    status = gl_glGetPixelMapuiv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetPixelMapuiv( params->map, ULongToPtr(params->values) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetPixelMapusv( void *args )
@@ -32233,16 +31720,11 @@ static NTSTATUS wow64_gl_glGetPixelMapusv( void *args )
         PTR32 teb;
         GLenum map;
         PTR32 values;
-    } *params32 = args;
-    struct glGetPixelMapusv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .map = params32->map,
-        .values = ULongToPtr(params32->values),
-    };
-    NTSTATUS status;
-    status = gl_glGetPixelMapusv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetPixelMapusv( params->map, ULongToPtr(params->values) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetPointerv( void *args )
@@ -32252,16 +31734,13 @@ static NTSTATUS wow64_gl_glGetPointerv( void *args )
         PTR32 teb;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glGetPointerv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-    };
-    NTSTATUS status;
-    status = gl_glGetPointerv( &params );
-    params32->params = PtrToUlong( params.params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    void *params_arg;
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetPointerv( params->pname, &params_arg );
+    *(PTR32 *)UlongToPtr(params->params) = PtrToUlong( params_arg );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetPolygonStipple( void *args )
@@ -32270,15 +31749,11 @@ static NTSTATUS wow64_gl_glGetPolygonStipple( void *args )
     {
         PTR32 teb;
         PTR32 mask;
-    } *params32 = args;
-    struct glGetPolygonStipple_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mask = ULongToPtr(params32->mask),
-    };
-    NTSTATUS status;
-    status = gl_glGetPolygonStipple( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetPolygonStipple( ULongToPtr(params->mask) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetTexEnvfv( void *args )
@@ -32289,17 +31764,11 @@ static NTSTATUS wow64_gl_glGetTexEnvfv( void *args )
         GLenum target;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glGetTexEnvfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glGetTexEnvfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetTexEnvfv( params->target, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetTexEnviv( void *args )
@@ -32310,17 +31779,11 @@ static NTSTATUS wow64_gl_glGetTexEnviv( void *args )
         GLenum target;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glGetTexEnviv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glGetTexEnviv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetTexEnviv( params->target, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetTexGendv( void *args )
@@ -32331,17 +31794,11 @@ static NTSTATUS wow64_gl_glGetTexGendv( void *args )
         GLenum coord;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glGetTexGendv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .coord = params32->coord,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glGetTexGendv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetTexGendv( params->coord, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetTexGenfv( void *args )
@@ -32352,17 +31809,11 @@ static NTSTATUS wow64_gl_glGetTexGenfv( void *args )
         GLenum coord;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glGetTexGenfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .coord = params32->coord,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glGetTexGenfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetTexGenfv( params->coord, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetTexGeniv( void *args )
@@ -32373,17 +31824,11 @@ static NTSTATUS wow64_gl_glGetTexGeniv( void *args )
         GLenum coord;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glGetTexGeniv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .coord = params32->coord,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glGetTexGeniv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetTexGeniv( params->coord, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetTexImage( void *args )
@@ -32396,19 +31841,11 @@ static NTSTATUS wow64_gl_glGetTexImage( void *args )
         GLenum format;
         GLenum type;
         PTR32 pixels;
-    } *params32 = args;
-    struct glGetTexImage_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .level = params32->level,
-        .format = params32->format,
-        .type = params32->type,
-        .pixels = ULongToPtr(params32->pixels),
-    };
-    NTSTATUS status;
-    status = gl_glGetTexImage( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetTexImage( params->target, params->level, params->format, params->type, ULongToPtr(params->pixels) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetTexLevelParameterfv( void *args )
@@ -32420,18 +31857,11 @@ static NTSTATUS wow64_gl_glGetTexLevelParameterfv( void *args )
         GLint level;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glGetTexLevelParameterfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .level = params32->level,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glGetTexLevelParameterfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetTexLevelParameterfv( params->target, params->level, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetTexLevelParameteriv( void *args )
@@ -32443,18 +31873,11 @@ static NTSTATUS wow64_gl_glGetTexLevelParameteriv( void *args )
         GLint level;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glGetTexLevelParameteriv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .level = params32->level,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glGetTexLevelParameteriv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetTexLevelParameteriv( params->target, params->level, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetTexParameterfv( void *args )
@@ -32465,17 +31888,11 @@ static NTSTATUS wow64_gl_glGetTexParameterfv( void *args )
         GLenum target;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glGetTexParameterfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glGetTexParameterfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetTexParameterfv( params->target, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glGetTexParameteriv( void *args )
@@ -32486,17 +31903,11 @@ static NTSTATUS wow64_gl_glGetTexParameteriv( void *args )
         GLenum target;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glGetTexParameteriv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glGetTexParameteriv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetTexParameteriv( params->target, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glHint( void *args )
@@ -32506,16 +31917,12 @@ static NTSTATUS wow64_gl_glHint( void *args )
         PTR32 teb;
         GLenum target;
         GLenum mode;
-    } *params32 = args;
-    struct glHint_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .mode = params32->mode,
-    };
-    NTSTATUS status;
-    status = gl_glHint( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glHint( params->target, params->mode );
+    set_context_attribute( teb, params->target, &params->mode, sizeof(params->mode) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glIndexMask( void *args )
@@ -32524,15 +31931,12 @@ static NTSTATUS wow64_gl_glIndexMask( void *args )
     {
         PTR32 teb;
         GLuint mask;
-    } *params32 = args;
-    struct glIndexMask_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mask = params32->mask,
-    };
-    NTSTATUS status;
-    status = gl_glIndexMask( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glIndexMask( params->mask );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glIndexPointer( void *args )
@@ -32543,17 +31947,12 @@ static NTSTATUS wow64_gl_glIndexPointer( void *args )
         GLenum type;
         GLsizei stride;
         PTR32 pointer;
-    } *params32 = args;
-    struct glIndexPointer_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .type = params32->type,
-        .stride = params32->stride,
-        .pointer = ULongToPtr(params32->pointer),
-    };
-    NTSTATUS status;
-    status = gl_glIndexPointer( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glIndexPointer( params->type, params->stride, ULongToPtr(params->pointer) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glIndexd( void *args )
@@ -32562,15 +31961,12 @@ static NTSTATUS wow64_gl_glIndexd( void *args )
     {
         PTR32 teb;
         GLdouble c;
-    } *params32 = args;
-    struct glIndexd_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .c = params32->c,
-    };
-    NTSTATUS status;
-    status = gl_glIndexd( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glIndexd( params->c );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glIndexdv( void *args )
@@ -32579,15 +31975,12 @@ static NTSTATUS wow64_gl_glIndexdv( void *args )
     {
         PTR32 teb;
         PTR32 c;
-    } *params32 = args;
-    struct glIndexdv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .c = ULongToPtr(params32->c),
-    };
-    NTSTATUS status;
-    status = gl_glIndexdv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glIndexdv( ULongToPtr(params->c) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glIndexf( void *args )
@@ -32596,15 +31989,12 @@ static NTSTATUS wow64_gl_glIndexf( void *args )
     {
         PTR32 teb;
         GLfloat c;
-    } *params32 = args;
-    struct glIndexf_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .c = params32->c,
-    };
-    NTSTATUS status;
-    status = gl_glIndexf( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glIndexf( params->c );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glIndexfv( void *args )
@@ -32613,15 +32003,12 @@ static NTSTATUS wow64_gl_glIndexfv( void *args )
     {
         PTR32 teb;
         PTR32 c;
-    } *params32 = args;
-    struct glIndexfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .c = ULongToPtr(params32->c),
-    };
-    NTSTATUS status;
-    status = gl_glIndexfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glIndexfv( ULongToPtr(params->c) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glIndexi( void *args )
@@ -32630,15 +32017,12 @@ static NTSTATUS wow64_gl_glIndexi( void *args )
     {
         PTR32 teb;
         GLint c;
-    } *params32 = args;
-    struct glIndexi_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .c = params32->c,
-    };
-    NTSTATUS status;
-    status = gl_glIndexi( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glIndexi( params->c );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glIndexiv( void *args )
@@ -32647,15 +32031,12 @@ static NTSTATUS wow64_gl_glIndexiv( void *args )
     {
         PTR32 teb;
         PTR32 c;
-    } *params32 = args;
-    struct glIndexiv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .c = ULongToPtr(params32->c),
-    };
-    NTSTATUS status;
-    status = gl_glIndexiv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glIndexiv( ULongToPtr(params->c) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glIndexs( void *args )
@@ -32664,15 +32045,12 @@ static NTSTATUS wow64_gl_glIndexs( void *args )
     {
         PTR32 teb;
         GLshort c;
-    } *params32 = args;
-    struct glIndexs_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .c = params32->c,
-    };
-    NTSTATUS status;
-    status = gl_glIndexs( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glIndexs( params->c );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glIndexsv( void *args )
@@ -32681,15 +32059,12 @@ static NTSTATUS wow64_gl_glIndexsv( void *args )
     {
         PTR32 teb;
         PTR32 c;
-    } *params32 = args;
-    struct glIndexsv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .c = ULongToPtr(params32->c),
-    };
-    NTSTATUS status;
-    status = gl_glIndexsv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glIndexsv( ULongToPtr(params->c) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glIndexub( void *args )
@@ -32698,15 +32073,12 @@ static NTSTATUS wow64_gl_glIndexub( void *args )
     {
         PTR32 teb;
         GLubyte c;
-    } *params32 = args;
-    struct glIndexub_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .c = params32->c,
-    };
-    NTSTATUS status;
-    status = gl_glIndexub( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glIndexub( params->c );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glIndexubv( void *args )
@@ -32715,15 +32087,12 @@ static NTSTATUS wow64_gl_glIndexubv( void *args )
     {
         PTR32 teb;
         PTR32 c;
-    } *params32 = args;
-    struct glIndexubv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .c = ULongToPtr(params32->c),
-    };
-    NTSTATUS status;
-    status = gl_glIndexubv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glIndexubv( ULongToPtr(params->c) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glInitNames( void *args )
@@ -32731,14 +32100,12 @@ static NTSTATUS wow64_gl_glInitNames( void *args )
     struct
     {
         PTR32 teb;
-    } *params32 = args;
-    struct glInitNames_params params =
-    {
-        .teb = get_teb64(params32->teb),
-    };
-    NTSTATUS status;
-    status = gl_glInitNames( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glInitNames();
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glInterleavedArrays( void *args )
@@ -32749,17 +32116,12 @@ static NTSTATUS wow64_gl_glInterleavedArrays( void *args )
         GLenum format;
         GLsizei stride;
         PTR32 pointer;
-    } *params32 = args;
-    struct glInterleavedArrays_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .format = params32->format,
-        .stride = params32->stride,
-        .pointer = ULongToPtr(params32->pointer),
-    };
-    NTSTATUS status;
-    status = gl_glInterleavedArrays( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glInterleavedArrays( params->format, params->stride, ULongToPtr(params->pointer) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glIsEnabled( void *args )
@@ -32769,16 +32131,11 @@ static NTSTATUS wow64_gl_glIsEnabled( void *args )
         PTR32 teb;
         GLenum cap;
         GLboolean ret;
-    } *params32 = args;
-    struct glIsEnabled_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .cap = params32->cap,
-    };
-    NTSTATUS status;
-    status = gl_glIsEnabled( &params );
-    params32->ret = params.ret;
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    params->ret = funcs->p_glIsEnabled( params->cap );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glIsList( void *args )
@@ -32788,16 +32145,11 @@ static NTSTATUS wow64_gl_glIsList( void *args )
         PTR32 teb;
         GLuint list;
         GLboolean ret;
-    } *params32 = args;
-    struct glIsList_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .list = params32->list,
-    };
-    NTSTATUS status;
-    status = gl_glIsList( &params );
-    params32->ret = params.ret;
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    params->ret = funcs->p_glIsList( params->list );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glIsTexture( void *args )
@@ -32807,16 +32159,11 @@ static NTSTATUS wow64_gl_glIsTexture( void *args )
         PTR32 teb;
         GLuint texture;
         GLboolean ret;
-    } *params32 = args;
-    struct glIsTexture_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .texture = params32->texture,
-    };
-    NTSTATUS status;
-    status = gl_glIsTexture( &params );
-    params32->ret = params.ret;
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    params->ret = funcs->p_glIsTexture( params->texture );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glLightModelf( void *args )
@@ -32826,16 +32173,12 @@ static NTSTATUS wow64_gl_glLightModelf( void *args )
         PTR32 teb;
         GLenum pname;
         GLfloat param;
-    } *params32 = args;
-    struct glLightModelf_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glLightModelf( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLightModelf( params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glLightModelfv( void *args )
@@ -32845,16 +32188,12 @@ static NTSTATUS wow64_gl_glLightModelfv( void *args )
         PTR32 teb;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glLightModelfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glLightModelfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLightModelfv( params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, params->pname, UlongToPtr(params->params), 0 /* variable size */ );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glLightModeli( void *args )
@@ -32864,16 +32203,12 @@ static NTSTATUS wow64_gl_glLightModeli( void *args )
         PTR32 teb;
         GLenum pname;
         GLint param;
-    } *params32 = args;
-    struct glLightModeli_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glLightModeli( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLightModeli( params->pname, params->param );
+    set_context_attribute( teb, params->pname, &params->param, sizeof(params->param) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glLightModeliv( void *args )
@@ -32883,16 +32218,12 @@ static NTSTATUS wow64_gl_glLightModeliv( void *args )
         PTR32 teb;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glLightModeliv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glLightModeliv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLightModeliv( params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glLightf( void *args )
@@ -32903,17 +32234,12 @@ static NTSTATUS wow64_gl_glLightf( void *args )
         GLenum light;
         GLenum pname;
         GLfloat param;
-    } *params32 = args;
-    struct glLightf_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .light = params32->light,
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glLightf( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLightf( params->light, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glLightfv( void *args )
@@ -32924,17 +32250,12 @@ static NTSTATUS wow64_gl_glLightfv( void *args )
         GLenum light;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glLightfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .light = params32->light,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glLightfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLightfv( params->light, params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glLighti( void *args )
@@ -32945,17 +32266,12 @@ static NTSTATUS wow64_gl_glLighti( void *args )
         GLenum light;
         GLenum pname;
         GLint param;
-    } *params32 = args;
-    struct glLighti_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .light = params32->light,
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glLighti( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLighti( params->light, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glLightiv( void *args )
@@ -32966,17 +32282,12 @@ static NTSTATUS wow64_gl_glLightiv( void *args )
         GLenum light;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glLightiv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .light = params32->light,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glLightiv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLightiv( params->light, params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glLineStipple( void *args )
@@ -32986,16 +32297,12 @@ static NTSTATUS wow64_gl_glLineStipple( void *args )
         PTR32 teb;
         GLint factor;
         GLushort pattern;
-    } *params32 = args;
-    struct glLineStipple_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .factor = params32->factor,
-        .pattern = params32->pattern,
-    };
-    NTSTATUS status;
-    status = gl_glLineStipple( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLineStipple( params->factor, params->pattern );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glLineWidth( void *args )
@@ -33004,15 +32311,12 @@ static NTSTATUS wow64_gl_glLineWidth( void *args )
     {
         PTR32 teb;
         GLfloat width;
-    } *params32 = args;
-    struct glLineWidth_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .width = params32->width,
-    };
-    NTSTATUS status;
-    status = gl_glLineWidth( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLineWidth( params->width );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glListBase( void *args )
@@ -33021,15 +32325,12 @@ static NTSTATUS wow64_gl_glListBase( void *args )
     {
         PTR32 teb;
         GLuint base;
-    } *params32 = args;
-    struct glListBase_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .base = params32->base,
-    };
-    NTSTATUS status;
-    status = gl_glListBase( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glListBase( params->base );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glLoadIdentity( void *args )
@@ -33037,14 +32338,12 @@ static NTSTATUS wow64_gl_glLoadIdentity( void *args )
     struct
     {
         PTR32 teb;
-    } *params32 = args;
-    struct glLoadIdentity_params params =
-    {
-        .teb = get_teb64(params32->teb),
-    };
-    NTSTATUS status;
-    status = gl_glLoadIdentity( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLoadIdentity();
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glLoadMatrixd( void *args )
@@ -33053,15 +32352,12 @@ static NTSTATUS wow64_gl_glLoadMatrixd( void *args )
     {
         PTR32 teb;
         PTR32 m;
-    } *params32 = args;
-    struct glLoadMatrixd_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .m = ULongToPtr(params32->m),
-    };
-    NTSTATUS status;
-    status = gl_glLoadMatrixd( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLoadMatrixd( ULongToPtr(params->m) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glLoadMatrixf( void *args )
@@ -33070,15 +32366,12 @@ static NTSTATUS wow64_gl_glLoadMatrixf( void *args )
     {
         PTR32 teb;
         PTR32 m;
-    } *params32 = args;
-    struct glLoadMatrixf_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .m = ULongToPtr(params32->m),
-    };
-    NTSTATUS status;
-    status = gl_glLoadMatrixf( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLoadMatrixf( ULongToPtr(params->m) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glLoadName( void *args )
@@ -33087,15 +32380,12 @@ static NTSTATUS wow64_gl_glLoadName( void *args )
     {
         PTR32 teb;
         GLuint name;
-    } *params32 = args;
-    struct glLoadName_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .name = params32->name,
-    };
-    NTSTATUS status;
-    status = gl_glLoadName( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLoadName( params->name );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glLogicOp( void *args )
@@ -33104,15 +32394,12 @@ static NTSTATUS wow64_gl_glLogicOp( void *args )
     {
         PTR32 teb;
         GLenum opcode;
-    } *params32 = args;
-    struct glLogicOp_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .opcode = params32->opcode,
-    };
-    NTSTATUS status;
-    status = gl_glLogicOp( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLogicOp( params->opcode );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glMap1d( void *args )
@@ -33126,20 +32413,12 @@ static NTSTATUS wow64_gl_glMap1d( void *args )
         GLint stride;
         GLint order;
         PTR32 points;
-    } *params32 = args;
-    struct glMap1d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .u1 = params32->u1,
-        .u2 = params32->u2,
-        .stride = params32->stride,
-        .order = params32->order,
-        .points = ULongToPtr(params32->points),
-    };
-    NTSTATUS status;
-    status = gl_glMap1d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMap1d( params->target, params->u1, params->u2, params->stride, params->order, ULongToPtr(params->points) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glMap1f( void *args )
@@ -33153,20 +32432,12 @@ static NTSTATUS wow64_gl_glMap1f( void *args )
         GLint stride;
         GLint order;
         PTR32 points;
-    } *params32 = args;
-    struct glMap1f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .u1 = params32->u1,
-        .u2 = params32->u2,
-        .stride = params32->stride,
-        .order = params32->order,
-        .points = ULongToPtr(params32->points),
-    };
-    NTSTATUS status;
-    status = gl_glMap1f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMap1f( params->target, params->u1, params->u2, params->stride, params->order, ULongToPtr(params->points) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glMap2d( void *args )
@@ -33184,24 +32455,12 @@ static NTSTATUS wow64_gl_glMap2d( void *args )
         GLint vstride;
         GLint vorder;
         PTR32 points;
-    } *params32 = args;
-    struct glMap2d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .u1 = params32->u1,
-        .u2 = params32->u2,
-        .ustride = params32->ustride,
-        .uorder = params32->uorder,
-        .v1 = params32->v1,
-        .v2 = params32->v2,
-        .vstride = params32->vstride,
-        .vorder = params32->vorder,
-        .points = ULongToPtr(params32->points),
-    };
-    NTSTATUS status;
-    status = gl_glMap2d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMap2d( params->target, params->u1, params->u2, params->ustride, params->uorder, params->v1, params->v2, params->vstride, params->vorder, ULongToPtr(params->points) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glMap2f( void *args )
@@ -33219,24 +32478,12 @@ static NTSTATUS wow64_gl_glMap2f( void *args )
         GLint vstride;
         GLint vorder;
         PTR32 points;
-    } *params32 = args;
-    struct glMap2f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .u1 = params32->u1,
-        .u2 = params32->u2,
-        .ustride = params32->ustride,
-        .uorder = params32->uorder,
-        .v1 = params32->v1,
-        .v2 = params32->v2,
-        .vstride = params32->vstride,
-        .vorder = params32->vorder,
-        .points = ULongToPtr(params32->points),
-    };
-    NTSTATUS status;
-    status = gl_glMap2f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMap2f( params->target, params->u1, params->u2, params->ustride, params->uorder, params->v1, params->v2, params->vstride, params->vorder, ULongToPtr(params->points) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glMapGrid1d( void *args )
@@ -33247,17 +32494,12 @@ static NTSTATUS wow64_gl_glMapGrid1d( void *args )
         GLint un;
         GLdouble u1;
         GLdouble u2;
-    } *params32 = args;
-    struct glMapGrid1d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .un = params32->un,
-        .u1 = params32->u1,
-        .u2 = params32->u2,
-    };
-    NTSTATUS status;
-    status = gl_glMapGrid1d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMapGrid1d( params->un, params->u1, params->u2 );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glMapGrid1f( void *args )
@@ -33268,17 +32510,12 @@ static NTSTATUS wow64_gl_glMapGrid1f( void *args )
         GLint un;
         GLfloat u1;
         GLfloat u2;
-    } *params32 = args;
-    struct glMapGrid1f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .un = params32->un,
-        .u1 = params32->u1,
-        .u2 = params32->u2,
-    };
-    NTSTATUS status;
-    status = gl_glMapGrid1f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMapGrid1f( params->un, params->u1, params->u2 );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glMapGrid2d( void *args )
@@ -33292,20 +32529,12 @@ static NTSTATUS wow64_gl_glMapGrid2d( void *args )
         GLint vn;
         GLdouble v1;
         GLdouble v2;
-    } *params32 = args;
-    struct glMapGrid2d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .un = params32->un,
-        .u1 = params32->u1,
-        .u2 = params32->u2,
-        .vn = params32->vn,
-        .v1 = params32->v1,
-        .v2 = params32->v2,
-    };
-    NTSTATUS status;
-    status = gl_glMapGrid2d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMapGrid2d( params->un, params->u1, params->u2, params->vn, params->v1, params->v2 );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glMapGrid2f( void *args )
@@ -33319,20 +32548,12 @@ static NTSTATUS wow64_gl_glMapGrid2f( void *args )
         GLint vn;
         GLfloat v1;
         GLfloat v2;
-    } *params32 = args;
-    struct glMapGrid2f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .un = params32->un,
-        .u1 = params32->u1,
-        .u2 = params32->u2,
-        .vn = params32->vn,
-        .v1 = params32->v1,
-        .v2 = params32->v2,
-    };
-    NTSTATUS status;
-    status = gl_glMapGrid2f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMapGrid2f( params->un, params->u1, params->u2, params->vn, params->v1, params->v2 );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glMaterialf( void *args )
@@ -33343,17 +32564,12 @@ static NTSTATUS wow64_gl_glMaterialf( void *args )
         GLenum face;
         GLenum pname;
         GLfloat param;
-    } *params32 = args;
-    struct glMaterialf_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .face = params32->face,
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glMaterialf( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMaterialf( params->face, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glMaterialfv( void *args )
@@ -33364,17 +32580,12 @@ static NTSTATUS wow64_gl_glMaterialfv( void *args )
         GLenum face;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glMaterialfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .face = params32->face,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glMaterialfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMaterialfv( params->face, params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glMateriali( void *args )
@@ -33385,17 +32596,12 @@ static NTSTATUS wow64_gl_glMateriali( void *args )
         GLenum face;
         GLenum pname;
         GLint param;
-    } *params32 = args;
-    struct glMateriali_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .face = params32->face,
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glMateriali( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMateriali( params->face, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glMaterialiv( void *args )
@@ -33406,17 +32612,12 @@ static NTSTATUS wow64_gl_glMaterialiv( void *args )
         GLenum face;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glMaterialiv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .face = params32->face,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glMaterialiv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMaterialiv( params->face, params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glMatrixMode( void *args )
@@ -33425,15 +32626,12 @@ static NTSTATUS wow64_gl_glMatrixMode( void *args )
     {
         PTR32 teb;
         GLenum mode;
-    } *params32 = args;
-    struct glMatrixMode_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mode = params32->mode,
-    };
-    NTSTATUS status;
-    status = gl_glMatrixMode( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMatrixMode( params->mode );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glMultMatrixd( void *args )
@@ -33442,15 +32640,12 @@ static NTSTATUS wow64_gl_glMultMatrixd( void *args )
     {
         PTR32 teb;
         PTR32 m;
-    } *params32 = args;
-    struct glMultMatrixd_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .m = ULongToPtr(params32->m),
-    };
-    NTSTATUS status;
-    status = gl_glMultMatrixd( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMultMatrixd( ULongToPtr(params->m) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glMultMatrixf( void *args )
@@ -33459,15 +32654,12 @@ static NTSTATUS wow64_gl_glMultMatrixf( void *args )
     {
         PTR32 teb;
         PTR32 m;
-    } *params32 = args;
-    struct glMultMatrixf_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .m = ULongToPtr(params32->m),
-    };
-    NTSTATUS status;
-    status = gl_glMultMatrixf( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMultMatrixf( ULongToPtr(params->m) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glNewList( void *args )
@@ -33477,16 +32669,12 @@ static NTSTATUS wow64_gl_glNewList( void *args )
         PTR32 teb;
         GLuint list;
         GLenum mode;
-    } *params32 = args;
-    struct glNewList_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .list = params32->list,
-        .mode = params32->mode,
-    };
-    NTSTATUS status;
-    status = gl_glNewList( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glNewList( params->list, params->mode );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glNormal3b( void *args )
@@ -33497,17 +32685,12 @@ static NTSTATUS wow64_gl_glNormal3b( void *args )
         GLbyte nx;
         GLbyte ny;
         GLbyte nz;
-    } *params32 = args;
-    struct glNormal3b_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .nx = params32->nx,
-        .ny = params32->ny,
-        .nz = params32->nz,
-    };
-    NTSTATUS status;
-    status = gl_glNormal3b( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glNormal3b( params->nx, params->ny, params->nz );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glNormal3bv( void *args )
@@ -33516,15 +32699,12 @@ static NTSTATUS wow64_gl_glNormal3bv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glNormal3bv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glNormal3bv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glNormal3bv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glNormal3d( void *args )
@@ -33535,17 +32715,12 @@ static NTSTATUS wow64_gl_glNormal3d( void *args )
         GLdouble nx;
         GLdouble ny;
         GLdouble nz;
-    } *params32 = args;
-    struct glNormal3d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .nx = params32->nx,
-        .ny = params32->ny,
-        .nz = params32->nz,
-    };
-    NTSTATUS status;
-    status = gl_glNormal3d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glNormal3d( params->nx, params->ny, params->nz );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glNormal3dv( void *args )
@@ -33554,15 +32729,12 @@ static NTSTATUS wow64_gl_glNormal3dv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glNormal3dv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glNormal3dv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glNormal3dv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glNormal3f( void *args )
@@ -33573,17 +32745,12 @@ static NTSTATUS wow64_gl_glNormal3f( void *args )
         GLfloat nx;
         GLfloat ny;
         GLfloat nz;
-    } *params32 = args;
-    struct glNormal3f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .nx = params32->nx,
-        .ny = params32->ny,
-        .nz = params32->nz,
-    };
-    NTSTATUS status;
-    status = gl_glNormal3f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glNormal3f( params->nx, params->ny, params->nz );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glNormal3fv( void *args )
@@ -33592,15 +32759,12 @@ static NTSTATUS wow64_gl_glNormal3fv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glNormal3fv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glNormal3fv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glNormal3fv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glNormal3i( void *args )
@@ -33611,17 +32775,12 @@ static NTSTATUS wow64_gl_glNormal3i( void *args )
         GLint nx;
         GLint ny;
         GLint nz;
-    } *params32 = args;
-    struct glNormal3i_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .nx = params32->nx,
-        .ny = params32->ny,
-        .nz = params32->nz,
-    };
-    NTSTATUS status;
-    status = gl_glNormal3i( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glNormal3i( params->nx, params->ny, params->nz );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glNormal3iv( void *args )
@@ -33630,15 +32789,12 @@ static NTSTATUS wow64_gl_glNormal3iv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glNormal3iv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glNormal3iv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glNormal3iv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glNormal3s( void *args )
@@ -33649,17 +32805,12 @@ static NTSTATUS wow64_gl_glNormal3s( void *args )
         GLshort nx;
         GLshort ny;
         GLshort nz;
-    } *params32 = args;
-    struct glNormal3s_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .nx = params32->nx,
-        .ny = params32->ny,
-        .nz = params32->nz,
-    };
-    NTSTATUS status;
-    status = gl_glNormal3s( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glNormal3s( params->nx, params->ny, params->nz );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glNormal3sv( void *args )
@@ -33668,15 +32819,12 @@ static NTSTATUS wow64_gl_glNormal3sv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glNormal3sv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glNormal3sv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glNormal3sv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glNormalPointer( void *args )
@@ -33687,17 +32835,12 @@ static NTSTATUS wow64_gl_glNormalPointer( void *args )
         GLenum type;
         GLsizei stride;
         PTR32 pointer;
-    } *params32 = args;
-    struct glNormalPointer_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .type = params32->type,
-        .stride = params32->stride,
-        .pointer = ULongToPtr(params32->pointer),
-    };
-    NTSTATUS status;
-    status = gl_glNormalPointer( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glNormalPointer( params->type, params->stride, ULongToPtr(params->pointer) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glOrtho( void *args )
@@ -33711,20 +32854,12 @@ static NTSTATUS wow64_gl_glOrtho( void *args )
         GLdouble top;
         GLdouble zNear;
         GLdouble zFar;
-    } *params32 = args;
-    struct glOrtho_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .left = params32->left,
-        .right = params32->right,
-        .bottom = params32->bottom,
-        .top = params32->top,
-        .zNear = params32->zNear,
-        .zFar = params32->zFar,
-    };
-    NTSTATUS status;
-    status = gl_glOrtho( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glOrtho( params->left, params->right, params->bottom, params->top, params->zNear, params->zFar );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPassThrough( void *args )
@@ -33733,15 +32868,12 @@ static NTSTATUS wow64_gl_glPassThrough( void *args )
     {
         PTR32 teb;
         GLfloat token;
-    } *params32 = args;
-    struct glPassThrough_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .token = params32->token,
-    };
-    NTSTATUS status;
-    status = gl_glPassThrough( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPassThrough( params->token );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPixelMapfv( void *args )
@@ -33752,17 +32884,12 @@ static NTSTATUS wow64_gl_glPixelMapfv( void *args )
         GLenum map;
         GLsizei mapsize;
         PTR32 values;
-    } *params32 = args;
-    struct glPixelMapfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .map = params32->map,
-        .mapsize = params32->mapsize,
-        .values = ULongToPtr(params32->values),
-    };
-    NTSTATUS status;
-    status = gl_glPixelMapfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPixelMapfv( params->map, params->mapsize, ULongToPtr(params->values) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPixelMapuiv( void *args )
@@ -33773,17 +32900,12 @@ static NTSTATUS wow64_gl_glPixelMapuiv( void *args )
         GLenum map;
         GLsizei mapsize;
         PTR32 values;
-    } *params32 = args;
-    struct glPixelMapuiv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .map = params32->map,
-        .mapsize = params32->mapsize,
-        .values = ULongToPtr(params32->values),
-    };
-    NTSTATUS status;
-    status = gl_glPixelMapuiv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPixelMapuiv( params->map, params->mapsize, ULongToPtr(params->values) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPixelMapusv( void *args )
@@ -33794,17 +32916,12 @@ static NTSTATUS wow64_gl_glPixelMapusv( void *args )
         GLenum map;
         GLsizei mapsize;
         PTR32 values;
-    } *params32 = args;
-    struct glPixelMapusv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .map = params32->map,
-        .mapsize = params32->mapsize,
-        .values = ULongToPtr(params32->values),
-    };
-    NTSTATUS status;
-    status = gl_glPixelMapusv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPixelMapusv( params->map, params->mapsize, ULongToPtr(params->values) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPixelStoref( void *args )
@@ -33814,16 +32931,12 @@ static NTSTATUS wow64_gl_glPixelStoref( void *args )
         PTR32 teb;
         GLenum pname;
         GLfloat param;
-    } *params32 = args;
-    struct glPixelStoref_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glPixelStoref( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPixelStoref( params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPixelStorei( void *args )
@@ -33833,16 +32946,12 @@ static NTSTATUS wow64_gl_glPixelStorei( void *args )
         PTR32 teb;
         GLenum pname;
         GLint param;
-    } *params32 = args;
-    struct glPixelStorei_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glPixelStorei( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPixelStorei( params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPixelTransferf( void *args )
@@ -33852,16 +32961,12 @@ static NTSTATUS wow64_gl_glPixelTransferf( void *args )
         PTR32 teb;
         GLenum pname;
         GLfloat param;
-    } *params32 = args;
-    struct glPixelTransferf_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glPixelTransferf( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPixelTransferf( params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPixelTransferi( void *args )
@@ -33871,16 +32976,12 @@ static NTSTATUS wow64_gl_glPixelTransferi( void *args )
         PTR32 teb;
         GLenum pname;
         GLint param;
-    } *params32 = args;
-    struct glPixelTransferi_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glPixelTransferi( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPixelTransferi( params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPixelZoom( void *args )
@@ -33890,16 +32991,12 @@ static NTSTATUS wow64_gl_glPixelZoom( void *args )
         PTR32 teb;
         GLfloat xfactor;
         GLfloat yfactor;
-    } *params32 = args;
-    struct glPixelZoom_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .xfactor = params32->xfactor,
-        .yfactor = params32->yfactor,
-    };
-    NTSTATUS status;
-    status = gl_glPixelZoom( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPixelZoom( params->xfactor, params->yfactor );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPointSize( void *args )
@@ -33908,15 +33005,12 @@ static NTSTATUS wow64_gl_glPointSize( void *args )
     {
         PTR32 teb;
         GLfloat size;
-    } *params32 = args;
-    struct glPointSize_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .size = params32->size,
-    };
-    NTSTATUS status;
-    status = gl_glPointSize( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPointSize( params->size );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPolygonMode( void *args )
@@ -33926,16 +33020,12 @@ static NTSTATUS wow64_gl_glPolygonMode( void *args )
         PTR32 teb;
         GLenum face;
         GLenum mode;
-    } *params32 = args;
-    struct glPolygonMode_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .face = params32->face,
-        .mode = params32->mode,
-    };
-    NTSTATUS status;
-    status = gl_glPolygonMode( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPolygonMode( params->face, params->mode );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPolygonOffset( void *args )
@@ -33945,16 +33035,12 @@ static NTSTATUS wow64_gl_glPolygonOffset( void *args )
         PTR32 teb;
         GLfloat factor;
         GLfloat units;
-    } *params32 = args;
-    struct glPolygonOffset_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .factor = params32->factor,
-        .units = params32->units,
-    };
-    NTSTATUS status;
-    status = gl_glPolygonOffset( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPolygonOffset( params->factor, params->units );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPolygonStipple( void *args )
@@ -33963,15 +33049,12 @@ static NTSTATUS wow64_gl_glPolygonStipple( void *args )
     {
         PTR32 teb;
         PTR32 mask;
-    } *params32 = args;
-    struct glPolygonStipple_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mask = ULongToPtr(params32->mask),
-    };
-    NTSTATUS status;
-    status = gl_glPolygonStipple( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPolygonStipple( ULongToPtr(params->mask) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPopAttrib( void *args )
@@ -33979,14 +33062,12 @@ static NTSTATUS wow64_gl_glPopAttrib( void *args )
     struct
     {
         PTR32 teb;
-    } *params32 = args;
-    struct glPopAttrib_params params =
-    {
-        .teb = get_teb64(params32->teb),
-    };
-    NTSTATUS status;
-    status = gl_glPopAttrib( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPopAttrib();
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPopClientAttrib( void *args )
@@ -33994,14 +33075,12 @@ static NTSTATUS wow64_gl_glPopClientAttrib( void *args )
     struct
     {
         PTR32 teb;
-    } *params32 = args;
-    struct glPopClientAttrib_params params =
-    {
-        .teb = get_teb64(params32->teb),
-    };
-    NTSTATUS status;
-    status = gl_glPopClientAttrib( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPopClientAttrib();
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPopMatrix( void *args )
@@ -34009,14 +33088,12 @@ static NTSTATUS wow64_gl_glPopMatrix( void *args )
     struct
     {
         PTR32 teb;
-    } *params32 = args;
-    struct glPopMatrix_params params =
-    {
-        .teb = get_teb64(params32->teb),
-    };
-    NTSTATUS status;
-    status = gl_glPopMatrix( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPopMatrix();
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPopName( void *args )
@@ -34024,14 +33101,12 @@ static NTSTATUS wow64_gl_glPopName( void *args )
     struct
     {
         PTR32 teb;
-    } *params32 = args;
-    struct glPopName_params params =
-    {
-        .teb = get_teb64(params32->teb),
-    };
-    NTSTATUS status;
-    status = gl_glPopName( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPopName();
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPrioritizeTextures( void *args )
@@ -34042,17 +33117,12 @@ static NTSTATUS wow64_gl_glPrioritizeTextures( void *args )
         GLsizei n;
         PTR32 textures;
         PTR32 priorities;
-    } *params32 = args;
-    struct glPrioritizeTextures_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .n = params32->n,
-        .textures = ULongToPtr(params32->textures),
-        .priorities = ULongToPtr(params32->priorities),
-    };
-    NTSTATUS status;
-    status = gl_glPrioritizeTextures( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPrioritizeTextures( params->n, ULongToPtr(params->textures), ULongToPtr(params->priorities) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPushAttrib( void *args )
@@ -34061,15 +33131,12 @@ static NTSTATUS wow64_gl_glPushAttrib( void *args )
     {
         PTR32 teb;
         GLbitfield mask;
-    } *params32 = args;
-    struct glPushAttrib_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mask = params32->mask,
-    };
-    NTSTATUS status;
-    status = gl_glPushAttrib( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPushAttrib( params->mask );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPushClientAttrib( void *args )
@@ -34078,15 +33145,12 @@ static NTSTATUS wow64_gl_glPushClientAttrib( void *args )
     {
         PTR32 teb;
         GLbitfield mask;
-    } *params32 = args;
-    struct glPushClientAttrib_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mask = params32->mask,
-    };
-    NTSTATUS status;
-    status = gl_glPushClientAttrib( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPushClientAttrib( params->mask );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPushMatrix( void *args )
@@ -34094,14 +33158,12 @@ static NTSTATUS wow64_gl_glPushMatrix( void *args )
     struct
     {
         PTR32 teb;
-    } *params32 = args;
-    struct glPushMatrix_params params =
-    {
-        .teb = get_teb64(params32->teb),
-    };
-    NTSTATUS status;
-    status = gl_glPushMatrix( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPushMatrix();
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glPushName( void *args )
@@ -34110,15 +33172,12 @@ static NTSTATUS wow64_gl_glPushName( void *args )
     {
         PTR32 teb;
         GLuint name;
-    } *params32 = args;
-    struct glPushName_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .name = params32->name,
-    };
-    NTSTATUS status;
-    status = gl_glPushName( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPushName( params->name );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos2d( void *args )
@@ -34128,16 +33187,12 @@ static NTSTATUS wow64_gl_glRasterPos2d( void *args )
         PTR32 teb;
         GLdouble x;
         GLdouble y;
-    } *params32 = args;
-    struct glRasterPos2d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos2d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos2d( params->x, params->y );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos2dv( void *args )
@@ -34146,15 +33201,12 @@ static NTSTATUS wow64_gl_glRasterPos2dv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glRasterPos2dv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos2dv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos2dv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos2f( void *args )
@@ -34164,16 +33216,12 @@ static NTSTATUS wow64_gl_glRasterPos2f( void *args )
         PTR32 teb;
         GLfloat x;
         GLfloat y;
-    } *params32 = args;
-    struct glRasterPos2f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos2f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos2f( params->x, params->y );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos2fv( void *args )
@@ -34182,15 +33230,12 @@ static NTSTATUS wow64_gl_glRasterPos2fv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glRasterPos2fv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos2fv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos2fv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos2i( void *args )
@@ -34200,16 +33245,12 @@ static NTSTATUS wow64_gl_glRasterPos2i( void *args )
         PTR32 teb;
         GLint x;
         GLint y;
-    } *params32 = args;
-    struct glRasterPos2i_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos2i( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos2i( params->x, params->y );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos2iv( void *args )
@@ -34218,15 +33259,12 @@ static NTSTATUS wow64_gl_glRasterPos2iv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glRasterPos2iv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos2iv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos2iv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos2s( void *args )
@@ -34236,16 +33274,12 @@ static NTSTATUS wow64_gl_glRasterPos2s( void *args )
         PTR32 teb;
         GLshort x;
         GLshort y;
-    } *params32 = args;
-    struct glRasterPos2s_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos2s( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos2s( params->x, params->y );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos2sv( void *args )
@@ -34254,15 +33288,12 @@ static NTSTATUS wow64_gl_glRasterPos2sv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glRasterPos2sv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos2sv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos2sv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos3d( void *args )
@@ -34273,17 +33304,12 @@ static NTSTATUS wow64_gl_glRasterPos3d( void *args )
         GLdouble x;
         GLdouble y;
         GLdouble z;
-    } *params32 = args;
-    struct glRasterPos3d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos3d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos3d( params->x, params->y, params->z );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos3dv( void *args )
@@ -34292,15 +33318,12 @@ static NTSTATUS wow64_gl_glRasterPos3dv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glRasterPos3dv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos3dv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos3dv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos3f( void *args )
@@ -34311,17 +33334,12 @@ static NTSTATUS wow64_gl_glRasterPos3f( void *args )
         GLfloat x;
         GLfloat y;
         GLfloat z;
-    } *params32 = args;
-    struct glRasterPos3f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos3f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos3f( params->x, params->y, params->z );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos3fv( void *args )
@@ -34330,15 +33348,12 @@ static NTSTATUS wow64_gl_glRasterPos3fv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glRasterPos3fv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos3fv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos3fv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos3i( void *args )
@@ -34349,17 +33364,12 @@ static NTSTATUS wow64_gl_glRasterPos3i( void *args )
         GLint x;
         GLint y;
         GLint z;
-    } *params32 = args;
-    struct glRasterPos3i_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos3i( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos3i( params->x, params->y, params->z );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos3iv( void *args )
@@ -34368,15 +33378,12 @@ static NTSTATUS wow64_gl_glRasterPos3iv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glRasterPos3iv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos3iv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos3iv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos3s( void *args )
@@ -34387,17 +33394,12 @@ static NTSTATUS wow64_gl_glRasterPos3s( void *args )
         GLshort x;
         GLshort y;
         GLshort z;
-    } *params32 = args;
-    struct glRasterPos3s_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos3s( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos3s( params->x, params->y, params->z );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos3sv( void *args )
@@ -34406,15 +33408,12 @@ static NTSTATUS wow64_gl_glRasterPos3sv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glRasterPos3sv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos3sv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos3sv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos4d( void *args )
@@ -34426,18 +33425,12 @@ static NTSTATUS wow64_gl_glRasterPos4d( void *args )
         GLdouble y;
         GLdouble z;
         GLdouble w;
-    } *params32 = args;
-    struct glRasterPos4d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-        .w = params32->w,
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos4d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos4d( params->x, params->y, params->z, params->w );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos4dv( void *args )
@@ -34446,15 +33439,12 @@ static NTSTATUS wow64_gl_glRasterPos4dv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glRasterPos4dv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos4dv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos4dv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos4f( void *args )
@@ -34466,18 +33456,12 @@ static NTSTATUS wow64_gl_glRasterPos4f( void *args )
         GLfloat y;
         GLfloat z;
         GLfloat w;
-    } *params32 = args;
-    struct glRasterPos4f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-        .w = params32->w,
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos4f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos4f( params->x, params->y, params->z, params->w );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos4fv( void *args )
@@ -34486,15 +33470,12 @@ static NTSTATUS wow64_gl_glRasterPos4fv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glRasterPos4fv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos4fv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos4fv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos4i( void *args )
@@ -34506,18 +33487,12 @@ static NTSTATUS wow64_gl_glRasterPos4i( void *args )
         GLint y;
         GLint z;
         GLint w;
-    } *params32 = args;
-    struct glRasterPos4i_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-        .w = params32->w,
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos4i( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos4i( params->x, params->y, params->z, params->w );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos4iv( void *args )
@@ -34526,15 +33501,12 @@ static NTSTATUS wow64_gl_glRasterPos4iv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glRasterPos4iv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos4iv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos4iv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos4s( void *args )
@@ -34546,18 +33518,12 @@ static NTSTATUS wow64_gl_glRasterPos4s( void *args )
         GLshort y;
         GLshort z;
         GLshort w;
-    } *params32 = args;
-    struct glRasterPos4s_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-        .w = params32->w,
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos4s( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos4s( params->x, params->y, params->z, params->w );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRasterPos4sv( void *args )
@@ -34566,15 +33532,12 @@ static NTSTATUS wow64_gl_glRasterPos4sv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glRasterPos4sv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glRasterPos4sv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRasterPos4sv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glReadBuffer( void *args )
@@ -34583,15 +33546,12 @@ static NTSTATUS wow64_gl_glReadBuffer( void *args )
     {
         PTR32 teb;
         GLenum src;
-    } *params32 = args;
-    struct glReadBuffer_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .src = params32->src,
-    };
-    NTSTATUS status;
-    status = gl_glReadBuffer( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glReadBuffer( params->src );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glReadPixels( void *args )
@@ -34606,21 +33566,11 @@ static NTSTATUS wow64_gl_glReadPixels( void *args )
         GLenum format;
         GLenum type;
         PTR32 pixels;
-    } *params32 = args;
-    struct glReadPixels_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .width = params32->width,
-        .height = params32->height,
-        .format = params32->format,
-        .type = params32->type,
-        .pixels = ULongToPtr(params32->pixels),
-    };
-    NTSTATUS status;
-    status = gl_glReadPixels( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    wrap_glReadPixels( teb, params->x, params->y, params->width, params->height, params->format, params->type, ULongToPtr(params->pixels) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRectd( void *args )
@@ -34632,18 +33582,12 @@ static NTSTATUS wow64_gl_glRectd( void *args )
         GLdouble y1;
         GLdouble x2;
         GLdouble y2;
-    } *params32 = args;
-    struct glRectd_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x1 = params32->x1,
-        .y1 = params32->y1,
-        .x2 = params32->x2,
-        .y2 = params32->y2,
-    };
-    NTSTATUS status;
-    status = gl_glRectd( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRectd( params->x1, params->y1, params->x2, params->y2 );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRectdv( void *args )
@@ -34653,16 +33597,12 @@ static NTSTATUS wow64_gl_glRectdv( void *args )
         PTR32 teb;
         PTR32 v1;
         PTR32 v2;
-    } *params32 = args;
-    struct glRectdv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v1 = ULongToPtr(params32->v1),
-        .v2 = ULongToPtr(params32->v2),
-    };
-    NTSTATUS status;
-    status = gl_glRectdv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRectdv( ULongToPtr(params->v1), ULongToPtr(params->v2) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRectf( void *args )
@@ -34674,18 +33614,12 @@ static NTSTATUS wow64_gl_glRectf( void *args )
         GLfloat y1;
         GLfloat x2;
         GLfloat y2;
-    } *params32 = args;
-    struct glRectf_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x1 = params32->x1,
-        .y1 = params32->y1,
-        .x2 = params32->x2,
-        .y2 = params32->y2,
-    };
-    NTSTATUS status;
-    status = gl_glRectf( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRectf( params->x1, params->y1, params->x2, params->y2 );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRectfv( void *args )
@@ -34695,16 +33629,12 @@ static NTSTATUS wow64_gl_glRectfv( void *args )
         PTR32 teb;
         PTR32 v1;
         PTR32 v2;
-    } *params32 = args;
-    struct glRectfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v1 = ULongToPtr(params32->v1),
-        .v2 = ULongToPtr(params32->v2),
-    };
-    NTSTATUS status;
-    status = gl_glRectfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRectfv( ULongToPtr(params->v1), ULongToPtr(params->v2) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRecti( void *args )
@@ -34716,18 +33646,12 @@ static NTSTATUS wow64_gl_glRecti( void *args )
         GLint y1;
         GLint x2;
         GLint y2;
-    } *params32 = args;
-    struct glRecti_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x1 = params32->x1,
-        .y1 = params32->y1,
-        .x2 = params32->x2,
-        .y2 = params32->y2,
-    };
-    NTSTATUS status;
-    status = gl_glRecti( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRecti( params->x1, params->y1, params->x2, params->y2 );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRectiv( void *args )
@@ -34737,16 +33661,12 @@ static NTSTATUS wow64_gl_glRectiv( void *args )
         PTR32 teb;
         PTR32 v1;
         PTR32 v2;
-    } *params32 = args;
-    struct glRectiv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v1 = ULongToPtr(params32->v1),
-        .v2 = ULongToPtr(params32->v2),
-    };
-    NTSTATUS status;
-    status = gl_glRectiv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRectiv( ULongToPtr(params->v1), ULongToPtr(params->v2) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRects( void *args )
@@ -34758,18 +33678,12 @@ static NTSTATUS wow64_gl_glRects( void *args )
         GLshort y1;
         GLshort x2;
         GLshort y2;
-    } *params32 = args;
-    struct glRects_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x1 = params32->x1,
-        .y1 = params32->y1,
-        .x2 = params32->x2,
-        .y2 = params32->y2,
-    };
-    NTSTATUS status;
-    status = gl_glRects( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRects( params->x1, params->y1, params->x2, params->y2 );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRectsv( void *args )
@@ -34779,16 +33693,12 @@ static NTSTATUS wow64_gl_glRectsv( void *args )
         PTR32 teb;
         PTR32 v1;
         PTR32 v2;
-    } *params32 = args;
-    struct glRectsv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v1 = ULongToPtr(params32->v1),
-        .v2 = ULongToPtr(params32->v2),
-    };
-    NTSTATUS status;
-    status = gl_glRectsv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRectsv( ULongToPtr(params->v1), ULongToPtr(params->v2) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRenderMode( void *args )
@@ -34798,16 +33708,12 @@ static NTSTATUS wow64_gl_glRenderMode( void *args )
         PTR32 teb;
         GLenum mode;
         GLint ret;
-    } *params32 = args;
-    struct glRenderMode_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mode = params32->mode,
-    };
-    NTSTATUS status;
-    status = gl_glRenderMode( &params );
-    params32->ret = params.ret;
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    params->ret = funcs->p_glRenderMode( params->mode );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRotated( void *args )
@@ -34819,18 +33725,12 @@ static NTSTATUS wow64_gl_glRotated( void *args )
         GLdouble x;
         GLdouble y;
         GLdouble z;
-    } *params32 = args;
-    struct glRotated_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .angle = params32->angle,
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-    };
-    NTSTATUS status;
-    status = gl_glRotated( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRotated( params->angle, params->x, params->y, params->z );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glRotatef( void *args )
@@ -34842,18 +33742,12 @@ static NTSTATUS wow64_gl_glRotatef( void *args )
         GLfloat x;
         GLfloat y;
         GLfloat z;
-    } *params32 = args;
-    struct glRotatef_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .angle = params32->angle,
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-    };
-    NTSTATUS status;
-    status = gl_glRotatef( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRotatef( params->angle, params->x, params->y, params->z );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glScaled( void *args )
@@ -34864,17 +33758,12 @@ static NTSTATUS wow64_gl_glScaled( void *args )
         GLdouble x;
         GLdouble y;
         GLdouble z;
-    } *params32 = args;
-    struct glScaled_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-    };
-    NTSTATUS status;
-    status = gl_glScaled( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glScaled( params->x, params->y, params->z );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glScalef( void *args )
@@ -34885,17 +33774,12 @@ static NTSTATUS wow64_gl_glScalef( void *args )
         GLfloat x;
         GLfloat y;
         GLfloat z;
-    } *params32 = args;
-    struct glScalef_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-    };
-    NTSTATUS status;
-    status = gl_glScalef( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glScalef( params->x, params->y, params->z );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glScissor( void *args )
@@ -34907,18 +33791,12 @@ static NTSTATUS wow64_gl_glScissor( void *args )
         GLint y;
         GLsizei width;
         GLsizei height;
-    } *params32 = args;
-    struct glScissor_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .width = params32->width,
-        .height = params32->height,
-    };
-    NTSTATUS status;
-    status = gl_glScissor( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glScissor( params->x, params->y, params->width, params->height );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glSelectBuffer( void *args )
@@ -34928,16 +33806,12 @@ static NTSTATUS wow64_gl_glSelectBuffer( void *args )
         PTR32 teb;
         GLsizei size;
         PTR32 buffer;
-    } *params32 = args;
-    struct glSelectBuffer_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .size = params32->size,
-        .buffer = ULongToPtr(params32->buffer),
-    };
-    NTSTATUS status;
-    status = gl_glSelectBuffer( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glSelectBuffer( params->size, ULongToPtr(params->buffer) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glShadeModel( void *args )
@@ -34946,15 +33820,12 @@ static NTSTATUS wow64_gl_glShadeModel( void *args )
     {
         PTR32 teb;
         GLenum mode;
-    } *params32 = args;
-    struct glShadeModel_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mode = params32->mode,
-    };
-    NTSTATUS status;
-    status = gl_glShadeModel( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glShadeModel( params->mode );
+    set_context_attribute( teb, GL_SHADE_MODEL, &params->mode, sizeof(params->mode) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glStencilFunc( void *args )
@@ -34965,17 +33836,12 @@ static NTSTATUS wow64_gl_glStencilFunc( void *args )
         GLenum func;
         GLint ref;
         GLuint mask;
-    } *params32 = args;
-    struct glStencilFunc_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .func = params32->func,
-        .ref = params32->ref,
-        .mask = params32->mask,
-    };
-    NTSTATUS status;
-    status = gl_glStencilFunc( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glStencilFunc( params->func, params->ref, params->mask );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glStencilMask( void *args )
@@ -34984,15 +33850,12 @@ static NTSTATUS wow64_gl_glStencilMask( void *args )
     {
         PTR32 teb;
         GLuint mask;
-    } *params32 = args;
-    struct glStencilMask_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .mask = params32->mask,
-    };
-    NTSTATUS status;
-    status = gl_glStencilMask( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glStencilMask( params->mask );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glStencilOp( void *args )
@@ -35003,17 +33866,12 @@ static NTSTATUS wow64_gl_glStencilOp( void *args )
         GLenum fail;
         GLenum zfail;
         GLenum zpass;
-    } *params32 = args;
-    struct glStencilOp_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .fail = params32->fail,
-        .zfail = params32->zfail,
-        .zpass = params32->zpass,
-    };
-    NTSTATUS status;
-    status = gl_glStencilOp( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glStencilOp( params->fail, params->zfail, params->zpass );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord1d( void *args )
@@ -35022,15 +33880,12 @@ static NTSTATUS wow64_gl_glTexCoord1d( void *args )
     {
         PTR32 teb;
         GLdouble s;
-    } *params32 = args;
-    struct glTexCoord1d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord1d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord1d( params->s );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord1dv( void *args )
@@ -35039,15 +33894,12 @@ static NTSTATUS wow64_gl_glTexCoord1dv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glTexCoord1dv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord1dv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord1dv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord1f( void *args )
@@ -35056,15 +33908,12 @@ static NTSTATUS wow64_gl_glTexCoord1f( void *args )
     {
         PTR32 teb;
         GLfloat s;
-    } *params32 = args;
-    struct glTexCoord1f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord1f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord1f( params->s );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord1fv( void *args )
@@ -35073,15 +33922,12 @@ static NTSTATUS wow64_gl_glTexCoord1fv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glTexCoord1fv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord1fv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord1fv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord1i( void *args )
@@ -35090,15 +33936,12 @@ static NTSTATUS wow64_gl_glTexCoord1i( void *args )
     {
         PTR32 teb;
         GLint s;
-    } *params32 = args;
-    struct glTexCoord1i_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord1i( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord1i( params->s );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord1iv( void *args )
@@ -35107,15 +33950,12 @@ static NTSTATUS wow64_gl_glTexCoord1iv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glTexCoord1iv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord1iv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord1iv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord1s( void *args )
@@ -35124,15 +33964,12 @@ static NTSTATUS wow64_gl_glTexCoord1s( void *args )
     {
         PTR32 teb;
         GLshort s;
-    } *params32 = args;
-    struct glTexCoord1s_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord1s( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord1s( params->s );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord1sv( void *args )
@@ -35141,15 +33978,12 @@ static NTSTATUS wow64_gl_glTexCoord1sv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glTexCoord1sv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord1sv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord1sv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord2d( void *args )
@@ -35159,16 +33993,12 @@ static NTSTATUS wow64_gl_glTexCoord2d( void *args )
         PTR32 teb;
         GLdouble s;
         GLdouble t;
-    } *params32 = args;
-    struct glTexCoord2d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-        .t = params32->t,
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord2d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord2d( params->s, params->t );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord2dv( void *args )
@@ -35177,15 +34007,12 @@ static NTSTATUS wow64_gl_glTexCoord2dv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glTexCoord2dv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord2dv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord2dv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord2f( void *args )
@@ -35195,16 +34022,12 @@ static NTSTATUS wow64_gl_glTexCoord2f( void *args )
         PTR32 teb;
         GLfloat s;
         GLfloat t;
-    } *params32 = args;
-    struct glTexCoord2f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-        .t = params32->t,
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord2f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord2f( params->s, params->t );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord2fv( void *args )
@@ -35213,15 +34036,12 @@ static NTSTATUS wow64_gl_glTexCoord2fv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glTexCoord2fv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord2fv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord2fv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord2i( void *args )
@@ -35231,16 +34051,12 @@ static NTSTATUS wow64_gl_glTexCoord2i( void *args )
         PTR32 teb;
         GLint s;
         GLint t;
-    } *params32 = args;
-    struct glTexCoord2i_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-        .t = params32->t,
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord2i( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord2i( params->s, params->t );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord2iv( void *args )
@@ -35249,15 +34065,12 @@ static NTSTATUS wow64_gl_glTexCoord2iv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glTexCoord2iv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord2iv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord2iv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord2s( void *args )
@@ -35267,16 +34080,12 @@ static NTSTATUS wow64_gl_glTexCoord2s( void *args )
         PTR32 teb;
         GLshort s;
         GLshort t;
-    } *params32 = args;
-    struct glTexCoord2s_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-        .t = params32->t,
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord2s( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord2s( params->s, params->t );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord2sv( void *args )
@@ -35285,15 +34094,12 @@ static NTSTATUS wow64_gl_glTexCoord2sv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glTexCoord2sv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord2sv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord2sv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord3d( void *args )
@@ -35304,17 +34110,12 @@ static NTSTATUS wow64_gl_glTexCoord3d( void *args )
         GLdouble s;
         GLdouble t;
         GLdouble r;
-    } *params32 = args;
-    struct glTexCoord3d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-        .t = params32->t,
-        .r = params32->r,
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord3d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord3d( params->s, params->t, params->r );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord3dv( void *args )
@@ -35323,15 +34124,12 @@ static NTSTATUS wow64_gl_glTexCoord3dv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glTexCoord3dv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord3dv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord3dv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord3f( void *args )
@@ -35342,17 +34140,12 @@ static NTSTATUS wow64_gl_glTexCoord3f( void *args )
         GLfloat s;
         GLfloat t;
         GLfloat r;
-    } *params32 = args;
-    struct glTexCoord3f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-        .t = params32->t,
-        .r = params32->r,
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord3f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord3f( params->s, params->t, params->r );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord3fv( void *args )
@@ -35361,15 +34154,12 @@ static NTSTATUS wow64_gl_glTexCoord3fv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glTexCoord3fv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord3fv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord3fv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord3i( void *args )
@@ -35380,17 +34170,12 @@ static NTSTATUS wow64_gl_glTexCoord3i( void *args )
         GLint s;
         GLint t;
         GLint r;
-    } *params32 = args;
-    struct glTexCoord3i_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-        .t = params32->t,
-        .r = params32->r,
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord3i( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord3i( params->s, params->t, params->r );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord3iv( void *args )
@@ -35399,15 +34184,12 @@ static NTSTATUS wow64_gl_glTexCoord3iv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glTexCoord3iv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord3iv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord3iv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord3s( void *args )
@@ -35418,17 +34200,12 @@ static NTSTATUS wow64_gl_glTexCoord3s( void *args )
         GLshort s;
         GLshort t;
         GLshort r;
-    } *params32 = args;
-    struct glTexCoord3s_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-        .t = params32->t,
-        .r = params32->r,
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord3s( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord3s( params->s, params->t, params->r );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord3sv( void *args )
@@ -35437,15 +34214,12 @@ static NTSTATUS wow64_gl_glTexCoord3sv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glTexCoord3sv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord3sv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord3sv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord4d( void *args )
@@ -35457,18 +34231,12 @@ static NTSTATUS wow64_gl_glTexCoord4d( void *args )
         GLdouble t;
         GLdouble r;
         GLdouble q;
-    } *params32 = args;
-    struct glTexCoord4d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-        .t = params32->t,
-        .r = params32->r,
-        .q = params32->q,
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord4d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord4d( params->s, params->t, params->r, params->q );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord4dv( void *args )
@@ -35477,15 +34245,12 @@ static NTSTATUS wow64_gl_glTexCoord4dv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glTexCoord4dv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord4dv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord4dv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord4f( void *args )
@@ -35497,18 +34262,12 @@ static NTSTATUS wow64_gl_glTexCoord4f( void *args )
         GLfloat t;
         GLfloat r;
         GLfloat q;
-    } *params32 = args;
-    struct glTexCoord4f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-        .t = params32->t,
-        .r = params32->r,
-        .q = params32->q,
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord4f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord4f( params->s, params->t, params->r, params->q );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord4fv( void *args )
@@ -35517,15 +34276,12 @@ static NTSTATUS wow64_gl_glTexCoord4fv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glTexCoord4fv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord4fv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord4fv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord4i( void *args )
@@ -35537,18 +34293,12 @@ static NTSTATUS wow64_gl_glTexCoord4i( void *args )
         GLint t;
         GLint r;
         GLint q;
-    } *params32 = args;
-    struct glTexCoord4i_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-        .t = params32->t,
-        .r = params32->r,
-        .q = params32->q,
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord4i( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord4i( params->s, params->t, params->r, params->q );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord4iv( void *args )
@@ -35557,15 +34307,12 @@ static NTSTATUS wow64_gl_glTexCoord4iv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glTexCoord4iv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord4iv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord4iv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord4s( void *args )
@@ -35577,18 +34324,12 @@ static NTSTATUS wow64_gl_glTexCoord4s( void *args )
         GLshort t;
         GLshort r;
         GLshort q;
-    } *params32 = args;
-    struct glTexCoord4s_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .s = params32->s,
-        .t = params32->t,
-        .r = params32->r,
-        .q = params32->q,
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord4s( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord4s( params->s, params->t, params->r, params->q );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoord4sv( void *args )
@@ -35597,15 +34338,12 @@ static NTSTATUS wow64_gl_glTexCoord4sv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glTexCoord4sv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoord4sv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoord4sv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexCoordPointer( void *args )
@@ -35617,18 +34355,12 @@ static NTSTATUS wow64_gl_glTexCoordPointer( void *args )
         GLenum type;
         GLsizei stride;
         PTR32 pointer;
-    } *params32 = args;
-    struct glTexCoordPointer_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .size = params32->size,
-        .type = params32->type,
-        .stride = params32->stride,
-        .pointer = ULongToPtr(params32->pointer),
-    };
-    NTSTATUS status;
-    status = gl_glTexCoordPointer( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexCoordPointer( params->size, params->type, params->stride, ULongToPtr(params->pointer) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexEnvf( void *args )
@@ -35639,17 +34371,12 @@ static NTSTATUS wow64_gl_glTexEnvf( void *args )
         GLenum target;
         GLenum pname;
         GLfloat param;
-    } *params32 = args;
-    struct glTexEnvf_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glTexEnvf( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexEnvf( params->target, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexEnvfv( void *args )
@@ -35660,17 +34387,12 @@ static NTSTATUS wow64_gl_glTexEnvfv( void *args )
         GLenum target;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glTexEnvfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glTexEnvfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexEnvfv( params->target, params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexEnvi( void *args )
@@ -35681,17 +34403,12 @@ static NTSTATUS wow64_gl_glTexEnvi( void *args )
         GLenum target;
         GLenum pname;
         GLint param;
-    } *params32 = args;
-    struct glTexEnvi_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glTexEnvi( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexEnvi( params->target, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexEnviv( void *args )
@@ -35702,17 +34419,12 @@ static NTSTATUS wow64_gl_glTexEnviv( void *args )
         GLenum target;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glTexEnviv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glTexEnviv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexEnviv( params->target, params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexGend( void *args )
@@ -35723,17 +34435,12 @@ static NTSTATUS wow64_gl_glTexGend( void *args )
         GLenum coord;
         GLenum pname;
         GLdouble param;
-    } *params32 = args;
-    struct glTexGend_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .coord = params32->coord,
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glTexGend( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexGend( params->coord, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexGendv( void *args )
@@ -35744,17 +34451,12 @@ static NTSTATUS wow64_gl_glTexGendv( void *args )
         GLenum coord;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glTexGendv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .coord = params32->coord,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glTexGendv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexGendv( params->coord, params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexGenf( void *args )
@@ -35765,17 +34467,12 @@ static NTSTATUS wow64_gl_glTexGenf( void *args )
         GLenum coord;
         GLenum pname;
         GLfloat param;
-    } *params32 = args;
-    struct glTexGenf_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .coord = params32->coord,
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glTexGenf( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexGenf( params->coord, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexGenfv( void *args )
@@ -35786,17 +34483,12 @@ static NTSTATUS wow64_gl_glTexGenfv( void *args )
         GLenum coord;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glTexGenfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .coord = params32->coord,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glTexGenfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexGenfv( params->coord, params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexGeni( void *args )
@@ -35807,17 +34499,12 @@ static NTSTATUS wow64_gl_glTexGeni( void *args )
         GLenum coord;
         GLenum pname;
         GLint param;
-    } *params32 = args;
-    struct glTexGeni_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .coord = params32->coord,
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glTexGeni( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexGeni( params->coord, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexGeniv( void *args )
@@ -35828,17 +34515,12 @@ static NTSTATUS wow64_gl_glTexGeniv( void *args )
         GLenum coord;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glTexGeniv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .coord = params32->coord,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glTexGeniv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexGeniv( params->coord, params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexImage1D( void *args )
@@ -35854,22 +34536,12 @@ static NTSTATUS wow64_gl_glTexImage1D( void *args )
         GLenum format;
         GLenum type;
         PTR32 pixels;
-    } *params32 = args;
-    struct glTexImage1D_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .level = params32->level,
-        .internalformat = params32->internalformat,
-        .width = params32->width,
-        .border = params32->border,
-        .format = params32->format,
-        .type = params32->type,
-        .pixels = ULongToPtr(params32->pixels),
-    };
-    NTSTATUS status;
-    status = gl_glTexImage1D( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexImage1D( params->target, params->level, params->internalformat, params->width, params->border, params->format, params->type, ULongToPtr(params->pixels) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexImage2D( void *args )
@@ -35886,23 +34558,12 @@ static NTSTATUS wow64_gl_glTexImage2D( void *args )
         GLenum format;
         GLenum type;
         PTR32 pixels;
-    } *params32 = args;
-    struct glTexImage2D_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .level = params32->level,
-        .internalformat = params32->internalformat,
-        .width = params32->width,
-        .height = params32->height,
-        .border = params32->border,
-        .format = params32->format,
-        .type = params32->type,
-        .pixels = ULongToPtr(params32->pixels),
-    };
-    NTSTATUS status;
-    status = gl_glTexImage2D( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexImage2D( params->target, params->level, params->internalformat, params->width, params->height, params->border, params->format, params->type, ULongToPtr(params->pixels) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexParameterf( void *args )
@@ -35913,17 +34574,12 @@ static NTSTATUS wow64_gl_glTexParameterf( void *args )
         GLenum target;
         GLenum pname;
         GLfloat param;
-    } *params32 = args;
-    struct glTexParameterf_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glTexParameterf( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexParameterf( params->target, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexParameterfv( void *args )
@@ -35934,17 +34590,12 @@ static NTSTATUS wow64_gl_glTexParameterfv( void *args )
         GLenum target;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glTexParameterfv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glTexParameterfv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexParameterfv( params->target, params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexParameteri( void *args )
@@ -35955,17 +34606,12 @@ static NTSTATUS wow64_gl_glTexParameteri( void *args )
         GLenum target;
         GLenum pname;
         GLint param;
-    } *params32 = args;
-    struct glTexParameteri_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .pname = params32->pname,
-        .param = params32->param,
-    };
-    NTSTATUS status;
-    status = gl_glTexParameteri( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexParameteri( params->target, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexParameteriv( void *args )
@@ -35976,17 +34622,12 @@ static NTSTATUS wow64_gl_glTexParameteriv( void *args )
         GLenum target;
         GLenum pname;
         PTR32 params;
-    } *params32 = args;
-    struct glTexParameteriv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .pname = params32->pname,
-        .params = ULongToPtr(params32->params),
-    };
-    NTSTATUS status;
-    status = gl_glTexParameteriv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexParameteriv( params->target, params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexSubImage1D( void *args )
@@ -36001,21 +34642,12 @@ static NTSTATUS wow64_gl_glTexSubImage1D( void *args )
         GLenum format;
         GLenum type;
         PTR32 pixels;
-    } *params32 = args;
-    struct glTexSubImage1D_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .level = params32->level,
-        .xoffset = params32->xoffset,
-        .width = params32->width,
-        .format = params32->format,
-        .type = params32->type,
-        .pixels = ULongToPtr(params32->pixels),
-    };
-    NTSTATUS status;
-    status = gl_glTexSubImage1D( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexSubImage1D( params->target, params->level, params->xoffset, params->width, params->format, params->type, ULongToPtr(params->pixels) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTexSubImage2D( void *args )
@@ -36032,23 +34664,12 @@ static NTSTATUS wow64_gl_glTexSubImage2D( void *args )
         GLenum format;
         GLenum type;
         PTR32 pixels;
-    } *params32 = args;
-    struct glTexSubImage2D_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .level = params32->level,
-        .xoffset = params32->xoffset,
-        .yoffset = params32->yoffset,
-        .width = params32->width,
-        .height = params32->height,
-        .format = params32->format,
-        .type = params32->type,
-        .pixels = ULongToPtr(params32->pixels),
-    };
-    NTSTATUS status;
-    status = gl_glTexSubImage2D( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexSubImage2D( params->target, params->level, params->xoffset, params->yoffset, params->width, params->height, params->format, params->type, ULongToPtr(params->pixels) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTranslated( void *args )
@@ -36059,17 +34680,12 @@ static NTSTATUS wow64_gl_glTranslated( void *args )
         GLdouble x;
         GLdouble y;
         GLdouble z;
-    } *params32 = args;
-    struct glTranslated_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-    };
-    NTSTATUS status;
-    status = gl_glTranslated( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTranslated( params->x, params->y, params->z );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glTranslatef( void *args )
@@ -36080,17 +34696,12 @@ static NTSTATUS wow64_gl_glTranslatef( void *args )
         GLfloat x;
         GLfloat y;
         GLfloat z;
-    } *params32 = args;
-    struct glTranslatef_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-    };
-    NTSTATUS status;
-    status = gl_glTranslatef( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTranslatef( params->x, params->y, params->z );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex2d( void *args )
@@ -36100,16 +34711,12 @@ static NTSTATUS wow64_gl_glVertex2d( void *args )
         PTR32 teb;
         GLdouble x;
         GLdouble y;
-    } *params32 = args;
-    struct glVertex2d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-    };
-    NTSTATUS status;
-    status = gl_glVertex2d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex2d( params->x, params->y );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex2dv( void *args )
@@ -36118,15 +34725,12 @@ static NTSTATUS wow64_gl_glVertex2dv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glVertex2dv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glVertex2dv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex2dv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex2f( void *args )
@@ -36136,16 +34740,12 @@ static NTSTATUS wow64_gl_glVertex2f( void *args )
         PTR32 teb;
         GLfloat x;
         GLfloat y;
-    } *params32 = args;
-    struct glVertex2f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-    };
-    NTSTATUS status;
-    status = gl_glVertex2f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex2f( params->x, params->y );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex2fv( void *args )
@@ -36154,15 +34754,12 @@ static NTSTATUS wow64_gl_glVertex2fv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glVertex2fv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glVertex2fv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex2fv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex2i( void *args )
@@ -36172,16 +34769,12 @@ static NTSTATUS wow64_gl_glVertex2i( void *args )
         PTR32 teb;
         GLint x;
         GLint y;
-    } *params32 = args;
-    struct glVertex2i_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-    };
-    NTSTATUS status;
-    status = gl_glVertex2i( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex2i( params->x, params->y );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex2iv( void *args )
@@ -36190,15 +34783,12 @@ static NTSTATUS wow64_gl_glVertex2iv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glVertex2iv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glVertex2iv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex2iv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex2s( void *args )
@@ -36208,16 +34798,12 @@ static NTSTATUS wow64_gl_glVertex2s( void *args )
         PTR32 teb;
         GLshort x;
         GLshort y;
-    } *params32 = args;
-    struct glVertex2s_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-    };
-    NTSTATUS status;
-    status = gl_glVertex2s( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex2s( params->x, params->y );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex2sv( void *args )
@@ -36226,15 +34812,12 @@ static NTSTATUS wow64_gl_glVertex2sv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glVertex2sv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glVertex2sv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex2sv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex3d( void *args )
@@ -36245,17 +34828,12 @@ static NTSTATUS wow64_gl_glVertex3d( void *args )
         GLdouble x;
         GLdouble y;
         GLdouble z;
-    } *params32 = args;
-    struct glVertex3d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-    };
-    NTSTATUS status;
-    status = gl_glVertex3d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex3d( params->x, params->y, params->z );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex3dv( void *args )
@@ -36264,15 +34842,12 @@ static NTSTATUS wow64_gl_glVertex3dv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glVertex3dv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glVertex3dv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex3dv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex3f( void *args )
@@ -36283,17 +34858,12 @@ static NTSTATUS wow64_gl_glVertex3f( void *args )
         GLfloat x;
         GLfloat y;
         GLfloat z;
-    } *params32 = args;
-    struct glVertex3f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-    };
-    NTSTATUS status;
-    status = gl_glVertex3f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex3f( params->x, params->y, params->z );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex3fv( void *args )
@@ -36302,15 +34872,12 @@ static NTSTATUS wow64_gl_glVertex3fv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glVertex3fv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glVertex3fv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex3fv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex3i( void *args )
@@ -36321,17 +34888,12 @@ static NTSTATUS wow64_gl_glVertex3i( void *args )
         GLint x;
         GLint y;
         GLint z;
-    } *params32 = args;
-    struct glVertex3i_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-    };
-    NTSTATUS status;
-    status = gl_glVertex3i( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex3i( params->x, params->y, params->z );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex3iv( void *args )
@@ -36340,15 +34902,12 @@ static NTSTATUS wow64_gl_glVertex3iv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glVertex3iv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glVertex3iv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex3iv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex3s( void *args )
@@ -36359,17 +34918,12 @@ static NTSTATUS wow64_gl_glVertex3s( void *args )
         GLshort x;
         GLshort y;
         GLshort z;
-    } *params32 = args;
-    struct glVertex3s_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-    };
-    NTSTATUS status;
-    status = gl_glVertex3s( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex3s( params->x, params->y, params->z );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex3sv( void *args )
@@ -36378,15 +34932,12 @@ static NTSTATUS wow64_gl_glVertex3sv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glVertex3sv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glVertex3sv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex3sv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex4d( void *args )
@@ -36398,18 +34949,12 @@ static NTSTATUS wow64_gl_glVertex4d( void *args )
         GLdouble y;
         GLdouble z;
         GLdouble w;
-    } *params32 = args;
-    struct glVertex4d_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-        .w = params32->w,
-    };
-    NTSTATUS status;
-    status = gl_glVertex4d( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex4d( params->x, params->y, params->z, params->w );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex4dv( void *args )
@@ -36418,15 +34963,12 @@ static NTSTATUS wow64_gl_glVertex4dv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glVertex4dv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glVertex4dv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex4dv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex4f( void *args )
@@ -36438,18 +34980,12 @@ static NTSTATUS wow64_gl_glVertex4f( void *args )
         GLfloat y;
         GLfloat z;
         GLfloat w;
-    } *params32 = args;
-    struct glVertex4f_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-        .w = params32->w,
-    };
-    NTSTATUS status;
-    status = gl_glVertex4f( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex4f( params->x, params->y, params->z, params->w );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex4fv( void *args )
@@ -36458,15 +34994,12 @@ static NTSTATUS wow64_gl_glVertex4fv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glVertex4fv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glVertex4fv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex4fv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex4i( void *args )
@@ -36478,18 +35011,12 @@ static NTSTATUS wow64_gl_glVertex4i( void *args )
         GLint y;
         GLint z;
         GLint w;
-    } *params32 = args;
-    struct glVertex4i_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-        .w = params32->w,
-    };
-    NTSTATUS status;
-    status = gl_glVertex4i( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex4i( params->x, params->y, params->z, params->w );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex4iv( void *args )
@@ -36498,15 +35025,12 @@ static NTSTATUS wow64_gl_glVertex4iv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glVertex4iv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glVertex4iv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex4iv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex4s( void *args )
@@ -36518,18 +35042,12 @@ static NTSTATUS wow64_gl_glVertex4s( void *args )
         GLshort y;
         GLshort z;
         GLshort w;
-    } *params32 = args;
-    struct glVertex4s_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .z = params32->z,
-        .w = params32->w,
-    };
-    NTSTATUS status;
-    status = gl_glVertex4s( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex4s( params->x, params->y, params->z, params->w );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertex4sv( void *args )
@@ -36538,15 +35056,12 @@ static NTSTATUS wow64_gl_glVertex4sv( void *args )
     {
         PTR32 teb;
         PTR32 v;
-    } *params32 = args;
-    struct glVertex4sv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .v = ULongToPtr(params32->v),
-    };
-    NTSTATUS status;
-    status = gl_glVertex4sv( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertex4sv( ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glVertexPointer( void *args )
@@ -36558,18 +35073,12 @@ static NTSTATUS wow64_gl_glVertexPointer( void *args )
         GLenum type;
         GLsizei stride;
         PTR32 pointer;
-    } *params32 = args;
-    struct glVertexPointer_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .size = params32->size,
-        .type = params32->type,
-        .stride = params32->stride,
-        .pointer = ULongToPtr(params32->pointer),
-    };
-    NTSTATUS status;
-    status = gl_glVertexPointer( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glVertexPointer( params->size, params->type, params->stride, ULongToPtr(params->pointer) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_gl_glViewport( void *args )
@@ -36581,18 +35090,11 @@ static NTSTATUS wow64_gl_glViewport( void *args )
         GLint y;
         GLsizei width;
         GLsizei height;
-    } *params32 = args;
-    struct glViewport_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .x = params32->x,
-        .y = params32->y,
-        .width = params32->width,
-        .height = params32->height,
-    };
-    NTSTATUS status;
-    status = gl_glViewport( &params );
-    return status;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    wrap_glViewport( teb, params->x, params->y, params->width, params->height );
+    set_context_attribute( teb, GL_VIEWPORT, &params->x, 2 * sizeof(GLint) + 2 * sizeof(GLsizei) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_ext_glAccumxOES( void *args )

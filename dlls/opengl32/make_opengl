@@ -1523,7 +1523,7 @@ foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
     next if defined $manual_wow64_thunks{$_};
-    print OUT generate_wow64_thunk($_, $norm_functions{$_}, "gl");
+    print OUT generate_unix_thunk($_, $norm_functions{$_}, 1, "gl");
 }
 foreach (sort keys %ext_functions)
 {
