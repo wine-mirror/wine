@@ -594,103 +594,6 @@ sub get_wow64_arg_type($)
     return $ptype;
 }
 
-sub generate_wow64_thunk($$$)
-{
-    my ($name, $func, $prefix) = @_;
-    my $call_args = get_func_args( $func, 0, 1, "params->" );
-    my $func_ret = get_func_ret( $func, 0 );
-    my $need_manual_thunk = 0;
-    my $ret = "";
-
-    $ret .= "static NTSTATUS wow64_$prefix\_$name( void *args )\n";
-    $ret .= "{\n";
-    $ret .= "    struct\n    {\n";
-    $ret .= "        PTR32 teb;\n";
-    foreach my $arg (@{$func->[1]})
-    {
-        my $ptype = get_wow64_arg_type( $arg );
-        my $pname = get_arg_name( $arg );
-        $ret .= "        $ptype $pname;\n";
-        $need_manual_thunk = 1 if $arg->textContent() =~ /(\*.*\*|\[|(sizei|int)ptr.*\*)/ &&
-                                  !defined $pointer_array_count{$_} && !defined $pointer_is_offset{$_};
-    }
-    if (!is_void_func($func))
-    {
-        my $ptype = get_wow64_arg_type( $func->[0] );
-        $ret .= "        $ptype ret;\n";
-    }
-    $ret .= "    } *params32 = args;\n";
-    $ret .= "    struct $name\_params params =\n";
-    $ret .= "    {\n";
-    $ret .= "        .teb = get_teb64(params32->teb),\n";
-    foreach my $arg (@{$func->[1]})
-    {
-        next if $arg->textContent() =~ /(\*.*\*|\[|(sizei|int)ptr.*\*)/;
-        my $ptype = get_arg_type( $arg );
-        my $pname = get_arg_name( $arg );
-        if ($arg->textContent() =~ /(sizei|int)ptr/)
-        {
-            $ret .= "        .$pname = ($ptype)ULongToPtr(params32->$pname),\n";
-        }
-        elsif (get_wow64_arg_type( $arg ) =~ /PTR32/)
-        {
-            $ret .= "        .$pname = ULongToPtr(params32->$pname),\n";
-        }
-        else
-        {
-            $ret .= "        .$pname = params32->$pname,\n";
-        }
-    }
-    $ret .= "    };\n";
-
-    if ($need_manual_thunk || get_wow64_arg_type( $func->[0] ) =~ /PTR32/)
-    {
-        $ret .= "    FIXME( \"params32 %p, params %p stub!\\n\", params32, &params );\n";
-        $ret .= "    return STATUS_NOT_IMPLEMENTED;\n";
-        $ret .= "}\n\n";
-        return $ret;
-    }
-
-    $ret .= "    NTSTATUS status;\n";
-
-    foreach my $arg (@{$func->[1]})
-    {
-        next unless $arg->textContent() =~ /\*.*\*/ || $arg->textContent() =~ /(sizei|int)ptr.*\*/;
-        next unless defined $pointer_array_count{$_};
-        my $pname = get_arg_name( $arg );
-        $ret .= "    params.$pname = copy_wow64_ptr32s( (UINT_PTR)params32->$pname, params32->$pointer_array_count{$_} );\n";
-    }
-
-    $ret .= "    status = $prefix\_$name( &params );\n";
-    if (!is_void_func( $func ))
-    {
-        $ret .= "    params32->ret = ";
-        $ret .= "(UINT_PTR)" if get_wow64_arg_type( $func->[0] ) =~ /PTR32/;
-        $ret .= "params.ret;\n";
-    }
-
-    foreach my $arg (@{$func->[1]})
-    {
-        next unless $arg->textContent() =~ /\*.*\*/ || $arg->textContent() =~ /(sizei|int)ptr.*\*/;
-        next unless defined $pointer_array_count{$_};
-        my $pname = get_arg_name( $arg );
-        $ret .= "    free( (void *)params.$pname );\n";
-    }
-
-    foreach my $arg (@{$func->[1]})
-    {
-        next unless defined $pointer_is_offset{$_};
-        my $pname = get_arg_name( $arg );
-        next unless $pname =~ $pointer_is_offset{$_};
-        $ret .= "    params32->$pname = PtrToUlong( params.$pname );\n";
-    }
-
-    $ret .= "    return status;\n";
-    $ret .= "}\n\n";
-
-    return $ret;
-}
-
 sub generate_null_func($$)
 {
     my ($name, $func) = @_;
@@ -1530,7 +1433,7 @@ foreach (sort keys %ext_functions)
     next if $_ =~ /^egl/; # unix-side only API
     next if defined $manual_win_functions{$_};
     next if defined $manual_wow64_thunks{$_};
-    print OUT generate_wow64_thunk($_, $ext_functions{$_}, "ext");
+    print OUT generate_unix_thunk($_, $ext_functions{$_}, 1, "ext");
 }
 
 print OUT "\nconst unixlib_entry_t __wine_unix_call_wow64_funcs[] =\n";
