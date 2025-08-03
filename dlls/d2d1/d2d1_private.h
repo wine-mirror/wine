@@ -1037,6 +1037,13 @@ static inline const char *debug_d2d_point_2l(const D2D1_POINT_2L *point)
     return wine_dbg_sprintf("{%ld, %ld}", point->x, point->y);
 }
 
+static inline const char *debug_d2d_point_2u(const D2D1_POINT_2U *point)
+{
+    if (!point)
+        return "(null)";
+    return wine_dbg_sprintf("{%u, %u}", point->x, point->y);
+}
+
 static inline const char *debug_d2d_rect_f(const D2D1_RECT_F *rect)
 {
     if (!rect)

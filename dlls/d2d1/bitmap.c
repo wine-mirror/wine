@@ -158,7 +158,8 @@ static HRESULT STDMETHODCALLTYPE d2d_bitmap_CopyFromBitmap(ID2D1Bitmap1 *iface,
     ID3D11Device *device;
     D3D11_BOX box;
 
-    TRACE("iface %p, dst_point %p, bitmap %p, src_rect %p.\n", iface, dst_point, bitmap, src_rect);
+    TRACE("iface %p, dst_point %s, bitmap %p, src_rect %s.\n", iface,
+            debug_d2d_point_2u(dst_point), bitmap, debug_d2d_rect_u(src_rect));
 
     if (src_rect)
     {
@@ -189,8 +190,8 @@ static HRESULT STDMETHODCALLTYPE d2d_bitmap_CopyFromRenderTarget(ID2D1Bitmap1 *i
     ID2D1Image *target = NULL;
     HRESULT hr;
 
-    TRACE("iface %p, dst_point %p, render_target %p, src_rect %s.\n", iface, dst_point,
-            render_target, debug_d2d_rect_u(src_rect));
+    TRACE("iface %p, dst_point %s, render_target %p, src_rect %s.\n", iface,
+            debug_d2d_point_2u(dst_point), render_target, debug_d2d_rect_u(src_rect));
 
     if (FAILED(hr = ID2D1RenderTarget_QueryInterface(render_target, &IID_ID2D1DeviceContext,
             (void **)&device_context)))
@@ -224,7 +225,8 @@ static HRESULT STDMETHODCALLTYPE d2d_bitmap_CopyFromMemory(ID2D1Bitmap1 *iface,
     ID3D11Device *device;
     D3D11_BOX box;
 
-    TRACE("iface %p, dst_rect %p, src_data %p, pitch %u.\n", iface, dst_rect, src_data, pitch);
+    TRACE("iface %p, dst_rect %s, src_data %p, pitch %u.\n", iface, debug_d2d_rect_u(dst_rect),
+            src_data, pitch);
 
     if (dst_rect)
     {
