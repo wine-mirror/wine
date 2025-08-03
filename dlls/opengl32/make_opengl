@@ -341,29 +341,18 @@ sub get_func_trace($$$)
     return "TRACE( \"$trace_fmt\\n\"$trace_arg );\n";
 }
 
-sub get_func_args($$$$)
+sub get_func_args($$)
 {
-    my ($func, $decl_args, $convert_args, $prefix) = @_;
+    my ($func, $convert_args) = @_;
     my $ret = "";
     foreach my $arg (@{$func->[1]})
     {
         my $ptype = get_arg_type( $arg );
         my $pname = get_arg_name( $arg );
-        if ($decl_args)
-        {
-            $ret .= " " . ($convert_args ? ConvertType( $arg ) : $arg->textContent()) . ",";
-        }
-        elsif ($convert_args && defined $remap_types{$ptype})
-        {
-            $ret .= " ($remap_types{$ptype})$prefix$pname,";
-        }
-        else
-        {
-            $ret .= " $prefix$pname,";
-        }
+        $ret .= " " . ($convert_args ? ConvertType( $arg ) : $arg->textContent()) . ",";
     }
     $ret =~ s/,$/ /;
-    $ret ||= "void" if $decl_args;
+    $ret ||= "void";
     return $ret;
 }
 
@@ -542,7 +531,7 @@ sub generate_wrapper_declaration($$)
 {
     my ($name, $func) = @_;
     my $ret = "extern " . get_func_ret( $func, 0 );
-    my $decl_args = get_func_args( $func, 1, 0, "" );
+    my $decl_args = get_func_args( $func, 0 );
     $ret .= " wrap_$name( TEB *teb";
     $ret .= " ,$decl_args" unless $decl_args eq "void";
     $ret .= ");\n";
@@ -552,7 +541,7 @@ sub generate_wrapper_declaration($$)
 sub generate_win_thunk($$)
 {
     my ($name, $func) = @_;
-    my $decl_args = get_func_args( $func, 1, 0, "" );
+    my $decl_args = get_func_args( $func, 0 );
     my $func_ret = get_func_ret( $func, 0 );
     my $params = "";
     my $ret = "";
@@ -597,7 +586,7 @@ sub get_wow64_arg_type($)
 sub generate_null_func($$)
 {
     my ($name, $func) = @_;
-    my $decl_args = get_func_args( $func, 1, 1, "" );
+    my $decl_args = get_func_args( $func, 1 );
     my $func_ret = get_func_ret( $func, 1 );
     my $ret = "";
 
@@ -1037,7 +1026,7 @@ print HEADER "\n";
 print HEADER "#ifndef GL_NO_PROTOTYPES\n";
 foreach (sort keys %norm_functions)
 {
-    my $decl_args = get_func_args( $norm_functions{$_}, 1, 0, "" );
+    my $decl_args = get_func_args( $norm_functions{$_}, 0 );
     my $func_ret = get_func_ret( $norm_functions{$_}, 0 );
     printf HEADER "%-10s GLAPIENTRY $_($decl_args);\n", $func_ret;
 }
@@ -1045,28 +1034,28 @@ print HEADER "#endif\n\n";
 
 foreach (sort keys %wgl_functions)
 {
-    my $decl_args = get_func_args( $wgl_functions{$_}, 1, 0, "" );
+    my $decl_args = get_func_args( $wgl_functions{$_}, 0 );
     my $func_ret = get_func_ret( $wgl_functions{$_}, 0 );
     printf HEADER "typedef %-10s (GLAPIENTRY *PFN_$_)($decl_args);\n", $func_ret;
 }
 
 foreach (sort keys %egl_functions)
 {
-    my $decl_args = get_func_args( $egl_functions{$_}, 1, 0, "" );
+    my $decl_args = get_func_args( $egl_functions{$_}, 0 );
     my $func_ret = get_func_ret( $egl_functions{$_}, 0 );
     printf HEADER "typedef %-10s (GLAPIENTRY *PFN_$_)($decl_args);\n", $func_ret;
 }
 
 foreach (sort keys %norm_functions)
 {
-    my $decl_args = get_func_args( $norm_functions{$_}, 1, 0, "" );
+    my $decl_args = get_func_args( $norm_functions{$_}, 0 );
     my $func_ret = get_func_ret( $norm_functions{$_}, 0 );
     printf HEADER "typedef %-10s (GLAPIENTRY *PFN_$_)($decl_args);\n", $func_ret;
 }
 
 foreach (sort keys %ext_functions)
 {
-    my $decl_args = get_func_args( $ext_functions{$_}, 1, 0, "" );
+    my $decl_args = get_func_args( $ext_functions{$_}, 0 );
     my $func_ret = get_func_ret( $ext_functions{$_}, 0 );
     printf HEADER "typedef %-10s (GLAPIENTRY *PFN_$_)($decl_args);\n", $func_ret;
 }
@@ -1274,7 +1263,7 @@ foreach (sort keys %ext_functions)
 {
     next if $_ =~ /^egl/; # unix-side only API
     next unless defined $manual_win_functions{$_} || $manual_win_thunks{$_};
-    my $decl_args = get_func_args( $ext_functions{$_}, 1, 0, "" );
+    my $decl_args = get_func_args( $ext_functions{$_}, 0 );
     my $func_ret = get_func_ret( $ext_functions{$_}, 0 );
     printf OUT "extern %s WINAPI %s(%s);\n", $func_ret, $_, $decl_args;
 }
