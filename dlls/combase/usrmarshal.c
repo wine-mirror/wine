@@ -22,6 +22,7 @@
 #define COBJMACROS
 #include "ole2.h"
 
+#include "winstring.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -1024,4 +1025,39 @@ void WINAPI WdtpInterfacePointer_UserFree(IUnknown *punk)
 {
     TRACE("%p.\n", punk);
     if (punk) IUnknown_Release(punk);
+}
+
+/******************************************************************************
+ *           HSTRING_UserSize (combase.@)
+ */
+ULONG __RPC_USER HSTRING_UserSize(ULONG *flags, ULONG size, HSTRING *str)
+{
+    FIXME("%p, %lu, %p: stub\n", flags, size, str);
+    return size;
+}
+
+/******************************************************************************
+ *           HSTRING_UserMarshal (combase.@)
+ */
+BYTE * __RPC_USER HSTRING_UserMarshal(ULONG *flags, BYTE *buf, HSTRING *str)
+{
+    FIXME("%p, %p, %p: stub\n", flags, buf, str);
+    return buf;
+}
+
+/******************************************************************************
+ *           HSTRING_UserUnmarshal (combase.@)
+ */
+BYTE * __RPC_USER HSTRING_UserUnmarshal(ULONG *flags, BYTE *buf, HSTRING *str)
+{
+    FIXME("%p, %p, %p: stub\n", flags, buf, str);
+    return buf;
+}
+
+/******************************************************************************
+ *           HSTRING_UserFree (combase.@)
+ */
+void __RPC_USER HSTRING_UserFree(ULONG *flags, HSTRING *str)
+{
+    FIXME("%p, %p: stub\n", flags, str);
 }
