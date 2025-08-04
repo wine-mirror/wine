@@ -1137,14 +1137,14 @@ static BOOL context_set_drawables( struct wgl_context *context, void *private, H
         WARN( "One of the drawable has been lost, ignoring\n" );
     else if (!private && (new_draw || new_read))
         WARN( "Unexpected drawables with NULL context\n" );
-    else if (!force && new_draw == context->draw && new_read == context->read)
-        TRACE( "Drawables didn't change, nothing to do\n" );
     else
     {
-        if (new_draw) opengl_drawable_flush( new_draw, new_draw->interval, 0 );
         if (new_read) opengl_drawable_flush( new_read, new_read->interval, 0 );
+        if (new_draw) opengl_drawable_flush( new_draw, new_draw->interval, 0 );
 
-        if ((ret = driver_funcs->p_make_current( new_draw, new_read, private )))
+        if (!force && new_draw == context->draw && new_read == context->read)
+            TRACE( "Drawables didn't change, nothing to do\n" );
+        else if ((ret = driver_funcs->p_make_current( new_draw, new_read, private )))
         {
             if ((context->draw = new_draw)) opengl_drawable_add_ref( new_draw );
             if ((context->read = new_read)) opengl_drawable_add_ref( new_read );
