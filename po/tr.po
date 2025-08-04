@@ -3871,15 +3871,15 @@ msgstr "Devre dışı"
 msgid "DInput"
 msgstr "DGirişi"
 
-#: dlls/joy.cpl/joy.rc:62
+#: dlls/joy.cpl/joy.rc:62 dlls/joy.cpl/joy.rc:111
 msgid "Axes"
 msgstr "Eksenler"
 
-#: dlls/joy.cpl/joy.rc:63
+#: dlls/joy.cpl/joy.rc:63 dlls/joy.cpl/joy.rc:112
 msgid "POVs"
 msgstr "POVs"
 
-#: dlls/joy.cpl/joy.rc:64
+#: dlls/joy.cpl/joy.rc:64 dlls/joy.cpl/joy.rc:113
 msgid "Buttons"
 msgstr "Düğmeler"
 
@@ -3952,7 +3952,7 @@ msgstr ""
 "kılınmadığından emin olun."
 
 #: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
-#: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:112
+#: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:115
 msgid "Rumble"
 msgstr "Gürlemek"
 

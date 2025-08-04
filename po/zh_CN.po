@@ -3806,15 +3806,15 @@ msgstr "停用 hidraw"
 msgid "DInput"
 msgstr "DInput"
 
-#: dlls/joy.cpl/joy.rc:62
+#: dlls/joy.cpl/joy.rc:62 dlls/joy.cpl/joy.rc:111
 msgid "Axes"
 msgstr "坐标轴"
 
-#: dlls/joy.cpl/joy.rc:63
+#: dlls/joy.cpl/joy.rc:63 dlls/joy.cpl/joy.rc:112
 msgid "POVs"
 msgstr "帽子开关"
 
-#: dlls/joy.cpl/joy.rc:64
+#: dlls/joy.cpl/joy.rc:64 dlls/joy.cpl/joy.rc:113
 msgid "Buttons"
 msgstr "按钮"
 
@@ -3881,7 +3881,7 @@ msgstr ""
 "的 DInput。"
 
 #: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
-#: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:112
+#: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:115
 msgid "Rumble"
 msgstr "震动"
 

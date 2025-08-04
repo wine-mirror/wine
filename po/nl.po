@@ -3856,15 +3856,15 @@ msgstr "Hidraw uitschakelen"
 msgid "DInput"
 msgstr "DInput"
 
-#: dlls/joy.cpl/joy.rc:62
+#: dlls/joy.cpl/joy.rc:62 dlls/joy.cpl/joy.rc:111
 msgid "Axes"
 msgstr "Assen"
 
-#: dlls/joy.cpl/joy.rc:63
+#: dlls/joy.cpl/joy.rc:63 dlls/joy.cpl/joy.rc:112
 msgid "POVs"
 msgstr "Gezichtsveld"
 
-#: dlls/joy.cpl/joy.rc:64
+#: dlls/joy.cpl/joy.rc:64 dlls/joy.cpl/joy.rc:113
 msgid "Buttons"
 msgstr "Knoppen"
 
@@ -3933,7 +3933,7 @@ msgstr ""
 "niet voor DInput is overschreven op het Joysticks-tabblad."
 
 #: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
-#: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:112
+#: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:115
 msgid "Rumble"
 msgstr "Trillen"
 

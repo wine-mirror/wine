@@ -31,6 +31,9 @@
 
 #include "resource.h"
 
+extern void paint_axes_view( HWND hwnd, UINT32 count, double *axes, const WCHAR **names );
+extern void paint_povs_view( HWND hwnd, UINT32 count, UINT32 *povs );
+extern void paint_buttons_view( HWND hwnd, UINT32 count, BYTE *buttons );
 extern void paint_gamepad_view( HWND hwnd, XINPUT_STATE *state );
 
 extern INT_PTR CALLBACK test_di_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
@@ -42,6 +45,9 @@ extern INT_PTR CALLBACK test_xi_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam,
 extern LRESULT CALLBACK test_xi_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
 
 extern INT_PTR CALLBACK test_wgi_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
+extern LRESULT CALLBACK test_wgi_axes_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
+extern LRESULT CALLBACK test_wgi_povs_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
+extern LRESULT CALLBACK test_wgi_buttons_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
 extern LRESULT CALLBACK test_wgi_gamepad_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
 
 #endif /* __JOY_PRIVATE_H */

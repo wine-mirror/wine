@@ -59,8 +59,11 @@ struct raw_controller_state
 {
     UINT64 timestamp;
     double axes[6];
+    INT32 axes_count;
     boolean buttons[32];
+    INT32 button_count;
     GameControllerSwitchPosition switches[4];
+    INT32 switches_count;
 };
 
 struct device_state
@@ -184,6 +187,9 @@ static DWORD WINAPI input_thread_proc( void *param )
             {
                 struct device_state state = {.iid = &IID_IRawGameController};
                 struct raw_controller_state *current = &state.raw_controller;
+                IRawGameController_get_AxisCount( raw_controller, &current->axes_count );
+                IRawGameController_get_ButtonCount( raw_controller, &current->button_count );
+                IRawGameController_get_SwitchCount( raw_controller, &current->switches_count );
                 IRawGameController_GetCurrentReading( raw_controller, ARRAY_SIZE(current->buttons), current->buttons,
                                                       ARRAY_SIZE(current->switches), current->switches,
                                                       ARRAY_SIZE(current->axes), current->axes, &current->timestamp );
@@ -204,6 +210,81 @@ static DWORD WINAPI input_thread_proc( void *param )
     }
 
     return 0;
+}
+
+LRESULT CALLBACK test_wgi_axes_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    TRACE( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
+
+    if (msg == WM_PAINT)
+    {
+        static const WCHAR *names[] = { L"#0", L"#1", L"#2", L"#3", L"#4", L"#5", L"#6", L"#7" };
+        struct device_state state;
+        UINT32 count;
+
+        get_device_state( &state );
+
+        count = min( state.raw_controller.axes_count, ARRAY_SIZE(state.raw_controller.axes) );
+        paint_axes_view( hwnd, count, state.raw_controller.axes, names );
+        return 0;
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+LRESULT CALLBACK test_wgi_povs_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    TRACE( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
+
+    if (msg == WM_PAINT)
+    {
+        struct device_state state;
+        UINT32 count, povs[ARRAY_SIZE(state.raw_controller.switches)];
+
+        get_device_state( &state );
+
+        for (int i = 0; i < ARRAY_SIZE(state.raw_controller.switches); i++)
+        {
+            if (i >= state.raw_controller.switches_count) povs[i] = -1;
+            else switch (state.raw_controller.switches[i])
+            {
+            case GameControllerSwitchPosition_Center: povs[i] = -1; break;
+            case GameControllerSwitchPosition_Up: povs[i] = 0; break;
+            case GameControllerSwitchPosition_UpRight: povs[i] = 4500; break;
+            case GameControllerSwitchPosition_Right: povs[i] = 9000; break;
+            case GameControllerSwitchPosition_DownRight: povs[i] = 13500; break;
+            case GameControllerSwitchPosition_Down: povs[i] = 18000; break;
+            case GameControllerSwitchPosition_DownLeft: povs[i] = 22500; break;
+            case GameControllerSwitchPosition_Left: povs[i] = 27000; break;
+            case GameControllerSwitchPosition_UpLeft: povs[i] = 31500; break;
+            }
+        }
+
+        count = min( state.raw_controller.switches_count, ARRAY_SIZE(povs) );
+        paint_povs_view( hwnd, count, povs );
+        return 0;
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+LRESULT CALLBACK test_wgi_buttons_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    TRACE( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
+
+    if (msg == WM_PAINT)
+    {
+        struct device_state state;
+        UINT32 count;
+
+        get_device_state( &state );
+
+        count = min( state.raw_controller.button_count, ARRAY_SIZE(state.raw_controller.buttons) );
+        paint_buttons_view( hwnd, count, state.raw_controller.buttons );
+        return 0;
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
 
 LRESULT CALLBACK test_wgi_gamepad_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
@@ -451,13 +532,32 @@ static void update_wgi_devices( HWND hwnd )
 
 static void update_device_views( HWND hwnd )
 {
-    HWND gamepad, rumble;
+    HWND gamepad, rumble, axes, povs, buttons;
     struct device_state state;
 
     get_device_state( &state );
 
     gamepad = GetDlgItem( hwnd, IDC_WGI_GAMEPAD );
     rumble = GetDlgItem( hwnd, IDC_WGI_RUMBLE );
+    axes = GetDlgItem( hwnd, IDC_WGI_AXES );
+    povs = GetDlgItem( hwnd, IDC_WGI_POVS );
+    buttons = GetDlgItem( hwnd, IDC_WGI_BUTTONS );
+
+    if (!IsEqualGUID( state.iid, &IID_IRawGameController ))
+    {
+        ShowWindow( axes, SW_HIDE );
+        ShowWindow( povs, SW_HIDE );
+        ShowWindow( buttons, SW_HIDE );
+    }
+    else
+    {
+        InvalidateRect( axes, NULL, TRUE );
+        InvalidateRect( povs, NULL, TRUE );
+        InvalidateRect( buttons, NULL, TRUE );
+        ShowWindow( axes, SW_SHOW );
+        ShowWindow( povs, SW_SHOW );
+        ShowWindow( buttons, SW_SHOW );
+    }
 
     if (!IsEqualGUID( state.iid, &IID_IGamepad ))
     {
@@ -476,14 +576,48 @@ static void update_device_views( HWND hwnd )
 static void create_device_views( HWND hwnd )
 {
     HINSTANCE instance = (HINSTANCE)GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
-    HWND gamepad, rumble;
+    HWND gamepad, rumble, axes, povs, buttons;
     LONG margin;
     RECT rect;
 
     gamepad = GetDlgItem( hwnd, IDC_WGI_GAMEPAD );
     rumble = GetDlgItem( hwnd, IDC_WGI_RUMBLE );
+    axes = GetDlgItem( hwnd, IDC_WGI_AXES );
+    povs = GetDlgItem( hwnd, IDC_WGI_POVS );
+    buttons = GetDlgItem( hwnd, IDC_WGI_BUTTONS );
+
     ShowWindow( gamepad, SW_HIDE );
     ShowWindow( rumble, SW_HIDE );
+    ShowWindow( axes, SW_HIDE );
+    ShowWindow( povs, SW_HIDE );
+    ShowWindow( buttons, SW_HIDE );
+
+    GetClientRect( axes, &rect );
+    rect.top += 10;
+
+    margin = (rect.bottom - rect.top) * 10 / 100;
+    InflateRect( &rect, -margin, -margin );
+
+    CreateWindowW( L"JoyCplWGIAxes", NULL, WS_CHILD | WS_VISIBLE, rect.left, rect.top,
+                   rect.right - rect.left, rect.bottom - rect.top, axes, NULL, NULL, instance );
+
+    GetClientRect( povs, &rect );
+    rect.top += 10;
+
+    margin = (rect.bottom - rect.top) * 10 / 100;
+    InflateRect( &rect, -margin, -margin );
+
+    CreateWindowW( L"JoyCplWGIPOVs", NULL, WS_CHILD | WS_VISIBLE, rect.left, rect.top,
+                   rect.right - rect.left, rect.bottom - rect.top, povs, NULL, NULL, instance );
+
+    GetClientRect( buttons, &rect );
+    rect.top += 10;
+
+    margin = (rect.bottom - rect.top) * 5 / 100;
+    InflateRect( &rect, -margin, -margin );
+
+    CreateWindowW( L"JoyCplWGIButtons", NULL, WS_CHILD | WS_VISIBLE, rect.left, rect.top,
+                   rect.right - rect.left, rect.bottom - rect.top, buttons, NULL, NULL, instance );
 
     GetClientRect( gamepad, &rect );
     rect.top += 10;

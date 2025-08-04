@@ -3852,15 +3852,15 @@ msgstr "사용 중지됨"
 msgid "DInput"
 msgstr "DInput"
 
-#: dlls/joy.cpl/joy.rc:62
+#: dlls/joy.cpl/joy.rc:62 dlls/joy.cpl/joy.rc:111
 msgid "Axes"
 msgstr "축"
 
-#: dlls/joy.cpl/joy.rc:63
+#: dlls/joy.cpl/joy.rc:63 dlls/joy.cpl/joy.rc:112
 msgid "POVs"
 msgstr "시점"
 
-#: dlls/joy.cpl/joy.rc:64
+#: dlls/joy.cpl/joy.rc:64 dlls/joy.cpl/joy.rc:113
 msgid "Buttons"
 msgstr "버튼"
 
@@ -3929,7 +3929,7 @@ msgstr ""
 "서 DInput으로 재정의되지 않았는지 확인하십시오."
 
 #: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
-#: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:112
+#: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:115
 msgid "Rumble"
 msgstr "진동"
 

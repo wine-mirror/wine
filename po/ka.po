@@ -3849,15 +3849,15 @@ msgstr "'hidraw'-ის გათიშვა"
 msgid "DInput"
 msgstr "DInput"
 
-#: dlls/joy.cpl/joy.rc:62
+#: dlls/joy.cpl/joy.rc:62 dlls/joy.cpl/joy.rc:111
 msgid "Axes"
 msgstr "ღერძები"
 
-#: dlls/joy.cpl/joy.rc:63
+#: dlls/joy.cpl/joy.rc:63 dlls/joy.cpl/joy.rc:112
 msgid "POVs"
 msgstr "POV-ები"
 
-#: dlls/joy.cpl/joy.rc:64
+#: dlls/joy.cpl/joy.rc:64 dlls/joy.cpl/joy.rc:113
 msgid "Buttons"
 msgstr "ღილაკები"
 
@@ -3926,7 +3926,7 @@ msgstr ""
 "და რომ მას ჯოისტიკების ჩანართში DInput არ ფარავს."
 
 #: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
-#: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:112
+#: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:115
 msgid "Rumble"
 msgstr ""
 

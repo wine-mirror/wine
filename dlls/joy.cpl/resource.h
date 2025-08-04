@@ -74,6 +74,9 @@
 #define IDC_WGI_INTERFACE   2301
 #define IDC_WGI_GAMEPAD     2302
 #define IDC_WGI_RUMBLE      2303
+#define IDC_WGI_AXES        2304
+#define IDC_WGI_POVS        2305
+#define IDC_WGI_BUTTONS     2306
 
 #define ICO_MAIN            100
 
