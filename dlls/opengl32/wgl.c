@@ -145,6 +145,7 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
     best.cDepthBits = -1;
     best.cStencilBits = -1;
     best.cAuxBuffers = -1;
+    best.cAccumBits = -1;
 
     for (i = 1; i <= count; i++)
     {
@@ -291,6 +292,18 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
             if (best.cAuxBuffers != format.cAuxBuffers)
             {
                 TRACE( "aux mismatch for iPixelFormat=%d\n", i );
+                continue;
+            }
+        }
+        if (ppfd->cAccumBits)
+        {
+            if (((ppfd->cAccumBits > best.cAccumBits) && (format.cAccumBits > best.cAccumBits)) ||
+                ((format.cAccumBits >= ppfd->cAccumBits) && (format.cAccumBits < best.cAccumBits)))
+                goto found;
+
+            if (best.cAccumBits != format.cAccumBits)
+            {
+                TRACE( "cAccumBits mismatch for iPixelFormat=%d\n", i );
                 continue;
             }
         }
