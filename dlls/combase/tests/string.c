@@ -631,9 +631,8 @@ static void test_marshal(void)
     ok(inproc->str == str, "got unexpected address %p\n", inproc->str);
     inproc->context = 0xdeadbeef; /* The context value is not validated. */
     next = HSTRING_UserUnmarshal(&umcb.Flags, buffer, &str2);
-    if (size == exp_size)
-        todo_wine ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
-    todo_wine ok(str2 == str, "got str2 %p != %p\n", str2, str);
+    ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
+    ok(str2 == str, "got str2 %p != %p\n", str2, str);
     HSTRING_UserFree(&umcb.Flags, &str2);
 
     /* Test alignment */
@@ -649,9 +648,8 @@ static void test_marshal(void)
     ok(inproc->context == exp_context, "got unexpected prefix %#lx != %#lx\n", inproc->context, exp_context);
     ok(inproc->str == str, "got unexpected address %p\n", inproc->str);
     next = HSTRING_UserUnmarshal(&umcb.Flags, &buffer[1], &str2);
-    if (size == exp_size)
-        todo_wine ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
-    todo_wine ok(str2 == str, "got str2 %p != %p\n", str2, str);
+    ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
+    ok(str2 == str, "got str2 %p != %p\n", str2, str);
     HSTRING_UserFree(&umcb.Flags, &str2);
 
     /* INPROC marshaling with empty/NULL HSTRING */
@@ -668,8 +666,7 @@ static void test_marshal(void)
     ok(!inproc->str, "got unexpected address %p\n", inproc->str);
     str2 = NULL;
     next = HSTRING_UserUnmarshal(&umcb.Flags, buffer, &str2);
-    if (size == exp_size)
-        todo_wine ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
+    ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
     ok(!str2, "got str2 %p\n", str2);
     HSTRING_UserFree(&umcb.Flags, &str2);
 
@@ -689,13 +686,12 @@ static void test_marshal(void)
     str2 = NULL;
     local->context = 0xdeadbeef; /* The context value is not validated. */
     next = HSTRING_UserUnmarshal(&umcb.Flags, buffer, &str2);
-    if (size == exp_size)
-        todo_wine ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
+    ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
     /* A new HSTRING should be allocated */
-    todo_wine_if(str2) ok(str2 != str, "got str2 %p\n", str2);
+    ok(str2 != str, "got str2 %p\n", str2);
     hr = WindowsCompareStringOrdinal(str2, str, &result);
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine ok(!result, "got str2 %s != %s\n", debugstr_hstring(str2), debugstr_hstring(str));
+    ok(!result, "got str2 %s != %s\n", debugstr_hstring(str2), debugstr_hstring(str));
     HSTRING_UserFree(&umcb.Flags, &str2);
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
@@ -711,13 +707,12 @@ static void test_marshal(void)
     ok(local->context == exp_context, "got unexpected prefix %#lx != %#lx\n", local->context, exp_context);
     ok(!memcmp(local->data, str_buf, str_bytes), "got buf.data %s\n", debugstr_wn(local->data, str_bytes));
     next = HSTRING_UserUnmarshal(&umcb.Flags, &buffer[1], &str2);
-    if (size == exp_size)
-        todo_wine ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
-    todo_wine_if(str2) ok(str2 != str, "got str2 %p\n", str2);
+    ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
+    ok(str2 != str, "got str2 %p\n", str2);
     result = -1;
     hr = WindowsCompareStringOrdinal(str2, str, &result);
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine ok(!result, "got str2 %s != %s\n", debugstr_hstring(str2), debugstr_hstring(str));
+    ok(!result, "got str2 %s != %s\n", debugstr_hstring(str2), debugstr_hstring(str));
     HSTRING_UserFree(&umcb.Flags, &str2);
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
@@ -733,8 +728,7 @@ static void test_marshal(void)
     ok(!local->size, "got buf.size %lu\n", local->size);
     str2 = NULL;
     next = HSTRING_UserUnmarshal(&umcb.Flags, buffer, &str2);
-    if (size == exp_size)
-        todo_wine ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
+    ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
     ok(!str2, "got str2 %p\n", str2);
     HSTRING_UserFree(&umcb.Flags, &str2);
 

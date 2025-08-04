@@ -1099,7 +1099,29 @@ BYTE * __RPC_USER HSTRING_UserMarshal(ULONG *flags, BYTE *buf, HSTRING *str)
  */
 BYTE * __RPC_USER HSTRING_UserUnmarshal(ULONG *flags, BYTE *buf, HSTRING *str)
 {
-    FIXME("%p, %p, %p: stub\n", flags, buf, str);
+    TRACE("%p, %p, %p\n", debugstr_user_flags(flags), buf, str);
+
+    if (LOWORD(*flags) == MSHCTX_INPROC)
+    {
+        const struct hstring_wire_inproc *wire = ALIGNED_POINTER(buf, 7);
+
+        *str = wire->str;
+        TRACE("str=%s\n", debugstr_hstring(*str));
+        buf = (BYTE *)(wire + 1);
+    }
+    else
+    {
+        const struct hstring_wire_local *wire = ALIGNED_POINTER(buf, 7);
+        UINT32 len;
+        HRESULT hr;
+
+        len = wire->size / sizeof(WCHAR);
+        hr = WindowsCreateString(wire->data, len, str);
+        if (FAILED(hr))
+            RpcRaiseException(RPC_S_OUT_OF_MEMORY);
+        buf = (BYTE *)&wire->data[len];
+    }
+
     return buf;
 }
 
@@ -1108,5 +1130,8 @@ BYTE * __RPC_USER HSTRING_UserUnmarshal(ULONG *flags, BYTE *buf, HSTRING *str)
  */
 void __RPC_USER HSTRING_UserFree(ULONG *flags, HSTRING *str)
 {
-    FIXME("%p, %p: stub\n", flags, str);
+    TRACE("%s, %s.\n", debugstr_user_flags(flags), debugstr_hstring(*str));
+
+    if (LOWORD(*flags) == MSHCTX_INPROC)
+        WindowsDeleteString(*str);
 }
