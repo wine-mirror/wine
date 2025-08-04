@@ -16499,16 +16499,73 @@ static void test_EndDialog(void)
     UnregisterClassA(cls.lpszClassName, cls.hInstance);
 }
 
+static const struct message WmUserSeq[] =
+{
+    { WM_USER, sent },
+    { 0 }
+};
+
 static void test_nullCallback(void)
 {
+    DWORD status;
     HWND hwnd;
+    BOOL ret;
 
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW,
                            100, 100, 200, 200, 0, 0, 0, NULL);
     ok (hwnd != 0, "Failed to create overlapped window\n");
 
-    SendMessageCallbackA(hwnd,WM_NULL,0,0,NULL,0);
+    /* NULL callback and data being 0 with SendMessageCallbackA() */
+    flush_sequence();
+    ret = SendMessageCallbackA(hwnd, WM_USER, 0, 0, NULL, 0);
+    ok(ret, "SendMessageCallbackA failed, error %ld.", GetLastError());
+    ok_sequence(WmUserSeq, "WM_USER with NULL callback", FALSE);
+
+    /* NULL callback and data being 0 with SendMessageCallbackW() */
+    flush_sequence();
+    ret = SendMessageCallbackW(hwnd, WM_USER, 0, 0, NULL, 0);
+    ok(ret, "SendMessageCallbackW failed, error %ld.", GetLastError());
+    ok_sequence(WmUserSeq, "WM_USER with NULL callback", FALSE);
+
+    /* NULL callback and data being 1 with SendMessageCallbackA(). The result suggests that the
+     * message is not directly sent to the window */
+    flush_sequence();
+    ret = SendMessageCallbackA(hwnd, WM_USER, 0, 0, NULL, 1);
+    ok(ret, "SendMessageCallbackA failed, error %ld.", GetLastError());
+    ok_sequence(WmEmptySeq, "WM_USER with NULL callback", TRUE);
     flush_events();
+    ok_sequence(WmUserSeq, "WM_USER with NULL callback after flushing events", TRUE);
+
+    /* NULL callback and data being 1 with SendMessageCallbackW(). The result suggests that the
+     * message is not directly sent to the window */
+    flush_sequence();
+    ret = SendMessageCallbackW(hwnd, WM_USER, 0, 0, NULL, 1);
+    ok(ret, "SendMessageCallbackW failed, error %ld.", GetLastError());
+    ok_sequence(WmEmptySeq, "WM_USER with NULL callback", TRUE);
+    flush_events();
+    ok_sequence(WmUserSeq, "WM_USER with NULL callback after flushing events", TRUE);
+
+    /* NULL callback and data being 2 with SendMessageCallbackA() */
+    flush_sequence();
+    ret = SendMessageCallbackA(hwnd, WM_USER, 0, 0, NULL, 2);
+    ok(ret, "SendMessageCallbackA failed, error %ld.", GetLastError());
+    ok_sequence(WmUserSeq, "WM_USER with NULL callback", FALSE);
+
+    /* NULL callback and data being 2 with SendMessageCallbackW() */
+    flush_sequence();
+    ret = SendMessageCallbackW(hwnd, WM_USER, 0, 0, NULL, 2);
+    ok(ret, "SendMessageCallbackW failed, error %ld.", GetLastError());
+    ok_sequence(WmUserSeq, "WM_USER with NULL callback", FALSE);
+
+    /* Check the queue status after SendMessageCallbackA() with NULL callback and data being 1 */
+    flush_events();
+    ret = SendMessageCallbackA(hwnd, WM_USER, 0, 0, NULL, 1);
+    ok(ret, "SendMessageCallbackA failed, error %ld.", GetLastError());
+    status = GetQueueStatus(QS_ALLINPUT);
+    todo_wine
+    ok(HIWORD(status) & QS_SENDMESSAGE && LOWORD(status) & QS_SENDMESSAGE,
+       "Got unexpected status %#lx.\n", status);
+
     DestroyWindow(hwnd);
 }
 
