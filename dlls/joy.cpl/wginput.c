@@ -43,6 +43,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(joycpl);
 
+struct iface
+{
+    struct list entry;
+    IGameController *iface;
+};
+
 struct device
 {
     struct list entry;
@@ -59,28 +65,41 @@ static CRITICAL_SECTION_DEBUG state_cs_debug =
 static CRITICAL_SECTION state_cs = { &state_cs_debug, -1, 0, 0, 0, 0 };
 
 static struct list devices = LIST_INIT( devices );
-static IRawGameController *device_selected;
+static struct list ifaces = LIST_INIT( ifaces );
+static IGameController *iface_selected;
 
 static HWND dialog_hwnd;
 static HANDLE state_event;
 
-static void set_selected_device( IRawGameController *device )
+static void set_selected_interface( IGameController *iface )
 {
-    IRawGameController *previous;
+    IGameController *previous;
 
     EnterCriticalSection( &state_cs );
 
-    if ((previous = device_selected)) IRawGameController_Release( previous );
-    if ((device_selected = device)) IRawGameController_AddRef( device );
+    if ((previous = iface_selected)) IGameController_Release( previous );
+    if ((iface_selected = iface)) IGameController_AddRef( iface );
 
     LeaveCriticalSection( &state_cs );
+}
+
+static void clear_interfaces(void)
+{
+    struct iface *entry, *next;
+
+    set_selected_interface( NULL );
+
+    LIST_FOR_EACH_ENTRY_SAFE( entry, next, &ifaces, struct iface, entry )
+    {
+        list_remove( &entry->entry );
+        IGameController_Release( entry->iface );
+        free( entry );
+    }
 }
 
 static void clear_devices(void)
 {
     struct device *entry, *next;
-
-    set_selected_device( NULL );
 
     LIST_FOR_EACH_ENTRY_SAFE( entry, next, &devices, struct device, entry )
     {
@@ -101,13 +120,132 @@ static DWORD WINAPI input_thread_proc( void *param )
     return 0;
 }
 
+static void handle_wgi_interface_change( HWND hwnd )
+{
+    IGameController *iface;
+    struct list *entry;
+    int i;
+
+    set_selected_interface( NULL );
+
+    i = SendDlgItemMessageW( hwnd, IDC_WGI_INTERFACE, CB_GETCURSEL, 0, 0 );
+    if (i < 0) return;
+
+    entry = list_head( &ifaces );
+    while (i-- && entry) entry = list_next( &ifaces, entry );
+    if (!entry) return;
+
+    iface = LIST_ENTRY( entry, struct iface, entry )->iface;
+    set_selected_interface( iface );
+}
+
+static HRESULT check_gamepad_interface( IRawGameController *device, IGameController **iface )
+{
+    const WCHAR *class_name = RuntimeClass_Windows_Gaming_Input_Gamepad;
+    IGameController *controller;
+    IGamepadStatics2 *statics;
+    IGamepad *gamepad = NULL;
+    HSTRING str;
+
+    WindowsCreateString( class_name, wcslen( class_name ), &str );
+    RoGetActivationFactory( str, &IID_IGamepadStatics2, (void **)&statics );
+    WindowsDeleteString( str );
+    if (!statics) return E_NOINTERFACE;
+
+    if (SUCCEEDED(IRawGameController_QueryInterface( device, &IID_IGameController, (void **)&controller )))
+    {
+        IGamepadStatics2_FromGameController( statics, controller, &gamepad );
+        IGameController_Release( controller );
+    }
+
+    IGamepadStatics2_Release( statics );
+    if (!gamepad) return E_NOINTERFACE;
+
+    IGamepad_QueryInterface( gamepad, &IID_IGameController, (void **)iface );
+    IGamepad_Release( gamepad );
+    return S_OK;
+}
+
+static HRESULT check_racing_wheel_interface( IRawGameController *device, IGameController **iface )
+{
+    const WCHAR *class_name = RuntimeClass_Windows_Gaming_Input_RacingWheel;
+    IRacingWheelStatics2 *statics;
+    IGameController *controller;
+    IRacingWheel *wheel = NULL;
+    HSTRING str;
+
+    WindowsCreateString( class_name, wcslen( class_name ), &str );
+    RoGetActivationFactory( str, &IID_IRacingWheelStatics2, (void **)&statics );
+    WindowsDeleteString( str );
+    if (!statics) return E_NOINTERFACE;
+
+    if (SUCCEEDED(IRawGameController_QueryInterface( device, &IID_IGameController, (void **)&controller )))
+    {
+        IRacingWheelStatics2_FromGameController( statics, controller, &wheel );
+        IGameController_Release( controller );
+    }
+
+    IRacingWheelStatics2_Release( statics );
+    if (!wheel) return E_NOINTERFACE;
+
+    IRacingWheel_QueryInterface( wheel, &IID_IGameController, (void **)iface );
+    IRacingWheel_Release( wheel );
+    return S_OK;
+}
+
+static void update_wgi_interface( HWND hwnd, IRawGameController *device )
+{
+    IGameController *controller;
+    struct iface *iface;
+
+    clear_interfaces();
+
+    if (SUCCEEDED(IRawGameController_QueryInterface( device, &IID_IGameController,
+                                                     (void **)&controller )))
+    {
+        if (!(iface = calloc( 1, sizeof(*iface)))) goto done;
+        list_add_tail( &ifaces, &iface->entry );
+        iface->iface = controller;
+    }
+    if (SUCCEEDED(check_gamepad_interface( device, &controller )))
+    {
+        if (!(iface = calloc( 1, sizeof(*iface)))) goto done;
+        list_add_tail( &ifaces, &iface->entry );
+        iface->iface = controller;
+    }
+    if (SUCCEEDED(check_racing_wheel_interface( device, &controller )))
+    {
+        if (!(iface = calloc( 1, sizeof(*iface)))) goto done;
+        list_add_tail( &ifaces, &iface->entry );
+        iface->iface = controller;
+    }
+    controller = NULL;
+
+    SendDlgItemMessageW( hwnd, IDC_WGI_INTERFACE, CB_RESETCONTENT, 0, 0 );
+
+    LIST_FOR_EACH_ENTRY( iface, &ifaces, struct iface, entry )
+    {
+        HSTRING name;
+
+        if (FAILED(IGameController_GetRuntimeClassName( iface->iface, &name ))) continue;
+
+        SendDlgItemMessageW( hwnd, IDC_WGI_INTERFACE, CB_ADDSTRING, 0,
+                             (LPARAM)(wcsrchr( WindowsGetStringRawBuffer( name, NULL ), '.' ) + 1) );
+
+        WindowsDeleteString( name );
+    }
+
+done:
+    if (controller) IGameController_Release( controller );
+
+    SendDlgItemMessageW( hwnd, IDC_WGI_INTERFACE, CB_SETCURSEL, 0, 0 );
+}
+
 static void handle_wgi_devices_change( HWND hwnd )
 {
     IRawGameController *device;
     struct list *entry;
     int i;
-
-    set_selected_device( NULL );
 
     i = SendDlgItemMessageW( hwnd, IDC_WGI_DEVICES, CB_GETCURSEL, 0, 0 );
     if (i < 0) return;
@@ -117,7 +255,7 @@ static void handle_wgi_devices_change( HWND hwnd )
     if (!entry) return;
 
     device = LIST_ENTRY( entry, struct device, entry )->device;
-    set_selected_device( device );
+    update_wgi_interface( hwnd, device );
 }
 
 static void update_wgi_devices( HWND hwnd )
@@ -175,7 +313,7 @@ static void update_wgi_devices( HWND hwnd )
             IRawGameController_get_HardwareVendorId( entry->device, &vid );
             IRawGameController_get_HardwareProductId( entry->device, &pid );
 
-            swprintf( buffer, ARRAY_SIZE(buffer), L"RawGameController %04x:%04x", vid, pid );
+            swprintf( buffer, ARRAY_SIZE(buffer), L"%04x:%04x", vid, pid );
             SendDlgItemMessageW( hwnd, IDC_WGI_DEVICES, CB_ADDSTRING, 0, (LPARAM)buffer );
         }
     }
@@ -202,6 +340,11 @@ extern INT_PTR CALLBACK test_wgi_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam
         {
         case MAKEWPARAM( IDC_WGI_DEVICES, CBN_SELCHANGE ):
             handle_wgi_devices_change( hwnd );
+            handle_wgi_interface_change( hwnd );
+            break;
+
+        case MAKEWPARAM( IDC_WGI_INTERFACE, CBN_SELCHANGE ):
+            handle_wgi_interface_change( hwnd );
             break;
         }
         return TRUE;
@@ -221,6 +364,9 @@ extern INT_PTR CALLBACK test_wgi_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam
 
             SendDlgItemMessageW( hwnd, IDC_WGI_DEVICES, CB_SETCURSEL, 0, 0 );
             handle_wgi_devices_change( hwnd );
+
+            SendDlgItemMessageW( hwnd, IDC_WGI_INTERFACE, CB_SETCURSEL, 0, 0 );
+            handle_wgi_interface_change( hwnd );
 
             thread_stop = CreateEventW( NULL, FALSE, FALSE, NULL );
             thread = CreateThread( NULL, 0, input_thread_proc, (void *)thread_stop, 0, NULL );
