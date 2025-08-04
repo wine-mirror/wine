@@ -357,7 +357,8 @@ BOOL hid_device_add_gamepad(struct unix_device *iface)
     if (!hid_device_add_axes(iface, 1, HID_USAGE_PAGE_GENERIC, &lt, FALSE, 0, 32767)) return FALSE;
     if (!hid_device_add_axes(iface, 1, HID_USAGE_PAGE_GENERIC, &rt, FALSE, 0, 32767)) return FALSE;
     if (!hid_device_add_hatswitch(iface, 1)) return FALSE;
-    if (!hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, 15)) return FALSE;
+    if (!hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, 14)) return FALSE;
+    if (!hid_device_add_buttons(iface, HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN, 1, 8)) return FALSE;
     if (!hid_device_end_input_report(iface)) return FALSE;
 
     return TRUE;

@@ -529,8 +529,8 @@ static void set_abs_axis_value(struct unix_device *iface, int code, int value)
         if (!(code = impl->hat_map[code - ABS_HAT0X])) return;
         if (impl->is_gamepad)
         {
-            hid_device_set_button(iface, 11, value < 0);
-            hid_device_set_button(iface, 12, value > 0);
+            hid_device_set_button(iface, 10, value < 0);
+            hid_device_set_button(iface, 11, value > 0);
         }
         hid_device_set_hatswitch_y(iface, code - 1, value);
     }
@@ -539,8 +539,8 @@ static void set_abs_axis_value(struct unix_device *iface, int code, int value)
         if (!(code = impl->hat_map[code - ABS_HAT0X])) return;
         if (impl->is_gamepad)
         {
-            hid_device_set_button(iface, 13, value < 0);
-            hid_device_set_button(iface, 14, value > 0);
+            hid_device_set_button(iface, 12, value < 0);
+            hid_device_set_button(iface, 13, value > 0);
         }
         hid_device_set_hatswitch_x(iface, code - 1, value);
     }
@@ -675,10 +675,10 @@ static BOOL set_report_from_event(struct unix_device *iface, struct input_event 
         if (!(button = impl->button_map[ie->code])) return FALSE;
         if (impl->is_gamepad && !impl->hat_count)
         {
-            if (button == 12) hid_device_set_hatswitch_y(iface, 0, -1);
-            if (button == 13) hid_device_set_hatswitch_y(iface, 0, +1);
-            if (button == 14) hid_device_set_hatswitch_x(iface, 0, -1);
-            if (button == 15) hid_device_set_hatswitch_x(iface, 0, +1);
+            if (button == 11) hid_device_set_hatswitch_y(iface, 0, -1);
+            if (button == 12) hid_device_set_hatswitch_y(iface, 0, +1);
+            if (button == 13) hid_device_set_hatswitch_x(iface, 0, -1);
+            if (button == 14) hid_device_set_hatswitch_x(iface, 0, +1);
         }
         hid_device_set_button(iface, button - 1, ie->value);
         return FALSE;
@@ -1301,6 +1301,7 @@ static NTSTATUS lnxev_device_create(struct udev_device *dev, int fd, const char 
             if (!test_bit(info.key, button)) continue;
             if (impl->button_count > (impl->hat_count ? 10 : 14)) break;
             impl->button_map[button] = ++impl->button_count;
+            if (impl->hat_count && impl->button_count == 11) impl->button_map[button] = 17;
         }
 
         for (int i = BTN_MISC; i < KEY_MAX; i++)
@@ -1309,6 +1310,7 @@ static NTSTATUS lnxev_device_create(struct udev_device *dev, int fd, const char 
             if (impl->button_count > (impl->hat_count ? 10 : 14)) break;
             if (!test_bit(info.key, i)) continue;
             impl->button_map[i] = ++impl->button_count;
+            if (impl->hat_count && impl->button_count == 11) impl->button_map[i] = 17;
         }
     }
 

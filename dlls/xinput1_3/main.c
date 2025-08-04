@@ -597,9 +597,13 @@ static void read_controller_state(struct xinput_controller *controller)
         case 8: state.Gamepad.wButtons |= XINPUT_GAMEPAD_START; break;
         case 9: state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_THUMB; break;
         case 10: state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_THUMB; break;
-        case 11: state.Gamepad.wButtons |= XINPUT_GAMEPAD_GUIDE; break;
         }
     }
+
+    button_length = ARRAY_SIZE(buttons);
+    status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN, 0, buttons, &button_length, controller->hid.preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsages HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN returned %#lx\n", status);
+    if (button_length) state.Gamepad.wButtons |= XINPUT_GAMEPAD_GUIDE;
 
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH, &value, controller->hid.preparsed, report_buf, report_len);
     if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_HATSWITCH returned %#lx\n", status);
