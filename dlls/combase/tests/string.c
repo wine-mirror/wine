@@ -621,7 +621,7 @@ static void test_marshal(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_INPROC);
     size = HSTRING_UserSize(&umcb.Flags, 0, &str);
     exp_size = sizeof(*inproc);
-    todo_wine ok(size == exp_size, "got size %lu != %lu\n", size, exp_size);
+    ok(size == exp_size, "got size %lu != %lu\n", size, exp_size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_INPROC);
     next = HSTRING_UserMarshal(&umcb.Flags, buffer, &str);
     if (size == exp_size)
@@ -641,7 +641,7 @@ static void test_marshal(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_INPROC);
     size = HSTRING_UserSize(&umcb.Flags, 1, &str);
     exp_size = ALIGNED_LENGTH(1 + sizeof(*inproc), 7);
-    todo_wine ok(size == exp_size, "got size %lu != %lu\n", size, exp_size);
+    ok(size == exp_size, "got size %lu != %lu\n", size, exp_size);
     memset(buffer, 0, 80);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_INPROC);
     next = HSTRING_UserMarshal(&umcb.Flags, &buffer[1], &str);
@@ -660,7 +660,7 @@ static void test_marshal(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_INPROC);
     size = HSTRING_UserSize(&umcb.Flags, 0, &str_empty);
     exp_size = sizeof(*inproc);
-    todo_wine ok(size == exp_size, "got size %lu != %lu\n", size, exp_size);
+    ok(size == exp_size, "got size %lu != %lu\n", size, exp_size);
     memset(buffer, 0xff, 80);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_INPROC);
     next = HSTRING_UserMarshal(&umcb.Flags, buffer, &str_empty);
@@ -680,7 +680,7 @@ static void test_marshal(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
     size = HSTRING_UserSize(&umcb.Flags, 0, &str);
     exp_size = offsetof(struct hstring_wire_local, data[str_len]);
-    todo_wine ok(size == exp_size, "got size %lu != %lu\n", size, exp_size);
+    ok(size == exp_size, "got size %lu != %lu\n", size, exp_size);
     memset(buffer, 0, 80);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
     next = HSTRING_UserMarshal(&umcb.Flags, buffer, &str);
@@ -706,7 +706,7 @@ static void test_marshal(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
     size = HSTRING_UserSize(&umcb.Flags, 1, &str);
     exp_size = ALIGNED_LENGTH(1, 7) + offsetof(struct hstring_wire_local, data[str_len]);
-    todo_wine ok(size == exp_size, "got size %lu != %lu\n", size, exp_size);
+    ok(size == exp_size, "got size %lu != %lu\n", size, exp_size);
     memset(buffer, 0, 80);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
     next = HSTRING_UserMarshal(&umcb.Flags, &buffer[1], &str);
@@ -730,7 +730,7 @@ static void test_marshal(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
     size = HSTRING_UserSize(&umcb.Flags, 0, &str_empty);
     exp_size = offsetof(struct hstring_wire_local, data[0]);
-    todo_wine ok(size == exp_size, "got size %lu != %lu\n", size, exp_size);
+    ok(size == exp_size, "got size %lu != %lu\n", size, exp_size);
     memset(buffer, 0xff, 80);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
     next = HSTRING_UserMarshal(&umcb.Flags, buffer, &str_empty);

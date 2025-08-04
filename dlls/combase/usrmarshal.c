@@ -1027,12 +1027,31 @@ void WINAPI WdtpInterfacePointer_UserFree(IUnknown *punk)
     if (punk) IUnknown_Release(punk);
 }
 
+struct hstring_wire_inproc
+{
+    ULONG context;
+    HSTRING str;
+};
+
+struct hstring_wire_local
+{
+    ULONG context;
+    ULONG size;
+    WCHAR data[1];
+};
+
 /******************************************************************************
  *           HSTRING_UserSize (combase.@)
  */
 ULONG __RPC_USER HSTRING_UserSize(ULONG *flags, ULONG size, HSTRING *str)
 {
-    FIXME("%p, %lu, %p: stub\n", flags, size, str);
+    TRACE("%s, %lu, %s.\n", debugstr_user_flags(flags), size, debugstr_hstring(*str));
+
+    ALIGN_LENGTH(size, 7);
+    if (LOWORD(*flags) == MSHCTX_INPROC)
+        size += sizeof(struct hstring_wire_inproc);
+    else
+        size += offsetof(struct hstring_wire_local, data[WindowsGetStringLen(*str)]);
     return size;
 }
 
