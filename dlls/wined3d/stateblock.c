@@ -1919,8 +1919,8 @@ void CDECL wined3d_stateblock_multiply_transform(struct wined3d_stateblock *stat
     TRACE("%.8e %.8e %.8e %.8e\n", matrix->_41, matrix->_42, matrix->_43, matrix->_44);
 
     multiply_matrix(mat, mat, matrix);
-    stateblock->changed.transform[d3dts >> 5] |= 1u << (d3dts & 0x1f);
-    stateblock->changed.transforms = 1;
+
+    wined3d_stateblock_set_transform(stateblock, d3dts, mat);
 }
 
 HRESULT CDECL wined3d_stateblock_set_clip_plane(struct wined3d_stateblock *stateblock,
