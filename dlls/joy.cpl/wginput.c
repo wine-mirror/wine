@@ -102,6 +102,13 @@ static void set_device_state( struct device_state *state )
     if (modified) SendMessageW( dialog_hwnd, WM_USER, 0, 0 );
 }
 
+static void get_device_state( struct device_state *state )
+{
+    EnterCriticalSection( &state_cs );
+    *state = device_state;
+    LeaveCriticalSection( &state_cs );
+}
+
 static void set_selected_interface( IGameController *iface )
 {
     IGameController *previous;
@@ -197,6 +204,50 @@ static DWORD WINAPI input_thread_proc( void *param )
     }
 
     return 0;
+}
+
+LRESULT CALLBACK test_wgi_gamepad_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    TRACE( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
+
+    if (msg == WM_PAINT)
+    {
+        struct device_state state;
+        XINPUT_STATE xstate = {0};
+
+        get_device_state( &state );
+
+        xstate.Gamepad.sThumbLX = state.gamepad.LeftThumbstickX * 0x7fff;
+        xstate.Gamepad.sThumbLY = state.gamepad.LeftThumbstickY * 0x7fff;
+        if (state.gamepad.Buttons & GamepadButtons_LeftThumbstick) xstate.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_THUMB;
+
+        xstate.Gamepad.sThumbRX = state.gamepad.RightThumbstickX * 0x7fff;
+        xstate.Gamepad.sThumbRY = state.gamepad.RightThumbstickY * 0x7fff;
+        if (state.gamepad.Buttons & GamepadButtons_RightThumbstick) xstate.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_THUMB;
+
+        xstate.Gamepad.bLeftTrigger = state.gamepad.LeftTrigger * 0xff;
+        xstate.Gamepad.bRightTrigger = state.gamepad.RightTrigger * 0xff;
+
+        if (state.gamepad.Buttons & GamepadButtons_DPadUp) xstate.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_UP;
+        if (state.gamepad.Buttons & GamepadButtons_LeftShoulder) xstate.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_SHOULDER;
+        if (state.gamepad.Buttons & GamepadButtons_RightShoulder) xstate.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_SHOULDER;
+        if (state.gamepad.Buttons & GamepadButtons_Y) xstate.Gamepad.wButtons |= XINPUT_GAMEPAD_Y;
+
+        if (state.gamepad.Buttons & GamepadButtons_DPadLeft) xstate.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_LEFT;
+        if (state.gamepad.Buttons & GamepadButtons_DPadRight) xstate.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_RIGHT;
+        if (state.gamepad.Buttons & GamepadButtons_X) xstate.Gamepad.wButtons |= XINPUT_GAMEPAD_X;
+        if (state.gamepad.Buttons & GamepadButtons_B) xstate.Gamepad.wButtons |= XINPUT_GAMEPAD_B;
+
+        if (state.gamepad.Buttons & GamepadButtons_DPadDown) xstate.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_DOWN;
+        if (state.gamepad.Buttons & GamepadButtons_View) xstate.Gamepad.wButtons |= XINPUT_GAMEPAD_BACK;
+        if (state.gamepad.Buttons & GamepadButtons_Menu) xstate.Gamepad.wButtons |= XINPUT_GAMEPAD_START;
+        if (state.gamepad.Buttons & GamepadButtons_A) xstate.Gamepad.wButtons |= XINPUT_GAMEPAD_A;
+
+        paint_gamepad_view( hwnd, &xstate );
+        return 0;
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
 
 static void handle_wgi_interface_change( HWND hwnd )
@@ -398,8 +449,50 @@ static void update_wgi_devices( HWND hwnd )
     }
 }
 
+static void update_device_views( HWND hwnd )
+{
+    HWND gamepad, rumble;
+    struct device_state state;
+
+    get_device_state( &state );
+
+    gamepad = GetDlgItem( hwnd, IDC_WGI_GAMEPAD );
+    rumble = GetDlgItem( hwnd, IDC_WGI_RUMBLE );
+
+    if (!IsEqualGUID( state.iid, &IID_IGamepad ))
+    {
+        ShowWindow( gamepad, SW_HIDE );
+        ShowWindow( rumble, SW_HIDE );
+    }
+    else
+    {
+        InvalidateRect( gamepad, NULL, TRUE );
+        InvalidateRect( rumble, NULL, TRUE );
+        ShowWindow( gamepad, SW_SHOW );
+        ShowWindow( rumble, SW_SHOW );
+    }
+}
+
 static void create_device_views( HWND hwnd )
 {
+    HINSTANCE instance = (HINSTANCE)GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
+    HWND gamepad, rumble;
+    LONG margin;
+    RECT rect;
+
+    gamepad = GetDlgItem( hwnd, IDC_WGI_GAMEPAD );
+    rumble = GetDlgItem( hwnd, IDC_WGI_RUMBLE );
+    ShowWindow( gamepad, SW_HIDE );
+    ShowWindow( rumble, SW_HIDE );
+
+    GetClientRect( gamepad, &rect );
+    rect.top += 10;
+
+    margin = (rect.bottom - rect.top) * 15 / 100;
+    InflateRect( &rect, -margin, -margin );
+
+    CreateWindowW( L"JoyCplWGIGamepad", NULL, WS_CHILD | WS_VISIBLE, rect.left, rect.top,
+                   rect.right - rect.left, rect.bottom - rect.top, gamepad, NULL, NULL, instance );
 }
 
 extern INT_PTR CALLBACK test_wgi_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
@@ -467,6 +560,7 @@ extern INT_PTR CALLBACK test_wgi_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam
         return TRUE;
 
     case WM_USER:
+        update_device_views( hwnd );
         return TRUE;
     }
 

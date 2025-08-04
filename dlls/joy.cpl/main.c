@@ -518,15 +518,23 @@ static void register_window_class(void)
         .lpfnWndProc = &test_di_buttons_window_proc,
         .lpszClassName = L"JoyCplDInputButtons",
     };
+    WNDCLASSW wgi_gamepad_class =
+    {
+        .hInstance = hcpl,
+        .lpfnWndProc = &test_wgi_gamepad_window_proc,
+        .lpszClassName = L"JoyCplWGIGamepad",
+    };
 
     RegisterClassW( &xi_class );
     RegisterClassW( &di_axes_class );
     RegisterClassW( &di_povs_class );
     RegisterClassW( &di_buttons_class );
+    RegisterClassW( &wgi_gamepad_class );
 }
 
 static void unregister_window_class(void)
 {
+    UnregisterClassW( L"JoyCplWGIGamepad", hcpl );
     UnregisterClassW( L"JoyCplDInputAxes", hcpl );
     UnregisterClassW( L"JoyCplDInputPOVs", hcpl );
     UnregisterClassW( L"JoyCplDInputButtons", hcpl );

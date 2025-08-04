@@ -3926,7 +3926,7 @@ msgstr ""
 "და რომ მას ჯოისტიკების ჩანართში DInput არ ფარავს."
 
 #: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
-#: dlls/joy.cpl/joy.rc:101
+#: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:112
 msgid "Rumble"
 msgstr ""
 

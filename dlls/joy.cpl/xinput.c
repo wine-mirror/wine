@@ -247,6 +247,74 @@ static void draw_button_view( HDC hdc, RECT rect, BOOL set, const WCHAR *name )
     SelectObject( hdc, font );
 }
 
+void paint_gamepad_view( HWND hwnd, XINPUT_STATE *state )
+{
+    UINT axis_size, trigger_size, button_size, horiz_space;
+    RECT rect, tmp_rect;
+    PAINTSTRUCT paint;
+    HDC hdc;
+
+    GetClientRect( hwnd, &rect );
+    axis_size = rect.bottom - rect.top;
+    button_size = (axis_size - 1) / 3;
+    trigger_size = axis_size / 4;
+    horiz_space = (rect.right - rect.left - axis_size * 2 - trigger_size * 2 - button_size * 5) / 10;
+
+    hdc = BeginPaint( hwnd, &paint );
+
+    rect.right = rect.left + axis_size;
+    OffsetRect( &rect, horiz_space, 0 );
+    draw_axis_view( hdc, rect, state->Gamepad.sThumbLX, state->Gamepad.sThumbLY,
+                            state->Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB );
+    OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
+    draw_axis_view( hdc, rect, state->Gamepad.sThumbRX, state->Gamepad.sThumbRY,
+                            state->Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB );
+
+    OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
+    rect.right = rect.left + trigger_size;
+    draw_trigger_view( hdc, rect, state->Gamepad.bLeftTrigger );
+    OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
+    draw_trigger_view( hdc, rect, state->Gamepad.bRightTrigger );
+
+    OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
+    rect.right = rect.left + button_size;
+    rect.bottom = rect.top + button_size;
+    tmp_rect = rect;
+    OffsetRect( &rect, (rect.right - rect.left + horiz_space) / 2, 0 );
+    draw_button_view( hdc, rect, state->Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP, L"^" );
+    OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
+    draw_button_view( hdc, rect, state->Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER, L"L" );
+    OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
+    draw_button_view( hdc, rect, state->Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER, L"R" );
+    OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
+    draw_button_view( hdc, rect, state->Gamepad.wButtons & XINPUT_GAMEPAD_Y, L"Y" );
+
+    rect = tmp_rect;
+    OffsetRect( &rect, 0, rect.bottom - rect.top );
+    tmp_rect = rect;
+    draw_button_view( hdc, rect, state->Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT, L"<" );
+    OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
+    draw_button_view( hdc, rect, state->Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT, L">" );
+    OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
+    draw_button_view( hdc, rect, state->Gamepad.wButtons & 0x0400, L"@" );
+    OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
+    draw_button_view( hdc, rect, state->Gamepad.wButtons & XINPUT_GAMEPAD_X, L"X" );
+    OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
+    draw_button_view( hdc, rect, state->Gamepad.wButtons & XINPUT_GAMEPAD_B, L"B" );
+
+    rect = tmp_rect;
+    OffsetRect( &rect, (rect.right - rect.left + horiz_space) / 2, rect.bottom - rect.top );
+    draw_button_view( hdc, rect, state->Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN, L"v" );
+    OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
+    draw_button_view( hdc, rect, state->Gamepad.wButtons & XINPUT_GAMEPAD_BACK, L"#" );
+    OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
+    draw_button_view( hdc, rect, state->Gamepad.wButtons & XINPUT_GAMEPAD_START, L"=" );
+    OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
+    draw_button_view( hdc, rect, state->Gamepad.wButtons & XINPUT_GAMEPAD_A, L"A" );
+
+    EndPaint( hwnd, &paint );
+}
+
 LRESULT CALLBACK test_xi_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     TRACE( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
@@ -254,74 +322,10 @@ LRESULT CALLBACK test_xi_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM
     if (msg == WM_PAINT)
     {
         DWORD index = GetWindowLongW( hwnd, GWLP_USERDATA );
-        UINT axis_size, trigger_size, button_size, horiz_space;
         struct device_state state;
-        RECT rect, tmp_rect;
-        PAINTSTRUCT paint;
-        HDC hdc;
-
-        GetClientRect( hwnd, &rect );
-        axis_size = rect.bottom - rect.top;
-        button_size = (axis_size - 1) / 3;
-        trigger_size = axis_size / 4;
-        horiz_space = (rect.right - rect.left - axis_size * 2 - trigger_size * 2 - button_size * 5) / 10;
 
         get_device_state( index, &state );
-
-        hdc = BeginPaint( hwnd, &paint );
-
-        rect.right = rect.left + axis_size;
-        OffsetRect( &rect, horiz_space, 0 );
-        draw_axis_view( hdc, rect, state.state.Gamepad.sThumbLX, state.state.Gamepad.sThumbLY,
-                        state.state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB );
-        OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
-        draw_axis_view( hdc, rect, state.state.Gamepad.sThumbRX, state.state.Gamepad.sThumbRY,
-                        state.state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB );
-
-        OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
-        rect.right = rect.left + trigger_size;
-        draw_trigger_view( hdc, rect, state.state.Gamepad.bLeftTrigger );
-        OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
-        draw_trigger_view( hdc, rect, state.state.Gamepad.bRightTrigger );
-
-        OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
-        rect.right = rect.left + button_size;
-        rect.bottom = rect.top + button_size;
-        tmp_rect = rect;
-        OffsetRect( &rect, (rect.right - rect.left + horiz_space) / 2, 0 );
-        draw_button_view( hdc, rect, state.state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP, L"^" );
-        OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
-        draw_button_view( hdc, rect, state.state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER, L"L" );
-        OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
-        draw_button_view( hdc, rect, state.state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER, L"R" );
-        OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
-        draw_button_view( hdc, rect, state.state.Gamepad.wButtons & XINPUT_GAMEPAD_Y, L"Y" );
-
-        rect = tmp_rect;
-        OffsetRect( &rect, 0, rect.bottom - rect.top );
-        tmp_rect = rect;
-        draw_button_view( hdc, rect, state.state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT, L"<" );
-        OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
-        draw_button_view( hdc, rect, state.state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT, L">" );
-        OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
-        draw_button_view( hdc, rect, state.state.Gamepad.wButtons & 0x0400, L"@" );
-        OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
-        draw_button_view( hdc, rect, state.state.Gamepad.wButtons & XINPUT_GAMEPAD_X, L"X" );
-        OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
-        draw_button_view( hdc, rect, state.state.Gamepad.wButtons & XINPUT_GAMEPAD_B, L"B" );
-
-        rect = tmp_rect;
-        OffsetRect( &rect, (rect.right - rect.left + horiz_space) / 2, rect.bottom - rect.top );
-        draw_button_view( hdc, rect, state.state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN, L"v" );
-        OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
-        draw_button_view( hdc, rect, state.state.Gamepad.wButtons & XINPUT_GAMEPAD_BACK, L"#" );
-        OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
-        draw_button_view( hdc, rect, state.state.Gamepad.wButtons & XINPUT_GAMEPAD_START, L"=" );
-        OffsetRect( &rect, rect.right - rect.left + horiz_space, 0 );
-        draw_button_view( hdc, rect, state.state.Gamepad.wButtons & XINPUT_GAMEPAD_A, L"A" );
-
-        EndPaint( hwnd, &paint );
-
+        paint_gamepad_view( hwnd, &state.state );
         return 0;
     }
 

@@ -3958,7 +3958,7 @@ msgstr ""
 "eingesteckt ist und nicht im Joysticks-Tab für DInput überschrieben wurde."
 
 #: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
-#: dlls/joy.cpl/joy.rc:101
+#: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:112
 msgid "Rumble"
 msgstr "Rumble"
 

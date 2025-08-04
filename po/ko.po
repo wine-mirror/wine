@@ -3929,7 +3929,7 @@ msgstr ""
 "서 DInput으로 재정의되지 않았는지 확인하십시오."
 
 #: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
-#: dlls/joy.cpl/joy.rc:101
+#: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:112
 msgid "Rumble"
 msgstr "진동"
 

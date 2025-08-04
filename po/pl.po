@@ -3941,7 +3941,7 @@ msgstr ""
 "podłączony i nie został nadpisany dla DInput na karcie Dżojstiki."
 
 #: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
-#: dlls/joy.cpl/joy.rc:101
+#: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:112
 msgid "Rumble"
 msgstr "Wibracje"
 
