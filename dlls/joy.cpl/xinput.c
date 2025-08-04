@@ -95,7 +95,7 @@ static DWORD WINAPI input_thread_proc( void *param )
             struct device_state state = {0};
 
             state.status = XInputGetCapabilities( i, 0, &state.caps );
-            if (!state.status) state.status = XInputGetState( i, &state.state );
+            if (!state.status) state.status = XInputGetStateEx( i, &state.state );
             set_device_state( i, &state );
 
             if (state.rumble)
