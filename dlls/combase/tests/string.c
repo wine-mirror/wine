@@ -624,12 +624,11 @@ static void test_marshal(void)
     ok(size == exp_size, "got size %lu != %lu\n", size, exp_size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_INPROC);
     next = HSTRING_UserMarshal(&umcb.Flags, buffer, &str);
-    if (size == exp_size)
-        todo_wine ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
+    ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
     inproc = (struct hstring_wire_inproc *)buffer;
-    todo_wine ok(inproc->context == exp_context, "got unexpected prefix %#lx != %#lx\n", inproc->context, exp_context);
+    ok(inproc->context == exp_context, "got unexpected prefix %#lx != %#lx\n", inproc->context, exp_context);
     /* INPROC marshaling just consists of increasing the refcount and copying the address. */
-    todo_wine ok(inproc->str == str, "got unexpected address %p\n", inproc->str);
+    ok(inproc->str == str, "got unexpected address %p\n", inproc->str);
     inproc->context = 0xdeadbeef; /* The context value is not validated. */
     next = HSTRING_UserUnmarshal(&umcb.Flags, buffer, &str2);
     if (size == exp_size)
@@ -645,11 +644,10 @@ static void test_marshal(void)
     memset(buffer, 0, 80);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_INPROC);
     next = HSTRING_UserMarshal(&umcb.Flags, &buffer[1], &str);
-    if (size == exp_size)
-        todo_wine ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
+    ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
     inproc = ALIGNED_POINTER(&buffer[1], 7);
-    todo_wine ok(inproc->context == exp_context, "got unexpected prefix %#lx != %#lx\n", inproc->context, exp_context);
-    todo_wine ok(inproc->str == str, "got unexpected address %p\n", inproc->str);
+    ok(inproc->context == exp_context, "got unexpected prefix %#lx != %#lx\n", inproc->context, exp_context);
+    ok(inproc->str == str, "got unexpected address %p\n", inproc->str);
     next = HSTRING_UserUnmarshal(&umcb.Flags, &buffer[1], &str2);
     if (size == exp_size)
         todo_wine ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
@@ -664,11 +662,10 @@ static void test_marshal(void)
     memset(buffer, 0xff, 80);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_INPROC);
     next = HSTRING_UserMarshal(&umcb.Flags, buffer, &str_empty);
-    if (size == exp_size)
-        todo_wine ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
+    ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
     inproc = (struct hstring_wire_inproc *)buffer;
-    todo_wine ok(inproc->context == exp_context, "got unexpected prefix %#lx != %#lx\n", inproc->context, exp_context);
-    todo_wine ok(!inproc->str, "got unexpected address %p\n", inproc->str);
+    ok(inproc->context == exp_context, "got unexpected prefix %#lx != %#lx\n", inproc->context, exp_context);
+    ok(!inproc->str, "got unexpected address %p\n", inproc->str);
     str2 = NULL;
     next = HSTRING_UserUnmarshal(&umcb.Flags, buffer, &str2);
     if (size == exp_size)
@@ -684,13 +681,11 @@ static void test_marshal(void)
     memset(buffer, 0, 80);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
     next = HSTRING_UserMarshal(&umcb.Flags, buffer, &str);
-    if (size == exp_size)
-        todo_wine ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
+    ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
     local = (struct hstring_wire_local *)buffer;
-    todo_wine ok(local->size == str_bytes, "got buf.size %lu != %lu\n", local->size, str_bytes);
-    todo_wine ok(local->context == exp_context, "got unexpected prefix %#lx != %#lx\n", local->context, exp_context);
-    if (size == exp_size)
-        todo_wine ok(!memcmp(local->data, str_buf, str_bytes), "got buf.data %s\n", debugstr_wn(local->data, str_bytes));
+    ok(local->size == str_bytes, "got buf.size %lu != %lu\n", local->size, str_bytes);
+    ok(local->context == exp_context, "got unexpected prefix %#lx != %#lx\n", local->context, exp_context);
+    ok(!memcmp(local->data, str_buf, str_bytes), "got buf.data %s\n", debugstr_wn(local->data, str_bytes));
     str2 = NULL;
     local->context = 0xdeadbeef; /* The context value is not validated. */
     next = HSTRING_UserUnmarshal(&umcb.Flags, buffer, &str2);
@@ -710,13 +705,11 @@ static void test_marshal(void)
     memset(buffer, 0, 80);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
     next = HSTRING_UserMarshal(&umcb.Flags, &buffer[1], &str);
-    if (size == exp_size)
-        todo_wine ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
+    ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
     local = ALIGNED_POINTER(&buffer[1], 7);
-    todo_wine ok(local->size == str_bytes, "got buf.size %lu != %lu\n", local->size, str_bytes);
-    todo_wine ok(local->context == exp_context, "got unexpected prefix %#lx != %#lx\n", local->context, exp_context);
-    if (size == exp_size)
-        todo_wine ok(!memcmp(local->data, str_buf, str_bytes), "got buf.data %s\n", debugstr_wn(local->data, str_bytes));
+    ok(local->size == str_bytes, "got buf.size %lu != %lu\n", local->size, str_bytes);
+    ok(local->context == exp_context, "got unexpected prefix %#lx != %#lx\n", local->context, exp_context);
+    ok(!memcmp(local->data, str_buf, str_bytes), "got buf.data %s\n", debugstr_wn(local->data, str_bytes));
     next = HSTRING_UserUnmarshal(&umcb.Flags, &buffer[1], &str2);
     if (size == exp_size)
         todo_wine ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
@@ -734,11 +727,10 @@ static void test_marshal(void)
     memset(buffer, 0xff, 80);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
     next = HSTRING_UserMarshal(&umcb.Flags, buffer, &str_empty);
-    if (size == exp_size)
-        todo_wine ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
+    ok(next == &buffer[size], "got next %p != %p\n", next, &buffer[size]);
     local = (struct hstring_wire_local *)buffer;
-    todo_wine ok(local->context == exp_context, "got unexpected prefix %#lx != %#lx\n", local->context, exp_context);
-    todo_wine ok(!local->size, "got buf.size %lu\n", local->size);
+    ok(local->context == exp_context, "got unexpected prefix %#lx != %#lx\n", local->context, exp_context);
+    ok(!local->size, "got buf.size %lu\n", local->size);
     str2 = NULL;
     next = HSTRING_UserUnmarshal(&umcb.Flags, buffer, &str2);
     if (size == exp_size)

@@ -1060,7 +1060,37 @@ ULONG __RPC_USER HSTRING_UserSize(ULONG *flags, ULONG size, HSTRING *str)
  */
 BYTE * __RPC_USER HSTRING_UserMarshal(ULONG *flags, BYTE *buf, HSTRING *str)
 {
-    FIXME("%p, %p, %p: stub\n", flags, buf, str);
+    const ULONG context = sizeof(*str) == 8 ? WDT_INPROC64_CALL : WDT_INPROC_CALL;
+
+    TRACE("%s, %p, %s.\n", debugstr_user_flags(flags), buf, debugstr_hstring(*str));
+
+    if (LOWORD(*flags) == MSHCTX_DIFFERENTMACHINE)
+    {
+        FIXME("MSHCTX_DIFFERENTMACHINE is not supported yet.\n");
+        RpcRaiseException(RPC_S_INVALID_TAG);
+    }
+
+    if (LOWORD(*flags) == MSHCTX_INPROC)
+    {
+        struct hstring_wire_inproc *wire = ALIGNED_POINTER(buf, 7);
+
+        wire->context = context;
+        WindowsDuplicateString(*str, &wire->str);
+        buf = (BYTE *)(wire + 1);
+    }
+    else
+    {
+        struct hstring_wire_local *wire = ALIGNED_POINTER(buf, 7);
+        const WCHAR *str_buf;
+        UINT32 len;
+
+        wire->context = context;
+        str_buf = WindowsGetStringRawBuffer(*str, &len);
+        wire->size = len * sizeof(WCHAR);
+        memcpy(wire->data, str_buf, wire->size);
+        buf = (BYTE *)&wire->data[len];
+    }
+
     return buf;
 }
 
