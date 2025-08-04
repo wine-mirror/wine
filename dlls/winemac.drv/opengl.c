@@ -2013,11 +2013,14 @@ static void macdrv_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 
 static void macdrv_surface_flush(struct opengl_drawable *base, UINT flags)
 {
+    struct macdrv_client_surface *client = impl_from_client_surface(base->client);
     struct macdrv_context *context = NtCurrentTeb()->glReserved2;
 
     TRACE("%s flags %#x\n", debugstr_opengl_drawable(base), flags);
 
+    if (!context) return;
     if (flags & GL_FLUSH_INTERVAL) set_swap_interval(context, base->interval);
+    if (flags & GL_FLUSH_UPDATED) make_context_current(context, context->read_view == client->cocoa_view);
 }
 
 
