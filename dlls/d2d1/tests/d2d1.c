@@ -15499,39 +15499,47 @@ static void test_compute_geometry_area(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1RectangleGeometry_ComputeArea(rectangle_geometry, NULL, 0.01f, &area);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-        ok(compare_float(area, 4.0f, 0), "Unexpected value %.8e.\n", area);
+    ok(compare_float(area, 4.0f, 0), "Unexpected value %.8e.\n", area);
 
     hr = ID2D1RectangleGeometry_ComputeArea(rectangle_geometry, NULL, 200.0f, &area);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-        ok(compare_float(area, 4.0f, 0), "Unexpected value %.8e.\n", area);
+    ok(compare_float(area, 4.0f, 0), "Unexpected value %.8e.\n", area);
 
     set_matrix_identity(&matrix);
     scale_matrix(&matrix, 1.0f, 2.0f);
     hr = ID2D1RectangleGeometry_ComputeArea(rectangle_geometry, &matrix, 0.01f, &area);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-        ok(compare_float(area, 8.0f, 0), "Unexpected value %.8e.\n", area);
+    ok(compare_float(area, 8.0f, 0), "Unexpected value %.8e.\n", area);
 
     rotate_matrix(&matrix, 0.5f);
     hr = ID2D1RectangleGeometry_ComputeArea(rectangle_geometry, &matrix, 200.0f, &area);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-        ok(compare_float(area, 8.0f, 0), "Unexpected value %.8e.\n", area);
+    ok(compare_float(area, 8.0f, 0), "Unexpected value %.8e.\n", area);
 
     skew_matrix(&matrix, 0.1f, 1.5f);
     hr = ID2D1RectangleGeometry_ComputeArea(rectangle_geometry, &matrix, 200.0f, &area);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-        ok(compare_float(area, 6.8f, 0), "Unexpected value %.8e.\n", area);
+    ok(compare_float(area, 6.8f, 0), "Unexpected value %.8e.\n", area);
 
+    ID2D1RectangleGeometry_Release(rectangle_geometry);
+
+    set_rect(&rect, 50.0f, 0.0f, 40.0f, 100.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(ctx.factory, &rect, &rectangle_geometry);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1RectangleGeometry_ComputeArea(rectangle_geometry, NULL, 1.0f, &area);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(compare_float(area, 1000.0f, 0), "Unexpected value %.8e.\n", area);
+    ID2D1RectangleGeometry_Release(rectangle_geometry);
+
+    set_rect(&rect, 0.0f, 100.0f, 40.0f, 50.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(ctx.factory, &rect, &rectangle_geometry);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1RectangleGeometry_ComputeArea(rectangle_geometry, NULL, 1.0f, &area);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(compare_float(area, 2000.0f, 0), "Unexpected value %.8e.\n", area);
     ID2D1RectangleGeometry_Release(rectangle_geometry);
 
     release_test_context(&ctx);

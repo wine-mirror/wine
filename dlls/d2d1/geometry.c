@@ -4499,12 +4499,46 @@ static HRESULT STDMETHODCALLTYPE d2d_rectangle_geometry_Outline(ID2D1RectangleGe
     return E_NOTIMPL;
 }
 
+static float d2d_triangle_area(const D2D1_TRIANGLE *triangle)
+{
+    D2D1_POINT_2F point2, point3;
+
+    /* Translate one vertex to origin */
+    point2.x = triangle->point2.x - triangle->point1.x;
+    point2.y = triangle->point2.y - triangle->point1.y;
+    point3.x = triangle->point3.x - triangle->point1.x;
+    point3.y = triangle->point3.y - triangle->point1.y;
+
+    return 0.5f * fabsf(point2.x * point3.y - point3.x * point2.y);
+}
+
 static HRESULT STDMETHODCALLTYPE d2d_rectangle_geometry_ComputeArea(ID2D1RectangleGeometry *iface,
         const D2D1_MATRIX_3X2_F *transform, float tolerance, float *area)
 {
-    FIXME("iface %p, transform %p, tolerance %.8e, area %p stub!\n", iface, transform, tolerance, area);
+    struct d2d_geometry *geometry = impl_from_ID2D1RectangleGeometry(iface);
+    const D2D_RECT_F *rect = &geometry->u.rectangle.rect;
+    D2D1_TRIANGLE triangle;
+    D2D1_MATRIX_3X2_F m;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, transform %p, tolerance %.8e, area %p.\n", iface, transform, tolerance, area);
+
+    if (transform)
+    {
+        m = *transform;
+        m._31 = m._32 = 0.0f;
+
+        d2d_point_transform(&triangle.point1, &m, rect->left, rect->bottom);
+        d2d_point_transform(&triangle.point2, &m, rect->left, rect->top);
+        d2d_point_transform(&triangle.point3, &m, rect->right, rect->top);
+
+        *area = 2 * d2d_triangle_area(&triangle);
+    }
+    else
+    {
+        *area = fabsf((rect->right - rect->left) * (rect->bottom - rect->top));
+    }
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_rectangle_geometry_ComputeLength(ID2D1RectangleGeometry *iface,
