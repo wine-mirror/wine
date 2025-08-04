@@ -15448,6 +15448,7 @@ static void test_effect_vertex_buffer(BOOL d3d11)
 
 static void test_compute_geometry_area(BOOL d3d11)
 {
+    ID2D1TransformedGeometry *transformed_geometry;
     ID2D1RectangleGeometry *rectangle_geometry;
     ID2D1EllipseGeometry *ellipse_geometry;
     struct d2d1_test_context ctx;
@@ -15540,6 +15541,31 @@ static void test_compute_geometry_area(BOOL d3d11)
     hr = ID2D1RectangleGeometry_ComputeArea(rectangle_geometry, NULL, 1.0f, &area);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(compare_float(area, 2000.0f, 0), "Unexpected value %.8e.\n", area);
+    ID2D1RectangleGeometry_Release(rectangle_geometry);
+
+    /* Transformed geometry */
+    set_rect(&rect, -1.0f, -1.0f, 1.0f, 1.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(ctx.factory, &rect, &rectangle_geometry);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 240.0f, 720.0f);
+    scale_matrix(&matrix, 40.0f, 120.0f);
+    hr = ID2D1Factory_CreateTransformedGeometry(ctx.factory, (ID2D1Geometry *)rectangle_geometry,
+            &matrix, &transformed_geometry);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1TransformedGeometry_ComputeArea(transformed_geometry, NULL, 1.0f, &area);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(compare_float(area, 1.92e+4f, 0), "Unexpected value %.8e.\n", area);
+
+    set_matrix_identity(&matrix);
+    skew_matrix(&matrix, 0.1f, 1.5f);
+    hr = ID2D1TransformedGeometry_ComputeArea(transformed_geometry, &matrix, 1.0f, &area);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(compare_float(area, 1.632e+4f, 0), "Unexpected value %.8e.\n", area);
+
+    ID2D1TransformedGeometry_Release(transformed_geometry);
     ID2D1RectangleGeometry_Release(rectangle_geometry);
 
     release_test_context(&ctx);
