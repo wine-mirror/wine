@@ -3324,7 +3324,8 @@ static void init_sys_menu_popup( HMENU hmenu, DWORD style, DWORD class_style )
 
 static BOOL init_popup( HWND owner, HMENU hmenu, UINT flags )
 {
-    UNICODE_STRING class_name = { .Buffer = MAKEINTRESOURCEW( POPUPMENU_CLASS_ATOM ) };
+    static const WCHAR atomW[] = {'#','3','2','7','6','8',0}; /* POPUPMENU_CLASS_ATOM */
+    UNICODE_STRING class_name = RTL_CONSTANT_STRING(atomW);
     DWORD ex_style = 0;
     struct menu *menu;
 

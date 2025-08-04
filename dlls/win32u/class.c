@@ -1164,7 +1164,7 @@ BOOL needs_ime_window( HWND hwnd )
 
 static const struct builtin_class_descr desktop_builtin_class =
 {
-    .name = MAKEINTRESOURCEA(DESKTOP_CLASS_ATOM),
+    .name = "#32769", /* DESKTOP_CLASS_ATOM */
     .style = CS_DBLCLKS,
     .proc = NTUSER_WNDPROC_DESKTOP,
     .brush = (HBRUSH)(COLOR_BACKGROUND + 1),
@@ -1204,7 +1204,7 @@ static const struct builtin_class_descr builtin_classes[] =
     },
     /* dialog */
     {
-        .name = MAKEINTRESOURCEA(DIALOG_CLASS_ATOM),
+        .name = "#32770", /* DIALOG_CLASS_ATOM */
         .style = CS_SAVEBITS | CS_DBLCLKS,
         .proc = NTUSER_WNDPROC_DIALOG,
         .extra = DLGWINDOWEXTRA,
@@ -1212,7 +1212,7 @@ static const struct builtin_class_descr builtin_classes[] =
     },
     /* icon title */
     {
-        .name = MAKEINTRESOURCEA(ICONTITLE_CLASS_ATOM),
+        .name = "#32772", /* ICONTITLE_CLASS_ATOM */
         .proc = NTUSER_WNDPROC_ICONTITLE,
         .cursor = IDC_ARROW,
     },
@@ -1233,7 +1233,7 @@ static const struct builtin_class_descr builtin_classes[] =
     },
     /* menu */
     {
-        .name = MAKEINTRESOURCEA(POPUPMENU_CLASS_ATOM),
+        .name = "#32768", /* POPUPMENU_CLASS_ATOM */
         .style = CS_DROPSHADOW | CS_SAVEBITS | CS_DBLCLKS,
         .proc = NTUSER_WNDPROC_MENU,
         .extra = sizeof(HMENU),
@@ -1290,16 +1290,8 @@ static void register_builtin( const struct builtin_class_descr *descr )
         class.hCursor = LoadImageW( 0, (const WCHAR *)descr->cursor, IMAGE_CURSOR,
                                     0, 0, LR_SHARED | LR_DEFAULTSIZE );
 
-    if (IS_INTRESOURCE( descr->name ))
-    {
-        name.Buffer = (WCHAR *)descr->name;
-        name.Length = name.MaximumLength = 0;
-    }
-    else
-    {
-        asciiz_to_unicode( nameW, descr->name );
-        RtlInitUnicodeString( &name, nameW );
-    }
+    asciiz_to_unicode( nameW, descr->name );
+    RtlInitUnicodeString( &name, nameW );
 
     if (!NtUserRegisterClassExWOW( &class, &name, &version, &menu_name, 1, 0, NULL ) && class.hCursor)
         NtUserDestroyCursor( class.hCursor, 0 );

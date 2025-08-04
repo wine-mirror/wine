@@ -35,29 +35,6 @@ static inline const char *debugstr_us( const UNICODE_STRING *us )
     return debugstr_wn( us->Buffer, us->Length / sizeof(WCHAR) );
 }
 
-
-/***********************************************************************
- *           get_int_atom_value
- */
-ATOM get_int_atom_value( UNICODE_STRING *name )
-{
-    const WCHAR *ptr = name->Buffer;
-    const WCHAR *end = ptr + name->Length / sizeof(WCHAR);
-    UINT ret = 0;
-
-    if (IS_INTRESOURCE(ptr)) return LOWORD(ptr);
-
-    if (*ptr++ != '#') return 0;
-    while (ptr < end)
-    {
-        if (*ptr < '0' || *ptr > '9') return 0;
-        ret = ret * 10 + *ptr++ - '0';
-        if (ret >= MAXINTATOM) return 0;
-    }
-    return ret;
-}
-
-
 /***********************************************************************
  *           is_comctl32_class
  */
@@ -124,8 +101,8 @@ void init_class_name_ansi( UNICODE_STRING *str, const char *name )
 {
     if (IS_INTRESOURCE( name ))
     {
-        str->Buffer = (WCHAR *)name;
-        str->Length = str->MaximumLength = 0;
+        UINT len = NtUserGetAtomName( (UINT_PTR)name, str );
+        str->Length = len * sizeof(WCHAR);
     }
     else
     {
@@ -138,8 +115,8 @@ void init_class_name( UNICODE_STRING *str, const WCHAR *name )
 {
     if (IS_INTRESOURCE( name ))
     {
-        str->Buffer = (WCHAR *)name;
-        str->Length = str->MaximumLength = 0;
+        UINT len = NtUserGetAtomName( (UINT_PTR)name, str );
+        str->Length = len * sizeof(WCHAR);
     }
     else
     {
