@@ -519,6 +519,7 @@ static void set_abs_axis_value(struct unix_device *iface, int code, int value)
         {
             double scale = (code == 5 || code == 6 ? 32767.0 : 65535.0) / range;
             value = (value - min) * scale - (code == 5 || code == 6 ? 0 : 32768);
+            if (code == 2 || code == 4) value = -value - 1; /* match XUSB / GIP protocol */
         }
 
         hid_device_set_abs_axis(iface, code - 1, value);

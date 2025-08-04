@@ -322,10 +322,10 @@ static HRESULT WINAPI gamepad_GetCurrentReading( IGamepad *iface, struct Gamepad
         }
 
         value->LeftThumbstickX = 2. * state.axes[0] - 1.;
-        value->LeftThumbstickY = 1. - 2. * state.axes[1];
+        value->LeftThumbstickY = 2. * state.axes[1] - 1.;
         value->LeftTrigger = state.axes[2];
         value->RightThumbstickX = 2. * state.axes[3] - 1.;
-        value->RightThumbstickY = 1. - 2. * state.axes[4];
+        value->RightThumbstickY = 2. * state.axes[4] - 1.;
         value->RightTrigger = state.axes[5];
 
         value->Timestamp = state.timestamp;

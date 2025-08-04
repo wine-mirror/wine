@@ -348,12 +348,14 @@ BOOL hid_device_add_gamepad(struct unix_device *iface)
     static const USAGE_AND_PAGE device_usage = {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_GAMEPAD};
     static const USAGE left[] = {HID_USAGE_GENERIC_X, HID_USAGE_GENERIC_Y};
     static const USAGE right[] = {HID_USAGE_GENERIC_RX, HID_USAGE_GENERIC_RY};
-    static const USAGE trigger[] = {HID_USAGE_GENERIC_Z, HID_USAGE_GENERIC_RZ};
+    static const USAGE lt = HID_USAGE_GENERIC_Z;
+    static const USAGE rt = HID_USAGE_GENERIC_RZ;
 
     if (!hid_device_begin_input_report(iface, &device_usage)) return FALSE;
     if (!hid_device_add_axes(iface, 2, HID_USAGE_PAGE_GENERIC, left, FALSE, -32768, 32767)) return FALSE;
     if (!hid_device_add_axes(iface, 2, HID_USAGE_PAGE_GENERIC, right, FALSE, -32768, 32767)) return FALSE;
-    if (!hid_device_add_axes(iface, 2, HID_USAGE_PAGE_GENERIC, trigger, FALSE, 0, 32767)) return FALSE;
+    if (!hid_device_add_axes(iface, 1, HID_USAGE_PAGE_GENERIC, &lt, FALSE, 0, 32767)) return FALSE;
+    if (!hid_device_add_axes(iface, 1, HID_USAGE_PAGE_GENERIC, &rt, FALSE, 0, 32767)) return FALSE;
     if (!hid_device_add_hatswitch(iface, 1)) return FALSE;
     if (!hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, 15)) return FALSE;
     if (!hid_device_end_input_report(iface)) return FALSE;
