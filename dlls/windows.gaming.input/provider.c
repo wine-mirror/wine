@@ -141,6 +141,12 @@ static HRESULT WINAPI wine_provider_GetTrustLevel( IWineGameControllerProvider *
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI wine_provider_get_NonRoamableId( IWineGameControllerProvider *iface, HSTRING *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
 static BOOL CALLBACK count_ffb_axes( const DIDEVICEOBJECTINSTANCEW *obj, void *args )
 {
     DWORD *count = args;
@@ -354,6 +360,7 @@ static const struct IWineGameControllerProviderVtbl wine_provider_vtbl =
     wine_provider_GetRuntimeClassName,
     wine_provider_GetTrustLevel,
     /* IWineGameControllerProvider methods */
+    wine_provider_get_NonRoamableId,
     wine_provider_get_Type,
     wine_provider_get_AxisCount,
     wine_provider_get_ButtonCount,

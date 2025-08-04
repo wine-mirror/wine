@@ -362,10 +362,10 @@ static HRESULT WINAPI raw_controller_2_get_SimpleHapticsControllers( IRawGameCon
     return hr;
 }
 
-static HRESULT WINAPI raw_controller_2_get_NonRoamableId( IRawGameController2 *iface, HSTRING* value )
+static HRESULT WINAPI raw_controller_2_get_NonRoamableId( IRawGameController2 *iface, HSTRING *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct controller *impl = impl_from_IRawGameController2( iface );
+    return IWineGameControllerProvider_get_NonRoamableId( impl->wine_provider, value );
 }
 
 static HRESULT WINAPI raw_controller_2_get_DisplayName( IRawGameController2 *iface, HSTRING* value )

@@ -169,6 +169,8 @@ namespace Windows.Gaming.Input.Custom {
     interface IWineGameControllerProvider : IInspectable
         requires Windows.Gaming.Input.Custom.IGameControllerProvider
     {
+        [propget] HRESULT NonRoamableId([out, retval] HSTRING *value);
+
         [propget] HRESULT Type([out, retval] WineGameControllerType *value);
         [propget] HRESULT AxisCount([out, retval] INT32 *value);
         [propget] HRESULT ButtonCount([out, retval] INT32 *value);
