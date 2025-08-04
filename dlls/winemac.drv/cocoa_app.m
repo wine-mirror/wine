@@ -581,7 +581,8 @@ static NSString* WineLocalizedString(unsigned int stringID)
         NSUInteger nextFloatingIndex = 0;
         __block NSInteger maxLevel = NSIntegerMin;
         __block NSInteger maxNonfloatingLevel = NSNormalWindowLevel;
-        __block NSInteger minFloatingLevel = NSFloatingWindowLevel;
+        /* Windows with WS_EX_TOPMOST should have a window level higher than the macOS dock */
+        __block NSInteger minFloatingLevel = kCGDockWindowLevel + 1;
         __block WineWindow* prev = nil;
         WineWindow* window;
 
