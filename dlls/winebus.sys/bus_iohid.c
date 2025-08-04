@@ -297,7 +297,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
          * opening keyboards, mice, or the Touch Bar on older MacBooks triggers
          * a permissions dialog for input monitoring.
          */
-        ERR("Ignoring HID device %p (vid %04x, pid %04x): not a joystick or gamepad\n", IOHIDDevice, desc.vid, desc.pid);
+        WARN("Ignoring HID device %p (vid %04x, pid %04x): not a joystick or gamepad\n", IOHIDDevice, desc.vid, desc.pid);
         return;
     }
 
