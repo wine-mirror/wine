@@ -16532,18 +16532,18 @@ static void test_nullCallback(void)
     flush_sequence();
     ret = SendMessageCallbackA(hwnd, WM_USER, 0, 0, NULL, 1);
     ok(ret, "SendMessageCallbackA failed, error %ld.", GetLastError());
-    ok_sequence(WmEmptySeq, "WM_USER with NULL callback", TRUE);
+    ok_sequence(WmEmptySeq, "WM_USER with NULL callback", FALSE);
     flush_events();
-    ok_sequence(WmUserSeq, "WM_USER with NULL callback after flushing events", TRUE);
+    ok_sequence(WmUserSeq, "WM_USER with NULL callback after flushing events", FALSE);
 
     /* NULL callback and data being 1 with SendMessageCallbackW(). The result suggests that the
      * message is not directly sent to the window */
     flush_sequence();
     ret = SendMessageCallbackW(hwnd, WM_USER, 0, 0, NULL, 1);
     ok(ret, "SendMessageCallbackW failed, error %ld.", GetLastError());
-    ok_sequence(WmEmptySeq, "WM_USER with NULL callback", TRUE);
+    ok_sequence(WmEmptySeq, "WM_USER with NULL callback", FALSE);
     flush_events();
-    ok_sequence(WmUserSeq, "WM_USER with NULL callback after flushing events", TRUE);
+    ok_sequence(WmUserSeq, "WM_USER with NULL callback after flushing events", FALSE);
 
     /* NULL callback and data being 2 with SendMessageCallbackA() */
     flush_sequence();
@@ -16562,7 +16562,6 @@ static void test_nullCallback(void)
     ret = SendMessageCallbackA(hwnd, WM_USER, 0, 0, NULL, 1);
     ok(ret, "SendMessageCallbackA failed, error %ld.", GetLastError());
     status = GetQueueStatus(QS_ALLINPUT);
-    todo_wine
     ok(HIWORD(status) & QS_SENDMESSAGE && LOWORD(status) & QS_SENDMESSAGE,
        "Got unexpected status %#lx.\n", status);
 

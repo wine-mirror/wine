@@ -4189,7 +4189,9 @@ static BOOL process_message( struct send_message_info *info, DWORD_PTR *res_ptr,
     thread_info->msg_source = msg_source_unavailable;
     spy_enter_message( SPY_SENDMESSAGE, info->hwnd, info->msg, info->wparam, info->lparam );
 
-    if (info->dest_tid != GetCurrentThreadId())
+    if (info->dest_tid != GetCurrentThreadId() ||
+        /* When the callback pointer is NULL and the data is 1, don't wait for the result */
+        (info->type == MSG_CALLBACK && !info->callback && info->data == 1))
     {
         if (dest_pid != GetCurrentProcessId() && (info->type == MSG_ASCII || info->type == MSG_UNICODE))
             info->type = MSG_OTHER_PROCESS;
