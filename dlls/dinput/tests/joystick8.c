@@ -5216,16 +5216,12 @@ static void test_windows_gaming_input(void)
     ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
 
     hr = IRawGameController2_get_DisplayName( raw_controller2, &str );
-    todo_wine
     ok( hr == S_OK, "get_DisplayName returned %#lx\n", hr );
-    if (hr == S_OK)
-    {
-        buffer = pWindowsGetStringRawBuffer( str, &length );
-        todo_wine
-        ok( !wcscmp( buffer, L"HID-compliant game controller" ),
-            "get_DisplayName returned %s\n", debugstr_wn( buffer, length ) );
-        pWindowsDeleteString( str );
-    }
+    buffer = pWindowsGetStringRawBuffer( str, &length );
+    todo_wine
+    ok( !wcscmp( buffer, L"HID-compliant game controller" ),
+        "get_DisplayName returned %s\n", debugstr_wn( buffer, length ) );
+    pWindowsDeleteString( str );
 
     hr = IRawGameController2_get_NonRoamableId( raw_controller2, &str );
     todo_wine

@@ -147,6 +147,18 @@ static HRESULT WINAPI wine_provider_get_NonRoamableId( IWineGameControllerProvid
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI wine_provider_get_DisplayName( IWineGameControllerProvider *iface, HSTRING *value )
+{
+    struct provider *impl = impl_from_IWineGameControllerProvider( iface );
+    DIDEVICEINSTANCEW instance = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    if (FAILED(hr = IDirectInputDevice8_GetDeviceInfo( impl->dinput_device, &instance ))) return hr;
+    return WindowsCreateString( instance.tszProductName, wcslen( instance.tszProductName ), value );
+}
+
 static BOOL CALLBACK count_ffb_axes( const DIDEVICEOBJECTINSTANCEW *obj, void *args )
 {
     DWORD *count = args;
@@ -361,6 +373,7 @@ static const struct IWineGameControllerProviderVtbl wine_provider_vtbl =
     wine_provider_GetTrustLevel,
     /* IWineGameControllerProvider methods */
     wine_provider_get_NonRoamableId,
+    wine_provider_get_DisplayName,
     wine_provider_get_Type,
     wine_provider_get_AxisCount,
     wine_provider_get_ButtonCount,
