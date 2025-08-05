@@ -38,8 +38,6 @@ extern NTSTATUS wgl_wglDeleteContext( void *args );
 extern NTSTATUS wow64_wgl_wglDeleteContext( void *args );
 extern NTSTATUS wgl_wglGetProcAddress( void *args );
 extern NTSTATUS wow64_wgl_wglGetProcAddress( void *args );
-extern NTSTATUS wgl_wglMakeCurrent( void *args );
-extern NTSTATUS wow64_wgl_wglMakeCurrent( void *args );
 extern NTSTATUS gl_glGetString( void *args );
 extern NTSTATUS wow64_gl_glGetString( void *args );
 extern NTSTATUS ext_glClientWaitSync( void *args );

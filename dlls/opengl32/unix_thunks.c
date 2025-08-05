@@ -68,7 +68,7 @@ NTSTATUS wgl_wglGetProcAddress( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS wgl_wglMakeCurrent( void *args )
+static NTSTATUS wgl_wglMakeCurrent( void *args )
 {
     struct wglMakeCurrent_params *params = args;
     pthread_mutex_lock( &wgl_lock );
@@ -29938,6 +29938,22 @@ static NTSTATUS wow64_wgl_wglGetPixelFormat( void *args )
     const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->hdc) );
     if (!funcs || !funcs->p_wglGetPixelFormat) return STATUS_NOT_IMPLEMENTED;
     params->ret = funcs->p_wglGetPixelFormat( ULongToPtr(params->hdc) );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_wgl_wglMakeCurrent( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        PTR32 hDc;
+        PTR32 newContext;
+        BOOL ret;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wrap_wglMakeCurrent( teb, ULongToPtr(params->hDc), ULongToPtr(params->newContext) );
+    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 

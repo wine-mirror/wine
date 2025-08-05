@@ -365,6 +365,20 @@ static void free_handle_ptr( struct wgl_handle *ptr )
     next_free = ptr;
 }
 
+static void update_teb32_context( TEB *teb )
+{
+#ifdef _WIN64
+    TEB32 *teb32;
+
+    if (!teb->WowTebOffset) return;
+    teb32 = (TEB32 *)((char *)teb + teb->WowTebOffset);
+
+    teb32->glCurrentRC = (UINT_PTR)teb->glCurrentRC;
+    teb32->glReserved1[0] = (UINT_PTR)teb->glReserved1[0];
+    teb32->glReserved1[1] = (UINT_PTR)teb->glReserved1[1];
+#endif
+}
+
 static int *memdup_attribs( const int *attribs )
 {
     const int *attr;
@@ -1020,21 +1034,20 @@ BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
         teb->glReserved1[1] = hdc;
         teb->glCurrentRC = hglrc;
         teb->glTable = (void *)funcs;
-        return TRUE;
     }
-    if (prev)
+    else if (prev)
     {
         if (!funcs->p_wglMakeCurrent( 0, NULL )) return FALSE;
         prev->tid = 0;
         teb->glCurrentRC = 0;
         teb->glTable = &null_opengl_funcs;
-        return TRUE;
     }
-    if (!hdc)
+    else if (!hdc)
     {
         RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return FALSE;
     }
+    update_teb32_context( teb );
     return TRUE;
 }
 
@@ -1427,18 +1440,6 @@ static PTR32 find_wow64_string( const char *str, PTR32 wow64_str )
     return wow64_str;
 }
 
-static inline void update_teb32_context( TEB *teb )
-{
-    void *teb32;
-
-    if (!teb->WowTebOffset) return;
-    teb32 = (char *)teb + teb->WowTebOffset;
-
-    ((TEB32 *)teb32)->glCurrentRC = (UINT_PTR)teb->glCurrentRC;
-    ((TEB32 *)teb32)->glReserved1[0] = (UINT_PTR)teb->glReserved1[0];
-    ((TEB32 *)teb32)->glReserved1[1] = (UINT_PTR)teb->glReserved1[1];
-}
-
 NTSTATUS wow64_wgl_wglCreateContext( void *args )
 {
     struct
@@ -1523,27 +1524,6 @@ NTSTATUS wow64_wgl_wglDeleteContext( void *args )
     };
     NTSTATUS status;
     if (!(status = wgl_wglDeleteContext( &params ))) update_teb32_context( params.teb );
-    params32->ret = params.ret;
-    return status;
-}
-
-NTSTATUS wow64_wgl_wglMakeCurrent( void *args )
-{
-    struct
-    {
-        PTR32 teb;
-        PTR32 hDc;
-        PTR32 newContext;
-        BOOL ret;
-    } *params32 = args;
-    struct wglMakeCurrent_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .hDc = ULongToPtr(params32->hDc),
-        .newContext = ULongToPtr(params32->newContext),
-    };
-    NTSTATUS status;
-    if (!(status = wgl_wglMakeCurrent( &params ))) update_teb32_context( params.teb );
     params32->ret = params.ret;
     return status;
 }
