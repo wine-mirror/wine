@@ -3813,8 +3813,9 @@ static void test_attr_collection_disp(IDispatch *disp, LONG len, IHTMLElement *e
     ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
     SysFreeString(bstr);
 
-    ok(dispid == dispid_attr1 || dispid == dispid_attr2 || dispid == dispid_attr3,
-        "indexed dispid isn't one of the attr dispids\n");
+    if(compat_mode < COMPAT_IE9)
+        ok(dispid == dispid_attr1 || dispid == dispid_attr2 || dispid == dispid_attr3,
+           "indexed dispid isn't one of the attr dispids\n");
 
     bstr = SysAllocString(L"attr1");
     hres = IHTMLElement_removeAttribute(elem, bstr, 0, &vbool);
@@ -3824,7 +3825,10 @@ static void test_attr_collection_disp(IDispatch *disp, LONG len, IHTMLElement *e
 
     hres = IDispatchEx_GetMemberName(dispex, dispid_attr1, &bstr);
     ok(hres == S_OK, "GetMemberName failed: %08lx\n", hres);
-    ok(wcscmp(bstr, L"attr1"), "GetMemberName still returned attr1 after removal\n");
+    if(compat_mode >= COMPAT_IE9)
+        ok(!wcscmp(bstr, L"attr1"), "GetMemberName returned %s after removal\n", debugstr_w(bstr));
+    else
+        ok(wcscmp(bstr, L"attr1"), "GetMemberName still returned attr1 after removal\n");
     SysFreeString(bstr);
 
     bstr = SysAllocString(buf);
@@ -3864,7 +3868,8 @@ static void test_attr_collection_disp(IDispatch *disp, LONG len, IHTMLElement *e
 
     hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &dispid);
     ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
-    ok(dispid != dispid_attr1, "attr1 after re-added dispid == dispid_attr1\n");
+    if(compat_mode < COMPAT_IE9)
+        ok(dispid != dispid_attr1, "attr1 after re-added dispid == dispid_attr1\n");
     ok(dispid != dispid_attr2, "attr1 after re-added dispid == dispid_attr2\n");
     ok(dispid != dispid_attr3, "attr1 after re-added dispid == dispid_attr3\n");
     SysFreeString(bstr);
@@ -3874,15 +3879,20 @@ static void test_attr_collection_disp(IDispatch *disp, LONG len, IHTMLElement *e
 
 static void test_attr_collection(IHTMLElement *elem)
 {
+    IHTMLAttributeCollection4 *attr_col4;
+    IHTMLAttributeCollection2 *attr_col2;
     IHTMLAttributeCollection *attr_col;
+    IHTMLDOMAttribute2 *dom_attr2;
+    IHTMLDOMAttribute *dom_attr;
+    LONG i, len, checked, len_ie9;
     IDispatch *disp, *attr;
     IEnumVARIANT *enum_var;
-    LONG i, len, checked;
     IHTMLDOMNode *node;
     IUnknown *enum_unk;
     VARIANT id, val;
     ULONG fetched;
     HRESULT hres;
+    BSTR bstr;
     BSTR name;
 
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLDOMNode, (void**)&node);
@@ -3900,10 +3910,18 @@ static void test_attr_collection(IHTMLElement *elem)
 
     hres = IDispatch_QueryInterface(disp, &IID_IHTMLAttributeCollection, (void**)&attr_col);
     ok(hres == S_OK, "QueryInterface failed: %08lx\n", hres);
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLAttributeCollection2, (void**)&attr_col2);
+    ok(hres == S_OK, "QueryInterface failed: %08lx\n", hres);
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLAttributeCollection4, (void**)&attr_col4);
+    ok(hres == S_OK, "QueryInterface failed: %08lx\n", hres);
 
     hres = IHTMLAttributeCollection_get_length(attr_col, &i);
     ok(hres == S_OK, "get_length failed: %08lx\n", hres);
-    ok(i > 3, "length = %ld\n", i);
+    ok(i > 4, "length = %ld\n", i);
+
+    hres = IHTMLAttributeCollection4_get_length(attr_col4, &len_ie9);
+    ok(hres == S_OK, "get_length failed: %08lx\n", hres);
+    ok(len_ie9 == 4, "length = %ld\n", len_ie9);
 
     V_VT(&val) = VT_I4;
     V_I4(&val) = 1;
@@ -3914,6 +3932,7 @@ static void test_attr_collection(IHTMLElement *elem)
 
     hres = IHTMLAttributeCollection_get_length(attr_col, &len);
     ok(hres == S_OK, "get_length failed: %08lx\n", hres);
+    todo_wine_if(compat_mode >= COMPAT_IE9)
     ok(len == i+1, "get_length returned %ld, expected %ld\n", len, i+1);
 
     hres = IHTMLAttributeCollection_get__newEnum(attr_col, &enum_unk);
@@ -3933,6 +3952,7 @@ static void test_attr_collection(IHTMLElement *elem)
         checked += test_attr_collection_attr(attr, i);
         IDispatch_Release(attr);
     }
+    todo_wine_if(compat_mode >= COMPAT_IE9)
     ok(checked==5, "invalid number of specified attributes (%ld)\n", checked);
 
     checked = 0;
@@ -3948,6 +3968,7 @@ static void test_attr_collection(IHTMLElement *elem)
         checked += test_attr_collection_attr(V_DISPATCH(&val), i);
         IDispatch_Release(V_DISPATCH(&val));
     }
+    todo_wine_if(compat_mode >= COMPAT_IE9)
     ok(checked==5, "invalid number of specified attributes (%ld)\n", checked);
 
     fetched = 0;
@@ -3967,10 +3988,106 @@ static void test_attr_collection(IHTMLElement *elem)
     ok(hres == E_INVALIDARG, "item failed: %08lx\n", hres);
     VariantClear(&id);
 
-    test_attr_collection_disp(disp, len, elem);
+    test_attr_collection_disp(disp, compat_mode >= COMPAT_IE9 ? len_ie9 : len, elem);
+
+    bstr = SysAllocString(L"attr1");
+    dom_attr = NULL;
+    hres = IHTMLAttributeCollection2_getNamedItem(attr_col2, bstr, &dom_attr);
+    ok(hres == S_OK, "getNamedItem failed: %08lx\n", hres);
+    todo_wine_if(compat_mode >= COMPAT_IE9)
+    ok(dom_attr != NULL, "getNamedItem returned null\n");
+    if(dom_attr)
+        test_no_iface((IUnknown*)dom_attr, &IID_IHTMLDOMNode);
+
+    dom_attr2 = NULL;
+    hres = IHTMLAttributeCollection4_getNamedItem(attr_col4, bstr, &dom_attr2);
+    ok(hres == S_OK, "getNamedItem failed: %08lx\n", hres);
+    todo_wine
+    test_no_iface((IUnknown*)dom_attr2, &IID_IHTMLDOMNode);
+    SysFreeString(bstr);
+
+    if(dom_attr) {
+        todo_wine
+        ok(iface_cmp((IUnknown*)dom_attr, (IUnknown*)dom_attr2), "attr != attr2\n");
+        IHTMLDOMAttribute_Release(dom_attr);
+    }
+    IHTMLDOMAttribute2_Release(dom_attr2);
+
+    bstr = SysAllocString(L"style");
+    dom_attr = NULL;
+    hres = IHTMLAttributeCollection2_getNamedItem(attr_col2, bstr, &dom_attr);
+    ok(hres == S_OK, "getNamedItem failed: %08lx\n", hres);
+    todo_wine_if(compat_mode >= COMPAT_IE9)
+    ok(dom_attr != NULL, "style attribute not found\n");
+    if(dom_attr)
+        IHTMLDOMAttribute_Release(dom_attr);
+
+    dom_attr2 = (void *)0xdeadbeef;
+    hres = IHTMLAttributeCollection4_getNamedItem(attr_col4, bstr, &dom_attr2);
+    ok(hres == S_OK, "getNamedItem failed: %08lx\n", hres);
+    ok(!dom_attr2, "style attribute found\n");
+    SysFreeString(bstr);
+
+    hres = IHTMLAttributeCollection4_get_length(attr_col4, &len_ie9);
+    ok(hres == S_OK, "get_length failed: %08lx\n", hres);
+    todo_wine_if(compat_mode < COMPAT_IE9)
+    ok(len_ie9 == 6, "length = %ld\n", len_ie9);
+
+    V_VT(&id) = VT_I4;
+    V_I4(&id) = len_ie9;
+    hres = IHTMLAttributeCollection_item(attr_col, &id, &attr);
+    ok(hres == S_OK, "getNamedItem failed: %08lx\n", hres);
+    ok(attr != NULL, "attr = NULL\n");
+    IDispatch_Release(attr);
+
+    dom_attr2 = (void*)0xdeadbeef;
+    hres = IHTMLAttributeCollection4_item(attr_col4, len_ie9, &dom_attr2);
+    ok(hres == S_OK, "getNamedItem failed: %08lx\n", hres);
+    ok(!dom_attr2, "attr = NULL\n");
 
     IDispatch_Release(disp);
     IHTMLAttributeCollection_Release(attr_col);
+    IHTMLAttributeCollection2_Release(attr_col2);
+    IHTMLAttributeCollection4_Release(attr_col4);
+}
+
+static void test_attributes(IHTMLDocument2 *doc, IHTMLElement *parent)
+{
+    IHTMLDOMAttribute2 *attr2;
+    IHTMLDOMNode *elem_node;
+    IHTMLElement6 *elem6;
+    IHTMLElement *elem;
+    BSTR bstr;
+    HRESULT hres;
+
+    test_elem_set_innerhtml((IUnknown*)parent,
+                            L"<div id=\"attr\" attr1=\"attr1\" attr2 attr3=\"attr3\"></div>");
+    elem_node = get_first_child((IUnknown*)parent);
+
+    elem = get_elem_iface((IUnknown*)elem_node);
+    test_attr_collection(elem);
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLElement6, (void**)&elem6);
+    ok(hres == S_OK, "Could not get IHTMLElement6: %08lx\n", hres);
+
+    bstr = SysAllocString(L"attr1");
+    hres = IHTMLElement6_getAttributeNode(elem6, bstr, &attr2);
+    SysFreeString(bstr);
+    ok(hres == S_OK, "getAttributeNode failed: %08lx\n", hres);
+    todo_wine
+    test_no_iface((IUnknown*)attr2, &IID_IHTMLDOMNode);
+    IHTMLDOMAttribute2_Release(attr2);
+
+    bstr = SysAllocString(L"style");
+    attr2 = (void*)0xdeadbeef;
+    hres = IHTMLElement6_getAttributeNode(elem6, bstr, &attr2);
+    SysFreeString(bstr);
+    ok(hres == S_OK, "getAttributeNode failed: %08lx\n", hres);
+    ok(!attr2, "getAttributeNode returned %p\n", attr2);
+
+    IHTMLElement6_Release(elem6);
+    IHTMLElement_Release(elem);
+    IHTMLDOMNode_Release(elem_node);
 }
 
 static void test_attr_collection_builtins(IHTMLDocument2 *doc)
@@ -10082,7 +10199,6 @@ static void test_elems(IHTMLDocument2 *doc)
     elem = get_elem_by_id(doc, L"attr", TRUE);
     if(elem) {
         test_dynamic_properties(elem);
-        test_attr_collection(elem);
         test_contenteditable((IUnknown*)elem);
         IHTMLElement_Release(elem);
     }
@@ -11121,6 +11237,7 @@ static void test_dom_elements(IHTMLDocument2 *doc)
     test_textarea_element(doc, div);
     test_form_element(doc, div);
     test_svg_element(doc, div);
+    test_attributes(doc, div);
 
     IHTMLElement_Release(div);
 }
