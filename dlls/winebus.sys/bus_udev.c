@@ -1253,6 +1253,47 @@ static NTSTATUS lnxev_device_create(struct udev_device *dev, int fd, const char 
     if (is_xbox_gamepad(desc.vid, desc.pid)) desc.is_gamepad = TRUE;
     else if (axis_count == 6 && button_count >= 14) desc.is_gamepad = TRUE;
 
+    if (desc.is_gamepad)
+    {
+        static const UINT gamepad_buttons[] =
+        {
+            BTN_A,
+            BTN_B,
+            BTN_X,
+            BTN_Y,
+            BTN_TL,
+            BTN_TR,
+            BTN_SELECT,
+            BTN_START,
+            BTN_THUMBL,
+            BTN_THUMBR,
+            BTN_MODE,
+            BTN_C,
+            BTN_Z,
+            BTN_TL2,
+            BTN_TR2,
+        };
+
+        memset(impl->button_map, 0, sizeof(impl->button_map));
+        impl->button_count = 0;
+
+        for (int i = 0; i < ARRAY_SIZE(gamepad_buttons); i++)
+        {
+            int button = gamepad_buttons[i];
+            if (!test_bit(info.key, button)) continue;
+            if (impl->button_count > 14) break;
+            impl->button_map[button] = ++impl->button_count;
+        }
+
+        for (int i = BTN_MISC; i < KEY_MAX; i++)
+        {
+            if (i >= BTN_GAMEPAD && i < BTN_DIGI) continue;
+            if (impl->button_count > 14) break;
+            if (!test_bit(info.key, i)) continue;
+            impl->button_map[i] = ++impl->button_count;
+        }
+    }
+
     if (build_report_descriptor(&impl->base.unix_device, impl->base.udev_device, &info))
     {
         list_remove(&impl->base.unix_device.entry);
