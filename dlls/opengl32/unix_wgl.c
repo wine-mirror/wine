@@ -1509,25 +1509,6 @@ NTSTATUS wow64_ext_wglCreatePbufferARB( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS wow64_wgl_wglDeleteContext( void *args )
-{
-    struct
-    {
-        PTR32 teb;
-        PTR32 oldContext;
-        BOOL ret;
-    } *params32 = args;
-    struct wglDeleteContext_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .oldContext = ULongToPtr(params32->oldContext),
-    };
-    NTSTATUS status;
-    if (!(status = wgl_wglDeleteContext( &params ))) update_teb32_context( params.teb );
-    params32->ret = params.ret;
-    return status;
-}
-
 NTSTATUS wow64_ext_wglGetPbufferDCARB( void *args )
 {
     struct

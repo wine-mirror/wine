@@ -43,7 +43,7 @@ NTSTATUS wgl_wglCreateContext( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS wgl_wglDeleteContext( void *args )
+static NTSTATUS wgl_wglDeleteContext( void *args )
 {
     struct wglDeleteContext_params *params = args;
     pthread_mutex_lock( &wgl_lock );
@@ -29923,6 +29923,21 @@ static NTSTATUS wow64_wgl_wglCopyContext( void *args )
     TEB *teb = get_teb64( params->teb );
     pthread_mutex_lock( &wgl_lock );
     params->ret = wrap_wglCopyContext( teb, ULongToPtr(params->hglrcSrc), ULongToPtr(params->hglrcDst), params->mask );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_wgl_wglDeleteContext( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        PTR32 oldContext;
+        BOOL ret;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wrap_wglDeleteContext( teb, ULongToPtr(params->oldContext) );
     pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }

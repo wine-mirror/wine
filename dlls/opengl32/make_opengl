@@ -241,7 +241,6 @@ my %manual_wow64_thunks =
      "wglCreateContext" => 1,
      "wglCreateContextAttribsARB" => 1,
      "wglCreatePbufferARB" => 1,
-     "wglDeleteContext" => 1,
      "wglGetExtensionsStringARB" => 1,
      "wglGetExtensionsStringEXT" => 1,
      "wglGetPbufferDCARB" => 1,

@@ -34,8 +34,6 @@ extern BOOL wrap_wglSetPbufferAttribARB( TEB *teb , HPBUFFERARB hPbuffer, const 
 
 extern NTSTATUS wgl_wglCreateContext( void *args );
 extern NTSTATUS wow64_wgl_wglCreateContext( void *args );
-extern NTSTATUS wgl_wglDeleteContext( void *args );
-extern NTSTATUS wow64_wgl_wglDeleteContext( void *args );
 extern NTSTATUS wgl_wglGetProcAddress( void *args );
 extern NTSTATUS wow64_wgl_wglGetProcAddress( void *args );
 extern NTSTATUS gl_glGetString( void *args );
