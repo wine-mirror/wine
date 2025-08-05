@@ -26697,14 +26697,6 @@ static NTSTATUS ext_wglFreeMemoryNV( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_wglGetCurrentReadDCARB( void *args )
-{
-    struct wglGetCurrentReadDCARB_params *params = args;
-    const struct opengl_funcs *funcs = params->teb->glTable;
-    params->ret = funcs->p_wglGetCurrentReadDCARB();
-    return STATUS_SUCCESS;
-}
-
 NTSTATUS ext_wglGetExtensionsStringARB( void *args )
 {
     struct wglGetExtensionsStringARB_params *params = args;
@@ -29880,7 +29872,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_wglCreatePbufferARB,
     ext_wglDestroyPbufferARB,
     ext_wglFreeMemoryNV,
-    ext_wglGetCurrentReadDCARB,
     ext_wglGetExtensionsStringARB,
     ext_wglGetExtensionsStringEXT,
     ext_wglGetPbufferDCARB,
@@ -78242,17 +78233,6 @@ static NTSTATUS wow64_ext_wglFreeMemoryNV( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_ext_wglGetCurrentReadDCARB( void *args )
-{
-    struct
-    {
-        PTR32 teb;
-        PTR32 ret;
-    } *params = args;
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 static NTSTATUS wow64_ext_wglGetPixelFormatAttribfvARB( void *args )
 {
     struct
@@ -81475,7 +81455,6 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_wglCreatePbufferARB,
     wow64_ext_wglDestroyPbufferARB,
     wow64_ext_wglFreeMemoryNV,
-    wow64_ext_wglGetCurrentReadDCARB,
     wow64_ext_wglGetExtensionsStringARB,
     wow64_ext_wglGetExtensionsStringEXT,
     wow64_ext_wglGetPbufferDCARB,
@@ -93756,11 +93735,6 @@ static void null_wglFreeMemoryNV( void *pointer )
 {
     ERR( "unsupported\n" );
 }
-static HDC null_wglGetCurrentReadDCARB(void)
-{
-    ERR( "unsupported\n" );
-    return 0;
-}
 static const char * null_wglGetExtensionsStringARB( HDC hdc )
 {
     ERR( "unsupported\n" );
@@ -96871,7 +96845,6 @@ struct opengl_funcs null_opengl_funcs =
     .p_wglCreatePbufferARB = null_wglCreatePbufferARB,
     .p_wglDestroyPbufferARB = null_wglDestroyPbufferARB,
     .p_wglFreeMemoryNV = null_wglFreeMemoryNV,
-    .p_wglGetCurrentReadDCARB = null_wglGetCurrentReadDCARB,
     .p_wglGetExtensionsStringARB = null_wglGetExtensionsStringARB,
     .p_wglGetExtensionsStringEXT = null_wglGetExtensionsStringEXT,
     .p_wglGetPbufferDCARB = null_wglGetPbufferDCARB,

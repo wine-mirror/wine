@@ -25180,12 +25180,6 @@ struct wglFreeMemoryNV_params
     void *pointer;
 };
 
-struct wglGetCurrentReadDCARB_params
-{
-    TEB *teb;
-    HDC ret;
-};
-
 struct wglGetExtensionsStringARB_params
 {
     TEB *teb;
@@ -28364,7 +28358,6 @@ enum unix_funcs
     unix_wglCreatePbufferARB,
     unix_wglDestroyPbufferARB,
     unix_wglFreeMemoryNV,
-    unix_wglGetCurrentReadDCARB,
     unix_wglGetExtensionsStringARB,
     unix_wglGetExtensionsStringEXT,
     unix_wglGetPbufferDCARB,
