@@ -96,8 +96,6 @@ extern NTSTATUS ext_wglGetExtensionsStringEXT( void *args );
 extern NTSTATUS wow64_ext_wglGetExtensionsStringEXT( void *args );
 extern NTSTATUS ext_wglGetPbufferDCARB( void *args );
 extern NTSTATUS wow64_ext_wglGetPbufferDCARB( void *args );
-extern NTSTATUS ext_wglMakeContextCurrentARB( void *args );
-extern NTSTATUS wow64_ext_wglMakeContextCurrentARB( void *args );
 extern NTSTATUS ext_wglQueryCurrentRendererStringWINE( void *args );
 extern NTSTATUS wow64_ext_wglQueryCurrentRendererStringWINE( void *args );
 extern NTSTATUS ext_wglQueryRendererStringWINE( void *args );

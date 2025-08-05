@@ -247,7 +247,6 @@ my %manual_wow64_thunks =
      "wglGetPbufferDCARB" => 1,
      "wglGetProcAddress" => 1,
      "wglGetProcAddress" => 1,
-     "wglMakeContextCurrentARB" => 1,
      "wglQueryCurrentRendererStringWINE" => 1,
      "wglQueryRendererStringWINE" => 1,
     );

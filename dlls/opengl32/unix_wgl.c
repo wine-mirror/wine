@@ -1254,15 +1254,15 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
         teb->glReserved1[1] = read_hdc;
         teb->glCurrentRC = hglrc;
         teb->glTable = (void *)funcs;
-        return TRUE;
     }
-    if (prev)
+    else if (prev)
     {
         if (!funcs->p_wglMakeCurrent( 0, NULL )) return FALSE;
         prev->tid = 0;
         teb->glCurrentRC = 0;
         teb->glTable = &null_opengl_funcs;
     }
+    update_teb32_context( teb );
     return TRUE;
 }
 
@@ -1524,29 +1524,6 @@ NTSTATUS wow64_wgl_wglDeleteContext( void *args )
     };
     NTSTATUS status;
     if (!(status = wgl_wglDeleteContext( &params ))) update_teb32_context( params.teb );
-    params32->ret = params.ret;
-    return status;
-}
-
-NTSTATUS wow64_ext_wglMakeContextCurrentARB( void *args )
-{
-    struct
-    {
-        PTR32 teb;
-        PTR32 hDrawDC;
-        PTR32 hReadDC;
-        PTR32 hglrc;
-        BOOL ret;
-    } *params32 = args;
-    struct wglMakeContextCurrentARB_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .hDrawDC = ULongToPtr(params32->hDrawDC),
-        .hReadDC = ULongToPtr(params32->hReadDC),
-        .hglrc = ULongToPtr(params32->hglrc),
-    };
-    NTSTATUS status;
-    if (!(status = ext_wglMakeContextCurrentARB( &params ))) update_teb32_context( params.teb );
     params32->ret = params.ret;
     return status;
 }
