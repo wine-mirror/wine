@@ -238,7 +238,6 @@ my %manual_wow64_thunks =
      "glUnmapNamedBuffer" => 1,
      "glUnmapNamedBufferEXT" => 1,
      "glWaitSync" => 1,
-     "wglCreateContext" => 1,
      "wglCreateContextAttribsARB" => 1,
      "wglCreatePbufferARB" => 1,
      "wglGetExtensionsStringARB" => 1,
@@ -444,7 +443,7 @@ sub generate_unix_thunk($$$$)
             $ret .= "        $ptype ret;\n";
         }
         $ret .= "    } *params = args;\n";
-        if ($need_manual_thunk || get_wow64_arg_type( $func->[0] ) =~ /PTR32/)
+        if ($need_manual_thunk || $func->[0]->textContent() =~ /(GLsync|PROC|GLintptr|\*)/)
         {
             $ret .= "    FIXME( \"params %p stub!\\n\", params );\n";
             $ret .= "    return STATUS_NOT_IMPLEMENTED;\n";

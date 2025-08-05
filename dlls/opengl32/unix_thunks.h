@@ -32,8 +32,6 @@ extern int wrap_wglReleasePbufferDCARB( TEB *teb , HPBUFFERARB hPbuffer, HDC hDC
 extern BOOL wrap_wglReleaseTexImageARB( TEB *teb , HPBUFFERARB hPbuffer, int iBuffer );
 extern BOOL wrap_wglSetPbufferAttribARB( TEB *teb , HPBUFFERARB hPbuffer, const int *piAttribList );
 
-extern NTSTATUS wgl_wglCreateContext( void *args );
-extern NTSTATUS wow64_wgl_wglCreateContext( void *args );
 extern NTSTATUS wgl_wglGetProcAddress( void *args );
 extern NTSTATUS wow64_wgl_wglGetProcAddress( void *args );
 extern NTSTATUS gl_glGetString( void *args );

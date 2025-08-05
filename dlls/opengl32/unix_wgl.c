@@ -1440,25 +1440,6 @@ static PTR32 find_wow64_string( const char *str, PTR32 wow64_str )
     return wow64_str;
 }
 
-NTSTATUS wow64_wgl_wglCreateContext( void *args )
-{
-    struct
-    {
-        PTR32 teb;
-        PTR32 hDc;
-        PTR32 ret;
-    } *params32 = args;
-    struct wglCreateContext_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .hDc = ULongToPtr(params32->hDc),
-    };
-    NTSTATUS status;
-    if ((status = wgl_wglCreateContext( &params ))) return status;
-    params32->ret = (UINT_PTR)params.ret;
-    return STATUS_SUCCESS;
-}
-
 NTSTATUS wow64_ext_wglCreateContextAttribsARB( void *args )
 {
     struct

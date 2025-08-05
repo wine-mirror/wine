@@ -32,7 +32,7 @@ static NTSTATUS wgl_wglCopyContext( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS wgl_wglCreateContext( void *args )
+static NTSTATUS wgl_wglCreateContext( void *args )
 {
     struct wglCreateContext_params *params = args;
     const struct opengl_funcs *funcs = get_dc_funcs( params->hDc );
@@ -29914,6 +29914,23 @@ static NTSTATUS wow64_wgl_wglCopyContext( void *args )
     TEB *teb = get_teb64( params->teb );
     pthread_mutex_lock( &wgl_lock );
     params->ret = wrap_wglCopyContext( teb, ULongToPtr(params->hglrcSrc), ULongToPtr(params->hglrcDst), params->mask );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_wgl_wglCreateContext( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        PTR32 hDc;
+        PTR32 ret;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->hDc) );
+    if (!funcs || !funcs->p_wglCreateContext) return STATUS_NOT_IMPLEMENTED;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = (UINT_PTR)wrap_wglCreateContext( teb, ULongToPtr(params->hDc) );
     pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
