@@ -201,6 +201,7 @@ struct lnxev_device
     BYTE button_map[KEY_CNT];
     int hat_count;
     int button_count;
+    BOOL is_gamepad;
 
     int haptic_effect_id;
     int effect_ids[256];
@@ -521,11 +522,21 @@ static void set_abs_axis_value(struct unix_device *iface, int code, int value)
     else if ((code - ABS_HAT0X) % 2)
     {
         if (!(code = impl->hat_map[code - ABS_HAT0X])) return;
+        if (impl->is_gamepad)
+        {
+            hid_device_set_button(iface, 11, value < 0);
+            hid_device_set_button(iface, 12, value > 0);
+        }
         hid_device_set_hatswitch_y(iface, code - 1, value);
     }
     else
     {
         if (!(code = impl->hat_map[code - ABS_HAT0X])) return;
+        if (impl->is_gamepad)
+        {
+            hid_device_set_button(iface, 13, value < 0);
+            hid_device_set_button(iface, 14, value > 0);
+        }
         hid_device_set_hatswitch_x(iface, code - 1, value);
     }
 }
@@ -565,8 +576,16 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
             return STATUS_NO_MEMORY;
     }
 
-    if (impl->hat_count && !hid_device_add_hatswitch(iface, impl->hat_count)) return STATUS_NO_MEMORY;
-    if (impl->button_count && !hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, impl->button_count)) return STATUS_NO_MEMORY;
+    if (impl->is_gamepad)
+    {
+        if (!hid_device_add_hatswitch(iface, 1)) return STATUS_NO_MEMORY;
+        if (!hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, 15)) return STATUS_NO_MEMORY;
+    }
+    else
+    {
+        if (impl->hat_count && !hid_device_add_hatswitch(iface, impl->hat_count)) return STATUS_NO_MEMORY;
+        if (impl->button_count && !hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, impl->button_count)) return STATUS_NO_MEMORY;
+    }
 
     if (!hid_device_end_input_report(iface))
         return STATUS_NO_MEMORY;
@@ -648,6 +667,13 @@ static BOOL set_report_from_event(struct unix_device *iface, struct input_event 
 #endif
     case EV_KEY:
         if (!(button = impl->button_map[ie->code])) return FALSE;
+        if (impl->is_gamepad && !impl->hat_count)
+        {
+            if (button == 12) hid_device_set_hatswitch_y(iface, 0, -1);
+            if (button == 13) hid_device_set_hatswitch_y(iface, 0, +1);
+            if (button == 14) hid_device_set_hatswitch_x(iface, 0, -1);
+            if (button == 15) hid_device_set_hatswitch_x(iface, 0, +1);
+        }
         hid_device_set_button(iface, button - 1, ie->value);
         return FALSE;
     case EV_ABS:
@@ -1223,9 +1249,9 @@ static NTSTATUS lnxev_device_create(struct udev_device *dev, int fd, const char 
     }
 
     if (is_xbox_gamepad(desc.vid, desc.pid)) desc.is_gamepad = TRUE;
-    else if (axis_count == 6 && button_count >= 14) desc.is_gamepad = TRUE;
+    else if (axis_count == 6 && button_count >= (impl->hat_count ? 10 : 14)) desc.is_gamepad = TRUE;
 
-    if (desc.is_gamepad)
+    if ((impl->is_gamepad = desc.is_gamepad))
     {
         static const UINT gamepad_buttons[] =
         {
@@ -1253,14 +1279,14 @@ static NTSTATUS lnxev_device_create(struct udev_device *dev, int fd, const char 
         {
             int button = gamepad_buttons[i];
             if (!test_bit(info.key, button)) continue;
-            if (impl->button_count > 14) break;
+            if (impl->button_count > (impl->hat_count ? 10 : 14)) break;
             impl->button_map[button] = ++impl->button_count;
         }
 
         for (int i = BTN_MISC; i < KEY_MAX; i++)
         {
             if (i >= BTN_GAMEPAD && i < BTN_DIGI) continue;
-            if (impl->button_count > 14) break;
+            if (impl->button_count > (impl->hat_count ? 10 : 14)) break;
             if (!test_bit(info.key, i)) continue;
             impl->button_map[i] = ++impl->button_count;
         }
