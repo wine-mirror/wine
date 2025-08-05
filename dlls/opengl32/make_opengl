@@ -238,7 +238,6 @@ my %manual_wow64_thunks =
      "glUnmapNamedBuffer" => 1,
      "glUnmapNamedBufferEXT" => 1,
      "glWaitSync" => 1,
-     "wglCreateContextAttribsARB" => 1,
      "wglCreatePbufferARB" => 1,
      "wglGetExtensionsStringARB" => 1,
      "wglGetExtensionsStringEXT" => 1,

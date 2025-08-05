@@ -82,8 +82,6 @@ extern NTSTATUS ext_glUnmapNamedBufferEXT( void *args );
 extern NTSTATUS wow64_ext_glUnmapNamedBufferEXT( void *args );
 extern NTSTATUS ext_glWaitSync( void *args );
 extern NTSTATUS wow64_ext_glWaitSync( void *args );
-extern NTSTATUS ext_wglCreateContextAttribsARB( void *args );
-extern NTSTATUS wow64_ext_wglCreateContextAttribsARB( void *args );
 extern NTSTATUS ext_wglCreatePbufferARB( void *args );
 extern NTSTATUS wow64_ext_wglCreatePbufferARB( void *args );
 extern NTSTATUS ext_wglGetExtensionsStringARB( void *args );
