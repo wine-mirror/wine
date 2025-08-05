@@ -38,7 +38,7 @@ NTSTATUS wgl_wglCreateContext( void *args )
     const struct opengl_funcs *funcs = get_dc_funcs( params->hDc );
     if (!funcs || !funcs->p_wglCreateContext) return STATUS_NOT_IMPLEMENTED;
     pthread_mutex_lock( &wgl_lock );
-    params->ret = (HGLRC)wrap_wglCreateContext( params->teb, params->hDc );
+    params->ret = wrap_wglCreateContext( params->teb, params->hDc );
     pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
@@ -26664,7 +26664,7 @@ NTSTATUS ext_wglCreateContextAttribsARB( void *args )
     const struct opengl_funcs *funcs = get_dc_funcs( params->hDC );
     if (!funcs || !funcs->p_wglCreateContextAttribsARB) return STATUS_NOT_IMPLEMENTED;
     pthread_mutex_lock( &wgl_lock );
-    params->ret = (HGLRC)wrap_wglCreateContextAttribsARB( params->teb, params->hDC, params->hShareContext, params->attribList );
+    params->ret = wrap_wglCreateContextAttribsARB( params->teb, params->hDC, params->hShareContext, params->attribList );
     pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
@@ -26675,7 +26675,7 @@ NTSTATUS ext_wglCreatePbufferARB( void *args )
     const struct opengl_funcs *funcs = get_dc_funcs( params->hDC );
     if (!funcs || !funcs->p_wglCreatePbufferARB) return STATUS_NOT_IMPLEMENTED;
     pthread_mutex_lock( &wgl_lock );
-    params->ret = (HPBUFFERARB)wrap_wglCreatePbufferARB( params->teb, params->hDC, params->iPixelFormat, params->iWidth, params->iHeight, params->piAttribList );
+    params->ret = wrap_wglCreatePbufferARB( params->teb, params->hDC, params->iPixelFormat, params->iWidth, params->iHeight, params->piAttribList );
     pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }

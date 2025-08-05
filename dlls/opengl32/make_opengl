@@ -489,7 +489,6 @@ sub generate_unix_thunk($$$$)
         $ret .= "params->ret = ";
         $ret .= "(UINT_PTR)" if $is_wow64 && get_wow64_arg_type( $func->[0] ) =~ /PTR32/;
     }
-    $ret .= "($func_ret)" if defined $remap_types{$func_ret};
     $call_args =~ s/,$/ /;
     if ($need_wrap)
     {
@@ -497,6 +496,7 @@ sub generate_unix_thunk($$$$)
     }
     else
     {
+        $ret .= "($func_ret)" if defined $remap_types{$func_ret};
         $ret .= "funcs->p_$name($call_args);\n";
     }
     $ret .= "    pthread_mutex_unlock( &wgl_lock );\n" if $need_lock;
