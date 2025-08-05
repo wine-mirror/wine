@@ -1193,9 +1193,9 @@ static type_t *replace_type_parameters_in_type(type_t *type, typeref_list_t *ori
         return type;
     case TYPE_ARRAY:
         t = replace_type_parameters_in_type(type->details.array.elem.type, orig, repl);
-        if (t == t->details.array.elem.type) return type;
+        if (t == type->details.array.elem.type) return type;
         type = duptype(type, 0);
-        t->details.array.elem.type = t;
+        type->details.array.elem.type = t;
         return type;
     case TYPE_FUNCTION:
         t = duptype(type, 0);
