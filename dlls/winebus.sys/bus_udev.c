@@ -129,7 +129,7 @@ static inline struct hidraw_device *hidraw_impl_from_unix_device(struct unix_dev
 
 #ifdef HAS_PROPER_INPUT_HEADER
 
-static const USAGE_AND_PAGE absolute_usages[] =
+static const USAGE_AND_PAGE absolute_usages[ABS_CNT] =
 {
     {.UsagePage = HID_USAGE_PAGE_GENERIC,    .Usage = HID_USAGE_GENERIC_X},              /* ABS_X */
     {.UsagePage = HID_USAGE_PAGE_GENERIC,    .Usage = HID_USAGE_GENERIC_Y},              /* ABS_Y */
@@ -166,7 +166,7 @@ static const USAGE_AND_PAGE absolute_usages[] =
     {.UsagePage = HID_USAGE_PAGE_CONSUMER,   .Usage = HID_USAGE_CONSUMER_VOLUME},        /* ABS_VOLUME */
 };
 
-static const USAGE_AND_PAGE relative_usages[] =
+static const USAGE_AND_PAGE relative_usages[REL_CNT] =
 {
     {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_X},     /* REL_X */
     {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_Y},     /* REL_Y */
@@ -180,14 +180,25 @@ static const USAGE_AND_PAGE relative_usages[] =
     {0},                                                                     /* REL_MISC */
 };
 
+struct lnxev_info
+{
+    struct input_id id;
+    char name[MAX_PATH];
+    char uniq[MAX_PATH];
+    BYTE abs[(ABS_CNT + 7) / 8];
+    BYTE rel[(REL_CNT + 7) / 8];
+    BYTE key[(KEY_CNT + 7) / 8];
+    BYTE ff[(FF_CNT + 7) / 8];
+};
+
 struct lnxev_device
 {
     struct base_device base;
 
-    BYTE abs_map[ARRAY_SIZE(absolute_usages)];
-    BYTE rel_map[ARRAY_SIZE(relative_usages)];
+    BYTE abs_map[ABS_CNT];
+    BYTE rel_map[REL_CNT];
     BYTE hat_map[8];
-    BYTE button_map[KEY_MAX];
+    BYTE button_map[KEY_CNT];
 
     int haptic_effect_id;
     int effect_ids[256];
@@ -496,21 +507,14 @@ static const USAGE_AND_PAGE *what_am_I(struct udev_device *dev, int fd)
     return &Unknown;
 }
 
-static INT count_buttons(int device_fd, BYTE *map)
+static INT count_buttons(const struct lnxev_info *info, BYTE *map)
 {
     int i;
     int button_count = 0;
-    BYTE keybits[(KEY_MAX+7)/8];
-
-    if (ioctl(device_fd, EVIOCGBIT(EV_KEY, sizeof(keybits)), keybits) == -1)
-    {
-        WARN("ioctl(EVIOCGBIT, EV_KEY) failed: %d %s\n", errno, strerror(errno));
-        return FALSE;
-    }
 
     for (i = BTN_MISC; i < KEY_MAX; i++)
     {
-        if (test_bit(keybits, i))
+        if (test_bit(info->key, i))
         {
             if (map) map[i] = button_count;
             button_count++;
@@ -519,52 +523,31 @@ static INT count_buttons(int device_fd, BYTE *map)
     return button_count;
 }
 
-static INT count_abs_axis(int device_fd)
+static INT count_abs_axis(const struct lnxev_info *info)
 {
-    BYTE absbits[(ABS_MAX+7)/8];
     int abs_count = 0;
     int i;
 
-    if (ioctl(device_fd, EVIOCGBIT(EV_ABS, sizeof(absbits)), absbits) == -1)
+    for (i = 0; i < ABS_CNT; i++)
     {
-        WARN("ioctl(EVIOCGBIT, EV_ABS) failed: %d %s\n", errno, strerror(errno));
-        return 0;
+        USAGE_AND_PAGE usage = absolute_usages[i];
+        if (!usage.UsagePage || !usage.Usage) continue;
+        if (!test_bit(info->abs, i)) continue;
+        abs_count++;
     }
 
-    for (i = 0; i < ARRAY_SIZE(absolute_usages); i++)
-        if (test_bit(absbits, i)) abs_count++;
     return abs_count;
 }
 
-static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_device *dev)
+static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_device *dev, struct lnxev_info *info)
 {
-    struct input_absinfo abs_info[ARRAY_SIZE(absolute_usages)];
-    BYTE absbits[(ABS_MAX+7)/8];
-    BYTE relbits[(REL_MAX+7)/8];
-    BYTE ffbits[(FF_MAX+7)/8];
+    struct input_absinfo abs_info[ABS_CNT];
     struct ff_effect effect;
-    USAGE_AND_PAGE usage;
     USHORT count = 0;
     USAGE usages[16];
     INT i, button_count, abs_count, rel_count, hat_count;
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
     const USAGE_AND_PAGE device_usage = *what_am_I(dev, impl->base.device_fd);
-
-    if (ioctl(impl->base.device_fd, EVIOCGBIT(EV_REL, sizeof(relbits)), relbits) == -1)
-    {
-        WARN("ioctl(EVIOCGBIT, EV_REL) failed: %d %s\n", errno, strerror(errno));
-        memset(relbits, 0, sizeof(relbits));
-    }
-    if (ioctl(impl->base.device_fd, EVIOCGBIT(EV_ABS, sizeof(absbits)), absbits) == -1)
-    {
-        WARN("ioctl(EVIOCGBIT, EV_ABS) failed: %d %s\n", errno, strerror(errno));
-        memset(absbits, 0, sizeof(absbits));
-    }
-    if (ioctl(impl->base.device_fd, EVIOCGBIT(EV_FF, sizeof(ffbits)), ffbits) == -1)
-    {
-        WARN("ioctl(EVIOCGBIT, EV_FF) failed: %d %s\n", errno, strerror(errno));
-        memset(ffbits, 0, sizeof(ffbits));
-    }
 
     if (!hid_device_begin_report_descriptor(iface, &device_usage))
         return STATUS_NO_MEMORY;
@@ -573,12 +556,13 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
         return STATUS_NO_MEMORY;
 
     abs_count = 0;
-    for (i = 0; i < ARRAY_SIZE(absolute_usages); i++)
+    for (i = 0; i < ABS_CNT; i++)
     {
-        usage = absolute_usages[i];
-        if (!test_bit(absbits, i)) continue;
-        ioctl(impl->base.device_fd, EVIOCGABS(i), abs_info + i);
+        USAGE_AND_PAGE usage = absolute_usages[i];
         if (!usage.UsagePage || !usage.Usage) continue;
+        if (!test_bit(info->abs, i)) continue;
+
+        ioctl(impl->base.device_fd, EVIOCGABS(i), abs_info + i);
         if (!hid_device_add_axes(iface, 1, usage.UsagePage, &usage.Usage, FALSE,
                                  LE_DWORD(abs_info[i].minimum), LE_DWORD(abs_info[i].maximum)))
             return STATUS_NO_MEMORY;
@@ -587,11 +571,12 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
     }
 
     rel_count = 0;
-    for (i = 0; i < ARRAY_SIZE(relative_usages); i++)
+    for (i = 0; i < REL_CNT; i++)
     {
-        usage = relative_usages[i];
-        if (!test_bit(relbits, i)) continue;
+        USAGE_AND_PAGE usage = relative_usages[i];
         if (!usage.UsagePage || !usage.Usage) continue;
+        if (!test_bit(info->rel, i)) continue;
+
         if (!hid_device_add_axes(iface, 1, usage.UsagePage, &usage.Usage, TRUE,
                                  INT32_MIN, INT32_MAX))
             return STATUS_NO_MEMORY;
@@ -602,7 +587,7 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
     hat_count = 0;
     for (i = ABS_HAT0X; i <= ABS_HAT3X; i += 2)
     {
-        if (!test_bit(absbits, i)) continue;
+        if (!test_bit(info->abs, i)) continue;
         impl->hat_map[i - ABS_HAT0X] = hat_count;
         impl->hat_map[i - ABS_HAT0X + 1] = hat_count++;
     }
@@ -611,7 +596,7 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
         return STATUS_NO_MEMORY;
 
     /* For now lump all buttons just into incremental usages, Ignore Keys */
-    button_count = count_buttons(impl->base.device_fd, impl->button_map);
+    button_count = count_buttons(info, impl->button_map);
     if (button_count && !hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, button_count))
         return STATUS_NO_MEMORY;
 
@@ -621,7 +606,7 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
     impl->haptic_effect_id = -1;
     for (i = 0; i < ARRAY_SIZE(impl->effect_ids); ++i) impl->effect_ids[i] = -1;
 
-    if (test_bit(ffbits, FF_RUMBLE))
+    if (test_bit(info->ff, FF_RUMBLE))
     {
         effect.id = -1;
         effect.type = FF_RUMBLE;
@@ -637,20 +622,20 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
             impl->haptic_effect_id = effect.id;
     }
 
-    for (i = 0; i < FF_MAX; ++i) if (test_bit(ffbits, i)) break;
+    for (i = 0; i < FF_MAX; ++i) if (test_bit(info->ff, i)) break;
     if (i != FF_MAX)
     {
-        if (test_bit(ffbits, FF_SINE)) usages[count++] = PID_USAGE_ET_SINE;
-        if (test_bit(ffbits, FF_SQUARE)) usages[count++] = PID_USAGE_ET_SQUARE;
-        if (test_bit(ffbits, FF_TRIANGLE)) usages[count++] = PID_USAGE_ET_TRIANGLE;
-        if (test_bit(ffbits, FF_SAW_UP)) usages[count++] = PID_USAGE_ET_SAWTOOTH_UP;
-        if (test_bit(ffbits, FF_SAW_DOWN)) usages[count++] = PID_USAGE_ET_SAWTOOTH_DOWN;
-        if (test_bit(ffbits, FF_SPRING)) usages[count++] = PID_USAGE_ET_SPRING;
-        if (test_bit(ffbits, FF_DAMPER)) usages[count++] = PID_USAGE_ET_DAMPER;
-        if (test_bit(ffbits, FF_INERTIA)) usages[count++] = PID_USAGE_ET_INERTIA;
-        if (test_bit(ffbits, FF_FRICTION)) usages[count++] = PID_USAGE_ET_FRICTION;
-        if (test_bit(ffbits, FF_CONSTANT)) usages[count++] = PID_USAGE_ET_CONSTANT_FORCE;
-        if (test_bit(ffbits, FF_RAMP)) usages[count++] = PID_USAGE_ET_RAMP;
+        if (test_bit(info->ff, FF_SINE)) usages[count++] = PID_USAGE_ET_SINE;
+        if (test_bit(info->ff, FF_SQUARE)) usages[count++] = PID_USAGE_ET_SQUARE;
+        if (test_bit(info->ff, FF_TRIANGLE)) usages[count++] = PID_USAGE_ET_TRIANGLE;
+        if (test_bit(info->ff, FF_SAW_UP)) usages[count++] = PID_USAGE_ET_SAWTOOTH_UP;
+        if (test_bit(info->ff, FF_SAW_DOWN)) usages[count++] = PID_USAGE_ET_SAWTOOTH_DOWN;
+        if (test_bit(info->ff, FF_SPRING)) usages[count++] = PID_USAGE_ET_SPRING;
+        if (test_bit(info->ff, FF_DAMPER)) usages[count++] = PID_USAGE_ET_DAMPER;
+        if (test_bit(info->ff, FF_INERTIA)) usages[count++] = PID_USAGE_ET_INERTIA;
+        if (test_bit(info->ff, FF_FRICTION)) usages[count++] = PID_USAGE_ET_FRICTION;
+        if (test_bit(info->ff, FF_CONSTANT)) usages[count++] = PID_USAGE_ET_CONSTANT_FORCE;
+        if (test_bit(info->ff, FF_RAMP)) usages[count++] = PID_USAGE_ET_RAMP;
 
         if (!hid_device_add_physical(iface, usages, count, 2))
             return STATUS_NO_MEMORY;
@@ -660,9 +645,12 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
         return STATUS_NO_MEMORY;
 
     /* Initialize axis in the report */
-    for (i = 0; i < ARRAY_SIZE(absolute_usages); i++)
+    for (i = 0; i < ABS_CNT; i++)
     {
-        if (!test_bit(absbits, i)) continue;
+        USAGE_AND_PAGE usage = absolute_usages[i];
+        if (!usage.UsagePage || !usage.Usage) continue;
+        if (!test_bit(info->abs, i)) continue;
+
         if (i < ABS_HAT0X || i > ABS_HAT3Y)
             hid_device_set_abs_axis(iface, impl->abs_map[i], abs_info[i].value);
         else if ((i - ABS_HAT0X) % 2)
@@ -1239,34 +1227,32 @@ static NTSTATUS lnxev_device_create(struct udev_device *dev, int fd, const char 
 #ifdef HAS_PROPER_INPUT_HEADER
     static const WCHAR evdev[] = {'e','v','d','e','v',0};
     static const WCHAR zeros[] = {'0','0','0','0',0};
-    struct input_id device_id = {0};
+    struct lnxev_info info = {0};
     struct lnxev_device *impl;
-    char buffer[MAX_PATH];
 
-    if (ioctl(fd, EVIOCGID, &device_id) < 0)
-        WARN("ioctl(EVIOCGID) failed: %d %s\n", errno, strerror(errno));
-    else
-    {
-        desc.vid = device_id.vendor;
-        desc.pid = device_id.product;
-        desc.version = device_id.version;
-    }
+    if (ioctl(fd, EVIOCGID, &info.id) == -1) memset(&info.id, 0, sizeof(info.id));
+    if (ioctl(fd, EVIOCGNAME(sizeof(info.name) - 1), info.name) == -1) memset(info.name, 0, sizeof(info.name));
+    if (ioctl(fd, EVIOCGUNIQ(sizeof(info.uniq) - 1), info.uniq) == -1) memset(info.uniq, 0, sizeof(info.uniq));
+    if (ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(info.abs)), info.abs) == -1) memset(info.abs, 0, sizeof(info.abs));
+    if (ioctl(fd, EVIOCGBIT(EV_REL, sizeof(info.rel)), info.rel) == -1) memset(info.rel, 0, sizeof(info.rel));
+    if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(info.key)), info.key) == -1) memset(info.key, 0, sizeof(info.key));
+    if (ioctl(fd, EVIOCGBIT(EV_FF, sizeof(info.ff)), info.ff) == -1) memset(info.ff, 0, sizeof(info.ff));
 
-    if (!desc.product[0] && ioctl(fd, EVIOCGNAME(sizeof(buffer) - 1), buffer) > 0)
-        ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc.product, ARRAY_SIZE(desc.product));
-    if (!desc.serialnumber[0] && ioctl(fd, EVIOCGUNIQ(sizeof(buffer)), buffer) >= 0)
-        ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc.serialnumber, ARRAY_SIZE(desc.serialnumber));
-
+    if (!desc.vid) desc.vid = info.id.vendor;
+    if (!desc.pid) desc.pid = info.id.product;
+    if (!desc.version) desc.version = info.id.version;
     if (!desc.manufacturer[0]) memcpy(desc.manufacturer, evdev, sizeof(evdev));
+    if (!desc.product[0]) ntdll_umbstowcs(info.name, strlen(info.name) + 1, desc.product, ARRAY_SIZE(desc.product));
+    if (!desc.serialnumber[0]) ntdll_umbstowcs(info.uniq, strlen(info.uniq) + 1, desc.serialnumber, ARRAY_SIZE(desc.serialnumber));
     if (!desc.serialnumber[0]) memcpy(desc.serialnumber, zeros, sizeof(zeros));
 
     if (is_xbox_gamepad(desc.vid, desc.pid))
         desc.is_gamepad = TRUE;
     else
     {
-        int axes=0, buttons=0;
-        axes = count_abs_axis(fd);
-        buttons = count_buttons(fd, NULL);
+        int axes = 0, buttons = 0;
+        axes = count_abs_axis(&info);
+        buttons = count_buttons(&info, NULL);
         desc.is_gamepad = (axes == 6 && buttons >= 14);
     }
 
@@ -1278,7 +1264,7 @@ static NTSTATUS lnxev_device_create(struct udev_device *dev, int fd, const char 
     strcpy(impl->base.devnode, devnode);
     impl->base.device_fd = fd;
 
-    if (build_report_descriptor(&impl->base.unix_device, impl->base.udev_device))
+    if (build_report_descriptor(&impl->base.unix_device, impl->base.udev_device, &info))
     {
         list_remove(&impl->base.unix_device.entry);
         impl->base.unix_device.vtbl->destroy(&impl->base.unix_device);
