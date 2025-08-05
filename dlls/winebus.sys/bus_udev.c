@@ -1203,15 +1203,102 @@ static void get_device_subsystem_info(struct udev_device *dev, const char *subsy
     }
 }
 
+static NTSTATUS hidraw_device_create(struct udev_device *dev, int fd, const char *devnode, struct device_desc desc)
+{
+#ifdef HAVE_LINUX_HIDRAW_H
+    static const WCHAR hidraw[] = {'h','i','d','r','a','w',0};
+    static const WCHAR zeros[] = {'0','0','0','0',0};
+    struct base_device *impl;
+    char buffer[MAX_PATH];
+
+    desc.is_hidraw = TRUE;
+    if (!desc.product[0] && ioctl(fd, HIDIOCGRAWNAME(sizeof(buffer) - 1), buffer) >= 0)
+        ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc.product, ARRAY_SIZE(desc.product));
+
+    if (!desc.manufacturer[0]) memcpy(desc.manufacturer, hidraw, sizeof(hidraw));
+    if (!desc.serialnumber[0]) memcpy(desc.serialnumber, zeros, sizeof(zeros));
+
+    if (!(impl = raw_device_create(&hidraw_device_vtbl, sizeof(struct hidraw_device))))
+        return STATUS_NO_MEMORY;
+    list_add_tail(&device_list, &impl->unix_device.entry);
+    impl->read_report = hidraw_device_read_report;
+    impl->udev_device = udev_device_ref(dev);
+    strcpy(impl->devnode, devnode);
+    impl->device_fd = fd;
+
+    TRACE("dev %p, node %s, desc %s.\n", dev, debugstr_a(devnode), debugstr_device_desc(&desc));
+    bus_event_queue_device_created(&event_queue, &impl->unix_device, &desc);
+    return STATUS_SUCCESS;
+#else
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
+static NTSTATUS lnxev_device_create(struct udev_device *dev, int fd, const char *devnode, struct device_desc desc)
+{
+#ifdef HAS_PROPER_INPUT_HEADER
+    static const WCHAR evdev[] = {'e','v','d','e','v',0};
+    static const WCHAR zeros[] = {'0','0','0','0',0};
+    struct input_id device_id = {0};
+    struct lnxev_device *impl;
+    char buffer[MAX_PATH];
+
+    if (ioctl(fd, EVIOCGID, &device_id) < 0)
+        WARN("ioctl(EVIOCGID) failed: %d %s\n", errno, strerror(errno));
+    else
+    {
+        desc.vid = device_id.vendor;
+        desc.pid = device_id.product;
+        desc.version = device_id.version;
+    }
+
+    if (!desc.product[0] && ioctl(fd, EVIOCGNAME(sizeof(buffer) - 1), buffer) > 0)
+        ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc.product, ARRAY_SIZE(desc.product));
+    if (!desc.serialnumber[0] && ioctl(fd, EVIOCGUNIQ(sizeof(buffer)), buffer) >= 0)
+        ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc.serialnumber, ARRAY_SIZE(desc.serialnumber));
+
+    if (!desc.manufacturer[0]) memcpy(desc.manufacturer, evdev, sizeof(evdev));
+    if (!desc.serialnumber[0]) memcpy(desc.serialnumber, zeros, sizeof(zeros));
+
+    if (is_xbox_gamepad(desc.vid, desc.pid))
+        desc.is_gamepad = TRUE;
+    else
+    {
+        int axes=0, buttons=0;
+        axes = count_abs_axis(fd);
+        buttons = count_buttons(fd, NULL);
+        desc.is_gamepad = (axes == 6 && buttons >= 14);
+    }
+
+    if (!(impl = hid_device_create(&lnxev_device_vtbl, sizeof(struct lnxev_device))))
+        return STATUS_NO_MEMORY;
+    list_add_tail(&device_list, &impl->base.unix_device.entry);
+    impl->base.read_report = lnxev_device_read_report;
+    impl->base.udev_device = udev_device_ref(dev);
+    strcpy(impl->base.devnode, devnode);
+    impl->base.device_fd = fd;
+
+    if (build_report_descriptor(&impl->base.unix_device, impl->base.udev_device))
+    {
+        list_remove(&impl->base.unix_device.entry);
+        impl->base.unix_device.vtbl->destroy(&impl->base.unix_device);
+    }
+    else
+    {
+        TRACE("dev %p, node %s, desc %s.\n", dev, debugstr_a(devnode), debugstr_device_desc(&desc));
+        bus_event_queue_device_created(&event_queue, &impl->base.unix_device, &desc);
+    }
+
+    return STATUS_SUCCESS;
+#else
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 static void udev_add_device(struct udev_device *dev, int fd)
 {
-    struct device_desc desc =
-    {
-        .input = -1,
-    };
-    struct base_device *impl;
-    const char *subsystem;
-    const char *devnode;
+    struct device_desc desc = { .input = -1 };
+    const char *subsystem, *devnode;
     int bus = 0;
 
     if (!(devnode = udev_device_get_devnode(dev)))
@@ -1240,102 +1327,9 @@ static void udev_add_device(struct udev_device *dev, int fd)
         return;
     }
 
-    if (!strcmp(subsystem, "hidraw"))
-    {
-        static const WCHAR hidraw[] = {'h','i','d','r','a','w',0};
-#ifdef HAVE_LINUX_HIDRAW_H
-        char product[MAX_PATH];
-#endif
-
-        if (!desc.manufacturer[0]) memcpy(desc.manufacturer, hidraw, sizeof(hidraw));
-        desc.is_hidraw = TRUE;
-
-#ifdef HAVE_LINUX_HIDRAW_H
-        if (!desc.product[0] && ioctl(fd, HIDIOCGRAWNAME(sizeof(product) - 1), product) >= 0)
-            ntdll_umbstowcs(product, strlen(product) + 1, desc.product, ARRAY_SIZE(desc.product));
-#endif
-    }
-#ifdef HAS_PROPER_INPUT_HEADER
-    else if (!strcmp(subsystem, "input"))
-    {
-        static const WCHAR evdev[] = {'e','v','d','e','v',0};
-        struct input_id device_id = {0};
-        char buffer[MAX_PATH];
-
-        if (ioctl(fd, EVIOCGID, &device_id) < 0)
-            WARN("ioctl(EVIOCGID) failed: %d %s\n", errno, strerror(errno));
-        else
-        {
-            desc.vid = device_id.vendor;
-            desc.pid = device_id.product;
-            desc.version = device_id.version;
-        }
-
-        if (!desc.manufacturer[0]) memcpy(desc.manufacturer, evdev, sizeof(evdev));
-
-        if (!desc.product[0] && ioctl(fd, EVIOCGNAME(sizeof(buffer) - 1), buffer) > 0)
-            ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc.product, ARRAY_SIZE(desc.product));
-
-        if (!desc.serialnumber[0] && ioctl(fd, EVIOCGUNIQ(sizeof(buffer)), buffer) >= 0)
-            ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc.serialnumber, ARRAY_SIZE(desc.serialnumber));
-    }
-#endif
-
-    if (!desc.serialnumber[0])
-    {
-        static const WCHAR zeros[] = {'0','0','0','0',0};
-        memcpy(desc.serialnumber, zeros, sizeof(zeros));
-    }
-
-    if (is_xbox_gamepad(desc.vid, desc.pid))
-        desc.is_gamepad = TRUE;
-#ifdef HAS_PROPER_INPUT_HEADER
-    else if (!strcmp(subsystem, "input"))
-    {
-        int axes=0, buttons=0;
-        axes = count_abs_axis(fd);
-        buttons = count_buttons(fd, NULL);
-        desc.is_gamepad = (axes == 6 && buttons >= 14);
-    }
-#endif
-
-    TRACE("dev %p, node %s, desc %s.\n", dev, debugstr_a(devnode), debugstr_device_desc(&desc));
-
-    if (strcmp(subsystem, "hidraw") == 0)
-    {
-        if (!(impl = raw_device_create(&hidraw_device_vtbl, sizeof(struct hidraw_device)))) return;
-        list_add_tail(&device_list, &impl->unix_device.entry);
-        impl->read_report = hidraw_device_read_report;
-        impl->udev_device = udev_device_ref(dev);
-        strcpy(impl->devnode, devnode);
-        impl->device_fd = fd;
-
-        bus_event_queue_device_created(&event_queue, &impl->unix_device, &desc);
-    }
-#ifdef HAS_PROPER_INPUT_HEADER
-    else if (strcmp(subsystem, "input") == 0)
-    {
-        if (!(impl = hid_device_create(&lnxev_device_vtbl, sizeof(struct lnxev_device)))) return;
-        list_add_tail(&device_list, &impl->unix_device.entry);
-        impl->read_report = lnxev_device_read_report;
-        impl->udev_device = udev_device_ref(dev);
-        strcpy(impl->devnode, devnode);
-        impl->device_fd = fd;
-
-        if (build_report_descriptor(&impl->unix_device, impl->udev_device))
-        {
-            list_remove(&impl->unix_device.entry);
-            impl->unix_device.vtbl->destroy(&impl->unix_device);
-            return;
-        }
-
-        bus_event_queue_device_created(&event_queue, &impl->unix_device, &desc);
-    }
-#endif
-    else
-    {
-        close(fd);
-    }
+    if ((desc.is_hidraw = !strcmp(subsystem, "hidraw")) && !hidraw_device_create(dev, fd, devnode, desc)) return;
+    if (!strcmp(subsystem, "input") && !lnxev_device_create(dev, fd, devnode, desc)) return;
+    close(fd);
 }
 
 #ifdef HAVE_SYS_INOTIFY_H
