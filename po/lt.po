@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-07-01 01:10+0300\n"
+"PO-Revision-Date: 2025-08-05 23:29+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -3929,7 +3929,7 @@ msgstr "Vibravimas"
 
 #: dlls/joy.cpl/joy.rc:106
 msgid "Windows.Gaming.Input"
-msgstr ""
+msgstr "Windows.Gaming.Input"
 
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
