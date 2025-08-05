@@ -253,6 +253,7 @@ extern BOOL hid_device_add_hatswitch(struct unix_device *iface, INT count);
 extern BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usage_page,
                                 const USAGE *usages, BOOL rel, LONG min, LONG max);
 
+extern BOOL hid_device_add_gamepad(struct unix_device *iface);
 extern BOOL hid_device_add_haptics(struct unix_device *iface);
 extern BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT count, USHORT axes_count);
 
