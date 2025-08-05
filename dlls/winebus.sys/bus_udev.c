@@ -509,13 +509,34 @@ static const USAGE_AND_PAGE *what_am_I(struct udev_device *dev, int fd)
     return &Unknown;
 }
 
+static void set_abs_axis_value(struct unix_device *iface, int code, int value)
+{
+    struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
+
+    if (code < ABS_HAT0X || code > ABS_HAT3Y)
+    {
+        if (!(code = impl->abs_map[code])) return;
+        hid_device_set_abs_axis(iface, code - 1, value);
+    }
+    else if ((code - ABS_HAT0X) % 2)
+    {
+        if (!(code = impl->hat_map[code - ABS_HAT0X])) return;
+        hid_device_set_hatswitch_y(iface, code - 1, value);
+    }
+    else
+    {
+        if (!(code = impl->hat_map[code - ABS_HAT0X])) return;
+        hid_device_set_hatswitch_x(iface, code - 1, value);
+    }
+}
+
 static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_device *dev, struct lnxev_info *info)
 {
     struct input_absinfo abs_info[ABS_CNT];
     struct ff_effect effect;
     USHORT count = 0;
     USAGE usages[16];
-    INT i, axis;
+    int i;
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
     const USAGE_AND_PAGE device_usage = *what_am_I(dev, impl->base.device_fd);
 
@@ -597,22 +618,7 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
         USAGE_AND_PAGE usage = absolute_usages[i];
         if (!usage.UsagePage || !usage.Usage) continue;
         if (!test_bit(info->abs, i)) continue;
-
-        if (i < ABS_HAT0X || i > ABS_HAT3Y)
-        {
-            if (!(axis = impl->abs_map[i])) continue;
-            hid_device_set_abs_axis(iface, axis - 1, abs_info[i].value);
-        }
-        else if ((i - ABS_HAT0X) % 2)
-        {
-            if (!(axis = impl->hat_map[i - ABS_HAT0X])) continue;
-            hid_device_set_hatswitch_y(iface, axis - 1, abs_info[i].value);
-        }
-        else
-        {
-            if (!(axis = impl->hat_map[i - ABS_HAT0X])) continue;
-            hid_device_set_hatswitch_x(iface, axis - 1, abs_info[i].value);
-        }
+        set_abs_axis_value(iface, i, abs_info[i].value);
     }
 
     return STATUS_SUCCESS;
@@ -623,7 +629,7 @@ static BOOL set_report_from_event(struct unix_device *iface, struct input_event 
     struct hid_effect_state *effect_state = &iface->hid_physical.effect_state;
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
     ULONG effect_flags = InterlockedOr(&impl->effect_flags, 0);
-    unsigned int i, axis, button;
+    unsigned int i, button;
 
     switch (ie->type)
     {
@@ -645,21 +651,7 @@ static BOOL set_report_from_event(struct unix_device *iface, struct input_event 
         hid_device_set_button(iface, button - 1, ie->value);
         return FALSE;
     case EV_ABS:
-        if (ie->code < ABS_HAT0X || ie->code > ABS_HAT3Y)
-        {
-            if (!(axis = impl->abs_map[ie->code])) return FALSE;
-            hid_device_set_abs_axis(iface, axis - 1, ie->value);
-        }
-        else if ((ie->code - ABS_HAT0X) % 2)
-        {
-            if (!(axis = impl->hat_map[ie->code - ABS_HAT0X])) return FALSE;
-            hid_device_set_hatswitch_y(iface, axis - 1, ie->value);
-        }
-        else
-        {
-            if (!(axis = impl->hat_map[ie->code - ABS_HAT0X])) return FALSE;
-            hid_device_set_hatswitch_x(iface, axis - 1, ie->value);
-        }
+        set_abs_axis_value(iface, ie->code, ie->value);
         return FALSE;
     case EV_REL:
         hid_device_set_rel_axis(iface, impl->rel_map[ie->code], ie->value);
