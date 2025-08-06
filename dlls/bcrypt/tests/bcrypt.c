@@ -3103,57 +3103,38 @@ static void test_RSA_SIGN(void)
     ok(!ret, "BCryptCloseAlgorithmProvider failed: %#lx\n", ret);
 }
 
-static BYTE eccprivkey[] =
+struct ecdh_test
 {
-    0x45, 0x43, 0x4b, 0x32, 0x20, 0x00, 0x00, 0x00,
-    0xfb, 0xbd, 0x3d, 0x20, 0x1b, 0x6d, 0x66, 0xb3, 0x7c, 0x9f, 0x89, 0xf3, 0xe4, 0x41, 0x16, 0xa5,
-    0x68, 0x52, 0x77, 0xac, 0xab, 0x55, 0xb2, 0x6c, 0xb0, 0x23, 0x55, 0xcb, 0x96, 0x14, 0xfd, 0x0b,
-    0x1c, 0xef, 0xdf, 0x07, 0x6d, 0x31, 0xaf, 0x39, 0xce, 0x8c, 0x8f, 0x9d, 0x75, 0xd0, 0x7b, 0xea,
-    0x81, 0xdc, 0x40, 0x21, 0x1f, 0x58, 0x22, 0x5f, 0x72, 0x55, 0xfc, 0x58, 0x8a, 0xeb, 0x88, 0x5d,
-    0x02, 0x09, 0x90, 0xd2, 0xe3, 0x36, 0xac, 0xfe, 0x83, 0x13, 0x6c, 0x88, 0x1a, 0xab, 0x9b, 0xdd,
-    0xaa, 0x8a, 0xee, 0x69, 0x9a, 0x6a, 0x62, 0x86, 0x6a, 0x13, 0x69, 0x88, 0xb7, 0xd5, 0xa3, 0xcd
+    const WCHAR *alg;
+    ULONG bitlen;
+    BYTE *eccprivkey;
+    ULONG eccprivkey_len;
+    BYTE *ecdh_pubkey;
+    ULONG ecdh_pubkey_len;
+    BYTE *ecdh_secret;
+    ULONG ecdh_secret_len;
+    BYTE *hashed_secret;
+    DWORD public_magic;
+    DWORD private_magic;
 };
 
-static BYTE ecdh_pubkey[] =
+static void test_ECDH_alg(const struct ecdh_test *t)
 {
-    0x45, 0x43, 0x4b, 0x31, 0x20, 0x00, 0x00, 0x00,
-    0x07, 0x61, 0x9d, 0x49, 0x63, 0x6b, 0x96, 0x94, 0xd1, 0x8f, 0xd1, 0x48, 0xcc, 0xcf, 0x72, 0x4d,
-    0xff, 0x43, 0xf4, 0x97, 0x0f, 0xa3, 0x8a, 0x72, 0xe9, 0xe0, 0xba, 0x87, 0x6d, 0xc3, 0x62, 0x15,
-    0xae, 0x65, 0xdd, 0x31, 0x51, 0xfc, 0x3b, 0xc9, 0x59, 0xa1, 0x0a, 0x92, 0x17, 0x2b, 0x64, 0x55,
-    0x03, 0x3e, 0x62, 0x1d, 0xac, 0x3e, 0x37, 0x40, 0x6a, 0x4c, 0xb6, 0x21, 0x3f, 0x73, 0x5c, 0xf5
-};
+    BCryptBuffer hash_param_buffers[] =
+    {
+        {
+            sizeof(BCRYPT_SHA1_ALGORITHM),
+            KDF_HASH_ALGORITHM,
+            (void *)BCRYPT_SHA1_ALGORITHM,
+        }
+    };
 
-/* little endian */
-static BYTE ecdh_secret[] =
-{
-    0x48, 0xb0, 0x11, 0xdb, 0x69, 0x4e, 0xb4, 0xf4, 0xf5, 0x3e, 0xe1, 0x9b, 0xca, 0x00, 0x04, 0xc8,
-    0x9b, 0x69, 0xaf, 0xd1, 0xaf, 0x1f, 0xc2, 0xd7, 0x83, 0x0a, 0xb7, 0xf8, 0x4f, 0x24, 0x32, 0x8e,
-};
-
-BCryptBuffer hash_param_buffers[] =
-{
-{
-    sizeof(BCRYPT_SHA1_ALGORITHM),
-    KDF_HASH_ALGORITHM,
-    (void *)BCRYPT_SHA1_ALGORITHM,
-}
-};
-
-BCryptBufferDesc hash_params =
-{
-    BCRYPTBUFFER_VERSION,
-    ARRAY_SIZE(hash_param_buffers),
-    hash_param_buffers,
-};
-
-static BYTE hashed_secret[] =
-{
-    0x1b, 0xe7, 0xbf, 0x0f, 0x65, 0x1e, 0xd0, 0x07, 0xf9, 0xf4, 0x77, 0x48, 0x48, 0x39, 0xd0, 0xf8,
-    0xf3, 0xce, 0xfc, 0x89
-};
-
-static void test_ECDH(void)
-{
+    BCryptBufferDesc hash_params =
+    {
+        BCRYPTBUFFER_VERSION,
+        ARRAY_SIZE(hash_param_buffers),
+        hash_param_buffers,
+    };
     BYTE *buf;
     BCRYPT_ECCKEY_BLOB *ecckey;
     BCRYPT_ALG_HANDLE alg;
@@ -3162,11 +3143,11 @@ static void test_ECDH(void)
     NTSTATUS status;
     ULONG size;
 
-    status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDH_P256_ALGORITHM, NULL, 0);
+    status = BCryptOpenAlgorithmProvider(&alg, t->alg, NULL, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
     key = NULL;
-    status = BCryptGenerateKeyPair(alg, &key, 256, 0);
+    status = BCryptGenerateKeyPair(alg, &key, t->bitlen, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
     ok(key != NULL, "key not set\n");
 
@@ -3182,8 +3163,8 @@ static void test_ECDH(void)
     status = BCryptExportKey(key, NULL, BCRYPT_ECCPUBLIC_BLOB, buf, size, &size, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
     ecckey = (BCRYPT_ECCKEY_BLOB *)buf;
-    ok(ecckey->dwMagic == BCRYPT_ECDH_PUBLIC_P256_MAGIC, "got %#lx\n", ecckey->dwMagic);
-    ok(ecckey->cbKey == 32, "got %lu\n", ecckey->cbKey);
+    ok(ecckey->dwMagic == t->public_magic, "got %#lx\n", ecckey->dwMagic);
+    ok(ecckey->cbKey == (t->bitlen + 7) / 8, "got %lu\n", ecckey->cbKey);
     ok(size == sizeof(*ecckey) + ecckey->cbKey * 2, "got %lu\n", size);
 
     status = BCryptImportKeyPair(alg, NULL, BCRYPT_PUBLIC_KEY_BLOB, &pubkey, buf, size, 0);
@@ -3203,8 +3184,8 @@ static void test_ECDH(void)
     status = BCryptExportKey(key, NULL, BCRYPT_ECCPRIVATE_BLOB, buf, size, &size, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
     ecckey = (BCRYPT_ECCKEY_BLOB *)buf;
-    ok(ecckey->dwMagic == BCRYPT_ECDH_PRIVATE_P256_MAGIC, "got %#lx\n", ecckey->dwMagic);
-    ok(ecckey->cbKey == 32, "got %lu\n", ecckey->cbKey);
+    ok(ecckey->dwMagic == t->private_magic, "got %#lx\n", ecckey->dwMagic);
+    ok(ecckey->cbKey == (t->bitlen + 7) / 8, "got %lu\n", ecckey->cbKey);
     ok(size == sizeof(*ecckey) + ecckey->cbKey * 3, "got %lu\n", size);
 
     status = BCryptImportKeyPair(alg, NULL, BCRYPT_ECCPRIVATE_BLOB, &privkey, buf, size, 0);
@@ -3214,7 +3195,7 @@ static void test_ECDH(void)
     BCryptDestroyKey(privkey);
     BCryptDestroyKey(key);
 
-    status = BCryptImportKeyPair(alg, NULL, BCRYPT_ECCPRIVATE_BLOB, &privkey, eccprivkey, sizeof(eccprivkey), 0);
+    status = BCryptImportKeyPair(alg, NULL, BCRYPT_ECCPRIVATE_BLOB, &privkey, t->eccprivkey, t->eccprivkey_len, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
     size = 0;
@@ -3225,11 +3206,11 @@ static void test_ECDH(void)
     buf = malloc(size);
     status = BCryptExportKey(privkey, NULL, BCRYPT_ECCPRIVATE_BLOB, buf, size, &size, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
-    ok(size == sizeof(eccprivkey), "got %lu\n", size);
-    ok(!memcmp(buf, eccprivkey, size), "wrong data\n");
+    ok(size == t->eccprivkey_len, "got %lu\n", size);
+    ok(!memcmp(buf, t->eccprivkey, size), "wrong data\n");
     free(buf);
 
-    status = BCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &pubkey, ecdh_pubkey, sizeof(ecdh_pubkey), 0);
+    status = BCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &pubkey, t->ecdh_pubkey, t->ecdh_pubkey_len, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
     status = BCryptSecretAgreement(privkey, pubkey, &secret, 0);
@@ -3245,11 +3226,11 @@ static void test_ECDH(void)
     todo_wine ok(status == STATUS_SUCCESS, "got %#lx\n", status);
     if (status != STATUS_SUCCESS) goto raw_secret_end;
 
-    ok(size == 32, "size of secret key incorrect, got %lu, expected 32\n", size);
+    ok(size == (t->bitlen + 7) / 8, "size of secret key incorrect, got %lu, expected 32\n", size);
     buf = malloc(size);
     status = BCryptDeriveKey(secret, BCRYPT_KDF_RAW_SECRET, NULL, buf, size, &size, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
-    ok(!(memcmp(ecdh_secret, buf, size)), "wrong data\n");
+    ok(!(memcmp(t->ecdh_secret, buf, size)), "wrong data\n");
     free(buf);
 
 raw_secret_end:
@@ -3261,7 +3242,7 @@ raw_secret_end:
     buf = malloc(size);
     status = BCryptDeriveKey(secret, BCRYPT_KDF_HASH, &hash_params, buf, size, &size, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
-    ok(!(memcmp(hashed_secret, buf, size)), "wrong data\n");
+    ok(!(memcmp(t->hashed_secret, buf, size)), "wrong data\n");
     free(buf);
 
     /* ulVersion is not verified */
@@ -3286,40 +3267,95 @@ derive_end:
     BCryptDestroyKey(pubkey);
     BCryptDestroyKey(privkey);
     BCryptCloseAlgorithmProvider(alg, 0);
+}
 
-    status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDH_P384_ALGORITHM, NULL, 0);
-    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+static void test_ECDH(void)
+{
+    static BYTE ecc256privkey[] =
+    {
+        0x45, 0x43, 0x4b, 0x32, 0x20, 0x00, 0x00, 0x00,
+        0xfb, 0xbd, 0x3d, 0x20, 0x1b, 0x6d, 0x66, 0xb3, 0x7c, 0x9f, 0x89, 0xf3, 0xe4, 0x41, 0x16, 0xa5,
+        0x68, 0x52, 0x77, 0xac, 0xab, 0x55, 0xb2, 0x6c, 0xb0, 0x23, 0x55, 0xcb, 0x96, 0x14, 0xfd, 0x0b,
+        0x1c, 0xef, 0xdf, 0x07, 0x6d, 0x31, 0xaf, 0x39, 0xce, 0x8c, 0x8f, 0x9d, 0x75, 0xd0, 0x7b, 0xea,
+        0x81, 0xdc, 0x40, 0x21, 0x1f, 0x58, 0x22, 0x5f, 0x72, 0x55, 0xfc, 0x58, 0x8a, 0xeb, 0x88, 0x5d,
+        0x02, 0x09, 0x90, 0xd2, 0xe3, 0x36, 0xac, 0xfe, 0x83, 0x13, 0x6c, 0x88, 0x1a, 0xab, 0x9b, 0xdd,
+        0xaa, 0x8a, 0xee, 0x69, 0x9a, 0x6a, 0x62, 0x86, 0x6a, 0x13, 0x69, 0x88, 0xb7, 0xd5, 0xa3, 0xcd
+    };
+    static BYTE ecdh256_pubkey[] =
+    {
+        0x45, 0x43, 0x4b, 0x31, 0x20, 0x00, 0x00, 0x00,
+        0x07, 0x61, 0x9d, 0x49, 0x63, 0x6b, 0x96, 0x94, 0xd1, 0x8f, 0xd1, 0x48, 0xcc, 0xcf, 0x72, 0x4d,
+        0xff, 0x43, 0xf4, 0x97, 0x0f, 0xa3, 0x8a, 0x72, 0xe9, 0xe0, 0xba, 0x87, 0x6d, 0xc3, 0x62, 0x15,
+        0xae, 0x65, 0xdd, 0x31, 0x51, 0xfc, 0x3b, 0xc9, 0x59, 0xa1, 0x0a, 0x92, 0x17, 0x2b, 0x64, 0x55,
+        0x03, 0x3e, 0x62, 0x1d, 0xac, 0x3e, 0x37, 0x40, 0x6a, 0x4c, 0xb6, 0x21, 0x3f, 0x73, 0x5c, 0xf5
+    };
+    static BYTE ecdh256_secret[] =
+    {
+        0x48, 0xb0, 0x11, 0xdb, 0x69, 0x4e, 0xb4, 0xf4, 0xf5, 0x3e, 0xe1, 0x9b, 0xca, 0x00, 0x04, 0xc8,
+        0x9b, 0x69, 0xaf, 0xd1, 0xaf, 0x1f, 0xc2, 0xd7, 0x83, 0x0a, 0xb7, 0xf8, 0x4f, 0x24, 0x32, 0x8e,
+    };
+    static BYTE hashed256_secret[] =
+    {
+        0x1b, 0xe7, 0xbf, 0x0f, 0x65, 0x1e, 0xd0, 0x07, 0xf9, 0xf4, 0x77, 0x48, 0x48, 0x39, 0xd0, 0xf8,
+        0xf3, 0xce, 0xfc, 0x89
+    };
 
-    key = NULL;
-    status = BCryptGenerateKeyPair(alg, &key, 384, 0);
-    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
-    ok(key != NULL, "key not set\n");
+    static BYTE ecc384privkey[] =
+    {
+        0x45, 0x43, 0x4b, 0x34, 0x30, 0x00, 0x00, 0x00,
+        0xc9, 0xcb, 0x38, 0x54, 0xa1, 0xe2, 0xb6, 0x60, 0x13, 0xd9, 0x45, 0x0d, 0x76, 0x90, 0xf9, 0x49,
+        0x75, 0x81, 0x76, 0xac, 0x43, 0x96, 0xc1, 0x04, 0x04, 0xda, 0x76, 0x72, 0xb1, 0x19, 0x38, 0xbd,
+        0xaf, 0x96, 0x0c, 0x4e, 0xc3, 0x29, 0x67, 0x91, 0x6c, 0xac, 0xcc, 0x33, 0x51, 0x1f, 0x82, 0xd5,
+        0x17, 0xbf, 0xa2, 0x94, 0xd7, 0x15, 0x4f, 0x83, 0xe7, 0xa3, 0xb8, 0x6d, 0xd0, 0x7f, 0xbc, 0x8a,
+        0x30, 0x09, 0x9e, 0x13, 0xaa, 0x2e, 0xf6, 0xde, 0x1c, 0x02, 0x4a, 0x65, 0xf6, 0x72, 0xb3, 0xf0,
+        0x4f, 0x7f, 0x1a, 0xce, 0x4e, 0x94, 0xc5, 0x98, 0x89, 0x74, 0xad, 0x51, 0x8f, 0x2b, 0x25, 0x17,
+        0xdc, 0x4a, 0x54, 0x8a, 0x42, 0xda, 0x30, 0x1a, 0xe3, 0x6d, 0x77, 0x4d, 0x3b, 0x33, 0x9a, 0xe3,
+        0x37, 0xd4, 0x06, 0x5b, 0xb3, 0x3f, 0x73, 0xb9, 0x7e, 0x0b, 0x37, 0x02, 0x8b, 0xed, 0x08, 0x10,
+        0x03, 0xf8, 0x69, 0xe3, 0x2a, 0x4f, 0xbb, 0x20, 0x6c, 0x5d, 0x24, 0x09, 0x0d, 0xd9, 0x86, 0x32,
+    };
+    static BYTE ecdh384_pubkey[] =
+    {
+        0x45, 0x43, 0x4b, 0x33, 0x30, 0x00, 0x00, 0x00,
+        0xd6, 0xc3, 0xef, 0x4a, 0xbb, 0x4c, 0xa2, 0x27, 0xa1, 0x96, 0x03, 0x3b, 0x0a, 0x83, 0x01, 0xff,
+        0xeb, 0x9a, 0xf1, 0x06, 0xee, 0x83, 0xce, 0x7c, 0xaa, 0x6b, 0x7c, 0x43, 0x1c, 0x8b, 0x30, 0x82,
+        0x99, 0x8f, 0xc4, 0x86, 0x0d, 0x19, 0x16, 0xb6, 0xab, 0xd1, 0x9f, 0xeb, 0xf9, 0x31, 0xda, 0xcd,
+        0xb9, 0xf8, 0xea, 0x87, 0xa1, 0x36, 0xaf, 0x10, 0x98, 0x8f, 0x9b, 0xcc, 0x6c, 0xe3, 0x24, 0xb4,
+        0x82, 0x37, 0xde, 0x1e, 0x04, 0x53, 0x03, 0xc0, 0x2a, 0x41, 0xe9, 0x50, 0x07, 0x87, 0xb2, 0x60,
+        0xe6, 0x32, 0x53, 0x4c, 0x8e, 0xa7, 0x80, 0x0f, 0xad, 0x25, 0x3b, 0x01, 0xa4, 0xd6, 0xe3, 0x54,
+    };
+    static BYTE ecdh384_secret[] =
+    {
+        0x08, 0x8c, 0xd1, 0xfa, 0x57, 0xb6, 0xf9, 0x79, 0x9e, 0x0c, 0x71, 0xc3, 0xcb, 0xa5, 0xb1, 0xfd,
+        0xde, 0xbc, 0x6d, 0x7c, 0x8a, 0x5b, 0x26, 0xe8, 0x18, 0x80, 0x61, 0x45, 0x6a, 0x38, 0xf9, 0x13,
+        0x2a, 0x8f, 0x4b, 0xfe, 0x75, 0x02, 0x62, 0xe9, 0xb3, 0x6e, 0xc5, 0x52, 0xc9, 0x82, 0x38, 0x53,
+    };
+    static BYTE hashed384_secret[] =
+    {
+        0x78, 0xf8, 0x07, 0xab, 0x00, 0x35, 0xaa, 0x8c, 0x22, 0xd0, 0xe7, 0x06, 0xfc, 0x0b, 0x74, 0x41,
+        0xed, 0xdc, 0x16, 0x6c,
+    };
 
-    status = BCryptFinalizeKeyPair(key, 0);
-    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    static const struct ecdh_test tests[] =
+    {
+        {
+            BCRYPT_ECDH_P256_ALGORITHM, 256, ecc256privkey, sizeof(ecc256privkey), ecdh256_pubkey, sizeof(ecdh256_pubkey),
+            ecdh256_secret, sizeof(ecdh256_secret), hashed256_secret,
+            BCRYPT_ECDH_PUBLIC_P256_MAGIC, BCRYPT_ECDH_PRIVATE_P256_MAGIC,
+        },
+        {
+            BCRYPT_ECDH_P384_ALGORITHM, 384, ecc384privkey, sizeof(ecc384privkey), ecdh384_pubkey, sizeof(ecdh384_pubkey),
+            ecdh384_secret, sizeof(ecdh384_secret), hashed384_secret,
+            BCRYPT_ECDH_PUBLIC_P384_MAGIC, BCRYPT_ECDH_PRIVATE_P384_MAGIC,
+        },
+    };
+    unsigned int i;
 
-    size = 0;
-    status = BCryptExportKey(key, NULL, BCRYPT_ECCPUBLIC_BLOB, NULL, 0, &size, 0);
-    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
-    ok(size, "size not set\n");
-
-    buf = malloc(size);
-    status = BCryptExportKey(key, NULL, BCRYPT_ECCPUBLIC_BLOB, buf, size, &size, 0);
-    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
-    ecckey = (BCRYPT_ECCKEY_BLOB *)buf;
-    ok(ecckey->dwMagic == BCRYPT_ECDH_PUBLIC_P384_MAGIC, "got %#lx\n", ecckey->dwMagic);
-    ok(ecckey->cbKey == 48, "got %lu\n", ecckey->cbKey);
-    ok(size == sizeof(*ecckey) + ecckey->cbKey * 2, "got %lu\n", size);
-
-    status = BCryptImportKeyPair(alg, NULL, BCRYPT_PUBLIC_KEY_BLOB, &pubkey, buf, size, 0);
-    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
-    BCryptDestroyKey(pubkey);
-
-    status = BCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &pubkey, buf, size, 0);
-    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
-    free(buf);
-    BCryptDestroyKey(pubkey);
-    BCryptCloseAlgorithmProvider(alg, 0);
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("%s", debugstr_w(tests[i].alg));
+        test_ECDH_alg(&tests[i]);
+        winetest_pop_context();
+    }
 }
 
 static BYTE dh_pubkey[] =
@@ -4144,6 +4180,16 @@ static void test_SecretAgreement(void)
     {
         0x3213db5b, 0x8cc8250b, 0xc829eaab, 0x00933709, 0x68160aa9, 0xfb9f1e20, 0xf92368e6, 0x2b8e18eb,
     };
+    static const struct
+    {
+        const WCHAR *alg;
+        ULONG bitlen;
+    }
+    ecdh_algorithms[] =
+    {
+        { BCRYPT_ECDH_P256_ALGORITHM, 256 },
+        { BCRYPT_ECDH_P384_ALGORITHM, 384 },
+    };
     static const ULONG length = 1024;
     BCRYPT_DH_PARAMETER_HEADER *dh_header;
     BCRYPT_DH_KEY_BLOB *dh_key_blob;
@@ -4154,62 +4200,67 @@ static void test_SecretAgreement(void)
     NTSTATUS status;
     ULONG size, i;
 
-    status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDH_P256_ALGORITHM, NULL, 0);
-    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    for (i = 0; i < ARRAY_SIZE(ecdh_algorithms); ++i)
+    {
+        winetest_push_context("%s", debugstr_w(ecdh_algorithms[i].alg));
+        status = BCryptOpenAlgorithmProvider(&alg, ecdh_algorithms[i].alg, NULL, 0);
+        ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
-    key = NULL;
-    status = BCryptGenerateKeyPair(alg, &key, 256, 0);
-    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
-    ok(key != NULL, "key not set\n");
+        key = NULL;
+        status = BCryptGenerateKeyPair(alg, &key, ecdh_algorithms[i].bitlen, 0);
+        ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+        ok(key != NULL, "key not set\n");
 
-    status = BCryptFinalizeKeyPair(key, 0);
-    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+        status = BCryptFinalizeKeyPair(key, 0);
+        ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
-    status = BCryptSecretAgreement(NULL, key, &secret, 0);
-    ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
+        status = BCryptSecretAgreement(NULL, key, &secret, 0);
+        ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
 
-    status = BCryptSecretAgreement(key, NULL, &secret, 0);
-    ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
+        status = BCryptSecretAgreement(key, NULL, &secret, 0);
+        ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
 
-    status = BCryptSecretAgreement(key, key, NULL, 0);
-    ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
+        status = BCryptSecretAgreement(key, key, NULL, 0);
+        ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
 
-    status = BCryptSecretAgreement(key, key, &secret, 0);
-    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+        status = BCryptSecretAgreement(key, key, &secret, 0);
+        ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
-    status = BCryptDeriveKey(NULL, L"HASH", NULL, NULL, 0, &size, 0);
-    ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
+        status = BCryptDeriveKey(NULL, L"HASH", NULL, NULL, 0, &size, 0);
+        ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
 
-    status = BCryptDeriveKey(key, L"HASH", NULL, NULL, 0, &size, 0);
-    ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
+        status = BCryptDeriveKey(key, L"HASH", NULL, NULL, 0, &size, 0);
+        ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
 
-    status = BCryptDeriveKey(secret, NULL, NULL, NULL, 0, &size, 0);
-    ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
+        status = BCryptDeriveKey(secret, NULL, NULL, NULL, 0, &size, 0);
+        ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
 
-    status = BCryptDeriveKey(secret, L"HASH", NULL, NULL, 0, &size, 0);
-    todo_wine
-    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+        status = BCryptDeriveKey(secret, L"HASH", NULL, NULL, 0, &size, 0);
+        todo_wine
+        ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
-    status = BCryptDestroyHash(secret);
-    ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
+        status = BCryptDestroyHash(secret);
+        ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
 
-    status = BCryptDestroyKey(secret);
-    ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
+        status = BCryptDestroyKey(secret);
+        ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
 
-    status = BCryptDestroySecret(NULL);
-    ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
+        status = BCryptDestroySecret(NULL);
+        ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
 
-    status = BCryptDestroySecret(alg);
-    ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
+        status = BCryptDestroySecret(alg);
+        ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
 
-    status = BCryptDestroySecret(secret);
-    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+        status = BCryptDestroySecret(secret);
+        ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
-    status = BCryptDestroyKey(key);
-    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+        status = BCryptDestroyKey(key);
+        ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
-    status = BCryptCloseAlgorithmProvider(alg, 0);
-    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+        status = BCryptCloseAlgorithmProvider(alg, 0);
+        ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+        winetest_pop_context();
+    }
 
     /* DH */
     status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_DH_ALGORITHM, NULL, 0);
