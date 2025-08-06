@@ -68,58 +68,6 @@ static const struct opengl_funcs *default_funcs; /* default GL function table fr
 static struct egl_platform display_egl;
 static struct opengl_funcs display_funcs;
 
-static const struct
-{
-    BYTE color_bits;
-    BYTE red_bits, red_shift;
-    BYTE green_bits, green_shift;
-    BYTE blue_bits, blue_shift;
-    BYTE alpha_bits, alpha_shift;
-    BYTE accum_bits;
-    BYTE depth_bits;
-    BYTE stencil_bits;
-} pixel_formats[] =
-{
-    { 32,  8, 16, 8, 8,  8, 0,  8, 24,  16, 32, 8 },
-    { 32,  8, 16, 8, 8,  8, 0,  8, 24,  16, 16, 8 },
-    { 32,  8, 0,  8, 8,  8, 16, 8, 24,  16, 32, 8 },
-    { 32,  8, 0,  8, 8,  8, 16, 8, 24,  16, 16, 8 },
-    { 32,  8, 8,  8, 16, 8, 24, 8, 0,   16, 32, 8 },
-    { 32,  8, 8,  8, 16, 8, 24, 8, 0,   16, 16, 8 },
-    { 24,  8, 0,  8, 8,  8, 16, 0, 0,   16, 32, 8 },
-    { 24,  8, 0,  8, 8,  8, 16, 0, 0,   16, 16, 8 },
-    { 24,  8, 16, 8, 8,  8, 0,  0, 0,   16, 32, 8 },
-    { 24,  8, 16, 8, 8,  8, 0,  0, 0,   16, 16, 8 },
-    { 16,  5, 0,  6, 5,  5, 11, 0, 0,   16, 32, 8 },
-    { 16,  5, 0,  6, 5,  5, 11, 0, 0,   16, 16, 8 },
-};
-
-static void describe_pixel_format( int fmt, PIXELFORMATDESCRIPTOR *descr )
-{
-    memset( descr, 0, sizeof(*descr) );
-    descr->nSize            = sizeof(*descr);
-    descr->nVersion         = 1;
-    descr->dwFlags          = PFD_SUPPORT_GDI | PFD_SUPPORT_OPENGL | PFD_DRAW_TO_BITMAP | PFD_GENERIC_FORMAT;
-    descr->iPixelType       = PFD_TYPE_RGBA;
-    descr->cColorBits       = pixel_formats[fmt - 1].color_bits;
-    descr->cRedBits         = pixel_formats[fmt - 1].red_bits;
-    descr->cRedShift        = pixel_formats[fmt - 1].red_shift;
-    descr->cGreenBits       = pixel_formats[fmt - 1].green_bits;
-    descr->cGreenShift      = pixel_formats[fmt - 1].green_shift;
-    descr->cBlueBits        = pixel_formats[fmt - 1].blue_bits;
-    descr->cBlueShift       = pixel_formats[fmt - 1].blue_shift;
-    descr->cAlphaBits       = pixel_formats[fmt - 1].alpha_bits;
-    descr->cAlphaShift      = pixel_formats[fmt - 1].alpha_shift;
-    descr->cAccumBits       = pixel_formats[fmt - 1].accum_bits;
-    descr->cAccumRedBits    = pixel_formats[fmt - 1].accum_bits / 4;
-    descr->cAccumGreenBits  = pixel_formats[fmt - 1].accum_bits / 4;
-    descr->cAccumBlueBits   = pixel_formats[fmt - 1].accum_bits / 4;
-    descr->cAccumAlphaBits  = pixel_formats[fmt - 1].accum_bits / 4;
-    descr->cDepthBits       = pixel_formats[fmt - 1].depth_bits;
-    descr->cStencilBits     = pixel_formats[fmt - 1].stencil_bits;
-    descr->cAuxBuffers      = 0;
-    descr->iLayerType       = PFD_MAIN_PLANE;
-}
 
 static BOOL has_extension( const char *list, const char *ext )
 {
@@ -744,6 +692,32 @@ static void init_egl_platform( struct egl_platform *egl, struct opengl_funcs *fu
 
 #endif /* SONAME_LIBEGL */
 
+static const struct
+{
+    BYTE color_bits;
+    BYTE red_bits, red_shift;
+    BYTE green_bits, green_shift;
+    BYTE blue_bits, blue_shift;
+    BYTE alpha_bits, alpha_shift;
+    BYTE accum_bits;
+    BYTE depth_bits;
+    BYTE stencil_bits;
+} nulldrv_pixel_formats[] =
+{
+    { 32,  8, 16, 8, 8,  8, 0,  8, 24,  16, 32, 8 },
+    { 32,  8, 16, 8, 8,  8, 0,  8, 24,  16, 16, 8 },
+    { 32,  8, 0,  8, 8,  8, 16, 8, 24,  16, 32, 8 },
+    { 32,  8, 0,  8, 8,  8, 16, 8, 24,  16, 16, 8 },
+    { 32,  8, 8,  8, 16, 8, 24, 8, 0,   16, 32, 8 },
+    { 32,  8, 8,  8, 16, 8, 24, 8, 0,   16, 16, 8 },
+    { 24,  8, 0,  8, 8,  8, 16, 0, 0,   16, 32, 8 },
+    { 24,  8, 0,  8, 8,  8, 16, 0, 0,   16, 16, 8 },
+    { 24,  8, 16, 8, 8,  8, 0,  0, 0,   16, 32, 8 },
+    { 24,  8, 16, 8, 8,  8, 0,  0, 0,   16, 16, 8 },
+    { 16,  5, 0,  6, 5,  5, 11, 0, 0,   16, 32, 8 },
+    { 16,  5, 0,  6, 5,  5, 11, 0, 0,   16, 16, 8 },
+};
+
 static void *nulldrv_get_proc_address( const char *name )
 {
     return NULL;
@@ -751,14 +725,38 @@ static void *nulldrv_get_proc_address( const char *name )
 
 static UINT nulldrv_init_pixel_formats( UINT *onscreen_count )
 {
-    *onscreen_count = ARRAY_SIZE(pixel_formats);
-    return ARRAY_SIZE(pixel_formats);
+    *onscreen_count = ARRAY_SIZE(nulldrv_pixel_formats);
+    return ARRAY_SIZE(nulldrv_pixel_formats);
 }
 
-static BOOL nulldrv_describe_pixel_format( int format, struct wgl_pixel_format *desc )
+static BOOL nulldrv_describe_pixel_format( int format, struct wgl_pixel_format *descr )
 {
-    if (format <= 0 || format > ARRAY_SIZE(pixel_formats)) return FALSE;
-    describe_pixel_format( format, &desc->pfd );
+    if (format <= 0 || format > ARRAY_SIZE(nulldrv_pixel_formats)) return FALSE;
+
+    memset( descr, 0, sizeof(*descr) );
+    descr->pfd.nSize            = sizeof(*descr);
+    descr->pfd.nVersion         = 1;
+    descr->pfd.dwFlags          = PFD_SUPPORT_GDI | PFD_SUPPORT_OPENGL | PFD_DRAW_TO_BITMAP | PFD_GENERIC_FORMAT;
+    descr->pfd.iPixelType       = PFD_TYPE_RGBA;
+    descr->pfd.cColorBits       = nulldrv_pixel_formats[format - 1].color_bits;
+    descr->pfd.cRedBits         = nulldrv_pixel_formats[format - 1].red_bits;
+    descr->pfd.cRedShift        = nulldrv_pixel_formats[format - 1].red_shift;
+    descr->pfd.cGreenBits       = nulldrv_pixel_formats[format - 1].green_bits;
+    descr->pfd.cGreenShift      = nulldrv_pixel_formats[format - 1].green_shift;
+    descr->pfd.cBlueBits        = nulldrv_pixel_formats[format - 1].blue_bits;
+    descr->pfd.cBlueShift       = nulldrv_pixel_formats[format - 1].blue_shift;
+    descr->pfd.cAlphaBits       = nulldrv_pixel_formats[format - 1].alpha_bits;
+    descr->pfd.cAlphaShift      = nulldrv_pixel_formats[format - 1].alpha_shift;
+    descr->pfd.cAccumBits       = nulldrv_pixel_formats[format - 1].accum_bits;
+    descr->pfd.cAccumRedBits    = nulldrv_pixel_formats[format - 1].accum_bits / 4;
+    descr->pfd.cAccumGreenBits  = nulldrv_pixel_formats[format - 1].accum_bits / 4;
+    descr->pfd.cAccumBlueBits   = nulldrv_pixel_formats[format - 1].accum_bits / 4;
+    descr->pfd.cAccumAlphaBits  = nulldrv_pixel_formats[format - 1].accum_bits / 4;
+    descr->pfd.cDepthBits       = nulldrv_pixel_formats[format - 1].depth_bits;
+    descr->pfd.cStencilBits     = nulldrv_pixel_formats[format - 1].stencil_bits;
+    descr->pfd.cAuxBuffers      = 0;
+    descr->pfd.iLayerType       = PFD_MAIN_PLANE;
+
     return TRUE;
 }
 
