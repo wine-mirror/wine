@@ -114,7 +114,7 @@ static void write_typelib_interface( const type_t *iface, const typelib_t *typel
     const struct uuid *uuid = get_attrp( iface->attrs, ATTR_UUID );
     unsigned short major, minor;
 
-    get_version( iface->attrs, &major, &minor );
+    get_version( typelib->attrs, &major, &minor );
 
     if (!uuid) return;
     if (!is_object( iface )) return;
