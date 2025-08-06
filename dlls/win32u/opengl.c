@@ -185,26 +185,28 @@ static UINT egldrv_init_pixel_formats( UINT *onscreen_count )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     struct egl_platform *egl = &display_egl;
-    const EGLint attribs[] =
-    {
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
-        EGL_NONE
-    };
     EGLConfig *configs;
-    EGLint i, count;
+    EGLint i, j, render, count;
 
-    funcs->p_eglChooseConfig( egl->display, attribs, NULL, 0, &count );
+    funcs->p_eglGetConfigs( egl->display, NULL, 0, &count );
     if (!(configs = malloc( count * sizeof(*configs) ))) return 0;
-    if (!funcs->p_eglChooseConfig( egl->display, attribs, configs, count, &count ) || !count)
+    if (!funcs->p_eglGetConfigs( egl->display, configs, count, &count ) || !count)
     {
         ERR( "Failed to get any configs from eglChooseConfig\n" );
         free( configs );
         return 0;
     }
 
+    for (i = 0, j = 0; i < count; i++)
+    {
+        funcs->p_eglGetConfigAttrib( egl->display, configs[i], EGL_RENDERABLE_TYPE, &render );
+        if (render & EGL_OPENGL_BIT) configs[j++] = configs[i];
+    }
+    count = j;
+
     if (TRACE_ON(wgl)) for (i = 0; i < count; i++)
     {
-        EGLint id, type, visual_id, native, render, color, r, g, b, a, d, s;
+        EGLint id, type, visual_id, native, color, r, g, b, a, d, s;
         funcs->p_eglGetConfigAttrib( egl->display, configs[i], EGL_NATIVE_VISUAL_ID, &visual_id );
         funcs->p_eglGetConfigAttrib( egl->display, configs[i], EGL_SURFACE_TYPE, &type );
         funcs->p_eglGetConfigAttrib( egl->display, configs[i], EGL_RENDERABLE_TYPE, &render );
