@@ -3600,6 +3600,7 @@ static NTSTATUS ext_glBindFramebuffer( void *args )
     struct glBindFramebuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindFramebuffer( params->target, params->framebuffer );
+    set_current_fbo( params->teb, params->target, params->framebuffer );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -3609,6 +3610,7 @@ static NTSTATUS ext_glBindFramebufferEXT( void *args )
     struct glBindFramebufferEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glBindFramebufferEXT( params->target, params->framebuffer );
+    set_current_fbo( params->teb, params->target, params->framebuffer );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -36093,6 +36095,7 @@ static NTSTATUS wow64_ext_glBindFramebuffer( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glBindFramebuffer( params->target, params->framebuffer );
+    set_current_fbo( teb, params->target, params->framebuffer );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -36108,6 +36111,7 @@ static NTSTATUS wow64_ext_glBindFramebufferEXT( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glBindFramebufferEXT( params->target, params->framebuffer );
+    set_current_fbo( teb, params->target, params->framebuffer );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }

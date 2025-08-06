@@ -82,5 +82,6 @@ extern NTSTATUS thread_attach( void *args );
 extern NTSTATUS process_detach( void *args );
 extern NTSTATUS get_pixel_formats( void *args );
 extern void set_context_attribute( TEB *teb, GLenum name, const void *value, size_t size );
+extern void set_current_fbo( TEB *teb, GLenum target, GLuint framebuffer );
 
 #endif /* __WINE_OPENGL32_UNIX_PRIVATE_H */

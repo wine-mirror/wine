@@ -509,6 +509,7 @@ sub generate_unix_thunk($$$$)
         $ret .= "funcs->p_$name($call_args);\n";
     }
     $ret .= "    pthread_mutex_unlock( &wgl_lock );\n" if $need_lock;
+    $ret .= "    set_current_fbo( $teb, params->target, params->framebuffer );\n" if $name =~ /glBindFramebuffer/;
     if (defined $state_attrib_funcs{$name})
     {
         my $state_args = $state_attrib_funcs{$name};

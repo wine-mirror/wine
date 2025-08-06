@@ -132,6 +132,8 @@ struct context
     struct enable_state enable;                 /* GL_ENABLE_BIT */
     struct color_buffer_state color_buffer;     /* GL_COLOR_BUFFER_BIT */
     struct hint_state hint;                     /* GL_HINT_BIT */
+    GLuint draw_fbo;                            /* currently bound draw FBO name */
+    GLuint read_fbo;                            /* currently bound read FBO name */
 };
 
 struct wgl_handle
@@ -1370,6 +1372,16 @@ void wrap_glDebugMessageCallbackARB( TEB *teb, GLDEBUGPROCARB callback, const vo
     ctx->debug_user     = (UINT_PTR)user;
     funcs->p_glDebugMessageCallbackARB( gl_debug_message_callback, ctx );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+}
+
+void set_current_fbo( TEB *teb, GLenum target, GLuint fbo )
+{
+    struct context *ctx;
+
+    if (!(ctx = get_current_context( teb ))) return;
+    if (target == GL_FRAMEBUFFER) ctx->draw_fbo = ctx->read_fbo = fbo;
+    if (target == GL_DRAW_FRAMEBUFFER) ctx->draw_fbo = fbo;
+    if (target == GL_READ_FRAMEBUFFER) ctx->read_fbo = fbo;
 }
 
 void wrap_glGetIntegerv( TEB *teb, GLenum pname, GLint *data )
