@@ -191,6 +191,7 @@
 @ stdcall DevCloseObjectQuery(ptr)
 @ stdcall DevCreateObjectQuery(long long long ptr long ptr ptr ptr ptr)
 @ stdcall DevCreateObjectQueryEx(long long long ptr long ptr long ptr ptr ptr ptr)
+@ stdcall DevFindProperty(ptr long wstr long ptr)
 @ stdcall DevFreeObjectProperties(long ptr)
 @ stdcall DevFreeObjects(long ptr)
 @ stdcall DevGetObjectProperties(long ptr long long ptr ptr ptr)

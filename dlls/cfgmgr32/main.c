@@ -1108,6 +1108,20 @@ HRESULT WINAPI DevGetObjectPropertiesEx( DEV_OBJECT_TYPE type, const WCHAR *id, 
     return hr;
 }
 
+static const char *debugstr_DEVPROPKEY( const DEVPROPKEY *key )
+{
+    if (!key) return "(null)";
+    return wine_dbg_sprintf( "{%s, %04lx}", debugstr_guid( &key->fmtid ), key->pid );
+}
+
+const DEVPROPERTY *WINAPI DevFindProperty( const DEVPROPKEY *key, DEVPROPSTORE store, const WCHAR *locale,
+                                           ULONG props_len, const DEVPROPERTY *props )
+{
+    FIXME( "(%s, %d, %s, %lu, %p): stub!\n", debugstr_DEVPROPKEY( key ), store, debugstr_w( locale ), props_len,
+           props );
+    return NULL;
+}
+
 void WINAPI DevFreeObjectProperties( ULONG len, const DEVPROPERTY *props )
 {
     DEVPROPERTY *properties = (DEVPROPERTY *)props;

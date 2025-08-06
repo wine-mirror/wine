@@ -127,6 +127,7 @@ void (WINAPI *pDevFreeObjects)(ULONG, const DEV_OBJECT*);
 HRESULT (WINAPI *pDevGetObjectProperties)(DEV_OBJECT_TYPE, const WCHAR *, ULONG, ULONG, const DEVPROPCOMPKEY *, ULONG *,
                                           const DEVPROPERTY **);
 void (WINAPI *pDevFreeObjectProperties)(ULONG, const DEVPROPERTY *);
+const DEVPROPERTY* (WINAPI *pDevFindProperty)(const DEVPROPKEY *, DEVPROPSTORE, PCWSTR, ULONG, const DEVPROPERTY *);
 
 DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
 
@@ -584,18 +585,23 @@ static const char *debugstr_DEVPROP_val( const DEVPROPERTY *prop )
     }
 }
 
+static const char *debugstr_DEVPROPKEY( const DEVPROPKEY *key )
+{
+    if (!key) return "(null)";
+    return wine_dbg_sprintf( "{%s, %04lx}", debugstr_guid( &key->fmtid ), key->pid );
+}
+
 static void test_DevGetObjectProperties( DEV_OBJECT_TYPE type, const WCHAR *id, const DEVPROPERTY *exp_props, ULONG props_len )
 {
-    static const DEVPROPKEY dummy_propkey = { { 0xdeadbeef, 0xdead, 0xbeef, { 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef } }, 0x1 };
-    static const DEVPROPCOMPKEY dummy_propcompkey = { dummy_propkey, DEVPROP_STORE_SYSTEM, NULL };
+    DEVPROPCOMPKEY dummy_propcompkey = { DEVPKEY_dummy, DEVPROP_STORE_SYSTEM, NULL };
     ULONG buf_len, rem_props = props_len, i;
     const DEVPROPERTY *buf;
     DEVPROPCOMPKEY *keys;
     HRESULT hr;
 
-    if (!pDevGetObjectProperties || !pDevFreeObjectProperties)
+    if (!pDevGetObjectProperties || !pDevFreeObjectProperties || !pDevFindProperty)
     {
-        win_skip( "Functions unavailable, skipping test. (%p %p)\n", pDevGetObjects, pDevFreeObjects );
+        win_skip( "Functions unavailable, skipping test. (%p %p %p)\n", pDevGetObjects, pDevFreeObjects, pDevFindProperty );
         return;
     }
 
@@ -626,13 +632,18 @@ static void test_DevGetObjectProperties( DEV_OBJECT_TYPE type, const WCHAR *id, 
         {
             if (IsEqualDevPropKey( exp_props[i].CompKey.Key, buf[j].CompKey.Key ) && rem_props)
             {
-                winetest_push_context( "{%s,%#lx}", debugstr_guid( &exp_props[i].CompKey.Key.fmtid ),
-                                       exp_props[i].CompKey.Key.pid );
+                winetest_push_context( "%s", debugstr_DEVPROPKEY( &exp_props[i].CompKey.Key ) );
                 /* ItemNameDisplay for software devices has different values for properties obtained from DevGetObjects
                  * and DevGetObjectProperties. */
                 if (!IsEqualDevPropKey(PKEY_ItemNameDisplay, buf[j].CompKey.Key))
+                {
+                    const DEVPROPERTY *found_prop;
+
                     ok( dev_property_val_equal( &exp_props[i], &buf[j] ), "%s != %s\n", debugstr_DEVPROP_val( &buf[j] ),
                         debugstr_DEVPROP_val( &exp_props[i] ) );
+                    found_prop = pDevFindProperty( &exp_props[i].CompKey.Key, DEVPROP_STORE_SYSTEM, NULL, buf_len, buf );
+                    todo_wine ok( found_prop == &buf[i], "got found_prop %p != %p\n", found_prop, &buf[i] );
+                }
                 winetest_pop_context();
                 rem_props--;
             }
@@ -664,7 +675,13 @@ static void test_DevGetObjectProperties( DEV_OBJECT_TYPE type, const WCHAR *id, 
         {
             if (IsEqualDevPropKey( exp_props[i].CompKey.Key, buf[j].CompKey.Key ))
             {
+                const DEVPROPERTY *found_prop;
+
+                winetest_push_context( "%s", debugstr_DEVPROPKEY( &exp_props[i].CompKey.Key ) );
                 rem_props--;
+                found_prop = pDevFindProperty( &exp_props[i].CompKey.Key, DEVPROP_STORE_SYSTEM, NULL, buf_len, buf );
+                todo_wine ok( found_prop == &buf[j], "got found_prop %p != %p\n", found_prop, &buf[j] );
+                winetest_pop_context();
                 break;
             }
         }
@@ -680,9 +697,13 @@ static void test_DevGetObjectProperties( DEV_OBJECT_TYPE type, const WCHAR *id, 
     ok( buf_len == 1, "got buf_len %lu\n", buf_len );
     if (buf)
     {
-        ok( IsEqualDevPropKey( buf[0].CompKey.Key, dummy_propkey ), "got propkey {%s, %#lx}\n",
+        const DEVPROPERTY *found_prop;
+
+        ok( IsEqualDevPropKey( buf[0].CompKey.Key, DEVPKEY_dummy ), "got propkey {%s, %#lx}\n",
             debugstr_guid( &buf[0].CompKey.Key.fmtid ), buf[0].CompKey.Key.pid );
         ok( buf[0].Type == DEVPROP_TYPE_EMPTY, "got Type %#lx\n", buf[0].Type );
+        found_prop = pDevFindProperty( &DEVPKEY_dummy, DEVPROP_STORE_SYSTEM, NULL, buf_len, buf );
+        todo_wine ok( found_prop == &buf[0], "got found_prop %p != %p\n", found_prop, &buf[0] );
         pDevFreeObjectProperties( buf_len, buf );
     }
     free( keys );
@@ -710,6 +731,7 @@ static void test_dev_object_iface_props( int line, const DEV_OBJECT *obj, const 
             {
                 SP_INTERFACE_DEVICE_DATA iface_data = {0};
                 DEVPROPTYPE type = DEVPROP_TYPE_EMPTY;
+                const DEVPROPERTY *found_prop;
                 ULONG size = 0;
                 CONFIGRET ret;
                 BYTE *buf;
@@ -751,6 +773,10 @@ static void test_dev_object_iface_props( int line, const DEV_OBJECT *obj, const 
                         break;
                     }
                 }
+
+                found_prop = pDevFindProperty( &property->CompKey.Key, DEVPROP_STORE_SYSTEM, NULL,
+                                               obj->cPropertyCount, obj->pProperties );
+                todo_wine ok( found_prop == property, "got found_prop %p != %p\n", found_prop, property );
                 free( buf );
                 winetest_pop_context();
                 break;
@@ -792,9 +818,9 @@ static void test_DevGetObjects( void )
     HRESULT hr;
     ULONG i, len = 0;
 
-    if (!pDevGetObjects || !pDevFreeObjects)
+    if (!pDevGetObjects || !pDevFreeObjects || !pDevFindProperty)
     {
-        win_skip("Functions unavailable, skipping test. (%p %p)\n", pDevGetObjects, pDevFreeObjects);
+        win_skip("Functions unavailable, skipping test. (%p %p %p)\n", pDevGetObjects, pDevFreeObjects, pDevFindProperty);
         return;
     }
 
@@ -885,14 +911,24 @@ static void test_DevGetObjects( void )
             for (k = 0; k < len; k++)
             {
                 const DEV_OBJECT *obj = &objects[k];
+                const DEVPROPERTY *found_prop;
 
                 winetest_push_context( "objects[%lu]", k );
                 ok( obj->cPropertyCount == 1, "got cPropertyCount %lu != 1\n", obj->cPropertyCount );
                 ok( !!obj->pProperties, "got pProperties %p\n", obj->pProperties );
                 if (obj->pProperties)
+                {
                     ok( IsEqualDevPropKey( obj->pProperties[0].CompKey.Key, prop->key ), "got property {%s, %#lx} != {%s, %#lx}\n",
                         debugstr_guid( &obj->pProperties[0].CompKey.Key.fmtid ), obj->pProperties[0].CompKey.Key.pid,
                         debugstr_guid( &prop->key.fmtid ), prop->key.pid );
+                    found_prop = pDevFindProperty( &prop->key, DEVPROP_STORE_SYSTEM, NULL, obj->cPropertyCount, obj->pProperties );
+                    todo_wine ok( found_prop == &obj->pProperties[0], "got found_prop %p != %p\n", found_prop, &obj->pProperties[0] );
+                }
+                /* Search for a property not in obj->pProperties, we should get NULL, as we haven't requested this
+                 * property in the DevGetObjects call. */
+                found_prop = pDevFindProperty( &DEVPKEY_dummy, DEVPROP_STORE_SYSTEM, NULL, obj->cPropertyCount, obj->pProperties );
+                ok( !found_prop, "got found_prop %p\n", found_prop );
+
                 winetest_pop_context();
             }
             pDevFreeObjects( len, objects );
@@ -918,11 +954,14 @@ static void test_DevGetObjects( void )
             ok( !!obj->pProperties, "got pProperties %p\n", obj->pProperties );
             if (obj->pProperties)
             {
-                ok( IsEqualDevPropKey( obj->pProperties[0].CompKey.Key, DEVPKEY_dummy ),
-                    "got property {%s, %#lx} != {%s, %#lx}\n", debugstr_guid( &obj->pProperties[0].CompKey.Key.fmtid ),
-                    obj->pProperties[0].CompKey.Key.pid, debugstr_guid( &DEVPKEY_dummy.fmtid ), DEVPKEY_dummy.pid );
+                const DEVPROPERTY *found_prop;
+
+                ok( IsEqualDevPropKey( obj->pProperties[0].CompKey.Key, DEVPKEY_dummy ), "got property %s != %s\n",
+                    debugstr_DEVPROPKEY( &obj->pProperties[0].CompKey.Key ), debugstr_DEVPROPKEY( &DEVPKEY_dummy ) );
                 ok( obj->pProperties[0].Type == DEVPROP_TYPE_EMPTY, "got Type %#lx != %#x", obj->pProperties[0].Type,
                     DEVPROP_TYPE_EMPTY );
+                found_prop = pDevFindProperty( &DEVPKEY_dummy, DEVPROP_STORE_SYSTEM, NULL, obj->cPropertyCount, obj->pProperties );
+                todo_wine ok( found_prop == &obj->pProperties[0], "got found_prop %p != %p\n", found_prop, &obj->pProperties[0] );
             }
             winetest_pop_context();
         }
@@ -1115,6 +1154,23 @@ static void test_DevGetObjectProperties_invalid( void )
     ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
 }
 
+static void test_DevFindProperty_invalid( void )
+{
+    const DEVPROPERTY *prop;
+
+    if (!pDevFindProperty)
+    {
+        win_skip( "Functions unavailable, skipping test. (%p)\n", pDevFindProperty );
+        return;
+    }
+
+    prop = pDevFindProperty( &DEVPKEY_dummy, DEVPROP_STORE_SYSTEM, NULL, 0, NULL );
+    ok( !prop, "got prop %p\n", prop );
+
+    prop = pDevFindProperty( &DEVPKEY_dummy, DEVPROP_STORE_SYSTEM, NULL, 0, (DEVPROPERTY *)0xdeadbeef );
+    ok( !prop, "got prop %p\n", prop );
+}
+
 START_TEST(cfgmgr32)
 {
     HMODULE mod = GetModuleHandleA("cfgmgr32.dll");
@@ -1124,6 +1180,7 @@ START_TEST(cfgmgr32)
     pDevFreeObjects = (void *)GetProcAddress(mod, "DevFreeObjects");
     pDevGetObjectProperties = (void *)GetProcAddress(mod, "DevGetObjectProperties");
     pDevFreeObjectProperties = (void *)GetProcAddress(mod, "DevFreeObjectProperties");
+    pDevFindProperty = (void *)GetProcAddress(mod, "DevFindProperty");
 
     test_CM_MapCrToWin32Err();
     test_CM_Get_Device_ID_List();
@@ -1132,4 +1189,5 @@ START_TEST(cfgmgr32)
     test_DevGetObjects();
     test_DevCreateObjectQuery();
     test_DevGetObjectProperties_invalid();
+    test_DevFindProperty_invalid();
 }
