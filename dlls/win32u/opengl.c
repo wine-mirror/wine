@@ -42,8 +42,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 struct wgl_context
 {
     void *driver_private;
+    void *internal_context;
     int pixel_format;
-
     struct opengl_drawable *draw;
     struct opengl_drawable *read;
 };
@@ -59,9 +59,6 @@ struct wgl_pbuffer
     GLenum texture_target;
     GLint mipmap_level;
     GLenum cube_face;
-
-    struct wgl_context *tmp_context;
-    struct wgl_context *prev_context;
 };
 
 static const struct opengl_funcs *default_funcs; /* default GL function table from opengl32 */
@@ -1165,10 +1162,30 @@ static BOOL win32u_wglDeleteContext( struct wgl_context *context )
 
     TRACE( "context %p\n", context );
 
+    if (context->internal_context) driver_funcs->p_context_destroy( context->internal_context );
     ret = driver_funcs->p_context_destroy( context->driver_private );
     free( context );
 
     return ret;
+}
+
+static void push_internal_context( struct wgl_context *context, HDC hdc, int format )
+{
+    TRACE( "context %p, hdc %p\n", context, hdc );
+
+    if (!context->internal_context)
+    {
+        driver_funcs->p_context_create( format, context->driver_private, NULL, &context->internal_context );
+        if (!context->internal_context) ERR( "Failed to create internal context\n" );
+    }
+
+    driver_funcs->p_make_current( context->draw, context->read, context->internal_context );
+}
+
+static void pop_internal_context( struct wgl_context *context )
+{
+    TRACE( "context %p\n", context );
+    driver_funcs->p_make_current( context->draw, context->read, context->driver_private );
 }
 
 static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct wgl_context *context )
@@ -1342,12 +1359,9 @@ failed:
 
 static BOOL win32u_wglDestroyPbufferARB( struct wgl_pbuffer *pbuffer )
 {
-    const struct opengl_funcs *funcs = &display_funcs;
-
     TRACE( "pbuffer %p\n", pbuffer );
 
     opengl_drawable_release( pbuffer->drawable );
-    if (pbuffer->tmp_context) funcs->p_wglDeleteContext( pbuffer->tmp_context );
     NtGdiDeleteObjectApp( pbuffer->hdc );
     free( pbuffer );
 
@@ -1470,9 +1484,7 @@ static GLenum binding_from_target( GLenum target )
 static BOOL win32u_wglBindTexImageARB( struct wgl_pbuffer *pbuffer, int buffer )
 {
     const struct opengl_funcs *funcs = &display_funcs;
-    HDC prev_draw = NtCurrentTeb()->glReserved1[0], prev_read = NtCurrentTeb()->glReserved1[1];
     int prev_texture = 0, format = win32u_wglGetPixelFormat( pbuffer->hdc );
-    struct wgl_context *prev_context = NtCurrentTeb()->glContext;
     struct wgl_pixel_format desc;
     GLenum source;
     UINT ret;
@@ -1531,17 +1543,8 @@ static BOOL win32u_wglBindTexImageARB( struct wgl_pbuffer *pbuffer, int buffer )
     if ((ret = driver_funcs->p_pbuffer_bind( pbuffer->hdc, pbuffer->drawable, source )) != -1)
         return ret;
 
-    if (!pbuffer->tmp_context || pbuffer->prev_context != prev_context)
-    {
-        if (pbuffer->tmp_context) funcs->p_wglDeleteContext( pbuffer->tmp_context );
-        pbuffer->tmp_context = funcs->p_wglCreateContextAttribsARB( pbuffer->hdc, prev_context, NULL );
-        pbuffer->prev_context = prev_context;
-    }
-
     funcs->p_glGetIntegerv( binding_from_target( pbuffer->texture_target ), &prev_texture );
-
-    /* Switch to our pbuffer */
-    funcs->p_wglMakeCurrent( pbuffer->hdc, pbuffer->tmp_context );
+    push_internal_context( NtCurrentTeb()->glContext, pbuffer->hdc, format );
 
     /* Make sure that the prev_texture is set as the current texture state isn't shared
      * between contexts. After that copy the pbuffer texture data. */
@@ -1549,8 +1552,7 @@ static BOOL win32u_wglBindTexImageARB( struct wgl_pbuffer *pbuffer, int buffer )
     funcs->p_glCopyTexImage2D( pbuffer->texture_target, 0, pbuffer->texture_format, 0, 0,
                                         pbuffer->width, pbuffer->height, 0 );
 
-    /* Switch back to the original drawable and context */
-    funcs->p_wglMakeContextCurrentARB( prev_draw, prev_read, prev_context );
+    pop_internal_context( NtCurrentTeb()->glContext );
     return GL_TRUE;
 }
 
