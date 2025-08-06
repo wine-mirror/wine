@@ -1736,29 +1736,29 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
     if (!wcscmp( type, BCRYPT_ECCPUBLIC_BLOB ))
     {
         BCRYPT_ECCKEY_BLOB *ecc_blob = (BCRYPT_ECCKEY_BLOB *)input;
-        DWORD key_size, magic;
+        DWORD bitlen, magic;
 
         if (input_len < sizeof(*ecc_blob)) return STATUS_INVALID_PARAMETER;
 
         switch (alg->id)
         {
         case ALG_ID_ECDH_P256:
-            key_size = 32;
+            bitlen = 256;
             magic = BCRYPT_ECDH_PUBLIC_P256_MAGIC;
             break;
 
         case ALG_ID_ECDH_P384:
-            key_size = 48;
+            bitlen = 384;
             magic = BCRYPT_ECDH_PUBLIC_P384_MAGIC;
             break;
 
         case ALG_ID_ECDSA_P256:
-            key_size = 32;
+            bitlen = 256;
             magic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
             break;
 
         case ALG_ID_ECDSA_P384:
-            key_size = 48;
+            bitlen = 384;
             magic = BCRYPT_ECDSA_PUBLIC_P384_MAGIC;
             break;
 
@@ -1768,10 +1768,10 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         }
 
         if (ecc_blob->dwMagic != magic) return STATUS_INVALID_PARAMETER;
-        if (ecc_blob->cbKey != key_size || input_len < sizeof(*ecc_blob) + ecc_blob->cbKey * 2)
+        if (ecc_blob->cbKey != len_from_bitlen( bitlen ) || input_len < sizeof(*ecc_blob) + ecc_blob->cbKey * 2)
             return STATUS_INVALID_PARAMETER;
 
-        if ((status = key_asymmetric_create( alg->id, key_size * 8, &key ))) return status;
+        if ((status = key_asymmetric_create( alg->id, bitlen, &key ))) return status;
         params.key   = key;
         params.flags = KEY_IMPORT_FLAG_PUBLIC;
         params.buf   = input;
@@ -1785,24 +1785,24 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
     else if (!wcscmp( type, BCRYPT_ECCPRIVATE_BLOB ))
     {
         BCRYPT_ECCKEY_BLOB *ecc_blob = (BCRYPT_ECCKEY_BLOB *)input;
-        DWORD key_size, magic;
+        DWORD bitlen, magic;
 
         if (input_len < sizeof(*ecc_blob)) return STATUS_INVALID_PARAMETER;
 
         switch (alg->id)
         {
         case ALG_ID_ECDH_P256:
-            key_size = 32;
+            bitlen = 256;
             magic = BCRYPT_ECDH_PRIVATE_P256_MAGIC;
             break;
 
         case ALG_ID_ECDH_P384:
-            key_size = 48;
+            bitlen = 384;
             magic = BCRYPT_ECDH_PRIVATE_P384_MAGIC;
             break;
 
         case ALG_ID_ECDSA_P256:
-            key_size = 32;
+            bitlen = 256;
             magic = BCRYPT_ECDSA_PRIVATE_P256_MAGIC;
             break;
 
@@ -1812,10 +1812,10 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         }
 
         if (ecc_blob->dwMagic != magic) return STATUS_INVALID_PARAMETER;
-        if (ecc_blob->cbKey != key_size || input_len < sizeof(*ecc_blob) + ecc_blob->cbKey * 3)
+        if (ecc_blob->cbKey != len_from_bitlen( bitlen ) || input_len < sizeof(*ecc_blob) + ecc_blob->cbKey * 3)
             return STATUS_INVALID_PARAMETER;
 
-        if ((status = key_asymmetric_create( alg->id, key_size * 8, &key ))) return status;
+        if ((status = key_asymmetric_create( alg->id, bitlen, &key ))) return status;
         params.key   = key;
         params.flags = 0;
         params.buf   = input;
