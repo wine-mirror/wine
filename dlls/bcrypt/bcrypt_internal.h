@@ -69,6 +69,7 @@ enum alg_id
     ALG_ID_RSA_SIGN,
     ALG_ID_ECDSA_P256,
     ALG_ID_ECDSA_P384,
+    ALG_ID_ECDSA_P521,
     ALG_ID_DSA,
 
     /* rng */
@@ -279,7 +280,7 @@ enum key_funcs
 
 static inline ULONG len_from_bitlen( ULONG bitlen )
 {
-    return bitlen / 8;
+    return (bitlen + 7) / 8;
 }
 
 #endif /* __BCRYPT_INTERNAL_H */

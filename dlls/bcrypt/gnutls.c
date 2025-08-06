@@ -845,6 +845,11 @@ static NTSTATUS key_export_ecc_public( struct key *key, UCHAR *buf, ULONG len, U
         size = 48;
         break;
 
+    case ALG_ID_ECDSA_P521:
+        magic = BCRYPT_ECDSA_PUBLIC_P521_MAGIC;
+        size = 66;
+        break;
+
     default:
         FIXME( "algorithm %u not supported\n", key->alg_id );
         return STATUS_NOT_IMPLEMENTED;
@@ -861,7 +866,7 @@ static NTSTATUS key_export_ecc_public( struct key *key, UCHAR *buf, ULONG len, U
         return STATUS_INTERNAL_ERROR;
     }
 
-    if (curve != GNUTLS_ECC_CURVE_SECP256R1 && curve != GNUTLS_ECC_CURVE_SECP384R1)
+    if (curve != GNUTLS_ECC_CURVE_SECP256R1 && curve != GNUTLS_ECC_CURVE_SECP384R1 && curve != GNUTLS_ECC_CURVE_SECP521R1)
     {
         FIXME( "curve %u not supported\n", curve );
         free( x.data ); free( y.data );
@@ -1131,6 +1136,11 @@ static NTSTATUS key_asymmetric_generate( void *args )
         bitlen = GNUTLS_CURVE_TO_BITS( GNUTLS_ECC_CURVE_SECP384R1 );
         break;
 
+    case ALG_ID_ECDSA_P521:
+        pk_alg = GNUTLS_PK_ECC; /* compatible with ECDSA and ECDH */
+        bitlen = GNUTLS_CURVE_TO_BITS( GNUTLS_ECC_CURVE_SECP521R1 );
+        break;
+
     default:
         FIXME( "algorithm %u not supported\n", key->alg_id );
         return STATUS_NOT_SUPPORTED;
@@ -1196,6 +1206,11 @@ static NTSTATUS key_export_ecc( struct key *key, UCHAR *buf, ULONG len, ULONG *r
         size = 48;
         break;
 
+    case ALG_ID_ECDSA_P521:
+        magic = BCRYPT_ECDSA_PRIVATE_P521_MAGIC;
+        size = 66;
+        break;
+
     default:
         FIXME( "algorithm %u does not yet support exporting ecc blob\n", key->alg_id );
         return STATUS_NOT_IMPLEMENTED;
@@ -1209,7 +1224,7 @@ static NTSTATUS key_export_ecc( struct key *key, UCHAR *buf, ULONG len, ULONG *r
         return STATUS_INTERNAL_ERROR;
     }
 
-    if (curve != GNUTLS_ECC_CURVE_SECP256R1 && curve != GNUTLS_ECC_CURVE_SECP384R1)
+    if (curve != GNUTLS_ECC_CURVE_SECP256R1 && curve != GNUTLS_ECC_CURVE_SECP384R1 && curve != GNUTLS_ECC_CURVE_SECP521R1)
     {
         FIXME( "curve %u not supported\n", curve );
         free( x.data ); free( y.data ); free( d.data );
@@ -1251,6 +1266,10 @@ static NTSTATUS key_import_ecc( struct key *key, UCHAR *buf, ULONG len )
     case ALG_ID_ECDH_P384:
     case ALG_ID_ECDSA_P384:
         curve = GNUTLS_ECC_CURVE_SECP384R1;
+        break;
+
+    case ALG_ID_ECDSA_P521:
+        curve = GNUTLS_ECC_CURVE_SECP521R1;
         break;
 
     default:
@@ -1517,6 +1536,9 @@ static NTSTATUS key_import_ecc_public( struct key *key, UCHAR *buf, ULONG len )
     case ALG_ID_ECDH_P384:
     case ALG_ID_ECDSA_P384:
         curve = GNUTLS_ECC_CURVE_SECP384R1; break;
+
+    case ALG_ID_ECDSA_P521:
+        curve = GNUTLS_ECC_CURVE_SECP521R1; break;
 
     default:
         FIXME( "algorithm %u not yet supported\n", key->alg_id );
@@ -1809,6 +1831,7 @@ static NTSTATUS key_asymmetric_export( void *args )
     case ALG_ID_ECDH_P384:
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
+    case ALG_ID_ECDSA_P521:
         if (flags & KEY_EXPORT_FLAG_PUBLIC)
             return key_export_ecc_public( key, params->buf, params->len, params->ret_len );
         return key_export_ecc( key, params->buf, params->len, params->ret_len );
@@ -1995,6 +2018,7 @@ static NTSTATUS key_asymmetric_import( void *args )
     case ALG_ID_ECDH_P384:
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
+    case ALG_ID_ECDSA_P521:
         if (flags & KEY_IMPORT_FLAG_PUBLIC)
             return key_import_ecc_public( key, params->buf, params->len );
         ret = key_import_ecc( key, params->buf, params->len );
@@ -2093,6 +2117,7 @@ static NTSTATUS prepare_gnutls_signature( struct key *key, UCHAR *signature, ULO
     {
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
+    case ALG_ID_ECDSA_P521:
     case ALG_ID_DSA:
         return prepare_gnutls_signature_dsa( key, signature, signature_len, gnutls_signature );
 
@@ -2159,6 +2184,7 @@ static NTSTATUS key_asymmetric_verify( void *args )
     {
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
+    case ALG_ID_ECDSA_P521:
     {
         if (flags) FIXME( "flags %#x not supported\n", flags );
 
@@ -2253,6 +2279,7 @@ static unsigned int get_signature_length( enum alg_id id )
     {
     case ALG_ID_ECDSA_P256: return 64;
     case ALG_ID_ECDSA_P384: return 96;
+    case ALG_ID_ECDSA_P521: return 132;
     case ALG_ID_DSA:        return 40;
     default:
         FIXME( "unhandled algorithm %u\n", id );
@@ -2275,6 +2302,7 @@ static NTSTATUS format_gnutls_signature( enum alg_id type, gnutls_datum_t signat
     }
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
+    case ALG_ID_ECDSA_P521:
     case ALG_ID_DSA:
     {
         int err;
@@ -2341,7 +2369,7 @@ static NTSTATUS key_asymmetric_sign( void *args )
     NTSTATUS status;
     int ret;
 
-    if (key->alg_id == ALG_ID_ECDSA_P256 || key->alg_id == ALG_ID_ECDSA_P384)
+    if (key->alg_id == ALG_ID_ECDSA_P256 || key->alg_id == ALG_ID_ECDSA_P384 || key->alg_id == ALG_ID_ECDSA_P521)
     {
         /* With ECDSA, we find the digest algorithm from the hash length, and verify it */
         switch (params->input_len)
@@ -2499,6 +2527,7 @@ static NTSTATUS dup_privkey( struct key *key_orig, struct key *key_copy )
     case ALG_ID_ECDH_P384:
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
+    case ALG_ID_ECDSA_P521:
     {
         gnutls_ecc_curve_t curve;
         gnutls_datum_t x, y, k;
@@ -2578,6 +2607,7 @@ static NTSTATUS dup_pubkey( struct key *key_orig, struct key *key_copy )
     case ALG_ID_ECDH_P384:
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
+    case ALG_ID_ECDSA_P521:
     {
         gnutls_ecc_curve_t curve;
         gnutls_datum_t x, y;
