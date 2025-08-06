@@ -68,6 +68,9 @@ static const struct opengl_funcs *default_funcs; /* default GL function table fr
 static struct egl_platform display_egl;
 static struct opengl_funcs display_funcs;
 
+static struct wgl_pixel_format *pixel_formats;
+static UINT formats_count, onscreen_count;
+static char wgl_extensions[4096];
 
 static BOOL has_extension( const char *list, const char *ext )
 {
@@ -817,9 +820,6 @@ static const struct opengl_driver_funcs nulldrv_funcs =
 };
 
 static const struct opengl_driver_funcs *driver_funcs = &nulldrv_funcs;
-static UINT formats_count, onscreen_count;
-
-static char wgl_extensions[4096];
 
 static const char *win32u_wglGetExtensionsStringARB( HDC hdc )
 {
@@ -1066,9 +1066,7 @@ static PROC win32u_wglGetProcAddress( const char *name )
 static void win32u_get_pixel_formats( struct wgl_pixel_format *formats, UINT max_formats,
                                       UINT *num_formats, UINT *num_onscreen_formats )
 {
-    UINT i = 0;
-
-    if (formats) while (i < max_formats && driver_funcs->p_describe_pixel_format( i + 1, &formats[i] )) i++;
+    memcpy( formats, pixel_formats, min( max_formats, formats_count ) * sizeof(*pixel_formats) );
     *num_formats = formats_count;
     *num_onscreen_formats = onscreen_count;
 }
@@ -1749,6 +1747,8 @@ static void display_funcs_init(void)
     init_egl_platform( &display_egl, &display_funcs, driver_funcs );
 
     formats_count = driver_funcs->p_init_pixel_formats( &onscreen_count );
+    if (!(pixel_formats = malloc( formats_count * sizeof(*pixel_formats) ))) ERR( "Failed to allocate memory for pixel formats\n" );
+    else for (int i = 0; i < formats_count; i++) driver_funcs->p_describe_pixel_format( i + 1, pixel_formats + i );
 
 #define USE_GL_FUNC(func) \
     if (!display_funcs.p_##func && !(display_funcs.p_##func = driver_funcs->p_get_proc_address( #func ))) \
