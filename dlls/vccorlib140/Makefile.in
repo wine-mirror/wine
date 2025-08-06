@@ -1,1 +1,5 @@
 MODULE = vccorlib140.dll
+IMPORTS = combase
+
+SOURCES = \
+	vccorlib.c

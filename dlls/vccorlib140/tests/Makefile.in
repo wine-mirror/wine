@@ -1,0 +1,5 @@
+TESTDLL = vccorlib140.dll
+IMPORTS = ole32 uuid
+
+SOURCES = \
+	vccorlib.c

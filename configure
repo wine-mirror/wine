@@ -22935,6 +22935,7 @@ wine_fn_config_makefile dlls/uxtheme/tests enable_tests
 wine_fn_config_makefile dlls/vbscript enable_vbscript
 wine_fn_config_makefile dlls/vbscript/tests enable_tests
 wine_fn_config_makefile dlls/vccorlib140 enable_vccorlib140
+wine_fn_config_makefile dlls/vccorlib140/tests enable_tests
 wine_fn_config_makefile dlls/vcomp enable_vcomp
 wine_fn_config_makefile dlls/vcomp/tests enable_tests
 wine_fn_config_makefile dlls/vcomp100 enable_vcomp100
