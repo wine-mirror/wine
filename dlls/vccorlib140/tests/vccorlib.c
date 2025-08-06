@@ -103,8 +103,7 @@ static DWORD exp_coinit;
 static HRESULT WINAPI InitializeSpy_PreInitialize(IInitializeSpy *iface, DWORD coinit, DWORD aptrefs)
 {
     CHECK_EXPECT(PreInitialize);
-    todo_wine_if(coinit == COINIT_APARTMENTTHREADED)
-        ok(coinit == exp_coinit, "coinit = %lx\n", coinit);
+    ok(coinit == exp_coinit, "coinit = %lx\n", coinit);
     return S_OK;
 }
 

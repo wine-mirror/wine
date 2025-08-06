@@ -125,7 +125,7 @@ HRESULT WINAPI RoInitialize(RO_INIT_TYPE type)
 {
     switch (type) {
     case RO_INIT_SINGLETHREADED:
-        return CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+        return CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
     default:
         FIXME("type %d\n", type);
     case RO_INIT_MULTITHREADED:

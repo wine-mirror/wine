@@ -22,6 +22,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winstring.h"
+#include "winternl.h"
 
 #include "initguid.h"
 #include "roapi.h"
@@ -212,6 +213,28 @@ static DWORD WINAPI mta_init_implicit_thread(void *dummy)
     return 0;
 }
 
+enum oletlsflags
+{
+    OLETLS_UUIDINITIALIZED = 0x2,
+    OLETLS_DISABLE_OLE1DDE = 0x40,
+    OLETLS_APARTMENTTHREADED = 0x80,
+    OLETLS_MULTITHREADED = 0x100,
+};
+
+struct oletlsdata
+{
+    void *threadbase;
+    void *smallocator;
+    DWORD id;
+    DWORD flags;
+};
+
+static DWORD get_oletlsflags(void)
+{
+    struct oletlsdata *data = NtCurrentTeb()->ReservedForOle;
+    return data ? data->flags : 0;
+}
+
 static void test_implicit_mta(void)
 {
     static const struct
@@ -247,7 +270,14 @@ static void test_implicit_mta(void)
     {
         winetest_push_context("test %u", i);
         if (tests[i].ro_init)
+        {
+            DWORD flags = tests[i].mta ? OLETLS_MULTITHREADED : OLETLS_APARTMENTTHREADED;
+
             hr = RoInitialize(tests[i].mta ? RO_INIT_MULTITHREADED : RO_INIT_SINGLETHREADED);
+
+            flags |= OLETLS_DISABLE_OLE1DDE;
+            ok((get_oletlsflags() & flags) == flags, "get_oletlsflags() = %lx\n", get_oletlsflags());
+        }
         else
             hr = CoInitializeEx(NULL, tests[i].mta ? COINIT_MULTITHREADED : COINIT_APARTMENTTHREADED);
         ok(hr == S_OK, "got %#lx.\n", hr);
