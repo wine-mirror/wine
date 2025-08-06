@@ -1806,6 +1806,11 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
             magic = BCRYPT_ECDSA_PRIVATE_P256_MAGIC;
             break;
 
+        case ALG_ID_ECDSA_P384:
+            bitlen = 384;
+            magic = BCRYPT_ECDSA_PRIVATE_P384_MAGIC;
+            break;
+
         default:
             FIXME( "algorithm %u does not yet support importing blob of type %s\n", alg->id, debugstr_w(type) );
             return STATUS_NOT_SUPPORTED;
