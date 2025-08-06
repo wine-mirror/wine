@@ -21,6 +21,7 @@
 #define __WINE_VULKAN_DRIVER_H
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stddef.h>
 
 #include <windef.h>
@@ -90,6 +91,7 @@ struct vulkan_physical_device
 {
     VULKAN_OBJECT_HEADER( VkPhysicalDevice, physical_device );
     struct vulkan_instance *instance;
+    bool has_swapchain_maintenance1;
 };
 
 static inline struct vulkan_physical_device *vulkan_physical_device_from_handle( VkPhysicalDevice handle )

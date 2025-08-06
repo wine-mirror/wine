@@ -384,6 +384,8 @@ static VkResult wine_vk_physical_device_init(struct wine_phys_dev *object, VkPhy
             have_external_memory_host = TRUE;
         else if (!strcmp(host_properties[i].extensionName, "VK_EXT_map_memory_placed"))
             have_memory_placed = TRUE;
+        else if (!strcmp(host_properties[i].extensionName, "VK_EXT_swapchain_maintenance1"))
+            object->obj.has_swapchain_maintenance1 = true;
         else if (!strcmp(host_properties[i].extensionName, "VK_KHR_map_memory2"))
             have_map_memory2 = TRUE;
     }
@@ -545,7 +547,7 @@ static VkResult wine_vk_device_convert_create_info(VkPhysicalDevice client_physi
         struct conversion_context *ctx, const VkDeviceCreateInfo *src, VkDeviceCreateInfo *dst)
 {
     struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(client_physical_device);
-    const char *extra_extensions[2], * const*extensions = src->ppEnabledExtensionNames;
+    const char *extra_extensions[3], * const*extensions = src->ppEnabledExtensionNames;
     unsigned int i, extra_count = 0, extensions_count = src->enabledExtensionCount;
 
     *dst = *src;
@@ -588,6 +590,13 @@ static VkResult wine_vk_device_convert_create_info(VkPhysicalDevice client_physi
             extra_extensions[extra_count++] = "VK_KHR_external_memory";
         if (!find_extension(extensions, extensions_count, "VK_EXT_external_memory_host"))
             extra_extensions[extra_count++] = "VK_EXT_external_memory_host";
+    }
+
+    /* win32u uses VkSwapchainPresentScalingCreateInfoEXT if available. */
+    if (phys_dev->obj.has_swapchain_maintenance1)
+    {
+        if (!find_extension(extensions, extensions_count, "VK_EXT_swapchain_maintenance1"))
+            extra_extensions[extra_count++] = "VK_EXT_swapchain_maintenance1";
     }
 
     if (extra_count)
