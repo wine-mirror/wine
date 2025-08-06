@@ -160,10 +160,14 @@ static struct context *context_from_wgl_context( struct wgl_context *context )
 }
 
 /* the current context is assumed valid and doesn't need locking */
-static struct context *get_current_context( TEB *teb )
+static struct context *get_current_context( TEB *teb, struct opengl_drawable **draw, struct opengl_drawable **read )
 {
+    struct wgl_context *context;
     if (!teb->glCurrentRC) return NULL;
-    return context_from_wgl_context( wgl_handles[LOWORD(teb->glCurrentRC) & ~HANDLE_TYPE_MASK].u.context );
+    if (!(context = wgl_handles[LOWORD(teb->glCurrentRC) & ~HANDLE_TYPE_MASK].u.context)) return NULL;
+    if (draw) *draw = context->draw;
+    if (read) *read = context->read;
+    return context_from_wgl_context( context );
 }
 
 static inline HANDLE next_handle( struct wgl_handle *ptr, enum wgl_handle_type type )
@@ -216,10 +220,10 @@ C_ASSERT( sizeof(context_attributes) <= 64 * 1024 );
 
 void set_context_attribute( TEB *teb, GLenum name, const void *value, size_t size )
 {
-    struct context *ctx = get_current_context( teb );
+    struct context *ctx;
     GLbitfield bit;
 
-    if (!(ctx = get_current_context( teb ))) return;
+    if (!(ctx = get_current_context( teb, NULL, NULL ))) return;
 
     if (name >= ARRAY_SIZE(context_attributes) || !(bit = context_attributes[name].bit)) bit = -1 /* unsupported */;
     else if (size && size != context_attributes[name].size) ERR( "Invalid state attrib %#x parameter size %#zx\n", name, size );
@@ -233,7 +237,7 @@ static BOOL copy_context_attributes( TEB *teb, const struct opengl_funcs *funcs,
                                      HGLRC src_handle, struct context *src, GLbitfield mask )
 {
     HDC draw_hdc = teb->glReserved1[0], read_hdc = teb->glReserved1[1];
-    struct context *old_ctx = get_current_context( teb );
+    struct context *old_ctx = get_current_context( teb, NULL, NULL );
     const struct opengl_funcs *old_funcs = teb->glTable;
 
     if (dst == old_ctx)
@@ -717,7 +721,7 @@ static BOOL filter_extensions( TEB * teb, const char *extensions, GLubyte **exts
 
 static const GLuint *disabled_extensions_index( TEB *teb )
 {
-    struct context *ctx = get_current_context( teb );
+    struct context *ctx = get_current_context( teb, NULL, NULL );
     GLuint **disabled = &ctx->disabled_exts;
     if (*disabled || filter_extensions( teb, NULL, NULL, disabled )) return *disabled;
     return NULL;
@@ -775,7 +779,9 @@ static BOOL check_extension_support( TEB *teb, const char *extension, const char
 static BOOL get_integer( TEB *teb, GLenum pname, GLint *data )
 {
     const struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *draw, *read;
     const GLuint *disabled;
+    struct context *ctx;
 
     if (pname == GL_NUM_EXTENSIONS)
     {
@@ -805,6 +811,20 @@ static BOOL get_integer( TEB *teb, GLenum pname, GLint *data )
         }
     }
 
+    if ((ctx = get_current_context( teb, &draw, &read )))
+    {
+        if (pname == GL_DRAW_FRAMEBUFFER_BINDING && draw->fbo)
+        {
+            *data = ctx->draw_fbo;
+            return TRUE;
+        }
+        if (pname == GL_READ_FRAMEBUFFER_BINDING && read->fbo)
+        {
+            *data = ctx->read_fbo;
+            return TRUE;
+        }
+    }
+
     return FALSE;
 }
 
@@ -817,14 +837,14 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
     {
         if (name == GL_EXTENSIONS)
         {
-            struct context *ctx = get_current_context( teb );
+            struct context *ctx = get_current_context( teb, NULL, NULL );
             GLubyte **extensions = &ctx->extensions;
             GLuint **disabled = &ctx->disabled_exts;
             if (*extensions || filter_extensions( teb, (const char *)ret, extensions, disabled )) return *extensions;
         }
         else if (name == GL_VERSION && is_win64 && is_wow64())
         {
-            struct context *ctx = get_current_context( teb );
+            struct context *ctx = get_current_context( teb, NULL, NULL );
             GLubyte **str = &ctx->wow64_version;
             int major, minor;
 
@@ -895,7 +915,7 @@ static UINT get_context_major_version( TEB *teb )
 {
     struct context *ctx;
 
-    if (!(ctx = get_current_context( teb ))) return TRUE;
+    if (!(ctx = get_current_context( teb, NULL, NULL ))) return TRUE;
     for (const int *attr = ctx->attribs; attr && attr[0]; attr += 2)
         if (attr[0] == WGL_CONTEXT_MAJOR_VERSION_ARB) return attr[1];
 
@@ -933,7 +953,7 @@ PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
     /* Without an active context opengl32 doesn't know to what
      * driver it has to dispatch wglGetProcAddress.
      */
-    if (!get_current_context( teb ))
+    if (!get_current_context( teb, NULL, NULL ))
     {
         WARN( "No active WGL context found\n" );
         return (void *)-1;
@@ -1022,7 +1042,7 @@ HGLRC wrap_wglCreateContext( TEB *teb, HDC hdc )
 BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
 {
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
-    struct context *ctx, *prev = get_current_context( teb );
+    struct context *ctx, *prev = get_current_context( teb, NULL, NULL );
     const struct opengl_funcs *funcs = teb->glTable;
 
     if (hglrc)
@@ -1084,7 +1104,7 @@ BOOL wrap_wglDeleteContext( TEB *teb, HGLRC hglrc )
 
 static void flush_context( TEB *teb, void (*flush)(void) )
 {
-    struct context *ctx = get_current_context( teb );
+    struct context *ctx = get_current_context( teb, NULL, NULL );
     const struct opengl_funcs *funcs = teb->glTable;
 
     if (!ctx || !funcs->p_wgl_context_flush( &ctx->base, flush ))
@@ -1238,7 +1258,7 @@ HDC wrap_wglGetPbufferDCARB( TEB *teb, HPBUFFERARB handle )
 BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
 {
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
-    struct context *ctx, *prev = get_current_context( teb );
+    struct context *ctx, *prev = get_current_context( teb, NULL, NULL );
     const struct opengl_funcs *funcs = teb->glTable;
 
     if (hglrc)
@@ -1337,7 +1357,7 @@ static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GL
 
 void wrap_glDebugMessageCallback( TEB *teb, GLDEBUGPROC callback, const void *user )
 {
-    struct context *ctx = get_current_context( teb );
+    struct context *ctx = get_current_context( teb, NULL, NULL );
     const struct opengl_funcs *funcs = teb->glTable;
 
     if (!funcs->p_glDebugMessageCallback) return;
@@ -1350,7 +1370,7 @@ void wrap_glDebugMessageCallback( TEB *teb, GLDEBUGPROC callback, const void *us
 
 void wrap_glDebugMessageCallbackAMD( TEB *teb, GLDEBUGPROCAMD callback, void *user )
 {
-    struct context *ctx = get_current_context( teb );
+    struct context *ctx = get_current_context( teb, NULL, NULL );
     const struct opengl_funcs *funcs = teb->glTable;
 
     if (!funcs->p_glDebugMessageCallbackAMD) return;
@@ -1363,7 +1383,7 @@ void wrap_glDebugMessageCallbackAMD( TEB *teb, GLDEBUGPROCAMD callback, void *us
 
 void wrap_glDebugMessageCallbackARB( TEB *teb, GLDEBUGPROCARB callback, const void *user )
 {
-    struct context *ctx = get_current_context( teb );
+    struct context *ctx = get_current_context( teb, NULL, NULL );
     const struct opengl_funcs *funcs = teb->glTable;
 
     if (!funcs->p_glDebugMessageCallbackARB) return;
@@ -1378,7 +1398,7 @@ void set_current_fbo( TEB *teb, GLenum target, GLuint fbo )
 {
     struct context *ctx;
 
-    if (!(ctx = get_current_context( teb ))) return;
+    if (!(ctx = get_current_context( teb, NULL, NULL ))) return;
     if (target == GL_FRAMEBUFFER) ctx->draw_fbo = ctx->read_fbo = fbo;
     if (target == GL_DRAW_FRAMEBUFFER) ctx->draw_fbo = fbo;
     if (target == GL_READ_FRAMEBUFFER) ctx->read_fbo = fbo;
