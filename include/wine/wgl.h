@@ -267,6 +267,7 @@ typedef unsigned int GLhandleARB;
 #define EGL_PIXEL_ASPECT_RATIO                                        0x3092
 #define EGL_PIXMAP_BIT                                                0x0002
 #define EGL_PLATFORM_ANDROID_KHR                                      0x3141
+#define EGL_PLATFORM_SURFACELESS_MESA                                 0x31DD
 #define EGL_PLATFORM_WAYLAND_KHR                                      0x31D8
 #define EGL_PLATFORM_X11_KHR                                          0x31D5
 #define EGL_PLATFORM_X11_SCREEN_KHR                                   0x31D6

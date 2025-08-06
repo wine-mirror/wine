@@ -794,6 +794,7 @@ my %supported_egl_extensions =
     "EGL_KHR_platform_android" => 1,
     "EGL_KHR_platform_wayland" => 1,
     "EGL_KHR_platform_x11" => 1,
+    "EGL_MESA_platform_surfaceless" => 1,
    );
 
 my %supported_apis =

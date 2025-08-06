@@ -167,6 +167,7 @@ static void opengl_drawable_flush( struct opengl_drawable *drawable, int interva
 
 #ifdef SONAME_LIBEGL
 
+static const struct opengl_drawable_funcs egldrv_surface_funcs;
 static const struct opengl_drawable_funcs egldrv_pbuffer_funcs;
 
 static inline EGLConfig egl_config_for_format( const struct egl_platform *egl, int format )
@@ -174,6 +175,12 @@ static inline EGLConfig egl_config_for_format( const struct egl_platform *egl, i
     assert(format > 0 && format <= 2 * egl->config_count);
     if (format <= egl->config_count) return egl->configs[format - 1];
     return egl->configs[format - egl->config_count - 1];
+}
+
+static void egldrv_init_egl_platform( struct egl_platform *platform )
+{
+    platform->type = EGL_PLATFORM_SURFACELESS_MESA;
+    platform->native_display = 0;
 }
 
 static void *egldrv_get_proc_address( const char *name )
@@ -238,6 +245,7 @@ static BOOL describe_egl_config( EGLConfig config, struct wgl_pixel_format *fmt,
 
     /* If we can't get basic information, there is no point continuing */
     if (!funcs->p_eglGetConfigAttrib( egl->display, config, EGL_SURFACE_TYPE, &surface_type )) return FALSE;
+    if (egl->type == EGL_PLATFORM_SURFACELESS_MESA) surface_type |= EGL_WINDOW_BIT | EGL_PBUFFER_BIT;
 
     memset( fmt, 0, sizeof(*fmt) );
     pfd->nSize = sizeof(*pfd);
@@ -381,8 +389,8 @@ static const char *egldrv_init_wgl_extensions( struct opengl_funcs *funcs )
 
 static BOOL egldrv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable )
 {
-    FIXME( "stub!\n" );
-    return TRUE;
+    *drawable = opengl_drawable_create( sizeof(**drawable), &egldrv_surface_funcs, format, NULL );
+    return !!*drawable;
 }
 
 static BOOL egldrv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
@@ -557,6 +565,29 @@ static BOOL egldrv_make_current( struct opengl_drawable *draw, struct opengl_dra
     return funcs->p_eglMakeCurrent( egl->display, context ? draw->surface : EGL_NO_SURFACE, context ? read->surface : EGL_NO_SURFACE, context );
 }
 
+static void egldrv_surface_destroy( struct opengl_drawable *drawable )
+{
+    TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
+}
+
+static void egldrv_surface_flush( struct opengl_drawable *drawable, UINT flags )
+{
+    TRACE( "%s flags %#x\n", debugstr_opengl_drawable( drawable ), flags );
+}
+
+static BOOL egldrv_surface_swap( struct opengl_drawable *drawable )
+{
+    TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
+    return TRUE;
+}
+
+static const struct opengl_drawable_funcs egldrv_surface_funcs =
+{
+    .destroy = egldrv_surface_destroy,
+    .flush = egldrv_surface_flush,
+    .swap = egldrv_surface_swap,
+};
+
 static void egldrv_pbuffer_destroy( struct opengl_drawable *drawable )
 {
     TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
@@ -569,6 +600,7 @@ static const struct opengl_drawable_funcs egldrv_pbuffer_funcs =
 
 static const struct opengl_driver_funcs egldrv_funcs =
 {
+    .p_init_egl_platform = egldrv_init_egl_platform,
     .p_get_proc_address = egldrv_get_proc_address,
     .p_init_pixel_formats = egldrv_init_pixel_formats,
     .p_describe_pixel_format = egldrv_describe_pixel_format,
