@@ -1689,17 +1689,17 @@ static void *gl_map_buffer( enum unix_funcs code, GLenum target, GLenum access )
 
     TRACE( "target %d, access %d\n", target, access );
 
-    if (!(status = WINE_UNIX_CALL( code, &args ))) return args.ret;
+    status = WINE_UNIX_CALL( code, &args );
 #ifndef _WIN64
-    if (status == STATUS_INVALID_ADDRESS)
+    if (args.client_ptr)
     {
         TRACE( "Unable to map wow64 buffer directly, using copy buffer!\n" );
-        if (!(args.ret = _aligned_malloc( (size_t)args.ret, 16 ))) status = STATUS_NO_MEMORY;
-        else if (!(status = WINE_UNIX_CALL( code, &args ))) return args.ret;
-        _aligned_free( args.ret );
+        if (!(args.client_ptr = _aligned_malloc( (size_t)args.client_ptr, 16 ))) return NULL;
+        status = WINE_UNIX_CALL( code, &args );
+        if (args.ret != args.client_ptr) _aligned_free( args.client_ptr );
     }
 #endif
-    WARN( "glMapBuffer returned %#lx\n", status );
+    if (status) WARN( "glMapBuffer returned %#lx\n", status );
     return args.ret;
 }
 

@@ -12379,6 +12379,9 @@ struct glMapBuffer_params
     GLenum target;
     GLenum access;
     void *ret;
+#ifndef _WIN64
+    void *client_ptr;
+#endif
 };
 
 struct glMapBufferARB_params
@@ -12387,6 +12390,9 @@ struct glMapBufferARB_params
     GLenum target;
     GLenum access;
     void *ret;
+#ifndef _WIN64
+    void *client_ptr;
+#endif
 };
 
 struct glMapBufferRange_params
