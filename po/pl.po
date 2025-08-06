@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-07-17 02:54+0200\n"
+"PO-Revision-Date: 2025-08-06 02:16+0200\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -3947,7 +3947,7 @@ msgstr "Wibracje"
 
 #: dlls/joy.cpl/joy.rc:106
 msgid "Windows.Gaming.Input"
-msgstr ""
+msgstr "Windows.Gaming.Input"
 
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
@@ -4162,8 +4162,8 @@ msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
-"Nie można ustawić atrybutu 'writable' na opisie własności na 'true' na tym "
-"obiekcie"
+"Atrybutu 'writable' w deskryptorze właściwości nie można ustawić na 'true' "
+"w tym obiekcie"
 
 #: dlls/jscript/jscript.rc:76
 msgid "Cyclic __proto__ value"
@@ -5341,7 +5341,7 @@ msgstr "Brak zamykania w toku.\n"
 
 #: dlls/kernelbase/winerror.mc:1383
 msgid "I/O device error.\n"
-msgstr "Błąd We/W urządzenia.\n"
+msgstr "Błąd we/wy urządzenia.\n"
 
 #: dlls/kernelbase/winerror.mc:1388
 msgid "No serial devices found.\n"
@@ -18854,7 +18854,7 @@ msgstr "Ukryj &rozszerzone"
 
 #: programs/winecfg/winecfg.rc:38
 msgid "(No Theme)"
-msgstr "(brak wystroju)"
+msgstr "(brak motywu)"
 
 #: programs/winecfg/winecfg.rc:39
 msgid "Graphics"
@@ -18878,11 +18878,11 @@ msgstr "Ustawienia Wine"
 
 #: programs/winecfg/winecfg.rc:45
 msgid "Theme files (*.msstyles; *.theme)"
-msgstr "Pliki wystrojów (*.msstyles; *.theme)"
+msgstr "Pliki motywów (*.msstyles; *.theme)"
 
 #: programs/winecfg/winecfg.rc:46
 msgid "Select a theme file"
-msgstr "Wybierz plik wystroju"
+msgstr "Wybierz plik motywu"
 
 #: programs/winecfg/winecfg.rc:47
 msgid "Folder"
@@ -19383,7 +19383,7 @@ msgstr "S&kompresowany"
 
 #: programs/winefile/winefile.rc:177
 msgid "Version information"
-msgstr "Informacja o wersji"
+msgstr "Informacje o wersji"
 
 #: programs/winefile/winefile.rc:193
 msgctxt "accelerator Fullscreen"
@@ -19826,7 +19826,7 @@ msgstr "Bez zawija&nia wierszy"
 
 #: programs/wordpad/wordpad.rc:269
 msgid "Wrap text by the &window border"
-msgstr "Zawijaj do &brzegu okna"
+msgstr "Zawijaj do o&bramowania okna"
 
 #: programs/wordpad/wordpad.rc:270
 msgid "Wrap text by the &margin"
