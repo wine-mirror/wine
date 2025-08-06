@@ -2777,6 +2777,13 @@ static NTSTATUS key_asymmetric_encrypt( void *args )
 
     if (!key_data(params->key)->a.pubkey) return STATUS_INVALID_HANDLE;
 
+    if (params->key->alg_id == ALG_ID_RSA
+        && (!params->output || len_from_bitlen( params->key->u.a.bitlen ) > params->output_len))
+    {
+        *params->ret_len = len_from_bitlen( params->key->u.a.bitlen );
+        return !params->output ? STATUS_SUCCESS : STATUS_BUFFER_TOO_SMALL;
+    }
+
     if (params->key->alg_id == ALG_ID_RSA && params->flags & BCRYPT_PAD_OAEP)
     {
         BCRYPT_OAEP_PADDING_INFO *pad = params->padding;
