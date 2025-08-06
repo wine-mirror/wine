@@ -269,9 +269,15 @@ static VkBool32 win32u_vkGetPhysicalDeviceWin32PresentationSupportKHR( VkPhysica
     return driver_funcs->p_vkGetPhysicalDeviceWin32PresentationSupportKHR( physical_device->host.physical_device, queue );
 }
 
+static BOOL extents_equals( const VkExtent2D *extents, const RECT *rect )
+{
+    return extents->width == rect->right - rect->left && extents->height == rect->bottom - rect->top;
+}
+
 static VkResult win32u_vkCreateSwapchainKHR( VkDevice client_device, const VkSwapchainCreateInfoKHR *create_info,
                                              const VkAllocationCallbacks *allocator, VkSwapchainKHR *ret )
 {
+    VkSwapchainPresentScalingCreateInfoEXT scaling = {.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_SCALING_CREATE_INFO_EXT};
     struct swapchain *swapchain, *old_swapchain = swapchain_from_handle( create_info->oldSwapchain );
     struct surface *surface = surface_from_handle( create_info->surface );
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
@@ -280,6 +286,7 @@ static VkResult win32u_vkCreateSwapchainKHR( VkDevice client_device, const VkSwa
     VkSwapchainCreateInfoKHR create_info_host = *create_info;
     VkSurfaceCapabilitiesKHR capabilities;
     VkSwapchainKHR host_swapchain;
+    RECT client_rect;
     VkResult res;
 
     if (!NtUserIsWindow( surface->hwnd ))
@@ -297,6 +304,18 @@ static VkResult win32u_vkCreateSwapchainKHR( VkDevice client_device, const VkSwa
 
     create_info_host.imageExtent.width = max( create_info_host.imageExtent.width, capabilities.minImageExtent.width );
     create_info_host.imageExtent.height = max( create_info_host.imageExtent.height, capabilities.minImageExtent.height );
+
+    /* If the swapchain image size is not equal to the presentation size (e.g. because of DPI virtualization or
+     * display mode change emulation), MoltenVK's vkQueuePresentKHR returns VK_SUBOPTIMAL_KHR.
+     * Create the swapchain with VkSwapchainPresentScalingCreateInfoEXT to avoid this.
+     */
+    if (NtUserGetClientRect( surface->hwnd, &client_rect, NtUserGetWinMonitorDpi( surface->hwnd, MDT_RAW_DPI ) ) &&
+        !extents_equals( &create_info_host.imageExtent, &client_rect ) &&
+        physical_device->has_swapchain_maintenance1)
+    {
+        scaling.scalingBehavior = VK_PRESENT_SCALING_STRETCH_BIT_EXT;
+        create_info_host.pNext = &scaling;
+    }
 
     if (!(swapchain = calloc( 1, sizeof(*swapchain) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
 
@@ -329,11 +348,6 @@ void win32u_vkDestroySwapchainKHR( VkDevice client_device, VkSwapchainKHR client
     instance->p_remove_object( instance, &swapchain->obj.obj );
 
     free( swapchain );
-}
-
-static BOOL extents_equals( const VkExtent2D *extents, const RECT *rect )
-{
-    return extents->width == rect->right - rect->left && extents->height == rect->bottom - rect->top;
 }
 
 static VkResult win32u_vkAcquireNextImage2KHR( VkDevice client_device, const VkAcquireNextImageInfoKHR *acquire_info,
