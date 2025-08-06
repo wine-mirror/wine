@@ -1117,8 +1117,20 @@ static const char *debugstr_DEVPROPKEY( const DEVPROPKEY *key )
 const DEVPROPERTY *WINAPI DevFindProperty( const DEVPROPKEY *key, DEVPROPSTORE store, const WCHAR *locale,
                                            ULONG props_len, const DEVPROPERTY *props )
 {
-    FIXME( "(%s, %d, %s, %lu, %p): stub!\n", debugstr_DEVPROPKEY( key ), store, debugstr_w( locale ), props_len,
-           props );
+    DEVPROPCOMPKEY comp_key;
+    ULONG i;
+
+    TRACE( "(%s, %d, %s, %lu, %p)\n", debugstr_DEVPROPKEY( key ), store, debugstr_w( locale ), props_len, props );
+
+    /* Windows does not validate parameters here. */
+    comp_key.Key = *key;
+    comp_key.Store = store;
+    comp_key.LocaleName = locale;
+    for (i = 0; i < props_len; i++)
+    {
+        if (IsEqualDevPropCompKey( comp_key, props[i].CompKey ))
+            return &props[i];
+    }
     return NULL;
 }
 

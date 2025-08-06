@@ -642,7 +642,7 @@ static void test_DevGetObjectProperties( DEV_OBJECT_TYPE type, const WCHAR *id, 
                     ok( dev_property_val_equal( &exp_props[i], &buf[j] ), "%s != %s\n", debugstr_DEVPROP_val( &buf[j] ),
                         debugstr_DEVPROP_val( &exp_props[i] ) );
                     found_prop = pDevFindProperty( &exp_props[i].CompKey.Key, DEVPROP_STORE_SYSTEM, NULL, buf_len, buf );
-                    todo_wine ok( found_prop == &buf[i], "got found_prop %p != %p\n", found_prop, &buf[i] );
+                    ok( found_prop == &buf[i], "got found_prop %p != %p\n", found_prop, &buf[i] );
                 }
                 winetest_pop_context();
                 rem_props--;
@@ -680,7 +680,7 @@ static void test_DevGetObjectProperties( DEV_OBJECT_TYPE type, const WCHAR *id, 
                 winetest_push_context( "%s", debugstr_DEVPROPKEY( &exp_props[i].CompKey.Key ) );
                 rem_props--;
                 found_prop = pDevFindProperty( &exp_props[i].CompKey.Key, DEVPROP_STORE_SYSTEM, NULL, buf_len, buf );
-                todo_wine ok( found_prop == &buf[j], "got found_prop %p != %p\n", found_prop, &buf[j] );
+                ok( found_prop == &buf[j], "got found_prop %p != %p\n", found_prop, &buf[j] );
                 winetest_pop_context();
                 break;
             }
@@ -703,7 +703,7 @@ static void test_DevGetObjectProperties( DEV_OBJECT_TYPE type, const WCHAR *id, 
             debugstr_guid( &buf[0].CompKey.Key.fmtid ), buf[0].CompKey.Key.pid );
         ok( buf[0].Type == DEVPROP_TYPE_EMPTY, "got Type %#lx\n", buf[0].Type );
         found_prop = pDevFindProperty( &DEVPKEY_dummy, DEVPROP_STORE_SYSTEM, NULL, buf_len, buf );
-        todo_wine ok( found_prop == &buf[0], "got found_prop %p != %p\n", found_prop, &buf[0] );
+        ok( found_prop == &buf[0], "got found_prop %p != %p\n", found_prop, &buf[0] );
         pDevFreeObjectProperties( buf_len, buf );
     }
     free( keys );
@@ -776,7 +776,7 @@ static void test_dev_object_iface_props( int line, const DEV_OBJECT *obj, const 
 
                 found_prop = pDevFindProperty( &property->CompKey.Key, DEVPROP_STORE_SYSTEM, NULL,
                                                obj->cPropertyCount, obj->pProperties );
-                todo_wine ok( found_prop == property, "got found_prop %p != %p\n", found_prop, property );
+                ok( found_prop == property, "got found_prop %p != %p\n", found_prop, property );
                 free( buf );
                 winetest_pop_context();
                 break;
@@ -922,7 +922,7 @@ static void test_DevGetObjects( void )
                         debugstr_guid( &obj->pProperties[0].CompKey.Key.fmtid ), obj->pProperties[0].CompKey.Key.pid,
                         debugstr_guid( &prop->key.fmtid ), prop->key.pid );
                     found_prop = pDevFindProperty( &prop->key, DEVPROP_STORE_SYSTEM, NULL, obj->cPropertyCount, obj->pProperties );
-                    todo_wine ok( found_prop == &obj->pProperties[0], "got found_prop %p != %p\n", found_prop, &obj->pProperties[0] );
+                    ok( found_prop == &obj->pProperties[0], "got found_prop %p != %p\n", found_prop, &obj->pProperties[0] );
                 }
                 /* Search for a property not in obj->pProperties, we should get NULL, as we haven't requested this
                  * property in the DevGetObjects call. */
@@ -961,7 +961,7 @@ static void test_DevGetObjects( void )
                 ok( obj->pProperties[0].Type == DEVPROP_TYPE_EMPTY, "got Type %#lx != %#x", obj->pProperties[0].Type,
                     DEVPROP_TYPE_EMPTY );
                 found_prop = pDevFindProperty( &DEVPKEY_dummy, DEVPROP_STORE_SYSTEM, NULL, obj->cPropertyCount, obj->pProperties );
-                todo_wine ok( found_prop == &obj->pProperties[0], "got found_prop %p != %p\n", found_prop, &obj->pProperties[0] );
+                ok( found_prop == &obj->pProperties[0], "got found_prop %p != %p\n", found_prop, &obj->pProperties[0] );
             }
             winetest_pop_context();
         }

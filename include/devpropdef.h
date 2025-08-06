@@ -114,6 +114,15 @@ typedef struct _DEVPROPCOMPKEY
     PCWSTR LocaleName;
 } DEVPROPCOMPKEY, *PDEVPROPCOMPKEY;
 
+#ifndef IsEqualLocaleName
+#define IsEqualLocaleName(a,b) ((a) == (b) || ((a) && (b) && !wcsicmp((a),(b))))
+#endif
+
+#ifndef IsEqualDevPropCompKey
+#define IsEqualDevPropCompKey(a,b) (IsEqualDevPropKey((a).Key,(b).Key) && (a).Store == (b).Store && \
+                                    IsEqualLocaleName((a).LocaleName,(b).LocaleName))
+#endif
+
 typedef struct _DEVPROPERTY
 {
     DEVPROPCOMPKEY CompKey;
