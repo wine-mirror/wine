@@ -277,4 +277,9 @@ enum key_funcs
     unix_funcs_count,
 };
 
+static inline ULONG len_from_bitlen( ULONG bitlen )
+{
+    return bitlen / 8;
+}
+
 #endif /* __BCRYPT_INTERNAL_H */

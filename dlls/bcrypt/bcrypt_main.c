@@ -809,7 +809,7 @@ static NTSTATUS set_key_property( struct key *key, const WCHAR *prop, UCHAR *val
 
         if (key->u.a.flags & KEY_FLAG_FINALIZED) return STATUS_INVALID_HANDLE;
         if (key->alg_id != ALG_ID_DH || size < sizeof(*hdr) || hdr->cbLength != size ||
-            hdr->dwMagic != BCRYPT_DH_PARAMETERS_MAGIC || hdr->cbKeyLength != key->u.a.bitlen / 8)
+            hdr->dwMagic != BCRYPT_DH_PARAMETERS_MAGIC || hdr->cbKeyLength != len_from_bitlen( key->u.a.bitlen ))
             return STATUS_INVALID_PARAMETER;
 
         params.key   = key;
@@ -1921,7 +1921,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         pubkey = (DSSPUBKEY *)(hdr + 1);
         if (pubkey->magic != MAGIC_DSS2) return STATUS_NOT_SUPPORTED;
 
-        if (input_len < sizeof(*hdr) + sizeof(*pubkey) + (pubkey->bitlen / 8) * 2 + 40 + sizeof(DSSSEED))
+        if (input_len < sizeof(*hdr) + sizeof(*pubkey) + len_from_bitlen( pubkey->bitlen ) * 2 + 40 + sizeof(DSSSEED))
             return STATUS_INVALID_PARAMETER;
 
         if ((status = key_asymmetric_create( alg->id, pubkey->bitlen, &key ))) return status;
@@ -1954,7 +1954,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         pubkey = (DSSPUBKEY *)(hdr + 1);
         if (pubkey->magic != MAGIC_DSS1) return STATUS_NOT_SUPPORTED;
 
-        size = sizeof(*hdr) + sizeof(*pubkey) + (pubkey->bitlen / 8) * 3 + 20 + sizeof(DSSSEED);
+        size = sizeof(*hdr) + sizeof(*pubkey) + len_from_bitlen( pubkey->bitlen ) * 3 + 20 + sizeof(DSSSEED);
         if (input_len < size) return STATUS_INVALID_PARAMETER;
 
         if ((status = key_asymmetric_create( alg->id, pubkey->bitlen, &key ))) return status;
@@ -2628,7 +2628,7 @@ static NTSTATUS derive_key_hash( struct secret *secret, BCryptBufferDesc *desc, 
                                  ULONG *ret_len )
 {
     struct key_asymmetric_derive_key_params params;
-    ULONG hash_len, derived_key_len = secret->privkey->u.a.bitlen / 8;
+    ULONG hash_len, derived_key_len = len_from_bitlen( secret->privkey->u.a.bitlen );
     UCHAR hash_buf[MAX_HASH_OUTPUT_BYTES];
     struct algorithm *alg = NULL;
     UCHAR *derived_key;
