@@ -118,6 +118,7 @@ builtin_algorithms[] =
     {  BCRYPT_DH_ALGORITHM,         BCRYPT_SECRET_AGREEMENT_INTERFACE,      0,      0,    0 },
     {  BCRYPT_ECDH_P256_ALGORITHM,  BCRYPT_SECRET_AGREEMENT_INTERFACE,      0,      0,    0 },
     {  BCRYPT_ECDH_P384_ALGORITHM,  BCRYPT_SECRET_AGREEMENT_INTERFACE,      0,      0,    0 },
+    {  BCRYPT_ECDH_P521_ALGORITHM,  BCRYPT_SECRET_AGREEMENT_INTERFACE,      0,      0,    0 },
     {  BCRYPT_RSA_SIGN_ALGORITHM,   BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
     {  BCRYPT_ECDSA_P256_ALGORITHM, BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
     {  BCRYPT_ECDSA_P384_ALGORITHM, BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
@@ -248,7 +249,7 @@ static const struct algorithm pseudo_algorithms[] =
     {{ 0 }}, /* ECDH */
     {{ MAGIC_ALG }, ALG_ID_ECDH_P256 },
     {{ MAGIC_ALG }, ALG_ID_ECDH_P384 },
-    {{ 0 }}, /* ECDH_P512 */
+    {{ MAGIC_ALG }, ALG_ID_ECDH_P521 },
     {{ MAGIC_ALG }, ALG_ID_DSA },
     {{ MAGIC_ALG }, ALG_ID_ECDSA_P256 },
     {{ MAGIC_ALG }, ALG_ID_ECDSA_P384 },
@@ -1753,6 +1754,11 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
             magic = BCRYPT_ECDH_PUBLIC_P384_MAGIC;
             break;
 
+        case ALG_ID_ECDH_P521:
+            bitlen = 521;
+            magic = BCRYPT_ECDH_PUBLIC_P521_MAGIC;
+            break;
+
         case ALG_ID_ECDSA_P256:
             bitlen = 256;
             magic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
@@ -1805,6 +1811,11 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         case ALG_ID_ECDH_P384:
             bitlen = 384;
             magic = BCRYPT_ECDH_PRIVATE_P384_MAGIC;
+            break;
+
+        case ALG_ID_ECDH_P521:
+            bitlen = 521;
+            magic = BCRYPT_ECDH_PRIVATE_P521_MAGIC;
             break;
 
         case ALG_ID_ECDSA_P256:
@@ -2197,6 +2208,7 @@ static const WCHAR *resolve_blob_type( const WCHAR *type, UCHAR *input, ULONG in
     {
     case BCRYPT_ECDH_PUBLIC_P256_MAGIC:
     case BCRYPT_ECDH_PUBLIC_P384_MAGIC:
+    case BCRYPT_ECDH_PUBLIC_P521_MAGIC:
     case BCRYPT_ECDSA_PUBLIC_P256_MAGIC:
     case BCRYPT_ECDSA_PUBLIC_P384_MAGIC:
     case BCRYPT_ECDSA_PUBLIC_P521_MAGIC:

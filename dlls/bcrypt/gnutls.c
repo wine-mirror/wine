@@ -835,6 +835,11 @@ static NTSTATUS key_export_ecc_public( struct key *key, UCHAR *buf, ULONG len, U
         size = 48;
         break;
 
+    case ALG_ID_ECDH_P521:
+        magic = BCRYPT_ECDH_PUBLIC_P521_MAGIC;
+        size = 66;
+        break;
+
     case ALG_ID_ECDSA_P256:
         magic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
         size = 32;
@@ -1136,6 +1141,7 @@ static NTSTATUS key_asymmetric_generate( void *args )
         bitlen = GNUTLS_CURVE_TO_BITS( GNUTLS_ECC_CURVE_SECP384R1 );
         break;
 
+    case ALG_ID_ECDH_P521:
     case ALG_ID_ECDSA_P521:
         pk_alg = GNUTLS_PK_ECC; /* compatible with ECDSA and ECDH */
         bitlen = GNUTLS_CURVE_TO_BITS( GNUTLS_ECC_CURVE_SECP521R1 );
@@ -1194,6 +1200,11 @@ static NTSTATUS key_export_ecc( struct key *key, UCHAR *buf, ULONG len, ULONG *r
     case ALG_ID_ECDH_P384:
         magic = BCRYPT_ECDH_PRIVATE_P384_MAGIC;
         size = 48;
+        break;
+
+    case ALG_ID_ECDH_P521:
+        magic = BCRYPT_ECDH_PRIVATE_P521_MAGIC;
+        size = 66;
         break;
 
     case ALG_ID_ECDSA_P256:
@@ -1268,6 +1279,7 @@ static NTSTATUS key_import_ecc( struct key *key, UCHAR *buf, ULONG len )
         curve = GNUTLS_ECC_CURVE_SECP384R1;
         break;
 
+    case ALG_ID_ECDH_P521:
     case ALG_ID_ECDSA_P521:
         curve = GNUTLS_ECC_CURVE_SECP521R1;
         break;
@@ -1537,6 +1549,7 @@ static NTSTATUS key_import_ecc_public( struct key *key, UCHAR *buf, ULONG len )
     case ALG_ID_ECDSA_P384:
         curve = GNUTLS_ECC_CURVE_SECP384R1; break;
 
+    case ALG_ID_ECDH_P521:
     case ALG_ID_ECDSA_P521:
         curve = GNUTLS_ECC_CURVE_SECP521R1; break;
 
@@ -1829,6 +1842,7 @@ static NTSTATUS key_asymmetric_export( void *args )
     {
     case ALG_ID_ECDH_P256:
     case ALG_ID_ECDH_P384:
+    case ALG_ID_ECDH_P521:
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
     case ALG_ID_ECDSA_P521:
@@ -2016,6 +2030,7 @@ static NTSTATUS key_asymmetric_import( void *args )
     {
     case ALG_ID_ECDH_P256:
     case ALG_ID_ECDH_P384:
+    case ALG_ID_ECDH_P521:
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
     case ALG_ID_ECDSA_P521:
@@ -2525,6 +2540,7 @@ static NTSTATUS dup_privkey( struct key *key_orig, struct key *key_copy )
     }
     case ALG_ID_ECDH_P256:
     case ALG_ID_ECDH_P384:
+    case ALG_ID_ECDH_P521:
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
     case ALG_ID_ECDSA_P521:
@@ -2605,6 +2621,7 @@ static NTSTATUS dup_pubkey( struct key *key_orig, struct key *key_copy )
     }
     case ALG_ID_ECDH_P256:
     case ALG_ID_ECDH_P384:
+    case ALG_ID_ECDH_P521:
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
     case ALG_ID_ECDSA_P521:
