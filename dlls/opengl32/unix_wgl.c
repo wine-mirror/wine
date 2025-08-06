@@ -1732,41 +1732,17 @@ NTSTATUS wow64_ext_glDeleteSync( void *args )
     return status;
 }
 
-NTSTATUS wow64_ext_glFenceSync( void *args )
+GLsync wow64_glFenceSync( TEB *teb, GLenum condition, GLbitfield flags )
 {
-    struct
-    {
-        PTR32 teb;
-        GLenum condition;
-        GLbitfield flags;
-        PTR32 ret;
-    } *params32 = args;
-    struct glFenceSync_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .condition = params32->condition,
-        .flags = params32->flags,
-    };
-    NTSTATUS status;
+    const struct opengl_funcs *funcs = teb->glTable;
+    GLsync sync, handle;
 
-    if ((status = ext_glFenceSync( &params ))) return status;
+    if (!(sync = funcs->p_glFenceSync( condition, flags ))) return NULL;
 
     pthread_mutex_lock( &wgl_lock );
-
-    if (!(params32->ret = (UINT_PTR)alloc_handle( HANDLE_GLSYNC, NULL, params.ret )))
-    {
-        struct glDeleteSync_params delete_params =
-        {
-            .teb = params.teb,
-            .sync = params.ret,
-        };
-
-        ext_glDeleteSync( &delete_params );
-        status = STATUS_NO_MEMORY;
-    }
-
+    if (!(handle = alloc_handle( HANDLE_GLSYNC, NULL, sync ))) funcs->p_glDeleteSync( sync );
     pthread_mutex_unlock( &wgl_lock );
-    return status;
+    return handle;
 }
 
 NTSTATUS wow64_ext_glGetSynciv( void *args )

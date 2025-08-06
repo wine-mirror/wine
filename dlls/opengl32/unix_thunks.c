@@ -7528,7 +7528,7 @@ static NTSTATUS ext_glFeedbackBufferxOES( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_glFenceSync( void *args )
+static NTSTATUS ext_glFenceSync( void *args )
 {
     struct glFenceSync_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
@@ -43364,6 +43364,21 @@ static NTSTATUS wow64_ext_glFeedbackBufferxOES( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glFeedbackBufferxOES( params->n, params->type, ULongToPtr(params->buffer) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glFenceSync( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum condition;
+        GLbitfield flags;
+        PTR32 ret;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    params->ret = (UINT_PTR)wow64_glFenceSync( teb, params->condition, params->flags );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }

@@ -215,7 +215,6 @@ my %manual_unix_thunks =
 my %manual_wow64_thunks =
     (
      "glDeleteSync" => 1,
-     "glFenceSync" => 1,
      "glGetBufferPointerv" => 1,
      "glGetBufferPointervARB" => 1,
      "glGetNamedBufferPointerv" => 1,
@@ -249,6 +248,7 @@ my %manual_wow64_thunks =
 my %manual_wow64_wrappers =
     (
      "glClientWaitSync" => 1,
+     "glFenceSync" => 1,
     );
 my %pointer_array_count =
     (

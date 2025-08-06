@@ -32,6 +32,7 @@ extern BOOL wrap_wglSetPbufferAttribARB( TEB *teb , HPBUFFERARB hPbuffer, const 
 
 #ifdef _WIN64
 extern GLenum wow64_glClientWaitSync( TEB *teb , GLsync sync, GLbitfield flags, GLuint64 timeout );
+extern GLsync wow64_glFenceSync( TEB *teb , GLenum condition, GLbitfield flags );
 #endif
 
 extern NTSTATUS wgl_wglGetProcAddress( void *args );
@@ -40,8 +41,6 @@ extern NTSTATUS gl_glGetString( void *args );
 extern NTSTATUS wow64_gl_glGetString( void *args );
 extern NTSTATUS ext_glDeleteSync( void *args );
 extern NTSTATUS wow64_ext_glDeleteSync( void *args );
-extern NTSTATUS ext_glFenceSync( void *args );
-extern NTSTATUS wow64_ext_glFenceSync( void *args );
 extern NTSTATUS ext_glGetBufferPointerv( void *args );
 extern NTSTATUS wow64_ext_glGetBufferPointerv( void *args );
 extern NTSTATUS ext_glGetBufferPointervARB( void *args );
