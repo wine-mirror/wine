@@ -57,7 +57,6 @@ struct session_op
     IUnknown IUnknown_iface;
     LONG refcount;
     enum session_command command;
-    BOOL submitted;
     union
     {
         struct
@@ -102,6 +101,9 @@ enum session_state
 enum command_state
 {
     COMMAND_STATE_COMPLETE = 0,
+    /* Command submitted but hasn't started execution.
+     * invariant: the submitted command is always the head of session->commands. */
+    COMMAND_STATE_SUBMITTED,
     /* STOPPED | PAUSED | STARTED -> STARTED transition */
     COMMAND_STATE_RESTARTING_SOURCES, /* -> COMMAND_STATE_STARTING_SOURCES */
     COMMAND_STATE_STARTING_SOURCES,   /* -> COMMAND_STATE_PREROLLING_SINKS | COMMAND_STATE_STARTING_SINKS */
@@ -485,7 +487,9 @@ static HRESULT session_submit_command(struct media_session *session, struct sess
         if (list_empty(&session->commands) && session->command_state == COMMAND_STATE_COMPLETE)
         {
             hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &session->commands_callback, &op->IUnknown_iface);
-            op->submitted = SUCCEEDED(hr);
+            /* Since session->commands is empty, whether `op` is added to head or tail, it will
+             * always be at the head of this list, thus the invariant holds. */
+            if (SUCCEEDED(hr)) session->command_state = COMMAND_STATE_SUBMITTED;
         }
         if (op->command == SESSION_CMD_SHUTDOWN)
             list_add_head(&session->commands, &op->entry);
@@ -869,14 +873,11 @@ static void session_shutdown_current_topology(struct media_session *session)
 static void session_clear_command_list(struct media_session *session)
 {
     struct session_op *op, *op2;
-
+    /* Checking this flag is unnecessary if this function is only called
+     * from the callback or upon release, but do it for consistency and
+     * in case a call from elsewhere is added. */
     LIST_FOR_EACH_ENTRY_SAFE(op, op2, &session->commands, struct session_op, entry)
     {
-        /* Checking this flag is unnecessary if this function is only called
-         * from the callback or upon release, but do it for consistency and
-         * in case a call from elsewhere is added. */
-        if (op->submitted)
-            continue;
         list_remove(&op->entry);
         IUnknown_Release(&op->IUnknown_iface);
     }
@@ -982,7 +983,7 @@ static void session_command_complete(struct media_session *session)
     {
         op = LIST_ENTRY(e, struct session_op, entry);
         hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &session->commands_callback, &op->IUnknown_iface);
-        op->submitted = SUCCEEDED(hr);
+        if (SUCCEEDED(hr)) session->command_state = COMMAND_STATE_SUBMITTED;
     }
 }
 
@@ -2789,12 +2790,7 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
 
     EnterCriticalSection(&session->cs);
 
-    if (session->command_state != COMMAND_STATE_COMPLETE)
-    {
-        WARN("session %p command is in progress, waiting for it to complete.\n", session);
-        LeaveCriticalSection(&session->cs);
-        return S_OK;
-    }
+    assert( session->command_state == COMMAND_STATE_SUBMITTED );
     list_remove(&op->entry);
 
     switch (op->command)
@@ -2963,6 +2959,8 @@ static void session_handle_source_shutdown(struct media_session *session)
         case COMMAND_STATE_COMPLETE:
             if (session->state == SESSION_STATE_STARTED || session->state == SESSION_STATE_PAUSED)
                 session_set_stopped(session, MESessionStopped, MF_E_SHUTDOWN);
+            break;
+        case COMMAND_STATE_SUBMITTED:
             break;
     }
 
@@ -3316,6 +3314,7 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
             session_set_caps(session, session->caps & ~MFSESSIONCAP_PAUSE);
             session_finalize_sinks(session);
             break;
+        case COMMAND_STATE_SUBMITTED:
         case COMMAND_STATE_COMPLETE:
         case COMMAND_STATE_PREROLLING_SINKS:
         case COMMAND_STATE_STARTING_SINKS:
@@ -3410,6 +3409,7 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
             if (FAILED(hr))
                 session_set_closed(session, hr);
             break;
+        case COMMAND_STATE_SUBMITTED:
         case COMMAND_STATE_COMPLETE:
         case COMMAND_STATE_RESTARTING_SOURCES:
         case COMMAND_STATE_STARTING_SOURCES:
