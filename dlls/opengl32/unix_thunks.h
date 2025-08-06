@@ -2,9 +2,7 @@
 
 extern BOOL wrap_wglCopyContext( TEB *teb , HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask );
 extern HGLRC wrap_wglCreateContext( TEB *teb , HDC hDc );
-extern HGLRC wrap_wglCreateLayerContext( TEB *teb , HDC hDc, int level );
 extern BOOL wrap_wglDeleteContext( TEB *teb , HGLRC oldContext );
-extern HGLRC wrap_wglGetCurrentContext( TEB *teb);
 extern PROC wrap_wglGetProcAddress( TEB *teb , LPCSTR lpszProc );
 extern BOOL wrap_wglMakeCurrent( TEB *teb , HDC hDc, HGLRC newContext );
 extern BOOL wrap_wglShareLists( TEB *teb , HGLRC hrcSrvShare, HGLRC hrcSrvSource );

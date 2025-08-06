@@ -802,6 +802,7 @@ sub needs_wrapper($$)
 {
     my ($name, $func) = @_;
 
+    return 0 if defined $manual_win_functions{$name};
     return 1 if defined $manual_unix_thunks{$name};
 
     # check if return value needs special handling
