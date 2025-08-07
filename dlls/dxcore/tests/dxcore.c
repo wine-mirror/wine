@@ -83,6 +83,8 @@ static void test_DXCoreCreateAdapterFactory(void)
     refcount = IDXCoreAdapterFactory_Release(factory2);
     ok(refcount == 1, "got refcount %ld.\n", refcount);
 
+    check_interface(factory, &IID_IUnknown, TRUE);
+    check_interface(factory, &IID_IDXCoreAdapterFactory, TRUE);
     check_interface(factory, &IID_IAgileObject, FALSE);
     check_interface(factory, &IID_IDXCoreAdapter, FALSE);
     check_interface(factory, &IID_IDXCoreAdapterList, FALSE);
@@ -105,6 +107,8 @@ static void test_DXCoreCreateAdapterFactory(void)
     refcount = IDXCoreAdapterList_Release(list2);
     ok(refcount == 0, "got refcount %ld.\n", refcount);
 
+    check_interface(list, &IID_IUnknown, TRUE);
+    check_interface(list, &IID_IDXCoreAdapterList, TRUE);
     check_interface(list, &IID_IAgileObject, FALSE);
     check_interface(list, &IID_IDXCoreAdapter, FALSE);
     check_interface(list, &IID_IDXCoreAdapterFactory, FALSE);
@@ -129,6 +133,8 @@ static void test_DXCoreCreateAdapterFactory(void)
     todo_wine
     ok(refcount == 3, "got refcount %ld.\n", refcount);
 
+    check_interface(adapter, &IID_IUnknown, TRUE);
+    check_interface(adapter, &IID_IDXCoreAdapter, TRUE);
     check_interface(adapter, &IID_IAgileObject, FALSE);
     check_interface(adapter, &IID_IDXCoreAdapterList, FALSE);
     check_interface(adapter, &IID_IDXCoreAdapterFactory, FALSE);
