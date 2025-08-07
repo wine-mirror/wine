@@ -1791,17 +1791,17 @@ static void *gl_map_named_buffer_range( enum unix_funcs code, GLuint buffer, GLi
 
     TRACE( "buffer %d, offset %Id, length %Id, access %d\n", buffer, offset, length, access );
 
-    if (!(status = WINE_UNIX_CALL( code, &args ))) return args.ret;
+    status = WINE_UNIX_CALL( code, &args );
 #ifndef _WIN64
-    if (status == STATUS_INVALID_ADDRESS)
+    if (args.client_ptr)
     {
         TRACE( "Unable to map wow64 buffer directly, using copy buffer!\n" );
-        if (!(args.ret = _aligned_malloc( length, 16 ))) status = STATUS_NO_MEMORY;
-        else if (!(status = WINE_UNIX_CALL( code, &args ))) return args.ret;
-        _aligned_free( args.ret );
+        if (!(args.client_ptr = _aligned_malloc( length, 16 ))) return NULL;
+        status = WINE_UNIX_CALL( code, &args );
+        if (args.ret != args.client_ptr) _aligned_free( args.ret );
     }
 #endif
-    WARN( "glMapNamedBufferRange returned %#lx\n", status );
+    if (status) WARN( "glMapNamedBufferRange returned %#lx\n", status );
     return args.ret;
 }
 

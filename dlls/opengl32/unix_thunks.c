@@ -13123,7 +13123,7 @@ static NTSTATUS ext_glMapNamedBufferEXT( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_glMapNamedBufferRange( void *args )
+static NTSTATUS ext_glMapNamedBufferRange( void *args )
 {
     struct glMapNamedBufferRange_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
@@ -13132,7 +13132,7 @@ NTSTATUS ext_glMapNamedBufferRange( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_glMapNamedBufferRangeEXT( void *args )
+static NTSTATUS ext_glMapNamedBufferRangeEXT( void *args )
 {
     struct glMapNamedBufferRangeEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
@@ -53824,6 +53824,42 @@ static NTSTATUS wow64_ext_glMapNamedBufferEXT( void *args )
     } *params = args;
     TEB *teb = get_teb64( params->teb );
     params->ret = wow64_glMapNamedBufferEXT( teb, params->buffer, params->access, &params->client_ptr );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glMapNamedBufferRange( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 length;
+        GLbitfield access;
+        PTR32 ret;
+        PTR32 client_ptr;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    params->ret = wow64_glMapNamedBufferRange( teb, params->buffer, (GLintptr)ULongToPtr(params->offset), (GLsizeiptr)ULongToPtr(params->length), params->access, &params->client_ptr );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glMapNamedBufferRangeEXT( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 length;
+        GLbitfield access;
+        PTR32 ret;
+        PTR32 client_ptr;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    params->ret = wow64_glMapNamedBufferRangeEXT( teb, params->buffer, (GLintptr)ULongToPtr(params->offset), (GLsizeiptr)ULongToPtr(params->length), params->access, &params->client_ptr );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }

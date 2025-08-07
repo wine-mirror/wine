@@ -1869,46 +1869,32 @@ PTR32 wow64_glMapNamedBufferEXT( TEB *teb, GLuint buffer, GLenum access, PTR32 *
     return wow64_gl_map_named_buffer( teb, buffer, access, client_ptr, funcs->p_glMapNamedBufferEXT );
 }
 
-static NTSTATUS wow64_gl_map_named_buffer_range( void *args, NTSTATUS (*gl_map_named_buffer_range64)(void *) )
+static NTSTATUS wow64_gl_map_named_buffer_range( TEB *teb, GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access,
+                                                 PTR32 *client_ptr, PFN_glMapNamedBufferRange gl_map_named_buffer_range64 )
 {
-    struct
-    {
-        PTR32 teb;
-        GLuint buffer;
-        PTR32 offset;
-        PTR32 length;
-        GLbitfield access;
-        PTR32 ret;
-    } *params32 = args;
-    struct glMapNamedBufferRange_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .buffer = params32->buffer,
-        .offset = (GLintptr)ULongToPtr(params32->offset),
-        .length = (GLsizeiptr)ULongToPtr(params32->length),
-        .access = params32->access,
-    };
     NTSTATUS status;
+    void *ptr;
 
     /* already mapped, we're being called again with a wow64 pointer */
-    if (params32->ret) params.ret = get_named_buffer_pointer( params.teb, params.buffer );
-    else if ((status = gl_map_named_buffer_range64( &params ))) return status;
+    if (*client_ptr) ptr = get_named_buffer_pointer( teb, buffer );
+    else ptr = gl_map_named_buffer_range64( buffer, offset, length, access );
 
-    status = wow64_map_buffer( params.teb, params.buffer, 0, params.ret, params.length, params.access, &params32->ret );
-    if (!status || status == STATUS_INVALID_ADDRESS) return status;
-
-    unmap_named_buffer( params.teb, params.buffer );
-    return status;
+    status = wow64_map_buffer( teb, buffer, 0, ptr, length, access, client_ptr );
+    if (!status) return *client_ptr;
+    if (status != STATUS_INVALID_ADDRESS)  unmap_named_buffer( teb, buffer );
+    return 0;
 }
 
-NTSTATUS wow64_ext_glMapNamedBufferRange( void *args )
+PTR32 wow64_glMapNamedBufferRange( TEB *teb, GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access, PTR32 *client_ptr )
 {
-    return wow64_gl_map_named_buffer_range( args, ext_glMapNamedBufferRange );
+    const struct opengl_funcs *funcs = teb->glTable;
+    return wow64_gl_map_named_buffer_range( teb, buffer, offset, length, access, client_ptr, funcs->p_glMapNamedBufferRange );
 }
 
-NTSTATUS wow64_ext_glMapNamedBufferRangeEXT( void *args )
+PTR32 wow64_glMapNamedBufferRangeEXT( TEB *teb, GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access, PTR32 *client_ptr )
 {
-    return wow64_gl_map_named_buffer_range( args, ext_glMapNamedBufferRangeEXT );
+    const struct opengl_funcs *funcs = teb->glTable;
+    return wow64_gl_map_named_buffer_range( teb, buffer, offset, length, access, client_ptr, funcs->p_glMapNamedBufferRangeEXT );
 }
 
 static PTR32 wow64_unmap_client_buffer( TEB *teb, GLenum target )

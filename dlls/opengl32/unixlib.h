@@ -12470,6 +12470,9 @@ struct glMapNamedBufferRange_params
     GLsizeiptr length;
     GLbitfield access;
     void *ret;
+#ifndef _WIN64
+    void *client_ptr;
+#endif
 };
 
 struct glMapNamedBufferRangeEXT_params
@@ -12480,6 +12483,9 @@ struct glMapNamedBufferRangeEXT_params
     GLsizeiptr length;
     GLbitfield access;
     void *ret;
+#ifndef _WIN64
+    void *client_ptr;
+#endif
 };
 
 struct glMapObjectBufferATI_params
