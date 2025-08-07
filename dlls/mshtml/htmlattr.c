@@ -608,6 +608,7 @@ static void *HTMLDOMAttribute_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLDOMAttribute_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLDOMAttribute *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(&This->node.event_target.dispex, cb);
 
     if(This->doc)
         note_cc_edge((nsISupports*)&This->doc->node.IHTMLDOMNode_iface, "doc", cb);
@@ -619,6 +620,7 @@ static void HTMLDOMAttribute_traverse(DispatchEx *dispex, nsCycleCollectionTrave
 static void HTMLDOMAttribute_unlink(DispatchEx *dispex)
 {
     HTMLDOMAttribute *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(&This->node.event_target.dispex);
 
     if(This->doc) {
         HTMLDocumentNode *doc = This->doc;
