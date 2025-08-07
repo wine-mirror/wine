@@ -1297,23 +1297,6 @@ static BOOLEAN get_dir_case_sensitivity_stat( int root_fd, const char *dir )
 #endif
     return TRUE;
 
-#elif defined(__NetBSD__)
-    struct statvfs stfs;
-    int fd;
-
-    if ((fd = openat( root_fd, dir, O_RDONLY )) == -1) return TRUE;
-    if (fstatvfs( fd, &stfs ) == -1)
-    {
-        close( fd );
-        return TRUE;
-    }
-    close( fd );
-    /* Only assume CIOPFS is case insensitive. */
-    if (strcmp( stfs.f_fstypename, "fusefs" ) ||
-        strncmp( stfs.f_mntfromname, "ciopfs", 5 ))
-        return FALSE;
-    return TRUE;
-
 #elif defined(__linux__)
     BOOLEAN sens = TRUE;
     struct statfs stfs;
