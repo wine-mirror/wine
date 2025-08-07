@@ -218,7 +218,6 @@ my %manual_wow64_thunks =
      "glGetBufferPointervARB" => 1,
      "glGetNamedBufferPointerv" => 1,
      "glGetNamedBufferPointervEXT" => 1,
-     "glGetStringi" => 1,
      "glMapBuffer" => 1,
      "glMapBufferARB" => 1,
      "glMapBufferRange" => 1,

@@ -50,8 +50,6 @@ extern NTSTATUS ext_glGetNamedBufferPointerv( void *args );
 extern NTSTATUS wow64_ext_glGetNamedBufferPointerv( void *args );
 extern NTSTATUS ext_glGetNamedBufferPointervEXT( void *args );
 extern NTSTATUS wow64_ext_glGetNamedBufferPointervEXT( void *args );
-extern NTSTATUS ext_glGetStringi( void *args );
-extern NTSTATUS wow64_ext_glGetStringi( void *args );
 extern NTSTATUS ext_glMapBuffer( void *args );
 extern NTSTATUS wow64_ext_glMapBuffer( void *args );
 extern NTSTATUS ext_glMapBufferARB( void *args );

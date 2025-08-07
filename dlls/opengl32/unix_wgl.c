@@ -1511,27 +1511,6 @@ NTSTATUS wow64_wgl_wglGetProcAddress( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS wow64_ext_glGetStringi( void *args )
-{
-    struct
-    {
-        PTR32 teb;
-        GLenum name;
-        GLuint index;
-        PTR32 ret;
-    } *params32 = args;
-    struct glGetStringi_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .name = params32->name,
-        .index = params32->index,
-    };
-    NTSTATUS status;
-
-    if ((status = ext_glGetStringi( &params ))) return status;
-    return return_wow64_string( params.ret, &params32->ret );
-}
-
 NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args )
 {
     struct

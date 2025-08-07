@@ -10776,7 +10776,7 @@ static NTSTATUS ext_glGetStageIndexNV( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_glGetStringi( void *args )
+static NTSTATUS ext_glGetStringi( void *args )
 {
     struct glGetStringi_params *params = args;
     params->ret = wrap_glGetStringi( params->teb, params->name, params->index );
@@ -49466,6 +49466,21 @@ static NTSTATUS wow64_ext_glGetStageIndexNV( void *args )
     const struct opengl_funcs *funcs = teb->glTable;
     params->ret = funcs->p_glGetStageIndexNV( params->shadertype );
     return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glGetStringi( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum name;
+        GLuint index;
+        PTR32 ret;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const GLubyte *ret;
+    ret = wrap_glGetStringi( teb, params->name, params->index );
+    return return_wow64_string( ret, &params->ret );
 }
 
 static NTSTATUS wow64_ext_glGetSubroutineIndex( void *args )
