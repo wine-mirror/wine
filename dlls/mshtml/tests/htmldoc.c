@@ -56,46 +56,55 @@ DEFINE_GUID(outer_test_iid,0xabcabc00,0,0,0,0,0,0,0,0,0,0x66);
 extern const IID IID_IActiveScriptSite;
 
 #define DEFINE_EXPECT(func) \
-    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+    static int expect_ ## func = 0, called_ ## func = 0
 
 #define SET_EXPECT(func) \
-    expect_ ## func = TRUE
+    expect_ ## func = 1
+
+#define SET_EXPECT_N(func, n) \
+    do { called_ ## func = 0; expect_ ## func = n; } while(0)
 
 #define SET_CALLED(func) \
-    called_ ## func = TRUE
+    called_ ## func = 1
 
 #define CHECK_EXPECT2(func) \
     do { \
         ok(expect_ ##func, "unexpected call " #func "\n"); \
-        called_ ## func = TRUE; \
+        called_ ## func += 1; \
     }while(0)
 
 #define CHECK_EXPECT(func) \
     do { \
         CHECK_EXPECT2(func); \
-        expect_ ## func = FALSE; \
+        if (expect_ ## func > 0) expect_ ## func -= 1; \
     }while(0)
 
 #define CHECK_CALLED(func) \
     do { \
         ok(called_ ## func, "expected " #func "\n"); \
-        expect_ ## func = called_ ## func = FALSE; \
+        expect_ ## func = called_ ## func = 0; \
+    }while(0)
+
+#define CHECK_CALLED_N(func, n) \
+    do { \
+        ok(called_ ## func == n, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = 0; \
     }while(0)
 
 #define CHECK_NOT_CALLED(func) \
     do { \
-        ok(!called_ ## func, "unexpected " #func "\n"); \
-        expect_ ## func = called_ ## func = FALSE; \
+        ok(called_ ## func == 0, "unexpected " #func "\n"); \
+        expect_ ## func = called_ ## func = 0; \
     }while(0)
 
 #define CHECK_CALLED_BROKEN(func) \
     do { \
-        ok(called_ ## func || broken(!called_ ## func), "expected " #func "\n"); \
-        expect_ ## func = called_ ## func = FALSE; \
+        ok(called_ ## func || broken(called_ ## func == 0), "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = 0; \
     }while(0)
 
 #define CLEAR_CALLED(func) \
-    expect_ ## func = called_ ## func = FALSE
+    expect_ ## func = called_ ## func = 0
 
 
 static IOleDocumentView *view = NULL;
