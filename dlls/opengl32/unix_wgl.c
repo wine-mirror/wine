@@ -1540,25 +1540,6 @@ NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args )
     return status;
 }
 
-NTSTATUS wow64_ext_wglGetExtensionsStringARB( void *args )
-{
-    struct
-    {
-        PTR32 teb;
-        PTR32 hdc;
-        PTR32 ret;
-    } *params32 = args;
-    struct wglGetExtensionsStringARB_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .hdc = ULongToPtr(params32->hdc),
-    };
-    NTSTATUS status;
-
-    if ((status = ext_wglGetExtensionsStringARB( &params ))) return status;
-    return return_wow64_string( params.ret, &params32->ret );
-}
-
 NTSTATUS wow64_ext_wglGetExtensionsStringEXT( void *args )
 {
     struct

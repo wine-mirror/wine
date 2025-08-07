@@ -26697,7 +26697,7 @@ static NTSTATUS ext_wglFreeMemoryNV( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_wglGetExtensionsStringARB( void *args )
+static NTSTATUS ext_wglGetExtensionsStringARB( void *args )
 {
     struct wglGetExtensionsStringARB_params *params = args;
     const struct opengl_funcs *funcs = get_dc_funcs( params->hdc );
@@ -78392,6 +78392,21 @@ static NTSTATUS wow64_ext_wglFreeMemoryNV( void *args )
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_wglFreeMemoryNV( ULongToPtr(params->pointer) );
     return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_wglGetExtensionsStringARB( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        PTR32 hdc;
+        PTR32 ret;
+    } *params = args;
+    const char *ret;
+    const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->hdc) );
+    if (!funcs || !funcs->p_wglGetExtensionsStringARB) return STATUS_NOT_IMPLEMENTED;
+    ret = funcs->p_wglGetExtensionsStringARB( ULongToPtr(params->hdc) );
+    return return_wow64_string( ret, &params->ret );
 }
 
 static NTSTATUS wow64_ext_wglGetPixelFormatAttribfvARB( void *args )
