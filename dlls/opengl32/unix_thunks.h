@@ -78,5 +78,3 @@ extern NTSTATUS ext_wglCreatePbufferARB( void *args );
 extern NTSTATUS wow64_ext_wglCreatePbufferARB( void *args );
 extern NTSTATUS ext_wglGetPbufferDCARB( void *args );
 extern NTSTATUS wow64_ext_wglGetPbufferDCARB( void *args );
-extern NTSTATUS ext_wglQueryRendererStringWINE( void *args );
-extern NTSTATUS wow64_ext_wglQueryRendererStringWINE( void *args );

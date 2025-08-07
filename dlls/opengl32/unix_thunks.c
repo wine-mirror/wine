@@ -26792,7 +26792,7 @@ static NTSTATUS ext_wglQueryRendererIntegerWINE( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_wglQueryRendererStringWINE( void *args )
+static NTSTATUS ext_wglQueryRendererStringWINE( void *args )
 {
     struct wglQueryRendererStringWINE_params *params = args;
     const struct opengl_funcs *funcs = get_dc_funcs( params->dc );
@@ -78553,6 +78553,23 @@ static NTSTATUS wow64_ext_wglQueryRendererIntegerWINE( void *args )
     if (!funcs || !funcs->p_wglQueryRendererIntegerWINE) return STATUS_NOT_IMPLEMENTED;
     params->ret = funcs->p_wglQueryRendererIntegerWINE( ULongToPtr(params->dc), params->renderer, params->attribute, ULongToPtr(params->value) );
     return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_wglQueryRendererStringWINE( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        PTR32 dc;
+        GLint renderer;
+        GLenum attribute;
+        PTR32 ret;
+    } *params = args;
+    const GLchar *ret;
+    const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->dc) );
+    if (!funcs || !funcs->p_wglQueryRendererStringWINE) return STATUS_NOT_IMPLEMENTED;
+    ret = funcs->p_wglQueryRendererStringWINE( ULongToPtr(params->dc), params->renderer, params->attribute );
+    return return_wow64_string( ret, &params->ret );
 }
 
 static NTSTATUS wow64_ext_wglReleasePbufferDCARB( void *args )

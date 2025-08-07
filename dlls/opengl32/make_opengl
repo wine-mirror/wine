@@ -234,7 +234,6 @@ my %manual_wow64_thunks =
      "wglGetPbufferDCARB" => 1,
      "wglGetProcAddress" => 1,
      "wglGetProcAddress" => 1,
-     "wglQueryRendererStringWINE" => 1,
     );
 my %manual_wow64_wrappers =
     (

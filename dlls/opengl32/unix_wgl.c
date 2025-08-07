@@ -1540,29 +1540,6 @@ NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args )
     return status;
 }
 
-NTSTATUS wow64_ext_wglQueryRendererStringWINE( void *args )
-{
-    struct
-    {
-        PTR32 teb;
-        PTR32 dc;
-        GLint renderer;
-        GLenum attribute;
-        PTR32 ret;
-    } *params32 = args;
-    struct wglQueryRendererStringWINE_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .dc = ULongToPtr(params32->dc),
-        .renderer = params32->renderer,
-        .attribute = params32->attribute,
-    };
-    NTSTATUS status;
-
-    if ((status = ext_wglQueryRendererStringWINE( &params ))) return status;
-    return return_wow64_string( params.ret, &params32->ret );
-}
-
 GLenum wow64_glClientWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64 timeout )
 {
     const struct opengl_funcs *funcs = teb->glTable;
