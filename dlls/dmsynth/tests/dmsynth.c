@@ -411,20 +411,21 @@ static void test_dmsynth(void)
     test_synth_getformat(dmsynth, &params, "defaults");
     IDirectMusicSynth_Close(dmsynth);
     /* All params supported and set to 0 */
+    memset(&params, 0, sizeof(params));
     params.dwSize = sizeof(params);
     params.dwValidParams = all_params;
     hr = IDirectMusicSynth_Open(dmsynth, &params);
-    ok(hr == S_OK, "Open failed: %#lx\n", hr);
+    ok(hr == S_FALSE, "Open failed: %#lx\n", hr);
     ok(params.dwSize == sizeof(params), "dwSize: %ld\n", params.dwSize);
     ok(params.dwValidParams == all_params, "dwValidParams: %#lx\n", params.dwValidParams);
-    ok(params.dwVoices == 32, "dwVoices: %ld\n", params.dwVoices);
-    ok(params.dwChannelGroups == 2, "dwChannelGroups: %ld\n", params.dwChannelGroups);
-    ok(params.dwAudioChannels == 2, "dwAudioChannels: %ld\n", params.dwAudioChannels);
-    ok(params.dwSampleRate == 22050, "dwSampleRate: %ld\n", params.dwSampleRate);
-    ok(params.dwEffectFlags == DMUS_EFFECT_REVERB, "params.dwEffectFlags: %#lx\n", params.dwEffectFlags);
+    todo_wine ok(params.dwVoices == 1, "dwVoices: %ld\n", params.dwVoices);
+    todo_wine ok(params.dwChannelGroups == 1, "dwChannelGroups: %ld\n", params.dwChannelGroups);
+    todo_wine ok(params.dwAudioChannels == 1, "dwAudioChannels: %ld\n", params.dwAudioChannels);
+    todo_wine ok(params.dwSampleRate == 11025, "dwSampleRate: %ld\n", params.dwSampleRate);
+    todo_wine ok(params.dwEffectFlags == 0, "params.dwEffectFlags: %#lx\n", params.dwEffectFlags);
     ok(params.fShare == FALSE, "fShare: %d\n", params.fShare);
     ok(params.dwFeatures == 0, "dwFeatures: %#lx\n", params.dwFeatures);
-    test_synth_getformat(dmsynth, &params, "defaults");
+    test_synth_getformat(dmsynth, &params, "zero");
     IDirectMusicSynth_Close(dmsynth);
     /* Requesting more than supported */
     params.dwValidParams = DMUS_PORTPARAMS_SAMPLERATE;
