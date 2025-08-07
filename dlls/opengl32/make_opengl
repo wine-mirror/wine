@@ -214,8 +214,6 @@ my %manual_unix_thunks =
     );
 my %manual_wow64_thunks =
     (
-     "glGetNamedBufferPointerv" => 1,
-     "glGetNamedBufferPointervEXT" => 1,
      "glPathGlyphIndexRangeNV" => 1,
      "wglCreatePbufferARB" => 1,
      "wglGetPbufferDCARB" => 1,
@@ -229,6 +227,8 @@ my %manual_wow64_wrappers =
      "glFenceSync" => 0,
      "glGetBufferPointerv" => 0,
      "glGetBufferPointervARB" => 0,
+     "glGetNamedBufferPointerv" => 0,
+     "glGetNamedBufferPointervEXT" => 0,
      "glGetSynciv" => 0,
      "glIsSync" => 0,
      "glMapBuffer" => 1,

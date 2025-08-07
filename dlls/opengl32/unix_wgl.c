@@ -1747,41 +1747,20 @@ void wow64_glGetBufferPointervARB( TEB *teb, GLenum target, GLenum pname, PTR32 
     return wow64_gl_get_buffer_pointer_v( pname, ptr, params );
 }
 
-static NTSTATUS wow64_gl_get_named_buffer_pointer_v( void *args, NTSTATUS (*gl_get_named_buffer_pointer_v64)(void *) )
+void wow64_glGetNamedBufferPointerv( TEB *teb, GLuint buffer, GLenum pname, PTR32 *params )
 {
-    PTR32 *ptr; /* pointer to the buffer data, where we saved the wow64 pointer */
-    struct
-    {
-        PTR32 teb;
-        GLuint buffer;
-        GLenum pname;
-        PTR32 params;
-    } *params32 = args;
-    struct glGetNamedBufferPointerv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .buffer = params32->buffer,
-        .pname = params32->pname,
-        .params = (void **)&ptr,
-    };
-    PTR32 *wow_ptr = UlongToPtr(params32->params);
-    NTSTATUS status;
-
-    if ((status = gl_get_named_buffer_pointer_v64( &params ))) return status;
-    if (params.pname != GL_BUFFER_MAP_POINTER) return STATUS_NOT_IMPLEMENTED;
-    if (ULongToPtr(*wow_ptr = PtrToUlong(ptr)) == ptr) return STATUS_SUCCESS;  /* we're lucky */
-    *wow_ptr = ptr[0];
-    return STATUS_SUCCESS;
+    const struct opengl_funcs *funcs = teb->glTable;
+    void *ptr;
+    funcs->p_glGetNamedBufferPointerv( buffer, pname, &ptr );
+    return wow64_gl_get_buffer_pointer_v( pname, ptr, params );
 }
 
-NTSTATUS wow64_ext_glGetNamedBufferPointerv( void *args )
+void wow64_glGetNamedBufferPointervEXT( TEB *teb, GLuint buffer, GLenum pname, PTR32 *params )
 {
-    return wow64_gl_get_named_buffer_pointer_v( args, ext_glGetNamedBufferPointerv );
-}
-
-NTSTATUS wow64_ext_glGetNamedBufferPointervEXT( void *args )
-{
-    return wow64_gl_get_named_buffer_pointer_v( args, ext_glGetNamedBufferPointervEXT );
+    const struct opengl_funcs *funcs = teb->glTable;
+    void *ptr;
+    funcs->p_glGetNamedBufferPointervEXT( buffer, pname, &ptr );
+    return wow64_gl_get_buffer_pointer_v( pname, ptr, params );
 }
 
 static PTR32 wow64_gl_map_buffer( TEB *teb, GLenum target, GLenum access, PTR32 *client_ptr,
