@@ -1724,41 +1724,27 @@ static PTR32 wow64_unmap_buffer( void *ptr, SIZE_T size, GLbitfield access )
     return PtrToUlong( wow_ptr );
 }
 
-static NTSTATUS wow64_gl_get_buffer_pointer_v( void *args, NTSTATUS (*get_buffer_pointer_v64)(void *) )
+static void wow64_gl_get_buffer_pointer_v( GLenum pname, PTR32 *ptr, PTR32 *wow_ptr )
 {
-    PTR32 *ptr; /* pointer to the buffer data, where we saved the wow64 pointer */
-    struct
-    {
-        PTR32 teb;
-        GLenum target;
-        GLenum pname;
-        PTR32 params;
-    } *params32 = args;
-    struct glGetBufferPointerv_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .pname = params32->pname,
-        .params = (void **)&ptr,
-    };
-    PTR32 *wow_ptr = UlongToPtr(params32->params);
-    NTSTATUS status;
-
-    if ((status = get_buffer_pointer_v64( &params ))) return status;
-    if (params.pname != GL_BUFFER_MAP_POINTER) return STATUS_NOT_IMPLEMENTED;
-    if (ULongToPtr(*wow_ptr = PtrToUlong(ptr)) == ptr) return STATUS_SUCCESS;  /* we're lucky */
+    if (pname != GL_BUFFER_MAP_POINTER) return;
+    if (ULongToPtr(*wow_ptr = PtrToUlong(ptr)) == ptr) return;  /* we're lucky */
     *wow_ptr = ptr[0];
-    return STATUS_SUCCESS;
 }
 
-NTSTATUS wow64_ext_glGetBufferPointerv( void *args )
+void wow64_glGetBufferPointerv( TEB *teb, GLenum target, GLenum pname, PTR32 *params )
 {
-    return wow64_gl_get_buffer_pointer_v( args, ext_glGetBufferPointerv );
+    const struct opengl_funcs *funcs = teb->glTable;
+    void *ptr;
+    funcs->p_glGetBufferPointerv( target, pname, &ptr );
+    return wow64_gl_get_buffer_pointer_v( pname, ptr, params );
 }
 
-NTSTATUS wow64_ext_glGetBufferPointervARB( void *args )
+void wow64_glGetBufferPointervARB( TEB *teb, GLenum target, GLenum pname, PTR32 *params )
 {
-    return wow64_gl_get_buffer_pointer_v( args, ext_glGetBufferPointervARB );
+    const struct opengl_funcs *funcs = teb->glTable;
+    void *ptr;
+    funcs->p_glGetBufferPointervARB( target, pname, &ptr );
+    return wow64_gl_get_buffer_pointer_v( pname, ptr, params );
 }
 
 static NTSTATUS wow64_gl_get_named_buffer_pointer_v( void *args, NTSTATUS (*gl_get_named_buffer_pointer_v64)(void *) )

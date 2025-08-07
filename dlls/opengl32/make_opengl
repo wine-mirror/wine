@@ -214,8 +214,6 @@ my %manual_unix_thunks =
     );
 my %manual_wow64_thunks =
     (
-     "glGetBufferPointerv" => 1,
-     "glGetBufferPointervARB" => 1,
      "glGetNamedBufferPointerv" => 1,
      "glGetNamedBufferPointervEXT" => 1,
      "glPathGlyphIndexRangeNV" => 1,
@@ -229,6 +227,8 @@ my %manual_wow64_wrappers =
      "glClientWaitSync" => 0,
      "glDeleteSync" => 0,
      "glFenceSync" => 0,
+     "glGetBufferPointerv" => 0,
+     "glGetBufferPointervARB" => 0,
      "glGetSynciv" => 0,
      "glIsSync" => 0,
      "glMapBuffer" => 1,
@@ -554,6 +554,11 @@ sub generate_wrapper_declaration($$$)
     {
         my $ptype = get_arg_type( $arg );
         my $pname = get_arg_name( $arg );
+        if ($is_wow64 && ($ptype =~ /\*.*\*/ || $ptype =~ /(sizei|int)ptr.*\*/))
+        {
+            $ret .= " PTR32 *$pname,";
+            next;
+        }
         $ret .= " " . $arg->textContent() . ",";
     }
     $ret .= " PTR32 *client_ptr," if $manual_wow64_wrappers{$name};

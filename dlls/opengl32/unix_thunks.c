@@ -8736,7 +8736,7 @@ static NTSTATUS ext_glGetBufferParameterui64vNV( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_glGetBufferPointerv( void *args )
+static NTSTATUS ext_glGetBufferPointerv( void *args )
 {
     struct glGetBufferPointerv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
@@ -8744,7 +8744,7 @@ NTSTATUS ext_glGetBufferPointerv( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_glGetBufferPointervARB( void *args )
+static NTSTATUS ext_glGetBufferPointervARB( void *args )
 {
     struct glGetBufferPointervARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
@@ -45540,6 +45540,34 @@ static NTSTATUS wow64_ext_glGetBufferParameterui64vNV( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glGetBufferParameterui64vNV( params->target, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glGetBufferPointerv( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    wow64_glGetBufferPointerv( teb, params->target, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glGetBufferPointervARB( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    wow64_glGetBufferPointervARB( teb, params->target, params->pname, ULongToPtr(params->params) );
     return STATUS_SUCCESS;
 }
 
