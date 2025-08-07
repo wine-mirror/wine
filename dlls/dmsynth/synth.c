@@ -532,26 +532,26 @@ static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *par
 
         if (size > params->dwSize) size = params->dwSize;
 
-        if ((params->dwValidParams & DMUS_PORTPARAMS_VOICES) && params->dwVoices)
+        if (params->dwValidParams & DMUS_PORTPARAMS_VOICES)
         {
-            actual.dwVoices = min(params->dwVoices, This->caps.dwMaxVoices);
+            actual.dwVoices = min(max(params->dwVoices, 1), This->caps.dwMaxVoices);
             modified |= actual.dwVoices != params->dwVoices;
         }
 
-        if ((params->dwValidParams & DMUS_PORTPARAMS_CHANNELGROUPS) && params->dwChannelGroups)
+        if (params->dwValidParams & DMUS_PORTPARAMS_CHANNELGROUPS)
         {
-            actual.dwChannelGroups = min(params->dwChannelGroups, This->caps.dwMaxChannelGroups);
+            actual.dwChannelGroups = min(max(params->dwChannelGroups, 1), This->caps.dwMaxChannelGroups);
             modified |= actual.dwChannelGroups != params->dwChannelGroups;
         }
 
-        if ((params->dwValidParams & DMUS_PORTPARAMS_AUDIOCHANNELS) && params->dwAudioChannels)
+        if (params->dwValidParams & DMUS_PORTPARAMS_AUDIOCHANNELS)
         {
             /* FluidSynth only works with stereo */
             actual.dwAudioChannels = 2;
             modified |= actual.dwAudioChannels != params->dwAudioChannels;
         }
 
-        if ((params->dwValidParams & DMUS_PORTPARAMS_SAMPLERATE) && params->dwSampleRate)
+        if (params->dwValidParams & DMUS_PORTPARAMS_SAMPLERATE)
         {
             actual.dwSampleRate = min(max(params->dwSampleRate, 11025), 96000);
             modified |= actual.dwSampleRate != params->dwSampleRate;
@@ -571,7 +571,7 @@ static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *par
 
         if (params->dwSize < sizeof(*params))
             actual.dwValidParams &= ~DMUS_PORTPARAMS_FEATURES;
-        else if ((params->dwValidParams & DMUS_PORTPARAMS_FEATURES) && params->dwFeatures)
+        else if (params->dwValidParams & DMUS_PORTPARAMS_FEATURES)
         {
             actual.dwFeatures = params->dwFeatures & (DMUS_PORT_FEATURE_AUDIOPATH | DMUS_PORT_FEATURE_STREAMING);
             modified |= actual.dwFeatures != params->dwFeatures;

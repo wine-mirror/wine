@@ -418,10 +418,10 @@ static void test_dmsynth(void)
     ok(hr == S_FALSE, "Open failed: %#lx\n", hr);
     ok(params.dwSize == sizeof(params), "dwSize: %ld\n", params.dwSize);
     ok(params.dwValidParams == all_params, "dwValidParams: %#lx\n", params.dwValidParams);
-    todo_wine ok(params.dwVoices == 1, "dwVoices: %ld\n", params.dwVoices);
-    todo_wine ok(params.dwChannelGroups == 1, "dwChannelGroups: %ld\n", params.dwChannelGroups);
+    ok(params.dwVoices == 1, "dwVoices: %ld\n", params.dwVoices);
+    ok(params.dwChannelGroups == 1, "dwChannelGroups: %ld\n", params.dwChannelGroups);
     todo_wine ok(params.dwAudioChannels == 1, "dwAudioChannels: %ld\n", params.dwAudioChannels);
-    todo_wine ok(params.dwSampleRate == 11025, "dwSampleRate: %ld\n", params.dwSampleRate);
+    ok(params.dwSampleRate == 11025, "dwSampleRate: %ld\n", params.dwSampleRate);
     todo_wine ok(params.dwEffectFlags == 0, "params.dwEffectFlags: %#lx\n", params.dwEffectFlags);
     ok(params.fShare == FALSE, "fShare: %d\n", params.fShare);
     ok(params.dwFeatures == 0, "dwFeatures: %#lx\n", params.dwFeatures);
