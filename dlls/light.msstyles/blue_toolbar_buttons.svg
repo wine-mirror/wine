@@ -8,18 +8,18 @@
    </cc:Work>
   </rdf:RDF>
  </metadata>
- <g stroke-linejoin="bevel" stroke-width=".26458">
-  <rect x=".13229" y="4.8948" width="1.5875" height="4.4979" rx=".52917" ry=".52917" fill="#fffffe" stroke="#3096fa" stroke-width=".26458"/>
-  <rect x=".13227" y="33.47" width="1.5875" height="4.4979" rx=".52917" ry=".52917" fill="#fffffe" stroke="#3096fa" stroke-width=".26458"/>
-  <g fill="#fff">
-   <g transform="translate(0 -2.1167)">
-    <rect x=".13229" y="11.774" width="1.5875" height="4.4979" rx=".52917" ry=".42836" stroke="#2979ff" stroke-width=".26458"/>
+ <g stroke-linejoin="bevel" stroke-width=".26458" style="fill:none">
+  <rect x=".13229" y="4.8948" width="1.5875" height="4.4979" rx=".52917" ry=".52917" fill="#fffffe" stroke="#3096fa" stroke-width=".26458" style="fill:none"/>
+  <rect x=".13227" y="33.47" width="1.5875" height="4.4979" rx=".52917" ry=".52917" fill="#fffffe" stroke="#3096fa" stroke-width=".26458" style="fill:none"/>
+  <g fill="#fff" style="fill:none">
+   <g transform="translate(0 -2.1167)" style="fill:none">
+    <rect x=".13229" y="11.774" width="1.5875" height="4.4979" rx=".52917" ry=".42836" stroke="#2979ff" stroke-width=".26458" style="fill:none"/>
    </g>
-   <g transform="translate(-1.9467e-5 7.4083)">
-    <rect x=".13229" y="11.774" width="1.5875" height="4.4979" rx=".52917" ry=".42836" stroke="#2979ff" stroke-width=".26458"/>
+   <g transform="translate(-1.9467e-5 7.4083)" style="fill:none">
+    <rect x=".13229" y="11.774" width="1.5875" height="4.4979" rx=".52917" ry=".42836" stroke="#2979ff" stroke-width=".26458" style="fill:none"/>
    </g>
-   <g transform="translate(-1.9467e-5 12.171)">
-    <rect x=".13229" y="11.774" width="1.5875" height="4.4979" rx=".52917" ry=".42836" stroke="#2979ff" stroke-width=".26458"/>
+   <g transform="translate(-1.9467e-5 12.171)" style="fill:none">
+    <rect x=".13229" y="11.774" width="1.5875" height="4.4979" rx=".52917" ry=".42836" stroke="#2979ff" stroke-width=".26458" style="fill:none"/>
    </g>
   </g>
  </g>

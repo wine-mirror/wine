@@ -8,13 +8,13 @@
    </cc:Work>
   </rdf:RDF>
  </metadata>
- <g fill="#fff" stroke-linejoin="bevel" stroke-width=".26458">
-  <rect x=".13229" y="4.8948" width="1.3229" height="4.4979" rx=".52917" ry=".52917" stroke="#3096fa"/>
-  <rect x=".13229" y="33.47" width="1.3229" height="4.4979" rx=".52917" ry=".52917" stroke="#3096fa"/>
-  <g stroke="#2979ff">
-   <rect x=".13229" y="9.6573" width="1.3229" height="4.4979" rx=".52917" ry=".52917"/>
-   <rect x=".13229" y="19.182" width="1.3229" height="4.4979" rx=".52917" ry=".52917"/>
-   <rect x=".13229" y="23.945" width="1.3229" height="4.4979" rx=".52917" ry=".52917"/>
+ <g fill="#fff" stroke-linejoin="bevel" stroke-width=".26458" style="fill:none">
+  <rect x=".13229" y="4.8948" width="1.3229" height="4.4979" rx=".52917" ry=".52917" stroke="#3096fa" style="fill:none"/>
+  <rect x=".13229" y="33.47" width="1.3229" height="4.4979" rx=".52917" ry=".52917" stroke="#3096fa" style="fill:none"/>
+  <g stroke="#2979ff" style="fill:none">
+   <rect x=".13229" y="9.6573" width="1.3229" height="4.4979" rx=".52917" ry=".52917" style="fill:none"/>
+   <rect x=".13229" y="19.182" width="1.3229" height="4.4979" rx=".52917" ry=".52917" style="fill:none"/>
+   <rect x=".13229" y="23.945" width="1.3229" height="4.4979" rx=".52917" ry=".52917" style="fill:none"/>
   </g>
  </g>
 </svg>
