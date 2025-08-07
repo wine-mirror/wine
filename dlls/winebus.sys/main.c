@@ -1129,7 +1129,7 @@ static NTSTATUS sdl_driver_init(void)
         .init_code = sdl_init,
         .wait_code = sdl_wait,
     };
-    if (options.disable_sdl) return STATUS_SUCCESS;
+    if (options.disable_sdl) return STATUS_NOT_SUPPORTED;
     return bus_main_thread_start(&bus);
 }
 
