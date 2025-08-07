@@ -144,6 +144,7 @@ CALLBACK DWORD devnotify_callback( HANDLE handle, DWORD flags, DEV_BROADCAST_HDR
 
 static const char *debugstr_CM_NOTIFY_FILTER( const CM_NOTIFY_FILTER *filter )
 {
+    if (!filter) return "(null)";
     switch (filter->FilterType)
     {
     case CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE:
