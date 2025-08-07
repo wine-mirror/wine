@@ -394,7 +394,8 @@ sub generate_unix_thunk($$$$)
         $ret .= "        PTR32 teb;\n";
         foreach my $arg (@{$func->[1]})
         {
-            my $ptype = get_wow64_arg_type( $arg );
+            my $arg_type = get_arg_type( $arg );
+            my $ptype = get_wow64_arg_type( $arg_type );
             my $pname = get_arg_name( $arg );
             $ret .= "        $ptype $pname;\n";
 
@@ -402,10 +403,8 @@ sub generate_unix_thunk($$$$)
             {
                 $call_args .= " params->$pname,";
             }
-            elsif (defined $pointer_array_count{$_} &&
-                   ($arg->textContent() =~ /\*.*\*/ || $arg->textContent() =~ /(sizei|int)ptr.*\*/))
+            elsif (defined $pointer_array_count{$_} && ($arg_type =~ /\*.*\*/ || $arg_type =~ /(sizei|int)ptr.*\*/))
             {
-                my $arg_type = get_arg_type( $arg );
                 if ($arg_type =~ /\*const\*$/)
                 {
                     $arg_type =~ s/\*const\*$/**/;
@@ -420,27 +419,26 @@ sub generate_unix_thunk($$$$)
             }
             elsif (defined $pointer_is_offset{$_} && $pname =~ $pointer_is_offset{$_})
             {
-                my $offset_type = get_arg_type( $arg );
-                $offset_type =~ s/\*$//;
-                $input_conv .= "    $offset_type$pname\_arg;\n";
+                $arg_type =~ s/\*$//;
+                $input_conv .= "    $arg_type$pname\_arg;\n";
                 $output_conv .= "    *(PTR32 *)UlongToPtr(params->$pname) = PtrToUlong( $pname\_arg );\n";
                 $call_args .= " &$pname\_arg,";
             }
-            elsif ($arg->textContent() =~ /(sizei|int)ptr/)
+            elsif ($arg_type =~ /(sizei|int)ptr/)
             {
-                $call_args .= " (" . get_arg_type( $arg ) . ")ULongToPtr(params->$pname),";
+                $call_args .= " (" . $arg_type . ")ULongToPtr(params->$pname),";
             }
             else
             {
                 $call_args .= " ULongToPtr(params->$pname),";
-                $need_manual_thunk = 1 if $arg->textContent() =~ /(\*.*\*|(sizei|int)ptr.*\*)/;
-                $need_lock = 1 if $arg->textContent() =~ /GLsync/;
+                $need_manual_thunk = 1 if $arg_type =~ /(\*.*\*|(sizei|int)ptr.*\*)/;
+                $need_lock = 1 if $arg_type =~ /GLsync/;
             }
         }
         if (!is_void_func($func))
         {
             my $ret_type = get_arg_type( $func->[0] );
-            my $ptype = get_wow64_arg_type( $func->[0] );
+            my $ptype = get_wow64_arg_type( $ret_type );
             $ret .= "        $ptype ret;\n";
             if ($ret_type eq "const GLubyte *" || $ret_type eq "const char *" || $ret_type eq "const GLchar *")
             {
@@ -596,10 +594,9 @@ sub generate_win_thunk($$)
 
 sub get_wow64_arg_type($)
 {
-    my $arg = shift;
-    my $ptype = get_arg_type( $arg );
+    my $ptype = shift;
     return "void" if $ptype =~ /^void$/;
-    return "PTR32" if $arg->textContent() =~ /(PROC|sizeiptr|intptr|\*|\[)/;
+    return "PTR32" if $ptype =~ /(PROC|sizeiptr|intptr|\*|\[)/;
     return $ptype unless defined $arg_types{$ptype};
     return "PTR32" if ${$arg_types{$ptype}}[0] =~ /(ptr|str)/;
     return "PTR32" if ${$arg_types{$ptype}}[1] =~ /%p/;
