@@ -549,6 +549,7 @@ static HRESULT WINAPI HTMLDOMAttribute3_get_ownerElement(IHTMLDOMAttribute3 *ifa
         if(dom_element) {
             HTMLElement *element;
             hres = get_element(dom_element, &element);
+            nsIDOMElement_Release(dom_element);
             if(SUCCEEDED(hres))
                 *p = &element->IHTMLElement2_iface;
         }else {
