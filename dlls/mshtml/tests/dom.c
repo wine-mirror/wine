@@ -2099,10 +2099,10 @@ static void _test_comment_text(unsigned line, IUnknown *unk, const WCHAR *extext
 }
 
 #define create_attr(a,b) _create_attr(__LINE__,a,b)
-static IHTMLDOMAttribute *_create_attr(unsigned line, IUnknown *unk, const char *name)
+static IHTMLDOMAttribute *_create_attr(unsigned line, IUnknown *unk, const WCHAR *name)
 {
     IHTMLDocument5 *doc = _get_htmldoc5_iface(line, unk);
-    BSTR str = SysAllocString(L"Test");
+    BSTR str = SysAllocString(name);
     IHTMLDOMAttribute *attr;
     HRESULT hres;
 
@@ -5615,6 +5615,78 @@ static IHTMLDOMAttribute *_get_elem_attr_node(unsigned line, IUnknown *unk, cons
 
     IHTMLElement4_Release(elem);
     SysFreeString(str);
+    return attr;
+}
+
+#define get_elem6_attr_node(a,b,c) _get_elem6_attr_node(__LINE__,a,b,c)
+static IHTMLDOMAttribute *_get_elem6_attr_node(unsigned line, IUnknown *unk, const WCHAR *attr_name, BOOL expect_success)
+{
+    BSTR str = SysAllocString(attr_name);
+    IHTMLDOMAttribute2 *attr2;
+    IHTMLDOMAttribute *attr;
+    IHTMLElement6 *elem;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLElement6, (void**)&elem);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IHTMLElement6: %08lx\n", hres);
+
+    attr = (void*)0xdeadbeef;
+    hres = IHTMLElement6_getAttributeNode(elem, str, &attr2);
+    ok_(__FILE__,line)(hres == S_OK, "getAttributeNode failed: %08lx\n", hres);
+    if(expect_success) {
+        ok_(__FILE__,line)(attr2 != NULL, "attr = NULL\n");
+        hres = IHTMLDOMAttribute2_QueryInterface(attr2, &IID_IHTMLDOMAttribute, (void**)&attr);
+        ok_(__FILE__,line)(hres == S_OK, "Could not get IHTMLDOMAttribute: %08lx\n", hres);
+        IHTMLDOMAttribute2_Release(attr2);
+    }else {
+        ok_(__FILE__,line)(!attr2, "attr = %p\n", attr2);
+        attr = NULL;
+    }
+
+    IHTMLElement6_Release(elem);
+    SysFreeString(str);
+    return attr;
+}
+
+#define get_elem_attr_node_via_disp(a,b,c) _get_elem_attr_node_via_disp(__LINE__,a,b,c)
+static IHTMLDOMAttribute *_get_elem_attr_node_via_disp(unsigned line, IUnknown *unk, const WCHAR *attr_name, BOOL expect_success)
+{
+    IHTMLDOMAttribute *attr = NULL;
+    DISPPARAMS dp = { 0 };
+    IDispatchEx *dispex;
+    VARIANT var, arg;
+    EXCEPINFO ei;
+    HRESULT hres;
+    DISPID id;
+    BSTR str;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IDispatchEx, (void**)&dispex);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IDispatchEx: %08lx\n", hres);
+
+    str = SysAllocString(L"getAttributeNode");
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &id);
+    ok_(__FILE__,line)(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    SysFreeString(str);
+
+    dp.cArgs = 1;
+    dp.rgvarg = &arg;
+    V_VT(&arg) = VT_BSTR;
+    V_BSTR(&arg) = SysAllocString(attr_name);
+
+    VariantInit(&var);
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, DISPATCH_METHOD, &dp, &var, &ei, NULL);
+    ok_(__FILE__,line)(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    if(!expect_success)
+        ok_(__FILE__,line)(V_VT(&var) == VT_NULL, "V_VT(var) = %d\n", V_VT(&var));
+    else {
+        ok_(__FILE__,line)(V_VT(&var) == VT_DISPATCH, "V_VT(var) = %d\n", V_VT(&var));
+        ok_(__FILE__,line)(V_DISPATCH(&var) != NULL, "V_DISPATCH(var) == NULL\n");
+        hres = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IHTMLDOMAttribute, (void**)&attr);
+        ok_(__FILE__,line)(hres == S_OK, "Could not get IHTMLDOMAttribute: %08lx\n", hres);
+    }
+    IDispatchEx_Release(dispex);
+    VariantClear(&arg);
+    VariantClear(&var);
     return attr;
 }
 
@@ -10818,16 +10890,25 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
         test_attr_specified(attr, has_attr ? VARIANT_TRUE : VARIANT_FALSE);
         test_attr_expando(attr, VARIANT_FALSE);
         IHTMLDOMAttribute_Release(attr);
+        attr = get_elem6_attr_node((IUnknown*)elem, elem_attr_props[i], has_attr);
+        if(attr) IHTMLDOMAttribute_Release(attr);
+        attr = get_elem_attr_node_via_disp((IUnknown*)elem, elem_attr_props[i], TRUE);
+        if(attr) IHTMLDOMAttribute_Release(attr);
     }
     for(i = 0; i < ARRAY_SIZE(elem_noattr_props); i++) {
         get_elem_attr_node((IUnknown*)elem, elem_noattr_props[i], FALSE);
+        get_elem6_attr_node((IUnknown*)elem, elem_noattr_props[i], FALSE);
     }
 
     ok(elem_has_attr((IUnknown*)elem, L"emptyattr"), "elem does not have emptyattr");
-    attr = get_elem_attr_node((IUnknown*)elem, L"emptyattr", TRUE);
+    attr = get_elem6_attr_node((IUnknown*)elem, L"emptyattr", TRUE);
+    test_attr_specified(attr, VARIANT_TRUE);
+    test_attr_node(attr, doc);
+    IHTMLDOMAttribute_Release(attr);
+
+    attr = get_elem_attr_node_via_disp((IUnknown*)elem, L"emptyattr", TRUE);
     test_attr_specified(attr, VARIANT_TRUE);
     test_attr_expando(attr, VARIANT_TRUE);
-    test_attr_node(attr, doc);
 
     bstr = SysAllocString(L"emptyattr");
     hres = IHTMLElement_removeAttribute(elem, bstr, 0, &vbool);
@@ -10846,7 +10927,7 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     IHTMLDOMAttribute_Release(attr);
 
     /* Test created, detached attribute. */
-    attr = create_attr((IUnknown*)doc, "Test");
+    attr = create_attr((IUnknown*)doc, L"Test");
 
     test_disp((IUnknown*)attr, &DIID_DispHTMLDOMAttribute, NULL, L"[object]");
     test_ifaces((IUnknown*)attr, attr_iids);
@@ -10888,7 +10969,7 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     ok(iface_cmp((IUnknown*)attr2, (IUnknown*)attr), "attr2 != attr\n");
     IHTMLDOMAttribute_Release(attr2);
 
-    attr3 = create_attr((IUnknown*)doc, "Test");
+    attr3 = create_attr((IUnknown*)doc, L"Test");
     put_attr_value(attr3, L"replace test");
 
     hres = IHTMLElement4_setAttributeNode(elem4, attr3, &attr2);
