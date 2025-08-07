@@ -399,6 +399,16 @@ static void test_dmsynth(void)
     params.dwSize = sizeof(DMUS_PORTPARAMS7);
     hr = IDirectMusicSynth_Open(dmsynth, &params);
     ok(hr == S_OK, "Open failed: %#lx\n", hr);
+    todo_wine ok(params.dwSize == sizeof(DMUS_PORTPARAMS7), "dwSize: %ld\n", params.dwSize);
+    ok(params.dwValidParams == (all_params & ~DMUS_PORTPARAMS_FEATURES), "dwValidParams: %#lx\n", params.dwValidParams);
+    ok(params.dwVoices == 32, "dwVoices: %ld\n", params.dwVoices);
+    ok(params.dwChannelGroups == 2, "dwChannelGroups: %ld\n", params.dwChannelGroups);
+    ok(params.dwAudioChannels == 2, "dwAudioChannels: %ld\n", params.dwAudioChannels);
+    ok(params.dwSampleRate == 22050, "dwSampleRate: %ld\n", params.dwSampleRate);
+    ok(params.dwEffectFlags == DMUS_EFFECT_REVERB, "params.dwEffectFlags: %#lx\n", params.dwEffectFlags);
+    ok(params.fShare == FALSE, "fShare: %d\n", params.fShare);
+    ok(params.dwFeatures == 0, "dwFeatures: %#lx\n", params.dwFeatures);
+    test_synth_getformat(dmsynth, &params, "defaults");
     IDirectMusicSynth_Close(dmsynth);
     /* All params supported and set to 0 */
     params.dwSize = sizeof(params);
