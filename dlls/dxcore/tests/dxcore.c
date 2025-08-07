@@ -159,6 +159,7 @@ static void test_GetProperty(void)
     LUID luid[2];
     size_t size;
     HRESULT hr;
+    char *str;
 
     if (FAILED(pDXCoreCreateAdapterFactory(&IID_IDXCoreAdapterFactory, (void **)&factory)))
         return;
@@ -249,6 +250,32 @@ static void test_GetProperty(void)
         hr = IDXCoreAdapter_GetProperty(adapter, IsHardware, sizeof(dummy), &dummy);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(dummy == is_hardware, "Got value %#x.\n", dummy);
+
+        /* DriverDescription */
+        size = 0;
+        hr = IDXCoreAdapter_GetPropertySize(adapter, DriverDescription, &size);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(!!size, "Unexpected property size.\n");
+
+        str = malloc(size);
+
+        hr = IDXCoreAdapter_GetProperty(adapter, DriverDescription, size, str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IDXCoreAdapter_GetProperty(adapter, DriverDescription, size, NULL);
+        ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+        *str = 0x1;
+        hr = IDXCoreAdapter_GetProperty(adapter, DriverDescription, size - 1, str);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+        ok(!*str, "Unexpected buffer contents %s.\n", wine_dbgstr_a(str));
+
+        *str = 0x1;
+        hr = IDXCoreAdapter_GetProperty(adapter, DriverDescription, 0, str);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+        ok(*str == 0x1, "Unexpected buffer contents %s.\n", wine_dbgstr_a(str));
+
+        free(str);
 
         IDXCoreAdapter_Release(adapter);
     }
