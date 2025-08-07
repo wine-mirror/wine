@@ -486,10 +486,10 @@ sync_test("builtin_obj", function() {
         enumerator.moveNext();
         ok(enumerator.atEnd(), "enumerator not at end");
     }else {
-        elem = f.call.call(f, document, "div");
+        elem1 = f.call.call(f, document, "div");
         f = f.bind(document);
-        elem = f.apply(null, ["style"]);
-        document.body.appendChild(elem);
+        elem1 = f.apply(null, ["style"]);
+        document.body.appendChild(elem1);
 
         try {
             var enumerator = new Enumerator(document.getElementsByTagName("style"));
