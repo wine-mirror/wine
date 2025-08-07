@@ -1103,4 +1103,49 @@ sync_test("attributeNode", function() {
     attr = elem.attributes.getNamedItem("style");
     ok(attr === null, "found style attribute named item");
     ok(!("style" in elem.attributes), "found style in attribute collection " + elem.attributes["style"]);
+
+    attr = elem.getAttributeNode("attr");
+    ok(attr.ownerDocument === document, "ownerDocument = " + attr.ownerDocument);
+    ok(attr.ownerElement === elem, "ownerElement = " + attr.ownerElement);
+    ok(attr.namespaceURI === null, "namespaceURI = " + attr.namespaceURI);
+    ok(attr.specified === true, "attr is not specified");
+    ok(attr.textContent === "wine", "textContent = " + attr.textContent);
+    todo_wine.
+    ok(attr.hasChildNodes() === true, "attr doesn't have child nodes");
+    todo_wine.
+    ok(attr.childNodes.length === 1, "child count = " + attr.childNodes.length);
+    if(attr.firstChild /* todo_wine */) {
+        ok(attr.firstChild.nodeType === 3, "child nodeType = " + attr.firstChild.nodeType);
+        ok(attr.firstChild.textContent === "wine", "child textContent = " + attr.firstChild.textContent);
+    }
+
+    elem = document.createElement("span");
+    try {
+        attr.appendChild(elem);
+        ok(false, "appendChild did not throw");
+    }catch(e) {
+        todo_wine.
+        ok(e.message === "HierarchyRequestError", "appendChild threw " + e.message);
+    }
+    try {
+        attr.insertBefore(elem, null);
+        ok(false, "insertBefore did not throw");
+    }catch(e) {
+        todo_wine.
+        ok(e.message === "HierarchyRequestError", "insertBefore threw " + e.message);
+    }
+    try {
+        attr.replaceChild(elem, attr.firstChild);
+        ok(false, "replaceChild did not throw");
+    }catch(e) {
+        todo_wine.
+        ok(e.message === "HierarchyRequestError", "replaceChild threw " + e.message);
+    }
+    try {
+        attr.removeChild(attr.firstChild);
+        ok(false, "removeChild did not throw");
+    }catch(e) {
+        todo_wine.
+        ok(e.message === "NotFoundError", "removeChild threw " + e.message);
+    }
 });
