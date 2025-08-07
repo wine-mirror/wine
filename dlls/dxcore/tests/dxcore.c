@@ -155,6 +155,7 @@ static void test_GetProperty(void)
     DXCoreHardwareID hwid[2];
     IDXCoreAdapter *adapter;
     uint32_t count, dummy;
+    LARGE_INTEGER version;
     BYTE is_hardware;
     LUID luid[2];
     size_t size;
@@ -276,6 +277,15 @@ static void test_GetProperty(void)
         ok(*str == 0x1, "Unexpected buffer contents %s.\n", wine_dbgstr_a(str));
 
         free(str);
+
+        /* DriverVersion */
+        size = 0;
+        hr = IDXCoreAdapter_GetPropertySize(adapter, DriverVersion, &size);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(size == sizeof(LARGE_INTEGER), "Unexpected property size.\n");
+
+        hr = IDXCoreAdapter_GetProperty(adapter, DriverVersion, size, &version);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         IDXCoreAdapter_Release(adapter);
     }

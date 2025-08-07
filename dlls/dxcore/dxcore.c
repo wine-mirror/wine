@@ -109,6 +109,7 @@ static HRESULT dxcore_adapter_get_property_size(struct dxcore_adapter *adapter,
     static const size_t property_sizes[] =
     {
         [InstanceLuid] = sizeof(LUID),
+        [DriverVersion] = sizeof(LARGE_INTEGER),
         [HardwareID] = sizeof(DXCoreHardwareID),
         [IsHardware] = sizeof(BYTE),
     };
@@ -116,6 +117,7 @@ static HRESULT dxcore_adapter_get_property_size(struct dxcore_adapter *adapter,
     switch (property)
     {
         case InstanceLuid:
+        case DriverVersion:
         case HardwareID:
         case IsHardware:
             *size = property_sizes[property];
@@ -156,6 +158,12 @@ static HRESULT STDMETHODCALLTYPE dxcore_adapter_GetProperty(IDXCoreAdapter *ifac
         case InstanceLuid:
             *(LUID *)buffer = adapter->identifier.adapter_luid;
             break;
+
+        case DriverVersion:
+        {
+            *(LARGE_INTEGER *)buffer = adapter->identifier.driver_version;
+            break;
+        }
 
         case HardwareID:
         {
