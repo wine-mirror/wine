@@ -430,6 +430,23 @@ static ULONG STDMETHODCALLTYPE dxcore_adapter_factory_Release(IDXCoreAdapterFact
     return refcount;
 }
 
+static HRESULT dxcore_adapter_create(const struct wined3d_adapter_identifier *adapter_id,
+        struct dxcore_adapter **ret_adapter)
+{
+    struct dxcore_adapter *adapter;
+
+    if (!(adapter = calloc(1, sizeof(*adapter))))
+        return E_OUTOFMEMORY;
+
+    adapter->IDXCoreAdapter_iface.lpVtbl = &dxcore_adapter_vtbl;
+    adapter->refcount = 1;
+    adapter->identifier = *adapter_id;
+
+    TRACE("Created adapter %p.\n", adapter);
+    *ret_adapter = adapter;
+    return S_OK;
+}
+
 static HRESULT get_adapters(struct dxcore_adapter_list *list)
 {
     struct wined3d *wined3d = wined3d_create(0);
@@ -449,26 +466,13 @@ static HRESULT get_adapters(struct dxcore_adapter_list *list)
 
     for (UINT i = 0; i < list->adapter_count; i++)
     {
-        struct dxcore_adapter *dxcore_adapter = calloc(1, sizeof(*dxcore_adapter));
-        const struct wined3d_adapter *wined3d_adapter;
+        struct wined3d_adapter_identifier adapter_id = {0};
 
-        if (!dxcore_adapter)
-        {
-            hr = E_OUTOFMEMORY;
+        if (FAILED(hr = wined3d_adapter_get_identifier(wined3d_get_adapter(wined3d, i), 0, &adapter_id)))
             goto done;
-        }
 
-        wined3d_adapter = wined3d_get_adapter(wined3d, i);
-        if (FAILED(hr = wined3d_adapter_get_identifier(wined3d_adapter, 0, &dxcore_adapter->identifier)))
-        {
-            free(dxcore_adapter);
+        if (FAILED(hr = dxcore_adapter_create(&adapter_id, &list->adapters[i])))
             goto done;
-        }
-
-        dxcore_adapter->IDXCoreAdapter_iface.lpVtbl = &dxcore_adapter_vtbl;
-        dxcore_adapter->refcount = 1;
-
-        list->adapters[i] = dxcore_adapter;
     }
 
 done:
