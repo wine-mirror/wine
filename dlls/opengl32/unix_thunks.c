@@ -26766,7 +26766,7 @@ static NTSTATUS ext_wglQueryCurrentRendererIntegerWINE( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_wglQueryCurrentRendererStringWINE( void *args )
+static NTSTATUS ext_wglQueryCurrentRendererStringWINE( void *args )
 {
     struct wglQueryCurrentRendererStringWINE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
@@ -78504,6 +78504,21 @@ static NTSTATUS wow64_ext_wglQueryCurrentRendererIntegerWINE( void *args )
     const struct opengl_funcs *funcs = teb->glTable;
     params->ret = funcs->p_wglQueryCurrentRendererIntegerWINE( params->attribute, ULongToPtr(params->value) );
     return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_wglQueryCurrentRendererStringWINE( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum attribute;
+        PTR32 ret;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const GLchar *ret;
+    const struct opengl_funcs *funcs = teb->glTable;
+    ret = funcs->p_wglQueryCurrentRendererStringWINE( params->attribute );
+    return return_wow64_string( ret, &params->ret );
 }
 
 static NTSTATUS wow64_ext_wglQueryPbufferARB( void *args )
