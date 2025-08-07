@@ -1321,6 +1321,33 @@ static void _test_elem_attr(unsigned line, IHTMLElement *elem, const WCHAR *name
     VariantClear(&value);
 }
 
+#define test_elem_attr_todo(e,n,v) _test_elem_attr_todo(__LINE__,e,n,v)
+static void _test_elem_attr_todo(unsigned line, IHTMLElement *elem, const WCHAR *name, const WCHAR *exval)
+{
+    VARIANT value;
+    BSTR tmp;
+    HRESULT hres;
+
+    VariantInit(&value);
+
+    tmp = SysAllocString(name);
+    hres = IHTMLElement_getAttribute(elem, tmp, 0, &value);
+    SysFreeString(tmp);
+    ok_(__FILE__,line) (hres == S_OK, "getAttribute failed: %08lx\n", hres);
+
+    if(exval) {
+        todo_wine
+        ok_(__FILE__,line) (V_VT(&value) == VT_BSTR, "vt=%d\n", V_VT(&value));
+        todo_wine
+        ok_(__FILE__,line) (!lstrcmpW(V_BSTR(&value), exval), "unexpected value %s\n", wine_dbgstr_w(V_BSTR(&value)));
+    }else {
+        todo_wine
+        ok_(__FILE__,line) (V_VT(&value) == VT_NULL, "vt=%d\n", V_VT(&value));
+    }
+
+    VariantClear(&value);
+}
+
 #define test_elem_offset(a,b) _test_elem_offset(__LINE__,a,b)
 static void _test_elem_offset(unsigned line, IUnknown *unk, const WCHAR *parent_tag)
 {
@@ -13201,6 +13228,253 @@ static void test_document_mode_after_initnew(void)
     IHTMLDocument2_Release(doc);
 }
 
+static void test_attribute_node_across_modes(void)
+{
+    IHTMLDOMAttribute *attr, *attr_ie9, *old_attr;
+    IHTMLElement4 *elem4, *elem4_ie9;
+    IDispatchEx *dispex, *dispex_ie9;
+    IHTMLDocument2 *doc, *doc_ie9;
+    IHTMLElement *elem, *elem_ie9;
+    IPersistStreamInit *init;
+    DISPPARAMS dp = { 0 };
+    IHTMLDocument6 *doc6;
+    IStream *stream;
+    BSTR name, bstr;
+    DISPID dispid;
+    HRESULT hres;
+    HGLOBAL mem;
+    SIZE_T len;
+    VARIANT v;
+    MSG msg;
+
+    notif_doc = doc = create_document();
+    if(!doc)
+        return;
+    doc_complete = FALSE;
+
+    len = strlen(doc_blank);
+    mem = GlobalAlloc(0, len);
+    memcpy(mem, doc_blank, len);
+    hres = CreateStreamOnHGlobal(mem, TRUE, &stream);
+    ok(hres == S_OK, "Failed to create stream: %08lx.\n", hres);
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistStreamInit, (void**)&init);
+    ok(hres == S_OK, "QueryInterface(IID_IPersistStreamInit) failed: %08lx.\n", hres);
+
+    IPersistStreamInit_Load(init, stream);
+    IPersistStreamInit_Release(init);
+    IStream_Release(stream);
+
+    set_client_site(doc, TRUE);
+    do_advise((IUnknown*)doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
+
+    while(!doc_complete && GetMessageW(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    notif_doc = doc_ie9 = create_document();
+    if(!doc_ie9) {
+        set_client_site(doc, FALSE);
+        IHTMLDocument2_Release(doc);
+        return;
+    }
+    doc_complete = FALSE;
+
+    len = strlen(doc_blank_ie9);
+    mem = GlobalAlloc(0, len);
+    memcpy(mem, doc_blank_ie9, len);
+    hres = CreateStreamOnHGlobal(mem, TRUE, &stream);
+    ok(hres == S_OK, "Failed to create stream: %08lx.\n", hres);
+
+    hres = IHTMLDocument2_QueryInterface(doc_ie9, &IID_IPersistStreamInit, (void**)&init);
+    ok(hres == S_OK, "QueryInterface(IID_IPersistStreamInit) failed: %08lx.\n", hres);
+
+    IPersistStreamInit_Load(init, stream);
+    IPersistStreamInit_Release(init);
+    IStream_Release(stream);
+
+    set_client_site(doc_ie9, TRUE);
+    do_advise((IUnknown*)doc_ie9, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
+
+    while(!doc_complete && GetMessageW(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument6, (void**)&doc6);
+    ok(hres == S_OK, "Could not get IHTMLDocument6 interface: %08lx\n", hres);
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLDocument6_get_documentMode(doc6, &v);
+    ok(hres == S_OK, "get_documentMode failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_R4, "V_VT(documentMode) = %u\n", V_VT(&v));
+    ok(V_R4(&v) == 5, "documentMode = %f\n", V_R4(&v));
+    IHTMLDocument6_Release(doc6);
+
+    hres = IHTMLDocument2_QueryInterface(doc_ie9, &IID_IHTMLDocument6, (void**)&doc6);
+    ok(hres == S_OK, "Could not get IHTMLDocument6 interface: %08lx\n", hres);
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLDocument6_get_documentMode(doc6, &v);
+    ok(hres == S_OK, "get_documentMode failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_R4, "V_VT(documentMode) = %u\n", V_VT(&v));
+    ok(V_R4(&v) == 9, "documentMode = %f\n", V_R4(&v));
+    IHTMLDocument6_Release(doc6);
+
+    elem = doc_get_body(doc);
+    elem4 = get_elem4_iface((IUnknown*)elem);
+    dispex = get_dispex_iface((IUnknown*)elem);
+    elem_ie9 = doc_get_body(doc_ie9);
+    elem4_ie9 = get_elem4_iface((IUnknown*)elem_ie9);
+    dispex_ie9 = get_dispex_iface((IUnknown*)elem_ie9);
+
+    name = SysAllocString(L"testattr");
+    attr = create_attr((IUnknown*)doc, name);
+    put_attr_value(attr, L"attr");
+
+    attr_ie9 = create_attr((IUnknown*)doc_ie9, name);
+    put_attr_value(attr_ie9, L"attr_ie9");
+
+    test_attr_value(attr, L"attr");
+    test_attr_value(attr_ie9, L"attr_ie9");
+
+    hres = IHTMLElement_GetIDsOfNames(elem, &IID_NULL, &name, 1, 0, &dispid);
+    ok(hres == DISP_E_UNKNOWNNAME, "GetIDsOfNames returned: %08lx\n", hres);
+    hres = IHTMLElement_GetIDsOfNames(elem_ie9, &IID_NULL, &name, 1, 0, &dispid);
+    ok(hres == DISP_E_UNKNOWNNAME, "GetIDsOfNames returned: %08lx\n", hres);
+
+    hres = IHTMLElement4_setAttributeNode(elem4, attr_ie9, &old_attr);
+    ok(hres == S_OK, "setAttributeNode failed: %08lx\n", hres);
+    ok(!old_attr, "old_attr != NULL\n");
+
+    hres = IHTMLElement4_setAttributeNode(elem4_ie9, attr, &old_attr);
+    ok(hres == S_OK, "setAttributeNode failed: %08lx\n", hres);
+    ok(!old_attr, "old_attr != NULL\n");
+
+    test_attr_value(attr, L"attr");
+    test_attr_value(attr_ie9, L"attr_ie9");
+    test_elem_attr(elem, name, L"attr_ie9");
+    test_elem_attr_todo(elem_ie9, name, L"attr");
+
+    hres = IHTMLElement_GetIDsOfNames(elem, &IID_NULL, &name, 1, 0, &dispid);
+    ok(hres == S_OK, "GetIDsOfNames returned: %08lx\n", hres);
+    hres = IDispatchEx_GetMemberName(dispex, dispid, &bstr);
+    ok(hres == S_OK, "GetMemberName failed: %08lx\n", hres);
+    ok(!wcscmp(bstr, name), "GetMemberName returned %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    hres = IHTMLElement_GetIDsOfNames(elem_ie9, &IID_NULL, &name, 1, 0, &dispid);
+    ok(hres == S_OK || hres == DISP_E_UNKNOWNNAME, "GetIDsOfNames returned: %08lx\n", hres);
+    if(hres == S_OK) {
+        hres = IDispatchEx_GetMemberName(dispex_ie9, dispid, &bstr);
+        todo_wine
+        ok(hres == E_INVALIDARG, "GetMemberName returned: %08lx\n", hres);
+    }
+    IHTMLDOMAttribute_Release(attr_ie9);
+    IHTMLDOMAttribute_Release(attr);
+
+    attr = create_attr((IUnknown*)doc, name);
+    put_attr_value(attr, L"wine");
+
+    attr_ie9 = create_attr((IUnknown*)doc_ie9, name);
+    put_attr_value(attr_ie9, L"wine_ie9");
+
+    test_attr_value(attr, L"wine");
+    test_attr_value(attr_ie9, L"wine_ie9");
+    test_elem_attr(elem, name, L"attr_ie9");
+    test_elem_attr_todo(elem_ie9, name, L"attr");
+
+    hres = IHTMLElement4_setAttributeNode(elem4, attr_ie9, &old_attr);
+    ok(hres == S_OK, "setAttributeNode failed: %08lx\n", hres);
+    test_attr_value(old_attr, L"attr_ie9");
+    test_attr_value(attr_ie9, L"wine_ie9");
+    test_elem_attr(elem, name, L"wine_ie9");
+    IHTMLDOMAttribute_Release(old_attr);
+
+    hres = IHTMLElement4_setAttributeNode(elem4_ie9, attr, &old_attr);
+    ok(hres == S_OK, "setAttributeNode failed: %08lx\n", hres);
+    test_attr_value(old_attr, L"attr");
+    test_attr_value(attr, L"wine");
+    test_elem_attr_todo(elem_ie9, name, L"wine");
+    IHTMLDOMAttribute_Release(old_attr);
+
+    IDispatchEx_Release(dispex_ie9);
+    IDispatchEx_Release(dispex);
+
+    /* The attributes function in their actual compat modes, regardless of the element's mode */
+    bstr = SysAllocString(L"firstChild");
+    dispex = get_dispex_iface((IUnknown*)attr);
+    dispex_ie9 = get_dispex_iface((IUnknown*)attr_ie9);
+
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &dispid);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    hres = IDispatchEx_InvokeEx(dispex, dispid, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(firstChild) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) == NULL, "V_DISPATCH(firstChild) != NULL\n");
+    VariantClear(&v);
+
+    hres = IDispatchEx_GetDispID(dispex_ie9, bstr, fdexNameCaseSensitive, &dispid);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    hres = IDispatchEx_InvokeEx(dispex_ie9, dispid, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    todo_wine
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    todo_wine
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(firstChild) = %d\n", V_VT(&v));
+    todo_wine
+    ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(firstChild) == NULL\n");
+    VariantClear(&v);
+
+    IHTMLDOMAttribute_Release(attr_ie9);
+    IHTMLDOMAttribute_Release(attr);
+    IDispatchEx_Release(dispex_ie9);
+    IDispatchEx_Release(dispex);
+    SysFreeString(name);
+
+    /* And obtaining unspecified builtins in IE9 elements with IHTMLElement4's getAttributeNode still has proper node */
+    name = SysAllocString(L"title");
+    hres = IHTMLElement4_getAttributeNode(elem4_ie9, name, &attr_ie9);
+    ok(hres == S_OK, "getAttributeNode failed: %08lx\n", hres);
+    todo_wine
+    ok(attr_ie9 != NULL, "attr_ie9 = NULL\n");
+    if(!attr_ie9)
+        goto end;
+
+    dispex_ie9 = get_dispex_iface((IUnknown*)attr_ie9);
+    hres = IDispatchEx_GetDispID(dispex_ie9, bstr, fdexNameCaseSensitive, &dispid);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    hres = IDispatchEx_InvokeEx(dispex_ie9, dispid, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_NULL, "V_VT(firstChild) = %d\n", V_VT(&v));
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"test");
+    hres = IHTMLElement_setAttribute(elem_ie9, name, v, 0);
+    ok(hres == S_OK, "setAttribute failed: %08lx\n", hres);
+    VariantClear(&v);
+
+    hres = IDispatchEx_InvokeEx(dispex_ie9, dispid, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(firstChild) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(firstChild) == NULL\n");
+    IHTMLDOMAttribute_Release(attr_ie9);
+    IDispatchEx_Release(dispex_ie9);
+
+end:
+    SysFreeString(bstr);
+    SysFreeString(name);
+    VariantClear(&v);
+
+    IHTMLElement4_Release(elem4_ie9);
+    IHTMLElement4_Release(elem4);
+    IHTMLElement_Release(elem_ie9);
+    IHTMLElement_Release(elem);
+
+    set_client_site(doc_ie9, FALSE);
+    IHTMLDocument2_Release(doc_ie9);
+    set_client_site(doc, FALSE);
+    IHTMLDocument2_Release(doc);
+}
+
 static DWORD WINAPI create_document_proc(void *param)
 {
     IHTMLDocument2 *doc = NULL;
@@ -13334,6 +13608,7 @@ START_TEST(dom)
     test_default_content_charset();
     test_document_mode_lock();
     test_document_mode_after_initnew();
+    test_attribute_node_across_modes();
     test_threads();
 
     /* Run this last since it messes with the process-wide user agent */
