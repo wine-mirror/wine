@@ -12446,6 +12446,9 @@ struct glMapNamedBuffer_params
     GLuint buffer;
     GLenum access;
     void *ret;
+#ifndef _WIN64
+    void *client_ptr;
+#endif
 };
 
 struct glMapNamedBufferEXT_params
@@ -12454,6 +12457,9 @@ struct glMapNamedBufferEXT_params
     GLuint buffer;
     GLenum access;
     void *ret;
+#ifndef _WIN64
+    void *client_ptr;
+#endif
 };
 
 struct glMapNamedBufferRange_params
