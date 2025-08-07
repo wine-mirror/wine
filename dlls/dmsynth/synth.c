@@ -559,7 +559,8 @@ static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *par
 
         if (params->dwValidParams & DMUS_PORTPARAMS_EFFECTS)
         {
-            actual.dwEffectFlags = DMUS_EFFECT_REVERB;
+            actual.dwEffectFlags = params->dwEffectFlags
+                    & (DMUS_EFFECT_REVERB | DMUS_EFFECT_CHORUS | DMUS_EFFECT_DELAY);
             modified |= actual.dwEffectFlags != params->dwEffectFlags;
         }
 

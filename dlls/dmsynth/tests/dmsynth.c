@@ -422,7 +422,7 @@ static void test_dmsynth(void)
     ok(params.dwChannelGroups == 1, "dwChannelGroups: %ld\n", params.dwChannelGroups);
     todo_wine ok(params.dwAudioChannels == 1, "dwAudioChannels: %ld\n", params.dwAudioChannels);
     ok(params.dwSampleRate == 11025, "dwSampleRate: %ld\n", params.dwSampleRate);
-    todo_wine ok(params.dwEffectFlags == 0, "params.dwEffectFlags: %#lx\n", params.dwEffectFlags);
+    ok(params.dwEffectFlags == 0, "params.dwEffectFlags: %#lx\n", params.dwEffectFlags);
     ok(params.fShare == FALSE, "fShare: %d\n", params.fShare);
     ok(params.dwFeatures == 0, "dwFeatures: %#lx\n", params.dwFeatures);
     test_synth_getformat(dmsynth, &params, "zero");
