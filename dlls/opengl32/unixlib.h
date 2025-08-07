@@ -12403,6 +12403,9 @@ struct glMapBufferRange_params
     GLsizeiptr length;
     GLbitfield access;
     void *ret;
+#ifndef _WIN64
+    void *client_ptr;
+#endif
 };
 
 struct glMapControlPointsNV_params

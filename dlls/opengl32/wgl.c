@@ -1727,17 +1727,17 @@ void * WINAPI glMapBufferRange( GLenum target, GLintptr offset, GLsizeiptr lengt
 
     TRACE( "target %d, offset %Id, length %Id, access %d\n", target, offset, length, access );
 
-    if (!(status = UNIX_CALL( glMapBufferRange, &args ))) return args.ret;
+    status = UNIX_CALL( glMapBufferRange, &args );
 #ifndef _WIN64
-    if (status == STATUS_INVALID_ADDRESS)
+    if (args.client_ptr)
     {
         TRACE( "Unable to map wow64 buffer directly, using copy buffer!\n" );
-        if (!(args.ret = _aligned_malloc( length, 16 ))) status = STATUS_NO_MEMORY;
-        else if (!(status = UNIX_CALL( glMapBufferRange, &args ))) return args.ret;
-        _aligned_free( args.ret );
+        if (!(args.client_ptr = _aligned_malloc( length, 16 ))) return NULL;
+        status = UNIX_CALL( glMapBufferRange, &args );
+        if (args.ret != args.client_ptr) _aligned_free( args.client_ptr );
     }
 #endif
-    WARN( "glMapBufferRange returned %#lx\n", status );
+    if (status) WARN( "glMapBufferRange returned %#lx\n", status );
     return args.ret;
 }
 
