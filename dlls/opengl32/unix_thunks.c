@@ -1133,7 +1133,7 @@ static NTSTATUS gl_glGetPolygonStipple( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS gl_glGetString( void *args )
+static NTSTATUS gl_glGetString( void *args )
 {
     struct glGetString_params *params = args;
     params->ret = wrap_glGetString( params->teb, params->name );
@@ -29895,8 +29895,6 @@ C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == funcs_count);
 
 #ifdef _WIN64
 
-typedef ULONG PTR32;
-
 extern NTSTATUS wow64_thread_attach( void *args );
 extern NTSTATUS wow64_process_detach( void *args );
 extern NTSTATUS wow64_get_pixel_formats( void *args );
@@ -31793,6 +31791,20 @@ static NTSTATUS wow64_gl_glGetPolygonStipple( void *args )
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glGetPolygonStipple( ULongToPtr(params->mask) );
     return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_gl_glGetString( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum name;
+        PTR32 ret;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const GLubyte *ret;
+    ret = wrap_glGetString( teb, params->name );
+    return return_wow64_string( ret, &params->ret );
 }
 
 static NTSTATUS wow64_gl_glGetTexEnvfv( void *args )

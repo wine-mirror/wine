@@ -1401,8 +1401,6 @@ NTSTATUS get_pixel_formats( void *args )
 
 #ifdef _WIN64
 
-typedef ULONG PTR32;
-
 struct wow64_string_entry
 {
     const char *str;
@@ -1411,7 +1409,7 @@ struct wow64_string_entry
 static struct wow64_string_entry *wow64_strings;
 static SIZE_T wow64_strings_count;
 
-static NTSTATUS return_wow64_string( const void *str, PTR32 *wow64_str )
+NTSTATUS return_wow64_string( const void *str, PTR32 *wow64_str )
 {
     void *tmp;
     SIZE_T i;
@@ -1511,25 +1509,6 @@ NTSTATUS wow64_wgl_wglGetProcAddress( void *args )
     if ((status = wgl_wglGetProcAddress( &params ))) return status;
     params32->ret = (UINT_PTR)params.ret;
     return STATUS_SUCCESS;
-}
-
-NTSTATUS wow64_gl_glGetString( void *args )
-{
-    struct
-    {
-        PTR32 teb;
-        GLenum name;
-        PTR32 ret;
-    } *params32 = args;
-    struct glGetString_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .name = params32->name,
-    };
-    NTSTATUS status;
-
-    if ((status = gl_glGetString( &params ))) return status;
-    return return_wow64_string( params.ret, &params32->ret );
 }
 
 NTSTATUS wow64_ext_glGetStringi( void *args )

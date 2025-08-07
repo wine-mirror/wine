@@ -31,6 +31,7 @@ extern BOOL wrap_wglReleaseTexImageARB( TEB *teb , HPBUFFERARB hPbuffer, int iBu
 extern BOOL wrap_wglSetPbufferAttribARB( TEB *teb , HPBUFFERARB hPbuffer, const int *piAttribList );
 
 #ifdef _WIN64
+typedef ULONG PTR32;
 extern GLenum wow64_glClientWaitSync( TEB *teb , GLsync sync, GLbitfield flags, GLuint64 timeout );
 extern void wow64_glDeleteSync( TEB *teb , GLsync sync );
 extern GLsync wow64_glFenceSync( TEB *teb , GLenum condition, GLbitfield flags );
@@ -41,8 +42,6 @@ extern void wow64_glWaitSync( TEB *teb , GLsync sync, GLbitfield flags, GLuint64
 
 extern NTSTATUS wgl_wglGetProcAddress( void *args );
 extern NTSTATUS wow64_wgl_wglGetProcAddress( void *args );
-extern NTSTATUS gl_glGetString( void *args );
-extern NTSTATUS wow64_gl_glGetString( void *args );
 extern NTSTATUS ext_glGetBufferPointerv( void *args );
 extern NTSTATUS wow64_ext_glGetBufferPointerv( void *args );
 extern NTSTATUS ext_glGetBufferPointervARB( void *args );

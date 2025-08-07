@@ -53,6 +53,8 @@ static inline const struct opengl_funcs *get_dc_funcs( HDC hdc )
     return funcs;
 }
 
+#ifdef _WIN64
+
 static inline void *copy_wow64_ptr32s( UINT_PTR address, ULONG count )
 {
     ULONG *ptrs = (ULONG *)address;
@@ -68,6 +70,10 @@ static inline TEB *get_teb64( ULONG teb32 )
     TEB32 *teb32_ptr = ULongToPtr( teb32 );
     return (TEB *)((char *)teb32_ptr + teb32_ptr->WowTebOffset);
 }
+
+extern NTSTATUS return_wow64_string( const void *str, PTR32 *wow64_str );
+
+#endif
 
 extern pthread_mutex_t wgl_lock;
 
