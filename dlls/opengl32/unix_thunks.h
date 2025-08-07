@@ -76,8 +76,6 @@ extern NTSTATUS ext_glUnmapNamedBufferEXT( void *args );
 extern NTSTATUS wow64_ext_glUnmapNamedBufferEXT( void *args );
 extern NTSTATUS ext_wglCreatePbufferARB( void *args );
 extern NTSTATUS wow64_ext_wglCreatePbufferARB( void *args );
-extern NTSTATUS ext_wglGetExtensionsStringEXT( void *args );
-extern NTSTATUS wow64_ext_wglGetExtensionsStringEXT( void *args );
 extern NTSTATUS ext_wglGetPbufferDCARB( void *args );
 extern NTSTATUS wow64_ext_wglGetPbufferDCARB( void *args );
 extern NTSTATUS ext_wglQueryCurrentRendererStringWINE( void *args );
