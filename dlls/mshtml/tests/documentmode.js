@@ -580,13 +580,29 @@ sync_test("attr_props", function() {
 
     elem.innerHTML = '<span id="test"></span>';
     elem = elem.getElementsByTagName("span")[0];
-    attr = elem.attributes[0];
+    attr = elem.getAttributeNode("id");
+
+    if(v < 8)
+        ok(elem.attributes.length > 50, "attributes.length = " + elem.attributes.length);
+    else {
+        todo_wine_if(v === 8).
+        ok(elem.attributes.length === 1, "attributes.length = " + elem.attributes.length);
+        todo_wine_if(v === 8).
+        ok(elem.attributes[0] === attr, "attributes[0] != attr");
+    }
 
     function test_exposed(prop, expect) {
         if(expect)
             ok(prop in attr, prop + " not found in attribute.");
         else
             ok(!(prop in attr), prop + " found in attribute.");
+    }
+
+    function test_attr(expando, specified) {
+        var r = attr.expando;
+        ok(r === expando, attr.name + " attr.expando = " + r);
+        r = attr.specified;
+        ok(r === specified, attr.name + " attr.specified = " + r);
     }
 
     test_exposed("appendChild", true);
@@ -622,6 +638,23 @@ sync_test("attr_props", function() {
     test_exposed("specified", true);
     test_exposed("textContent", v >= 9);
     test_exposed("value", true);
+    test_attr(false, true);
+
+    elem.setAttribute("test", "wine");
+    elem.setAttribute("z-index", "foobar");
+
+    attr = elem.getAttributeNode("test");
+    test_attr(true, true);
+
+    attr = elem.getAttributeNode("z-index");
+    test_attr(true, true);
+
+    attr = elem.getAttributeNode("tabIndex");
+    if(v < 8)
+        test_attr(false, false);
+    else
+        todo_wine_if(v === 8).
+        ok(attr === null, "tabIndex attr not null.");
 });
 
 sync_test("doc_props", function() {

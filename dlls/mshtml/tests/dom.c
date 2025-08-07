@@ -10930,6 +10930,7 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     ok(elem_has_attr((IUnknown*)elem, L"emptyattr"), "elem does not have emptyattr");
     attr = get_elem6_attr_node((IUnknown*)elem, L"emptyattr", TRUE);
     test_attr_specified(attr, VARIANT_TRUE);
+    test_attr_expando(attr, VARIANT_TRUE);
     test_attr_node(attr, doc);
     IHTMLDOMAttribute_Release(attr);
 

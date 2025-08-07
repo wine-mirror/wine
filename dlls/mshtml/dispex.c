@@ -1384,7 +1384,10 @@ HRESULT dispex_get_chain_builtin_id(DispatchEx *dispex, const WCHAR *name, DWORD
     const dispex_data_t *info = dispex->info;
     HRESULT hres;
 
-    assert(compat_mode >= COMPAT_MODE_IE9);
+    hres = get_builtin_id(info, name, flags, pid);
+    if(hres != DISP_E_UNKNOWNNAME || compat_mode < COMPAT_MODE_IE9)
+        return hres;
+    info = info->desc->prototype_info[compat_mode - COMPAT_MODE_IE9];
 
     for(;;) {
         hres = get_builtin_id(info, name, flags, pid);
