@@ -39,15 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 
-struct wgl_context
-{
-    void *driver_private;
-    void *internal_context;
-    int pixel_format;
-    struct opengl_drawable *draw;
-    struct opengl_drawable *read;
-};
-
 struct wgl_pbuffer
 {
     struct opengl_drawable *drawable;
@@ -1175,7 +1166,7 @@ static BOOL create_memory_pbuffer( HDC hdc, int format )
     }
     release_dc_ptr( dc );
 
-    if (ret)
+    if (ret && format)
     {
         int width = dib.rect.right - dib.rect.left, height = dib.rect.bottom - dib.rect.top;
         struct wgl_pbuffer *pbuffer;
@@ -1293,49 +1284,6 @@ static void win32u_get_pixel_formats( struct wgl_pixel_format *formats, UINT max
     *num_onscreen_formats = onscreen_count;
 }
 
-static struct wgl_context *context_create( HDC hdc, struct wgl_context *shared, const int *attribs )
-{
-    void *shared_private = shared ? shared->driver_private : NULL;
-    struct wgl_context *context;
-    int format;
-
-    TRACE( "hdc %p, shared %p, attribs %p\n", hdc, shared, attribs );
-
-    if ((format = get_dc_pixel_format( hdc, TRUE )) <= 0)
-    {
-        if (!format) RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
-        return NULL;
-    }
-
-    if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
-    context->pixel_format = format;
-
-    if (!driver_funcs->p_context_create( format, shared_private, attribs, &context->driver_private ))
-    {
-        free( context );
-        return NULL;
-    }
-
-    TRACE( "created context %p, format %u for driver context %p\n", context, format, context->driver_private );
-    return context;
-}
-
-static struct wgl_context *win32u_wglCreateContextAttribsARB( HDC hdc, struct wgl_context *shared, const int *attribs )
-{
-    static const int empty_attribs = {0};
-
-    TRACE( "hdc %p, shared %p, attribs %p\n", hdc, shared, attribs );
-
-    if (!attribs) attribs = &empty_attribs;
-    return context_create( hdc, shared, attribs );
-}
-
-static struct wgl_context *win32u_wglCreateContext( HDC hdc )
-{
-    TRACE( "hdc %p\n", hdc );
-    return context_create( hdc, NULL, NULL );
-}
-
 static void context_set_drawables( struct wgl_context *context, struct opengl_drawable *new_draw, struct opengl_drawable *new_read )
 {
     struct opengl_drawable *old_draw = context->draw, *old_read = context->read;
@@ -1370,7 +1318,7 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
     BOOL ret = FALSE, flush;
     HWND hwnd;
 
-    flush = create_memory_pbuffer( draw_hdc, context->pixel_format );
+    flush = create_memory_pbuffer( draw_hdc, context->format );
     new_draw = get_dc_opengl_drawable( draw_hdc );
 
     /* get the last used window drawable when reading */
@@ -1423,19 +1371,6 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
     return ret;
 }
 
-static BOOL win32u_wglDeleteContext( struct wgl_context *context )
-{
-    BOOL ret;
-
-    TRACE( "context %p\n", context );
-
-    if (context->internal_context) driver_funcs->p_context_destroy( context->internal_context );
-    ret = driver_funcs->p_context_destroy( context->driver_private );
-    free( context );
-
-    return ret;
-}
-
 static void push_internal_context( struct wgl_context *context, HDC hdc, int format )
 {
     TRACE( "context %p, hdc %p\n", context, hdc );
@@ -1477,9 +1412,9 @@ static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
         if (!format) RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
         return FALSE;
     }
-    if (context->pixel_format != format)
+    if (context->format != format)
     {
-        WARN( "Mismatched draw_hdc %p format %u, context %p format %u\n", draw_hdc, format, context, context->pixel_format );
+        WARN( "Mismatched draw_hdc %p format %u, context %p format %u\n", draw_hdc, format, context, context->format );
         RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
         return FALSE;
     }
@@ -1908,6 +1843,42 @@ static int get_window_swap_interval( HWND hwnd )
     return interval;
 }
 
+static BOOL win32u_wgl_context_reset( struct wgl_context *context, HDC hdc, struct wgl_context *share, const int *attribs )
+{
+    void *share_private = share ? share->driver_private : NULL;
+    int format;
+
+    TRACE( "context %p, hdc %p, share %p, attribs %p\n", context, hdc, share, attribs );
+
+    if (context->internal_context)
+    {
+        driver_funcs->p_context_destroy( context->internal_context );
+        context->internal_context = NULL;
+    }
+    if (context->driver_private && !driver_funcs->p_context_destroy( context->driver_private ))
+    {
+        WARN( "Failed to destroy driver context %p\n", context->driver_private );
+        return FALSE;
+    }
+    context->driver_private = NULL;
+    if (!hdc) return TRUE;
+
+    if ((format = get_dc_pixel_format( hdc, TRUE )) <= 0)
+    {
+        if (!format) RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
+        return FALSE;
+    }
+    if (!driver_funcs->p_context_create( format, share_private, attribs, &context->driver_private ))
+    {
+        WARN( "Failed to create driver context for context %p\n", context );
+        return FALSE;
+    }
+    context->format = format;
+
+    TRACE( "reset context %p, format %u for driver context %p\n", context, format, context->driver_private );
+    return TRUE;
+}
+
 static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)(void) )
 {
     HDC draw_hdc = NtCurrentTeb()->glReserved1[0], read_hdc = NtCurrentTeb()->glReserved1[1];
@@ -2046,13 +2017,14 @@ static void display_funcs_init(void)
     display_funcs.p_wglGetPixelFormat = win32u_wglGetPixelFormat;
     display_funcs.p_wglSetPixelFormat = win32u_wglSetPixelFormat;
 
-    display_funcs.p_wglCreateContext = win32u_wglCreateContext;
-    display_funcs.p_wglDeleteContext = win32u_wglDeleteContext;
+    display_funcs.p_wglCreateContext = (void *)1; /* never called */
+    display_funcs.p_wglDeleteContext = (void *)1; /* never called */
     display_funcs.p_wglCopyContext = (void *)1; /* never called */
     display_funcs.p_wglShareLists = (void *)1; /* never called */
     display_funcs.p_wglMakeCurrent = win32u_wglMakeCurrent;
 
     display_funcs.p_wglSwapBuffers = win32u_wglSwapBuffers;
+    display_funcs.p_wgl_context_reset = win32u_wgl_context_reset;
     display_funcs.p_wgl_context_flush = win32u_wgl_context_flush;
 
     if (display_egl.has_EGL_EXT_pixel_format_float)
@@ -2081,7 +2053,7 @@ static void display_funcs_init(void)
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context" );
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context_no_error" );
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context_profile" );
-    display_funcs.p_wglCreateContextAttribsARB = win32u_wglCreateContextAttribsARB;
+    display_funcs.p_wglCreateContextAttribsARB = (void *)1; /* never called */
 
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_make_current_read" );
     display_funcs.p_wglGetCurrentReadDCARB   = (void *)1;  /* never called */
