@@ -1521,7 +1521,7 @@ NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args )
         GLbitfield fontStyle;
         GLuint pathParameterTemplate;
         GLfloat emScale;
-        GLuint baseAndCount[2];
+        PTR32 baseAndCount;
         GLenum ret;
     } *params32 = args;
     struct glPathGlyphIndexRangeNV_params params =
@@ -1532,7 +1532,7 @@ NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args )
         .fontStyle = params32->fontStyle,
         .pathParameterTemplate = params32->pathParameterTemplate,
         .emScale = params32->emScale,
-        .baseAndCount = {params32->baseAndCount[0], params32->baseAndCount[1]},
+        .baseAndCount = ULongToPtr(params32->baseAndCount),
     };
     NTSTATUS status;
     if ((status = ext_glPathGlyphIndexRangeNV( &params ))) return status;

@@ -14875,9 +14875,8 @@ static GLenum WINAPI glPathGlyphIndexArrayNV( GLuint firstPathName, GLenum fontT
 
 static GLenum WINAPI glPathGlyphIndexRangeNV( GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint pathParameterTemplate, GLfloat emScale, GLuint baseAndCount[2] )
 {
-    struct glPathGlyphIndexRangeNV_params args = { .teb = NtCurrentTeb(), .fontTarget = fontTarget, .fontName = fontName, .fontStyle = fontStyle, .pathParameterTemplate = pathParameterTemplate, .emScale = emScale };
+    struct glPathGlyphIndexRangeNV_params args = { .teb = NtCurrentTeb(), .fontTarget = fontTarget, .fontName = fontName, .fontStyle = fontStyle, .pathParameterTemplate = pathParameterTemplate, .emScale = emScale, .baseAndCount = baseAndCount };
     NTSTATUS status;
-    memcpy( args.baseAndCount, baseAndCount, sizeof(args.baseAndCount) );
     TRACE( "fontTarget %d, fontName %p, fontStyle %d, pathParameterTemplate %d, emScale %f, baseAndCount %p\n", fontTarget, fontName, fontStyle, pathParameterTemplate, emScale, baseAndCount );
     if ((status = UNIX_CALL( glPathGlyphIndexRangeNV, &args ))) WARN( "glPathGlyphIndexRangeNV returned %#lx\n", status );
     return args.ret;

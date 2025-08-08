@@ -582,16 +582,11 @@ sub generate_win_thunk($$)
     foreach my $arg (@{$func->[1]})
     {
         my $pname = get_arg_name( $arg );
-        $params .= ", .$pname = $pname" unless $arg->textContent() =~ /\[/;
+        $params .= ", .$pname = $pname";
     }
     $ret .= " = {$params }";
     $ret .= ";\n";
     $ret .= "    NTSTATUS status;\n";
-    foreach my $arg (@{$func->[1]})
-    {
-        my $pname = get_arg_name( $arg );
-        $ret .= "    memcpy( args.$pname, $pname, sizeof(args.$pname) );\n" if $arg->textContent() =~ /\[/;
-    }
     $ret .= "    " . get_func_trace( $name, $func, 1 ) if $gen_traces;
     $ret .= "    if ((status = UNIX_CALL( $name, &args ))) WARN( \"$name returned %#lx\\n\", status );\n";
     $ret .= "    return args.ret;\n" unless is_void_func($func);
@@ -662,6 +657,13 @@ sub generate_func_params($$)
     $ret .= "    TEB *teb;\n";
     foreach my $arg (@{$func->[1]})
     {
+        my $ptype = get_arg_type( $arg );
+        if ($ptype =~ /\]$/)
+        {
+            $ptype =~ s/\[.*//;
+            $ret .= "    $ptype*" . get_arg_name( $arg ) . ";\n";
+            next;
+        }
         $ret .= sprintf "    %s;\n", $arg->textContent();
     }
     $ret .= sprintf "    %sret;\n", $func->[0]->textContent() unless is_void_func($func);

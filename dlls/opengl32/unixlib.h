@@ -15387,7 +15387,7 @@ struct glPathGlyphIndexRangeNV_params
     GLbitfield fontStyle;
     GLuint pathParameterTemplate;
     GLfloat emScale;
-    GLuint baseAndCount[2];
+    GLuint *baseAndCount;
     GLenum ret;
 };
 
