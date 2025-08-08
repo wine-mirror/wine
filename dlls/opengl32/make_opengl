@@ -248,6 +248,20 @@ my %hide_default_fbo_thunks =
      "glGetFramebufferAttachmentParameteriv" => 1,
      "glGetFramebufferAttachmentParameterivEXT" => 1,
     );
+my %resolve_default_fbo_thunks =
+    (
+     "glCopyColorTable" => 1,
+     "glCopyPixels" => 1,
+     "glCopyTexImage1D" => 1,
+     "glCopyTexImage2D" => 1,
+     "glCopyTexSubImage1D" => 1,
+     "glCopyTexSubImage2D" => 1,
+     "glCopyTexSubImage3D" => 1,
+     "glCopyTextureSubImage1D" => 1,
+     "glCopyTextureSubImage2D" => 1,
+     "glCopyTextureSubImage3D" => 1,
+     "glReadPixels" => 1,
+    );
 my %map_default_fbo_thunks =
     (
      "glBindFramebuffer" => [ "framebuffer" ],
@@ -555,6 +569,7 @@ sub generate_unix_thunk($$$$)
         $target = "params->target" if $call_args =~ "params->target";
         $ret .= "    if (!params->$arg) params->$arg = get_default_fbo( $teb, $target );\n";
     }
+    $ret .= "    resolve_default_fbo( $teb, TRUE );\n" if defined $resolve_default_fbo_thunks{$name};
     $ret .= "    push_default_fbo( $teb );\n" if defined $hide_default_fbo_thunks{$name};
     $ret .= "    pthread_mutex_lock( &wgl_lock );\n" if $need_lock;
     $ret .= "    $ret_expr";
