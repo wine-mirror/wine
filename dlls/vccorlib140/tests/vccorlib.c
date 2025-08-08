@@ -20,6 +20,8 @@
 
 #define COBJMACROS
 
+#include "initguid.h"
+#include "activation.h"
 #include "objbase.h"
 #include "wine/test.h"
 
@@ -55,6 +57,7 @@ DEFINE_EXPECT(PostUninitialize);
 
 static HRESULT (__cdecl *pInitializeData)(int);
 static void (__cdecl *pUninitializeData)(int);
+static HRESULT (WINAPI *pGetActivationFactoryByPCWSTR)(const WCHAR *, const GUID *, void **);
 
 static BOOL init(void)
 {
@@ -72,6 +75,19 @@ static BOOL init(void)
     pUninitializeData = (void *)GetProcAddress(hmod,
             "?UninitializeData@Details@Platform@@YAXH@Z");
     ok(pUninitializeData != NULL, "UninitializeData not available\n");
+
+#ifdef __arm__
+    pGetActivationFactoryByPCWSTR = (void *)GetProcAddress(hmod,
+            "?GetActivationFactoryByPCWSTR@@YAJPAXAAVGuid@Platform@@PAPAX@Z");
+#else
+    if (sizeof(void *) == 8)
+        pGetActivationFactoryByPCWSTR = (void *)GetProcAddress(hmod,
+                "?GetActivationFactoryByPCWSTR@@YAJPEAXAEAVGuid@Platform@@PEAPEAX@Z");
+    else
+        pGetActivationFactoryByPCWSTR = (void *)GetProcAddress(hmod,
+                "?GetActivationFactoryByPCWSTR@@YGJPAXAAVGuid@Platform@@PAPAX@Z");
+#endif
+    ok(pGetActivationFactoryByPCWSTR != NULL, "GetActivationFactoryByPCWSTR not available\n");
 
     return TRUE;
 }
@@ -212,10 +228,40 @@ static void test_InitializeData(void)
     ok(hr == S_OK, "CoRevokeInitializeSpy returned %lx\n", hr);
 }
 
+static void test_GetActivationFactoryByPCWSTR(void)
+{
+    static const GUID guid_null = {0};
+    HRESULT hr;
+    void *out;
+
+    hr = pGetActivationFactoryByPCWSTR(L"Wine.Nonexistent.RuntimeClass", &IID_IActivationFactory, &out);
+    todo_wine ok(hr == CO_E_NOTINITIALIZED, "got hr %#lx\n", hr);
+
+    hr = pInitializeData(1);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+
+    hr = pGetActivationFactoryByPCWSTR(L"Wine.Nonexistent.RuntimeClass", &IID_IActivationFactory, &out);
+    todo_wine ok(hr == REGDB_E_CLASSNOTREG, "got hr %#lx\n", hr);
+
+    hr = pGetActivationFactoryByPCWSTR(L"Windows.Foundation.Metadata.ApiInformation", &IID_IActivationFactory, &out);
+    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    if (SUCCEEDED(hr)) IActivationFactory_Release(out);
+
+    hr = pGetActivationFactoryByPCWSTR(L"Windows.Foundation.Metadata.ApiInformation", &IID_IInspectable, &out);
+    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    if (SUCCEEDED(hr)) IActivationFactory_Release(out);
+
+    hr = pGetActivationFactoryByPCWSTR(L"Windows.Foundation.Metadata.ApiInformation", &guid_null, &out);
+    todo_wine ok(hr == E_NOINTERFACE, "got hr %#lx\n", hr);
+
+    pUninitializeData(1);
+}
+
 START_TEST(vccorlib)
 {
     if(!init())
         return;
 
     test_InitializeData();
+    test_GetActivationFactoryByPCWSTR();
 }

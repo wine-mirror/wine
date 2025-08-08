@@ -40,3 +40,10 @@ void __cdecl UninitializeData(int type)
 
     if (type) RoUninitialize();
 }
+
+HRESULT WINAPI GetActivationFactoryByPCWSTR(const WCHAR *name, const GUID *iid, void **out)
+{
+    FIXME("(%s, %s, %p) stub\n", debugstr_w(name), debugstr_guid(iid), out);
+
+    return E_NOTIMPL;
+}

@@ -73,9 +73,9 @@
 @ stub -arch=i386 ?GetActivationFactory@Details@Platform@@YGJPAVModuleBase@1WRL@Microsoft@@PAUHSTRING__@@PAPAUIActivationFactory@@@Z
 @ stub -arch=arm ?GetActivationFactory@Details@Platform@@YAJPAVModuleBase@1WRL@Microsoft@@PAUHSTRING__@@PAPAUIActivationFactory@@@Z
 @ stub -arch=win64 ?GetActivationFactory@Details@Platform@@YAJPEAVModuleBase@1WRL@Microsoft@@PEAUHSTRING__@@PEAPEAUIActivationFactory@@@Z
-@ stub -arch=i386 ?GetActivationFactoryByPCWSTR@@YGJPAXAAVGuid@Platform@@PAPAX@Z
-@ stub -arch=arm ?GetActivationFactoryByPCWSTR@@YAJPAXAAVGuid@Platform@@PAPAX@Z
-@ stub -arch=win64 ?GetActivationFactoryByPCWSTR@@YAJPEAXAEAVGuid@Platform@@PEAPEAX@Z
+@ stdcall -arch=i386 ?GetActivationFactoryByPCWSTR@@YGJPAXAAVGuid@Platform@@PAPAX@Z(wstr ptr ptr) GetActivationFactoryByPCWSTR
+@ stdcall -arch=arm ?GetActivationFactoryByPCWSTR@@YAJPAXAAVGuid@Platform@@PAPAX@Z(wstr ptr ptr) GetActivationFactoryByPCWSTR
+@ stdcall -arch=win64 ?GetActivationFactoryByPCWSTR@@YAJPEAXAEAVGuid@Platform@@PEAPEAX@Z(wstr ptr ptr) GetActivationFactoryByPCWSTR
 @ stub -arch=win32 ??0ClassNotRegisteredException@Platform@@Q$AAA@XZ
 @ stub -arch=win64 ??0ClassNotRegisteredException@Platform@@QE$AAA@XZ
 @ stub -arch=win32 ?GetCmdArguments@Details@Platform@@YAPAPA_WPAH@Z
