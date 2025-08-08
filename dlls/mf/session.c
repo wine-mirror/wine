@@ -1076,15 +1076,25 @@ static void session_start(struct media_session *session, const GUID *time_format
 {
     struct media_source *source;
     struct topo_node *topo_node;
+    BOOL keep_position;
     MFTIME duration;
     HRESULT hr;
     UINT i;
+
+    keep_position = IsEqualGUID(time_format, &GUID_NULL) && start_position->vt == VT_EMPTY;
+
+    /* No position change - nothing to do. */
+    if (session->state == SESSION_STATE_STARTED && keep_position)
+    {
+        session_command_complete_with_event(session, MESessionStarted, S_OK, NULL);
+        return;
+    }
 
     switch (session->state)
     {
         case SESSION_STATE_PAUSED:
         case SESSION_STATE_STARTED:
-            if (!IsEqualGUID(time_format, &GUID_NULL) || start_position->vt != VT_EMPTY)
+            if (!keep_position)
             {
                 session->command_state = COMMAND_STATE_RESTARTING_SOURCES;
 

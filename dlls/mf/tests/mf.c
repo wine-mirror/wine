@@ -7919,6 +7919,21 @@ static void test_media_session_seek(void)
 
     compare_object_states(&actual_object_state_record, &expected_sample_request_and_delivery_records);
 
+    SET_EXPECT(test_media_sink_GetPresentationClock);
+    SET_EXPECT(test_media_sink_GetStreamSinkCount);
+
+    PropVariantClear(&propvar);
+    hr = IMFMediaSession_Start(session, NULL, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = wait_media_event(session, callback, MESessionStarted, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    todo_wine
+    CHECK_CALLED(test_media_sink_GetPresentationClock);
+    todo_wine
+    CHECK_CALLED(test_media_sink_GetStreamSinkCount);
+
     memset(&actual_object_state_record, 0, sizeof(actual_object_state_record));
     hr = IMFMediaSession_Pause(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
