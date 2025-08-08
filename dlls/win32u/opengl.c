@@ -1157,6 +1157,21 @@ static void context_set_drawables( struct wgl_context *context, struct opengl_dr
     if (old_read) opengl_drawable_release( old_read );
 }
 
+static BOOL context_unset_current( struct wgl_context *context )
+{
+    struct opengl_drawable *old_draw = context->draw, *old_read = context->read;
+
+    TRACE( "context %p\n", context );
+
+    opengl_drawable_flush( old_read, old_read->interval, GL_FLUSH_WAS_CURRENT );
+    if (old_read != old_draw) opengl_drawable_flush( old_draw, old_draw->interval, GL_FLUSH_WAS_CURRENT );
+    if (driver_funcs->p_make_current( NULL, NULL, NULL )) return TRUE;
+    opengl_drawable_flush( old_read, old_read->interval, GL_FLUSH_SET_CURRENT );
+    if (old_read != old_draw) opengl_drawable_flush( old_draw, old_draw->interval, GL_FLUSH_SET_CURRENT );
+
+    return FALSE;
+}
+
 static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, HDC read_hdc )
 {
     struct wgl_context *previous = NtCurrentTeb()->glContext;
@@ -1180,11 +1195,21 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
     }
 
     if (previous == context && new_draw == context->draw && new_read == context->read) ret = TRUE;
-    else if ((ret = driver_funcs->p_make_current( new_draw, new_read, context->driver_private )))
+    else if (previous)
+    {
+        struct opengl_drawable *old_draw = previous->draw, *old_read = previous->read;
+        opengl_drawable_flush( old_read, old_read->interval, GL_FLUSH_WAS_CURRENT );
+        if (old_read != old_draw) opengl_drawable_flush( old_draw, old_draw->interval, GL_FLUSH_WAS_CURRENT );
+    }
+
+    if (!ret && (ret = driver_funcs->p_make_current( new_draw, new_read, context->driver_private )))
     {
         NtCurrentTeb()->glContext = context;
         context_set_drawables( context, new_draw, new_read );
         if (previous && previous != context) context_set_drawables( previous, NULL, NULL );
+
+        opengl_drawable_flush( new_read, new_read->interval, GL_FLUSH_SET_CURRENT );
+        if (new_read != new_draw) opengl_drawable_flush( new_draw, new_draw->interval, GL_FLUSH_SET_CURRENT );
     }
 
     if (ret)
@@ -1194,6 +1219,12 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
         /* update the current window drawable to the last used draw surface */
         if ((hwnd = NtUserWindowFromDC( draw_hdc ))) set_window_opengl_drawable( hwnd, new_draw );
         if (flush) flush_memory_dc( context, draw_hdc, TRUE, NULL );
+    }
+    else if (previous)
+    {
+        struct opengl_drawable *old_draw = previous->draw, *old_read = previous->read;
+        opengl_drawable_flush( old_read, old_read->interval, GL_FLUSH_SET_CURRENT );
+        if (old_read != old_draw) opengl_drawable_flush( old_draw, old_draw->interval, GL_FLUSH_SET_CURRENT );
     }
 
     opengl_drawable_release( new_draw );
@@ -1243,7 +1274,7 @@ static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
     if (!context)
     {
         if (!(context = prev_context)) return TRUE;
-        if (!driver_funcs->p_make_current( NULL, NULL, NULL )) return FALSE;
+        if (!context_unset_current( context )) return FALSE;
         NtCurrentTeb()->glContext = NULL;
         context_set_drawables( context, NULL, NULL );
         return TRUE;

@@ -146,6 +146,8 @@ struct opengl_drawable_funcs
 #define GL_FLUSH_FINISHED      0x01
 #define GL_FLUSH_INTERVAL      0x02
 #define GL_FLUSH_UPDATED       0x04
+#define GL_FLUSH_WAS_CURRENT   0x08
+#define GL_FLUSH_SET_CURRENT   0x10
 
 struct opengl_drawable
 {
