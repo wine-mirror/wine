@@ -136,9 +136,9 @@
 @ stub -arch=i386 ?GetIBoxVtable@Details@Platform@@YGPAXPAX@Z
 @ stub -arch=arm ?GetIBoxVtable@Details@Platform@@YAPAXPAX@Z
 @ stub -arch=win64 ?GetIBoxVtable@Details@Platform@@YAPEAXPEAX@Z
-@ stub -arch=i386 ?GetIidsFn@@YGJHPAKPBU__s_GUID@@PAPAVGuid@Platform@@@Z
-@ stub -arch=arm ?GetIidsFn@@YAJHPAKPBU__s_GUID@@PAPAVGuid@Platform@@@Z
-@ stub -arch=win64 ?GetIidsFn@@YAJHPEAKPEBU__s_GUID@@PEAPEAVGuid@Platform@@@Z
+@ stdcall -arch=i386 ?GetIidsFn@@YGJHPAKPBU__s_GUID@@PAPAVGuid@Platform@@@Z(long ptr ptr ptr) GetIidsFn
+@ stdcall -arch=arm ?GetIidsFn@@YAJHPAKPBU__s_GUID@@PAPAVGuid@Platform@@@Z(long ptr ptr ptr) GetIidsFn
+@ stdcall -arch=win64 ?GetIidsFn@@YAJHPEAKPEBU__s_GUID@@PEAPEAVGuid@Platform@@@Z(long ptr ptr ptr) GetIidsFn
 @ stub -arch=i386 ?GetObjectContext@Details@Platform@@YGPAUIUnknown@@XZ
 @ stub -arch=arm ?GetObjectContext@Details@Platform@@YAPAUIUnknown@@XZ
 @ stub -arch=win64 ?GetObjectContext@Details@Platform@@YAPEAUIUnknown@@XZ

@@ -1,5 +1,6 @@
 /*
  * Copyright 2025 Piotr Caban
+ * Copyright 2025 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -55,4 +56,11 @@ HRESULT WINAPI GetActivationFactoryByPCWSTR(const WCHAR *name, const GUID *iid, 
     if (FAILED(hr)) return hr;
 
     return RoGetActivationFactory(str, iid, out);
+}
+
+HRESULT WINAPI GetIidsFn(unsigned int count, unsigned int *copied, const GUID *src, GUID **dest)
+{
+    FIXME("(%u, %p, %p, %p) stub\n", count, copied, src, dest);
+
+    return E_NOTIMPL;
 }
