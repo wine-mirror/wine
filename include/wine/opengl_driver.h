@@ -157,6 +157,7 @@ struct opengl_drawable
     int                                 format;         /* pixel format of the drawable */
     int                                 interval;       /* last set surface swap interval */
     EGLSurface                          surface;        /* surface for EGL based drivers */
+    GLuint                              fbo;            /* default FBO name when emulating framebuffer */
 };
 
 static inline const char *debugstr_opengl_drawable( struct opengl_drawable *drawable )

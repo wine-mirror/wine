@@ -61,6 +61,7 @@ struct wgl_pbuffer
     GLenum cube_face;
 };
 
+static const struct opengl_driver_funcs nulldrv_funcs, *driver_funcs = &nulldrv_funcs;
 static const struct opengl_funcs *default_funcs; /* default GL function table from opengl32 */
 static struct egl_platform display_egl;
 static struct opengl_funcs display_funcs;
@@ -165,9 +166,156 @@ static void opengl_drawable_flush( struct opengl_drawable *drawable, int interva
         drawable->funcs->flush( drawable, flags );
 }
 
+struct framebuffer_surface
+{
+    struct opengl_drawable base;
+};
+
+static GLenum color_format_from_pfd( const struct wgl_pixel_format *desc )
+{
+    TRACE( "format type %u bits %u/%u/%u/%u\n", desc->pixel_type, desc->pfd.cRedBits,
+           desc->pfd.cGreenBits, desc->pfd.cBlueBits, desc->pfd.cAlphaBits );
+
+    if (desc->pixel_type == WGL_TYPE_RGBA_FLOAT_ARB)
+    {
+        if (desc->pfd.cAlphaBits == 32) return GL_RGBA32F;
+        if (desc->pfd.cAlphaBits == 16) return GL_RGBA16F;
+        if (desc->pfd.cBlueBits == 32) return GL_RGB32F;
+        if (desc->pfd.cBlueBits == 16) return GL_RGB16F;
+        if (desc->pfd.cGreenBits == 32) return GL_RG32F;
+        if (desc->pfd.cGreenBits == 16) return GL_RG16F;
+        if (desc->pfd.cRedBits == 32) return GL_R32F;
+        if (desc->pfd.cRedBits == 16) return GL_R16F;
+    }
+    else
+    {
+        if (desc->pfd.cBlueBits == 10 && desc->pfd.cGreenBits == 10 &&
+            desc->pfd.cRedBits == 10 && desc->pfd.cAlphaBits == 2)
+            return GL_RGB10_A2;
+        if (desc->pfd.cAlphaBits == 32) return GL_RGBA32UI;
+        if (desc->pfd.cAlphaBits == 16) return GL_RGBA16;
+        if (desc->pfd.cAlphaBits == 8) return GL_RGBA8;
+        if (desc->pfd.cAlphaBits == 4) return GL_RGBA4;
+        if (desc->pfd.cBlueBits == 32) return GL_RGB32UI;
+        if (desc->pfd.cBlueBits == 16) return GL_RGB16;
+        if (desc->pfd.cBlueBits == 8) return GL_RGB8;
+        if (desc->pfd.cBlueBits == 4) return GL_RGB4;
+        if (desc->pfd.cGreenBits == 32) return GL_RG32UI;
+        if (desc->pfd.cGreenBits == 16) return GL_RG16;
+        if (desc->pfd.cGreenBits == 8) return GL_RG8;
+        if (desc->pfd.cRedBits == 32) return GL_R32UI;
+        if (desc->pfd.cRedBits == 16) return GL_R16;
+        if (desc->pfd.cRedBits == 8) return GL_R8;
+    }
+
+    FIXME( "Unsupported format type %u bits %u/%u/%u/%u\n", desc->pixel_type, desc->pfd.cRedBits,
+           desc->pfd.cGreenBits, desc->pfd.cBlueBits, desc->pfd.cAlphaBits );
+    return 0;
+}
+
+static GLuint create_framebuffer( struct opengl_drawable *drawable, const struct wgl_pixel_format *desc )
+{
+    const struct opengl_funcs *funcs = &display_funcs;
+    GLuint fbo, name;
+
+    funcs->p_glCreateFramebuffers( 1, &fbo );
+    funcs->p_glCreateRenderbuffers( 1, &name );
+    funcs->p_glNamedFramebufferRenderbuffer( fbo, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, name );
+    TRACE( "drawable %p/%u created color buffer %#x/%u\n", drawable, fbo, GL_COLOR_ATTACHMENT0, name );
+
+    funcs->p_glNamedFramebufferDrawBuffer( fbo, GL_COLOR_ATTACHMENT0 );
+    funcs->p_glNamedFramebufferReadBuffer( fbo, GL_COLOR_ATTACHMENT0 );
+    TRACE( "drawable %p created framebuffer %u\n", drawable, fbo );
+
+    return fbo;
+}
+
+static void resize_framebuffer( struct opengl_drawable *drawable, const struct wgl_pixel_format *desc, GLuint fbo,
+                                int width, int height )
+{
+    const struct opengl_funcs *funcs = &display_funcs;
+    GLuint name;
+    GLenum ret;
+
+    funcs->p_glGetNamedFramebufferAttachmentParameteriv( fbo, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, (GLint *)&name );
+    funcs->p_glNamedRenderbufferStorageMultisample( name, desc->samples, color_format_from_pfd( desc ), width, height );
+    TRACE( "drawable %p/%u resized color buffer %#x/%u to %d,%d\n", drawable, fbo, GL_COLOR_ATTACHMENT0, name, width, height );
+
+    ret = funcs->p_glCheckNamedFramebufferStatus( fbo, GL_FRAMEBUFFER );
+    if (ret != GL_FRAMEBUFFER_COMPLETE) WARN( "glCheckNamedFramebufferStatus returned %#x\n", ret );
+    TRACE( "drawable %p/%u resized buffers to %d,%d\n", drawable, fbo, width, height );
+}
+
+static void destroy_framebuffer( struct opengl_drawable *drawable, const struct wgl_pixel_format *desc, GLuint fbo )
+{
+    const struct opengl_funcs *funcs = &display_funcs;
+    GLuint name;
+
+    funcs->p_glGetNamedFramebufferAttachmentParameteriv( fbo, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, (GLint *)&name );
+    funcs->p_glDeleteRenderbuffers( 1, &name );
+    TRACE( "drawable %p/%u destroyed color buffer %#x/%u\n", drawable, fbo, GL_COLOR_ATTACHMENT0, name );
+
+    funcs->p_glDeleteFramebuffers( 1, &fbo );
+    TRACE( "drawable %p destroyed framebuffer %u\n", drawable, fbo );
+}
+
+static void framebuffer_surface_destroy( struct opengl_drawable *drawable )
+{
+    TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
+}
+
+static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT flags )
+{
+    struct wgl_pixel_format desc = pixel_formats[drawable->format - 1];
+    RECT rect;
+
+    TRACE( "%s, flags %#x\n", debugstr_opengl_drawable( drawable ), flags );
+
+    NtUserGetClientRect( drawable->client->hwnd, &rect, NtUserGetDpiForWindow( drawable->client->hwnd ) );
+    if (!rect.right) rect.right = 1;
+    if (!rect.bottom) rect.bottom = 1;
+
+    if (flags & GL_FLUSH_WAS_CURRENT)
+    {
+        destroy_framebuffer( drawable, &desc, drawable->fbo );
+        drawable->fbo = 0;
+    }
+
+    if (flags & GL_FLUSH_SET_CURRENT)
+    {
+        drawable->fbo = create_framebuffer( drawable, &desc );
+        if (!drawable->fbo) ERR( "Failed to create framebuffer object\n" );
+    }
+
+    if ((flags & (GL_FLUSH_UPDATED | GL_FLUSH_SET_CURRENT)) && drawable->fbo)
+    {
+        TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->fbo, rect.right, rect.bottom );
+        resize_framebuffer( drawable, &desc, drawable->fbo, rect.right, rect.bottom );
+    }
+}
+
+static BOOL framebuffer_surface_swap( struct opengl_drawable *drawable )
+{
+    TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
+    return TRUE;
+}
+
+static const struct opengl_drawable_funcs framebuffer_surface_funcs =
+{
+    .destroy = framebuffer_surface_destroy,
+    .flush = framebuffer_surface_flush,
+    .swap = framebuffer_surface_swap,
+};
+
+static struct opengl_drawable *framebuffer_surface_create( int format, struct client_surface *client )
+{
+    struct framebuffer_surface *surface;
+    if (!(surface = opengl_drawable_create( sizeof(*surface), &framebuffer_surface_funcs, format, client ))) return NULL;
+    return &surface->base;
+}
+
 #ifdef SONAME_LIBEGL
 
-static const struct opengl_drawable_funcs egldrv_surface_funcs;
 static const struct opengl_drawable_funcs egldrv_pbuffer_funcs;
 
 static inline EGLConfig egl_config_for_format( const struct egl_platform *egl, int format )
@@ -392,8 +540,9 @@ static BOOL egldrv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl
     struct client_surface *client;
 
     if (!(client = nulldrv_client_surface_create( hwnd ))) return FALSE;
-    *drawable = opengl_drawable_create( sizeof(**drawable), &egldrv_surface_funcs, format, client );
+    *drawable = framebuffer_surface_create( format, client );
     client_surface_release( client );
+
     return !!*drawable;
 }
 
@@ -568,29 +717,6 @@ static BOOL egldrv_make_current( struct opengl_drawable *draw, struct opengl_dra
 
     return funcs->p_eglMakeCurrent( egl->display, context ? draw->surface : EGL_NO_SURFACE, context ? read->surface : EGL_NO_SURFACE, context );
 }
-
-static void egldrv_surface_destroy( struct opengl_drawable *drawable )
-{
-    TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
-}
-
-static void egldrv_surface_flush( struct opengl_drawable *drawable, UINT flags )
-{
-    TRACE( "%s flags %#x\n", debugstr_opengl_drawable( drawable ), flags );
-}
-
-static BOOL egldrv_surface_swap( struct opengl_drawable *drawable )
-{
-    TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
-    return TRUE;
-}
-
-static const struct opengl_drawable_funcs egldrv_surface_funcs =
-{
-    .destroy = egldrv_surface_destroy,
-    .flush = egldrv_surface_flush,
-    .swap = egldrv_surface_swap,
-};
 
 static void egldrv_pbuffer_destroy( struct opengl_drawable *drawable )
 {
@@ -853,8 +979,6 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_context_destroy = nulldrv_context_destroy,
     .p_make_current = nulldrv_make_current,
 };
-
-static const struct opengl_driver_funcs *driver_funcs = &nulldrv_funcs;
 
 static const char *win32u_wglGetExtensionsStringARB( HDC hdc )
 {
@@ -1840,6 +1964,16 @@ static void display_funcs_init(void)
         display_funcs.p_##func = default_funcs->p_##func; \
     }
     ALL_GL_FUNCS
+    USE_GL_FUNC(glCheckNamedFramebufferStatus)
+    USE_GL_FUNC(glCreateFramebuffers)
+    USE_GL_FUNC(glCreateRenderbuffers)
+    USE_GL_FUNC(glDeleteFramebuffers)
+    USE_GL_FUNC(glDeleteRenderbuffers)
+    USE_GL_FUNC(glGetNamedFramebufferAttachmentParameteriv)
+    USE_GL_FUNC(glNamedFramebufferDrawBuffer)
+    USE_GL_FUNC(glNamedFramebufferReadBuffer)
+    USE_GL_FUNC(glNamedFramebufferRenderbuffer)
+    USE_GL_FUNC(glNamedRenderbufferStorageMultisample)
 #undef USE_GL_FUNC
 
     display_funcs.p_wglGetProcAddress = win32u_wglGetProcAddress;
