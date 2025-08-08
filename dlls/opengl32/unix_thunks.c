@@ -22681,7 +22681,7 @@ static NTSTATUS ext_glUnlockArraysEXT( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_glUnmapBuffer( void *args )
+static NTSTATUS ext_glUnmapBuffer( void *args )
 {
     struct glUnmapBuffer_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
@@ -22690,7 +22690,7 @@ NTSTATUS ext_glUnmapBuffer( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS ext_glUnmapBufferARB( void *args )
+static NTSTATUS ext_glUnmapBufferARB( void *args )
 {
     struct glUnmapBufferARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
@@ -71434,6 +71434,36 @@ static NTSTATUS wow64_ext_glUnlockArraysEXT( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glUnlockArraysEXT();
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glUnmapBuffer( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum target;
+        GLboolean ret;
+        PTR32 client_ptr;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    params->ret = wow64_glUnmapBuffer( teb, params->target, &params->client_ptr );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glUnmapBufferARB( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum target;
+        GLboolean ret;
+        PTR32 client_ptr;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    params->ret = wow64_glUnmapBufferARB( teb, params->target, &params->client_ptr );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }

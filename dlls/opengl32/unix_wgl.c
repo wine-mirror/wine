@@ -1950,41 +1950,30 @@ NTSTATUS wow64_ext_glMapNamedBufferRangeEXT( void *args )
     return wow64_gl_map_named_buffer_range( args, ext_glMapNamedBufferRangeEXT );
 }
 
-static NTSTATUS wow64_gl_unmap_buffer( void *args, NTSTATUS (*gl_unmap_buffer64)(void *) )
+static PTR32 wow64_unmap_client_buffer( TEB *teb, GLenum target )
 {
-    PTR32 *ptr;
-    struct
-    {
-        PTR32 teb;
-        GLenum target;
-        GLboolean ret;
-    } *params32 = args;
-    struct glUnmapBuffer_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .target = params32->target,
-        .ret = TRUE,
-    };
-    NTSTATUS status;
+    PTR32 *ptr, ret;
 
-    if (!(ptr = get_buffer_pointer( params.teb, params.target ))) return STATUS_SUCCESS;
+    if (!(ptr = get_buffer_pointer( teb, target ))) return 0;
+    ret = *ptr;
 
-    status = wow64_unmap_buffer( ptr, get_buffer_param( params.teb, params.target, GL_BUFFER_MAP_LENGTH ),
-                                 get_buffer_param( params.teb, params.target, GL_BUFFER_ACCESS_FLAGS ) );
-    gl_unmap_buffer64( &params );
-    params32->ret = params.ret;
-
-    return status;
+    wow64_unmap_buffer( ptr, get_buffer_param( teb, target, GL_BUFFER_MAP_LENGTH ),
+                        get_buffer_param( teb, target, GL_BUFFER_ACCESS_FLAGS ) );
+    return ret;
 }
 
-NTSTATUS wow64_ext_glUnmapBuffer( void *args )
+GLboolean wow64_glUnmapBuffer( TEB *teb, GLenum target, PTR32 *client_ptr )
 {
-    return wow64_gl_unmap_buffer( args, ext_glUnmapBuffer );
+    const struct opengl_funcs *funcs = teb->glTable;
+    *client_ptr = wow64_unmap_client_buffer( teb, target );
+    return funcs->p_glUnmapBuffer( target );
 }
 
-NTSTATUS wow64_ext_glUnmapBufferARB( void *args )
+GLboolean wow64_glUnmapBufferARB( TEB *teb, GLenum target, PTR32 *client_ptr )
 {
-    return wow64_gl_unmap_buffer( args, ext_glUnmapBufferARB );
+    const struct opengl_funcs *funcs = teb->glTable;
+    *client_ptr = wow64_unmap_client_buffer( teb, target );
+    return funcs->p_glUnmapBuffer( target );
 }
 
 static NTSTATUS wow64_gl_unmap_named_buffer( void *args, NTSTATUS (*gl_unmap_named_buffer64)(void *) )
