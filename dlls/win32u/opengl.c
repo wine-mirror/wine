@@ -122,6 +122,8 @@ void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *fun
 
     drawable->format = format;
     drawable->interval = INT_MIN;
+    drawable->doublebuffer = !!(pixel_formats[format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
+    drawable->stereo = !!(pixel_formats[format - 1].pfd.dwFlags & PFD_STEREO);
     if ((drawable->client = client)) client_surface_add_ref( client );
 
     TRACE( "created %s\n", debugstr_opengl_drawable( drawable ) );
@@ -216,15 +218,22 @@ static GLenum color_format_from_pfd( const struct wgl_pixel_format *desc )
 static GLuint create_framebuffer( struct opengl_drawable *drawable, const struct wgl_pixel_format *desc )
 {
     const struct opengl_funcs *funcs = &display_funcs;
-    GLuint fbo, name;
+    GLuint count = 1, fbo, name;
+
+    if (drawable->doublebuffer) count *= 2;
+    if (drawable->stereo) count *= 2;
 
     funcs->p_glCreateFramebuffers( 1, &fbo );
-    funcs->p_glCreateRenderbuffers( 1, &name );
-    funcs->p_glNamedFramebufferRenderbuffer( fbo, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, name );
-    TRACE( "drawable %p/%u created color buffer %#x/%u\n", drawable, fbo, GL_COLOR_ATTACHMENT0, name );
+
+    for (GLuint i = 0; i < count; i++)
+    {
+        funcs->p_glCreateRenderbuffers( 1, &name );
+        funcs->p_glNamedFramebufferRenderbuffer( fbo, GL_COLOR_ATTACHMENT0 + i, GL_RENDERBUFFER, name );
+        TRACE( "drawable %p/%u created color buffer %#x/%u\n", drawable, fbo, GL_COLOR_ATTACHMENT0 + i, name );
+    }
 
     funcs->p_glNamedFramebufferDrawBuffer( fbo, GL_COLOR_ATTACHMENT0 );
-    funcs->p_glNamedFramebufferReadBuffer( fbo, GL_COLOR_ATTACHMENT0 );
+    funcs->p_glNamedFramebufferReadBuffer( fbo, drawable->doublebuffer ? GL_COLOR_ATTACHMENT1 : GL_COLOR_ATTACHMENT0 );
     TRACE( "drawable %p created framebuffer %u\n", drawable, fbo );
 
     return fbo;
@@ -234,12 +243,18 @@ static void resize_framebuffer( struct opengl_drawable *drawable, const struct w
                                 int width, int height )
 {
     const struct opengl_funcs *funcs = &display_funcs;
-    GLuint name;
+    GLuint count = 1, name;
     GLenum ret;
 
-    funcs->p_glGetNamedFramebufferAttachmentParameteriv( fbo, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, (GLint *)&name );
-    funcs->p_glNamedRenderbufferStorageMultisample( name, desc->samples, color_format_from_pfd( desc ), width, height );
-    TRACE( "drawable %p/%u resized color buffer %#x/%u to %d,%d\n", drawable, fbo, GL_COLOR_ATTACHMENT0, name, width, height );
+    if (drawable->doublebuffer) count *= 2;
+    if (drawable->stereo) count *= 2;
+
+    for (GLuint i = 0; i < count; i++)
+    {
+        funcs->p_glGetNamedFramebufferAttachmentParameteriv( fbo, GL_COLOR_ATTACHMENT0 + i, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, (GLint *)&name );
+        funcs->p_glNamedRenderbufferStorageMultisample( name, desc->samples, color_format_from_pfd( desc ), width, height );
+        TRACE( "drawable %p/%u resized color buffer %#x/%u to %d,%d\n", drawable, fbo, GL_COLOR_ATTACHMENT0 + i, name, width, height );
+    }
 
     ret = funcs->p_glCheckNamedFramebufferStatus( fbo, GL_FRAMEBUFFER );
     if (ret != GL_FRAMEBUFFER_COMPLETE) WARN( "glCheckNamedFramebufferStatus returned %#x\n", ret );
@@ -249,11 +264,17 @@ static void resize_framebuffer( struct opengl_drawable *drawable, const struct w
 static void destroy_framebuffer( struct opengl_drawable *drawable, const struct wgl_pixel_format *desc, GLuint fbo )
 {
     const struct opengl_funcs *funcs = &display_funcs;
-    GLuint name;
+    GLuint count = 1, name;
 
-    funcs->p_glGetNamedFramebufferAttachmentParameteriv( fbo, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, (GLint *)&name );
-    funcs->p_glDeleteRenderbuffers( 1, &name );
-    TRACE( "drawable %p/%u destroyed color buffer %#x/%u\n", drawable, fbo, GL_COLOR_ATTACHMENT0, name );
+    if (drawable->doublebuffer) count *= 2;
+    if (drawable->stereo) count *= 2;
+
+    for (GLuint i = 0; i < count; i++)
+    {
+        funcs->p_glGetNamedFramebufferAttachmentParameteriv( fbo, GL_COLOR_ATTACHMENT0 + i, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, (GLint *)&name );
+        funcs->p_glDeleteRenderbuffers( 1, &name );
+        TRACE( "drawable %p/%u destroyed color buffer %#x/%u\n", drawable, fbo, GL_COLOR_ATTACHMENT0 + i, name );
+    }
 
     funcs->p_glDeleteFramebuffers( 1, &fbo );
     TRACE( "drawable %p destroyed framebuffer %u\n", drawable, fbo );

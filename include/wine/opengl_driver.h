@@ -156,6 +156,8 @@ struct opengl_drawable
     struct client_surface              *client;         /* underlying client surface */
     int                                 format;         /* pixel format of the drawable */
     int                                 interval;       /* last set surface swap interval */
+    BOOL                                doublebuffer;   /* pixel format is double buffered */
+    BOOL                                stereo;         /* pixel format is stereo buffered */
     EGLSurface                          surface;        /* surface for EGL based drivers */
     GLuint                              fbo;            /* default FBO name when emulating framebuffer */
 };
