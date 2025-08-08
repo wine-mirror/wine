@@ -215,6 +215,26 @@ static GLenum color_format_from_pfd( const struct wgl_pixel_format *desc )
     return 0;
 }
 
+static GLenum depth_format_from_pfd( const struct wgl_pixel_format *desc )
+{
+    TRACE( "format bits %u/%u\n", desc->pfd.cStencilBits, desc->pfd.cDepthBits );
+
+    if (desc->pfd.cStencilBits)
+    {
+        if (desc->pfd.cDepthBits == 32) return GL_DEPTH32F_STENCIL8;
+        if (desc->pfd.cDepthBits == 24) return GL_DEPTH24_STENCIL8;
+    }
+    else
+    {
+        if (desc->pfd.cDepthBits == 32) return GL_DEPTH_COMPONENT32;
+        if (desc->pfd.cDepthBits == 24) return GL_DEPTH_COMPONENT24;
+        if (desc->pfd.cDepthBits == 16) return GL_DEPTH_COMPONENT16;
+    }
+
+    FIXME( "Unsupported format bits %u/%u\n", desc->pfd.cStencilBits, desc->pfd.cDepthBits );
+    return 0;
+}
+
 static GLuint create_framebuffer( struct opengl_drawable *drawable, const struct wgl_pixel_format *desc )
 {
     const struct opengl_funcs *funcs = &display_funcs;
@@ -230,6 +250,14 @@ static GLuint create_framebuffer( struct opengl_drawable *drawable, const struct
         funcs->p_glCreateRenderbuffers( 1, &name );
         funcs->p_glNamedFramebufferRenderbuffer( fbo, GL_COLOR_ATTACHMENT0 + i, GL_RENDERBUFFER, name );
         TRACE( "drawable %p/%u created color buffer %#x/%u\n", drawable, fbo, GL_COLOR_ATTACHMENT0 + i, name );
+    }
+
+    if (desc->pfd.cDepthBits)
+    {
+        funcs->p_glCreateRenderbuffers( 1, &name );
+        funcs->p_glNamedFramebufferRenderbuffer( fbo, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, name );
+        if (desc->pfd.cStencilBits) funcs->p_glNamedFramebufferRenderbuffer( fbo, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, name );
+        TRACE( "drawable %p/%u created depth buffer %u\n", drawable, fbo, name );
     }
 
     funcs->p_glNamedFramebufferDrawBuffer( fbo, GL_COLOR_ATTACHMENT0 );
@@ -256,6 +284,13 @@ static void resize_framebuffer( struct opengl_drawable *drawable, const struct w
         TRACE( "drawable %p/%u resized color buffer %#x/%u to %d,%d\n", drawable, fbo, GL_COLOR_ATTACHMENT0 + i, name, width, height );
     }
 
+    if (desc->pfd.cDepthBits)
+    {
+        funcs->p_glGetNamedFramebufferAttachmentParameteriv( fbo, GL_DEPTH_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, (GLint *)&name );
+        funcs->p_glNamedRenderbufferStorageMultisample( name, desc->samples, depth_format_from_pfd( desc ), width, height );
+        TRACE( "drawable %p/%u resized depth buffer %u to %d,%d\n", drawable, fbo, name, width, height );
+    }
+
     ret = funcs->p_glCheckNamedFramebufferStatus( fbo, GL_FRAMEBUFFER );
     if (ret != GL_FRAMEBUFFER_COMPLETE) WARN( "glCheckNamedFramebufferStatus returned %#x\n", ret );
     TRACE( "drawable %p/%u resized buffers to %d,%d\n", drawable, fbo, width, height );
@@ -274,6 +309,13 @@ static void destroy_framebuffer( struct opengl_drawable *drawable, const struct 
         funcs->p_glGetNamedFramebufferAttachmentParameteriv( fbo, GL_COLOR_ATTACHMENT0 + i, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, (GLint *)&name );
         funcs->p_glDeleteRenderbuffers( 1, &name );
         TRACE( "drawable %p/%u destroyed color buffer %#x/%u\n", drawable, fbo, GL_COLOR_ATTACHMENT0 + i, name );
+    }
+
+    if (desc->pfd.cDepthBits)
+    {
+        funcs->p_glGetNamedFramebufferAttachmentParameteriv( fbo, GL_DEPTH_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, (GLint *)&name );
+        funcs->p_glDeleteRenderbuffers( 1, &name );
+        TRACE( "drawable %p/%u destroyed depth buffer %u\n", drawable, fbo, name );
     }
 
     funcs->p_glDeleteFramebuffers( 1, &fbo );
