@@ -699,8 +699,7 @@ static NTSTATUS gl_glDrawArrays( void *args )
 static NTSTATUS gl_glDrawBuffer( void *args )
 {
     struct glDrawBuffer_params *params = args;
-    const struct opengl_funcs *funcs = params->teb->glTable;
-    funcs->p_glDrawBuffer( params->buf );
+    wrap_glDrawBuffer( params->teb, params->buf );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -2189,8 +2188,7 @@ static NTSTATUS gl_glRasterPos4sv( void *args )
 static NTSTATUS gl_glReadBuffer( void *args )
 {
     struct glReadBuffer_params *params = args;
-    const struct opengl_funcs *funcs = params->teb->glTable;
-    funcs->p_glReadBuffer( params->src );
+    wrap_glReadBuffer( params->teb, params->src );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -6864,8 +6862,7 @@ static NTSTATUS ext_glDrawBufferRegion( void *args )
 static NTSTATUS ext_glDrawBuffers( void *args )
 {
     struct glDrawBuffers_params *params = args;
-    const struct opengl_funcs *funcs = params->teb->glTable;
-    funcs->p_glDrawBuffers( params->n, params->bufs );
+    wrap_glDrawBuffers( params->teb, params->n, params->bufs );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -7971,8 +7968,7 @@ static NTSTATUS ext_glFrameZoomSGIX( void *args )
 static NTSTATUS ext_glFramebufferDrawBufferEXT( void *args )
 {
     struct glFramebufferDrawBufferEXT_params *params = args;
-    const struct opengl_funcs *funcs = params->teb->glTable;
-    funcs->p_glFramebufferDrawBufferEXT( params->framebuffer, params->mode );
+    wrap_glFramebufferDrawBufferEXT( params->teb, params->framebuffer, params->mode );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -7980,8 +7976,7 @@ static NTSTATUS ext_glFramebufferDrawBufferEXT( void *args )
 static NTSTATUS ext_glFramebufferDrawBuffersEXT( void *args )
 {
     struct glFramebufferDrawBuffersEXT_params *params = args;
-    const struct opengl_funcs *funcs = params->teb->glTable;
-    funcs->p_glFramebufferDrawBuffersEXT( params->framebuffer, params->n, params->bufs );
+    wrap_glFramebufferDrawBuffersEXT( params->teb, params->framebuffer, params->n, params->bufs );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -8016,8 +8011,7 @@ static NTSTATUS ext_glFramebufferParameteriMESA( void *args )
 static NTSTATUS ext_glFramebufferReadBufferEXT( void *args )
 {
     struct glFramebufferReadBufferEXT_params *params = args;
-    const struct opengl_funcs *funcs = params->teb->glTable;
-    funcs->p_glFramebufferReadBufferEXT( params->framebuffer, params->mode );
+    wrap_glFramebufferReadBufferEXT( params->teb, params->framebuffer, params->mode );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -15464,8 +15458,7 @@ static NTSTATUS ext_glNamedCopyBufferSubDataEXT( void *args )
 static NTSTATUS ext_glNamedFramebufferDrawBuffer( void *args )
 {
     struct glNamedFramebufferDrawBuffer_params *params = args;
-    const struct opengl_funcs *funcs = params->teb->glTable;
-    funcs->p_glNamedFramebufferDrawBuffer( params->framebuffer, params->buf );
+    wrap_glNamedFramebufferDrawBuffer( params->teb, params->framebuffer, params->buf );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -15473,8 +15466,7 @@ static NTSTATUS ext_glNamedFramebufferDrawBuffer( void *args )
 static NTSTATUS ext_glNamedFramebufferDrawBuffers( void *args )
 {
     struct glNamedFramebufferDrawBuffers_params *params = args;
-    const struct opengl_funcs *funcs = params->teb->glTable;
-    funcs->p_glNamedFramebufferDrawBuffers( params->framebuffer, params->n, params->bufs );
+    wrap_glNamedFramebufferDrawBuffers( params->teb, params->framebuffer, params->n, params->bufs );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -15500,8 +15492,7 @@ static NTSTATUS ext_glNamedFramebufferParameteriEXT( void *args )
 static NTSTATUS ext_glNamedFramebufferReadBuffer( void *args )
 {
     struct glNamedFramebufferReadBuffer_params *params = args;
-    const struct opengl_funcs *funcs = params->teb->glTable;
-    funcs->p_glNamedFramebufferReadBuffer( params->framebuffer, params->src );
+    wrap_glNamedFramebufferReadBuffer( params->teb, params->framebuffer, params->src );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -31069,8 +31060,7 @@ static NTSTATUS wow64_gl_glDrawBuffer( void *args )
         GLenum buf;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = teb->glTable;
-    funcs->p_glDrawBuffer( params->buf );
+    wrap_glDrawBuffer( teb, params->buf );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -33607,8 +33597,7 @@ static NTSTATUS wow64_gl_glReadBuffer( void *args )
         GLenum src;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = teb->glTable;
-    funcs->p_glReadBuffer( params->src );
+    wrap_glReadBuffer( teb, params->src );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -42248,8 +42237,7 @@ static NTSTATUS wow64_ext_glDrawBuffers( void *args )
         PTR32 bufs;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = teb->glTable;
-    funcs->p_glDrawBuffers( params->n, ULongToPtr(params->bufs) );
+    wrap_glDrawBuffers( teb, params->n, ULongToPtr(params->bufs) );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -44140,8 +44128,7 @@ static NTSTATUS wow64_ext_glFramebufferDrawBufferEXT( void *args )
         GLenum mode;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = teb->glTable;
-    funcs->p_glFramebufferDrawBufferEXT( params->framebuffer, params->mode );
+    wrap_glFramebufferDrawBufferEXT( teb, params->framebuffer, params->mode );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -44156,8 +44143,7 @@ static NTSTATUS wow64_ext_glFramebufferDrawBuffersEXT( void *args )
         PTR32 bufs;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = teb->glTable;
-    funcs->p_glFramebufferDrawBuffersEXT( params->framebuffer, params->n, ULongToPtr(params->bufs) );
+    wrap_glFramebufferDrawBuffersEXT( teb, params->framebuffer, params->n, ULongToPtr(params->bufs) );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -44216,8 +44202,7 @@ static NTSTATUS wow64_ext_glFramebufferReadBufferEXT( void *args )
         GLenum mode;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = teb->glTable;
-    funcs->p_glFramebufferReadBufferEXT( params->framebuffer, params->mode );
+    wrap_glFramebufferReadBufferEXT( teb, params->framebuffer, params->mode );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -58189,8 +58174,7 @@ static NTSTATUS wow64_ext_glNamedFramebufferDrawBuffer( void *args )
         GLenum buf;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = teb->glTable;
-    funcs->p_glNamedFramebufferDrawBuffer( params->framebuffer, params->buf );
+    wrap_glNamedFramebufferDrawBuffer( teb, params->framebuffer, params->buf );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -58205,8 +58189,7 @@ static NTSTATUS wow64_ext_glNamedFramebufferDrawBuffers( void *args )
         PTR32 bufs;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = teb->glTable;
-    funcs->p_glNamedFramebufferDrawBuffers( params->framebuffer, params->n, ULongToPtr(params->bufs) );
+    wrap_glNamedFramebufferDrawBuffers( teb, params->framebuffer, params->n, ULongToPtr(params->bufs) );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -58252,8 +58235,7 @@ static NTSTATUS wow64_ext_glNamedFramebufferReadBuffer( void *args )
         GLenum src;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = teb->glTable;
-    funcs->p_glNamedFramebufferReadBuffer( params->framebuffer, params->src );
+    wrap_glNamedFramebufferReadBuffer( teb, params->framebuffer, params->src );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }

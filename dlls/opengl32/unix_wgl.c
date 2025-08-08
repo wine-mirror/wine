@@ -65,6 +65,11 @@ enum wgl_handle_type
 
 /* context state management */
 
+struct pixel_mode_state
+{
+    GLenum read_buffer;
+};
+
 struct light_model_state
 {
     GLfloat ambient[4];
@@ -100,9 +105,12 @@ struct enable_state
     GLboolean normalize;
 };
 
+#define MAX_DRAW_BUFFERS 16
+
 struct color_buffer_state
 {
     GLfloat clear_color[4];
+    GLenum  draw_buffers[MAX_DRAW_BUFFERS];
 };
 
 struct hint_state
@@ -126,6 +134,7 @@ struct context
 
     /* semi-stub state tracker for wglCopyContext */
     GLbitfield used;                            /* context state used bits */
+    struct pixel_mode_state pixel_mode;         /* GL_PIXEL_MODE_BIT */
     struct lighting_state lighting;             /* GL_LIGHTING_BIT */
     struct depth_buffer_state depth_buffer;     /* GL_DEPTH_BUFFER_BIT */
     struct viewport_state viewport;             /* GL_VIEWPORT_BIT */
@@ -1402,6 +1411,166 @@ void set_current_fbo( TEB *teb, GLenum target, GLuint fbo )
     if (target == GL_FRAMEBUFFER) ctx->draw_fbo = ctx->read_fbo = fbo;
     if (target == GL_DRAW_FRAMEBUFFER) ctx->draw_fbo = fbo;
     if (target == GL_READ_FRAMEBUFFER) ctx->read_fbo = fbo;
+}
+
+static void set_default_fbo_draw_buffers( struct context *ctx, struct opengl_drawable *draw,
+                                          GLsizei count, const GLenum *buffers )
+{
+    memset( ctx->color_buffer.draw_buffers, 0, sizeof(ctx->color_buffer.draw_buffers) );
+
+    for (GLsizei i = 0; i < count; i++)
+    {
+        if (i >= MAX_DRAW_BUFFERS) FIXME( "Needs %u draw buffers\n", i );
+        else ctx->color_buffer.draw_buffers[i] = buffers[i];
+    }
+}
+
+void wrap_glDrawBuffers( TEB *teb, GLsizei n, const GLenum *bufs )
+{
+    struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *draw;
+    struct context *ctx;
+
+    if ((ctx = get_current_context( teb, &draw, NULL )) && !ctx->draw_fbo && draw->fbo)
+        set_default_fbo_draw_buffers( ctx, draw, n, bufs );
+
+    funcs->p_glDrawBuffers( n, bufs );
+}
+
+void wrap_glFramebufferDrawBuffersEXT( TEB *teb, GLuint fbo, GLsizei n, const GLenum *bufs )
+{
+    struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *draw;
+    struct context *ctx;
+
+    if ((ctx = get_current_context( teb, &draw, NULL )) && !fbo && draw->fbo)
+        set_default_fbo_draw_buffers( ctx, draw, n, bufs );
+
+    funcs->p_glFramebufferDrawBuffersEXT( fbo, n, bufs );
+}
+
+void wrap_glNamedFramebufferDrawBuffers( TEB *teb, GLuint fbo, GLsizei n, const GLenum *bufs )
+{
+    struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *draw;
+    struct context *ctx;
+
+    if ((ctx = get_current_context( teb, &draw, NULL )) && !fbo && draw->fbo)
+        set_default_fbo_draw_buffers( ctx, draw, n, bufs );
+
+    funcs->p_glNamedFramebufferDrawBuffers( fbo, n, bufs );
+}
+
+static void set_default_fbo_draw_buffer( struct context *ctx, struct opengl_drawable *draw, GLint buffer )
+{
+    switch (buffer)
+    {
+    case GL_LEFT:
+    case GL_RIGHT:
+    case GL_FRONT:
+    case GL_BACK:
+    case GL_FRONT_AND_BACK:
+    case GL_FRONT_LEFT:
+    case GL_FRONT_RIGHT:
+    case GL_BACK_LEFT:
+    case GL_BACK_RIGHT:
+        memset( ctx->color_buffer.draw_buffers, 0, sizeof(ctx->color_buffer.draw_buffers) );
+        ctx->color_buffer.draw_buffers[0] = buffer;
+        return;
+    }
+
+    WARN( "Invalid draw buffer %#x for context %p\n", buffer, ctx );
+}
+
+void wrap_glDrawBuffer( TEB *teb, GLenum buf )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *draw;
+    struct context *ctx;
+
+    if ((ctx = get_current_context( teb, &draw, NULL )) && !ctx->draw_fbo && draw->fbo)
+        set_default_fbo_draw_buffer( ctx, draw, buf );
+
+    funcs->p_glDrawBuffer( buf );
+}
+
+void wrap_glFramebufferDrawBufferEXT( TEB *teb, GLuint fbo, GLenum mode )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *draw;
+    struct context *ctx;
+
+    if ((ctx = get_current_context( teb, &draw, NULL )) && !fbo && draw->fbo)
+        set_default_fbo_draw_buffer( ctx, draw, mode );
+
+    funcs->p_glFramebufferDrawBufferEXT( fbo, mode );
+}
+
+void wrap_glNamedFramebufferDrawBuffer( TEB *teb, GLuint fbo, GLenum buf )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *draw;
+    struct context *ctx;
+
+    if ((ctx = get_current_context( teb, &draw, NULL )) && !fbo && draw->fbo)
+        set_default_fbo_draw_buffer( ctx, draw, buf );
+
+    funcs->p_glNamedFramebufferDrawBuffer( fbo, buf );
+}
+
+static void set_default_fbo_read_buffer( struct context *ctx, struct opengl_drawable *read, GLint buffer )
+{
+    switch (buffer)
+    {
+    case GL_FRONT:
+    case GL_LEFT:
+    case GL_FRONT_LEFT:
+    case GL_RIGHT:
+    case GL_FRONT_RIGHT:
+    case GL_BACK:
+    case GL_BACK_LEFT:
+    case GL_BACK_RIGHT:
+        ctx->pixel_mode.read_buffer = buffer;
+        return;
+    }
+
+    WARN( "Invalid read buffer %#x for context %p\n", buffer, ctx );
+}
+
+void wrap_glReadBuffer( TEB *teb, GLenum src )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *read;
+    struct context *ctx;
+
+    if ((ctx = get_current_context( teb, NULL, &read )) && !ctx->read_fbo && read->fbo)
+        set_default_fbo_read_buffer( ctx, read, src );
+
+    funcs->p_glReadBuffer( src );
+}
+
+void wrap_glFramebufferReadBufferEXT( TEB *teb, GLuint fbo, GLenum mode )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *read;
+    struct context *ctx;
+
+    if ((ctx = get_current_context( teb, NULL, &read )) && !fbo && read->fbo)
+        set_default_fbo_read_buffer( ctx, read, mode );
+
+    funcs->p_glFramebufferReadBufferEXT( fbo, mode );
+}
+
+void wrap_glNamedFramebufferReadBuffer( TEB *teb, GLuint fbo, GLenum src )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *read;
+    struct context *ctx;
+
+    if ((ctx = get_current_context( teb, NULL, &read )) && !fbo && read->fbo)
+        set_default_fbo_read_buffer( ctx, read, src );
+
+    funcs->p_glNamedFramebufferReadBuffer( fbo, src );
 }
 
 void wrap_glGetIntegerv( TEB *teb, GLenum pname, GLint *data )
