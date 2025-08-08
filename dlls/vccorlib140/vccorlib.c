@@ -17,6 +17,7 @@
  */
 
 #include "roapi.h"
+#include "winstring.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vccorlib);
@@ -43,7 +44,15 @@ void __cdecl UninitializeData(int type)
 
 HRESULT WINAPI GetActivationFactoryByPCWSTR(const WCHAR *name, const GUID *iid, void **out)
 {
-    FIXME("(%s, %s, %p) stub\n", debugstr_w(name), debugstr_guid(iid), out);
+    HSTRING_HEADER hdr;
+    HSTRING str;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%s, %s, %p)\n", debugstr_w(name), debugstr_guid(iid), out);
+
+    /* Use a fast-pass string to avoid an allocation. */
+    hr = WindowsCreateStringReference(name, wcslen(name), &hdr, &str);
+    if (FAILED(hr)) return hr;
+
+    return RoGetActivationFactory(str, iid, out);
 }

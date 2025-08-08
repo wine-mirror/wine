@@ -235,24 +235,24 @@ static void test_GetActivationFactoryByPCWSTR(void)
     void *out;
 
     hr = pGetActivationFactoryByPCWSTR(L"Wine.Nonexistent.RuntimeClass", &IID_IActivationFactory, &out);
-    todo_wine ok(hr == CO_E_NOTINITIALIZED, "got hr %#lx\n", hr);
+    ok(hr == CO_E_NOTINITIALIZED, "got hr %#lx\n", hr);
 
     hr = pInitializeData(1);
     ok(hr == S_OK, "got hr %#lx\n", hr);
 
     hr = pGetActivationFactoryByPCWSTR(L"Wine.Nonexistent.RuntimeClass", &IID_IActivationFactory, &out);
-    todo_wine ok(hr == REGDB_E_CLASSNOTREG, "got hr %#lx\n", hr);
+    ok(hr == REGDB_E_CLASSNOTREG, "got hr %#lx\n", hr);
 
     hr = pGetActivationFactoryByPCWSTR(L"Windows.Foundation.Metadata.ApiInformation", &IID_IActivationFactory, &out);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-    if (SUCCEEDED(hr)) IActivationFactory_Release(out);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    IActivationFactory_Release(out);
 
     hr = pGetActivationFactoryByPCWSTR(L"Windows.Foundation.Metadata.ApiInformation", &IID_IInspectable, &out);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-    if (SUCCEEDED(hr)) IActivationFactory_Release(out);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    IActivationFactory_Release(out);
 
     hr = pGetActivationFactoryByPCWSTR(L"Windows.Foundation.Metadata.ApiInformation", &guid_null, &out);
-    todo_wine ok(hr == E_NOINTERFACE, "got hr %#lx\n", hr);
+    ok(hr == E_NOINTERFACE, "got hr %#lx\n", hr);
 
     pUninitializeData(1);
 }
