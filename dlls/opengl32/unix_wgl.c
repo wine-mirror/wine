@@ -805,6 +805,16 @@ static BOOL get_default_fbo_integer( struct context *ctx, struct opengl_drawable
         *data = ctx->color_buffer.draw_buffers[pname - GL_DRAW_BUFFER0];
         return TRUE;
     }
+    if (pname == GL_DOUBLEBUFFER && draw->fbo)
+    {
+        *data = draw->doublebuffer;
+        return TRUE;
+    }
+    if (pname == GL_STEREO && draw->fbo)
+    {
+        *data = draw->stereo;
+        return TRUE;
+    }
 
     return FALSE;
 }
@@ -1078,6 +1088,7 @@ BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
     struct context *ctx, *prev = get_current_context( teb, NULL, NULL );
     const struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *draw, *read;
 
     if (hglrc)
     {
@@ -1095,6 +1106,11 @@ BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
         teb->glReserved1[1] = hdc;
         teb->glCurrentRC = hglrc;
         teb->glTable = (void *)funcs;
+
+        if ((draw = ctx->base.draw) && !ctx->draw_fbo && draw->fbo)
+            funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, draw->fbo );
+        if ((read = ctx->base.read) && !ctx->read_fbo && read->fbo)
+            funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, read->fbo );
     }
     else if (prev)
     {
@@ -1294,6 +1310,7 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
     struct context *ctx, *prev = get_current_context( teb, NULL, NULL );
     const struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *draw, *read;
 
     if (hglrc)
     {
@@ -1312,6 +1329,11 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
         teb->glReserved1[1] = read_hdc;
         teb->glCurrentRC = hglrc;
         teb->glTable = (void *)funcs;
+
+        if ((draw = ctx->base.draw) && !ctx->draw_fbo && draw->fbo)
+            funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, draw->fbo );
+        if ((read = ctx->base.read) && !ctx->read_fbo && read->fbo)
+            funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, read->fbo );
     }
     else if (prev)
     {
@@ -1438,6 +1460,40 @@ void set_current_fbo( TEB *teb, GLenum target, GLuint fbo )
     if (target == GL_READ_FRAMEBUFFER) ctx->read_fbo = fbo;
 }
 
+GLuint get_default_fbo( TEB *teb, GLenum target )
+{
+    struct opengl_drawable *draw, *read;
+    struct context *ctx;
+
+    if (!(ctx = get_current_context( teb, &draw, &read ))) return 0;
+    if (target == GL_FRAMEBUFFER) return draw->fbo;
+    if (target == GL_DRAW_FRAMEBUFFER) return draw->fbo;
+    if (target == GL_READ_FRAMEBUFFER) return read->fbo;
+    return 0;
+}
+
+void push_default_fbo( TEB *teb )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *draw, *read;
+    struct context *ctx;
+
+    if (!(ctx = get_current_context( teb, &draw, &read ))) return;
+    if (!ctx->draw_fbo && draw->fbo) funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
+    if (!ctx->read_fbo && read->fbo) funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 );
+}
+
+void pop_default_fbo( TEB *teb )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *draw, *read;
+    struct context *ctx;
+
+    if (!(ctx = get_current_context( teb, &draw, &read ))) return;
+    if (!ctx->draw_fbo && draw->fbo) funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, draw->fbo );
+    if (!ctx->read_fbo && read->fbo) funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, read->fbo );
+}
+
 static GLenum *set_default_fbo_draw_buffers( struct context *ctx, struct opengl_drawable *draw,
                                              GLsizei count, const GLenum *src, GLenum *dst )
 {
@@ -1476,7 +1532,7 @@ void wrap_glDrawBuffers( TEB *teb, GLsizei n, const GLenum *bufs )
     struct context *ctx;
 
     if ((ctx = get_current_context( teb, &draw, NULL )) && !ctx->draw_fbo && draw->fbo)
-        set_default_fbo_draw_buffers( ctx, draw, n, bufs, buffer );
+        bufs = set_default_fbo_draw_buffers( ctx, draw, n, bufs, buffer );
 
     funcs->p_glDrawBuffers( n, bufs );
 }
@@ -1579,7 +1635,7 @@ void wrap_glDrawBuffer( TEB *teb, GLenum buf )
     struct context *ctx;
 
     if ((ctx = get_current_context( teb, &draw, NULL )) && !ctx->draw_fbo && draw->fbo)
-        set_default_fbo_draw_buffer( ctx, draw, buf );
+        buf = set_default_fbo_draw_buffer( ctx, draw, buf );
 
     funcs->p_glDrawBuffer( buf );
 }
@@ -1648,7 +1704,7 @@ void wrap_glReadBuffer( TEB *teb, GLenum src )
     struct context *ctx;
 
     if ((ctx = get_current_context( teb, NULL, &read )) && !ctx->read_fbo && read->fbo)
-        set_default_fbo_read_buffer( ctx, read, src );
+        src = set_default_fbo_read_buffer( ctx, read, src );
 
     funcs->p_glReadBuffer( src );
 }
