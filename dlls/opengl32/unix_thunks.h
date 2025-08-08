@@ -27,6 +27,7 @@ extern void wrap_glDrawBuffers( TEB *teb, GLsizei n, const GLenum *bufs );
 extern void wrap_glFramebufferDrawBufferEXT( TEB *teb, GLuint framebuffer, GLenum mode );
 extern void wrap_glFramebufferDrawBuffersEXT( TEB *teb, GLuint framebuffer, GLsizei n, const GLenum *bufs );
 extern void wrap_glFramebufferReadBufferEXT( TEB *teb, GLuint framebuffer, GLenum mode );
+extern void wrap_glGetFramebufferParameterivEXT( TEB *teb, GLuint framebuffer, GLenum pname, GLint *params );
 extern void wrap_glGetInteger64v( TEB *teb, GLenum pname, GLint64 *data );
 extern const GLubyte * wrap_glGetStringi( TEB *teb, GLenum name, GLuint index );
 extern void wrap_glNamedFramebufferDrawBuffer( TEB *teb, GLuint framebuffer, GLenum buf );

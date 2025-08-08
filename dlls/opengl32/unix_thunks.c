@@ -9228,8 +9228,7 @@ static NTSTATUS ext_glGetFramebufferParameteriv( void *args )
 static NTSTATUS ext_glGetFramebufferParameterivEXT( void *args )
 {
     struct glGetFramebufferParameterivEXT_params *params = args;
-    const struct opengl_funcs *funcs = params->teb->glTable;
-    funcs->p_glGetFramebufferParameterivEXT( params->framebuffer, params->pname, params->params );
+    wrap_glGetFramebufferParameterivEXT( params->teb, params->framebuffer, params->pname, params->params );
     return STATUS_SUCCESS;
 }
 
@@ -46512,8 +46511,7 @@ static NTSTATUS wow64_ext_glGetFramebufferParameterivEXT( void *args )
         PTR32 params;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = teb->glTable;
-    funcs->p_glGetFramebufferParameterivEXT( params->framebuffer, params->pname, ULongToPtr(params->params) );
+    wrap_glGetFramebufferParameterivEXT( teb, params->framebuffer, params->pname, ULongToPtr(params->params) );
     return STATUS_SUCCESS;
 }
 

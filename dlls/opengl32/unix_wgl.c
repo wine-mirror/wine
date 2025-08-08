@@ -785,6 +785,30 @@ static BOOL check_extension_support( TEB *teb, const char *extension, const char
     return FALSE;
 }
 
+static BOOL get_default_fbo_integer( struct context *ctx, struct opengl_drawable *draw, struct opengl_drawable *read,
+                                     GLenum pname, GLint *data )
+{
+    if (pname == GL_READ_BUFFER && !ctx->read_fbo && read->fbo)
+    {
+        if (ctx->pixel_mode.read_buffer) *data = ctx->pixel_mode.read_buffer;
+        else *data = read->doublebuffer ? GL_BACK : GL_FRONT;
+        return TRUE;
+    }
+    if ((pname == GL_DRAW_BUFFER || pname == GL_DRAW_BUFFER0) && !ctx->draw_fbo && draw->fbo)
+    {
+        if (ctx->color_buffer.draw_buffers[0]) *data = ctx->color_buffer.draw_buffers[0];
+        else *data = draw->doublebuffer ? GL_BACK : GL_FRONT;
+        return TRUE;
+    }
+    if (pname >= GL_DRAW_BUFFER1 && pname <= GL_DRAW_BUFFER15 && !ctx->draw_fbo && draw->fbo)
+    {
+        *data = ctx->color_buffer.draw_buffers[pname - GL_DRAW_BUFFER0];
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 static BOOL get_integer( TEB *teb, GLenum pname, GLint *data )
 {
     const struct opengl_funcs *funcs = teb->glTable;
@@ -832,6 +856,7 @@ static BOOL get_integer( TEB *teb, GLenum pname, GLint *data )
             *data = ctx->read_fbo;
             return TRUE;
         }
+        if (get_default_fbo_integer( ctx, draw, read, pname, data )) return TRUE;
     }
 
     return FALSE;
@@ -1610,6 +1635,18 @@ void wrap_glGetInteger64v( TEB *teb, GLenum pname, GLint64 *data )
     GLint value;
     if (get_integer( teb, pname, &value )) *data = value;
     else funcs->p_glGetInteger64v( pname, data );
+}
+
+void wrap_glGetFramebufferParameterivEXT( TEB *teb, GLuint fbo, GLenum pname, GLint *params )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *draw, *read;
+    struct context *ctx;
+
+    if ((ctx = get_current_context( teb, &draw, &read )) && !fbo && (fbo = draw->fbo))
+        if (get_default_fbo_integer( ctx, draw, read, pname, params )) return;
+
+    funcs->p_glGetFramebufferParameterivEXT( fbo, pname, params );
 }
 
 NTSTATUS process_attach( void *args )
