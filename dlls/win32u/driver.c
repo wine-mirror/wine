@@ -1428,3 +1428,32 @@ INT WINAPI NtGdiExtEscape( HDC hdc, WCHAR *driver, int driver_id, INT escape, IN
     release_dc_ptr( dc );
     return ret;
 }
+
+static void nulldrv_surface_destroy( struct client_surface *client )
+{
+}
+
+static void nulldrv_surface_detach( struct client_surface *client )
+{
+}
+
+static void nulldrv_surface_update( struct client_surface *client )
+{
+}
+
+static void nulldrv_surface_present( struct client_surface *client, HDC hdc )
+{
+}
+
+static const struct client_surface_funcs nulldrv_surface_funcs =
+{
+    .destroy = nulldrv_surface_destroy,
+    .detach = nulldrv_surface_detach,
+    .update = nulldrv_surface_update,
+    .present = nulldrv_surface_present,
+};
+
+struct client_surface *nulldrv_client_surface_create( HWND hwnd )
+{
+    return client_surface_create( sizeof(struct client_surface), &nulldrv_surface_funcs, hwnd );
+}

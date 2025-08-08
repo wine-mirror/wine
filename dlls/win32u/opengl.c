@@ -389,7 +389,11 @@ static const char *egldrv_init_wgl_extensions( struct opengl_funcs *funcs )
 
 static BOOL egldrv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable )
 {
-    *drawable = opengl_drawable_create( sizeof(**drawable), &egldrv_surface_funcs, format, NULL );
+    struct client_surface *client;
+
+    if (!(client = nulldrv_client_surface_create( hwnd ))) return FALSE;
+    *drawable = opengl_drawable_create( sizeof(**drawable), &egldrv_surface_funcs, format, client );
+    client_surface_release( client );
     return !!*drawable;
 }
 

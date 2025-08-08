@@ -499,15 +499,13 @@ static struct vulkan_funcs vulkan_funcs =
     .p_get_host_surface_extension = win32u_get_host_surface_extension,
 };
 
-static const struct client_surface_funcs nulldrv_vulkan_surface_funcs;
-
 static VkResult nulldrv_vulkan_surface_create( HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *surface,
                                                struct client_surface **client )
 {
     VkHeadlessSurfaceCreateInfoEXT create_info = {.sType = VK_STRUCTURE_TYPE_HEADLESS_SURFACE_CREATE_INFO_EXT};
     VkResult res;
 
-    if (!(*client = client_surface_create(sizeof(**client), &nulldrv_vulkan_surface_funcs, hwnd))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    if (!(*client = nulldrv_client_surface_create( hwnd ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
     if ((res = instance->p_vkCreateHeadlessSurfaceEXT( instance->host.instance, &create_info, NULL, surface )))
     {
         client_surface_release(*client);
@@ -515,22 +513,6 @@ static VkResult nulldrv_vulkan_surface_create( HWND hwnd, const struct vulkan_in
     }
 
     return res;
-}
-
-static void nulldrv_vulkan_surface_destroy( struct client_surface *client )
-{
-}
-
-static void nulldrv_vulkan_surface_detach( struct client_surface *client )
-{
-}
-
-static void nulldrv_vulkan_surface_update( struct client_surface *client )
-{
-}
-
-static void nulldrv_vulkan_surface_present( struct client_surface *client, HDC hdc )
-{
 }
 
 static VkBool32 nulldrv_vkGetPhysicalDeviceWin32PresentationSupportKHR( VkPhysicalDevice device, uint32_t queue )
@@ -542,14 +524,6 @@ static const char *nulldrv_get_host_surface_extension(void)
 {
     return "VK_EXT_headless_surface";
 }
-
-static const struct client_surface_funcs nulldrv_vulkan_surface_funcs =
-{
-    .destroy = nulldrv_vulkan_surface_destroy,
-    .detach = nulldrv_vulkan_surface_detach,
-    .update = nulldrv_vulkan_surface_update,
-    .present = nulldrv_vulkan_surface_present,
-};
 
 static const struct vulkan_driver_funcs nulldrv_funcs =
 {
