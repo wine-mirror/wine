@@ -1677,17 +1677,6 @@ const GLchar * WINAPI wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum
     return args.ret;
 }
 
-#ifndef _WIN64
-static void *get_named_buffer_pointer( GLint buffer )
-{
-    void (WINAPI *p_glGetNamedBufferPointerv)( GLuint buffer, GLenum pname, void **params );
-    void *ptr;
-    if (!(p_glGetNamedBufferPointerv = (void *)wglGetProcAddress( "glGetNamedBufferPointerv" ))) return 0;
-    p_glGetNamedBufferPointerv( buffer, GL_BUFFER_MAP_POINTER, &ptr );
-    return ptr;
-}
-#endif
-
 static void *gl_map_buffer( enum unix_funcs code, GLenum target, GLenum access )
 {
     struct glMapBuffer_params args =
@@ -1867,22 +1856,18 @@ static GLboolean gl_unmap_named_buffer( enum unix_funcs code, GLuint buffer )
         .buffer = buffer,
     };
     NTSTATUS status;
-#ifndef _WIN64
-    void *ptr = get_named_buffer_pointer( buffer );
-#endif
 
     TRACE( "buffer %d\n", buffer );
 
-    if (!(status = WINE_UNIX_CALL( code, &args ))) return args.ret;
+    status = WINE_UNIX_CALL( code, &args );
 #ifndef _WIN64
-    if (status == STATUS_INVALID_ADDRESS)
+    if (args.client_ptr)
     {
-        TRACE( "Releasing wow64 copy buffer %p\n", ptr );
-        _aligned_free( ptr );
-        return args.ret;
+        TRACE( "Releasing wow64 copy buffer %p\n", args.client_ptr );
+        _aligned_free( args.client_ptr );
     }
 #endif
-    WARN( "glUnmapNamedBuffer returned %#lx\n", status );
+    if (status) WARN( "glUnmapNamedBuffer returned %#lx\n", status );
     return args.ret;
 }
 
