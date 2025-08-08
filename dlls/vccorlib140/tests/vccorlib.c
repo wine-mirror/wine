@@ -278,17 +278,17 @@ static void test_GetIidsFn(void)
     guids_dest = NULL;
     copied = 0xdeadbeef;
     hr = pGetIidsFn(0, &copied, NULL, &guids_dest);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine ok(copied == 0, "got copied %I32u\n", copied);
-    todo_wine ok(guids_dest != NULL, "got guids_dest %p\n", guids_dest);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(copied == 0, "got copied %I32u\n", copied);
+    ok(guids_dest != NULL, "got guids_dest %p\n", guids_dest);
     CoTaskMemFree(guids_dest);
 
     guids_dest = NULL;
     copied = 0;
     hr = pGetIidsFn(ARRAY_SIZE(guids_src), &copied, guids_src, &guids_dest);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine ok(copied == ARRAY_SIZE(guids_src), "got copied %I32u\n", copied);
-    todo_wine ok(guids_dest != NULL, "got guids_dest %p\n", guids_dest);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(copied == ARRAY_SIZE(guids_src), "got copied %I32u\n", copied);
+    ok(guids_dest != NULL, "got guids_dest %p\n", guids_dest);
     ok(!memcmp(guids_src, guids_dest, sizeof(*guids_dest) * copied), "unexpected guids_dest value.\n");
     CoTaskMemFree(guids_dest);
 }

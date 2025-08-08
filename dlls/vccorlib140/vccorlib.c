@@ -60,7 +60,16 @@ HRESULT WINAPI GetActivationFactoryByPCWSTR(const WCHAR *name, const GUID *iid, 
 
 HRESULT WINAPI GetIidsFn(unsigned int count, unsigned int *copied, const GUID *src, GUID **dest)
 {
-    FIXME("(%u, %p, %p, %p) stub\n", count, copied, src, dest);
+    TRACE("(%u, %p, %p, %p)\n", count, copied, src, dest);
 
-    return E_NOTIMPL;
+    if (!(*dest = CoTaskMemAlloc(count * sizeof(*src))))
+    {
+        *copied = 0;
+        return E_OUTOFMEMORY;
+    }
+
+    *copied = count;
+    memcpy(*dest, src, count * sizeof(*src));
+
+    return S_OK;
 }
