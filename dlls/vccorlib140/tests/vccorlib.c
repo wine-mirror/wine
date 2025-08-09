@@ -510,7 +510,7 @@ static void test_AllocateWithWeakRef_inline(void)
 
     /* Test inline allocation. */
     object = pAllocateWithWeakRef(offsetof(struct unknown_impl, weakref), sizeof(struct unknown_impl));
-    todo_wine ok(object != NULL, "got object %p\n", object);
+    ok(object != NULL, "got object %p\n", object);
     if (!object)
     {
         skip("AllocateWithWeakRef returned NULL\n");
@@ -567,7 +567,7 @@ static void test_AllocateWithWeakRef(void)
 
     /* Test non-inline allocation. */
     object = pAllocateWithWeakRef(offsetof(struct unknown_impl, weakref), INLINE_MAX + 1);
-    todo_wine ok(object != NULL, "got object %p\n", object);
+    ok(object != NULL, "got object %p\n", object);
     if (!object)
     {
         skip("AllocateWithWeakRef returned NULL\n");
