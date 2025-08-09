@@ -98,6 +98,29 @@ static inline BOOL convert_index_to_luid( UINT index, NET_LUID *luid )
     return !nsi_get_parameter_ex( &params );
 }
 
+static inline BOOL nsi_get_all_parameters( const NPI_MODULEID *module, UINT table,
+                                           void *key_data, UINT key_size, void *rw_data, UINT rw_size,
+                                           void *dynamic_data, UINT dynamic_size, void *static_data, UINT static_size )
+{
+    struct nsi_get_all_parameters_ex params;
+
+    params.unknown[0] = 0;
+    params.unknown[1] = 0;
+    params.module = module;
+    params.table = table;
+    params.first_arg = 1;
+    params.unknown2 = 0;
+    params.key = key_data;
+    params.key_size = key_size;
+    params.rw_data = rw_data;
+    params.rw_size = rw_size;
+    params.dynamic_data = dynamic_data;
+    params.dynamic_size = dynamic_size;
+    params.static_data = static_data;
+    params.static_size = static_size;
+    return !nsi_get_all_parameters_ex( &params );
+}
+
 struct ipv6_addr_scope
 {
     IN6_ADDR addr;

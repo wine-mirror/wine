@@ -24,6 +24,7 @@
 #include "ws2def.h"
 #include "ws2ipdef.h"
 #include "winioctl.h"
+#include "nldef.h"
 
 /* Undocumented NSI NDIS tables */
 #define NSI_NDIS_IFINFO_TABLE              0
@@ -101,6 +102,7 @@ struct nsi_ndis_ifinfo_static
 #define NSI_IP_COMPARTMENT_TABLE           2
 #define NSI_IP_ICMPSTATS_TABLE             3
 #define NSI_IP_IPSTATS_TABLE               6
+#define NSI_IP_INTERFACE_TABLE             7
 #define NSI_IP_UNICAST_TABLE              10
 #define NSI_IP_NEIGHBOUR_TABLE            11
 #define NSI_IP_FORWARD_TABLE              16
@@ -291,6 +293,46 @@ struct nsi_ip_forward_static
 {
     UINT origin;
     UINT if_index;
+};
+
+struct nsi_ip_interface_key
+{
+    NET_LUID luid;
+};
+
+struct nsi_ip_interface_rw
+{
+    UINT32 unk1[5];
+    UINT router_discovery_behaviour;
+    UINT32 unk2;
+    ULONG metric;
+    ULONG base_reachable_time;
+    ULONG retransmit_time;
+    ULONG path_mtu_discovery_timeout;
+    ULONG dad_transmits;
+    UINT link_local_address_behavior;
+    ULONG link_local_address_timeout;
+    ULONG zone_indices[ScopeLevelCount];
+    ULONG mtu;
+    ULONG site_prefix_len;
+    UINT32 unk3[28];
+};
+
+struct nsi_ip_interface_dynamic
+{
+    UINT if_index;
+    UINT unk1;
+    UINT supports_wakeup_patterns;
+    ULONG reachable_time;
+    UINT connected;
+    UINT unk2[3];
+    NL_INTERFACE_OFFLOAD_ROD transmit_offload;
+    UINT32 unk3[13];
+};
+
+struct nsi_ip_interface_static
+{
+    UINT32 unk[8];
 };
 
 /* Undocumented NSI TCP tables */
