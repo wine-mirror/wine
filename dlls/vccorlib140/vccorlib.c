@@ -19,6 +19,7 @@
 
 #include "roapi.h"
 #include "winstring.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vccorlib);
@@ -92,4 +93,17 @@ void __cdecl Free(void *addr)
     TRACE("(%p)\n", addr);
 
     free(addr);
+}
+
+void *__cdecl AllocateWithWeakRef(ptrdiff_t offset, size_t size)
+{
+    FIXME("(%Iu, %Iu) stub\n", offset, size);
+
+    return NULL;
+}
+
+DEFINE_THISCALL_WRAPPER(control_block_ReleaseTarget, 4)
+void __thiscall control_block_ReleaseTarget(void *weakref)
+{
+    FIXME("(%p) stub\n", weakref);
 }

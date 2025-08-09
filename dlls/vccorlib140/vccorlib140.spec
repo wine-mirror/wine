@@ -205,8 +205,9 @@
 @ stub -arch=i386 ?ReleaseInContextImpl@Details@Platform@@YGJPAUIUnknown@@0@Z
 @ stub -arch=arm ?ReleaseInContextImpl@Details@Platform@@YAJPAUIUnknown@@0@Z
 @ stub -arch=win64 ?ReleaseInContextImpl@Details@Platform@@YAJPEAUIUnknown@@0@Z
-@ stub -arch=win32 ?ReleaseTarget@ControlBlock@Details@Platform@@AAEXXZ
-@ stub -arch=win64 ?ReleaseTarget@ControlBlock@Details@Platform@@AEAAXXZ
+@ thiscall -arch=i386 ?ReleaseTarget@ControlBlock@Details@Platform@@AAEXXZ(ptr) control_block_ReleaseTarget
+@ cdecl -arch=arm ?ReleaseTarget@ControlBlock@Details@Platform@@AAAXXZ(ptr) control_block_ReleaseTarget
+@ cdecl -arch=win64 ?ReleaseTarget@ControlBlock@Details@Platform@@AEAAXXZ(ptr) control_block_ReleaseTarget
 @ stub -arch=i386 ?ResolveWeakReference@Details@Platform@@YGP$AAVObject@2@ABU_GUID@@PAPAU__abi_IUnknown@@@Z
 @ stub -arch=arm ?ResolveWeakReference@Details@Platform@@YAP$AAVObject@2@ABU_GUID@@PAPAU__abi_IUnknown@@@Z
 @ stub -arch=win64 ?ResolveWeakReference@Details@Platform@@YAPE$AAVObject@2@AEBU_GUID@@PEAPEAU__abi_IUnknown@@@Z
@@ -502,9 +503,9 @@
 @ stub -arch=win32 ?AlignedFreeException@Heap@Details@Platform@@SAXPAX@Z
 @ stub -arch=win64 ?AlignedFreeException@Heap@Details@Platform@@SAXPEAX@Z
 @ cdecl -arch=win32 ?Allocate@Heap@Details@Platform@@SAPAXI@Z(long) Allocate
-@ stub -arch=win64 ?Allocate@Heap@Details@Platform@@SAPEAX_K0@Z
-@ stub -arch=win32 ?Allocate@Heap@Details@Platform@@SAPAXII@Z
 @ cdecl -arch=win64 ?Allocate@Heap@Details@Platform@@SAPEAX_K@Z(long) Allocate
+@ cdecl -arch=win32 ?Allocate@Heap@Details@Platform@@SAPAXII@Z(long long) AllocateWithWeakRef
+@ cdecl -arch=win64 ?Allocate@Heap@Details@Platform@@SAPEAX_K0@Z(long long) AllocateWithWeakRef
 @ stub -arch=win32 ?AllocateException@Heap@Details@Platform@@SAPAXI@Z
 @ stub -arch=win64 ?AllocateException@Heap@Details@Platform@@SAPEAX_K0@Z
 @ stub -arch=win32 ?AllocateException@Heap@Details@Platform@@SAPAXII@Z
