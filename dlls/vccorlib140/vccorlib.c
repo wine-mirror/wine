@@ -73,3 +73,23 @@ HRESULT WINAPI GetIidsFn(unsigned int count, unsigned int *copied, const GUID *s
 
     return S_OK;
 }
+
+void *__cdecl Allocate(size_t size)
+{
+    void *addr;
+
+    TRACE("(%Iu)\n", size);
+
+    addr = malloc(size);
+    /* TODO: Throw a COMException on allocation failure. */
+    if (!addr)
+        FIXME("allocation failure\n");
+    return addr;
+}
+
+void __cdecl Free(void *addr)
+{
+    TRACE("(%p)\n", addr);
+
+    free(addr);
+}

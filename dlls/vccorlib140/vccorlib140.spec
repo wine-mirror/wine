@@ -66,8 +66,8 @@
 @ stub -arch=i386 ?FlushFactoryCache@@YGXXZ
 @ stub -arch=arm ?FlushFactoryCache@@YAXXZ
 @ stub -arch=win64 ?FlushFactoryCache@@YAXXZ
-@ stub -arch=win32 ?Free@Heap@Details@Platform@@SAXPAX@Z
-@ stub -arch=win64 ?Free@Heap@Details@Platform@@SAXPEAX@Z
+@ cdecl -arch=win32 ?Free@Heap@Details@Platform@@SAXPAX@Z(ptr) Free
+@ cdecl -arch=win64 ?Free@Heap@Details@Platform@@SAXPEAX@Z(ptr) Free
 @ stub -arch=win32 ?FreeException@Heap@Details@Platform@@SAXPAX@Z
 @ stub -arch=win64 ?FreeException@Heap@Details@Platform@@SAXPEAX@Z
 @ stub -arch=i386 ?GetActivationFactory@Details@Platform@@YGJPAVModuleBase@1WRL@Microsoft@@PAUHSTRING__@@PAPAUIActivationFactory@@@Z
@@ -501,10 +501,10 @@
 @ stub -arch=win64 ?AlignedFree@Heap@Details@Platform@@SAXPEAX@Z
 @ stub -arch=win32 ?AlignedFreeException@Heap@Details@Platform@@SAXPAX@Z
 @ stub -arch=win64 ?AlignedFreeException@Heap@Details@Platform@@SAXPEAX@Z
-@ stub -arch=win32 ?Allocate@Heap@Details@Platform@@SAPAXI@Z
+@ cdecl -arch=win32 ?Allocate@Heap@Details@Platform@@SAPAXI@Z(long) Allocate
 @ stub -arch=win64 ?Allocate@Heap@Details@Platform@@SAPEAX_K0@Z
 @ stub -arch=win32 ?Allocate@Heap@Details@Platform@@SAPAXII@Z
-@ stub -arch=win64 ?Allocate@Heap@Details@Platform@@SAPEAX_K@Z
+@ cdecl -arch=win64 ?Allocate@Heap@Details@Platform@@SAPEAX_K@Z(long) Allocate
 @ stub -arch=win32 ?AllocateException@Heap@Details@Platform@@SAPAXI@Z
 @ stub -arch=win64 ?AllocateException@Heap@Details@Platform@@SAPEAX_K0@Z
 @ stub -arch=win32 ?AllocateException@Heap@Details@Platform@@SAPAXII@Z

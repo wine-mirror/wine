@@ -60,6 +60,8 @@ static HRESULT (__cdecl *pInitializeData)(int);
 static void (__cdecl *pUninitializeData)(int);
 static HRESULT (WINAPI *pGetActivationFactoryByPCWSTR)(const WCHAR *, const GUID *, void **);
 static HRESULT (WINAPI *pGetIidsFn)(UINT32, UINT32 *, const GUID *, GUID **);
+static void *(__cdecl *pAllocate)(size_t);
+static void (__cdecl *pFree)(void *);
 
 static BOOL init(void)
 {
@@ -82,22 +84,30 @@ static BOOL init(void)
     pGetActivationFactoryByPCWSTR = (void *)GetProcAddress(hmod,
             "?GetActivationFactoryByPCWSTR@@YAJPAXAAVGuid@Platform@@PAPAX@Z");
     pGetIidsFn = (void *)GetProcAddress(hmod, "?GetIidsFn@@YAJHPAKPBU__s_GUID@@PAPAVGuid@Platform@@@Z");
+    pAllocate = (void *)GetProcAddress(hmod, "?Allocate@Heap@Details@Platform@@SAPAXI@Z");
+    pFree = (void *)GetProcAddress(hmod, "?Free@Heap@Details@Platform@@SAXPAX@Z");
 #else
     if (sizeof(void *) == 8)
     {
         pGetActivationFactoryByPCWSTR = (void *)GetProcAddress(hmod,
                 "?GetActivationFactoryByPCWSTR@@YAJPEAXAEAVGuid@Platform@@PEAPEAX@Z");
         pGetIidsFn = (void *)GetProcAddress(hmod, "?GetIidsFn@@YAJHPEAKPEBU__s_GUID@@PEAPEAVGuid@Platform@@@Z");
+        pAllocate = (void *)GetProcAddress(hmod, "?Allocate@Heap@Details@Platform@@SAPEAX_K@Z");
+        pFree = (void *)GetProcAddress(hmod, "?Free@Heap@Details@Platform@@SAXPEAX@Z");
     }
     else
     {
         pGetActivationFactoryByPCWSTR = (void *)GetProcAddress(hmod,
                 "?GetActivationFactoryByPCWSTR@@YGJPAXAAVGuid@Platform@@PAPAX@Z");
         pGetIidsFn = (void *)GetProcAddress(hmod, "?GetIidsFn@@YGJHPAKPBU__s_GUID@@PAPAVGuid@Platform@@@Z");
+        pAllocate = (void *)GetProcAddress(hmod, "?Allocate@Heap@Details@Platform@@SAPAXI@Z");
+        pFree = (void *)GetProcAddress(hmod, "?Free@Heap@Details@Platform@@SAXPAX@Z");
     }
 #endif
     ok(pGetActivationFactoryByPCWSTR != NULL, "GetActivationFactoryByPCWSTR not available\n");
     ok(pGetIidsFn != NULL, "GetIidsFn not available\n");
+    ok(pAllocate != NULL, "Allocate not available\n");
+    ok(pFree != NULL, "Free not available\n");
 
     return TRUE;
 }
@@ -293,6 +303,20 @@ static void test_GetIidsFn(void)
     CoTaskMemFree(guids_dest);
 }
 
+static void test_Allocate(void)
+{
+    void *addr;
+
+    addr = pAllocate(0);
+    ok(!!addr, "got addr %p\n", addr);
+    pFree(addr);
+
+    addr = pAllocate(sizeof(void *));
+    ok(!!addr, "got addr %p\n", addr);
+    pFree(addr);
+    pFree(NULL);
+}
+
 START_TEST(vccorlib)
 {
     if(!init())
@@ -301,4 +325,5 @@ START_TEST(vccorlib)
     test_InitializeData();
     test_GetActivationFactoryByPCWSTR();
     test_GetIidsFn();
+    test_Allocate();
 }
