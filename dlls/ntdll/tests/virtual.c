@@ -1961,8 +1961,6 @@ static void test_NtMapViewOfSectionEx(void)
     CloseHandle(process);
 }
 
-#define SUPPORTED_XSTATE_FEATURES ((1 << XSTATE_LEGACY_FLOATING_POINT) | (1 << XSTATE_LEGACY_SSE) | (1 << XSTATE_AVX))
-
 static void test_user_shared_data(void)
 {
     struct old_xstate_configuration
@@ -1974,13 +1972,13 @@ static void test_user_shared_data(void)
         XSTATE_FEATURE Features[MAXIMUM_XSTATE_FEATURES];
     };
 
-    static const ULONG feature_offsets[] =
+    ULONG feature_offsets[] =
     {
             0,
             160, /*offsetof(XMM_SAVE_AREA32, XmmRegisters)*/
             512  /* sizeof(XMM_SAVE_AREA32) */ + offsetof(XSTATE, YmmContext),
     };
-    static const ULONG feature_sizes[] =
+    ULONG feature_sizes[] =
     {
             160,
             256, /*sizeof(M128A) * 16 */
@@ -1989,6 +1987,8 @@ static void test_user_shared_data(void)
     const KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
     XSTATE_CONFIGURATION xstate = user_shared_data->XState;
     ULONG64 feature_mask;
+    ULONG64 supported_xstate_features = (1 << XSTATE_LEGACY_FLOATING_POINT) | (1 << XSTATE_LEGACY_SSE) | (1 << XSTATE_AVX);
+    ULONG xstate_part_size = sizeof(XSTATE);
     unsigned int i;
 
     ok(user_shared_data->NumberOfPhysicalPages == sbi.MmNumberOfPhysicalPages,
@@ -2030,6 +2030,15 @@ static void test_user_shared_data(void)
         return;
     }
 
+    if (!(xstate.EnabledFeatures & (1 << XSTATE_AVX)))
+    {
+        trace("AVX not present\n");
+        feature_offsets[2] = 0;
+        feature_sizes[2] = 0;
+        xstate_part_size = offsetof( XSTATE, YmmContext );
+        supported_xstate_features = (1 << XSTATE_LEGACY_FLOATING_POINT) | (1 << XSTATE_LEGACY_SSE);
+    }
+
     trace("XState EnabledFeatures %#I64x, EnabledSupervisorFeatures %#I64x, EnabledVolatileFeatures %I64x.\n",
             xstate.EnabledFeatures, xstate.EnabledSupervisorFeatures, xstate.EnabledVolatileFeatures);
     feature_mask = pRtlGetEnabledExtendedFeatures(0);
@@ -2040,16 +2049,17 @@ static void test_user_shared_data(void)
     feature_mask = pGetEnabledXStateFeatures();
     ok(feature_mask == (xstate.EnabledFeatures | xstate.EnabledSupervisorFeatures), "Got unexpected feature_mask %s.\n",
             wine_dbgstr_longlong(feature_mask));
-    ok((xstate.EnabledFeatures & SUPPORTED_XSTATE_FEATURES) == SUPPORTED_XSTATE_FEATURES,
+    ok((xstate.EnabledFeatures & supported_xstate_features) == supported_xstate_features,
             "Got unexpected EnabledFeatures %s.\n", wine_dbgstr_longlong(xstate.EnabledFeatures));
-    ok((xstate.EnabledVolatileFeatures & SUPPORTED_XSTATE_FEATURES) == (xstate.EnabledFeatures & SUPPORTED_XSTATE_FEATURES),
+    ok((xstate.EnabledVolatileFeatures & supported_xstate_features) == (xstate.EnabledFeatures & supported_xstate_features),
             "Got unexpected EnabledVolatileFeatures %s.\n", wine_dbgstr_longlong(xstate.EnabledVolatileFeatures));
-    ok(xstate.Size >= 512 + sizeof(XSTATE), "Got unexpected Size %lu.\n", xstate.Size);
+    ok(xstate.Size >= 512 + xstate_part_size,
+            "Got unexpected Size %lu, expected %lu.\n", xstate.Size, (ULONG)(512 + xstate_part_size));
     if (xstate.CompactionEnabled)
         ok(xstate.OptimizedSave, "Got zero OptimizedSave with compaction enabled.\n");
     ok(!xstate.AlignedFeatures, "Got unexpected AlignedFeatures %s.\n",
             wine_dbgstr_longlong(xstate.AlignedFeatures));
-    ok(xstate.AllFeatureSize >= 512 + sizeof(XSTATE)
+    ok(xstate.AllFeatureSize >= 512 + xstate_part_size
             || !xstate.AllFeatureSize /* win8 on CPUs without XSAVEC */,
             "Got unexpected AllFeatureSize %lu.\n", xstate.AllFeatureSize);
 
