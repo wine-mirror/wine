@@ -4401,6 +4401,8 @@ void loader_init( CONTEXT *context, void **entry )
 
     if (process_detaching) NtTerminateThread( GetCurrentThread(), 0 );
 
+    if (NtCurrentTeb()->SkipLoaderInit) return;
+
     RtlEnterCriticalSection( &loader_section );
 
     if (!imports_fixup_done)

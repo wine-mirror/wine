@@ -505,11 +505,11 @@ static void test_arm64_skip_loader_init(void)
     status = pNtCreateThreadEx( &thread, THREAD_ALL_ACCESS, NULL, GetCurrentProcess(), (PRTL_THREAD_START_ROUTINE)code_mem,
                                 &args, THREAD_CREATE_FLAGS_SKIP_THREAD_ATTACH | THREAD_CREATE_FLAGS_SKIP_LOADER_INIT, 0, 0, 0, NULL );
 
-    todo_wine ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
+    ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
 
     WaitForSingleObject( thread, INFINITE );
 
-    todo_wine ok( (args.teb_same_teb_flags & 0x4008) == 0x4008, "wrong value %x\n", args.teb_same_teb_flags );
+    ok( (args.teb_same_teb_flags & 0x4008) == 0x4008, "wrong value %x\n", args.teb_same_teb_flags );
 
     CloseHandle( thread );
 }
