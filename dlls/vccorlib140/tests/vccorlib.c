@@ -680,30 +680,30 @@ static void test___abi_make_type_id(void)
     HRESULT hr;
 
     type_obj = p___abi_make_type_id(&desc);
-    todo_wine ok(type_obj != NULL, "got type_obj %p\n", type_obj);
+    ok(type_obj != NULL, "got type_obj %p\n", type_obj);
     if (!type_obj)
     {
         skip("__abi_make_type_id failed\n");
         return;
     }
 
-    todo_wine check_interface(type_obj, &IID_IInspectable);
-    todo_wine check_interface(type_obj, &IID_IClosable);
-    todo_wine check_interface(type_obj, &IID_IMarshal);
-    todo_wine check_interface(type_obj, &IID_IAgileObject);
+    check_interface(type_obj, &IID_IInspectable);
+    check_interface(type_obj, &IID_IClosable);
+    check_interface(type_obj, &IID_IMarshal);
+    check_interface(type_obj, &IID_IAgileObject);
     todo_wine check_interface(type_obj, &IID_IEquatable);
     todo_wine check_interface(type_obj, &IID_IPrintable);
 
     hr = IInspectable_GetRuntimeClassName(type_obj, &str);
     ok(hr == S_OK, "got hr %#lx\n", hr);
     buf = WindowsGetStringRawBuffer(str, NULL);
-    todo_wine ok(buf && !wcscmp(buf, L"Platform.Type"), "got buf %s\n", debugstr_w(buf));
+    ok(buf && !wcscmp(buf, L"Platform.Type"), "got buf %s\n", debugstr_w(buf));
     WindowsDeleteString(str);
 
     equals = p_platform_type_Equals_Object(type_obj, type_obj);
     todo_wine ok(equals, "got equals %d\n", equals);
     equals = p_platform_type_Equals_Object(type_obj, NULL);
-    todo_wine ok(!equals, "got equals %d\n", equals);
+    ok(!equals, "got equals %d\n", equals);
 
     typecode = p_platform_type_GetTypeCode(type_obj);
     todo_wine ok(typecode == 0xdeadbeef, "got typecode %d\n", typecode);
@@ -720,13 +720,13 @@ static void test___abi_make_type_id(void)
     WindowsDeleteString(str);
 
     type_obj2 = p___abi_make_type_id(&desc);
-    todo_wine ok(type_obj2 != NULL, "got type_obj %p\n", type_obj);
+    ok(type_obj2 != NULL, "got type_obj %p\n", type_obj);
     ok(type_obj2 != type_obj, "got type_obj2 %p\n", type_obj2);
 
-    todo_wine check_interface(type_obj2, &IID_IInspectable);
-    todo_wine check_interface(type_obj2, &IID_IClosable);
-    todo_wine check_interface(type_obj2, &IID_IMarshal);
-    todo_wine check_interface(type_obj2, &IID_IAgileObject);
+    check_interface(type_obj2, &IID_IInspectable);
+    check_interface(type_obj2, &IID_IClosable);
+    check_interface(type_obj2, &IID_IMarshal);
+    check_interface(type_obj2, &IID_IAgileObject);
     todo_wine check_interface(type_obj2, &IID_IEquatable);
     todo_wine check_interface(type_obj2, &IID_IPrintable);
 
@@ -740,20 +740,20 @@ static void test___abi_make_type_id(void)
     todo_wine ok(equals, "got equals %d\n", equals);
 
     type_obj = p___abi_make_type_id(&desc2);
-    todo_wine ok(type_obj != NULL, "got type_obj %p\n", type_obj);
+    ok(type_obj != NULL, "got type_obj %p\n", type_obj);
 
     /* Platform::Type::Equals only seems to compare the value of the __abi_type_descriptor pointer. */
     equals = p_platform_type_Equals_Object(type_obj, type_obj2);
-    todo_wine ok(!equals, "got equals %d\n", equals);
+    ok(!equals, "got equals %d\n", equals);
 
     count = IInspectable_Release(type_obj);
     ok(count == 0, "got count %lu\n", count);
 
     type_obj = p___abi_make_type_id(&desc3);
-    todo_wine ok(type_obj != NULL, "got type_obj %p\n", type_obj);
+    ok(type_obj != NULL, "got type_obj %p\n", type_obj);
 
     equals = p_platform_type_Equals_Object(type_obj, type_obj2);
-    todo_wine ok(!equals, "got equals %d\n", equals);
+    ok(!equals, "got equals %d\n", equals);
 
     typecode = p_platform_type_GetTypeCode(type_obj);
     todo_wine ok(typecode == 1, "got typecode %d\n", typecode);

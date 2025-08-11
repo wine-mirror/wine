@@ -25,6 +25,8 @@
 #include "roapi.h"
 #include "weakreference.h"
 #include "winstring.h"
+#define WIDL_using_Windows_Foundation
+#include "windows.foundation.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
 
@@ -232,6 +234,103 @@ struct __abi_type_descriptor
     int type_id;
 };
 
+struct platform_type
+{
+    IClosable IClosable_iface;
+    IUnknown *marshal;
+    const struct __abi_type_descriptor *desc;
+    LONG ref;
+};
+
+static inline struct platform_type *impl_from_IClosable(IClosable *iface)
+{
+    return CONTAINING_RECORD(iface, struct platform_type, IClosable_iface);
+}
+
+static HRESULT WINAPI platform_type_QueryInterface(IClosable *iface, const GUID *iid, void **out)
+{
+    struct platform_type *impl = impl_from_IClosable(iface);
+
+    TRACE("(%p, %s, %p)\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IClosable) ||
+        IsEqualGUID(iid, &IID_IAgileObject))
+    {
+        IClosable_AddRef((*out = &impl->IClosable_iface));
+        return S_OK;
+    }
+    if (IsEqualGUID(iid, &IID_IMarshal))
+        return IUnknown_QueryInterface(impl->marshal, iid, out);
+
+    ERR("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI platform_type_AddRef(IClosable *iface)
+{
+    struct platform_type *impl = impl_from_IClosable(iface);
+    TRACE("(%p)\n", iface);
+    return InterlockedIncrement(&impl->ref);
+}
+
+static ULONG WINAPI platform_type_Release(IClosable *iface)
+{
+    struct platform_type *impl = impl_from_IClosable(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+
+    TRACE("(%p)\n", iface);
+
+    if (!ref)
+    {
+        IUnknown_Release(impl->marshal);
+        Free(impl);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI platform_type_GetIids(IClosable *iface, ULONG *count, GUID **iids)
+{
+    FIXME("(%p, %p, %p) stub\n", iface, count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI platform_type_GetRuntimeClassName(IClosable *iface, HSTRING *name)
+{
+    static const WCHAR *str = L"Platform.Type";
+
+    TRACE("(%p, %p)\n", iface, name);
+    return WindowsCreateString(str, wcslen(str), name);
+}
+
+static HRESULT WINAPI platform_type_GetTrustLevel(IClosable *iface, TrustLevel *level)
+{
+    FIXME("(%p, %p) stub\n", iface, level);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI platform_type_Close(IClosable *iface)
+{
+    FIXME("(%p) stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static const IClosableVtbl platform_type_closable_vtbl =
+{
+    /* IUnknown */
+    platform_type_QueryInterface,
+    platform_type_AddRef,
+    platform_type_Release,
+    /* IInspectable */
+    platform_type_GetIids,
+    platform_type_GetRuntimeClassName,
+    platform_type_GetTrustLevel,
+    /* ICloseable */
+    platform_type_Close
+};
+
 static const char *debugstr_abi_type_descriptor(const struct __abi_type_descriptor *desc)
 {
     if (!desc) return "(null)";
@@ -241,9 +340,27 @@ static const char *debugstr_abi_type_descriptor(const struct __abi_type_descript
 
 void *WINAPI __abi_make_type_id(const struct __abi_type_descriptor *desc)
 {
-    FIXME("(%s) stub\n", debugstr_abi_type_descriptor(desc));
+    /* TODO:
+     * Emit RTTI for Platform::Type.
+     * Implement IEquatable and IPrintable.
+     * Throw a COMException if CoCreateFreeThreadedMarshaler fails. */
+    struct platform_type *obj;
+    HRESULT hr;
 
-    return NULL;
+    TRACE("(%s)\n", debugstr_abi_type_descriptor(desc));
+
+    obj = Allocate(sizeof(*obj));
+    obj->IClosable_iface.lpVtbl = &platform_type_closable_vtbl;
+    obj->desc = desc;
+    obj->ref = 1;
+    hr = CoCreateFreeThreadedMarshaler((IUnknown *)&obj->IClosable_iface, &obj->marshal);
+    if (FAILED(hr))
+    {
+        FIXME("CoCreateFreeThreadedMarshaler failed: %#lx\n", hr);
+        Free(obj);
+        return NULL;
+    }
+    return &obj->IClosable_iface;
 }
 
 bool __cdecl platform_type_Equals_Object(void *this, void *object)
