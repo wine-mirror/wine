@@ -356,6 +356,91 @@ static void test_NtQueueApcThreadEx(void)
     SleepEx( 0, TRUE );
 }
 
+static void extract_resource(const char *name, const char *type, const char *path)
+{
+    DWORD written;
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+
+    file = CreateFileA(path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %ld\n", path, GetLastError());
+
+    res = FindResourceA(NULL, name, type);
+    ok( res != 0, "couldn't find resource\n" );
+    ptr = LockResource( LoadResource( GetModuleHandleA(NULL), res ));
+    WriteFile( file, ptr, SizeofResource( GetModuleHandleA(NULL), res ), &written, NULL );
+    ok( written == SizeofResource( GetModuleHandleA(NULL), res ), "couldn't write resource\n" );
+    CloseHandle( file );
+}
+
+struct skip_thread_attach_args
+{
+    BOOL teb_flag;
+    PVOID teb_tls_pointer;
+    PVOID teb_fls_slots;
+};
+
+static void CALLBACK test_skip_thread_attach_proc(void *param)
+{
+    struct skip_thread_attach_args *args = param;
+    args->teb_flag = NtCurrentTeb()->SkipThreadAttach;
+    args->teb_tls_pointer = NtCurrentTeb()->ThreadLocalStoragePointer;
+    args->teb_fls_slots = NtCurrentTeb()->FlsSlots;
+}
+
+static void test_skip_thread_attach(void)
+{
+    BOOL *seen_thread_attach, *seen_thread_detach;
+    struct skip_thread_attach_args args;
+    HANDLE thread;
+    NTSTATUS status;
+    char path_dll_local[MAX_PATH + 11];
+    char path_tmp[MAX_PATH];
+    HMODULE module;
+
+    if (!pNtCreateThreadEx)
+    {
+        win_skip( "NtCreateThreadEx is not available.\n" );
+        return;
+    }
+
+    GetTempPathA(sizeof(path_tmp), path_tmp);
+
+    sprintf(path_dll_local, "%s%s", path_tmp, "testdll.dll");
+    extract_resource("testdll.dll", "TESTDLL", path_dll_local);
+
+    module = LoadLibraryA(path_dll_local);
+    if (!module) {
+        trace("Could not load testdll.\n");
+        goto delete;
+    }
+
+    seen_thread_attach = (BOOL *)GetProcAddress(module, "seen_thread_attach");
+    seen_thread_detach = (BOOL *)GetProcAddress(module, "seen_thread_detach");
+
+    ok( !*seen_thread_attach, "Unexpected\n" );
+    ok( !*seen_thread_detach, "Unexpected\n" );
+
+    status = pNtCreateThreadEx( &thread, THREAD_ALL_ACCESS, NULL, GetCurrentProcess(), test_skip_thread_attach_proc,
+                                &args, THREAD_CREATE_FLAGS_SKIP_THREAD_ATTACH, 0, 0, 0, NULL );
+    todo_wine ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
+
+    WaitForSingleObject( thread, INFINITE );
+
+    CloseHandle( thread );
+
+    todo_wine ok( !*seen_thread_attach, "Unexpected\n" );
+    todo_wine ok( !*seen_thread_detach, "Unexpected\n" );
+    todo_wine ok( args.teb_flag, "Unexpected\n" );
+    todo_wine ok( !args.teb_tls_pointer, "Unexpected\n" );
+    todo_wine ok( !args.teb_fls_slots, "Unexpected\n" );
+
+    FreeLibrary(module);
+delete:
+    DeleteFileA(path_dll_local);
+}
+
 START_TEST(thread)
 {
     init_function_pointers();
@@ -378,4 +463,5 @@ START_TEST(thread)
     test_NtCreateUserProcess();
     test_thread_bypass_process_freeze();
     test_NtQueueApcThreadEx();
+    test_skip_thread_attach();
 }

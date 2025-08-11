@@ -22,6 +22,8 @@ SOURCES = \
 	rtlstr.c \
 	string.c \
 	sync.c \
+	testdll.c \
+	testdll.spec \
 	thread.c \
 	threadpool.c \
 	time.c \

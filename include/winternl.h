@@ -610,7 +610,27 @@ typedef struct _TEB
     PVOID                        MergedPrefLanguages;               /* fc0/17e0 */
     ULONG                        MuiImpersonation;                  /* fc4/17e8 */
     USHORT                       CrossTebFlags;                     /* fc8/17ec */
-    USHORT                       SameTebFlags;                      /* fca/17ee */
+    union {
+        USHORT SameTebFlags;                                        /* fca/17ee */
+        struct {
+            USHORT SafeThunkCall : 1;
+            USHORT InDebugPrint : 1;
+            USHORT HasFiberData : 1;
+            USHORT SkipThreadAttach : 1;
+            USHORT WerInShipAssertCode : 1;
+            USHORT RanProcessInit : 1;
+            USHORT ClonedThread : 1;
+            USHORT SuppressDebugMsg : 1;
+            USHORT DisableUserStackWalk : 1;
+            USHORT RtlExceptionAttached : 1;
+            USHORT InitialThread : 1;
+            USHORT SessionAware : 1;
+            USHORT LoadOwner : 1;
+            USHORT LoaderWorker : 1;
+            USHORT SkipLoaderInit : 1;
+            USHORT SkipFileAPIBrokering : 1;
+        };
+    };
     PVOID                        TxnScopeEnterCallback;             /* fcc/17f0 */
     PVOID                        TxnScopeExitCallback;              /* fd0/17f8 */
     PVOID                        TxnScopeContext;                   /* fd4/1800 */
@@ -1143,7 +1163,27 @@ typedef struct _TEB32
     ULONG                        MergedPrefLanguages;               /* 0fc0 */
     ULONG                        MuiImpersonation;                  /* 0fc4 */
     USHORT                       CrossTebFlags;                     /* 0fc8 */
-    USHORT                       SameTebFlags;                      /* 0fca */
+    union {
+        USHORT SameTebFlags;                                        /* 0fca */
+        struct {
+            USHORT SafeThunkCall : 1;
+            USHORT InDebugPrint : 1;
+            USHORT HasFiberData : 1;
+            USHORT SkipThreadAttach : 1;
+            USHORT WerInShipAssertCode : 1;
+            USHORT RanProcessInit : 1;
+            USHORT ClonedThread : 1;
+            USHORT SuppressDebugMsg : 1;
+            USHORT DisableUserStackWalk : 1;
+            USHORT RtlExceptionAttached : 1;
+            USHORT InitialThread : 1;
+            USHORT SessionAware : 1;
+            USHORT LoadOwner : 1;
+            USHORT LoaderWorker : 1;
+            USHORT SkipLoaderInit : 1;
+            USHORT SkipFileAPIBrokering : 1;
+        };
+    };
     ULONG                        TxnScopeEnterCallback;             /* 0fcc */
     ULONG                        TxnScopeExitCallback;              /* 0fd0 */
     ULONG                        TxnScopeContext;                   /* 0fd4 */
@@ -1249,7 +1289,27 @@ typedef struct _TEB64
     ULONG64                      MergedPrefLanguages;               /* 17e0 */
     ULONG                        MuiImpersonation;                  /* 17e8 */
     USHORT                       CrossTebFlags;                     /* 17ec */
-    USHORT                       SameTebFlags;                      /* 17ee */
+    union {
+        USHORT SameTebFlags;                                        /* 17ee */
+        struct {
+            USHORT SafeThunkCall : 1;
+            USHORT InDebugPrint : 1;
+            USHORT HasFiberData : 1;
+            USHORT SkipThreadAttach : 1;
+            USHORT WerInShipAssertCode : 1;
+            USHORT RanProcessInit : 1;
+            USHORT ClonedThread : 1;
+            USHORT SuppressDebugMsg : 1;
+            USHORT DisableUserStackWalk : 1;
+            USHORT RtlExceptionAttached : 1;
+            USHORT InitialThread : 1;
+            USHORT SessionAware : 1;
+            USHORT LoadOwner : 1;
+            USHORT LoaderWorker : 1;
+            USHORT SkipLoaderInit : 1;
+            USHORT SkipFileAPIBrokering : 1;
+        };
+    };
     ULONG64                      TxnScopeEnterCallback;             /* 17f0 */
     ULONG64                      TxnScopeExitCallback;              /* 17f8 */
     ULONG64                      TxnScopeContext;                   /* 1800 */
