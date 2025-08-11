@@ -67,6 +67,7 @@ static DWORD (WINAPI *pParseNetworkString)(const WCHAR*,DWORD,NET_ADDRESS_INFO*,
 static DWORD (WINAPI *pNotifyUnicastIpAddressChange)(ADDRESS_FAMILY, PUNICAST_IPADDRESS_CHANGE_CALLBACK,
                                                 PVOID, BOOLEAN, HANDLE *);
 static DWORD (WINAPI *pCancelMibChangeNotify2)(HANDLE);
+static DWORD (WINAPI *pGetIpInterfaceEntry)(MIB_IPINTERFACE_ROW*);
 static DWORD (WINAPI *pGetIpInterfaceTable)(ADDRESS_FAMILY family, MIB_IPINTERFACE_TABLE **table);
 
 DWORD WINAPI ConvertGuidToStringA( const GUID *, char *, DWORD );
@@ -90,6 +91,7 @@ static void loadIPHlpApi(void)
     pNotifyUnicastIpAddressChange = (void *)GetProcAddress(hLibrary, "NotifyUnicastIpAddressChange");
     pCancelMibChangeNotify2 = (void *)GetProcAddress(hLibrary, "CancelMibChangeNotify2");
     pGetIpInterfaceTable = (void *)GetProcAddress(hLibrary, "GetIpInterfaceTable");
+    pGetIpInterfaceEntry = (void *)GetProcAddress(hLibrary, "GetIpInterfaceEntry");
   }
 }
 
@@ -3108,8 +3110,9 @@ static void test_compartments(void)
     ok(id == NET_IF_COMPARTMENT_ID_PRIMARY, "got %u\n", id);
 }
 
-static void test_GetIpInterfaceTable(void)
+static void test_GetIpInterface(void)
 {
+    MIB_IPINTERFACE_ROW entry_row;
     MIB_IPINTERFACE_TABLE *table;
     MIB_IF_ROW2 *if_info = NULL;
     MIB_IPINTERFACE_ROW *row;
@@ -3118,9 +3121,9 @@ static void test_GetIpInterfaceTable(void)
     BOOL connected, is_loopback, loopback_found = FALSE;
     DWORD err;
 
-    if (!pGetIpInterfaceTable)
+    if (!pGetIpInterfaceTable || !pGetIpInterfaceEntry)
     {
-        win_skip( "GetIpInterfaceTable is not available\n" );
+        win_skip( "GetIpInterfaceTable or GetIpInterfaceEntry is not available\n" );
         return;
     }
 
@@ -3158,6 +3161,48 @@ static void test_GetIpInterfaceTable(void)
             todo_wine ok( row->NlMtu == ~0u, "got %lu.\n", row->NlMtu );
         connected = (if_info->MediaConnectState == MediaConnectStateConnected);
         ok( row->Connected == connected, "got %d, expected %d.\n", row->Connected, connected );
+
+        err = GetIpInterfaceEntry( NULL );
+        ok( err == ERROR_INVALID_PARAMETER, "got %ld\n", err );
+
+        memset( &entry_row, 0, sizeof(entry_row) );
+        entry_row.Family = AF_UNSPEC;
+        entry_row.InterfaceLuid = row->InterfaceLuid;
+        err = GetIpInterfaceEntry( &entry_row );
+        ok( err == ERROR_INVALID_PARAMETER, "got %ld\n", err );
+
+        memset( &entry_row, 0xcc, sizeof(entry_row) );
+        entry_row.Family = row->Family;
+        entry_row.InterfaceLuid = row->InterfaceLuid;
+        err = pGetIpInterfaceEntry( &entry_row );
+        ok( !err, "got %ld\n", err );
+        ok( entry_row.Family == row->Family, "got %d, expected %d.\n", entry_row.Family, row->Family );
+        ok( entry_row.InterfaceLuid.Value == row->InterfaceLuid.Value, "got %#I64x, expected %#I64x.\n",
+            entry_row.InterfaceLuid.Value, row->InterfaceLuid.Value );
+        ok( entry_row.InterfaceIndex == row->InterfaceIndex, "got %lu, expected %lu.\n",
+            entry_row.InterfaceIndex, row->InterfaceIndex );
+        ok( entry_row.BaseReachableTime == row->BaseReachableTime, "got %lu, expected %lu.\n",
+            entry_row.BaseReachableTime, row->BaseReachableTime );
+
+        memset( &entry_row, 0xcc, sizeof(entry_row) );
+        entry_row.Family = row->Family;
+        entry_row.InterfaceIndex = row->InterfaceIndex;
+        err = GetIpInterfaceEntry( &entry_row );
+        ok( err == ERROR_NOT_FOUND, "got %ld\n", err );
+
+        memset( &entry_row, 0xcc, sizeof(entry_row) );
+        entry_row.Family = row->Family;
+        entry_row.InterfaceLuid.Value = 0;
+        entry_row.InterfaceIndex = row->InterfaceIndex;
+        err = GetIpInterfaceEntry( &entry_row );
+        ok( !err, "got %ld\n", err );
+        ok( entry_row.Family == row->Family, "got %d, expected %d.\n", entry_row.Family, row->Family );
+        ok( entry_row.InterfaceLuid.Value == row->InterfaceLuid.Value, "got %#I64x, expected %#I64x.\n",
+            entry_row.InterfaceLuid.Value, row->InterfaceLuid.Value );
+        ok( entry_row.InterfaceIndex == row->InterfaceIndex, "got %lu, expected %lu.\n",
+            entry_row.InterfaceIndex, row->InterfaceIndex );
+        ok( entry_row.BaseReachableTime == row->BaseReachableTime, "got %lu, expected %lu.\n",
+            entry_row.BaseReachableTime, row->BaseReachableTime );
     }
     ok( loopback_found, "loopback not found.\n" );
     FreeMibTable( table );
@@ -3205,7 +3250,7 @@ START_TEST(iphlpapi)
     test_NotifyUnicastIpAddressChange();
     test_ConvertGuidToString();
     test_compartments();
-    test_GetIpInterfaceTable();
+    test_GetIpInterface();
     freeIPHlpApi();
   }
 

@@ -4626,6 +4626,33 @@ DWORD WINAPI GetIpInterfaceTable( ADDRESS_FAMILY family, MIB_IPINTERFACE_TABLE *
 }
 
 /******************************************************************
+ *    GetIpInterfaceEntry (IPHLPAPI.@)
+ */
+DWORD WINAPI GetIpInterfaceEntry( MIB_IPINTERFACE_ROW *row )
+{
+    struct nsi_ip_interface_dynamic dyn;
+    struct nsi_ip_interface_key key;
+    struct nsi_ip_interface_rw rw;
+    DWORD err;
+
+    TRACE( "%p.\n", row );
+
+    if (!row) return ERROR_INVALID_PARAMETER;
+    if (row->Family != AF_INET && row->Family != AF_INET6) return ERROR_INVALID_PARAMETER;
+
+    key.luid = row->InterfaceLuid;
+    if (!key.luid.Value && ConvertInterfaceIndexToLuid( row->InterfaceIndex, &key.luid )) return ERROR_NOT_FOUND;
+
+    err = NsiGetAllParameters( 1, ip_module_id( row->Family ), NSI_IP_INTERFACE_TABLE,
+                               &key, sizeof(key), &rw, sizeof(rw),
+                               &dyn, sizeof(dyn), NULL, 0 );
+    if (err) return err;
+    fill_ip_interface_table_row( row->Family, row, &key, &rw, &dyn );
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************
  *    GetBestRoute2 (IPHLPAPI.@)
  */
 DWORD WINAPI GetBestRoute2(NET_LUID *luid, NET_IFINDEX index,

@@ -106,7 +106,7 @@
 @ stdcall GetIpForwardTable( ptr ptr long )
 @ stdcall GetIpForwardTable2( long ptr )
 @ stub GetIpForwardTableFromStack
-#@ stub GetIpInterfaceEntry
+@ stdcall GetIpInterfaceEntry( ptr )
 @ stdcall GetIpInterfaceTable( long ptr )
 #@ stub GetIpNetEntry2
 @ stdcall GetIpNetTable( ptr ptr long )
