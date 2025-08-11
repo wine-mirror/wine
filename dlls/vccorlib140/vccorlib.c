@@ -397,3 +397,10 @@ HSTRING __cdecl platform_type_get_FullName(struct platform_type *type)
 
     return platform_type_ToString(type);
 }
+
+void *WINAPI CreateValue(int typecode, const void *val)
+{
+    FIXME("(%d, %p) stub\n", typecode, val);
+
+    return NULL;
+}

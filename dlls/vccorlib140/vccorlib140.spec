@@ -519,9 +519,9 @@
 @ stub -arch=win64 ?CreateException@Exception@Platform@@SAPE$AAV12@H@Z
 @ stub -arch=win32 ?CreateException@Exception@Platform@@SAP$AAV12@HP$AAVString@2@@Z
 @ stub -arch=win64 ?CreateException@Exception@Platform@@SAPE$AAV12@HPE$AAVString@2@@Z
-@ stub -arch=i386 ?CreateValue@Details@Platform@@YGP$AAVObject@2@W4TypeCode@2@PBX@Z
-@ stub -arch=arm ?CreateValue@Details@Platform@@YAP$AAVObject@2@W4TypeCode@2@PBX@Z
-@ stub -arch=win64 ?CreateValue@Details@Platform@@YAPE$AAVObject@2@W4TypeCode@2@PEBX@Z
+@ stdcall -arch=i386 ?CreateValue@Details@Platform@@YGP$AAVObject@2@W4TypeCode@2@PBX@Z(long ptr) CreateValue
+@ stdcall -arch=arm ?CreateValue@Details@Platform@@YAP$AAVObject@2@W4TypeCode@2@PBX@Z(long ptr) CreateValue
+@ stdcall -arch=win64 ?CreateValue@Details@Platform@@YAPE$AAVObject@2@W4TypeCode@2@PEBX@Z(long ptr) CreateValue
 @ stub ?EnableFactoryCache@@YAXXZ
 @ stub -arch=win32 ?EnumerateAllocatedObjects@Heap@Details@Platform@@SAXP$AAVHeapEntryHandler@23@@Z
 @ stub -arch=win64 ?EnumerateAllocatedObjects@Heap@Details@Platform@@SAXPE$AAVHeapEntryHandler@23@@Z

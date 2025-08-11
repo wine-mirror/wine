@@ -125,6 +125,7 @@ static bool (__cdecl *p_platform_type_Equals_Object)(void *, void *);
 static int (__cdecl *p_platform_type_GetTypeCode)(void *);
 static HSTRING (__cdecl *p_platform_type_ToString)(void *);
 static HSTRING (__cdecl *p_platform_type_get_FullName)(void *);
+static void *(WINAPI *pCreateValue)(int type, const void *);
 
 static BOOL init(void)
 {
@@ -158,6 +159,7 @@ static BOOL init(void)
             "?GetTypeCode@Type@Platform@@SA?AW4TypeCode@2@P$AAV12@@Z");
     p_platform_type_ToString = (void *)GetProcAddress(hmod, "?ToString@Type@Platform@@U$AAAP$AAVString@2@XZ");
     p_platform_type_get_FullName = (void *)GetProcAddress(hmod, "?get@FullName@Type@Platform@@Q$AAAP$AAVString@3@XZ");
+    pCreateValue = (void *)GetProcAddress(hmod, "?CreateValue@Details@Platform@@YAP$AAVObject@2@W4TypeCode@2@PBX@Z");
 #else
     if (sizeof(void *) == 8)
     {
@@ -177,6 +179,8 @@ static BOOL init(void)
         p_platform_type_ToString = (void *)GetProcAddress(hmod, "?ToString@Type@Platform@@UE$AAAPE$AAVString@2@XZ");
         p_platform_type_get_FullName = (void *)GetProcAddress(hmod,
                 "?get@FullName@Type@Platform@@QE$AAAPE$AAVString@3@XZ");
+        pCreateValue = (void *)GetProcAddress(hmod,
+                "?CreateValue@Details@Platform@@YAPE$AAVObject@2@W4TypeCode@2@PEBX@Z");
     }
     else
     {
@@ -195,6 +199,8 @@ static BOOL init(void)
         p_platform_type_ToString = (void *)GetProcAddress(hmod, "?ToString@Type@Platform@@U$AAAP$AAVString@2@XZ");
         p_platform_type_get_FullName = (void *)GetProcAddress(hmod,
                 "?get@FullName@Type@Platform@@Q$AAAP$AAVString@3@XZ");
+        pCreateValue = (void *)GetProcAddress(hmod,
+                "?CreateValue@Details@Platform@@YGP$AAVObject@2@W4TypeCode@2@PBX@Z");
     }
 #endif
     ok(pGetActivationFactoryByPCWSTR != NULL, "GetActivationFactoryByPCWSTR not available\n");
@@ -208,6 +214,7 @@ static BOOL init(void)
     ok(p_platform_type_GetTypeCode != NULL, "Platform::Type::GetTypeCode not available\n");
     ok(p_platform_type_ToString != NULL, "Platform::Type::ToString not available\n");
     ok(p_platform_type_get_FullName != NULL, "Platform::Type::FullName not available\n");
+    ok(pCreateValue != NULL, "CreateValue not available\n");
 
     init_thiscall_thunk();
 
@@ -771,6 +778,193 @@ static void test___abi_make_type_id(void)
     ok(count == 0, "got count %lu\n", count);
 }
 
+enum typecode
+{
+    TYPECODE_BOOLEAN = 3,
+    TYPECODE_CHAR16 = 4,
+    TYPECODE_UINT8 = 6,
+    TYPECODE_INT16 = 7,
+    TYPECODE_UINT16 = 8,
+    TYPECODE_INT32 = 9,
+    TYPECODE_UINT32 = 10,
+    TYPECODE_INT64 = 11,
+    TYPECODE_UINT64 = 12,
+    TYPECODE_SINGLE = 13,
+    TYPECODE_DOUBLE = 14,
+    TYPECODE_DATETIME = 16,
+    TYPECODE_STRING = 18,
+    TYPECODE_TIMESPAN = 19,
+    TYPECODE_POINT = 20,
+    TYPECODE_SIZE = 21,
+    TYPECODE_RECT = 22,
+    TYPECODE_GUID = 23,
+};
+
+static void test_CreateValue(void)
+{
+    union value {
+        UINT8 uint8;
+        UINT16 uint16;
+        UINT32 uint32;
+        UINT64 uint64;
+        FLOAT single;
+        DOUBLE dbl;
+        boolean boolean;
+        GUID guid;
+        DateTime time;
+        TimeSpan span;
+        Point point;
+        Size size;
+        Rect rect;
+    };
+    static const struct {
+        int typecode;
+        union value value;
+        PropertyType exp_winrt_type;
+        SIZE_T size;
+    } test_cases[] = {
+        {TYPECODE_BOOLEAN, {.boolean = true}, PropertyType_Boolean, sizeof(boolean)},
+        {TYPECODE_CHAR16, {.uint16 = 0xbeef}, PropertyType_Char16, sizeof(UINT16)},
+        {TYPECODE_UINT8, {.uint8 = 0xbe}, PropertyType_UInt8, sizeof(UINT8)},
+        {TYPECODE_INT16, {.uint16 = 0xbeef}, PropertyType_Int16, sizeof(INT16)},
+        {TYPECODE_UINT16, {.uint16 = 0xbeef}, PropertyType_UInt16, sizeof(UINT16)},
+        {TYPECODE_INT32, {.uint32 = 0xdeadbeef}, PropertyType_Int32, sizeof(INT32)},
+        {TYPECODE_UINT32, {.uint32 = 0xdeadbeef}, PropertyType_UInt32, sizeof(UINT32)},
+        {TYPECODE_INT64, {.uint64 = 0xdeadbeefdeadbeef}, PropertyType_Int64, sizeof(INT64)},
+        {TYPECODE_UINT64, {.uint64 = 0xdeadbeefdeadbeef}, PropertyType_UInt64, sizeof(UINT64)},
+        {TYPECODE_SINGLE, {.single = 2.71828}, PropertyType_Single, sizeof(FLOAT)},
+        {TYPECODE_DOUBLE, {.dbl = 2.7182818284}, PropertyType_Double, sizeof(DOUBLE)},
+        {TYPECODE_DATETIME, {.time = {0xdeadbeefdeadbeef}}, PropertyType_DateTime, sizeof(DateTime)},
+        {TYPECODE_TIMESPAN, {.span = {0xdeadbeefdeadbeef}}, PropertyType_TimeSpan, sizeof(TimeSpan)},
+        {TYPECODE_POINT, {.point = {2.71828, 3.14159}}, PropertyType_Point, sizeof(Point)},
+        {TYPECODE_SIZE, {.size = {2.71828, 3.14159}}, PropertyType_Size, sizeof(Size)},
+        {TYPECODE_RECT, {.rect = {2.71828, 3.14159, 23.140692, 0.20787}}, PropertyType_Rect, sizeof(Rect)},
+        {TYPECODE_GUID, {.guid = IID_IInspectable}, PropertyType_Guid, sizeof(GUID)},
+    };
+    static const int null_typecodes[] = {0, 1, 2, 5,15, 17};
+    PropertyType type;
+    const WCHAR *buf;
+    ULONG count, i;
+    HSTRING str;
+    HRESULT hr;
+    void *obj;
+
+    hr = pInitializeData(1);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(test_cases); i++)
+    {
+        union value value = {0};
+        type = PropertyType_Empty;
+
+        winetest_push_context("test_cases[%lu]", i);
+
+        obj = pCreateValue(test_cases[i].typecode, &test_cases[i].value);
+        todo_wine ok(obj != NULL, "got value %p\n", obj);
+        if (!obj) continue;
+
+        check_interface(obj, &IID_IInspectable);
+        check_interface(obj, &IID_IPropertyValue);
+
+        hr = IPropertyValue_get_Type(obj, &type);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(type == test_cases[i].exp_winrt_type, "got type %d != %d\n", type, test_cases[i].exp_winrt_type);
+
+        switch (test_cases[i].exp_winrt_type)
+        {
+        case PropertyType_Boolean:
+            hr = IPropertyValue_GetBoolean(obj, &value.boolean);
+            break;
+        case PropertyType_Char16:
+            hr = IPropertyValue_GetChar16(obj, &value.uint16);
+            break;
+        case PropertyType_UInt8:
+            hr = IPropertyValue_GetUInt8(obj, &value.uint8);
+            break;
+        case PropertyType_Int16:
+            hr = IPropertyValue_GetInt16(obj, (INT16 *)&value.uint16);
+            break;
+        case PropertyType_UInt16:
+            hr = IPropertyValue_GetUInt16(obj, &value.uint16);
+            break;
+        case PropertyType_Int32:
+            hr = IPropertyValue_GetInt32(obj, (INT32 *)&value.uint32);
+            break;
+        case PropertyType_UInt32:
+            hr = IPropertyValue_GetUInt32(obj, &value.uint32);
+            break;
+        case PropertyType_Int64:
+            hr = IPropertyValue_GetInt64(obj, (INT64 *)&value.uint64);
+            break;
+        case PropertyType_UInt64:
+            hr = IPropertyValue_GetUInt64(obj, &value.uint64);
+            break;
+        case PropertyType_Single:
+            hr = IPropertyValue_GetSingle(obj, &value.single);
+            break;
+        case PropertyType_Double:
+            hr = IPropertyValue_GetDouble(obj, &value.dbl);
+            break;
+        case PropertyType_DateTime:
+            hr = IPropertyValue_GetDateTime(obj, &value.time);
+            break;
+        case PropertyType_TimeSpan:
+            hr = IPropertyValue_GetTimeSpan(obj, &value.span);
+            break;
+        case PropertyType_Point:
+            hr = IPropertyValue_GetPoint(obj, &value.point);
+            break;
+        case PropertyType_Size:
+            hr = IPropertyValue_GetSize(obj, &value.size);
+            break;
+        case PropertyType_Rect:
+            hr = IPropertyValue_GetRect(obj, &value.rect);
+            break;
+        case PropertyType_Guid:
+            hr = IPropertyValue_GetGuid(obj, &value.guid);
+            break;
+        DEFAULT_UNREACHABLE;
+        }
+
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(!memcmp(&test_cases[i].value, &value, test_cases[i].size), "got unexpected value\n");
+        count = IPropertyValue_Release(obj);
+        ok(count == 0, "got count %lu\n", count);
+
+        winetest_pop_context();
+    }
+
+    hr = WindowsCreateString(L"foo", 3, &str);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    obj = pCreateValue(TYPECODE_STRING, &str);
+    WindowsDeleteString(str);
+    todo_wine ok(obj != NULL || broken(obj == NULL), "got obj %p\n", obj); /* Returns NULL on i386 Windows 10. */
+    if (obj)
+    {
+        type = PropertyType_Empty;
+        hr = IPropertyValue_get_Type(obj, &type);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(type == PropertyType_String, "got type %d\n", type);
+        str = NULL;
+        hr = IPropertyValue_GetString(obj, &str);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(str != NULL, "got str %p\n", str);
+        buf = WindowsGetStringRawBuffer(str, NULL);
+        ok(buf && !wcscmp(buf, L"foo"), "got buf %s\n", debugstr_w(buf));
+        WindowsDeleteString(str);
+        count = IPropertyValue_Release(obj);
+        ok(count == 0, "got count %lu\n", count);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(null_typecodes); i++)
+    {
+        obj = pCreateValue(null_typecodes[i], &i);
+        ok(obj == NULL, "got obj %p\n", obj);
+    }
+
+    pUninitializeData(0);
+}
+
 START_TEST(vccorlib)
 {
     if(!init())
@@ -783,4 +977,5 @@ START_TEST(vccorlib)
     test_AllocateWithWeakRef_inline();
     test_AllocateWithWeakRef();
     test___abi_make_type_id();
+    test_CreateValue();
 }
