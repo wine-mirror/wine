@@ -802,6 +802,68 @@ static void test_ip_forward( int family )
     winetest_pop_context();
 }
 
+static void test_ip_interface( int family )
+{
+    const NPI_MODULEID *mod = (family == AF_INET) ? &NPI_MS_IPV4_MODULEID : &NPI_MS_IPV6_MODULEID;
+    struct nsi_ip_interface_key *key_tbl;
+    struct nsi_ip_interface_rw *rw_tbl, *rw;
+    struct nsi_ip_interface_dynamic *dyn_tbl, *dyn;
+    struct nsi_ip_interface_static *stat_tbl;
+    MIB_IPINTERFACE_TABLE *table;
+    MIB_IPINTERFACE_ROW *row;
+    unsigned int i;
+    DWORD err, count;
+
+    winetest_push_context( family == AF_INET ? "AF_INET" : "AF_INET6" );
+
+    err = GetIpInterfaceTable( family, &table );
+    ok( !err, "got %lu.\n", err );
+    err = NsiAllocateAndGetTable( 1, mod, NSI_IP_INTERFACE_TABLE, (void **)&key_tbl, sizeof(*key_tbl),
+                                  (void **)&rw_tbl, sizeof(*rw_tbl), (void **)&dyn_tbl, sizeof(*dyn_tbl),
+                                  (void **)&stat_tbl, sizeof(*stat_tbl), &count, 0 );
+    ok( !err, "got %lu.\n", err );
+    for (i = 0; i < count; ++i)
+    {
+        row = &table->Table[i];
+        rw = &rw_tbl[i];
+        dyn = &dyn_tbl[i];
+        if (row->BaseReachableTime != rw->base_reachable_time)
+        {
+            /* Before Win10 1709. */
+            win_skip( "Old NSI tables layout, skipping tests.\n" );
+            break;
+        }
+        ok( row->BaseReachableTime == rw->base_reachable_time, "mismatch: %#lx vs %#lx.\n",
+            row->BaseReachableTime, rw->base_reachable_time );
+        ok( row->Metric == rw->metric, "mismatch: %#lx vs %#lx.\n", row->Metric, rw->metric );
+        ok( row->RetransmitTime == rw->retransmit_time, "mismatch: %#lx vs %#lx.\n", row->RetransmitTime, rw->retransmit_time );
+        ok( row->PathMtuDiscoveryTimeout == rw->path_mtu_discovery_timeout, "mismatch: %#lx vs %#lx.\n",
+            row->PathMtuDiscoveryTimeout, rw->path_mtu_discovery_timeout );
+        ok( row->DadTransmits == rw->dad_transmits, "mismatch: %#lx vs %#lx.\n", row->DadTransmits, rw->dad_transmits );
+        ok( row->LinkLocalAddressBehavior == rw->link_local_address_behavior, "mismatch: %#x vs %#x.\n",
+            row->LinkLocalAddressBehavior, rw->link_local_address_behavior );
+        ok( row->LinkLocalAddressTimeout == rw->link_local_address_timeout, "mismatch: %#lx vs %#lx.\n",
+            row->LinkLocalAddressTimeout, rw->link_local_address_timeout );
+        ok( !memcmp( row->ZoneIndices, rw->zone_indices, sizeof(row->ZoneIndices) ), "mismatch.\n" );
+        ok( row->NlMtu == rw->mtu, "mismatch: %#lx vs %#lx.\n", row->NlMtu, rw->mtu );
+        ok( row->SitePrefixLength == rw->site_prefix_len, "mismatch: %#lx vs %#lx.\n",
+            row->SitePrefixLength, rw->site_prefix_len );
+        ok( row->RouterDiscoveryBehavior == rw->router_discovery_behaviour, "mismatch: %#x vs %#x.\n",
+            row->RouterDiscoveryBehavior, rw->router_discovery_behaviour );
+
+        ok( row->InterfaceIndex == dyn->if_index, "mismatch: %#lx vs %#x.\n", row->InterfaceIndex, dyn->if_index );
+        ok( row->SupportsWakeUpPatterns == dyn->supports_wakeup_patterns, "mismatch: %#x vs %#x.\n",
+            row->SupportsWakeUpPatterns, dyn->supports_wakeup_patterns );
+        ok( row->ReachableTime == dyn->reachable_time, "mismatch: %#lx vs %#lx.\n", row->InterfaceIndex, dyn->reachable_time );
+        ok( row->Connected == dyn->connected, "mismatch: %#x vs %#x.\n", row->Connected, dyn->connected );
+        ok( *(UINT *)&row->TransmitOffload == *(UINT *)&dyn->transmit_offload, "mismatch: %#x vs %#x.\n",
+            *(UINT *)&row->TransmitOffload, *(UINT *)&dyn->transmit_offload );
+    }
+    FreeMibTable( table );
+    NsiFreeTable( key_tbl, rw_tbl, dyn_tbl, stat_tbl );
+    winetest_pop_context();
+}
+
 static void test_tcp_stats( int family )
 {
     DWORD err;
@@ -1111,6 +1173,8 @@ START_TEST( nsi )
     test_ip_neighbour( AF_INET6 );
     test_ip_forward( AF_INET );
     test_ip_forward( AF_INET6 );
+    test_ip_interface( AF_INET );
+    test_ip_interface( AF_INET6 );
 
     test_tcp_stats( AF_INET );
     test_tcp_stats( AF_INET6 );
