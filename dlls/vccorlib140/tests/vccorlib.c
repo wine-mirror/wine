@@ -27,6 +27,9 @@
 #include "activation.h"
 #include "objbase.h"
 #include "weakreference.h"
+#define WIDL_using_Windows_Foundation
+#include "windows.foundation.h"
+#include "winstring.h"
 #include "wine/test.h"
 
 #define DEFINE_EXPECT(func) \
@@ -103,6 +106,12 @@ DEFINE_EXPECT(PostInitialize);
 DEFINE_EXPECT(PreUninitialize);
 DEFINE_EXPECT(PostUninitialize);
 
+struct __abi_type_descriptor
+{
+    const WCHAR *name;
+    int type_id;
+};
+
 static HRESULT (__cdecl *pInitializeData)(int);
 static void (__cdecl *pUninitializeData)(int);
 static HRESULT (WINAPI *pGetActivationFactoryByPCWSTR)(const WCHAR *, const GUID *, void **);
@@ -111,6 +120,11 @@ static void *(__cdecl *pAllocate)(size_t);
 static void (__cdecl *pFree)(void *);
 static void *(__cdecl *pAllocateWithWeakRef)(ptrdiff_t, size_t);
 static void (__thiscall *pReleaseTarget)(void *);
+static void *(WINAPI *p___abi_make_type_id)(const struct __abi_type_descriptor *desc);
+static bool (__cdecl *p_platform_type_Equals_Object)(void *, void *);
+static int (__cdecl *p_platform_type_GetTypeCode)(void *);
+static HSTRING (__cdecl *p_platform_type_ToString)(void *);
+static HSTRING (__cdecl *p_platform_type_get_FullName)(void *);
 
 static BOOL init(void)
 {
@@ -137,6 +151,13 @@ static BOOL init(void)
     pFree = (void *)GetProcAddress(hmod, "?Free@Heap@Details@Platform@@SAXPAX@Z");
     pAllocateWithWeakRef = (void *)GetProcAddress(hmod, "?Allocate@Heap@Details@Platform@@SAPAXII@Z");
     pReleaseTarget = (void *)GetProcAddress(hmod, "?ReleaseTarget@ControlBlock@Details@Platform@@AAAXXZ");
+    p___abi_make_type_id = (void *)GetProcAddress(hmod,
+            "?__abi_make_type_id@@YAP$AAVType@Platform@@ABU__abi_type_descriptor@@@Z");
+    p_platform_type_Equals_Object = (void *)GetProcAddress(hmod, "?Equals@Type@Platform@@U$AAA_NP$AAVObject@2@@Z");
+    p_platform_type_GetTypeCode = (void *)GetProcAddress(hmod,
+            "?GetTypeCode@Type@Platform@@SA?AW4TypeCode@2@P$AAV12@@Z");
+    p_platform_type_ToString = (void *)GetProcAddress(hmod, "?ToString@Type@Platform@@U$AAAP$AAVString@2@XZ");
+    p_platform_type_get_FullName = (void *)GetProcAddress(hmod, "?get@FullName@Type@Platform@@Q$AAAP$AAVString@3@XZ");
 #else
     if (sizeof(void *) == 8)
     {
@@ -147,6 +168,15 @@ static BOOL init(void)
         pFree = (void *)GetProcAddress(hmod, "?Free@Heap@Details@Platform@@SAXPEAX@Z");
         pAllocateWithWeakRef = (void *)GetProcAddress(hmod, "?Allocate@Heap@Details@Platform@@SAPEAX_K0@Z");
         pReleaseTarget = (void *)GetProcAddress(hmod, "?ReleaseTarget@ControlBlock@Details@Platform@@AEAAXXZ");
+        p___abi_make_type_id = (void *)GetProcAddress(hmod,
+                "?__abi_make_type_id@@YAPE$AAVType@Platform@@AEBU__abi_type_descriptor@@@Z");
+        p_platform_type_Equals_Object = (void *)GetProcAddress(hmod,
+                "?Equals@Type@Platform@@UE$AAA_NPE$AAVObject@2@@Z");
+        p_platform_type_GetTypeCode = (void *)GetProcAddress(hmod,
+                "?GetTypeCode@Type@Platform@@SA?AW4TypeCode@2@PE$AAV12@@Z");
+        p_platform_type_ToString = (void *)GetProcAddress(hmod, "?ToString@Type@Platform@@UE$AAAPE$AAVString@2@XZ");
+        p_platform_type_get_FullName = (void *)GetProcAddress(hmod,
+                "?get@FullName@Type@Platform@@QE$AAAPE$AAVString@3@XZ");
     }
     else
     {
@@ -157,6 +187,14 @@ static BOOL init(void)
         pFree = (void *)GetProcAddress(hmod, "?Free@Heap@Details@Platform@@SAXPAX@Z");
         pAllocateWithWeakRef = (void *)GetProcAddress(hmod, "?Allocate@Heap@Details@Platform@@SAPAXII@Z");
         pReleaseTarget = (void *)GetProcAddress(hmod, "?ReleaseTarget@ControlBlock@Details@Platform@@AAEXXZ");
+        p___abi_make_type_id = (void *)GetProcAddress(hmod,
+                "?__abi_make_type_id@@YGP$AAVType@Platform@@ABU__abi_type_descriptor@@@Z");
+        p_platform_type_Equals_Object = (void *)GetProcAddress(hmod, "?Equals@Type@Platform@@U$AAA_NP$AAVObject@2@@Z");
+        p_platform_type_GetTypeCode = (void *)GetProcAddress(hmod,
+                "?GetTypeCode@Type@Platform@@SA?AW4TypeCode@2@P$AAV12@@Z");
+        p_platform_type_ToString = (void *)GetProcAddress(hmod, "?ToString@Type@Platform@@U$AAAP$AAVString@2@XZ");
+        p_platform_type_get_FullName = (void *)GetProcAddress(hmod,
+                "?get@FullName@Type@Platform@@Q$AAAP$AAVString@3@XZ");
     }
 #endif
     ok(pGetActivationFactoryByPCWSTR != NULL, "GetActivationFactoryByPCWSTR not available\n");
@@ -165,6 +203,11 @@ static BOOL init(void)
     ok(pFree != NULL, "Free not available\n");
     ok(pAllocateWithWeakRef != NULL, "AllocateWithWeakRef not available\n");
     ok(pReleaseTarget != NULL, "ReleaseTarget not available\n");
+    ok(p___abi_make_type_id != NULL, "__abi_make_type_id not available\n");
+    ok(p_platform_type_Equals_Object != NULL, "Platform::Type::Equals not available\n");
+    ok(p_platform_type_GetTypeCode != NULL, "Platform::Type::GetTypeCode not available\n");
+    ok(p_platform_type_ToString != NULL, "Platform::Type::ToString not available\n");
+    ok(p_platform_type_get_FullName != NULL, "Platform::Type::FullName not available\n");
 
     init_thiscall_thunk();
 
@@ -610,6 +653,127 @@ static void test_AllocateWithWeakRef(void)
     ok(count == 0, "got count %lu\n", count);
 }
 
+#define check_interface(o, i) check_interface_(__LINE__, (o), (i))
+static void check_interface_(int line, void *obj, const GUID *iid)
+{
+    HRESULT hr;
+    void *out;
+
+    hr = IUnknown_QueryInterface((IUnknown *)obj, iid, &out);
+    ok_(__FILE__, line)(hr == S_OK, "got hr %#lx\n", hr);
+    if (SUCCEEDED(hr)) IUnknown_Release((IUnknown *)out);
+}
+
+/* Additional interfaces implemented by Platform::Object. */
+DEFINE_GUID(IID_IEquatable,0xde0cbaec,0xe077,0x4e92,0x84,0xbe,0xc6,0xd4,0x8d,0xca,0x30,0x06);
+DEFINE_GUID(IID_IPrintable,0xde0cbaeb,0x8065,0x4a45,0x96,0xb1,0xc9,0xd4,0x43,0xf9,0xba,0xb3);
+
+static void test___abi_make_type_id(void)
+{
+    const struct __abi_type_descriptor desc = {L"foo", 0xdeadbeef}, desc2 = {L"foo", 0xdeadbeef}, desc3 = {NULL, 1};
+    void *type_obj, *type_obj2;
+    const WCHAR *buf;
+    int typecode;
+    HSTRING str;
+    ULONG count;
+    bool equals;
+    HRESULT hr;
+
+    type_obj = p___abi_make_type_id(&desc);
+    todo_wine ok(type_obj != NULL, "got type_obj %p\n", type_obj);
+    if (!type_obj)
+    {
+        skip("__abi_make_type_id failed\n");
+        return;
+    }
+
+    todo_wine check_interface(type_obj, &IID_IInspectable);
+    todo_wine check_interface(type_obj, &IID_IClosable);
+    todo_wine check_interface(type_obj, &IID_IMarshal);
+    todo_wine check_interface(type_obj, &IID_IAgileObject);
+    todo_wine check_interface(type_obj, &IID_IEquatable);
+    todo_wine check_interface(type_obj, &IID_IPrintable);
+
+    hr = IInspectable_GetRuntimeClassName(type_obj, &str);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    buf = WindowsGetStringRawBuffer(str, NULL);
+    todo_wine ok(buf && !wcscmp(buf, L"Platform.Type"), "got buf %s\n", debugstr_w(buf));
+    WindowsDeleteString(str);
+
+    equals = p_platform_type_Equals_Object(type_obj, type_obj);
+    todo_wine ok(equals, "got equals %d\n", equals);
+    equals = p_platform_type_Equals_Object(type_obj, NULL);
+    todo_wine ok(!equals, "got equals %d\n", equals);
+
+    typecode = p_platform_type_GetTypeCode(type_obj);
+    todo_wine ok(typecode == 0xdeadbeef, "got typecode %d\n", typecode);
+
+    str = p_platform_type_ToString(type_obj);
+    buf = WindowsGetStringRawBuffer(str, NULL);
+    todo_wine ok(buf && !wcscmp(buf, L"foo"), "got buf %s\n", debugstr_w(buf));
+    WindowsDeleteString(str);
+
+    str = p_platform_type_get_FullName(type_obj);
+    todo_wine ok(str != NULL, "got str %p\n", str);
+    buf = WindowsGetStringRawBuffer(str, NULL);
+    todo_wine ok(buf && !wcscmp(buf, L"foo"), "got buf %s != %s\n", debugstr_w(buf), debugstr_w(L"foo"));
+    WindowsDeleteString(str);
+
+    type_obj2 = p___abi_make_type_id(&desc);
+    todo_wine ok(type_obj2 != NULL, "got type_obj %p\n", type_obj);
+    ok(type_obj2 != type_obj, "got type_obj2 %p\n", type_obj2);
+
+    todo_wine check_interface(type_obj2, &IID_IInspectable);
+    todo_wine check_interface(type_obj2, &IID_IClosable);
+    todo_wine check_interface(type_obj2, &IID_IMarshal);
+    todo_wine check_interface(type_obj2, &IID_IAgileObject);
+    todo_wine check_interface(type_obj2, &IID_IEquatable);
+    todo_wine check_interface(type_obj2, &IID_IPrintable);
+
+    equals = p_platform_type_Equals_Object(type_obj2, type_obj);
+    todo_wine ok(equals, "got equals %d\n", equals);
+
+    count = IInspectable_Release(type_obj);
+    ok(count == 0, "got count %lu\n", count);
+
+    equals = p_platform_type_Equals_Object(NULL, NULL);
+    todo_wine ok(equals, "got equals %d\n", equals);
+
+    type_obj = p___abi_make_type_id(&desc2);
+    todo_wine ok(type_obj != NULL, "got type_obj %p\n", type_obj);
+
+    /* Platform::Type::Equals only seems to compare the value of the __abi_type_descriptor pointer. */
+    equals = p_platform_type_Equals_Object(type_obj, type_obj2);
+    todo_wine ok(!equals, "got equals %d\n", equals);
+
+    count = IInspectable_Release(type_obj);
+    ok(count == 0, "got count %lu\n", count);
+
+    type_obj = p___abi_make_type_id(&desc3);
+    todo_wine ok(type_obj != NULL, "got type_obj %p\n", type_obj);
+
+    equals = p_platform_type_Equals_Object(type_obj, type_obj2);
+    todo_wine ok(!equals, "got equals %d\n", equals);
+
+    typecode = p_platform_type_GetTypeCode(type_obj);
+    todo_wine ok(typecode == 1, "got typecode %d\n", typecode);
+
+    str = p_platform_type_ToString(type_obj);
+    ok(str == NULL, "got str %s\n", debugstr_hstring(str));
+
+    str = p_platform_type_get_FullName(type_obj);
+    ok(str == NULL, "got str %s\n", debugstr_hstring(str));
+
+    count = IInspectable_Release(type_obj);
+    ok(count == 0, "got count %lu\n", count);
+
+    count = IInspectable_Release(type_obj2);
+    ok(count == 0, "got count %lu\n", count);
+
+    typecode = p_platform_type_GetTypeCode(NULL);
+    ok(typecode == 0, "got typecode %d\n", typecode);
+}
+
 START_TEST(vccorlib)
 {
     if(!init())
@@ -621,4 +785,5 @@ START_TEST(vccorlib)
     test_Allocate();
     test_AllocateWithWeakRef_inline();
     test_AllocateWithWeakRef();
+    test___abi_make_type_id();
 }

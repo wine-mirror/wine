@@ -225,3 +225,51 @@ void __thiscall control_block_ReleaseTarget(struct control_block *weakref)
     if ((object = InterlockedCompareExchangePointer((void *)&weakref->object, NULL, weakref->object)))
         Free(object);
 }
+
+struct __abi_type_descriptor
+{
+    const WCHAR *name;
+    int type_id;
+};
+
+static const char *debugstr_abi_type_descriptor(const struct __abi_type_descriptor *desc)
+{
+    if (!desc) return "(null)";
+
+    return wine_dbg_sprintf("{%s, %d}", debugstr_w(desc->name), desc->type_id);
+}
+
+void *WINAPI __abi_make_type_id(const struct __abi_type_descriptor *desc)
+{
+    FIXME("(%s) stub\n", debugstr_abi_type_descriptor(desc));
+
+    return NULL;
+}
+
+bool __cdecl platform_type_Equals_Object(void *this, void *object)
+{
+    FIXME("(%p, %p) stub\n", this, object);
+
+    return false;
+}
+
+int __cdecl platform_type_GetTypeCode(void *this)
+{
+    FIXME("(%p) stub\n", this);
+
+    return 0;
+}
+
+HSTRING __cdecl platform_type_ToString(void *this)
+{
+    FIXME("(%p) stub\n", this);
+
+    return NULL;
+}
+
+HSTRING __cdecl platform_type_get_FullName(void *type)
+{
+    FIXME("(%p) stub\n", type);
+
+    return NULL;
+}

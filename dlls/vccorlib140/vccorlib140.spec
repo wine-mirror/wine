@@ -12,8 +12,8 @@
 @ stub -arch=win64 ?Equals@OnePhaseConstructedAttribute@CompilerServices@Runtime@Platform@@QE$AAA_NPE$AAVObject@4@@Z
 @ stub -arch=win32 ?Equals@STAThreadAttribute@Platform@@Q$AAA_NP$AAVObject@2@@Z
 @ stub -arch=win64 ?Equals@STAThreadAttribute@Platform@@QE$AAA_NPE$AAVObject@2@@Z
-@ stub -arch=win32 ?Equals@Type@Platform@@U$AAA_NP$AAVObject@2@@Z
-@ stub -arch=win64 ?Equals@Type@Platform@@UE$AAA_NPE$AAVObject@2@@Z
+@ cdecl -arch=win32 ?Equals@Type@Platform@@U$AAA_NP$AAVObject@2@@Z(ptr ptr) platform_type_Equals_Object
+@ cdecl -arch=win64 ?Equals@Type@Platform@@UE$AAA_NPE$AAVObject@2@@Z(ptr ptr) platform_type_Equals_Object
 @ stub -arch=win32 ?Equals@ValueType@Platform@@Q$AAA_NP$AAVObject@2@@Z
 @ stub -arch=win64 ?Equals@ValueType@Platform@@QE$AAA_NPE$AAVObject@2@@Z
 @ stub -arch=win32 ?Equals@char16@default@@QAA_NP$AAVObject@Platform@@@Z
@@ -177,8 +177,8 @@
 @ stub -arch=win64 ?GetType@uint64@default@@QEAAPE$AAVType@Platform@@XZ
 @ stub -arch=win32 ?GetType@uint8@default@@QAAP$AAVType@Platform@@XZ
 @ stub -arch=win64 ?GetType@uint8@default@@QEAAPE$AAVType@Platform@@XZ
-@ stub -arch=win32 ?GetTypeCode@Type@Platform@@SA?AW4TypeCode@2@P$AAV12@@Z
-@ stub -arch=win64 ?GetTypeCode@Type@Platform@@SA?AW4TypeCode@2@PE$AAV12@@Z
+@ cdecl -arch=win32 ?GetTypeCode@Type@Platform@@SA?AW4TypeCode@2@P$AAV12@@Z(ptr) platform_type_GetTypeCode
+@ cdecl -arch=win64 ?GetTypeCode@Type@Platform@@SA?AW4TypeCode@2@PE$AAV12@@Z(ptr) platform_type_GetTypeCode
 @ stub -arch=i386 ?GetWeakReference@Details@Platform@@YGPAU__abi_IUnknown@@Q$ADVObject@2@@Z
 @ stub -arch=arm ?GetWeakReference@Details@Platform@@YAPAU__abi_IUnknown@@Q$ADVObject@2@@Z
 @ stub -arch=win64 ?GetWeakReference@Details@Platform@@YAPEAU__abi_IUnknown@@QE$ADVObject@2@@Z
@@ -246,8 +246,8 @@
 @ stub -arch=win64 ?<Dispose>@String@Platform@@UE$AAAXXZ
 @ stub -arch=win32 ??0FailureException@Platform@@Q$AAA@P$AAVString@1@@Z
 @ stub -arch=win64 ??0FailureException@Platform@@QE$AAA@PE$AAVString@1@@Z
-@ stub -arch=win32 ?ToString@Type@Platform@@U$AAAP$AAVString@2@XZ
-@ stub -arch=win64 ?ToString@Type@Platform@@UE$AAAPE$AAVString@2@XZ
+@ cdecl -arch=win32 ?ToString@Type@Platform@@U$AAAP$AAVString@2@XZ(ptr) platform_type_ToString
+@ cdecl -arch=win64 ?ToString@Type@Platform@@UE$AAAPE$AAVString@2@XZ(ptr) platform_type_ToString
 @ stub -arch=win32 ?ToString@ValueType@Platform@@Q$AAAP$AAVString@2@XZ
 @ stub -arch=win64 ?ToString@ValueType@Platform@@QE$AAAPE$AAVString@2@XZ
 @ stub -arch=win32 ?ToString@char16@default@@QAAP$AAVString@Platform@@XZ
@@ -347,9 +347,9 @@
 @ stub -arch=i386 ?__abi_cast_String_to_Object@__abi_details@@YGP$AAVObject@Platform@@P$AAVString@3@@Z
 @ stub -arch=arm ?__abi_cast_String_to_Object@__abi_details@@YAP$AAVObject@Platform@@P$AAVString@3@@Z
 @ stub -arch=win64 ?__abi_cast_String_to_Object@__abi_details@@YAPE$AAVObject@Platform@@PE$AAVString@3@@Z
-@ stub -arch=i386 ?__abi_make_type_id@@YGP$AAVType@Platform@@ABU__abi_type_descriptor@@@Z
-@ stub -arch=arm ?__abi_make_type_id@@YAP$AAVType@Platform@@ABU__abi_type_descriptor@@@Z
-@ stub -arch=win64 ?__abi_make_type_id@@YAPE$AAVType@Platform@@AEBU__abi_type_descriptor@@@Z
+@ stdcall -arch=i386 ?__abi_make_type_id@@YGP$AAVType@Platform@@ABU__abi_type_descriptor@@@Z(ptr) __abi_make_type_id
+@ stdcall -arch=arm ?__abi_make_type_id@@YAP$AAVType@Platform@@ABU__abi_type_descriptor@@@Z(ptr) __abi_make_type_id
+@ stdcall -arch=win64 ?__abi_make_type_id@@YAPE$AAVType@Platform@@AEBU__abi_type_descriptor@@@Z(ptr) __abi_make_type_id
 @ stub -arch=win32 ??0IntPtr@Platform@@QAA@PAX@Z
 @ stub -arch=win64 ??0IntPtr@Platform@@QEAA@PEAX@Z
 @ stub -arch=i386 ?__abi_translateCurrentException@@YGJ_N@Z
@@ -365,8 +365,8 @@
 @ stub ?get@CurrentAllocationId@Heap@Details@Platform@@SAHXZ
 @ stub ?get@Empty@Rect@Foundation@Windows@@SA?AV234@XZ
 @ stub ?get@Empty@Size@Foundation@Windows@@SA?AV234@XZ
-@ stub -arch=win32 ?get@FullName@Type@Platform@@Q$AAAP$AAVString@3@XZ
-@ stub -arch=win64 ?get@FullName@Type@Platform@@QE$AAAPE$AAVString@3@XZ
+@ cdecl -arch=win32 ?get@FullName@Type@Platform@@Q$AAAP$AAVString@3@XZ(ptr) platform_type_get_FullName
+@ cdecl -arch=win64 ?get@FullName@Type@Platform@@QE$AAAPE$AAVString@3@XZ(ptr) platform_type_get_FullName
 @ stub -arch=win32 ?get@HasInverse@Matrix3D@Media3D@Media@Xaml@UI@Windows@@QAA_NXZ
 @ stub -arch=win64 ?get@HasInverse@Matrix3D@Media3D@Media@Xaml@UI@Windows@@QEAA_NXZ
 @ stub -arch=win32 ??0InvalidArgumentException@Platform@@Q$AAA@P$AAVString@1@@Z
