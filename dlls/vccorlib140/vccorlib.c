@@ -363,30 +363,37 @@ void *WINAPI __abi_make_type_id(const struct __abi_type_descriptor *desc)
     return &obj->IClosable_iface;
 }
 
-bool __cdecl platform_type_Equals_Object(void *this, void *object)
+bool __cdecl platform_type_Equals_Object(struct platform_type *this, struct platform_type *object)
 {
-    FIXME("(%p, %p) stub\n", this, object);
+    TRACE("(%p, %p)\n", this, object);
 
-    return false;
+    return this == object || (this && object && this->desc == object->desc);
 }
 
-int __cdecl platform_type_GetTypeCode(void *this)
+int __cdecl platform_type_GetTypeCode(struct platform_type *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
 
-    return 0;
+    return this->desc->type_id;
 }
 
-HSTRING __cdecl platform_type_ToString(void *this)
+HSTRING __cdecl platform_type_ToString(struct platform_type *this)
 {
-    FIXME("(%p) stub\n", this);
+    HSTRING str = NULL;
+    HRESULT hr;
 
-    return NULL;
+    TRACE("(%p)\n", this);
+
+    /* TODO: Throw a COMException if this fails */
+    hr = WindowsCreateString(this->desc->name, this->desc->name ? wcslen(this->desc->name) : 0, &str);
+    if (FAILED(hr))
+        FIXME("WindowsCreateString failed: %#lx\n", hr);
+    return str;
 }
 
-HSTRING __cdecl platform_type_get_FullName(void *type)
+HSTRING __cdecl platform_type_get_FullName(struct platform_type *type)
 {
-    FIXME("(%p) stub\n", type);
+    TRACE("(%p)\n", type);
 
-    return NULL;
+    return platform_type_ToString(type);
 }

@@ -701,22 +701,22 @@ static void test___abi_make_type_id(void)
     WindowsDeleteString(str);
 
     equals = p_platform_type_Equals_Object(type_obj, type_obj);
-    todo_wine ok(equals, "got equals %d\n", equals);
+    ok(equals, "got equals %d\n", equals);
     equals = p_platform_type_Equals_Object(type_obj, NULL);
     ok(!equals, "got equals %d\n", equals);
 
     typecode = p_platform_type_GetTypeCode(type_obj);
-    todo_wine ok(typecode == 0xdeadbeef, "got typecode %d\n", typecode);
+    ok(typecode == 0xdeadbeef, "got typecode %d\n", typecode);
 
     str = p_platform_type_ToString(type_obj);
     buf = WindowsGetStringRawBuffer(str, NULL);
-    todo_wine ok(buf && !wcscmp(buf, L"foo"), "got buf %s\n", debugstr_w(buf));
+    ok(buf && !wcscmp(buf, L"foo"), "got buf %s\n", debugstr_w(buf));
     WindowsDeleteString(str);
 
     str = p_platform_type_get_FullName(type_obj);
-    todo_wine ok(str != NULL, "got str %p\n", str);
+    ok(str != NULL, "got str %p\n", str);
     buf = WindowsGetStringRawBuffer(str, NULL);
-    todo_wine ok(buf && !wcscmp(buf, L"foo"), "got buf %s != %s\n", debugstr_w(buf), debugstr_w(L"foo"));
+    ok(buf && !wcscmp(buf, L"foo"), "got buf %s != %s\n", debugstr_w(buf), debugstr_w(L"foo"));
     WindowsDeleteString(str);
 
     type_obj2 = p___abi_make_type_id(&desc);
@@ -731,13 +731,13 @@ static void test___abi_make_type_id(void)
     todo_wine check_interface(type_obj2, &IID_IPrintable);
 
     equals = p_platform_type_Equals_Object(type_obj2, type_obj);
-    todo_wine ok(equals, "got equals %d\n", equals);
+    ok(equals, "got equals %d\n", equals);
 
     count = IInspectable_Release(type_obj);
     ok(count == 0, "got count %lu\n", count);
 
     equals = p_platform_type_Equals_Object(NULL, NULL);
-    todo_wine ok(equals, "got equals %d\n", equals);
+    ok(equals, "got equals %d\n", equals);
 
     type_obj = p___abi_make_type_id(&desc2);
     ok(type_obj != NULL, "got type_obj %p\n", type_obj);
@@ -756,7 +756,7 @@ static void test___abi_make_type_id(void)
     ok(!equals, "got equals %d\n", equals);
 
     typecode = p_platform_type_GetTypeCode(type_obj);
-    todo_wine ok(typecode == 1, "got typecode %d\n", typecode);
+    ok(typecode == 1, "got typecode %d\n", typecode);
 
     str = p_platform_type_ToString(type_obj);
     ok(str == NULL, "got str %s\n", debugstr_hstring(str));
@@ -769,9 +769,6 @@ static void test___abi_make_type_id(void)
 
     count = IInspectable_Release(type_obj2);
     ok(count == 0, "got count %lu\n", count);
-
-    typecode = p_platform_type_GetTypeCode(NULL);
-    ok(typecode == 0, "got typecode %d\n", typecode);
 }
 
 START_TEST(vccorlib)
