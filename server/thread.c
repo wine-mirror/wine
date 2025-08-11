@@ -418,6 +418,7 @@ static inline void init_thread_structure( struct thread *thread )
     thread->base_priority   = 0;
     thread->suspend         = 0;
     thread->dbg_hidden      = 0;
+    thread->bypass_proc_suspend = 0;
     thread->desktop_users   = 0;
     thread->token           = NULL;
     thread->desc            = NULL;
@@ -438,7 +439,8 @@ static inline void init_thread_structure( struct thread *thread )
 
 static inline int is_thread_suspended( struct thread *thread )
 {
-    return (thread->suspend + thread->process->suspend > 0);
+    if (thread->suspend) return 1;
+    return !thread->bypass_proc_suspend && thread->process->suspend;
 }
 
 /* check if address looks valid for a client-side data structure (TEB etc.) */
@@ -1651,6 +1653,7 @@ DECL_HANDLER(new_thread)
         thread->system_regs = current->system_regs;
         if (req->flags & THREAD_CREATE_FLAGS_CREATE_SUSPENDED) thread->suspend++;
         thread->dbg_hidden = !!(req->flags & THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER);
+        thread->bypass_proc_suspend = !!(req->flags & THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE);
         reply->tid = get_thread_id( thread );
         if ((reply->handle = alloc_handle_no_access_check( current->process, thread,
                                                            req->access, objattr->attributes )))

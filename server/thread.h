@@ -86,6 +86,7 @@ struct thread
     int                    base_priority; /* base priority level (relative to process base priority class) */
     int                    suspend;       /* suspend count */
     int                    dbg_hidden;    /* hidden from debugger */
+    int                    bypass_proc_suspend; /* will still run if the process is suspended */
     obj_handle_t           desktop;       /* desktop handle */
     int                    desktop_users; /* number of objects using the thread desktop */
     timeout_t              creation_time; /* Thread creation time */
