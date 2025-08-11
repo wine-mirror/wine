@@ -541,8 +541,9 @@ sub generate_wrapper_declaration($$$)
     my $ret = "extern " . get_func_ret( $func, 0 );
     my $decl_args = get_func_args( $func, 0 );
     $ret .= $is_wow64 ? " wow64_" : " wrap_";
-    $ret .= "$name( TEB *teb";
-    $ret .= " ,$decl_args" unless $decl_args eq "void";
+    $ret .= "$name( TEB *teb,";
+    $ret .= $decl_args unless $decl_args eq "void";
+    $ret =~ s/,$/ /;
     $ret .= ");\n";
     return $ret;
 }
