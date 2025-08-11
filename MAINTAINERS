@@ -83,6 +83,7 @@ F:	dlls/d3d8/
 F:	dlls/d3d9/
 F:	dlls/d3drm/
 F:	dlls/ddraw*/
+F:	dlls/dxcore/
 F:	dlls/dxgi/
 F:	dlls/wined3d/
 
