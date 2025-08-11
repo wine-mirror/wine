@@ -4530,13 +4530,99 @@ char *WINAPI IPHLP_if_indextoname( NET_IFINDEX index, char *name )
     return name;
 }
 
+static void fill_ip_interface_table_row( ADDRESS_FAMILY fam, MIB_IPINTERFACE_ROW *row, struct nsi_ip_interface_key *key,
+                                         struct nsi_ip_interface_rw *rw, struct nsi_ip_interface_dynamic *dyn )
+{
+    row->Family = fam;
+    row->InterfaceLuid = key->luid;
+    row->InterfaceIndex = dyn->if_index;
+    row->RouterDiscoveryBehavior = rw->router_discovery_behaviour;
+    row->DadTransmits = rw->dad_transmits;
+    row->BaseReachableTime = rw->base_reachable_time;
+    row->RetransmitTime = rw->retransmit_time;
+    row->PathMtuDiscoveryTimeout = rw->path_mtu_discovery_timeout;
+    row->LinkLocalAddressBehavior = rw->link_local_address_behavior;
+    row->LinkLocalAddressTimeout = rw->link_local_address_timeout;
+    memcpy( row->ZoneIndices, rw->zone_indices, sizeof(row->ZoneIndices) );
+    row->SitePrefixLength = rw->site_prefix_len;
+    row->Metric = rw->metric;
+    row->NlMtu = rw->mtu;
+    row->Connected = dyn->connected;
+    row->SupportsWakeUpPatterns = dyn->supports_wakeup_patterns;
+    row->ReachableTime = dyn->reachable_time;
+    row->TransmitOffload = dyn->transmit_offload;
+
+    /* MinRouterAdvertisementInterval / MaxRouterAdvertisementInterval don't seem to have an
+     * entry in NSI interface table, or maybe these fields are usually default and NSI tables have 0 in that case
+     * and thus weren't discovered. */
+    row->MinRouterAdvertisementInterval = 200;
+    row->MaxRouterAdvertisementInterval = 600;
+
+    /* Flags exact locations were not yet discovered in NSI table. */
+    row->UseAutomaticMetric = 1;
+    row->UseNeighborUnreachabilityDetection = 1;
+    row->SupportsNeighborDiscovery = 1;
+    row->SupportsRouterDiscovery = 1;
+}
+
 /******************************************************************
  *    GetIpInterfaceTable (IPHLPAPI.@)
  */
-DWORD WINAPI GetIpInterfaceTable(ADDRESS_FAMILY family, PMIB_IPINTERFACE_TABLE *table)
+DWORD WINAPI GetIpInterfaceTable( ADDRESS_FAMILY family, MIB_IPINTERFACE_TABLE **table )
 {
-    FIXME("(%u %p): stub\n", family, table);
-    return ERROR_NOT_SUPPORTED;
+    struct nsi_ip_interface_dynamic *dyn;
+    struct nsi_ip_interface_key *keys;
+    DWORD err, count, total_count = 0;
+    MIB_IPINTERFACE_TABLE *new_alloc;
+    struct nsi_ip_interface_rw *rw;
+    ADDRESS_FAMILY fam[3] = { 0 };
+    unsigned int i, family_idx;
+
+    TRACE( "(%u %p).\n", family, table );
+
+    if (!table) return ERROR_INVALID_PARAMETER;
+
+    if (family == AF_UNSPEC)
+    {
+        fam[0] = AF_INET;
+        fam[1] = AF_INET6;
+    }
+    else fam[0] = family;
+
+    *table = NULL;
+    for (family_idx = 0; fam[family_idx]; ++family_idx)
+    {
+        err = NsiAllocateAndGetTable( 1, ip_module_id( fam[family_idx] ), NSI_IP_INTERFACE_TABLE,
+                                      (void **)&keys, sizeof(*keys), (void **)&rw, sizeof(*rw),
+                                      (void **)&dyn, sizeof(*dyn), NULL, 0, &count, 0 );
+        if (err)
+        {
+            heap_free( *table );
+            return err;
+        }
+        total_count += count;
+        new_alloc = heap_alloc_zero( offsetof(MIB_IPINTERFACE_TABLE, Table[total_count]) );
+        if (!new_alloc)
+        {
+            heap_free( *table );
+            NsiFreeTable( keys, rw, dyn, NULL );
+            return ERROR_NOT_ENOUGH_MEMORY;
+        }
+        if (*table)
+        {
+            memcpy( new_alloc, *table, offsetof(MIB_IPINTERFACE_TABLE, Table[(*table)->NumEntries]) );
+            free( *table );
+        }
+        *table = new_alloc;
+        for (i = 0; i < count; ++i)
+        {
+            fill_ip_interface_table_row( fam[family_idx], &(*table)->Table[(*table)->NumEntries],
+                                         &keys[i], &rw[i], &dyn[i] );
+            ++(*table)->NumEntries;
+        }
+        NsiFreeTable( keys, rw, dyn, NULL );
+    }
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************

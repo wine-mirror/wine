@@ -67,6 +67,7 @@ static DWORD (WINAPI *pParseNetworkString)(const WCHAR*,DWORD,NET_ADDRESS_INFO*,
 static DWORD (WINAPI *pNotifyUnicastIpAddressChange)(ADDRESS_FAMILY, PUNICAST_IPADDRESS_CHANGE_CALLBACK,
                                                 PVOID, BOOLEAN, HANDLE *);
 static DWORD (WINAPI *pCancelMibChangeNotify2)(HANDLE);
+static DWORD (WINAPI *pGetIpInterfaceTable)(ADDRESS_FAMILY family, MIB_IPINTERFACE_TABLE **table);
 
 DWORD WINAPI ConvertGuidToStringA( const GUID *, char *, DWORD );
 DWORD WINAPI ConvertGuidToStringW( const GUID *, WCHAR *, DWORD );
@@ -88,6 +89,7 @@ static void loadIPHlpApi(void)
     pParseNetworkString = (void *)GetProcAddress(hLibrary, "ParseNetworkString");
     pNotifyUnicastIpAddressChange = (void *)GetProcAddress(hLibrary, "NotifyUnicastIpAddressChange");
     pCancelMibChangeNotify2 = (void *)GetProcAddress(hLibrary, "CancelMibChangeNotify2");
+    pGetIpInterfaceTable = (void *)GetProcAddress(hLibrary, "GetIpInterfaceTable");
   }
 }
 
@@ -3106,6 +3108,62 @@ static void test_compartments(void)
     ok(id == NET_IF_COMPARTMENT_ID_PRIMARY, "got %u\n", id);
 }
 
+static void test_GetIpInterfaceTable(void)
+{
+    MIB_IPINTERFACE_TABLE *table;
+    MIB_IF_ROW2 *if_info = NULL;
+    MIB_IPINTERFACE_ROW *row;
+    MIB_IF_TABLE2 *if_table;
+    unsigned int i, j;
+    BOOL connected, is_loopback, loopback_found = FALSE;
+    DWORD err;
+
+    if (!pGetIpInterfaceTable)
+    {
+        win_skip( "GetIpInterfaceTable is not available\n" );
+        return;
+    }
+
+    err = GetIfTable2( &if_table );
+    ok( !err, "got %ld\n", err );
+
+    err = pGetIpInterfaceTable( AF_UNSPEC, NULL );
+    ok( err == ERROR_INVALID_PARAMETER, "got %lu.\n", err );
+
+    err = pGetIpInterfaceTable( AF_UNSPEC, &table );
+    ok( !err, "got %lu.\n", err );
+    for (i = 0; i < table->NumEntries; ++i)
+    {
+        row = &table->Table[i];
+        ok( row->Family == AF_INET || row->Family == AF_INET6, "got %d.\n", row->Family );
+        for (j = 0; j < if_table->NumEntries; ++j)
+        {
+            if_info = &if_table->Table[j];
+            if (if_info->InterfaceIndex == row->InterfaceIndex) break;
+        }
+        ok( j < if_table->NumEntries, "could not find interface.\n" );
+        ok( row->InterfaceLuid.Value == if_info->InterfaceLuid.Value, "luid doesn't match.\n" );
+        is_loopback = (if_info->Type == IF_TYPE_SOFTWARE_LOOPBACK);
+        if (is_loopback) loopback_found = TRUE;
+        if (row->Family == AF_INET)
+            ok( row->SitePrefixLength == 64, "got %lu.\n", row->SitePrefixLength );
+        if (is_loopback)
+        {
+            ok( !row->DadTransmits, "got %lu.\n", row->DadTransmits );
+            ok( row->SitePrefixLength == 64, "got %lu.\n", row->SitePrefixLength );
+        }
+        ok( row->MinRouterAdvertisementInterval == 200, "got %lu.\n", row->MinRouterAdvertisementInterval );
+        ok( row->MaxRouterAdvertisementInterval == 600, "got %lu.\n", row->MaxRouterAdvertisementInterval );
+        if (is_loopback)
+            todo_wine ok( row->NlMtu == ~0u, "got %lu.\n", row->NlMtu );
+        connected = (if_info->MediaConnectState == MediaConnectStateConnected);
+        ok( row->Connected == connected, "got %d, expected %d.\n", row->Connected, connected );
+    }
+    ok( loopback_found, "loopback not found.\n" );
+    FreeMibTable( table );
+    FreeMibTable( if_table );
+}
+
 START_TEST(iphlpapi)
 {
   WSADATA wsa_data;
@@ -3147,6 +3205,7 @@ START_TEST(iphlpapi)
     test_NotifyUnicastIpAddressChange();
     test_ConvertGuidToString();
     test_compartments();
+    test_GetIpInterfaceTable();
     freeIPHlpApi();
   }
 
