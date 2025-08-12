@@ -573,6 +573,15 @@ struct ip_hdr
     ULONG daddr;
 };
 
+struct ipv6_pseudo_header
+{
+    struct in6_addr src;
+    struct in6_addr dst;
+    UINT32 next_len; /* incapsulated packet length in network byte order */
+    BYTE zero[3];
+    BYTE next_header;
+};
+
 struct icmp_hdr
 {
     BYTE type;
@@ -625,6 +634,60 @@ static unsigned short chksum( BYTE *data, unsigned int count, unsigned int sum )
     return check;
 }
 
+static void set_ipv6_addr_from_pktinfo( struct msghdr *hdr, struct in6_addr *addr )
+{
+#ifdef IPV6_PKTINFO
+    struct in6_pktinfo *info;
+    struct cmsghdr *cmsg;
+
+    for (cmsg = CMSG_FIRSTHDR( hdr ); cmsg; cmsg = CMSG_NXTHDR( hdr, cmsg ))
+    {
+        if (cmsg->cmsg_level != IPPROTO_IPV6) continue;
+        if (cmsg->cmsg_type != IPV6_PKTINFO) continue;
+        info = (struct in6_pktinfo *)CMSG_DATA( cmsg );
+        *addr = info->ipi6_addr;
+        return;
+    }
+#endif
+}
+
+static ssize_t fixup_icmpv6_over_dgram( struct msghdr *hdr, void *buf, union unix_sockaddr *unix_addr,
+                                      HANDLE handle, ssize_t recv_len )
+{
+    struct ipv6_pseudo_header ip_h;
+    struct icmp_hdr *icmp_h = buf;
+    unsigned int fixup_status;
+    unsigned int sum;
+
+    if (recv_len < sizeof(*icmp_h)) return recv_len;
+
+    SERVER_START_REQ( socket_get_icmp_id )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        req->icmp_seq = icmp_h->un.echo.sequence;
+        if (!(fixup_status = wine_server_call( req )))
+            icmp_h->un.echo.id = reply->icmp_id;
+    }
+    SERVER_END_REQ;
+
+    if (fixup_status)
+    {
+        WARN( "socket_get_icmp_id returned %#x.\n", fixup_status );
+        return recv_len;
+    }
+
+    memset( &ip_h, 0, sizeof(ip_h) );
+    ip_h.src = unix_addr->in6.sin6_addr;
+    set_ipv6_addr_from_pktinfo( hdr, &ip_h.dst );
+    ip_h.next_len = htonl( recv_len );
+    ip_h.next_header = IPPROTO_ICMPV6;
+    sum = chksum_add( (BYTE *)&ip_h, sizeof(ip_h), 0 );
+    icmp_h->checksum = 0;
+    icmp_h->checksum = chksum( (BYTE *)icmp_h, recv_len, sum );
+
+    return recv_len;
+}
+
 static ssize_t fixup_icmp_over_dgram( struct msghdr *hdr, union unix_sockaddr *unix_addr,
                                       HANDLE handle, ssize_t recv_len, NTSTATUS *status )
 {
@@ -644,6 +707,9 @@ static ssize_t fixup_icmp_over_dgram( struct msghdr *hdr, union unix_sockaddr *u
 
     buf = hdr->msg_iov[0].iov_base;
     buf_len = hdr->msg_iov[0].iov_len;
+
+    if (unix_addr->addr.sa_family == AF_INET6)
+        return fixup_icmpv6_over_dgram( hdr, buf, unix_addr, handle, recv_len );
 
     if (recv_len + sizeof(ip_h) > buf_len)
         *status = STATUS_BUFFER_OVERFLOW;
@@ -836,7 +902,7 @@ static BOOL is_icmp_over_dgram( int fd )
     int val;
 
     len = sizeof(val);
-    if (getsockopt( fd, SOL_SOCKET, SO_PROTOCOL, (char *)&val, &len ) || val != IPPROTO_ICMP)
+    if (getsockopt( fd, SOL_SOCKET, SO_PROTOCOL, (char *)&val, &len ) || (val != IPPROTO_ICMP && val != IPPROTO_ICMPV6))
         return FALSE;
 
     len = sizeof(val);

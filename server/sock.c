@@ -1876,6 +1876,7 @@ static int get_unix_protocol( int family, int protocol )
     switch (protocol)
     {
         case WS_IPPROTO_ICMP: return IPPROTO_ICMP;
+        case WS_IPPROTO_ICMPV6: return IPPROTO_ICMPV6;
         case WS_IPPROTO_IGMP: return IPPROTO_IGMP;
         case WS_IPPROTO_IP: return IPPROTO_IP;
         case WS_IPPROTO_IPV4: return IPPROTO_IPIP;
@@ -1947,19 +1948,28 @@ static int init_socket( struct sock *sock, int family, int type, int protocol )
     }
 
     sockfd = socket( unix_family, unix_type, unix_protocol );
-
 #ifdef linux
-    if (sockfd == -1 && errno == EPERM && unix_family == AF_INET
-        && unix_type == SOCK_RAW && unix_protocol == IPPROTO_ICMP)
+    if (sockfd == -1 && errno == EPERM && unix_type == SOCK_RAW
+        && ((unix_family == AF_INET && unix_protocol == IPPROTO_ICMP)
+            || (unix_family == AF_INET6 && unix_protocol == IPPROTO_ICMPV6)))
     {
         sockfd = socket( unix_family, SOCK_DGRAM, unix_protocol );
         if (sockfd != -1)
         {
             const int val = 1;
 
-            setsockopt( sockfd, IPPROTO_IP, IP_RECVTTL, (const char *)&val, sizeof(val) );
-            setsockopt( sockfd, IPPROTO_IP, IP_RECVTOS, (const char *)&val, sizeof(val) );
-            setsockopt( sockfd, IPPROTO_IP, IP_PKTINFO, (const char *)&val, sizeof(val) );
+            if (unix_family == AF_INET6)
+            {
+#ifdef IPV6_RECVPKTINFO
+                setsockopt( sockfd, IPPROTO_IPV6, IPV6_RECVPKTINFO, (const char *)&val, sizeof(val) );
+#endif
+            }
+            else
+            {
+                setsockopt( sockfd, IPPROTO_IP, IP_RECVTTL, (const char *)&val, sizeof(val) );
+                setsockopt( sockfd, IPPROTO_IP, IP_RECVTOS, (const char *)&val, sizeof(val) );
+                setsockopt( sockfd, IPPROTO_IP, IP_PKTINFO, (const char *)&val, sizeof(val) );
+            }
         }
     }
 #endif
