@@ -2171,7 +2171,7 @@ static UINT make_deprecated_value( const attr_t *attr, BYTE **ret_buf )
     const char *text = expr->ref->u.sval;
     const char *kind = expr->u.ext->u.sval;
     BYTE encoded[4];
-    UINT len, len_text = strlen( text ), len_encoded = encode_int( len_text, encoded );
+    UINT len, version, len_text = strlen( text ), len_encoded = encode_int( len_text, encoded );
     BYTE *buf = xmalloc( 2 + len_encoded + len_text + 6 + MAX_NAME + 5 );
     char *contract;
 
@@ -2184,11 +2184,11 @@ static UINT make_deprecated_value( const attr_t *attr, BYTE **ret_buf )
     if (!strcmp( kind, "remove" )) memcpy( buf + len, one, sizeof(one) );
     else memcpy( buf + len, zero, sizeof(zero) );
     len += 4;
-    buf[len++] = 0;
-    buf[len++] = 0;
 
-    buf[len++] = 1;
-    buf[len++] = 0;
+    version = expr->ext2->ref->u.integer.value;
+    memcpy( buf + len, &version, sizeof(version) );
+    len += sizeof(version);
+
     contract = format_namespace( type->namespace, "", ".", type->name, NULL );
     len_text = strlen( contract );
     buf[len++] = len_text;
