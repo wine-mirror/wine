@@ -596,8 +596,8 @@ marshaling_behavior:
 	;
 
 contract_ver:
-	  aNUM					{ $$ = make_version( 0, $1.value ); }
-	| aNUM '.' aNUM				{ $$ = make_version( $3.value, $1.value ); }
+	  aNUM					{ $$ = make_version( $1.value, 0 ); }
+	| aNUM '.' aNUM				{ $$ = make_version( $1.value, $3.value ); }
 	;
 
 contract_req
