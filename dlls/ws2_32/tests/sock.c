@@ -14096,6 +14096,83 @@ static void test_icmp(void)
     closesocket(s);
 }
 
+struct ipv6_pseudo_header
+{
+    struct in6_addr src;
+    struct in6_addr dst;
+    UINT32 next_len; /* incapsulated packet length in network byte order */
+    BYTE zero[3];
+    BYTE next_header;
+};
+
+static void test_icmpv6(void)
+{
+    static const unsigned int ping_data = 0xdeadbeef;
+
+    BYTE send_buf[sizeof(struct icmp_hdr) + sizeof(ping_data)];
+    struct ipv6_pseudo_header *ip_h;
+    UINT16 recv_checksum, checksum;
+    struct icmp_hdr *icmp_h;
+    unsigned int reply_data;
+    struct sockaddr_in6 sa;
+    BYTE chksum_buf[256];
+    BYTE recv_buf[256];
+    SOCKET s;
+    int ret;
+
+    s = WSASocketA(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6, NULL, 0, 0);
+    if (s == INVALID_SOCKET)
+    {
+        ret = WSAGetLastError();
+        ok(ret == WSAEACCES, "Expected 10013, received %d\n", ret);
+        skip("SOCK_RAW is not supported\n");
+        return;
+    }
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sin6_family = AF_INET6;
+    ret = inet_pton( AF_INET6, "::1", &sa.sin6_addr);
+    ok(ret, "got error %u.\n", WSAGetLastError());
+
+    icmp_h = (struct icmp_hdr *)send_buf;
+    icmp_h->type = ICMP6_ECHO_REQUEST;
+    icmp_h->code = 0;
+    icmp_h->checksum = 0;
+    icmp_h->un.echo.id = 0xbeaf; /* will be overwritten for linux ping socks */
+    icmp_h->un.echo.sequence = 2;
+    *(unsigned int *)(icmp_h + 1) = ping_data;
+    icmp_h->checksum = 0;
+
+    ret = sendto(s, (char *)send_buf, sizeof(send_buf), 0, (struct sockaddr*)&sa, sizeof(sa));
+    ok(ret != SOCKET_ERROR, "got error %d.\n", WSAGetLastError());
+    memset(recv_buf, 0xcc, sizeof(recv_buf));
+    ret = recv(s, (char *)recv_buf, sizeof(recv_buf), 0);
+    ok(ret == sizeof(send_buf), "got %d\n", ret);
+
+    icmp_h = (struct icmp_hdr *)recv_buf;
+    reply_data = *(unsigned int *)(icmp_h + 1);
+
+    ok(icmp_h->type == ICMP6_ECHO_REPLY, "got type %#x.\n", icmp_h->type);
+    ok(!icmp_h->code, "got code %#x.\n", icmp_h->code);
+    ok(icmp_h->un.echo.id == 0xbeaf, "got echo id %#x.\n", icmp_h->un.echo.id);
+    ok(icmp_h->un.echo.sequence == 2, "got echo sequence %#x.\n", icmp_h->un.echo.sequence);
+
+    recv_checksum = icmp_h->checksum;
+    ip_h = (struct ipv6_pseudo_header *)chksum_buf;
+    memset(ip_h, 0, sizeof(*ip_h));
+    ip_h->dst = sa.sin6_addr;
+    ip_h->src = sa.sin6_addr;
+    ip_h->next_len = htonl(sizeof(send_buf));
+    ip_h->next_header = IPPROTO_ICMPV6;
+    icmp_h->checksum = 0;
+    memcpy(ip_h + 1, icmp_h, sizeof(send_buf));
+    checksum = chksum((BYTE *)ip_h, sizeof(*ip_h) + sizeof(send_buf));
+    ok(recv_checksum == checksum, "got checksum %#x, expected %#x.\n", recv_checksum, checksum);
+    ok(reply_data == ping_data, "got reply_data %#x.\n", reply_data);
+
+    closesocket(s);
+}
+
 static void test_connect_time(void)
 {
     struct sockaddr_in addr = {.sin_family = AF_INET, .sin_addr.s_addr = htonl(INADDR_LOOPBACK)};
@@ -14601,6 +14678,7 @@ START_TEST( sock )
     test_timeout();
     test_tcp_reset();
     test_icmp();
+    test_icmpv6();
     test_connect_udp();
     test_tcp_sendto_recvfrom();
     test_broadcast();
