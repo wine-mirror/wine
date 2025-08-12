@@ -588,12 +588,12 @@ struct icmp_hdr
     } un;
 };
 
-/* rfc 1071 checksum */
-static unsigned short chksum(BYTE *data, unsigned int count)
+static unsigned int chksum_add( BYTE *data, unsigned int count, unsigned int sum )
 {
-    unsigned int sum = 0, carry = 0;
-    unsigned short check, s;
+    unsigned int carry = 0;
+    unsigned short s;
 
+    assert( !(count % 2) );
     while (count > 1)
     {
         s = *(unsigned short *)data;
@@ -604,9 +604,18 @@ static unsigned short chksum(BYTE *data, unsigned int count)
         count -= 2;
     }
     sum += carry; /* This won't produce another carry */
+    return sum;
+}
+
+/* rfc 1071 checksum */
+static unsigned short chksum( BYTE *data, unsigned int count, unsigned int sum )
+{
+    unsigned short check;
+
+    sum = chksum_add( data, count & ~1u, sum );
     sum = (sum & 0xffff) + (sum >> 16);
 
-    if (count) sum += *data; /* LE-only */
+    if (count % 2) sum += data[count - 1]; /* LE-only */
 
     sum = (sum & 0xffff) + (sum >> 16);
     /* fold in any carry */
@@ -700,10 +709,10 @@ static ssize_t fixup_icmp_over_dgram( struct msghdr *hdr, union unix_sockaddr *u
         if (!fixup_status)
         {
             icmp_h->checksum = 0;
-            icmp_h->checksum = chksum( (BYTE *)icmp_h, recv_len - sizeof(ip_h) );
+            icmp_h->checksum = chksum( (BYTE *)icmp_h, recv_len - sizeof(ip_h), 0 );
         }
     }
-    ip_h.checksum = chksum( (BYTE *)&ip_h, sizeof(ip_h) );
+    ip_h.checksum = chksum( (BYTE *)&ip_h, sizeof(ip_h), 0 );
     memcpy( buf, &ip_h, min( sizeof(ip_h), buf_len ));
 
     return recv_len;
