@@ -1835,15 +1835,17 @@ static void write_coclass_forward(FILE *header, type_t *cocl)
   fprintf(header, "#endif /* defined __%s_FWD_DEFINED__ */\n\n", cocl->name );
 }
 
-static void write_apicontract(FILE *header, type_t *apicontract)
+static void write_apicontract( FILE *header, type_t *apicontract )
 {
+    const version_t *version;
     char *name;
     if (apicontract->written) return;
     name = format_apicontract_macro( apicontract );
-    fprintf(header, "#if !defined(%s_VERSION)\n", name);
-    fprintf(header, "#define %s_VERSION %#x\n", name, get_attrv(apicontract->attrs, ATTR_CONTRACTVERSION));
-    fprintf(header, "#endif // defined(%s_VERSION)\n\n", name);
-    free(name);
+    version = get_attrp( apicontract->attrs, ATTR_CONTRACTVERSION );
+    fprintf( header, "#if !defined(%s_VERSION)\n", name );
+    fprintf( header, "#define %s_VERSION %#x\n", name, (version->major << 16 | version->minor) );
+    fprintf( header, "#endif // defined(%s_VERSION)\n\n", name );
+    free( name );
     apicontract->written = true;
 }
 
