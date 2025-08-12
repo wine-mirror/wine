@@ -1313,7 +1313,7 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp, sizeof(bmp_1bpp) - 1, NULL, &info, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
+    todo_wine ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp + 1, sizeof(bmp_1bpp) - 1, NULL, &info, NULL);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
@@ -1503,9 +1503,9 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     check_dds_dxt10_format(DXGI_FORMAT_B8G8R8X8_UNORM, DXGI_FORMAT_B8G8R8X8_UNORM, FALSE);
     check_dds_dxt10_format(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_B8G8R8A8_UNORM, FALSE);
     /* Formats unsupported on d3dx10, but now supported on d3dx11. */
-    check_dds_dxt10_format(DXGI_FORMAT_BC6H_UF16, DXGI_FORMAT_BC6H_UF16, FALSE);
-    check_dds_dxt10_format(DXGI_FORMAT_BC6H_SF16, DXGI_FORMAT_BC6H_SF16, FALSE);
-    check_dds_dxt10_format(DXGI_FORMAT_BC7_UNORM, DXGI_FORMAT_BC7_UNORM, FALSE);
+    todo_wine check_dds_dxt10_format(DXGI_FORMAT_BC6H_UF16, DXGI_FORMAT_BC6H_UF16, FALSE);
+    todo_wine check_dds_dxt10_format(DXGI_FORMAT_BC6H_SF16, DXGI_FORMAT_BC6H_SF16, FALSE);
+    todo_wine check_dds_dxt10_format(DXGI_FORMAT_BC7_UNORM, DXGI_FORMAT_BC7_UNORM, FALSE);
 }
 
 START_TEST(d3dx11)
@@ -1514,14 +1514,7 @@ START_TEST(d3dx11)
     test_D3DX11CreateAsyncFileLoader();
     test_D3DX11CreateAsyncResourceLoader();
     test_D3DX11CompileFromFile();
-    if (!strcmp(winetest_platform, "wine"))
-    {
-        skip("Skipping D3DX11GetImageInfoFromMemory() tests.\n");
-    }
-    else
-    {
-        test_D3DX11GetImageInfoFromMemory();
-        test_legacy_dds_header_image_info();
-        test_dxt10_dds_header_image_info();
-    }
+    test_D3DX11GetImageInfoFromMemory();
+    test_legacy_dds_header_image_info();
+    test_dxt10_dds_header_image_info();
 }
