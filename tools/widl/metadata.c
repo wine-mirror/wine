@@ -2618,18 +2618,6 @@ static void add_interface_type_step2( type_t *type )
     add_exclusiveto_attr_step2( type );
 }
 
-static UINT make_contractversion_value( const attr_t *attr, BYTE *buf )
-{
-    UINT version = attr ? attr->u.ival : 0, len = 2 + sizeof(version);
-
-    buf[0] = 1;
-    buf[1] = 0;
-    memcpy( buf + 2, &version, sizeof(version) );
-    buf[len++] = 0;
-    buf[len++] = 0;
-    return len;
-}
-
 static void add_contractversion_attr_step1( const type_t *type )
 {
     static const BYTE sig[] = { SIG_TYPE_HASTHIS, 1, ELEMENT_TYPE_VOID, ELEMENT_TYPE_U4 };
@@ -2656,7 +2644,7 @@ static void add_contractversion_attr_step2( const type_t *type )
 
     parent = has_customattribute( TABLE_TYPEDEF, type->md.def );
     attr_type = customattribute_type( TABLE_MEMBERREF, attr->md_member );
-    value_size = make_contractversion_value( attr, value );
+    value_size = make_version_value( attr, value );
     add_customattribute_row( parent, attr_type, add_blob(value, value_size) );
 }
 
