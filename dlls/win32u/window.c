@@ -129,8 +129,6 @@ static NTSTATUS get_shared_window( HANDLE handle, struct object_lock *lock, cons
     const shared_object_t *object;
     struct user_entry entry;
 
-    TRACE( "handle %p, lock %p, window_shm %p\n", handle, lock, window_shm );
-
     if (!get_user_entry( handle, NTUSER_OBJ_WINDOW, &entry, &handle )) return STATUS_INVALID_HANDLE;
 
     if (lock->id) object = CONTAINING_RECORD( *window_shm, shared_object_t, shm.window );
