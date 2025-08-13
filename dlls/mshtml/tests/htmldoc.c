@@ -47,6 +47,7 @@
 #include "exdispid.h"
 #include "mshtml_test.h"
 #include "mscoree.h"
+#include "exdisp.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(IID_IProxyManager,0x00000008,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
@@ -206,6 +207,8 @@ DEFINE_EXPECT(UpdateBackForwardState);
 DEFINE_EXPECT(FireBeforeNavigate2);
 DEFINE_EXPECT(FireNavigateComplete2);
 DEFINE_EXPECT(FireDocumentComplete);
+DEFINE_EXPECT(FireDownloadBegin);
+DEFINE_EXPECT(FireDownloadComplete);
 DEFINE_EXPECT(GetPendingUrl);
 DEFINE_EXPECT(ActiveElementChanged);
 DEFINE_EXPECT(IsErrorUrl);
@@ -240,6 +243,7 @@ static BOOL is_error_url;
 static BOOL is_mhtml;
 static int stream_read, protocol_read;
 static IStream *history_stream;
+static int documents_to_load;
 static enum load_state_t {
     LD_DOLOAD,
     LD_LOADING,
@@ -2854,9 +2858,12 @@ static HRESULT WINAPI DocHostUIHandler_TranslateUrl(IDocHostUIHandler2 *iface, D
     CHECK_EXPECT(TranslateUrl);
     ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     ok(!dwTranslate, "dwTranslate = %lx\n", dwTranslate);
-    todo_wine_if(loading_hash)
-        ok(!lstrcmpW(pchURLIn, nav_serv_url), "pchURLIn = %s, expected %s\n", wine_dbgstr_w(pchURLIn),
-           wine_dbgstr_w(nav_serv_url));
+    if (documents_to_load <= 1) /* FIXME */
+    {
+        todo_wine_if(loading_hash)
+            ok(!lstrcmpW(pchURLIn, nav_serv_url), "pchURLIn = %s, expected %s\n", wine_dbgstr_w(pchURLIn),
+               wine_dbgstr_w(nav_serv_url));
+    }
     ok(ppchURLOut != NULL, "ppchURLOut == NULL\n");
     ok(!*ppchURLOut, "*ppchURLOut = %p\n", *ppchURLOut);
 
@@ -3063,7 +3070,10 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             test_performance_timing(doc_unk, L"domComplete");
             readystate_set_loading = FALSE;
             readystate_set_interactive = FALSE;
-            load_state = LD_COMPLETE;
+            if (documents_to_load > 1)
+                load_state = LD_LOADING;
+            else
+                load_state = LD_COMPLETE;
             return S_OK;
         case OLECMDID_SETDOWNLOADSTATE:
             ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08lx\n", nCmdexecopt);
@@ -3176,6 +3186,9 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             load_state = loading_js ? LD_COMPLETE : LD_LOADING;
             return S_OK; /* TODO */
         }
+
+        case 65:
+            return E_NOTIMPL;
 
         case 67:
             CHECK_EXPECT(Exec_ShellDocView_67);
@@ -3704,8 +3717,13 @@ static HRESULT  WINAPI DocObjectService_FireBeforeNavigate2(IDocObjectService *i
 {
     CHECK_EXPECT(FireBeforeNavigate2);
 
-    ok(!pDispatch, "pDispatch = %p\n", pDispatch);
-    ok(!lstrcmpW(lpszUrl, nav_url), "lpszUrl = %s, expected %s\n", wine_dbgstr_w(lpszUrl), wine_dbgstr_w(nav_url));
+    if (documents_to_load > 1)
+        todo_wine ok(pDispatch != NULL, "pDispatch = %p\n", pDispatch);
+    else
+    {
+        ok(!pDispatch, "pDispatch = %p\n", pDispatch);
+        ok(!lstrcmpW(lpszUrl, nav_url), "lpszUrl = %s, expected %s\n", wine_dbgstr_w(lpszUrl), wine_dbgstr_w(nav_url)); /* FIXME */
+    }
     ok(dwFlags == 0x140 /* IE11*/ || dwFlags == 0x40 || !dwFlags || dwFlags == 0x50, "dwFlags = %lx\n", dwFlags);
     ok(!lpszFrameName, "lpszFrameName = %s\n", wine_dbgstr_w(lpszFrameName));
     if(!testing_submit) {
@@ -3721,7 +3739,8 @@ static HRESULT  WINAPI DocObjectService_FireBeforeNavigate2(IDocObjectService *i
            "lpszHeaders = %s\n", wine_dbgstr_w(lpszHeaders));
 
     }
-    ok(fPlayNavSound, "fPlayNavSound = %x\n", fPlayNavSound);
+    if (documents_to_load <= 1)
+        ok(fPlayNavSound, "fPlayNavSound = %x\n", fPlayNavSound);
     ok(pfCancel != NULL, "pfCancel = NULL\n");
     ok(!*pfCancel, "*pfCancel = %x\n", *pfCancel);
 
@@ -3733,17 +3752,29 @@ static HRESULT  WINAPI DocObjectService_FireNavigateComplete2(
         IHTMLWindow2 *pHTMLWindow2,
         DWORD dwFlags)
 {
+    IHTMLWindow2 *top_window = NULL, *self_window = NULL;
+
     CHECK_EXPECT(FireNavigateComplete2);
     test_readyState(NULL);
     test_navigation_type(doc_unk);
     test_performance_timing(doc_unk, L"domInteractive");
 
+    IHTMLWindow2_get_top(pHTMLWindow2, &top_window);
+    IHTMLWindow2_get_self(pHTMLWindow2, &self_window);
+
     if(loading_hash)
         ok(dwFlags == 0x10 || broken(!dwFlags), "dwFlags = %lx, expected 0x10\n", dwFlags);
+    else if (top_window == self_window && documents_to_load > 1)
+        ok(!dwFlags, "dwFlags = %lx\n", dwFlags);
+    else if (documents_to_load > 1)
+        ok(dwFlags == (navNoHistory | navNoReadFromCache), "dwFlags = %lx\n", dwFlags);
     else
         ok(!(dwFlags &~1), "dwFlags = %lx\n", dwFlags);
 
     ok(pHTMLWindow2 != NULL, "pHTMLWindow2 = NULL\n");
+
+    IHTMLWindow2_Release(top_window);
+    IHTMLWindow2_Release(self_window);
 
     return S_OK;
 }
@@ -3751,15 +3782,15 @@ static HRESULT  WINAPI DocObjectService_FireNavigateComplete2(
 static HRESULT  WINAPI DocObjectService_FireDownloadBegin(
         IDocObjectService* This)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(FireDownloadBegin);
+    return S_OK;
 }
 
 static HRESULT  WINAPI DocObjectService_FireDownloadComplete(
         IDocObjectService* This)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(FireDownloadComplete);
+    return S_OK;
 }
 
 static HRESULT  WINAPI DocObjectService_FireDocumentComplete(
@@ -3767,10 +3798,25 @@ static HRESULT  WINAPI DocObjectService_FireDocumentComplete(
         IHTMLWindow2 *pHTMLWindow,
         DWORD dwFlags)
 {
+    IHTMLWindow2 *top_window = NULL, *self_window = NULL;
+
     CHECK_EXPECT(FireDocumentComplete);
 
+    IHTMLWindow2_get_top(pHTMLWindow, &top_window);
+    IHTMLWindow2_get_self(pHTMLWindow, &self_window);
+
+    if (documents_to_load > 0)
+        documents_to_load--;
+
     ok(pHTMLWindow != NULL, "pHTMLWindow == NULL\n");
-    ok(!dwFlags, "dwFlags = %lx\n", dwFlags);
+
+    if (top_window != self_window)
+        ok(dwFlags == navNoHistory, "dwFlags = %lx\n", dwFlags);
+    else
+        ok(!dwFlags, "dwFlags = %lx\n", dwFlags);
+
+    IHTMLWindow2_Release(top_window);
+    IHTMLWindow2_Release(self_window);
 
     return S_OK;
 }
@@ -5622,7 +5668,7 @@ static void _test_readyState(unsigned line, IUnknown *unk)
         L"uninitialized"
     };
 
-    if(open_call || resetting_document)
+    if(open_call || resetting_document || documents_to_load > 1)
         return; /* FIXME */
 
     if(!unk)
@@ -5869,8 +5915,11 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         SET_EXPECT(GetContainer);
         SET_EXPECT(LockContainer);
     }
-    SET_EXPECT(OnChanged_READYSTATE);
-    SET_EXPECT(Invoke_OnReadyStateChange_Loading);
+    if (documents_to_load <= 1)
+    {
+        SET_EXPECT(OnChanged_READYSTATE);
+        SET_EXPECT(Invoke_OnReadyStateChange_Loading);
+    }
     SET_EXPECT(IsSystemMoniker);
     if(!is_mhtml && mon == &Moniker)
         SET_EXPECT(BindToStorage);
@@ -5924,8 +5973,11 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         CHECK_CALLED(LockContainer);
         container_locked = TRUE;
     }
-    CHECK_CALLED(OnChanged_READYSTATE);
-    CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
+    if (documents_to_load <= 1)
+    {
+        CHECK_CALLED(OnChanged_READYSTATE);
+        CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
+    }
     CLEAR_CALLED(IsSystemMoniker); /* IE7 */
     if(!is_mhtml && mon == &Moniker)
         CHECK_CALLED(BindToStorage);
@@ -5957,6 +6009,9 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         test_GetCurMoniker((IUnknown*)persist, NULL, L"mhtml:winetest:doc", FALSE);
 
     IBindCtx_Release(bind);
+
+    if (documents_to_load > 1)
+        load_state = LD_LOADING;
 
     test_readyState((IUnknown*)persist);
 }
@@ -8186,6 +8241,135 @@ static void test_mimeType(IHTMLDocument2 *doc, const WCHAR *content_type)
     SysFreeString(mime_type);
 }
 
+static BSTR get_res_url(const WCHAR *file)
+{
+    DWORD len;
+    BSTR bstr;
+    static const WCHAR res[] = { 'r','e','s',':','/','/' };
+    WCHAR url[INTERNET_MAX_URL_LENGTH];
+
+    memcpy(url, res, sizeof(res));
+    len = 6 + GetModuleFileNameW(NULL, url + ARRAY_SIZE(res), ARRAY_SIZE(url) - ARRAY_SIZE(res) - 1);
+    url[len++] = '/';
+    lstrcpynW(url + len, file, ARRAY_SIZE(url) - len);
+
+    bstr = SysAllocString(url);
+    return bstr;
+}
+
+/* Assumes interal document with external iframes */
+static void test_iframe_download(int flags)
+{
+    MSG msg;
+    DWORD start;
+    int total_documents = documents_to_load, total_iframes = total_documents - 1;
+    const DWORD timeout_ms = 3000;
+
+    if (!(flags & DWL_VERBDONE))
+        return;
+
+    expect_status_text = (LPWSTR)0xdeadbeef;
+
+    SET_EXPECT_N(Exec_MSHTML_PARSECOMPLETE, 1);
+    SET_EXPECT_N(Exec_HTTPEQUIV_DONE, total_documents);
+
+    SET_EXPECT(SetStatusText);
+    SET_EXPECT_N(GetDropTarget, 1);
+    SET_EXPECT_N(ActiveElementChanged, 1);
+    SET_EXPECT_N(IsErrorUrl, total_documents);
+
+    SET_EXPECT_N(Invoke_AMBIENT_SILENT, total_iframes);
+    SET_EXPECT_N(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED, total_iframes);
+    SET_EXPECT_N(TranslateUrl, total_iframes);
+
+    SET_EXPECT(Exec_SETPROGRESSMAX);
+    SET_EXPECT(Exec_SETPROGRESSPOS);
+    SET_EXPECT_N(Exec_SETDOWNLOADSTATE_1, 1);
+    SET_EXPECT_N(Exec_SETDOWNLOADSTATE_0, 1);
+    SET_EXPECT_N(Exec_ShellDocView_37, 1);
+    SET_EXPECT_N(Exec_SETTITLE, 1);
+
+    SET_EXPECT_N(Exec_Explorer_69, 2 * total_documents);
+    SET_EXPECT_N(EnableModeless_TRUE, 1); /* IE7 */
+    SET_EXPECT_N(Frame_EnableModeless_TRUE, 1); /* IE7 */
+    SET_EXPECT_N(EnableModeless_FALSE, 1); /* IE7 */
+    SET_EXPECT_N(Frame_EnableModeless_FALSE, 1); /* IE7 */
+
+    SET_EXPECT_N(FireDownloadBegin, total_iframes);
+    SET_EXPECT_N(FireDownloadComplete, total_iframes);
+
+    SET_EXPECT_N(FireBeforeNavigate2, total_iframes);
+    SET_EXPECT_N(FireNavigateComplete2, total_documents);
+    SET_EXPECT_N(FireDocumentComplete, total_documents);
+
+    /* WINE TODO */
+    SET_EXPECT(Exec_ShellDocView_103);
+
+    start = GetTickCount();
+    while(documents_to_load > 0 && GetMessageW(&msg, NULL, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+        if (GetTickCount() - start >= timeout_ms)
+        {
+            todo_wine ok(0, "Test timed out waiting for iframe completion.\n");
+            break;
+        }
+    }
+
+    todo_wine CHECK_CALLED_N(Exec_HTTPEQUIV_DONE, total_documents);
+
+    CHECK_CALLED(SetStatusText);
+    CHECK_CALLED_N(GetDropTarget, 1);
+    todo_wine CHECK_CALLED_N(ActiveElementChanged, 1);
+    todo_wine CHECK_CALLED_N(IsErrorUrl, total_documents);
+
+    todo_wine CHECK_CALLED_N(Invoke_AMBIENT_SILENT, total_iframes);
+    todo_wine CHECK_CALLED_N(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED, total_iframes);
+    todo_wine CHECK_CALLED_N(TranslateUrl, total_iframes);
+
+    CHECK_CALLED(Exec_SETPROGRESSMAX);
+    CHECK_CALLED(Exec_SETPROGRESSPOS);
+    CHECK_CALLED_N(Exec_SETDOWNLOADSTATE_1, 1);
+    CHECK_CALLED_N(Exec_SETDOWNLOADSTATE_0, 1);
+    todo_wine CHECK_CALLED_N(Exec_ShellDocView_37, 1);
+    CHECK_CALLED_N(Exec_SETTITLE, 1);
+
+    CLEAR_CALLED(Exec_Explorer_69);
+    CLEAR_CALLED(EnableModeless_TRUE); /* IE7 */
+    CLEAR_CALLED(Frame_EnableModeless_TRUE); /* IE7 */
+    CLEAR_CALLED(EnableModeless_FALSE); /* IE7 */
+    CLEAR_CALLED(Frame_EnableModeless_FALSE); /* IE7 */
+
+    todo_wine CHECK_CALLED_N(FireDownloadBegin, total_iframes);
+    todo_wine CHECK_CALLED_N(FireDownloadComplete, total_iframes);
+
+    todo_wine CHECK_CALLED_N(FireBeforeNavigate2, total_iframes);
+    todo_wine CHECK_CALLED_N(FireNavigateComplete2, total_documents);
+    todo_wine CHECK_CALLED_N(FireDocumentComplete, total_documents);
+
+    todo_wine CHECK_NOT_CALLED(Exec_ShellDocView_103);
+}
+
+static void test_iframe_load(IHTMLDocument2 *doc, const WCHAR *url)
+{
+    HRESULT hres;
+    IMoniker *mon;
+    BSTR moniker_url;
+
+    moniker_url = get_res_url(url);
+
+    hres = CreateURLMoniker(NULL, moniker_url, &mon);
+    ok(!hres, "Failed to create URL Moniker\n");
+    nav_serv_url = nav_url = moniker_url;
+
+    test_Persist(doc, mon);
+    IMoniker_Release(mon);
+
+    test_iframe_download(DWL_VERBDONE);
+    SysFreeString(moniker_url);
+}
+
 static void init_test(enum load_state_t ls) {
     doc_unk = NULL;
     doc_hwnd = last_hwnd = NULL;
@@ -8203,6 +8387,37 @@ static void init_test(enum load_state_t ls) {
     testing_submit = FALSE;
     expect_uihandler_iface = &DocHostUIHandler;
     is_mhtml = FALSE;
+    documents_to_load = 1;
+}
+
+static void test_iframes(void)
+{
+    IHTMLDocument2 *doc;
+    IOleObject *oleobj;
+    HRESULT hres;
+
+    init_test(LD_DOLOAD);
+    doc = create_document();
+    doc_unk = (IUnknown*)doc;
+    support_wbapp = TRUE;
+    documents_to_load = 3;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
+    ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08lx\n", hres);
+    test_ClientSite(oleobj, CLIENTSITE_EXPECTPATH);
+    test_DoVerb(oleobj);
+    IOleObject_Release(oleobj);
+
+    test_iframe_load(doc, L"event_iframe.html");
+
+    test_InPlaceDeactivate(doc, TRUE);
+    test_Close(doc, TRUE);
+
+    if (view)
+        IOleDocumentView_Release(view);
+    view = NULL;
+
+    release_document(doc);
 }
 
 static void test_HTMLDocument(BOOL do_load, BOOL mime)
@@ -9631,6 +9846,7 @@ START_TEST(htmldoc)
     test_HTMLDoc_ISupportErrorInfo();
     test_ServiceProvider();
     test_com_aggregation(&CLSID_HTMLDocument);
+    test_iframes();
 
     DestroyWindow(container_hwnd);
     CoUninitialize();

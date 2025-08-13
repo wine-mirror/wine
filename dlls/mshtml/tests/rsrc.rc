@@ -91,6 +91,9 @@ iframe.html HTML "iframe.html"
 /* @makedep: xhr_iframe.html */
 xhr_iframe.html HTML "xhr_iframe.html"
 
+/* @makedep: event_iframe.html */
+event_iframe.html HTML "event_iframe.html"
+
 /* @makedep: utf8.css */
 utf8.css HTML "utf8.css"
 
