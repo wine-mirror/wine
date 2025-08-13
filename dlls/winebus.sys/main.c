@@ -41,6 +41,9 @@
 
 #include "unixlib.h"
 
+#include "initguid.h"
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
 
 static DRIVER_OBJECT *driver_obj;
@@ -81,6 +84,7 @@ struct device_extension
     enum device_state state;
 
     struct device_desc desc;
+    GUID container_id;
     DWORD index;
 
     BYTE *report_desc;
@@ -279,6 +283,24 @@ static WCHAR *get_device_text(DEVICE_OBJECT *device)
     return dst;
 }
 
+#define GUID_STRING_LENGTH 39
+static WCHAR *get_container_id(DEVICE_OBJECT *device)
+{
+    struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
+    GUID *guid = &ext->container_id;
+    WCHAR *dst;
+
+    if ((dst = ExAllocatePool(PagedPool, GUID_STRING_LENGTH * sizeof(WCHAR))))
+    {
+        swprintf(dst, GUID_STRING_LENGTH, L"{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+                guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+                guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+    }
+
+    TRACE("Returning container ID %s.\n", debugstr_w(dst));
+    return dst;
+}
+
 static IRP *pop_pending_read(struct device_extension *ext)
 {
     IRP *pending;
@@ -314,6 +336,22 @@ static void make_unique_serial(struct device_extension *device)
 
     swprintf(device->desc.serialnumber, ARRAY_SIZE(device->desc.serialnumber), L"%04x%08x%04x%04x",
              device->index, device->desc.input, device->desc.pid, device->desc.vid);
+}
+
+static void make_unique_container_id(struct device_extension *device)
+{
+    struct device_extension *ext;
+    LARGE_INTEGER ticks;
+
+    LIST_FOR_EACH_ENTRY(ext, &device_list, struct device_extension, entry)
+        if (IsEqualGUID(&device->container_id, &ext->container_id)) break;
+    if (&ext->entry == &device_list && !IsEqualGUID(&device->container_id, &GUID_NULL)) return;
+
+    device->container_id.Data1 = MAKELONG(device->desc.vid, device->desc.pid);
+    device->container_id.Data2 = device->index;
+    device->container_id.Data3 = device->desc.input;
+    QueryPerformanceCounter(&ticks);
+    memcpy(device->container_id.Data4, &ticks.QuadPart, sizeof(device->container_id.Data4));
 }
 
 static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 unix_device)
@@ -363,6 +401,13 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 uni
     /* Overcooked! All You Can Eat only adds controllers with unique serial numbers
      * Prefer keeping serial numbers unique over keeping them consistent across runs */
     make_unique_serial(ext);
+
+    /*
+     * Some games use container ID to match the bus device to the HID
+     * device in order to get things like DEVPKEY_Device_BusReportedDeviceDesc.
+     * Create a unique container ID to facilitate this.
+     */
+    make_unique_container_id(ext);
 
     /* add to list of pnp devices */
     if (before)
@@ -721,6 +766,10 @@ static NTSTATUS handle_IRP_MN_QUERY_ID(DEVICE_OBJECT *device, IRP *irp)
         case BusQueryInstanceID:
             TRACE("BusQueryInstanceID\n");
             irp->IoStatus.Information = (ULONG_PTR)get_instance_id(device);
+            break;
+        case BusQueryContainerID:
+            TRACE("BusQueryContainerID\n");
+            irp->IoStatus.Information = (ULONG_PTR)get_container_id(device);
             break;
         default:
             WARN("Unhandled type %08x\n", type);
