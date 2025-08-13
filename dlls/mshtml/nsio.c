@@ -1000,6 +1000,22 @@ static void start_binding_task_destr(task_t *_task)
     IBindStatusCallback_Release(&task->bscallback->bsc.IBindStatusCallback_iface);
 }
 
+static nsresult fire_beforenavigate2(HTMLOuterWindow *window, BSTR url, BOOL *cancel)
+{
+    BSTR frame_name = NULL;
+    HRESULT hres;
+
+    hres = IHTMLWindow2_get_name(&window->base.IHTMLWindow2_iface, &frame_name);
+    if (FAILED(hres))
+        return NS_ERROR_UNEXPECTED;
+
+    hres = IDocObjectService_FireBeforeNavigate2(window->browser->doc->doc_object_service, NULL, url, 0, frame_name, NULL, 0, NULL, FALSE, cancel);
+    SysFreeString(frame_name);
+    if (*cancel)
+        return NS_BINDING_ABORTED;
+    return NS_OK;
+}
+
 static nsresult async_open(nsChannel *This, HTMLOuterWindow *window, BOOL is_doc_channel, UINT32 load_type,
         nsIStreamListener *listener, nsISupports *context)
 {
@@ -1058,6 +1074,8 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     BOOL is_document_channel;
     BOOL cancel = FALSE;
     nsresult nsres = NS_OK;
+    HRESULT hres;
+    BSTR uri_str;
 
     TRACE("(%p)->(%p %p)\n", This, aListener, aContext);
 
@@ -1065,9 +1083,6 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         return NS_ERROR_FAILURE;
 
     if(TRACE_ON(mshtml)) {
-        HRESULT hres;
-        BSTR uri_str;
-
         hres = IUri_GetDisplayUri(This->uri->uri, &uri_str);
         if(SUCCEEDED(hres)) {
             TRACE("opening %s\n", debugstr_w(uri_str));
@@ -1102,6 +1117,21 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
             }else if(window->browser->doc && window->browser->doc->mime) {
                 free(This->content_type);
                 This->content_type = strdupWtoA(window->browser->doc->mime);
+            }
+        }
+
+        if (!cancel && !This->uri->channel_bsc && window->browser->doc->doc_object_service)
+        {
+            /* fire event for document navigations by Gecko */
+            hres = IUri_GetDisplayUri(This->uri->uri, &uri_str);
+            if (SUCCEEDED(hres))
+            {
+                nsres = fire_beforenavigate2(window, uri_str, &cancel);
+                SysFreeString(uri_str);
+            }else
+            {
+                cancel = TRUE;
+                WARN("GetDisplayUri failed: %08lx\n", hres);
             }
         }
     }

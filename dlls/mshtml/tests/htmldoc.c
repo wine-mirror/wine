@@ -8344,7 +8344,7 @@ static void test_iframe_download(int flags)
     todo_wine CHECK_CALLED_N(FireDownloadBegin, total_iframes);
     todo_wine CHECK_CALLED_N(FireDownloadComplete, total_iframes);
 
-    todo_wine CHECK_CALLED_N(FireBeforeNavigate2, total_iframes);
+    CHECK_CALLED_N(FireBeforeNavigate2, total_iframes);
     todo_wine CHECK_CALLED_N(FireNavigateComplete2, total_documents);
     todo_wine CHECK_CALLED_N(FireDocumentComplete, total_documents);
 
