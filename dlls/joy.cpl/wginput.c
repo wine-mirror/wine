@@ -58,7 +58,7 @@ struct device
 struct raw_controller_state
 {
     UINT64 timestamp;
-    double axes[6];
+    DOUBLE axes[6];
     INT32 axes_count;
     boolean buttons[32];
     INT32 button_count;
