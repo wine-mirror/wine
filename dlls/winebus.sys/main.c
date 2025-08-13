@@ -264,6 +264,21 @@ static WCHAR *get_compatible_ids(DEVICE_OBJECT *device)
     return dst;
 }
 
+static WCHAR *get_device_text(DEVICE_OBJECT *device)
+{
+    struct device_extension *ext = device->DeviceExtension;
+    const WCHAR *src = ext->desc.product;
+    DWORD size;
+    WCHAR *dst;
+
+    size = (wcslen(src) + 1) * sizeof(WCHAR);
+    if ((dst = ExAllocatePool( PagedPool, size )))
+        memcpy( dst, src, size );
+
+    TRACE("Returning %s.\n", debugstr_w(dst));
+    return dst;
+}
+
 static IRP *pop_pending_read(struct device_extension *ext)
 {
     IRP *pending;
@@ -693,6 +708,30 @@ static NTSTATUS handle_IRP_MN_QUERY_ID(DEVICE_OBJECT *device, IRP *irp)
             break;
         default:
             WARN("Unhandled type %08x\n", type);
+            return status;
+    }
+
+    status = irp->IoStatus.Information ? STATUS_SUCCESS : STATUS_NO_MEMORY;
+    return status;
+}
+
+static NTSTATUS handle_IRP_MN_QUERY_DEVICE_TEXT(DEVICE_OBJECT *device, IRP *irp)
+{
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    DEVICE_TEXT_TYPE type = irpsp->Parameters.QueryDeviceText.DeviceTextType;
+    NTSTATUS status = irp->IoStatus.Status;
+
+    TRACE("(%p, %p)\n", device, irp);
+
+    switch (type)
+    {
+        case DeviceTextDescription:
+            TRACE("DeviceTextDescription.\n");
+            irp->IoStatus.Information = (ULONG_PTR)get_device_text(device);
+            break;
+
+        default:
+            WARN("Unhandled type %08x.\n", type);
             return status;
     }
 
@@ -1222,6 +1261,10 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
     {
         case IRP_MN_QUERY_ID:
             status = handle_IRP_MN_QUERY_ID(device, irp);
+            break;
+
+        case IRP_MN_QUERY_DEVICE_TEXT:
+            status = handle_IRP_MN_QUERY_DEVICE_TEXT(device, irp);
             break;
 
         case IRP_MN_QUERY_CAPABILITIES:
