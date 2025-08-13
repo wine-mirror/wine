@@ -993,7 +993,7 @@ BOOL is_window_enabled( HWND hwnd )
 UINT get_window_dpi_awareness_context( HWND hwnd )
 {
     struct object_lock lock = OBJECT_LOCK_INIT;
-    const window_shm_t *window_shm;
+    const window_shm_t *window_shm = NULL;
     UINT status, ctx = 0;
 
     while ((status = get_shared_window( hwnd, &lock, &window_shm )) == STATUS_PENDING)
