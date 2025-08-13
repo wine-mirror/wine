@@ -9333,7 +9333,7 @@ static void test_video_processor(BOOL use_2d_buffer)
             .output_buffer_desc = use_2d_buffer ? nv12_crop : NULL,
             .output_sample_desc = &nv12_crop_sample_desc, .output_sample_2d_desc = &nv12_crop_sample_2d_desc,
             .delta = 2, /* Windows returns 1, Wine needs 2 */
-            .todo = TRUE, /* Would need special handling to convert gstreamer NV12 buffer to Windows alignment */
+            .todo = use_2d_buffer,
         },
     };
 
@@ -9773,7 +9773,6 @@ static void test_video_processor(BOOL use_2d_buffer)
         output_sample = create_sample_(NULL, output_info.cbSize, test->output_buffer_desc);
         hr = check_mft_process_output(transform, output_sample, &output_status);
 
-        todo_wine_if(test->output_sample_desc == &nv12_crop_sample_desc)
         ok(hr == S_OK || broken(hr == MF_E_SHUTDOWN) /* w8 */, "ProcessOutput returned %#lx\n", hr);
         if (hr != S_OK)
         {

@@ -107,6 +107,7 @@ static struct wg_transform *get_transform(wg_transform_t trans)
 static void align_video_info_planes(MFVideoInfo *video_info, gsize plane_align,
         GstVideoInfo *info, GstVideoAlignment *align)
 {
+    bool fix_nv12 = !plane_align && info->finfo->format == GST_VIDEO_FORMAT_NV12 && (info->width & 3) && (info->width & 3) != 3;
     const MFVideoArea *aperture = &video_info->MinimumDisplayAperture;
 
     gst_video_alignment_reset(align);
@@ -129,9 +130,24 @@ static void align_video_info_planes(MFVideoInfo *video_info, gsize plane_align,
         align->padding_bottom = top;
     }
 
-    align->stride_align[0] = plane_align;
-
-    gst_video_info_align(info, align);
+    /* TODO: set NV12 GstVideoInfo correctly when padding is present */
+    if (fix_nv12 && !align->padding_left && !align->padding_top && !align->padding_right && !align->padding_bottom)
+    {
+        /* NV12 minimum stride alignment is 2, and Windows expects 2,
+         * but gst_video_info_align() imposes a minimum of 4. */
+        gint aligned_height = GST_ROUND_UP_2(info->height);
+        info->stride[0] = GST_ROUND_UP_2(info->width);
+        info->stride[1] = info->stride[0];
+        info->offset[0] = 0;
+        info->offset[1] = info->stride[0] * aligned_height;
+        info->size = info->offset[1] + info->stride[0] * aligned_height / 2;
+        align->stride_align[0] = 1;
+    }
+    else
+    {
+        align->stride_align[0] = plane_align;
+        gst_video_info_align(info, align);
+    }
 
     if (video_info->VideoFlags & MFVideoFlag_BottomUpLinearRep)
     {
@@ -206,12 +222,16 @@ static WgVideoBufferPool *wg_video_buffer_pool_create(GstCaps *caps, gsize plane
 {
     WgVideoBufferPool *pool;
     GstStructure *config;
+    gsize max_size;
 
     if (!(pool = g_object_new(wg_video_buffer_pool_get_type(), NULL)))
         return NULL;
 
     gst_video_info_from_caps(&pool->info, caps);
+    max_size = pool->info.size;
     align_video_info_planes(video_info, plane_align, &pool->info, align);
+    /* GStreamer assumes NV12 pools must accommodate a stride alignment of 4, but we use 2 */
+    max_size = max(max_size, pool->info.size);
 
     if (!(config = gst_buffer_pool_get_config(GST_BUFFER_POOL(pool))))
         GST_ERROR("Failed to get %"GST_PTR_FORMAT" config.", pool);
@@ -221,7 +241,7 @@ static WgVideoBufferPool *wg_video_buffer_pool_create(GstCaps *caps, gsize plane
         gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_ALIGNMENT);
         gst_buffer_pool_config_set_video_alignment(config, align);
 
-        gst_buffer_pool_config_set_params(config, caps, pool->info.size, 0, 0);
+        gst_buffer_pool_config_set_params(config, caps, max_size, 0, 0);
         gst_buffer_pool_config_set_allocator(config, allocator, NULL);
         if (!gst_buffer_pool_set_config(GST_BUFFER_POOL(pool), config))
             GST_ERROR("Failed to set %"GST_PTR_FORMAT" config.", pool);
