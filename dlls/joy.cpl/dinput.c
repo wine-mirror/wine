@@ -232,7 +232,6 @@ static IDirectInputDevice8W *get_selected_device(void)
 
 static BOOL CALLBACK enum_devices( const DIDEVICEINSTANCEW *instance, void *context )
 {
-    DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
     IDirectInput8W *dinput = context;
     struct device *entry;
 
@@ -240,7 +239,6 @@ static BOOL CALLBACK enum_devices( const DIDEVICEINSTANCEW *instance, void *cont
 
     IDirectInput8_CreateDevice( dinput, &instance->guidInstance, &entry->device, NULL );
     IDirectInputDevice8_SetDataFormat( entry->device, &c_dfDIJoystick2 );
-    IDirectInputDevice8_GetCapabilities( entry->device, &caps );
 
     list_add_tail( &devices, &entry->entry );
 
