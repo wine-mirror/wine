@@ -5465,6 +5465,16 @@ static void test_create_sampler_state(void)
     refcount = ID3D11SamplerState_Release(sampler_state1);
     ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
+    desc.Filter = D3D11_FILTER_ANISOTROPIC;
+    desc.MaxAnisotropy = 0;
+    hr = ID3D11Device_CreateSamplerState(device, &desc, &sampler_state1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ID3D11SamplerState_GetDesc(sampler_state1, &desc);
+    ok(desc.Filter == D3D11_FILTER_ANISOTROPIC, "Got filter %#x.\n", desc.Filter);
+    ok(!desc.MaxAnisotropy, "Got max anisotropy %u.\n", desc.MaxAnisotropy);
+    refcount = ID3D11SamplerState_Release(sampler_state1);
+    ok(!refcount, "Got refcount %lu.\n", refcount);
+
     for (i = 0; i < ARRAY_SIZE(desc_conversion_tests); ++i)
     {
         const struct test *current = &desc_conversion_tests[i];
