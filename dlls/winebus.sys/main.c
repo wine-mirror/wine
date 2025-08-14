@@ -204,21 +204,31 @@ static WCHAR *get_instance_id(DEVICE_OBJECT *device)
     return dst;
 }
 
+static const WCHAR *bus_type_str[] =
+{
+    L"WINEBUS", /* BUS_TYPE_UNKNOWN */
+    L"USB", /* BUS_TYPE_USB */
+    L"BTHENUM", /* BUS_TYPE_BLUETOOTH */
+};
+
 static WCHAR *get_device_id(DEVICE_OBJECT *device)
 {
     static const WCHAR input_format[] = L"&MI_%02u";
-    static const WCHAR winebus_format[] = L"WINEBUS\\VID_%04X&PID_%04X";
+    static const WCHAR winebus_format[] = L"%s\\VID_%04X&PID_%04X";
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    DWORD pos = 0, len = 0, input_len = 0, winebus_len = 25;
+    DWORD pos = 0, len = 0, input_len = 0, winebus_len = 18;
+    const WCHAR *bus_str;
     WCHAR *dst;
 
+    assert(ext->desc.bus_type < BUS_TYPE_COUNT);
+    bus_str = bus_type_str[ext->desc.bus_type];
     if (ext->desc.input != -1) input_len = 14;
 
-    len += winebus_len + input_len + 1;
+    len += winebus_len + input_len + wcslen(bus_str) + 1;
 
     if ((dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
     {
-        pos += swprintf(dst + pos, len - pos, winebus_format, ext->desc.vid, ext->desc.pid);
+        pos += swprintf(dst + pos, len - pos, winebus_format, bus_str, ext->desc.vid, ext->desc.pid);
         if (input_len) pos += swprintf(dst + pos, len - pos, input_format, ext->desc.input);
     }
 
@@ -384,12 +394,12 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 uni
     ext->unix_device        = unix_device;
     list_init(&ext->reports);
 
-    if (desc->is_hidraw && desc->is_bluetooth && is_dualshock4_gamepad(desc->vid, desc->pid))
+    if (desc->is_hidraw && (desc->bus_type == BUS_TYPE_BLUETOOTH) && is_dualshock4_gamepad(desc->vid, desc->pid))
     {
         TRACE("Enabling report fixup for Bluetooth DualShock4 device %p\n", device);
         ext->report_fixups |= HIDRAW_FIXUP_DUALSHOCK_BT;
     }
-    if (desc->is_hidraw && desc->is_bluetooth && is_dualsense_gamepad(desc->vid, desc->pid))
+    if (desc->is_hidraw && (desc->bus_type == BUS_TYPE_BLUETOOTH) && is_dualsense_gamepad(desc->vid, desc->pid))
     {
         TRACE("Enabling report fixup for Bluetooth DualSense device %p\n", device);
         ext->report_fixups |= HIDRAW_FIXUP_DUALSENSE_BT;

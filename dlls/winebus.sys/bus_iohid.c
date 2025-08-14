@@ -287,8 +287,13 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     desc.uid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDLocationIDKey)));
 
     if ((str = IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDTransportKey))))
-        desc.is_bluetooth = !CFStringCompare(str, CFSTR(kIOHIDTransportBluetoothValue), 0) ||
-                            !CFStringCompare(str, CFSTR(kIOHIDTransportBluetoothLowEnergyValue), 0);
+    {
+        if (!CFStringCompare(str, CFSTR(kIOHIDTransportBluetoothValue), 0) ||
+                            !CFStringCompare(str, CFSTR(kIOHIDTransportBluetoothLowEnergyValue), 0))
+            desc.bus_type = BUS_TYPE_BLUETOOTH;
+        else if (!CFStringCompare(str, CFSTR(kIOHIDTransportUSBValue), 0))
+            desc.bus_type = BUS_TYPE_USB;
+    }
 
     if (usages.UsagePage != HID_USAGE_PAGE_GENERIC ||
         !(usages.Usage == HID_USAGE_GENERIC_JOYSTICK || usages.Usage == HID_USAGE_GENERIC_GAMEPAD))

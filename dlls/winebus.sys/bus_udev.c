@@ -1362,7 +1362,8 @@ static void udev_add_device(struct udev_device *dev, int fd)
     get_device_subsystem_info(dev, "hid", NULL, &desc, &bus);
     get_device_subsystem_info(dev, "input", NULL, &desc, &bus);
     get_device_subsystem_info(dev, "usb", "usb_device", &desc, &bus);
-    if (bus == BUS_BLUETOOTH) desc.is_bluetooth = TRUE;
+    if (bus == BUS_BLUETOOTH) desc.bus_type = BUS_TYPE_BLUETOOTH;
+    else if (bus == BUS_USB) desc.bus_type = BUS_TYPE_USB;
 
     if (!(subsystem = udev_device_get_subsystem(dev)))
     {
