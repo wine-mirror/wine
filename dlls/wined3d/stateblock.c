@@ -2884,7 +2884,7 @@ static void sampler_desc_from_sampler_states(struct wined3d_sampler_desc *desc,
         desc->mip_base_level = min(max(sampler_states[WINED3D_SAMP_MAX_MIP_LEVEL], texture->lod), texture->level_count - 1);
 
     desc->max_anisotropy = sampler_states[WINED3D_SAMP_MAX_ANISOTROPY];
-    if ((sampler_states[WINED3D_SAMP_MAG_FILTER] != WINED3D_TEXF_ANISOTROPIC
+    if (!desc->max_anisotropy || (sampler_states[WINED3D_SAMP_MAG_FILTER] != WINED3D_TEXF_ANISOTROPIC
                 && sampler_states[WINED3D_SAMP_MIN_FILTER] != WINED3D_TEXF_ANISOTROPIC
                 && sampler_states[WINED3D_SAMP_MIP_FILTER] != WINED3D_TEXF_ANISOTROPIC)
             || (texture->flags & WINED3D_TEXTURE_COND_NP2))
