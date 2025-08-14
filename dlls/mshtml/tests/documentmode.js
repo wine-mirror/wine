@@ -659,7 +659,7 @@ sync_test("attr_props", function() {
         ok(attr !== null, "innerText attr = null");
 
     attr = elem.getAttributeNode("removeAttribute");
-    ok(attr !== null, "removeAttribute attr = null");
+    test_attr(true, true);
 
     attr = elem.getAttributeNode("tabIndex");
     if(v < 8)

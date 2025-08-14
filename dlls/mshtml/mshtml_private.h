@@ -630,6 +630,8 @@ HRESULT change_type(VARIANT*,VARIANT*,VARTYPE,IServiceProvider*);
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**);
 HRESULT get_dispids(tid_t,DWORD*,DISPID**);
 HRESULT remove_attribute(DispatchEx*,DISPID,VARIANT_BOOL*);
+BOOL is_builtin_attribute(DispatchEx*,DISPID);
+BOOL is_builtin_value(DispatchEx*,DISPID);
 HRESULT dispex_get_dynid(DispatchEx*,const WCHAR*,BOOL,DISPID*);
 void release_typelib(void);
 HRESULT get_class_typeinfo(const CLSID*,ITypeInfo**);

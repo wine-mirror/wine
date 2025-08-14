@@ -115,7 +115,7 @@ static HRESULT WINAPI HTMLDOMAttribute_get_specified(IHTMLDOMAttribute *iface, V
         return S_OK;
     }
 
-    if(get_dispid_type(This->dispid) != DISPEXPROP_BUILTIN) {
+    if(!is_builtin_value(&This->elem->node.event_target.dispex, This->dispid)) {
         *p = VARIANT_TRUE;
         return S_OK;
     }
@@ -251,7 +251,7 @@ static HRESULT WINAPI HTMLDOMAttribute2_get_expando(IHTMLDOMAttribute2 *iface, V
         return hres;
     }
 
-    *p = variant_bool(This->elem && get_dispid_type(This->dispid) != DISPEXPROP_BUILTIN);
+    *p = variant_bool(This->elem && !is_builtin_attribute(&This->elem->node.event_target.dispex, This->dispid));
     return S_OK;
 }
 
