@@ -961,6 +961,7 @@ static void testIcmpSendEcho(void)
     char senddata[32], replydata[sizeof(senddata) + sizeof(ICMP_ECHO_REPLY)];
     char replydata2[sizeof(replydata) + sizeof(IO_STATUS_BLOCK)];
     DWORD ret, error, replysz = sizeof(replydata);
+    IP_OPTION_INFORMATION opt;
     IPAddr address;
     ICMP_ECHO_REPLY *reply;
     HANDLE event;
@@ -1017,6 +1018,12 @@ static void testIcmpSendEcho(void)
 
     SetLastError(0xdeadbeef);
     ret = IcmpSendEcho(icmp, address, NULL, 0, NULL, replydata, replysz, 1000);
+    error = GetLastError();
+    ok (ret, "IcmpSendEcho failed unexpectedly with error %ld\n", error);
+
+    memset(&opt, 0, sizeof(opt));
+    SetLastError(0xdeadbeef);
+    ret = IcmpSendEcho(icmp, address, NULL, 0, &opt, replydata, replysz, 1000);
     error = GetLastError();
     ok (ret, "IcmpSendEcho failed unexpectedly with error %ld\n", error);
 

@@ -46,6 +46,7 @@ struct icmp_send_echo_params
     void *request, *reply;
     UINT request_size, reply_len;
     BYTE bits, ttl, tos;
+    int hop_limit;
     icmp_handle *handle;
 };
 

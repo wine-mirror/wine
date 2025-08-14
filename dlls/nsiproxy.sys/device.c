@@ -29,6 +29,7 @@
 #include "ddk/wdm.h"
 #include "ifdef.h"
 #include "netiodef.h"
+#include "ipexport.h"
 #include "wine/nsi.h"
 #include "wine/debug.h"
 #include "wine/unixlib.h"
@@ -220,6 +221,8 @@ static int icmp_echo_reply_struct_len( ULONG family, ULONG bits )
 {
     if (family == AF_INET)
         return (bits == 32) ? sizeof(struct icmp_echo_reply_32) : sizeof(struct icmp_echo_reply_64);
+    if (family == AF_INET6)
+        return sizeof(ICMPV6_ECHO_REPLY);
     return 0;
 }
 
@@ -274,6 +277,7 @@ static NTSTATUS handle_send_echo( IRP *irp )
     params.reply = irp->AssociatedIrp.SystemBuffer;
     params.bits = in->bits;
     params.ttl = in->ttl;
+    params.hop_limit = in->hop_limit;
     params.tos = in->tos;
     params.src = &in->src;
     params.dst = &in->dst;
@@ -321,6 +325,10 @@ static NTSTATUS nsiproxy_icmp_echo( IRP *irp )
     case AF_INET:
         if (in->dst.Ipv4.sin_addr.s_addr == INADDR_ANY) return STATUS_INVALID_ADDRESS_WILDCARD;
         break;
+    case AF_INET6:
+        if (IN6_IS_ADDR_UNSPECIFIED(&in->dst.Ipv6.sin6_addr)) return STATUS_INVALID_ADDRESS_WILDCARD;
+        break;
+
     default:
         return STATUS_INVALID_PARAMETER;
     }

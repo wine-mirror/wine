@@ -4904,11 +4904,13 @@ static NTSTATUS icmp_send_echo( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
     if (opts)
     {
         in->ttl = opts->Ttl;
+        in->hop_limit = opts->Ttl;
         in->tos = opts->Tos;
         in->flags = opts->Flags;
         memcpy( in->data, opts->OptionsData, opts->OptionsSize );
         in->opt_size = opts->OptionsSize;
     }
+    else in->hop_limit = -1;
     in->req_size = request_size;
     in->timeout = timeout;
     memcpy( in->data + opt_size, request, request_size );
@@ -4986,9 +4988,20 @@ DWORD WINAPI Icmp6SendEcho2( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_ro
                              struct sockaddr_in6 *src, struct sockaddr_in6 *dst, void *request, WORD request_size,
                              IP_OPTION_INFORMATION *opts, void *reply, DWORD reply_size, DWORD timeout )
 {
-    FIXME( "(%p, %p, %p, %p, %p, %p, %p, %d, %p, %p, %ld, %ld): stub\n", handle, event,
+    SOCKADDR_INET src_addr, dst_addr;
+    NTSTATUS status;
+
+    TRACE( "(%p, %p, %p, %p, %p, %p, %p, %d, %p, %p, %ld, %ld).\n", handle, event,
            apc_routine, apc_ctxt, src, dst, request, request_size, opts, reply, reply_size, timeout );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+
+    src_addr.Ipv6 = *src;
+    if (!src_addr.si_family) src_addr.si_family = AF_INET6;
+    dst_addr.Ipv6 = *dst;
+    if (!dst_addr.si_family) dst_addr.si_family = AF_INET6;
+    status = icmp_send_echo( handle, event, apc_routine, apc_ctxt, &src_addr, &dst_addr, request, request_size,
+                             opts, reply, reply_size, timeout );
+    if (!status) return Icmp6ParseReplies( reply, reply_size );
+    SetLastError( RtlNtStatusToDosError( status ) );
     return 0;
 }
 

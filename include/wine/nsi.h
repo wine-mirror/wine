@@ -476,6 +476,7 @@ struct nsiproxy_icmp_echo
     UINT opt_size;
     UINT req_size;
     UINT timeout;
+    int hop_limit;
     BYTE data[1]; /* ((opt_size + 3) & ~3) + req_size */
 };
 
