@@ -2007,6 +2007,14 @@ BOOL dispex_builtin_is_noattr(DispatchEx *dispex, DISPID id)
     hres = get_builtin_func(dispex->info, id, &func);
     assert(SUCCEEDED(hres));
 
+    if(func->func_disp_idx >= 0 && dispex->dynamic_data && dispex->dynamic_data->func_disps) {
+        func_obj_entry_t *entry = dispex->dynamic_data->func_disps + func->func_disp_idx;
+
+        if(entry->func_obj && (V_VT(&entry->val) != VT_DISPATCH ||
+           V_DISPATCH(&entry->val) != (IDispatch*)&entry->func_obj->dispex.IWineJSDispatchHost_iface))
+            return FALSE;
+    }
+
     return func->noattr;
 }
 

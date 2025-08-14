@@ -642,12 +642,24 @@ sync_test("attr_props", function() {
 
     elem.setAttribute("test", "wine");
     elem.setAttribute("z-index", "foobar");
+    elem.setAttribute("innerText", "test");
+    elem.setAttribute("removeAttribute", "funcattr");
 
     attr = elem.getAttributeNode("test");
     test_attr(true, true);
 
     attr = elem.getAttributeNode("z-index");
     test_attr(true, true);
+
+    attr = elem.getAttributeNode("innerText");
+    if(v < 8)
+        ok(attr === null, "innerText attr != null");
+    else
+        todo_wine_if(v === 8).
+        ok(attr !== null, "innerText attr = null");
+
+    attr = elem.getAttributeNode("removeAttribute");
+    ok(attr !== null, "removeAttribute attr = null");
 
     attr = elem.getAttributeNode("tabIndex");
     if(v < 8)
