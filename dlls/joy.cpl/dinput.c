@@ -166,7 +166,7 @@ static void set_selected_effect( IDirectInputEffect *effect )
 
     EnterCriticalSection( &state_cs );
     if ((previous = effect_selected)) IDirectInputEffect_Release( previous );
-    if ((effect_selected = effect)) IDirectInput_AddRef( effect );
+    if ((effect_selected = effect)) IDirectInputEffect_AddRef( effect );
     LeaveCriticalSection( &state_cs );
 }
 
