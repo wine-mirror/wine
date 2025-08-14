@@ -430,7 +430,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
 @implementation WineBaseView
 
-    - (void) setRetinaMode:(int)mode
+    - (void) setRetinaMode:(BOOL)mode
     {
         for (WineBaseView* subview in [self subviews])
         {
@@ -699,7 +699,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         return _metalView;
     }
 
-    - (void) setLayerRetinaProperties:(int)mode
+    - (void) setLayerRetinaProperties:(BOOL)mode
     {
         [self layer].contentsScale = mode ? 2.0 : 1.0;
         [self layer].minificationFilter = mode ? kCAFilterLinear : kCAFilterNearest;
@@ -722,7 +722,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         }
     }
 
-    - (void) setRetinaMode:(int)mode
+    - (void) setRetinaMode:(BOOL)mode
     {
         double scale = mode ? 0.5 : 2.0;
         NSRect frame = self.frame;
@@ -784,7 +784,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         event = macdrv_create_event(IM_SET_TEXT, window);
         event->im_set_text.himc = [window himc];
         event->im_set_text.text = (CFStringRef)[text copy];
-        event->im_set_text.complete = TRUE;
+        event->im_set_text.complete = true;
 
         [[window queue] postEvent:event];
 
@@ -867,7 +867,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             event = macdrv_create_event(IM_SET_TEXT, window);
             event->im_set_text.himc = [window himc];
             event->im_set_text.text = (CFStringRef)[[markedText string] copy];
-            event->im_set_text.complete = FALSE;
+            event->im_set_text.complete = false;
             event->im_set_text.cursor_begin = markedTextSelection.location;
             event->im_set_text.cursor_end = markedTextSelection.location + markedTextSelection.length;
 
@@ -969,7 +969,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [super dealloc];
     }
 
-    - (void) setRetinaMode:(int)mode
+    - (void) setRetinaMode:(BOOL)mode
     {
         self.layer.contentsScale = mode ? 2.0 : 1.0;
         [super setRetinaMode:mode];
@@ -2604,7 +2604,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                     [[WineApplicationController sharedController] flipRect:&frame];
 
                     event = macdrv_create_event(WINDOW_RESTORE_REQUESTED, self);
-                    event->window_restore_requested.keep_frame = TRUE;
+                    event->window_restore_requested.keep_frame = true;
                     event->window_restore_requested.frame = cgrect_win_from_mac(NSRectToCGRect(frame));
                     [queue postEvent:event];
                     macdrv_release_event(event);
@@ -2725,7 +2725,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             [self checkTransparency];
     }
 
-    - (void) setRetinaMode:(int)mode
+    - (void) setRetinaMode:(BOOL)mode
     {
         NSRect frame;
         double scale = mode ? 0.5 : 2.0;
@@ -3205,7 +3205,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             [[WineApplicationController sharedController] flipRect:&frame];
 
             event = macdrv_create_event(WINDOW_RESTORE_REQUESTED, self);
-            event->window_restore_requested.keep_frame = TRUE;
+            event->window_restore_requested.keep_frame = true;
             event->window_restore_requested.frame = cgrect_win_from_mac(NSRectToCGRect(frame));
             [queue postEvent:event];
             macdrv_release_event(event);
@@ -3477,7 +3477,7 @@ void macdrv_set_cocoa_window_title(macdrv_window w, const unsigned short* title,
  * front.
  */
 void macdrv_order_cocoa_window(macdrv_window w, macdrv_window p,
-        macdrv_window n, int activate)
+        macdrv_window n, bool activate)
 {
     WineWindow* window = (WineWindow*)w;
     WineWindow* prev = (WineWindow*)p;
@@ -3657,7 +3657,7 @@ void macdrv_set_window_alpha(macdrv_window w, CGFloat alpha)
 /***********************************************************************
  *              macdrv_window_use_per_pixel_alpha
  */
-void macdrv_window_use_per_pixel_alpha(macdrv_window w, int use_per_pixel_alpha)
+void macdrv_window_use_per_pixel_alpha(macdrv_window w, bool use_per_pixel_alpha)
 {
 @autoreleasepool
 {
@@ -3692,7 +3692,7 @@ void macdrv_set_window_mask(macdrv_window w, CGRect rect)
  * orders it front and, if its frame was not within the desktop bounds,
  * Cocoa will typically move it on-screen.
  */
-void macdrv_give_cocoa_window_focus(macdrv_window w, int activate)
+void macdrv_give_cocoa_window_focus(macdrv_window w, bool activate)
 {
     WineWindow* window = (WineWindow*)w;
 
@@ -3865,7 +3865,7 @@ void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_window w, ma
 /***********************************************************************
  *              macdrv_set_view_hidden
  */
-void macdrv_set_view_hidden(macdrv_view v, int hidden)
+void macdrv_set_view_hidden(macdrv_view v, bool hidden)
 {
 @autoreleasepool
 {
@@ -3964,15 +3964,15 @@ void macdrv_view_release_metal_view(macdrv_metal_view v)
     });
 }
 
-int macdrv_get_view_backing_size(macdrv_view v, int backing_size[2])
+bool macdrv_get_view_backing_size(macdrv_view v, int backing_size[2])
 {
     WineContentView* view = (WineContentView*)v;
 
     if (![view isKindOfClass:[WineContentView class]])
-        return FALSE;
+        return false;
 
     [view wine_getBackingSize:backing_size];
-    return TRUE;
+    return true;
 }
 
 void macdrv_set_view_backing_size(macdrv_view v, const int backing_size[2])
@@ -4032,9 +4032,9 @@ uint32_t macdrv_window_background_color(void)
  * processed by input sources (AKA IMEs). This is only called when there is an
  * active non-keyboard input source.
  */
-int macdrv_ime_process_key(int keyc, unsigned int flags, int repeat, void *himc)
+bool macdrv_ime_process_key(int keyc, unsigned int flags, int repeat, void *himc)
 {
-    __block BOOL ret;
+    __block bool ret;
 
     OnMainThread(^{
         WineWindow* window = (WineWindow*)[NSApp keyWindow];
@@ -4067,10 +4067,10 @@ int macdrv_ime_process_key(int keyc, unsigned int flags, int repeat, void *himc)
             ret = [[[window contentView] inputContext] handleEvent:event] && !window.commandDone;
         }
         else
-            ret = FALSE;
+            ret = false;
     });
 
-    return (int)ret;
+    return ret;
 }
 
 void macdrv_clear_ime_text(void)

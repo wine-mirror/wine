@@ -110,6 +110,6 @@
 
     - (void) updateForCursorClipping;
 
-    - (void) setRetinaMode:(int)mode;
+    - (void) setRetinaMode:(BOOL)mode;
 
 @end

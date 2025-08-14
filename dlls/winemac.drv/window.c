@@ -1734,7 +1734,7 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
         flags |= SWP_NOSENDCHANGING;
     if (!(flags & SWP_NOSIZE) || !(flags & SWP_NOMOVE))
     {
-        int send_sizemove = !event->window_frame_changed.in_resize && !being_dragged && !event->window_frame_changed.skip_size_move_loop;
+        bool send_sizemove = !event->window_frame_changed.in_resize && !being_dragged && !event->window_frame_changed.skip_size_move_loop;
         if (send_sizemove)
             send_message(hwnd, WM_ENTERSIZEMOVE, 0, 0);
         NtUserSetRawWindowPos(hwnd, rect, flags, FALSE);

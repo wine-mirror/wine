@@ -106,7 +106,7 @@ struct macdrv_thread_data
     macdrv_window               capture_window;
     CFDataRef                   keyboard_layout_uchr;
     CGEventSourceKeyboardType   keyboard_type;
-    int                         iso_keyboard;
+    bool                        iso_keyboard;
     CGEventFlags                last_modifiers;
     UInt32                      dead_key_state;
     HKL                         active_keyboard_layout;
