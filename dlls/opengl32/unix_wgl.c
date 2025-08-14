@@ -770,34 +770,40 @@ static BOOL check_extension_support( TEB *teb, const char *extension, const char
     return FALSE;
 }
 
-void wrap_glGetIntegerv( TEB *teb, GLenum pname, GLint *data )
+static BOOL get_integer( TEB *teb, GLenum pname, GLint *data )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     const GLuint *disabled;
 
-    funcs->p_glGetIntegerv( pname, data );
-
     if (pname == GL_NUM_EXTENSIONS)
     {
+        funcs->p_glGetIntegerv( pname, data );
         if ((disabled = disabled_extensions_index( teb )))
             while (*disabled++ != ~0u) (*data)--;
         *data += ARRAY_SIZE(legacy_extensions) - 1;
+        return TRUE;
     }
 
     if (is_win64 && is_wow64())
     {
         /* 4.4 depends on ARB_buffer_storage, which we don't support on wow64. */
-        if (pname == GL_MAJOR_VERSION && *data > 4)
-            *data = 4;
-        else if (pname == GL_MINOR_VERSION)
+        if (pname == GL_MAJOR_VERSION)
+        {
+            funcs->p_glGetIntegerv( pname, data );
+            if (*data > 4) *data = 4;
+            return TRUE;
+        }
+        if (pname == GL_MINOR_VERSION)
         {
             GLint major;
-
             funcs->p_glGetIntegerv( GL_MAJOR_VERSION, &major );
-            if (major == 4 && *data > 3)
-                *data = 3;
+            funcs->p_glGetIntegerv( pname, data );
+            if (major == 4 && *data > 3) *data = 3;
+            return TRUE;
         }
     }
+
+    return FALSE;
 }
 
 const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
@@ -866,7 +872,7 @@ static char *build_extension_list( TEB *teb )
     GLint len = 0, capacity, i, extensions_count;
     char *extension, *tmp, *available_extensions;
 
-    wrap_glGetIntegerv( teb, GL_NUM_EXTENSIONS, &extensions_count );
+    get_integer( teb, GL_NUM_EXTENSIONS, &extensions_count );
     capacity = 128 * extensions_count;
 
     if (!(available_extensions = malloc( capacity ))) return NULL;
@@ -1368,6 +1374,45 @@ void wrap_glDebugMessageCallbackARB( TEB *teb, GLDEBUGPROCARB callback, const vo
     ctx->debug_user     = (UINT_PTR)user;
     funcs->p_glDebugMessageCallbackARB( gl_debug_message_callback, ctx );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+}
+
+void wrap_glGetIntegerv( TEB *teb, GLenum pname, GLint *data )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    if (get_integer( teb, pname, data )) return;
+    funcs->p_glGetIntegerv( pname, data );
+}
+
+void wrap_glGetBooleanv( TEB *teb, GLenum pname, GLboolean *data )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    GLint value;
+    if (get_integer( teb, pname, &value )) *data = !!value;
+    else funcs->p_glGetBooleanv( pname, data );
+}
+
+void wrap_glGetDoublev( TEB *teb, GLenum pname, GLdouble *data )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    GLint value;
+    if (get_integer( teb, pname, &value )) *data = value;
+    funcs->p_glGetDoublev( pname, data );
+}
+
+void wrap_glGetFloatv( TEB *teb, GLenum pname, GLfloat *data )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    GLint value;
+    if (get_integer( teb, pname, &value )) *data = value;
+    else funcs->p_glGetFloatv( pname, data );
+}
+
+void wrap_glGetInteger64v( TEB *teb, GLenum pname, GLint64 *data )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    GLint value;
+    if (get_integer( teb, pname, &value )) *data = value;
+    else funcs->p_glGetInteger64v( pname, data );
 }
 
 NTSTATUS process_attach( void *args )

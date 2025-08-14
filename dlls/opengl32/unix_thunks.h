@@ -11,6 +11,9 @@ extern void wrap_glClear( TEB *teb, GLbitfield mask );
 extern void wrap_glDrawPixels( TEB *teb, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels );
 extern void wrap_glFinish( TEB *teb );
 extern void wrap_glFlush( TEB *teb );
+extern void wrap_glGetBooleanv( TEB *teb, GLenum pname, GLboolean *data );
+extern void wrap_glGetDoublev( TEB *teb, GLenum pname, GLdouble *data );
+extern void wrap_glGetFloatv( TEB *teb, GLenum pname, GLfloat *data );
 extern void wrap_glGetIntegerv( TEB *teb, GLenum pname, GLint *data );
 extern const GLubyte * wrap_glGetString( TEB *teb, GLenum name );
 extern void wrap_glReadPixels( TEB *teb, GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, void *pixels );
@@ -18,6 +21,7 @@ extern void wrap_glViewport( TEB *teb, GLint x, GLint y, GLsizei width, GLsizei 
 extern void wrap_glDebugMessageCallback( TEB *teb, GLDEBUGPROC callback, const void *userParam );
 extern void wrap_glDebugMessageCallbackAMD( TEB *teb, GLDEBUGPROCAMD callback, void *userParam );
 extern void wrap_glDebugMessageCallbackARB( TEB *teb, GLDEBUGPROCARB callback, const void *userParam );
+extern void wrap_glGetInteger64v( TEB *teb, GLenum pname, GLint64 *data );
 extern const GLubyte * wrap_glGetStringi( TEB *teb, GLenum name, GLuint index );
 extern BOOL wrap_wglBindTexImageARB( TEB *teb, HPBUFFERARB hPbuffer, int iBuffer );
 extern HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hDC, HGLRC hShareContext, const int *attribList );
