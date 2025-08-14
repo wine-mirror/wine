@@ -1242,6 +1242,128 @@ static void test_write_package(void)
     IOpcPackage_Release(package);
 }
 
+static void test_read_package(void)
+{
+    static const struct
+    {
+        const WCHAR *type;
+        const WCHAR *uri;
+        OPC_COMPRESSION_OPTIONS options;
+    }
+    parts[] =
+    {
+        { L"type1/subtype1", L"/entry1.11", OPC_COMPRESSION_NONE },
+        { L"type1/subtype2", L"/entry2.12", OPC_COMPRESSION_NORMAL },
+        { L"type2/subtype1", L"/entry3.21", OPC_COMPRESSION_MAXIMUM },
+        { L"type2/subtype2", L"/entry4.22", OPC_COMPRESSION_FAST },
+        { L"type1/subtype1", L"/entry5.11", OPC_COMPRESSION_SUPERFAST },
+        { L"type1/subtype2", L"/entry6.12", OPC_COMPRESSION_NONE },
+        { L"type2/subtype1", L"/entry7.21", OPC_COMPRESSION_NORMAL },
+        { L"type2/subtype2", L"/entry8.22", OPC_COMPRESSION_MAXIMUM },
+        { L"type1/subtype1", L"/dir1/entry1.11", OPC_COMPRESSION_FAST },
+    };
+    const LARGE_INTEGER start = {0};
+    IOpcFactory *factory;
+    IOpcPackage *package;
+    IOpcPartSet *partset;
+    IOpcPartUri *uri;
+    IStream *stream;
+    IOpcPart *part;
+    BYTE buf[256];
+    HRESULT hr;
+    int i;
+
+    factory = create_factory();
+
+    hr = IOpcFactory_CreatePackage(factory, &package);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IOpcPackage_GetPartSet(package, &partset);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(parts); ++i)
+    {
+        hr = IOpcFactory_CreatePartUri(factory, parts[i].uri, &uri);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IOpcPartSet_CreatePart(partset, uri, parts[i].type, parts[i].options, &part);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IOpcPart_GetContentStream(part, &stream);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        memset(buf, i, sizeof(buf));
+        hr = IStream_Write(stream, buf, sizeof(buf), NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        IStream_Release(stream);
+
+        IOpcPartUri_Release(uri);
+        IOpcPart_Release(part);
+    }
+    IOpcPartSet_Release(partset);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IOpcFactory_WritePackageToStream(factory, package, OPC_WRITE_FORCE_ZIP32, stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IOpcPackage_Release(package);
+    hr = IStream_Seek(stream, start, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IOpcFactory_ReadPackageFromStream(factory, stream, OPC_READ_DEFAULT, &package);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IStream_Release(stream);
+    if (FAILED(hr)) goto done;
+
+    hr = IOpcPackage_GetPartSet(package, &partset);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(parts); ++i)
+    {
+        OPC_COMPRESSION_OPTIONS options;
+        WCHAR *type = NULL;
+        BYTE exp_buf[256];
+        ULONG read = 0;
+
+        winetest_push_context("parts[%d]", i);
+
+        hr = IOpcFactory_CreatePartUri(factory, parts[i].uri, &uri);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IOpcPartSet_GetPart(partset, uri, &part);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IOpcPart_GetContentType(part, &type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine ok(!wcscmp(type, parts[i].type), "Unexpected type %s != %s.\n", debugstr_w(type), debugstr_w(parts[i].type));
+        CoTaskMemFree(type);
+
+        options = ~0u;
+        hr = IOpcPart_GetCompressionOptions(part, &options);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(options == parts[i].options, "Unexpected options %d != %d.\n", options, parts[i].options);
+
+        hr = IOpcPart_GetContentStream(part, &stream);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        memset(buf, 0, sizeof(buf));
+        memset(exp_buf, i, sizeof(exp_buf));
+        hr = IStream_Read(stream, buf, sizeof(buf), &read);
+        ok(hr == S_OK, "Failed to read from stream, hr %#lx.\n", hr);
+        ok(read == sizeof(buf), "Got read %lu != %Iu.\n", read, sizeof(buf));
+        ok(!memcmp(buf, exp_buf, read), "Got mismatching data.\n");
+        IStream_Release(stream);
+
+        IOpcPart_Release(part);
+        IOpcPartUri_Release(uri);
+
+        winetest_pop_context();
+    }
+
+    IOpcPartSet_Release(partset);
+    IOpcPackage_Release(package);
+done:
+    IOpcFactory_Release(factory);
+}
+
 START_TEST(opcservices)
 {
     IOpcFactory *factory;
@@ -1266,6 +1388,7 @@ START_TEST(opcservices)
     test_combine_uri();
     test_create_part_uri();
     test_write_package();
+    test_read_package();
 
     IOpcFactory_Release(factory);
 
