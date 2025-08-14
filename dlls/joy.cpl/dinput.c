@@ -107,9 +107,6 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
     struct effect *entry;
     HRESULT hr;
 
-    hr = IDirectInputDevice8_Acquire( device );
-    if (FAILED(hr)) return DIENUM_CONTINUE;
-
     if (!(entry = calloc( 1, sizeof(*entry) ))) return DIENUM_STOP;
 
     if (IsEqualGUID( &info->guid, &GUID_RampForce ))
@@ -202,6 +199,7 @@ static void set_selected_device( IDirectInputDevice8W *device )
     if ((previous = device_selected))
     {
         IDirectInputDevice8_SetEventNotification( previous, NULL );
+        IDirectInputDevice8_Unacquire( previous );
         IDirectInputDevice8_Release( previous );
     }
     if ((device_selected = device))
@@ -230,13 +228,21 @@ static BOOL CALLBACK enum_devices( const DIDEVICEINSTANCEW *instance, void *cont
 {
     IDirectInput8W *dinput = context;
     struct device *entry;
+    HRESULT hr;
 
     if (!(entry = calloc( 1, sizeof(*entry) ))) return DIENUM_STOP;
 
-    IDirectInput8_CreateDevice( dinput, &instance->guidInstance, &entry->device, NULL );
-    IDirectInputDevice8_SetDataFormat( entry->device, &c_dfDIJoystick2 );
+    hr = IDirectInput8_CreateDevice( dinput, &instance->guidInstance, &entry->device, NULL );
+    if (SUCCEEDED(hr)) hr = IDirectInputDevice8_SetDataFormat( entry->device, &c_dfDIJoystick2 );
+    if (SUCCEEDED(hr)) hr = IDirectInputDevice8_SetCooperativeLevel( entry->device, GetAncestor( dialog_hwnd, GA_ROOT ),
+                                                                     DISCL_BACKGROUND | DISCL_EXCLUSIVE );
 
-    list_add_tail( &devices, &entry->entry );
+    if (SUCCEEDED(hr)) list_add_tail( &devices, &entry->entry );
+    else
+    {
+        if (entry->device) IDirectInputDevice8_Release( entry->device );
+        free( entry );
+    }
 
     return DIENUM_CONTINUE;
 }
@@ -250,7 +256,6 @@ static void clear_devices(void)
     LIST_FOR_EACH_ENTRY_SAFE( entry, next, &devices, struct device, entry )
     {
         list_remove( &entry->entry );
-        IDirectInputDevice8_Unacquire( entry->device );
         IDirectInputDevice8_Release( entry->device );
         free( entry );
     }
@@ -645,7 +650,6 @@ static void update_di_effects( HWND hwnd, IDirectInputDevice8W *device )
 
 static void handle_di_effects_change( HWND hwnd )
 {
-    IDirectInputDevice8W *device;
     struct list *entry;
     int sel;
 
@@ -659,14 +663,6 @@ static void handle_di_effects_change( HWND hwnd )
     if (!entry) return;
 
     set_selected_effect( LIST_ENTRY( entry, struct effect, entry )->effect );
-
-    if ((device = get_selected_device()))
-    {
-        IDirectInputDevice8_Unacquire( device );
-        IDirectInputDevice8_SetCooperativeLevel( device, GetAncestor( hwnd, GA_ROOT ), DISCL_BACKGROUND | DISCL_EXCLUSIVE );
-        IDirectInputDevice8_Acquire( device );
-        IDirectInputDevice8_Release( device );
-    }
 }
 
 static void create_device_views( HWND hwnd )
