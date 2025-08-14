@@ -4152,6 +4152,16 @@ static void test_create_sampler_state(void)
     refcount = ID3D10SamplerState_Release(sampler_state1);
     ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
+    desc.Filter = D3D10_FILTER_ANISOTROPIC;
+    desc.MaxAnisotropy = 0;
+    hr = ID3D10Device_CreateSamplerState(device, &desc, &sampler_state1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ID3D10SamplerState_GetDesc(sampler_state1, &desc);
+    ok(desc.Filter == D3D10_FILTER_ANISOTROPIC, "Got filter %#x.\n", desc.Filter);
+    ok(!desc.MaxAnisotropy, "Got max anisotropy %u.\n", desc.MaxAnisotropy);
+    refcount = ID3D10SamplerState_Release(sampler_state1);
+    ok(!refcount, "Got refcount %lu.\n", refcount);
+
     hr = ID3D10Device_QueryInterface(device, &IID_ID3D11Device, (void **)&d3d11_device);
     ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
             "Device should implement ID3D11Device.\n");
