@@ -1616,7 +1616,10 @@ static HRESULT d3d_sampler_state_init(struct d3d_sampler_state *state, struct d3
     wined3d_desc.min_lod = desc->MinLOD;
     wined3d_desc.max_lod = max(desc->MinLOD, desc->MaxLOD);
     wined3d_desc.mip_base_level = 0;
-    wined3d_desc.max_anisotropy = D3D11_DECODE_IS_ANISOTROPIC_FILTER(desc->Filter) ? desc->MaxAnisotropy : 1;
+    if (D3D11_DECODE_IS_ANISOTROPIC_FILTER(desc->Filter) && desc->MaxAnisotropy)
+        wined3d_desc.max_anisotropy = desc->MaxAnisotropy;
+    else
+        wined3d_desc.max_anisotropy = 1;
     wined3d_desc.compare = wined3d_texture_compare_from_d3d11(desc->Filter);
     wined3d_desc.comparison_func = wined3d_cmp_func_from_d3d11(desc->ComparisonFunc);
     wined3d_desc.srgb_decode = TRUE;
