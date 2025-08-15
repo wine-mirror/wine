@@ -103,6 +103,10 @@ it is actually called.
 .BI \-D\  symbol
 Ignored for compatibility with the C compiler.
 .TP
+.B \--disable-dynamicbase
+Disable 'ASLR' address space layout randomization in executable image.
+The default is 'ASLR' enabled.
+.TP
 .BI \-e,\ --entry= function
 Specify the module entry point function; if not specified, the default
 is

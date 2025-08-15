@@ -182,6 +182,7 @@ static const char usage_str[] =
 "       --data-only           Generate a data-only dll (i.e. without any executable code)\n"
 "   -d, --delay-lib=LIB       Import the specified library in delayed mode\n"
 "   -D SYM                    Ignored for C flags compatibility\n"
+"       --disable-dynamicbase Disable 'ASLR' address space layout randomization (default: ASLR on)\n"
 "   -e, --entry=FUNC          Set the DLL entry point function (default: DllMain)\n"
 "   -E, --export=FILE         Export the symbols defined in the .spec or .def file\n"
 "       --external-symbols    Allow linking to external symbols\n"
@@ -232,6 +233,7 @@ enum long_options_values
     LONG_OPT_ASCMD,
     LONG_OPT_CCCMD,
     LONG_OPT_DATA_ONLY,
+    LONG_OPT_DISABLE_DYNAMICBASE,
     LONG_OPT_EXTERNAL_SYMS,
     LONG_OPT_FAKE_MODULE,
     LONG_OPT_FIXUP_CTORS,
@@ -266,6 +268,7 @@ static const struct long_option long_options[] =
     { "as-cmd",              1, LONG_OPT_ASCMD },
     { "cc-cmd",              1, LONG_OPT_CCCMD },
     { "data-only",           0, LONG_OPT_DATA_ONLY },
+    { "disable-dynamicbase", 0, LONG_OPT_DISABLE_DYNAMICBASE },
     { "external-symbols",    0, LONG_OPT_EXTERNAL_SYMS },
     { "fake-module",         0, LONG_OPT_FAKE_MODULE },
     { "large-address-aware", 0, LONG_OPT_LARGE_ADDRESS_AWARE },
@@ -436,6 +439,9 @@ static void option_callback( int optc, char *optarg )
     case LONG_OPT_DEF:
         set_exec_mode( MODE_DEF );
         break;
+    case LONG_OPT_DISABLE_DYNAMICBASE:
+        main_spec->dll_characteristics &= ~IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
+        break;
     case LONG_OPT_EXE:
         set_exec_mode( MODE_EXE );
         if (!main_spec->subsystem) main_spec->subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
@@ -598,7 +604,8 @@ int main(int argc, char **argv)
         else
         {
             spec->characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
-            spec->dll_characteristics |= IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA;
+            if (spec->dll_characteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE)
+                spec->dll_characteristics |= IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA;
         }
 
         check_target();
