@@ -850,8 +850,7 @@ static void test_GetSystemTimes(void)
     int i;
     ULARGE_INTEGER ul1, ul2, ul3;
     SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi;
-    SYSTEM_BASIC_INFORMATION sbi;
-    ULONG ReturnLength;
+    ULONG ReturnLength, nprocs = NtCurrentTeb()->Peb->NumberOfProcessors;
     ULARGE_INTEGER total_usertime, total_kerneltime, total_idletime;
 
     if (!pGetSystemTimes)
@@ -878,24 +877,16 @@ static void test_GetSystemTimes(void)
     ul3.LowPart = usertime.dwLowDateTime;
     ul3.HighPart = usertime.dwHighDateTime;
 
-    ok( !NtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), &ReturnLength),
-                                  "NtQuerySystemInformation failed\n" );
-    ok( sizeof(sbi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength );
+    trace( "Number of Processors : %lu\n", nprocs );
 
-    /* Check if we have some return values */
-    trace( "Number of Processors : %d\n", sbi.NumberOfProcessors );
-    ok( sbi.NumberOfProcessors > 0, "Expected more than 0 processors, got %d\n",
-        sbi.NumberOfProcessors );
-
-    sppi = HeapAlloc( GetProcessHeap(), 0,
-                      sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * sbi.NumberOfProcessors);
+    sppi = HeapAlloc( GetProcessHeap(), 0, sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * nprocs);
 
     ok( !NtQuerySystemInformation( SystemProcessorPerformanceInformation, sppi,
-                                   sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * sbi.NumberOfProcessors,
+                                   sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * nprocs,
                                    &ReturnLength),
                                    "NtQuerySystemInformation failed\n" );
 
-    for (i = 0; i < sbi.NumberOfProcessors; i++)
+    for (i = 0; i < nprocs; i++)
     {
         total_usertime.QuadPart += sppi[i].UserTime.QuadPart;
         total_kerneltime.QuadPart += sppi[i].KernelTime.QuadPart;
