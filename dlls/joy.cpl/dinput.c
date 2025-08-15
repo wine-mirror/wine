@@ -232,6 +232,16 @@ static BOOL CALLBACK enum_devices( const DIDEVICEINSTANCEW *instance, void *cont
 {
     IDirectInput8W *dinput = context;
     struct device *entry;
+    DIPROPDWORD ac_prop =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPDWORD),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+        .dwData = DIPROPAUTOCENTER_OFF,
+    };
     HRESULT hr;
 
     if (!(entry = calloc( 1, sizeof(*entry) ))) return DIENUM_STOP;
@@ -240,6 +250,7 @@ static BOOL CALLBACK enum_devices( const DIDEVICEINSTANCEW *instance, void *cont
     if (SUCCEEDED(hr)) hr = IDirectInputDevice8_SetDataFormat( entry->device, &c_dfDIJoystick2 );
     if (SUCCEEDED(hr)) hr = IDirectInputDevice8_SetCooperativeLevel( entry->device, GetAncestor( dialog_hwnd, GA_ROOT ),
                                                                      DISCL_BACKGROUND | DISCL_EXCLUSIVE );
+    if (SUCCEEDED(hr)) hr = IDirectInputDevice8_SetProperty( entry->device, DIPROP_AUTOCENTER, &ac_prop.diph );
 
     if (SUCCEEDED(hr)) list_add_tail( &devices, &entry->entry );
     else
