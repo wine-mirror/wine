@@ -4289,8 +4289,8 @@ call run.cmd
 
 rem cleanup
 echo ---
-delete run.cmd
-delete ovr.cmd
+del run.cmd
+del ovr.cmd
 echo ------------ Testing combined CALLs/GOTOs ------------
 echo @echo off>foo.cmd
 echo goto :eof>>foot.cmd
