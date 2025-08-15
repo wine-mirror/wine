@@ -265,6 +265,38 @@ static NTSTATUS query_id(struct device *device, IRP *irp, BUS_QUERY_ID_TYPE type
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS query_text(struct device *device, IRP *irp, DEVICE_TEXT_TYPE type, LCID locale)
+{
+    static const WCHAR device_text2[] = L"WineTestDeviceLocation";
+    static const WCHAR device_text[] = L"WineTestDevice";
+    WCHAR *text = NULL;
+
+    irp->IoStatus.Information = 0;
+    switch (type)
+    {
+        case DeviceTextDescription:
+            todo_wine ok(locale, "Expected locale to be set.\n");
+            if (!(text = ExAllocatePool(PagedPool, sizeof(device_text))))
+                return STATUS_NO_MEMORY;
+            wcscpy(text, device_text);
+            break;
+
+        case DeviceTextLocationInformation:
+            todo_wine ok(locale, "Expected locale to be set.\n");
+            if (!(text = ExAllocatePool(PagedPool, sizeof(device_text2))))
+                return STATUS_NO_MEMORY;
+            wcscpy(text, device_text2);
+            break;
+
+        default:
+            ok(0, "Unexpected device text type %#x.\n", type);
+            return irp->IoStatus.Status;
+    }
+
+    irp->IoStatus.Information = (ULONG_PTR)text;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
@@ -421,6 +453,11 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
         case IRP_MN_CANCEL_REMOVE_DEVICE:
             cancel_remove_device_count++;
             ret = STATUS_SUCCESS;
+            break;
+
+        case IRP_MN_QUERY_DEVICE_TEXT:
+            ret = query_text(device, irp, stack->Parameters.QueryDeviceText.DeviceTextType,
+                    stack->Parameters.QueryDeviceText.LocaleId);
             break;
     }
 

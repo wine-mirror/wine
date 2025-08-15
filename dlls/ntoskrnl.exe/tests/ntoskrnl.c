@@ -1640,6 +1640,9 @@ static void test_pnp_devices(void)
     static const char expect_hardware_id[] = "winetest_hardware\0winetest_hardware_1\0";
     static const WCHAR expect_hardware_id_w[] = L"winetest_hardware\0winetest_hardware_1\0";
     static const char expect_compat_id[] = "winetest_compat\0winetest_compat_1\0";
+    static const char expect_device_location[] = "WineTestDeviceLocation";
+    static const WCHAR expect_device_location_w[] = L"WineTestDeviceLocation";
+    static const WCHAR expect_device_bus_desc_w[] = L"WineTestDevice";
     static const WCHAR expect_compat_id_w[] = L"winetest_compat\0winetest_compat_1\0";
     static const WCHAR expect_container_id_w[] = L"{12345678-1234-1234-1234-123456789123}";
     static const char foobar[] = "foobar";
@@ -1926,6 +1929,16 @@ static void test_pnp_devices(void)
         ok(!strcmp(buffer, "\\Device\\winetest_pnp_1"), "got PDO name %s\n", debugstr_a(buffer));
     }
 
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_LOCATION_INFORMATION, &type, (BYTE *)buffer,
+            sizeof(buffer), &size);
+    todo_wine ok(ret, "Got error %#lx.\n", GetLastError());
+    if (ret)
+    {
+        ok(type == REG_SZ, "Got type %lu.\n", type);
+        ok(size == sizeof(expect_device_location), "Got size %lu.\n", size);
+        ok(!strcmp(buffer, expect_device_location), "Got location information %s.\n", debugstr_a(buffer));
+    }
+
     prop_type = DEVPROP_TYPE_EMPTY;
     size = 0;
     memset(buffer_w, 0, sizeof(buffer_w));
@@ -1955,6 +1968,34 @@ static void test_pnp_devices(void)
     ok(size == sizeof(expect_container_id_guid), "got size %lu\n", size);
     ok(IsEqualGUID(&buffer_guid, &expect_container_id_guid), "got container ID %s != %s\n",
        debugstr_guid(&buffer_guid), debugstr_guid(&expect_container_id_guid));
+
+    /* DEVPKEY_Device_BusReportedDeviceDesc. */
+    prop_type = DEVPROP_TYPE_EMPTY;
+    size = 0;
+    memset(buffer_w, 0, sizeof(buffer_w));
+    ret = SetupDiGetDevicePropertyW(set, &device, &DEVPKEY_Device_BusReportedDeviceDesc, &prop_type, (BYTE *)buffer_w,
+                                    sizeof(buffer_w), &size, 0);
+    todo_wine ok(ret, "Got error %#lx.\n", GetLastError());
+    if (ret)
+    {
+        ok(prop_type == DEVPROP_TYPE_STRING, "got type %#lx\n", prop_type);
+        ok(size == sizeof(expect_device_bus_desc_w), "Got size %lu.\n", size);
+        ok(!wcscmp(buffer_w, expect_device_bus_desc_w), "Got device bus desc %s.\n", debugstr_w(buffer_w));
+    }
+
+    /* DEVPKEY_Device_LocationInfo. */
+    prop_type = DEVPROP_TYPE_EMPTY;
+    size = 0;
+    memset(buffer_w, 0, sizeof(buffer_w));
+    ret = SetupDiGetDevicePropertyW(set, &device, &DEVPKEY_Device_LocationInfo, &prop_type, (BYTE *)buffer_w,
+                                    sizeof(buffer_w), &size, 0);
+    todo_wine ok(ret, "Got error %#lx.\n", GetLastError());
+    if (ret)
+    {
+        ok(prop_type == DEVPROP_TYPE_STRING, "got type %#lx\n", prop_type);
+        ok(size == sizeof(expect_device_location_w), "Got size %lu.\n", size);
+        ok(!wcscmp(buffer_w, expect_device_location_w), "Got device location info %s.\n", debugstr_w(buffer_w));
+    }
 
     ret = SetupDiEnumDeviceInterfaces(set, NULL, &child_class, 0, &iface);
     ok(ret, "failed to get interface, error %#lx\n", GetLastError());
