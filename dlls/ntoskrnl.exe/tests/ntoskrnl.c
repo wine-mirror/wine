@@ -1975,13 +1975,10 @@ static void test_pnp_devices(void)
     memset(buffer_w, 0, sizeof(buffer_w));
     ret = SetupDiGetDevicePropertyW(set, &device, &DEVPKEY_Device_BusReportedDeviceDesc, &prop_type, (BYTE *)buffer_w,
                                     sizeof(buffer_w), &size, 0);
-    todo_wine ok(ret, "Got error %#lx.\n", GetLastError());
-    if (ret)
-    {
-        ok(prop_type == DEVPROP_TYPE_STRING, "got type %#lx\n", prop_type);
-        ok(size == sizeof(expect_device_bus_desc_w), "Got size %lu.\n", size);
-        ok(!wcscmp(buffer_w, expect_device_bus_desc_w), "Got device bus desc %s.\n", debugstr_w(buffer_w));
-    }
+    ok(ret, "Got error %#lx.\n", GetLastError());
+    ok(prop_type == DEVPROP_TYPE_STRING, "got type %#lx\n", prop_type);
+    ok(size == sizeof(expect_device_bus_desc_w), "Got size %lu.\n", size);
+    ok(!wcscmp(buffer_w, expect_device_bus_desc_w), "Got device bus desc %s.\n", debugstr_w(buffer_w));
 
     /* DEVPKEY_Device_LocationInfo. */
     prop_type = DEVPROP_TYPE_EMPTY;

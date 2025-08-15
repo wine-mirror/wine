@@ -33,6 +33,7 @@
 
 #include "initguid.h"
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+#include "devpkey.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
@@ -92,6 +93,32 @@ static NTSTATUS get_device_id( DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WC
         KeWaitForSingleObject( &event, Executive, KernelMode, FALSE, NULL );
 
     *id = (WCHAR *)irp_status.Information;
+    return irp_status.Status;
+}
+
+static NTSTATUS get_device_text( DEVICE_OBJECT *device, DEVICE_TEXT_TYPE type, WCHAR **text )
+{
+    IO_STACK_LOCATION *irpsp;
+    IO_STATUS_BLOCK irp_status;
+    KEVENT event;
+    IRP *irp;
+
+    device = IoGetAttachedDevice( device );
+
+    KeInitializeEvent( &event, NotificationEvent, FALSE );
+    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_PNP, device, NULL, 0, NULL, &event, &irp_status )))
+        return STATUS_NO_MEMORY;
+
+    irpsp = IoGetNextIrpStackLocation( irp );
+    irpsp->MinorFunction = IRP_MN_QUERY_DEVICE_TEXT;
+    irpsp->Parameters.QueryDeviceText.DeviceTextType = type;
+    irpsp->Parameters.QueryDeviceText.LocaleId = 0;
+
+    irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
+    if (IoCallDriver( device, irp ) == STATUS_PENDING)
+        KeWaitForSingleObject( &event, Executive, KernelMode, FALSE, NULL );
+
+    *text = (WCHAR *)irp_status.Information;
     return irp_status.Status;
 }
 
@@ -359,6 +386,14 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set )
     {
         SetupDiSetDeviceRegistryPropertyW( set, &sp_device, SPDRP_BASE_CONTAINERID, (BYTE *)id,
             (lstrlenW( id ) + 1) * sizeof(WCHAR) );
+        ExFreePool( id );
+    }
+
+    if (!get_device_text(device, DeviceTextDescription, &id) && id)
+    {
+        if (!SetupDiSetDevicePropertyW( set, &sp_device, &DEVPKEY_Device_BusReportedDeviceDesc, DEVPROP_TYPE_STRING,
+                    (BYTE *)id, (lstrlenW( id ) + 1) * sizeof(WCHAR), 0 ))
+            WARN("Failed to set bus reported device desc property.\n");
         ExFreePool( id );
     }
 
