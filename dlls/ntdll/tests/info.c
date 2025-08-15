@@ -726,13 +726,9 @@ static void test_query_procperf(void)
     NTSTATUS status;
     ULONG ReturnLength;
     ULONG NeededLength;
-    SYSTEM_BASIC_INFORMATION sbi;
     SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* sppi;
 
-    /* Find out the number of processors */
-    status = pNtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), &ReturnLength);
-    ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    NeededLength = sbi.NumberOfProcessors * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
+    NeededLength = NtCurrentTeb()->Peb->NumberOfProcessors * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
 
     sppi = HeapAlloc(GetProcessHeap(), 0, NeededLength);
 
@@ -1071,13 +1067,9 @@ static void test_query_interrupt(void)
     NTSTATUS status;
     ULONG ReturnLength;
     ULONG NeededLength;
-    SYSTEM_BASIC_INFORMATION sbi;
     SYSTEM_INTERRUPT_INFORMATION* sii;
 
-    /* Find out the number of processors */
-    status = pNtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), &ReturnLength);
-    ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    NeededLength = sbi.NumberOfProcessors * sizeof(SYSTEM_INTERRUPT_INFORMATION);
+    NeededLength = NtCurrentTeb()->Peb->NumberOfProcessors * sizeof(SYSTEM_INTERRUPT_INFORMATION);
 
     sii = HeapAlloc(GetProcessHeap(), 0, NeededLength);
 
