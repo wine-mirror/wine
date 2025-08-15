@@ -1752,14 +1752,6 @@ static enum fill_status fill_cdromdrive( struct table *table, const struct expr 
     return status;
 }
 
-static UINT get_processor_count(void)
-{
-    SYSTEM_BASIC_INFORMATION info;
-
-    if (NtQuerySystemInformation( SystemBasicInformation, &info, sizeof(info), NULL )) return 1;
-    return info.NumberOfProcessors;
-}
-
 static UINT get_physical_processor_count( const char *buf, UINT len, UINT *num_logical )
 {
     const struct smbios_header *hdr;
@@ -3691,7 +3683,7 @@ static WCHAR *get_processor_name( UINT index, const char *buf, UINT len )
 static UINT get_processor_currentclockspeed( UINT index )
 {
     PROCESSOR_POWER_INFORMATION *info;
-    UINT ret = 1000, size = get_processor_count() * sizeof(PROCESSOR_POWER_INFORMATION);
+    UINT ret = 1000, size = NtCurrentTeb()->Peb->NumberOfProcessors * sizeof(PROCESSOR_POWER_INFORMATION);
     NTSTATUS status;
 
     if ((info = malloc( size )))
@@ -3705,7 +3697,7 @@ static UINT get_processor_currentclockspeed( UINT index )
 static UINT get_processor_maxclockspeed( UINT index )
 {
     PROCESSOR_POWER_INFORMATION *info;
-    UINT ret = 1000, size = get_processor_count() * sizeof(PROCESSOR_POWER_INFORMATION);
+    UINT ret = 1000, size = NtCurrentTeb()->Peb->NumberOfProcessors * sizeof(PROCESSOR_POWER_INFORMATION);
     NTSTATUS status;
 
     if ((info = malloc( size )))
