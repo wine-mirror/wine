@@ -708,7 +708,7 @@ static void *lnxev_device_haptics_thread(void *args)
     {
         while (!memcmp(&effect, &impl->haptics, sizeof(effect)))
             pthread_cond_wait(&impl->haptics_cond, &udev_cs);
-        if (impl->haptics.type == (__u16)-1) break;
+        if (impl->haptics.type == (uint16_t)-1) break;
 
         effect = impl->haptics;
         pthread_mutex_unlock(&udev_cs);
