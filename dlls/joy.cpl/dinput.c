@@ -116,13 +116,11 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
     {
         params.cbTypeSpecificParams = sizeof(ramp);
         params.lpvTypeSpecificParams = &ramp;
-        params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
     }
     else if (IsEqualGUID( &info->guid, &GUID_ConstantForce ))
     {
         params.cbTypeSpecificParams = sizeof(constant);
         params.lpvTypeSpecificParams = &constant;
-        params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
     }
     else if (IsEqualGUID( &info->guid, &GUID_Sine ) ||
              IsEqualGUID( &info->guid, &GUID_Square ) ||
@@ -132,7 +130,6 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
     {
         params.cbTypeSpecificParams = sizeof(periodic);
         params.lpvTypeSpecificParams = &periodic;
-        params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
     }
     else if (IsEqualGUID( &info->guid, &GUID_Spring ) ||
              IsEqualGUID( &info->guid, &GUID_Damper ) ||
@@ -141,7 +138,6 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
     {
         params.cbTypeSpecificParams = sizeof(condition);
         params.lpvTypeSpecificParams = &condition;
-        params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
     }
 
     do hr = IDirectInputDevice2_CreateEffect( device, &info->guid, &params, &effect, NULL );
