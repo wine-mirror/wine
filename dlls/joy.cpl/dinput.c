@@ -109,33 +109,25 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
 
     if (!(entry = calloc( 1, sizeof(*entry) ))) return DIENUM_STOP;
 
-    if (IsEqualGUID( &info->guid, &GUID_RampForce ))
+    switch (DIEFT_GETTYPE( info->dwEffType ))
     {
+    case DIEFT_RAMPFORCE:
         params.cbTypeSpecificParams = sizeof(ramp);
         params.dwDuration = 2 * DI_SECONDS;
         params.lpvTypeSpecificParams = &ramp;
-    }
-    else if (IsEqualGUID( &info->guid, &GUID_ConstantForce ))
-    {
+        break;
+    case DIEFT_CONSTANTFORCE:
         params.cbTypeSpecificParams = sizeof(constant);
         params.lpvTypeSpecificParams = &constant;
-    }
-    else if (IsEqualGUID( &info->guid, &GUID_Sine ) ||
-             IsEqualGUID( &info->guid, &GUID_Square ) ||
-             IsEqualGUID( &info->guid, &GUID_Triangle ) ||
-             IsEqualGUID( &info->guid, &GUID_SawtoothUp ) ||
-             IsEqualGUID( &info->guid, &GUID_SawtoothDown ))
-    {
+        break;
+    case DIEFT_PERIODIC:
         params.cbTypeSpecificParams = sizeof(periodic);
         params.lpvTypeSpecificParams = &periodic;
-    }
-    else if (IsEqualGUID( &info->guid, &GUID_Spring ) ||
-             IsEqualGUID( &info->guid, &GUID_Damper ) ||
-             IsEqualGUID( &info->guid, &GUID_Inertia ) ||
-             IsEqualGUID( &info->guid, &GUID_Friction ))
-    {
+        break;
+    case DIEFT_CONDITION:
         params.cbTypeSpecificParams = sizeof(condition);
         params.lpvTypeSpecificParams = &condition;
+        break;
     }
 
     do hr = IDirectInputDevice2_CreateEffect( device, &info->guid, &params, &effect, NULL );
