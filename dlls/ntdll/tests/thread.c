@@ -267,7 +267,9 @@ static void test_thread_bypass_process_freeze(void)
 
     status = pNtCreateThreadEx( &thread, THREAD_ALL_ACCESS, NULL, GetCurrentProcess(), test_thread_bypass_process_freeze_proc,
                                 NULL, THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE, 0, 0, 0, NULL );
-    ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
+    ok( status == STATUS_SUCCESS ||
+        broken(status == STATUS_INVALID_PARAMETER_7) /* <= Win10-1809 */,
+        "Got unexpected status %#lx.\n", status );
 
     WaitForSingleObject( thread, INFINITE );
     CloseHandle( thread );
