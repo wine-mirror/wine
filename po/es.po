@@ -3913,8 +3913,12 @@ msgid "Force Feedback Effect"
 msgstr "Probar Force Feedback"
 
 #: dlls/joy.cpl/joy.rc:67
+#, fuzzy
+#| msgid ""
+#| "Press any button in the controller to activate the chosen effect. The "
+#| "effect direction can be changed with the controller axis."
 msgid ""
-"Press any button in the controller to activate the chosen effect. The effect "
+"Hold any button in the controller to play the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
 "Presione cualquier botón del controlador para activar el efecto elegido. La "

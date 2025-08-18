@@ -3883,7 +3883,7 @@ msgstr ""
 
 #: dlls/joy.cpl/joy.rc:67
 msgid ""
-"Press any button in the controller to activate the chosen effect. The effect "
+"Hold any button in the controller to play the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
 

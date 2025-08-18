@@ -3881,8 +3881,12 @@ msgid "Force Feedback Effect"
 msgstr "Efeutu de la rempuesta de fuercia"
 
 #: dlls/joy.cpl/joy.rc:67
+#, fuzzy
+#| msgid ""
+#| "Press any button in the controller to activate the chosen effect. The "
+#| "effect direction can be changed with the controller axis."
 msgid ""
-"Press any button in the controller to activate the chosen effect. The effect "
+"Hold any button in the controller to play the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
 "Primi cualesquier botón del mandu p'activar l'efeutu escoyíu. Pues camudar "

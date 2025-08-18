@@ -63,7 +63,7 @@ FONT 8, "Ms Shell Dlg"
     GROUPBOX        "Buttons", IDC_DI_BUTTONS, 15, 100, 291, 86
     LTEXT           "Force Feedback Effect", IDC_STATIC, 15, 196, 291, 10
     LISTBOX         IDC_DI_EFFECTS, 15, 206, 291, 54, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
-    LTEXT           "Press any button in the controller to activate the chosen effect. The effect direction can be changed with the controller axis.",
+    LTEXT           "Hold any button in the controller to play the chosen effect. The effect direction can be changed with the controller axis.",
                     IDC_STATIC, 15, 260, 291, 25
 }
 

@@ -77,7 +77,7 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
     {
         .dwSize = sizeof(DIEFFECT),
         .dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS,
-        .dwDuration = 2 * DI_SECONDS,
+        .dwDuration = INFINITE,
         .dwGain = DI_FFNOMINALMAX,
         .rglDirection = direction,
         .rgdwAxes = axes,
@@ -112,6 +112,7 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
     if (IsEqualGUID( &info->guid, &GUID_RampForce ))
     {
         params.cbTypeSpecificParams = sizeof(ramp);
+        params.dwDuration = 2 * DI_SECONDS;
         params.lpvTypeSpecificParams = &ramp;
     }
     else if (IsEqualGUID( &info->guid, &GUID_ConstantForce ))
@@ -267,6 +268,7 @@ static void clear_devices(void)
 static DWORD WINAPI input_thread( void *param )
 {
     HANDLE events[2] = {param, state_event};
+    IDirectInputEffect *playing = NULL;
 
     while (WaitForMultipleObjects( 2, events, FALSE, INFINITE ) != 0)
     {
@@ -289,16 +291,38 @@ static DWORD WINAPI input_thread( void *param )
                 .cAxes = 2,
             };
 
-            if (pressed)
+            if (playing && (!pressed || playing != effect))
+            {
+                IDirectInputEffect_Stop( playing );
+                IDirectInputEffect_Release( playing );
+                playing = NULL;
+            }
+
+            if (pressed && !playing)
             {
                 do hr = IDirectInputEffect_SetParameters( effect, &params, DIEP_DIRECTION | DIEP_NORESTART );
                 while (FAILED(hr) && --params.cAxes);
 
                 IDirectInputEffect_Start( effect, 1, 0 );
+                IDirectInputEffect_AddRef( effect );
+                playing = effect;
             }
 
             IDirectInputEffect_Release( effect );
         }
+        else if (playing)
+        {
+            IDirectInputEffect_Stop( playing );
+            IDirectInputEffect_Release( playing );
+            playing = NULL;
+        }
+    }
+
+    if (playing)
+    {
+        IDirectInputEffect_Stop( playing );
+        IDirectInputEffect_Release( playing );
+        playing = NULL;
     }
 
     return 0;

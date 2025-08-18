@@ -3869,8 +3869,12 @@ msgid "Force Feedback Effect"
 msgstr "피드백 효과 강제"
 
 #: dlls/joy.cpl/joy.rc:67
+#, fuzzy
+#| msgid ""
+#| "Press any button in the controller to activate the chosen effect. The "
+#| "effect direction can be changed with the controller axis."
 msgid ""
-"Press any button in the controller to activate the chosen effect. The effect "
+"Hold any button in the controller to play the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
 "선택한 효과를 활성화하려면 컨트롤러의 아무 버튼이나 누르십시오. 효과 방향은 "
