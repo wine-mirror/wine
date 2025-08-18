@@ -275,6 +275,7 @@ static NTSTATUS handle_send_echo( IRP *irp )
     params.bits = in->bits;
     params.ttl = in->ttl;
     params.tos = in->tos;
+    params.src = &in->src;
     params.dst = &in->dst;
     params.handle = &handle;
 

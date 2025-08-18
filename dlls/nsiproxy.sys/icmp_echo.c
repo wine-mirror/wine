@@ -113,6 +113,10 @@ struct icmp_data
     unsigned short id;
     unsigned short seq;
     const struct family_ops *ops;
+    struct sockaddr_storage src_storage;
+    struct sockaddr_storage dst_storage;
+    int src_len;
+    int dst_len;
 };
 
 #define MAX_HANDLES 256 /* Max number of simultaneous pings - could become dynamic if need be */
@@ -625,14 +629,26 @@ NTSTATUS icmp_send_echo( void *args )
 {
     struct icmp_send_echo_params *params = args;
     struct icmp_hdr *icmp_hdr; /* this is the same for both ipv4 and ipv6 */
-    struct sockaddr_storage dst_storage;
-    struct sockaddr *dst = (struct sockaddr *)&dst_storage;
     struct icmp_data *data;
-    int dst_len, ret;
+    int ret;
+    struct sockaddr *src, *dst;
+
     NTSTATUS status;
 
     status = icmp_data_create( params->dst->si_family, &data );
     if (status) return status;
+
+    src = (struct sockaddr *)&data->src_storage;
+    dst = (struct sockaddr *)&data->dst_storage;
+    data->src_len = SOCKADDR_INET_to_sockaddr( params->src, src, sizeof(data->src_storage) );
+    data->dst_len = SOCKADDR_INET_to_sockaddr( params->dst, dst, sizeof(data->dst_storage) );
+
+    if (bind( data->socket, src, data->src_len ))
+    {
+        icmp_data_free( data );
+        return STATUS_INVALID_ADDRESS_COMPONENT;
+    }
+
     data->ops->set_socket_opts( data, params );
 
     icmp_hdr = malloc( sizeof(*icmp_hdr) + params->request_size );
@@ -645,10 +661,8 @@ NTSTATUS icmp_send_echo( void *args )
     memcpy( icmp_hdr + 1, params->request, params->request_size );
     icmp_hdr->checksum = data->ops->chksum( (BYTE *)icmp_hdr, sizeof(*icmp_hdr) + params->request_size );
 
-    dst_len = SOCKADDR_INET_to_sockaddr( params->dst, dst, sizeof(dst_storage) );
-
     NtQueryPerformanceCounter( &data->send_time, NULL );
-    ret = sendto( data->socket, icmp_hdr, sizeof(*icmp_hdr) + params->request_size, 0, dst, dst_len );
+    ret = sendto( data->socket, icmp_hdr, sizeof(*icmp_hdr) + params->request_size, 0, dst, data->dst_len );
     free( icmp_hdr );
 
     if (ret < 0)

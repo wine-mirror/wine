@@ -41,6 +41,7 @@ struct icmp_listen_params
 
 struct icmp_send_echo_params
 {
+    SOCKADDR_INET *src;
     SOCKADDR_INET *dst;
     void *request, *reply;
     UINT request_size, reply_len;

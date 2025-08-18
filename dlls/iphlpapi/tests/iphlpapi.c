@@ -1241,6 +1241,12 @@ static void testIcmpSendEcho(void)
     ok(ret, "IcmpSendEcho2 failed unexpectedly with error %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
+    ret = IcmpSendEcho2Ex(icmp, NULL, NULL, NULL, 0x01010101, address, senddata, ICMP_MINLEN, NULL, replydata2, replysz, 1000);
+    ok(!ret, "IcmpSendEcho2 succeded unexpectedly\n");
+    error = GetLastError();
+    ok(error == ERROR_INVALID_NETNAME, "got %ld\n", error);
+
+    SetLastError(0xdeadbeef);
     replysz = sizeof(replydata2);
     ret = IcmpSendEcho2(icmp, NULL, NULL, NULL, address, senddata, sizeof(senddata), NULL, replydata2, replysz, 1000);
     if (!ret)
