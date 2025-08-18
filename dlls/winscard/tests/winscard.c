@@ -207,6 +207,9 @@ static void test_SCardEstablishContext(void)
     ret = SCardTransmit( connect, &send_pci, cmd, sizeof(cmd), &recv_pci, recv_buf, NULL );
     ok( ret == SCARD_E_INVALID_PARAMETER, "got %lx (%lu)\n", ret, ret );
 
+    ret = SCardTransmit( connect, NULL, cmd, sizeof(cmd), &recv_pci, recv_buf, &len );
+    ok( ret == SCARD_S_SUCCESS, "got %lx (%lu)\n", ret, ret );
+
     len = sizeof(recv_buf);
     ret = SCardTransmit( connect, &send_pci, cmd, sizeof(cmd), &recv_pci, recv_buf, &len );
     ok( ret == SCARD_S_SUCCESS, "got %lx (%lu)\n", ret, ret );
