@@ -21,6 +21,8 @@
 #include <stdarg.h>
 
 #define IPHLPAPI_DLL_LINKAGE
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -4863,17 +4865,15 @@ void WINAPI icmp_apc_routine( void *context, IO_STATUS_BLOCK *iosb, ULONG reserv
     heap_free( ctxt );
 }
 
-/***********************************************************************
- *    IcmpSendEcho2Ex (IPHLPAPI.@)
- */
-DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_routine, void *apc_ctxt,
-                              IPAddr src, IPAddr dst, void *request, WORD request_size, IP_OPTION_INFORMATION *opts,
-                              void *reply, DWORD reply_size, DWORD timeout )
+static NTSTATUS icmp_send_echo( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_routine, void *apc_ctxt,
+                                SOCKADDR_INET *src_addr, SOCKADDR_INET *dst_addr, void *request,
+                                WORD request_size, IP_OPTION_INFORMATION *opts, void *reply, DWORD reply_size,
+                                DWORD timeout )
 {
     struct icmp_handle_data *data = (struct icmp_handle_data *)handle;
     struct icmp_apc_ctxt *ctxt = heap_alloc( sizeof(*ctxt) );
     IO_STATUS_BLOCK *iosb = &ctxt->iosb;
-    DWORD opt_size, in_size, ret = 0;
+    DWORD opt_size, in_size;
     struct nsiproxy_icmp_echo *in;
     HANDLE request_event;
     NTSTATUS status;
@@ -4881,8 +4881,7 @@ DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_r
     if (handle == INVALID_HANDLE_VALUE || !reply)
     {
         heap_free( ctxt );
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
+        return STATUS_INVALID_PARAMETER;
     }
 
     ctxt->apc_routine = apc_routine;
@@ -4895,16 +4894,13 @@ DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_r
     if (!in)
     {
         heap_free( ctxt );
-        SetLastError( IP_NO_RESOURCES );
-        return 0;
+        return STATUS_NO_MEMORY;
     }
 
     in->user_reply_ptr = (ULONG_PTR)reply;
     in->bits = sizeof(void*) * 8;
-    in->src.Ipv4.sin_family = AF_INET;
-    in->src.Ipv4.sin_addr.s_addr = src;
-    in->dst.Ipv4.sin_family = AF_INET;
-    in->dst.Ipv4.sin_addr.s_addr = dst;
+    in->src = *src_addr;
+    in->dst = *dst_addr;
     if (opts)
     {
         in->ttl = opts->Ttl;
@@ -4929,15 +4925,36 @@ DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_r
             status = iosb->Status;
     }
 
-    if (!status)
-        ret = IcmpParseReplies( reply, reply_size );
-
     if (!event && request_event) CloseHandle( request_event );
     if ((!apc_routine && !event) || status != STATUS_PENDING) heap_free( ctxt );
     heap_free( in );
+    return status;
+}
 
-    if (status) SetLastError( RtlNtStatusToDosError( status ) );
-    return ret;
+/***********************************************************************
+ *    IcmpSendEcho2Ex (IPHLPAPI.@)
+ */
+DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_routine, void *apc_ctxt,
+                              IPAddr src, IPAddr dst, void *request, WORD request_size, IP_OPTION_INFORMATION *opts,
+                              void *reply, DWORD reply_size, DWORD timeout )
+{
+    SOCKADDR_INET src_addr, dst_addr;
+    NTSTATUS status;
+
+    TRACE( "(%p %p %p %p %#lx %#lx %p %u %p %p %lu %lu).\n", handle, event, apc_routine, apc_ctxt, src, dst,
+           request, request_size, opts, reply, reply_size, timeout );
+
+    memset( &src_addr, 0, sizeof(src_addr) );
+    src_addr.Ipv4.sin_family = AF_INET;
+    src_addr.Ipv4.sin_addr.s_addr = src;
+    memset( &dst_addr, 0, sizeof(dst_addr) );
+    dst_addr.Ipv4.sin_family = AF_INET;
+    dst_addr.Ipv4.sin_addr.s_addr = dst;
+    status = icmp_send_echo( handle, event, apc_routine, apc_ctxt, &src_addr, &dst_addr, request, request_size,
+                             opts, reply, reply_size, timeout );
+    if (!status) return IcmpParseReplies( reply, reply_size );
+    SetLastError( RtlNtStatusToDosError( status ) );
+    return 0;
 }
 
 /***********************************************************************
