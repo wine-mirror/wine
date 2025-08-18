@@ -424,17 +424,17 @@ static void test_skip_thread_attach(void)
 
     status = pNtCreateThreadEx( &thread, THREAD_ALL_ACCESS, NULL, GetCurrentProcess(), test_skip_thread_attach_proc,
                                 &args, THREAD_CREATE_FLAGS_SKIP_THREAD_ATTACH, 0, 0, 0, NULL );
-    todo_wine ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
+    ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
 
     WaitForSingleObject( thread, INFINITE );
 
     CloseHandle( thread );
 
-    todo_wine ok( !*seen_thread_attach, "Unexpected\n" );
-    todo_wine ok( !*seen_thread_detach, "Unexpected\n" );
-    todo_wine ok( args.teb_flag, "Unexpected\n" );
-    todo_wine ok( !args.teb_tls_pointer, "Unexpected\n" );
-    todo_wine ok( !args.teb_fls_slots, "Unexpected\n" );
+    ok( !*seen_thread_attach, "Unexpected\n" );
+    ok( !*seen_thread_detach, "Unexpected\n" );
+    ok( args.teb_flag, "Unexpected\n" );
+    ok( !args.teb_tls_pointer, "Unexpected\n" );
+    ok( !args.teb_fls_slots, "Unexpected\n" );
 
     FreeLibrary(module);
 delete:

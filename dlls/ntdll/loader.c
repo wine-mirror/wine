@@ -3912,23 +3912,26 @@ void WINAPI LdrShutdownThread(void)
     RtlProcessFlsData( NtCurrentTeb()->FlsSlots, 1 );
 
     RtlEnterCriticalSection( &loader_section );
-    wm = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
 
-    mark = &NtCurrentTeb()->Peb->LdrData->InInitializationOrderModuleList;
-    for (entry = mark->Blink; entry != mark; entry = entry->Blink)
+    if (!NtCurrentTeb()->SkipThreadAttach)
     {
-        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY,
-                                InInitializationOrderLinks);
-        if ( !(mod->Flags & LDR_PROCESS_ATTACHED) )
-            continue;
-        if ( mod->Flags & LDR_NO_DLL_CALLS )
-            continue;
+        wm = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
+        mark = &NtCurrentTeb()->Peb->LdrData->InInitializationOrderModuleList;
+        for (entry = mark->Blink; entry != mark; entry = entry->Blink)
+        {
+            mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY,
+                                    InInitializationOrderLinks);
+            if ( !(mod->Flags & LDR_PROCESS_ATTACHED) )
+                continue;
+            if ( mod->Flags & LDR_NO_DLL_CALLS )
+                continue;
 
-        MODULE_InitDLL( CONTAINING_RECORD(mod, WINE_MODREF, ldr), 
-                        DLL_THREAD_DETACH, NULL );
+            MODULE_InitDLL( CONTAINING_RECORD(mod, WINE_MODREF, ldr),
+                            DLL_THREAD_DETACH, NULL );
+        }
+
+        if (wm->ldr.TlsIndex == -1) call_tls_callbacks( wm->ldr.DllBase, DLL_THREAD_DETACH );
     }
-
-    if (wm->ldr.TlsIndex == -1) call_tls_callbacks( wm->ldr.DllBase, DLL_THREAD_DETACH );
 
     RtlAcquirePebLock();
     if ((pointers = NtCurrentTeb()->ThreadLocalStoragePointer))
@@ -4474,6 +4477,13 @@ void loader_init( CONTEXT *context, void **entry )
 #ifdef __arm64ec__
         arm64ec_thread_init();
 #endif
+
+        if (NtCurrentTeb()->SkipThreadAttach)
+        {
+            RtlLeaveCriticalSection( &loader_section );
+            return;
+        }
+
         wm = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
     }
 
