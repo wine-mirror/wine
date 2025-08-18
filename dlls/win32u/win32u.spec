@@ -520,7 +520,7 @@
 @ stdcall -syscall NtGdiGetGlyphOutline(long long long ptr long ptr ptr long)
 @ stdcall -syscall NtGdiGetKerningPairs(long long ptr)
 @ stub NtGdiGetLinkedUFIs
-@ stub NtGdiGetMiterLimit
+@ stdcall -syscall NtGdiGetMiterLimit(long ptr)
 @ stub NtGdiGetMonitorID
 @ stdcall -syscall NtGdiGetNearestColor(long long)
 @ stdcall -syscall NtGdiGetNearestPaletteIndex(long long)
@@ -640,7 +640,7 @@
 @ stub NtGdiSetLinkedUFIs
 @ stdcall -syscall NtGdiSetMagicColors(long long long)
 @ stdcall -syscall NtGdiSetMetaRgn(long)
-@ stub NtGdiSetMiterLimit
+@ stdcall -syscall NtGdiSetMiterLimit(long long ptr)
 @ stub NtGdiSetOPMSigningKeyAndSequenceNumbers
 @ stub NtGdiSetPUMPDOBJ
 @ stdcall -syscall NtGdiSetPixel(long long long long)

@@ -405,7 +405,7 @@
 @ stdcall GetMetaFileBitsEx(long long ptr)
 @ stdcall GetMetaFileW(wstr)
 @ stdcall GetMetaRgn(long long)
-@ stdcall GetMiterLimit(long ptr)
+@ stdcall GetMiterLimit(long ptr) NtGdiGetMiterLimit
 @ stdcall GetNearestColor(long long) NtGdiGetNearestColor
 @ stdcall GetNearestPaletteIndex(long long) NtGdiGetNearestPaletteIndex
 # @ stub GetNumberOfPhysicalMonitors

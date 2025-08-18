@@ -397,7 +397,7 @@ W32KAPI DWORD    WINAPI NtGdiGetGlyphOutline( HDC hdc, UINT ch, UINT format, GLY
                                               DWORD size, void *buffer, const MAT2 *mat2,
                                               BOOL ignore_rotation );
 W32KAPI DWORD    WINAPI NtGdiGetKerningPairs( HDC hdc, DWORD count, KERNINGPAIR *kern_pair );
-W32KAPI BOOL     WINAPI NtGdiGetMiterLimit( HDC hdc, DWORD *limit );
+W32KAPI BOOL     WINAPI NtGdiGetMiterLimit( HDC hdc, FLOAT *limit );
 W32KAPI COLORREF WINAPI NtGdiGetNearestColor( HDC hdc, COLORREF color );
 W32KAPI UINT     WINAPI NtGdiGetNearestPaletteIndex( HPALETTE hpalette, COLORREF color );
 W32KAPI UINT     WINAPI NtGdiGetOutlineTextMetricsInternalW( HDC hdc, UINT cbData,
@@ -484,7 +484,7 @@ W32KAPI BOOL     WINAPI NtGdiSetDeviceGammaRamp( HDC hdc, void *ptr );
 W32KAPI DWORD    WINAPI NtGdiSetLayout( HDC hdc, LONG wox, DWORD layout );
 W32KAPI BOOL     WINAPI NtGdiSetMagicColors( HDC hdc, DWORD magic, ULONG index );
 W32KAPI INT      WINAPI NtGdiSetMetaRgn( HDC hdc );
-W32KAPI BOOL     WINAPI NtGdiSetMiterLimit( HDC hdc, DWORD limit, DWORD *prev_limit );
+W32KAPI BOOL     WINAPI NtGdiSetMiterLimit( HDC hdc, DWORD limit, FLOAT *prev_limit );
 W32KAPI COLORREF WINAPI NtGdiSetPixel( HDC hdc, INT x, INT y, COLORREF color );
 W32KAPI BOOL     WINAPI NtGdiSetPixelFormat( HDC hdc, INT format );
 W32KAPI BOOL     WINAPI NtGdiSetRectRgn( HRGN hrgn, INT left, INT top, INT right, INT bottom );

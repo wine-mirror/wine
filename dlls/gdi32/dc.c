@@ -1439,17 +1439,6 @@ INT WINAPI SetROP2( HDC hdc, INT mode )
     return ret;
 }
 
-/***********************************************************************
- *           GetMiterLimit  (GDI32.@)
- */
-BOOL WINAPI GetMiterLimit( HDC hdc, FLOAT *limit )
-{
-    DC_ATTR *dc_attr;
-    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
-    if (limit) *limit = dc_attr->miter_limit;
-    return TRUE;
-}
-
 /*******************************************************************
  *           SetMiterLimit  (GDI32.@)
  */
@@ -1459,9 +1448,7 @@ BOOL WINAPI SetMiterLimit( HDC hdc, FLOAT limit, FLOAT *old_limit )
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
     if (dc_attr->emf && !EMFDC_SetMiterLimit( dc_attr, limit )) return 0;
     if (limit < 1.0f) return FALSE;
-    if (old_limit) *old_limit = dc_attr->miter_limit;
-    dc_attr->miter_limit = limit;
-    return TRUE;
+    return NtGdiSetMiterLimit( hdc, *(DWORD *)&limit, old_limit );
 }
 
 /***********************************************************************

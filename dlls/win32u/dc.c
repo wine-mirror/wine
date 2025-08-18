@@ -1091,6 +1091,35 @@ BOOL WINAPI NtGdiSetBrushOrg( HDC hdc, INT x, INT y, POINT *oldorg )
 }
 
 
+/***********************************************************************
+ *           NtGdiGetMiterLimit  (win32u.@)
+ */
+BOOL WINAPI NtGdiGetMiterLimit( HDC hdc, FLOAT *limit )
+{
+    DC *dc;
+
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+    if (limit) *limit = dc->attr->miter_limit;
+    release_dc_ptr( dc );
+    return TRUE;
+}
+
+
+/*******************************************************************
+ *           NtGdiSetMiterLimit  (win32u.@)
+ */
+BOOL WINAPI NtGdiSetMiterLimit( HDC hdc, DWORD limit, FLOAT *old_limit )
+{
+    DC *dc;
+
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+    if (old_limit) *old_limit = dc->attr->miter_limit;
+    dc->attr->miter_limit = *(FLOAT *)&limit;
+    release_dc_ptr( dc );
+    return TRUE;
+}
+
+
 BOOL offset_viewport_org( HDC hdc, INT x, INT y, POINT *point )
 {
     DC *dc;
