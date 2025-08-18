@@ -862,6 +862,7 @@ int main( int argc, char **argv )
     }
     if (GetEnvironmentVariableA( "WINETEST_DEBUG", p, sizeof(p) )) winetest_debug = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_INTERACTIVE", p, sizeof(p) )) winetest_interactive = atoi(p);
+    if (GetEnvironmentVariableA( "WINETEST_MUTE_THRESHOLD", p, sizeof(p) )) winetest_mute_threshold = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_REPORT_FLAKY", p, sizeof(p) )) winetest_report_flaky = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", p, sizeof(p) )) winetest_report_success = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_TIME", p, sizeof(p) )) winetest_time = atoi(p);
