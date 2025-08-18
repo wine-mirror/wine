@@ -163,12 +163,15 @@ static void set_selected_effect( IDirectInputEffect *effect )
     LeaveCriticalSection( &state_cs );
 }
 
-static IDirectInputEffect *get_selected_effect(void)
+static IDirectInputEffect *get_selected_effect( DIJOYSTATE2 *state )
 {
+    IDirectInputDevice8W *device;
     IDirectInputEffect *effect;
 
     EnterCriticalSection( &state_cs );
-    if ((effect = effect_selected)) IDirectInputEffect_AddRef( effect );
+    if (!(device = device_selected)) effect = NULL;
+    else if (FAILED(IDirectInputDevice8_GetDeviceState( device, sizeof(*state), state ))) effect = NULL;
+    else if ((effect = effect_selected)) IDirectInputEffect_AddRef( effect );
     LeaveCriticalSection( &state_cs );
 
     return effect;
@@ -269,12 +272,13 @@ static DWORD WINAPI input_thread( void *param )
     {
         IDirectInputEffect *effect;
         DIJOYSTATE2 state = {0};
-        unsigned int i;
 
         SendMessageW( dialog_hwnd, WM_USER, 0, 0 );
 
-        if ((effect = get_selected_effect()))
+        if ((effect = get_selected_effect( &state )))
         {
+            static const BYTE empty[sizeof(state.rgbButtons)] = {0};
+            BOOL pressed = memcmp( empty, state.rgbButtons, sizeof(state.rgbButtons) );
             DWORD flags = DIEP_AXES | DIEP_DIRECTION | DIEP_NORESTART;
             LONG direction[3] = {0};
             DWORD axes[3] = {0};
@@ -291,14 +295,10 @@ static DWORD WINAPI input_thread( void *param )
             params.rgdwAxes[0] = state.lX;
             params.rgdwAxes[1] = state.lY;
 
-            for (i = 0; i < ARRAY_SIZE(state.rgbButtons); i++)
+            if (pressed)
             {
-                if (state.rgbButtons[i])
-                {
-                    IDirectInputEffect_SetParameters( effect, &params, flags );
-                    IDirectInputEffect_Start( effect, 1, 0 );
-                    break;
-                }
+                IDirectInputEffect_SetParameters( effect, &params, flags );
+                IDirectInputEffect_Start( effect, 1, 0 );
             }
 
             IDirectInputEffect_Release( effect );
