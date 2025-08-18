@@ -96,17 +96,61 @@ const char *type_get_decl_name(const type_t *type, enum name_type name_type)
     return NULL;
 }
 
-const char *type_get_name(const type_t *type, enum name_type name_type)
+const char *type_get_name( const type_t *type, enum name_type name_type, bool record )
 {
-    switch(name_type) {
-    case NAME_DEFAULT:
-        return type->qualified_name ? type->qualified_name : type->name;
-    case NAME_C:
-        return type->c_name ? type->c_name : type->name;
+    const char *name;
+    char *args;
+
+    switch (name_type)
+    {
+    case NAME_DEFAULT: name = type->qualified_name ? type->qualified_name : type->name; break;
+    case NAME_C: name = type->c_name ? type->c_name : type->name; break;
+    default: assert(0);
     }
 
+    if (type_is_alias( type )) return name;
+    switch (type_get_type_detect_alias( type ))
+    {
+    case TYPE_ALIAS:              return NULL;
+    case TYPE_APICONTRACT:        return NULL;
+    case TYPE_BASIC:              return NULL;
+    case TYPE_BITFIELD:           return NULL;
+    case TYPE_FUNCTION:           return NULL;
+    case TYPE_POINTER:            return NULL;
+
+    case TYPE_ENCAPSULATED_UNION: return record ? name : NULL;
+    case TYPE_ENUM:               return record ? name : NULL;
+    case TYPE_STRUCT:             return record ? name : NULL;
+    case TYPE_UNION:              return record ? name : NULL;
+
+    case TYPE_COCLASS:            return name;
+    case TYPE_INTERFACE:          return name;
+    case TYPE_MODULE:             return name;
+    case TYPE_VOID:               return "void";
+    case TYPE_PARAMETER:          return name;
+
+    case TYPE_RUNTIMECLASS:
+        return type_get_name( type_runtimeclass_get_default_iface( type, TRUE ), name_type, false );
+    case TYPE_DELEGATE:
+        return type_get_name( type_delegate_get_iface( type ), name_type, false );
+
+    case TYPE_ARRAY:
+        if (type->name && type_array_is_decl_as_ptr( type )) return type->name;
+        return NULL;
+
+    case TYPE_PARAMETERIZED_TYPE:
+    {
+        type_t *iface = type_parameterized_type_get_real_type( type );
+        if (type_get_type( iface ) == TYPE_DELEGATE) iface = type_delegate_get_iface( iface );
+        args = format_parameterized_type_args( type, "", "_logical" );
+        name = strmake( "%s<%s>", iface->name, args );
+        free( args );
+        return name;
+    }
+    }
+
+    /* shouldn't be here */
     assert(0);
-    return NULL;
 }
 
 void append_basic_type( struct strbuf *str, const type_t *type )

@@ -266,12 +266,10 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, b
   type_t *t = ds->type;
   const char *decl_name, *name;
   struct strbuf str = {0};
-  char *args;
 
   if (!h) return;
 
   decl_name = type_get_decl_name(t, name_type);
-  name = type_get_name(t, name_type);
 
   if (ds->func_specifier & FUNCTION_SPECIFIER_INLINE)
     fprintf(h, "inline ");
@@ -279,10 +277,11 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, b
   if ((ds->qualifier & TYPE_QUALIFIER_CONST) && (type_is_alias(t) || !is_ptr(t)))
     fprintf(h, "const ");
 
-  if (type_is_alias(t)) fprintf(h, "%s", name);
+  if ((name = type_get_name( t, name_type, false ))) fprintf(h, "%s", name);
   else {
     switch (type_get_type_detect_alias(t)) {
       case TYPE_ENUM:
+        name = type_get_name( t, name_type, true );
         if (!define) fprintf(h, "enum %s", decl_name ? decl_name : "");
         else if (!t->written) {
           assert(t->defined);
@@ -299,6 +298,7 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, b
         break;
       case TYPE_STRUCT:
       case TYPE_ENCAPSULATED_UNION:
+        name = type_get_name( t, name_type, true );
         if (!define) fprintf(h, "struct %s", decl_name ? decl_name : "");
         else if (!t->written) {
           assert(t->defined);
@@ -317,6 +317,7 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, b
         else fprintf(h, "struct %s", name ? name : "");
         break;
       case TYPE_UNION:
+        name = type_get_name( t, name_type, true );
         if (!define) fprintf(h, "union %s", decl_name ? decl_name : "");
         else if (!t->written) {
           assert(t->defined);
@@ -339,17 +340,11 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, b
         break;
       }
       case TYPE_ARRAY:
-        if (t->name && type_array_is_decl_as_ptr(t))
-          fprintf(h, "%s", t->name);
-        else
-        {
-          write_type_left(h, type_array_get_element(t), name_type, define, !type_array_is_decl_as_ptr(t));
-          if (type_array_is_decl_as_ptr(t))
-            write_pointer_left(h, type_array_get_element_type(t));
-        }
+        write_type_left(h, type_array_get_element(t), name_type, define, !type_array_is_decl_as_ptr(t));
+        if (type_array_is_decl_as_ptr(t))
+          write_pointer_left(h, type_array_get_element_type(t));
         break;
       case TYPE_FUNCTION:
-      {
         write_type_left(h, type_function_get_ret(t), name_type, define, TRUE);
 
         /* A pointer to a function has to write the calling convention inside
@@ -363,46 +358,27 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, b
             if (callconv) fprintf(h, " %s ", callconv);
         }
         break;
-      }
       case TYPE_BASIC:
-        append_basic_type( &str, t );
-        fwrite( str.buf, 1, str.pos, h );
-        break;
-      case TYPE_INTERFACE:
-      case TYPE_MODULE:
-      case TYPE_COCLASS:
-        fprintf(h, "%s", type_get_name(t, name_type));
-        break;
-      case TYPE_RUNTIMECLASS:
-        fprintf(h, "%s", type_get_name(type_runtimeclass_get_default_iface(t, TRUE), name_type));
-        break;
-      case TYPE_DELEGATE:
-        fprintf(h, "%s", type_get_name(type_delegate_get_iface(t), name_type));
-        break;
-      case TYPE_VOID:
-        fprintf(h, "void");
-        break;
+          append_basic_type( &str, t );
+          fwrite( str.buf, 1, str.pos, h );
+          break;
       case TYPE_BITFIELD:
           t = type_bitfield_get_field( t );
           if (!type_is_alias( t )) append_basic_type( &str, t );
-          else strappend( &str, "%s", type_get_name( t, name_type ) );
+          else strappend( &str, "%s", type_get_name( t, name_type, false ) );
           fwrite( str.buf, 1, str.pos, h );
           break;
+      case TYPE_INTERFACE:
+      case TYPE_MODULE:
+      case TYPE_COCLASS:
+      case TYPE_RUNTIMECLASS:
+      case TYPE_DELEGATE:
+      case TYPE_VOID:
       case TYPE_ALIAS:
+      case TYPE_PARAMETERIZED_TYPE:
+      case TYPE_PARAMETER:
         /* handled elsewhere */
         assert(0);
-        break;
-      case TYPE_PARAMETERIZED_TYPE:
-      {
-        type_t *iface = type_parameterized_type_get_real_type(t);
-        if (type_get_type(iface) == TYPE_DELEGATE) iface = type_delegate_get_iface(iface);
-        args = format_parameterized_type_args(t, "", "_logical");
-        fprintf(h, "%s<%s>", iface->name, args);
-        free(args);
-        break;
-      }
-      case TYPE_PARAMETER:
-        fprintf(h, "%s_abi", t->name);
         break;
       case TYPE_APICONTRACT:
         /* shouldn't be here */

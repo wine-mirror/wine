@@ -2111,6 +2111,11 @@ type_t *reg_type(type_t *type, const char *name, struct namespace *namespace, in
     type->c_name = name;
     type->qualified_name = name;
   }
+  else if (type->type_type == TYPE_PARAMETER)
+  {
+    type->c_name = strmake( "%s_abi", type->name );
+    type->qualified_name = strmake( "%s_abi", type->name );
+  }
   else
   {
     type->c_name = format_namespace(namespace, "__x_", "_C", name, use_abi_namespace ? "ABI" : NULL);
