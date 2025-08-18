@@ -801,6 +801,7 @@ SOURCES = \
 	powersetting.h \
 	powrprof.h \
 	prntvpt.h \
+	processsnapshot.h \
 	processthreadsapi.h \
 	profinfo.h \
 	proofofpossessioncookieinfo.idl \
