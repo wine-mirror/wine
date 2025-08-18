@@ -191,6 +191,13 @@ NTSTATUS WINAPI wow64_NtGdiBitBlt( UINT *args )
                         x_src, y_src, rop, bk_color, fl );
 }
 
+NTSTATUS WINAPI wow64_NtGdiCancelDC( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiCancelDC( hdc );
+}
+
 NTSTATUS WINAPI wow64_NtGdiCloseFigure( UINT *args )
 {
     HDC hdc = get_handle( &args );

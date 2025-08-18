@@ -2435,8 +2435,7 @@ BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR 
  */
 BOOL WINAPI CancelDC(HDC hdc)
 {
-    FIXME( "stub\n" );
-    return TRUE;
+    return NtGdiCancelDC( hdc );
 }
 
 /***********************************************************************

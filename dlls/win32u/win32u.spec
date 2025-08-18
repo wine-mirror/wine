@@ -154,7 +154,7 @@
 @ stub NtGdiCLIPOBJ_bEnum
 @ stub NtGdiCLIPOBJ_cEnumStart
 @ stub NtGdiCLIPOBJ_ppoGetPath
-@ stub NtGdiCancelDC
+@ stdcall -syscall NtGdiCancelDC(long)
 @ stub NtGdiChangeGhostFont
 @ stub NtGdiCheckBitmapBits
 @ stub NtGdiClearBitmapAttributes

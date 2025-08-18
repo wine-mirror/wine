@@ -493,6 +493,16 @@ BOOL WINAPI NtGdiSwapBuffers( HDC hdc )
 
 
 /***********************************************************************
+ *           NtGdiCancelDC   (win32u.@)
+ */
+BOOL WINAPI NtGdiCancelDC( HDC hdc )
+{
+    FIXME( "%p: stub\n", hdc );
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           NtGdiFillRgn    (win32u.@)
  */
 BOOL WINAPI NtGdiFillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )

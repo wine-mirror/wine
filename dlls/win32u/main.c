@@ -98,6 +98,11 @@ BOOL SYSCALL_API NtGdiBitBlt( HDC hdc_dst, INT x_dst, INT y_dst, INT width, INT 
     SYSCALL_FUNC( NtGdiBitBlt );
 }
 
+BOOL SYSCALL_API NtGdiCancelDC( HDC hdc )
+{
+    SYSCALL_FUNC( NtGdiCancelDC );
+}
+
 BOOL SYSCALL_API NtGdiCloseFigure( HDC hdc )
 {
     SYSCALL_FUNC( NtGdiCloseFigure );
