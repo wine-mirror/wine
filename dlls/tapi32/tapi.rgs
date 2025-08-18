@@ -1,0 +1,2185 @@
+HKLM
+{
+    NoRemove Software
+    {
+        NoRemove Microsoft
+        {
+            NoRemove Windows
+            {
+                NoRemove CurrentVersion
+                {
+                    Telephony
+                    {
+                        'Country List'
+                        {
+                            val CountryListVersion = d 25
+                            '1'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG' 
+                                val Name = s 'United States of America'
+                                val SameAreaRule = s 'G'
+                            }
+                            '7'
+                            {
+                                val CountryCode = d 7
+                                val InternationalRule = s '8W10EFG'
+                                val LongDistanceRule = s ' 8WFG'
+                                val Name = s 'Russia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '20'
+                            {
+                                val CountryCode = d 20
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Egypt'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '27'
+                            {
+                                val CountryCode = d 27
+                                val InternationalRule = s '09EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'South Africa'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '30'
+                            {
+                                val CountryCode = d 30
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Greece'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '31'
+                            {
+                                val CountryCode = d 31
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Netherlands'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '32'
+                            {
+                                val CountryCode = d 32
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Belgium'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '33'
+                            {
+                                val CountryCode = d 33
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'France'
+                                val SameAreaRule = s '0FG'
+
+                            }
+                            '34'
+                            {
+                                val CountryCode = d 34
+                                val InternationalRule = s '00,EFG'
+                                val LongDistanceRule = s 'IG'
+                                val Name = s 'Spain'
+                                val SameAreaRule = s 'IG'
+
+                            }
+                            '36'
+                            {
+                                val CountryCode = d 36
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ' 06,FG'
+                                val Name = s 'Hungary'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '39'
+                            {
+                                val CountryCode = d 39
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s 'IG'
+                                val Name = s 'Italy'
+                                val SameAreaRule = s 'IG'
+
+                            }
+                            '40'
+                            {
+                                val CountryCode = d 40
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ' 0FG'
+                                val Name = s 'Romania'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '41'
+                            {
+                                val CountryCode = d 41
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Switzerland'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '43'
+                            {
+                                val CountryCode = d 43
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Austria'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '44'
+                            {
+                                val CountryCode = d 44
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'United Kingdom'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '45'
+                            {
+                                val CountryCode = d 45
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Denmark'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '46'
+                            {
+                                val CountryCode = d 46
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Sweden'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '47'
+                            {
+                                val CountryCode = d 47
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Norway'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '48'
+                            {
+                                val CountryCode = d 48
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Poland'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '49'
+                            {
+                                val CountryCode = d 49
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Germany'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '51'
+                            {
+                                val CountryCode = d 51
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Peru'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '52'
+                            {
+                                val CountryCode = d 52
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ' 01FG'
+                                val Name = s 'Mexico'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '53'
+                            {
+                                val CountryCode = d 53
+                                val InternationalRule = s '119EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Cuba'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '5399'
+                            {
+                                val CountryCode = d 53
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Guantanamo Bay'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '54'
+                            {
+                                val CountryCode = d 54
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Argentina'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '55'
+                            {
+                                val CountryCode = d 55
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Brazil'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '56'
+                            {
+                                val CountryCode = d 56
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s 'FG'
+                                val Name = s 'Chile'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '57'
+                            {
+                                val CountryCode = d 57
+                                val InternationalRule = s '009EFG'
+                                val LongDistanceRule = s '09FG'
+                                val Name = s 'Colombia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '58'
+                            {
+                                val CountryCode = d 58
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Venezuela'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '60'
+                            {
+                                val CountryCode = d 60
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Malaysia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '61'
+                            {
+                                val CountryCode = d 61
+                                val InternationalRule = s '0011EFG'
+                                val LongDistanceRule = s ' 0FG'
+                                val Name = s 'Australia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '6101'
+                            {
+                                val CountryCode = d 61
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ' 0FG'
+                                val Name = s 'Cocos-Keeling Islands'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '62'
+                            {
+                                val CountryCode = d 62
+                                val InternationalRule = s '001EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Indonesia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '63'
+                            {
+                                val CountryCode = d 63
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Philippines'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '64'
+                            {
+                                val CountryCode = d 64
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'New Zealand'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '65'
+                            {
+                                val CountryCode = d 65
+                                val InternationalRule = s '001EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Singapore'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '66'
+                            {
+                                val CountryCode = d 66
+                                val InternationalRule = s '001EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Thailand'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '81'
+                            {
+                                val CountryCode = d 81
+                                val InternationalRule = s '001EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Japan'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '82'
+                            {
+                                val CountryCode = d 82
+                                val InternationalRule = s '001EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Korea (Republic of)'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '84'
+                            {
+                                val CountryCode = d 84
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Vietnam'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '86'
+                            {
+                                val CountryCode = d 86
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'China'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '90'
+                            {
+                                val CountryCode = d 90
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Turkey'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '91'
+                            {
+                                val CountryCode = d 91
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'India'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '92'
+                            {
+                                val CountryCode = d 92
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Pakistan'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '93'
+                            {
+                                val CountryCode = d 93
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Afghanistan'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '94'
+                            {
+                                val CountryCode = d 94
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Sri Lanka'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '95'
+                            {
+                                val CountryCode = d 95
+                                val InternationalRule = s '0EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Myanmar'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '98'
+                            {
+                                val CountryCode = d 98
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s 'FG'
+                                val Name = s 'Iran'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '101'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Anguilla'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '102'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Antigua'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '103'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Bahamas'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '104'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Barbados'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '105'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Bermuda'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '106'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'British Virgin Islands'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '107'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Canada'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '108'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Cayman Islands'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '109'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Dominica'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '110'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Dominican Republic'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '111'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Grenada'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '112'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Jamaica'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '113'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Montserrat'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '115'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'St. Kitts and Nevis'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '116'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '0EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'St. Vincent and the Grenadines'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '117'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Trinidad and Tobago'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '118'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '0EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Turks and Caicos Islands'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '120'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Barbuda'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '121'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Puerto Rico'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '122'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Saint Lucia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '123'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'United States Virgin Islands'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '124'
+                            {
+                                val CountryCode = d 1
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Guam'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '212'
+                            {
+                                val CountryCode = d 212
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Morocco'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '213'
+                            {
+                                val CountryCode = d 213
+                                val InternationalRule = s '00,EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Algeria'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '216'
+                            {
+                                val CountryCode = d 216
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Tunisia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '218'
+                            {
+                                val CountryCode = d 218
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Libya'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '220'
+                            {
+                                val CountryCode = d 220
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Gambia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '221'
+                            {
+                                val CountryCode = d 221
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Senegal Republic'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '222'
+                            {
+                                val CountryCode = d 222
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Mauritania'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '223'
+                            {
+                                val CountryCode = d 223
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Mali'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '224'
+                            {
+                                val CountryCode = d 224
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Guinea'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '225'
+                            {
+                                val CountryCode = d 225
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Cote d''Ivoire'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '226'
+                            {
+                                val CountryCode = d 226
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Burkina Faso'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '227'
+                            {
+                                val CountryCode = d 227
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Niger'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '228'
+                            {
+                                val CountryCode = d 228
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Togo'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '229'
+                            {
+                                val CountryCode = d 229
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Benin'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '230'
+                            {
+                                val CountryCode = d 230
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Mauritius'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '231'
+                            {
+                                val CountryCode = d 231
+                                val InternationalRule = s '0EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Liberia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '232'
+                            {
+                                val CountryCode = d 232
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s 'IG'
+                                val Name = s 'Sierra Leone'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '233'
+                            {
+                                val CountryCode = d 233
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Ghana'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '234'
+                            {
+                                val CountryCode = d 234
+                                val InternationalRule = s '009EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Nigeria'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '235'
+                            {
+                                val CountryCode = d 235
+                                val InternationalRule = s '15EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Chad'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '236'
+                            {
+                                val CountryCode = d 236
+                                val InternationalRule = s '19EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Central African Republic'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '237'
+                            {
+                                val CountryCode = d 237
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Cameroon'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '238'
+                            {
+                                val CountryCode = d 238
+                                val InternationalRule = s '0EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Cape Verde Islands'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '239'
+                            {
+                                val CountryCode = d 239
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Sao Tome and Principe'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '240'
+                            {
+                                val CountryCode = d 240
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Equatorial Guinea'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '241'
+                            {
+                                val CountryCode = d 241
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Gabon'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '242'
+                            {
+                                val CountryCode = d 242
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Congo'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '243'
+                            {
+                                val CountryCode = d 243
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Congo, Democratic Republic of the'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '244'
+                            {
+                                val CountryCode = d 244
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Angola'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '245'
+                            {
+                                val CountryCode = d 245
+                                val InternationalRule = s '099EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Guinea-Bissau'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '246'
+                            {
+                                val CountryCode = d 246
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Diego Garcia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '247'
+                            {
+                                val CountryCode = d 247
+                                val InternationalRule = s '01EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Ascension Island'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '248'
+                            {
+                                val CountryCode = d 248
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Seychelles'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '249'
+                            {
+                                val CountryCode = d 249
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Sudan'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '250'
+                            {
+                                val CountryCode = d 250
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Rwanda'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '251'
+                            {
+                                val CountryCode = d 251
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Ethiopia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '252'
+                            {
+                                val CountryCode = d 252
+                                val InternationalRule = s '19,EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Somalia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '253'
+                            {
+                                val CountryCode = d 253
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Djibouti'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '254'
+                            {
+                                val CountryCode = d 254
+                                val InternationalRule = s '000EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Kenya'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '255'
+                            {
+                                val CountryCode = d 255
+                                val InternationalRule = s '0900EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Tanzania'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '256'
+                            {
+                                val CountryCode = d 256
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Uganda'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '257'
+                            {
+                                val CountryCode = d 257
+                                val InternationalRule = s '90EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Burundi'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '258'
+                            {
+                                val CountryCode = d 258
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Mozambique'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '260'
+                            {
+                                val CountryCode = d 260
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Zambia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '261'
+                            {
+                                val CountryCode = d 261
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Madagascar'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '262'
+                            {
+                                val CountryCode = d 262
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Reunion Island'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '263'
+                            {
+                                val CountryCode = d 263
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Zimbabwe'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '264'
+                            {
+                                val CountryCode = d 264
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Namibia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '265'
+                            {
+                                val CountryCode = d 265
+                                val InternationalRule = s '101EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Malawi'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '266'
+                            {
+                                val CountryCode = d 266
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Lesotho'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '267'
+                            {
+                                val CountryCode = d 267
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Botswana'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '268'
+                            {
+                                val CountryCode = d 268
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Swaziland'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '269'
+                            {
+                                val CountryCode = d 269
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Mayotte Island'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '2691'
+                            {
+                                val CountryCode = d 269
+                                val InternationalRule = s '10EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Comoros'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '290'
+                            {
+                                val CountryCode = d 290
+                                val InternationalRule = s '01EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'St. Helena'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '291'
+                            {
+                                val CountryCode = d 291
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Eritrea'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '297'
+                            {
+                                val CountryCode = d 297
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Aruba'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '298'
+                            {
+                                val CountryCode = d 298
+                                val InternationalRule = s '009EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Faroe Islands'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '299'
+                            {
+                                val CountryCode = d 299
+                                val InternationalRule = s '009EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Greenland'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '350'
+                            {
+                                val CountryCode = d 350
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Gibraltar'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '351'
+                            {
+                                val CountryCode = d 351
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s 'IG'
+                                val Name = s 'Portugal'
+                                val SameAreaRule = s 'IG'
+
+                            }
+                            '352'
+                            {
+                                val CountryCode = d 352
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Luxembourg'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '353'
+                            {
+                                val CountryCode = d 353
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Ireland'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '354'
+                            {
+                                val CountryCode = d 354
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Iceland'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '355'
+                            {
+                                val CountryCode = d 355
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Albania'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '356'
+                            {
+                                val CountryCode = d 356
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Malta'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '357'
+                            {
+                                val CountryCode = d 357
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Cyprus'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '358'
+                            {
+                                val CountryCode = d 358
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Finland'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '359'
+                            {
+                                val CountryCode = d 359
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Bulgaria'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '370'
+                            {
+                                val CountryCode = d 370
+                                val InternationalRule = s '8W10EFG'
+                                val LongDistanceRule = s ' 8WFG'
+                                val Name = s 'Lithuania'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '371'
+                            {
+                                val CountryCode = d 371
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ' 8,FG'
+                                val Name = s 'Latvia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '372'
+                            {
+                                val CountryCode = d 372
+                                val InternationalRule = s '8,00EFG'
+                                val LongDistanceRule = s ' 8,2IG'
+                                val Name = s 'Estonia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '373'
+                            {
+                                val CountryCode = d 373
+                                val InternationalRule = s '8W10EFG'
+                                val LongDistanceRule = s ' 8WFG'
+                                val Name = s 'Moldova'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '374'
+                            {
+                                val CountryCode = d 374
+                                val InternationalRule = s '8,10EFG'
+                                val LongDistanceRule = s ' 8,IG'
+                                val Name = s 'Armenia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '375'
+                            {
+                                val CountryCode = d 375
+                                val InternationalRule = s '8W10EFG'
+                                val LongDistanceRule = s ' 8WFG'
+                                val Name = s 'Belarus'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '376'
+                            {
+                                val CountryCode = d 376
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Andorra'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '377'
+                            {
+                                val CountryCode = d 377
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Monaco'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '378'
+                            {
+                                val CountryCode = d 378
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s 'IG'
+                                val Name = s 'San Marino'
+                                val SameAreaRule = s 'IG'
+
+                            }
+                            '379'
+                            {
+                                val CountryCode = d 39
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s 'IG'
+                                val Name = s 'Vatican City'
+                                val SameAreaRule = s 'IG'
+
+                            }
+                            '380'
+                            {
+                                val CountryCode = d 380
+                                val InternationalRule = s '8W10EFG'
+                                val LongDistanceRule = s ' 8WFG'
+                                val Name = s 'Ukraine'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '381'
+                            {
+                                val CountryCode = d 381
+                                val InternationalRule = s '99EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Yugoslavia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '385'
+                            {
+                                val CountryCode = d 385
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Croatia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '386'
+                            {
+                                val CountryCode = d 386
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Slovenia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '387'
+                            {
+                                val CountryCode = d 387
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Bosnia and Herzegovina'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '389'
+                            {
+                                val CountryCode = d 389
+                                val InternationalRule = s '99EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'F.Y.R.O.M. (Former Yugoslav Republic of Macedonia)'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '420'
+                            {
+                                val CountryCode = d 420
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Czech Republic'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '421'
+                            {
+                                val CountryCode = d 421
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Slovakia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '423'
+                            {
+                                val CountryCode = d 423
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s 'G'
+                                val Name = s 'Liechtenstein'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '500'
+                            {
+                                val CountryCode = d 500
+                                val InternationalRule = s '0EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Falkland Islands (Islas Malvinas)'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '501'
+                            {
+                                val CountryCode = d 501
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Belize'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '502'
+                            {
+                                val CountryCode = d 502
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Guatemala'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '503'
+                            {
+                                val CountryCode = d 503
+                                val InternationalRule = s '0EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'El Salvador'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '504'
+                            {
+                                val CountryCode = d 504
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Honduras'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '505'
+                            {
+                                val CountryCode = d 505
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Nicaragua'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '506'
+                            {
+                                val CountryCode = d 506
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Costa Rica'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '507'
+                            {
+                                val CountryCode = d 507
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Panama'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '508'
+                            {
+                                val CountryCode = d 508
+                                val InternationalRule = s '00,EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'St. Pierre and Miquelon'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '509'
+                            {
+                                val CountryCode = d 509
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Haiti'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '590'
+                            {
+                                val CountryCode = d 590
+                                val InternationalRule = s '00,EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Guadeloupe'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '5901'
+                            {
+                                val CountryCode = d 590
+                                val InternationalRule = s '00,EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'French Antilles'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '591'
+                            {
+                                val CountryCode = d 591
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Bolivia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '592'
+                            {
+                                val CountryCode = d 592
+                                val InternationalRule = s '001EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Guyana'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '593'
+                            {
+                                val CountryCode = d 593
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Ecuador'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '594'
+                            {
+                                val CountryCode = d 594
+                                val InternationalRule = s '00,EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'French Guiana'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '595'
+                            {
+                                val CountryCode = d 595
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Paraguay'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '596'
+                            {
+                                val CountryCode = d 596
+                                val InternationalRule = s '00,EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Martinique'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '597'
+                            {
+                                val CountryCode = d 597
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Suriname'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '598'
+                            {
+                                val CountryCode = d 598
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Uruguay'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '599'
+                            {
+                                val CountryCode = d 599
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Netherlands Antilles'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '670'
+                            {
+                                val CountryCode = d 670
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Saipan Island'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '6701'
+                            {
+                                val CountryCode = d 670
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Rota Island'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '6702'
+                            {
+                                val CountryCode = d 670
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ' 1FG'
+                                val Name = s 'Tinian Island'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '672'
+                            {
+                                val CountryCode = d 672
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Christmas Island'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '6722'
+                            {
+                                val CountryCode = d 672
+                                val InternationalRule = s '0101EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Norfolk Island'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '673'
+                            {
+                                val CountryCode = d 673
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Brunei'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '674'
+                            {
+                                val CountryCode = d 674
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Nauru'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '675'
+                            {
+                                val CountryCode = d 675
+                                val InternationalRule = s '05EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Papua New Guinea'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '676'
+                            {
+                                val CountryCode = d 676
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Tonga'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '677'
+                            {
+                                val CountryCode = d 677
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Solomon Islands'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '678'
+                            {
+                                val CountryCode = d 678
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Vanuatu'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '679'
+                            {
+                                val CountryCode = d 679
+                                val InternationalRule = s '05EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Fiji Islands'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '680'
+                            {
+                                val CountryCode = d 680
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Palau'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '681'
+                            {
+                                val CountryCode = d 681
+                                val InternationalRule = s '00,EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Wallis and Futuna Islands'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '682'
+                            {
+                                val CountryCode = d 682
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Cook Islands'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '683'
+                            {
+                                val CountryCode = d 683
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Niue'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '684'
+                            {
+                                val CountryCode = d 684
+                                val InternationalRule = s '1EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'American Samoa'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '685'
+                            {
+                                val CountryCode = d 685
+                                val InternationalRule = s '0EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Samoa'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '686'
+                            {
+                                val CountryCode = d 686
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Kiribati'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '687'
+                            {
+                                val CountryCode = d 687
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'New Caledonia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '688'
+                            {
+                                val CountryCode = d 688
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Tuvalu'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '689'
+                            {
+                                val CountryCode = d 689
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'French Polynesia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '690'
+                            {
+                                val CountryCode = d 690
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Tokelau'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '691'
+                            {
+                                val CountryCode = d 691
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Micronesia, Federated States of'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '692'
+                            {
+                                val CountryCode = d 692
+                                val InternationalRule = s '011EFG'
+                                val LongDistanceRule = s '1FG'
+                                val Name = s 'Marshall Islands'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '705'
+                            {
+                                val CountryCode = d 7
+                                val InternationalRule = s '8W10EFG'
+                                val LongDistanceRule = s ' 8WFG'
+                                val Name = s 'Kazakhstan'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '708'
+                            {
+                                val CountryCode = d 7
+                                val InternationalRule = s '8W10EFG'
+                                val LongDistanceRule = s ' 8WFG'
+                                val Name = s 'Tajikistan'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '800'
+                            {
+                                val CountryCode = d 800
+                                val InternationalRule = s ''
+                                val LongDistanceRule = s ''
+                                val Name = s 'International Freephone Service'
+                                val SameAreaRule = s ''
+
+                            }
+                            '850'
+                            {
+                                val CountryCode = d 850
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Korea (North)'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '852'
+                            {
+                                val CountryCode = d 852
+                                val InternationalRule = s '001EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Hong Kong S.A.R.'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '853'
+                            {
+                                val CountryCode = d 853
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Macau S.A.R.'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '855'
+                            {
+                                val CountryCode = d 855
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Cambodia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '856'
+                            {
+                                val CountryCode = d 856
+                                val InternationalRule = s '14EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Laos'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '870'
+                            {
+                                val CountryCode = d 870
+                                val InternationalRule = s '00EFG#'
+                                val LongDistanceRule = s '00EFG#'
+                                val Name = s 'INMARSAT'
+                                val SameAreaRule = s '00EFG#'
+
+                            }
+                            '871'
+                            {
+                                val CountryCode = d 871
+                                val InternationalRule = s '00EFG#'
+                                val LongDistanceRule = s '00EFG#'
+                                val Name = s 'INMARSAT (Atlantic-East)'
+                                val SameAreaRule = s '00EFG#'
+
+                            }
+                            '872'
+                            {
+                                val CountryCode = d 872
+                                val InternationalRule = s '00EFG#'
+                                val LongDistanceRule = s '00EFG#'
+                                val Name = s 'INMARSAT (Pacific)'
+                                val SameAreaRule = s '00EFG#'
+
+                            }
+                            '873'
+                            {
+                                val CountryCode = d 873
+                                val InternationalRule = s '00EFG#'
+                                val LongDistanceRule = s '00EFG#'
+                                val Name = s 'INMARSAT (Indian)'
+                                val SameAreaRule = s '00EFG#'
+
+                            }
+                            '874'
+                            {
+                                val CountryCode = d 874
+                                val InternationalRule = s '00EFG#'
+                                val LongDistanceRule = s '00EFG#'
+                                val Name = s 'INMARSAT (Atlantic-West)'
+                                val SameAreaRule = s '00EFG#'
+
+                            }
+                            '880'
+                            {
+                                val CountryCode = d 880
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Bangladesh'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '886'
+                            {
+                                val CountryCode = d 886
+                                val InternationalRule = s '002EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Taiwan'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '960'
+                            {
+                                val CountryCode = d 960
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Maldives'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '961'
+                            {
+                                val CountryCode = d 961
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Lebanon'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '962'
+                            {
+                                val CountryCode = d 962
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Jordan'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '963'
+                            {
+                                val CountryCode = d 963
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Syria'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '964'
+                            {
+                                val CountryCode = d 964
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s 'FG'
+                                val Name = s 'Iraq'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '965'
+                            {
+                                val CountryCode = d 965
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Kuwait'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '966'
+                            {
+                                val CountryCode = d 966
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Saudi Arabia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '967'
+                            {
+                                val CountryCode = d 967
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Yemen'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '968'
+                            {
+                                val CountryCode = d 968
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Oman'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '971'
+                            {
+                                val CountryCode = d 971
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'United Arab Emirates'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '972'
+                            {
+                                val CountryCode = d 972
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Israel'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '973'
+                            {
+                                val CountryCode = d 973
+                                val InternationalRule = s '0EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Bahrain'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '974'
+                            {
+                                val CountryCode = d 974
+                                val InternationalRule = s '0EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Qatar'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '975'
+                            {
+                                val CountryCode = d 975
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Bhutan'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '976'
+                            {
+                                val CountryCode = d 976
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '0FG'
+                                val Name = s 'Mongolia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '977'
+                            {
+                                val CountryCode = d 977
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s ''
+                                val Name = s 'Nepal'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '993'
+                            {
+                                val CountryCode = d 993
+                                val InternationalRule = s '8W10EFG'
+                                val LongDistanceRule = s ' 8WFG'
+                                val Name = s 'Turkmenistan'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '994'
+                            {
+                                val CountryCode = d 994
+                                val InternationalRule = s '8W10EFG'
+                                val LongDistanceRule = s ' 8WFG'
+                                val Name = s 'Azerbaijan'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '995'
+                            {
+                                val CountryCode = d 995
+                                val InternationalRule = s '8W10EFG'
+                                val LongDistanceRule = s ' 8WFG'
+                                val Name = s 'Georgia'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '996'
+                            {
+                                val CountryCode = d 996
+                                val InternationalRule = s '00EFG'
+                                val LongDistanceRule = s '8FG'
+                                val Name = s 'Kyrgyzstan'
+                                val SameAreaRule = s 'G'
+
+                            }
+                            '998'
+                            {
+                                val CountryCode = d 998
+                                val InternationalRule = s '8W10EFG'
+                                val LongDistanceRule = s ' 8WFG'
+                                val Name = s 'Uzbekistan'
+                                val SameAreaRule = s 'G'
+                            }
+                        }
+                        Locations
+                        {
+                        }
+                        val Perf1 = d 1346720330
+                        val Perf2 = d 1346720326
+                    }
+                }
+            }
+        }
+    }
+}
