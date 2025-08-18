@@ -272,6 +272,7 @@ static DWORD WINAPI input_thread( void *param )
     {
         IDirectInputEffect *effect;
         DIJOYSTATE2 state = {0};
+        HRESULT hr;
 
         SendMessageW( dialog_hwnd, WM_USER, 0, 0 );
 
@@ -279,25 +280,20 @@ static DWORD WINAPI input_thread( void *param )
         {
             static const BYTE empty[sizeof(state.rgbButtons)] = {0};
             BOOL pressed = memcmp( empty, state.rgbButtons, sizeof(state.rgbButtons) );
-            DWORD flags = DIEP_AXES | DIEP_DIRECTION | DIEP_NORESTART;
-            LONG direction[3] = {0};
-            DWORD axes[3] = {0};
+            LONG direction[2] = {state.lX - 32768, state.lY - 32768};
             DIEFFECT params =
             {
                 .dwSize = sizeof(DIEFFECT),
-                .dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS,
+                .dwFlags = DIEFF_CARTESIAN,
                 .rglDirection = direction,
-                .rgdwAxes = axes,
-                .cAxes = 3,
+                .cAxes = 2,
             };
-
-            IDirectInputEffect_GetParameters( effect, &params, flags );
-            params.rgdwAxes[0] = state.lX;
-            params.rgdwAxes[1] = state.lY;
 
             if (pressed)
             {
-                IDirectInputEffect_SetParameters( effect, &params, flags );
+                do hr = IDirectInputEffect_SetParameters( effect, &params, DIEP_DIRECTION | DIEP_NORESTART );
+                while (FAILED(hr) && --params.cAxes);
+
                 IDirectInputEffect_Start( effect, 1, 0 );
             }
 
