@@ -846,6 +846,7 @@ W32KAPI HCURSOR WINAPI NtUserGetCursor(void);
 W32KAPI HCURSOR WINAPI NtUserGetCursorFrameInfo( HCURSOR hCursor, DWORD istep, DWORD *rate_jiffies,
                                                  DWORD *num_steps );
 W32KAPI BOOL    WINAPI NtUserGetCursorInfo( CURSORINFO *info );
+W32KAPI BOOL    WINAPI NtUserGetCursorPos( POINT *pt );
 W32KAPI HDC     WINAPI NtUserGetDC( HWND hwnd );
 W32KAPI HDC     WINAPI NtUserGetDCEx( HWND hwnd, HRGN clip_rgn, DWORD flags );
 W32KAPI LONG    WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
@@ -1100,7 +1101,6 @@ enum
     NtUserCallOneParam_CreateCursorIcon,
     NtUserCallOneParam_EnableDC,
     NtUserCallOneParam_EnableThunkLock,
-    NtUserCallOneParam_GetCursorPos,
     NtUserCallOneParam_GetIconParam,
     NtUserCallOneParam_GetMenuItemCount,
     NtUserCallOneParam_GetPrimaryMonitorRect,
@@ -1137,11 +1137,6 @@ struct thunk_lock_params
 static inline void NtUserEnableThunkLock( ntuser_callback thunk_lock_callback )
 {
     NtUserCallOneParam( (UINT_PTR)thunk_lock_callback, NtUserCallOneParam_EnableThunkLock );
-}
-
-static inline BOOL NtUserGetCursorPos( POINT *pt )
-{
-    return NtUserCallOneParam( (UINT_PTR)pt, NtUserCallOneParam_GetCursorPos );
 }
 
 static inline UINT_PTR NtUserGetIconParam( HICON icon )

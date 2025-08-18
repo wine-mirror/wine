@@ -1001,7 +1001,7 @@
 @ stdcall -syscall NtUserGetCursor()
 @ stdcall -syscall NtUserGetCursorFrameInfo(long long ptr ptr)
 @ stdcall -syscall NtUserGetCursorInfo(ptr)
-@ stub NtUserGetCursorPos
+@ stdcall -syscall NtUserGetCursorPos(ptr)
 @ stdcall -syscall NtUserGetDC(long)
 @ stdcall -syscall NtUserGetDCEx(long long long)
 @ stub NtUserGetDCompositionHwndBitmap

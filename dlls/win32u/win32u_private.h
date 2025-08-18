@@ -90,7 +90,6 @@ extern BOOL grab_pointer;
 extern BOOL grab_fullscreen;
 extern HWND get_active_window(void);
 extern HWND get_capture(void);
-extern BOOL get_cursor_pos( POINT *pt );
 extern HWND get_focus(void);
 extern DWORD get_input_state(void);
 extern DWORD get_last_input_time(void);

@@ -7130,9 +7130,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         thunk_lock_callback = arg;
         return 0;
 
-    case NtUserCallOneParam_GetCursorPos:
-        return get_cursor_pos( (POINT *)arg );
-
     case NtUserCallOneParam_GetIconParam:
         return get_icon_param( UlongToHandle(arg) );
 

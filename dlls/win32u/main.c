@@ -1564,6 +1564,11 @@ BOOL SYSCALL_API NtUserGetCursorInfo( CURSORINFO *info )
     SYSCALL_FUNC( NtUserGetCursorInfo );
 }
 
+BOOL SYSCALL_API NtUserGetCursorPos( POINT *pt )
+{
+    SYSCALL_FUNC( NtUserGetCursorPos );
+}
+
 HDC SYSCALL_API NtUserGetDC( HWND hwnd )
 {
     SYSCALL_FUNC( NtUserGetDC );

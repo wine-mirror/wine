@@ -2500,6 +2500,13 @@ NTSTATUS WINAPI wow64_NtUserGetCursorInfo( UINT *args )
     return TRUE;
 }
 
+NTSTATUS WINAPI wow64_NtUserGetCursorPos( UINT *args )
+{
+    POINT *pt = get_ptr( &args );
+
+    return NtUserGetCursorPos( pt );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetDC( UINT *args )
 {
     HWND hwnd = get_handle( &args );
