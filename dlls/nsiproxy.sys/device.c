@@ -37,8 +37,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(nsi);
 
-static HANDLE request_event;
-
 #define DECLARE_CRITICAL_SECTION(cs)                                    \
     static CRITICAL_SECTION cs;                                         \
     static CRITICAL_SECTION_DEBUG cs##_debug =                          \
@@ -48,7 +46,6 @@ static HANDLE request_event;
 DECLARE_CRITICAL_SECTION( nsiproxy_cs );
 
 #define LIST_ENTRY_INIT( list )  { .Flink = &(list), .Blink = &(list) }
-static LIST_ENTRY request_queue = LIST_ENTRY_INIT( request_queue );
 static LIST_ENTRY notification_queue = LIST_ENTRY_INIT( notification_queue );
 
 struct notification_data
@@ -226,14 +223,92 @@ static int icmp_echo_reply_struct_len( ULONG family, ULONG bits )
     return 0;
 }
 
+static DWORD WINAPI listen_thread_proc( void *arg )
+{
+    IRP *irp = arg;
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    struct nsiproxy_icmp_echo *in = irp->AssociatedIrp.SystemBuffer;
+    struct icmp_close_params close_params;
+    struct icmp_listen_params params;
+    NTSTATUS status;
+
+    TRACE( "\n" );
+
+    params.user_reply_ptr = in->user_reply_ptr;
+    params.handle = irp_get_icmp_handle( irp );
+    params.timeout = in->timeout;
+    params.bits = in->bits;
+    params.reply = irp->AssociatedIrp.SystemBuffer;
+    params.reply_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
+
+    status = nsiproxy_call( icmp_listen, &params );
+    TRACE( "icmp_listen rets %08lx\n", status );
+
+    EnterCriticalSection( &nsiproxy_cs );
+
+    close_params.handle = irp_set_icmp_handle( irp, 0 );
+    nsiproxy_call( icmp_close, &close_params );
+
+    irp->IoStatus.Status = status;
+    if (status == STATUS_SUCCESS)
+        irp->IoStatus.Information = params.reply_len;
+    else
+        irp->IoStatus.Information = 0;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+
+    LeaveCriticalSection( &nsiproxy_cs );
+
+    return 0;
+}
+
+static NTSTATUS handle_send_echo( IRP *irp )
+{
+    struct nsiproxy_icmp_echo *in = (struct nsiproxy_icmp_echo *)irp->AssociatedIrp.SystemBuffer;
+    struct icmp_send_echo_params params;
+    icmp_handle handle;
+    NTSTATUS status;
+
+    TRACE( "\n" );
+    params.request = in->data + ((in->opt_size + 3) & ~3);
+    params.request_size = in->req_size;
+    params.reply = irp->AssociatedIrp.SystemBuffer;
+    params.bits = in->bits;
+    params.ttl = in->ttl;
+    params.tos = in->tos;
+    params.dst = &in->dst;
+    params.handle = &handle;
+
+    status = nsiproxy_call( icmp_send_echo, &params );
+    TRACE( "icmp_send_echo status %#lx\n", status );
+
+    if (status != STATUS_PENDING)
+    {
+        irp->IoStatus.Status = status;
+        if (status == STATUS_SUCCESS)
+            irp->IoStatus.Information = params.reply_len;
+        return status;
+    }
+    IoSetCancelRoutine( irp, icmp_echo_cancel );
+    if (irp->Cancel && !IoSetCancelRoutine( irp, NULL ))
+    {
+        /* IRP was canceled before we set cancel routine */
+        return STATUS_CANCELLED;
+    }
+    IoMarkIrpPending( irp );
+    irp_set_icmp_handle( irp, handle );
+    RtlQueueWorkItem( listen_thread_proc, irp, WT_EXECUTELONGFUNCTION );
+    return STATUS_PENDING;
+}
+
 static NTSTATUS nsiproxy_icmp_echo( IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     struct nsiproxy_icmp_echo *in = (struct nsiproxy_icmp_echo *)irp->AssociatedIrp.SystemBuffer;
     DWORD in_len = irpsp->Parameters.DeviceIoControl.InputBufferLength;
     DWORD out_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
+    NTSTATUS ret;
 
-    TRACE( "\n" );
+    TRACE( ".\n" );
 
     if (in_len < offsetof(struct nsiproxy_icmp_echo, data[0]) ||
         in_len < offsetof(struct nsiproxy_icmp_echo, data[((in->opt_size + 3) & ~3) + in->req_size]) ||
@@ -250,23 +325,9 @@ static NTSTATUS nsiproxy_icmp_echo( IRP *irp )
     }
 
     EnterCriticalSection( &nsiproxy_cs );
-
-    IoSetCancelRoutine( irp, icmp_echo_cancel );
-    if (irp->Cancel && !IoSetCancelRoutine( irp, NULL ))
-    {
-        /* IRP was canceled before we set cancel routine */
-        InitializeListHead( &irp->Tail.Overlay.ListEntry );
-        LeaveCriticalSection( &nsiproxy_cs );
-        return STATUS_CANCELLED;
-    }
-
-    InsertTailList( &request_queue, &irp->Tail.Overlay.ListEntry );
-    IoMarkIrpPending( irp );
-
+    ret = handle_send_echo( irp );
     LeaveCriticalSection( &nsiproxy_cs );
-    SetEvent( request_event );
-
-    return STATUS_PENDING;
+    return ret;
 }
 
 static void WINAPI change_notification_cancel( DEVICE_OBJECT *device, IRP *irp )
@@ -381,107 +442,6 @@ static int add_device( DRIVER_OBJECT *driver )
     return 1;
 }
 
-static DWORD WINAPI listen_thread_proc( void *arg )
-{
-    IRP *irp = arg;
-    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
-    struct nsiproxy_icmp_echo *in = irp->AssociatedIrp.SystemBuffer;
-    struct icmp_close_params close_params;
-    struct icmp_listen_params params;
-    NTSTATUS status;
-
-    TRACE( "\n" );
-
-    params.user_reply_ptr = in->user_reply_ptr;
-    params.handle = irp_get_icmp_handle( irp );
-    params.timeout = in->timeout;
-    params.bits = in->bits;
-    params.reply = irp->AssociatedIrp.SystemBuffer;
-    params.reply_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
-
-    status = nsiproxy_call( icmp_listen, &params );
-    TRACE( "icmp_listen rets %08lx\n", status );
-
-    EnterCriticalSection( &nsiproxy_cs );
-
-    close_params.handle = irp_set_icmp_handle( irp, 0 );
-    nsiproxy_call( icmp_close, &close_params );
-
-    irp->IoStatus.Status = status;
-    if (status == STATUS_SUCCESS)
-        irp->IoStatus.Information = params.reply_len;
-    else
-        irp->IoStatus.Information = 0;
-    IoCompleteRequest( irp, IO_NO_INCREMENT );
-
-    LeaveCriticalSection( &nsiproxy_cs );
-
-    return 0;
-}
-
-static void handle_queued_send_echo( IRP *irp )
-{
-    struct nsiproxy_icmp_echo *in = (struct nsiproxy_icmp_echo *)irp->AssociatedIrp.SystemBuffer;
-    struct icmp_send_echo_params params;
-    icmp_handle handle;
-    NTSTATUS status;
-
-    TRACE( "\n" );
-    params.request = in->data + ((in->opt_size + 3) & ~3);
-    params.request_size = in->req_size;
-    params.reply = irp->AssociatedIrp.SystemBuffer;
-    params.bits = in->bits;
-    params.ttl = in->ttl;
-    params.tos = in->tos;
-    params.dst = &in->dst;
-    params.handle = &handle;
-
-    status = nsiproxy_call( icmp_send_echo, &params );
-    TRACE( "icmp_send_echo rets %08lx\n", status );
-
-    if (status != STATUS_PENDING)
-    {
-        irp->IoStatus.Status = status;
-        if (status == STATUS_SUCCESS)
-            irp->IoStatus.Information = params.reply_len;
-        IoCompleteRequest( irp, IO_NO_INCREMENT );
-    }
-    else
-    {
-        irp_set_icmp_handle( irp, handle );
-        RtlQueueWorkItem( listen_thread_proc, irp, WT_EXECUTELONGFUNCTION );
-    }
-}
-
-static DWORD WINAPI request_thread_proc( void *arg )
-{
-    LIST_ENTRY *entry;
-
-    SetThreadDescription( GetCurrentThread(), L"wine_nsi_request" );
-
-    while (WaitForSingleObject( request_event, INFINITE ) == WAIT_OBJECT_0)
-    {
-        TRACE( "request_event triggered\n" );
-        EnterCriticalSection( &nsiproxy_cs );
-        while ((entry = RemoveHeadList( &request_queue )) != &request_queue )
-        {
-            IRP *irp = CONTAINING_RECORD( entry, IRP, Tail.Overlay.ListEntry );
-
-            if (irp->Cancel)
-            {
-                irp->IoStatus.Status = STATUS_CANCELLED;
-                TRACE( "already cancelled\n" );
-                IoCompleteRequest( irp, IO_NO_INCREMENT );
-                continue;
-            }
-
-            handle_queued_send_echo( irp );
-        }
-        LeaveCriticalSection( &nsiproxy_cs );
-    }
-    return 0;
-}
-
 static DWORD WINAPI notification_thread_proc( void *arg )
 {
     struct nsi_get_notification_params params;
@@ -536,9 +496,6 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
     add_device( driver );
 
-    request_event = CreateEventW( NULL, FALSE, FALSE, NULL );
-    thread = CreateThread( NULL, 0, request_thread_proc, NULL, 0, NULL );
-    CloseHandle( thread );
     thread = CreateThread( NULL, 0, notification_thread_proc, NULL, 0, NULL );
     CloseHandle( thread );
 
