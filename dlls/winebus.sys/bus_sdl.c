@@ -652,7 +652,7 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
     struct sdl_device *impl = impl_from_unix_device(iface);
     int id = impl->effect_ids[index];
     SDL_HapticEffect effect = {0};
-    INT16 direction;
+    INT32 direction;
     NTSTATUS status;
 
     TRACE("iface %p, index %u, params %p.\n", iface, index, params);
@@ -662,8 +662,7 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
 
     /* The first direction we get from PID is in polar coordinate space, so we need to
      * remove 90° to make it match SDL spherical coordinates. */
-    direction = (params->direction[0] - 9000) % 36000;
-    if (direction < 0) direction += 36000;
+    direction = (params->direction[0] + 27000) % 36000;
 
     switch (params->effect_type)
     {
