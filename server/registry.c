@@ -2160,12 +2160,6 @@ void flush_registry(void)
     if (fchdir( server_dir_fd ) == -1) fatal_error( "chdir to server dir: %s\n", strerror( errno ));
 }
 
-/* determine if the thread is wow64 (32-bit client running on 64-bit prefix) */
-static int is_wow64_thread( struct thread *thread )
-{
-    return (is_machine_64bit( native_machine ) && !is_machine_64bit( thread->process->machine ));
-}
-
 
 /* create a registry key */
 DECL_HANDLER(create_key)
@@ -2179,7 +2173,7 @@ DECL_HANDLER(create_key)
 
     if (!objattr) return;
 
-    if (!is_wow64_thread( current )) access = (access & ~KEY_WOW64_32KEY) | KEY_WOW64_64KEY;
+    if (!is_wow64_process( current->process )) access = (access & ~KEY_WOW64_32KEY) | KEY_WOW64_64KEY;
 
     if (objattr->rootdir)
     {
@@ -2210,7 +2204,7 @@ DECL_HANDLER(open_key)
     unsigned int access = req->access;
     struct unicode_str name = get_req_unicode_str();
 
-    if (!is_wow64_thread( current )) access = (access & ~KEY_WOW64_32KEY) | KEY_WOW64_64KEY;
+    if (!is_wow64_process( current->process )) access = (access & ~KEY_WOW64_32KEY) | KEY_WOW64_64KEY;
 
     if (req->parent && !(parent = get_hkey_obj( req->parent, 0 ))) return;
 

@@ -145,6 +145,11 @@ static inline int is_process_init_done( struct process *process )
     return process->startup_state == STARTUP_DONE;
 }
 
+static inline int is_wow64_process( struct process *process )
+{
+    return is_machine_64bit( native_machine ) && !is_machine_64bit( process->machine );
+}
+
 static const unsigned int default_session_id = 1;
 
 #endif  /* __WINE_SERVER_PROCESS_H */
