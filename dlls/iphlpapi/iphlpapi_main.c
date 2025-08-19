@@ -4962,9 +4962,9 @@ DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_r
  */
 HANDLE WINAPI Icmp6CreateFile( void )
 {
-    FIXME( "stub\n" );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return INVALID_HANDLE_VALUE;
+    TRACE( ".\n" );
+
+    return IcmpCreateFile();
 }
 
 /******************************************************************
