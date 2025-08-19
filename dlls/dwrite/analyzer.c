@@ -299,6 +299,9 @@ system_fallback_config[] =
     { "1C00-1C4F",              L"Noto Sans Lepcha" },
     { "1C50-1C7F",              L"Noto Sans Ol Chiki" },
 
+    /* Dingbats - 2700-27BF */
+    { "2700-27BF",              L"Noto Sans Symbols2"},
+
     { "2C80-2CFF",              L"Noto Sans Coptic" },
     { "2D30-2D7F",              L"Noto Sans Tifinagh" },
 
