@@ -34,52 +34,58 @@
 prng_state prng = { 0 };
 int wprng = 0;
 
-BOOL init_hash_impl(ALG_ID aiAlgid, BCRYPT_HASH_HANDLE *hash_handle)
+BOOL init_hash_impl( ALG_ID algid, struct hash *hash )
 {
-    switch (aiAlgid)
+    memset( hash, 0, sizeof(*hash) );
+
+    switch (algid)
     {
     case CALG_MD2:
-        return !BCryptCreateHash(BCRYPT_MD2_ALG_HANDLE, hash_handle, NULL, 0, NULL, 0, 0);
+        hash->desc = &md2_desc;
+        break;
 
     case CALG_MD4:
-        return !BCryptCreateHash(BCRYPT_MD4_ALG_HANDLE, hash_handle, NULL, 0, NULL, 0, 0);
+        hash->desc = &md4_desc;
+        break;
 
     case CALG_MD5:
-        return !BCryptCreateHash(BCRYPT_MD5_ALG_HANDLE, hash_handle, NULL, 0, NULL, 0, 0);
+        hash->desc = &md5_desc;
+        break;
 
     case CALG_SHA:
-        return !BCryptCreateHash(BCRYPT_SHA1_ALG_HANDLE, hash_handle, NULL, 0, NULL, 0, 0);
+        hash->desc = &sha1_desc;
+        break;
 
     case CALG_SHA_256:
-        return !BCryptCreateHash(BCRYPT_SHA256_ALG_HANDLE, hash_handle, NULL, 0, NULL, 0, 0);
+        hash->desc = &sha256_desc;
+        break;
 
     case CALG_SHA_384:
-        return !BCryptCreateHash(BCRYPT_SHA384_ALG_HANDLE, hash_handle, NULL, 0, NULL, 0, 0);
+        hash->desc = &sha384_desc;
+        break;
 
     case CALG_SHA_512:
-        return !BCryptCreateHash(BCRYPT_SHA512_ALG_HANDLE, hash_handle, NULL, 0, NULL, 0, 0);
+        hash->desc = &sha512_desc;
+        break;
 
     default:
         return TRUE;
     }
-}
 
-BOOL update_hash_impl(BCRYPT_HASH_HANDLE hash_handle, const BYTE *pbData, DWORD dwDataLen)
-{
-    BCryptHashData(hash_handle, (UCHAR*)pbData, dwDataLen, 0);
+    hash->desc->init( &hash->state );
     return TRUE;
 }
 
-BOOL finalize_hash_impl(BCRYPT_HASH_HANDLE hash_handle, BYTE *hash_value, DWORD hash_size)
+BOOL update_hash_impl( struct hash *hash, const BYTE *data, DWORD len )
 {
-    BCryptFinishHash(hash_handle, hash_value, hash_size, 0);
-    BCryptDestroyHash(hash_handle);
+    hash->desc->process( &hash->state, data, len );
     return TRUE;
 }
 
-BOOL duplicate_hash_impl(BCRYPT_HASH_HANDLE src_hash_handle, BCRYPT_HASH_HANDLE *dest_hash_handle)
+BOOL finalize_hash_impl( struct hash *hash, BYTE *hash_value, DWORD hash_size )
 {
-    return !BCryptDuplicateHash(src_hash_handle, dest_hash_handle, NULL, 0, 0);
+    hash->desc->done( &hash->state, hash_value );
+    return TRUE;
 }
 
 BOOL new_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen) 

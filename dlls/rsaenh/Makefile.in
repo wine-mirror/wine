@@ -1,6 +1,6 @@
 MODULE    = rsaenh.dll
 IMPORTLIB = rsaenh
-IMPORTS   = $(TOMCRYPT_PE_LIBS) bcrypt crypt32 advapi32
+IMPORTS   = $(TOMCRYPT_PE_LIBS) crypt32 advapi32
 EXTRAINCL = $(TOMCRYPT_PE_CFLAGS)
 
 SOURCES = \

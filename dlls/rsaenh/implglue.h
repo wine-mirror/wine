@@ -24,7 +24,6 @@
 #ifndef __WINE_IMPLGLUE_H
 #define __WINE_IMPLGLUE_H
 
-#include "bcrypt.h"
 #include "tomcrypt.h"
 
 #define RSAENH_MAX_HASH_SIZE        104
@@ -38,10 +37,15 @@ typedef union tagKEY_CONTEXT {
 extern prng_state prng;
 extern int wprng;
 
-BOOL init_hash_impl(ALG_ID aiAlgid, BCRYPT_HASH_HANDLE *hash_handle);
-BOOL update_hash_impl(BCRYPT_HASH_HANDLE hash_handle, const BYTE *pbData, DWORD dwDataLen);
-BOOL finalize_hash_impl(BCRYPT_HASH_HANDLE hash_handle, BYTE *hash_value, DWORD hash_size);
-BOOL duplicate_hash_impl(BCRYPT_HASH_HANDLE src_hash_handle, BCRYPT_HASH_HANDLE *dest_hash_handle);
+struct hash
+{
+    const struct ltc_hash_descriptor *desc;
+    hash_state state;
+};
+
+BOOL init_hash_impl(ALG_ID algid, struct hash *hash);
+BOOL update_hash_impl(struct hash *hash, const BYTE *data, DWORD len);
+BOOL finalize_hash_impl(struct hash *hash, BYTE *hash_value, DWORD hash_size);
 
 BOOL new_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen);
 BOOL free_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext);

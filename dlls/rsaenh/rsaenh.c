@@ -68,7 +68,7 @@ typedef struct tagCRYPTHASH
     HCRYPTPROV   hProv;
     DWORD        dwHashSize;
     DWORD        dwState;
-    BCRYPT_HASH_HANDLE hash_handle;
+    struct hash  hash;
     BYTE         abHashValue[RSAENH_MAX_HASH_SIZE];
     PHMAC_INFO   pHMACInfo;
     RSAENH_TLS1PRF_PARAMS tpPRFParams;
@@ -663,7 +663,6 @@ static void destroy_hash(OBJECTHDR *pObject)
 {
     CRYPTHASH *pCryptHash = (CRYPTHASH*)pObject;
 
-    BCryptDestroyHash(pCryptHash->hash_handle);
     free_hmac_info(pCryptHash->pHMACInfo);
     free_data_blob(&pCryptHash->tpPRFParams.blobLabel);
     free_data_blob(&pCryptHash->tpPRFParams.blobSeed);
@@ -698,9 +697,8 @@ static inline BOOL init_hash(CRYPTHASH *pCryptHash) {
                     return FALSE;
                 }
                 pCryptHash->dwHashSize = pAlgInfo->dwDefaultLen >> 3;
-                init_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->hash_handle);
-                update_hash_impl(pCryptHash->hash_handle,
-                                 pCryptHash->pHMACInfo->pbInnerString, 
+                init_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->hash);
+                update_hash_impl(&pCryptHash->hash, pCryptHash->pHMACInfo->pbInnerString,
                                  pCryptHash->pHMACInfo->cbInnerString);
             }
             return TRUE;
@@ -713,7 +711,7 @@ static inline BOOL init_hash(CRYPTHASH *pCryptHash) {
             return TRUE;
 
         default:
-            return init_hash_impl(pCryptHash->aiAlgid, &pCryptHash->hash_handle);
+            return init_hash_impl(pCryptHash->aiAlgid, &pCryptHash->hash);
     }
 }
 
@@ -737,7 +735,7 @@ static inline void update_hash(CRYPTHASH *pCryptHash, const BYTE *pbData, DWORD 
     {
         case CALG_HMAC:
             if (pCryptHash->pHMACInfo) 
-                update_hash_impl(pCryptHash->hash_handle, pbData, dwDataLen);
+                update_hash_impl(&pCryptHash->hash, pbData, dwDataLen);
             break;
 
         case CALG_MAC:
@@ -792,7 +790,7 @@ static inline void update_hash(CRYPTHASH *pCryptHash, const BYTE *pbData, DWORD 
             break;
 
         default:
-            update_hash_impl(pCryptHash->hash_handle, pbData, dwDataLen);
+            update_hash_impl(&pCryptHash->hash, pbData, dwDataLen);
     }
 }
 
@@ -816,16 +814,14 @@ static inline void finalize_hash(CRYPTHASH *pCryptHash)
             if (pCryptHash->pHMACInfo) {
                 BYTE abHashValue[RSAENH_MAX_HASH_SIZE];
 
-                finalize_hash_impl(pCryptHash->hash_handle, pCryptHash->abHashValue, pCryptHash->dwHashSize);
+                finalize_hash_impl(&pCryptHash->hash, pCryptHash->abHashValue, pCryptHash->dwHashSize);
                 memcpy(abHashValue, pCryptHash->abHashValue, pCryptHash->dwHashSize);
-                init_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->hash_handle);
-                update_hash_impl(pCryptHash->hash_handle,
-                                 pCryptHash->pHMACInfo->pbOuterString, 
+                init_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->hash);
+                update_hash_impl(&pCryptHash->hash, pCryptHash->pHMACInfo->pbOuterString,
                                  pCryptHash->pHMACInfo->cbOuterString);
-                update_hash_impl(pCryptHash->hash_handle,
-                                 abHashValue, pCryptHash->dwHashSize);
-                finalize_hash_impl(pCryptHash->hash_handle, pCryptHash->abHashValue, pCryptHash->dwHashSize);
-                pCryptHash->hash_handle = NULL;
+                update_hash_impl(&pCryptHash->hash, abHashValue, pCryptHash->dwHashSize);
+                finalize_hash_impl(&pCryptHash->hash, pCryptHash->abHashValue, pCryptHash->dwHashSize);
+                memset(&pCryptHash->hash, 0, sizeof(pCryptHash->hash));
             } 
             break;
 
@@ -842,8 +838,8 @@ static inline void finalize_hash(CRYPTHASH *pCryptHash)
             break;
 
         default:
-            finalize_hash_impl(pCryptHash->hash_handle, pCryptHash->abHashValue, pCryptHash->dwHashSize);
-            pCryptHash->hash_handle = NULL;
+            finalize_hash_impl(&pCryptHash->hash, pCryptHash->abHashValue, pCryptHash->dwHashSize);
+            memset(&pCryptHash->hash, 0, sizeof(pCryptHash->hash));
     }
 }
 
@@ -2351,7 +2347,7 @@ BOOL WINAPI RSAENH_CPCreateHash(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey, 
     pCryptHash->hProv = hProv;
     pCryptHash->dwState = RSAENH_HASHSTATE_HASHING;
     pCryptHash->pHMACInfo = NULL;
-    pCryptHash->hash_handle = NULL;
+    memset(&pCryptHash->hash, 0, sizeof(pCryptHash->hash));
     pCryptHash->dwHashSize = peaAlgidInfo->dwDefaultLen >> 3;
     pCryptHash->buffered_hash_bytes = 0;
     init_data_blob(&pCryptHash->tpPRFParams.blobLabel);
@@ -2513,7 +2509,6 @@ BOOL WINAPI RSAENH_CPDuplicateHash(HCRYPTPROV hUID, HCRYPTHASH hHash, DWORD *pdw
     if (*phHash != (HCRYPTHASH)INVALID_HANDLE_VALUE)
     {
         *pDestHash = *pSrcHash;
-        duplicate_hash_impl(pSrcHash->hash_handle, &pDestHash->hash_handle);
         copy_hmac_info(&pDestHash->pHMACInfo, pSrcHash->pHMACInfo);
         copy_data_blob(&pDestHash->tpPRFParams.blobLabel, &pSrcHash->tpPRFParams.blobLabel);
         copy_data_blob(&pDestHash->tpPRFParams.blobSeed, &pSrcHash->tpPRFParams.blobSeed);
