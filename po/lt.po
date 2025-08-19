@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-08-05 23:29+0300\n"
+"PO-Revision-Date: 2025-08-19 20:02+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -3863,16 +3863,12 @@ msgid "Force Feedback Effect"
 msgstr "„Force Feedback“ efektas"
 
 #: dlls/joy.cpl/joy.rc:67
-#, fuzzy
-#| msgid ""
-#| "Press any button in the controller to activate the chosen effect. The "
-#| "effect direction can be changed with the controller axis."
 msgid ""
 "Hold any button in the controller to play the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
-"Spauskite bet kurį valdiklio mygtuką pasirinktam efektui aktyvuoti. Efekto "
-"kryptis gali būti pakeista valdiklio ašimi."
+"Laikykite paspaustą bet kurį valdiklio mygtuką pasirinktam efektui leisti. "
+"Efekto kryptis gali būti pakeista valdiklio ašimi."
 
 #: dlls/joy.cpl/joy.rc:73
 msgid "XInput"
