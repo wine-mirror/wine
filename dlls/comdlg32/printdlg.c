@@ -739,11 +739,14 @@ static BOOL PRINTDLG_UpdatePrintDlgW(HWND hDlg,
 	    if (lpdm->dmFields & DM_COPIES)
 	        lpdm->dmCopies = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
 	} else {
+            /* Application is responsible for multiple copies */
 	    if (IsDlgButtonChecked(hDlg, chx2) == BST_CHECKED)
 	        lppd->Flags |= PD_COLLATE;
             else
                lppd->Flags &= ~PD_COLLATE;
             lppd->nCopies = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
+            /* multiple copies already included in the document. Driver must print only one copy */
+            lpdm->dmCopies = 1;
 	}
     }
     GlobalUnlock(lppd->hDevMode);
