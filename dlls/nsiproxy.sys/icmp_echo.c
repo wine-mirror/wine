@@ -384,6 +384,8 @@ static int ipv4_parse_icmp_hdr( struct icmp_data *data, struct icmp_hdr *icmp, i
         return -1;
     }
 
+    if (data->ping_socket) return 0;
+
     /* Check that the appended packet is really ours -
      * all handled icmp replies have an 8-byte header
      * followed by the original ip hdr. */
