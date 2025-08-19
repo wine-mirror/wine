@@ -4915,7 +4915,7 @@ static NTSTATUS icmp_send_echo( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
 
     request_event = event ? event : (apc_routine ? NULL : CreateEventW( NULL, 0, 0, NULL ));
 
-    status = NtDeviceIoControlFile( data->nsi_device, request_event, apc_routine ? icmp_apc_routine : NULL,
+    status = NtDeviceIoControlFile( data->nsi_device, request_event, apc_routine && !event ? icmp_apc_routine : NULL,
                                     apc_routine ? ctxt : apc_ctxt, iosb, IOCTL_NSIPROXY_WINE_ICMP_ECHO,
                                     in, in_size, reply, reply_size );
 

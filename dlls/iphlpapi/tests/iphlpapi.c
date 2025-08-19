@@ -1325,6 +1325,22 @@ static void testIcmpSendEcho(void)
     /* pre-Vista, reply->Data is an offset; otherwise it's a pointer, so hardcode the offset */
     ok(!memcmp(senddata, reply + 1, min(sizeof(senddata), reply->DataSize)), "Data mismatch\n");
 
+    SetLastError(0xdeadbeef);
+    for (i = 0; i < ARRAY_SIZE(senddata); i++) senddata[i] = i & 0xff;
+    ret = IcmpSendEcho2(icmp, event, icmp_send_echo_test_apc, NULL, address, senddata, sizeof(senddata),
+            NULL, replydata2, replysz, 1000);
+    error = GetLastError();
+    ok(!ret, "IcmpSendEcho2 returned success unexpectedly\n");
+    ok(error == ERROR_IO_PENDING, "Expect last error: 0x%08x, got: 0x%08lx\n", ERROR_IO_PENDING, error);
+    ret = WaitForSingleObjectEx(event, 2000, TRUE);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObjectEx failed unexpectedly with %lu\n", ret);
+    reply = (ICMP_ECHO_REPLY*)replydata2;
+    ok(ntohl(reply->Address) == INADDR_LOOPBACK, "Address mismatch, expect: %s, got: %s\n", ntoa(INADDR_LOOPBACK),
+       ntoa(reply->Address));
+    ok(reply->Status == IP_SUCCESS, "Expect status: 0x%08x, got: 0x%08lx\n", IP_SUCCESS, reply->Status);
+    ok(reply->DataSize == sizeof(senddata), "Got size: %d\n", reply->DataSize);
+    ok(!memcmp(senddata, reply + 1, min(sizeof(senddata), reply->DataSize)), "Data mismatch\n");
+
     CloseHandle(event);
 
     /* asynchronous tests with APC */
@@ -1335,9 +1351,6 @@ static void testIcmpSendEcho(void)
     icmp_send_echo_test_apc_expect = TRUE;
     memset(&icmp_send_echo_io, 0xcc, sizeof(icmp_send_echo_io));
     icmp_send_echo_test_line = __LINE__;
-    /*
-       NOTE: Supplying both event and apc has varying behavior across Windows versions, so not tested.
-    */
     ret = IcmpSendEcho2(icmp, NULL, icmp_send_echo_test_apc, (void*)0xdeadc0de, address, senddata, sizeof(senddata),
             NULL, replydata2, replysz, 1000);
     error = GetLastError();
