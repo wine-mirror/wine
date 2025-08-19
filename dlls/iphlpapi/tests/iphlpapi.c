@@ -943,27 +943,20 @@ static void testSetTcpEntry(void)
 }
 
 static BOOL icmp_send_echo_test_apc_expect;
-static void WINAPI icmp_send_echo_test_apc_xp(void *context)
-{
-    ok(icmp_send_echo_test_apc_expect, "Unexpected APC execution\n");
-    ok(context == (void*)0xdeadc0de, "Wrong context: %p\n", context);
-    icmp_send_echo_test_apc_expect = FALSE;
-}
+static int icmp_send_echo_test_line;
+static IO_STATUS_BLOCK icmp_send_echo_io;
 
 static void WINAPI icmp_send_echo_test_apc(void *context, IO_STATUS_BLOCK *io_status, ULONG reserved)
 {
-    icmp_send_echo_test_apc_xp(context);
-    ok(io_status->Status == 0, "Got IO Status 0x%08lx\n", io_status->Status);
-    ok(io_status->Information == sizeof(ICMP_ECHO_REPLY) + 32 /* sizeof(senddata) */,
-        "Got IO Information %Iu\n", io_status->Information);
+    ok_(__FILE__, icmp_send_echo_test_line)(icmp_send_echo_test_apc_expect, "Unexpected APC execution\n");
+    ok_(__FILE__, icmp_send_echo_test_line)(context == (void*)0xdeadc0de, "Wrong context: %p\n", context);
+    icmp_send_echo_test_apc_expect = FALSE;
+    icmp_send_echo_io = *io_status;
 }
 
 static void testIcmpSendEcho(void)
 {
     /* The APC's signature is different pre-Vista */
-    const PIO_APC_ROUTINE apc = broken(LOBYTE(LOWORD(GetVersion())) < 6)
-                                ? (PIO_APC_ROUTINE)icmp_send_echo_test_apc_xp
-                                : icmp_send_echo_test_apc;
     HANDLE icmp;
     char senddata[32], replydata[sizeof(senddata) + sizeof(ICMP_ECHO_REPLY)];
     char replydata2[sizeof(replydata) + sizeof(IO_STATUS_BLOCK)];
@@ -1340,16 +1333,21 @@ static void testIcmpSendEcho(void)
     address = htonl(INADDR_LOOPBACK);
     for (i = 0; i < ARRAY_SIZE(senddata); i++) senddata[i] = ~i & 0xff;
     icmp_send_echo_test_apc_expect = TRUE;
+    memset(&icmp_send_echo_io, 0xcc, sizeof(icmp_send_echo_io));
+    icmp_send_echo_test_line = __LINE__;
     /*
        NOTE: Supplying both event and apc has varying behavior across Windows versions, so not tested.
     */
-    ret = IcmpSendEcho2(icmp, NULL, apc, (void*)0xdeadc0de, address, senddata, sizeof(senddata), NULL, replydata2, replysz, 1000);
+    ret = IcmpSendEcho2(icmp, NULL, icmp_send_echo_test_apc, (void*)0xdeadc0de, address, senddata, sizeof(senddata),
+            NULL, replydata2, replysz, 1000);
     error = GetLastError();
     ok(!ret, "IcmpSendEcho2 returned success unexpectedly\n");
     ok(error == ERROR_IO_PENDING, "Expect last error: 0x%08x, got: 0x%08lx\n", ERROR_IO_PENDING, error);
     SleepEx(200, TRUE);
     SleepEx(0, TRUE);
     ok(icmp_send_echo_test_apc_expect == FALSE, "APC was not executed!\n");
+    ok(!icmp_send_echo_io.Status, "got %#lx.\n", icmp_send_echo_io.Status);
+    ok(icmp_send_echo_io.Information == sizeof(replydata), "got %Iu.\n", icmp_send_echo_io.Information);
     reply = (ICMP_ECHO_REPLY*)replydata2;
     ok(ntohl(reply->Address) == INADDR_LOOPBACK, "Address mismatch, expect: %s, got: %s\n", ntoa(INADDR_LOOPBACK),
        ntoa(reply->Address));
