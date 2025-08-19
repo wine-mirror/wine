@@ -1406,6 +1406,24 @@ static void testIcmpParseReplies( void )
     ok( !reply.Reserved, "reserved %d\n", reply.Reserved );
 }
 
+static void testIcmp6ParseReplies( void )
+{
+    ICMPV6_ECHO_REPLY reply = { 0 };
+    DWORD ret;
+
+    SetLastError( 0xdeadbeef );
+    ret = Icmp6ParseReplies( &reply, sizeof(reply) );
+    ok( ret == 1, "got %ld.\n", ret );
+    ok( GetLastError() == 0xdeadbeef, "got error %ld.\n", GetLastError() );
+
+    reply.Status = 12345;
+    SetLastError( 0xdeadbeef );
+    ret = Icmp6ParseReplies( &reply, sizeof(reply) );
+    ok( ret == 0, "ret %ld\n", ret );
+    ok( GetLastError() == 12345, "got error %ld.\n", GetLastError() );
+    ok( reply.Status == 12345, "got %ld,\n", reply.Status );
+}
+
 static void testWinNT4Functions(void)
 {
   testGetNumberOfInterfaces();
@@ -1426,6 +1444,7 @@ static void testWinNT4Functions(void)
   testSetTcpEntry();
   testIcmpSendEcho();
   testIcmpParseReplies();
+  testIcmp6ParseReplies();
 }
 
 static void testGetInterfaceInfo(void)

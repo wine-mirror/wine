@@ -4967,6 +4967,18 @@ HANDLE WINAPI Icmp6CreateFile( void )
     return INVALID_HANDLE_VALUE;
 }
 
+/******************************************************************
+ *    Icmp6ParseReplies (IPHLPAPI.@)
+ */
+DWORD WINAPI Icmp6ParseReplies( void *reply, DWORD reply_size )
+{
+    ICMPV6_ECHO_REPLY *icmp_reply = reply;
+
+    if (!icmp_reply->Status) return 1;
+    SetLastError( icmp_reply->Status );
+    return 0;
+}
+
 /***********************************************************************
  *    Icmp6SendEcho2 (IPHLPAPI.@)
  */

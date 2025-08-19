@@ -66,6 +66,23 @@ typedef struct ip_option_information IP_OPTION_INFORMATION, *PIP_OPTION_INFORMAT
 
 typedef struct icmp_echo_reply ICMP_ECHO_REPLY, *PICMP_ECHO_REPLY;
 
+#pragma pack(push,1)
+typedef struct _IPV6_ADDRESS_EX {
+    USHORT sin6_port;
+    ULONG  sin6_flowinfo;
+    USHORT sin6_addr[8];
+    ULONG  sin6_scope_id;
+} IPV6_ADDRESS_EX, *PIPV6_ADDRESS_EX;
+#pragma pack(pop)
+
+struct icmpv6_echo_reply_lh
+{
+    IPV6_ADDRESS_EX Address;
+    ULONG           Status;
+    unsigned int    RoundTripTime;
+};
+
+typedef struct icmpv6_echo_reply_lh ICMPV6_ECHO_REPLY, *PICMPV6_ECHO_REPLY;
 
 #define IP_STATUS_BASE              11000
 
@@ -98,6 +115,20 @@ typedef struct icmp_echo_reply ICMP_ECHO_REPLY, *PICMP_ECHO_REPLY;
 #define MAX_IP_STATUS               IP_GENERAL_FAILURE
 #define IP_PENDING                  (IP_STATUS_BASE + 255)
 
+/* IPv6 status codes */
+#define IP_DEST_NO_ROUTE            (IP_STATUS_BASE + 2)
+#define IP_DEST_ADDR_UNREACHABLE    (IP_STATUS_BASE + 3)
+#define IP_DEST_PROHIBITED          (IP_STATUS_BASE + 4)
+#define IP_DEST_PORT_UNREACHABLE    (IP_STATUS_BASE + 5)
+#define IP_HOP_LIMIT_EXCEEDED       (IP_STATUS_BASE + 13)
+#define IP_REASSEMBLY_TIME_EXCEEDED (IP_STATUS_BASE + 14)
+#define IP_PARAMETER_PROBLEM        (IP_STATUS_BASE + 15)
+#define IP_DEST_UNREACHABLE         (IP_STATUS_BASE + 40)
+#define IP_TIME_EXCEEDED            (IP_STATUS_BASE + 41)
+#define IP_BAD_HEADER               (IP_STATUS_BASE + 42)
+#define IP_UNRECOGNIZED_NEXT_HEADER (IP_STATUS_BASE + 43)
+#define IP_ICMP_ERROR               (IP_STATUS_BASE + 44)
+#define IP_DEST_SCOPE_MISMATCH      (IP_STATUS_BASE + 45)
 
 #define MAX_ADAPTER_NAME 128
 
