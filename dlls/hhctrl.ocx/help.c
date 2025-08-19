@@ -380,6 +380,9 @@ static void hook_WebBrowserEvents2(HHInfo *info, BOOL init)
     IConnectionPoint *point;
     HRESULT hres;
 
+    if (!info->web_browser || !info->web_browser->web_browser)
+        return;
+
     hres = IWebBrowser2_QueryInterface(info->web_browser->web_browser, &IID_IConnectionPointContainer, (void **)&container);
     if (FAILED(hres))
         return;
