@@ -2663,11 +2663,12 @@ BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
     if (is_valid_handle(&handle_table, hHash, RSAENH_MAGIC_HASH)) {
         if (!RSAENH_CPHashData(hProv, hHash, pbData, *pdwDataLen, 0)) return FALSE;
     }
-    
+
     if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_BLOCK) {
         if (!block_encrypt(pCryptKey, pbData, pdwDataLen, dwBufLen, Final,
                            &pCryptKey->context, pCryptKey->abChainVector))
             return FALSE;
+        if (!pbData) return TRUE;
     } else if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_STREAM) {
         if (pbData == NULL) {
             *pdwDataLen = dwBufLen;

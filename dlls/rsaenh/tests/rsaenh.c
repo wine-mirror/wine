@@ -727,6 +727,10 @@ static void test_block_cipher_modes(void)
     ok(result && dwLen == 16, "%08lx, dwLen: %ld\n", GetLastError(), dwLen);
 
     dwLen = 7;
+    result = CryptEncrypt(hKey, 0, TRUE, 0, NULL, &dwLen, 8);
+    ok(result && dwLen == 8, "%08lx, dwLen: %ld\n", GetLastError(), dwLen);
+
+    dwLen = 7;
     result = CryptEncrypt(hKey, 0, TRUE, 0, abData+16, &dwLen, 8);
     ok(result && dwLen == 8 && !memcmp(cfb, abData, sizeof(cfb)), 
        "%08lx, dwLen: %ld\n", GetLastError(), dwLen);
