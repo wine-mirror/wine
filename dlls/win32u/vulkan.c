@@ -91,7 +91,7 @@ static VkResult win32u_vkCreateWin32SurfaceKHR( VkInstance client_instance, cons
     {
         static const WCHAR staticW[] = {'s','t','a','t','i','c',0};
         UNICODE_STRING static_us = RTL_CONSTANT_STRING( staticW );
-        dummy = NtUserCreateWindowEx( 0, &static_us, &static_us, &static_us, WS_POPUP, 0, 0, 0, 0,
+        dummy = NtUserCreateWindowEx( 0, &static_us, NULL, &static_us, WS_POPUP, 0, 0, 0, 0,
                                       NULL, NULL, NULL, NULL, 0, NULL, 0, FALSE );
         WARN( "Created dummy window %p for null surface window\n", dummy );
         surface->hwnd = dummy;

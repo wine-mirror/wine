@@ -297,7 +297,7 @@ BOOL register_imm_window( HWND hwnd )
         UNICODE_STRING class_name = RTL_CONSTANT_STRING( imeW );
         UNICODE_STRING name = RTL_CONSTANT_STRING( default_imeW );
 
-        thread_data->default_hwnd = NtUserCreateWindowEx( 0, &class_name, &class_name, &name,
+        thread_data->default_hwnd = NtUserCreateWindowEx( 0, &class_name, NULL, &name,
                                                           WS_POPUP | WS_DISABLED | WS_CLIPSIBLINGS,
                                                           0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, FALSE );
     }

@@ -3343,7 +3343,7 @@ static BOOL init_popup( HWND owner, HMENU hmenu, UINT flags )
     if (flags & TPM_LAYOUTRTL) ex_style = WS_EX_LAYOUTRTL;
 
     /* NOTE: In Windows, top menu popup is not owned. */
-    menu->hWnd = NtUserCreateWindowEx( ex_style, &class_name, &class_name, NULL,
+    menu->hWnd = NtUserCreateWindowEx( ex_style, &class_name, NULL, NULL,
                                        WS_POPUP, 0, 0, 0, 0, owner, 0,
                                        (HINSTANCE)get_window_long_ptr( owner, GWLP_HINSTANCE, FALSE ),
                                        (void *)hmenu, 0, NULL, 0, FALSE );
