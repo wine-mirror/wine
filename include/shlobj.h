@@ -225,50 +225,7 @@ WINSHELLAPI HRESULT WINAPI SHOpenWithDialog(HWND,const OPENASINFO*);
 #define CFSTR_AUTOPLAY_SHELLIDLISTSA "Autoplay Enumerated IDList Array"
 #define CFSTR_LOGICALPERFORMEDDROPEFFECTA "Logical Performed DropEffect"
 
-#if defined(__GNUC__)
-# define CFSTR_SHELLIDLISTW \
-    (const WCHAR []){ 'S','h','e','l','l',' ','I','D','L','i','s','t',' ','A','r','r','a','y',0 }
-# define CFSTR_SHELLIDLISTOFFSETW \
-    (const WCHAR []){ 'S','h','e','l','l',' ','O','b','j','e','c','t',' ','O','f','f','s','e','t','s',0 }
-# define CFSTR_NETRESOURCESW \
-    (const WCHAR []){ 'N','e','t',' ','R','e','s','o','u','r','c','e',0 }
-# define CFSTR_FILEDESCRIPTORW \
-    (const WCHAR []){ 'F','i','l','e','G','r','o','u','p','D','e','s','c','r','i','p','t','o','r','W',0 }
-# define CFSTR_FILECONTENTSW \
-    (const WCHAR []){ 'F','i','l','e','C','o','n','t','e','n','t','s',0 }
-# define CFSTR_FILENAMEW \
-    (const WCHAR []){ 'F','i','l','e','N','a','m','e','W',0 }
-# define CFSTR_FILENAMEMAPW \
-    (const WCHAR []){ 'F','i','l','e','N','a','m','e','M','a','p','W',0 }
-# define CFSTR_PRINTERGROUPW \
-    (const WCHAR []){ 'P','r','i','n','t','e','r','F','r','i','e','n','d','l','y','N','a','m','e',0 }
-# define CFSTR_SHELLURLW \
-    (const WCHAR []){ 'U','n','i','f','o','r','m','R','e','s','o','u','r','c','e','L','o','c','a','t','o','r',0 }
-# define CFSTR_INETURLW \
-    (const WCHAR []){ 'U','n','i','f','o','r','m','R','e','s','o','u','r','c','e','L','o','c','a','t','o','r','W',0 }
-# define CFSTR_PREFERREDDROPEFFECTW \
-    (const WCHAR []){ 'P','r','e','f','e','r','r','e','d',' ','D','r','o','p','E','f','f','e','c','t',0 }
-# define CFSTR_PERFORMEDDROPEFFECTW \
-    (const WCHAR []){ 'P','e','r','f','o','r','m','e','d',' ','D','r','o','p','E','f','f','e','c','t',0 }
-# define CFSTR_PASTESUCCEEDEDW \
-    (const WCHAR []){ 'P','a','s','t','e',' ','S','u','c','c','e','e','d','e','d',0 }
-# define CFSTR_INDRAGLOOPW \
-    (const WCHAR []){ 'I','n','S','h','e','l','l','D','r','a','g','L','o','o','p',0 }
-# define CFSTR_DRAGCONTEXTW \
-    (const WCHAR []){ 'D','r','a','g','C','o','n','t','e','x','t',0 }
-# define CFSTR_MOUNTEDVOLUMEW \
-    (const WCHAR []){ 'M','o','u','n','t','e','d','V','o','l','u','m','e',0 }
-# define CFSTR_PERSISTEDDATAOBJECTW \
-    (const WCHAR []){ 'P','e','r','s','i','s','t','e','d','D','a','t','a','O','b','j','e','c','t',0 }
-# define CFSTR_TARGETCLSIDW \
-    (const WCHAR []){ 'T','a','r','g','e','t','C','L','S','I','D',0 }
-# define CFSTR_AUTOPLAY_SHELLIDLISTSW \
-    (const WCHAR []){ 'A','u','t','o','p','l','a','y',' ','E','n','u','m','e','r','a','t','e','d',\
-                      ' ','I','D','L','i','s','t',' ','A','r','r','a','y',0 }
-# define CFSTR_LOGICALPERFORMEDDROPEFFECTW \
-    (const WCHAR []){ 'L','o','g','i','c','a','l',' ','P','e','r','f','o','r','m','e','d',\
-                      ' ','D','r','o','p','E','f','f','e','c','t',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define CFSTR_SHELLIDLISTW           L"Shell IDList Array"
 # define CFSTR_SHELLIDLISTOFFSETW     L"Shell Object Offsets"
 # define CFSTR_NETRESOURCESW          L"Net Resource"
