@@ -2205,7 +2205,7 @@ DECL_HANDLER(create_window)
     struct unicode_str cls_name = get_req_unicode_str();
     struct atom_table *table = get_user_atom_table();
     unsigned int dpi_context;
-    atom_t atom;
+    atom_t atom = req->atom;
 
     reply->handle = 0;
     if (req->parent)
@@ -2233,7 +2233,7 @@ DECL_HANDLER(create_window)
                 owner = owner->parent;
     }
 
-    atom = cls_name.len ? find_atom( table, &cls_name ) : req->atom;
+    if (!atom) atom = find_atom( table, &cls_name );
 
     if (!(win = create_window( parent, owner, atom, req->class_instance, req->instance ))) return;
 
@@ -2538,7 +2538,7 @@ DECL_HANDLER(get_class_windows)
     user_handle_t *data;
     unsigned int count = 0, max_count = get_reply_max_size() / sizeof(*data);
 
-    if (cls_name.len && !(atom = find_atom( table, &cls_name ))) return;
+    if (!atom && cls_name.len && !(atom = find_atom( table, &cls_name ))) return;
     if (req->parent && !(parent = get_window( req->parent ))) return;
 
     if (req->child)

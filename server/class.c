@@ -223,7 +223,7 @@ DECL_HANDLER(destroy_class)
     struct atom_table *table = get_user_atom_table();
     atom_t atom = req->atom;
 
-    if (name.len) atom = find_atom( table, &name );
+    if (!atom) atom = find_atom( table, &name );
 
     if (!(class = find_class( current->process, atom, req->instance )))
         set_win32_error( ERROR_CLASS_DOES_NOT_EXIST );
