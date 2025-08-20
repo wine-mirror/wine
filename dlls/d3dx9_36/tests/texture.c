@@ -638,7 +638,7 @@ static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
     format = D3DFMT_CxV8U8;
     hr = D3DXCheckTextureRequirements(device, NULL, NULL, NULL, 0, &format, D3DPOOL_DEFAULT);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(format == expected, "Unexpected format %u.\n", format);
+    ok(format == expected, "Unexpected format %u.\n", format);
 
     IDirect3D9_Release(d3d);
 }

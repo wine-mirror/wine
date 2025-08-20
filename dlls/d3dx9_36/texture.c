@@ -186,6 +186,7 @@ static D3DFORMAT get_replacement_format(D3DFORMAT format)
         {D3DFMT_DXT3, D3DFMT_A8R8G8B8},
         {D3DFMT_DXT4, D3DFMT_A8R8G8B8},
         {D3DFMT_DXT5, D3DFMT_A8R8G8B8},
+        {D3DFMT_CxV8U8, D3DFMT_X8L8V8U8},
     };
     unsigned int i;
 
