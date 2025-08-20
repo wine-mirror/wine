@@ -2039,7 +2039,7 @@ DECL_HANDLER(queue_apc)
             return;
         }
         thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT );
-        if (call->user.flags & SERVER_USER_APC_SPECIAL && is_wow64_process( thread->process ))
+        if (thread && call && call->user.flags & SERVER_USER_APC_SPECIAL && is_wow64_process( thread->process ))
         {
             release_object( apc );
             release_object( thread );

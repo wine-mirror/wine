@@ -2930,6 +2930,8 @@ static void test_QueueUserAPC(void)
     ok(ret == STATUS_UNSUCCESSFUL, "got %#lx\n", ret);
     ret = pNtQueueApcThread(thread, NULL, 0, 0, 0);
     ok(ret == STATUS_UNSUCCESSFUL, "got %#lx\n", ret);
+    ret = pNtQueueApcThread((HANDLE)0xdeadbeef, call_user_apc, (ULONG_PTR)user_apc, 0, 0);
+    ok(ret == STATUS_INVALID_HANDLE, "got %#lx\n", ret);
 
     SetLastError(0xdeadbeef);
     ret = QueueUserAPC(user_apc, thread, 0);
