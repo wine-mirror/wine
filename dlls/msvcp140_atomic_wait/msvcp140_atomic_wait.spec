@@ -22,11 +22,11 @@
 @ stdcall __std_release_shared_mutex_for_instance(ptr)
 @ stdcall __std_submit_threadpool_work(ptr)
 @ stdcall __std_tzdb_delete_current_zone(ptr)
-@ stub __std_tzdb_delete_leap_seconds
+@ stdcall __std_tzdb_delete_leap_seconds(ptr)
 @ stub __std_tzdb_delete_sys_info
 @ stdcall __std_tzdb_delete_time_zones(ptr)
 @ stdcall __std_tzdb_get_current_zone()
-@ stub __std_tzdb_get_leap_seconds
+@ stdcall __std_tzdb_get_leap_seconds(ptr ptr)
 @ stub __std_tzdb_get_sys_info
 @ stdcall __std_tzdb_get_time_zones()
 @ stdcall __std_wait_for_threadpool_work_callbacks(ptr long)

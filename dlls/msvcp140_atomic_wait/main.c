@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include "stdint.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
@@ -210,6 +211,16 @@ struct tzdb_current_zone
     char *name;
 };
 
+struct tzdb_leap_second
+{
+    uint16_t year;
+    uint16_t month;
+    uint16_t day;
+    uint16_t hour;
+    uint16_t negative;
+    uint16_t reserved;
+};
+
 struct tzdb_time_zones * __stdcall __std_tzdb_get_time_zones(void)
 {
     DYNAMIC_TIME_ZONE_INFORMATION tzd;
@@ -285,4 +296,19 @@ void __stdcall __std_tzdb_delete_current_zone(struct tzdb_current_zone *c)
 
     free(c->name);
     free(c);
+}
+
+struct tzdb_leap_second * __stdcall __std_tzdb_get_leap_seconds(size_t prev_size, size_t *new_size)
+{
+    FIXME("(%#Ix %p) stub\n", prev_size, new_size);
+
+    *new_size = 0;
+    return NULL;
+}
+
+void __stdcall __std_tzdb_delete_leap_seconds(struct tzdb_leap_second *l)
+{
+    TRACE("(%p)\n", l);
+
+    free(l);
 }

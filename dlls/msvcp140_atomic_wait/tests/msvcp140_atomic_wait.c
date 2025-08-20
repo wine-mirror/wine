@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <process.h>
 
+#include "stdint.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wine/test.h"
@@ -50,6 +51,16 @@ struct tzdb_current_zone
     char *name;
 };
 
+struct tzdb_leap_second
+{
+    uint16_t year;
+    uint16_t month;
+    uint16_t day;
+    uint16_t hour;
+    uint16_t negative;
+    uint16_t reserved;
+};
+
 static unsigned int (__stdcall *p___std_parallel_algorithms_hw_threads)(void);
 
 static void (__stdcall *p___std_bulk_submit_threadpool_work)(PTP_WORK, size_t);
@@ -67,6 +78,8 @@ static struct tzdb_time_zones * (__stdcall *p___std_tzdb_get_time_zones)(void);
 static void (__stdcall *p___std_tzdb_delete_time_zones)(struct tzdb_time_zones *);
 static struct tzdb_current_zone * (__stdcall *p___std_tzdb_get_current_zone)(void);
 static void (__stdcall *p___std_tzdb_delete_current_zone)(struct tzdb_current_zone *);
+static struct tzdb_leap_second * (__stdcall *p___std_tzdb_get_leap_seconds)(size_t, size_t *);
+static void (__stdcall *p___std_tzdb_delete_leap_seconds)(struct tzdb_leap_second *);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -94,6 +107,8 @@ static HMODULE init(void)
     SET(p___std_tzdb_delete_time_zones, "__std_tzdb_delete_time_zones");
     SET(p___std_tzdb_get_current_zone, "__std_tzdb_get_current_zone");
     SET(p___std_tzdb_delete_current_zone, "__std_tzdb_delete_current_zone");
+    SET(p___std_tzdb_get_leap_seconds, "__std_tzdb_get_leap_seconds");
+    SET(p___std_tzdb_delete_leap_seconds, "__std_tzdb_delete_leap_seconds");
     return msvcp;
 }
 
@@ -359,7 +374,9 @@ static void test___std_tzdb(void)
 {
     struct tzdb_current_zone *c;
     struct tzdb_time_zones *z;
+    void *leap_seconds;
     unsigned int i;
+    size_t size;
 
     if (!p___std_tzdb_get_time_zones)
     {
@@ -393,6 +410,12 @@ static void test___std_tzdb(void)
 
     p___std_tzdb_delete_current_zone(c);
     p___std_tzdb_delete_time_zones(z);
+
+    size = 0xdeadbeef;
+    leap_seconds = p___std_tzdb_get_leap_seconds(100, &size);
+    ok(!leap_seconds, "got %p.\n", leap_seconds);
+    ok(!size, "got %#Ix.\n", size);
+    p___std_tzdb_delete_leap_seconds(leap_seconds);
 }
 
 START_TEST(msvcp140_atomic_wait)
