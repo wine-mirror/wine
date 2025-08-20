@@ -1001,6 +1001,7 @@ static void test_D3DXGetImageInfo(void)
     check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_R32F, 0, 0, 0, 0, 0, D3DFMT_R32F);
     check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_G32R32F, 0, 0, 0, 0, 0, D3DFMT_G32R32F);
     check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_A32B32G32R32F, 0, 0, 0, 0, 0, D3DFMT_A32B32G32R32F);
+    todo_wine check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_CxV8U8, 0, 0, 0, 0, 0, D3DFMT_CxV8U8);
     check_dds_pixel_format(DDS_PF_RGB, 0, 16, 0xf800, 0x07e0, 0x001f, 0, D3DFMT_R5G6B5);
     check_dds_pixel_format(DDS_PF_RGB | DDS_PF_ALPHA, 0, 16, 0x7c00, 0x03e0, 0x001f, 0x8000, D3DFMT_A1R5G5B5);
     check_dds_pixel_format(DDS_PF_RGB | DDS_PF_ALPHA, 0, 16, 0x0f00, 0x00f0, 0x000f, 0xf000, D3DFMT_A4R4G4B4);
@@ -2518,6 +2519,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     static const uint32_t pixdata_q8w8v8u8[] = { 0x30201000, 0x7f605040, 0xb0a08180, 0xffe0d0c0 };
     static const float pixdata_a32b32g32r32f[] = {  0.0f,  0.1f,  NAN,  INFINITY,  1.0f,  1.1f,  1.2f,  1.3f,
                                                    -0.1f, -0.2f, -NAN, -INFINITY, -1.0f, -1.1f, -1.2f, -1.3f };
+    static const uint16_t pixdata_cxv8u8[] = { 0x7f7f, 0x8181, 0x0000, 0x006d };
     static const uint16_t pixdata_v8u8[] = { 0x3000, 0x7f40, 0x8180, 0xffc0 };
     BYTE buffer[4 * 8 * 4];
     D3DXIMAGE_INFO info;
@@ -2952,6 +2954,22 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         check_pixel_4bpp(&lockrect, 1, 1, 0x7e3f4f5f);
         hr = IDirect3DSurface9_UnlockRect(surf);
         ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
+
+        /* D3DFMT_CxV8U8. */
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_cxv8u8, D3DFMT_CxV8U8, 4, NULL, &rect,
+                D3DX_FILTER_NONE, 0);
+        todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+            ok(hr == D3D_OK, "Failed to lock surface, hr %#lx.\n", hr);
+            check_pixel_4bpp(&lockrect, 0, 0, 0xffffff80);
+            check_pixel_4bpp(&lockrect, 1, 0, 0xff000080);
+            check_pixel_4bpp(&lockrect, 0, 1, 0xff8080ff);
+            check_pixel_4bpp(&lockrect, 1, 1, 0xffed80c1);
+            hr = IDirect3DSurface9_UnlockRect(surf);
+            ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
+        }
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a32b32g32r32f, D3DFMT_A32B32G32R32F, 32, NULL, &rect,
                 D3DX_FILTER_NONE, 0);
@@ -3557,6 +3575,23 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         hr = IDirect3DSurface9_UnlockRect(surf);
         ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
 
+        /* D3DFMT_CxV8U8. */
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_cxv8u8, D3DFMT_CxV8U8, 4, NULL, &rect,
+                D3DX_FILTER_NONE, 0);
+        todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            /* The calculated Cx value goes into the blue channel. */
+            hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+            ok(hr == D3D_OK, "Failed to lock surface, hr %#lx.\n", hr);
+            check_pixel_float4(&lockrect, 0, 0,  1.0f,             1.0f, 0.0f,            1.0f, 0, FALSE);
+            check_pixel_float4(&lockrect, 1, 0, -1.0f,            -1.0f, 0.0f,            1.0f, 0, FALSE);
+            check_pixel_float4(&lockrect, 0, 1,  0.0f,             0.0f, 1.0f,            1.0f, 0, FALSE);
+            check_pixel_float4(&lockrect, 1, 1,  8.58267725e-001,  0.0f, 5.13202250e-001, 1.0f, 0, FALSE);
+            hr = IDirect3DSurface9_UnlockRect(surf);
+            ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
+        }
+
         check_release((IUnknown*)surf, 0);
     }
 
@@ -3672,6 +3707,21 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         hr = IDirect3DSurface9_UnlockRect(surf);
         ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
 
+        /* D3DFMT_CxV8U8. */
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_cxv8u8, D3DFMT_CxV8U8, 4, NULL, &rect,
+                D3DX_FILTER_NONE, 0);
+        todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+            ok(hr == D3D_OK, "Failed to lock surface, hr %#lx.\n", hr);
+            check_pixel_4bpp(&lockrect, 0, 0, 0x00ff7f7f);
+            check_pixel_4bpp(&lockrect, 1, 0, 0x00ff8282);
+            check_pixel_4bpp(&lockrect, 0, 1, 0x00ff0000);
+            check_pixel_4bpp(&lockrect, 1, 1, 0x00ff006d);
+            hr = IDirect3DSurface9_UnlockRect(surf);
+            ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
+        }
         check_release((IUnknown*)surf, 1);
         check_release((IUnknown*)tex, 0);
     }
@@ -4100,6 +4150,12 @@ static void test_save_surface_to_dds(IDirect3DDevice9 *device)
             DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
             DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
           }
+        },
+        { D3DFMT_CxV8U8, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_CxV8U8, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
+          }, .todo_hr = TRUE
         },
     };
     struct
@@ -4769,6 +4825,17 @@ static void test_save_surface_iffs(IDirect3DDevice9 *device)
             { D3D_OK, D3DFMT_R8G8B8, .todo_hr = TRUE },
             { D3D_OK, D3DFMT_A32B32G32R32F, .todo_hr = TRUE },
             { D3D_OK, D3DFMT_A32B32G32R32F, .todo_hr = TRUE },
+          },
+        },
+        { D3DFMT_CxV8U8, NULL, 0x00,
+          { { D3DERR_INVALIDCALL, .todo_hr = TRUE },
+            { D3DERR_INVALIDCALL, .todo_hr = TRUE },
+            { D3DERR_INVALIDCALL, .todo_hr = TRUE },
+            { D3DERR_INVALIDCALL, .todo_hr = TRUE },
+            { D3DERR_INVALIDCALL, .todo_hr = TRUE },
+            { D3DERR_INVALIDCALL, .todo_hr = TRUE },
+            { D3DERR_INVALIDCALL, .todo_hr = TRUE },
+            { D3DERR_INVALIDCALL, .todo_hr = TRUE },
           },
         },
     };

@@ -628,6 +628,18 @@ static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
         ok(format == D3DFMT_A8R8G8B8, "Got unexpected format %u.\n", format);
     }
 
+    /* D3DFMT CxV8U8, unsupported by modern cards, replaced with D3DFMT_X8L8V8U8. */
+    if (SUCCEEDED(IDirect3D9_CheckDeviceFormat(d3d, params.AdapterOrdinal, params.DeviceType,
+                                               mode.Format, 0, D3DRTYPE_TEXTURE, D3DFMT_X8L8V8U8)))
+        expected = D3DFMT_X8L8V8U8;
+    else
+        expected = D3DFMT_V8U8;
+
+    format = D3DFMT_CxV8U8;
+    hr = D3DXCheckTextureRequirements(device, NULL, NULL, NULL, 0, &format, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(format == expected, "Unexpected format %u.\n", format);
+
     IDirect3D9_Release(d3d);
 }
 
