@@ -426,14 +426,14 @@ static HRESULT array_to_args(script_ctx_t *ctx, IDispatch *disp, unsigned *argc,
 
     hres = disp_propget_name(ctx, disp, L"length", &val);
     if(FAILED(hres))
-        return (hres == DISP_E_UNKNOWNNAME) ? JS_E_JSCRIPT_EXPECTED : hres;
+        return (hres == DISP_E_UNKNOWNNAME) ? JS_E_ARRAY_OR_ARGS_EXPECTED : hres;
 
     hres = to_int32(ctx, val, &length);
     jsval_release(val);
     if(FAILED(hres))
         return hres;
     if(length < 0)
-        return JS_E_JSCRIPT_EXPECTED;
+        return JS_E_ARRAY_OR_ARGS_EXPECTED;
 
     argv = malloc(length * sizeof(*argv));
     if(!argv)
@@ -503,7 +503,7 @@ static HRESULT Function_apply(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsi
             }
         }
 
-        hres = obj ? array_to_args(ctx, obj, &cnt, &args) : JS_E_JSCRIPT_EXPECTED;
+        hres = obj ? array_to_args(ctx, obj, &cnt, &args) : ctx->html_mode ? JS_E_ARRAY_OR_ARGS_EXPECTED : JS_E_JSCRIPT_EXPECTED;
     }
 
     if(SUCCEEDED(hres)) {

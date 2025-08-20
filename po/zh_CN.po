@@ -4005,15 +4005,15 @@ msgstr "条件编译已关闭"
 msgid "Expected '@'"
 msgstr "期望 '@'"
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:91
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript 编译错误"
 
-#: dlls/jscript/jscript.rc:91
+#: dlls/jscript/jscript.rc:92
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript 运行时错误"
 
-#: dlls/jscript/jscript.rc:92 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:93 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "未知运行时错误"
 
@@ -4094,68 +4094,74 @@ msgid "Precision is out of range"
 msgstr "精度超出范围"
 
 #: dlls/jscript/jscript.rc:73
+#, fuzzy
+#| msgid "Array object expected"
+msgid "Array or arguments object expected"
+msgstr "期望得到 Array 对象"
+
+#: dlls/jscript/jscript.rc:74
 msgid "Array length must be a finite positive integer"
 msgstr "数组的长度必须为一个有限正整数"
 
-#: dlls/jscript/jscript.rc:74
+#: dlls/jscript/jscript.rc:75
 msgid "Array object expected"
 msgstr "期望得到 Array 对象"
 
-#: dlls/jscript/jscript.rc:75
+#: dlls/jscript/jscript.rc:76
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr "无法在此对象上更改属性描述符中的“writable”属性为“true”"
 
-#: dlls/jscript/jscript.rc:76
+#: dlls/jscript/jscript.rc:77
 msgid "Cyclic __proto__ value"
 msgstr "循环的 __proto__ 值"
 
-#: dlls/jscript/jscript.rc:77
+#: dlls/jscript/jscript.rc:78
 msgid "Cannot create property for a non-extensible object"
 msgstr "无法为不可扩展对象创建属性"
 
-#: dlls/jscript/jscript.rc:78
+#: dlls/jscript/jscript.rc:79
 msgid "Cannot define property '|': object is not extensible"
 msgstr "无法定义属性 '|': 对象不可扩展"
 
-#: dlls/jscript/jscript.rc:79
+#: dlls/jscript/jscript.rc:80
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "无法重定义不可配置的属性 '|'"
 
-#: dlls/jscript/jscript.rc:80
+#: dlls/jscript/jscript.rc:81
 msgid "Cannot modify non-writable property '|'"
 msgstr "无法更改不可写的属性 '|'"
 
-#: dlls/jscript/jscript.rc:81
+#: dlls/jscript/jscript.rc:82
 msgid "'this' is not a DataView object"
 msgstr "'this' 不是 DataView 对象"
 
-#: dlls/jscript/jscript.rc:82
+#: dlls/jscript/jscript.rc:83
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr "未指定 DataView 方法所必需的参数偏移量或值"
 
-#: dlls/jscript/jscript.rc:83
+#: dlls/jscript/jscript.rc:84
 msgid "DataView operation access beyond specified buffer length"
 msgstr "DataView 操作访问超出指定的缓冲区长度"
 
-#: dlls/jscript/jscript.rc:84
+#: dlls/jscript/jscript.rc:85
 msgid "DataView constructor argument offset is invalid"
 msgstr "DataView 构造函数参数偏移量无效"
 
-#: dlls/jscript/jscript.rc:85
+#: dlls/jscript/jscript.rc:86
 msgid "'this' is not a | object"
 msgstr "'this' 不是 | 对象"
 
-#: dlls/jscript/jscript.rc:86
+#: dlls/jscript/jscript.rc:87
 msgid "'key' is not an object"
 msgstr "'key' 不是一个对象"
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:88
 msgid "ArrayBuffer object expected"
 msgstr "期望得到 ArrayBuffer 对象"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "Property cannot have both accessors and a value"
 msgstr "属性不能同时包含存取器和值"
 

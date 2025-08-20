@@ -69,6 +69,7 @@ STRINGTABLE
     IDS_URI_INVALID_CHAR    "URI to be encoded contains invalid characters"
     IDS_FRACTION_DIGITS_OUT_OF_RANGE "Number of fraction digits is out of range"
     IDS_PRECISION_OUT_OF_RANGE "Precision is out of range"
+    IDS_ARRAY_OR_ARGS_EXPECTED "Array or arguments object expected"
     IDS_INVALID_LENGTH      "Array length must be a finite positive integer"
     IDS_ARRAY_EXPECTED      "Array object expected"
     IDS_INVALID_WRITABLE_PROP_DESC "'writable' attribute on the property descriptor cannot be set to 'true' on this object"

@@ -4061,15 +4061,15 @@ msgstr "Warunkowa kompilacja jest wyłączona"
 msgid "Expected '@'"
 msgstr "Oczekiwano '@'"
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:91
 msgid "Microsoft JScript compilation error"
 msgstr "Błąd kompilacji Microsoft JScript"
 
-#: dlls/jscript/jscript.rc:91
+#: dlls/jscript/jscript.rc:92
 msgid "Microsoft JScript runtime error"
 msgstr "Błąd biblioteki uruchomieniowej Microsoft JScript"
 
-#: dlls/jscript/jscript.rc:92 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:93 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Nieznany błąd biblioteki uruchomieniowej"
 
@@ -4150,14 +4150,20 @@ msgid "Precision is out of range"
 msgstr "Precyzja jest poza poza zakresem"
 
 #: dlls/jscript/jscript.rc:73
+#, fuzzy
+#| msgid "Array object expected"
+msgid "Array or arguments object expected"
+msgstr "Oczekiwany obiekt tablicowy"
+
+#: dlls/jscript/jscript.rc:74
 msgid "Array length must be a finite positive integer"
 msgstr "Długość tablicy musi być skończoną dodatnią liczbą stałą"
 
-#: dlls/jscript/jscript.rc:74
+#: dlls/jscript/jscript.rc:75
 msgid "Array object expected"
 msgstr "Oczekiwany obiekt tablicowy"
 
-#: dlls/jscript/jscript.rc:75
+#: dlls/jscript/jscript.rc:76
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
@@ -4165,56 +4171,56 @@ msgstr ""
 "Atrybutu 'writable' w deskryptorze właściwości nie można ustawić na 'true' "
 "w tym obiekcie"
 
-#: dlls/jscript/jscript.rc:76
+#: dlls/jscript/jscript.rc:77
 msgid "Cyclic __proto__ value"
 msgstr "Cykliczna wartość __proto__"
 
-#: dlls/jscript/jscript.rc:77
+#: dlls/jscript/jscript.rc:78
 msgid "Cannot create property for a non-extensible object"
 msgstr "Nie można stworzyć własności dla nierozszerzalnego obiektu"
 
-#: dlls/jscript/jscript.rc:78
+#: dlls/jscript/jscript.rc:79
 msgid "Cannot define property '|': object is not extensible"
 msgstr "Nie można określić własności '|': obiekt jest nierozciągalny"
 
-#: dlls/jscript/jscript.rc:79
+#: dlls/jscript/jscript.rc:80
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "Nie można określić nieustawialnej własności '|'"
 
-#: dlls/jscript/jscript.rc:80
+#: dlls/jscript/jscript.rc:81
 msgid "Cannot modify non-writable property '|'"
 msgstr "Nie można zmienić niezapisywalnej własności '|'"
 
-#: dlls/jscript/jscript.rc:81
+#: dlls/jscript/jscript.rc:82
 msgid "'this' is not a DataView object"
 msgstr "'this' nie jest obiektem DataView"
 
-#: dlls/jscript/jscript.rc:82
+#: dlls/jscript/jscript.rc:83
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr ""
 "Wymagany argument offset lub wartość w metodzie DataView nie jest określona"
 
-#: dlls/jscript/jscript.rc:83
+#: dlls/jscript/jscript.rc:84
 msgid "DataView operation access beyond specified buffer length"
 msgstr "Dostęp do operacji DataView poza określoną długością bufora"
 
-#: dlls/jscript/jscript.rc:84
+#: dlls/jscript/jscript.rc:85
 msgid "DataView constructor argument offset is invalid"
 msgstr "Argument przesunięcia konstruktora DataView jest nieprawidłowy"
 
-#: dlls/jscript/jscript.rc:85
+#: dlls/jscript/jscript.rc:86
 msgid "'this' is not a | object"
 msgstr "'this' nie jest obiektem |"
 
-#: dlls/jscript/jscript.rc:86
+#: dlls/jscript/jscript.rc:87
 msgid "'key' is not an object"
 msgstr "'key' nie jest obiektem"
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:88
 msgid "ArrayBuffer object expected"
 msgstr "Oczekiwano obiektu ArrayBuffer"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "Property cannot have both accessors and a value"
 msgstr "Własność nie może mieć zarówno akcesorów i wartości"
 

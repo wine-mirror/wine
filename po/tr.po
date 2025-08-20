@@ -4076,15 +4076,15 @@ msgstr "Şartlı derleme kapatıldı"
 msgid "Expected '@'"
 msgstr "Beklenen '@'"
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:91
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript derleme hatası"
 
-#: dlls/jscript/jscript.rc:91
+#: dlls/jscript/jscript.rc:92
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript çalışma zamanı hatası"
 
-#: dlls/jscript/jscript.rc:92 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:93 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Bilinmeyen çalışma zamanı hatası"
 
@@ -4167,14 +4167,20 @@ msgid "Precision is out of range"
 msgstr "Aralık erişim dışında"
 
 #: dlls/jscript/jscript.rc:73
+#, fuzzy
+#| msgid "Array object expected"
+msgid "Array or arguments object expected"
+msgstr "Beklenen dizi nesnesi"
+
+#: dlls/jscript/jscript.rc:74
 msgid "Array length must be a finite positive integer"
 msgstr "Dizi adı pozitif sonlu bir sayı olmalıdır"
 
-#: dlls/jscript/jscript.rc:74
+#: dlls/jscript/jscript.rc:75
 msgid "Array object expected"
 msgstr "Beklenen dizi nesnesi"
 
-#: dlls/jscript/jscript.rc:75
+#: dlls/jscript/jscript.rc:76
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
@@ -4182,61 +4188,61 @@ msgstr ""
 "Nesne açıklayıcısındaki 'yazılabilir' özelliği bu nesnede 'doğru' olarak "
 "ayarlananmıyor"
 
-#: dlls/jscript/jscript.rc:76
+#: dlls/jscript/jscript.rc:77
 msgid "Cyclic __proto__ value"
 msgstr "Döngüsel __protokol__ değeri"
 
-#: dlls/jscript/jscript.rc:77
+#: dlls/jscript/jscript.rc:78
 msgid "Cannot create property for a non-extensible object"
 msgstr "Genişletilemez bir nesne için özellik oluşturulamaz"
 
-#: dlls/jscript/jscript.rc:78
+#: dlls/jscript/jscript.rc:79
 msgid "Cannot define property '|': object is not extensible"
 msgstr "'|' özelliği tanımlanamıyor: nesne genişletilebilir değil"
 
-#: dlls/jscript/jscript.rc:79
+#: dlls/jscript/jscript.rc:80
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "'|' yapılandırılamayan nesnesi yeniden tanımlanamıyor"
 
-#: dlls/jscript/jscript.rc:80
+#: dlls/jscript/jscript.rc:81
 msgid "Cannot modify non-writable property '|'"
 msgstr "'|' yazılamayan nesnesi değiştirilemiyor"
 
-#: dlls/jscript/jscript.rc:81
+#: dlls/jscript/jscript.rc:82
 #, fuzzy
 #| msgid "'this' is not a | object"
 msgid "'this' is not a DataView object"
 msgstr "'bu' bir | nesne değil"
 
-#: dlls/jscript/jscript.rc:82
+#: dlls/jscript/jscript.rc:83
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:83
+#: dlls/jscript/jscript.rc:84
 msgid "DataView operation access beyond specified buffer length"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:84
+#: dlls/jscript/jscript.rc:85
 msgid "DataView constructor argument offset is invalid"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:85
+#: dlls/jscript/jscript.rc:86
 msgid "'this' is not a | object"
 msgstr "'bu' bir | nesne değil"
 
-#: dlls/jscript/jscript.rc:86
+#: dlls/jscript/jscript.rc:87
 #, fuzzy
 #| msgid "'this' is not a | object"
 msgid "'key' is not an object"
 msgstr "'bu' bir | nesne değil"
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:88
 #, fuzzy
 #| msgid "Array object expected"
 msgid "ArrayBuffer object expected"
 msgstr "Beklenen dizi nesnesi"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "Property cannot have both accessors and a value"
 msgstr "Nesnenin erişimcisi ve değeri birden olamaz"
 

@@ -4043,15 +4043,15 @@ msgstr "Sąlyginis kompiliavimas išjungtas"
 msgid "Expected '@'"
 msgstr "Tikėtasi „@“"
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:91
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript kompiliavimo klaida"
 
-#: dlls/jscript/jscript.rc:91
+#: dlls/jscript/jscript.rc:92
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript vykdymo klaida"
 
-#: dlls/jscript/jscript.rc:92 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:93 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Nežinoma vykdymo klaida"
 
@@ -4132,14 +4132,20 @@ msgid "Precision is out of range"
 msgstr "Tikslumas nepatenka į rėžius"
 
 #: dlls/jscript/jscript.rc:73
+#, fuzzy
+#| msgid "Array object expected"
+msgid "Array or arguments object expected"
+msgstr "Tikėtasi masyvo objekto"
+
+#: dlls/jscript/jscript.rc:74
 msgid "Array length must be a finite positive integer"
 msgstr "Masyvo dydis turi būti teigiamas sveikasis skaičius"
 
-#: dlls/jscript/jscript.rc:74
+#: dlls/jscript/jscript.rc:75
 msgid "Array object expected"
 msgstr "Tikėtasi masyvo objekto"
 
-#: dlls/jscript/jscript.rc:75
+#: dlls/jscript/jscript.rc:76
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
@@ -4147,56 +4153,56 @@ msgstr ""
 "savybės aprašo atributas „writable“ negali būti nustatytas į „tiesa“ šiam "
 "objektui"
 
-#: dlls/jscript/jscript.rc:76
+#: dlls/jscript/jscript.rc:77
 msgid "Cyclic __proto__ value"
 msgstr "Ciklinė __proto__ reikšmė"
 
-#: dlls/jscript/jscript.rc:77
+#: dlls/jscript/jscript.rc:78
 msgid "Cannot create property for a non-extensible object"
 msgstr "Negalima sukurti savybės neišplečiamam objektui"
 
-#: dlls/jscript/jscript.rc:78
+#: dlls/jscript/jscript.rc:79
 msgid "Cannot define property '|': object is not extensible"
 msgstr "Negalima apibrėžti savybės „|“: objektas nėra išplečiamas"
 
-#: dlls/jscript/jscript.rc:79
+#: dlls/jscript/jscript.rc:80
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "Negalima iš naujo apibrėžti nekonfigūruojamos savybės „|“"
 
-#: dlls/jscript/jscript.rc:80
+#: dlls/jscript/jscript.rc:81
 msgid "Cannot modify non-writable property '|'"
 msgstr "Negalima modifikuoti nerašomos savybės „|“"
 
-#: dlls/jscript/jscript.rc:81
+#: dlls/jscript/jscript.rc:82
 msgid "'this' is not a DataView object"
 msgstr "„Šis“ nėra DataView objektas"
 
-#: dlls/jscript/jscript.rc:82
+#: dlls/jscript/jscript.rc:83
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr ""
 "DataView metode nenurodytas reikalingas argumentas poslinkis ar reikšmė"
 
-#: dlls/jscript/jscript.rc:83
+#: dlls/jscript/jscript.rc:84
 msgid "DataView operation access beyond specified buffer length"
 msgstr "DataView operacijos kreiptis už nurodyto buferio ilgio"
 
-#: dlls/jscript/jscript.rc:84
+#: dlls/jscript/jscript.rc:85
 msgid "DataView constructor argument offset is invalid"
 msgstr "DataView konstruktoriaus argumentas poslinkis yra netinkamas"
 
-#: dlls/jscript/jscript.rc:85
+#: dlls/jscript/jscript.rc:86
 msgid "'this' is not a | object"
 msgstr "„Šis“ nėra | objektas"
 
-#: dlls/jscript/jscript.rc:86
+#: dlls/jscript/jscript.rc:87
 msgid "'key' is not an object"
 msgstr "„raktas“ nėra objektas"
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:88
 msgid "ArrayBuffer object expected"
 msgstr "Tikėtasi ArrayBuffer objekto"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "Property cannot have both accessors and a value"
 msgstr "Savybė negali turėti ir kreipiklių, ir reikšmės"
 
