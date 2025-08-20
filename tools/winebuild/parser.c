@@ -308,6 +308,11 @@ static int parse_spec_arguments( ORDDEF *odp, DLLSPEC *spec, int optional )
             error( "First argument of a thiscall function must be a pointer\n" );
             return 0;
         }
+        if (odp->flags & FLAG_CPU_MASK & ~FLAG_CPU(CPU_i386))
+        {
+            error( "A thiscall function can only be exported on i386\n" );
+            return 0;
+        }
     }
     if (odp->flags & FLAG_FASTCALL)
     {
@@ -359,7 +364,7 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
         odp->flags |= FLAG_NORELAY;  /* no relay debug possible for varags entry point */
 
     if (target.cpu != CPU_i386)
-        odp->flags &= ~(FLAG_THISCALL | FLAG_FASTCALL);
+        odp->flags &= ~FLAG_FASTCALL;
 
     if (!(token = GetToken(1)))
     {
