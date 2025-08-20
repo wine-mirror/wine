@@ -176,12 +176,12 @@ WNDPROC get_class_winproc( struct tagCLASS *class );
 ULONG_PTR get_class_long_ptr( HWND hwnd, INT offset, BOOL ansi );
 WORD get_class_word( HWND hwnd, INT offset );
 DLGPROC get_dialog_proc( DLGPROC proc, BOOL ansi );
-ATOM get_int_atom_value( UNICODE_STRING *name );
 WNDPROC get_winproc( WNDPROC proc, BOOL ansi );
 void get_winproc_params( struct win_proc_params *params, BOOL fixup_ansi_dst );
 struct dce *get_class_dce( struct tagCLASS *class );
 struct dce *set_class_dce( struct tagCLASS *class, struct dce *dce );
 BOOL needs_ime_window( HWND hwnd );
+extern atom_t wine_server_add_atom( void *req, UNICODE_STRING *str );
 extern void register_builtin_classes(void);
 extern void register_desktop_class(void);
 

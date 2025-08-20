@@ -3024,11 +3024,10 @@ HWND WINAPI NtUserFindWindowEx( HWND parent, HWND child, UNICODE_STRING *class, 
     user_handle_t *list;
     HWND retvalue = 0;
     int i = 0, size = 128, title_len;
-    ATOM atom = class ? get_int_atom_value( class ) : 0;
     NTSTATUS status;
 
     /* empty class is not the same as NULL class */
-    if (!atom && class && !class->Length) return 0;
+    if (class && !class->Length && !IS_INTRESOURCE(class->Buffer)) return 0;
 
     if (parent == HWND_MESSAGE) parent = get_hwnd_message_parent();
 
@@ -3040,8 +3039,7 @@ HWND WINAPI NtUserFindWindowEx( HWND parent, HWND child, UNICODE_STRING *class, 
         {
             req->parent = wine_server_user_handle( parent );
             req->child  = wine_server_user_handle( child );
-            req->atom   = atom;
-            if (!atom && class) wine_server_add_data( req, class->Buffer, class->Length );
+            if (class) req->atom = wine_server_add_atom( req, class );
             wine_server_set_reply( req, list, size * sizeof(user_handle_t) );
             status = wine_server_call( req );
             size = reply->count;
@@ -5381,8 +5379,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
         req->dpi_context     = dpi_context;
         req->style           = style;
         req->ex_style        = ex_style;
-        if (!(req->atom = get_int_atom_value( name )) && name->Length)
-            wine_server_add_data( req, name->Buffer, name->Length );
+        req->atom            = wine_server_add_atom( req, name );
         if (!wine_server_call_err( req ))
         {
             handle      = wine_server_ptr_handle( reply->handle );
