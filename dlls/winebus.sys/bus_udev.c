@@ -998,6 +998,7 @@ static NTSTATUS lnxev_device_physical_effect_update(struct unix_device *iface, B
 {
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
     struct ff_effect effect = {.id = impl->effect_ids[index]};
+    int i;
     NTSTATUS status;
 
     TRACE("iface %p, index %u, params %p.\n", iface, index, params);
@@ -1035,23 +1036,22 @@ static NTSTATUS lnxev_device_physical_effect_update(struct unix_device *iface, B
     case PID_USAGE_ET_DAMPER:
     case PID_USAGE_ET_INERTIA:
     case PID_USAGE_ET_FRICTION:
-        if (params->condition_count >= 1)
+        for (i = 0; i < max(params->condition_count, 2); i++)
         {
-            effect.u.condition[0].right_saturation = params->condition[0].positive_saturation;
-            effect.u.condition[0].left_saturation = params->condition[0].negative_saturation;
-            effect.u.condition[0].right_coeff = params->condition[0].positive_coefficient;
-            effect.u.condition[0].left_coeff = params->condition[0].negative_coefficient;
-            effect.u.condition[0].deadband = params->condition[0].dead_band;
-            effect.u.condition[0].center = params->condition[0].center_point_offset;
+            effect.u.condition[i].right_saturation = params->condition[i].positive_saturation;
+            effect.u.condition[i].left_saturation = params->condition[i].negative_saturation;
+            effect.u.condition[i].right_coeff = params->condition[i].positive_coefficient;
+            effect.u.condition[i].left_coeff = params->condition[i].negative_coefficient;
+            effect.u.condition[i].deadband = params->condition[i].dead_band;
+            effect.u.condition[i].center = params->condition[i].center_point_offset;
         }
-        if (params->condition_count >= 2)
+        /* Testing MS Sidewinder 2 indicates unspecified paramater blocks are full strength */
+        for (; i < 2; i++)
         {
-            effect.u.condition[1].right_saturation = params->condition[1].positive_saturation;
-            effect.u.condition[1].left_saturation = params->condition[1].negative_saturation;
-            effect.u.condition[1].right_coeff = params->condition[1].positive_coefficient;
-            effect.u.condition[1].left_coeff = params->condition[1].negative_coefficient;
-            effect.u.condition[1].deadband = params->condition[1].dead_band;
-            effect.u.condition[1].center = params->condition[1].center_point_offset;
+            effect.u.condition[i].right_saturation = 65535;
+            effect.u.condition[i].left_saturation = 65535;
+            effect.u.condition[i].right_coeff = 32767;
+            effect.u.condition[i].left_coeff = 32767;
         }
         break;
 
