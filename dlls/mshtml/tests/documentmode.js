@@ -529,6 +529,7 @@ sync_test("builtin_obj", function() {
     test_toString("Date", Date, 0xa138e);
     test_toString("RegExp", RegExp, 0xa1398);
     test_toString("Number", Number, 0xa1389);
+    test_toString("String", String, 0xa138d);
 
     if(v >= 9) {
         var obj = { length: 2 };

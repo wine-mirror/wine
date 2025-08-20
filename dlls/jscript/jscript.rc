@@ -51,6 +51,7 @@ STRINGTABLE
     IDS_DISABLED_CC         "Conditional compilation is turned off"
     IDS_EXPECTED_AT         "Expected '@'"
     IDS_NOT_FUNC            "Function expected"
+    IDS_NOT_STRING          "'[object]' is not a string object"
     IDS_NOT_DATE            "'[object]' is not a date object"
     IDS_NOT_NUM             "Number expected"
     IDS_OBJECT_EXPECTED     "Object expected"

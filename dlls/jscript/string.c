@@ -89,7 +89,7 @@ static HRESULT stringobj_to_string(jsval_t vthis, jsval_t *r)
 
     if(!(string = string_this(vthis))) {
         WARN("this is not a string object\n");
-        return E_FAIL;
+        return JS_E_STRING_EXPECTED;
     }
 
     if(r)
