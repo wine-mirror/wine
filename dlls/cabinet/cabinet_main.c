@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "shlwapi.h"
 
 #include "cabinet.h"
 
@@ -33,6 +34,27 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cabinet);
 
+typedef struct
+{
+    DWORD cbStruct;
+    DWORD dwReserved1;
+    DWORD dwReserved2;
+    DWORD dwFileVersionMS;
+    DWORD dwFileVersionLS;
+} CABINETDLLVERSIONINFO, *PCABINETDLLVERSIONINFO;
+
+/***********************************************************************
+ * DllGetVersion (CABINET.2)
+ */
+void WINAPI cabinet_DllGetVersion( CABINETDLLVERSIONINFO *info )
+{
+    DLLVERSIONINFO2 ver = { .info1.cbSize = sizeof(ver) };
+
+    if (info->cbStruct < sizeof(*info)) return;
+    DllGetVersion( &ver.info1 );
+    info->dwFileVersionMS = ver.ullVersion >> 32;
+    info->dwFileVersionLS = ver.ullVersion;
+}
 
 /* FDI callback functions */
 
