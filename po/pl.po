@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-08-06 02:16+0200\n"
+"PO-Revision-Date: 2025-08-20 03:22+0200\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -3881,16 +3881,12 @@ msgid "Force Feedback Effect"
 msgstr "Efekt sprzężenia zwrotnego"
 
 #: dlls/joy.cpl/joy.rc:67
-#, fuzzy
-#| msgid ""
-#| "Press any button in the controller to activate the chosen effect. The "
-#| "effect direction can be changed with the controller axis."
 msgid ""
 "Hold any button in the controller to play the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
-"Naciśnij jakikolwiek klawisz na kontrolerze, aby aktywować wybrany efekt. "
-"Kierunek efektu może być zmieniony przy użyciu osi kontrolera."
+"Przytrzymaj dowolny przycisk kontrolera, aby odtworzyć wybrany efekt. "
+"Kierunek efektu można zmienić za pomocą osi kontrolera."
 
 #: dlls/joy.cpl/joy.rc:73
 msgid "XInput"
