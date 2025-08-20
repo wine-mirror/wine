@@ -1612,20 +1612,14 @@ static void set_next_timer( struct msg_queue *queue )
 static struct timer *find_timer( struct msg_queue *queue, user_handle_t win,
                                  unsigned int msg, lparam_t id )
 {
-    struct list *ptr;
+    struct timer *timer;
 
     /* we need to search both lists */
 
-    LIST_FOR_EACH( ptr, &queue->pending_timers )
-    {
-        struct timer *timer = LIST_ENTRY( ptr, struct timer, entry );
+    LIST_FOR_EACH_ENTRY( timer, &queue->pending_timers, struct timer, entry )
         if (timer->win == win && timer->msg == msg && timer->id == id) return timer;
-    }
-    LIST_FOR_EACH( ptr, &queue->expired_timers )
-    {
-        struct timer *timer = LIST_ENTRY( ptr, struct timer, entry );
+    LIST_FOR_EACH_ENTRY( timer, &queue->expired_timers, struct timer, entry )
         if (timer->win == win && timer->msg == msg && timer->id == id) return timer;
-    }
     return NULL;
 }
 
@@ -1678,11 +1672,10 @@ static struct timer *find_expired_timer( struct msg_queue *queue, user_handle_t 
                                          unsigned int get_first, unsigned int get_last,
                                          int remove )
 {
-    struct list *ptr;
+    struct timer *timer;
 
-    LIST_FOR_EACH( ptr, &queue->expired_timers )
+    LIST_FOR_EACH_ENTRY( timer, &queue->expired_timers, struct timer, entry )
     {
-        struct timer *timer = LIST_ENTRY( ptr, struct timer, entry );
         if (win && timer->win != win) continue;
         if (check_msg_filter( timer->msg, get_first, get_last ))
         {

@@ -97,12 +97,11 @@ void destroy_process_classes( struct process *process )
 
 static struct window_class *find_class( struct process *process, atom_t atom, mod_handle_t instance )
 {
-    struct list *ptr;
+    struct window_class *class;
+    int is_win16;
 
-    LIST_FOR_EACH( ptr, &process->classes )
+    LIST_FOR_EACH_ENTRY( class, &process->classes, struct window_class, entry )
     {
-        int is_win16;
-        struct window_class *class = LIST_ENTRY( ptr, struct window_class, entry );
         if (class->atom != atom) continue;
         is_win16 = !(class->instance >> 16);
         if (!instance || !class->local || class->instance == instance ||

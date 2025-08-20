@@ -1341,7 +1341,7 @@ static void remove_unix_locks( struct fd *fd, file_pos_t start, file_pos_t end )
         file_pos_t   end;
     } *first, *cur, *next, *buffer;
 
-    struct list *ptr;
+    struct file_lock *lock;
     int count = 0;
 
     if (!fd->inode) return;
@@ -1351,9 +1351,8 @@ static void remove_unix_locks( struct fd *fd, file_pos_t start, file_pos_t end )
 
     /* count the number of locks overlapping the specified area */
 
-    LIST_FOR_EACH( ptr, &fd->inode->locks )
+    LIST_FOR_EACH_ENTRY( lock, &fd->inode->locks, struct file_lock, inode_entry )
     {
-        struct file_lock *lock = LIST_ENTRY( ptr, struct file_lock, inode_entry );
         if (lock->start == lock->end) continue;
         if (lock_overlaps( lock, start, end )) count++;
     }
@@ -1377,9 +1376,8 @@ static void remove_unix_locks( struct fd *fd, file_pos_t start, file_pos_t end )
 
     /* build a sorted list of unlocked holes in the specified area */
 
-    LIST_FOR_EACH( ptr, &fd->inode->locks )
+    LIST_FOR_EACH_ENTRY( lock, &fd->inode->locks, struct file_lock, inode_entry )
     {
-        struct file_lock *lock = LIST_ENTRY( ptr, struct file_lock, inode_entry );
         if (lock->start == lock->end) continue;
         if (!lock_overlaps( lock, start, end )) continue;
 
@@ -1503,7 +1501,7 @@ static void remove_fd_locks( struct fd *fd )
 /* returns handle to wait on */
 obj_handle_t lock_fd( struct fd *fd, file_pos_t start, file_pos_t count, int shared, int wait )
 {
-    struct list *ptr;
+    struct file_lock *lock;
     file_pos_t end = start + count;
 
     if (!fd->inode)  /* not a regular file */
@@ -1520,9 +1518,8 @@ obj_handle_t lock_fd( struct fd *fd, file_pos_t start, file_pos_t count, int sha
     }
 
     /* check if another lock on that file overlaps the area */
-    LIST_FOR_EACH( ptr, &fd->inode->locks )
+    LIST_FOR_EACH_ENTRY( lock, &fd->inode->locks, struct file_lock, inode_entry )
     {
-        struct file_lock *lock = LIST_ENTRY( ptr, struct file_lock, inode_entry );
         if (!lock_overlaps( lock, start, end )) continue;
         if (shared && (lock->shared || lock->fd == fd)) continue;
         /* found one */
@@ -1548,13 +1545,12 @@ obj_handle_t lock_fd( struct fd *fd, file_pos_t start, file_pos_t count, int sha
 /* remove a lock on an fd */
 void unlock_fd( struct fd *fd, file_pos_t start, file_pos_t count )
 {
-    struct list *ptr;
+    struct file_lock *lock;
     file_pos_t end = start + count;
 
     /* find an existing lock with the exact same parameters */
-    LIST_FOR_EACH( ptr, &fd->locks )
+    LIST_FOR_EACH_ENTRY( lock, &fd->locks, struct file_lock, fd_entry )
     {
-        struct file_lock *lock = LIST_ENTRY( ptr, struct file_lock, fd_entry );
         if ((lock->start == start) && (lock->end == end))
         {
             remove_lock( lock, 1 );
@@ -1621,20 +1617,17 @@ static unsigned int check_sharing( struct fd *fd, unsigned int access, unsigned 
 
     unsigned int existing_sharing = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
     unsigned int existing_access = 0;
-    struct list *ptr;
+    struct fd *fd_ptr;
 
     fd->access = access;
     fd->sharing = sharing;
 
-    LIST_FOR_EACH( ptr, &fd->inode->open )
+    LIST_FOR_EACH_ENTRY( fd_ptr, &fd->inode->open, struct fd, inode_entry )
     {
-        struct fd *fd_ptr = LIST_ENTRY( ptr, struct fd, inode_entry );
-        if (fd_ptr != fd)
-        {
-            /* if access mode is 0, sharing mode is ignored */
-            if (fd_ptr->access & all_access) existing_sharing &= fd_ptr->sharing;
-            existing_access |= fd_ptr->access;
-        }
+        if (fd_ptr == fd) continue;
+        /* if access mode is 0, sharing mode is ignored */
+        if (fd_ptr->access & all_access) existing_sharing &= fd_ptr->sharing;
+        existing_access |= fd_ptr->access;
     }
 
     if (((access & read_access) && !(existing_sharing & FILE_SHARE_READ)) ||

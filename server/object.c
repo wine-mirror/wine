@@ -564,14 +564,13 @@ struct object *find_object( const struct namespace *namespace, const struct unic
                             unsigned int attributes )
 {
     const struct list *list;
-    struct list *p;
+    const struct object_name *ptr;
 
     if (!name || !name->len) return NULL;
 
     list = &namespace->names[ hash_strW( name->str, name->len, namespace->hash_size ) ];
-    LIST_FOR_EACH( p, list )
+    LIST_FOR_EACH_ENTRY( ptr, list, struct object_name, entry )
     {
-        const struct object_name *ptr = LIST_ENTRY( p, struct object_name, entry );
         if (ptr->len != name->len) continue;
         if (attributes & OBJ_CASE_INSENSITIVE)
         {
