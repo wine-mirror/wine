@@ -325,6 +325,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
                 shared->cursor.clip.right = 0;
                 shared->cursor.clip.bottom = 0;
                 memset( (void *)shared->keystate, 0, sizeof(shared->keystate) );
+                shared->keystate_serial = 1;
                 shared->monitor_serial = winstation->monitor_serial;
             }
             SHARED_WRITE_END;

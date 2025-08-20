@@ -969,6 +969,7 @@ typedef volatile struct
     struct shared_cursor cursor;
     unsigned char        keystate[256];
     unsigned __int64     monitor_serial;
+    unsigned __int64     keystate_serial;
 } desktop_shm_t;
 
 typedef volatile struct
@@ -994,6 +995,7 @@ typedef volatile struct
     int                  cursor_count;
     unsigned char        keystate[256];
     int                  keystate_lock;
+    unsigned __int64     keystate_serial;
 } input_shm_t;
 
 typedef volatile struct
@@ -6859,6 +6861,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 886
+#define SERVER_PROTOCOL_VERSION 887
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

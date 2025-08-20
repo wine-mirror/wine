@@ -985,6 +985,7 @@ typedef volatile struct
     struct shared_cursor cursor;           /* global cursor information */
     unsigned char        keystate[256];    /* asynchronous key state */
     unsigned __int64     monitor_serial;   /* winstation monitor update counter */
+    unsigned __int64     keystate_serial;  /* keystate update counter */
 } desktop_shm_t;
 
 typedef volatile struct
@@ -1010,6 +1011,7 @@ typedef volatile struct
     int                  cursor_count;     /* cursor show count */
     unsigned char        keystate[256];    /* key state */
     int                  keystate_lock;    /* keystate is locked */
+    unsigned __int64     keystate_serial;  /* keystate update counter at last sync */
 } input_shm_t;
 
 typedef volatile struct

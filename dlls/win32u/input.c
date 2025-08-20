@@ -1019,14 +1019,25 @@ SHORT WINAPI NtUserGetKeyState( INT vkey )
 {
     struct object_lock lock = OBJECT_LOCK_INIT;
     const input_shm_t *input_shm;
+    UINT64 keystate_serial = 0;
     BOOL ret = FALSE;
     SHORT retval = 0;
     NTSTATUS status;
 
     while ((status = get_shared_input( GetCurrentThreadId(), &lock, &input_shm )) == STATUS_PENDING)
     {
-        ret = !!input_shm->keystate_lock; /* needs a request for sync_input_keystate */
+        ret = !!input_shm->keystate_lock; /* needs a request for sync_input_keystate if desktop keystate differs. */
+        keystate_serial = input_shm->keystate_serial;
         retval = (signed char)(input_shm->keystate[vkey & 0xff] & 0x81);
+    }
+
+    if (!ret)
+    {
+        struct object_lock lock = OBJECT_LOCK_INIT;
+        const desktop_shm_t *desktop_shm;
+
+        while ((status = get_shared_desktop( &lock, &desktop_shm )) == STATUS_PENDING)
+            ret = keystate_serial == desktop_shm->keystate_serial;
     }
 
     if (!ret) SERVER_START_REQ( get_key_state )
