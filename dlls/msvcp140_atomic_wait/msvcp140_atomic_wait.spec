@@ -24,9 +24,9 @@
 @ stub __std_tzdb_delete_current_zone
 @ stub __std_tzdb_delete_leap_seconds
 @ stub __std_tzdb_delete_sys_info
-@ stub __std_tzdb_delete_time_zones
+@ stdcall __std_tzdb_delete_time_zones(ptr)
 @ stub __std_tzdb_get_current_zone
 @ stub __std_tzdb_get_leap_seconds
 @ stub __std_tzdb_get_sys_info
-@ stub __std_tzdb_get_time_zones
+@ stdcall __std_tzdb_get_time_zones()
 @ stdcall __std_wait_for_threadpool_work_callbacks(ptr long)

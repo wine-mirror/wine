@@ -28,6 +28,22 @@ typedef struct
     SRWLOCK srwlock;
 } shared_mutex;
 
+enum tzdb_error
+{
+    TZDB_ERROR_SUCCESS,
+    TZDB_ERROR_WIN,
+    TZDB_ERROR_ICU,
+};
+
+struct tzdb_time_zones
+{
+    enum tzdb_error error;
+    char *ver;
+    unsigned int count;
+    char **names;
+    char **links;
+};
+
 static unsigned int (__stdcall *p___std_parallel_algorithms_hw_threads)(void);
 
 static void (__stdcall *p___std_bulk_submit_threadpool_work)(PTP_WORK, size_t);
@@ -41,6 +57,8 @@ static void (__stdcall *p___std_execution_wait_on_uchar)(void *, unsigned char);
 static void (__stdcall *p___std_execution_wake_by_address_all)(void *);
 static shared_mutex* (__stdcall *p___std_acquire_shared_mutex_for_instance)(void*);
 static void (__stdcall *p___std_release_shared_mutex_for_instance)(void*);
+static struct tzdb_time_zones * (__stdcall *p___std_tzdb_get_time_zones)(void);
+static void (__stdcall *p___std_tzdb_delete_time_zones)(struct tzdb_time_zones *);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -64,6 +82,8 @@ static HMODULE init(void)
     SET(p___std_execution_wake_by_address_all, "__std_execution_wake_by_address_all");
     SET(p___std_acquire_shared_mutex_for_instance, "__std_acquire_shared_mutex_for_instance");
     SET(p___std_release_shared_mutex_for_instance, "__std_release_shared_mutex_for_instance");
+    SET(p___std_tzdb_get_time_zones, "__std_tzdb_get_time_zones");
+    SET(p___std_tzdb_delete_time_zones, "__std_tzdb_delete_time_zones");
     return msvcp;
 }
 
@@ -325,6 +345,38 @@ static void test___std_acquire_shared_mutex_for_instance(void)
     p___std_release_shared_mutex_for_instance(NULL);
 }
 
+static void test___std_tzdb(void)
+{
+    struct tzdb_time_zones *z;
+    unsigned int i;
+
+    if (!p___std_tzdb_get_time_zones)
+    {
+        win_skip("__std_tzdb_get_time_zones is not available, skipping tests.\n");
+        return;
+    }
+
+    z = p___std_tzdb_get_time_zones();
+    ok(!!z, "got NULL.\n");
+    ok(!z->error || broken(z->error == TZDB_ERROR_WIN && !z->ver && !z->count), "got %u.\n", z->error);
+    if (z->error)
+    {
+        win_skip("__std_tzdb_get_time_zones empty result, skipping remaining tests.\n");
+        p___std_tzdb_delete_time_zones(z);
+        return;
+    }
+    ok(!!z->ver, "got NULL.\n");
+    ok(z->count, "got 0.\n");
+
+    trace("ver %s.\n", debugstr_a(z->ver));
+    for (i = 0; i < z->count; ++i)
+    {
+        ok(!!z->names[i], "got NULL.\n");
+    }
+
+    p___std_tzdb_delete_time_zones(z);
+}
+
 START_TEST(msvcp140_atomic_wait)
 {
     HMODULE msvcp;
@@ -338,5 +390,6 @@ START_TEST(msvcp140_atomic_wait)
     test___std_atomic_wait_direct();
     test___std_execution();
     test___std_acquire_shared_mutex_for_instance();
+    test___std_tzdb();
     FreeLibrary(msvcp);
 }

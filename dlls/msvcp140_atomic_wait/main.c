@@ -187,3 +187,65 @@ void __stdcall __std_free_crt(void *ptr)
 {
     free(ptr);
 }
+
+enum tzdb_error
+{
+    TZDB_ERROR_SUCCESS,
+    TZDB_ERROR_WIN,
+    TZDB_ERROR_ICU,
+};
+
+struct tzdb_time_zones
+{
+    enum tzdb_error error;
+    char *ver;
+    unsigned int count;
+    char **names;
+    char **links;
+};
+
+struct tzdb_time_zones * __stdcall __std_tzdb_get_time_zones(void)
+{
+    DYNAMIC_TIME_ZONE_INFORMATION tzd;
+    static char ver[] = "2022g";
+    struct tzdb_time_zones *z;
+    unsigned int i, j;
+
+    FIXME("returning Windows time zone names.\n");
+
+    z = calloc(1, sizeof(*z));
+    while (!EnumDynamicTimeZoneInformation(z->count, &tzd))
+        ++z->count;
+
+    z->ver = ver;
+    z->names = calloc(z->count, sizeof(*z->names));
+    z->links = calloc(z->count, sizeof(*z->links));
+
+    for (i = 0; i < z->count; ++i)
+    {
+        if (EnumDynamicTimeZoneInformation(i, &tzd))
+            break;
+        z->names[i] = malloc(wcslen(tzd.StandardName) + 1);
+        j = 0;
+        while ((z->names[i][j] = tzd.StandardName[j]))
+            ++j;
+    }
+    z->count = i;
+    return z;
+}
+
+void __stdcall __std_tzdb_delete_time_zones(struct tzdb_time_zones *z)
+{
+    unsigned int i;
+
+    TRACE("(%p)\n", z);
+
+    for (i = 0; i < z->count; ++i)
+    {
+        free(z->names[i]);
+        free(z->links[i]);
+    }
+    free(z->names);
+    free(z->links);
+    free(z);
+}
