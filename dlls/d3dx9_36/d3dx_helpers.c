@@ -113,6 +113,7 @@ static const struct pixel_format_desc formats[] =
     {D3DX_PIXEL_FORMAT_U8V8W8Q8_SNORM,           { 8,  8,  8,  8}, {24,  0,  8, 16},  4, 1, 1,  4, CTYPE_SNORM, CTYPE_SNORM, 0           },
     {D3DX_PIXEL_FORMAT_U16V16W16Q16_SNORM,       {16, 16, 16, 16}, {48,  0, 16, 32},  8, 1, 1,  8, CTYPE_SNORM, CTYPE_SNORM, 0           },
     {D3DX_PIXEL_FORMAT_U8V8_SNORM,               { 0,  8,  8,  0}, { 0,  0,  8,  0},  2, 1, 1,  2, CTYPE_EMPTY, CTYPE_SNORM, 0           },
+    {D3DX_PIXEL_FORMAT_U8V8_SNORM_Cx,            { 0,  8,  8,  0}, { 0,  0,  8,  0},  2, 1, 1,  2, CTYPE_EMPTY, CTYPE_SHILO, 0           },
     {D3DX_PIXEL_FORMAT_U16V16_SNORM,             { 0, 16, 16,  0}, { 0,  0, 16,  0},  4, 1, 1,  4, CTYPE_EMPTY, CTYPE_SNORM, 0           },
     {D3DX_PIXEL_FORMAT_U8V8_SNORM_L8X8_UNORM,    { 8,  8,  8,  0}, {16,  0,  8,  0},  4, 1, 1,  4, CTYPE_UNORM, CTYPE_SNORM, 0           },
     {D3DX_PIXEL_FORMAT_U10V10W10_SNORM_A2_UNORM, { 2, 10, 10, 10}, {30,  0, 10, 20},  4, 1, 1,  4, CTYPE_UNORM, CTYPE_SNORM, 0           },
@@ -240,6 +241,7 @@ static const struct
     { { 32, DDS_PF_FOURCC, 0x72 }, D3DX_PIXEL_FORMAT_R32_FLOAT },
     { { 32, DDS_PF_FOURCC, 0x73 }, D3DX_PIXEL_FORMAT_R32G32_FLOAT },
     { { 32, DDS_PF_FOURCC, 0x74 }, D3DX_PIXEL_FORMAT_R32G32B32A32_FLOAT },
+    { { 32, DDS_PF_FOURCC, 0x75 }, D3DX_PIXEL_FORMAT_U8V8_SNORM_Cx },
     /* DDS_PF_RGB. */
     { { 32, DDS_PF_RGB,  0, 8,  0xe0,       0x1c,       0x03,       0x00       }, D3DX_PIXEL_FORMAT_B2G3R3_UNORM },
     { { 32, DDS_PF_RGB,  0, 16, 0xf800,     0x07e0,     0x001f,     0x0000     }, D3DX_PIXEL_FORMAT_B5G6R5_UNORM },
@@ -781,7 +783,8 @@ static enum d3dx_pixel_format_id d3dx_get_closest_d3dx_pixel_format_id(const enu
             continue;
         if (rgb_only && curfmt->rgb_type == CTYPE_EMPTY)
             continue;
-        if (fmt->rgb_type == CTYPE_SNORM && curfmt->rgb_type != CTYPE_SNORM)
+        if ((fmt->rgb_type == CTYPE_SNORM && curfmt->rgb_type != CTYPE_SNORM)
+                || (fmt->rgb_type == CTYPE_SHILO && curfmt->rgb_type != CTYPE_SHILO))
             continue;
 
         cur_rgb_channels = !!curfmt->bits[1] + !!curfmt->bits[2] + !!curfmt->bits[3];
@@ -2069,6 +2072,7 @@ static enum range get_range_for_component_type(enum component_type type)
     switch (type)
     {
         case CTYPE_SNORM:
+        case CTYPE_SHILO:
             return RANGE_SNORM;
 
         case CTYPE_LUMA:
@@ -2127,6 +2131,7 @@ void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *sr
                 *dst_component = (float)tmp / mask;
                 break;
 
+            case CTYPE_SHILO:
             case CTYPE_SNORM:
             {
                 const uint32_t sign_bit = (1u << (format->bits[c] - 1));
@@ -2151,6 +2156,17 @@ void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *sr
         {
             assert(format->bits[1]);
             *dst_component = dst->value.x;
+        }
+        else if (dst_ctype == CTYPE_SHILO)
+        {
+            float cx_val;
+
+            assert(format->bits[1] && format->bits[2] && c == 3);
+            cx_val = 1.0f - dst->value.x * dst->value.x - dst->value.y * dst->value.y;
+            if (cx_val <= 0.0f || cx_val > 1.0f)
+                *dst_component = 0.0f;
+            else
+                *dst_component = sqrtf(cx_val);
         }
         else
         {
@@ -2222,8 +2238,9 @@ void format_from_d3dx_color(const struct pixel_format_desc *format, const struct
             break;
         }
 
-        /* We shouldn't be trying to output to CTYPE_INDEX. */
+        /* We shouldn't be trying to output to CTYPE_INDEX or CTYPE_SHILO. */
         case CTYPE_INDEX:
+        case CTYPE_SHILO:
             assert(0);
             break;
 

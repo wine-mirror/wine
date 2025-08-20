@@ -220,6 +220,7 @@ enum d3dx_pixel_format_id
     D3DX_PIXEL_FORMAT_U8V8W8Q8_SNORM,
     D3DX_PIXEL_FORMAT_U16V16W16Q16_SNORM,
     D3DX_PIXEL_FORMAT_U8V8_SNORM,
+    D3DX_PIXEL_FORMAT_U8V8_SNORM_Cx,
     D3DX_PIXEL_FORMAT_U16V16_SNORM,
     D3DX_PIXEL_FORMAT_U8V8_SNORM_L8X8_UNORM,
     D3DX_PIXEL_FORMAT_U10V10W10_SNORM_A2_UNORM,
@@ -248,6 +249,7 @@ enum component_type
     CTYPE_FLOAT,
     CTYPE_LUMA,
     CTYPE_INDEX,
+    CTYPE_SHILO, /* Signed HILO. */
 };
 
 enum format_flag
@@ -351,6 +353,11 @@ static inline BOOL is_packed_format(const struct pixel_format_desc *format)
     return !!(format->flags & FMT_FLAG_PACKED);
 }
 
+static inline BOOL is_signed_hilo_format(const struct pixel_format_desc *format)
+{
+    return format->rgb_type == CTYPE_SHILO;
+}
+
 static inline BOOL format_types_match(const struct pixel_format_desc *src, const struct pixel_format_desc *dst)
 {
     if ((src->a_type && dst->a_type) && (src->a_type != dst->a_type))
@@ -382,7 +389,8 @@ static inline BOOL is_conversion_from_supported(const struct pixel_format_desc *
 
 static inline BOOL is_conversion_to_supported(const struct pixel_format_desc *format)
 {
-    return !is_index_format(format) && !is_packed_format(format) && !is_unknown_format(format);
+    return !is_index_format(format) && !is_packed_format(format) && !is_signed_hilo_format(format)
+        && !is_unknown_format(format);
 }
 
 const struct pixel_format_desc *get_d3dx_pixel_format_info(enum d3dx_pixel_format_id format);

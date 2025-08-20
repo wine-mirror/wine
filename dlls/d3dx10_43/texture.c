@@ -90,6 +90,7 @@ static DXGI_FORMAT dxgi_format_from_legacy_dds_d3dx_pixel_format_id(enum d3dx_pi
         /* These formats are known and explicitly unsupported on d3dx10+. */
         case D3DX_PIXEL_FORMAT_U8V8W8Q8_SNORM:
         case D3DX_PIXEL_FORMAT_U8V8_SNORM:
+        case D3DX_PIXEL_FORMAT_U8V8_SNORM_Cx:
         case D3DX_PIXEL_FORMAT_U16V16_SNORM:
         case D3DX_PIXEL_FORMAT_U8V8_SNORM_L8X8_UNORM:
         case D3DX_PIXEL_FORMAT_U10V10W10_SNORM_A2_UNORM:
