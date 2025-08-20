@@ -1655,6 +1655,41 @@ static const struct midi_message default_note_off =
     .message = 0x7f3c80,
 };
 
+static struct midi_message make_midi_message(REFERENCE_TIME delta, DWORD message)
+{
+    struct midi_message midi_message =
+    {
+        .header =
+        {
+            .cbEvent = 3,
+            .rtDelta = delta,
+            .dwFlags = DMUS_EVENT_STRUCTURED,
+        },
+        .message = message,
+    };
+    return midi_message;
+}
+
+static struct midi_message make_note_off(REFERENCE_TIME delta, int chan, int note, int vel)
+{
+    return make_midi_message(delta, 0x000080 | (vel << 16) | (note << 8) | chan);
+}
+
+static struct midi_message make_note_on(REFERENCE_TIME delta, int chan, int note, int vel)
+{
+    return make_midi_message(delta, 0x000090 | (vel << 16) | (note << 8) | chan);
+}
+
+static struct midi_message make_cc(REFERENCE_TIME delta, int chan, int cc, int value)
+{
+    return make_midi_message(delta, 0x0000b0 | (value << 16) | (cc << 8) | chan);
+}
+
+static struct midi_message make_program_change(REFERENCE_TIME delta, int chan, int patch)
+{
+    return make_midi_message(delta, 0x0000c0 | (patch << 8) | chan);
+}
+
 struct midi
 {
     struct midi_message messages[15];
@@ -1823,6 +1858,169 @@ static void test_IKsControl(void)
     check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, FALSE);
 
     IKsControl_Release(control);
+    IDirectMusicSynth_Release(synth);
+}
+
+static void test_instrument_selection(void)
+{
+    struct instrument_download download;
+    IDirectMusicSynth *synth;
+    struct envelope envelope;
+    struct midi midi;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth, (void **)&synth);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    /* melodic channel */
+
+    /* the default is bank 0, program 0 */
+    check_volume_envelope(synth, &default_instrument_download, &default_midi, &default_volume_envelope, FALSE);
+
+    /* there is no program fallback on melodic channels */
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_program_change(0, 0, 1);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    envelope = default_volume_envelope;
+    envelope.gain = -960.;
+    check_volume_envelope(synth, &default_instrument_download, &midi, &envelope, FALSE);
+
+    /* program number corresponds to the patch number bits 0..6 */
+    download = default_instrument_download;
+    download.instrument.ulPatch = 0x000001;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_program_change(0, 0, 1);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, FALSE);
+
+    /* bank select MSB without a program change has no effect */
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 0, 1);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    check_volume_envelope(synth, &default_instrument_download, &midi, &default_volume_envelope, FALSE);
+
+    /* bank select LSB without a program change has no effect */
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 32, 1);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    check_volume_envelope(synth, &default_instrument_download, &midi, &default_volume_envelope, FALSE);
+
+    /* there is no bank fallback on melodic channels */
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 0, 1);
+    midi.messages[1] = make_program_change(0, 0, 0);
+    midi.messages[2] = default_note_on;
+    midi.messages[3] = default_note_off;
+    envelope = default_volume_envelope;
+    envelope.gain = -960.;
+    check_volume_envelope(synth, &default_instrument_download, &midi, &envelope, FALSE);
+
+    /* bank select MSB corresponds to the patch number bits 16..22 */
+    download = default_instrument_download;
+    download.instrument.ulPatch = 0x010000;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 0, 1);
+    midi.messages[1] = make_program_change(0, 0, 0);
+    midi.messages[2] = default_note_on;
+    midi.messages[3] = default_note_off;
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, TRUE);
+
+    /* there is no bank fallback on melodic channels */
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 32, 1);
+    midi.messages[1] = make_program_change(0, 0, 0);
+    midi.messages[2] = default_note_on;
+    midi.messages[3] = default_note_off;
+    envelope = default_volume_envelope;
+    envelope.gain = -960.;
+    check_volume_envelope(synth, &default_instrument_download, &midi, &envelope, TRUE);
+
+    /* bank select LSB corresponds to the patch number bits 8..14 */
+    download = default_instrument_download;
+    download.instrument.ulPatch = 0x000100;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 32, 1);
+    midi.messages[1] = make_program_change(0, 0, 0);
+    midi.messages[2] = default_note_on;
+    midi.messages[3] = default_note_off;
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, TRUE);
+
+    /* drum channel */
+
+    /* the default is bank 0, program 0 */
+    download = default_instrument_download;
+    download.instrument.ulPatch = F_INSTRUMENT_DRUMS;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_note_on(0, 9, 60, 127);
+    midi.messages[1] = make_note_off(10000000, 9, 60, 127);
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, FALSE);
+
+    /* there is a program fallback on the drum channel */
+    download = default_instrument_download;
+    download.instrument.ulPatch = F_INSTRUMENT_DRUMS;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_program_change(0, 9, 1);
+    midi.messages[1] = make_note_on(0, 9, 60, 127);
+    midi.messages[2] = make_note_off(10000000, 9, 60, 127);
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, FALSE);
+
+    /* program number corresponds to the patch number bits 0..6 */
+    download = default_instrument_download;
+    download.instrument.ulPatch = 0x000001 | F_INSTRUMENT_DRUMS;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_program_change(0, 9, 1);
+    midi.messages[1] = make_note_on(0, 9, 60, 127);
+    midi.messages[2] = make_note_off(10000000, 9, 60, 127);
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, FALSE);
+
+    /* there is a bank fallback on the drum channel */
+    download = default_instrument_download;
+    download.instrument.ulPatch = F_INSTRUMENT_DRUMS;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 9, 0, 1);
+    midi.messages[1] = make_cc(0, 9, 32, 0);
+    midi.messages[2] = make_program_change(0, 9, 0);
+    midi.messages[3] = make_note_on(0, 9, 60, 127);
+    midi.messages[4] = make_note_off(10000000, 9, 60, 127);
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, FALSE);
+
+    /* bank select MSB corresponds to the the patch number bits 16..22 */
+    download = default_instrument_download;
+    download.instrument.ulPatch = 0x010000 | F_INSTRUMENT_DRUMS;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 9, 0, 1);
+    midi.messages[1] = make_cc(0, 9, 32, 0);
+    midi.messages[2] = make_program_change(0, 9, 0);
+    midi.messages[3] = make_note_on(0, 9, 60, 127);
+    midi.messages[4] = make_note_off(10000000, 9, 60, 127);
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, TRUE);
+
+    /* there is a bank fallback on the drum channel */
+    download = default_instrument_download;
+    download.instrument.ulPatch = F_INSTRUMENT_DRUMS;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 9, 0, 0);
+    midi.messages[1] = make_cc(0, 9, 32, 1);
+    midi.messages[2] = make_program_change(0, 9, 0);
+    midi.messages[3] = make_note_on(0, 9, 60, 127);
+    midi.messages[4] = make_note_off(10000000, 9, 60, 127);
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, FALSE);
+
+    /* bank select LSB corresponds to the patch number bits 8..14 */
+    download = default_instrument_download;
+    download.instrument.ulPatch = 0x000100 | F_INSTRUMENT_DRUMS;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 9, 0, 0);
+    midi.messages[1] = make_cc(0, 9, 32, 1);
+    midi.messages[2] = make_program_change(0, 9, 0);
+    midi.messages[3] = make_note_on(0, 9, 60, 127);
+    midi.messages[4] = make_note_off(10000000, 9, 60, 127);
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, TRUE);
+
     IDirectMusicSynth_Release(synth);
 }
 
@@ -2016,6 +2214,7 @@ START_TEST(dmsynth)
     test_COM_synthsink();
     test_IDirectMusicSynth();
     test_IKsControl();
+    test_instrument_selection();
     test_IDirectMusicSynthSink();
 
     CoUninitialize();
