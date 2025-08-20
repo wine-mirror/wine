@@ -417,27 +417,30 @@ static HRESULT Function_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, u
     return S_OK;
 }
 
-static HRESULT array_to_args(script_ctx_t *ctx, jsdisp_t *arg_array, unsigned *argc, jsval_t **ret)
+static HRESULT array_to_args(script_ctx_t *ctx, IDispatch *disp, unsigned *argc, jsval_t **ret)
 {
     jsval_t *argv, val;
-    UINT32 length, i;
     HRESULT hres;
+    INT32 length;
+    UINT32 i;
 
-    hres = jsdisp_propget_name(arg_array, L"length", &val);
+    hres = disp_propget_name(ctx, disp, L"length", &val);
     if(FAILED(hres))
-        return hres;
+        return (hres == DISP_E_UNKNOWNNAME) ? JS_E_JSCRIPT_EXPECTED : hres;
 
-    hres = to_uint32(ctx, val, &length);
+    hres = to_int32(ctx, val, &length);
     jsval_release(val);
     if(FAILED(hres))
         return hres;
+    if(length < 0)
+        return JS_E_JSCRIPT_EXPECTED;
 
     argv = malloc(length * sizeof(*argv));
     if(!argv)
         return E_OUTOFMEMORY;
 
     for(i=0; i<length; i++) {
-        hres = jsdisp_get_idx(arg_array, i, argv+i);
+        hres = disp_propget_idx(ctx, disp, i, argv+i);
         if(hres == DISP_E_UNKNOWNNAME) {
             argv[i] = jsval_undefined();
         }else if(FAILED(hres)) {
@@ -483,24 +486,24 @@ static HRESULT Function_apply(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsi
     }
 
     if(argc >= 2) {
-        jsdisp_t *arg_array = NULL;
+        IDispatch *obj = NULL;
+        jsdisp_t *arg_array;
 
         if(is_object_instance(argv[1])) {
-            arg_array = iface_to_jsdisp(get_object(argv[1]));
-            if(arg_array &&
-               (!is_class(arg_array, JSCLASS_ARRAY) && !is_class(arg_array, JSCLASS_ARGUMENTS) )) {
-                jsdisp_release(arg_array);
-                arg_array = NULL;
+            obj = get_object(argv[1]);
+            arg_array = to_jsdisp(obj);
+
+            if(ctx->version < SCRIPTLANGUAGEVERSION_ES5) {
+                if(!arg_array) {
+                    if(!ctx->html_mode)
+                        obj = NULL;
+                }else if(!is_class(arg_array, JSCLASS_ARRAY) && !is_class(arg_array, JSCLASS_ARGUMENTS)) {
+                    obj = NULL;
+                }
             }
         }
 
-        if(arg_array) {
-            hres = array_to_args(ctx, arg_array, &cnt, &args);
-            jsdisp_release(arg_array);
-        }else {
-            FIXME("throw TypeError\n");
-            hres = E_FAIL;
-        }
+        hres = obj ? array_to_args(ctx, obj, &cnt, &args) : JS_E_JSCRIPT_EXPECTED;
     }
 
     if(SUCCEEDED(hres)) {

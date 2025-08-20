@@ -2918,6 +2918,8 @@ testFunctionThis("toString");
 testFunctionThis("call");
 testFunctionThis("apply");
 
+testException(function() {(function (a, b) {}).apply(null, testObj)}, "E_JSCRIPT_EXPECTED");
+
 function testArrayHostThis(func) {
     testException(function() { Array.prototype[func].call(testObj); }, "E_JSCRIPT_EXPECTED");
 }

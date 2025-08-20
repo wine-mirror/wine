@@ -2975,6 +2975,35 @@ HRESULT jsdisp_propget_name(jsdisp_t *obj, const WCHAR *name, jsval_t *val)
     return prop_get(obj, to_disp(obj), prop, val);
 }
 
+HRESULT disp_propget_name(script_ctx_t *ctx, IDispatch *disp, const WCHAR *name, jsval_t *val)
+{
+    IDispatchEx *dispex;
+    jsdisp_t *jsdisp;
+    DISPID dispid;
+    HRESULT hres;
+    BSTR str;
+
+    jsdisp = to_jsdisp(disp);
+    if(jsdisp && jsdisp->ctx == ctx)
+        return jsdisp_propget_name(jsdisp, name, val);
+
+    if(!(str = SysAllocString(name)))
+        return E_OUTOFMEMORY;
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    if(hres != S_OK)
+        hres = IDispatch_GetIDsOfNames(disp, &IID_NULL, &str, 1, 0, &dispid);
+    else {
+        hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &dispid);
+        IDispatchEx_Release(dispex);
+    }
+    SysFreeString(str);
+
+    if(SUCCEEDED(hres))
+        hres = disp_propget(ctx, disp, dispid, val);
+
+    return hres;
+}
+
 HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, jsval_t *r)
 {
     WCHAR name[12];
@@ -2993,6 +3022,14 @@ HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, jsval_t *r)
     }
 
     return prop_get(obj, to_disp(obj), prop, r);
+}
+
+HRESULT disp_propget_idx(script_ctx_t *ctx, IDispatch *disp, DWORD idx, jsval_t *r)
+{
+    WCHAR buf[12];
+
+    swprintf(buf, ARRAY_SIZE(buf), L"%u", idx);
+    return disp_propget_name(ctx, disp, buf, r);
 }
 
 HRESULT jsdisp_propget(jsdisp_t *jsdisp, DISPID id, jsval_t *val)

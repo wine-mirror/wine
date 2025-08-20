@@ -502,6 +502,72 @@ sync_test("builtin_obj", function() {
         f.call = function() { };
         ok(f.apply === 0, "changed f.apply = ", f.apply);
         ok(f.call instanceof Function, "changed f.call not instance of Function");
+
+        e = Array.isArray(document.body.childNodes);
+        ok(e === false, "isArray(childNodes) returned " + e);
+    }
+
+    (function(a, b, c) {
+        ok(a === document.body.childNodes[0], "a = " + a);
+        ok(b === document.body.childNodes[1], "b = " + b);
+        ok(c === document.body.childNodes[2], "c = " + c);
+    }).apply(null, document.body.childNodes);
+
+    elem1[0] = "a";
+    elem1[1] = "b";
+    if(v < 9) {
+        try {
+            (function(a, b) {}).apply(null, elem1);
+        }catch(ex) {
+            e = ex.number;
+        }
+        todo_wine.
+        ok(e === 0xa13a4 - 0x80000000, "[function.apply with elem without length] e = " + e);
+    }else {
+        (function(a, b) {
+            ok(a === undefined, "a = " + a);
+            ok(b === undefined, "b = " + b);
+        }).apply(null, elem1);
+    }
+
+    elem1.length = 2;
+    (function(a, b) {
+        ok(a === "a", "a = " + a);
+        ok(b === "b", "b = " + b);
+    }).apply(null, elem1);
+
+    elem1 = new Object;
+    elem1[0] = "c";
+    elem1[1] = "d";
+    if(v < 9) {
+        try {
+            (function(c, d) {}).apply(null, elem1);
+        }catch(ex) {
+            e = ex.number;
+        }
+        todo_wine.
+        ok(e === 0xa13a4 - 0x80000000, "[function.apply with Object without length] e = " + e);
+    }else {
+        (function(c, d) {
+            ok(c === undefined, "c = " + c);
+            ok(d === undefined, "d = " + d);
+        }).apply(null, elem1);
+    }
+
+    elem1.length = 2;
+    if(v < 9) {
+        try {
+            (function(c, d) {}).apply(null, elem1);
+        }catch(ex) {
+            e = ex.number;
+        }
+        todo_wine.
+        ok(e === 0xa13a4 - 0x80000000, "[function.apply with Object with length] e = " + e);
+    }else {
+        (function(c, d) {
+            ok(c === "c", "c = " + c);
+            ok(d === "d", "d = " + d);
+        }).apply(null, elem1);
     }
 });
 
