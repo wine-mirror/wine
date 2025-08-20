@@ -743,7 +743,7 @@ UINT msi_patch_assembly( MSIPACKAGE *package, MSIASSEMBLY *assembly, MSIFILEPATC
     IAssemblyName *name;
     IAssemblyEnum *iter;
 
-    if (!(iter = msi_create_assembly_enum( package, assembly->display_name )))
+    if (!(iter = msi_create_assembly_enum( assembly->display_name )))
         return ERROR_FUNCTION_FAILED;
 
     while ((IAssemblyEnum_GetNextAssembly( iter, NULL, &name, 0 ) == S_OK))
@@ -763,7 +763,7 @@ UINT msi_patch_assembly( MSIPACKAGE *package, MSIASSEMBLY *assembly, MSIFILEPATC
             break;
         }
 
-        if ((path = msi_get_assembly_path( package, displayname )))
+        if ((path = msi_get_assembly_path( displayname )))
         {
             if (!msi_copy_file( package, path, patch->File->TargetPath, FALSE ))
             {

@@ -332,8 +332,6 @@ static void MSI_FreePackage( MSIOBJECTHDR *arg)
 {
     MSIPACKAGE *package = (MSIPACKAGE *)arg;
 
-    msi_destroy_assembly_caches( package );
-
     if( package->dialog )
         msi_dialog_destroy( package->dialog );
 
