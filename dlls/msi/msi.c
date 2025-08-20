@@ -2833,6 +2833,18 @@ static INSTALLSTATE MSI_GetComponentPath( const WCHAR *szProduct, const WCHAR *s
     if (state == INSTALLSTATE_LOCAL && !*path)
         state = INSTALLSTATE_NOTUSED;
 
+    if (wcslen(path) > 2 && !wcsncmp(path, L"<\\", 2))
+    {
+        WCHAR *assembly_path = msi_get_assembly_path(path + 2);
+        if (assembly_path)
+        {
+            free(path);
+            path = assembly_path;
+            if (GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES)
+                state = INSTALLSTATE_LOCAL;
+        }
+    }
+
     if (msi_strcpy_to_awstring(path, -1, lpPathBuf, pcchBuf) == ERROR_MORE_DATA)
         state = INSTALLSTATE_MOREDATA;
 
