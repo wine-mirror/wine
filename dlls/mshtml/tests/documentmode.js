@@ -505,6 +505,52 @@ sync_test("builtin_obj", function() {
 
         e = Array.isArray(document.body.childNodes);
         ok(e === false, "isArray(childNodes) returned " + e);
+        e = Array.prototype.toString.call(Number);
+        ok(e === "[object Function]", "Array.toString(Number) = " + e);
+    }
+
+    function test_toString(msg, constr, err) {
+        var e = 0;
+        if(typeof(err) === "string") {
+            e = constr.prototype.toString.call(document.body);
+            ok(e === err, msg + ".toString(body) = " + e);
+            return;
+        }
+        try {
+            constr.prototype.toString.call(document.body);
+        }catch(ex) {
+            e = ex.number;
+        }
+        ok(e === err - 0x80000000, "[" + msg + ".toString(body)] e = " + e);
+    }
+
+    test_toString("Array", Array, v < 9 ? 0xa13a7 : "[object HTMLBodyElement]");
+    test_toString("Boolean", Boolean, 0xa1392);
+    test_toString("Date", Date, 0xa138e);
+    test_toString("RegExp", RegExp, 0xa1398);
+    test_toString("Number", Number, 0xa1389);
+
+    if(v >= 9) {
+        var obj = { length: 2 };
+        obj[0] = "foo";
+        obj[1] = "bar";
+        e = Array.prototype.toString.call(obj);
+        ok(e === "[object Object]", "Array.toString(array-like object) = " + e);
+
+        obj = Object.create(null);
+        obj.length = 2;
+        obj[0] = "foo";
+        obj[1] = "bar";
+        e = Array.prototype.toString.call(obj);
+        ok(e === "[object Object]", "Array.toString(array-like object with no prototype) = " + e);
+
+        e = 0;
+        try {
+            Array.prototype.toString.call(null);
+        }catch(ex) {
+            e = ex.number;
+        }
+        ok(e === 0xa138f - 0x80000000, "Array.toString(null) e = " + e);
     }
 
     (function(a, b, c) {

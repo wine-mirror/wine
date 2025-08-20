@@ -24,7 +24,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
-static HRESULT Object_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+HRESULT Object_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     const WCHAR *str = NULL;
