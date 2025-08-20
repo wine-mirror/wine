@@ -204,6 +204,12 @@ struct tzdb_time_zones
     char **links;
 };
 
+struct tzdb_current_zone
+{
+    enum tzdb_error error;
+    char *name;
+};
+
 struct tzdb_time_zones * __stdcall __std_tzdb_get_time_zones(void)
 {
     DYNAMIC_TIME_ZONE_INFORMATION tzd;
@@ -248,4 +254,35 @@ void __stdcall __std_tzdb_delete_time_zones(struct tzdb_time_zones *z)
     free(z->names);
     free(z->links);
     free(z);
+}
+
+struct tzdb_current_zone * __stdcall __std_tzdb_get_current_zone(void)
+{
+    DYNAMIC_TIME_ZONE_INFORMATION tzd;
+    struct tzdb_current_zone *c;
+    unsigned int i;
+
+    FIXME("returning Windows time zone name.\n");
+
+    c = calloc(1, sizeof(*c));
+
+    if (GetDynamicTimeZoneInformation(&tzd) == TIME_ZONE_ID_INVALID)
+    {
+        c->error = TZDB_ERROR_WIN;
+        return c;
+    }
+
+    c->name = malloc(wcslen(tzd.StandardName) + 1);
+    i = 0;
+    while ((c->name[i] = tzd.StandardName[i]))
+        ++i;
+    return c;
+}
+
+void __stdcall __std_tzdb_delete_current_zone(struct tzdb_current_zone *c)
+{
+    TRACE("(%p)\n", c);
+
+    free(c->name);
+    free(c);
 }

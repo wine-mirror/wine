@@ -44,6 +44,12 @@ struct tzdb_time_zones
     char **links;
 };
 
+struct tzdb_current_zone
+{
+    enum tzdb_error error;
+    char *name;
+};
+
 static unsigned int (__stdcall *p___std_parallel_algorithms_hw_threads)(void);
 
 static void (__stdcall *p___std_bulk_submit_threadpool_work)(PTP_WORK, size_t);
@@ -59,6 +65,8 @@ static shared_mutex* (__stdcall *p___std_acquire_shared_mutex_for_instance)(void
 static void (__stdcall *p___std_release_shared_mutex_for_instance)(void*);
 static struct tzdb_time_zones * (__stdcall *p___std_tzdb_get_time_zones)(void);
 static void (__stdcall *p___std_tzdb_delete_time_zones)(struct tzdb_time_zones *);
+static struct tzdb_current_zone * (__stdcall *p___std_tzdb_get_current_zone)(void);
+static void (__stdcall *p___std_tzdb_delete_current_zone)(struct tzdb_current_zone *);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -84,6 +92,8 @@ static HMODULE init(void)
     SET(p___std_release_shared_mutex_for_instance, "__std_release_shared_mutex_for_instance");
     SET(p___std_tzdb_get_time_zones, "__std_tzdb_get_time_zones");
     SET(p___std_tzdb_delete_time_zones, "__std_tzdb_delete_time_zones");
+    SET(p___std_tzdb_get_current_zone, "__std_tzdb_get_current_zone");
+    SET(p___std_tzdb_delete_current_zone, "__std_tzdb_delete_current_zone");
     return msvcp;
 }
 
@@ -347,6 +357,7 @@ static void test___std_acquire_shared_mutex_for_instance(void)
 
 static void test___std_tzdb(void)
 {
+    struct tzdb_current_zone *c;
     struct tzdb_time_zones *z;
     unsigned int i;
 
@@ -369,11 +380,18 @@ static void test___std_tzdb(void)
     ok(z->count, "got 0.\n");
 
     trace("ver %s.\n", debugstr_a(z->ver));
+    c = p___std_tzdb_get_current_zone();
+    ok(!!c, "got NULL.\n");
+    ok(!!c->name, "got NULL.\n");
+    ok(!c->error, "got %u.\n", c->error);
     for (i = 0; i < z->count; ++i)
     {
-        ok(!!z->names[i], "got NULL.\n");
+        if (!strcmp(c->name, z->names[i]))
+            break;
     }
+    ok(i < z->count, "current zone %s not found.\n", c->name);
 
+    p___std_tzdb_delete_current_zone(c);
     p___std_tzdb_delete_time_zones(z);
 }
 

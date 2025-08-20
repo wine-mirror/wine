@@ -21,11 +21,11 @@
 @ stdcall __std_parallel_algorithms_hw_threads()
 @ stdcall __std_release_shared_mutex_for_instance(ptr)
 @ stdcall __std_submit_threadpool_work(ptr)
-@ stub __std_tzdb_delete_current_zone
+@ stdcall __std_tzdb_delete_current_zone(ptr)
 @ stub __std_tzdb_delete_leap_seconds
 @ stub __std_tzdb_delete_sys_info
 @ stdcall __std_tzdb_delete_time_zones(ptr)
-@ stub __std_tzdb_get_current_zone
+@ stdcall __std_tzdb_get_current_zone()
 @ stub __std_tzdb_get_leap_seconds
 @ stub __std_tzdb_get_sys_info
 @ stdcall __std_tzdb_get_time_zones()
