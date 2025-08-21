@@ -726,18 +726,6 @@ typedef struct VkVideoEncodeH264RateControlLayerInfoKHR32
     VkVideoEncodeH264FrameSizeKHR maxFrameSize;
 } VkVideoEncodeH264RateControlLayerInfoKHR32;
 
-typedef struct VkVideoEncodeH265RateControlLayerInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    VkBool32 useMinQp;
-    VkVideoEncodeH265QpKHR minQp;
-    VkBool32 useMaxQp;
-    VkVideoEncodeH265QpKHR maxQp;
-    VkBool32 useMaxFrameSize;
-    VkVideoEncodeH265FrameSizeKHR maxFrameSize;
-} VkVideoEncodeH265RateControlLayerInfoKHR32;
-
 typedef struct VkVideoEncodeAV1RateControlLayerInfoKHR32
 {
     VkStructureType sType;
@@ -787,13 +775,6 @@ typedef struct VkVideoDecodeH264DpbSlotInfoKHR32
     PTR32 pStdReferenceInfo;
 } VkVideoDecodeH264DpbSlotInfoKHR32;
 
-typedef struct VkVideoDecodeH265DpbSlotInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    PTR32 pStdReferenceInfo;
-} VkVideoDecodeH265DpbSlotInfoKHR32;
-
 typedef struct VkVideoDecodeAV1DpbSlotInfoKHR32
 {
     VkStructureType sType;
@@ -807,13 +788,6 @@ typedef struct VkVideoEncodeH264DpbSlotInfoKHR32
     PTR32 pNext;
     PTR32 pStdReferenceInfo;
 } VkVideoEncodeH264DpbSlotInfoKHR32;
-
-typedef struct VkVideoEncodeH265DpbSlotInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    PTR32 pStdReferenceInfo;
-} VkVideoEncodeH265DpbSlotInfoKHR32;
 
 typedef struct VkVideoEncodeAV1DpbSlotInfoKHR32
 {
@@ -862,27 +836,6 @@ typedef struct VkVideoEncodeH264GopRemainingFrameInfoKHR32
     uint32_t gopRemainingP;
     uint32_t gopRemainingB;
 } VkVideoEncodeH264GopRemainingFrameInfoKHR32;
-
-typedef struct VkVideoEncodeH265RateControlInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    VkVideoEncodeH265RateControlFlagsKHR flags;
-    uint32_t gopFrameCount;
-    uint32_t idrPeriod;
-    uint32_t consecutiveBFrameCount;
-    uint32_t subLayerCount;
-} VkVideoEncodeH265RateControlInfoKHR32;
-
-typedef struct VkVideoEncodeH265GopRemainingFrameInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    VkBool32 useGopRemainingFrames;
-    uint32_t gopRemainingI;
-    uint32_t gopRemainingP;
-    uint32_t gopRemainingB;
-} VkVideoEncodeH265GopRemainingFrameInfoKHR32;
 
 typedef struct VkVideoEncodeAV1RateControlInfoKHR32
 {
@@ -1397,218 +1350,6 @@ typedef struct VkDebugMarkerMarkerInfoEXT32
     float color[4];
 } VkDebugMarkerMarkerInfoEXT32;
 
-typedef struct StdVideoH264SequenceParameterSetVui32
-{
-    StdVideoH264SpsVuiFlags flags;
-    StdVideoH264AspectRatioIdc aspect_ratio_idc;
-    uint16_t sar_width;
-    uint16_t sar_height;
-    uint8_t video_format;
-    uint8_t colour_primaries;
-    uint8_t transfer_characteristics;
-    uint8_t matrix_coefficients;
-    uint32_t num_units_in_tick;
-    uint32_t time_scale;
-    uint8_t max_num_reorder_frames;
-    uint8_t max_dec_frame_buffering;
-    uint8_t chroma_sample_loc_type_top_field;
-    uint8_t chroma_sample_loc_type_bottom_field;
-    uint32_t reserved1;
-    PTR32 pHrdParameters;
-} StdVideoH264SequenceParameterSetVui32;
-
-typedef struct StdVideoH264SequenceParameterSet32
-{
-    StdVideoH264SpsFlags flags;
-    StdVideoH264ProfileIdc profile_idc;
-    StdVideoH264LevelIdc level_idc;
-    StdVideoH264ChromaFormatIdc chroma_format_idc;
-    uint8_t seq_parameter_set_id;
-    uint8_t bit_depth_luma_minus8;
-    uint8_t bit_depth_chroma_minus8;
-    uint8_t log2_max_frame_num_minus4;
-    StdVideoH264PocType pic_order_cnt_type;
-    int32_t offset_for_non_ref_pic;
-    int32_t offset_for_top_to_bottom_field;
-    uint8_t log2_max_pic_order_cnt_lsb_minus4;
-    uint8_t num_ref_frames_in_pic_order_cnt_cycle;
-    uint8_t max_num_ref_frames;
-    uint8_t reserved1;
-    uint32_t pic_width_in_mbs_minus1;
-    uint32_t pic_height_in_map_units_minus1;
-    uint32_t frame_crop_left_offset;
-    uint32_t frame_crop_right_offset;
-    uint32_t frame_crop_top_offset;
-    uint32_t frame_crop_bottom_offset;
-    uint32_t reserved2;
-    PTR32 pOffsetForRefFrame;
-    PTR32 pScalingLists;
-    PTR32 pSequenceParameterSetVui;
-} StdVideoH264SequenceParameterSet32;
-
-typedef struct StdVideoH264PictureParameterSet32
-{
-    StdVideoH264PpsFlags flags;
-    uint8_t seq_parameter_set_id;
-    uint8_t pic_parameter_set_id;
-    uint8_t num_ref_idx_l0_default_active_minus1;
-    uint8_t num_ref_idx_l1_default_active_minus1;
-    StdVideoH264WeightedBipredIdc weighted_bipred_idc;
-    int8_t pic_init_qp_minus26;
-    int8_t pic_init_qs_minus26;
-    int8_t chroma_qp_index_offset;
-    int8_t second_chroma_qp_index_offset;
-    PTR32 pScalingLists;
-} StdVideoH264PictureParameterSet32;
-
-typedef struct StdVideoH265HrdParameters32
-{
-    StdVideoH265HrdFlags flags;
-    uint8_t tick_divisor_minus2;
-    uint8_t du_cpb_removal_delay_increment_length_minus1;
-    uint8_t dpb_output_delay_du_length_minus1;
-    uint8_t bit_rate_scale;
-    uint8_t cpb_size_scale;
-    uint8_t cpb_size_du_scale;
-    uint8_t initial_cpb_removal_delay_length_minus1;
-    uint8_t au_cpb_removal_delay_length_minus1;
-    uint8_t dpb_output_delay_length_minus1;
-    uint8_t cpb_cnt_minus1[STD_VIDEO_H265_SUBLAYERS_LIST_SIZE];
-    uint16_t elemental_duration_in_tc_minus1[STD_VIDEO_H265_SUBLAYERS_LIST_SIZE];
-    uint16_t reserved[3];
-    PTR32 pSubLayerHrdParametersNal;
-    PTR32 pSubLayerHrdParametersVcl;
-} StdVideoH265HrdParameters32;
-
-typedef struct StdVideoH265VideoParameterSet32
-{
-    StdVideoH265VpsFlags flags;
-    uint8_t vps_video_parameter_set_id;
-    uint8_t vps_max_sub_layers_minus1;
-    uint8_t reserved1;
-    uint8_t reserved2;
-    uint32_t vps_num_units_in_tick;
-    uint32_t vps_time_scale;
-    uint32_t vps_num_ticks_poc_diff_one_minus1;
-    uint32_t reserved3;
-    PTR32 pDecPicBufMgr;
-    PTR32 pHrdParameters;
-    PTR32 pProfileTierLevel;
-} StdVideoH265VideoParameterSet32;
-
-typedef struct StdVideoH265SequenceParameterSetVui32
-{
-    StdVideoH265SpsVuiFlags flags;
-    StdVideoH265AspectRatioIdc aspect_ratio_idc;
-    uint16_t sar_width;
-    uint16_t sar_height;
-    uint8_t video_format;
-    uint8_t colour_primaries;
-    uint8_t transfer_characteristics;
-    uint8_t matrix_coeffs;
-    uint8_t chroma_sample_loc_type_top_field;
-    uint8_t chroma_sample_loc_type_bottom_field;
-    uint8_t reserved1;
-    uint8_t reserved2;
-    uint16_t def_disp_win_left_offset;
-    uint16_t def_disp_win_right_offset;
-    uint16_t def_disp_win_top_offset;
-    uint16_t def_disp_win_bottom_offset;
-    uint32_t vui_num_units_in_tick;
-    uint32_t vui_time_scale;
-    uint32_t vui_num_ticks_poc_diff_one_minus1;
-    uint16_t min_spatial_segmentation_idc;
-    uint16_t reserved3;
-    uint8_t max_bytes_per_pic_denom;
-    uint8_t max_bits_per_min_cu_denom;
-    uint8_t log2_max_mv_length_horizontal;
-    uint8_t log2_max_mv_length_vertical;
-    PTR32 pHrdParameters;
-} StdVideoH265SequenceParameterSetVui32;
-
-typedef struct StdVideoH265SequenceParameterSet32
-{
-    StdVideoH265SpsFlags flags;
-    StdVideoH265ChromaFormatIdc chroma_format_idc;
-    uint32_t pic_width_in_luma_samples;
-    uint32_t pic_height_in_luma_samples;
-    uint8_t sps_video_parameter_set_id;
-    uint8_t sps_max_sub_layers_minus1;
-    uint8_t sps_seq_parameter_set_id;
-    uint8_t bit_depth_luma_minus8;
-    uint8_t bit_depth_chroma_minus8;
-    uint8_t log2_max_pic_order_cnt_lsb_minus4;
-    uint8_t log2_min_luma_coding_block_size_minus3;
-    uint8_t log2_diff_max_min_luma_coding_block_size;
-    uint8_t log2_min_luma_transform_block_size_minus2;
-    uint8_t log2_diff_max_min_luma_transform_block_size;
-    uint8_t max_transform_hierarchy_depth_inter;
-    uint8_t max_transform_hierarchy_depth_intra;
-    uint8_t num_short_term_ref_pic_sets;
-    uint8_t num_long_term_ref_pics_sps;
-    uint8_t pcm_sample_bit_depth_luma_minus1;
-    uint8_t pcm_sample_bit_depth_chroma_minus1;
-    uint8_t log2_min_pcm_luma_coding_block_size_minus3;
-    uint8_t log2_diff_max_min_pcm_luma_coding_block_size;
-    uint8_t reserved1;
-    uint8_t reserved2;
-    uint8_t palette_max_size;
-    uint8_t delta_palette_max_predictor_size;
-    uint8_t motion_vector_resolution_control_idc;
-    uint8_t sps_num_palette_predictor_initializers_minus1;
-    uint32_t conf_win_left_offset;
-    uint32_t conf_win_right_offset;
-    uint32_t conf_win_top_offset;
-    uint32_t conf_win_bottom_offset;
-    PTR32 pProfileTierLevel;
-    PTR32 pDecPicBufMgr;
-    PTR32 pScalingLists;
-    PTR32 pShortTermRefPicSet;
-    PTR32 pLongTermRefPicsSps;
-    PTR32 pSequenceParameterSetVui;
-    PTR32 pPredictorPaletteEntries;
-} StdVideoH265SequenceParameterSet32;
-
-typedef struct StdVideoH265PictureParameterSet32
-{
-    StdVideoH265PpsFlags flags;
-    uint8_t pps_pic_parameter_set_id;
-    uint8_t pps_seq_parameter_set_id;
-    uint8_t sps_video_parameter_set_id;
-    uint8_t num_extra_slice_header_bits;
-    uint8_t num_ref_idx_l0_default_active_minus1;
-    uint8_t num_ref_idx_l1_default_active_minus1;
-    int8_t init_qp_minus26;
-    uint8_t diff_cu_qp_delta_depth;
-    int8_t pps_cb_qp_offset;
-    int8_t pps_cr_qp_offset;
-    int8_t pps_beta_offset_div2;
-    int8_t pps_tc_offset_div2;
-    uint8_t log2_parallel_merge_level_minus2;
-    uint8_t log2_max_transform_skip_block_size_minus2;
-    uint8_t diff_cu_chroma_qp_offset_depth;
-    uint8_t chroma_qp_offset_list_len_minus1;
-    int8_t cb_qp_offset_list[STD_VIDEO_H265_CHROMA_QP_OFFSET_LIST_SIZE];
-    int8_t cr_qp_offset_list[STD_VIDEO_H265_CHROMA_QP_OFFSET_LIST_SIZE];
-    uint8_t log2_sao_offset_scale_luma;
-    uint8_t log2_sao_offset_scale_chroma;
-    int8_t pps_act_y_qp_offset_plus5;
-    int8_t pps_act_cb_qp_offset_plus5;
-    int8_t pps_act_cr_qp_offset_plus3;
-    uint8_t pps_num_palette_predictor_initializers;
-    uint8_t luma_bit_depth_entry_minus8;
-    uint8_t chroma_bit_depth_entry_minus8;
-    uint8_t num_tile_columns_minus1;
-    uint8_t num_tile_rows_minus1;
-    uint8_t reserved1;
-    uint8_t reserved2;
-    uint16_t column_width_minus1[STD_VIDEO_H265_CHROMA_QP_OFFSET_TILE_COLS_LIST_SIZE];
-    uint16_t row_height_minus1[STD_VIDEO_H265_CHROMA_QP_OFFSET_TILE_ROWS_LIST_SIZE];
-    uint32_t reserved3;
-    PTR32 pScalingLists;
-    PTR32 pPredictorPaletteEntries;
-} StdVideoH265PictureParameterSet32;
-
 typedef struct StdVideoDecodeVP9PictureInfo32
 {
     StdVideoDecodeVP9PictureInfoFlags flags;
@@ -1630,24 +1371,6 @@ typedef struct StdVideoDecodeVP9PictureInfo32
     PTR32 pLoopFilter;
     PTR32 pSegmentation;
 } StdVideoDecodeVP9PictureInfo32;
-
-typedef struct StdVideoAV1SequenceHeader32
-{
-    StdVideoAV1SequenceHeaderFlags flags;
-    StdVideoAV1Profile seq_profile;
-    uint8_t frame_width_bits_minus_1;
-    uint8_t frame_height_bits_minus_1;
-    uint16_t max_frame_width_minus_1;
-    uint16_t max_frame_height_minus_1;
-    uint8_t delta_frame_id_length_minus_2;
-    uint8_t additional_frame_id_length_minus_1;
-    uint8_t order_hint_bits_minus_1;
-    uint8_t seq_force_integer_mv;
-    uint8_t seq_force_screen_content_tools;
-    uint8_t reserved1[5];
-    PTR32 pColorConfig;
-    PTR32 pTimingInfo;
-} StdVideoAV1SequenceHeader32;
 
 typedef struct StdVideoAV1TileInfo32
 {
@@ -1700,14 +1423,6 @@ typedef struct VkVideoInlineQueryInfoKHR32
     uint32_t queryCount;
 } VkVideoInlineQueryInfoKHR32;
 
-typedef struct VkVideoDecodeH264InlineSessionParametersInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    PTR32 pStdSPS;
-    PTR32 pStdPPS;
-} VkVideoDecodeH264InlineSessionParametersInfoKHR32;
-
 typedef struct VkVideoDecodeH264PictureInfoKHR32
 {
     VkStructureType sType;
@@ -1716,24 +1431,6 @@ typedef struct VkVideoDecodeH264PictureInfoKHR32
     uint32_t sliceCount;
     PTR32 pSliceOffsets;
 } VkVideoDecodeH264PictureInfoKHR32;
-
-typedef struct VkVideoDecodeH265InlineSessionParametersInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    PTR32 pStdVPS;
-    PTR32 pStdSPS;
-    PTR32 pStdPPS;
-} VkVideoDecodeH265InlineSessionParametersInfoKHR32;
-
-typedef struct VkVideoDecodeH265PictureInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    PTR32 pStdPictureInfo;
-    uint32_t sliceSegmentCount;
-    PTR32 pSliceSegmentOffsets;
-} VkVideoDecodeH265PictureInfoKHR32;
 
 typedef struct VkVideoDecodeVP9PictureInfoKHR32
 {
@@ -1745,13 +1442,6 @@ typedef struct VkVideoDecodeVP9PictureInfoKHR32
     uint32_t compressedHeaderOffset;
     uint32_t tilesOffset;
 } VkVideoDecodeVP9PictureInfoKHR32;
-
-typedef struct VkVideoDecodeAV1InlineSessionParametersInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    PTR32 pStdSequenceHeader;
-} VkVideoDecodeAV1InlineSessionParametersInfoKHR32;
 
 typedef struct VkVideoDecodeAV1PictureInfoKHR32
 {
@@ -1846,49 +1536,6 @@ typedef struct StdVideoEncodeH264PictureInfo32
     PTR32 pRefLists;
 } StdVideoEncodeH264PictureInfo32;
 
-typedef struct StdVideoEncodeH265SliceSegmentHeader32
-{
-    StdVideoEncodeH265SliceSegmentHeaderFlags flags;
-    StdVideoH265SliceType slice_type;
-    uint32_t slice_segment_address;
-    uint8_t collocated_ref_idx;
-    uint8_t MaxNumMergeCand;
-    int8_t slice_cb_qp_offset;
-    int8_t slice_cr_qp_offset;
-    int8_t slice_beta_offset_div2;
-    int8_t slice_tc_offset_div2;
-    int8_t slice_act_y_qp_offset;
-    int8_t slice_act_cb_qp_offset;
-    int8_t slice_act_cr_qp_offset;
-    int8_t slice_qp_delta;
-    uint16_t reserved1;
-    PTR32 pWeightTable;
-} StdVideoEncodeH265SliceSegmentHeader32;
-
-typedef struct VkVideoEncodeH265NaluSliceSegmentInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    int32_t constantQp;
-    PTR32 pStdSliceSegmentHeader;
-} VkVideoEncodeH265NaluSliceSegmentInfoKHR32;
-
-typedef struct StdVideoEncodeH265PictureInfo32
-{
-    StdVideoEncodeH265PictureInfoFlags flags;
-    StdVideoH265PictureType pic_type;
-    uint8_t sps_video_parameter_set_id;
-    uint8_t pps_seq_parameter_set_id;
-    uint8_t pps_pic_parameter_set_id;
-    uint8_t short_term_ref_pic_set_idx;
-    int32_t PicOrderCntVal;
-    uint8_t TemporalId;
-    uint8_t reserved1[7];
-    PTR32 pRefLists;
-    PTR32 pShortTermRefPicSet;
-    PTR32 pLongTermRefPics;
-} StdVideoEncodeH265PictureInfo32;
-
 typedef struct StdVideoEncodeAV1PictureInfo32
 {
     StdVideoEncodeAV1PictureInfoFlags flags;
@@ -1937,15 +1584,6 @@ typedef struct VkVideoEncodeH264PictureInfoKHR32
     PTR32 pStdPictureInfo;
     VkBool32 generatePrefixNalu;
 } VkVideoEncodeH264PictureInfoKHR32;
-
-typedef struct VkVideoEncodeH265PictureInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    uint32_t naluSliceSegmentEntryCount;
-    PTR32 pNaluSliceSegmentEntries;
-    PTR32 pStdPictureInfo;
-} VkVideoEncodeH265PictureInfoKHR32;
 
 typedef struct VkVideoEncodeAV1PictureInfoKHR32
 {
@@ -2533,13 +2171,6 @@ typedef struct VkVideoDecodeH264ProfileInfoKHR32
     VkVideoDecodeH264PictureLayoutFlagBitsKHR pictureLayout;
 } VkVideoDecodeH264ProfileInfoKHR32;
 
-typedef struct VkVideoDecodeH265ProfileInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    StdVideoH265ProfileIdc stdProfileIdc;
-} VkVideoDecodeH265ProfileInfoKHR32;
-
 typedef struct VkVideoDecodeVP9ProfileInfoKHR32
 {
     VkStructureType sType;
@@ -2570,13 +2201,6 @@ typedef struct VkVideoEncodeH264ProfileInfoKHR32
     PTR32 pNext;
     StdVideoH264ProfileIdc stdProfileIdc;
 } VkVideoEncodeH264ProfileInfoKHR32;
-
-typedef struct VkVideoEncodeH265ProfileInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    StdVideoH265ProfileIdc stdProfileIdc;
-} VkVideoEncodeH265ProfileInfoKHR32;
 
 typedef struct VkVideoEncodeAV1ProfileInfoKHR32
 {
@@ -4185,13 +3809,6 @@ typedef struct VkPhysicalDeviceVideoMaintenance1FeaturesKHR32
     PTR32 pNext;
     VkBool32 videoMaintenance1;
 } VkPhysicalDeviceVideoMaintenance1FeaturesKHR32;
-
-typedef struct VkPhysicalDeviceVideoMaintenance2FeaturesKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    VkBool32 videoMaintenance2;
-} VkPhysicalDeviceVideoMaintenance2FeaturesKHR32;
 
 typedef struct VkPhysicalDeviceVideoDecodeVP9FeaturesKHR32
 {
@@ -6280,14 +5897,6 @@ typedef struct VkVideoEncodeH264SessionCreateInfoKHR32
     StdVideoH264LevelIdc maxLevelIdc;
 } VkVideoEncodeH264SessionCreateInfoKHR32;
 
-typedef struct VkVideoEncodeH265SessionCreateInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    VkBool32 useMaxLevelIdc;
-    StdVideoH265LevelIdc maxLevelIdc;
-} VkVideoEncodeH265SessionCreateInfoKHR32;
-
 typedef struct VkVideoEncodeAV1SessionCreateInfoKHR32
 {
     VkStructureType sType;
@@ -6311,6 +5920,70 @@ typedef struct VkVideoSessionCreateInfoKHR32
     PTR32 pStdHeaderVersion;
 } VkVideoSessionCreateInfoKHR32;
 
+typedef struct StdVideoH264SequenceParameterSetVui32
+{
+    StdVideoH264SpsVuiFlags flags;
+    StdVideoH264AspectRatioIdc aspect_ratio_idc;
+    uint16_t sar_width;
+    uint16_t sar_height;
+    uint8_t video_format;
+    uint8_t colour_primaries;
+    uint8_t transfer_characteristics;
+    uint8_t matrix_coefficients;
+    uint32_t num_units_in_tick;
+    uint32_t time_scale;
+    uint8_t max_num_reorder_frames;
+    uint8_t max_dec_frame_buffering;
+    uint8_t chroma_sample_loc_type_top_field;
+    uint8_t chroma_sample_loc_type_bottom_field;
+    uint32_t reserved1;
+    PTR32 pHrdParameters;
+} StdVideoH264SequenceParameterSetVui32;
+
+typedef struct StdVideoH264SequenceParameterSet32
+{
+    StdVideoH264SpsFlags flags;
+    StdVideoH264ProfileIdc profile_idc;
+    StdVideoH264LevelIdc level_idc;
+    StdVideoH264ChromaFormatIdc chroma_format_idc;
+    uint8_t seq_parameter_set_id;
+    uint8_t bit_depth_luma_minus8;
+    uint8_t bit_depth_chroma_minus8;
+    uint8_t log2_max_frame_num_minus4;
+    StdVideoH264PocType pic_order_cnt_type;
+    int32_t offset_for_non_ref_pic;
+    int32_t offset_for_top_to_bottom_field;
+    uint8_t log2_max_pic_order_cnt_lsb_minus4;
+    uint8_t num_ref_frames_in_pic_order_cnt_cycle;
+    uint8_t max_num_ref_frames;
+    uint8_t reserved1;
+    uint32_t pic_width_in_mbs_minus1;
+    uint32_t pic_height_in_map_units_minus1;
+    uint32_t frame_crop_left_offset;
+    uint32_t frame_crop_right_offset;
+    uint32_t frame_crop_top_offset;
+    uint32_t frame_crop_bottom_offset;
+    uint32_t reserved2;
+    PTR32 pOffsetForRefFrame;
+    PTR32 pScalingLists;
+    PTR32 pSequenceParameterSetVui;
+} StdVideoH264SequenceParameterSet32;
+
+typedef struct StdVideoH264PictureParameterSet32
+{
+    StdVideoH264PpsFlags flags;
+    uint8_t seq_parameter_set_id;
+    uint8_t pic_parameter_set_id;
+    uint8_t num_ref_idx_l0_default_active_minus1;
+    uint8_t num_ref_idx_l1_default_active_minus1;
+    StdVideoH264WeightedBipredIdc weighted_bipred_idc;
+    int8_t pic_init_qp_minus26;
+    int8_t pic_init_qs_minus26;
+    int8_t chroma_qp_index_offset;
+    int8_t second_chroma_qp_index_offset;
+    PTR32 pScalingLists;
+} StdVideoH264PictureParameterSet32;
+
 typedef struct VkVideoDecodeH264SessionParametersAddInfoKHR32
 {
     VkStructureType sType;
@@ -6321,17 +5994,23 @@ typedef struct VkVideoDecodeH264SessionParametersAddInfoKHR32
     PTR32 pStdPPSs;
 } VkVideoDecodeH264SessionParametersAddInfoKHR32;
 
-typedef struct VkVideoDecodeH265SessionParametersAddInfoKHR32
+typedef struct StdVideoAV1SequenceHeader32
 {
-    VkStructureType sType;
-    PTR32 pNext;
-    uint32_t stdVPSCount;
-    PTR32 pStdVPSs;
-    uint32_t stdSPSCount;
-    PTR32 pStdSPSs;
-    uint32_t stdPPSCount;
-    PTR32 pStdPPSs;
-} VkVideoDecodeH265SessionParametersAddInfoKHR32;
+    StdVideoAV1SequenceHeaderFlags flags;
+    StdVideoAV1Profile seq_profile;
+    uint8_t frame_width_bits_minus_1;
+    uint8_t frame_height_bits_minus_1;
+    uint16_t max_frame_width_minus_1;
+    uint16_t max_frame_height_minus_1;
+    uint8_t delta_frame_id_length_minus_2;
+    uint8_t additional_frame_id_length_minus_1;
+    uint8_t order_hint_bits_minus_1;
+    uint8_t seq_force_integer_mv;
+    uint8_t seq_force_screen_content_tools;
+    uint8_t reserved1[5];
+    PTR32 pColorConfig;
+    PTR32 pTimingInfo;
+} StdVideoAV1SequenceHeader32;
 
 typedef struct VkVideoEncodeH264SessionParametersAddInfoKHR32
 {
@@ -6343,18 +6022,6 @@ typedef struct VkVideoEncodeH264SessionParametersAddInfoKHR32
     PTR32 pStdPPSs;
 } VkVideoEncodeH264SessionParametersAddInfoKHR32;
 
-typedef struct VkVideoEncodeH265SessionParametersAddInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    uint32_t stdVPSCount;
-    PTR32 pStdVPSs;
-    uint32_t stdSPSCount;
-    PTR32 pStdSPSs;
-    uint32_t stdPPSCount;
-    PTR32 pStdPPSs;
-} VkVideoEncodeH265SessionParametersAddInfoKHR32;
-
 typedef struct VkVideoDecodeH264SessionParametersCreateInfoKHR32
 {
     VkStructureType sType;
@@ -6363,16 +6030,6 @@ typedef struct VkVideoDecodeH264SessionParametersCreateInfoKHR32
     uint32_t maxStdPPSCount;
     PTR32 pParametersAddInfo;
 } VkVideoDecodeH264SessionParametersCreateInfoKHR32;
-
-typedef struct VkVideoDecodeH265SessionParametersCreateInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    uint32_t maxStdVPSCount;
-    uint32_t maxStdSPSCount;
-    uint32_t maxStdPPSCount;
-    PTR32 pParametersAddInfo;
-} VkVideoDecodeH265SessionParametersCreateInfoKHR32;
 
 typedef struct VkVideoDecodeAV1SessionParametersCreateInfoKHR32
 {
@@ -6396,16 +6053,6 @@ typedef struct VkVideoEncodeH264SessionParametersCreateInfoKHR32
     uint32_t maxStdPPSCount;
     PTR32 pParametersAddInfo;
 } VkVideoEncodeH264SessionParametersCreateInfoKHR32;
-
-typedef struct VkVideoEncodeH265SessionParametersCreateInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    uint32_t maxStdVPSCount;
-    uint32_t maxStdSPSCount;
-    uint32_t maxStdPPSCount;
-    PTR32 pParametersAddInfo;
-} VkVideoEncodeH265SessionParametersCreateInfoKHR32;
 
 typedef struct VkVideoEncodeAV1SessionParametersCreateInfoKHR32
 {
@@ -6845,18 +6492,6 @@ typedef struct VkVideoEncodeH264SessionParametersGetInfoKHR32
     uint32_t stdPPSId;
 } VkVideoEncodeH264SessionParametersGetInfoKHR32;
 
-typedef struct VkVideoEncodeH265SessionParametersGetInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    VkBool32 writeStdVPS;
-    VkBool32 writeStdSPS;
-    VkBool32 writeStdPPS;
-    uint32_t stdVPSId;
-    uint32_t stdSPSId;
-    uint32_t stdPPSId;
-} VkVideoEncodeH265SessionParametersGetInfoKHR32;
-
 typedef struct VkVideoEncodeSessionParametersGetInfoKHR32
 {
     VkStructureType sType;
@@ -6871,15 +6506,6 @@ typedef struct VkVideoEncodeH264SessionParametersFeedbackInfoKHR32
     VkBool32 hasStdSPSOverrides;
     VkBool32 hasStdPPSOverrides;
 } VkVideoEncodeH264SessionParametersFeedbackInfoKHR32;
-
-typedef struct VkVideoEncodeH265SessionParametersFeedbackInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    VkBool32 hasStdVPSOverrides;
-    VkBool32 hasStdSPSOverrides;
-    VkBool32 hasStdPPSOverrides;
-} VkVideoEncodeH265SessionParametersFeedbackInfoKHR32;
 
 typedef struct VkVideoEncodeSessionParametersFeedbackInfoKHR32
 {
@@ -8863,13 +8489,6 @@ typedef struct VkVideoDecodeH264CapabilitiesKHR32
     VkOffset2D fieldOffsetGranularity;
 } VkVideoDecodeH264CapabilitiesKHR32;
 
-typedef struct VkVideoDecodeH265CapabilitiesKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    StdVideoH265LevelIdc maxLevelIdc;
-} VkVideoDecodeH265CapabilitiesKHR32;
-
 typedef struct VkVideoDecodeVP9CapabilitiesKHR32
 {
     VkStructureType sType;
@@ -8915,28 +8534,6 @@ typedef struct VkVideoEncodeH264CapabilitiesKHR32
     VkBool32 requiresGopRemainingFrames;
     VkVideoEncodeH264StdFlagsKHR stdSyntaxFlags;
 } VkVideoEncodeH264CapabilitiesKHR32;
-
-typedef struct VkVideoEncodeH265CapabilitiesKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    VkVideoEncodeH265CapabilityFlagsKHR flags;
-    StdVideoH265LevelIdc maxLevelIdc;
-    uint32_t maxSliceSegmentCount;
-    VkExtent2D maxTiles;
-    VkVideoEncodeH265CtbSizeFlagsKHR ctbSizes;
-    VkVideoEncodeH265TransformBlockSizeFlagsKHR transformBlockSizes;
-    uint32_t maxPPictureL0ReferenceCount;
-    uint32_t maxBPictureL0ReferenceCount;
-    uint32_t maxL1ReferenceCount;
-    uint32_t maxSubLayerCount;
-    VkBool32 expectDyadicTemporalSubLayerPattern;
-    int32_t minQp;
-    int32_t maxQp;
-    VkBool32 prefersGopRemainingFrames;
-    VkBool32 requiresGopRemainingFrames;
-    VkVideoEncodeH265StdFlagsKHR stdSyntaxFlags;
-} VkVideoEncodeH265CapabilitiesKHR32;
 
 typedef struct VkVideoEncodeAV1CapabilitiesKHR32
 {
@@ -9005,20 +8602,6 @@ typedef struct VkVideoEncodeH264QualityLevelPropertiesKHR32
     uint32_t preferredMaxL1ReferenceCount;
     VkBool32 preferredStdEntropyCodingModeFlag;
 } VkVideoEncodeH264QualityLevelPropertiesKHR32;
-
-typedef struct VkVideoEncodeH265QualityLevelPropertiesKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    VkVideoEncodeH265RateControlFlagsKHR preferredRateControlFlags;
-    uint32_t preferredGopFrameCount;
-    uint32_t preferredIdrPeriod;
-    uint32_t preferredConsecutiveBFrameCount;
-    uint32_t preferredSubLayerCount;
-    VkVideoEncodeH265QpKHR preferredConstantQp;
-    uint32_t preferredMaxL0ReferenceCount;
-    uint32_t preferredMaxL1ReferenceCount;
-} VkVideoEncodeH265QualityLevelPropertiesKHR32;
 
 typedef struct VkVideoEncodeAV1QualityLevelPropertiesKHR32
 {
@@ -11597,22 +11180,6 @@ static inline void convert_VkVideoEncodeRateControlLayerInfoKHR_win32_to_host(st
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_RATE_CONTROL_LAYER_INFO_KHR:
-        {
-            VkVideoEncodeH265RateControlLayerInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoEncodeH265RateControlLayerInfoKHR32 *in_ext = (const VkVideoEncodeH265RateControlLayerInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_RATE_CONTROL_LAYER_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->useMinQp = in_ext->useMinQp;
-            out_ext->minQp = in_ext->minQp;
-            out_ext->useMaxQp = in_ext->useMaxQp;
-            out_ext->maxQp = in_ext->maxQp;
-            out_ext->useMaxFrameSize = in_ext->useMaxFrameSize;
-            out_ext->maxFrameSize = in_ext->maxFrameSize;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_RATE_CONTROL_LAYER_INFO_KHR:
         {
             VkVideoEncodeAV1RateControlLayerInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -11737,17 +11304,6 @@ static inline void convert_VkVideoReferenceSlotInfoKHR_win32_to_host(struct conv
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_DPB_SLOT_INFO_KHR:
-        {
-            VkVideoDecodeH265DpbSlotInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoDecodeH265DpbSlotInfoKHR32 *in_ext = (const VkVideoDecodeH265DpbSlotInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_DPB_SLOT_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->pStdReferenceInfo = UlongToPtr(in_ext->pStdReferenceInfo);
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_VIDEO_DECODE_AV1_DPB_SLOT_INFO_KHR:
         {
             VkVideoDecodeAV1DpbSlotInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -11764,17 +11320,6 @@ static inline void convert_VkVideoReferenceSlotInfoKHR_win32_to_host(struct conv
             VkVideoEncodeH264DpbSlotInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkVideoEncodeH264DpbSlotInfoKHR32 *in_ext = (const VkVideoEncodeH264DpbSlotInfoKHR32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_DPB_SLOT_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->pStdReferenceInfo = UlongToPtr(in_ext->pStdReferenceInfo);
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_DPB_SLOT_INFO_KHR:
-        {
-            VkVideoEncodeH265DpbSlotInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoEncodeH265DpbSlotInfoKHR32 *in_ext = (const VkVideoEncodeH265DpbSlotInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_DPB_SLOT_INFO_KHR;
             out_ext->pNext = NULL;
             out_ext->pStdReferenceInfo = UlongToPtr(in_ext->pStdReferenceInfo);
             out_header->pNext = (void *)out_ext;
@@ -11870,35 +11415,6 @@ static inline void convert_VkVideoBeginCodingInfoKHR_win32_to_host(struct conver
             VkVideoEncodeH264GopRemainingFrameInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkVideoEncodeH264GopRemainingFrameInfoKHR32 *in_ext = (const VkVideoEncodeH264GopRemainingFrameInfoKHR32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_GOP_REMAINING_FRAME_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->useGopRemainingFrames = in_ext->useGopRemainingFrames;
-            out_ext->gopRemainingI = in_ext->gopRemainingI;
-            out_ext->gopRemainingP = in_ext->gopRemainingP;
-            out_ext->gopRemainingB = in_ext->gopRemainingB;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_RATE_CONTROL_INFO_KHR:
-        {
-            VkVideoEncodeH265RateControlInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoEncodeH265RateControlInfoKHR32 *in_ext = (const VkVideoEncodeH265RateControlInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_RATE_CONTROL_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->flags = in_ext->flags;
-            out_ext->gopFrameCount = in_ext->gopFrameCount;
-            out_ext->idrPeriod = in_ext->idrPeriod;
-            out_ext->consecutiveBFrameCount = in_ext->consecutiveBFrameCount;
-            out_ext->subLayerCount = in_ext->subLayerCount;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_GOP_REMAINING_FRAME_INFO_KHR:
-        {
-            VkVideoEncodeH265GopRemainingFrameInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoEncodeH265GopRemainingFrameInfoKHR32 *in_ext = (const VkVideoEncodeH265GopRemainingFrameInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_GOP_REMAINING_FRAME_INFO_KHR;
             out_ext->pNext = NULL;
             out_ext->useGopRemainingFrames = in_ext->useGopRemainingFrames;
             out_ext->gopRemainingI = in_ext->gopRemainingI;
@@ -12576,21 +12092,6 @@ static inline void convert_VkVideoCodingControlInfoKHR_win32_to_host(struct conv
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_RATE_CONTROL_INFO_KHR:
-        {
-            VkVideoEncodeH265RateControlInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoEncodeH265RateControlInfoKHR32 *in_ext = (const VkVideoEncodeH265RateControlInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_RATE_CONTROL_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->flags = in_ext->flags;
-            out_ext->gopFrameCount = in_ext->gopFrameCount;
-            out_ext->idrPeriod = in_ext->idrPeriod;
-            out_ext->consecutiveBFrameCount = in_ext->consecutiveBFrameCount;
-            out_ext->subLayerCount = in_ext->subLayerCount;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_RATE_CONTROL_INFO_KHR:
         {
             VkVideoEncodeAV1RateControlInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -13034,362 +12535,6 @@ static inline void convert_VkDebugMarkerMarkerInfoEXT_win32_to_host(const VkDebu
         FIXME("Unexpected pNext\n");
 }
 
-static inline void convert_StdVideoH264SequenceParameterSetVui_win32_to_host(const StdVideoH264SequenceParameterSetVui32 *in, StdVideoH264SequenceParameterSetVui *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->aspect_ratio_idc = in->aspect_ratio_idc;
-    out->sar_width = in->sar_width;
-    out->sar_height = in->sar_height;
-    out->video_format = in->video_format;
-    out->colour_primaries = in->colour_primaries;
-    out->transfer_characteristics = in->transfer_characteristics;
-    out->matrix_coefficients = in->matrix_coefficients;
-    out->num_units_in_tick = in->num_units_in_tick;
-    out->time_scale = in->time_scale;
-    out->max_num_reorder_frames = in->max_num_reorder_frames;
-    out->max_dec_frame_buffering = in->max_dec_frame_buffering;
-    out->chroma_sample_loc_type_top_field = in->chroma_sample_loc_type_top_field;
-    out->chroma_sample_loc_type_bottom_field = in->chroma_sample_loc_type_bottom_field;
-    out->reserved1 = in->reserved1;
-    out->pHrdParameters = UlongToPtr(in->pHrdParameters);
-}
-
-static inline const StdVideoH264SequenceParameterSetVui *convert_StdVideoH264SequenceParameterSetVui_array_win32_to_host(struct conversion_context *ctx, const StdVideoH264SequenceParameterSetVui32 *in, uint32_t count)
-{
-    StdVideoH264SequenceParameterSetVui *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoH264SequenceParameterSetVui_win32_to_host(&in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoH264SequenceParameterSet_win32_to_host(struct conversion_context *ctx, const StdVideoH264SequenceParameterSet32 *in, StdVideoH264SequenceParameterSet *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->profile_idc = in->profile_idc;
-    out->level_idc = in->level_idc;
-    out->chroma_format_idc = in->chroma_format_idc;
-    out->seq_parameter_set_id = in->seq_parameter_set_id;
-    out->bit_depth_luma_minus8 = in->bit_depth_luma_minus8;
-    out->bit_depth_chroma_minus8 = in->bit_depth_chroma_minus8;
-    out->log2_max_frame_num_minus4 = in->log2_max_frame_num_minus4;
-    out->pic_order_cnt_type = in->pic_order_cnt_type;
-    out->offset_for_non_ref_pic = in->offset_for_non_ref_pic;
-    out->offset_for_top_to_bottom_field = in->offset_for_top_to_bottom_field;
-    out->log2_max_pic_order_cnt_lsb_minus4 = in->log2_max_pic_order_cnt_lsb_minus4;
-    out->num_ref_frames_in_pic_order_cnt_cycle = in->num_ref_frames_in_pic_order_cnt_cycle;
-    out->max_num_ref_frames = in->max_num_ref_frames;
-    out->reserved1 = in->reserved1;
-    out->pic_width_in_mbs_minus1 = in->pic_width_in_mbs_minus1;
-    out->pic_height_in_map_units_minus1 = in->pic_height_in_map_units_minus1;
-    out->frame_crop_left_offset = in->frame_crop_left_offset;
-    out->frame_crop_right_offset = in->frame_crop_right_offset;
-    out->frame_crop_top_offset = in->frame_crop_top_offset;
-    out->frame_crop_bottom_offset = in->frame_crop_bottom_offset;
-    out->reserved2 = in->reserved2;
-    out->pOffsetForRefFrame = UlongToPtr(in->pOffsetForRefFrame);
-    out->pScalingLists = UlongToPtr(in->pScalingLists);
-    out->pSequenceParameterSetVui = convert_StdVideoH264SequenceParameterSetVui_array_win32_to_host(ctx, (const StdVideoH264SequenceParameterSetVui32 *)UlongToPtr(in->pSequenceParameterSetVui), 1);
-}
-
-static inline const StdVideoH264SequenceParameterSet *convert_StdVideoH264SequenceParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH264SequenceParameterSet32 *in, uint32_t count)
-{
-    StdVideoH264SequenceParameterSet *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoH264SequenceParameterSet_win32_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoH264PictureParameterSet_win32_to_host(const StdVideoH264PictureParameterSet32 *in, StdVideoH264PictureParameterSet *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->seq_parameter_set_id = in->seq_parameter_set_id;
-    out->pic_parameter_set_id = in->pic_parameter_set_id;
-    out->num_ref_idx_l0_default_active_minus1 = in->num_ref_idx_l0_default_active_minus1;
-    out->num_ref_idx_l1_default_active_minus1 = in->num_ref_idx_l1_default_active_minus1;
-    out->weighted_bipred_idc = in->weighted_bipred_idc;
-    out->pic_init_qp_minus26 = in->pic_init_qp_minus26;
-    out->pic_init_qs_minus26 = in->pic_init_qs_minus26;
-    out->chroma_qp_index_offset = in->chroma_qp_index_offset;
-    out->second_chroma_qp_index_offset = in->second_chroma_qp_index_offset;
-    out->pScalingLists = UlongToPtr(in->pScalingLists);
-}
-
-static inline const StdVideoH264PictureParameterSet *convert_StdVideoH264PictureParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH264PictureParameterSet32 *in, uint32_t count)
-{
-    StdVideoH264PictureParameterSet *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoH264PictureParameterSet_win32_to_host(&in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoH265HrdParameters_win32_to_host(const StdVideoH265HrdParameters32 *in, StdVideoH265HrdParameters *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->tick_divisor_minus2 = in->tick_divisor_minus2;
-    out->du_cpb_removal_delay_increment_length_minus1 = in->du_cpb_removal_delay_increment_length_minus1;
-    out->dpb_output_delay_du_length_minus1 = in->dpb_output_delay_du_length_minus1;
-    out->bit_rate_scale = in->bit_rate_scale;
-    out->cpb_size_scale = in->cpb_size_scale;
-    out->cpb_size_du_scale = in->cpb_size_du_scale;
-    out->initial_cpb_removal_delay_length_minus1 = in->initial_cpb_removal_delay_length_minus1;
-    out->au_cpb_removal_delay_length_minus1 = in->au_cpb_removal_delay_length_minus1;
-    out->dpb_output_delay_length_minus1 = in->dpb_output_delay_length_minus1;
-    memcpy(out->cpb_cnt_minus1, in->cpb_cnt_minus1, STD_VIDEO_H265_SUBLAYERS_LIST_SIZE * sizeof(uint8_t));
-    memcpy(out->elemental_duration_in_tc_minus1, in->elemental_duration_in_tc_minus1, STD_VIDEO_H265_SUBLAYERS_LIST_SIZE * sizeof(uint16_t));
-    memcpy(out->reserved, in->reserved, 3 * sizeof(uint16_t));
-    out->pSubLayerHrdParametersNal = UlongToPtr(in->pSubLayerHrdParametersNal);
-    out->pSubLayerHrdParametersVcl = UlongToPtr(in->pSubLayerHrdParametersVcl);
-}
-
-static inline const StdVideoH265HrdParameters *convert_StdVideoH265HrdParameters_array_win32_to_host(struct conversion_context *ctx, const StdVideoH265HrdParameters32 *in, uint32_t count)
-{
-    StdVideoH265HrdParameters *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoH265HrdParameters_win32_to_host(&in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoH265VideoParameterSet_win32_to_host(struct conversion_context *ctx, const StdVideoH265VideoParameterSet32 *in, StdVideoH265VideoParameterSet *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->vps_video_parameter_set_id = in->vps_video_parameter_set_id;
-    out->vps_max_sub_layers_minus1 = in->vps_max_sub_layers_minus1;
-    out->reserved1 = in->reserved1;
-    out->reserved2 = in->reserved2;
-    out->vps_num_units_in_tick = in->vps_num_units_in_tick;
-    out->vps_time_scale = in->vps_time_scale;
-    out->vps_num_ticks_poc_diff_one_minus1 = in->vps_num_ticks_poc_diff_one_minus1;
-    out->reserved3 = in->reserved3;
-    out->pDecPicBufMgr = UlongToPtr(in->pDecPicBufMgr);
-    out->pHrdParameters = convert_StdVideoH265HrdParameters_array_win32_to_host(ctx, (const StdVideoH265HrdParameters32 *)UlongToPtr(in->pHrdParameters), 1);
-    out->pProfileTierLevel = UlongToPtr(in->pProfileTierLevel);
-}
-
-static inline const StdVideoH265VideoParameterSet *convert_StdVideoH265VideoParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH265VideoParameterSet32 *in, uint32_t count)
-{
-    StdVideoH265VideoParameterSet *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoH265VideoParameterSet_win32_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoH265SequenceParameterSetVui_win32_to_host(struct conversion_context *ctx, const StdVideoH265SequenceParameterSetVui32 *in, StdVideoH265SequenceParameterSetVui *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->aspect_ratio_idc = in->aspect_ratio_idc;
-    out->sar_width = in->sar_width;
-    out->sar_height = in->sar_height;
-    out->video_format = in->video_format;
-    out->colour_primaries = in->colour_primaries;
-    out->transfer_characteristics = in->transfer_characteristics;
-    out->matrix_coeffs = in->matrix_coeffs;
-    out->chroma_sample_loc_type_top_field = in->chroma_sample_loc_type_top_field;
-    out->chroma_sample_loc_type_bottom_field = in->chroma_sample_loc_type_bottom_field;
-    out->reserved1 = in->reserved1;
-    out->reserved2 = in->reserved2;
-    out->def_disp_win_left_offset = in->def_disp_win_left_offset;
-    out->def_disp_win_right_offset = in->def_disp_win_right_offset;
-    out->def_disp_win_top_offset = in->def_disp_win_top_offset;
-    out->def_disp_win_bottom_offset = in->def_disp_win_bottom_offset;
-    out->vui_num_units_in_tick = in->vui_num_units_in_tick;
-    out->vui_time_scale = in->vui_time_scale;
-    out->vui_num_ticks_poc_diff_one_minus1 = in->vui_num_ticks_poc_diff_one_minus1;
-    out->min_spatial_segmentation_idc = in->min_spatial_segmentation_idc;
-    out->reserved3 = in->reserved3;
-    out->max_bytes_per_pic_denom = in->max_bytes_per_pic_denom;
-    out->max_bits_per_min_cu_denom = in->max_bits_per_min_cu_denom;
-    out->log2_max_mv_length_horizontal = in->log2_max_mv_length_horizontal;
-    out->log2_max_mv_length_vertical = in->log2_max_mv_length_vertical;
-    out->pHrdParameters = convert_StdVideoH265HrdParameters_array_win32_to_host(ctx, (const StdVideoH265HrdParameters32 *)UlongToPtr(in->pHrdParameters), 1);
-}
-
-static inline const StdVideoH265SequenceParameterSetVui *convert_StdVideoH265SequenceParameterSetVui_array_win32_to_host(struct conversion_context *ctx, const StdVideoH265SequenceParameterSetVui32 *in, uint32_t count)
-{
-    StdVideoH265SequenceParameterSetVui *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoH265SequenceParameterSetVui_win32_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoH265SequenceParameterSet_win32_to_host(struct conversion_context *ctx, const StdVideoH265SequenceParameterSet32 *in, StdVideoH265SequenceParameterSet *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->chroma_format_idc = in->chroma_format_idc;
-    out->pic_width_in_luma_samples = in->pic_width_in_luma_samples;
-    out->pic_height_in_luma_samples = in->pic_height_in_luma_samples;
-    out->sps_video_parameter_set_id = in->sps_video_parameter_set_id;
-    out->sps_max_sub_layers_minus1 = in->sps_max_sub_layers_minus1;
-    out->sps_seq_parameter_set_id = in->sps_seq_parameter_set_id;
-    out->bit_depth_luma_minus8 = in->bit_depth_luma_minus8;
-    out->bit_depth_chroma_minus8 = in->bit_depth_chroma_minus8;
-    out->log2_max_pic_order_cnt_lsb_minus4 = in->log2_max_pic_order_cnt_lsb_minus4;
-    out->log2_min_luma_coding_block_size_minus3 = in->log2_min_luma_coding_block_size_minus3;
-    out->log2_diff_max_min_luma_coding_block_size = in->log2_diff_max_min_luma_coding_block_size;
-    out->log2_min_luma_transform_block_size_minus2 = in->log2_min_luma_transform_block_size_minus2;
-    out->log2_diff_max_min_luma_transform_block_size = in->log2_diff_max_min_luma_transform_block_size;
-    out->max_transform_hierarchy_depth_inter = in->max_transform_hierarchy_depth_inter;
-    out->max_transform_hierarchy_depth_intra = in->max_transform_hierarchy_depth_intra;
-    out->num_short_term_ref_pic_sets = in->num_short_term_ref_pic_sets;
-    out->num_long_term_ref_pics_sps = in->num_long_term_ref_pics_sps;
-    out->pcm_sample_bit_depth_luma_minus1 = in->pcm_sample_bit_depth_luma_minus1;
-    out->pcm_sample_bit_depth_chroma_minus1 = in->pcm_sample_bit_depth_chroma_minus1;
-    out->log2_min_pcm_luma_coding_block_size_minus3 = in->log2_min_pcm_luma_coding_block_size_minus3;
-    out->log2_diff_max_min_pcm_luma_coding_block_size = in->log2_diff_max_min_pcm_luma_coding_block_size;
-    out->reserved1 = in->reserved1;
-    out->reserved2 = in->reserved2;
-    out->palette_max_size = in->palette_max_size;
-    out->delta_palette_max_predictor_size = in->delta_palette_max_predictor_size;
-    out->motion_vector_resolution_control_idc = in->motion_vector_resolution_control_idc;
-    out->sps_num_palette_predictor_initializers_minus1 = in->sps_num_palette_predictor_initializers_minus1;
-    out->conf_win_left_offset = in->conf_win_left_offset;
-    out->conf_win_right_offset = in->conf_win_right_offset;
-    out->conf_win_top_offset = in->conf_win_top_offset;
-    out->conf_win_bottom_offset = in->conf_win_bottom_offset;
-    out->pProfileTierLevel = UlongToPtr(in->pProfileTierLevel);
-    out->pDecPicBufMgr = UlongToPtr(in->pDecPicBufMgr);
-    out->pScalingLists = UlongToPtr(in->pScalingLists);
-    out->pShortTermRefPicSet = UlongToPtr(in->pShortTermRefPicSet);
-    out->pLongTermRefPicsSps = UlongToPtr(in->pLongTermRefPicsSps);
-    out->pSequenceParameterSetVui = convert_StdVideoH265SequenceParameterSetVui_array_win32_to_host(ctx, (const StdVideoH265SequenceParameterSetVui32 *)UlongToPtr(in->pSequenceParameterSetVui), 1);
-    out->pPredictorPaletteEntries = UlongToPtr(in->pPredictorPaletteEntries);
-}
-
-static inline const StdVideoH265SequenceParameterSet *convert_StdVideoH265SequenceParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH265SequenceParameterSet32 *in, uint32_t count)
-{
-    StdVideoH265SequenceParameterSet *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoH265SequenceParameterSet_win32_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoH265PictureParameterSet_win32_to_host(const StdVideoH265PictureParameterSet32 *in, StdVideoH265PictureParameterSet *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->pps_pic_parameter_set_id = in->pps_pic_parameter_set_id;
-    out->pps_seq_parameter_set_id = in->pps_seq_parameter_set_id;
-    out->sps_video_parameter_set_id = in->sps_video_parameter_set_id;
-    out->num_extra_slice_header_bits = in->num_extra_slice_header_bits;
-    out->num_ref_idx_l0_default_active_minus1 = in->num_ref_idx_l0_default_active_minus1;
-    out->num_ref_idx_l1_default_active_minus1 = in->num_ref_idx_l1_default_active_minus1;
-    out->init_qp_minus26 = in->init_qp_minus26;
-    out->diff_cu_qp_delta_depth = in->diff_cu_qp_delta_depth;
-    out->pps_cb_qp_offset = in->pps_cb_qp_offset;
-    out->pps_cr_qp_offset = in->pps_cr_qp_offset;
-    out->pps_beta_offset_div2 = in->pps_beta_offset_div2;
-    out->pps_tc_offset_div2 = in->pps_tc_offset_div2;
-    out->log2_parallel_merge_level_minus2 = in->log2_parallel_merge_level_minus2;
-    out->log2_max_transform_skip_block_size_minus2 = in->log2_max_transform_skip_block_size_minus2;
-    out->diff_cu_chroma_qp_offset_depth = in->diff_cu_chroma_qp_offset_depth;
-    out->chroma_qp_offset_list_len_minus1 = in->chroma_qp_offset_list_len_minus1;
-    memcpy(out->cb_qp_offset_list, in->cb_qp_offset_list, STD_VIDEO_H265_CHROMA_QP_OFFSET_LIST_SIZE * sizeof(int8_t));
-    memcpy(out->cr_qp_offset_list, in->cr_qp_offset_list, STD_VIDEO_H265_CHROMA_QP_OFFSET_LIST_SIZE * sizeof(int8_t));
-    out->log2_sao_offset_scale_luma = in->log2_sao_offset_scale_luma;
-    out->log2_sao_offset_scale_chroma = in->log2_sao_offset_scale_chroma;
-    out->pps_act_y_qp_offset_plus5 = in->pps_act_y_qp_offset_plus5;
-    out->pps_act_cb_qp_offset_plus5 = in->pps_act_cb_qp_offset_plus5;
-    out->pps_act_cr_qp_offset_plus3 = in->pps_act_cr_qp_offset_plus3;
-    out->pps_num_palette_predictor_initializers = in->pps_num_palette_predictor_initializers;
-    out->luma_bit_depth_entry_minus8 = in->luma_bit_depth_entry_minus8;
-    out->chroma_bit_depth_entry_minus8 = in->chroma_bit_depth_entry_minus8;
-    out->num_tile_columns_minus1 = in->num_tile_columns_minus1;
-    out->num_tile_rows_minus1 = in->num_tile_rows_minus1;
-    out->reserved1 = in->reserved1;
-    out->reserved2 = in->reserved2;
-    memcpy(out->column_width_minus1, in->column_width_minus1, STD_VIDEO_H265_CHROMA_QP_OFFSET_TILE_COLS_LIST_SIZE * sizeof(uint16_t));
-    memcpy(out->row_height_minus1, in->row_height_minus1, STD_VIDEO_H265_CHROMA_QP_OFFSET_TILE_ROWS_LIST_SIZE * sizeof(uint16_t));
-    out->reserved3 = in->reserved3;
-    out->pScalingLists = UlongToPtr(in->pScalingLists);
-    out->pPredictorPaletteEntries = UlongToPtr(in->pPredictorPaletteEntries);
-}
-
-static inline const StdVideoH265PictureParameterSet *convert_StdVideoH265PictureParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH265PictureParameterSet32 *in, uint32_t count)
-{
-    StdVideoH265PictureParameterSet *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoH265PictureParameterSet_win32_to_host(&in[i], &out[i]);
-    }
-
-    return out;
-}
-
 static inline void convert_StdVideoDecodeVP9PictureInfo_win32_to_host(const StdVideoDecodeVP9PictureInfo32 *in, StdVideoDecodeVP9PictureInfo *out)
 {
     if (!in) return;
@@ -13425,42 +12570,6 @@ static inline const StdVideoDecodeVP9PictureInfo *convert_StdVideoDecodeVP9Pictu
     for (i = 0; i < count; i++)
     {
         convert_StdVideoDecodeVP9PictureInfo_win32_to_host(&in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoAV1SequenceHeader_win32_to_host(const StdVideoAV1SequenceHeader32 *in, StdVideoAV1SequenceHeader *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->seq_profile = in->seq_profile;
-    out->frame_width_bits_minus_1 = in->frame_width_bits_minus_1;
-    out->frame_height_bits_minus_1 = in->frame_height_bits_minus_1;
-    out->max_frame_width_minus_1 = in->max_frame_width_minus_1;
-    out->max_frame_height_minus_1 = in->max_frame_height_minus_1;
-    out->delta_frame_id_length_minus_2 = in->delta_frame_id_length_minus_2;
-    out->additional_frame_id_length_minus_1 = in->additional_frame_id_length_minus_1;
-    out->order_hint_bits_minus_1 = in->order_hint_bits_minus_1;
-    out->seq_force_integer_mv = in->seq_force_integer_mv;
-    out->seq_force_screen_content_tools = in->seq_force_screen_content_tools;
-    memcpy(out->reserved1, in->reserved1, 5 * sizeof(uint8_t));
-    out->pColorConfig = UlongToPtr(in->pColorConfig);
-    out->pTimingInfo = UlongToPtr(in->pTimingInfo);
-}
-
-static inline const StdVideoAV1SequenceHeader *convert_StdVideoAV1SequenceHeader_array_win32_to_host(struct conversion_context *ctx, const StdVideoAV1SequenceHeader32 *in, uint32_t count)
-{
-    StdVideoAV1SequenceHeader *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoAV1SequenceHeader_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -13579,18 +12688,6 @@ static inline void convert_VkVideoDecodeInfoKHR_win32_to_host(struct conversion_
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_INLINE_SESSION_PARAMETERS_INFO_KHR:
-        {
-            VkVideoDecodeH264InlineSessionParametersInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoDecodeH264InlineSessionParametersInfoKHR32 *in_ext = (const VkVideoDecodeH264InlineSessionParametersInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_INLINE_SESSION_PARAMETERS_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->pStdSPS = convert_StdVideoH264SequenceParameterSet_array_win32_to_host(ctx, (const StdVideoH264SequenceParameterSet32 *)UlongToPtr(in_ext->pStdSPS), 1);
-            out_ext->pStdPPS = convert_StdVideoH264PictureParameterSet_array_win32_to_host(ctx, (const StdVideoH264PictureParameterSet32 *)UlongToPtr(in_ext->pStdPPS), 1);
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_PICTURE_INFO_KHR:
         {
             VkVideoDecodeH264PictureInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -13600,32 +12697,6 @@ static inline void convert_VkVideoDecodeInfoKHR_win32_to_host(struct conversion_
             out_ext->pStdPictureInfo = UlongToPtr(in_ext->pStdPictureInfo);
             out_ext->sliceCount = in_ext->sliceCount;
             out_ext->pSliceOffsets = UlongToPtr(in_ext->pSliceOffsets);
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_INLINE_SESSION_PARAMETERS_INFO_KHR:
-        {
-            VkVideoDecodeH265InlineSessionParametersInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoDecodeH265InlineSessionParametersInfoKHR32 *in_ext = (const VkVideoDecodeH265InlineSessionParametersInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_INLINE_SESSION_PARAMETERS_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->pStdVPS = convert_StdVideoH265VideoParameterSet_array_win32_to_host(ctx, (const StdVideoH265VideoParameterSet32 *)UlongToPtr(in_ext->pStdVPS), 1);
-            out_ext->pStdSPS = convert_StdVideoH265SequenceParameterSet_array_win32_to_host(ctx, (const StdVideoH265SequenceParameterSet32 *)UlongToPtr(in_ext->pStdSPS), 1);
-            out_ext->pStdPPS = convert_StdVideoH265PictureParameterSet_array_win32_to_host(ctx, (const StdVideoH265PictureParameterSet32 *)UlongToPtr(in_ext->pStdPPS), 1);
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_PICTURE_INFO_KHR:
-        {
-            VkVideoDecodeH265PictureInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoDecodeH265PictureInfoKHR32 *in_ext = (const VkVideoDecodeH265PictureInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_PICTURE_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->pStdPictureInfo = UlongToPtr(in_ext->pStdPictureInfo);
-            out_ext->sliceSegmentCount = in_ext->sliceSegmentCount;
-            out_ext->pSliceSegmentOffsets = UlongToPtr(in_ext->pSliceSegmentOffsets);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -13641,17 +12712,6 @@ static inline void convert_VkVideoDecodeInfoKHR_win32_to_host(struct conversion_
             out_ext->uncompressedHeaderOffset = in_ext->uncompressedHeaderOffset;
             out_ext->compressedHeaderOffset = in_ext->compressedHeaderOffset;
             out_ext->tilesOffset = in_ext->tilesOffset;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VIDEO_DECODE_AV1_INLINE_SESSION_PARAMETERS_INFO_KHR:
-        {
-            VkVideoDecodeAV1InlineSessionParametersInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoDecodeAV1InlineSessionParametersInfoKHR32 *in_ext = (const VkVideoDecodeAV1InlineSessionParametersInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_AV1_INLINE_SESSION_PARAMETERS_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->pStdSequenceHeader = convert_StdVideoAV1SequenceHeader_array_win32_to_host(ctx, (const StdVideoAV1SequenceHeader32 *)UlongToPtr(in_ext->pStdSequenceHeader), 1);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -13842,105 +12902,6 @@ static inline const StdVideoEncodeH264PictureInfo *convert_StdVideoEncodeH264Pic
     return out;
 }
 
-static inline void convert_StdVideoEncodeH265SliceSegmentHeader_win32_to_host(const StdVideoEncodeH265SliceSegmentHeader32 *in, StdVideoEncodeH265SliceSegmentHeader *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->slice_type = in->slice_type;
-    out->slice_segment_address = in->slice_segment_address;
-    out->collocated_ref_idx = in->collocated_ref_idx;
-    out->MaxNumMergeCand = in->MaxNumMergeCand;
-    out->slice_cb_qp_offset = in->slice_cb_qp_offset;
-    out->slice_cr_qp_offset = in->slice_cr_qp_offset;
-    out->slice_beta_offset_div2 = in->slice_beta_offset_div2;
-    out->slice_tc_offset_div2 = in->slice_tc_offset_div2;
-    out->slice_act_y_qp_offset = in->slice_act_y_qp_offset;
-    out->slice_act_cb_qp_offset = in->slice_act_cb_qp_offset;
-    out->slice_act_cr_qp_offset = in->slice_act_cr_qp_offset;
-    out->slice_qp_delta = in->slice_qp_delta;
-    out->reserved1 = in->reserved1;
-    out->pWeightTable = UlongToPtr(in->pWeightTable);
-}
-
-static inline const StdVideoEncodeH265SliceSegmentHeader *convert_StdVideoEncodeH265SliceSegmentHeader_array_win32_to_host(struct conversion_context *ctx, const StdVideoEncodeH265SliceSegmentHeader32 *in, uint32_t count)
-{
-    StdVideoEncodeH265SliceSegmentHeader *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoEncodeH265SliceSegmentHeader_win32_to_host(&in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_VkVideoEncodeH265NaluSliceSegmentInfoKHR_win32_to_host(struct conversion_context *ctx, const VkVideoEncodeH265NaluSliceSegmentInfoKHR32 *in, VkVideoEncodeH265NaluSliceSegmentInfoKHR *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = NULL;
-    out->constantQp = in->constantQp;
-    out->pStdSliceSegmentHeader = convert_StdVideoEncodeH265SliceSegmentHeader_array_win32_to_host(ctx, (const StdVideoEncodeH265SliceSegmentHeader32 *)UlongToPtr(in->pStdSliceSegmentHeader), 1);
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
-}
-
-static inline const VkVideoEncodeH265NaluSliceSegmentInfoKHR *convert_VkVideoEncodeH265NaluSliceSegmentInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkVideoEncodeH265NaluSliceSegmentInfoKHR32 *in, uint32_t count)
-{
-    VkVideoEncodeH265NaluSliceSegmentInfoKHR *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_VkVideoEncodeH265NaluSliceSegmentInfoKHR_win32_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoEncodeH265PictureInfo_win32_to_host(const StdVideoEncodeH265PictureInfo32 *in, StdVideoEncodeH265PictureInfo *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->pic_type = in->pic_type;
-    out->sps_video_parameter_set_id = in->sps_video_parameter_set_id;
-    out->pps_seq_parameter_set_id = in->pps_seq_parameter_set_id;
-    out->pps_pic_parameter_set_id = in->pps_pic_parameter_set_id;
-    out->short_term_ref_pic_set_idx = in->short_term_ref_pic_set_idx;
-    out->PicOrderCntVal = in->PicOrderCntVal;
-    out->TemporalId = in->TemporalId;
-    memcpy(out->reserved1, in->reserved1, 7 * sizeof(uint8_t));
-    out->pRefLists = UlongToPtr(in->pRefLists);
-    out->pShortTermRefPicSet = UlongToPtr(in->pShortTermRefPicSet);
-    out->pLongTermRefPics = UlongToPtr(in->pLongTermRefPics);
-}
-
-static inline const StdVideoEncodeH265PictureInfo *convert_StdVideoEncodeH265PictureInfo_array_win32_to_host(struct conversion_context *ctx, const StdVideoEncodeH265PictureInfo32 *in, uint32_t count)
-{
-    StdVideoEncodeH265PictureInfo *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoEncodeH265PictureInfo_win32_to_host(&in[i], &out[i]);
-    }
-
-    return out;
-}
-
 static inline void convert_StdVideoEncodeAV1PictureInfo_win32_to_host(struct conversion_context *ctx, const StdVideoEncodeAV1PictureInfo32 *in, StdVideoEncodeAV1PictureInfo *out)
 {
     if (!in) return;
@@ -14048,19 +13009,6 @@ static inline void convert_VkVideoEncodeInfoKHR_win32_to_host(struct conversion_
             out_ext->pNaluSliceEntries = convert_VkVideoEncodeH264NaluSliceInfoKHR_array_win32_to_host(ctx, (const VkVideoEncodeH264NaluSliceInfoKHR32 *)UlongToPtr(in_ext->pNaluSliceEntries), in_ext->naluSliceEntryCount);
             out_ext->pStdPictureInfo = convert_StdVideoEncodeH264PictureInfo_array_win32_to_host(ctx, (const StdVideoEncodeH264PictureInfo32 *)UlongToPtr(in_ext->pStdPictureInfo), 1);
             out_ext->generatePrefixNalu = in_ext->generatePrefixNalu;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_PICTURE_INFO_KHR:
-        {
-            VkVideoEncodeH265PictureInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoEncodeH265PictureInfoKHR32 *in_ext = (const VkVideoEncodeH265PictureInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_PICTURE_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->naluSliceSegmentEntryCount = in_ext->naluSliceSegmentEntryCount;
-            out_ext->pNaluSliceSegmentEntries = convert_VkVideoEncodeH265NaluSliceSegmentInfoKHR_array_win32_to_host(ctx, (const VkVideoEncodeH265NaluSliceSegmentInfoKHR32 *)UlongToPtr(in_ext->pNaluSliceSegmentEntries), in_ext->naluSliceSegmentEntryCount);
-            out_ext->pStdPictureInfo = convert_StdVideoEncodeH265PictureInfo_array_win32_to_host(ctx, (const StdVideoEncodeH265PictureInfo32 *)UlongToPtr(in_ext->pStdPictureInfo), 1);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -15575,17 +14523,6 @@ static inline void convert_VkVideoProfileInfoKHR_win32_to_host(struct conversion
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_PROFILE_INFO_KHR:
-        {
-            VkVideoDecodeH265ProfileInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoDecodeH265ProfileInfoKHR32 *in_ext = (const VkVideoDecodeH265ProfileInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_PROFILE_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->stdProfileIdc = in_ext->stdProfileIdc;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_VIDEO_DECODE_VP9_PROFILE_INFO_KHR:
         {
             VkVideoDecodeVP9ProfileInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -15627,17 +14564,6 @@ static inline void convert_VkVideoProfileInfoKHR_win32_to_host(struct conversion
             VkVideoEncodeH264ProfileInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkVideoEncodeH264ProfileInfoKHR32 *in_ext = (const VkVideoEncodeH264ProfileInfoKHR32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_PROFILE_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->stdProfileIdc = in_ext->stdProfileIdc;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_PROFILE_INFO_KHR:
-        {
-            VkVideoEncodeH265ProfileInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoEncodeH265ProfileInfoKHR32 *in_ext = (const VkVideoEncodeH265ProfileInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_PROFILE_INFO_KHR;
             out_ext->pNext = NULL;
             out_ext->stdProfileIdc = in_ext->stdProfileIdc;
             out_header->pNext = (void *)out_ext;
@@ -18420,17 +17346,6 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR:
-        {
-            VkPhysicalDeviceVideoMaintenance2FeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPhysicalDeviceVideoMaintenance2FeaturesKHR *in_ext = (const VkPhysicalDeviceVideoMaintenance2FeaturesKHR *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR;
-            out_ext->pNext = NULL;
-            out_ext->videoMaintenance2 = in_ext->videoMaintenance2;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_DECODE_VP9_FEATURES_KHR:
         {
             VkPhysicalDeviceVideoDecodeVP9FeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -21188,17 +20103,6 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_1_FEATURES_KHR;
             out_ext->pNext = NULL;
             out_ext->videoMaintenance1 = in_ext->videoMaintenance1;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR:
-        {
-            VkPhysicalDeviceVideoMaintenance2FeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPhysicalDeviceVideoMaintenance2FeaturesKHR32 *in_ext = (const VkPhysicalDeviceVideoMaintenance2FeaturesKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR;
-            out_ext->pNext = NULL;
-            out_ext->videoMaintenance2 = in_ext->videoMaintenance2;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -24873,17 +23777,6 @@ static inline void convert_VkQueryPoolCreateInfo_win32_to_host(struct conversion
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_PROFILE_INFO_KHR:
-        {
-            VkVideoDecodeH265ProfileInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoDecodeH265ProfileInfoKHR32 *in_ext = (const VkVideoDecodeH265ProfileInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_PROFILE_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->stdProfileIdc = in_ext->stdProfileIdc;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_VIDEO_DECODE_VP9_PROFILE_INFO_KHR:
         {
             VkVideoDecodeVP9ProfileInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -24936,17 +23829,6 @@ static inline void convert_VkQueryPoolCreateInfo_win32_to_host(struct conversion
             VkVideoEncodeH264ProfileInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkVideoEncodeH264ProfileInfoKHR32 *in_ext = (const VkVideoEncodeH264ProfileInfoKHR32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_PROFILE_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->stdProfileIdc = in_ext->stdProfileIdc;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_PROFILE_INFO_KHR:
-        {
-            VkVideoEncodeH265ProfileInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoEncodeH265ProfileInfoKHR32 *in_ext = (const VkVideoEncodeH265ProfileInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_PROFILE_INFO_KHR;
             out_ext->pNext = NULL;
             out_ext->stdProfileIdc = in_ext->stdProfileIdc;
             out_header->pNext = (void *)out_ext;
@@ -26542,18 +25424,6 @@ static inline void convert_VkVideoSessionCreateInfoKHR_win32_to_host(struct conv
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_SESSION_CREATE_INFO_KHR:
-        {
-            VkVideoEncodeH265SessionCreateInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoEncodeH265SessionCreateInfoKHR32 *in_ext = (const VkVideoEncodeH265SessionCreateInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_SESSION_CREATE_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->useMaxLevelIdc = in_ext->useMaxLevelIdc;
-            out_ext->maxLevelIdc = in_ext->maxLevelIdc;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_SESSION_CREATE_INFO_KHR:
         {
             VkVideoEncodeAV1SessionCreateInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -26571,6 +25441,124 @@ static inline void convert_VkVideoSessionCreateInfoKHR_win32_to_host(struct conv
             break;
         }
     }
+}
+
+static inline void convert_StdVideoH264SequenceParameterSetVui_win32_to_host(const StdVideoH264SequenceParameterSetVui32 *in, StdVideoH264SequenceParameterSetVui *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->aspect_ratio_idc = in->aspect_ratio_idc;
+    out->sar_width = in->sar_width;
+    out->sar_height = in->sar_height;
+    out->video_format = in->video_format;
+    out->colour_primaries = in->colour_primaries;
+    out->transfer_characteristics = in->transfer_characteristics;
+    out->matrix_coefficients = in->matrix_coefficients;
+    out->num_units_in_tick = in->num_units_in_tick;
+    out->time_scale = in->time_scale;
+    out->max_num_reorder_frames = in->max_num_reorder_frames;
+    out->max_dec_frame_buffering = in->max_dec_frame_buffering;
+    out->chroma_sample_loc_type_top_field = in->chroma_sample_loc_type_top_field;
+    out->chroma_sample_loc_type_bottom_field = in->chroma_sample_loc_type_bottom_field;
+    out->reserved1 = in->reserved1;
+    out->pHrdParameters = UlongToPtr(in->pHrdParameters);
+}
+
+static inline const StdVideoH264SequenceParameterSetVui *convert_StdVideoH264SequenceParameterSetVui_array_win32_to_host(struct conversion_context *ctx, const StdVideoH264SequenceParameterSetVui32 *in, uint32_t count)
+{
+    StdVideoH264SequenceParameterSetVui *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_StdVideoH264SequenceParameterSetVui_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static inline void convert_StdVideoH264SequenceParameterSet_win32_to_host(struct conversion_context *ctx, const StdVideoH264SequenceParameterSet32 *in, StdVideoH264SequenceParameterSet *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->profile_idc = in->profile_idc;
+    out->level_idc = in->level_idc;
+    out->chroma_format_idc = in->chroma_format_idc;
+    out->seq_parameter_set_id = in->seq_parameter_set_id;
+    out->bit_depth_luma_minus8 = in->bit_depth_luma_minus8;
+    out->bit_depth_chroma_minus8 = in->bit_depth_chroma_minus8;
+    out->log2_max_frame_num_minus4 = in->log2_max_frame_num_minus4;
+    out->pic_order_cnt_type = in->pic_order_cnt_type;
+    out->offset_for_non_ref_pic = in->offset_for_non_ref_pic;
+    out->offset_for_top_to_bottom_field = in->offset_for_top_to_bottom_field;
+    out->log2_max_pic_order_cnt_lsb_minus4 = in->log2_max_pic_order_cnt_lsb_minus4;
+    out->num_ref_frames_in_pic_order_cnt_cycle = in->num_ref_frames_in_pic_order_cnt_cycle;
+    out->max_num_ref_frames = in->max_num_ref_frames;
+    out->reserved1 = in->reserved1;
+    out->pic_width_in_mbs_minus1 = in->pic_width_in_mbs_minus1;
+    out->pic_height_in_map_units_minus1 = in->pic_height_in_map_units_minus1;
+    out->frame_crop_left_offset = in->frame_crop_left_offset;
+    out->frame_crop_right_offset = in->frame_crop_right_offset;
+    out->frame_crop_top_offset = in->frame_crop_top_offset;
+    out->frame_crop_bottom_offset = in->frame_crop_bottom_offset;
+    out->reserved2 = in->reserved2;
+    out->pOffsetForRefFrame = UlongToPtr(in->pOffsetForRefFrame);
+    out->pScalingLists = UlongToPtr(in->pScalingLists);
+    out->pSequenceParameterSetVui = convert_StdVideoH264SequenceParameterSetVui_array_win32_to_host(ctx, (const StdVideoH264SequenceParameterSetVui32 *)UlongToPtr(in->pSequenceParameterSetVui), 1);
+}
+
+static inline const StdVideoH264SequenceParameterSet *convert_StdVideoH264SequenceParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH264SequenceParameterSet32 *in, uint32_t count)
+{
+    StdVideoH264SequenceParameterSet *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_StdVideoH264SequenceParameterSet_win32_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static inline void convert_StdVideoH264PictureParameterSet_win32_to_host(const StdVideoH264PictureParameterSet32 *in, StdVideoH264PictureParameterSet *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->seq_parameter_set_id = in->seq_parameter_set_id;
+    out->pic_parameter_set_id = in->pic_parameter_set_id;
+    out->num_ref_idx_l0_default_active_minus1 = in->num_ref_idx_l0_default_active_minus1;
+    out->num_ref_idx_l1_default_active_minus1 = in->num_ref_idx_l1_default_active_minus1;
+    out->weighted_bipred_idc = in->weighted_bipred_idc;
+    out->pic_init_qp_minus26 = in->pic_init_qp_minus26;
+    out->pic_init_qs_minus26 = in->pic_init_qs_minus26;
+    out->chroma_qp_index_offset = in->chroma_qp_index_offset;
+    out->second_chroma_qp_index_offset = in->second_chroma_qp_index_offset;
+    out->pScalingLists = UlongToPtr(in->pScalingLists);
+}
+
+static inline const StdVideoH264PictureParameterSet *convert_StdVideoH264PictureParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH264PictureParameterSet32 *in, uint32_t count)
+{
+    StdVideoH264PictureParameterSet *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_StdVideoH264PictureParameterSet_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
 }
 
 static inline void convert_VkVideoDecodeH264SessionParametersAddInfoKHR_win32_to_host(struct conversion_context *ctx, const VkVideoDecodeH264SessionParametersAddInfoKHR32 *in, VkVideoDecodeH264SessionParametersAddInfoKHR *out)
@@ -26603,25 +25591,29 @@ static inline const VkVideoDecodeH264SessionParametersAddInfoKHR *convert_VkVide
     return out;
 }
 
-static inline void convert_VkVideoDecodeH265SessionParametersAddInfoKHR_win32_to_host(struct conversion_context *ctx, const VkVideoDecodeH265SessionParametersAddInfoKHR32 *in, VkVideoDecodeH265SessionParametersAddInfoKHR *out)
+static inline void convert_StdVideoAV1SequenceHeader_win32_to_host(const StdVideoAV1SequenceHeader32 *in, StdVideoAV1SequenceHeader *out)
 {
     if (!in) return;
 
-    out->sType = in->sType;
-    out->pNext = NULL;
-    out->stdVPSCount = in->stdVPSCount;
-    out->pStdVPSs = convert_StdVideoH265VideoParameterSet_array_win32_to_host(ctx, (const StdVideoH265VideoParameterSet32 *)UlongToPtr(in->pStdVPSs), in->stdVPSCount);
-    out->stdSPSCount = in->stdSPSCount;
-    out->pStdSPSs = convert_StdVideoH265SequenceParameterSet_array_win32_to_host(ctx, (const StdVideoH265SequenceParameterSet32 *)UlongToPtr(in->pStdSPSs), in->stdSPSCount);
-    out->stdPPSCount = in->stdPPSCount;
-    out->pStdPPSs = convert_StdVideoH265PictureParameterSet_array_win32_to_host(ctx, (const StdVideoH265PictureParameterSet32 *)UlongToPtr(in->pStdPPSs), in->stdPPSCount);
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
+    out->flags = in->flags;
+    out->seq_profile = in->seq_profile;
+    out->frame_width_bits_minus_1 = in->frame_width_bits_minus_1;
+    out->frame_height_bits_minus_1 = in->frame_height_bits_minus_1;
+    out->max_frame_width_minus_1 = in->max_frame_width_minus_1;
+    out->max_frame_height_minus_1 = in->max_frame_height_minus_1;
+    out->delta_frame_id_length_minus_2 = in->delta_frame_id_length_minus_2;
+    out->additional_frame_id_length_minus_1 = in->additional_frame_id_length_minus_1;
+    out->order_hint_bits_minus_1 = in->order_hint_bits_minus_1;
+    out->seq_force_integer_mv = in->seq_force_integer_mv;
+    out->seq_force_screen_content_tools = in->seq_force_screen_content_tools;
+    memcpy(out->reserved1, in->reserved1, 5 * sizeof(uint8_t));
+    out->pColorConfig = UlongToPtr(in->pColorConfig);
+    out->pTimingInfo = UlongToPtr(in->pTimingInfo);
 }
 
-static inline const VkVideoDecodeH265SessionParametersAddInfoKHR *convert_VkVideoDecodeH265SessionParametersAddInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkVideoDecodeH265SessionParametersAddInfoKHR32 *in, uint32_t count)
+static inline const StdVideoAV1SequenceHeader *convert_StdVideoAV1SequenceHeader_array_win32_to_host(struct conversion_context *ctx, const StdVideoAV1SequenceHeader32 *in, uint32_t count)
 {
-    VkVideoDecodeH265SessionParametersAddInfoKHR *out;
+    StdVideoAV1SequenceHeader *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -26629,7 +25621,7 @@ static inline const VkVideoDecodeH265SessionParametersAddInfoKHR *convert_VkVide
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkVideoDecodeH265SessionParametersAddInfoKHR_win32_to_host(ctx, &in[i], &out[i]);
+        convert_StdVideoAV1SequenceHeader_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -26665,38 +25657,6 @@ static inline const VkVideoEncodeH264SessionParametersAddInfoKHR *convert_VkVide
     return out;
 }
 
-static inline void convert_VkVideoEncodeH265SessionParametersAddInfoKHR_win32_to_host(struct conversion_context *ctx, const VkVideoEncodeH265SessionParametersAddInfoKHR32 *in, VkVideoEncodeH265SessionParametersAddInfoKHR *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = NULL;
-    out->stdVPSCount = in->stdVPSCount;
-    out->pStdVPSs = convert_StdVideoH265VideoParameterSet_array_win32_to_host(ctx, (const StdVideoH265VideoParameterSet32 *)UlongToPtr(in->pStdVPSs), in->stdVPSCount);
-    out->stdSPSCount = in->stdSPSCount;
-    out->pStdSPSs = convert_StdVideoH265SequenceParameterSet_array_win32_to_host(ctx, (const StdVideoH265SequenceParameterSet32 *)UlongToPtr(in->pStdSPSs), in->stdSPSCount);
-    out->stdPPSCount = in->stdPPSCount;
-    out->pStdPPSs = convert_StdVideoH265PictureParameterSet_array_win32_to_host(ctx, (const StdVideoH265PictureParameterSet32 *)UlongToPtr(in->pStdPPSs), in->stdPPSCount);
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
-}
-
-static inline const VkVideoEncodeH265SessionParametersAddInfoKHR *convert_VkVideoEncodeH265SessionParametersAddInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkVideoEncodeH265SessionParametersAddInfoKHR32 *in, uint32_t count)
-{
-    VkVideoEncodeH265SessionParametersAddInfoKHR *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_VkVideoEncodeH265SessionParametersAddInfoKHR_win32_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-
 static inline void convert_VkVideoSessionParametersCreateInfoKHR_win32_to_host(struct conversion_context *ctx, const VkVideoSessionParametersCreateInfoKHR32 *in, VkVideoSessionParametersCreateInfoKHR *out)
 {
     const VkBaseInStructure32 *in_header;
@@ -26723,20 +25683,6 @@ static inline void convert_VkVideoSessionParametersCreateInfoKHR_win32_to_host(s
             out_ext->maxStdSPSCount = in_ext->maxStdSPSCount;
             out_ext->maxStdPPSCount = in_ext->maxStdPPSCount;
             out_ext->pParametersAddInfo = convert_VkVideoDecodeH264SessionParametersAddInfoKHR_array_win32_to_host(ctx, (const VkVideoDecodeH264SessionParametersAddInfoKHR32 *)UlongToPtr(in_ext->pParametersAddInfo), 1);
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_SESSION_PARAMETERS_CREATE_INFO_KHR:
-        {
-            VkVideoDecodeH265SessionParametersCreateInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoDecodeH265SessionParametersCreateInfoKHR32 *in_ext = (const VkVideoDecodeH265SessionParametersCreateInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_SESSION_PARAMETERS_CREATE_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->maxStdVPSCount = in_ext->maxStdVPSCount;
-            out_ext->maxStdSPSCount = in_ext->maxStdSPSCount;
-            out_ext->maxStdPPSCount = in_ext->maxStdPPSCount;
-            out_ext->pParametersAddInfo = convert_VkVideoDecodeH265SessionParametersAddInfoKHR_array_win32_to_host(ctx, (const VkVideoDecodeH265SessionParametersAddInfoKHR32 *)UlongToPtr(in_ext->pParametersAddInfo), 1);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -26783,20 +25729,6 @@ static inline void convert_VkVideoSessionParametersCreateInfoKHR_win32_to_host(s
             out_ext->maxStdSPSCount = in_ext->maxStdSPSCount;
             out_ext->maxStdPPSCount = in_ext->maxStdPPSCount;
             out_ext->pParametersAddInfo = convert_VkVideoEncodeH264SessionParametersAddInfoKHR_array_win32_to_host(ctx, (const VkVideoEncodeH264SessionParametersAddInfoKHR32 *)UlongToPtr(in_ext->pParametersAddInfo), 1);
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_SESSION_PARAMETERS_CREATE_INFO_KHR:
-        {
-            VkVideoEncodeH265SessionParametersCreateInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoEncodeH265SessionParametersCreateInfoKHR32 *in_ext = (const VkVideoEncodeH265SessionParametersCreateInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_SESSION_PARAMETERS_CREATE_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->maxStdVPSCount = in_ext->maxStdVPSCount;
-            out_ext->maxStdSPSCount = in_ext->maxStdSPSCount;
-            out_ext->maxStdPPSCount = in_ext->maxStdPPSCount;
-            out_ext->pParametersAddInfo = convert_VkVideoEncodeH265SessionParametersAddInfoKHR_array_win32_to_host(ctx, (const VkVideoEncodeH265SessionParametersAddInfoKHR32 *)UlongToPtr(in_ext->pParametersAddInfo), 1);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -28086,22 +27018,6 @@ static inline void convert_VkVideoEncodeSessionParametersGetInfoKHR_win32_to_hos
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_SESSION_PARAMETERS_GET_INFO_KHR:
-        {
-            VkVideoEncodeH265SessionParametersGetInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoEncodeH265SessionParametersGetInfoKHR32 *in_ext = (const VkVideoEncodeH265SessionParametersGetInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_SESSION_PARAMETERS_GET_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->writeStdVPS = in_ext->writeStdVPS;
-            out_ext->writeStdSPS = in_ext->writeStdSPS;
-            out_ext->writeStdPPS = in_ext->writeStdPPS;
-            out_ext->stdVPSId = in_ext->stdVPSId;
-            out_ext->stdSPSId = in_ext->stdSPSId;
-            out_ext->stdPPSId = in_ext->stdPPSId;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -28132,15 +27048,6 @@ static inline void convert_VkVideoEncodeSessionParametersFeedbackInfoKHR_win32_t
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_SESSION_PARAMETERS_FEEDBACK_INFO_KHR:
-        {
-            VkVideoEncodeH265SessionParametersFeedbackInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_SESSION_PARAMETERS_FEEDBACK_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -28166,17 +27073,6 @@ static inline void convert_VkVideoEncodeSessionParametersFeedbackInfoKHR_host_to
             VkVideoEncodeH264SessionParametersFeedbackInfoKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_SESSION_PARAMETERS_FEEDBACK_INFO_KHR);
             const VkVideoEncodeH264SessionParametersFeedbackInfoKHR *in_ext = (const VkVideoEncodeH264SessionParametersFeedbackInfoKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_SESSION_PARAMETERS_FEEDBACK_INFO_KHR;
-            out_ext->hasStdSPSOverrides = in_ext->hasStdSPSOverrides;
-            out_ext->hasStdPPSOverrides = in_ext->hasStdPPSOverrides;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_SESSION_PARAMETERS_FEEDBACK_INFO_KHR:
-        {
-            VkVideoEncodeH265SessionParametersFeedbackInfoKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_SESSION_PARAMETERS_FEEDBACK_INFO_KHR);
-            const VkVideoEncodeH265SessionParametersFeedbackInfoKHR *in_ext = (const VkVideoEncodeH265SessionParametersFeedbackInfoKHR *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_SESSION_PARAMETERS_FEEDBACK_INFO_KHR;
-            out_ext->hasStdVPSOverrides = in_ext->hasStdVPSOverrides;
             out_ext->hasStdSPSOverrides = in_ext->hasStdSPSOverrides;
             out_ext->hasStdPPSOverrides = in_ext->hasStdPPSOverrides;
             out_header = (void *)out_ext;
@@ -30550,17 +29446,6 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_1_FEATURES_KHR;
             out_ext->pNext = NULL;
             out_ext->videoMaintenance1 = in_ext->videoMaintenance1;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR:
-        {
-            VkPhysicalDeviceVideoMaintenance2FeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPhysicalDeviceVideoMaintenance2FeaturesKHR32 *in_ext = (const VkPhysicalDeviceVideoMaintenance2FeaturesKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR;
-            out_ext->pNext = NULL;
-            out_ext->videoMaintenance2 = in_ext->videoMaintenance2;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -32968,15 +31853,6 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             const VkPhysicalDeviceVideoMaintenance1FeaturesKHR *in_ext = (const VkPhysicalDeviceVideoMaintenance1FeaturesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_1_FEATURES_KHR;
             out_ext->videoMaintenance1 = in_ext->videoMaintenance1;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR:
-        {
-            VkPhysicalDeviceVideoMaintenance2FeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR);
-            const VkPhysicalDeviceVideoMaintenance2FeaturesKHR *in_ext = (const VkPhysicalDeviceVideoMaintenance2FeaturesKHR *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR;
-            out_ext->videoMaintenance2 = in_ext->videoMaintenance2;
             out_header = (void *)out_ext;
             break;
         }
@@ -37526,15 +36402,6 @@ static inline void convert_VkVideoCapabilitiesKHR_win32_to_host(struct conversio
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_CAPABILITIES_KHR:
-        {
-            VkVideoDecodeH265CapabilitiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_CAPABILITIES_KHR;
-            out_ext->pNext = NULL;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_VIDEO_DECODE_VP9_CAPABILITIES_KHR:
         {
             VkVideoDecodeVP9CapabilitiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -37566,15 +36433,6 @@ static inline void convert_VkVideoCapabilitiesKHR_win32_to_host(struct conversio
         {
             VkVideoEncodeH264CapabilitiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_CAPABILITIES_KHR;
-            out_ext->pNext = NULL;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_CAPABILITIES_KHR:
-        {
-            VkVideoEncodeH265CapabilitiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_CAPABILITIES_KHR;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
@@ -37675,15 +36533,6 @@ static inline void convert_VkVideoCapabilitiesKHR_host_to_win32(const VkVideoCap
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_CAPABILITIES_KHR:
-        {
-            VkVideoDecodeH265CapabilitiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_CAPABILITIES_KHR);
-            const VkVideoDecodeH265CapabilitiesKHR *in_ext = (const VkVideoDecodeH265CapabilitiesKHR *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_CAPABILITIES_KHR;
-            out_ext->maxLevelIdc = in_ext->maxLevelIdc;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_VIDEO_DECODE_VP9_CAPABILITIES_KHR:
         {
             VkVideoDecodeVP9CapabilitiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_VIDEO_DECODE_VP9_CAPABILITIES_KHR);
@@ -37730,30 +36579,6 @@ static inline void convert_VkVideoCapabilitiesKHR_host_to_win32(const VkVideoCap
             out_ext->maxL1ReferenceCount = in_ext->maxL1ReferenceCount;
             out_ext->maxTemporalLayerCount = in_ext->maxTemporalLayerCount;
             out_ext->expectDyadicTemporalLayerPattern = in_ext->expectDyadicTemporalLayerPattern;
-            out_ext->minQp = in_ext->minQp;
-            out_ext->maxQp = in_ext->maxQp;
-            out_ext->prefersGopRemainingFrames = in_ext->prefersGopRemainingFrames;
-            out_ext->requiresGopRemainingFrames = in_ext->requiresGopRemainingFrames;
-            out_ext->stdSyntaxFlags = in_ext->stdSyntaxFlags;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_CAPABILITIES_KHR:
-        {
-            VkVideoEncodeH265CapabilitiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_CAPABILITIES_KHR);
-            const VkVideoEncodeH265CapabilitiesKHR *in_ext = (const VkVideoEncodeH265CapabilitiesKHR *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_CAPABILITIES_KHR;
-            out_ext->flags = in_ext->flags;
-            out_ext->maxLevelIdc = in_ext->maxLevelIdc;
-            out_ext->maxSliceSegmentCount = in_ext->maxSliceSegmentCount;
-            out_ext->maxTiles = in_ext->maxTiles;
-            out_ext->ctbSizes = in_ext->ctbSizes;
-            out_ext->transformBlockSizes = in_ext->transformBlockSizes;
-            out_ext->maxPPictureL0ReferenceCount = in_ext->maxPPictureL0ReferenceCount;
-            out_ext->maxBPictureL0ReferenceCount = in_ext->maxBPictureL0ReferenceCount;
-            out_ext->maxL1ReferenceCount = in_ext->maxL1ReferenceCount;
-            out_ext->maxSubLayerCount = in_ext->maxSubLayerCount;
-            out_ext->expectDyadicTemporalSubLayerPattern = in_ext->expectDyadicTemporalSubLayerPattern;
             out_ext->minQp = in_ext->minQp;
             out_ext->maxQp = in_ext->maxQp;
             out_ext->prefersGopRemainingFrames = in_ext->prefersGopRemainingFrames;
@@ -37835,15 +36660,6 @@ static inline void convert_VkVideoEncodeQualityLevelPropertiesKHR_win32_to_host(
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_QUALITY_LEVEL_PROPERTIES_KHR:
-        {
-            VkVideoEncodeH265QualityLevelPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_QUALITY_LEVEL_PROPERTIES_KHR;
-            out_ext->pNext = NULL;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_QUALITY_LEVEL_PROPERTIES_KHR:
         {
             VkVideoEncodeAV1QualityLevelPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -37888,22 +36704,6 @@ static inline void convert_VkVideoEncodeQualityLevelPropertiesKHR_host_to_win32(
             out_ext->preferredMaxL0ReferenceCount = in_ext->preferredMaxL0ReferenceCount;
             out_ext->preferredMaxL1ReferenceCount = in_ext->preferredMaxL1ReferenceCount;
             out_ext->preferredStdEntropyCodingModeFlag = in_ext->preferredStdEntropyCodingModeFlag;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_QUALITY_LEVEL_PROPERTIES_KHR:
-        {
-            VkVideoEncodeH265QualityLevelPropertiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_QUALITY_LEVEL_PROPERTIES_KHR);
-            const VkVideoEncodeH265QualityLevelPropertiesKHR *in_ext = (const VkVideoEncodeH265QualityLevelPropertiesKHR *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_QUALITY_LEVEL_PROPERTIES_KHR;
-            out_ext->preferredRateControlFlags = in_ext->preferredRateControlFlags;
-            out_ext->preferredGopFrameCount = in_ext->preferredGopFrameCount;
-            out_ext->preferredIdrPeriod = in_ext->preferredIdrPeriod;
-            out_ext->preferredConsecutiveBFrameCount = in_ext->preferredConsecutiveBFrameCount;
-            out_ext->preferredSubLayerCount = in_ext->preferredSubLayerCount;
-            out_ext->preferredConstantQp = in_ext->preferredConstantQp;
-            out_ext->preferredMaxL0ReferenceCount = in_ext->preferredMaxL0ReferenceCount;
-            out_ext->preferredMaxL1ReferenceCount = in_ext->preferredMaxL1ReferenceCount;
             out_header = (void *)out_ext;
             break;
         }
@@ -40169,22 +38969,6 @@ static inline void convert_VkVideoSessionParametersUpdateInfoKHR_win32_to_host(s
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_SESSION_PARAMETERS_ADD_INFO_KHR:
-        {
-            VkVideoDecodeH265SessionParametersAddInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoDecodeH265SessionParametersAddInfoKHR32 *in_ext = (const VkVideoDecodeH265SessionParametersAddInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_SESSION_PARAMETERS_ADD_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->stdVPSCount = in_ext->stdVPSCount;
-            out_ext->pStdVPSs = convert_StdVideoH265VideoParameterSet_array_win32_to_host(ctx, (const StdVideoH265VideoParameterSet32 *)UlongToPtr(in_ext->pStdVPSs), in_ext->stdVPSCount);
-            out_ext->stdSPSCount = in_ext->stdSPSCount;
-            out_ext->pStdSPSs = convert_StdVideoH265SequenceParameterSet_array_win32_to_host(ctx, (const StdVideoH265SequenceParameterSet32 *)UlongToPtr(in_ext->pStdSPSs), in_ext->stdSPSCount);
-            out_ext->stdPPSCount = in_ext->stdPPSCount;
-            out_ext->pStdPPSs = convert_StdVideoH265PictureParameterSet_array_win32_to_host(ctx, (const StdVideoH265PictureParameterSet32 *)UlongToPtr(in_ext->pStdPPSs), in_ext->stdPPSCount);
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_SESSION_PARAMETERS_ADD_INFO_KHR:
         {
             VkVideoEncodeH264SessionParametersAddInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -40195,22 +38979,6 @@ static inline void convert_VkVideoSessionParametersUpdateInfoKHR_win32_to_host(s
             out_ext->pStdSPSs = convert_StdVideoH264SequenceParameterSet_array_win32_to_host(ctx, (const StdVideoH264SequenceParameterSet32 *)UlongToPtr(in_ext->pStdSPSs), in_ext->stdSPSCount);
             out_ext->stdPPSCount = in_ext->stdPPSCount;
             out_ext->pStdPPSs = convert_StdVideoH264PictureParameterSet_array_win32_to_host(ctx, (const StdVideoH264PictureParameterSet32 *)UlongToPtr(in_ext->pStdPPSs), in_ext->stdPPSCount);
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_SESSION_PARAMETERS_ADD_INFO_KHR:
-        {
-            VkVideoEncodeH265SessionParametersAddInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoEncodeH265SessionParametersAddInfoKHR32 *in_ext = (const VkVideoEncodeH265SessionParametersAddInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_SESSION_PARAMETERS_ADD_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->stdVPSCount = in_ext->stdVPSCount;
-            out_ext->pStdVPSs = convert_StdVideoH265VideoParameterSet_array_win32_to_host(ctx, (const StdVideoH265VideoParameterSet32 *)UlongToPtr(in_ext->pStdVPSs), in_ext->stdVPSCount);
-            out_ext->stdSPSCount = in_ext->stdSPSCount;
-            out_ext->pStdSPSs = convert_StdVideoH265SequenceParameterSet_array_win32_to_host(ctx, (const StdVideoH265SequenceParameterSet32 *)UlongToPtr(in_ext->pStdSPSs), in_ext->stdSPSCount);
-            out_ext->stdPPSCount = in_ext->stdPPSCount;
-            out_ext->pStdPPSs = convert_StdVideoH265PictureParameterSet_array_win32_to_host(ctx, (const StdVideoH265PictureParameterSet32 *)UlongToPtr(in_ext->pStdPPSs), in_ext->stdPPSCount);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -58933,16 +57701,13 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_vertex_attribute_divisor",
     "VK_KHR_video_decode_av1",
     "VK_KHR_video_decode_h264",
-    "VK_KHR_video_decode_h265",
     "VK_KHR_video_decode_queue",
     "VK_KHR_video_decode_vp9",
     "VK_KHR_video_encode_av1",
     "VK_KHR_video_encode_h264",
-    "VK_KHR_video_encode_h265",
     "VK_KHR_video_encode_quantization_map",
     "VK_KHR_video_encode_queue",
     "VK_KHR_video_maintenance1",
-    "VK_KHR_video_maintenance2",
     "VK_KHR_video_queue",
     "VK_KHR_vulkan_memory_model",
     "VK_KHR_workgroup_memory_explicit_layout",
