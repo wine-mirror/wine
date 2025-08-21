@@ -1713,6 +1713,10 @@ static NTSTATUS WINAPI remote_device_pdo_pnp( DEVICE_OBJECT *device_obj, struct 
         ret = STATUS_SUCCESS;
         break;
     }
+    case IRP_MN_QUERY_DEVICE_TEXT:
+        WARN("Unhandled IRP_MN_QUERY_DEVICE_TEXT text type %u.\n", stack->Parameters.QueryDeviceText.DeviceTextType);
+        break;
+
     default:
         FIXME( "Unhandled minor function %#x.\n", stack->MinorFunction );
     }
@@ -1822,6 +1826,9 @@ static NTSTATUS WINAPI radio_pdo_pnp( DEVICE_OBJECT *device_obj, struct bluetoot
             }
             LeaveCriticalSection( &device_list_cs );
             ret = STATUS_SUCCESS;
+            break;
+        case IRP_MN_QUERY_DEVICE_TEXT:
+            WARN("Unhandled IRP_MN_QUERY_DEVICE_TEXT text type %u.\n", stack->Parameters.QueryDeviceText.DeviceTextType);
             break;
         default:
             FIXME( "Unhandled minor function %s.\n", debugstr_minor_function_code( stack->MinorFunction ) );
