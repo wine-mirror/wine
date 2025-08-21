@@ -181,6 +181,7 @@ static LONG WINAPI debug_exception_handler( EXCEPTION_POINTERS *eptr )
  */
 void WINAPI DECLSPEC_HOTPATCH OutputDebugStringA( LPCSTR str )
 {
+    DWORD last_error = GetLastError();
     static HANDLE DBWinMutex = NULL;
     static BOOL mutex_inited = FALSE;
     BOOL caught_by_dbg = TRUE;
@@ -263,6 +264,7 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringA( LPCSTR str )
             CloseHandle( mapping );
         }
     }
+    SetLastError( last_error );
 }
 
 static LONG WINAPI debug_exception_handler_wide( EXCEPTION_POINTERS *eptr )
