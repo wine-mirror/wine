@@ -1,18 +1,19 @@
 # Lithuanian translations for Wine
-# Aurimas Fišeras <aurimas@members.fsf.org>, 2011-2021.
+# Aurimas Fišeras <aurimas@members.fsf.org>, 2011-2025.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-08-19 20:02+0300\n"
+"PO-Revision-Date: 2025-08-22 00:02+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.6\n"
+"X-Generator: Gtranslator 46.0\n"
 "X-Project-Style: default\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
@@ -4064,10 +4065,8 @@ msgid "Function expected"
 msgstr "Tikėtasi funkcijos"
 
 #: dlls/jscript/jscript.rc:55
-#, fuzzy
-#| msgid "'[object]' is not a date object"
 msgid "'[object]' is not a string object"
-msgstr "„[objektas]“ nėra datos objektas"
+msgstr "„[objektas]“ nėra eilutės objektas"
 
 #: dlls/jscript/jscript.rc:56
 msgid "'[object]' is not a date object"
@@ -4138,10 +4137,8 @@ msgid "Precision is out of range"
 msgstr "Tikslumas nepatenka į rėžius"
 
 #: dlls/jscript/jscript.rc:74
-#, fuzzy
-#| msgid "Array object expected"
 msgid "Array or arguments object expected"
-msgstr "Tikėtasi masyvo objekto"
+msgstr "Tikėtasi masyvo ar parametrų objekto"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Array length must be a finite positive integer"
