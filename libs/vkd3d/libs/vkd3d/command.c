@@ -4221,13 +4221,21 @@ static void STDMETHODCALLTYPE d3d12_command_list_RSSetViewports(ID3D12GraphicsCo
     TRACE("iface %p, viewport_count %u, viewports %p.\n", iface, viewport_count, viewports);
 
     if (viewport_count > ARRAY_SIZE(vk_viewports))
-    {
         FIXME("Viewport count %u > D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE.\n", viewport_count);
-        viewport_count = ARRAY_SIZE(vk_viewports);
-    }
 
-    for (i = 0; i < viewport_count; ++i)
+    for (i = 0; i < ARRAY_SIZE(vk_viewports); ++i)
     {
+        if (i >= viewport_count)
+        {
+            vk_viewports[i].x = 0.0f;
+            vk_viewports[i].y = 0.0f;
+            vk_viewports[i].width = 1.0f;
+            vk_viewports[i].height = 1.0f;
+            vk_viewports[i].minDepth = 0.0f;
+            vk_viewports[i].maxDepth = 0.0f;
+            continue;
+        }
+
         vk_viewports[i].x = viewports[i].TopLeftX;
         vk_viewports[i].y = viewports[i].TopLeftY + viewports[i].Height;
         vk_viewports[i].width = viewports[i].Width;
@@ -4245,7 +4253,7 @@ static void STDMETHODCALLTYPE d3d12_command_list_RSSetViewports(ID3D12GraphicsCo
     }
 
     vk_procs = &list->device->vk_procs;
-    VK_CALL(vkCmdSetViewport(list->vk_command_buffer, 0, viewport_count, vk_viewports));
+    VK_CALL(vkCmdSetViewport(list->vk_command_buffer, 0, ARRAY_SIZE(vk_viewports), vk_viewports));
 }
 
 static void STDMETHODCALLTYPE d3d12_command_list_RSSetScissorRects(ID3D12GraphicsCommandList6 *iface,
@@ -4264,6 +4272,7 @@ static void STDMETHODCALLTYPE d3d12_command_list_RSSetScissorRects(ID3D12Graphic
         rect_count = ARRAY_SIZE(vk_rects);
     }
 
+    memset(vk_rects, 0, sizeof(vk_rects));
     for (i = 0; i < rect_count; ++i)
     {
         vk_rects[i].offset.x = rects[i].left;
@@ -4273,7 +4282,7 @@ static void STDMETHODCALLTYPE d3d12_command_list_RSSetScissorRects(ID3D12Graphic
     }
 
     vk_procs = &list->device->vk_procs;
-    VK_CALL(vkCmdSetScissor(list->vk_command_buffer, 0, rect_count, vk_rects));
+    VK_CALL(vkCmdSetScissor(list->vk_command_buffer, 0, ARRAY_SIZE(vk_rects), vk_rects));
 }
 
 static void STDMETHODCALLTYPE d3d12_command_list_OMSetBlendFactor(ID3D12GraphicsCommandList6 *iface,

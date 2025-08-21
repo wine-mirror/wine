@@ -436,7 +436,7 @@ struct d3d12_heap
 {
     ID3D12Heap ID3D12Heap_iface;
     unsigned int refcount;
-    unsigned int resource_count;
+    unsigned int internal_refcount;
 
     bool is_private;
     D3D12_HEAP_DESC desc;
@@ -826,17 +826,6 @@ enum vkd3d_vk_descriptor_set_index
 
     VKD3D_SET_INDEX_COUNT
 };
-
-extern const enum vkd3d_vk_descriptor_set_index vk_descriptor_set_index_table[];
-
-static inline enum vkd3d_vk_descriptor_set_index vkd3d_vk_descriptor_set_index_from_vk_descriptor_type(
-        VkDescriptorType type)
-{
-    VKD3D_ASSERT(type <= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-    VKD3D_ASSERT(vk_descriptor_set_index_table[type] < VKD3D_SET_INDEX_COUNT);
-
-    return vk_descriptor_set_index_table[type];
-}
 
 struct vkd3d_vk_descriptor_heap_layout
 {

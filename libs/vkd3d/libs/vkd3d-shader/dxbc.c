@@ -388,7 +388,7 @@ static int shader_parse_signature(const struct vkd3d_shader_dxbc_section_desc *s
     {
         WARN("Invalid data size %#zx.\n", section->data.size);
         vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_DXBC_INVALID_SIGNATURE,
-                "Section size %zu is smaller than the minimum signature header size.\n", section->data.size);
+                "Section size %zu is smaller than the minimum signature header size.", section->data.size);
         return VKD3D_ERROR_INVALID_ARGUMENT;
     }
 
@@ -402,7 +402,7 @@ static int shader_parse_signature(const struct vkd3d_shader_dxbc_section_desc *s
     {
         WARN("Invalid header size %#x.\n", header_size);
         vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_DXBC_INVALID_SIGNATURE,
-                "Signature header size %#x is invalid.\n", header_size);
+                "Signature header size %#x is invalid.", header_size);
         return VKD3D_ERROR_INVALID_ARGUMENT;
     }
     skip_dword_unknown(&ptr, i - 2);
@@ -438,7 +438,7 @@ static int shader_parse_signature(const struct vkd3d_shader_dxbc_section_desc *s
                 || !(e[i].semantic_name = vkd3d_strdup(name)))
         {
             vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_DXBC_INVALID_STRING_REFERENCE,
-                    "Element %u has invalid semantic name reference %#zx (data size %#zx).\n",
+                    "Element %u has invalid semantic name reference %#zx (data size %#zx).",
                     i, name_offset, section->data.size);
             fail = true;
         }
@@ -447,7 +447,7 @@ static int shader_parse_signature(const struct vkd3d_shader_dxbc_section_desc *s
         if ((e[i].component_type = read_u32(&ptr)) > VKD3D_SHADER_COMPONENT_FLOAT)
         {
             vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_DXBC_INVALID_COMPONENT_TYPE,
-                    "Element %u has invalid component type %#x.\n", i, e[i].component_type);
+                    "Element %u has invalid component type %#x.", i, e[i].component_type);
             fail = true;
         }
         e[i].register_index = read_u32(&ptr);
@@ -531,7 +531,7 @@ static int shdr_parse_features(const struct vkd3d_shader_dxbc_section_desc *sect
     {
         WARN("Invalid data size %#zx.\n", section->data.size);
         vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_DXBC_INVALID_CHUNK_SIZE,
-                "SFI0 section size %zu is too small to contain flags.\n", section->data.size);
+                "SFI0 section size %zu is too small to contain flags.", section->data.size);
         return VKD3D_ERROR_INVALID_ARGUMENT;
     }
     flags = read_u64(&ptr);

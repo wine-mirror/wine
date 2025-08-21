@@ -43,10 +43,12 @@ enum spirv_parser_operand_type
     SPIRV_PARSER_OPERAND_TYPE_ADDRESSING_MODEL,
     SPIRV_PARSER_OPERAND_TYPE_BUILT_IN,
     SPIRV_PARSER_OPERAND_TYPE_CAPABILITY,
+    SPIRV_PARSER_OPERAND_TYPE_COMPONENT_TYPE,
     SPIRV_PARSER_OPERAND_TYPE_COOPERATIVE_MATRIX_LAYOUT,
     SPIRV_PARSER_OPERAND_TYPE_COOPERATIVE_MATRIX_OPERANDS,
     SPIRV_PARSER_OPERAND_TYPE_COOPERATIVE_MATRIX_REDUCE,
     SPIRV_PARSER_OPERAND_TYPE_COOPERATIVE_MATRIX_USE,
+    SPIRV_PARSER_OPERAND_TYPE_COOPERATIVE_VECTOR_MATRIX_LAYOUT,
     SPIRV_PARSER_OPERAND_TYPE_DECORATION,
     SPIRV_PARSER_OPERAND_TYPE_DIM,
     SPIRV_PARSER_OPERAND_TYPE_EXECUTION_MODE,
@@ -82,6 +84,7 @@ enum spirv_parser_operand_type
     SPIRV_PARSER_OPERAND_TYPE_LITERAL_STRING,
     SPIRV_PARSER_OPERAND_TYPE_LOAD_CACHE_CONTROL,
     SPIRV_PARSER_OPERAND_TYPE_LOOP_CONTROL,
+    SPIRV_PARSER_OPERAND_TYPE_MATRIX_MULTIPLY_ACCUMULATE_OPERANDS,
     SPIRV_PARSER_OPERAND_TYPE_MEMORY_ACCESS,
     SPIRV_PARSER_OPERAND_TYPE_MEMORY_MODEL,
     SPIRV_PARSER_OPERAND_TYPE_MEMORY_SEMANTICS,
@@ -146,7 +149,7 @@ spirv_parser_operand_type_info[] =
     },
     [SPIRV_PARSER_OPERAND_TYPE_BUILT_IN] =
     {
-        "BuiltIn", SPIRV_PARSER_OPERAND_CATEGORY_VALUE_ENUM, 116,
+        "BuiltIn", SPIRV_PARSER_OPERAND_CATEGORY_VALUE_ENUM, 126,
         (struct spirv_parser_enumerant[])
         {
             {0, "Position"},
@@ -207,6 +210,9 @@ spirv_parser_operand_type_info[] =
             {0x1156, "DeviceIndex"},
             {0x1158, "ViewIndex"},
             {0x115c, "ShadingRateKHR"},
+            {0x118c, "TileOffsetQCOM"},
+            {0x118d, "TileDimensionQCOM"},
+            {0x118e, "TileApronSizeQCOM"},
             {0x1380, "BaryCoordNoPerspAMD"},
             {0x1381, "BaryCoordNoPerspCentroidAMD"},
             {0x1382, "BaryCoordNoPerspSampleAMD"},
@@ -258,18 +264,25 @@ spirv_parser_operand_type_info[] =
             {0x14e0, "HitMicroTriangleVertexBarycentricsNV"},
             {0x14e7, "IncomingRayFlagsKHR"},
             {0x14e8, "RayGeometryIndexKHR"},
+            {0x14ef, "HitIsSphereNV"},
+            {0x14f0, "HitIsLSSNV"},
+            {0x14f1, "HitSpherePositionNV"},
             {0x14fe, "WarpsPerSMNV"},
             {0x14ff, "SMCountNV"},
             {0x1500, "WarpIDNV"},
             {0x1501, "SMIDNV"},
+            {0x1514, "HitLSSPositionsNV"},
             {0x151d, "HitKindFrontFacingMicroTriangleNV"},
             {0x151e, "HitKindBackFacingMicroTriangleNV"},
+            {0x152c, "HitSphereRadiusNV"},
+            {0x152d, "HitLSSRadiiNV"},
+            {0x153c, "ClusterIDNV"},
             {0x1785, "CullMaskKHR"},
         }
     },
     [SPIRV_PARSER_OPERAND_TYPE_CAPABILITY] =
     {
-        "Capability", SPIRV_PARSER_OPERAND_CATEGORY_VALUE_ENUM, 245,
+        "Capability", SPIRV_PARSER_OPERAND_CATEGORY_VALUE_ENUM, 261,
         (struct spirv_parser_enumerant[])
         {
             {0, "Matrix"},
@@ -380,6 +393,7 @@ spirv_parser_operand_type_info[] =
             {0x1184, "TextureSampleWeightedQCOM"},
             {0x1185, "TextureBoxFilterQCOM"},
             {0x1186, "TextureBlockMatchQCOM"},
+            {0x118f, "TileShadingQCOM"},
             {0x1192, "TextureBlockMatch2QCOM"},
             {0x1390, "Float16ImageAMD"},
             {0x1391, "ImageGatherBiasLodAMD"},
@@ -390,6 +404,9 @@ spirv_parser_operand_type_info[] =
             {0x13bf, "ShaderClockKHR"},
             {0x13cb, "ShaderEnqueueAMDX"},
             {0x13df, "QuadControlKHR"},
+            {0x13fc, "BFloat16TypeKHR"},
+            {0x13fd, "BFloat16DotProductKHR"},
+            {0x13fe, "BFloat16CooperativeMatrixKHR"},
             {0x1481, "SampleMaskOverrideCoverageNV"},
             {0x1483, "GeometryShaderPassthroughNV"},
             {0x1486, "ShaderViewportIndexLayerEXT"},
@@ -435,14 +452,19 @@ spirv_parser_operand_type_info[] =
             {0x1507, "ShaderInvocationReorderNV"},
             {0x150e, "BindlessTextureNV"},
             {0x150f, "RayQueryPositionFetchKHR"},
+            {0x1512, "CooperativeVectorNV"},
             {0x151c, "AtomicFloat16VectorNV"},
             {0x1521, "RayTracingDisplacementMicromapNV"},
             {0x1526, "RawAccessChainsNV"},
+            {0x152a, "RayTracingSpheresGeometryNV"},
+            {0x152b, "RayTracingLinearSweptSpheresGeometryNV"},
             {0x1536, "CooperativeMatrixReductionsNV"},
             {0x1537, "CooperativeMatrixConversionsNV"},
             {0x1538, "CooperativeMatrixPerElementOperationsNV"},
             {0x1539, "CooperativeMatrixTensorAddressingNV"},
             {0x153a, "CooperativeMatrixBlockLoadsNV"},
+            {0x153b, "CooperativeVectorTrainingNV"},
+            {0x153d, "RayTracingClusterAccelerationStructureNV"},
             {0x153f, "TensorAddressingNV"},
             {0x15c0, "SubgroupShuffleINTEL"},
             {0x15c1, "SubgroupBufferBlockIOINTEL"},
@@ -507,16 +529,45 @@ spirv_parser_operand_type_info[] =
             {0x1800, "ArithmeticFenceEXT"},
             {0x1806, "FPGAClusterAttributesV2INTEL"},
             {0x1811, "FPGAKernelAttributesv2INTEL"},
+            {0x1812, "TaskSequenceINTEL"},
             {0x1819, "FPMaxErrorINTEL"},
             {0x181b, "FPGALatencyControlINTEL"},
             {0x181e, "FPGAArgumentInterfacesINTEL"},
             {0x182b, "GlobalVariableHostAccessINTEL"},
             {0x182d, "GlobalVariableFPGADecorationsINTEL"},
             {0x184c, "SubgroupBufferPrefetchINTEL"},
+            {0x1854, "Subgroup2DBlockIOINTEL"},
+            {0x1855, "Subgroup2DBlockTransformINTEL"},
+            {0x1856, "Subgroup2DBlockTransposeINTEL"},
+            {0x185c, "SubgroupMatrixMultiplyAccumulateINTEL"},
+            {0x1861, "TernaryBitwiseFunctionINTEL"},
             {0x1900, "GroupUniformArithmeticKHR"},
+            {0x1919, "TensorFloat32RoundingINTEL"},
             {0x191b, "MaskedGatherScatterINTEL"},
             {0x1929, "CacheControlsINTEL"},
             {0x193c, "RegisterLimitsINTEL"},
+        }
+    },
+    [SPIRV_PARSER_OPERAND_TYPE_COMPONENT_TYPE] =
+    {
+        "ComponentType", SPIRV_PARSER_OPERAND_CATEGORY_VALUE_ENUM, 15,
+        (struct spirv_parser_enumerant[])
+        {
+            {0, "Float16NV"},
+            {0x1, "Float32NV"},
+            {0x2, "Float64NV"},
+            {0x3, "SignedInt8NV"},
+            {0x4, "SignedInt16NV"},
+            {0x5, "SignedInt32NV"},
+            {0x6, "SignedInt64NV"},
+            {0x7, "UnsignedInt8NV"},
+            {0x8, "UnsignedInt16NV"},
+            {0x9, "UnsignedInt32NV"},
+            {0xa, "UnsignedInt64NV"},
+            {0x3ba247f8, "SignedInt8PackedNV"},
+            {0x3ba247f9, "UnsignedInt8PackedNV"},
+            {0x3ba247fa, "FloatE4M3NV"},
+            {0x3ba247fb, "FloatE5M2NV"},
         }
     },
     [SPIRV_PARSER_OPERAND_TYPE_COOPERATIVE_MATRIX_LAYOUT] =
@@ -561,6 +612,17 @@ spirv_parser_operand_type_info[] =
             {0, "MatrixAKHR"},
             {0x1, "MatrixBKHR"},
             {0x2, "MatrixAccumulatorKHR"},
+        }
+    },
+    [SPIRV_PARSER_OPERAND_TYPE_COOPERATIVE_VECTOR_MATRIX_LAYOUT] =
+    {
+        "CooperativeVectorMatrixLayout", SPIRV_PARSER_OPERAND_CATEGORY_VALUE_ENUM, 4,
+        (struct spirv_parser_enumerant[])
+        {
+            {0, "RowMajorNV"},
+            {0x1, "ColumnMajorNV"},
+            {0x2, "InferencingOptimalNV"},
+            {0x3, "TrainingOptimalNV"},
         }
     },
     [SPIRV_PARSER_OPERAND_TYPE_DECORATION] =
@@ -1178,7 +1240,7 @@ spirv_parser_operand_type_info[] =
     },
     [SPIRV_PARSER_OPERAND_TYPE_EXECUTION_MODE] =
     {
-        "ExecutionMode", SPIRV_PARSER_OPERAND_CATEGORY_VALUE_ENUM, 94,
+        "ExecutionMode", SPIRV_PARSER_OPERAND_CATEGORY_VALUE_ENUM, 96,
         (struct spirv_parser_enumerant[])
         {
             {
@@ -1324,6 +1386,16 @@ spirv_parser_operand_type_info[] =
                 0x116f, "RoundingModeRTZ", 1,
                 (enum spirv_parser_operand_type[])
                 {
+                    SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER,
+                }
+            },
+            {0x1189, "NonCoherentTileAttachmentReadQCOM"},
+            {
+                0x118a, "TileShadingRateQCOM", 3,
+                (enum spirv_parser_operand_type[])
+                {
+                    SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER,
+                    SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER,
                     SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER,
                 }
             },
@@ -1556,7 +1628,11 @@ spirv_parser_operand_type_info[] =
     },
     [SPIRV_PARSER_OPERAND_TYPE_FPENCODING] =
     {
-        "FPEncoding", SPIRV_PARSER_OPERAND_CATEGORY_VALUE_ENUM
+        "FPEncoding", SPIRV_PARSER_OPERAND_CATEGORY_VALUE_ENUM, 1,
+        (struct spirv_parser_enumerant[])
+        {
+            {0, "BFloat16KHR"},
+        }
     },
     [SPIRV_PARSER_OPERAND_TYPE_FPFAST_MATH_MODE] =
     {
@@ -1681,7 +1757,7 @@ spirv_parser_operand_type_info[] =
     },
     [SPIRV_PARSER_OPERAND_TYPE_IMAGE_CHANNEL_DATA_TYPE] =
     {
-        "ImageChannelDataType", SPIRV_PARSER_OPERAND_CATEGORY_VALUE_ENUM, 20,
+        "ImageChannelDataType", SPIRV_PARSER_OPERAND_CATEGORY_VALUE_ENUM, 26,
         (struct spirv_parser_enumerant[])
         {
             {0, "SnormInt8"},
@@ -1701,9 +1777,15 @@ spirv_parser_operand_type_info[] =
             {0xe, "Float"},
             {0xf, "UnormInt24"},
             {0x10, "UnormInt101010_2"},
+            {0x11, "UnormInt10X6EXT"},
             {0x13, "UnsignedIntRaw10EXT"},
             {0x14, "UnsignedIntRaw12EXT"},
             {0x15, "UnormInt2_101010EXT"},
+            {0x16, "UnsignedInt10X6EXT"},
+            {0x17, "UnsignedInt12X4EXT"},
+            {0x18, "UnsignedInt14X2EXT"},
+            {0x19, "UnormInt12X4EXT"},
+            {0x1a, "UnormInt14X2EXT"},
         }
     },
     [SPIRV_PARSER_OPERAND_TYPE_IMAGE_CHANNEL_ORDER] =
@@ -2064,6 +2146,28 @@ spirv_parser_operand_type_info[] =
             },
         }
     },
+    [SPIRV_PARSER_OPERAND_TYPE_MATRIX_MULTIPLY_ACCUMULATE_OPERANDS] =
+    {
+        "MatrixMultiplyAccumulateOperands", SPIRV_PARSER_OPERAND_CATEGORY_BIT_ENUM, 15,
+        (struct spirv_parser_enumerant[])
+        {
+            {0, "None"},
+            {0x1, "MatrixASignedComponentsINTEL"},
+            {0x2, "MatrixBSignedComponentsINTEL"},
+            {0x4, "MatrixCBFloat16INTEL"},
+            {0x8, "MatrixResultBFloat16INTEL"},
+            {0x10, "MatrixAPackedInt8INTEL"},
+            {0x20, "MatrixBPackedInt8INTEL"},
+            {0x40, "MatrixAPackedInt4INTEL"},
+            {0x80, "MatrixBPackedInt4INTEL"},
+            {0x100, "MatrixATF32INTEL"},
+            {0x200, "MatrixBTF32INTEL"},
+            {0x400, "MatrixAPackedFloat16INTEL"},
+            {0x800, "MatrixBPackedFloat16INTEL"},
+            {0x1000, "MatrixAPackedBFloat16INTEL"},
+            {0x2000, "MatrixBPackedBFloat16INTEL"},
+        }
+    },
     [SPIRV_PARSER_OPERAND_TYPE_MEMORY_ACCESS] =
     {
         "MemoryAccess", SPIRV_PARSER_OPERAND_CATEGORY_BIT_ENUM, 9,
@@ -2301,7 +2405,7 @@ spirv_parser_operand_type_info[] =
     },
     [SPIRV_PARSER_OPERAND_TYPE_SOURCE_LANGUAGE] =
     {
-        "SourceLanguage", SPIRV_PARSER_OPERAND_CATEGORY_VALUE_ENUM, 13,
+        "SourceLanguage", SPIRV_PARSER_OPERAND_CATEGORY_VALUE_ENUM, 14,
         (struct spirv_parser_enumerant[])
         {
             {0, "Unknown"},
@@ -2317,11 +2421,12 @@ spirv_parser_operand_type_info[] =
             {0xa, "WGSL"},
             {0xb, "Slang"},
             {0xc, "Zig"},
+            {0xd, "Rust"},
         }
     },
     [SPIRV_PARSER_OPERAND_TYPE_STORAGE_CLASS] =
     {
-        "StorageClass", SPIRV_PARSER_OPERAND_CATEGORY_VALUE_ENUM, 27,
+        "StorageClass", SPIRV_PARSER_OPERAND_CATEGORY_VALUE_ENUM, 28,
         (struct spirv_parser_enumerant[])
         {
             {0, "UniformConstant"},
@@ -2338,6 +2443,7 @@ spirv_parser_operand_type_info[] =
             {0xb, "Image"},
             {0xc, "StorageBuffer"},
             {0x104c, "TileImageEXT"},
+            {0x118b, "TileAttachmentQCOM"},
             {0x13cc, "NodePayloadAMDX"},
             {0x14d0, "CallableDataKHR"},
             {0x14d1, "IncomingCallableDataKHR"},
@@ -6891,6 +6997,78 @@ spirv_parser_opcode_info[] =
         }
     },
     {
+        0x14a8, "OpTypeCooperativeVectorNV", 3,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x14a9, "OpCooperativeVectorMatrixMulNV", 13,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF, '?'},
+            {SPIRV_PARSER_OPERAND_TYPE_COOPERATIVE_MATRIX_OPERANDS, '?'},
+        }
+    },
+    {
+        0x14aa, "OpCooperativeVectorOuterProductAccumulateNV", 7,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF, '?'},
+        }
+    },
+    {
+        0x14ab, "OpCooperativeVectorReduceSumAccumulateNV", 3,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x14ac, "OpCooperativeVectorMatrixMulAddNV", 16,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF, '?'},
+            {SPIRV_PARSER_OPERAND_TYPE_COOPERATIVE_MATRIX_OPERANDS, '?'},
+        }
+    },
+    {
         0x14ad, "OpCooperativeMatrixConvertNV", 3,
         (struct spirv_parser_instruction_operand[])
         {
@@ -6958,6 +7136,27 @@ spirv_parser_opcode_info[] =
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x14b6, "OpCooperativeVectorLoadNV", 5,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_MEMORY_ACCESS, '?'},
+        }
+    },
+    {
+        0x14b7, "OpCooperativeVectorStoreNV", 4,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_MEMORY_ACCESS, '?'},
         }
     },
     {
@@ -7047,6 +7246,25 @@ spirv_parser_opcode_info[] =
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x14e1, "OpRayQueryGetClusterIdNV", 4,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x14e2, "OpHitObjectGetClusterIdNV", 3,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
         }
     },
@@ -7363,6 +7581,130 @@ spirv_parser_opcode_info[] =
         }
     },
     {
+        0x1533, "OpRayQueryGetIntersectionSpherePositionNV", 4,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x1534, "OpRayQueryGetIntersectionSphereRadiusNV", 4,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x1535, "OpRayQueryGetIntersectionLSSPositionsNV", 4,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x1536, "OpRayQueryGetIntersectionLSSRadiiNV", 4,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x1537, "OpRayQueryGetIntersectionLSSHitValueNV", 4,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x1538, "OpHitObjectGetSpherePositionNV", 3,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x1539, "OpHitObjectGetSphereRadiusNV", 3,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x153a, "OpHitObjectGetLSSPositionsNV", 3,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x153b, "OpHitObjectGetLSSRadiiNV", 3,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x153c, "OpHitObjectIsSphereHitNV", 3,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x153d, "OpHitObjectIsLSSHitNV", 3,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x153e, "OpRayQueryIsSphereHitNV", 4,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x153f, "OpRayQueryIsLSSHitNV", 4,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
         0x15c3, "OpSubgroupShuffleINTEL", 4,
         (struct spirv_parser_instruction_operand[])
         {
@@ -7620,10 +7962,9 @@ spirv_parser_opcode_info[] =
         }
     },
     {
-        0x15e9, "OpAsmTargetINTEL", 3,
+        0x15e9, "OpAsmTargetINTEL", 2,
         (struct spirv_parser_instruction_operand[])
         {
-            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_STRING},
         }
@@ -8896,13 +9237,12 @@ spirv_parser_opcode_info[] =
         }
     },
     {
-        0x16d0, "OpArbitraryFloatSinCosPiINTEL", 9,
+        0x16d0, "OpArbitraryFloatSinCosPiINTEL", 8,
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
-            {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
@@ -8939,12 +9279,13 @@ spirv_parser_opcode_info[] =
         }
     },
     {
-        0x16d3, "OpArbitraryFloatCastToIntINTEL", 7,
+        0x16d3, "OpArbitraryFloatCastToIntINTEL", 8,
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
@@ -9462,7 +9803,7 @@ spirv_parser_opcode_info[] =
         }
     },
     {
-        0x16fa, "OpArbitraryFloatPowNINTEL", 9,
+        0x16fa, "OpArbitraryFloatPowNINTEL", 10,
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
@@ -9470,6 +9811,7 @@ spirv_parser_opcode_info[] =
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
@@ -9509,12 +9851,11 @@ spirv_parser_opcode_info[] =
         }
     },
     {
-        0x1723, "OpFixedSqrtINTEL", 9,
+        0x1723, "OpFixedSqrtINTEL", 8,
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
-            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
@@ -9524,12 +9865,11 @@ spirv_parser_opcode_info[] =
         }
     },
     {
-        0x1724, "OpFixedRecipINTEL", 9,
+        0x1724, "OpFixedRecipINTEL", 8,
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
-            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
@@ -9539,12 +9879,11 @@ spirv_parser_opcode_info[] =
         }
     },
     {
-        0x1725, "OpFixedRsqrtINTEL", 9,
+        0x1725, "OpFixedRsqrtINTEL", 8,
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
-            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
@@ -9554,12 +9893,11 @@ spirv_parser_opcode_info[] =
         }
     },
     {
-        0x1726, "OpFixedSinINTEL", 9,
+        0x1726, "OpFixedSinINTEL", 8,
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
-            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
@@ -9569,12 +9907,11 @@ spirv_parser_opcode_info[] =
         }
     },
     {
-        0x1727, "OpFixedCosINTEL", 9,
+        0x1727, "OpFixedCosINTEL", 8,
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
-            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
@@ -9584,12 +9921,11 @@ spirv_parser_opcode_info[] =
         }
     },
     {
-        0x1728, "OpFixedSinCosINTEL", 9,
+        0x1728, "OpFixedSinCosINTEL", 8,
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
-            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
@@ -9599,12 +9935,11 @@ spirv_parser_opcode_info[] =
         }
     },
     {
-        0x1729, "OpFixedSinPiINTEL", 9,
+        0x1729, "OpFixedSinPiINTEL", 8,
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
-            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
@@ -9614,12 +9949,11 @@ spirv_parser_opcode_info[] =
         }
     },
     {
-        0x172a, "OpFixedCosPiINTEL", 9,
+        0x172a, "OpFixedCosPiINTEL", 8,
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
-            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
@@ -9629,12 +9963,11 @@ spirv_parser_opcode_info[] =
         }
     },
     {
-        0x172b, "OpFixedSinCosPiINTEL", 9,
+        0x172b, "OpFixedSinCosPiINTEL", 8,
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
-            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
@@ -9644,12 +9977,11 @@ spirv_parser_opcode_info[] =
         }
     },
     {
-        0x172c, "OpFixedLogINTEL", 9,
+        0x172c, "OpFixedLogINTEL", 8,
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
-            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
@@ -9659,12 +9991,11 @@ spirv_parser_opcode_info[] =
         }
     },
     {
-        0x172d, "OpFixedExpINTEL", 9,
+        0x172d, "OpFixedExpINTEL", 8,
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
-            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
             {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
@@ -9712,12 +10043,11 @@ spirv_parser_opcode_info[] =
         }
     },
     {
-        0x173d, "OpFPGARegINTEL", 4,
+        0x173d, "OpFPGARegINTEL", 3,
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
-            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
         }
     },
@@ -9982,12 +10312,160 @@ spirv_parser_opcode_info[] =
         }
     },
     {
+        0x1813, "OpTaskSequenceCreateINTEL", 7,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
+            {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
+            {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
+            {SPIRV_PARSER_OPERAND_TYPE_LITERAL_INTEGER},
+        }
+    },
+    {
+        0x1814, "OpTaskSequenceAsyncINTEL", 2,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF, '*'},
+        }
+    },
+    {
+        0x1815, "OpTaskSequenceGetINTEL", 3,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x1816, "OpTaskSequenceReleaseINTEL", 1,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x1837, "OpTypeTaskSequenceINTEL", 1,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+        }
+    },
+    {
         0x184d, "OpSubgroupBlockPrefetchINTEL", 3,
         (struct spirv_parser_instruction_operand[])
         {
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
             {SPIRV_PARSER_OPERAND_TYPE_MEMORY_ACCESS, '?'},
+        }
+    },
+    {
+        0x1857, "OpSubgroup2DBlockLoadINTEL", 10,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x1858, "OpSubgroup2DBlockLoadTransformINTEL", 10,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x1859, "OpSubgroup2DBlockLoadTransposeINTEL", 10,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x185a, "OpSubgroup2DBlockPrefetchINTEL", 9,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x185b, "OpSubgroup2DBlockStoreINTEL", 10,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x185d, "OpSubgroupMatrixMultiplyAccumulateINTEL", 7,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_MATRIX_MULTIPLY_ACCUMULATE_OPERANDS, '?'},
+        }
+    },
+    {
+        0x1862, "OpBitwiseFunctionINTEL", 6,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
         }
     },
     {
@@ -10075,6 +10553,15 @@ spirv_parser_opcode_info[] =
             {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
             {SPIRV_PARSER_OPERAND_TYPE_ID_SCOPE},
             {SPIRV_PARSER_OPERAND_TYPE_GROUP_OPERATION},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
+        }
+    },
+    {
+        0x191a, "OpRoundFToTF32INTEL", 3,
+        (struct spirv_parser_instruction_operand[])
+        {
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT_TYPE},
+            {SPIRV_PARSER_OPERAND_TYPE_ID_RESULT},
             {SPIRV_PARSER_OPERAND_TYPE_ID_REF},
         }
     },

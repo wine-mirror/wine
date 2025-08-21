@@ -38,6 +38,7 @@ struct preproc_buffer
 {
     void *lexer_buffer;
     struct vkd3d_shader_location location;
+    bool eof;
 };
 
 struct preproc_file
@@ -125,7 +126,6 @@ struct preproc_ctx
     int lookahead_token;
 
     bool last_was_newline;
-    bool last_was_eof;
     bool last_was_defined;
 
     bool error;

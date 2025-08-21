@@ -158,6 +158,7 @@ static                  {return KW_STATIC;              }
 string                  {return KW_STRING;              }
 String                  {return KW_STRING;              }
 struct                  {return KW_STRUCT;              }
+StructuredBuffer        {return KW_STRUCTUREDBUFFER;    }
 switch                  {return KW_SWITCH;              }
 tbuffer                 {return KW_TBUFFER;             }
 (?i:technique)          {return KW_TECHNIQUE;           }

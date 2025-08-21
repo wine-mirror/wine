@@ -21,10 +21,6 @@
 
 #include "vkd3d_shader.h"
 
-#define TAG_DXIL VKD3D_MAKE_TAG('D', 'X', 'I', 'L')
-#define TAG_SHDR VKD3D_MAKE_TAG('S', 'H', 'D', 'R')
-#define TAG_SHEX VKD3D_MAKE_TAG('S', 'H', 'E', 'X')
-
 static inline enum vkd3d_result vkd3d_shader_parse_dxbc_source_type(const struct vkd3d_shader_code *dxbc,
         enum vkd3d_shader_source_type *type, char **messages)
 {

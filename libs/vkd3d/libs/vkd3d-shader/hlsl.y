@@ -2117,7 +2117,8 @@ static bool add_assignment(struct hlsl_ctx *ctx, struct hlsl_block *block, struc
         VKD3D_ASSERT(coords->data_type->e.numeric.type == HLSL_TYPE_UINT);
         VKD3D_ASSERT(coords->data_type->e.numeric.dimx == dim_count);
 
-        hlsl_block_add_resource_store(ctx, block, HLSL_RESOURCE_STORE, &resource_deref, coords, rhs, &lhs->loc);
+        hlsl_block_add_resource_store(ctx, block, HLSL_RESOURCE_STORE,
+                &resource_deref, coords, rhs, writemask, &lhs->loc);
         hlsl_cleanup_deref(&resource_deref);
     }
     else if (matrix_writemask)
@@ -2559,10 +2560,17 @@ static void declare_var(struct hlsl_ctx *ctx, struct parse_variable_def *v)
             hlsl_error(ctx, &var->loc, VKD3D_SHADER_ERROR_HLSL_INVALID_MODIFIER,
                     "Variable '%s' is declared as both \"uniform\" and \"static\".", var->name);
 
+        if ((modifiers & HLSL_STORAGE_GROUPSHARED) && ctx->profile->type != VKD3D_SHADER_TYPE_COMPUTE)
+        {
+            modifiers &= ~HLSL_STORAGE_GROUPSHARED;
+            hlsl_warning(ctx, &var->loc, VKD3D_SHADER_WARNING_HLSL_IGNORED_MODIFIER,
+                    "Ignoring the 'groupshared' modifier in a non-compute shader.");
+        }
+
         /* Mark it as uniform. We need to do this here since synthetic
             * variables also get put in the global scope, but shouldn't be
             * considered uniforms, and we have no way of telling otherwise. */
-        if (!(modifiers & HLSL_STORAGE_STATIC))
+        if (!(modifiers & (HLSL_STORAGE_STATIC | HLSL_STORAGE_GROUPSHARED)))
             var->storage_modifiers |= HLSL_STORAGE_UNIFORM;
 
         if (stream_output)
@@ -4291,6 +4299,28 @@ static bool intrinsic_mul(struct hlsl_ctx *ctx,
     return true;
 }
 
+static bool intrinsic_noise(struct hlsl_ctx *ctx,
+        const struct parse_initializer *params, const struct vkd3d_shader_location *loc)
+{
+    struct hlsl_type *type = params->args[0]->data_type, *ret_type;
+    struct hlsl_ir_node *args[HLSL_MAX_OPERANDS] = {0};
+
+    type = params->args[0]->data_type;
+    if (type->class == HLSL_CLASS_MATRIX)
+    {
+        struct vkd3d_string_buffer *string;
+        if ((string = hlsl_type_to_string(ctx, type)))
+            hlsl_error(ctx, loc, VKD3D_SHADER_ERROR_HLSL_INVALID_TYPE,
+                    "Wrong argument type for noise(): expected vector or scalar, but got '%s'.", string->buffer);
+        hlsl_release_string_buffer(ctx, string);
+    }
+
+    args[0] = intrinsic_float_convert_arg(ctx, params, params->args[0], loc);
+    ret_type = hlsl_get_scalar_type(ctx, args[0]->data_type->e.numeric.type);
+
+    return !!add_expr(ctx, params->instrs, HLSL_OP1_NOISE, args, ret_type, loc);
+}
+
 static bool intrinsic_normalize(struct hlsl_ctx *ctx,
         const struct parse_initializer *params, const struct vkd3d_shader_location *loc)
 {
@@ -5033,13 +5063,25 @@ static bool intrinsic_interlocked(struct hlsl_ctx *ctx, enum hlsl_interlocked_op
 
         if (hlsl_deref_get_type(ctx, &dst_deref)->class != HLSL_CLASS_UAV)
         {
-            hlsl_error(ctx, loc, VKD3D_SHADER_ERROR_HLSL_INVALID_TYPE, "Interlocked targets must be UAV elements.");
+            hlsl_error(ctx, loc, VKD3D_SHADER_ERROR_HLSL_INVALID_TYPE,
+                    "Interlocked targets must be UAV or groupshared elements.");
             return false;
         }
     }
+    else if (lhs->type == HLSL_IR_INDEX && hlsl_index_chain_has_tgsm_access(hlsl_ir_index(lhs)))
+    {
+        hlsl_fixme(ctx, loc, "Interlocked operations on indexed groupshared elements.");
+        return false;
+    }
+    else if (lhs->type == HLSL_IR_LOAD && (hlsl_ir_load(lhs)->src.var->storage_modifiers & HLSL_STORAGE_GROUPSHARED))
+    {
+        hlsl_init_simple_deref_from_var(&dst_deref, hlsl_ir_load(lhs)->src.var);
+        coords = hlsl_block_add_uint_constant(ctx, params->instrs, 0, loc);
+    }
     else
     {
-        hlsl_error(ctx, loc, VKD3D_SHADER_ERROR_HLSL_INVALID_TYPE, "Interlocked targets must be UAV elements.");
+        hlsl_error(ctx, loc, VKD3D_SHADER_ERROR_HLSL_INVALID_TYPE,
+                "Interlocked targets must be UAV or groupshared elements.");
         return false;
     }
 
@@ -5119,10 +5161,10 @@ static bool intrinsic_InterlockedXor(struct hlsl_ctx *ctx,
 
 static void validate_group_barrier_profile(struct hlsl_ctx *ctx, const struct vkd3d_shader_location *loc)
 {
-    if (ctx->profile->type != VKD3D_SHADER_TYPE_COMPUTE || hlsl_version_lt(ctx, 5, 0))
+    if (ctx->profile->type != VKD3D_SHADER_TYPE_COMPUTE)
     {
         hlsl_error(ctx, loc, VKD3D_SHADER_ERROR_HLSL_INCOMPATIBLE_PROFILE,
-                "Group barriers can only be used in compute shaders 5.0 or higher.");
+                "Group barriers can only be used in compute shaders.");
     }
 }
 
@@ -5146,10 +5188,10 @@ static bool intrinsic_DeviceMemoryBarrier(struct hlsl_ctx *ctx,
         const struct parse_initializer *params, const struct vkd3d_shader_location *loc)
 {
     if ((ctx->profile->type != VKD3D_SHADER_TYPE_COMPUTE && ctx->profile->type != VKD3D_SHADER_TYPE_PIXEL)
-            || hlsl_version_lt(ctx, 5, 0))
+            || hlsl_version_lt(ctx, 4, 0))
     {
         hlsl_error(ctx, loc, VKD3D_SHADER_ERROR_HLSL_INCOMPATIBLE_PROFILE,
-                "DeviceMemoryBarrier() can only be used in pixel and compute shaders 5.0 or higher.");
+                "DeviceMemoryBarrier() can only be used in compute and pixel shaders 4.0 or higher.");
     }
     return !!hlsl_block_add_sync(ctx, params->instrs, VKD3DSSF_GLOBAL_UAV, loc);
 }
@@ -5255,6 +5297,7 @@ intrinsic_functions[] =
     {"min",                                 2, true,  intrinsic_min},
     {"modf",                                2, true,  intrinsic_modf},
     {"mul",                                 2, true,  intrinsic_mul},
+    {"noise",                               1, true,  intrinsic_noise},
     {"normalize",                           1, true,  intrinsic_normalize},
     {"pow",                                 2, true,  intrinsic_pow},
     {"radians",                             1, true,  intrinsic_radians},
@@ -5604,6 +5647,7 @@ static unsigned int hlsl_offset_dim_count(enum hlsl_sampler_dim dim)
         case HLSL_SAMPLER_DIM_CUBEARRAY:
         case HLSL_SAMPLER_DIM_BUFFER:
         case HLSL_SAMPLER_DIM_RAW_BUFFER:
+        case HLSL_SAMPLER_DIM_STRUCTURED_BUFFER:
             /* Offset parameters not supported for these types. */
             return 0;
         default:
@@ -6269,6 +6313,7 @@ static bool add_store_method_call(struct hlsl_ctx *ctx, struct hlsl_block *block
     struct hlsl_ir_node *offset, *rhs;
     struct hlsl_deref resource_deref;
     unsigned int value_dim;
+    uint32_t writemask;
 
     if (params->args_count != 2)
     {
@@ -6290,11 +6335,12 @@ static bool add_store_method_call(struct hlsl_ctx *ctx, struct hlsl_block *block
             hlsl_get_scalar_type(ctx, HLSL_TYPE_UINT), loc);
     rhs = add_implicit_conversion(ctx, block, params->args[1],
             hlsl_get_vector_type(ctx, HLSL_TYPE_UINT, value_dim), loc);
+    writemask = vkd3d_write_mask_from_component_count(value_dim);
 
     if (!hlsl_init_deref_from_index_chain(ctx, &resource_deref, object))
         return false;
 
-    hlsl_block_add_resource_store(ctx, block, HLSL_RESOURCE_STORE, &resource_deref, offset, rhs, loc);
+    hlsl_block_add_resource_store(ctx, block, HLSL_RESOURCE_STORE, &resource_deref, offset, rhs, writemask, loc);
     hlsl_cleanup_deref(&resource_deref);
 
     return true;
@@ -6319,7 +6365,7 @@ static bool add_so_append_method_call(struct hlsl_ctx *ctx, struct hlsl_block *b
     if (!(rhs = add_implicit_conversion(ctx, block, params->args[0], object->data_type->e.so.type, loc)))
         return false;
 
-    hlsl_block_add_resource_store(ctx, block, HLSL_RESOURCE_STREAM_APPEND, &so_deref, NULL, rhs, loc);
+    hlsl_block_add_resource_store(ctx, block, HLSL_RESOURCE_STREAM_APPEND, &so_deref, NULL, rhs, 0, loc);
     hlsl_cleanup_deref(&so_deref);
 
     return true;
@@ -6340,7 +6386,7 @@ static bool add_so_restartstrip_method_call(struct hlsl_ctx *ctx, struct hlsl_bl
     if (!hlsl_init_deref_from_index_chain(ctx, &so_deref, object))
         return false;
 
-    hlsl_block_add_resource_store(ctx, block, HLSL_RESOURCE_STREAM_RESTART, &so_deref, NULL, NULL, loc);
+    hlsl_block_add_resource_store(ctx, block, HLSL_RESOURCE_STREAM_RESTART, &so_deref, NULL, NULL, 0, loc);
     hlsl_cleanup_deref(&so_deref);
 
     return true;
@@ -6521,19 +6567,25 @@ static bool add_object_property_access(struct hlsl_ctx *ctx,
     return false;
 }
 
-static void validate_texture_format_type(struct hlsl_ctx *ctx, struct hlsl_type *format,
-        const struct vkd3d_shader_location *loc)
+static void validate_texture_format_type(struct hlsl_ctx *ctx, enum hlsl_sampler_dim dim,
+        struct hlsl_type *format, const struct vkd3d_shader_location *loc)
 {
-    if (format->class > HLSL_CLASS_VECTOR)
-    {
-        struct vkd3d_string_buffer *string;
+    struct vkd3d_string_buffer *string;
 
-        string = hlsl_type_to_string(ctx, format);
-        if (string)
+    if (!(string = hlsl_type_to_string(ctx, format)))
+        return;
+
+    if (dim == HLSL_SAMPLER_DIM_STRUCTURED_BUFFER)
+    {
+        if (!type_contains_only_numerics(format))
             hlsl_error(ctx, loc, VKD3D_SHADER_ERROR_HLSL_INVALID_TYPE,
-                    "Texture data type %s is not scalar or vector.", string->buffer);
-        hlsl_release_string_buffer(ctx, string);
+                    "SRV type %s is not numeric.", string->buffer);
     }
+    else if (format->class > HLSL_CLASS_VECTOR)
+        hlsl_error(ctx, loc, VKD3D_SHADER_ERROR_HLSL_INVALID_TYPE,
+                "Texture data type %s is not scalar or vector.", string->buffer);
+
+    hlsl_release_string_buffer(ctx, string);
 }
 
 static bool check_continue(struct hlsl_ctx *ctx, const struct hlsl_scope *scope, const struct vkd3d_shader_location *loc)
@@ -6801,6 +6853,7 @@ static void validate_uav_type(struct hlsl_ctx *ctx, enum hlsl_sampler_dim dim,
 %token KW_STATIC
 %token KW_STRING
 %token KW_STRUCT
+%token KW_STRUCTUREDBUFFER
 %token KW_SWITCH
 %token KW_TBUFFER
 %token KW_TECHNIQUE
@@ -7137,23 +7190,19 @@ declaration_statement_list:
 preproc_directive:
       PRE_LINE STRING
         {
-            const char **new_array = NULL;
-
-            ctx->location.line = $1;
             if (strcmp($2, ctx->location.source_name))
-                new_array = hlsl_realloc(ctx, ctx->source_files,
-                        sizeof(*ctx->source_files) * (ctx->source_files_count + 1));
-
-            if (new_array)
             {
-                ctx->source_files = new_array;
-                ctx->source_files[ctx->source_files_count++] = $2;
-                ctx->location.source_name = $2;
+                if (!vkd3d_shader_source_list_append(ctx->source_files, $2))
+                {
+                    ctx->result = VKD3D_ERROR_OUT_OF_MEMORY;
+                }
+                else
+                {
+                    ctx->location.line = $1;
+                    ctx->location.source_name = ctx->source_files->sources[ctx->source_files->count - 1];
+                }
             }
-            else
-            {
-                vkd3d_free($2);
-            }
+            vkd3d_free($2);
         }
 
 struct_declaration_without_vars:
@@ -7888,6 +7937,10 @@ texture_type:
         {
             $$ = HLSL_SAMPLER_DIM_BUFFER;
         }
+    | KW_STRUCTUREDBUFFER
+        {
+            $$ = HLSL_SAMPLER_DIM_STRUCTURED_BUFFER;
+        }
     | KW_TEXTURE1D
         {
             $$ = HLSL_SAMPLER_DIM_1D;
@@ -8111,16 +8164,19 @@ type_no_void:
         }
     | texture_type
         {
+            if ($1 == HLSL_SAMPLER_DIM_STRUCTURED_BUFFER)
+                hlsl_error(ctx, &@1, VKD3D_SHADER_ERROR_HLSL_INVALID_TYPE,
+                        "Structured buffer type requires an explicit format.");
             $$ = hlsl_new_texture_type(ctx, $1, hlsl_get_vector_type(ctx, HLSL_TYPE_FLOAT, 4), 0);
         }
     | texture_type '<' resource_format '>'
         {
-            validate_texture_format_type(ctx, $3, &@3);
+            validate_texture_format_type(ctx, $1, $3, &@3);
             $$ = hlsl_new_texture_type(ctx, $1, $3, 0);
         }
     | texture_ms_type '<' resource_format '>'
         {
-            validate_texture_format_type(ctx, $3, &@3);
+            validate_texture_format_type(ctx, $1, $3, &@3);
 
             $$ = hlsl_new_texture_type(ctx, $1, $3, 0);
         }

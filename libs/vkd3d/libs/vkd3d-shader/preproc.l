@@ -71,8 +71,8 @@ INT_SUFFIX      [uUlL]{0,2}
 
 %%
 
-<INITIAL>"//"                       {yy_push_state(CXX_COMMENT, yyscanner);}
-<INITIAL>"/*"                       {yy_push_state(C_COMMENT, yyscanner);}
+<INITIAL,INCLUDE,LINE>"//"          {yy_push_state(CXX_COMMENT, yyscanner);}
+<INITIAL,INCLUDE,LINE>"/*"          {yy_push_state(C_COMMENT, yyscanner);}
 <CXX_COMMENT>\\{NEWLINE}            {}
 <CXX_COMMENT>\n                     {
         yy_pop_state(yyscanner);
@@ -80,7 +80,11 @@ INT_SUFFIX      [uUlL]{0,2}
         return T_NEWLINE;
     }
 <C_COMMENT>"*/"                     {yy_pop_state(yyscanner);}
-<C_COMMENT,CXX_COMMENT><<EOF>>      {yy_pop_state(yyscanner);}
+<C_COMMENT,CXX_COMMENT><<EOF>>      {
+        yy_pop_state(yyscanner);
+        BEGIN(INITIAL);
+        yyterminate();
+    }
 <C_COMMENT,CXX_COMMENT>.            {}
 <C_COMMENT>\n                       {}
 
@@ -196,6 +200,10 @@ INT_SUFFIX      [uUlL]{0,2}
         BEGIN(INITIAL);
         return T_NEWLINE;
     }
+<INITIAL,INCLUDE,ERROR,LINE><<EOF>> {
+        BEGIN(INITIAL);
+        yyterminate();
+    }
 
 <INITIAL,INCLUDE,LINE>{WS}+         {}
 <INITIAL>[-()\[\]{},+!*/<>&|^?:]    {return yytext[0];}
@@ -250,8 +258,19 @@ static bool should_concat(struct preproc_ctx *ctx)
     return !macro || macro->arg_count;
 }
 
+static struct preproc_buffer *preproc_get_top_buffer(struct preproc_ctx *ctx)
+{
+    if (ctx->expansion_count)
+        return &ctx->expansion_stack[ctx->expansion_count - 1].buffer;
+    if (ctx->file_count)
+        return &ctx->file_stack[ctx->file_count - 1].buffer;
+    return NULL;
+}
+
 static void preproc_pop_buffer(struct preproc_ctx *ctx)
 {
+    struct preproc_buffer *buffer;
+
     if (ctx->expansion_count)
     {
         struct preproc_expansion *exp = &ctx->expansion_stack[ctx->expansion_count - 1];
@@ -290,10 +309,8 @@ static void preproc_pop_buffer(struct preproc_ctx *ctx)
         TRACE("File stack size is now %zu.\n", ctx->file_count);
     }
 
-    if (ctx->expansion_count)
-        yy_switch_to_buffer(ctx->expansion_stack[ctx->expansion_count - 1].buffer.lexer_buffer, ctx->scanner);
-    else if (ctx->file_count)
-        yy_switch_to_buffer(ctx->file_stack[ctx->file_count - 1].buffer.lexer_buffer, ctx->scanner);
+    if ((buffer = preproc_get_top_buffer(ctx)))
+        yy_switch_to_buffer(buffer->lexer_buffer, ctx->scanner);
 }
 
 static int return_token(int token, YYSTYPE *lval, const char *text)
@@ -347,6 +364,7 @@ static bool preproc_push_expansion(struct preproc_ctx *ctx,
     exp->text = text;
     exp->buffer.lexer_buffer = yy_scan_bytes(text->text.buffer, text->text.content_size, ctx->scanner);
     exp->buffer.location = text->location;
+    exp->buffer.eof = false;
     exp->macro = macro;
     exp->arg_values = arg_values;
     TRACE("Expansion stack size is now %zu.\n", ctx->expansion_count);
@@ -407,18 +425,17 @@ int yylex(YYSTYPE *lval, YYLTYPE *lloc, yyscan_t scanner)
         }
         else
         {
-            if (ctx->last_was_eof)
+            if (preproc_get_top_buffer(ctx)->eof)
             {
                 preproc_pop_buffer(ctx);
                 if (!ctx->file_count)
                     return 0;
             }
-            ctx->last_was_eof = false;
 
             VKD3D_ASSERT(ctx->file_count);
             if (!(token = preproc_lexer_lex(lval, lloc, scanner)))
             {
-                ctx->last_was_eof = true;
+                preproc_get_top_buffer(ctx)->eof = true;
 
                 /* If we have reached the end of an included file, inject a newline. */
                 if (ctx->expansion_count)
@@ -781,6 +798,7 @@ bool preproc_push_include(struct preproc_ctx *ctx, char *filename, const struct 
     file->buffer.location.source_name = file->filename;
     file->buffer.location.line = 1;
     file->buffer.location.column = 1;
+    file->buffer.eof = false;
     TRACE("File stack size is now %zu.\n", ctx->file_count);
     ctx->last_was_newline = true;
     return true;

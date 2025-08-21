@@ -5193,7 +5193,12 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_EnumerateMetaCommands(ID3D12Device
     FIXME("iface %p, num_meta_commands %p, command_desc %p stub!\n", iface,
             num_meta_commands, command_desc);
 
-    return E_NOTIMPL;
+    if (!num_meta_commands)
+        return E_INVALIDARG;
+
+    *num_meta_commands = 0;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_device_EnumerateMetaCommandParameters(ID3D12Device9 *iface,

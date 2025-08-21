@@ -66,6 +66,7 @@
 
 #define TAG_AON9 VKD3D_MAKE_TAG('A', 'o', 'n', '9')
 #define TAG_CLI4 VKD3D_MAKE_TAG('C', 'L', 'I', '4')
+#define TAG_CLIT VKD3D_MAKE_TAG('C', 'L', 'I', 'T')
 #define TAG_CTAB VKD3D_MAKE_TAG('C', 'T', 'A', 'B')
 #define TAG_DXBC VKD3D_MAKE_TAG('D', 'X', 'B', 'C')
 #define TAG_DXIL VKD3D_MAKE_TAG('D', 'X', 'I', 'L')
