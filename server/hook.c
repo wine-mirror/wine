@@ -257,7 +257,7 @@ static inline struct hook *get_first_valid_hook( struct hook_table *table, int i
             }
         }
     }
-    return hook;
+    return NULL;
 }
 
 /* find the next hook in the chain, skipping the deleted ones */
@@ -286,11 +286,9 @@ static struct hook *get_next_hook( struct thread *thread, struct hook *hook, int
         }
     }
     global_hooks = get_global_hooks( thread );
-    if (global_hooks && table != global_hooks)  /* now search through the global table */
-    {
-        hook = get_first_valid_hook( global_hooks, index, event, win, object_id, child_id );
-    }
-    return hook;
+    if (!global_hooks || global_hooks == table) return NULL;
+    /* now search through the global table */
+    return get_first_valid_hook( global_hooks, index, event, win, object_id, child_id );
 }
 
 static void hook_table_dump( struct object *obj, int verbose )
