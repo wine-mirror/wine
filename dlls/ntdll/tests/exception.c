@@ -9281,10 +9281,12 @@ static void test_outputdebugstring(BOOL unicode, DWORD numexc_ansi, BOOL todo_an
 
     outputdebugstring_exceptions_ansi = outputdebugstring_exceptions_unicode = 0;
 
+    SetLastError(0xdeadbeef);
     if (unicode)
         OutputDebugStringW(L"Hello World");
     else
         OutputDebugStringA("Hello World");
+    ok(GetLastError() == 0xdeadbeef, "got %#lx.\n", GetLastError());
 
     todo_wine_if(todo_ansi)
     ok(outputdebugstring_exceptions_ansi == numexc_ansi,
@@ -9368,10 +9370,12 @@ static void test_outputdebugstring_newmodel(void)
         outputdebugstring_exceptions_newmodel_order = 0;
         outputdebugstring_newmodel_return = tests[i].ret_code;
 
+        SetLastError(0xdeadbeef);
         if (tests[i].unicode)
             OutputDebugStringW(L"Hello World");
         else
             OutputDebugStringA("Hello World");
+        ok(GetLastError() == 0xdeadbeef, "got %#lx.\n", GetLastError());
 
         ok(outputdebugstring_exceptions_newmodel_order == tests[i].exceptions_order,
            "OutputDebugString%c/%u generated exceptions %04lxs, expected %04lx\n",
