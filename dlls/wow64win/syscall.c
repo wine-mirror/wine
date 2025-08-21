@@ -26,7 +26,25 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "winternl.h"
+#include "rtlsupportapi.h"
 #include "wow64win_private.h"
+
+static void DECLSPEC_NORETURN stub_syscall( const char *name )
+{
+    EXCEPTION_RECORD record;
+
+    record.ExceptionCode    = EXCEPTION_WINE_STUB;
+    record.ExceptionFlags   = EXCEPTION_NONCONTINUABLE;
+    record.ExceptionRecord  = NULL;
+    record.ExceptionAddress = stub_syscall;
+    record.NumberParameters = 2;
+    record.ExceptionInformation[0] = (ULONG_PTR)"win32u";
+    record.ExceptionInformation[1] = (ULONG_PTR)name;
+    for (;;) RtlRaiseException( &record );
+}
+
+#define SYSCALL_STUB(name) NTSTATUS WINAPI wow64_ ## name( UINT *args ) { stub_syscall( #name ); }
+ALL_SYSCALL_STUBS
 
 static void * const win32_syscalls[] =
 {

@@ -2495,6 +2495,9 @@ BOOL SYSCALL_API __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *siz
     SYSCALL_FUNC( __wine_get_icm_profile );
 }
 
+#define SYSCALL_STUB(name) NTSTATUS SYSCALL_API name(void) { SYSCALL_FUNC( name ); }
+ALL_SYSCALL_STUBS
+
 #else /*  __arm64ec__ */
 
 #ifdef _WIN64
@@ -2508,20 +2511,6 @@ ALL_SYSCALLS
 
 #endif /*  __arm64ec__ */
 
-
-void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *function )
-{
-    EXCEPTION_RECORD record;
-
-    record.ExceptionCode    = EXCEPTION_WINE_STUB;
-    record.ExceptionFlags   = EXCEPTION_NONCONTINUABLE;
-    record.ExceptionRecord  = NULL;
-    record.ExceptionAddress = __wine_spec_unimplemented_stub;
-    record.NumberParameters = 2;
-    record.ExceptionInformation[0] = (ULONG_PTR)module;
-    record.ExceptionInformation[1] = (ULONG_PTR)function;
-    for (;;) RtlRaiseException( &record );
-}
 
 void *dummy = NtQueryVirtualMemory;  /* forced import to avoid link error with winecrt0 */
 
