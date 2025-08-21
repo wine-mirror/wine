@@ -2422,6 +2422,27 @@ static void test_kill_on_exit(const char *argv0)
     heap_free(cmd);
 }
 
+static void test_OutputDebugString(void)
+{
+    static void (WINAPI *pOutputDebugStringA)(const char *);
+
+    pOutputDebugStringA = (void *)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "OutputDebugStringA");
+    ok(!!pOutputDebugStringA, "got NULL");
+    SetLastError(0xdeadbeef);
+    pOutputDebugStringA("test");
+    ok(GetLastError() == 0xdeadbeef, "got %ld.\n", GetLastError());
+
+    pOutputDebugStringA = (void *)GetProcAddress(GetModuleHandleW(L"kernelbase.dll"), "OutputDebugStringA");
+    ok(!!pOutputDebugStringA, "got NULL");
+    SetLastError(0xdeadbeef);
+    pOutputDebugStringA("test");
+    ok(GetLastError() == 0xdeadbeef, "got %ld.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    OutputDebugStringW(L"test");
+    ok(GetLastError() == 0xdeadbeef, "got %ld.\n", GetLastError());
+}
+
 START_TEST(debugger)
 {
     HMODULE hdll;
@@ -2487,5 +2508,6 @@ START_TEST(debugger)
         test_debug_children(myARGV[0], DEBUG_ONLY_THIS_PROCESS, FALSE, TRUE);
         test_debugger(myARGV[0]);
         test_kill_on_exit(myARGV[0]);
+        test_OutputDebugString();
     }
 }
