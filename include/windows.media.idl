@@ -363,6 +363,16 @@ namespace Windows.Media
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.SystemMediaTransportControls),
+        uuid(43ba380a-eca4-4832-91ab-d415fae484c6)
+    ]
+    interface ISystemMediaTransportControlsStatics : IInspectable
+    {
+        HRESULT GetForCurrentView([out, retval] Windows.Media.SystemMediaTransportControls **controls);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.Media.SystemMediaTransportControlsTimelineProperties),
         uuid(5125316a-c3a2-475b-8507-93534dc88f15)
     ]
