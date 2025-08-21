@@ -1496,6 +1496,7 @@ enable_wevtsvc
 enable_wiaservc
 enable_wimgapi
 enable_win32u
+enable_winbio
 enable_windows_applicationmodel
 enable_windows_devices_bluetooth
 enable_windows_devices_enumeration
@@ -22986,6 +22987,7 @@ wine_fn_config_makefile dlls/win32u enable_win32u
 wine_fn_config_makefile dlls/win32u/tests enable_tests
 wine_fn_config_makefile dlls/win87em.dll16 enable_win16
 wine_fn_config_makefile dlls/winaspi.dll16 enable_win16
+wine_fn_config_makefile dlls/winbio enable_winbio
 wine_fn_config_makefile dlls/windebug.dll16 enable_win16
 wine_fn_config_makefile dlls/windows.applicationmodel enable_windows_applicationmodel
 wine_fn_config_makefile dlls/windows.applicationmodel/tests enable_tests
