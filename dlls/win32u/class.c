@@ -315,16 +315,12 @@ atom_t wine_server_add_atom( void *req, UNICODE_STRING *str )
 BOOL is_desktop_class( UNICODE_STRING *name )
 {
     static const WCHAR desktopW[] = {'#','3','2','7','6','9'};
-    ATOM atom;
-    if ((atom = get_int_atom_value( name ))) return atom == DESKTOP_CLASS_ATOM;
     return name->Length == sizeof(desktopW) && !wcsnicmp( name->Buffer, desktopW, ARRAY_SIZE(desktopW) );
 }
 
 BOOL is_message_class( UNICODE_STRING *name )
 {
     static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
-    ATOM atom;
-    if ((atom = get_int_atom_value( name ))) return FALSE;
     return name->Length == sizeof(messageW) && !wcsnicmp( name->Buffer, messageW, ARRAY_SIZE(messageW) );
 }
 
@@ -404,7 +400,6 @@ static void release_class_ptr( CLASS *ptr )
 
 static CLASS *find_class( HINSTANCE module, UNICODE_STRING *name )
 {
-    ATOM atom = get_int_atom_value( name );
     ULONG_PTR instance = (UINT_PTR)module;
     CLASS *class;
     int is_win16;
@@ -412,15 +407,8 @@ static CLASS *find_class( HINSTANCE module, UNICODE_STRING *name )
     user_lock();
     LIST_FOR_EACH_ENTRY( class, &class_list, CLASS, entry )
     {
-        if (atom)
-        {
-            if (class->atomName != atom) continue;
-        }
-        else
-        {
-            if (wcsnicmp( class->name, name->Buffer, name->Length / sizeof(WCHAR) ) ||
-                class->name[name->Length / sizeof(WCHAR)]) continue;
-        }
+        if (wcsnicmp( class->name, name->Buffer, name->Length / sizeof(WCHAR) ) ||
+            class->name[name->Length / sizeof(WCHAR)]) continue;
         is_win16 = !(class->instance >> 16);
         if (!instance || !class->local || class->instance == instance ||
             (!is_win16 && ((class->instance & ~0xffff) == (instance & ~0xffff))))
@@ -496,19 +484,9 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
 
     if (!(class = calloc( 1, sizeof(CLASS) + wc->cbClsExtra ))) return 0;
 
-    class->atomName = get_int_atom_value( name );
-    class->basename = class->name;
-    if (!class->atomName && name)
-    {
-        memcpy( class->name, name->Buffer, name->Length );
-        class->name[name->Length / sizeof(WCHAR)] = 0;
-        class->basename += version->Length / sizeof(WCHAR);
-    }
-    else
-    {
-        UNICODE_STRING str = { .MaximumLength = sizeof(class->name), .Buffer = class->name };
-        NtUserGetAtomName( class->atomName, &str );
-    }
+    memcpy( class->name, name->Buffer, name->Length );
+    class->name[name->Length / sizeof(WCHAR)] = 0;
+    class->basename = class->name + version->Length / sizeof(WCHAR);
 
     class->style      = wc->style;
     class->local      = !is_builtin && !(wc->style & CS_GLOBALCLASS);
