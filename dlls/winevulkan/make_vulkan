@@ -64,7 +64,7 @@ from enum import Enum
 LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
-VK_XML_VERSION = "1.4.318"
+VK_XML_VERSION = "1.4.325"
 WINE_VK_VERSION = (1, 4)
 
 # Filenames to create.
