@@ -1200,7 +1200,7 @@ static void test_IDirectMusicSynth(void)
     hr = IDirectMusicSynth_Download(synth, &wave_handle, &wave_download, &can_free);
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(!!wave_handle, "got %p\n", wave_handle);
-    todo_wine ok(can_free == FALSE, "got %u\n", can_free);
+    ok(can_free == FALSE, "got %u\n", can_free);
 
     can_free = 0xdeadbeef;
     instrument_handle = NULL;
