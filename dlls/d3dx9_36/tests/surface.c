@@ -231,7 +231,7 @@ static void check_dds_pixel_format_image_info(unsigned int line,
 
     /* Test again with unused fields set. */
     if (flags & DDS_PF_FOURCC)
-        rmask = gmask = bmask = amask = bpp = ~0u;
+        rmask = gmask = bmask = amask = bpp = flags = ~0u;
     else if ((flags & (DDS_PF_INDEXED | DDS_PF_ALPHA)) == (DDS_PF_INDEXED | DDS_PF_ALPHA))
         rmask = gmask = bmask = fourcc = ~0u;
     else if (flags & DDS_PF_INDEXED)
@@ -251,6 +251,7 @@ static void check_dds_pixel_format_image_info(unsigned int line,
     else if (flags & DDS_PF_BUMPLUMINANCE)
         fourcc = amask = ~0u;
 
+    dds.header.pixel_format.flags = flags;
     dds.header.pixel_format.fourcc = fourcc;
     dds.header.pixel_format.bpp = bpp;
     dds.header.pixel_format.rmask = rmask;
@@ -258,7 +259,7 @@ static void check_dds_pixel_format_image_info(unsigned int line,
     dds.header.pixel_format.bmask = bmask;
     dds.header.pixel_format.amask = amask;
     hr = D3DXGetImageInfoFromFileInMemory(&dds, sizeof(dds), &info);
-    ok_(__FILE__, line)(hr == expected_hr, "Unexpected hr %#lx.\n", hr);
+    todo_wine_if(flags == ~0u) ok_(__FILE__, line)(hr == expected_hr, "Unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr) && hr == expected_hr)
         ok_(__FILE__, line)(info.Format == expected_format, "Unexpected format %#x.\n", info.Format);
 }
