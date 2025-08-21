@@ -475,7 +475,7 @@ WCHAR * CDECL wine_get_dos_file_name( LPCSTR str )
     NTSTATUS status;
     HANDLE handle = 0;
     WCHAR *buffer = NULL, *nt_str = NULL;
-    ULONG res, len = strlen(str) + 1;
+    ULONG i, res, len = strlen(str) + 1;
 
     if (str[0] != '/')  /* relative path name */
     {
@@ -493,11 +493,13 @@ WCHAR * CDECL wine_get_dos_file_name( LPCSTR str )
         for (WCHAR *p = nt_str; *p; p++) if (*p == '/') *p = '\\';
         RtlInitUnicodeString( &nt_name, nt_str );
         InitializeObjectAttributes( &attr, &nt_name, 0, 0, NULL );
+        for (i = nt_name.Length / sizeof(WCHAR); i > 9 && nt_name.Buffer[i - 1] == '\\'; i--)
+            nt_name.Length -= sizeof(WCHAR);
         status = NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
                              FILE_SYNCHRONOUS_IO_NONALERT );
         while (status)
         {
-            ULONG i = nt_name.Length / sizeof(WCHAR);
+            i = nt_name.Length / sizeof(WCHAR);
             while (i && nt_name.Buffer[i - 1] != '\\') i--;
             while (i && nt_name.Buffer[i - 1] == '\\') i--;
             if (i <= 9) break;
