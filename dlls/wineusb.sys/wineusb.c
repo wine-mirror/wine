@@ -503,6 +503,10 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
             ret = STATUS_SUCCESS;
             break;
 
+        case IRP_MN_QUERY_DEVICE_TEXT:
+            WARN("Unhandled IRP_MN_QUERY_DEVICE_TEXT text type %u.\n", stack->Parameters.QueryDeviceText.DeviceTextType);
+            break;
+
         default:
             FIXME("Unhandled minor function %#x.\n", stack->MinorFunction);
     }
