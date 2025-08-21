@@ -259,7 +259,7 @@ static void check_dds_pixel_format_image_info(unsigned int line,
     dds.header.pixel_format.bmask = bmask;
     dds.header.pixel_format.amask = amask;
     hr = D3DXGetImageInfoFromFileInMemory(&dds, sizeof(dds), &info);
-    todo_wine_if(flags == ~0u) ok_(__FILE__, line)(hr == expected_hr, "Unexpected hr %#lx.\n", hr);
+    ok_(__FILE__, line)(hr == expected_hr, "Unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr) && hr == expected_hr)
         ok_(__FILE__, line)(info.Format == expected_format, "Unexpected format %#x.\n", info.Format);
 }

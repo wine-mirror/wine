@@ -289,6 +289,7 @@ static BOOL dds_pixel_format_compare(const struct dds_pixel_format *pf_a, const 
 
 static enum d3dx_pixel_format_id d3dx_pixel_format_id_from_dds_pixel_format(const struct dds_pixel_format *pixel_format)
 {
+    DWORD flags = pixel_format->flags;
     uint32_t i;
 
     TRACE("pixel_format: size %lu, flags %#lx, fourcc %#lx, bpp %lu.\n", pixel_format->size,
@@ -296,14 +297,17 @@ static enum d3dx_pixel_format_id d3dx_pixel_format_id_from_dds_pixel_format(cons
     TRACE("rmask %#lx, gmask %#lx, bmask %#lx, amask %#lx.\n", pixel_format->rmask, pixel_format->gmask,
             pixel_format->bmask, pixel_format->amask);
 
+    /* DDS_PF_FOURCC overrides all other flags. */
+    if (flags & DDS_PF_FOURCC)
+        flags = DDS_PF_FOURCC;
     for (i = 0; i < ARRAY_SIZE(dds_pixel_formats); ++i)
     {
         const struct dds_pixel_format *dds_pf = &dds_pixel_formats[i].dds_pixel_format;
 
-        if (pixel_format->flags != dds_pf->flags)
+        if (flags != dds_pf->flags)
             continue;
 
-        switch (pixel_format->flags & ~DDS_PF_ALPHA)
+        switch (flags & ~DDS_PF_ALPHA)
         {
             case DDS_PF_ALPHA_ONLY:
                 if (dds_pixel_format_compare(pixel_format, dds_pf, FALSE, FALSE, FALSE, TRUE))
