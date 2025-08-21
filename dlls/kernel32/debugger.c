@@ -52,6 +52,7 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringA( LPCSTR str )
     static HANDLE DBWinMutex = NULL;
     static BOOL mutex_inited = FALSE;
     BOOL caught_by_dbg = TRUE;
+    DWORD last_error = GetLastError();
 
     if (!str) str = "";
     WARN( "%s\n", debugstr_a(str) );
@@ -131,6 +132,7 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringA( LPCSTR str )
             CloseHandle( mapping );
         }
     }
+    SetLastError( last_error );
 }
 
 
