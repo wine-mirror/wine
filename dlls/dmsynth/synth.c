@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 #define CONN_TRN_BIPOLAR (1<<4)
 #define CONN_TRN_INVERT  (1<<5)
 
-#define CONN_TRANSFORM(src, ctrl, dst) (((src) & 0x3f) << 10) | (((ctrl) & 0x3f) << 4) | ((dst) & 0xf)
+#define CONN_TRANSFORM(src, ctrl, dst) ((((src) & 0x3f) << 10) | (((ctrl) & 0x3f) << 4) | ((dst) & 0xf))
 
 #define BASE_GAIN 60.
 #define CENTER_PAN_GAIN -30.10
@@ -1598,7 +1598,11 @@ static BOOL set_gen_from_connection(fluid_voice_t *fluid_voice, const CONNECTION
     UINT gen;
 
     if (conn->usControl != CONN_SRC_NONE) return FALSE;
-    if (conn->usTransform != CONN_TRN_NONE) return FALSE;
+    if (conn->usTransform != CONN_TRN_NONE)
+    {
+        if (conn->usTransform != CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE)) return FALSE;
+        if (conn->usSource != CONN_SRC_LFO && conn->usSource != CONN_SRC_VIBRATO) return FALSE;
+    }
 
     if (conn->usSource == CONN_SRC_NONE)
     {

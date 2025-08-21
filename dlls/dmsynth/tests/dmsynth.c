@@ -2613,7 +2613,7 @@ static void test_dls(void)
     envelope = default_volume_envelope;
     envelope.lfo.freq = 2.;
     envelope.lfo.scale = 10.;
-    check_volume_envelope(synth, &download, &default_midi, &envelope, TRUE);
+    check_volume_envelope(synth, &download, &default_midi, &envelope, FALSE);
 
     /* LFO x CC1 -> gain */
 
@@ -2793,7 +2793,7 @@ static void test_dls(void)
     envelope = default_pitch_envelope;
     envelope.lfo.freq = 2.;
     envelope.lfo.scale = 100.;
-    check_pitch_envelope(synth, &download, &default_midi, &envelope, TRUE);
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, FALSE);
 
     /* vibrato LFO x CC1 -> pitch */
 
@@ -2892,7 +2892,7 @@ static void test_dls(void)
     envelope = default_pitch_envelope;
     envelope.lfo.freq = 2.;
     envelope.lfo.scale = 100.;
-    check_pitch_envelope(synth, &download, &default_midi, &envelope, TRUE);
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, FALSE);
 
     /* LFO x CC1 -> pitch */
 
