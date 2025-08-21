@@ -164,7 +164,7 @@ static void dump_dmus_region(DMUS_REGION *region)
     TRACE("   - cbSize        = %lu\n", region->WSMP.cbSize);
     TRACE("   - usUnityNote   = %u\n", region->WSMP.usUnityNote);
     TRACE("   - sFineTune     = %u\n", region->WSMP.sFineTune);
-    TRACE("   - lAttenuation  = %lu\n", region->WSMP.lAttenuation);
+    TRACE("   - lAttenuation  = %ld\n", region->WSMP.lAttenuation);
     TRACE("   - fulOptions    = %#lx\n", region->WSMP.fulOptions);
     TRACE("   - cSampleLoops  = %lu\n", region->WSMP.cSampleLoops);
     for (i = 0; i < region->WSMP.cSampleLoops; i++)
