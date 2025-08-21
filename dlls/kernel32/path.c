@@ -446,6 +446,7 @@ char * CDECL wine_get_unix_file_name( LPCWSTR dosW )
             ULONG lenA = info->Length;
             buffer = (char *)info;
             memmove( buffer, info->Name, lenA );
+            if (lenA > 1 && nt_name.Buffer[nt_name.Length/sizeof(WCHAR) - 1] == '\\') buffer[lenA++] = '/';
             buffer[lenA] = 0;
         }
         break;
