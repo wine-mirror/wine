@@ -873,8 +873,10 @@ static HRESULT synth_download_wave(struct synth *This, DMUS_DOWNLOADINFO *info, 
         return FLUID_FAILED;
     }
 
+    /* Although the doc says there should be 8-frame padding around the data,
+     * FluidSynth doesn't actually require this since version 1.0.8. */
     fluid_sample_set_sound_data(wave->fluid_sample, wave->samples, NULL, wave->sample_count,
-            wave->format.nSamplesPerSec, TRUE);
+            wave->format.nSamplesPerSec, FALSE);
 
     EnterCriticalSection(&This->cs);
     list_add_tail(&This->waves, &wave->entry);
@@ -1930,11 +1932,8 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
         else
             FIXME("Unsupported loop type %lu\n", loop->ulType);
 
-        /* When copy_data is TRUE, fluid_sample_set_sound_data() adds
-            * 8-frame padding around the sample data. Offset the loop points
-            * to compensate for this. */
-        fluid_voice_gen_set(fluid_voice, GEN_STARTLOOPADDROFS, 8 + loop->ulStart);
-        fluid_voice_gen_set(fluid_voice, GEN_ENDLOOPADDROFS, 8 + loop->ulStart + loop->ulLength);
+        fluid_voice_gen_set(fluid_voice, GEN_STARTLOOPADDROFS, loop->ulStart);
+        fluid_voice_gen_set(fluid_voice, GEN_ENDLOOPADDROFS, loop->ulStart + loop->ulLength);
     }
     fluid_voice_gen_set(fluid_voice, GEN_OVERRIDEROOTKEY, region->wave_sample.usUnityNote);
     fluid_voice_gen_set(fluid_voice, GEN_FINETUNE, region->wave_sample.sFineTune);
