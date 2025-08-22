@@ -1,0 +1,6 @@
+MODULE = icuuc.dll
+
+EXTRADLLFLAGS = -Wb,--data-only
+
+SOURCES = \
+	icuuc.spec

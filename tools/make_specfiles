@@ -147,6 +147,10 @@ my @dll_groups =
   "shell32",
   "windows.storage",
  ],
+ [
+  "icu",
+  "icuuc",
+ ],
 );
 
 my $update_flags = 0;
