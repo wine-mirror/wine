@@ -4085,14 +4085,78 @@ static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_CompareWithGeometry(ID2D1E
     return E_NOTIMPL;
 }
 
+static void d2d_ellipse_to_segments(const D2D1_ELLIPSE *ellipse, D2D1_POINT_2F *start_point,
+        D2D1_BEZIER_SEGMENT *segments)
+{
+    const float coeff = 4.0f * (M_SQRT2 - 1.0f) / 3.0f;
+    D2D1_MATRIX_3X2_F m;
+    unsigned int i;
+
+    /* Use four Bézier segments to approximate a unit circle.
+       Endpoints tangents are tangential to the circle. Endpoints and the midpoint
+       are lying on the circle. */
+
+    d2d_point_set(start_point, -1.0f, 0.0f);
+
+    d2d_point_set(&segments[0].point1, -1.0f, -coeff);
+    d2d_point_set(&segments[0].point2, -coeff, -1.0f);
+    d2d_point_set(&segments[0].point3, 0.0f, -1.0f);
+
+    d2d_point_set(&segments[1].point1, coeff, -1.0f);
+    d2d_point_set(&segments[1].point2, 1.0f, -coeff);
+    d2d_point_set(&segments[1].point3, 1.0f, 0.0f);
+
+    d2d_point_set(&segments[2].point1, 1.0f, coeff);
+    d2d_point_set(&segments[2].point2, coeff, 1.0f);
+    d2d_point_set(&segments[2].point3, 0.0f, 1.0f);
+
+    d2d_point_set(&segments[3].point1, -coeff, 1.0f);
+    d2d_point_set(&segments[3].point2, -1.0f, coeff);
+    d2d_point_set(&segments[3].point3, start_point->x, start_point->y);
+
+    m._11 = ellipse->radiusX;
+    m._12 = 0.0f;
+    m._21 = 0.0f;
+    m._22 = ellipse->radiusY;
+    m._31 = ellipse->point.x;
+    m._32 = ellipse->point.y;
+
+    d2d_point_transform(start_point, &m, start_point->x, start_point->y);
+    for (i = 0; i < 4; ++i)
+    {
+        d2d_point_transform(&segments[i].point1, &m, segments[i].point1.x, segments[i].point1.y);
+        d2d_point_transform(&segments[i].point2, &m, segments[i].point2.x, segments[i].point2.y);
+        d2d_point_transform(&segments[i].point3, &m, segments[i].point3.x, segments[i].point3.y);
+    }
+}
+
 static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_Simplify(ID2D1EllipseGeometry *iface,
         D2D1_GEOMETRY_SIMPLIFICATION_OPTION option, const D2D1_MATRIX_3X2_F *transform, float tolerance,
         ID2D1SimplifiedGeometrySink *sink)
 {
-    FIXME("iface %p, option %#x, transform %p, tolerance %.8e, sink %p stub!\n",
+    struct d2d_geometry *geometry = impl_from_ID2D1EllipseGeometry(iface);
+    struct d2d_figure figure = { 0 };
+    D2D1_BEZIER_SEGMENT segments[4];
+    D2D1_POINT_2F start_point;
+
+    TRACE("iface %p, option %#x, transform %p, tolerance %.8e, sink %p.\n",
             iface, option, transform, tolerance, sink);
 
-    return E_NOTIMPL;
+    d2d_ellipse_to_segments(&geometry->u.ellipse.ellipse, &start_point, segments);
+
+    if (!d2d_figure_begin(&figure, start_point, D2D1_FIGURE_BEGIN_FILLED))
+        return E_OUTOFMEMORY;
+    if (!d2d_figure_add_beziers(&figure, segments, ARRAY_SIZE(segments)))
+    {
+        d2d_figure_cleanup(&figure);
+        return E_OUTOFMEMORY;
+    }
+    d2d_figure_end(&figure, D2D1_FIGURE_END_CLOSED);
+
+    d2d_figure_simplify(&figure, option, transform, tolerance, sink);
+    d2d_figure_cleanup(&figure);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_Tessellate(ID2D1EllipseGeometry *iface,
