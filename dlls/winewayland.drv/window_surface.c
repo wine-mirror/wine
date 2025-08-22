@@ -524,7 +524,7 @@ BOOL WAYLAND_CreateWindowSurface(HWND hwnd, BOOL layered, const RECT *surface_re
     if (previous) window_surface_release(previous);
 
     if (layered) data->layered_attribs_set = TRUE;
-    *surface = wayland_window_surface_create(data->hwnd, surface_rect, data->layered_attribs_set);
+    *surface = wayland_window_surface_create(data->hwnd, surface_rect, layered);
 
     wayland_win_data_release(data);
     return TRUE;
