@@ -149,6 +149,7 @@ my @dll_groups =
  ],
  [
   "icu",
+  "icuin",
   "icuuc",
  ],
 );
