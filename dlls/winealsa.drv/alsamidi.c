@@ -945,9 +945,9 @@ static UINT midi_out_reset(WORD dev_id)
     for (chn = 0; chn < 16; chn++)
     {
         /* turn off every note */
-        midi_out_data(dev_id, (MIDI_CTL_ALL_SOUNDS_OFF << 8) | MIDI_CMD_CONTROL | chn);
-        /* remove sustain on all channels */
-        midi_out_data(dev_id, (MIDI_CTL_SUSTAIN << 8) | MIDI_CMD_CONTROL | chn);
+        midi_out_data(dev_id, (MIDI_CTL_ALL_NOTES_OFF << 8) | MIDI_CMD_CONTROL | chn);
+        /* resets controller settings */
+        midi_out_data(dev_id, (MIDI_CTL_RESET_CONTROLLERS << 8) | MIDI_CMD_CONTROL | chn);
     }
     dests[dev_id].runningStatus = 0;
     /* FIXME: the LongData buffers must also be returned to the app */
