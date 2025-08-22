@@ -22,7 +22,8 @@ enum name_attr_id
     NAME_ATTR_ID_ARCH,
     NAME_ATTR_ID_TOKEN,
     NAME_ATTR_ID_TYPE,
-    NAME_ATTR_ID_VERSION
+    NAME_ATTR_ID_VERSION,
+    NAME_ATTR_ID_LANGUAGE,
 };
 
 const WCHAR *get_name_attribute( IAssemblyName *, enum name_attr_id );

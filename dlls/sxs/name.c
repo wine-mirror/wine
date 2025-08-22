@@ -41,6 +41,7 @@ struct name
     WCHAR *token;
     WCHAR *type;
     WCHAR *version;
+    WCHAR *language;
 };
 
 static inline struct name *impl_from_IAssemblyName( IAssemblyName *iface )
@@ -88,6 +89,7 @@ static ULONG WINAPI name_Release( IAssemblyName *iface )
         free( name->token );
         free( name->type );
         free( name->version );
+        free( name->language );
         free( name );
     }
     return refs;
@@ -135,6 +137,7 @@ static HRESULT WINAPI name_GetDisplayName(
     if (!buflen || flags) return E_INVALIDARG;
 
     len = lstrlenW( name->name ) + 1;
+    if (name->language) len += lstrlenW( L"language" ) + lstrlenW( name->language ) + 4;
     if (name->arch)    len += lstrlenW( L"processorArchitecture" ) + lstrlenW( name->arch ) + 4;
     if (name->token)   len += lstrlenW( L"publicKeyToken" ) + lstrlenW( name->token ) + 4;
     if (name->type)    len += lstrlenW( L"type" ) + lstrlenW( name->type ) + 4;
@@ -146,6 +149,7 @@ static HRESULT WINAPI name_GetDisplayName(
     }
     lstrcpyW( buffer, name->name );
     len = lstrlenW( buffer );
+    if (name->language) len += swprintf( buffer + len, *buflen - len, fmtW, L"language", name->language );
     if (name->arch)    len += swprintf( buffer + len, *buflen - len, fmtW, L"processorArchitecture", name->arch );
     if (name->token)   len += swprintf( buffer + len, *buflen - len, fmtW, L"publicKeyToken", name->token );
     if (name->type)    len += swprintf( buffer + len, *buflen - len, fmtW, L"type", name->type );
@@ -182,6 +186,7 @@ const WCHAR *get_name_attribute( IAssemblyName *iface, enum name_attr_id id )
     case NAME_ATTR_ID_TOKEN:   return name->token;
     case NAME_ATTR_ID_TYPE:    return name->type;
     case NAME_ATTR_ID_VERSION: return name->version;
+    case NAME_ATTR_ID_LANGUAGE: return name->language;
     default:
         ERR("unhandled name attribute %u\n", id);
         break;
@@ -344,6 +349,12 @@ static HRESULT parse_displayname( struct name *name, const WCHAR *displayname )
             if (!(name->version = parse_value( p, &len ))) return E_INVALIDARG;
             q += len;
         }
+        else if (len == ARRAY_SIZE(L"language") - 1 && !memcmp( p, L"language", len * sizeof(WCHAR) ))
+        {
+            p = ++q;
+            if (!(name->language = parse_value( p, &len ))) return E_INVALIDARG;
+            q += len;
+        }
         else return HRESULT_FROM_WIN32( ERROR_SXS_INVALID_ASSEMBLY_IDENTITY_ATTRIBUTE_NAME );
         while (*q && *q != ',') q++;
         if (!*q) break;
@@ -385,6 +396,7 @@ HRESULT WINAPI CreateAssemblyNameObject(
         free( name->token );
         free( name->type );
         free( name->version );
+        free( name->language );
         free( name );
         return hr;
     }

@@ -195,7 +195,41 @@ static void test_CreateAssemblyNameObject( void )
     ok( !name, "expected NULL got %p\n", name );
 }
 
+static void test_display_name( void )
+{
+    static const struct { const WCHAR *input, *expect; } tests[] =
+    {
+        { L"wine", L"wine" },
+        { L"wine,version=\"1.2.3.4\",type=\"foo\"", L"wine,type=\"foo\",version=\"1.2.3.4\"" },
+        { L"wine,version=\"1.2.3.4\",language=\"en-US\",type=\"win32\",processorArchitecture=\"amd64\",publicKeyToken=\"foo\"",
+          L"wine,language=\"en-US\",processorArchitecture=\"amd64\",publicKeyToken=\"foo\",type=\"win32\",version=\"1.2.3.4\"" },
+    };
+    unsigned int i;
+    WCHAR buffer[1024];
+    DWORD size;
+    HRESULT hr;
+    IAssemblyName *name;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context( "%u", i );
+        name = NULL;
+        hr = CreateAssemblyNameObject( &name, tests[i].input, CANOF_PARSE_DISPLAY_NAME, NULL );
+        if (tests[i].expect)
+        {
+            ok( hr == S_OK, "expected S_OK got %08lx\n", hr );
+            size = ARRAY_SIZE(buffer);
+            IAssemblyName_GetDisplayName( name, buffer, &size, 0 );
+            ok( !wcscmp( buffer, tests[i].expect ), "wrong result %s\n", debugstr_w(buffer) );
+        }
+        else ok( hr == E_INVALIDARG, "expected E_INVALIDARG got %08lx\n", hr );
+        if (!FAILED( hr )) IAssemblyName_Release( name );
+        winetest_pop_context();
+    }
+}
+
 START_TEST(name)
 {
     test_CreateAssemblyNameObject();
+    test_display_name();
 }
