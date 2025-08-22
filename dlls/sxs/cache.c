@@ -99,28 +99,31 @@ static unsigned int build_sxs_path( WCHAR *path )
 }
 
 static WCHAR *build_assembly_name( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
-                                   const WCHAR *version, unsigned int *len )
+                                   const WCHAR *version, const WCHAR *language, unsigned int *len )
 {
-    static const WCHAR fmtW[] = L"%s_%s_%s_%s_none_deadbeef";
+    static const WCHAR fmtW[] = L"%s_%s_%s_%s_%s_deadbeef";
     unsigned int buflen = ARRAY_SIZE(fmtW);
     WCHAR *ret;
+
+    if (!language || !wcsicmp( language, L"neutral" ) || !wcscmp( language, L"*")) language = L"none";
 
     buflen += lstrlenW( arch );
     buflen += lstrlenW( name );
     buflen += lstrlenW( token );
     buflen += lstrlenW( version );
+    buflen += lstrlenW( language );
     if (!(ret = malloc( buflen * sizeof(WCHAR) ))) return NULL;
-    *len = swprintf( ret, buflen, fmtW, arch, name, token, version );
+    *len = swprintf( ret, buflen, fmtW, arch, name, token, version, language );
     return wcslwr( ret );
 }
 
 static WCHAR *build_dll_path( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
-                              const WCHAR *version )
+                              const WCHAR *version, const WCHAR *language )
 {
     WCHAR *path = NULL, *ret, sxsdir[MAX_PATH];
     unsigned int len;
 
-    if (!(path = build_assembly_name( arch, name, token, version, &len ))) return NULL;
+    if (!(path = build_assembly_name( arch, name, token, version, language, &len ))) return NULL;
     len += build_sxs_path( sxsdir ) + 2;
     if (!(ret = malloc( len * sizeof(WCHAR) )))
     {
@@ -190,7 +193,7 @@ static HRESULT WINAPI cache_QueryAssemblyInfo(
 {
     struct cache *cache = impl_from_IAssemblyCache( iface );
     IAssemblyName *name_obj;
-    const WCHAR *arch, *name, *token, *type, *version;
+    const WCHAR *arch, *name, *token, *type, *version, *language;
     WCHAR *path = NULL;
     unsigned int len;
     HRESULT hr;
@@ -209,6 +212,7 @@ static HRESULT WINAPI cache_QueryAssemblyInfo(
     token = get_name_attribute( name_obj, NAME_ATTR_ID_TOKEN );
     type = get_name_attribute( name_obj, NAME_ATTR_ID_TYPE );
     version = get_name_attribute( name_obj, NAME_ATTR_ID_VERSION );
+    language = get_name_attribute( name_obj, NAME_ATTR_ID_LANGUAGE );
     if (!arch || !name || !token || !type || !version)
     {
         IAssemblyName_Release( name_obj );
@@ -221,7 +225,7 @@ static HRESULT WINAPI cache_QueryAssemblyInfo(
     }
     cache_lock( cache );
 
-    if (!wcscmp( type, L"win32" )) path = build_dll_path( arch, name, token, version );
+    if (!wcscmp( type, L"win32" )) path = build_dll_path( arch, name, token, version, language );
     else if (!wcscmp( type, L"win32-policy" )) path = build_policy_path( arch, name, token, version );
     else
     {
@@ -313,6 +317,7 @@ struct assembly
     BSTR version;
     BSTR arch;
     BSTR token;
+    BSTR language;
     struct list files;
 };
 
@@ -326,6 +331,7 @@ static void free_assembly( struct assembly *assembly )
     SysFreeString( assembly->version );
     SysFreeString( assembly->arch );
     SysFreeString( assembly->token );
+    SysFreeString( assembly->language );
     LIST_FOR_EACH_SAFE( item, cursor, &assembly->files )
     {
         struct file *file = LIST_ENTRY( item, struct file, entry );
@@ -449,6 +455,7 @@ static HRESULT parse_assembly( IXMLDOMDocument *doc, struct assembly **assembly 
     a->version = get_attribute_value( attrs, L"version" );
     a->arch    = get_attribute_value( attrs, L"processorArchitecture" );
     a->token   = get_attribute_value( attrs, L"publicKeyToken" );
+    a->language = get_attribute_value( attrs, L"language" );
 
     if (!a->type || (wcscmp( a->type, L"win32" ) && wcscmp( a->type, L"win32-policy" )) ||
         !a->name || !a->version || !a->arch || !a->token)
@@ -540,14 +547,14 @@ static WCHAR *build_source_filename( const WCHAR *manifest, struct file *file )
 }
 
 static WCHAR *build_manifest_filename( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
-                                       const WCHAR *version )
+                                       const WCHAR *version, const WCHAR *language )
 {
     static const WCHAR manifestsW[] = L"manifests\\";
     static const WCHAR suffixW[] = L".manifest";
     WCHAR sxsdir[MAX_PATH], *ret, *fullname;
     unsigned int len;
 
-    if (!(fullname = build_assembly_name( arch, name, token, version, &len ))) return NULL;
+    if (!(fullname = build_assembly_name( arch, name, token, version, language, &len ))) return NULL;
     len += build_sxs_path( sxsdir );
     len += ARRAY_SIZE(manifestsW) - 1;
     len += ARRAY_SIZE(suffixW) - 1;
@@ -595,7 +602,8 @@ static HRESULT install_assembly( const WCHAR *manifest, struct assembly *assembl
     HRESULT hr = E_OUTOFMEMORY;
     BOOL ret;
 
-    dst = build_manifest_filename( assembly->arch, assembly->name, assembly->token, assembly->version );
+    dst = build_manifest_filename( assembly->arch, assembly->name, assembly->token,
+                                   assembly->version, assembly->language );
     if (!dst) return E_OUTOFMEMORY;
 
     if (GetFileAttributesW( dst ) != INVALID_FILE_ATTRIBUTES)
@@ -615,7 +623,7 @@ static HRESULT install_assembly( const WCHAR *manifest, struct assembly *assembl
     }
 
     name = build_assembly_name( assembly->arch, assembly->name, assembly->token, assembly->version,
-                                &len_name );
+                                assembly->language, &len_name );
     if (!name) return E_OUTOFMEMORY;
 
     /* FIXME: this should be a transaction */
@@ -700,7 +708,7 @@ static HRESULT uninstall_assembly( struct assembly *assembly )
     struct file *file;
 
     name = build_assembly_name( assembly->arch, assembly->name, assembly->token, assembly->version,
-                                &len_name );
+                                assembly->language, &len_name );
     if (!name) return E_OUTOFMEMORY;
     if (!(dirname = malloc( (len_sxsdir + len_name + 1) * sizeof(WCHAR) )))
         goto done;
@@ -739,7 +747,7 @@ static HRESULT WINAPI cache_UninstallAssembly(
     IXMLDOMDocument *doc = NULL;
     struct assembly *assembly = NULL;
     IAssemblyName *name_obj = NULL;
-    const WCHAR *arch, *name, *token, *type, *version;
+    const WCHAR *arch, *name, *token, *type, *version, *language;
     WCHAR *p, *path = NULL;
 
     TRACE("%p, 0x%08lx, %s, %p, %p\n", iface, flags, debugstr_w(assembly_name), ref, disp);
@@ -761,12 +769,13 @@ static HRESULT WINAPI cache_UninstallAssembly(
     token = get_name_attribute( name_obj, NAME_ATTR_ID_TOKEN );
     type = get_name_attribute( name_obj, NAME_ATTR_ID_TYPE );
     version = get_name_attribute( name_obj, NAME_ATTR_ID_VERSION );
+    language = get_name_attribute( name_obj, NAME_ATTR_ID_LANGUAGE );
     if (!arch || !name || !token || !type || !version)
     {
         hr = E_INVALIDARG;
         goto done;
     }
-    if (!wcscmp( type, L"win32" )) path = build_manifest_filename( arch, name, token, version );
+    if (!wcscmp( type, L"win32" )) path = build_manifest_filename( arch, name, token, version, language );
     else if (!wcscmp( type, L"win32-policy" )) path = build_policy_filename( arch, name, token, version );
     else
     {
