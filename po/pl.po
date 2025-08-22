@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-08-20 03:22+0200\n"
+"PO-Revision-Date: 2025-08-22 08:50+0200\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
-"X-Generator: Poedit 3.6\n"
+"X-Generator: Poedit 3.7\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
 #: programs/winefile/winefile.rc:114
@@ -4082,10 +4082,8 @@ msgid "Function expected"
 msgstr "Oczekiwana funkcja"
 
 #: dlls/jscript/jscript.rc:55
-#, fuzzy
-#| msgid "'[object]' is not a date object"
 msgid "'[object]' is not a string object"
-msgstr "'[obiekt]' nie jest obiektem daty"
+msgstr "'[obiekt]' nie jest obiektem ciągu"
 
 #: dlls/jscript/jscript.rc:56
 msgid "'[object]' is not a date object"
@@ -4156,10 +4154,8 @@ msgid "Precision is out of range"
 msgstr "Precyzja jest poza poza zakresem"
 
 #: dlls/jscript/jscript.rc:74
-#, fuzzy
-#| msgid "Array object expected"
 msgid "Array or arguments object expected"
-msgstr "Oczekiwany obiekt tablicowy"
+msgstr "Oczekiwany obiekt tablicowy lub argumentów"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Array length must be a finite positive integer"
@@ -6605,7 +6601,7 @@ msgstr "Niepoprawna sekwencja protokołu RPC.\n"
 
 #: dlls/kernelbase/winerror.mc:2958
 msgid "Invalid string UUID.\n"
-msgstr "Niepoprawny łańcuch tekstowy UUID.\n"
+msgstr "Niepoprawny ciąg UUID.\n"
 
 #: dlls/kernelbase/winerror.mc:2963
 msgid "Invalid endpoint format.\n"
@@ -6741,7 +6737,9 @@ msgstr "Maksymalna liczba wywołań zbyt mała.\n"
 
 #: dlls/kernelbase/winerror.mc:3133
 msgid "String too long.\n"
-msgstr "Łańcuch znaków zbyt długi.\n"
+msgstr ""
+"Zbyt długi ciąg.\n"
+"\n"
 
 #: dlls/kernelbase/winerror.mc:3138
 msgid "Protocol sequence not found.\n"
@@ -16706,7 +16704,7 @@ msgstr "reg: po opcji [/d] musi wystąpić prawidłowa wartość szesnastkowa\n"
 
 #: programs/reg/reg.rc:136
 msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr "reg: opcja [/d] musi występować przy prawidłowym ciągu tekstu\n"
+msgstr "reg: opcja [/d] musi występować przy prawidłowym ciągu znaków\n"
 
 #: programs/reg/reg.rc:124
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
@@ -17315,7 +17313,7 @@ msgstr "Czy na pewno usunąć zaznaczoną wartość rejestru?"
 
 #: programs/regedit/regedit.rc:220
 msgid "Search complete. The string '%1' was not found."
-msgstr "Wyszukiwanie zakończone.  Nie znaleziono ciągu tekstu '%1'."
+msgstr "Wyszukiwanie zakończone. Nie znaleziono ciągu tekstu '%1'."
 
 #: programs/regedit/regedit.rc:215
 msgid "Are you sure you want to delete these values?"
