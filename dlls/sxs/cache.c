@@ -137,42 +137,6 @@ static WCHAR *build_dll_path( const WCHAR *arch, const WCHAR *name, const WCHAR 
     return ret;
 }
 
-static WCHAR *build_policy_name( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
-                                 unsigned int *len )
-{
-    static const WCHAR fmtW[] = L"%s_%s_%s_none_deadbeef";
-    unsigned int buflen = ARRAY_SIZE(fmtW);
-    WCHAR *ret;
-
-    buflen += lstrlenW( arch );
-    buflen += lstrlenW( name );
-    buflen += lstrlenW( token );
-    if (!(ret = malloc( buflen * sizeof(WCHAR) ))) return NULL;
-    *len = swprintf( ret, buflen, fmtW, arch, name, token );
-    return wcslwr( ret );
-}
-
-static WCHAR *build_policy_path( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
-                                 const WCHAR *version )
-{
-    static const WCHAR fmtW[] = L"%spolicies\\%s\\%s.policy";
-    WCHAR *path = NULL, *ret, sxsdir[MAX_PATH];
-    unsigned int len;
-
-    if (!(path = build_policy_name( arch, name, token, &len ))) return NULL;
-    len += ARRAY_SIZE(fmtW);
-    len += build_sxs_path( sxsdir );
-    len += lstrlenW( version );
-    if (!(ret = malloc( len * sizeof(WCHAR) )))
-    {
-        free( path );
-        return NULL;
-    }
-    swprintf( ret, len, fmtW, sxsdir, path, version );
-    free( path );
-    return ret;
-}
-
 static void cache_lock( struct cache *cache )
 {
     WaitForSingleObject( cache->lock, INFINITE );
@@ -223,20 +187,18 @@ static HRESULT WINAPI cache_QueryAssemblyInfo(
         IAssemblyName_Release( name_obj );
         return S_OK;
     }
-    cache_lock( cache );
-
-    if (!wcscmp( type, L"win32" )) path = build_dll_path( arch, name, token, version, language );
-    else if (!wcscmp( type, L"win32-policy" )) path = build_policy_path( arch, name, token, version );
-    else
+    if (wcscmp( type, L"win32" ) && wcscmp( type, L"win32-policy" ))
     {
         hr = HRESULT_FROM_WIN32( ERROR_SXS_INVALID_IDENTITY_ATTRIBUTE_VALUE );
         goto done;
     }
-    if (!path)
+    if (!(path = build_dll_path( arch, name, token, version, language )))
     {
         hr = E_OUTOFMEMORY;
         goto done;
     }
+
+    cache_lock( cache );
     hr = S_OK;
     if (GetFileAttributesW( path ) != INVALID_FILE_ATTRIBUTES) /* FIXME: better check */
     {
@@ -253,11 +215,11 @@ static HRESULT WINAPI cache_QueryAssemblyInfo(
         }
         else lstrcpyW( info->pszCurrentAssemblyPathBuf, path );
     }
+    cache_unlock( cache );
 
 done:
     free( path );
     IAssemblyName_Release( name_obj );
-    cache_unlock( cache );
     return hr;
 }
 
@@ -475,58 +437,6 @@ done:
     return hr;
 }
 
-static WCHAR *build_policy_filename( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
-                                     const WCHAR *version )
-{
-    static const WCHAR policiesW[] = L"policies\\";
-    static const WCHAR suffixW[] = L".policy";
-    WCHAR sxsdir[MAX_PATH], *ret, *fullname;
-    unsigned int len;
-
-    if (!(fullname = build_policy_name( arch, name, token, &len ))) return NULL;
-    len += build_sxs_path( sxsdir );
-    len += ARRAY_SIZE(policiesW) - 1;
-    len += lstrlenW( version );
-    len += ARRAY_SIZE(suffixW) - 1;
-    if (!(ret = malloc( (len + 1) * sizeof(WCHAR) )))
-    {
-        free( fullname );
-        return NULL;
-    }
-    lstrcpyW( ret, sxsdir );
-    lstrcatW( ret, policiesW );
-    CreateDirectoryW( ret, NULL );
-    lstrcatW( ret, name );
-    CreateDirectoryW( ret, NULL );
-    lstrcatW( ret, L"\\" );
-    lstrcatW( ret, version );
-    lstrcatW( ret, suffixW );
-
-    free( fullname );
-    return ret;
-}
-
-static HRESULT install_policy( const WCHAR *manifest, struct assembly *assembly )
-{
-    WCHAR *dst;
-    BOOL ret;
-
-    /* FIXME: handle catalog file */
-
-    dst = build_policy_filename( assembly->arch, assembly->name, assembly->token, assembly->version );
-    if (!dst) return E_OUTOFMEMORY;
-
-    ret = CopyFileW( manifest, dst, FALSE );
-    free( dst );
-    if (!ret)
-    {
-        HRESULT hr = HRESULT_FROM_WIN32( GetLastError() );
-        WARN("failed to copy policy manifest file 0x%08lx\n", hr);
-        return hr;
-    }
-    return S_OK;
-}
-
 static WCHAR *build_source_filename( const WCHAR *manifest, struct file *file )
 {
     WCHAR *src;
@@ -687,10 +597,7 @@ static HRESULT WINAPI cache_InstallAssembly(
 
     /* FIXME: verify name attributes */
 
-    if (!wcscmp( assembly->type, L"win32-policy" ))
-        hr = install_policy( path, assembly );
-    else
-        hr = install_assembly( path, assembly );
+    hr = install_assembly( path, assembly );
 
 done:
     free_assembly( assembly );
@@ -775,13 +682,12 @@ static HRESULT WINAPI cache_UninstallAssembly(
         hr = E_INVALIDARG;
         goto done;
     }
-    if (!wcscmp( type, L"win32" )) path = build_manifest_filename( arch, name, token, version, language );
-    else if (!wcscmp( type, L"win32-policy" )) path = build_policy_filename( arch, name, token, version );
-    else
+    if (wcscmp( type, L"win32" ) && wcscmp( type, L"win32-policy" ))
     {
         hr = E_INVALIDARG;
         goto done;
     }
+    path = build_manifest_filename( arch, name, token, version, language );
 
     hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc );
     if (hr != S_OK)
