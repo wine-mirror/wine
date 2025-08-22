@@ -49,6 +49,78 @@ static inline struct name *impl_from_IAssemblyName( IAssemblyName *iface )
     return CONTAINING_RECORD( iface, struct name, IAssemblyName_iface );
 }
 
+static WCHAR *escape( const WCHAR *str )
+{
+    static const WCHAR valid_chars[] = L"-._ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    WCHAR *dst, *ret;
+
+    if (!str) return NULL;
+    if (!(ret = malloc( (wcslen(str) * 8 + 1) * sizeof(WCHAR) ))) return NULL;
+    for (dst = ret; *str; str++)
+    {
+        if (wcschr( valid_chars, *str )) *dst++ = *str;
+        else switch (*str)
+        {
+        case '<':  wcscpy( dst, L"&lt;" ); dst += 4; break;
+        case '>':  wcscpy( dst, L"&gt;" ); dst += 4; break;
+        case '&':  wcscpy( dst, L"&amp;" ); dst += 5; break;
+        case '"':  wcscpy( dst, L"&quot;" ); dst += 6; break;
+        case '\'': wcscpy( dst, L"&apos;" ); dst += 6; break;
+        default:   dst += swprintf( dst, 9, L"&#x%x;", *str ); break;
+        }
+    }
+    *dst = 0;
+    return ret;
+}
+
+static WCHAR *unescape( const WCHAR *str, size_t len )
+{
+    WCHAR *ret, *dst, *end;
+    size_t j, i = 0;
+
+    if (!(dst = ret = malloc( (len + 1) * sizeof(WCHAR) ))) return NULL;
+
+    while (i < len)
+    {
+        if (str[i] != '&')
+        {
+            *dst++ = str[i++];
+            continue;
+        }
+        if (!wcsncmp( str + i, L"&lt;", 4 )) { *dst++ = '<'; i += 4; }
+        else if (!wcsncmp( str + i, L"&gt;", 4 )) { *dst++ = '>'; i += 4; }
+        else if (!wcsncmp( str + i, L"&amp;", 5 )) { *dst++ = '&'; i += 5; }
+        else if (!wcsncmp( str + i, L"&quot;", 6 )) { *dst++ = '"'; i += 6; }
+        else if (!wcsncmp( str + i, L"&apos;", 6 )) { *dst++ = '\''; i += 6; }
+        else if (i + 1 < len && str[i + 1] == '#')
+        {
+            int base = 10;
+
+            i += 2;
+            if (str[i] == 'x' || str[i] == 'X')
+            {
+                i++;
+                base = 16;
+            }
+            *dst++ = wcstoul( str + i, &end, base );
+            if (*end != ';') goto error;
+            i = end + 1 - str;
+        }
+        else
+        {
+            for (j = i + 1; j < len; j++) if (str[j] == ';') break;
+            if (j - i > 2) goto error;
+            i = j + 1;
+        }
+    }
+    *dst = 0;
+    return ret;
+
+error:
+    free( ret );
+    return NULL;
+}
+
 static HRESULT WINAPI name_QueryInterface(
     IAssemblyName *iface,
     REFIID riid,
@@ -128,33 +200,50 @@ static HRESULT WINAPI name_GetDisplayName(
     LPDWORD buflen,
     DWORD flags )
 {
-    static const WCHAR fmtW[] = {',','%','s','=','\"','%','s','\"',0};
     struct name *name = impl_from_IAssemblyName( iface );
     unsigned int len;
+    WCHAR *escname, *arch, *token, *type, *version, *language;
+    HRESULT ret = S_OK;
 
     TRACE("%p, %p, %p, 0x%08lx\n", iface, buffer, buflen, flags);
 
     if (!buflen || flags) return E_INVALIDARG;
 
-    len = lstrlenW( name->name ) + 1;
-    if (name->language) len += lstrlenW( L"language" ) + lstrlenW( name->language ) + 4;
-    if (name->arch)    len += lstrlenW( L"processorArchitecture" ) + lstrlenW( name->arch ) + 4;
-    if (name->token)   len += lstrlenW( L"publicKeyToken" ) + lstrlenW( name->token ) + 4;
-    if (name->type)    len += lstrlenW( L"type" ) + lstrlenW( name->type ) + 4;
-    if (name->version) len += lstrlenW( L"version" ) + lstrlenW( name->version ) + 4;
+    escname  = escape( name->name );
+    arch     = escape( name->arch );
+    token    = escape( name->token );
+    type     = escape( name->type );
+    version  = escape( name->version );
+    language = escape( name->language );
+
+    len = lstrlenW( escname ) + 1;
+    if (language) len += lstrlenW( L"language" ) + lstrlenW( language ) + 4;
+    if (arch)     len += lstrlenW( L"processorArchitecture" ) + lstrlenW( arch ) + 4;
+    if (token)    len += lstrlenW( L"publicKeyToken" ) + lstrlenW( token ) + 4;
+    if (type)     len += lstrlenW( L"type" ) + lstrlenW( type ) + 4;
+    if (version)  len += lstrlenW( L"version" ) + lstrlenW( version ) + 4;
     if (len > *buflen)
     {
         *buflen = len;
-        return HRESULT_FROM_WIN32( ERROR_INSUFFICIENT_BUFFER );
+        ret = HRESULT_FROM_WIN32( ERROR_INSUFFICIENT_BUFFER );
     }
-    lstrcpyW( buffer, name->name );
-    len = lstrlenW( buffer );
-    if (name->language) len += swprintf( buffer + len, *buflen - len, fmtW, L"language", name->language );
-    if (name->arch)    len += swprintf( buffer + len, *buflen - len, fmtW, L"processorArchitecture", name->arch );
-    if (name->token)   len += swprintf( buffer + len, *buflen - len, fmtW, L"publicKeyToken", name->token );
-    if (name->type)    len += swprintf( buffer + len, *buflen - len, fmtW, L"type", name->type );
-    if (name->version) len += swprintf( buffer + len, *buflen - len, fmtW, L"version", name->version );
-    return S_OK;
+    else
+    {
+        lstrcpyW( buffer, escname );
+        len = lstrlenW( buffer );
+        if (language) len += swprintf( buffer + len, *buflen - len, L",language=\"%s\"", language );
+        if (arch)     len += swprintf( buffer + len, *buflen - len, L",processorArchitecture=\"%s\"", arch );
+        if (token)    len += swprintf( buffer + len, *buflen - len, L",publicKeyToken=\"%s\"", token );
+        if (type)     len += swprintf( buffer + len, *buflen - len, L",type=\"%s\"", type );
+        if (version)  len += swprintf( buffer + len, *buflen - len, L",version=\"%s\"", version );
+    }
+    free( escname );
+    free( arch );
+    free( token );
+    free( type );
+    free( version );
+    free( language );
+    return ret;
 }
 
 static HRESULT WINAPI name_Reserved(
@@ -292,7 +381,6 @@ static const IAssemblyNameVtbl name_vtbl =
 
 static WCHAR *parse_value( const WCHAR *str, unsigned int *len )
 {
-    WCHAR *ret;
     const WCHAR *p = str;
 
     if (*p++ != '\"') return NULL;
@@ -300,10 +388,7 @@ static WCHAR *parse_value( const WCHAR *str, unsigned int *len )
     if (!*p) return NULL;
 
     *len = p - str;
-    if (!(ret = malloc( *len * sizeof(WCHAR) ))) return NULL;
-    memcpy( ret, str + 1, (*len - 1) * sizeof(WCHAR) );
-    ret[*len - 1] = 0;
-    return ret;
+    return unescape( str + 1, *len - 1 );
 }
 
 static HRESULT parse_displayname( struct name *name, const WCHAR *displayname )
@@ -314,9 +399,7 @@ static HRESULT parse_displayname( struct name *name, const WCHAR *displayname )
     p = q = displayname;
     while (*q && *q != ',') q++;
     len = q - p;
-    if (!(name->name = malloc( (len + 1) * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
-    memcpy( name->name, p, len * sizeof(WCHAR) );
-    name->name[len] = 0;
+    if (!(name->name = unescape( p, len ))) return E_INVALIDARG;
     if (!*q) return S_OK;
 
     for (;;)

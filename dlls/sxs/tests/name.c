@@ -203,6 +203,15 @@ static void test_display_name( void )
         { L"wine,version=\"1.2.3.4\",type=\"foo\"", L"wine,type=\"foo\",version=\"1.2.3.4\"" },
         { L"wine,version=\"1.2.3.4\",language=\"en-US\",type=\"win32\",processorArchitecture=\"amd64\",publicKeyToken=\"foo\"",
           L"wine,language=\"en-US\",processorArchitecture=\"amd64\",publicKeyToken=\"foo\",type=\"win32\",version=\"1.2.3.4\"" },
+        { L"wine ,version=\"1 . 2 . 3 . 4\"",
+          L"wine&#x20;,version=\"1&#x20;.&#x20;2&#x20;.&#x20;3&#x20;.&#x20;4\"" },
+        { L"wine&#x0020;&#x3c;&#x3e;&#X2c;&#3;&#010;&#x123456;A&#0;B,version=\"&#x26;&#x27;3\"",
+          L"wine&#x20;&lt;&gt;&#x2c;&#x3;&#xa;&#x3456;A,version=\"&amp;&apos;3\"" },
+        { L"wine\x1234\x2345zz,version=\"1.2.3.4\"", L"wine&#x1234;&#x2345;zz,version=\"1.2.3.4\"" },
+        { L"wine\a\b\t\r\n!\"#$%'*+-./:;<=>?@[\\]^_`{|}~\x7f",
+          L"wine&#x7;&#x8;&#x9;&#xd;&#xa;&#x21;&quot;&#x23;&#x24;&#x25;&apos;&#x2a;&#x2b;-.&#x2f;&#x3a;&#x3b;&lt;&#x3d;&gt;&#x3f;&#x40;&#x5b;&#x5c;&#x5d;&#x5e;_&#x60;&#x7b;&#x7c;&#x7d;&#x7e;&#x7f;" },
+        { L"wine&*;A&B;C&;D&", L"wineACD" },
+        { L"wine&**;A", NULL },
     };
     unsigned int i;
     WCHAR buffer[1024];
