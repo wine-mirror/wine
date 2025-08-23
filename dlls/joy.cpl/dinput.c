@@ -92,12 +92,15 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
         .dwMagnitude = DI_FFNOMINALMAX,
         .dwPeriod = DI_SECONDS / 2,
     };
-    DICONDITION condition =
+    DICONDITION condition[2] =
     {
-        .dwPositiveSaturation = 10000,
-        .dwNegativeSaturation = 10000,
-        .lPositiveCoefficient = 10000,
-        .lNegativeCoefficient = 10000,
+        {0},
+        {
+            .dwPositiveSaturation = 10000,
+            .dwNegativeSaturation = 10000,
+            .lPositiveCoefficient = 10000,
+            .lNegativeCoefficient = 10000,
+        },
     };
     DIRAMPFORCE ramp =
     {
@@ -130,8 +133,15 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
         break;
     }
 
-    do hr = IDirectInputDevice2_CreateEffect( device, &info->guid, &params, &effect, NULL );
-    while (FAILED(hr) && --params.cAxes);
+    do
+    {
+        hr = IDirectInputDevice2_CreateEffect( device, &info->guid, &params, &effect, NULL );
+        if (FAILED(hr) && DIEFT_GETTYPE(info->dwEffType) == DIEFT_CONDITION)
+        {
+            params.cbTypeSpecificParams = sizeof(condition[1]);
+            params.lpvTypeSpecificParams = &condition[1];
+        }
+    } while (FAILED(hr) && --params.cAxes);
 
     if (FAILED(hr))
     {
