@@ -4382,7 +4382,7 @@ static void test_create_effect_from_memory(void)
     /* Empty buffers are always included before version 40. */
     hr = effect->lpVtbl->GetDesc(effect, &desc);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-#if D3DX10_SDK_VERSION > 40
+#if D3DX10_SDK_VERSION >= 40
     ok(desc.ConstantBuffers == 1, "Unexpected buffer count.\n");
 #else
     todo_wine

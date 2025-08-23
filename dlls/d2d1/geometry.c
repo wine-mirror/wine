@@ -957,6 +957,21 @@ static bool d2d_figure_add_beziers(struct d2d_figure *figure, const D2D1_BEZIER_
     return true;
 }
 
+static bool d2d_figure_add_lines(struct d2d_figure *figure, const D2D1_POINT_2F *points,
+        UINT32 count)
+{
+    unsigned int i;
+
+    for (i = 0; i < count; ++i)
+    {
+        figure->vertex_types[figure->vertex_count - 1] = D2D_VERTEX_TYPE_LINE;
+        if (!d2d_figure_add_vertex(figure, points[i]))
+            return false;
+    }
+
+    return true;
+}
+
 static void d2d_figure_cleanup(struct d2d_figure *figure)
 {
     free(figure->original_bezier_controls);
@@ -2881,7 +2896,6 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddLines(ID2D1GeometrySink *ifac
 {
     struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
     struct d2d_figure *figure = &geometry->u.path.figures[geometry->u.path.figure_count - 1];
-    unsigned int i;
 
     TRACE("iface %p, points %p, count %u.\n", iface, points, count);
 
@@ -2891,14 +2905,10 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddLines(ID2D1GeometrySink *ifac
         return;
     }
 
-    for (i = 0; i < count; ++i)
+    if (!d2d_figure_add_lines(figure, points, count))
     {
-        figure->vertex_types[figure->vertex_count - 1] = D2D_VERTEX_TYPE_LINE;
-        if (!d2d_figure_add_vertex(figure, points[i]))
-        {
-            ERR("Failed to add vertex.\n");
-            return;
-        }
+        ERR("Failed to add vertex.\n");
+        return;
     }
 
     geometry->u.path.segment_count += count;
@@ -4873,14 +4883,73 @@ static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_CompareWithGeome
     return E_NOTIMPL;
 }
 
+static inline void d2d_point_translate(D2D1_POINT_2F *point, float x, float y)
+{
+    point->x += x;
+    point->y += y;
+}
+
+static inline void d2d_bezier_segment_translate(D2D1_BEZIER_SEGMENT *segment, float x, float y)
+{
+    d2d_point_translate(&segment->point1, x, y);
+    d2d_point_translate(&segment->point2, x, y);
+    d2d_point_translate(&segment->point3, x, y);
+}
+
 static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_Simplify(ID2D1RoundedRectangleGeometry *iface,
         D2D1_GEOMETRY_SIMPLIFICATION_OPTION option, const D2D1_MATRIX_3X2_F *transform, float tolerance,
         ID2D1SimplifiedGeometrySink *sink)
 {
-    FIXME("iface %p, option %#x, transform %p, tolerance %.8e, sink %p stub!\n",
+    struct d2d_geometry *geometry = impl_from_ID2D1RoundedRectangleGeometry(iface);
+    const D2D1_ROUNDED_RECT *r = &geometry->u.rounded_rectangle.rounded_rect;
+    struct d2d_figure figure = { 0 };
+    D2D1_BEZIER_SEGMENT segments[4];
+    D2D1_POINT_2F start_point, p;
+    D2D1_ELLIPSE ellipse;
+    bool ret;
+
+    TRACE("iface %p, option %#x, transform %p, tolerance %.8e, sink %p.\n",
             iface, option, transform, tolerance, sink);
 
-    return E_NOTIMPL;
+    d2d_point_set(&ellipse.point, 0.0f, 0.0f);
+    ellipse.radiusX = r->radiusX;
+    ellipse.radiusY = r->radiusY;
+
+    d2d_ellipse_to_segments(&ellipse, &start_point, segments);
+
+    d2d_point_set(&p, r->rect.left + r->radiusX, r->rect.bottom + r->radiusY);
+    d2d_point_translate(&start_point, p.x, p.y);
+    d2d_bezier_segment_translate(&segments[0], p.x, p.y);
+    d2d_point_set(&p, r->rect.right - r->radiusX, r->rect.bottom + r->radiusY);
+    d2d_bezier_segment_translate(&segments[1], p.x, p.y);
+    d2d_point_set(&p, r->rect.right - r->radiusX, r->rect.top - r->radiusY);
+    d2d_bezier_segment_translate(&segments[2], p.x, p.y);
+    d2d_point_set(&p, r->rect.left + r->radiusX, r->rect.top - r->radiusY);
+    d2d_bezier_segment_translate(&segments[3], p.x, p.y);
+
+    ret = d2d_figure_begin(&figure, start_point, D2D1_FIGURE_BEGIN_FILLED);
+    ret = ret && d2d_figure_add_beziers(&figure, &segments[0], 1);
+    d2d_point_set(&p, r->rect.right - r->radiusX, r->rect.bottom);
+    ret = ret && d2d_figure_add_lines(&figure, &p, 1);
+    ret = ret && d2d_figure_add_beziers(&figure, &segments[1], 1);
+    d2d_point_set(&p, r->rect.right, r->rect.top - r->radiusY);
+    ret = ret && d2d_figure_add_lines(&figure, &p, 1);
+    ret = ret && d2d_figure_add_beziers(&figure, &segments[2], 1);
+    d2d_point_set(&p, r->rect.left + r->radiusX, r->rect.top);
+    ret = ret && d2d_figure_add_lines(&figure, &p, 1);
+    ret = ret && d2d_figure_add_beziers(&figure, &segments[3], 1);
+    if (!ret)
+    {
+        d2d_figure_cleanup(&figure);
+        return E_OUTOFMEMORY;
+    }
+
+    d2d_figure_end(&figure, D2D1_FIGURE_END_CLOSED);
+
+    d2d_figure_simplify(&figure, option, transform, tolerance, sink);
+    d2d_figure_cleanup(&figure);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_Tessellate(ID2D1RoundedRectangleGeometry *iface,
