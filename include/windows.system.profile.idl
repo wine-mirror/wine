@@ -97,7 +97,6 @@ namespace Windows.System.Profile {
         HRESULT GetSystemIdForUser([in] Windows.System.User *user, [out, retval] Windows.System.Profile.SystemIdentificationInfo **result);
     }
 
-#ifndef _WINDOWS_SYSTEM_PROFILE_SYSTEM_ID
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
@@ -119,7 +118,6 @@ namespace Windows.System.Profile {
     runtimeclass AnalyticsInfo
     {
     }
-#endif
 
     [
         contract(Windows.Foundation.UniversalApiContract, 3.0),
