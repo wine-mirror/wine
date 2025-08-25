@@ -19,6 +19,14 @@
  */
 
 #pragma makedep register
+#pragma winrt ns_prefix
 
-#include "windows.perception.spatial.surfaces.idl"
-#include "windows.graphics.holographic.idl"
+import "windows.perception.spatial.surfaces.idl";
+import "windows.graphics.holographic.idl";
+
+namespace Windows.Perception.Spatial.Surfaces {
+    runtimeclass SpatialSurfaceObserver;
+}
+namespace Windows.Graphics.Holographic {
+    runtimeclass HolographicSpace;
+}
