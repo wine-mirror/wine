@@ -121,7 +121,6 @@ namespace Windows.System.Profile {
     }
 #endif
 
-#ifndef _TWINAPI_APPCORE
     [
         contract(Windows.Foundation.UniversalApiContract, 3.0),
         marshaling_behavior(agile),
@@ -141,5 +140,4 @@ namespace Windows.System.Profile {
     {
         [default] interface Windows.System.Profile.ISystemIdentificationInfo;
     }
-#endif
 }
