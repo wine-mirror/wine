@@ -50,6 +50,8 @@ static void test_BackgroundMediaPlayer_Statics(void)
     static const WCHAR *background_media_player_statics_name = L"Windows.Media.Playback.BackgroundMediaPlayer";
     IBackgroundMediaPlayerStatics *background_media_player_statics = (void *)0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
+    IMediaPlayer *media_player2 = (void *)0xdeadbeef;
+    IMediaPlayer *media_player = (void *)0xdeadbeef;
     HSTRING str;
     HRESULT hr;
     LONG ref;
@@ -72,6 +74,14 @@ static void test_BackgroundMediaPlayer_Statics(void)
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IBackgroundMediaPlayerStatics, (void **)&background_media_player_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = IBackgroundMediaPlayerStatics_get_Current( background_media_player_statics, &media_player );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IBackgroundMediaPlayerStatics_get_Current( background_media_player_statics, &media_player2 );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( media_player == media_player2, "got media_player %p, media_player2 %p.\n", media_player, media_player2 );
+    IMediaPlayer_Release( media_player2 );
+    IMediaPlayer_Release( media_player );
 
     ref = IBackgroundMediaPlayerStatics_Release( background_media_player_statics );
     ok( ref == 2, "got ref %ld.\n", ref );

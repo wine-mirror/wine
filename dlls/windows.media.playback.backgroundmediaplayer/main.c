@@ -24,11 +24,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(playback);
 
+static CRITICAL_SECTION media_player_cs;
+static CRITICAL_SECTION_DEBUG media_player_cs_debug =
+{
+    0, 0, &media_player_cs,
+    { &media_player_cs_debug.ProcessLocksList, &media_player_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": media_player_cs") }
+};
+static CRITICAL_SECTION media_player_cs = { &media_player_cs_debug, -1, 0, 0, 0, 0 };
+
 struct background_media_player_statics
 {
     IActivationFactory IActivationFactory_iface;
     IBackgroundMediaPlayerStatics IBackgroundMediaPlayerStatics_iface;
     LONG ref;
+
+    IMediaPlayer *media_player;
 };
 
 static inline struct background_media_player_statics *impl_from_IActivationFactory( IActivationFactory *iface )
@@ -76,7 +87,20 @@ static ULONG WINAPI factory_Release( IActivationFactory *iface )
 {
     struct background_media_player_statics *impl = impl_from_IActivationFactory( iface );
     ULONG ref = InterlockedDecrement( &impl->ref );
+
     TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
+
+    if (!ref)
+    {
+        EnterCriticalSection( &media_player_cs );
+        if (!impl->ref && impl->media_player)
+        {
+            IMediaPlayer_Release( impl->media_player );
+            impl->media_player = NULL;
+        }
+        LeaveCriticalSection( &media_player_cs );
+    }
+
     return ref;
 }
 
@@ -120,10 +144,44 @@ static const struct IActivationFactoryVtbl factory_vtbl =
 
 DEFINE_IINSPECTABLE( background_media_player_statics, IBackgroundMediaPlayerStatics, struct background_media_player_statics, IActivationFactory_iface )
 
+static HRESULT get_media_player( IMediaPlayer **media_player )
+{
+    static const WCHAR *media_player_name = L"Windows.Media.Playback.MediaPlayer";
+    IInspectable *inspectable = NULL;
+    HSTRING str = NULL;
+    HRESULT hr;
+
+    if (FAILED(hr = WindowsCreateString( media_player_name, wcslen( media_player_name ), &str ))) return hr;
+    if (SUCCEEDED(hr = RoActivateInstance( str, &inspectable )))
+    {
+        hr = IInspectable_QueryInterface( inspectable, &IID_IMediaPlayer, (void **)media_player );
+        IInspectable_Release( inspectable );
+    }
+
+    WindowsDeleteString( str );
+    return hr;
+}
+
 static HRESULT WINAPI background_media_player_statics_get_Current( IBackgroundMediaPlayerStatics *iface, IMediaPlayer **player )
 {
-    FIXME( "iface %p, player %p stub!\n", iface, player );
-    return E_NOTIMPL;
+    struct background_media_player_statics *impl = impl_from_IBackgroundMediaPlayerStatics( iface );
+    HRESULT hr;
+
+    TRACE( "iface %p, player %p\n", iface, player );
+
+    EnterCriticalSection( &media_player_cs );
+
+    if (!impl->media_player && FAILED(hr = get_media_player( &impl->media_player )))
+    {
+        *player = NULL;
+        LeaveCriticalSection( &media_player_cs );
+        return hr;
+    }
+
+    *player = impl->media_player;
+    IMediaPlayer_AddRef( *player );
+    LeaveCriticalSection( &media_player_cs );
+    return S_OK;
 }
 
 static HRESULT WINAPI background_media_player_statics_add_MessageReceivedFromBackground( IBackgroundMediaPlayerStatics *iface,
