@@ -99,16 +99,12 @@ namespace Windows.UI.ViewManagement
     interface IInputPaneStatics2;
 
     runtimeclass AccessibilitySettings;
-#ifndef _WINDOWS_UI
     runtimeclass ApplicationView;
-#endif
     runtimeclass ApplicationViewConsolidatedEventArgs;
     runtimeclass ApplicationViewScaling;
-#ifndef _WINDOWS_UI
     runtimeclass ApplicationViewSwitcher;
     runtimeclass ApplicationViewTitleBar;
     runtimeclass ApplicationViewTransferContext;
-#endif
     runtimeclass UISettings;
     runtimeclass UISettingsAnimationsEnabledChangedEventArgs;
     runtimeclass UISettingsAutoHideScrollBarsChangedEventArgs;
@@ -120,10 +116,8 @@ namespace Windows.UI.ViewManagement
 
     declare {
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.AccessibilitySettings *, IInspectable *>;
-#ifndef _WINDOWS_UI
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.ApplicationView *, IInspectable *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.ApplicationView *, Windows.UI.ViewManagement.ApplicationViewConsolidatedEventArgs *>;
-#endif
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.UISettings *, IInspectable *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.UISettings *, Windows.UI.ViewManagement.UISettingsAnimationsEnabledChangedEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.UISettings *, Windows.UI.ViewManagement.UISettingsAutoHideScrollBarsChangedEventArgs *>;
@@ -325,7 +319,6 @@ namespace Windows.UI.ViewManagement
         [eventremove] HRESULT HighContrastChanged([in] EventRegistrationToken cookie);
     }
 
-#ifndef _WINDOWS_UI
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.UI.ViewManagement.ApplicationView),
@@ -416,7 +409,6 @@ namespace Windows.UI.ViewManagement
         [propget] HRESULT WindowingEnvironment([out, retval] Windows.UI.WindowManagement.WindowingEnvironment **value);
         HRESULT GetDisplayRegions([out, retval] Windows.Foundation.Collections.IVectorView<Windows.UI.WindowManagement.DisplayRegion *> **result);
     }
-#endif
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -438,7 +430,6 @@ namespace Windows.UI.ViewManagement
         [propget] HRESULT IsAppInitiated([out, retval] boolean *value);
     }
 
-#ifndef _WINDOWS_UI
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.UI.ViewManagement.ApplicationView),
@@ -458,7 +449,6 @@ namespace Windows.UI.ViewManagement
     {
         HRESULT GetApplicationViewIdForWindow([in] Windows.UI.Core.ICoreWindow *window, [out, retval] INT32 *id);
     }
-#endif
 
     [
         contract(Windows.UI.ViewManagement.ViewManagementViewScalingContract, 1.0),
@@ -480,7 +470,6 @@ namespace Windows.UI.ViewManagement
         HRESULT TrySetDisableLayoutScaling([in] boolean disabled, [out, retval] boolean *success);
     }
 
-#ifndef _WINDOWS_UI
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.UI.ViewManagement.ApplicationView),
@@ -629,7 +618,6 @@ namespace Windows.UI.ViewManagement
     {
         [propget] HRESULT UIContext([out, retval] Windows.UI.UIContext **value);
     }
-#endif
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -872,7 +860,6 @@ namespace Windows.UI.ViewManagement
         [default] interface Windows.UI.ViewManagement.IAccessibilitySettings;
     }
 
-#ifndef _WINDOWS_UI
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
@@ -894,7 +881,6 @@ namespace Windows.UI.ViewManagement
         [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.ViewManagement.IApplicationView9;
         [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.ViewManagement.IApplicationViewWithContext;
     }
-#endif
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -915,7 +901,6 @@ namespace Windows.UI.ViewManagement
         [default] interface Windows.UI.ViewManagement.IApplicationViewScaling;
     }
 
-#ifndef _WINDOWS_UI
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
@@ -946,7 +931,6 @@ namespace Windows.UI.ViewManagement
     {
         [contract(Windows.Foundation.UniversalApiContract, 2.0), default] interface Windows.UI.ViewManagement.IApplicationViewTransferContext;
     }
-#endif
 
     [
         activatable(Windows.Foundation.UniversalApiContract, 1.0),
@@ -990,7 +974,6 @@ namespace Windows.UI.ViewManagement
         [default] interface Windows.UI.ViewManagement.IUISettingsMessageDurationChangedEventArgs;
     }
 
-#ifndef _WINDOWS_UI
     [
         static(Windows.UI.ViewManagement.IUIViewSettingsStatics, Windows.Foundation.UniversalApiContract, 1.0),
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -1000,7 +983,6 @@ namespace Windows.UI.ViewManagement
     {
         [default] interface Windows.UI.ViewManagement.IUIViewSettings;
     }
-#endif
 
     [
         static(Windows.UI.ViewManagement.IInputPaneStatics, Windows.Foundation.UniversalApiContract, 1.0),
@@ -1024,7 +1006,6 @@ namespace Windows.UI.ViewManagement
         [default] interface Windows.UI.ViewManagement.IInputPaneVisibilityEventArgs;
     }
 
-#ifndef _WINDOWS_UI
     [
         contract(Windows.Foundation.UniversalApiContract, 4.0),
         static(Windows.UI.ViewManagement.IViewModePreferencesStatics, Windows.Foundation.UniversalApiContract, 4.0)
@@ -1033,5 +1014,4 @@ namespace Windows.UI.ViewManagement
     {
         [contract(Windows.Foundation.UniversalApiContract, 4.0), default] interface Windows.UI.ViewManagement.IViewModePreferences;
     }
-#endif
 }
