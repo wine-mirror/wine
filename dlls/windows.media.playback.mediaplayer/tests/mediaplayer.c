@@ -28,6 +28,7 @@
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
+#define WIDL_using_Windows_Media
 #define WIDL_using_Windows_Media_Playback
 #include "windows.media.playback.h"
 
@@ -48,6 +49,8 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid, BOOL
 static void test_MediaPlayer_Statics(void)
 {
     static const WCHAR *media_player_name = L"Windows.Media.Playback.MediaPlayer";
+    ISystemMediaTransportControls *media_transport_controls2 = (void *)0xdeadbeef;
+    ISystemMediaTransportControls *media_transport_controls = (void *)0xdeadbeef;
     IMediaPlayer2 *media_player2 = (void *)0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
     IMediaPlayer *media_player = (void *)0xdeadbeef;
@@ -85,6 +88,16 @@ static void test_MediaPlayer_Statics(void)
     hr = IMediaPlayer_QueryInterface( media_player, &IID_IMediaPlayer2, (void **)&media_player2 );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
+    hr = IMediaPlayer2_get_SystemMediaTransportControls( media_player2, &media_transport_controls );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IMediaPlayer2_get_SystemMediaTransportControls( media_player2, &media_transport_controls2 );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( media_transport_controls == media_transport_controls2, "got media_transport_controls %p, media_transport_controls2 %p.\n", media_transport_controls, media_transport_controls2 );
+    ref = ISystemMediaTransportControls_Release( media_transport_controls2 );
+    ok( ref == 3, "got ref %ld.\n", ref );
+
+    ref = ISystemMediaTransportControls_Release( media_transport_controls );
+    ok( ref == 2, "got ref %ld.\n", ref );
     ref = IMediaPlayer2_Release( media_player2 );
     ok( ref == 2, "got ref %ld.\n", ref );
     ref = IMediaPlayer_Release( media_player );

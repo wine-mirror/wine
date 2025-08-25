@@ -29,6 +29,9 @@ struct media_player
     IMediaPlayer IMediaPlayer_iface;
     IMediaPlayer2 IMediaPlayer2_iface;
     LONG ref;
+
+    ISystemMediaTransportControls *controls;
+    HWND window;
 };
 
 static inline struct media_player *impl_from_IMediaPlayer( IMediaPlayer *iface )
@@ -79,7 +82,12 @@ static ULONG WINAPI media_player_Release( IMediaPlayer *iface )
 
     TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
 
-    if (!ref) free( impl );
+    if (!ref)
+    {
+        ISystemMediaTransportControls_Release( impl->controls );
+        DestroyWindow( impl->window );
+        free( impl );
+    }
     return ref;
 }
 
@@ -416,8 +424,13 @@ DEFINE_IINSPECTABLE( media_player2, IMediaPlayer2, struct media_player, IMediaPl
 
 static HRESULT WINAPI media_player2_get_SystemMediaTransportControls( IMediaPlayer2 *iface, ISystemMediaTransportControls **value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct media_player *impl = impl_from_IMediaPlayer2( iface );
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    *value = impl->controls;
+    ISystemMediaTransportControls_AddRef( *value );
+    return S_OK;
 }
 
 static HRESULT WINAPI media_player2_get_AudioCategory( IMediaPlayer2 *iface, MediaPlayerAudioCategory *value )
@@ -527,16 +540,52 @@ static HRESULT WINAPI factory_GetTrustLevel( IActivationFactory *iface, TrustLev
     return E_NOTIMPL;
 }
 
+static HRESULT get_system_media_transport_controls( HWND *window, ISystemMediaTransportControls **controls )
+{
+    static const WCHAR *media_control_statics_name = L"Windows.Media.SystemMediaTransportControls";
+    ISystemMediaTransportControlsInterop *media_control_interop_statics = NULL;
+    IActivationFactory *factory = NULL;
+    HSTRING str = NULL;
+    HRESULT hr;
+    HWND hwnd;
+
+    FIXME( "shell integration not implemented.\n" );
+
+    if (!(hwnd = CreateWindowExW( 0, L"static", NULL, WS_POPUP, 0, 0, 0, 0, NULL, NULL, GetModuleHandleW( NULL ), NULL ))) return HRESULT_FROM_WIN32( GetLastError() );
+
+    if (FAILED(hr = WindowsCreateString( media_control_statics_name, wcslen( media_control_statics_name ), &str ))) goto done;
+    if (SUCCEEDED(hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory )))
+    {
+        hr = IActivationFactory_QueryInterface( factory, &IID_ISystemMediaTransportControlsInterop, (void **)&media_control_interop_statics );
+        IActivationFactory_Release( factory );
+    }
+    if (SUCCEEDED(hr))
+    {
+        hr = ISystemMediaTransportControlsInterop_GetForWindow( media_control_interop_statics, hwnd, &IID_ISystemMediaTransportControls, (void **)controls );
+        ISystemMediaTransportControlsInterop_Release( media_control_interop_statics );
+    }
+    WindowsDeleteString( str );
+
+done:
+    if (FAILED(hr)) DestroyWindow( hwnd );
+    else *window = hwnd;
+    return hr;
+}
+
 static HRESULT WINAPI factory_ActivateInstance( IActivationFactory *iface, IInspectable **instance )
 {
     struct media_player *impl;
+    HRESULT hr;
 
     TRACE( "iface %p, instance %p.\n", iface, instance );
 
-    if (!(impl = calloc( 1, sizeof( *impl ) )))
+    *instance = NULL;
+
+    if (!(impl = calloc( 1, sizeof( *impl ) ))) return E_OUTOFMEMORY;
+    if (FAILED(hr = get_system_media_transport_controls( &impl->window, &impl->controls )))
     {
-        *instance = NULL;
-        return E_OUTOFMEMORY;
+        free( impl );
+        return hr;
     }
 
     impl->IMediaPlayer_iface.lpVtbl = &media_player_vtbl;

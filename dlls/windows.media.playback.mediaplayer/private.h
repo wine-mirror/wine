@@ -28,6 +28,7 @@
 #include "winstring.h"
 
 #include "activation.h"
+#include "roapi.h"
 
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
@@ -35,6 +36,7 @@
 #define WIDL_using_Windows_Media
 #define WIDL_using_Windows_Media_Playback
 #include "windows.media.playback.h"
+#include "systemmediatransportcontrolsinterop.h"
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \
