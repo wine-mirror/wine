@@ -19,10 +19,7 @@
  */
 
 #pragma makedep register
-
-#ifdef __WIDL__
 #pragma winrt ns_prefix
-#endif
 
 import "inspectable.idl";
 import "asyncinfo.idl";
@@ -33,8 +30,21 @@ import "windows.foundation.numerics.idl";
 import "windows.devices.haptics.idl";
 import "windows.system.idl";
 import "windows.devices.power.idl";
+import "windows.gaming.input.idl";
+import "windows.gaming.input.custom.idl";
+import "windows.gaming.input.forcefeedback.idl";
 
-#define DO_NO_IMPORTS
-#include "windows.gaming.input.forcefeedback.idl"
-#include "windows.gaming.input.idl"
-#include "windows.gaming.input.custom.idl"
+namespace Windows.Gaming.Input {
+    runtimeclass RawGameController;
+    runtimeclass Gamepad;
+    runtimeclass RacingWheel;
+}
+namespace Windows.Gaming.Input.Custom {
+    runtimeclass GameControllerFactoryManager;
+}
+namespace Windows.Gaming.Input.ForceFeedback {
+    runtimeclass ConstantForceEffect;
+    runtimeclass RampForceEffect;
+    runtimeclass PeriodicForceEffect;
+    runtimeclass ConditionForceEffect;
+}
