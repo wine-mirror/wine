@@ -159,6 +159,8 @@ static void opengl_drawable_flush( struct opengl_drawable *drawable, int interva
         drawable->funcs->flush( drawable, flags );
 }
 
+#ifdef SONAME_LIBEGL
+
 struct framebuffer_surface
 {
     struct opengl_drawable base;
@@ -367,8 +369,6 @@ static struct opengl_drawable *framebuffer_surface_create( int format, struct cl
     if (!(surface = opengl_drawable_create( sizeof(*surface), &framebuffer_surface_funcs, format, client ))) return NULL;
     return &surface->base;
 }
-
-#ifdef SONAME_LIBEGL
 
 static const struct opengl_drawable_funcs egldrv_pbuffer_funcs;
 
