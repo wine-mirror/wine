@@ -19,6 +19,10 @@
  */
 
 #pragma makedep register
+#pragma winrt ns_prefix
 
-#define _WINDOWS_APPLICATIONDATA
-#include "windows.storage.idl"
+import "windows.storage.idl";
+
+namespace Windows.Storage {
+    runtimeclass ApplicationData;
+}
