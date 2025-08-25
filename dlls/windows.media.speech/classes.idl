@@ -15,6 +15,15 @@
  */
 
 #pragma makedep register
+#pragma winrt ns_prefix
 
-#include "windows.media.speechrecognition.idl"
-#include "windows.media.speechsynthesis.idl"
+import "windows.media.speechrecognition.idl";
+import "windows.media.speechsynthesis.idl";
+
+namespace Windows.Media.SpeechRecognition {
+    runtimeclass SpeechRecognizer;
+    runtimeclass SpeechRecognitionListConstraint;
+}
+namespace Windows.Media.SpeechSynthesis {
+    runtimeclass SpeechSynthesizer;
+}
