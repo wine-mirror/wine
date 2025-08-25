@@ -2,7 +2,7 @@
 
 .wine-build:
   stage: build
-  image: $CI_REGISTRY/wine/wine:debian-bookworm
+  image: $CI_REGISTRY/wine/wine:debian-trixie
   interruptible: true
   variables:
     GIT_DEPTH: 0
@@ -101,7 +101,7 @@ build-sast:
 
 build-winetest:
   stage: build
-  image: $CI_REGISTRY/wine/wine:debian-bookworm
+  image: $CI_REGISTRY/wine/wine:debian-trixie
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   needs:
@@ -151,7 +151,7 @@ build-daily-mac:
 
 build-daily-winetest:
   stage: build
-  image: $CI_REGISTRY/wine/wine:debian-bookworm
+  image: $CI_REGISTRY/wine/wine:debian-trixie
   rules:
     - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   needs:

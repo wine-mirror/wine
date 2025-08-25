@@ -2,7 +2,7 @@
 
 .wine-test:
   stage: test
-  image: $CI_REGISTRY/wine/wine:debian-bookworm
+  image: $CI_REGISTRY/wine/wine:debian-trixie
   interruptible: true
   variables:
     GIT_STRATEGY: none

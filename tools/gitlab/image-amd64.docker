@@ -29,7 +29,6 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
                        libgphoto2-dev:amd64 libgphoto2-dev:i386 \
                        libice-dev:amd64 libice-dev:i386 \
                        libkrb5-dev:amd64 libkrb5-dev:i386 \
-                       libosmesa6-dev:amd64 libosmesa6-dev:i386 \
                        libpcap-dev:amd64 libpcap-dev:i386 \
                        libpcsclite-dev:amd64 \
                        libpulse-dev:amd64 libpulse-dev:i386 \
@@ -54,21 +53,14 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
                        libxrender-dev:amd64 libxrender-dev:i386 \
                        libxxf86vm-dev:amd64 libxxf86vm-dev:i386 \
                        linux-libc-dev:amd64 linux-libc-dev:i386 \
+                       libunwind-dev:amd64 \
                        ocl-icd-opencl-dev:amd64 ocl-icd-opencl-dev:i386 \
                        samba-dev:amd64 \
                        unixodbc-dev:amd64 unixodbc-dev:i386 \
                        x11proto-dev && \
     apt-get install -y ccache netbase curl ca-certificates xserver-xorg-video-dummy xserver-xorg xfonts-base xinit fvwm \
-                       winbind fonts-liberation2 fonts-noto-core fonts-noto-cjk pulseaudio unzip && \
-    curl -O https://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2024.9.1_all.deb && \
-    dpkg -i deb-multimedia-keyring_2024.9.1_all.deb && \
-    echo 'deb https://www.deb-multimedia.org bookworm main' >> /etc/apt/sources.list && \
-    apt-get update && \
-    apt-get install -y libgstreamer-plugins-base1.0-dev:amd64 libgstreamer-plugins-base1.0-dev:i386 \
-                       libasound2-plugins:amd64 libasound2-plugins:i386 \
-                       libmjpegutils-2.1-0:amd64 libmjpegutils-2.1-0:i386 \
-                       gstreamer1.0-libav:amd64 gstreamer1.0-libav:i386 \
-                       gstreamer1.0-plugins-base:amd64 gstreamer1.0-plugins-good:amd64 gstreamer1.0-plugins-bad:amd64 gstreamer1.0-plugins-ugly:amd64 \
+                       winbind fonts-liberation2 fonts-noto-core fonts-noto-cjk pulseaudio unzip \
+                       libgstreamer-plugins-base1.0-dev:i386 libasound2-plugins:i386 libmjpegutils-2.1-0:i386 gstreamer1.0-libav:i386 \
                        gstreamer1.0-plugins-base:i386 gstreamer1.0-plugins-good:i386 gstreamer1.0-plugins-bad:i386 gstreamer1.0-plugins-ugly:i386 && \
     apt-get clean && \
     curl -L -o /usr/local/bin/sarif-converter https://gitlab.com/ignis-build/sarif-converter/-/releases/permalink/latest/downloads/bin/sarif-converter-linux-amd64 && \

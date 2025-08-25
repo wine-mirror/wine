@@ -12,8 +12,8 @@
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
   variables:
-    IMAGE_SOURCE: "$CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX/debian:bookworm"
-    IMAGE_LOCAL: "$CI_REGISTRY_IMAGE:debian-bookworm-$ARCH"
+    IMAGE_SOURCE: "$CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX/debian:trixie"
+    IMAGE_LOCAL: "$CI_REGISTRY_IMAGE:debian-trixie-$ARCH"
     DOCKER_FILE: "$CI_PROJECT_DIR/tools/gitlab/image-$ARCH.docker"
   script:
     - mkdir -p /kaniko/.docker
@@ -42,4 +42,4 @@ build-image:
   script:
     - curl -s -L https://github.com/estesp/manifest-tool/releases/download/v2.2.0/binaries-manifest-tool-2.2.0.tar.gz | tar xz manifest-tool-linux-amd64
     - ./manifest-tool-linux-amd64 --username "${CI_REGISTRY_USER}" --password "${CI_REGISTRY_PASSWORD}" push from-args
-      --platforms linux/amd64,linux/arm64 --template ${CI_REGISTRY_IMAGE}:debian-bookworm-ARCH --target ${CI_REGISTRY_IMAGE}:debian-bookworm
+      --platforms linux/amd64,linux/arm64 --template ${CI_REGISTRY_IMAGE}:debian-trixie-ARCH --target ${CI_REGISTRY_IMAGE}:debian-trixie

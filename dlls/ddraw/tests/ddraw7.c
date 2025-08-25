@@ -5694,6 +5694,7 @@ static void test_fog_special(void)
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#lx.\n", hr);
 
         color = get_surface_color(rt, 310, 240);
+        todo_wine_if(i == 1)
         ok(compare_color(color, tests[i].color_left, 1),
                 "Expected left color 0x%08x, got 0x%08x, case %u.\n", tests[i].color_left, color, i);
         color = get_surface_color(rt, 330, 240);

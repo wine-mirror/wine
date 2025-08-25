@@ -2740,20 +2740,19 @@ static void test_rsa_encrypt(void)
     ok(encrypted_size == 80, "got size of %ld\n", encrypted_size);
 
     ret = BCryptEncrypt(key, input, sizeof(input), &oaep_pad, NULL, 0, encrypted_a, encrypted_size, &encrypted_size, BCRYPT_PAD_OAEP);
-    todo_wine ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
+    ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
     ok(encrypted_size == 80, "got size of %ld\n", encrypted_size);
 
     ret = BCryptEncrypt(key, input, sizeof(input), &oaep_pad, NULL, 0, encrypted_b, encrypted_size, &encrypted_size, BCRYPT_PAD_OAEP);
-    todo_wine ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
+    ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
     ok(encrypted_size == 80, "got size of %ld\n", encrypted_size);
-    todo_wine ok(memcmp(encrypted_a, encrypted_b, encrypted_size), "Both outputs are the same\n");
+    ok(memcmp(encrypted_a, encrypted_b, encrypted_size), "Both outputs are the same\n");
 
     decrypted_size = 0;
     memset(decrypted, 0, sizeof(decrypted));
     ret = BCryptDecrypt(key, encrypted_a, encrypted_size, NULL, NULL, 0, NULL, 0, &decrypted_size, BCRYPT_PAD_OAEP);
     ok(ret == STATUS_INVALID_PARAMETER, "got %lx\n", ret);
 
-    todo_wine {
     decrypted_size = 0;
     memset(decrypted, 0, sizeof(decrypted));
     ret = BCryptDecrypt(key, encrypted_a, encrypted_size, &oaep_pad, NULL, 0, NULL, 0, &decrypted_size, BCRYPT_PAD_OAEP);
@@ -2764,7 +2763,6 @@ static void test_rsa_encrypt(void)
     ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
     ok(decrypted_size == sizeof(input), "got %lu\n", decrypted_size);
     ok(!memcmp(decrypted, input, sizeof(input)), "unexpected output\n");
-    }
 
     free(encrypted_a);
     free(encrypted_b);
@@ -3248,7 +3246,7 @@ static void test_ECDH_alg(const struct ecdh_test *t)
         win_skip("BCRYPT_KDF_RAW_SECRET not supported\n");
         goto raw_secret_end;
     }
-    todo_wine ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
     if (status != STATUS_SUCCESS) goto raw_secret_end;
 
     ok(size == (t->bitlen + 7) / 8, "size of secret key incorrect, got %lu, expected 32\n", size);
@@ -3260,7 +3258,7 @@ static void test_ECDH_alg(const struct ecdh_test *t)
 
 raw_secret_end:
     status = BCryptDeriveKey(secret, BCRYPT_KDF_HASH, &hash_params, NULL, 0, &size, 0);
-    todo_wine ok (status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok (status == STATUS_SUCCESS, "got %#lx\n", status);
     if (status != STATUS_SUCCESS) goto derive_end;
 
     ok (size == 20, "got %lu\n", size);
@@ -3531,7 +3529,7 @@ static void test_DH(void)
     ok(key != NULL, "key not set\n");
 
     status = BCryptFinalizeKeyPair(key, 0);
-    todo_wine ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
     if (status != STATUS_SUCCESS)
     {
         BCryptDestroyKey(key);
@@ -4311,7 +4309,6 @@ static void test_SecretAgreement(void)
         ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
 
         status = BCryptDeriveKey(secret, L"HASH", NULL, NULL, 0, &size, 0);
-        todo_wine
         ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
         status = BCryptDestroyHash(secret);
@@ -4353,7 +4350,7 @@ static void test_SecretAgreement(void)
         BCryptCloseAlgorithmProvider(alg, 0);
         return;
     }
-    todo_wine ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
     status = BCryptSecretAgreement(key, key, &secret, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
@@ -4362,7 +4359,7 @@ static void test_SecretAgreement(void)
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
     status = BCryptDeriveKey(secret, L"HASH", NULL, NULL, 0, &size, 0);
-    todo_wine ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
     status = BCryptDestroySecret(secret);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
@@ -4460,7 +4457,7 @@ static void test_SecretAgreement(void)
     ok(size == sizeof(BCRYPT_DH_KEY_BLOB) + length / 8 * 3, "Got unexpected size %lu.\n", size);
     ok(dh_key_blob->dwMagic == BCRYPT_DH_PUBLIC_MAGIC, "Got unexpected dwMagic %#lx.\n", dh_key_blob->dwMagic);
     ok(dh_key_blob->cbKey == length / 8, "Got unexpected length %lu.\n", dh_key_blob->cbKey);
-    todo_wine ok(!memcmp(dh_key_blob + 1, dh_private_key, length / 8 * 2), "DH parameters do not match.\n");
+    ok(!memcmp(dh_key_blob + 1, dh_private_key, length / 8 * 2), "DH parameters do not match.\n");
     ok(memcmp((BYTE *)(dh_key_blob + 1) + length / 8 * 2, (BYTE *)dh_private_key + length / 8 * 2, length / 8),
        "Random public key data matches.\n");
 
