@@ -19,18 +19,14 @@
  */
 
 #pragma makedep register
-
-#ifdef __WIDL__
 #pragma winrt ns_prefix
-#endif
 
 import "windows.foundation.idl";
 import "windows.storage.idl";
 import "windows.system.idl";
+import "windows.applicationmodel.idl";
 
-#define DO_NO_IMPORTS
-#define _WINDOWS_APPLICATIONMODEL
-#include "windows.applicationmodel.core.idl"
-#include "windows.applicationmodel.idl"
-#include "windows.applicationmodel.activation.idl"
-#include "windows.applicationmodel.background.idl"
+namespace Windows.ApplicationModel {
+    runtimeclass Package;
+    runtimeclass DesignMode;
+}
