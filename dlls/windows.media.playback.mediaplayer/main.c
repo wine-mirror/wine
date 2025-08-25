@@ -27,6 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mediaplayer);
 struct media_player
 {
     IMediaPlayer IMediaPlayer_iface;
+    IMediaPlayer2 IMediaPlayer2_iface;
     LONG ref;
 };
 
@@ -47,6 +48,13 @@ static HRESULT WINAPI media_player_QueryInterface( IMediaPlayer *iface, REFIID i
         IsEqualGUID( iid, &IID_IMediaPlayer ))
     {
         *out = &impl->IMediaPlayer_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IMediaPlayer2 ))
+    {
+        *out = &impl->IMediaPlayer2_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -404,6 +412,56 @@ static const struct IMediaPlayerVtbl media_player_vtbl =
     media_player_SetUriSource,
 };
 
+DEFINE_IINSPECTABLE( media_player2, IMediaPlayer2, struct media_player, IMediaPlayer_iface )
+
+static HRESULT WINAPI media_player2_get_SystemMediaTransportControls( IMediaPlayer2 *iface, ISystemMediaTransportControls **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_player2_get_AudioCategory( IMediaPlayer2 *iface, MediaPlayerAudioCategory *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_player2_put_AudioCategory( IMediaPlayer2 *iface, MediaPlayerAudioCategory value )
+{
+    FIXME( "iface %p, value %#x stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_player2_get_AudioDeviceType( IMediaPlayer2 *iface, MediaPlayerAudioDeviceType *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_player2_put_AudioDeviceType( IMediaPlayer2 *iface, MediaPlayerAudioDeviceType value )
+{
+    FIXME( "iface %p, value %#x stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static const struct IMediaPlayer2Vtbl media_player2_vtbl =
+{
+    /* IUnknown methods */
+    media_player2_QueryInterface,
+    media_player2_AddRef,
+    media_player2_Release,
+    /* IInspectable methods */
+    media_player2_GetIids,
+    media_player2_GetRuntimeClassName,
+    media_player2_GetTrustLevel,
+    /* IMediaPlayer2 methods */
+    media_player2_get_SystemMediaTransportControls,
+    media_player2_get_AudioCategory,
+    media_player2_put_AudioCategory,
+    media_player2_get_AudioDeviceType,
+    media_player2_put_AudioDeviceType,
+};
+
 struct media_player_statics
 {
     IActivationFactory IActivationFactory_iface;
@@ -482,6 +540,7 @@ static HRESULT WINAPI factory_ActivateInstance( IActivationFactory *iface, IInsp
     }
 
     impl->IMediaPlayer_iface.lpVtbl = &media_player_vtbl;
+    impl->IMediaPlayer2_iface.lpVtbl = &media_player2_vtbl;
     impl->ref = 1;
 
     *instance = (IInspectable *)&impl->IMediaPlayer_iface;

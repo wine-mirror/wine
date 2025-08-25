@@ -48,6 +48,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid, BOOL
 static void test_MediaPlayer_Statics(void)
 {
     static const WCHAR *media_player_name = L"Windows.Media.Playback.MediaPlayer";
+    IMediaPlayer2 *media_player2 = (void *)0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
     IMediaPlayer *media_player = (void *)0xdeadbeef;
     IInspectable *inspectable = (void *)0xdeadbeef;
@@ -81,6 +82,11 @@ static void test_MediaPlayer_Statics(void)
 
     check_interface( media_player, &IID_IAgileObject, TRUE );
 
+    hr = IMediaPlayer_QueryInterface( media_player, &IID_IMediaPlayer2, (void **)&media_player2 );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IMediaPlayer2_Release( media_player2 );
+    ok( ref == 2, "got ref %ld.\n", ref );
     ref = IMediaPlayer_Release( media_player );
     ok( ref == 1, "got ref %ld.\n", ref );
     ref = IInspectable_Release( inspectable );

@@ -33,6 +33,7 @@
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
+#define WIDL_using_Windows_Media
 #define WIDL_using_Windows_Media_Playback
 #include "windows.media.playback.h"
 
