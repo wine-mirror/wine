@@ -39,11 +39,14 @@ import "windows.storage.streams.idl";
 import "windows.ui.composition.idl";
 
 namespace Windows.Media.Playback {
+    typedef enum MediaPlayerAudioCategory MediaPlayerAudioCategory;
+    typedef enum MediaPlayerAudioDeviceType MediaPlayerAudioDeviceType;
     typedef enum MediaPlayerError MediaPlayerError;
     typedef enum MediaPlayerState MediaPlayerState;
 
     interface IBackgroundMediaPlayerStatics;
     interface IMediaPlayer;
+    interface IMediaPlayer2;
     interface IMediaPlayerDataReceivedEventArgs;
     interface IMediaPlayerFailedEventArgs;
     interface IMediaPlayerRateChangedEventArgs;
@@ -70,6 +73,33 @@ namespace Windows.Media.Playback {
         interface Windows.Foundation.TypedEventHandler<Windows.Media.Playback.MediaPlayer *, Windows.Media.Playback.MediaPlayerRateChangedEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.Media.Playback.MediaPlayer *, Windows.Media.Playback.PlaybackMediaMarkerReachedEventArgs *>;
     }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum MediaPlayerAudioCategory
+    {
+        Other          = 0,
+        Communications = 3,
+        Alerts         = 4,
+        SoundEffects   = 5,
+        GameEffects    = 6,
+        GameMedia      = 7,
+        GameChat       = 8,
+        Speech         = 9,
+        Movie          = 10,
+        Media          = 11,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum MediaPlayerAudioDeviceType
+    {
+        Console        = 0,
+        Multimedia     = 1,
+        Communications = 2,
+    };
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0)
@@ -225,6 +255,20 @@ namespace Windows.Media.Playback {
         HRESULT Pause();
         [deprecated("Use Source", deprecate, Windows.Foundation.UniversalApiContract, 2.0)]
         HRESULT SetUriSource([in] Windows.Foundation.Uri *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Playback.MediaPlayer),
+        uuid(3c841218-2123-4fc5-9082-2f883f77bdf5)
+    ]
+    interface IMediaPlayer2 : IInspectable
+    {
+        [propget] HRESULT SystemMediaTransportControls([out, retval] Windows.Media.SystemMediaTransportControls **value);
+        [propget] HRESULT AudioCategory([out, retval] Windows.Media.Playback.MediaPlayerAudioCategory *value);
+        [propput] HRESULT AudioCategory([in] Windows.Media.Playback.MediaPlayerAudioCategory value);
+        [propget] HRESULT AudioDeviceType([out, retval] Windows.Media.Playback.MediaPlayerAudioDeviceType *value);
+        [propput] HRESULT AudioDeviceType([in] Windows.Media.Playback.MediaPlayerAudioDeviceType value);
     }
 
     [
