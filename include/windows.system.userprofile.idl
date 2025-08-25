@@ -75,7 +75,6 @@ namespace Windows.System.UserProfile {
     {
     }
 
-#ifndef _WINDOWS_GLOBALIZATION
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(standard),
@@ -85,6 +84,5 @@ namespace Windows.System.UserProfile {
     runtimeclass AdvertisingManager
     {
     }
-#endif
 
 }
