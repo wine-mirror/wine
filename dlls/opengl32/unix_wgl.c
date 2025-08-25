@@ -1105,6 +1105,15 @@ BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
     return TRUE;
 }
 
+static void free_context( struct context *ctx )
+{
+    free( ctx->wow64_version );
+    free( ctx->disabled_exts );
+    free( ctx->extensions );
+    free( ctx->attribs );
+    free( ctx );
+}
+
 BOOL wrap_wglDeleteContext( TEB *teb, HGLRC hglrc )
 {
     struct wgl_handle *ptr;
@@ -1120,11 +1129,7 @@ BOOL wrap_wglDeleteContext( TEB *teb, HGLRC hglrc )
     }
     if (hglrc == teb->glCurrentRC) wrap_wglMakeCurrent( teb, 0, 0 );
     ptr->funcs->p_wgl_context_reset( &ctx->base, NULL, NULL, NULL );
-    free( ctx->wow64_version );
-    free( ctx->disabled_exts );
-    free( ctx->extensions );
-    free( ctx->attribs );
-    free( ctx );
+    free_context( ctx );
     free_handle_ptr( ptr );
     return TRUE;
 }
@@ -1246,11 +1251,11 @@ HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC share, const int
         context->hdc = hdc;
         context->share = (HGLRC)-1; /* initial shared context */
         context->attribs = memdup_attribs( attribs );
-        if (!(funcs->p_wgl_context_reset( &context->base, hdc, share_ctx ? &share_ctx->base : NULL, attribs ))) free( context );
+        if (!(funcs->p_wgl_context_reset( &context->base, hdc, share_ctx ? &share_ctx->base : NULL, attribs ))) free_context( context );
         else if (!(ret = alloc_handle( HANDLE_CONTEXT, funcs, context )))
         {
             funcs->p_wgl_context_reset( &context->base, NULL, NULL, NULL );
-            free( context );
+            free_context( context );
         }
     }
     return ret;
