@@ -20,7 +20,6 @@
 #pragma winrt ns_prefix
 #endif
 
-#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
@@ -29,7 +28,6 @@ import "windows.foundation.idl";
 import "windows.devices.geolocation.idl";
 /* import "windows.storage.idl"; */
 import "windows.storage.streams.idl";
-#endif
 
 namespace Windows.Storage.FileProperties {
     interface IBasicProperties;

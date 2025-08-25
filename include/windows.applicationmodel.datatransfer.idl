@@ -20,7 +20,6 @@
 #pragma winrt ns_prefix
 #endif
 
-#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
@@ -30,7 +29,6 @@ import "windows.security.enterprisedata.idl";
 import "windows.storage.idl";
 import "windows.storage.streams.idl";
 import "windows.ui.idl";
-#endif
 
 namespace Windows.ApplicationModel.DataTransfer {
     typedef enum ClipboardHistoryItemsResultStatus ClipboardHistoryItemsResultStatus;

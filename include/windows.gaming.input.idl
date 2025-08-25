@@ -20,7 +20,6 @@
 #pragma winrt ns_prefix
 #endif
 
-#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
@@ -30,7 +29,6 @@ import "windows.devices.haptics.idl";
 import "windows.gaming.input.forcefeedback.idl";
 import "windows.system.idl";
 import "windows.devices.power.idl";
-#endif
 
 namespace Windows.Gaming.Input {
     typedef enum ArcadeStickButtons ArcadeStickButtons;

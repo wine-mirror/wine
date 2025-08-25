@@ -20,7 +20,6 @@
 #pragma winrt ns_prefix
 #endif
 
-#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
@@ -29,7 +28,6 @@ import "windows.foundation.idl";
 import "windows.devices.input.idl";
 import "windows.system.idl";
 import "windows.ui.core.idl";
-#endif
 
 namespace Windows.UI.Input {
     typedef enum PointerUpdateKind PointerUpdateKind;

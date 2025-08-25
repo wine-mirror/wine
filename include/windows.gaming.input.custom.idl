@@ -20,7 +20,6 @@
 #pragma winrt ns_prefix
 #endif
 
-#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
@@ -28,7 +27,6 @@ import "windowscontracts.idl";
 import "windows.foundation.idl";
 import "windows.gaming.input.idl";
 import "windows.storage.streams.idl";
-#endif
 
 namespace Windows.Gaming.Input.Custom {
     typedef enum XusbDeviceSubtype XusbDeviceSubtype;

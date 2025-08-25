@@ -20,14 +20,12 @@
 #pragma winrt ns_prefix
 #endif
 
-#ifndef DO_NO_IMPORTS
 import "windows.foundation.idl";
 import "windows.storage.idl";
 import "windows.system.idl";
 import "windows.applicationmodel.idl";
 import "windows.applicationmodel.activation.idl";
 import "windows.ui.core.idl";
-#endif
 
 namespace Windows.ApplicationModel.Core {
     runtimeclass CoreApplicationView;

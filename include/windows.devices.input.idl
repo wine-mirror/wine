@@ -20,13 +20,11 @@
 #pragma winrt ns_prefix
 #endif
 
-#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
 import "windowscontracts.idl";
 import "windows.foundation.idl";
-#endif
 
 namespace Windows.Devices.Input {
     typedef enum PointerDeviceType PointerDeviceType;

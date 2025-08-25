@@ -20,7 +20,6 @@
 #pragma winrt ns_prefix
 #endif
 
-#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
@@ -32,7 +31,6 @@ import "windows.devices.enumeration.idl";
 import "windows.devices.radios.idl";
 import "windows.networking.idl";
 import "windows.storage.streams.idl";
-#endif
 
 namespace Windows.Devices.Bluetooth {
     typedef enum BluetoothCacheMode BluetoothCacheMode;
