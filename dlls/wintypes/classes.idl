@@ -19,13 +19,22 @@
  */
 
 #pragma makedep register
-
-#ifdef __WIDL__
 #pragma winrt ns_prefix
-#endif
 
-#define DO_NO_IMPORTS
-#define _WINTYPES
-#include "windows.foundation.idl"
-#include "windows.foundation.metadata.idl"
-#include "windows.storage.streams.idl"
+import "windows.foundation.idl";
+import "windows.foundation.metadata.idl";
+import "windows.storage.streams.idl";
+
+namespace Windows.Foundation {
+    runtimeclass PropertyValue;
+}
+namespace Windows.Foundation.Collections {
+    runtimeclass PropertySet;
+}
+namespace Windows.Foundation.Metadata {
+    runtimeclass ApiInformation;
+}
+namespace Windows.Storage.Streams {
+    runtimeclass Buffer;
+    runtimeclass DataWriter;
+}
