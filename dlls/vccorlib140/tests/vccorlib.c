@@ -860,8 +860,7 @@ static void test_CreateValue(void)
         winetest_push_context("test_cases[%lu]", i);
 
         obj = pCreateValue(test_cases[i].typecode, &test_cases[i].value);
-        todo_wine ok(obj != NULL, "got value %p\n", obj);
-        if (!obj) continue;
+        ok(obj != NULL, "got value %p\n", obj);
 
         check_interface(obj, &IID_IInspectable);
         check_interface(obj, &IID_IPropertyValue);
@@ -938,7 +937,7 @@ static void test_CreateValue(void)
     ok(hr == S_OK, "got hr %#lx\n", hr);
     obj = pCreateValue(TYPECODE_STRING, &str);
     WindowsDeleteString(str);
-    todo_wine ok(obj != NULL || broken(obj == NULL), "got obj %p\n", obj); /* Returns NULL on i386 Windows 10. */
+    ok(obj != NULL || broken(obj == NULL), "got obj %p\n", obj); /* Returns NULL on i386 Windows 10. */
     if (obj)
     {
         type = PropertyType_Empty;

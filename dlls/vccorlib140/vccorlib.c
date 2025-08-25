@@ -398,9 +398,135 @@ HSTRING __cdecl platform_type_get_FullName(struct platform_type *type)
     return platform_type_ToString(type);
 }
 
+enum typecode
+{
+    TYPECODE_BOOLEAN = 3,
+    TYPECODE_CHAR16 = 4,
+    TYPECODE_UINT8 = 6,
+    TYPECODE_INT16 = 7,
+    TYPECODE_UINT16 = 8,
+    TYPECODE_INT32 = 9,
+    TYPECODE_UINT32 = 10,
+    TYPECODE_INT64 = 11,
+    TYPECODE_UINT64 = 12,
+    TYPECODE_SINGLE = 13,
+    TYPECODE_DOUBLE = 14,
+    TYPECODE_DATETIME = 16,
+    TYPECODE_STRING = 18,
+    TYPECODE_TIMESPAN = 19,
+    TYPECODE_POINT = 20,
+    TYPECODE_SIZE = 21,
+    TYPECODE_RECT = 22,
+    TYPECODE_GUID = 23,
+};
+
+static const char *debugstr_typecode(int typecode)
+{
+    static const char *str[] =  {
+        [TYPECODE_BOOLEAN] = "Boolean",
+        [TYPECODE_CHAR16] = "char16",
+        [TYPECODE_UINT8] = "uint8",
+        [TYPECODE_INT16] = "int16",
+        [TYPECODE_UINT16] = "uint16",
+        [TYPECODE_INT32] = "int32",
+        [TYPECODE_UINT32] = "uint32",
+        [TYPECODE_INT64] = "int64",
+        [TYPECODE_UINT64] = "uint64",
+        [TYPECODE_SINGLE] = "float32",
+        [TYPECODE_DOUBLE] = "double",
+        [TYPECODE_DATETIME] = "DateTime",
+        [TYPECODE_STRING] = "String",
+        [TYPECODE_POINT] = "Point",
+        [TYPECODE_SIZE] = "Size",
+        [TYPECODE_RECT] = "Rect",
+        [TYPECODE_GUID] = "Guid",
+    };
+    if (typecode > ARRAY_SIZE(str) || !str[typecode]) return wine_dbg_sprintf("%d", typecode);
+    return wine_dbg_sprintf("%s", str[typecode]);
+}
+
 void *WINAPI CreateValue(int typecode, const void *val)
 {
-    FIXME("(%d, %p) stub\n", typecode, val);
+    IPropertyValueStatics *statics;
+    IInspectable *obj;
+    HRESULT hr;
 
-    return NULL;
+    TRACE("(%s, %p)\n", debugstr_typecode(typecode), val);
+
+    hr = GetActivationFactoryByPCWSTR(RuntimeClass_Windows_Foundation_PropertyValue, &IID_IPropertyValueStatics,
+                                      (void **)&statics);
+    if (FAILED(hr))
+    {
+        FIXME("GetActivationFactoryByPCWSTR failed: %#lx\n", hr);
+        return NULL;
+    }
+    switch (typecode)
+    {
+    case TYPECODE_BOOLEAN:
+        hr = IPropertyValueStatics_CreateBoolean(statics, *(boolean *)val, &obj);
+        break;
+    case TYPECODE_CHAR16:
+        hr = IPropertyValueStatics_CreateChar16(statics, *(WCHAR *)val, &obj);
+        break;
+    case TYPECODE_UINT8:
+        hr = IPropertyValueStatics_CreateUInt8(statics, *(BYTE *)val, &obj);
+        break;
+    case TYPECODE_UINT16:
+        hr = IPropertyValueStatics_CreateUInt16(statics, *(UINT16 *)val, &obj);
+        break;
+    case TYPECODE_INT16:
+        hr = IPropertyValueStatics_CreateInt16(statics, *(INT16 *)val, &obj);
+        break;
+    case TYPECODE_INT32:
+        hr = IPropertyValueStatics_CreateInt32(statics, *(INT32 *)val, &obj);
+        break;
+    case TYPECODE_UINT32:
+        hr = IPropertyValueStatics_CreateUInt32(statics, *(UINT32 *)val, &obj);
+        break;
+    case TYPECODE_INT64:
+        hr = IPropertyValueStatics_CreateInt64(statics, *(INT64 *)val, &obj);
+        break;
+    case TYPECODE_UINT64:
+        hr = IPropertyValueStatics_CreateUInt64(statics, *(UINT64 *)val, &obj);
+        break;
+    case TYPECODE_SINGLE:
+        hr = IPropertyValueStatics_CreateSingle(statics, *(FLOAT *)val, &obj);
+        break;
+    case TYPECODE_DOUBLE:
+        hr = IPropertyValueStatics_CreateDouble(statics, *(DOUBLE *)val, &obj);
+        break;
+    case TYPECODE_DATETIME:
+        hr = IPropertyValueStatics_CreateDateTime(statics, *(DateTime *)val, &obj);
+        break;
+    case TYPECODE_STRING:
+        hr = IPropertyValueStatics_CreateString(statics, *(HSTRING *)val, &obj);
+        break;
+    case TYPECODE_TIMESPAN:
+        hr = IPropertyValueStatics_CreateTimeSpan(statics, *(TimeSpan *)val, &obj);
+        break;
+    case TYPECODE_POINT:
+        hr = IPropertyValueStatics_CreatePoint(statics, *(Point *)val, &obj);
+        break;
+    case TYPECODE_SIZE:
+        hr = IPropertyValueStatics_CreateSize(statics, *(Size *)val, &obj);
+        break;
+    case TYPECODE_RECT:
+        hr = IPropertyValueStatics_CreateRect(statics, *(Rect *)val, &obj);
+        break;
+    case TYPECODE_GUID:
+        hr = IPropertyValueStatics_CreateGuid(statics, *(GUID *)val, &obj);
+        break;
+    default:
+        obj = NULL;
+        hr = S_OK;
+        break;
+    }
+
+    IPropertyValueStatics_Release(statics);
+    if (FAILED(hr))
+    {
+        FIXME("Failed to create IPropertyValue object: %#lx\n", hr);
+        return NULL;
+    }
+    return obj;
 }
