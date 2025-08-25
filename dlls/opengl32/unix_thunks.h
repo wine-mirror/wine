@@ -1,5 +1,7 @@
 /* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */
 
+typedef ULONG PTR32;
+
 extern BOOL wrap_wglCopyContext( TEB *teb, HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask );
 extern HGLRC wrap_wglCreateContext( TEB *teb, HDC hDc );
 extern BOOL wrap_wglDeleteContext( TEB *teb, HGLRC oldContext );
@@ -45,8 +47,8 @@ extern BOOL wrap_wglReleaseTexImageARB( TEB *teb, HPBUFFERARB hPbuffer, int iBuf
 extern BOOL wrap_wglSetPbufferAttribARB( TEB *teb, HPBUFFERARB hPbuffer, const int *piAttribList );
 
 #ifdef _WIN64
-typedef ULONG PTR32;
 extern GLenum wow64_glClientWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64 timeout );
+extern void wow64_glDeleteBuffers( TEB *teb, GLsizei n, const GLuint *buffers );
 extern void wow64_glDeleteSync( TEB *teb, GLsync sync );
 extern GLsync wow64_glFenceSync( TEB *teb, GLenum condition, GLbitfield flags );
 extern void wow64_glGetBufferPointerv( TEB *teb, GLenum target, GLenum pname, PTR32 *params );

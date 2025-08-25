@@ -71,6 +71,8 @@ static inline TEB *get_teb64( ULONG teb32 )
     return (TEB *)((char *)teb32_ptr + teb32_ptr->WowTebOffset);
 }
 
+extern void invalidate_buffer_name( TEB *teb, GLuint name );
+extern void invalidate_buffer_target( TEB *teb, GLenum target );
 extern NTSTATUS return_wow64_string( const void *str, PTR32 *wow64_str );
 
 #endif
