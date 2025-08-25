@@ -1065,25 +1065,6 @@ BOOL wrap_wglCopyContext( TEB *teb, HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
     return ret;
 }
 
-HGLRC wrap_wglCreateContext( TEB *teb, HDC hdc )
-{
-    HGLRC ret = 0;
-    struct context *context;
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
-
-    if (!funcs) return 0;
-    if (!(context = calloc( 1, sizeof(*context) ))) return 0;
-    context->hdc = hdc;
-    context->share = (HGLRC)-1; /* initial shared context */
-    if (!funcs->p_wgl_context_reset( &context->base, hdc, NULL, NULL )) free( context );
-    else if (!(ret = alloc_handle( HANDLE_CONTEXT, funcs, context )))
-    {
-        funcs->p_wgl_context_reset( &context->base, NULL, NULL, NULL );
-        free( context );
-    }
-    return ret;
-}
-
 BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
 {
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
@@ -1273,6 +1254,11 @@ HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC share, const int
         }
     }
     return ret;
+}
+
+HGLRC wrap_wglCreateContext( TEB *teb, HDC hdc )
+{
+    return wrap_wglCreateContextAttribsARB( teb, hdc, NULL, NULL );
 }
 
 HPBUFFERARB wrap_wglCreatePbufferARB( TEB *teb, HDC hdc, int format, int width, int height, const int *attribs )
