@@ -1,0 +1,5 @@
+TESTDLL = windows.media.playback.mediaplayer.dll
+IMPORTS = combase
+
+SOURCES = \
+	mediaplayer.c
