@@ -125,22 +125,16 @@ namespace Windows.Foundation {
         interface Windows.Foundation.Collections.IIterable<HSTRING>;
         interface Windows.Foundation.Collections.IIterable<IInspectable *>;
         interface Windows.Foundation.Collections.IIterable<IWwwFormUrlDecoderEntry *>;
-#ifndef _WINTYPES
         interface Windows.Foundation.Collections.IIterable<Uri *>;
-#endif
         interface Windows.Foundation.Collections.IIterator<HSTRING>;
         interface Windows.Foundation.Collections.IIterator<IInspectable *>;
         interface Windows.Foundation.Collections.IIterator<IWwwFormUrlDecoderEntry *>;
-#ifndef _WINTYPES
         interface Windows.Foundation.Collections.IIterator<Uri *>;
-#endif
         interface Windows.Foundation.Collections.IVectorView<BYTE>;
         interface Windows.Foundation.Collections.IVectorView<HSTRING>;
         interface Windows.Foundation.Collections.IVectorView<IInspectable *>;
         interface Windows.Foundation.Collections.IVectorView<IWwwFormUrlDecoderEntry *>;
-#ifndef _WINTYPES
         interface Windows.Foundation.Collections.IVectorView<Windows.Foundation.Uri *>;
-#endif
         interface Windows.Foundation.Collections.IVector<HSTRING>;
         interface Windows.Foundation.Collections.IVector<IInspectable *>;
         interface Windows.Foundation.Collections.IMapView<HSTRING, Windows.Foundation.Collections.IVectorView<HSTRING> *>;
@@ -150,18 +144,14 @@ namespace Windows.Foundation {
         interface Windows.Foundation.AsyncOperationCompletedHandler<boolean>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<HSTRING>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<UINT32>;
-#ifndef _WINTYPES
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Uri *>;
-#endif
         interface Windows.Foundation.AsyncOperationProgressHandler<UINT32, UINT32>;
         interface Windows.Foundation.AsyncOperationWithProgressCompletedHandler<UINT32, UINT32>;
         interface Windows.Foundation.IAsyncOperation<HSTRING>;
         interface Windows.Foundation.IAsyncOperation<IInspectable *>;
         interface Windows.Foundation.IAsyncOperation<boolean>;
         interface Windows.Foundation.IAsyncOperation<UINT32>;
-#ifndef _WINTYPES
         interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Uri *>;
-#endif
         interface Windows.Foundation.IAsyncOperationWithProgress<UINT32, UINT32>;
         interface Windows.Foundation.IReference<BYTE>;
         interface Windows.Foundation.IReference<DOUBLE>;
@@ -588,7 +578,6 @@ namespace Windows.Foundation {
     {
     }
 
-#ifndef _WINTYPES
     [
         activatable(Windows.Foundation.IUriRuntimeClassFactory, Windows.Foundation.UniversalApiContract, 1.0),
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -615,7 +604,6 @@ namespace Windows.Foundation {
         interface Windows.Foundation.Collections.IVectorView<Windows.Foundation.IWwwFormUrlDecoderEntry *>;
         interface Windows.Foundation.Collections.IIterable<Windows.Foundation.IWwwFormUrlDecoderEntry *>;
     }
-#endif
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
