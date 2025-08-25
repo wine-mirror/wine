@@ -4870,32 +4870,22 @@ static NTSTATUS icmp_send_echo( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
                                 WORD request_size, IP_OPTION_INFORMATION *opts, void *reply, DWORD reply_size,
                                 DWORD timeout )
 {
+    static IO_STATUS_BLOCK iosb_placeholder;
     struct icmp_handle_data *data = (struct icmp_handle_data *)handle;
-    struct icmp_apc_ctxt *ctxt = heap_alloc( sizeof(*ctxt) );
-    IO_STATUS_BLOCK *iosb = &ctxt->iosb;
+    struct icmp_apc_ctxt *ctxt = NULL;
+    IO_STATUS_BLOCK *iosb;
     DWORD opt_size, in_size;
     struct nsiproxy_icmp_echo *in;
     HANDLE request_event;
     NTSTATUS status;
 
-    if (handle == INVALID_HANDLE_VALUE || !reply)
-    {
-        heap_free( ctxt );
-        return STATUS_INVALID_PARAMETER;
-    }
-
-    ctxt->apc_routine = apc_routine;
-    ctxt->apc_ctxt = apc_ctxt;
+    if (handle == INVALID_HANDLE_VALUE || !reply) return STATUS_INVALID_PARAMETER;
 
     opt_size = opts ? (opts->OptionsSize + 3) & ~3 : 0;
     in_size = FIELD_OFFSET(struct nsiproxy_icmp_echo, data[opt_size + request_size]);
     in = heap_alloc_zero( in_size );
 
-    if (!in)
-    {
-        heap_free( ctxt );
-        return STATUS_NO_MEMORY;
-    }
+    if (!in) return STATUS_NO_MEMORY;
 
     in->user_reply_ptr = (ULONG_PTR)reply;
     in->bits = sizeof(void*) * 8;
@@ -4915,10 +4905,27 @@ static NTSTATUS icmp_send_echo( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
     in->timeout = timeout;
     memcpy( in->data + opt_size, request, request_size );
 
+    if (event)
+    {
+        /* Async completion without calling APC routine, IOSB is not delivered anywhere. */
+        iosb = &iosb_placeholder;
+    }
+    else
+    {
+        if (!(ctxt = heap_alloc( sizeof(*ctxt) )))
+        {
+            heap_free( in );
+            return STATUS_NO_MEMORY;
+        }
+        iosb = &ctxt->iosb;
+        ctxt->apc_routine = apc_routine;
+        ctxt->apc_ctxt = apc_ctxt;
+    }
+
     request_event = event ? event : (apc_routine ? NULL : CreateEventW( NULL, 0, 0, NULL ));
 
     status = NtDeviceIoControlFile( data->nsi_device, request_event, apc_routine && !event ? icmp_apc_routine : NULL,
-                                    apc_routine ? ctxt : apc_ctxt, iosb, IOCTL_NSIPROXY_WINE_ICMP_ECHO,
+                                    ctxt, iosb, IOCTL_NSIPROXY_WINE_ICMP_ECHO,
                                     in, in_size, reply, reply_size );
 
     if (status == STATUS_PENDING)
