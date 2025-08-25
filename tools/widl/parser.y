@@ -79,19 +79,19 @@ static void add_explicit_handle_if_necessary(const type_t *iface, var_t *func);
 
 static void check_async_uuid(type_t *iface);
 
-static statement_t *make_statement(enum statement_type type);
-static statement_t *make_statement_type_decl(type_t *type);
-static statement_t *make_statement_reference(type_t *type);
-static statement_t *make_statement_declaration(var_t *var);
-static statement_t *make_statement_library(typelib_t *typelib);
-static statement_t *make_statement_pragma(const char *str);
-static statement_t *make_statement_cppquote(const char *str);
-static statement_t *make_statement_importlib(const char *str);
-static statement_t *make_statement_module(type_t *type);
-static statement_t *make_statement_typedef(var_list_t *names, bool is_defined);
-static statement_t *make_statement_import(const char *str);
-static statement_t *make_statement_parameterized_type(type_t *type, typeref_list_t *params);
-static statement_t *make_statement_delegate(type_t *ret, var_list_t *args);
+static statement_t *make_statement( struct location where, enum statement_type type );
+static statement_t *make_statement_type_decl( struct location where, type_t *type );
+static statement_t *make_statement_reference( struct location where, type_t *type );
+static statement_t *make_statement_declaration( struct location where, var_t *var );
+static statement_t *make_statement_library( struct location where, typelib_t *typelib );
+static statement_t *make_statement_pragma( struct location where, const char *str );
+static statement_t *make_statement_cppquote( struct location where, const char *str );
+static statement_t *make_statement_importlib( struct location where, const char *str );
+static statement_t *make_statement_module( struct location where, type_t *type );
+static statement_t *make_statement_typedef( struct location where, var_list_t *names, bool is_defined );
+static statement_t *make_statement_import( struct location where, const char *str );
+static statement_t *make_statement_parameterized_type( struct location where, type_t *type, typeref_list_t *params );
+static statement_t *make_statement_delegate( struct location where, type_t *ret, var_list_t *args );
 static statement_list_t *append_statement(statement_list_t *list, statement_t *stmt);
 static statement_list_t *append_statements(statement_list_t *, statement_list_t *);
 
@@ -394,8 +394,8 @@ m_acf
 decl_statements
 	: %empty				{ $$ = NULL; }
 	| decl_statements tINTERFACE qualified_type '<' parameterized_type_args '>' ';'
-						{ parameterized_type_stmts = append_statement(parameterized_type_stmts, make_statement_parameterized_type($3, $5));
-						  $$ = append_statement($1, make_statement_reference(type_parameterized_type_specialize_declare($3, $5)));
+						{ parameterized_type_stmts = append_statement(parameterized_type_stmts, make_statement_parameterized_type( @$, $3, $5 ));
+						  $$ = append_statement($1, make_statement_reference( @$, type_parameterized_type_specialize_declare($3, $5) ));
 						}
 	;
 
@@ -405,7 +405,7 @@ decl_block: tDECLARE '{' decl_statements '}' { $$ = $3; }
 imp_decl_statements
 	: %empty				{ $$ = NULL; }
 	| imp_decl_statements tINTERFACE qualified_type '<' parameterized_type_args '>' ';'
-						{ $$ = append_statement($1, make_statement_reference(type_parameterized_type_specialize_declare($3, $5))); }
+						{ $$ = append_statement($1, make_statement_reference( @$, type_parameterized_type_specialize_declare($3, $5) )); }
 	;
 
 imp_decl_block
@@ -416,50 +416,50 @@ gbl_statements
 	: %empty				{ $$ = NULL; }
 	| gbl_statements namespacedef '{' { push_namespaces($2); } gbl_statements '}'
 						{ pop_namespaces($2); $$ = append_statements($1, $5); }
-	| gbl_statements interface ';'		{ $$ = append_statement($1, make_statement_reference($2)); }
-	| gbl_statements dispinterface ';'	{ $$ = append_statement($1, make_statement_reference($2)); }
-	| gbl_statements interfacedef		{ $$ = append_statement($1, make_statement_type_decl($2)); }
-	| gbl_statements delegatedef		{ $$ = append_statement($1, make_statement_type_decl($2)); }
+	| gbl_statements interface ';'		{ $$ = append_statement($1, make_statement_reference( @$, $2 )); }
+	| gbl_statements dispinterface ';'	{ $$ = append_statement($1, make_statement_reference( @$, $2 )); }
+	| gbl_statements interfacedef		{ $$ = append_statement($1, make_statement_type_decl( @$, $2 )); }
+	| gbl_statements delegatedef		{ $$ = append_statement($1, make_statement_type_decl( @$, $2 )); }
 	| gbl_statements coclass ';'		{ $$ = $1;
 						  reg_type($2, $2->name, current_namespace, 0);
 						}
-	| gbl_statements coclassdef		{ $$ = append_statement($1, make_statement_type_decl($2));
+	| gbl_statements coclassdef		{ $$ = append_statement($1, make_statement_type_decl( @$, $2 ));
 						  reg_type($2, $2->name, current_namespace, 0);
 						}
 	| gbl_statements apicontract ';'	{ $$ = $1; reg_type($2, $2->name, current_namespace, 0); }
-	| gbl_statements apicontract_def	{ $$ = append_statement($1, make_statement_type_decl($2));
+	| gbl_statements apicontract_def	{ $$ = append_statement($1, make_statement_type_decl( @$, $2 ));
 						  reg_type($2, $2->name, current_namespace, 0); }
 	| gbl_statements runtimeclass ';'       { $$ = $1; reg_type($2, $2->name, current_namespace, 0); }
-	| gbl_statements runtimeclass_def       { $$ = append_statement($1, make_statement_type_decl($2));
+	| gbl_statements runtimeclass_def       { $$ = append_statement($1, make_statement_type_decl( @$, $2 ));
 	                                          reg_type($2, $2->name, current_namespace, 0); }
-	| gbl_statements moduledef		{ $$ = append_statement($1, make_statement_module($2)); }
-	| gbl_statements librarydef		{ $$ = append_statement($1, make_statement_library($2)); }
+	| gbl_statements moduledef		{ $$ = append_statement($1, make_statement_module( @$, $2 )); }
+	| gbl_statements librarydef		{ $$ = append_statement($1, make_statement_library( @$, $2 )); }
 	| gbl_statements statement		{ $$ = append_statement($1, $2); }
 	| gbl_statements decl_block		{ $$ = append_statements($1, $2); }
 	;
 
 imp_statements
 	: %empty				{ $$ = NULL; }
-	| imp_statements interface ';'		{ $$ = append_statement($1, make_statement_reference($2)); }
-	| imp_statements dispinterface ';'	{ $$ = append_statement($1, make_statement_reference($2)); }
+	| imp_statements interface ';'		{ $$ = append_statement($1, make_statement_reference( @$, $2 )); }
+	| imp_statements dispinterface ';'	{ $$ = append_statement($1, make_statement_reference( @$, $2 )); }
 	| imp_statements namespacedef '{' { push_namespaces($2); } imp_statements '}'
 						{ pop_namespaces($2); $$ = append_statements($1, $5); }
-	| imp_statements interfacedef		{ $$ = append_statement($1, make_statement_type_decl($2)); }
-	| imp_statements delegatedef		{ $$ = append_statement($1, make_statement_type_decl($2)); }
+	| imp_statements interfacedef		{ $$ = append_statement($1, make_statement_type_decl( @$, $2 )); }
+	| imp_statements delegatedef		{ $$ = append_statement($1, make_statement_type_decl( @$, $2 )); }
 	| imp_statements coclass ';'		{ $$ = $1; reg_type($2, $2->name, current_namespace, 0); }
-	| imp_statements coclassdef		{ $$ = append_statement($1, make_statement_type_decl($2));
+	| imp_statements coclassdef		{ $$ = append_statement($1, make_statement_type_decl( @$, $2 ));
 						  reg_type($2, $2->name, current_namespace, 0);
 						}
 	| imp_statements apicontract ';'	{ $$ = $1; reg_type($2, $2->name, current_namespace, 0); }
-	| imp_statements apicontract_def	{ $$ = append_statement($1, make_statement_type_decl($2));
+	| imp_statements apicontract_def	{ $$ = append_statement($1, make_statement_type_decl( @$, $2 ));
 						  reg_type($2, $2->name, current_namespace, 0); }
 	| imp_statements runtimeclass ';'       { $$ = $1; reg_type($2, $2->name, current_namespace, 0); }
-	| imp_statements runtimeclass_def       { $$ = append_statement($1, make_statement_type_decl($2));
+	| imp_statements runtimeclass_def       { $$ = append_statement($1, make_statement_type_decl( @$, $2 ));
 	                                          reg_type($2, $2->name, current_namespace, 0); }
-	| imp_statements moduledef		{ $$ = append_statement($1, make_statement_module($2)); }
+	| imp_statements moduledef		{ $$ = append_statement($1, make_statement_module( @$, $2 )); }
 	| imp_statements statement		{ $$ = append_statement($1, $2); }
-	| imp_statements importlib		{ $$ = append_statement($1, make_statement_importlib($2)); }
-	| imp_statements librarydef		{ $$ = append_statement($1, make_statement_library($2)); }
+	| imp_statements importlib		{ $$ = append_statement($1, make_statement_importlib( @$, $2 )); }
+	| imp_statements librarydef		{ $$ = append_statement($1, make_statement_library( @$, $2 )); }
 	| imp_statements imp_decl_block		{ $$ = append_statements($1, $2); }
 	;
 
@@ -474,12 +474,12 @@ semicolon_opt
 	;
 
 statement:
-	  cppquote				{ $$ = make_statement_cppquote($1); }
-	| typedecl ';'				{ $$ = make_statement_type_decl($1); }
-	| declaration ';'			{ $$ = make_statement_declaration($1); }
-	| import				{ $$ = make_statement_import($1); }
+	  cppquote				{ $$ = make_statement_cppquote( @$, $1 ); }
+	| typedecl ';'				{ $$ = make_statement_type_decl( @$, $1 ); }
+	| declaration ';'			{ $$ = make_statement_declaration( @$, $1 ); }
+	| import				{ $$ = make_statement_import( @$, $1 ); }
 	| typedef ';'				{ $$ = $1; }
-	| aPRAGMA				{ $$ = make_statement_pragma($1); }
+	| aPRAGMA				{ $$ = make_statement_pragma( @$, $1 ); }
 	| pragma_warning { $$ = NULL; }
 	;
 
@@ -1124,13 +1124,13 @@ interface:
 
 delegatedef: m_attributes tDELEGATE type ident '(' m_args ')' semicolon_opt
 						{ $$ = type_delegate_declare($4->name, current_namespace);
-						  $$ = type_delegate_define($$, $1, append_statement(NULL, make_statement_delegate($3, $6)), &@4);
+						  $$ = type_delegate_define($$, $1, append_statement(NULL, make_statement_delegate( @$, $3, $6 )), &@4);
 						}
 	| m_attributes tDELEGATE type ident
 	  '<' { push_parameters_namespace($4->name); } type_parameters '>'
 	  '(' m_args ')' { pop_parameters_namespace($4->name); } semicolon_opt
 						{ $$ = type_parameterized_delegate_declare($4->name, current_namespace, $7);
-						  $$ = type_parameterized_delegate_define($$, $1, append_statement(NULL, make_statement_delegate($3, $10)), &@4);
+						  $$ = type_parameterized_delegate_define($$, $1, append_statement(NULL, make_statement_delegate( @$, $3, $10 )), &@4);
 						}
 	;
 
@@ -1376,7 +1376,7 @@ type:
 typedef: m_attributes tTYPEDEF m_attributes decl_spec declarator_list
 						{ $1 = append_attribs($1, $3);
 						  reg_typedefs( @$, $4, $5, check_typedef_attrs( $1 ) );
-						  $$ = make_statement_typedef($5, $4->type->defined && !$4->type->defined_in_import);
+						  $$ = make_statement_typedef( @$, $5, $4->type->defined && !$4->type->defined_in_import );
 						}
 	;
 
@@ -2880,13 +2880,13 @@ static void check_async_uuid(type_t *iface)
         begin_func->declspec.type = type_new_function(begin_args);
         begin_func->declspec.type->attrs = func->attrs;
         begin_func->declspec.type->details.function->retval = func->declspec.type->details.function->retval;
-        stmts = append_statement(stmts, make_statement_declaration(begin_func));
+        stmts = append_statement(stmts, make_statement_declaration( stmt->where, begin_func ));
 
         finish_func = copy_var(func, strmake("Finish_%s", func->name), NULL);
         finish_func->declspec.type = type_new_function(finish_args);
         finish_func->declspec.type->attrs = func->attrs;
         finish_func->declspec.type->details.function->retval = func->declspec.type->details.function->retval;
-        stmts = append_statement(stmts, make_statement_declaration(finish_func));
+        stmts = append_statement(stmts, make_statement_declaration( stmt->where, finish_func ));
     }
 
     type_interface_define(async_iface, map_attrs(iface->attrs, async_iface_attrs), inherit, stmts, NULL, &iface->where);
@@ -3073,31 +3073,32 @@ static void check_all_user_types(const statement_list_t *stmts)
   }
 }
 
-static statement_t *make_statement(enum statement_type type)
+static statement_t *make_statement( struct location where, enum statement_type type )
 {
     statement_t *stmt = xmalloc(sizeof(*stmt));
     stmt->type = type;
+    stmt->where = where;
     return stmt;
 }
 
-static statement_t *make_statement_type_decl(type_t *type)
+static statement_t *make_statement_type_decl( struct location where, type_t *type )
 {
-    statement_t *stmt = make_statement(STMT_TYPE);
+    statement_t *stmt = make_statement( where, STMT_TYPE );
     stmt->u.type = type;
     stmt->is_defined = type->defined && !type->defined_in_import;
     return stmt;
 }
 
-static statement_t *make_statement_reference(type_t *type)
+static statement_t *make_statement_reference( struct location where, type_t *type )
 {
-    statement_t *stmt = make_statement(STMT_TYPEREF);
+    statement_t *stmt = make_statement( where, STMT_TYPEREF );
     stmt->u.type = type;
     return stmt;
 }
 
-static statement_t *make_statement_declaration(var_t *var)
+static statement_t *make_statement_declaration( struct location where, var_t *var )
 {
-    statement_t *stmt = make_statement(STMT_DECLARATION);
+    statement_t *stmt = make_statement( where, STMT_DECLARATION );
     stmt->u.var = var;
     if (var->declspec.stgclass == STG_EXTERN && var->eval)
         warning("'%s' initialised and declared extern\n", var->name);
@@ -3113,56 +3114,56 @@ static statement_t *make_statement_declaration(var_t *var)
     return stmt;
 }
 
-static statement_t *make_statement_library(typelib_t *typelib)
+static statement_t *make_statement_library( struct location where, typelib_t *typelib )
 {
-    statement_t *stmt = make_statement(STMT_LIBRARY);
+    statement_t *stmt = make_statement( where, STMT_LIBRARY );
     stmt->u.lib = typelib;
     return stmt;
 }
 
-static statement_t *make_statement_pragma(const char *str)
+static statement_t *make_statement_pragma( struct location where, const char *str )
 {
-    statement_t *stmt = make_statement(STMT_PRAGMA);
+    statement_t *stmt = make_statement( where, STMT_PRAGMA );
     stmt->u.str = str;
     return stmt;
 }
 
-static statement_t *make_statement_cppquote(const char *str)
+static statement_t *make_statement_cppquote( struct location where, const char *str )
 {
-    statement_t *stmt = make_statement(STMT_CPPQUOTE);
+    statement_t *stmt = make_statement( where, STMT_CPPQUOTE );
     stmt->u.str = str;
     return stmt;
 }
 
-static statement_t *make_statement_importlib(const char *str)
+static statement_t *make_statement_importlib( struct location where, const char *str )
 {
-    statement_t *stmt = make_statement(STMT_IMPORTLIB);
+    statement_t *stmt = make_statement( where, STMT_IMPORTLIB );
     stmt->u.str = str;
     return stmt;
 }
 
-static statement_t *make_statement_import(const char *str)
+static statement_t *make_statement_import( struct location where, const char *str )
 {
-    statement_t *stmt = make_statement(STMT_IMPORT);
+    statement_t *stmt = make_statement( where, STMT_IMPORT );
     stmt->u.str = str;
     return stmt;
 }
 
-static statement_t *make_statement_module(type_t *type)
+static statement_t *make_statement_module( struct location where, type_t *type )
 {
-    statement_t *stmt = make_statement(STMT_MODULE);
+    statement_t *stmt = make_statement( where, STMT_MODULE );
     stmt->u.type = type;
     return stmt;
 }
 
-static statement_t *make_statement_typedef(declarator_list_t *decls, bool is_defined)
+static statement_t *make_statement_typedef( struct location where, declarator_list_t *decls, bool is_defined )
 {
     declarator_t *decl, *next;
     statement_t *stmt;
 
     if (!decls) return NULL;
 
-    stmt = make_statement(STMT_TYPEDEF);
+    stmt = make_statement( where, STMT_TYPEDEF );
     stmt->u.type_list = NULL;
     stmt->is_defined = is_defined;
 
@@ -3178,19 +3179,19 @@ static statement_t *make_statement_typedef(declarator_list_t *decls, bool is_def
     return stmt;
 }
 
-static statement_t *make_statement_parameterized_type(type_t *type, typeref_list_t *params)
+static statement_t *make_statement_parameterized_type( struct location where, type_t *type, typeref_list_t *params )
 {
-    statement_t *stmt = make_statement(STMT_TYPE);
+    statement_t *stmt = make_statement( where, STMT_TYPE );
     stmt->u.type = type_parameterized_type_specialize_partial(type, params);
     return stmt;
 }
 
-static statement_t *make_statement_delegate(type_t *ret, var_list_t *args)
+static statement_t *make_statement_delegate( struct location where, type_t *ret, var_list_t *args )
 {
     declarator_t *decl = make_declarator(make_var(xstrdup("Invoke")));
     decl_spec_t *spec = make_decl_spec(ret, NULL, NULL, STG_NONE, 0, 0);
     append_chain_type(decl, type_new_function(args), 0);
-    return make_statement_declaration(declare_var(NULL, spec, decl, FALSE));
+    return make_statement_declaration( where, declare_var( NULL, spec, decl, FALSE ) );
 }
 
 static statement_list_t *append_statements(statement_list_t *l1, statement_list_t *l2)

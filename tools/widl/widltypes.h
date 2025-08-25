@@ -645,6 +645,7 @@ struct _user_type_t {
 struct _statement_t {
     struct list entry;
     enum statement_type type;
+    struct location where;
     union
     {
         type_t *type;
