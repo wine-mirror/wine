@@ -19,5 +19,10 @@
  */
 
 #pragma makedep register
+#pragma winrt ns_prefix
 
-#include "windows.ui.idl"
+import "windows.ui.idl";
+
+namespace Windows.UI {
+    runtimeclass ColorHelper;
+}
