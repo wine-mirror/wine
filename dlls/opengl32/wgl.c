@@ -1709,7 +1709,7 @@ static void *gl_map_buffer( enum unix_funcs code, GLenum target, GLenum access )
         TRACE( "Unable to map wow64 buffer directly, using copy buffer!\n" );
         if (!(args.client_ptr = _aligned_malloc( (size_t)args.client_ptr, 16 ))) return NULL;
         status = WINE_UNIX_CALL( code, &args );
-        if (args.ret != args.client_ptr) _aligned_free( args.client_ptr );
+        _aligned_free( args.client_ptr );
     }
 #endif
     if (status) WARN( "glMapBuffer returned %#lx\n", status );
@@ -1747,7 +1747,7 @@ void * WINAPI glMapBufferRange( GLenum target, GLintptr offset, GLsizeiptr lengt
         TRACE( "Unable to map wow64 buffer directly, using copy buffer!\n" );
         if (!(args.client_ptr = _aligned_malloc( length, 16 ))) return NULL;
         status = UNIX_CALL( glMapBufferRange, &args );
-        if (args.ret != args.client_ptr) _aligned_free( args.client_ptr );
+        _aligned_free( args.client_ptr );
     }
 #endif
     if (status) WARN( "glMapBufferRange returned %#lx\n", status );
@@ -1773,7 +1773,7 @@ static void *gl_map_named_buffer( enum unix_funcs code, GLuint buffer, GLenum ac
         TRACE( "Unable to map wow64 buffer directly, using copy buffer!\n" );
         if (!(args.client_ptr = _aligned_malloc( (size_t)args.client_ptr, 16 ))) return NULL;
         status = WINE_UNIX_CALL( code, &args );
-        if (args.ret != args.client_ptr) _aligned_free( args.client_ptr );
+        _aligned_free( args.client_ptr );
     }
 #endif
     if (status) WARN( "glMapNamedBuffer returned %#lx\n", status );
@@ -1811,7 +1811,7 @@ static void *gl_map_named_buffer_range( enum unix_funcs code, GLuint buffer, GLi
         TRACE( "Unable to map wow64 buffer directly, using copy buffer!\n" );
         if (!(args.client_ptr = _aligned_malloc( length, 16 ))) return NULL;
         status = WINE_UNIX_CALL( code, &args );
-        if (args.ret != args.client_ptr) _aligned_free( args.ret );
+        _aligned_free( args.client_ptr );
     }
 #endif
     if (status) WARN( "glMapNamedBufferRange returned %#lx\n", status );
