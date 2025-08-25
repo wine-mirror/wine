@@ -194,7 +194,8 @@ static void write_runtimeclasses_registry( const statement_list_t *stmts )
 
     if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
     {
-        if (stmt->type != STMT_TYPE) continue;
+        if (stmt->type != STMT_TYPE && stmt->type != STMT_TYPEREF) continue;
+        if (stmt->type == STMT_TYPEREF && strcmp( stmt->where.input_name, input_name )) continue; /* ignore #included statements */
         if (type_get_type((type = stmt->u.type)) != TYPE_RUNTIMECLASS) continue;
         if (!get_attrp(type->attrs, ATTR_ACTIVATABLE) && !get_attrp(type->attrs, ATTR_STATIC)) continue;
         put_str( indent, "ForceRemove %s\n", format_namespace( type->namespace, "", ".", type->name, NULL ) );

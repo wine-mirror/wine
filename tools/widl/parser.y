@@ -429,7 +429,8 @@ gbl_statements
 	| gbl_statements apicontract ';'	{ $$ = $1; reg_type($2, $2->name, current_namespace, 0); }
 	| gbl_statements apicontract_def	{ $$ = append_statement($1, make_statement_type_decl( @$, $2 ));
 						  reg_type($2, $2->name, current_namespace, 0); }
-	| gbl_statements runtimeclass ';'       { $$ = $1; reg_type($2, $2->name, current_namespace, 0); }
+	| gbl_statements runtimeclass ';'       { $$ = append_statement($1, make_statement_reference( @$, $2 ));
+	                                          reg_type($2, $2->name, current_namespace, 0); }
 	| gbl_statements runtimeclass_def       { $$ = append_statement($1, make_statement_type_decl( @$, $2 ));
 	                                          reg_type($2, $2->name, current_namespace, 0); }
 	| gbl_statements moduledef		{ $$ = append_statement($1, make_statement_module( @$, $2 )); }
