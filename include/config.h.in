@@ -342,6 +342,9 @@
 /* Define to 1 if you have the 'prctl' function. */
 #undef HAVE_PRCTL
 
+/* Define to 1 if you have the 'process_vm_readv' function. */
+#undef HAVE_PROCESS_VM_READV
+
 /* Define to 1 if you have the 'pthread_getthreadid_np' function. */
 #undef HAVE_PTHREAD_GETTHREADID_NP
 

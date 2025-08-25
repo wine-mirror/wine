@@ -4542,8 +4542,10 @@ static void test_ReadProcessMemory(void)
     ok(ret, "ReadProcessMemory failed %lu\n", GetLastError());
     ok(copied == si.dwPageSize, "copied = %Id\n", copied);
 
+    copied = 1;
     ret = ReadProcessMemory(hproc, ptr, buf, 2 * si.dwPageSize, &copied);
-    todo_wine ok(!ret, "ReadProcessMemory succeeded\n");
+    todo_wine_if(ret) ok(!ret, "ReadProcessMemory succeeded\n");
+    todo_wine_if(ret) ok(!copied, "copied = %Id\n", copied);
 
     ret = ReadProcessMemory(hproc, ptr, buf, si.dwPageSize, &copied);
     ok(ret, "ReadProcessMemory failed %lu\n", GetLastError());

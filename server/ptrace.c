@@ -43,6 +43,9 @@
 #ifdef HAVE_SYS_THR_H
 # include <sys/thr.h>
 #endif
+#ifdef HAVE_SYS_UIO_H
+# include <sys/uio.h>
+#endif
 #include <unistd.h>
 
 #include "ntstatus.h"
@@ -340,20 +343,44 @@ static struct thread *get_ptrace_thread( struct process *process )
     return NULL;
 }
 
-/* read data from a process memory space */
-int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, char *dest )
+#ifdef HAVE_PROCESS_VM_READV
+static int read_process_memory_vm( struct thread *thread, client_ptr_t ptr, data_size_t size, char *dest )
 {
-    struct thread *thread = get_ptrace_thread( process );
-    unsigned int first_offset, last_offset, len;
-    unsigned long data, *addr;
+    static int not_supported;
+    struct iovec local, remote;
+    ssize_t len;
 
-    if (!thread) return 0;
-
-    if ((unsigned long)ptr != ptr)
+    if (not_supported) return -1;
+    if (thread->unix_pid == -1 || !is_process_init_done( thread->process ))
     {
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
+
+    local.iov_len = remote.iov_len = size;
+    local.iov_base = dest;
+    remote.iov_base = (void *)(unsigned long)ptr;
+    len = process_vm_readv( thread->unix_pid, &local, 1, &remote, 1, 0 );
+    if (len < 0 && (errno == ENOSYS || errno == EPERM))
+    {
+        not_supported = 1;
+        return -1;
+    }
+    if (len == size) return 1;
+    set_error( len >= 0 ? STATUS_PARTIAL_COPY : STATUS_ACCESS_DENIED );
+    return 0;
+}
+#else
+static int read_process_memory_vm( struct thread *thread, client_ptr_t ptr, data_size_t size, char *dest )
+{
+    return -1;
+}
+#endif
+
+static int read_process_memory_ptrace( struct thread *thread, client_ptr_t ptr, data_size_t size, char *dest )
+{
+    unsigned int first_offset, last_offset, len;
+    unsigned long data, *addr;
 
     first_offset = ptr % sizeof(long);
     last_offset = (size + first_offset) % sizeof(long);
@@ -369,7 +396,7 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
             char procmem[24];
             int fd;
 
-            snprintf( procmem, sizeof(procmem), "/proc/%u/mem", process->unix_pid );
+            snprintf( procmem, sizeof(procmem), "/proc/%u/mem", thread->process->unix_pid );
             if ((fd = open( procmem, O_RDONLY )) != -1)
             {
                 ssize_t ret = pread( fd, dest, size, ptr );
@@ -405,6 +432,24 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
         resume_after_ptrace( thread );
     }
     return !len;
+}
+
+/* read data from a process memory space */
+int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, char *dest )
+{
+    struct thread *thread = get_ptrace_thread( process );
+    int ret;
+
+    if (!thread) return 0;
+
+    if ((unsigned long)ptr != ptr)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
+
+    if ((ret = read_process_memory_vm( thread, ptr, size, dest )) != -1) return ret;
+    return read_process_memory_ptrace( thread, ptr, size, dest );
 }
 
 /* make sure we can write to the whole address range */
