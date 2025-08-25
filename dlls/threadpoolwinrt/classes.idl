@@ -17,5 +17,10 @@
  */
 
 #pragma makedep register
+#pragma winrt ns_prefix
 
-#include "windows.system.threading.idl"
+import "windows.system.threading.idl";
+
+namespace Windows.System.Threading {
+    runtimeclass ThreadPool;
+}
