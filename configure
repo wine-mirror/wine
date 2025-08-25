@@ -21438,6 +21438,12 @@ then :
   printf "%s\n" "#define HAVE_PROCESS_VM_READV 1" >>confdefs.h
 
 fi
+ac_fn_c_check_func "$LINENO" "process_vm_writev" "ac_cv_func_process_vm_writev"
+if test "x$ac_cv_func_process_vm_writev" = xyes
+then :
+  printf "%s\n" "#define HAVE_PROCESS_VM_WRITEV 1" >>confdefs.h
+
+fi
 ac_fn_c_check_func "$LINENO" "sched_getcpu" "ac_cv_func_sched_getcpu"
 if test "x$ac_cv_func_sched_getcpu" = xyes
 then :

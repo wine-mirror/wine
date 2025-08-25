@@ -2520,10 +2520,10 @@ static void test_nt_wow64(void)
                                                       MEM_RESERVE | MEM_COMMIT, PAGE_READONLY );
             ok( !status, "NtWow64AllocateVirtualMemory64 failed %lx\n", status );
             status = pNtWow64WriteVirtualMemory64( process, ptr, str, sizeof(str), &res );
-            todo_wine
+            todo_wine_if(status == STATUS_SUCCESS)
             ok( status == STATUS_PARTIAL_COPY || broken( status == STATUS_ACCESS_VIOLATION ),
                 "NtWow64WriteVirtualMemory64 failed %lx\n", status );
-            todo_wine
+            todo_wine_if(status == STATUS_SUCCESS)
             ok( !res || broken(res) /* win10 1709 */, "wrong size %s\n", wine_dbgstr_longlong(res) );
         }
         ptr = 0x9876543210ull;

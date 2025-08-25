@@ -151,8 +151,7 @@ static void test_VirtualAllocEx(void)
     bytes_written = 0xdeadbeef;
     b = WriteProcessMemory(hProcess, addr1, src, alloc_size, &bytes_written);
     ok( !b, "WriteProcessMemory succeeded\n" );
-    ok( GetLastError() == ERROR_NOACCESS ||
-        GetLastError() == ERROR_PARTIAL_COPY, /* vista */
+    ok( GetLastError() == ERROR_PARTIAL_COPY, /* vista */
         "wrong error %lu\n", GetLastError() );
     ok( bytes_written == 0, "%Iu bytes written\n", bytes_written );
     bytes_read = 0xdeadbeef;
@@ -211,10 +210,10 @@ static void test_VirtualAllocEx(void)
     if (!b) ok( GetLastError() == ERROR_NOACCESS, "wrong error %lu\n", GetLastError() );
     ok( bytes_written == 0xdeadbeef, "%Iu bytes written\n", bytes_written );
     status = pNtWriteVirtualMemory( hProcess, addr1, src, alloc_size, &bytes_written );
-    todo_wine
+    todo_wine_if(status == STATUS_SUCCESS)
     ok( status == STATUS_PARTIAL_COPY || broken(status == STATUS_ACCESS_VIOLATION),
         "wrong status %lx\n", status );
-    todo_wine
+    todo_wine_if(status == STATUS_SUCCESS)
     ok( bytes_written == 0, "%Iu bytes written\n", bytes_written );
 
     b = VirtualProtectEx( hProcess, addr1, alloc_size, PAGE_EXECUTE_READ, &old_prot );
@@ -225,21 +224,21 @@ static void test_VirtualAllocEx(void)
     ok( bytes_written == alloc_size, "%Iu bytes written\n", bytes_written );
     bytes_written = 0xdeadbeef;
     status = pNtWriteVirtualMemory( hProcess, addr1, src, alloc_size, &bytes_written );
-    todo_wine
+    todo_wine_if(status == STATUS_SUCCESS)
     ok( status == STATUS_PARTIAL_COPY || broken(status == STATUS_ACCESS_VIOLATION),
         "wrong status %lx\n", status );
-    todo_wine
+    todo_wine_if(status == STATUS_SUCCESS)
     ok( bytes_written == 0, "%Iu bytes written\n", bytes_written );
 
     b = VirtualProtectEx( hProcess, addr1, 0x2000, PAGE_EXECUTE_READWRITE, &old_prot );
     ok( b, "VirtualProtectEx, error %lu\n", GetLastError() );
     bytes_written = 0xdeadbeef;
     b = WriteProcessMemory(hProcess, addr1, src, alloc_size, &bytes_written);
-    todo_wine
+    todo_wine_if(status == STATUS_SUCCESS)
     ok( !b || broken(b), /* <= win10 1507 */ "WriteProcessMemory succeeded\n" );
     bytes_written = 0xdeadbeef;
     status = pNtWriteVirtualMemory( hProcess, addr1, src, alloc_size, &bytes_written );
-    todo_wine
+    todo_wine_if(status == STATUS_SUCCESS)
     ok( status == STATUS_PARTIAL_COPY || broken(status == STATUS_SUCCESS), /* <= win10 1507 */
         "wrong status %lx\n", status );
     ok( bytes_written == (status ? 0x2000 : alloc_size), "%Iu bytes written\n", bytes_written );
@@ -248,10 +247,10 @@ static void test_VirtualAllocEx(void)
     ok( b, "VirtualProtectEx, error %lu\n", GetLastError() );
     bytes_written = 0xdeadbeef;
     b = WriteProcessMemory(hProcess, addr1, src, alloc_size, &bytes_written);
-    todo_wine
+    todo_wine_if(status == STATUS_SUCCESS)
     ok( !b || broken(b), /* <= win10 1507 */ "WriteProcessMemory succeeded\n" );
     status = pNtWriteVirtualMemory( hProcess, addr1, src, alloc_size, &bytes_written );
-    todo_wine
+    todo_wine_if(b)
     ok( status == STATUS_PARTIAL_COPY || broken(status == STATUS_SUCCESS), /* <= win10 1507 */
         "wrong status %lx\n", status );
     ok( bytes_written == (status ? 0x2000 : alloc_size), "%Iu bytes written\n", bytes_written );
