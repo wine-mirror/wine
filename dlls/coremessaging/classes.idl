@@ -19,6 +19,10 @@
  */
 
 #pragma makedep register
+#pragma winrt ns_prefix
 
-#define _CORE_MESSAGING
-#include "windows.system.idl"
+import "windows.system.idl";
+
+namespace Windows.System {
+    runtimeclass DispatcherQueueController;
+}
