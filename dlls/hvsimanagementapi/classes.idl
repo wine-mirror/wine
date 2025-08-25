@@ -19,5 +19,10 @@
  */
 
 #pragma makedep register
+#pragma winrt ns_prefix
 
-#include "windows.security.isolation.idl"
+import "windows.security.isolation.idl";
+
+namespace Windows.Security.Isolation {
+    runtimeclass IsolatedWindowsEnvironmentHost;
+}
