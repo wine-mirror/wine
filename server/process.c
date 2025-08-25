@@ -1142,8 +1142,8 @@ int set_process_debug_flag( struct process *process, int flag )
     if (is_wow64_process( process )) peb32 = process->peb + 0x1000;
 
     /* BeingDebugged flag is the byte at offset 2 in the PEB */
-    if (peb32 && !write_process_memory( process, peb32 + 2, 1, &data )) return 0;
-    return write_process_memory( process, process->peb + 2, 1, &data );
+    if (peb32 && !write_process_memory( process, peb32 + 2, 1, &data, NULL )) return 0;
+    return write_process_memory( process, process->peb + 2, 1, &data, NULL );
 }
 
 /* create a new process */
@@ -1796,7 +1796,8 @@ DECL_HANDLER(write_process_memory)
     if ((process = get_process_from_handle( req->handle, PROCESS_VM_WRITE )))
     {
         data_size_t len = get_req_data_size();
-        if (len) write_process_memory( process, req->addr, len, get_req_data() );
+        reply->written = 0;
+        if (len) write_process_memory( process, req->addr, len, get_req_data(), &reply->written );
         release_object( process );
     }
 }

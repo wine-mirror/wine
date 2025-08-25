@@ -2546,6 +2546,8 @@ struct write_process_memory_request
 struct write_process_memory_reply
 {
     struct reply_header __header;
+    data_size_t written;
+    char __pad_12[4];
 };
 
 
@@ -7086,6 +7088,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 926
+#define SERVER_PROTOCOL_VERSION 927
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

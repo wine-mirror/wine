@@ -150,7 +150,8 @@ int read_process_memory( struct process *process, client_ptr_t ptr, size_t size,
 }
 
 /* write data to a process memory space */
-int write_process_memory( struct process *process, client_ptr_t ptr, size_t size, const char *src )
+int write_process_memory( struct process *process, client_ptr_t ptr, size_t size, const char *src,
+                          data_size_t *written )
 {
     ssize_t ret;
     int fd;
@@ -165,6 +166,7 @@ int write_process_memory( struct process *process, client_ptr_t ptr, size_t size
 
     ret = pwrite( fd, src, size, (off_t)ptr );
     close( fd );
+    if (ret == size && written) *written = size;
     if (ret == size) return 1;
 
     if (ret == -1) file_set_error();

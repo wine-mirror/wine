@@ -469,7 +469,8 @@ static int check_process_write_access( struct thread *thread, long *addr, data_s
 }
 
 /* write data to a process memory space */
-int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, const char *src )
+int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, const char *src,
+                          data_size_t *written )
 {
     struct thread *thread = get_ptrace_thread( process );
     int ret = 0;
@@ -553,6 +554,7 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
     done:
         resume_after_ptrace( thread );
     }
+    if (ret && written) *written = size;
     return ret;
 }
 

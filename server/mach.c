@@ -415,7 +415,8 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
 }
 
 /* write data to a process memory space */
-int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, const char *src )
+int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, const char *src,
+                          data_size_t *written )
 {
     kern_return_t ret;
     mach_port_t process_port = get_process_port( process );
@@ -538,6 +539,7 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
 out:
     free( (void *)data );
     mach_set_error( ret );
+    if (ret == KERN_SUCCESS && written) *written = size;
     return (ret == KERN_SUCCESS);
 }
 

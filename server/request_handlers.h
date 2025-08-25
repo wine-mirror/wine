@@ -1184,6 +1184,8 @@ C_ASSERT( sizeof(struct read_process_memory_reply) == 8 );
 C_ASSERT( offsetof(struct write_process_memory_request, handle) == 12 );
 C_ASSERT( offsetof(struct write_process_memory_request, addr) == 16 );
 C_ASSERT( sizeof(struct write_process_memory_request) == 24 );
+C_ASSERT( offsetof(struct write_process_memory_reply, written) == 8 );
+C_ASSERT( sizeof(struct write_process_memory_reply) == 16 );
 C_ASSERT( offsetof(struct create_key_request, access) == 12 );
 C_ASSERT( offsetof(struct create_key_request, options) == 16 );
 C_ASSERT( sizeof(struct create_key_request) == 24 );

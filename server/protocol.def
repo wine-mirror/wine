@@ -2030,6 +2030,8 @@ struct process_info
     obj_handle_t handle;       /* process handle */
     client_ptr_t addr;         /* addr to write to */
     VARARG(data,bytes);        /* data to write */
+@REPLY
+    data_size_t written;       /* number of bytes written */
 @END
 
 
