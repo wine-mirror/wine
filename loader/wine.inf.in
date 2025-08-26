@@ -50,9 +50,9 @@ AddService=MountMgr,0x800,MountMgrService
 11,,winedevice.exe
 12,,mountmgr.sys
 
-[DefaultInstall]
+[BaseInstall]
 RegisterDlls=RegisterDllsSection
-WineFakeDlls=FakeDllsWin32,FakeDlls
+WineFakeDlls=FakeDlls
 UpdateInis=SystemIni
 CopyFiles=ColorFiles,EtcFiles,InfFiles,NlsFiles,SortFiles
 AddReg=\
@@ -63,120 +63,75 @@ AddReg=\
     Debugger,\
     DirectX,\
     Fonts,\
+    LicenseInformation,\
     MCI,\
     Misc,\
     OLE,\
     Printing,\
     Services, \
     SessionMgr,\
-    ThemeManager,\
-    VCRuntime.ntx86,\
-    LicenseInformation
+    ThemeManager
 
-[DefaultInstall.NT]
-RegisterDlls=RegisterDllsSection
-WineFakeDlls=FakeDllsWin32,FakeDlls
-UpdateInis=SystemIni
-CopyFiles=ColorFiles,EtcFiles,InfFiles,NlsFiles,SortFiles
+[DefaultInstall]
+Needs=BaseInstall
+WineFakeDlls=FakeDllsWin32
 AddReg=\
-    Classes,\
-    ContentIndex,\
-    ControlClass,\
-    CurrentVersion,\
-    Debugger,\
-    DirectX,\
-    Fonts,\
-    MCI,\
-    Misc,\
-    OLE,\
-    Printing,\
-    Services, \
-    SessionMgr,\
-    ThemeManager,\
+    VCRuntime.ntx86
+
+[DefaultInstall.ntx86]
+Needs=BaseInstall
+WineFakeDlls=FakeDllsWin32
+AddReg=\
     VCRuntime.ntx86,\
-    VersionInfo,\
-    LicenseInformation
+    VersionInfo
+
+[DefaultInstall.ntarm]
+Needs=BaseInstall
+WineFakeDlls=FakeDllsWin32
+AddReg=\
+    VersionInfo
 
 [DefaultInstall.ntamd64]
-RegisterDlls=RegisterDllsSection
-WineFakeDlls=FakeDllsWin64,FakeDlls
-UpdateInis=SystemIni
-CopyFiles=ColorFiles,EtcFiles,InfFiles,NlsFiles,SortFiles
+Needs=BaseInstall
+WineFakeDlls=FakeDllsWin64
 AddReg=\
-    Classes,\
-    ContentIndex,\
-    ControlClass,\
-    CurrentVersion,\
     CurrentVersionWow64.ntamd64,\
-    Debugger,\
-    DirectX,\
-    Fonts,\
-    MCI,\
-    Misc,\
-    OLE,\
-    Printing,\
-    Services, \
-    SessionMgr,\
-    ThemeManager,\
     VCRuntime.ntamd64,\
-    VersionInfo,\
-    LicenseInformation
+    VersionInfo
 
 [DefaultInstall.ntarm64]
-RegisterDlls=RegisterDllsSection
-WineFakeDlls=FakeDllsWin64,FakeDlls
-UpdateInis=SystemIni
-CopyFiles=ColorFiles,EtcFiles,InfFiles,NlsFiles,SortFiles
+Needs=BaseInstall
+WineFakeDlls=FakeDllsWin64
 AddReg=\
-    Classes,\
-    ContentIndex,\
-    ControlClass,\
-    CurrentVersion,\
     CurrentVersionWow64.ntarm64,\
-    Debugger,\
-    DirectX,\
-    Fonts,\
-    MCI,\
-    Misc,\
-    OLE,\
-    Printing,\
-    Services, \
-    SessionMgr,\
-    ThemeManager,\
     VCRuntime.ntamd64,\
     VCRuntime.ntarm64,\
-    VersionInfo,\
-    LicenseInformation
+    VersionInfo
+
+[BaseWow64Install]
+RegisterDlls=RegisterDllsSection
+WineFakeDlls=FakeDllsWin32,FakeDllsWow64
+CopyFiles=NlsFiles
+AddReg=\
+    CurrentVersion,\
+    Debugger,\
+    DirectX,\
+    LicenseInformation,\
+    MCI,\
+    Misc,\
+    VersionInfo
 
 [Wow64Install.ntx86]
-RegisterDlls=RegisterDllsSection
-WineFakeDlls=FakeDllsWin32,FakeDllsWow64
-CopyFiles=NlsFiles
+Needs=BaseWow64Install
 AddReg=\
-    CurrentVersion,\
     CurrentVersionWow64.ntx86,\
-    Debugger,\
-    DirectX,\
-    MCI,\
-    Misc,\
     VCRuntime.ntamd64,\
-    VCRuntime.ntx86,\
-    VersionInfo,\
-    LicenseInformation
+    VCRuntime.ntx86
 
 [Wow64Install.ntarm]
-RegisterDlls=RegisterDllsSection
-WineFakeDlls=FakeDllsWin32,FakeDllsWow64
-CopyFiles=NlsFiles
+Needs=BaseWow64Install
 AddReg=\
-    CurrentVersion,\
-    CurrentVersionWow64.ntarm,\
-    Debugger,\
-    DirectX,\
-    MCI,\
-    Misc,\
-    VersionInfo,\
-    LicenseInformation
+    CurrentVersionWow64.ntarm
 
 [DefaultInstall.Services]
 AddService=BITS,0,BITSService
