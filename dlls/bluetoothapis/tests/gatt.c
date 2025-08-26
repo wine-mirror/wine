@@ -215,7 +215,7 @@ static void test_BluetoothGATTGetCharacteristic( void )
 {
     HRESULT ret;
     USHORT actual = 0;
-    BTH_LE_GATT_SERVICE svc;
+    BTH_LE_GATT_SERVICE svc = {0};
 
     ret = BluetoothGATTGetCharacteristics( NULL, NULL, 0, NULL, NULL, 0 );
     ok( ret == E_POINTER, "got ret %#lx\n", ret );
