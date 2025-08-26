@@ -780,6 +780,17 @@ static BOOL fake_dlls_callback( HINF hinf, PCWSTR field, void *arg )
 }
 
 /***********************************************************************
+ *            include_callback
+ *
+ * Called once for each Include entry in a given section.
+ */
+static BOOL include_callback( HINF hinf, PCWSTR field, void *arg )
+{
+    SetupOpenAppendInfFileW( field, hinf, NULL );
+    return TRUE;
+}
+
+/***********************************************************************
  *            update_ini_callback
  *
  * Called once for each UpdateInis entry in a given section.
@@ -1254,6 +1265,8 @@ void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, I
 
     SetupDiGetActualSectionToInstallW( hinf, section, section, ARRAY_SIZE(section), NULL, NULL );
     TRACE( "using section %s\n", debugstr_w(section) );
+
+    iterate_section_fields( hinf, section, L"Include", include_callback, NULL );
 
     callback_context = SetupInitDefaultQueueCallback( hwnd );
     SetupInstallFromInfSectionW( hwnd, hinf, section, SPINST_ALL, NULL, NULL, SP_COPY_NEWER,

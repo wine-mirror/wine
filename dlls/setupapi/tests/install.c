@@ -2343,7 +2343,7 @@ static void test_append_reg(void)
 
     /* Key doesn't exist yet. */
 
-    RegDeleteKeyA(HKEY_CURRENT_USER, "winetest_setupapi");
+    RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\winetest_setupapi");
 
     ret = SetupInstallFromInfSectionA(NULL, hinf, "DefaultInstall", SPINST_REGISTRY,
             NULL, "C:\\", 0, SetupDefaultQueueCallbackA, context, NULL, NULL);
@@ -2410,6 +2410,78 @@ static void test_append_reg(void)
     ok(!l, "Got error %lu.\n", l);
 
     SetupCloseInfFile(hinf);
+    ret = DeleteFileA("test.inf");
+    ok(ret, "Failed to delete INF file, error %lu.\n", GetLastError());
+}
+
+static void test_include(void)
+{
+    static const char inf_data[] = "[Version]\n"
+            "Signature=\"$Chicago$\"\n"
+            "[DefaultInstall]\n"
+            "AddReg=reg_section\n"
+            "Include=.\\test2.inf\n"
+            "[reg_section]\n"
+            "HKCU,Software\\winetest_setupapi,val1,,\"data1\"\n";
+    static const char incl_data[] = "[Version]\n"
+            "Signature=\"$Chicago$\"\n"
+            "[DefaultInstall]\n"
+            "AddReg=reg_section2\n"
+            "[reg_section2]\n"
+            "HKCU,Software\\winetest_setupapi,val2,,\"data2\"\n";
+
+    void *context = SetupInitDefaultQueueCallbackEx(NULL, INVALID_HANDLE_VALUE, 0, 0, 0);
+    char path[MAX_PATH];
+    DWORD type, size;
+    char value[20];
+    HINF hinf;
+    BOOL ret;
+    HKEY key;
+    LSTATUS res;
+
+    create_inf_file("test.inf", inf_data);
+    create_inf_file("test2.inf", incl_data);
+    sprintf(path, "%s\\test.inf", CURR_DIR);
+    hinf = SetupOpenInfFileA(path, NULL, INF_STYLE_WIN4, NULL);
+    ok(hinf != INVALID_HANDLE_VALUE, "Failed to open INF file, error %#lx.\n", GetLastError());
+
+    /* show that Include is not processed from SetupInstallFromInfSectionA */
+
+    RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\winetest_setupapi");
+    ret = SetupInstallFromInfSectionA(NULL, hinf, "DefaultInstall", SPINST_ALL, NULL, NULL, 0,
+                                       SetupDefaultQueueCallbackA, context, NULL, NULL);
+    ok(ret, "Failed to install, error %#lx.\n", GetLastError());
+
+    res = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\winetest_setupapi", &key);
+    ok(!res, "Got error %lu.\n", res);
+    size = sizeof(value);
+    res = RegQueryValueExA(key, "val1", NULL, &type, (BYTE *)value, &size);
+    ok(!res, "Got error %lu.\n", res);
+    ok(!strcmp( value, "data1" ), "wrong value %s\n", debugstr_a(value) );
+    size = sizeof(value);
+    res = RegQueryValueExA(key, "val2", NULL, &type, (BYTE *)value, &size);
+    ok(res == ERROR_FILE_NOT_FOUND, "Got error %lu.\n", res);
+    RegCloseKey(key);
+    RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\winetest_setupapi");
+    SetupCloseInfFile(hinf);
+
+    InstallHinfSectionW( GetDesktopWindow(), GetModuleHandleW(0), L"DefaultInstall 128 .\\test.inf", 0 );
+
+    res = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\winetest_setupapi", &key);
+    ok(!res, "Got error %lu.\n", res);
+    size = sizeof(value);
+    res = RegQueryValueExA(key, "val1", NULL, &type, (BYTE *)value, &size);
+    ok(!res, "Got error %lu.\n", res);
+    ok(!strcmp( value, "data1" ), "wrong value %s\n", debugstr_a(value) );
+    size = sizeof(value);
+    res = RegQueryValueExA(key, "val2", NULL, &type, (BYTE *)value, &size);
+    ok(!res, "Got error %lu.\n", res);
+    ok(!strcmp( value, "data2" ), "wrong value %s\n", debugstr_a(value) );
+    RegCloseKey(key);
+    RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\winetest_setupapi");
+
+    ret = DeleteFileA("test2.inf");
+    ok(ret, "Failed to delete INF file, error %lu.\n", GetLastError());
     ret = DeleteFileA("test.inf");
     ok(ret, "Failed to delete INF file, error %lu.\n", GetLastError());
 }
@@ -2578,6 +2650,7 @@ START_TEST(install)
     test_register_dlls();
     test_rename();
     test_append_reg();
+    test_include();
     test_source_disks_architecture();
 
     UnhookWindowsHookEx(hhook);
