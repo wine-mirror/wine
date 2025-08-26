@@ -4143,6 +4143,16 @@ DWORD WINAPI SetPerTcpConnectionEStats(PMIB_TCPROW row, TCP_ESTATS_TYPE state, P
   return ERROR_NOT_SUPPORTED;
 }
 
+/******************************************************************
+ *    SetPerTcp6ConnectionEStats (IPHLPAPI.@)
+ */
+DWORD WINAPI SetPerTcp6ConnectionEStats(MIB_TCP6ROW *row, TCP_ESTATS_TYPE state, BYTE *rw,
+                                        ULONG version, ULONG size, ULONG offset)
+{
+    FIXME("(row %p, state %d, rw %p, version %lu, size %lu, offset %lu): stub\n",
+          row, state, rw, version, size, offset);
+    return ERROR_NOT_SUPPORTED;
+}
 
 /******************************************************************
  *    UnenableRouter (IPHLPAPI.@)

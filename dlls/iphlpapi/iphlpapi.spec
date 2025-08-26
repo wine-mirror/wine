@@ -285,7 +285,7 @@
 @ stub SetIpStatsToStack
 @ stdcall SetIpTTL( long )
 #@ stub SetNetworkInformation
-#@ stub SetPerTcp6ConnectionEStats
+@ stdcall SetPerTcp6ConnectionEStats( ptr long ptr long long long )
 #@ stub SetPerTcp6ConnectionStats
 @ stdcall SetPerTcpConnectionEStats( ptr long ptr long long long )
 #@ stub SetPerTcpConnectionStats
