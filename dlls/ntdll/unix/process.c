@@ -752,6 +752,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     {
         if (status == STATUS_INVALID_IMAGE_NOT_MZ && !fork_and_exec( &attr, unix_name, unixdir, params ))
         {
+            *process_handle_ptr = *thread_handle_ptr = 0;
             memset( info, 0, sizeof(*info) );
             free( unix_name );
             free( nt_name.Buffer );
