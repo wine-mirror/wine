@@ -516,7 +516,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
     WCHAR name[MAX_PATH];
     WCHAR *p, *tidy_cmdline = cmd_line;
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
-    RTL_USER_PROCESS_INFORMATION rtl_info;
+    RTL_USER_PROCESS_INFORMATION rtl_info = { 0 };
     HANDLE parent = 0, debug = 0;
     ULONG nt_flags = 0;
     USHORT machine = 0;
