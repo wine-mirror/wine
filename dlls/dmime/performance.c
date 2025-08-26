@@ -1379,6 +1379,8 @@ static HRESULT WINAPI performance_SetGlobalParam(IDirectMusicPerformance8 *iface
         void *pParam, DWORD dwSize)
 {
         struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+        struct channel_block *block;
+        int i;
 
 	TRACE("(%p, %s, %p, %ld)\n", This, debugstr_dmguid(rguidType), pParam, dwSize);
 
@@ -1396,6 +1398,11 @@ static HRESULT WINAPI performance_SetGlobalParam(IDirectMusicPerformance8 *iface
 	}
 	if (IsEqualGUID (rguidType, &GUID_PerfMasterVolume)) {
 		memcpy(&This->lMasterVolume, pParam, dwSize);
+		RB_FOR_EACH_ENTRY(block, &This->channel_blocks, struct channel_block, entry)
+		{
+			for (i = 0; i < ARRAYSIZE(block->channels); ++i)
+				set_port_volume(block->channels[i].port, This->lMasterVolume);
+		}
 		TRACE("=> MasterVolume set to %li\n", This->lMasterVolume);
 	}
 
