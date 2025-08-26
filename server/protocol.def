@@ -971,6 +971,12 @@ union udp_endpoint
 /****************************************************************/
 /* shared session mapping structures */
 
+struct obj_locator
+{
+    object_id_t          id;               /* object unique id, object data is valid if != 0 */
+    mem_size_t           offset;           /* offset of the object in session shared memory */
+};
+
 #define MAX_ATOM_LEN     255
 
 struct shared_cursor
@@ -1025,6 +1031,7 @@ typedef volatile struct
 
 typedef volatile struct
 {
+    struct obj_locator   class;            /* object locator for the window class shared object */
     unsigned int         dpi_context;      /* DPI awareness context */
 } window_shm_t;
 
@@ -1048,12 +1055,6 @@ typedef volatile struct
 {
     struct user_entry user_entries[MAX_USER_HANDLES];
 } session_shm_t;
-
-struct obj_locator
-{
-    object_id_t          id;               /* object unique id, object data is valid if != 0 */
-    mem_size_t           offset;           /* offset of the object in session shared memory */
-};
 
 /****************************************************************/
 /* Request declarations */

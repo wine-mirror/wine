@@ -129,14 +129,15 @@ static struct window_class *find_class( struct process *process, atom_t atom, mo
     return NULL;
 }
 
-struct window_class *grab_class( struct process *process, atom_t atom,
-                                 mod_handle_t instance, int *extra_bytes )
+struct window_class *grab_class( struct process *process, atom_t atom, mod_handle_t instance,
+                                 int *extra_bytes, struct obj_locator *locator )
 {
     struct window_class *class = find_class( process, atom, instance );
     if (class)
     {
         class->count++;
         *extra_bytes = class->win_extra;
+        *locator = get_shared_object_locator( class->shared );
     }
     else set_error( STATUS_INVALID_HANDLE );
     return class;

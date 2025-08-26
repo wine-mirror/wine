@@ -189,8 +189,8 @@ extern struct window_class *get_window_class( user_handle_t window );
 /* window class functions */
 
 extern void destroy_process_classes( struct process *process );
-extern struct window_class *grab_class( struct process *process, atom_t atom,
-                                        mod_handle_t instance, int *extra_bytes );
+extern struct window_class *grab_class( struct process *process, atom_t atom, mod_handle_t instance,
+                                        int *extra_bytes, struct obj_locator *locator );
 extern void release_class( struct window_class *class );
 extern int is_desktop_class( struct window_class *class );
 extern int is_message_class( struct window_class *class );

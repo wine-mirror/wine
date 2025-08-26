@@ -955,6 +955,12 @@ union udp_endpoint
 
 
 
+struct obj_locator
+{
+    object_id_t          id;
+    mem_size_t           offset;
+};
+
 #define MAX_ATOM_LEN     255
 
 struct shared_cursor
@@ -1009,6 +1015,7 @@ typedef volatile struct
 
 typedef volatile struct
 {
+    struct obj_locator   class;
     unsigned int         dpi_context;
 } window_shm_t;
 
@@ -1032,12 +1039,6 @@ typedef volatile struct
 {
     struct user_entry user_entries[MAX_USER_HANDLES];
 } session_shm_t;
-
-struct obj_locator
-{
-    object_id_t          id;
-    mem_size_t           offset;
-};
 
 
 
@@ -6897,6 +6898,6 @@ union generic_reply
     struct get_inproc_sync_fd_reply get_inproc_sync_fd_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 895
+#define SERVER_PROTOCOL_VERSION 896
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

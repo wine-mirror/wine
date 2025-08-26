@@ -618,10 +618,11 @@ static struct window *create_window( struct window *parent, struct window *owner
     struct window *win = NULL;
     struct desktop *desktop;
     struct window_class *class;
+    struct obj_locator class_locator;
 
     if (!(desktop = get_thread_desktop( current, DESKTOP_CREATEWINDOW ))) return NULL;
 
-    if (!(class = grab_class( current->process, atom, class_instance, &extra_bytes )))
+    if (!(class = grab_class( current->process, atom, class_instance, &extra_bytes, &class_locator )))
     {
         release_object( desktop );
         return NULL;
@@ -683,6 +684,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     if (!(win->shared = alloc_shared_object())) goto failed;
     SHARED_WRITE_BEGIN( win->shared, window_shm_t )
     {
+        shared->class       = class_locator;
         shared->dpi_context = NTUSER_DPI_PER_MONITOR_AWARE;
     }
     SHARED_WRITE_END;
