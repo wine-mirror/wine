@@ -513,8 +513,8 @@ static void test_VirtualProtectFromApp(void)
 
     /* Works on desktop, but not on UWP */
     ret = pVirtualProtectFromApp(p, 0x1000, PAGE_EXECUTE_READWRITE, &old_prot);
-    ok(ret, "Failed err %lu\n", GetLastError());
-    ok(old_prot == PAGE_READONLY, "wrong old_prot %lu\n", old_prot);
+    ok(ret || broken(GetLastError() == ERROR_INVALID_PARAMETER) /* Win10-1507 */, "Failed err %lu\n", GetLastError());
+    if (ret) ok(old_prot == PAGE_READONLY, "wrong old_prot %lu\n", old_prot);
 
     ret = VirtualFree(p, 0, MEM_RELEASE);
     ok(ret, "Failed to free mem error %lu.\n", GetLastError());
