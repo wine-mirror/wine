@@ -758,12 +758,18 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileA( LPCSTR name, DWORD access, DWORD sh
     return CreateFileW( nameW, access, sharing, sa, creation, attributes, template );
 }
 
-static UINT get_nt_file_options( DWORD attributes )
+static UINT get_nt_file_options( DWORD attributes, DWORD creation )
 {
     UINT options = 0;
 
     if (attributes & FILE_FLAG_BACKUP_SEMANTICS)
+    {
         options |= FILE_OPEN_FOR_BACKUP_INTENT;
+        if ((attributes & FILE_FLAG_POSIX_SEMANTICS) &&
+            (attributes & FILE_ATTRIBUTE_DIRECTORY) &&
+            creation == CREATE_NEW)
+            options |= FILE_DIRECTORY_FILE;
+    }
     else
         options |= FILE_NON_DIRECTORY_FILE;
     if (attributes & FILE_FLAG_DELETE_ON_CLOSE)
@@ -864,7 +870,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
     status = NtCreateFile( &ret, access | SYNCHRONIZE | FILE_READ_ATTRIBUTES, &attr, &io,
                            NULL, attributes & FILE_ATTRIBUTE_VALID_FLAGS, sharing,
                            nt_disposition[creation - CREATE_NEW],
-                           get_nt_file_options( attributes ), NULL, 0 );
+                           get_nt_file_options( attributes, creation ), NULL, 0 );
     if (status)
     {
         if (vxd_name && vxd_name[0])
@@ -3423,7 +3429,9 @@ HANDLE WINAPI DECLSPEC_HOTPATCH ReOpenFile( HANDLE handle, DWORD access, DWORD s
     }
 
     status = NtCreateFile( &file, access | SYNCHRONIZE | FILE_READ_ATTRIBUTES, &attr, &io, NULL,
-                           0, sharing, FILE_OPEN, FILE_NON_DIRECTORY_FILE | get_nt_file_options( attributes ), NULL, 0 );
+                           0, sharing, FILE_OPEN,
+                           FILE_NON_DIRECTORY_FILE | get_nt_file_options( attributes, OPEN_EXISTING ),
+                           NULL, 0 );
     if (!set_ntstatus( status ))
         return INVALID_HANDLE_VALUE;
     return file;

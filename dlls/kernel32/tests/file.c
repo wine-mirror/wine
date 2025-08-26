@@ -6849,7 +6849,6 @@ static void test_posix_semantics(void)
             ret = GetFileInformationByHandle(hFile, &info);
             ok(ret, "GetFileInformationByHandle error %lu\n", GetLastError());
             if (td[i].disposition == CREATE_NEW && flags[j] == (FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_POSIX_SEMANTICS | FILE_ATTRIBUTE_DIRECTORY))
-                todo_wine
                 ok(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY, "created file is not a directory\n");
             else
                 ok(!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY), "created file is a directory\n");
