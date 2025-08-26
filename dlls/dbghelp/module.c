@@ -1280,6 +1280,7 @@ BOOL  WINAPI EnumerateLoadedModulesW64(HANDLE process,
                                        PENUMLOADED_MODULES_CALLBACKW64 enum_cb,
                                        PVOID user)
 {
+    OBJECT_BASIC_INFORMATION obi;
     HMODULE*            hmods;
     unsigned            alloc = 256, count, count32, i;
     USHORT              pcs_machine, native_machine;
@@ -1289,6 +1290,15 @@ BOOL  WINAPI EnumerateLoadedModulesW64(HANDLE process,
     WCHAR*              sysdir = NULL;
     WCHAR*              wowdir = NULL;
     size_t              sysdir_len = 0, wowdir_len = 0;
+
+    if (process != GetCurrentProcess() &&
+        RtlIsCurrentProcess( process ) &&
+        !NtQueryObject(process, ObjectBasicInformation, &obi, sizeof(obi), NULL) &&
+        obi.GrantedAccess & PROCESS_VM_READ)
+    {
+        TRACE("same process.\n");
+        process = GetCurrentProcess();
+    }
 
     /* process might not be a handle to a live process */
     if (!IsWow64Process2(process, &pcs_machine, &native_machine))
