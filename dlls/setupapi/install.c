@@ -69,6 +69,14 @@ struct register_dll_info
     HMODULE            *modules;
 };
 
+/* info passed to callback functions dealing with installing a section */
+struct install_section_callback_info
+{
+    HWND                hwnd;
+    PSP_FILE_CALLBACK_W callback;
+    PVOID               callback_context;
+};
+
 typedef BOOL (*iterate_fields_func)( HINF hinf, PCWSTR field, void *arg );
 
 
@@ -791,6 +799,22 @@ static BOOL include_callback( HINF hinf, PCWSTR field, void *arg )
 }
 
 /***********************************************************************
+ *            install_section_callback
+ *
+ * Called once for each Needs entry in a given section.
+ */
+static BOOL install_section_callback( HINF hinf, PCWSTR field, void *arg )
+{
+    struct install_section_callback_info *info = arg;
+
+    TRACE( "installing %s\n", debugstr_w(field) );
+    SetupInstallFromInfSectionW( info->hwnd, hinf, field, SPINST_ALL, NULL, NULL, SP_COPY_NEWER,
+                                 info->callback, info->callback_context, NULL, NULL );
+    return TRUE;
+}
+
+
+/***********************************************************************
  *            update_ini_callback
  *
  * Called once for each UpdateInis entry in a given section.
@@ -1241,8 +1265,8 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
  */
 void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, INT show )
 {
+    struct install_section_callback_info info = { .hwnd = hwnd, .callback = SetupDefaultQueueCallbackW };
     WCHAR *s, *path, section[MAX_PATH + ARRAY_SIZE( L".Services" )];
-    void *callback_context;
     UINT mode;
     HINF hinf;
 
@@ -1268,11 +1292,10 @@ void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, I
 
     iterate_section_fields( hinf, section, L"Include", include_callback, NULL );
 
-    callback_context = SetupInitDefaultQueueCallback( hwnd );
-    SetupInstallFromInfSectionW( hwnd, hinf, section, SPINST_ALL, NULL, NULL, SP_COPY_NEWER,
-                                 SetupDefaultQueueCallbackW, callback_context,
-                                 NULL, NULL );
-    SetupTermDefaultQueueCallback( callback_context );
+    info.callback_context = SetupInitDefaultQueueCallback( hwnd );
+    install_section_callback( hinf, section, &info );
+    iterate_section_fields( hinf, section, L"Needs", install_section_callback, &info );
+    SetupTermDefaultQueueCallback( info.callback_context );
     lstrcatW( section, L".Services" );
     SetupInstallServicesFromInfSectionW( hinf, section, 0 );
     SetupCloseInfFile( hinf );
