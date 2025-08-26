@@ -20,6 +20,7 @@
 
 #include "dmime_private.h"
 #include "dmusic_midi.h"
+#include "dmksctrl.h"
 #include "wine/rbtree.h"
 #include <math.h>
 
@@ -1138,6 +1139,25 @@ static void performance_update_latency_time(struct performance *This, IDirectMus
     if (FAILED(hr)) ERR("Failed to update performance %p latency, hr %#lx\n", This, hr);
 }
 
+static void set_port_volume(IDirectMusicPort *port, LONG volume)
+{
+    KSPROPERTY volume_prop;
+    IKsControl *control;
+    DWORD volume_size;
+
+    if (FAILED(IDirectMusicPort_QueryInterface(port, &IID_IKsControl, (void **)&control)))
+        return;
+
+    volume_prop.Set = GUID_DMUS_PROP_Volume;
+    volume_prop.Id = 0;
+    volume_prop.Flags = KSPROPERTY_TYPE_SET;
+
+    IKsControl_KsProperty(control, &volume_prop, sizeof(volume_prop), &volume, sizeof(volume),
+            &volume_size);
+
+    IKsControl_Release(control);
+}
+
 static HRESULT perf_dmport_create(struct performance *perf, DMUS_PORTPARAMS *params)
 {
     IDirectMusicPort *port;
@@ -1167,6 +1187,7 @@ static HRESULT perf_dmport_create(struct performance *perf, DMUS_PORTPARAMS *par
     }
 
     performance_update_latency_time(perf, port, NULL);
+    set_port_volume(port, perf->lMasterVolume);
     IDirectMusicPort_Release(port);
     return S_OK;
 }
@@ -1197,6 +1218,7 @@ static HRESULT WINAPI performance_AddPort(IDirectMusicPerformance8 *iface, IDire
      */
 
     performance_update_latency_time(This, port, NULL);
+    set_port_volume(port, This->lMasterVolume);
     return S_OK;
 }
 
