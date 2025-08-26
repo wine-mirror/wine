@@ -555,7 +555,7 @@ static NTSTATUS fork_and_exec( OBJECT_ATTRIBUTES *attr, const char *unix_name, i
     pid_t pid;
     int fd[2], stdin_fd = -1, stdout_fd = -1;
     char **argv, **envp;
-    NTSTATUS status;
+    NTSTATUS status = STATUS_SUCCESS;
 
 #ifdef HAVE_PIPE2
     if (pipe2( fd, O_CLOEXEC ) == -1)
