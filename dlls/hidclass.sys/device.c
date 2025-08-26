@@ -163,7 +163,7 @@ static NTSTATUS hid_queue_push_irp( struct hid_queue *queue, IRP *irp )
     KeAcquireSpinLock( &queue->lock, &irql );
 
     IoSetCancelRoutine( irp, read_cancel_routine );
-    if (irp->Cancel && !IoSetCancelRoutine( irp, NULL ))
+    if (irp->Cancel && IoSetCancelRoutine( irp, NULL ))
     {
         /* IRP was canceled before we set cancel routine */
         InitializeListHead( &irp->Tail.Overlay.ListEntry );
