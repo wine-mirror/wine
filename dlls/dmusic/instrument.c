@@ -582,11 +582,22 @@ static HRESULT instrument_add_soundfont_region(struct instrument *This, struct s
 
     start_loop = generators->amount[SF_GEN_STARTLOOP_ADDRS_OFFSET].value;
     end_loop = generators->amount[SF_GEN_ENDLOOP_ADDRS_OFFSET].value;
-    if (start_loop || end_loop)
+    region->wave_loop.ulStart = start_loop;
+    region->wave_loop.ulLength = end_loop - start_loop;
+
+    switch (generators->amount[SF_GEN_SAMPLE_MODES].value & 0x3)
     {
+    case SF_UNLOOPED:
+    case SF_NOTUSED:
+        break;
+    case SF_LOOP_DURING_RELEASE:
         region->wave_sample.cSampleLoops = 1;
-        region->wave_loop.ulStart = start_loop;
-        region->wave_loop.ulLength = end_loop - start_loop;
+        region->wave_loop.ulType = WLOOP_TYPE_FORWARD;
+        break;
+    case SF_LOOP_UNTIL_RELEASE:
+        region->wave_sample.cSampleLoops = 1;
+        region->wave_loop.ulType = WLOOP_TYPE_RELEASE;
+        break;
     }
 
     list_add_tail(&This->regions, &region->entry);

@@ -361,7 +361,6 @@ HRESULT wave_create_from_soundfont(struct soundfont *soundfont, UINT index, IDir
 
     if (!(sample = calloc(1, offsetof(struct sample, loops[1])))) goto failed;
     sample->head.cbSize = sizeof(sample->head);
-    sample->head.cSampleLoops = 1;
     sample->loops[0].ulStart = sf_sample->start_loop - sf_sample->start;
     sample->loops[0].ulLength = sf_sample->end_loop - sf_sample->start_loop;
 
