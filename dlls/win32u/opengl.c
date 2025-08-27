@@ -322,7 +322,7 @@ static void framebuffer_surface_destroy( struct opengl_drawable *drawable )
 
 static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT flags )
 {
-    struct wgl_pixel_format desc = pixel_formats[drawable->format - 1];
+    struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
     RECT rect;
 
     TRACE( "%s, flags %#x\n", debugstr_opengl_drawable( drawable ), flags );
@@ -331,22 +331,39 @@ static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT fl
     if (!rect.right) rect.right = 1;
     if (!rect.bottom) rect.bottom = 1;
 
+    read_desc.samples = read_desc.sample_buffers = 0;
+
     if (flags & GL_FLUSH_WAS_CURRENT)
     {
-        destroy_framebuffer( drawable, &desc, drawable->fbo );
-        drawable->fbo = 0;
+        if (drawable->draw_fbo != drawable->read_fbo)
+        {
+            destroy_framebuffer( drawable, &draw_desc, drawable->draw_fbo );
+            drawable->draw_fbo = 0;
+        }
+        destroy_framebuffer( drawable, &read_desc, drawable->read_fbo );
+        drawable->read_fbo = 0;
     }
 
     if (flags & GL_FLUSH_SET_CURRENT)
     {
-        drawable->fbo = create_framebuffer( drawable, &desc );
-        if (!drawable->fbo) ERR( "Failed to create framebuffer object\n" );
+        drawable->read_fbo = create_framebuffer( drawable, &read_desc );
+        if (!drawable->read_fbo) ERR( "Failed to create read framebuffer object\n" );
+
+        if (!draw_desc.sample_buffers) drawable->draw_fbo = drawable->read_fbo;
+        else drawable->draw_fbo = create_framebuffer( drawable, &draw_desc );
+        if (!drawable->draw_fbo) ERR( "Failed to create draw framebuffer object\n" );
     }
 
-    if ((flags & (GL_FLUSH_UPDATED | GL_FLUSH_SET_CURRENT)) && drawable->fbo)
+    if ((flags & (GL_FLUSH_UPDATED | GL_FLUSH_SET_CURRENT)) && drawable->read_fbo)
     {
-        TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->fbo, rect.right, rect.bottom );
-        resize_framebuffer( drawable, &desc, drawable->fbo, rect.right, rect.bottom );
+        TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->read_fbo, rect.right, rect.bottom );
+        resize_framebuffer( drawable, &read_desc, drawable->read_fbo, rect.right, rect.bottom );
+
+        if (drawable->draw_fbo != drawable->read_fbo)
+        {
+            TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->draw_fbo, rect.right, rect.bottom );
+            resize_framebuffer( drawable, &draw_desc, drawable->draw_fbo, rect.right, rect.bottom );
+        }
     }
 }
 

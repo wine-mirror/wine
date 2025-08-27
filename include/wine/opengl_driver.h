@@ -169,7 +169,8 @@ struct opengl_drawable
     BOOL                                doublebuffer;   /* pixel format is double buffered */
     BOOL                                stereo;         /* pixel format is stereo buffered */
     EGLSurface                          surface;        /* surface for EGL based drivers */
-    GLuint                              fbo;            /* default FBO name when emulating framebuffer */
+    GLuint                              read_fbo;       /* default read FBO name when emulating framebuffer */
+    GLuint                              draw_fbo;       /* default draw FBO name when emulating framebuffer */
 };
 
 static inline const char *debugstr_opengl_drawable( struct opengl_drawable *drawable )
