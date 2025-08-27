@@ -143,6 +143,7 @@ struct context
     struct hint_state hint;                     /* GL_HINT_BIT */
     GLuint draw_fbo;                            /* currently bound draw FBO name */
     GLuint read_fbo;                            /* currently bound read FBO name */
+    GLboolean has_viewport;                     /* whether viewport has been initialized */
 };
 
 struct wgl_handle
@@ -1088,7 +1089,6 @@ BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
     struct context *ctx, *prev = get_current_context( teb, NULL, NULL );
     const struct opengl_funcs *funcs = teb->glTable;
-    struct opengl_drawable *draw, *read;
 
     if (hglrc)
     {
@@ -1106,11 +1106,7 @@ BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
         teb->glReserved1[1] = hdc;
         teb->glCurrentRC = hglrc;
         teb->glTable = (void *)funcs;
-
-        if ((draw = ctx->base.draw) && !ctx->draw_fbo && draw->fbo)
-            funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, draw->fbo );
-        if ((read = ctx->base.read) && !ctx->read_fbo && read->fbo)
-            funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, read->fbo );
+        pop_default_fbo( teb );
     }
     else if (prev)
     {
@@ -1310,7 +1306,6 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
     struct context *ctx, *prev = get_current_context( teb, NULL, NULL );
     const struct opengl_funcs *funcs = teb->glTable;
-    struct opengl_drawable *draw, *read;
 
     if (hglrc)
     {
@@ -1329,11 +1324,7 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
         teb->glReserved1[1] = read_hdc;
         teb->glCurrentRC = hglrc;
         teb->glTable = (void *)funcs;
-
-        if ((draw = ctx->base.draw) && !ctx->draw_fbo && draw->fbo)
-            funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, draw->fbo );
-        if ((read = ctx->base.read) && !ctx->read_fbo && read->fbo)
-            funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, read->fbo );
+        pop_default_fbo( teb );
     }
     else if (prev)
     {
@@ -1488,10 +1479,17 @@ void pop_default_fbo( TEB *teb )
     const struct opengl_funcs *funcs = teb->glTable;
     struct opengl_drawable *draw, *read;
     struct context *ctx;
+    RECT rect;
 
     if (!(ctx = get_current_context( teb, &draw, &read ))) return;
     if (!ctx->draw_fbo && draw->fbo) funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, draw->fbo );
     if (!ctx->read_fbo && read->fbo) funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, read->fbo );
+    if (!ctx->has_viewport && draw->fbo && draw->client)
+    {
+        NtUserGetClientRect( draw->client->hwnd, &rect, NtUserGetDpiForWindow( draw->client->hwnd ) );
+        funcs->p_glViewport( 0, 0, rect.right, rect.bottom );
+        ctx->has_viewport = GL_TRUE;
+    }
 }
 
 static GLenum *set_default_fbo_draw_buffers( struct context *ctx, struct opengl_drawable *draw,
