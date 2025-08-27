@@ -272,7 +272,7 @@ struct client_surface
 W32KAPI void *client_surface_create( UINT size, const struct client_surface_funcs *funcs, HWND hwnd );
 W32KAPI void client_surface_add_ref( struct client_surface *surface );
 W32KAPI void client_surface_release( struct client_surface *surface );
-W32KAPI void client_surface_present( struct client_surface *surface, HDC hdc );
+W32KAPI void client_surface_present( struct client_surface *surface );
 
 static inline const char *debugstr_client_surface( struct client_surface *surface )
 {

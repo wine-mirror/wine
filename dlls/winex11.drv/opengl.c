@@ -1199,7 +1199,7 @@ static void x11drv_surface_flush( struct opengl_drawable *base, UINT flags )
     {
         if (!(flags & GL_FLUSH_FINISHED)) funcs->p_glFinish();
         XFlush( gdi_display );
-        client_surface_present( base->client, gl->hdc );
+        client_surface_present( base->client );
     }
 }
 
@@ -1465,7 +1465,7 @@ static BOOL x11drv_surface_swap( struct opengl_drawable *base )
     if (InterlockedCompareExchange( &base->client->offscreen, 0, 0 ))
     {
         if (!pglXWaitForSbcOML) XFlush( gdi_display );
-        client_surface_present( base->client, gl->hdc );
+        client_surface_present( base->client );
     }
 
     return TRUE;
@@ -1478,8 +1478,6 @@ static void x11drv_egl_surface_destroy( struct opengl_drawable *base )
 
 static void x11drv_egl_surface_flush( struct opengl_drawable *base, UINT flags )
 {
-    struct gl_drawable *gl = impl_from_opengl_drawable( base );
-
     TRACE( "%s\n", debugstr_opengl_drawable( base ) );
 
     if (flags & GL_FLUSH_INTERVAL) funcs->p_eglSwapInterval( egl->display, abs( base->interval ) );
@@ -1488,7 +1486,7 @@ static void x11drv_egl_surface_flush( struct opengl_drawable *base, UINT flags )
     {
         if (!(flags & GL_FLUSH_FINISHED)) funcs->p_glFinish();
         XFlush( gdi_display );
-        client_surface_present( base->client, gl->hdc );
+        client_surface_present( base->client );
     }
 }
 
@@ -1503,7 +1501,7 @@ static BOOL x11drv_egl_surface_swap( struct opengl_drawable *base )
     if (InterlockedCompareExchange( &base->client->offscreen, 0, 0 ))
     {
         XFlush( gdi_display );
-        client_surface_present( base->client, gl->hdc );
+        client_surface_present( base->client );
     }
 
     return TRUE;
