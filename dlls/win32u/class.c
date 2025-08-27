@@ -51,7 +51,7 @@ typedef struct tagCLASS
     struct dce  *dce;           /* Opaque pointer to class DCE */
     HICON        hIcon;         /* Default icon */
     HICON        hIconSm;       /* Default small icon */
-    HICON        hIconSmIntern; /* Internal small icon, derived from hIcon */
+    HICON        icon_internal; /* internal small icon, derived from hIcon */
     HCURSOR      hCursor;       /* Default cursor */
     HBRUSH       hbrBackground; /* Default background */
     struct client_menu_name *menu_name; /* Default menu name */
@@ -515,8 +515,8 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
     const BOOL is_builtin = fnid, ansi = flags;
     const shared_object_t *shared;
     struct obj_locator locator;
+    HICON icon_internal;
     HINSTANCE instance;
-    HICON sm_icon = 0;
     CLASS *class;
     ATOM atom;
     BOOL ret;
@@ -547,11 +547,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
     class->local      = !is_builtin && !(wc->style & CS_GLOBALCLASS);
 
     /* Other non-null values must be set by caller */
-    if (wc->hIcon && !wc->hIconSm)
-        sm_icon = CopyImage( wc->hIcon, IMAGE_ICON,
-                             get_system_metrics( SM_CXSMICON ),
-                             get_system_metrics( SM_CYSMICON ),
-                             LR_COPYFROMRESOURCE );
+    icon_internal = wc->hIconSm ? 0 : create_small_icon( wc->hIcon );
 
     user_lock();
     SERVER_START_REQ( create_class )
@@ -594,7 +590,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
 
     class->hIcon         = wc->hIcon;
     class->hIconSm       = wc->hIconSm;
-    class->hIconSmIntern = sm_icon;
+    class->icon_internal = icon_internal;
     class->hCursor       = wc->hCursor;
     class->hbrBackground = wc->hbrBackground;
     class->winproc       = alloc_winproc( wc->lpfnWndProc, ansi );
@@ -605,7 +601,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
 
 failed:
     user_unlock();
-    NtUserDestroyCursor( sm_icon, 0 );
+    NtUserDestroyCursor( icon_internal, 0 );
     free( class );
     return 0;
 
@@ -644,7 +640,7 @@ BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance, str
     if (class->hbrBackground > (HBRUSH)(COLOR_GRADIENTINACTIVECAPTION + 1))
         NtGdiDeleteObjectApp( class->hbrBackground );
     *menu_name = class->menu_name;
-    NtUserDestroyCursor( class->hIconSmIntern, 0 );
+    NtUserDestroyCursor( class->icon_internal, 0 );
     free( class );
     user_unlock();
 
@@ -679,7 +675,7 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
             wc->cbWndExtra    = class_shm->win_extra;
             wc->hInstance     = (instance == user32_module) ? 0 : instance;
             wc->hIcon         = class->hIcon;
-            wc->hIconSm       = class->hIconSm ? class->hIconSm : class->hIconSmIntern;
+            wc->hIconSm       = class->hIconSm;
             wc->hCursor       = class->hCursor;
             wc->hbrBackground = class->hbrBackground;
             wc->lpszMenuName  = (WCHAR *)class->menu_name;
@@ -687,6 +683,7 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
         }
         atom = class_shm->atom;
     }
+    if (!wc->hIconSm) wc->hIconSm = class->icon_internal;
     *menu_name = class->menu_name;
     release_class_ptr( class );
     return status ? 0 : atom;
@@ -824,7 +821,6 @@ static BOOL set_server_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size, 
 static ULONG_PTR set_class_long_size( HWND hwnd, INT offset, LONG_PTR newval, UINT size, BOOL ansi )
 {
     ULONG_PTR retval = 0;
-    HICON small_icon = 0;
     CLASS *class;
 
     if (!(class = get_class_ptr( hwnd, TRUE ))) return 0;
@@ -850,61 +846,12 @@ static ULONG_PTR set_class_long_size( HWND hwnd, INT offset, LONG_PTR newval, UI
     case GCLP_HICON:
         retval = (ULONG_PTR)class->hIcon;
         if (retval == newval) break;
-        if (newval && !class->hIconSm)
-        {
-            release_class_ptr( class );
-
-            small_icon = CopyImage( (HICON)newval, IMAGE_ICON,
-                                    get_system_metrics( SM_CXSMICON ),
-                                    get_system_metrics( SM_CYSMICON ),
-                                    LR_COPYFROMRESOURCE );
-
-            if (!(class = get_class_ptr( hwnd, TRUE )))
-            {
-                NtUserDestroyCursor( small_icon, 0 );
-                return 0;
-            }
-            if (retval != HandleToUlong( class->hIcon ) || class->hIconSm)
-            {
-                /* someone beat us, restart */
-                release_class_ptr( class );
-                NtUserDestroyCursor( small_icon, 0 );
-                return set_class_long_size( hwnd, offset, newval, size, ansi );
-            }
-        }
-        if (class->hIconSmIntern) NtUserDestroyCursor( class->hIconSmIntern, 0 );
         class->hIcon = (HICON)newval;
-        class->hIconSmIntern = small_icon;
         break;
     case GCLP_HICONSM:
         retval = (ULONG_PTR)class->hIconSm;
         if (retval == newval) break;
-        if (retval && !newval && class->hIcon)
-        {
-            HICON icon = class->hIcon;
-            release_class_ptr( class );
-
-            small_icon = CopyImage( icon, IMAGE_ICON,
-                                    get_system_metrics( SM_CXSMICON ),
-                                    get_system_metrics( SM_CYSMICON ),
-                                    LR_COPYFROMRESOURCE );
-
-            if (!(class = get_class_ptr( hwnd, TRUE )))
-            {
-                NtUserDestroyCursor( small_icon, 0 );
-                return 0;
-            }
-            if (class->hIcon != icon || !class->hIconSm)
-            {
-                /* someone beat us, restart */
-                release_class_ptr( class );
-                NtUserDestroyCursor( small_icon, 0 );
-                return set_class_long_size( hwnd, offset, newval, size, ansi );
-            }
-        }
-        if (class->hIconSmIntern) NtUserDestroyCursor( class->hIconSmIntern, 0 );
         class->hIconSm = (HICON)newval;
-        class->hIconSmIntern = small_icon;
         break;
     case GCL_STYLE:
         if (!set_server_info( hwnd, offset, newval, size, &retval )) break;
@@ -923,6 +870,14 @@ static ULONG_PTR set_class_long_size( HWND hwnd, INT offset, LONG_PTR newval, UI
         else RtlSetLastWin32Error( ERROR_INVALID_INDEX );
         break;
     }
+
+    if (offset == GCLP_HICON || offset == GCLP_HICONSM)
+    {
+        HICON icon = class->hIcon, icon_small = class->hIconSm;
+        NtUserDestroyCursor( class->icon_internal, 0 );
+        class->icon_internal = icon_small ? 0 : create_small_icon( icon );
+    }
+
     release_class_ptr( class );
     return retval;
 }
@@ -1050,7 +1005,7 @@ static ULONG_PTR get_class_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
         retvalue = (ULONG_PTR)class->hIcon;
         break;
     case GCLP_HICONSM:
-        retvalue = (ULONG_PTR)(class->hIconSm ? class->hIconSm : class->hIconSmIntern);
+        retvalue = (ULONG_PTR)(class->hIconSm ? class->hIconSm : class->icon_internal);
         break;
     case GCLP_WNDPROC:
         retvalue = (ULONG_PTR)get_winproc( class->winproc, ansi );
