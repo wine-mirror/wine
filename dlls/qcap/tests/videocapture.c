@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdbool.h>
 #define COBJMACROS
 #include "dshow.h"
 #include "wine/test.h"
@@ -55,6 +56,7 @@ static void test_media_types(IPin *pin)
 
     while (IEnumMediaTypes_Next(enum_media_types, 1, &pmt, NULL) == S_OK)
     {
+        strmbase_dump_media_type(pmt);
         hr = IPin_QueryAccept(pin, pmt);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         CoTaskMemFree(pmt);
@@ -91,6 +93,24 @@ static void test_stream_config(IPin *pin)
     LONG depth, compression;
     int count, size, i;
     HRESULT hr;
+
+    struct
+    {
+        const GUID *subtype;
+        WORD depth;
+        DWORD compression;
+        bool supported;
+    }
+    formats[] =
+    {
+        {&MEDIASUBTYPE_RGB24, 24, BI_RGB},
+        {&MEDIASUBTYPE_RGB32, 32, BI_RGB},
+        {&MEDIASUBTYPE_ARGB32, 32, BI_RGB},
+        {&MEDIASUBTYPE_NV12, 12, mmioFOURCC('N','V','1','2')},
+        {&MEDIASUBTYPE_UYVY, 16, mmioFOURCC('U','Y','V','Y')},
+        {&MEDIASUBTYPE_YV12, 12, mmioFOURCC('Y','V','1','2')},
+        {&MEDIASUBTYPE_YUY2, 16, mmioFOURCC('Y','U','Y','2')},
+    };
 
     hr = IPin_QueryInterface(pin, &IID_IAMStreamConfig, (void **)&stream_config);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -183,6 +203,20 @@ static void test_stream_config(IPin *pin)
     {
         hr = IAMStreamConfig_GetStreamCaps(stream_config, i, &format, (BYTE *)&vscc);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        for (unsigned int j = 0; j < ARRAY_SIZE(formats); ++j)
+        {
+            if (IsEqualGUID(&format->subtype, formats[j].subtype))
+                formats[j].supported = true;
+        }
+
+        DeleteMediaType(format);
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        hr = IAMStreamConfig_GetStreamCaps(stream_config, i, &format, (BYTE *)&vscc);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(IsEqualGUID(&format->majortype, &MEDIATYPE_Video), "Got wrong majortype: %s.\n",
                 debugstr_guid(&MEDIATYPE_Video));
         ok(IsEqualGUID(&vscc.guid, &FORMAT_VideoInfo)
@@ -204,6 +238,49 @@ static void test_stream_config(IPin *pin)
         ok(compare_media_types(format, format2), "Media types didn't match.\n");
         DeleteMediaType(format2);
         IEnumMediaTypes_Release(enum_media_types);
+
+        strmbase_dump_media_type(format);
+        if (IsEqualGUID(&format->formattype, &FORMAT_VideoInfo))
+        {
+            AM_MEDIA_TYPE test_format = *format;
+            VIDEOINFOHEADER video_info = *(VIDEOINFOHEADER *)format->pbFormat;
+
+            test_format.pbFormat = (void *)&video_info;
+
+            video_info.bmiHeader.biCompression = 0xdeadbeef;
+            video_info.bmiHeader.biBitCount = 123;
+            video_info.bmiHeader.biSizeImage = 456;
+            test_format.lSampleSize = 789;
+            hr = IPin_QueryAccept(pin, &test_format);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            hr = IAMStreamConfig_SetFormat(stream_config, &test_format);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            hr = IAMStreamConfig_GetFormat(stream_config, &format2);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            ok(compare_media_types(format, format2), "Media types didn't match.\n");
+            DeleteMediaType(format2);
+
+            for (unsigned int j = 0; j < ARRAY_SIZE(formats); ++j)
+            {
+                if (formats[j].supported)
+                    continue;
+
+                test_format.subtype = *formats[j].subtype;
+                video_info.bmiHeader.biCompression = formats[j].compression;
+                video_info.bmiHeader.biBitCount = formats[j].depth;
+                video_info.bmiHeader.biSizeImage = video_info.bmiHeader.biWidth
+                        * video_info.bmiHeader.biHeight * video_info.bmiHeader.biBitCount / 8;
+                test_format.lSampleSize = video_info.bmiHeader.biSizeImage;
+
+                hr = IPin_QueryAccept(pin, &test_format);
+                todo_wine ok(hr != S_OK, "Got hr %#lx.\n", hr);
+
+                hr = IAMStreamConfig_SetFormat(stream_config, &test_format);
+                todo_wine ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
+            }
+        }
 
         DeleteMediaType(format);
     }
