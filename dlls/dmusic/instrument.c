@@ -581,7 +581,9 @@ static HRESULT instrument_add_soundfont_region(struct instrument *This, struct s
     region->wave_sample.lAttenuation = sample->correction;
 
     start_loop = generators->amount[SF_GEN_STARTLOOP_ADDRS_OFFSET].value;
+    start_loop += generators->amount[SF_GEN_STARTLOOP_ADDRS_COARSE_OFFSET].value * 32768;
     end_loop = generators->amount[SF_GEN_ENDLOOP_ADDRS_OFFSET].value;
+    end_loop += generators->amount[SF_GEN_ENDLOOP_ADDRS_COARSE_OFFSET].value * 32768;
     region->wave_loop.ulStart = sample->start_loop + start_loop - sample->start;
     region->wave_loop.ulLength = sample->end_loop + end_loop - sample->start_loop;
 
