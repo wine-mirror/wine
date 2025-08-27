@@ -1941,7 +1941,7 @@ static int play_region(struct synth *synth, struct instrument *instrument, struc
     return FLUID_OK;
 }
 
-static void find_region_no_fallback(struct synth *synth, int patch, int key, int vel,
+static int play_instrument_no_fallback(struct synth *synth, int chan, int patch, int key, int vel,
         struct instrument **out_instrument, struct region **out_region)
 {
     struct instrument *instrument;
@@ -1957,7 +1957,7 @@ static void find_region_no_fallback(struct synth *synth, int patch, int key, int
     }
 
     if (&instrument->entry == &synth->instruments)
-        return;
+        return FLUID_FAILED;
 
     *out_instrument = instrument;
 
@@ -1966,29 +1966,38 @@ static void find_region_no_fallback(struct synth *synth, int patch, int key, int
         if (key < region->key_range.usLow || key > region->key_range.usHigh) continue;
         if (vel < region->vel_range.usLow || vel > region->vel_range.usHigh) continue;
         *out_region = region;
-        break;
+        if (FLUID_OK != play_region(synth, instrument, region, chan, key, vel))
+            return FLUID_FAILED;
     }
+
+    if (&region->entry == &instrument->regions)
+        return FLUID_FAILED;
+
+    return FLUID_OK;
 }
 
-static void find_region(struct synth *synth, int patch, int key, int vel,
-        struct instrument **out_instrument, struct region **out_region)
+static int play_instrument(struct synth *synth, int chan, int patch, int key, int vel)
 {
-    find_region_no_fallback(synth, patch, key, vel, out_instrument, out_region);
-    if (!*out_region && (patch & F_INSTRUMENT_DRUMS))
-        find_region_no_fallback(synth, F_INSTRUMENT_DRUMS, key, vel, out_instrument, out_region);
+    struct instrument *instrument;
+    struct region *region;
+    int result;
 
-    if (!*out_instrument)
+    result = play_instrument_no_fallback(synth, chan, patch, key, vel, &instrument, &region);
+    if (!region && (patch & F_INSTRUMENT_DRUMS))
+        result = play_instrument_no_fallback(synth, chan, F_INSTRUMENT_DRUMS, key, vel, &instrument, &region);
+
+    if (!instrument)
         WARN("Could not find instrument with patch %#x\n", patch);
-    else if (!*out_region)
+    else if (!region)
         WARN("Failed to find instrument matching note / velocity\n");
+
+    return result;
 }
 
 static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *fluid_synth, int chan, int key, int vel)
 {
     struct preset *preset = fluid_preset_get_data(fluid_preset);
     struct synth *synth = preset->synth;
-    struct instrument *instrument;
-    struct region *region;
     UINT patch;
 
     TRACE("(%p, %p, %u, %u, %u)\n", fluid_preset, fluid_synth, chan, key, vel);
@@ -2001,14 +2010,7 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
     if (chan == 9)
         patch |= F_INSTRUMENT_DRUMS;
 
-    find_region(synth, patch, key, vel, &instrument, &region);
-    if (!region)
-    {
-        LeaveCriticalSection(&synth->cs);
-        return FLUID_FAILED;
-    }
-
-    if (FLUID_OK != play_region(synth, instrument, region, chan, key, vel))
+    if (FLUID_OK != play_instrument(synth, chan, patch, key, vel))
     {
         LeaveCriticalSection(&synth->cs);
         return FLUID_FAILED;
