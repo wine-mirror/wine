@@ -6220,6 +6220,7 @@ static LRESULT unwinding_wnd_proc(HWND w, UINT msg, WPARAM p2, LPARAM p3)
                 ok(!context.R14, "unexpected register value, %%r14 = %#I64x\n", context.R14);
                 ok(!context.R15, "unexpected register value, %%r15 = %#I64x\n", context.R15);
                 ok(context.Rbp == 0xdeadbeef, "unexpected register value, %%rbp = %#I64x\n", context.Rbp);
+                ok(context.MxCsr == 0x9f80, "unexpected register value, %%mxcsr = %#lx\n", context.MxCsr);
                 break;
             }
         }
@@ -6248,35 +6249,39 @@ static void test_user_callback_context(void)
         0x41, 0x54,                                                 /* 07: push %r12 */
         0x53,                                                       /* 09: push %rbx */
         0x48, 0x83, 0xec, 0x28,                                     /* 0a: sub 0x28,%rsp */
-        0xbd, 0xef, 0xbe, 0xad, 0xde,                               /* 0e: mov $0xdeadbeef,%rbp */
-        0xbb, 0xef, 0xbe, 0xad, 0xde,                               /* 13: mov $0xdeadbeef,%rbx */
-        0x41, 0xbc, 0xef, 0xbe, 0xad, 0xde,                         /* 18: mov $0xdeadbeef,%r12 */
-        0x41, 0xbd, 0xef, 0xbe, 0xad, 0xde,                         /* 1e: mov $0xdeadbeef,%r13 */
-        0x41, 0xbe, 0xef, 0xbe, 0xad, 0xde,                         /* 24: mov $0xdeadbeef,%r14 */
-        0x41, 0xbf, 0xef, 0xbe, 0xad, 0xde,                         /* 2a: mov $0xdeadbeef,%r15 */
-        0x48, 0xb8, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, /* 30: mov ?,%rax # &target_frame */
-        0x48, 0x89, 0x20,                                           /* 3a: mov %rsp,(%rax) */
-        0x48, 0xb8, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, /* 3d: mov ?,%rax # DestroyWindow */
-        0xff, 0xd0,                                                 /* 47: call *%rax */
-        0x90,                                                       /* 49: nop */
-        0x48, 0x83, 0xc4, 0x28,                                     /* 4a: add $0x28,%rsp */
-        0x5b,                                                       /* 4e: pop %rbx */
-        0x41, 0x5c,                                                 /* 4f: pop %r12 */
-        0x41, 0x5d,                                                 /* 51: pop %r13 */
-        0x41, 0x5e,                                                 /* 53: pop %r14 */
-        0x41, 0x5f,                                                 /* 55: pop %r15 */
-        0x5d,                                                       /* 57: pop %rbp */
-        0xc3,                                                       /* 58: ret */
+        0x0f, 0xae, 0x5c, 0x24, 0x20,                               /* 0e: stmxcsr 0x20(%rsp) */
+        0xbd, 0xef, 0xbe, 0xad, 0xde,                               /* 13: mov $0xdeadbeef,%rbp */
+        0xbb, 0xef, 0xbe, 0xad, 0xde,                               /* 18: mov $0xdeadbeef,%rbx */
+        0x41, 0xbc, 0xef, 0xbe, 0xad, 0xde,                         /* 1d: mov $0xdeadbeef,%r12 */
+        0x41, 0xbd, 0xef, 0xbe, 0xad, 0xde,                         /* 13: mov $0xdeadbeef,%r13 */
+        0x41, 0xbe, 0xef, 0xbe, 0xad, 0xde,                         /* 29: mov $0xdeadbeef,%r14 */
+        0x41, 0xbf, 0xef, 0xbe, 0xad, 0xde,                         /* 2f: mov $0xdeadbeef,%r15 */
+        0x48, 0xc7, 0x04, 0x24, 0x80, 0x9f, 0x00, 0x00,             /* 35: movq $0x9f80,(%rsp) */
+        0x0f, 0xae, 0x14, 0x24,                                     /* 3d: ldmxcsr (%rsp) */
+        0x48, 0xb8, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, /* 41: mov ?,%rax # &target_frame */
+        0x48, 0x89, 0x20,                                           /* 4b: mov %rsp,(%rax) */
+        0x48, 0xb8, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, /* 4e: mov ?,%rax # DestroyWindow */
+        0xff, 0xd0,                                                 /* 58: call *%rax */
+        0x90,                                                       /* 5a: nop */
+        0x0f, 0xae, 0x54, 0x24, 0x20,                               /* 5b: ldmxcsr 0x20(%rsp) */
+        0x48, 0x83, 0xc4, 0x28,                                     /* 60: add $0x28,%rsp */
+        0x5b,                                                       /* 64: pop %rbx */
+        0x41, 0x5c,                                                 /* 65: pop %r12 */
+        0x41, 0x5d,                                                 /* 67: pop %r13 */
+        0x41, 0x5e,                                                 /* 69: pop %r14 */
+        0x41, 0x5f,                                                 /* 6b: pop %r15 */
+        0x5d,                                                       /* 6d: pop %rbp */
+        0xc3,                                                       /* 6e: ret */
     };
 
     memcpy(code_mem, trampoline, ARRAYSIZE(trampoline));
 
     patch = (ULONG_PTR)&target_frame;
-    memcpy((char *)code_mem + 0x30 + 2, &patch, 8);
+    memcpy((char *)code_mem + 0x41 + 2, &patch, 8);
     patch = (ULONG_PTR)DestroyWindow;
-    memcpy((char *)code_mem + 0x3d + 2, &patch, 8);
+    memcpy((char *)code_mem + 0x4e + 2, &patch, 8);
 
-    unwind_target = (char *)code_mem + 0x49;
+    unwind_target = (char *)code_mem + 0x5a;
 
     cls.style = CS_HREDRAW | CS_VREDRAW;
     cls.lpfnWndProc = unwinding_wnd_proc;
