@@ -1910,41 +1910,19 @@ static void set_default_voice_connections(fluid_voice_t *fluid_voice)
     add_voice_connections(fluid_voice, &list, connections);
 }
 
-static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *fluid_synth, int chan, int key, int vel)
+static int play_region(struct synth *synth, struct instrument *instrument, struct region *region,
+        int chan, int key, int vel)
 {
-    struct preset *preset = fluid_preset_get_data(fluid_preset);
-    struct synth *synth = preset->synth;
     struct articulation *articulation;
-    struct instrument *instrument;
     fluid_voice_t *fluid_voice;
-    struct region *region;
     struct voice *voice;
     struct wave *wave;
-    UINT patch;
-
-    TRACE("(%p, %p, %u, %u, %u)\n", fluid_preset, fluid_synth, chan, key, vel);
-
-    EnterCriticalSection(&synth->cs);
-
-    patch = preset->patch;
-    patch |= (preset->bank << 8) & 0x007f00;
-    patch |= (preset->bank << 9) & 0x7f0000;
-    if (chan == 9)
-        patch |= F_INSTRUMENT_DRUMS;
-
-    find_region(synth, patch, key, vel, &instrument, &region);
-    if (!region)
-    {
-        LeaveCriticalSection(&synth->cs);
-        return FLUID_FAILED;
-    }
 
     wave = region->wave;
 
     if (!(fluid_voice = fluid_synth_alloc_voice(synth->fluid_synth, wave->fluid_sample, chan, key, vel)))
     {
         WARN("Failed to allocate FluidSynth voice\n");
-        LeaveCriticalSection(&synth->cs);
         return FLUID_FAILED;
     }
 
@@ -1964,10 +1942,7 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
     if (&voice->entry == &synth->voices)
     {
         if (!(voice = calloc(1, sizeof(struct voice))))
-        {
-            LeaveCriticalSection(&synth->cs);
             return FLUID_FAILED;
-        }
         voice->fluid_voice = fluid_voice;
         list_add_tail(&synth->voices, &voice->entry);
     }
@@ -2004,6 +1979,40 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
     fluid_voice_gen_incr(voice->fluid_voice, GEN_ATTENUATION, -CENTER_PAN_GAIN);
     fluid_voice_gen_set(voice->fluid_voice, GEN_EXCLUSIVECLASS, region->group);
     fluid_synth_start_voice(synth->fluid_synth, fluid_voice);
+
+    return FLUID_OK;
+}
+
+static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *fluid_synth, int chan, int key, int vel)
+{
+    struct preset *preset = fluid_preset_get_data(fluid_preset);
+    struct synth *synth = preset->synth;
+    struct instrument *instrument;
+    struct region *region;
+    UINT patch;
+
+    TRACE("(%p, %p, %u, %u, %u)\n", fluid_preset, fluid_synth, chan, key, vel);
+
+    EnterCriticalSection(&synth->cs);
+
+    patch = preset->patch;
+    patch |= (preset->bank << 8) & 0x007f00;
+    patch |= (preset->bank << 9) & 0x7f0000;
+    if (chan == 9)
+        patch |= F_INSTRUMENT_DRUMS;
+
+    find_region(synth, patch, key, vel, &instrument, &region);
+    if (!region)
+    {
+        LeaveCriticalSection(&synth->cs);
+        return FLUID_FAILED;
+    }
+
+    if (FLUID_OK != play_region(synth, instrument, region, chan, key, vel))
+    {
+        LeaveCriticalSection(&synth->cs);
+        return FLUID_FAILED;
+    }
 
     LeaveCriticalSection(&synth->cs);
 
