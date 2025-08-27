@@ -1519,48 +1519,6 @@ static int synth_preset_get_num(fluid_preset_t *fluid_preset)
     return preset->patch;
 }
 
-static void find_region_no_fallback(struct synth *synth, int patch, int key, int vel,
-        struct instrument **out_instrument, struct region **out_region)
-{
-    struct instrument *instrument;
-    struct region *region;
-
-    *out_instrument = NULL;
-    *out_region = NULL;
-
-    LIST_FOR_EACH_ENTRY(instrument, &synth->instruments, struct instrument, entry)
-    {
-        if (instrument->patch == patch)
-            break;
-    }
-
-    if (&instrument->entry == &synth->instruments)
-        return;
-
-    *out_instrument = instrument;
-
-    LIST_FOR_EACH_ENTRY(region, &instrument->regions, struct region, entry)
-    {
-        if (key < region->key_range.usLow || key > region->key_range.usHigh) continue;
-        if (vel < region->vel_range.usLow || vel > region->vel_range.usHigh) continue;
-        *out_region = region;
-        break;
-    }
-}
-
-static void find_region(struct synth *synth, int patch, int key, int vel,
-        struct instrument **out_instrument, struct region **out_region)
-{
-    find_region_no_fallback(synth, patch, key, vel, out_instrument, out_region);
-    if (!*out_region && (patch & F_INSTRUMENT_DRUMS))
-        find_region_no_fallback(synth, F_INSTRUMENT_DRUMS, key, vel, out_instrument, out_region);
-
-    if (!*out_instrument)
-        WARN("Could not find instrument with patch %#x\n", patch);
-    else if (!*out_region)
-        WARN("Failed to find instrument matching note / velocity\n");
-}
-
 static BOOL gen_from_connection(const CONNECTION *conn, UINT *gen)
 {
     switch (conn->usDestination)
@@ -1981,6 +1939,48 @@ static int play_region(struct synth *synth, struct instrument *instrument, struc
     fluid_synth_start_voice(synth->fluid_synth, fluid_voice);
 
     return FLUID_OK;
+}
+
+static void find_region_no_fallback(struct synth *synth, int patch, int key, int vel,
+        struct instrument **out_instrument, struct region **out_region)
+{
+    struct instrument *instrument;
+    struct region *region;
+
+    *out_instrument = NULL;
+    *out_region = NULL;
+
+    LIST_FOR_EACH_ENTRY(instrument, &synth->instruments, struct instrument, entry)
+    {
+        if (instrument->patch == patch)
+            break;
+    }
+
+    if (&instrument->entry == &synth->instruments)
+        return;
+
+    *out_instrument = instrument;
+
+    LIST_FOR_EACH_ENTRY(region, &instrument->regions, struct region, entry)
+    {
+        if (key < region->key_range.usLow || key > region->key_range.usHigh) continue;
+        if (vel < region->vel_range.usLow || vel > region->vel_range.usHigh) continue;
+        *out_region = region;
+        break;
+    }
+}
+
+static void find_region(struct synth *synth, int patch, int key, int vel,
+        struct instrument **out_instrument, struct region **out_region)
+{
+    find_region_no_fallback(synth, patch, key, vel, out_instrument, out_region);
+    if (!*out_region && (patch & F_INSTRUMENT_DRUMS))
+        find_region_no_fallback(synth, F_INSTRUMENT_DRUMS, key, vel, out_instrument, out_region);
+
+    if (!*out_instrument)
+        WARN("Could not find instrument with patch %#x\n", patch);
+    else if (!*out_region)
+        WARN("Failed to find instrument matching note / velocity\n");
 }
 
 static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *fluid_synth, int chan, int key, int vel)
