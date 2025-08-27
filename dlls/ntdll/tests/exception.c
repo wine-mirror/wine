@@ -10375,9 +10375,9 @@ static DWORD WINAPI test_extended_context_thread(void *arg)
     unsigned int i;
 
     memcpy(code_mem, call_func_code_reset_ymm_state, sizeof(call_func_code_reset_ymm_state));
-    *(void **)((BYTE *)code_mem + call_func_offsets.func_addr) = SuspendThread;
+    *(void **)((BYTE *)code_mem + call_func_offsets.func_addr) = NtSuspendThread;
     *(void **)((BYTE *)code_mem + call_func_offsets.func_param1) = (void *)GetCurrentThread();
-    *(void **)((BYTE *)code_mem + call_func_offsets.func_param2) = (void *)0xdeadbeef;
+    *(void **)((BYTE *)code_mem + call_func_offsets.func_param2) = NULL;
     *(void **)((BYTE *)code_mem + call_func_offsets.ymm0_save) = data;
     func();
 
@@ -10388,16 +10388,16 @@ static DWORD WINAPI test_extended_context_thread(void *arg)
     memset(data, 0x68, sizeof(data));
 
     memcpy(code_mem, call_func_code_set_ymm0, sizeof(call_func_code_set_ymm0));
-    *(void **)((BYTE *)code_mem + call_func_offsets.func_addr) = SuspendThread;
+    *(void **)((BYTE *)code_mem + call_func_offsets.func_addr) = NtSuspendThread;
     *(void **)((BYTE *)code_mem + call_func_offsets.func_param1) = (void *)GetCurrentThread();
-    *(void **)((BYTE *)code_mem + call_func_offsets.func_param2) = (void *)0xdeadbeef;
+    *(void **)((BYTE *)code_mem + call_func_offsets.func_param2) = NULL;
     *(void **)((BYTE *)code_mem + call_func_offsets.ymm0_save) = data;
     func();
 
     memcpy(code_mem, call_func_code_reset_ymm_state, sizeof(call_func_code_reset_ymm_state));
-    *(void **)((BYTE *)code_mem + call_func_offsets.func_addr) = SuspendThread;
+    *(void **)((BYTE *)code_mem + call_func_offsets.func_addr) = NtSuspendThread;
     *(void **)((BYTE *)code_mem + call_func_offsets.func_param1) = (void *)GetCurrentThread();
-    *(void **)((BYTE *)code_mem + call_func_offsets.func_param2) = (void *)0xdeadbeef;
+    *(void **)((BYTE *)code_mem + call_func_offsets.func_param2) = NULL;
     *(void **)((BYTE *)code_mem + call_func_offsets.ymm0_save) = data;
     func();
     return 0;
