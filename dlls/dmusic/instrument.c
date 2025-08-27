@@ -666,6 +666,8 @@ HRESULT instrument_create_from_soundfont(struct soundfont *soundfont, UINT index
     This = impl_from_IDirectMusicInstrument(iface);
 
     This->header.Locale.ulBank = (preset->bank & 0x7f) | ((preset->bank << 1) & 0x7f00);
+    if (preset->bank == 128)
+        This->header.Locale.ulBank = F_INSTRUMENT_DRUMS;
     This->header.Locale.ulInstrument = preset->preset;
     MultiByteToWideChar(CP_ACP, 0, preset->name, strlen(preset->name) + 1,
             desc->wszName, sizeof(desc->wszName));
