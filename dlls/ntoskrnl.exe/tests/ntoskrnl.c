@@ -695,15 +695,21 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     ret = NtDeviceIoControlFile(device, NULL, NULL, NULL, &io,
             ioctl, params, sizeof(*params), buffer, sizeof(buffer));
     ok(ret == expect_status, "got %#x\n", ret);
-    if (NT_ERROR(params->iosb_status))
+    if (NT_ERROR(params->iosb_status) && !params->pending)
     {
         ok(io.Status == 0xdeadf00d, "got %#lx\n", io.Status);
         ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
     }
     else
     {
-        ok(io.Status == params->iosb_status, "got %#lx\n", io.Status);
-        ok(io.Information == 3, "got size %Iu\n", io.Information);
+        todo_wine_if (NT_ERROR(params->iosb_status) && params->pending)
+            ok(io.Status == params->iosb_status /* newer win10/11 */
+                    || broken(NT_ERROR(params->iosb_status) && params->pending && io.Status == 0xdeadf00d), /* older win10 */
+                    "got %#lx\n", io.Status);
+        todo_wine_if (NT_ERROR(params->iosb_status) && params->pending)
+            ok(io.Information == 3 /* newer win10/11 */
+                    || broken(NT_ERROR(params->iosb_status) && params->pending && io.Information == 0xdeadf00d), /* older win10 */
+                    "got size %Iu\n", io.Information);
     }
     ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
 
@@ -725,7 +731,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     ret = NtDeviceIoControlFile(file, event, NULL, (void *)456, &io,
             ioctl, params, sizeof(*params), buffer, sizeof(buffer));
     ok(ret == params->ret_status
-            || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
+            || (NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* newer win10/11 */
             "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
@@ -772,7 +778,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     ret = NtDeviceIoControlFile(file, event, NULL, NULL, &io,
             ioctl, params, sizeof(*params), buffer, sizeof(buffer));
     ok(ret == params->ret_status
-            || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
+            || (NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* newer win10/11 */
             "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
@@ -800,7 +806,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     ret = NtDeviceIoControlFile(file, NULL, NULL, NULL, &io,
             ioctl, params, sizeof(*params), buffer, sizeof(buffer));
     ok(ret == params->ret_status
-            || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
+            || (NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* newer win10/11 */
             "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
@@ -832,7 +838,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
         ret = NtDeviceIoControlFile(file, event, NULL, (void *)456, &io,
                 ioctl, params, sizeof(*params), buffer, sizeof(buffer));
         ok(ret == params->ret_status
-                || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
+                || (NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* newer win10/11 */
                 "got %#x\n", ret);
         if (!params->pending && NT_ERROR(params->iosb_status))
         {
@@ -1132,8 +1138,10 @@ static void test_blocking_irp(void)
     io.Information = 0xdeadf00d;
     status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsFullSizeInformation);
     ok(status == STATUS_DEVICE_NOT_READY, "got %#lx\n", status);
-    ok(io.Status == 0xdeadf00d, "got iosb status %#lx\n", io.Status);
-    ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
+    todo_wine ok(io.Status == STATUS_DEVICE_NOT_READY || broken(io.Status == 0xdeadf00d), /* older win10 */
+            "got iosb status %#lx\n", io.Status);
+    todo_wine ok(io.Information == 0 || broken(io.Information == 0xdeadf00d), /* older win10 */
+            "got information %#Ix\n", io.Information);
 
     CloseHandle(file);
 
