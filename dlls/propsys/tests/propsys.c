@@ -3096,12 +3096,13 @@ static void test_PropertySystem(void)
         const PROPERTYKEY *key;
         const WCHAR *name;
         VARTYPE type;
+        HRESULT hr_broken;
     } system_props[] = {
         {&PKEY_ItemNameDisplay, L"System.ItemNameDisplay", VT_LPWSTR},
         {&PKEY_Devices_ContainerId, L"System.Devices.ContainerId", VT_CLSID},
-        {&PKEY_Devices_InterfaceClassGuid, L"System.Devices.InterfaceClassGuid", VT_CLSID},
-        {&PKEY_Devices_HardwareIds, L"System.Devices.HardwareIds", VT_VECTOR | VT_LPWSTR},
-        {&PKEY_Devices_ClassGuid, L"System.Devices.ClassGuid", VT_CLSID}
+        {&PKEY_Devices_InterfaceClassGuid, L"System.Devices.InterfaceClassGuid", VT_CLSID, TYPE_E_ELEMENTNOTFOUND /* Win7 */},
+        {&PKEY_Devices_HardwareIds, L"System.Devices.HardwareIds", VT_VECTOR | VT_LPWSTR, TYPE_E_ELEMENTNOTFOUND /* Win7 */},
+        {&PKEY_Devices_ClassGuid, L"System.Devices.ClassGuid", VT_CLSID, TYPE_E_ELEMENTNOTFOUND /* <= Win8 */}
     };
     IPropertySystem *system;
     HRESULT hr;
@@ -3126,6 +3127,12 @@ static void test_PropertySystem(void)
         winetest_push_context("system_props %d", (int)i);
 
         hr = IPropertySystem_GetPropertyDescription(system, system_props[i].key, &IID_IPropertyDescription, (void **)&desc);
+        if (!SUCCEEDED(hr) && broken(hr == system_props[i].hr_broken))
+        {
+            win_skip("Property not supported, skipping.\n");
+            winetest_pop_context();
+            continue;
+        }
         ok(hr == S_OK, "got %#lx\n", hr);
         if (SUCCEEDED(hr))
         {
