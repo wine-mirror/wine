@@ -646,7 +646,19 @@ static HRESULT instrument_add_soundfont_instrument(struct instrument *This, stru
         }
 
         for (oper = 0; oper < SF_GEN_END_OPER; ++oper)
+        {
+            if (oper == SF_GEN_KEY_RANGE || oper == SF_GEN_VEL_RANGE)
+            {
+                generators.amount[oper].range.low = max(
+                    generators.amount[oper].range.low,
+                    preset_generators->amount[oper].range.low);
+                generators.amount[oper].range.high = min(
+                    generators.amount[oper].range.high,
+                    preset_generators->amount[oper].range.high);
+                continue;
+            }
             generators.amount[oper].value += preset_generators->amount[oper].value;
+        }
 
         hr = instrument_add_soundfont_region(This, soundfont, &generators);
     }
@@ -658,7 +670,14 @@ HRESULT instrument_create_from_soundfont(struct soundfont *soundfont, UINT index
         struct collection *collection, DMUS_OBJECTDESC *desc, IDirectMusicInstrument **ret_iface)
 {
     struct sf_preset *preset = soundfont->phdr + index;
-    struct sf_generators global_generators = {0};
+    struct sf_generators global_generators =
+    {
+        .amount =
+        {
+            [SF_GEN_KEY_RANGE] = {.range = {.low = 0, .high = 127}},
+            [SF_GEN_VEL_RANGE] = {.range = {.low = 0, .high = 127}},
+        },
+    };
     IDirectMusicInstrument *iface;
     struct instrument *This;
     HRESULT hr;
