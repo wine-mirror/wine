@@ -2811,6 +2811,8 @@ static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface,
 
     TRACE( "%p, %p\n", recordset, unk );
 
+    if (recordset->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
+
     hr = IUnknown_QueryInterface(unk, &IID_IRowset, (void**)&rowset);
     if ( FAILED(hr) ) return E_FAIL;
 
@@ -2820,6 +2822,7 @@ static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface,
     if ( !get_column_count(recordset) )
         map_rowset_fields(recordset, &recordset->fields);
 
+    recordset->state = adStateOpen;
     return S_OK;
 }
 

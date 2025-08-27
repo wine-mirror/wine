@@ -906,7 +906,7 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
 
     hr = _Recordset_get_State( recordset, &state );
     ok( hr == S_OK, "got %08lx\n", hr );
-    todo_wine ok( state == adStateOpen, "state = %ld\n", state );
+    ok( state == adStateOpen, "state = %ld\n", state );
 
     count = -1;
     SET_EXPECT( rowset_QI_IColumnsInfo );
