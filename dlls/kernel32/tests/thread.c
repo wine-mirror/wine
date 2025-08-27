@@ -2035,6 +2035,8 @@ static void test_thread_fpu_cw(void)
     unsigned int initial_cw, cw;
     unsigned long fpu_cw;
 
+    _clearfp();  /* clear status flags before checks */
+
     fpu_cw = get_fpu_cw();
     initial_cw = _control87( 0, 0 );
     ok(initial_cw == expected_cw[0].cw, "expected %#x got %#x\n", expected_cw[0].cw, initial_cw);
