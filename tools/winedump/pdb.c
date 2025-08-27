@@ -39,13 +39,13 @@ struct pdb_reader
     {
         struct
         {
-            const struct PDB_JG_HEADER  header;
+            struct PDB_JG_HEADER        header;
             const struct PDB_JG_TOC*    toc;
             const struct PDB_JG_ROOT*   root;
         } jg;
         struct
         {
-            const struct PDB_DS_HEADER  header;
+            struct PDB_DS_HEADER        header;
             const struct PDB_DS_TOC*    toc;
             const struct PDB_DS_ROOT*   root;
         } ds;
@@ -120,7 +120,7 @@ static BOOL pdb_jg_init(int fd, struct pdb_reader* reader)
     WORD    *blocks;
     BOOL     ret = FALSE;
 
-    if (pdb_read_at(fd, (void*)&reader->u.jg.header, sizeof(reader->u.jg.header), 0) != sizeof(reader->u.jg.header)) return FALSE;
+    if (pdb_read_at(fd, &reader->u.jg.header, sizeof(reader->u.jg.header), 0) != sizeof(reader->u.jg.header)) return FALSE;
     reader->fd = fd;
     reader->read_stream = pdb_jg_read_stream;
     size_blocks = NUMBER_OF(reader->u.jg.header.toc.size, reader->u.jg.header.block_size) * sizeof(blocks[0]);
@@ -1263,7 +1263,7 @@ static BOOL pdb_ds_init(int fd, struct pdb_reader* reader)
     unsigned *blocks;
     BOOL      ret;
 
-    if (pdb_read_at(fd, (void*)&reader->u.ds.header, sizeof(reader->u.ds.header), 0) != sizeof(reader->u.ds.header)) return FALSE;
+    if (pdb_read_at(fd, &reader->u.ds.header, sizeof(reader->u.ds.header), 0) != sizeof(reader->u.ds.header)) return FALSE;
     reader->fd = fd;
     reader->read_stream = pdb_ds_read_stream;
     size_blocks = NUMBER_OF(reader->u.ds.header.toc_size, reader->u.ds.header.block_size) * sizeof(blocks[0]);
