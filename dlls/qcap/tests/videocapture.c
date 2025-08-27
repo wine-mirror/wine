@@ -275,10 +275,10 @@ static void test_stream_config(IPin *pin)
                 test_format.lSampleSize = video_info.bmiHeader.biSizeImage;
 
                 hr = IPin_QueryAccept(pin, &test_format);
-                todo_wine ok(hr != S_OK, "Got hr %#lx.\n", hr);
+                ok(hr != S_OK, "Got hr %#lx.\n", hr);
 
                 hr = IAMStreamConfig_SetFormat(stream_config, &test_format);
-                todo_wine ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
+                ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
             }
         }
 

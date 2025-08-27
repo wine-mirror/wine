@@ -141,6 +141,7 @@ static const struct caps *find_caps(struct video_capture_device *device, const A
         struct caps *caps = &device->caps[index];
 
         if (IsEqualGUID(&mt->formattype, &caps->media_type.formattype)
+                && IsEqualGUID(&mt->subtype, &caps->media_type.subtype)
                 && video_info->bmiHeader.biWidth == caps->video_info.bmiHeader.biWidth
                 && video_info->bmiHeader.biHeight == caps->video_info.bmiHeader.biHeight)
             return caps;
