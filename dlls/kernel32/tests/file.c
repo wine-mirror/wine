@@ -6813,6 +6813,65 @@ static void test_symbolic_link(void)
     ok( ret == TRUE, "got error %lu\n", GetLastError() );
 }
 
+static void test_posix_semantics(void)
+{
+    static const DWORD flags[] = { FILE_FLAG_BACKUP_SEMANTICS, FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_DIRECTORY,
+                                   FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_POSIX_SEMANTICS | FILE_ATTRIBUTE_DIRECTORY,
+                                   FILE_FLAG_POSIX_SEMANTICS | FILE_ATTRIBUTE_DIRECTORY };
+    static const struct
+    {
+        DWORD disposition, cleanup;
+    } td[] =
+    {
+        { CREATE_NEW, 1 },
+        { OPEN_ALWAYS, 0 },
+        { TRUNCATE_EXISTING, 0 },
+        { CREATE_ALWAYS, 1 }
+    };
+    HANDLE hFile, hFile2;
+    WCHAR temp_path[MAX_PATH];
+    WCHAR filename[MAX_PATH];
+    DWORD ret, i, j;
+    BY_HANDLE_FILE_INFORMATION info;
+
+    GetTempPathW(MAX_PATH, temp_path);
+    GetTempFileNameW(temp_path, L"psx", 0, filename);
+    DeleteFileW(filename);
+
+    for (i = 0; i < ARRAY_SIZE(td); i++)
+    {
+        for (j = 0; j < ARRAY_SIZE(flags); j++)
+        {
+            winetest_push_context("%lu/%lu", i, j);
+
+            hFile = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, td[i].disposition, flags[j], NULL);
+            ok(hFile != INVALID_HANDLE_VALUE, "CreateFileW error %lu\n", GetLastError());
+            ret = GetFileInformationByHandle(hFile, &info);
+            ok(ret, "GetFileInformationByHandle error %lu\n", GetLastError());
+            if (td[i].disposition == CREATE_NEW && flags[j] == (FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_POSIX_SEMANTICS | FILE_ATTRIBUTE_DIRECTORY))
+                todo_wine
+                ok(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY, "created file is not a directory\n");
+            else
+                ok(!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY), "created file is a directory\n");
+
+            hFile2 = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, flags[j], NULL);
+            ok(hFile2 != INVALID_HANDLE_VALUE, "CreateFileW error %lu\n", GetLastError());
+            CloseHandle(hFile2);
+            CloseHandle(hFile);
+
+            if (td[i].cleanup)
+            {
+                if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                    RemoveDirectoryW(filename);
+                else
+                    DeleteFileW(filename);
+            }
+
+            winetest_pop_context();
+        }
+    }
+}
+
 START_TEST(file)
 {
     char temp_path[MAX_PATH];
@@ -6892,4 +6951,5 @@ START_TEST(file)
     test_move_file();
     test_eof();
     test_symbolic_link();
+    test_posix_semantics();
 }
