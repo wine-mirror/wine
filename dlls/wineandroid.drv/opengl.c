@@ -71,7 +71,7 @@ static inline EGLConfig egl_config_for_format(int format)
     return egl->configs[format - egl->config_count - 1];
 }
 
-static struct gl_drawable *create_gl_drawable( HWND hwnd, HDC hdc, int format, ANativeWindow *window )
+static struct gl_drawable *create_gl_drawable( HWND hwnd, int format, ANativeWindow *window )
 {
     static const int attribs[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };
     struct client_surface *client;
@@ -103,7 +103,7 @@ void update_gl_drawable( HWND hwnd )
     struct gl_drawable *old, *new;
 
     if (!(old = impl_from_opengl_drawable( get_window_opengl_drawable( hwnd ) ))) return;
-    if ((new = create_gl_drawable( hwnd, 0, old->base.format, old->window )))
+    if ((new = create_gl_drawable( hwnd, old->base.format, old->window )))
     {
         set_window_opengl_drawable( hwnd, &new->base );
         opengl_drawable_release( &new->base );
@@ -113,11 +113,11 @@ void update_gl_drawable( HWND hwnd )
     NtUserRedrawWindow( hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE );
 }
 
-static BOOL android_surface_create( HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable )
+static BOOL android_surface_create( HWND hwnd, int format, struct opengl_drawable **drawable )
 {
     struct gl_drawable *gl;
 
-    TRACE( "hwnd %p, hdc %p, format %d, drawable %p\n", hwnd, hdc, format, drawable );
+    TRACE( "hwnd %p, format %d, drawable %p\n", hwnd, format, drawable );
 
     if (*drawable)
     {
@@ -134,7 +134,7 @@ static BOOL android_surface_create( HWND hwnd, HDC hdc, int format, struct openg
         return TRUE;
     }
 
-    if (!(gl = create_gl_drawable( hwnd, hdc, format, NULL ))) return FALSE;
+    if (!(gl = create_gl_drawable( hwnd, format, NULL ))) return FALSE;
     *drawable = &gl->base;
     return TRUE;
 }

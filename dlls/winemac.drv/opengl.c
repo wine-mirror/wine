@@ -1458,13 +1458,13 @@ static BOOL create_context(struct macdrv_context *context, CGLContextObj share, 
     return TRUE;
 }
 
-static BOOL macdrv_surface_create(HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable)
+static BOOL macdrv_surface_create(HWND hwnd, int format, struct opengl_drawable **drawable)
 {
     struct macdrv_client_surface *client;
     struct macdrv_win_data *data;
     struct gl_drawable *gl;
 
-    TRACE("hwnd %p, hdc %p, format %d, drawable %p\n", hwnd, hdc, format, drawable);
+    TRACE("hwnd %p, format %d, drawable %p\n", hwnd, format, drawable);
 
     if (!(data = get_win_data(hwnd)))
     {

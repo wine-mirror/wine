@@ -606,7 +606,7 @@ static const char *egldrv_init_wgl_extensions( struct opengl_funcs *funcs )
     return "";
 }
 
-static BOOL egldrv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable )
+static BOOL egldrv_surface_create( HWND hwnd, int format, struct opengl_drawable **drawable )
 {
     struct client_surface *client;
 
@@ -1000,7 +1000,7 @@ static const char *nulldrv_init_wgl_extensions( struct opengl_funcs *funcs )
     return "";
 }
 
-static BOOL nulldrv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable )
+static BOOL nulldrv_surface_create( HWND hwnd, int format, struct opengl_drawable **drawable )
 {
     return TRUE;
 }
@@ -1258,7 +1258,7 @@ static BOOL set_dc_pixel_format( HDC hdc, int new_format, BOOL internal )
         if ((old_format = get_window_pixel_format( hwnd, FALSE )) && !internal) return old_format == new_format;
 
         drawable = get_dc_opengl_drawable( hdc );
-        if ((ret = driver_funcs->p_surface_create( hwnd, hdc, new_format, &drawable )))
+        if ((ret = driver_funcs->p_surface_create( hwnd, new_format, &drawable )))
         {
             /* update the current window drawable to the last used draw surface */
             if ((hwnd = NtUserWindowFromDC( hdc ))) set_window_opengl_drawable( hwnd, drawable );

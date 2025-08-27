@@ -202,7 +202,6 @@ struct gl_drawable
     Colormap                       colormap;     /* colormap for the client window */
     Pixmap                         pixmap;       /* base pixmap if drawable is a GLXPixmap */
     BOOL                           offscreen;
-    HDC                            hdc;
     HDC                            hdc_src;
     HDC                            hdc_dst;
 };
@@ -484,7 +483,7 @@ static inline EGLConfig egl_config_for_format(int format)
     return egl->configs[format - egl->config_count - 1];
 }
 
-static BOOL x11drv_egl_surface_create( HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable )
+static BOOL x11drv_egl_surface_create( HWND hwnd, int format, struct opengl_drawable **drawable )
 {
     struct opengl_drawable *previous;
     struct client_surface *client;
@@ -500,7 +499,6 @@ static BOOL x11drv_egl_surface_create( HWND hwnd, HDC hdc, int format, struct op
     client_surface_release( client );
     if (!gl) return FALSE;
     gl->rect = rect;
-    gl->hdc = hdc;
 
     if (!(gl->base.surface = funcs->p_eglCreateWindowSurface( egl->display, egl_config_for_format( format ),
                                                               (void *)window, NULL )))
@@ -926,7 +924,7 @@ static GLXContext create_glxcontext( int format, GLXContext share, const int *at
     return ctx;
 }
 
-static BOOL x11drv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable )
+static BOOL x11drv_surface_create( HWND hwnd, int format, struct opengl_drawable **drawable )
 {
     struct glx_pixel_format *fmt = glx_pixel_format_from_format( format );
     struct opengl_drawable *previous;
@@ -949,7 +947,6 @@ static BOOL x11drv_surface_create( HWND hwnd, HDC hdc, int format, struct opengl
     client_surface_release( client );
     if (!gl) goto failed;
     gl->rect = rect;
-    gl->hdc = hdc;
     gl->colormap = colormap;
 
     if (!(gl->drawable = pglXCreateWindow( gdi_display, fmt->fbconfig, window, NULL )))
