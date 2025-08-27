@@ -153,7 +153,7 @@ AddService=wuauserv,0,wuauService
 AddService=NDIS,0x800,NDISService
 AddService=nsiproxy,0x800,NsiProxyService
 
-[DefaultInstall.NT.Services]
+[DefaultInstall.ntx86.Services]
 AddService=BITS,0,BITSService
 AddService=EventLog,0x800,EventLogService
 AddService=HTTP,0,HTTPService
