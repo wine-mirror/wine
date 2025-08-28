@@ -319,11 +319,6 @@ static DWORD nulldrv_GetGlyphOutline( PHYSDEV dev, UINT ch, UINT format, LPGLYPH
     return GDI_ERROR;
 }
 
-static BOOL nulldrv_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
-{
-    return FALSE;
-}
-
 static DWORD nulldrv_GetImage( PHYSDEV dev, BITMAPINFO *info, struct gdi_image_bits *bits,
                                struct bitblt_coords *src )
 {
@@ -562,7 +557,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_GetFontUnicodeRanges,       /* pGetFontUnicodeRanges */
     nulldrv_GetGlyphIndices,            /* pGetGlyphIndices */
     nulldrv_GetGlyphOutline,            /* pGetGlyphOutline */
-    nulldrv_GetICMProfile,              /* pGetICMProfile */
     nulldrv_GetImage,                   /* pGetImage */
     nulldrv_GetKerningPairs,            /* pGetKerningPairs */
     nulldrv_GetNearestColor,            /* pGetNearestColor */

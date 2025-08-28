@@ -2067,7 +2067,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pGetFontUnicodeRanges */
     NULL,                               /* pGetGlyphIndices */
     NULL,                               /* pGetGlyphOutline */
-    NULL,                               /* pGetICMProfile */
     NULL,                               /* pGetImage */
     NULL,                               /* pGetKerningPairs */
     NULL,                               /* pGetNearestColor */

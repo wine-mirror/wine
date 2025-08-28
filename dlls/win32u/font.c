@@ -4646,7 +4646,6 @@ const struct gdi_dc_funcs font_driver =
     font_GetFontUnicodeRanges,      /* pGetFontUnicodeRanges */
     font_GetGlyphIndices,           /* pGetGlyphIndices */
     font_GetGlyphOutline,           /* pGetGlyphOutline */
-    NULL,                           /* pGetICMProfile */
     NULL,                           /* pGetImage */
     font_GetKerningPairs,           /* pGetKerningPairs */
     NULL,                           /* pGetNearestColor */

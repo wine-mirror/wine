@@ -162,7 +162,6 @@ struct gdi_dc_funcs
     DWORD    (*pGetFontUnicodeRanges)(PHYSDEV,LPGLYPHSET);
     DWORD    (*pGetGlyphIndices)(PHYSDEV,LPCWSTR,INT,LPWORD,DWORD);
     DWORD    (*pGetGlyphOutline)(PHYSDEV,UINT,UINT,LPGLYPHMETRICS,DWORD,LPVOID,const MAT2*);
-    BOOL     (*pGetICMProfile)(PHYSDEV,LPDWORD,LPWSTR);
     DWORD    (*pGetImage)(PHYSDEV,BITMAPINFO*,struct gdi_image_bits*,struct bitblt_coords*);
     DWORD    (*pGetKerningPairs)(PHYSDEV,DWORD,LPKERNINGPAIR);
     COLORREF (*pGetNearestColor)(PHYSDEV,COLORREF);
@@ -219,7 +218,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 105
+#define WINE_GDI_DRIVER_VERSION 106
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
