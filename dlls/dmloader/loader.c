@@ -445,12 +445,14 @@ static HRESULT WINAPI loader_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
             pObjectEntry = calloc(1, sizeof(*pObjectEntry));
             DM_STRUCT_INIT(&pObjectEntry->Desc);
             DMUSIC_CopyDescriptor (&pObjectEntry->Desc, &GotDesc);
+            pObjectEntry->Desc.dwValidData |= DMUS_OBJ_LOADED;
             pObjectEntry->pObject = pObject;
             list_add_head(&This->cache, &pObjectEntry->entry);
         }
         else
         {
             DMUSIC_CopyDescriptor (&pObjectEntry->Desc, &GotDesc);
+            pObjectEntry->Desc.dwValidData |= DMUS_OBJ_LOADED;
             pObjectEntry->pObject = pObject;
         }
         TRACE(": filled in cache entry\n");
