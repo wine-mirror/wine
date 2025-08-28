@@ -2847,9 +2847,8 @@ NTSTATUS WINAPI wow64_NtGdiWidenPath( UINT *args )
 NTSTATUS WINAPI wow64___wine_get_icm_profile( UINT *args )
 {
     HDC hdc = get_handle( &args );
-    BOOL allow_default = get_ulong( &args );
     DWORD *size = get_ptr( &args );
     WCHAR *filename = get_ptr( &args );
 
-    return __wine_get_icm_profile( hdc, allow_default, size, filename );
+    return __wine_get_icm_profile( hdc, size, filename );
 }

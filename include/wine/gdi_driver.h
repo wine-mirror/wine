@@ -162,7 +162,7 @@ struct gdi_dc_funcs
     DWORD    (*pGetFontUnicodeRanges)(PHYSDEV,LPGLYPHSET);
     DWORD    (*pGetGlyphIndices)(PHYSDEV,LPCWSTR,INT,LPWORD,DWORD);
     DWORD    (*pGetGlyphOutline)(PHYSDEV,UINT,UINT,LPGLYPHMETRICS,DWORD,LPVOID,const MAT2*);
-    BOOL     (*pGetICMProfile)(PHYSDEV,BOOL,LPDWORD,LPWSTR);
+    BOOL     (*pGetICMProfile)(PHYSDEV,LPDWORD,LPWSTR);
     DWORD    (*pGetImage)(PHYSDEV,BITMAPINFO*,struct gdi_image_bits*,struct bitblt_coords*);
     DWORD    (*pGetKerningPairs)(PHYSDEV,DWORD,LPKERNINGPAIR);
     COLORREF (*pGetNearestColor)(PHYSDEV,COLORREF);

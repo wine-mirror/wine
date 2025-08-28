@@ -26,6 +26,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(icm);
 
+static const WCHAR default_profile[] = L"c:\\windows\\system32\\spool\\drivers\\color\\sRGB Color Space Profile.icm";
 
 struct enum_profiles
 {
@@ -74,7 +75,8 @@ INT WINAPI EnumICMProfilesW(HDC hdc, ICMENUMPROCW func, LPARAM lparam)
     TRACE( "%p, %p, 0x%08Ix\n", hdc, func, lparam );
 
     if (!func) return -1;
-    if (!__wine_get_icm_profile( hdc, FALSE, &size, profile )) return -1;
+    if (!GetICMProfileW( hdc, &size, profile )) return -1;
+    if (!wcsicmp( profile, default_profile )) return -1;
     /* FIXME: support multiple profiles */
     return func( profile, lparam );
 }
@@ -129,9 +131,25 @@ BOOL WINAPI GetICMProfileA(HDC hdc, LPDWORD size, LPSTR filename)
  */
 BOOL WINAPI GetICMProfileW(HDC hdc, LPDWORD size, LPWSTR filename)
 {
+    DC_ATTR *dc_attr;
+
     TRACE("%p, %p, %p\n", hdc, size, filename);
 
-    return __wine_get_icm_profile( hdc, TRUE, size, filename );
+    if (!size) return FALSE;
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+
+    if (!__wine_get_icm_profile( hdc, size, filename ))
+    {
+        if (*size < ARRAY_SIZE( default_profile ))
+        {
+            *size = ARRAY_SIZE( default_profile );
+            RtlSetLastWin32Error( ERROR_INSUFFICIENT_BUFFER );
+            return FALSE;
+        }
+        if (filename) wcscpy( filename, default_profile );
+        *size = ARRAY_SIZE( default_profile );
+    }
+    return TRUE;
 }
 
 /**********************************************************************

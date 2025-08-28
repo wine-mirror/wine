@@ -1544,4 +1544,4 @@
 ################################################################
 # Wine internal extensions
 
-@ stdcall -syscall __wine_get_icm_profile(long long ptr ptr)
+@ stdcall -syscall __wine_get_icm_profile(long ptr ptr)

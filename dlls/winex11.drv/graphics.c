@@ -1654,11 +1654,8 @@ static const WCHAR color_path[] =
 /***********************************************************************
  *              GetICMProfile (X11DRV.@)
  */
-BOOL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, LPWSTR filename )
+BOOL X11DRV_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
 {
-    static const WCHAR srgb[] =
-        {'s','R','G','B',' ','C','o','l','o','r',' ','S','p','a','c','e',' ',
-         'P','r','o','f','i','l','e','.','i','c','m',0};
     HKEY hkey;
     DWORD required;
     char buf[4096];
@@ -1714,8 +1711,7 @@ BOOL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, LPWSTR
         }
         free( buffer );
     }
-    else if (!allow_default) return FALSE;
-    else lstrcpyW( p, srgb );
+    else return FALSE;
 
     NtClose( hkey );
     required = wcslen( fullname ) + 1 - 4 /* skip NT prefix */;
