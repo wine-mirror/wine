@@ -40,6 +40,8 @@
 #include <string.h>
 #include <limits.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -1641,75 +1643,75 @@ static char *get_icm_profile( unsigned long *size )
     return ret;
 }
 
-static const WCHAR color_path[] =
-    {'\\','?','?','\\','c',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m','3','2',
-     '\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\','c','o','l','o','r','\\'};
-
-/***********************************************************************
- *              GetICMProfile (X11DRV.@)
- */
-BOOL X11DRV_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
+void init_icm_profile(void)
 {
-    DWORD required;
+    static const WCHAR icm[] = {'.','i','c','m',0};
+    static const WCHAR mntr[] = {'m','n','t','r',0};
+    static const WCHAR color_path[] = {'\\','?','?','\\','c',':','\\','w','i','n','d','o','w','s',
+                                       '\\','s','y','s','t','e','m','3','2','\\','s','p','o','o','l',
+                                       '\\','d','r','i','v','e','r','s','\\','c','o','l','o','r','\\',0};
+    static const WCHAR icm_key[] = {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e',
+                                    '\\','S','o','f','t','w','a','r','e',
+                                    '\\','M','i','c','r','o','s','o','f','t',
+                                    '\\','W','i','n','d','o','w','s',' ','N','T',
+                                    '\\','C','u','r','r','e','n','t', 'V','e','r','s','i','o','n',
+                                    '\\','I','C','M',0};
     char *buffer;
     unsigned long buflen, i;
-    WCHAR fullname[MAX_PATH + ARRAY_SIZE( color_path )], *p;
+    UINT64 hash = 0;
+    WCHAR filename[sizeof(hash) * 2 + ARRAY_SIZE(icm)];
+    WCHAR fullname[ARRAY_SIZE(color_path) + ARRAY_SIZE(filename)];
     UNICODE_STRING name;
     OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    HANDLE file, key, subkey;
+    NTSTATUS status;
+    ULONG dispos;
 
-    if (!size) return FALSE;
+    if (!(buffer = get_icm_profile( &buflen ))) return;
 
-    memcpy( fullname, color_path, sizeof(color_path) );
-    p = fullname + ARRAYSIZE(color_path);
-
-    if ((buffer = get_icm_profile( &buflen )))
+    for (i = 0; i < buflen; i++) hash = (hash << 16) - hash + buffer[i];
+    for (i = 0; i < sizeof(hash) * 2; i++)
     {
-        static const WCHAR icm[] = {'.','i','c','m',0};
-        IO_STATUS_BLOCK io = {{0}};
-        UINT64 hash = 0;
-        HANDLE file;
-        int status;
-
-        for (i = 0; i < buflen; i++) hash = (hash << 16) - hash + buffer[i];
-        for (i = 0; i < sizeof(hash) * 2; i++)
-        {
-            int digit = hash & 0xf;
-            p[i] = digit < 10 ? '0' + digit : 'a' - 10 + digit;
-            hash >>= 4;
-        }
-
-        memcpy( p + i, icm, sizeof(icm) );
-
-        RtlInitUnicodeString( &name, fullname );
-        InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, NULL, NULL );
-        status = NtCreateFile( &file, GENERIC_WRITE, &attr, &io, NULL, 0, 0, FILE_CREATE,
-                               FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE, NULL, 0 );
-        if (!status)
-        {
-            status = NtWriteFile( file, NULL, NULL, NULL, &io, buffer, buflen, NULL, NULL );
-            if (status) ERR( "Unable to write color profile: %x\n", status );
-            NtClose( file );
-        }
-        free( buffer );
+        int digit = hash & 0xf;
+        filename[i] = digit < 10 ? '0' + digit : 'a' - 10 + digit;
+        hash >>= 4;
     }
-    else return FALSE;
+    wcscpy( filename + i, icm );
+    wcscpy( fullname, color_path );
+    wcscat( fullname, filename );
 
-    required = wcslen( fullname ) + 1 - 4 /* skip NT prefix */;
-    if (*size < required)
+    RtlInitUnicodeString( &name, fullname );
+    InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, NULL, NULL );
+    status = NtCreateFile( &file, GENERIC_WRITE, &attr, &io, NULL, 0, 0, FILE_CREATE,
+                           FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE, NULL, 0 );
+    if (!status)
     {
-        *size = required;
-        RtlSetLastWin32Error( ERROR_INSUFFICIENT_BUFFER );
-        return FALSE;
+        status = NtWriteFile( file, NULL, NULL, NULL, &io, buffer, buflen, NULL, NULL );
+        if (status) ERR( "Unable to write color profile: %x\n", status );
+        NtClose( file );
     }
-    if (filename)
+    free( buffer );
+
+    if (status && status != STATUS_OBJECT_NAME_COLLISION) return;
+
+    RtlInitUnicodeString( &name, icm_key );
+    if (NtCreateKey( &key, MAXIMUM_ALLOWED, &attr, 0, NULL, 0, NULL )) return;
+
+    RtlInitUnicodeString( &name, mntr );
+    attr.RootDirectory = key;
+    status = NtCreateKey( &subkey, MAXIMUM_ALLOWED, &attr, 0, NULL, REG_OPTION_VOLATILE, &dispos );
+    NtClose( key );
+    if (status) return;
+
+    /* FIXME: support multiple profiles */
+
+    if (dispos == REG_CREATED_NEW_KEY)
     {
-        FILE_BASIC_INFORMATION info;
-        wcscpy( filename, fullname + 4 );
-        RtlInitUnicodeString( &name, fullname );
-        InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, NULL, NULL );
-        if (NtQueryAttributesFile( &attr, &info ))
-            WARN( "color profile not found in %s\n", debugstr_w(fullname) );
+        BYTE data[12] = { 0 };
+        RtlInitUnicodeString( &name, filename );
+        NtSetValueKey( subkey, &name, 0, REG_BINARY, data, sizeof(data) );
+        TRACE( "created mntr entry for %s\n", debugstr_w(filename) );
     }
-    *size = required;
-    return TRUE;
+    NtClose( subkey );
 }

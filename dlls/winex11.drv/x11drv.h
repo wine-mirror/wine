@@ -163,7 +163,6 @@ extern BOOL X11DRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT botto
 extern BOOL X11DRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType );
 extern BOOL X11DRV_FillPath( PHYSDEV dev );
 extern BOOL X11DRV_GetDeviceGammaRamp( PHYSDEV dev, LPVOID ramp );
-extern BOOL X11DRV_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename );
 extern DWORD X11DRV_GetImage( PHYSDEV dev, BITMAPINFO *info,
                               struct gdi_image_bits *bits, struct bitblt_coords *src );
 extern COLORREF X11DRV_GetNearestColor( PHYSDEV dev, COLORREF color );
@@ -746,6 +745,7 @@ extern RECT get_work_area( const RECT *monitor_rect );
 extern void xinerama_get_fullscreen_monitors( const RECT *rect, unsigned int *generation, long *indices );
 extern void xinerama_init( unsigned int width, unsigned int height );
 extern void init_recursive_mutex( pthread_mutex_t *mutex );
+extern void init_icm_profile(void);
 
 #define DEPTH_COUNT 3
 extern const unsigned int *depths;

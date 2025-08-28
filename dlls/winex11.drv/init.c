@@ -567,7 +567,6 @@ static const struct user_driver_funcs x11drv_funcs =
     .dc_funcs.pFillPath = X11DRV_FillPath,
     .dc_funcs.pGetDeviceCaps = X11DRV_GetDeviceCaps,
     .dc_funcs.pGetDeviceGammaRamp = X11DRV_GetDeviceGammaRamp,
-    .dc_funcs.pGetICMProfile = X11DRV_GetICMProfile,
     .dc_funcs.pGetImage = X11DRV_GetImage,
     .dc_funcs.pGetNearestColor = X11DRV_GetNearestColor,
     .dc_funcs.pGetSystemPaletteEntries = X11DRV_GetSystemPaletteEntries,
