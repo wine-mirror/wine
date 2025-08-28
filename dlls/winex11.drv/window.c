@@ -1617,6 +1617,8 @@ static UINT window_update_client_config( struct x11drv_win_data *data )
     static const UINT fullscreen_mask = (1 << NET_WM_STATE_MAXIMIZED) | (1 << NET_WM_STATE_FULLSCREEN);
     UINT old_style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE ), flags;
     RECT rect, old_rect = data->rects.window, new_rect;
+    unsigned int old_generation, generation;
+    long old_monitors[4], monitors[4];
 
     if (!data->managed) return 0; /* unmanaged windows are managed by the Win32 side */
     if (is_virtual_desktop()) return 0; /* ignore window manager config changes in virtual desktop mode */
@@ -1626,6 +1628,18 @@ static UINT window_update_client_config( struct x11drv_win_data *data )
     if (data->net_wm_state_serial) return 0; /* another _NET_WM_STATE update is pending, wait for it to complete */
     if (data->mwm_hints_serial) return 0; /* another MWM_HINT update is pending, wait for it to complete */
     if (data->configure_serial) return 0; /* another config update is pending, wait for it to complete */
+
+    /* Ignore fullscreen config changes when it's still on the same monitor. This is needed because
+     * adding __NET_WM_STATE_FULLSCREEN will make WMs move the window to cover exactly the monitor
+     * rect. If the application sets a visible rect slightly larger than the monitor rect and insists
+     * on changing to the rect that it previously set when the rect is changed by the WM, then the
+     * window rect will be repeatedly changed by the WM and the application, causing a flickering effect */
+    if (data->is_fullscreen)
+    {
+        xinerama_get_fullscreen_monitors( &data->rects.visible, &old_generation, old_monitors );
+        xinerama_get_fullscreen_monitors( &data->current_state.rect, &generation, monitors );
+        if (!memcmp( old_monitors, monitors, sizeof(monitors) )) return 0;
+    }
 
     if ((old_style & WS_CAPTION) == WS_CAPTION || !data->is_fullscreen)
     {
