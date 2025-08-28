@@ -30,7 +30,12 @@
 #include "wine/asm.h"
 #include "wine/debug.h"
 
+#include "cxx.h"
+#include "private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(vccorlib);
+
+CREATE_TYPE_INFO_VTABLE
 
 HRESULT __cdecl InitializeData(int type)
 {
@@ -236,27 +241,32 @@ struct __abi_type_descriptor
 
 struct platform_type
 {
+    IInspectable IInspectable_iface;
     IClosable IClosable_iface;
     IUnknown *marshal;
     const struct __abi_type_descriptor *desc;
     LONG ref;
 };
 
-static inline struct platform_type *impl_from_IClosable(IClosable *iface)
+static inline struct platform_type *impl_from_IInspectable(IInspectable *iface)
 {
-    return CONTAINING_RECORD(iface, struct platform_type, IClosable_iface);
+    return CONTAINING_RECORD(iface, struct platform_type, IInspectable_iface);
 }
 
-static HRESULT WINAPI platform_type_QueryInterface(IClosable *iface, const GUID *iid, void **out)
+HRESULT WINAPI platform_type_QueryInterface(IInspectable *iface, const GUID *iid, void **out)
 {
-    struct platform_type *impl = impl_from_IClosable(iface);
+    struct platform_type *impl = impl_from_IInspectable(iface);
 
     TRACE("(%p, %s, %p)\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_IUnknown) ||
         IsEqualGUID(iid, &IID_IInspectable) ||
-        IsEqualGUID(iid, &IID_IClosable) ||
         IsEqualGUID(iid, &IID_IAgileObject))
+    {
+        IInspectable_AddRef((*out = &impl->IInspectable_iface));
+        return S_OK;
+    }
+    if (IsEqualGUID(iid, &IID_IClosable))
     {
         IClosable_AddRef((*out = &impl->IClosable_iface));
         return S_OK;
@@ -269,16 +279,16 @@ static HRESULT WINAPI platform_type_QueryInterface(IClosable *iface, const GUID 
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI platform_type_AddRef(IClosable *iface)
+static ULONG WINAPI platform_type_AddRef(IInspectable *iface)
 {
-    struct platform_type *impl = impl_from_IClosable(iface);
+    struct platform_type *impl = impl_from_IInspectable(iface);
     TRACE("(%p)\n", iface);
     return InterlockedIncrement(&impl->ref);
 }
 
-static ULONG WINAPI platform_type_Release(IClosable *iface)
+static ULONG WINAPI platform_type_Release(IInspectable *iface)
 {
-    struct platform_type *impl = impl_from_IClosable(iface);
+    struct platform_type *impl = impl_from_IInspectable(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
 
     TRACE("(%p)\n", iface);
@@ -291,13 +301,13 @@ static ULONG WINAPI platform_type_Release(IClosable *iface)
     return ref;
 }
 
-static HRESULT WINAPI platform_type_GetIids(IClosable *iface, ULONG *count, GUID **iids)
+static HRESULT WINAPI platform_type_GetIids(IInspectable *iface, ULONG *count, GUID **iids)
 {
     FIXME("(%p, %p, %p) stub\n", iface, count, iids);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI platform_type_GetRuntimeClassName(IClosable *iface, HSTRING *name)
+static HRESULT WINAPI platform_type_GetRuntimeClassName(IInspectable *iface, HSTRING *name)
 {
     static const WCHAR *str = L"Platform.Type";
 
@@ -305,31 +315,47 @@ static HRESULT WINAPI platform_type_GetRuntimeClassName(IClosable *iface, HSTRIN
     return WindowsCreateString(str, wcslen(str), name);
 }
 
-static HRESULT WINAPI platform_type_GetTrustLevel(IClosable *iface, TrustLevel *level)
+static HRESULT WINAPI platform_type_GetTrustLevel(IInspectable *iface, TrustLevel *level)
 {
     FIXME("(%p, %p) stub\n", iface, level);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI platform_type_Close(IClosable *iface)
+DEFINE_RTTI_DATA(platform_type, 0, ".?AVType@Platform@@");
+COM_VTABLE_RTTI_START(IInspectable, platform_type)
+COM_VTABLE_ENTRY(platform_type_QueryInterface)
+COM_VTABLE_ENTRY(platform_type_AddRef)
+COM_VTABLE_ENTRY(platform_type_Release)
+COM_VTABLE_ENTRY(platform_type_GetIids)
+COM_VTABLE_ENTRY(platform_type_GetRuntimeClassName)
+COM_VTABLE_ENTRY(platform_type_GetTrustLevel)
+COM_VTABLE_RTTI_END;
+
+DEFINE_IINSPECTABLE(platform_type_closable, IClosable, struct platform_type, IInspectable_iface);
+
+static HRESULT WINAPI platform_type_closable_Close(IClosable *iface)
 {
     FIXME("(%p) stub\n", iface);
     return E_NOTIMPL;
 }
 
-static const IClosableVtbl platform_type_closable_vtbl =
+DEFINE_RTTI_DATA(platform_type_closable, offsetof(struct platform_type, IClosable_iface), ".?AVType@Platform@@");
+COM_VTABLE_RTTI_START(IClosable, platform_type_closable)
+COM_VTABLE_ENTRY(platform_type_closable_QueryInterface)
+COM_VTABLE_ENTRY(platform_type_closable_AddRef)
+COM_VTABLE_ENTRY(platform_type_closable_Release)
+COM_VTABLE_ENTRY(platform_type_closable_GetIids)
+COM_VTABLE_ENTRY(platform_type_closable_GetRuntimeClassName)
+COM_VTABLE_ENTRY(platform_type_closable_GetTrustLevel)
+COM_VTABLE_ENTRY(platform_type_closable_Close)
+COM_VTABLE_RTTI_END;
+
+static void init_platform_type(void *base)
 {
-    /* IUnknown */
-    platform_type_QueryInterface,
-    platform_type_AddRef,
-    platform_type_Release,
-    /* IInspectable */
-    platform_type_GetIids,
-    platform_type_GetRuntimeClassName,
-    platform_type_GetTrustLevel,
-    /* ICloseable */
-    platform_type_Close
-};
+    INIT_RTTI(type_info, base);
+    INIT_RTTI(platform_type, base);
+    INIT_RTTI(platform_type_closable, base);
+}
 
 static const char *debugstr_abi_type_descriptor(const struct __abi_type_descriptor *desc)
 {
@@ -341,7 +367,6 @@ static const char *debugstr_abi_type_descriptor(const struct __abi_type_descript
 void *WINAPI __abi_make_type_id(const struct __abi_type_descriptor *desc)
 {
     /* TODO:
-     * Emit RTTI for Platform::Type.
      * Implement IEquatable and IPrintable.
      * Throw a COMException if CoCreateFreeThreadedMarshaler fails. */
     struct platform_type *obj;
@@ -350,17 +375,18 @@ void *WINAPI __abi_make_type_id(const struct __abi_type_descriptor *desc)
     TRACE("(%s)\n", debugstr_abi_type_descriptor(desc));
 
     obj = Allocate(sizeof(*obj));
-    obj->IClosable_iface.lpVtbl = &platform_type_closable_vtbl;
+    obj->IInspectable_iface.lpVtbl = &platform_type_vtable.vtable;
+    obj->IClosable_iface.lpVtbl = &platform_type_closable_vtable.vtable;
     obj->desc = desc;
     obj->ref = 1;
-    hr = CoCreateFreeThreadedMarshaler((IUnknown *)&obj->IClosable_iface, &obj->marshal);
+    hr = CoCreateFreeThreadedMarshaler((IUnknown *)&obj->IInspectable_iface, &obj->marshal);
     if (FAILED(hr))
     {
         FIXME("CoCreateFreeThreadedMarshaler failed: %#lx\n", hr);
         Free(obj);
         return NULL;
     }
-    return &obj->IClosable_iface;
+    return &obj->IInspectable_iface;
 }
 
 bool __cdecl platform_type_Equals_Object(struct platform_type *this, struct platform_type *object)
@@ -529,4 +555,11 @@ void *WINAPI CreateValue(int typecode, const void *val)
         return NULL;
     }
     return obj;
+}
+
+BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
+{
+    if (reason == DLL_PROCESS_ATTACH)
+        init_platform_type(inst);
+    return TRUE;
 }

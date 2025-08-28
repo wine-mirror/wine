@@ -79,6 +79,7 @@ const rtti_object_locator name ## _rtti = \
 #elif defined __WINE_PE_BUILD
 
 #define DEFINE_RTTI_DATA2(name, off, mangled_name, ...) \
+extern const rtti_object_locator name##_rtti; \
 type_info name ## _type_info = { &type_info_vtable, NULL, mangled_name }; \
 extern const rtti_base_descriptor name ## _rtti_base_descriptor[1]; \
 void __asm_dummy_ ## name ## _rtti(void) \

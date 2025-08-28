@@ -72,6 +72,7 @@ struct thiscall_thunk
 #pragma pack( pop )
 
 static ULONG_PTR (WINAPI *call_thiscall_func1)(void *func, void *this);
+static ULONG_PTR (WINAPI *call_thiscall_func2)(void *func, void *this, void *arg1);
 
 static void init_thiscall_thunk(void)
 {
@@ -82,16 +83,19 @@ static void init_thiscall_thunk(void)
     thunk->push_eax = 0x50;   /* pushl %eax */
     thunk->jmp_edx  = 0xe2ff; /* jmp  *%edx */
     call_thiscall_func1 = (void *)thunk;
+    call_thiscall_func2 = (void *)thunk;
 }
 
 #define __thiscall __stdcall
 #define call_func1(func,_this) call_thiscall_func1(func,_this)
+#define call_func2(func,_this,arg1) call_thiscall_func2(func, _this, arg1)
 
 #else
 
 #define init_thiscall_thunk()
 #define __thiscall __cdecl
 #define call_func1(func,_this) func(_this)
+#define call_func2(func,_this,arg1) func(_this,arg1)
 
 #endif /* __i386__ */
 
@@ -127,9 +131,16 @@ static HSTRING (__cdecl *p_platform_type_ToString)(void *);
 static HSTRING (__cdecl *p_platform_type_get_FullName)(void *);
 static void *(WINAPI *pCreateValue)(int type, const void *);
 
+static void *(__cdecl *p__RTtypeid)(const void *);
+static const char *(__thiscall *p_type_info_name)(void *);
+static const char *(__thiscall *p_type_info_raw_name)(void *);
+static int (__thiscall *p_type_info_opequals_equals)(void *, void *);
+static int (__thiscall *p_type_info_opnot_equals)(void *, void *);
+
 static BOOL init(void)
 {
     HMODULE hmod = LoadLibraryA("vccorlib140.dll");
+    HMODULE msvcrt = LoadLibraryA("msvcrt.dll");
 
     if (!hmod)
     {
@@ -143,6 +154,8 @@ static BOOL init(void)
     pUninitializeData = (void *)GetProcAddress(hmod,
             "?UninitializeData@Details@Platform@@YAXH@Z");
     ok(pUninitializeData != NULL, "UninitializeData not available\n");
+    p__RTtypeid = (void *)GetProcAddress(msvcrt, "__RTtypeid");
+    ok(p__RTtypeid != NULL, "__RTtypeid not available\n");
 
 #ifdef __arm__
     pGetActivationFactoryByPCWSTR = (void *)GetProcAddress(hmod,
@@ -160,6 +173,10 @@ static BOOL init(void)
     p_platform_type_ToString = (void *)GetProcAddress(hmod, "?ToString@Type@Platform@@U$AAAP$AAVString@2@XZ");
     p_platform_type_get_FullName = (void *)GetProcAddress(hmod, "?get@FullName@Type@Platform@@Q$AAAP$AAVString@3@XZ");
     pCreateValue = (void *)GetProcAddress(hmod, "?CreateValue@Details@Platform@@YAP$AAVObject@2@W4TypeCode@2@PBX@Z");
+    p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QBAPBDXZ");
+    p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QBAPBDXZ");
+    p_type_info_opequals_equals = (void *)GetProcAddress(msvcrt, "??8type_info@@QBAHABV0@@Z");
+    p_type_info_opnot_equals = (void *)GetProcAddress(msvcrt, "??9type_info@@QBAHABV0@@Z");
 #else
     if (sizeof(void *) == 8)
     {
@@ -181,6 +198,10 @@ static BOOL init(void)
                 "?get@FullName@Type@Platform@@QE$AAAPE$AAVString@3@XZ");
         pCreateValue = (void *)GetProcAddress(hmod,
                 "?CreateValue@Details@Platform@@YAPE$AAVObject@2@W4TypeCode@2@PEBX@Z");
+        p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QEBAPEBDXZ");
+        p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QEBAPEBDXZ");
+        p_type_info_opequals_equals = (void *)GetProcAddress(msvcrt, "??8type_info@@QEBAHAEBV0@@Z");
+        p_type_info_opnot_equals = (void *)GetProcAddress(msvcrt, "??9type_info@@QEBAHAEBV0@@Z");
     }
     else
     {
@@ -201,6 +222,10 @@ static BOOL init(void)
                 "?get@FullName@Type@Platform@@Q$AAAP$AAVString@3@XZ");
         pCreateValue = (void *)GetProcAddress(hmod,
                 "?CreateValue@Details@Platform@@YGP$AAVObject@2@W4TypeCode@2@PBX@Z");
+        p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QBEPBDXZ");
+        p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QBEPBDXZ");
+        p_type_info_opequals_equals = (void *)GetProcAddress(msvcrt, "??8type_info@@QBEHABV0@@Z");
+        p_type_info_opnot_equals = (void *)GetProcAddress(msvcrt, "??9type_info@@QBEHABV0@@Z");
     }
 #endif
     ok(pGetActivationFactoryByPCWSTR != NULL, "GetActivationFactoryByPCWSTR not available\n");
@@ -215,6 +240,11 @@ static BOOL init(void)
     ok(p_platform_type_ToString != NULL, "Platform::Type::ToString not available\n");
     ok(p_platform_type_get_FullName != NULL, "Platform::Type::FullName not available\n");
     ok(pCreateValue != NULL, "CreateValue not available\n");
+
+    ok(p_type_info_name != NULL, "type_info::name not available\n");
+    ok(p_type_info_raw_name != NULL, "type_info::raw_name not available\n");
+    ok(p_type_info_opequals_equals != NULL, "type_info::operator== not available\n");
+    ok(p_type_info_opnot_equals != NULL, "type_info::operator!= not available\n");
 
     init_thiscall_thunk();
 
@@ -678,9 +708,11 @@ DEFINE_GUID(IID_IPrintable,0xde0cbaeb,0x8065,0x4a45,0x96,0xb1,0xc9,0xd4,0x43,0xf
 static void test___abi_make_type_id(void)
 {
     const struct __abi_type_descriptor desc = {L"foo", 0xdeadbeef}, desc2 = {L"foo", 0xdeadbeef}, desc3 = {NULL, 1};
-    void *type_obj, *type_obj2;
+    void *type_obj, *type_obj2, *type_info, *type_info2;
+    const char *name, *raw_name;
+    IClosable *closable;
+    int typecode, ret;
     const WCHAR *buf;
-    int typecode;
     HSTRING str;
     ULONG count;
     bool equals;
@@ -729,6 +761,30 @@ static void test___abi_make_type_id(void)
     type_obj2 = p___abi_make_type_id(&desc);
     ok(type_obj2 != NULL, "got type_obj %p\n", type_obj);
     ok(type_obj2 != type_obj, "got type_obj2 %p\n", type_obj2);
+
+    type_info = p__RTtypeid(type_obj);
+    ok(type_info != NULL, "got type_info %p\n", type_info);
+    name = (char *)call_func1(p_type_info_name, type_info);
+    ok(!strcmp(name, "class Platform::Type"), "got name %s\n", debugstr_a(name));
+    raw_name = (char *)call_func1(p_type_info_raw_name, type_info);
+    ok(!strcmp(raw_name, ".?AVType@Platform@@"), "got raw_name %s\n", debugstr_a(raw_name));
+
+    hr = IInspectable_QueryInterface(type_obj, &IID_IClosable, (void **)&closable);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    type_info2 = p__RTtypeid(closable);
+    ok(type_info2 != NULL, "got type_info %p\n", type_info2);
+    name = (char *)call_func1(p_type_info_name, type_info2);
+    ok(!strcmp(name, "class Platform::Type"), "got name %s\n", debugstr_a(name));
+
+    raw_name = (char *)call_func1(p_type_info_raw_name, type_info2);
+    ok(!strcmp(raw_name, ".?AVType@Platform@@"), "got raw_name %s\n", debugstr_a(raw_name));
+
+    ret = call_func2(p_type_info_opequals_equals, type_info, type_info2);
+    ok(ret, "got ret %d\n", ret);
+    ret = call_func2(p_type_info_opnot_equals, type_info, type_info2);
+    ok(!ret, "got ret %d\n", ret);
+
+    IClosable_Release(closable);
 
     check_interface(type_obj2, &IID_IInspectable);
     check_interface(type_obj2, &IID_IClosable);
