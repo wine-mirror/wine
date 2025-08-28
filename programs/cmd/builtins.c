@@ -555,8 +555,8 @@ static BOOL WCMD_ManualCopy(WCHAR *srcname, WCHAR *dstname, BOOL ascii, BOOL app
     BOOL   ok;
     DWORD  bytesread, byteswritten;
 
-    WINE_TRACE("Manual Copying %s to %s (append?%d)\n",
-               wine_dbgstr_w(srcname), wine_dbgstr_w(dstname), append);
+    WINE_TRACE("Manual Copying %s to %s (ascii: %u) (append: %u)\n",
+               wine_dbgstr_w(srcname), wine_dbgstr_w(dstname), ascii, append);
 
     in  = CreateFileW(srcname, GENERIC_READ, 0, NULL,
                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -1006,7 +1006,10 @@ RETURN_CODE WCMD_copy(WCHAR * args)
     if (wcsncmp(srcpath, L"\\\\.\\", lstrlenW(L"\\\\.\\")) == 0) {
       WINE_TRACE("Source is a device\n");
       srcisdevice = TRUE;
-      srcname  = &srcpath[4]; /* After the \\.\ prefix */
+      srcname = &srcpath[4]; /* After the \\.\ prefix */
+      if (!wcsnicmp(srcname, L"CON", 3)) {
+        thiscopy->binarycopy = FALSE;
+      }
     } else {
 
       /* Loop through all source files */
@@ -1095,15 +1098,9 @@ RETURN_CODE WCMD_copy(WCHAR * args)
               }
               else status = FALSE;
             } else if (anyconcats && writtenoneconcat) {
-              if (thiscopy->binarycopy) {
-                status = WCMD_ManualCopy(srcpath, outname, FALSE, TRUE);
-              } else {
-                status = WCMD_ManualCopy(srcpath, outname, TRUE, TRUE);
-              }
-            } else if (!thiscopy->binarycopy) {
-              status = WCMD_ManualCopy(srcpath, outname, TRUE, FALSE);
-            } else if (srcisdevice) {
-              status = WCMD_ManualCopy(srcpath, outname, FALSE, FALSE);
+              status = WCMD_ManualCopy(srcpath, outname, !thiscopy->binarycopy, TRUE);
+            } else if (!thiscopy->binarycopy || srcisdevice) {
+              status = WCMD_ManualCopy(srcpath, outname, !thiscopy->binarycopy, FALSE);
             } else {
               status = CopyFileW(srcpath, outname, FALSE);
             }
