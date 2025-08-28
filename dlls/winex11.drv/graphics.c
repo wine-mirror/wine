@@ -1641,12 +1641,6 @@ static char *get_icm_profile( unsigned long *size )
     return ret;
 }
 
-static const WCHAR mntr_key[] =
-    {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e','\\',
-     'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-     'W','i','n','d','o','w','s',' ','N','T','\\','C','u','r','r','e','n','t',
-     'V','e','r','s','i','o','n','\\','I','C','M','\\','m','n','t','r'};
-
 static const WCHAR color_path[] =
     {'\\','?','?','\\','c',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m','3','2',
      '\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\','c','o','l','o','r','\\'};
@@ -1656,13 +1650,9 @@ static const WCHAR color_path[] =
  */
 BOOL X11DRV_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
 {
-    HKEY hkey;
     DWORD required;
-    char buf[4096];
-    KEY_VALUE_FULL_INFORMATION *info = (void *)buf;
     char *buffer;
     unsigned long buflen, i;
-    ULONG full_size;
     WCHAR fullname[MAX_PATH + ARRAY_SIZE( color_path )], *p;
     UNICODE_STRING name;
     OBJECT_ATTRIBUTES attr;
@@ -1672,16 +1662,7 @@ BOOL X11DRV_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
     memcpy( fullname, color_path, sizeof(color_path) );
     p = fullname + ARRAYSIZE(color_path);
 
-    hkey = reg_open_key( NULL, mntr_key, sizeof(mntr_key) );
-
-    if (hkey && !NtEnumerateValueKey( hkey, 0, KeyValueFullInformation,
-                                      info, sizeof(buf), &full_size ))
-    {
-        /* FIXME handle multiple values */
-        memcpy( p, info->Name, info->NameLength );
-        p[info->NameLength / sizeof(WCHAR)] = 0;
-    }
-    else if ((buffer = get_icm_profile( &buflen )))
+    if ((buffer = get_icm_profile( &buflen )))
     {
         static const WCHAR icm[] = {'.','i','c','m',0};
         IO_STATUS_BLOCK io = {{0}};
@@ -1713,7 +1694,6 @@ BOOL X11DRV_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
     }
     else return FALSE;
 
-    NtClose( hkey );
     required = wcslen( fullname ) + 1 - 4 /* skip NT prefix */;
     if (*size < required)
     {
