@@ -213,7 +213,7 @@ static void init_original_display_mode(void)
     HKEY mac_driver_hkey, parent_hkey;
     DWORD disposition;
     struct macdrv_monitor *monitors = NULL;
-    int num_monitors, i;
+    int num_monitors = 0, i;
 
     if (inited_original_display_mode)
         return;
@@ -252,7 +252,7 @@ done:
     success = TRUE;
 
 fail:
-    macdrv_free_monitors(monitors);
+    macdrv_free_monitors(monitors, num_monitors);
     NtClose(parent_hkey);
     if (!success && parent_hkey)
         reg_delete_tree(mac_driver_hkey, initial_mode_keyW, sizeof(initial_mode_keyW));
@@ -1093,6 +1093,8 @@ UINT macdrv_UpdateDisplayDevices(const struct gdi_device_manager *device_manager
                 {
                     .rc_monitor = rect_from_cgrect(monitor->rc_monitor),
                     .rc_work = rect_from_cgrect(monitor->rc_work),
+                    .edid_len = monitor->edid_len,
+                    .edid = monitor->edid,
                 };
                 device_manager->add_monitor( &gdi_monitor, param );
 
@@ -1104,7 +1106,7 @@ UINT macdrv_UpdateDisplayDevices(const struct gdi_device_manager *device_manager
             if (!(modes = display_get_modes(adapter->id, &mode_count))) break;
             device_manager->add_modes( &current_mode, mode_count, modes, param );
             free(modes);
-            macdrv_free_monitors(monitors);
+            macdrv_free_monitors(monitors, monitor_count);
         }
 
         macdrv_free_adapters(adapters);

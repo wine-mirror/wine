@@ -253,6 +253,8 @@ struct macdrv_monitor
     CGRect rc_monitor;
     /* as RcWork in MONITORINFO struct after conversion by rect_from_cgrect */
     CGRect rc_work;
+    unsigned char *edid;
+    uint32_t edid_len;
 };
 
 extern int macdrv_set_display_mode(CGDirectDisplayID id, CGDisplayModeRef display_mode);
@@ -261,7 +263,7 @@ extern void macdrv_free_gpus(struct macdrv_gpu* gpus);
 extern int macdrv_get_adapters(uint64_t gpu_id, struct macdrv_adapter** adapters, int* count);
 extern void macdrv_free_adapters(struct macdrv_adapter* adapters);
 extern int macdrv_get_monitors(CGDirectDisplayID adapter_id, struct macdrv_monitor** monitors, int* count);
-extern void macdrv_free_monitors(struct macdrv_monitor* monitors);
+extern void macdrv_free_monitors(struct macdrv_monitor* monitors, int monitor_count);
 
 
 /* event */

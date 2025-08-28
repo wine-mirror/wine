@@ -24,6 +24,7 @@
 #ifdef HAVE_MTLDEVICE_REGISTRYID
 #import <Metal/Metal.h>
 #endif
+#include <dlfcn.h>
 #include "macdrv_cocoa.h"
 
 #pragma GCC diagnostic ignored "-Wdeclaration-after-statement"
@@ -581,6 +582,74 @@ void macdrv_free_adapters(struct macdrv_adapter* adapters)
         free(adapters);
 }
 
+static CFDataRef get_edid_from_dcpav_service_proxy(uint32_t vendor_number, uint32_t model_number, uint32_t serial_number)
+{
+    typedef CFTypeRef IOAVServiceRef;
+    static IOAVServiceRef (*pIOAVServiceCreateWithService)(CFAllocatorRef, io_service_t);
+    static IOReturn (*pIOAVServiceCopyEDID)(IOAVServiceRef, CFDataRef*);
+    static dispatch_once_t once;
+    io_iterator_t iterator;
+    CFDataRef edid = NULL;
+    kern_return_t result;
+    io_service_t service;
+
+    dispatch_once(&once, ^{
+            void *handle = dlopen("/System/Library/Frameworks/IOKit.framework/IOKit", RTLD_LAZY | RTLD_LOCAL);
+            if (handle)
+            {
+                pIOAVServiceCreateWithService = dlsym(handle, "IOAVServiceCreateWithService");
+                pIOAVServiceCopyEDID = dlsym(handle, "IOAVServiceCopyEDID");
+            }
+        });
+
+    if (!pIOAVServiceCreateWithService || !pIOAVServiceCopyEDID)
+        return NULL;
+
+    result = IOServiceGetMatchingServices(0, IOServiceMatching("DCPAVServiceProxy"), &iterator);
+    if (result != KERN_SUCCESS)
+        return NULL;
+
+    while((service = IOIteratorNext(iterator)))
+    {
+        uint32_t vendor_number_edid, model_number_edid, serial_number_edid;
+        const unsigned char *edid_ptr;
+        IOAVServiceRef avservice;
+        IOReturn edid_result;
+
+        avservice = pIOAVServiceCreateWithService(kCFAllocatorDefault, service);
+        IOObjectRelease(service);
+        if (!avservice)
+            continue;
+
+        edid_result = pIOAVServiceCopyEDID(avservice, &edid);
+        CFRelease(avservice);
+        if (edid_result != kIOReturnSuccess || !edid || CFDataGetLength(edid) < 13)
+        {
+            if (edid)
+            {
+                CFRelease(edid);
+                edid = NULL;
+            }
+            continue;
+        }
+
+        edid_ptr = CFDataGetBytePtr(edid);
+        vendor_number_edid = (uint16_t)(edid_ptr[9] | (edid_ptr[8] << 8));
+        model_number_edid = *((uint16_t *)&edid_ptr[10]);
+        serial_number_edid = *((uint32_t *)&edid_ptr[12]);
+        if (vendor_number == vendor_number_edid &&
+                model_number == model_number_edid &&
+                serial_number == serial_number_edid)
+            break;
+
+        CFRelease(edid);
+        edid = NULL;
+    }
+
+    IOObjectRelease(iterator);
+    return edid;
+}
+
 /***********************************************************************
  *              macdrv_get_monitors
  *
@@ -597,7 +666,7 @@ int macdrv_get_monitors(CGDirectDisplayID adapter_id, struct macdrv_monitor** ne
     struct macdrv_monitor* monitors = NULL;
     struct macdrv_monitor* realloc_monitors;
     CGDirectDisplayID display_ids[16];
-    uint32_t display_id_count;
+    uint32_t display_id_count, vendor_number, model_number, serial_number;
     NSArray<NSScreen *> *screens = [NSScreen screens];
     NSRect primary_frame;
     int primary_index = 0;
@@ -634,6 +703,8 @@ int macdrv_get_monitors(CGDirectDisplayID adapter_id, struct macdrv_monitor** ne
         {
             NSScreen* screen = screens[j];
             CGDirectDisplayID screen_displayID = [[screen deviceDescription][@"NSScreenNumber"] unsignedIntValue];
+            CFDataRef edid_data;
+            size_t length;
 
             if (screen_displayID == display_ids[i]
                 || CGDisplayMirrorsDisplay(display_ids[i]) == screen_displayID)
@@ -654,6 +725,24 @@ int macdrv_get_monitors(CGDirectDisplayID adapter_id, struct macdrv_monitor** ne
                 monitors[monitor_count].id = display_ids[i];
                 monitors[monitor_count].rc_monitor = convert_display_rect(screen.frame, primary_frame);
                 monitors[monitor_count].rc_work = convert_display_rect(screen.visibleFrame, primary_frame);
+
+                vendor_number = CGDisplayVendorNumber(monitors[monitor_count].id);
+                model_number = CGDisplayModelNumber(monitors[monitor_count].id);
+                serial_number = CGDisplaySerialNumber(monitors[monitor_count].id);
+
+                edid_data = get_edid_from_dcpav_service_proxy(vendor_number, model_number, serial_number);
+                if (edid_data && (length = CFDataGetLength(edid_data)))
+                {
+                    const unsigned char *edid_ptr = CFDataGetBytePtr(edid_data);
+
+                    if ((monitors[monitor_count].edid = malloc(length)))
+                    {
+                        monitors[monitor_count].edid_len = length;
+                        memcpy(monitors[monitor_count].edid, edid_ptr, length);
+                    }
+                    CFRelease(edid_data);
+                }
+
                 monitor_count++;
                 break;
             }
@@ -674,7 +763,7 @@ int macdrv_get_monitors(CGDirectDisplayID adapter_id, struct macdrv_monitor** ne
     ret = 0;
 done:
     if (ret)
-        macdrv_free_monitors(monitors);
+        macdrv_free_monitors(monitors, capacity);
     return ret;
 }
 }
@@ -684,8 +773,11 @@ done:
  *
  * Frees an monitor list allocated from macdrv_get_monitors()
  */
-void macdrv_free_monitors(struct macdrv_monitor* monitors)
+void macdrv_free_monitors(struct macdrv_monitor* monitors, int monitor_count)
 {
+    while (monitor_count--)
+        if (monitors[monitor_count].edid)
+            free(monitors[monitor_count].edid);
     if (monitors)
         free(monitors);
 }
