@@ -1540,8 +1540,7 @@
     SYSCALL_ENTRY( 0x1600, NtUserYieldTask, 0 ) \
     SYSCALL_ENTRY( 0x1601, NtUserZapActiveAndFocus, 0 ) \
     SYSCALL_ENTRY( 0x1602, NtValidateCompositionSurfaceHandle, 0 ) \
-    SYSCALL_ENTRY( 0x1603, NtVisualCaptureBits, 0 ) \
-    SYSCALL_ENTRY( 0x1604, __wine_get_icm_profile, 12 )
+    SYSCALL_ENTRY( 0x1603, NtVisualCaptureBits, 0 )
 #ifdef _WIN64
 #define ALL_SYSCALLS \
     SYSCALL_ENTRY( 0x1000, NtBindCompositionSurface, 0 ) \
@@ -3083,8 +3082,7 @@
     SYSCALL_ENTRY( 0x1600, NtUserYieldTask, 0 ) \
     SYSCALL_ENTRY( 0x1601, NtUserZapActiveAndFocus, 0 ) \
     SYSCALL_ENTRY( 0x1602, NtValidateCompositionSurfaceHandle, 0 ) \
-    SYSCALL_ENTRY( 0x1603, NtVisualCaptureBits, 0 ) \
-    SYSCALL_ENTRY( 0x1604, __wine_get_icm_profile, 24 )
+    SYSCALL_ENTRY( 0x1603, NtVisualCaptureBits, 0 )
 #else
 #define ALL_SYSCALLS ALL_SYSCALLS32
 #endif

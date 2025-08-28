@@ -1540,8 +1540,3 @@
 @ stub -syscall NtValidateCompositionSurfaceHandle
 @ stub -syscall NtVisualCaptureBits
 # extern gDispatchTableValues
-
-################################################################
-# Wine internal extensions
-
-@ stdcall -syscall __wine_get_icm_profile(long ptr ptr)

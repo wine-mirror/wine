@@ -558,6 +558,5 @@ W32KAPI NTSTATUS WINAPI NtGdiDdDDIShareObjects( UINT count, const D3DKMT_HANDLE 
 /* Wine extensions */
 W32KAPI const struct vulkan_funcs * __wine_get_vulkan_driver(UINT version);
 W32KAPI const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version, const struct opengl_funcs *null_funcs );
-W32KAPI BOOL WINAPI __wine_get_icm_profile( HDC hdc, DWORD *size, WCHAR *filename );
 
 #endif /* _NTGDI_ */

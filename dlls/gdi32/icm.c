@@ -152,7 +152,7 @@ BOOL WINAPI GetICMProfileW(HDC hdc, LPDWORD size, LPWSTR filename)
             goto found;
     }
 
-    if (!__wine_get_icm_profile( hdc, &len, fullname )) wcscpy( fullname, default_profile );
+    wcscpy( fullname, default_profile );
 
  found:
     len = wcslen(fullname) + 1;

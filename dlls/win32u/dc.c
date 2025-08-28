@@ -1499,20 +1499,3 @@ DWORD WINAPI NtGdiSetLayout( HDC hdc, LONG wox, DWORD layout )
 
     return old_layout;
 }
-
-/**********************************************************************
- *           __wine_get_icm_profile     (win32u.@)
- */
-BOOL WINAPI __wine_get_icm_profile( HDC hdc, DWORD *size, WCHAR *filename )
-{
-    PHYSDEV physdev;
-    DC *dc;
-    BOOL ret;
-
-    if (!(dc = get_dc_ptr(hdc))) return FALSE;
-
-    physdev = GET_DC_PHYSDEV( dc, pGetICMProfile );
-    ret = physdev->funcs->pGetICMProfile( physdev, size, filename );
-    release_dc_ptr(dc);
-    return ret;
-}
