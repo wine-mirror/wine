@@ -551,7 +551,6 @@ static BOOL parse_soundfont_generators(struct soundfont *soundfont, UINT index,
 
         default:
             generators->amount[gen->oper] = gen->amount;
-            if (preset_generators) generators->amount[gen->oper].value += preset_generators->amount[gen->oper].value;
             break;
         }
     }
@@ -630,6 +629,7 @@ static HRESULT instrument_add_soundfont_instrument(struct instrument *This, stru
     struct sf_generators global_generators = SF_DEFAULT_GENERATORS;
     struct sf_instrument *instrument = soundfont->inst + index;
     UINT i = instrument->bag_ndx;
+    sf_generator oper;
     HRESULT hr = S_OK;
 
     for (i = instrument->bag_ndx; SUCCEEDED(hr) && i < (instrument + 1)->bag_ndx; i++)
@@ -644,6 +644,9 @@ static HRESULT instrument_add_soundfont_instrument(struct instrument *This, stru
                 global_generators = generators;
             continue;
         }
+
+        for (oper = 0; oper < SF_GEN_END_OPER; ++oper)
+            generators.amount[oper].value += preset_generators->amount[oper].value;
 
         hr = instrument_add_soundfont_region(This, soundfont, &generators);
     }
