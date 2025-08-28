@@ -503,14 +503,16 @@ static inline void mark_block_tail( struct block *block, DWORD flags )
 static inline void initialize_block( struct block *block, SIZE_T old_size, SIZE_T size, DWORD flags )
 {
     char *data = (char *)(block + 1);
-    SIZE_T i;
+    SIZE_T i, aligned_size;
 
     if (size <= old_size) return;
 
     if (flags & HEAP_ZERO_MEMORY)
     {
-        valgrind_make_writable( data + old_size, size - old_size );
-        memset( data + old_size, 0, size - old_size );
+        aligned_size = ROUND_SIZE( size, sizeof(void *) - 1 );
+        valgrind_make_writable( data + old_size, aligned_size - old_size );
+        memset( data + old_size, 0, aligned_size - old_size );
+        valgrind_make_noaccess( data + size, aligned_size - size );
     }
     else if (flags & HEAP_FREE_CHECKING_ENABLED)
     {
