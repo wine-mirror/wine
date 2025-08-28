@@ -558,16 +558,94 @@ static BOOL parse_soundfont_generators(struct soundfont *soundfont, UINT index, 
     return TRUE;
 }
 
+static const USHORT gen_to_conn_dst[SF_GEN_END_OPER] =
+{
+    [SF_GEN_MOD_LFO_TO_PITCH] = CONN_DST_PITCH,
+    [SF_GEN_VIB_LFO_TO_PITCH] = CONN_DST_PITCH,
+    [SF_GEN_MOD_ENV_TO_PITCH] = CONN_DST_PITCH,
+    [SF_GEN_INITIAL_FILTER_FC] = CONN_DST_FILTER_CUTOFF,
+    [SF_GEN_INITIAL_FILTER_Q] = CONN_DST_FILTER_Q,
+    [SF_GEN_MOD_LFO_TO_FILTER_FC] = CONN_DST_FILTER_CUTOFF,
+    [SF_GEN_MOD_ENV_TO_FILTER_FC] = CONN_DST_FILTER_CUTOFF,
+    [SF_GEN_MOD_LFO_TO_VOLUME] = CONN_DST_GAIN,
+    [SF_GEN_CHORUS_EFFECTS_SEND] = CONN_DST_CHORUS,
+    [SF_GEN_REVERB_EFFECTS_SEND] = CONN_DST_REVERB,
+    [SF_GEN_PAN] = CONN_DST_PAN,
+    [SF_GEN_DELAY_MOD_LFO] = CONN_DST_LFO_STARTDELAY,
+    [SF_GEN_FREQ_MOD_LFO] = CONN_DST_LFO_FREQUENCY,
+    [SF_GEN_DELAY_VIB_LFO] = CONN_DST_VIB_STARTDELAY,
+    [SF_GEN_FREQ_VIB_LFO] = CONN_DST_VIB_FREQUENCY,
+    [SF_GEN_DELAY_MOD_ENV] = CONN_DST_EG2_DELAYTIME,
+    [SF_GEN_ATTACK_MOD_ENV] = CONN_DST_EG2_ATTACKTIME,
+    [SF_GEN_HOLD_MOD_ENV] = CONN_DST_EG2_HOLDTIME,
+    [SF_GEN_DECAY_MOD_ENV] = CONN_DST_EG2_DECAYTIME,
+    [SF_GEN_SUSTAIN_MOD_ENV] = CONN_DST_EG2_SUSTAINLEVEL,
+    [SF_GEN_RELEASE_MOD_ENV] = CONN_DST_EG2_RELEASETIME,
+    [SF_GEN_KEYNUM_TO_MOD_ENV_HOLD] = CONN_DST_NONE,
+    [SF_GEN_KEYNUM_TO_MOD_ENV_DECAY] = CONN_DST_NONE,
+    [SF_GEN_DELAY_VOL_ENV] = CONN_DST_EG1_DELAYTIME,
+    [SF_GEN_ATTACK_VOL_ENV] = CONN_DST_EG1_ATTACKTIME,
+    [SF_GEN_HOLD_VOL_ENV] = CONN_DST_EG1_HOLDTIME,
+    [SF_GEN_DECAY_VOL_ENV] = CONN_DST_EG1_DECAYTIME,
+    [SF_GEN_SUSTAIN_VOL_ENV] = CONN_DST_EG1_SUSTAINLEVEL,
+    [SF_GEN_RELEASE_VOL_ENV] = CONN_DST_EG1_RELEASETIME,
+    [SF_GEN_KEYNUM_TO_VOL_ENV_HOLD] = CONN_DST_EG1_HOLDTIME,
+    [SF_GEN_KEYNUM_TO_VOL_ENV_DECAY] = CONN_DST_EG1_DECAYTIME,
+    [SF_GEN_INITIAL_ATTENUATION] = CONN_DST_GAIN,
+};
+
+static const USHORT gen_to_conn_src[SF_GEN_END_OPER] =
+{
+    [SF_GEN_MOD_LFO_TO_PITCH] = CONN_SRC_LFO,
+    [SF_GEN_VIB_LFO_TO_PITCH] = CONN_SRC_VIBRATO,
+    [SF_GEN_MOD_ENV_TO_PITCH] = CONN_SRC_EG2,
+    [SF_GEN_MOD_LFO_TO_FILTER_FC] = CONN_SRC_LFO,
+    [SF_GEN_MOD_ENV_TO_FILTER_FC] = CONN_SRC_EG2,
+    [SF_GEN_MOD_LFO_TO_VOLUME] = CONN_SRC_LFO,
+    [SF_GEN_KEYNUM_TO_VOL_ENV_HOLD] = CONN_SRC_KEYNUMBER,
+    [SF_GEN_KEYNUM_TO_VOL_ENV_DECAY] = CONN_SRC_KEYNUMBER,
+};
+
 static HRESULT instrument_add_soundfont_region(struct instrument *This, struct soundfont *soundfont,
         struct sf_generators *generators)
 {
     UINT start_loop, end_loop, unity_note, sample_index = generators->amount[SF_GEN_SAMPLE_ID].value;
     struct sf_sample *sample = soundfont->shdr + sample_index;
+    struct articulation *articulation;
     struct region *region;
     double attenuation;
+    sf_generator oper;
 
     if (!(region = calloc(1, sizeof(*region)))) return E_OUTOFMEMORY;
     list_init(&region->articulations);
+
+    if (!(articulation = calloc(1, offsetof(struct articulation, connections[SF_GEN_END_OPER]))))
+    {
+        free(region);
+        return E_OUTOFMEMORY;
+    }
+    articulation->list.cbSize = sizeof(CONNECTIONLIST);
+
+    for (oper = 0; oper < SF_GEN_END_OPER; ++oper)
+    {
+        CONNECTION *conn = &articulation->connections[articulation->list.cConnections];
+        USHORT dst = gen_to_conn_dst[oper];
+
+        if (dst == CONN_DST_NONE || dst == CONN_DST_GAIN)
+            continue;
+
+        conn->usSource = gen_to_conn_src[oper];
+        conn->usDestination = dst;
+
+        if (oper == SF_GEN_SUSTAIN_MOD_ENV || oper == SF_GEN_SUSTAIN_VOL_ENV)
+            conn->lScale = (1000 - (SHORT)generators->amount[oper].value) * 65536;
+        else
+            conn->lScale = (SHORT)generators->amount[oper].value * 65536;
+
+        ++articulation->list.cConnections;
+    }
+
+    list_add_tail(&region->articulations, &articulation->entry);
 
     region->header.RangeKey.usLow = generators->amount[SF_GEN_KEY_RANGE].range.low;
     region->header.RangeKey.usHigh = generators->amount[SF_GEN_KEY_RANGE].range.high;
