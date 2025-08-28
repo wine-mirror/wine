@@ -58,6 +58,9 @@ static int kmemcmp( const void *ptr1, const void *ptr2, size_t n )
 static DRIVER_OBJECT *driver_obj;
 static DEVICE_OBJECT *lower_device, *upper_device;
 
+static IRP *queued_async_irps[2];
+static unsigned int queued_async_count;
+
 static POBJECT_TYPE *pExEventObjectType, *pIoFileObjectType, *pPsThreadType, *pIoDriverObjectType;
 static PEPROCESS *pPsInitialSystemProcess;
 static void *create_caller_thread;
@@ -2682,10 +2685,17 @@ static NTSTATUS WINAPI driver_Create(DEVICE_OBJECT *device, IRP *irp)
     return STATUS_SUCCESS;
 }
 
+static void cancel_complete(IRP *irp)
+{
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+}
+
 static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
     NTSTATUS status = STATUS_NOT_SUPPORTED;
+    unsigned int i;
 
     switch (stack->Parameters.DeviceIoControl.IoControlCode)
     {
@@ -2699,6 +2709,7 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
             status = test_load_driver_ioctl(irp, stack, &irp->IoStatus.Information);
             break;
         case IOCTL_WINETEST_RESET_CANCEL:
+            ok(!queued_async_count, "expected no queued asyncs left\n");
             cancel_cnt = 0;
             status = STATUS_SUCCESS;
             break;
@@ -2706,6 +2717,27 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
             IoSetCancelRoutine(irp, cancel_ioctl_irp);
             IoMarkIrpPending(irp);
             return STATUS_PENDING;
+        case IOCTL_WINETEST_QUEUE_ASYNC:
+            if (queued_async_count >= ARRAY_SIZE(queued_async_irps))
+            {
+                ok(FALSE, "unexpected queued_async_count %u\n", queued_async_count);
+                status = ERROR_TOO_MANY_CMDS;
+                break;
+            }
+            queued_async_irps[queued_async_count++] = irp;
+            IoMarkIrpPending(irp);
+            return STATUS_PENDING;
+        case IOCTL_WINETEST_COMPLETE_ASYNC:
+            /* complete the pending IRPs gathered from
+             * IOCTL_WINETEST_QUEUE_ASYNC */
+            for (i = 0; i < queued_async_count; i++)
+            {
+                cancel_complete(queued_async_irps[i]);
+                queued_async_irps[i] = NULL;
+            }
+            queued_async_count = 0;
+            status = STATUS_SUCCESS;
+            break;
         case IOCTL_WINETEST_GET_CANCEL_COUNT:
             status = get_dword(irp, stack, &irp->IoStatus.Information, cancel_cnt);
             break;
