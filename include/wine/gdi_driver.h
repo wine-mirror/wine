@@ -319,13 +319,7 @@ W32KAPI struct window_surface *window_surface_create( UINT size, const struct wi
                                                       const RECT *rect, BITMAPINFO *info, HBITMAP bitmap );
 W32KAPI void window_surface_add_ref( struct window_surface *surface );
 W32KAPI void window_surface_release( struct window_surface *surface );
-W32KAPI void window_surface_lock( struct window_surface *surface );
-W32KAPI void window_surface_unlock( struct window_surface *surface );
-W32KAPI void window_surface_set_layered( struct window_surface *surface, COLORREF color_key, UINT alpha_bits, UINT alpha_mask );
-W32KAPI void window_surface_flush( struct window_surface *surface );
-W32KAPI void window_surface_set_clip( struct window_surface *surface, HRGN clip_region );
 W32KAPI void window_surface_set_shape( struct window_surface *surface, HRGN shape_region );
-W32KAPI void window_surface_set_layered( struct window_surface *surface, COLORREF color_key, UINT alpha_bits, UINT alpha_mask );
 
 /* display manager interface, used to initialize display device registry data */
 
