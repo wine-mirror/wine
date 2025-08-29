@@ -19,9 +19,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
-#define WINE_NO_NAMELESS_EXTENSION
-
 #include <stdbool.h>
 #include "wine/test.h"
 #include "dshow.h"
@@ -82,7 +79,7 @@ static const VIDEOINFO rgb565_video_info =
     .bmiHeader.biPlanes = 1,
     .bmiHeader.biBitCount = 16,
     .bmiHeader.biCompression = BI_BITFIELDS,
-    .u.dwBitMasks = {0xf800, 0x07e0, 0x001f},
+    .dwBitMasks = {0xf800, 0x07e0, 0x001f},
 };
 
 static const VIDEOINFO rgb24_video_info =
@@ -161,7 +158,7 @@ static const DDSURFACEDESC rgb8_format =
     .dwFlags = DDSD_PIXELFORMAT,
     .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
     .ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED8,
-    .ddpfPixelFormat.u1.dwRGBBitCount = 8,
+    .ddpfPixelFormat.dwRGBBitCount = 8,
 };
 
 static const DDSURFACEDESC rgb555_format =
@@ -170,10 +167,10 @@ static const DDSURFACEDESC rgb555_format =
     .dwFlags = DDSD_PIXELFORMAT,
     .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
     .ddpfPixelFormat.dwFlags = DDPF_RGB,
-    .ddpfPixelFormat.u1.dwRGBBitCount = 16,
-    .ddpfPixelFormat.u2.dwRBitMask = 0x7c00,
-    .ddpfPixelFormat.u3.dwGBitMask = 0x03e0,
-    .ddpfPixelFormat.u4.dwBBitMask = 0x001f,
+    .ddpfPixelFormat.dwRGBBitCount = 16,
+    .ddpfPixelFormat.dwRBitMask = 0x7c00,
+    .ddpfPixelFormat.dwGBitMask = 0x03e0,
+    .ddpfPixelFormat.dwBBitMask = 0x001f,
 };
 
 static const DDSURFACEDESC rgb565_format =
@@ -182,10 +179,10 @@ static const DDSURFACEDESC rgb565_format =
     .dwFlags = DDSD_PIXELFORMAT,
     .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
     .ddpfPixelFormat.dwFlags = DDPF_RGB,
-    .ddpfPixelFormat.u1.dwRGBBitCount = 16,
-    .ddpfPixelFormat.u2.dwRBitMask = 0xf800,
-    .ddpfPixelFormat.u3.dwGBitMask = 0x07e0,
-    .ddpfPixelFormat.u4.dwBBitMask = 0x001f,
+    .ddpfPixelFormat.dwRGBBitCount = 16,
+    .ddpfPixelFormat.dwRBitMask = 0xf800,
+    .ddpfPixelFormat.dwGBitMask = 0x07e0,
+    .ddpfPixelFormat.dwBBitMask = 0x001f,
 };
 
 static const DDSURFACEDESC rgb24_format =
@@ -194,10 +191,10 @@ static const DDSURFACEDESC rgb24_format =
     .dwFlags = DDSD_PIXELFORMAT,
     .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
     .ddpfPixelFormat.dwFlags = DDPF_RGB,
-    .ddpfPixelFormat.u1.dwRGBBitCount = 24,
-    .ddpfPixelFormat.u2.dwRBitMask = 0xff0000,
-    .ddpfPixelFormat.u3.dwGBitMask = 0x00ff00,
-    .ddpfPixelFormat.u4.dwBBitMask = 0x0000ff,
+    .ddpfPixelFormat.dwRGBBitCount = 24,
+    .ddpfPixelFormat.dwRBitMask = 0xff0000,
+    .ddpfPixelFormat.dwGBitMask = 0x00ff00,
+    .ddpfPixelFormat.dwBBitMask = 0x0000ff,
 };
 
 static const DDSURFACEDESC rgb32_format =
@@ -206,10 +203,10 @@ static const DDSURFACEDESC rgb32_format =
     .dwFlags = DDSD_PIXELFORMAT,
     .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
     .ddpfPixelFormat.dwFlags = DDPF_RGB,
-    .ddpfPixelFormat.u1.dwRGBBitCount = 32,
-    .ddpfPixelFormat.u2.dwRBitMask = 0xff0000,
-    .ddpfPixelFormat.u3.dwGBitMask = 0x00ff00,
-    .ddpfPixelFormat.u4.dwBBitMask = 0x0000ff,
+    .ddpfPixelFormat.dwRGBBitCount = 32,
+    .ddpfPixelFormat.dwRBitMask = 0xff0000,
+    .ddpfPixelFormat.dwGBitMask = 0x00ff00,
+    .ddpfPixelFormat.dwBBitMask = 0x0000ff,
 };
 
 static const DDSURFACEDESC argb32_format =
@@ -218,11 +215,11 @@ static const DDSURFACEDESC argb32_format =
     .dwFlags = DDSD_PIXELFORMAT,
     .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
     .ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS,
-    .ddpfPixelFormat.u1.dwRGBBitCount = 32,
-    .ddpfPixelFormat.u2.dwRBitMask = 0xff0000,
-    .ddpfPixelFormat.u3.dwGBitMask = 0x00ff00,
-    .ddpfPixelFormat.u4.dwBBitMask = 0x0000ff,
-    .ddpfPixelFormat.u5.dwRGBAlphaBitMask = 0xff000000,
+    .ddpfPixelFormat.dwRGBBitCount = 32,
+    .ddpfPixelFormat.dwRBitMask = 0xff0000,
+    .ddpfPixelFormat.dwGBitMask = 0x00ff00,
+    .ddpfPixelFormat.dwBBitMask = 0x0000ff,
+    .ddpfPixelFormat.dwRGBAlphaBitMask = 0xff000000,
 };
 
 static const DDSURFACEDESC yuy2_format =
@@ -232,7 +229,7 @@ static const DDSURFACEDESC yuy2_format =
     .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
     .ddpfPixelFormat.dwFlags = DDPF_FOURCC,
     .ddpfPixelFormat.dwFourCC = MAKEFOURCC('Y', 'U', 'Y', '2'),
-    .ddpfPixelFormat.u1.dwYUVBitCount = 16,
+    .ddpfPixelFormat.dwYUVBitCount = 16,
 };
 
 static const DDSURFACEDESC yv12_format =
@@ -242,7 +239,7 @@ static const DDSURFACEDESC yv12_format =
     .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
     .ddpfPixelFormat.dwFlags = DDPF_FOURCC,
     .ddpfPixelFormat.dwFourCC = MAKEFOURCC('Y', 'V', '1', '2'),
-    .ddpfPixelFormat.u1.dwYUVBitCount = 12,
+    .ddpfPixelFormat.dwYUVBitCount = 12,
 };
 
 static const WCHAR primary_video_sink_id[] = L"I{A35FF56A-9FDA-11D0-8FDF-00C04FD9189D}";
@@ -1177,9 +1174,9 @@ static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDI
         {
             expect_video_info.bmiHeader.biCompression = BI_BITFIELDS;
             depth = 16;
-            expect_video_info.u.dwBitMasks[iRED] = 0xf800;
-            expect_video_info.u.dwBitMasks[iGREEN] = 0x07e0;
-            expect_video_info.u.dwBitMasks[iBLUE] = 0x001f;
+            expect_video_info.dwBitMasks[iRED] = 0xf800;
+            expect_video_info.dwBitMasks[iGREEN] = 0x07e0;
+            expect_video_info.dwBitMasks[iBLUE] = 0x001f;
         }
         else
         {
@@ -1188,9 +1185,9 @@ static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDI
 
             if (filter->query_accept_rgb8_palette)
             {
-                expect_video_info.u.bmiColors[0].rgbRed = 0x12;
-                expect_video_info.u.bmiColors[1].rgbBlue = 0x34;
-                expect_video_info.u.bmiColors[2].rgbGreen = 0x56;
+                expect_video_info.bmiColors[0].rgbRed = 0x12;
+                expect_video_info.bmiColors[1].rgbBlue = 0x34;
+                expect_video_info.bmiColors[2].rgbGreen = 0x56;
             }
         }
 
@@ -4191,9 +4188,9 @@ static void test_ddrawstream_receive_connection(void)
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
 
     format = yuy2_format;
-    format.ddpfPixelFormat.u2.dwRBitMask = 0xf800;
-    format.ddpfPixelFormat.u3.dwGBitMask = 0x07e0;
-    format.ddpfPixelFormat.u4.dwBBitMask = 0x001f;
+    format.ddpfPixelFormat.dwRBitMask = 0xf800;
+    format.ddpfPixelFormat.dwGBitMask = 0x07e0;
+    format.ddpfPixelFormat.dwBBitMask = 0x001f;
     hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &format, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -5613,7 +5610,7 @@ static void test_ddrawstream_set_format(void)
         .dwFlags = DDSD_PIXELFORMAT,
         .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
         .ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED1,
-        .ddpfPixelFormat.u1.dwRGBBitCount = 1,
+        .ddpfPixelFormat.dwRGBBitCount = 1,
     };
     static const DDSURFACEDESC rgb2_format =
     {
@@ -5621,7 +5618,7 @@ static void test_ddrawstream_set_format(void)
         .dwFlags = DDSD_PIXELFORMAT,
         .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
         .ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED2,
-        .ddpfPixelFormat.u1.dwRGBBitCount = 2,
+        .ddpfPixelFormat.dwRGBBitCount = 2,
     };
     static const DDSURFACEDESC rgb4_format =
     {
@@ -5629,7 +5626,7 @@ static void test_ddrawstream_set_format(void)
         .dwFlags = DDSD_PIXELFORMAT,
         .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
         .ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED4,
-        .ddpfPixelFormat.u1.dwRGBBitCount = 4,
+        .ddpfPixelFormat.dwRGBBitCount = 4,
     };
     static const DDSURFACEDESC rgb4to8_format =
     {
@@ -5637,7 +5634,7 @@ static void test_ddrawstream_set_format(void)
         .dwFlags = DDSD_PIXELFORMAT,
         .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
         .ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXEDTO8,
-        .ddpfPixelFormat.u1.dwRGBBitCount = 4,
+        .ddpfPixelFormat.dwRGBBitCount = 4,
     };
     static const DDSURFACEDESC rgb332_format =
     {
@@ -5645,10 +5642,10 @@ static void test_ddrawstream_set_format(void)
         .dwFlags = DDSD_PIXELFORMAT,
         .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
         .ddpfPixelFormat.dwFlags = DDPF_RGB,
-        .ddpfPixelFormat.u1.dwRGBBitCount = 8,
-        .ddpfPixelFormat.u2.dwRBitMask = 0xe0,
-        .ddpfPixelFormat.u3.dwGBitMask = 0x1c,
-        .ddpfPixelFormat.u4.dwBBitMask = 0x03,
+        .ddpfPixelFormat.dwRGBBitCount = 8,
+        .ddpfPixelFormat.dwRBitMask = 0xe0,
+        .ddpfPixelFormat.dwGBitMask = 0x1c,
+        .ddpfPixelFormat.dwBBitMask = 0x03,
     };
 
     IDirectDrawStreamSample *sample, *sample2;
@@ -5733,19 +5730,19 @@ static void test_ddrawstream_set_format(void)
     check_ddrawstream_set_format(ddraw_stream, &format, NULL, DDERR_INVALIDSURFACETYPE);
 
     format = rgb565_format;
-    format.ddpfPixelFormat.u2.dwRBitMask = 0x001f;
-    format.ddpfPixelFormat.u3.dwGBitMask = 0x07e0;
-    format.ddpfPixelFormat.u4.dwBBitMask = 0xf800;
+    format.ddpfPixelFormat.dwRBitMask = 0x001f;
+    format.ddpfPixelFormat.dwGBitMask = 0x07e0;
+    format.ddpfPixelFormat.dwBBitMask = 0xf800;
     check_ddrawstream_set_format(ddraw_stream, &format, NULL, DDERR_INVALIDSURFACETYPE);
 
     format = rgb32_format;
-    format.ddpfPixelFormat.u2.dwRBitMask = 0x00ff00;
-    format.ddpfPixelFormat.u3.dwGBitMask = 0x0000ff;
-    format.ddpfPixelFormat.u4.dwBBitMask = 0xff0000;
+    format.ddpfPixelFormat.dwRBitMask = 0x00ff00;
+    format.ddpfPixelFormat.dwGBitMask = 0x0000ff;
+    format.ddpfPixelFormat.dwBBitMask = 0xff0000;
     check_ddrawstream_set_format(ddraw_stream, &format, NULL, DDERR_INVALIDSURFACETYPE);
 
     format = yuy2_format;
-    format.ddpfPixelFormat.u1.dwYUVBitCount = 0;
+    format.ddpfPixelFormat.dwYUVBitCount = 0;
     check_ddrawstream_set_format(ddraw_stream, &format, NULL, E_INVALIDARG);
 
     format = rgb32_format;
@@ -5794,10 +5791,10 @@ static void test_ddrawstream_set_format(void)
             "Got subtype %s.\n", wine_dbgstr_guid(&source.source.pin.mt.subtype));
     hr = IDirectDrawMediaStream_GetFormat(ddraw_stream, &current_format, NULL, &desired_format, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current_format.ddpfPixelFormat.u1.dwRGBBitCount == 8,
-            "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.u1.dwRGBBitCount);
-    ok(desired_format.ddpfPixelFormat.u1.dwRGBBitCount == 8,
-            "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.u1.dwRGBBitCount);
+    ok(current_format.ddpfPixelFormat.dwRGBBitCount == 8,
+            "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.dwRGBBitCount);
+    ok(desired_format.ddpfPixelFormat.dwRGBBitCount == 8,
+            "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.dwRGBBitCount);
 
     format = rgb555_format;
     format.dwFlags = 0;
@@ -5826,14 +5823,14 @@ static void test_ddrawstream_set_format(void)
             "Got flags %#lx.\n", current_format.dwFlags);
     ok(current_format.dwWidth == 333, "Got width %ld.\n", current_format.dwWidth);
     ok(current_format.dwHeight == 444, "Got height %ld.\n", current_format.dwHeight);
-    ok(current_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
-            "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.u1.dwRGBBitCount);
+    ok(current_format.ddpfPixelFormat.dwRGBBitCount == 16,
+            "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.dwRGBBitCount);
     ok(desired_format.dwFlags == (DDSD_WIDTH | DDSD_HEIGHT),
             "Got flags %#lx.\n", desired_format.dwFlags);
     ok(desired_format.dwWidth == 333, "Got width %ld.\n", desired_format.dwWidth);
     ok(desired_format.dwHeight == 444, "Got height %ld.\n", desired_format.dwHeight);
-    ok(desired_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
-            "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.u1.dwRGBBitCount);
+    ok(desired_format.ddpfPixelFormat.dwRGBBitCount == 16,
+            "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.dwRGBBitCount);
 
     video_info = rgb555_video_info;
     video_info.bmiHeader.biWidth = 222;
@@ -5894,14 +5891,14 @@ static void test_ddrawstream_set_format(void)
             "Got flags %#lx.\n", current_format.dwFlags);
     ok(current_format.dwWidth == 333, "Got width %ld.\n", current_format.dwWidth);
     ok(current_format.dwHeight == 444, "Got height %ld.\n", current_format.dwHeight);
-    ok(current_format.ddpfPixelFormat.u1.dwRGBBitCount == 32,
-            "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.u1.dwRGBBitCount);
+    ok(current_format.ddpfPixelFormat.dwRGBBitCount == 32,
+            "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.dwRGBBitCount);
     ok(desired_format.dwFlags == (DDSD_WIDTH | DDSD_HEIGHT),
             "Got flags %#lx.\n", desired_format.dwFlags);
     ok(desired_format.dwWidth == 333, "Got width %ld.\n", desired_format.dwWidth);
     ok(desired_format.dwHeight == 444, "Got height %ld.\n", desired_format.dwHeight);
-    ok(desired_format.ddpfPixelFormat.u1.dwRGBBitCount == 32,
-            "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.u1.dwRGBBitCount);
+    ok(desired_format.ddpfPixelFormat.dwRGBBitCount == 32,
+            "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.dwRGBBitCount);
 
     SetRect(&rect, 100, 200, 300, 400);
 
@@ -8225,7 +8222,7 @@ static void test_ddrawstream_create_sample(void)
     ok(desc.dwWidth == 100, "Expected width 100, got %ld.\n", desc.dwWidth);
     ok(desc.dwHeight == 100, "Expected height 100, got %ld.\n", desc.dwHeight);
     ok(desc.ddpfPixelFormat.dwFlags == DDPF_RGB, "Expected format flags DDPF_RGB, got %#lx.\n", desc.ddpfPixelFormat.dwFlags);
-    ok(desc.ddpfPixelFormat.u1.dwRGBBitCount, "Expected non-zero RGB bit count.\n");
+    ok(desc.ddpfPixelFormat.dwRGBBitCount, "Expected non-zero RGB bit count.\n");
     IDirectDrawSurface_Release(surface);
     IDirectDrawStreamSample_Release(sample);
     EXPECT_REF(stream, 3);
@@ -8269,11 +8266,11 @@ static void test_ddrawstream_create_sample(void)
     desc.dwHeight = 400;
     desc.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
     desc.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-    desc.ddpfPixelFormat.u1.dwRGBBitCount = 32;
-    desc.ddpfPixelFormat.u2.dwRBitMask = 0xff0000;
-    desc.ddpfPixelFormat.u3.dwGBitMask = 0x00ff00;
-    desc.ddpfPixelFormat.u4.dwBBitMask = 0x0000ff;
-    desc.ddpfPixelFormat.u5.dwRGBAlphaBitMask = 0xff000000;
+    desc.ddpfPixelFormat.dwRGBBitCount = 32;
+    desc.ddpfPixelFormat.dwRBitMask = 0xff0000;
+    desc.ddpfPixelFormat.dwGBitMask = 0x00ff00;
+    desc.ddpfPixelFormat.dwBBitMask = 0x0000ff;
+    desc.ddpfPixelFormat.dwRGBAlphaBitMask = 0xff000000;
     desc.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN;
     hr = IDirectDraw_CreateSurface(ddraw, &desc, &surface, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -8314,7 +8311,7 @@ static void test_ddrawstream_create_sample(void)
     desc.dwHeight = 400;
     desc.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
     desc.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED4;
-    desc.ddpfPixelFormat.u1.dwRGBBitCount = 4;
+    desc.ddpfPixelFormat.dwRGBBitCount = 4;
     desc.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN;
     hr = IDirectDraw_CreateSurface(ddraw, &desc, &surface, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -8340,10 +8337,10 @@ static void test_ddrawstream_create_sample(void)
     ok(desc.dwWidth == 100, "Got width %lu.\n", desc.dwWidth);
     ok(desc.dwHeight == 100, "Got height %lu.\n", desc.dwHeight);
     ok(desc.ddpfPixelFormat.dwFlags == DDPF_RGB, "Got flags %#lx.\n", desc.ddpfPixelFormat.dwFlags);
-    ok(desc.ddpfPixelFormat.u1.dwRGBBitCount == 32, "Got rgb bit count %lu.\n", desc.ddpfPixelFormat.u1.dwRGBBitCount);
-    ok(desc.ddpfPixelFormat.u2.dwRBitMask == 0xff0000, "Got r bit mask %#lx.\n", desc.ddpfPixelFormat.u2.dwRBitMask);
-    ok(desc.ddpfPixelFormat.u3.dwGBitMask == 0x00ff00, "Got g bit mask %#lx.\n", desc.ddpfPixelFormat.u3.dwGBitMask);
-    ok(desc.ddpfPixelFormat.u4.dwBBitMask == 0x0000ff, "Got b bit mask %#lx.\n", desc.ddpfPixelFormat.u4.dwBBitMask);
+    ok(desc.ddpfPixelFormat.dwRGBBitCount == 32, "Got rgb bit count %lu.\n", desc.ddpfPixelFormat.dwRGBBitCount);
+    ok(desc.ddpfPixelFormat.dwRBitMask == 0xff0000, "Got r bit mask %#lx.\n", desc.ddpfPixelFormat.dwRBitMask);
+    ok(desc.ddpfPixelFormat.dwGBitMask == 0x00ff00, "Got g bit mask %#lx.\n", desc.ddpfPixelFormat.dwGBitMask);
+    ok(desc.ddpfPixelFormat.dwBBitMask == 0x0000ff, "Got b bit mask %#lx.\n", desc.ddpfPixelFormat.dwBBitMask);
 
     format1 = rgb8_format;
     format1.dwFlags |= DDSD_WIDTH;
@@ -8369,30 +8366,30 @@ static void test_ddrawstream_create_sample(void)
     ok(desc.dwWidth == 333, "Got width %lu.\n", desc.dwWidth);
     ok(desc.dwHeight == 444, "Got height %lu.\n", desc.dwHeight);
     ok(desc.ddpfPixelFormat.dwFlags == DDPF_RGB, "Got flags %#lx.\n", desc.ddpfPixelFormat.dwFlags);
-    ok(desc.ddpfPixelFormat.u1.dwRGBBitCount == 32, "Got rgb bit count %lu.\n", desc.ddpfPixelFormat.u1.dwRGBBitCount);
-    ok(desc.ddpfPixelFormat.u2.dwRBitMask == 0xff0000, "Got r bit mask %#lx.\n", desc.ddpfPixelFormat.u2.dwRBitMask);
-    ok(desc.ddpfPixelFormat.u3.dwGBitMask == 0x00ff00, "Got g bit mask %#lx.\n", desc.ddpfPixelFormat.u3.dwGBitMask);
-    ok(desc.ddpfPixelFormat.u4.dwBBitMask == 0x0000ff, "Got b bit mask %#lx.\n", desc.ddpfPixelFormat.u4.dwBBitMask);
+    ok(desc.ddpfPixelFormat.dwRGBBitCount == 32, "Got rgb bit count %lu.\n", desc.ddpfPixelFormat.dwRGBBitCount);
+    ok(desc.ddpfPixelFormat.dwRBitMask == 0xff0000, "Got r bit mask %#lx.\n", desc.ddpfPixelFormat.dwRBitMask);
+    ok(desc.ddpfPixelFormat.dwGBitMask == 0x00ff00, "Got g bit mask %#lx.\n", desc.ddpfPixelFormat.dwGBitMask);
+    ok(desc.ddpfPixelFormat.dwBBitMask == 0x0000ff, "Got b bit mask %#lx.\n", desc.ddpfPixelFormat.dwBBitMask);
 
     get_ddrawstream_create_sample_desc(&rgb565_format, NULL, NULL, &desc);
     ok(desc.dwWidth == 100, "Got width %lu.\n", desc.dwWidth);
     ok(desc.dwHeight == 100, "Got height %lu.\n", desc.dwHeight);
     ok(desc.ddpfPixelFormat.dwFlags == DDPF_RGB, "Got flags %#lx.\n", desc.ddpfPixelFormat.dwFlags);
-    ok(desc.ddpfPixelFormat.u1.dwRGBBitCount == 16, "Got rgb bit count %lu.\n", desc.ddpfPixelFormat.u1.dwRGBBitCount);
-    ok(desc.ddpfPixelFormat.u2.dwRBitMask == 0xf800, "Got r bit mask %#lx.\n", desc.ddpfPixelFormat.u2.dwRBitMask);
-    ok(desc.ddpfPixelFormat.u3.dwGBitMask == 0x07e0, "Got g bit mask %#lx.\n", desc.ddpfPixelFormat.u3.dwGBitMask);
-    ok(desc.ddpfPixelFormat.u4.dwBBitMask == 0x001f, "Got b bit mask %#lx.\n", desc.ddpfPixelFormat.u4.dwBBitMask);
+    ok(desc.ddpfPixelFormat.dwRGBBitCount == 16, "Got rgb bit count %lu.\n", desc.ddpfPixelFormat.dwRGBBitCount);
+    ok(desc.ddpfPixelFormat.dwRBitMask == 0xf800, "Got r bit mask %#lx.\n", desc.ddpfPixelFormat.dwRBitMask);
+    ok(desc.ddpfPixelFormat.dwGBitMask == 0x07e0, "Got g bit mask %#lx.\n", desc.ddpfPixelFormat.dwGBitMask);
+    ok(desc.ddpfPixelFormat.dwBBitMask == 0x001f, "Got b bit mask %#lx.\n", desc.ddpfPixelFormat.dwBBitMask);
 
     get_ddrawstream_create_sample_desc(&argb32_format, NULL, NULL, &desc);
     ok(desc.dwWidth == 100, "Got width %lu.\n", desc.dwWidth);
     ok(desc.dwHeight == 100, "Got height %lu.\n", desc.dwHeight);
     ok(desc.ddpfPixelFormat.dwFlags == (DDPF_RGB | DDPF_ALPHAPIXELS), "Got flags %#lx.\n", desc.ddpfPixelFormat.dwFlags);
-    ok(desc.ddpfPixelFormat.u1.dwRGBBitCount == 32, "Got rgb bit count %lu.\n", desc.ddpfPixelFormat.u1.dwRGBBitCount);
-    ok(desc.ddpfPixelFormat.u2.dwRBitMask == 0xff0000, "Got r bit mask %#lx.\n", desc.ddpfPixelFormat.u2.dwRBitMask);
-    ok(desc.ddpfPixelFormat.u3.dwGBitMask == 0x00ff00, "Got g bit mask %#lx.\n", desc.ddpfPixelFormat.u3.dwGBitMask);
-    ok(desc.ddpfPixelFormat.u4.dwBBitMask == 0x0000ff, "Got b bit mask %#lx.\n", desc.ddpfPixelFormat.u4.dwBBitMask);
-    ok(desc.ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0xff000000,
-            "Got alpha bit mask %#lx.\n", desc.ddpfPixelFormat.u4.dwBBitMask);
+    ok(desc.ddpfPixelFormat.dwRGBBitCount == 32, "Got rgb bit count %lu.\n", desc.ddpfPixelFormat.dwRGBBitCount);
+    ok(desc.ddpfPixelFormat.dwRBitMask == 0xff0000, "Got r bit mask %#lx.\n", desc.ddpfPixelFormat.dwRBitMask);
+    ok(desc.ddpfPixelFormat.dwGBitMask == 0x00ff00, "Got g bit mask %#lx.\n", desc.ddpfPixelFormat.dwGBitMask);
+    ok(desc.ddpfPixelFormat.dwBBitMask == 0x0000ff, "Got b bit mask %#lx.\n", desc.ddpfPixelFormat.dwBBitMask);
+    ok(desc.ddpfPixelFormat.dwRGBAlphaBitMask == 0xff000000,
+            "Got alpha bit mask %#lx.\n", desc.ddpfPixelFormat.dwBBitMask);
 
     format1 = rgb32_format;
     format1.dwFlags |= DDSD_CAPS;
@@ -8404,10 +8401,10 @@ static void test_ddrawstream_create_sample(void)
     ok(desc.dwWidth == 100, "Got width %lu.\n", desc.dwWidth);
     ok(desc.dwHeight == 100, "Got height %lu.\n", desc.dwHeight);
     ok(desc.ddpfPixelFormat.dwFlags == DDPF_RGB, "Got flags %#lx.\n", desc.ddpfPixelFormat.dwFlags);
-    ok(desc.ddpfPixelFormat.u1.dwRGBBitCount == 32, "Got rgb bit count %lu.\n", desc.ddpfPixelFormat.u1.dwRGBBitCount);
-    ok(desc.ddpfPixelFormat.u2.dwRBitMask == 0xff0000, "Got r bit mask %#lx.\n", desc.ddpfPixelFormat.u2.dwRBitMask);
-    ok(desc.ddpfPixelFormat.u3.dwGBitMask == 0x00ff00, "Got g bit mask %#lx.\n", desc.ddpfPixelFormat.u3.dwGBitMask);
-    ok(desc.ddpfPixelFormat.u4.dwBBitMask == 0x0000ff, "Got b bit mask %#lx.\n", desc.ddpfPixelFormat.u4.dwBBitMask);
+    ok(desc.ddpfPixelFormat.dwRGBBitCount == 32, "Got rgb bit count %lu.\n", desc.ddpfPixelFormat.dwRGBBitCount);
+    ok(desc.ddpfPixelFormat.dwRBitMask == 0xff0000, "Got r bit mask %#lx.\n", desc.ddpfPixelFormat.dwRBitMask);
+    ok(desc.ddpfPixelFormat.dwGBitMask == 0x00ff00, "Got g bit mask %#lx.\n", desc.ddpfPixelFormat.dwGBitMask);
+    ok(desc.ddpfPixelFormat.dwBBitMask == 0x0000ff, "Got b bit mask %#lx.\n", desc.ddpfPixelFormat.dwBBitMask);
 
     format1 = rgb32_format;
     format1.dwFlags |= DDSD_CKSRCBLT;
@@ -8418,10 +8415,10 @@ static void test_ddrawstream_create_sample(void)
     ok(desc.dwWidth == 100, "Got width %lu.\n", desc.dwWidth);
     ok(desc.dwHeight == 100, "Got height %lu.\n", desc.dwHeight);
     ok(desc.ddpfPixelFormat.dwFlags == DDPF_RGB, "Got flags %#lx.\n", desc.ddpfPixelFormat.dwFlags);
-    ok(desc.ddpfPixelFormat.u1.dwRGBBitCount == 32, "Got rgb bit count %lu.\n", desc.ddpfPixelFormat.u1.dwRGBBitCount);
-    ok(desc.ddpfPixelFormat.u2.dwRBitMask == 0xff0000, "Got r bit mask %#lx.\n", desc.ddpfPixelFormat.u2.dwRBitMask);
-    ok(desc.ddpfPixelFormat.u3.dwGBitMask == 0x00ff00, "Got g bit mask %#lx.\n", desc.ddpfPixelFormat.u3.dwGBitMask);
-    ok(desc.ddpfPixelFormat.u4.dwBBitMask == 0x0000ff, "Got b bit mask %#lx.\n", desc.ddpfPixelFormat.u4.dwBBitMask);
+    ok(desc.ddpfPixelFormat.dwRGBBitCount == 32, "Got rgb bit count %lu.\n", desc.ddpfPixelFormat.dwRGBBitCount);
+    ok(desc.ddpfPixelFormat.dwRBitMask == 0xff0000, "Got r bit mask %#lx.\n", desc.ddpfPixelFormat.dwRBitMask);
+    ok(desc.ddpfPixelFormat.dwGBitMask == 0x00ff00, "Got g bit mask %#lx.\n", desc.ddpfPixelFormat.dwGBitMask);
+    ok(desc.ddpfPixelFormat.dwBBitMask == 0x0000ff, "Got b bit mask %#lx.\n", desc.ddpfPixelFormat.dwBBitMask);
     ok(desc.ddckCKSrcBlt.dwColorSpaceLowValue == 0, "Got color key low value %#lx.\n",
             desc.ddckCKSrcBlt.dwColorSpaceLowValue);
     ok(desc.ddckCKSrcBlt.dwColorSpaceHighValue == 0, "Got color key high value %#lx.\n",
@@ -8907,7 +8904,7 @@ static void test_ddrawstream_mem_allocator(void)
     ok(hr == S_OK, "got hr %#lx\n", hr);
     hr = IDirectDrawSurface_GetSurfaceDesc(surface, &surface_desc);
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    expect_pitch = surface_desc.u1.lPitch;
+    expect_pitch = surface_desc.lPitch;
     expect_video_info.bmiHeader.biWidth = expect_pitch / 2;
     expect_video_info.bmiHeader.biSizeImage = expect_pitch * 444;
     IDirectDrawSurface_Release(surface);
@@ -9291,14 +9288,14 @@ static void test_ddrawstream_set_format_dynamic(void)
             "Got flags %#lx.\n", current_format.dwFlags);
     ok(current_format.dwWidth == 333, "Got width %ld.\n", current_format.dwWidth);
     ok(current_format.dwHeight == 444, "Got height %ld.\n", current_format.dwHeight);
-    ok(current_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
-            "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.u1.dwRGBBitCount);
+    ok(current_format.ddpfPixelFormat.dwRGBBitCount == 16,
+            "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.dwRGBBitCount);
     ok(desired_format.dwFlags == (DDSD_WIDTH | DDSD_HEIGHT),
             "Got flags %#lx.\n", desired_format.dwFlags);
     ok(desired_format.dwWidth == 333, "Got width %ld.\n", desired_format.dwWidth);
     ok(desired_format.dwHeight == 444, "Got height %ld.\n", desired_format.dwHeight);
-    ok(desired_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
-            "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.u1.dwRGBBitCount);
+    ok(desired_format.ddpfPixelFormat.dwRGBBitCount == 16,
+            "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.dwRGBBitCount);
 
     format = rgb555_format;
     format.dwFlags = 0;
@@ -9355,10 +9352,10 @@ static void test_ddrawstream_set_format_dynamic(void)
             "Got subtype %s.\n", wine_dbgstr_guid(&source.source.pin.mt.subtype));
     hr = IDirectDrawMediaStream_GetFormat(ddraw_stream, &current_format, NULL, &desired_format, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
-            "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.u1.dwRGBBitCount);
-    ok(desired_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
-            "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.u1.dwRGBBitCount);
+    ok(current_format.ddpfPixelFormat.dwRGBBitCount == 16,
+            "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.dwRGBBitCount);
+    ok(desired_format.ddpfPixelFormat.dwRGBBitCount == 16,
+            "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.dwRGBBitCount);
 
     video_info = rgb555_video_info;
     video_info.bmiHeader.biWidth = 222;
@@ -9397,10 +9394,10 @@ static void test_ddrawstream_set_format_dynamic(void)
     hr = IDirectDrawMediaStream_GetFormat(ddraw_stream, &current_format, NULL, &desired_format, NULL);
     /* FIXME: The peer is not able to reconnect while the stream is running, so it stays disconnected. */
     todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(current_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
-            "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.u1.dwRGBBitCount);
-    todo_wine ok(desired_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
-            "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.u1.dwRGBBitCount);
+    todo_wine ok(current_format.ddpfPixelFormat.dwRGBBitCount == 16,
+            "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.dwRGBBitCount);
+    todo_wine ok(desired_format.ddpfPixelFormat.dwRGBBitCount == 16,
+            "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.dwRGBBitCount);
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -9584,7 +9581,7 @@ static void test_ddrawstreamsample_update(void)
     hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     for (i = 0; i < 5; ++i)
-        memcpy((BYTE *)desc.lpSurface + i * desc.u1.lPitch, initial_data, 12);
+        memcpy((BYTE *)desc.lpSurface + i * desc.lPitch, initial_data, 12);
     hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -9601,11 +9598,11 @@ static void test_ddrawstreamsample_update(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(memcmp((BYTE *)desc.lpSurface + 0 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 1 * desc.u1.lPitch, &test_data[0], 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 2 * desc.u1.lPitch, &test_data[12], 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 3 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 4 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 0 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 1 * desc.lPitch, &test_data[0], 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 2 * desc.lPitch, &test_data[12], 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 3 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 4 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
     hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -9632,7 +9629,7 @@ static void test_ddrawstreamsample_update(void)
     hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     for (i = 0; i < 5; ++i)
-        memcpy((BYTE *)desc.lpSurface + i * desc.u1.lPitch, initial_data, 12);
+        memcpy((BYTE *)desc.lpSurface + i * desc.lPitch, initial_data, 12);
     hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -9649,11 +9646,11 @@ static void test_ddrawstreamsample_update(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(memcmp((BYTE *)desc.lpSurface + 0 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 1 * desc.u1.lPitch, &test_data[12], 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 2 * desc.u1.lPitch, &test_data[0], 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 3 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 4 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 0 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 1 * desc.lPitch, &test_data[12], 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 2 * desc.lPitch, &test_data[0], 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 3 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 4 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
     hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -9685,7 +9682,7 @@ static void test_ddrawstreamsample_update(void)
     hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     for (i = 0; i < 5; ++i)
-        memcpy((BYTE *)desc.lpSurface + i * desc.u1.lPitch, initial_data, 12);
+        memcpy((BYTE *)desc.lpSurface + i * desc.lPitch, initial_data, 12);
     hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -9701,11 +9698,11 @@ static void test_ddrawstreamsample_update(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(memcmp((BYTE *)desc.lpSurface + 0 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 1 * desc.u1.lPitch, &test_data[12], 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 2 * desc.u1.lPitch, &test_data[0], 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 3 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 4 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 0 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 1 * desc.lPitch, &test_data[12], 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 2 * desc.lPitch, &test_data[0], 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 3 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 4 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
     hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -9734,7 +9731,7 @@ static void test_ddrawstreamsample_update(void)
     hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     for (i = 0; i < 5; ++i)
-        memcpy((BYTE *)desc.lpSurface + i * desc.u1.lPitch, initial_data, 12);
+        memcpy((BYTE *)desc.lpSurface + i * desc.lPitch, initial_data, 12);
     hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -9750,11 +9747,11 @@ static void test_ddrawstreamsample_update(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(memcmp((BYTE *)desc.lpSurface + 0 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 1 * desc.u1.lPitch, &test_data[12], 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 2 * desc.u1.lPitch, &test_data[0], 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 3 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 4 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 0 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 1 * desc.lPitch, &test_data[12], 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 2 * desc.lPitch, &test_data[0], 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 3 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 4 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
     hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -9770,7 +9767,7 @@ static void test_ddrawstreamsample_update(void)
     hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     for (i = 0; i < 5; ++i)
-        memcpy((BYTE *)desc.lpSurface + i * desc.u1.lPitch, initial_data, 12);
+        memcpy((BYTE *)desc.lpSurface + i * desc.lPitch, initial_data, 12);
     hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -9782,18 +9779,18 @@ static void test_ddrawstreamsample_update(void)
 
     hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(memcmp((BYTE *)desc.lpSurface + 0 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 1 * desc.u1.lPitch, &test_data[12], 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 2 * desc.u1.lPitch, &test_data[0], 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 3 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 4 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 0 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 1 * desc.lPitch, &test_data[12], 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 2 * desc.lPitch, &test_data[0], 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 3 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 4 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
     hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     for (i = 0; i < 5; ++i)
-        memcpy((BYTE *)desc.lpSurface + i * desc.u1.lPitch, initial_data, 12);
+        memcpy((BYTE *)desc.lpSurface + i * desc.lPitch, initial_data, 12);
     hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -9805,11 +9802,11 @@ static void test_ddrawstreamsample_update(void)
 
     hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(memcmp((BYTE *)desc.lpSurface + 0 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 1 * desc.u1.lPitch, &test_data[12], 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 2 * desc.u1.lPitch, &test_data[0], 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 3 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 4 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 0 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 1 * desc.lPitch, &test_data[12], 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 2 * desc.lPitch, &test_data[0], 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 3 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 4 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
     hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -9851,7 +9848,7 @@ static void test_ddrawstreamsample_update(void)
     hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     for (i = 0; i < 5; ++i)
-        memcpy((BYTE *)desc.lpSurface + i * desc.u1.lPitch, initial_data, 12);
+        memcpy((BYTE *)desc.lpSurface + i * desc.lPitch, initial_data, 12);
     hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -9877,7 +9874,7 @@ static void test_ddrawstreamsample_update(void)
     hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     for (i = 0; i < 5; ++i)
-        ok(memcmp((BYTE *)desc.lpSurface + i * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+        ok(memcmp((BYTE *)desc.lpSurface + i * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
     hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -9888,11 +9885,11 @@ static void test_ddrawstreamsample_update(void)
 
     hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(memcmp((BYTE *)desc.lpSurface + 0 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 1 * desc.u1.lPitch, &test_data[12], 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 2 * desc.u1.lPitch, &test_data[0], 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 3 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
-    ok(memcmp((BYTE *)desc.lpSurface + 4 * desc.u1.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 0 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 1 * desc.lPitch, &test_data[12], 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 2 * desc.lPitch, &test_data[0], 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 3 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 4 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
     hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
