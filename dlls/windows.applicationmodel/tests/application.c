@@ -32,6 +32,7 @@
 
 #include "roapi.h"
 
+#include "inspectable.h"
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
@@ -177,6 +178,111 @@ static void test_PackageStatics(void)
     ok( ref == 1, "got ref %ld.\n", ref );
 }
 
+
+static HRESULT WINAPI test_factory_QueryInterface( IActivationFactory *iface, REFIID iid, void **out )
+{
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_IActivationFactory ) ||
+        IsEqualGUID( iid, &IID_IInspectable ))
+    {
+        IActivationFactory_AddRef(( *out = iface ));
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_factory_AddRef( IActivationFactory *iface )
+{
+    return 2;
+}
+
+static ULONG WINAPI test_factory_Release( IActivationFactory *iface )
+{
+    return 1;
+}
+
+static HRESULT WINAPI test_factory_GetIids( IActivationFactory *iface, ULONG *count, GUID **iids )
+{
+    ok( 0, "unexpected call\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_factory_GetRuntimeClassName( IActivationFactory *iface, HSTRING *name )
+{
+    static const WCHAR *nameW = L"Wine.Application.Class";
+    return WindowsCreateString( nameW, wcslen( nameW ), name );
+}
+
+static HRESULT WINAPI test_factory_GetTrustLevel( IActivationFactory *iface, TrustLevel *level )
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI test_factory_ActivateInstance( IActivationFactory *iface, IInspectable **out )
+{
+    ok( 0, "unexpected call\n" );
+    return E_NOTIMPL;
+}
+
+static const IActivationFactoryVtbl test_factory_vtbl =
+{
+    /* IUnknown */
+    test_factory_QueryInterface,
+    test_factory_AddRef,
+    test_factory_Release,
+    /* IInspectable */
+    test_factory_GetIids,
+    test_factory_GetRuntimeClassName,
+    test_factory_GetTrustLevel,
+    /* IActivationFactory */
+    test_factory_ActivateInstance
+};
+
+static IActivationFactory test_factory = { &test_factory_vtbl };
+
+HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **factory )
+{
+    const WCHAR *buffer = WindowsGetStringRawBuffer( classid, NULL );
+
+   *factory = NULL;
+
+    if (!wcscmp( buffer, L"Wine.Application.Class" ))
+        return IActivationFactory_QueryInterface( &test_factory, &IID_IActivationFactory, (void **)factory );
+
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+static void test_registration( void )
+{
+    static const WCHAR *name = L"Wine.Application.Class";
+    IActivationFactory *factory;
+    const WCHAR *buf;
+    HSTRING str;
+    HRESULT hr;
+    hr = WindowsCreateString( name, wcslen( name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    WindowsDeleteString( str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    check_interface( factory, &IID_IUnknown );
+    check_interface( factory, &IID_IInspectable );
+    check_interface( factory, &IID_IActivationFactory );
+    check_interface( factory, &IID_IAgileObject );
+
+    hr = IActivationFactory_GetRuntimeClassName( factory, &str );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    buf = WindowsGetStringRawBuffer( str, NULL );
+    ok( buf && !wcscmp( buf, name ), "got str %s\n", debugstr_hstring( str ) );
+    WindowsDeleteString( str );
+
+    IActivationFactory_Release( factory );
+}
+
 int main( int argc, char const *argv[] )
 {
     HRESULT hr;
@@ -188,6 +294,8 @@ int main( int argc, char const *argv[] )
 
     test_ApplicationDataStatics();
     test_PackageStatics();
+
+    test_registration();
 
     RoUninitialize();
 
