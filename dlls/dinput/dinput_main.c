@@ -375,6 +375,7 @@ static DWORD WINAPI dinput_thread_proc( void *params )
     MSG msg;
 
     SetThreadDescription( GetCurrentThread(), L"wine_dinput_worker" );
+    SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
 
     di_em_win = CreateWindowW( L"DIEmWin", L"DIEmWin", 0, 0, 0, 0, 0, HWND_MESSAGE, 0, DINPUT_instance, NULL );
     input_thread_state = &state;
