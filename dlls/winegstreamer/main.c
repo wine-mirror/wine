@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define WINE_NO_NAMELESS_EXTENSION
-
 #define EXTERN_GUID DEFINE_GUID
 
 #include "ntstatus.h"
@@ -1105,8 +1103,8 @@ static const REGFILTER2 reg_decodebin_parser =
 {
     .dwVersion = 2,
     .dwMerit = MERIT_NORMAL - 1,
-    .u.s2.cPins2 = 3,
-    .u.s2.rgPins2 = reg_decodebin_parser_pins,
+    .cPins2 = 3,
+    .rgPins2 = reg_decodebin_parser_pins,
 };
 
 HRESULT WINAPI DllRegisterServer(void)

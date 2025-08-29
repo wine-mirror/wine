@@ -29,8 +29,6 @@
 #include <stdio.h>
 
 #define COBJMACROS
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
 #include "dshow.h"
 #include "mfidl.h"
 #include "wine/debug.h"
