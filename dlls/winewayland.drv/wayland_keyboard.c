@@ -606,7 +606,8 @@ static BOOL find_xkb_layout_variant(const char *name, const char **layout, const
 
     for (iter = rxkb_layout_first(rxkb_context); iter; iter = rxkb_layout_next(iter))
     {
-        if (!strcmp(name, rxkb_layout_get_description(iter)))
+        const char *desc = rxkb_layout_get_description(iter);
+        if (desc && !strcmp(name, desc))
         {
             *layout = rxkb_layout_get_name(iter);
             *variant = rxkb_layout_get_variant(iter);
@@ -710,7 +711,7 @@ static void keyboard_handle_keymap(void *data, struct wl_keyboard *wl_keyboard,
         char buffer[1024];
         LANGID lang;
 
-        if (!find_xkb_layout_variant(layout_name, &layout, &variant)) layout = "us";
+        if (!layout_name || !find_xkb_layout_variant(layout_name, &layout, &variant)) layout = "us";
         if (variant) variant_len = strlen(variant);
         layout_len = strlen(layout);
 
