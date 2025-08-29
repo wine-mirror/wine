@@ -17,8 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define WINE_NO_NAMELESS_EXTENSION
-
 #include "qedit_private.h"
 #include "rpcproxy.h"
 #include "wine/debug.h"
@@ -207,8 +205,8 @@ static const REGFILTER2 reg_sample_grabber =
 {
     .dwVersion = 2,
     .dwMerit = MERIT_DO_NOT_USE,
-    .u.s2.cPins2 = 2,
-    .u.s2.rgPins2 = reg_sample_grabber_pins,
+    .cPins2 = 2,
+    .rgPins2 = reg_sample_grabber_pins,
 };
 
 static const REGFILTERPINS2 reg_null_renderer_pins[1] =
@@ -225,8 +223,8 @@ static const REGFILTER2 reg_null_renderer =
 {
     .dwVersion = 2,
     .dwMerit = MERIT_DO_NOT_USE,
-    .u.s2.cPins2 = 1,
-    .u.s2.rgPins2 = reg_null_renderer_pins,
+    .cPins2 = 1,
+    .rgPins2 = reg_null_renderer_pins,
 };
 
 /***********************************************************************
