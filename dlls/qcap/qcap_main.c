@@ -20,8 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define WINE_NO_NAMELESS_EXTENSION
-
 #include "qcap_private.h"
 #include "rpcproxy.h"
 
@@ -153,8 +151,8 @@ static const REGFILTER2 reg_avi_mux =
 {
     .dwVersion = 2,
     .dwMerit = MERIT_DO_NOT_USE,
-    .u.s2.cPins2 = 1,
-    .u.s2.rgPins2 = reg_avi_mux_pins,
+    .cPins2 = 1,
+    .rgPins2 = reg_avi_mux_pins,
 };
 
 static const REGPINTYPES reg_video_mt = {&MEDIATYPE_Video, &GUID_NULL};
@@ -184,8 +182,8 @@ static const REGFILTER2 reg_smart_tee =
 {
     .dwVersion = 2,
     .dwMerit = MERIT_DO_NOT_USE,
-    .u.s2.cPins2 = 3,
-    .u.s2.rgPins2 = reg_smart_tee_pins,
+    .cPins2 = 3,
+    .rgPins2 = reg_smart_tee_pins,
 };
 
 static const REGPINTYPES reg_file_writer_sink_mt = {&GUID_NULL, &GUID_NULL};
@@ -203,8 +201,8 @@ static const REGFILTER2 reg_file_writer =
 {
     .dwVersion = 2,
     .dwMerit = MERIT_DO_NOT_USE,
-    .u.s2.cPins2 = 1,
-    .u.s2.rgPins2 = reg_file_writer_pins,
+    .cPins2 = 1,
+    .rgPins2 = reg_file_writer_pins,
 };
 
 /***********************************************************************

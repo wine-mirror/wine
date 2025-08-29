@@ -22,8 +22,6 @@
 #define _QCAP_PRIVATE_H_DEFINED
 
 #define COBJMACROS
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
 #include <stdbool.h>
 #include "dshow.h"
 #include "winternl.h"
