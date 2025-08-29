@@ -36,10 +36,7 @@ static IOpcFactory *create_factory(void)
 
 static void test_package(void)
 {
-    static const WCHAR typeW[] = {'t','y','p','e','/','s','u','b','t','y','p','e',0};
-    static const WCHAR targetW[] = {'t','a','r','g','e','t',0};
-    static const WCHAR uriW[] = {'/','u','r','i',0};
-    static const WCHAR rootW[] = {'/',0};
+    static const WCHAR typeW[] = L"type/subtype";
     IOpcRelationshipSet *relset, *relset2;
     IOpcPartUri *part_uri, *part_uri2;
     IOpcPartSet *partset, *partset2;
@@ -77,10 +74,10 @@ static void test_package(void)
     IOpcPartSet_Release(partset2);
 
     /* CreatePart */
-    hr = IOpcFactory_CreatePartUri(factory, uriW, &part_uri);
+    hr = IOpcFactory_CreatePartUri(factory, L"/uri", &part_uri);
     ok(SUCCEEDED(hr), "Failed to create part uri, hr %#lx.\n", hr);
 
-    hr = IOpcFactory_CreatePartUri(factory, uriW, &part_uri2);
+    hr = IOpcFactory_CreatePartUri(factory, L"/uri", &part_uri2);
     ok(SUCCEEDED(hr), "Failed to create part uri, hr %#lx.\n", hr);
 
     part = (void *)0xdeadbeef;
@@ -123,7 +120,7 @@ static void test_package(void)
     ok(SUCCEEDED(hr), "Failed to get part, hr %#lx.\n", hr);
     IOpcPart_Release(part2);
 
-    hr = IOpcFactory_CreatePartUri(factory, targetW, &part_uri2);
+    hr = IOpcFactory_CreatePartUri(factory, L"target", &part_uri2);
     ok(SUCCEEDED(hr), "Failed to create part uri, hr %#lx.\n", hr);
 
     hr = IOpcPartSet_GetPart(partset, part_uri2, &part2);
@@ -173,7 +170,7 @@ static void test_package(void)
     ok(SUCCEEDED(hr), "Failed to get relationship set, hr %#lx.\n", hr);
     ok(relset == relset2, "Expected same part set instance.\n");
 
-    hr = CreateUri(targetW, Uri_CREATE_ALLOW_RELATIVE, 0, &target_uri);
+    hr = CreateUri(L"target", Uri_CREATE_ALLOW_RELATIVE, 0, &target_uri);
     ok(SUCCEEDED(hr), "Failed to create target uri, hr %#lx.\n", hr);
 
     hr = IOpcRelationshipSet_CreateRelationship(relset, NULL, typeW, target_uri, OPC_URI_TARGET_MODE_INTERNAL, &rel);
@@ -227,7 +224,7 @@ static void test_package(void)
     ok(SUCCEEDED(hr), "Failed to create root uri, hr %#lx.\n", hr);
     hr = IOpcUri_GetRawUri(uri, &str);
     ok(SUCCEEDED(hr), "Failed to get raw uri, hr %#lx.\n", hr);
-    ok(!lstrcmpW(str, rootW), "Unexpected uri %s.\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"/"), "Unexpected uri %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
     IOpcUri_Release(uri);
 
@@ -258,7 +255,6 @@ static void test_stream_stat_(unsigned int line, IStream *stream, ULONG size)
 
 static void test_file_stream(void)
 {
-    static const WCHAR filereadW[] = {'o','p','c','f','i','l','e','r','e','a','d','.','e','x','t',0};
     WCHAR temppathW[MAX_PATH], pathW[MAX_PATH];
     IOpcFactory *factory;
     LARGE_INTEGER move;
@@ -274,7 +270,7 @@ static void test_file_stream(void)
 
     GetTempPathW(ARRAY_SIZE(temppathW), temppathW);
     lstrcpyW(pathW, temppathW);
-    lstrcatW(pathW, filereadW);
+    lstrcatW(pathW, L"opcfileread.ext");
     DeleteFileW(pathW);
 
     hr = IOpcFactory_CreateStreamOnFile(factory, pathW, OPC_STREAM_IO_READ, NULL, 0, NULL);
@@ -333,10 +329,7 @@ static void test_file_stream(void)
 
 static void test_relationship(void)
 {
-    static const WCHAR absoluteW[] = {'f','i','l','e',':','/','/','h','o','s','t','/','f','i','l','e','.','t','x','t',0};
-    static const WCHAR targetW[] = {'t','a','r','g','e','t',0};
-    static const WCHAR typeW[] = {'t','y','p','e',0};
-    static const WCHAR rootW[] = {'/',0};
+    static const WCHAR typeW[] = L"type";
     IUri *target_uri, *target_uri2, *uri;
     IOpcRelationship *rel, *rel2, *rel3;
     IOpcUri *source_uri, *source_uri2;
@@ -360,10 +353,10 @@ static void test_relationship(void)
         return;
     }
 
-    hr = CreateUri(targetW, Uri_CREATE_ALLOW_RELATIVE, 0, &target_uri);
+    hr = CreateUri(L"target", Uri_CREATE_ALLOW_RELATIVE, 0, &target_uri);
     ok(SUCCEEDED(hr), "Failed to create target uri, hr %#lx.\n", hr);
 
-    hr = CreateUri(absoluteW, 0, 0, &target_uri2);
+    hr = CreateUri(L"file://host/file.txt", 0, 0, &target_uri2);
     ok(SUCCEEDED(hr), "Failed to create target uri, hr %#lx.\n", hr);
 
     hr = IOpcPackage_GetRelationshipSet(package, &rels);
@@ -472,7 +465,7 @@ static void test_relationship(void)
     str = NULL;
     hr = IOpcUri_GetRawUri(source_uri, &str);
     ok(SUCCEEDED(hr), "Failed to get raw uri, hr %#lx.\n", hr);
-    ok(!lstrcmpW(rootW, str), "Unexpected uri %s.\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(L"/", str), "Unexpected uri %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     hr = IOpcRelationship_GetSourceUri(rel2, &source_uri2);
@@ -529,7 +522,6 @@ static void test_rel_part_uri(void)
         { L"/uri/_rels/uri.rels", TRUE },
         { L"/_rels/.rels", TRUE },
     };
-    static const WCHAR testuriW[] = {'/','u','r','i',0};
     IOpcPartUri *part_uri;
     IOpcFactory *factory;
     IOpcUri *source_uri;
@@ -538,7 +530,7 @@ static void test_rel_part_uri(void)
 
     factory = create_factory();
 
-    hr = IOpcFactory_CreatePartUri(factory, testuriW, &part_uri);
+    hr = IOpcFactory_CreatePartUri(factory, L"/uri", &part_uri);
     ok(SUCCEEDED(hr), "Failed to create part uri, hr %#lx.\n", hr);
 
     hr = IOpcPartUri_GetRelationshipsPartUri(part_uri, NULL);
@@ -653,8 +645,6 @@ static void test_rel_part_uri(void)
 
 static void test_part_enumerator(void)
 {
-    static const WCHAR typeW[] = {'t','y','p','e','/','s','u','b','t','y','p','e',0};
-    static const WCHAR uriW[] = {'/','u','r','i',0};
     IOpcPartEnumerator *partenum, *partenum2;
     IOpcPart *part, *part2;
     IOpcPartUri *part_uri;
@@ -707,10 +697,10 @@ static void test_part_enumerator(void)
     ok(hr == S_OK, "Failed to move, hr %#lx.\n", hr);
     ok(!ret, "Unexpected result %d.\n", ret);
 
-    hr = IOpcFactory_CreatePartUri(factory, uriW, &part_uri);
+    hr = IOpcFactory_CreatePartUri(factory, L"/uri", &part_uri);
     ok(SUCCEEDED(hr), "Failed to create part uri, hr %#lx.\n", hr);
 
-    hr = IOpcPartSet_CreatePart(parts, part_uri, typeW, OPC_COMPRESSION_NONE, &part);
+    hr = IOpcPartSet_CreatePart(parts, part_uri, L"type/subtype", OPC_COMPRESSION_NONE, &part);
     ok(SUCCEEDED(hr), "Failed to create a part, hr %#lx.\n", hr);
     IOpcPartUri_Release(part_uri);
 
@@ -815,8 +805,6 @@ static void test_part_enumerator(void)
 
 static void test_rels_enumerator(void)
 {
-    static const WCHAR typeW[] = {'t','y','p','e','/','s','u','b','t','y','p','e',0};
-    static const WCHAR targetW[] = {'t','a','r','g','e','t',0};
     IOpcRelationshipEnumerator *relsenum, *relsenum2;
     IOpcRelationship *rel, *rel2;
     IOpcPackage *package;
@@ -869,10 +857,10 @@ static void test_rels_enumerator(void)
     ok(hr == S_OK, "Failed to move, hr %#lx.\n", hr);
     ok(!ret, "Unexpected result %d.\n", ret);
 
-    hr = CreateUri(targetW, Uri_CREATE_ALLOW_RELATIVE, 0, &target_uri);
+    hr = CreateUri(L"target", Uri_CREATE_ALLOW_RELATIVE, 0, &target_uri);
     ok(SUCCEEDED(hr), "Failed to create target uri, hr %#lx.\n", hr);
 
-    hr = IOpcRelationshipSet_CreateRelationship(rels, NULL, typeW, target_uri, OPC_URI_TARGET_MODE_INTERNAL, &rel);
+    hr = IOpcRelationshipSet_CreateRelationship(rels, NULL, L"type/subtype", target_uri, OPC_URI_TARGET_MODE_INTERNAL, &rel);
     ok(SUCCEEDED(hr), "Failed to create relationship, hr %#lx.\n", hr);
 
     IUri_Release(target_uri);
