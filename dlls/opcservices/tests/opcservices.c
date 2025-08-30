@@ -672,6 +672,13 @@ static void test_part_enumerator(void)
     hr = IOpcPartEnumerator_MoveNext(partenum, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
+    ret = 123;
+    hr = IOpcPartEnumerator_MovePrevious(partenum, &ret);
+    todo_wine
+    ok(hr == OPC_E_ENUM_CANNOT_MOVE_PREVIOUS, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(ret == 123, "Unexpected result %d.\n", ret);
+
     ret = TRUE;
     hr = IOpcPartEnumerator_MoveNext(partenum, &ret);
     ok(hr == S_OK, "Failed to move, hr %#lx.\n", hr);
@@ -686,6 +693,13 @@ static void test_part_enumerator(void)
     hr = IOpcPartEnumerator_MovePrevious(partenum, &ret);
     ok(hr == S_OK, "Failed to move, hr %#lx.\n", hr);
     ok(!ret, "Unexpected result %d.\n", ret);
+
+    ret = 123;
+    hr = IOpcPartEnumerator_MovePrevious(partenum, &ret);
+    todo_wine
+    ok(hr == OPC_E_ENUM_CANNOT_MOVE_PREVIOUS, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(ret == 123, "Unexpected result %d.\n", ret);
 
     hr = IOpcFactory_CreatePartUri(factory, L"/uri", &part_uri);
     ok(hr == S_OK, "Failed to create part uri, hr %#lx.\n", hr);
@@ -771,6 +785,13 @@ static void test_part_enumerator(void)
 
     hr = IOpcPartEnumerator_GetCurrent(partenum, &part2);
     ok(hr == OPC_E_ENUM_INVALID_POSITION, "Unexpected hr %#lx.\n", hr);
+
+    ret = 123;
+    hr = IOpcPartEnumerator_MovePrevious(partenum, &ret);
+    todo_wine
+    ok(hr == OPC_E_ENUM_CANNOT_MOVE_PREVIOUS, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(ret == 123, "Unexpected result %d.\n", ret);
 
     hr = IOpcPartEnumerator_Clone(partenum, &partenum2);
     ok(hr == S_OK, "Clone failed, hr %#lx.\n", hr);
