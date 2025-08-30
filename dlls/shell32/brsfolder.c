@@ -50,6 +50,7 @@ typedef struct tagbrowse_info
     HWND          hwndTreeView;
     LPBROWSEINFOW lpBrowseInfo;
     LPITEMIDLIST  pidlRet;
+    LPITEMIDLIST  pidlRoot;
     LAYOUT_DATA  *layout;  /* filled by LayoutInit, used by LayoutUpdate */
     SIZE          szMin;
     ULONG         hNotify; /* change notification handle */
@@ -169,16 +170,6 @@ static void LayoutUpdate(HWND hwnd, LAYOUT_DATA *data, const LAYOUT_INFO *layout
     }
 }
 
-
-/******************************************************************************
- * InitializeTreeView [Internal]
- *
- * Called from WM_INITDIALOG handler.
- * 
- * PARAMS
- *  hwndParent [I] The BrowseForFolder dialog
- *  root       [I] ITEMIDLIST of the root shell folder
- */
 static void InitializeTreeView( browse_info *info )
 {
     LPITEMIDLIST pidlParent, pidlChild;
@@ -188,7 +179,7 @@ static void InitializeTreeView( browse_info *info )
     IEnumIDList * pEnumChildren = NULL;
     HTREEITEM item;
     DWORD flags;
-    LPCITEMIDLIST root = info->lpBrowseInfo->pidlRoot;
+    LPCITEMIDLIST root = info->pidlRoot;
 
     TRACE("%p\n", info );
     
@@ -925,7 +916,7 @@ static BOOL BrsFolder_OnSetExpanded(browse_info *info, LPVOID selection,
 
     /* Move pidlCurrent behind the SHITEMIDs in pidlSelection, which are the root of
      * the sub-tree currently displayed. */
-    pidlRoot = info->lpBrowseInfo->pidlRoot;
+    pidlRoot = info->pidlRoot;
     pidlCurrent = pidlSelection;
     while (!_ILIsEmpty(pidlRoot) && _ILIsEqualSimple(pidlRoot, pidlCurrent)) {
         pidlRoot = ILGetNext(pidlRoot);
@@ -1030,6 +1021,8 @@ static INT BrsFolder_OnDestroy(browse_info *info)
         info->layout = NULL;
     }
 
+    ILFree(info->pidlRoot);
+    info->pidlRoot = NULL;
     SHChangeNotifyDeregister(info->hNotify);
 
     return 0;
@@ -1230,15 +1223,35 @@ LPITEMIDLIST WINAPI SHBrowseForFolderW (LPBROWSEINFOW lpbi)
     hr = OleInitialize(NULL);
 
     if (lpbi->ulFlags & BIF_NEWDIALOGSTYLE)
+    {
         templateName = L"SHNEWBRSFORFOLDER_MSGBOX";
+        info.pidlRoot = ILClone(lpbi->pidlRoot);
+    }
     else
+    {
         templateName = L"SHBRSFORFOLDER_MSGBOX";
+
+        if (IS_INTRESOURCE(lpbi->pidlRoot))
+        {
+            hr = SHGetFolderLocation(NULL, LOWORD(lpbi->pidlRoot) | CSIDL_FLAG_CREATE, NULL, 0, &info.pidlRoot);
+            if (FAILED(hr))
+            {
+                WARN("Failed to create a PIDL for folder %#x, hr %#lx.\n", LOWORD(lpbi->pidlRoot), hr);
+                return NULL;
+            }
+        }
+        else
+        {
+            info.pidlRoot = ILClone(lpbi->pidlRoot);
+        }
+    }
     r = DialogBoxParamW( shell32_hInstance, templateName, lpbi->hwndOwner,
 	                 BrsFolderDlgProc, (LPARAM)&info );
     if (SUCCEEDED(hr)) 
         OleUninitialize();
     if (!r)
     {
+        ILFree(info.pidlRoot);
         ILFree(info.pidlRet);
         return NULL;
     }

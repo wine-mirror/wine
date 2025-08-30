@@ -410,5 +410,5 @@ START_TEST(brsfolder)
 {
     test_click_make_new_folder_button();
     test_selection();
-    if (!winetest_platform_is_wine) test_csidl_pidlroot();
+    test_csidl_pidlroot();
 }
