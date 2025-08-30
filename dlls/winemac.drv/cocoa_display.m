@@ -21,6 +21,7 @@
 #include "config.h"
 
 #import <AppKit/AppKit.h>
+#import <IOKit/graphics/IOGraphicsLib.h>
 #ifdef HAVE_MTLDEVICE_REGISTRYID
 #import <Metal/Metal.h>
 #endif
@@ -650,6 +651,51 @@ static CFDataRef get_edid_from_dcpav_service_proxy(uint32_t vendor_number, uint3
     return edid;
 }
 
+static CFDataRef get_edid_from_io_display_edid(uint32_t vendor_number, uint32_t model_number, uint32_t serial_number)
+{
+    io_iterator_t iterator;
+    CFDataRef data = NULL;
+    kern_return_t result;
+    io_service_t service;
+
+    result = IOServiceGetMatchingServices(0, IOServiceMatching("IODisplayConnect"), &iterator);
+    if (result != KERN_SUCCESS)
+        return NULL;
+
+    while((service = IOIteratorNext(iterator)))
+    {
+        uint32_t vendor_number_edid, model_number_edid, serial_number_edid;
+        const unsigned char *edid_ptr;
+        CFDictionaryRef display_dict;
+        CFDataRef edid;
+
+        display_dict = IOCreateDisplayInfoDictionary(service, 0);
+        if (display_dict)
+        {
+            edid = CFDictionaryGetValue(display_dict, CFSTR(kIODisplayEDIDKey));
+            if (edid && (CFDataGetLength(edid) >= 13))
+            {
+                edid_ptr = CFDataGetBytePtr(edid);
+                vendor_number_edid = (uint16_t)(edid_ptr[9] | (edid_ptr[8] << 8));
+                model_number_edid = *((uint16_t *)&edid_ptr[10]);
+                serial_number_edid = *((uint32_t *)&edid_ptr[12]);
+                if (vendor_number == vendor_number_edid &&
+                        model_number == model_number_edid &&
+                        /* CGDisplaySerialNumber() isn't reliable on Intel machines; it returns 0 sometimes. */
+                        (!serial_number || serial_number == serial_number_edid))
+                    data = CFDataCreateCopy(NULL, edid);
+            }
+            CFRelease(display_dict);
+        }
+        IOObjectRelease(service);
+        if (data)
+            break;
+    }
+
+    IOObjectRelease(iterator);
+    return data;
+}
+
 /***********************************************************************
  *              macdrv_get_monitors
  *
@@ -731,6 +777,8 @@ int macdrv_get_monitors(CGDirectDisplayID adapter_id, struct macdrv_monitor** ne
                 serial_number = CGDisplaySerialNumber(monitors[monitor_count].id);
 
                 edid_data = get_edid_from_dcpav_service_proxy(vendor_number, model_number, serial_number);
+                if (!edid_data)
+                    edid_data = get_edid_from_io_display_edid(vendor_number, model_number, serial_number);
                 if (edid_data && (length = CFDataGetLength(edid_data)))
                 {
                     const unsigned char *edid_ptr = CFDataGetBytePtr(edid_data);
