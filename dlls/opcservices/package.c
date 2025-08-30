@@ -260,10 +260,10 @@ static HRESULT WINAPI opc_part_enum_MovePrevious(IOpcPartEnumerator *iface, BOOL
     if (has_part_collection_changed(part_enum))
         return OPC_E_ENUM_COLLECTION_CHANGED;
 
-    if (part_enum->pos != ~(size_t)0)
-        part_enum->pos--;
+    if (part_enum->pos == ~(size_t)0)
+        return OPC_E_ENUM_CANNOT_MOVE_PREVIOUS;
 
-    *has_previous = part_enum->pos != ~(size_t)0;
+    *has_previous = --part_enum->pos != ~(size_t)0;
 
     return S_OK;
 }
