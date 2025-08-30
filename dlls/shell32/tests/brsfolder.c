@@ -357,8 +357,58 @@ static void test_selection(void)
     CoUninitialize();
 }
 
+static void CALLBACK ok_timer_callback(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
+{
+    KillTimer(hwnd, idEvent);
+    SendMessageA(hwnd, WM_COMMAND, IDOK, 0);
+}
+
+static int CALLBACK csidl_pidlroot_callback(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
+{
+    switch (uMsg)
+    {
+    case BFFM_INITIALIZED:
+        SetTimer(hwnd, 0, TIMER_WAIT_MS, ok_timer_callback);
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static void test_csidl_pidlroot(void)
+{
+    BROWSEINFOW bi = { 0 };
+    LPITEMIDLIST pidl;
+    HRESULT hr;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* pidlRoot accepts CSIDL_* constants, unless BIF_NEWDIALOGSTYLE is used. */
+    bi.lpszTitle = L"test_csidl_pidlroot";
+    bi.lpfn = csidl_pidlroot_callback;
+
+    bi.pidlRoot = LongToPtr(CSIDL_DRIVES);
+    pidl = SHBrowseForFolderW(&bi);
+    ok(!!pidl, "Unexpected pidl.\n");
+    CoTaskMemFree(pidl);
+
+    bi.pidlRoot = LongToPtr(CSIDL_DRIVES | 0xff00);
+    pidl = SHBrowseForFolderW(&bi);
+    ok(!!pidl, "Unexpected pidl.\n");
+    CoTaskMemFree(pidl);
+
+    /* Invalid CSIDL folder will not open a window */
+    bi.pidlRoot = LongToPtr(0x000c);
+    pidl = SHBrowseForFolderW(&bi);
+    ok(!pidl, "Unexpected pidl.\n");
+
+    CoUninitialize();
+}
+
 START_TEST(brsfolder)
 {
     test_click_make_new_folder_button();
     test_selection();
+    if (!winetest_platform_is_wine) test_csidl_pidlroot();
 }
