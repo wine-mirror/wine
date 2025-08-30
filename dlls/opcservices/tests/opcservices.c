@@ -679,9 +679,7 @@ static void test_part_enumerator(void)
 
     ret = 123;
     hr = IOpcPartEnumerator_MoveNext(partenum, &ret);
-    todo_wine
     ok(hr == OPC_E_ENUM_CANNOT_MOVE_NEXT, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(ret == 123, "Unexpected result %d.\n", ret);
 
     ret = TRUE;
@@ -750,9 +748,7 @@ static void test_part_enumerator(void)
 
     ret = 123;
     hr = IOpcPartEnumerator_MoveNext(partenum, &ret);
-    todo_wine
     ok(hr == OPC_E_ENUM_CANNOT_MOVE_NEXT, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(ret == 123, "Unexpected result %d.\n", ret);
 
     part2 = (void *)0xdeadbeef;

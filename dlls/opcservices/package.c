@@ -237,7 +237,10 @@ static HRESULT WINAPI opc_part_enum_MoveNext(IOpcPartEnumerator *iface, BOOL *ha
     if (has_part_collection_changed(part_enum))
         return OPC_E_ENUM_COLLECTION_CHANGED;
 
-    if (part_enum->part_set->count && (part_enum->pos == ~(size_t)0 || part_enum->pos < part_enum->part_set->count))
+    if (part_enum->pos == part_enum->part_set->count)
+        return OPC_E_ENUM_CANNOT_MOVE_NEXT;
+
+    if (part_enum->pos == ~(size_t)0 || part_enum->pos < part_enum->part_set->count)
         part_enum->pos++;
 
     *has_next = part_enum->pos < part_enum->part_set->count;
