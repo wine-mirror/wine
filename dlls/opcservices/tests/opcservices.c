@@ -58,12 +58,7 @@ static void test_package(void)
     factory = create_factory();
 
     hr = IOpcFactory_CreatePackage(factory, &package);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOTIMPL) /* Vista */, "Failed to create a package, hr %#lx.\n", hr);
-    if (FAILED(hr))
-    {
-        IOpcFactory_Release(factory);
-        return;
-    }
+    ok(hr == S_OK, "Failed to create a package, hr %#lx.\n", hr);
 
     hr = IOpcPackage_GetPartSet(package, &partset);
     ok(SUCCEEDED(hr), "Failed to create a part set, hr %#lx.\n", hr);
@@ -346,12 +341,7 @@ static void test_relationship(void)
     factory = create_factory();
 
     hr = IOpcFactory_CreatePackage(factory, &package);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOTIMPL) /* Vista */, "Failed to create a package, hr %#lx.\n", hr);
-    if (FAILED(hr))
-    {
-        IOpcFactory_Release(factory);
-        return;
-    }
+    ok(hr == S_OK, "Failed to create a package, hr %#lx.\n", hr);
 
     hr = CreateUri(L"target", Uri_CREATE_ALLOW_RELATIVE, 0, &target_uri);
     ok(SUCCEEDED(hr), "Failed to create target uri, hr %#lx.\n", hr);
@@ -657,12 +647,7 @@ static void test_part_enumerator(void)
     factory = create_factory();
 
     hr = IOpcFactory_CreatePackage(factory, &package);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOTIMPL) /* Vista */, "Failed to create a package, hr %#lx.\n", hr);
-    if (FAILED(hr))
-    {
-        IOpcFactory_Release(factory);
-        return;
-    }
+    ok(hr == S_OK, "Failed to create a package, hr %#lx.\n", hr);
 
     hr = IOpcPackage_GetPartSet(package, &parts);
     ok(SUCCEEDED(hr), "Failed to get part set, hr %#lx.\n", hr);
@@ -817,12 +802,7 @@ static void test_rels_enumerator(void)
     factory = create_factory();
 
     hr = IOpcFactory_CreatePackage(factory, &package);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOTIMPL) /* Vista */, "Failed to create a package, hr %#lx.\n", hr);
-    if (FAILED(hr))
-    {
-        IOpcFactory_Release(factory);
-        return;
-    }
+    ok(hr == S_OK, "Failed to create a package, hr %#lx.\n", hr);
 
     hr = IOpcPackage_GetRelationshipSet(package, &rels);
     ok(SUCCEEDED(hr), "Failed to get part set, hr %#lx.\n", hr);
@@ -1205,12 +1185,7 @@ static void test_write_package(void)
     factory = create_factory();
 
     hr = IOpcFactory_CreatePackage(factory, &package);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOTIMPL) /* Vista */, "Failed to create a package, hr %#lx.\n", hr);
-    if (FAILED(hr))
-    {
-        IOpcFactory_Release(factory);
-        return;
-    }
+    ok(hr == S_OK, "Failed to create a package, hr %#lx.\n", hr);
 
     hr = IOpcFactory_WritePackageToStream(factory, NULL, OPC_WRITE_FORCE_ZIP32, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
