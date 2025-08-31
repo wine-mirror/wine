@@ -422,16 +422,18 @@ static HRESULT WINAPI display_updater_put_AppMediaId( ISystemMediaTransportContr
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI display_updater_get_Thumbnail( ISystemMediaTransportControlsDisplayUpdater *iface, __x_ABI_CWindows_CStorage_CStreams_CIRandomAccessStreamReference **value )
+static HRESULT WINAPI display_updater_get_Thumbnail( ISystemMediaTransportControlsDisplayUpdater *iface, IRandomAccessStreamReference **value )
 {
     FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+
+    *value = NULL;
+    return S_OK;
 }
 
-static HRESULT WINAPI display_updater_put_Thumbnail( ISystemMediaTransportControlsDisplayUpdater *iface, __x_ABI_CWindows_CStorage_CStreams_CIRandomAccessStreamReference *value )
+static HRESULT WINAPI display_updater_put_Thumbnail( ISystemMediaTransportControlsDisplayUpdater *iface, IRandomAccessStreamReference *value )
 {
     FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI display_updater_get_MusicProperties( ISystemMediaTransportControlsDisplayUpdater *iface, IMusicDisplayProperties **value )
