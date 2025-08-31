@@ -118,6 +118,8 @@ static void test_MediaControlStatics(void)
 
     hr = ISystemMediaTransportControls_put_IsPlayEnabled( media_control_statics, FALSE );
     ok( hr == S_OK || broken(hr == S_FALSE) /* Win10 1507,1607 */, "got hr %#lx.\n", hr );
+    hr = ISystemMediaTransportControls_put_IsStopEnabled( media_control_statics, FALSE );
+    ok( hr == S_OK || broken(hr == S_FALSE) /* Win10 1507,1607 */, "got hr %#lx.\n", hr );
     hr = ISystemMediaTransportControls_put_IsPauseEnabled( media_control_statics, FALSE );
     ok( hr == S_OK || broken(hr == S_FALSE) /* Win10 1507,1607 */, "got hr %#lx.\n", hr );
     hr = ISystemMediaTransportControls_put_IsPreviousEnabled( media_control_statics, FALSE );
@@ -129,6 +131,11 @@ static void test_MediaControlStatics(void)
 
     value = TRUE;
     hr = ISystemMediaTransportControls_get_IsPlayEnabled( media_control_statics, &value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( value == FALSE, "got value %d.\n", value );
+
+    value = TRUE;
+    hr = ISystemMediaTransportControls_get_IsStopEnabled( media_control_statics, &value );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( value == FALSE, "got value %d.\n", value );
 
