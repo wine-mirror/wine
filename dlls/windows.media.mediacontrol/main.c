@@ -24,6 +24,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mediacontrol);
 
+static EventRegistrationToken dummy_token = {.value = 0xdeadbeef};
+
 struct media_control_statics
 {
     IActivationFactory IActivationFactory_iface;
@@ -800,13 +802,14 @@ static HRESULT WINAPI media_control_add_ButtonPressed( ISystemMediaTransportCont
     ITypedEventHandler_SystemMediaTransportControls_SystemMediaTransportControlsButtonPressedEventArgs *handler, EventRegistrationToken *token )
 {
     FIXME( "iface %p, handler %p, token %p stub!\n", iface, handler, token );
-    return E_NOTIMPL;
+    *token = dummy_token;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_control_remove_ButtonPressed( ISystemMediaTransportControls *iface, EventRegistrationToken token )
 {
     FIXME( "iface %p, token %#I64x stub!\n", iface, token.value );
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_control_add_PropertyChanged( ISystemMediaTransportControls *iface,
