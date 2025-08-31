@@ -948,8 +948,32 @@ NTSTATUS WINAPI NtGdiDdDDIOpenKeyedMutexFromNtHandle( D3DKMT_OPENKEYEDMUTEXFROMN
  */
 NTSTATUS WINAPI NtGdiDdDDICreateSynchronizationObject2( D3DKMT_CREATESYNCHRONIZATIONOBJECT2 *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_object *device, *sync;
+    NTSTATUS status;
+
+    FIXME( "params %p semi-stub!\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    if (!(device = get_d3dkmt_object( params->hDevice, D3DKMT_DEVICE ))) return STATUS_INVALID_PARAMETER;
+
+    if (params->Info.Type < D3DDDI_SYNCHRONIZATION_MUTEX || params->Info.Type > D3DDDI_MONITORED_FENCE)
+        return STATUS_INVALID_PARAMETER;
+
+    if (params->Info.Type == D3DDDI_CPU_NOTIFICATION && !params->Info.CPUNotification.Event) return STATUS_INVALID_HANDLE;
+    if (params->Info.Flags.NtSecuritySharing && !params->Info.Flags.Shared) return STATUS_INVALID_PARAMETER;
+
+    if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) return status;
+    if (!params->Info.Flags.Shared) status = alloc_object_handle( sync );
+    else status = d3dkmt_object_create( sync, params->Info.Flags.NtSecuritySharing );
+    if (status) goto failed;
+
+    if (params->Info.Flags.Shared) params->Info.SharedHandle = sync->shared ? 0 : sync->global;
+    params->hSyncObject = sync->local;
+    return STATUS_SUCCESS;
+
+failed:
+    d3dkmt_object_free( sync );
+    return status;
 }
 
 /******************************************************************************
@@ -957,8 +981,23 @@ NTSTATUS WINAPI NtGdiDdDDICreateSynchronizationObject2( D3DKMT_CREATESYNCHRONIZA
  */
 NTSTATUS WINAPI NtGdiDdDDICreateSynchronizationObject( D3DKMT_CREATESYNCHRONIZATIONOBJECT *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    D3DKMT_CREATESYNCHRONIZATIONOBJECT2 params2 = {0};
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+
+    if (params->Info.Type != D3DDDI_SYNCHRONIZATION_MUTEX && params->Info.Type != D3DDDI_SEMAPHORE)
+        return STATUS_INVALID_PARAMETER;
+
+    params2.hDevice = params->hDevice;
+    params2.Info.Type = params->Info.Type;
+    params2.Info.Flags.Shared = 1;
+    memcpy( &params2.Info.Reserved, &params->Info.Reserved, sizeof(params->Info.Reserved) );
+    status = NtGdiDdDDICreateSynchronizationObject2( &params2 );
+    params->hSyncObject = params2.hSyncObject;
+    return status;
 }
 
 /******************************************************************************
@@ -1002,6 +1041,13 @@ NTSTATUS WINAPI NtGdiDdDDIOpenSynchronizationObject( D3DKMT_OPENSYNCHRONIZATIONO
  */
 NTSTATUS WINAPI NtGdiDdDDIDestroySynchronizationObject( const D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_object *sync;
+
+    TRACE( "params %p\n", params );
+
+    if (!(sync = get_d3dkmt_object( params->hSyncObject, D3DKMT_SYNC )))
+        return STATUS_INVALID_PARAMETER;
+    d3dkmt_object_free( sync );
+
+    return STATUS_SUCCESS;
 }

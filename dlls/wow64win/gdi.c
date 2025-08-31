@@ -750,6 +750,7 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateSynchronizationObject2( UINT *args )
 {
     D3DKMT_CREATESYNCHRONIZATIONOBJECT2 *desc = get_ptr( &args );
 
+    if (!desc) return STATUS_INVALID_PARAMETER;
     if (desc->Info.Type == D3DDDI_CPU_NOTIFICATION)
     {
         ULONG event = HandleToUlong( desc->Info.CPUNotification.Event );

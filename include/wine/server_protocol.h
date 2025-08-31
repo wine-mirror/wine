@@ -959,6 +959,7 @@ enum d3dkmt_type
     D3DKMT_DEVICE       = 2,
     D3DKMT_SOURCE       = 3,
     D3DKMT_MUTEX        = 4,
+    D3DKMT_SYNC         = 5,
 };
 
 
@@ -6905,6 +6906,6 @@ union generic_reply
     struct d3dkmt_object_create_reply d3dkmt_object_create_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 903
+#define SERVER_PROTOCOL_VERSION 904
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

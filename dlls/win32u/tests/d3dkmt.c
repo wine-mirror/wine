@@ -80,8 +80,8 @@ static void run_in_process_( const char *file, int line, const char *args )
     name = file;
     if ((tmp = strrchr( name, '\\' ))) name = tmp;
     if ((tmp = strrchr( name, '/' ))) name = tmp;
-    if ((tmp = strrchr( name, '.' ))) *tmp = 0;
     strcpy( test, name );
+    if ((tmp = strrchr( test, '.' ))) *tmp = 0;
 
     argc = winetest_get_mainargs( &argv );
     sprintf( cmdline, "%s %s %s", argv[0], argc > 1 ? argv[1] : test, args );
@@ -1260,145 +1260,142 @@ static void test_D3DKMTCreateSynchronizationObject( void )
 
     /* D3DKMTCreateSynchronizationObject creates a local D3DKMT_HANDLE */
     status = D3DKMTCreateSynchronizationObject( NULL );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     status = D3DKMTCreateSynchronizationObject( &create );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     create.hDevice = create_device.hDevice;
     status = D3DKMTCreateSynchronizationObject( &create );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     create.hDevice = 0;
     create.Info.Type = D3DDDI_SYNCHRONIZATION_MUTEX;
     status = D3DKMTCreateSynchronizationObject( &create );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     create.hDevice = create_device.hDevice;
     create.Info.Type = D3DDDI_SYNCHRONIZATION_MUTEX;
     create.hSyncObject = 0x1eadbeed;
     status = D3DKMTCreateSynchronizationObject( &create );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create.hSyncObject, &next_local );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create.hSyncObject, &next_local );
     destroy.hSyncObject = create.hSyncObject;
 
     /* local handles are monotonically increasing */
     create.hSyncObject = 0x1eadbeed;
     status = D3DKMTCreateSynchronizationObject( &create );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create.hSyncObject, &next_local );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create.hSyncObject, &next_local );
 
     status = D3DKMTDestroySynchronizationObject( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     /* destroying multiple times fails */
     status = D3DKMTDestroySynchronizationObject( &destroy );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
     destroy.hSyncObject = create.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
     create.Info.Type = D3DDDI_SEMAPHORE;
     create.hSyncObject = 0x1eadbeed;
     status = D3DKMTCreateSynchronizationObject( &create );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create.hSyncObject, &next_local );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create.hSyncObject, &next_local );
     destroy.hSyncObject = create.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
     create.Info.Type = D3DDDI_FENCE;
     status = D3DKMTCreateSynchronizationObject( &create );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
 
     /* D3DKMTCreateSynchronizationObject2 can create local D3DKMT_HANDLE */
     status = D3DKMTCreateSynchronizationObject2( NULL );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     status = D3DKMTCreateSynchronizationObject2( &create2 );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     create2.hDevice = create_device.hDevice;
     status = D3DKMTCreateSynchronizationObject2( &create2 );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     create2.hDevice = 0;
     create2.Info.Type = D3DDDI_SYNCHRONIZATION_MUTEX;
     status = D3DKMTCreateSynchronizationObject2( &create2 );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     create2.hDevice = create_device.hDevice;
     create2.Info.Type = D3DDDI_SYNCHRONIZATION_MUTEX;
     create2.hSyncObject = create2.Info.SharedHandle = 0x1eadbeed;
     status = D3DKMTCreateSynchronizationObject2( &create2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create2.hSyncObject, &next_local );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hSyncObject, &next_local );
 
     destroy.hSyncObject = create2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
 
     create2.Info.Type = D3DDDI_SEMAPHORE;
     create2.hSyncObject = create2.Info.SharedHandle = 0x1eadbeed;
     status = D3DKMTCreateSynchronizationObject2( &create2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create2.hSyncObject, &next_local );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hSyncObject, &next_local );
     destroy.hSyncObject = create2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
     create2.Info.Type = D3DDDI_FENCE;
     create2.hSyncObject = create2.Info.SharedHandle = 0x1eadbeed;
     status = D3DKMTCreateSynchronizationObject2( &create2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create2.hSyncObject, &next_local );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hSyncObject, &next_local );
     destroy.hSyncObject = create2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
     create2.Info.Type = D3DDDI_CPU_NOTIFICATION;
     status = D3DKMTCreateSynchronizationObject2( &create2 );
-    todo_wine ok_nt( STATUS_INVALID_HANDLE, status );
+    ok_nt( STATUS_INVALID_HANDLE, status );
     create2.Info.CPUNotification.Event = CreateEventW( NULL, FALSE, FALSE, NULL );
     create2.hSyncObject = create2.Info.SharedHandle = 0x1eadbeed;
     status = D3DKMTCreateSynchronizationObject2( &create2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create2.hSyncObject, &next_local );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hSyncObject, &next_local );
     destroy.hSyncObject = create2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     CloseHandle( create2.Info.CPUNotification.Event );
     create2.Info.CPUNotification.Event = NULL;
 
     create2.Info.Type = D3DDDI_MONITORED_FENCE;
     create2.hSyncObject = create2.Info.SharedHandle = 0x1eadbeed;
     status = D3DKMTCreateSynchronizationObject2( &create2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    if (status == STATUS_SUCCESS)
-    {
-        todo_wine check_d3dkmt_local( create2.hSyncObject, &next_local );
-        destroy.hSyncObject = create2.hSyncObject;
-        status = D3DKMTDestroySynchronizationObject( &destroy );
-        todo_wine ok_nt( STATUS_SUCCESS, status );
-    }
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hSyncObject, &next_local );
+    destroy.hSyncObject = create2.hSyncObject;
+    status = D3DKMTDestroySynchronizationObject( &destroy );
+    ok_nt( STATUS_SUCCESS, status );
 
 
     create2.Info.Type = D3DDDI_SYNCHRONIZATION_MUTEX;
     create2.Info.Flags.Shared = 1;
     create2.hSyncObject = create2.Info.SharedHandle = 0x1eadbeed;
     status = D3DKMTCreateSynchronizationObject2( &create2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create2.hSyncObject, &next_local );
-    todo_wine check_d3dkmt_global( create2.Info.SharedHandle );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hSyncObject, &next_local );
+    check_d3dkmt_global( create2.Info.SharedHandle );
     destroy.hSyncObject = create2.hSyncObject;
 
     create2.hSyncObject = create2.Info.SharedHandle = 0x1eadbeed;
     status = D3DKMTCreateSynchronizationObject2( &create2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create2.hSyncObject, &next_local );
-    todo_wine check_d3dkmt_global( create2.Info.SharedHandle );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hSyncObject, &next_local );
+    check_d3dkmt_global( create2.Info.SharedHandle );
 
     status = D3DKMTDestroySynchronizationObject( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
     /* cannot destroy the global D3DKMT_HANDLE */
     destroy.hSyncObject = create2.Info.SharedHandle;
     status = D3DKMTDestroySynchronizationObject( &destroy );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
 
     /* D3DKMTOpenSynchronizationObject creates a new local D3DKMT_HANDLE */
@@ -1422,13 +1419,14 @@ static void test_D3DKMTCreateSynchronizationObject( void )
     todo_wine ok_nt( STATUS_SUCCESS, status );
     /* destroying multiple times fails */
     status = D3DKMTDestroySynchronizationObject( &destroy );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
     /* the D3DKMT object can still be opened */
     open.hSyncObject = 0x1eadbeed;
     status = D3DKMTOpenSynchronizationObject( &open );
     todo_wine ok_nt( STATUS_SUCCESS, status );
     todo_wine check_d3dkmt_local( open.hSyncObject, &next_local );
+    next_local = 0;
 
     destroy.hSyncObject = open.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy );
@@ -1436,7 +1434,7 @@ static void test_D3DKMTCreateSynchronizationObject( void )
 
     destroy.hSyncObject = create2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     /* the global D3DKMT_HANDLE is destroyed with last reference */
     status = D3DKMTOpenSynchronizationObject( &open );
     todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
@@ -1446,7 +1444,7 @@ static void test_D3DKMTCreateSynchronizationObject( void )
     create2.Info.Flags.Shared = 0;
     create2.Info.Flags.NtSecuritySharing = 1;
     status = D3DKMTCreateSynchronizationObject2( &create2 );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     if (broken( !status ))
     {
         check_d3dkmt_local( create2.hSyncObject, &next_local );
@@ -1459,29 +1457,29 @@ static void test_D3DKMTCreateSynchronizationObject( void )
     create2.Info.Flags.NtSecuritySharing = 1;
     create2.hSyncObject = create2.Info.SharedHandle = 0x1eadbeed;
     status = D3DKMTCreateSynchronizationObject2( &create2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create2.hSyncObject, &next_local );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hSyncObject, &next_local );
     ok( create2.Info.SharedHandle == 0x1eadbeed || !create2.Info.SharedHandle,
         "got Info.SharedHandle %#x\n", create2.Info.SharedHandle );
 
     destroy.hSyncObject = create2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
 
     create2.Info.Flags.NtSecuritySharing = 0;
     create2.hSyncObject = create2.Info.SharedHandle = 0x1eadbeed;
     status = D3DKMTCreateSynchronizationObject2( &create2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create2.hSyncObject, &next_local );
-    todo_wine check_d3dkmt_global( create2.Info.SharedHandle );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hSyncObject, &next_local );
+    check_d3dkmt_global( create2.Info.SharedHandle );
 
     sprintf( buffer, "test_D3DKMTCreateSynchronizationObject %u", create2.Info.SharedHandle );
     run_in_process( buffer );
 
     destroy.hSyncObject = create2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
     open.hSharedHandle = create2.Info.SharedHandle;
     status = D3DKMTOpenSynchronizationObject( &open );
@@ -2160,43 +2158,43 @@ static void test_D3DKMTShareObjects( void )
     create_sync.Info.Type = D3DDDI_SYNCHRONIZATION_MUTEX;
     create_sync.hSyncObject = 0x1eadbeed;
     status = D3DKMTCreateSynchronizationObject( &create_sync );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     handle = (HANDLE)0xdeadbeef;
     status = D3DKMTShareObjects( 1, &create_sync.hSyncObject, &attr, STANDARD_RIGHTS_WRITE, &handle );
     todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
     if (broken( !status )) CloseHandle( handle );
     destroy_sync.hSyncObject = create_sync.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy_sync );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
     /* D3DKMTShareObjects doesn't work with Shared = 1/0 alone */
     create_sync2.hDevice = create_device.hDevice;
     create_sync2.Info.Type = D3DDDI_SYNCHRONIZATION_MUTEX;
     status = D3DKMTCreateSynchronizationObject2( &create_sync2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     handle = (HANDLE)0xdeadbeef;
     status = D3DKMTShareObjects( 1, &create_sync2.hSyncObject, &attr, STANDARD_RIGHTS_WRITE, &handle );
     todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
     if (broken( !status )) CloseHandle( handle );
     destroy_sync.hSyncObject = create_sync2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy_sync );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
     create_sync2.Info.Flags.Shared = 1;
     status = D3DKMTCreateSynchronizationObject2( &create_sync2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     handle = (HANDLE)0xdeadbeef;
     status = D3DKMTShareObjects( 1, &create_sync2.hSyncObject, &attr, STANDARD_RIGHTS_WRITE, &handle );
     todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
     if (broken( !status )) CloseHandle( handle );
     destroy_sync.hSyncObject = create_sync2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy_sync );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
     /* D3DKMTShareObjects requires NtSecuritySharing (which requires Shared = 1) */
     create_sync2.Info.Flags.NtSecuritySharing = 1;
     status = D3DKMTCreateSynchronizationObject2( &create_sync2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     InitializeObjectAttributes( &attr, &name, 0, 0, NULL );
     handle = (HANDLE)0xdeadbeef;
     status = D3DKMTShareObjects( 1, &create_sync2.hSyncObject, &attr, STANDARD_RIGHTS_WRITE, &handle );
@@ -2210,11 +2208,11 @@ static void test_D3DKMTShareObjects( void )
     /* cannot destroy the handle */
     destroy_sync.hSyncObject = (UINT_PTR)handle;
     status = D3DKMTDestroySynchronizationObject( &destroy_sync );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
     destroy_sync.hSyncObject = create_sync2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy_sync );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
 
     /* the sync object can be opened from the NT handle */
@@ -2522,7 +2520,7 @@ static void test_D3DKMTShareObjects( void )
     create_sync2.hDevice = create_device.hDevice;
     create_sync2.Info.Type = D3DDDI_SYNCHRONIZATION_MUTEX;
     status = D3DKMTCreateSynchronizationObject2( &create_sync2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     handle = (HANDLE)0xdeadbeef;
 
     create_mutex2.Flags.NtSecuritySharing = 1;
@@ -2582,7 +2580,7 @@ static void test_D3DKMTShareObjects( void )
 
     destroy_sync.hSyncObject = create_sync2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy_sync );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     create_sync2.hSyncObject = 0;
 
     destroy_alloc.hResource = create_alloc.hResource;

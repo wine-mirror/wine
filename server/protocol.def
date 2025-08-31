@@ -975,6 +975,7 @@ enum d3dkmt_type
     D3DKMT_DEVICE       = 2,
     D3DKMT_SOURCE       = 3,
     D3DKMT_MUTEX        = 4,
+    D3DKMT_SYNC         = 5,
 };
 
 /****************************************************************/
