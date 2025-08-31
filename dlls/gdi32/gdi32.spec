@@ -126,6 +126,7 @@
 @ stdcall D3DKMTOpenKeyedMutex(ptr) win32u.NtGdiDdDDIOpenKeyedMutex
 @ stdcall D3DKMTOpenKeyedMutex2(ptr) win32u.NtGdiDdDDIOpenKeyedMutex2
 @ stdcall D3DKMTOpenKeyedMutexFromNtHandle(ptr) win32u.NtGdiDdDDIOpenKeyedMutexFromNtHandle
+@ stdcall D3DKMTOpenNtHandleFromName(ptr) win32u.NtGdiDdDDIOpenNtHandleFromName
 @ stdcall D3DKMTOpenResource(ptr) win32u.NtGdiDdDDIOpenResource
 @ stdcall D3DKMTOpenResource2(ptr) win32u.NtGdiDdDDIOpenResource2
 @ stdcall D3DKMTOpenResourceFromNtHandle(ptr) win32u.NtGdiDdDDIOpenResourceFromNtHandle

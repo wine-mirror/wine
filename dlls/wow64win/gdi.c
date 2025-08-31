@@ -977,6 +977,25 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenKeyedMutexFromNtHandle( UINT *args )
     return status;
 }
 
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenNtHandleFromName( UINT *args )
+{
+    struct
+    {
+        DWORD dwDesiredAccess;
+        ULONG pObjAttrib;
+        ULONG hNtHandle;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_OPENNTHANDLEFROMNAME desc;
+    struct object_attr64 attr;
+    NTSTATUS status;
+
+    desc.dwDesiredAccess = desc32->dwDesiredAccess;
+    desc.pObjAttrib = objattr_32to64( &attr, UlongToPtr( desc32->pObjAttrib ) );
+    status = NtGdiDdDDIOpenNtHandleFromName( &desc );
+    desc32->hNtHandle = HandleToUlong( desc.hNtHandle );
+    return status;
+}
+
 NTSTATUS WINAPI wow64_NtGdiDdDDIOpenResource( UINT *args )
 {
     struct

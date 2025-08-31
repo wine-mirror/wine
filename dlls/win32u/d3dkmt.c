@@ -798,6 +798,15 @@ NTSTATUS WINAPI NtGdiDdDDIOpenResourceFromNtHandle( D3DKMT_OPENRESOURCEFROMNTHAN
 }
 
 /******************************************************************************
+ *           NtGdiDdDDIOpenNtHandleFromName    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenNtHandleFromName( D3DKMT_OPENNTHANDLEFROMNAME *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
  *           NtGdiDdDDIQueryResourceInfo    (win32u.@)
  */
 NTSTATUS WINAPI NtGdiDdDDIQueryResourceInfo( D3DKMT_QUERYRESOURCEINFO *params )
