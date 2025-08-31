@@ -581,6 +581,10 @@ static HRESULT instrument_add_soundfont_region(struct instrument *This, struct s
      * the attenuation value. Although this does not comply with the SF2 spec,
      * most soundfonts expect this behavior. */
     attenuation = (SHORT)generators->amount[SF_GEN_INITIAL_ATTENUATION].value * 0.4;
+    /* Normally, FluidSynth adds a resonance hump compensation in
+     * fluid_iir_filter_q_from_dB, but as DLS has no such compensation, it's
+     * disabled in the budled version of FluidSynth. Add it back here. */
+    attenuation += -15.05;
     unity_note = generators->amount[SF_GEN_OVERRIDING_ROOT_KEY].value;
     if (unity_note == (WORD)-1) unity_note = sample->original_key;
     region->wave_sample.usUnityNote = unity_note - (SHORT)generators->amount[SF_GEN_COARSE_TUNE].value;
