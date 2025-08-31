@@ -1508,11 +1508,11 @@ static void test_D3DKMTCreateKeyedMutex( void )
     NTSTATUS status;
 
     status = D3DKMTCreateKeyedMutex( NULL );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     create.hKeyedMutex = create.hSharedHandle = 0x1eadbeed;
     status = D3DKMTCreateKeyedMutex( &create );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create.hKeyedMutex, &next_local );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create.hKeyedMutex, &next_local );
     todo_wine check_d3dkmt_global( create.hSharedHandle );
 
     status = D3DKMTOpenKeyedMutex( &open );
@@ -1525,9 +1525,10 @@ static void test_D3DKMTCreateKeyedMutex( void )
     status = D3DKMTOpenKeyedMutex( &open );
     todo_wine ok_nt( STATUS_SUCCESS, status );
     todo_wine check_d3dkmt_local( open.hKeyedMutex, &next_local );
+    next_local = 0;
 
     status = D3DKMTDestroyKeyedMutex( &destroy );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
     if (0)
     {
@@ -1542,11 +1543,11 @@ static void test_D3DKMTCreateKeyedMutex( void )
     todo_wine ok_nt( STATUS_SUCCESS, status );
     /* destroying multiple times fails */
     status = D3DKMTDestroyKeyedMutex( &destroy );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
     destroy.hKeyedMutex = create.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
     /* the global D3DKMT_HANDLE is destroyed with last reference */
     status = D3DKMTOpenKeyedMutex( &open );
@@ -1554,18 +1555,18 @@ static void test_D3DKMTCreateKeyedMutex( void )
 
 
     status = D3DKMTCreateKeyedMutex2( NULL );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     create2.hKeyedMutex = create2.hSharedHandle = 0x1eadbeed;
     status = D3DKMTCreateKeyedMutex2( &create2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create2.hKeyedMutex, &next_local );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hKeyedMutex, &next_local );
     todo_wine check_d3dkmt_global( create2.hSharedHandle );
     destroy.hKeyedMutex = create2.hKeyedMutex;
 
     create2.hKeyedMutex = create2.hSharedHandle = 0x1eadbeed;
     status = D3DKMTCreateKeyedMutex2( &create2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create2.hKeyedMutex, &next_local );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hKeyedMutex, &next_local );
     todo_wine check_d3dkmt_global( create2.hSharedHandle );
 
     status = D3DKMTOpenKeyedMutex2( &open2 );
@@ -1578,12 +1579,13 @@ static void test_D3DKMTCreateKeyedMutex( void )
     status = D3DKMTOpenKeyedMutex2( &open2 );
     todo_wine ok_nt( STATUS_SUCCESS, status );
     todo_wine check_d3dkmt_local( open2.hKeyedMutex, &next_local );
+    next_local = 0;
 
     status = D3DKMTDestroyKeyedMutex( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     destroy.hKeyedMutex = create2.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     destroy.hKeyedMutex = open2.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy );
     todo_wine ok_nt( STATUS_SUCCESS, status );
@@ -1592,8 +1594,8 @@ static void test_D3DKMTCreateKeyedMutex( void )
     /* PrivateRuntimeDataSize must be 0 if no buffer is provided */
 
     status = D3DKMTCreateKeyedMutex2( &create2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create2.hKeyedMutex, &next_local );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hKeyedMutex, &next_local );
     todo_wine check_d3dkmt_global( create2.hSharedHandle );
 
     open2.hKeyedMutex = 0x1eadbeed;
@@ -1605,6 +1607,7 @@ static void test_D3DKMTCreateKeyedMutex( void )
     status = D3DKMTOpenKeyedMutex2( &open2 );
     todo_wine ok_nt( STATUS_SUCCESS, status );
     todo_wine check_d3dkmt_local( open2.hKeyedMutex, &next_local );
+    next_local = 0;
     ok_x4( open2.PrivateRuntimeDataSize, ==, sizeof(buffer) );
 
     destroy.hKeyedMutex = open2.hKeyedMutex;
@@ -1612,14 +1615,14 @@ static void test_D3DKMTCreateKeyedMutex( void )
     todo_wine ok_nt( STATUS_SUCCESS, status );
     destroy.hKeyedMutex = create2.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
 
     create2.PrivateRuntimeDataSize = sizeof(runtime_data);
     create2.pPrivateRuntimeData = runtime_data;
     status = D3DKMTCreateKeyedMutex2( &create2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create2.hKeyedMutex, &next_local );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hKeyedMutex, &next_local );
     todo_wine check_d3dkmt_global( create2.hSharedHandle );
 
     open2.hKeyedMutex = 0x1eadbeed;
@@ -1629,6 +1632,7 @@ static void test_D3DKMTCreateKeyedMutex( void )
     status = D3DKMTOpenKeyedMutex2( &open2 );
     todo_wine ok_nt( STATUS_SUCCESS, status );
     todo_wine check_d3dkmt_local( open2.hKeyedMutex, &next_local );
+    next_local = 0;
     ok_x4( open2.PrivateRuntimeDataSize, ==, 0 );
 
     open2.PrivateRuntimeDataSize = sizeof(buffer);
@@ -1643,6 +1647,7 @@ static void test_D3DKMTCreateKeyedMutex( void )
     status = D3DKMTOpenKeyedMutex2( &open2 );
     todo_wine ok_nt( STATUS_SUCCESS, status );
     todo_wine check_d3dkmt_local( open2.hKeyedMutex, &next_local );
+    next_local = 0;
     ok_x4( open2.PrivateRuntimeDataSize, ==, sizeof(runtime_data) );
     ok_u1( buffer[0], ==, 0xcd );
 
@@ -1651,20 +1656,20 @@ static void test_D3DKMTCreateKeyedMutex( void )
     todo_wine ok_nt( STATUS_SUCCESS, status );
     destroy.hKeyedMutex = create2.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
 
     /* doesn't return a global D3DKMT_HANDLE with NtSecuritySharing = 1 */
     create2.Flags.NtSecuritySharing = 1;
     create2.hKeyedMutex = create2.hSharedHandle = 0x1eadbeed;
     status = D3DKMTCreateKeyedMutex2( &create2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( create2.hKeyedMutex, &next_local );
-    todo_wine ok_x4( create2.hSharedHandle, ==, 0 );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hKeyedMutex, &next_local );
+    ok_x4( create2.hSharedHandle, ==, 0 );
 
     destroy.hKeyedMutex = create2.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 }
 
 static void test_D3DKMTCreateAllocation( void )
@@ -2313,23 +2318,23 @@ static void test_D3DKMTShareObjects( void )
 
     /* D3DKMTShareObjects doesn't work with keyed mutex objects alone */
     status = D3DKMTCreateKeyedMutex( &create_mutex );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     status = D3DKMTShareObjects( 1, &create_mutex.hKeyedMutex, &attr, STANDARD_RIGHTS_WRITE, &handle );
     todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
     status = D3DKMTShareObjects( 1, &create_mutex.hSharedHandle, &attr, STANDARD_RIGHTS_WRITE, &handle );
     todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
     destroy_mutex.hKeyedMutex = create_mutex.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy_mutex );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
     create_mutex2.Flags.NtSecuritySharing = 1;
     status = D3DKMTCreateKeyedMutex2( &create_mutex2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     status = D3DKMTShareObjects( 1, &create_mutex2.hKeyedMutex, &attr, STANDARD_RIGHTS_WRITE, &handle );
     todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
     destroy_mutex.hKeyedMutex = create_mutex2.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy_mutex );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
 
     /* NtSecuritySharing = 1 is required for D3DKMTShareObjects */
@@ -2524,7 +2529,7 @@ static void test_D3DKMTShareObjects( void )
     create_mutex2.PrivateRuntimeDataSize = sizeof(expect_mutex_data);
     create_mutex2.pPrivateRuntimeData = expect_mutex_data;
     status = D3DKMTCreateKeyedMutex2( &create_mutex2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
     objects[0] = create_alloc.hResource;
     objects[1] = create_alloc.hResource;
@@ -2572,7 +2577,7 @@ static void test_D3DKMTShareObjects( void )
 
     destroy_mutex.hKeyedMutex = create_mutex2.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy_mutex );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     create_mutex2.hKeyedMutex = 0;
 
     destroy_sync.hSyncObject = create_sync2.hSyncObject;

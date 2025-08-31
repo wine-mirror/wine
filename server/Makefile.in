@@ -8,6 +8,7 @@ SOURCES = \
 	clipboard.c \
 	completion.c \
 	console.c \
+	d3dkmt.c \
 	debugger.c \
 	device.c \
 	directory.c \

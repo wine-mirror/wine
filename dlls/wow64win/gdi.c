@@ -726,6 +726,8 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateKeyedMutex2( UINT *args )
     D3DKMT_CREATEKEYEDMUTEX2 desc;
     NTSTATUS status;
 
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+
     desc.InitialValue = desc32->InitialValue;
     desc.hSharedHandle = desc32->hSharedHandle;
     desc.hKeyedMutex = desc32->hKeyedMutex;
@@ -734,6 +736,7 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateKeyedMutex2( UINT *args )
     desc.Flags = desc32->Flags;
     status = NtGdiDdDDICreateKeyedMutex2( &desc );
     desc32->hKeyedMutex = desc.hKeyedMutex;
+    desc32->hSharedHandle = desc.hSharedHandle;
     return status;
 }
 
