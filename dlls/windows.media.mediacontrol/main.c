@@ -473,7 +473,7 @@ static HRESULT WINAPI display_updater_CopyFromFileAsync( ISystemMediaTransportCo
 static HRESULT WINAPI display_updater_ClearAll( ISystemMediaTransportControlsDisplayUpdater *iface )
 {
     FIXME( "iface %p stub!\n", iface );
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI display_updater_Update( ISystemMediaTransportControlsDisplayUpdater *iface )
