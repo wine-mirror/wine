@@ -22,6 +22,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <pthread.h>
 
 #include "ntstatus.h"
@@ -32,17 +33,29 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
+enum d3dkmt_type
+{
+    D3DKMT_ADAPTER      = 1,
+    D3DKMT_DEVICE       = 2,
+    D3DKMT_SOURCE       = 3,
+};
+
+struct d3dkmt_object
+{
+    enum d3dkmt_type    type;           /* object type */
+    D3DKMT_HANDLE       local;          /* object local handle */
+};
+
 struct d3dkmt_adapter
 {
-    D3DKMT_HANDLE handle;               /* Kernel mode graphics adapter handle */
-    struct list entry;                  /* List entry */
-    VkPhysicalDevice vk_device;         /* Vulkan physical device */
+    struct d3dkmt_object obj;           /* object header */
+    LUID                 luid;          /* LUID of the adapter */
 };
 
 struct d3dkmt_device
 {
-    D3DKMT_HANDLE handle;               /* Kernel mode graphics device handle*/
-    struct list entry;                  /* List entry */
+    struct d3dkmt_object obj;           /* object header */
+    LUID                 luid;          /* LUID of the device adapter */
 };
 
 struct d3dkmt_vidpn_source
@@ -54,9 +67,105 @@ struct d3dkmt_vidpn_source
 };
 
 static pthread_mutex_t d3dkmt_lock = PTHREAD_MUTEX_INITIALIZER;
-static struct list d3dkmt_adapters = LIST_INIT( d3dkmt_adapters );
-static struct list d3dkmt_devices = LIST_INIT( d3dkmt_devices );
 static struct list d3dkmt_vidpn_sources = LIST_INIT( d3dkmt_vidpn_sources );   /* VidPN source information list */
+
+static struct d3dkmt_object **objects;
+static unsigned int object_count, object_capacity, last_index;
+
+/* return the position of the first object which handle is not less than
+ * the given local handle, d3dkmt_lock must be held. */
+static unsigned int object_handle_lower_bound( D3DKMT_HANDLE local )
+{
+    unsigned int begin = 0, end = object_count, mid;
+
+    while (begin < end)
+    {
+        mid = begin + (end - begin) / 2;
+        if (objects[mid]->local < local) begin = mid + 1;
+        else end = mid;
+    }
+
+    return begin;
+}
+
+/* allocate a d3dkmt object with a local handle */
+static NTSTATUS alloc_object_handle( struct d3dkmt_object *object )
+{
+    D3DKMT_HANDLE handle = 0;
+    unsigned int index;
+
+    pthread_mutex_lock( &d3dkmt_lock );
+
+    if (object_count >= object_capacity)
+    {
+        unsigned int capacity = max( 32, object_capacity * 3 / 2 );
+        struct d3dkmt_object **tmp;
+        assert( capacity > object_capacity );
+
+        if (capacity >= 0xffff) goto done;
+        if (!(tmp = realloc( objects, capacity * sizeof(*objects) ))) goto done;
+        object_capacity = capacity;
+        objects = tmp;
+    }
+
+    last_index += 0x40;
+    handle = object->local = (last_index & ~0xc0000000) | 0x40000000;
+    index = object_handle_lower_bound( object->local );
+    if (index < object_count) memmove( objects + index + 1, objects, (object_count - index) * sizeof(*objects) );
+    objects[index] = object;
+    object_count++;
+
+done:
+    pthread_mutex_unlock( &d3dkmt_lock );
+    return handle ? STATUS_SUCCESS : STATUS_NO_MEMORY;
+}
+
+/* free a d3dkmt local object handle */
+static void free_object_handle( struct d3dkmt_object *object )
+{
+    unsigned int index;
+
+    pthread_mutex_lock( &d3dkmt_lock );
+    index = object_handle_lower_bound( object->local );
+    assert( index < object_count && objects[index] == object );
+    object_count--;
+    object->local = 0;
+    memmove( objects + index, objects + index + 1, (object_count - index) * sizeof(*objects) );
+    pthread_mutex_unlock( &d3dkmt_lock );
+}
+
+/* return a pointer to a d3dkmt object from its local handle */
+static void *get_d3dkmt_object( D3DKMT_HANDLE local, enum d3dkmt_type type )
+{
+    struct d3dkmt_object *object;
+    unsigned int index;
+
+    pthread_mutex_lock( &d3dkmt_lock );
+    index = object_handle_lower_bound( local );
+    if (index >= object_count) object = NULL;
+    else object = objects[index];
+    pthread_mutex_unlock( &d3dkmt_lock );
+
+    if (!object || object->local != local || (type != -1 && object->type != type)) return NULL;
+    return object;
+}
+
+static NTSTATUS d3dkmt_object_alloc( UINT size, enum d3dkmt_type type, void **obj )
+{
+    struct d3dkmt_object *object;
+
+    if (!(object = calloc( 1, size ))) return STATUS_NO_MEMORY;
+    object->type = type;
+
+    *obj = object;
+    return STATUS_SUCCESS;
+}
+
+static void d3dkmt_object_free( struct d3dkmt_object *object )
+{
+    if (object->local) free_object_handle( object );
+    free( object );
+}
 
 static VkInstance d3dkmt_vk_instance; /* Vulkan instance for D3DKMT functions */
 static PFN_vkGetPhysicalDeviceMemoryProperties2KHR pvkGetPhysicalDeviceMemoryProperties2KHR;
@@ -117,15 +226,6 @@ static BOOL d3dkmt_use_vulkan(void)
     return !!d3dkmt_vk_instance;
 }
 
-/* d3dkmt_lock must be held */
-static struct d3dkmt_adapter *find_adapter_from_handle( D3DKMT_HANDLE handle )
-{
-    struct d3dkmt_adapter *adapter;
-    LIST_FOR_EACH_ENTRY( adapter, &d3dkmt_adapters, struct d3dkmt_adapter, entry )
-        if (adapter->handle == handle) return adapter;
-    return NULL;
-}
-
 /******************************************************************************
  *           NtGdiDdDDIOpenAdapterFromHdc    (win32u.@)
  */
@@ -149,23 +249,15 @@ NTSTATUS WINAPI NtGdiDdDDIEscape( const D3DKMT_ESCAPE *desc )
  */
 NTSTATUS WINAPI NtGdiDdDDICloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
 {
-    NTSTATUS status = STATUS_INVALID_PARAMETER;
-    struct d3dkmt_adapter *adapter;
+    struct d3dkmt_object *adapter;
 
     TRACE( "(%p)\n", desc );
 
     if (!desc || !desc->hAdapter) return STATUS_INVALID_PARAMETER;
+    if (!(adapter = get_d3dkmt_object( desc->hAdapter, D3DKMT_ADAPTER ))) return STATUS_INVALID_PARAMETER;
 
-    pthread_mutex_lock( &d3dkmt_lock );
-    if ((adapter = find_adapter_from_handle( desc->hAdapter )))
-    {
-        list_remove( &adapter->entry );
-        status = STATUS_SUCCESS;
-    }
-    pthread_mutex_unlock( &d3dkmt_lock );
-
-    free( adapter );
-    return status;
+    d3dkmt_object_free( adapter );
+    return STATUS_SUCCESS;
 }
 
 static UINT get_vulkan_physical_devices( VkPhysicalDevice **devices )
@@ -191,10 +283,17 @@ static UINT get_vulkan_physical_devices( VkPhysicalDevice **devices )
     return device_count;
 }
 
-static VkPhysicalDevice get_vulkan_physical_device( const GUID *uuid )
+static VkPhysicalDevice get_vulkan_physical_device( const LUID *luid )
 {
     VkPhysicalDevice *devices, device;
     UINT device_count, i;
+    GUID uuid;
+
+    if (!get_vulkan_uuid_from_luid( luid, &uuid ))
+    {
+        WARN( "Failed to find Vulkan device with LUID %08x:%08x.\n", luid->HighPart, luid->LowPart );
+        return VK_NULL_HANDLE;
+    }
 
     if (!(device_count = get_vulkan_physical_devices( &devices ))) return VK_NULL_HANDLE;
 
@@ -204,7 +303,7 @@ static VkPhysicalDevice get_vulkan_physical_device( const GUID *uuid )
         VkPhysicalDeviceProperties2 properties2 = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, .pNext = &id};
 
         pvkGetPhysicalDeviceProperties2KHR( devices[i], &properties2 );
-        if (IsEqualGUID( uuid, id.deviceUUID ))
+        if (IsEqualGUID( &uuid, id.deviceUUID ))
         {
             device = devices[i];
             break;
@@ -220,26 +319,22 @@ static VkPhysicalDevice get_vulkan_physical_device( const GUID *uuid )
  */
 NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc )
 {
-    static D3DKMT_HANDLE handle_start = 0;
     struct d3dkmt_adapter *adapter;
-    GUID uuid = {0};
+    NTSTATUS status;
 
-    if (!(adapter = calloc( 1, sizeof(*adapter) ))) return STATUS_NO_MEMORY;
+    if ((status = d3dkmt_object_alloc( sizeof(*adapter), D3DKMT_ADAPTER, (void **)&adapter ))) return status;
+    if ((status = alloc_object_handle( &adapter->obj ))) goto failed;
 
-    if (!d3dkmt_use_vulkan())
-        WARN( "Vulkan is unavailable.\n" );
-    else if (!get_vulkan_uuid_from_luid( &desc->AdapterLuid, &uuid ))
-        WARN( "Failed to find Vulkan device with LUID %08x:%08x.\n",
-              desc->AdapterLuid.HighPart, desc->AdapterLuid.LowPart );
-    else if (!(adapter->vk_device = get_vulkan_physical_device( &uuid )))
-        WARN( "Failed to find vulkan device with GUID %s\n", debugstr_guid( &uuid ) );
+    if (!d3dkmt_use_vulkan()) WARN( "Vulkan is unavailable.\n" );
+    else if (!get_vulkan_physical_device( &desc->AdapterLuid )) WARN( "Failed to find vulkan device\n" );
+    else adapter->luid = desc->AdapterLuid;
 
-    pthread_mutex_lock( &d3dkmt_lock );
-    desc->hAdapter = adapter->handle = ++handle_start;
-    list_add_tail( &d3dkmt_adapters, &adapter->entry );
-    pthread_mutex_unlock( &d3dkmt_lock );
-
+    desc->hAdapter = adapter->obj.local;
     return STATUS_SUCCESS;
+
+failed:
+    d3dkmt_object_free( &adapter->obj );
+    return status;
 }
 
 /******************************************************************************
@@ -247,33 +342,27 @@ NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc 
  */
 NTSTATUS WINAPI NtGdiDdDDICreateDevice( D3DKMT_CREATEDEVICE *desc )
 {
-    static D3DKMT_HANDLE handle_start = 0;
+    struct d3dkmt_adapter *adapter;
     struct d3dkmt_device *device;
-    BOOL found = FALSE;
+    NTSTATUS status;
 
     TRACE( "(%p)\n", desc );
 
     if (!desc) return STATUS_INVALID_PARAMETER;
+    if (desc->Flags.LegacyMode || desc->Flags.RequestVSync || desc->Flags.DisableGpuTimeout) FIXME( "Flags unsupported.\n" );
 
-    pthread_mutex_lock( &d3dkmt_lock );
-    found = !!find_adapter_from_handle( desc->hAdapter );
-    pthread_mutex_unlock( &d3dkmt_lock );
+    if (!(adapter = get_d3dkmt_object( desc->hAdapter, D3DKMT_ADAPTER ))) return STATUS_INVALID_PARAMETER;
+    if ((status = d3dkmt_object_alloc( sizeof(*device), D3DKMT_DEVICE, (void **)&device ))) return status;
+    if ((status = alloc_object_handle( &device->obj ))) goto failed;
 
-    if (!found) return STATUS_INVALID_PARAMETER;
+    device->luid = adapter->luid;
 
-    if (desc->Flags.LegacyMode || desc->Flags.RequestVSync || desc->Flags.DisableGpuTimeout)
-        FIXME( "Flags unsupported.\n" );
-
-    device = calloc( 1, sizeof(*device) );
-    if (!device) return STATUS_NO_MEMORY;
-
-    pthread_mutex_lock( &d3dkmt_lock );
-    device->handle = ++handle_start;
-    list_add_tail( &d3dkmt_devices, &device->entry );
-    pthread_mutex_unlock( &d3dkmt_lock );
-
-    desc->hDevice = device->handle;
+    desc->hDevice = device->obj.local;
     return STATUS_SUCCESS;
+
+failed:
+    d3dkmt_object_free( &device->obj );
+    return status;
 }
 
 /******************************************************************************
@@ -282,29 +371,17 @@ NTSTATUS WINAPI NtGdiDdDDICreateDevice( D3DKMT_CREATEDEVICE *desc )
 NTSTATUS WINAPI NtGdiDdDDIDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
 {
     D3DKMT_SETVIDPNSOURCEOWNER set_owner_desc = {0};
-    struct d3dkmt_device *device, *found = NULL;
+    struct d3dkmt_object *device;
 
     TRACE( "(%p)\n", desc );
 
     if (!desc || !desc->hDevice) return STATUS_INVALID_PARAMETER;
-
-    pthread_mutex_lock( &d3dkmt_lock );
-    LIST_FOR_EACH_ENTRY( device, &d3dkmt_devices, struct d3dkmt_device, entry )
-    {
-        if (device->handle == desc->hDevice)
-        {
-            list_remove( &device->entry );
-            found = device;
-            break;
-        }
-    }
-    pthread_mutex_unlock( &d3dkmt_lock );
-
-    if (!found) return STATUS_INVALID_PARAMETER;
+    if (!(device = get_d3dkmt_object( desc->hDevice, D3DKMT_DEVICE ))) return STATUS_INVALID_PARAMETER;
 
     set_owner_desc.hDevice = desc->hDevice;
     NtGdiDdDDISetVidPnSourceOwner( &set_owner_desc );
-    free( found );
+
+    d3dkmt_object_free( device );
     return STATUS_SUCCESS;
 }
 
@@ -364,6 +441,7 @@ NTSTATUS WINAPI NtGdiDdDDIQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *des
 {
     VkPhysicalDeviceMemoryBudgetPropertiesEXT budget;
     VkPhysicalDeviceMemoryProperties2 properties2;
+    VkPhysicalDevice phys_dev;
     struct d3dkmt_adapter *adapter;
     OBJECT_BASIC_INFORMATION info;
     NTSTATUS status;
@@ -384,19 +462,20 @@ NTSTATUS WINAPI NtGdiDdDDIQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *des
     if (status != STATUS_SUCCESS) return status;
     if (!(info.GrantedAccess & PROCESS_QUERY_INFORMATION)) return STATUS_ACCESS_DENIED;
 
+    if (!(adapter = get_d3dkmt_object( desc->hAdapter, D3DKMT_ADAPTER ))) return STATUS_INVALID_PARAMETER;
+
     desc->Budget = 0;
     desc->CurrentUsage = 0;
     desc->CurrentReservation = 0;
     desc->AvailableForReservation = 0;
 
-    pthread_mutex_lock( &d3dkmt_lock );
-    if ((adapter = find_adapter_from_handle( desc->hAdapter )) && adapter->vk_device)
+    if ((phys_dev = get_vulkan_physical_device( &adapter->luid )))
     {
         memset( &budget, 0, sizeof(budget) );
         budget.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
         properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
         properties2.pNext = &budget;
-        pvkGetPhysicalDeviceMemoryProperties2KHR( adapter->vk_device, &properties2 );
+        pvkGetPhysicalDeviceMemoryProperties2KHR( phys_dev, &properties2 );
         for (i = 0; i < properties2.memoryProperties.memoryHeapCount; ++i)
         {
             if ((desc->MemorySegmentGroup == D3DKMT_MEMORY_SEGMENT_GROUP_LOCAL &&
@@ -410,9 +489,8 @@ NTSTATUS WINAPI NtGdiDdDDIQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *des
         }
         desc->AvailableForReservation = desc->Budget / 2;
     }
-    pthread_mutex_unlock( &d3dkmt_lock );
 
-    return adapter ? STATUS_SUCCESS : STATUS_INVALID_PARAMETER;
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
