@@ -585,6 +585,11 @@ static HRESULT instrument_add_soundfont_region(struct instrument *This, struct s
      * fluid_iir_filter_q_from_dB, but as DLS has no such compensation, it's
      * disabled in the budled version of FluidSynth. Add it back here. */
     attenuation += -15.05;
+    /* Add some attenuation to normalize the volume. The value was determined
+     * experimentally by comparing instruments from SF2 soundfonts to the
+     * gm.dls equivalents. The value is approximate, as there is some volume
+     * variation from instrument to instrument. */
+    attenuation += 80.;
     unity_note = generators->amount[SF_GEN_OVERRIDING_ROOT_KEY].value;
     if (unity_note == (WORD)-1) unity_note = sample->original_key;
     region->wave_sample.usUnityNote = unity_note - (SHORT)generators->amount[SF_GEN_COARSE_TUNE].value;
