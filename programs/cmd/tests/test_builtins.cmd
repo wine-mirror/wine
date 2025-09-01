@@ -72,6 +72,7 @@ echo@tab@word@tab@@space@
 echo @tab@word
 echo  @tab@word
 echo@tab@@tab@word
+echo(3
 
 echo ------------ Testing mixed echo modes ------------
 echo @echo on> mixedEchoModes.cmd
@@ -1581,6 +1582,11 @@ echo )>> blockclosing.cmd
 echo echo outside of block without closing bracket>> blockclosing.cmd
 cmd.exe /Q /C blockclosing.cmd
 echo %ERRORLEVEL% nested
+::
+call :setError 666
+echo ^)> blockclosing.cmd
+cmd.exe /Q /C blockclosing.cmd
+echo %ERRORLEVEL% unmatched
 ::
 del blockclosing.cmd
 echo --- case sensitivity with and without /i option

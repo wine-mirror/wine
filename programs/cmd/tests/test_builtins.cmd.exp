@@ -127,6 +127,7 @@ word
 @tab@word
 @space@@tab@word
 @tab@word
+@todo_wine@3
 ------------ Testing mixed echo modes ------------
 @echo on
 if 1==1 echo foo
@@ -1029,6 +1030,7 @@ with closing bracket
 255 two lines
 before both blocks
 255 nested
+@todo_wine@0 unmatched
 --- case sensitivity with and without /i option
 if seems to default to case sensitivity
 if /i seems to work
