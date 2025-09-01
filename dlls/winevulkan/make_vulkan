@@ -134,6 +134,12 @@ UNEXPOSED_EXTENSIONS = {
     "VK_EXT_map_memory_placed",
     "VK_KHR_external_memory_win32",
     "VK_EXT_headless_surface",
+    # Extensions for other platforms
+    "VK_KHR_wayland_surface",
+}
+
+UNEXPOSED_PLATFORMS = {
+    "wayland",
 }
 
 # The Vulkan loader provides entry-points for core functionality and important
@@ -3506,7 +3512,7 @@ class VkRegistry(object):
                     self._process_require_enum(enum_elem, ext, only_aliased=True)
 
             platform = ext.attrib.get("platform")
-            if platform and platform != "win32":
+            if platform and platform != "win32" and platform not in UNEXPOSED_PLATFORMS:
                 LOGGER.debug("Skipping extensions {0} for platform {1}".format(ext_name, platform))
                 skipped_exts.append(ext_name)
                 return

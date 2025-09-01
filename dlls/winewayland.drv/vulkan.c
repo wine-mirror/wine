@@ -37,22 +37,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
-#ifdef SONAME_LIBVULKAN
-
-#define VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR 1000006000
-
-typedef struct VkWaylandSurfaceCreateInfoKHR
-{
-    VkStructureType sType;
-    const void *pNext;
-    VkWaylandSurfaceCreateFlagsKHR flags;
-    struct wl_display *display;
-    struct wl_surface *surface;
-} VkWaylandSurfaceCreateInfoKHR;
-
-static VkResult (*pvkCreateWaylandSurfaceKHR)(VkInstance, const VkWaylandSurfaceCreateInfoKHR *, const VkAllocationCallbacks *, VkSurfaceKHR *);
-static VkBool32 (*pvkGetPhysicalDeviceWaylandPresentationSupportKHR)(VkPhysicalDevice, uint32_t, struct wl_display *);
-
 static const struct vulkan_driver_funcs wayland_vulkan_driver_funcs;
 
 static VkResult wayland_vulkan_surface_create(HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *handle,
@@ -71,9 +55,7 @@ static VkResult wayland_vulkan_surface_create(HWND hwnd, const struct vulkan_ins
     create_info_host.display = process_wayland.wl_display;
     create_info_host.surface = surface->wl_surface;
 
-    res = pvkCreateWaylandSurfaceKHR(instance->host.instance, &create_info_host,
-                                     NULL /* allocator */,
-                                     handle);
+    res = instance->p_vkCreateWaylandSurfaceKHR(instance->host.instance, &create_info_host, NULL /* allocator */, handle);
     if (res != VK_SUCCESS)
     {
         ERR("Failed to create vulkan wayland surface, res=%d\n", res);
@@ -91,10 +73,12 @@ static VkResult wayland_vulkan_surface_create(HWND hwnd, const struct vulkan_ins
 static VkBool32 wayland_get_physical_device_presentation_support(struct vulkan_physical_device *physical_device,
                                                                  uint32_t index)
 {
+    struct vulkan_instance *instance = physical_device->instance;
+
     TRACE("%p %u\n", physical_device, index);
 
-    return pvkGetPhysicalDeviceWaylandPresentationSupportKHR(physical_device->host.physical_device, index,
-                                                             process_wayland.wl_display);
+    return instance->p_vkGetPhysicalDeviceWaylandPresentationSupportKHR(physical_device->host.physical_device, index,
+                                                                        process_wayland.wl_display);
 }
 
 static const char *wayland_get_host_surface_extension(void)
@@ -120,21 +104,6 @@ UINT WAYLAND_VulkanInit(UINT version, void *vulkan_handle, const struct vulkan_d
         return STATUS_INVALID_PARAMETER;
     }
 
-#define LOAD_FUNCPTR(f) if (!(p##f = dlsym(vulkan_handle, #f))) return STATUS_PROCEDURE_NOT_FOUND;
-    LOAD_FUNCPTR(vkCreateWaylandSurfaceKHR);
-    LOAD_FUNCPTR(vkGetPhysicalDeviceWaylandPresentationSupportKHR);
-#undef LOAD_FUNCPTR
-
     *driver_funcs = &wayland_vulkan_driver_funcs;
     return STATUS_SUCCESS;
 }
-
-#else /* No vulkan */
-
-UINT WAYLAND_VulkanInit(UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs)
-{
-    ERR( "Wine was built without Vulkan support.\n" );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-#endif /* SONAME_LIBVULKAN */
