@@ -41,33 +41,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
-#ifdef SONAME_LIBVULKAN
-
-typedef VkFlags VkMacOSSurfaceCreateFlagsMVK;
-#define VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK 1000123000
-
-typedef VkFlags VkMetalSurfaceCreateFlagsEXT;
-#define VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT 1000217000
-
-typedef struct VkMacOSSurfaceCreateInfoMVK
-{
-    VkStructureType sType;
-    const void *pNext;
-    VkMacOSSurfaceCreateFlagsMVK flags;
-    const void *pView; /* NSView */
-} VkMacOSSurfaceCreateInfoMVK;
-
-typedef struct VkMetalSurfaceCreateInfoEXT
-{
-    VkStructureType sType;
-    const void *pNext;
-    VkMetalSurfaceCreateFlagsEXT flags;
-    const void *pLayer; /* CAMetalLayer */
-} VkMetalSurfaceCreateInfoEXT;
-
-static VkResult (*pvkCreateMacOSSurfaceMVK)(VkInstance, const VkMacOSSurfaceCreateInfoMVK*, const VkAllocationCallbacks *, VkSurfaceKHR *);
-static VkResult (*pvkCreateMetalSurfaceEXT)(VkInstance, const VkMetalSurfaceCreateInfoEXT*, const VkAllocationCallbacks *, VkSurfaceKHR *);
-
 static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs;
 
 static VkResult macdrv_vulkan_surface_create(HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *handle,
@@ -82,7 +55,7 @@ static VkResult macdrv_vulkan_surface_create(HWND hwnd, const struct vulkan_inst
     if (!(surface->metal_device = macdrv_create_metal_device())) goto err;
     if (!(surface->metal_view = macdrv_view_create_metal_view(surface->cocoa_view, surface->metal_device))) goto err;
 
-    if (pvkCreateMetalSurfaceEXT)
+    if (instance->p_vkCreateMetalSurfaceEXT)
     {
         VkMetalSurfaceCreateInfoEXT create_info_host;
         create_info_host.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
@@ -90,7 +63,7 @@ static VkResult macdrv_vulkan_surface_create(HWND hwnd, const struct vulkan_inst
         create_info_host.flags = 0; /* reserved */
         create_info_host.pLayer = macdrv_view_get_metal_layer(surface->metal_view);
 
-        res = pvkCreateMetalSurfaceEXT(instance->host.instance, &create_info_host, NULL /* allocator */, handle);
+        res = instance->p_vkCreateMetalSurfaceEXT(instance->host.instance, &create_info_host, NULL /* allocator */, handle);
     }
     else
     {
@@ -100,7 +73,7 @@ static VkResult macdrv_vulkan_surface_create(HWND hwnd, const struct vulkan_inst
         create_info_host.flags = 0; /* reserved */
         create_info_host.pView = macdrv_view_get_metal_layer(surface->metal_view);
 
-        res = pvkCreateMacOSSurfaceMVK(instance->host.instance, &create_info_host, NULL /* allocator */, handle);
+        res = instance->p_vkCreateMacOSSurfaceMVK(instance->host.instance, &create_info_host, NULL /* allocator */, handle);
     }
     if (res != VK_SUCCESS)
     {
@@ -125,9 +98,10 @@ static VkBool32 macdrv_get_physical_device_presentation_support(struct vulkan_ph
     return VK_TRUE;
 }
 
+static const char *host_surface_extension = "VK_MVK_macos_surface";
 static const char *macdrv_get_host_surface_extension(void)
 {
-    return pvkCreateMetalSurfaceEXT ? "VK_EXT_metal_surface" : "VK_MVK_macos_surface";
+    return host_surface_extension;
 }
 
 static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs =
@@ -145,21 +119,8 @@ UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, const struct vulkan_dr
         return STATUS_INVALID_PARAMETER;
     }
 
-#define LOAD_FUNCPTR(f) if ((p##f = dlsym(vulkan_handle, #f)) == NULL) return STATUS_PROCEDURE_NOT_FOUND;
-    LOAD_FUNCPTR(vkCreateMacOSSurfaceMVK)
-    LOAD_FUNCPTR(vkCreateMetalSurfaceEXT)
-#undef LOAD_FUNCPTR
+    if (dlsym(vulkan_handle, "vkCreateMetalSurfaceEXT")) host_surface_extension = "VK_EXT_metal_surface";
 
     *driver_funcs = &macdrv_vulkan_driver_funcs;
     return STATUS_SUCCESS;
 }
-
-#else /* No vulkan */
-
-UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs)
-{
-    ERR("Wine was built without Vulkan support.\n");
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-#endif /* SONAME_LIBVULKAN */
