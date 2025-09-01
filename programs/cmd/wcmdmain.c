@@ -4516,6 +4516,9 @@ int __cdecl wmain(int argc, WCHAR *argvW[])
     parse_command_line_parameters(&parameters);
     if (parameters.opt_q) WCMD_echo(L"OFF");
 
+    control_c_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    SetConsoleCtrlHandler(my_event_handler, TRUE);
+
     if (parameters.opt_c)
     {
         RETURN_CODE return_code = WCMD_call_batch(NULL, parameters.initial_command);
@@ -4539,10 +4542,6 @@ int __cdecl wmain(int argc, WCHAR *argvW[])
     }
     else
         WCMD_output_asis(version_string);
-
-    /* Entering interactive mode */
-    control_c_event = CreateEventW(NULL, TRUE, FALSE, NULL);
-    SetConsoleCtrlHandler(my_event_handler, TRUE);
 
     /* Loop forever getting commands and executing them. */
     if (echo_mode) WCMD_output_asis(L"\r\n");
