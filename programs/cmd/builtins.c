@@ -1559,7 +1559,7 @@ RETURN_CODE WCMD_delete(WCHAR *args)
  */
 RETURN_CODE WCMD_echo(const WCHAR *args)
 {
-    const WCHAR *toskip = L".:;/";
+    const WCHAR *toskip = L".:;/(";
     const WCHAR *skipped = NULL;
     WCHAR *trimmed;
 

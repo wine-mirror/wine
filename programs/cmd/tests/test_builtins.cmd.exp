@@ -127,7 +127,7 @@ word
 @tab@word
 @space@@tab@word
 @tab@word
-@todo_wine@3
+3
 ------------ Testing mixed echo modes ------------
 @echo on
 if 1==1 echo foo
