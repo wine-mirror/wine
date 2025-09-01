@@ -4156,6 +4156,64 @@ static RETURN_CODE for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node
     return return_code;
 }
 
+static RETURN_CODE handle_pipe_command(CMD_NODE *node)
+{
+    static SECURITY_ATTRIBUTES sa = {.nLength = sizeof(sa), .lpSecurityDescriptor = NULL, .bInheritHandle = TRUE};
+    WCHAR temp_path[MAX_PATH];
+    WCHAR filename[MAX_PATH];
+    CMD_REDIRECTION *output;
+    HANDLE saved[3];
+    struct batch_context *saved_context = context;
+    RETURN_CODE return_code;
+
+    /* pipe LHS & RHS are run outside of any batch context */
+    context = NULL;
+    /* FIXME: a real pipe instead of writing to an intermediate file would be
+     * better.
+     * But waiting for completion of commands will require more work.
+     */
+    /* FIXME check precedence (eg foo > a | more)
+     * with following code, | has higher precedence than > a
+     * (which is likely wrong IIRC, and not what previous code was doing)
+     */
+    /* Generate a unique temporary filename */
+    GetTempPathW(ARRAY_SIZE(temp_path), temp_path);
+    GetTempFileNameW(temp_path, L"CMD", 0, filename);
+    TRACE("Using temporary file of %ls\n", filename);
+
+    /* set output for left hand side command */
+    output = redirection_create_file(REDIR_WRITE_TO, 1, filename);
+    if (push_std_redirections(output, saved))
+    {
+        RETURN_CODE return_code_left = node_execute(node->left);
+        pop_std_redirections(saved);
+
+        if (errorlevel == RETURN_CODE_CANT_LAUNCH && saved_context)
+            ExitProcess(255);
+        return_code = ERROR_INVALID_FUNCTION;
+        if (!WCMD_is_break(return_code_left) && errorlevel != RETURN_CODE_CANT_LAUNCH)
+        {
+            HANDLE h = CreateFileW(filename, GENERIC_READ,
+                                   FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING,
+                                   FILE_ATTRIBUTE_NORMAL, NULL);
+            if (h != INVALID_HANDLE_VALUE)
+            {
+                SetStdHandle(STD_INPUT_HANDLE, h);
+                return_code = node_execute(node->right);
+                if (errorlevel == RETURN_CODE_CANT_LAUNCH && saved_context)
+                    ExitProcess(255);
+            }
+        }
+        DeleteFileW(filename);
+        errorlevel = return_code;
+    }
+    else return_code = ERROR_INVALID_FUNCTION;
+    redirection_dispose_list(output);
+    context = saved_context;
+
+    return return_code;
+}
+
 RETURN_CODE node_execute(CMD_NODE *node)
 {
     HANDLE saved[3];
@@ -4195,59 +4253,7 @@ RETURN_CODE node_execute(CMD_NODE *node)
         }
         break;
     case CMD_PIPE:
-        {
-            static SECURITY_ATTRIBUTES sa = {.nLength = sizeof(sa), .lpSecurityDescriptor = NULL, .bInheritHandle = TRUE};
-            WCHAR temp_path[MAX_PATH];
-            WCHAR filename[MAX_PATH];
-            CMD_REDIRECTION *output;
-            HANDLE saved[3];
-            struct batch_context *saved_context = context;
-
-            /* pipe LHS & RHS are run outside of any batch context */
-            context = NULL;
-            /* FIXME: a real pipe instead of writing to an intermediate file would be
-             * better.
-             * But waiting for completion of commands will require more work.
-             */
-            /* FIXME check precedence (eg foo > a | more)
-             * with following code, | has higher precedence than > a
-             * (which is likely wrong IIRC, and not what previous code was doing)
-             */
-            /* Generate a unique temporary filename */
-            GetTempPathW(ARRAY_SIZE(temp_path), temp_path);
-            GetTempFileNameW(temp_path, L"CMD", 0, filename);
-            TRACE("Using temporary file of %ls\n", filename);
-
-            /* set output for left hand side command */
-            output = redirection_create_file(REDIR_WRITE_TO, 1, filename);
-            if (push_std_redirections(output, saved))
-            {
-                RETURN_CODE return_code_left = node_execute(node->left);
-                pop_std_redirections(saved);
-
-                if (errorlevel == RETURN_CODE_CANT_LAUNCH && saved_context)
-                    ExitProcess(255);
-                return_code = ERROR_INVALID_FUNCTION;
-                if (!WCMD_is_break(return_code_left) && errorlevel != RETURN_CODE_CANT_LAUNCH)
-                {
-                    HANDLE h = CreateFileW(filename, GENERIC_READ,
-                                           FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING,
-                                           FILE_ATTRIBUTE_NORMAL, NULL);
-                    if (h != INVALID_HANDLE_VALUE)
-                    {
-                        SetStdHandle(STD_INPUT_HANDLE, h);
-                        return_code = node_execute(node->right);
-                        if (errorlevel == RETURN_CODE_CANT_LAUNCH && saved_context)
-                            ExitProcess(255);
-                    }
-                }
-                DeleteFileW(filename);
-                errorlevel = return_code;
-            }
-            else return_code = ERROR_INVALID_FUNCTION;
-            redirection_dispose_list(output);
-            context = saved_context;
-        }
+        return_code = handle_pipe_command(node);
         break;
     case CMD_IF:
         if (if_condition_evaluate(&node->condition, &test))
