@@ -951,9 +951,35 @@ static IO_STATUS_BLOCK icmp_send_echo_io;
 static void WINAPI icmp_send_echo_test_apc(void *context, IO_STATUS_BLOCK *io_status, ULONG reserved)
 {
     ok_(__FILE__, icmp_send_echo_test_line)(icmp_send_echo_test_apc_expect, "Unexpected APC execution\n");
+    ok_(__FILE__, icmp_send_echo_test_line)(!reserved, "Got reserved %#lx\n", reserved);
     ok_(__FILE__, icmp_send_echo_test_line)(context == (void*)0xdeadc0de, "Wrong context: %p\n", context);
     icmp_send_echo_test_apc_expect = FALSE;
     icmp_send_echo_io = *io_status;
+}
+
+struct test_echo_thread_params
+{
+    HANDLE icmp;
+    HANDLE event;
+    PIO_APC_ROUTINE apc;
+    void *apc_context;
+    IPAddr address;
+    char *senddata;
+    DWORD send_data_size;
+    char *replydata;
+    DWORD replysz;
+    DWORD timeout;
+};
+
+static DWORD CALLBACK test_echo_thread(void *params)
+{
+    struct test_echo_thread_params *p = params;
+    BOOL ret;
+
+    ret = IcmpSendEcho2(p->icmp, p->event, p->apc, p->apc_context, p->address, p->senddata, p->send_data_size,
+            NULL, p->replydata, p->replysz, p->timeout);
+    ok(!ret && GetLastError() == ERROR_IO_PENDING, "got ret %d, error %ld.\n", ret, GetLastError());
+    return 0;
 }
 
 static void testIcmpSendEcho(void)
@@ -963,10 +989,11 @@ static void testIcmpSendEcho(void)
     char senddata[32], replydata[sizeof(senddata) + sizeof(ICMP_ECHO_REPLY)];
     char replydata2[sizeof(replydata) + sizeof(IO_STATUS_BLOCK)];
     DWORD ret, error, replysz = sizeof(replydata);
+    struct test_echo_thread_params p;
     IP_OPTION_INFORMATION opt;
     IPAddr address;
     ICMP_ECHO_REPLY *reply;
-    HANDLE event;
+    HANDLE event, thread;
     INT i;
 
     memset(senddata, 0, sizeof(senddata));
@@ -1283,6 +1310,37 @@ static void testIcmpSendEcho(void)
     ok(!memcmp(senddata, reply->Data, min(sizeof(senddata), reply->DataSize)), "Data mismatch\n");
 
     /* asynchronous tests with event */
+
+    replysz = sizeof(replydata2);
+    ResetEvent(event);
+    p.icmp = icmp;
+    p.event = event;
+    p.apc = icmp_send_echo_test_apc;
+    p.apc_context = (void *)0xdeadbeef;
+    ret = inet_pton(AF_INET, "192.18.1.1", &address);
+    ok(ret, "got error %u.\n", WSAGetLastError());
+    p.address = address;
+    p.senddata = senddata;
+    p.send_data_size = sizeof(senddata);
+    p.replydata = replydata2;
+    p.replysz = replysz;
+    p.timeout = 30;
+    memset(replydata2, 0xcc, sizeof(replydata2));
+    reply = (ICMP_ECHO_REPLY*)replydata2;
+    thread = CreateThread(NULL, 0, test_echo_thread, &p, 0, NULL);
+
+    ret = WaitForSingleObject(thread, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "got %lu.\n", ret);
+    IcmpCloseHandle(icmp); /* completion is delivered even if icmp handle is closed */
+    icmp = IcmpCreateFile();
+    ok (icmp != INVALID_HANDLE_VALUE, "IcmpCreateFile failed unexpectedly with error %ld\n", GetLastError());
+
+    CloseHandle(thread);
+    ret = WaitForSingleObject(event, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "got %lu.\n", ret);
+    ok(reply->Status == IP_REQ_TIMED_OUT, "Expect status: 0x%08x, got: 0x%08lx\n", IP_REQ_TIMED_OUT, reply->Status);
+    ok(!reply->DataSize, "got size %d.\n", reply->DataSize);
+
     SetLastError(0xdeadbeef);
     replysz = sizeof(replydata2);
     address = htonl(INADDR_LOOPBACK);
@@ -1297,6 +1355,9 @@ static void testIcmpSendEcho(void)
     {
         ok(!ret, "IcmpSendEcho2 returned success unexpectedly\n");
         ok(error == ERROR_IO_PENDING, "Expect last error: 0x%08x, got: 0x%08lx\n", ERROR_IO_PENDING, error);
+        IcmpCloseHandle(icmp); /* completion is delivered even if icmp handle is closed */
+        icmp = IcmpCreateFile();
+        ok (icmp != INVALID_HANDLE_VALUE, "IcmpCreateFile failed unexpectedly with error %ld\n", GetLastError());
         ret = WaitForSingleObjectEx(event, 2000, TRUE);
         ok(ret == WAIT_OBJECT_0, "WaitForSingleObjectEx failed unexpectedly with %lu\n", ret);
         reply = (ICMP_ECHO_REPLY*)replydata2;
@@ -1365,6 +1426,10 @@ static void testIcmpSendEcho(void)
     error = GetLastError();
     ok(!ret, "IcmpSendEcho2 returned success unexpectedly\n");
     ok(error == ERROR_IO_PENDING, "Expect last error: 0x%08x, got: 0x%08lx\n", ERROR_IO_PENDING, error);
+    IcmpCloseHandle(icmp);
+    icmp = IcmpCreateFile();
+    ok (icmp != INVALID_HANDLE_VALUE, "IcmpCreateFile failed unexpectedly with error %ld\n", GetLastError());
+
     SleepEx(200, TRUE);
     SleepEx(0, TRUE);
     ok(icmp_send_echo_test_apc_expect == FALSE, "APC was not executed!\n");
