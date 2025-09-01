@@ -333,6 +333,7 @@ sync_test("builtin_toString", function() {
     if(v >= 9) {
         test("computedStyle", window.getComputedStyle(e), "CSSStyleDeclaration");
         test("doctype", document.doctype, "DocumentType");
+        test("domParser", new DOMParser(), "DOMParser");
 
         test("Event", document.createEvent("Event"), "Event");
         test("CustomEvent", document.createEvent("CustomEvent"), "CustomEvent");
@@ -980,6 +981,7 @@ sync_test("window_props", function() {
     test_exposed("matchMedia", v >= 10);
     test_exposed("Document", v >= 9);
     test_exposed("HTMLDocument", v === 8 || v >= 11, v === 8);
+    test_exposed("DOMParser", v >= 9);
     test_exposed("MutationObserver", v >= 11);
     test_exposed("PageTransitionEvent", v >= 11);
     test_exposed("ProgressEvent", v >= 10);
@@ -1202,6 +1204,7 @@ sync_test("constructor props", function() {
     test_exposed(Image, "create", v < 9);
     test_exposed(Option, "create", v < 9);
     test_exposed(XMLHttpRequest, "create", true);
+    if(v >= 9)  test_exposed(DOMParser, "create", false);
     if(v >= 11) test_exposed(MutationObserver, "create", false);
 });
 
@@ -3878,6 +3881,9 @@ sync_test("prototypes", function() {
     check(document.createElement("option"), HTMLOptionElement.prototype, "option elem");
     check(HTMLOptionElement.prototype, HTMLElement.prototype, "option elem prototype");
     check(Option, Function.prototype, "Option constructor");
+    check(new DOMParser(), DOMParser.prototype, "dom parser");
+    check(DOMParser.prototype, Object.prototype, "dom parser prototype");
+    check(DOMParser, Function.prototype, "dom parser constructor");
     if(v >= 11) {
         check(new MutationObserver(function() {}), MutationObserver.prototype, "mutation observer");
         check(MutationObserver.prototype, Object.prototype, "mutation observer prototype");
@@ -4181,6 +4187,7 @@ sync_test("prototype props", function() {
     ]);
     check(DocumentFragment, [ ["attachEvent",9,10], ["detachEvent",9,10], "querySelector", "querySelectorAll", "removeNode", "replaceNode", "swapNode" ]);
     check(DocumentType, [ "entities", "internalSubset", "name", "notations", "publicId", "systemId" ]);
+    check(DOMParser, [ "parseFromString" ]);
     check(Element, [
         "childElementCount", "clientHeight", "clientLeft", "clientTop", "clientWidth", ["fireEvent",9,10], "firstElementChild",
         "getAttribute", "getAttributeNS", "getAttributeNode", "getAttributeNodeNS", "getBoundingClientRect", "getClientRects",
@@ -4412,7 +4419,7 @@ sync_test("constructors", function() {
     if(v < 9)
         return;
 
-    var ctors = [ "Image", "Option", "XMLHttpRequest" ];
+    var ctors = [ "DOMParser", "Image", "Option", "XMLHttpRequest" ];
     if (v >= 11)
         ctors.push("MutationObserver");
     for(i = 0; i < ctors.length; i++) {
@@ -4544,7 +4551,7 @@ async_test("window own props", function() {
             "BeforeUnloadEvent", ["Blob",10], "BookmarkCollection", "CanvasGradient", "CanvasPattern", "CanvasPixelArray", "CanvasRenderingContext2D", "CDATASection", ["CloseEvent",10],
             "CompositionEvent", "ControlRangeCollection", "Coordinates", ["Crypto",11], ["CryptoOperation",11], "CSSFontFaceRule", "CSSImportRule", ["CSSKeyframeRule",10], ["CSSKeyframesRule",10],
             "CSSMediaRule", "CSSNamespaceRule", "CSSPageRule", "CSSRuleList", "DataTransfer", ["DataView",9,9], "Debug", ["DeviceAcceleration",11], ["DeviceMotionEvent",11],
-            ["DeviceOrientationEvent",11], ["DeviceRotationRate",11], ["DOMError",10], "DOMException", "DOMParser", ["DOMSettableTokenList",10], ["DOMStringList",10], ["DOMStringMap",11],
+            ["DeviceOrientationEvent",11], ["DeviceRotationRate",11], ["DOMError",10], "DOMException", ["DOMSettableTokenList",10], ["DOMStringList",10], ["DOMStringMap",11],
             "DragEvent", ["ErrorEvent",10], "EventException", ["EXT_texture_filter_anisotropic",11], ["File",10], ["FileList",10], ["FileReader",10], ["Float32Array",10], ["Float64Array",10],
             "FocusEvent", ["FormData",10], "Geolocation", "GetObject", ["HTMLAllCollection",11], "HTMLAppletElement", "HTMLAreasCollection", "HTMLAudioElement", "HTMLBaseElement",
             "HTMLBaseFontElement", "HTMLBGSoundElement", "HTMLBlockElement", "HTMLBRElement", "HTMLCanvasElement", ["HTMLDataListElement",10], "HTMLDDElement", "HTMLDirectoryElement",

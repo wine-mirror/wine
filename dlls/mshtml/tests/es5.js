@@ -2814,6 +2814,17 @@ sync_test("screen", function() {
     ok(!check_enum(o, "prop2"), "prop2 enumerated");
 });
 
+sync_test("DOMParser", function() {
+    var p, r = DOMParser.length;
+    ok(r === 0, "length = " + r);
+
+    p = DOMParser();
+    r = Object.getPrototypeOf(p);
+    ok(r === DOMParser.prototype, "prototype of instance created without new = " + r);
+    ok(p !== new DOMParser(), "DOMParser() == new DOMParser()");
+    ok(new DOMParser() !== new DOMParser(), "new DOMParser() == new DOMParser()");
+});
+
 sync_test("builtin_func", function() {
     var o = document.implementation, r;
     var f = o.hasFeature;
