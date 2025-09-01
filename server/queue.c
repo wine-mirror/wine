@@ -729,7 +729,7 @@ static void reset_queue_sync( struct msg_queue *queue )
 }
 
 /* check the queue status */
-static inline int is_signaled( struct msg_queue *queue )
+static inline int get_queue_status( struct msg_queue *queue )
 {
     queue_shm_t *queue_shm = queue->shared;
     return (queue_shm->wake_bits & queue_shm->wake_mask) ||
@@ -754,7 +754,7 @@ static inline void set_queue_bits( struct msg_queue *queue, unsigned int bits )
     }
     SHARED_WRITE_END;
 
-    if (is_signaled( queue )) signal_queue_sync( queue );
+    if (get_queue_status( queue )) signal_queue_sync( queue );
 }
 
 /* clear some queue bits */
@@ -774,7 +774,7 @@ static inline void clear_queue_bits( struct msg_queue *queue, unsigned int bits 
         if (queue->keystate_lock) unlock_input_keystate( queue->input );
         queue->keystate_lock = 0;
     }
-    if (!is_signaled( queue )) reset_queue_sync( queue );
+    if (!get_queue_status( queue )) reset_queue_sync( queue );
 }
 
 /* check if message is matched by the filter */
@@ -3178,7 +3178,7 @@ DECL_HANDLER(set_queue_mask)
         reply->wake_bits    = queue_shm->wake_bits;
         reply->changed_bits = queue_shm->changed_bits;
 
-        if (!is_signaled( queue )) reset_queue_sync( queue );
+        if (!get_queue_status( queue )) reset_queue_sync( queue );
         else if (!req->skip_wait) signal_queue_sync( queue );
         else msg_queue_satisfied( &queue->obj, NULL );
     }
@@ -3202,7 +3202,7 @@ DECL_HANDLER(get_queue_status)
         }
         SHARED_WRITE_END;
 
-        if (!is_signaled( queue )) reset_queue_sync( queue );
+        if (!get_queue_status( queue )) reset_queue_sync( queue );
     }
     else reply->wake_bits = reply->changed_bits = 0;
 }
@@ -3400,7 +3400,7 @@ DECL_HANDLER(get_message)
     }
     SHARED_WRITE_END;
 
-    if (!is_signaled( queue )) reset_queue_sync( queue );
+    if (!get_queue_status( queue )) reset_queue_sync( queue );
 
     /* then check for posted messages */
     if ((filter & QS_POSTMESSAGE) &&
