@@ -109,15 +109,9 @@ UNSUPPORTED_EXTENSIONS = [
     "VK_NV_external_compute_queue", # Has a new dispatchable handle
 
     # Extensions for other platforms
-    "VK_EXT_external_memory_dma_buf",
-    "VK_EXT_image_drm_format_modifier",
     "VK_EXT_metal_objects",
     "VK_EXT_physical_device_drm",
     "VK_GOOGLE_surfaceless_query",
-    "VK_KHR_external_fence_fd",
-    "VK_KHR_external_memory_fd",
-    "VK_EXT_external_memory_metal",
-    "VK_KHR_external_semaphore_fd",
     "VK_SEC_amigo_profiling", # Angle specific.
 
     # Extensions which require callback handling
@@ -136,7 +130,13 @@ UNEXPOSED_EXTENSIONS = {
     "VK_KHR_external_memory_win32",
     "VK_EXT_headless_surface",
     # Extensions for other platforms
+    "VK_EXT_external_memory_dma_buf",
+    "VK_EXT_image_drm_format_modifier",
     "VK_EXT_metal_surface",
+    "VK_KHR_external_fence_fd",
+    "VK_KHR_external_memory_fd",
+    "VK_EXT_external_memory_metal",
+    "VK_KHR_external_semaphore_fd",
     "VK_KHR_wayland_surface",
     "VK_KHR_xlib_surface",
     "VK_MVK_macos_surface",
