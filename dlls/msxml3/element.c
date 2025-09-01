@@ -1491,8 +1491,28 @@ static HRESULT WINAPI domelem_removeAttributeNode(
     IXMLDOMAttribute** attributeNode)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    FIXME("(%p)->(%p %p)\n", This, domAttribute, attributeNode);
-    return E_NOTIMPL;
+    xmlnode *attr_node;
+
+    TRACE("(%p)->(%p %p)\n", This, domAttribute, attributeNode);
+
+    if (!domAttribute)
+        return E_INVALIDARG;
+    attr_node = get_node_obj((IXMLDOMNode*)domAttribute);
+    if (This->node.node != attr_node->node->parent)
+        return E_INVALIDARG;
+
+    if (attributeNode)
+    {
+        xmlUnlinkNode(attr_node->node );
+        xmldoc_add_orphan(attr_node->node->doc, attr_node->node);
+        *attributeNode = (IXMLDOMAttribute*)create_node(attr_node->node);
+    }
+    else
+    {
+        if (xmlRemoveProp((xmlAttrPtr)attr_node->node) == -1)
+            return E_INVALIDARG;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI domelem_getElementsByTagName(
