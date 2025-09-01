@@ -481,8 +481,8 @@ q3
 @todo_wine@b same b@space@
 
 ---
-@todo_wine@foo
-@todo_wine@foo
+foo
+foo
 ---
 yy!WINE_VAR!yy
 yy!WINE_VAR!yy@space@
@@ -747,24 +747,24 @@ FAILURE 1
 FAILURE 1
 --------- success/failure when invoking cmd /k --------------
 a
-@todo_wine@ERRORLEVEL 0
+ERRORLEVEL 0
 SUCCESS 0
-@todo_wine@ERRORLEVEL 1
+ERRORLEVEL 1
 SUCCESS 0
-@todo_wine@ERRORLEVEL 1
+ERRORLEVEL 1
 SUCCESS 0
 FAILURE 457
-@todo_wine@ERRORLEVEL 458
+ERRORLEVEL 458
 SUCCESS 0
-@todo_wine@ERRORLEVEL 459
+ERRORLEVEL 459
 SUCCESS 0
-@todo_wine@ERRORLEVEL 460
+ERRORLEVEL 460
 SUCCESS 0
-@todo_wine@ERRORLEVEL 461
+ERRORLEVEL 461
 SUCCESS 0
-@todo_wine@ERRORLEVEL 0
+ERRORLEVEL 0
 SUCCESS 0
-@todo_wine@ERRORLEVEL 9009
+ERRORLEVEL 9009
 SUCCESS 0
 @todo_wine@FAILURE 1
 @todo_wine@------------ Testing 'set' ------------

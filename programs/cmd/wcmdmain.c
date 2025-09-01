@@ -1821,7 +1821,7 @@ static RETURN_CODE spawn_external_full_path(const WCHAR *file, WCHAR *full_cmdli
         }
     }
 
-    *cui_subsystem = console && !HIWORD(console);
+    if (cui_subsystem) *cui_subsystem = console && !HIWORD(console);
     return NO_ERROR;
 }
 
@@ -1957,6 +1957,7 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
     /* Quick way to get the filename is to extract the first argument. */
     firstParam = WCMD_parameter(command, 0, NULL, FALSE, TRUE);
 
+    sc->has_path = sc->has_extension = sc->is_command_file = FALSE;
     sc->cmd_index = WCMD_EXIT + 1;
 
     if (!firstParam[0])
@@ -3257,6 +3258,94 @@ static WCHAR *fetch_next_line(BOOL first_line, WCHAR* buffer)
     return buffer;
 }
 
+struct command_rebuild
+{
+    WCHAR *buffer;
+    size_t buffer_size;
+    size_t pos;
+};
+
+struct rebuild_flags
+{
+    unsigned precedence : 3,
+             depth;
+};
+
+static BOOL rebuild_append(struct command_rebuild *rb, const WCHAR *toappend)
+{
+    size_t len = wcslen(toappend);
+    if (rb->pos + len >= rb->buffer_size) return FALSE;
+    wcscpy(rb->buffer + rb->pos, toappend);
+    rb->pos += len;
+    return TRUE;
+}
+
+static BOOL rebuild_expand_and_append(struct command_rebuild *rb, const WCHAR *toappend, BOOL expand)
+{
+    WCHAR output[MAXSTRING];
+
+    if (!expand) return rebuild_append(rb, toappend);
+    /* it would be better to expand in place in rb, but handleExpansion doesn't take a string size */
+    wcscpy(output, toappend);
+    handleExpansion(output, TRUE);
+    return rebuild_append(rb, output);
+}
+
+static BOOL rebuild_insert(struct command_rebuild *rb, unsigned pos, const WCHAR *toinsert)
+{
+    size_t len = wcslen(toinsert);
+    if (rb->pos + len >= rb->buffer_size) return FALSE;
+    if (pos > rb->pos) return FALSE;
+    memmove(rb->buffer + pos + len, rb->buffer + pos, (rb->pos - pos + 1) * sizeof(WCHAR));
+    memcpy(rb->buffer + pos, toinsert, len * sizeof(WCHAR));
+    rb->pos += len;
+    return TRUE;
+}
+
+static BOOL rebuild_append_redirection(struct command_rebuild *rb, const CMD_REDIRECTION *redir, BOOL expand)
+{
+    WCHAR number[2] = {L'0' + redir->fd, L'\0'};
+    WCHAR clonestr[2] = {};
+    const WCHAR *op;
+    const WCHAR *dst = redir->file;
+
+    switch (redir->kind)
+    {
+    case REDIR_READ_FROM:
+        op = L"<";
+        break;
+    case REDIR_WRITE_TO:
+        op = L">";
+        break;
+    case REDIR_WRITE_APPEND:
+        op = L">>";
+        break;
+    case REDIR_WRITE_CLONE:
+        op = L">&";
+        clonestr[0] = L'0' + redir->clone;
+        dst = clonestr;
+        break;
+    default: return FALSE;
+    }
+    return rebuild_append(rb, number) &&
+        rebuild_append(rb, op) &&
+        rebuild_expand_and_append(rb, dst, expand);
+}
+
+static BOOL rebuild_append_all_redirections(struct command_rebuild *rb, const CMD_NODE *node, BOOL expand)
+{
+    CMD_REDIRECTION *redir;
+    BOOL ret = TRUE;
+
+    for (redir = node->redirects; ret && redir != NULL; redir = redir->next)
+    {
+        if (rb->pos && !iswspace(rb->buffer[rb->pos - 1]))
+            ret = ret && rebuild_append(rb, L" ");
+        ret = ret && rebuild_append_redirection(rb, redir, expand);
+    }
+    return ret;
+}
+
 static BOOL lexer_can_accept_do(const struct node_builder *builder)
 {
     unsigned d = 0;
@@ -4156,7 +4245,7 @@ static RETURN_CODE for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node
     return return_code;
 }
 
-static RETURN_CODE handle_pipe_command(CMD_NODE *node)
+static RETURN_CODE handle_pipe_command_old(CMD_NODE *node)
 {
     static SECURITY_ATTRIBUTES sa = {.nLength = sizeof(sa), .lpSecurityDescriptor = NULL, .bInheritHandle = TRUE};
     WCHAR temp_path[MAX_PATH];
@@ -4212,6 +4301,134 @@ static RETURN_CODE handle_pipe_command(CMD_NODE *node)
     context = saved_context;
 
     return return_code;
+}
+
+/* temp helper during migration */
+static BOOL can_run_new_pipe(CMD_NODE *node)
+{
+    switch (node->op)
+    {
+    case CMD_SINGLE:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+static RETURN_CODE spawn_pipe_sub_command(CMD_NODE *node, HANDLE *child)
+{
+    WCHAR cmd_string[MAXSTRING];
+    WCHAR comspec[MAX_PATH];
+    struct command_rebuild rb = {cmd_string, ARRAY_SIZE(cmd_string), 0};
+    RETURN_CODE return_code;
+
+    switch (node->op)
+    {
+    case CMD_SINGLE:
+        {
+            struct search_command sc;
+
+            /* command isn't delayed expanded... */
+            return_code = search_command(node->command, &sc, TRUE);
+            if (return_code != NO_ERROR && sc.cmd_index == WCMD_EXIT + 1)
+                return RETURN_CODE_CANT_LAUNCH;
+            if ((sc.cmd_index <= WCMD_EXIT && (return_code != NO_ERROR || (!sc.has_path && !sc.has_extension))) ||
+                (sc.has_path && sc.is_command_file))
+            {
+                rebuild_expand_and_append(&rb, node->command, TRUE);
+                rebuild_append_all_redirections(&rb, node, TRUE);
+            }
+            else
+            {
+                HANDLE saved[3];
+
+                if (!push_std_redirections(node->redirects, saved))
+                {
+                    WCMD_print_error();
+                    return ERROR_INVALID_FUNCTION;
+                }
+
+                return_code = spawn_external_full_path(sc.path, node->command, child, NULL);
+                pop_std_redirections(saved);
+                return return_code;
+            }
+        }
+        break;
+    default:
+        FIXME("Shouldn't happen\n");
+        return ERROR_INVALID_FUNCTION;
+    }
+
+    /* Any node except a single external command must be run in an alternate cmd.exe instance for concurrency.
+     * Native doesn't use COMSPEC for IF and FOR commands (likely for historical reasons as command.com
+     * didn't support these commands).
+     */
+    if (node->op == CMD_IF || node->op == CMD_FOR ||
+        !GetEnvironmentVariableW(L"COMSPEC", comspec, ARRAY_SIZE(comspec)))
+    {
+        if (!GetModuleFileNameW(NULL, comspec, ARRAY_SIZE(comspec)))
+            wcscpy(comspec, L"cmd.exe");
+    }
+
+    /* testings show that none of the options (extended commands, delayed expansions...) are passed as parameters */
+    if (rebuild_insert(&rb, 0, L" /S /D /C \"") &&
+        rebuild_insert(&rb, 0, comspec) &&
+        rebuild_append(&rb, L"\""))
+        return_code = spawn_external_full_path(comspec, rb.buffer, child, NULL);
+    else
+        return_code = ERROR_INVALID_FUNCTION;
+
+    return return_code;
+}
+
+static RETURN_CODE handle_pipe_command(CMD_NODE *node)
+{
+    static SECURITY_ATTRIBUTES sa = {.nLength = sizeof(sa), .lpSecurityDescriptor = NULL, .bInheritHandle = TRUE};
+    HANDLE lhs_child, rhs_child;
+    HANDLE read_pipe, write_pipe;
+    HANDLE saved_output;
+    RETURN_CODE return_code;
+
+    if (!can_run_new_pipe(node->left) || !can_run_new_pipe(node->right))
+        return handle_pipe_command_old(node);
+
+    if (!CreatePipe(&read_pipe, &write_pipe, &sa, 0))
+        return ERROR_INVALID_FUNCTION;
+    saved_output = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetStdHandle(STD_OUTPUT_HANDLE, write_pipe);
+    return_code = spawn_pipe_sub_command(node->left, &lhs_child);
+    CloseHandle(write_pipe);
+    SetStdHandle(STD_OUTPUT_HANDLE, saved_output);
+    if (return_code == RETURN_CODE_CANT_LAUNCH && context) ExitProcess(255);
+    if (return_code == NO_ERROR)
+    {
+        SetStdHandle(STD_INPUT_HANDLE, read_pipe);
+        return_code = spawn_pipe_sub_command(node->right, &rhs_child);
+        if (return_code == NO_ERROR)
+        {
+            HANDLE h[2] = {lhs_child, rhs_child};
+            DWORD exit_code, result;
+            /* We wait even on a GUI processes to terminate!
+             * but no direct ctrl-c support here (shall be inherited & handled by sub processes though)
+             */
+            if ((result = WaitForMultipleObjects(ARRAY_SIZE(h), h, TRUE, INFINITE)) == WAIT_OBJECT_0)
+            {
+                if (!GetExitCodeProcess(rhs_child, &exit_code)) exit_code = 255;
+                return_code = exit_code;
+            }
+            else FIXME("Wait shouldn't fail %lx\n", result);
+            CloseHandle(rhs_child);
+        }
+        else
+        {
+            TerminateProcess(lhs_child, 255);
+            if (return_code == RETURN_CODE_CANT_LAUNCH && context) ExitProcess(255);
+        }
+        CloseHandle(lhs_child);
+    }
+    CloseHandle(read_pipe);
+
+    return errorlevel = return_code;
 }
 
 RETURN_CODE node_execute(CMD_NODE *node)
