@@ -70,8 +70,6 @@ static BOOL paged_mode;
 static const WCHAR *pagedMessage = NULL;
 static int line_count;
 static int max_height;
-static int max_width;
-static int numChars;
 
 static HANDLE control_c_event;
 
@@ -609,14 +607,11 @@ void WCMD_enter_paged_mode(const WCHAR *msg)
   if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo)) {
     /* Use console window dimensions, not screen buffer dimensions. */
     max_height = consoleInfo.srWindow.Bottom - consoleInfo.srWindow.Top + 1;
-    max_width  = consoleInfo.srWindow.Right - consoleInfo.srWindow.Left + 1;
   } else {
     max_height = 25;
-    max_width  = 80;
   }
   paged_mode = TRUE;
   line_count = 0;
-  numChars   = 0;
   pagedMessage = (msg==NULL)? anykey : msg;
 }
 
@@ -719,35 +714,31 @@ BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWO
  *
  * Send output to specified handle without formatting e.g. when message contains '%'
  */
-static RETURN_CODE WCMD_output_asis_handle (DWORD std_handle, const WCHAR *message) {
-  RETURN_CODE return_code = NO_ERROR;
-  const WCHAR* ptr;
-  HANDLE handle = GetStdHandle(std_handle);
+static RETURN_CODE WCMD_output_asis_handle(DWORD std_handle, const WCHAR *message)
+{
+    RETURN_CODE return_code = NO_ERROR;
+    const WCHAR* ptr;
+    HANDLE handle = GetStdHandle(std_handle);
 
-  if (paged_mode) {
-    do {
-      ptr = message;
-      while (*ptr && *ptr!='\n' && (numChars < max_width)) {
-        numChars++;
-        ptr++;
-      };
-      if (*ptr == '\n') ptr++;
-      WCMD_output_asis_len(message, ptr - message, handle);
-      numChars = 0;
-      if (++line_count >= max_height - 1) {
-        line_count = 0;
-        WCMD_output_asis_len(pagedMessage, lstrlenW(pagedMessage), handle);
-        return_code = WCMD_wait_for_input(GetStdHandle(STD_INPUT_HANDLE));
-        WCMD_output_asis_len(L"\r\n", 2, handle);
-        if (return_code)
-          break;
-      }
-    } while (((message = ptr) != NULL) && (*ptr));
-  } else {
-    WCMD_output_asis_len(message, lstrlenW(message), handle);
-  }
+    if (paged_mode)
+    {
+        do
+        {
+            for (ptr = message; *ptr && *ptr != L'\n'; ptr++) {}
+            if (*ptr == L'\n') ptr++;
+            WCMD_output_asis_len(message, ptr - message, handle);
+            if (++line_count >= max_height - 1)
+            {
+                line_count = 0;
+                WCMD_output_asis_len(pagedMessage, lstrlenW(pagedMessage), handle);
+                return_code = WCMD_wait_for_input(GetStdHandle(STD_INPUT_HANDLE));
+                WCMD_output_asis_len(L"\r\n", 2, handle);
+            }
+        } while (*(message = ptr) && !return_code);
+    } else
+        WCMD_output_asis_len(message, lstrlenW(message), handle);
 
-  return return_code;
+    return return_code;
 }
 
 /*******************************************************************
