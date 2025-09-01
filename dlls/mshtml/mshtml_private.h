@@ -76,6 +76,7 @@
 #define MSHTML_E_INVALID_PROPERTY 0x800a01b6
 #define MSHTML_E_INVALID_ACTION   0x800a01bd
 #define MSHTML_E_NODOC            0x800a025c
+#define MSHTML_E_SYNTAX           0x800a03ea
 #define MSHTML_E_NOT_FUNC         0x800a138a
 
 typedef struct HTMLWindow HTMLWindow;
@@ -1284,6 +1285,7 @@ HRESULT nsnode_to_nsstring(nsIDOMNode*,nsAString*);
 void setup_editor_controller(GeckoBrowser*);
 nsresult get_nsinterface(nsISupports*,REFIID,void**);
 nsIWritableVariant *create_nsvariant(void);
+nsIDOMParser *create_nsdomparser(nsIDOMWindow*);
 nsIXMLHttpRequest *create_nsxhr(nsIDOMWindow *nswindow);
 nsresult create_nsfile(const PRUnichar*,nsIFile**);
 char *get_nscategory_entry(const char*,const char*);

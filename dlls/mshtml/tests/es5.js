@@ -2815,7 +2815,7 @@ sync_test("screen", function() {
 });
 
 sync_test("DOMParser", function() {
-    var p, r = DOMParser.length;
+    var p, r = DOMParser.length, mimeType;
     ok(r === 0, "length = " + r);
 
     p = DOMParser();
@@ -2823,6 +2823,100 @@ sync_test("DOMParser", function() {
     ok(r === DOMParser.prototype, "prototype of instance created without new = " + r);
     ok(p !== new DOMParser(), "DOMParser() == new DOMParser()");
     ok(new DOMParser() !== new DOMParser(), "new DOMParser() == new DOMParser()");
+
+    var teststr = { toString: function() { return "<a name=\"test\">wine</a>"; } };
+
+    // HTML mime types
+    mimeType = [
+        "text/hTml"
+    ];
+    for(var i = 0; i < mimeType.length; i++) {
+        var m = mimeType[i], html = p.parseFromString(teststr, m), e = external.getExpectedMimeType(m.toLowerCase());
+        r = html.mimeType;
+        ok(r === e, "mimeType of HTML document with mime type " + m + " = " + r + ", expected " + e);
+        r = html.childNodes;
+        ok(r.length === 1 || r.length === 2, "childNodes.length of HTML document with mime type " + m + " = " + r.length);
+        var html_elem = r[r.length - 1];
+        ok(html_elem.nodeName === "HTML", "child nodeName of HTML document with mime type " + m + " = " + html_elem.nodeName);
+        ok(html_elem.nodeValue === null, "child nodeValue of HTML document with mime type " + m + " = " + html_elem.nodeValue);
+        r = html.anchors;
+        ok(r.length === 1, "anchors.length of HTML document with mime type " + m + " = " + r.length);
+        r = r[0];
+        ok(r.nodeName === "A", "anchor nodeName of HTML document with mime type " + m + " = " + r.nodeName);
+        ok(r.nodeValue === null, "anchor nodeValue of HTML document with mime type " + m + " = " + r.nodeValue);
+        r = r.parentNode;
+        ok(r.nodeName === "BODY", "anchor parent nodeName of HTML document with mime type " + m + " = " + r.nodeName);
+        ok(r.nodeValue === null, "anchor parent nodeValue of HTML document with mime type " + m + " = " + r.nodeValue);
+        r = r.parentNode;
+        ok(r === html_elem, "body parent of HTML document with mime type " + m + " = " + r);
+    }
+
+    // XML mime types
+    mimeType = [
+        "text/xmL",
+        "aPPlication/xml",
+        "application/xhtml+xml",
+        "image/svg+xml"
+    ];
+    for(var i = 0; i < mimeType.length; i++) {
+        var m = mimeType[i], xml = p.parseFromString(teststr, m), e;
+        e = external.getExpectedMimeType(m === "aPPlication/xml" ? "text/xml" : m.toLowerCase());
+        r = xml.mimeType;
+        ok(r === e, "mimeType of XML document with mime type " + m + " = " + r + ", expected " + e);
+        r = xml.childNodes;
+        ok(r.length === 1, "childNodes.length of XML document with mime type " + m + " = " + r.length);
+        r = r[0];
+        ok(r.nodeName === "a", "child nodeName of XML document with mime type " + m + " = " + r.nodeName);
+        ok(r.nodeValue === null, "child nodeValue of XML document with mime type " + m + " = " + r.nodeValue);
+        r = r.childNodes;
+        ok(r.length === 1, "childNodes of child.length of XML document with mime type " + m + " = " + r.length);
+        r = r[0];
+        ok(r.nodeName === "#text", "child of child nodeName of XML document with mime type " + m + " = " + r.nodeName);
+        ok(r.nodeValue === "wine", "child of child nodeValue of XML document with mime type " + m + " = " + r.nodeValue);
+        ok(!("test" in xml), "'test' in XML document with mime type " + m);
+
+        // test HTMLDocument specific props, which are available in DocumentPrototype,
+        // so they are shared in XMLDocument since they both have the same prototype
+        r = xml.anchors;
+        if(m === "application/xhtml+xml") {
+            todo_wine.
+            ok(r.length === 1, "anchors.length of XML document with mime type " + m + " = " + r.length);
+            r = r[0];
+            todo_wine.
+            ok(r === xml.childNodes[0], "anchor of XML document with mime type " + m + " = " + r);
+        }else {
+            ok(r.length === 0, "anchors.length of XML document with mime type " + m + " = " + r.length);
+        }
+    }
+
+    // Invalid mime types
+    mimeType = [
+        "application/html",
+        "wine/test+xml",
+        "image/jpeg",
+        "text/plain",
+        "html",
+        "+xml",
+        "xml",
+        42
+    ];
+    for(var i = 0; i < mimeType.length; i++) {
+        try {
+            p.parseFromString(teststr, mimeType[i]);
+            ok(false, "expected exception calling parseFromString with mime type " + mimeType[i]);
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === E_INVALIDARG, "parseFromString with mime type " + mimeType[i] + " threw " + n);
+        }
+    }
+
+    try {
+        r = p.parseFromString("<invalid>xml", "text/xml");
+        ok(false, "expected exception calling parseFromString with invalid xml");
+    }catch(ex) {
+        ok(ex.name === "SyntaxError", "parseFromString with invalid xml threw " + ex.name);
+    }
+    p.parseFromString("<parsererror></parsererror>", "text/xml");
 });
 
 sync_test("builtin_func", function() {

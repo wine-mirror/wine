@@ -42,6 +42,7 @@ WINE_DECLARE_DEBUG_CHANNEL(gecko);
 #define NS_WEBBROWSER_CONTRACTID "@mozilla.org/embedding/browser/nsWebBrowser;1"
 #define NS_COMMANDPARAMS_CONTRACTID "@mozilla.org/embedcomp/command-params;1"
 #define NS_HTMLSERIALIZER_CONTRACTID "@mozilla.org/layout/contentserializer;1?mimetype=text/html"
+#define NS_DOMPARSER_CONTRACTID "@mozilla.org/xmlextras/domparser;1"
 #define NS_EDITORCONTROLLER_CONTRACTID "@mozilla.org/editor/editorcontroller;1"
 #define NS_PREFERENCES_CONTRACTID "@mozilla.org/preferences;1"
 #define NS_VARIANT_CONTRACTID "@mozilla.org/variant;1"
@@ -2414,6 +2415,48 @@ __ASM_GLOBAL_FUNC(call_thiscall_func,
         "jmp *%edx\n\t")
 #define nsIScriptObjectPrincipal_GetPrincipal(this) ((void* (WINAPI*)(void*,void*))&call_thiscall_func)((this)->lpVtbl->GetPrincipal,this)
 #endif
+
+nsIDOMParser *create_nsdomparser(nsIDOMWindow *nswindow)
+{
+    nsIScriptObjectPrincipal *sop;
+    mozIDOMWindow *inner_window;
+    nsIGlobalObject *nsglo;
+    nsIDOMParser *nsparser;
+    nsIPrincipal *nspri;
+    nsresult nsres;
+
+    nsres = nsIDOMWindow_GetInnerWindow(nswindow, &inner_window);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get inner window: %08lx\n", nsres);
+        return NULL;
+    }
+
+    nsres = mozIDOMWindow_QueryInterface(inner_window, &IID_nsIGlobalObject, (void**)&nsglo);
+    mozIDOMWindow_Release(inner_window);
+    assert(nsres == NS_OK);
+
+    nsres = nsIGlobalObject_QueryInterface(nsglo, &IID_nsIScriptObjectPrincipal, (void**)&sop);
+    assert(nsres == NS_OK);
+
+    /* The returned principal is *not* AddRef'd */
+    nspri = nsIScriptObjectPrincipal_GetPrincipal(sop);
+    nsIScriptObjectPrincipal_Release(sop);
+
+    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr,
+            NS_DOMPARSER_CONTRACTID, NULL, &IID_nsIDOMParser, (void**)&nsparser);
+    if(NS_SUCCEEDED(nsres)) {
+        nsres = nsIDOMParser_Init(nsparser, nspri, NULL, NULL, nsglo);
+        if(NS_FAILED(nsres))
+            nsIDOMParser_Release(nsparser);
+    }
+    nsIGlobalObject_Release(nsglo);
+    if(NS_FAILED(nsres)) {
+        ERR("nsIDOMParser_Init failed: %08lx\n", nsres);
+        return NULL;
+    }
+
+    return nsparser;
+}
 
 nsIXMLHttpRequest *create_nsxhr(nsIDOMWindow *nswindow)
 {

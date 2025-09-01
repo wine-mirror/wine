@@ -4371,6 +4371,19 @@ interface nsIScriptObjectPrincipal : nsISupports
 
 [
     object,
+    uuid(70b9600e-8622-4c93-9ad8-22c28058dc44),
+    local
+]
+interface nsIDOMParser : nsISupports
+{
+    nsresult ParseFromString(const char16_t *str, const char *contentType, nsIDOMDocument **_retval);
+    nsresult ParseFromBuffer(const uint8_t *buf, uint32_t bufLen, const char *aContentType, nsIDOMDocument **_retval);
+    nsresult ParseFromStream(nsIInputStream *stream, const char *charset, int32_t contentLength, const char *contentType, nsIDOMDocument **_retval);
+    nsresult Init(nsIPrincipal *principal, nsIURI *documentURI, nsIURI *baseURI, nsIGlobalObject *scriptObject);
+}
+
+[
+    object,
     uuid(6f54214c-7175-498d-9d2d-0429e38c2869),
     local
 ]

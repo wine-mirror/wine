@@ -280,10 +280,70 @@ DISPEX_IDISPATCH_IMPL(dom_parser, IDOMParser, impl_from_IDOMParser(iface)->dispe
 static HRESULT WINAPI dom_parser_parseFromString(IDOMParser *iface, BSTR string, BSTR mimeType, IHTMLDocument2 **ppNode)
 {
     struct dom_parser *This = impl_from_IDOMParser(iface);
+    HTMLInnerWindow *script_global;
+    nsAString errns, errtag;
+    HTMLDocumentNode *doc;
+    nsIDOMDocument *nsdoc;
+    nsIDOMNodeList *nodes;
+    nsIDOMParser *parser;
+    char *content_type;
+    nsresult nsres;
+    HRESULT hres;
+    BOOL is_html;
 
-    FIXME("(%p)->(%s %s %p)\n", This, debugstr_w(string), debugstr_w(mimeType), ppNode);
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(string), debugstr_w(mimeType), ppNode);
 
-    return E_NOTIMPL;
+    if(!string || !mimeType)
+        return E_INVALIDARG;
+
+    if(!(content_type = strdupWtoA(mimeType)))
+        return E_OUTOFMEMORY;
+    _strlwr(content_type);
+
+    script_global = get_script_global(&This->dispex);
+
+    if(!(parser = create_nsdomparser(script_global->dom_window))) {
+        free(content_type);
+        hres = E_FAIL;
+        goto ret;
+    }
+    nsres = nsIDOMParser_ParseFromString(parser, string ? string : L"", content_type, &nsdoc);
+    is_html = !strcmp(content_type, "text/html");
+    nsIDOMParser_Release(parser);
+    free(content_type);
+    if(NS_FAILED(nsres)) {
+        hres = (nsres == NS_ERROR_NOT_IMPLEMENTED) ? E_INVALIDARG : map_nsresult(nsres);
+        goto ret;
+    }
+
+    if(!is_html) {
+        nsAString_InitDepend(&errns, L"http://www.mozilla.org/newlayout/xml/parsererror.xml");
+        nsAString_InitDepend(&errtag, L"parsererror");
+        nsres = nsIDOMDocument_GetElementsByTagNameNS(nsdoc, &errns, &errtag, &nodes);
+        nsAString_Finish(&errtag);
+        nsAString_Finish(&errns);
+        if(NS_SUCCEEDED(nsres)) {
+            UINT32 length;
+            nsres = nsIDOMNodeList_GetLength(nodes, &length);
+            nsIDOMNodeList_Release(nodes);
+            if(NS_SUCCEEDED(nsres) && length) {
+                WARN("Failed to parse input XML\n");
+                nsIDOMDocument_Release(nsdoc);
+                hres = MSHTML_E_SYNTAX;
+                goto ret;
+            }
+        }
+    }
+
+    hres = create_document_node(nsdoc, script_global->doc->browser, NULL, script_global, script_global->doc->document_mode, &doc);
+    nsIDOMDocument_Release(nsdoc);
+    if(FAILED(hres))
+        goto ret;
+
+    *ppNode = &doc->IHTMLDocument2_iface;
+ret:
+    IHTMLWindow2_Release(&script_global->base.IHTMLWindow2_iface);
+    return hres;
 }
 
 static const IDOMParserVtbl dom_parser_vtbl = {
