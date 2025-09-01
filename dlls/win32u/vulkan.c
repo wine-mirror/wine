@@ -266,7 +266,7 @@ static VkResult win32u_vkGetPhysicalDeviceSurfaceFormats2KHR( VkPhysicalDevice c
 static VkBool32 win32u_vkGetPhysicalDeviceWin32PresentationSupportKHR( VkPhysicalDevice client_physical_device, uint32_t queue )
 {
     struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle( client_physical_device );
-    return driver_funcs->p_vkGetPhysicalDeviceWin32PresentationSupportKHR( physical_device->host.physical_device, queue );
+    return driver_funcs->p_get_physical_device_presentation_support( physical_device, queue );
 }
 
 static BOOL extents_equals( const VkExtent2D *extents, const RECT *rect )
@@ -515,7 +515,7 @@ static VkResult nulldrv_vulkan_surface_create( HWND hwnd, const struct vulkan_in
     return res;
 }
 
-static VkBool32 nulldrv_vkGetPhysicalDeviceWin32PresentationSupportKHR( VkPhysicalDevice device, uint32_t queue )
+static VkBool32 nulldrv_get_physical_device_presentation_support( struct vulkan_physical_device *physical_device, uint32_t queue )
 {
     return VK_TRUE;
 }
@@ -528,7 +528,7 @@ static const char *nulldrv_get_host_surface_extension(void)
 static const struct vulkan_driver_funcs nulldrv_funcs =
 {
     .p_vulkan_surface_create = nulldrv_vulkan_surface_create,
-    .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = nulldrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
+    .p_get_physical_device_presentation_support = nulldrv_get_physical_device_presentation_support,
     .p_get_host_surface_extension = nulldrv_get_host_surface_extension,
 };
 
@@ -560,10 +560,10 @@ static VkResult lazydrv_vulkan_surface_create( HWND hwnd, const struct vulkan_in
     return driver_funcs->p_vulkan_surface_create( hwnd, instance, surface, client );
 }
 
-static VkBool32 lazydrv_vkGetPhysicalDeviceWin32PresentationSupportKHR( VkPhysicalDevice device, uint32_t queue )
+static VkBool32 lazydrv_get_physical_device_presentation_support( struct vulkan_physical_device *physical_device, uint32_t queue )
 {
     vulkan_driver_load();
-    return driver_funcs->p_vkGetPhysicalDeviceWin32PresentationSupportKHR( device, queue );
+    return driver_funcs->p_get_physical_device_presentation_support( physical_device, queue );
 }
 
 static const char *lazydrv_get_host_surface_extension(void)
@@ -575,7 +575,7 @@ static const char *lazydrv_get_host_surface_extension(void)
 static const struct vulkan_driver_funcs lazydrv_funcs =
 {
     .p_vulkan_surface_create = lazydrv_vulkan_surface_create,
-    .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = lazydrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
+    .p_get_physical_device_presentation_support = lazydrv_get_physical_device_presentation_support,
     .p_get_host_surface_extension = lazydrv_get_host_surface_extension,
 };
 

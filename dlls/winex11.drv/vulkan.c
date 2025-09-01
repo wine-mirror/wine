@@ -85,13 +85,11 @@ static VkResult X11DRV_vulkan_surface_create( HWND hwnd, const struct vulkan_ins
     return VK_SUCCESS;
 }
 
-static VkBool32 X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
-        uint32_t index)
+static VkBool32 X11DRV_get_physical_device_presentation_support( struct vulkan_physical_device *physical_device, uint32_t index )
 {
-    TRACE("%p %u\n", phys_dev, index);
-
-    return pvkGetPhysicalDeviceXlibPresentationSupportKHR(phys_dev, index, gdi_display,
-            default_visual.visual->visualid);
+    TRACE( "%p %u\n", physical_device, index );
+    return pvkGetPhysicalDeviceXlibPresentationSupportKHR( physical_device->host.physical_device, index, gdi_display,
+                                                           default_visual.visual->visualid );
 }
 
 static const char *X11DRV_get_host_surface_extension(void)
@@ -102,7 +100,7 @@ static const char *X11DRV_get_host_surface_extension(void)
 static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = X11DRV_vulkan_surface_create,
-    .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR,
+    .p_get_physical_device_presentation_support = X11DRV_get_physical_device_presentation_support,
     .p_get_host_surface_extension = X11DRV_get_host_surface_extension,
 };
 

@@ -88,12 +88,12 @@ static VkResult wayland_vulkan_surface_create(HWND hwnd, const struct vulkan_ins
     return VK_SUCCESS;
 }
 
-static VkBool32 wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
-                                                                       uint32_t index)
+static VkBool32 wayland_get_physical_device_presentation_support(struct vulkan_physical_device *physical_device,
+                                                                 uint32_t index)
 {
-    TRACE("%p %u\n", phys_dev, index);
+    TRACE("%p %u\n", physical_device, index);
 
-    return pvkGetPhysicalDeviceWaylandPresentationSupportKHR(phys_dev, index,
+    return pvkGetPhysicalDeviceWaylandPresentationSupportKHR(physical_device->host.physical_device, index,
                                                              process_wayland.wl_display);
 }
 
@@ -105,7 +105,7 @@ static const char *wayland_get_host_surface_extension(void)
 static const struct vulkan_driver_funcs wayland_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = wayland_vulkan_surface_create,
-    .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR,
+    .p_get_physical_device_presentation_support = wayland_get_physical_device_presentation_support,
     .p_get_host_surface_extension = wayland_get_host_surface_extension,
 };
 

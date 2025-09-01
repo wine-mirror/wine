@@ -117,10 +117,10 @@ err:
     return VK_ERROR_INCOMPATIBLE_DRIVER;
 }
 
-static VkBool32 macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
+static VkBool32 macdrv_get_physical_device_presentation_support(struct vulkan_physical_device *physical_device,
         uint32_t index)
 {
-    TRACE("%p %u\n", phys_dev, index);
+    TRACE("%p %u\n", physical_device, index);
 
     return VK_TRUE;
 }
@@ -133,7 +133,7 @@ static const char *macdrv_get_host_surface_extension(void)
 static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = macdrv_vulkan_surface_create,
-    .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
+    .p_get_physical_device_presentation_support = macdrv_get_physical_device_presentation_support,
     .p_get_host_surface_extension = macdrv_get_host_surface_extension,
 };
 
