@@ -1348,14 +1348,6 @@ static int msg_queue_signaled( struct object *obj, struct wait_queue_entry *entr
 static void msg_queue_satisfied( struct object *obj, struct wait_queue_entry *entry )
 {
     struct msg_queue *queue = (struct msg_queue *)obj;
-    queue_shm_t *queue_shm = queue->shared;
-
-    SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
-    {
-        shared->wake_mask = 0;
-        shared->changed_mask = 0;
-    }
-    SHARED_WRITE_END;
     reset_queue_sync( queue );
 }
 
@@ -3180,7 +3172,7 @@ DECL_HANDLER(set_queue_mask)
 
         if (!get_queue_status( queue )) reset_queue_sync( queue );
         else if (!req->skip_wait) signal_queue_sync( queue );
-        else msg_queue_satisfied( &queue->obj, NULL );
+        else reset_queue_sync( queue );
     }
 }
 
