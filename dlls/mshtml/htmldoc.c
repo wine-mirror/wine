@@ -5967,6 +5967,10 @@ HRESULT create_document_node(nsIDOMDocument *nsdoc, GeckoBrowser *browser, HTMLI
             ERR("SetDesignMode failed: %08lx\n", nsres);
     }
 
+    /* make sure dispex info is initialized for the prototype */
+    if(parent_mode >= COMPAT_MODE_IE9 && !window)
+        dispex_compat_mode(&doc->node.event_target.dispex);
+
     *ret = doc;
     return S_OK;
 }

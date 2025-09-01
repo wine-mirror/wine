@@ -139,10 +139,6 @@ static HRESULT WINAPI HTMLDOMImplementation2_createHTMLDocument(IHTMLDOMImplemen
     if(FAILED(hres))
         return hres;
 
-    /* make sure dispex info is initialized for the prototype */
-    if(compat_mode >= COMPAT_MODE_IE9)
-        dispex_compat_mode(&new_document_node->node.event_target.dispex);
-
     *new_document = &new_document_node->IHTMLDocument7_iface;
     return S_OK;
 }
