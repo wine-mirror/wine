@@ -1081,12 +1081,14 @@ static void test_call_driver(DEVICE_OBJECT *device)
 }
 
 static int cancel_cnt;
+static HANDLE thread_id;
 
 static void WINAPI cancel_irp(DEVICE_OBJECT *device, IRP *irp)
 {
     IoReleaseCancelSpinLock(irp->CancelIrql);
     ok(irp->Cancel == TRUE, "Cancel = %x\n", irp->Cancel);
     ok(!irp->CancelRoutine, "CancelRoutine = %p\n", irp->CancelRoutine);
+    ok(PsGetCurrentThreadId() == thread_id, "Unexpected thread_id %p\n", PsGetCurrentThreadId());
     irp->IoStatus.Status = STATUS_CANCELLED;
     irp->IoStatus.Information = 0;
     cancel_cnt++;
@@ -1095,6 +1097,7 @@ static void WINAPI cancel_irp(DEVICE_OBJECT *device, IRP *irp)
 static void WINAPI cancel_ioctl_irp(DEVICE_OBJECT *device, IRP *irp)
 {
     IoReleaseCancelSpinLock(irp->CancelIrql);
+    todo_wine ok(PsGetCurrentThreadId() == thread_id, "Unexpected thread_id %p\n", PsGetCurrentThreadId());
     irp->IoStatus.Status = STATUS_CANCELLED;
     irp->IoStatus.Information = 0;
     cancel_cnt++;
@@ -1116,6 +1119,8 @@ static void test_cancel_irp(DEVICE_OBJECT *device)
     BOOL completion_called;
     BOOLEAN r;
     NTSTATUS status;
+
+    thread_id = PsGetCurrentThreadId();
 
     /* cancel IRP with no cancel routine */
     irp = IoBuildAsynchronousFsdRequest(IRP_MJ_FLUSH_BUFFERS, device, NULL, 0, NULL, &iosb);
@@ -2714,6 +2719,7 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
             status = STATUS_SUCCESS;
             break;
         case IOCTL_WINETEST_TEST_CANCEL:
+            thread_id = PsGetCurrentThreadId();
             IoSetCancelRoutine(irp, cancel_ioctl_irp);
             IoMarkIrpPending(irp);
             return STATUS_PENDING;
