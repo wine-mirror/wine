@@ -259,9 +259,16 @@ async_test("content_types", function() {
 
     function onload() {
         ok(xhr.responseText === xml, "unexpected responseText " + xhr.responseText);
-        if(v < 10 || types === xml_types)
+        if(v < 10 || types === xml_types) {
             ok(xhr.responseXML !== null, "unexpected null responseXML for " + types[i]);
-        else
+            if(v >= 10) {
+                var r = xhr.responseXML.mimeType, e = "text/xml";
+                if(types[i] === "application/xHtml+xml" || types[i] === "image/SvG+xml")
+                    e = types[i].toLowerCase();
+                e = external.getExpectedMimeType(e);
+                ok(r === e, "XML document mimeType for " + types[i] + " = " + r + ", expected " + e);
+            }
+        }else
             ok(xhr.responseXML === null, "unexpected non-null responseXML for " + (override ? "overridden " : "") + types[i]);
 
         if(("overrideMimeType" in xhr) && !override) {

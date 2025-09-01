@@ -1269,6 +1269,7 @@ static HRESULT WINAPI HTMLDocument_get_mimeType(IHTMLDocument2 *iface, BSTR *p)
     nsAString nsstr;
     nsresult nsres;
     HRESULT hres;
+    size_t len;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -1283,6 +1284,12 @@ static HRESULT WINAPI HTMLDocument_get_mimeType(IHTMLDocument2 *iface, BSTR *p)
         return map_nsresult(nsres);
 
     nsAString_GetData(&nsstr, &content_type);
+
+    /* Unknown content types with +xml are reported as XML */
+    if((len = wcslen(content_type)) >= 4 && !memcmp(content_type + len - 4, L"+xml", 4 * sizeof(WCHAR)) &&
+       wcscmp(content_type, L"application/xhtml+xml") && wcscmp(content_type, L"image/svg+xml"))
+        content_type = L"text/xml";
+
     hres = get_mime_type_display_name(content_type, p);
     nsAString_Finish(&nsstr);
     return hres;
