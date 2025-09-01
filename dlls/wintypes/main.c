@@ -1455,9 +1455,19 @@ static HRESULT STDMETHODCALLTYPE property_value_statics_CreateBoolean(IPropertyV
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateString(IPropertyValueStatics *iface,
-        HSTRING value, IInspectable **property_value)
+        HSTRING value_str, IInspectable **property_value)
 {
-    TRACE("iface %p, value %s, property_value %p.\n", iface, debugstr_hstring(value), property_value);
+    HSTRING value;
+    HRESULT hr;
+
+    TRACE("iface %p, value %s, property_value %p.\n", iface, debugstr_hstring(value_str), property_value);
+
+    if (FAILED(hr = WindowsDuplicateString(value_str, &value)))
+    {
+        *property_value = NULL;
+        return hr;
+    }
+
     create_primitive_property_value_iref(PropertyType_String, irefs.hstring_iface.lpVtbl, iref_hstring_vtbl);
 }
 
