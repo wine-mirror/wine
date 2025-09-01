@@ -3197,12 +3197,12 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
         params.restore = TRUE;
     }
 
-    if (user_driver->pProcessEvents( mask )) ret = count - 1;
+    if (user_driver->pProcessEvents( QS_ALLINPUT )) ret = count - 1;
     else
     {
         ret = NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
                                         !!(flags & MWMO_ALERTABLE), get_nt_timeout( &time, timeout ));
-        if (ret == count - 1) user_driver->pProcessEvents( mask );
+        if (ret == count - 1) user_driver->pProcessEvents( QS_ALLINPUT );
         else if (HIWORD(ret)) /* is it an error code? */
         {
             RtlSetLastWin32Error( RtlNtStatusToDosError(ret) );
