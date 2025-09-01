@@ -19,6 +19,7 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#include <stdint.h>
 #include <zlib.h>
 
 #include "windef.h"
@@ -46,12 +47,12 @@ struct local_file_header
     WORD extra_length;
 };
 
-struct data_descriptor
+struct zip32_data_descriptor
 {
-    DWORD signature;
-    DWORD crc32;
-    DWORD compressed_size;
-    DWORD uncompressed_size;
+    uint32_t signature;
+    uint32_t crc32;
+    uint32_t compressed_size;
+    uint32_t uncompressed_size;
 };
 
 struct central_directory_header
@@ -74,16 +75,16 @@ struct central_directory_header
     DWORD local_file_offset;
 };
 
-struct central_directory_end
+struct zip32_end_of_central_directory
 {
-    DWORD signature;
-    WORD diskid;
-    WORD firstdisk;
-    WORD records_num;
-    WORD records_total;
-    DWORD directory_size;
-    DWORD directory_offset;
-    WORD comment_length;
+    uint32_t signature;
+    uint16_t diskid;
+    uint16_t firstdisk;
+    uint16_t records_num;
+    uint16_t records_total;
+    uint32_t directory_size;
+    uint32_t directory_offset;
+    uint16_t comment_length;
 };
 #pragma pack(pop)
 
@@ -91,7 +92,7 @@ struct central_directory_end
 #define LOCAL_HEADER_SIGNATURE 0x04034b50
 #define DIRECTORY_END_SIGNATURE 0x06054b50
 #define DATA_DESCRIPTOR_SIGNATURE 0x08074b50
-#define VERSION 20
+#define ZIP32_VERSION 20
 
 enum entry_flags
 {
@@ -157,7 +158,7 @@ static void compress_write(struct zip_archive *archive, void *data, ULONG size)
 
 void compress_finalize_archive(struct zip_archive *archive)
 {
-    struct central_directory_end dir_end = { 0 };
+    struct zip32_end_of_central_directory dir_end = { 0 };
     size_t i;
 
     dir_end.directory_offset = archive->position;
@@ -195,7 +196,7 @@ static void zfree(void *opaque, void *ptr)
 }
 
 static void compress_write_content(struct zip_archive *archive, IStream *content,
-        OPC_COMPRESSION_OPTIONS options, struct data_descriptor *data_desc)
+        OPC_COMPRESSION_OPTIONS options, struct zip32_data_descriptor *data_desc)
 {
     int level, flush;
     z_stream z_str;
@@ -277,7 +278,7 @@ HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path,
 {
     struct central_directory_header *entry;
     struct local_file_header local_header;
-    struct data_descriptor data_desc;
+    struct zip32_data_descriptor data_desc;
     DWORD local_header_pos;
     char *name;
     DWORD len;
@@ -289,7 +290,7 @@ HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path,
 
     /* Local header */
     local_header.signature = LOCAL_HEADER_SIGNATURE;
-    local_header.version = VERSION;
+    local_header.version = ZIP32_VERSION;
     local_header.flags = USE_DATA_DESCRIPTOR;
     local_header.method = 8; /* Z_DEFLATED */
     local_header.mtime = archive->mtime;
