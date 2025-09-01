@@ -20,4 +20,5 @@ SOURCES = \
 	src/FAudio_internal_simd.c \
 	src/FAudio_operationset.c \
 	src/FAudio_platform_win32.c \
+	src/FAudio_platform_win32_wmadec.c \
 	src/matrix_defaults.inl
