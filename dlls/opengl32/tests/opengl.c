@@ -78,6 +78,25 @@ static void (WINAPI *pglDebugMessageInsertARB)(GLenum, GLenum, GLuint, GLenum, G
 static void (WINAPI *pglBindFramebuffer)(GLenum target, GLuint framebuffer);
 static GLenum (WINAPI *pglCheckFramebufferStatus)(GLenum target);
 
+static PFN_glBindBuffer pglBindBuffer;
+static PFN_glBufferData pglBufferData;
+static PFN_glBufferStorage pglBufferStorage;
+static PFN_glCopyBufferSubData pglCopyBufferSubData;
+static PFN_glCopyNamedBufferSubData pglCopyNamedBufferSubData;
+static PFN_glCreateBuffers pglCreateBuffers;
+static PFN_glDeleteBuffers pglDeleteBuffers;
+static PFN_glFlushMappedBufferRange pglFlushMappedBufferRange;
+static PFN_glFlushMappedNamedBufferRange pglFlushMappedNamedBufferRange;
+static PFN_glGenBuffers pglGenBuffers;
+static PFN_glMapBuffer pglMapBuffer;
+static PFN_glMapBufferRange pglMapBufferRange;
+static PFN_glMapNamedBuffer pglMapNamedBuffer;
+static PFN_glMapNamedBufferRange pglMapNamedBufferRange;
+static PFN_glNamedBufferData pglNamedBufferData;
+static PFN_glNamedBufferStorage pglNamedBufferStorage;
+static PFN_glUnmapBuffer pglUnmapBuffer;
+static PFN_glUnmapNamedBuffer pglUnmapNamedBuffer;
+
 static const char* wgl_extensions = NULL;
 
 static void flush_events(void)
@@ -142,6 +161,25 @@ static void init_functions(void)
     /* GL_ARB_framebuffer_object */
     GET_PROC(glBindFramebuffer)
     GET_PROC(glCheckFramebufferStatus)
+
+    GET_PROC(glBindBuffer)
+    GET_PROC(glBufferData)
+    GET_PROC(glBufferStorage)
+    GET_PROC(glCopyBufferSubData)
+    GET_PROC(glCopyNamedBufferSubData)
+    GET_PROC(glCreateBuffers)
+    GET_PROC(glDeleteBuffers)
+    GET_PROC(glFlushMappedBufferRange)
+    GET_PROC(glFlushMappedNamedBufferRange)
+    GET_PROC(glGenBuffers)
+    GET_PROC(glMapBuffer)
+    GET_PROC(glMapBufferRange)
+    GET_PROC(glMapNamedBuffer)
+    GET_PROC(glMapNamedBufferRange)
+    GET_PROC(glNamedBufferData)
+    GET_PROC(glNamedBufferStorage)
+    GET_PROC(glUnmapBuffer)
+    GET_PROC(glUnmapNamedBuffer)
 
 #undef GET_PROC
 }
@@ -3124,6 +3162,226 @@ static void test_child_window(HWND hwnd, PIXELFORMATDESCRIPTOR *pfd)
     DestroyWindow(child);
 }
 
+#define check_gl_error(exp) check_gl_error_(__LINE__, exp)
+static void check_gl_error_( unsigned int line, GLenum exp )
+{
+    GLenum err = glGetError();
+    ok_(__FILE__,line)( err == exp, "glGetError returned %x, expected %x\n", err, exp );
+}
+
+static void test_memory_map( HDC hdc)
+{
+    unsigned int i, major = 0, minor = 0;
+    BOOL have_persistent_storage = TRUE;
+    const char *dst_ptr, *version;
+    char *src_ptr, *ptr;
+    HGLRC rc, old_rc;
+    GLuint src, dst;
+    char data[0x1000];
+    BOOL ret;
+
+    old_rc = wglGetCurrentContext();
+
+    rc = wglCreateContext( hdc );
+    ok( !!rc, "got %p\n", rc );
+    ret = wglMakeCurrent( hdc, rc );
+    ok( ret, "got %u\n", ret );
+
+    version = (const char *)glGetString( GL_VERSION );
+    sscanf( version, "%d.%d", &major, &minor );
+    if (major < 4 || (major == 4 && minor < 4))
+    {
+        const char *extensions = (const char *)glGetString( GL_EXTENSIONS );
+        if (!extensions || !strstr( extensions, "GL_ARB_buffer_storage" ))
+        {
+            skip( "persistent map not supported\n" );
+            have_persistent_storage = FALSE;
+        }
+    }
+
+    pglGenBuffers( 1, &src );
+    pglGenBuffers( 1, &dst );
+
+    pglBindBuffer( GL_ARRAY_BUFFER, src );
+    pglBufferData( GL_ARRAY_BUFFER, sizeof(data), NULL, GL_STATIC_DRAW );
+
+    src_ptr = pglMapBuffer( GL_ARRAY_BUFFER, GL_WRITE_ONLY );
+    check_gl_error( GL_NO_ERROR );
+    ok( !((UINT_PTR)src_ptr & 0xf), "pointer not aligned\n" );
+    for (i = 0; i < sizeof(data); i++) src_ptr[i] = 'a' + i;
+
+    ptr = pglMapBuffer( GL_ARRAY_BUFFER, GL_WRITE_ONLY );
+    check_gl_error( GL_INVALID_OPERATION );
+    ok( !ptr, "repeated glMapBuffer returned %p\n", ptr );
+
+    pglUnmapBuffer( GL_ARRAY_BUFFER );
+    check_gl_error( GL_NO_ERROR );
+
+    pglUnmapBuffer( GL_ARRAY_BUFFER );
+    check_gl_error( GL_INVALID_OPERATION );
+
+    pglBindBuffer( GL_ARRAY_BUFFER, dst );
+    pglBufferData( GL_ARRAY_BUFFER, sizeof(data), NULL, GL_STATIC_DRAW );
+
+    pglBindBuffer( GL_COPY_READ_BUFFER, src );
+    pglBindBuffer( GL_COPY_WRITE_BUFFER, dst );
+    pglCopyBufferSubData( GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, sizeof(data) );
+
+    dst_ptr = pglMapBuffer( GL_COPY_WRITE_BUFFER, GL_READ_ONLY );
+    check_gl_error( GL_NO_ERROR );
+    ok( !((UINT_PTR)dst_ptr & 0xf), "pointer not aligned\n" );
+    ok( !memcmp( dst_ptr, "abcdef", 6 ), "unexpected src data %s\n", debugstr_an(src_ptr, 6) );
+    pglUnmapBuffer( GL_COPY_WRITE_BUFFER );
+
+    if (pglMapBufferRange)
+    {
+        pglBindBuffer( GL_ARRAY_BUFFER, src );
+        src_ptr = pglMapBufferRange( GL_ARRAY_BUFFER, 3, 4, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT );
+        check_gl_error( GL_NO_ERROR );
+
+        ok( !memcmp( src_ptr, "defg", 4 ), "unexpected src data %s\n", debugstr_an(src_ptr, 4) );
+        for (i = 0; i < 4; i++) src_ptr[i] += 'A' - 'a';
+
+        pglUnmapBuffer( GL_ARRAY_BUFFER );
+
+        src_ptr = pglMapBufferRange( GL_ARRAY_BUFFER, 2, 10, GL_MAP_READ_BIT );
+
+        ok( !memcmp( src_ptr, "cDEFGhijkl", 10 ), "unexpected src data %s\n", debugstr_an(src_ptr, 10) );
+
+        pglUnmapBuffer( GL_ARRAY_BUFFER );
+
+        pglCopyBufferSubData( GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, sizeof(data) );
+
+        pglBindBuffer( GL_ARRAY_BUFFER, dst );
+        dst_ptr = pglMapBufferRange( GL_ARRAY_BUFFER, 2, 10, GL_MAP_READ_BIT );
+
+        ok( !memcmp( dst_ptr, "cDEFGhijkl", 10 ), "unexpected src data %s\n", debugstr_an(dst_ptr, 10) );
+
+        pglUnmapBuffer( GL_ARRAY_BUFFER );
+        check_gl_error( GL_NO_ERROR );
+    }
+    else skip( "glMapBufferRange not available\n" );
+
+    if (have_persistent_storage)
+    {
+        for (i = 0; i < sizeof(data); i++) data[i] = '0' + i;
+        pglBufferStorage( GL_COPY_READ_BUFFER, sizeof(data), data,
+                          GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT );
+
+        pglBufferStorage( GL_COPY_WRITE_BUFFER, sizeof(data), NULL,
+                          GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT );
+
+        src_ptr = pglMapBufferRange( GL_COPY_READ_BUFFER, 2, sizeof(data) - 2,
+                                     GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT | GL_MAP_PERSISTENT_BIT );
+        ok( ((UINT_PTR)src_ptr & 0xf) == 2, "pointer not aligned\n" );
+
+        dst_ptr = pglMapBufferRange( GL_COPY_WRITE_BUFFER, 0, sizeof(data),
+                                     GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT );
+        ok( ((UINT_PTR)dst_ptr & 0xf) == 0, "pointer not aligned\n" );
+
+        ok( src_ptr[0] == '2', "src_ptr[0] = %x (%c)\n", src_ptr[0], src_ptr[0] );
+        src_ptr[0] += 'a' - '0';
+        pglFlushMappedBufferRange( GL_COPY_READ_BUFFER, 0, 16 );
+
+        pglCopyBufferSubData( GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, sizeof(data) );
+        glFinish();
+        ok( !memcmp( dst_ptr, "01c3456789", 8 ), "unexpected dst data %s\n", debugstr_an(dst_ptr, 10) );
+
+        src_ptr[1] += 'A' - '0';
+        pglCopyBufferSubData( GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, sizeof(data) );
+        glFinish();
+        ok( !memcmp( dst_ptr, "01cD456789", 8 ), "unexpected dst data %s\n", debugstr_an(dst_ptr, 10) );
+
+        pglUnmapBuffer( GL_COPY_WRITE_BUFFER );
+        pglUnmapBuffer( GL_COPY_READ_BUFFER );
+        check_gl_error( GL_NO_ERROR );
+    }
+
+    pglDeleteBuffers( 1, &src );
+    pglDeleteBuffers( 1, &dst );
+
+    if (major > 4 || (major == 4 && minor >= 5))
+    {
+        pglCreateBuffers( 1, &src );
+        pglCreateBuffers( 1, &dst );
+        check_gl_error( GL_NO_ERROR );
+
+        pglNamedBufferData( src, 0x1000, NULL, GL_STATIC_DRAW );
+        check_gl_error( GL_NO_ERROR );
+
+        src_ptr = pglMapNamedBuffer( src, GL_WRITE_ONLY );
+        check_gl_error( GL_NO_ERROR );
+        ok( !((UINT_PTR)src_ptr & 0xf), "pointer not aligned\n" );
+        for (i = 0; i < 0x1000; i++) src_ptr[i] = 'a' + i;
+
+        ptr = pglMapNamedBuffer( src, GL_WRITE_ONLY );
+        check_gl_error( GL_INVALID_OPERATION );
+        ok( !ptr, "repeated glMapBuffer returned %p\n", ptr );
+
+        pglUnmapNamedBuffer( src );
+        check_gl_error( GL_NO_ERROR );
+
+        pglUnmapNamedBuffer( src );
+        check_gl_error( GL_INVALID_OPERATION );
+
+        pglNamedBufferData( dst, 0x1000, NULL, GL_STATIC_DRAW );
+
+        pglCopyNamedBufferSubData( src, dst, 0, 0, 0x1000 );
+
+        dst_ptr = pglMapNamedBuffer( dst, GL_READ_ONLY );
+        check_gl_error( GL_NO_ERROR );
+        ok( !((UINT_PTR)dst_ptr & 0xf), "pointer not aligned\n" );
+        ok( !memcmp( dst_ptr, "abcdef", 6 ), "unexpected src data %s\n", debugstr_an(src_ptr, 6) );
+        pglUnmapNamedBuffer( dst );
+
+        pglDeleteBuffers( 1, &src );
+        pglDeleteBuffers( 1, &dst );
+
+        pglCreateBuffers( 1, &src );
+        pglCreateBuffers( 1, &dst );
+
+        for (i = 0; i < sizeof(data); i++) data[i] = '0' + i;
+        pglNamedBufferStorage( src, sizeof(data), data,
+                               GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT );
+
+        pglNamedBufferStorage( dst, sizeof(data), NULL,
+                               GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT );
+
+        src_ptr = pglMapNamedBufferRange( src, 2, sizeof(data) - 2,
+                                          GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT | GL_MAP_PERSISTENT_BIT );
+        ok( ((UINT_PTR)src_ptr & 0xf) == 2, "pointer not aligned\n" );
+
+        dst_ptr = pglMapNamedBufferRange( dst, 0, sizeof(data),
+                                          GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT );
+        check_gl_error( GL_NO_ERROR );
+        ok( ((UINT_PTR)dst_ptr & 0xf) == 0, "pointer not aligned\n" );
+
+        ok( src_ptr[0] == '2', "src_ptr[0] = %x (%c)\n", src_ptr[0], src_ptr[0] );
+        src_ptr[0] += 'a' - '0';
+        pglFlushMappedNamedBufferRange( src, 0, 16 );
+        check_gl_error( GL_NO_ERROR );
+
+        pglCopyNamedBufferSubData( src, dst, 0, 0, sizeof(data) );
+        glFinish();
+        ok( !memcmp( dst_ptr, "01c3456789", 8 ), "unexpected dst data %s\n", debugstr_an(dst_ptr, 10) );
+
+        src_ptr[1] += 'A' - '0';
+        pglCopyNamedBufferSubData( src, dst, 0, 0, sizeof(data) );
+        glFinish();
+        ok( !memcmp( dst_ptr, "01cD456789", 8 ), "unexpected dst data %s\n", debugstr_an(dst_ptr, 10) );
+
+        pglUnmapNamedBuffer( src );
+        pglUnmapNamedBuffer( dst );
+
+        pglDeleteBuffers( 1, &src );
+        pglDeleteBuffers( 1, &dst );
+        check_gl_error( GL_NO_ERROR );
+    }
+    else skip( "Named buffers not supported by OpenGL %s\n", version );
+
+    wglMakeCurrent( hdc, old_rc );
+}
+
 START_TEST(opengl)
 {
     HWND hwnd;
@@ -3239,6 +3497,7 @@ START_TEST(opengl)
         test_gdi_dbuf(hdc);
         test_acceleration(hdc);
         test_framebuffer();
+        test_memory_map(hdc);
 
         wgl_extensions = pwglGetExtensionsStringARB(hdc);
         if(wgl_extensions == NULL) skip("Skipping opengl32 tests because this OpenGL implementation doesn't support WGL extensions!\n");
