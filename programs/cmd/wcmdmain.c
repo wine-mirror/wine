@@ -2803,9 +2803,9 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
             {
                 ERROR_IF(tkn != TKN_EOL);
                 node_builder_consume(builder);
-                /* FIXME potential empty here?? */
                 ERROR_IF(!node_builder_parse(builder, 0, &right));
-                left = node_create_binary(CMD_CONCAT, left, right);
+                if (right)
+                    left = node_create_binary(CMD_CONCAT, left, right);
             }
             node_builder_consume(builder);
             /* if we had redirection before '(', add them up front */
@@ -2841,7 +2841,8 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                     break;
                 }
                 ERROR_IF(!node_builder_parse(builder, token_get_precedence(tkn), &right));
-                left = node_create_binary(CMD_CONCAT, left, right);
+                if (right)
+                    left = node_create_binary(CMD_CONCAT, left, right);
             }
             break;
         case TKN_AMPAMP:
