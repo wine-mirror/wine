@@ -59,7 +59,6 @@ WCHAR quals[MAXSTRING], param1[MAXSTRING], param2[MAXSTRING];
 FOR_CONTEXT *forloopcontext; /* The 'for' loop context */
 BOOL delayedsubst = FALSE; /* The current delayed substitution setting */
 
-int defaultColor = 7;
 BOOL echo_mode = TRUE;
 
 WCHAR anykey[100], version_string[100];
@@ -4267,6 +4266,66 @@ static BOOL WINAPI my_event_handler(DWORD ctrl)
     return ctrl == CTRL_C_EVENT;
 }
 
+static BOOL query_default_color_key(HKEY from_key, DWORD *value)
+{
+    HKEY key;
+    BOOL ret = FALSE;
+
+    if (RegOpenKeyExW(from_key, L"Software\\Microsoft\\Command Processor", 0, KEY_READ, &key) == ERROR_SUCCESS)
+    {
+        DWORD size, type;
+
+        /* See if DWORD or REG_SZ */
+        if (RegQueryValueExW(key, L"DefaultColor", NULL, &type, NULL, NULL) == ERROR_SUCCESS)
+        {
+            if (type == REG_DWORD)
+            {
+                size = sizeof(DWORD);
+                ret = RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)value, &size);
+            }
+            else if (type == REG_SZ)
+            {
+                WCHAR  strvalue[4];
+
+                size = sizeof(strvalue);
+                if (RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)strvalue, &size))
+                {
+                    WCHAR *end;
+                    *value = wcstoul(strvalue, &end, 10);
+                    ret = *end == L'\0';
+                }
+            }
+        }
+        RegCloseKey(key);
+    }
+    return ret;
+}
+
+static void set_console_default_color(unsigned color)
+{
+    if (color >= 0x100) /* no value from command line */
+    {
+        /* Check HKCU\Software\Microsoft\Command Processor
+         * Then  HKLM\Software\Microsoft\Command Processor
+         *    for defaultcolor value
+         *    Note  Can be supplied as DWORD or REG_SZ
+         *    Note2 When supplied as REG_SZ it's in decimal!!!
+         */
+        DWORD value;
+        if (query_default_color_key(HKEY_CURRENT_USER, &value) ||
+            query_default_color_key(HKEY_LOCAL_MACHINE, &value))
+            color = value;
+    }
+    if (color >= 0x100 || ((color >> 4) == (color & 0xf)))
+        color = 7;
+    swprintf(param1, ARRAY_SIZE(param1), L"%x", color);
+    WCMD_color();
+}
+
+struct cmd_parameters
+{
+    unsigned default_color;
+};
 
 /*****************************************************************************
  * Main entry point. This is a console application so we have a main() not a
@@ -4275,12 +4334,12 @@ static BOOL WINAPI my_event_handler(DWORD ctrl)
 
 int __cdecl wmain (int argc, WCHAR *argvW[])
 {
+    struct cmd_parameters parameters = {.default_color = 0x100};
   WCHAR  *cmdLine = NULL;
   WCHAR  *cmd     = NULL;
   WCHAR string[1024];
   WCHAR envvar[4];
   BOOL opt_q;
-  int opt_t = 0;
   WCHAR comspec[MAX_PATH];
   CMD_NODE *toExecute = NULL;         /* Commands left to be executed */
   RTL_OSVERSIONINFOEXW osv;
@@ -4353,7 +4412,12 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
             break;
         case 't':
             if (arg[2] == ':')
-                opt_t = wcstoul(&arg[3], NULL, 16);
+            {
+                WCHAR *end;
+                unsigned long v = wcstoul(arg + 3, &end, 16);
+                if (end == arg + 5 && !*end)
+                    parameters.default_color = v;
+            }
             break;
         case 'u':
             unicodeOutput = TRUE;
@@ -4548,68 +4612,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
       SetConsoleTitleW(WCMD_LoadMessage(WCMD_CONSTITLE));
 
   /* Note: cmd.exe /c dir does not get a new color, /k dir does */
-  if (opt_t) {
-      if (!(((opt_t & 0xF0) >> 4) == (opt_t & 0x0F))) {
-          defaultColor = opt_t & 0xFF;
-          param1[0] = 0x00;
-          WCMD_color();
-      }
-  } else {
-      /* Check HKCU\Software\Microsoft\Command Processor
-         Then  HKLM\Software\Microsoft\Command Processor
-           for defaultcolour value
-           Note  Can be supplied as DWORD or REG_SZ
-           Note2 When supplied as REG_SZ it's in decimal!!! */
-      HKEY key;
-      DWORD type;
-      DWORD value=0, size=4;
-      static const WCHAR regKeyW[] = L"Software\\Microsoft\\Command Processor";
-
-      if (RegOpenKeyExW(HKEY_CURRENT_USER, regKeyW,
-                       0, KEY_READ, &key) == ERROR_SUCCESS) {
-          WCHAR  strvalue[4];
-
-          /* See if DWORD or REG_SZ */
-          if (RegQueryValueExW(key, L"DefaultColor", NULL, &type, NULL, NULL) == ERROR_SUCCESS) {
-              if (type == REG_DWORD) {
-                  size = sizeof(DWORD);
-                  RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)&value, &size);
-              } else if (type == REG_SZ) {
-                  size = sizeof(strvalue);
-                  RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)strvalue, &size);
-                  value = wcstoul(strvalue, NULL, 10);
-              }
-          }
-          RegCloseKey(key);
-      }
-
-      if (value == 0 && RegOpenKeyExW(HKEY_LOCAL_MACHINE, regKeyW,
-                       0, KEY_READ, &key) == ERROR_SUCCESS) {
-          WCHAR  strvalue[4];
-
-          /* See if DWORD or REG_SZ */
-          if (RegQueryValueExW(key, L"DefaultColor", NULL, &type,
-                     NULL, NULL) == ERROR_SUCCESS) {
-              if (type == REG_DWORD) {
-                  size = sizeof(DWORD);
-                  RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)&value, &size);
-              } else if (type == REG_SZ) {
-                  size = sizeof(strvalue);
-                  RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)strvalue, &size);
-                  value = wcstoul(strvalue, NULL, 10);
-              }
-          }
-          RegCloseKey(key);
-      }
-
-      /* If one found, set the screen to that colour */
-      if (!(((value & 0xF0) >> 4) == (value & 0x0F))) {
-          defaultColor = value & 0xFF;
-          param1[0] = 0x00;
-          WCMD_color();
-      }
-
-  }
+  set_console_default_color(parameters.default_color);
 
   if (opt_k)
   {

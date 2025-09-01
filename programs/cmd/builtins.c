@@ -34,7 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
-extern int defaultColor;
 extern BOOL echo_mode;
 
 struct env_stack *pushd_directories;
@@ -3929,11 +3928,7 @@ RETURN_CODE WCMD_color(void)
       screenSize = consoleInfo.dwSize.X * (consoleInfo.dwSize.Y + 1);
 
       /* Convert the color hex digits */
-      if (param1[0] == 0x00) {
-        color = defaultColor;
-      } else {
-        color = wcstoul(param1, NULL, 16);
-      }
+      color = wcstoul(param1, NULL, 16);
 
       /* Fail if fg == bg color */
       if (((color & 0xF0) >> 4) != (color & 0x0F))
