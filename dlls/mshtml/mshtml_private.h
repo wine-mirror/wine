@@ -510,6 +510,7 @@ typedef struct {
     X(TextRange)                           \
     X(UIEvent)                             \
     X(Window)                              \
+    X(XMLDocument)                         \
     X(XMLHttpRequest)
 
 typedef enum {

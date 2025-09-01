@@ -5634,7 +5634,7 @@ static HTMLInnerWindow *HTMLDocumentNode_get_script_global(DispatchEx *dispex, d
     if(This->node.vtbl != &HTMLDocumentNodeImplVtbl)
         *dispex_data = &DocumentFragment_dispex;
     else
-        *dispex_data = This->document_mode < COMPAT_MODE_IE11 ? &Document_dispex : &HTMLDocument_dispex;
+        *dispex_data = This->document_mode < COMPAT_MODE_IE11 ? &Document_dispex : This->html_document ? &HTMLDocument_dispex : &XMLDocument_dispex;
     return This->script_global;
 }
 
@@ -5870,6 +5870,17 @@ dispex_static_data_t HTMLDocument_dispex = {
     .min_compat_mode = COMPAT_MODE_IE11,
 };
 
+dispex_static_data_t XMLDocument_dispex = {
+    .id           = OBJID_XMLDocument,
+    .prototype_id = OBJID_Document,
+    .vtbl         = &HTMLDocument_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLDocument_tid,
+    .iface_tids   = HTMLDocumentNode_iface_tids,
+    .init_info    = HTMLDocumentNode_init_dispex_info,
+    .js_flags     = HOSTOBJ_VOLATILE_FILL,
+    .min_compat_mode = COMPAT_MODE_IE11,
+};
+
 static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindow *window, HTMLInnerWindow *script_global)
 {
     HTMLDocumentNode *doc;
@@ -5921,6 +5932,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
 HRESULT create_document_node(nsIDOMDocument *nsdoc, GeckoBrowser *browser, HTMLInnerWindow *window,
                              HTMLInnerWindow *script_global, compat_mode_t parent_mode, HTMLDocumentNode **ret)
 {
+    dispex_static_data_t *dispex = &XMLDocument_dispex;
     HTMLDocumentObj *doc_obj = browser->doc;
     HTMLDocumentNode *doc;
 
@@ -5941,12 +5953,13 @@ HRESULT create_document_node(nsIDOMDocument *nsdoc, GeckoBrowser *browser, HTMLI
     if(NS_SUCCEEDED(nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMHTMLDocument, (void**)&doc->html_document))) {
         doc->dom_document = (nsIDOMDocument*)doc->html_document;
         nsIDOMHTMLDocument_Release(doc->html_document);
+        dispex = &HTMLDocument_dispex;
     }else {
         doc->dom_document = nsdoc;
         doc->html_document = NULL;
     }
 
-    HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)doc->dom_document, &HTMLDocument_dispex);
+    HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)doc->dom_document, dispex);
 
     init_document_mutation(doc);
     doc_init_events(doc);

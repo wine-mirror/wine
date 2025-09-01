@@ -519,10 +519,14 @@ static void _set_request_header(unsigned line, IHTMLXMLHttpRequest *xhr, const W
 static void test_responseXML(const WCHAR *expect_text)
 {
     IDispatch *disp;
+    IHTMLDocument2 *html_doc;
     IXMLDOMDocument *xmldom;
     IObjectSafety *safety;
+    IHTMLDOMNode *node;
     DWORD enabled = 0, supported = 0;
+    DISPID dispid;
     HRESULT hres;
+    BSTR str;
 
     disp = NULL;
     hres = IHTMLXMLHttpRequest_get_responseXML(xhr, &disp);
@@ -544,6 +548,17 @@ static void test_responseXML(const WCHAR *expect_text)
     ok(enabled == ((INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA | INTERFACE_USES_SECURITY_MANAGER) & supported),
         "Expected enabled: (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA | INTERFACE_USES_SECURITY_MANAGER), got 0x%08lx\n", enabled);
     IObjectSafety_Release(safety);
+
+    hres = IXMLDOMDocument_QueryInterface(xmldom, &IID_IHTMLDOMNode, (void**)&node);
+    ok(hres == E_NOINTERFACE, "QueryInterface(IHTMLDOMNode) returned: %08lx\n", hres);
+
+    hres = IXMLDOMDocument_QueryInterface(xmldom, &IID_IHTMLDocument2, (void**)&html_doc);
+    ok(hres == E_NOINTERFACE, "QueryInterface(IHTMLDocument2) returned: %08lx\n", hres);
+
+    str = SysAllocString(L"anchors");
+    hres = IDispatch_GetIDsOfNames(disp, &IID_NULL, &str, 1, LOCALE_USER_DEFAULT, &dispid);
+    ok(hres == DISP_E_UNKNOWNNAME, "GetIDsOfNames(\"anchors\") returned: %08lx\n", hres);
+    SysFreeString(str);
 
     if(!expect_text)
         test_illegal_xml(xmldom);

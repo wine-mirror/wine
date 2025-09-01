@@ -981,6 +981,7 @@ sync_test("window_props", function() {
     test_exposed("matchMedia", v >= 10);
     test_exposed("Document", v >= 9);
     test_exposed("HTMLDocument", v === 8 || v >= 11, v === 8);
+    test_exposed("XMLDocument", v >= 11);
     test_exposed("DOMParser", v >= 9);
     test_exposed("MutationObserver", v >= 11);
     test_exposed("PageTransitionEvent", v >= 11);
@@ -3868,6 +3869,7 @@ sync_test("prototypes", function() {
     else {
         check(document, HTMLDocument.prototype, "html document");
         check(HTMLDocument.prototype, Document.prototype, "html document prototype");
+        check(XMLDocument.prototype, Document.prototype, "xml document prototype");
     }
     check(Document.prototype, Node.prototype, "document prototype");
     check(window, Window.prototype, "window");
@@ -4412,6 +4414,8 @@ sync_test("prototype props", function() {
     check(StyleSheet, [ "disabled", "href", "media", "ownerNode", "parentStyleSheet", "title", "type" ]);
     check(Text, [ "removeNode", "replaceNode", "replaceWholeText", "splitText", "swapNode", "wholeText" ], [ "replaceWholeText", "wholeText" ]);
     check(UIEvent, [ "detail", "initUIEvent", "view" ], null, [ "deviceSessionId" ]);
+    if(v >= 11)
+        check(XMLDocument, []);
 });
 
 sync_test("constructors", function() {
@@ -4587,7 +4591,7 @@ async_test("window own props", function() {
             ["Uint8Array",10], ["Uint8ClampedArray",11], ["URL",10], ["ValidityState",10], ["VideoPlaybackQuality",11], ["WebGLActiveInfo",11], ["WebGLBuffer",11], ["WebGLContextEvent",11],
             ["WebGLFramebuffer",11], ["WebGLObject",11], ["WebGLProgram",11], ["WebGLRenderbuffer",11], ["WebGLRenderingContext",11], ["WebGLShader",11], ["WebGLShaderPrecisionFormat",11],
             ["WebGLTexture",11], ["WebGLUniformLocation",11], ["WEBGL_compressed_texture_s3tc",11], ["WEBGL_debug_renderer_info",11], ["WebSocket",10], "WheelEvent", ["Worker",10],
-            ["XDomainRequest",9,10], ["XMLDocument",11], ["XMLHttpRequestEventTarget",10], "XMLSerializer"
+            ["XDomainRequest",9,10], ["XMLHttpRequestEventTarget",10], "XMLSerializer"
         ]);
         next_test();
     }
