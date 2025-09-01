@@ -1360,6 +1360,7 @@ static BOOL WCMD_delete_one (const WCHAR *thisArg) {
     hff = FindFirstFileW(argCopy, &fd);
     if (hff == INVALID_HANDLE_VALUE) {
       handleParm = FALSE;
+      found = wcschr(argCopy,'*') != NULL || wcschr(argCopy,'?') != NULL;
     } else {
       found = TRUE;
     }
