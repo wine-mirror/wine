@@ -20,6 +20,7 @@ Authors, for copyright and licensing purposes.
  * Lucas Chollet
  * Magnus Holmgren
  * Mandar Sahastrabuddhe
+ * Manfred Schlaegl
  * Mans Rullgard
  * Matt Sarett
  * Mike Klein
@@ -40,8 +41,9 @@ Authors, for copyright and licensing purposes.
     - Zixu Wang (王子旭)
  * Arm Holdings
     - Richard Townsend
- * Google Inc.
+ * Google LLC
     - Dan Field
+    - Dragoș Tiselice
     - Leon Scroggins III
     - Matt Sarett
     - Mike Klein
@@ -51,6 +53,8 @@ Authors, for copyright and licensing purposes.
     - GuXiWei (顾希伟)
     - JinBo (金波)
     - ZhangLixia (张利霞)
+ * Samsung Group
+    - Filip Wasil
 
 The build projects, the build scripts, the test scripts, and other
 files in the "projects", "scripts" and "tests" directories, have

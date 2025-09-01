@@ -702,7 +702,12 @@ png_read_end(png_structrp png_ptr, png_inforp info_ptr)
       png_uint_32 chunk_name = png_ptr->chunk_name;
 
       if (chunk_name != png_IDAT)
-         png_ptr->mode |= PNG_HAVE_CHUNK_AFTER_IDAT;
+      {
+         /* These flags must be set consistently for all non-IDAT chunks,
+          * including the unknown chunks.
+          */
+         png_ptr->mode |= PNG_HAVE_CHUNK_AFTER_IDAT | PNG_AFTER_IDAT;
+      }
 
       if (chunk_name == png_IEND)
          png_handle_chunk(png_ptr, info_ptr, length);
@@ -809,7 +814,8 @@ png_read_destroy(png_structrp png_ptr)
 #endif
 
 #if defined(PNG_READ_EXPAND_SUPPORTED) && \
-    defined(PNG_ARM_NEON_IMPLEMENTATION)
+    (defined(PNG_ARM_NEON_IMPLEMENTATION) || \
+     defined(PNG_RISCV_RVV_IMPLEMENTATION))
    png_free(png_ptr, png_ptr->riffled_palette);
    png_ptr->riffled_palette = NULL;
 #endif
