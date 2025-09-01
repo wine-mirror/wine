@@ -63,7 +63,7 @@ BOOL echo_mode = TRUE;
 
 WCHAR anykey[100], version_string[100];
 
-static BOOL opt_c, opt_k, opt_s, unicodeOutput = FALSE;
+static BOOL unicodeOutput = FALSE;
 
 /* Variables pertaining to paging */
 static BOOL paged_mode;
@@ -4325,242 +4325,238 @@ static void set_console_default_color(unsigned color)
 struct cmd_parameters
 {
     unsigned default_color;
+    BOOL opt_c, opt_q, opt_k;
+    WCHAR* initial_command;
 };
 
-/*****************************************************************************
- * Main entry point. This is a console application so we have a main() not a
- * winmain().
- */
-
-int __cdecl wmain (int argc, WCHAR *argvW[])
+static void parse_command_line_parameters(struct cmd_parameters *parameters)
 {
-    struct cmd_parameters parameters = {.default_color = 0x100};
-  WCHAR  *cmdLine = NULL;
-  WCHAR  *cmd     = NULL;
-  WCHAR string[1024];
-  WCHAR envvar[4];
-  BOOL opt_q;
-  WCHAR comspec[MAX_PATH];
-  CMD_NODE *toExecute = NULL;         /* Commands left to be executed */
-  RTL_OSVERSIONINFOEXW osv;
-  char osver[50];
-  STARTUPINFOW startupInfo;
-  const WCHAR *arg;
-  enum read_parse_line rpl_status;
+    WCHAR *cmd_line, *arg;
+    BOOL opt_s;
 
-  if (!GetEnvironmentVariableW(L"COMSPEC", comspec, ARRAY_SIZE(comspec)))
-  {
-      GetSystemDirectoryW(comspec, ARRAY_SIZE(comspec) - ARRAY_SIZE(L"\\cmd.exe"));
-      lstrcatW(comspec, L"\\cmd.exe");
-      SetEnvironmentVariableW(L"COMSPEC", comspec);
-  }
+    parameters->default_color = 0x100;
+    parameters->opt_c = parameters->opt_k = parameters->opt_q = FALSE;
+    parameters->initial_command = NULL;
 
-  srand(time(NULL));
+    opt_s = FALSE;
+    /* Can't use argc/argv as it will have stripped quotes from parameters
+     * meaning cmd.exe /C echo "quoted string" is impossible
+     */
+    cmd_line = GetCommandLineW();
+    WINE_TRACE("Full commandline '%s'\n", wine_dbgstr_w(cmd_line));
 
-  /* Get the windows version being emulated */
-  osv.dwOSVersionInfoSize = sizeof(osv);
-  RtlGetVersion(&osv);
+    while (*cmd_line && *cmd_line != L'/') ++cmd_line;
 
-  /* Pre initialize some messages */
-  lstrcpyW(anykey, WCMD_LoadMessage(WCMD_ANYKEY));
-  sprintf(osver, "%ld.%ld.%ld", osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber);
-  cmd = WCMD_format_string(WCMD_LoadMessage(WCMD_VERSION), osver);
-  lstrcpyW(version_string, cmd);
-  LocalFree(cmd);
-  cmd = NULL;
-
-  /* init for loop context */
-  forloopcontext = NULL;
-  WCMD_save_for_loop_context(TRUE);
-
-  /* Initialize the event here because the command loop at the bottom will
-   * reset it unconditionally even if the Control-C handler is not installed.
-   */
-  control_c_event = CreateEventW(NULL, TRUE, FALSE, NULL);
-
-  /* Can't use argc/argv as it will have stripped quotes from parameters
-   * meaning cmd.exe /C echo "quoted string" is impossible
-   */
-  cmdLine = GetCommandLineW();
-  WINE_TRACE("Full commandline '%s'\n", wine_dbgstr_w(cmdLine));
-
-  while (*cmdLine && *cmdLine != '/') ++cmdLine;
-
-  opt_c = opt_k = opt_q = opt_s = FALSE;
-
-  for (arg = cmdLine; *arg; ++arg)
-  {
-        if (arg[0] != '/')
+    for (arg = cmd_line; *arg; ++arg)
+    {
+        if (arg[0] != L'/')
             continue;
 
         switch (towlower(arg[1]))
         {
-        case 'a':
+        case L'a':
             unicodeOutput = FALSE;
             break;
-        case 'c':
-            opt_c = TRUE;
+        case L'c':
+            parameters->opt_c = TRUE;
             break;
-        case 'k':
-            opt_k = TRUE;
+        case L'k':
+            parameters->opt_k = TRUE;
             break;
-        case 'q':
-            opt_q = TRUE;
+        case L'q':
+            parameters->opt_q = TRUE;
             break;
-        case 's':
+        case L's':
             opt_s = TRUE;
             break;
-        case 't':
+        case L't':
             if (arg[2] == ':')
             {
                 WCHAR *end;
                 unsigned long v = wcstoul(arg + 3, &end, 16);
                 if (end == arg + 5 && !*end)
-                    parameters.default_color = v;
+                    parameters->default_color = v;
             }
             break;
-        case 'u':
+        case L'u':
             unicodeOutput = TRUE;
             break;
-        case 'v':
-            if (arg[2] == ':')
+        case L'v':
+            if (arg[2] == L':')
                 delayedsubst = wcsnicmp(&arg[3], L"OFF", 3);
             break;
         }
 
-        if (opt_c || opt_k)
+        if (parameters->opt_c || parameters->opt_k)
         {
             arg += 2;
             break;
         }
-  }
+    }
 
-  while (*arg && wcschr(L" \t,=;", *arg)) arg++;
+    while (*arg && wcschr(L" \t,=;", *arg)) arg++;
 
-  if (opt_q) {
-    WCMD_echo(L"OFF");
-  }
+    if (parameters->opt_c || parameters->opt_k)
+    {
+        WCHAR *q1 = NULL, *q2 = NULL, *p;
 
-  SetEnvironmentVariableW(L"PROMPT", L"$P$G");
+        /* Take a copy */
+        parameters->initial_command = xstrdupW(arg);
 
-  if (opt_c || opt_k) {
-      WCHAR   *q1 = NULL,*q2 = NULL,*p;
+        /* opt_s left unflagged if the command starts with and contains exactly
+         * one quoted string (exactly two quote characters). The quoted string
+         * must be an executable name that has whitespace and must not have the
+         * following characters: &<>()@^|
+         */
 
-      /* Take a copy */
-      cmd = xstrdupW(arg);
-
-      /* opt_s left unflagged if the command starts with and contains exactly
-       * one quoted string (exactly two quote characters). The quoted string
-       * must be an executable name that has whitespace and must not have the
-       * following characters: &<>()@^| */
-
-      if (!opt_s) {
         /* 1. Confirm there is at least one quote */
-        q1 = wcschr(arg, '"');
-        if (!q1) opt_s=1;
-      }
+        if (!opt_s && !(q1 = wcschr(arg, L'"'))) opt_s = TRUE;
+        /* 2. Confirm there is a second quote */
+        if (!opt_s && !(q2 = wcschr(q1 + 1, L'"'))) opt_s = TRUE;
+        /* 3. Ensure there are no more quotes */
+        if (!opt_s && wcschr(q2 + 1, L'"')) opt_s = TRUE;
 
-      if (!opt_s) {
-          /* 2. Confirm there is a second quote */
-          q2 = wcschr(q1+1, '"');
-          if (!q2) opt_s=1;
-      }
-
-      if (!opt_s) {
-          /* 3. Ensure there are no more quotes */
-          if (wcschr(q2+1, '"')) opt_s=1;
-      }
-
-      /* check first parameter for a space and invalid characters. There must not be any
-       * invalid characters, but there must be one or more whitespace                    */
-      if (!opt_s) {
-          opt_s = TRUE;
-          p=q1;
-          while (p!=q2) {
-              if (*p=='&' || *p=='<' || *p=='>' || *p=='(' || *p==')'
-                  || *p=='@' || *p=='^' || *p=='|') {
-                  opt_s = TRUE;
-                  break;
-              }
-              if (*p==' ' || *p=='\t')
-                  opt_s = FALSE;
-              p++;
-          }
-      }
-
-      WINE_TRACE("/c command line: '%s' %u\n", wine_dbgstr_w(cmd), opt_s);
-
-      /* Finally, we only stay in new mode IF the first parameter is quoted and
-         is a valid executable, i.e. must exist, otherwise drop back to old mode  */
-      if (!opt_s) {
-        struct search_command sc;
-
-        if (search_command(cmd, &sc, TRUE) != NO_ERROR) /* no command found */
+        /* check first parameter for a space and invalid characters. There must not be any
+         * invalid characters, but there must be one or more whitespace
+         */
+        if (!opt_s)
         {
-            WINE_TRACE("Binary not found, dropping back to old behaviour\n");
             opt_s = TRUE;
+            for (p = q1; p != q2; p++)
+            {
+                if (wcschr(L"&<>()@^'", *p))
+                {
+                    opt_s = TRUE;
+                    break;
+                }
+                if (iswspace(*p)) opt_s = FALSE;
+            }
         }
-      }
 
-      /* strip first and last quote characters if opt_s; check for invalid
-       * executable is done later */
-      if (opt_s && *cmd == L'\"')
-          WCMD_strip_quotes(cmd);
-  }
-  else
-  {
-      SetConsoleCtrlHandler(my_event_handler, TRUE);
-  }
+        WINE_TRACE("/c command line: '%s'\n", wine_dbgstr_w(parameters->initial_command));
 
-  /* Save cwd into appropriate env var (Must be before the /c processing */
-  GetCurrentDirectoryW(ARRAY_SIZE(string), string);
-  if (IsCharAlphaW(string[0]) && string[1] == ':') {
-    wsprintfW(envvar, L"=%c:", string[0]);
-    SetEnvironmentVariableW(envvar, string);
-    WINE_TRACE("Set %s to %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(string));
-  }
+        /* Finally, we only stay in new mode IF the first parameter is quoted and
+         * is a valid executable, i.e. must exist, otherwise drop back to old mode
+         */
+        if (!opt_s)
+        {
+            struct search_command sc;
 
-  if (opt_c)
-  {
-    RETURN_CODE return_code = WCMD_call_batch(NULL, cmd);
-    if (return_code == RETURN_CODE_GOTO) return NO_ERROR;
-    if (return_code != RETURN_CODE_ABORTED && return_code != RETURN_CODE_EXITED && return_code != NO_ERROR)
-      return return_code;
-    return errorlevel;
-  }
-  GetStartupInfoW(&startupInfo);
-  if (startupInfo.lpTitle != NULL)
-      SetConsoleTitleW(startupInfo.lpTitle);
-  else
-      SetConsoleTitleW(WCMD_LoadMessage(WCMD_CONSTITLE));
+            if (search_command(parameters->initial_command, &sc, TRUE) != NO_ERROR) /* no command found */
+            {
+                WINE_TRACE("Binary not found, dropping back to old behaviour\n");
+                opt_s = TRUE;
+            }
+        }
 
-  /* Note: cmd.exe /c dir does not get a new color, /k dir does */
-  set_console_default_color(parameters.default_color);
+        /* strip first and last quote characters if opt_s; check for invalid
+         * executable is done later */
+        if (opt_s && *parameters->initial_command == L'\"')
+            WCMD_strip_quotes(parameters->initial_command);
+    }
+}
 
-  if (opt_k)
-  {
-      RETURN_CODE return_code = WCMD_call_batch(NULL, cmd);
-      if (return_code == RETURN_CODE_ABORTED) return errorlevel;
-      free(cmd);
-  }
+static void WCMD_setup(void)
+{
+    WCHAR string[MAX_PATH];
+    RTL_OSVERSIONINFOEXW osv;
+    char osver[50];
+    WCHAR *cmd;
 
-/*
- *	Loop forever getting commands and executing them.
+    srand(time(NULL));
+
+    /* initialize some env variables */
+    if (!GetEnvironmentVariableW(L"COMSPEC", string, ARRAY_SIZE(string)))
+    {
+        GetSystemDirectoryW(string, ARRAY_SIZE(string) - ARRAY_SIZE(L"\\cmd.exe"));
+        lstrcatW(string, L"\\cmd.exe");
+        SetEnvironmentVariableW(L"COMSPEC", string);
+    }
+    SetEnvironmentVariableW(L"PROMPT", L"$P$G");
+
+    /* Save cwd into appropriate env var (Must be before the /c processing */
+    GetCurrentDirectoryW(ARRAY_SIZE(string), string);
+    if (IsCharAlphaW(string[0]) && string[1] == ':')
+    {
+        WCHAR envvar[4];
+        wsprintfW(envvar, L"=%c:", string[0]);
+        SetEnvironmentVariableW(envvar, string);
+        WINE_TRACE("Set %s to %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(string));
+    }
+
+    /* Get the windows version being emulated */
+    osv.dwOSVersionInfoSize = sizeof(osv);
+    RtlGetVersion(&osv);
+
+    /* Pre initialize some messages */
+    lstrcpyW(anykey, WCMD_LoadMessage(WCMD_ANYKEY));
+    sprintf(osver, "%ld.%ld.%ld", osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber);
+    cmd = WCMD_format_string(WCMD_LoadMessage(WCMD_VERSION), osver);
+    lstrcpyW(version_string, cmd);
+    LocalFree(cmd);
+
+    /* init for loop context */
+    forloopcontext = NULL;
+    WCMD_save_for_loop_context(TRUE);
+}
+
+/*****************************************************************************
+ * Main entry point. This is a console application so we have a main() not a
+ * winmain().
  */
+int __cdecl wmain(int argc, WCHAR *argvW[])
+{
+    struct cmd_parameters parameters;
+    CMD_NODE *toExecute = NULL;
+    STARTUPINFOW startupInfo;
+    enum read_parse_line rpl_status;
 
-  if (!opt_k) WCMD_output_asis(version_string);
-  if (echo_mode) WCMD_output_asis(L"\r\n");
-  /* Read until EOF (which for std input is never, but if redirect in place, may occur */
-  while ((rpl_status = WCMD_ReadAndParseLine(&toExecute)) != RPL_EOF)
-  {
-      if (rpl_status == RPL_SUCCESS && toExecute)
-      {
-          ResetEvent(control_c_event);
-          node_execute(toExecute);
-          node_dispose_tree(toExecute);
-          if (echo_mode) WCMD_output_asis(L"\r\n");
-      }
-  }
-  CloseHandle(control_c_event);
-  return 0;
+    WCMD_setup();
+
+    parse_command_line_parameters(&parameters);
+    if (parameters.opt_q) WCMD_echo(L"OFF");
+
+    if (parameters.opt_c)
+    {
+        RETURN_CODE return_code = WCMD_call_batch(NULL, parameters.initial_command);
+        if (return_code == RETURN_CODE_GOTO) return NO_ERROR;
+        if (return_code != RETURN_CODE_ABORTED && return_code != RETURN_CODE_EXITED && return_code != NO_ERROR)
+            return return_code;
+        return errorlevel;
+    }
+
+    GetStartupInfoW(&startupInfo);
+    SetConsoleTitleW(startupInfo.lpTitle ? startupInfo.lpTitle : WCMD_LoadMessage(WCMD_CONSTITLE));
+
+    /* Note: cmd.exe /c dir does not get a new color, /k dir does */
+    set_console_default_color(parameters.default_color);
+
+    if (parameters.opt_k)
+    {
+        RETURN_CODE return_code = WCMD_call_batch(NULL, parameters.initial_command);
+        if (return_code == RETURN_CODE_ABORTED)
+            return errorlevel;
+    }
+    else
+        WCMD_output_asis(version_string);
+
+    /* Entering interactive mode */
+    control_c_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    SetConsoleCtrlHandler(my_event_handler, TRUE);
+
+    /* Loop forever getting commands and executing them. */
+    if (echo_mode) WCMD_output_asis(L"\r\n");
+    /* Read until EOF (which for std input is never, but if redirect in place, may occur */
+    while ((rpl_status = WCMD_ReadAndParseLine(&toExecute)) != RPL_EOF)
+    {
+        if (rpl_status == RPL_SUCCESS && toExecute)
+        {
+            ResetEvent(control_c_event);
+            node_execute(toExecute);
+            node_dispose_tree(toExecute);
+            if (echo_mode) WCMD_output_asis(L"\r\n");
+        }
+    }
+
+    return 0;
 }
