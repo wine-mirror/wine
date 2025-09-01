@@ -130,6 +130,14 @@ type foo.txt | cmd.exe > NUL
 type foo.txt | cmd.exe > NUL
 @call :showEchoMode foo.tmp
 
+rem labels are not echoed (while all the other commands are)
+echo echo on > callme.cmd
+echo rem itsme >> callme.cmd
+echo :itsmeagain >> callme.cmd
+echo @echo off >> callme.cmd
+call callme.cmd
+@echo ---
+
 rem cleanup
 del foo.txt
 del callme.cmd

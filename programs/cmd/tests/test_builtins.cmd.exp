@@ -150,6 +150,9 @@ ECHO_IS_ON
 ECHO_IS_OFF
 ECHO_IS_ON
 ECHO_IS_OFF
+
+@pwd@>rem itsme@space@@space@
+@todo_wine@---
 ------------ Testing parameterization ------------
 'a', 'b', 'c'
 '"a b c"', '', ''
