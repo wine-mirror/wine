@@ -3553,6 +3553,9 @@ enum read_parse_line WCMD_ReadAndParseLine(CMD_NODE **output)
                                  curRedirs, &curRedirsLen,
                                  &curCopyTo, &curLen);
               node_builder_push_token(&builder, TKN_CLOSEPAR);
+          } else if (curStringLen == 0 && curCopyTo == curString) {
+              /* unmatched closing ')': silently skip rest of line */
+              curPos += wcslen(curPos) - 1;
           } else {
               curCopyTo[(*curLen)++] = *curPos;
           }
