@@ -55,6 +55,14 @@ struct zip32_data_descriptor
     uint32_t uncompressed_size;
 };
 
+struct zip64_data_descriptor
+{
+    uint32_t signature;
+    uint32_t crc32;
+    uint64_t compressed_size;
+    uint64_t uncompressed_size;
+};
+
 struct central_directory_header
 {
     DWORD signature;
@@ -107,7 +115,7 @@ struct zip_archive
 
     DWORD mtime;
     IStream *output;
-    DWORD position;
+    uint64_t position;
     HRESULT write_result;
 
     unsigned char input_buffer[0x8000];
@@ -196,7 +204,7 @@ static void zfree(void *opaque, void *ptr)
 }
 
 static void compress_write_content(struct zip_archive *archive, IStream *content,
-        OPC_COMPRESSION_OPTIONS options, struct zip32_data_descriptor *data_desc)
+        OPC_COMPRESSION_OPTIONS options, struct zip64_data_descriptor *data_desc)
 {
     int level, flush;
     z_stream z_str;
@@ -205,7 +213,10 @@ static void compress_write_content(struct zip_archive *archive, IStream *content
     HRESULT hr;
     int init_ret;
 
+    data_desc->signature = DATA_DESCRIPTOR_SIGNATURE;
     data_desc->crc32 = RtlComputeCrc32(0, NULL, 0);
+    data_desc->compressed_size = data_desc->uncompressed_size = 0;
+
     move.QuadPart = 0;
     IStream_Seek(content, move, STREAM_SEEK_SET, NULL);
 
@@ -250,6 +261,7 @@ static void compress_write_content(struct zip_archive *archive, IStream *content
         z_str.avail_in = num_read;
         z_str.next_in = archive->input_buffer;
         data_desc->crc32 = RtlComputeCrc32(data_desc->crc32, archive->input_buffer, num_read);
+        data_desc->uncompressed_size += num_read;
 
         flush = sizeof(archive->input_buffer) > num_read ? Z_FINISH : Z_NO_FLUSH;
 
@@ -264,21 +276,21 @@ static void compress_write_content(struct zip_archive *archive, IStream *content
                 WARN("Failed to deflate, ret %d.\n", ret);
             have = sizeof(archive->output_buffer) - z_str.avail_out;
             compress_write(archive, archive->output_buffer, have);
+
+            data_desc->compressed_size += have;
         } while (z_str.avail_out == 0);
     } while (flush != Z_FINISH);
 
     deflateEnd(&z_str);
-
-    data_desc->compressed_size = z_str.total_out;
-    data_desc->uncompressed_size = z_str.total_in;
 }
 
 HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path,
         IStream *content, OPC_COMPRESSION_OPTIONS options)
 {
+    struct zip32_data_descriptor zip32_data_desc;
+    struct zip64_data_descriptor zip64_data_desc;
     struct central_directory_header *entry;
     struct local_file_header local_header;
-    struct zip32_data_descriptor data_desc;
     DWORD local_header_pos;
     char *name;
     DWORD len;
@@ -306,11 +318,14 @@ HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path,
     compress_write(archive, name, local_header.name_length);
 
     /* Content */
-    compress_write_content(archive, content, options, &data_desc);
+    compress_write_content(archive, content, options, &zip64_data_desc);
 
     /* Data descriptor */
-    data_desc.signature = DATA_DESCRIPTOR_SIGNATURE;
-    compress_write(archive, &data_desc, sizeof(data_desc));
+    zip32_data_desc.signature = DATA_DESCRIPTOR_SIGNATURE;
+    zip32_data_desc.crc32 = zip64_data_desc.crc32;
+    zip32_data_desc.compressed_size = zip64_data_desc.compressed_size;
+    zip32_data_desc.uncompressed_size = zip64_data_desc.uncompressed_size;
+    compress_write(archive, &zip32_data_desc, sizeof(zip32_data_desc));
 
     if (FAILED(archive->write_result))
         return archive->write_result;
@@ -328,9 +343,9 @@ HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path,
     entry->flags = local_header.flags;
     entry->method = local_header.method;
     entry->mtime = local_header.mtime;
-    entry->crc32 = data_desc.crc32;
-    entry->compressed_size = data_desc.compressed_size;
-    entry->uncompressed_size = data_desc.uncompressed_size;
+    entry->crc32 = zip32_data_desc.crc32;
+    entry->compressed_size = zip32_data_desc.compressed_size;
+    entry->uncompressed_size = zip32_data_desc.uncompressed_size;
     entry->name_length = local_header.name_length;
     entry->local_file_offset = local_header_pos;
     memcpy(entry + 1, name, entry->name_length);
