@@ -1551,73 +1551,36 @@ RETURN_CODE WCMD_delete(WCHAR *args)
     return errorlevel;
 }
 
-/*
- * WCMD_strtrim
- *
- * Returns a trimmed version of s with all leading and trailing whitespace removed
- * Pre: s non NULL
- *
- */
-static WCHAR *WCMD_strtrim(const WCHAR *s)
-{
-    DWORD len = lstrlenW(s);
-    const WCHAR *start = s;
-    WCHAR* result;
-
-    result = xalloc((len + 1) * sizeof(WCHAR));
-
-    while (iswspace(*start)) start++;
-    if (*start) {
-        const WCHAR *end = s + len - 1;
-        while (end > start && iswspace(*end)) end--;
-        memcpy(result, start, (end - start + 2) * sizeof(WCHAR));
-        result[end - start + 1] = '\0';
-    } else {
-        result[0] = '\0';
-    }
-
-    return result;
-}
-
 /****************************************************************************
  * WCMD_echo
  *
  * Echo input to the screen (or not). We don't try to emulate the bugs
  * in DOS (try typing "ECHO ON AGAIN" for an example).
  */
-
 RETURN_CODE WCMD_echo(const WCHAR *args)
 {
-  int count;
-  const WCHAR *origcommand = args;
-  WCHAR *trimmed;
+    const WCHAR *toskip = L".:;/";
+    const WCHAR *skipped = NULL;
+    WCHAR *trimmed;
 
-  if (   args[0]==' ' || args[0]=='\t' || args[0]=='.'
-      || args[0]==':' || args[0]==';'  || args[0]=='/')
-    args++;
+    if (iswspace(args[0]) || (args[0] && (skipped = wcschr(toskip, args[0])))) args++;
 
-  trimmed = WCMD_strtrim(args);
-  if (!trimmed) return NO_ERROR;
+    trimmed = WCMD_skip_leading_spaces((WCHAR *)args);
 
-  count = lstrlenW(trimmed);
-  if (count == 0 && origcommand[0]!='.' && origcommand[0]!=':'
-                 && origcommand[0]!=';' && origcommand[0]!='/') {
-    if (echo_mode) WCMD_output(WCMD_LoadMessage(WCMD_ECHOPROMPT), L"ON");
-    else WCMD_output (WCMD_LoadMessage(WCMD_ECHOPROMPT), L"OFF");
-    free(trimmed);
+    if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT, trimmed, 2, L"ON", 2) == CSTR_EQUAL &&
+        *WCMD_skip_leading_spaces(trimmed + 2) == L'\0')
+        echo_mode = TRUE;
+    else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT, trimmed, 3, L"OFF", 3) == CSTR_EQUAL &&
+             *WCMD_skip_leading_spaces(trimmed + 3) == L'\0')
+        echo_mode = FALSE;
+    else if (!trimmed[0] && !skipped)
+        WCMD_output(WCMD_LoadMessage(WCMD_ECHOPROMPT), echo_mode ? L"ON" : L"OFF");
+    else
+    {
+        WCMD_output_asis(args);
+        WCMD_output_asis(L"\r\n");
+    }
     return NO_ERROR;
-  }
-
-  if (lstrcmpiW(trimmed, L"ON") == 0)
-    echo_mode = TRUE;
-  else if (lstrcmpiW(trimmed, L"OFF") == 0)
-    echo_mode = FALSE;
-  else {
-    WCMD_output_asis (args);
-    WCMD_output_asis(L"\r\n");
-  }
-  free(trimmed);
-  return NO_ERROR;
 }
 
 /*****************************************************************************
