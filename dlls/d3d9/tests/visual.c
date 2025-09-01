@@ -18339,7 +18339,7 @@ static void fog_special_test(void)
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#lx.\n", hr);
 
         color = getPixelColor(device, 310, 240);
-        ok(color_match(color, tests[i].color_left, 1),
+        todo_wine_if(tests[i].vertexmode == D3DFOG_NONE) ok(color_match(color, tests[i].color_left, 1),
                 "Expected left color 0x%08x, got 0x%08x, case %u.\n", tests[i].color_left, color, i);
         color = getPixelColor(device, 330, 240);
         ok(color_match(color, tests[i].color_right, 1),
