@@ -4444,7 +4444,6 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
   SetEnvironmentVariableW(L"PROMPT", L"$P$G");
 
   if (opt_c || opt_k) {
-      int     len;
       WCHAR   *q1 = NULL,*q2 = NULL,*p;
 
       /* Take a copy */
@@ -4489,99 +4488,23 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
           }
       }
 
-      WINE_TRACE("/c command line: '%s'\n", wine_dbgstr_w(cmd));
+      WINE_TRACE("/c command line: '%s' %u\n", wine_dbgstr_w(cmd), opt_s);
 
       /* Finally, we only stay in new mode IF the first parameter is quoted and
          is a valid executable, i.e. must exist, otherwise drop back to old mode  */
       if (!opt_s) {
-        WCHAR *thisArg = WCMD_parameter(cmd, 0, NULL, FALSE, TRUE);
-        WCHAR  pathext[MAXSTRING];
-        BOOL found = FALSE;
+        struct search_command sc;
 
-        /* Now extract PATHEXT */
-        len = GetEnvironmentVariableW(L"PATHEXT", pathext, ARRAY_SIZE(pathext));
-        if ((len == 0) || (len >= ARRAY_SIZE(pathext))) {
-          lstrcpyW(pathext, L".bat;.com;.cmd;.exe");
+        if (search_command(cmd, &sc, TRUE) != NO_ERROR) /* no command found */
+        {
+            WINE_TRACE("Binary not found, dropping back to old behaviour\n");
+            opt_s = TRUE;
         }
-
-        /* If the supplied parameter has any directory information, look there */
-        WINE_TRACE("First parameter is '%s'\n", wine_dbgstr_w(thisArg));
-        if (wcschr(thisArg, '\\') != NULL) {
-
-          if (!WCMD_get_fullpath(thisArg, ARRAY_SIZE(string), string, NULL)) return FALSE;
-          WINE_TRACE("Full path name '%s'\n", wine_dbgstr_w(string));
-          p = string + lstrlenW(string);
-
-          /* Does file exist with this name? */
-          if (GetFileAttributesW(string) != INVALID_FILE_ATTRIBUTES) {
-            WINE_TRACE("Found file as '%s'\n", wine_dbgstr_w(string));
-            found = TRUE;
-          } else {
-            WCHAR *thisExt = pathext;
-
-            /* No - try with each of the PATHEXT extensions */
-            while (!found && thisExt) {
-              WCHAR *nextExt = wcschr(thisExt, ';');
-
-              if (nextExt) {
-                memcpy(p, thisExt, (nextExt-thisExt) * sizeof(WCHAR));
-                p[(nextExt-thisExt)] = 0x00;
-                thisExt = nextExt+1;
-              } else {
-                lstrcpyW(p, thisExt);
-                thisExt = NULL;
-              }
-
-              /* Does file exist with this extension appended? */
-              if (GetFileAttributesW(string) != INVALID_FILE_ATTRIBUTES) {
-                WINE_TRACE("Found file as '%s'\n", wine_dbgstr_w(string));
-                found = TRUE;
-              }
-            }
-          }
-
-        /* Otherwise we now need to look in the path to see if we can find it */
-        } else {
-          /* Does file exist with this name? */
-          if (SearchPathW(NULL, thisArg, NULL, ARRAY_SIZE(string), string, NULL) != 0)  {
-            WINE_TRACE("Found on path as '%s'\n", wine_dbgstr_w(string));
-            found = TRUE;
-          } else {
-            WCHAR *thisExt = pathext;
-
-            /* No - try with each of the PATHEXT extensions */
-            while (!found && thisExt) {
-              WCHAR *nextExt = wcschr(thisExt, ';');
-
-              if (nextExt) {
-                *nextExt = 0;
-                nextExt = nextExt+1;
-              } else {
-                nextExt = NULL;
-              }
-
-              /* Does file exist with this extension? */
-              if (SearchPathW(NULL, thisArg, thisExt, ARRAY_SIZE(string), string, NULL) != 0)  {
-                WINE_TRACE("Found on path as '%s' with extension '%s'\n", wine_dbgstr_w(string),
-                           wine_dbgstr_w(thisExt));
-                found = TRUE;
-              }
-              thisExt = nextExt;
-            }
-          }
-        }
-
-        /* If not found, drop back to old behaviour */
-        if (!found) {
-          WINE_TRACE("Binary not found, dropping back to old behaviour\n");
-          opt_s = TRUE;
-        }
-
       }
 
       /* strip first and last quote characters if opt_s; check for invalid
        * executable is done later */
-      if (opt_s && *cmd=='\"')
+      if (opt_s && *cmd == L'\"')
           WCMD_strip_quotes(cmd);
   }
   else
