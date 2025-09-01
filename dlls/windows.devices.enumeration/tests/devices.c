@@ -54,97 +54,133 @@ static void check_interface_(unsigned int line, void *obj, const IID *iid, BOOL 
         IUnknown_Release(unk);
 }
 
-struct device_watcher_handler
+struct inspectable_event_handler
 {
-    ITypedEventHandler_DeviceWatcher_IInspectable ITypedEventHandler_DeviceWatcher_IInspectable_iface;
+    ITypedEventHandler_IInspectable_IInspectable iface;
+    const GUID *iid;
+    void (*callback)( IInspectable *, IInspectable *, void * );
+    void *data;
     LONG ref;
-
-    unsigned int test_deviceinformation : 1;
-    LONG devices_added;
-    HANDLE event;
-    BOOL invoked;
-    IInspectable *args;
 };
 
-static inline struct device_watcher_handler *impl_from_ITypedEventHandler_DeviceWatcher_IInspectable(
-        ITypedEventHandler_DeviceWatcher_IInspectable *iface )
+static inline struct inspectable_event_handler *impl_from_ITypedEventHandler_IInspectable_IInspectable( ITypedEventHandler_IInspectable_IInspectable *iface )
 {
-    return CONTAINING_RECORD( iface, struct device_watcher_handler, ITypedEventHandler_DeviceWatcher_IInspectable_iface );
+    return CONTAINING_RECORD( iface, struct inspectable_event_handler, iface );
 }
 
-static HRESULT WINAPI device_watcher_handler_QueryInterface(
-        ITypedEventHandler_DeviceWatcher_IInspectable *iface, REFIID iid, void **out )
+static HRESULT WINAPI inspectable_event_handler_QueryInterface( ITypedEventHandler_IInspectable_IInspectable *iface, REFIID iid, void **out )
 {
-    struct device_watcher_handler *impl = impl_from_ITypedEventHandler_DeviceWatcher_IInspectable( iface );
+    struct inspectable_event_handler *impl = impl_from_ITypedEventHandler_IInspectable_IInspectable( iface );
 
-    if (IsEqualGUID( iid, &IID_IUnknown ) ||
-        IsEqualGUID( iid, &IID_ITypedEventHandler_DeviceWatcher_IInspectable ) ||
-        (impl->test_deviceinformation && IsEqualGUID( iid, &IID_ITypedEventHandler_DeviceWatcher_DeviceInformation )))
+    if (winetest_debug > 1) trace( "(%p, %s, %p)\n", iface, debugstr_guid( iid ), out );
+    if (IsEqualGUID( iid, &IID_IUnknown ) || IsEqualGUID( iid, &IID_IAgileObject) || IsEqualGUID( iid, impl->iid ))
     {
-        IUnknown_AddRef( &impl->ITypedEventHandler_DeviceWatcher_IInspectable_iface );
-        *out = &impl->ITypedEventHandler_DeviceWatcher_IInspectable_iface;
+        ITypedEventHandler_IInspectable_IInspectable_AddRef((*out = &impl->iface.lpVtbl));
         return S_OK;
     }
 
-    trace( "%s not implemented, returning E_NO_INTERFACE.\n", debugstr_guid( iid ) );
     *out = NULL;
+    if (winetest_debug > 1) trace( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI device_watcher_handler_AddRef( ITypedEventHandler_DeviceWatcher_IInspectable *iface )
+static ULONG WINAPI inspectable_event_handler_AddRef( ITypedEventHandler_IInspectable_IInspectable *iface )
 {
-    struct device_watcher_handler *impl = impl_from_ITypedEventHandler_DeviceWatcher_IInspectable( iface );
-    ULONG ref = InterlockedIncrement( &impl->ref );
-    return ref;
+    struct inspectable_event_handler *impl = impl_from_ITypedEventHandler_IInspectable_IInspectable( iface );
+    return InterlockedIncrement( &impl->ref );
 }
 
-static ULONG WINAPI device_watcher_handler_Release( ITypedEventHandler_DeviceWatcher_IInspectable *iface )
+static ULONG WINAPI inspectable_event_handler_Release( ITypedEventHandler_IInspectable_IInspectable *iface )
 {
-    struct device_watcher_handler *impl = impl_from_ITypedEventHandler_DeviceWatcher_IInspectable( iface );
+    struct inspectable_event_handler *impl = impl_from_ITypedEventHandler_IInspectable_IInspectable( iface );
     ULONG ref = InterlockedDecrement( &impl->ref );
+
+    if (!ref) free( impl );
     return ref;
 }
 
-static void test_DeviceInformation_obj( int line, IDeviceInformation *info );
-static HRESULT WINAPI device_watcher_handler_Invoke( ITypedEventHandler_DeviceWatcher_IInspectable *iface,
-                                                     IDeviceWatcher *sender, IInspectable *args )
+static HRESULT WINAPI inspectable_event_handler_Invoke( ITypedEventHandler_IInspectable_IInspectable *iface, IInspectable *arg1, IInspectable *arg2 )
 {
-    struct device_watcher_handler *impl = impl_from_ITypedEventHandler_DeviceWatcher_IInspectable( iface );
+    struct inspectable_event_handler *impl = impl_from_ITypedEventHandler_IInspectable_IInspectable( iface );
 
-    impl->invoked = TRUE;
-    impl->args = args;
-
-    if (impl->test_deviceinformation)
-    {
-        IDeviceInformation *info;
-        HRESULT hr;
-
-        hr = IInspectable_QueryInterface( args, &IID_IDeviceInformation, (void *)&info );
-        ok( hr == S_OK, "got hr %#lx\n", hr );
-        test_DeviceInformation_obj( __LINE__, info );
-        InterlockedIncrement( &impl->devices_added );
-        IDeviceInformation_Release( info );
-    }
-
-    SetEvent( impl->event );
-
+    if (winetest_debug > 1) trace( "(%p, %p, %p)\n", iface, arg1, arg2 );
+    impl->callback( arg1, arg2, impl->data );
     return S_OK;
 }
 
-static const ITypedEventHandler_DeviceWatcher_IInspectableVtbl device_watcher_handler_vtbl =
-{
-    device_watcher_handler_QueryInterface,
-    device_watcher_handler_AddRef,
-    device_watcher_handler_Release,
-    /* ITypedEventHandler<DeviceWatcher*,IInspectable*> methods */
-    device_watcher_handler_Invoke,
+static const ITypedEventHandler_IInspectable_IInspectableVtbl inspectable_event_handler_vtbl = {
+    /* IUnknown */
+    inspectable_event_handler_QueryInterface,
+    inspectable_event_handler_AddRef,
+    inspectable_event_handler_Release,
+    /* ITypedEventHandler<IInspectable *, IInspectable *> */
+    inspectable_event_handler_Invoke
 };
 
-static void device_watcher_handler_create( struct device_watcher_handler *impl )
+static ITypedEventHandler_IInspectable_IInspectable *inspectable_event_handler_create( REFIID iid, void (*callback)( IInspectable *, IInspectable *, void * ),
+                                                                                       void *data )
 {
-    impl->ITypedEventHandler_DeviceWatcher_IInspectable_iface.lpVtbl = &device_watcher_handler_vtbl;
-    impl->invoked = FALSE;
-    impl->ref = 1;
+    struct inspectable_event_handler *handler;
+
+    if (!(handler = calloc( 1, sizeof( *handler )))) return NULL;
+    handler->iface.lpVtbl = &inspectable_event_handler_vtbl;
+    handler->iid = iid;
+    handler->callback = callback;
+    handler->data = data;
+    handler->ref = 1;
+    return &handler->iface;
+}
+
+struct device_watcher_added_handler_data
+{
+    LONG devices_added;
+};
+
+static void test_DeviceInformation_obj( int line, IDeviceInformation *info );
+static void device_watcher_added_callback( IInspectable *arg1, IInspectable *arg2, void *param )
+{
+    struct device_watcher_added_handler_data *data = param;
+    IDeviceInformation *device_info;
+    HRESULT hr;
+
+    check_interface( arg1, &IID_IDeviceWatcher, TRUE );
+    hr = IInspectable_QueryInterface( arg2, &IID_IDeviceInformation, (void **)&device_info );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+
+    InterlockedIncrement( &data->devices_added );
+    test_DeviceInformation_obj( __LINE__, device_info );
+    IDeviceInformation_Release( device_info );
+}
+
+static ITypedEventHandler_DeviceWatcher_DeviceInformation *device_watcher_added_handler_create( struct device_watcher_added_handler_data *data )
+{
+    return (ITypedEventHandler_DeviceWatcher_DeviceInformation *)inspectable_event_handler_create( &IID_ITypedEventHandler_DeviceWatcher_DeviceInformation,
+                                                                                                   device_watcher_added_callback, data );
+}
+
+struct device_watcher_once_handler_data
+{
+    HANDLE event;
+    LONG invoked;
+};
+
+static void device_watcher_once_callback( IInspectable *arg1, IInspectable *arg2, void *param )
+{
+    struct device_watcher_once_handler_data *data = param;
+    BOOL ret;
+
+    check_interface( arg1, &IID_IDeviceWatcher, TRUE );
+    ok( !arg2, "got arg2 %p\n", arg2 );
+
+    ok( InterlockedIncrement( &data->invoked ), "event handler invoked more than once\n" );
+    ret = SetEvent( data->event );
+    ok( ret, "SetEvent failed, last error %lu \n", GetLastError() );
+}
+
+static ITypedEventHandler_DeviceWatcher_IInspectable *device_watcher_once_handler_create( struct device_watcher_once_handler_data *data )
+{
+    return (ITypedEventHandler_DeviceWatcher_IInspectable *)inspectable_event_handler_create( &IID_ITypedEventHandler_DeviceWatcher_IInspectable,
+                                                                                              device_watcher_once_callback, data );
 }
 
 struct device_information_collection_async_handler
@@ -255,9 +291,10 @@ static void await_device_information_collection_( int line, IAsyncOperation_Devi
     ok_(__FILE__, line)( ret, "CloseHandle failed, error %lu\n", GetLastError() );
 }
 
-#define check_device_information_collection_async( a, b, c, d, e ) check_device_information_collection_async_( __LINE__, a, b, c, d, e )
+#define check_device_information_collection_async( a, b, c, d, e ) check_device_information_collection_async_( __LINE__, a, TRUE, b, c, d, e )
+#define check_device_information_collection_async_no_id( a, b, c, d  ) check_device_information_collection_async_( __LINE__, a, FALSE, 0, b, c, d )
 static void check_device_information_collection_async_( int line, IAsyncOperation_DeviceInformationCollection *async,
-                                                        UINT32 expect_id, AsyncStatus expect_status,
+                                                        BOOL test_id, UINT32 expect_id, AsyncStatus expect_status,
                                                         HRESULT expect_hr, IVectorView_DeviceInformation **result )
 {
     AsyncStatus async_status;
@@ -272,7 +309,8 @@ static void check_device_information_collection_async_( int line, IAsyncOperatio
     hr = IAsyncInfo_get_Id( async_info, &async_id );
     if (expect_status < 4) ok_(__FILE__, line)( hr == S_OK, "get_Id returned %#lx\n", hr );
     else ok_(__FILE__, line)( hr == E_ILLEGAL_METHOD_CALL, "get_Id returned %#lx\n", hr );
-    ok_(__FILE__, line)( async_id == expect_id, "got id %u\n", async_id );
+    if (test_id)
+        ok_(__FILE__, line)( async_id == expect_id, "got id %u\n", async_id );
 
     async_status = 0xdeadbeef;
     hr = IAsyncInfo_get_Status( async_info, &async_status );
@@ -329,7 +367,10 @@ static void test_DeviceInformation( void )
 {
     static const WCHAR *device_info_name = L"Windows.Devices.Enumeration.DeviceInformation";
 
-    static struct device_watcher_handler stopped_handler, added_handler, enumerated_handler;
+    ITypedEventHandler_DeviceWatcher_IInspectable *stopped_handler, *enumerated_handler;
+    struct device_watcher_once_handler_data enumerated_data = {0}, stopped_data = {0};
+    ITypedEventHandler_DeviceWatcher_DeviceInformation *device_added_handler;
+    struct device_watcher_added_handler_data device_added_data = {0};
     EventRegistrationToken stopped_token, added_token, enumerated_token;
     IInspectable *inspectable, *inspectable2;
     IActivationFactory *factory;
@@ -348,14 +389,14 @@ static void test_DeviceInformation( void )
     HRESULT hr;
     ULONG ref;
 
-    device_watcher_handler_create( &added_handler );
-    device_watcher_handler_create( &stopped_handler );
-    device_watcher_handler_create( &enumerated_handler );
+    enumerated_data.event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!enumerated_data.event, "failed to create event, got error %lu\n", GetLastError() );
+    stopped_data.event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!stopped_data.event, "failed to create event, got error %lu\n", GetLastError() );
 
-    stopped_handler.event = CreateEventW( NULL, FALSE, FALSE, NULL );
-    ok( !!stopped_handler.event, "failed to create event, got error %lu\n", GetLastError() );
-    enumerated_handler.event = CreateEventW( NULL, FALSE, FALSE, NULL );
-    ok( !!enumerated_handler.event, "failed to create event, got error %lu\n", GetLastError() );
+    device_added_handler = device_watcher_added_handler_create( &device_added_data );
+    stopped_handler = device_watcher_once_handler_create( &stopped_data );
+    enumerated_handler = device_watcher_once_handler_create( &enumerated_data );
 
     hr = WindowsCreateString( device_info_name, wcslen( device_info_name ), &str );
     ok( hr == S_OK, "got hr %#lx\n", hr );
@@ -401,9 +442,10 @@ static void test_DeviceInformation( void )
     ref = IDeviceWatcher_Release( watcher );
     ok( ref == 1, "got ref %lu\n", ref );
 
-    hr = IDeviceWatcher_add_Added( device_watcher, (void *)&added_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface, &added_token );
+    device_added_data.devices_added = 0;
+    hr = IDeviceWatcher_add_Added( device_watcher, device_added_handler, &added_token );
     ok( hr == S_OK, "got hr %#lx\n", hr );
-    hr = IDeviceWatcher_add_Stopped( device_watcher, &stopped_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface, &stopped_token );
+    hr = IDeviceWatcher_add_Stopped( device_watcher, stopped_handler, &stopped_token );
     ok( hr == S_OK, "got hr %#lx\n", hr );
 
     hr = IDeviceWatcher_get_Status( device_watcher, &status );
@@ -420,13 +462,12 @@ static void test_DeviceInformation( void )
     ok( ref == 2, "got ref %lu\n", ref );
     hr = IDeviceWatcher_Stop( device_watcher );
     ok( hr == S_OK, "got hr %#lx\n", hr );
-    ok( !WaitForSingleObject( stopped_handler.event, 1000 ), "wait for stopped_handler.event failed\n" );
+    ok( !WaitForSingleObject( stopped_data.event, 1000 ), "wait for stopped_handler.event failed\n" );
 
     hr = IDeviceWatcher_get_Status( device_watcher, &status );
     ok( hr == S_OK, "got hr %#lx\n", hr );
     ok( status == DeviceWatcherStatus_Stopped, "got status %u\n", status );
-    ok( stopped_handler.invoked, "stopped_handler not invoked\n" );
-    ok( stopped_handler.args == NULL, "stopped_handler not invoked\n" );
+    ok( stopped_data.invoked, "stopped_handler not invoked\n" );
 
     IDeviceWatcher_Release( device_watcher );
     IInspectable_Release( inspectable2 );
@@ -448,15 +489,16 @@ static void test_DeviceInformation( void )
     check_interface( device_watcher, &IID_IAgileObject, TRUE );
     check_interface( device_watcher, &IID_IDeviceWatcher, TRUE );
 
-    hr = IDeviceWatcher_add_Added( device_watcher, (void *)&added_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface, &added_token );
+    hr = IDeviceWatcher_add_Added( device_watcher, device_added_handler, &added_token );
     ok( hr == S_OK, "got hr %#lx\n", hr );
-    hr = IDeviceWatcher_add_Stopped( device_watcher, &stopped_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface, &stopped_token );
+    hr = IDeviceWatcher_add_Stopped( device_watcher, stopped_handler, &stopped_token );
     ok( hr == S_OK, "got hr %#lx\n", hr );
 
     hr = IDeviceWatcher_get_Status( device_watcher, &status );
     ok( hr == S_OK, "got hr %#lx\n", hr );
     ok( status == DeviceWatcherStatus_Created, "got status %u\n", status );
 
+    stopped_data.invoked = 0;
     hr = IDeviceWatcher_Start( device_watcher );
     ok( hr == S_OK, "got hr %#lx\n", hr );
     hr = IDeviceWatcher_get_Status( device_watcher, &status );
@@ -467,13 +509,12 @@ static void test_DeviceInformation( void )
     ok( ref == 2, "got ref %lu\n", ref );
     hr = IDeviceWatcher_Stop( device_watcher );
     ok( hr == S_OK, "got hr %#lx\n", hr );
-    ok( !WaitForSingleObject( stopped_handler.event, 1000 ), "wait for stopped_handler.event failed\n" );
+    ok( !WaitForSingleObject( stopped_data.event, 1000 ), "wait for stopped_handler.event failed\n" );
 
     hr = IDeviceWatcher_get_Status( device_watcher, &status );
     ok( hr == S_OK, "got hr %#lx\n", hr );
     ok( status == DeviceWatcherStatus_Stopped, "got status %u\n", status );
-    ok( stopped_handler.invoked, "stopped_handler not invoked\n" );
-    ok( stopped_handler.args == NULL, "stopped_handler not invoked\n" );
+    ok( stopped_data.invoked, "stopped_handler not invoked\n" );
 
     IDeviceWatcher_Release( device_watcher );
 
@@ -482,16 +523,15 @@ static void test_DeviceInformation( void )
 
     if (device_watcher)
     {
-        added_handler.test_deviceinformation = 1;
-        hr = IDeviceWatcher_add_Added( device_watcher, (void *)&added_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface, &added_token );
+        hr = IDeviceWatcher_add_Added( device_watcher, device_added_handler, &added_token );
         ok( hr == S_OK, "got hr %#lx\n", hr );
-        hr = IDeviceWatcher_add_EnumerationCompleted( device_watcher, (void *)&enumerated_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface, &enumerated_token );
+        hr = IDeviceWatcher_add_EnumerationCompleted( device_watcher, enumerated_handler, &enumerated_token );
         ok( hr == S_OK, "got hr %#lx\n", hr );
 
         hr = IDeviceWatcher_Start( device_watcher );
         ok( hr == S_OK, "got hr %#lx\n", hr );
-        ok( !WaitForSingleObject( enumerated_handler.event, 5000 ), "wait for enumerated_handler.event failed\n" );
-        ok( added_handler.devices_added > 0, "devices_added should be greater than 0\n" );
+        ok( !WaitForSingleObject( enumerated_data.event, 5000 ), "wait for enumerated_handler.event failed\n" );
+        ok( device_added_data.devices_added > 0, "devices_added should be greater than 0\n" );
         hr = IDeviceWatcher_get_Status( device_watcher, &status );
         ok( hr == S_OK, "got hr %#lx\n", hr );
         ok( status == DeviceWatcherStatus_EnumerationCompleted, "got status %u\n", status );
@@ -531,8 +571,281 @@ skip_device_statics:
 
 done:
     WindowsDeleteString( str );
-    CloseHandle( stopped_handler.event );
-    CloseHandle( enumerated_handler.event );
+    ITypedEventHandler_DeviceWatcher_DeviceInformation_Release( device_added_handler );
+    ITypedEventHandler_DeviceWatcher_IInspectable_Release( stopped_handler );
+    ITypedEventHandler_DeviceWatcher_IInspectable_Release( enumerated_handler );
+    CloseHandle( stopped_data.event );
+    CloseHandle( enumerated_data.event );
+}
+
+struct test_case_filter
+{
+    const WCHAR *filter;
+    HRESULT hr;
+    BOOL no_results;
+    HRESULT start_hr; /* Code returned by IDeviceWatcher::Start */
+};
+
+#define test_FindAllAsyncAqsFilter( statics, test_cases, todo_hr, todo_results ) \
+    test_FindAllAsyncAqsFilter_( statics, #test_cases, test_cases, ARRAY_SIZE( test_cases ), todo_hr, todo_results )
+
+static void test_FindAllAsyncAqsFilter_( IDeviceInformationStatics *statics, const char *name, const struct test_case_filter *test_cases, SIZE_T len,
+                                         BOOL todo_hr, BOOL todo_results )
+{
+    SIZE_T i;
+
+    for (i = 0; i < len; i++)
+    {
+        IAsyncOperation_DeviceInformationCollection *devices_async;
+        const struct test_case_filter *test_case = &test_cases[i];
+        IVectorView_DeviceInformation *devices;
+        UINT32 size;
+        HSTRING str;
+        HRESULT hr;
+
+        winetest_push_context("%s[%Iu]", name, i );
+
+        hr = WindowsCreateString( test_case->filter, wcslen( test_case->filter ), &str );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        hr = IDeviceInformationStatics_FindAllAsyncAqsFilter( statics, str, &devices_async );
+        todo_wine_if( todo_hr ) ok( hr == test_case->hr, "got hr %#lx != %#lx\n", hr, test_case->hr );
+        WindowsDeleteString( str );
+        if (FAILED( hr ) || FAILED( test_case->hr ))
+        {
+            if (SUCCEEDED( hr )) IAsyncOperation_DeviceInformationCollection_Release( devices_async );
+            winetest_pop_context();
+            continue;
+        }
+        await_device_information_collection( devices_async );
+        check_device_information_collection_async_no_id( devices_async, Completed, S_OK, &devices );
+
+        hr = IVectorView_DeviceInformation_get_Size( devices, &size );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        todo_wine_if( todo_results ) ok( test_case->no_results == !size, "got size %I32u\n", size );
+        IAsyncOperation_DeviceInformationCollection_Release( devices_async );
+        IVectorView_DeviceInformation_Release( devices );
+
+        winetest_pop_context();
+    }
+}
+
+#define test_CreateWatcherAqsFilter( statics, test_cases, todo_hr, todo_start_hr, todo_wait, todo_results ) \
+    test_CreateWatcherAqsFilter_( statics, #test_cases, test_cases, ARRAY_SIZE( test_cases ), todo_hr, todo_start_hr, todo_wait, todo_results )
+
+static void test_CreateWatcherAqsFilter_( IDeviceInformationStatics *statics, const char *name, const struct test_case_filter *test_cases, SIZE_T len,
+                                          BOOL todo_hr, BOOL todo_start_hr, BOOL todo_wait, BOOL todo_results )
+{
+    ITypedEventHandler_DeviceWatcher_IInspectable *enumerated_handler, *stopped_handler;
+    struct device_watcher_once_handler_data enumerated_data = {0}, stopped_data = {0};
+    SIZE_T i;
+
+    enumerated_data.event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!enumerated_data.event, "CreateEventW failed, last error %lu\n", GetLastError() );
+    enumerated_handler = device_watcher_once_handler_create( &enumerated_data );
+
+    stopped_data.event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!stopped_data.event, "CreateEventW failed, last error %lu\n", GetLastError() );
+    stopped_handler = device_watcher_once_handler_create( &stopped_data );
+
+    for (i = 0; i < len; i++)
+    {
+        EventRegistrationToken added_token, enumerated_token, stopped_token;
+        ITypedEventHandler_DeviceWatcher_DeviceInformation *added_handler;
+        struct device_watcher_added_handler_data added_data = {0};
+        const struct test_case_filter *test_case = &test_cases[i];
+        IDeviceWatcher *watcher;
+        HSTRING str;
+        HRESULT hr;
+        DWORD ret;
+
+        winetest_push_context("%s[%Iu]", name, i );
+
+        hr = WindowsCreateString( test_case->filter, wcslen( test_case->filter ), &str );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        hr = IDeviceInformationStatics_CreateWatcherAqsFilter( statics, str, &watcher );
+        todo_wine_if( todo_hr ) ok( hr == test_case->hr, "got hr %#lx != %#lx\n", hr, test_case->hr );
+        WindowsDeleteString( str );
+        if (FAILED( hr ) || FAILED( test_case->hr ))
+        {
+            if (SUCCEEDED( hr )) IDeviceWatcher_Release( watcher );
+            winetest_pop_context();
+            continue;
+        }
+
+        added_handler = device_watcher_added_handler_create( &added_data );
+        hr = IDeviceWatcher_add_Added( watcher, added_handler, &added_token );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        ITypedEventHandler_DeviceWatcher_DeviceInformation_Release( added_handler );
+        hr = IDeviceWatcher_add_EnumerationCompleted( watcher, enumerated_handler, &enumerated_token );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        hr = IDeviceWatcher_add_Stopped( watcher, stopped_handler, &stopped_token );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        hr = IDeviceWatcher_Start( watcher );
+        todo_wine_if( todo_start_hr ) ok( hr == test_case->start_hr, "got hr %#lx\n", hr );
+        if (FAILED( hr ) || FAILED( test_case->start_hr )) goto next;
+
+        ret = WaitForSingleObject( enumerated_data.event, 500 );
+        todo_wine_if( todo_wait ) ok( !ret, "WaitForSingleObject returned %lu\n", ret );
+
+        hr = IDeviceWatcher_Stop( watcher );
+        ret = WaitForSingleObject( stopped_data.event, 500 );
+        todo_wine_if( todo_wait ) ok( !ret, "WaitForSingleObject returned %lu\n", ret );
+        todo_wine_if( todo_results ) ok( test_case->no_results == !added_data.devices_added, "got devices_added %lu\n", added_data.devices_added );
+
+    next:
+        hr = IDeviceWatcher_remove_Added( watcher, added_token );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        hr = IDeviceWatcher_remove_Stopped( watcher, stopped_token );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        hr = IDeviceWatcher_remove_EnumerationCompleted( watcher, enumerated_token );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        IDeviceWatcher_Release( watcher );
+
+        winetest_pop_context();
+
+        enumerated_data.invoked = 0;
+        stopped_data.invoked = 0;
+    }
+
+    ITypedEventHandler_DeviceWatcher_IInspectable_Release( enumerated_handler );
+    ITypedEventHandler_DeviceWatcher_IInspectable_Release( stopped_handler );
+    CloseHandle( enumerated_data.event );
+    CloseHandle( stopped_data.event );
+}
+
+static const struct test_case_filter filters_empty[] = { { L"", S_OK } };
+static const struct test_case_filter filters_simple[] = {
+    { L"System.Devices.InterfaceEnabled := System.StructuredQueryType.Boolean#True", S_OK },
+    { L"System.Devices.InterfaceEnabled : System.StructuredQueryType.Boolean#True", S_OK },
+    { L"\t\nSystem.Devices.InterfaceEnabled\n\t\n:=\r\n\tSystem.StructuredQueryType.Boolean#True  ", S_OK },
+    { L"System.Devices.InterfaceEnabled :NOT System.StructuredQueryType.Boolean#False", S_OK },
+    { L"System.Devices.InterfaceEnabled :<> System.StructuredQueryType.Boolean#False", S_OK },
+    { L"System.Devices.InterfaceEnabled :- System.StructuredQueryType.Boolean#False", S_OK },
+    { L"System.Devices.InterfaceEnabled :\u2260 System.StructuredQueryType.Boolean#False", S_OK },
+    { L"System.Devices.InterfaceClassGuid :\u2260 {deadbeef-dead-beef-dead-deadbeefdead}", S_OK },
+    { L"System.Devices.InterfaceEnabled :NOT []", S_OK },
+    { L"System.Devices.InterfaceEnabled := System.StructuredQueryType.Boolean#True "
+        L"System.Devices.DeviceInstanceId :NOT []", S_OK },
+    { L"(((System.Devices.DeviceInstanceId :NOT [])))", S_OK },
+};
+static const struct test_case_filter filters_boolean_op[] = {
+    { L"NOT System.Devices.DeviceInstanceId := []", S_OK },
+    { L"(NOT (NOT (NOT System.Devices.DeviceInstanceId := [])))", S_OK },
+    { L"System.Devices.DeviceInstanceId := [] OR System.Devices.DeviceInstanceId :NOT []", S_OK },
+    { L"NOT ((System.Devices.DeviceInstanceId :NOT []) AND System.Devices.DeviceInstanceId := [])", S_OK },
+    { L"NOT ((NOT System.Devices.InterfaceEnabled := []) AND System.Devices.DeviceInstanceId := [])", S_OK }
+};
+/* Propsys canonical property names are case-sensitive, but not in AQS. */
+static const struct test_case_filter filters_case_insensitive[] = {
+    { L"SYSTEM.DEVICES.InterfaceEnabled := System.StructuredQueryType.Boolean#True", S_OK },
+    { L"system.devices.interfaceenabled : SYSTEM.STRUCTUREDQUERYTYPE.BOOLEAN#true", S_OK },
+    { L"SYSTEM.DEVICES.INTERFACEENABLED :- SYSTEM.STRUCTUREDQUERYTYPE.BOOLEAN#FALSE", S_OK },
+    { L"system.devices.interfaceenabled :NOT system.structuredquerytype.boolean#false", S_OK },
+    { L"SYSTEM.DEVICES.INTERFACECLASSGUID :\u2260 {DEADBEEF-DEAD-BEEF-DEAD-DEADBEEFDEAD}", S_OK },
+};
+static const struct test_case_filter filters_precedence[] = {
+    /* Gets parsed as ((DeviceInstanceId := [] AND DeviceInstanceId := []) OR DeviceInstanceId :NOT []) */
+    { L"System.Devices.DeviceInstanceId := [] System.Devices.DeviceInstanceId := [] OR System.Devices.DeviceInstanceId :NOT []", S_OK },
+    /* Gets parsed as ((DeviceInstanceId := [] OR DeviceInstanceId :NOT []) AND DeviceInstanceId :NOT []) */
+    { L"System.Devices.DeviceInstanceId := [] OR System.Devices.DeviceInstanceId :NOT [] System.Devices.DeviceInstanceId :NOT []", S_OK }
+};
+/* Queries that succeed but don't return any results. */
+static const struct test_case_filter filters_no_results[] = {
+    /* Gets parsed as ((NOT DeviceInstanceId := []) AND DeviceInstanceId := []) */
+    { L"NOT System.Devices.DeviceInstanceId := [] System.Devices.DeviceInstanceId := []", S_OK, TRUE },
+    { L"System.Devices.InterfaceClassGuid := {deadbeef-dead-beef-dead-deadbeefdead}", S_OK, TRUE },
+    { L"System.Devices.DeviceInstanceId := \"invalid\\device\\id\"", S_OK, TRUE },
+    { L"System.Devices.InterfaceEnabled := []", S_OK, TRUE },
+    { L"System.Devices.DeviceInstanceId := []", S_OK, TRUE },
+    { L"System.Devices.InterfaceEnabled := System.StructuredQueryType.Boolean#True "
+      L"System.Devices.InterfaceEnabled := System.StructuredQueryType.Boolean#False", S_OK, TRUE },
+    { L"System.Devices.InterfaceClassGuid :< {deadbeef-dead-beef-dead-deadbeefdead} OR "
+      L"System.Devices.InterfaceClassGuid :> {deadbeef-dead-beef-dead-deadbeefdead}", S_OK, TRUE }
+};
+static const struct test_case_filter filters_invalid_comparand_type[] = {
+    { L"System.Devices.InterfaceEnabled := \"foo\"", E_INVALIDARG },
+    { L"System.Devices.InterfaceEnabled := {deadbeef-dead-beef-dead-deadbeefdead}", E_INVALIDARG },
+    { L"System.Devices.InterfaceClassGuid := System.StructuredQueryType.Boolean#True", E_INVALIDARG },
+    { L"System.Devices.InterfaceClassGuid :- System.StructuredQueryType.Boolean#True", E_INVALIDARG },
+    { L"System.Devices.InterfaceEnabled := System.Devices.InterfaceEnabled", E_INVALIDARG }, /* RHS is parsed as a string. */
+};
+static const struct test_case_filter filters_invalid_empty[] = {
+    { L" ", E_INVALIDARG },
+    { L"\t", E_INVALIDARG },
+    { L"\n", E_INVALIDARG },
+};
+/* CreateWatcher* accepts whitespace-only strings, the error will be returned by IDeviceWatcher_Start instead. */
+static const struct test_case_filter filters_empty_watcher[] = {
+    { L" ", S_OK, FALSE, E_INVALIDARG },
+    { L"\t", S_OK, FALSE, E_INVALIDARG },
+    { L"\n", S_OK, FALSE, E_INVALIDARG },
+};
+static const struct test_case_filter filters_invalid_operator[] = {
+    { L"System.Devices.InterfaceEnabled = System.StructuredQueryType.Boolean#True", E_INVALIDARG }, /* Missing colon */
+    { L"System.Devices.InterfacesEnabled :not System.StructuredQueryType.Boolean#True", E_INVALIDARG }, /* Named operators are case-sensitive */
+    { L"System.Devices.InterfacesEnabled System.StructuredQueryType.Boolean#True", E_INVALIDARG },
+    { L"System.Devices.InterfacesEnabled := := System.StructuredQueryType.Boolean#True", E_INVALIDARG },
+    { L"System.Devices.InterfacesEnabled :!= System.StructuredQueryType.Boolean#True", E_INVALIDARG },
+    { L"System.Devices.InterfacesEnabled :\U0001F377 System.StructuredQueryType.Boolean#True", E_INVALIDARG },
+    { L"System.Devices.InterfacesEnabled", E_INVALIDARG },
+    { L"System.StructuredQueryType.Boolean#True", E_INVALIDARG },
+};
+static const struct test_case_filter filters_invalid_operand[] = {
+    { L"System.Devices.InterfaceEnabled := ", E_INVALIDARG },
+    { L":= System.StructuredQueryType.Boolean#True", E_INVALIDARG },
+    { L":=", E_INVALIDARG },
+    { L" System.StructuredQueryType.Boolean#True := System.StructuredQueryType.Boolean#True", E_INVALIDARG },
+};
+
+static void test_aqs_filters( void )
+{
+    static const WCHAR *class_name = RuntimeClass_Windows_Devices_Enumeration_DeviceInformation;
+    IDeviceInformationStatics *statics;
+    HSTRING str;
+    HRESULT hr;
+
+    hr = WindowsCreateString( class_name, wcslen( class_name ), &str );
+    ok(hr == S_OK, "got hr %#lx\n", hr );
+    hr = RoGetActivationFactory( str, &IID_IDeviceInformationStatics, (void **)&statics );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx\n", hr );
+    WindowsDeleteString( str  );
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip( "%s runtimeclass, not registered.\n", wine_dbgstr_w( class_name ) );
+        return;
+    }
+
+    test_FindAllAsyncAqsFilter( statics, filters_empty, TRUE, FALSE );
+    test_CreateWatcherAqsFilter( statics, filters_empty, FALSE, FALSE, FALSE, FALSE );
+
+    test_FindAllAsyncAqsFilter( statics, filters_boolean_op, TRUE, TRUE );
+    test_CreateWatcherAqsFilter( statics, filters_boolean_op, FALSE, FALSE, TRUE, TRUE );
+
+    test_FindAllAsyncAqsFilter( statics, filters_simple, TRUE, FALSE );
+    test_CreateWatcherAqsFilter( statics, filters_simple, FALSE, FALSE, TRUE, TRUE );
+
+    test_FindAllAsyncAqsFilter( statics, filters_case_insensitive, TRUE, FALSE );
+    test_CreateWatcherAqsFilter( statics, filters_case_insensitive, FALSE, FALSE, TRUE, TRUE );
+
+    test_FindAllAsyncAqsFilter( statics, filters_precedence, TRUE, FALSE );
+    test_CreateWatcherAqsFilter( statics, filters_precedence, FALSE, FALSE, TRUE, TRUE );
+
+    test_FindAllAsyncAqsFilter( statics, filters_no_results, TRUE, FALSE );
+    test_CreateWatcherAqsFilter( statics, filters_no_results, FALSE, FALSE, TRUE, FALSE );
+
+    test_FindAllAsyncAqsFilter( statics, filters_invalid_comparand_type, TRUE, FALSE );
+    test_CreateWatcherAqsFilter( statics, filters_invalid_comparand_type, TRUE, FALSE, FALSE, FALSE );
+
+    test_FindAllAsyncAqsFilter( statics, filters_invalid_empty, TRUE, FALSE );
+    test_CreateWatcherAqsFilter( statics, filters_empty_watcher, FALSE, TRUE, FALSE, FALSE );
+
+    test_FindAllAsyncAqsFilter( statics, filters_invalid_operator, TRUE, FALSE );
+    test_CreateWatcherAqsFilter( statics, filters_invalid_operator, TRUE, FALSE, FALSE, FALSE );
+
+    test_FindAllAsyncAqsFilter( statics, filters_invalid_operand, TRUE, FALSE );
+    test_CreateWatcherAqsFilter( statics, filters_invalid_operand, TRUE, FALSE, FALSE, FALSE );
+
+    IDeviceInformationStatics_Release( statics );
 }
 
 static void test_DeviceAccessInformation( void )
@@ -601,6 +914,7 @@ START_TEST( devices )
 
     test_DeviceInformation();
     test_DeviceAccessInformation();
+    test_aqs_filters();
 
     RoUninitialize();
 }
