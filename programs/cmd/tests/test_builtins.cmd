@@ -136,7 +136,6 @@ echo rem itsme >> callme.cmd
 echo :itsmeagain >> callme.cmd
 echo @echo off >> callme.cmd
 call callme.cmd
-@echo ---
 
 rem cleanup
 del foo.txt
