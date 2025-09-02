@@ -35,16 +35,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(msopc);
 #pragma pack(push,2)
 struct local_file_header
 {
-    DWORD signature;
-    WORD version;
-    WORD flags;
-    WORD method;
-    DWORD mtime;
-    DWORD crc32;
-    DWORD compressed_size;
-    DWORD uncompressed_size;
-    WORD name_length;
-    WORD extra_length;
+    uint32_t signature;
+    uint16_t version;
+    uint16_t flags;
+    uint16_t method;
+    uint32_t mtime;
+    uint32_t crc32;
+    uint32_t compressed_size;
+    uint32_t uncompressed_size;
+    uint16_t name_length;
+    uint16_t extra_length;
 };
 
 struct zip32_data_descriptor
