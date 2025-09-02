@@ -28,6 +28,7 @@
 #include "winbase.h"
 #include "winstring.h"
 #include "objbase.h"
+#include "propsys.h"
 
 #include "activation.h"
 

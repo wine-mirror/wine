@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
 #include <assert.h>
 
 #include "initguid.h"
@@ -26,10 +27,84 @@
 #include "devpropdef.h"
 #include "devfiltertypes.h"
 #include "devquery.h"
+#include "aqs.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(enumeration);
+
+struct devquery_params
+{
+    IUnknown IUnknown_iface;
+    struct aqs_expr *expr;
+    LONG ref;
+};
+
+static inline struct devquery_params *impl_from_IUnknown( IUnknown *iface )
+{
+    return CONTAINING_RECORD( iface, struct devquery_params, IUnknown_iface );
+}
+
+static HRESULT WINAPI devquery_params_QueryInterface( IUnknown *iface, REFIID iid, void **out )
+{
+    TRACE( "iface %p, iid %s, out %p\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ))
+    {
+        IUnknown_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    *out = NULL;
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    return S_OK;
+}
+
+static ULONG WINAPI devquery_params_AddRef( IUnknown *iface )
+{
+    struct devquery_params *impl = impl_from_IUnknown( iface );
+
+    TRACE( "iface %p\n", iface );
+    return InterlockedIncrement( &impl->ref );
+}
+
+static ULONG WINAPI devquery_params_Release( IUnknown *iface )
+{
+    struct devquery_params *impl = impl_from_IUnknown( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+
+    TRACE( "iface %p\n", iface );
+
+    if (!ref)
+    {
+        free_aqs_expr( impl->expr );
+        free( impl );
+    }
+    return ref;
+}
+
+static const IUnknownVtbl devquery_params_vtbl =
+{
+    /* IUnknown */
+    devquery_params_QueryInterface,
+    devquery_params_AddRef,
+    devquery_params_Release,
+};
+
+static HRESULT devquery_params_create( struct aqs_expr *expr, IUnknown **out )
+{
+    struct devquery_params *impl;
+
+    *out = NULL;
+    if (!(impl = calloc( 1, sizeof( *impl ) ))) return E_OUTOFMEMORY;
+
+    impl->IUnknown_iface.lpVtbl = &devquery_params_vtbl;
+    impl->ref = 1;
+    impl->expr = expr;
+    *out = &impl->IUnknown_iface;
+    return S_OK;
+}
 
 struct device_watcher
 {
@@ -39,7 +114,8 @@ struct device_watcher
     struct list added_handlers;
     struct list enumerated_handlers;
     struct list stopped_handlers;
-    HSTRING filter;
+    IUnknown *query_params;
+    BOOL aqs_all_whitespace;
 
     CRITICAL_SECTION cs;
     DeviceWatcherStatus status;
@@ -97,7 +173,7 @@ static ULONG WINAPI device_watcher_Release( IDeviceWatcher *iface )
         typed_event_handlers_clear( &impl->added_handlers );
         typed_event_handlers_clear( &impl->enumerated_handlers );
         typed_event_handlers_clear( &impl->stopped_handlers );
-        WindowsDeleteString( impl->filter );
+        IUnknown_Release( impl->query_params );
         impl->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection( &impl->cs );
         if (impl->query) DevCloseObjectQuery( impl->query );
@@ -290,13 +366,9 @@ static HRESULT WINAPI device_watcher_Start( IDeviceWatcher *iface )
     struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
     HRESULT hr = S_OK;
 
-    FIXME( "iface %p: semi-stub!\n", iface );
+    TRACE( "iface %p\n", iface );
 
-    if (!WindowsIsStringEmpty( impl->filter ))
-    {
-        FIXME( "Unsupported filter: %s\n", debugstr_hstring( impl->filter ) );
-        return S_OK;
-    }
+    if (impl->aqs_all_whitespace) return E_INVALIDARG;
 
     EnterCriticalSection( &impl->cs );
     switch (impl->status)
@@ -309,12 +381,21 @@ static HRESULT WINAPI device_watcher_Start( IDeviceWatcher *iface )
     case DeviceWatcherStatus_Created:
     case DeviceWatcherStatus_Stopped:
     {
+        const struct devquery_params *query_params = impl_from_IUnknown( impl->query_params );
+        const DEVPROP_FILTER_EXPRESSION *filters = NULL;
+        ULONG filters_len = 0;
         IWeakReference *weak;
         HRESULT hr;
 
+        if (query_params->expr)
+        {
+            filters = query_params->expr->filters;
+            filters_len = query_params->expr->len;
+        }
+
         IWeakReferenceSource_GetWeakReference( &impl->weak_reference_source.IWeakReferenceSource_iface, &weak );
-        hr = DevCreateObjectQuery( DevObjectTypeDeviceInterfaceDisplay, DevQueryFlagAsyncClose, 0, NULL, 0, NULL, device_object_query_callback, weak,
-                                   &impl->query );
+        hr = DevCreateObjectQuery( DevObjectTypeDeviceInterfaceDisplay, DevQueryFlagAsyncClose, 0, NULL, filters_len, filters, device_object_query_callback,
+                                   weak, &impl->query );
         if (FAILED(hr))
         {
             ERR( "Failed to create device query: %#lx\n", hr );
@@ -385,6 +466,7 @@ static const struct IDeviceWatcherVtbl device_watcher_vtbl =
 static HRESULT device_watcher_create( HSTRING filter, IDeviceWatcher **out )
 {
     struct device_watcher *impl;
+    struct aqs_expr *expr;
     HRESULT hr;
 
     if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
@@ -395,8 +477,16 @@ static HRESULT device_watcher_create( HSTRING filter, IDeviceWatcher **out )
         free( impl );
         return hr;
     }
-    if (FAILED(hr = WindowsDuplicateString( filter, &impl->filter )))
+    /* If the filter string is all whitespaces, we return E_INVALIDARG in IDeviceWatcher_Start, not here. */
+    if (FAILED(hr = aqs_parse_query( WindowsGetStringRawBuffer( filter, NULL ), &expr, &impl->aqs_all_whitespace )) && !impl->aqs_all_whitespace)
     {
+        weak_reference_strong_release( &impl->weak_reference_source );
+        free( impl );
+        return hr;
+    }
+    if (FAILED(hr = devquery_params_create( expr, &impl->query_params )))
+    {
+        free_aqs_expr( expr );
         weak_reference_strong_release( &impl->weak_reference_source );
         free( impl );
         return hr;
@@ -538,18 +628,27 @@ static HRESULT find_all_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *
         .iterable = &IID_IIterable_DeviceInformation,
         .iterator = &IID_IIterator_DeviceInformation,
     };
+    const DEVPROP_FILTER_EXPRESSION *filters = NULL;
     IVectorView_DeviceInformation *view;
+    struct devquery_params *params;
     IVector_IInspectable *vector;
+    ULONG filters_len = 0, len, i;
     const DEV_OBJECT *objects;
-    ULONG len, i;
     HRESULT hr;
 
     TRACE( "invoker %p, param %p, result %p\n", invoker, param, result );
 
+    params = impl_from_IUnknown( param );
+    if (params->expr)
+    {
+        filters = params->expr->filters;
+        filters_len = params->expr->len;
+    }
     if (FAILED(hr = vector_create( &iids, (void *)&vector ))) return hr;
-    if (FAILED(hr = DevGetObjects( DevObjectTypeDeviceInterfaceDisplay, DevQueryFlagNone, 0, NULL, 0, NULL, &len, &objects )))
+    if (FAILED(hr = DevGetObjects( DevObjectTypeDeviceInterfaceDisplay, DevQueryFlagNone, 0, NULL, filters_len, filters, &len, &objects )))
     {
         IVector_IInspectable_Release( vector );
+        ERR("DevGetObjects failed, hr %#lx\n", hr);
         return hr;
     }
     for (i = 0; i < len && SUCCEEDED(hr); i++)
@@ -575,8 +674,7 @@ static HRESULT WINAPI device_statics_FindAllAsync( IDeviceInformationStatics *if
                                                    IAsyncOperation_DeviceInformationCollection **op )
 {
     TRACE( "iface %p, op %p\n", iface, op );
-    return async_operation_inspectable_create( &IID_IAsyncOperation_DeviceInformationCollection, (IUnknown *)iface, NULL,
-                                               find_all_async, (IAsyncOperation_IInspectable **)op );
+    return IDeviceInformationStatics_FindAllAsyncAqsFilter( iface, NULL, op );
 }
 
 static HRESULT WINAPI device_statics_FindAllAsyncDeviceClass( IDeviceInformationStatics *iface, DeviceClass class,
@@ -589,8 +687,20 @@ static HRESULT WINAPI device_statics_FindAllAsyncDeviceClass( IDeviceInformation
 static HRESULT WINAPI device_statics_FindAllAsyncAqsFilter( IDeviceInformationStatics *iface, HSTRING filter,
                                                             IAsyncOperation_DeviceInformationCollection **op )
 {
-    FIXME( "iface %p, aqs %p, op %p stub!\n", iface, debugstr_hstring(filter), op );
-    return E_NOTIMPL;
+    struct aqs_expr *expr;
+    IUnknown *params;
+    HRESULT hr;
+
+    TRACE( "iface %p, aqs %p, op %p\n", iface, debugstr_hstring(filter), op );
+
+    if (FAILED(hr = aqs_parse_query(WindowsGetStringRawBuffer( filter, NULL ), &expr, NULL ))) return hr;
+    if (FAILED(hr = devquery_params_create( expr, &params )))
+    {
+        free_aqs_expr( expr );
+        return hr;
+    }
+    return async_operation_inspectable_create( &IID_IAsyncOperation_DeviceInformationCollection, (IUnknown *)iface, (IUnknown *)params,
+                                               find_all_async, (IAsyncOperation_IInspectable **)op );
 }
 
 static HRESULT WINAPI device_statics_FindAllAsyncAqsFilterAndAdditionalProperties( IDeviceInformationStatics *iface, HSTRING filter,

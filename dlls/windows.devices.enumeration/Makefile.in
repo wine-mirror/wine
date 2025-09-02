@@ -1,8 +1,9 @@
 MODULE = windows.devices.enumeration.dll
-IMPORTS = cfgmgr32 combase uuid
-
+IMPORTS = cfgmgr32 combase propsys uuid
 SOURCES = \
 	access.c \
+	aqs.c \
+	aqs.y \
 	async.c \
 	async_private.idl \
 	classes.idl \

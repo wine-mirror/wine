@@ -815,35 +815,35 @@ static void test_aqs_filters( void )
         return;
     }
 
-    test_FindAllAsyncAqsFilter( statics, filters_empty, TRUE, FALSE );
+    test_FindAllAsyncAqsFilter( statics, filters_empty, FALSE, FALSE );
     test_CreateWatcherAqsFilter( statics, filters_empty, FALSE, FALSE, FALSE, FALSE );
 
-    test_FindAllAsyncAqsFilter( statics, filters_boolean_op, TRUE, TRUE );
-    test_CreateWatcherAqsFilter( statics, filters_boolean_op, FALSE, FALSE, TRUE, TRUE );
+    test_FindAllAsyncAqsFilter( statics, filters_boolean_op, FALSE, TRUE );
+    test_CreateWatcherAqsFilter( statics, filters_boolean_op, FALSE, FALSE, FALSE, TRUE );
 
-    test_FindAllAsyncAqsFilter( statics, filters_simple, TRUE, FALSE );
-    test_CreateWatcherAqsFilter( statics, filters_simple, FALSE, FALSE, TRUE, TRUE );
+    test_FindAllAsyncAqsFilter( statics, filters_simple, FALSE, FALSE );
+    test_CreateWatcherAqsFilter( statics, filters_simple, FALSE, FALSE, FALSE, TRUE );
 
     test_FindAllAsyncAqsFilter( statics, filters_case_insensitive, TRUE, FALSE );
-    test_CreateWatcherAqsFilter( statics, filters_case_insensitive, FALSE, FALSE, TRUE, TRUE );
+    test_CreateWatcherAqsFilter( statics, filters_case_insensitive, TRUE, FALSE, FALSE, FALSE );
 
-    test_FindAllAsyncAqsFilter( statics, filters_precedence, TRUE, FALSE );
-    test_CreateWatcherAqsFilter( statics, filters_precedence, FALSE, FALSE, TRUE, TRUE );
+    test_FindAllAsyncAqsFilter( statics, filters_precedence, FALSE, TRUE );
+    test_CreateWatcherAqsFilter( statics, filters_precedence, FALSE, FALSE, FALSE, TRUE );
 
-    test_FindAllAsyncAqsFilter( statics, filters_no_results, TRUE, FALSE );
-    test_CreateWatcherAqsFilter( statics, filters_no_results, FALSE, FALSE, TRUE, FALSE );
+    test_FindAllAsyncAqsFilter( statics, filters_no_results, FALSE, FALSE );
+    test_CreateWatcherAqsFilter( statics, filters_no_results, FALSE, FALSE, FALSE, FALSE );
 
-    test_FindAllAsyncAqsFilter( statics, filters_invalid_comparand_type, TRUE, FALSE );
-    test_CreateWatcherAqsFilter( statics, filters_invalid_comparand_type, TRUE, FALSE, FALSE, FALSE );
+    test_FindAllAsyncAqsFilter( statics, filters_invalid_comparand_type, FALSE, FALSE );
+    test_CreateWatcherAqsFilter( statics, filters_invalid_comparand_type, FALSE, FALSE, FALSE, FALSE );
 
-    test_FindAllAsyncAqsFilter( statics, filters_invalid_empty, TRUE, FALSE );
-    test_CreateWatcherAqsFilter( statics, filters_empty_watcher, FALSE, TRUE, FALSE, FALSE );
+    test_FindAllAsyncAqsFilter( statics, filters_invalid_empty, FALSE, FALSE );
+    test_CreateWatcherAqsFilter( statics, filters_empty_watcher, FALSE, FALSE, FALSE, FALSE );
 
-    test_FindAllAsyncAqsFilter( statics, filters_invalid_operator, TRUE, FALSE );
-    test_CreateWatcherAqsFilter( statics, filters_invalid_operator, TRUE, FALSE, FALSE, FALSE );
+    test_FindAllAsyncAqsFilter( statics, filters_invalid_operator, FALSE, FALSE );
+    test_CreateWatcherAqsFilter( statics, filters_invalid_operator, FALSE, FALSE, FALSE, FALSE );
 
-    test_FindAllAsyncAqsFilter( statics, filters_invalid_operand, TRUE, FALSE );
-    test_CreateWatcherAqsFilter( statics, filters_invalid_operand, TRUE, FALSE, FALSE, FALSE );
+    test_FindAllAsyncAqsFilter( statics, filters_invalid_operand, FALSE, FALSE );
+    test_CreateWatcherAqsFilter( statics, filters_invalid_operand, FALSE, FALSE, FALSE, FALSE );
 
     IDeviceInformationStatics_Release( statics );
 }
