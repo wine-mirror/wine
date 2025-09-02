@@ -2884,8 +2884,18 @@ sync_test("DOMParser", function() {
             r = r[0];
             todo_wine.
             ok(r === xml.childNodes[0], "anchor of XML document with mime type " + m + " = " + r);
+            r = Object.prototype.toString.call(xml.getElementsByTagName("a")[0]);
+            todo_wine.
+            ok(r === "[object HTMLAnchorElement]", "element's Object.toString of XML document with mime type " + m + " = " + r);
         }else {
             ok(r.length === 0, "anchors.length of XML document with mime type " + m + " = " + r.length);
+            r = Object.getPrototypeOf(xml.getElementsByTagName("a")[0]);
+            ok(r === Element.prototype, "element's prototype of XML document with mime type " + m + " = " + r);
+            r = document.importNode(xml.childNodes[0], true);
+            ok(r.nodeName === "a", "imported node name of XML document with mime type " + m + " = " + r.nodeName);
+            ok(r.nodeValue === null, "imported node value of XML document with mime type " + m + " = " + r.nodeValue);
+            r = Object.getPrototypeOf(r);
+            ok(r === Element.prototype, "imported node's prototype of XML document with mime type " + m + " = " + r);
         }
     }
 
