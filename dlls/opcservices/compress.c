@@ -157,6 +157,7 @@ struct zip_file
     uint32_t crc32;
     uint16_t name_length;
     uint16_t method;
+    char name[1];
 };
 
 struct zip_archive
@@ -205,7 +206,7 @@ HRESULT compress_create_archive(IStream *output, bool zip64, struct zip_archive 
     return S_OK;
 }
 
-static void compress_write(struct zip_archive *archive, void *data, ULONG size)
+static void compress_write(struct zip_archive *archive, const void *data, ULONG size)
 {
     ULONG written;
 
@@ -262,7 +263,7 @@ HRESULT compress_finalize_archive(struct zip_archive *archive)
             compress_write(archive, &cdh, sizeof(cdh));
 
             /* File name */
-            compress_write(archive, archive->files[i] + 1, file->name_length);
+            compress_write(archive, file->name, file->name_length);
 
             /* Extra field */
             extra_field.id = 1;
@@ -327,7 +328,7 @@ HRESULT compress_finalize_archive(struct zip_archive *archive)
             compress_write(archive, &cdh, sizeof(cdh));
 
             /* File name */
-            compress_write(archive, archive->files[i] + 1, file->name_length);
+            compress_write(archive, file->name, file->name_length);
 
             cd_size += cdh.name_length + sizeof(cdh);
         }
@@ -473,7 +474,7 @@ HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path,
         return E_OUTOFMEMORY;
     WideCharToMultiByte(CP_ACP, 0, path, -1, name, len, NULL, NULL);
 
-    if (!(file = calloc(1, sizeof(*file) + len)))
+    if (!(file = calloc(1, offsetof(struct zip_file, name[len]))))
     {
         free(name);
         return E_OUTOFMEMORY;
@@ -482,7 +483,7 @@ HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path,
     file->name_length = len - 1;
     if (options != OPC_COMPRESSION_NONE)
         file->method = Z_DEFLATED;
-    memcpy(file + 1, name, file->name_length);
+    memcpy(file->name, name, file->name_length);
     free(name);
 
     local_header.signature = LOCAL_HEADER_SIGNATURE;
@@ -506,7 +507,7 @@ HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path,
     }
 
     compress_write(archive, &local_header, sizeof(local_header));
-    compress_write(archive, file + 1, file->name_length);
+    compress_write(archive, file->name, file->name_length);
 
     /* Content */
     compress_write_content(archive, content, options, file);
