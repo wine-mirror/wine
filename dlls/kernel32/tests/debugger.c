@@ -2460,7 +2460,7 @@ static LONG WINAPI test_unhandled_exception_filter_topfilter( EXCEPTION_POINTERS
     ret = UnhandledExceptionFilter( ep );
     ok( depth == 1, "got %d.\n", depth );
     depth = 1;
-    todo_wine ok( ret == EXCEPTION_CONTINUE_SEARCH, "got %#lx.\n", ret );
+    ok( ret == EXCEPTION_CONTINUE_SEARCH, "got %#lx.\n", ret );
     --depth;
     rec->ExceptionFlags = 0;
     return EXCEPTION_CONTINUE_SEARCH;
@@ -2481,7 +2481,7 @@ static void test_unhandled_exception_filter(void)
 
     rec.ExceptionFlags = EXCEPTION_NESTED_CALL;
     ret = UnhandledExceptionFilter( &ep );
-    todo_wine ok( ret == EXCEPTION_CONTINUE_SEARCH, "got %#lx.\n", ret );
+    ok( ret == EXCEPTION_CONTINUE_SEARCH, "got %#lx.\n", ret );
     rec.ExceptionFlags &= ~EXCEPTION_NESTED_CALL;
     ret = UnhandledExceptionFilter( &ep );
     ok( ret == EXCEPTION_EXECUTE_HANDLER, "got %#lx.\n", ret );
