@@ -28,26 +28,244 @@ import "windows.foundation.idl";
 import "windows.storage.streams.idl";
 
 namespace Windows.Devices.Usb {
+    typedef enum UsbControlRecipient UsbControlRecipient;
+    typedef enum UsbControlTransferType UsbControlTransferType;
+    typedef enum UsbReadOptions UsbReadOptions;
+    typedef enum UsbTransferDirection UsbTransferDirection;
+    typedef enum UsbWriteOptions UsbWriteOptions;
+
+    interface IUsbBulkInEndpointDescriptor;
+    interface IUsbBulkInPipe;
     interface IUsbDevice;
     interface IUsbDeviceClass;
     interface IUsbConfiguration;
+    interface IUsbConfigurationDescriptor;
+    interface IUsbConfigurationDescriptorStatics;
+    interface IUsbControlRequestType;
     interface IUsbDeviceDescriptor;
     interface IUsbDeviceStatics;
     interface IUsbInterface;
+    interface IUsbInterfaceDescriptor;
+    interface IUsbInterfaceDescriptorStatics;
+    interface IUsbInterruptInEndpointDescriptor;
+    interface IUsbInterruptInEventArgs;
+    interface IUsbInterruptInPipe;
+    interface IUsbInterruptOutEndpointDescriptor;
+    interface IUsbInterruptOutPipe;
     interface IUsbSetupPacket;
     interface IUsbSetupPacketFactory;
 
+    runtimeclass UsbBulkInEndpointDescriptor;
+    runtimeclass UsbBulkInPipe;
+    runtimeclass UsbBulkOutEndpointDescriptor;
+    runtimeclass UsbBulkOutPipe;
     runtimeclass UsbConfiguration;
+    runtimeclass UsbConfigurationDescriptor;
+    runtimeclass UsbControlRequestType;
+    runtimeclass UsbDescriptor;
     runtimeclass UsbDevice;
     runtimeclass UsbDeviceClass;
     runtimeclass UsbDeviceDescriptor;
     runtimeclass UsbInterface;
+    runtimeclass UsbInterfaceDescriptor;
+    runtimeclass UsbInterfaceSetting;
+    runtimeclass UsbInterruptInEndpointDescriptor;
+    runtimeclass UsbInterruptInEventArgs;
+    runtimeclass UsbInterruptInPipe;
+    runtimeclass UsbInterruptOutEndpointDescriptor;
+    runtimeclass UsbInterruptOutPipe;
     runtimeclass UsbSetupPacket;
 
     declare {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Devices.Usb.UsbDevice *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbBulkInEndpointDescriptor *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbBulkInPipe *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbBulkOutEndpointDescriptor *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbBulkOutPipe *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbDescriptor *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbInterface *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbInterfaceSetting *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbInterruptInEndpointDescriptor *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbInterruptInPipe *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbInterruptOutEndpointDescriptor *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbInterruptOutPipe *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Devices.Usb.UsbDevice *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Devices.Usb.UsbInterruptInPipe *, Windows.Devices.Usb.UsbInterruptInEventArgs *>;
     }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum UsbControlRecipient
+    {
+        Device             = 0,
+        SpecifiedInterface = 1,
+        Endpoint           = 2,
+        Other              = 3,
+        DefaultInterface   = 4,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum UsbControlTransferType
+    {
+        Standard = 0,
+        Class    = 1,
+        Vendor   = 2,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        flags
+    ]
+    enum UsbReadOptions
+    {
+        None                              = 0x0,
+        AutoClearStall                    = 0x1,
+        OverrideAutomaticBufferManagement = 0x2,
+        IgnoreShortPacket                 = 0x4,
+        AllowPartialReads                 = 0x8,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum UsbTransferDirection
+    {
+        Out = 0,
+        In  = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        flags
+    ]
+    enum UsbWriteOptions
+    {
+        None                 = 0x0,
+        AutoClearStall       = 0x1,
+        ShortPacketTerminate = 0x2,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbBulkInEndpointDescriptor),
+        uuid(3c6e4846-06cf-42a9-9dc2-971c1b14b6e3)
+    ]
+    interface IUsbBulkInEndpointDescriptor : IInspectable
+    {
+        [propget] HRESULT MaxPacketSize([out, retval] UINT32 *value);
+        [propget] HRESULT EndpointNumber([out, retval] BYTE *value);
+        [propget] HRESULT Pipe([out, retval] Windows.Devices.Usb.UsbBulkInPipe **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbBulkInPipe),
+        uuid(f01d2d3b-4548-4d50-b326-d82cdabe1220)
+    ]
+    interface IUsbBulkInPipe : IInspectable
+    {
+        [propget] HRESULT MaxTransferSizeBytes([out, retval] UINT32 *value);
+        [propget] HRESULT EndpointDescriptor([out, retval] Windows.Devices.Usb.UsbBulkInEndpointDescriptor **value);
+        HRESULT ClearStallAsync([out, retval] Windows.Foundation.IAsyncAction **operation);
+        [propput] HRESULT ReadOptions([in] Windows.Devices.Usb.UsbReadOptions value);
+        [propget] HRESULT ReadOptions([out, retval] Windows.Devices.Usb.UsbReadOptions *value);
+        HRESULT FlushBuffer();
+        [propget] HRESULT InputStream([out, retval] Windows.Storage.Streams.IInputStream **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbBulkOutEndpointDescriptor),
+        uuid(2820847a-ffee-4f60-9be1-956cac3ecb65)
+    ]
+    interface IUsbBulkOutEndpointDescriptor : IInspectable
+    {
+        [propget] HRESULT MaxPacketSize([out, retval] UINT32 *value);
+        [propget] HRESULT EndpointNumber([out, retval] BYTE *value);
+        [propget] HRESULT Pipe([out, retval] Windows.Devices.Usb.UsbBulkOutPipe **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbBulkOutPipe),
+        uuid(a8e9ee6e-0115-45aa-8b21-37b225bccee7)
+    ]
+    interface IUsbBulkOutPipe : IInspectable
+    {
+        [propget] HRESULT EndpointDescriptor([out, retval] Windows.Devices.Usb.UsbBulkOutEndpointDescriptor **value);
+        HRESULT ClearStallAsync([out, retval] Windows.Foundation.IAsyncAction **operation);
+        [propput] HRESULT WriteOptions([in] Windows.Devices.Usb.UsbWriteOptions value);
+        [propget] HRESULT WriteOptions([out, retval] Windows.Devices.Usb.UsbWriteOptions *value);
+        [propget] HRESULT OutputStream([out, retval] Windows.Storage.Streams.IOutputStream **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbConfiguration),
+        uuid(68177429-36a9-46d7-b873-fc689251ec30)
+    ]
+    interface IUsbConfiguration : IInspectable
+    {
+        [propget] HRESULT UsbInterfaces([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbInterface *> **value);
+        [propget] HRESULT ConfigurationDescriptor([out, retval] Windows.Devices.Usb.UsbConfigurationDescriptor **value);
+        [propget] HRESULT Descriptors([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbDescriptor *> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbConfigurationDescriptor),
+        uuid(f2176d92-b442-407a-8207-7d646c0385f3)
+    ]
+    interface IUsbConfigurationDescriptor : IInspectable
+    {
+        [propget] HRESULT ConfigurationValue([out, retval] BYTE *value);
+        [propget] HRESULT MaxPowerMilliamps([out, retval] UINT32 *value);
+        [propget] HRESULT SelfPowered([out, retval] boolean *value);
+        [propget] HRESULT RemoteWakeup([out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbConfigurationDescriptor),
+        uuid(424ced93-e740-40a1-92bd-da120ea04914)
+    ]
+    interface IUsbConfigurationDescriptorStatics : IInspectable
+    {
+        HRESULT TryParse([in] Windows.Devices.Usb.UsbDescriptor *descriptor, [out] Windows.Devices.Usb.UsbConfigurationDescriptor **parsed, [out, retval] boolean *success);
+        HRESULT Parse([in] Windows.Devices.Usb.UsbDescriptor *descriptor, [out, retval] Windows.Devices.Usb.UsbConfigurationDescriptor **parsed);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbControlRequestType),
+        uuid(8e9465a6-d73d-46de-94be-aae7f07c0f5c)
+    ]
+    interface IUsbControlRequestType : IInspectable
+    {
+        [propget] HRESULT Direction([out, retval] Windows.Devices.Usb.UsbTransferDirection *value);
+        [propput] HRESULT Direction([in] Windows.Devices.Usb.UsbTransferDirection value);
+        [propget] HRESULT ControlTransferType([out, retval] Windows.Devices.Usb.UsbControlTransferType *value);
+        [propput] HRESULT ControlTransferType([in] Windows.Devices.Usb.UsbControlTransferType value);
+        [propget] HRESULT Recipient([out, retval] Windows.Devices.Usb.UsbControlRecipient *value);
+        [propput] HRESULT Recipient([in] Windows.Devices.Usb.UsbControlRecipient value);
+        [propget] HRESULT AsByte([out, retval] BYTE *value);
+        [propput] HRESULT AsByte([in] BYTE value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbDescriptor),
+        uuid(0a89f216-5f9d-4874-8904-da9ad3f5528f)
+    ]
+    interface IUsbDescriptor : IInspectable
+    {
+        [propget] HRESULT Length([out, retval] BYTE *value);
+        [propget] HRESULT DescriptorType([out, retval] BYTE *value);
+        HRESULT ReadDescriptorBuffer([in] Windows.Storage.Streams.IBuffer *buffer);
+     }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -101,6 +319,21 @@ namespace Windows.Devices.Usb {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbDeviceDescriptor),
+        uuid(1f48d1f6-ba97-4322-b92c-b5b189216588)
+    ]
+    interface IUsbDeviceDescriptor : IInspectable
+    {
+        [propget] HRESULT BcdUsb([out, retval] UINT32 *value);
+        [propget] HRESULT MaxPacketSize0([out, retval] BYTE *value);
+        [propget] HRESULT VendorId([out, retval] UINT32 *value);
+        [propget] HRESULT ProductId([out, retval] UINT32 *value);
+        [propget] HRESULT BcdDeviceRevision([out, retval] UINT32 *value);
+        [propget] HRESULT NumberOfConfigurations([out, retval] BYTE *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.Devices.Usb.UsbDevice),
         uuid(066b85a2-09b7-4446-8502-6fe6dcaa7309)
     ]
@@ -118,11 +351,216 @@ namespace Windows.Devices.Usb {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbInterface),
+        uuid(a0322b95-7f47-48ab-a727-678c25be2112)
+    ]
+    interface IUsbInterface : IInspectable
+    {
+        [propget] HRESULT BulkInPipes([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbBulkInPipe *> **value);
+        [propget] HRESULT InterruptInPipes([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbInterruptInPipe *> **value);
+        [propget] HRESULT BulkOutPipes([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbBulkOutPipe *> **value);
+        [propget] HRESULT InterruptOutPipes([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbInterruptOutPipe *> **value);
+        [propget] HRESULT InterfaceSettings([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbInterfaceSetting *> **value);
+        [propget] HRESULT InterfaceNumber([out, retval] BYTE *value);
+        [propget] HRESULT Descriptors([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbDescriptor *> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbInterfaceDescriptor),
+        uuid(199670c7-b7ee-4f90-8cd5-94a2e257598a)
+    ]
+    interface IUsbInterfaceDescriptor : IInspectable
+    {
+        [propget] HRESULT ClassCode([out, retval] BYTE *value);
+        [propget] HRESULT SubclassCode([out, retval] BYTE *value);
+        [propget] HRESULT ProtocolCode([out, retval] BYTE *value);
+        [propget] HRESULT AlternateSettingNumber([out, retval] BYTE *value);
+        [propget] HRESULT InterfaceNumber([out, retval] BYTE *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbInterfaceDescriptor),
+        uuid(e34a9ff5-77d6-48b6-b0be-16c6422316fe)
+    ]
+    interface IUsbInterfaceDescriptorStatics : IInspectable
+    {
+        HRESULT TryParse([in] Windows.Devices.Usb.UsbDescriptor *descriptor, [out] Windows.Devices.Usb.UsbInterfaceDescriptor **parsed, [out, retval] boolean *success);
+        HRESULT Parse([in] Windows.Devices.Usb.UsbDescriptor *descriptor, [out, retval] Windows.Devices.Usb.UsbInterfaceDescriptor **parsed);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbInterfaceSetting),
+        uuid(1827bba7-8da7-4af7-8f4c-7f3032e781f5)
+    ]
+    interface IUsbInterfaceSetting : IInspectable
+    {
+        [propget] HRESULT BulkInEndpoints([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbBulkInEndpointDescriptor *> **value);
+        [propget] HRESULT InterruptInEndpoints([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbInterruptInEndpointDescriptor *> **value);
+        [propget] HRESULT BulkOutEndpoints([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbBulkOutEndpointDescriptor *> **value);
+        [propget] HRESULT InterruptOutEndpoints([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbInterruptOutEndpointDescriptor *> **value);
+        [propget] HRESULT Selected([out, retval] boolean *value);
+        HRESULT SelectSettingAsync([out, retval] Windows.Foundation.IAsyncAction **operation);
+        [propget] HRESULT InterfaceDescriptor([out, retval] Windows.Devices.Usb.UsbInterfaceDescriptor **value);
+        [propget] HRESULT Descriptors([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Devices.Usb.UsbDescriptor *> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbInterruptInEndpointDescriptor),
+        uuid(c0528967-c911-4c3a-86b2-419c2da89039)
+    ]
+    interface IUsbInterruptInEndpointDescriptor : IInspectable
+    {
+        [propget] HRESULT MaxPacketSize([out, retval] UINT32 *value);
+        [propget] HRESULT EndpointNumber([out, retval] BYTE *value);
+        [propget] HRESULT Interval([out, retval] Windows.Foundation.TimeSpan *value);
+        [propget] HRESULT Pipe([out, retval] Windows.Devices.Usb.UsbInterruptInPipe **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbInterruptInEventArgs),
+        uuid(b7b04092-1418-4936-8209-299cf5605583)
+    ]
+    interface IUsbInterruptInEventArgs : IInspectable
+    {
+        [propget] HRESULT InterruptData([out, retval] Windows.Storage.Streams.IBuffer **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbInterruptInPipe),
+        uuid(fa007116-84d7-48c7-8a3f-4c0b235f2ea6)
+    ]
+    interface IUsbInterruptInPipe : IInspectable
+    {
+        [propget] HRESULT EndpointDescriptor([out, retval] Windows.Devices.Usb.UsbInterruptInEndpointDescriptor **value);
+        HRESULT ClearStallAsync([out, retval] Windows.Foundation.IAsyncAction **operation);
+        [eventadd] HRESULT DataReceived([in] Windows.Foundation.TypedEventHandler<Windows.Devices.Usb.UsbInterruptInPipe *, Windows.Devices.Usb.UsbInterruptInEventArgs *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT DataReceived([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbInterruptOutEndpointDescriptor),
+        uuid(cc9fed81-10ca-4533-952d-9e278341e80f)
+    ]
+    interface IUsbInterruptOutEndpointDescriptor : IInspectable
+    {
+        [propget] HRESULT MaxPacketSize([out, retval] UINT32 *value);
+        [propget] HRESULT EndpointNumber([out, retval] BYTE *value);
+        [propget] HRESULT Interval([out, retval] Windows.Foundation.TimeSpan *value);
+        [propget] HRESULT Pipe([out, retval] Windows.Devices.Usb.UsbInterruptOutPipe **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbInterruptOutPipe),
+        uuid(e984c8a9-aaf9-49d0-b96c-f661ab4a7f95)
+    ]
+    interface IUsbInterruptOutPipe : IInspectable
+    {
+        [propget] HRESULT EndpointDescriptor([out, retval] Windows.Devices.Usb.UsbInterruptOutEndpointDescriptor **value);
+        HRESULT ClearStallAsync([out, retval] Windows.Foundation.IAsyncAction **operation);
+        [propput] HRESULT WriteOptions([in] Windows.Devices.Usb.UsbWriteOptions value);
+        [propget] HRESULT WriteOptions([out, retval] Windows.Devices.Usb.UsbWriteOptions *value);
+        [propget] HRESULT OutputStream([out, retval] Windows.Storage.Streams.IOutputStream **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Usb.UsbSetupPacket),
+        uuid(104ba132-c78f-4c51-b654-e49d02f2cb03)
+    ]
+    interface IUsbSetupPacket : IInspectable
+    {
+        [propget] HRESULT RequestType([out, retval] Windows.Devices.Usb.UsbControlRequestType **value);
+        [propput] HRESULT RequestType([in] Windows.Devices.Usb.UsbControlRequestType *value);
+        [propget] HRESULT Request([out, retval] BYTE *value);
+        [propput] HRESULT Request([in] BYTE value);
+        [propget] HRESULT Value([out, retval] UINT32 *value);
+        [propput] HRESULT Value([in] UINT32 value);
+        [propget] HRESULT Index([out, retval] UINT32 *value);
+        [propput] HRESULT Index([in] UINT32 value);
+        [propget] HRESULT Length([out, retval] UINT32 *value);
+        [propput] HRESULT Length([in] UINT32 value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass UsbBulkInEndpointDescriptor
+    {
+        [default] interface Windows.Devices.Usb.IUsbBulkInEndpointDescriptor;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass UsbBulkInPipe
+    {
+        [default] interface Windows.Devices.Usb.IUsbBulkInPipe;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass UsbBulkOutEndpointDescriptor
+    {
+        [default] interface Windows.Devices.Usb.IUsbBulkOutEndpointDescriptor;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass UsbBulkOutPipe
+    {
+        [default] interface Windows.Devices.Usb.IUsbBulkOutPipe;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile)
     ]
     runtimeclass UsbConfiguration
     {
         [default] interface Windows.Devices.Usb.IUsbConfiguration;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Devices.Usb.IUsbConfigurationDescriptorStatics, Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    runtimeclass UsbConfigurationDescriptor
+    {
+        [default] interface Windows.Devices.Usb.IUsbConfigurationDescriptor;
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass UsbControlRequestType
+    {
+        [default] interface Windows.Devices.Usb.IUsbControlRequestType;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass UsbDescriptor
+    {
+        [default] interface Windows.Devices.Usb.IUsbDescriptor;
     }
 
     [
@@ -162,6 +600,70 @@ namespace Windows.Devices.Usb {
     runtimeclass UsbInterface
     {
         [default] interface Windows.Devices.Usb.IUsbInterface;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Devices.Usb.IUsbInterfaceDescriptorStatics, Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    runtimeclass UsbInterfaceDescriptor
+    {
+        [default] interface Windows.Devices.Usb.IUsbInterfaceDescriptor;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass UsbInterfaceSetting
+    {
+        [default] interface Windows.Devices.Usb.IUsbInterfaceSetting;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass UsbInterruptInEventArgs
+    {
+        [default] interface Windows.Devices.Usb.IUsbInterruptInEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass UsbInterruptInEndpointDescriptor
+    {
+        [default] interface Windows.Devices.Usb.IUsbInterruptInEndpointDescriptor;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass UsbInterruptInPipe
+    {
+        [default] interface Windows.Devices.Usb.IUsbInterruptInPipe;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass UsbInterruptOutEndpointDescriptor
+    {
+        [default] interface Windows.Devices.Usb.IUsbInterruptOutEndpointDescriptor;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass UsbInterruptOutPipe
+    {
+        [default] interface Windows.Devices.Usb.IUsbInterruptOutPipe;
     }
 
     [
