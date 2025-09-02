@@ -850,8 +850,8 @@ static void test_SetupGetBinaryField(void)
     ok(size == 4, "got size %lu\n", size);
     ok(buffer[0] == 0x11, "got %#x\n", buffer[0]);
     ok(buffer[1] == 0x22, "got %#x\n", buffer[1]);
-    todo_wine ok(buffer[2] == 0xaa, "got %#x\n", buffer[2]);
-    todo_wine ok(buffer[3] == 0xff, "got %#x\n", buffer[3]);
+    ok(buffer[2] == 0xaa, "got %#x\n", buffer[2]);
+    ok(buffer[3] == 0xff, "got %#x\n", buffer[3]);
 
     ret = SetupFindFirstLineA(hinf, "section", "key2", &context);
     ok(ret == TRUE, "got error %lu\n", GetLastError());
