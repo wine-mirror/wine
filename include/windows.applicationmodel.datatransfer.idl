@@ -113,8 +113,12 @@ namespace Windows.ApplicationModel.DataTransfer {
     runtimeclass TargetApplicationChosenEventArgs;
 
     declare {
+        interface Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *>;
+        interface Windows.Foundation.Collections.IMap<HSTRING, IInspectable *>;
+        interface Windows.Foundation.Collections.IMapView<HSTRING, IInspectable *>;
         interface Windows.Foundation.Collections.IIterable<Windows.ApplicationModel.DataTransfer.ClipboardHistoryItem *>;
         interface Windows.Foundation.Collections.IIterable<Windows.ApplicationModel.DataTransfer.ShareProvider *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *> *>;
         interface Windows.Foundation.Collections.IIterator<Windows.ApplicationModel.DataTransfer.ClipboardHistoryItem *>;
         interface Windows.Foundation.Collections.IIterator<Windows.ApplicationModel.DataTransfer.ShareProvider *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.DataTransfer.ClipboardHistoryItem *>;
