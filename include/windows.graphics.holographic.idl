@@ -28,15 +28,26 @@ import "windows.foundation.idl";
 import "windows.foundation.numerics.idl";
 import "windows.graphics.directx.idl";
 import "windows.graphics.directx.direct3d11.idl";
-/* import "windows.perception.idl"; */
+import "windows.perception.idl";
 import "windows.perception.spatial.idl";
 import "windows.ui.core.idl";
 
+namespace Windows.Perception {
+    runtimeclass PerceptionTimestamp;
+}
+
 namespace Windows.Graphics.Holographic {
+    typedef enum HolographicFramePresentResult HolographicFramePresentResult;
+    typedef enum HolographicFramePresentWaitBehavior HolographicFramePresentWaitBehavior;
+
     typedef struct HolographicAdapterId HolographicAdapterId;
+    typedef struct HolographicStereoTransform HolographicStereoTransform;
 
     interface IHolographicCamera;
+    interface IHolographicCameraPose;
+    interface IHolographicCameraRenderingParameters;
     interface IHolographicFrame;
+    interface IHolographicFramePrediction;
     interface IHolographicSpaceStatics;
     interface IHolographicSpaceStatics2;
     interface IHolographicSpaceStatics3;
@@ -44,16 +55,40 @@ namespace Windows.Graphics.Holographic {
     interface IHolographicSpaceCameraRemovedEventArgs;
 
     runtimeclass HolographicCamera;
+    runtimeclass HolographicCameraPose;
+    runtimeclass HolographicCameraRenderingParameters;
     runtimeclass HolographicFrame;
+    runtimeclass HolographicFramePrediction;
     runtimeclass HolographicSpace;
     runtimeclass HolographicSpaceCameraAddedEventArgs;
     runtimeclass HolographicSpaceCameraRemovedEventArgs;
 
     declare {
+        interface Windows.Foundation.Collections.IVectorView<Windows.Graphics.Holographic.HolographicCamera *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Graphics.Holographic.HolographicCameraPose *>;
+        interface Windows.Foundation.IReference<Windows.Graphics.Holographic.HolographicStereoTransform>;
         interface Windows.Foundation.TypedEventHandler<Windows.Graphics.Holographic.HolographicSpace *, IInspectable *>;
         interface Windows.Foundation.TypedEventHandler<Windows.Graphics.Holographic.HolographicSpace *, Windows.Graphics.Holographic.HolographicSpaceCameraAddedEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.Graphics.Holographic.HolographicSpace *, Windows.Graphics.Holographic.HolographicSpaceCameraRemovedEventArgs *>;
     }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    enum HolographicFramePresentResult
+    {
+        Success       = 0,
+        DeviceRemoved = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    enum HolographicFramePresentWaitBehavior
+    {
+        WaitForFrameToFinish      = 0,
+        DoNotWaitForFrameToFinish = 1,
+    };
 
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0)
@@ -63,6 +98,91 @@ namespace Windows.Graphics.Holographic {
         UINT32 LowPart;
         INT32 HighPart;
     };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    struct HolographicStereoTransform
+    {
+        Windows.Foundation.Numerics.Matrix4x4 Left;
+        Windows.Foundation.Numerics.Matrix4x4 Right;
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.Graphics.Holographic.HolographicCamera),
+        uuid(e4e98445-9bed-4980-9ba0-e87680d1cb74)
+    ]
+    interface IHolographicCamera : IInspectable
+    {
+        [propget] HRESULT RenderTargetSize([out, retval] Windows.Foundation.Size *value);
+        [propget] HRESULT ViewportScaleFactor([out, retval] DOUBLE *value);
+        [propput] HRESULT ViewportScaleFactor([in] DOUBLE value);
+        [propget] HRESULT IsStereo([out, retval] boolean *value);
+        [propget] HRESULT Id([out, retval] UINT32 *value);
+        HRESULT SetNearPlaneDistance([in] DOUBLE value);
+        HRESULT SetFarPlaneDistance([in] DOUBLE value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.Graphics.Holographic.HolographicCameraPose),
+        uuid(0d7d7e30-12de-45bd-912b-c7f6561599d1)
+    ]
+    interface IHolographicCameraPose : IInspectable
+    {
+        [propget] HRESULT HolographicCamera([out, retval] Windows.Graphics.Holographic.HolographicCamera **value);
+        [propget] HRESULT Viewport([out, retval] Windows.Foundation.Rect *value);
+        HRESULT TryGetViewTransform([in] Windows.Perception.Spatial.SpatialCoordinateSystem *coordinate_system, [out, retval] Windows.Foundation.IReference<Windows.Graphics.Holographic.HolographicStereoTransform> **value);
+        [propget] HRESULT ProjectionTransform([out, retval] Windows.Graphics.Holographic.HolographicStereoTransform *value);
+        HRESULT TryGetCullingFrustum([in] Windows.Perception.Spatial.SpatialCoordinateSystem *coordinate_system, [out, retval] Windows.Foundation.IReference<Windows.Perception.Spatial.SpatialBoundingFrustum> **value);
+        HRESULT TryGetVisibleFrustum([in] Windows.Perception.Spatial.SpatialCoordinateSystem* coordinateSystem, [out, retval] Windows.Foundation.IReference<Windows.Perception.Spatial.SpatialBoundingFrustum> **value);
+        [propget] HRESULT NearPlaneDistance([out, retval] DOUBLE *value);
+        [propget] HRESULT FarPlaneDistance([out, retval] DOUBLE *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.Graphics.Holographic.HolographicCameraRenderingParameters),
+        uuid(8eac2ed1-5bf4-4e16-8236-ae0800c11d0d)
+    ]
+    interface IHolographicCameraRenderingParameters : IInspectable
+    {
+        [overload("SetFocusPoint")] HRESULT SetFocusPoint([in] Windows.Perception.Spatial.SpatialCoordinateSystem *coordinate_system, [in] Windows.Foundation.Numerics.Vector3 position);
+        [overload("SetFocusPoint")] HRESULT SetFocusPointWithNormal([in] Windows.Perception.Spatial.SpatialCoordinateSystem *coordinate_system, [in] Windows.Foundation.Numerics.Vector3 position, [in] Windows.Foundation.Numerics.Vector3 normal);
+        [overload("SetFocusPoint")] HRESULT SetFocusPointWithNormalLinearVelocity([in] Windows.Perception.Spatial.SpatialCoordinateSystem *coordinate_system, [in] Windows.Foundation.Numerics.Vector3 position, [in] Windows.Foundation.Numerics.Vector3 normal, [in] Windows.Foundation.Numerics.Vector3 linearVelocity);
+        [propget] HRESULT Direct3D11Device([out, retval] Windows.Graphics.DirectX.Direct3D11.IDirect3DDevice **value);
+        [propget] HRESULT Direct3D11BackBuffer([out, retval] Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.Graphics.Holographic.HolographicFrame),
+        uuid(c6988eb6-a8b9-3054-a6eb-d624b6536375)
+    ]
+    interface IHolographicFrame : IInspectable
+    {
+        [propget] HRESULT AddedCameras([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Graphics.Holographic.HolographicCamera *> **value);
+        [propget] HRESULT RemovedCameras([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Graphics.Holographic.HolographicCamera *> **value);
+        HRESULT GetRenderingParameters([in] Windows.Graphics.Holographic.HolographicCameraPose *camera_pose, [out, retval] Windows.Graphics.Holographic.HolographicCameraRenderingParameters **value);
+        [propget] HRESULT Duration([out, retval] Windows.Foundation.TimeSpan *value);
+        [propget] HRESULT CurrentPrediction([out, retval] Windows.Graphics.Holographic.HolographicFramePrediction **value);
+        HRESULT UpdateCurrentPrediction();
+        [overload("PresentUsingCurrentPrediction")] HRESULT PresentUsingCurrentPrediction([out, retval] Windows.Graphics.Holographic.HolographicFramePresentResult *result);
+        [overload("PresentUsingCurrentPrediction")] HRESULT PresentUsingCurrentPredictionWithBehavior([in] Windows.Graphics.Holographic.HolographicFramePresentWaitBehavior wait_behavior, [out, retval] Windows.Graphics.Holographic.HolographicFramePresentResult *result);
+        HRESULT WaitForFrameToFinish();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.Graphics.Holographic.HolographicFramePrediction),
+        uuid(520f4de1-5c0a-4e79-a81e-6abe02bb2739)
+    ]
+    interface IHolographicFramePrediction : IInspectable
+    {
+        [propget] HRESULT CameraPoses([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Graphics.Holographic.HolographicCameraPose *> **value);
+        [propget] HRESULT Timestamp([out, retval] Windows.Perception.PerceptionTimestamp **value);
+    }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 2.0),
@@ -145,9 +265,39 @@ namespace Windows.Graphics.Holographic {
         marshaling_behavior(agile),
         threading(both)
     ]
+    runtimeclass HolographicCameraPose
+    {
+        [default] interface Windows.Graphics.Holographic.IHolographicCameraPose;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass HolographicCameraRenderingParameters
+    {
+        [default] interface Windows.Graphics.Holographic.IHolographicCameraRenderingParameters;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
     runtimeclass HolographicFrame
     {
         [default] interface Windows.Graphics.Holographic.IHolographicFrame;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass HolographicFramePrediction
+    {
+        [default] interface Windows.Graphics.Holographic.IHolographicFramePrediction;
     }
 
     [

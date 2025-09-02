@@ -913,6 +913,7 @@ SOURCES = \
 	windows.networking.connectivity.idl \
 	windows.networking.idl \
 	windows.networking.sockets.idl \
+	windows.perception.idl \
 	windows.perception.spatial.idl \
 	windows.perception.spatial.surfaces.idl \
 	windows.security.authentication.onlineid.idl \
