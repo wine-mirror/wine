@@ -9497,8 +9497,18 @@ static void test_video_processor(BOOL use_2d_buffer)
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
 
+    hr = IMFTransform_GetOutputStatus(transform, &flags);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputStatus returned %#lx.\n", hr);
+
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "Failed to set output type, hr %#lx.\n", hr);
+
+    flags = 0xdeadbeef;
+    hr = IMFTransform_GetOutputStatus(transform, &flags);
+    todo_wine
+    ok(hr == S_OK, "GetOutputStatus returned %#lx.\n", hr);
+    todo_wine
+    ok(flags == 0, "Unexpected output status %#lx.\n", flags);
 
     hr = MFCalculateImageSize(&MFVideoFormat_IYUV, 16, 16, (UINT32 *)&input_info.cbSize);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -9520,6 +9530,13 @@ static void test_video_processor(BOOL use_2d_buffer)
     hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     todo_wine
     ok(hr == S_OK, "Failed to push a sample, hr %#lx.\n", hr);
+
+    flags = 0xdeadbeef;
+    hr = IMFTransform_GetOutputStatus(transform, &flags);
+    todo_wine
+    ok(hr == S_OK, "GetOutputStatus returned %#lx.\n", hr);
+    todo_wine
+    ok(flags == MFT_OUTPUT_STATUS_SAMPLE_READY, "Unexpected output status %#lx.\n", flags);
 
     hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     todo_wine
@@ -9552,6 +9569,13 @@ static void test_video_processor(BOOL use_2d_buffer)
     {
         hr = check_mft_process_output(transform, output_sample, &output_status);
         ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "Unexpected hr %#lx.\n", hr);
+
+        flags = 0xdeadbeef;
+        hr = IMFTransform_GetOutputStatus(transform, &flags);
+        todo_wine
+        ok(hr == S_OK, "GetOutputStatus returned %#lx.\n", hr);
+        todo_wine
+        ok(flags == 0, "Unexpected output status %#lx.\n", flags);
     }
 
     ref = IMFTransform_Release(transform);
