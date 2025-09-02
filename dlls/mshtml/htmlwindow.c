@@ -3307,6 +3307,7 @@ HRESULT search_window_props(HTMLInnerWindow *This, const WCHAR *name, DWORD grfd
 {
     DWORD i;
     ScriptHost *script_host;
+    BSTR prop_name;
     DISPID id;
 
     for(i=0; i < This->global_prop_cnt; i++) {
@@ -3319,10 +3320,11 @@ HRESULT search_window_props(HTMLInnerWindow *This, const WCHAR *name, DWORD grfd
         }
     }
 
-    if(find_global_prop(This->base.inner_window, name, grfdex, &script_host, &id)) {
+    if(find_global_prop(This->base.inner_window, name, grfdex, &script_host, &id, &prop_name)) {
         global_prop_t *prop;
 
-        prop = alloc_global_prop(This, GLOBAL_SCRIPTVAR, name);
+        prop = alloc_global_prop(This, GLOBAL_SCRIPTVAR, prop_name ? prop_name : name);
+        SysFreeString(prop_name);
         if(!prop)
             return E_OUTOFMEMORY;
 

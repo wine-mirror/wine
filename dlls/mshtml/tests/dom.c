@@ -117,6 +117,8 @@ static const char doctype_str[] =
     "    <title>emptydiv test</title>"
     "  </head>"
     "<body><div id=\"divid\"></div></body></html>";
+static const char case_insens_str[] =
+    "<html><script type=\"text/javascript\">window.wineProp = 42;</script></html>";
 
 static WCHAR characterW[] = {'c','h','a','r','a','c','t','e','r',0};
 static WCHAR texteditW[] = {'t','e','x','t','e','d','i','t',0};
@@ -11562,6 +11564,44 @@ static void test_doctype(IHTMLDocument2 *doc)
     IHTMLDOMNode_Release(doctype);
 }
 
+static void test_case_insens(IHTMLDocument2 *doc)
+{
+    DISPID dispid, dispid2;
+    IHTMLWindow2 *window;
+    IDispatchEx *dispex;
+    HRESULT hres;
+    BSTR bstr;
+
+    window = get_doc_window(doc);
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx: %08lx\n", hres);
+    IHTMLWindow2_Release(window);
+
+    bstr = SysAllocString(L"WINEprop");
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseInsensitive, &dispid);
+    ok(hres == S_OK, "GetDispID returned: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    hres = IDispatchEx_GetMemberName(dispex, dispid, &bstr);
+    ok(hres == S_OK, "GetMemberName returned: %08lx\n", hres);
+    ok(!wcscmp(bstr, L"wineProp"), "got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    /* For some reason GetMemberName on native here returns DISP_E_MEMBERNOTFOUND even though DISPID is found, so compare dispids instead */
+    bstr = SysAllocString(L"coLLecTgarbAGE");
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseInsensitive, &dispid);
+    ok(hres == S_OK, "GetDispID returned: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    bstr = SysAllocString(L"CollectGarbage");
+    hres = IDispatchEx_GetDispID(dispex, bstr, 0, &dispid2);
+    ok(hres == S_OK, "GetDispID returned: %08lx\n", hres);
+    ok(dispid == dispid2, "dispid != dispid2\n");
+    SysFreeString(bstr);
+
+    IDispatchEx_Release(dispex);
+}
+
 static void test_null_write(IHTMLDocument2 *doc)
 {
     HRESULT hres;
@@ -13599,6 +13639,7 @@ START_TEST(dom)
     run_domtest(emptydiv_str, test_docfrag);
     run_domtest(doc_blank, test_replacechild_elems);
     run_domtest(doctype_str, test_doctype);
+    run_domtest(case_insens_str, test_case_insens);
     if(is_ie9plus) {
         compat_mode = COMPAT_IE9;
         run_domtest(emptydiv_ie9_str, test_docfrag);

@@ -1819,7 +1819,7 @@ void bind_event_scripts(HTMLDocumentNode *doc)
     nsIDOMNodeList_Release(node_list);
 }
 
-BOOL find_global_prop(HTMLInnerWindow *window, const WCHAR *name, DWORD flags, ScriptHost **ret_host, DISPID *ret_id)
+BOOL find_global_prop(HTMLInnerWindow *window, const WCHAR *name, DWORD flags, ScriptHost **ret_host, DISPID *ret_id, BSTR *ret_name)
 {
     IDispatchEx *dispex;
     IDispatch *disp;
@@ -1837,7 +1837,10 @@ BOOL find_global_prop(HTMLInnerWindow *window, const WCHAR *name, DWORD flags, S
 
         hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
         if(SUCCEEDED(hres)) {
+            *ret_name = NULL;
             hres = IDispatchEx_GetDispID(dispex, str, flags & (~fdexNameEnsure), ret_id);
+            if(SUCCEEDED(hres) && (flags & fdexNameCaseInsensitive))
+                hres = IDispatchEx_GetMemberName(dispex, *ret_id, ret_name);
             IDispatchEx_Release(dispex);
         }else {
             FIXME("No IDispatchEx\n");
