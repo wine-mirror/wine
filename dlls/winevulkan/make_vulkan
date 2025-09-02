@@ -1926,6 +1926,7 @@ class VkStruct(Sequence):
         self.type_info = None # To be set later.
         self.struct_extensions = []
         self.aliased_by = []
+        self.order = 0
 
     def __getitem__(self, i):
         return self.members[i]
@@ -1976,58 +1977,19 @@ class VkStruct(Sequence):
 
         return s
 
-    @staticmethod
-    def decouple_structs(structs):
-        """ Helper function which decouples a list of structs.
-        Structures often depend on other structures. To make the C compiler
-        happy we need to define 'substructures' first. This function analyzes
-        the list of structures and reorders them in such a way that they are
-        decoupled.
-        """
+    def set_order(self, order, structs):
+        if order < self.order:
+            return
 
-        tmp_structs = list(structs) # Don't modify the original structures.
-        decoupled_structs = []
-
-        while (len(tmp_structs) > 0):
-            # Iterate over a copy because we want to modify the list inside the loop.
-            for struct in list(tmp_structs):
-                dependends = False
-
-                if not struct.required:
-                    tmp_structs.remove(struct)
-                    continue
-
-                for m in struct:
-                    if not (m.is_struct() or m.is_union()):
-                        continue
-
-                    # VkBaseInstructure and VkBaseOutStructure reference themselves.
-                    if m.type == struct.name:
-                        break
-
-                    found = False
-                    # Check if a struct we depend on has already been defined.
-                    for s in decoupled_structs:
-                        if s.name == m.type:
-                            found = True
-                            break
-
-                    if not found:
-                        # Check if the struct we depend on is even in the list of structs.
-                        # If found now, it means we haven't met all dependencies before we
-                        # can operate on the current struct.
-                        # When generating 'host' structs we may not be able to find a struct
-                        # as the list would only contain the structs requiring conversion.
-                        for s in tmp_structs:
-                            if s.name == m.type:
-                                dependends = True
-                                break
-
-                if dependends == False:
-                    decoupled_structs.append(struct)
-                    tmp_structs.remove(struct)
-
-        return decoupled_structs
+        self.order = order + 1
+        for member in self.members:
+            if member.type == self.name:
+                continue
+            if not member.is_union() and not member.is_struct():
+                continue
+            if structs[member.type].is_alias():
+                structs[member.type].alias.set_order(self.order, structs)
+            structs[member.type].set_order(self.order, structs)
 
     def definition(self, align=False, conv=False):
         """ Convert structure to textual definition.
@@ -3031,11 +2993,11 @@ class VkGenerator(object):
         # decoupled structs.
         # Note: unions are stored in structs for dependency reasons,
         # see comment in parsing section.
-        structs = VkStruct.decouple_structs(self.registry.structs)
-        for struct in structs:
-            LOGGER.debug("Generating struct: {0}".format(struct.name))
-            f.write(struct.definition(align=True))
-            f.write("\n")
+        for struct in self.registry.structs:
+            if struct.required:
+                LOGGER.debug("Generating struct: {0}".format(struct.name))
+                f.write(struct.definition(align=True))
+                f.write("\n")
 
         for func in self.registry.funcs.values():
             if not func.is_required():
@@ -3728,7 +3690,8 @@ class VkRegistry(object):
         # are parsed among other types, so there is no guarantee
         # that any types needed have been parsed already, so set
         # the data now.
-        for struct in structs:
+        structs = {struct.name: struct for struct in structs}
+        for struct in structs.values():
             struct.set_type_info(self.types)
 
             # Alias structures have enum values equivalent to those of the
@@ -3742,6 +3705,9 @@ class VkRegistry(object):
                 s = self.types[structextend]["data"]
                 s.struct_extensions.append(struct)
 
+        for struct in structs.values():
+            struct.set_order(0, structs)
+
         # Guarantee everything is sorted, so code generation doesn't have
         # to deal with this.
         self.base_types = sorted(base_types, key=lambda base_type: base_type.name)
@@ -3750,7 +3716,7 @@ class VkRegistry(object):
         self.enums = OrderedDict(sorted(self.enums.items()))
         self.funcpointers = sorted(funcpointers, key=lambda fp: fp.value)
         self.handles = sorted(handles, key=lambda handle: handle.name)
-        self.structs = sorted(structs, key=lambda struct: struct.name)
+        self.structs = sorted(structs.values(), key=lambda struct: (-struct.order, struct.name))
 
 def generate_vulkan_json(f):
     f.write("{\n")
