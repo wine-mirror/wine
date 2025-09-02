@@ -805,6 +805,68 @@ static void test_GLE(void)
     SetupCloseInfFile( hinf );
 }
 
+static void test_SetupGetBinaryField(void)
+{
+    static const char inf[] =
+        "[Version]\n"
+        "Signature=\"$Windows NT$\"\n"
+        "[section]\n"
+        "key1=0,11,022,0xaA,0x0Ff\n"
+        "key2=123\n";
+    INFCONTEXT context;
+    BYTE buffer[6];
+    DWORD size;
+    HINF hinf;
+    UINT err;
+    BOOL ret;
+
+    hinf = test_file_contents(inf, strlen(inf), &err);
+    ok(hinf != NULL, "Expected valid INF file\n");
+
+    ret = SetupFindFirstLineA(hinf, "section", "key1", &context);
+    ok(ret == TRUE, "got error %lu\n", GetLastError());
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    size = 0xdeadbeef;
+    ret = SetupGetBinaryField(&context, 2, buffer, 0, &size);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %lu\n", GetLastError());
+    ok(size == 4, "got size %lu\n", size);
+    ok(buffer[0] == 0xcc, "got %#x\n", buffer[0]);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    size = 0xdeadbeef;
+    ret = SetupGetBinaryField(&context, 2, buffer, 3, &size);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %lu\n", GetLastError());
+    ok(size == 4, "got size %lu\n", size);
+    ok(buffer[0] == 0xcc, "got %#x\n", buffer[0]);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    size = 0xdeadbeef;
+    ret = SetupGetBinaryField(&context, 2, buffer, 4, &size);
+    ok(ret == TRUE, "got %d\n", ret);
+    todo_wine ok(!GetLastError(), "got error %lu\n", GetLastError());
+    ok(size == 4, "got size %lu\n", size);
+    ok(buffer[0] == 0x11, "got %#x\n", buffer[0]);
+    ok(buffer[1] == 0x22, "got %#x\n", buffer[1]);
+    todo_wine ok(buffer[2] == 0xaa, "got %#x\n", buffer[2]);
+    todo_wine ok(buffer[3] == 0xff, "got %#x\n", buffer[3]);
+
+    ret = SetupFindFirstLineA(hinf, "section", "key2", &context);
+    ok(ret == TRUE, "got error %lu\n", GetLastError());
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    size = 0xdeadbeef;
+    ret = SetupGetBinaryField(&context, 1, buffer, 0, &size);
+    ok(!ret, "got %d\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_DATA, "got error %lu\n", GetLastError());
+    todo_wine ok(size == 0xdeadbeef, "got size %lu\n", size);
+    ok(buffer[0] == 0xcc, "got %#x\n", buffer[0]);
+
+    SetupCloseInfFile( hinf );
+}
+
 START_TEST(parser)
 {
     init_function_pointers();
@@ -816,5 +878,6 @@ START_TEST(parser)
     test_pSetupGetField();
     test_SetupGetIntField();
     test_GLE();
+    test_SetupGetBinaryField();
     DeleteFileA( tmpfilename );
 }
