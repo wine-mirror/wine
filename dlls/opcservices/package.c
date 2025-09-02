@@ -2040,13 +2040,15 @@ HRESULT opc_package_write(IOpcPackage *package, OPC_WRITE_FLAGS flags, IStream *
     /* Parts. */
     if (SUCCEEDED(hr))
         hr = opc_package_write_parts(archive, package, writer);
+    if (SUCCEEDED(hr))
+        hr = compress_finalize_archive(archive);
 
     if (rels)
         IOpcRelationshipSet_Release(rels);
     if (uri)
         IOpcUri_Release(uri);
 
-    compress_finalize_archive(archive);
+    compress_release_archive(archive);
     IXmlWriter_Release(writer);
 
     return hr;

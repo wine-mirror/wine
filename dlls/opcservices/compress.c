@@ -167,7 +167,7 @@ struct zip_archive
     DWORD mtime;
     IStream *output;
     uint64_t position;
-    HRESULT write_result;
+    HRESULT status;
 
     bool zip64;
 
@@ -187,7 +187,7 @@ HRESULT compress_create_archive(IStream *output, bool zip64, struct zip_archive 
     archive->files = NULL;
     archive->file_size = 0;
     archive->file_count = 0;
-    archive->write_result = S_OK;
+    archive->status = S_OK;
 
     archive->output = output;
     IStream_AddRef(archive->output);
@@ -208,18 +208,20 @@ static void compress_write(struct zip_archive *archive, void *data, ULONG size)
 {
     ULONG written;
 
-    archive->write_result = IStream_Write(archive->output, data, size, &written);
+    if (FAILED(archive->status))
+        return;
+
+    archive->status = IStream_Write(archive->output, data, size, &written);
     if (written != size)
-        archive->write_result = E_FAIL;
+        archive->status = E_FAIL;
     else
         archive->position += written;
 
-    if (FAILED(archive->write_result))
-        WARN("Failed to write output %p, size %lu, written %lu, hr %#lx.\n",
-                data, size, written, archive->write_result);
+    if (FAILED(archive->status))
+        WARN("Failed to write output %p, size %lu, written %lu, hr %#lx.\n", data, size, written, archive->status);
 }
 
-void compress_finalize_archive(struct zip_archive *archive)
+HRESULT compress_finalize_archive(struct zip_archive *archive)
 {
     struct zip32_end_of_central_directory dir_end;
     struct zip32_central_directory_header cdh;
@@ -341,6 +343,13 @@ void compress_finalize_archive(struct zip_archive *archive)
         compress_write(archive, &dir_end, sizeof(dir_end));
     }
 
+    return archive->status;
+}
+
+void compress_release_archive(struct zip_archive *archive)
+{
+    size_t i;
+
     IStream_Release(archive->output);
 
     for (i = 0; i < archive->file_count; i++)
@@ -368,6 +377,9 @@ static void compress_write_content(struct zip_archive *archive, IStream *content
     ULONG num_read;
     HRESULT hr;
     int init_ret;
+
+    if (FAILED(archive->status))
+        return;
 
     file->crc32 = RtlComputeCrc32(0, NULL, 0);
     file->compressed_size = file->uncompressed_size = 0;
@@ -401,7 +413,11 @@ static void compress_write_content(struct zip_archive *archive, IStream *content
     z_str.zalloc = zalloc;
     z_str.zfree = zfree;
     if ((init_ret = deflateInit2(&z_str, level, Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY)) != Z_OK)
-        WARN("Failed to allocate memory in deflateInit2, ret %d.\n", init_ret);
+    {
+        WARN("deflateInit2() failed, ret %d.\n", init_ret);
+        archive->status = OPC_E_ZIP_COMPRESSION_FAILED;
+        return;
+    }
 
     do
     {
@@ -409,7 +425,7 @@ static void compress_write_content(struct zip_archive *archive, IStream *content
 
         if (FAILED(hr = IStream_Read(content, archive->input_buffer, sizeof(archive->input_buffer), &num_read)))
         {
-            archive->write_result = hr;
+            archive->status = hr;
             break;
         }
 
@@ -428,7 +444,11 @@ static void compress_write_content(struct zip_archive *archive, IStream *content
             z_str.next_out = archive->output_buffer;
 
             if ((ret = deflate(&z_str, flush)) < 0)
-                WARN("Failed to deflate, ret %d.\n", ret);
+            {
+                WARN("Failed to deflate(), ret %d.\n", ret);
+                archive->status = OPC_E_ZIP_COMPRESSION_FAILED;
+                break;
+            }
             have = sizeof(archive->output_buffer) - z_str.avail_out;
             compress_write(archive, archive->output_buffer, have);
 
@@ -510,10 +530,10 @@ HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path,
         compress_write(archive, &zip32_data_desc, sizeof(zip32_data_desc));
     }
 
-    if (FAILED(archive->write_result))
+    if (FAILED(archive->status))
     {
         free(file);
-        return archive->write_result;
+        return archive->status;
     }
 
     if (!opc_array_reserve((void **)&archive->files, &archive->file_size, archive->file_count + 1,

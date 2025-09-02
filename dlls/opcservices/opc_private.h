@@ -67,4 +67,5 @@ struct zip_archive;
 extern HRESULT compress_create_archive(IStream *output, bool zip64, struct zip_archive **archive);
 extern HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path, IStream *content,
         OPC_COMPRESSION_OPTIONS options);
-extern void compress_finalize_archive(struct zip_archive *archive);
+extern HRESULT compress_finalize_archive(struct zip_archive *archive);
+extern void compress_release_archive(struct zip_archive *archive);
