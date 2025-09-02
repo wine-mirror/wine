@@ -931,7 +931,7 @@ static HRESULT instrument_add_soundfont_region(struct instrument *This, struct s
 }
 
 static HRESULT instrument_add_soundfont_instrument(struct instrument *This, struct soundfont *soundfont,
-        UINT index, struct sf_generators *preset_generators)
+        UINT index, struct sf_generators *preset_generators, struct sf_modulators *preset_modulators)
 {
     struct sf_generators global_generators = SF_DEFAULT_GENERATORS;
     struct sf_instrument *instrument = soundfont->inst + index;
@@ -940,6 +940,7 @@ static HRESULT instrument_add_soundfont_instrument(struct instrument *This, stru
     UINT i = instrument->bag_ndx;
     sf_generator oper;
     HRESULT hr = S_OK;
+    UINT j;
 
     copy_modulators(&global_modulators, SF_DEFAULT_MODULATORS, ARRAYSIZE(SF_DEFAULT_MODULATORS));
 
@@ -977,6 +978,18 @@ static HRESULT instrument_add_soundfont_instrument(struct instrument *This, stru
             generators.amount[oper].value += preset_generators->amount[oper].value;
         }
 
+        for (j = 0; j < preset_modulators->count; ++j)
+        {
+            struct sf_mod *preset_mod = &preset_modulators->mods[j];
+            struct sf_mod *mod;
+            if ((mod = find_modulator(&modulators, preset_mod)))
+            {
+                mod->amount += preset_mod->amount;
+                continue;
+            }
+            add_modulator(&modulators, preset_mod);
+        }
+
         hr = instrument_add_soundfont_region(This, soundfont, &generators, &modulators);
     }
 
@@ -998,6 +1011,8 @@ HRESULT instrument_create_from_soundfont(struct soundfont *soundfont, UINT index
             [SF_GEN_VEL_RANGE] = {.range = {.low = 0, .high = 127}},
         },
     };
+    struct sf_modulators global_modulators = {};
+    struct sf_modulators modulators = {};
     IDirectMusicInstrument *iface;
     struct instrument *This;
     HRESULT hr;
@@ -1020,18 +1035,27 @@ HRESULT instrument_create_from_soundfont(struct soundfont *soundfont, UINT index
         struct sf_generators generators = global_generators;
         UINT instrument;
 
+        copy_modulators(&modulators, global_modulators.mods, global_modulators.count);
+
+        parse_soundfont_modulators(soundfont, i, TRUE, &modulators);
         if (parse_soundfont_generators(soundfont, i, TRUE, &generators))
         {
             if (i > preset->bag_ndx)
                 WARN("Ignoring preset zone without an instrument\n");
             else
+            {
                 global_generators = generators;
+                copy_modulators(&global_modulators, modulators.mods, modulators.count);
+            }
             continue;
         }
 
         instrument = generators.amount[SF_GEN_INSTRUMENT].value;
-        hr = instrument_add_soundfont_instrument(This, soundfont, instrument, &generators);
+        hr = instrument_add_soundfont_instrument(This, soundfont, instrument, &generators, &modulators);
     }
+
+    free(modulators.mods);
+    free(global_modulators.mods);
 
     if (FAILED(hr))
     {
