@@ -449,6 +449,7 @@ struct amd64_thread_data
     DWORD_PTR             frame_size;    /* 0328 syscall frame size including xstate */
     void                **instrumentation_callback; /* 0330 */
     DWORD                 fs;            /* 0338 WOW TEB selector */
+    DWORD                 mxcsr;         /* 033c Unix-side mxcsr register */
 };
 
 C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
@@ -456,6 +457,7 @@ C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, pth
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, frame_size ) == 0x328 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, instrumentation_callback ) == 0x330 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, fs ) == 0x338 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, mxcsr ) == 0x33c );
 
 static inline struct amd64_thread_data *amd64_thread_data(void)
 {
@@ -1686,6 +1688,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    /* switch to user stack */
                    "1:\tmovq %rdi,%rsp\n\t"    /* user_rsp */
                    "movq 0x98(%r14),%rbp\n\t"  /* prev_frame->rbp */
+                   "ldmxcsr 0xd8(%r14)\n\t"    /* prev_frame->xsave.MxCsr */
 #ifdef __linux__
                    "movw 0x338(%r13),%ax\n"    /* amd64_thread_data()->fs */
                    "testw %ax,%ax\n\t"
@@ -2819,6 +2822,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "1:\tmovq $0,0xa0(%r8)\n\t"     /* frame->prev_frame */
                    "movq %r9,0xa8(%r8)\n\t"        /* frame->syscall_cfa */
                    "movl $0,0xb4(%r8)\n\t"         /* frame->restore_flags */
+                   "stmxcsr 0x33c(%rcx)\n\t"       /* amd64_thread_data()->mxcsr */
                    /* switch to kernel stack */
                    "movq %r8,%rsp\n\t"
                    "movq %rcx,%r13\n\t"            /* teb */
@@ -2938,6 +2942,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "syscall\n\t"
                    "leaq -0x98(%rbp),%rcx\n"
 #endif
+                   "ldmxcsr 0x33c(%r13)\n\t"       /* amd64_thread_data()->mxcsr */
                    "movl 0xb0(%rcx),%eax\n\t"      /* frame->syscall_id */
                    "movq 0x18(%rcx),%r11\n\t"      /* 2nd argument */
                    "movl %eax,%ebx\n\t"
@@ -2995,6 +3000,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl 0xb4(%rcx),%edx\n\t"      /* frame->restore_flags */
                    "testl $0x48,%edx\n\t"          /* CONTEXT_FLOATING_POINT | CONTEXT_XSTATE */
                    "jnz 2f\n\t"
+                   "ldmxcsr 0xd8(%rcx)\n\t"        /* frame->xsave.MxCsr */
                    "movaps 0x1c0(%rcx),%xmm6\n\t"
                    "movaps 0x1d0(%rcx),%xmm7\n\t"
                    "movaps 0x1e0(%rcx),%xmm8\n\t"
@@ -3179,6 +3185,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movq %rbp,0x98(%rcx)\n\t"
                    __ASM_CFI_REG_IS_AT2(rbp, rcx, 0x98, 0x01)
                    "movq %gs:0x30,%r13\n\t"
+                   "stmxcsr 0xd8(%rcx)\n\t"        /* frame->xsave.MxCsr */
                    "movdqa %xmm6,0x1c0(%rcx)\n\t"
                    "movdqa %xmm7,0x1d0(%rcx)\n\t"
                    "movdqa %xmm8,0x1e0(%rcx)\n\t"
@@ -3221,9 +3228,11 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movl $0x3000003,%eax\n\t"      /* _thread_set_tsd_base */
                    "syscall\n\t"
 #endif
+                   "ldmxcsr 0x33c(%r13)\n\t"       /* amd64_thread_data()->mxcsr */
                    "movq %r8,%rdi\n\t"             /* args */
                    "callq *(%r10,%rdx,8)\n\t"
                    "movq %rsp,%rcx\n\t"
+                   "ldmxcsr 0xd8(%rcx)\n\t"        /* frame->xsave.MxCsr */
                    "movdqa 0x1c0(%rcx),%xmm6\n\t"
                    "movdqa 0x1d0(%rcx),%xmm7\n\t"
                    "movdqa 0x1e0(%rcx),%xmm8\n\t"
