@@ -2443,6 +2443,52 @@ static void test_OutputDebugString(void)
     ok(GetLastError() == 0xdeadbeef, "got %ld.\n", GetLastError());
 }
 
+static LONG WINAPI test_unhandled_exception_filter_topfilter( EXCEPTION_POINTERS *ep )
+{
+    static int depth;
+    EXCEPTION_RECORD *rec = ep->ExceptionRecord;
+    LONG ret;
+
+    ++depth;
+    if (depth > 1) return EXCEPTION_CONTINUE_SEARCH;
+
+    ret = UnhandledExceptionFilter( ep );
+    ok( depth == 2, "got %d.\n", depth );
+    --depth;
+    ok( ret == EXCEPTION_EXECUTE_HANDLER, "got %#lx.\n", ret );
+    rec->ExceptionFlags = EXCEPTION_NESTED_CALL;
+    ret = UnhandledExceptionFilter( ep );
+    todo_wine ok( depth == 1, "got %d.\n", depth );
+    depth = 1;
+    todo_wine ok( ret == EXCEPTION_CONTINUE_SEARCH, "got %#lx.\n", ret );
+    --depth;
+    rec->ExceptionFlags = 0;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+static void test_unhandled_exception_filter(void)
+{
+    EXCEPTION_RECORD rec = { .ExceptionCode = 0xbeef };
+    EXCEPTION_POINTERS ep = { .ExceptionRecord = &rec };
+    LPTOP_LEVEL_EXCEPTION_FILTER old;
+    LONG ret;
+
+    old = SetUnhandledExceptionFilter( test_unhandled_exception_filter_topfilter );
+    ret = UnhandledExceptionFilter( &ep );
+    ok( ret == EXCEPTION_EXECUTE_HANDLER, "got %ld.\n", ret );
+
+    SetUnhandledExceptionFilter( NULL );
+
+    rec.ExceptionFlags = EXCEPTION_NESTED_CALL;
+    ret = UnhandledExceptionFilter( &ep );
+    todo_wine ok( ret == EXCEPTION_CONTINUE_SEARCH, "got %#lx.\n", ret );
+    rec.ExceptionFlags &= ~EXCEPTION_NESTED_CALL;
+    ret = UnhandledExceptionFilter( &ep );
+    ok( ret == EXCEPTION_EXECUTE_HANDLER, "got %#lx.\n", ret );
+
+    SetUnhandledExceptionFilter( old );
+}
+
 START_TEST(debugger)
 {
     HMODULE hdll;
@@ -2509,5 +2555,6 @@ START_TEST(debugger)
         test_debugger(myARGV[0]);
         test_kill_on_exit(myARGV[0]);
         test_OutputDebugString();
+        test_unhandled_exception_filter();
     }
 }
