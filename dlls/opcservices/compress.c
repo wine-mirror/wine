@@ -156,6 +156,7 @@ struct zip_file
     uint64_t offset;
     uint32_t crc32;
     uint16_t name_length;
+    uint16_t method;
 };
 
 struct zip_archive
@@ -246,7 +247,7 @@ HRESULT compress_finalize_archive(struct zip_archive *archive)
             cdh.version = ZIP64_VERSION;
             cdh.min_version = ZIP64_VERSION;
             cdh.flags = USE_DATA_DESCRIPTOR;
-            cdh.method = 8; /* Z_DEFLATED */
+            cdh.method = file->method;
             cdh.mtime = archive->mtime;
             cdh.crc32 = file->crc32;
             cdh.compressed_size = ~0u;
@@ -311,7 +312,7 @@ HRESULT compress_finalize_archive(struct zip_archive *archive)
             cdh.version = ZIP32_VERSION;
             cdh.min_version = ZIP32_VERSION;
             cdh.flags = USE_DATA_DESCRIPTOR;
-            cdh.method = 8; /* Z_DEFLATED */
+            cdh.method = file->method;
             cdh.mtime = archive->mtime;
             cdh.crc32 = file->crc32;
             cdh.compressed_size = file->compressed_size;
@@ -479,12 +480,14 @@ HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path,
     }
     file->offset = archive->position;
     file->name_length = len - 1;
+    if (options != OPC_COMPRESSION_NONE)
+        file->method = Z_DEFLATED;
     memcpy(file + 1, name, file->name_length);
     free(name);
 
     local_header.signature = LOCAL_HEADER_SIGNATURE;
     local_header.flags = USE_DATA_DESCRIPTOR;
-    local_header.method = 8; /* Z_DEFLATED */
+    local_header.method = file->method;
     local_header.mtime = archive->mtime;
     local_header.crc32 = 0;
     local_header.name_length = len - 1;
