@@ -633,7 +633,8 @@ static HRESULT WINAPI video_processor_GetOutputStatus(IMFTransform *iface, DWORD
     if (!impl->output_type)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
 
-    return E_NOTIMPL;
+    *flags = MFT_OUTPUT_STATUS_SAMPLE_READY;
+    return S_OK;
 }
 
 static HRESULT WINAPI video_processor_SetOutputBounds(IMFTransform *iface, LONGLONG lower, LONGLONG upper)
