@@ -2979,6 +2979,8 @@ static void check_composition_interface( const type_t *iface )
 
 static void check_runtimeclass( const type_t *runtimeclass )
 {
+    const typeref_list_t *iface_list = type_runtimeclass_get_ifaces( runtimeclass );
+    const typeref_t *iface;
     const attr_t *attr;
 
     LIST_FOR_EACH_ENTRY( attr, runtimeclass->attrs, const attr_t, entry )
@@ -3011,6 +3013,12 @@ static void check_runtimeclass( const type_t *runtimeclass )
             if (!value->u.var->declspec.type->defined)
                 error_at( &attr->where, "apicontract %s is undefined\n", value->u.var->declspec.type->name );
         }
+    }
+
+    if (iface_list) LIST_FOR_EACH_ENTRY( iface, iface_list, typeref_t, entry )
+    {
+        if (!iface->type->defined)
+            error_at( NULL, "member interface %s of runtimeclass %s is undefined\n", iface->type->name, runtimeclass->name );
     }
 }
 
