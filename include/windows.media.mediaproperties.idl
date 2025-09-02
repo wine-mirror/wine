@@ -57,8 +57,17 @@ namespace Windows.Media.MediaProperties {
     runtimeclass AudioEncodingProperties;
     runtimeclass ContainerEncodingProperties;
     runtimeclass MediaEncodingProfile;
+    runtimeclass MediaPropertySet;
     runtimeclass MediaRatio;
     runtimeclass VideoEncodingProperties;
+
+    declare {
+        interface Windows.Foundation.Collections.IKeyValuePair<GUID, IInspectable *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<GUID, IInspectable *> *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Foundation.Collections.IKeyValuePair<GUID, IInspectable *> *>;
+        interface Windows.Foundation.Collections.IMap<GUID, IInspectable *>;
+        interface Windows.Foundation.Collections.IMapView<GUID, IInspectable *>;
+    }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -101,6 +110,29 @@ namespace Windows.Media.MediaProperties {
         [propget] HRESULT Video([out, retval] Windows.Media.MediaProperties.VideoEncodingProperties **value);
         [propput] HRESULT Container([in] Windows.Media.MediaProperties.ContainerEncodingProperties *value);
         [propget] HRESULT Container([out, retval] Windows.Media.MediaProperties.ContainerEncodingProperties **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(b4002af6-acd4-4e5a-a24b-5d7498a8b8c4)
+    ]
+    interface IMediaEncodingProperties : IInspectable
+    {
+        [propget] HRESULT Properties([out, retval] Windows.Media.MediaProperties.MediaPropertySet **value);
+        [propget] HRESULT Type([out, retval] HSTRING *value);
+        [propput] HRESULT Subtype([in] HSTRING value);
+        [propget] HRESULT Subtype([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.MediaProperties.AudioEncodingProperties),
+        uuid(98f10d79-13ea-49ff-be70-2673db69702c)
+    ]
+    interface IAudioEncodingPropertiesWithFormatUserData : IInspectable
+    {
+        HRESULT SetFormatUserData([in] UINT32 __value_size, [in, size_is(__value_size)] BYTE *value);
+        HRESULT GetFormatUserData([out] UINT32 * __value_size, [out, size_is(, *__value_size)] BYTE **value);
     }
 
     [
@@ -178,6 +210,18 @@ namespace Windows.Media.MediaProperties {
         [default] interface Windows.Media.MediaProperties.IMediaEncodingProfile;
         /* [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.Media.MediaProperties.IMediaEncodingProfile2; */
         /* [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Media.MediaProperties.IMediaEncodingProfile3; */
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass MediaPropertySet
+    {
+        [default] interface Windows.Foundation.Collections.IMap<GUID, IInspectable *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<GUID, IInspectable *> *>;
     }
 
     [
