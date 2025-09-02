@@ -752,6 +752,7 @@ static BOOL check_resource_write( void *addr )
 LONG WINAPI UnhandledExceptionFilter( EXCEPTION_POINTERS *epointers )
 {
     const EXCEPTION_RECORD *rec = epointers->ExceptionRecord;
+    BOOL nested;
 
     if (rec->ExceptionCode == EXCEPTION_ACCESS_VIOLATION && rec->NumberParameters >= 2)
     {
@@ -772,7 +773,8 @@ LONG WINAPI UnhandledExceptionFilter( EXCEPTION_POINTERS *epointers )
             TerminateProcess( GetCurrentProcess(), 1 );
         }
 
-        if (top_filter)
+        nested = rec->ExceptionFlags & EXCEPTION_NESTED_CALL;
+        if (top_filter && !nested)
         {
             LONG ret = top_filter( epointers );
             if (ret != EXCEPTION_CONTINUE_SEARCH) return ret;

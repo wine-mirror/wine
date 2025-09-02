@@ -2458,7 +2458,7 @@ static LONG WINAPI test_unhandled_exception_filter_topfilter( EXCEPTION_POINTERS
     ok( ret == EXCEPTION_EXECUTE_HANDLER, "got %#lx.\n", ret );
     rec->ExceptionFlags = EXCEPTION_NESTED_CALL;
     ret = UnhandledExceptionFilter( ep );
-    todo_wine ok( depth == 1, "got %d.\n", depth );
+    ok( depth == 1, "got %d.\n", depth );
     depth = 1;
     todo_wine ok( ret == EXCEPTION_CONTINUE_SEARCH, "got %#lx.\n", ret );
     --depth;
