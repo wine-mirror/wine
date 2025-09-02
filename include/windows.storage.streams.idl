@@ -30,6 +30,7 @@ namespace Windows.Storage {
 
 namespace Windows.Storage.Streams {
     typedef enum ByteOrder ByteOrder;
+    typedef enum InputStreamOptions InputStreamOptions;
     typedef enum UnicodeEncoding UnicodeEncoding;
     interface IBuffer;
     interface IBufferFactory;
@@ -54,8 +55,11 @@ namespace Windows.Storage.Streams {
 
     declare {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IBuffer *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IInputStream *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IOutputStream *>;
+        interface Windows.Foundation.IAsyncOperation<UINT32>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IBuffer *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IInputStream *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IOutputStream *>;
         interface Windows.Foundation.Collections.IIterable<Windows.Storage.Streams.IRandomAccessStream *>;
         interface Windows.Foundation.Collections.IIterator<Windows.Storage.Streams.IRandomAccessStream *>;
@@ -69,6 +73,8 @@ namespace Windows.Storage.Streams {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IRandomAccessStreamWithContentType *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.RandomAccessStreamReference *>;
         interface Windows.Foundation.AsyncOperationProgressHandler<UINT64,UINT64>;
+        interface Windows.Foundation.AsyncOperationProgressHandler<Windows.Storage.Streams.IBuffer *,UINT32>;
+        interface Windows.Foundation.AsyncOperationWithProgressCompletedHandler<Windows.Storage.Streams.IBuffer *,UINT32>;
         interface Windows.Foundation.AsyncOperationWithProgressCompletedHandler<UINT64,UINT64>;
         interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IMapView<HSTRING, Windows.Storage.Streams.RandomAccessStreamReference *> *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStream *>;
@@ -76,6 +82,7 @@ namespace Windows.Storage.Streams {
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStreamWithContentType *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.RandomAccessStreamReference *>;
         interface Windows.Foundation.IAsyncOperationWithProgress<UINT64,UINT64>;
+        interface Windows.Foundation.IAsyncOperationWithProgress<Windows.Storage.Streams.IBuffer *,UINT32>;
     }
 
     [
@@ -85,6 +92,17 @@ namespace Windows.Storage.Streams {
     {
         LittleEndian = 0,
         BigEndian    = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        flags
+    ]
+    enum InputStreamOptions
+    {
+        None      = 0x0,
+        Partial   = 0x1,
+        ReadAhead = 0x2,
     };
 
     [
@@ -134,6 +152,15 @@ namespace Windows.Storage.Streams {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(97d098a5-3b99-4de9-88a5-e11d2f50c795)
+    ]
+    interface IContentTypeProvider : IInspectable
+    {
+        [propget] HRESULT ContentType([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         uuid(64b89265-d341-4922-b38a-dd4af8808c4e)
     ]
     interface IDataWriter : IInspectable
@@ -177,6 +204,29 @@ namespace Windows.Storage.Streams {
         HRESULT CreateDataWriter(
             [in] Windows.Storage.Streams.IOutputStream *output_stream,
             [out, retval] Windows.Storage.Streams.DataWriter **data_writer);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(905a0fe2-bc53-11df-8c49-001e4fc686da)
+    ]
+    interface IInputStream : IInspectable
+        requires Windows.Foundation.IClosable
+    {
+        HRESULT ReadAsync(
+            [in] Windows.Storage.Streams.IBuffer *buffer,
+            [in] UINT32 count,
+            [in] Windows.Storage.Streams.InputStreamOptions options,
+            [out, retval] Windows.Foundation.IAsyncOperationWithProgress<Windows.Storage.Streams.IBuffer *, UINT32> **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(43929d18-5ec9-4b5a-919c-4205b0c804b6)
+    ]
+    interface IInputStreamReference : IInspectable
+    {
+        HRESULT OpenSequentialReadAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IInputStream *> **operation);
     }
 
     [
