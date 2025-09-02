@@ -146,6 +146,10 @@ enum zip_versions
 
 enum entry_flags
 {
+    DEFLATE_NORMAL = 0x0,
+    DEFLATE_MAX = 0x2,
+    DEFLATE_FAST = 0x4,
+    DEFLATE_SUPERFAST = 0x6,
     USE_DATA_DESCRIPTOR = 0x8,
 };
 
@@ -157,6 +161,7 @@ struct zip_file
     uint32_t crc32;
     uint16_t name_length;
     uint16_t method;
+    uint16_t flags;
     char name[1];
 };
 
@@ -482,7 +487,18 @@ HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path,
     file->offset = archive->position;
     file->name_length = len - 1;
     if (options != OPC_COMPRESSION_NONE)
+    {
         file->method = Z_DEFLATED;
+        if (options == OPC_COMPRESSION_MAXIMUM)
+            file->flags = DEFLATE_MAX;
+        else if (options == OPC_COMPRESSION_FAST)
+            file->flags = DEFLATE_FAST;
+        else if (options == OPC_COMPRESSION_SUPERFAST)
+            file->flags = DEFLATE_SUPERFAST;
+        else
+            file->flags = DEFLATE_NORMAL;
+    }
+    file->flags |= USE_DATA_DESCRIPTOR;
     memcpy(file->name, name, file->name_length);
     free(name);
 
