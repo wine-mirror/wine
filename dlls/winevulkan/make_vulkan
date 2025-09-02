@@ -138,6 +138,7 @@ UNEXPOSED_EXTENSIONS = {
     # Extensions for other platforms
     "VK_EXT_metal_surface",
     "VK_KHR_wayland_surface",
+    "VK_KHR_xlib_surface",
     "VK_MVK_macos_surface",
 }
 
@@ -145,6 +146,7 @@ UNEXPOSED_PLATFORMS = {
     "macos",
     "metal",
     "wayland",
+    "xlib",
 }
 
 # The Vulkan loader provides entry-points for core functionality and important
@@ -3023,6 +3025,12 @@ class VkGenerator(object):
         f.write("#ifndef WINE_VK_ALIGN\n")
         f.write("#define WINE_VK_ALIGN DECLSPEC_ALIGN\n")
         f.write("#endif\n\n")
+
+        f.write("#ifndef WINE_VULKAN_NO_X11_TYPES\n")
+        f.write("typedef unsigned long Window;\n")
+        f.write("typedef unsigned long VisualID;\n")
+        f.write("typedef struct _XDisplay Display;\n")
+        f.write("#endif\n")
 
         # The overall strategy is to define independent constants and datatypes,
         # prior to complex structures and function calls to avoid forward declarations.

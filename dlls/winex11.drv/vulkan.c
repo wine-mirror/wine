@@ -39,26 +39,11 @@
 #include "x11drv.h"
 #include "xcomposite.h"
 
+#define WINE_VULKAN_NO_X11_TYPES
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
-
-#ifdef SONAME_LIBVULKAN
-
-#define VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR 1000004000
-
-typedef struct VkXlibSurfaceCreateInfoKHR
-{
-    VkStructureType sType;
-    const void *pNext;
-    VkXlibSurfaceCreateFlagsKHR flags;
-    Display *dpy;
-    Window window;
-} VkXlibSurfaceCreateInfoKHR;
-
-static VkResult (*pvkCreateXlibSurfaceKHR)(VkInstance, const VkXlibSurfaceCreateInfoKHR *, const VkAllocationCallbacks *, VkSurfaceKHR *);
-static VkBool32 (*pvkGetPhysicalDeviceXlibPresentationSupportKHR)(VkPhysicalDevice, uint32_t, Display *, VisualID);
 
 static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs;
 
@@ -74,7 +59,7 @@ static VkResult X11DRV_vulkan_surface_create( HWND hwnd, const struct vulkan_ins
     TRACE( "%p %p %p %p\n", hwnd, instance, handle, client );
 
     if (!(info.window = x11drv_client_surface_create( hwnd, &default_visual, default_colormap, client ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
-    if (pvkCreateXlibSurfaceKHR( instance->host.instance, &info, NULL /* allocator */, handle ))
+    if (instance->p_vkCreateXlibSurfaceKHR( instance->host.instance, &info, NULL /* allocator */, handle ))
     {
         ERR("Failed to create Xlib surface\n");
         client_surface_release( *client );
@@ -87,9 +72,10 @@ static VkResult X11DRV_vulkan_surface_create( HWND hwnd, const struct vulkan_ins
 
 static VkBool32 X11DRV_get_physical_device_presentation_support( struct vulkan_physical_device *physical_device, uint32_t index )
 {
+    struct vulkan_instance *instance = physical_device->instance;
     TRACE( "%p %u\n", physical_device, index );
-    return pvkGetPhysicalDeviceXlibPresentationSupportKHR( physical_device->host.physical_device, index, gdi_display,
-                                                           default_visual.visual->visualid );
+    return instance->p_vkGetPhysicalDeviceXlibPresentationSupportKHR( physical_device->host.physical_device, index, gdi_display,
+                                                                      default_visual.visual->visualid );
 }
 
 static const char *X11DRV_get_host_surface_extension(void)
@@ -112,21 +98,6 @@ UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, const struct vulkan_d
         return STATUS_INVALID_PARAMETER;
     }
 
-#define LOAD_FUNCPTR( f ) if (!(p##f = dlsym( vulkan_handle, #f ))) return STATUS_PROCEDURE_NOT_FOUND;
-    LOAD_FUNCPTR( vkCreateXlibSurfaceKHR );
-    LOAD_FUNCPTR( vkGetPhysicalDeviceXlibPresentationSupportKHR );
-#undef LOAD_FUNCPTR
-
     *driver_funcs = &x11drv_vulkan_driver_funcs;
     return STATUS_SUCCESS;
 }
-
-#else /* No vulkan */
-
-UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs )
-{
-    ERR( "Wine was built without Vulkan support.\n" );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-#endif /* SONAME_LIBVULKAN */
