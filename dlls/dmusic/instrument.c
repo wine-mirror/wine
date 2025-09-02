@@ -510,6 +510,82 @@ static const struct sf_generators SF_DEFAULT_GENERATORS =
     }
 };
 
+static const struct sf_mod SF_DEFAULT_MODULATORS[] =
+{
+    {
+        .src_mod = SF_MOD_CTRL_GEN_VELOCITY | SF_MOD_DIR_DECREASING | SF_MOD_SRC_CONCAVE,
+        .dest_gen = SF_GEN_INITIAL_ATTENUATION,
+        .amount = 960,
+    },
+    {
+        .src_mod = SF_MOD_CTRL_GEN_VELOCITY | SF_MOD_DIR_DECREASING,
+        .dest_gen = SF_GEN_INITIAL_FILTER_FC,
+        .amount = -2400,
+        .amount_src_mod = SF_MOD_CTRL_GEN_VELOCITY | SF_MOD_DIR_DECREASING | SF_MOD_SRC_SWITCH,
+    },
+    {
+        .src_mod = SF_MOD_CTRL_GEN_CHAN_PRESSURE,
+        .dest_gen = SF_GEN_VIB_LFO_TO_PITCH,
+        .amount = 50,
+    },
+    {
+        .src_mod = 1 | SF_MOD_CTRL_MIDI,
+        .dest_gen = SF_GEN_VIB_LFO_TO_PITCH,
+        .amount = 50,
+    },
+    {
+        .src_mod = 7 | SF_MOD_CTRL_MIDI | SF_MOD_DIR_DECREASING | SF_MOD_SRC_CONCAVE,
+        .dest_gen = SF_GEN_INITIAL_ATTENUATION,
+        .amount = 960,
+    },
+    {
+        .src_mod = 10 | SF_MOD_CTRL_MIDI | SF_MOD_POL_BIPOLAR,
+        .dest_gen = SF_GEN_PAN,
+        .amount = 1000,
+    },
+    {
+        .src_mod = 11 | SF_MOD_CTRL_MIDI | SF_MOD_DIR_DECREASING | SF_MOD_SRC_CONCAVE,
+        .dest_gen = SF_GEN_INITIAL_ATTENUATION,
+        .amount = 960,
+    },
+    {
+        .src_mod = 91 | SF_MOD_CTRL_MIDI,
+        .dest_gen = SF_GEN_REVERB_EFFECTS_SEND,
+        .amount = 200,
+    },
+    {
+        .src_mod = 93 | SF_MOD_CTRL_MIDI,
+        .dest_gen = SF_GEN_CHORUS_EFFECTS_SEND,
+        .amount = 200,
+    },
+};
+
+struct sf_modulators
+{
+    UINT count;
+    UINT capacity;
+    struct sf_mod *mods;
+};
+
+static void copy_modulators(struct sf_modulators *dst, const struct sf_mod *mods, UINT count)
+{
+    if (dst->capacity < count)
+    {
+        struct sf_mod *mods;
+
+        if (!(mods = malloc(count * sizeof(struct sf_mod))))
+            return;
+
+        free(dst->mods);
+
+        dst->mods = mods;
+        dst->capacity = count;
+    }
+
+    memcpy(dst->mods, mods, count * sizeof(struct sf_mod));
+    dst->count = count;
+}
+
 static BOOL parse_soundfont_generators(struct soundfont *soundfont, UINT index, BOOL preset,
         struct sf_generators *generators)
 {
@@ -606,20 +682,74 @@ static const USHORT gen_to_conn_src[SF_GEN_END_OPER] =
     [SF_GEN_KEYNUM_TO_VOL_ENV_DECAY] = CONN_SRC_KEYNUMBER,
 };
 
+static const USHORT mod_ctrl_to_conn_src[] =
+{
+    [SF_MOD_CTRL_GEN_NONE] = CONN_SRC_NONE,
+    [SF_MOD_CTRL_GEN_VELOCITY] = CONN_SRC_KEYONVELOCITY,
+    [SF_MOD_CTRL_GEN_KEY] = CONN_SRC_KEYNUMBER,
+    [SF_MOD_CTRL_GEN_POLY_PRESSURE] = CONN_SRC_POLYPRESSURE,
+    [SF_MOD_CTRL_GEN_CHAN_PRESSURE] = CONN_SRC_CHANNELPRESSURE,
+    [SF_MOD_CTRL_GEN_PITCH_WHEEL] = CONN_SRC_PITCHWHEEL,
+    [SF_MOD_CTRL_GEN_PITCH_WHEEL_SENSITIVITY] = CONN_SRC_RPN0,
+};
+
+static USHORT mod_src_to_conn_src(sf_modulator src)
+{
+    if (src & SF_MOD_CTRL_MIDI)
+        return CONN_SRC_CC1 - 1 + (src & 0x7f);
+
+    if ((src & 0x7f) >= ARRAYSIZE(mod_ctrl_to_conn_src))
+        return CONN_SRC_NONE;
+
+    return mod_ctrl_to_conn_src[src & 0x7f];
+}
+
+static USHORT mod_src_to_conn_transform(sf_modulator src)
+{
+    USHORT transform = 0;
+
+    if (src & SF_MOD_DIR_DECREASING)
+        transform |= CONN_TRN_INVERT;
+
+    if (src & SF_MOD_POL_BIPOLAR)
+        transform |= CONN_TRN_BIPOLAR;
+
+    switch (src & 0xc00)
+    {
+    case SF_MOD_SRC_LINEAR:
+        transform |= CONN_TRN_NONE;
+        break;
+    case SF_MOD_SRC_CONCAVE:
+        transform |= CONN_TRN_CONCAVE;
+        break;
+    case SF_MOD_SRC_CONVEX:
+        transform |= CONN_TRN_CONVEX;
+        break;
+    case SF_MOD_SRC_SWITCH:
+        transform |= CONN_TRN_SWITCH;
+        break;
+    }
+
+    return transform;
+}
+
 static HRESULT instrument_add_soundfont_region(struct instrument *This, struct soundfont *soundfont,
-        struct sf_generators *generators)
+        struct sf_generators *generators, struct sf_modulators *modulators)
 {
     UINT start_loop, end_loop, unity_note, sample_index = generators->amount[SF_GEN_SAMPLE_ID].value;
     struct sf_sample *sample = soundfont->shdr + sample_index;
     struct articulation *articulation;
+    DWORD connection_count;
     struct region *region;
     double attenuation;
     sf_generator oper;
+    UINT i;
 
     if (!(region = calloc(1, sizeof(*region)))) return E_OUTOFMEMORY;
     list_init(&region->articulations);
 
-    if (!(articulation = calloc(1, offsetof(struct articulation, connections[SF_GEN_END_OPER]))))
+    connection_count = SF_GEN_END_OPER + modulators->count;
+    if (!(articulation = calloc(1, offsetof(struct articulation, connections[connection_count]))))
     {
         free(region);
         return E_OUTOFMEMORY;
@@ -641,6 +771,47 @@ static HRESULT instrument_add_soundfont_region(struct instrument *This, struct s
             conn->lScale = (1000 - (SHORT)generators->amount[oper].value) * 65536;
         else
             conn->lScale = (SHORT)generators->amount[oper].value * 65536;
+
+        ++articulation->list.cConnections;
+    }
+
+    for (i = 0; i < modulators->count; ++i)
+    {
+        CONNECTION *conn = &articulation->connections[articulation->list.cConnections];
+        struct sf_mod *mod = &modulators->mods[i];
+        USHORT src_transform, ctrl_transform;
+
+        if (mod->dest_gen >= ARRAYSIZE(gen_to_conn_dst))
+            continue;
+        conn->usDestination = gen_to_conn_dst[mod->dest_gen];
+
+        if (gen_to_conn_src[mod->dest_gen] == CONN_SRC_NONE)
+        {
+            conn->usSource = mod_src_to_conn_src(mod->src_mod);
+            conn->usControl = mod_src_to_conn_src(mod->amount_src_mod);
+            src_transform = mod_src_to_conn_transform(mod->src_mod);
+            ctrl_transform = mod_src_to_conn_transform(mod->amount_src_mod);
+        }
+        else if (mod_src_to_conn_src(mod->amount_src_mod) == CONN_SRC_NONE)
+        {
+            conn->usSource = gen_to_conn_src[mod->dest_gen];
+            conn->usControl = mod_src_to_conn_src(mod->src_mod);
+            src_transform = CONN_TRN_NONE;
+            ctrl_transform = mod_src_to_conn_transform(mod->src_mod);
+        }
+        else
+        {
+            FIXME("Modulator requires a three-input connection.\n");
+            continue;
+        }
+        conn->usTransform = (src_transform << 10) | (ctrl_transform << 4);
+
+        if (mod->dest_gen == SF_GEN_SUSTAIN_MOD_ENV || mod->dest_gen == SF_GEN_SUSTAIN_VOL_ENV)
+            conn->lScale = mod->amount * -65536;
+        else if (mod->dest_gen == SF_GEN_MOD_LFO_TO_VOLUME && mod->src_mod == SF_MOD_CTRL_GEN_CHAN_PRESSURE)
+            conn->lScale = mod->amount * 655360;
+        else
+            conn->lScale = mod->amount * 65536;
 
         ++articulation->list.cConnections;
     }
@@ -706,9 +877,12 @@ static HRESULT instrument_add_soundfont_instrument(struct instrument *This, stru
 {
     struct sf_generators global_generators = SF_DEFAULT_GENERATORS;
     struct sf_instrument *instrument = soundfont->inst + index;
+    struct sf_modulators global_modulators = {};
     UINT i = instrument->bag_ndx;
     sf_generator oper;
     HRESULT hr = S_OK;
+
+    copy_modulators(&global_modulators, SF_DEFAULT_MODULATORS, ARRAYSIZE(SF_DEFAULT_MODULATORS));
 
     for (i = instrument->bag_ndx; SUCCEEDED(hr) && i < (instrument + 1)->bag_ndx; i++)
     {
@@ -738,8 +912,10 @@ static HRESULT instrument_add_soundfont_instrument(struct instrument *This, stru
             generators.amount[oper].value += preset_generators->amount[oper].value;
         }
 
-        hr = instrument_add_soundfont_region(This, soundfont, &generators);
+        hr = instrument_add_soundfont_region(This, soundfont, &generators, &global_modulators);
     }
+
+    free(global_modulators.mods);
 
     return hr;
 }
