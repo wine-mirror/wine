@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdbool.h>
+
 #include "msopc.h"
 
 static inline BOOL opc_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
@@ -62,7 +64,7 @@ extern HRESULT opc_root_uri_create(IOpcUri **opc_uri);
 extern HRESULT opc_package_write(IOpcPackage *package, OPC_WRITE_FLAGS flags, IStream *stream);
 
 struct zip_archive;
-extern HRESULT compress_create_archive(IStream *output, struct zip_archive **archive);
+extern HRESULT compress_create_archive(IStream *output, bool zip64, struct zip_archive **archive);
 extern HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path, IStream *content,
         OPC_COMPRESSION_OPTIONS options);
 extern void compress_finalize_archive(struct zip_archive *archive);

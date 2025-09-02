@@ -2019,13 +2019,10 @@ HRESULT opc_package_write(IOpcPackage *package, OPC_WRITE_FLAGS flags, IStream *
     IXmlWriter *writer;
     HRESULT hr;
 
-    if (flags != OPC_WRITE_FORCE_ZIP32)
-        FIXME("Unsupported write flags %#x.\n", flags);
-
     if (FAILED(hr = CreateXmlWriter(&IID_IXmlWriter, (void **)&writer, NULL)))
         return hr;
 
-    if (FAILED(hr = compress_create_archive(stream, &archive)))
+    if (FAILED(hr = compress_create_archive(stream, flags != OPC_WRITE_FORCE_ZIP32, &archive)))
     {
         IXmlWriter_Release(writer);
         return hr;
