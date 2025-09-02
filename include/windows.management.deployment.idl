@@ -245,7 +245,7 @@ namespace Windows.Management.Deployment {
     runtimeclass DeploymentResult
     {
         [default] interface Windows.Management.Deployment.IDeploymentResult;
-        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Management.Deployment.IDeploymentResult2;
+        /* [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Management.Deployment.IDeploymentResult2; */
     }
 
     [
@@ -258,13 +258,13 @@ namespace Windows.Management.Deployment {
     {
         [default] interface Windows.Management.Deployment.IPackageManager;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Management.Deployment.IPackageManager2;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Management.Deployment.IPackageManager3;
-        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Management.Deployment.IPackageManager4;
-        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Management.Deployment.IPackageManager5;
-        [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.Management.Deployment.IPackageManager6;
-        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Management.Deployment.IPackageManager7;
-        [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.Management.Deployment.IPackageManager8;
-        [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.Management.Deployment.IPackageManager9;
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Management.Deployment.IPackageManager3; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Management.Deployment.IPackageManager4; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Management.Deployment.IPackageManager5; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.Management.Deployment.IPackageManager6; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Management.Deployment.IPackageManager7; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.Management.Deployment.IPackageManager8; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.Management.Deployment.IPackageManager9; */
     }
 
     [

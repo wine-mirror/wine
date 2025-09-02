@@ -103,7 +103,7 @@ namespace Windows.System.Profile {
     runtimeclass AnalyticsVersionInfo
     {
         [default] interface Windows.System.Profile.IAnalyticsVersionInfo;
-        [contract(Windows.Foundation.UniversalApiContract, 11.0)] interface Windows.System.Profile.IAnalyticsVersionInfo2;
+        /* [contract(Windows.Foundation.UniversalApiContract, 11.0)] interface Windows.System.Profile.IAnalyticsVersionInfo2; */
     }
 
     [

@@ -310,7 +310,7 @@ namespace Windows.Devices.Enumeration {
     runtimeclass DeviceInformation
     {
         [default] interface Windows.Devices.Enumeration.IDeviceInformation;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Devices.Enumeration.IDeviceInformation2;
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Devices.Enumeration.IDeviceInformation2; */
     }
 
     [
@@ -330,7 +330,7 @@ namespace Windows.Devices.Enumeration {
     runtimeclass DeviceInformationUpdate
     {
         [default] interface Windows.Devices.Enumeration.IDeviceInformationUpdate;
-        interface Windows.Devices.Enumeration.IDeviceInformationUpdate2;
+        /* interface Windows.Devices.Enumeration.IDeviceInformationUpdate2; */
     }
 
     [
@@ -354,7 +354,7 @@ namespace Windows.Devices.Enumeration {
     runtimeclass DeviceWatcher
     {
         [default] interface Windows.Devices.Enumeration.IDeviceWatcher;
-        interface Windows.Devices.Enumeration.IDeviceWatcher2;
+        /* interface Windows.Devices.Enumeration.IDeviceWatcher2; */
     }
 
     [

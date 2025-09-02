@@ -57,6 +57,6 @@ namespace Windows.Storage.FileProperties {
     runtimeclass BasicProperties
     {
         [default] interface Windows.Storage.FileProperties.IBasicProperties;
-        interface Windows.Storage.FileProperties.IStorageItemExtraProperties;
+        /* interface Windows.Storage.FileProperties.IStorageItemExtraProperties; */
     }
 }

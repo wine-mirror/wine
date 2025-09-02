@@ -515,7 +515,7 @@ namespace Windows.Networking.Connectivity
     runtimeclass ConnectionCost
     {
         [default] interface Windows.Networking.Connectivity.IConnectionCost;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Networking.Connectivity.IConnectionCost2;
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Networking.Connectivity.IConnectionCost2; */
     }
 
     [
@@ -526,9 +526,9 @@ namespace Windows.Networking.Connectivity
     {
         [default] interface Windows.Networking.Connectivity.IConnectionProfile;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Networking.Connectivity.IConnectionProfile2;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Networking.Connectivity.IConnectionProfile3;
-        [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.Networking.Connectivity.IConnectionProfile4;
-        [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.Networking.Connectivity.IConnectionProfile5;
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Networking.Connectivity.IConnectionProfile3; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.Networking.Connectivity.IConnectionProfile4; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.Networking.Connectivity.IConnectionProfile5; */
     }
 
     [
@@ -637,7 +637,7 @@ namespace Windows.Networking.Connectivity
     runtimeclass WwanConnectionProfileDetails
     {
         [default] interface Windows.Networking.Connectivity.IWwanConnectionProfileDetails;
-        [contract(Windows.Networking.Connectivity.WwanContract, 2.0)] interface Windows.Networking.Connectivity.IWwanConnectionProfileDetails2;
+        /* [contract(Windows.Networking.Connectivity.WwanContract, 2.0)] interface Windows.Networking.Connectivity.IWwanConnectionProfileDetails2; */
     }
 
     [

@@ -92,9 +92,9 @@ namespace Windows.Devices.Bluetooth.Rfcomm {
     runtimeclass RfcommDeviceService
     {
         [default] interface Windows.Devices.Bluetooth.Rfcomm.IRfcommDeviceService;
-        interface Windows.Devices.Bluetooth.Rfcomm.IRfcommDeviceService2;
+        /* interface Windows.Devices.Bluetooth.Rfcomm.IRfcommDeviceService2; */
         interface Windows.Foundation.IClosable;
-        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Devices.Bluetooth.Rfcomm.IRfcommDeviceService3;
+        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Devices.Bluetooth.Rfcomm.IRfcommDeviceService3; */
     }
 
     [

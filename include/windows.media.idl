@@ -418,7 +418,7 @@ namespace Windows.Media
     {
         [default] interface Windows.Media.IMusicDisplayProperties;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.IMusicDisplayProperties2;
-        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Media.IMusicDisplayProperties3;
+        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Media.IMusicDisplayProperties3; */
     }
 
     [
@@ -507,6 +507,6 @@ namespace Windows.Media
     runtimeclass VideoDisplayProperties
     {
         [default] interface Windows.Media.IVideoDisplayProperties;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.IVideoDisplayProperties2;
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.IVideoDisplayProperties2; */
     }
 }

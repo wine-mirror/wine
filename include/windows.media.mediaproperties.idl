@@ -147,8 +147,8 @@ namespace Windows.Media.MediaProperties {
         [default] interface Windows.Media.MediaProperties.IAudioEncodingProperties;
         interface Windows.Media.MediaProperties.IMediaEncodingProperties;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.MediaProperties.IAudioEncodingPropertiesWithFormatUserData;
-        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Media.MediaProperties.IAudioEncodingProperties2;
-        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Media.MediaProperties.IAudioEncodingProperties3;
+        /* [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Media.MediaProperties.IAudioEncodingProperties2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Media.MediaProperties.IAudioEncodingProperties3; */
     }
 
     [
@@ -161,7 +161,7 @@ namespace Windows.Media.MediaProperties {
     {
         [default] interface Windows.Media.MediaProperties.IContainerEncodingProperties;
         interface Windows.Media.MediaProperties.IMediaEncodingProperties;
-        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Media.MediaProperties.IContainerEncodingProperties2;
+        /* [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Media.MediaProperties.IContainerEncodingProperties2; */
     }
 
     [
@@ -176,8 +176,8 @@ namespace Windows.Media.MediaProperties {
     runtimeclass MediaEncodingProfile
     {
         [default] interface Windows.Media.MediaProperties.IMediaEncodingProfile;
-        [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.Media.MediaProperties.IMediaEncodingProfile2;
-        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Media.MediaProperties.IMediaEncodingProfile3;
+        /* [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.Media.MediaProperties.IMediaEncodingProfile2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Media.MediaProperties.IMediaEncodingProfile3; */
     }
 
     [
@@ -202,9 +202,9 @@ namespace Windows.Media.MediaProperties {
     {
         [default] interface Windows.Media.MediaProperties.IVideoEncodingProperties;
         interface Windows.Media.MediaProperties.IMediaEncodingProperties;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.MediaProperties.IVideoEncodingProperties2;
-        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Media.MediaProperties.IVideoEncodingProperties3;
-        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Media.MediaProperties.IVideoEncodingProperties4;
-        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Media.MediaProperties.IVideoEncodingProperties5;
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.MediaProperties.IVideoEncodingProperties2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Media.MediaProperties.IVideoEncodingProperties3; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Media.MediaProperties.IVideoEncodingProperties4; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Media.MediaProperties.IVideoEncodingProperties5; */
     }
 }

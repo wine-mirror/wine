@@ -677,7 +677,7 @@ namespace Windows.Devices.Bluetooth.GenericAttributeProfile {
     runtimeclass GattReadResult
     {
         [default] interface Windows.Devices.Bluetooth.GenericAttributeProfile.IGattReadResult;
-        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Devices.Bluetooth.GenericAttributeProfile.IGattReadResult2;
+        /* [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Devices.Bluetooth.GenericAttributeProfile.IGattReadResult2; */
     }
 
     [

@@ -480,6 +480,6 @@ namespace Windows.System
     runtimeclass UserChangedEventArgs
     {
         [default] interface Windows.System.IUserChangedEventArgs;
-        [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.System.IUserChangedEventArgs2;
+        /* [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.System.IUserChangedEventArgs2; */
     }
 }

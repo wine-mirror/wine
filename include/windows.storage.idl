@@ -672,12 +672,12 @@ namespace Windows.Storage {
         interface Windows.Storage.Streams.IInputStreamReference;
         interface Windows.Storage.Streams.IRandomAccessStreamReference;
         interface Windows.Storage.IStorageItem;
-        interface Windows.Storage.IStorageItemProperties;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageItemProperties2;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageItem2;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageItemPropertiesWithProvider;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageFilePropertiesWithAvailability;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageFile2;
+        /* interface Windows.Storage.IStorageItemProperties; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageItemProperties2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageItem2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageItemPropertiesWithProvider; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageFilePropertiesWithAvailability; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageFile2; */
     }
 
     [
@@ -689,13 +689,13 @@ namespace Windows.Storage {
     {
         [default] interface Windows.Storage.IStorageFolder;
         interface Windows.Storage.IStorageItem;
-        interface Windows.Storage.Search.IStorageFolderQueryOperations;
-        interface Windows.Storage.IStorageItemProperties;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageItemProperties2;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageItem2;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageFolder2;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageItemPropertiesWithProvider;
-        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Storage.IStorageFolder3;
+        /* interface Windows.Storage.Search.IStorageFolderQueryOperations; */
+        /* interface Windows.Storage.IStorageItemProperties; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageItemProperties2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageItem2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageFolder2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageItemPropertiesWithProvider; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Storage.IStorageFolder3; */
     }
 
     [

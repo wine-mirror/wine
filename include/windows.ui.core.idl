@@ -586,8 +586,8 @@ namespace Windows.UI.Core {
     {
         [default] interface Windows.UI.Core.ICoreDispatcher;
         interface Windows.UI.Core.ICoreAcceleratorKeys;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.Core.ICoreDispatcherWithTaskPriority;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.Core.ICoreDispatcher2;
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.Core.ICoreDispatcherWithTaskPriority; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.Core.ICoreDispatcher2; */
     }
 
     [
@@ -599,11 +599,11 @@ namespace Windows.UI.Core {
     {
         [default] interface Windows.UI.Core.ICoreWindow;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.Core.ICoreWindow2;
-        [contract(Windows.Foundation.UniversalApiContract, 2.0)] interface Windows.UI.Core.ICorePointerRedirector;
+        /* [contract(Windows.Foundation.UniversalApiContract, 2.0)] interface Windows.UI.Core.ICorePointerRedirector; */
         [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Core.ICoreWindow3;
         [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.Core.ICoreWindow4;
         [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.UI.Core.ICoreWindow5;
-        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Core.ICoreWindowWithContext;
+        /* [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Core.ICoreWindowWithContext; */
     }
 
     [

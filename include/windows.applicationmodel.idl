@@ -402,12 +402,12 @@ namespace Windows.ApplicationModel {
         [default] interface Windows.ApplicationModel.IPackage;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.IPackage2;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.IPackage3;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.IPackageWithMetadata;
-        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.ApplicationModel.IPackage4;
-        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.ApplicationModel.IPackage5;
-        [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.ApplicationModel.IPackage6;
-        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.ApplicationModel.IPackage7;
-        [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.ApplicationModel.IPackage8;
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.IPackageWithMetadata; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.ApplicationModel.IPackage4; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.ApplicationModel.IPackage5; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.ApplicationModel.IPackage6; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.ApplicationModel.IPackage7; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.ApplicationModel.IPackage8; */
     }
 
     [
@@ -417,7 +417,7 @@ namespace Windows.ApplicationModel {
     runtimeclass PackageStatus
     {
         [default] interface Windows.ApplicationModel.IPackageStatus;
-        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.ApplicationModel.IPackageStatus2;
+        /* [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.ApplicationModel.IPackageStatus2; */
     }
 
     [

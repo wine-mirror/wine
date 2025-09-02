@@ -157,7 +157,7 @@ namespace Windows.Data.Json {
         interface Windows.Data.Json.IJsonValue;
         interface Windows.Foundation.Collections.IMap<HSTRING, Windows.Data.Json.IJsonValue *>;
         interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Data.Json.IJsonValue *> *>;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Data.Json.IJsonObjectWithDefaultValues;
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Data.Json.IJsonObjectWithDefaultValues; */
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Foundation.IStringable;
     }
 

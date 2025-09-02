@@ -918,9 +918,9 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionAnimation : Windows.UI.Composition.CompositionObject
     {
         [default] interface Windows.UI.Composition.ICompositionAnimation;
-        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionAnimation2;
-        [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.UI.Composition.ICompositionAnimation3;
-        [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.UI.Composition.ICompositionAnimation4;
+        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionAnimation2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.UI.Composition.ICompositionAnimation3; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.UI.Composition.ICompositionAnimation4; */
         [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionAnimationBase;
     }
 
@@ -954,7 +954,7 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionClip : Windows.UI.Composition.CompositionObject
     {
         [default] interface Windows.UI.Composition.ICompositionClip;
-        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionClip2;
+        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionClip2; */
     }
 
     [
@@ -986,7 +986,7 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionDrawingSurface : Windows.UI.Composition.CompositionObject
     {
         [default] interface Windows.UI.Composition.ICompositionDrawingSurface;
-        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.Composition.ICompositionDrawingSurface2;
+        /* [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.Composition.ICompositionDrawingSurface2; */
         interface Windows.UI.Composition.ICompositionSurface;
     }
 
@@ -1030,9 +1030,9 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionGraphicsDevice : Windows.UI.Composition.CompositionObject
     {
         [default] interface Windows.UI.Composition.ICompositionGraphicsDevice;
-        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.Composition.ICompositionGraphicsDevice2;
-        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositionGraphicsDevice3;
-        [contract(Windows.Foundation.UniversalApiContract, 12.0)] interface Windows.UI.Composition.ICompositionGraphicsDevice4;
+        /* [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.Composition.ICompositionGraphicsDevice2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositionGraphicsDevice3; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 12.0)] interface Windows.UI.Composition.ICompositionGraphicsDevice4; */
     }
 
     [
@@ -1045,11 +1045,11 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionObject
     {
         [default] interface Windows.UI.Composition.ICompositionObject;
-        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionObject2;
-        [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.UI.Composition.ICompositionObject3;
-        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.UI.Composition.ICompositionObject4;
+        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionObject2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.UI.Composition.ICompositionObject3; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.UI.Composition.ICompositionObject4; */
         interface Windows.Foundation.IClosable;
-        [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.UI.Composition.IAnimationObject;
+        /* [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.UI.Composition.IAnimationObject; */
     }
 
     [
@@ -1060,7 +1060,7 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionPropertySet : Windows.UI.Composition.CompositionObject
     {
         [default] interface Windows.UI.Composition.ICompositionPropertySet;
-        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionPropertySet2;
+        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionPropertySet2; */
     }
 
     [
@@ -1081,8 +1081,8 @@ namespace Windows.UI.Composition {
     runtimeclass CompositionSurfaceBrush : Windows.UI.Composition.CompositionBrush
     {
         [default] interface Windows.UI.Composition.ICompositionSurfaceBrush;
-        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionSurfaceBrush2;
-        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositionSurfaceBrush3;
+        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositionSurfaceBrush2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositionSurfaceBrush3; */
     }
 
     [
@@ -1106,16 +1106,16 @@ namespace Windows.UI.Composition {
     runtimeclass Compositor
     {
         [default] interface Windows.UI.Composition.ICompositor;
-        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositor2;
-        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.Composition.ICompositor3;
-        [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.UI.Composition.ICompositor4;
-        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.UI.Composition.ICompositor5;
-        [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.UI.Composition.ICompositor6;
-        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositorWithProjectedShadow;
-        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositorWithRadialGradient;
-        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositorWithVisualSurface;
-        [contract(Windows.Foundation.UniversalApiContract, 12.0)] interface Windows.UI.Composition.ICompositor7;
-        [contract(Windows.Foundation.UniversalApiContract, 13.0)] interface Windows.UI.Composition.ICompositorWithBlurredWallpaperBackdropBrush;
+        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ICompositor2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.Composition.ICompositor3; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.UI.Composition.ICompositor4; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.UI.Composition.ICompositor5; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.UI.Composition.ICompositor6; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositorWithProjectedShadow; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositorWithRadialGradient; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Composition.ICompositorWithVisualSurface; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 12.0)] interface Windows.UI.Composition.ICompositor7; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 13.0)] interface Windows.UI.Composition.ICompositorWithBlurredWallpaperBackdropBrush; */
         interface Windows.Foundation.IClosable;
     }
 
@@ -1208,7 +1208,7 @@ namespace Windows.UI.Composition {
     runtimeclass SpriteVisual : Windows.UI.Composition.ContainerVisual
     {
         [default] interface Windows.UI.Composition.ISpriteVisual;
-        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ISpriteVisual2;
+        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Composition.ISpriteVisual2; */
     }
 
     [
@@ -1250,9 +1250,9 @@ namespace Windows.UI.Composition {
     runtimeclass Visual : Windows.UI.Composition.CompositionObject
     {
         [default] interface Windows.UI.Composition.IVisual;
-        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.Composition.IVisual2;
-        [contract(Windows.Foundation.UniversalApiContract, 11.0)] interface Windows.UI.Composition.IVisual3;
-        [contract(Windows.Foundation.UniversalApiContract, 12.0)] interface Windows.UI.Composition.IVisual4;
+        /* [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.Composition.IVisual2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 11.0)] interface Windows.UI.Composition.IVisual3; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 12.0)] interface Windows.UI.Composition.IVisual4; */
     }
 
     [
