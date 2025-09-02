@@ -33,6 +33,10 @@ import "windows.storage.streams.idl";
 import "windows.system.idl";
 #endif
 
+namespace Windows.System {
+    runtimeclass User;
+}
+
 namespace Windows.Storage {
     typedef enum ApplicationDataCreateDisposition ApplicationDataCreateDisposition;
     typedef enum ApplicationDataLocality ApplicationDataLocality;

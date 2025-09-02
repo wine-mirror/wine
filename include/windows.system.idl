@@ -25,11 +25,24 @@ import "asyncinfo.idl";
 import "eventtoken.idl";
 import "windowscontracts.idl";
 import "windows.foundation.idl";
+import "windows.storage.idl";
+import "windows.storage.streams.idl";
+
+namespace Windows.Foundation.Collections {
+    interface IPropertySet;
+}
+
+namespace Windows.Storage.Streams {
+    interface IRandomAccessStreamReference;
+}
 
 namespace Windows.System
 {
     typedef enum DispatcherQueuePriority DispatcherQueuePriority;
     typedef enum ProcessorArchitecture ProcessorArchitecture;
+    typedef enum UserAuthenticationStatus UserAuthenticationStatus;
+    typedef enum UserPictureSize UserPictureSize;
+    typedef enum UserType UserType;
     typedef enum VirtualKey VirtualKey;
     typedef enum VirtualKeyModifiers VirtualKeyModifiers;
 
@@ -54,6 +67,10 @@ namespace Windows.System
 
     declare
     {
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IPropertySet *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IRandomAccessStreamReference *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IPropertySet *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStreamReference *>;
         interface Windows.Foundation.TypedEventHandler<Windows.System.DispatcherQueue *, IInspectable *>;
         interface Windows.Foundation.TypedEventHandler<Windows.System.DispatcherQueue *, Windows.System.DispatcherQueueShutdownStartingEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.System.DispatcherQueueTimer *, IInspectable *>;
@@ -83,6 +100,40 @@ namespace Windows.System
         [contract(Windows.Foundation.UniversalApiContract, 8.0)]
         X86OnArm64 = 14,
         Unknown    = 65535
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum UserAuthenticationStatus
+    {
+        Unauthenticated       = 0,
+        LocallyAuthenticated  = 1,
+        RemotelyAuthenticated = 2,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum UserPictureSize
+    {
+        Size64x64     = 0,
+        Size208x208   = 1,
+        Size424x424   = 2,
+        Size1080x1080 = 3,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum UserType
+    {
+        LocalUser     = 0,
+        RemoteUser    = 1,
+        LocalGuest    = 2,
+        RemoteGuest   = 3,
+        [contract(Windows.Foundation.UniversalApiContract, 11.0)]
+        SystemManaged = 4,
     };
 
     [
@@ -409,6 +460,21 @@ namespace Windows.System
         HRESULT Stop();
         [eventadd] HRESULT Tick([in] Windows.Foundation.TypedEventHandler<Windows.System.DispatcherQueueTimer *, IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
         [eventremove] HRESULT Tick([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.System.User),
+        uuid(df9a26c6-e746-4bcd-b5d4-120103c4209b)
+    ]
+    interface IUser : IInspectable
+    {
+        [propget] HRESULT NonRoamableId([out, retval] HSTRING *value);
+        [propget] HRESULT AuthenticationStatus([out, retval] Windows.System.UserAuthenticationStatus *value);
+        [propget] HRESULT Type([out, retval] Windows.System.UserType *value);
+        HRESULT GetPropertyAsync([in] HSTRING value, [out, retval] Windows.Foundation.IAsyncOperation<IInspectable *> **operation);
+        HRESULT GetPropertiesAsync([in] Windows.Foundation.Collections.IVectorView<HSTRING> *values, [out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IPropertySet *> **operation);
+        HRESULT GetPictureAsync([in] Windows.System.UserPictureSize desired_size, [out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStreamReference *> **operation);
     }
 
     [
