@@ -471,19 +471,14 @@ HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path,
 {
     struct local_file_header local_header;
     struct zip_file *file;
-    char *name;
     DWORD len;
 
     len = WideCharToMultiByte(CP_ACP, 0, path, -1, NULL, 0, NULL, NULL);
-    if (!(name = malloc(len)))
-        return E_OUTOFMEMORY;
-    WideCharToMultiByte(CP_ACP, 0, path, -1, name, len, NULL, NULL);
 
     if (!(file = calloc(1, offsetof(struct zip_file, name[len]))))
-    {
-        free(name);
         return E_OUTOFMEMORY;
-    }
+
+    WideCharToMultiByte(CP_ACP, 0, path, -1, file->name, len, NULL, NULL);
     file->offset = archive->position;
     file->name_length = len - 1;
     if (options != OPC_COMPRESSION_NONE)
@@ -499,8 +494,6 @@ HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path,
             file->flags = DEFLATE_NORMAL;
     }
     file->flags |= USE_DATA_DESCRIPTOR;
-    memcpy(file->name, name, file->name_length);
-    free(name);
 
     local_header.signature = LOCAL_HEADER_SIGNATURE;
     local_header.flags = USE_DATA_DESCRIPTOR;
