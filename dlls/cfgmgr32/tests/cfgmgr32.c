@@ -1145,6 +1145,19 @@ static void test_DevGetObjects( void )
         }
     }
 
+    memset( filters, 0, sizeof( filters ) );
+    filters[0] = valid_filter;
+    filters[0].Operator = DEVPROP_OPERATOR_NOT_EQUALS;
+    bool_val = FALSE;
+    len = 0;
+    objects = NULL;
+    hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 1, filters, &len, &objects );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( len > 0, "got len %lu\n", len );
+    ok( !!objects, "got objects %p\n", objects );
+    pDevFreeObjects( len, objects );
+    bool_val = TRUE;
+
     for (i = 0; i < ARRAY_SIZE( test_cases ); i++)
     {
         const DEV_OBJECT *objects = NULL;

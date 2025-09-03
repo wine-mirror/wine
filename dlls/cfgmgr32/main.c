@@ -418,10 +418,8 @@ static HRESULT devprop_filter_eval_compare( const DEV_OBJECT *obj, const DEVPROP
                 cmp = memcmp( prop->Buffer, cmp_prop->Buffer, prop->BufferSize );
                 break;
             }
-            if (op == DEVPROP_OPERATOR_EQUALS)
+            if (op & DEVPROP_OPERATOR_EQUALS)
                 ret = !cmp;
-            else if (op & DEVPROP_OPERATOR_EQUALS && !cmp)
-                ret = TRUE;
             else
                 ret = (op & DEVPROP_OPERATOR_LESS_THAN) ? cmp < 0 : cmp > 0;
         }
