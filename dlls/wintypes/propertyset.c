@@ -240,7 +240,7 @@ static HRESULT STDMETHODCALLTYPE factory_ActivateInstance( IActivationFactory *i
     impl->IObservableMap_HSTRING_IInspectable_iface.lpVtbl = &propertyset_IObservableMap_vtbl;
     impl->ref = 1;
 
-    if (FAILED(hr = map_create( &iids, (IInspectable *)&impl->IPropertySet_iface, &impl->map_inner )))
+    if (FAILED(hr = multi_threaded_map_create( &iids, (IInspectable *)&impl->IPropertySet_iface, &impl->map_inner )))
     {
         free( impl );
         return hr;

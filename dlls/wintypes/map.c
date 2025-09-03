@@ -830,7 +830,7 @@ static const struct IIterable_IKeyValuePair_HSTRING_IInspectableVtbl iterable_vt
     iterable_First,
 };
 
-HRESULT map_create( const struct map_iids *iids, IInspectable *outer, IInspectable **out )
+HRESULT single_threaded_map_create( const struct map_iids *iids, IInspectable *outer, IInspectable **out )
 {
     struct map *impl;
 
@@ -843,6 +843,239 @@ HRESULT map_create( const struct map_iids *iids, IInspectable *outer, IInspectab
     impl->IInspectable_outer = outer ? outer : (IInspectable *)&impl->IInspectable_iface;
     impl->iids = *iids;
     impl->ref = 1;
+
+    *out = &impl->IInspectable_iface;
+    TRACE( "created %p\n", *out );
+    return S_OK;
+}
+
+struct locked_map
+{
+    IInspectable IInspectable_iface;
+    IMap_HSTRING_IInspectable IMap_HSTRING_IInspectable_iface;
+    IInspectable *IInspectable_outer;
+    struct map_iids iids;
+    LONG ref;
+
+    SRWLOCK lock;
+    IInspectable *inner;
+    IMap_HSTRING_IInspectable *inner_map;
+};
+
+static struct locked_map *locked_map_from_IInspectable( IInspectable *iface )
+{
+    return CONTAINING_RECORD( iface, struct locked_map, IInspectable_iface );
+}
+
+static HRESULT WINAPI locked_map_inner_QueryInterface( IInspectable *iface, REFIID iid, void **out )
+{
+    struct locked_map *impl = locked_map_from_IInspectable( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ))
+    {
+        IInspectable_AddRef( (*out = &impl->IInspectable_iface) );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, impl->iids.map ))
+    {
+        IInspectable_AddRef( (*out = &impl->IMap_HSTRING_IInspectable_iface) );
+        return S_OK;
+    }
+
+    if (SUCCEEDED(IInspectable_QueryInterface( impl->inner, iid, out ))) return S_OK;
+
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI locked_map_inner_AddRef( IInspectable *iface )
+{
+    struct locked_map *impl = locked_map_from_IInspectable( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p increasing refcount to %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI locked_map_inner_Release( IInspectable *iface )
+{
+    struct locked_map *impl = locked_map_from_IInspectable( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+
+    TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
+
+    if (!ref)
+    {
+        IInspectable_Release( impl->inner );
+        free( impl );
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI locked_map_inner_GetIids( IInspectable *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI locked_map_inner_GetRuntimeClassName( IInspectable *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI locked_map_inner_GetTrustLevel( IInspectable *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static const IInspectableVtbl locked_map_inner_vtbl =
+{
+    /* IUnknown */
+    locked_map_inner_QueryInterface,
+    locked_map_inner_AddRef,
+    locked_map_inner_Release,
+    /* IInspectable */
+    locked_map_inner_GetIids,
+    locked_map_inner_GetRuntimeClassName,
+    locked_map_inner_GetTrustLevel,
+};
+
+DEFINE_IINSPECTABLE_( locked_map, IMap_HSTRING_IInspectable, struct locked_map, locked_map_from_IMap_HSTRING_IInspectable,
+                      IMap_HSTRING_IInspectable_iface, impl->IInspectable_outer );
+
+static HRESULT WINAPI locked_map_Lookup( IMap_HSTRING_IInspectable *iface, HSTRING key, IInspectable **value )
+{
+    struct locked_map *impl = locked_map_from_IMap_HSTRING_IInspectable( iface );
+    HRESULT hr;
+
+    AcquireSRWLockExclusive( &impl->lock );
+    hr = IMap_HSTRING_IInspectable_Lookup( impl->inner_map, key, value );
+    ReleaseSRWLockExclusive( &impl->lock );
+
+    return hr;
+}
+
+static HRESULT WINAPI locked_map_get_Size( IMap_HSTRING_IInspectable *iface, UINT32 *size )
+{
+    struct locked_map *impl = locked_map_from_IMap_HSTRING_IInspectable( iface );
+    HRESULT hr;
+
+    AcquireSRWLockExclusive( &impl->lock );
+    hr = IMap_HSTRING_IInspectable_get_Size( impl->inner_map, size );
+    ReleaseSRWLockExclusive( &impl->lock );
+
+    return hr;
+}
+
+static HRESULT WINAPI locked_map_HasKey( IMap_HSTRING_IInspectable *iface, HSTRING key, boolean *exists )
+{
+    struct locked_map *impl = locked_map_from_IMap_HSTRING_IInspectable( iface );
+    HRESULT hr;
+
+    AcquireSRWLockExclusive( &impl->lock );
+    hr = IMap_HSTRING_IInspectable_HasKey( impl->inner_map, key, exists );
+    ReleaseSRWLockExclusive( &impl->lock );
+
+    return hr;
+}
+
+static HRESULT WINAPI locked_map_GetView( IMap_HSTRING_IInspectable *iface, IMapView_HSTRING_IInspectable **value )
+{
+    struct locked_map *impl = locked_map_from_IMap_HSTRING_IInspectable( iface );
+    HRESULT hr;
+
+    AcquireSRWLockExclusive( &impl->lock );
+    hr = IMap_HSTRING_IInspectable_GetView( impl->inner_map, value );
+    ReleaseSRWLockExclusive( &impl->lock );
+
+    return hr;
+}
+
+static HRESULT WINAPI locked_map_Insert( IMap_HSTRING_IInspectable *iface, HSTRING key, IInspectable *value, boolean *replaced )
+{
+    struct locked_map *impl = locked_map_from_IMap_HSTRING_IInspectable( iface );
+    HRESULT hr;
+
+    AcquireSRWLockExclusive( &impl->lock );
+    hr = IMap_HSTRING_IInspectable_Insert( impl->inner_map, key, value, replaced );
+    ReleaseSRWLockExclusive( &impl->lock );
+
+    return hr;
+}
+
+static HRESULT WINAPI locked_map_Remove( IMap_HSTRING_IInspectable *iface, HSTRING key )
+{
+    struct locked_map *impl = locked_map_from_IMap_HSTRING_IInspectable( iface );
+    HRESULT hr;
+
+    AcquireSRWLockExclusive( &impl->lock );
+    hr = IMap_HSTRING_IInspectable_Remove( impl->inner_map, key );
+    ReleaseSRWLockExclusive( &impl->lock );
+
+    return hr;
+}
+
+static HRESULT WINAPI locked_map_Clear( IMap_HSTRING_IInspectable *iface )
+{
+    struct locked_map *impl = locked_map_from_IMap_HSTRING_IInspectable( iface );
+    HRESULT hr;
+
+    AcquireSRWLockExclusive( &impl->lock );
+    hr = IMap_HSTRING_IInspectable_Clear( impl->inner_map );
+    ReleaseSRWLockExclusive( &impl->lock );
+
+    return hr;
+}
+
+static const IMap_HSTRING_IInspectableVtbl locked_map_vtbl =
+{
+    /* IUnknown */
+    locked_map_QueryInterface,
+    locked_map_AddRef,
+    locked_map_Release,
+    /* IInspectable */
+    locked_map_GetIids,
+    locked_map_GetRuntimeClassName,
+    locked_map_GetTrustLevel,
+    /* IMap<HSTRING, IInspectable *> */
+    locked_map_Lookup,
+    locked_map_get_Size,
+    locked_map_HasKey,
+    locked_map_GetView,
+    locked_map_Insert,
+    locked_map_Remove,
+    locked_map_Clear,
+};
+
+HRESULT multi_threaded_map_create( const struct map_iids *iids, IInspectable *outer, IInspectable **out )
+{
+    struct locked_map *impl;
+    HRESULT hr;
+
+    TRACE( "iid %s, out %p.\n", debugstr_guid( iids->map ), out );
+
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
+    impl->IInspectable_iface.lpVtbl = &locked_map_inner_vtbl;
+    impl->IMap_HSTRING_IInspectable_iface.lpVtbl = &locked_map_vtbl;
+    impl->IInspectable_outer = outer ? outer : &impl->IInspectable_iface;
+    impl->iids = *iids;
+    impl->ref = 1;
+
+    if (FAILED(hr = single_threaded_map_create( iids, impl->IInspectable_outer, &impl->inner )))
+    {
+        free( impl );
+        return hr;
+    }
+    IInspectable_QueryInterface( impl->inner, iids->map, (void **)&impl->inner_map );
+    IMap_HSTRING_IInspectable_Release( impl->inner_map ); /* release outer reference */
 
     *out = &impl->IInspectable_iface;
     TRACE( "created %p\n", *out );

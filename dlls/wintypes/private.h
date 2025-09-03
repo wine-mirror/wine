@@ -47,7 +47,8 @@ struct map_iids
     const GUID *iterator;
     const GUID *pair;
 };
-extern HRESULT map_create( const struct map_iids *iids, IInspectable *outer, IInspectable **out );
+extern HRESULT single_threaded_map_create( const struct map_iids *iids, IInspectable *outer, IInspectable **out );
+extern HRESULT multi_threaded_map_create( const struct map_iids *iids, IInspectable *outer, IInspectable **out );
 
 extern IActivationFactory *data_writer_activation_factory;
 extern IActivationFactory *buffer_activation_factory;
