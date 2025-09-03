@@ -1816,6 +1816,146 @@ static void test_bitmap_rendering( BOOL use_dib )
     winetest_pop_context();
 }
 
+static void test_16bit_bitmap_rendering(void)
+{
+    PIXELFORMATDESCRIPTOR pfd;
+    INT pixel_format, success;
+    HGDIOBJ old_gdi_obj;
+    USHORT *pixels;
+    HBITMAP bitmap;
+    HGLRC gl;
+    HDC hdc;
+
+    PIXELFORMATDESCRIPTOR pixel_format_args = {
+        .nSize = sizeof(PIXELFORMATDESCRIPTOR),
+        .nVersion = 1,
+        .dwFlags = PFD_DRAW_TO_BITMAP | PFD_SUPPORT_OPENGL | PFD_DEPTH_DONTCARE,
+        .iPixelType = PFD_TYPE_RGBA,
+        .iLayerType = PFD_MAIN_PLANE,
+        .cColorBits = 16,
+        .cAlphaBits = 0
+    };
+    BITMAPINFO bitmap_args = {
+        .bmiHeader = {
+            .biSize = sizeof(BITMAPINFOHEADER),
+            .biPlanes = 1,
+            .biCompression = BI_RGB,
+            .biWidth = 4,
+            .biHeight = -4,  /* Four pixels tall with the origin in the top-left corner. */
+            .biBitCount = 16
+        }
+    };
+
+    hdc = CreateCompatibleDC(NULL);
+    ok(hdc != NULL, "Failed to get a device context\n");
+
+    /* Create a bitmap. */
+    bitmap = CreateDIBSection(NULL, &bitmap_args, DIB_RGB_COLORS, (void**)&pixels, NULL, 0);
+    old_gdi_obj = SelectObject(hdc, bitmap);
+    ok(old_gdi_obj != NULL, "Failed to SetObject\n");
+
+    /* Choose a pixel format. */
+    pixel_format = ChoosePixelFormat(hdc, &pixel_format_args);
+    todo_wine ok(pixel_format != 0, "Failed to get a 16 bit pixel format with the DRAW_TO_BITMAP flag.\n");
+
+    if (pixel_format == 0)
+    {
+        skip("Skipping 16-bit rendering test"
+                " (no 16 bit pixel format with the DRAW_TO_BITMAP flag was available)\n");
+        SelectObject(hdc, old_gdi_obj);
+        DeleteObject(bitmap);
+        DeleteDC(hdc);
+        return;
+    }
+
+    /* When asking for a 16-bit DRAW_TO_BITMAP pixel format, Windows will give you r5g5b5a1 by
+     * default, even if you didn't ask for an alpha bit.
+     *
+     * It's important to note that all of the color bits have to match exactly, because the renders
+     * are sent back to the CPU and will have to match any other software rendering operations that
+     * the program does (DRAW_TO_BITMAP is normally used in combination with blitting). */
+    success = DescribePixelFormat(hdc, pixel_format, sizeof(pfd), &pfd);
+    ok(success != 0, "Failed to DescribePixelFormat (error: %lu)\n", GetLastError());
+    /* Likely MSDN inaccuracy: According to the PIXELFORMATDESCRIPTOR docs, alpha bits are excluded
+     * from cColorBits. It doesn't seem like that's true. */
+    ok(pfd.cColorBits == 16, "Wrong amount of color bits (got %d, expected 16)\n", pfd.cColorBits);
+    todo_wine ok(pfd.cRedBits == 5, "Wrong amount of red bits (got %d, expected 5)\n", pfd.cRedBits);
+    todo_wine ok(pfd.cGreenBits == 5, "Wrong amount of green bits (got %d, expected 5)\n", pfd.cGreenBits);
+    todo_wine ok(pfd.cBlueBits == 5, "Wrong amount of blue bits (got %d, expected 5)\n", pfd.cBlueBits);
+    /* Quirky: It seems that there's an alpha bit, but it somehow doesn't count as one for
+     * DescribePixelFormat. On Windows cAlphaBits is zero.
+     * ok(pfd.cAlphaBits == 1, "Wrong amount of alpha bits (got %d, expected 1)\n", pfd.cAlphaBits); */
+    todo_wine ok(pfd.cRedShift == 10, "Wrong red shift (got %d, expected 10)\n", pfd.cRedShift);
+    todo_wine ok(pfd.cGreenShift == 5, "Wrong green shift (got %d, expected 5)\n", pfd.cGreenShift);
+    /* This next test might fail, depending on your drivers. */
+    ok(pfd.cBlueShift == 0, "Wrong blue shift (got %d, expected 0)\n", pfd.cBlueShift);
+
+    success = SetPixelFormat(hdc, pixel_format, &pixel_format_args);
+    ok(success, "Failed to SetPixelFormat (error: %lu)\n", GetLastError());
+
+    /* Create an OpenGL context. */
+    gl = wglCreateContext(hdc);
+    ok(gl != NULL, "Failed to wglCreateContext (error: %lu)\n", GetLastError());
+    success = wglMakeCurrent(hdc, gl);
+    ok(success, "Failed to wglMakeCurrent (error: %lu)\n", GetLastError());
+
+    /* Try setting the bitmap to white. */
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glFinish();
+    todo_wine ok(pixels[0] == 0x7fff, "Wrong color after glClear at (0, 0): %#x\n", pixels[0]);
+    todo_wine ok(pixels[1] == 0x7fff, "Wrong color after glClear at (1, 0): %#x\n", pixels[1]);
+
+    /* Try setting the bitmap to black with a white line. */
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0.0f, 4.0f, 4.0f, 0.0f, -1.0f, 1.0f);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glLineWidth(1.0f);
+    glBegin(GL_LINES);
+    glVertex2i(1, 1);
+    glVertex2i(1, 3);
+    glEnd();
+
+    glFinish();
+
+    {
+        /* Note that the line stops at (1,2) on Windows despite the second vertex being (1,3).
+         * I'm not sure if that's an implementation quirk or expected OpenGL behaviour. */
+        USHORT X = 0x7fff, _ = 0x0;
+        USHORT expected[16] = {
+            _,_,_,_,
+            _,X,_,_,
+            _,X,_,_,
+            _,_,_,_
+        };
+
+        for (int i = 0; i < 16; i++)
+        {
+            BOOL matches = (pixels[i] == expected[i]);
+            int x = i % 4;
+            int y = i / 4;
+            /* I'm using a loop so that I can put the expected image in an easy-to-understand array.
+             * Unfortunately this way of working doesn't work great with `todo_wine` since only half
+             * of the elements are a mismatch. I'm using `todo_wine_if` as a workaround. */
+            todo_wine_if(!matches) ok(matches, "Wrong color at (%d,%d). Got %#x, expected %#x\n",
+                    x, y, pixels[i], expected[i]);
+        }
+    }
+
+    /* Clean up. */
+    wglDeleteContext(gl);
+    SelectObject(hdc, old_gdi_obj);
+    DeleteObject(bitmap);
+    DeleteDC(hdc);
+}
+
 static void test_d3dkmt_rendering(void)
 {
     static const RECT expect_rect = {0, 0, 4, 4};
@@ -3443,6 +3583,7 @@ START_TEST(opengl)
 
         test_bitmap_rendering( TRUE );
         test_bitmap_rendering( FALSE );
+        test_16bit_bitmap_rendering();
         test_d3dkmt_rendering();
         test_minimized();
         test_window_dc();
