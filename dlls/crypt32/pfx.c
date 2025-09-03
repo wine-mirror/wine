@@ -152,10 +152,14 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
     }
-    if (flags & ~(CRYPT_EXPORTABLE|CRYPT_USER_KEYSET|CRYPT_MACHINE_KEYSET|PKCS12_NO_PERSIST_KEY))
+    if (flags & ~(CRYPT_EXPORTABLE|CRYPT_USER_KEYSET|CRYPT_MACHINE_KEYSET|PKCS12_NO_PERSIST_KEY|PKCS12_ALWAYS_CNG_KSP))
     {
         FIXME( "flags %08lx not supported\n", flags );
         return NULL;
+    }
+    if (flags & PKCS12_ALWAYS_CNG_KSP)
+    {
+        FIXME( "flag PKCS12_ALWAYS_CNG_KSP ignored\n" );
     }
     if (CRYPT32_CALL( open_cert_store, &open_params )) return NULL;
 

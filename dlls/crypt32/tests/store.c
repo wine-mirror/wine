@@ -3370,6 +3370,16 @@ static void test_PFXImportCertStore(void)
 
     CertFreeCertificateContext( cert );
     CertCloseStore( store, 0 );
+
+    /* PKCS12_NO_PERSIST_KEY|PKCS12_ALWAYS_CNG_KSP */
+    store = PFXImportCertStore( &pfx, NULL, PKCS12_NO_PERSIST_KEY|PKCS12_ALWAYS_CNG_KSP );
+    ok( store != NULL, "got %lu\n", GetLastError() );
+
+    cert = CertFindCertificateInStore( store, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
+    ok( cert != NULL, "got %08lx\n", GetLastError() );
+
+    CertFreeCertificateContext( cert );
+    CertCloseStore( store, 0 );
 }
 
 static void test_CryptQueryObject(void)
