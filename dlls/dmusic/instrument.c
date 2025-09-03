@@ -593,7 +593,7 @@ static HRESULT instrument_add_soundfont_region(struct instrument *This, struct s
     unity_note = generators->amount[SF_GEN_OVERRIDING_ROOT_KEY].value;
     if (unity_note == (WORD)-1) unity_note = sample->original_key;
     region->wave_sample.usUnityNote = unity_note - (SHORT)generators->amount[SF_GEN_COARSE_TUNE].value;
-    region->wave_sample.sFineTune = sample->correction + generators->amount[SF_GEN_FINE_TUNE].value;
+    region->wave_sample.sFineTune = sample->correction + (SHORT)generators->amount[SF_GEN_FINE_TUNE].value;
     region->wave_sample.lAttenuation = (LONG)round(attenuation * -65536.);
 
     start_loop = generators->amount[SF_GEN_STARTLOOP_ADDRS_OFFSET].value;
