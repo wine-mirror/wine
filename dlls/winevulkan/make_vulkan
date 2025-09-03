@@ -236,6 +236,9 @@ USER_DRIVER_FUNCS = {
     "vkMapMemory",
     "vkMapMemory2KHR",
     "vkQueuePresentKHR",
+    "vkQueueSubmit",
+    "vkQueueSubmit2",
+    "vkQueueSubmit2KHR",
     "vkUnmapMemory",
     "vkUnmapMemory2KHR",
 }

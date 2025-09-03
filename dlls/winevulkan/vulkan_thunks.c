@@ -39517,7 +39517,25 @@ static void convert_VkPresentInfoKHR_win32_to_unwrapped_host(struct conversion_c
 }
 
 #ifdef _WIN64
-static void convert_VkSubmitInfo_win64_to_host(struct conversion_context *ctx, const VkSubmitInfo *in, VkSubmitInfo *out)
+static const VkCommandBuffer *convert_VkCommandBuffer_array_win64_to_unwrapped_host(struct conversion_context *ctx, const VkCommandBuffer *in, uint32_t count)
+{
+    VkCommandBuffer *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i] = in[i];
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
+
+#ifdef _WIN64
+static void convert_VkSubmitInfo_win64_to_unwrapped_host(struct conversion_context *ctx, const VkSubmitInfo *in, VkSubmitInfo *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -39530,7 +39548,7 @@ static void convert_VkSubmitInfo_win64_to_host(struct conversion_context *ctx, c
     out->pWaitSemaphores = in->pWaitSemaphores;
     out->pWaitDstStageMask = in->pWaitDstStageMask;
     out->commandBufferCount = in->commandBufferCount;
-    out->pCommandBuffers = convert_VkCommandBuffer_array_win64_to_host(ctx, in->pCommandBuffers, in->commandBufferCount);
+    out->pCommandBuffers = convert_VkCommandBuffer_array_win64_to_unwrapped_host(ctx, in->pCommandBuffers, in->commandBufferCount);
     out->signalSemaphoreCount = in->signalSemaphoreCount;
     out->pSignalSemaphores = in->pSignalSemaphores;
 
@@ -39641,7 +39659,7 @@ static void convert_VkSubmitInfo_win64_to_host(struct conversion_context *ctx, c
 #endif /* _WIN64 */
 
 #ifdef _WIN64
-static const VkSubmitInfo *convert_VkSubmitInfo_array_win64_to_host(struct conversion_context *ctx, const VkSubmitInfo *in, uint32_t count)
+static const VkSubmitInfo *convert_VkSubmitInfo_array_win64_to_unwrapped_host(struct conversion_context *ctx, const VkSubmitInfo *in, uint32_t count)
 {
     VkSubmitInfo *out;
     unsigned int i;
@@ -39651,14 +39669,14 @@ static const VkSubmitInfo *convert_VkSubmitInfo_array_win64_to_host(struct conve
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkSubmitInfo_win64_to_host(ctx, &in[i], &out[i]);
+        convert_VkSubmitInfo_win64_to_unwrapped_host(ctx, &in[i], &out[i]);
     }
 
     return out;
 }
 #endif /* _WIN64 */
 
-static void convert_VkSubmitInfo_win32_to_host(struct conversion_context *ctx, const VkSubmitInfo32 *in, VkSubmitInfo *out)
+static void convert_VkSubmitInfo_win32_to_unwrapped_host(struct conversion_context *ctx, const VkSubmitInfo32 *in, VkSubmitInfo *out)
 {
     const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -39671,7 +39689,7 @@ static void convert_VkSubmitInfo_win32_to_host(struct conversion_context *ctx, c
     out->pWaitSemaphores = UlongToPtr(in->pWaitSemaphores);
     out->pWaitDstStageMask = UlongToPtr(in->pWaitDstStageMask);
     out->commandBufferCount = in->commandBufferCount;
-    out->pCommandBuffers = convert_VkCommandBuffer_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(in->pCommandBuffers), in->commandBufferCount);
+    out->pCommandBuffers = convert_VkCommandBuffer_array_win32_to_unwrapped_host(ctx, (const PTR32 *)UlongToPtr(in->pCommandBuffers), in->commandBufferCount);
     out->signalSemaphoreCount = in->signalSemaphoreCount;
     out->pSignalSemaphores = UlongToPtr(in->pSignalSemaphores);
 
@@ -39780,7 +39798,7 @@ static void convert_VkSubmitInfo_win32_to_host(struct conversion_context *ctx, c
     }
 }
 
-static const VkSubmitInfo *convert_VkSubmitInfo_array_win32_to_host(struct conversion_context *ctx, const VkSubmitInfo32 *in, uint32_t count)
+static const VkSubmitInfo *convert_VkSubmitInfo_array_win32_to_unwrapped_host(struct conversion_context *ctx, const VkSubmitInfo32 *in, uint32_t count)
 {
     VkSubmitInfo *out;
     unsigned int i;
@@ -39790,14 +39808,14 @@ static const VkSubmitInfo *convert_VkSubmitInfo_array_win32_to_host(struct conve
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkSubmitInfo_win32_to_host(ctx, &in[i], &out[i]);
+        convert_VkSubmitInfo_win32_to_unwrapped_host(ctx, &in[i], &out[i]);
     }
 
     return out;
 }
 
 #ifdef _WIN64
-static void convert_VkCommandBufferSubmitInfo_win64_to_host(struct conversion_context *ctx, const VkCommandBufferSubmitInfo *in, VkCommandBufferSubmitInfo *out)
+static void convert_VkCommandBufferSubmitInfo_win64_to_unwrapped_host(struct conversion_context *ctx, const VkCommandBufferSubmitInfo *in, VkCommandBufferSubmitInfo *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -39806,7 +39824,7 @@ static void convert_VkCommandBufferSubmitInfo_win64_to_host(struct conversion_co
 
     out->sType = in->sType;
     out->pNext = NULL;
-    out->commandBuffer = vulkan_command_buffer_from_handle(in->commandBuffer)->host.command_buffer;
+    out->commandBuffer = in->commandBuffer;
     out->deviceMask = in->deviceMask;
 
     for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
@@ -39834,7 +39852,7 @@ static void convert_VkCommandBufferSubmitInfo_win64_to_host(struct conversion_co
 #endif /* _WIN64 */
 
 #ifdef _WIN64
-static const VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo_array_win64_to_host(struct conversion_context *ctx, const VkCommandBufferSubmitInfo *in, uint32_t count)
+static const VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo_array_win64_to_unwrapped_host(struct conversion_context *ctx, const VkCommandBufferSubmitInfo *in, uint32_t count)
 {
     VkCommandBufferSubmitInfo *out;
     unsigned int i;
@@ -39844,7 +39862,7 @@ static const VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo_array_
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkCommandBufferSubmitInfo_win64_to_host(ctx, &in[i], &out[i]);
+        convert_VkCommandBufferSubmitInfo_win64_to_unwrapped_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -39852,7 +39870,7 @@ static const VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo_array_
 #endif /* _WIN64 */
 
 #ifdef _WIN64
-static void convert_VkSubmitInfo2_win64_to_host(struct conversion_context *ctx, const VkSubmitInfo2 *in, VkSubmitInfo2 *out)
+static void convert_VkSubmitInfo2_win64_to_unwrapped_host(struct conversion_context *ctx, const VkSubmitInfo2 *in, VkSubmitInfo2 *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -39865,7 +39883,7 @@ static void convert_VkSubmitInfo2_win64_to_host(struct conversion_context *ctx, 
     out->waitSemaphoreInfoCount = in->waitSemaphoreInfoCount;
     out->pWaitSemaphoreInfos = in->pWaitSemaphoreInfos;
     out->commandBufferInfoCount = in->commandBufferInfoCount;
-    out->pCommandBufferInfos = convert_VkCommandBufferSubmitInfo_array_win64_to_host(ctx, in->pCommandBufferInfos, in->commandBufferInfoCount);
+    out->pCommandBufferInfos = convert_VkCommandBufferSubmitInfo_array_win64_to_unwrapped_host(ctx, in->pCommandBufferInfos, in->commandBufferInfoCount);
     out->signalSemaphoreInfoCount = in->signalSemaphoreInfoCount;
     out->pSignalSemaphoreInfos = in->pSignalSemaphoreInfos;
 
@@ -39935,7 +39953,7 @@ static void convert_VkSubmitInfo2_win64_to_host(struct conversion_context *ctx, 
 #endif /* _WIN64 */
 
 #ifdef _WIN64
-static const VkSubmitInfo2 *convert_VkSubmitInfo2_array_win64_to_host(struct conversion_context *ctx, const VkSubmitInfo2 *in, uint32_t count)
+static const VkSubmitInfo2 *convert_VkSubmitInfo2_array_win64_to_unwrapped_host(struct conversion_context *ctx, const VkSubmitInfo2 *in, uint32_t count)
 {
     VkSubmitInfo2 *out;
     unsigned int i;
@@ -39945,7 +39963,7 @@ static const VkSubmitInfo2 *convert_VkSubmitInfo2_array_win64_to_host(struct con
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkSubmitInfo2_win64_to_host(ctx, &in[i], &out[i]);
+        convert_VkSubmitInfo2_win64_to_unwrapped_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -39982,7 +40000,7 @@ static const VkSemaphoreSubmitInfo *convert_VkSemaphoreSubmitInfo_array_win32_to
     return out;
 }
 
-static void convert_VkCommandBufferSubmitInfo_win32_to_host(struct conversion_context *ctx, const VkCommandBufferSubmitInfo32 *in, VkCommandBufferSubmitInfo *out)
+static void convert_VkCommandBufferSubmitInfo_win32_to_unwrapped_host(struct conversion_context *ctx, const VkCommandBufferSubmitInfo32 *in, VkCommandBufferSubmitInfo *out)
 {
     const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -39991,7 +40009,7 @@ static void convert_VkCommandBufferSubmitInfo_win32_to_host(struct conversion_co
 
     out->sType = in->sType;
     out->pNext = NULL;
-    out->commandBuffer = vulkan_command_buffer_from_handle((VkCommandBuffer)UlongToPtr(in->commandBuffer))->host.command_buffer;
+    out->commandBuffer = (VkCommandBuffer)UlongToPtr(in->commandBuffer);
     out->deviceMask = in->deviceMask;
 
     for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
@@ -40017,7 +40035,7 @@ static void convert_VkCommandBufferSubmitInfo_win32_to_host(struct conversion_co
     }
 }
 
-static const VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo_array_win32_to_host(struct conversion_context *ctx, const VkCommandBufferSubmitInfo32 *in, uint32_t count)
+static const VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo_array_win32_to_unwrapped_host(struct conversion_context *ctx, const VkCommandBufferSubmitInfo32 *in, uint32_t count)
 {
     VkCommandBufferSubmitInfo *out;
     unsigned int i;
@@ -40027,13 +40045,13 @@ static const VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo_array_
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkCommandBufferSubmitInfo_win32_to_host(ctx, &in[i], &out[i]);
+        convert_VkCommandBufferSubmitInfo_win32_to_unwrapped_host(ctx, &in[i], &out[i]);
     }
 
     return out;
 }
 
-static void convert_VkSubmitInfo2_win32_to_host(struct conversion_context *ctx, const VkSubmitInfo232 *in, VkSubmitInfo2 *out)
+static void convert_VkSubmitInfo2_win32_to_unwrapped_host(struct conversion_context *ctx, const VkSubmitInfo232 *in, VkSubmitInfo2 *out)
 {
     const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -40046,7 +40064,7 @@ static void convert_VkSubmitInfo2_win32_to_host(struct conversion_context *ctx, 
     out->waitSemaphoreInfoCount = in->waitSemaphoreInfoCount;
     out->pWaitSemaphoreInfos = convert_VkSemaphoreSubmitInfo_array_win32_to_host(ctx, (const VkSemaphoreSubmitInfo32 *)UlongToPtr(in->pWaitSemaphoreInfos), in->waitSemaphoreInfoCount);
     out->commandBufferInfoCount = in->commandBufferInfoCount;
-    out->pCommandBufferInfos = convert_VkCommandBufferSubmitInfo_array_win32_to_host(ctx, (const VkCommandBufferSubmitInfo32 *)UlongToPtr(in->pCommandBufferInfos), in->commandBufferInfoCount);
+    out->pCommandBufferInfos = convert_VkCommandBufferSubmitInfo_array_win32_to_unwrapped_host(ctx, (const VkCommandBufferSubmitInfo32 *)UlongToPtr(in->pCommandBufferInfos), in->commandBufferInfoCount);
     out->signalSemaphoreInfoCount = in->signalSemaphoreInfoCount;
     out->pSignalSemaphoreInfos = convert_VkSemaphoreSubmitInfo_array_win32_to_host(ctx, (const VkSemaphoreSubmitInfo32 *)UlongToPtr(in->pSignalSemaphoreInfos), in->signalSemaphoreInfoCount);
 
@@ -40114,7 +40132,7 @@ static void convert_VkSubmitInfo2_win32_to_host(struct conversion_context *ctx, 
     }
 }
 
-static const VkSubmitInfo2 *convert_VkSubmitInfo2_array_win32_to_host(struct conversion_context *ctx, const VkSubmitInfo232 *in, uint32_t count)
+static const VkSubmitInfo2 *convert_VkSubmitInfo2_array_win32_to_unwrapped_host(struct conversion_context *ctx, const VkSubmitInfo232 *in, uint32_t count)
 {
     VkSubmitInfo2 *out;
     unsigned int i;
@@ -40124,7 +40142,7 @@ static const VkSubmitInfo2 *convert_VkSubmitInfo2_array_win32_to_host(struct con
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkSubmitInfo2_win32_to_host(ctx, &in[i], &out[i]);
+        convert_VkSubmitInfo2_win32_to_unwrapped_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -58180,8 +58198,8 @@ static NTSTATUS thunk64_vkQueueSubmit(void *args)
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
 
     init_conversion_context(ctx);
-    pSubmits_host = convert_VkSubmitInfo_array_win64_to_host(ctx, params->pSubmits, params->submitCount);
-    params->result = vulkan_queue_from_handle(params->queue)->device->p_vkQueueSubmit(vulkan_queue_from_handle(params->queue)->host.queue, params->submitCount, pSubmits_host, params->fence);
+    pSubmits_host = convert_VkSubmitInfo_array_win64_to_unwrapped_host(ctx, params->pSubmits, params->submitCount);
+    params->result = vk_funcs->p_vkQueueSubmit(params->queue, params->submitCount, pSubmits_host, params->fence);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -58204,8 +58222,8 @@ static NTSTATUS thunk32_vkQueueSubmit(void *args)
     TRACE("%#x, %u, %#x, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
 
     init_conversion_context(ctx);
-    pSubmits_host = convert_VkSubmitInfo_array_win32_to_host(ctx, (const VkSubmitInfo32 *)UlongToPtr(params->pSubmits), params->submitCount);
-    params->result = vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueSubmit(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue, params->submitCount, pSubmits_host, params->fence);
+    pSubmits_host = convert_VkSubmitInfo_array_win32_to_unwrapped_host(ctx, (const VkSubmitInfo32 *)UlongToPtr(params->pSubmits), params->submitCount);
+    params->result = vk_funcs->p_vkQueueSubmit((VkQueue)UlongToPtr(params->queue), params->submitCount, pSubmits_host, params->fence);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -58221,8 +58239,8 @@ static NTSTATUS thunk64_vkQueueSubmit2(void *args)
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
 
     init_conversion_context(ctx);
-    pSubmits_host = convert_VkSubmitInfo2_array_win64_to_host(ctx, params->pSubmits, params->submitCount);
-    params->result = vulkan_queue_from_handle(params->queue)->device->p_vkQueueSubmit2(vulkan_queue_from_handle(params->queue)->host.queue, params->submitCount, pSubmits_host, params->fence);
+    pSubmits_host = convert_VkSubmitInfo2_array_win64_to_unwrapped_host(ctx, params->pSubmits, params->submitCount);
+    params->result = vk_funcs->p_vkQueueSubmit2(params->queue, params->submitCount, pSubmits_host, params->fence);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -58245,8 +58263,8 @@ static NTSTATUS thunk32_vkQueueSubmit2(void *args)
     TRACE("%#x, %u, %#x, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
 
     init_conversion_context(ctx);
-    pSubmits_host = convert_VkSubmitInfo2_array_win32_to_host(ctx, (const VkSubmitInfo232 *)UlongToPtr(params->pSubmits), params->submitCount);
-    params->result = vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueSubmit2(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue, params->submitCount, pSubmits_host, params->fence);
+    pSubmits_host = convert_VkSubmitInfo2_array_win32_to_unwrapped_host(ctx, (const VkSubmitInfo232 *)UlongToPtr(params->pSubmits), params->submitCount);
+    params->result = vk_funcs->p_vkQueueSubmit2((VkQueue)UlongToPtr(params->queue), params->submitCount, pSubmits_host, params->fence);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -58262,8 +58280,8 @@ static NTSTATUS thunk64_vkQueueSubmit2KHR(void *args)
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
 
     init_conversion_context(ctx);
-    pSubmits_host = convert_VkSubmitInfo2_array_win64_to_host(ctx, params->pSubmits, params->submitCount);
-    params->result = vulkan_queue_from_handle(params->queue)->device->p_vkQueueSubmit2KHR(vulkan_queue_from_handle(params->queue)->host.queue, params->submitCount, pSubmits_host, params->fence);
+    pSubmits_host = convert_VkSubmitInfo2_array_win64_to_unwrapped_host(ctx, params->pSubmits, params->submitCount);
+    params->result = vk_funcs->p_vkQueueSubmit2KHR(params->queue, params->submitCount, pSubmits_host, params->fence);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -58286,8 +58304,8 @@ static NTSTATUS thunk32_vkQueueSubmit2KHR(void *args)
     TRACE("%#x, %u, %#x, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
 
     init_conversion_context(ctx);
-    pSubmits_host = convert_VkSubmitInfo2_array_win32_to_host(ctx, (const VkSubmitInfo232 *)UlongToPtr(params->pSubmits), params->submitCount);
-    params->result = vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueSubmit2KHR(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue, params->submitCount, pSubmits_host, params->fence);
+    pSubmits_host = convert_VkSubmitInfo2_array_win32_to_unwrapped_host(ctx, (const VkSubmitInfo232 *)UlongToPtr(params->pSubmits), params->submitCount);
+    params->result = vk_funcs->p_vkQueueSubmit2KHR((VkQueue)UlongToPtr(params->queue), params->submitCount, pSubmits_host, params->fence);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }

@@ -1041,6 +1041,80 @@ static VkResult win32u_vkQueuePresentKHR( VkQueue client_queue, const VkPresentI
     return res;
 }
 
+static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, const VkSubmitInfo *submits, VkFence fence )
+{
+    struct vulkan_queue *queue = vulkan_queue_from_handle( client_queue );
+    struct vulkan_device *device = queue->device;
+
+    TRACE( "queue %p, count %u, submits %p, fence 0x%s\n", queue, count, submits, wine_dbgstr_longlong( fence ) );
+
+    for (uint32_t i = 0; i < count; i++)
+    {
+        VkSubmitInfo *submit = (VkSubmitInfo *)submits + i; /* cast away const, chain has been copied in the thunks */
+        VkBaseOutStructure **next, *prev = (VkBaseOutStructure *)submit;
+
+        for (uint32_t j = 0; j < submit->commandBufferCount; j++)
+        {
+            VkCommandBuffer *command_buffers = (VkCommandBuffer *)submit->pCommandBuffers; /* cast away const, chain has been copied in the thunks */
+            struct vulkan_command_buffer *command_buffer = vulkan_command_buffer_from_handle( command_buffers[j] );
+            command_buffers[j] = command_buffer->host.command_buffer;
+        }
+
+        for (next = &prev->pNext; *next; prev = *next, next = &(*next)->pNext)
+        {
+            switch ((*next)->sType)
+            {
+            case VK_STRUCTURE_TYPE_DEVICE_GROUP_SUBMIT_INFO: break;
+            case VK_STRUCTURE_TYPE_FRAME_BOUNDARY_EXT: break;
+            case VK_STRUCTURE_TYPE_FRAME_BOUNDARY_TENSORS_ARM: break;
+            case VK_STRUCTURE_TYPE_LATENCY_SUBMISSION_PRESENT_ID_NV: break;
+            case VK_STRUCTURE_TYPE_PERFORMANCE_QUERY_SUBMIT_INFO_KHR: break;
+            case VK_STRUCTURE_TYPE_PROTECTED_SUBMIT_INFO: break;
+            case VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO: break;
+            default: FIXME( "Unhandled sType %u.\n", (*next)->sType ); break;
+            }
+        }
+    }
+
+    return device->p_vkQueueSubmit( queue->host.queue, count, submits, fence );
+}
+
+static VkResult win32u_vkQueueSubmit2( VkQueue client_queue, uint32_t count, const VkSubmitInfo2 *submits, VkFence fence )
+{
+    struct vulkan_queue *queue = vulkan_queue_from_handle( client_queue );
+    struct vulkan_device *device = queue->device;
+
+    TRACE( "queue %p, count %u, submits %p, fence 0x%s\n", queue, count, submits, wine_dbgstr_longlong( fence ) );
+
+    for (uint32_t i = 0; i < count; i++)
+    {
+        VkSubmitInfo2 *submit = (VkSubmitInfo2 *)submits + i; /* cast away const, chain has been copied in the thunks */
+        VkBaseOutStructure **next, *prev = (VkBaseOutStructure *)submit;
+
+        for (uint32_t j = 0; j < submit->commandBufferInfoCount; j++)
+        {
+            VkCommandBufferSubmitInfoKHR *command_buffer_infos = (VkCommandBufferSubmitInfoKHR *)submit->pCommandBufferInfos; /* cast away const, chain has been copied in the thunks */
+            struct vulkan_command_buffer *command_buffer = vulkan_command_buffer_from_handle( command_buffer_infos[j].commandBuffer );
+            command_buffer_infos[j].commandBuffer = command_buffer->host.command_buffer;
+            if (command_buffer_infos->pNext) FIXME( "Unhandled struct chain\n" );
+        }
+
+        for (next = &prev->pNext; *next; prev = *next, next = &(*next)->pNext)
+        {
+            switch ((*next)->sType)
+            {
+            case VK_STRUCTURE_TYPE_FRAME_BOUNDARY_EXT: break;
+            case VK_STRUCTURE_TYPE_FRAME_BOUNDARY_TENSORS_ARM: break;
+            case VK_STRUCTURE_TYPE_LATENCY_SUBMISSION_PRESENT_ID_NV: break;
+            case VK_STRUCTURE_TYPE_PERFORMANCE_QUERY_SUBMIT_INFO_KHR: break;
+            default: FIXME( "Unhandled sType %u.\n", (*next)->sType ); break;
+            }
+        }
+    }
+
+    return device->p_vkQueueSubmit2( queue->host.queue, count, submits, fence );
+}
+
 static const char *win32u_get_host_surface_extension(void)
 {
     return driver_funcs->p_get_host_surface_extension();
@@ -1076,6 +1150,9 @@ static struct vulkan_funcs vulkan_funcs =
     .p_vkMapMemory = win32u_vkMapMemory,
     .p_vkMapMemory2KHR = win32u_vkMapMemory2KHR,
     .p_vkQueuePresentKHR = win32u_vkQueuePresentKHR,
+    .p_vkQueueSubmit = win32u_vkQueueSubmit,
+    .p_vkQueueSubmit2 = win32u_vkQueueSubmit2,
+    .p_vkQueueSubmit2KHR = win32u_vkQueueSubmit2,
     .p_vkUnmapMemory = win32u_vkUnmapMemory,
     .p_vkUnmapMemory2KHR = win32u_vkUnmapMemory2KHR,
     .p_get_host_surface_extension = win32u_get_host_surface_extension,

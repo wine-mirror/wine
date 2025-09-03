@@ -47,7 +47,7 @@ struct vulkan_client_object
 #include "wine/rbtree.h"
 
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
-#define WINE_VULKAN_DRIVER_VERSION 40
+#define WINE_VULKAN_DRIVER_VERSION 41
 
 struct vulkan_object
 {
@@ -217,6 +217,9 @@ struct vulkan_funcs
     PFN_vkMapMemory p_vkMapMemory;
     PFN_vkMapMemory2KHR p_vkMapMemory2KHR;
     PFN_vkQueuePresentKHR p_vkQueuePresentKHR;
+    PFN_vkQueueSubmit p_vkQueueSubmit;
+    PFN_vkQueueSubmit2 p_vkQueueSubmit2;
+    PFN_vkQueueSubmit2KHR p_vkQueueSubmit2KHR;
     PFN_vkUnmapMemory p_vkUnmapMemory;
     PFN_vkUnmapMemory2KHR p_vkUnmapMemory2KHR;
 
