@@ -458,6 +458,8 @@ struct cancel_thread_ctx
 static DWORD WINAPI test_cancel_thread(void *param)
 {
     struct cancel_thread_ctx *ctx = param;
+    NTSTATUS status = STATUS_SUCCESS;
+    IO_STATUS_BLOCK cancel_sb;
     DWORD cancel_cnt, size;
     OVERLAPPED o, o2, o3;
     BOOL res;
@@ -495,28 +497,38 @@ static DWORD WINAPI test_cancel_thread(void *param)
 
     if (ctx->test == cancel || ctx->test == cancel_cancelex)
     {
-        res = CancelIo(ctx->file);
-        ok(res, "CancelIo failed: %lu\n", GetLastError());
+        status = NtCancelIoFile(ctx->file, &cancel_sb);
+        ok(!status, "Unexpected status %lu\n", status);
+        ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+        ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
     }
     else if (ctx->test == cancelex || ctx->test == cancelex_cancel)
     {
-        res = CancelIoEx(ctx->file, NULL);
-        ok(res, "CancelIoEx failed: %lu\n", GetLastError());
-        res = CancelIoEx(ctx->file, NULL);
-        ok(res, "CancelIoEx failed: %lu\n", GetLastError());
+        status = NtCancelIoFileEx(ctx->file, NULL, &cancel_sb);
+        ok(!status, "Unexpected status %lu\n", status);
+        ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+        ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
+        status = NtCancelIoFileEx(ctx->file, NULL, &cancel_sb);
+        ok(!status, "Unexpected status %lu\n", status);
+        ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+        ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
         cancelioex_returned = TRUE;
     }
     if (ctx->test == cancelex_cancel)
     {
-        res = CancelIo(ctx->file);
-        ok(res, "CancelIo failed: %lu\n", GetLastError());
+        status = NtCancelIoFile(ctx->file, &cancel_sb);
+        ok(!status, "Unexpected status %lu\n", status);
+        ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+        ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
     }
     else if (ctx->test == cancel_cancelex)
     {
-        res = CancelIoEx(ctx->file, NULL);
-        ok(!res && GetLastError() == ERROR_NOT_FOUND, "CancelIoEx failed: %lu\n", GetLastError());
+        status = NtCancelIoFileEx(ctx->file, NULL, &cancel_sb);
+        ok(status, "Unexpected status %lu\n", status);
+        ok(cancel_sb.Status == STATUS_NOT_FOUND, "Unexpected Status %lx\n", cancel_sb.Status);
+        ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
     }
-    return res;
+    return status;
 }
 
 static void test_overlapped(void)
@@ -524,7 +536,9 @@ static void test_overlapped(void)
     OVERLAPPED overlapped, overlapped2, *o;
     struct cancel_thread_ctx ctx;
     HANDLE file, port, thread;
+    IO_STATUS_BLOCK cancel_sb;
     DWORD cancel_cnt, size;
+    NTSTATUS status;
     ULONG_PTR key;
     DWORD ret;
     BOOL res;
@@ -645,8 +659,10 @@ static void test_overlapped(void)
     thread = CreateThread(NULL, 0, test_cancel_thread, &ctx, 0, NULL);
     ret = WaitForSingleObject(thread, 100);
     ok(ret == WAIT_TIMEOUT, "CancelIo didn't block\n");
-    res = CancelIoEx(file, NULL);
-    ok(res, "CancelIoEx failed: %lu\n", GetLastError());
+    status = NtCancelIoFileEx(file, NULL, &cancel_sb);
+    ok(!status, "Unexpected status %lu\n", status);
+    ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+    ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
     ret = WaitForSingleObject(thread, 100);
     ok(ret == WAIT_TIMEOUT, "CancelIo didn't block\n");
     res = DeviceIoControl(file, IOCTL_WINETEST_COMPLETE_ASYNC, NULL, 0, NULL, 0, NULL, &overlapped);
@@ -665,8 +681,10 @@ static void test_overlapped(void)
     thread = CreateThread(NULL, 0, test_cancel_thread, &ctx, 0, NULL);
     WaitForSingleObject(thread, 100);
     ok(ret == WAIT_TIMEOUT, "Synchronous DeviceIoControl() already returned\n");
-    res = CancelSynchronousIo(thread);
-    ok(res, "CancelSynchronousIo failed: %lu\n", GetLastError());
+    status = NtCancelSynchronousIoFile(thread, NULL, &cancel_sb);
+    ok(!status, "Unexpected status %lu\n", status);
+    ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+    ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
     ret = WaitForSingleObject(thread, INFINITE);
     ok(ret == WAIT_OBJECT_0, "CancelIoEx did block\n");
     CloseHandle(thread);
