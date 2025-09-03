@@ -697,6 +697,8 @@ void WINAPI vkFreeCommandBuffers(VkDevice device, VkCommandPool cmd_pool, uint32
     assert(!status);
     for (i = 0; i < count; i++)
     {
+        if (!buffers[i])
+            continue;
         list_remove(&buffers[i]->pool_link);
         free(buffers[i]);
     }
