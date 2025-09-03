@@ -963,14 +963,14 @@ static VkResult win32u_vkAcquireNextImageKHR( VkDevice client_device, VkSwapchai
     return res;
 }
 
-static VkResult win32u_vkQueuePresentKHR( VkQueue client_queue, const VkPresentInfoKHR *present_info )
+static VkResult win32u_vkQueuePresentKHR( VkQueue client_queue, const VkPresentInfoKHR *client_present_info )
 {
+    VkPresentInfoKHR *present_info = (VkPresentInfoKHR *)client_present_info; /* cast away const, it has been copied in the thunks */
     struct vulkan_queue *queue = vulkan_queue_from_handle( client_queue );
     VkSwapchainKHR swapchains_buffer[16], *swapchains = swapchains_buffer;
-    VkPresentInfoKHR present_info_host = *present_info;
     struct vulkan_device *device = queue->device;
+    const VkSwapchainKHR *client_swapchains;
     VkResult res;
-    UINT i;
 
     TRACE( "queue %p, present_info %p\n", queue, present_info );
 
@@ -978,19 +978,20 @@ static VkResult win32u_vkQueuePresentKHR( VkQueue client_queue, const VkPresentI
         !(swapchains = malloc( present_info->swapchainCount * sizeof(*swapchains) )))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
-    for (i = 0; i < present_info->swapchainCount; i++)
+    for (uint32_t i = 0; i < present_info->swapchainCount; i++)
     {
         struct swapchain *swapchain = swapchain_from_handle( present_info->pSwapchains[i] );
         swapchains[i] = swapchain->obj.host.swapchain;
     }
 
-    present_info_host.pSwapchains = swapchains;
+    client_swapchains = present_info->pSwapchains;
+    present_info->pSwapchains = swapchains;
 
-    res = device->p_vkQueuePresentKHR( queue->host.queue, &present_info_host );
+    res = device->p_vkQueuePresentKHR( queue->host.queue, present_info );
 
-    for (i = 0; i < present_info->swapchainCount; i++)
+    for (uint32_t i = 0; i < present_info->swapchainCount; i++)
     {
-        struct swapchain *swapchain = swapchain_from_handle( present_info->pSwapchains[i] );
+        struct swapchain *swapchain = swapchain_from_handle( client_swapchains[i] );
         VkResult swapchain_res = present_info->pResults ? present_info->pResults[i] : res;
         struct surface *surface = swapchain->surface;
         RECT client_rect;
