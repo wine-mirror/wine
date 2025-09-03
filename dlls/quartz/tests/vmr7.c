@@ -2151,7 +2151,7 @@ static void test_video_window_owner(IVideoWindow *window, HWND hwnd, HWND our_hw
     parent = GetAncestor(hwnd, GA_PARENT);
     ok(parent == GetDesktopWindow(), "Got parent %p.\n", parent);
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    ok(style == WS_OVERLAPPEDWINDOW, "Got style %#lx.\n", style);
+    todo_wine ok(style == (WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW), "Got style %#lx.\n", style);
 
     ok(GetActiveWindow() == hwnd, "Got active window %p.\n", GetActiveWindow());
     top_hwnd = get_top_window();
