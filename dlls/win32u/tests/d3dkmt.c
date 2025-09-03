@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -35,11 +36,31 @@
 #include "devpkey.h"
 #include "cfgmgr32.h"
 
+#include "d3d9.h"
+#include "dxgi1_3.h"
 #include "wine/test.h"
+
+#define D3DUSAGE_SURFACE    0x8000000
+#define D3DUSAGE_LOCKABLE   0x4000000
+#define D3DUSAGE_OFFSCREEN  0x0400000
 
 static const WCHAR display1W[] = L"\\\\.\\DISPLAY1";
 
 DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
+
+static const LUID luid_zero;
+const GUID GUID_NULL = {0};
+
+static const char *debugstr_luid( const LUID *luid )
+{
+    if (!luid) return "(null)";
+    return wine_dbg_sprintf( "%04lx:%04lx", luid->LowPart, luid->HighPart );
+}
+
+static BOOL luid_equals( const LUID *a, const LUID *b )
+{
+    return a->HighPart == b->HighPart && a->LowPart == b->LowPart;
+}
 
 static const char *debugstr_ok( const char *cond )
 {
@@ -61,11 +82,22 @@ static const char *debugstr_ok( const char *cond )
         t v = (r);                                                                                 \
         ok( v op (e), "%s " f "\n", debugstr_ok( #r ), v, ##__VA_ARGS__ );                         \
     } while (0)
+#define ok_i4( r, op, e )   ok_ex( r, op, e, int, "%i" )
 #define ok_u4( r, op, e )   ok_ex( r, op, e, UINT, "%u" )
 #define ok_x4( r, op, e )   ok_ex( r, op, e, UINT, "%#x" )
 #define ok_u1( r, op, e )   ok_ex( r, op, e, unsigned char, "%u" )
 #define ok_ptr( r, op, e )  ok_ex( r, op, e, const void *, "%p" )
+
+#define ok_ret( e, r )      ok_ex( r, ==, e, UINT_PTR, "%Iu, error %ld", GetLastError() )
+#define ok_ref( e, r )      ok_ex( r, ==, e, LONG, "%ld" )
+#define ok_hr( e, r )       ok_ex( r, ==, e, HRESULT, "%#lx" )
 #define ok_nt( e, r )       ok_ex( r, ==, e, NTSTATUS, "%#lx" )
+#define ok_vk( e, r )       ok_ex( r, ==, e, VkResult, "%d" )
+
+static BOOL is_d3dkmt_handle( HANDLE handle )
+{
+    return (ULONG_PTR)handle & 0xc0000000;
+}
 
 #define run_in_process( a ) run_in_process_( __FILE__, __LINE__, a )
 static void run_in_process_( const char *file, int line, const char *args )
@@ -152,6 +184,257 @@ static void _check_object_name( unsigned line, HANDLE handle, const WCHAR *expec
     ok_(__FILE__, line)( len >= sizeof(OBJECT_NAME_INFORMATION) + str->Length, "unexpected len %lu\n", len );
     ok_(__FILE__, line)( compare_unicode_string( str, expected_name ), "got %s, expected %s\n",
                          debugstr_w(str->Buffer), debugstr_w(expected_name) );
+}
+
+struct dxgi_runtime_desc
+{
+    UINT                        size;
+    UINT                        version;
+    UINT                        width;
+    UINT                        height;
+    DXGI_FORMAT                 format;
+    UINT                        unknown_0;
+    UINT                        unknown_1;
+    UINT                        keyed_mutex;
+    D3DKMT_HANDLE               mutex_handle;
+    D3DKMT_HANDLE               sync_handle;
+    UINT                        nt_shared;
+    UINT                        unknown_2;
+    UINT                        unknown_3;
+    UINT                        unknown_4;
+};
+
+#define check_dxgi_runtime_desc( a, b ) check_dxgi_runtime_desc_( a, b, FALSE )
+static void check_dxgi_runtime_desc_( struct dxgi_runtime_desc *desc, const struct dxgi_runtime_desc *expect, BOOL d3d12 )
+{
+    ok_x4( desc->size, ==, expect->size );
+    ok_x4( desc->version, ==, expect->version );
+    ok_x4( desc->width, ==, expect->width );
+    ok_x4( desc->height, ==, expect->height );
+    ok_x4( desc->format, ==, expect->format );
+    if (expect->version == 1) ok_x4( desc->unknown_0, ==, 1 );
+    else if (!d3d12) ok_x4( desc->unknown_0, ==, 0 );
+    ok_x4( desc->unknown_1, ==, 0 );
+    ok_x4( desc->keyed_mutex, ==, expect->keyed_mutex );
+    if (desc->keyed_mutex) check_d3dkmt_global( desc->mutex_handle );
+    if (desc->keyed_mutex) check_d3dkmt_global( desc->sync_handle );
+    ok_x4( desc->nt_shared, ==, expect->nt_shared );
+    ok_x4( desc->unknown_2, ==, 0 );
+    ok_x4( desc->unknown_3, ==, 0 );
+    if (!d3d12) ok_x4( desc->unknown_4, ==, 0 );
+}
+
+struct d3d9_runtime_desc
+{
+    struct dxgi_runtime_desc    dxgi;
+    D3DFORMAT                   format;
+    D3DRESOURCETYPE             type;
+    UINT                        usage;
+    union
+    {
+        struct
+        {
+            UINT                unknown_0;
+            UINT                width;
+            UINT                height;
+            UINT                levels;
+            UINT                depth;
+        } texture;
+        struct
+        {
+            UINT                unknown_0;
+            UINT                unknown_1;
+            UINT                unknown_2;
+            UINT                width;
+            UINT                height;
+        } surface;
+        struct
+        {
+            UINT                unknown_0;
+            UINT                width;
+            UINT                format;
+            UINT                unknown_1;
+            UINT                unknown_2;
+        } buffer;
+    };
+};
+
+C_ASSERT( sizeof(struct d3d9_runtime_desc) == 0x58 );
+
+static void check_d3d9_runtime_desc( struct d3d9_runtime_desc *desc, const struct d3d9_runtime_desc *expect )
+{
+    check_dxgi_runtime_desc( &desc->dxgi, &expect->dxgi );
+
+    ok_x4( desc->format, ==, expect->format );
+    ok_x4( desc->type, ==, expect->type );
+    ok_x4( desc->usage, ==, expect->usage );
+    switch (desc->type)
+    {
+    case D3DRTYPE_TEXTURE:
+        ok_x4( desc->texture.unknown_0, ==, 0 );
+        ok_x4( desc->texture.width, ==, expect->dxgi.width );
+        ok_x4( desc->texture.height, ==, expect->dxgi.height );
+        ok_x4( desc->texture.levels, ==, 1 );
+        ok_x4( desc->texture.depth, ==, 0 );
+        break;
+    case D3DRTYPE_CUBETEXTURE:
+        ok_x4( desc->texture.unknown_0, ==, 0 );
+        ok_x4( desc->texture.width, ==, expect->dxgi.width );
+        ok_x4( desc->texture.height, ==, expect->dxgi.width );
+        ok_x4( desc->texture.levels, ==, 1 );
+        ok_x4( desc->texture.depth, ==, 0 );
+        break;
+    case D3DRTYPE_VOLUMETEXTURE:
+        ok_x4( desc->texture.unknown_0, ==, 0 );
+        ok_x4( desc->texture.width, ==, expect->dxgi.width );
+        ok_x4( desc->texture.height, ==, expect->dxgi.height );
+        ok_x4( desc->texture.levels, ==, 1 );
+        ok_x4( desc->texture.depth, ==, expect->texture.depth );
+        break;
+    case D3DRTYPE_SURFACE:
+        ok_x4( desc->surface.unknown_0, ==, 0 );
+        ok_x4( desc->surface.unknown_1, ==, 0 );
+        ok_x4( desc->surface.unknown_2, ==, 0 );
+        ok_x4( desc->surface.width, ==, expect->dxgi.width );
+        ok_x4( desc->surface.height, ==, expect->dxgi.height );
+        break;
+    case D3DRTYPE_VERTEXBUFFER:
+    case D3DRTYPE_INDEXBUFFER:
+        ok_x4( desc->buffer.unknown_0, ==, 0 );
+        ok_x4( desc->buffer.width, ==, expect->dxgi.width );
+        ok_x4( desc->buffer.format, ==, expect->buffer.format );
+        ok_x4( desc->buffer.unknown_1, ==, 0 );
+        ok_x4( desc->buffer.unknown_2, ==, 0 );
+        break;
+    default:
+        ok( 0, "unexpected\n" );
+        break;
+    }
+}
+
+static void get_d3dkmt_resource_desc( LUID luid, HANDLE handle, BOOL expect_global, UINT size, char *buffer )
+{
+    D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE query_nt = {0};
+    D3DKMT_OPENADAPTERFROMLUID open_adapter = {0};
+    D3DKMT_OPENRESOURCEFROMNTHANDLE open_nt = {0};
+    D3DDDI_OPENALLOCATIONINFO2 open_alloc = {0};
+    D3DKMT_DESTROYDEVICE destroy_device = {0};
+    D3DKMT_CREATEDEVICE create_device = {0};
+    D3DKMT_CLOSEADAPTER close_adapter = {0};
+    D3DKMT_DESTROYALLOCATION destroy = {0};
+    D3DKMT_QUERYRESOURCEINFO query = {0};
+    D3DKMT_OPENRESOURCE open = {0};
+
+    char resource_data[0x100] = {0};
+    char driver_data[0x4000] = {0};
+    D3DKMT_HANDLE resource;
+    NTSTATUS status;
+
+    todo_wine ok_ptr( handle, !=, NULL );
+    if (!handle) return;
+
+    open_adapter.AdapterLuid = luid;
+    status = D3DKMTOpenAdapterFromLuid(&open_adapter);
+    ok_nt( status, STATUS_SUCCESS );
+    check_d3dkmt_local(open_adapter.hAdapter, NULL);
+    create_device.hAdapter = open_adapter.hAdapter;
+    status = D3DKMTCreateDevice(&create_device);
+    ok_nt( status, STATUS_SUCCESS );
+    check_d3dkmt_local(create_device.hDevice, NULL);
+
+    if (expect_global) check_d3dkmt_global( (UINT_PTR)handle );
+    else check_object_type( handle, L"DxgkSharedResource" );
+
+    if (is_d3dkmt_handle( handle ))
+    {
+        memset( buffer, 0xcd, size );
+        query.hDevice = create_device.hDevice;
+        query.hGlobalShare = HandleToUlong( handle );
+        query.pPrivateRuntimeData = buffer;
+        query.PrivateRuntimeDataSize = size;
+        status = D3DKMTQueryResourceInfo( &query );
+        ok_nt( STATUS_SUCCESS, status );
+        if (size) ok_u4( query.PrivateRuntimeDataSize, ==, size );
+        else ok( query.PrivateRuntimeDataSize == 0 || query.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", query.PrivateRuntimeDataSize );
+        ok_u4( query.TotalPrivateDriverDataSize, <, sizeof(driver_data) );
+        ok_u4( query.ResourcePrivateDriverDataSize, <, sizeof(driver_data) );
+        ok_u4( query.NumAllocations, ==, 1 );
+        if (size) ok_u1( *buffer, ==, 0xcd );
+
+        memset( buffer, 0xcd, size );
+        open.hDevice = query.hDevice;
+        open.hGlobalShare = query.hGlobalShare;
+        open.NumAllocations = 1;
+        open.pOpenAllocationInfo2 = &open_alloc;
+        open.pPrivateRuntimeData = buffer;
+        open.PrivateRuntimeDataSize = query.PrivateRuntimeDataSize;
+        open.pResourcePrivateDriverData = resource_data;
+        open.ResourcePrivateDriverDataSize = query.ResourcePrivateDriverDataSize;
+        open.pTotalPrivateDriverDataBuffer = driver_data;
+        open.TotalPrivateDriverDataBufferSize = query.TotalPrivateDriverDataSize;
+        status = D3DKMTOpenResource2( &open );
+        ok_nt( STATUS_SUCCESS, status );
+        check_d3dkmt_local( open.hResource, NULL );
+        if (size) ok_u4( open.PrivateRuntimeDataSize, ==, size );
+        else ok( open.PrivateRuntimeDataSize == 0 || open.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", open.PrivateRuntimeDataSize );
+        ok_u4( open.TotalPrivateDriverDataBufferSize, <, sizeof(driver_data) );
+        ok_u4( open.ResourcePrivateDriverDataSize, <, sizeof(driver_data) );
+        ok_u4( open.NumAllocations, ==, 1 );
+        check_d3dkmt_local( open_alloc.hAllocation, NULL );
+
+        resource = open.hResource;
+    }
+    else
+    {
+        memset( buffer, 0xcd, size );
+        query_nt.hDevice = create_device.hDevice;
+        query_nt.hNtHandle = handle;
+        query_nt.pPrivateRuntimeData = buffer;
+        query_nt.PrivateRuntimeDataSize = size;
+        status = D3DKMTQueryResourceInfoFromNtHandle( &query_nt );
+        ok_nt( STATUS_SUCCESS, status );
+        if (size) ok_u4( query_nt.PrivateRuntimeDataSize, ==, size );
+        else ok( query_nt.PrivateRuntimeDataSize == 0 || query_nt.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", query_nt.PrivateRuntimeDataSize );
+        ok_u4( query_nt.TotalPrivateDriverDataSize, <, sizeof(driver_data) );
+        ok_u4( query_nt.ResourcePrivateDriverDataSize, <, sizeof(driver_data) );
+        ok_u4( query_nt.NumAllocations, ==, 1 );
+        if (size) ok_u1( *buffer, ==, 0xcd );
+
+        memset( buffer, 0xcd, size );
+        open_nt.hDevice = query_nt.hDevice;
+        open_nt.hNtHandle = query_nt.hNtHandle;
+        open_nt.NumAllocations = 1;
+        open_nt.pOpenAllocationInfo2 = &open_alloc;
+        open_nt.pPrivateRuntimeData = buffer;
+        open_nt.PrivateRuntimeDataSize = query_nt.PrivateRuntimeDataSize;
+        open_nt.pResourcePrivateDriverData = resource_data;
+        open_nt.ResourcePrivateDriverDataSize = query_nt.ResourcePrivateDriverDataSize;
+        open_nt.pTotalPrivateDriverDataBuffer = driver_data;
+        open_nt.TotalPrivateDriverDataBufferSize = query_nt.TotalPrivateDriverDataSize;
+        status = D3DKMTOpenResourceFromNtHandle( &open_nt );
+        ok_nt( STATUS_SUCCESS, status );
+        check_d3dkmt_local( open_nt.hResource, NULL );
+        if (size) ok_u4( open_nt.PrivateRuntimeDataSize, ==, size );
+        else ok( open_nt.PrivateRuntimeDataSize == 0 || open_nt.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", open_nt.PrivateRuntimeDataSize );
+        ok_u4( open_nt.TotalPrivateDriverDataBufferSize, <, sizeof(driver_data) );
+        ok_u4( open_nt.ResourcePrivateDriverDataSize, <, sizeof(driver_data) );
+        ok_u4( open_nt.NumAllocations, ==, 1 );
+        todo_wine check_d3dkmt_local( open_alloc.hAllocation, NULL );
+
+        resource = open_nt.hResource;
+    }
+
+    destroy.hDevice = create_device.hDevice;
+    destroy.hResource = resource;
+    status = D3DKMTDestroyAllocation( &destroy );
+    ok_nt( STATUS_SUCCESS, status );
+
+    destroy_device.hDevice = create_device.hDevice;
+    status = D3DKMTDestroyDevice(&destroy_device);
+    ok_nt( status, STATUS_SUCCESS );
+    close_adapter.hAdapter = open_adapter.hAdapter;
+    status = D3DKMTCloseAdapter(&close_adapter);
+    ok_nt( status, STATUS_SUCCESS );
 }
 
 static BOOL get_primary_adapter_name( WCHAR *name )
@@ -2663,6 +2946,286 @@ static void test_D3DKMTShareObjects( void )
     ok_nt( STATUS_SUCCESS, status );
 }
 
+static IDirect3DDevice9Ex *create_d3d9ex_device( HWND hwnd, LUID *luid, BOOL *stencil_broken )
+{
+    D3DPRESENT_PARAMETERS params = {0};
+    D3DADAPTER_IDENTIFIER9 adapter_id;
+    IDirect3DDevice9Ex *device;
+    IDirect3D9Ex *d3d;
+    LUID adapter_luid;
+    UINT i, count;
+    HRESULT hr;
+
+    hr = Direct3DCreate9Ex( D3D_SDK_VERSION, &d3d );
+    ok_hr( S_OK, hr );
+    count = IDirect3D9Ex_GetAdapterCount( d3d );
+    ok_u4( count, >, 0 );
+
+    for (i = 0; i < count; i++)
+    {
+        hr = IDirect3D9Ex_GetAdapterLUID( d3d, i, &adapter_luid );
+        ok_hr( S_OK, hr );
+
+        if (luid_equals( luid, &luid_zero )) *luid = adapter_luid;
+        if (luid_equals( luid, &adapter_luid )) break;
+    }
+    ok( i < count, "d3d9ex adapter not found\n" );
+
+    hr = IDirect3D9Ex_GetAdapterIdentifier( d3d, i, 0, &adapter_id );
+    ok_hr( S_OK, hr );
+    if (stencil_broken) *stencil_broken = adapter_id.VendorId == 0x1002;
+
+    params.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    params.hDeviceWindow = hwnd;
+    params.Windowed = TRUE;
+    hr = IDirect3D9Ex_CreateDeviceEx( d3d, i, D3DDEVTYPE_HAL, hwnd, D3DCREATE_HARDWARE_VERTEXPROCESSING,
+                                     &params, NULL, &device );
+    ok_hr( S_OK, hr );
+    IDirect3D9Ex_Release( d3d );
+
+    return device;
+}
+
+static void test_shared_resources(void)
+{
+    IDirect3DDevice9Ex *d3d9_exp, *d3d9_imp;
+    BOOL stencil_broken;
+    LUID luid = {0};
+    HRESULT hr;
+    HWND hwnd;
+    MSG msg;
+
+    hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE, 100, 100, 200, 200, NULL, NULL, NULL, NULL );
+    ok_ptr( hwnd, !=, NULL );
+    while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
+
+    d3d9_exp = create_d3d9ex_device( hwnd, &luid, &stencil_broken );
+    ok_ptr( d3d9_exp, !=, NULL );
+    d3d9_imp = create_d3d9ex_device( hwnd, &luid, NULL );
+    ok_ptr( d3d9_imp, !=, NULL );
+
+    trace( "adapter luid %s\n", debugstr_luid( &luid ) );
+
+#define MAKETEST(api, dim, idx) (((api & 7) << 7) | ((dim & 7) << 4) | (idx & 15))
+#define GET_API(test) ((test >> 7) & 7)
+#define GET_DIM(test) ((test >> 4) & 7)
+
+    for (UINT test = 0; test <= MAKETEST(7,7,0xf); test++)
+    {
+        static const UINT resource_size = 0x100000, array_1d = 0x20, width_2d = 0x40, height_3d = 0x20, width_cube = 0x40;
+        const UINT width_3d = width_2d, depth_3d = resource_size / 4 / width_2d / height_3d;
+        const UINT height_2d = resource_size / 4 / width_2d;
+        const UINT width_1d = resource_size / 4 / array_1d;
+
+        char runtime_desc[0x1000] = {0};
+        IUnknown *export = NULL;
+        HANDLE handle = NULL;
+
+        winetest_push_context( "%u:%u:%u", GET_API(test), GET_DIM(test), test & 15 );
+
+        switch (test)
+        {
+        case MAKETEST(0, 0, 0):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x58, .version = 1, .width = resource_size / (4 * sizeof(float)), .height = 1, .format = DXGI_FORMAT_UNKNOWN};
+            const struct d3d9_runtime_desc desc = {.dxgi = dxgi, .format = D3DFMT_VERTEXDATA, .type = D3DRTYPE_VERTEXBUFFER, .usage = D3DUSAGE_LOCKABLE, .buffer.format = D3DFVF_XYZ};
+            hr = IDirect3DDevice9Ex_CreateVertexBuffer( d3d9_exp, dxgi.width, 0, D3DFVF_XYZ, D3DPOOL_DEFAULT,
+                                                        (IDirect3DVertexBuffer9 **)&export, &handle );
+            ok_hr( S_OK, hr );
+            todo_wine ok_ptr( handle, !=, NULL );
+            if (!handle) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d9_runtime_desc( (struct d3d9_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(0, 0, 1):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x58, .version = 1, .width = resource_size / 2, .height = 1, .format = DXGI_FORMAT_UNKNOWN};
+            const struct d3d9_runtime_desc desc = {.dxgi = dxgi, .format = D3DFMT_INDEX16, .type = D3DRTYPE_INDEXBUFFER, .usage = D3DUSAGE_LOCKABLE};
+            hr = IDirect3DDevice9Ex_CreateIndexBuffer( d3d9_exp, dxgi.width, 0, desc.format, D3DPOOL_DEFAULT,
+                                                       (IDirect3DIndexBuffer9 **)&export, &handle );
+            ok( hr == S_OK || broken( hr == D3DERR_NOTAVAILABLE ), "got %#lx\n", hr );
+            if (hr != S_OK) break;
+            todo_wine ok_ptr( handle, !=, NULL );
+            if (!handle) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d9_runtime_desc( (struct d3d9_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(0, 2, 0):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x58, .version = 1, .width = width_2d, .height = height_2d, .format = DXGI_FORMAT_B8G8R8A8_UNORM};
+            const struct d3d9_runtime_desc desc = {.dxgi = dxgi, .format = D3DFMT_A8R8G8B8, .type = D3DRTYPE_TEXTURE, .usage = D3DUSAGE_SURFACE};
+            hr = IDirect3DDevice9Ex_CreateTexture( d3d9_exp, dxgi.width, dxgi.height, 1, 0, desc.format, D3DPOOL_DEFAULT,
+                                                   (IDirect3DTexture9 **)&export, &handle );
+            ok_hr( S_OK, hr );
+            todo_wine ok_ptr( handle, !=, NULL );
+            if (!handle) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d9_runtime_desc( (struct d3d9_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(0, 2, 1):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x58, .version = 1, .width = width_2d, .height = height_2d, .format = DXGI_FORMAT_B8G8R8A8_UNORM};
+            const struct d3d9_runtime_desc desc = {.dxgi = dxgi, .format = D3DFMT_A8R8G8B8, .type = D3DRTYPE_TEXTURE, .usage = D3DUSAGE_SURFACE | D3DUSAGE_LOCKABLE | D3DUSAGE_DYNAMIC};
+            hr = IDirect3DDevice9Ex_CreateTexture( d3d9_exp, dxgi.width, dxgi.height, 1, D3DUSAGE_DYNAMIC, desc.format, D3DPOOL_DEFAULT,
+                                                   (IDirect3DTexture9 **)&export, &handle );
+            ok_hr( S_OK, hr );
+            todo_wine ok_ptr( handle, !=, NULL );
+            if (!handle) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d9_runtime_desc( (struct d3d9_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(0, 2, 2):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x58, .version = 1, .width = width_2d, .height = height_2d, .format = DXGI_FORMAT_B8G8R8A8_UNORM};
+            const struct d3d9_runtime_desc desc = {.dxgi = dxgi, .format = D3DFMT_A8R8G8B8, .type = D3DRTYPE_TEXTURE, .usage = D3DUSAGE_SURFACE | D3DUSAGE_RENDERTARGET};
+            hr = IDirect3DDevice9Ex_CreateTexture( d3d9_exp, dxgi.width, dxgi.height, 1, D3DUSAGE_RENDERTARGET, desc.format, D3DPOOL_DEFAULT,
+                                                   (IDirect3DTexture9 **)&export, &handle );
+            ok_hr( S_OK, hr );
+            todo_wine ok_ptr( handle, !=, NULL );
+            if (!handle) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d9_runtime_desc( (struct d3d9_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(0, 2, 3):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x58, .version = 1, .width = width_2d, .height = height_2d, .format = DXGI_FORMAT_B8G8R8A8_UNORM};
+            const struct d3d9_runtime_desc desc = {.dxgi = dxgi, .format = D3DFMT_A8R8G8B8, .type = D3DRTYPE_SURFACE, .usage = D3DUSAGE_SURFACE | D3DUSAGE_RENDERTARGET};
+            hr = IDirect3DDevice9Ex_CreateRenderTarget( d3d9_exp, dxgi.width, dxgi.height, desc.format, D3DMULTISAMPLE_NONE, 0,
+                                                        FALSE, (IDirect3DSurface9 **)&export, &handle );
+            ok_hr( S_OK, hr );
+            todo_wine ok_ptr( handle, !=, NULL );
+            if (!handle) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d9_runtime_desc( (struct d3d9_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(0, 2, 4):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x58, .version = 1, .width = width_2d, .height = height_2d, .format = DXGI_FORMAT_B8G8R8A8_UNORM};
+            const struct d3d9_runtime_desc desc = {.dxgi = dxgi, .format = D3DFMT_A8R8G8B8, .type = D3DRTYPE_SURFACE, .usage = D3DUSAGE_SURFACE | D3DUSAGE_LOCKABLE | D3DUSAGE_RENDERTARGET};
+            hr = IDirect3DDevice9Ex_CreateRenderTarget( d3d9_exp, dxgi.width, dxgi.height, desc.format, D3DMULTISAMPLE_NONE, 0,
+                                                        TRUE, (IDirect3DSurface9 **)&export, &handle );
+            ok_hr( S_OK, hr );
+            todo_wine ok_ptr( handle, !=, NULL );
+            if (!handle) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d9_runtime_desc( (struct d3d9_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(0, 2, 5):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x58, .version = 1, .width = width_2d, .height = height_2d, .format = DXGI_FORMAT_D24_UNORM_S8_UINT};
+            struct d3d9_runtime_desc desc = {.dxgi = dxgi, .format = D3DFMT_D24S8, .type = D3DRTYPE_SURFACE, .usage = D3DUSAGE_SURFACE | D3DUSAGE_DEPTHSTENCIL};
+            hr = IDirect3DDevice9Ex_CreateDepthStencilSurface( d3d9_exp, dxgi.width, dxgi.height, desc.format, D3DMULTISAMPLE_NONE, 0,
+                                                               FALSE, (IDirect3DSurface9 **)&export, &handle );
+            ok_hr( S_OK, hr );
+            todo_wine ok_ptr( handle, !=, NULL );
+            if (!handle) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            if (stencil_broken) { desc.dxgi.format = 0; desc.format = D3DFMT_D24S8 - 1; }
+            check_d3d9_runtime_desc( (struct d3d9_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(0, 2, 6):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x58, .version = 1, .width = width_2d, .height = height_2d, .format = DXGI_FORMAT_B8G8R8A8_UNORM};
+            const struct d3d9_runtime_desc desc = {.dxgi = dxgi, .format = D3DFMT_A8R8G8B8, .type = D3DRTYPE_SURFACE, .usage = D3DUSAGE_LOCKABLE | D3DUSAGE_OFFSCREEN};
+            hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurface( d3d9_exp, dxgi.width, dxgi.height, desc.format, D3DPOOL_DEFAULT,
+                                                                 (IDirect3DSurface9 **)&export, &handle );
+            ok_hr( S_OK, hr );
+            todo_wine ok_ptr( handle, !=, NULL );
+            if (!handle) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d9_runtime_desc( (struct d3d9_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(0, 2, 7):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x58, .version = 1, .width = width_2d, .height = height_2d, .format = DXGI_FORMAT_B8G8R8A8_UNORM};
+            const struct d3d9_runtime_desc desc = {.dxgi = dxgi, .format = D3DFMT_A8R8G8B8, .type = D3DRTYPE_SURFACE, .usage = D3DUSAGE_SURFACE | D3DUSAGE_RENDERTARGET};
+            hr = IDirect3DDevice9Ex_CreateRenderTargetEx( d3d9_exp, dxgi.width, dxgi.height, desc.format, D3DMULTISAMPLE_NONE, 0,
+                                                          FALSE, (IDirect3DSurface9 **)&export, &handle, 0 );
+            ok_hr( S_OK, hr );
+            todo_wine ok_ptr( handle, !=, NULL );
+            if (!handle) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d9_runtime_desc( (struct d3d9_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(0, 2, 8):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x58, .version = 1, .width = width_2d, .height = height_2d, .format = DXGI_FORMAT_B8G8R8A8_UNORM};
+            const struct d3d9_runtime_desc desc = {.dxgi = dxgi, .format = D3DFMT_A8R8G8B8, .type = D3DRTYPE_SURFACE, .usage = D3DUSAGE_LOCKABLE | D3DUSAGE_OFFSCREEN};
+            hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurfaceEx( d3d9_exp, dxgi.width, dxgi.height, desc.format, D3DPOOL_DEFAULT,
+                                                                   (IDirect3DSurface9 **)&export, &handle, 0 );
+            todo_wine ok_hr( S_OK, hr );
+            todo_wine todo_wine ok_ptr( handle, !=, NULL );
+            if (!handle) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d9_runtime_desc( (struct d3d9_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(0, 2, 9):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x58, .version = 1, .width = width_2d, .height = height_2d, .format = DXGI_FORMAT_D24_UNORM_S8_UINT};
+            struct d3d9_runtime_desc desc = {.dxgi = dxgi, .format = D3DFMT_D24S8, .type = D3DRTYPE_SURFACE, .usage = D3DUSAGE_SURFACE | D3DUSAGE_DEPTHSTENCIL};
+            hr = IDirect3DDevice9Ex_CreateDepthStencilSurfaceEx( d3d9_exp, dxgi.width, dxgi.height, desc.format, D3DMULTISAMPLE_NONE, 0,
+                                                                 FALSE, (IDirect3DSurface9 **)&export, &handle, 0 );
+            ok_hr( S_OK, hr );
+            todo_wine ok_ptr( handle, !=, NULL );
+            if (!handle) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            if (stencil_broken) { desc.dxgi.format = 0; desc.format = D3DFMT_D24S8 - 1; }
+            check_d3d9_runtime_desc( (struct d3d9_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(0, 3, 0):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x58, .version = 1, .width = width_3d, .height = height_3d, .format = DXGI_FORMAT_UNKNOWN};
+            const struct d3d9_runtime_desc desc = {.dxgi = dxgi, .format = D3DFMT_A8R8G8B8, .type = D3DRTYPE_VOLUMETEXTURE, .usage = D3DUSAGE_SURFACE, .texture.depth = depth_3d};
+            hr = IDirect3DDevice9Ex_CreateVolumeTexture( d3d9_exp, dxgi.width, dxgi.height, desc.texture.depth, 1, 0, desc.format, D3DPOOL_DEFAULT,
+                                                         (IDirect3DVolumeTexture9 **)&export, &handle );
+            ok_hr( S_OK, hr );
+            todo_wine ok_ptr( handle, !=, NULL );
+            if (!handle) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d9_runtime_desc( (struct d3d9_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(0, 3, 1):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x58, .version = 1, .width = width_cube, .height = width_cube, .format = DXGI_FORMAT_UNKNOWN};
+            const struct d3d9_runtime_desc desc = {.dxgi = dxgi, .format = D3DFMT_A8R8G8B8, .type = D3DRTYPE_CUBETEXTURE, .usage = D3DUSAGE_SURFACE};
+            hr = IDirect3DDevice9Ex_CreateCubeTexture( d3d9_exp, dxgi.width, 1, 0, desc.format, D3DPOOL_DEFAULT,
+                                                       (IDirect3DCubeTexture9 **)&export, &handle );
+            ok_hr( S_OK, hr );
+            todo_wine ok_ptr( handle, !=, NULL );
+            if (!handle) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d9_runtime_desc( (struct d3d9_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        }
+
+        if (handle && !is_d3dkmt_handle( handle )) CloseHandle( handle );
+        if (export) ok_ref( 0, IUnknown_Release( export ) );
+        winetest_pop_context();
+    }
+
+#undef GET_DIM
+#undef GET_API
+#undef MAKETEST
+
+    ok_ref( 0, IDirect3DDevice9Ex_Release( d3d9_imp ) );
+    ok_ref( 0, IDirect3DDevice9Ex_Release( d3d9_exp ) );
+    DestroyWindow( hwnd );
+}
+
 START_TEST( d3dkmt )
 {
     char **argv;
@@ -2692,4 +3255,5 @@ START_TEST( d3dkmt )
     test_D3DKMTCreateKeyedMutex();
     test_D3DKMTCreateAllocation();
     test_D3DKMTShareObjects();
+    test_shared_resources();
 }
