@@ -1600,9 +1600,12 @@ fail:
 
 static NTSTATUS process_detach( void *args )
 {
-    pgnutls_global_deinit();
-    dlclose(libgnutls_handle);
-    libgnutls_handle = NULL;
+    if (libgnutls_handle)
+    {
+        pgnutls_global_deinit();
+        dlclose(libgnutls_handle);
+        libgnutls_handle = NULL;
+    }
     return STATUS_SUCCESS;
 }
 
