@@ -391,6 +391,10 @@ WinINet
 P:	Jacek Caban <jacek@codeweavers.com> @jacek
 F:	dlls/wininet/
 
+WinRT Devices
+P:	Vibhav Pant <vibhavp@gmail.com> @vibhavp
+F:	dlls/windows.devices.enumeration/
+
 X11 Driver
 M:	Alexandre Julliard <julliard@winehq.org> @julliard
 P:	Rémi Bernon <rbernon@codeweavers.com> @rbernon
