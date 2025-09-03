@@ -13,6 +13,7 @@
     - key:
         files:
           - configure.ac
+          - tools/gitlab/image.docker
         prefix: $CI_JOB_NAME-config
       paths:
         - build32/config.cache
