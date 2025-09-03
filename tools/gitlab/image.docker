@@ -117,6 +117,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
             libgphoto2-dev:i386 \
             libice-dev:i386 \
             libkrb5-dev:i386 \
+            liborc-0.4-dev:i386 \
             libpcap-dev:i386 \
             libpulse-dev:i386 \
             libsane-dev:i386 \
@@ -142,6 +143,10 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
             linux-libc-dev:i386 \
             ocl-icd-opencl-dev:i386 \
             unixodbc-dev:i386 && \
+        apt-get download -y libgstreamer-plugins-base1.0-dev:i386 libgstreamer1.0-dev:i386 && \
+        (for deb in *.deb; do dpkg-deb -x $deb /dpkg; done) && \
+        cp -a /dpkg/usr/lib/i386-linux-gnu /usr/lib && \
+        rm -rf /dpkg && \
         curl -L -o /usr/local/bin/sarif-converter https://gitlab.com/ignis-build/sarif-converter/-/releases/permalink/latest/downloads/bin/sarif-converter-linux-amd64 && \
         chmod +x /usr/local/bin/sarif-converter ;; \
     arm64) \
