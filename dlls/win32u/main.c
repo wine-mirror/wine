@@ -211,6 +211,11 @@ HBRUSH SYSCALL_API NtGdiCreateSolidBrush( COLORREF color, HBRUSH brush )
     SYSCALL_FUNC( NtGdiCreateSolidBrush );
 }
 
+NTSTATUS SYSCALL_API NtGdiDdDDICheckOcclusion( const D3DKMT_CHECKOCCLUSION *desc )
+{
+    SYSCALL_FUNC( NtGdiDdDDICheckOcclusion );
+}
+
 NTSTATUS SYSCALL_API NtGdiDdDDICheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc )
 {
     SYSCALL_FUNC( NtGdiDdDDICheckVidPnExclusiveOwnership );

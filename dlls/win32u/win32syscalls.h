@@ -213,7 +213,7 @@
     SYSCALL_ENTRY( 0x10d1, NtGdiDdDDICheckMultiPlaneOverlaySupport, 0 ) \
     SYSCALL_ENTRY( 0x10d2, NtGdiDdDDICheckMultiPlaneOverlaySupport2, 0 ) \
     SYSCALL_ENTRY( 0x10d3, NtGdiDdDDICheckMultiPlaneOverlaySupport3, 0 ) \
-    SYSCALL_ENTRY( 0x10d4, NtGdiDdDDICheckOcclusion, 0 ) \
+    SYSCALL_ENTRY( 0x10d4, NtGdiDdDDICheckOcclusion, 4 ) \
     SYSCALL_ENTRY( 0x10d5, NtGdiDdDDICheckSharedResourceAccess, 0 ) \
     SYSCALL_ENTRY( 0x10d6, NtGdiDdDDICheckVidPnExclusiveOwnership, 4 ) \
     SYSCALL_ENTRY( 0x10d7, NtGdiDdDDICloseAdapter, 4 ) \
@@ -1755,7 +1755,7 @@
     SYSCALL_ENTRY( 0x10d1, NtGdiDdDDICheckMultiPlaneOverlaySupport, 0 ) \
     SYSCALL_ENTRY( 0x10d2, NtGdiDdDDICheckMultiPlaneOverlaySupport2, 0 ) \
     SYSCALL_ENTRY( 0x10d3, NtGdiDdDDICheckMultiPlaneOverlaySupport3, 0 ) \
-    SYSCALL_ENTRY( 0x10d4, NtGdiDdDDICheckOcclusion, 0 ) \
+    SYSCALL_ENTRY( 0x10d4, NtGdiDdDDICheckOcclusion, 8 ) \
     SYSCALL_ENTRY( 0x10d5, NtGdiDdDDICheckSharedResourceAccess, 0 ) \
     SYSCALL_ENTRY( 0x10d6, NtGdiDdDDICheckVidPnExclusiveOwnership, 8 ) \
     SYSCALL_ENTRY( 0x10d7, NtGdiDdDDICloseAdapter, 8 ) \
@@ -3269,7 +3269,6 @@
     SYSCALL_STUB( NtGdiDdDDICheckMultiPlaneOverlaySupport ) \
     SYSCALL_STUB( NtGdiDdDDICheckMultiPlaneOverlaySupport2 ) \
     SYSCALL_STUB( NtGdiDdDDICheckMultiPlaneOverlaySupport3 ) \
-    SYSCALL_STUB( NtGdiDdDDICheckOcclusion ) \
     SYSCALL_STUB( NtGdiDdDDICheckSharedResourceAccess ) \
     SYSCALL_STUB( NtGdiDdDDIConfigureSharedResource ) \
     SYSCALL_STUB( NtGdiDdDDICreateBundleObject ) \

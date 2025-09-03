@@ -99,6 +99,7 @@
 # @ stub CreateScaledCompatibleBitmap
 # @ stub CreateSessionMappedDIBSection
 @ stdcall CreateSolidBrush(long)
+@ stdcall D3DKMTCheckOcclusion(ptr) win32u.NtGdiDdDDICheckOcclusion
 @ stdcall D3DKMTCheckVidPnExclusiveOwnership(ptr) win32u.NtGdiDdDDICheckVidPnExclusiveOwnership
 @ stdcall D3DKMTCloseAdapter(ptr) win32u.NtGdiDdDDICloseAdapter
 @ stdcall D3DKMTCreateAllocation(ptr) win32u.NtGdiDdDDICreateAllocation

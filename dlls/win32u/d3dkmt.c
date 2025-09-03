@@ -540,6 +540,12 @@ NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER 
     return STATUS_SUCCESS;
 }
 
+NTSTATUS WINAPI NtGdiDdDDICheckOcclusion( const D3DKMT_CHECKOCCLUSION *desc )
+{
+    FIXME( "desc %p stub!\n", desc );
+    return STATUS_PROCEDURE_NOT_FOUND;
+}
+
 /******************************************************************************
  *           NtGdiDdDDICheckVidPnExclusiveOwnership    (win32u.@)
  */

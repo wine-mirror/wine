@@ -399,6 +399,16 @@ NTSTATUS WINAPI wow64_NtGdiCreateSolidBrush( UINT *args )
     return HandleToUlong( NtGdiCreateSolidBrush( color, brush ));
 }
 
+NTSTATUS WINAPI wow64_NtGdiDdDDICheckOcclusion( UINT *args )
+{
+    struct
+    {
+        ULONG hWnd;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_CHECKOCCLUSION desc = {.hWnd = UlongToHandle( desc32->hWnd )};
+    return NtGdiDdDDICheckOcclusion( &desc );
+}
+
 NTSTATUS WINAPI wow64_NtGdiDdDDICheckVidPnExclusiveOwnership( UINT *args )
 {
     const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc = get_ptr( &args );
