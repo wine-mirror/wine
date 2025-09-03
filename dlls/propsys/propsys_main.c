@@ -829,7 +829,7 @@ static struct system_property_description system_properties[] =
 {
     {L"System.Devices.ContainerId", &PKEY_Devices_ContainerId, VT_CLSID},
     {L"System.Devices.InterfaceClassGuid", &PKEY_Devices_InterfaceClassGuid, VT_CLSID},
-    {L"System.Devices.DeviceInstanceId", &PKEY_Devices_DeviceInstanceId, VT_CLSID},
+    {L"System.Devices.DeviceInstanceId", &PKEY_Devices_DeviceInstanceId, VT_LPWSTR},
     {L"System.Devices.InterfaceEnabled", &PKEY_Devices_InterfaceEnabled, VT_BOOL},
     {L"System.Devices.ClassGuid", &PKEY_Devices_ClassGuid, VT_CLSID},
     {L"System.Devices.CompatibleIds", &PKEY_Devices_CompatibleIds, VT_VECTOR | VT_LPWSTR},
