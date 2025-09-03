@@ -308,6 +308,9 @@ STRUCT_CHAIN_CONVERSIONS = {
     "VkImageCreateInfo": {},
     "VkPhysicalDeviceExternalBufferInfo": {},
     "VkPhysicalDeviceImageFormatInfo2": {},
+    "VkCommandBufferSubmitInfo": {},
+    "VkSubmitInfo": {},
+    "VkSubmitInfo2": {},
 
     # Ignore to not confuse host loader.
     "VkDeviceCreateInfo": {"strip": ["VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO"]},
