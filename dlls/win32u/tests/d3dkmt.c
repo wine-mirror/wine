@@ -41,6 +41,15 @@ static const WCHAR display1W[] = L"\\\\.\\DISPLAY1";
 
 DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
 
+#define check_d3dkmt_local( a, b ) check_d3dkmt_local_( __LINE__, a, b )
+static void check_d3dkmt_local_( int line, D3DKMT_HANDLE handle, D3DKMT_HANDLE *next_local )
+{
+    ok_(__FILE__, line)( handle & 0xc0000000, "got %#x\n", handle );
+    ok_(__FILE__, line)( handle && !(handle & 0x3f), "got %#x\n", handle );
+    if (next_local && *next_local) ok_(__FILE__, line)( handle == *next_local, "got %#x, expected %#x\n", handle, *next_local );
+    if (next_local) *next_local = handle + 0x40;
+}
+
 static BOOL get_primary_adapter_name( WCHAR *name )
 {
     DISPLAY_DEVICEW dd;
@@ -64,12 +73,14 @@ static void test_D3DKMTOpenAdapterFromGdiDisplayName(void)
     D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_gdi_desc;
     D3DKMT_CLOSEADAPTER close_adapter_desc;
     DISPLAY_DEVICEW display_device = {sizeof(display_device)};
+    D3DKMT_HANDLE next_local = 0;
     NTSTATUS status;
     DWORD i;
 
     lstrcpyW( open_adapter_gdi_desc.DeviceName, display1W );
     status = D3DKMTOpenAdapterFromGdiDisplayName( &open_adapter_gdi_desc );
     ok( status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status );
+    todo_wine check_d3dkmt_local( open_adapter_gdi_desc.hAdapter, &next_local );
     close_adapter_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
     status = D3DKMTCloseAdapter( &close_adapter_desc );
     ok( status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status );
@@ -94,8 +105,7 @@ static void test_D3DKMTOpenAdapterFromGdiDisplayName(void)
             ok( status == STATUS_UNSUCCESSFUL, "Got unexpected return code %#lx.\n", status );
             continue;
         }
-
-        ok( open_adapter_gdi_desc.hAdapter, "Expect not null.\n" );
+        todo_wine check_d3dkmt_local( open_adapter_gdi_desc.hAdapter, &next_local );
         ok( open_adapter_gdi_desc.AdapterLuid.LowPart || open_adapter_gdi_desc.AdapterLuid.HighPart,
             "Expect LUID not zero.\n" );
 
@@ -110,6 +120,7 @@ static void test_D3DKMTOpenAdapterFromHdc(void)
     DISPLAY_DEVICEW display_device = {sizeof(display_device)};
     D3DKMT_OPENADAPTERFROMHDC open_adapter_hdc_desc;
     D3DKMT_CLOSEADAPTER close_adapter_desc;
+    D3DKMT_HANDLE next_local = 0;
     INT adapter_count = 0;
     NTSTATUS status;
     HDC hdc;
@@ -134,7 +145,7 @@ static void test_D3DKMTOpenAdapterFromHdc(void)
         open_adapter_hdc_desc.hDc = hdc;
         status = D3DKMTOpenAdapterFromHdc( &open_adapter_hdc_desc );
         todo_wine ok( status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status );
-        todo_wine ok( open_adapter_hdc_desc.hAdapter, "Expect not null.\n" );
+        todo_wine check_d3dkmt_local( open_adapter_hdc_desc.hAdapter, &next_local );
         DeleteDC( hdc );
 
         if (status == STATUS_SUCCESS)
@@ -154,6 +165,7 @@ static void test_D3DKMTOpenAdapterFromHdc(void)
                   "Got unexpected return code %#lx.\n", status );
     if (status == STATUS_SUCCESS)
     {
+        todo_wine check_d3dkmt_local( open_adapter_hdc_desc.hAdapter, &next_local );
         close_adapter_desc.hAdapter = open_adapter_hdc_desc.hAdapter;
         status = D3DKMTCloseAdapter( &close_adapter_desc );
         ok( status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status );
@@ -164,6 +176,7 @@ static void test_D3DKMTEnumAdapters2(void)
 {
     D3DKMT_ENUMADAPTERS2 enum_adapters_2_desc = {0};
     D3DKMT_CLOSEADAPTER close_adapter_desc;
+    D3DKMT_HANDLE next_local = 0;
     NTSTATUS status;
     UINT i;
 
@@ -189,7 +202,7 @@ static void test_D3DKMTEnumAdapters2(void)
 
     for (i = 0; i < enum_adapters_2_desc.NumAdapters; ++i)
     {
-        ok( enum_adapters_2_desc.pAdapters[i].hAdapter, "Expect not null.\n" );
+        todo_wine check_d3dkmt_local( enum_adapters_2_desc.pAdapters[i].hAdapter, &next_local );
         ok( enum_adapters_2_desc.pAdapters[i].AdapterLuid.LowPart ||
             enum_adapters_2_desc.pAdapters[i].AdapterLuid.HighPart,
             "Expect LUID not zero.\n" );
@@ -227,6 +240,7 @@ static void test_D3DKMTCreateDevice(void)
     D3DKMT_CREATEDEVICE create_device_desc;
     D3DKMT_CLOSEADAPTER close_adapter_desc;
     D3DKMT_DESTROYDEVICE destroy_device_desc;
+    D3DKMT_HANDLE next_local = 0;
     NTSTATUS status;
 
     /* Invalid parameters */
@@ -240,12 +254,13 @@ static void test_D3DKMTCreateDevice(void)
     lstrcpyW( open_adapter_gdi_desc.DeviceName, display1W );
     status = D3DKMTOpenAdapterFromGdiDisplayName( &open_adapter_gdi_desc );
     ok( status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status );
+    todo_wine check_d3dkmt_local( open_adapter_gdi_desc.hAdapter, &next_local );
 
     /* Create device */
     create_device_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
     status = D3DKMTCreateDevice( &create_device_desc );
     ok( status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status );
-    ok( create_device_desc.hDevice, "Expect not null.\n" );
+    todo_wine check_d3dkmt_local( create_device_desc.hDevice, &next_local );
     ok( create_device_desc.pCommandBuffer == NULL, "Expect null.\n" );
     ok( create_device_desc.CommandBufferSize == 0, "Got wrong value %#x.\n", create_device_desc.CommandBufferSize );
     ok( create_device_desc.pAllocationList == NULL, "Expect null.\n" );
@@ -288,6 +303,7 @@ static void test_D3DKMTCheckVidPnExclusiveOwnership(void)
     D3DKMT_CLOSEADAPTER close_adapter_desc;
     D3DKMT_VIDPNSOURCEOWNER_TYPE owner_type;
     D3DKMT_SETVIDPNSOURCEOWNER set_owner_desc;
+    D3DKMT_HANDLE next_local = 0;
     DWORD total_time;
     NTSTATUS status;
     INT i;
@@ -414,11 +430,13 @@ static void test_D3DKMTCheckVidPnExclusiveOwnership(void)
     lstrcpyW( open_adapter_gdi_desc.DeviceName, display1W );
     status = D3DKMTOpenAdapterFromGdiDisplayName( &open_adapter_gdi_desc );
     ok( status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status );
+    todo_wine check_d3dkmt_local( open_adapter_gdi_desc.hAdapter, &next_local );
 
     memset( &create_device_desc, 0, sizeof(create_device_desc) );
     create_device_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
     status = D3DKMTCreateDevice( &create_device_desc );
     ok( status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status );
+    todo_wine check_d3dkmt_local( create_device_desc.hDevice, &next_local );
 
     check_owner_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
     check_owner_desc.VidPnSourceId = open_adapter_gdi_desc.VidPnSourceId;
@@ -462,6 +480,7 @@ static void test_D3DKMTCheckVidPnExclusiveOwnership(void)
     create_device_desc2.hAdapter = open_adapter_gdi_desc.hAdapter;
     status = D3DKMTCreateDevice( &create_device_desc2 );
     ok( status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status );
+    todo_wine check_d3dkmt_local( create_device_desc2.hDevice, &next_local );
 
     /* Set owner with the first device */
     set_owner_desc.hDevice = create_device_desc.hDevice;
@@ -615,6 +634,7 @@ static void test_D3DKMTCheckOcclusion(void)
     D3DKMT_CREATEDEVICE create_device_desc;
     D3DKMT_CHECKOCCLUSION occlusion_desc;
     NTSTATUS expected_occlusion, status;
+    D3DKMT_HANDLE next_local = 0;
     INT i, adapter_count = 0;
     HWND hwnd, hwnd2;
     HRESULT hr;
@@ -689,15 +709,16 @@ static void test_D3DKMTCheckOcclusion(void)
     hr = DwmEnableComposition( DWM_EC_ENABLECOMPOSITION );
     ok( hr == S_OK, "Failed to enable composition.\n" );
 
-
     lstrcpyW( open_adapter_gdi_desc.DeviceName, display1W );
     status = D3DKMTOpenAdapterFromGdiDisplayName( &open_adapter_gdi_desc );
     ok( status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status );
+    todo_wine check_d3dkmt_local( open_adapter_gdi_desc.hAdapter, &next_local );
 
     memset( &create_device_desc, 0, sizeof(create_device_desc) );
     create_device_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
     status = D3DKMTCreateDevice( &create_device_desc );
     ok( status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status );
+    todo_wine check_d3dkmt_local( create_device_desc.hDevice, &next_local );
 
     check_owner_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
     check_owner_desc.VidPnSourceId = open_adapter_gdi_desc.VidPnSourceId;
@@ -786,6 +807,7 @@ static void test_D3DKMTOpenAdapterFromDeviceName_deviface( const GUID *devinterf
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *iface_data;
     D3DKMT_OPENADAPTERFROMDEVICENAME device_name;
     D3DKMT_CLOSEADAPTER close_adapter_desc;
+    D3DKMT_HANDLE next_local = 0;
     DEVPROPTYPE type;
     NTSTATUS status;
     unsigned int i;
@@ -811,6 +833,8 @@ static void test_D3DKMTOpenAdapterFromDeviceName_deviface( const GUID *devinterf
 
         if (!status)
         {
+            todo_wine check_d3dkmt_local( device_name.hAdapter, &next_local );
+
             ret = SetupDiGetDevicePropertyW( set, &device_data, &DEVPROPKEY_GPU_LUID, &type,
                                              (BYTE *)&luid, sizeof(luid), NULL, 0 );
             ok( ret || GetLastError() == ERROR_NOT_FOUND, "Got unexpected ret %d, GetLastError() %lu.\n", ret, GetLastError() );
@@ -866,6 +890,7 @@ static void test_D3DKMTQueryVideoMemoryInfo(void)
     D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_desc;
     D3DKMT_QUERYVIDEOMEMORYINFO query_memory_info;
     D3DKMT_CLOSEADAPTER close_adapter_desc;
+    D3DKMT_HANDLE next_local = 0;
     NTSTATUS status;
     unsigned int i;
     BOOL ret;
@@ -874,6 +899,7 @@ static void test_D3DKMTQueryVideoMemoryInfo(void)
     ok( ret, "Failed to get primary adapter name.\n" );
     status = D3DKMTOpenAdapterFromGdiDisplayName( &open_adapter_desc );
     ok( status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status );
+    todo_wine check_d3dkmt_local( open_adapter_desc.hAdapter, &next_local );
 
     /* Normal query */
     for (i = 0; i < ARRAY_SIZE(groups); ++i)
@@ -1011,6 +1037,7 @@ static void test_D3DKMTQueryAdapterInfo(void)
     D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_desc;
     D3DKMT_QUERYADAPTERINFO query_adapter_info;
     D3DKMT_CLOSEADAPTER close_adapter_desc;
+    D3DKMT_HANDLE next_local = 0;
     unsigned char buffer[1024];
     NTSTATUS status;
     unsigned int i;
@@ -1031,6 +1058,7 @@ static void test_D3DKMTQueryAdapterInfo(void)
     ok( ret, "Failed to get primary adapter name.\n" );
     status = D3DKMTOpenAdapterFromGdiDisplayName( &open_adapter_desc );
     ok( status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status );
+    todo_wine check_d3dkmt_local( open_adapter_desc.hAdapter, &next_local );
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
