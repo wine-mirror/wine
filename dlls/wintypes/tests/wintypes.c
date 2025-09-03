@@ -1437,7 +1437,6 @@ static void test_IPropertySet(void)
         ok( hr == S_OK, "GetUInt32, got %#lx\n", hr );
         ok( uint64 == 0xdeadbeefdeadbeef, "Got uint64 %I64u\n", uint64 );
     }
-    WindowsDeleteString( key2 );
 
     hr = IMap_HSTRING_IInspectable_QueryInterface( map, &IID_IIterable_IKeyValuePair_HSTRING_IInspectable,
                                                    (void **)&iterable );
@@ -1454,6 +1453,28 @@ static void test_IPropertySet(void)
     ok( hr == S_OK, "GetView failed, got %#lx\n", hr );
     if (FAILED( hr )) goto skip_test;
 
+    hr = IMapView_HSTRING_IInspectable_QueryInterface( map_view, &IID_IIterable_IKeyValuePair_HSTRING_IInspectable,
+                                                       (void **)&iterable );
+    ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
+    hr = IMapView_HSTRING_IInspectable_Lookup( map_view, key2, &val );
+    todo_wine
+    ok( hr == S_OK, "Lookup failed, got %#lx\n", hr );
+    if (SUCCEEDED(hr)) IInspectable_Release( val );
+    hr = IMap_HSTRING_IInspectable_Remove( map, key2 );
+    todo_wine
+    ok( hr == S_OK, "Remove failed, got %#lx\n", hr );
+    hr = IMapView_HSTRING_IInspectable_Lookup( map_view, key2, &val );
+    todo_wine
+    ok( hr == E_CHANGED_STATE, "Got hr %#lx\n", hr );
+    WindowsDeleteString( key2 );
+    hr = IIterable_IKeyValuePair_HSTRING_IInspectable_First( iterable, &iterator );
+    todo_wine
+    ok( hr == E_CHANGED_STATE, "got %#lx\n", hr );
+    IIterable_IKeyValuePair_HSTRING_IInspectable_Release( iterable );
+    IMapView_HSTRING_IInspectable_Release( map_view );
+
+    hr = IMap_HSTRING_IInspectable_GetView( map, &map_view );
+    ok( hr == S_OK, "GetView failed, got %#lx\n", hr );
     hr = IMapView_HSTRING_IInspectable_QueryInterface( map_view, &IID_IIterable_IKeyValuePair_HSTRING_IInspectable,
                                                        (void **)&iterable );
     ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
