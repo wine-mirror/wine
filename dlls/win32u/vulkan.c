@@ -381,21 +381,39 @@ static void win32u_vkUnmapMemory( VkDevice client_device, VkDeviceMemory client_
 static VkResult win32u_vkCreateBuffer( VkDevice client_device, const VkBufferCreateInfo *create_info,
                                        const VkAllocationCallbacks *allocator, VkBuffer *buffer )
 {
+    VkBaseOutStructure **next, *prev = (VkBaseOutStructure *)create_info; /* cast away const, chain has been copied in the thunks */
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
     struct vulkan_physical_device *physical_device = device->physical_device;
-    VkExternalMemoryBufferCreateInfo external_memory_info;
-    VkBufferCreateInfo info = *create_info;
+    VkExternalMemoryBufferCreateInfo host_external_info, *external_info = NULL;
 
-    if (physical_device->external_memory_align &&
-        !find_next_struct( info.pNext, VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO ))
+    for (next = &prev->pNext; *next; prev = *next, next = &(*next)->pNext)
     {
-        external_memory_info.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO;
-        external_memory_info.pNext = info.pNext;
-        external_memory_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT;
-        info.pNext = &external_memory_info;
+        switch ((*next)->sType)
+        {
+        case VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_CREATE_INFO_EXT: break;
+        case VK_STRUCTURE_TYPE_BUFFER_OPAQUE_CAPTURE_ADDRESS_CREATE_INFO: break;
+        case VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO: break;
+        case VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_BUFFER_CREATE_INFO_NV: break;
+        case VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO:
+            external_info = (VkExternalMemoryBufferCreateInfo *)*next;
+            FIXME( "VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO not implemented!\n" );
+            *next = (*next)->pNext; next = &prev;
+            break;
+        case VK_STRUCTURE_TYPE_OPAQUE_CAPTURE_DESCRIPTOR_DATA_CREATE_INFO_EXT: break;
+        case VK_STRUCTURE_TYPE_VIDEO_PROFILE_LIST_INFO_KHR: break;
+        default: FIXME( "Unhandled sType %u.\n", (*next)->sType ); break;
+        }
     }
 
-    return device->p_vkCreateBuffer( device->host.device, &info, NULL, buffer );
+    if (physical_device->external_memory_align && !external_info)
+    {
+        host_external_info.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO;
+        host_external_info.pNext = create_info->pNext;
+        host_external_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT;
+        ((VkBufferCreateInfo *)create_info)->pNext = &host_external_info; /* cast away const, it has been copied in the thunks */
+    }
+
+    return device->p_vkCreateBuffer( device->host.device, create_info, NULL, buffer );
 }
 
 static VkResult win32u_vkCreateImage( VkDevice client_device, const VkImageCreateInfo *create_info,
