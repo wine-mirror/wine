@@ -441,8 +441,8 @@ static const char *debugstr_typecode(int typecode)
         [TYPECODE_RECT] = "Rect",
         [TYPECODE_GUID] = "Guid",
     };
-    if (typecode > ARRAY_SIZE(str) || !str[typecode]) return wine_dbg_sprintf("%d", typecode);
-    return wine_dbg_sprintf("%s", str[typecode]);
+    if (typecode < ARRAY_SIZE(str) && str[typecode]) return wine_dbg_sprintf("%s", str[typecode]);
+    return wine_dbg_sprintf("%d", typecode);
 }
 
 void *WINAPI CreateValue(int typecode, const void *val)
