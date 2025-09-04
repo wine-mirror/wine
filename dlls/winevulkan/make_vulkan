@@ -2614,7 +2614,11 @@ class VkGenerator(object):
 
         f.write("WINE_DEFAULT_DEBUG_CHANNEL(vulkan);\n\n")
 
-        for struct in self.win32_structs:
+        def unique(list, key=lambda x: x, seen=set()):
+            return (e for e in list if not (key(e) in seen or seen.add(key(e))))
+
+        win32_structs = sorted(self.win32_structs, key=lambda struct: (-struct.order, struct.name))
+        for struct in unique(win32_structs, key=lambda struct: struct.name):
             f.write(struct.definition(conv=True, align=True))
             f.write("\n")
 
