@@ -1958,11 +1958,17 @@ class VkStruct(Sequence):
             structs[member.type].set_order(self.order, structs)
 
     @property
+    def extension(self):
+        return self.registry.types[self.name]["extension"]
+
+    @property
     def struct_extensions(self):
         if self._extensions is None:
             self._extensions = []
 
             def is_struct_extension(s):
+                if s.extension in UNEXPOSED_EXTENSIONS:
+                    return False
                 return not s.alias and self.name in s.structextends
 
             structs = sorted(self.registry.structs, key=lambda s: s.name)
@@ -3429,8 +3435,9 @@ class VkRegistry(object):
                     # We don't even parse <type category="include"> tags.
                     # Therefore just skip any types that aren't found.
                     if t.attrib["name"] in self.types:
-                        type_info = self.types[t.attrib["name"]]["data"]
-                        self._require_type(type_info)
+                        type_info = self.types[t.attrib["name"]]
+                        type_info["extension"] = ext_name
+                        self._require_type(type_info["data"])
                 feature = require.attrib.get("feature")
                 if feature and not self._is_feature_supported(feature):
                     continue
@@ -3519,6 +3526,7 @@ class VkRegistry(object):
             type_info = {}
             type_info["category"] = t.attrib.get("category", None)
             type_info["requires"] = t.attrib.get("requires", None)
+            type_info["extension"] = None
 
             # We parse aliases in a second pass when we know more.
             alias = t.attrib.get("alias")
@@ -3626,6 +3634,7 @@ class VkRegistry(object):
             type_info = {}
             type_info["category"] = t.attrib.get("category")
             type_info["name"] = t.attrib.get("name")
+            type_info["extension"] = None
 
             alias = t.attrib.get("alias")
 

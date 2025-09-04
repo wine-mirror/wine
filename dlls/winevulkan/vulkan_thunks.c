@@ -3102,15 +3102,6 @@ typedef struct VkExportMemoryAllocateInfo32
 } VkExportMemoryAllocateInfo32;
 typedef VkExportMemoryAllocateInfo32 VkExportMemoryAllocateInfoKHR32;
 
-typedef struct VkExportMemoryWin32HandleInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    PTR32 pAttributes;
-    DWORD dwAccess;
-    LPCWSTR name;
-} VkExportMemoryWin32HandleInfoKHR32;
-
 typedef struct VkExportSemaphoreCreateInfo32
 {
     VkStructureType sType;
@@ -3632,15 +3623,6 @@ typedef struct VkImportMemoryHostPointerInfoEXT32
     PTR32 pHostPointer;
 } VkImportMemoryHostPointerInfoEXT32;
 
-typedef struct VkImportMemoryWin32HandleInfoKHR32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    VkExternalMemoryHandleTypeFlagBits handleType;
-    HANDLE handle;
-    LPCWSTR name;
-} VkImportMemoryWin32HandleInfoKHR32;
-
 typedef struct VkIndirectCommandsLayoutCreateInfoEXT32
 {
     VkStructureType sType;
@@ -3816,13 +3798,6 @@ typedef struct VkMemoryMapInfo32
     VkDeviceSize DECLSPEC_ALIGN(8) size;
 } VkMemoryMapInfo32;
 typedef VkMemoryMapInfo32 VkMemoryMapInfoKHR32;
-
-typedef struct VkMemoryMapPlacedInfoEXT32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    PTR32 pPlacedAddress;
-} VkMemoryMapPlacedInfoEXT32;
 
 typedef struct VkMemoryOpaqueCaptureAddressAllocateInfo32
 {
@@ -5481,22 +5456,6 @@ typedef struct VkPhysicalDeviceMaintenance9PropertiesKHR32
     VkBool32 image2DViewOf3DSparse;
     VkDefaultVertexAttributeValueKHR defaultVertexAttributeValue;
 } VkPhysicalDeviceMaintenance9PropertiesKHR32;
-
-typedef struct VkPhysicalDeviceMapMemoryPlacedFeaturesEXT32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    VkBool32 memoryMapPlaced;
-    VkBool32 memoryMapRangePlaced;
-    VkBool32 memoryUnmapReserve;
-} VkPhysicalDeviceMapMemoryPlacedFeaturesEXT32;
-
-typedef struct VkPhysicalDeviceMapMemoryPlacedPropertiesEXT32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    VkDeviceSize DECLSPEC_ALIGN(8) minPlacedMemoryMapAlignment;
-} VkPhysicalDeviceMapMemoryPlacedPropertiesEXT32;
 
 typedef struct VkPhysicalDeviceMemoryBudgetPropertiesEXT32
 {
@@ -9698,19 +9657,6 @@ static void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_context
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_EXPORT_MEMORY_WIN32_HANDLE_INFO_KHR:
-        {
-            VkExportMemoryWin32HandleInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkExportMemoryWin32HandleInfoKHR32 *in_ext = (const VkExportMemoryWin32HandleInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_WIN32_HANDLE_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->pAttributes = UlongToPtr(in_ext->pAttributes);
-            out_ext->dwAccess = in_ext->dwAccess;
-            out_ext->name = in_ext->name;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_IMPORT_MEMORY_HOST_POINTER_INFO_EXT:
         {
             VkImportMemoryHostPointerInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -9719,19 +9665,6 @@ static void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_context
             out_ext->pNext = NULL;
             out_ext->handleType = in_ext->handleType;
             out_ext->pHostPointer = UlongToPtr(in_ext->pHostPointer);
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_IMPORT_MEMORY_WIN32_HANDLE_INFO_KHR:
-        {
-            VkImportMemoryWin32HandleInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkImportMemoryWin32HandleInfoKHR32 *in_ext = (const VkImportMemoryWin32HandleInfoKHR32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_WIN32_HANDLE_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->handleType = in_ext->handleType;
-            out_ext->handle = in_ext->handle;
-            out_ext->name = in_ext->name;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -17425,19 +17358,6 @@ static void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_context *
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT:
-        {
-            VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *in_ext = (const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT;
-            out_ext->pNext = NULL;
-            out_ext->memoryMapPlaced = in_ext->memoryMapPlaced;
-            out_ext->memoryMapRangePlaced = in_ext->memoryMapRangePlaced;
-            out_ext->memoryUnmapReserve = in_ext->memoryUnmapReserve;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_FEATURES_NV:
         {
             VkPhysicalDeviceMemoryDecompressionFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -20325,19 +20245,6 @@ static void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_context *
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_9_FEATURES_KHR;
             out_ext->pNext = NULL;
             out_ext->maintenance9 = in_ext->maintenance9;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT:
-        {
-            VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT32 *in_ext = (const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT;
-            out_ext->pNext = NULL;
-            out_ext->memoryMapPlaced = in_ext->memoryMapPlaced;
-            out_ext->memoryMapRangePlaced = in_ext->memoryMapRangePlaced;
-            out_ext->memoryUnmapReserve = in_ext->memoryUnmapReserve;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -29852,19 +29759,6 @@ static void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT:
-        {
-            VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT32 *in_ext = (const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT;
-            out_ext->pNext = NULL;
-            out_ext->memoryMapPlaced = in_ext->memoryMapPlaced;
-            out_ext->memoryMapRangePlaced = in_ext->memoryMapRangePlaced;
-            out_ext->memoryUnmapReserve = in_ext->memoryUnmapReserve;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_FEATURES_NV:
         {
             VkPhysicalDeviceMemoryDecompressionFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -32376,17 +32270,6 @@ static void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysicalDevi
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT:
-        {
-            VkPhysicalDeviceMapMemoryPlacedFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT);
-            const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *in_ext = (const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT;
-            out_ext->memoryMapPlaced = in_ext->memoryMapPlaced;
-            out_ext->memoryMapRangePlaced = in_ext->memoryMapRangePlaced;
-            out_ext->memoryUnmapReserve = in_ext->memoryUnmapReserve;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_FEATURES_NV:
         {
             VkPhysicalDeviceMemoryDecompressionFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_FEATURES_NV);
@@ -34838,15 +34721,6 @@ static void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conversion_
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_PROPERTIES_EXT:
-        {
-            VkPhysicalDeviceMapMemoryPlacedPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_PROPERTIES_EXT;
-            out_ext->pNext = NULL;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_PROPERTIES_NV:
         {
             VkPhysicalDeviceMemoryDecompressionPropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -35921,15 +35795,6 @@ static void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhysicalDe
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_9_PROPERTIES_KHR;
             out_ext->image2DViewOf3DSparse = in_ext->image2DViewOf3DSparse;
             out_ext->defaultVertexAttributeValue = in_ext->defaultVertexAttributeValue;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_PROPERTIES_EXT:
-        {
-            VkPhysicalDeviceMapMemoryPlacedPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_PROPERTIES_EXT);
-            const VkPhysicalDeviceMapMemoryPlacedPropertiesEXT *in_ext = (const VkPhysicalDeviceMapMemoryPlacedPropertiesEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_PROPERTIES_EXT;
-            out_ext->minPlacedMemoryMapAlignment = in_ext->minPlacedMemoryMapAlignment;
             out_header = (void *)out_ext;
             break;
         }
@@ -38472,11 +38337,8 @@ static void convert_VkMemoryMapInfo_win64_to_host(const VkMemoryMapInfo *in, VkM
 }
 #endif /* _WIN64 */
 
-static void convert_VkMemoryMapInfo_win32_to_host(struct conversion_context *ctx, const VkMemoryMapInfo32 *in, VkMemoryMapInfo *out)
+static void convert_VkMemoryMapInfo_win32_to_host(const VkMemoryMapInfo32 *in, VkMemoryMapInfo *out)
 {
-    const VkBaseInStructure32 *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
-
     if (!in) return;
 
     out->sType = in->sType;
@@ -38485,34 +38347,12 @@ static void convert_VkMemoryMapInfo_win32_to_host(struct conversion_context *ctx
     out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->offset = in->offset;
     out->size = in->size;
-
-    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
-    {
-        switch (in_header->sType)
-        {
-        case VK_STRUCTURE_TYPE_MEMORY_MAP_PLACED_INFO_EXT:
-        {
-            VkMemoryMapPlacedInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkMemoryMapPlacedInfoEXT32 *in_ext = (const VkMemoryMapPlacedInfoEXT32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_MEMORY_MAP_PLACED_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->pPlacedAddress = UlongToPtr(in_ext->pPlacedAddress);
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        default:
-            FIXME("Unhandled sType %u.\n", in_header->sType);
-            break;
-        }
-    }
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
-static void convert_VkMemoryMapInfo_win32_to_unwrapped_host(struct conversion_context *ctx, const VkMemoryMapInfo32 *in, VkMemoryMapInfo *out)
+static void convert_VkMemoryMapInfo_win32_to_unwrapped_host(const VkMemoryMapInfo32 *in, VkMemoryMapInfo *out)
 {
-    const VkBaseInStructure32 *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
-
     if (!in) return;
 
     out->sType = in->sType;
@@ -38521,27 +38361,8 @@ static void convert_VkMemoryMapInfo_win32_to_unwrapped_host(struct conversion_co
     out->memory = in->memory;
     out->offset = in->offset;
     out->size = in->size;
-
-    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
-    {
-        switch (in_header->sType)
-        {
-        case VK_STRUCTURE_TYPE_MEMORY_MAP_PLACED_INFO_EXT:
-        {
-            VkMemoryMapPlacedInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkMemoryMapPlacedInfoEXT32 *in_ext = (const VkMemoryMapPlacedInfoEXT32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_MEMORY_MAP_PLACED_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->pPlacedAddress = UlongToPtr(in_ext->pPlacedAddress);
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        default:
-            FIXME("Unhandled sType %u.\n", in_header->sType);
-            break;
-        }
-    }
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 #ifdef _WIN64
@@ -57160,17 +56981,13 @@ static NTSTATUS thunk32_vkMapMemory2(void *args)
     } *params = args;
     VkMemoryMapInfo pMemoryMapInfo_host;
     void *ppData_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%#x, %#x, %#x\n", params->device, params->pMemoryMapInfo, params->ppData);
 
-    init_conversion_context(ctx);
-    convert_VkMemoryMapInfo_win32_to_host(ctx, (const VkMemoryMapInfo32 *)UlongToPtr(params->pMemoryMapInfo), &pMemoryMapInfo_host);
+    convert_VkMemoryMapInfo_win32_to_host((const VkMemoryMapInfo32 *)UlongToPtr(params->pMemoryMapInfo), &pMemoryMapInfo_host);
     ppData_host = UlongToPtr(*(PTR32 *)UlongToPtr(params->ppData));
     params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkMapMemory2(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, &pMemoryMapInfo_host, &ppData_host);
     *(PTR32 *)UlongToPtr(params->ppData) = PtrToUlong(ppData_host);
-    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 
@@ -57197,17 +57014,13 @@ static NTSTATUS thunk32_vkMapMemory2KHR(void *args)
     } *params = args;
     VkMemoryMapInfo pMemoryMapInfo_host;
     void *ppData_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%#x, %#x, %#x\n", params->device, params->pMemoryMapInfo, params->ppData);
 
-    init_conversion_context(ctx);
-    convert_VkMemoryMapInfo_win32_to_unwrapped_host(ctx, (const VkMemoryMapInfo32 *)UlongToPtr(params->pMemoryMapInfo), &pMemoryMapInfo_host);
+    convert_VkMemoryMapInfo_win32_to_unwrapped_host((const VkMemoryMapInfo32 *)UlongToPtr(params->pMemoryMapInfo), &pMemoryMapInfo_host);
     ppData_host = UlongToPtr(*(PTR32 *)UlongToPtr(params->ppData));
     params->result = vk_funcs->p_vkMapMemory2KHR((VkDevice)UlongToPtr(params->device), &pMemoryMapInfo_host, &ppData_host);
     *(PTR32 *)UlongToPtr(params->ppData) = PtrToUlong(ppData_host);
-    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 
