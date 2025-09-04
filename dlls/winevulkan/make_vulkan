@@ -96,7 +96,6 @@ UNSUPPORTED_EXTENSIONS = [
     "VK_AMD_display_native_hdr",
     "VK_EXT_full_screen_exclusive",
     "VK_GOOGLE_display_timing",
-    "VK_KHR_external_fence_win32",
     # Relates to external_semaphore and needs type conversions in bitflags.
     "VK_KHR_maintenance7", # Causes infinity recursion in struct convert code
     "VK_KHR_shared_presentable_image", # Needs WSI work.
@@ -188,14 +187,10 @@ FUNCTION_OVERRIDES = {
 
     # Instance functions
     "vkCreateDevice" : {"extra_param" : "client_ptr"},
-    "vkGetPhysicalDeviceExternalFenceProperties" : {"dispatch" : False},
 
     # Device functions
     "vkCreateCommandPool" : {"extra_param" : "client_ptr"},
     "vkGetDeviceProcAddr" : {"dispatch" : False},
-
-    # VK_KHR_external_fence_capabilities
-    "vkGetPhysicalDeviceExternalFencePropertiesKHR" : {"dispatch" : False},
 }
 
 # functions for which a user driver entry must be generated
@@ -204,10 +199,12 @@ USER_DRIVER_FUNCS = {
     "vkAcquireNextImageKHR",
     "vkAllocateMemory",
     "vkCreateBuffer",
+    "vkCreateFence",
     "vkCreateImage",
     "vkCreateSemaphore",
     "vkCreateSwapchainKHR",
     "vkCreateWin32SurfaceKHR",
+    "vkDestroyFence",
     "vkDestroySemaphore",
     "vkDestroySurfaceKHR",
     "vkDestroySwapchainKHR",
@@ -216,11 +213,14 @@ USER_DRIVER_FUNCS = {
     "vkGetDeviceBufferMemoryRequirementsKHR",
     "vkGetDeviceImageMemoryRequirements",
     "vkGetDeviceProcAddr",
+    "vkGetFenceWin32HandleKHR",
     "vkGetInstanceProcAddr",
     "vkGetMemoryWin32HandleKHR",
     "vkGetMemoryWin32HandlePropertiesKHR",
     "vkGetPhysicalDeviceExternalBufferProperties",
     "vkGetPhysicalDeviceExternalBufferPropertiesKHR",
+    "vkGetPhysicalDeviceExternalFenceProperties",
+    "vkGetPhysicalDeviceExternalFencePropertiesKHR",
     "vkGetPhysicalDeviceExternalSemaphoreProperties",
     "vkGetPhysicalDeviceExternalSemaphorePropertiesKHR",
     "vkGetPhysicalDeviceImageFormatProperties2",
@@ -232,6 +232,7 @@ USER_DRIVER_FUNCS = {
     "vkGetPhysicalDeviceSurfaceFormatsKHR",
     "vkGetPhysicalDeviceWin32PresentationSupportKHR",
     "vkGetSemaphoreWin32HandleKHR",
+    "vkImportFenceWin32HandleKHR",
     "vkImportSemaphoreWin32HandleKHR",
     "vkMapMemory",
     "vkMapMemory2KHR",
@@ -311,6 +312,7 @@ STRUCT_CHAIN_CONVERSIONS = {
     "VkPhysicalDeviceImageFormatInfo2": {},
     "VkCommandBufferSubmitInfo": {},
     "VkSemaphoreCreateInfo": {},
+    "VkFenceCreateInfo": {},
     "VkSubmitInfo": {},
     "VkSubmitInfo2": {},
 

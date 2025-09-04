@@ -1195,6 +1195,71 @@ static void win32u_vkGetPhysicalDeviceExternalSemaphoreProperties( VkPhysicalDev
     instance->p_vkGetPhysicalDeviceExternalSemaphoreProperties( physical_device->host.physical_device, semaphore_info, semaphore_properties );
 }
 
+static VkResult win32u_vkCreateFence( VkDevice client_device, const VkFenceCreateInfo *client_create_info, const VkAllocationCallbacks *allocator, VkFence *ret )
+{
+    VkFenceCreateInfo *create_info = (VkFenceCreateInfo *)client_create_info; /* cast away const, chain has been copied in the thunks */
+    struct vulkan_device *device = vulkan_device_from_handle( client_device );
+    VkBaseOutStructure **next, *prev = (VkBaseOutStructure *)create_info;
+
+    TRACE( "device %p, create_info %p, allocator %p, ret %p\n", device, create_info, allocator, ret );
+
+    for (next = &prev->pNext; *next; prev = *next, next = &(*next)->pNext)
+    {
+        switch ((*next)->sType)
+        {
+        case VK_STRUCTURE_TYPE_EXPORT_FENCE_CREATE_INFO:
+            FIXME( "VK_STRUCTURE_TYPE_EXPORT_FENCE_CREATE_INFO not implemented.\n" );
+            *next = (*next)->pNext; next = &prev;
+            break;
+        case VK_STRUCTURE_TYPE_EXPORT_FENCE_WIN32_HANDLE_INFO_KHR:
+            FIXME( "VK_STRUCTURE_TYPE_EXPORT_FENCE_WIN32_HANDLE_INFO_KHR not implemented.\n" );
+            *next = (*next)->pNext; next = &prev;
+            break;
+        default: FIXME( "Unhandled sType %u.\n", (*next)->sType ); break;
+        }
+    }
+
+    return device->p_vkCreateFence( device->host.device, create_info, NULL /* allocator */, ret );
+}
+
+static void win32u_vkDestroyFence( VkDevice client_device, VkFence client_fence, const VkAllocationCallbacks *allocator )
+{
+    struct vulkan_device *device = vulkan_device_from_handle( client_device );
+
+    TRACE( "device %p, client_fence %s, allocator %p\n", device, wine_dbgstr_longlong( client_fence ), allocator );
+
+    return device->p_vkDestroyFence( device->host.device, client_fence, allocator );
+}
+
+static VkResult win32u_vkGetFenceWin32HandleKHR( VkDevice client_device, const VkFenceGetWin32HandleInfoKHR *handle_info, HANDLE *handle )
+{
+    struct vulkan_device *device = vulkan_device_from_handle( client_device );
+
+    FIXME( "device %p, handle_info %p, handle %p stub!\n", device, handle_info, handle );
+
+    return VK_ERROR_INCOMPATIBLE_DRIVER;
+}
+
+static VkResult win32u_vkImportFenceWin32HandleKHR( VkDevice client_device, const VkImportFenceWin32HandleInfoKHR *handle_info )
+{
+    struct vulkan_device *device = vulkan_device_from_handle( client_device );
+
+    FIXME( "device %p, handle_info %p stub!\n", device, handle_info );
+
+    return VK_ERROR_INCOMPATIBLE_DRIVER;
+}
+
+static void win32u_vkGetPhysicalDeviceExternalFenceProperties( VkPhysicalDevice client_physical_device, const VkPhysicalDeviceExternalFenceInfo *fence_info,
+                                                               VkExternalFenceProperties *fence_properties )
+{
+    struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle( client_physical_device );
+    struct vulkan_instance *instance = physical_device->instance;
+
+    TRACE( "physical_device %p, fence_info %p, fence_properties %p\n", physical_device, fence_info, fence_properties );
+
+    instance->p_vkGetPhysicalDeviceExternalFenceProperties( physical_device->host.physical_device, fence_info, fence_properties );
+}
+
 static const char *win32u_get_host_surface_extension(void)
 {
     return driver_funcs->p_get_host_surface_extension();
@@ -1206,10 +1271,12 @@ static struct vulkan_funcs vulkan_funcs =
     .p_vkAcquireNextImageKHR = win32u_vkAcquireNextImageKHR,
     .p_vkAllocateMemory = win32u_vkAllocateMemory,
     .p_vkCreateBuffer = win32u_vkCreateBuffer,
+    .p_vkCreateFence = win32u_vkCreateFence,
     .p_vkCreateImage = win32u_vkCreateImage,
     .p_vkCreateSemaphore = win32u_vkCreateSemaphore,
     .p_vkCreateSwapchainKHR = win32u_vkCreateSwapchainKHR,
     .p_vkCreateWin32SurfaceKHR = win32u_vkCreateWin32SurfaceKHR,
+    .p_vkDestroyFence = win32u_vkDestroyFence,
     .p_vkDestroySemaphore = win32u_vkDestroySemaphore,
     .p_vkDestroySurfaceKHR = win32u_vkDestroySurfaceKHR,
     .p_vkDestroySwapchainKHR = win32u_vkDestroySwapchainKHR,
@@ -1217,10 +1284,13 @@ static struct vulkan_funcs vulkan_funcs =
     .p_vkGetDeviceBufferMemoryRequirements = win32u_vkGetDeviceBufferMemoryRequirements,
     .p_vkGetDeviceBufferMemoryRequirementsKHR = win32u_vkGetDeviceBufferMemoryRequirements,
     .p_vkGetDeviceImageMemoryRequirements = win32u_vkGetDeviceImageMemoryRequirements,
+    .p_vkGetFenceWin32HandleKHR = win32u_vkGetFenceWin32HandleKHR,
     .p_vkGetMemoryWin32HandleKHR = win32u_vkGetMemoryWin32HandleKHR,
     .p_vkGetMemoryWin32HandlePropertiesKHR = win32u_vkGetMemoryWin32HandlePropertiesKHR,
     .p_vkGetPhysicalDeviceExternalBufferProperties = win32u_vkGetPhysicalDeviceExternalBufferProperties,
     .p_vkGetPhysicalDeviceExternalBufferPropertiesKHR = win32u_vkGetPhysicalDeviceExternalBufferProperties,
+    .p_vkGetPhysicalDeviceExternalFenceProperties = win32u_vkGetPhysicalDeviceExternalFenceProperties,
+    .p_vkGetPhysicalDeviceExternalFencePropertiesKHR = win32u_vkGetPhysicalDeviceExternalFenceProperties,
     .p_vkGetPhysicalDeviceExternalSemaphoreProperties = win32u_vkGetPhysicalDeviceExternalSemaphoreProperties,
     .p_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR = win32u_vkGetPhysicalDeviceExternalSemaphoreProperties,
     .p_vkGetPhysicalDeviceImageFormatProperties2 = win32u_vkGetPhysicalDeviceImageFormatProperties2,
@@ -1232,6 +1302,7 @@ static struct vulkan_funcs vulkan_funcs =
     .p_vkGetPhysicalDeviceSurfaceFormatsKHR = win32u_vkGetPhysicalDeviceSurfaceFormatsKHR,
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = win32u_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_vkGetSemaphoreWin32HandleKHR = win32u_vkGetSemaphoreWin32HandleKHR,
+    .p_vkImportFenceWin32HandleKHR = win32u_vkImportFenceWin32HandleKHR,
     .p_vkImportSemaphoreWin32HandleKHR = win32u_vkImportSemaphoreWin32HandleKHR,
     .p_vkMapMemory = win32u_vkMapMemory,
     .p_vkMapMemory2KHR = win32u_vkMapMemory2KHR,
