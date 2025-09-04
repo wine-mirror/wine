@@ -426,7 +426,7 @@ class VkDefine(object):
         self.value = value
 
     @staticmethod
-    def from_xml(define):
+    def from_xml(registry, define):
         if not api_is_vulkan(define):
             return None
 
@@ -454,7 +454,7 @@ class VkEnum(object):
         self.aliased_by = []
 
     @staticmethod
-    def from_alias(enum, alias):
+    def from_alias(registry, enum, alias):
         name = enum.attrib.get("name")
         aliasee = VkEnum(name, alias.bitwidth, alias=alias)
 
@@ -462,7 +462,7 @@ class VkEnum(object):
         return aliasee
 
     @staticmethod
-    def from_xml(enum):
+    def from_xml(registry, enum):
         if not api_is_vulkan(enum):
             return None
 
@@ -621,7 +621,7 @@ class VkFunction(object):
             self.unwrap = Unwrap.HOST
 
     @staticmethod
-    def from_alias(command, alias):
+    def from_alias(registry, command, alias):
         """ Create VkFunction from an alias command.
 
         Args:
@@ -641,7 +641,7 @@ class VkFunction(object):
         return VkFunction(_type=func_type, name=func_name, params=params, alias=alias)
 
     @staticmethod
-    def from_xml(command, types):
+    def from_xml(registry, command, types):
         if not api_is_vulkan(command):
             return None
 
@@ -651,7 +651,7 @@ class VkFunction(object):
 
         params = []
         for param in command.findall("param"):
-            vk_param = VkParam.from_xml(param, types, params)
+            vk_param = VkParam.from_xml(registry, param, types, params)
             if vk_param:
                 params.append(vk_param)
 
@@ -997,7 +997,7 @@ class VkFunctionPointer(object):
         self.required = False
 
     @staticmethod
-    def from_xml(funcpointer):
+    def from_xml(registry, funcpointer):
         if not api_is_vulkan(funcpointer):
             return None
 
@@ -1025,12 +1025,12 @@ class VkHandle(object):
         self.object_type = None
 
     @staticmethod
-    def from_alias(handle, alias):
+    def from_alias(registry, handle, alias):
         name = handle.attrib.get("name")
         return VkHandle(name, alias.type, alias.parent, alias=alias)
 
     @staticmethod
-    def from_xml(handle):
+    def from_xml(registry, handle):
         if not api_is_vulkan(handle):
             return None
 
@@ -1341,7 +1341,7 @@ class VkMember(VkVariable):
                 self.name, self.array_lens, self.dyn_array_len)
 
     @staticmethod
-    def from_xml(member, returnedonly, parent):
+    def from_xml(registry, member, returnedonly, parent):
         """ Helper function for parsing a member tag within a struct or union. """
 
         if not api_is_vulkan(member):
@@ -1584,7 +1584,7 @@ class VkParam(VkVariable):
         return "{0} {1} {2} {3} {4} {5}".format(self.const, self.type, self.pointer, self.name, self.array_lens, self.dyn_array_len)
 
     @staticmethod
-    def from_xml(param, types, parent):
+    def from_xml(registry, param, types, parent):
         """ Helper function to create VkParam from xml. """
 
         if not api_is_vulkan(param):
@@ -1880,7 +1880,8 @@ class VkParam(VkVariable):
 class VkStruct(Sequence):
     """ Class which represents the type union and struct. """
 
-    def __init__(self, name, members, returnedonly, structextends, alias=None, union=False):
+    def __init__(self, registry, name, members, returnedonly, structextends, alias=None, union=False):
+        self.registry = registry
         self.name = name
         self.members = members
         self.returnedonly = returnedonly
@@ -1889,7 +1890,7 @@ class VkStruct(Sequence):
         self.alias = alias
         self.union = union
         self.type_info = None # To be set later.
-        self.struct_extensions = []
+        self._extensions = None
         self.aliased_by = []
         self.order = 0
 
@@ -1900,15 +1901,15 @@ class VkStruct(Sequence):
         return len(self.members)
 
     @staticmethod
-    def from_alias(struct, alias):
+    def from_alias(registry, struct, alias):
         name = struct.attrib.get("name")
-        aliasee = VkStruct(name, alias.members, alias.returnedonly, alias.structextends, alias=alias)
+        aliasee = VkStruct(registry, name, alias.members, alias.returnedonly, alias.structextends, alias=alias)
 
         alias.add_aliased_by(aliasee)
         return aliasee
 
     @staticmethod
-    def from_xml(struct):
+    def from_xml(registry, struct):
         if not api_is_vulkan(struct):
             return None
 
@@ -1934,9 +1935,9 @@ class VkStruct(Sequence):
         structextends = struct.attrib.get("structextends")
         structextends = structextends.split(",") if structextends else []
 
-        s = VkStruct(name, [], returnedonly, structextends, union=union)
+        s = VkStruct(registry, name, [], returnedonly, structextends, union=union)
         for member in struct.findall("member"):
-            vk_member = VkMember.from_xml(member, returnedonly, s)
+            vk_member = VkMember.from_xml(registry, member, returnedonly, s)
             if vk_member:
                 s.members.append(vk_member)
 
@@ -1955,6 +1956,21 @@ class VkStruct(Sequence):
             if structs[member.type].is_alias():
                 structs[member.type].alias.set_order(self.order, structs)
             structs[member.type].set_order(self.order, structs)
+
+    @property
+    def struct_extensions(self):
+        if self._extensions is None:
+            self._extensions = []
+
+            def is_struct_extension(s):
+                return not s.alias and self.name in s.structextends
+
+            for type_info in self.registry.types.values():
+                struct = type_info["data"] if type_info["category"] == "struct" else None
+                if struct and is_struct_extension(struct):
+                    self._extensions.append(struct)
+
+        return self._extensions
 
     def definition(self, align=False, conv=False):
         """ Convert structure to textual definition.
@@ -3188,14 +3204,14 @@ class VkRegistry(object):
                 alias_commands.append(command)
                 continue
 
-            func = VkFunction.from_xml(command, self.types)
+            func = VkFunction.from_xml(self, command, self.types)
             if func:
                 funcs[func.name] = func
 
         for command in alias_commands:
             alias_name = command.attrib.get("alias")
             alias = funcs[alias_name]
-            func = VkFunction.from_alias(command, alias)
+            func = VkFunction.from_alias(self, command, alias)
             if func:
                 funcs[func.name] = func
 
@@ -3235,7 +3251,7 @@ class VkRegistry(object):
             _type = enum.attrib.get("type")
 
             if _type in ("enum", "bitmask"):
-                enum_obj = VkEnum.from_xml(enum)
+                enum_obj = VkEnum.from_xml(self, enum)
                 if enum_obj:
                     enums[name] = enum_obj
             else:
@@ -3522,7 +3538,7 @@ class VkRegistry(object):
 
             if type_info["category"] == "basetype":
                 name = t.find("name").text
-                define = VkDefine.from_xml(t)
+                define = VkDefine.from_xml(self, t)
                 defines.append(define)
                 type_info["data"] = define
 
@@ -3545,7 +3561,7 @@ class VkRegistry(object):
                 type_info["data"] = bitmask
 
             elif type_info["category"] == "define":
-                define = VkDefine.from_xml(t)
+                define = VkDefine.from_xml(self, t)
                 if define:
                     defines.append(define)
                     type_info["data"] = define
@@ -3565,7 +3581,7 @@ class VkRegistry(object):
                     type_info["data"] = None
 
             elif type_info["category"] == "funcpointer":
-                funcpointer = VkFunctionPointer.from_xml(t)
+                funcpointer = VkFunctionPointer.from_xml(self, t)
                 if funcpointer:
                     funcpointers.append(funcpointer)
                     type_info["data"] = funcpointer
@@ -3573,7 +3589,7 @@ class VkRegistry(object):
                     continue
 
             elif type_info["category"] == "handle":
-                handle = VkHandle.from_xml(t)
+                handle = VkHandle.from_xml(self, t)
                 if handle:
                     handles.append(handle)
                     type_info["data"] = handle
@@ -3585,7 +3601,7 @@ class VkRegistry(object):
                 # on unions. The types are very similar in parsing and
                 # generation anyway. The official Vulkan scripts use
                 # a similar kind of hack.
-                struct = VkStruct.from_xml(t)
+                struct = VkStruct.from_xml(self, t)
                 if struct:
                     structs.append(struct)
                     type_info["data"] = struct
@@ -3620,17 +3636,17 @@ class VkRegistry(object):
                 type_info["data"] = bitmask
 
             if type_info["category"] == "enum":
-                enum = VkEnum.from_alias(t, self.types[alias]["data"])
+                enum = VkEnum.from_alias(self, t, self.types[alias]["data"])
                 type_info["data"] = enum
                 self.enums[enum.name] = enum
 
             if type_info["category"] == "handle":
-                handle = VkHandle.from_alias(t, self.types[alias]["data"])
+                handle = VkHandle.from_alias(self, t, self.types[alias]["data"])
                 handles.append(handle)
                 type_info["data"] = handle
 
             if type_info["category"] == "struct":
-                struct = VkStruct.from_alias(t, self.types[alias]["data"])
+                struct = VkStruct.from_alias(self, t, self.types[alias]["data"])
                 structs.append(struct)
                 type_info["data"] = struct
 
@@ -3644,17 +3660,6 @@ class VkRegistry(object):
         structs = {struct.name: struct for struct in structs}
         for struct in structs.values():
             struct.set_type_info(self.types)
-
-            # Alias structures have enum values equivalent to those of the
-            # structure which they are aliased against. we need to ignore alias
-            # structs when populating the struct extensions list, otherwise we
-            # will create duplicate case entries.
-            if struct.alias:
-                continue
-
-            for structextend in struct.structextends:
-                s = self.types[structextend]["data"]
-                s.struct_extensions.append(struct)
 
         for struct in structs.values():
             struct.set_order(0, structs)
