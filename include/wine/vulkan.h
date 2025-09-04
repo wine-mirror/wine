@@ -180,6 +180,8 @@ typedef struct _XDisplay Display;
 #define VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME "VK_KHR_external_memory_win32"
 #define VK_KHR_EXTERNAL_MEMORY_FD_SPEC_VERSION 1
 #define VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME "VK_KHR_external_memory_fd"
+#define VK_KHR_WIN32_KEYED_MUTEX_SPEC_VERSION 1
+#define VK_KHR_WIN32_KEYED_MUTEX_EXTENSION_NAME "VK_KHR_win32_keyed_mutex"
 #define VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_SPEC_VERSION 1
 #define VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME "VK_KHR_external_semaphore_capabilities"
 #define VK_KHR_EXTERNAL_SEMAPHORE_SPEC_VERSION 1
@@ -5450,6 +5452,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR = 1000074000,
     VK_STRUCTURE_TYPE_MEMORY_FD_PROPERTIES_KHR = 1000074001,
     VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR = 1000074002,
+    VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR = 1000075000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO = 1000076000,
     VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES = 1000076001,
     VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO = 1000077000,
@@ -18643,6 +18646,19 @@ typedef struct VkWaylandSurfaceCreateInfoKHR
     struct wl_display *display;
     struct wl_surface *surface;
 } VkWaylandSurfaceCreateInfoKHR;
+
+typedef struct VkWin32KeyedMutexAcquireReleaseInfoKHR
+{
+    VkStructureType sType;
+    const void *pNext;
+    uint32_t acquireCount;
+    const VkDeviceMemory *pAcquireSyncs;
+    const uint64_t *pAcquireKeys;
+    const uint32_t *pAcquireTimeouts;
+    uint32_t releaseCount;
+    const VkDeviceMemory *pReleaseSyncs;
+    const uint64_t *pReleaseKeys;
+} VkWin32KeyedMutexAcquireReleaseInfoKHR;
 
 typedef struct VkWin32SurfaceCreateInfoKHR
 {

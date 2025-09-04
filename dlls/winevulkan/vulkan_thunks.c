@@ -9449,6 +9449,19 @@ typedef struct VkVideoSessionParametersUpdateInfoKHR32
     uint32_t updateSequenceCount;
 } VkVideoSessionParametersUpdateInfoKHR32;
 
+typedef struct VkWin32KeyedMutexAcquireReleaseInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t acquireCount;
+    PTR32 pAcquireSyncs;
+    PTR32 pAcquireKeys;
+    PTR32 pAcquireTimeouts;
+    uint32_t releaseCount;
+    PTR32 pReleaseSyncs;
+    PTR32 pReleaseKeys;
+} VkWin32KeyedMutexAcquireReleaseInfoKHR32;
+
 typedef struct VkWin32SurfaceCreateInfoKHR32
 {
     VkStructureType sType;
@@ -39535,6 +39548,24 @@ static const VkCommandBuffer *convert_VkCommandBuffer_array_win64_to_unwrapped_h
 #endif /* _WIN64 */
 
 #ifdef _WIN64
+static const VkDeviceMemory *convert_VkDeviceMemory_array_win64_to_host(struct conversion_context *ctx, const VkDeviceMemory *in, uint32_t count)
+{
+    VkDeviceMemory *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i] = vulkan_device_memory_from_handle(in[i])->host.device_memory;
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
+
+#ifdef _WIN64
 static void convert_VkSubmitInfo_win64_to_unwrapped_host(struct conversion_context *ctx, const VkSubmitInfo *in, VkSubmitInfo *out)
 {
     const VkBaseInStructure *in_header;
@@ -39650,6 +39681,23 @@ static void convert_VkSubmitInfo_win64_to_unwrapped_host(struct conversion_conte
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR:
+        {
+            VkWin32KeyedMutexAcquireReleaseInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkWin32KeyedMutexAcquireReleaseInfoKHR *in_ext = (const VkWin32KeyedMutexAcquireReleaseInfoKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->acquireCount = in_ext->acquireCount;
+            out_ext->pAcquireSyncs = convert_VkDeviceMemory_array_win64_to_host(ctx, in_ext->pAcquireSyncs, in_ext->acquireCount);
+            out_ext->pAcquireKeys = in_ext->pAcquireKeys;
+            out_ext->pAcquireTimeouts = in_ext->pAcquireTimeouts;
+            out_ext->releaseCount = in_ext->releaseCount;
+            out_ext->pReleaseSyncs = convert_VkDeviceMemory_array_win64_to_host(ctx, in_ext->pReleaseSyncs, in_ext->releaseCount);
+            out_ext->pReleaseKeys = in_ext->pReleaseKeys;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -39675,6 +39723,22 @@ static const VkSubmitInfo *convert_VkSubmitInfo_array_win64_to_unwrapped_host(st
     return out;
 }
 #endif /* _WIN64 */
+
+static const VkDeviceMemory *convert_VkDeviceMemory_array_win32_to_host(struct conversion_context *ctx, const VkDeviceMemory *in, uint32_t count)
+{
+    VkDeviceMemory *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i] = vulkan_device_memory_from_handle(in[i])->host.device_memory;
+    }
+
+    return out;
+}
 
 static void convert_VkSubmitInfo_win32_to_unwrapped_host(struct conversion_context *ctx, const VkSubmitInfo32 *in, VkSubmitInfo *out)
 {
@@ -39787,6 +39851,23 @@ static void convert_VkSubmitInfo_win32_to_unwrapped_host(struct conversion_conte
             out_ext->pWaitSemaphoreValues = UlongToPtr(in_ext->pWaitSemaphoreValues);
             out_ext->signalSemaphoreValueCount = in_ext->signalSemaphoreValueCount;
             out_ext->pSignalSemaphoreValues = UlongToPtr(in_ext->pSignalSemaphoreValues);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR:
+        {
+            VkWin32KeyedMutexAcquireReleaseInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkWin32KeyedMutexAcquireReleaseInfoKHR32 *in_ext = (const VkWin32KeyedMutexAcquireReleaseInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->acquireCount = in_ext->acquireCount;
+            out_ext->pAcquireSyncs = convert_VkDeviceMemory_array_win32_to_host(ctx, (const VkDeviceMemory *)UlongToPtr(in_ext->pAcquireSyncs), in_ext->acquireCount);
+            out_ext->pAcquireKeys = UlongToPtr(in_ext->pAcquireKeys);
+            out_ext->pAcquireTimeouts = UlongToPtr(in_ext->pAcquireTimeouts);
+            out_ext->releaseCount = in_ext->releaseCount;
+            out_ext->pReleaseSyncs = convert_VkDeviceMemory_array_win32_to_host(ctx, (const VkDeviceMemory *)UlongToPtr(in_ext->pReleaseSyncs), in_ext->releaseCount);
+            out_ext->pReleaseKeys = UlongToPtr(in_ext->pReleaseKeys);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -39940,6 +40021,23 @@ static void convert_VkSubmitInfo2_win64_to_unwrapped_host(struct conversion_cont
             out_ext->sType = VK_STRUCTURE_TYPE_PERFORMANCE_QUERY_SUBMIT_INFO_KHR;
             out_ext->pNext = NULL;
             out_ext->counterPassIndex = in_ext->counterPassIndex;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR:
+        {
+            VkWin32KeyedMutexAcquireReleaseInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkWin32KeyedMutexAcquireReleaseInfoKHR *in_ext = (const VkWin32KeyedMutexAcquireReleaseInfoKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->acquireCount = in_ext->acquireCount;
+            out_ext->pAcquireSyncs = convert_VkDeviceMemory_array_win64_to_host(ctx, in_ext->pAcquireSyncs, in_ext->acquireCount);
+            out_ext->pAcquireKeys = in_ext->pAcquireKeys;
+            out_ext->pAcquireTimeouts = in_ext->pAcquireTimeouts;
+            out_ext->releaseCount = in_ext->releaseCount;
+            out_ext->pReleaseSyncs = convert_VkDeviceMemory_array_win64_to_host(ctx, in_ext->pReleaseSyncs, in_ext->releaseCount);
+            out_ext->pReleaseKeys = in_ext->pReleaseKeys;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -40121,6 +40219,23 @@ static void convert_VkSubmitInfo2_win32_to_unwrapped_host(struct conversion_cont
             out_ext->sType = VK_STRUCTURE_TYPE_PERFORMANCE_QUERY_SUBMIT_INFO_KHR;
             out_ext->pNext = NULL;
             out_ext->counterPassIndex = in_ext->counterPassIndex;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR:
+        {
+            VkWin32KeyedMutexAcquireReleaseInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkWin32KeyedMutexAcquireReleaseInfoKHR32 *in_ext = (const VkWin32KeyedMutexAcquireReleaseInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->acquireCount = in_ext->acquireCount;
+            out_ext->pAcquireSyncs = convert_VkDeviceMemory_array_win32_to_host(ctx, (const VkDeviceMemory *)UlongToPtr(in_ext->pAcquireSyncs), in_ext->acquireCount);
+            out_ext->pAcquireKeys = UlongToPtr(in_ext->pAcquireKeys);
+            out_ext->pAcquireTimeouts = UlongToPtr(in_ext->pAcquireTimeouts);
+            out_ext->releaseCount = in_ext->releaseCount;
+            out_ext->pReleaseSyncs = convert_VkDeviceMemory_array_win32_to_host(ctx, (const VkDeviceMemory *)UlongToPtr(in_ext->pReleaseSyncs), in_ext->releaseCount);
+            out_ext->pReleaseKeys = UlongToPtr(in_ext->pReleaseKeys);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -59941,6 +60056,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_video_maintenance1",
     "VK_KHR_video_queue",
     "VK_KHR_vulkan_memory_model",
+    "VK_KHR_win32_keyed_mutex",
     "VK_KHR_workgroup_memory_explicit_layout",
     "VK_KHR_zero_initialize_workgroup_memory",
     "VK_MESA_image_alignment_control",

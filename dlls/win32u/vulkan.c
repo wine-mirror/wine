@@ -1071,6 +1071,10 @@ static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, cons
             case VK_STRUCTURE_TYPE_PERFORMANCE_QUERY_SUBMIT_INFO_KHR: break;
             case VK_STRUCTURE_TYPE_PROTECTED_SUBMIT_INFO: break;
             case VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO: break;
+            case VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR:
+                FIXME( "VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR not implemented!\n" );
+                *next = (*next)->pNext; next = &prev;
+                break;
             default: FIXME( "Unhandled sType %u.\n", (*next)->sType ); break;
             }
         }
@@ -1107,6 +1111,10 @@ static VkResult win32u_vkQueueSubmit2( VkQueue client_queue, uint32_t count, con
             case VK_STRUCTURE_TYPE_FRAME_BOUNDARY_TENSORS_ARM: break;
             case VK_STRUCTURE_TYPE_LATENCY_SUBMISSION_PRESENT_ID_NV: break;
             case VK_STRUCTURE_TYPE_PERFORMANCE_QUERY_SUBMIT_INFO_KHR: break;
+            case VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR:
+                FIXME( "VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR not implemented!\n" );
+                *next = (*next)->pNext; next = &prev;
+                break;
             default: FIXME( "Unhandled sType %u.\n", (*next)->sType ); break;
             }
         }
