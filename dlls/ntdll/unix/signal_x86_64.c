@@ -2051,8 +2051,8 @@ static BOOL handle_syscall_trap( ucontext_t *sigcontext, siginfo_t *siginfo )
  */
 static inline BOOL check_invalid_gsbase( ucontext_t *ucontext )
 {
-    unsigned int prefix_count = 0;
-    const BYTE *instr = (const BYTE *)RIP_sig( ucontext );
+    BYTE instr[16];
+    unsigned int i, len, prefix_count = 0;
     TEB *teb = NtCurrentTeb();
     ULONG_PTR cur_gsbase = 0;
 
@@ -2067,13 +2067,18 @@ static inline BOOL check_invalid_gsbase( ucontext_t *ucontext )
     amd64_get_gsbase( &cur_gsbase );
 #elif defined(__NetBSD__)
     sysarch( X86_64_GET_GSBASE, &cur_gsbase );
+#elif defined(__APPLE__)
+    /* init_handler() has already reset GSBASE, we can't determine what it was before the signal */
 #endif
 
     if (cur_gsbase == (ULONG_PTR)teb) return FALSE;
 
-    for (;;)
+    len = virtual_uninterrupted_read_memory( (BYTE *)RIP_sig(ucontext), instr, sizeof(instr) );
+    if (!len) return FALSE;
+
+    for (i = 0; i < len; i++)
     {
-        switch (*instr)
+        switch (instr[i])
         {
         /* instruction prefixes */
         case 0x2e:  /* %cs: */
@@ -2103,7 +2108,6 @@ static inline BOOL check_invalid_gsbase( ucontext_t *ucontext )
         case 0xf2:  /* repne */
         case 0xf3:  /* repe */
             if (++prefix_count >= 15) return FALSE;
-            instr++;
             continue;
         case 0x65:  /* %gs: */
             break;
@@ -2121,6 +2125,8 @@ static inline BOOL check_invalid_gsbase( ucontext_t *ucontext )
     amd64_set_gsbase( teb );
 #elif defined(__NetBSD__)
     sysarch( X86_64_SET_GSBASE, &teb );
+#elif defined(__APPLE__)
+    /* leave_handler() will set GSBASE to the TEB */
 #endif
     return TRUE;
 }
