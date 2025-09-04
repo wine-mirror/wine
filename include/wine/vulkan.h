@@ -20707,6 +20707,8 @@ VkResult VKAPI_CALL vkWriteMicromapsPropertiesEXT(VkDevice device, uint32_t micr
     USE_VK_FUNC(vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceCooperativeMatrixPropertiesNV) \
     USE_VK_FUNC(vkGetPhysicalDeviceCooperativeVectorPropertiesNV) \
+    USE_VK_FUNC(vkGetPhysicalDeviceExternalBufferProperties) \
+    USE_VK_FUNC(vkGetPhysicalDeviceExternalBufferPropertiesKHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceExternalTensorPropertiesARM) \
     USE_VK_FUNC(vkGetPhysicalDeviceFeatures) \
     USE_VK_FUNC(vkGetPhysicalDeviceFeatures2) \

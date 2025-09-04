@@ -185,8 +185,17 @@ struct vulkan_funcs
     PFN_vkDestroySurfaceKHR p_vkDestroySurfaceKHR;
     PFN_vkDestroySwapchainKHR p_vkDestroySwapchainKHR;
     PFN_vkFreeMemory p_vkFreeMemory;
+    PFN_vkGetDeviceBufferMemoryRequirements p_vkGetDeviceBufferMemoryRequirements;
+    PFN_vkGetDeviceBufferMemoryRequirementsKHR p_vkGetDeviceBufferMemoryRequirementsKHR;
+    PFN_vkGetDeviceImageMemoryRequirements p_vkGetDeviceImageMemoryRequirements;
     PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr;
     PFN_vkGetInstanceProcAddr p_vkGetInstanceProcAddr;
+    PFN_vkGetMemoryWin32HandleKHR p_vkGetMemoryWin32HandleKHR;
+    PFN_vkGetMemoryWin32HandlePropertiesKHR p_vkGetMemoryWin32HandlePropertiesKHR;
+    PFN_vkGetPhysicalDeviceExternalBufferProperties p_vkGetPhysicalDeviceExternalBufferProperties;
+    PFN_vkGetPhysicalDeviceExternalBufferPropertiesKHR p_vkGetPhysicalDeviceExternalBufferPropertiesKHR;
+    PFN_vkGetPhysicalDeviceImageFormatProperties2 p_vkGetPhysicalDeviceImageFormatProperties2;
+    PFN_vkGetPhysicalDeviceImageFormatProperties2KHR p_vkGetPhysicalDeviceImageFormatProperties2KHR;
     PFN_vkGetPhysicalDevicePresentRectanglesKHR p_vkGetPhysicalDevicePresentRectanglesKHR;
     PFN_vkGetPhysicalDeviceSurfaceCapabilities2KHR p_vkGetPhysicalDeviceSurfaceCapabilities2KHR;
     PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR;

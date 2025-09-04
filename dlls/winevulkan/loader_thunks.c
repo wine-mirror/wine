@@ -5233,6 +5233,31 @@ VkResult WINAPI vkGetMemoryHostPointerPropertiesEXT(VkDevice device, VkExternalM
     return params.result;
 }
 
+VkResult WINAPI vkGetMemoryWin32HandleKHR(VkDevice device, const VkMemoryGetWin32HandleInfoKHR *pGetWin32HandleInfo, HANDLE *pHandle)
+{
+    struct vkGetMemoryWin32HandleKHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pGetWin32HandleInfo = pGetWin32HandleInfo;
+    params.pHandle = pHandle;
+    status = UNIX_CALL(vkGetMemoryWin32HandleKHR, &params);
+    assert(!status && "vkGetMemoryWin32HandleKHR");
+    return params.result;
+}
+
+VkResult WINAPI vkGetMemoryWin32HandlePropertiesKHR(VkDevice device, VkExternalMemoryHandleTypeFlagBits handleType, HANDLE handle, VkMemoryWin32HandlePropertiesKHR *pMemoryWin32HandleProperties)
+{
+    struct vkGetMemoryWin32HandlePropertiesKHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.handleType = handleType;
+    params.handle = handle;
+    params.pMemoryWin32HandleProperties = pMemoryWin32HandleProperties;
+    status = UNIX_CALL(vkGetMemoryWin32HandlePropertiesKHR, &params);
+    assert(!status && "vkGetMemoryWin32HandlePropertiesKHR");
+    return params.result;
+}
+
 void WINAPI vkGetMicromapBuildSizesEXT(VkDevice device, VkAccelerationStructureBuildTypeKHR buildType, const VkMicromapBuildInfoEXT *pBuildInfo, VkMicromapBuildSizesInfoEXT *pSizeInfo)
 {
     struct vkGetMicromapBuildSizesEXT_params params;
@@ -7544,6 +7569,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetImageViewOpaqueCaptureDescriptorDataEXT", vkGetImageViewOpaqueCaptureDescriptorDataEXT},
     {"vkGetLatencyTimingsNV", vkGetLatencyTimingsNV},
     {"vkGetMemoryHostPointerPropertiesEXT", vkGetMemoryHostPointerPropertiesEXT},
+    {"vkGetMemoryWin32HandleKHR", vkGetMemoryWin32HandleKHR},
+    {"vkGetMemoryWin32HandlePropertiesKHR", vkGetMemoryWin32HandlePropertiesKHR},
     {"vkGetMicromapBuildSizesEXT", vkGetMicromapBuildSizesEXT},
     {"vkGetPartitionedAccelerationStructuresBuildSizesNV", vkGetPartitionedAccelerationStructuresBuildSizesNV},
     {"vkGetPerformanceParameterINTEL", vkGetPerformanceParameterINTEL},

@@ -526,6 +526,8 @@ enum unix_call
     unix_vkGetImageViewOpaqueCaptureDescriptorDataEXT,
     unix_vkGetLatencyTimingsNV,
     unix_vkGetMemoryHostPointerPropertiesEXT,
+    unix_vkGetMemoryWin32HandleKHR,
+    unix_vkGetMemoryWin32HandlePropertiesKHR,
     unix_vkGetMicromapBuildSizesEXT,
     unix_vkGetPartitionedAccelerationStructuresBuildSizesNV,
     unix_vkGetPerformanceParameterINTEL,
@@ -4539,6 +4541,23 @@ struct vkGetMemoryHostPointerPropertiesEXT_params
     VkExternalMemoryHandleTypeFlagBits handleType;
     const void *pHostPointer;
     VkMemoryHostPointerPropertiesEXT *pMemoryHostPointerProperties;
+    VkResult result;
+};
+
+struct vkGetMemoryWin32HandleKHR_params
+{
+    VkDevice device;
+    const VkMemoryGetWin32HandleInfoKHR *pGetWin32HandleInfo;
+    HANDLE *pHandle;
+    VkResult result;
+};
+
+struct vkGetMemoryWin32HandlePropertiesKHR_params
+{
+    VkDevice device;
+    VkExternalMemoryHandleTypeFlagBits handleType;
+    HANDLE handle;
+    VkMemoryWin32HandlePropertiesKHR *pMemoryWin32HandleProperties;
     VkResult result;
 };
 

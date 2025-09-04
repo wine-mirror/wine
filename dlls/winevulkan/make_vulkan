@@ -127,7 +127,6 @@ UNSUPPORTED_EXTENSIONS = [
 # but not expose to applications (useful for test commits)
 UNEXPOSED_EXTENSIONS = {
     "VK_EXT_map_memory_placed",
-    "VK_KHR_external_memory_win32",
     "VK_EXT_headless_surface",
     # Extensions for other platforms
     "VK_EXT_external_memory_dma_buf",
@@ -191,7 +190,6 @@ FUNCTION_OVERRIDES = {
 
     # Instance functions
     "vkCreateDevice" : {"extra_param" : "client_ptr"},
-    "vkGetPhysicalDeviceExternalBufferProperties" : {"dispatch" : False},
     "vkGetPhysicalDeviceExternalFenceProperties" : {"dispatch" : False},
     "vkGetPhysicalDeviceExternalSemaphoreProperties" : {"dispatch" : False},
 
@@ -201,9 +199,6 @@ FUNCTION_OVERRIDES = {
 
     # VK_KHR_external_fence_capabilities
     "vkGetPhysicalDeviceExternalFencePropertiesKHR" : {"dispatch" : False},
-
-    # VK_KHR_external_memory_capabilities
-    "vkGetPhysicalDeviceExternalBufferPropertiesKHR" : {"dispatch" : False},
 
     # VK_KHR_external_semaphore_capabilities
     "vkGetPhysicalDeviceExternalSemaphorePropertiesKHR" : {"dispatch" : False},
@@ -221,8 +216,17 @@ USER_DRIVER_FUNCS = {
     "vkDestroySurfaceKHR",
     "vkDestroySwapchainKHR",
     "vkFreeMemory",
+    "vkGetDeviceBufferMemoryRequirements",
+    "vkGetDeviceBufferMemoryRequirementsKHR",
+    "vkGetDeviceImageMemoryRequirements",
     "vkGetDeviceProcAddr",
     "vkGetInstanceProcAddr",
+    "vkGetMemoryWin32HandleKHR",
+    "vkGetMemoryWin32HandlePropertiesKHR",
+    "vkGetPhysicalDeviceExternalBufferProperties",
+    "vkGetPhysicalDeviceExternalBufferPropertiesKHR",
+    "vkGetPhysicalDeviceImageFormatProperties2",
+    "vkGetPhysicalDeviceImageFormatProperties2KHR",
     "vkGetPhysicalDevicePresentRectanglesKHR",
     "vkGetPhysicalDeviceSurfaceCapabilities2KHR",
     "vkGetPhysicalDeviceSurfaceCapabilitiesKHR",
@@ -268,14 +272,10 @@ MANUAL_UNIX_THUNKS = {
     "vkGetInstanceProcAddr",
     "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT",
     "vkGetPhysicalDeviceCalibrateableTimeDomainsKHR",
-    "vkGetPhysicalDeviceExternalBufferProperties",
-    "vkGetPhysicalDeviceExternalBufferPropertiesKHR",
     "vkGetPhysicalDeviceExternalFenceProperties",
     "vkGetPhysicalDeviceExternalFencePropertiesKHR",
     "vkGetPhysicalDeviceExternalSemaphoreProperties",
     "vkGetPhysicalDeviceExternalSemaphorePropertiesKHR",
-    "vkGetPhysicalDeviceImageFormatProperties2",
-    "vkGetPhysicalDeviceImageFormatProperties2KHR",
 }
 
 # loader functions which are entirely manually implemented
@@ -306,6 +306,8 @@ STRUCT_CHAIN_CONVERSIONS = {
     "VkMemoryAllocateInfo": {},
     "VkBufferCreateInfo": {},
     "VkImageCreateInfo": {},
+    "VkPhysicalDeviceExternalBufferInfo": {},
+    "VkPhysicalDeviceImageFormatInfo2": {},
 
     # Ignore to not confuse host loader.
     "VkDeviceCreateInfo": {"strip": ["VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO"]},
