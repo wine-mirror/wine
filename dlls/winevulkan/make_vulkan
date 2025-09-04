@@ -1965,10 +1965,9 @@ class VkStruct(Sequence):
             def is_struct_extension(s):
                 return not s.alias and self.name in s.structextends
 
-            for type_info in self.registry.types.values():
-                struct = type_info["data"] if type_info["category"] == "struct" else None
-                if struct and is_struct_extension(struct):
-                    self._extensions.append(struct)
+            structs = sorted(self.registry.structs, key=lambda s: s.name)
+            for struct in filter(is_struct_extension, structs):
+                self._extensions.append(struct)
 
         return self._extensions
 
