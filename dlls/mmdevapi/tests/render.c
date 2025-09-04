@@ -1460,10 +1460,11 @@ static void test_clock(int share)
         /* ok(hr == AUDCLNT_E_BUFFER_TOO_LARGE || (hr == S_OK && i==0) without todo_wine */
         ok(hr == S_OK || hr == AUDCLNT_E_BUFFER_TOO_LARGE,
            "GetBuffer large (%u) failed: %08lx\n", avail, hr);
-        if(hr == S_OK && i) ok(FALSE, "GetBuffer large (%u) at iteration %d\n", avail, i);
-        /* Only the first iteration should allow that large a buffer
+        /* In theory only the first iteration should allow that large a buffer
          * as prefill was drained during the first 350+100ms sleep.
-         * Afterwards, only 100ms of data should find room per iteration. */
+         * Afterwards, only 100ms of data should find room per iteration.
+         * However on some drivers a large buffer is allowed even at later
+         * iterations, so we don't explicitly check this. */
 
         if(hr == S_OK) {
             trace("data at %p\n", data);
