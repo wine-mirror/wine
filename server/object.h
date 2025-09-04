@@ -244,7 +244,7 @@ extern void abandon_mutexes( struct thread *thread );
 
 struct inproc_sync;
 extern int get_inproc_device_fd(void);
-extern struct inproc_sync *create_inproc_event_sync( int manual, int signaled );
+extern struct inproc_sync *create_inproc_internal_sync( int manual, int signaled );
 extern void signal_inproc_sync( struct inproc_sync *sync );
 extern void reset_inproc_sync( struct inproc_sync *sync );
 

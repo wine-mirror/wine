@@ -4126,8 +4126,8 @@ struct handle_info
 
 enum inproc_sync_type
 {
-    INPROC_SYNC_UNKNOWN = 0,
-    INPROC_SYNC_EVENT = 1,
+    INPROC_SYNC_UNKNOWN   = 0,
+    INPROC_SYNC_INTERNAL  = 1,
 };
 
 /* Get the in-process synchronization fd associated with the waitable handle */

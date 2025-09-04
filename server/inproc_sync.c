@@ -87,15 +87,21 @@ static const struct object_ops inproc_sync_ops =
     inproc_sync_destroy,        /* destroy */
 };
 
-struct inproc_sync *create_inproc_event_sync( int manual, int signaled )
+struct inproc_sync *create_inproc_internal_sync( int manual, int signaled )
 {
     struct ntsync_event_args args = {.signaled = signaled, .manual = manual};
     struct inproc_sync *event;
 
     if (!(event = alloc_object( &inproc_sync_ops ))) return NULL;
-    event->type = INPROC_SYNC_EVENT;
-    event->fd = ioctl( get_inproc_device_fd(), NTSYNC_IOC_CREATE_EVENT, &args );
+    event->type = INPROC_SYNC_INTERNAL;
+    event->fd   = ioctl( get_inproc_device_fd(), NTSYNC_IOC_CREATE_EVENT, &args );
 
+    if (event->fd == -1)
+    {
+        set_error( STATUS_TOO_MANY_OPENED_FILES );
+        release_object( event );
+        return NULL;
+    }
     return event;
 }
 
@@ -154,7 +160,7 @@ int get_inproc_device_fd(void)
     return -1;
 }
 
-struct inproc_sync *create_inproc_event_sync( int manual, int signaled )
+struct inproc_sync *create_inproc_internal_sync( int manual, int signaled )
 {
     return NULL;
 }
