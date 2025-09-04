@@ -576,6 +576,12 @@ int async_waiting( struct async_queue *queue )
     return !async->terminated;
 }
 
+static void cancel_async( struct async *async )
+{
+    async->canceled = 1;
+    fd_cancel_async( async->fd, async );
+}
+
 static struct async *find_async_from_user( struct process *process, client_ptr_t user )
 {
     struct async *async;
@@ -586,14 +592,14 @@ static struct async *find_async_from_user( struct process *process, client_ptr_t
     return NULL;
 }
 
-static int cancel_async( struct process *process, struct object *obj, struct thread *thread, client_ptr_t iosb )
+static int cancel_process_async( struct process *process, struct object *obj, struct thread *thread, client_ptr_t iosb )
 {
     struct async *async;
     int woken = 0;
 
-    /* FIXME: it would probably be nice to replace the "canceled" flag with a
-     * single LIST_FOR_EACH_ENTRY_SAFE, but currently cancelling an async can
-     * cause other asyncs to be removed via async_reselect() */
+    /* We can't simply use LIST_FOR_EACH_ENTRY_SAFE here, because currently
+     * cancelling an async can cause other asyncs to be removed via
+     * async_reselect() */
 
 restart:
     LIST_FOR_EACH_ENTRY( async, &process->asyncs, struct async, process_entry )
@@ -603,8 +609,7 @@ restart:
             (!thread || async->thread == thread) &&
             (!iosb || async->data.iosb == iosb))
         {
-            async->canceled = 1;
-            fd_cancel_async( async->fd, async );
+            cancel_async( async );
             woken++;
             goto restart;
         }
@@ -624,8 +629,7 @@ restart:
         if (async->blocking && async->thread == thread &&
             (!iosb || async->data.iosb == iosb))
         {
-            async->canceled = 1;
-            fd_cancel_async( async->fd, async );
+            cancel_async( async );
             woken++;
             goto restart;
         }
@@ -633,7 +637,7 @@ restart:
     return woken;
 }
 
-void cancel_process_asyncs( struct process *process )
+void cancel_terminating_process_asyncs( struct process *process )
 {
     struct async *async;
 
@@ -641,8 +645,7 @@ restart:
     LIST_FOR_EACH_ENTRY( async, &process->asyncs, struct async, process_entry )
     {
         if (async->terminated || async->canceled) continue;
-        async->canceled = 1;
-        fd_cancel_async( async->fd, async );
+        cancel_async( async );
         goto restart;
     }
 }
@@ -661,9 +664,7 @@ restart:
     {
         if (async->terminated || async->canceled || get_fd_user( async->fd ) != obj) continue;
         if (!async->completion || !async->data.apc_context || async->event) continue;
-
-        async->canceled = 1;
-        fd_cancel_async( async->fd, async );
+        cancel_async( async );
         goto restart;
     }
     return 1;
@@ -679,9 +680,7 @@ restart:
         if (async->thread != thread || async->terminated || async->canceled) continue;
         if (async->completion && async->data.apc_context && !async->event) continue;
         if (async->is_system) continue;
-
-        async->canceled = 1;
-        fd_cancel_async( async->fd, async );
+        cancel_async( async );
         goto restart;
     }
 }
@@ -831,7 +830,7 @@ DECL_HANDLER(cancel_async)
 
     if (obj)
     {
-        int count = cancel_async( current->process, obj, thread, req->iosb );
+        int count = cancel_process_async( current->process, obj, thread, req->iosb );
         if (!count && !thread) set_error( STATUS_NOT_FOUND );
         release_object( obj );
     }
