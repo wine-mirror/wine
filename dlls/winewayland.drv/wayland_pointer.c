@@ -712,7 +712,12 @@ static BOOL wayland_pointer_set_cursor_shape(HCURSOR hcursor)
     if (!get_icon_info(hcursor, &info)) return FALSE;
     proto_version = wp_cursor_shape_manager_v1_get_version(
         process_wayland.wp_cursor_shape_manager_v1);
-    if (!(shape = cursor_shape_from_info(&info, proto_version))) return FALSE;
+    shape = cursor_shape_from_info(&info, proto_version);
+
+    if (info.hbmColor) NtGdiDeleteObjectApp(info.hbmColor);
+    if (info.hbmMask) NtGdiDeleteObjectApp(info.hbmMask);
+
+    if (!shape) return FALSE;
 
     if (!pointer->wp_cursor_shape_device_v1)
     {
