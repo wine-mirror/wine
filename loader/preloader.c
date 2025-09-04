@@ -208,11 +208,13 @@ extern char _end[];
 __ASM_GLOBAL_FUNC(_start,
                   __ASM_CFI("\t.cfi_undefined %eip\n")
                   "\tmovl $243,%eax\n"        /* SYS_set_thread_area */
-                  "\tmovl $thread_ldt,%ebx\n"
+                  "\tcall 1f\n"
+                  "1:\tpop %ebx\n"
+                  "\taddl $thread_ldt-1b,%ebx\n"
                   "\tint $0x80\n"             /* allocate gs segment */
                   "\torl %eax,%eax\n"
                   "\tjl 1f\n"
-                  "\tmovl thread_ldt,%eax\n"  /* thread_ldt.entry_number */
+                  "\tmovl (%ebx),%eax\n"      /* thread_ldt.entry_number */
                   "\tshl $3,%eax\n"
                   "\torl $3,%eax\n"
                   "\tmov %ax,%gs\n"
