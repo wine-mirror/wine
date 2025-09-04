@@ -309,9 +309,9 @@ static unsigned int validate_open_object_attributes( const OBJECT_ATTRIBUTES *at
 
 struct inproc_sync
 {
-    int fd;
-    unsigned int access;
-    unsigned int type : 2;
+    int            fd;        /* unix file descriptor */
+    unsigned int   access;    /* handle access rights */
+    unsigned int   type;      /* enum inproc_sync_type */
 };
 
 static void release_inproc_sync( struct inproc_sync *sync )
@@ -353,6 +353,18 @@ static NTSTATUS get_inproc_sync( HANDLE handle, ACCESS_MASK desired_access, stru
     }
 
     return STATUS_SUCCESS;
+}
+
+extern NTSTATUS check_signal_access( struct inproc_sync *sync )
+{
+    switch (sync->type)
+    {
+    case INPROC_SYNC_INTERNAL:
+        return STATUS_OBJECT_TYPE_MISMATCH;
+    }
+
+    assert( 0 );
+    return STATUS_OBJECT_TYPE_MISMATCH;
 }
 
 static NTSTATUS inproc_release_semaphore( HANDLE handle, ULONG count, ULONG *prev_count )
@@ -429,7 +441,26 @@ static NTSTATUS inproc_wait( DWORD count, const HANDLE *handles, BOOLEAN wait_an
 static NTSTATUS inproc_signal_and_wait( HANDLE signal, HANDLE wait,
                                         BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
+    struct inproc_sync stack_signal, stack_wait, *signal_sync = &stack_signal, *wait_sync = &stack_wait;
+    NTSTATUS ret;
+
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
+
+    if ((ret = get_inproc_sync( signal, 0, signal_sync ))) return ret;
+    if ((ret = check_signal_access( signal_sync )))
+    {
+        release_inproc_sync( signal_sync );
+        return ret;
+    }
+
+    if ((ret = get_inproc_sync( wait, SYNCHRONIZE, wait_sync )))
+    {
+        release_inproc_sync( signal_sync );
+        return ret;
+    }
+
+    release_inproc_sync( signal_sync );
+    release_inproc_sync( wait_sync );
     return STATUS_NOT_IMPLEMENTED;
 }
 
