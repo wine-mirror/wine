@@ -85,13 +85,6 @@ static struct swapchain *swapchain_from_handle( VkSwapchainKHR handle )
     return CONTAINING_RECORD( obj, struct swapchain, obj );
 }
 
-static inline const void *find_next_struct( const void *head, VkStructureType type )
-{
-    const VkBaseInStructure *header;
-    for (header = head; header; header = header->pNext) if (header->sType == type) return header;
-    return NULL;
-}
-
 static VkResult allocate_external_host_memory( struct vulkan_device *device, VkMemoryAllocateInfo *alloc_info,
                                                VkImportMemoryHostPointerInfoEXT *import_info )
 {
@@ -419,21 +412,42 @@ static VkResult win32u_vkCreateBuffer( VkDevice client_device, const VkBufferCre
 static VkResult win32u_vkCreateImage( VkDevice client_device, const VkImageCreateInfo *create_info,
                                       const VkAllocationCallbacks *allocator, VkImage *image )
 {
+    VkBaseOutStructure **next, *prev = (VkBaseOutStructure *)create_info; /* cast away const, chain has been copied in the thunks */
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
     struct vulkan_physical_device *physical_device = device->physical_device;
-    VkExternalMemoryImageCreateInfo external_memory_info;
-    VkImageCreateInfo info = *create_info;
+    VkExternalMemoryImageCreateInfo host_external_info, *external_info = NULL;
 
-    if (physical_device->external_memory_align &&
-        !find_next_struct( info.pNext, VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO ))
+    for (next = &prev->pNext; *next; prev = *next, next = &(*next)->pNext)
     {
-        external_memory_info.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
-        external_memory_info.pNext = info.pNext;
-        external_memory_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT;
-        info.pNext = &external_memory_info;
+        switch ((*next)->sType)
+        {
+        case VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_IMAGE_CREATE_INFO_NV: break;
+        case VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO:
+            external_info = (VkExternalMemoryImageCreateInfo *)*next;
+            FIXME( "VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO not implemented!\n" );
+            *next = (*next)->pNext; next = &prev;
+            break;
+        case VK_STRUCTURE_TYPE_IMAGE_ALIGNMENT_CONTROL_CREATE_INFO_MESA: break;
+        case VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_CONTROL_EXT: break;
+        case VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO: break;
+        case VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO: break;
+        case VK_STRUCTURE_TYPE_IMAGE_SWAPCHAIN_CREATE_INFO_KHR: break;
+        case VK_STRUCTURE_TYPE_OPAQUE_CAPTURE_DESCRIPTOR_DATA_CREATE_INFO_EXT: break;
+        case VK_STRUCTURE_TYPE_OPTICAL_FLOW_IMAGE_FORMAT_INFO_NV: break;
+        case VK_STRUCTURE_TYPE_VIDEO_PROFILE_LIST_INFO_KHR: break;
+        default: FIXME( "Unhandled sType %u.\n", (*next)->sType ); break;
+        }
     }
 
-    return device->p_vkCreateImage( device->host.device, &info, NULL, image );
+    if (physical_device->external_memory_align && !external_info)
+    {
+        host_external_info.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
+        host_external_info.pNext = create_info->pNext;
+        host_external_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT;
+        ((VkImageCreateInfo *)create_info)->pNext = &host_external_info; /* cast away const, it has been copied in the thunks */
+    }
+
+    return device->p_vkCreateImage( device->host.device, create_info, NULL, image );
 }
 
 static VkResult win32u_vkCreateWin32SurfaceKHR( VkInstance client_instance, const VkWin32SurfaceCreateInfoKHR *create_info,
