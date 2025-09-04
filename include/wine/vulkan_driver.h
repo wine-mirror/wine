@@ -47,7 +47,7 @@ struct vulkan_client_object
 #include "wine/rbtree.h"
 
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
-#define WINE_VULKAN_DRIVER_VERSION 42
+#define WINE_VULKAN_DRIVER_VERSION 43
 
 struct vulkan_object
 {
@@ -192,8 +192,10 @@ struct vulkan_funcs
     PFN_vkAllocateMemory p_vkAllocateMemory;
     PFN_vkCreateBuffer p_vkCreateBuffer;
     PFN_vkCreateImage p_vkCreateImage;
+    PFN_vkCreateSemaphore p_vkCreateSemaphore;
     PFN_vkCreateSwapchainKHR p_vkCreateSwapchainKHR;
     PFN_vkCreateWin32SurfaceKHR p_vkCreateWin32SurfaceKHR;
+    PFN_vkDestroySemaphore p_vkDestroySemaphore;
     PFN_vkDestroySurfaceKHR p_vkDestroySurfaceKHR;
     PFN_vkDestroySwapchainKHR p_vkDestroySwapchainKHR;
     PFN_vkFreeMemory p_vkFreeMemory;
@@ -206,6 +208,8 @@ struct vulkan_funcs
     PFN_vkGetMemoryWin32HandlePropertiesKHR p_vkGetMemoryWin32HandlePropertiesKHR;
     PFN_vkGetPhysicalDeviceExternalBufferProperties p_vkGetPhysicalDeviceExternalBufferProperties;
     PFN_vkGetPhysicalDeviceExternalBufferPropertiesKHR p_vkGetPhysicalDeviceExternalBufferPropertiesKHR;
+    PFN_vkGetPhysicalDeviceExternalSemaphoreProperties p_vkGetPhysicalDeviceExternalSemaphoreProperties;
+    PFN_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR p_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR;
     PFN_vkGetPhysicalDeviceImageFormatProperties2 p_vkGetPhysicalDeviceImageFormatProperties2;
     PFN_vkGetPhysicalDeviceImageFormatProperties2KHR p_vkGetPhysicalDeviceImageFormatProperties2KHR;
     PFN_vkGetPhysicalDevicePresentRectanglesKHR p_vkGetPhysicalDevicePresentRectanglesKHR;
@@ -214,6 +218,8 @@ struct vulkan_funcs
     PFN_vkGetPhysicalDeviceSurfaceFormats2KHR p_vkGetPhysicalDeviceSurfaceFormats2KHR;
     PFN_vkGetPhysicalDeviceSurfaceFormatsKHR p_vkGetPhysicalDeviceSurfaceFormatsKHR;
     PFN_vkGetPhysicalDeviceWin32PresentationSupportKHR p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
+    PFN_vkGetSemaphoreWin32HandleKHR p_vkGetSemaphoreWin32HandleKHR;
+    PFN_vkImportSemaphoreWin32HandleKHR p_vkImportSemaphoreWin32HandleKHR;
     PFN_vkMapMemory p_vkMapMemory;
     PFN_vkMapMemory2KHR p_vkMapMemory2KHR;
     PFN_vkQueuePresentKHR p_vkQueuePresentKHR;

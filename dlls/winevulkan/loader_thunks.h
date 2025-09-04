@@ -609,6 +609,7 @@ enum unix_call
     unix_vkGetSamplerOpaqueCaptureDescriptorDataEXT,
     unix_vkGetSemaphoreCounterValue,
     unix_vkGetSemaphoreCounterValueKHR,
+    unix_vkGetSemaphoreWin32HandleKHR,
     unix_vkGetShaderBinaryDataEXT,
     unix_vkGetShaderInfoAMD,
     unix_vkGetShaderModuleCreateInfoIdentifierEXT,
@@ -619,6 +620,7 @@ enum unix_call
     unix_vkGetTensorViewOpaqueCaptureDescriptorDataARM,
     unix_vkGetValidationCacheDataEXT,
     unix_vkGetVideoSessionMemoryRequirementsKHR,
+    unix_vkImportSemaphoreWin32HandleKHR,
     unix_vkInitializePerformanceApiINTEL,
     unix_vkInvalidateMappedMemoryRanges,
     unix_vkLatencySleepNV,
@@ -5205,6 +5207,14 @@ struct vkGetSemaphoreCounterValueKHR_params
     VkResult result;
 };
 
+struct vkGetSemaphoreWin32HandleKHR_params
+{
+    VkDevice device;
+    const VkSemaphoreGetWin32HandleInfoKHR *pGetWin32HandleInfo;
+    HANDLE *pHandle;
+    VkResult result;
+};
+
 struct vkGetShaderBinaryDataEXT_params
 {
     VkDevice device;
@@ -5286,6 +5296,13 @@ struct vkGetVideoSessionMemoryRequirementsKHR_params
     VkVideoSessionKHR DECLSPEC_ALIGN(8) videoSession;
     uint32_t *pMemoryRequirementsCount;
     VkVideoSessionMemoryRequirementsKHR *pMemoryRequirements;
+    VkResult result;
+};
+
+struct vkImportSemaphoreWin32HandleKHR_params
+{
+    VkDevice device;
+    const VkImportSemaphoreWin32HandleInfoKHR *pImportSemaphoreWin32HandleInfo;
     VkResult result;
 };
 
