@@ -41,6 +41,7 @@
 #include "d3d11_1.h"
 #include "d3d12.h"
 
+#include "wine/vulkan.h"
 #include "wine/wgl.h"
 #include "wine/test.h"
 
@@ -51,6 +52,9 @@
 static const WCHAR display1W[] = L"\\\\.\\DISPLAY1";
 
 DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
+
+static PFN_vkGetInstanceProcAddr p_vkGetInstanceProcAddr;
+static PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr;
 
 static const LUID luid_zero;
 const GUID GUID_NULL = {0};
@@ -476,7 +480,7 @@ static void get_d3dkmt_resource_desc( LUID luid, HANDLE handle, BOOL expect_glob
         status = D3DKMTQueryResourceInfo( &query );
         ok_nt( STATUS_SUCCESS, status );
         if (size) ok_u4( query.PrivateRuntimeDataSize, ==, size );
-        else ok( query.PrivateRuntimeDataSize == 0 || query.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", query.PrivateRuntimeDataSize );
+        else todo_wine ok( query.PrivateRuntimeDataSize == 0 || query.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", query.PrivateRuntimeDataSize );
         ok_u4( query.TotalPrivateDriverDataSize, <, sizeof(driver_data) );
         ok_u4( query.ResourcePrivateDriverDataSize, <, sizeof(driver_data) );
         ok_u4( query.NumAllocations, ==, 1 );
@@ -497,7 +501,7 @@ static void get_d3dkmt_resource_desc( LUID luid, HANDLE handle, BOOL expect_glob
         ok_nt( STATUS_SUCCESS, status );
         check_d3dkmt_local( open.hResource, NULL );
         if (size) ok_u4( open.PrivateRuntimeDataSize, ==, size );
-        else ok( open.PrivateRuntimeDataSize == 0 || open.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", open.PrivateRuntimeDataSize );
+        else todo_wine ok( open.PrivateRuntimeDataSize == 0 || open.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", open.PrivateRuntimeDataSize );
         ok_u4( open.TotalPrivateDriverDataBufferSize, <, sizeof(driver_data) );
         ok_u4( open.ResourcePrivateDriverDataSize, <, sizeof(driver_data) );
         ok_u4( open.NumAllocations, ==, 1 );
@@ -515,7 +519,7 @@ static void get_d3dkmt_resource_desc( LUID luid, HANDLE handle, BOOL expect_glob
         status = D3DKMTQueryResourceInfoFromNtHandle( &query_nt );
         ok_nt( STATUS_SUCCESS, status );
         if (size) ok_u4( query_nt.PrivateRuntimeDataSize, ==, size );
-        else ok( query_nt.PrivateRuntimeDataSize == 0 || query_nt.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", query_nt.PrivateRuntimeDataSize );
+        else todo_wine ok( query_nt.PrivateRuntimeDataSize == 0 || query_nt.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", query_nt.PrivateRuntimeDataSize );
         ok_u4( query_nt.TotalPrivateDriverDataSize, <, sizeof(driver_data) );
         ok_u4( query_nt.ResourcePrivateDriverDataSize, <, sizeof(driver_data) );
         ok_u4( query_nt.NumAllocations, ==, 1 );
@@ -536,7 +540,7 @@ static void get_d3dkmt_resource_desc( LUID luid, HANDLE handle, BOOL expect_glob
         ok_nt( STATUS_SUCCESS, status );
         check_d3dkmt_local( open_nt.hResource, NULL );
         if (size) ok_u4( open_nt.PrivateRuntimeDataSize, ==, size );
-        else ok( open_nt.PrivateRuntimeDataSize == 0 || open_nt.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", open_nt.PrivateRuntimeDataSize );
+        else todo_wine ok( open_nt.PrivateRuntimeDataSize == 0 || open_nt.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", open_nt.PrivateRuntimeDataSize );
         ok_u4( open_nt.TotalPrivateDriverDataBufferSize, <, sizeof(driver_data) );
         ok_u4( open_nt.ResourcePrivateDriverDataSize, <, sizeof(driver_data) );
         ok_u4( open_nt.NumAllocations, ==, 1 );
@@ -3143,6 +3147,444 @@ static ID3D11Device1 *create_d3d11_device( IDXGIAdapter *adapter )
     return device1;
 }
 
+struct vulkan_device
+{
+    VkInstance instance;
+    VkPhysicalDevice physical_device;
+    VkDevice device;
+};
+
+struct vulkan_buffer
+{
+    VkBuffer buffer;
+    VkDeviceMemory memory;
+};
+
+struct vulkan_image
+{
+    VkImage image;
+    VkDeviceMemory memory;
+};
+
+static VkResult create_vulkan_instance( uint32_t extension_count, const char *const *extensions,
+                                        VkInstance *instance )
+{
+    VkInstanceCreateInfo create_info = {.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
+    VkApplicationInfo app_info = {.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO};
+    PFN_vkCreateInstance p_vkCreateInstance;
+    HMODULE vulkan;
+
+    if (!(vulkan = LoadLibraryW( L"vulkan-1" ))) return VK_ERROR_INITIALIZATION_FAILED;
+    if (!(p_vkCreateInstance = (void *)GetProcAddress( vulkan, "vkCreateInstance" ))) return 0;
+    if (!(p_vkGetInstanceProcAddr = (void *)GetProcAddress( vulkan, "vkGetInstanceProcAddr" ))) return 0;
+    if (!(p_vkGetDeviceProcAddr = (void *)GetProcAddress( vulkan, "vkGetDeviceProcAddr" ))) return 0;
+
+    app_info.apiVersion = VK_API_VERSION_1_1;
+    create_info.pApplicationInfo = &app_info;
+    create_info.enabledExtensionCount = extension_count;
+    create_info.ppEnabledExtensionNames = extensions;
+
+    return p_vkCreateInstance( &create_info, NULL, instance );
+}
+
+static void get_vulkan_physical_device_luid( VkInstance instance, VkPhysicalDevice physical_device, LUID *luid )
+{
+    PFN_vkGetPhysicalDeviceProperties2 p_vkGetPhysicalDeviceProperties2;
+
+    VkPhysicalDeviceIDProperties id_props = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES};
+    VkPhysicalDeviceVulkan11Properties vk11_props = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES, .pNext = &id_props};
+    VkPhysicalDeviceProperties2 props = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, .pNext = &vk11_props};
+
+    if (!(p_vkGetPhysicalDeviceProperties2 = (void *)p_vkGetInstanceProcAddr( instance, "vkGetPhysicalDeviceProperties2" ))) return;
+
+    p_vkGetPhysicalDeviceProperties2( physical_device, &props );
+    ok_u4( props.properties.apiVersion, !=, 0 );
+    ok_u4( props.properties.driverVersion, !=, 0 );
+    ok_u4( props.properties.vendorID, !=, 0 );
+
+    ok( !IsEqualGUID( &GUID_NULL, (GUID *)id_props.deviceUUID ), "got deviceUUID %s\n", debugstr_guid( (GUID *)id_props.deviceUUID ) );
+    ok( !IsEqualGUID( &GUID_NULL, (GUID *)id_props.driverUUID ), "got driverUUID %s\n", debugstr_guid( (GUID *)id_props.driverUUID ) );
+    ok( !luid_equals( &luid_zero, (LUID *)id_props.deviceLUID ), "got deviceLUID %s\n", debugstr_luid( (LUID *)id_props.deviceLUID ) );
+    ok_u4( id_props.deviceNodeMask, ==, 1 );
+    ok_u4( id_props.deviceLUIDValid, ==, 1 );
+
+    ok( !IsEqualGUID( &GUID_NULL, (GUID *)vk11_props.deviceUUID ), "got deviceUUID %s\n", debugstr_guid( (GUID *)vk11_props.deviceUUID ) );
+    ok( !IsEqualGUID( &GUID_NULL, (GUID *)vk11_props.driverUUID ), "got driverUUID %s\n", debugstr_guid( (GUID *)vk11_props.driverUUID ) );
+    ok( !luid_equals( &luid_zero, (LUID *)vk11_props.deviceLUID ), "got deviceLUID %s\n", debugstr_luid( (LUID *)vk11_props.deviceLUID ) );
+    ok_u4( vk11_props.deviceNodeMask, ==, 1 );
+    ok_u4( vk11_props.deviceLUIDValid, ==, 1 );
+
+    *luid = *(LUID *)vk11_props.deviceLUID;
+}
+
+static VkExternalMemoryHandleTypeFlags get_vulkan_external_image_types( VkInstance instance, VkPhysicalDevice physical_device,
+                                                                        VkExternalMemoryFeatureFlags feature_flags )
+{
+    static const VkExternalMemoryHandleTypeFlagBits bits[] =
+    {
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT,
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT,
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT,
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT,
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT,
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_HEAP_BIT,
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT,
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT,
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_MAPPED_FOREIGN_MEMORY_BIT_EXT,
+    };
+
+    VkPhysicalDeviceExternalImageFormatInfo external_info = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_IMAGE_FORMAT_INFO};
+    VkPhysicalDeviceImageFormatInfo2 format_info = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2, .pNext = &external_info};
+
+    VkExternalImageFormatProperties external_props = {.sType = VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES};
+    VkImageFormatProperties2 format_props = {.sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2, .pNext = &external_props};
+
+    PFN_vkGetPhysicalDeviceImageFormatProperties2 p_vkGetPhysicalDeviceImageFormatProperties2;
+    VkExternalMemoryHandleTypeFlags handle_types = 0;
+    VkResult vr;
+
+    if (!(p_vkGetPhysicalDeviceImageFormatProperties2 = (void *)p_vkGetInstanceProcAddr( instance, "vkGetPhysicalDeviceImageFormatProperties2" ))) return 0;
+
+    format_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+    format_info.type = VK_IMAGE_TYPE_2D;
+    format_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    format_info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+
+    for (const VkExternalMemoryHandleTypeFlagBits *bit = bits; bit < bits + ARRAY_SIZE(bits); bit++)
+    {
+        winetest_push_context( "%#x", *bit );
+
+        external_info.handleType = *bit;
+        memset( &external_props.externalMemoryProperties, 0, sizeof(external_props.externalMemoryProperties) );
+        vr = p_vkGetPhysicalDeviceImageFormatProperties2( physical_device, &format_info, &format_props );
+        ok( vr == VK_SUCCESS || vr == VK_ERROR_FORMAT_NOT_SUPPORTED, "got %#x\n", vr );
+
+        if (!(~external_props.externalMemoryProperties.externalMemoryFeatures & feature_flags))
+        {
+            ok_u4( external_props.externalMemoryProperties.compatibleHandleTypes, ==, external_info.handleType );
+            handle_types |= external_info.handleType;
+        }
+
+        winetest_pop_context();
+    }
+
+    return handle_types;
+}
+
+static void destroy_vulkan_device( struct vulkan_device *dev )
+{
+    if (dev->instance)
+    {
+        PFN_vkDestroyInstance p_vkDestroyInstance;
+        PFN_vkDestroyDevice p_vkDestroyDevice;
+
+        p_vkDestroyDevice = (void *)p_vkGetDeviceProcAddr( dev->device, "vkDestroyDevice" );
+        p_vkDestroyDevice( dev->device, NULL );
+
+        p_vkDestroyInstance = (void *)p_vkGetInstanceProcAddr( dev->instance, "vkDestroyInstance" );
+        p_vkDestroyInstance( dev->instance, NULL );
+    }
+
+    free( dev );
+}
+
+static uint32_t get_vulkan_queue_family( VkInstance instance, VkPhysicalDevice physical_device )
+{
+    PFN_vkGetPhysicalDeviceQueueFamilyProperties p_vkGetPhysicalDeviceQueueFamilyProperties;
+
+    VkQueueFamilyProperties *props;
+    uint32_t i, count;
+
+    p_vkGetPhysicalDeviceQueueFamilyProperties = (void *)p_vkGetInstanceProcAddr( instance, "vkGetPhysicalDeviceQueueFamilyProperties" );
+
+    p_vkGetPhysicalDeviceQueueFamilyProperties( physical_device, &count, NULL );
+    props = calloc( count, sizeof(*props) );
+    ok_ptr( props, !=, NULL );
+    p_vkGetPhysicalDeviceQueueFamilyProperties( physical_device, &count, props );
+    for (i = 0; i < count; ++i) if (props[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) break;
+    free( props );
+
+    return i;
+}
+
+static struct vulkan_device *create_vulkan_device( LUID *luid )
+{
+    static const char *instance_extensions[] =
+    {
+        "VK_KHR_external_memory_capabilities",
+        "VK_KHR_get_physical_device_properties2",
+    };
+    static const char *device_extensions[] =
+    {
+        "VK_KHR_get_memory_requirements2",
+        "VK_KHR_dedicated_allocation",
+        "VK_KHR_external_memory",
+        "VK_KHR_external_memory_win32",
+    };
+
+    VkDeviceQueueCreateInfo queue_info = {.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
+    VkDeviceCreateInfo create_info = {.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+
+    PFN_vkEnumeratePhysicalDevices p_vkEnumeratePhysicalDevices;
+    PFN_vkCreateDevice p_vkCreateDevice;
+
+    VkPhysicalDevice *physical_devices;
+    struct vulkan_device *dev;
+    float priority = 0.0f;
+    uint32_t count;
+    VkResult vr;
+
+    dev = calloc( 1, sizeof(*dev) );
+    ok_ptr( dev, !=, NULL );
+
+    vr = create_vulkan_instance( ARRAY_SIZE(instance_extensions), instance_extensions, &dev->instance );
+    if (vr != VK_SUCCESS) return NULL;
+
+    p_vkEnumeratePhysicalDevices = (void *)p_vkGetInstanceProcAddr( dev->instance, "vkEnumeratePhysicalDevices" );
+    vr = p_vkEnumeratePhysicalDevices( dev->instance, &count, NULL );
+    ok_vk( VK_SUCCESS, vr );
+
+    physical_devices = calloc( count, sizeof(*physical_devices) );
+    ok_ptr( physical_devices, !=, NULL );
+    vr = p_vkEnumeratePhysicalDevices( dev->instance, &count, physical_devices );
+    ok_vk( VK_SUCCESS, vr );
+
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        static const VkExternalMemoryHandleTypeFlags expect_export_types = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT |
+                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT;
+        static const VkExternalMemoryHandleTypeFlags expect_import_types = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT |
+                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT |
+                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT |
+                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT |
+                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT |
+                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT;
+        VkExternalMemoryHandleTypeFlags types;
+
+        winetest_push_context( "export" );
+        types = get_vulkan_external_image_types( dev->instance, physical_devices[i], VK_EXTERNAL_MEMORY_FEATURE_EXPORTABLE_BIT_KHR );
+        todo_wine ok( !(~types & expect_export_types), "got types %#x\n", types );
+        winetest_pop_context();
+
+        winetest_push_context( "import" );
+        types = get_vulkan_external_image_types( dev->instance, physical_devices[i], VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT_KHR );
+        todo_wine ok( !(~types & expect_import_types), "got types %#x\n", types );
+        winetest_pop_context();
+    }
+
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        LUID device_luid;
+
+        dev->physical_device = physical_devices[i];
+        get_vulkan_physical_device_luid( dev->instance, physical_devices[i], &device_luid );
+        if (luid_equals( luid, &luid_zero )) *luid = device_luid;
+        if (luid_equals( luid, &device_luid )) break;
+        dev->physical_device = VK_NULL_HANDLE;
+    }
+    ok_ptr( dev->physical_device, !=, VK_NULL_HANDLE );
+
+    free( physical_devices );
+
+    queue_info.queueFamilyIndex = get_vulkan_queue_family( dev->instance, dev->physical_device );
+    queue_info.queueCount = 1;
+    queue_info.pQueuePriorities = &priority;
+
+    create_info.enabledExtensionCount = ARRAY_SIZE(device_extensions);
+    create_info.ppEnabledExtensionNames = device_extensions;
+    create_info.queueCreateInfoCount = 1;
+    create_info.pQueueCreateInfos = &queue_info;
+
+    p_vkCreateDevice = (void *)p_vkGetInstanceProcAddr( dev->instance, "vkCreateDevice" );
+    vr = p_vkCreateDevice( dev->physical_device, &create_info, NULL, &dev->device );
+    todo_wine ok_vk( VK_SUCCESS, vr );
+    todo_wine ok_ptr( dev->device, !=, VK_NULL_HANDLE );
+    if (dev->device == VK_NULL_HANDLE)
+    {
+        PFN_vkDestroyInstance p_vkDestroyInstance = (void *)p_vkGetInstanceProcAddr( dev->instance, "vkDestroyInstance" );
+        p_vkDestroyInstance( dev->instance, NULL );
+        free( dev );
+        return NULL;
+    }
+
+    return dev;
+}
+
+static uint32_t find_vulkan_memory_type( VkInstance instance, VkPhysicalDevice physical_device, VkMemoryPropertyFlagBits flags, uint32_t mask )
+{
+    PFN_vkGetPhysicalDeviceMemoryProperties p_vkGetPhysicalDeviceMemoryProperties;
+    VkPhysicalDeviceMemoryProperties properties = {0};
+    unsigned int i;
+
+    p_vkGetPhysicalDeviceMemoryProperties = (void *)p_vkGetInstanceProcAddr( instance, "vkGetPhysicalDeviceMemoryProperties" );
+
+    p_vkGetPhysicalDeviceMemoryProperties( physical_device, &properties );
+    for (i = 0; i < properties.memoryTypeCount; i++)
+    {
+        if (!(properties.memoryTypes[i].propertyFlags & flags)) continue;
+        if ((1u << i) & mask) return i;
+    }
+
+    return -1;
+}
+
+static void destroy_vulkan_buffer( struct vulkan_device *dev, struct vulkan_buffer *buf )
+{
+    PFN_vkFreeMemory p_vkFreeMemory;
+    PFN_vkDestroyBuffer p_vkDestroyBuffer;
+
+    p_vkFreeMemory = (void *)p_vkGetDeviceProcAddr( dev->device, "vkFreeMemory" );
+    p_vkDestroyBuffer = (void *)p_vkGetDeviceProcAddr( dev->device, "vkDestroyBuffer" );
+
+    p_vkDestroyBuffer( dev->device, buf->buffer, NULL );
+    p_vkFreeMemory( dev->device, buf->memory, NULL );
+    free( buf );
+}
+
+static struct vulkan_buffer *export_vulkan_buffer( struct vulkan_device *dev, UINT width, const WCHAR *name,
+                                                   UINT handle_type, HANDLE *handle )
+{
+    VkExternalMemoryBufferCreateInfo external_info = {.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO};
+    VkBufferCreateInfo create_info = {.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, .pNext = &external_info};
+
+    VkMemoryDedicatedAllocateInfoKHR dedicated_info = {.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO};
+    VkExportMemoryAllocateInfoKHR export_info = {.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR, .pNext = &dedicated_info};
+    VkExportMemoryWin32HandleInfoKHR handle_info = {.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_WIN32_HANDLE_INFO_KHR, .pNext = &export_info};
+    VkMemoryAllocateInfo alloc_info = {.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, .pNext = &handle_info};
+
+    VkMemoryGetWin32HandleInfoKHR get_handle_info = {.sType = VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR};
+
+    PFN_vkAllocateMemory p_vkAllocateMemory;
+    PFN_vkBindBufferMemory p_vkBindBufferMemory;
+    PFN_vkCreateBuffer p_vkCreateBuffer;
+    PFN_vkGetBufferMemoryRequirements p_vkGetBufferMemoryRequirements;
+    PFN_vkGetMemoryWin32HandleKHR p_vkGetMemoryWin32HandleKHR;
+
+    VkMemoryRequirements requirements;
+    struct vulkan_buffer *buf;
+    VkResult vr;
+
+    buf = calloc( 1, sizeof(*buf) );
+    ok_ptr( buf, !=, NULL );
+
+    p_vkAllocateMemory = (void *)p_vkGetDeviceProcAddr( dev->device, "vkAllocateMemory" );
+    p_vkBindBufferMemory = (void *)p_vkGetDeviceProcAddr( dev->device, "vkBindBufferMemory" );
+    p_vkCreateBuffer = (void *)p_vkGetDeviceProcAddr( dev->device, "vkCreateBuffer" );
+    p_vkGetBufferMemoryRequirements = (void *)p_vkGetDeviceProcAddr( dev->device, "vkGetBufferMemoryRequirements" );
+    p_vkGetMemoryWin32HandleKHR = (void *)p_vkGetDeviceProcAddr( dev->device, "vkGetMemoryWin32HandleKHR" );
+
+    external_info.handleTypes = handle_type;
+    create_info.size = width;
+    create_info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    vr = p_vkCreateBuffer( dev->device, &create_info, NULL, &buf->buffer );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkGetBufferMemoryRequirements( dev->device, buf->buffer, &requirements );
+
+    dedicated_info.buffer = buf->buffer;
+    export_info.handleTypes = handle_type;
+    handle_info.dwAccess = GENERIC_ALL;
+    handle_info.name = name;
+    alloc_info.allocationSize = requirements.size;
+    alloc_info.memoryTypeIndex = find_vulkan_memory_type( dev->instance, dev->physical_device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, requirements.memoryTypeBits );
+
+    vr = p_vkAllocateMemory( dev->device, &alloc_info, NULL, &buf->memory );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkBindBufferMemory( dev->device, buf->buffer, buf->memory, 0 );
+    ok_vk( VK_SUCCESS, vr );
+
+    get_handle_info.memory = buf->memory;
+    get_handle_info.handleType = handle_type;
+    vr = p_vkGetMemoryWin32HandleKHR( dev->device, &get_handle_info, handle );
+    ok_vk( VK_SUCCESS, vr );
+
+    return buf;
+}
+
+static void destroy_vulkan_image( struct vulkan_device *dev, struct vulkan_image *img )
+{
+    PFN_vkFreeMemory p_vkFreeMemory;
+    PFN_vkDestroyImage p_vkDestroyImage;
+
+    p_vkFreeMemory = (void *)p_vkGetDeviceProcAddr( dev->device, "vkFreeMemory" );
+    p_vkDestroyImage = (void *)p_vkGetDeviceProcAddr( dev->device, "vkDestroyImage" );
+
+    p_vkDestroyImage( dev->device, img->image, NULL );
+    p_vkFreeMemory( dev->device, img->memory, NULL );
+    free( img );
+}
+
+static struct vulkan_image *export_vulkan_image( struct vulkan_device *dev, UINT width, UINT height, UINT depth,
+                                                 const WCHAR *name, UINT handle_type, HANDLE *handle )
+{
+    VkExternalMemoryImageCreateInfo external_info = {.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO};
+    VkImageCreateInfo create_info = {.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, .pNext = &external_info};
+
+    VkMemoryDedicatedAllocateInfoKHR dedicated_info = {.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO};
+    VkExportMemoryAllocateInfoKHR export_info = {.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR, .pNext = &dedicated_info};
+    VkExportMemoryWin32HandleInfoKHR handle_info = {.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_WIN32_HANDLE_INFO_KHR, .pNext = &export_info};
+    VkMemoryAllocateInfo alloc_info = {.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, .pNext = &handle_info};
+
+    VkMemoryGetWin32HandleInfoKHR get_handle_info = {.sType = VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR};
+
+    PFN_vkAllocateMemory p_vkAllocateMemory;
+    PFN_vkBindImageMemory p_vkBindImageMemory;
+    PFN_vkCreateImage p_vkCreateImage;
+    PFN_vkGetImageMemoryRequirements p_vkGetImageMemoryRequirements;
+    PFN_vkGetMemoryWin32HandleKHR p_vkGetMemoryWin32HandleKHR;
+
+    VkMemoryRequirements requirements;
+    struct vulkan_image *img;
+    VkResult vr;
+
+    img = calloc( 1, sizeof(*img) );
+    ok_ptr( img, !=, NULL );
+
+    p_vkAllocateMemory = (void *)p_vkGetDeviceProcAddr( dev->device, "vkAllocateMemory" );
+    p_vkBindImageMemory = (void *)p_vkGetDeviceProcAddr( dev->device, "vkBindImageMemory" );
+    p_vkCreateImage = (void *)p_vkGetDeviceProcAddr( dev->device, "vkCreateImage" );
+    p_vkGetImageMemoryRequirements = (void *)p_vkGetDeviceProcAddr( dev->device, "vkGetImageMemoryRequirements" );
+    p_vkGetMemoryWin32HandleKHR = (void *)p_vkGetDeviceProcAddr( dev->device, "vkGetMemoryWin32HandleKHR" );
+
+    external_info.handleTypes = handle_type;
+    if (depth > 1 && height > 1) create_info.imageType = VK_IMAGE_TYPE_3D;
+    else if (height > 1) create_info.imageType = VK_IMAGE_TYPE_2D;
+    else create_info.imageType = VK_IMAGE_TYPE_1D;
+    create_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+    create_info.extent.width = width;
+    create_info.extent.height = height;
+    create_info.extent.depth = height > 1 ? depth : 1;
+    create_info.arrayLayers = height == 1 ? depth : 1;
+    create_info.mipLevels = 1;
+    create_info.samples = VK_SAMPLE_COUNT_1_BIT;
+    create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    create_info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    vr = p_vkCreateImage( dev->device, &create_info, NULL, &img->image );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkGetImageMemoryRequirements( dev->device, img->image, &requirements );
+
+    dedicated_info.image = img->image;
+    export_info.handleTypes = handle_type;
+    handle_info.dwAccess = GENERIC_ALL;
+    handle_info.name = name;
+    alloc_info.allocationSize = requirements.size;
+    alloc_info.memoryTypeIndex = find_vulkan_memory_type( dev->instance, dev->physical_device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, requirements.memoryTypeBits );
+
+    vr = p_vkAllocateMemory( dev->device, &alloc_info, NULL, &img->memory );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkBindImageMemory( dev->device, img->image, img->memory, 0 );
+    ok_vk( VK_SUCCESS, vr );
+
+    get_handle_info.memory = img->memory;
+    get_handle_info.handleType = handle_type;
+    vr = p_vkGetMemoryWin32HandleKHR( dev->device, &get_handle_info, handle );
+    ok_vk( VK_SUCCESS, vr );
+
+    return img;
+}
+
 C_ASSERT( sizeof(GUID) == GL_UUID_SIZE_EXT );
 C_ASSERT( sizeof(LUID) == GL_LUID_SIZE_EXT );
 
@@ -3351,6 +3793,7 @@ static HRESULT get_d3d12_shared_handle( ID3D12Device *d3d12, IUnknown *obj, cons
 
 static void test_shared_resources(void)
 {
+    struct vulkan_device *vulkan_exp = NULL;
     struct opengl_device *opengl_imp = NULL;
     IDirect3DDevice9Ex *d3d9_exp = NULL, *d3d9_imp = NULL;
     ID3D11Device1 *d3d11_exp = NULL, *d3d11_imp = NULL;
@@ -3376,6 +3819,8 @@ static void test_shared_resources(void)
     }
 
     trace( "adapter luid %s\n", debugstr_luid( &luid ) );
+
+    vulkan_exp = create_vulkan_device( &luid );
 
     d3d9_exp = create_d3d9ex_device( hwnd, &luid, &stencil_broken );
     ok_ptr( d3d9_exp, !=, NULL );
@@ -3422,6 +3867,8 @@ static void test_shared_resources(void)
 
         char runtime_desc[0x1000] = {0};
         IUnknown *export = NULL, *import = NULL;
+        struct vulkan_buffer *buf = NULL;
+        struct vulkan_image *img = NULL;
         const WCHAR *name = NULL;
         HANDLE handle = NULL;
 
@@ -4068,6 +4515,49 @@ static void test_shared_resources(void)
             check_d3d12_runtime_desc( (struct d3d12_runtime_desc *)runtime_desc, &desc );
             break;
         }
+
+        case MAKETEST(4, 0, 0):
+        {
+            if (!vulkan_exp) break;
+            buf = export_vulkan_buffer( vulkan_exp, resource_size, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &handle );
+            get_d3dkmt_resource_desc( luid, handle, FALSE, 0, runtime_desc );
+            break;
+        }
+        case MAKETEST(4, 0, 1):
+        {
+            if (!vulkan_exp) break;
+            buf = export_vulkan_buffer( vulkan_exp, resource_size, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT, &handle );
+            get_d3dkmt_resource_desc( luid, handle, TRUE, 0, runtime_desc );
+            break;
+        }
+        case MAKETEST(4, 1, 0):
+        {
+            if (!vulkan_exp) break;
+            img = export_vulkan_image( vulkan_exp, width_1d, 1, array_1d, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &handle );
+            get_d3dkmt_resource_desc( luid, handle, FALSE, 0, runtime_desc );
+            break;
+        }
+        case MAKETEST(4, 2, 0):
+        {
+            if (!vulkan_exp) break;
+            img = export_vulkan_image( vulkan_exp, width_2d, height_2d, 1, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &handle );
+            get_d3dkmt_resource_desc( luid, handle, FALSE, 0, runtime_desc );
+            break;
+        }
+        case MAKETEST(4, 2, 1):
+        {
+            if (!vulkan_exp) break;
+            img = export_vulkan_image( vulkan_exp, width_2d, height_2d, 1, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT, &handle );
+            get_d3dkmt_resource_desc( luid, handle, TRUE, 0, runtime_desc );
+            break;
+        }
+        case MAKETEST(4, 3, 0):
+        {
+            if (!vulkan_exp) break;
+            img = export_vulkan_image( vulkan_exp, width_3d, height_3d, depth_3d, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &handle );
+            get_d3dkmt_resource_desc( luid, handle, FALSE, 0, runtime_desc );
+            break;
+        }
         }
         if (!handle) goto skip_tests;
 
@@ -4078,7 +4568,7 @@ static void test_shared_resources(void)
             todo_wine check_object_name( handle, path );
         }
 
-        if (d3d9_imp)
+        if (d3d9_imp && GET_API(test) <= 3)
         {
             const struct d3d9_runtime_desc *desc = (struct d3d9_runtime_desc *)runtime_desc;
 
@@ -4168,7 +4658,7 @@ static void test_shared_resources(void)
             todo_wine ok( luid_equals( &luid, &adapter_luid ), "got %s\n", debugstr_luid( &adapter_luid ) );
         }
 
-        if (d3d10_imp)
+        if (d3d10_imp && GET_API(test) <= 3)
         {
             const struct d3d11_runtime_desc *desc = (struct d3d11_runtime_desc *)runtime_desc;
 
@@ -4179,7 +4669,7 @@ static void test_shared_resources(void)
             if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
         }
 
-        if (d3d11_imp)
+        if (d3d11_imp && GET_API(test) <= 3)
         {
             const struct dxgi_runtime_desc *desc = (struct dxgi_runtime_desc *)runtime_desc;
 
@@ -4211,7 +4701,7 @@ static void test_shared_resources(void)
             }
         }
 
-        if (d3d12_imp)
+        if (d3d12_imp && GET_API(test) <= 3)
         {
             hr = ID3D12Device_OpenSharedHandle( d3d12_imp, handle, &IID_ID3D12Resource, (void **)&import );
             ok_hr( S_OK, hr );
@@ -4321,6 +4811,8 @@ static void test_shared_resources(void)
 skip_tests:
         if (handle && !is_d3dkmt_handle( handle )) CloseHandle( handle );
         if (export) ok_ref( 0, IUnknown_Release( export ) );
+        if (buf) destroy_vulkan_buffer( vulkan_exp, buf );
+        if (img) destroy_vulkan_image( vulkan_exp, img );
         winetest_pop_context();
     }
 
@@ -4337,6 +4829,7 @@ skip_tests:
     ok_ref( 0, IDXGIFactory3_Release( dxgi ) );
     ok_ref( 0, IDirect3DDevice9Ex_Release( d3d9_imp ) );
     ok_ref( 0, IDirect3DDevice9Ex_Release( d3d9_exp ) );
+    if (vulkan_exp) destroy_vulkan_device( vulkan_exp );
     destroy_opengl_device( opengl_imp );
     DestroyWindow( hwnd );
 }
