@@ -74,6 +74,9 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self)
     activeDS.twCC = SANE_SaneSetDefaults();
     if (activeDS.twCC == TWCC_SUCCESS)
     {
+        strcpy(activeDS.identity.Manufacturer, self->Manufacturer);
+        strcpy(activeDS.identity.ProductFamily, self->ProductFamily);
+        strcpy(activeDS.identity.ProductName, self->ProductName);
         activeDS.currentState = 4;
         activeDS.identity.Id = self->Id;
         activeDS.appIdentity = *pOrigin;
