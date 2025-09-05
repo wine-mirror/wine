@@ -3747,6 +3747,12 @@ static void test_font(void)
         return;
     }
 
+    if (D3DX10_SDK_VERSION == 33)
+    {
+        skip("Font functions are broken in version 33.\n");
+        return;
+    }
+
     ref = get_refcount(device);
     hr = D3DX10CreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET,
             OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma", &font);

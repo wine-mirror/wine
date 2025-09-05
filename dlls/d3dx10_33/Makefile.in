@@ -1,4 +1,5 @@
 MODULE    = d3dx10_33.dll
+IMPORTLIB = d3dx10_33
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 

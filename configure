@@ -22300,6 +22300,7 @@ wine_fn_config_makefile dlls/d3dim700 enable_d3dim700
 wine_fn_config_makefile dlls/d3drm enable_d3drm
 wine_fn_config_makefile dlls/d3drm/tests enable_tests
 wine_fn_config_makefile dlls/d3dx10_33 enable_d3dx10_33
+wine_fn_config_makefile dlls/d3dx10_33/tests enable_tests
 wine_fn_config_makefile dlls/d3dx10_34 enable_d3dx10_34
 wine_fn_config_makefile dlls/d3dx10_34/tests enable_tests
 wine_fn_config_makefile dlls/d3dx10_35 enable_d3dx10_35
