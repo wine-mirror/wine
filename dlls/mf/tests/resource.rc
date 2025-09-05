@@ -185,3 +185,12 @@ rgb24frame.bmp RCDATA rgb24frame.bmp
  */
 /* @makedep: test.mp4 */
 test.mp4 RCDATA test.mp4
+
+/* Generated with:
+ *  gst-launch-1.0 videotestsrc num-buffers=60 pattern=smpte100 ! \
+ *      video/x-raw,format=I420,width=72,height=64,framerate=30000/1001 ! \
+ *      videoflip method=clockwise ! videoconvert ! \
+ *      x264enc ! mp4mux ! filesink location=dlls/mf/tests/test-unaligned.mp4
+ */
+/* @makedep: test-unaligned.mp4 */
+test-unaligned.mp4 RCDATA test-unaligned.mp4

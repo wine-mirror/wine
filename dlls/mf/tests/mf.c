@@ -6609,6 +6609,200 @@ static void test_MFCreateSequencerSegmentOffset(void)
     PropVariantClear(&propvar);
 }
 
+static IMFTransform *topology_get_transform(IMFTopology *topology)
+{
+    IMFTransform *transform;
+    IMFTopologyNode *node;
+    MF_TOPOLOGY_TYPE type;
+    HRESULT hr;
+    WORD count;
+    UINT i;
+
+    hr = IMFTopology_GetNodeCount(topology, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    for (i = 0; i < count; ++i)
+    {
+        hr = IMFTopology_GetNode(topology, i, &node);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFTopologyNode_GetNodeType(node, &type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        if (type == MF_TOPOLOGY_TRANSFORM_NODE)
+        {
+            hr = IMFTopologyNode_GetObject(node, (IUnknown **)&transform);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            IMFTopologyNode_Release(node);
+            return transform;
+        }
+        IMFTopologyNode_Release(node);
+    }
+
+    return NULL;
+}
+
+#define get_current_media_type_frame_size(a) get_current_media_type_frame_size_(__LINE__, (IUnknown *)a)
+static UINT64 get_current_media_type_frame_size_(int line, IUnknown *unknown)
+{
+    IMFMediaTypeHandler *handler;
+    IMFMediaType *output_type;
+    IMFTransform *transform;
+    UINT64 frame_size;
+    HRESULT hr;
+
+    /* Wine does not currently use a transform. */
+    if (!unknown)
+        return 0;
+
+    if (SUCCEEDED(IUnknown_QueryInterface(unknown, &IID_IMFTransform, (void **)&transform)))
+    {
+        hr = IMFTransform_GetOutputCurrentType(transform, 0, &output_type);
+        ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFMediaType_GetUINT64(output_type, &MF_MT_FRAME_SIZE, &frame_size);
+        ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        IMFMediaType_Release(output_type);
+        IMFTransform_Release(transform);
+        return frame_size;
+    }
+
+    hr = IUnknown_QueryInterface(unknown, &IID_IMFMediaTypeHandler, (void **)&handler);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &output_type);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetUINT64(output_type, &MF_MT_FRAME_SIZE, &frame_size);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(output_type);
+    IMFMediaTypeHandler_Release(handler);
+    return frame_size;
+}
+
+static void test_h264_output_alignment(void)
+{
+    media_type_desc video_nv12_desc =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+    };
+    struct test_grabber_callback *grabber_callback;
+    IMFTopology *topology, *resolved_topology;
+    struct test_callback *test_callback;
+    IMFMediaTypeHandler *handler;
+    IMFActivate *sink_activate;
+    IMFTopoLoader *topo_loader;
+    IMFStreamSink *stream_sink;
+    IMFAsyncCallback *callback;
+    IMFMediaType *output_type;
+    IMFMediaSession *session;
+    IMFMediaSink *media_sink;
+    IMFTransform *transform;
+    IMFMediaSource *source;
+    PROPVARIANT propvar;
+    UINT64 frame_size;
+    UINT32 status;
+    HRESULT hr;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+
+    if (!(source = create_media_source(L"test-unaligned.mp4", L"video/mp4")))
+    {
+        todo_wine /* Gitlab CI Debian runner */
+        win_skip("MP4 media source is not supported, skipping tests.\n");
+        MFShutdown();
+        return;
+    }
+
+    grabber_callback = impl_from_IMFSampleGrabberSinkCallback(create_test_grabber_callback());
+
+    hr = MFCreateMediaType(&output_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_media_type(output_type, video_nv12_desc, -1);
+    hr = MFCreateSampleGrabberSinkActivate(output_type, &grabber_callback->IMFSampleGrabberSinkCallback_iface, &sink_activate);
+    ok(hr == S_OK, "Failed to create grabber sink, hr %#lx.\n", hr);
+    IMFMediaType_Release(output_type);
+
+    IMFActivate_ActivateObject(sink_activate, &IID_IMFMediaSink, (void **)&media_sink);
+    hr = IMFMediaSink_GetStreamSinkByIndex(media_sink, 0, &stream_sink);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFActivate_Release(sink_activate);
+    topology = create_test_topology_unk(source, (IUnknown *)stream_sink, NULL, NULL);
+    hr = MFCreateTopoLoader(&topo_loader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTopoLoader_Load(topo_loader, topology, &resolved_topology, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFTopology_Release(topology);
+    IMFTopoLoader_Release(topo_loader);
+
+    hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, &handler);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &output_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetUINT64(output_type, &MF_MT_FRAME_SIZE, &frame_size);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(output_type);
+
+    hr = MFCreateMediaSession(NULL, &session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaSession_SetTopology(session, 0, resolved_topology);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    transform = topology_get_transform(resolved_topology);
+    IMFTopology_Release(resolved_topology);
+
+    callback = create_test_callback(TRUE);
+    hr = wait_media_event(session, callback, MESessionTopologySet, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    test_callback = impl_from_IMFAsyncCallback(callback);
+    hr = wait_media_event(session, callback, MESessionTopologyStatus, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaEvent_GetUINT32(test_callback->media_event, &MF_EVENT_TOPOLOGY_STATUS, &status);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(status == MF_TOPOSTATUS_READY, "Unexpected status %d.\n", status);
+
+    frame_size = get_current_media_type_frame_size(transform);
+    todo_wine
+    ok(frame_size == (((UINT64)64 << 32) | 72), "Unexpected frame size %#llx\n", frame_size);
+    frame_size = get_current_media_type_frame_size(handler);
+    ok(frame_size == (((UINT64)64 << 32) | 72), "Unexpected frame size %#llx\n", frame_size);
+
+    propvar.vt = VT_EMPTY;
+    hr = IMFMediaSession_Start(session, &GUID_NULL, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* frame size change occurs before MESessionStarted */
+    hr = wait_media_event(session, callback, MESessionStarted, 5000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    frame_size = get_current_media_type_frame_size(transform);
+    todo_wine
+    ok(frame_size == (((UINT64)64 << 32) | 80), "Unexpected frame size %#llx\n", frame_size);
+    frame_size = get_current_media_type_frame_size(handler);
+    todo_wine
+    ok(frame_size == (((UINT64)64 << 32) | 80), "Unexpected frame size %#llx\n", frame_size);
+
+    hr = IMFMediaSession_Stop(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaSession_Close(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = wait_media_event(session, callback, MESessionClosed, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaSource_Shutdown(source);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaSession_Shutdown(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IMFMediaTypeHandler_Release(handler);
+    if (transform)
+        IMFTransform_Release(transform);
+    IMFAsyncCallback_Release(callback);
+    IMFMediaSession_Release(session);
+    IMFStreamSink_Release(stream_sink);
+    IMFMediaSink_Release(media_sink);
+    IMFSampleGrabberSinkCallback_Release(&grabber_callback->IMFSampleGrabberSinkCallback_iface);
+    IMFMediaSource_Release(source);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+}
+
 static void test_media_session_Start(void)
 {
     static const struct object_state_record expected_object_state_records[] =
@@ -8113,6 +8307,7 @@ START_TEST(mf)
     test_MFRequireProtectedEnvironment();
     test_mpeg4_media_sink();
     test_MFCreateSequencerSegmentOffset();
+    test_h264_output_alignment();
     test_media_session_Start();
     test_MFEnumDeviceSources();
     test_media_session_Close();
