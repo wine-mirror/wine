@@ -1,5 +1,5 @@
 TESTDLL   = win32u.dll
-IMPORTS   = imm32 user32 gdi32 dwmapi setupapi d3d9 win32u
+IMPORTS   = imm32 user32 gdi32 dwmapi setupapi opengl32 d3d9 win32u
 
 SOURCES = \
 	d3dkmt.c \
