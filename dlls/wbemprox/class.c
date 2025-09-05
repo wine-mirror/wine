@@ -543,6 +543,12 @@ static HRESULT WINAPI class_object_Next(
 
     TRACE( "%p, %#lx, %p, %p, %p, %p\n", iface, lFlags, strName, pVal, pType, plFlavor );
 
+    if (lFlags)
+    {
+        WARN( "lFlags %#lx.\n", lFlags );
+        return WBEM_E_INVALID_PARAMETER;
+    }
+
     for (i = obj->index_property; i < table->num_cols; i++)
     {
         if (is_method( table, i )) continue;
