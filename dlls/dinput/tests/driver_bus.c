@@ -198,7 +198,7 @@ static NTSTATUS wait_queue_add_pending_locked( struct wait_queue *queue, IRP *ir
     if (queue->pending_wait) return STATUS_INVALID_PARAMETER;
 
     IoSetCancelRoutine( irp, wait_cancel_routine );
-    if (irp->Cancel && !IoSetCancelRoutine( irp, NULL ))
+    if (irp->Cancel && IoSetCancelRoutine( irp, NULL ))
         return STATUS_CANCELLED;
 
     irp->Tail.Overlay.DriverContext[0] = queue;
