@@ -290,14 +290,6 @@ IAssemblyEnum *msi_create_assembly_enum( const WCHAR *displayname )
     return ret;
 }
 
-static const WCHAR *clr_version[] =
-{
-    L"v1.0.3705",
-    L"v1.2.4322",
-    L"v2.0.50727",
-    L"v4.0.30319"
-};
-
 MSIASSEMBLY *msi_load_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
 {
     MSIRECORD *rec;
@@ -337,7 +329,15 @@ MSIASSEMBLY *msi_load_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
     return a;
 }
 
-static enum clr_version get_clr_version( MSIPACKAGE *package, const WCHAR *filename )
+static const WCHAR *clr_version[] =
+{
+    L"v1.0.3705",
+    L"v1.2.4322",
+    L"v2.0.50727",
+    L"v4.0.30319"
+};
+
+static enum clr_version get_clr_version( const WCHAR *filename )
 {
     DWORD len;
     HRESULT hr;
@@ -360,6 +360,14 @@ static enum clr_version get_clr_version( MSIPACKAGE *package, const WCHAR *filen
         free( strW );
     }
     return version;
+}
+
+static IAssemblyCache *get_net_cache( enum clr_version version )
+{
+    int i;
+    if (version == CLR_VERSION_V40) return cache_net[CLR_VERSION_V40];
+    for (i = CLR_VERSION_V20; i >= CLR_VERSION_V10; i--) if (cache_net[i]) return cache_net[i];
+    return NULL;
 }
 
 UINT msi_install_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
@@ -393,7 +401,7 @@ UINT msi_install_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
     else
     {
         manifest = msi_get_loaded_file( package, comp->KeyPath )->TargetPath;
-        cache = cache_net[get_clr_version( package, manifest )];
+        cache = get_net_cache( get_clr_version(manifest) );
         if (!cache) return ERROR_SUCCESS;
     }
     TRACE("installing assembly %s\n", debugstr_w(manifest));
