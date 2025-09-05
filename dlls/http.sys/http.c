@@ -973,7 +973,7 @@ static NTSTATUS http_receive_request(struct request_queue *queue, IRP *irp)
         TRACE("Queuing IRP %p.\n", irp);
 
         IoSetCancelRoutine(irp, http_receive_request_cancel);
-        if (irp->Cancel && !IoSetCancelRoutine(irp, NULL))
+        if (irp->Cancel && IoSetCancelRoutine(irp, NULL))
         {
             /* The IRP was canceled before we set the cancel routine. */
             ret = STATUS_CANCELLED;
