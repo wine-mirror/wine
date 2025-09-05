@@ -539,7 +539,7 @@ static HRESULT WINAPI class_object_Next(
     struct table *table = get_view_table( view, obj->index );
     BSTR prop;
     HRESULT hr;
-    UINT i;
+    UINT i, view_idx_start;
 
     TRACE( "%p, %#lx, %p, %p, %p, %p\n", iface, lFlags, strName, pVal, pType, plFlavor );
 
@@ -549,11 +549,19 @@ static HRESULT WINAPI class_object_Next(
         return WBEM_E_INVALID_PARAMETER;
     }
 
-    for (i = obj->index_property; i < table->num_cols; i++)
+    view_idx_start = obj->record ? 0 : system_prop_count;
+    for (i = obj->index_property; i < table->num_cols + view_idx_start; i++)
     {
-        if (is_method( table, i )) continue;
-        if (!is_result_prop( view, table->columns[i].name )) continue;
-        if (!(prop = SysAllocString( table->columns[i].name ))) return E_OUTOFMEMORY;
+        if (i < view_idx_start)
+        {
+            if (!(prop = SysAllocString( system_props[i] ))) return E_OUTOFMEMORY;
+        }
+        else
+        {
+            if (is_method( table, i - view_idx_start )) continue;
+            if (!is_result_prop( view, table->columns[i - view_idx_start].name )) continue;
+            if (!(prop = SysAllocString( table->columns[i - view_idx_start].name ))) return E_OUTOFMEMORY;
+        }
         if (obj->record)
         {
             UINT index;

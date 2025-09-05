@@ -815,6 +815,12 @@ static BOOL is_system_prop( const WCHAR *name )
     return (name[0] == '_' && name[1] == '_');
 }
 
+const WCHAR * const system_props[] =
+    { L"__GENUS", L"__CLASS", L"__RELPATH", L"__PROPERTY_COUNT", L"__DERIVATION", L"__SERVER", L"__NAMESPACE",
+      L"__PATH" };
+
+unsigned int system_prop_count = ARRAY_SIZE(system_props);
+
 static BSTR build_proplist( const struct table *table, UINT row, UINT count, UINT *len )
 {
     UINT i, j, offset;
@@ -1413,9 +1419,6 @@ HRESULT put_propval( const struct view *view, UINT index, const WCHAR *name, VAR
 
 HRESULT get_properties( const struct view *view, UINT index, LONG flags, SAFEARRAY **props )
 {
-    static const WCHAR * const system_props[] =
-        { L"__GENUS", L"__CLASS", L"__RELPATH", L"__PROPERTY_COUNT", L"__DERIVATION", L"__SERVER", L"__NAMESPACE",
-          L"__PATH" };
     SAFEARRAY *sa;
     BSTR str;
     UINT i, table_index, result_index, count = 0;
@@ -1426,7 +1429,7 @@ HRESULT get_properties( const struct view *view, UINT index, LONG flags, SAFEARR
     if ((hr = map_view_index( view, index, &table_index, &result_index )) != S_OK) return hr;
     table = view->table[table_index];
 
-    if (!(flags & WBEM_FLAG_NONSYSTEM_ONLY)) count += ARRAY_SIZE(system_props);
+    if (!(flags & WBEM_FLAG_NONSYSTEM_ONLY)) count += system_prop_count;
     if (!(flags & WBEM_FLAG_SYSTEM_ONLY))
     {
         for (i = 0; i < table->num_cols; i++)
@@ -1439,7 +1442,7 @@ HRESULT get_properties( const struct view *view, UINT index, LONG flags, SAFEARR
 
     if (!(flags & WBEM_FLAG_NONSYSTEM_ONLY))
     {
-        for (j = 0; j < ARRAY_SIZE(system_props); j++)
+        for (j = 0; j < system_prop_count; j++)
         {
             str = SysAllocString( system_props[j] );
             if (!str || SafeArrayPutElement( sa, &j, str ) != S_OK)

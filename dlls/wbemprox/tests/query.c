@@ -216,6 +216,68 @@ static void test_like_query( IWbemServices *services )
 }
 
 
+static void test_IWbemClassObject_Next( IWbemServices *services )
+{
+    struct
+    {
+        const WCHAR *name;
+        BOOL found;
+    }
+    system_props[] =
+    {
+        {L"__GENUS"}, {L"__CLASS"}, {L"__RELPATH"}, {L"__PROPERTY_COUNT"}, {L"__DERIVATION"},
+        {L"__SERVER"}, {L"__NAMESPACE"}, {L"__PATH"},
+    };
+
+    BSTR wql = SysAllocString( L"wql" ), query = SysAllocString( L"SELECT * FROM Win32_LogicalDisk" );
+    BSTR name;
+    IEnumWbemClassObject *result;
+    IWbemClassObject *obj;
+    HRESULT hr;
+    unsigned int i, j;
+    DWORD count;
+
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    if (hr != S_OK)
+    {
+        win_skip( "Win32_Volume not available\n" );
+        return;
+    }
+
+    hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+    ok( hr == S_OK, "got %#lx.\n", hr );
+
+    IWbemClassObject_BeginEnumeration(obj, 0);
+    hr = IWbemClassObject_Next( obj, WBEM_FLAG_SYSTEM_ONLY, &name, NULL, NULL, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %#lx.\n", hr );
+    hr = IWbemClassObject_Next( obj, WBEM_FLAG_NONSYSTEM_ONLY, &name, NULL, NULL, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "got %#lx.\n", hr );
+
+    for (i = 0; !(hr = IWbemClassObject_Next( obj, 0, &name, NULL, NULL, NULL )); ++i)
+    {
+        ok( hr == S_OK, "got %#lx\n", hr );
+        for (j = 0; j < ARRAY_SIZE(system_props); ++j)
+        {
+            if (!wcscmp(name, system_props[j].name))
+            {
+                system_props[j].found = TRUE;
+                break;
+            }
+        }
+        SysFreeString( name );
+    }
+    ok( hr == WBEM_S_NO_MORE_DATA, "got %#lx.\n", hr );
+    IWbemClassObject_Release( obj );
+
+    for (i = 0; i < ARRAY_SIZE(system_props); ++i)
+        ok( system_props[i].found, "%s not found.\n", debugstr_w(system_props[i].name) );
+
+    IEnumWbemClassObject_Release( result );
+    SysFreeString( query );
+    SysFreeString( wql );
+}
+
+
 static void test_associators( IWbemServices *services )
 {
     static const WCHAR *test[] =
@@ -2649,6 +2711,7 @@ START_TEST(query)
     test_query_semisync( services );
     test_select( services );
     test_like_query( services );
+    test_IWbemClassObject_Next( services );
 
     /* classes */
     test_SoftwareLicensingProduct( services );
