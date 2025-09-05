@@ -1084,10 +1084,20 @@ SAFEARRAY *to_safearray( const struct array *array, CIMTYPE basetype )
             }
             SysFreeString( str );
         }
-        else if (SafeArrayPutElement( ret, &i, ptr ) != S_OK)
+        else
         {
-            SafeArrayDestroy( ret );
-            return NULL;
+            UINT32 v;
+
+            if (vartype == VT_I4 && basetype == CIM_UINT16)
+            {
+                v = *(UINT16 *)ptr;
+                ptr = &v;
+            }
+            if (SafeArrayPutElement( ret, &i, ptr ) != S_OK)
+            {
+                SafeArrayDestroy( ret );
+                return NULL;
+            }
         }
     }
     return ret;
