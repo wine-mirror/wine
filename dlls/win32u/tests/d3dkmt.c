@@ -3018,7 +3018,7 @@ static void test_shared_resources(void)
         const UINT width_1d = resource_size / 4 / array_1d;
 
         char runtime_desc[0x1000] = {0};
-        IUnknown *export = NULL;
+        IUnknown *export = NULL, *import = NULL;
         HANDLE handle = NULL;
 
         winetest_push_context( "%u:%u:%u", GET_API(test), GET_DIM(test), test & 15 );
@@ -3211,7 +3211,91 @@ static void test_shared_resources(void)
             break;
         }
         }
+        if (!handle) goto skip_tests;
 
+        if (d3d9_imp)
+        {
+            const struct d3d9_runtime_desc *desc = (struct d3d9_runtime_desc *)runtime_desc;
+
+            hr = IDirect3DDevice9Ex_CreateTexture( d3d9_imp, width_2d, height_2d, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, (IDirect3DTexture9 **)&import, &handle );
+            if (desc->dxgi.version != 1) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (desc->type != D3DRTYPE_TEXTURE) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (desc->usage != D3DUSAGE_SURFACE) todo_wine ok_hr( E_INVALIDARG, hr );
+            else ok_hr( S_OK, hr );
+            if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
+
+            hr = IDirect3DDevice9Ex_CreateVolumeTexture( d3d9_imp, width_3d, height_3d, depth_3d, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, (IDirect3DVolumeTexture9 **)&import, &handle );
+            if (desc->dxgi.version != 1) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (desc->type != D3DRTYPE_VOLUMETEXTURE) todo_wine ok_hr( E_INVALIDARG, hr );
+            else ok_hr( S_OK, hr );
+            if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
+
+            hr = IDirect3DDevice9Ex_CreateCubeTexture( d3d9_imp, width_cube, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, (IDirect3DCubeTexture9 **)&import, &handle );
+            if (desc->dxgi.version != 1) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (desc->type != D3DRTYPE_CUBETEXTURE) todo_wine ok_hr( E_INVALIDARG, hr );
+            else ok_hr( S_OK, hr );
+            if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
+
+            hr = IDirect3DDevice9Ex_CreateVertexBuffer( d3d9_imp, resource_size / (4 * sizeof(float)), 0, D3DFVF_XYZ, D3DPOOL_DEFAULT, (IDirect3DVertexBuffer9 **)&import, &handle );
+            if (desc->dxgi.version != 1) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (desc->type != D3DRTYPE_VERTEXBUFFER) todo_wine ok_hr( E_INVALIDARG, hr );
+            else ok_hr( S_OK, hr );
+            if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
+
+            hr = IDirect3DDevice9Ex_CreateIndexBuffer( d3d9_imp, resource_size / 2, 0, D3DFMT_INDEX16, D3DPOOL_DEFAULT, (IDirect3DIndexBuffer9 **)&import, &handle );
+            if (desc->dxgi.version != 1) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (desc->type != D3DRTYPE_INDEXBUFFER) todo_wine ok_hr( E_INVALIDARG, hr );
+            else ok_hr( S_OK, hr );
+            if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
+
+            hr = IDirect3DDevice9Ex_CreateRenderTarget( d3d9_imp, width_2d, height_2d, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, (IDirect3DSurface9 **)&import, &handle );
+            if (desc->dxgi.version != 1) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (desc->type != D3DRTYPE_SURFACE) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (!(desc->usage & D3DUSAGE_RENDERTARGET)) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if ((desc->usage & D3DUSAGE_LOCKABLE)) todo_wine ok_hr( E_INVALIDARG, hr );
+            else ok_hr( S_OK, hr );
+            if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
+
+            hr = IDirect3DDevice9Ex_CreateDepthStencilSurface( d3d9_imp, width_2d, height_2d, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, FALSE, (IDirect3DSurface9 **)&import, &handle );
+            if (desc->dxgi.version != 1) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (desc->type != D3DRTYPE_SURFACE) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (!(desc->usage & D3DUSAGE_DEPTHSTENCIL)) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if ((desc->usage & D3DUSAGE_LOCKABLE)) todo_wine ok_hr( E_INVALIDARG, hr );
+            else ok_hr( S_OK, hr );
+            if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
+
+            hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurface( d3d9_imp, width_2d, height_2d, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, (IDirect3DSurface9 **)&import, &handle );
+            if (desc->dxgi.version != 1) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (desc->type != D3DRTYPE_SURFACE) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (!(desc->usage & D3DUSAGE_OFFSCREEN)) todo_wine ok_hr( E_INVALIDARG, hr );
+            else ok_hr( S_OK, hr );
+            if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
+
+            hr = IDirect3DDevice9Ex_CreateRenderTargetEx( d3d9_imp, width_2d, height_2d, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, (IDirect3DSurface9 **)&import, &handle, 0 );
+            if (desc->dxgi.version != 1) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (desc->type != D3DRTYPE_SURFACE) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (!(desc->usage & D3DUSAGE_RENDERTARGET)) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if ((desc->usage & D3DUSAGE_LOCKABLE)) todo_wine ok_hr( E_INVALIDARG, hr );
+            else ok_hr( S_OK, hr );
+            if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
+
+            hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurfaceEx( d3d9_imp, width_2d, height_2d, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, (IDirect3DSurface9 **)&import, &handle, 0 );
+            if (desc->dxgi.version != 1) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (desc->type != D3DRTYPE_SURFACE) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (!(desc->usage & D3DUSAGE_OFFSCREEN)) todo_wine ok_hr( E_INVALIDARG, hr );
+            else ok_hr( S_OK, hr );
+            if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
+
+            hr = IDirect3DDevice9Ex_CreateDepthStencilSurfaceEx( d3d9_imp, width_2d, height_2d, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, FALSE, (IDirect3DSurface9 **)&import, &handle, 0 );
+            if (desc->dxgi.version != 1) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (desc->type != D3DRTYPE_SURFACE) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (!(desc->usage & D3DUSAGE_DEPTHSTENCIL)) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if ((desc->usage & D3DUSAGE_LOCKABLE)) todo_wine ok_hr( E_INVALIDARG, hr );
+            else ok_hr( S_OK, hr );
+            if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
+        }
+
+skip_tests:
         if (handle && !is_d3dkmt_handle( handle )) CloseHandle( handle );
         if (export) ok_ref( 0, IUnknown_Release( export ) );
         winetest_pop_context();
