@@ -3501,6 +3501,64 @@ static struct vulkan_buffer *export_vulkan_buffer( struct vulkan_device *dev, UI
     return buf;
 }
 
+static VkResult import_vulkan_buffer( struct vulkan_device *dev, UINT width, const WCHAR *name,
+                                      HANDLE handle, UINT handle_type, struct vulkan_buffer **out )
+{
+    VkExternalMemoryBufferCreateInfo external_info = {.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO};
+    VkBufferCreateInfo create_info = {.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, .pNext = &external_info};
+
+    VkMemoryDedicatedAllocateInfoKHR dedicated_info = {.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO};
+    VkImportMemoryWin32HandleInfoKHR handle_info = {.sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_WIN32_HANDLE_INFO_KHR, .pNext = &dedicated_info};
+    VkMemoryAllocateInfo alloc_info = {.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, .pNext = &handle_info};
+
+    PFN_vkAllocateMemory p_vkAllocateMemory;
+    PFN_vkBindBufferMemory p_vkBindBufferMemory;
+    PFN_vkCreateBuffer p_vkCreateBuffer;
+    PFN_vkGetBufferMemoryRequirements p_vkGetBufferMemoryRequirements;
+
+    VkMemoryRequirements requirements;
+    struct vulkan_buffer *buf;
+    VkResult vr;
+
+    buf = calloc( 1, sizeof(*buf) );
+    ok_ptr( buf, !=, NULL );
+
+    p_vkAllocateMemory = (void *)p_vkGetDeviceProcAddr( dev->device, "vkAllocateMemory" );
+    p_vkBindBufferMemory = (void *)p_vkGetDeviceProcAddr( dev->device, "vkBindBufferMemory" );
+    p_vkCreateBuffer = (void *)p_vkGetDeviceProcAddr( dev->device, "vkCreateBuffer" );
+    p_vkGetBufferMemoryRequirements = (void *)p_vkGetDeviceProcAddr( dev->device, "vkGetBufferMemoryRequirements" );
+
+    external_info.handleTypes = handle_type;
+    create_info.size = width;
+    create_info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    vr = p_vkCreateBuffer( dev->device, &create_info, NULL, &buf->buffer );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkGetBufferMemoryRequirements( dev->device, buf->buffer, &requirements );
+
+    dedicated_info.buffer = buf->buffer;
+    handle_info.handle = name ? NULL : handle;
+    handle_info.name = name;
+    handle_info.handleType = handle_type;
+    alloc_info.allocationSize = requirements.size;
+    alloc_info.memoryTypeIndex = find_vulkan_memory_type( dev->instance, dev->physical_device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, requirements.memoryTypeBits );
+
+    if ((vr = p_vkAllocateMemory( dev->device, &alloc_info, NULL, &buf->memory )))
+    {
+        PFN_vkDestroyBuffer p_vkDestroyBuffer;
+        p_vkDestroyBuffer = (void *)p_vkGetDeviceProcAddr( dev->device, "vkDestroyBuffer" );
+        p_vkDestroyBuffer( dev->device, buf->buffer, NULL );
+        free( buf );
+        *out = NULL;
+        return vr;
+    }
+    vr = p_vkBindBufferMemory( dev->device, buf->buffer, buf->memory, 0 );
+    ok_vk( VK_SUCCESS, vr );
+
+    *out = buf;
+    return VK_SUCCESS;
+}
+
 static void destroy_vulkan_image( struct vulkan_device *dev, struct vulkan_image *img )
 {
     PFN_vkFreeMemory p_vkFreeMemory;
@@ -3583,6 +3641,75 @@ static struct vulkan_image *export_vulkan_image( struct vulkan_device *dev, UINT
     ok_vk( VK_SUCCESS, vr );
 
     return img;
+}
+
+static VkResult import_vulkan_image( struct vulkan_device *dev, UINT width, UINT height, UINT depth,
+                                     const WCHAR *name, HANDLE handle, UINT handle_type, struct vulkan_image **out )
+{
+    VkExternalMemoryImageCreateInfo external_info = {.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO};
+    VkImageCreateInfo create_info = {.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, .pNext = &external_info};
+
+    VkMemoryDedicatedAllocateInfoKHR dedicated_info = {.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO};
+    VkImportMemoryWin32HandleInfoKHR handle_info = {.sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_WIN32_HANDLE_INFO_KHR, .pNext = &dedicated_info};
+    VkMemoryAllocateInfo alloc_info = {.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, .pNext = &handle_info};
+
+    PFN_vkAllocateMemory p_vkAllocateMemory;
+    PFN_vkBindImageMemory p_vkBindImageMemory;
+    PFN_vkCreateImage p_vkCreateImage;
+    PFN_vkGetImageMemoryRequirements p_vkGetImageMemoryRequirements;
+
+    VkMemoryRequirements requirements;
+    struct vulkan_image *img;
+    VkResult vr;
+
+    img = calloc( 1, sizeof(*img) );
+    ok_ptr( img, !=, NULL );
+
+    p_vkAllocateMemory = (void *)p_vkGetDeviceProcAddr( dev->device, "vkAllocateMemory" );
+    p_vkBindImageMemory = (void *)p_vkGetDeviceProcAddr( dev->device, "vkBindImageMemory" );
+    p_vkCreateImage = (void *)p_vkGetDeviceProcAddr( dev->device, "vkCreateImage" );
+    p_vkGetImageMemoryRequirements = (void *)p_vkGetDeviceProcAddr( dev->device, "vkGetImageMemoryRequirements" );
+
+    external_info.handleTypes = handle_type;
+    if (depth > 1 && height > 1) create_info.imageType = VK_IMAGE_TYPE_3D;
+    else if (height > 1) create_info.imageType = VK_IMAGE_TYPE_2D;
+    else create_info.imageType = VK_IMAGE_TYPE_1D;
+    create_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+    create_info.extent.width = width;
+    create_info.extent.height = height;
+    create_info.extent.depth = height > 1 ? depth : 1;
+    create_info.arrayLayers = height == 1 ? depth : 1;
+    create_info.mipLevels = 1;
+    create_info.samples = VK_SAMPLE_COUNT_1_BIT;
+    create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    create_info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    vr = p_vkCreateImage( dev->device, &create_info, NULL, &img->image );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkGetImageMemoryRequirements( dev->device, img->image, &requirements );
+
+    dedicated_info.image = img->image;
+    handle_info.handle = name ? NULL : handle;
+    handle_info.name = name;
+    handle_info.handleType = handle_type;
+    alloc_info.allocationSize = requirements.size;
+    alloc_info.memoryTypeIndex = find_vulkan_memory_type( dev->instance, dev->physical_device, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, requirements.memoryTypeBits );
+
+    if ((vr = p_vkAllocateMemory( dev->device, &alloc_info, NULL, &img->memory )))
+    {
+        PFN_vkDestroyImage p_vkDestroyImage;
+        p_vkDestroyImage = (void *)p_vkGetDeviceProcAddr( dev->device, "vkDestroyImage" );
+        p_vkDestroyImage( dev->device, img->image, NULL );
+        free( img );
+        *out = NULL;
+        return vr;
+    }
+    vr = p_vkBindImageMemory( dev->device, img->image, img->memory, 0 );
+    ok_vk( VK_SUCCESS, vr );
+
+    *out = img;
+    return VK_SUCCESS;
 }
 
 C_ASSERT( sizeof(GUID) == GL_UUID_SIZE_EXT );
@@ -3793,7 +3920,7 @@ static HRESULT get_d3d12_shared_handle( ID3D12Device *d3d12, IUnknown *obj, cons
 
 static void test_shared_resources(void)
 {
-    struct vulkan_device *vulkan_exp = NULL;
+    struct vulkan_device *vulkan_imp = NULL, *vulkan_exp = NULL;
     struct opengl_device *opengl_imp = NULL;
     IDirect3DDevice9Ex *d3d9_exp = NULL, *d3d9_imp = NULL;
     ID3D11Device1 *d3d11_exp = NULL, *d3d11_imp = NULL;
@@ -3821,6 +3948,7 @@ static void test_shared_resources(void)
     trace( "adapter luid %s\n", debugstr_luid( &luid ) );
 
     vulkan_exp = create_vulkan_device( &luid );
+    vulkan_imp = create_vulkan_device( &luid );
 
     d3d9_exp = create_d3d9ex_device( hwnd, &luid, &stencil_broken );
     ok_ptr( d3d9_exp, !=, NULL );
@@ -4728,6 +4856,102 @@ static void test_shared_resources(void)
             goto skip_tests;
         }
 
+        if (vulkan_imp)
+        {
+            struct vulkan_buffer *buf_imp = NULL;
+            struct vulkan_image *img_imp = NULL;
+            VkResult vr;
+
+            if (is_d3dkmt_handle( handle ))
+            {
+                switch (GET_DIM(test))
+                {
+                case 0:
+                    vr = import_vulkan_buffer( vulkan_imp, resource_size, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT, &buf_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_buffer( vulkan_imp, buf_imp );
+                    vr = import_vulkan_buffer( vulkan_imp, resource_size, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT, &buf_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_buffer( vulkan_imp, buf_imp );
+                    break;
+                case 1:
+                    vr = import_vulkan_image( vulkan_imp, width_1d, 1, array_1d, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT, &img_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_image( vulkan_imp, img_imp );
+                    vr = import_vulkan_image( vulkan_imp, width_1d, 1, array_1d, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT, &img_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_image( vulkan_imp, img_imp );
+                    break;
+                case 2:
+                    vr = import_vulkan_image( vulkan_imp, width_2d, height_2d, 1, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT, &img_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_image( vulkan_imp, img_imp );
+                    vr = import_vulkan_image( vulkan_imp, width_2d, height_2d, 1, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT, &img_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_image( vulkan_imp, img_imp );
+                    break;
+                case 3:
+                    vr = import_vulkan_image( vulkan_imp, width_3d, height_3d, depth_3d, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT, &img_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_image( vulkan_imp, img_imp );
+                    vr = import_vulkan_image( vulkan_imp, width_3d, height_3d, depth_3d, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT, &img_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_image( vulkan_imp, img_imp );
+                    break;
+                }
+            }
+            else
+            {
+                switch (GET_DIM(test))
+                {
+                case 0:
+                    vr = import_vulkan_buffer( vulkan_imp, resource_size, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &buf_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_buffer( vulkan_imp, buf_imp );
+                    vr = import_vulkan_buffer( vulkan_imp, resource_size, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT, &buf_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_buffer( vulkan_imp, buf_imp );
+                    vr = import_vulkan_buffer( vulkan_imp, resource_size, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT, &buf_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_buffer( vulkan_imp, buf_imp );
+                    break;
+                case 1:
+                    vr = import_vulkan_image( vulkan_imp, width_1d, 1, array_1d, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &img_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_image( vulkan_imp, img_imp );
+                    vr = import_vulkan_image( vulkan_imp, width_1d, 1, array_1d, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT, &img_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_image( vulkan_imp, img_imp );
+                    vr = import_vulkan_image( vulkan_imp, width_1d, 1, array_1d, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT, &img_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_image( vulkan_imp, img_imp );
+                    break;
+                case 2:
+                    vr = import_vulkan_image( vulkan_imp, width_2d, height_2d, 1, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &img_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_image( vulkan_imp, img_imp );
+                    vr = import_vulkan_image( vulkan_imp, width_2d, height_2d, 1, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT, &img_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_image( vulkan_imp, img_imp );
+                    vr = import_vulkan_image( vulkan_imp, width_2d, height_2d, 1, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT, &img_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_image( vulkan_imp, img_imp );
+                    break;
+                case 3:
+                    vr = import_vulkan_image( vulkan_imp, width_3d, height_3d, depth_3d, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &img_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_image( vulkan_imp, img_imp );
+                    vr = import_vulkan_image( vulkan_imp, width_3d, height_3d, depth_3d, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT, &img_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_image( vulkan_imp, img_imp );
+                    vr = import_vulkan_image( vulkan_imp, width_3d, height_3d, depth_3d, name, handle, VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT, &img_imp );
+                    ok_vk( VK_SUCCESS, vr );
+                    destroy_vulkan_image( vulkan_imp, img_imp );
+                    break;
+                }
+            }
+        }
+
         if (opengl_imp)
         {
             if (is_d3dkmt_handle( handle ))
@@ -4829,6 +5053,7 @@ skip_tests:
     ok_ref( 0, IDXGIFactory3_Release( dxgi ) );
     ok_ref( 0, IDirect3DDevice9Ex_Release( d3d9_imp ) );
     ok_ref( 0, IDirect3DDevice9Ex_Release( d3d9_exp ) );
+    if (vulkan_imp) destroy_vulkan_device( vulkan_imp );
     if (vulkan_exp) destroy_vulkan_device( vulkan_exp );
     destroy_opengl_device( opengl_imp );
     DestroyWindow( hwnd );
