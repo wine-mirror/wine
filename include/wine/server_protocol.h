@@ -5999,6 +5999,22 @@ struct d3dkmt_object_create_reply
 };
 
 
+
+struct d3dkmt_object_query_request
+{
+    struct request_header __header;
+    unsigned int        type;
+    d3dkmt_handle_t     global;
+    char __pad_20[4];
+};
+struct d3dkmt_object_query_reply
+{
+    struct reply_header __header;
+    data_size_t         runtime_size;
+    char __pad_12[4];
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -6299,6 +6315,7 @@ enum request
     REQ_set_keyboard_repeat,
     REQ_get_inproc_sync_fd,
     REQ_d3dkmt_object_create,
+    REQ_d3dkmt_object_query,
     REQ_NB_REQUESTS
 };
 
@@ -6604,6 +6621,7 @@ union generic_request
     struct set_keyboard_repeat_request set_keyboard_repeat_request;
     struct get_inproc_sync_fd_request get_inproc_sync_fd_request;
     struct d3dkmt_object_create_request d3dkmt_object_create_request;
+    struct d3dkmt_object_query_request d3dkmt_object_query_request;
 };
 union generic_reply
 {
@@ -6907,8 +6925,9 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
     struct get_inproc_sync_fd_reply get_inproc_sync_fd_reply;
     struct d3dkmt_object_create_reply d3dkmt_object_create_reply;
+    struct d3dkmt_object_query_reply d3dkmt_object_query_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 906
+#define SERVER_PROTOCOL_VERSION 907
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

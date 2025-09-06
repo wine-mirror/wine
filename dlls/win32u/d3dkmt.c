@@ -75,6 +75,11 @@ static struct d3dkmt_object **objects, **objects_end, **objects_next;
 
 #define D3DKMT_HANDLE_BIT  0x40000000
 
+static BOOL is_d3dkmt_global( D3DKMT_HANDLE handle )
+{
+    return (handle & 0xc0000000) && (handle & 0x3f) == 2;
+}
+
 static D3DKMT_HANDLE index_to_handle( int index )
 {
     return (index << 6) | D3DKMT_HANDLE_BIT;
@@ -194,6 +199,24 @@ static NTSTATUS d3dkmt_object_create( struct d3dkmt_object *object, BOOL shared,
 
     if (status) WARN( "Failed to create global object for %p, status %#x\n", object, status );
     else TRACE( "Created global object %#x for %p/%#x\n", object->global, object, object->local );
+    return status;
+}
+
+static NTSTATUS d3dkmt_object_query( enum d3dkmt_type type, D3DKMT_HANDLE global, UINT *runtime_size )
+{
+    NTSTATUS status;
+
+    SERVER_START_REQ( d3dkmt_object_query )
+    {
+        req->type = type;
+        req->global = global;
+        status = wine_server_call( req );
+        *runtime_size = reply->runtime_size;
+    }
+    SERVER_END_REQ;
+
+    if (status) WARN( "Failed to query object %#x, status %#x\n", global, status );
+    else TRACE( "Found object %#x with runtime size %#x\n", global, *runtime_size );
     return status;
 }
 
@@ -943,8 +966,22 @@ NTSTATUS WINAPI NtGdiDdDDIOpenNtHandleFromName( D3DKMT_OPENNTHANDLEFROMNAME *par
  */
 NTSTATUS WINAPI NtGdiDdDDIQueryResourceInfo( D3DKMT_QUERYRESOURCEINFO *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_object *device;
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    if (!(device = get_d3dkmt_object( params->hDevice, D3DKMT_DEVICE ))) return STATUS_INVALID_PARAMETER;
+    if (!is_d3dkmt_global( params->hGlobalShare )) return STATUS_INVALID_PARAMETER;
+
+    if ((status = d3dkmt_object_query( D3DKMT_RESOURCE, params->hGlobalShare, &params->PrivateRuntimeDataSize )))
+        return status;
+
+    params->TotalPrivateDriverDataSize = 0;
+    params->ResourcePrivateDriverDataSize = 0;
+    params->NumAllocations = 1;
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************

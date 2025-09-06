@@ -149,6 +149,19 @@ static void free_object_handle( d3dkmt_handle_t global )
     objects[index] = NULL;
 }
 
+/* return a pointer to a d3dkmt object from its global handle */
+static void *get_d3dkmt_object( d3dkmt_handle_t global, enum d3dkmt_type type )
+{
+    unsigned int index = handle_to_index( global );
+    struct d3dkmt_object *object;
+
+    if (objects + index >= objects_end) object = NULL;
+    else object = objects[index];
+
+    if (!object || object->global != global || object->type != type) return NULL;
+    return object;
+}
+
 static void d3dkmt_object_dump( struct object *obj, int verbose )
 {
     struct d3dkmt_object *object = (struct d3dkmt_object *)obj;
@@ -185,6 +198,19 @@ static struct d3dkmt_object *d3dkmt_object_create( enum d3dkmt_type type, data_s
     return object;
 }
 
+/* return a pointer to a d3dkmt object from its global handle */
+static void *d3dkmt_object_open( d3dkmt_handle_t global, enum d3dkmt_type type )
+{
+    struct d3dkmt_object *object;
+
+    if (!(object = get_d3dkmt_object( global, type )))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return NULL;
+    }
+    return grab_object( object );
+}
+
 /* create a global d3dkmt object */
 DECL_HANDLER(d3dkmt_object_create)
 {
@@ -193,5 +219,18 @@ DECL_HANDLER(d3dkmt_object_create)
     if (!(object = d3dkmt_object_create( req->type, get_req_data_size(), get_req_data() ))) return;
     reply->handle = alloc_handle( current->process, object, STANDARD_RIGHTS_ALL, OBJ_INHERIT );
     reply->global = object->global;
+    release_object( object );
+}
+
+/* query a global d3dkmt object */
+DECL_HANDLER(d3dkmt_object_query)
+{
+    struct d3dkmt_object *object;
+
+    if (!req->global) return;
+    object = d3dkmt_object_open( req->global, req->type );
+    if (!object) return;
+
+    reply->runtime_size = object->runtime_size;
     release_object( object );
 }

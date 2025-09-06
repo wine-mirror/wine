@@ -1951,7 +1951,7 @@ static void test_D3DKMTCreateAllocation( void )
     query.hDevice = create_device.hDevice;
     query.hGlobalShare = create.hResource;
     status = D3DKMTQueryResourceInfo( &query );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
     /* D3DKMTOpenResource requires a global handle */
     open.hDevice = create_device.hDevice;
@@ -1982,12 +1982,12 @@ static void test_D3DKMTCreateAllocation( void )
     query.PrivateRuntimeDataSize = sizeof(runtime_data);
     query.ResourcePrivateDriverDataSize = 0;
     status = D3DKMTQueryResourceInfo( &query );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine ok_x4( query.PrivateRuntimeDataSize, ==, sizeof(expect_runtime_data) );
+    ok_nt( STATUS_SUCCESS, status );
+    ok_x4( query.PrivateRuntimeDataSize, ==, sizeof(expect_runtime_data) );
     todo_wine ok_x4( query.TotalPrivateDriverDataSize, >, 0 );
     ok_x4( query.TotalPrivateDriverDataSize, <, sizeof(driver_data) );
     ok_x4( query.ResourcePrivateDriverDataSize, ==, 0 );
-    todo_wine ok_u4( query.NumAllocations, ==, 1 );
+    ok_u4( query.NumAllocations, ==, 1 );
     /* runtime data doesn't get updated ? */
     ok_u1( runtime_data[0], ==, 0xcd );
 
@@ -2013,7 +2013,7 @@ static void test_D3DKMTCreateAllocation( void )
     todo_wine ok_nt( STATUS_SUCCESS, status );
     ok_x4( open.hGlobalShare, ==, create.hGlobalShare );
     todo_wine check_d3dkmt_local( open.hResource, &next_local );
-    todo_wine ok_x4( open.PrivateRuntimeDataSize, ==, sizeof(expect_runtime_data) );
+    ok_x4( open.PrivateRuntimeDataSize, ==, sizeof(expect_runtime_data) );
     ok_x4( open.TotalPrivateDriverDataBufferSize, >, 0 );
     todo_wine ok_x4( open.TotalPrivateDriverDataBufferSize, <, sizeof(driver_data) );
     ok_x4( open.ResourcePrivateDriverDataSize, ==, 0 );
@@ -2056,7 +2056,7 @@ static void test_D3DKMTCreateAllocation( void )
     todo_wine ok_nt( STATUS_SUCCESS, status );
     ok_x4( open.hGlobalShare, ==, create.hGlobalShare );
     todo_wine check_d3dkmt_local( open.hResource, &next_local );
-    todo_wine ok_x4( open.PrivateRuntimeDataSize, ==, sizeof(expect_runtime_data) );
+    ok_x4( open.PrivateRuntimeDataSize, ==, sizeof(expect_runtime_data) );
     ok_x4( open.TotalPrivateDriverDataBufferSize, >, 0 );
     todo_wine ok_x4( open.TotalPrivateDriverDataBufferSize, <, sizeof(driver_data) );
     ok_x4( open.ResourcePrivateDriverDataSize, ==, 0 );
