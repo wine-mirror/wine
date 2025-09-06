@@ -6034,6 +6034,23 @@ struct d3dkmt_object_open_reply
 };
 
 
+
+struct d3dkmt_share_objects_request
+{
+    struct request_header __header;
+    d3dkmt_handle_t     sync;
+    unsigned int        access;
+    /* VARARG(objattr,object_attributes); */
+    char __pad_20[4];
+};
+struct d3dkmt_share_objects_reply
+{
+    struct reply_header __header;
+    obj_handle_t        handle;
+    char __pad_12[4];
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -6336,6 +6353,7 @@ enum request
     REQ_d3dkmt_object_create,
     REQ_d3dkmt_object_query,
     REQ_d3dkmt_object_open,
+    REQ_d3dkmt_share_objects,
     REQ_NB_REQUESTS
 };
 
@@ -6643,6 +6661,7 @@ union generic_request
     struct d3dkmt_object_create_request d3dkmt_object_create_request;
     struct d3dkmt_object_query_request d3dkmt_object_query_request;
     struct d3dkmt_object_open_request d3dkmt_object_open_request;
+    struct d3dkmt_share_objects_request d3dkmt_share_objects_request;
 };
 union generic_reply
 {
@@ -6948,8 +6967,9 @@ union generic_reply
     struct d3dkmt_object_create_reply d3dkmt_object_create_reply;
     struct d3dkmt_object_query_reply d3dkmt_object_query_reply;
     struct d3dkmt_object_open_reply d3dkmt_object_open_reply;
+    struct d3dkmt_share_objects_reply d3dkmt_share_objects_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 908
+#define SERVER_PROTOCOL_VERSION 909
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

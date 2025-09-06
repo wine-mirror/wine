@@ -4182,3 +4182,13 @@ enum inproc_sync_type
     data_size_t         runtime_size;   /* size of client runtime data */
     VARARG(runtime,bytes);              /* client runtime data */
 @END
+
+
+/* Share d3dkmt objects together */
+@REQ(d3dkmt_share_objects)
+    d3dkmt_handle_t     sync;           /* sync global handle */
+    unsigned int        access;         /* wanted access rights */
+    VARARG(objattr,object_attributes);  /* object attributes */
+@REPLY
+    obj_handle_t        handle;         /* shared object handle */
+@END

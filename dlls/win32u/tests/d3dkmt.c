@@ -2155,7 +2155,7 @@ static void test_D3DKMTShareObjects( void )
     ok_nt( STATUS_SUCCESS, status );
     handle = (HANDLE)0xdeadbeef;
     status = D3DKMTShareObjects( 1, &create_sync.hSyncObject, &attr, STANDARD_RIGHTS_WRITE, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     if (broken( !status )) CloseHandle( handle );
     destroy_sync.hSyncObject = create_sync.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy_sync );
@@ -2168,7 +2168,7 @@ static void test_D3DKMTShareObjects( void )
     ok_nt( STATUS_SUCCESS, status );
     handle = (HANDLE)0xdeadbeef;
     status = D3DKMTShareObjects( 1, &create_sync2.hSyncObject, &attr, STANDARD_RIGHTS_WRITE, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     if (broken( !status )) CloseHandle( handle );
     destroy_sync.hSyncObject = create_sync2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy_sync );
@@ -2179,7 +2179,7 @@ static void test_D3DKMTShareObjects( void )
     ok_nt( STATUS_SUCCESS, status );
     handle = (HANDLE)0xdeadbeef;
     status = D3DKMTShareObjects( 1, &create_sync2.hSyncObject, &attr, STANDARD_RIGHTS_WRITE, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     if (broken( !status )) CloseHandle( handle );
     destroy_sync.hSyncObject = create_sync2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy_sync );
@@ -2192,12 +2192,12 @@ static void test_D3DKMTShareObjects( void )
     InitializeObjectAttributes( &attr, &name, 0, 0, NULL );
     handle = (HANDLE)0xdeadbeef;
     status = D3DKMTShareObjects( 1, &create_sync2.hSyncObject, &attr, STANDARD_RIGHTS_WRITE, &handle );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     /* handle isn't a D3DKMT_HANDLE */
-    todo_wine ok( !((UINT_PTR)handle & 0xc0000000), "got %p\n", handle );
+    ok( !((UINT_PTR)handle & 0xc0000000), "got %p\n", handle );
 
-    todo_wine check_object_type( handle, L"DxgkSharedSyncObject" );
-    todo_wine check_object_name( handle, name.Buffer );
+    check_object_type( handle, L"DxgkSharedSyncObject" );
+    check_object_name( handle, name.Buffer );
 
     /* cannot destroy the handle */
     destroy_sync.hSyncObject = (UINT_PTR)handle;
@@ -2221,7 +2221,7 @@ static void test_D3DKMTShareObjects( void )
     /* objects opened with D3DKMTOpenSyncObjectFromNtHandle cannot be reshared */
     InitializeObjectAttributes( &attr, &name, 0, 0, NULL );
     status = D3DKMTShareObjects( 1, &create_sync2.hSyncObject, &attr, STANDARD_RIGHTS_WRITE, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
     destroy_sync.hSyncObject = open_sync.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy_sync );
@@ -2312,9 +2312,9 @@ static void test_D3DKMTShareObjects( void )
     status = D3DKMTCreateKeyedMutex( &create_mutex );
     ok_nt( STATUS_SUCCESS, status );
     status = D3DKMTShareObjects( 1, &create_mutex.hKeyedMutex, &attr, STANDARD_RIGHTS_WRITE, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     status = D3DKMTShareObjects( 1, &create_mutex.hSharedHandle, &attr, STANDARD_RIGHTS_WRITE, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     destroy_mutex.hKeyedMutex = create_mutex.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy_mutex );
     ok_nt( STATUS_SUCCESS, status );
@@ -2323,7 +2323,7 @@ static void test_D3DKMTShareObjects( void )
     status = D3DKMTCreateKeyedMutex2( &create_mutex2 );
     ok_nt( STATUS_SUCCESS, status );
     status = D3DKMTShareObjects( 1, &create_mutex2.hKeyedMutex, &attr, STANDARD_RIGHTS_WRITE, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     destroy_mutex.hKeyedMutex = create_mutex2.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy_mutex );
     ok_nt( STATUS_SUCCESS, status );
@@ -2354,9 +2354,9 @@ static void test_D3DKMTShareObjects( void )
     check_d3dkmt_local( alloc.hAllocation, NULL );
 
     status = D3DKMTShareObjects( 1, &alloc.hAllocation, &attr, STANDARD_RIGHTS_READ, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     status = D3DKMTShareObjects( 1, &create_alloc.hResource, &attr, STANDARD_RIGHTS_READ, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
     destroy_alloc.hDevice = create_device.hDevice;
     destroy_alloc.hResource = create_alloc.hResource;
@@ -2374,9 +2374,9 @@ static void test_D3DKMTShareObjects( void )
     check_d3dkmt_local( alloc.hAllocation, NULL );
 
     status = D3DKMTShareObjects( 1, &alloc.hAllocation, &attr, STANDARD_RIGHTS_READ, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     status = D3DKMTShareObjects( 1, &create_alloc.hResource, &attr, STANDARD_RIGHTS_READ, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
     destroy_alloc.hResource = create_alloc.hResource;
     status = D3DKMTDestroyAllocation( &destroy_alloc );
@@ -2394,7 +2394,7 @@ static void test_D3DKMTShareObjects( void )
 
     /* can only share resources, not allocations */
     status = D3DKMTShareObjects( 1, &alloc.hAllocation, &attr, STANDARD_RIGHTS_READ, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     status = D3DKMTShareObjects( 1, &create_alloc.hResource, &attr, STANDARD_RIGHTS_READ, &handle );
     todo_wine ok_nt( STATUS_SUCCESS, status );
 
@@ -2527,35 +2527,35 @@ static void test_D3DKMTShareObjects( void )
     objects[1] = create_alloc.hResource;
     objects[2] = create_alloc.hResource;
     status = D3DKMTShareObjects( 3, objects, &attr, STANDARD_RIGHTS_ALL, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
     objects[0] = create_alloc.hResource;
     objects[1] = create_mutex2.hKeyedMutex;
     status = D3DKMTShareObjects( 2, objects, &attr, STANDARD_RIGHTS_ALL, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
     objects[0] = create_alloc.hResource;
     objects[1] = create_sync2.hSyncObject;
     status = D3DKMTShareObjects( 2, objects, &attr, STANDARD_RIGHTS_ALL, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
     objects[0] = create_mutex2.hKeyedMutex;
     objects[1] = create_sync2.hSyncObject;
     status = D3DKMTShareObjects( 2, objects, &attr, STANDARD_RIGHTS_ALL, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
     objects[0] = create_alloc.hResource;
     objects[1] = create_mutex2.hKeyedMutex;
     objects[2] = create_sync2.hSyncObject;
     objects[3] = create_sync2.hSyncObject;
     status = D3DKMTShareObjects( 4, objects, &attr, STANDARD_RIGHTS_ALL, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
     objects[0] = create_alloc.hResource;
     objects[1] = create_sync2.hSyncObject;
     objects[2] = create_mutex2.hKeyedMutex;
     status = D3DKMTShareObjects( 3, objects, &attr, STANDARD_RIGHTS_ALL, &handle );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
     objects[0] = create_alloc.hResource;
     objects[1] = create_mutex2.hKeyedMutex;
