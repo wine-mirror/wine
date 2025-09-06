@@ -78,16 +78,17 @@ static VkBool32 X11DRV_get_physical_device_presentation_support( struct vulkan_p
                                                                       default_visual.visual->visualid );
 }
 
-static const char *X11DRV_get_host_surface_extension(void)
+static const char *X11DRV_get_host_extension( const char *name )
 {
-    return "VK_KHR_xlib_surface";
+    if (!strcmp( name, "VK_KHR_win32_surface" )) return "VK_KHR_xlib_surface";
+    return name;
 }
 
 static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = X11DRV_vulkan_surface_create,
     .p_get_physical_device_presentation_support = X11DRV_get_physical_device_presentation_support,
-    .p_get_host_surface_extension = X11DRV_get_host_surface_extension,
+    .p_get_host_extension = X11DRV_get_host_extension,
 };
 
 UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs )

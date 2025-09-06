@@ -1374,9 +1374,9 @@ static void win32u_vkGetPhysicalDeviceExternalFenceProperties( VkPhysicalDevice 
     instance->p_vkGetPhysicalDeviceExternalFenceProperties( physical_device->host.physical_device, fence_info, fence_properties );
 }
 
-static const char *win32u_get_host_surface_extension(void)
+static const char *win32u_get_host_extension( const char *name )
 {
-    return driver_funcs->p_get_host_surface_extension();
+    return driver_funcs->p_get_host_extension( name );
 }
 
 static struct vulkan_funcs vulkan_funcs =
@@ -1426,7 +1426,7 @@ static struct vulkan_funcs vulkan_funcs =
     .p_vkQueueSubmit2KHR = win32u_vkQueueSubmit2,
     .p_vkUnmapMemory = win32u_vkUnmapMemory,
     .p_vkUnmapMemory2KHR = win32u_vkUnmapMemory2KHR,
-    .p_get_host_surface_extension = win32u_get_host_surface_extension,
+    .p_get_host_extension = win32u_get_host_extension,
 };
 
 static VkResult nulldrv_vulkan_surface_create( HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *surface,
@@ -1450,16 +1450,17 @@ static VkBool32 nulldrv_get_physical_device_presentation_support( struct vulkan_
     return VK_TRUE;
 }
 
-static const char *nulldrv_get_host_surface_extension(void)
+static const char *nulldrv_get_host_extension( const char *name )
 {
-    return "VK_EXT_headless_surface";
+    if (!strcmp( name, "VK_KHR_win32_surface" )) return "VK_EXT_headless_surface";
+    return name;
 }
 
 static const struct vulkan_driver_funcs nulldrv_funcs =
 {
     .p_vulkan_surface_create = nulldrv_vulkan_surface_create,
     .p_get_physical_device_presentation_support = nulldrv_get_physical_device_presentation_support,
-    .p_get_host_surface_extension = nulldrv_get_host_surface_extension,
+    .p_get_host_extension = nulldrv_get_host_extension,
 };
 
 static void vulkan_driver_init(void)
@@ -1474,7 +1475,7 @@ static void vulkan_driver_init(void)
     }
 
     if (status == STATUS_NOT_IMPLEMENTED) driver_funcs = &nulldrv_funcs;
-    else vulkan_funcs.p_get_host_surface_extension = driver_funcs->p_get_host_surface_extension;
+    else vulkan_funcs.p_get_host_extension = driver_funcs->p_get_host_extension;
 }
 
 static void vulkan_driver_load(void)
@@ -1496,17 +1497,17 @@ static VkBool32 lazydrv_get_physical_device_presentation_support( struct vulkan_
     return driver_funcs->p_get_physical_device_presentation_support( physical_device, queue );
 }
 
-static const char *lazydrv_get_host_surface_extension(void)
+static const char *lazydrv_get_host_extension( const char *name )
 {
     vulkan_driver_load();
-    return driver_funcs->p_get_host_surface_extension();
+    return driver_funcs->p_get_host_extension( name );
 }
 
 static const struct vulkan_driver_funcs lazydrv_funcs =
 {
     .p_vulkan_surface_create = lazydrv_vulkan_surface_create,
     .p_get_physical_device_presentation_support = lazydrv_get_physical_device_presentation_support,
-    .p_get_host_surface_extension = lazydrv_get_host_surface_extension,
+    .p_get_host_extension = lazydrv_get_host_extension,
 };
 
 static void vulkan_init_once(void)

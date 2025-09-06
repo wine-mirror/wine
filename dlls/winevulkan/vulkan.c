@@ -715,7 +715,7 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
         }
         if (!strcmp(*extension, "VK_KHR_win32_surface"))
         {
-            *extension = vk_funcs->p_get_host_surface_extension();
+            *extension = vk_funcs->p_get_host_extension("VK_KHR_win32_surface");
             instance->enable_win32_surface = VK_TRUE;
         }
     }

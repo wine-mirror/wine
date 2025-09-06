@@ -81,16 +81,17 @@ static VkBool32 wayland_get_physical_device_presentation_support(struct vulkan_p
                                                                         process_wayland.wl_display);
 }
 
-static const char *wayland_get_host_surface_extension(void)
+static const char *wayland_get_host_extension(const char *name)
 {
-    return "VK_KHR_wayland_surface";
+    if (!strcmp( name, "VK_KHR_win32_surface" )) return "VK_KHR_wayland_surface";
+    return name;
 }
 
 static const struct vulkan_driver_funcs wayland_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = wayland_vulkan_surface_create,
     .p_get_physical_device_presentation_support = wayland_get_physical_device_presentation_support,
-    .p_get_host_surface_extension = wayland_get_host_surface_extension,
+    .p_get_host_extension = wayland_get_host_extension,
 };
 
 /**********************************************************************
