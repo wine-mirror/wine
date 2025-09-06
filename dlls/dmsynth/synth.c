@@ -46,6 +46,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
 #define CONN_TRANSFORM(src, ctrl, dst) (((src) & 0x3f) << 10) | (((ctrl) & 0x3f) << 4) | ((dst) & 0xf)
 
+#define BASE_GAIN 60.
+
 /* from src/rvoice/fluid_rvoice.h */
 #define FLUID_LOOP_DURING_RELEASE 1
 #define FLUID_LOOP_UNTIL_RELEASE  3
@@ -511,6 +513,7 @@ static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *par
     };
     UINT size = sizeof(DMUS_PORTPARAMS);
     BOOL modified = FALSE;
+    double gain;
     UINT id;
 
     TRACE("(%p, %p)\n", This, params);
@@ -586,6 +589,11 @@ static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *par
             !!(actual.dwEffectFlags & DMUS_EFFECT_REVERB));
     fluid_settings_setint(This->fluid_settings, "synth.chorus.active",
             !!(actual.dwEffectFlags & DMUS_EFFECT_CHORUS));
+
+    /* native limits the total voice gain to 6 dB */
+    gain = BASE_GAIN;
+    fluid_settings_setnum(This->fluid_settings, "synth.gain", pow(10., gain / 200.));
+
     if (!(This->fluid_synth = new_fluid_synth(This->fluid_settings)))
     {
         LeaveCriticalSection(&This->cs);
