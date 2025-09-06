@@ -1364,66 +1364,6 @@ void wine_vkGetPhysicalDeviceExternalFencePropertiesKHR(VkPhysicalDevice client_
     properties->externalFenceFeatures = 0;
 }
 
-void wine_vkGetPhysicalDeviceExternalBufferProperties(VkPhysicalDevice client_physical_device,
-                                                      const VkPhysicalDeviceExternalBufferInfo *buffer_info,
-                                                      VkExternalBufferProperties *properties)
-{
-    memset(&properties->externalMemoryProperties, 0, sizeof(properties->externalMemoryProperties));
-}
-
-void wine_vkGetPhysicalDeviceExternalBufferPropertiesKHR(VkPhysicalDevice client_physical_device,
-                                                         const VkPhysicalDeviceExternalBufferInfo *buffer_info,
-                                                         VkExternalBufferProperties *properties)
-{
-    memset(&properties->externalMemoryProperties, 0, sizeof(properties->externalMemoryProperties));
-}
-
-VkResult wine_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice client_physical_device,
-                                                        const VkPhysicalDeviceImageFormatInfo2 *format_info,
-                                                        VkImageFormatProperties2 *properties)
-{
-    struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle(client_physical_device);
-    struct vulkan_instance *instance = physical_device->instance;
-    VkExternalImageFormatProperties *external_image_properties;
-    VkResult res;
-
-    res = instance->p_vkGetPhysicalDeviceImageFormatProperties2(physical_device->host.physical_device, format_info, properties);
-
-    if ((external_image_properties = find_next_struct(properties,
-                                                      VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES)))
-    {
-        VkExternalMemoryProperties *p = &external_image_properties->externalMemoryProperties;
-        p->externalMemoryFeatures = 0;
-        p->exportFromImportedHandleTypes = 0;
-        p->compatibleHandleTypes = 0;
-    }
-
-    return res;
-}
-
-VkResult wine_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice client_physical_device,
-                                                           const VkPhysicalDeviceImageFormatInfo2 *format_info,
-                                                           VkImageFormatProperties2 *properties)
-{
-    struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle(client_physical_device);
-    struct vulkan_instance *instance = physical_device->instance;
-    VkExternalImageFormatProperties *external_image_properties;
-    VkResult res;
-
-    res = instance->p_vkGetPhysicalDeviceImageFormatProperties2KHR(physical_device->host.physical_device, format_info, properties);
-
-    if ((external_image_properties = find_next_struct(properties,
-                                                      VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES)))
-    {
-        VkExternalMemoryProperties *p = &external_image_properties->externalMemoryProperties;
-        p->externalMemoryFeatures = 0;
-        p->exportFromImportedHandleTypes = 0;
-        p->compatibleHandleTypes = 0;
-    }
-
-    return res;
-}
-
 /* From ntdll/unix/sync.c */
 #define NANOSECONDS_IN_A_SECOND 1000000000
 #define TICKSPERSEC             10000000

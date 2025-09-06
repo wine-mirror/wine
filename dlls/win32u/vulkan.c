@@ -482,20 +482,24 @@ static void win32u_vkGetDeviceBufferMemoryRequirements( VkDevice client_device, 
     device->p_vkGetDeviceBufferMemoryRequirements( device->host.device, buffer_requirements, memory_requirements );
 }
 
-static void win32u_vkGetPhysicalDeviceExternalBufferProperties( VkPhysicalDevice client_physical_device, const VkPhysicalDeviceExternalBufferInfo *buffer_info,
-                                                                VkExternalBufferProperties *buffer_properies )
+static void win32u_vkGetPhysicalDeviceExternalBufferProperties( VkPhysicalDevice client_physical_device, const VkPhysicalDeviceExternalBufferInfo *client_buffer_info,
+                                                                VkExternalBufferProperties *buffer_properties )
 {
+    VkPhysicalDeviceExternalBufferInfo *buffer_info = (VkPhysicalDeviceExternalBufferInfo *)client_buffer_info; /* cast away const, it has been copied in the thunks */
     struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle( client_physical_device );
     struct vulkan_instance *instance = physical_device->instance;
 
-    TRACE( "physical_device %p, buffer_info %p, buffer_properies %p\n", physical_device, buffer_info, buffer_properies );
+    TRACE( "physical_device %p, buffer_info %p, buffer_properties %p\n", physical_device, buffer_info, buffer_properties );
 
     if (!(buffer_info->handleType & EXTERNAL_MEMORY_WIN32_BITS))
         FIXME( "Unsupported handle type %#x\n", buffer_info->handleType );
     FIXME( "VkPhysicalDeviceExternalBufferInfo Win32 handleType not implemented!\n" );
-    ((VkPhysicalDeviceExternalBufferInfo *)buffer_info)->handleType = 0; /* cast away const, it has been copied in the thunks */
+    buffer_info->handleType = 0;
 
-    return instance->p_vkGetPhysicalDeviceExternalBufferProperties( physical_device->host.physical_device, buffer_info, buffer_properies );
+    instance->p_vkGetPhysicalDeviceExternalBufferProperties( physical_device->host.physical_device, buffer_info, buffer_properties );
+    buffer_properties->externalMemoryProperties.externalMemoryFeatures = 0;
+    buffer_properties->externalMemoryProperties.exportFromImportedHandleTypes = 0;
+    buffer_properties->externalMemoryProperties.compatibleHandleTypes = 0;
 }
 
 static VkResult win32u_vkCreateImage( VkDevice client_device, const VkImageCreateInfo *create_info,
@@ -578,14 +582,15 @@ static void win32u_vkGetDeviceImageMemoryRequirements( VkDevice client_device, c
 }
 
 static VkResult win32u_vkGetPhysicalDeviceImageFormatProperties2( VkPhysicalDevice client_physical_device, const VkPhysicalDeviceImageFormatInfo2 *format_info,
-                                                                  VkImageFormatProperties2 *format_properies )
+                                                                  VkImageFormatProperties2 *format_properties )
 {
     VkBaseOutStructure **next, *prev = (VkBaseOutStructure *)format_info; /* cast away const, chain has been copied in the thunks */
     struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle( client_physical_device );
     struct vulkan_instance *instance = physical_device->instance;
     VkPhysicalDeviceExternalImageFormatInfo *external_info;
+    VkResult res;
 
-    TRACE( "physical_device %p, format_info %p, format_properies %p\n", physical_device, format_info, format_properies );
+    TRACE( "physical_device %p, format_info %p, format_properties %p\n", physical_device, format_info, format_properties );
 
     for (next = &prev->pNext; *next; prev = *next, next = &(*next)->pNext)
     {
@@ -608,7 +613,29 @@ static VkResult win32u_vkGetPhysicalDeviceImageFormatProperties2( VkPhysicalDevi
         }
     }
 
-    return instance->p_vkGetPhysicalDeviceImageFormatProperties2( physical_device->host.physical_device, format_info, format_properies );
+    res = instance->p_vkGetPhysicalDeviceImageFormatProperties2( physical_device->host.physical_device, format_info, format_properties );
+    if (!res) for (prev = (VkBaseOutStructure *)format_properties, next = &prev->pNext; *next; prev = *next, next = &(*next)->pNext)
+    {
+        switch ((*next)->sType)
+        {
+        case VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES:
+        {
+            VkExternalImageFormatProperties *props = (VkExternalImageFormatProperties *)*next;
+            props->externalMemoryProperties.externalMemoryFeatures = 0;
+            props->externalMemoryProperties.exportFromImportedHandleTypes = 0;
+            props->externalMemoryProperties.compatibleHandleTypes = 0;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_FILTER_CUBIC_IMAGE_VIEW_IMAGE_FORMAT_PROPERTIES_EXT: break;
+        case VK_STRUCTURE_TYPE_HOST_IMAGE_COPY_DEVICE_PERFORMANCE_QUERY: break;
+        case VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT: break;
+        case VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_IMAGE_FORMAT_PROPERTIES: break;
+        case VK_STRUCTURE_TYPE_TEXTURE_LOD_GATHER_FORMAT_PROPERTIES_AMD: break;
+        default: FIXME( "Unhandled sType %u.\n", (*next)->sType ); break;
+        }
+    }
+
+    return res;
 }
 
 static VkResult win32u_vkCreateWin32SurfaceKHR( VkInstance client_instance, const VkWin32SurfaceCreateInfoKHR *create_info,
