@@ -3420,7 +3420,9 @@ static void dump_d3dkmt_object_open_reply( const struct d3dkmt_object_open_reply
 
 static void dump_d3dkmt_share_objects_request( const struct d3dkmt_share_objects_request *req )
 {
-    fprintf( stderr, " sync=%08x", req->sync );
+    fprintf( stderr, " resource=%08x", req->resource );
+    fprintf( stderr, ", mutex=%08x", req->mutex );
+    fprintf( stderr, ", sync=%08x", req->sync );
     fprintf( stderr, ", access=%08x", req->access );
     dump_varargs_object_attributes( ", objattr=", cur_size );
 }

@@ -908,7 +908,7 @@ void free_vulkan_gpu( struct vulkan_gpu *gpu )
 NTSTATUS WINAPI NtGdiDdDDIShareObjects( UINT count, const D3DKMT_HANDLE *handles, OBJECT_ATTRIBUTES *attr,
                                         UINT access, HANDLE *handle )
 {
-    struct d3dkmt_object *object, *sync;
+    struct d3dkmt_object *object, *resource = NULL, *sync = NULL, *mutex = NULL;
     struct object_attributes *objattr;
     data_size_t len;
     NTSTATUS status;
@@ -918,8 +918,23 @@ NTSTATUS WINAPI NtGdiDdDDIShareObjects( UINT count, const D3DKMT_HANDLE *handles
     if (count == 1)
     {
         if (!(object = get_d3dkmt_object( handles[0], -1 )) || !object->shared) goto failed;
-        if (object->type == D3DKMT_SYNC) sync = object;
+        if (object->type == D3DKMT_RESOURCE) resource = object;
+        else if (object->type == D3DKMT_SYNC) sync = object;
         else goto failed;
+    }
+    else if (count == 3)
+    {
+        if (!(object = get_d3dkmt_object( handles[0], -1 )) || !object->shared) goto failed;
+        if (object->type != D3DKMT_RESOURCE) goto failed;
+        resource = object;
+
+        if (!(object = get_d3dkmt_object( handles[1], -1 )) || !object->shared) goto failed;
+        if (object->type != D3DKMT_MUTEX) goto failed;
+        mutex = object;
+
+        if (!(object = get_d3dkmt_object( handles[2], -1 )) || !object->shared) goto failed;
+        if (object->type != D3DKMT_SYNC) goto failed;
+        sync = object;
     }
     else goto failed;
 
@@ -928,7 +943,9 @@ NTSTATUS WINAPI NtGdiDdDDIShareObjects( UINT count, const D3DKMT_HANDLE *handles
     SERVER_START_REQ( d3dkmt_share_objects )
     {
         req->access = access | STANDARD_RIGHTS_ALL;
-        req->sync = sync->global;
+        if (resource) req->resource = resource->global;
+        if (mutex) req->mutex = mutex->global;
+        if (sync) req->sync = sync->global;
         wine_server_add_data( req, objattr, len );
         status = wine_server_call( req );
         *handle = wine_server_ptr_handle( reply->handle );

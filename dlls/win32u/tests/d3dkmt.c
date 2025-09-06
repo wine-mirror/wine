@@ -2396,10 +2396,10 @@ static void test_D3DKMTShareObjects( void )
     status = D3DKMTShareObjects( 1, &alloc.hAllocation, &attr, STANDARD_RIGHTS_READ, &handle );
     ok_nt( STATUS_INVALID_PARAMETER, status );
     status = D3DKMTShareObjects( 1, &create_alloc.hResource, &attr, STANDARD_RIGHTS_READ, &handle );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
-    todo_wine check_object_type( handle, L"DxgkSharedResource" );
-    todo_wine check_object_name( handle, name.Buffer );
+    check_object_type( handle, L"DxgkSharedResource" );
+    check_object_name( handle, name.Buffer );
 
 
     status = D3DKMTOpenNtHandleFromName( &open_resource_name );
@@ -2562,10 +2562,10 @@ static void test_D3DKMTShareObjects( void )
     objects[2] = create_sync2.hSyncObject;
     handle = (HANDLE)0xdeadbeef;
     status = D3DKMTShareObjects( 3, objects, &attr, STANDARD_RIGHTS_ALL, &handle );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
-    todo_wine check_object_type( handle, L"DxgkSharedResource" );
-    todo_wine check_object_name( handle, name.Buffer );
+    check_object_type( handle, L"DxgkSharedResource" );
+    check_object_name( handle, name.Buffer );
 
     destroy_mutex.hKeyedMutex = create_mutex2.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy_mutex );

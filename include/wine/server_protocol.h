@@ -6038,10 +6038,12 @@ struct d3dkmt_object_open_reply
 struct d3dkmt_share_objects_request
 {
     struct request_header __header;
+    d3dkmt_handle_t     resource;
+    d3dkmt_handle_t     mutex;
     d3dkmt_handle_t     sync;
     unsigned int        access;
     /* VARARG(objattr,object_attributes); */
-    char __pad_20[4];
+    char __pad_28[4];
 };
 struct d3dkmt_share_objects_reply
 {
@@ -6970,6 +6972,6 @@ union generic_reply
     struct d3dkmt_share_objects_reply d3dkmt_share_objects_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 909
+#define SERVER_PROTOCOL_VERSION 910
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

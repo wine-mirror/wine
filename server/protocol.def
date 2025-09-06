@@ -4186,6 +4186,8 @@ enum inproc_sync_type
 
 /* Share d3dkmt objects together */
 @REQ(d3dkmt_share_objects)
+    d3dkmt_handle_t     resource;       /* resource global handle */
+    d3dkmt_handle_t     mutex;          /* mutex global handle */
     d3dkmt_handle_t     sync;           /* sync global handle */
     unsigned int        access;         /* wanted access rights */
     VARARG(objattr,object_attributes);  /* object attributes */

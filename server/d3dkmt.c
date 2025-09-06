@@ -138,6 +138,76 @@ static void dxgk_shared_sync_destroy( struct object *obj )
     release_object( shared->sync );
 }
 
+#define DXGK_SHARED_RESOURCE_MODIFY_STATE 0x0001
+#define DXGK_SHARED_RESOURCE_ALL_ACCESS   (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x1)
+
+static const WCHAR dxgk_shared_resource_name[] = {'D','x','g','k','S','h','a','r','e','d','R','e','s','o','u','r','c','e'};
+
+struct type_descr dxgk_shared_resource_type =
+{
+    { dxgk_shared_resource_name, sizeof(dxgk_shared_resource_name) },   /* name */
+    DXGK_SHARED_RESOURCE_ALL_ACCESS,                                    /* valid_access */
+    {                                                                   /* mapping */
+        STANDARD_RIGHTS_READ,
+        STANDARD_RIGHTS_WRITE | DXGK_SHARED_RESOURCE_MODIFY_STATE,
+        STANDARD_RIGHTS_EXECUTE,
+        STANDARD_RIGHTS_REQUIRED | DXGK_SHARED_RESOURCE_MODIFY_STATE,
+    },
+};
+
+struct dxgk_shared_resource
+{
+    struct object   obj;        /* object header */
+    struct object  *resource;   /* shared resource object */
+    struct object  *mutex;      /* shared keyed mutex object */
+    struct object  *sync;       /* shared sync object */
+};
+
+static void dxgk_shared_resource_dump( struct object *obj, int verbose );
+static void dxgk_shared_resource_destroy( struct object *obj );
+
+static const struct object_ops dxgk_shared_resource_ops =
+{
+    sizeof(struct dxgk_shared_resource),    /* size */
+    &dxgk_shared_resource_type,             /* type */
+    dxgk_shared_resource_dump,              /* dump */
+    no_add_queue,                           /* add_queue */
+    NULL,                                   /* remove_queue */
+    NULL,                                   /* signaled */
+    NULL,                                   /* satisfied */
+    no_signal,                              /* signal */
+    no_get_fd,                              /* get_fd */
+    default_get_sync,                       /* get_sync */
+    default_map_access,                     /* map_access */
+    default_get_sd,                         /* get_sd */
+    default_set_sd,                         /* set_sd */
+    default_get_full_name,                  /* get_full_name */
+    no_lookup_name,                         /* lookup_name */
+    directory_link_name,                    /* link_name */
+    default_unlink_name,                    /* unlink_name */
+    no_open_file,                           /* open_file */
+    no_kernel_obj_list,                     /* get_kernel_obj_list */
+    no_close_handle,                        /* close_handle */
+    dxgk_shared_resource_destroy,           /* destroy */
+};
+
+static void dxgk_shared_resource_dump( struct object *obj, int verbose )
+{
+    struct dxgk_shared_resource *shared = (struct dxgk_shared_resource *)obj;
+    assert( obj->ops == &dxgk_shared_resource_ops );
+    fprintf( stderr, "DxgkResource resource=%p mutex=%p sync=%p\n", shared->resource,
+             shared->mutex, shared->sync );
+}
+
+static void dxgk_shared_resource_destroy( struct object *obj )
+{
+    struct dxgk_shared_resource *shared = (struct dxgk_shared_resource *)obj;
+    assert( obj->ops == &dxgk_shared_resource_ops );
+    release_object( shared->resource );
+    if (shared->mutex) release_object( shared->mutex );
+    if (shared->sync) release_object( shared->sync );
+}
+
 static struct d3dkmt_object **objects, **objects_end, **objects_next;
 
 #define D3DKMT_HANDLE_BIT  0x40000000
@@ -330,19 +400,43 @@ DECL_HANDLER(d3dkmt_object_open)
 /* share global d3dkmt objects together */
 DECL_HANDLER(d3dkmt_share_objects)
 {
-    struct object *sync = NULL;
+    struct object *resource = NULL, *mutex = NULL, *sync = NULL;
     const struct object_attributes *objattr;
     const struct security_descriptor *sd;
-    struct dxgk_shared_sync *shared;
     struct unicode_str name;
     struct object *root;
 
     objattr = get_req_object_attributes( &sd, &name, &root );
 
-    if (!(sync = get_d3dkmt_object( req->sync, D3DKMT_SYNC ))) return;
+    if (req->resource)
+    {
+        struct dxgk_shared_resource *shared;
 
-    if (!(shared = create_named_object( root, &dxgk_shared_sync_ops, &name, objattr->attributes | OBJ_CASE_INSENSITIVE, NULL ))) return;
-    shared->sync = grab_object( sync );
-    reply->handle = alloc_handle( current->process, shared, req->access, OBJ_INHERIT );
-    release_object( shared );
+        if (!(resource = d3dkmt_object_open( req->resource, D3DKMT_RESOURCE ))) return;
+        if (req->mutex && !(mutex = d3dkmt_object_open( req->mutex, D3DKMT_MUTEX ))) goto done;
+        if (req->sync && !(sync = d3dkmt_object_open( req->sync, D3DKMT_SYNC ))) goto done;
+
+        if (!(shared = create_named_object( root, &dxgk_shared_resource_ops, &name, objattr->attributes | OBJ_CASE_INSENSITIVE, NULL ))) goto done;
+        shared->resource = grab_object( resource );
+        if ((shared->mutex = mutex)) grab_object( mutex );
+        if ((shared->sync = sync)) grab_object( sync );
+        reply->handle = alloc_handle( current->process, shared, req->access, OBJ_INHERIT );
+        release_object( shared );
+    }
+    else
+    {
+        struct dxgk_shared_sync *shared;
+
+        if (!(sync = d3dkmt_object_open( req->sync, D3DKMT_SYNC ))) return;
+
+        if (!(shared = create_named_object( root, &dxgk_shared_sync_ops, &name, objattr->attributes | OBJ_CASE_INSENSITIVE, NULL ))) goto done;
+        shared->sync = grab_object( sync );
+        reply->handle = alloc_handle( current->process, shared, req->access, OBJ_INHERIT );
+        release_object( shared );
+    }
+
+done:
+    if (resource) release_object( resource );
+    if (mutex) release_object( mutex );
+    if (sync) release_object( sync );
 }
