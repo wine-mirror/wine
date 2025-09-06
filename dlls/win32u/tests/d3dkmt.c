@@ -3362,12 +3362,12 @@ static struct vulkan_device *create_vulkan_device( LUID *luid )
 
         winetest_push_context( "export" );
         types = get_vulkan_external_image_types( dev->instance, physical_devices[i], VK_EXTERNAL_MEMORY_FEATURE_EXPORTABLE_BIT_KHR );
-        todo_wine ok( !(~types & expect_export_types), "got types %#x\n", types );
+        ok( !(~types & expect_export_types), "got types %#x\n", types );
         winetest_pop_context();
 
         winetest_push_context( "import" );
         types = get_vulkan_external_image_types( dev->instance, physical_devices[i], VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT_KHR );
-        todo_wine ok( !(~types & expect_import_types), "got types %#x\n", types );
+        ok( !(~types & expect_import_types), "got types %#x\n", types );
         winetest_pop_context();
     }
 
@@ -3396,15 +3396,8 @@ static struct vulkan_device *create_vulkan_device( LUID *luid )
 
     p_vkCreateDevice = (void *)p_vkGetInstanceProcAddr( dev->instance, "vkCreateDevice" );
     vr = p_vkCreateDevice( dev->physical_device, &create_info, NULL, &dev->device );
-    todo_wine ok_vk( VK_SUCCESS, vr );
-    todo_wine ok_ptr( dev->device, !=, VK_NULL_HANDLE );
-    if (dev->device == VK_NULL_HANDLE)
-    {
-        PFN_vkDestroyInstance p_vkDestroyInstance = (void *)p_vkGetInstanceProcAddr( dev->instance, "vkDestroyInstance" );
-        p_vkDestroyInstance( dev->instance, NULL );
-        free( dev );
-        return NULL;
-    }
+    ok_vk( VK_SUCCESS, vr );
+    ok_ptr( dev->device, !=, VK_NULL_HANDLE );
 
     return dev;
 }
@@ -3495,7 +3488,7 @@ static struct vulkan_buffer *export_vulkan_buffer( struct vulkan_device *dev, UI
     get_handle_info.memory = buf->memory;
     get_handle_info.handleType = handle_type;
     vr = p_vkGetMemoryWin32HandleKHR( dev->device, &get_handle_info, handle );
-    ok_vk( VK_SUCCESS, vr );
+    todo_wine ok_vk( VK_SUCCESS, vr );
 
     return buf;
 }
@@ -3637,7 +3630,7 @@ static struct vulkan_image *export_vulkan_image( struct vulkan_device *dev, UINT
     get_handle_info.memory = img->memory;
     get_handle_info.handleType = handle_type;
     vr = p_vkGetMemoryWin32HandleKHR( dev->device, &get_handle_info, handle );
-    ok_vk( VK_SUCCESS, vr );
+    todo_wine ok_vk( VK_SUCCESS, vr );
 
     return img;
 }
@@ -4645,42 +4638,36 @@ static void test_shared_resources(void)
 
         case MAKETEST(4, 0, 0):
         {
-            if (!vulkan_exp) break;
             buf = export_vulkan_buffer( vulkan_exp, resource_size, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &handle );
             get_d3dkmt_resource_desc( luid, handle, FALSE, 0, runtime_desc );
             break;
         }
         case MAKETEST(4, 0, 1):
         {
-            if (!vulkan_exp) break;
             buf = export_vulkan_buffer( vulkan_exp, resource_size, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT, &handle );
             get_d3dkmt_resource_desc( luid, handle, TRUE, 0, runtime_desc );
             break;
         }
         case MAKETEST(4, 1, 0):
         {
-            if (!vulkan_exp) break;
             img = export_vulkan_image( vulkan_exp, width_1d, 1, array_1d, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &handle );
             get_d3dkmt_resource_desc( luid, handle, FALSE, 0, runtime_desc );
             break;
         }
         case MAKETEST(4, 2, 0):
         {
-            if (!vulkan_exp) break;
             img = export_vulkan_image( vulkan_exp, width_2d, height_2d, 1, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &handle );
             get_d3dkmt_resource_desc( luid, handle, FALSE, 0, runtime_desc );
             break;
         }
         case MAKETEST(4, 2, 1):
         {
-            if (!vulkan_exp) break;
             img = export_vulkan_image( vulkan_exp, width_2d, height_2d, 1, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT, &handle );
             get_d3dkmt_resource_desc( luid, handle, TRUE, 0, runtime_desc );
             break;
         }
         case MAKETEST(4, 3, 0):
         {
-            if (!vulkan_exp) break;
             img = export_vulkan_image( vulkan_exp, width_3d, height_3d, depth_3d, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &handle );
             get_d3dkmt_resource_desc( luid, handle, FALSE, 0, runtime_desc );
             break;
