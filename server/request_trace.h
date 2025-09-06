@@ -3409,6 +3409,7 @@ static void dump_d3dkmt_object_open_request( const struct d3dkmt_object_open_req
 {
     fprintf( stderr, " type=%08x", req->type );
     fprintf( stderr, ", global=%08x", req->global );
+    fprintf( stderr, ", handle=%04x", req->handle );
 }
 
 static void dump_d3dkmt_object_open_reply( const struct d3dkmt_object_open_reply *req )

@@ -4173,10 +4173,11 @@ enum inproc_sync_type
 @END
 
 
-/* Open a global d3dkmt object */
+/* Open a global/shared d3dkmt object */
 @REQ(d3dkmt_object_open)
     unsigned int        type;           /* d3dkmt object type */
     d3dkmt_handle_t     global;         /* global d3dkmt handle */
+    obj_handle_t        handle;         /* shared object handle */
 @REPLY
     d3dkmt_handle_t     global;         /* global d3dkmt handle */
     obj_handle_t        handle;         /* internal handle of the server object */

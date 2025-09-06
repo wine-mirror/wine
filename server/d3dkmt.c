@@ -408,8 +408,8 @@ DECL_HANDLER(d3dkmt_object_open)
     struct d3dkmt_object *object;
     obj_handle_t handle;
 
-    if (!req->global) return;
-    object = d3dkmt_object_open( req->global, req->type );
+    if (req->global) object = d3dkmt_object_open( req->global, req->type );
+    else object = d3dkmt_object_open_shared( req->handle, req->type );
     if (!object) return;
 
     /* only resource objects require exact runtime buffer size match */
