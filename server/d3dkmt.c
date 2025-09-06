@@ -470,3 +470,24 @@ done:
     if (mutex) release_object( mutex );
     if (sync) release_object( sync );
 }
+
+/* open a shared d3dkmt object from its name */
+DECL_HANDLER(d3dkmt_object_open_name)
+{
+    struct unicode_str name = get_req_unicode_str();
+
+    switch (req->type)
+    {
+    case D3DKMT_SYNC:
+        reply->handle = open_object( current->process, req->rootdir, req->access, &dxgk_shared_sync_ops,
+                                     &name, req->attributes | OBJ_CASE_INSENSITIVE );
+        break;
+    case D3DKMT_RESOURCE:
+        reply->handle = open_object( current->process, req->rootdir, req->access, &dxgk_shared_resource_ops,
+                                     &name, req->attributes | OBJ_CASE_INSENSITIVE );
+        break;
+    default:
+        set_error( STATUS_INVALID_PARAMETER );
+        break;
+    }
+}

@@ -4196,3 +4196,15 @@ enum inproc_sync_type
 @REPLY
     obj_handle_t        handle;         /* shared object handle */
 @END
+
+
+/* Open a shared d3dkmt object from a name */
+@REQ(d3dkmt_object_open_name)
+    unsigned int        type;           /* d3dkmt object type */
+    unsigned int        access;         /* wanted access rights */
+    unsigned int        attributes;     /* object attributes */
+    obj_handle_t        rootdir;        /* root directory */
+    VARARG(name,unicode_str);           /* object name */
+@REPLY
+    obj_handle_t        handle;         /* shared object handle */
+@END

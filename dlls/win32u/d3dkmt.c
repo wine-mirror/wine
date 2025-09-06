@@ -407,6 +407,20 @@ static BOOL d3dkmt_use_vulkan(void)
     return !!d3dkmt_vk_instance;
 }
 
+static unsigned int validate_open_object_attributes( const OBJECT_ATTRIBUTES *attr )
+{
+    if (!attr || attr->Length != sizeof(*attr)) return STATUS_INVALID_PARAMETER;
+
+    if (attr->ObjectName)
+    {
+        if ((ULONG_PTR)attr->ObjectName->Buffer & (sizeof(WCHAR) - 1)) return STATUS_DATATYPE_MISALIGNMENT;
+        if (attr->ObjectName->Length & (sizeof(WCHAR) - 1)) return STATUS_OBJECT_NAME_INVALID;
+    }
+    else if (attr->RootDirectory) return STATUS_OBJECT_NAME_INVALID;
+
+    return STATUS_SUCCESS;
+}
+
 /******************************************************************************
  *           NtGdiDdDDIOpenAdapterFromHdc    (win32u.@)
  */
@@ -1234,14 +1248,36 @@ failed:
     return status;
 }
 
+
 /******************************************************************************
  *           NtGdiDdDDIOpenNtHandleFromName    (win32u.@)
  */
 NTSTATUS WINAPI NtGdiDdDDIOpenNtHandleFromName( D3DKMT_OPENNTHANDLEFROMNAME *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    OBJECT_ATTRIBUTES *attr = params->pObjAttrib;
+    DWORD access = params->dwDesiredAccess;
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    params->hNtHandle = 0;
+    if ((status = validate_open_object_attributes( attr ))) return status;
+
+    SERVER_START_REQ( d3dkmt_object_open_name )
+    {
+        req->type       = D3DKMT_RESOURCE;
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName) wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        status = wine_server_call( req );
+        params->hNtHandle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    return status;
 }
+
 
 /******************************************************************************
  *           NtGdiDdDDIQueryResourceInfo    (win32u.@)
@@ -1531,8 +1567,28 @@ failed:
  */
 NTSTATUS WINAPI NtGdiDdDDIOpenSyncObjectNtHandleFromName( D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    OBJECT_ATTRIBUTES *attr = params->pObjAttrib;
+    DWORD access = params->dwDesiredAccess;
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    params->hNtHandle = 0;
+    if ((status = validate_open_object_attributes( attr ))) return status;
+
+    SERVER_START_REQ( d3dkmt_object_open_name )
+    {
+        req->type       = D3DKMT_SYNC;
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName) wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        status = wine_server_call( req );
+        params->hNtHandle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    return status;
 }
 
 /******************************************************************************

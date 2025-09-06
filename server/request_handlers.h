@@ -308,6 +308,7 @@ DECL_HANDLER(d3dkmt_object_create);
 DECL_HANDLER(d3dkmt_object_query);
 DECL_HANDLER(d3dkmt_object_open);
 DECL_HANDLER(d3dkmt_share_objects);
+DECL_HANDLER(d3dkmt_object_open_name);
 
 typedef void (*req_handler)( const void *req, void *reply );
 static const req_handler req_handlers[REQ_NB_REQUESTS] =
@@ -613,6 +614,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_d3dkmt_object_query,
     (req_handler)req_d3dkmt_object_open,
     (req_handler)req_d3dkmt_share_objects,
+    (req_handler)req_d3dkmt_object_open_name,
 };
 
 C_ASSERT( sizeof(abstime_t) == 8 );
@@ -2324,3 +2326,10 @@ C_ASSERT( offsetof(struct d3dkmt_share_objects_request, access) == 24 );
 C_ASSERT( sizeof(struct d3dkmt_share_objects_request) == 32 );
 C_ASSERT( offsetof(struct d3dkmt_share_objects_reply, handle) == 8 );
 C_ASSERT( sizeof(struct d3dkmt_share_objects_reply) == 16 );
+C_ASSERT( offsetof(struct d3dkmt_object_open_name_request, type) == 12 );
+C_ASSERT( offsetof(struct d3dkmt_object_open_name_request, access) == 16 );
+C_ASSERT( offsetof(struct d3dkmt_object_open_name_request, attributes) == 20 );
+C_ASSERT( offsetof(struct d3dkmt_object_open_name_request, rootdir) == 24 );
+C_ASSERT( sizeof(struct d3dkmt_object_open_name_request) == 32 );
+C_ASSERT( offsetof(struct d3dkmt_object_open_name_reply, handle) == 8 );
+C_ASSERT( sizeof(struct d3dkmt_object_open_name_reply) == 16 );
