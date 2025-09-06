@@ -306,6 +306,7 @@ DECL_HANDLER(set_keyboard_repeat);
 DECL_HANDLER(get_inproc_sync_fd);
 DECL_HANDLER(d3dkmt_object_create);
 DECL_HANDLER(d3dkmt_object_query);
+DECL_HANDLER(d3dkmt_object_open);
 
 typedef void (*req_handler)( const void *req, void *reply );
 static const req_handler req_handlers[REQ_NB_REQUESTS] =
@@ -609,6 +610,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_inproc_sync_fd,
     (req_handler)req_d3dkmt_object_create,
     (req_handler)req_d3dkmt_object_query,
+    (req_handler)req_d3dkmt_object_open,
 };
 
 C_ASSERT( sizeof(abstime_t) == 8 );
@@ -2304,3 +2306,10 @@ C_ASSERT( offsetof(struct d3dkmt_object_query_request, global) == 16 );
 C_ASSERT( sizeof(struct d3dkmt_object_query_request) == 24 );
 C_ASSERT( offsetof(struct d3dkmt_object_query_reply, runtime_size) == 8 );
 C_ASSERT( sizeof(struct d3dkmt_object_query_reply) == 16 );
+C_ASSERT( offsetof(struct d3dkmt_object_open_request, type) == 12 );
+C_ASSERT( offsetof(struct d3dkmt_object_open_request, global) == 16 );
+C_ASSERT( sizeof(struct d3dkmt_object_open_request) == 24 );
+C_ASSERT( offsetof(struct d3dkmt_object_open_reply, global) == 8 );
+C_ASSERT( offsetof(struct d3dkmt_object_open_reply, handle) == 12 );
+C_ASSERT( offsetof(struct d3dkmt_object_open_reply, runtime_size) == 16 );
+C_ASSERT( sizeof(struct d3dkmt_object_open_reply) == 24 );

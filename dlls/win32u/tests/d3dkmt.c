@@ -1230,8 +1230,8 @@ static void test_D3DKMTCreateSynchronizationObject_process( const char *arg )
     open.hSharedHandle = global;
     open.hSyncObject = 0x1eadbeed;
     status = D3DKMTOpenSynchronizationObject( &open );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( open.hSyncObject, &next_local );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( open.hSyncObject, &next_local );
     /* leak the object */
 }
 
@@ -1401,22 +1401,22 @@ static void test_D3DKMTCreateSynchronizationObject( void )
     /* D3DKMTOpenSynchronizationObject creates a new local D3DKMT_HANDLE */
     open.hSharedHandle = 0x1eadbeed;
     status = D3DKMTOpenSynchronizationObject( &open );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     open.hSharedHandle = 0;
     status = D3DKMTOpenSynchronizationObject( &open );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     open.hSyncObject = create2.hSyncObject;
     status = D3DKMTOpenSynchronizationObject( &open );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     open.hSyncObject = 0x1eadbeed;
     open.hSharedHandle = create2.Info.SharedHandle;
     status = D3DKMTOpenSynchronizationObject( &open );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( open.hSyncObject, &next_local );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( open.hSyncObject, &next_local );
 
     destroy.hSyncObject = open.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     /* destroying multiple times fails */
     status = D3DKMTDestroySynchronizationObject( &destroy );
     ok_nt( STATUS_INVALID_PARAMETER, status );
@@ -1424,20 +1424,19 @@ static void test_D3DKMTCreateSynchronizationObject( void )
     /* the D3DKMT object can still be opened */
     open.hSyncObject = 0x1eadbeed;
     status = D3DKMTOpenSynchronizationObject( &open );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( open.hSyncObject, &next_local );
-    next_local = 0;
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( open.hSyncObject, &next_local );
 
     destroy.hSyncObject = open.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
     destroy.hSyncObject = create2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy );
     ok_nt( STATUS_SUCCESS, status );
     /* the global D3DKMT_HANDLE is destroyed with last reference */
     status = D3DKMTOpenSynchronizationObject( &open );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
 
     /* NtSecuritySharing requires Shared, doesn't creates a global handle */
@@ -1483,7 +1482,7 @@ static void test_D3DKMTCreateSynchronizationObject( void )
 
     open.hSharedHandle = create2.Info.SharedHandle;
     status = D3DKMTOpenSynchronizationObject( &open );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
 
     destroy_device.hDevice = create_device.hDevice;
@@ -1514,16 +1513,15 @@ static void test_D3DKMTCreateKeyedMutex( void )
     check_d3dkmt_global( create.hSharedHandle );
 
     status = D3DKMTOpenKeyedMutex( &open );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     open.hKeyedMutex = create.hKeyedMutex;
     status = D3DKMTOpenKeyedMutex( &open );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     open.hKeyedMutex = 0x1eadbeed;
     open.hSharedHandle = create.hSharedHandle;
     status = D3DKMTOpenKeyedMutex( &open );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( open.hKeyedMutex, &next_local );
-    next_local = 0;
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( open.hKeyedMutex, &next_local );
 
     status = D3DKMTDestroyKeyedMutex( &destroy );
     ok_nt( STATUS_INVALID_PARAMETER, status );
@@ -1533,12 +1531,12 @@ static void test_D3DKMTCreateKeyedMutex( void )
         /* older W10 lets you destroy the global D3DKMT_HANDLE, it causes random failures in the tests below */
         destroy.hKeyedMutex = create.hSharedHandle;
         status = D3DKMTDestroyKeyedMutex( &destroy );
-        todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+        ok_nt( STATUS_INVALID_PARAMETER, status );
     }
 
     destroy.hKeyedMutex = open.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     /* destroying multiple times fails */
     status = D3DKMTDestroyKeyedMutex( &destroy );
     ok_nt( STATUS_INVALID_PARAMETER, status );
@@ -1549,7 +1547,7 @@ static void test_D3DKMTCreateKeyedMutex( void )
 
     /* the global D3DKMT_HANDLE is destroyed with last reference */
     status = D3DKMTOpenKeyedMutex( &open );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
 
     status = D3DKMTCreateKeyedMutex2( NULL );
@@ -1568,16 +1566,15 @@ static void test_D3DKMTCreateKeyedMutex( void )
     check_d3dkmt_global( create2.hSharedHandle );
 
     status = D3DKMTOpenKeyedMutex2( &open2 );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     open2.hKeyedMutex = create2.hKeyedMutex;
     status = D3DKMTOpenKeyedMutex2( &open2 );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     open2.hKeyedMutex = 0x1eadbeed;
     open2.hSharedHandle = create2.hSharedHandle;
     status = D3DKMTOpenKeyedMutex2( &open2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( open2.hKeyedMutex, &next_local );
-    next_local = 0;
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( open2.hKeyedMutex, &next_local );
 
     status = D3DKMTDestroyKeyedMutex( &destroy );
     ok_nt( STATUS_SUCCESS, status );
@@ -1586,7 +1583,7 @@ static void test_D3DKMTCreateKeyedMutex( void )
     ok_nt( STATUS_SUCCESS, status );
     destroy.hKeyedMutex = open2.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
 
 
     /* PrivateRuntimeDataSize must be 0 if no buffer is provided */
@@ -1600,17 +1597,16 @@ static void test_D3DKMTCreateKeyedMutex( void )
     open2.hSharedHandle = create2.hSharedHandle;
     open2.PrivateRuntimeDataSize = sizeof(buffer);
     status = D3DKMTOpenKeyedMutex2( &open2 );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     open2.pPrivateRuntimeData = buffer;
     status = D3DKMTOpenKeyedMutex2( &open2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( open2.hKeyedMutex, &next_local );
-    next_local = 0;
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( open2.hKeyedMutex, &next_local );
     ok_x4( open2.PrivateRuntimeDataSize, ==, sizeof(buffer) );
 
     destroy.hKeyedMutex = open2.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     destroy.hKeyedMutex = create2.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy );
     ok_nt( STATUS_SUCCESS, status );
@@ -1628,30 +1624,28 @@ static void test_D3DKMTCreateKeyedMutex( void )
     open2.PrivateRuntimeDataSize = 0;
     open2.pPrivateRuntimeData = NULL;
     status = D3DKMTOpenKeyedMutex2( &open2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( open2.hKeyedMutex, &next_local );
-    next_local = 0;
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( open2.hKeyedMutex, &next_local );
     ok_x4( open2.PrivateRuntimeDataSize, ==, 0 );
 
     open2.PrivateRuntimeDataSize = sizeof(buffer);
     status = D3DKMTOpenKeyedMutex2( &open2 );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     open2.PrivateRuntimeDataSize = sizeof(runtime_data) - 1;
     open2.pPrivateRuntimeData = buffer;
     status = D3DKMTOpenKeyedMutex2( &open2 );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     open2.PrivateRuntimeDataSize = sizeof(runtime_data);
     memset( buffer, 0xcd, sizeof(buffer) );
     status = D3DKMTOpenKeyedMutex2( &open2 );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine check_d3dkmt_local( open2.hKeyedMutex, &next_local );
-    next_local = 0;
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( open2.hKeyedMutex, &next_local );
     ok_x4( open2.PrivateRuntimeDataSize, ==, sizeof(runtime_data) );
-    ok_u1( buffer[0], ==, 0xcd );
+    todo_wine ok_u1( buffer[0], ==, 0xcd );
 
     destroy.hKeyedMutex = open2.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     destroy.hKeyedMutex = create2.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy );
     ok_nt( STATUS_SUCCESS, status );
@@ -1957,7 +1951,7 @@ static void test_D3DKMTCreateAllocation( void )
     open.hDevice = create_device.hDevice;
     open.hGlobalShare = create.hResource;
     status = D3DKMTOpenResource( &open );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
 
     destroy.hResource = create.hResource;
     status = D3DKMTDestroyAllocation( &destroy );
@@ -2010,41 +2004,41 @@ static void test_D3DKMTCreateAllocation( void )
     open_alloc.PrivateDriverDataSize = sizeof(alloc_data);
     open.hResource = 0x1eadbeed;
     status = D3DKMTOpenResource( &open );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     ok_x4( open.hGlobalShare, ==, create.hGlobalShare );
-    todo_wine check_d3dkmt_local( open.hResource, &next_local );
+    check_d3dkmt_local( open.hResource, &next_local );
     ok_x4( open.PrivateRuntimeDataSize, ==, sizeof(expect_runtime_data) );
-    ok_x4( open.TotalPrivateDriverDataBufferSize, >, 0 );
-    todo_wine ok_x4( open.TotalPrivateDriverDataBufferSize, <, sizeof(driver_data) );
+    todo_wine ok_x4( open.TotalPrivateDriverDataBufferSize, >, 0 );
+    ok_x4( open.TotalPrivateDriverDataBufferSize, <, sizeof(driver_data) );
     ok_x4( open.ResourcePrivateDriverDataSize, ==, 0 );
     ok_u4( open.NumAllocations, ==, 1 );
-    todo_wine check_d3dkmt_local( open_alloc.hAllocation, &next_local );
-    ok_x4( open_alloc.PrivateDriverDataSize, >, 0 );
-    todo_wine ok_x4( open_alloc.PrivateDriverDataSize, <, sizeof(alloc_data) );
-    todo_wine ok( !memcmp( runtime_data, expect_runtime_data, sizeof(expect_runtime_data) ), "got data %#x\n", runtime_data[0] );
+    check_d3dkmt_local( open_alloc.hAllocation, &next_local );
+    todo_wine ok_x4( open_alloc.PrivateDriverDataSize, >, 0 );
+    ok_x4( open_alloc.PrivateDriverDataSize, <, sizeof(alloc_data) );
+    ok( !memcmp( runtime_data, expect_runtime_data, sizeof(expect_runtime_data) ), "got data %#x\n", runtime_data[0] );
     todo_wine ok_u1( driver_data[0], !=, 0xcd );
     ok_u1( resource_data[0], ==, 0xcd );
     ok_u1( alloc_data[0], ==, 0xcd );
 
     destroy.hResource = open.hResource;
     status = D3DKMTDestroyAllocation( &destroy );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     open.hResource = 0;
 
     /* NumAllocations must be set */
     open.NumAllocations = 0;
     status = D3DKMTOpenResource( &open );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     open.NumAllocations = 1;
 
     /* buffer sizes must match exactly */
     open.PrivateRuntimeDataSize += 1;
     status = D3DKMTOpenResource( &open );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     open.PrivateRuntimeDataSize -= 1;
     open.ResourcePrivateDriverDataSize += 1;
     status = D3DKMTOpenResource( &open );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     open.ResourcePrivateDriverDataSize -= 1;
 
     /* D3DKMTOpenResource2 works as well */
@@ -2053,18 +2047,17 @@ static void test_D3DKMTCreateAllocation( void )
     open_alloc2.PrivateDriverDataSize = sizeof(alloc2_data);
     open_alloc2.hAllocation = 0x1eadbeed;
     status = D3DKMTOpenResource2( &open );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     ok_x4( open.hGlobalShare, ==, create.hGlobalShare );
-    todo_wine check_d3dkmt_local( open.hResource, &next_local );
+    check_d3dkmt_local( open.hResource, &next_local );
     ok_x4( open.PrivateRuntimeDataSize, ==, sizeof(expect_runtime_data) );
-    ok_x4( open.TotalPrivateDriverDataBufferSize, >, 0 );
-    todo_wine ok_x4( open.TotalPrivateDriverDataBufferSize, <, sizeof(driver_data) );
+    todo_wine ok_x4( open.TotalPrivateDriverDataBufferSize, >, 0 );
+    ok_x4( open.TotalPrivateDriverDataBufferSize, <, sizeof(driver_data) );
     ok_x4( open.ResourcePrivateDriverDataSize, ==, 0 );
     ok_u4( open.NumAllocations, ==, 1 );
-    todo_wine check_d3dkmt_local( open_alloc2.hAllocation, &next_local );
-    next_local = 0;
-    ok_x4( open_alloc2.PrivateDriverDataSize, >, 0 );
-    todo_wine ok_x4( open_alloc2.PrivateDriverDataSize, <, sizeof(alloc_data) );
+    check_d3dkmt_local( open_alloc2.hAllocation, &next_local );
+    todo_wine ok_x4( open_alloc2.PrivateDriverDataSize, >, 0 );
+    ok_x4( open_alloc2.PrivateDriverDataSize, <, sizeof(alloc_data) );
     open.pOpenAllocationInfo = &open_alloc;
 
     destroy.hResource = open.hResource;

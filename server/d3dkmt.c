@@ -234,3 +234,29 @@ DECL_HANDLER(d3dkmt_object_query)
     reply->runtime_size = object->runtime_size;
     release_object( object );
 }
+
+/* open a global d3dkmt object */
+DECL_HANDLER(d3dkmt_object_open)
+{
+    data_size_t runtime_size = get_reply_max_size();
+    struct d3dkmt_object *object;
+    obj_handle_t handle;
+
+    if (!req->global) return;
+    object = d3dkmt_object_open( req->global, req->type );
+    if (!object) return;
+
+    /* only resource objects require exact runtime buffer size match */
+    if (object->type != D3DKMT_RESOURCE && runtime_size > object->runtime_size) runtime_size = object->runtime_size;
+
+    if (runtime_size && object->runtime_size != runtime_size) set_error( STATUS_INVALID_PARAMETER );
+    else if ((handle = alloc_handle( current->process, object, STANDARD_RIGHTS_ALL, OBJ_INHERIT )))
+    {
+        reply->handle = handle;
+        reply->global = object->global;
+        reply->runtime_size = object->runtime_size;
+        if (runtime_size) set_reply_data( object->runtime, runtime_size );
+    }
+
+    release_object( object );
+}

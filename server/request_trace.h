@@ -3404,6 +3404,20 @@ static void dump_d3dkmt_object_query_reply( const struct d3dkmt_object_query_rep
     fprintf( stderr, " runtime_size=%u", req->runtime_size );
 }
 
+static void dump_d3dkmt_object_open_request( const struct d3dkmt_object_open_request *req )
+{
+    fprintf( stderr, " type=%08x", req->type );
+    fprintf( stderr, ", global=%08x", req->global );
+}
+
+static void dump_d3dkmt_object_open_reply( const struct d3dkmt_object_open_reply *req )
+{
+    fprintf( stderr, " global=%08x", req->global );
+    fprintf( stderr, ", handle=%04x", req->handle );
+    fprintf( stderr, ", runtime_size=%u", req->runtime_size );
+    dump_varargs_bytes( ", runtime=", cur_size );
+}
+
 typedef void (*dump_func)( const void *req );
 
 static const dump_func req_dumpers[REQ_NB_REQUESTS] =
@@ -3707,6 +3721,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_get_inproc_sync_fd_request,
     (dump_func)dump_d3dkmt_object_create_request,
     (dump_func)dump_d3dkmt_object_query_request,
+    (dump_func)dump_d3dkmt_object_open_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
@@ -4010,6 +4025,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_get_inproc_sync_fd_reply,
     (dump_func)dump_d3dkmt_object_create_reply,
     (dump_func)dump_d3dkmt_object_query_reply,
+    (dump_func)dump_d3dkmt_object_open_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] =
@@ -4313,6 +4329,7 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "get_inproc_sync_fd",
     "d3dkmt_object_create",
     "d3dkmt_object_query",
+    "d3dkmt_object_open",
 };
 
 static const struct
