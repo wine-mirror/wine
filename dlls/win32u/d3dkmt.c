@@ -42,6 +42,12 @@ struct d3dkmt_object
     HANDLE              handle;         /* internal handle of the server object */
 };
 
+struct d3dkmt_resource
+{
+    struct d3dkmt_object obj;
+    D3DKMT_HANDLE allocation;
+};
+
 struct d3dkmt_adapter
 {
     struct d3dkmt_object obj;           /* object header */
@@ -770,8 +776,64 @@ NTSTATUS WINAPI NtGdiDdDDIShareObjects( UINT count, const D3DKMT_HANDLE *handles
  */
 NTSTATUS WINAPI NtGdiDdDDICreateAllocation2( D3DKMT_CREATEALLOCATION *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    D3DKMT_CREATESTANDARDALLOCATION *standard;
+    struct d3dkmt_resource *resource = NULL;
+    D3DDDI_ALLOCATIONINFO *alloc_info;
+    struct d3dkmt_object *allocation;
+    struct d3dkmt_device *device;
+    NTSTATUS status;
+
+    FIXME( "params %p semi-stub!\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    if (!(device = get_d3dkmt_object( params->hDevice, D3DKMT_DEVICE ))) return STATUS_INVALID_PARAMETER;
+
+    if (!params->Flags.StandardAllocation) return STATUS_INVALID_PARAMETER;
+    if (params->PrivateDriverDataSize) return STATUS_INVALID_PARAMETER;
+
+    if (params->NumAllocations != 1) return STATUS_INVALID_PARAMETER;
+    if (!(alloc_info = params->pAllocationInfo)) return STATUS_INVALID_PARAMETER;
+
+    if (!(standard = params->pStandardAllocation)) return STATUS_INVALID_PARAMETER;
+    if (standard->Type != D3DKMT_STANDARDALLOCATIONTYPE_EXISTINGHEAP) return STATUS_INVALID_PARAMETER;
+    if (standard->ExistingHeapData.Size & 0xfff) return STATUS_INVALID_PARAMETER;
+    if (!params->Flags.ExistingSysMem) return STATUS_INVALID_PARAMETER;
+    if (!alloc_info->pSystemMem) return STATUS_INVALID_PARAMETER;
+
+    if (params->Flags.CreateResource)
+    {
+        if (params->hResource && !(resource = get_d3dkmt_object( params->hResource, D3DKMT_RESOURCE )))
+            return STATUS_INVALID_HANDLE;
+        if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) return status;
+        if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
+
+        if (!params->Flags.CreateShared) status = alloc_object_handle( &resource->obj );
+        else status = d3dkmt_object_create( &resource->obj, params->Flags.NtSecuritySharing );
+        if (status) goto failed;
+
+        params->hGlobalShare = resource->obj.shared ? 0 : resource->obj.global;
+        params->hResource = resource->obj.local;
+    }
+    else
+    {
+        if (params->Flags.CreateShared) return STATUS_INVALID_PARAMETER;
+        if (params->hResource)
+        {
+            resource = get_d3dkmt_object( params->hResource, D3DKMT_RESOURCE );
+            return resource ? STATUS_INVALID_PARAMETER : STATUS_INVALID_HANDLE;
+        }
+        if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) return status;
+        params->hGlobalShare = 0;
+    }
+
+    if ((status = alloc_object_handle( allocation ))) goto failed;
+    if (resource) resource->allocation = allocation->local;
+    alloc_info->hAllocation = allocation->local;
+    return STATUS_SUCCESS;
+
+failed:
+    if (resource) d3dkmt_object_free( &resource->obj );
+    return status;
 }
 
 /******************************************************************************
@@ -779,8 +841,7 @@ NTSTATUS WINAPI NtGdiDdDDICreateAllocation2( D3DKMT_CREATEALLOCATION *params )
  */
 NTSTATUS WINAPI NtGdiDdDDICreateAllocation( D3DKMT_CREATEALLOCATION *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    return NtGdiDdDDICreateAllocation2( params );
 }
 
 /******************************************************************************
@@ -788,8 +849,37 @@ NTSTATUS WINAPI NtGdiDdDDICreateAllocation( D3DKMT_CREATEALLOCATION *params )
  */
 NTSTATUS WINAPI NtGdiDdDDIDestroyAllocation2( const D3DKMT_DESTROYALLOCATION2 *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_object *device, *allocation;
+    D3DKMT_HANDLE alloc_handle = 0;
+    UINT i;
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    if (!(device = get_d3dkmt_object( params->hDevice, D3DKMT_DEVICE ))) return STATUS_INVALID_PARAMETER;
+
+    if (params->AllocationCount && !params->phAllocationList) return STATUS_INVALID_PARAMETER;
+
+    if (params->hResource)
+    {
+        struct d3dkmt_resource *resource;
+        if (!(resource = get_d3dkmt_object( params->hResource, D3DKMT_RESOURCE )))
+            return STATUS_INVALID_PARAMETER;
+        alloc_handle = resource->allocation;
+        d3dkmt_object_free( &resource->obj );
+    }
+
+    for (i = 0; i < params->AllocationCount; i++)
+    {
+        if (!(allocation = get_d3dkmt_object( params->phAllocationList[i], D3DKMT_ALLOCATION )))
+            return STATUS_INVALID_PARAMETER;
+        d3dkmt_object_free( allocation );
+    }
+
+    if (alloc_handle && (allocation = get_d3dkmt_object( alloc_handle, D3DKMT_ALLOCATION )))
+        d3dkmt_object_free( allocation );
+
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
@@ -797,8 +887,17 @@ NTSTATUS WINAPI NtGdiDdDDIDestroyAllocation2( const D3DKMT_DESTROYALLOCATION2 *p
  */
 NTSTATUS WINAPI NtGdiDdDDIDestroyAllocation( const D3DKMT_DESTROYALLOCATION *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    D3DKMT_DESTROYALLOCATION2 params2 = {0};
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+
+    params2.hDevice = params->hDevice;
+    params2.hResource = params->hResource;
+    params2.phAllocationList = params->phAllocationList;
+    params2.AllocationCount = params->AllocationCount;
+    return NtGdiDdDDIDestroyAllocation2( &params2 );
 }
 
 /******************************************************************************

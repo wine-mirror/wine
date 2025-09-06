@@ -497,16 +497,16 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateAllocation( UINT *args )
         standard.Flags = standard32->Flags;
 
         desc.pStandardAllocation = &standard;
-        desc.PrivateDriverDataSize = sizeof(standard);
+        desc.PrivateDriverDataSize = desc32->PrivateDriverDataSize;
     }
     desc.NumAllocations = desc32->NumAllocations;
+    allocs32 = UlongToPtr( desc32->pAllocationInfo );
     desc.pAllocationInfo = NULL;
     if (desc32->pAllocationInfo && desc32->NumAllocations)
     {
         if (!(desc.pAllocationInfo = Wow64AllocateTemp( desc32->NumAllocations + sizeof(*desc.pAllocationInfo) )))
             return STATUS_NO_MEMORY;
 
-        allocs32 = UlongToPtr( desc32->pAllocationInfo );
         for (i = 0; i < desc32->NumAllocations; i++)
         {
             desc.pAllocationInfo[i].hAllocation = allocs32->hAllocation;
@@ -523,6 +523,8 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateAllocation( UINT *args )
     status = NtGdiDdDDICreateAllocation( &desc );
     desc32->hResource = desc.hResource;
     desc32->hGlobalShare = desc.hGlobalShare;
+    for (i = 0; desc32->pAllocationInfo && i < desc32->NumAllocations; i++)
+        allocs32->hAllocation = desc.pAllocationInfo[i].hAllocation;
     return status;
 }
 
@@ -607,13 +609,13 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateAllocation2( UINT *args )
         desc.PrivateDriverDataSize = sizeof(standard);
     }
     desc.NumAllocations = desc32->NumAllocations;
+    allocs32 = UlongToPtr( desc32->pAllocationInfo2 );
     desc.pAllocationInfo2 = NULL;
     if (desc32->pAllocationInfo2 && desc32->NumAllocations)
     {
         if (!(desc.pAllocationInfo2 = Wow64AllocateTemp( desc32->NumAllocations + sizeof(*desc.pAllocationInfo2) )))
             return STATUS_NO_MEMORY;
 
-        allocs32 = UlongToPtr( desc32->pAllocationInfo2 );
         for (i = 0; i < desc32->NumAllocations; i++)
         {
             desc.pAllocationInfo2[i].hAllocation = allocs32->hAllocation;
@@ -632,7 +634,10 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateAllocation2( UINT *args )
     desc32->hResource = desc.hResource;
     desc32->hGlobalShare = desc.hGlobalShare;
     for (i = 0; desc32->pAllocationInfo2 && i < desc32->NumAllocations; i++)
+    {
+        allocs32->hAllocation = desc.pAllocationInfo2[i].hAllocation;
         allocs32->GpuVirtualAddress = desc.pAllocationInfo2[i].GpuVirtualAddress;
+    }
     return status;
 }
 
