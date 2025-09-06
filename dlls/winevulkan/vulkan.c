@@ -379,6 +379,8 @@ static VkResult vulkan_physical_device_init(struct vulkan_physical_device *physi
             have_external_memory_host = TRUE;
         else if (!strcmp(host_properties[i].extensionName, "VK_EXT_map_memory_placed"))
             have_memory_placed = TRUE;
+        else if (!strcmp(host_properties[i].extensionName, "VK_EXT_surface_maintenance1"))
+            physical_device->has_surface_maintenance1 = true;
         else if (!strcmp(host_properties[i].extensionName, "VK_EXT_swapchain_maintenance1"))
             physical_device->has_swapchain_maintenance1 = true;
         else if (!strcmp(host_properties[i].extensionName, "VK_KHR_map_memory2"))
@@ -535,9 +537,11 @@ static VkResult wine_vk_device_convert_create_info(struct vulkan_physical_device
 {
     bool has_swapchain_maintenance1 = false;
     bool has_external_memory_host = false;
+    bool has_surface_maintenance1 = false;
     bool has_map_memory_placed = false;
     bool has_external_memory = false;
     bool has_map_memory2 = false;
+    bool has_swapchain = false;
     const char **extensions;
     uint32_t count;
 
@@ -564,6 +568,8 @@ static VkResult wine_vk_device_convert_create_info(struct vulkan_physical_device
         if (!strcmp(*extension, "VK_KHR_external_memory")) has_external_memory = true;
         if (!strcmp(*extension, "VK_EXT_external_memory_host")) has_external_memory_host = true;
         if (!strcmp(*extension, "VK_EXT_swapchain_maintenance1")) has_swapchain_maintenance1 = true;
+        if (!strcmp(*extension, "VK_EXT_surface_maintenance1")) has_surface_maintenance1 = true;
+        if (!strcmp(*extension, "VK_KHR_swapchain")) has_swapchain = true;
     }
 
     if (physical_device->map_placed_align)
@@ -587,8 +593,12 @@ static VkResult wine_vk_device_convert_create_info(struct vulkan_physical_device
     }
 
     /* win32u uses VkSwapchainPresentScalingCreateInfoEXT if available. */
-    if (physical_device->has_swapchain_maintenance1 && !has_swapchain_maintenance1)
+    if (physical_device->has_surface_maintenance1 && physical_device->has_swapchain_maintenance1 &&
+        has_swapchain && !has_swapchain_maintenance1)
+    {
+        if (!has_surface_maintenance1) extensions[count++] = "VK_EXT_surface_maintenance1";
         extensions[count++] = "VK_EXT_swapchain_maintenance1";
+    }
 
     TRACE("Enabling %u device extensions\n", count);
     for (const char **extension = extensions, **end = extension + count; extension < end; extension++)

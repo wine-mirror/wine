@@ -94,6 +94,7 @@ struct vulkan_physical_device
 {
     VULKAN_OBJECT_HEADER( VkPhysicalDevice, physical_device );
     struct vulkan_instance *instance;
+    bool has_surface_maintenance1;
     bool has_swapchain_maintenance1;
 
     VkExtensionProperties *extensions;
