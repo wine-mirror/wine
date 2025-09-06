@@ -39,6 +39,8 @@
 #include "d3d9.h"
 #include "dxgi1_3.h"
 #include "d3d11_1.h"
+#include "d3d12.h"
+
 #include "wine/wgl.h"
 #include "wine/test.h"
 
@@ -387,6 +389,48 @@ static void check_d3d11_runtime_desc_( struct d3d11_runtime_desc *desc, const st
         ok( 0, "unexpected\n" );
         break;
     }
+}
+
+struct d3d12_runtime_desc
+{
+    struct d3d11_runtime_desc   d3d11;
+    UINT                        unknown_5[4];
+    UINT                        resource_size;
+    UINT                        unknown_6[7];
+    UINT                        resource_align;
+    UINT                        unknown_7[9];
+    union
+    {
+        D3D12_RESOURCE_DESC     desc;
+        D3D12_RESOURCE_DESC1    desc1;
+    };
+    UINT64                      unknown_8[1];
+};
+
+C_ASSERT( sizeof(struct d3d12_runtime_desc) == 0x108 );
+C_ASSERT( offsetof(struct d3d12_runtime_desc, unknown_5) == sizeof(struct d3d11_runtime_desc) );
+
+static void check_d3d12_runtime_desc( struct d3d12_runtime_desc *desc, const struct d3d12_runtime_desc *expect )
+{
+    if (desc->d3d11.dxgi.version == 4) check_d3d11_runtime_desc_( &desc->d3d11, &expect->d3d11, TRUE );
+    else check_dxgi_runtime_desc_( &desc->d3d11.dxgi, &expect->d3d11.dxgi, TRUE );
+
+    ok_x4( desc->desc.Dimension, ==, expect->desc.Dimension );
+    ok_x4( desc->desc.Alignment, ==, expect->resource_align );
+    ok_x4( desc->desc.Width, ==, expect->desc.Width );
+    ok_x4( desc->desc.Height, ==, expect->desc.Height );
+    ok_x4( desc->desc.DepthOrArraySize, ==, expect->desc.DepthOrArraySize );
+    ok_x4( desc->desc.MipLevels, ==, expect->desc.MipLevels );
+    ok_x4( desc->desc.Format, ==, expect->desc.Format );
+    ok_x4( desc->desc.SampleDesc.Count, ==, expect->desc.SampleDesc.Count );
+    ok_x4( desc->desc.SampleDesc.Quality, ==, expect->desc.SampleDesc.Quality );
+    ok_x4( desc->desc.Layout, ==, expect->desc.Layout );
+    ok_x4( desc->desc.Flags, ==, expect->desc.Flags );
+    ok_x4( desc->desc1.SamplerFeedbackMipRegion.Width, ==, expect->desc1.SamplerFeedbackMipRegion.Width );
+    ok_x4( desc->desc1.SamplerFeedbackMipRegion.Height, ==, expect->desc1.SamplerFeedbackMipRegion.Height );
+    ok_x4( desc->desc1.SamplerFeedbackMipRegion.Depth, ==, expect->desc1.SamplerFeedbackMipRegion.Depth );
+    ok_x4( desc->resource_size, ==, expect->resource_size );
+    ok_x4( desc->resource_align, ==, expect->resource_align );
 }
 
 static void get_d3dkmt_resource_desc( LUID luid, HANDLE handle, BOOL expect_global, UINT size, char *buffer )
@@ -3292,14 +3336,28 @@ static HRESULT get_dxgi_shared_handle( IUnknown *obj, const WCHAR *name, HANDLE 
     return hr;
 }
 
+static HRESULT get_d3d12_shared_handle( ID3D12Device *d3d12, IUnknown *obj, const WCHAR *name, HANDLE *handle )
+{
+    ID3D12DeviceChild *child;
+    HRESULT hr;
+
+    hr = IUnknown_QueryInterface( obj, &IID_ID3D12DeviceChild, (void **)&child );
+    ok_hr( S_OK, hr );
+    hr = ID3D12Device_CreateSharedHandle( d3d12, child, NULL, GENERIC_ALL, name, handle );
+    ID3D12DeviceChild_Release( child );
+
+    return hr;
+}
+
 static void test_shared_resources(void)
 {
-    IDirect3DDevice9Ex *d3d9_exp, *d3d9_imp;
-    ID3D11Device1 *d3d11_exp, *d3d11_imp;
-    ID3D10Device *d3d10_exp, *d3d10_imp;
-    struct opengl_device *opengl_imp;
+    struct opengl_device *opengl_imp = NULL;
+    IDirect3DDevice9Ex *d3d9_exp = NULL, *d3d9_imp = NULL;
+    ID3D11Device1 *d3d11_exp = NULL, *d3d11_imp = NULL;
+    ID3D10Device *d3d10_exp = NULL, *d3d10_imp = NULL;
+    ID3D12Device *d3d12_exp = NULL, *d3d12_imp = NULL;
+    IDXGIFactory3 *dxgi = NULL;
     IDXGIAdapter *adapter;
-    IDXGIFactory3 *dxgi;
     BOOL stencil_broken;
     LUID luid = {0};
     HRESULT hr;
@@ -3341,6 +3399,13 @@ static void test_shared_resources(void)
     ok_ptr( d3d11_imp, !=, NULL );
     d3d11_exp = create_d3d11_device( adapter );
     ok_ptr( d3d11_exp, !=, NULL );
+
+    hr = D3D12CreateDevice( (IUnknown *)adapter, D3D_FEATURE_LEVEL_12_0,
+                            &IID_ID3D12Device, (void **)&d3d12_imp );
+    todo_wine ok_hr( S_OK, hr );
+    hr = D3D12CreateDevice( (IUnknown *)adapter, D3D_FEATURE_LEVEL_12_0,
+                            &IID_ID3D12Device, (void **)&d3d12_exp );
+    todo_wine ok_hr( S_OK, hr );
 
     IDXGIAdapter_Release( adapter );
 
@@ -3819,6 +3884,190 @@ static void test_shared_resources(void)
             check_d3d11_runtime_desc( (struct d3d11_runtime_desc *)runtime_desc, &desc );
             break;
         }
+
+        case MAKETEST(3, 0, 0):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .nt_shared = 1};
+            const struct d3d12_runtime_desc desc = {.d3d11.dxgi = dxgi, .resource_size = resource_size, .resource_align = 0x10000, .desc = {
+                .Dimension = D3D12_RESOURCE_DIMENSION_BUFFER, .Width = resource_size, .Height = 1, .DepthOrArraySize = 1, .MipLevels = 1,
+                .Format = DXGI_FORMAT_UNKNOWN, .SampleDesc.Count = 1, .Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+                .Flags = D3D12_RESOURCE_FLAG_NONE,
+            }};
+            D3D12_HEAP_PROPERTIES heap_props = {.Type = D3D12_HEAP_TYPE_DEFAULT};
+            if (!d3d12_exp) break;
+            hr = ID3D12Device_CreateCommittedResource( d3d12_exp, &heap_props, D3D12_HEAP_FLAG_SHARED, &desc.desc, D3D12_RESOURCE_STATE_COMMON,
+                                                       NULL, &IID_ID3D12Resource, (void **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_d3d12_shared_handle( d3d12_exp, export, NULL, &handle );
+            ok_hr( S_OK, hr );
+            get_d3dkmt_resource_desc( luid, handle, FALSE, sizeof(desc), runtime_desc );
+            check_d3d12_runtime_desc( (struct d3d12_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(3, 1, 0):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .nt_shared = 1};
+            struct d3d12_runtime_desc desc = {.d3d11.dxgi = dxgi, .resource_size = resource_size, .resource_align = 0x10000, .desc = {
+                .Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D, .Width = width_1d, .Height = 1, .DepthOrArraySize = array_1d, .MipLevels = 1,
+                .Format = DXGI_FORMAT_R8G8B8A8_UNORM, .SampleDesc.Count = 1, .Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+                .Flags = D3D12_RESOURCE_FLAG_NONE,
+            }};
+            D3D12_HEAP_PROPERTIES heap_props = {.Type = D3D12_HEAP_TYPE_DEFAULT};
+            if (!d3d12_exp) break;
+            hr = ID3D12Device_CreateCommittedResource( d3d12_exp, &heap_props, D3D12_HEAP_FLAG_SHARED, &desc.desc, D3D12_RESOURCE_STATE_COMMON,
+                                                       NULL, &IID_ID3D12Resource, (void **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_d3d12_shared_handle( d3d12_exp, export, NULL, &handle );
+            ok_hr( S_OK, hr );
+            get_d3dkmt_resource_desc( luid, handle, FALSE, sizeof(desc), runtime_desc );
+            if (!opengl_imp->broken) desc.resource_size = 0x800000; /* each plane is aligned on NVIDIA */
+            check_d3d12_runtime_desc( (struct d3d12_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(3, 2, 0):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .nt_shared = 1};
+            const struct d3d12_runtime_desc desc = {.d3d11.dxgi = dxgi, .resource_size = resource_size, .resource_align = 0x10000, .desc = {
+                .Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D, .Width = width_2d, .Height = height_2d, .DepthOrArraySize = 1, .MipLevels = 1,
+                .Format = DXGI_FORMAT_R8G8B8A8_UNORM, .SampleDesc.Count = 1, .Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+                .Flags = D3D12_RESOURCE_FLAG_NONE,
+            }};
+            D3D12_HEAP_PROPERTIES heap_props = {.Type = D3D12_HEAP_TYPE_DEFAULT};
+            if (!d3d12_exp) break;
+            hr = ID3D12Device_CreateCommittedResource( d3d12_exp, &heap_props, D3D12_HEAP_FLAG_SHARED, &desc.desc, D3D12_RESOURCE_STATE_COMMON,
+                                                       NULL, &IID_ID3D12Resource, (void **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_d3d12_shared_handle( d3d12_exp, export, NULL, &handle );
+            ok_hr( S_OK, hr );
+            get_d3dkmt_resource_desc( luid, handle, FALSE, sizeof(desc), runtime_desc );
+            check_d3d12_runtime_desc( (struct d3d12_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(3, 2, 1):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .nt_shared = 1};
+            const struct d3d12_runtime_desc desc = {.d3d11.dxgi = dxgi, .resource_size = resource_size, .resource_align = 0x10000, .desc = {
+                .Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D, .Width = width_2d, .Height = height_2d, .DepthOrArraySize = 1, .MipLevels = 1,
+                .Format = DXGI_FORMAT_R8G8B8A8_UNORM, .SampleDesc.Count = 1, .Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+                .Flags = D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS,
+            }};
+            D3D12_HEAP_PROPERTIES heap_props = {.Type = D3D12_HEAP_TYPE_DEFAULT};
+            if (!d3d12_exp) break;
+            hr = ID3D12Device_CreateCommittedResource( d3d12_exp, &heap_props, D3D12_HEAP_FLAG_SHARED, &desc.desc, D3D12_RESOURCE_STATE_COMMON,
+                                                       NULL, &IID_ID3D12Resource, (void **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_d3d12_shared_handle( d3d12_exp, export, NULL, &handle );
+            ok_hr( S_OK, hr );
+            get_d3dkmt_resource_desc( luid, handle, FALSE, sizeof(desc), runtime_desc );
+            check_d3d12_runtime_desc( (struct d3d12_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(3, 2, 2):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .nt_shared = 1, .width = width_2d, .height = height_2d, .format = DXGI_FORMAT_R8G8B8A8_UNORM};
+            const struct d3d12_runtime_desc desc = {.d3d11.dxgi = dxgi, .resource_size = resource_size, .resource_align = 0x10000, .desc = {
+                .Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D, .Width = width_2d, .Height = height_2d, .DepthOrArraySize = 1, .MipLevels = 1,
+                .Format = DXGI_FORMAT_R8G8B8A8_UNORM, .SampleDesc.Count = 1, .Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+                .Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
+            }};
+            D3D12_HEAP_PROPERTIES heap_props = {.Type = D3D12_HEAP_TYPE_DEFAULT};
+            if (!d3d12_exp) break;
+            hr = ID3D12Device_CreateCommittedResource( d3d12_exp, &heap_props, D3D12_HEAP_FLAG_SHARED, &desc.desc, D3D12_RESOURCE_STATE_COMMON,
+                                                       NULL, &IID_ID3D12Resource, (void **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_d3d12_shared_handle( d3d12_exp, export, NULL, &handle );
+            ok_hr( S_OK, hr );
+            get_d3dkmt_resource_desc( luid, handle, FALSE, sizeof(desc), runtime_desc );
+            check_d3d12_runtime_desc( (struct d3d12_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(3, 2, 3):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .version = 4, .width = width_2d, .height = height_2d, .format = DXGI_FORMAT_R8G8B8A8_UNORM, .nt_shared = 1};
+            const struct d3d11_runtime_desc d3d11 = {.dxgi = dxgi, .dimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D, .d3d11_2d = {
+                .Width = width_2d, .Height = height_2d, .MipLevels = 1, .ArraySize = 1, .Format = DXGI_FORMAT_R8G8B8A8_UNORM, .SampleDesc.Count = 1,
+                .Usage = D3D11_USAGE_DEFAULT, .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, .CPUAccessFlags = 0,
+                .MiscFlags = D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE,
+            }};
+            const struct d3d12_runtime_desc desc = {.d3d11 = d3d11, .resource_size = resource_size, .resource_align = 0x10000, .desc = {
+                .Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D, .Width = width_2d, .Height = height_2d, .DepthOrArraySize = 1, .MipLevels = 1,
+                .Format = DXGI_FORMAT_R8G8B8A8_UNORM, .SampleDesc.Count = 1, .Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+                .Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS,
+            }};
+            D3D12_HEAP_PROPERTIES heap_props = {.Type = D3D12_HEAP_TYPE_DEFAULT};
+            if (!d3d12_exp) break;
+            hr = ID3D12Device_CreateCommittedResource( d3d12_exp, &heap_props, D3D12_HEAP_FLAG_SHARED, &desc.desc, D3D12_RESOURCE_STATE_COMMON,
+                                                       NULL, &IID_ID3D12Resource, (void **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_d3d12_shared_handle( d3d12_exp, export, NULL, &handle );
+            ok_hr( S_OK, hr );
+            get_d3dkmt_resource_desc( luid, handle, FALSE, sizeof(desc), runtime_desc );
+            check_d3d12_runtime_desc( (struct d3d12_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(3, 2, 4):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .nt_shared = 1};
+            const struct d3d12_runtime_desc desc = {.d3d11.dxgi = dxgi, .resource_size = resource_size, .resource_align = 0x10000, .desc = {
+                .Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D, .Width = width_2d, .Height = height_2d, .DepthOrArraySize = 1, .MipLevels = 1,
+                .Format = DXGI_FORMAT_R8G8B8A8_UNORM, .SampleDesc.Count = 1, .Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+                .Flags = D3D12_RESOURCE_FLAG_NONE,
+            }};
+            D3D12_HEAP_PROPERTIES heap_props = {.Type = D3D12_HEAP_TYPE_DEFAULT};
+            if (!d3d12_exp) break;
+            hr = ID3D12Device_CreateCommittedResource( d3d12_exp, &heap_props, D3D12_HEAP_FLAG_SHARED, &desc.desc, D3D12_RESOURCE_STATE_COMMON,
+                                                       NULL, &IID_ID3D12Resource, (void **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_d3d12_shared_handle( d3d12_exp, export, NULL, &handle );
+            ok_hr( S_OK, hr );
+            get_d3dkmt_resource_desc( luid, handle, FALSE, sizeof(desc), runtime_desc );
+            check_d3d12_runtime_desc( (struct d3d12_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(3, 2, 5):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .version = 4, .width = width_2d, .height = height_2d, .format = DXGI_FORMAT_R8G8B8A8_UNORM, .nt_shared = 1};
+            const struct d3d11_runtime_desc d3d11 = {.dxgi = dxgi, .dimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D, .d3d11_2d = {
+                .Width = width_2d, .Height = height_2d, .MipLevels = 1, .ArraySize = 1, .Format = DXGI_FORMAT_R8G8B8A8_UNORM, .SampleDesc.Count = 1,
+                .Usage = D3D11_USAGE_DEFAULT, .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, .CPUAccessFlags = 0,
+                .MiscFlags = D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE,
+            }};
+            const struct d3d12_runtime_desc desc = {.d3d11 = d3d11, .resource_size = resource_size, .resource_align = 0x10000, .desc = {
+                .Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D, .Width = width_2d, .Height = height_2d, .DepthOrArraySize = 1, .MipLevels = 1,
+                .Format = DXGI_FORMAT_R8G8B8A8_UNORM, .SampleDesc.Count = 1, .Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+                .Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS,
+            }};
+            D3D12_HEAP_PROPERTIES heap_props = {.Type = D3D12_HEAP_TYPE_DEFAULT};
+            if (!d3d12_exp) break;
+            name = L"__winetest_d3d12_image";
+            hr = ID3D12Device_CreateCommittedResource( d3d12_exp, &heap_props, D3D12_HEAP_FLAG_SHARED, &desc.desc, D3D12_RESOURCE_STATE_COMMON,
+                                                       NULL, &IID_ID3D12Resource, (void **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_d3d12_shared_handle( d3d12_exp, export, name, &handle );
+            ok_hr( S_OK, hr );
+            get_d3dkmt_resource_desc( luid, handle, FALSE, sizeof(desc), runtime_desc );
+            check_d3d12_runtime_desc( (struct d3d12_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(3, 3, 0):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .nt_shared = 1};
+            const struct d3d12_runtime_desc desc = {.d3d11.dxgi = dxgi, .resource_size = resource_size, .resource_align = 0x10000, .desc = {
+                .Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE3D, .Width = width_3d, .Height = height_3d, .DepthOrArraySize = depth_3d, .MipLevels = 1,
+                .Format = DXGI_FORMAT_R8G8B8A8_UNORM, .SampleDesc.Count = 1, .Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+                .Flags = D3D12_RESOURCE_FLAG_NONE,
+            }};
+            D3D12_HEAP_PROPERTIES heap_props = {.Type = D3D12_HEAP_TYPE_DEFAULT};
+            if (!d3d12_exp) break;
+            hr = ID3D12Device_CreateCommittedResource( d3d12_exp, &heap_props, D3D12_HEAP_FLAG_SHARED, &desc.desc, D3D12_RESOURCE_STATE_COMMON,
+                                                       NULL, &IID_ID3D12Resource, (void **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_d3d12_shared_handle( d3d12_exp, export, NULL, &handle );
+            ok_hr( S_OK, hr );
+            get_d3dkmt_resource_desc( luid, handle, FALSE, sizeof(desc), runtime_desc );
+            check_d3d12_runtime_desc( (struct d3d12_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
         }
         if (!handle) goto skip_tests;
 
@@ -3962,6 +4211,26 @@ static void test_shared_resources(void)
             }
         }
 
+        if (d3d12_imp)
+        {
+            hr = ID3D12Device_OpenSharedHandle( d3d12_imp, handle, &IID_ID3D12Resource, (void **)&import );
+            ok_hr( S_OK, hr );
+            if (import) ok_ref( 0, IUnknown_Release( import ) );
+
+            if (name)
+            {
+                HANDLE other;
+
+                hr = ID3D12Device_OpenSharedHandleByName( d3d12_imp, name, GENERIC_ALL, &other );
+                ok_hr( S_OK, hr );
+                hr = ID3D12Device_OpenSharedHandle( d3d12_imp, other, &IID_ID3D12Resource, (void **)&import );
+                ok_hr( S_OK, hr );
+                CloseHandle( other );
+
+                if (import) ok_ref( 0, IUnknown_Release( import ) );
+            }
+        }
+
         if (opengl_imp->broken ? (test == MAKETEST(0, 0, 0) || test == MAKETEST(0, 0, 1)) :
                                  (test == MAKETEST(0, 0, 0) || test == MAKETEST(0, 3, 1)))
         {
@@ -4059,6 +4328,8 @@ skip_tests:
 #undef GET_API
 #undef MAKETEST
 
+    if (d3d12_imp) ID3D12Device_Release( d3d12_imp );
+    if (d3d12_exp) ok_ref( 0, ID3D12Device_Release( d3d12_exp ) );
     if (d3d11_imp) ok_ref( 0, ID3D11Device1_Release( d3d11_imp ) );
     if (d3d11_exp) ok_ref( 0, ID3D11Device1_Release( d3d11_exp ) );
     if (d3d10_imp) ok_ref( 0, ID3D10Device_Release( d3d10_imp ) );
