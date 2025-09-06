@@ -530,22 +530,16 @@ static void wine_vk_device_init_queues(struct wine_device *object, const VkDevic
     object->queue_count += info->queueCount;
 }
 
-static const char *find_extension(const char *const *extensions, uint32_t count, const char *ext)
-{
-    while (count--)
-    {
-        if (!strcmp(extensions[count], ext))
-            return extensions[count];
-    }
-    return NULL;
-}
-
-static VkResult wine_vk_device_convert_create_info(VkPhysicalDevice client_physical_device,
+static VkResult wine_vk_device_convert_create_info(struct vulkan_physical_device *physical_device,
         struct conversion_context *ctx, const VkDeviceCreateInfo *src, VkDeviceCreateInfo *dst)
 {
-    struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle(client_physical_device);
-    const char *extra_extensions[3], * const*extensions = src->ppEnabledExtensionNames;
-    unsigned int i, extra_count = 0, extensions_count = src->enabledExtensionCount;
+    bool has_swapchain_maintenance1 = false;
+    bool has_external_memory_host = false;
+    bool has_map_memory_placed = false;
+    bool has_external_memory = false;
+    bool has_map_memory2 = false;
+    const char **extensions;
+    uint32_t count;
 
     *dst = *src;
 
@@ -553,16 +547,23 @@ static VkResult wine_vk_device_convert_create_info(VkPhysicalDevice client_physi
     dst->enabledLayerCount = 0;
     dst->ppEnabledLayerNames = NULL;
 
-    TRACE("Enabled %u extensions.\n", extensions_count);
-    for (i = 0; i < extensions_count; i++)
+    count = src->enabledExtensionCount;
+    extensions = conversion_context_alloc(ctx, (count + 16) * sizeof(*extensions));
+    memcpy(extensions, dst->ppEnabledExtensionNames, count * sizeof(*extensions));
+    dst->ppEnabledExtensionNames = extensions;
+
+    for (const char **extension = extensions, **end = extension + count; extension < end; extension++)
     {
-        const char *extension_name = extensions[i];
-        TRACE("Extension %u: %s.\n", i, debugstr_a(extension_name));
-        if (!wine_vk_device_extension_supported(extension_name))
+        if (!wine_vk_device_extension_supported(*extension))
         {
-            WARN("Extension %s is not supported.\n", debugstr_a(extension_name));
+            WARN("Extension %s is not supported.\n", debugstr_a(*extension));
             return VK_ERROR_EXTENSION_NOT_PRESENT;
         }
+        if (!strcmp(*extension, "VK_EXT_map_memory_placed")) has_map_memory_placed = true;
+        if (!strcmp(*extension, "VK_KHR_map_memory2")) has_map_memory2 = true;
+        if (!strcmp(*extension, "VK_KHR_external_memory")) has_external_memory = true;
+        if (!strcmp(*extension, "VK_EXT_external_memory_host")) has_external_memory_host = true;
+        if (!strcmp(*extension, "VK_EXT_swapchain_maintenance1")) has_swapchain_maintenance1 = true;
     }
 
     if (physical_device->map_placed_align)
@@ -576,37 +577,24 @@ static VkResult wine_vk_device_convert_create_info(VkPhysicalDevice client_physi
         map_placed_features->memoryUnmapReserve = VK_TRUE;
         dst->pNext = map_placed_features;
 
-        if (!find_extension(extensions, extensions_count, "VK_EXT_map_memory_placed"))
-            extra_extensions[extra_count++] = "VK_EXT_map_memory_placed";
-        if (!find_extension(extensions, extensions_count, "VK_KHR_map_memory2"))
-            extra_extensions[extra_count++] = "VK_KHR_map_memory2";
+        if (!has_map_memory_placed) extensions[count++] = "VK_EXT_map_memory_placed";
+        if (!has_map_memory2) extensions[count++] = "VK_KHR_map_memory2";
     }
     else if (physical_device->external_memory_align)
     {
-        if (!find_extension(extensions, extensions_count, "VK_KHR_external_memory"))
-            extra_extensions[extra_count++] = "VK_KHR_external_memory";
-        if (!find_extension(extensions, extensions_count, "VK_EXT_external_memory_host"))
-            extra_extensions[extra_count++] = "VK_EXT_external_memory_host";
+        if (!has_external_memory) extensions[count++] = "VK_KHR_external_memory";
+        if (!has_external_memory_host) extensions[count++] = "VK_EXT_external_memory_host";
     }
 
     /* win32u uses VkSwapchainPresentScalingCreateInfoEXT if available. */
-    if (physical_device->has_swapchain_maintenance1)
-    {
-        if (!find_extension(extensions, extensions_count, "VK_EXT_swapchain_maintenance1"))
-            extra_extensions[extra_count++] = "VK_EXT_swapchain_maintenance1";
-    }
+    if (physical_device->has_swapchain_maintenance1 && !has_swapchain_maintenance1)
+        extensions[count++] = "VK_EXT_swapchain_maintenance1";
 
-    if (extra_count)
-    {
-        const char **new_extensions;
+    TRACE("Enabling %u device extensions\n", count);
+    for (const char **extension = extensions, **end = extension + count; extension < end; extension++)
+        TRACE("  - %s\n", debugstr_a(*extension));
 
-        dst->enabledExtensionCount += extra_count;
-        new_extensions = conversion_context_alloc(ctx, dst->enabledExtensionCount * sizeof(*new_extensions));
-        memcpy(new_extensions, extensions, extensions_count * sizeof(*new_extensions));
-        memcpy(new_extensions + extensions_count, extra_extensions, extra_count * sizeof(*new_extensions));
-        dst->ppEnabledExtensionNames = new_extensions;
-    }
-
+    dst->enabledExtensionCount = count;
     return VK_SUCCESS;
 }
 
@@ -646,9 +634,10 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
 {
     VkDebugUtilsMessengerCreateInfoEXT *debug_utils_messenger;
     VkDebugReportCallbackCreateInfoEXT *debug_report_callback;
-    const char **new_extensions;
     VkBaseInStructure *header;
+    const char **extensions;
     unsigned int i;
+    uint32_t count;
 
     *dst = *src;
 
@@ -701,36 +690,37 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
         }
     }
 
-    new_extensions = conversion_context_alloc(ctx, (src->enabledExtensionCount + 2) *
-                                              sizeof(*src->ppEnabledExtensionNames));
-    memcpy(new_extensions, src->ppEnabledExtensionNames,
-           dst->enabledExtensionCount * sizeof(*dst->ppEnabledExtensionNames));
-    dst->ppEnabledExtensionNames = new_extensions;
+    count = src->enabledExtensionCount;
+    extensions = conversion_context_alloc(ctx, (count + 2) * sizeof(*extensions));
+    memcpy(extensions, src->ppEnabledExtensionNames, count * sizeof(*dst->ppEnabledExtensionNames));
+    dst->ppEnabledExtensionNames = extensions;
     dst->enabledExtensionCount = src->enabledExtensionCount;
 
-    for (i = 0; i < dst->enabledExtensionCount; i++)
+    for (const char **extension = extensions, **end = extension + count; extension < end; extension++)
     {
-        const char *extension_name = dst->ppEnabledExtensionNames[i];
-        if (!strcmp(extension_name, "VK_EXT_debug_utils") || !strcmp(extension_name, "VK_EXT_debug_report"))
+        if (!strcmp(*extension, "VK_EXT_debug_utils") || !strcmp(*extension, "VK_EXT_debug_report"))
         {
             rb_init(&instance->objects, vulkan_object_compare);
             pthread_rwlock_init(&instance->objects_lock, NULL);
         }
-        if (!strcmp(extension_name, "VK_KHR_win32_surface"))
+        if (!strcmp(*extension, "VK_KHR_win32_surface"))
         {
-            new_extensions[i] = vk_funcs->p_get_host_surface_extension();
+            *extension = vk_funcs->p_get_host_surface_extension();
             instance->enable_win32_surface = VK_TRUE;
         }
     }
 
     if (use_external_memory())
     {
-        new_extensions[dst->enabledExtensionCount++] = "VK_KHR_get_physical_device_properties2";
-        new_extensions[dst->enabledExtensionCount++] = "VK_KHR_external_memory_capabilities";
+        extensions[count++] = "VK_KHR_get_physical_device_properties2";
+        extensions[count++] = "VK_KHR_external_memory_capabilities";
     }
 
-    TRACE("Enabled %u instance extensions.\n", dst->enabledExtensionCount);
+    TRACE("Enabling %u instance extensions\n", count);
+    for (const char **extension = extensions, **end = extension + count; extension < end; extension++)
+        TRACE("  - %s\n", debugstr_a(*extension));
 
+    dst->enabledExtensionCount = count;
     return VK_SUCCESS;
 }
 
@@ -894,7 +884,7 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice client_physical_device, const VkDe
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
     init_conversion_context(&ctx);
-    res = wine_vk_device_convert_create_info(client_physical_device, &ctx, create_info, &create_info_host);
+    res = wine_vk_device_convert_create_info(physical_device, &ctx, create_info, &create_info_host);
     if (res == VK_SUCCESS)
         res = instance->p_vkCreateDevice(physical_device->host.physical_device, &create_info_host,
                                                NULL /* allocator */, &host_device);
