@@ -128,7 +128,7 @@
 #@ stub GetOwnerModuleFromUdp6Entry
 #@ stub GetOwnerModuleFromUdpEntry
 @ stdcall GetPerAdapterInfo( long ptr ptr )
-#@ stub GetPerTcp6ConnectionEStats
+@ stdcall GetPerTcp6ConnectionEStats( ptr long ptr long long ptr long long ptr long long )
 #@ stub GetPerTcp6ConnectionStats
 @ stdcall GetPerTcpConnectionEStats( ptr long ptr long long ptr long long ptr long long )
 #@ stub GetPerTcpConnectionStats
