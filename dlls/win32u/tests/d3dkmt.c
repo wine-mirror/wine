@@ -3081,6 +3081,24 @@ static IDXGIAdapter *create_dxgi_adapter( IDXGIFactory3 *dxgi, LUID *luid )
     return adapter;
 }
 
+static ID3D11Device1 *create_d3d11_device( IDXGIAdapter *adapter )
+{
+    D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    ID3D11Device1 *device1;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    hr = D3D11CreateDevice( adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, 0, &feature_level, 1,
+                            D3D11_SDK_VERSION, &device, NULL, NULL );
+    ok_hr( S_OK, hr );
+
+    hr = ID3D11Device_QueryInterface( device, &IID_ID3D11Device1, (void **)&device1 );
+    ok_hr( S_OK, hr );
+    ID3D11Device_Release( device );
+
+    return device1;
+}
+
 C_ASSERT( sizeof(GUID) == GL_UUID_SIZE_EXT );
 C_ASSERT( sizeof(LUID) == GL_LUID_SIZE_EXT );
 
@@ -3229,7 +3247,8 @@ static void import_opengl_image( struct opengl_device *dev, UINT width, UINT hei
     if (name)
     {
         PFN_glImportMemoryWin32NameEXT p_glImportMemoryWin32NameEXT = (void *)wglGetProcAddress( "glImportMemoryWin32NameEXT" );
-        ok_ptr( p_glImportMemoryWin32NameEXT, !=, NULL );
+        todo_wine ok_ptr( p_glImportMemoryWin32NameEXT, !=, NULL );
+        if (!p_glImportMemoryWin32NameEXT) return;
 
         p_glCreateMemoryObjectsEXT( 1, &memory );
         p_glImportMemoryWin32NameEXT( memory, width * height * depth * bpp, handle_type, name );
@@ -3276,6 +3295,7 @@ static HRESULT get_dxgi_shared_handle( IUnknown *obj, const WCHAR *name, HANDLE 
 static void test_shared_resources(void)
 {
     IDirect3DDevice9Ex *d3d9_exp, *d3d9_imp;
+    ID3D11Device1 *d3d11_exp, *d3d11_imp;
     ID3D10Device *d3d10_exp, *d3d10_imp;
     struct opengl_device *opengl_imp;
     IDXGIAdapter *adapter;
@@ -3316,6 +3336,11 @@ static void test_shared_resources(void)
     hr = D3D10CreateDevice( adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, D3D10_CREATE_DEVICE_BGRA_SUPPORT,
                             D3D10_SDK_VERSION, &d3d10_exp );
     ok_hr( S_OK, hr );
+
+    d3d11_imp = create_d3d11_device( adapter );
+    ok_ptr( d3d11_imp, !=, NULL );
+    d3d11_exp = create_d3d11_device( adapter );
+    ok_ptr( d3d11_exp, !=, NULL );
 
     IDXGIAdapter_Release( adapter );
 
@@ -3621,6 +3646,179 @@ static void test_shared_resources(void)
             check_d3d11_runtime_desc( (struct d3d11_runtime_desc *)runtime_desc, (struct d3d11_runtime_desc *)&desc );
             break;
         }
+
+        case MAKETEST(2, 0, 0):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .version = 4};
+            const struct d3d11_runtime_desc desc = {.dxgi = dxgi, .dimension = D3D11_RESOURCE_DIMENSION_BUFFER, .d3d11_buf = {
+                .ByteWidth = resource_size, .Usage = D3D11_USAGE_DEFAULT, .BindFlags = D3D11_BIND_SHADER_RESOURCE, .CPUAccessFlags = D3D11_CPU_ACCESS_READ,
+                .MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
+            }};
+            hr = ID3D11Device1_CreateBuffer( d3d11_exp, &desc.d3d11_buf, NULL, (ID3D11Buffer **)&export );
+            todo_wine ok_hr( E_INVALIDARG, hr );
+            if (!export) break;
+            hr = get_dxgi_shared_handle( export, NULL, &handle );
+            todo_wine ok_hr( E_INVALIDARG, hr );
+            hr = get_dxgi_global_handle( export, &handle );
+            todo_wine ok_hr( S_OK, hr );
+            if (hr != S_OK) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d11_runtime_desc( (struct d3d11_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(2, 1, 0):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .version = 4};
+            const struct d3d11_runtime_desc desc = {.dxgi = dxgi, .dimension = D3D11_RESOURCE_DIMENSION_TEXTURE1D, .d3d11_1d = {
+                .Width = width_1d, .MipLevels = 1, .ArraySize = array_1d, .Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+                .Usage = D3D11_USAGE_DEFAULT, .BindFlags = D3D11_BIND_SHADER_RESOURCE, .CPUAccessFlags = D3D11_CPU_ACCESS_READ,
+                .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
+            }};
+            hr = ID3D11Device1_CreateTexture1D( d3d11_exp, &desc.d3d11_1d, NULL, (ID3D11Texture1D **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_dxgi_shared_handle( export, NULL, &handle );
+            todo_wine ok_hr( E_INVALIDARG, hr );
+            hr = get_dxgi_global_handle( export, &handle );
+            todo_wine ok_hr( S_OK, hr );
+            if (hr != S_OK) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d11_runtime_desc( (struct d3d11_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(2, 1, 1):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .version = 4, .keyed_mutex = 1};
+            const struct d3d11_runtime_desc desc = {.dxgi = dxgi, .dimension = D3D11_RESOURCE_DIMENSION_TEXTURE1D, .d3d11_1d = {
+                .Width = width_1d, .MipLevels = 1, .ArraySize = array_1d, .Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+                .Usage = D3D11_USAGE_DEFAULT, .BindFlags = D3D11_BIND_SHADER_RESOURCE, .CPUAccessFlags = D3D11_CPU_ACCESS_READ,
+                .MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
+            }};
+            hr = ID3D11Device1_CreateTexture1D( d3d11_exp, &desc.d3d11_1d, NULL, (ID3D11Texture1D **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_dxgi_shared_handle( export, NULL, &handle );
+            todo_wine ok_hr( E_INVALIDARG, hr );
+            hr = get_dxgi_global_handle( export, &handle );
+            todo_wine ok_hr( S_OK, hr );
+            if (hr != S_OK) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d11_runtime_desc( (struct d3d11_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(2, 2, 0):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .version = 4};
+            const struct d3d11_runtime_desc desc = {.dxgi = dxgi, .dimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D, .d3d11_2d = {
+                .Width = width_2d, .Height = height_2d, .MipLevels = 1, .ArraySize = 1, .Format = DXGI_FORMAT_R8G8B8A8_UNORM, .SampleDesc.Count = 1,
+                .Usage = D3D11_USAGE_DEFAULT, .BindFlags = D3D11_BIND_RENDER_TARGET, .CPUAccessFlags = D3D11_CPU_ACCESS_READ,
+                .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
+            }};
+            hr = ID3D11Device1_CreateTexture2D( d3d11_exp, &desc.d3d11_2d, NULL, (ID3D11Texture2D **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_dxgi_shared_handle( export, NULL, &handle );
+            todo_wine ok_hr( E_INVALIDARG, hr );
+            hr = get_dxgi_global_handle( export, &handle );
+            todo_wine ok_hr( S_OK, hr );
+            if (hr != S_OK) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d11_runtime_desc( (struct d3d11_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(2, 2, 1):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .version = 4, .nt_shared = 1};
+            const struct d3d11_runtime_desc desc = {.dxgi = dxgi, .dimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D, .d3d11_2d = {
+                .Width = width_2d, .Height = height_2d, .MipLevels = 1, .ArraySize = 1, .Format = DXGI_FORMAT_R8G8B8A8_UNORM, .SampleDesc.Count = 1,
+                .Usage = D3D11_USAGE_DEFAULT, .BindFlags = D3D11_BIND_RENDER_TARGET, .CPUAccessFlags = D3D11_CPU_ACCESS_READ,
+                .MiscFlags = D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE,
+            }};
+            hr = ID3D11Device1_CreateTexture2D( d3d11_exp, &desc.d3d11_2d, NULL, (ID3D11Texture2D **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_dxgi_global_handle( export, &handle );
+            todo_wine ok_hr( E_INVALIDARG, hr );
+            hr = get_dxgi_shared_handle( export, NULL, &handle );
+            todo_wine ok_hr( S_OK, hr );
+            if (hr != S_OK) break;
+            get_d3dkmt_resource_desc( luid, handle, FALSE, sizeof(desc), runtime_desc );
+            check_d3d11_runtime_desc( (struct d3d11_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(2, 2, 2):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .version = 4, .keyed_mutex = 1};
+            const struct d3d11_runtime_desc desc = {.dxgi = dxgi, .dimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D, .d3d11_2d = {
+                .Width = width_2d, .Height = height_2d, .MipLevels = 1, .ArraySize = 1, .Format = DXGI_FORMAT_R8G8B8A8_UNORM, .SampleDesc.Count = 1,
+                .Usage = D3D11_USAGE_DEFAULT, .BindFlags = D3D11_BIND_SHADER_RESOURCE, .CPUAccessFlags = D3D11_CPU_ACCESS_WRITE,
+                .MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
+            }};
+            hr = ID3D11Device1_CreateTexture2D( d3d11_exp, &desc.d3d11_2d, NULL, (ID3D11Texture2D **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_dxgi_shared_handle( export, NULL, &handle );
+            todo_wine ok_hr( E_INVALIDARG, hr );
+            hr = get_dxgi_global_handle( export, &handle );
+            todo_wine ok_hr( S_OK, hr );
+            if (hr != S_OK) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d11_runtime_desc( (struct d3d11_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(2, 2, 3):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .version = 4, .nt_shared = 1};
+            const struct d3d11_runtime_desc desc = {.dxgi = dxgi, .dimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D, .d3d11_2d = {
+                .Width = width_2d, .Height = height_2d, .MipLevels = 1, .ArraySize = 1, .Format = DXGI_FORMAT_R8G8B8A8_UNORM, .SampleDesc.Count = 1,
+                .Usage = D3D11_USAGE_DEFAULT, .BindFlags = D3D11_BIND_RENDER_TARGET, .CPUAccessFlags = D3D11_CPU_ACCESS_READ,
+                .MiscFlags = D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE,
+            }};
+            name = L"__winetest_d3d11_image";
+            hr = ID3D11Device1_CreateTexture2D( d3d11_exp, &desc.d3d11_2d, NULL, (ID3D11Texture2D **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_dxgi_global_handle( export, &handle );
+            todo_wine ok_hr( E_INVALIDARG, hr );
+            hr = get_dxgi_shared_handle( export, name, &handle );
+            todo_wine ok_hr( S_OK, hr );
+            if (hr != S_OK) break;
+            get_d3dkmt_resource_desc( luid, handle, FALSE, sizeof(desc), runtime_desc );
+            check_d3d11_runtime_desc( (struct d3d11_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(2, 3, 0):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .version = 4};
+            const struct d3d11_runtime_desc desc = {.dxgi = dxgi, .dimension = D3D11_RESOURCE_DIMENSION_TEXTURE3D, .d3d11_3d = {
+                .Width = width_3d, .Height = height_3d, .Depth = depth_3d, .MipLevels = 1, .Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+                .Usage = D3D11_USAGE_DEFAULT, .BindFlags = D3D11_BIND_SHADER_RESOURCE, .CPUAccessFlags = D3D11_CPU_ACCESS_READ,
+                .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
+            }};
+            hr = ID3D11Device1_CreateTexture3D( d3d11_exp, &desc.d3d11_3d, NULL, (ID3D11Texture3D **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_dxgi_shared_handle( export, NULL, &handle );
+            todo_wine ok_hr( E_INVALIDARG, hr );
+            hr = get_dxgi_global_handle( export, &handle );
+            todo_wine ok_hr( S_OK, hr );
+            if (hr != S_OK) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d11_runtime_desc( (struct d3d11_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
+        case MAKETEST(2, 3, 1):
+        {
+            const struct dxgi_runtime_desc dxgi = {.size = 0x68, .version = 4, .keyed_mutex = 1};
+            const struct d3d11_runtime_desc desc = {.dxgi = dxgi, .dimension = D3D11_RESOURCE_DIMENSION_TEXTURE3D, .d3d11_3d = {
+                .Width = width_3d, .Height = height_3d, .Depth = depth_3d, .MipLevels = 1, .Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+                .Usage = D3D11_USAGE_DEFAULT, .BindFlags = D3D11_BIND_SHADER_RESOURCE, .CPUAccessFlags = D3D11_CPU_ACCESS_READ,
+                .MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
+            }};
+            hr = ID3D11Device1_CreateTexture3D( d3d11_exp, &desc.d3d11_3d, NULL, (ID3D11Texture3D **)&export );
+            ok_hr( S_OK, hr );
+            hr = get_dxgi_shared_handle( export, NULL, &handle );
+            todo_wine ok_hr( E_INVALIDARG, hr );
+            hr = get_dxgi_global_handle( export, &handle );
+            todo_wine ok_hr( S_OK, hr );
+            if (hr != S_OK) break;
+            get_d3dkmt_resource_desc( luid, handle, TRUE, sizeof(desc), runtime_desc );
+            check_d3d11_runtime_desc( (struct d3d11_runtime_desc *)runtime_desc, &desc );
+            break;
+        }
         }
         if (!handle) goto skip_tests;
 
@@ -3628,7 +3826,7 @@ static void test_shared_resources(void)
         {
             WCHAR path[MAX_PATH];
             swprintf( path, ARRAY_SIZE(path), L"\\Sessions\\1\\BaseNamedObjects\\%s", name );
-            check_object_name( handle, path );
+            todo_wine check_object_name( handle, path );
         }
 
         if (d3d9_imp)
@@ -3732,6 +3930,38 @@ static void test_shared_resources(void)
             if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
         }
 
+        if (d3d11_imp)
+        {
+            const struct dxgi_runtime_desc *desc = (struct dxgi_runtime_desc *)runtime_desc;
+
+            hr = ID3D11Device1_OpenSharedResource( d3d11_imp, handle, &IID_ID3D11Resource, (void **)&import );
+            if (!is_d3dkmt_handle( handle )) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (desc->version == 1)
+            {
+                const struct d3d9_runtime_desc *d3d9_desc = (struct d3d9_runtime_desc *)runtime_desc;
+                if (d3d9_desc->type != D3DRTYPE_TEXTURE && d3d9_desc->type != D3DRTYPE_SURFACE) ok_hr( E_INVALIDARG, hr );
+                else if (d3d9_desc->usage & D3DUSAGE_DEPTHSTENCIL) ok_hr( E_INVALIDARG, hr );
+                else ok_hr( S_OK, hr );
+            }
+            else if (desc->version != 4) ok_hr( E_INVALIDARG, hr );
+            else todo_wine ok_hr( S_OK, hr );
+            if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
+
+            hr = ID3D11Device1_OpenSharedResource1( d3d11_imp, handle, &IID_ID3D11Resource, (void **)&import );
+            if (is_d3dkmt_handle( handle )) todo_wine ok_hr( E_INVALIDARG, hr );
+            else if (desc->version == 4) todo_wine ok_hr( S_OK, hr );
+            else if (!desc->format) todo_wine ok_hr( E_INVALIDARG, hr );
+            else ok_hr( S_OK, hr );
+            if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
+
+            if (name)
+            {
+                hr = ID3D11Device1_OpenSharedResourceByName( d3d11_imp, name, GENERIC_ALL, &IID_ID3D11Resource, (void **)&import );
+                todo_wine ok_hr( S_OK, hr );
+                if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
+            }
+        }
+
         if (opengl_imp->broken ? (test == MAKETEST(0, 0, 0) || test == MAKETEST(0, 0, 1)) :
                                  (test == MAKETEST(0, 0, 0) || test == MAKETEST(0, 3, 1)))
         {
@@ -3829,6 +4059,8 @@ skip_tests:
 #undef GET_API
 #undef MAKETEST
 
+    if (d3d11_imp) ok_ref( 0, ID3D11Device1_Release( d3d11_imp ) );
+    if (d3d11_exp) ok_ref( 0, ID3D11Device1_Release( d3d11_exp ) );
     if (d3d10_imp) ok_ref( 0, ID3D10Device_Release( d3d10_imp ) );
     if (d3d10_exp) ok_ref( 0, ID3D10Device_Release( d3d10_exp ) );
     ok_ref( 0, IDXGIFactory3_Release( dxgi ) );
