@@ -347,6 +347,36 @@ static void *d3dkmt_object_open( d3dkmt_handle_t global, enum d3dkmt_type type )
     return grab_object( object );
 }
 
+static struct d3dkmt_object *d3dkmt_object_open_shared( obj_handle_t handle, enum d3dkmt_type type )
+{
+    struct object *obj, *ret = NULL;
+
+    if ((obj = get_handle_obj( current->process, handle, 0, &dxgk_shared_resource_ops )))
+    {
+        struct dxgk_shared_resource *shared = (struct dxgk_shared_resource *)obj;
+        if (type == D3DKMT_RESOURCE) ret = grab_object( shared->resource );
+        else if (type == D3DKMT_MUTEX && shared->mutex) ret = grab_object( shared->mutex );
+        else if (type == D3DKMT_SYNC && shared->sync) ret = grab_object( shared->sync );
+        release_object( obj );
+        if (!ret) set_error( STATUS_INVALID_PARAMETER );
+        return (struct d3dkmt_object *)ret;
+    }
+
+    if (type != D3DKMT_SYNC) return NULL;
+
+    /* try again looking for a shared sync if client asked for a sync object */
+    set_error( STATUS_SUCCESS );
+
+    if ((obj = get_handle_obj( current->process, handle, 0, &dxgk_shared_sync_ops )))
+    {
+        struct dxgk_shared_sync *shared = (struct dxgk_shared_sync *)obj;
+        ret = grab_object( shared->sync );
+        release_object( obj );
+    }
+
+    return (struct d3dkmt_object *)ret;
+}
+
 /* create a global d3dkmt object */
 DECL_HANDLER(d3dkmt_object_create)
 {
@@ -363,8 +393,8 @@ DECL_HANDLER(d3dkmt_object_query)
 {
     struct d3dkmt_object *object;
 
-    if (!req->global) return;
-    object = d3dkmt_object_open( req->global, req->type );
+    if (req->global) object = d3dkmt_object_open( req->global, req->type );
+    else object = d3dkmt_object_open_shared( req->handle, req->type );
     if (!object) return;
 
     reply->runtime_size = object->runtime_size;

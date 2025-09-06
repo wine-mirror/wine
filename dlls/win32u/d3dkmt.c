@@ -226,7 +226,8 @@ static NTSTATUS d3dkmt_object_open( struct d3dkmt_object *obj, D3DKMT_HANDLE glo
     return status;
 }
 
-static NTSTATUS d3dkmt_object_query( enum d3dkmt_type type, D3DKMT_HANDLE global, UINT *runtime_size )
+static NTSTATUS d3dkmt_object_query( enum d3dkmt_type type, D3DKMT_HANDLE global, HANDLE handle,
+                                     UINT *runtime_size )
 {
     NTSTATUS status;
 
@@ -234,13 +235,14 @@ static NTSTATUS d3dkmt_object_query( enum d3dkmt_type type, D3DKMT_HANDLE global
     {
         req->type = type;
         req->global = global;
+        req->handle = wine_server_obj_handle( handle );
         status = wine_server_call( req );
         *runtime_size = reply->runtime_size;
     }
     SERVER_END_REQ;
 
-    if (status) WARN( "Failed to query global object %#x, status %#x\n", global, status );
-    else TRACE( "Found global object %#x with runtime size %#x\n", global, *runtime_size );
+    if (status) WARN( "Failed to query global object %#x/%p, status %#x\n", global, handle, status );
+    else TRACE( "Found global object %#x/%p with runtime size %#x\n", global, handle, *runtime_size );
     return status;
 }
 
@@ -1211,7 +1213,8 @@ NTSTATUS WINAPI NtGdiDdDDIQueryResourceInfo( D3DKMT_QUERYRESOURCEINFO *params )
     if (!(device = get_d3dkmt_object( params->hDevice, D3DKMT_DEVICE ))) return STATUS_INVALID_PARAMETER;
     if (!is_d3dkmt_global( params->hGlobalShare )) return STATUS_INVALID_PARAMETER;
 
-    if ((status = d3dkmt_object_query( D3DKMT_RESOURCE, params->hGlobalShare, &params->PrivateRuntimeDataSize )))
+    if ((status = d3dkmt_object_query( D3DKMT_RESOURCE, params->hGlobalShare, NULL,
+                                       &params->PrivateRuntimeDataSize )))
         return status;
 
     params->TotalPrivateDriverDataSize = 0;
@@ -1225,8 +1228,18 @@ NTSTATUS WINAPI NtGdiDdDDIQueryResourceInfo( D3DKMT_QUERYRESOURCEINFO *params )
  */
 NTSTATUS WINAPI NtGdiDdDDIQueryResourceInfoFromNtHandle( D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    if ((status = d3dkmt_object_query( D3DKMT_RESOURCE, 0, params->hNtHandle,
+                                       &params->PrivateRuntimeDataSize )))
+        return status;
+
+    params->TotalPrivateDriverDataSize = 0;
+    params->ResourcePrivateDriverDataSize = 0;
+    params->NumAllocations = 1;
+    return STATUS_SUCCESS;
 }
 
 

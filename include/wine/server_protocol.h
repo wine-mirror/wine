@@ -6005,7 +6005,7 @@ struct d3dkmt_object_query_request
     struct request_header __header;
     unsigned int        type;
     d3dkmt_handle_t     global;
-    char __pad_20[4];
+    obj_handle_t        handle;
 };
 struct d3dkmt_object_query_reply
 {
@@ -6972,6 +6972,6 @@ union generic_reply
     struct d3dkmt_share_objects_reply d3dkmt_share_objects_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 910
+#define SERVER_PROTOCOL_VERSION 911
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

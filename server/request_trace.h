@@ -3397,6 +3397,7 @@ static void dump_d3dkmt_object_query_request( const struct d3dkmt_object_query_r
 {
     fprintf( stderr, " type=%08x", req->type );
     fprintf( stderr, ", global=%08x", req->global );
+    fprintf( stderr, ", handle=%04x", req->handle );
 }
 
 static void dump_d3dkmt_object_query_reply( const struct d3dkmt_object_query_reply *req )
