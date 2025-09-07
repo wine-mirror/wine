@@ -92,7 +92,7 @@ static struct swapchain *swapchain_from_handle( VkSwapchainKHR handle )
     return CONTAINING_RECORD( obj, struct swapchain, obj );
 }
 
-static VkResult allocate_external_host_memory( struct vulkan_device *device, VkMemoryAllocateInfo *alloc_info,
+static VkResult allocate_external_host_memory( struct vulkan_device *device, VkMemoryAllocateInfo *alloc_info, uint32_t mem_flags,
                                                VkImportMemoryHostPointerInfoEXT *import_info )
 {
     struct vulkan_physical_device *physical_device = device->physical_device;
@@ -100,15 +100,13 @@ static VkResult allocate_external_host_memory( struct vulkan_device *device, VkM
     {
         .sType = VK_STRUCTURE_TYPE_MEMORY_HOST_POINTER_PROPERTIES_EXT,
     };
-    uint32_t i, mem_flags, align = physical_device->external_memory_align - 1;
+    uint32_t i, align = physical_device->external_memory_align - 1;
     SIZE_T alloc_size = alloc_info->allocationSize;
     static int once;
     void *mapping;
     VkResult res;
 
     if (!once++) FIXME( "Using VK_EXT_external_memory_host\n" );
-
-    mem_flags = physical_device->memory_properties.memoryTypes[alloc_info->memoryTypeIndex].propertyFlags;
 
     if (NtAllocateVirtualMemory( GetCurrentProcess(), &mapping, zero_bits, &alloc_size, MEM_COMMIT, PAGE_READWRITE ))
     {
@@ -157,10 +155,11 @@ static VkResult allocate_external_host_memory( struct vulkan_device *device, VkM
     return VK_SUCCESS;
 }
 
-static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryAllocateInfo *alloc_info,
+static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryAllocateInfo *client_alloc_info,
                                          const VkAllocationCallbacks *allocator, VkDeviceMemory *ret )
 {
-    VkBaseOutStructure **next, *prev = (VkBaseOutStructure *)alloc_info; /* cast away const, chain has been copied in the thunks */
+    VkMemoryAllocateInfo *alloc_info = (VkMemoryAllocateInfo *)client_alloc_info; /* cast away const, chain has been copied in the thunks */
+    VkBaseOutStructure **next, *prev = (VkBaseOutStructure *)alloc_info;
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
     struct vulkan_physical_device *physical_device = device->physical_device;
     struct vulkan_instance *instance = device->physical_device->instance;
@@ -207,7 +206,7 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
     /* For host visible memory, we try to use VK_EXT_external_memory_host on wow64 to ensure that mapped pointer is 32-bit. */
     mem_flags = physical_device->memory_properties.memoryTypes[alloc_info->memoryTypeIndex].propertyFlags;
     if (physical_device->external_memory_align && (mem_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) && !pointer_info &&
-        (res = allocate_external_host_memory( device, (VkMemoryAllocateInfo *)alloc_info, &host_pointer_info )))
+        (res = allocate_external_host_memory( device, alloc_info, mem_flags, &host_pointer_info )))
         return res;
 
     if (!(memory = malloc( sizeof(*memory) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
