@@ -97,8 +97,8 @@ static inline ULONGLONG monotonic_counter(void)
     return mach_continuous_time() * timebase.numer / timebase.denom / 100;
 #elif defined(HAVE_CLOCK_GETTIME)
     struct timespec ts;
-#ifdef CLOCK_MONOTONIC_RAW
-    if (!clock_gettime( CLOCK_MONOTONIC_RAW, &ts ))
+#ifdef CLOCK_BOOTTIME
+    if (!clock_gettime( CLOCK_BOOTTIME, &ts ))
         return ts.tv_sec * (ULONGLONG)TICKSPERSEC + ts.tv_nsec / 100;
 #endif
     if (!clock_gettime( CLOCK_MONOTONIC, &ts ))
