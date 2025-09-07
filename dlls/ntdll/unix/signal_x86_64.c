@@ -2064,7 +2064,7 @@ static inline BOOL check_invalid_gsbase( ucontext_t *ucontext )
     else
         arch_prctl( ARCH_GET_GS, &cur_gsbase );
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-    amd64_get_gsbase( &cur_gsbase );
+    amd64_get_gsbase( (void**)&cur_gsbase );
 #elif defined(__NetBSD__)
     sysarch( X86_64_GET_GSBASE, &cur_gsbase );
 #elif defined(__APPLE__)
