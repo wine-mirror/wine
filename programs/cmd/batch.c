@@ -265,58 +265,59 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, BOOL raw,
 
 static WCHAR *WCMD_fgets_helper(WCHAR *buf, DWORD noChars, HANDLE h, UINT code_page)
 {
-  DWORD charsRead;
-  BOOL status;
-  DWORD i;
+    DWORD charsRead;
 
-  /* We can't use the native f* functions because of the filename syntax differences
-     between DOS and Unix. Also need to lose the LF (or CRLF) from the line. */
+    if (!WCMD_read_console(h, buf, noChars, &charsRead))
+    {
+        LARGE_INTEGER filepos;
+        char *bufA, *p;
 
-  if (WCMD_read_console(h, buf, noChars, &charsRead) && charsRead) {
-      /* Find first EOL */
-      for (i = 0; i < charsRead; i++) {
-          if (buf[i] == '\n' || buf[i] == '\r')
-              break;
-      }
-  }
-  else {
-      LARGE_INTEGER filepos;
-      char *bufA;
-      const char *p;
+        bufA = xalloc(noChars);
 
-      bufA = xalloc(noChars);
+        /* Save current file position */
+        filepos.QuadPart = 0;
+        if (GetFileType(h) == FILE_TYPE_DISK && SetFilePointerEx(h, filepos, &filepos, FILE_CURRENT))
+        {
+            if (!ReadFile(h, bufA, noChars, &charsRead, NULL) || charsRead == 0)
+            {
+                free(bufA);
+                return NULL;
+            }
 
-      /* Save current file position */
-      filepos.QuadPart = 0;
-      SetFilePointerEx(h, filepos, &filepos, FILE_CURRENT);
+            /* Find first EOL */
+            for (p = bufA; p < bufA + charsRead; p = CharNextExA(code_page, p, 0))
+            {
+                if (p[0] == L'\n') break;
+            }
+            if (p < bufA + charsRead)
+            {
+                /* Sets file pointer to the start of the next line, if any */
+                filepos.QuadPart += p - bufA + 1;
+                SetFilePointerEx(h, filepos, NULL, FILE_BEGIN);
+            }
+        }
+        else
+        {
+            for (p = bufA; p < bufA + noChars; p++)
+            {
+                if (!ReadFile(h, p, 1, &charsRead, NULL) || (!charsRead && p == bufA))
+                {
+                    free(bufA);
+                    return NULL;
+                }
+                /* FIXME: not multibyte charset compliant */
+                if (!charsRead || p[0] == '\n') break;
+            }
+        }
 
-      status = ReadFile(h, bufA, noChars, &charsRead, NULL);
-      if (!status || charsRead == 0) {
-          free(bufA);
-          return NULL;
-      }
+        charsRead = MultiByteToWideChar(code_page, 0, bufA, p - bufA, buf, noChars - 1);
+        free(bufA);
+    }
 
-      /* Find first EOL */
-      for (p = bufA; p < (bufA + charsRead); p = CharNextExA(code_page, p, 0)) {
-          if (*p == '\n' || *p == '\r')
-              break;
-      }
+    while (charsRead && (buf[charsRead - 1] == L'\n' || buf[charsRead - 1] == L'\r')) charsRead--;
+    buf[charsRead] = L'\0';
 
-      /* Sets file pointer to the start of the next line, if any */
-      filepos.QuadPart += p - bufA + 1 + (*p == '\r' ? 1 : 0);
-      SetFilePointerEx(h, filepos, NULL, FILE_BEGIN);
-
-      i = MultiByteToWideChar(code_page, 0, bufA, p - bufA, buf, noChars);
-      free(bufA);
-  }
-
-  /* Truncate at EOL (or end of buffer) */
-  if (i == noChars)
-    i--;
-
-  buf[i] = '\0';
-
-  return buf;
+    return buf;
 }
 
 static UINT get_current_code_page(void)
