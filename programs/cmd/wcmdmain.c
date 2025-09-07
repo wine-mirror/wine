@@ -3346,6 +3346,54 @@ static BOOL rebuild_append_all_redirections(struct command_rebuild *rb, const CM
     return ret;
 }
 
+static BOOL rebuild_append_command(struct command_rebuild *rb, const CMD_NODE *node, struct rebuild_flags rbflags);
+
+static BOOL rebuild_command_binary(struct command_rebuild *rb, const CMD_NODE *node, struct rebuild_flags rbflags)
+{
+    const WCHAR *op_string;
+    struct rebuild_flags new_rbflags = {.depth = rbflags.depth + 1};
+
+    switch (node->op)
+    {
+    case CMD_PIPE:       op_string = L"|";  new_rbflags.precedence = 4; break;
+    case CMD_CONCAT:     op_string = L"&";  new_rbflags.precedence = 3; break;
+    case CMD_ONFAILURE:  op_string = L"||"; new_rbflags.precedence = 2; break;
+    case CMD_ONSUCCESS:  op_string = L"&&"; new_rbflags.precedence = 1; break;
+    default: return FALSE;
+    }
+
+    return ((new_rbflags.precedence >= rbflags.precedence) || rebuild_append(rb, L"(")) &&
+        rebuild_append_command(rb, node->left, new_rbflags) &&
+        ((node->left->op == CMD_SINGLE && node->op == CMD_CONCAT) ? rebuild_append(rb, L" ") : TRUE) &&
+        rebuild_append(rb, op_string) &&
+        rebuild_append_command(rb, node->right, new_rbflags) &&
+        ((new_rbflags.precedence >= rbflags.precedence) || rebuild_append(rb, L")"));
+}
+
+static BOOL rebuild_append_command(struct command_rebuild *rb, const CMD_NODE *node, struct rebuild_flags rbflags)
+{
+    BOOL ret;
+
+    switch (node->op)
+    {
+    case CMD_SINGLE:
+        ret = rebuild_expand_and_append(rb, node->command, rbflags.depth == 0);
+        break;
+    case CMD_PIPE:
+    case CMD_CONCAT:
+    case CMD_ONFAILURE:
+    case CMD_ONSUCCESS:
+        ret = rebuild_command_binary(rb, node, rbflags);
+        break;
+    default:
+        FIXME("Shouldn't happen\n");
+        ret = FALSE;
+    }
+    ret = ret && rebuild_append_all_redirections(rb, node, rbflags.depth == 0);
+
+    return ret;
+}
+
 static BOOL lexer_can_accept_do(const struct node_builder *builder)
 {
     unsigned d = 0;
@@ -4310,6 +4358,11 @@ static BOOL can_run_new_pipe(CMD_NODE *node)
     {
     case CMD_SINGLE:
         return TRUE;
+    case CMD_PIPE:
+    case CMD_CONCAT:
+    case CMD_ONFAILURE:
+    case CMD_ONSUCCESS:
+        return can_run_new_pipe(node->left) && can_run_new_pipe(node->right);
     default:
         return FALSE;
     }
@@ -4320,6 +4373,7 @@ static RETURN_CODE spawn_pipe_sub_command(CMD_NODE *node, HANDLE *child)
     WCHAR cmd_string[MAXSTRING];
     WCHAR comspec[MAX_PATH];
     struct command_rebuild rb = {cmd_string, ARRAY_SIZE(cmd_string), 0};
+    struct rebuild_flags rbflags = {};
     RETURN_CODE return_code;
 
     switch (node->op)
@@ -4335,8 +4389,8 @@ static RETURN_CODE spawn_pipe_sub_command(CMD_NODE *node, HANDLE *child)
             if ((sc.cmd_index <= WCMD_EXIT && (return_code != NO_ERROR || (!sc.has_path && !sc.has_extension))) ||
                 (sc.has_path && sc.is_command_file))
             {
-                rebuild_expand_and_append(&rb, node->command, TRUE);
-                rebuild_append_all_redirections(&rb, node, TRUE);
+                if (!rebuild_append_command(&rb, node, rbflags))
+                    return ERROR_INVALID_FUNCTION;
             }
             else
             {
@@ -4353,6 +4407,13 @@ static RETURN_CODE spawn_pipe_sub_command(CMD_NODE *node, HANDLE *child)
                 return return_code;
             }
         }
+        break;
+    case CMD_PIPE:
+    case CMD_CONCAT:
+    case CMD_ONFAILURE:
+    case CMD_ONSUCCESS:
+        if (!rebuild_append_command(&rb, node, rbflags))
+            return ERROR_INVALID_FUNCTION;
         break;
     default:
         FIXME("Shouldn't happen\n");
