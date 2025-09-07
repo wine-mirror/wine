@@ -676,7 +676,7 @@ RETURN_CODE WCMD_call(WCHAR *command)
             return_code = errorlevel;
         }
     }
-    else if (context)
+    else if (WCMD_is_in_context(NULL))
     {
         WCHAR gotoLabel[MAX_PATH];
 
@@ -699,11 +699,13 @@ RETURN_CODE WCMD_call(WCHAR *command)
 
         /* Restore the for loop context */
         WCMD_restore_for_loop_context();
-  } else {
-      WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_CALLINSCRIPT));
-      return_code = ERROR_INVALID_FUNCTION;
-  }
-  return return_code;
+    }
+    else
+    {
+        WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_CALLINSCRIPT));
+        return_code = ERROR_INVALID_FUNCTION;
+    }
+    return return_code;
 }
 
 void WCMD_set_label_end(WCHAR *string)
