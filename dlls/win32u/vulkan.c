@@ -103,7 +103,7 @@ static VkResult allocate_external_host_memory( struct vulkan_device *device, VkM
     uint32_t i, align = physical_device->external_memory_align - 1;
     SIZE_T alloc_size = alloc_info->allocationSize;
     static int once;
-    void *mapping;
+    void *mapping = NULL;
     VkResult res;
 
     if (!once++) FIXME( "Using VK_EXT_external_memory_host\n" );
