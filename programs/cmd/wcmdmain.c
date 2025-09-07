@@ -3370,6 +3370,61 @@ static BOOL rebuild_command_binary(struct command_rebuild *rb, const CMD_NODE *n
         ((new_rbflags.precedence >= rbflags.precedence) || rebuild_append(rb, L")"));
 }
 
+static BOOL rebuild_command_if(struct command_rebuild *rb, const CMD_NODE *node, struct rebuild_flags rbflags)
+{
+    const WCHAR *unop = NULL, *binop = NULL;
+    struct rebuild_flags new_rbflags = {.precedence = 0, .depth = rbflags.depth + 1};
+    BOOL ret;
+
+    ret = rebuild_append(rb, L"if ");
+    if (node->condition.case_insensitive) ret = ret && rebuild_append(rb, L"/i ");
+    if (node->condition.negated)          ret = ret && rebuild_append(rb, L"not ");
+
+    switch (node->condition.op)
+    {
+    case CMD_IF_ERRORLEVEL:   unop = L"errorlevel "; break;
+    case CMD_IF_EXIST:        unop = L"exist "; break;
+    case CMD_IF_DEFINED:      unop = L"defined "; break;
+    case CMD_IF_BINOP_EQUAL:  binop = L" == "; break;
+    case CMD_IF_BINOP_LSS:    binop = L" LSS "; break;
+    case CMD_IF_BINOP_LEQ:    binop = L" LEQ "; break;
+    case CMD_IF_BINOP_EQU:    binop = L" EQU "; break;
+    case CMD_IF_BINOP_NEQ:    binop = L" NEQ "; break;
+    case CMD_IF_BINOP_GEQ:    binop = L" GEQ "; break;
+    case CMD_IF_BINOP_GTR:    binop = L" GTR "; break;
+    default:
+        FIXME("Unexpected condition operator %u\n", node->condition.op);
+        ret = FALSE;
+        break;
+    }
+    if (unop)
+    {
+        ret = ret && rebuild_append(rb, unop);
+        ret = ret && rebuild_expand_and_append(rb, node->condition.operand, rbflags.depth == 0);
+    }
+    else if (binop)
+    {
+        ret = ret && rebuild_expand_and_append(rb, node->condition.left, rbflags.depth == 0);
+        ret = ret && rebuild_append(rb, binop);
+        ret = ret && rebuild_expand_and_append(rb, node->condition.right, rbflags.depth == 0);
+    }
+    else
+        return FALSE;
+    ret = ret && rebuild_append(rb, L" ");
+    if (node->else_block)
+    {
+        ret = ret && rebuild_append(rb, L"(");
+        ret = ret && rebuild_append_command(rb, node->then_block, new_rbflags);
+        ret = ret && rebuild_append(rb, L" ) else ( ");
+        ret = ret && rebuild_append_command(rb, node->else_block, new_rbflags);
+        ret = ret && rebuild_append(rb, L" ) ");
+    }
+    else
+        ret = ret && rebuild_append_command(rb, node->then_block, new_rbflags);
+
+    return ret;
+}
+
 static BOOL rebuild_append_command(struct command_rebuild *rb, const CMD_NODE *node, struct rebuild_flags rbflags)
 {
     BOOL ret;
@@ -3384,6 +3439,9 @@ static BOOL rebuild_append_command(struct command_rebuild *rb, const CMD_NODE *n
     case CMD_ONFAILURE:
     case CMD_ONSUCCESS:
         ret = rebuild_command_binary(rb, node, rbflags);
+        break;
+    case CMD_IF:
+        ret = rebuild_command_if(rb, node, rbflags);
         break;
     default:
         FIXME("Shouldn't happen\n");
@@ -4363,6 +4421,9 @@ static BOOL can_run_new_pipe(CMD_NODE *node)
     case CMD_ONFAILURE:
     case CMD_ONSUCCESS:
         return can_run_new_pipe(node->left) && can_run_new_pipe(node->right);
+    case CMD_IF:
+        return can_run_new_pipe(node->then_block) &&
+            (!node->else_block || can_run_new_pipe(node->else_block));
     default:
         return FALSE;
     }
@@ -4412,6 +4473,7 @@ static RETURN_CODE spawn_pipe_sub_command(CMD_NODE *node, HANDLE *child)
     case CMD_CONCAT:
     case CMD_ONFAILURE:
     case CMD_ONSUCCESS:
+    case CMD_IF:
         if (!rebuild_append_command(&rb, node, rbflags))
             return ERROR_INVALID_FUNCTION;
         break;
