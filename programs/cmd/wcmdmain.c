@@ -4307,10 +4307,12 @@ static void set_console_default_color(unsigned color)
             query_default_color_key(HKEY_LOCAL_MACHINE, &value))
             color = value;
     }
-    if (color >= 0x100 || ((color >> 4) == (color & 0xf)))
-        color = 7;
-    swprintf(param1, ARRAY_SIZE(param1), L"%x", color);
-    WCMD_color();
+    if (color < 0x100 && ((color >> 4) != (color & 0xf)))
+    {
+        swprintf(param1, ARRAY_SIZE(param1), L"%x", color);
+        WCMD_color();
+    }
+    else color = 7;
 }
 
 struct cmd_parameters
