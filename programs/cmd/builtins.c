@@ -410,7 +410,8 @@ RETURN_CODE WCMD_choice(WCHAR *args)
             char choice;
 
             overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-            if (SetFilePointerEx(GetStdHandle(STD_INPUT_HANDLE), zeroli, &li, FILE_CURRENT))
+            if (GetFileType(GetStdHandle(STD_INPUT_HANDLE)) == FILE_TYPE_DISK &&
+                SetFilePointerEx(GetStdHandle(STD_INPUT_HANDLE), zeroli, &li, FILE_CURRENT))
             {
                 overlapped.Offset = li.LowPart;
                 overlapped.OffsetHigh = li.HighPart;
