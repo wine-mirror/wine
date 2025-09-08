@@ -2896,6 +2896,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    /* The xsavec instruction is not supported by
                     * binutils < 2.25. */
                    ".byte 0x48, 0x0f, 0xc7, 0xa1, 0xc0, 0x00, 0x00, 0x00\n\t" /* xsavec64 0xc0(%rcx) */
+                   "stmxcsr 0xd8(%rcx)\n\t"        /* frame->xsave.MxCsr */
                    "jmp 3f\n"
                    "1:\txsave64 0xc0(%rcx)\n\t"
                    "jmp 3f\n"
