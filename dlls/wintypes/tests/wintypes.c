@@ -1457,15 +1457,13 @@ static void test_IPropertySet(void)
     ok( hr == S_OK, "Got hr %#lx\n", hr );
     ok( boolean == TRUE, "Got %u\n", boolean );
     hr = IIterator_IKeyValuePair_HSTRING_IInspectable_get_Current( iterator, &pair );
-    todo_wine ok( hr == E_CHANGED_STATE, "Got hr %#lx\n", hr );
+    ok( hr == E_CHANGED_STATE, "Got hr %#lx\n", hr );
     IIterator_IKeyValuePair_HSTRING_IInspectable_Release( iterator );
 
     hr = IMapView_HSTRING_IInspectable_Lookup( map_view, key2, &val );
-    todo_wine
     ok( hr == E_CHANGED_STATE, "Got hr %#lx\n", hr );
     WindowsDeleteString( key2 );
     hr = IIterable_IKeyValuePair_HSTRING_IInspectable_First( iterable, &iterator );
-    todo_wine
     ok( hr == E_CHANGED_STATE, "got %#lx\n", hr );
     IIterable_IKeyValuePair_HSTRING_IInspectable_Release( iterable );
     IMapView_HSTRING_IInspectable_Release( map_view );

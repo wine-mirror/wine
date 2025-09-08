@@ -200,6 +200,7 @@ struct map
     struct map_iids iids;
     LONG ref;
 
+    LONG64 serial;
     UINT32 size;
     UINT32 capacity;
     struct map_entry *entries;
@@ -212,6 +213,7 @@ struct map_view
     LONG ref;
 
     struct map *map;
+    LONG64 serial;
     UINT32 size;
     struct map_entry entries[1];
 };
@@ -224,6 +226,11 @@ struct iterator
     struct map_view *view;
     UINT32 index;
 };
+
+static HRESULT map_view_check_serial( struct map_view *view )
+{
+    return ReadNoFence64( &view->map->serial ) == view->serial ? S_OK : E_CHANGED_STATE;
+}
 
 static struct iterator *impl_from_IIterator_IKeyValuePair_HSTRING_IInspectable( IIterator_IKeyValuePair_HSTRING_IInspectable *iface )
 {
@@ -295,9 +302,11 @@ static HRESULT WINAPI iterator_GetTrustLevel( IIterator_IKeyValuePair_HSTRING_II
 static HRESULT WINAPI iterator_get_Current( IIterator_IKeyValuePair_HSTRING_IInspectable *iface, IKeyValuePair_HSTRING_IInspectable **value )
 {
     struct iterator *impl = impl_from_IIterator_IKeyValuePair_HSTRING_IInspectable( iface );
+    HRESULT hr;
 
     TRACE( "iface %p, value %p\n", iface, value );
 
+    if (FAILED(hr = map_view_check_serial( impl->view ))) return hr;
     if (impl->index >= impl->view->size) return E_BOUNDS;
     return pair_create( impl->view->map->iids.pair, impl->view->entries + impl->index, value );
 }
@@ -305,7 +314,9 @@ static HRESULT WINAPI iterator_get_Current( IIterator_IKeyValuePair_HSTRING_IIns
 static HRESULT WINAPI iterator_get_HasCurrent( IIterator_IKeyValuePair_HSTRING_IInspectable *iface, boolean *value )
 {
     struct iterator *impl = impl_from_IIterator_IKeyValuePair_HSTRING_IInspectable( iface );
+
     TRACE( "iface %p, value %p\n", iface, value );
+
     *value = impl->index < impl->view->size;
     return S_OK;
 }
@@ -313,7 +324,11 @@ static HRESULT WINAPI iterator_get_HasCurrent( IIterator_IKeyValuePair_HSTRING_I
 static HRESULT WINAPI iterator_MoveNext( IIterator_IKeyValuePair_HSTRING_IInspectable *iface, boolean *value )
 {
     struct iterator *impl = impl_from_IIterator_IKeyValuePair_HSTRING_IInspectable( iface );
+    HRESULT hr;
+
     TRACE( "iface %p, value %p\n", iface, value );
+
+    if (FAILED(hr = map_view_check_serial( impl->view ))) return hr;
     if (impl->index < impl->view->size) impl->index++;
     return IIterator_IKeyValuePair_HSTRING_IInspectable_get_HasCurrent( iface, value );
 }
@@ -327,6 +342,7 @@ static HRESULT WINAPI iterator_GetMany( IIterator_IKeyValuePair_HSTRING_IInspect
 
     TRACE( "iface %p, items_size %u, items %p, count %p\n", iface, items_size, items, count );
 
+    if (FAILED(hr = map_view_check_serial( impl->view ))) return hr;
     if ((len = impl->view->size - impl->index) < 0) return E_BOUNDS;
     for (UINT32 i = 0; i < len; ++i)
     {
@@ -433,10 +449,12 @@ static HRESULT WINAPI map_view_Lookup( IMapView_HSTRING_IInspectable *iface, HST
 {
     struct map_view *impl = impl_from_IMapView_HSTRING_IInspectable( iface );
     struct map_entry *entry;
+    HRESULT hr;
     int order;
 
     TRACE( "iface %p, key %s, value %p\n", iface, debugstr_hstring( key ), value );
 
+    if (FAILED(hr = map_view_check_serial( impl ))) return hr;
     if (!(entry = map_entries_lower_bound( impl->entries, impl->size, key, &order )) || order) return E_BOUNDS;
     IInspectable_AddRef( (*value = entry->value ));
     return S_OK;
@@ -445,7 +463,11 @@ static HRESULT WINAPI map_view_Lookup( IMapView_HSTRING_IInspectable *iface, HST
 static HRESULT WINAPI map_view_get_Size( IMapView_HSTRING_IInspectable *iface, UINT32 *value )
 {
     struct map_view *impl = impl_from_IMapView_HSTRING_IInspectable( iface );
+    HRESULT hr;
+
     TRACE( "iface %p, value %p\n", iface, value );
+
+    if (FAILED(hr = map_view_check_serial( impl ))) return hr;
     *value = impl->size;
     return S_OK;
 }
@@ -453,10 +475,12 @@ static HRESULT WINAPI map_view_get_Size( IMapView_HSTRING_IInspectable *iface, U
 static HRESULT WINAPI map_view_HasKey( IMapView_HSTRING_IInspectable *iface, HSTRING key, boolean *found )
 {
     struct map_view *impl = impl_from_IMapView_HSTRING_IInspectable( iface );
+    HRESULT hr;
     int order;
 
     TRACE( "iface %p, key %s, found %p\n", iface, debugstr_hstring( key ), found );
 
+    if (FAILED(hr = map_view_check_serial( impl ))) return hr;
     map_entries_lower_bound( impl->entries, impl->size, key, &order );
     *found = !order;
     return S_OK;
@@ -472,6 +496,7 @@ static HRESULT WINAPI map_view_Split( IMapView_HSTRING_IInspectable *iface, IMap
 
     TRACE( "iface %p, first %p, second %p\n", iface, first, second );
 
+    if (FAILED(hr = map_view_check_serial( impl ))) return hr;
     if (FAILED(hr = map_view_create( impl->map, 0, impl->size / 2, first ))) return hr;
     if (FAILED(hr = map_view_create( impl->map, impl->size / 2, impl->size - impl->size / 2, second )))
         IMapView_HSTRING_IInspectable_Release( *first );
@@ -502,8 +527,11 @@ static HRESULT WINAPI iterable_view_First( IIterable_IKeyValuePair_HSTRING_IInsp
 {
     struct map_view *impl = view_impl_from_IIterable_IKeyValuePair_HSTRING_IInspectable( iface );
     struct iterator *iter;
+    HRESULT hr;
 
     TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (FAILED(hr = map_view_check_serial( impl ))) return hr;
 
     if (!(iter = calloc( 1, sizeof(struct iterator) ))) return E_OUTOFMEMORY;
     iter->IIterator_IKeyValuePair_HSTRING_IInspectable_iface.lpVtbl = &iterator_vtbl;
@@ -540,6 +568,7 @@ static HRESULT map_view_create( struct map *map, UINT first, UINT count, IMapVie
 
     IMap_HSTRING_IInspectable_AddRef( &map->IMap_HSTRING_IInspectable_iface );
     view->map = map;
+    view->serial = map->serial;
 
     for (UINT32 i = 0; i < count; ++i) map_entry_copy( view->entries + view->size++, map->entries + i );
 
@@ -707,6 +736,7 @@ static HRESULT WINAPI map_Insert( IMap_HSTRING_IInspectable *iface, HSTRING key,
     else memmove( entry + 1, entry, (impl->entries + impl->size++ - entry) * sizeof(*impl->entries) );
     *entry = copy;
 
+    InterlockedIncrement64( &impl->serial );
     return S_OK;
 }
 
@@ -722,6 +752,7 @@ static HRESULT WINAPI map_Remove( IMap_HSTRING_IInspectable *iface, HSTRING key 
     map_entry_clear( entry );
     memmove( entry, entry + 1, (impl->entries + --impl->size - entry) * sizeof(*impl->entries) );
 
+    InterlockedIncrement64( &impl->serial );
     return S_OK;
 }
 
@@ -740,6 +771,7 @@ static HRESULT WINAPI map_Clear( IMap_HSTRING_IInspectable *iface )
     while (size) map_entry_clear( entries + --size );
     free( entries );
 
+    InterlockedIncrement64( &impl->serial );
     return S_OK;
 }
 
