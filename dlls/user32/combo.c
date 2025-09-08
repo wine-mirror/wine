@@ -1467,7 +1467,8 @@ static void COMBO_Size( HEADCOMBO *lphc )
 static void COMBO_Font( LPHEADCOMBO lphc, HFONT hFont, BOOL bRedraw )
 {
   lphc->hFont = hFont;
-  lphc->item_height = combo_get_text_height(lphc);
+  if (!CB_OWNERDRAWN(lphc))
+    lphc->item_height = combo_get_text_height(lphc);
 
   /*
    * Propagate to owned windows.

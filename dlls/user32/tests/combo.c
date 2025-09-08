@@ -956,7 +956,7 @@ static void test_combo_setfont(void)
     ret = GetComboBoxInfo( combo, &info );
     ok( ret, "got error %lu.\n", GetLastError() );
     r2 = info.rcItem;
-    todo_wine ok( !memcmp( &r1, &r2, sizeof(r1) ), "got %s, expected %s.\n", wine_dbgstr_rect(&r2), wine_dbgstr_rect(&r1) );
+    ok( !memcmp( &r1, &r2, sizeof(r1) ), "got %s, expected %s.\n", wine_dbgstr_rect(&r2), wine_dbgstr_rect(&r1) );
     DestroyWindow(combo);
 
     DeleteObject(hf);
