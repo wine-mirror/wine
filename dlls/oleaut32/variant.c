@@ -590,6 +590,7 @@ HRESULT VARIANT_ClearInd(VARIANTARG *pVarg)
         {
             IRecordInfo_RecordClear(rec_info, V_RECORD(pVarg));
             IRecordInfo_Release(rec_info);
+            CoTaskMemFree(V_RECORD(pVarg));
         }
         break;
     }
