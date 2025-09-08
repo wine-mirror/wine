@@ -36,6 +36,28 @@
 
 #define MAX_FORMATS 256
 
+static const char *debugstr_ok( const char *cond )
+{
+    int c, n = 0;
+    /* skip possible casts */
+    while ((c = *cond++))
+    {
+        if (c == '(') n++;
+        if (!n) break;
+        if (c == ')') n--;
+    }
+    if (!strchr( cond - 1, '(' )) return wine_dbg_sprintf( "got %s", cond - 1 );
+    return wine_dbg_sprintf( "%.*s returned", (int)strcspn( cond - 1, "( " ), cond - 1 );
+}
+
+#define ok_ex( r, op, e, t, f, ... )                                                               \
+    do                                                                                             \
+    {                                                                                              \
+        t v = (r);                                                                                 \
+        ok( v op (e), "%s " f "\n", debugstr_ok( #r ), v, ##__VA_ARGS__ );                         \
+    } while (0)
+#define ok_ret( e, r )      ok_ex( r, ==, e, UINT, "%#x" )
+
 static NTSTATUS (WINAPI *pD3DKMTCreateDCFromMemory)( D3DKMT_CREATEDCFROMMEMORY *desc );
 static NTSTATUS (WINAPI *pD3DKMTDestroyDCFromMemory)( const D3DKMT_DESTROYDCFROMMEMORY *desc );
 
@@ -2504,6 +2526,59 @@ static void test_framebuffer(void)
     DestroyWindow(window);
 }
 
+static DWORD CALLBACK test_window_dc_thread( void *arg )
+{
+    PIXELFORMATDESCRIPTOR pfd =
+    {
+        .nSize = sizeof(pfd),
+        .nVersion = 1,
+        .dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+        .iPixelType = PFD_TYPE_RGBA,
+        .cColorBits = 24,
+        .cDepthBits = 32,
+    };
+    HWND hwnd = arg;
+    UINT ret, pixel;
+    HGLRC ctx;
+    int format;
+    HDC hdc;
+
+    hdc = GetWindowDC( hwnd );
+    ok( hdc != NULL, "got %p\n", hdc );
+    format = ChoosePixelFormat( hdc, &pfd );
+    ok( format != 0, "got %d\n", format );
+    ret = SetPixelFormat( hdc, format, &pfd );
+    ok( ret != 0, "got %u\n", ret );
+
+    ctx = wglCreateContext( hdc );
+    ok( ctx != NULL, "got %p\n", ctx );
+    todo_wine ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    glReadBuffer( GL_BACK );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+    pixel = 0xdeadbeef;
+    glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
+    todo_wine ok( pixel == 0xff0000ff, "got %#x\n", pixel );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+    glClearColor( 0.0, 1.0, 0.0, 1.0 );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    glClear( GL_COLOR_BUFFER_BIT );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+    pixel = 0xdeadbeef;
+    glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
+    todo_wine ok( pixel == 0xff00ff00, "got %#x\n", pixel );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+    todo_wine ok_ret( TRUE, wglMakeCurrent( NULL, NULL ) );
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
+
+    ReleaseDC( hwnd, hdc );
+    return 0;
+}
+
 static void test_window_dc(void)
 {
     PIXELFORMATDESCRIPTOR pf_desc =
@@ -2528,9 +2603,11 @@ static void test_window_dc(void)
     int pixel_format;
     HWND window;
     RECT vp, r;
-    HGLRC ctx;
+    HGLRC ctx, ctx1;
     BOOL ret;
-    HDC dc;
+    HDC dc, dc1;
+    UINT pixel;
+    HANDLE thread;
 
     window = CreateWindowA("static", "opengl32_test",
             WS_OVERLAPPEDWINDOW, 0, 0, 640, 480, 0, 0, 0, 0);
@@ -2569,7 +2646,112 @@ static void test_window_dc(void)
     ret = wglDeleteContext(ctx);
     ok(ret, "Failed to delete GL context, last error %#lx.\n", GetLastError());
 
-    ReleaseDC(window, dc);
+    ReleaseDC( window, dc );
+
+
+    dc = GetWindowDC( window );
+    ctx = wglCreateContext( dc );
+    ok( ctx != NULL, "got %p\n", ctx );
+    todo_wine ok_ret( TRUE, wglMakeCurrent( dc, ctx ) );
+    glReadBuffer( GL_BACK );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+    glClearColor( 1.0, 0.0, 0.0, 1.0 );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    glClear( GL_COLOR_BUFFER_BIT );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+    pixel = 0xdeadbeef;
+    glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
+    todo_wine ok( pixel == 0xff0000ff, "got %#x\n", pixel );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+    ReleaseDC( window, dc );
+
+
+    pixel = 0xdeadbeef;
+    glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
+    todo_wine ok( pixel == 0xff0000ff, "got %#x\n", pixel );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+    glFlush();
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+    pixel = 0xdeadbeef;
+    glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
+    todo_wine ok( pixel == 0xff0000ff, "got %#x\n", pixel );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+
+    dc = GetWindowDC( window );
+    ok( dc != NULL, "got %p\n", dc );
+    todo_wine ok_ret( TRUE, wglMakeCurrent( dc, ctx ) );
+
+    pixel = 0xdeadbeef;
+    glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
+    todo_wine ok( pixel == 0xff0000ff, "got %#x\n", pixel );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+    thread = CreateThread( NULL, 0, test_window_dc_thread, window, 0, NULL );
+    ok( thread != NULL, "got %p\n", thread );
+    ret = WaitForSingleObject( thread, 5000 );
+    ok( ret == 0, "got %#x\n", ret );
+
+    pixel = 0xdeadbeef;
+    glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
+    todo_wine ok( pixel == 0xff00ff00, "got %#x\n", pixel );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+
+    dc1 = GetWindowDC( window );
+    ok( dc1 != NULL, "got %p\n", dc1 );
+    todo_wine ok_ret( TRUE, wglMakeCurrent( dc1, ctx ) );
+
+    pixel = 0xdeadbeef;
+    glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
+    todo_wine ok( pixel == 0xff00ff00, "got %#x\n", pixel );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+
+    ctx1 = wglCreateContext( dc1 );
+    ok( ctx1 != NULL, "got %p\n", ctx1 );
+    todo_wine ok_ret( TRUE, wglMakeCurrent( dc1, ctx1 ) );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    glReadBuffer( GL_BACK );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+    pixel = 0xdeadbeef;
+    glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
+    todo_wine ok( pixel == 0xff00ff00, "got %#x\n", pixel );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+    todo_wine ok_ret( TRUE, wglMakeCurrent( NULL, NULL ) );
+    ok_ret( TRUE, wglDeleteContext( ctx1 ) );
+    ReleaseDC( window, dc1 );
+
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
+    ReleaseDC( window, dc );
+
+
+    dc = GetWindowDC( window );
+    ok( dc != NULL, "got %p\n", dc );
+    ctx = wglCreateContext( dc );
+    ok( ctx != NULL, "got %p\n", ctx );
+    todo_wine ok_ret( TRUE, wglMakeCurrent( dc, ctx ) );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    glReadBuffer( GL_BACK );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+    pixel = 0xdeadbeef;
+    glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
+    todo_wine ok( pixel == 0xff00ff00, "got %#x\n", pixel );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+
+    todo_wine ok_ret( TRUE, wglMakeCurrent( NULL, NULL ) );
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
+    todo_wine ok_ret( TRUE, SwapBuffers( dc ) );
+    ReleaseDC( window, dc );
+
     DestroyWindow(window);
 }
 
