@@ -24,11 +24,61 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(combase);
 
+struct map_entry
+{
+    HSTRING key;
+    IInspectable *value;
+};
+
+static HRESULT map_entry_init( HSTRING key, IInspectable *value, struct map_entry *entry )
+{
+    HRESULT hr;
+    if (FAILED(hr = WindowsDuplicateString( key, &entry->key ))) return hr;
+    IInspectable_AddRef( (entry->value = value) );
+    return S_OK;
+}
+
+static void map_entry_copy( struct map_entry *dst, const struct map_entry *src )
+{
+    /* key has been duplicated already and further duplication cannot fail */
+    WindowsDuplicateString( src->key, &dst->key );
+    IInspectable_AddRef( (dst->value = src->value) );
+}
+
+static void map_entry_clear( struct map_entry *entry )
+{
+    WindowsDeleteString( entry->key );
+    entry->key = NULL;
+    IInspectable_AddRef( entry->value );
+    entry->value = NULL;
+}
+
+/* returns the first entry which is not less than addr, or entries + size if there's none. */
+static struct map_entry *map_entries_lower_bound( struct map_entry *entries, UINT32 size, HSTRING key, int *ret )
+{
+    struct map_entry *begin = entries, *end = begin + size, *mid;
+    int order = -1;
+
+    while (begin < end)
+    {
+        mid = begin + (end - begin) / 2;
+        WindowsCompareStringOrdinal( mid->key, key, &order );
+        if (order < 0) begin = mid + 1;
+        else if (order > 0) end = mid;
+        else begin = end = mid;
+    }
+
+    *ret = order;
+    return begin;
+}
+
 struct pair
 {
     IKeyValuePair_HSTRING_IInspectable IKeyValuePair_HSTRING_IInspectable_iface;
     const GUID *iid;
     LONG ref;
+
+    struct map_entry entry;
 };
 
 static struct pair *impl_from_IKeyValuePair_HSTRING_IInspectable( IKeyValuePair_HSTRING_IInspectable *iface )
@@ -73,6 +123,7 @@ static ULONG WINAPI pair_Release( IKeyValuePair_HSTRING_IInspectable *iface )
 
     if (!ref)
     {
+        map_entry_clear( &impl->entry );
         free( impl );
     }
 
@@ -99,14 +150,17 @@ static HRESULT WINAPI pair_GetTrustLevel( IKeyValuePair_HSTRING_IInspectable *if
 
 static HRESULT WINAPI pair_get_Key( IKeyValuePair_HSTRING_IInspectable *iface, HSTRING *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct pair *impl = impl_from_IKeyValuePair_HSTRING_IInspectable( iface );
+    TRACE( "iface %p, value %p\n", iface, value );
+    return WindowsDuplicateString( impl->entry.key, value );
 }
 
 static HRESULT WINAPI pair_get_Value( IKeyValuePair_HSTRING_IInspectable *iface, IInspectable **value )
 {
-    TRACE( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct pair *impl = impl_from_IKeyValuePair_HSTRING_IInspectable( iface );
+    TRACE( "iface %p, value %p\n", iface, value );
+    IInspectable_AddRef( (*value = impl->entry.value) );
+    return S_OK;
 }
 
 static const IKeyValuePair_HSTRING_IInspectableVtbl pair_vtbl =
@@ -123,7 +177,7 @@ static const IKeyValuePair_HSTRING_IInspectableVtbl pair_vtbl =
     pair_get_Value,
 };
 
-static HRESULT pair_create( const GUID *iid, IKeyValuePair_HSTRING_IInspectable **out )
+static HRESULT pair_create( const GUID *iid, struct map_entry *entry, IKeyValuePair_HSTRING_IInspectable **out )
 {
     struct pair *pair;
 
@@ -131,6 +185,7 @@ static HRESULT pair_create( const GUID *iid, IKeyValuePair_HSTRING_IInspectable 
     pair->IKeyValuePair_HSTRING_IInspectable_iface.lpVtbl = &pair_vtbl;
     pair->iid = iid;
     pair->ref = 1;
+    map_entry_copy( &pair->entry, entry );
 
     *out = &pair->IKeyValuePair_HSTRING_IInspectable_iface;
     return S_OK;
@@ -144,6 +199,10 @@ struct map
     IInspectable *IInspectable_outer;
     struct map_iids iids;
     LONG ref;
+
+    UINT32 size;
+    UINT32 capacity;
+    struct map_entry *entries;
 };
 
 struct map_view
@@ -153,6 +212,8 @@ struct map_view
     LONG ref;
 
     struct map *map;
+    UINT32 size;
+    struct map_entry entries[1];
 };
 
 struct iterator
@@ -161,6 +222,7 @@ struct iterator
     LONG ref;
 
     struct map_view *view;
+    UINT32 index;
 };
 
 static struct iterator *impl_from_IIterator_IKeyValuePair_HSTRING_IInspectable( IIterator_IKeyValuePair_HSTRING_IInspectable *iface )
@@ -233,27 +295,50 @@ static HRESULT WINAPI iterator_GetTrustLevel( IIterator_IKeyValuePair_HSTRING_II
 static HRESULT WINAPI iterator_get_Current( IIterator_IKeyValuePair_HSTRING_IInspectable *iface, IKeyValuePair_HSTRING_IInspectable **value )
 {
     struct iterator *impl = impl_from_IIterator_IKeyValuePair_HSTRING_IInspectable( iface );
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return pair_create( impl->view->map->iids.pair, value );
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    if (impl->index >= impl->view->size) return E_BOUNDS;
+    return pair_create( impl->view->map->iids.pair, impl->view->entries + impl->index, value );
 }
 
 static HRESULT WINAPI iterator_get_HasCurrent( IIterator_IKeyValuePair_HSTRING_IInspectable *iface, boolean *value )
 {
-    TRACE( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct iterator *impl = impl_from_IIterator_IKeyValuePair_HSTRING_IInspectable( iface );
+    TRACE( "iface %p, value %p\n", iface, value );
+    *value = impl->index < impl->view->size;
+    return S_OK;
 }
 
 static HRESULT WINAPI iterator_MoveNext( IIterator_IKeyValuePair_HSTRING_IInspectable *iface, boolean *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct iterator *impl = impl_from_IIterator_IKeyValuePair_HSTRING_IInspectable( iface );
+    TRACE( "iface %p, value %p\n", iface, value );
+    if (impl->index < impl->view->size) impl->index++;
+    return IIterator_IKeyValuePair_HSTRING_IInspectable_get_HasCurrent( iface, value );
 }
 
 static HRESULT WINAPI iterator_GetMany( IIterator_IKeyValuePair_HSTRING_IInspectable *iface, UINT32 items_size,
                                         IKeyValuePair_HSTRING_IInspectable **items, UINT *count )
 {
-    FIXME( "iface %p, items_size %u, items %p, count %p stub!\n", iface, items_size, items, count );
-    return E_NOTIMPL;
+    struct iterator *impl = impl_from_IIterator_IKeyValuePair_HSTRING_IInspectable( iface );
+    HRESULT hr;
+    int len;
+
+    TRACE( "iface %p, items_size %u, items %p, count %p\n", iface, items_size, items, count );
+
+    if ((len = impl->view->size - impl->index) < 0) return E_BOUNDS;
+    for (UINT32 i = 0; i < len; ++i)
+    {
+        if (i >= items_size) break;
+        if (FAILED(hr = pair_create( impl->view->map->iids.pair, impl->view->entries + impl->index + i, items + i )))
+        {
+            while (i) IKeyValuePair_HSTRING_IInspectable_Release( items[--i] );
+            return hr;
+        }
+    }
+    *count = len;
+    return S_OK;
 }
 
 static const IIterator_IKeyValuePair_HSTRING_IInspectableVtbl iterator_vtbl =
@@ -346,27 +431,52 @@ static HRESULT WINAPI map_view_GetTrustLevel( IMapView_HSTRING_IInspectable *ifa
 
 static HRESULT WINAPI map_view_Lookup( IMapView_HSTRING_IInspectable *iface, HSTRING key, IInspectable **value )
 {
-    FIXME( "iface %p, key %s, value %p stub!\n", iface, debugstr_hstring( key ), value );
-    return E_NOTIMPL;
+    struct map_view *impl = impl_from_IMapView_HSTRING_IInspectable( iface );
+    struct map_entry *entry;
+    int order;
+
+    TRACE( "iface %p, key %s, value %p\n", iface, debugstr_hstring( key ), value );
+
+    if (!(entry = map_entries_lower_bound( impl->entries, impl->size, key, &order )) || order) return E_BOUNDS;
+    IInspectable_AddRef( (*value = entry->value ));
+    return S_OK;
 }
 
 static HRESULT WINAPI map_view_get_Size( IMapView_HSTRING_IInspectable *iface, UINT32 *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct map_view *impl = impl_from_IMapView_HSTRING_IInspectable( iface );
+    TRACE( "iface %p, value %p\n", iface, value );
+    *value = impl->size;
+    return S_OK;
 }
 
 static HRESULT WINAPI map_view_HasKey( IMapView_HSTRING_IInspectable *iface, HSTRING key, boolean *found )
 {
-    FIXME( "iface %p, key %s, found %p stub!\n", iface, debugstr_hstring( key ), found );
-    return E_NOTIMPL;
+    struct map_view *impl = impl_from_IMapView_HSTRING_IInspectable( iface );
+    int order;
+
+    TRACE( "iface %p, key %s, found %p\n", iface, debugstr_hstring( key ), found );
+
+    map_entries_lower_bound( impl->entries, impl->size, key, &order );
+    *found = !order;
+    return S_OK;
 }
+
+static HRESULT map_view_create( struct map *map, UINT first, UINT count, IMapView_HSTRING_IInspectable **out );
 
 static HRESULT WINAPI map_view_Split( IMapView_HSTRING_IInspectable *iface, IMapView_HSTRING_IInspectable **first,
                                       IMapView_HSTRING_IInspectable **second )
 {
-    FIXME( "iface %p, first %p, second %p stub!\n", iface, first, second );
-    return E_NOTIMPL;
+    struct map_view *impl = impl_from_IMapView_HSTRING_IInspectable( iface );
+    HRESULT hr;
+
+    TRACE( "iface %p, first %p, second %p\n", iface, first, second );
+
+    if (FAILED(hr = map_view_create( impl->map, 0, impl->size / 2, first ))) return hr;
+    if (FAILED(hr = map_view_create( impl->map, impl->size / 2, impl->size - impl->size / 2, second )))
+        IMapView_HSTRING_IInspectable_Release( *first );
+
+    return hr;
 }
 
 static const struct IMapView_HSTRING_IInspectableVtbl map_view_vtbl =
@@ -419,17 +529,19 @@ static const struct IIterable_IKeyValuePair_HSTRING_IInspectableVtbl iterable_vi
     iterable_view_First,
 };
 
-static HRESULT map_view_create( struct map *map, IMapView_HSTRING_IInspectable **out )
+static HRESULT map_view_create( struct map *map, UINT first, UINT count, IMapView_HSTRING_IInspectable **out )
 {
     struct map_view *view;
 
-    if (!(view = calloc( 1, sizeof(*view) ))) return E_OUTOFMEMORY;
+    if (!(view = calloc( 1, offsetof( struct map_view, entries[count] ) ))) return E_OUTOFMEMORY;
     view->IMapView_HSTRING_IInspectable_iface.lpVtbl = &map_view_vtbl;
     view->IIterable_IKeyValuePair_HSTRING_IInspectable_iface.lpVtbl = &iterable_view_vtbl;
     view->ref = 1;
 
     IMap_HSTRING_IInspectable_AddRef( &map->IMap_HSTRING_IInspectable_iface );
     view->map = map;
+
+    for (UINT32 i = 0; i < count; ++i) map_entry_copy( view->entries + view->size++, map->entries + i );
 
     *out = &view->IMapView_HSTRING_IInspectable_iface;
     return S_OK;
@@ -529,20 +641,35 @@ DEFINE_IINSPECTABLE_OUTER( map, IMap_HSTRING_IInspectable, struct map, IInspecta
 
 static HRESULT WINAPI map_Lookup( IMap_HSTRING_IInspectable *iface, HSTRING key, IInspectable **value )
 {
-    FIXME( "iface %p, key %s, value %p stub!\n", iface, debugstr_hstring( key ), value );
-    return E_NOTIMPL;
+    struct map *impl = impl_from_IMap_HSTRING_IInspectable( iface );
+    struct map_entry *entry;
+    int order;
+
+    TRACE( "iface %p, key %s, value %p\n", iface, debugstr_hstring( key ), value );
+
+    if (!(entry = map_entries_lower_bound( impl->entries, impl->size, key, &order )) || order) return E_BOUNDS;
+    IInspectable_AddRef( (*value = entry->value ));
+    return S_OK;
 }
 
 static HRESULT WINAPI map_get_Size( IMap_HSTRING_IInspectable *iface, UINT32 *size )
 {
-    FIXME( "iface %p, size %p stub!\n", iface, size );
-    return E_NOTIMPL;
+    struct map *impl = impl_from_IMap_HSTRING_IInspectable( iface );
+    TRACE( "iface %p, size %p\n", iface, size );
+    *size = impl->size;
+    return S_OK;
 }
 
 static HRESULT WINAPI map_HasKey( IMap_HSTRING_IInspectable *iface, HSTRING key, boolean *exists )
 {
-    FIXME( "iface %p, key %s, exists %p stub!\n", iface, debugstr_hstring( key ), exists );
-    return E_NOTIMPL;
+    struct map *impl = impl_from_IMap_HSTRING_IInspectable( iface );
+    int order;
+
+    TRACE( "iface %p, key %s, exists %p\n", iface, debugstr_hstring( key ), exists );
+
+    map_entries_lower_bound( impl->entries, impl->size, key, &order );
+    *exists = !order;
+    return S_OK;
 }
 
 static HRESULT WINAPI map_GetView( IMap_HSTRING_IInspectable *iface, IMapView_HSTRING_IInspectable **value )
@@ -551,25 +678,69 @@ static HRESULT WINAPI map_GetView( IMap_HSTRING_IInspectable *iface, IMapView_HS
 
     TRACE( "iface %p, value %p.\n", iface, value );
 
-    return map_view_create( impl, value );
+    return map_view_create( impl, 0, impl->size, value );
 }
 
 static HRESULT WINAPI map_Insert( IMap_HSTRING_IInspectable *iface, HSTRING key, IInspectable *value, boolean *replaced )
 {
-    FIXME( "iface %p, key %p, value %p, replaced %p stub!\n", iface, key, value, replaced );
-    return E_NOTIMPL;
+    struct map *impl = impl_from_IMap_HSTRING_IInspectable( iface );
+    struct map_entry *tmp = impl->entries, *entry, copy;
+    HRESULT hr;
+    int order;
+
+    TRACE( "iface %p, key %p, value %p, replaced %p\n", iface, key, value, replaced );
+
+    if (impl->size == impl->capacity)
+    {
+        impl->capacity = max( 32, impl->capacity * 3 / 2 );
+        if (!(impl->entries = realloc( impl->entries, impl->capacity * sizeof(*impl->entries) )))
+        {
+            impl->entries = tmp;
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    if (!(entry = map_entries_lower_bound( impl->entries, impl->size, key, &order ))) return E_OUTOFMEMORY;
+    if (FAILED(hr = map_entry_init( key, value, &copy ))) return hr;
+
+    if ((*replaced = !order)) map_entry_clear( entry );
+    else memmove( entry + 1, entry, (impl->entries + impl->size++ - entry) * sizeof(*impl->entries) );
+    *entry = copy;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI map_Remove( IMap_HSTRING_IInspectable *iface, HSTRING key )
 {
-    FIXME( "iface %p, key %s stub!\n", iface, debugstr_hstring( key ) );
-    return E_NOTIMPL;
+    struct map *impl = impl_from_IMap_HSTRING_IInspectable( iface );
+    struct map_entry *entry;
+    int order;
+
+    TRACE( "iface %p, key %s\n", iface, debugstr_hstring( key ) );
+
+    if (!(entry = map_entries_lower_bound( impl->entries, impl->size, key, &order )) || order) return E_BOUNDS;
+    map_entry_clear( entry );
+    memmove( entry, entry + 1, (impl->entries + --impl->size - entry) * sizeof(*impl->entries) );
+
+    return S_OK;
 }
 
 static HRESULT WINAPI map_Clear( IMap_HSTRING_IInspectable *iface )
 {
-    FIXME( "iface %p stub!\n", iface );
-    return E_NOTIMPL;
+    struct map *impl = impl_from_IMap_HSTRING_IInspectable( iface );
+    struct map_entry *entries = impl->entries;
+    UINT32 size = impl->size;
+
+    TRACE( "iface %p\n", iface );
+
+    impl->entries = NULL;
+    impl->capacity = 0;
+    impl->size = 0;
+
+    while (size) map_entry_clear( entries + --size );
+    free( entries );
+
+    return S_OK;
 }
 
 static const IMap_HSTRING_IInspectableVtbl map_vtbl =
