@@ -1264,6 +1264,7 @@ static void test_IPropertySet(void)
     IObservableMap_HSTRING_IInspectable *observable_map;
     IIterable_IKeyValuePair_HSTRING_IInspectable *iterable;
     IIterator_IKeyValuePair_HSTRING_IInspectable *iterator;
+    IKeyValuePair_HSTRING_IInspectable *pair;
     BOOLEAN boolean;
     HRESULT hr;
     HSTRING name, key1, key2;
@@ -1438,31 +1439,66 @@ static void test_IPropertySet(void)
         ok( uint64 == 0xdeadbeefdeadbeef, "Got uint64 %I64u\n", uint64 );
     }
 
+    todo_wine check_interface( map, &IID_IAgileObject, TRUE );
     hr = IMap_HSTRING_IInspectable_QueryInterface( map, &IID_IIterable_IKeyValuePair_HSTRING_IInspectable,
                                                    (void **)&iterable );
     ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
     hr = IIterable_IKeyValuePair_HSTRING_IInspectable_First( iterable, &iterator );
     todo_wine
     ok( hr == S_OK, "got %#lx\n", hr );
-    if (SUCCEEDED( hr ))
-        IIterator_IKeyValuePair_HSTRING_IInspectable_Release( iterator );
     IIterable_IKeyValuePair_HSTRING_IInspectable_Release( iterable );
+    if (FAILED( hr )) goto skip_test;
+
+    check_interface( iterator, &IID_IAgileObject, TRUE );
+    hr = IIterator_IKeyValuePair_HSTRING_IInspectable_get_HasCurrent( iterator, &boolean );
+    ok( hr == S_OK, "Got hr %#lx\n", hr );
+    ok( boolean == TRUE, "Got %u\n", boolean );
+
+    hr = IIterator_IKeyValuePair_HSTRING_IInspectable_get_Current( iterator, &pair );
+    ok( hr == S_OK, "Got hr %#lx\n", hr );
+    check_interface( pair, &IID_IAgileObject, TRUE );
+    hr = IKeyValuePair_HSTRING_IInspectable_get_Key( pair, &key2 );
+    ok( hr == S_OK, "Got %#lx\n", hr );
+    WindowsDeleteString( key2 );
+    hr = IKeyValuePair_HSTRING_IInspectable_get_Value( pair, &val );
+    ok( hr == S_OK, "Got %#lx\n", hr );
+    IInspectable_Release( val );
 
     hr = IMap_HSTRING_IInspectable_GetView( map, &map_view );
     todo_wine
     ok( hr == S_OK, "GetView failed, got %#lx\n", hr );
     if (FAILED( hr )) goto skip_test;
 
+    check_interface( map_view, &IID_IAgileObject, TRUE );
     hr = IMapView_HSTRING_IInspectable_QueryInterface( map_view, &IID_IIterable_IKeyValuePair_HSTRING_IInspectable,
                                                        (void **)&iterable );
     ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
     hr = IMapView_HSTRING_IInspectable_Lookup( map_view, key2, &val );
     todo_wine
     ok( hr == S_OK, "Lookup failed, got %#lx\n", hr );
-    if (SUCCEEDED(hr)) IInspectable_Release( val );
+    IInspectable_Release( val );
+
+
+    /* after map is modified, associated objects are invalidated */
     hr = IMap_HSTRING_IInspectable_Remove( map, key2 );
     todo_wine
     ok( hr == S_OK, "Remove failed, got %#lx\n", hr );
+
+    hr = IKeyValuePair_HSTRING_IInspectable_get_Key( pair, &key2 );
+    ok( hr == S_OK, "Got %#lx\n", hr );
+    WindowsDeleteString( key2 );
+    hr = IKeyValuePair_HSTRING_IInspectable_get_Value( pair, &val );
+    ok( hr == S_OK, "Got %#lx\n", hr );
+    IInspectable_Release( val );
+    IKeyValuePair_HSTRING_IInspectable_Release( pair );
+
+    hr = IIterator_IKeyValuePair_HSTRING_IInspectable_get_HasCurrent( iterator, &boolean );
+    ok( hr == S_OK, "Got hr %#lx\n", hr );
+    ok( boolean == TRUE, "Got %u\n", boolean );
+    hr = IIterator_IKeyValuePair_HSTRING_IInspectable_get_Current( iterator, &pair );
+    ok( hr == E_CHANGED_STATE, "Got hr %#lx\n", hr );
+    IIterator_IKeyValuePair_HSTRING_IInspectable_Release( iterator );
+
     hr = IMapView_HSTRING_IInspectable_Lookup( map_view, key2, &val );
     todo_wine
     ok( hr == E_CHANGED_STATE, "Got hr %#lx\n", hr );
