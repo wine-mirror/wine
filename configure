@@ -1476,6 +1476,7 @@ enable_tdh
 enable_tdi_sys
 enable_threadpoolwinrt
 enable_thumbcache
+enable_tiptsf
 enable_traffic
 enable_twain_32
 enable_twaindsm
@@ -23567,6 +23568,7 @@ wine_fn_config_makefile dlls/threadpoolwinrt enable_threadpoolwinrt
 wine_fn_config_makefile dlls/threadpoolwinrt/tests enable_tests
 wine_fn_config_makefile dlls/thumbcache enable_thumbcache
 wine_fn_config_makefile dlls/thumbcache/tests enable_tests
+wine_fn_config_makefile dlls/tiptsf enable_tiptsf
 wine_fn_config_makefile dlls/toolhelp.dll16 enable_win16
 wine_fn_config_makefile dlls/traffic enable_traffic
 wine_fn_config_makefile dlls/twain.dll16 enable_win16

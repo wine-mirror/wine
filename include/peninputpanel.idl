@@ -195,6 +195,9 @@ interface ITextInputPanel : IUnknown
 }
 
 [
+    progid("TextInputPanel.TextInputPanel.1"),
+    vi_progid("TextInputPanel.TextInputPanel"),
+    threading(apartment),
     uuid(f9b189d7-228b-4f2b-8650-b97f59e02c8c)
 ]
 coclass TextInputPanel
