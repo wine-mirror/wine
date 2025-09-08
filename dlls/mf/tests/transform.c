@@ -236,6 +236,25 @@ static void load_resource(const WCHAR *filename, const BYTE **data, DWORD *lengt
     *length = SizeofResource(GetModuleHandleW(NULL), resource);
 }
 
+static IMFMediaType *transform_find_available_output_type(IMFTransform *transform, const GUID *desired)
+{
+    IMFMediaType *output_type = NULL;
+    GUID subtype;
+    HRESULT hr;
+    UINT i = 0;
+
+    while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, i++, &output_type)))
+    {
+        IMFMediaType_GetGUID(output_type, &MF_MT_SUBTYPE, &subtype);
+        if (IsEqualGUID(&subtype, desired))
+            break;
+        IMFMediaType_Release(output_type);
+        output_type = NULL;
+    }
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    return output_type;
+}
+
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG expected_refcount, int line)
 {
@@ -5562,6 +5581,98 @@ static void test_h264_decoder_timestamps(void)
     ok(ret == 0, "Release returned %lu\n", ret);
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %lu\n", ret);
+
+failed:
+    winetest_pop_context();
+    CoUninitialize();
+}
+
+static void test_h264_decoder_alignment(void)
+{
+    static const DWORD actual_width = 82, actual_height = 84;
+    static const DWORD aligned_width = 96, aligned_height = 96;
+
+    const struct attribute_desc input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
+        {0},
+    };
+
+    IMFSample *input_sample, *output_sample;
+    const BYTE *h264_encoded_data;
+    ULONG h264_encoded_data_len;
+    IMFMediaType *output_type;
+    IMFTransform *transform;
+    DWORD output_status;
+    UINT64 frame_size;
+    HRESULT hr;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
+
+    winetest_push_context("h264dec alignment");
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_MSH264DecoderMFT, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
+        goto failed;
+
+    load_resource(L"h264data.bin", &h264_encoded_data, &h264_encoded_data_len);
+
+    check_mft_set_input_type(transform, input_type_desc, S_OK);
+
+    output_type = transform_find_available_output_type(transform, &MFVideoFormat_NV12);
+    hr = IMFMediaType_GetUINT64(output_type, &MF_MT_FRAME_SIZE, &frame_size);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(frame_size == (((UINT64)actual_width << 32) | actual_height), "Unexpected frame size %#llx\n", frame_size);
+
+    hr = IMFTransform_SetOutputType(transform, 0, output_type, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(output_type);
+
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    output_sample = create_sample(NULL, aligned_width * aligned_height * 3 / 2);
+    output_type = NULL;
+    do
+    {
+        MFT_OUTPUT_DATA_BUFFER output = {.pSample = output_sample};
+
+        hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &output_status);
+        ok(hr == S_OK || hr == MF_E_TRANSFORM_STREAM_CHANGE || hr == MF_E_TRANSFORM_NEED_MORE_INPUT,
+                "ProcessOutput returned %#lx\n", hr);
+
+        if (hr == S_OK)
+        {
+            ok(!!output_type, "Stream change not received.\n");
+            IMFSample_Release(output_sample);
+            output_sample = create_sample(NULL, aligned_width * aligned_height * 3 / 2);
+        }
+        else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && h264_encoded_data_len > 4)
+        {
+            input_sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+            hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+            ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+            IMFSample_Release(input_sample);
+        }
+        else if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
+        {
+            /* The H.264 decoder sends a format change once the aligned frame size is known. */
+            output_type = transform_find_available_output_type(transform, &MFVideoFormat_NV12);
+            hr = IMFMediaType_GetUINT64(output_type, &MF_MT_FRAME_SIZE, &frame_size);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            ok(frame_size == (((UINT64)aligned_width << 32) | aligned_height), "Unexpected frame size %#llx\n", frame_size);
+
+            hr = IMFTransform_SetOutputType(transform, 0, output_type, 0);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            IMFMediaType_Release(output_type);
+        }
+    } while (hr == S_OK);
+
+    IMFSample_Release(output_sample);
+    IMFTransform_Release(transform);
 
 failed:
     winetest_pop_context();
@@ -11154,6 +11265,7 @@ START_TEST(transform)
     test_h264_encoder();
     test_h264_decoder();
     test_h264_decoder_timestamps();
+    test_h264_decoder_alignment();
     test_wmv_encoder();
     test_wmv_decoder();
     test_wmv_decoder_timestamps();
