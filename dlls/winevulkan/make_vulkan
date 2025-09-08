@@ -1557,13 +1557,13 @@ class VkMember(VkVariable):
                 return True
 
         if self.is_handle():
-            if unwrap != Unwrap.NONE and self.handle.is_wrapped():
+            if self.handle.is_wrapped() and self.is_dynamic_array():
                 return True
-            if conv and self.handle.is_dispatchable():
+            if conv and self.handle.is_dispatchable() and self.is_static_array():
                 return True
+            return unwrap != Unwrap.NONE and self.handle.is_wrapped()
         elif self.is_generic_handle():
-            if unwrap != Unwrap.NONE:
-                return True
+            return unwrap != Unwrap.NONE
         elif self.is_struct() or self.is_union():
             if self.struct.needs_conversion(conv, unwrap, direction, is_const):
                 return True

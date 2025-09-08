@@ -39311,6 +39311,56 @@ static void convert_VkOutOfBandQueueTypeInfoNV_win32_to_host(const VkOutOfBandQu
         FIXME("Unexpected pNext\n");
 }
 
+#ifdef _WIN64
+static const VkSwapchainKHR *convert_VkSwapchainKHR_array_win64_to_unwrapped_host(struct conversion_context *ctx, const VkSwapchainKHR *in, uint32_t count)
+{
+    VkSwapchainKHR *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i] = in[i];
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
+
+#ifdef _WIN64
+static void convert_VkPresentInfoKHR_win64_to_unwrapped_host(struct conversion_context *ctx, const VkPresentInfoKHR *in, VkPresentInfoKHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->waitSemaphoreCount = in->waitSemaphoreCount;
+    out->pWaitSemaphores = in->pWaitSemaphores;
+    out->swapchainCount = in->swapchainCount;
+    out->pSwapchains = convert_VkSwapchainKHR_array_win64_to_unwrapped_host(ctx, in->pSwapchains, in->swapchainCount);
+    out->pImageIndices = in->pImageIndices;
+    out->pResults = in->pResults;
+}
+#endif /* _WIN64 */
+
+static const VkSwapchainKHR *convert_VkSwapchainKHR_array_win32_to_unwrapped_host(struct conversion_context *ctx, const VkSwapchainKHR *in, uint32_t count)
+{
+    VkSwapchainKHR *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i] = in[i];
+    }
+
+    return out;
+}
+
 static void convert_VkPresentRegionKHR_win32_to_host(const VkPresentRegionKHR32 *in, VkPresentRegionKHR *out)
 {
     if (!in) return;
@@ -39347,7 +39397,7 @@ static void convert_VkPresentInfoKHR_win32_to_unwrapped_host(struct conversion_c
     out->waitSemaphoreCount = in->waitSemaphoreCount;
     out->pWaitSemaphores = UlongToPtr(in->pWaitSemaphores);
     out->swapchainCount = in->swapchainCount;
-    out->pSwapchains = UlongToPtr(in->pSwapchains);
+    out->pSwapchains = convert_VkSwapchainKHR_array_win32_to_unwrapped_host(ctx, (const VkSwapchainKHR *)UlongToPtr(in->pSwapchains), in->swapchainCount);
     out->pImageIndices = UlongToPtr(in->pImageIndices);
     out->pResults = UlongToPtr(in->pResults);
 
@@ -57859,10 +57909,16 @@ static NTSTATUS thunk32_vkQueueNotifyOutOfBandNV(void *args)
 static NTSTATUS thunk64_vkQueuePresentKHR(void *args)
 {
     struct vkQueuePresentKHR_params *params = args;
+    VkPresentInfoKHR pPresentInfo_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p\n", params->queue, params->pPresentInfo);
 
-    params->result = vk_funcs->p_vkQueuePresentKHR(params->queue, params->pPresentInfo);
+    init_conversion_context(ctx);
+    convert_VkPresentInfoKHR_win64_to_unwrapped_host(ctx, params->pPresentInfo, &pPresentInfo_host);
+    params->result = vk_funcs->p_vkQueuePresentKHR(params->queue, &pPresentInfo_host);
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
