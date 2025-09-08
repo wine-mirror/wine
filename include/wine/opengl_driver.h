@@ -176,7 +176,7 @@ struct opengl_drawable
 static inline const char *debugstr_opengl_drawable( struct opengl_drawable *drawable )
 {
     if (!drawable) return "(null)";
-    return wine_dbg_sprintf( "%s/%p (format %u)", debugstr_client_surface( drawable->surface ), drawable, drawable->format );
+    return wine_dbg_sprintf( "%s/%p (format %u)", debugstr_client_surface( drawable->client ), drawable, drawable->format );
 }
 
 W32KAPI void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *funcs, int format, struct client_surface *client );
