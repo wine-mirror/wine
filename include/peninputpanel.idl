@@ -1,0 +1,203 @@
+/*
+ * Copyright (C) 2025 Alistair Leslie-Hughes
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "oaidl.idl";
+import "ocidl.idl";
+import "msinkaut.idl";
+
+#if !defined(progid) && !defined(__WIDL__)
+#define threading(model)
+#define progid(str)
+#define vi_progid(str)
+#endif
+
+
+[
+    uuid(500f9c5a-6739-449b-9cfa-5fc2f2e9ddce)
+]
+typedef enum
+{
+    InteractionMode_InPlace,
+    InteractionMode_Floating,
+    InteractionMode_DockedTop,
+    InteractionMode_DockedBottom
+} InteractionMode;
+
+[
+    uuid(aa9bda6b-fc6a-49a3-9d7c-26b233690583)
+]
+typedef enum
+{
+    InPlaceState_Auto,
+    InPlaceState_HoverTarget,
+    InPlaceState_Expanded
+} InPlaceState;
+
+[
+    uuid(619eab37-412f-44ca-996f-0f415fb8bc12)
+]
+typedef enum
+{
+    InPlaceDirection_Auto,
+    InPlaceDirection_Bottom,
+    InPlaceDirection_Top
+}   InPlaceDirection;
+
+
+[
+    uuid(8b4f78bf-4253-4467-a006-670419caa993)
+]
+typedef enum
+{
+    PanelInputArea_Auto,
+    PanelInputArea_Keyboard,
+    PanelInputArea_WritingPad,
+    PanelInputArea_CharacterPad
+}   PanelInputArea;
+
+[
+    uuid(d708f745-981e-4e9b-afa0-98082aadb421)
+]
+typedef enum
+{
+    CorrectionMode_NotVisible,
+    CorrectionMode_PreInsertion,
+    CorrectionMode_PostInsertionCollapsed,
+    CorrectionMode_PostInsertionExpanded
+}   CorrectionMode;
+
+[
+    uuid(84ccefd0-9212-44e4-94e6-91562a94016e)
+]
+typedef enum
+{
+    CorrectionPosition_Auto,
+    CorrectionPosition_Bottom,
+    CorrectionPosition_Top
+}   CorrectionPosition;
+
+[
+    object,
+    oleautomation,
+    uuid(27560408-8e64-4fe1-804e-421201584b31),
+]
+interface ITextInputPanelEventSink : IUnknown
+{
+    HRESULT InPlaceStateChanging(InPlaceState old_state, InPlaceState new_state);
+    HRESULT InPlaceStateChanged(InPlaceState old_state, InPlaceState new_state);
+
+    HRESULT InPlaceSizeChanging(RECT old_rect, RECT new_rect);
+    HRESULT InPlaceSizeChanged(RECT old_rect, RECT new_rect);
+
+    HRESULT InputAreaChanging(PanelInputArea old_area, PanelInputArea new_area);
+    HRESULT InputAreaChanged(PanelInputArea old_area, PanelInputArea new_area);
+
+    HRESULT CorrectionModeChanging(CorrectionMode old_mode,CorrectionMode new_mode);
+    HRESULT CorrectionModeChanged(CorrectionMode old_mode, CorrectionMode new_mode);
+
+    HRESULT InPlaceVisibilityChanging(BOOL old_visible, BOOL new_visible);
+    HRESULT InPlaceVisibilityChanged(BOOL old_visible, BOOL new_visible);
+
+    HRESULT TextInserting(SAFEARRAY(VARIANT) *ink);
+    HRESULT TextInserted(SAFEARRAY(VARIANT) *ink);
+};
+
+[
+    object,
+    oleautomation,
+    uuid(6b6a65a5-6af3-46c2-b6ea-56cd1f80df71),
+]
+interface ITextInputPanel : IUnknown
+{
+    [propget]
+    HRESULT AttachedEditWindow([retval, out] HWND *window);
+
+    [propput]
+    HRESULT AttachedEditWindow([in] HWND window);
+
+    [propget]
+    HRESULT CurrentInteractionMode([retval, out] InteractionMode *mode);
+
+    [propget]
+    HRESULT DefaultInPlaceState([retval, out] InPlaceState *state);
+
+    [propput]
+    HRESULT DefaultInPlaceState([in] InPlaceState state);
+
+    [propget]
+    HRESULT CurrentInPlaceState([retval, out] InPlaceState *state);
+
+    [propget]
+    HRESULT DefaultInputArea([retval, out] PanelInputArea *area);
+
+    [propput]
+    HRESULT DefaultInputArea([in] PanelInputArea area);
+
+    [propget]
+    HRESULT CurrentInputArea([retval, out] PanelInputArea *area);
+
+    [propget]
+    HRESULT CurrentCorrectionMode([retval, out] CorrectionMode *Mode);
+
+    [propget]
+    HRESULT PreferredInPlaceDirection([retval, out] InPlaceDirection *direction);
+
+    [propput]
+    HRESULT PreferredInPlaceDirection( [in] InPlaceDirection drection);
+
+    [propget]
+    HRESULT ExpandPostInsertionCorrection([retval, out] BOOL *expand);
+
+    [propput]
+    HRESULT ExpandPostInsertionCorrection([in] BOOL expand);
+
+    [propget]
+    HRESULT InPlaceVisibleOnFocus([retval, out] BOOL *bisible);
+
+    [propput]
+    HRESULT InPlaceVisibleOnFocus([in] BOOL bisible);
+
+    [propget]
+    HRESULT InPlaceBoundingRectangle([retval, out] RECT *bounding_rect);
+
+    [propget]
+    HRESULT PopUpCorrectionHeight([retval, out] int *height);
+
+    [propget]
+    HRESULT PopDownCorrectionHeight([retval, out] int *height);
+
+    HRESULT CommitPendingInput(void);
+
+    HRESULT SetInPlaceVisibility(BOOL Visible);
+
+    HRESULT  SetInPlacePosition(int x, int y, CorrectionPosition position);
+
+    HRESULT SetInPlaceHoverTargetPosition(int x, int y);
+
+    HRESULT Advise(ITextInputPanelEventSink *sink, DWORD mask);
+
+    HRESULT Unadvise(ITextInputPanelEventSink *sink);
+}
+
+[
+    uuid(f9b189d7-228b-4f2b-8650-b97f59e02c8c)
+]
+coclass TextInputPanel
+{
+    [default] interface ITextInputPanel;
+}

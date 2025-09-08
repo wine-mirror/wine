@@ -651,6 +651,7 @@ SOURCES = \
 	pathcch.h \
 	pdh.h \
 	pdhmsg.h \
+	peninputpanel.idl \
 	perflib.h \
 	perhist.idl \
 	physicalmonitorenumerationapi.h \
