@@ -770,7 +770,7 @@ static void test_combo_setfont(DWORD style)
         SendMessageA(hCombo, WM_SETFONT, (WPARAM)hFont1, FALSE);
         GetClientRect(hCombo, &r);
         expected_height = style & CBS_OWNERDRAWFIXED ? initial_height : 18;
-        todo_wine_if(style & CBS_OWNERDRAWFIXED) expect_rect(r, 0, 0, 100, expected_height);
+        expect_rect(r, 0, 0, 100, expected_height);
         SendMessageA(hCombo, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&r);
         MapWindowPoints(HWND_DESKTOP, hMainWnd, (LPPOINT)&r, 2);
 
@@ -786,7 +786,7 @@ static void test_combo_setfont(DWORD style)
         SendMessageA(hCombo, WM_SETFONT, (WPARAM)hFont2, FALSE);
         GetClientRect(hCombo, &r);
         expected_height = style & CBS_OWNERDRAWFIXED ? initial_height : 16;
-        todo_wine_if(style & CBS_OWNERDRAWFIXED) expect_rect(r, 0, 0, 100, expected_height);
+        expect_rect(r, 0, 0, 100, expected_height);
         SendMessageA(hCombo, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&r);
         MapWindowPoints(HWND_DESKTOP, hMainWnd, (LPPOINT)&r, 2);
 
@@ -802,7 +802,7 @@ static void test_combo_setfont(DWORD style)
         SendMessageA(hCombo, WM_SETFONT, (WPARAM)hFont1, FALSE);
         GetClientRect(hCombo, &r);
         expected_height = style & CBS_OWNERDRAWFIXED ? initial_height : 18;
-        todo_wine_if(style & CBS_OWNERDRAWFIXED) expect_rect(r, 0, 0, 100, expected_height);
+        expect_rect(r, 0, 0, 100, expected_height);
         SendMessageA(hCombo, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&r);
         MapWindowPoints(HWND_DESKTOP, hMainWnd, (LPPOINT)&r, 2);
         if (style & CBS_OWNERDRAWFIXED)
@@ -831,7 +831,6 @@ static void test_combo_setfont(DWORD style)
             expected_height = initial_height;
         else
             expected_height = (height + 8);
-        todo_wine_if(style & CBS_OWNERDRAWFIXED && initial_height != height + 8)
         ok((r.bottom - r.top) == expected_height, "Unexpected client rect height %ld, expected %d.\n", r.bottom - r.top,
                 expected_height);
         SendMessageA(hCombo, WM_SETFONT, 0, FALSE);
