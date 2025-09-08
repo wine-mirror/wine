@@ -915,6 +915,53 @@ static void test_combo_ctlcolor(void)
     DestroyWindow(combo);
 }
 
+static void test_combo_setfont(void)
+{
+    COMBOBOXINFO info;
+    RECT r1, r2;
+    HWND combo;
+    BOOL ret;
+    HFONT hf;
+
+    hf = CreateFontA( 24, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+                      CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH|FF_DONTCARE, "Arial" );
+    ok( !!hf, "got NULL.\n" );
+
+    combo = CreateWindowA( "ComboBox", "Combo", WS_VISIBLE | WS_CHILD | CBS_DROPDOWNLIST,
+                           5, 5, 200, 200, hMainWnd, (HMENU)COMBO_ID, NULL, 0 );
+    info.cbSize = sizeof(COMBOBOXINFO);
+    ret = GetComboBoxInfo( combo, &info );
+    ok( ret, "got error %lu.\n", GetLastError() );
+    r1 = info.rcItem;
+
+    SendMessageA( combo, WM_SETFONT, (WPARAM)hf, TRUE );
+
+    ret = GetComboBoxInfo( combo, &info );
+    ok( ret, "got error %lu.\n", GetLastError() );
+    r2 = info.rcItem;
+    ok( memcmp( &r1, &r2, sizeof(r1) ), "got equal rects %s.\n", wine_dbgstr_rect(&r2) );
+
+    DestroyWindow(combo);
+
+
+    combo = CreateWindowA( "ComboBox", "Combo", WS_VISIBLE | WS_CHILD | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED,
+                           5, 5, 200, 200, hMainWnd, (HMENU)COMBO_ID, NULL, 0 );
+    info.cbSize = sizeof(COMBOBOXINFO);
+    ret = GetComboBoxInfo( combo, &info );
+    ok( ret, "got error %lu.\n", GetLastError() );
+    r1 = info.rcItem;
+
+    SendMessageA( combo, WM_SETFONT, (WPARAM)hf, TRUE );
+
+    ret = GetComboBoxInfo( combo, &info );
+    ok( ret, "got error %lu.\n", GetLastError() );
+    r2 = info.rcItem;
+    todo_wine ok( !memcmp( &r1, &r2, sizeof(r1) ), "got %s, expected %s.\n", wine_dbgstr_rect(&r2), wine_dbgstr_rect(&r1) );
+    DestroyWindow(combo);
+
+    DeleteObject(hf);
+}
+
 START_TEST(combo)
 {
     brush_red = CreateSolidBrush(RGB(255, 0, 0));
@@ -938,6 +985,7 @@ START_TEST(combo)
     test_listbox_styles(CBS_DROPDOWNLIST);
     test_listbox_size(CBS_DROPDOWN);
     test_combo_ctlcolor();
+    test_combo_setfont();
 
     DestroyWindow(hMainWnd);
     DeleteObject(brush_red);
