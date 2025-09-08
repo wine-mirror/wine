@@ -2218,6 +2218,7 @@ static void test_domnode( void )
     IXMLDOMNode *node = NULL, *next = NULL;
     IXMLDOMNodeList *list = NULL;
     IXMLDOMAttribute *attr = NULL;
+    IXMLDOMAttribute *attr_out = NULL;
     DOMNodeType type = NODE_INVALID;
     VARIANT_BOOL b;
     HRESULT hr;
@@ -2324,7 +2325,36 @@ static void test_domnode( void )
             IXMLDOMAttribute_Release(attr);
         }
 
+        attr = NULL;
+        hr = IXMLDOMElement_getAttributeNode( element, str, &attr );
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(attr != NULL, "getAttributeNode returned NULL\n");
+        attr_out = NULL;
+        hr = IXMLDOMElement_removeAttributeNode(element, attr, &attr_out );
+todo_wine {
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(attr_out != NULL, "removeAttributeNode expected to set attr_out, but got NULL pointer\n");
+}
+        if (attr_out)
+        {
+            /* remove the same attribute again returns invalid arg */
+            hr = IXMLDOMElement_removeAttributeNode( element, attr, NULL );
+            ok(hr == E_INVALIDARG, "removeAttributeNode removed an already removed node, unexpected hr %#lx.\n", hr);
+
+            /* readd removed attribute to recover previous state */
+            hr = IXMLDOMElement_setAttributeNode(element, attr_out, NULL);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+            IXMLDOMAttribute_Release(attr_out);
+        }
+        IXMLDOMAttribute_Release(attr);
+
         SysFreeString( str );
+
+        attr_out = (IXMLDOMAttribute*)0xdeadbeef;
+        hr = IXMLDOMElement_removeAttributeNode( element, NULL, &attr_out );
+        todo_wine ok(hr == E_INVALIDARG, "removeAttributeNode removed a NULL pointer hr: %#lx.\n", hr);
+        ok(attr_out == (IXMLDOMAttribute*)0xdeadbeef, "removeAttributeNode expected to not touch attr_out in error case, got (%p)\n", attr_out);
 
         hr = IXMLDOMElement_get_attributes( element, &map );
         ok(hr == S_OK, "get_attributes returned wrong code\n");
