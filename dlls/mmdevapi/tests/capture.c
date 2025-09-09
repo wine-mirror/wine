@@ -106,6 +106,44 @@ static void test_uninitialized(IAudioClient *ac)
     CloseHandle(handle);
 }
 
+static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE handle,
+        unsigned int packet_count)
+{
+    unsigned int idx = 0;
+    HRESULT hr;
+
+    while (idx < packet_count)
+    {
+        UINT32 next_packet_size, frames;
+        UINT64 dev_pos, qpc_pos;
+        DWORD flags;
+        BYTE *ptr;
+
+        winetest_push_context("packet %u", idx);
+
+        hr = IAudioCaptureClient_GetNextPacketSize(acc, &next_packet_size);
+        ok(hr == S_OK, "GetNextPacketSize returns %08lx\n", hr);
+
+        if (next_packet_size == 0)
+        {
+            ok(WaitForSingleObject(handle, 1000) == WAIT_OBJECT_0, "Waiting on event handle failed!\n");
+
+            winetest_pop_context();
+            continue;
+        }
+
+        hr = IAudioCaptureClient_GetBuffer(acc, &ptr, &frames, &flags, &dev_pos, &qpc_pos);
+        ok(hr == S_OK, "GetBuffer returns %08lx\n", hr);
+
+        hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
+        ok(hr == S_OK, "Releasing buffer returns %08lx\n", hr);
+
+        ++idx;
+
+        winetest_pop_context();
+    }
+}
+
 static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
 {
     IAudioCaptureClient *acc;
@@ -396,23 +434,7 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     hr = IAudioClient_Start(ac);
     ok(hr == S_OK, "Start on a stopped stream returns %08lx\n", hr);
 
-    Sleep(180);
-
-    hr = IAudioClient_GetCurrentPadding(ac, &pad);
-    ok(hr == S_OK, "GetCurrentPadding call returns %08lx\n", hr);
-
-    hr = IAudioCaptureClient_GetBuffer(acc, &data, &frames, &flags, &pos, &qpc);
-    flaky_wine
-    ok(hr == S_OK, "Valid IAudioCaptureClient_GetBuffer returns %08lx\n", hr);
-    trace("Running position %d pad %u flags %lx, amount of frames locked: %u\n",
-          SUCCEEDED(hr) ? (UINT)pos : -1, pad, flags, frames);
-
-    if(SUCCEEDED(hr)){
-        /* Some w7 machines signal DATA_DISCONTINUITY here following the
-         * previous AUDCLNT_S_BUFFER_EMPTY, others not.  What logic? */
-        ok(pos >= sum, "Position %u gap %d\n", (UINT)pos, (UINT)pos - sum);
-        IAudioCaptureClient_ReleaseBuffer(acc, frames);
-    }
+    read_packets(ac, acc, handle, 10);
 
     IAudioCaptureClient_Release(acc);
 }
