@@ -110,6 +110,8 @@ static void test_uninitialized(IAudioClient *ac)
 struct read_packets_data
 {
     UINT64 expected_dev_pos;
+    BOOL discontinuity_at_0;
+    BOOL discontinuity_at_later;
 };
 
 static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE handle,
@@ -117,6 +119,9 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
 {
     unsigned int idx = 0;
     HRESULT hr;
+
+    data->discontinuity_at_0 = FALSE;
+    data->discontinuity_at_later = FALSE;
 
     while (idx < packet_count)
     {
@@ -167,6 +172,14 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
         ok(hr == S_OK, "GetCurrentPadding returns %08lx\n", hr);
         ok(padding >= frames, "GetCurrentPadding returns %u, GetBuffer returns %u frames\n",
                 padding, frames);
+
+        if (flags & AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY)
+        {
+            if (idx == 0)
+                data->discontinuity_at_0 = TRUE;
+            else
+                data->discontinuity_at_later = TRUE;
+        }
 
         if (data->expected_dev_pos != UINT64_MAX)
         {
@@ -297,6 +310,10 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     winetest_push_context("read 10 packets");
 
     read_packets(ac, acc, handle, 10, &packets_data);
+
+    todo_wine
+    ok(packets_data.discontinuity_at_0, "No discontinuity at first packet\n");
+    ok(!packets_data.discontinuity_at_later, "Discontinuity at later packet\n");
 
     winetest_pop_context();
 
