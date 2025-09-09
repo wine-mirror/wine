@@ -110,6 +110,7 @@ static void test_uninitialized(IAudioClient *ac)
 struct read_packets_data
 {
     UINT64 expected_dev_pos;
+    UINT32 period;
     BOOL discontinuity_at_0;
     BOOL discontinuity_at_later;
 };
@@ -118,6 +119,7 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
         unsigned int packet_count, struct read_packets_data *data)
 {
     unsigned int idx = 0;
+    UINT32 padding;
     HRESULT hr;
 
     data->discontinuity_at_0 = FALSE;
@@ -125,8 +127,8 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
 
     while (idx < packet_count)
     {
-        UINT32 next_packet_size, frames, frames2, padding;
         UINT64 dev_pos, dev_pos2, qpc_pos, qpc_pos2;
+        UINT32 next_packet_size, frames, frames2;
         DWORD flags, flags2;
         BYTE *ptr;
 
@@ -248,6 +250,13 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
 
         winetest_pop_context();
     }
+
+    /* Here we should have basically emptied the buffer, but we allow one or two
+     * packets to arrive concurrently. */
+    hr = IAudioClient_GetCurrentPadding(ac, &padding);
+    ok(hr == S_OK, "GetCurrentPadding returns %08lx\n", hr);
+    ok(padding <= 2 * data->period, "GetCurrentPadding %u is larger then twice the period%u\n",
+            padding, data->period);
 }
 
 static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
@@ -300,7 +309,7 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
 
     hr = IAudioClient_GetDevicePeriod(ac, &period, NULL);
     ok(hr == S_OK, "GetDevicePeriod failed: %08lx\n", hr);
-    period = MulDiv(period, wfx->nSamplesPerSec, 10000000); /* as in render.c */
+    packets_data.period = MulDiv(period, wfx->nSamplesPerSec, 10000000); /* as in render.c */
 
     hr = IAudioClient_Start(ac);
     ok(hr == S_OK, "Start on a stopped stream returns %08lx\n", hr);
@@ -402,7 +411,7 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
         ok(hr == AUDCLNT_E_OUT_OF_ORDER, "Releasing buffer twice returns %08lx\n", hr);
     }
 
-    frames = period;
+    frames = packets_data.period;
     flaky_wine
     ok(next == frames, "GetNextPacketSize %u vs. GetDevicePeriod %u\n", next, frames);
 
