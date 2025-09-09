@@ -2595,8 +2595,8 @@ sync_test("functions scope", function() {
 });
 
 sync_test("perf toJSON", function() {
-    var json, objs = [ performance.timing ];
-    var non_props = [ "constructor" ];
+    var json, objs = [ performance.navigation, performance.timing ];
+    var non_props = [ "constructor", "TYPE_BACK_FORWARD", "TYPE_NAVIGATE", "TYPE_RELOAD", "TYPE_RESERVED" ];
 
     for(var i = 0; i < objs.length; i++) {
         var desc, prop, proto = Object.getPrototypeOf(objs[i]), props = Object.getOwnPropertyNames(proto);

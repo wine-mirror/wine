@@ -1778,8 +1778,10 @@ static HRESULT WINAPI HTMLPerformanceNavigation_toString(IHTMLPerformanceNavigat
 static HRESULT WINAPI HTMLPerformanceNavigation_toJSON(IHTMLPerformanceNavigation *iface, VARIANT *p)
 {
     HTMLPerformanceNavigation *This = impl_from_IHTMLPerformanceNavigation(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return dispex_builtin_props_to_json(&This->dispex, This->window, p);
 }
 
 static const IHTMLPerformanceNavigationVtbl HTMLPerformanceNavigationVtbl = {

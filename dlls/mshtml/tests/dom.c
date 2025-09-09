@@ -12231,6 +12231,7 @@ static void test_quirks_mode_offsetHeight(IHTMLDocument2 *doc)
 
 static void test_quirks_mode_perf_toJSON(IHTMLDocument2 *doc)
 {
+    IHTMLPerformanceNavigation *nav;
     IHTMLPerformanceTiming *timing;
     IHTMLPerformance *perf;
     DISPPARAMS dp = { 0 };
@@ -12264,6 +12265,15 @@ static void test_quirks_mode_perf_toJSON(IHTMLDocument2 *doc)
     ok(hres == S_OK, "QueryInterface(IID_IHTMLPerformance) failed: %08lx\n", hres);
     ok(perf != NULL, "performance is NULL\n");
     VariantClear(&var);
+
+    hres = IHTMLPerformance_get_navigation(perf, &nav);
+    ok(hres == S_OK, "get_navigation failed: %08lx\n", hres);
+    ok(nav != NULL, "performance.navigation is NULL\n");
+
+    hres = IHTMLPerformanceNavigation_toJSON(nav, &var);
+    ok(hres == E_UNEXPECTED, "navigation.toJSON() failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_EMPTY, "V_VT(navigation.toJSON()) = %d\n", V_VT(&var));
+    IHTMLPerformanceNavigation_Release(nav);
 
     hres = IHTMLPerformance_get_timing(perf, &timing);
     ok(hres == S_OK, "get_timing failed: %08lx\n", hres);
