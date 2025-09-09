@@ -52,6 +52,16 @@ static enum {
 static const char doc_blank[] =
     "<html></html>";
 
+static const char doc_blank_ie8[] =
+    "<!DOCTYPE html>\n"
+    "<html>"
+    " <head>"
+    "  <meta http-equiv=\"x-ua-compatible\" content=\"IE=8\" />"
+    " </head>"
+    " <body>"
+    " </body>"
+    "</html>";
+
 static const char doc_blank_ie9[] =
     "<!DOCTYPE html>\n"
     "<html>"
@@ -12219,6 +12229,54 @@ static void test_quirks_mode_offsetHeight(IHTMLDocument2 *doc)
     IHTMLElement_Release(elem);
 }
 
+static void test_quirks_mode_perf_toJSON(IHTMLDocument2 *doc)
+{
+    IHTMLPerformanceTiming *timing;
+    IHTMLPerformance *perf;
+    DISPPARAMS dp = { 0 };
+    IHTMLWindow2 *window;
+    IDispatchEx *dispex;
+    DISPID dispid;
+    HRESULT hres;
+    VARIANT var;
+    BSTR bstr;
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "QueryInterface(IID_IDispatchEx) failed: %08lx\n", hres);
+    IHTMLWindow2_Release(window);
+
+    bstr = SysAllocString(L"performance");
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &dispid);
+    ok(hres == S_OK, "GetDispID(performance) failed: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    V_VT(&var) = VT_EMPTY;
+    hres = IDispatchEx_InvokeEx(dispex, dispid, 0, DISPATCH_PROPERTYGET, &dp, &var, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx(performance) failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH, "V_VT(performance) = %d\n", V_VT(&var));
+    ok(V_DISPATCH(&var) != NULL, "V_DISPATCH(performance) = NULL\n");
+    IDispatchEx_Release(dispex);
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IHTMLPerformance, (void**)&perf);
+    ok(hres == S_OK, "QueryInterface(IID_IHTMLPerformance) failed: %08lx\n", hres);
+    ok(perf != NULL, "performance is NULL\n");
+    VariantClear(&var);
+
+    hres = IHTMLPerformance_get_timing(perf, &timing);
+    ok(hres == S_OK, "get_timing failed: %08lx\n", hres);
+    ok(timing != NULL, "performance.timing is NULL\n");
+
+    hres = IHTMLPerformanceTiming_toJSON(timing, &var);
+    ok(hres == E_UNEXPECTED, "timing.toJSON() failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_EMPTY, "V_VT(timing.toJSON()) = %d\n", V_VT(&var));
+    IHTMLPerformanceTiming_Release(timing);
+
+    IHTMLPerformance_Release(perf);
+}
+
 static IHTMLDocument2 *notif_doc;
 static BOOL doc_complete;
 
@@ -13638,6 +13696,8 @@ START_TEST(dom)
     run_domtest(frameset_str, test_frameset);
     run_domtest(emptydiv_str, test_docfrag);
     run_domtest(doc_blank, test_replacechild_elems);
+    run_domtest(doc_blank, test_quirks_mode_perf_toJSON);
+    run_domtest(doc_blank_ie8, test_quirks_mode_perf_toJSON);
     run_domtest(doctype_str, test_doctype);
     run_domtest(case_insens_str, test_case_insens);
     if(is_ie9plus) {

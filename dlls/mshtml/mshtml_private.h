@@ -638,6 +638,7 @@ HRESULT remove_attribute(DispatchEx*,DISPID,VARIANT_BOOL*);
 BOOL is_builtin_attribute(DispatchEx*,DISPID);
 BOOL is_builtin_value(DispatchEx*,DISPID);
 HRESULT dispex_get_dynid(DispatchEx*,const WCHAR*,BOOL,DISPID*);
+HRESULT dispex_builtin_props_to_json(DispatchEx*,HTMLInnerWindow*,VARIANT*);
 void release_typelib(void);
 HRESULT get_class_typeinfo(const CLSID*,ITypeInfo**);
 const void *dispex_get_vtbl(DispatchEx*);

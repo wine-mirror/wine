@@ -1627,8 +1627,10 @@ static HRESULT WINAPI HTMLPerformanceTiming_toString(IHTMLPerformanceTiming *ifa
 static HRESULT WINAPI HTMLPerformanceTiming_toJSON(IHTMLPerformanceTiming *iface, VARIANT *p)
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return dispex_builtin_props_to_json(&This->dispex, This->window, p);
 }
 
 static const IHTMLPerformanceTimingVtbl HTMLPerformanceTimingVtbl = {

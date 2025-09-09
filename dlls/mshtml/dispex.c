@@ -2901,6 +2901,43 @@ static IWineJSDispatchHostVtbl JSDispatchHostVtbl = {
     JSDispatchHost_ToString,
 };
 
+HRESULT dispex_builtin_props_to_json(DispatchEx *dispex, HTMLInnerWindow *window, VARIANT *ret)
+{
+    func_info_t *func, *end;
+    IWineJSDispatch *json;
+    DISPPARAMS dp = { 0 };
+    HRESULT hres;
+    VARIANT var;
+
+    if(!window->jscript)
+        return E_UNEXPECTED;
+
+    if(!ret)
+        return S_OK;
+
+    hres = IWineJScript_CreateObject(window->jscript, &json);
+    if(FAILED(hres))
+        return hres;
+
+    for(func = dispex->info->funcs, end = func + dispex->info->func_cnt; func < end; func++) {
+        if(func->func_disp_idx != -1)
+            continue;
+        hres = builtin_propget(dispex, func, &dp, &var, NULL, NULL);
+        if(SUCCEEDED(hres)) {
+            hres = IWineJSDispatch_DefineProperty(json, func->name, PROPF_WRITABLE | PROPF_ENUMERABLE | PROPF_CONFIGURABLE, &var);
+            VariantClear(&var);
+        }
+        if(FAILED(hres)) {
+            IWineJSDispatch_Release(json);
+            return hres;
+        }
+    }
+
+    V_VT(ret) = VT_DISPATCH;
+    V_DISPATCH(ret) = (IDispatch*)json;
+    return hres;
+}
+
 static nsresult NSAPI dispex_traverse(void *ccp, void *p, nsCycleCollectionTraversalCallback *cb)
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(p);

@@ -2594,6 +2594,54 @@ sync_test("functions scope", function() {
     })();
 });
 
+sync_test("perf toJSON", function() {
+    var json, objs = [ performance.timing ];
+    var non_props = [ "constructor" ];
+
+    for(var i = 0; i < objs.length; i++) {
+        var desc, prop, proto = Object.getPrototypeOf(objs[i]), props = Object.getOwnPropertyNames(proto);
+        var name = Object.prototype.toString.call(objs[i]).slice(8, -1);
+
+        Object.defineProperty(objs[i], "foobar", {writable: true, enumerable: true, configurable: true, value: 1});
+        Object.defineProperty(proto, "barfoo", {writable: true, enumerable: true, configurable: true, value: 3});
+        json = objs[i].toJSON();
+
+        ok(Object.getPrototypeOf(json) === Object.prototype, "prototype of " + name + ".toJSON() != Object.prototype");
+        ok(typeof json === "object", "typeof " + name + ".toJSON() != object");
+
+        for(var j = 0; j < non_props.length; j++) {
+            var idx = props.indexOf(non_props[j]);
+            if(idx !== -1)
+                props.splice(idx, 1);
+        }
+
+        for(var j = 0; j < props.length; j++) {
+            if(typeof(proto[props[j]]) === "function")
+                ok(!(props[j] in json), props[j] + " in " + name + ".toJSON()");
+            else {
+                test_own_data_prop_desc(json, props[j], true, true, true);
+                prop = props[j];
+            }
+        }
+
+        for(var j = 0; j < non_props.length; j++)
+            ok(!json.hasOwnProperty(non_props[j]), non_props[j] + " in " + name + ".toJSON()");
+        ok(!("foobar" in json), "foobar in " + name + ".toJSON()");
+        ok(!("barfoo" in json), "barfoo in " + name + ".toJSON()");
+
+        delete objs[i].foobar;
+        delete proto.barfoo;
+
+        // test delete a builtin from the prototype and toJSON after
+        desc = Object.getOwnPropertyDescriptor(proto, prop);
+        delete proto[prop];
+        ok(!(prop in objs[i]), prop + " in " + name + " after delete");
+        json = objs[i].toJSON();
+        ok(json.hasOwnProperty(prop), name + ".toJSON() does not have " + prop + " after delete");
+        Object.defineProperty(proto, prop, desc);
+    }
+});
+
 sync_test("console", function() {
     var except
 
