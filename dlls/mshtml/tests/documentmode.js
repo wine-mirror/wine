@@ -4467,14 +4467,14 @@ sync_test("prototype props", function() {
         "getMeasures", "mark", "measure", "navigation", ["now",10], "setResourceTimingBufferSize", "timing", "toJSON"
     ], [
         "clearMarks", "clearMeasures", "clearResourceTimings", "getEntries", "getEntriesByName", "getEntriesByType", "getMarks",
-        "getMeasures", "mark", "measure", ["now",10], "setResourceTimingBufferSize", "toString"
+        "getMeasures", "mark", "measure", ["now",10], "setResourceTimingBufferSize"
     ]);
-    check(PerformanceNavigation, [ "TYPE_BACK_FORWARD", "TYPE_NAVIGATE", "TYPE_RELOAD", "TYPE_RESERVED", "redirectCount", "toJSON", "type" ], [ "TYPE_BACK_FORWARD", "TYPE_NAVIGATE", "TYPE_RELOAD", "TYPE_RESERVED", "toString" ]);
+    check(PerformanceNavigation, [ "TYPE_BACK_FORWARD", "TYPE_NAVIGATE", "TYPE_RELOAD", "TYPE_RESERVED", "redirectCount", "toJSON", "type" ], [ "TYPE_BACK_FORWARD", "TYPE_NAVIGATE", "TYPE_RELOAD", "TYPE_RESERVED" ]);
     check(PerformanceTiming, [
         "connectEnd", "connectStart", "domComplete", "domContentLoadedEventEnd", "domContentLoadedEventStart", "domInteractive", "domLoading",
         "domainLookupEnd", "domainLookupStart", "fetchStart", "loadEventEnd", "loadEventStart", "msFirstPaint", "navigationStart", "redirectEnd",
         "redirectStart", "requestStart", "responseEnd", "responseStart", "toJSON", "unloadEventEnd", "unloadEventStart"
-    ], [ "toString" ]);
+    ]);
     if(v >= 10)
         check(ProgressEvent, [ "initProgressEvent", "lengthComputable", "loaded", "total" ]);
     check(StorageEvent, [ "initStorageEvent", "key", "newValue", "oldValue", "storageArea", "url" ]);

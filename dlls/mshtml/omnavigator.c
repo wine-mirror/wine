@@ -1715,7 +1715,11 @@ static void PerformanceTiming_init_dispex_info(dispex_data_t *info, compat_mode_
         {DISPID_IHTMLPERFORMANCETIMING_TOJSON},
         {DISPID_UNKNOWN}
     };
-    dispex_info_add_interface(info, IHTMLPerformanceTiming_tid, mode < COMPAT_MODE_IE9 ? hooks : NULL);
+    static const dispex_hook_t ie9_hooks[] = {
+        {DISPID_IHTMLPERFORMANCETIMING_TOSTRING},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IHTMLPerformanceTiming_tid, mode < COMPAT_MODE_IE9 ? hooks : ie9_hooks);
 }
 
 dispex_static_data_t PerformanceTiming_dispex = {
@@ -1841,7 +1845,11 @@ static void PerformanceNavigation_init_dispex_info(dispex_data_t *info, compat_m
         {DISPID_IHTMLPERFORMANCENAVIGATION_TOJSON},
         {DISPID_UNKNOWN}
     };
-    dispex_info_add_interface(info, IHTMLPerformanceNavigation_tid, mode < COMPAT_MODE_IE9 ? hooks : NULL);
+    static const dispex_hook_t ie9_hooks[] = {
+        {DISPID_IHTMLPERFORMANCENAVIGATION_TOSTRING},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IHTMLPerformanceNavigation_tid, mode < COMPAT_MODE_IE9 ? hooks : ie9_hooks);
 }
 
 dispex_static_data_t PerformanceNavigation_dispex = {
@@ -2009,7 +2017,11 @@ static void Performance_init_dispex_info(dispex_data_t *info, compat_mode_t mode
         {DISPID_IHTMLPERFORMANCE_TOJSON},
         {DISPID_UNKNOWN}
     };
-    dispex_info_add_interface(info, IHTMLPerformance_tid, mode < COMPAT_MODE_IE9 ? hooks : NULL);
+    static const dispex_hook_t ie9_hooks[] = {
+        {DISPID_IHTMLPERFORMANCE_TOSTRING},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IHTMLPerformance_tid, mode < COMPAT_MODE_IE9 ? hooks : ie9_hooks);
 }
 
 dispex_static_data_t Performance_dispex = {
