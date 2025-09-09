@@ -345,64 +345,37 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     ok(!packets_data.discontinuity_at_later, "Discontinuity at later packet\n");
 
     winetest_pop_context();
+    winetest_push_context("overrun and read 75 packets");
 
-    sum = packets_data.expected_dev_pos;
-
-    Sleep(600); /* overrun */
+    /* Now wait too much, to overrun the buffer. By swallowing enough packets
+     * we should eventually reach a discontinuity. We have a 500 ms buffer and
+     * normally the period is 10 ms, so 50 packets should be enough. Let's take
+     * a few more to stay safe. */
+    Sleep(600);
 
     hr = IAudioClient_GetCurrentPadding(ac, &pad);
     ok(hr == S_OK, "GetCurrentPadding call returns %08lx\n", hr);
+    /* Fails with CoreAudio. */
+    todo_if(pad != buffer_size)
     ok(pad == buffer_size, "GCP %u vs. BufferSize %u\n", (UINT32)pad, buffer_size);
 
-    hr = IAudioCaptureClient_GetBuffer(acc, &data, &frames, &flags, &pos, &qpc);
-    flaky_wine
-    ok(hr == S_OK, "Valid IAudioCaptureClient_GetBuffer returns %08lx\n", hr);
+    read_packets(ac, acc, handle, 75, &packets_data);
 
-    trace("Overrun position %d pad %u flags %lx, amount of frames locked: %u\n",
-          hr==S_OK ? (UINT)pos : -1, pad, flags, frames);
+    /* Works with Pulse, but fails with ALSA and CoreAudio. */
+    todo_wine_if(!packets_data.discontinuity_at_0 && !packets_data.discontinuity_at_later)
+    ok(packets_data.discontinuity_at_0 || packets_data.discontinuity_at_later, "No discontinuity\n");
 
-    if(hr == S_OK){
-        if(flags & AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY){
-            /* Native's position is one period further than what we read.
-             * Perhaps that's precisely the meaning of DATA_DISCONTINUITY:
-             * signal when the position jump left a gap. */
-            ok(pos >= sum + frames, "Position %u last %u frames %u\n", (UINT)pos, sum, frames);
-            sum = pos;
-        }else{ /* win10 */
-            ok(pos == sum, "Position %u last %u frames %u\n", (UINT)pos, sum, frames);
-        }
-    }
+    winetest_pop_context();
 
-    hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
-    ok(hr == S_OK, "Releasing buffer returns %08lx\n", hr);
-    sum += frames;
-
-    hr = IAudioClient_GetCurrentPadding(ac, &pad);
-    ok(hr == S_OK, "GetCurrentPadding call returns %08lx\n", hr);
-
-    hr = IAudioCaptureClient_GetBuffer(acc, &data, &frames, &flags, &pos, &qpc);
-    flaky_wine
-    ok(hr == S_OK, "Valid IAudioCaptureClient_GetBuffer returns %08lx\n", hr);
-
-    trace("Cont'ed position %d pad %u flags %lx, amount of frames locked: %u\n",
-          hr==S_OK ? (UINT)pos : -1, pad, flags, frames);
-
-    if(hr == S_OK){
-        flaky_wine
-        ok(pos == sum, "Position %u expected %u\n", (UINT)pos, sum);
-        flaky_wine
-        ok(!flags, "flags %lu\n", flags);
-
-        hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
-        ok(hr == S_OK, "Releasing buffer returns %08lx\n", hr);
-        sum += frames;
-    }
+    sum = packets_data.expected_dev_pos;
 
     hr = IAudioClient_Stop(ac);
     ok(hr == S_OK, "Stop on a started stream returns %08lx\n", hr);
 
     hr = IAudioClient_Start(ac);
     ok(hr == S_OK, "Start on a stopped stream returns %08lx\n", hr);
+
+    ok(WaitForSingleObject(handle, 1000) == WAIT_OBJECT_0, "Waiting on event handle failed!\n");
 
     hr = IAudioCaptureClient_GetBuffer(acc, &data, &frames, &flags, &pos, &qpc);
     flaky_wine
@@ -413,8 +386,6 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
 
     trace("Restart position %d pad %u flags %lx, amount of frames locked: %u\n",
           hr==S_OK ? (UINT)pos : -1, pad, flags, frames);
-    flaky_wine
-    ok(pad > sum, "restarted GCP %u\n", pad); /* GCP is still near buffer size */
 
     if(frames){
         flaky_wine
