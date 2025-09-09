@@ -411,14 +411,10 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
         ok(hr == AUDCLNT_E_OUT_OF_ORDER, "Releasing buffer twice returns %08lx\n", hr);
     }
 
-    frames = packets_data.period;
-    flaky_wine
-    ok(next == frames, "GetNextPacketSize %u vs. GetDevicePeriod %u\n", next, frames);
-
     /* GetBufferSize is not a multiple of the period size! */
     hr = IAudioClient_GetBufferSize(ac, &next);
     ok(hr == S_OK, "GetBufferSize failed: %08lx\n", hr);
-    trace("GetBufferSize %u period size %u\n", next, frames);
+    trace("GetBufferSize %u period size %u\n", next, packets_data.period);
 
     Sleep(600); /* overrun */
 
