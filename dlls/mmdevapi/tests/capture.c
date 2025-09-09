@@ -264,7 +264,7 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     struct read_packets_data packets_data;
     IAudioCaptureClient *acc;
     HRESULT hr;
-    UINT32 frames, next, pad, sum = 0;
+    UINT32 frames, next, pad, sum = 0, buffer_size;
     BYTE *data;
     DWORD flags;
     UINT64 pos, qpc;
@@ -311,6 +311,11 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     ok(hr == S_OK, "GetDevicePeriod failed: %08lx\n", hr);
     packets_data.period = MulDiv(period, wfx->nSamplesPerSec, 10000000); /* as in render.c */
 
+    /* GetBufferSize is not a multiple of the period size! */
+    hr = IAudioClient_GetBufferSize(ac, &buffer_size);
+    ok(hr == S_OK, "GetBufferSize failed: %08lx\n", hr);
+    trace("GetBufferSize %u period size %u\n", buffer_size, packets_data.period);
+
     hr = IAudioClient_Start(ac);
     ok(hr == S_OK, "Start on a stopped stream returns %08lx\n", hr);
 
@@ -339,15 +344,11 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
 
     sum = packets_data.expected_dev_pos;
 
-    /* GetBufferSize is not a multiple of the period size! */
-    hr = IAudioClient_GetBufferSize(ac, &next);
-    ok(hr == S_OK, "GetBufferSize failed: %08lx\n", hr);
-    trace("GetBufferSize %u period size %u\n", next, packets_data.period);
-
     Sleep(600); /* overrun */
 
     hr = IAudioClient_GetCurrentPadding(ac, &pad);
     ok(hr == S_OK, "GetCurrentPadding call returns %08lx\n", hr);
+    ok(pad == buffer_size, "GCP %u vs. BufferSize %u\n", (UINT32)pad, buffer_size);
 
     hr = IAudioCaptureClient_GetBuffer(acc, &data, &frames, &flags, &pos, &qpc);
     flaky_wine
@@ -366,8 +367,6 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
         }else{ /* win10 */
             ok(pos == sum, "Position %u last %u frames %u\n", (UINT)pos, sum, frames);
         }
-
-        ok(pad == next, "GCP %u vs. BufferSize %u\n", (UINT32)pad, next);
     }
 
     hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
