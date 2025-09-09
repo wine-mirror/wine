@@ -47,7 +47,7 @@ struct vulkan_client_object
 #include "wine/rbtree.h"
 
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
-#define WINE_VULKAN_DRIVER_VERSION 45
+#define WINE_VULKAN_DRIVER_VERSION 46
 
 struct vulkan_object
 {
@@ -190,6 +190,16 @@ struct vulkan_semaphore
 static inline struct vulkan_semaphore *vulkan_semaphore_from_handle( VkSemaphore handle )
 {
     return (struct vulkan_semaphore *)(UINT_PTR)handle;
+}
+
+struct vulkan_fence
+{
+    VULKAN_OBJECT_HEADER( VkFence, fence );
+};
+
+static inline struct vulkan_fence *vulkan_fence_from_handle( VkFence handle )
+{
+    return (struct vulkan_fence *)(UINT_PTR)handle;
 }
 
 struct vulkan_funcs

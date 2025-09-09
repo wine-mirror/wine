@@ -97,10 +97,21 @@ struct semaphore
     struct vulkan_semaphore obj;
 };
 
-static inline struct semaphore *semaphore_from_handle( VkSemaphore handle )
+static struct semaphore *semaphore_from_handle( VkSemaphore handle )
 {
     struct vulkan_semaphore *obj = vulkan_semaphore_from_handle( handle );
     return CONTAINING_RECORD( obj, struct semaphore, obj );
+}
+
+struct fence
+{
+    struct vulkan_fence obj;
+};
+
+static struct fence *fence_from_handle( VkFence handle )
+{
+    struct vulkan_fence *obj = vulkan_fence_from_handle( handle );
+    return CONTAINING_RECORD( obj, struct fence, obj );
 }
 
 static VkResult allocate_external_host_memory( struct vulkan_device *device, VkMemoryAllocateInfo *alloc_info, uint32_t mem_flags,
@@ -930,6 +941,7 @@ static VkResult win32u_vkAcquireNextImage2KHR( VkDevice client_device, const VkA
                                                uint32_t *image_index )
 {
     struct vulkan_semaphore *semaphore = acquire_info->semaphore ? vulkan_semaphore_from_handle( acquire_info->semaphore ) : NULL;
+    struct vulkan_fence *fence = acquire_info->fence ? vulkan_fence_from_handle( acquire_info->fence ) : NULL;
     struct swapchain *swapchain = swapchain_from_handle( acquire_info->swapchain );
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
     VkAcquireNextImageInfoKHR acquire_info_host = *acquire_info;
@@ -939,6 +951,7 @@ static VkResult win32u_vkAcquireNextImage2KHR( VkDevice client_device, const VkA
 
     acquire_info_host.swapchain = swapchain->obj.host.swapchain;
     acquire_info_host.semaphore = semaphore ? semaphore->host.semaphore : 0;
+    acquire_info_host.fence = fence ? fence->host.fence : 0;
     res = device->p_vkAcquireNextImage2KHR( device->host.device, &acquire_info_host, image_index );
 
     if (!res && NtUserGetClientRect( surface->hwnd, &client_rect, NtUserGetDpiForWindow( surface->hwnd ) ) &&
@@ -953,9 +966,10 @@ static VkResult win32u_vkAcquireNextImage2KHR( VkDevice client_device, const VkA
 }
 
 static VkResult win32u_vkAcquireNextImageKHR( VkDevice client_device, VkSwapchainKHR client_swapchain, uint64_t timeout,
-                                              VkSemaphore client_semaphore, VkFence fence, uint32_t *image_index )
+                                              VkSemaphore client_semaphore, VkFence client_fence, uint32_t *image_index )
 {
     struct vulkan_semaphore *semaphore = client_semaphore ? vulkan_semaphore_from_handle( client_semaphore ) : NULL;
+    struct vulkan_fence *fence = client_fence ? vulkan_fence_from_handle( client_fence ) : NULL;
     struct swapchain *swapchain = swapchain_from_handle( client_swapchain );
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
     struct surface *surface = swapchain->surface;
@@ -963,7 +977,8 @@ static VkResult win32u_vkAcquireNextImageKHR( VkDevice client_device, VkSwapchai
     VkResult res;
 
     res = device->p_vkAcquireNextImageKHR( device->host.device, swapchain->obj.host.swapchain, timeout,
-                                              semaphore ? semaphore->host.semaphore : 0, fence, image_index );
+                                              semaphore ? semaphore->host.semaphore : 0, fence ? fence->host.fence : 0,
+                                              image_index );
 
     if (!res && NtUserGetClientRect( surface->hwnd, &client_rect, NtUserGetDpiForWindow( surface->hwnd ) ) &&
         !extents_equals( &swapchain->extents, &client_rect ))
@@ -1062,12 +1077,13 @@ static VkResult win32u_vkQueuePresentKHR( VkQueue client_queue, const VkPresentI
     return res;
 }
 
-static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, const VkSubmitInfo *submits, VkFence fence )
+static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, const VkSubmitInfo *submits, VkFence client_fence )
 {
+    struct vulkan_fence *fence = client_fence ? vulkan_fence_from_handle( client_fence ) : NULL;
     struct vulkan_queue *queue = vulkan_queue_from_handle( client_queue );
     struct vulkan_device *device = queue->device;
 
-    TRACE( "queue %p, count %u, submits %p, fence 0x%s\n", queue, count, submits, wine_dbgstr_longlong( fence ) );
+    TRACE( "queue %p, count %u, submits %p, fence %p\n", queue, count, submits, fence );
 
     for (uint32_t i = 0; i < count; i++)
     {
@@ -1119,15 +1135,16 @@ static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, cons
         }
     }
 
-    return device->p_vkQueueSubmit( queue->host.queue, count, submits, fence );
+    return device->p_vkQueueSubmit( queue->host.queue, count, submits, fence ? fence->host.fence : 0 );
 }
 
-static VkResult win32u_vkQueueSubmit2( VkQueue client_queue, uint32_t count, const VkSubmitInfo2 *submits, VkFence fence )
+static VkResult win32u_vkQueueSubmit2( VkQueue client_queue, uint32_t count, const VkSubmitInfo2 *submits, VkFence client_fence )
 {
+    struct vulkan_fence *fence = client_fence ? vulkan_fence_from_handle( client_fence ) : NULL;
     struct vulkan_queue *queue = vulkan_queue_from_handle( client_queue );
     struct vulkan_device *device = queue->device;
 
-    TRACE( "queue %p, count %u, submits %p, fence 0x%s\n", queue, count, submits, wine_dbgstr_longlong( fence ) );
+    TRACE( "queue %p, count %u, submits %p, fence %p\n", queue, count, submits, fence );
 
     for (uint32_t i = 0; i < count; i++)
     {
@@ -1175,7 +1192,7 @@ static VkResult win32u_vkQueueSubmit2( VkQueue client_queue, uint32_t count, con
         }
     }
 
-    return device->p_vkQueueSubmit2( queue->host.queue, count, submits, fence );
+    return device->p_vkQueueSubmit2( queue->host.queue, count, submits, fence ? fence->host.fence : 0 );
 }
 
 static VkResult win32u_vkCreateSemaphore( VkDevice client_device, const VkSemaphoreCreateInfo *client_create_info,
@@ -1274,6 +1291,10 @@ static VkResult win32u_vkCreateFence( VkDevice client_device, const VkFenceCreat
     VkFenceCreateInfo *create_info = (VkFenceCreateInfo *)client_create_info; /* cast away const, chain has been copied in the thunks */
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
     VkBaseOutStructure **next, *prev = (VkBaseOutStructure *)create_info;
+    struct vulkan_instance *instance = device->physical_device->instance;
+    struct fence *fence;
+    VkFence host_fence;
+    VkResult res;
 
     TRACE( "device %p, create_info %p, allocator %p, ret %p\n", device, create_info, allocator, ret );
 
@@ -1293,16 +1314,35 @@ static VkResult win32u_vkCreateFence( VkDevice client_device, const VkFenceCreat
         }
     }
 
-    return device->p_vkCreateFence( device->host.device, create_info, NULL /* allocator */, ret );
+    if (!(fence = calloc( 1, sizeof(*fence) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+
+    if ((res = device->p_vkCreateFence( device->host.device, create_info, NULL /* allocator */, &host_fence )))
+    {
+        free( fence );
+        return res;
+    }
+
+    vulkan_object_init( &fence->obj.obj, host_fence );
+    instance->p_insert_object( instance, &fence->obj.obj );
+
+    *ret = fence->obj.client.fence;
+    return res;
 }
 
 static void win32u_vkDestroyFence( VkDevice client_device, VkFence client_fence, const VkAllocationCallbacks *allocator )
 {
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
+    struct fence *fence = fence_from_handle( client_fence );
+    struct vulkan_instance *instance = device->physical_device->instance;
 
-    TRACE( "device %p, client_fence %s, allocator %p\n", device, wine_dbgstr_longlong( client_fence ), allocator );
+    TRACE( "device %p, fence %p, allocator %p\n", device, fence, allocator );
 
-    return device->p_vkDestroyFence( device->host.device, client_fence, allocator );
+    if (!client_fence) return;
+
+    device->p_vkDestroyFence( device->host.device, fence->obj.host.fence, NULL /* allocator */ );
+    instance->p_remove_object( instance, &fence->obj.obj );
+
+    free( fence );
 }
 
 static VkResult win32u_vkGetFenceWin32HandleKHR( VkDevice client_device, const VkFenceGetWin32HandleInfoKHR *handle_info, HANDLE *handle )

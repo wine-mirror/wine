@@ -1126,6 +1126,8 @@ class VkHandle(object):
             return "vulkan_swapchain_from_handle({0})->host.swapchain".format(name)
         if self.name == "VkSemaphore":
             return "vulkan_semaphore_from_handle({0})->host.semaphore".format(name)
+        if self.name == "VkFence":
+            return "vulkan_fence_from_handle({0})->host.fence".format(name)
 
         if self.is_dispatchable():
             LOGGER.error("Unhandled host handle for: {0}".format(self.name))

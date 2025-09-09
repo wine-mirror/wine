@@ -9612,6 +9612,8 @@ static uint64_t wine_vk_unwrap_handle(uint32_t type, uint64_t handle)
         return (uint64_t) (uintptr_t) vulkan_device_from_handle(((VkDevice) (uintptr_t) handle))->host.device;
     case VK_OBJECT_TYPE_DEVICE_MEMORY:
         return (uint64_t) vulkan_device_memory_from_handle(handle)->host.device_memory;
+    case VK_OBJECT_TYPE_FENCE:
+        return (uint64_t) vulkan_fence_from_handle(handle)->host.fence;
     case VK_OBJECT_TYPE_INSTANCE:
         return (uint64_t) (uintptr_t) vulkan_instance_from_handle(((VkInstance) (uintptr_t) handle))->host.instance;
     case VK_OBJECT_TYPE_PHYSICAL_DEVICE:
@@ -28441,7 +28443,7 @@ static void convert_VkVideoEncodeSessionParametersFeedbackInfoKHR_host_to_win32(
     }
 }
 
-static void convert_VkFenceGetWin32HandleInfoKHR_win32_to_host(const VkFenceGetWin32HandleInfoKHR32 *in, VkFenceGetWin32HandleInfoKHR *out)
+static void convert_VkFenceGetWin32HandleInfoKHR_win32_to_unwrapped_host(const VkFenceGetWin32HandleInfoKHR32 *in, VkFenceGetWin32HandleInfoKHR *out)
 {
     if (!in) return;
 
@@ -39063,7 +39065,7 @@ static void convert_VkVideoSessionMemoryRequirementsKHR_array_host_to_win32(cons
     }
 }
 
-static void convert_VkImportFenceWin32HandleInfoKHR_win32_to_host(const VkImportFenceWin32HandleInfoKHR32 *in, VkImportFenceWin32HandleInfoKHR *out)
+static void convert_VkImportFenceWin32HandleInfoKHR_win32_to_unwrapped_host(const VkImportFenceWin32HandleInfoKHR32 *in, VkImportFenceWin32HandleInfoKHR *out)
 {
     if (!in) return;
 
@@ -39674,18 +39676,153 @@ static const VkSwapchainKHR *convert_VkSwapchainKHR_array_win64_to_unwrapped_hos
 #endif /* _WIN64 */
 
 #ifdef _WIN64
+static const VkFence *convert_VkFence_array_win64_to_host(struct conversion_context *ctx, const VkFence *in, uint32_t count)
+{
+    VkFence *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i] = vulkan_fence_from_handle(in[i])->host.fence;
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
+
+#ifdef _WIN64
 static void convert_VkPresentInfoKHR_win64_to_unwrapped_host(struct conversion_context *ctx, const VkPresentInfoKHR *in, VkPresentInfoKHR *out)
 {
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = in->pNext;
+    out->pNext = NULL;
     out->waitSemaphoreCount = in->waitSemaphoreCount;
     out->pWaitSemaphores = convert_VkSemaphore_array_win64_to_unwrapped_host(ctx, in->pWaitSemaphores, in->waitSemaphoreCount);
     out->swapchainCount = in->swapchainCount;
     out->pSwapchains = convert_VkSwapchainKHR_array_win64_to_unwrapped_host(ctx, in->pSwapchains, in->swapchainCount);
     out->pImageIndices = in->pImageIndices;
     out->pResults = in->pResults;
+
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_DEVICE_GROUP_PRESENT_INFO_KHR:
+        {
+            VkDeviceGroupPresentInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkDeviceGroupPresentInfoKHR *in_ext = (const VkDeviceGroupPresentInfoKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_DEVICE_GROUP_PRESENT_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->swapchainCount = in_ext->swapchainCount;
+            out_ext->pDeviceMasks = in_ext->pDeviceMasks;
+            out_ext->mode = in_ext->mode;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_FRAME_BOUNDARY_EXT:
+        {
+            VkFrameBoundaryEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkFrameBoundaryEXT *in_ext = (const VkFrameBoundaryEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_FRAME_BOUNDARY_EXT;
+            out_ext->pNext = NULL;
+            out_ext->flags = in_ext->flags;
+            out_ext->frameID = in_ext->frameID;
+            out_ext->imageCount = in_ext->imageCount;
+            out_ext->pImages = in_ext->pImages;
+            out_ext->bufferCount = in_ext->bufferCount;
+            out_ext->pBuffers = in_ext->pBuffers;
+            out_ext->tagName = in_ext->tagName;
+            out_ext->tagSize = in_ext->tagSize;
+            out_ext->pTag = in_ext->pTag;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_FRAME_BOUNDARY_TENSORS_ARM:
+        {
+            VkFrameBoundaryTensorsARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkFrameBoundaryTensorsARM *in_ext = (const VkFrameBoundaryTensorsARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_FRAME_BOUNDARY_TENSORS_ARM;
+            out_ext->pNext = NULL;
+            out_ext->tensorCount = in_ext->tensorCount;
+            out_ext->pTensors = in_ext->pTensors;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PRESENT_ID_2_KHR:
+        {
+            VkPresentId2KHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPresentId2KHR *in_ext = (const VkPresentId2KHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PRESENT_ID_2_KHR;
+            out_ext->pNext = NULL;
+            out_ext->swapchainCount = in_ext->swapchainCount;
+            out_ext->pPresentIds = in_ext->pPresentIds;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PRESENT_ID_KHR:
+        {
+            VkPresentIdKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPresentIdKHR *in_ext = (const VkPresentIdKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PRESENT_ID_KHR;
+            out_ext->pNext = NULL;
+            out_ext->swapchainCount = in_ext->swapchainCount;
+            out_ext->pPresentIds = in_ext->pPresentIds;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PRESENT_REGIONS_KHR:
+        {
+            VkPresentRegionsKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPresentRegionsKHR *in_ext = (const VkPresentRegionsKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PRESENT_REGIONS_KHR;
+            out_ext->pNext = NULL;
+            out_ext->swapchainCount = in_ext->swapchainCount;
+            out_ext->pRegions = in_ext->pRegions;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_FENCE_INFO_KHR:
+        {
+            VkSwapchainPresentFenceInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkSwapchainPresentFenceInfoKHR *in_ext = (const VkSwapchainPresentFenceInfoKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_FENCE_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->swapchainCount = in_ext->swapchainCount;
+            out_ext->pFences = convert_VkFence_array_win64_to_host(ctx, in_ext->pFences, in_ext->swapchainCount);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_MODE_INFO_KHR:
+        {
+            VkSwapchainPresentModeInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkSwapchainPresentModeInfoKHR *in_ext = (const VkSwapchainPresentModeInfoKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_MODE_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->swapchainCount = in_ext->swapchainCount;
+            out_ext->pPresentModes = in_ext->pPresentModes;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
 }
 #endif /* _WIN64 */
 
@@ -39740,6 +39877,22 @@ static const VkPresentRegionKHR *convert_VkPresentRegionKHR_array_win32_to_host(
     for (i = 0; i < count; i++)
     {
         convert_VkPresentRegionKHR_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static const VkFence *convert_VkFence_array_win32_to_host(struct conversion_context *ctx, const VkFence *in, uint32_t count)
+{
+    VkFence *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i] = vulkan_fence_from_handle(in[i])->host.fence;
     }
 
     return out;
@@ -39852,7 +40005,7 @@ static void convert_VkPresentInfoKHR_win32_to_unwrapped_host(struct conversion_c
             out_ext->sType = VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_FENCE_INFO_KHR;
             out_ext->pNext = NULL;
             out_ext->swapchainCount = in_ext->swapchainCount;
-            out_ext->pFences = UlongToPtr(in_ext->pFences);
+            out_ext->pFences = convert_VkFence_array_win32_to_host(ctx, (const VkFence *)UlongToPtr(in_ext->pFences), in_ext->swapchainCount);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -54558,7 +54711,7 @@ static NTSTATUS thunk64_vkGetFenceStatus(void *args)
 
     TRACE("%p, 0x%s\n", params->device, wine_dbgstr_longlong(params->fence));
 
-    params->result = vulkan_device_from_handle(params->device)->p_vkGetFenceStatus(vulkan_device_from_handle(params->device)->host.device, params->fence);
+    params->result = vulkan_device_from_handle(params->device)->p_vkGetFenceStatus(vulkan_device_from_handle(params->device)->host.device, vulkan_fence_from_handle(params->fence)->host.fence);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -54574,7 +54727,7 @@ static NTSTATUS thunk32_vkGetFenceStatus(void *args)
 
     TRACE("%#x, 0x%s\n", params->device, wine_dbgstr_longlong(params->fence));
 
-    params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkGetFenceStatus(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, params->fence);
+    params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkGetFenceStatus(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, vulkan_fence_from_handle(params->fence)->host.fence);
     return STATUS_SUCCESS;
 }
 
@@ -54603,7 +54756,7 @@ static NTSTATUS thunk32_vkGetFenceWin32HandleKHR(void *args)
 
     TRACE("%#x, %#x, %#x\n", params->device, params->pGetWin32HandleInfo, params->pHandle);
 
-    convert_VkFenceGetWin32HandleInfoKHR_win32_to_host((const VkFenceGetWin32HandleInfoKHR32 *)UlongToPtr(params->pGetWin32HandleInfo), &pGetWin32HandleInfo_host);
+    convert_VkFenceGetWin32HandleInfoKHR_win32_to_unwrapped_host((const VkFenceGetWin32HandleInfoKHR32 *)UlongToPtr(params->pGetWin32HandleInfo), &pGetWin32HandleInfo_host);
     params->result = vk_funcs->p_vkGetFenceWin32HandleKHR((VkDevice)UlongToPtr(params->device), &pGetWin32HandleInfo_host, (HANDLE *)UlongToPtr(params->pHandle));
     return STATUS_SUCCESS;
 }
@@ -58418,7 +58571,7 @@ static NTSTATUS thunk32_vkImportFenceWin32HandleKHR(void *args)
 
     TRACE("%#x, %#x\n", params->device, params->pImportFenceWin32HandleInfo);
 
-    convert_VkImportFenceWin32HandleInfoKHR_win32_to_host((const VkImportFenceWin32HandleInfoKHR32 *)UlongToPtr(params->pImportFenceWin32HandleInfo), &pImportFenceWin32HandleInfo_host);
+    convert_VkImportFenceWin32HandleInfoKHR_win32_to_unwrapped_host((const VkImportFenceWin32HandleInfoKHR32 *)UlongToPtr(params->pImportFenceWin32HandleInfo), &pImportFenceWin32HandleInfo_host);
     params->result = vk_funcs->p_vkImportFenceWin32HandleKHR((VkDevice)UlongToPtr(params->device), &pImportFenceWin32HandleInfo_host);
     return STATUS_SUCCESS;
 }
@@ -58753,7 +58906,7 @@ static NTSTATUS thunk64_vkQueueBindSparse(void *args)
 
     init_conversion_context(ctx);
     pBindInfo_host = convert_VkBindSparseInfo_array_win64_to_host(ctx, params->pBindInfo, params->bindInfoCount);
-    params->result = vulkan_queue_from_handle(params->queue)->device->p_vkQueueBindSparse(vulkan_queue_from_handle(params->queue)->host.queue, params->bindInfoCount, pBindInfo_host, params->fence);
+    params->result = vulkan_queue_from_handle(params->queue)->device->p_vkQueueBindSparse(vulkan_queue_from_handle(params->queue)->host.queue, params->bindInfoCount, pBindInfo_host, params->fence ? vulkan_fence_from_handle(params->fence)->host.fence : 0);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -58777,7 +58930,7 @@ static NTSTATUS thunk32_vkQueueBindSparse(void *args)
 
     init_conversion_context(ctx);
     pBindInfo_host = convert_VkBindSparseInfo_array_win32_to_host(ctx, (const VkBindSparseInfo32 *)UlongToPtr(params->pBindInfo), params->bindInfoCount);
-    params->result = vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueBindSparse(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue, params->bindInfoCount, pBindInfo_host, params->fence);
+    params->result = vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueBindSparse(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue, params->bindInfoCount, pBindInfo_host, params->fence ? vulkan_fence_from_handle(params->fence)->host.fence : 0);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -59336,10 +59489,16 @@ static NTSTATUS thunk32_vkResetEvent(void *args)
 static NTSTATUS thunk64_vkResetFences(void *args)
 {
     struct vkResetFences_params *params = args;
+    const VkFence *pFences_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->fenceCount, params->pFences);
 
-    params->result = vulkan_device_from_handle(params->device)->p_vkResetFences(vulkan_device_from_handle(params->device)->host.device, params->fenceCount, params->pFences);
+    init_conversion_context(ctx);
+    pFences_host = convert_VkFence_array_win64_to_host(ctx, params->pFences, params->fenceCount);
+    params->result = vulkan_device_from_handle(params->device)->p_vkResetFences(vulkan_device_from_handle(params->device)->host.device, params->fenceCount, pFences_host);
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -59353,10 +59512,16 @@ static NTSTATUS thunk32_vkResetFences(void *args)
         PTR32 pFences;
         VkResult result;
     } *params = args;
+    const VkFence *pFences_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%#x, %u, %#x\n", params->device, params->fenceCount, params->pFences);
 
-    params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkResetFences(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, params->fenceCount, (const VkFence *)UlongToPtr(params->pFences));
+    init_conversion_context(ctx);
+    pFences_host = convert_VkFence_array_win32_to_host(ctx, (const VkFence *)UlongToPtr(params->pFences), params->fenceCount);
+    params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkResetFences(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, params->fenceCount, pFences_host);
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 
@@ -60215,10 +60380,16 @@ static NTSTATUS thunk32_vkUpdateVideoSessionParametersKHR(void *args)
 static NTSTATUS thunk64_vkWaitForFences(void *args)
 {
     struct vkWaitForFences_params *params = args;
+    const VkFence *pFences_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %u, %p, %u, 0x%s\n", params->device, params->fenceCount, params->pFences, params->waitAll, wine_dbgstr_longlong(params->timeout));
 
-    params->result = vulkan_device_from_handle(params->device)->p_vkWaitForFences(vulkan_device_from_handle(params->device)->host.device, params->fenceCount, params->pFences, params->waitAll, params->timeout);
+    init_conversion_context(ctx);
+    pFences_host = convert_VkFence_array_win64_to_host(ctx, params->pFences, params->fenceCount);
+    params->result = vulkan_device_from_handle(params->device)->p_vkWaitForFences(vulkan_device_from_handle(params->device)->host.device, params->fenceCount, pFences_host, params->waitAll, params->timeout);
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -60234,10 +60405,16 @@ static NTSTATUS thunk32_vkWaitForFences(void *args)
         uint64_t DECLSPEC_ALIGN(8) timeout;
         VkResult result;
     } *params = args;
+    const VkFence *pFences_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%#x, %u, %#x, %u, 0x%s\n", params->device, params->fenceCount, params->pFences, params->waitAll, wine_dbgstr_longlong(params->timeout));
 
-    params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkWaitForFences(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, params->fenceCount, (const VkFence *)UlongToPtr(params->pFences), params->waitAll, params->timeout);
+    init_conversion_context(ctx);
+    pFences_host = convert_VkFence_array_win32_to_host(ctx, (const VkFence *)UlongToPtr(params->pFences), params->fenceCount);
+    params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkWaitForFences(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, params->fenceCount, pFences_host, params->waitAll, params->timeout);
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 
@@ -60870,6 +61047,7 @@ BOOL wine_vk_is_type_wrapped(VkObjectType type)
         type == VK_OBJECT_TYPE_DEFERRED_OPERATION_KHR ||
         type == VK_OBJECT_TYPE_DEVICE ||
         type == VK_OBJECT_TYPE_DEVICE_MEMORY ||
+        type == VK_OBJECT_TYPE_FENCE ||
         type == VK_OBJECT_TYPE_INSTANCE ||
         type == VK_OBJECT_TYPE_PHYSICAL_DEVICE ||
         type == VK_OBJECT_TYPE_QUEUE ||
