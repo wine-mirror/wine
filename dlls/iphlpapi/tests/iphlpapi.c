@@ -1899,12 +1899,12 @@ static void testGetBestRoute(void)
     ok( err == NO_ERROR,
         "GetBestRoute([127.0.0.1], 0, NULL) returned %lu, expected %d\n",
         err, NO_ERROR );
-    todo_wine ok( bestRoute.dwForwardMask == 0xffffffff, "got %#lx.\n", bestRoute.dwForwardMask );
+    ok( bestRoute.dwForwardMask == 0xffffffff, "got %#lx.\n", bestRoute.dwForwardMask );
 
     if_row.dwIndex = bestRoute.dwForwardIfIndex;
     err = GetIfEntry( &if_row );
     ok( !err, "got %lu.\n", err );
-    todo_wine ok( if_row.dwType == IF_TYPE_SOFTWARE_LOOPBACK, "got %#lx.\n", if_row.dwType );
+    ok( if_row.dwType == IF_TYPE_SOFTWARE_LOOPBACK, "got %#lx.\n", if_row.dwType );
 }
 
 /*

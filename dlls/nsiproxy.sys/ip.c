@@ -59,6 +59,10 @@
 #include <netinet6/ip6_var.h>
 #endif
 
+#ifdef HAVE_NET_IF_H
+# include <net/if.h>
+#endif
+
 #ifdef __APPLE__
 /* For reasons unknown, Mac OS doesn't export <netinet6/ip6_var.h> to user-
  * space. We'll have to define the needed struct ourselves.
@@ -1495,10 +1499,49 @@ static NTSTATUS ipv4_forward_enumerate_all( void *key_data, UINT key_size, void 
 
 #ifdef __linux__
     {
+        struct ifaddrs *addrs, *ifentry;
         char buf[512], *ptr;
         struct in_addr mask;
         UINT rtf_flags;
         FILE *fp;
+
+        /* Loopback routes are not present in /proc/net/routes, add those explicitly. */
+        if (getifaddrs( &addrs )) return STATUS_NO_MORE_ENTRIES;
+        for (ifentry = addrs; ifentry; ifentry = ifentry->ifa_next)
+        {
+            if (!(ifentry->ifa_flags & IFF_LOOPBACK)) continue;
+            if (!convert_unix_name_to_luid( ifentry->ifa_name, &entry.luid )) continue;
+            if (!convert_luid_to_index( &entry.luid, &entry.if_index )) continue;
+
+            if (num < *count)
+            {
+                entry.prefix.s_addr = htonl( 0x7f000000 );
+                entry.next_hop.s_addr = 0;
+                entry.metric = 256;
+                entry.prefix_len = 8;
+                entry.protocol = MIB_IPPROTO_LOCAL;
+                entry.loopback = 1;
+                ipv4_forward_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
+                key_data = (BYTE *)key_data + key_size;
+                rw_data = (BYTE *)rw_data + rw_size;
+                dynamic_data = (BYTE *)dynamic_data + dynamic_size;
+                static_data = (BYTE *)static_data + static_size;
+            }
+            num++;
+            if (num < *count)
+            {
+                entry.prefix.s_addr = htonl( INADDR_LOOPBACK );
+                entry.prefix_len = 32;
+                ipv4_forward_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
+                key_data = (BYTE *)key_data + key_size;
+                rw_data = (BYTE *)rw_data + rw_size;
+                dynamic_data = (BYTE *)dynamic_data + dynamic_size;
+                static_data = (BYTE *)static_data + static_size;
+            }
+            num++;
+            break;
+        }
+        freeifaddrs( addrs );
 
         if (!(fp = fopen( "/proc/net/route", "r" ))) return STATUS_NOT_SUPPORTED;
 

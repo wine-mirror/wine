@@ -811,8 +811,8 @@ static void test_ip_forward( int family )
     }
     if (family == AF_INET)
     {
-        todo_wine ok( ipv4_loopback_mask_found, "127.0.0.0/8 not found.\n" );
-        todo_wine ok( ipv4_loopback_found, "127.0.0.1/32 not found.\n" );
+        ok( ipv4_loopback_mask_found, "127.0.0.0/8 not found.\n" );
+        ok( ipv4_loopback_found, "127.0.0.1/32 not found.\n" );
     }
 
     FreeMibTable( table );
