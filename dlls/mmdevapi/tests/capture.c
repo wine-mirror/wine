@@ -114,7 +114,7 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
 
     while (idx < packet_count)
     {
-        UINT32 next_packet_size, frames;
+        UINT32 next_packet_size, frames, padding;
         UINT64 dev_pos, qpc_pos;
         DWORD flags;
         BYTE *ptr;
@@ -151,6 +151,11 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
 
         ok(next_packet_size == frames, "GetNextPacketSize returns %u, GetBuffer returns %u frames\n",
                 next_packet_size, frames);
+
+        hr = IAudioClient_GetCurrentPadding(ac, &padding);
+        ok(hr == S_OK, "GetCurrentPadding returns %08lx\n", hr);
+        ok(padding >= frames, "GetCurrentPadding returns %u, GetBuffer returns %u frames\n",
+                padding, frames);
 
         hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
         ok(hr == S_OK, "Releasing buffer returns %08lx\n", hr);
