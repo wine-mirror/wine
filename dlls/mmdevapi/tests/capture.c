@@ -158,6 +158,11 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
         ok(next_packet_size == frames, "GetNextPacketSize returns %u, GetBuffer returns %u frames\n",
                 next_packet_size, frames);
 
+        hr = IAudioCaptureClient_GetNextPacketSize(acc, &next_packet_size);
+        ok(hr == S_OK, "GetNextPacketSize returns %08lx\n", hr);
+        ok(next_packet_size == frames, "GetNextPacketSize returns %u, GetBuffer returns %u frames\n",
+                next_packet_size, frames);
+
         hr = IAudioClient_GetCurrentPadding(ac, &padding);
         ok(hr == S_OK, "GetCurrentPadding returns %08lx\n", hr);
         ok(padding >= frames, "GetCurrentPadding returns %u, GetBuffer returns %u frames\n",
@@ -195,6 +200,11 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
 
         hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
         ok(hr == AUDCLNT_E_OUT_OF_ORDER, "Releasing buffer again returns %08lx\n", hr);
+
+        hr = IAudioCaptureClient_GetNextPacketSize(acc, &next_packet_size);
+        ok(hr == S_OK, "GetNextPacketSize returns %08lx\n", hr);
+        ok(next_packet_size == frames, "GetNextPacketSize returns %u, GetBuffer returns %u frames\n",
+                next_packet_size, frames);
 
         hr = IAudioCaptureClient_GetBuffer(acc, &ptr, &frames2, &flags2, &dev_pos2, &qpc_pos2);
         ok(hr == S_OK, "GetBuffer returns %08lx\n", hr);
