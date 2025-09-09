@@ -709,6 +709,7 @@ static void test_ip_forward( int family )
     const NPI_MODULEID *mod = (family == AF_INET) ? &NPI_MS_IPV4_MODULEID : &NPI_MS_IPV6_MODULEID;
     DWORD key_size = (family == AF_INET) ? sizeof(*key4) : sizeof(*key6);
     DWORD err, count, i, rw_size, dyn_size;
+    BOOL ipv4_loopback_mask_found = FALSE, ipv4_loopback_found = FALSE;
 
     winetest_push_context( family == AF_INET ? "AF_INET" : "AF_INET6" );
 
@@ -760,6 +761,18 @@ static void test_ip_forward( int family )
             ok( row->NextHop.Ipv4.sin_addr.s_addr == key4->next_hop.s_addr, "mismatch\n" );
             ok( row->NextHop.Ipv4.sin_port == 0, "mismatch\n" );
             ok( row->Age == dyn4->age, "mismatch\n" );
+            if (key4->prefix.s_addr == htonl( 0x7f000000 ))
+            {
+                ipv4_loopback_mask_found = TRUE;
+                ok( key4->prefix_len == 8, "got %u.\n", key4->prefix_len );
+                ok( !key4->next_hop.s_addr, "got %#lx.\n", key4->next_hop.s_addr );
+            }
+            if (key4->prefix.s_addr == htonl( INADDR_LOOPBACK ))
+            {
+                ipv4_loopback_found = TRUE;
+                ok( key4->prefix_len == 32, "got %u.\n", key4->prefix_len );
+                ok( !key4->next_hop.s_addr, "got %#lx.\n", key4->next_hop.s_addr );
+            }
         }
         else
         {
@@ -795,6 +808,11 @@ static void test_ip_forward( int family )
         ok( row->Origin == stat->origin, "mismatch\n" );
 
         winetest_pop_context();
+    }
+    if (family == AF_INET)
+    {
+        todo_wine ok( ipv4_loopback_mask_found, "127.0.0.0/8 not found.\n" );
+        todo_wine ok( ipv4_loopback_found, "127.0.0.1/32 not found.\n" );
     }
 
     FreeMibTable( table );
