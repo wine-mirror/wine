@@ -292,45 +292,15 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     hr = IAudioClient_Start(ac);
     ok(hr == S_OK, "Start on a stopped stream returns %08lx\n", hr);
 
-    ok(WaitForSingleObject(handle, 1000) == WAIT_OBJECT_0, "Waiting on event handle failed!\n");
+    packets_data.expected_dev_pos = UINT64_MAX;
 
-    data = (void*)0xdeadf00d;
-    hr = IAudioCaptureClient_GetBuffer(acc, &data, &frames, &flags, &pos, &qpc);
-    ok(hr == S_OK || hr == AUDCLNT_S_BUFFER_EMPTY, "Valid IAudioCaptureClient_GetBuffer returns %08lx\n", hr);
-    if (hr == S_OK){
-        ok(frames, "Amount of frames locked is 0!\n");
-        /* broken: some w7 machines return pad == 0 and DATA_DISCONTINUITY here,
-         * AUDCLNT_S_BUFFER_EMPTY above, yet pos == 1-2 * period rather than 0 */
-        ok(pos == sum || broken(flags & AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY),
-           "Position %u expected %u\n", (UINT)pos, sum);
-        sum = pos;
-    }else if (hr == AUDCLNT_S_BUFFER_EMPTY){
-        ok(!frames, "Amount of frames locked with empty buffer is %u!\n", frames);
-        ok(broken(data == (void*)0xdeadf00d) || /* <= win8 */
-                data == NULL, "No data changed to %p\n", data);
-    }
+    winetest_push_context("read 10 packets");
 
-    trace("Wait'ed position %d pad %u flags %lx, amount of frames locked: %u\n",
-          hr==S_OK ? (UINT)pos : -1, pad, flags, frames);
+    read_packets(ac, acc, handle, 10, &packets_data);
 
-    hr = IAudioCaptureClient_GetNextPacketSize(acc, &next);
-    ok(hr == S_OK, "IAudioCaptureClient_GetNextPacketSize returns %08lx\n", hr);
-    ok(next == frames, "GetNextPacketSize %u vs. GetBuffer %u\n", next, frames);
+    winetest_pop_context();
 
-    hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
-    ok(hr == S_OK, "Releasing buffer returns %08lx\n", hr);
-
-    hr = IAudioCaptureClient_ReleaseBuffer(acc, 0);
-    ok(hr == S_OK, "Releasing 0 returns %08lx\n", hr);
-
-    hr = IAudioCaptureClient_GetNextPacketSize(acc, &next);
-    ok(hr == S_OK, "IAudioCaptureClient_GetNextPacketSize returns %08lx\n", hr);
-
-    if (frames) {
-        hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
-        ok(hr == AUDCLNT_E_OUT_OF_ORDER, "Releasing buffer twice returns %08lx\n", hr);
-        sum += frames;
-    }
+    sum = packets_data.expected_dev_pos;
 
     Sleep(350); /* for sure there's data now */
 
