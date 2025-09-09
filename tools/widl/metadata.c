@@ -2320,12 +2320,11 @@ static void add_interface_type_step1( type_t *type )
 
     create_typeref( type );
 
-    add_exclusiveto_attr_step1( type );
-
     if ((class = type->details.iface->runtime_class)) add_runtimeclass_type_step1( class );
 
     add_contract_attr_step1( type );
     add_uuid_attr_step1( type );
+    add_exclusiveto_attr_step1( type );
 
     STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(type) )
     {
