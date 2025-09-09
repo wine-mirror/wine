@@ -108,6 +108,39 @@ library MSINKAUTLib
         IRC_Poor = 2
     } InkRecognitionConfidence;
 
+    typedef enum InkOverlayEditingMode
+    {
+        IOEM_Ink    = 0,
+        IOEM_Delete = 1,
+        IOEM_Select = 2
+    } InkOverlayEditingMode;
+
+    typedef enum InkOverlayEraserMode
+    {
+        IOERM_StrokeErase = 0,
+        IOERM_PointErase  = 1
+    } InkOverlayEraserMode;
+
+    typedef enum
+    {
+        IOAM_Behind  = 0,
+        IOAM_InFront = 1
+    } InkOverlayAttachMode;
+
+    typedef enum SelectionHitResult
+    {
+        SHR_None      = 0,
+        SHR_NW        = 1,
+        SHR_SE        = 2,
+        SHR_NE        = 3,
+        SHR_SW        = 4,
+        SHR_E         = 5,
+        SHR_W         = 6,
+        SHR_N         = 7,
+        SHR_S         = 8,
+        SHR_Selection = 9
+    } SelectionHitResult;
+
     [
         odl,
         uuid(DB489209-B7C3-411D-90F6-1548CFFF271E),
@@ -1005,5 +1038,177 @@ cpp_quote("#endif /* _WINGDI_ */")
         [id(0x0000000a)]             HRESULT SetEventInterest(
             [in] InkCollectorEventInterest EventId,
             [in] VARIANT_BOOL Listen);
+    }
+
+    [
+        odl,
+        dual,
+        oleautomation,
+        uuid(B82A463B-C1C5-45A3-997C-DEAB5651B67A),
+    ]
+    interface IInkOverlay : IDispatch
+    {
+        [id(0x00000002), propget]
+        HRESULT hWnd([out, retval] LONG_PTR *window);
+        [id(0x00000002), propput]
+        HRESULT hWnd([in] LONG_PTR window);
+
+        [id(0x00000001), propget]
+        HRESULT Enabled([out, retval] VARIANT_BOOL* Collecting);
+        [id(0x00000001), propput]
+        HRESULT Enabled([in] VARIANT_BOOL Collecting);
+
+        [id(0x00000005), propget]
+        HRESULT DefaultDrawingAttributes([out, retval] IInkDrawingAttributes** CurrentAttributes);
+        [id(0x00000005), propputref]
+        HRESULT DefaultDrawingAttributes([in] IInkDrawingAttributes* CurrentAttributes);
+
+        [id(0x00000006), propget]
+        HRESULT Renderer([out, retval] IInkRenderer** CurrentInkRenderer);
+        [id(0x00000006), propputref]
+        HRESULT Renderer([in] IInkRenderer* CurrentInkRenderer);
+
+        [id(0x00000007), propget]
+        HRESULT Ink([out, retval] IInkDisp** Ink);
+        [id(0x00000007), propputref]
+        HRESULT Ink([in] IInkDisp* Ink);
+
+        [id(0x00000008), propget]
+        HRESULT AutoRedraw([out, retval] VARIANT_BOOL* AutoRedraw);
+        [id(0x00000008), propput]
+        HRESULT AutoRedraw([in] VARIANT_BOOL AutoRedraw);
+
+        [id(0x00000009), propget]
+        HRESULT CollectingInk([out, retval] VARIANT_BOOL* Collecting);
+
+        [id(0x0000001c), propget]
+        HRESULT CollectionMode([out, retval] InkCollectionMode* Mode);
+        [id(0x0000001c), propput]
+        HRESULT CollectionMode([in] InkCollectionMode Mode);
+
+        [id(0x0000001f), propget]
+        HRESULT DynamicRendering([out, retval] VARIANT_BOOL* Enabled);
+        [id(0x0000001f), propput]
+        HRESULT DynamicRendering([in] VARIANT_BOOL Enabled);
+
+        [id(0x00000020), propget]
+        HRESULT DesiredPacketDescription([out, retval] VARIANT* PacketGuids);
+        [id(0x00000020), propput]
+        HRESULT DesiredPacketDescription([in] VARIANT PacketGuids);
+
+        [id(0x00000023), propget]
+        HRESULT MouseIcon([out, retval] IPictureDisp** MouseIcon);
+        [id(0x00000023), propput]
+        HRESULT MouseIcon([in] IPictureDisp* MouseIcon);
+        [id(0x00000023), propputref]
+        HRESULT MouseIcon([in] IPictureDisp* MouseIcon);
+
+        [id(0x00000024), propget]
+        HRESULT MousePointer([out, retval] InkMousePointer* MousePointer);
+        [id(0x00000024), propput]
+        HRESULT MousePointer([in] InkMousePointer MousePointer);
+
+        [id(0x0000000c), propget]
+        HRESULT EditingMode([out, retval] InkOverlayEditingMode* EditingMode);
+        [id(0x0000000c), propput]
+        HRESULT EditingMode([in] InkOverlayEditingMode EditingMode);
+
+        [id(0x0000000d), propget]
+        HRESULT Selection([out, retval] IInkStrokes** Selection);
+        [id(0x0000000d), propput]
+        HRESULT Selection([in] IInkStrokes* Selection);
+
+        [id(0x00000021), propget]
+        HRESULT EraserMode([out, retval] InkOverlayEraserMode* EraserMode);
+        [id(0x00000021), propput]
+        HRESULT EraserMode([in] InkOverlayEraserMode EraserMode);
+
+        [id(0x00000022), propget]
+        HRESULT EraserWidth([out, retval] long* EraserWidth);
+        [id(0x00000022), propput]
+        HRESULT EraserWidth([in] long EraserWidth);
+
+        [id(0x0000000e), propget]
+        HRESULT AttachMode([out, retval] InkOverlayAttachMode* AttachMode);
+        [id(0x0000000e), propput]
+        HRESULT AttachMode([in] InkOverlayAttachMode AttachMode);
+
+        [id(0x00000014), propget]
+        HRESULT Cursors([out, retval] IInkCursors** Cursors);
+
+        [id(0x00000015), propget]
+        HRESULT MarginX([out, retval] long* MarginX);
+        [id(0x00000015), propput]
+        HRESULT MarginX([in] long MarginX);
+
+        [id(0x00000016), propget]
+        HRESULT MarginY([out, retval] long* MarginY);
+        [id(0x00000016), propput]
+        HRESULT MarginY([in] long MarginY);
+
+        [id(0x00000019), propget]
+        HRESULT Tablet([out, retval] IInkTablet** SingleTablet);
+
+        [id(0x00000026), propget]
+        HRESULT SupportHighContrastInk([out, retval] VARIANT_BOOL* Support);
+        [id(0x00000026), propput]
+        HRESULT SupportHighContrastInk([in] VARIANT_BOOL Support);
+
+        [id(0x00000027), propget]
+        HRESULT SupportHighContrastSelectionUI([out, retval] VARIANT_BOOL* Support);
+        [id(0x00000027), propput]
+        HRESULT SupportHighContrastSelectionUI([in] VARIANT_BOOL Support);
+
+        [id(0x0000000f)]
+        HRESULT HitTestSelection([in] long x, [in] long y, [out, retval] SelectionHitResult* SelArea);
+
+        [id(0x00000010)]
+        HRESULT Draw([in] IInkRectangle* Rect);
+
+        [id(0x0000001d)]
+        HRESULT SetGestureStatus([in] InkApplicationGesture Gesture, [in] VARIANT_BOOL Listen);
+
+        [id(0x0000001e)]
+        HRESULT GetGestureStatus([in] InkApplicationGesture Gesture, [out, retval] VARIANT_BOOL* Listening);
+
+        [id(0x00000018)]
+        HRESULT GetWindowInputRectangle([in, out] IInkRectangle** WindowInputRectangle);
+
+        [id(0x00000017)]
+        HRESULT SetWindowInputRectangle([in] IInkRectangle* WindowInputRectangle);
+
+        [id(0x0000001a)]
+        HRESULT SetAllTabletsMode([in, optional, defaultvalue(-1)] VARIANT_BOOL UseMouseForInput);
+
+        [id(0x0000001b)]
+        HRESULT SetSingleTabletIntegratedMode([in] IInkTablet* Tablet);
+
+        [id(0x0000000b)]
+        HRESULT GetEventInterest([in] InkCollectorEventInterest EventId, [out, retval] VARIANT_BOOL* Listen);
+
+        [id(0x0000000a)]
+        HRESULT SetEventInterest([in] InkCollectorEventInterest EventId, [in] VARIANT_BOOL Listen);
+    }
+
+    [
+        progid("msinkaut.InkObject.1"),
+        vi_progid("msinkaut.InkObject"),
+        threading(both),
+        uuid(937c1a34-151d-4610-9ca6-a8cc9bdb5d83)
+    ]
+    coclass InkDisp
+    {
+        [default] interface IInkDisp;
+    }
+
+    [
+        progid("msinkaut.InkOverlay.1"),
+        vi_progid("msinkaut.InkOverlay"),
+        threading(both),
+        uuid(65d00646-cde3-4a88-9163-6769f0f1a97d)
+    ]
+    coclass InkOverlay
+    {
+        [default] interface IInkOverlay;
     }
 }
