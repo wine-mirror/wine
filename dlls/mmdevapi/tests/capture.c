@@ -157,8 +157,26 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
         ok(padding >= frames, "GetCurrentPadding returns %u, GetBuffer returns %u frames\n",
                 padding, frames);
 
+        ptr = (void*)0xdeadf00ddeadf00d;
+        flags2 = 0xdeadf11d;
+        dev_pos2 = 0xdeadf22ddeadf22d;
+        qpc_pos2 = 0xdeadf33ddeadf33d;
+        hr = IAudioCaptureClient_GetBuffer(acc, &ptr, &frames2, &flags2, &dev_pos2, &qpc_pos2);
+        ok(hr == AUDCLNT_E_OUT_OF_ORDER, "Second GetBuffer returns %08lx\n", hr);
+        ok(broken((uintptr_t)ptr == (uintptr_t)0xdeadf00ddeadf00d) || /* <= win8 */
+                !ptr, "Unexpected data after second GetBuffer: %p\n", ptr);
+        ok(flags2 == 0xdeadf11d, "Unexpected flags after second GetBuffer: %08lx\n", flags2);
+        ok(dev_pos2 == 0xdeadf22ddeadf22d, "Unexpected device position after second GetBuffer: %I64u\n", dev_pos2);
+        ok(qpc_pos2 == 0xdeadf33ddeadf33d, "Unexpected QPC position after second GetBuffer: %I64u\n", qpc_pos2);
+
         hr = IAudioCaptureClient_ReleaseBuffer(acc, 0);
         ok(hr == S_OK, "Releasing buffer returns %08lx\n", hr);
+
+        hr = IAudioCaptureClient_ReleaseBuffer(acc, 0);
+        ok(hr == S_OK, "Releasing buffer again returns %08lx\n", hr);
+
+        hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
+        ok(hr == AUDCLNT_E_OUT_OF_ORDER, "Releasing buffer again returns %08lx\n", hr);
 
         hr = IAudioCaptureClient_GetBuffer(acc, &ptr, &frames2, &flags2, &dev_pos2, &qpc_pos2);
         ok(hr == S_OK, "GetBuffer returns %08lx\n", hr);
@@ -179,6 +197,9 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
 
         hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
         ok(hr == S_OK, "Releasing buffer returns %08lx\n", hr);
+
+        hr = IAudioCaptureClient_ReleaseBuffer(acc, 0);
+        ok(hr == S_OK, "Releasing buffer again returns %08lx\n", hr);
 
         ++idx;
 
