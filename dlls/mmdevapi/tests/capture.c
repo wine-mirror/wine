@@ -420,7 +420,7 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     ok(hr == S_OK, "GetBufferSize failed: %08lx\n", hr);
     trace("GetBufferSize %u period size %u\n", next, frames);
 
-    Sleep(400); /* overrun */
+    Sleep(600); /* overrun */
 
     hr = IAudioClient_GetCurrentPadding(ac, &pad);
     ok(hr == S_OK, "GetCurrentPadding call returns %08lx\n", hr);
