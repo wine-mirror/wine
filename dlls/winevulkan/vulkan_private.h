@@ -29,18 +29,6 @@
 
 extern const struct vulkan_funcs *vk_funcs;
 
-struct wine_cmd_buffer
-{
-    VULKAN_OBJECT_HEADER( VkCommandBuffer, command_buffer );
-    struct vulkan_device *device;
-};
-
-static inline struct wine_cmd_buffer *wine_cmd_buffer_from_handle(VkCommandBuffer handle)
-{
-    struct vulkan_client_object *client = (struct vulkan_client_object *)handle;
-    return (struct wine_cmd_buffer *)(UINT_PTR)client->unix_handle;
-}
-
 struct wine_queue
 {
     struct vulkan_queue obj;

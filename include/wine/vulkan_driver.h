@@ -138,6 +138,18 @@ static inline struct vulkan_queue *vulkan_queue_from_handle( VkQueue handle )
     return (struct vulkan_queue *)(UINT_PTR)client->unix_handle;
 }
 
+struct vulkan_command_buffer
+{
+    VULKAN_OBJECT_HEADER( VkCommandBuffer, command_buffer );
+    struct vulkan_device *device;
+};
+
+static inline struct vulkan_command_buffer *vulkan_command_buffer_from_handle( VkCommandBuffer handle )
+{
+    struct vulkan_client_object *client = (struct vulkan_client_object *)handle;
+    return (struct vulkan_command_buffer *)(UINT_PTR)client->unix_handle;
+}
+
 struct vulkan_device_memory
 {
     VULKAN_OBJECT_HEADER( VkDeviceMemory, device_memory );

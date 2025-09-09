@@ -1057,7 +1057,7 @@ class VkHandle(object):
             # Should only happen for VkInstance
             return "vulkan_instance_from_handle({0})".format(param)
         elif self.name == "VkCommandBuffer":
-            return "wine_cmd_buffer_from_handle({0})->device".format(param)
+            return "vulkan_command_buffer_from_handle({0})->device".format(param)
         elif self.name == "VkDevice":
             return "vulkan_device_from_handle({0})".format(param)
         elif self.name == "VkPhysicalDevice":
@@ -1096,7 +1096,7 @@ class VkHandle(object):
         """ Provide access to the host handle of a wrapped object. """
 
         if self.name == "VkCommandBuffer":
-            return "wine_cmd_buffer_from_handle({0})->host.command_buffer".format(name)
+            return "vulkan_command_buffer_from_handle({0})->host.command_buffer".format(name)
         if self.name == "VkCommandPool":
             return "wine_cmd_pool_from_handle({0})->host.command_pool".format(name)
         if self.name == "VkDebugUtilsMessengerEXT":
