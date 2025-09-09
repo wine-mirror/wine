@@ -891,18 +891,18 @@ static BOOL set_report_from_controller_event(struct sdl_device *impl, SDL_Event 
             case SDL_CONTROLLER_BUTTON_LEFTSTICK: button = 8; break;
             case SDL_CONTROLLER_BUTTON_RIGHTSTICK: button = 9; break;
             case SDL_CONTROLLER_BUTTON_DPAD_UP: button = 10; break;
-            case SDL_CONTROLLER_BUTTON_DPAD_DOWN: button = 11; break;
-            case SDL_CONTROLLER_BUTTON_DPAD_LEFT: button = 12; break;
-            case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: button = 13; break;
+            case SDL_CONTROLLER_BUTTON_DPAD_DOWN: button = 12; break;
+            case SDL_CONTROLLER_BUTTON_DPAD_LEFT: button = 13; break;
+            case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: button = 11; break;
             case SDL_CONTROLLER_BUTTON_GUIDE: button = 16; break;
             default: button = -1; break;
             }
 
             if (button == -1) break;
             if (button == 10) hid_device_move_hatswitch(iface, 0, 0, ie->state ? -1 : +1);
-            if (button == 11) hid_device_move_hatswitch(iface, 0, 0, ie->state ? +1 : -1);
-            if (button == 12) hid_device_move_hatswitch(iface, 0, ie->state ? -1 : +1, 0);
-            if (button == 13) hid_device_move_hatswitch(iface, 0, ie->state ? +1 : -1, 0);
+            if (button == 12) hid_device_move_hatswitch(iface, 0, 0, ie->state ? +1 : -1);
+            if (button == 13) hid_device_move_hatswitch(iface, 0, ie->state ? -1 : +1, 0);
+            if (button == 11) hid_device_move_hatswitch(iface, 0, ie->state ? +1 : -1, 0);
             hid_device_set_button(iface, button, ie->state);
             bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
             break;
