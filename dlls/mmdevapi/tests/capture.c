@@ -21,6 +21,7 @@
  * - IAudioClient with eCapture and IAudioCaptureClient
  */
 
+#include <stdint.h>
 #include <math.h>
 
 #include "wine/test.h"
@@ -106,8 +107,13 @@ static void test_uninitialized(IAudioClient *ac)
     CloseHandle(handle);
 }
 
+struct read_packets_data
+{
+    UINT64 expected_dev_pos;
+};
+
 static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE handle,
-        unsigned int packet_count)
+        unsigned int packet_count, struct read_packets_data *data)
 {
     unsigned int idx = 0;
     HRESULT hr;
@@ -157,6 +163,18 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
         ok(padding >= frames, "GetCurrentPadding returns %u, GetBuffer returns %u frames\n",
                 padding, frames);
 
+        if (data->expected_dev_pos != UINT64_MAX)
+        {
+            /* Win <= 8 and some older Win 10 builds sometimes handle discontinuities incorrectly. */
+            ok(dev_pos >= data->expected_dev_pos || broken(dev_pos < data->expected_dev_pos),
+                    "GetBuffer returns %I64u device position, expected at least %I64u\n",
+                    dev_pos, data->expected_dev_pos);
+            if (!(flags & AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY))
+                ok(dev_pos == data->expected_dev_pos || broken(dev_pos != data->expected_dev_pos),
+                        "GetBuffer returns %I64u device position, expected %I64u\n",
+                        dev_pos, data->expected_dev_pos);
+        }
+
         ptr = (void*)0xdeadf00ddeadf00d;
         flags2 = 0xdeadf11d;
         dev_pos2 = 0xdeadf22ddeadf22d;
@@ -201,6 +219,8 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
         hr = IAudioCaptureClient_ReleaseBuffer(acc, 0);
         ok(hr == S_OK, "Releasing buffer again returns %08lx\n", hr);
 
+        data->expected_dev_pos = dev_pos + frames;
+
         ++idx;
 
         winetest_pop_context();
@@ -209,6 +229,7 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
 
 static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
 {
+    struct read_packets_data packets_data;
     IAudioCaptureClient *acc;
     HRESULT hr;
     UINT32 frames, next, pad, sum = 0;
@@ -497,7 +518,9 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     hr = IAudioClient_Start(ac);
     ok(hr == S_OK, "Start on a stopped stream returns %08lx\n", hr);
 
-    read_packets(ac, acc, handle, 10);
+    packets_data.expected_dev_pos = sum;
+
+    read_packets(ac, acc, handle, 10, &packets_data);
 
     IAudioCaptureClient_Release(acc);
 }
