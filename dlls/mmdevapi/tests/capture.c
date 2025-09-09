@@ -114,9 +114,9 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
 
     while (idx < packet_count)
     {
-        UINT32 next_packet_size, frames, padding;
-        UINT64 dev_pos, qpc_pos;
-        DWORD flags;
+        UINT32 next_packet_size, frames, frames2, padding;
+        UINT64 dev_pos, dev_pos2, qpc_pos, qpc_pos2;
+        DWORD flags, flags2;
         BYTE *ptr;
 
         winetest_push_context("packet %u", idx);
@@ -156,6 +156,23 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
         ok(hr == S_OK, "GetCurrentPadding returns %08lx\n", hr);
         ok(padding >= frames, "GetCurrentPadding returns %u, GetBuffer returns %u frames\n",
                 padding, frames);
+
+        hr = IAudioCaptureClient_ReleaseBuffer(acc, 0);
+        ok(hr == S_OK, "Releasing buffer returns %08lx\n", hr);
+
+        hr = IAudioCaptureClient_GetBuffer(acc, &ptr, &frames2, &flags2, &dev_pos2, &qpc_pos2);
+        ok(hr == S_OK, "GetBuffer returns %08lx\n", hr);
+
+        ok(frames == frames2, "First GetBuffer returns %u frames, second GetBuffer returns %u\n",
+                frames, frames2);
+        ok(flags == flags2, "First GetBuffer returns %08lx flags, second GetBuffer returns %08lx\n",
+                flags, flags2);
+        ok(dev_pos == dev_pos2, "First GetBuffer returns %I64u device position, second GetBuffer returns %I64u\n",
+                dev_pos, dev_pos2);
+        /* Works with Pulse, but fails with ALSA and CoreAudio. */
+        todo_wine_if(qpc_pos != qpc_pos2)
+        ok(qpc_pos == qpc_pos2, "First GetBuffer returns %I64u device QPC, second GetBuffer returns %I64u\n",
+                qpc_pos, qpc_pos2);
 
         hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
         ok(hr == S_OK, "Releasing buffer returns %08lx\n", hr);
