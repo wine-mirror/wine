@@ -107,9 +107,11 @@ static PFN_glCopyBufferSubData pglCopyBufferSubData;
 static PFN_glCopyNamedBufferSubData pglCopyNamedBufferSubData;
 static PFN_glCreateBuffers pglCreateBuffers;
 static PFN_glDeleteBuffers pglDeleteBuffers;
+static PFN_glDeleteSync pglDeleteSync;
 static PFN_glFlushMappedBufferRange pglFlushMappedBufferRange;
 static PFN_glFlushMappedNamedBufferRange pglFlushMappedNamedBufferRange;
 static PFN_glGenBuffers pglGenBuffers;
+static PFN_glIsSync pglIsSync;
 static PFN_glMapBuffer pglMapBuffer;
 static PFN_glMapBufferRange pglMapBufferRange;
 static PFN_glMapNamedBuffer pglMapNamedBuffer;
@@ -191,9 +193,11 @@ static void init_functions(void)
     GET_PROC(glCopyNamedBufferSubData)
     GET_PROC(glCreateBuffers)
     GET_PROC(glDeleteBuffers)
+    GET_PROC(glDeleteSync)
     GET_PROC(glFlushMappedBufferRange)
     GET_PROC(glFlushMappedNamedBufferRange)
     GET_PROC(glGenBuffers)
+    GET_PROC(glIsSync)
     GET_PROC(glMapBuffer)
     GET_PROC(glMapBufferRange)
     GET_PROC(glMapNamedBuffer)
@@ -3491,6 +3495,50 @@ static void check_gl_error_( unsigned int line, GLenum exp )
     ok_(__FILE__,line)( err == exp, "glGetError returned %x, expected %x\n", err, exp );
 }
 
+static void test_gl_error( HDC hdc )
+{
+    HGLRC rc, old_rc;
+    int i;
+    BOOL ret;
+
+    if (!pglDeleteSync)
+    {
+        skip( "glDeleteSync not available\n" );
+        return;
+    }
+
+    old_rc = wglGetCurrentContext();
+    rc = wglCreateContext( hdc );
+    ok( !!rc, "got %p\n", rc );
+    ret = wglMakeCurrent( hdc, rc );
+    ok( ret, "got %u\n", ret );
+
+    check_gl_error( GL_NO_ERROR );
+    glGetIntegerv( 0xdeadbeef, &i );
+    check_gl_error( GL_INVALID_ENUM );
+    check_gl_error( GL_NO_ERROR );
+
+    pglDeleteSync( (GLsync)0xdeadbeef );
+    check_gl_error( GL_INVALID_VALUE );
+    check_gl_error( GL_NO_ERROR );
+
+    glGetIntegerv( 0xdeadbeef, &i );
+    pglDeleteSync( (GLsync)0xdeadbeef );
+    check_gl_error( GL_INVALID_ENUM );
+    check_gl_error( GL_NO_ERROR );
+
+    pglDeleteSync( (GLsync)0xdeadbeef );
+    glGetIntegerv( 0xdeadbeef, &i );
+    check_gl_error( GL_INVALID_VALUE );
+    check_gl_error( GL_NO_ERROR );
+
+    ret = pglIsSync( (GLsync)0xdeadbeef );
+    ok( !ret, "glIsSync returned %x\n", ret );
+    check_gl_error( GL_NO_ERROR );
+
+    wglMakeCurrent( hdc, old_rc );
+}
+
 static void test_memory_map( HDC hdc)
 {
     unsigned int i, major = 0, minor = 0;
@@ -3745,6 +3793,7 @@ START_TEST(opengl)
         pD3DKMTCreateDCFromMemory  = (void *)GetProcAddress( gdi32, "D3DKMTCreateDCFromMemory" );
         pD3DKMTDestroyDCFromMemory = (void *)GetProcAddress( gdi32, "D3DKMTDestroyDCFromMemory" );
 
+        check_gl_error( GL_INVALID_OPERATION );
         ShowWindow(hwnd, SW_SHOW);
 
         hdc = GetDC(hwnd);
@@ -3824,6 +3873,7 @@ START_TEST(opengl)
         test_acceleration(hdc);
         test_framebuffer();
         test_memory_map(hdc);
+        test_gl_error(hdc);
 
         wgl_extensions = pwglGetExtensionsStringARB(hdc);
         if(wgl_extensions == NULL) skip("Skipping opengl32 tests because this OpenGL implementation doesn't support WGL extensions!\n");

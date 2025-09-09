@@ -139,6 +139,7 @@ struct context
     GLuint *disabled_exts;       /* indices of disabled extensions */
     GLubyte *wow64_version;      /* wow64 GL version override */
     struct buffers *buffers;     /* wow64 buffers map */
+    GLenum gl_error;             /* wrapped GL error */
 
     /* semi-stub state tracker for wglCopyContext */
     GLbitfield used;                            /* context state used bits */
@@ -2023,12 +2024,41 @@ NTSTATUS return_wow64_string( const void *str, PTR32 *wow64_str )
     return STATUS_BUFFER_TOO_SMALL;
 }
 
+GLenum wow64_glGetError( TEB *teb )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    GLenum gl_err, prev_err;
+    struct context *ctx;
+
+    if (!(ctx = get_current_context( teb, NULL, NULL ))) return GL_INVALID_OPERATION;
+    gl_err = funcs->p_glGetError();
+    prev_err = ctx->gl_error;
+    ctx->gl_error = GL_NO_ERROR;
+    return prev_err ? prev_err : gl_err;
+}
+
+static void set_gl_error( TEB *teb, GLenum gl_error )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    struct context *ctx;
+
+    if (!(ctx = get_current_context( teb, NULL, NULL )) || ctx->gl_error) return;
+    if (!(ctx->gl_error = funcs->p_glGetError())) ctx->gl_error = gl_error;
+}
+
+static struct wgl_handle *get_sync_ptr( TEB *teb, GLsync sync )
+{
+    struct wgl_handle *handle = get_handle_ptr( sync );
+    if (!handle) set_gl_error( teb, GL_INVALID_VALUE );
+    return handle;
+}
+
 GLenum wow64_glClientWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64 timeout )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     struct wgl_handle *handle;
 
-    if (!(handle = get_handle_ptr( sync ))) return GL_INVALID_VALUE;
+    if (!(handle = get_sync_ptr( teb, sync ))) return GL_INVALID_VALUE;
     return funcs->p_glClientWaitSync( handle->u.sync, flags, timeout );
 }
 
@@ -2037,7 +2067,7 @@ void wow64_glDeleteSync( TEB *teb, GLsync sync )
     const struct opengl_funcs *funcs = teb->glTable;
     struct wgl_handle *handle;
 
-    if ((handle = get_handle_ptr( sync )))
+    if ((handle = get_sync_ptr( teb, sync )))
     {
         funcs->p_glDeleteSync( handle->u.sync );
         free_handle_ptr( handle );
@@ -2062,7 +2092,7 @@ void wow64_glGetSynciv( TEB *teb, GLsync sync, GLenum pname, GLsizei count, GLsi
     const struct opengl_funcs *funcs = teb->glTable;
     struct wgl_handle *handle;
 
-    if ((handle = get_handle_ptr( sync ))) funcs->p_glGetSynciv( handle->u.sync, pname, count, length, values );
+    if ((handle = get_sync_ptr( teb, sync ))) funcs->p_glGetSynciv( handle->u.sync, pname, count, length, values );
 }
 
 GLboolean wow64_glIsSync( TEB *teb, GLsync sync )
@@ -2079,7 +2109,7 @@ void wow64_glWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64 timeout
     const struct opengl_funcs *funcs = teb->glTable;
     struct wgl_handle *handle;
 
-    if ((handle = get_handle_ptr( sync ))) funcs->p_glWaitSync( handle->u.sync, flags, timeout );
+    if ((handle = get_sync_ptr( teb, sync ))) funcs->p_glWaitSync( handle->u.sync, flags, timeout );
 }
 
 static GLint get_buffer_param( TEB *teb, GLenum target, GLenum param )
@@ -2181,7 +2211,7 @@ static struct buffer *get_target_buffer( TEB *teb, GLenum target )
     return name ? get_named_buffer( teb, name ) : NULL;
 }
 
-static BOOL buffer_vm_alloc( struct buffer *buffer, SIZE_T size )
+static BOOL buffer_vm_alloc( TEB *teb, struct buffer *buffer, SIZE_T size )
 {
     if (buffer->vm_size >= size) return TRUE;
     if (buffer->vm_ptr)
@@ -2194,6 +2224,7 @@ static BOOL buffer_vm_alloc( struct buffer *buffer, SIZE_T size )
                                  MEM_COMMIT, PAGE_READWRITE ))
     {
         ERR("NtAllocateVirtualMemory failed\n");
+        set_gl_error( teb, GL_OUT_OF_MEMORY );
         return FALSE;
     }
     buffer->vm_size = size;
@@ -2233,7 +2264,7 @@ static PTR32 wow64_map_buffer( TEB *teb, GLenum target, GLuint name, GLintptr of
         goto unmap;
     }
 
-    if (!buffer_vm_alloc( buffer, length + (offset & 0xf) )) return 0;
+    if (!buffer_vm_alloc( teb, buffer, length + (offset & 0xf) )) goto unmap;
     buffer->map_ptr = (char *)buffer->vm_ptr + (offset & 0xf);
     buffer->copy_length = (access & GL_MAP_WRITE_BIT) ? length : 0;
     if (!(access & (GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT)))

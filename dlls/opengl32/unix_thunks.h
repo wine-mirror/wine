@@ -47,6 +47,7 @@ extern BOOL wrap_wglReleaseTexImageARB( TEB *teb, HPBUFFERARB hPbuffer, int iBuf
 extern BOOL wrap_wglSetPbufferAttribARB( TEB *teb, HPBUFFERARB hPbuffer, const int *piAttribList );
 
 #ifdef _WIN64
+extern GLenum wow64_glGetError( TEB *teb );
 extern GLenum wow64_glClientWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64 timeout );
 extern void wow64_glDeleteBuffers( TEB *teb, GLsizei n, const GLuint *buffers );
 extern void wow64_glDeleteSync( TEB *teb, GLsync sync );

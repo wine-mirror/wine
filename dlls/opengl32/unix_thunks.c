@@ -31659,8 +31659,7 @@ static NTSTATUS wow64_gl_glGetError( void *args )
         GLenum ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = teb->glTable;
-    params->ret = funcs->p_glGetError();
+    params->ret = wow64_glGetError( teb );
     return STATUS_SUCCESS;
 }
 

@@ -283,6 +283,7 @@ my %manual_wow64_wrappers =
      "glFenceSync" => 0,
      "glGetBufferPointerv" => 0,
      "glGetBufferPointervARB" => 0,
+     "glGetError" => 0,
      "glGetNamedBufferPointerv" => 0,
      "glGetNamedBufferPointervEXT" => 0,
      "glGetSynciv" => 0,
