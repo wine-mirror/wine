@@ -40189,6 +40189,38 @@ static const VkSubmitInfo *convert_VkSubmitInfo_array_win32_to_unwrapped_host(st
 }
 
 #ifdef _WIN64
+static void convert_VkSemaphoreSubmitInfo_win64_to_host(struct conversion_context *ctx, const VkSemaphoreSubmitInfo *in, VkSemaphoreSubmitInfo *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->semaphore = in->semaphore;
+    out->value = in->value;
+    out->stageMask = in->stageMask;
+    out->deviceIndex = in->deviceIndex;
+}
+#endif /* _WIN64 */
+
+#ifdef _WIN64
+static const VkSemaphoreSubmitInfo *convert_VkSemaphoreSubmitInfo_array_win64_to_host(struct conversion_context *ctx, const VkSemaphoreSubmitInfo *in, uint32_t count)
+{
+    VkSemaphoreSubmitInfo *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkSemaphoreSubmitInfo_win64_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
+
+#ifdef _WIN64
 static void convert_VkCommandBufferSubmitInfo_win64_to_unwrapped_host(struct conversion_context *ctx, const VkCommandBufferSubmitInfo *in, VkCommandBufferSubmitInfo *out)
 {
     const VkBaseInStructure *in_header;
@@ -40212,7 +40244,7 @@ static void convert_VkCommandBufferSubmitInfo_win64_to_unwrapped_host(struct con
             out_ext->sType = VK_STRUCTURE_TYPE_RENDER_PASS_STRIPE_SUBMIT_INFO_ARM;
             out_ext->pNext = NULL;
             out_ext->stripeSemaphoreInfoCount = in_ext->stripeSemaphoreInfoCount;
-            out_ext->pStripeSemaphoreInfos = in_ext->pStripeSemaphoreInfos;
+            out_ext->pStripeSemaphoreInfos = convert_VkSemaphoreSubmitInfo_array_win64_to_host(ctx, in_ext->pStripeSemaphoreInfos, in_ext->stripeSemaphoreInfoCount);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -40255,11 +40287,11 @@ static void convert_VkSubmitInfo2_win64_to_unwrapped_host(struct conversion_cont
     out->pNext = NULL;
     out->flags = in->flags;
     out->waitSemaphoreInfoCount = in->waitSemaphoreInfoCount;
-    out->pWaitSemaphoreInfos = in->pWaitSemaphoreInfos;
+    out->pWaitSemaphoreInfos = convert_VkSemaphoreSubmitInfo_array_win64_to_host(ctx, in->pWaitSemaphoreInfos, in->waitSemaphoreInfoCount);
     out->commandBufferInfoCount = in->commandBufferInfoCount;
     out->pCommandBufferInfos = convert_VkCommandBufferSubmitInfo_array_win64_to_unwrapped_host(ctx, in->pCommandBufferInfos, in->commandBufferInfoCount);
     out->signalSemaphoreInfoCount = in->signalSemaphoreInfoCount;
-    out->pSignalSemaphoreInfos = in->pSignalSemaphoreInfos;
+    out->pSignalSemaphoreInfos = convert_VkSemaphoreSubmitInfo_array_win64_to_host(ctx, in->pSignalSemaphoreInfos, in->signalSemaphoreInfoCount);
 
     for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
@@ -40361,7 +40393,7 @@ static const VkSubmitInfo2 *convert_VkSubmitInfo2_array_win64_to_unwrapped_host(
 }
 #endif /* _WIN64 */
 
-static void convert_VkSemaphoreSubmitInfo_win32_to_host(const VkSemaphoreSubmitInfo32 *in, VkSemaphoreSubmitInfo *out)
+static void convert_VkSemaphoreSubmitInfo_win32_to_host(struct conversion_context *ctx, const VkSemaphoreSubmitInfo32 *in, VkSemaphoreSubmitInfo *out)
 {
     if (!in) return;
 
@@ -40385,7 +40417,7 @@ static const VkSemaphoreSubmitInfo *convert_VkSemaphoreSubmitInfo_array_win32_to
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkSemaphoreSubmitInfo_win32_to_host(&in[i], &out[i]);
+        convert_VkSemaphoreSubmitInfo_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;

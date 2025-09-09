@@ -312,6 +312,7 @@ STRUCT_CHAIN_CONVERSIONS = {
     "VkPhysicalDeviceImageFormatInfo2": {},
     "VkCommandBufferSubmitInfo": {},
     "VkSemaphoreCreateInfo": {},
+    "VkSemaphoreSubmitInfo": {},
     "VkFenceCreateInfo": {},
     "VkSubmitInfo": {},
     "VkSubmitInfo2": {},
@@ -2264,6 +2265,8 @@ class StructConversionFunction(object):
         needs_extensions = self.operand.needs_extensions_conversion(self.conv, self.direction)
 
         if self.direction == Direction.OUTPUT and not any([any([self.member_needs_copy(ext, m) for m in ext]) for ext in self.operand.struct_extensions]):
+            needs_extensions = False
+        if len(self.operand.struct_extensions) == 0:
             needs_extensions = False
 
         body += "{\n"
