@@ -24,6 +24,10 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winstring.h"
+#include "devpropdef.h"
+#include "devfiltertypes.h"
+#include "devquery.h"
+#include "propsys.h"
 
 #include "initguid.h"
 #include "roapi.h"
@@ -130,6 +134,12 @@ static ITypedEventHandler_IInspectable_IInspectable *inspectable_event_handler_c
     handler->ref = 1;
     return &handler->iface;
 }
+
+struct device_property
+{
+    const WCHAR *name;
+    PropertyType type;
+};
 
 struct device_watcher_added_handler_data
 {
@@ -344,27 +354,217 @@ static void check_device_information_collection_async_( int line, IAsyncOperatio
     }
 }
 
+/* Find the DEVPROPKEY associated with prop_name, ensure propval matches the value retrieved from DevGetObjectProperties.
+ * If propval is NULL, then check the retrieved DEVPROPERTY has Type DEVPROP_TYPE_EMPTY.
+ * This assumes that the DeviceInformationKind is DeviceInterface (DevObjectTypeDeviceInterfaceDisplay). */
+static void test_DeviceInformation_property( HSTRING device_id, const WCHAR *prop_name, IPropertyValue *propval )
+{
+    PropertyType type = 0xdeadbeef;
+    DEVPROPCOMPKEY comp_key = {0};
+    const DEVPROPERTY *prop;
+    DEVPROPKEY key = {0};
+    HRESULT hr;
+    ULONG len;
+
+    hr = PSGetPropertyKeyFromName( prop_name, (PROPERTYKEY *)&key );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+
+    comp_key.Key = key;
+    prop = NULL;
+    len = 0;
+    hr = DevGetObjectProperties( DevObjectTypeDeviceInterfaceDisplay, WindowsGetStringRawBuffer( device_id, NULL ), 0, 1, &comp_key, &len, &prop );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( !!prop, "got prop %p\n", prop );
+    ok( len == 1, "got len %lu != 1\n", len );
+
+    if (propval)
+    {
+        hr = IPropertyValue_get_Type( propval, &type );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+
+        switch (type)
+        {
+        case PropertyType_Boolean:
+        {
+            boolean bool_val, exp_val;
+
+            hr = IPropertyValue_GetBoolean( propval, &bool_val );
+            ok( hr == S_OK, "got hr %#lx\n", hr );
+            ok( prop->Type == DEVPROP_TYPE_BOOLEAN, "got Type %#lx\n", prop->Type );
+            exp_val = !!*(DEVPROP_BOOLEAN *)prop->Buffer;
+            ok( bool_val == exp_val, "got bool_val %d != %d\n", bool_val, exp_val );
+            break;
+        }
+        case PropertyType_String:
+        {
+            HSTRING str;
+
+            hr = IPropertyValue_GetString( propval, &str );
+            ok( hr == S_OK, "got hr %#lx\n", hr );
+            ok( prop->Type == DEVPROP_TYPE_STRING || prop->Type == DEVPROP_TYPE_STRING_INDIRECT, "got Type %#lx\n", prop->Type );
+            /* TODO:
+             * For DEVPROP_TYPE_STRING_INDIRECT, WinRT extracts the locale-specific string from the referenced INF.
+             * System.ItemNameDisplay's value is formatted differently by WinRT. */
+            if (!wcsicmp( prop_name, L"System.ItemNameDisplay" ))
+                skip("Unhandled property %s, skipping.\n", debugstr_w( prop_name ) );
+            else if (prop->Type == DEVPROP_TYPE_STRING)
+                ok( !wcsicmp( WindowsGetStringRawBuffer( str, NULL ), prop->Buffer ), "got str %s != %s\n", debugstr_hstring( str ),
+                    debugstr_w( prop->Buffer ) );
+            WindowsDeleteString( str );
+            break;
+        }
+        case PropertyType_Guid:
+        {
+            GUID guid;
+
+            hr = IPropertyValue_GetGuid( propval, &guid );
+            ok( hr == S_OK, "got hr %#lx\n", hr );
+            ok( prop->Type == DEVPROP_TYPE_GUID, "got Type %#lx\n", prop->Type );
+            ok( IsEqualGUID( &guid, prop->Buffer ), "got guid %s != %s\n", debugstr_guid( &guid ), debugstr_guid( prop->Buffer ) );
+            break;
+        }
+        /* Used by System.Devices.PhysicalDeviceLocation */
+        case PropertyType_UInt8Array:
+        {
+            BYTE *arr = NULL;
+            UINT32 len = 0;
+
+            hr = IPropertyValue_GetUInt8Array( propval, &len, &arr );
+            ok( hr == S_OK, "got hr %#lx\n", hr );
+            ok( prop->Type == (DEVPROP_TYPEMOD_ARRAY | DEVPROP_TYPE_BYTE), "got Type %#lx\n", prop->Type );
+            ok( prop->BufferSize == sizeof( BYTE ) * len, "got BufferSize %lu\n", prop->BufferSize );
+            if (prop->BufferSize == sizeof( BYTE ) * len)
+                ok( !memcmp( arr, prop->Buffer, len ), "got arr %s != %s \n", debugstr_an( (char *)arr, len ), debugstr_an( (char *)prop->Buffer, len ) );
+            CoTaskMemFree( arr );
+            break;
+        }
+        default:
+            skip( "Unhandled type %d, skipping.\n", type );
+            break;
+        }
+    }
+    else
+        ok( prop->Type == DEVPROP_TYPE_EMPTY, "got Type %#lx\n", prop->Type );
+
+    DevFreeObjectProperties( len, prop );
+    winetest_pop_context();
+}
+
+
 static void test_DeviceInformation_obj( int line, IDeviceInformation *info )
 {
-    HRESULT hr;
-    HSTRING str;
+    HSTRING str = NULL, id = NULL;
     boolean bool_val;
+    HRESULT hr;
 
-    hr = IDeviceInformation_get_Id( info, &str );
-    ok_(__FILE__, line)( hr == S_OK, "got hr %#lx\n", hr );
-    WindowsDeleteString( str );
-    str = NULL;
+    hr = IDeviceInformation_get_Id( info, &id );
+    ok_(__FILE__, line)( hr == S_OK, "get_Id failed, got hr %#lx\n", hr );
     hr = IDeviceInformation_get_Name( info, &str );
-    todo_wine ok_(__FILE__, line)( hr == S_OK, "got hr %#lx\n", hr );
+    todo_wine ok_(__FILE__, line)( hr == S_OK, "get_Name failed, got hr %#lx\n", hr );
     WindowsDeleteString( str );
     hr = IDeviceInformation_get_IsEnabled( info, &bool_val );
-    todo_wine ok_(__FILE__, line)( hr == S_OK, "got hr %#lx\n", hr );
+    todo_wine ok_(__FILE__, line)( hr == S_OK, "get_IsEnabled failed, got hr %#lx\n", hr );
     hr = IDeviceInformation_get_IsDefault( info, &bool_val );
-    todo_wine ok_(__FILE__, line)( hr == S_OK, "got hr %#lx\n", hr );
+    todo_wine ok_(__FILE__, line)( hr == S_OK, "get_IsDefault failed, got hr %#lx\n", hr );
+}
+
+static void test_DeviceInformation_properties( IDeviceInformation *info, const struct device_property *exp_props, SIZE_T exp_props_len )
+{
+    IIterable_IKeyValuePair_HSTRING_IInspectable *iterable;
+    IIterator_IKeyValuePair_HSTRING_IInspectable *iterator;
+    IMapView_HSTRING_IInspectable *properties;
+    IInspectable *inspectable;
+    IPropertyValue *propval;
+    HSTRING str, id = NULL;
+    boolean valid;
+    HRESULT hr;
+    SIZE_T i;
+
+    hr = IDeviceInformation_get_Properties( info, &properties );
+    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    if (FAILED(hr)) return;
+
+    hr = IDeviceInformation_get_Id( info, &id );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    for (i = 0; i < exp_props_len; i++)
+    {
+        PropertyType type = 0xdeadbeef;
+        HSTRING_HEADER hdr;
+
+        winetest_push_context( "exp_props[%Iu]", i );
+        hr = WindowsCreateStringReference( exp_props[i].name, wcslen( exp_props[i].name ), &hdr, &str );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        hr = IMapView_HSTRING_IInspectable_Lookup( properties, str, &inspectable );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        hr = IInspectable_QueryInterface( inspectable, &IID_IPropertyValue, (void **)&propval );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        IInspectable_Release( inspectable );
+        hr = IPropertyValue_get_Type( propval, &type );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        ok(type == exp_props[i].type, "got type %d != %d\n", type, exp_props[i].type );
+        IPropertyValue_Release( propval );
+        winetest_pop_context();
+    }
+
+    hr = IMapView_HSTRING_IInspectable_QueryInterface( properties, &IID_IIterable_IKeyValuePair_HSTRING_IInspectable, (void **)&iterable );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    IMapView_HSTRING_IInspectable_Release( properties );
+    hr = IIterable_IKeyValuePair_HSTRING_IInspectable_First( iterable, &iterator );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    IIterable_IKeyValuePair_HSTRING_IInspectable_Release( iterable );
+
+    i = 0;
+    valid = FALSE;
+    hr = IIterator_IKeyValuePair_HSTRING_IInspectable_get_HasCurrent( iterator, &valid );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    while (valid && SUCCEEDED( hr ))
+    {
+        IKeyValuePair_HSTRING_IInspectable *pair;
+        const WCHAR *prop_buf;
+
+        winetest_push_context( "i=%Iu", i++ );
+
+        hr = IIterator_IKeyValuePair_HSTRING_IInspectable_get_Current( iterator, &pair );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+
+        str = NULL;
+        hr = IKeyValuePair_HSTRING_IInspectable_get_Key( pair, &str );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        prop_buf = WindowsGetStringRawBuffer( str, NULL );
+        inspectable = NULL;
+        hr = IKeyValuePair_HSTRING_IInspectable_get_Value( pair, &inspectable );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        IKeyValuePair_HSTRING_IInspectable_Release( pair );
+
+        propval = NULL;
+        if (inspectable)
+        {
+            hr = IInspectable_QueryInterface( inspectable, &IID_IPropertyValue, (void **)&propval );
+            ok( hr == S_OK, "got hr %#lx\n", hr );
+            IInspectable_Release( inspectable );
+        }
+
+        winetest_push_context("%s: %s", debugstr_hstring( id ), debugstr_w( prop_buf ) );
+        test_DeviceInformation_property( id, prop_buf, propval );
+        WindowsDeleteString( str );
+        winetest_pop_context();
+
+        hr = IIterator_IKeyValuePair_HSTRING_IInspectable_MoveNext( iterator, &valid );
+        ok( hr == S_OK, " got hr %#lx\n", hr );
+
+        winetest_pop_context();
+    }
+    WindowsDeleteString( id );
+    IIterator_IKeyValuePair_HSTRING_IInspectable_Release( iterator );
+
 }
 
 static void test_DeviceInformation( void )
 {
+    static const struct device_property device_iface_exp_props[] =  {
+        { L"System.Devices.InterfaceEnabled", PropertyType_Boolean },
+        { L"System.Devices.DeviceInstanceId", PropertyType_String },
+    };
     static const WCHAR *device_info_name = L"Windows.Devices.Enumeration.DeviceInformation";
 
     ITypedEventHandler_DeviceWatcher_IInspectable *stopped_handler, *enumerated_handler;
@@ -557,6 +757,7 @@ static void test_DeviceInformation( void )
         hr = IVectorView_DeviceInformation_GetAt( info_collection, i, &info );
         ok( hr == S_OK, "got %#lx\n", hr );
         test_DeviceInformation_obj( __LINE__, info );
+        test_DeviceInformation_properties( info, device_iface_exp_props, ARRAY_SIZE( device_iface_exp_props ) );
         IDeviceInformation_Release( info );
         winetest_pop_context();
     }
