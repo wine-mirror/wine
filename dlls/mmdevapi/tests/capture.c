@@ -126,6 +126,20 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
 
         if (next_packet_size == 0)
         {
+            /* There is some room for flakyness here, in theory a packet could arrive between the
+             * GetNextPacketSize() call and the GetBuffer() call. Hopefully this is not very probable. */
+            ptr = (void*)0xdeadf00ddeadf00d;
+            flags = 0xdeadf11d;
+            dev_pos = 0xdeadf22ddeadf22d;
+            qpc_pos = 0xdeadf33ddeadf33d;
+            hr = IAudioCaptureClient_GetBuffer(acc, &ptr, &frames, &flags, &dev_pos, &qpc_pos);
+            ok(hr == AUDCLNT_S_BUFFER_EMPTY, "GetBuffer returns %08lx\n", hr);
+            ok(broken((uintptr_t)ptr == (uintptr_t)0xdeadf00ddeadf00d) || /* <= win8 */
+                    !ptr, "Unexpected data after GetBuffer: %p\n", ptr);
+            ok(flags == 0xdeadf11d, "Unexpected flags after GetBuffer: %08lx\n", flags);
+            ok(dev_pos == 0xdeadf22ddeadf22d, "Unexpected device position after GetBuffer: %I64u\n", dev_pos);
+            ok(qpc_pos == 0xdeadf33ddeadf33d, "Unexpected QPC position after GetBuffer: %I64u\n", qpc_pos);
+
             ok(WaitForSingleObject(handle, 1000) == WAIT_OBJECT_0, "Waiting on event handle failed!\n");
 
             winetest_pop_context();
