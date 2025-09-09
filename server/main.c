@@ -28,6 +28,9 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <unistd.h>
+#ifdef HAVE_SYS_RESOURCE_H
+# include <sys/resource.h>
+#endif
 
 #include "object.h"
 #include "file.h"
@@ -212,6 +215,19 @@ static void sigterm_handler( int signum )
     exit(1);  /* make sure atexit functions get called */
 }
 
+static void init_limits(void)
+{
+#ifdef RLIMIT_NOFILE
+    struct rlimit rlimit;
+
+    if (!getrlimit( RLIMIT_NOFILE, &rlimit ))
+    {
+        rlimit.rlim_cur = rlimit.rlim_max;
+        setrlimit( RLIMIT_NOFILE, &rlimit );
+    }
+#endif
+}
+
 int main( int argc, char *argv[] )
 {
     setvbuf( stderr, NULL, _IOLBF, 0 );
@@ -225,6 +241,7 @@ int main( int argc, char *argv[] )
     signal( SIGQUIT, sigterm_handler );
     signal( SIGTERM, sigterm_handler );
     signal( SIGABRT, sigterm_handler );
+    init_limits();
 
     sock_init();
     open_master_socket();
