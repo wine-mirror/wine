@@ -926,7 +926,7 @@ static void test_tcp_stats( int family )
 static void test_tcp_tables( int family, int table_type )
 {
     DWORD dyn_sizes[] = { FIELD_OFFSET(struct nsi_tcp_conn_dynamic, unk[2]), FIELD_OFFSET(struct nsi_tcp_conn_dynamic, unk[3]),
-                          sizeof(struct nsi_tcp_conn_dynamic) };
+                          FIELD_OFFSET(struct nsi_tcp_conn_dynamic, unk[4]), sizeof(struct nsi_tcp_conn_dynamic) };
     DWORD i, err, count, table_num, dyn_size, size;
     struct nsi_tcp_conn_key *keys;
     struct nsi_tcp_conn_dynamic *dyn_tbl, *dyn;
