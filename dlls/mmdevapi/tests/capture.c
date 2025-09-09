@@ -174,6 +174,9 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
         ok(qpc_pos == qpc_pos2, "First GetBuffer returns %I64u device QPC, second GetBuffer returns %I64u\n",
                 qpc_pos, qpc_pos2);
 
+        hr = IAudioCaptureClient_ReleaseBuffer(acc, frames - 1);
+        ok(hr == AUDCLNT_E_INVALID_SIZE, "Releasing buffer with the wrong frame count returns %08lx\n", hr);
+
         hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
         ok(hr == S_OK, "Releasing buffer returns %08lx\n", hr);
 
