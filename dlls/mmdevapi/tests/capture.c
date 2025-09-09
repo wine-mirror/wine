@@ -149,6 +149,9 @@ static void read_packets(IAudioClient *ac, IAudioCaptureClient *acc, HANDLE hand
         hr = IAudioCaptureClient_GetBuffer(acc, &ptr, &frames, &flags, &dev_pos, &qpc_pos);
         ok(hr == S_OK, "GetBuffer returns %08lx\n", hr);
 
+        ok(next_packet_size == frames, "GetNextPacketSize returns %u, GetBuffer returns %u frames\n",
+                next_packet_size, frames);
+
         hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
         ok(hr == S_OK, "Releasing buffer returns %08lx\n", hr);
 
