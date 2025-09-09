@@ -503,6 +503,8 @@ enum type_type
 
 struct metadata
 {
+    unsigned int name;
+    unsigned int namespace;
     unsigned int ref;
     unsigned int def;
     unsigned int extends;
