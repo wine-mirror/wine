@@ -1877,26 +1877,34 @@ static void testGetBestInterfaceEx(void)
 
 static void testGetBestRoute(void)
 {
-    DWORD apiReturn;
+    MIB_IFROW if_row;
+    DWORD err;
     MIB_IPFORWARDROW bestRoute;
 
-    apiReturn = GetBestRoute( INADDR_ANY, 0, &bestRoute );
-    trace( "GetBestRoute([0.0.0.0], 0, [...]) = %lu\n", apiReturn );
-    if (apiReturn == ERROR_NOT_SUPPORTED)
+    err = GetBestRoute( INADDR_ANY, 0, &bestRoute );
+    trace( "GetBestRoute([0.0.0.0], 0, [...]) = %lu\n", err );
+    if (err == ERROR_NOT_SUPPORTED)
     {
         skip( "GetBestRoute is not supported\n" );
         return;
     }
 
-    apiReturn = GetBestRoute( INADDR_ANY, 0, NULL );
-    ok( apiReturn == ERROR_INVALID_PARAMETER,
+    err = GetBestRoute( INADDR_ANY, 0, NULL );
+    ok( err == ERROR_INVALID_PARAMETER,
         "GetBestRoute([0.0.0.0], 0, NULL) returned %lu, expected %d\n",
-        apiReturn, ERROR_INVALID_PARAMETER );
+        err, ERROR_INVALID_PARAMETER );
 
-    apiReturn = GetBestRoute( INADDR_LOOPBACK, 0, &bestRoute );
-    ok( apiReturn == NO_ERROR,
+    memset( &bestRoute, 0xcc, sizeof(bestRoute));
+    err = GetBestRoute( htonl( INADDR_LOOPBACK ), 0, &bestRoute );
+    ok( err == NO_ERROR,
         "GetBestRoute([127.0.0.1], 0, NULL) returned %lu, expected %d\n",
-        apiReturn, NO_ERROR );
+        err, NO_ERROR );
+    todo_wine ok( bestRoute.dwForwardMask == 0xffffffff, "got %#lx.\n", bestRoute.dwForwardMask );
+
+    if_row.dwIndex = bestRoute.dwForwardIfIndex;
+    err = GetIfEntry( &if_row );
+    ok( !err, "got %lu.\n", err );
+    todo_wine ok( if_row.dwType == IF_TYPE_SOFTWARE_LOOPBACK, "got %#lx.\n", if_row.dwType );
 }
 
 /*
