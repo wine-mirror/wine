@@ -500,16 +500,164 @@ static NTSTATUS linux_wait_objs( int device, const DWORD count, const int *objs,
 
 #endif /* NTSYNC_IOC_EVENT_READ */
 
+/* It's possible for synchronization primitives to remain alive even after being
+ * closed, because a thread is still waiting on them. It's rare in practice, and
+ * documented as being undefined behaviour by Microsoft, but it works, and some
+ * applications rely on it. This means we need to refcount handles, and defer
+ * deleting them on the server side until the refcount reaches zero. We do this
+ * by having each client process hold a handle to the in-process synchronization
+ * object, as well as a private refcount. When the client refcount reaches zero,
+ * it closes the handle; when all handles are closed, the server deletes the
+ * in-process synchronization object.
+ *
+ * We also need this for signal-and-wait. The signal and wait operations aren't
+ * atomic, but we can't perform the signal and then return STATUS_INVALID_HANDLE
+ * for the wait—we need to either do both operations or neither. That means we
+ * need to grab references to both objects, and prevent them from being
+ * destroyed before we're done with them.
+ *
+ * We want lookup of objects from the cache to be very fast; ideally, it should
+ * be lock-free. We achieve this by using atomic modifications to "refcount",
+ * and guaranteeing that all other fields are valid and correct *as long as*
+ * refcount is nonzero, and we store the entire structure in memory which will
+ * never be freed.
+ *
+ * This means that acquiring the object can't use a simple atomic increment; it
+ * has to use a compare-and-swap loop to ensure that it doesn't try to increment
+ * an object with a zero refcount. That's still leagues better than a real lock,
+ * though, and release can be a single atomic decrement.
+ *
+ * It also means that threads modifying the cache need to take a lock, to
+ * prevent other threads from writing to it concurrently.
+ *
+ * It's possible for an object currently in use (by a waiter) to be closed and
+ * the same handle immediately reallocated to a different object. This should be
+ * a very rare situation, and in that case we simply don't cache the handle.
+ */
 struct inproc_sync
 {
+    LONG           refcount;  /* reference count of the sync object */
     int            fd;        /* unix file descriptor */
     unsigned int   access;    /* handle access rights */
-    unsigned int   type;      /* enum inproc_sync_type */
+    unsigned short type;      /* enum inproc_sync_type as short to save space */
+    unsigned short closed;    /* fd has been closed but sync is still referenced */
 };
+
+#define INPROC_SYNC_CACHE_BLOCK_SIZE  (65536 / sizeof(struct inproc_sync))
+#define INPROC_SYNC_CACHE_ENTRIES     128
+
+static struct inproc_sync *inproc_sync_cache[INPROC_SYNC_CACHE_ENTRIES];
+static struct inproc_sync inproc_sync_cache_initial_block[INPROC_SYNC_CACHE_BLOCK_SIZE];
+
+static inline unsigned int inproc_sync_handle_to_index( HANDLE handle, unsigned int *entry )
+{
+    unsigned int idx = (wine_server_obj_handle(handle) >> 2) - 1;
+    *entry = idx / INPROC_SYNC_CACHE_BLOCK_SIZE;
+    return idx % INPROC_SYNC_CACHE_BLOCK_SIZE;
+}
+
+static struct inproc_sync *cache_inproc_sync( HANDLE handle, struct inproc_sync *sync )
+{
+    unsigned int entry, idx = inproc_sync_handle_to_index( handle, &entry );
+    struct inproc_sync *cache;
+    int refcount;
+
+    /* don't cache pseudo-handles; waiting on them is pointless anyway */
+    if ((ULONG)(ULONG_PTR)handle > 0xfffffffa) return sync;
+
+    if (entry >= INPROC_SYNC_CACHE_ENTRIES)
+    {
+        FIXME( "too many allocated handles, not caching %p\n", handle );
+        return sync;
+    }
+
+    if (!inproc_sync_cache[entry])  /* do we need to allocate a new block of entries? */
+    {
+        if (!entry) inproc_sync_cache[0] = inproc_sync_cache_initial_block;
+        else
+        {
+            static const size_t size = INPROC_SYNC_CACHE_BLOCK_SIZE * sizeof(struct inproc_sync);
+            void *ptr = anon_mmap_alloc( size, PROT_READ | PROT_WRITE );
+            if (ptr == MAP_FAILED) return sync;
+            if (InterlockedCompareExchangePointer( (void **)&inproc_sync_cache[entry], ptr, NULL ))
+                munmap( ptr, size ); /* someone beat us to it */
+        }
+    }
+
+    cache = &inproc_sync_cache[entry][idx];
+
+    if (InterlockedCompareExchange( &cache->refcount, 0, 0 ))
+    {
+        /* The handle is currently being used for another object (i.e. it was
+         * closed and then reused, but some thread is waiting on the old handle
+         * or otherwise simultaneously using the old object). We can't cache
+         * this object until the old one is completely destroyed. */
+        return sync;
+    }
+
+    cache->fd = sync->fd;
+    cache->access = sync->access;
+    cache->type = sync->type;
+    cache->closed = sync->closed;
+    /* Make sure we set the other members before the refcount; this store needs
+     * release semantics [paired with the load in get_cached_inproc_sync()].
+     * Set the refcount to 2 (one for the handle, one for the caller). */
+    refcount = InterlockedExchange( &cache->refcount, 2 );
+    assert( !refcount );
+
+    assert( sync->refcount == 1 );
+    memset( sync, 0, sizeof(*sync) );
+
+    return cache;
+}
+
+/* returns the previous value */
+static inline LONG interlocked_inc_if_nonzero( LONG *dest )
+{
+    LONG val, tmp;
+    for (val = *dest;; val = tmp)
+    {
+        if (!val || (tmp = InterlockedCompareExchange( dest, val + 1, val )) == val)
+            break;
+    }
+    return val;
+}
 
 static void release_inproc_sync( struct inproc_sync *sync )
 {
-    close( sync->fd );
+    /* save the fd now; as soon as the refcount hits 0 we cannot
+     * access the cache anymore */
+    int fd = sync->fd;
+    LONG ref = InterlockedDecrement( &sync->refcount );
+
+    assert( ref >= 0 );
+    if (!ref) close( fd );
+}
+
+static struct inproc_sync *get_cached_inproc_sync( HANDLE handle )
+{
+    unsigned int entry, idx = inproc_sync_handle_to_index( handle, &entry );
+    struct inproc_sync *cache;
+
+    if (entry >= INPROC_SYNC_CACHE_ENTRIES || !inproc_sync_cache[entry]) return NULL;
+
+    cache = &inproc_sync_cache[entry][idx];
+
+    /* this load needs acquire semantics [paired with the store in
+     * cache_inproc_sync()] */
+    if (!interlocked_inc_if_nonzero( &cache->refcount )) return NULL;
+
+    if (cache->closed)
+    {
+        /* The object is still being used, but "handle" has been closed. The
+         * handle value might have been reused for another object in the
+         * meantime, in which case we have to report that valid object, so
+         * force the caller to check the server. */
+        release_inproc_sync( cache );
+        return NULL;
+    }
+
+    return cache;
 }
 
 /* fd_cache_mutex must be held to avoid races with other thread receiving fds */
@@ -523,10 +671,12 @@ static NTSTATUS get_server_inproc_sync( HANDLE handle, struct inproc_sync *sync 
         if (!(ret = wine_server_call( req )))
         {
             obj_handle_t fd_handle;
+            sync->refcount = 1;
             sync->fd = wine_server_receive_fd( &fd_handle );
             assert( wine_server_ptr_handle(fd_handle) == handle );
             sync->access = reply->access;
             sync->type = reply->type;
+            sync->closed = 0;
         }
     }
     SERVER_END_REQ;
@@ -534,20 +684,34 @@ static NTSTATUS get_server_inproc_sync( HANDLE handle, struct inproc_sync *sync 
     return ret;
 }
 
+/* returns a pointer to a cache entry; if the object could not be cached,
+ * returns "cache" instead, which should be allocated on stack */
 static NTSTATUS get_inproc_sync( HANDLE handle, enum inproc_sync_type desired_type, ACCESS_MASK desired_access,
-                                 struct inproc_sync *sync )
+                                 struct inproc_sync *stack, struct inproc_sync **out )
 {
+    struct inproc_sync *sync;
     sigset_t sigset;
     NTSTATUS ret;
 
-    /* We need to use fd_cache_mutex here to protect against races with
-     * other threads trying to receive fds for the fd cache,
-     * and we need to use an uninterrupted section to prevent reentrancy. */
-    server_enter_uninterrupted_section( &fd_cache_mutex, &sigset );
-    ret = get_server_inproc_sync( handle, sync );
-    server_leave_uninterrupted_section( &fd_cache_mutex, &sigset );
+    /* try to find it in the cache already */
+    if ((sync = get_cached_inproc_sync( handle ))) ret = STATUS_SUCCESS;
+    else
+    {
+        /* We need to use fd_cache_mutex here to protect against races with
+         * other threads trying to receive fds for the fd cache,
+         * and we need to use an uninterrupted section to prevent reentrancy.
+         * We also need fd_cache_mutex to protect against the same race with
+         * NtClose, that is, to prevent the object from being cached again between
+         * close_inproc_sync() and close_handle. */
+        server_enter_uninterrupted_section( &fd_cache_mutex, &sigset );
+        if ((sync = get_cached_inproc_sync( handle ))) ret = STATUS_SUCCESS;
+        else ret = get_server_inproc_sync( handle, stack );
+        server_leave_uninterrupted_section( &fd_cache_mutex, &sigset );
+        if (ret) return ret;
 
-    if (ret) return ret;
+        if (!sync) sync = cache_inproc_sync( handle, stack );
+    }
+
     if (desired_type != INPROC_SYNC_UNKNOWN && desired_type != sync->type)
     {
         release_inproc_sync( sync );
@@ -559,6 +723,7 @@ static NTSTATUS get_inproc_sync( HANDLE handle, enum inproc_sync_type desired_ty
         return STATUS_ACCESS_DENIED;
     }
 
+    *out = sync;
     return STATUS_SUCCESS;
 }
 
@@ -583,13 +748,28 @@ extern NTSTATUS check_signal_access( struct inproc_sync *sync )
     return STATUS_OBJECT_TYPE_MISMATCH;
 }
 
+/* caller must hold fd_cache_mutex */
+void close_inproc_sync( HANDLE handle )
+{
+    struct inproc_sync *cache;
+
+    if (inproc_device_fd < 0) return;
+    if ((cache = get_cached_inproc_sync( handle )))
+    {
+        cache->closed = 1;
+        /* once for the reference we just grabbed, and once for the handle */
+        release_inproc_sync( cache );
+        release_inproc_sync( cache );
+    }
+}
+
 static NTSTATUS inproc_release_semaphore( HANDLE handle, ULONG count, ULONG *prev_count )
 {
-    struct inproc_sync stack, *sync = &stack;
+    struct inproc_sync stack, *sync;
     NTSTATUS ret;
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    if ((ret = get_inproc_sync( handle, INPROC_SYNC_SEMAPHORE, SEMAPHORE_MODIFY_STATE, &stack ))) return ret;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_SEMAPHORE, SEMAPHORE_MODIFY_STATE, &stack, &sync ))) return ret;
     ret = linux_release_semaphore_obj( sync->fd, count, prev_count );
     release_inproc_sync( sync );
     return ret;
@@ -597,11 +777,11 @@ static NTSTATUS inproc_release_semaphore( HANDLE handle, ULONG count, ULONG *pre
 
 static NTSTATUS inproc_query_semaphore( HANDLE handle, SEMAPHORE_BASIC_INFORMATION *info )
 {
-    struct inproc_sync stack, *sync = &stack;
+    struct inproc_sync stack, *sync;
     NTSTATUS ret;
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    if ((ret = get_inproc_sync( handle, INPROC_SYNC_SEMAPHORE, SEMAPHORE_QUERY_STATE, &stack ))) return ret;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_SEMAPHORE, SEMAPHORE_QUERY_STATE, &stack, &sync ))) return ret;
     ret = linux_query_semaphore_obj( sync->fd, info );
     release_inproc_sync( sync );
     return ret;
@@ -609,11 +789,11 @@ static NTSTATUS inproc_query_semaphore( HANDLE handle, SEMAPHORE_BASIC_INFORMATI
 
 static NTSTATUS inproc_set_event( HANDLE handle, LONG *prev_state )
 {
-    struct inproc_sync stack, *sync = &stack;
+    struct inproc_sync stack, *sync;
     NTSTATUS ret;
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_MODIFY_STATE, &stack ))) return ret;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_MODIFY_STATE, &stack, &sync ))) return ret;
     ret = linux_set_event_obj( sync->fd, prev_state );
     release_inproc_sync( sync );
     return ret;
@@ -621,11 +801,11 @@ static NTSTATUS inproc_set_event( HANDLE handle, LONG *prev_state )
 
 static NTSTATUS inproc_reset_event( HANDLE handle, LONG *prev_state )
 {
-    struct inproc_sync stack, *sync = &stack;
+    struct inproc_sync stack, *sync;
     NTSTATUS ret;
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_MODIFY_STATE, &stack ))) return ret;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_MODIFY_STATE, &stack, &sync ))) return ret;
     ret = linux_reset_event_obj( sync->fd, prev_state );
     release_inproc_sync( sync );
     return ret;
@@ -633,11 +813,11 @@ static NTSTATUS inproc_reset_event( HANDLE handle, LONG *prev_state )
 
 static NTSTATUS inproc_pulse_event( HANDLE handle, LONG *prev_state )
 {
-    struct inproc_sync stack, *sync = &stack;
+    struct inproc_sync stack, *sync;
     NTSTATUS ret;
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_MODIFY_STATE, &stack ))) return ret;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_MODIFY_STATE, &stack, &sync ))) return ret;
     ret = linux_pulse_event_obj( sync->fd, prev_state );
     release_inproc_sync( sync );
     return ret;
@@ -645,11 +825,11 @@ static NTSTATUS inproc_pulse_event( HANDLE handle, LONG *prev_state )
 
 static NTSTATUS inproc_query_event( HANDLE handle, EVENT_BASIC_INFORMATION *info )
 {
-    struct inproc_sync stack, *sync = &stack;
+    struct inproc_sync stack, *sync;
     NTSTATUS ret;
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_QUERY_STATE, &stack ))) return ret;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_QUERY_STATE, &stack, &sync ))) return ret;
     ret = linux_query_event_obj( sync->fd, sync->type, info );
     release_inproc_sync( sync );
     return ret;
@@ -657,11 +837,11 @@ static NTSTATUS inproc_query_event( HANDLE handle, EVENT_BASIC_INFORMATION *info
 
 static NTSTATUS inproc_release_mutex( HANDLE handle, LONG *prev_count )
 {
-    struct inproc_sync stack, *sync = &stack;
+    struct inproc_sync stack, *sync;
     NTSTATUS ret;
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    if ((ret = get_inproc_sync( handle, INPROC_SYNC_MUTEX, 0, &stack ))) return ret;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_MUTEX, 0, &stack, &sync ))) return ret;
     ret = linux_release_mutex_obj( sync->fd, prev_count );
     release_inproc_sync( sync );
     return ret;
@@ -669,11 +849,11 @@ static NTSTATUS inproc_release_mutex( HANDLE handle, LONG *prev_count )
 
 static NTSTATUS inproc_query_mutex( HANDLE handle, MUTANT_BASIC_INFORMATION *info )
 {
-    struct inproc_sync stack, *sync = &stack;
+    struct inproc_sync stack, *sync;
     NTSTATUS ret;
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    if ((ret = get_inproc_sync( handle, INPROC_SYNC_MUTEX, MUTANT_QUERY_STATE, &stack ))) return ret;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_MUTEX, MUTANT_QUERY_STATE, &stack, &sync ))) return ret;
     ret = linux_query_mutex_obj( sync->fd, info );
     release_inproc_sync( sync );
     return ret;
@@ -718,12 +898,11 @@ static NTSTATUS inproc_wait( DWORD count, const HANDLE *handles, BOOLEAN wait_an
     assert( count <= ARRAY_SIZE(syncs) );
     for (int i = 0; i < count; ++i)
     {
-        if ((ret = get_inproc_sync( handles[i], INPROC_SYNC_UNKNOWN, SYNCHRONIZE, &stack[i] )))
+        if ((ret = get_inproc_sync( handles[i], INPROC_SYNC_UNKNOWN, SYNCHRONIZE, &stack[i], &syncs[i] )))
         {
             while (i--) release_inproc_sync( syncs[i] );
             return ret;
         }
-        syncs[i] = &stack[i];
         objs[i] = syncs[i]->fd;
     }
 
@@ -743,10 +922,10 @@ static NTSTATUS inproc_signal_and_wait( HANDLE signal, HANDLE wait,
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
 
-    if ((ret = get_inproc_sync( signal, INPROC_SYNC_UNKNOWN, 0, signal_sync ))) return ret;
+    if ((ret = get_inproc_sync( signal, INPROC_SYNC_UNKNOWN, 0, &stack_signal, &signal_sync ))) return ret;
     if ((ret = check_signal_access( signal_sync ))) goto done;
 
-    if ((ret = get_inproc_sync( wait, INPROC_SYNC_UNKNOWN, SYNCHRONIZE, wait_sync ))) goto done;
+    if ((ret = get_inproc_sync( wait, INPROC_SYNC_UNKNOWN, SYNCHRONIZE, &stack_wait, &wait_sync ))) goto done;
 
     switch (signal_sync->type)
     {
