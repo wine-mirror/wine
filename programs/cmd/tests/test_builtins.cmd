@@ -1405,6 +1405,20 @@ echo ---6
 type foobaw
 echo ---7
 del foobaz foobay foobax foobaw
+echo ---8
+rem generating sequence ab<ctrl-Z>c\n\r
+echo 61621A630D0A>seq.hex
+certutil -decodehex seq.hex seq.bin > nul
+type seq.bin > foo0
+call :CompareFileSizes seq.bin foo0
+erase seq.hex seq.bin foo0
+echo ---9
+rem generating sequence ab<NUL>c\n\r
+echo 616200630D0A>seq.hex
+certutil -decodehex seq.hex seq.bin > nul
+type seq.bin > foo0
+call :CompareFileSizes seq.bin foo0
+erase seq.hex seq.bin foo0
 
 echo ------------ Testing NUL ------------
 md foobar & cd foobar
@@ -3514,6 +3528,10 @@ if "%WINE_filesize%"=="%2" (
 shift
 shift
 if not "%1"=="" goto :CheckFileSize
+goto :eof
+
+:CompareFileSizes
+if "%~z1"=="%~z2" (echo passed) else (echo failed)
 goto :eof
 
 :testcopy
