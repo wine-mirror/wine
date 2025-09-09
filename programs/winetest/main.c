@@ -471,6 +471,8 @@ static void print_version (void)
     void (CDECL *wine_get_host_version)( const char **sysname, const char **release );
     BOOL (WINAPI *pGetProductInfo)(DWORD, DWORD, DWORD, DWORD, DWORD *);
     NTSTATUS (WINAPI *pRtlGetVersion)(RTL_OSVERSIONINFOEXW *);
+    DWORD revision, size = sizeof(revision);
+    HKEY hkey;
 
     ver.dwOSVersionInfoSize = sizeof(ver);
     if (!(ext = GetVersionExA ((OSVERSIONINFOA *) &ver)))
@@ -522,6 +524,13 @@ static void print_version (void)
              "    dwBuildNumber=%lu\n    PlatformId=%lu\n    szCSDVersion=%s\n",
              ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber,
              ver.dwPlatformId, ver.szCSDVersion);
+
+    if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion", &hkey ))
+    {
+        if (!RegQueryValueExA( hkey, "UBR", NULL, NULL, (BYTE *)&revision, &size ))
+            xprintf( "    UBR=%lu\n", revision );
+        RegCloseKey( hkey );
+    }
 
     wine_get_build_id = (void *)GetProcAddress(hntdll, "wine_get_build_id");
     wine_get_host_version = (void *)GetProcAddress(hntdll, "wine_get_host_version");
