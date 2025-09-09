@@ -12266,6 +12266,10 @@ static void test_quirks_mode_perf_toJSON(IHTMLDocument2 *doc)
     ok(perf != NULL, "performance is NULL\n");
     VariantClear(&var);
 
+    hres = IHTMLPerformance_toJSON(perf, &var);
+    ok(hres == E_UNEXPECTED, "toJSON() returned: %08lx\n", hres);
+    ok(V_VT(&var) == VT_EMPTY, "V_VT(toJSON()) = %d\n", V_VT(&var));
+
     hres = IHTMLPerformance_get_navigation(perf, &nav);
     ok(hres == S_OK, "get_navigation failed: %08lx\n", hres);
     ok(nav != NULL, "performance.navigation is NULL\n");

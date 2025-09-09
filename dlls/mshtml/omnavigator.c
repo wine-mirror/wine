@@ -1946,8 +1946,42 @@ static HRESULT WINAPI HTMLPerformance_toString(IHTMLPerformance *iface, BSTR *st
 static HRESULT WINAPI HTMLPerformance_toJSON(IHTMLPerformance *iface, VARIANT *var)
 {
     HTMLPerformance *This = impl_from_IHTMLPerformance(iface);
-    FIXME("(%p)->(%p)\n", This, var);
-    return E_NOTIMPL;
+    IWineJSDispatch *json;
+    HRESULT hres;
+    VARIANT v;
+
+    TRACE("(%p)->(%p)\n", This, var);
+
+    if(!This->window->jscript)
+        return E_UNEXPECTED;
+
+    if(!var)
+        return S_OK;
+
+    hres = IWineJScript_CreateObject(This->window->jscript, &json);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IHTMLPerformanceNavigation_toJSON(This->navigation, &v);
+    if(SUCCEEDED(hres)) {
+        hres = IWineJSDispatch_DefineProperty(json, L"navigation", PROPF_WRITABLE | PROPF_ENUMERABLE | PROPF_CONFIGURABLE, &v);
+        VariantClear(&v);
+        if(SUCCEEDED(hres)) {
+            hres = IHTMLPerformanceTiming_toJSON(This->timing, &v);
+            if(SUCCEEDED(hres)) {
+                hres = IWineJSDispatch_DefineProperty(json, L"timing", PROPF_WRITABLE | PROPF_ENUMERABLE | PROPF_CONFIGURABLE, &v);
+                VariantClear(&v);
+            }
+        }
+    }
+    if(FAILED(hres)) {
+        IWineJSDispatch_Release(json);
+        return hres;
+    }
+
+    V_VT(var) = VT_DISPATCH;
+    V_DISPATCH(var) = (IDispatch*)json;
+    return hres;
 }
 
 static const IHTMLPerformanceVtbl HTMLPerformanceVtbl = {

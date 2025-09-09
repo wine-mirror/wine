@@ -2595,7 +2595,7 @@ sync_test("functions scope", function() {
 });
 
 sync_test("perf toJSON", function() {
-    var json, objs = [ performance.navigation, performance.timing ];
+    var json, objs = [ performance, performance.navigation, performance.timing ];
     var non_props = [ "constructor", "TYPE_BACK_FORWARD", "TYPE_NAVIGATE", "TYPE_RELOAD", "TYPE_RESERVED" ];
 
     for(var i = 0; i < objs.length; i++) {
@@ -2640,6 +2640,12 @@ sync_test("perf toJSON", function() {
         ok(json.hasOwnProperty(prop), name + ".toJSON() does not have " + prop + " after delete");
         Object.defineProperty(proto, prop, desc);
     }
+
+    json = performance.toJSON();
+    ok(typeof json.navigation === "object", "JSON'd performance's navigation type = " + typeof json.navigation);
+    ok(typeof json.navigation.redirectCount === "number", "JSON'd performance's navigation.redirectCount type = " + typeof json.navigation.redirectCount);
+    ok(Object.getPrototypeOf(json.navigation) === Object.prototype, "JSON'd performance's navigation prototype != Object.prototype");
+    ok(!("toJSON" in json.navigation), "toJSON in JSON'd performance's navigation");
 });
 
 sync_test("console", function() {
