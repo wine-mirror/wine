@@ -995,9 +995,9 @@ foobay
 
 ---7
 ---8
-@todo_wine@passed
+passed
 ---9
-@todo_wine@passed
+passed
 ------------ Testing NUL ------------
 bar
 bar
