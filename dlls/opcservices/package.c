@@ -1608,7 +1608,8 @@ static HRESULT opc_package_add_default_content_type(struct content_types *types,
 static HRESULT opc_package_add_content_type(struct content_types *types, IOpcPart *part)
 {
     struct content_type *cur;
-    BSTR ext, content_type;
+    BSTR ext;
+    WCHAR *content_type;
     BOOL added = FALSE;
     IOpcPartUri *name;
     HRESULT hr;
@@ -1652,7 +1653,7 @@ static HRESULT opc_package_add_content_type(struct content_types *types, IOpcPar
         hr = opc_package_add_default_content_type(types, ext, content_type);
 
     SysFreeString(ext);
-    SysFreeString(content_type);
+    CoTaskMemFree(content_type);
 
     return hr;
 }
