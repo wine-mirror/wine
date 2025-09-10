@@ -3378,6 +3378,7 @@ static void test_memory_map( HDC hdc)
         pglBindBuffer( GL_ARRAY_BUFFER, src );
         src_ptr = pglMapBufferRange( GL_ARRAY_BUFFER, 3, 4, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT );
         check_gl_error( GL_NO_ERROR );
+        ok( ((UINT_PTR)src_ptr & 0xf) == 3, "pointer not aligned\n" );
 
         ok( !memcmp( src_ptr, "defg", 4 ), "unexpected src data %s\n", debugstr_an(src_ptr, 4) );
         for (i = 0; i < 4; i++) src_ptr[i] += 'A' - 'a';
@@ -3385,6 +3386,7 @@ static void test_memory_map( HDC hdc)
         pglUnmapBuffer( GL_ARRAY_BUFFER );
 
         src_ptr = pglMapBufferRange( GL_ARRAY_BUFFER, 2, 10, GL_MAP_READ_BIT );
+        ok( ((UINT_PTR)src_ptr & 0xf) == 2, "pointer not aligned\n" );
 
         ok( !memcmp( src_ptr, "cDEFGhijkl", 10 ), "unexpected src data %s\n", debugstr_an(src_ptr, 10) );
 
@@ -3394,6 +3396,7 @@ static void test_memory_map( HDC hdc)
 
         pglBindBuffer( GL_ARRAY_BUFFER, dst );
         dst_ptr = pglMapBufferRange( GL_ARRAY_BUFFER, 2, 10, GL_MAP_READ_BIT );
+        ok( ((UINT_PTR)dst_ptr & 0xf) == 2, "pointer not aligned\n" );
 
         ok( !memcmp( dst_ptr, "cDEFGhijkl", 10 ), "unexpected src data %s\n", debugstr_an(dst_ptr, 10) );
 
