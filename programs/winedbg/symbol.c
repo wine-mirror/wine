@@ -154,7 +154,7 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
         }
         else
         {
-            DWORD* pdw = (DWORD*)lexeme_alloc_size(sizeof(*pdw));
+            DWORD64* pdw = (DWORD64*)lexeme_alloc_size(sizeof(*pdw));
             init_lvalue(lvalue, FALSE, pdw);
             *pdw = sym->Value;
         }
