@@ -85,7 +85,7 @@ WINE_VULKAN_LOADER_THUNKS_H = "loader_thunks.h"
 EXT_BASE = 1000000000
 EXT_BLOCK_SIZE = 1000
 
-UNSUPPORTED_EXTENSIONS = [
+UNSUPPORTED_EXTENSIONS = {
     # Instance extensions
     "VK_KHR_display", # Needs WSI work.
     "VK_KHR_surface_protected_capabilities",
@@ -116,7 +116,11 @@ UNSUPPORTED_EXTENSIONS = [
     # Deprecated extensions
     "VK_NV_external_memory_capabilities",
     "VK_NV_external_memory_win32",
-]
+}
+UNSUPPORTED_EXTGROUPS = (
+    "VK_KHX",
+    "VK_NVX",
+)
 
 # Either internal extensions which aren't present on the win32 platform which
 # winevulkan may nonetheless use, or extensions we want to generate headers for
@@ -375,6 +379,11 @@ def convert_suffix(direction, win_type, unwrap, is_wrapped):
         if unwrap == Unwrap.NONE:
             return "{0}_to_unwrapped_host".format(win_type)
         return "{0}_to_host".format(win_type)
+
+
+# return any element within the list that is not yet in the `seen` set
+def unique(list, key=lambda x: x, seen=set()):
+    return (e for e in list if not (key(e) in seen or seen.add(key(e))))
 
 
 # Arrays come in multiple formats. Known formats are:
@@ -2499,14 +2508,12 @@ class VkGenerator(object):
             thunks += vk_func.thunk(conversions, prefix="thunk64_")
             thunks += vk_func.thunk(conversions, prefix="thunk32_", conv=True)
 
-        def unique(list, key=lambda x: x, seen=set()):
-            return (e for e in list if not (key(e) in seen or seen.add(key(e))))
-
-        def enum_conversions(conversions, visited=set()):
-            for conversion in unique(conversions, key=lambda conv: conv.name):
+        # iterate over each of the conversion function dependencies first
+        def enum_conversions(conversions, seen=set()):
+            for conversion in unique(conversions, key=lambda conv: conv.name, seen=seen):
                 dependencies = []
                 definition = conversion.definition(dependencies)
-                yield from enum_conversions(dependencies, visited)
+                yield from enum_conversions(dependencies, seen)
                 yield definition, conversion
 
         conv_helpers = ""
@@ -2987,11 +2994,6 @@ class VkRegistry(object):
 
         self._match_object_types()
 
-    def _is_extension_supported(self, extension):
-        # We disable some extensions as either we haven't implemented
-        # support yet or because they are for platforms other than win32.
-        return extension not in UNSUPPORTED_EXTENSIONS
-
     def _mark_command_required(self, command):
         """ Helper function to mark a certain command and the datatypes it needs as required."""
         def mark_bitmask_dependencies(bitmask, types):
@@ -3194,10 +3196,51 @@ class VkRegistry(object):
 
     def _parse_extensions(self, root):
         """ Parse extensions section and pull in any types and commands for this extension. """
-        extensions = []
         exts = root.findall("./extensions/extension")
+        exts = {ext.attrib["name"]: ext for ext in exts}
+
+
+        # return a dict of required extensions for an extension
+        def required_extensions(ext):
+            features = [req.attrib.get("feature") for req in ext.findall("require")]
+            requires = ext.attrib.get("requires", "").split(",")
+            depends = re.split(r'\W+', ext.attrib.get("depends", ""))
+            return {name: exts[name] for name in set(requires + depends + features) & exts.keys()}
+
+        # return a set of required features for an extension
+        def required_versions(ext):
+            features = [req.attrib.get("feature") for req in ext.findall("require")]
+            depends = re.split(r'\W+', ext.attrib.get("depends", ""))
+            versions = filter(None, set(depends + features) - exts.keys())
+            regex = re.compile(r"VERSION_(\d)_(\d)$")
+            return (tuple(map(int, regex.search(name).groups())) for name in versions)
+
+        # iterate over each of the extension dependencies first
+        def enum_extensions(extensions, seen=set()):
+            for name in unique(extensions.keys(), seen=seen):
+                depends = required_extensions(extensions[name])
+                yield from enum_extensions(depends, seen)
+                yield name, extensions[name], depends.keys()
+
+        # transitively iterate over required extensions to flag unsupported extensions
+        for name, ext, depends in enum_extensions(exts):
+            if depends & UNSUPPORTED_EXTENSIONS:
+                UNSUPPORTED_EXTENSIONS.add(name)
+            elif ext.attrib.get("platform", "win32") not in UNEXPOSED_PLATFORMS | {"win32"}:
+                UNSUPPORTED_EXTENSIONS.add(name)
+            # Some extensions are not ready or have numbers reserved as a place holder
+            # or are only supported for VulkanSC.
+            elif not set(ext.attrib.get("supported").split(",")) & {"vulkan"}:
+                UNSUPPORTED_EXTENSIONS.add(name)
+            # Disable highly experimental extensions as the APIs are unstable and can
+            # change between minor Vulkan revisions until API is final and becomes KHR
+            # or NV.
+            elif not name in ALLOWED_X_EXTENSIONS and name.startswith(UNSUPPORTED_EXTGROUPS):
+                UNSUPPORTED_EXTENSIONS.add(name)
+
+
+        extensions = []
         deferred_exts = []
-        skipped_exts = UNSUPPORTED_EXTENSIONS.copy()
 
         def process_ext(ext, deferred=False):
             ext_name = ext.attrib["name"]
@@ -3215,24 +3258,12 @@ class VkRegistry(object):
                 if cmd_name in self.funcs:
                     self.funcs[cmd_name].extensions.add(ext_name)
 
-            # Some extensions are not ready or have numbers reserved as a place holder
-            # or are only supported for VulkanSC.
-            if not "vulkan" in ext.attrib["supported"].split(","):
-                LOGGER.debug("Skipping disabled extension: {0}".format(ext_name))
-                skipped_exts.append(ext_name)
+            if ext_name in UNSUPPORTED_EXTENSIONS:
                 return
 
             # Defer extensions with 'sortorder' as they are order-dependent for spec-parsing.
             if not deferred and "sortorder" in ext.attrib:
                 deferred_exts.append(ext)
-                return
-
-            # Disable highly experimental extensions as the APIs are unstable and can
-            # change between minor Vulkan revisions until API is final and becomes KHR
-            # or NV.
-            if ("KHX" in ext_name or "NVX" in ext_name) and ext_name not in ALLOWED_X_EXTENSIONS:
-                LOGGER.debug("Skipping experimental extension: {0}".format(ext_name))
-                skipped_exts.append(ext_name)
                 return
 
             # Extensions can define EnumValues which alias to provisional extensions. Pre-process
@@ -3241,28 +3272,6 @@ class VkRegistry(object):
                 # Extensions can add enum values to Core / extension enums, so add these.
                 for enum_elem in require.findall("enum"):
                     self._process_require_enum(enum_elem, ext, only_aliased=True)
-
-            platform = ext.attrib.get("platform")
-            if platform and platform != "win32" and platform not in UNEXPOSED_PLATFORMS:
-                LOGGER.debug("Skipping extensions {0} for platform {1}".format(ext_name, platform))
-                skipped_exts.append(ext_name)
-                return
-
-            if not self._is_extension_supported(ext_name):
-                LOGGER.debug("Skipping unsupported extension: {0}".format(ext_name))
-                skipped_exts.append(ext_name)
-                return
-            elif "requires" in ext.attrib:
-                # Check if this extension builds on top of another unsupported extension.
-                requires = ext.attrib["requires"].split(",")
-                if len(set(requires).intersection(skipped_exts)) > 0:
-                    skipped_exts.append(ext_name)
-                    return
-            elif "depends" in ext.attrib:
-                # The syntax for this is more complex, but this is good enough for now.
-                if any([sext in ext.attrib["depends"] for sext in skipped_exts]):
-                    skipped_exts.append(ext_name)
-                    return
 
             LOGGER.debug("Loading extension: {0}".format(ext_name))
 
@@ -3284,9 +3293,6 @@ class VkRegistry(object):
                         type_info = self.types[t.attrib["name"]]
                         type_info["extension"] = ext_name
                         self._require_type(type_info["data"])
-                required_extension = require.attrib.get("extension")
-                if required_extension and not self._is_extension_supported(required_extension):
-                    continue
 
                 # Pull in any commands we need. We infer types to pull in from the command
                 # as well.
@@ -3311,7 +3317,7 @@ class VkRegistry(object):
 
 
         # Process extensions, allowing for sortorder to defer extension processing
-        for ext in exts:
+        for ext in exts.values():
             process_ext(ext)
 
         deferred_exts.sort(key=lambda ext: ext.attrib["sortorder"])
