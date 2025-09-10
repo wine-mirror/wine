@@ -1810,6 +1810,10 @@ class VkStruct(Sequence):
         self.aliased_by = []
         self.order = 0
 
+        # struct type is the (only one possible) value of the sType member, if present
+        member = next((x for x in self.members if x.name == "sType"), None)
+        self.struct_type = member.values if member else None
+
     def __getitem__(self, i):
         return self.members[i]
 
@@ -2218,7 +2222,6 @@ class StructConversionFunction(object):
                 if self.direction == Direction.OUTPUT and not any([self.member_needs_copy(ext, m) for m in ext]):
                     continue
 
-                stype = next(x for x in ext.members if x.name == "sType").values
                 win_type = ext.name + "32" if self.conv and ext.needs_win32_type() else ext.name
                 if self.direction == Direction.INPUT:
                     in_type = "const " + win_type
@@ -2227,32 +2230,28 @@ class StructConversionFunction(object):
                     in_type = "const " + ext.name
                     out_type = win_type
 
-                body += "        case {0}:\n".format(stype)
-                body += "        {\n"
+                body += f"        case {ext.struct_type}:\n"
+                body += u"        {\n"
                 if self.direction == Direction.INPUT:
-                    body += ident + "{0} *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));\n".format(out_type)
+                    body += f"            {out_type} *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));\n"
                 elif self.conv:
-                    body += ident + "{0} *out_ext = find_next_struct32(out_header, {1});\n".format(out_type, stype)
+                    body += f"            {out_type} *out_ext = find_next_struct32(out_header, {ext.struct_type});\n"
                 else:
-                    body += ident + "{0} *out_ext = find_next_struct(out_header, {1});\n".format(out_type, stype)
+                    body += f"            {out_type} *out_ext = find_next_struct(out_header, {ext.struct_type});\n"
 
-                copy_body = ""
+                if any(self.member_needs_copy(ext, m) for m in ext if m.name not in ("sType", "pNext")):
+                    body += f"            {in_type} *in_ext = ({in_type} *)in_header;\n"
 
                 for m in ext:
                     if m.name == "sType":
-                        copy_body += ident + "out_ext->sType = {0};\n".format(stype)
+                        body += f"            out_ext->sType = {ext.struct_type};\n"
                         continue
                     if not self.member_needs_copy(ext, m):
                         continue
                     if m.name == "pNext":
-                        copy_body += ident + "out_ext->pNext = NULL;\n"
+                        body += u"            out_ext->pNext = NULL;\n"
                         continue
-                    copy_body += ident + m.copy("in_ext->", "out_ext->", self.direction, self.conv, Unwrap.HOST, self.const, conversions, ext)
-
-                # Generate the definition of "in_ext" if we need it
-                if "in_ext->" in copy_body:
-                    body += ident + "{0} *in_ext = ({0} *)in_header;\n".format(in_type)
-                body += copy_body
+                    body += ident + m.copy("in_ext->", "out_ext->", self.direction, self.conv, Unwrap.HOST, self.const, conversions, ext)
 
                 if self.direction == Direction.INPUT:
                     body += ident + "out_header->pNext = (void *)out_ext;\n"
