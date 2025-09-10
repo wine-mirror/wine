@@ -2201,11 +2201,11 @@ static BOOL buffer_vm_alloc( struct buffer *buffer, SIZE_T size )
 }
 
 static PTR32 wow64_map_buffer( TEB *teb, GLenum target, GLuint name, GLintptr offset,
-                               size_t length, GLbitfield access, void *ptr, PTR32 *client_ptr )
+                               size_t length, GLbitfield access, void *ptr )
 {
     struct buffer *buffer = get_target_buffer( teb, target );
 
-    if (!ptr && (!*client_ptr || !buffer)) return 0;
+    if (!ptr) return 0;
 
     if (!buffer)
     {
@@ -2337,94 +2337,92 @@ void wow64_glGetNamedBufferPointervEXT( TEB *teb, GLuint buffer, GLenum pname, P
     *params = PtrToUlong(ptr);
 }
 
-static PTR32 wow64_gl_map_buffer( TEB *teb, GLenum target, GLenum access, PTR32 *client_ptr,
-                                  PFN_glMapBuffer gl_map_buffer64 )
+static PTR32 wow64_gl_map_buffer( TEB *teb, GLenum target, GLenum access, PFN_glMapBuffer gl_map_buffer64 )
 {
     GLbitfield range_access = map_range_flags_from_map_flags( access );
-    void *ptr = NULL;
-    PTR32 ret ;
-
-    pthread_mutex_lock( &wgl_lock );
-    if (!*client_ptr) ptr = gl_map_buffer64( target, access );
-    ret = wow64_map_buffer( teb, target, 0, 0, 0, range_access, ptr, client_ptr );
-    pthread_mutex_unlock( &wgl_lock );
-    return ret;
-}
-
-PTR32 wow64_glMapBuffer( TEB *teb, GLenum target, GLenum access, PTR32 *client_ptr )
-{
-    const struct opengl_funcs *funcs = teb->glTable;
-    return wow64_gl_map_buffer( teb, target, access, client_ptr, funcs->p_glMapBuffer );
-}
-
-PTR32 wow64_glMapBufferARB( TEB *teb, GLenum target, GLenum access, PTR32 *client_ptr )
-{
-    const struct opengl_funcs *funcs = teb->glTable;
-    return wow64_gl_map_buffer( teb, target, access, client_ptr, funcs->p_glMapBufferARB );
-}
-
-PTR32 wow64_glMapBufferRange( TEB *teb, GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access, PTR32 *client_ptr )
-{
-    const struct opengl_funcs *funcs = teb->glTable;
-    void *ptr = NULL;
+    void *ptr;
     PTR32 ret;
 
     pthread_mutex_lock( &wgl_lock );
-    if (!*client_ptr) ptr = funcs->p_glMapBufferRange( target, offset, length, access );
-    ret = wow64_map_buffer( teb, target, 0, offset, length, access, ptr, client_ptr );
+    ptr = gl_map_buffer64( target, access );
+    ret = wow64_map_buffer( teb, target, 0, 0, 0, range_access, ptr );
     pthread_mutex_unlock( &wgl_lock );
     return ret;
 }
 
-static PTR32 wow64_gl_map_named_buffer( TEB *teb, GLuint name, GLenum access, PTR32 *client_ptr,
-                                        PFN_glMapNamedBuffer gl_map_named_buffer64 )
+PTR32 wow64_glMapBuffer( TEB *teb, GLenum target, GLenum access )
 {
-    GLbitfield range_access = map_range_flags_from_map_flags( access );
-    void *ptr = NULL;
+    const struct opengl_funcs *funcs = teb->glTable;
+    return wow64_gl_map_buffer( teb, target, access, funcs->p_glMapBuffer );
+}
+
+PTR32 wow64_glMapBufferARB( TEB *teb, GLenum target, GLenum access )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    return wow64_gl_map_buffer( teb, target, access, funcs->p_glMapBufferARB );
+}
+
+PTR32 wow64_glMapBufferRange( TEB *teb, GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    void *ptr;
     PTR32 ret;
 
     pthread_mutex_lock( &wgl_lock );
-    if (!*client_ptr) ptr = gl_map_named_buffer64( name, access );
-    ret = wow64_map_buffer( teb, 0, name, 0, 0, range_access, ptr, client_ptr );
+    ptr = funcs->p_glMapBufferRange( target, offset, length, access );
+    ret = wow64_map_buffer( teb, target, 0, offset, length, access, ptr );
     pthread_mutex_unlock( &wgl_lock );
     return ret;
 }
 
-PTR32 wow64_glMapNamedBuffer( TEB *teb, GLuint buffer, GLenum access, PTR32 *client_ptr )
+static PTR32 wow64_gl_map_named_buffer( TEB *teb, GLuint name, GLenum access, PFN_glMapNamedBuffer gl_map_named_buffer64 )
 {
-    const struct opengl_funcs *funcs = teb->glTable;
-    return wow64_gl_map_named_buffer( teb, buffer, access, client_ptr, funcs->p_glMapNamedBuffer );
+    GLbitfield range_access = map_range_flags_from_map_flags( access );
+    void *ptr;
+    PTR32 ret;
+
+    pthread_mutex_lock( &wgl_lock );
+    ptr = gl_map_named_buffer64( name, access );
+    ret = wow64_map_buffer( teb, 0, name, 0, 0, range_access, ptr );
+    pthread_mutex_unlock( &wgl_lock );
+    return ret;
 }
 
-PTR32 wow64_glMapNamedBufferEXT( TEB *teb, GLuint buffer, GLenum access, PTR32 *client_ptr )
+PTR32 wow64_glMapNamedBuffer( TEB *teb, GLuint buffer, GLenum access )
 {
     const struct opengl_funcs *funcs = teb->glTable;
-    return wow64_gl_map_named_buffer( teb, buffer, access, client_ptr, funcs->p_glMapNamedBufferEXT );
+    return wow64_gl_map_named_buffer( teb, buffer, access, funcs->p_glMapNamedBuffer );
+}
+
+PTR32 wow64_glMapNamedBufferEXT( TEB *teb, GLuint buffer, GLenum access )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    return wow64_gl_map_named_buffer( teb, buffer, access, funcs->p_glMapNamedBufferEXT );
 }
 
 static NTSTATUS wow64_gl_map_named_buffer_range( TEB *teb, GLuint name, GLintptr offset, GLsizeiptr length, GLbitfield access,
-                                                 PTR32 *client_ptr, PFN_glMapNamedBufferRange gl_map_named_buffer_range64 )
+                                                 PFN_glMapNamedBufferRange gl_map_named_buffer_range64 )
 {
-    void *ptr = NULL;
+    void *ptr;
     PTR32 ret;
 
     pthread_mutex_lock( &wgl_lock );
-    if (!*client_ptr) ptr = gl_map_named_buffer_range64( name, offset, length, access );
-    ret = wow64_map_buffer( teb, 0, name, offset, length, access, ptr, client_ptr );
+    ptr = gl_map_named_buffer_range64( name, offset, length, access );
+    ret = wow64_map_buffer( teb, 0, name, offset, length, access, ptr );
     pthread_mutex_unlock( &wgl_lock );
     return ret;
 }
 
-PTR32 wow64_glMapNamedBufferRange( TEB *teb, GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access, PTR32 *client_ptr )
+PTR32 wow64_glMapNamedBufferRange( TEB *teb, GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access )
 {
     const struct opengl_funcs *funcs = teb->glTable;
-    return wow64_gl_map_named_buffer_range( teb, buffer, offset, length, access, client_ptr, funcs->p_glMapNamedBufferRange );
+    return wow64_gl_map_named_buffer_range( teb, buffer, offset, length, access, funcs->p_glMapNamedBufferRange );
 }
 
-PTR32 wow64_glMapNamedBufferRangeEXT( TEB *teb, GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access, PTR32 *client_ptr )
+PTR32 wow64_glMapNamedBufferRangeEXT( TEB *teb, GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access )
 {
     const struct opengl_funcs *funcs = teb->glTable;
-    return wow64_gl_map_named_buffer_range( teb, buffer, offset, length, access, client_ptr, funcs->p_glMapNamedBufferRangeEXT );
+    return wow64_gl_map_named_buffer_range( teb, buffer, offset, length, access, funcs->p_glMapNamedBufferRangeEXT );
 }
 
 static void wow64_unmap_buffer( struct buffer *buffer )

@@ -12138,6 +12138,33 @@ static void WINAPI glMap2xOES( GLenum target, GLfixed u1, GLfixed u2, GLint ustr
     if ((status = UNIX_CALL( glMap2xOES, &args ))) WARN( "glMap2xOES returned %#lx\n", status );
 }
 
+static void * WINAPI glMapBuffer( GLenum target, GLenum access )
+{
+    struct glMapBuffer_params args = { .teb = NtCurrentTeb(), .target = target, .access = access };
+    NTSTATUS status;
+    TRACE( "target %d, access %d\n", target, access );
+    if ((status = UNIX_CALL( glMapBuffer, &args ))) WARN( "glMapBuffer returned %#lx\n", status );
+    return args.ret;
+}
+
+static void * WINAPI glMapBufferARB( GLenum target, GLenum access )
+{
+    struct glMapBufferARB_params args = { .teb = NtCurrentTeb(), .target = target, .access = access };
+    NTSTATUS status;
+    TRACE( "target %d, access %d\n", target, access );
+    if ((status = UNIX_CALL( glMapBufferARB, &args ))) WARN( "glMapBufferARB returned %#lx\n", status );
+    return args.ret;
+}
+
+static void * WINAPI glMapBufferRange( GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access )
+{
+    struct glMapBufferRange_params args = { .teb = NtCurrentTeb(), .target = target, .offset = offset, .length = length, .access = access };
+    NTSTATUS status;
+    TRACE( "target %d, offset %Id, length %Id, access %d\n", target, offset, length, access );
+    if ((status = UNIX_CALL( glMapBufferRange, &args ))) WARN( "glMapBufferRange returned %#lx\n", status );
+    return args.ret;
+}
+
 static void WINAPI glMapControlPointsNV( GLenum target, GLuint index, GLenum type, GLsizei ustride, GLsizei vstride, GLint uorder, GLint vorder, GLboolean packed, const void *points )
 {
     struct glMapControlPointsNV_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .type = type, .ustride = ustride, .vstride = vstride, .uorder = uorder, .vorder = vorder, .packed = packed, .points = points };
@@ -12160,6 +12187,42 @@ static void WINAPI glMapGrid2xOES( GLint n, GLfixed u1, GLfixed u2, GLfixed v1, 
     NTSTATUS status;
     TRACE( "n %d, u1 %d, u2 %d, v1 %d, v2 %d\n", n, u1, u2, v1, v2 );
     if ((status = UNIX_CALL( glMapGrid2xOES, &args ))) WARN( "glMapGrid2xOES returned %#lx\n", status );
+}
+
+static void * WINAPI glMapNamedBuffer( GLuint buffer, GLenum access )
+{
+    struct glMapNamedBuffer_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .access = access };
+    NTSTATUS status;
+    TRACE( "buffer %d, access %d\n", buffer, access );
+    if ((status = UNIX_CALL( glMapNamedBuffer, &args ))) WARN( "glMapNamedBuffer returned %#lx\n", status );
+    return args.ret;
+}
+
+static void * WINAPI glMapNamedBufferEXT( GLuint buffer, GLenum access )
+{
+    struct glMapNamedBufferEXT_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .access = access };
+    NTSTATUS status;
+    TRACE( "buffer %d, access %d\n", buffer, access );
+    if ((status = UNIX_CALL( glMapNamedBufferEXT, &args ))) WARN( "glMapNamedBufferEXT returned %#lx\n", status );
+    return args.ret;
+}
+
+static void * WINAPI glMapNamedBufferRange( GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access )
+{
+    struct glMapNamedBufferRange_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .offset = offset, .length = length, .access = access };
+    NTSTATUS status;
+    TRACE( "buffer %d, offset %Id, length %Id, access %d\n", buffer, offset, length, access );
+    if ((status = UNIX_CALL( glMapNamedBufferRange, &args ))) WARN( "glMapNamedBufferRange returned %#lx\n", status );
+    return args.ret;
+}
+
+static void * WINAPI glMapNamedBufferRangeEXT( GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access )
+{
+    struct glMapNamedBufferRangeEXT_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .offset = offset, .length = length, .access = access };
+    NTSTATUS status;
+    TRACE( "buffer %d, offset %Id, length %Id, access %d\n", buffer, offset, length, access );
+    if ((status = UNIX_CALL( glMapNamedBufferRangeEXT, &args ))) WARN( "glMapNamedBufferRangeEXT returned %#lx\n", status );
+    return args.ret;
 }
 
 static void * WINAPI glMapObjectBufferATI( GLuint buffer )
@@ -24298,13 +24361,6 @@ static BOOL WINAPI wglSwapIntervalEXT( int interval )
 }
 
 extern const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index );
-extern void * WINAPI glMapBuffer( GLenum target, GLenum access );
-extern void * WINAPI glMapBufferARB( GLenum target, GLenum access );
-extern void * WINAPI glMapBufferRange( GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access );
-extern void * WINAPI glMapNamedBuffer( GLuint buffer, GLenum access );
-extern void * WINAPI glMapNamedBufferEXT( GLuint buffer, GLenum access );
-extern void * WINAPI glMapNamedBufferRange( GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access );
-extern void * WINAPI glMapNamedBufferRangeEXT( GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access );
 extern GLboolean WINAPI glUnmapBuffer( GLenum target );
 extern GLboolean WINAPI glUnmapBufferARB( GLenum target );
 extern GLboolean WINAPI glUnmapNamedBuffer( GLuint buffer );
