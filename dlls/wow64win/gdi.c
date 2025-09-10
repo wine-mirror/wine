@@ -521,8 +521,8 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateAllocation( UINT *args )
     desc.hPrivateRuntimeResourceHandle = desc32->hPrivateRuntimeResourceHandle;
 
     status = NtGdiDdDDICreateAllocation( &desc );
-    desc.hResource = desc32->hResource;
-    desc.hGlobalShare = desc32->hGlobalShare;
+    desc32->hResource = desc.hResource;
+    desc32->hGlobalShare = desc.hGlobalShare;
     return status;
 }
 
@@ -629,8 +629,8 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateAllocation2( UINT *args )
     desc.hPrivateRuntimeResourceHandle = desc32->hPrivateRuntimeResourceHandle;
 
     status = NtGdiDdDDICreateAllocation( &desc );
-    desc.hResource = desc32->hResource;
-    desc.hGlobalShare = desc32->hGlobalShare;
+    desc32->hResource = desc.hResource;
+    desc32->hGlobalShare = desc.hGlobalShare;
     for (i = 0; desc32->pAllocationInfo2 && i < desc32->NumAllocations; i++)
         allocs32->GpuVirtualAddress = desc.pAllocationInfo2[i].GpuVirtualAddress;
     return status;
