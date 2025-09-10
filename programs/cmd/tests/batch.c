@@ -513,24 +513,6 @@ static int cmd_available(void)
     return FALSE;
 }
 
-void create_nul_test_file(void)
-{
-    HANDLE file;
-    DWORD size;
-    BOOL bres;
-    char contents[] = "a b c\nd e\0f\ng h i";
-
-    file = CreateFileA("nul_test_file", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-            FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
-    if(file == INVALID_HANDLE_VALUE)
-        return;
-
-    bres = WriteFile(file, contents, ARRAYSIZE(contents), &size, NULL);
-    ok(bres, "Could not write to file: %lu\n", GetLastError());
-    CloseHandle(file);
-}
-
 START_TEST(batch)
 {
     int argc;
@@ -555,13 +537,9 @@ START_TEST(batch)
     }
     shortpath_len = GetShortPathNameA(path, shortpath, ARRAY_SIZE(shortpath));
 
-    create_nul_test_file();
-
     argc = winetest_get_mainargs(&argv);
     if(argc > 2)
         run_from_file(argv[2]);
     else
         EnumResourceNamesA(NULL, "TESTCMD", test_enum_proc, 0);
-
-    DeleteFileA("nul_test_file");
 }
