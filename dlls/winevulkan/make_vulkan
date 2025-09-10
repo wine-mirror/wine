@@ -417,6 +417,7 @@ class VkBaseType(object):
             requires (:obj:'str', optional): Other types required.
                 Often bitmask values pull in a *FlagBits type.
         """
+        self.extensions = set()
         self.name = name
         self.type = _type
         self.alias = alias
@@ -435,6 +436,17 @@ class VkBaseType(object):
         return bool(self.alias)
 
 
+class Extension(object):
+    def __init__(self, name, type=None, platform=None, **kwargs):
+        self.name = name
+        self.type = type
+
+        self.is_supported = name not in UNSUPPORTED_EXTENSIONS
+        self.is_exposed = platform not in UNEXPOSED_PLATFORMS and \
+                          name not in UNEXPOSED_EXTENSIONS
+        self.is_core = name in CORE_EXTENSIONS
+
+
 class VkConstant(object):
     def __init__(self, name, value):
         self.name = name
@@ -447,6 +459,7 @@ class VkConstant(object):
 
 class VkDefine(object):
     def __init__(self, value):
+        self.extensions = set()
         self.value = value
 
     @staticmethod
@@ -567,6 +580,7 @@ class EnumValue(object):
 class VkFunction(object):
     def __init__(self, _type, name, params, alias=None):
         self.extensions = set()
+        self.platforms = set()
         self.name = name
         self.type = _type
         self.params = params
@@ -605,15 +619,7 @@ class VkFunction(object):
         return bool(self.alias)
 
     def is_core_func(self):
-        """ Returns whether the function is a Vulkan core function.
-        Core functions are APIs defined by the Vulkan spec to be part of the
-        Core API as well as several KHR WSI extensions.
-        """
-
-        if not self.extensions:
-            return True
-
-        return any(ext in self.extensions for ext in CORE_EXTENSIONS)
+        return not self.extensions or any(ext.is_core for ext in self.extensions)
 
     def is_device_func(self):
         # If none of the other, it must be a device function
@@ -660,7 +666,7 @@ class VkFunction(object):
 
     def needs_exposing(self):
         # The function needs exposed if at-least one extension isn't both UNSUPPORTED and UNEXPOSED
-        return self.is_required() and (not self.extensions or not self.extensions.issubset(UNEXPOSED_EXTENSIONS))
+        return self.is_required() and (not self.extensions or any(ext.is_exposed for ext in self.extensions))
 
     def is_perf_critical(self):
         # vkCmd* functions are frequently called, do not trace for performance
@@ -937,6 +943,7 @@ class VkFunction(object):
 
 class VkFunctionPointer(object):
     def __init__(self, value):
+        self.extensions = set()
         self.value = value
         self.required = False
 
@@ -958,6 +965,7 @@ class VkFunctionPointer(object):
 
 class VkHandle(object):
     def __init__(self, name, _type, parent, alias=None):
+        self.extensions = set()
         self.name = name
         self.type = _type
         self.parent = parent
@@ -1816,6 +1824,7 @@ class VkStruct(Sequence):
 
     def __init__(self, registry, name, members, returnedonly, structextends, alias=None, union=False):
         self.registry = registry
+        self.extensions = set()
         self.name = name
         self.members = members
         self.returnedonly = returnedonly
@@ -1824,7 +1833,7 @@ class VkStruct(Sequence):
         self.alias = alias
         self.union = union
         self.type_info = None # To be set later.
-        self._extensions = None
+        self._struct_extensions = None
         self.aliased_by = []
         self.order = 0
 
@@ -1889,24 +1898,20 @@ class VkStruct(Sequence):
             structs[member.type].set_order(self.order, structs)
 
     @property
-    def extension(self):
-        return self.registry.types[self.name]["extension"]
-
-    @property
     def struct_extensions(self):
-        if self._extensions is None:
-            self._extensions = []
+        if self._struct_extensions is None:
+            self._struct_extensions = []
 
-            def is_struct_extension(s):
-                if s.extension in UNEXPOSED_EXTENSIONS:
-                    return False
-                return not s.alias and self.name in s.structextends
+            def is_struct_extension(struct):
+                if not struct.extensions or any(ext.is_exposed for ext in struct.extensions):
+                    return not struct.alias and self.name in struct.structextends
+                return False
 
             structs = sorted(self.registry.structs, key=lambda s: s.name)
             for struct in filter(is_struct_extension, structs):
-                self._extensions.append(struct)
+                self._struct_extensions.append(struct)
 
-        return self._extensions
+        return self._struct_extensions
 
     def definition(self, align=False, conv=False):
         """ Convert structure to textual definition.
@@ -2872,16 +2877,14 @@ class VkGenerator(object):
 
         f.write("#define ALL_VK_CLIENT_DEVICE_EXTS")
         for ext in self.registry.extensions:
-            type, name = ext["type"], ext["name"]
-            if type == "device" and name not in UNEXPOSED_EXTENSIONS:
-                f.write(f" \\\n    USE_VK_EXT({name})")
+            if ext.type == "device" and ext.is_exposed:
+                f.write(f" \\\n    USE_VK_EXT({ext.name})")
         f.write("\n\n")
 
         f.write("#define ALL_VK_DEVICE_EXTS ALL_VK_CLIENT_DEVICE_EXTS")
         for ext in self.registry.extensions:
-            type, name = ext["type"], ext["name"]
-            if type == "device" and name in UNEXPOSED_EXTENSIONS:
-                f.write(f" \\\n    USE_VK_EXT({name})")
+            if ext.type == "device" and not ext.is_exposed:
+                f.write(f" \\\n    USE_VK_EXT({ext.name})")
         f.write("\n\n")
 
         f.write("#define ALL_VK_INSTANCE_FUNCS")
@@ -2895,16 +2898,14 @@ class VkGenerator(object):
 
         f.write("#define ALL_VK_CLIENT_INSTANCE_EXTS")
         for ext in self.registry.extensions:
-            type, name = ext["type"], ext["name"]
-            if type == "instance" and name not in UNEXPOSED_EXTENSIONS:
-                f.write(f" \\\n    USE_VK_EXT({name})")
+            if ext.type == "instance" and ext.is_exposed:
+                f.write(f" \\\n    USE_VK_EXT({ext.name})")
         f.write("\n\n")
 
         f.write("#define ALL_VK_INSTANCE_EXTS ALL_VK_CLIENT_INSTANCE_EXTS")
         for ext in self.registry.extensions:
-            type, name = ext["type"], ext["name"]
-            if type == "instance" and name in UNEXPOSED_EXTENSIONS:
-                f.write(f" \\\n    USE_VK_EXT({name})")
+            if ext.type == "instance" and not ext.is_exposed:
+                f.write(f" \\\n    USE_VK_EXT({ext.name})")
         f.write("\n\n")
 
         f.write("#endif /* __WINE_VULKAN_H */\n")
@@ -3240,30 +3241,16 @@ class VkRegistry(object):
 
 
         extensions = []
-        deferred_exts = []
 
-        def process_ext(ext, deferred=False):
-            ext_name = ext.attrib["name"]
+        def process_ext(ext):
+            extension = Extension(**ext.attrib)
 
             # Set extension name on any functions calls part of this extension as we
             # were not aware of the name during initial parsing.
-            commands = ext.findall("require/command")
-            for command in commands:
-                cmd_name = command.attrib["name"]
-                # Need to verify that the command is defined, and otherwise skip it.
-                # vkCreateScreenSurfaceQNX is declared in <extensions> but not defined in
-                # <commands>. A command without a definition cannot be enabled, so it's valid for
-                # the XML file to handle this, but because of the manner in which we parse the XML
-                # file we pre-populate from <commands> before we check if a command is enabled.
-                if cmd_name in self.funcs:
-                    self.funcs[cmd_name].extensions.add(ext_name)
+            for command in ext.findall("require/command"):
+                self.funcs[command.attrib["name"]].extensions.add(extension)
 
-            if ext_name in UNSUPPORTED_EXTENSIONS:
-                return
-
-            # Defer extensions with 'sortorder' as they are order-dependent for spec-parsing.
-            if not deferred and "sortorder" in ext.attrib:
-                deferred_exts.append(ext)
+            if not extension.is_supported:
                 return
 
             # Extensions can define EnumValues which alias to provisional extensions. Pre-process
@@ -3273,7 +3260,7 @@ class VkRegistry(object):
                 for enum_elem in require.findall("enum"):
                     self._process_require_enum(enum_elem, ext, only_aliased=True)
 
-            LOGGER.debug("Loading extension: {0}".format(ext_name))
+            LOGGER.debug("Loading extension: {0}".format(extension.name))
 
             # Extensions can define one or more require sections each requiring
             # different features (e.g. Vulkan 1.1). Parse each require section
@@ -3291,7 +3278,7 @@ class VkRegistry(object):
                     # Therefore just skip any types that aren't found.
                     if t.attrib["name"] in self.types:
                         type_info = self.types[t.attrib["name"]]
-                        type_info["extension"] = ext_name
+                        type_info["data"].extensions.add(extension)
                         self._require_type(type_info["data"])
 
                 # Pull in any commands we need. We infer types to pull in from the command
@@ -3312,22 +3299,13 @@ class VkRegistry(object):
             # don't want to add the extension as a real extension here.
             # Checking for the existence of "type" seems to achieve this.
             if "type" in ext.attrib:
-                ext_info = {"name" : ext_name, "type" : ext.attrib["type"]}
-                extensions.append(ext_info)
+                extensions.append(extension)
 
-
-        # Process extensions, allowing for sortorder to defer extension processing
         for ext in exts.values():
             process_ext(ext)
 
-        deferred_exts.sort(key=lambda ext: ext.attrib["sortorder"])
-
-        # Respect sortorder
-        for ext in deferred_exts:
-            process_ext(ext, deferred=True)
-
         # Sort in alphabetical order.
-        self.extensions = sorted(extensions, key=lambda ext: ext["name"])
+        self.extensions = sorted(extensions, key=lambda ext: ext.name)
 
     def _parse_features(self, root):
         """ Parse the feature section, which describes Core commands and types needed. """
@@ -3369,7 +3347,6 @@ class VkRegistry(object):
             type_info = {}
             type_info["category"] = t.attrib.get("category", None)
             type_info["requires"] = t.attrib.get("requires", None)
-            type_info["extension"] = None
 
             # We parse aliases in a second pass when we know more.
             alias = t.attrib.get("alias")
@@ -3465,7 +3442,6 @@ class VkRegistry(object):
             type_info = {}
             type_info["category"] = t.attrib.get("category")
             type_info["name"] = t.attrib.get("name")
-            type_info["extension"] = None
 
             alias = t.attrib.get("alias")
 
