@@ -352,10 +352,11 @@ int __cdecl wcsncmp( LPCWSTR str1, LPCWSTR str2, size_t n )
 #undef wcsncpy
 LPWSTR __cdecl wcsncpy( LPWSTR s1, LPCWSTR s2, size_t n )
 {
-    WCHAR *ret = s1;
-    for ( ; n; n--) if (!(*s1++ = *s2++)) break;
-    for ( ; n; n--) *s1++ = 0;
-    return ret;
+    size_t i;
+
+    for (i = 0; i < n; i++) if(!(s1[i] = s2[i])) break;
+    for (; i < n; i++) s1[i] = 0;
+    return s1;
 }
 
 
