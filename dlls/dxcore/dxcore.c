@@ -27,8 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxcore);
 
-static struct dxcore_adapter_factory *dxcore_adapter_factory;
-
 struct dxcore_adapter
 {
     IDXCoreAdapter IDXCoreAdapter_iface;
@@ -442,12 +440,6 @@ static ULONG STDMETHODCALLTYPE dxcore_adapter_factory_Release(IDXCoreAdapterFact
 
     TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
-    if (!refcount)
-    {
-        free(factory);
-        dxcore_adapter_factory = NULL;
-    }
-
     return refcount;
 }
 
@@ -612,25 +604,23 @@ static const struct IDXCoreAdapterFactoryVtbl dxcore_adapter_factory_vtbl =
     dxcore_adapter_factory_UnregisterEventNotification,
 };
 
+static struct dxcore_adapter_factory dxcore_adapter_factory = {
+    .IDXCoreAdapterFactory_iface.lpVtbl = &dxcore_adapter_factory_vtbl,
+    .refcount = 0
+};
+
 HRESULT STDMETHODCALLTYPE DXCoreCreateAdapterFactory(REFIID riid, void **out)
 {
+    HRESULT hr;
+
     TRACE("riid %s, out %p\n", debugstr_guid(riid), out);
 
     if (!out)
         return E_POINTER;
 
-    if (!dxcore_adapter_factory)
-    {
-        if (!(dxcore_adapter_factory = calloc(1, sizeof(*dxcore_adapter_factory))))
-        {
-            *out = NULL;
-            return E_OUTOFMEMORY;
-        }
+    hr = IDXCoreAdapterFactory_QueryInterface(&dxcore_adapter_factory.IDXCoreAdapterFactory_iface, riid, out);
+    if (SUCCEEDED(hr))
+        TRACE("returning factory %p\n", *out);
 
-        dxcore_adapter_factory->IDXCoreAdapterFactory_iface.lpVtbl = &dxcore_adapter_factory_vtbl;
-        dxcore_adapter_factory->refcount = 0;
-    }
-
-    TRACE("created IDXCoreAdapterFactory %p.\n", *out);
-    return IDXCoreAdapterFactory_QueryInterface(&dxcore_adapter_factory->IDXCoreAdapterFactory_iface, riid, out);
+    return hr;
 }
