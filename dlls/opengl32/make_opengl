@@ -173,10 +173,6 @@ my %manual_win_thunks =
     (
      "glGetString" => 1,
      "glGetStringi" => 1,
-     "glUnmapBuffer" => 1,
-     "glUnmapBufferARB" => 1,
-     "glUnmapNamedBuffer" => 1,
-     "glUnmapNamedBufferEXT" => 1,
      "wglChoosePixelFormatARB" => 1,
      "wglGetExtensionsStringARB" => 1,
      "wglGetExtensionsStringEXT" => 1,
@@ -298,10 +294,10 @@ my %manual_wow64_wrappers =
      "glMapNamedBufferEXT" => 0,
      "glMapNamedBufferRange" => 0,
      "glMapNamedBufferRangeEXT" => 0,
-     "glUnmapBuffer" => 1,
-     "glUnmapBufferARB" => 1,
-     "glUnmapNamedBuffer" => 1,
-     "glUnmapNamedBufferEXT" => 1,
+     "glUnmapBuffer" => 0,
+     "glUnmapBufferARB" => 0,
+     "glUnmapNamedBuffer" => 0,
+     "glUnmapNamedBufferEXT" => 0,
      "glWaitSync" => 0,
     );
 my %wow64_invalidate_buffer =
@@ -529,11 +525,6 @@ sub generate_unix_thunk($$$$)
                 $need_manual_thunk = 1 if $ret_type =~ /(GLsync|PROC|GLintptr|\*)/;
             }
         }
-        if ($manual_wow64_wrappers{$name})
-        {
-            $ret .= "        PTR32 client_ptr;\n";
-            $call_args .= " &params->client_ptr,";
-        }
         $ret .= "    } *params = args;\n";
         if (!$need_wrap && $need_manual_thunk)
         {
@@ -653,7 +644,6 @@ sub generate_wrapper_declaration($$$)
         }
         $ret .= " " . $arg->textContent() . ",";
     }
-    $ret .= " PTR32 *client_ptr," if $manual_wow64_wrappers{$name};
     $ret =~ s/,$/ /;
     $ret .= ");\n";
     return $ret;
@@ -758,7 +748,6 @@ sub generate_func_params($$)
         $ret .= sprintf "    %s;\n", $arg->textContent();
     }
     $ret .= sprintf "    %sret;\n", $func->[0]->textContent() unless is_void_func($func);
-    $ret .= "#ifndef _WIN64\n    void *client_ptr;\n#endif\n" if $manual_wow64_wrappers{$name};
     $ret .= "};\n\n";
     return $ret;
 }

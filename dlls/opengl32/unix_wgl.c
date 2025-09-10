@@ -2454,13 +2454,13 @@ static GLboolean wow64_unmap_target_buffer( TEB *teb, GLenum target, PFN_glUnmap
     return ret;
 }
 
-GLboolean wow64_glUnmapBuffer( TEB *teb, GLenum target, PTR32 *client_ptr )
+GLboolean wow64_glUnmapBuffer( TEB *teb, GLenum target )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     return wow64_unmap_target_buffer( teb, target, funcs->p_glUnmapBuffer );
 }
 
-GLboolean wow64_glUnmapBufferARB( TEB *teb, GLenum target, PTR32 *client_ptr )
+GLboolean wow64_glUnmapBufferARB( TEB *teb, GLenum target )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     return wow64_unmap_target_buffer( teb, target, funcs->p_glUnmapBufferARB );
@@ -2478,13 +2478,13 @@ static GLboolean wow64_gl_unmap_named_buffer( TEB *teb, GLuint name, PFN_glUnmap
     return ret;
 }
 
-GLboolean wow64_glUnmapNamedBuffer( TEB *teb, GLuint buffer, PTR32 *client_ptr )
+GLboolean wow64_glUnmapNamedBuffer( TEB *teb, GLuint buffer )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     return wow64_gl_unmap_named_buffer( teb, buffer, funcs->p_glUnmapNamedBuffer );
 }
 
-GLboolean wow64_glUnmapNamedBufferEXT( TEB *teb, GLuint buffer, PTR32 *client_ptr )
+GLboolean wow64_glUnmapNamedBufferEXT( TEB *teb, GLuint buffer )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     return wow64_gl_unmap_named_buffer( teb, buffer, funcs->p_glUnmapNamedBufferEXT );

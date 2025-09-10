@@ -64,9 +64,9 @@ extern PTR32 wow64_glMapNamedBuffer( TEB *teb, GLuint buffer, GLenum access );
 extern PTR32 wow64_glMapNamedBufferEXT( TEB *teb, GLuint buffer, GLenum access );
 extern PTR32 wow64_glMapNamedBufferRange( TEB *teb, GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access );
 extern PTR32 wow64_glMapNamedBufferRangeEXT( TEB *teb, GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access );
-extern GLboolean wow64_glUnmapBuffer( TEB *teb, GLenum target, PTR32 *client_ptr );
-extern GLboolean wow64_glUnmapBufferARB( TEB *teb, GLenum target, PTR32 *client_ptr );
-extern GLboolean wow64_glUnmapNamedBuffer( TEB *teb, GLuint buffer, PTR32 *client_ptr );
-extern GLboolean wow64_glUnmapNamedBufferEXT( TEB *teb, GLuint buffer, PTR32 *client_ptr );
+extern GLboolean wow64_glUnmapBuffer( TEB *teb, GLenum target );
+extern GLboolean wow64_glUnmapBufferARB( TEB *teb, GLenum target );
+extern GLboolean wow64_glUnmapNamedBuffer( TEB *teb, GLuint buffer );
+extern GLboolean wow64_glUnmapNamedBufferEXT( TEB *teb, GLuint buffer );
 extern void wow64_glWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64 timeout );
 #endif

@@ -20723,6 +20723,42 @@ static void WINAPI glUnlockArraysEXT(void)
     if ((status = UNIX_CALL( glUnlockArraysEXT, &args ))) WARN( "glUnlockArraysEXT returned %#lx\n", status );
 }
 
+static GLboolean WINAPI glUnmapBuffer( GLenum target )
+{
+    struct glUnmapBuffer_params args = { .teb = NtCurrentTeb(), .target = target };
+    NTSTATUS status;
+    TRACE( "target %d\n", target );
+    if ((status = UNIX_CALL( glUnmapBuffer, &args ))) WARN( "glUnmapBuffer returned %#lx\n", status );
+    return args.ret;
+}
+
+static GLboolean WINAPI glUnmapBufferARB( GLenum target )
+{
+    struct glUnmapBufferARB_params args = { .teb = NtCurrentTeb(), .target = target };
+    NTSTATUS status;
+    TRACE( "target %d\n", target );
+    if ((status = UNIX_CALL( glUnmapBufferARB, &args ))) WARN( "glUnmapBufferARB returned %#lx\n", status );
+    return args.ret;
+}
+
+static GLboolean WINAPI glUnmapNamedBuffer( GLuint buffer )
+{
+    struct glUnmapNamedBuffer_params args = { .teb = NtCurrentTeb(), .buffer = buffer };
+    NTSTATUS status;
+    TRACE( "buffer %d\n", buffer );
+    if ((status = UNIX_CALL( glUnmapNamedBuffer, &args ))) WARN( "glUnmapNamedBuffer returned %#lx\n", status );
+    return args.ret;
+}
+
+static GLboolean WINAPI glUnmapNamedBufferEXT( GLuint buffer )
+{
+    struct glUnmapNamedBufferEXT_params args = { .teb = NtCurrentTeb(), .buffer = buffer };
+    NTSTATUS status;
+    TRACE( "buffer %d\n", buffer );
+    if ((status = UNIX_CALL( glUnmapNamedBufferEXT, &args ))) WARN( "glUnmapNamedBufferEXT returned %#lx\n", status );
+    return args.ret;
+}
+
 static void WINAPI glUnmapObjectBufferATI( GLuint buffer )
 {
     struct glUnmapObjectBufferATI_params args = { .teb = NtCurrentTeb(), .buffer = buffer };
@@ -24361,10 +24397,6 @@ static BOOL WINAPI wglSwapIntervalEXT( int interval )
 }
 
 extern const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index );
-extern GLboolean WINAPI glUnmapBuffer( GLenum target );
-extern GLboolean WINAPI glUnmapBufferARB( GLenum target );
-extern GLboolean WINAPI glUnmapNamedBuffer( GLuint buffer );
-extern GLboolean WINAPI glUnmapNamedBufferEXT( GLuint buffer );
 extern BOOL WINAPI wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats );
 extern HDC WINAPI wglGetCurrentReadDCARB(void);
 extern const char * WINAPI wglGetExtensionsStringARB( HDC hdc );

@@ -1690,58 +1690,6 @@ const GLchar * WINAPI wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum
     return args.ret;
 }
 
-static GLboolean gl_unmap_buffer( enum unix_funcs code, GLenum target )
-{
-    struct glUnmapBuffer_params args =
-    {
-        .teb = NtCurrentTeb(),
-        .target = target,
-    };
-    NTSTATUS status;
-
-    TRACE( "target %d\n", target );
-
-    status = WINE_UNIX_CALL( code, &args );
-    if (status) WARN( "glUnmapBuffer returned %#lx\n", status );
-    return args.ret;
-}
-
-GLboolean WINAPI glUnmapBuffer( GLenum target )
-{
-    return gl_unmap_buffer( unix_glUnmapBuffer, target );
-}
-
-GLboolean WINAPI glUnmapBufferARB( GLenum target )
-{
-    return gl_unmap_buffer( unix_glUnmapBufferARB, target );
-}
-
-static GLboolean gl_unmap_named_buffer( enum unix_funcs code, GLuint buffer )
-{
-    struct glUnmapNamedBuffer_params args =
-    {
-        .teb = NtCurrentTeb(),
-        .buffer = buffer,
-    };
-    NTSTATUS status;
-
-    TRACE( "buffer %d\n", buffer );
-
-    status = WINE_UNIX_CALL( code, &args );
-    if (status) WARN( "glUnmapNamedBuffer returned %#lx\n", status );
-    return args.ret;
-}
-
-GLboolean WINAPI glUnmapNamedBuffer( GLuint buffer )
-{
-    return gl_unmap_named_buffer( unix_glUnmapNamedBuffer, buffer );
-}
-
-GLboolean WINAPI glUnmapNamedBufferEXT( GLuint buffer )
-{
-    return gl_unmap_named_buffer( unix_glUnmapNamedBufferEXT, buffer );
-}
-
 typedef void (WINAPI *gl_debug_message)(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar *, const void *);
 
 static NTSTATUS WINAPI call_gl_debug_message_callback( void *args, ULONG size )
