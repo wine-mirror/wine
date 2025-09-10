@@ -65,7 +65,6 @@ LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
 VK_XML_VERSION = "1.4.335"
-WINE_VK_VERSION = (1, 4)
 
 # Filenames to create.
 WINE_VULKAN_H = "../../include/wine/vulkan.h"
@@ -2613,7 +2612,8 @@ class VkGenerator(object):
         f.write("#ifndef __WINE_VULKAN_THUNKS_H\n")
         f.write("#define __WINE_VULKAN_THUNKS_H\n\n")
 
-        f.write("#define WINE_VK_VERSION VK_API_VERSION_{0}_{1}\n\n".format(WINE_VK_VERSION[0], WINE_VK_VERSION[1]))
+        major, minor, patch = VK_XML_VERSION.split('.')
+        f.write("#define WINE_VK_VERSION VK_API_VERSION_{0}_{1}\n\n".format(major, minor))
 
         # Generate prototypes for device and instance functions requiring a custom implementation.
         f.write("/* Functions for which we have custom implementations outside of the thunks. */\n")
@@ -2955,15 +2955,6 @@ class VkRegistry(object):
         self.funcs = {}
         self.types = {}
 
-        self.version_regex = re.compile(
-            r'^'
-            r'VK_VERSION_'
-            r'(?P<major>[0-9])'
-            r'_'
-            r'(?P<minor>[0-9])'
-            r'$'
-        )
-
         # Overall strategy for parsing the registry is to first
         # parse all type / function definitions. Then parse
         # features and extensions to decide which types / functions
@@ -2995,14 +2986,6 @@ class VkRegistry(object):
             enum.fixup_64bit_aliases()
 
         self._match_object_types()
-
-    def _is_feature_supported(self, feature):
-        version = self.version_regex.match(feature)
-        if not version:
-            return True
-
-        version = tuple(map(int, version.group('major', 'minor')))
-        return version <= WINE_VK_VERSION
 
     def _is_extension_supported(self, extension):
         # We disable some extensions as either we haven't implemented
@@ -3301,10 +3284,6 @@ class VkRegistry(object):
                         type_info = self.types[t.attrib["name"]]
                         type_info["extension"] = ext_name
                         self._require_type(type_info["data"])
-                feature = require.attrib.get("feature")
-                if feature and not self._is_feature_supported(feature):
-                    continue
-
                 required_extension = require.attrib.get("extension")
                 if required_extension and not self._is_extension_supported(required_extension):
                     continue
@@ -3348,15 +3327,12 @@ class VkRegistry(object):
         """ Parse the feature section, which describes Core commands and types needed. """
 
         for feature in filter(is_api_supported, root.findall("./feature")):
-            feature_name = feature.attrib["name"]
             for require in feature.findall("require"):
                 LOGGER.info("Including features for {0}".format(require.attrib.get("comment")))
                 for tag in require:
                     if tag.tag == "comment":
                         continue
                     elif tag.tag == "command":
-                        if not self._is_feature_supported(feature_name):
-                            continue
                         name = tag.attrib["name"]
                         self._mark_command_required(name)
                     elif tag.tag == "enum":
