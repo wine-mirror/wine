@@ -2280,7 +2280,7 @@ static VkResult queue_submit( struct vulkan_queue *queue, uint32_t count, const 
 
         for (uint32_t j = 0; j < submit->commandBufferInfoCount; j++)
         {
-            VkCommandBufferSubmitInfoKHR *command_buffer_infos = (VkCommandBufferSubmitInfoKHR *)submit->pCommandBufferInfos; /* cast away const, chain has been copied in the thunks */
+            VkCommandBufferSubmitInfo *command_buffer_infos = (VkCommandBufferSubmitInfo *)submit->pCommandBufferInfos; /* cast away const, chain has been copied in the thunks */
             struct vulkan_command_buffer *command_buffer = vulkan_command_buffer_from_handle( command_buffer_infos[j].commandBuffer );
             command_buffer_infos[j].commandBuffer = command_buffer->host.command_buffer;
             if (command_buffer_infos->pNext) FIXME( "Unhandled struct chain\n" );

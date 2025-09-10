@@ -293,18 +293,27 @@ MANUAL_LOADER_THUNKS = {
     "vkFreeCommandBuffers",
 }
 
+# Force making copies of structs even without chains
+FORCE_STRUCT_CONVERSIONS = {
+    "VkPhysicalDeviceExternalBufferInfo",
+    "VkPhysicalDeviceExternalBufferInfoKHR",
+    "VkPhysicalDeviceExternalFenceInfo",
+    "VkPhysicalDeviceExternalFenceInfoKHR",
+    "VkPhysicalDeviceExternalSemaphoreInfo",
+    "VkPhysicalDeviceExternalSemaphoreInfoKHR",
+    "VkCommandBufferSubmitInfo",
+    "VkCommandBufferSubmitInfoKHR",
+    "VkSemaphoreSubmitInfo",
+    "VkSemaphoreSubmitInfoKHR",
+}
+
 STRUCT_CHAIN_CONVERSIONS = {
     # Force making copies of some struct chains
     "VkMemoryAllocateInfo": {},
     "VkBufferCreateInfo": {},
     "VkImageCreateInfo": {},
-    "VkPhysicalDeviceExternalBufferInfo": {},
-    "VkPhysicalDeviceExternalFenceInfo": {},
-    "VkPhysicalDeviceExternalSemaphoreInfo": {},
     "VkPhysicalDeviceImageFormatInfo2": {},
-    "VkCommandBufferSubmitInfo": {},
     "VkSemaphoreCreateInfo": {},
-    "VkSemaphoreSubmitInfo": {},
     "VkFenceCreateInfo": {},
     "VkSubmitInfo": {},
     "VkSubmitInfo2": {},
@@ -1993,6 +2002,9 @@ class VkStruct(Sequence):
             return False
         if direction == Direction.OUTPUT and re.match("^VkClusterAccelerationStructure",self.name):
             return False
+
+        if direction == Direction.INPUT and self.name in FORCE_STRUCT_CONVERSIONS:
+            return True
 
         needs_output_copy = False
 

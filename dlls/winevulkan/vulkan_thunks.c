@@ -29929,39 +29929,15 @@ static void convert_VkCooperativeVectorPropertiesNV_array_host_to_win32(const Vk
 }
 
 #ifdef _WIN64
-static void convert_VkPhysicalDeviceExternalBufferInfo_win64_to_host(struct conversion_context *ctx, const VkPhysicalDeviceExternalBufferInfo *in, VkPhysicalDeviceExternalBufferInfo *out)
+static void convert_VkPhysicalDeviceExternalBufferInfo_win64_to_host(const VkPhysicalDeviceExternalBufferInfo *in, VkPhysicalDeviceExternalBufferInfo *out)
 {
-    const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
-
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = NULL;
+    out->pNext = in->pNext;
     out->flags = in->flags;
     out->usage = in->usage;
     out->handleType = in->handleType;
-
-    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
-    {
-        switch (in_header->sType)
-        {
-        case VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO:
-        {
-            VkBufferUsageFlags2CreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkBufferUsageFlags2CreateInfo *in_ext = (const VkBufferUsageFlags2CreateInfo *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO;
-            out_ext->pNext = NULL;
-            out_ext->usage = in_ext->usage;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        default:
-            FIXME("Unhandled sType %u.\n", in_header->sType);
-            break;
-        }
-    }
 }
 #endif /* _WIN64 */
 
@@ -30018,7 +29994,7 @@ static void convert_VkExternalBufferProperties_host_to_win32(const VkExternalBuf
 }
 
 #ifdef _WIN64
-static void convert_VkPhysicalDeviceExternalFenceInfo_win64_to_host(struct conversion_context *ctx, const VkPhysicalDeviceExternalFenceInfo *in, VkPhysicalDeviceExternalFenceInfo *out)
+static void convert_VkPhysicalDeviceExternalFenceInfo_win64_to_host(const VkPhysicalDeviceExternalFenceInfo *in, VkPhysicalDeviceExternalFenceInfo *out)
 {
     if (!in) return;
 
@@ -30028,7 +30004,7 @@ static void convert_VkPhysicalDeviceExternalFenceInfo_win64_to_host(struct conve
 }
 #endif /* _WIN64 */
 
-static void convert_VkPhysicalDeviceExternalFenceInfo_win32_to_host(struct conversion_context *ctx, const VkPhysicalDeviceExternalFenceInfo32 *in, VkPhysicalDeviceExternalFenceInfo *out)
+static void convert_VkPhysicalDeviceExternalFenceInfo_win32_to_host(const VkPhysicalDeviceExternalFenceInfo32 *in, VkPhysicalDeviceExternalFenceInfo *out)
 {
     if (!in) return;
 
@@ -30059,38 +30035,13 @@ static void convert_VkExternalFenceProperties_host_to_win32(const VkExternalFenc
 }
 
 #ifdef _WIN64
-static void convert_VkPhysicalDeviceExternalSemaphoreInfo_win64_to_host(struct conversion_context *ctx, const VkPhysicalDeviceExternalSemaphoreInfo *in, VkPhysicalDeviceExternalSemaphoreInfo *out)
+static void convert_VkPhysicalDeviceExternalSemaphoreInfo_win64_to_host(const VkPhysicalDeviceExternalSemaphoreInfo *in, VkPhysicalDeviceExternalSemaphoreInfo *out)
 {
-    const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
-
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = NULL;
+    out->pNext = in->pNext;
     out->handleType = in->handleType;
-
-    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
-    {
-        switch (in_header->sType)
-        {
-        case VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO:
-        {
-            VkSemaphoreTypeCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkSemaphoreTypeCreateInfo *in_ext = (const VkSemaphoreTypeCreateInfo *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
-            out_ext->pNext = NULL;
-            out_ext->semaphoreType = in_ext->semaphoreType;
-            out_ext->initialValue = in_ext->initialValue;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        default:
-            FIXME("Unhandled sType %u.\n", in_header->sType);
-            break;
-        }
-    }
 }
 #endif /* _WIN64 */
 
@@ -41635,7 +41586,7 @@ static const VkSubmitInfo *convert_VkSubmitInfo_array_win32_to_unwrapped_host(st
 }
 
 #ifdef _WIN64
-static void convert_VkSemaphoreSubmitInfo_win64_to_unwrapped_host(struct conversion_context *ctx, const VkSemaphoreSubmitInfo *in, VkSemaphoreSubmitInfo *out)
+static void convert_VkSemaphoreSubmitInfo_win64_to_unwrapped_host(const VkSemaphoreSubmitInfo *in, VkSemaphoreSubmitInfo *out)
 {
     if (!in) return;
 
@@ -41659,7 +41610,7 @@ static const VkSemaphoreSubmitInfo *convert_VkSemaphoreSubmitInfo_array_win64_to
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkSemaphoreSubmitInfo_win64_to_unwrapped_host(ctx, &in[i], &out[i]);
+        convert_VkSemaphoreSubmitInfo_win64_to_unwrapped_host(&in[i], &out[i]);
     }
 
     return out;
@@ -41667,7 +41618,7 @@ static const VkSemaphoreSubmitInfo *convert_VkSemaphoreSubmitInfo_array_win64_to
 #endif /* _WIN64 */
 
 #ifdef _WIN64
-static void convert_VkSemaphoreSubmitInfo_win64_to_host(struct conversion_context *ctx, const VkSemaphoreSubmitInfo *in, VkSemaphoreSubmitInfo *out)
+static void convert_VkSemaphoreSubmitInfo_win64_to_host(const VkSemaphoreSubmitInfo *in, VkSemaphoreSubmitInfo *out)
 {
     if (!in) return;
 
@@ -41691,7 +41642,7 @@ static const VkSemaphoreSubmitInfo *convert_VkSemaphoreSubmitInfo_array_win64_to
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkSemaphoreSubmitInfo_win64_to_host(ctx, &in[i], &out[i]);
+        convert_VkSemaphoreSubmitInfo_win64_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -41871,7 +41822,7 @@ static const VkSubmitInfo2 *convert_VkSubmitInfo2_array_win64_to_unwrapped_host(
 }
 #endif /* _WIN64 */
 
-static void convert_VkSemaphoreSubmitInfo_win32_to_unwrapped_host(struct conversion_context *ctx, const VkSemaphoreSubmitInfo32 *in, VkSemaphoreSubmitInfo *out)
+static void convert_VkSemaphoreSubmitInfo_win32_to_unwrapped_host(const VkSemaphoreSubmitInfo32 *in, VkSemaphoreSubmitInfo *out)
 {
     if (!in) return;
 
@@ -41895,13 +41846,13 @@ static const VkSemaphoreSubmitInfo *convert_VkSemaphoreSubmitInfo_array_win32_to
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkSemaphoreSubmitInfo_win32_to_unwrapped_host(ctx, &in[i], &out[i]);
+        convert_VkSemaphoreSubmitInfo_win32_to_unwrapped_host(&in[i], &out[i]);
     }
 
     return out;
 }
 
-static void convert_VkSemaphoreSubmitInfo_win32_to_host(struct conversion_context *ctx, const VkSemaphoreSubmitInfo32 *in, VkSemaphoreSubmitInfo *out)
+static void convert_VkSemaphoreSubmitInfo_win32_to_host(const VkSemaphoreSubmitInfo32 *in, VkSemaphoreSubmitInfo *out)
 {
     if (!in) return;
 
@@ -41925,7 +41876,7 @@ static const VkSemaphoreSubmitInfo *convert_VkSemaphoreSubmitInfo_array_win32_to
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkSemaphoreSubmitInfo_win32_to_host(ctx, &in[i], &out[i]);
+        convert_VkSemaphoreSubmitInfo_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -57212,15 +57163,11 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalBufferProperties(void *args)
 {
     struct vkGetPhysicalDeviceExternalBufferProperties_params *params = args;
     VkPhysicalDeviceExternalBufferInfo pExternalBufferInfo_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalBufferInfo, params->pExternalBufferProperties);
 
-    init_conversion_context(ctx);
-    convert_VkPhysicalDeviceExternalBufferInfo_win64_to_host(ctx, params->pExternalBufferInfo, &pExternalBufferInfo_host);
+    convert_VkPhysicalDeviceExternalBufferInfo_win64_to_host(params->pExternalBufferInfo, &pExternalBufferInfo_host);
     vk_funcs->p_vkGetPhysicalDeviceExternalBufferProperties(params->physicalDevice, &pExternalBufferInfo_host, params->pExternalBufferProperties);
-    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -57254,15 +57201,11 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalBufferPropertiesKHR(void *arg
 {
     struct vkGetPhysicalDeviceExternalBufferPropertiesKHR_params *params = args;
     VkPhysicalDeviceExternalBufferInfo pExternalBufferInfo_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalBufferInfo, params->pExternalBufferProperties);
 
-    init_conversion_context(ctx);
-    convert_VkPhysicalDeviceExternalBufferInfo_win64_to_host(ctx, params->pExternalBufferInfo, &pExternalBufferInfo_host);
+    convert_VkPhysicalDeviceExternalBufferInfo_win64_to_host(params->pExternalBufferInfo, &pExternalBufferInfo_host);
     vk_funcs->p_vkGetPhysicalDeviceExternalBufferPropertiesKHR(params->physicalDevice, &pExternalBufferInfo_host, params->pExternalBufferProperties);
-    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -57296,15 +57239,11 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalFenceProperties(void *args)
 {
     struct vkGetPhysicalDeviceExternalFenceProperties_params *params = args;
     VkPhysicalDeviceExternalFenceInfo pExternalFenceInfo_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalFenceInfo, params->pExternalFenceProperties);
 
-    init_conversion_context(ctx);
-    convert_VkPhysicalDeviceExternalFenceInfo_win64_to_host(ctx, params->pExternalFenceInfo, &pExternalFenceInfo_host);
+    convert_VkPhysicalDeviceExternalFenceInfo_win64_to_host(params->pExternalFenceInfo, &pExternalFenceInfo_host);
     wine_vkGetPhysicalDeviceExternalFenceProperties(params->physicalDevice, &pExternalFenceInfo_host, params->pExternalFenceProperties);
-    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -57319,17 +57258,13 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceExternalFenceProperties(void *args)
     } *params = args;
     VkPhysicalDeviceExternalFenceInfo pExternalFenceInfo_host;
     VkExternalFenceProperties pExternalFenceProperties_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%#x, %#x, %#x\n", params->physicalDevice, params->pExternalFenceInfo, params->pExternalFenceProperties);
 
-    init_conversion_context(ctx);
-    convert_VkPhysicalDeviceExternalFenceInfo_win32_to_host(ctx, (const VkPhysicalDeviceExternalFenceInfo32 *)UlongToPtr(params->pExternalFenceInfo), &pExternalFenceInfo_host);
+    convert_VkPhysicalDeviceExternalFenceInfo_win32_to_host((const VkPhysicalDeviceExternalFenceInfo32 *)UlongToPtr(params->pExternalFenceInfo), &pExternalFenceInfo_host);
     convert_VkExternalFenceProperties_win32_to_host((VkExternalFenceProperties32 *)UlongToPtr(params->pExternalFenceProperties), &pExternalFenceProperties_host);
     wine_vkGetPhysicalDeviceExternalFenceProperties((VkPhysicalDevice)UlongToPtr(params->physicalDevice), &pExternalFenceInfo_host, &pExternalFenceProperties_host);
     convert_VkExternalFenceProperties_host_to_win32(&pExternalFenceProperties_host, (VkExternalFenceProperties32 *)UlongToPtr(params->pExternalFenceProperties));
-    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 
@@ -57338,15 +57273,11 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalFencePropertiesKHR(void *args
 {
     struct vkGetPhysicalDeviceExternalFencePropertiesKHR_params *params = args;
     VkPhysicalDeviceExternalFenceInfo pExternalFenceInfo_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalFenceInfo, params->pExternalFenceProperties);
 
-    init_conversion_context(ctx);
-    convert_VkPhysicalDeviceExternalFenceInfo_win64_to_host(ctx, params->pExternalFenceInfo, &pExternalFenceInfo_host);
+    convert_VkPhysicalDeviceExternalFenceInfo_win64_to_host(params->pExternalFenceInfo, &pExternalFenceInfo_host);
     wine_vkGetPhysicalDeviceExternalFencePropertiesKHR(params->physicalDevice, &pExternalFenceInfo_host, params->pExternalFenceProperties);
-    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -57361,17 +57292,13 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceExternalFencePropertiesKHR(void *args
     } *params = args;
     VkPhysicalDeviceExternalFenceInfo pExternalFenceInfo_host;
     VkExternalFenceProperties pExternalFenceProperties_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%#x, %#x, %#x\n", params->physicalDevice, params->pExternalFenceInfo, params->pExternalFenceProperties);
 
-    init_conversion_context(ctx);
-    convert_VkPhysicalDeviceExternalFenceInfo_win32_to_host(ctx, (const VkPhysicalDeviceExternalFenceInfo32 *)UlongToPtr(params->pExternalFenceInfo), &pExternalFenceInfo_host);
+    convert_VkPhysicalDeviceExternalFenceInfo_win32_to_host((const VkPhysicalDeviceExternalFenceInfo32 *)UlongToPtr(params->pExternalFenceInfo), &pExternalFenceInfo_host);
     convert_VkExternalFenceProperties_win32_to_host((VkExternalFenceProperties32 *)UlongToPtr(params->pExternalFenceProperties), &pExternalFenceProperties_host);
     wine_vkGetPhysicalDeviceExternalFencePropertiesKHR((VkPhysicalDevice)UlongToPtr(params->physicalDevice), &pExternalFenceInfo_host, &pExternalFenceProperties_host);
     convert_VkExternalFenceProperties_host_to_win32(&pExternalFenceProperties_host, (VkExternalFenceProperties32 *)UlongToPtr(params->pExternalFenceProperties));
-    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 
@@ -57380,15 +57307,11 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalSemaphoreProperties(void *arg
 {
     struct vkGetPhysicalDeviceExternalSemaphoreProperties_params *params = args;
     VkPhysicalDeviceExternalSemaphoreInfo pExternalSemaphoreInfo_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalSemaphoreInfo, params->pExternalSemaphoreProperties);
 
-    init_conversion_context(ctx);
-    convert_VkPhysicalDeviceExternalSemaphoreInfo_win64_to_host(ctx, params->pExternalSemaphoreInfo, &pExternalSemaphoreInfo_host);
+    convert_VkPhysicalDeviceExternalSemaphoreInfo_win64_to_host(params->pExternalSemaphoreInfo, &pExternalSemaphoreInfo_host);
     vk_funcs->p_vkGetPhysicalDeviceExternalSemaphoreProperties(params->physicalDevice, &pExternalSemaphoreInfo_host, params->pExternalSemaphoreProperties);
-    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -57422,15 +57345,11 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(void *
 {
     struct vkGetPhysicalDeviceExternalSemaphorePropertiesKHR_params *params = args;
     VkPhysicalDeviceExternalSemaphoreInfo pExternalSemaphoreInfo_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalSemaphoreInfo, params->pExternalSemaphoreProperties);
 
-    init_conversion_context(ctx);
-    convert_VkPhysicalDeviceExternalSemaphoreInfo_win64_to_host(ctx, params->pExternalSemaphoreInfo, &pExternalSemaphoreInfo_host);
+    convert_VkPhysicalDeviceExternalSemaphoreInfo_win64_to_host(params->pExternalSemaphoreInfo, &pExternalSemaphoreInfo_host);
     vk_funcs->p_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(params->physicalDevice, &pExternalSemaphoreInfo_host, params->pExternalSemaphoreProperties);
-    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
