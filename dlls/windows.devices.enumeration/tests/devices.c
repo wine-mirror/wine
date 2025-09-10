@@ -707,9 +707,7 @@ static void test_DeviceInformation_properties( IDeviceInformation *info, const s
     SIZE_T i;
 
     hr = IDeviceInformation_get_Properties( info, &properties );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
-    if (FAILED(hr)) return;
-
+    ok( hr == S_OK, "got hr %#lx\n", hr );
     hr = IDeviceInformation_get_Id( info, &id );
     ok( hr == S_OK, "got hr %#lx\n", hr );
     for (i = 0; i < exp_props_len; i++)

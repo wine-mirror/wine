@@ -24,10 +24,9 @@
 
 #include "initguid.h"
 #include "private.h"
-#include "devpropdef.h"
-#include "devfiltertypes.h"
 #include "devquery.h"
 #include "aqs.h"
+#include "devpkey.h"
 
 #include "wine/debug.h"
 
@@ -347,7 +346,7 @@ static void WINAPI device_object_query_callback( HDEVQUERY query, void *data,
     case DevQueryResultAdd:
     {
         IDeviceInformation *info;
-        if (FAILED(hr = device_information_create( action_data->Data.DeviceObject.pszObjectId, &info )))
+        if (FAILED(hr = device_information_create( &action_data->Data.DeviceObject, &info )))
             break;
         typed_event_handlers_notify( &watcher->added_handlers, (IInspectable *)iface, (IInspectable *)info );
         IDeviceInformation_Release( info );
@@ -360,6 +359,12 @@ static void WINAPI device_object_query_callback( HDEVQUERY query, void *data,
 
     IDeviceWatcher_Release( iface );
 }
+
+static const DEVPROPCOMPKEY device_iface_default_props[] =
+{
+    { DEVPKEY_DeviceInterface_Enabled, DEVPROP_STORE_SYSTEM, NULL },
+    { DEVPKEY_Device_InstanceId, DEVPROP_STORE_SYSTEM, NULL },
+};
 
 static HRESULT WINAPI device_watcher_Start( IDeviceWatcher *iface )
 {
@@ -394,8 +399,8 @@ static HRESULT WINAPI device_watcher_Start( IDeviceWatcher *iface )
         }
 
         IWeakReferenceSource_GetWeakReference( &impl->weak_reference_source.IWeakReferenceSource_iface, &weak );
-        hr = DevCreateObjectQuery( DevObjectTypeDeviceInterfaceDisplay, DevQueryFlagAsyncClose, 0, NULL, filters_len, filters, device_object_query_callback,
-                                   weak, &impl->query );
+        hr = DevCreateObjectQuery( DevObjectTypeDeviceInterfaceDisplay, DevQueryFlagAsyncClose, ARRAY_SIZE( device_iface_default_props ),
+                                   device_iface_default_props, filters_len, filters, device_object_query_callback, weak, &impl->query );
         if (FAILED(hr))
         {
             ERR( "Failed to create device query: %#lx\n", hr );
@@ -645,16 +650,17 @@ static HRESULT find_all_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *
         filters_len = params->expr->len;
     }
     if (FAILED(hr = vector_create( &iids, (void *)&vector ))) return hr;
-    if (FAILED(hr = DevGetObjects( DevObjectTypeDeviceInterfaceDisplay, DevQueryFlagNone, 0, NULL, filters_len, filters, &len, &objects )))
+    hr = DevGetObjects( DevObjectTypeDeviceInterfaceDisplay, DevQueryFlagNone, ARRAY_SIZE( device_iface_default_props ), device_iface_default_props, filters_len, filters,
+                        &len, &objects );
+    if (FAILED(hr))
     {
         IVector_IInspectable_Release( vector );
-        ERR("DevGetObjects failed, hr %#lx\n", hr);
         return hr;
     }
     for (i = 0; i < len && SUCCEEDED(hr); i++)
     {
         IDeviceInformation *info;
-        if (SUCCEEDED(hr = device_information_create( objects[i].pszObjectId, &info )))
+        if (SUCCEEDED(hr = device_information_create( &objects[i], &info )))
         {
             hr = IVector_IInspectable_Append( vector, (IInspectable *)info );
             IDeviceInformation_Release( info );
