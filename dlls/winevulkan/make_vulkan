@@ -98,7 +98,6 @@ UNSUPPORTED_EXTENSIONS = [
     "VK_EXT_present_timing", # Needs time conversion
     "VK_GOOGLE_display_timing",
     # Relates to external_semaphore and needs type conversions in bitflags.
-    "VK_KHR_maintenance7", # Causes infinity recursion in struct convert code
     "VK_KHR_shared_presentable_image", # Needs WSI work.
     "VK_KHR_video_encode_h265", # StdVideoH265HrdParameters cannot be handled
     "VK_KHR_video_decode_h265", # by struct conversions.
@@ -321,6 +320,7 @@ STRUCT_CHAIN_CONVERSIONS = {
     # Ignore to not confuse host loader.
     "VkDeviceCreateInfo": {"strip": ["VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO"]},
     "VkInstanceCreateInfo": {"strip": ["VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO"]},
+    "VkPhysicalDeviceLayeredApiPropertiesKHR": {"strip": ["VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_VULKAN_PROPERTIES_KHR"]},
 }
 
 # Some struct members are conditionally ignored and callers are free to leave them uninitialized.

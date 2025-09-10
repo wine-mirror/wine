@@ -784,6 +784,8 @@ typedef struct _XDisplay Display;
 #define VK_KHR_SHADER_RELAXED_EXTENDED_INSTRUCTION_EXTENSION_NAME "VK_KHR_shader_relaxed_extended_instruction"
 #define VK_NV_COMMAND_BUFFER_INHERITANCE_SPEC_VERSION 1
 #define VK_NV_COMMAND_BUFFER_INHERITANCE_EXTENSION_NAME "VK_NV_command_buffer_inheritance"
+#define VK_KHR_MAINTENANCE_7_SPEC_VERSION 1
+#define VK_KHR_MAINTENANCE_7_EXTENSION_NAME "VK_KHR_maintenance7"
 #define VK_NV_SHADER_ATOMIC_FLOAT16_VECTOR_SPEC_VERSION 1
 #define VK_NV_SHADER_ATOMIC_FLOAT16_VECTOR_EXTENSION_NAME "VK_NV_shader_atomic_float16_vector"
 #define VK_EXT_SHADER_REPLICATED_COMPOSITES_SPEC_VERSION 1
@@ -4407,6 +4409,16 @@ typedef enum VkPhysicalDeviceDataGraphProcessingEngineTypeARM
     VK_PHYSICAL_DEVICE_DATA_GRAPH_PROCESSING_ENGINE_TYPE_ARM_MAX_ENUM = 0x7fffffff,
 } VkPhysicalDeviceDataGraphProcessingEngineTypeARM;
 
+typedef enum VkPhysicalDeviceLayeredApiKHR
+{
+    VK_PHYSICAL_DEVICE_LAYERED_API_VULKAN_KHR = 0,
+    VK_PHYSICAL_DEVICE_LAYERED_API_D3D12_KHR = 1,
+    VK_PHYSICAL_DEVICE_LAYERED_API_METAL_KHR = 2,
+    VK_PHYSICAL_DEVICE_LAYERED_API_OPENGL_KHR = 3,
+    VK_PHYSICAL_DEVICE_LAYERED_API_OPENGLES_KHR = 4,
+    VK_PHYSICAL_DEVICE_LAYERED_API_KHR_MAX_ENUM = 0x7fffffff,
+} VkPhysicalDeviceLayeredApiKHR;
+
 typedef VkFlags64 VkPhysicalDeviceSchedulingControlsFlagBitsARM;
 
 static const VkPhysicalDeviceSchedulingControlsFlagBitsARM VK_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_SHADER_CORE_COUNT_ARM = 0x00000001ull;
@@ -6271,6 +6283,11 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAW_ACCESS_CHAINS_FEATURES_NV = 1000555000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_RELAXED_EXTENDED_INSTRUCTION_FEATURES_KHR = 1000558000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMMAND_BUFFER_INHERITANCE_FEATURES_NV = 1000559000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_7_FEATURES_KHR = 1000562000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_7_PROPERTIES_KHR = 1000562001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_PROPERTIES_LIST_KHR = 1000562002,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_PROPERTIES_KHR = 1000562003,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_VULKAN_PROPERTIES_KHR = 1000562004,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV = 1000563000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_REPLICATED_COMPOSITES_FEATURES_EXT = 1000564000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT8_FEATURES_EXT = 1000567000,
@@ -9809,6 +9826,16 @@ typedef struct VkPhysicalDeviceFeatures
     VkBool32 variableMultisampleRate;
     VkBool32 inheritedQueries;
 } VkPhysicalDeviceFeatures;
+
+typedef struct VkPhysicalDeviceLayeredApiPropertiesKHR
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t vendorID;
+    uint32_t deviceID;
+    VkPhysicalDeviceLayeredApiKHR layeredAPI;
+    char deviceName[VK_MAX_PHYSICAL_DEVICE_NAME_SIZE];
+} VkPhysicalDeviceLayeredApiPropertiesKHR;
 
 typedef struct VkPhysicalDeviceMemoryProperties
 {
@@ -14790,6 +14817,21 @@ typedef struct VkPhysicalDeviceInvocationMaskFeaturesHUAWEI
     VkBool32 invocationMask;
 } VkPhysicalDeviceInvocationMaskFeaturesHUAWEI;
 
+typedef struct VkPhysicalDeviceLayeredApiPropertiesListKHR
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t layeredApiCount;
+    VkPhysicalDeviceLayeredApiPropertiesKHR *pLayeredApis;
+} VkPhysicalDeviceLayeredApiPropertiesListKHR;
+
+typedef struct VkPhysicalDeviceLayeredApiVulkanPropertiesKHR
+{
+    VkStructureType sType;
+    void *pNext;
+    VkPhysicalDeviceProperties2 WINE_VK_ALIGN(8) properties;
+} VkPhysicalDeviceLayeredApiVulkanPropertiesKHR;
+
 typedef struct VkPhysicalDeviceLayeredDriverPropertiesMSFT
 {
     VkStructureType sType;
@@ -14927,6 +14969,27 @@ typedef struct VkPhysicalDeviceMaintenance6Properties
     VkBool32 fragmentShadingRateClampCombinerInputs;
 } VkPhysicalDeviceMaintenance6Properties;
 typedef VkPhysicalDeviceMaintenance6Properties VkPhysicalDeviceMaintenance6PropertiesKHR;
+
+typedef struct VkPhysicalDeviceMaintenance7FeaturesKHR
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 maintenance7;
+} VkPhysicalDeviceMaintenance7FeaturesKHR;
+
+typedef struct VkPhysicalDeviceMaintenance7PropertiesKHR
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 robustFragmentShadingRateAttachmentAccess;
+    VkBool32 separateDepthStencilAttachmentAccess;
+    uint32_t maxDescriptorSetTotalUniformBuffersDynamic;
+    uint32_t maxDescriptorSetTotalStorageBuffersDynamic;
+    uint32_t maxDescriptorSetTotalBuffersDynamic;
+    uint32_t maxDescriptorSetUpdateAfterBindTotalUniformBuffersDynamic;
+    uint32_t maxDescriptorSetUpdateAfterBindTotalStorageBuffersDynamic;
+    uint32_t maxDescriptorSetUpdateAfterBindTotalBuffersDynamic;
+} VkPhysicalDeviceMaintenance7PropertiesKHR;
 
 typedef struct VkPhysicalDeviceMaintenance8FeaturesKHR
 {
@@ -21417,6 +21480,7 @@ VkResult VKAPI_CALL vkWriteMicromapsPropertiesEXT(VkDevice device, uint32_t micr
     USE_VK_EXT(VK_KHR_maintenance4) \
     USE_VK_EXT(VK_KHR_maintenance5) \
     USE_VK_EXT(VK_KHR_maintenance6) \
+    USE_VK_EXT(VK_KHR_maintenance7) \
     USE_VK_EXT(VK_KHR_maintenance8) \
     USE_VK_EXT(VK_KHR_maintenance9) \
     USE_VK_EXT(VK_KHR_map_memory2) \
