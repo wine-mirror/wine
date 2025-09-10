@@ -1966,8 +1966,11 @@ class VkStruct(Sequence):
     def needs_extensions_conversion(self, conv, direction):
         """ Check if struct contains extensions chain that needs to be converted """
 
+        stripped = STRUCT_CHAIN_CONVERSIONS.get(self.name, {}).get("strip", [])
+        struct_extensions = filter(lambda s: s.struct_type not in stripped, self.struct_extensions)
+
         if direction == Direction.INPUT and self.name in STRUCT_CHAIN_CONVERSIONS:
-            return True
+            return any(struct_extensions)
 
         if not "pNext" in self:
             return False
@@ -1977,7 +1980,7 @@ class VkStruct(Sequence):
                          "VkDescriptorBufferBindingInfoEXT"]:
             is_const = True
 
-        for e in self.struct_extensions:
+        for e in struct_extensions:
             if not e.required:
                 continue
             if e.needs_conversion(conv, Unwrap.HOST, direction, is_const, check_extensions=False):
