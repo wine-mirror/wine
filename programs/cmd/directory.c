@@ -922,7 +922,7 @@ RETURN_CODE WCMD_directory(WCHAR *args)
       } else {
         /* Special case wildcard search with no extension (ie parameters ending in '.') as
            GetFullPathName strips off the additional '.'                                  */
-        if (fullname[lstrlenW(fullname)-1] == '.') lstrcatW(path, L".");
+        if (fullname[0] && fullname[lstrlenW(fullname)-1] == '.') lstrcatW(path, L".");
       }
 
       WINE_TRACE("Using path '%s'\n", wine_dbgstr_w(path));
