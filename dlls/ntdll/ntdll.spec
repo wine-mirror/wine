@@ -386,7 +386,7 @@
 @ stdcall -syscall NtSetDefaultUILanguage(long)
 @ stdcall -syscall NtSetEaFile(long ptr ptr long)
 @ stdcall -syscall=0x000e NtSetEvent(long ptr)
-@ stub -syscall=0x002d NtSetEventBoostPriority
+@ stdcall -syscall=0x002d NtSetEventBoostPriority(long)
 # @ stub NtSetHighEventPair
 # @ stub NtSetHighWaitLowEventPair
 @ stdcall -syscall NtSetInformationDebugObject(long long ptr long ptr)
@@ -1454,7 +1454,7 @@
 @ stdcall -private ZwSetDefaultUILanguage(long) NtSetDefaultUILanguage
 @ stdcall -private ZwSetEaFile(long ptr ptr long) NtSetEaFile
 @ stdcall -private ZwSetEvent(long ptr) NtSetEvent
-@ stdcall -private ZwSetEventBoostPriority() NtSetEventBoostPriority
+@ stdcall -private ZwSetEventBoostPriority(long) NtSetEventBoostPriority
 # @ stub ZwSetHighEventPair
 # @ stub ZwSetHighWaitLowEventPair
 @ stdcall -private ZwSetInformationDebugObject(long long ptr long ptr) NtSetInformationDebugObject

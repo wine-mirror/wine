@@ -46,7 +46,7 @@
     SYSCALL_ENTRY( 0x002a, NtUnmapViewOfSection, 8 ) \
     SYSCALL_ENTRY( 0x002b, NtReplyWaitReceivePortEx, 20 ) \
     SYSCALL_ENTRY( 0x002c, NtTerminateProcess, 8 ) \
-    SYSCALL_ENTRY( 0x002d, NtSetEventBoostPriority, 0 ) \
+    SYSCALL_ENTRY( 0x002d, NtSetEventBoostPriority, 4 ) \
     SYSCALL_ENTRY( 0x002e, NtReadFileScatter, 36 ) \
     SYSCALL_ENTRY( 0x002f, NtOpenThreadTokenEx, 20 ) \
     SYSCALL_ENTRY( 0x0030, NtOpenProcessTokenEx, 16 ) \
@@ -311,7 +311,7 @@
     SYSCALL_ENTRY( 0x002a, NtUnmapViewOfSection, 16 ) \
     SYSCALL_ENTRY( 0x002b, NtReplyWaitReceivePortEx, 40 ) \
     SYSCALL_ENTRY( 0x002c, NtTerminateProcess, 16 ) \
-    SYSCALL_ENTRY( 0x002d, NtSetEventBoostPriority, 0 ) \
+    SYSCALL_ENTRY( 0x002d, NtSetEventBoostPriority, 8 ) \
     SYSCALL_ENTRY( 0x002e, NtReadFileScatter, 72 ) \
     SYSCALL_ENTRY( 0x002f, NtOpenThreadTokenEx, 40 ) \
     SYSCALL_ENTRY( 0x0030, NtOpenProcessTokenEx, 32 ) \
@@ -530,7 +530,6 @@
     SYSCALL_STUB( NtApphelpCacheControl ) \
     SYSCALL_STUB( NtCreateProcessEx ) \
     SYSCALL_STUB( NtMapUserPhysicalPagesScatter ) \
-    SYSCALL_STUB( NtSetEventBoostPriority ) \
     SYSCALL_STUB( NtTraceEvent ) \
     SYSCALL_STUB( NtWaitForMultipleObjects32 ) \
     SYSCALL_STUB( NtWorkerFactoryWorkerReady )

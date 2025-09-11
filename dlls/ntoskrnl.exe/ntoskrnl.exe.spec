@@ -829,6 +829,7 @@
 @ stdcall NtRequestWaitReplyPort(ptr ptr ptr)
 @ stdcall NtSetEaFile(long ptr ptr long)
 @ stdcall NtSetEvent(long ptr)
+@ stdcall NtSetEventBoostPriority(long)
 @ stdcall NtSetInformationFile(long ptr ptr long long)
 @ stdcall NtSetInformationProcess(long long ptr long)
 @ stdcall NtSetInformationThread(long long ptr long)
@@ -1518,6 +1519,7 @@
 @ stdcall -private ZwSetDefaultUILanguage(long) NtSetDefaultUILanguage
 @ stdcall -private ZwSetEaFile(long ptr ptr long) NtSetEaFile
 @ stdcall ZwSetEvent(long ptr) NtSetEvent
+@ stdcall -private ZwSetEventBoostPriority(long) NtSetEventBoostPriority
 @ stdcall -private ZwSetInformationFile(long ptr ptr long long) NtSetInformationFile
 @ stdcall -private ZwSetInformationJobObject(long long ptr long) NtSetInformationJobObject
 @ stdcall -private ZwSetInformationKey(long long ptr long) NtSetInformationKey

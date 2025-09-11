@@ -1393,6 +1393,17 @@ NTSTATUS WINAPI wow64_NtSetEvent( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtSetEventBoostPriority
+ */
+NTSTATUS WINAPI wow64_NtSetEventBoostPriority( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+
+    return NtSetEventBoostPriority( handle );
+}
+
+
+/**********************************************************************
  *           wow64_NtSetInformationDebugObject
  */
 NTSTATUS WINAPI wow64_NtSetInformationDebugObject( UINT *args )

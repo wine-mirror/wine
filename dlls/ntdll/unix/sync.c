@@ -676,6 +676,15 @@ NTSTATUS WINAPI NtSetEvent( HANDLE handle, LONG *prev_state )
 
 
 /******************************************************************************
+ *              NtSetEventBoostPriority (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetEventBoostPriority( HANDLE handle )
+{
+    return NtSetEvent( handle, NULL );
+}
+
+
+/******************************************************************************
  *              NtResetEvent (NTDLL.@)
  */
 NTSTATUS WINAPI NtResetEvent( HANDLE handle, LONG *prev_state )
