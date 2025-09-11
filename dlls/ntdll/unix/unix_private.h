@@ -644,6 +644,17 @@ static inline LDT_ENTRY ldt_make_entry( void *base, unsigned int limit, unsigned
     return entry;
 }
 
+static inline void update_ldt_copy( WORD sel, LDT_ENTRY entry )
+{
+    unsigned int index = sel >> 3;
+
+    __wine_ldt_copy.base[index]  = ldt_get_base( entry );
+    __wine_ldt_copy.limit[index] = ldt_get_limit( entry );
+    __wine_ldt_copy.flags[index] = (entry.HighWord.Bits.Type |
+                                    (entry.HighWord.Bits.Default_Big ? LDT_FLAGS_32BIT : 0) |
+                                    LDT_FLAGS_ALLOCATED);
+}
+
 static inline int is_gdt_sel( WORD sel )
 {
     return !(sel & 4);

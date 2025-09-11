@@ -2177,10 +2177,8 @@ static pthread_mutex_t ldt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void ldt_set_entry( WORD sel, LDT_ENTRY entry )
 {
-    int index = sel >> 3;
-
 #ifdef linux
-    struct modify_ldt_s ldt_info = { index };
+    struct modify_ldt_s ldt_info = { .entry_number = sel >> 3 };
 
     ldt_info.base_addr       = ldt_get_base( entry );
     ldt_info.limit           = entry.LimitLow | (entry.HighWord.Bits.LimitHi << 16);
@@ -2194,7 +2192,7 @@ static void ldt_set_entry( WORD sel, LDT_ENTRY entry )
 #elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__DragonFly__)
     /* The kernel will only let us set LDTs with user priority level */
     if (entry.HighWord.Bits.Pres && entry.HighWord.Bits.Dpl != 3) entry.HighWord.Bits.Dpl = 3;
-    if (i386_set_ldt(index, (union descriptor *)&entry, 1) < 0)
+    if (i386_set_ldt(sel >> 3, (union descriptor *)&entry, 1) < 0)
     {
         perror("i386_set_ldt");
         fprintf( stderr, "Did you reconfigure the kernel with \"options USER_LDT\"?\n" );
@@ -2210,7 +2208,7 @@ static void ldt_set_entry( WORD sel, LDT_ENTRY entry )
     ldt_mod.acc2 = entry.HighWord.Bytes.Flags2 >> 4;
     if (sysi86(SI86DSCR, &ldt_mod) == -1) perror("sysi86");
 #elif defined(__APPLE__)
-    if (i386_set_ldt(index, (union ldt_entry *)&entry, 1) < 0) perror("i386_set_ldt");
+    if (i386_set_ldt(sel >> 3, (union ldt_entry *)&entry, 1) < 0) perror("i386_set_ldt");
 #elif defined(__GNU__)
     if (i386_set_ldt(mach_thread_self(), sel, (descriptor_list_t)&entry, 1) != KERN_SUCCESS)
         perror("i386_set_ldt");
@@ -2218,12 +2216,7 @@ static void ldt_set_entry( WORD sel, LDT_ENTRY entry )
     fprintf( stderr, "No LDT support on this platform\n" );
     exit(1);
 #endif
-
-    __wine_ldt_copy.base[index]  = ldt_get_base( entry );
-    __wine_ldt_copy.limit[index] = ldt_get_limit( entry );
-    __wine_ldt_copy.flags[index] = (entry.HighWord.Bits.Type |
-                                    (entry.HighWord.Bits.Default_Big ? LDT_FLAGS_32BIT : 0) |
-                                    LDT_FLAGS_ALLOCATED);
+    update_ldt_copy( sel, entry );
 }
 
 static void ldt_set_fs( WORD sel, TEB *teb )

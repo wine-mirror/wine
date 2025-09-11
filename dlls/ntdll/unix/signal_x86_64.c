@@ -2456,20 +2456,13 @@ static pthread_mutex_t ldt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void ldt_set_entry( WORD sel, LDT_ENTRY entry )
 {
-    int index = sel >> 3;
-
 #if defined(__APPLE__)
-    if (i386_set_ldt(index, (union ldt_entry *)&entry, 1) < 0) perror("i386_set_ldt");
+    if (i386_set_ldt(sel >> 3, (union ldt_entry *)&entry, 1) < 0) perror("i386_set_ldt");
 #else
     fprintf( stderr, "No LDT support on this platform\n" );
     exit(1);
 #endif
-
-    __wine_ldt_copy.base[index]  = ldt_get_base( entry );
-    __wine_ldt_copy.limit[index] = ldt_get_limit( entry );
-    __wine_ldt_copy.flags[index] = (entry.HighWord.Bits.Type |
-                                    (entry.HighWord.Bits.Default_Big ? LDT_FLAGS_32BIT : 0) |
-                                    LDT_FLAGS_ALLOCATED);
+    update_ldt_copy( sel, entry );
 }
 
 
