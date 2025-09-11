@@ -1165,12 +1165,13 @@ static struct opengl_drawable *get_dc_opengl_drawable( HDC hdc )
     return drawable;
 }
 
-static BOOL create_memory_pbuffer( HDC hdc, int format )
+static BOOL create_memory_pbuffer( HDC hdc )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     dib_info dib = {.rect = {0, 0, 1, 1}};
     BOOL ret = TRUE;
     BITMAPOBJ *bmp;
+    int format = 0;
     DC *dc;
 
     if (!(dc = get_dc_ptr( hdc ))) return FALSE;
@@ -1178,12 +1179,13 @@ static BOOL create_memory_pbuffer( HDC hdc, int format )
     else if (get_gdi_object_type( hdc ) != NTGDI_OBJ_MEMDC) ret = FALSE;
     else if ((bmp = GDI_GetObjPtr( dc->hBitmap, NTGDI_OBJ_BITMAP )))
     {
+        if (!(format = dc->pixel_format)) ret = FALSE;
         init_dib_info_from_bitmapobj( &dib, bmp );
         GDI_ReleaseObj( dc->hBitmap );
     }
     release_dc_ptr( dc );
 
-    if (ret && format)
+    if (ret)
     {
         int width = dib.rect.right - dib.rect.left, height = dib.rect.bottom - dib.rect.top;
         struct wgl_pbuffer *pbuffer;
@@ -1332,10 +1334,9 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
 {
     struct wgl_context *previous = NtCurrentTeb()->glContext;
     struct opengl_drawable *new_draw, *new_read;
-    BOOL ret = FALSE, flush;
+    BOOL ret = FALSE;
     HWND hwnd;
 
-    flush = create_memory_pbuffer( draw_hdc, context->format );
     new_draw = get_dc_opengl_drawable( draw_hdc );
 
     /* get the last used window drawable when reading */
@@ -1374,7 +1375,6 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
         opengl_drawable_flush( new_draw, new_draw->interval, 0 );
         /* update the current window drawable to the last used draw surface */
         if ((hwnd = NtUserWindowFromDC( draw_hdc ))) set_window_opengl_drawable( hwnd, new_draw );
-        if (flush) flush_memory_dc( context, draw_hdc, TRUE, NULL );
     }
     else if (previous)
     {
@@ -1410,6 +1410,7 @@ static void pop_internal_context( struct wgl_context *context )
 static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct wgl_context *context )
 {
     struct wgl_context *prev_context = NtCurrentTeb()->glContext;
+    BOOL created;
     int format;
 
     TRACE( "draw_hdc %p, read_hdc %p, context %p\n", draw_hdc, read_hdc, context );
@@ -1436,8 +1437,11 @@ static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
         return FALSE;
     }
 
+    created = create_memory_pbuffer( draw_hdc );
     if (!context_sync_drawables( context, draw_hdc, read_hdc )) return FALSE;
     NtCurrentTeb()->glContext = context;
+    if (created) flush_memory_dc( context, draw_hdc, TRUE, NULL );
+
     return TRUE;
 }
 
@@ -1896,6 +1900,20 @@ static BOOL win32u_wgl_context_reset( struct wgl_context *context, HDC hdc, stru
     return TRUE;
 }
 
+static BOOL flush_memory_pbuffer( void (*flush)(void) )
+{
+    HDC draw_hdc = NtCurrentTeb()->glReserved1[0], read_hdc = NtCurrentTeb()->glReserved1[1];
+    struct wgl_context *context = NtCurrentTeb()->glContext;
+    BOOL created;
+
+    TRACE( "context %p, draw_hdc %p, read_hdc %p, flush %p\n", context, draw_hdc, read_hdc, flush );
+
+    created = create_memory_pbuffer( draw_hdc );
+    if (context) context_sync_drawables( context, draw_hdc, read_hdc );
+    if (created) flush_memory_dc( context, draw_hdc, TRUE, NULL );
+    return flush_memory_dc( context, draw_hdc, FALSE, flush );
+}
+
 static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)(void) )
 {
     HDC draw_hdc = NtCurrentTeb()->glReserved1[0], read_hdc = NtCurrentTeb()->glReserved1[1];
@@ -1905,13 +1923,13 @@ static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)
     int interval;
     HWND hwnd;
 
-    if (!(hwnd = NtUserWindowFromDC( draw_hdc ))) interval = 0;
-    else interval = get_window_swap_interval( hwnd );
+    if (!(hwnd = NtUserWindowFromDC( draw_hdc ))) return flush_memory_pbuffer( flush );
+
+    interval = get_window_swap_interval( hwnd );
 
     TRACE( "context %p, hwnd %p, draw_hdc %p, interval %d, flush %p\n", context, hwnd, draw_hdc, interval, flush );
 
     context_sync_drawables( context, draw_hdc, read_hdc );
-    if (flush_memory_dc( context, draw_hdc, FALSE, flush )) return TRUE;
 
     if (flush) flush();
     if (flush == funcs->p_glFinish) flags |= GL_FLUSH_FINISHED;
@@ -1933,11 +1951,13 @@ static BOOL win32u_wglSwapBuffers( HDC hdc )
     HWND hwnd;
     BOOL ret;
 
-    if (!(hwnd = NtUserWindowFromDC( hdc ))) interval = 0;
-    else interval = get_window_swap_interval( hwnd );
+    if (!(hwnd = NtUserWindowFromDC( hdc ))) return flush_memory_pbuffer( funcs->p_glFlush );
+
+    interval = get_window_swap_interval( hwnd );
+
+    TRACE( "context %p, hwnd %p, draw_hdc %p, interval %d\n", context, hwnd, draw_hdc, interval );
 
     context_sync_drawables( context, draw_hdc, read_hdc );
-    if (flush_memory_dc( context, hdc, FALSE, funcs->p_glFlush )) return TRUE;
 
     if (!(draw = get_dc_opengl_drawable( draw_hdc ))) return FALSE;
     opengl_drawable_flush( draw, interval, 0 );
