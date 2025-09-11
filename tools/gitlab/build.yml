@@ -167,3 +167,14 @@ build-daily-winetest:
   script:
     - mv usr/local/lib/wine/i386-windows/winetest.exe winetest.exe
     - mv usr/local/lib/wine/x86_64-windows/winetest.exe winetest64.exe
+
+winehq-bot:
+  stage: build
+  image: $CI_REGISTRY/wine/wine:debian-trixie
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_PROJECT_PATH == "wine/wine" && $WINEHQ_BOT_TRIGGER
+  script:
+    - curl -s -X POST -F "token=$WINEHQ_BOT_TRIGGER" -F "ref=master"
+      -F "variables[MERGE_REQUEST_IID]=$CI_MERGE_REQUEST_IID"
+      -F "variables[MERGE_REQUEST_PROJECT_PATH]=$CI_MERGE_REQUEST_PROJECT_PATH"
+      "$CI_API_V4_URL/projects/6/trigger/pipeline" | jq -er .web_url

@@ -31,6 +31,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
         gstreamer1.0-plugins-base \
         gstreamer1.0-plugins-good \
         gstreamer1.0-plugins-ugly \
+        jq \
         libasound2-dev \
         libasound2-plugins \
         libavcodec-dev \
