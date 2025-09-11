@@ -220,12 +220,11 @@ WCHAR *WCMD_LoadMessage(UINT id);
 WCHAR *WCMD_strsubstW(WCHAR *start, const WCHAR* next, const WCHAR* insert, int len);
 RETURN_CODE WCMD_wait_for_input(HANDLE hIn);
 RETURN_CODE WCMD_wait_for_console_input(void);
-BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead);
 BOOL WCMD_read_console(const HANDLE hInput, WCHAR *inputBuffer, const DWORD inputBufferLength, LPDWORD numRead);
 
 enum read_parse_line {RPL_SUCCESS, RPL_EOF, RPL_SYNTAXERROR};
 enum read_parse_line WCMD_ReadAndParseLine(CMD_NODE **output);
-void      node_dispose_tree(CMD_NODE *cmds);
+void node_dispose_tree(CMD_NODE *cmds);
 RETURN_CODE node_execute(CMD_NODE *node);
 
 RETURN_CODE WCMD_call_batch(const WCHAR *, WCHAR *);

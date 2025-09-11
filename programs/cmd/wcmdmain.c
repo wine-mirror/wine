@@ -658,31 +658,6 @@ RETURN_CODE WCMD_wait_for_console_input(void)
     return WCMD_wait_for_input(console_input);
 }
 
-/***************************************************************************
- * WCMD_ReadFile
- *
- *	Read characters in from a console/file, returning result in Unicode
- */
-BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead)
-{
-    DWORD numRead;
-    char *buffer;
-
-    /* Try to read from console as Unicode */
-    if (VerifyConsoleIoHandle(hIn) && ReadConsoleW(hIn, intoBuf, maxChars, charsRead, NULL)) return TRUE;
-
-    /* We assume it's a file handle and read then convert from assumed OEM codepage */
-    if (!(buffer = get_file_buffer()))
-        return FALSE;
-
-    if (!ReadFile(hIn, buffer, maxChars, &numRead, NULL))
-        return FALSE;
-
-    *charsRead = MultiByteToWideChar(GetConsoleCP(), 0, buffer, numRead, intoBuf, maxChars);
-
-    return TRUE;
-}
-
 /*******************************************************************
  * WCMD_output_asis
  *
