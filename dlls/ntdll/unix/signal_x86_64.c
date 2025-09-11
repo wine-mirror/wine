@@ -2449,56 +2449,10 @@ static void sigsys_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  *           LDT support
  */
 
-#define LDT_SIZE 8192
-
-#define LDT_FLAGS_DATA      0x13  /* Data segment */
-#define LDT_FLAGS_CODE      0x1b  /* Code segment */
-#define LDT_FLAGS_32BIT     0x40  /* Segment is 32-bit (code or stack) */
-#define LDT_FLAGS_ALLOCATED 0x80  /* Segment is allocated */
+struct ldt_copy __wine_ldt_copy;
 
 static ULONG first_ldt_entry = 32;
-
-struct ldt_copy
-{
-    void         *base[LDT_SIZE];
-    unsigned int  limit[LDT_SIZE];
-    unsigned char flags[LDT_SIZE];
-} __wine_ldt_copy;
-
 static pthread_mutex_t ldt_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-static inline void *ldt_get_base( LDT_ENTRY ent )
-{
-    return (void *)(ent.BaseLow |
-                    (ULONG_PTR)ent.HighWord.Bits.BaseMid << 16 |
-                    (ULONG_PTR)ent.HighWord.Bits.BaseHi << 24);
-}
-
-static inline unsigned int ldt_get_limit( LDT_ENTRY ent )
-{
-    unsigned int limit = ent.LimitLow | (ent.HighWord.Bits.LimitHi << 16);
-    if (ent.HighWord.Bits.Granularity) limit = (limit << 12) | 0xfff;
-    return limit;
-}
-
-static LDT_ENTRY ldt_make_entry( void *base, unsigned int limit, unsigned char flags )
-{
-    LDT_ENTRY entry;
-
-    entry.BaseLow                   = (WORD)(ULONG_PTR)base;
-    entry.HighWord.Bits.BaseMid     = (BYTE)((ULONG_PTR)base >> 16);
-    entry.HighWord.Bits.BaseHi      = (BYTE)((ULONG_PTR)base >> 24);
-    if ((entry.HighWord.Bits.Granularity = (limit >= 0x100000))) limit >>= 12;
-    entry.LimitLow                  = (WORD)limit;
-    entry.HighWord.Bits.LimitHi     = limit >> 16;
-    entry.HighWord.Bits.Dpl         = 3;
-    entry.HighWord.Bits.Pres        = 1;
-    entry.HighWord.Bits.Type        = flags;
-    entry.HighWord.Bits.Sys         = 0;
-    entry.HighWord.Bits.Reserved_0  = 0;
-    entry.HighWord.Bits.Default_Big = (flags & LDT_FLAGS_32BIT) != 0;
-    return entry;
-}
 
 static void ldt_set_entry( WORD sel, LDT_ENTRY entry )
 {
