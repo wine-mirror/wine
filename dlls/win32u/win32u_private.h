@@ -189,11 +189,6 @@ extern void user_lock(void);
 extern void user_unlock(void);
 extern void user_check_not_lock(void);
 
-/* opengl.c */
-
-struct opengl_drawable;
-extern void set_dc_opengl_drawable( HDC hdc, struct opengl_drawable *new_drawable );
-
 /* d3dkmtc. */
 
 struct vulkan_gpu

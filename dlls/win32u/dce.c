@@ -886,7 +886,6 @@ static void release_dce( struct dce *dce )
 
     set_visible_region( dce->hdc, 0, &dummy_surface.rect, &dummy_surface.rect, &dummy_surface );
     user_driver->pReleaseDC( dce->hwnd, dce->hdc );
-    set_dc_opengl_drawable( dce->hdc, NULL );
 
     if (dce->clip_rgn) NtGdiDeleteObjectApp( dce->clip_rgn );
     dce->clip_rgn = 0;
@@ -1224,7 +1223,6 @@ static INT release_dc( HWND hwnd, HDC hdc, BOOL end_paint )
         if (end_paint || (dce->flags & DCX_CACHE)) delete_clip_rgn( dce );
         if (dce->flags & DCX_CACHE)
         {
-            set_dc_opengl_drawable( dce->hdc, NULL );
             dce->count = 0;
             set_dce_flags( dce->hdc, DCHF_DISABLEDC );
         }
@@ -1365,12 +1363,6 @@ HDC WINAPI NtUserGetDCEx( HWND hwnd, HRGN clip_rgn, DWORD flags )
     if (get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
         NtGdiSetLayout( dce->hdc, -1, LAYOUT_RTL );
 
-    if (dce->hwnd != hwnd)
-    {
-        struct opengl_drawable *drawable = get_window_current_drawable( hwnd );
-        set_dc_opengl_drawable( dce->hdc, drawable );
-        if (drawable) opengl_drawable_release( drawable );
-    }
     dce->hwnd = hwnd;
     dce->flags = (dce->flags & ~user_flags) | (flags & user_flags);
 

@@ -2552,27 +2552,27 @@ static DWORD CALLBACK test_window_dc_thread( void *arg )
 
     ctx = wglCreateContext( hdc );
     ok( ctx != NULL, "got %p\n", ctx );
-    todo_wine ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
+    ok_ret( GL_NO_ERROR, glGetError() );
     glReadBuffer( GL_BACK );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
     pixel = 0xdeadbeef;
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
     todo_wine ok( pixel == 0xff0000ff, "got %#x\n", pixel );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
     glClearColor( 0.0, 1.0, 0.0, 1.0 );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok_ret( GL_NO_ERROR, glGetError() );
     glClear( GL_COLOR_BUFFER_BIT );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
     pixel = 0xdeadbeef;
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
-    todo_wine ok( pixel == 0xff00ff00, "got %#x\n", pixel );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok( pixel == 0xff00ff00, "got %#x\n", pixel );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
-    todo_wine ok_ret( TRUE, wglMakeCurrent( NULL, NULL ) );
+    ok_ret( TRUE, wglMakeCurrent( NULL, NULL ) );
     ok_ret( TRUE, wglDeleteContext( ctx ) );
 
     ReleaseDC( hwnd, hdc );
@@ -2652,45 +2652,45 @@ static void test_window_dc(void)
     dc = GetWindowDC( window );
     ctx = wglCreateContext( dc );
     ok( ctx != NULL, "got %p\n", ctx );
-    todo_wine ok_ret( TRUE, wglMakeCurrent( dc, ctx ) );
+    ok_ret( TRUE, wglMakeCurrent( dc, ctx ) );
     glReadBuffer( GL_BACK );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
     glClearColor( 1.0, 0.0, 0.0, 1.0 );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok_ret( GL_NO_ERROR, glGetError() );
     glClear( GL_COLOR_BUFFER_BIT );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
     pixel = 0xdeadbeef;
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
-    todo_wine ok( pixel == 0xff0000ff, "got %#x\n", pixel );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok( pixel == 0xff0000ff, "got %#x\n", pixel );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
     ReleaseDC( window, dc );
 
 
     pixel = 0xdeadbeef;
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
-    todo_wine ok( pixel == 0xff0000ff, "got %#x\n", pixel );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok( pixel == 0xff0000ff, "got %#x\n", pixel );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
     glFlush();
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
     pixel = 0xdeadbeef;
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
-    todo_wine ok( pixel == 0xff0000ff, "got %#x\n", pixel );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok( pixel == 0xff0000ff, "got %#x\n", pixel );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
 
     dc = GetWindowDC( window );
     ok( dc != NULL, "got %p\n", dc );
-    todo_wine ok_ret( TRUE, wglMakeCurrent( dc, ctx ) );
+    ok_ret( TRUE, wglMakeCurrent( dc, ctx ) );
 
     pixel = 0xdeadbeef;
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
-    todo_wine ok( pixel == 0xff0000ff, "got %#x\n", pixel );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok( pixel == 0xff0000ff, "got %#x\n", pixel );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
     thread = CreateThread( NULL, 0, test_window_dc_thread, window, 0, NULL );
     ok( thread != NULL, "got %p\n", thread );
@@ -2700,32 +2700,32 @@ static void test_window_dc(void)
     pixel = 0xdeadbeef;
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
     todo_wine ok( pixel == 0xff00ff00, "got %#x\n", pixel );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
 
     dc1 = GetWindowDC( window );
     ok( dc1 != NULL, "got %p\n", dc1 );
-    todo_wine ok_ret( TRUE, wglMakeCurrent( dc1, ctx ) );
+    ok_ret( TRUE, wglMakeCurrent( dc1, ctx ) );
 
     pixel = 0xdeadbeef;
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
     todo_wine ok( pixel == 0xff00ff00, "got %#x\n", pixel );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
 
     ctx1 = wglCreateContext( dc1 );
     ok( ctx1 != NULL, "got %p\n", ctx1 );
-    todo_wine ok_ret( TRUE, wglMakeCurrent( dc1, ctx1 ) );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok_ret( TRUE, wglMakeCurrent( dc1, ctx1 ) );
+    ok_ret( GL_NO_ERROR, glGetError() );
     glReadBuffer( GL_BACK );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
     pixel = 0xdeadbeef;
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
-    todo_wine ok( pixel == 0xff00ff00, "got %#x\n", pixel );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok( pixel == 0xff00ff00, "got %#x\n", pixel );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
-    todo_wine ok_ret( TRUE, wglMakeCurrent( NULL, NULL ) );
+    ok_ret( TRUE, wglMakeCurrent( NULL, NULL ) );
     ok_ret( TRUE, wglDeleteContext( ctx1 ) );
     ReleaseDC( window, dc1 );
 
@@ -2737,17 +2737,17 @@ static void test_window_dc(void)
     ok( dc != NULL, "got %p\n", dc );
     ctx = wglCreateContext( dc );
     ok( ctx != NULL, "got %p\n", ctx );
-    todo_wine ok_ret( TRUE, wglMakeCurrent( dc, ctx ) );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok_ret( TRUE, wglMakeCurrent( dc, ctx ) );
+    ok_ret( GL_NO_ERROR, glGetError() );
     glReadBuffer( GL_BACK );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
     pixel = 0xdeadbeef;
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
-    todo_wine ok( pixel == 0xff00ff00, "got %#x\n", pixel );
-    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    ok( pixel == 0xff00ff00, "got %#x\n", pixel );
+    ok_ret( GL_NO_ERROR, glGetError() );
 
-    todo_wine ok_ret( TRUE, wglMakeCurrent( NULL, NULL ) );
+    ok_ret( TRUE, wglMakeCurrent( NULL, NULL ) );
     ok_ret( TRUE, wglDeleteContext( ctx ) );
     ok_ret( TRUE, SwapBuffers( dc ) );
     ReleaseDC( window, dc );
