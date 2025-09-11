@@ -3644,50 +3644,49 @@ BOOL WCMD_print_volume_information(const WCHAR *path)
 
 RETURN_CODE WCMD_label(void)
 {
-  DWORD count;
-  WCHAR string[MAX_PATH], curdir[MAX_PATH];
+    WCHAR string[MAX_PATH], curdir[MAX_PATH];
 
-  /* FIXME incomplete implementation:
-   * - no support for /MP qualifier,
-   * - no support for passing label as parameter
-   */
-  if (*quals)
-      return errorlevel = ERROR_INVALID_FUNCTION;
-  if (!*param1) {
-    if (!GetCurrentDirectoryW(ARRAY_SIZE(curdir), curdir)) {
-      WCMD_print_error();
-      return errorlevel = ERROR_INVALID_FUNCTION;
+    /* FIXME incomplete implementation:
+     * - no support for /MP qualifier,
+     * - no support for passing label as parameter
+     */
+    if (*quals)
+        return errorlevel = ERROR_INVALID_FUNCTION;
+    if (!*param1)
+    {
+        if (!GetCurrentDirectoryW(ARRAY_SIZE(curdir), curdir))
+        {
+            WCMD_print_error();
+            return errorlevel = ERROR_INVALID_FUNCTION;
+        }
     }
-  }
-  else if (param1[1] == ':' && !param1[2]) {
-    curdir[0] = param1[0];
-    curdir[1] = param1[1];
-  } else {
-      WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
-      return errorlevel = ERROR_INVALID_FUNCTION;
-  }
-  curdir[2] = L'\\';
-  curdir[3] = L'\0';
-  if (!WCMD_print_volume_information(curdir)) {
-    WCMD_print_error();
-    return errorlevel = ERROR_INVALID_FUNCTION;
-  }
+    else if (param1[1] == ':' && !param1[2])
+    {
+        curdir[0] = param1[0];
+        curdir[1] = param1[1];
+    }
+    else
+    {
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+        return errorlevel = ERROR_INVALID_FUNCTION;
+    }
+    curdir[2] = L'\\';
+    curdir[3] = L'\0';
+    if (!WCMD_print_volume_information(curdir))
+    {
+        WCMD_print_error();
+        return errorlevel = ERROR_INVALID_FUNCTION;
+    }
 
-  if (WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, ARRAY_SIZE(string), &count) &&
-      count > 1) {
-    string[count-1] = '\0';		/* ReadFile output is not null-terminatrred! */
-    if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
-  }
-  else return errorlevel = ERROR_INVALID_FUNCTION;
-  if (*param1) {
-    if (!SetVolumeLabelW(curdir, string))
+    if (!WCMD_fgets(string, ARRAY_SIZE(string), GetStdHandle(STD_INPUT_HANDLE)) || !string[0])
+        return errorlevel = ERROR_INVALID_FUNCTION;
+    if (*param1 && !SetVolumeLabelW(curdir, string))
     {
         errorlevel = GetLastError();
         WCMD_print_error();
         return errorlevel;
     }
-  }
-  return errorlevel = NO_ERROR;
+    return errorlevel = NO_ERROR;
 }
 
 RETURN_CODE WCMD_volume(void)
