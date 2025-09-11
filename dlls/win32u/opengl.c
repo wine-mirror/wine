@@ -1918,7 +1918,6 @@ static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)
 {
     HDC draw_hdc = NtCurrentTeb()->glReserved1[0], read_hdc = NtCurrentTeb()->glReserved1[1];
     const struct opengl_funcs *funcs = &display_funcs;
-    struct opengl_drawable *draw;
     UINT flags = 0;
     int interval;
     HWND hwnd;
@@ -1933,10 +1932,7 @@ static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)
 
     if (flush) flush();
     if (flush == funcs->p_glFinish) flags |= GL_FLUSH_FINISHED;
-
-    if (!(draw = get_dc_opengl_drawable( draw_hdc ))) return FALSE;
-    opengl_drawable_flush( draw, interval, flags );
-    opengl_drawable_release( draw );
+    opengl_drawable_flush( context->draw, interval, flags );
 
     return TRUE;
 }
