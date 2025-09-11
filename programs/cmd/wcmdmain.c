@@ -638,6 +638,11 @@ RETURN_CODE WCMD_wait_for_input(HANDLE hIn)
     return return_code;
 }
 
+RETURN_CODE WCMD_wait_for_console_input(void)
+{
+    return WCMD_wait_for_input(console_input);
+}
+
 /***************************************************************************
  * WCMD_ReadFile
  *
@@ -674,6 +679,8 @@ RETURN_CODE WCMD_output_asis(const WCHAR *message)
     RETURN_CODE return_code = NO_ERROR;
     const WCHAR* ptr;
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD dummy;
+    BOOL is_output_console = GetConsoleMode(handle, &dummy);
 
     if (!message) /* Hack for flushing */
     {
@@ -692,9 +699,11 @@ RETURN_CODE WCMD_output_asis(const WCHAR *message)
             if (paged_mode && ++line_count >= max_height - 1)
             {
                 line_count = 0;
-                WCMD_output_unbuffered(pagedMessage, -1, handle);
+                if (is_output_console)
+                    WCMD_output_unbuffered(pagedMessage, -1, handle);
                 return_code = WCMD_wait_for_input(console_input);
-                WCMD_output_unbuffered(L"\r\n", 2, handle);
+                if (is_output_console)
+                    WCMD_output_unbuffered(L"\r", 1, handle);
             }
         }
         else

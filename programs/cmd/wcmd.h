@@ -219,6 +219,7 @@ WCHAR *WCMD_strip_quotes(WCHAR *cmd);
 WCHAR *WCMD_LoadMessage(UINT id);
 WCHAR *WCMD_strsubstW(WCHAR *start, const WCHAR* next, const WCHAR* insert, int len);
 RETURN_CODE WCMD_wait_for_input(HANDLE hIn);
+RETURN_CODE WCMD_wait_for_console_input(void);
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead);
 BOOL WCMD_read_console(const HANDLE hInput, WCHAR *inputBuffer, const DWORD inputBufferLength, LPDWORD numRead);
 
