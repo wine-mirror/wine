@@ -4913,61 +4913,6 @@ HRESULT create_font_collection_from_set(IDWriteFactory7 *factory, IDWriteFontSet
     return hr;
 }
 
-struct system_fontfile_enumerator
-{
-    IDWriteFontFileEnumerator IDWriteFontFileEnumerator_iface;
-    LONG refcount;
-
-    IDWriteFactory7 *factory;
-    HKEY hkey;
-    int index;
-
-    WCHAR *filename;
-    DWORD filename_size;
-};
-
-static inline struct system_fontfile_enumerator *impl_from_IDWriteFontFileEnumerator(IDWriteFontFileEnumerator* iface)
-{
-    return CONTAINING_RECORD(iface, struct system_fontfile_enumerator, IDWriteFontFileEnumerator_iface);
-}
-
-static HRESULT WINAPI systemfontfileenumerator_QueryInterface(IDWriteFontFileEnumerator *iface, REFIID riid, void **obj)
-{
-    if (IsEqualIID(riid, &IID_IDWriteFontFileEnumerator) || IsEqualIID(riid, &IID_IUnknown)) {
-        IDWriteFontFileEnumerator_AddRef(iface);
-        *obj = iface;
-        return S_OK;
-    }
-
-    WARN("%s not implemented.\n", debugstr_guid(riid));
-
-    *obj = NULL;
-
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI systemfontfileenumerator_AddRef(IDWriteFontFileEnumerator *iface)
-{
-    struct system_fontfile_enumerator *enumerator = impl_from_IDWriteFontFileEnumerator(iface);
-    return InterlockedIncrement(&enumerator->refcount);
-}
-
-static ULONG WINAPI systemfontfileenumerator_Release(IDWriteFontFileEnumerator *iface)
-{
-    struct system_fontfile_enumerator *enumerator = impl_from_IDWriteFontFileEnumerator(iface);
-    ULONG refcount = InterlockedDecrement(&enumerator->refcount);
-
-    if (!refcount)
-    {
-        IDWriteFactory7_Release(enumerator->factory);
-        RegCloseKey(enumerator->hkey);
-        free(enumerator->filename);
-        free(enumerator);
-    }
-
-    return refcount;
-}
-
 static HRESULT create_local_file_reference(IDWriteFactory7 *factory, const WCHAR *filename, IDWriteFontFile **file)
 {
     HRESULT hr;
@@ -4989,148 +4934,18 @@ static HRESULT create_local_file_reference(IDWriteFactory7 *factory, const WCHAR
     return hr;
 }
 
-static HRESULT WINAPI systemfontfileenumerator_GetCurrentFontFile(IDWriteFontFileEnumerator *iface, IDWriteFontFile **file)
-{
-    struct system_fontfile_enumerator *enumerator = impl_from_IDWriteFontFileEnumerator(iface);
-
-    *file = NULL;
-
-    if (enumerator->index < 0 || !enumerator->filename || !*enumerator->filename)
-        return E_FAIL;
-
-    return create_local_file_reference(enumerator->factory, enumerator->filename, file);
-}
-
-static HRESULT WINAPI systemfontfileenumerator_MoveNext(IDWriteFontFileEnumerator *iface, BOOL *current)
-{
-    struct system_fontfile_enumerator *enumerator = impl_from_IDWriteFontFileEnumerator(iface);
-    WCHAR name_buf[256], *name = name_buf;
-    DWORD name_count, max_name_count = ARRAY_SIZE(name_buf), type, data_size;
-    HRESULT hr = S_OK;
-    LONG r;
-
-    *current = FALSE;
-    enumerator->index++;
-
-    /* iterate until we find next string value */
-    for (;;) {
-        do {
-            name_count = max_name_count;
-            data_size = enumerator->filename_size - sizeof(*enumerator->filename);
-
-            r = RegEnumValueW(enumerator->hkey, enumerator->index, name, &name_count,
-                              NULL, &type, (BYTE *)enumerator->filename, &data_size);
-            if (r == ERROR_MORE_DATA) {
-                if (name_count >= max_name_count) {
-                    if (name != name_buf) free(name);
-                    max_name_count *= 2;
-                    name = malloc(max_name_count * sizeof(*name));
-                    if (!name) return E_OUTOFMEMORY;
-                }
-                if (data_size > enumerator->filename_size - sizeof(*enumerator->filename))
-                {
-                    free(enumerator->filename);
-                    enumerator->filename_size = max(data_size + sizeof(*enumerator->filename), enumerator->filename_size * 2);
-                    if (!(enumerator->filename = malloc(enumerator->filename_size)))
-                    {
-                        hr = E_OUTOFMEMORY;
-                        goto err;
-                    }
-                }
-            }
-        } while (r == ERROR_MORE_DATA);
-
-        if (r != ERROR_SUCCESS) {
-            enumerator->filename[0] = 0;
-            break;
-        }
-        enumerator->filename[data_size / sizeof(*enumerator->filename)] = 0;
-        if (type == REG_SZ && *name != '@') {
-            *current = TRUE;
-            break;
-        }
-        enumerator->index++;
-    }
-    TRACE("index = %d, current = %d\n", enumerator->index, *current);
-
-err:
-    if (name != name_buf) free(name);
-    return hr;
-}
-
-static const IDWriteFontFileEnumeratorVtbl systemfontfileenumeratorvtbl =
-{
-    systemfontfileenumerator_QueryInterface,
-    systemfontfileenumerator_AddRef,
-    systemfontfileenumerator_Release,
-    systemfontfileenumerator_MoveNext,
-    systemfontfileenumerator_GetCurrentFontFile
-};
-
-static HRESULT create_system_fontfile_enumerator(IDWriteFactory7 *factory, IDWriteFontFileEnumerator **ret)
-{
-    struct system_fontfile_enumerator *enumerator;
-
-    *ret = NULL;
-
-    if (!(enumerator = calloc(1, sizeof(*enumerator))))
-        return E_OUTOFMEMORY;
-
-    enumerator->IDWriteFontFileEnumerator_iface.lpVtbl = &systemfontfileenumeratorvtbl;
-    enumerator->refcount = 1;
-    enumerator->factory = factory;
-    enumerator->index = -1;
-    enumerator->filename_size = MAX_PATH * sizeof(*enumerator->filename);
-    enumerator->filename = malloc(enumerator->filename_size);
-    if (!enumerator->filename)
-    {
-        free(enumerator);
-        return E_OUTOFMEMORY;
-    }
-
-    IDWriteFactory7_AddRef(factory);
-
-    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts", 0,
-            GENERIC_READ, &enumerator->hkey))
-    {
-        ERR("failed to open fonts list key\n");
-        IDWriteFactory7_Release(factory);
-        free(enumerator->filename);
-        free(enumerator);
-        return E_FAIL;
-    }
-
-    *ret = &enumerator->IDWriteFontFileEnumerator_iface;
-
-    return S_OK;
-}
-
 HRESULT get_system_fontcollection(IDWriteFactory7 *factory, DWRITE_FONT_FAMILY_MODEL family_model,
         IDWriteFontCollection **collection)
 {
-    IDWriteFontFileEnumerator *enumerator;
     IDWriteFontSet *fontset;
     HRESULT hr;
 
     *collection = NULL;
 
-    if (family_model == DWRITE_FONT_FAMILY_MODEL_TYPOGRAPHIC)
+    if (SUCCEEDED(hr = create_system_fontset(factory, &IID_IDWriteFontSet, (void **)&fontset)))
     {
-        if (SUCCEEDED(hr = create_system_fontset(factory, &IID_IDWriteFontSet, (void **)&fontset)))
-        {
-            hr = create_font_collection_from_set(factory, fontset, family_model,
-                    &IID_IDWriteFontCollection, (void **)collection);
-            IDWriteFontSet_Release(fontset);
-        }
-    }
-    else
-    {
-        if (SUCCEEDED(hr = create_system_fontfile_enumerator(factory, &enumerator)))
-        {
-            TRACE("Building system font collection for factory %p.\n", factory);
-            hr = create_font_collection(factory, enumerator, TRUE, (IDWriteFontCollection3 **)collection);
-            IDWriteFontFileEnumerator_Release(enumerator);
-        }
+        hr = create_font_collection_from_set(factory, fontset, family_model, &IID_IDWriteFontCollection, (void **)collection);
+        IDWriteFontSet_Release(fontset);
     }
 
     return hr;
