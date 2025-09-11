@@ -1101,7 +1101,7 @@ static int win32u_wglGetPixelFormat( HDC hdc )
     return format > 0 ? format : 0;
 }
 
-void set_window_opengl_drawable( HWND hwnd, struct opengl_drawable *new_drawable )
+void set_window_opengl_drawable( HWND hwnd, struct opengl_drawable *new_drawable, BOOL current )
 {
     struct opengl_drawable *old_drawable = NULL;
     WND *win;
@@ -1110,8 +1110,9 @@ void set_window_opengl_drawable( HWND hwnd, struct opengl_drawable *new_drawable
 
     if ((win = get_win_ptr( hwnd )) && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
     {
-        old_drawable = win->current_drawable;
-        if ((win->current_drawable = new_drawable)) opengl_drawable_add_ref( new_drawable );
+        struct opengl_drawable **ptr = current ? &win->current_drawable : &win->unused_drawable;
+        old_drawable = *ptr;
+        if ((*ptr = new_drawable)) opengl_drawable_add_ref( new_drawable );
         release_win_ptr( win );
     }
 
@@ -1128,6 +1129,35 @@ struct opengl_drawable *get_window_current_drawable( HWND hwnd )
         if ((drawable = win->current_drawable)) opengl_drawable_add_ref( drawable );
         release_win_ptr( win );
     }
+
+    TRACE( "hwnd %p, drawable %s\n", hwnd, debugstr_opengl_drawable( drawable ) );
+    return drawable;
+}
+
+static struct opengl_drawable *get_window_unused_drawable( HWND hwnd, int format )
+{
+    struct opengl_drawable *drawable = NULL;
+    WND *win;
+
+    if ((win = get_win_ptr( hwnd )) && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
+    {
+        drawable = win->unused_drawable;
+        win->unused_drawable = NULL;
+        release_win_ptr( win );
+    }
+
+    if (drawable && drawable->format != format)
+    {
+        opengl_drawable_release( drawable );
+        drawable = NULL;
+    }
+
+    /* No compatible window drawable found, try creating a new one. This is not what native
+     * is doing, it allows multiple contexts to be current on separate threads on the same
+     * window, each drawing to the same back/front buffers. We cannot do that because host
+     * OpenGL usually doesn't allow multiple contexts to use the same surface at the same time.
+     */
+    if (!drawable) driver_funcs->p_surface_create( hwnd, format, &drawable );
 
     TRACE( "hwnd %p, drawable %s\n", hwnd, debugstr_opengl_drawable( drawable ) );
     return drawable;
@@ -1247,7 +1277,6 @@ static BOOL set_dc_pixel_format( HDC hdc, int new_format, BOOL internal )
     {
         struct opengl_drawable *drawable;
         int old_format;
-        BOOL ret;
 
         if (new_format > onscreen)
         {
@@ -1259,16 +1288,14 @@ static BOOL set_dc_pixel_format( HDC hdc, int new_format, BOOL internal )
 
         if ((old_format = get_window_pixel_format( hwnd, FALSE )) && !internal) return old_format == new_format;
 
-        drawable = get_dc_opengl_drawable( hdc );
-        if ((ret = driver_funcs->p_surface_create( hwnd, new_format, &drawable )))
+        if ((drawable = get_window_unused_drawable( hwnd, new_format )))
         {
-            /* update the current window drawable to the last used draw surface */
-            if ((hwnd = NtUserWindowFromDC( hdc ))) set_window_opengl_drawable( hwnd, drawable );
             set_dc_opengl_drawable( hdc, drawable );
+            set_window_opengl_drawable( hwnd, drawable, TRUE );
+            set_window_opengl_drawable( hwnd, drawable, FALSE );
+            opengl_drawable_release( drawable );
         }
-        if (drawable) opengl_drawable_release( drawable );
 
-        if (!ret) return FALSE;
         return set_window_pixel_format( hwnd, new_format, internal );
     }
 
@@ -1360,6 +1387,11 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
     {
         NtCurrentTeb()->glContext = context;
 
+        if (old_draw && old_draw != new_draw && old_draw != new_read && old_draw->client)
+            set_window_opengl_drawable( old_draw->client->hwnd, old_draw, FALSE );
+        if (old_read && old_read != new_draw && old_read != new_read && old_read->client)
+            set_window_opengl_drawable( old_read->client->hwnd, old_read, FALSE );
+
         /* all good, release previous context drawables if any */
         if (old_draw) opengl_drawable_release( old_draw );
         if (old_read) opengl_drawable_release( old_read );
@@ -1373,7 +1405,7 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
         opengl_drawable_flush( new_read, new_read->interval, 0 );
         opengl_drawable_flush( new_draw, new_draw->interval, 0 );
         /* update the current window drawable to the last used draw surface */
-        if ((hwnd = NtUserWindowFromDC( draw_hdc ))) set_window_opengl_drawable( hwnd, new_draw );
+        if ((hwnd = NtUserWindowFromDC( draw_hdc ))) set_window_opengl_drawable( hwnd, new_draw, TRUE );
         context_exchange_drawables( context, &new_draw, &new_read );
     }
     else if (previous)
@@ -1425,7 +1457,9 @@ static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
         NtCurrentTeb()->glContext = NULL;
 
         context_exchange_drawables( context, &draw, &read );
+        if (draw->client) set_window_opengl_drawable( draw->client->hwnd, draw, FALSE );
         opengl_drawable_release( draw );
+        if (read->client) set_window_opengl_drawable( read->client->hwnd, read, FALSE );
         opengl_drawable_release( read );
 
         return TRUE;

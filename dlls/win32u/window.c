@@ -5187,6 +5187,7 @@ LRESULT destroy_window( HWND hwnd )
 
     detach_client_surfaces( hwnd );
     if (win->current_drawable) opengl_drawable_release( win->current_drawable );
+    if (win->unused_drawable) opengl_drawable_release( win->unused_drawable );
     user_driver->pDestroyWindow( hwnd );
 
     free_window_handle( hwnd );
@@ -5292,6 +5293,7 @@ void destroy_thread_windows(void)
         HMENU menu;
         HMENU sys_menu;
         struct opengl_drawable *current_drawable;
+        struct opengl_drawable *unused_drawable;
         struct window_surface *surface;
         struct destroy_entry *next;
     } *entry, *free_list = NULL;
@@ -5318,6 +5320,7 @@ void destroy_thread_windows(void)
         if (!is_child) tmp.menu = (HMENU)win->wIDmenu;
         tmp.sys_menu = win->hSysMenu;
         tmp.current_drawable = win->current_drawable;
+        tmp.unused_drawable = win->unused_drawable;
         tmp.surface = win->surface;
         *entry = tmp;
 
@@ -5343,6 +5346,7 @@ void destroy_thread_windows(void)
         detach_client_surfaces( entry->handle );
         user_driver->pDestroyWindow( entry->handle );
         if (entry->current_drawable) opengl_drawable_release( entry->current_drawable );
+        if (entry->unused_drawable) opengl_drawable_release( entry->unused_drawable );
 
         NtUserDestroyMenu( entry->menu );
         NtUserDestroyMenu( entry->sys_menu );

@@ -67,6 +67,7 @@ typedef struct tagWND
     HIMC               imc;           /* window's input context */
     struct window_surface *surface;   /* Window surface if any */
     struct opengl_drawable *current_drawable; /* current GL client surface for this window */
+    struct opengl_drawable *unused_drawable; /* unused GL client surface for this window */
     struct tagDIALOGINFO *dlgInfo;    /* Dialog additional info (dialogs only) */
     int                swap_interval; /* OpenGL surface swap interval */
     int                pixel_format;  /* Pixel format set by the graphics driver */

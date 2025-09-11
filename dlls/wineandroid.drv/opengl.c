@@ -100,16 +100,9 @@ static void android_drawable_destroy( struct opengl_drawable *base )
 
 void update_gl_drawable( HWND hwnd )
 {
-    struct gl_drawable *old, *new;
-
-    if (!(old = impl_from_opengl_drawable( get_window_current_drawable( hwnd ) ))) return;
-    if ((new = create_gl_drawable( hwnd, old->base.format, old->window )))
-    {
-        set_window_opengl_drawable( hwnd, &new->base );
-        opengl_drawable_release( &new->base );
-    }
-    opengl_drawable_release( &old->base );
-
+    /* clear any cached opengl drawable */
+    set_window_opengl_drawable( hwnd, NULL, TRUE );
+    set_window_opengl_drawable( hwnd, NULL, FALSE );
     NtUserRedrawWindow( hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE );
 }
 
