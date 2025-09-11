@@ -40,8 +40,6 @@ WINE_DECLARE_DEBUG_CHANNEL(dwrite_file);
 #define MS_CPAL_TAG DWRITE_MAKE_OPENTYPE_TAG('C','P','A','L')
 #define MS_COLR_TAG DWRITE_MAKE_OPENTYPE_TAG('C','O','L','R')
 
-static const IID IID_issystemcollection = {0x14d88047,0x331f,0x4cd3,{0xbc,0xa8,0x3e,0x67,0x99,0xaf,0x34,0x75}};
-
 static const FLOAT RECOMMENDED_OUTLINE_AA_THRESHOLD = 100.0f;
 static const FLOAT RECOMMENDED_OUTLINE_A_THRESHOLD = 350.0f;
 static const FLOAT RECOMMENDED_NATURAL_PPEM = 20.0f;
@@ -3214,39 +3212,6 @@ static HRESULT create_fontfamily(struct dwrite_fontcollection *collection, UINT3
     return S_OK;
 }
 
-BOOL is_system_collection(IDWriteFontCollection *collection)
-{
-    void *obj;
-    return IDWriteFontCollection_QueryInterface(collection, &IID_issystemcollection, &obj) == S_OK;
-}
-
-static HRESULT WINAPI dwritesystemfontcollection_QueryInterface(IDWriteFontCollection3 *iface, REFIID riid, void **obj)
-{
-    struct dwrite_fontcollection *collection = impl_from_IDWriteFontCollection3(iface);
-
-    TRACE("%p, %s, %p.\n", collection, debugstr_guid(riid), obj);
-
-    if (IsEqualIID(riid, &IID_IDWriteFontCollection3) ||
-        IsEqualIID(riid, &IID_IDWriteFontCollection2) ||
-        IsEqualIID(riid, &IID_IDWriteFontCollection1) ||
-        IsEqualIID(riid, &IID_IDWriteFontCollection) ||
-        IsEqualIID(riid, &IID_IUnknown))
-    {
-        *obj = iface;
-        IDWriteFontCollection3_AddRef(iface);
-        return S_OK;
-    }
-
-    *obj = NULL;
-
-    if (IsEqualIID(riid, &IID_issystemcollection))
-        return S_OK;
-
-    WARN("%s not implemented.\n", debugstr_guid(riid));
-
-    return E_NOINTERFACE;
-}
-
 static HRESULT WINAPI dwritefontcollection_QueryInterface(IDWriteFontCollection3 *iface, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
@@ -3544,24 +3509,6 @@ static const IDWriteFontCollection3Vtbl fontcollectionvtbl =
     dwritefontcollection3_GetExpirationEvent,
 };
 
-static const IDWriteFontCollection3Vtbl systemfontcollectionvtbl =
-{
-    dwritesystemfontcollection_QueryInterface,
-    dwritefontcollection_AddRef,
-    dwritefontcollection_Release,
-    dwritefontcollection_GetFontFamilyCount,
-    dwritefontcollection_GetFontFamily,
-    dwritefontcollection_FindFamilyName,
-    dwritefontcollection_GetFontFromFontFace,
-    dwritefontcollection1_GetFontSet,
-    dwritefontcollection1_GetFontFamily,
-    dwritefontcollection2_GetFontFamily,
-    dwritefontcollection2_GetMatchingFonts,
-    dwritefontcollection2_GetFontFamilyModel,
-    dwritefontcollection2_GetFontSet,
-    dwritefontcollection3_GetExpirationEvent,
-};
-
 static HRESULT fontfamily_add_font(struct dwrite_fontfamily_data *family_data, struct dwrite_font_data *font_data)
 {
     if (!dwrite_array_reserve((void **)&family_data->fonts, &family_data->size, family_data->count + 1,
@@ -3594,9 +3541,9 @@ static HRESULT fontcollection_add_family(struct dwrite_fontcollection *collectio
 }
 
 static HRESULT init_font_collection(struct dwrite_fontcollection *collection, IDWriteFactory7 *factory,
-        DWRITE_FONT_FAMILY_MODEL family_model, BOOL is_system)
+        DWRITE_FONT_FAMILY_MODEL family_model)
 {
-    collection->IDWriteFontCollection3_iface.lpVtbl = is_system ? &systemfontcollectionvtbl : &fontcollectionvtbl;
+    collection->IDWriteFontCollection3_iface.lpVtbl = &fontcollectionvtbl;
     collection->refcount = 1;
     collection->factory = factory;
     IDWriteFactory7_AddRef(collection->factory);
@@ -4710,7 +4657,7 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
     if (!(collection = calloc(1, sizeof(*collection))))
         return E_OUTOFMEMORY;
 
-    hr = init_font_collection(collection, factory, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE, is_system);
+    hr = init_font_collection(collection, factory, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE);
     if (FAILED(hr))
     {
         free(collection);
@@ -4912,7 +4859,7 @@ HRESULT create_font_collection_from_set(IDWriteFactory7 *factory, IDWriteFontSet
     if (!(collection = calloc(1, sizeof(*collection))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = init_font_collection(collection, factory, family_model, FALSE)))
+    if (FAILED(hr = init_font_collection(collection, factory, family_model)))
     {
         free(collection);
         return hr;
@@ -5283,7 +5230,7 @@ HRESULT get_eudc_fontcollection(IDWriteFactory7 *factory, IDWriteFontCollection3
     if (!(collection = calloc(1, sizeof(*collection))))
         return E_OUTOFMEMORY;
 
-    hr = init_font_collection(collection, factory, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE, FALSE);
+    hr = init_font_collection(collection, factory, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE);
     if (FAILED(hr))
     {
         free(collection);

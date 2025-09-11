@@ -341,7 +341,6 @@ extern HRESULT create_fontface(const struct fontface_desc *desc, struct list *ca
 extern HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerator *enumerator, BOOL is_system,
        IDWriteFontCollection3 **collection);
 extern HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc*,IDWriteGlyphRunAnalysis**);
-extern BOOL    is_system_collection(IDWriteFontCollection*);
 extern HRESULT get_local_refkey(const WCHAR*,const FILETIME*,void**,UINT32*);
 extern HRESULT get_filestream_from_file(IDWriteFontFile*,IDWriteFontFileStream**);
 extern BOOL    is_face_type_supported(DWRITE_FONT_FACE_TYPE);
