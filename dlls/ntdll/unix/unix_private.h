@@ -603,7 +603,7 @@ static inline NTSTATUS map_section( HANDLE mapping, void **ptr, SIZE_T *size, UL
 
 struct ldt_copy
 {
-    void         *base[LDT_SIZE];
+    unsigned int  base[LDT_SIZE];
     unsigned int  limit[LDT_SIZE];
     unsigned char flags[LDT_SIZE];
 };
@@ -611,11 +611,11 @@ extern struct ldt_copy __wine_ldt_copy;
 
 static const LDT_ENTRY null_entry;
 
-static inline void *ldt_get_base( LDT_ENTRY ent )
+static inline unsigned int ldt_get_base( LDT_ENTRY ent )
 {
-    return (void *)(ent.BaseLow |
-                    (ULONG_PTR)ent.HighWord.Bits.BaseMid << 16 |
-                    (ULONG_PTR)ent.HighWord.Bits.BaseHi << 24);
+    return (ent.BaseLow |
+            (unsigned int)ent.HighWord.Bits.BaseMid << 16 |
+            (unsigned int)ent.HighWord.Bits.BaseHi << 24);
 }
 
 static inline unsigned int ldt_get_limit( LDT_ENTRY ent )
@@ -625,13 +625,13 @@ static inline unsigned int ldt_get_limit( LDT_ENTRY ent )
     return limit;
 }
 
-static inline LDT_ENTRY ldt_make_entry( void *base, unsigned int limit, unsigned char flags )
+static inline LDT_ENTRY ldt_make_entry( unsigned int base, unsigned int limit, unsigned char flags )
 {
     LDT_ENTRY entry;
 
-    entry.BaseLow                   = (WORD)(ULONG_PTR)base;
-    entry.HighWord.Bits.BaseMid     = (BYTE)((ULONG_PTR)base >> 16);
-    entry.HighWord.Bits.BaseHi      = (BYTE)((ULONG_PTR)base >> 24);
+    entry.BaseLow                   = (WORD)base;
+    entry.HighWord.Bits.BaseMid     = (BYTE)(base >> 16);
+    entry.HighWord.Bits.BaseHi      = (BYTE)(base >> 24);
     if ((entry.HighWord.Bits.Granularity = (limit >= 0x100000))) limit >>= 12;
     entry.LimitLow                  = (WORD)limit;
     entry.HighWord.Bits.LimitHi     = limit >> 16;
@@ -667,7 +667,7 @@ static inline LDT_ENTRY ldt_make_ds32_entry(void)
 
 static inline LDT_ENTRY ldt_make_fs32_entry( void *teb )
 {
-    return ldt_make_entry( teb, page_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+    return ldt_make_entry( PtrToUlong(teb), page_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
 }
 
 static inline int is_gdt_sel( WORD sel )

@@ -164,7 +164,7 @@ __ASM_GLOBAL_FUNC( rt_sigreturn,
 struct modify_ldt_s
 {
     unsigned int  entry_number;
-    void         *base_addr;
+    unsigned int  base_addr;
     unsigned int  limit;
     unsigned int  seg_32bit : 1;
     unsigned int  contents : 2;
@@ -2202,7 +2202,7 @@ static void ldt_set_entry( WORD sel, LDT_ENTRY entry )
     struct ssd ldt_mod;
 
     ldt_mod.sel  = sel;
-    ldt_mod.bo   = (unsigned long)ldt_get_base( entry );
+    ldt_mod.bo   = ldt_get_base( entry );
     ldt_mod.ls   = entry.LimitLow | (entry.HighWord.Bits.LimitHi << 16);
     ldt_mod.acc1 = entry.HighWord.Bytes.Flags1;
     ldt_mod.acc2 = entry.HighWord.Bytes.Flags2 >> 4;
@@ -2224,11 +2224,8 @@ static void ldt_set_fs( WORD sel, TEB *teb )
     if (sel == gdt_fs_sel)
     {
 #ifdef __linux__
-        struct modify_ldt_s ldt_info = { sel >> 3 };
-
-        ldt_info.base_addr = teb;
-        ldt_info.limit     = page_size - 1;
-        ldt_info.seg_32bit = 1;
+        struct modify_ldt_s ldt_info = { .entry_number = sel >> 3, .base_addr = PtrToUlong( teb ),
+                                         .limit = page_size - 1, .seg_32bit = 1 };
         if (set_thread_area( &ldt_info ) < 0) perror( "set_thread_area" );
 #elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__) || defined(__DragonFly__)
         i386_set_fsbase( teb );
@@ -2272,7 +2269,7 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_
             if (!status)
             {
                 if (reply->flags)
-                    info->Entry = ldt_make_entry( (void *)reply->base, reply->limit, reply->flags );
+                    info->Entry = ldt_make_entry( reply->base, reply->limit, reply->flags );
                 else
                     status = STATUS_UNSUCCESSFUL;
             }
