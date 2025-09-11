@@ -338,8 +338,8 @@ extern void    init_local_fontfile_loader(void);
 extern IDWriteFontFileLoader *get_local_fontfile_loader(void);
 extern HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_list,
         IDWriteFontFace5 **fontface);
-extern HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerator *enumerator, BOOL is_system,
-       IDWriteFontCollection3 **collection);
+extern HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerator *enumerator,
+        IDWriteFontCollection3 **collection);
 extern HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc*,IDWriteGlyphRunAnalysis**);
 extern HRESULT get_local_refkey(const WCHAR*,const FILETIME*,void**,UINT32*);
 extern HRESULT get_filestream_from_file(IDWriteFontFile*,IDWriteFontFileStream**);

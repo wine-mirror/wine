@@ -4642,49 +4642,32 @@ static void fontcollection_add_replacements(struct dwrite_fontcollection *collec
     RegCloseKey(hkey);
 }
 
-HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerator *enumerator, BOOL is_system,
-    IDWriteFontCollection3 **ret)
+HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerator *enumerator, IDWriteFontCollection3 **ret)
 {
     struct fontfile_enum {
         struct list entry;
         IDWriteFontFile *file;
     };
     struct fontfile_enum *fileenum, *fileenum2;
-    struct dwrite_fontcollection *collection;
     struct list scannedfiles;
-    BOOL current = FALSE;
-    HRESULT hr = S_OK;
-    size_t i;
+    IDWriteFontSetBuilder1 *builder;
+    IDWriteFontSet *fontset = NULL;
+    BOOL current;
+    HRESULT hr;
 
     *ret = NULL;
 
-    if (!(collection = calloc(1, sizeof(*collection))))
-        return E_OUTOFMEMORY;
-
-    hr = init_font_collection(collection, factory, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE);
-    if (FAILED(hr))
-    {
-        free(collection);
+    if (FAILED(hr = create_fontset_builder(factory, FALSE, (IDWriteFontSetBuilder2 **)&builder)))
         return hr;
-    }
-
-    *ret = &collection->IDWriteFontCollection3_iface;
 
     TRACE("building font collection:\n");
 
     list_init(&scannedfiles);
-    while (hr == S_OK) {
-        DWRITE_FONT_FACE_TYPE face_type;
-        DWRITE_FONT_FILE_TYPE file_type;
-        BOOL supported, same = FALSE;
-        IDWriteFontFileStream *stream;
-        IDWriteFontFile *file;
-        UINT32 face_count;
 
-        current = FALSE;
-        hr = IDWriteFontFileEnumerator_MoveNext(enumerator, &current);
-        if (FAILED(hr) || !current)
-            break;
+    while (IDWriteFontFileEnumerator_MoveNext(enumerator, &current) == S_OK && current)
+    {
+        IDWriteFontFile *file;
+        BOOL same = FALSE;
 
         hr = IDWriteFontFileEnumerator_GetCurrentFontFile(enumerator, &file);
         if (FAILED(hr))
@@ -4701,88 +4684,21 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
             continue;
         }
 
-        if (FAILED(get_filestream_from_file(file, &stream))) {
-            IDWriteFontFile_Release(file);
-            continue;
-        }
-
-        /* Unsupported formats are skipped. */
-        hr = opentype_analyze_font(stream, &supported, &file_type, &face_type, &face_count);
-        if (FAILED(hr) || !supported || face_count == 0) {
-            TRACE("Unsupported font (%p, 0x%08lx, %d, %u)\n", file, hr, supported, face_count);
-            IDWriteFontFileStream_Release(stream);
-            IDWriteFontFile_Release(file);
-            hr = S_OK;
-            continue;
-        }
-
         /* add to scanned list */
         fileenum = malloc(sizeof(*fileenum));
         fileenum->file = file;
         list_add_tail(&scannedfiles, &fileenum->entry);
 
-        for (i = 0; i < face_count; ++i)
-        {
-            struct dwrite_font_data *font_data;
-            struct fontface_desc desc;
-            WCHAR familyW[255];
-            UINT32 index;
-
-            desc.factory = factory;
-            desc.face_type = face_type;
-            desc.file = file;
-            desc.stream = stream;
-            desc.index = i;
-            desc.simulations = DWRITE_FONT_SIMULATIONS_NONE;
-            desc.font_data = NULL;
-
-            /* Allocate an initialize new font data structure. */
-            hr = init_font_data(&desc, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE, &font_data);
-            if (FAILED(hr))
-            {
-                /* move to next one */
-                hr = S_OK;
-                continue;
-            }
-
-            fontstrings_get_en_string(font_data->family_names, familyW, ARRAY_SIZE(familyW));
-
-            /* ignore dot named faces */
-            if (familyW[0] == '.')
-            {
-                WARN("Ignoring face %s\n", debugstr_w(familyW));
-                release_font_data(font_data);
-                continue;
-            }
-
-            index = collection_find_family(collection, familyW);
-            if (index != ~0u)
-                hr = fontfamily_add_font(collection->family_data[index], font_data);
-            else {
-                struct dwrite_fontfamily_data *family_data;
-
-                /* create and init new family */
-                hr = init_fontfamily_data(font_data->family_names, &family_data);
-                if (hr == S_OK) {
-                    /* add font to family, family - to collection */
-                    hr = fontfamily_add_font(family_data, font_data);
-                    if (hr == S_OK)
-                        hr = fontcollection_add_family(collection, family_data);
-
-                    if (FAILED(hr))
-                        release_fontfamily_data(family_data);
-                }
-            }
-
-            if (FAILED(hr))
-            {
-                release_font_data(font_data);
-                break;
-            }
-        }
-
-        IDWriteFontFileStream_Release(stream);
+        if (FAILED(hr = IDWriteFontSetBuilder1_AddFontFile(builder, file)))
+            break;
     }
+
+    if (SUCCEEDED(hr))
+        hr = IDWriteFontSetBuilder1_CreateFontSet(builder, &fontset);
+
+    if (SUCCEEDED(hr))
+        hr = create_font_collection_from_set(factory, fontset, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE,
+                 &IID_IDWriteFontCollection3, (void **)ret);
 
     LIST_FOR_EACH_ENTRY_SAFE(fileenum, fileenum2, &scannedfiles, struct fontfile_enum, entry)
     {
@@ -4791,14 +4707,9 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
         free(fileenum);
     }
 
-    for (i = 0; i < collection->count; ++i)
-    {
-        fontfamily_add_bold_simulated_face(collection->family_data[i]);
-        fontfamily_add_oblique_simulated_face(collection->family_data[i]);
-    }
-
-    if (is_system)
-        fontcollection_add_replacements(collection);
+    if (fontset)
+        IDWriteFontSet_Release(fontset);
+    IDWriteFontSetBuilder1_Release(builder);
 
     return hr;
 }
