@@ -2509,7 +2509,7 @@ NTSTATUS signal_alloc_thread( TEB *teb )
         {
             sigset_t sigset;
             int idx;
-            LDT_ENTRY entry = ldt_make_entry( wow_teb, page_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+            LDT_ENTRY entry = ldt_make_fs32_entry( wow_teb );
 
             server_enter_uninterrupted_section( &ldt_mutex, &sigset );
             for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
@@ -2602,8 +2602,8 @@ void signal_init_process(void)
         LDT_ENTRY cs32_entry, fs32_entry;
         int idx;
 
-        cs32_entry = ldt_make_entry( NULL, -1, LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
-        fs32_entry = ldt_make_entry( wow_teb, page_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+        cs32_entry = ldt_make_cs32_entry();
+        fs32_entry = ldt_make_fs32_entry( wow_teb );
 
         for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
         {

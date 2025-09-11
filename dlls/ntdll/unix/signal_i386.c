@@ -2254,11 +2254,11 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_
         if (!(info->Selector & ~3))
             info->Entry = null_entry;
         else if ((info->Selector | 3) == get_cs())
-            info->Entry = ldt_make_entry( 0, ~0u, LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
+            info->Entry = ldt_make_cs32_entry();
         else if ((info->Selector | 3) == get_ds())
-            info->Entry = ldt_make_entry( 0, ~0u, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+            info->Entry = ldt_make_ds32_entry();
         else if ((info->Selector | 3) == get_fs())
-            info->Entry = ldt_make_entry( NtCurrentTeb(), 0xfff, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+            info->Entry = ldt_make_fs32_entry( NtCurrentTeb() );
         else
             return STATUS_UNSUCCESSFUL;
     }
@@ -2342,7 +2342,7 @@ NTSTATUS signal_alloc_thread( TEB *teb )
         static int first_thread = 1;
         sigset_t sigset;
         int idx;
-        LDT_ENTRY entry = ldt_make_entry( teb, page_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+        LDT_ENTRY entry = ldt_make_fs32_entry( teb );
 
         if (first_thread)  /* no locking for first thread */
         {

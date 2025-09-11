@@ -655,6 +655,21 @@ static inline void update_ldt_copy( WORD sel, LDT_ENTRY entry )
                                     LDT_FLAGS_ALLOCATED);
 }
 
+static inline LDT_ENTRY ldt_make_cs32_entry(void)
+{
+    return ldt_make_entry( 0, ~0u, LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
+}
+
+static inline LDT_ENTRY ldt_make_ds32_entry(void)
+{
+    return ldt_make_entry( 0, ~0u, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+}
+
+static inline LDT_ENTRY ldt_make_fs32_entry( void *teb )
+{
+    return ldt_make_entry( teb, page_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+}
+
 static inline int is_gdt_sel( WORD sel )
 {
     return !(sel & 4);
