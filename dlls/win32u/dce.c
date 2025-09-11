@@ -1367,7 +1367,7 @@ HDC WINAPI NtUserGetDCEx( HWND hwnd, HRGN clip_rgn, DWORD flags )
 
     if (dce->hwnd != hwnd)
     {
-        struct opengl_drawable *drawable = get_window_opengl_drawable( hwnd );
+        struct opengl_drawable *drawable = get_window_current_drawable( hwnd );
         set_dc_opengl_drawable( dce->hdc, drawable );
         if (drawable) opengl_drawable_release( drawable );
     }

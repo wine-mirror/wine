@@ -102,7 +102,7 @@ void update_gl_drawable( HWND hwnd )
 {
     struct gl_drawable *old, *new;
 
-    if (!(old = impl_from_opengl_drawable( get_window_opengl_drawable( hwnd ) ))) return;
+    if (!(old = impl_from_opengl_drawable( get_window_current_drawable( hwnd ) ))) return;
     if ((new = create_gl_drawable( hwnd, old->base.format, old->window )))
     {
         set_window_opengl_drawable( hwnd, &new->base );

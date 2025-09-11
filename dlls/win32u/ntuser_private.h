@@ -66,7 +66,7 @@ typedef struct tagWND
     HICON              hIconSmall2;   /* window's secondary small icon, derived from hIcon */
     HIMC               imc;           /* window's input context */
     struct window_surface *surface;   /* Window surface if any */
-    struct opengl_drawable *opengl_drawable; /* last GL client surface for this window */
+    struct opengl_drawable *current_drawable; /* current GL client surface for this window */
     struct tagDIALOGINFO *dlgInfo;    /* Dialog additional info (dialogs only) */
     int                swap_interval; /* OpenGL surface swap interval */
     int                pixel_format;  /* Pixel format set by the graphics driver */

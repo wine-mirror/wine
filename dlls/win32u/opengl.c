@@ -1103,29 +1103,29 @@ static int win32u_wglGetPixelFormat( HDC hdc )
 
 void set_window_opengl_drawable( HWND hwnd, struct opengl_drawable *new_drawable )
 {
-    void *old_drawable = NULL;
+    struct opengl_drawable *old_drawable = NULL;
     WND *win;
 
     TRACE( "hwnd %p, new_drawable %s\n", hwnd, debugstr_opengl_drawable( new_drawable ) );
 
     if ((win = get_win_ptr( hwnd )) && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
     {
-        old_drawable = win->opengl_drawable;
-        if ((win->opengl_drawable = new_drawable)) opengl_drawable_add_ref( new_drawable );
+        old_drawable = win->current_drawable;
+        if ((win->current_drawable = new_drawable)) opengl_drawable_add_ref( new_drawable );
         release_win_ptr( win );
     }
 
     if (old_drawable) opengl_drawable_release( old_drawable );
 }
 
-struct opengl_drawable *get_window_opengl_drawable( HWND hwnd )
+struct opengl_drawable *get_window_current_drawable( HWND hwnd )
 {
-    void *drawable = NULL;
+    struct opengl_drawable *drawable = NULL;
     WND *win;
 
     if ((win = get_win_ptr( hwnd )) && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
     {
-        if ((drawable = win->opengl_drawable)) opengl_drawable_add_ref( drawable );
+        if ((drawable = win->current_drawable)) opengl_drawable_add_ref( drawable );
         release_win_ptr( win );
     }
 
@@ -1337,7 +1337,7 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
     new_draw = get_dc_opengl_drawable( draw_hdc );
 
     /* get the last used window drawable when reading */
-    if ((hwnd = NtUserWindowFromDC( read_hdc ))) new_read = get_window_opengl_drawable( hwnd );
+    if ((hwnd = NtUserWindowFromDC( read_hdc ))) new_read = get_window_current_drawable( hwnd );
     else new_read = get_dc_opengl_drawable( read_hdc );
 
     TRACE( "context %p, new_draw %s, new_read %s\n", context, debugstr_opengl_drawable( new_draw ), debugstr_opengl_drawable( new_read ) );
@@ -1963,7 +1963,7 @@ static BOOL win32u_wglSwapBuffers( HDC hdc )
     if (context) context_sync_drawables( context, draw_hdc, read_hdc );
 
     if (context) opengl_drawable_add_ref( (draw = context->draw) );
-    else if (!(draw = get_window_opengl_drawable( hwnd ))) return FALSE;
+    else if (!(draw = get_window_current_drawable( hwnd ))) return FALSE;
 
     opengl_drawable_flush( draw, interval, 0 );
     ret = draw->funcs->swap( draw );
