@@ -4156,6 +4156,7 @@ static void test_FoldStringW(void)
       { 0x11c50, 0, 9, TRUE /*win10*/ },  /* Bhaiksuki */
       { 0x11d50, 0, 9, TRUE /*win10*/ },  /* Masaram Gondi */
       { 0x11da0, 0, 9, TRUE /*win10*/ },  /* Gunjala Gondi */
+      { 0x11de0, 0, 9, TRUE /*win10*/ },  /* Tolong Siki */
       { 0x11f50, 0, 9, TRUE /*win10*/ },  /* Kawi */
       { 0x16130, 0, 9, TRUE /*win10*/ },  /* Gurung Khema */
       { 0x16a60, 0, 9, TRUE /*win10*/ },  /* Mro */

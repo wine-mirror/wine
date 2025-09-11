@@ -25,7 +25,7 @@ use Digest::SHA;
 use Encode;
 use Time::Local qw(timegm_modern);
 
-my $UNIVERSION = "16.0.0";
+my $UNIVERSION = "17.0.0";
 my $CLDRVERSION = "47";
 my $ISO639VERSION = "20230123";
 my $TZVERSION = "2025a";
@@ -33,11 +33,11 @@ my $TZVERSION = "2025a";
 my %data_files =
 (
  ucd       => { url  => "https://www.unicode.org/Public/$UNIVERSION/ucd/UCD.zip", name => "UCD-$UNIVERSION.zip",
-                sha  => "c86dd81f2b14a43b0cc064aa5f89aa7241386801e35c59c7984e579832634eb2" },
+                sha  => "2066d1909b2ea93916ce092da1c0ee4808ea3ef8407c94b4f14f5b7eb263d28e" },
  unihan    => { url  => "https://www.unicode.org/Public/$UNIVERSION/ucd/Unihan.zip", name => "Unihan-$UNIVERSION.zip",
-                sha  => "b8f000df69de7828d21326a2ffea462b04bc7560022989f7cc704f10521ef3e0" },
- idna      => { url  => "https://www.unicode.org/Public/idna/$UNIVERSION/IdnaMappingTable.txt", name => "IdnaMappingTable-$UNIVERSION.txt",
-                sha  => "6db2ef4ed35f3b3de74ebc2e00404a9607f76d499f576b8d4043cf14f1ed175c" },
+                sha  => "f7a48b2b545acfaa77b2d607ae28747404ce02baefee16396c5d2d7a8ef34b5e" },
+ idna      => { url  => "https://www.unicode.org/Public/$UNIVERSION/idna/IdnaMappingTable.txt", name => "IdnaMappingTable-$UNIVERSION.txt",
+                sha  => "87f05505dc026fdb2bff16132bdc68a8014675836882a9a2b1844540ad3be382" },
  cldr      => { url  => "https://github.com/unicode-org/cldr/archive/refs/tags/release-$CLDRVERSION.zip",
                 sha  => "90f600f3d59d2e8dc0e179b2d988647c338a5aa48f6b39a08ebf2a223d3d8b92" },
  cldr33    => { url  => "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip",
@@ -290,6 +290,7 @@ my %break_types =
     "AS"  => 0x002e,
     "VF"  => 0x002f,
     "VI"  => 0x0030,
+    "HH"  => 0x0031,
 );
 
 my %vertical_types =
@@ -1981,7 +1982,11 @@ sub download_data_files()
         {
             print "Fetching $url...\n";
             system "mkdir", "-p", $cache;
-            !system "wget", "-q", "-O", $filename, $url or die "cannot fetch $url";
+            if (system "wget", "-q", "-O", $filename, $url)
+            {
+                unlink $filename;
+                die "cannot fetch $url";
+            }
         }
         my $sha = Digest::SHA->new( "sha256" )->addfile( $filename )->hexdigest;
         die "invalid checksum $sha for $filename" unless $sha eq $data->{sha};

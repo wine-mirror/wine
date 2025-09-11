@@ -1,5 +1,5 @@
 /* Unicode Script IDs */
-/* generated from https://www.unicode.org/Public/16.0.0/ucd/UCD.zip:Scripts.txt */
+/* generated from https://www.unicode.org/Public/17.0.0/ucd/UCD.zip:Scripts.txt */
 /* DO NOT EDIT!! */
 
 enum unicode_script_id {
