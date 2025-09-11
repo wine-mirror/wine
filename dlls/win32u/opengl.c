@@ -1953,12 +1953,13 @@ static BOOL win32u_wglSwapBuffers( HDC hdc )
 
     TRACE( "context %p, hwnd %p, draw_hdc %p, interval %d\n", context, hwnd, draw_hdc, interval );
 
-    context_sync_drawables( context, draw_hdc, read_hdc );
+    if (context) context_sync_drawables( context, draw_hdc, read_hdc );
 
-    if (!(draw = get_dc_opengl_drawable( draw_hdc ))) return FALSE;
+    if (context) opengl_drawable_add_ref( (draw = context->draw) );
+    else if (!(draw = get_window_opengl_drawable( hwnd ))) return FALSE;
+
     opengl_drawable_flush( draw, interval, 0 );
-    if (!draw->client) ret = FALSE; /* pbuffer, nothing to do */
-    else ret = draw->funcs->swap( draw );
+    ret = draw->funcs->swap( draw );
     opengl_drawable_release( draw );
 
     return ret;

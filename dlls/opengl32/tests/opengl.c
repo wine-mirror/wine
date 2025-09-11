@@ -2749,7 +2749,7 @@ static void test_window_dc(void)
 
     todo_wine ok_ret( TRUE, wglMakeCurrent( NULL, NULL ) );
     ok_ret( TRUE, wglDeleteContext( ctx ) );
-    todo_wine ok_ret( TRUE, SwapBuffers( dc ) );
+    ok_ret( TRUE, SwapBuffers( dc ) );
     ReleaseDC( window, dc );
 
     DestroyWindow(window);
