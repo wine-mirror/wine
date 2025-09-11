@@ -1632,7 +1632,7 @@ HRESULT create_system_fontset(IDWriteFactory7 *factory, REFIID riid, void **obj)
 
     *obj = NULL;
 
-    if (FAILED(hr = create_fontset_builder(factory, &builder))) return hr;
+    if (FAILED(hr = create_fontset_builder(factory, TRUE, &builder))) return hr;
 
     if (SUCCEEDED(hr = create_system_path_list(&paths, &count)))
     {
@@ -1677,7 +1677,7 @@ static HRESULT WINAPI dwritefactory3_CreateFontSetBuilder(IDWriteFactory7 *iface
 {
     TRACE("%p, %p.\n", iface, builder);
 
-    return create_fontset_builder(iface, (IDWriteFontSetBuilder2 **)builder);
+    return create_fontset_builder(iface, FALSE, (IDWriteFontSetBuilder2 **)builder);
 }
 
 static HRESULT WINAPI dwritefactory3_CreateFontCollectionFromFontSet(IDWriteFactory7 *iface, IDWriteFontSet *fontset,
@@ -1796,7 +1796,7 @@ static HRESULT WINAPI dwritefactory5_CreateFontSetBuilder(IDWriteFactory7 *iface
 {
     TRACE("%p, %p.\n", iface, builder);
 
-    return create_fontset_builder(iface, (IDWriteFontSetBuilder2 **)builder);
+    return create_fontset_builder(iface, FALSE, (IDWriteFontSetBuilder2 **)builder);
 }
 
 static HRESULT WINAPI dwritefactory5_CreateInMemoryFontFileLoader(IDWriteFactory7 *iface,
@@ -1885,7 +1885,7 @@ static HRESULT WINAPI dwritefactory6_CreateFontSetBuilder(IDWriteFactory7 *iface
 {
     TRACE("%p, %p.\n", iface, builder);
 
-    return create_fontset_builder(iface, builder);
+    return create_fontset_builder(iface, FALSE, builder);
 }
 
 static HRESULT WINAPI dwritefactory6_CreateTextFormat(IDWriteFactory7 *iface, const WCHAR *family_name,
