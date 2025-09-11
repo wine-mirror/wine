@@ -3042,9 +3042,11 @@ static void test_CustomFontCollection(void)
     IDWriteFontFile *fontfile, *fontfile2;
     IDWriteLocalizedStrings *string;
     IDWriteFont *idfont, *idfont2;
+    IDWriteGdiInterop *interop;
     IDWriteFactory *factory;
     UINT32 index, count;
-    BOOL exists;
+    BOOL system, exists;
+    LOGFONTW logfont;
     HRESULT hr;
     HRSRC font;
     ULONG ref;
@@ -3133,6 +3135,19 @@ static void test_CustomFontCollection(void)
 
     hr = IDWriteFontFamily_GetFont(family, 0, &idfont);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Font created using a custom loader */
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    system = TRUE;
+    memset(&logfont, 0, sizeof(logfont));
+    hr = IDWriteGdiInterop_ConvertFontToLOGFONT(interop, idfont, &logfont, &system);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!system, "Unexpected flag %d.\n", system);
+
+    IDWriteGdiInterop_Release(interop);
+
     EXPECT_REF(idfont, 1);
     EXPECT_REF(family, 2);
     hr = IDWriteFontFamily_GetFont(family, 0, &idfont2);
@@ -4767,6 +4782,7 @@ static void test_ConvertFontToLOGFONT(void)
     IDWriteFontCollection *collection;
     IDWriteGdiInterop *interop;
     IDWriteFontFamily *family;
+    IDWriteFactory3 *factory3;
     IDWriteFont *font;
     LOGFONTW logfont;
     UINT32 i, count;
@@ -4803,6 +4819,9 @@ if (0) { /* crashes on native */
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!system, "got %d\n", system);
     ok(logfont.lfFaceName[0] == 0, "got face name %s\n", wine_dbgstr_w(logfont.lfFaceName));
+
+    IDWriteFontFamily_Release(family);
+    IDWriteFont_Release(font);
 
     count = IDWriteFontCollection_GetFontFamilyCount(collection);
     for (i = 0; i < count; i++) {
@@ -4892,9 +4911,84 @@ if (0) { /* crashes on native */
 
     IDWriteFactory_Release(factory2);
 
+    if (SUCCEEDED(IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory3, (void **)&factory3)))
+    {
+        IDWriteFontCollection1 *collection2;
+        IDWriteFontSet *fontset, *fontset2;
+        IDWriteFontSetBuilder2 *builder2;
+        IDWriteFontSetBuilder *builder;
+        WCHAR *path;
+
+        /* System font set -> collection -> ConvertFontToLOGFONT() */
+        hr = IDWriteFactory3_GetSystemFontSet(factory3, &fontset);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IDWriteFactory3_CreateFontCollectionFromFontSet(factory3, fontset, &collection2);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IDWriteFontCollection1_GetFontFamily(collection2, 0, (IDWriteFontFamily1 **)&family);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IDWriteFontFamily_GetFont(family, 0, &font);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        system = FALSE;
+        memset(&logfont, 0, sizeof(logfont));
+        hr = IDWriteGdiInterop_ConvertFontToLOGFONT(interop, font, &logfont, &system);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine
+        ok(system, "Unexpected flag %d.\n", system);
+
+        IDWriteFont_Release(font);
+        IDWriteFontSet_Release(fontset);
+        IDWriteFontFamily_Release(family);
+        IDWriteFontCollection1_Release(collection2);
+
+        /* User font set using local file -> custom collection -> ConvertFontToLOGFONT() */
+        hr = IDWriteFactory3_CreateFontSetBuilder(factory3, &builder);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        if (SUCCEEDED(IDWriteFontSetBuilder_QueryInterface(builder, &IID_IDWriteFontSetBuilder2, (void **)&builder2)))
+        {
+            path = create_testfontfile(test_fontfile);
+
+            hr = IDWriteFontSetBuilder2_AddFontFile(builder2, path);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+            hr = IDWriteFontSetBuilder_CreateFontSet(builder, &fontset2);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+            hr = IDWriteFactory3_CreateFontCollectionFromFontSet(factory3, fontset2, &collection2);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+            hr = IDWriteFontCollection1_GetFontFamily(collection2, 0, (IDWriteFontFamily1 **)&family);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+            hr = IDWriteFontFamily_GetFont(family, 0, &font);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+            system = FALSE;
+            memset(&logfont, 0, sizeof(logfont));
+            hr = IDWriteGdiInterop_ConvertFontToLOGFONT(interop, font, &logfont, &system);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            todo_wine
+            ok(system, "Unexpected flag %d.\n", system);
+
+            IDWriteFont_Release(font);
+            IDWriteFontSet_Release(fontset2);
+            IDWriteFontFamily_Release(family);
+            IDWriteFontCollection1_Release(collection2);
+
+            IDWriteFontSetBuilder2_Release(builder2);
+            DeleteFileW(path);
+        }
+
+        IDWriteFontSetBuilder_Release(builder);
+
+        IDWriteFactory3_Release(factory3);
+    }
+
     IDWriteFontCollection_Release(collection);
-    IDWriteFontFamily_Release(family);
-    IDWriteFont_Release(font);
     IDWriteGdiInterop_Release(interop);
     ref = IDWriteFactory_Release(factory);
     ok(ref == 0, "factory not released, %lu\n", ref);
