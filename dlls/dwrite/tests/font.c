@@ -4936,7 +4936,6 @@ if (0) { /* crashes on native */
         memset(&logfont, 0, sizeof(logfont));
         hr = IDWriteGdiInterop_ConvertFontToLOGFONT(interop, font, &logfont, &system);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        todo_wine
         ok(system, "Unexpected flag %d.\n", system);
 
         IDWriteFont_Release(font);
@@ -4971,7 +4970,6 @@ if (0) { /* crashes on native */
             memset(&logfont, 0, sizeof(logfont));
             hr = IDWriteGdiInterop_ConvertFontToLOGFONT(interop, font, &logfont, &system);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-            todo_wine
             ok(system, "Unexpected flag %d.\n", system);
 
             IDWriteFont_Release(font);

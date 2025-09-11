@@ -2601,6 +2601,20 @@ static HRESULT create_font(struct dwrite_fontfamily *family, UINT32 index, IDWri
     return S_OK;
 }
 
+IDWriteFontFile *get_fontfile_from_font(IDWriteFont *font_iface)
+{
+    struct dwrite_font *font = unsafe_impl_from_IDWriteFont(font_iface);
+    IDWriteFontFile *file = NULL;
+
+    if (font)
+    {
+        file = font->data->file;
+        IDWriteFontFile_AddRef(file);
+    }
+
+    return file;
+}
+
 /* IDWriteFontList2 */
 static HRESULT WINAPI dwritefontlist_QueryInterface(IDWriteFontList2 *iface, REFIID riid, void **obj)
 {
