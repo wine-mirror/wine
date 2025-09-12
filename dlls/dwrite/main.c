@@ -603,6 +603,13 @@ struct dwritefactory
     IDWriteGdiInterop1 *gdiinterop;
     IDWriteFontFallback1 *fallback;
 
+    struct
+    {
+        FILETIME timestamp;
+        struct dwrite_fontset_entry **entries;
+        unsigned int count;
+    } system_set;
+
     IDWriteFontFileLoader *localfontfileloader;
     struct list localfontfaces;
 
@@ -636,6 +643,15 @@ static void release_fileloader(struct fileloader *fileloader)
     free(fileloader);
 }
 
+static void factory_cleanup_fontset(struct dwritefactory *factory)
+{
+    unsigned int i;
+
+    for (i = 0; i < factory->system_set.count; ++i)
+        release_fontset_entry(factory->system_set.entries[i]);
+    memset(&factory->system_set, 0, sizeof(factory->system_set));
+}
+
 static void release_dwritefactory(struct dwritefactory *factory)
 {
     struct fileloader *fileloader, *fileloader2;
@@ -660,6 +676,7 @@ static void release_dwritefactory(struct dwritefactory *factory)
         if (factory->system_collections[i])
             IDWriteFontCollection_Release(factory->system_collections[i]);
     }
+    factory_cleanup_fontset(factory);
     if (factory->eudc_collection)
         IDWriteFontCollection1_Release(factory->eudc_collection);
     if (factory->fallback)
@@ -1524,6 +1541,16 @@ static HRESULT WINAPI dwritefactory3_CreateFontFaceReference(IDWriteFactory7 *if
     return hr;
 }
 
+static HKEY open_fonts_key(void)
+{
+    HKEY hkey = NULL;
+
+    RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts",
+            0, GENERIC_READ | KEY_QUERY_VALUE, &hkey);
+
+    return hkey;
+}
+
 static HRESULT create_system_path_list(WCHAR ***ret, unsigned int *ret_count)
 {
     unsigned int index = 0, value_size, max_name_count;
@@ -1533,11 +1560,8 @@ static HRESULT create_system_path_list(WCHAR ***ret, unsigned int *ret_count)
     HKEY hkey;
     LONG r;
 
-    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts",
-            0, GENERIC_READ, &hkey))
-    {
+    if (!(hkey = open_fonts_key()))
         return E_UNEXPECTED;
-    }
 
     value_size = MAX_PATH * sizeof(*value);
     value = malloc(value_size);
@@ -1616,23 +1640,37 @@ static HRESULT create_system_path_list(WCHAR ***ret, unsigned int *ret_count)
     return S_OK;
 }
 
+static void get_system_fonts_mtime(FILETIME *mtime)
+{
+    HKEY hkey;
+
+    memset(mtime, 0, sizeof(*mtime));
+
+    if ((hkey = open_fonts_key()))
+    {
+        RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, NULL, NULL,
+                NULL, NULL, NULL, NULL, mtime);
+        RegCloseKey(hkey);
+    }
+}
+
 static int __cdecl create_system_fontset_compare(const void *left, const void *right)
 {
     const WCHAR *_l = *(WCHAR **)left, *_r = *(WCHAR **)right;
     return wcsicmp(_l, _r);
 };
 
-HRESULT create_system_fontset(IDWriteFactory7 *factory, REFIID riid, void **obj)
+static HRESULT factory_create_system_fontset(struct dwritefactory *factory, const FILETIME *timestamp)
 {
     IDWriteFontSetBuilder2 *builder;
-    IDWriteFontSet *fontset;
     unsigned int i, j, count;
     WCHAR **paths;
     HRESULT hr;
 
-    *obj = NULL;
+    factory_cleanup_fontset(factory);
+    factory->system_set.timestamp = *timestamp;
 
-    if (FAILED(hr = create_fontset_builder(factory, TRUE, &builder))) return hr;
+    if (FAILED(hr = create_fontset_builder(&factory->IDWriteFactory7_iface, TRUE, &builder))) return hr;
 
     if (SUCCEEDED(hr = create_system_path_list(&paths, &count)))
     {
@@ -1655,13 +1693,41 @@ HRESULT create_system_fontset(IDWriteFactory7 *factory, REFIID riid, void **obj)
         free(paths);
     }
 
-    if (SUCCEEDED(hr = IDWriteFontSetBuilder2_CreateFontSet(builder, &fontset)))
+    hr = fontset_builder_get_entries(builder, &factory->system_set.entries, &factory->system_set.count);
+    IDWriteFontSetBuilder2_Release(builder);
+
+    return hr;
+}
+
+HRESULT create_system_fontset(IDWriteFactory7 *factory_iface, REFIID riid, void **obj)
+{
+    struct dwritefactory *factory = impl_from_IDWriteFactory7(factory_iface);
+    IDWriteFontSet *fontset;
+    FILETIME timestamp;
+    HRESULT hr = S_OK;
+
+    *obj = NULL;
+
+    get_system_fonts_mtime(&timestamp);
+
+    EnterCriticalSection(&factory->cs);
+
+    if (CompareFileTime(&timestamp, &factory->system_set.timestamp) > 0)
+        hr = factory_create_system_fontset(factory, &timestamp);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = fontset_create_from_set(factory_iface, factory->system_set.entries,
+                factory->system_set.count, TRUE, &fontset);
+    }
+
+    LeaveCriticalSection(&factory->cs);
+
+    if (SUCCEEDED(hr))
     {
         hr = IDWriteFontSet_QueryInterface(fontset, riid, obj);
         IDWriteFontSet_Release(fontset);
     }
-
-    IDWriteFontSetBuilder2_Release(builder);
 
     return hr;
 }

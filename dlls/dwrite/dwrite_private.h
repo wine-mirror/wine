@@ -383,6 +383,13 @@ extern HRESULT create_font_collection_from_set(IDWriteFactory7 *factory, IDWrite
         DWRITE_FONT_FAMILY_MODEL family_model, REFGUID riid, void **ret);
 extern HRESULT create_system_fontset(IDWriteFactory7 *factory, REFIID riid, void **obj);
 
+struct dwrite_fontset_entry;
+extern void release_fontset_entry(struct dwrite_fontset_entry *);
+extern HRESULT fontset_builder_get_entries(IDWriteFontSetBuilder2 *iface, struct dwrite_fontset_entry ***ret,
+        unsigned int *count);
+extern HRESULT fontset_create_from_set(IDWriteFactory7 *factory, struct dwrite_fontset_entry **src_entries,
+        unsigned int count, BOOL is_system, IDWriteFontSet **ret);
+
 struct dwrite_fontface;
 
 extern float fontface_get_scaled_design_advance(struct dwrite_fontface *fontface, DWRITE_MEASURING_MODE measuring_mode,
