@@ -950,6 +950,40 @@ static void check_dds_pixel_format_image_info(unsigned int line, DWORD flags, DW
     ok_(__FILE__, line)(hr == expected_hr, "Unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr) && hr == expected_hr)
         ok_(__FILE__, line)(info.Format == expected_format, "Unexpected format %#x.\n", info.Format);
+
+    /* Test again with unused fields set. */
+    if (flags & DDS_PF_FOURCC)
+        rmask = gmask = bmask = amask = bpp = flags = ~0u;
+    else if ((flags & (DDS_PF_INDEXED | DDS_PF_ALPHA)) == (DDS_PF_INDEXED | DDS_PF_ALPHA))
+        rmask = gmask = bmask = fourcc = ~0u;
+    else if (flags & DDS_PF_INDEXED)
+        rmask = gmask = bmask = amask = fourcc = ~0u;
+    else if ((flags & (DDS_PF_RGB | DDS_PF_ALPHA)) == (DDS_PF_RGB | DDS_PF_ALPHA))
+        fourcc = ~0u;
+    else if (flags & DDS_PF_RGB)
+        fourcc = amask = ~0u;
+    else if ((flags & (DDS_PF_LUMINANCE | DDS_PF_ALPHA)) == (DDS_PF_LUMINANCE | DDS_PF_ALPHA))
+        gmask = bmask = fourcc = ~0u;
+    else if (flags & DDS_PF_LUMINANCE)
+        gmask = bmask = amask = fourcc = ~0u;
+    else if (flags & DDS_PF_ALPHA_ONLY)
+        rmask = gmask = bmask = fourcc = ~0u;
+    else if (flags & DDS_PF_BUMPDUDV)
+        fourcc = ~0u;
+    else if (flags & DDS_PF_BUMPLUMINANCE)
+        fourcc = amask = ~0u;
+
+    dds.header.pixel_format.flags = flags;
+    dds.header.pixel_format.fourcc = fourcc;
+    dds.header.pixel_format.bpp = bpp;
+    dds.header.pixel_format.rmask = rmask;
+    dds.header.pixel_format.gmask = gmask;
+    dds.header.pixel_format.bmask = bmask;
+    dds.header.pixel_format.amask = amask;
+    hr = D3DX11GetImageInfoFromMemory(&dds, sizeof(dds), NULL, &info, NULL);
+    ok_(__FILE__, line)(hr == expected_hr, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr) && hr == expected_hr)
+        ok_(__FILE__, line)(info.Format == expected_format, "Unexpected format %#x.\n", info.Format);
 }
 
 #define check_dds_pixel_format(flags, fourcc, bpp, rmask, gmask, bmask, amask, format) \
@@ -1474,7 +1508,8 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     check_dds_pixel_format(DDS_PF_FOURCC, 0x73, 0, 0, 0, 0, 0, DXGI_FORMAT_R32G32_FLOAT); /* D3DFMT_G32R32F */
     check_dds_pixel_format(DDS_PF_FOURCC, 0x74, 0, 0, 0, 0, 0, DXGI_FORMAT_R32G32B32A32_FLOAT); /* D3DFMT_A32B32G32R32F */
 
-    /* Test for DDS pixel formats that are valid on d3dx9, but not d3dx10. */
+    /* Test for DDS pixel formats that are valid on d3dx9, but not d3dx10+. */
+    check_dds_pixel_format_unsupported(DDS_PF_FOURCC, 0x75, 0, 0, 0, 0, 0, E_FAIL); /* D3DFMT_CxV8U8 */
     check_dds_pixel_format_unsupported(DDS_PF_FOURCC, MAKEFOURCC('U','Y','V','Y'), 0, 0, 0, 0, 0, E_FAIL);
     check_dds_pixel_format_unsupported(DDS_PF_FOURCC, MAKEFOURCC('Y','U','Y','2'), 0, 0, 0, 0, 0, E_FAIL);
     /* Bumpmap formats aren't supported. */
