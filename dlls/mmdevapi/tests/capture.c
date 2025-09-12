@@ -366,36 +366,26 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     ok(packets_data.discontinuity_at_0 || packets_data.discontinuity_at_later, "No discontinuity\n");
 
     winetest_pop_context();
-
-    sum = packets_data.expected_dev_pos;
+    winetest_push_context("stop, start and read 10 packets");
 
     hr = IAudioClient_Stop(ac);
     ok(hr == S_OK, "Stop on a started stream returns %08lx\n", hr);
 
+    hr = IAudioClient_Stop(ac);
+    ok(hr == S_FALSE, "Stop on a stopped stream returns %08lx\n", hr);
+
     hr = IAudioClient_Start(ac);
     ok(hr == S_OK, "Start on a stopped stream returns %08lx\n", hr);
 
-    ok(WaitForSingleObject(handle, 1000) == WAIT_OBJECT_0, "Waiting on event handle failed!\n");
+    hr = IAudioClient_Start(ac);
+    ok(hr == AUDCLNT_E_NOT_STOPPED, "Start on a started stream returns %08lx\n", hr);
 
-    hr = IAudioCaptureClient_GetBuffer(acc, &data, &frames, &flags, &pos, &qpc);
-    flaky_wine
-    ok(hr == S_OK, "Valid IAudioCaptureClient_GetBuffer returns %08lx\n", hr);
+    read_packets(ac, acc, handle, 10, &packets_data);
 
-    hr = IAudioClient_GetCurrentPadding(ac, &pad);
-    ok(hr == S_OK, "GetCurrentPadding call returns %08lx\n", hr);
+    /* Sometimes there is a discontinuity at the first packet. */
+    ok(!packets_data.discontinuity_at_later, "Discontinuity at later packet\n");
 
-    trace("Restart position %d pad %u flags %lx, amount of frames locked: %u\n",
-          hr==S_OK ? (UINT)pos : -1, pad, flags, frames);
-
-    if(frames){
-        flaky_wine
-        ok(pos == sum, "Position %u expected %u\n", (UINT)pos, sum);
-        ok(!flags, "flags %lu\n", flags);
-
-        hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
-        ok(hr == S_OK, "Releasing buffer returns %08lx\n", hr);
-        sum += frames;
-    }
+    winetest_pop_context();
 
     hr = IAudioClient_Stop(ac);
     ok(hr == S_OK, "Stop on a started stream returns %08lx\n", hr);
