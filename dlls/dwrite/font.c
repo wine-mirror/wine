@@ -3544,7 +3544,7 @@ static HRESULT fontcollection_add_family(struct dwrite_fontcollection *collectio
     return S_OK;
 }
 
-static HRESULT init_font_collection(struct dwrite_fontcollection *collection, IDWriteFactory7 *factory,
+static void init_font_collection(struct dwrite_fontcollection *collection, IDWriteFactory7 *factory,
         DWRITE_FONT_FAMILY_MODEL family_model)
 {
     collection->IDWriteFontCollection3_iface.lpVtbl = &fontcollectionvtbl;
@@ -3552,8 +3552,6 @@ static HRESULT init_font_collection(struct dwrite_fontcollection *collection, ID
     collection->factory = factory;
     IDWriteFactory7_AddRef(collection->factory);
     collection->family_model = family_model;
-
-    return S_OK;
 }
 
 HRESULT get_filestream_from_file(IDWriteFontFile *file, IDWriteFontFileStream **stream)
@@ -4774,11 +4772,7 @@ HRESULT create_font_collection_from_set(IDWriteFactory7 *factory, IDWriteFontSet
     if (!(collection = calloc(1, sizeof(*collection))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = init_font_collection(collection, factory, family_model)))
-    {
-        free(collection);
-        return hr;
-    }
+    init_font_collection(collection, factory, family_model);
 
     for (i = 0; i < set->count; ++i)
     {
@@ -4963,12 +4957,7 @@ HRESULT get_eudc_fontcollection(IDWriteFactory7 *factory, IDWriteFontCollection3
     if (!(collection = calloc(1, sizeof(*collection))))
         return E_OUTOFMEMORY;
 
-    hr = init_font_collection(collection, factory, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE);
-    if (FAILED(hr))
-    {
-        free(collection);
-        return hr;
-    }
+    init_font_collection(collection, factory, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE);
 
     *ret = &collection->IDWriteFontCollection3_iface;
 
