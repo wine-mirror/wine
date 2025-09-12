@@ -194,12 +194,10 @@ static void fill_dds_header(struct dds_header *header)
     header->caps = DDSCAPS_TEXTURE;
 }
 
-#define check_dds_pixel_format(flags, fourcc, bpp, rmask, gmask, bmask, amask, format) \
-        check_dds_pixel_format_(__LINE__, flags, fourcc, bpp, rmask, gmask, bmask, amask, format)
-static void check_dds_pixel_format_(unsigned int line,
+static void check_dds_pixel_format_image_info(unsigned int line,
                                     DWORD flags, DWORD fourcc, DWORD bpp,
                                     DWORD rmask, DWORD gmask, DWORD bmask, DWORD amask,
-                                    D3DFORMAT expected_format)
+                                    HRESULT expected_hr, D3DFORMAT expected_format)
 {
     HRESULT hr;
     D3DXIMAGE_INFO info;
@@ -223,9 +221,9 @@ static void check_dds_pixel_format_(unsigned int line,
     memset(dds.data, 0, sizeof(dds.data));
 
     hr = D3DXGetImageInfoFromFileInMemory(&dds, sizeof(dds), &info);
-    ok_(__FILE__, line)(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx for pixel format %#x, expected %#lx\n",
-            hr, expected_format, D3D_OK);
-    if (SUCCEEDED(hr))
+    ok_(__FILE__, line)(hr == expected_hr, "D3DXGetImageInfoFromFileInMemory returned %#lx for pixel format %#x, expected %#lx\n",
+            hr, expected_format, expected_hr);
+    if (SUCCEEDED(hr) && hr == expected_hr)
     {
         ok_(__FILE__, line)(info.Format == expected_format, "D3DXGetImageInfoFromFileInMemory returned format %#x, expected %#x\n",
                 info.Format, expected_format);
@@ -260,10 +258,17 @@ static void check_dds_pixel_format_(unsigned int line,
     dds.header.pixel_format.bmask = bmask;
     dds.header.pixel_format.amask = amask;
     hr = D3DXGetImageInfoFromFileInMemory(&dds, sizeof(dds), &info);
-    ok_(__FILE__, line)(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
+    ok_(__FILE__, line)(hr == expected_hr, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr) && hr == expected_hr)
         ok_(__FILE__, line)(info.Format == expected_format, "Unexpected format %#x.\n", info.Format);
 }
+
+#define check_dds_pixel_format(flags, fourcc, bpp, rmask, gmask, bmask, amask, format) \
+        check_dds_pixel_format_image_info(__LINE__, flags, fourcc, bpp, rmask, gmask, bmask, amask, D3D_OK, format)
+
+#define check_dds_pixel_format_unsupported(flags, fourcc, bpp, rmask, gmask, bmask, amask, expected_hr) \
+        check_dds_pixel_format_image_info(__LINE__, flags, fourcc, bpp, rmask, gmask, bmask, amask, expected_hr, \
+                D3DFMT_UNKNOWN)
 
 static void test_dds_header_handling(void)
 {
@@ -1031,6 +1036,13 @@ static void test_D3DXGetImageInfo(void)
     todo_wine check_dds_pixel_format(DDS_PF_BUMPLUMINANCE, 0, 16, 0x001f, 0x03e0, 0xfc00, 0, D3DFMT_L6V5U5);
     check_dds_pixel_format(DDS_PF_INDEXED, 0, 8, 0, 0, 0, 0, D3DFMT_P8);
     check_dds_pixel_format(DDS_PF_INDEXED | DDS_PF_ALPHA, 0, 16, 0, 0, 0, 0xff00, D3DFMT_A8P8);
+
+    /*
+     * ATI{1,2} are unsupported, but some games (Secret World Legends) attempt
+     * to use them on d3dx9.
+     */
+    check_dds_pixel_format_unsupported(DDS_PF_FOURCC, MAKEFOURCC('A','T','I','1'), 0, 0, 0, 0, 0, D3DXERR_INVALIDDATA);
+    check_dds_pixel_format_unsupported(DDS_PF_FOURCC, MAKEFOURCC('A','T','I','2'), 0, 0, 0, 0, 0, D3DXERR_INVALIDDATA);
 
     test_dds_header_handling();
     test_tga_header_handling();
