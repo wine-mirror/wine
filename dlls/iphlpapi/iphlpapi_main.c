@@ -4681,24 +4681,197 @@ DWORD WINAPI GetIpInterfaceEntry( MIB_IPINTERFACE_ROW *row )
     return ERROR_SUCCESS;
 }
 
+static BOOL match_ip_address_with_prefix( const SOCKADDR_INET *addr, const IP_ADDRESS_PREFIX *pfx )
+{
+    const BYTE *p1, *p2;
+    unsigned int len;
+    BYTE mask;
+
+    if (addr->si_family != pfx->Prefix.si_family) return FALSE;
+    if (!(len = pfx->PrefixLength)) return TRUE;
+
+    if (addr->si_family == AF_INET6)
+    {
+        if (len > 128) return FALSE;
+        p1 = (const BYTE *)&addr->Ipv6.sin6_addr;
+        p2 = (const BYTE *)&pfx->Prefix.Ipv6.sin6_addr;
+    }
+    else
+    {
+        if (len > 32) return FALSE;
+        p1 = (const BYTE *)&addr->Ipv4.sin_addr;
+        p2 = (const BYTE *)&pfx->Prefix.Ipv4.sin_addr;
+    }
+    if (memcmp( p1, p2, len / 8 )) return FALSE;
+    mask = 0xffu << (8 - (len % 8));
+    if (!mask) return TRUE;
+    return (p1[len / 8] & mask) == (p2[len / 8] & mask);
+}
+
+static MIB_UNICASTIPADDRESS_ROW *find_first_matching_unicast_addr( MIB_UNICASTIPADDRESS_TABLE *uni, BOOL v6,
+                                                                   const SOCKADDR_INET *src, const SOCKADDR_INET *dst,
+                                                                   NET_IFINDEX if_index )
+{
+    unsigned int i;
+
+    for (i = 0; i < uni->NumEntries; ++i)
+    {
+        if (if_index && uni->Table[i].InterfaceIndex != if_index) continue;
+        if (src)
+        {
+            if (v6)
+            {
+                if (src->Ipv6.sin6_scope_id && IN6_IS_ADDR_LINKLOCAL(&src->Ipv6.sin6_addr)
+                    && src->Ipv6.sin6_scope_id != uni->Table[i].InterfaceIndex) continue;
+                if (memcmp( &src->Ipv6.sin6_addr, &uni->Table[i].Address.Ipv6.sin6_addr, sizeof(src->Ipv6.sin6_addr) ))
+                    continue;
+            }
+            else if (src->Ipv4.sin_addr.s_addr != uni->Table[i].Address.Ipv4.sin_addr.s_addr) continue;
+        }
+        if (v6 && dst)
+        {
+            if (IN6_IS_ADDR_LINKLOCAL(&dst->Ipv6.sin6_addr)
+                != IN6_IS_ADDR_LINKLOCAL(&uni->Table[i].Address.Ipv6.sin6_addr))
+                continue;
+        }
+        return &uni->Table[i];
+    }
+    return NULL;
+}
+
 /******************************************************************
  *    GetBestRoute2 (IPHLPAPI.@)
  */
-DWORD WINAPI GetBestRoute2(NET_LUID *luid, NET_IFINDEX index,
-                           const SOCKADDR_INET *source, const SOCKADDR_INET *destination,
-                           ULONG options, PMIB_IPFORWARD_ROW2 bestroute,
-                           SOCKADDR_INET *bestaddress)
+DWORD WINAPI GetBestRoute2( NET_LUID *luid, NET_IFINDEX index,
+                            const SOCKADDR_INET *src, const SOCKADDR_INET *dst,
+                            ULONG options, PMIB_IPFORWARD_ROW2 bestroute,
+                            SOCKADDR_INET *bestaddress )
 {
-    static int once;
+    MIB_UNICASTIPADDRESS_ROW *uni_row = NULL;
+    MIB_UNICASTIPADDRESS_TABLE *uni;
+    MIB_IPFORWARD_TABLE2 *fwd;
+    unsigned int i, best_idx;
+    int max_prefix_len;
+    DWORD ret;
+    BOOL v6;
 
-    if (!once++)
-        FIXME("(%p, %ld, %p, %p, 0x%08lx, %p, %p): stub\n", luid, index, source,
-                destination, options, bestroute, bestaddress);
+    TRACE( "(%p, %ld, %p, %p, 0x%08lx, %p, %p).\n", luid, index, src, dst, options, bestroute, bestaddress );
 
-    if (!destination || !bestroute || !bestaddress)
+    if (!dst || !bestroute || !bestaddress)
         return ERROR_INVALID_PARAMETER;
 
-    return ERROR_NOT_SUPPORTED;
+    memset( bestroute, 0, sizeof(*bestroute) );
+    memset( bestaddress, 0, sizeof(*bestaddress) );
+
+    if (dst->si_family != AF_INET && dst->si_family != AF_INET6) return ERROR_INVALID_PARAMETER;
+    v6 = dst->si_family == AF_INET6;
+    if (src)
+    {
+        if (src->si_family != dst->si_family)                         src = NULL;
+        else if (v6 && IN6_IS_ADDR_UNSPECIFIED(&src->Ipv6.sin6_addr)) src = NULL;
+        else if (!v6 && !src->Ipv4.sin_addr.s_addr)                   src = NULL;
+    }
+
+    if (v6 && !IN6_IS_ADDR_LINKLOCAL(&dst->Ipv6.sin6_addr) && dst->Ipv6.sin6_scope_id)
+        return ERROR_INVALID_PARAMETER;
+    if (v6 && src && !IN6_IS_ADDR_LINKLOCAL(&src->Ipv6.sin6_addr) && src->Ipv6.sin6_scope_id)
+        return ERROR_INVALID_PARAMETER;
+
+    if ((ret = GetUnicastIpAddressTable( dst->si_family, &uni ))) return ret;
+    if ((ret = GetIpForwardTable2( dst->si_family, &fwd )))
+    {
+        FreeMibTable( &uni );
+        return ret;
+    }
+
+    if (!luid && index)
+    {
+        for (i = 0; i < uni->NumEntries; ++i)
+        {
+            if (uni->Table[i].InterfaceIndex == index) break;
+        }
+        if (i == uni->NumEntries)
+        {
+            ret = ERROR_FILE_NOT_FOUND;
+            goto done;
+        }
+        luid = &uni->Table[i].InterfaceLuid;
+    }
+    if (src && !(uni_row = find_first_matching_unicast_addr( uni, v6, src, NULL, 0 )))
+    {
+        ret = ERROR_NOT_FOUND;
+        goto done;
+    }
+    if (!uni_row && luid && luid->Value)
+    {
+        for (i = 0; i < uni->NumEntries; ++i)
+        {
+            if (uni->Table[i].InterfaceLuid.Value == luid->Value) break;
+        }
+        if (i == uni->NumEntries)
+        {
+            ret = ERROR_NOT_FOUND;
+            goto done;
+        }
+        uni_row = &uni->Table[i];
+    }
+
+    if (uni_row) index = uni_row->InterfaceIndex;
+    else         index = 0;
+
+    if (v6)
+    {
+        if (!index) index = dst->Ipv6.sin6_scope_id;
+        if (IN6_IS_ADDR_LINKLOCAL(&dst->Ipv6.sin6_addr) && dst->Ipv6.sin6_scope_id
+            && dst->Ipv6.sin6_scope_id != index)
+        {
+            ret = ERROR_INVALID_PARAMETER;
+            goto done;
+        }
+    }
+
+    max_prefix_len = -1;
+    best_idx = 0;
+    for (i = 0; i < fwd->NumEntries; ++i)
+    {
+        if (index && fwd->Table[i].InterfaceIndex != index) continue;
+
+        if (match_ip_address_with_prefix( dst, &fwd->Table[i].DestinationPrefix )
+            && max_prefix_len < fwd->Table[i].DestinationPrefix.PrefixLength )
+        {
+            max_prefix_len = fwd->Table[i].DestinationPrefix.PrefixLength;
+            best_idx = i;
+        }
+    }
+
+    if (max_prefix_len == -1)
+    {
+        ret = ERROR_NETWORK_UNREACHABLE;
+        goto done;
+    }
+    index = fwd->Table[best_idx].InterfaceIndex;
+    if (!fwd->Table[best_idx].Loopback && ((v6 && IN6_IS_ADDR_LOOPBACK(&dst->Ipv6.sin6_addr))
+        || (!v6 && dst->Ipv4.sin_addr.S_un.S_un_b.s_b1 == 127)))
+    {
+        ret = ERROR_INVALID_PARAMETER;
+        goto done;
+    }
+
+    if (!(uni_row = find_first_matching_unicast_addr( uni, v6, src, dst, index )))
+    {
+        WARN( "Could not find source address.\n" );
+        ret = ERROR_NOT_FOUND;
+        goto done;
+    }
+    *bestaddress = uni_row->Address;
+    *bestroute = fwd->Table[best_idx];
+
+    ret = ERROR_SUCCESS;
+done:
+    FreeMibTable( fwd );
+    FreeMibTable( uni );
+    TRACE( "-> %lu.\n", ret );
+    return ret;
 }
 
 /******************************************************************
