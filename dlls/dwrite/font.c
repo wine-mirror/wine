@@ -475,7 +475,10 @@ struct dwrite_fontset_entry_desc
 struct dwrite_fontset_entry
 {
     LONG refcount;
-    struct dwrite_fontset_entry_desc desc;
+    IDWriteFontFile *file;
+    DWRITE_FONT_FACE_TYPE face_type;
+    unsigned int face_index;
+    unsigned int simulations;
     IDWriteLocalizedStrings *props[DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FACE_NAME + 1];
 };
 
@@ -4780,18 +4783,18 @@ HRESULT create_font_collection_from_set(IDWriteFactory7 *factory, IDWriteFontSet
         IDWriteFontFileStream *stream;
         struct fontface_desc desc;
 
-        if (FAILED(get_filestream_from_file(entry->desc.file, &stream)))
+        if (FAILED(get_filestream_from_file(entry->file, &stream)))
         {
             WARN("Failed to get file stream.\n");
             continue;
         }
 
         desc.factory = factory;
-        desc.face_type = entry->desc.face_type;
-        desc.file = entry->desc.file;
+        desc.face_type = entry->face_type;
+        desc.file = entry->file;
         desc.stream = stream;
-        desc.index = entry->desc.face_index;
-        desc.simulations = entry->desc.simulations;
+        desc.index = entry->face_index;
+        desc.simulations = entry->simulations;
         desc.font_data = NULL;
 
         if (FAILED(hr = collection_add_font_entry(collection, &desc)))
@@ -7375,7 +7378,7 @@ static void release_fontset_entry(struct dwrite_fontset_entry *entry)
 
     if (InterlockedDecrement(&entry->refcount) > 0)
         return;
-    IDWriteFontFile_Release(entry->desc.file);
+    IDWriteFontFile_Release(entry->file);
     for (i = 0; i < ARRAY_SIZE(entry->props); ++i)
     {
         if (entry->props[i] && entry->props[i] != MISSING_SET_PROP)
@@ -7407,9 +7410,9 @@ static IDWriteLocalizedStrings * fontset_entry_get_property(struct dwrite_fontse
         return value;
     }
 
-    get_filestream_from_file(entry->desc.file, &stream_desc.stream);
-    stream_desc.face_type = entry->desc.face_type;
-    stream_desc.face_index = entry->desc.face_index;
+    get_filestream_from_file(entry->file, &stream_desc.stream);
+    stream_desc.face_type = entry->face_type;
+    stream_desc.face_index = entry->face_index;
 
     if (property == DWRITE_FONT_PROPERTY_ID_FULL_NAME)
         opentype_get_font_info_strings(&stream_desc, DWRITE_INFORMATIONAL_STRING_FULL_NAME, &value);
@@ -7482,8 +7485,8 @@ static HRESULT WINAPI dwritefontset_GetFontFaceReference(IDWriteFontSet3 *iface,
     if (index >= set->count)
         return E_INVALIDARG;
 
-    return IDWriteFactory7_CreateFontFaceReference_(set->factory, set->entries[index]->desc.file,
-            set->entries[index]->desc.face_index, set->entries[index]->desc.simulations, reference);
+    return IDWriteFactory7_CreateFontFaceReference_(set->factory, set->entries[index]->file,
+            set->entries[index]->face_index, set->entries[index]->simulations, reference);
 }
 
 static HRESULT WINAPI dwritefontset_FindFontFaceReference(IDWriteFontSet3 *iface,
@@ -7730,8 +7733,8 @@ static HRESULT WINAPI dwritefontset1_CreateFontResource(IDWriteFontSet3 *iface, 
     if (index >= set->count)
         return E_INVALIDARG;
 
-    return IDWriteFactory7_CreateFontResource(set->factory, set->entries[index]->desc.file,
-            set->entries[index]->desc.face_index, resource);
+    return IDWriteFactory7_CreateFontResource(set->factory, set->entries[index]->file,
+            set->entries[index]->face_index, resource);
 }
 
 static HRESULT WINAPI dwritefontset1_CreateFontFace(IDWriteFontSet3 *iface, UINT32 index, IDWriteFontFace5 **fontface)
@@ -7827,11 +7830,11 @@ static HRESULT fontset_create_entry(IDWriteFontFile *file, DWRITE_FONT_FACE_TYPE
         return E_OUTOFMEMORY;
 
     entry->refcount = 1;
-    entry->desc.file = file;
-    IDWriteFontFile_AddRef(entry->desc.file);
-    entry->desc.face_type = face_type;
-    entry->desc.face_index = face_index;
-    entry->desc.simulations = simulations;
+    entry->file = file;
+    IDWriteFontFile_AddRef(entry->file);
+    entry->face_type = face_type;
+    entry->face_index = face_index;
+    entry->simulations = simulations;
 
     *ret = entry;
 
