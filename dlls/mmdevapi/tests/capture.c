@@ -256,10 +256,9 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     struct read_packets_data packets_data;
     IAudioCaptureClient *acc;
     HRESULT hr;
-    UINT32 frames, next, pad, sum = 0, buffer_size, padding;
+    UINT32 frames, next, pad, buffer_size, padding;
     BYTE *data;
     DWORD flags;
-    UINT64 pos, qpc;
     REFERENCE_TIME period;
 
     hr = IAudioClient_GetService(ac, &IID_IAudioCaptureClient, (void**)&acc);
@@ -386,35 +385,29 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     ok(!packets_data.discontinuity_at_later, "Discontinuity at later packet\n");
 
     winetest_pop_context();
+    winetest_push_context("stop, reset, start and read 10 packets");
+
+    hr = IAudioClient_Reset(ac);
+    ok(hr == AUDCLNT_E_NOT_STOPPED, "Reset on a started stream returns %08lx\n", hr);
 
     hr = IAudioClient_Stop(ac);
     ok(hr == S_OK, "Stop on a started stream returns %08lx\n", hr);
 
     hr = IAudioClient_Reset(ac);
     ok(hr == S_OK, "Reset on a stopped stream returns %08lx\n", hr);
-    sum += pad - frames;
-
-    hr = IAudioClient_GetCurrentPadding(ac, &pad);
-    ok(hr == S_OK, "GetCurrentPadding call returns %08lx\n", hr);
-    ok(!pad, "reset GCP %u\n", pad);
-
-    flags = 0xabadcafe;
-    hr = IAudioCaptureClient_GetBuffer(acc, &data, &frames, &flags, &pos, &qpc);
-    ok(hr == AUDCLNT_S_BUFFER_EMPTY,
-       "Initial IAudioCaptureClient_GetBuffer returns %08lx\n", hr);
-
-    trace("Reset   position %d pad %u flags %lx, amount of frames locked: %u\n",
-          hr==S_OK ? (UINT)pos : -1, pad, flags, frames);
-
-    if(SUCCEEDED(hr))
-        IAudioCaptureClient_ReleaseBuffer(acc, frames);
 
     hr = IAudioClient_Start(ac);
     ok(hr == S_OK, "Start on a stopped stream returns %08lx\n", hr);
 
-    packets_data.expected_dev_pos = sum;
+    /* Device position is lost when resetting. */
+    packets_data.expected_dev_pos = UINT64_MAX;
 
     read_packets(ac, acc, handle, 10, &packets_data);
+
+    ok(!packets_data.discontinuity_at_0, "Discontinuity at first packet\n");
+    ok(!packets_data.discontinuity_at_later, "Discontinuity at later packet\n");
+
+    winetest_pop_context();
 
     IAudioCaptureClient_Release(acc);
 }
