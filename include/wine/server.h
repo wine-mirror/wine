@@ -49,6 +49,7 @@ struct __server_request_info
     struct __server_iovec data[__SERVER_MAX_DATA];  /* request variable size data */
 };
 
+NTSYSAPI void CDECL wine_server_send_fd( int fd );
 NTSYSAPI unsigned int CDECL wine_server_call( void *req_ptr );
 NTSYSAPI NTSTATUS CDECL wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attributes, HANDLE *handle );
 NTSYSAPI NTSTATUS CDECL wine_server_handle_to_fd( HANDLE handle, unsigned int access, int *unix_fd, unsigned int *options );

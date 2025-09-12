@@ -939,7 +939,7 @@ unsigned int server_queue_process_apc( HANDLE process, const union apc_call *cal
  *
  * Send a file descriptor to the server.
  */
-void wine_server_send_fd( int fd )
+void CDECL wine_server_send_fd( int fd )
 {
     struct send_fd data;
     struct msghdr msghdr;

@@ -233,7 +233,6 @@ extern unsigned int server_queue_process_apc( HANDLE process, const union apc_ca
                                               union apc_result *result );
 extern int server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
                                int *needs_close, enum server_fd_type *type, unsigned int *options );
-extern void wine_server_send_fd( int fd );
 extern int wine_server_receive_fd( obj_handle_t *handle );
 extern void process_exit_wrapper( int status ) DECLSPEC_NORETURN;
 extern size_t server_init_process(void);
