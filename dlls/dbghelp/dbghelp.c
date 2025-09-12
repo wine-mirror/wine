@@ -417,7 +417,7 @@ static BOOL check_live_target(struct process* pcs, BOOL wow64, BOOL child_wow64)
     if (!base) return FALSE;
 
     TRACE("got debug info address %#I64x from PEB %p\n", base, pbi.PebBaseAddress);
-    if (!elf_read_wine_loader_dbg_info(pcs, base) && !macho_read_wine_loader_dbg_info(pcs, base))
+    if (base != (ULONG_PTR)base || (!elf_read_wine_loader_dbg_info(pcs, base) && !macho_read_wine_loader_dbg_info(pcs, base)))
     {
         WARN("couldn't load process debug info at %#I64x\n", base);
         pcs->loader = &empty_loader_ops;
