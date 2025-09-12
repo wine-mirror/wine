@@ -5505,7 +5505,9 @@ static void test_GetGlyphRunOutline(void)
 static void test_GetEudcFontCollection(void)
 {
     IDWriteFontCollection *coll, *coll2;
+    IDWriteFontCollection1 *collection1;
     IDWriteFactory1 *factory;
+    IDWriteFontSet *fontset;
     HRESULT hr;
     ULONG ref;
 
@@ -5523,8 +5525,18 @@ static void test_GetEudcFontCollection(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     EXPECT_REF(factory, 2);
     ok(coll == coll2, "got %p, %p\n", coll, coll2);
-    IDWriteFontCollection_Release(coll);
     IDWriteFontCollection_Release(coll2);
+
+    if (SUCCEEDED(IDWriteFontCollection_QueryInterface(coll, &IID_IDWriteFontCollection1, (void **)&collection1)))
+    {
+        hr = IDWriteFontCollection1_GetFontSet(collection1, &fontset);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        IDWriteFontSet_Release(fontset);
+        IDWriteFontCollection1_Release(collection1);
+    }
+
+    IDWriteFontCollection_Release(coll);
 
     ref = IDWriteFactory1_Release(factory);
     ok(ref == 0, "factory not released, %lu\n", ref);
