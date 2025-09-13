@@ -2581,6 +2581,10 @@ static void test_mdi(void)
     static const DWORD style[] = { 0, WS_HSCROLL, WS_VSCROLL, WS_HSCROLL | WS_VSCROLL };
     HWND mdi_hwndMain, mdi_client, mdi_child;
     CLIENTCREATESTRUCT client_cs;
+    MENUITEMINFOA item_info;
+    char item_string[50];
+    int count;
+    BOOL ret;
     RECT rc;
     DWORD i;
     MSG msg;
@@ -2777,16 +2781,66 @@ static void test_mdi(void)
             GetMenuItemCount(frame_menu));
 
     child_menu = CreateMenu();
-    SendMessageW(mdi_client, WM_MDISETMENU, 0, (LPARAM)child_menu);
+    ret = SendMessageW(mdi_client, WM_MDISETMENU, 0, (LPARAM)child_menu);
+    todo_wine ok(ret == (UINT_PTR)frame_menu, "got %#x\n", ret);
 
-    ok(GetMenuItemCount(frame_menu) == 4, "Frame menu should have 4 items after WM_MDISETMENU, but has %u\n",
+    /* Without this call the menu string won't update.
+     * Is native skipping a menu update if the menu isn't attached to anything? */
+    ret = AppendMenuA(frame_menu, MF_POPUP, (UINT_PTR)child_menu, "menu" );
+    ok(ret == TRUE, "got error %lu\n", GetLastError());
+
+    count = GetMenuItemCount(child_menu);
+    todo_wine ok(count == 2, "Got count %d.\n", count);
+
+    item_info.cbSize = sizeof(item_info);
+    item_info.fMask = MIIM_ID | MIIM_FTYPE | MIIM_STATE;
+    ret = GetMenuItemInfoA(child_menu, 0, TRUE, &item_info);
+    todo_wine ok(ret == TRUE, "got error %lu\n", GetLastError());
+    if (ret)
+    {
+        ok(item_info.fType == MF_SEPARATOR, "got type %#x\n", item_info.fType);
+        ok(!item_info.wID, "got ID %#x\n", item_info.wID);
+        ok(item_info.fState == MFS_GRAYED, "got state %#x\n", item_info.fState);
+    }
+
+    item_info.fMask = MIIM_ID | MIIM_FTYPE | MIIM_STATE | MIIM_STRING;
+    item_info.dwTypeData = item_string;
+    item_info.cch = sizeof(item_string);
+    ret = GetMenuItemInfoA(child_menu, 1, TRUE, &item_info);
+    todo_wine ok(ret == TRUE, "got error %lu\n", GetLastError());
+    if (ret)
+    {
+        ok(item_info.fType == MF_STRING, "got type %#x\n", item_info.fType);
+        ok(item_info.wID == 1, "got ID %#x\n", item_info.wID);
+        ok(item_info.fState == MFS_CHECKED, "got state %#x\n", item_info.fState);
+        ok(!strcmp(item_string, "&1 MDI child"), "got string %s\n", debugstr_a(item_string));
+    }
+
+    ret = SetWindowTextA(mdi_child, "new title");
+    ok(ret == TRUE, "got %#x\n", ret);
+
+    item_info.fMask = MIIM_ID | MIIM_FTYPE | MIIM_STATE | MIIM_STRING;
+    item_info.dwTypeData = item_string;
+    item_info.cch = sizeof(item_string);
+    ret = GetMenuItemInfoA(child_menu, 1, TRUE, &item_info);
+    todo_wine ok(ret == TRUE, "got error %lu\n", GetLastError());
+    if (ret)
+    {
+        ok(item_info.fType == MF_STRING, "got type %#x\n", item_info.fType);
+        ok(item_info.wID == 1, "got ID %#x\n", item_info.wID);
+        ok(item_info.fState == MFS_CHECKED, "got state %#x\n", item_info.fState);
+        ok(!strcmp(item_string, "&1 new title"), "got string %s\n", debugstr_a(item_string));
+    }
+
+    ok(GetMenuItemCount(frame_menu) == 5, "Frame menu should have 4 items after WM_MDISETMENU, but has %u\n",
             GetMenuItemCount(frame_menu));
 
     SendMessageW(mdi_child, WM_SIZE, SIZE_RESTORED, 0);
 
-    ok(GetMenuItemCount(frame_menu) == 0, "Frame menu should be empty after child restored, but has %u items\n",
+    ok(GetMenuItemCount(frame_menu) == 1, "Frame menu should be empty after child restored, but has %u items\n",
             GetMenuItemCount(frame_menu));
 
+    RemoveMenu(frame_menu, 0, MF_BYPOSITION);
     DestroyMenu(child_menu);
     DestroyWindow(mdi_child);
     DestroyWindow(mdi_client);
