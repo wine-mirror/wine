@@ -306,12 +306,12 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
 
             ci->hWindowMenu = hmenuWindow;
 
-            /* Add items to the new Window menu */
             ci->nActiveChildren = nActiveChildren_old;
-            MDI_RefreshMenu(ci);
         }
         else
             ci->hWindowMenu = hmenuWindow;
+
+        MDI_RefreshMenu(ci);
     }
 
     if (hmenuFrame)

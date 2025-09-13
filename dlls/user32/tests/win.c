@@ -2790,31 +2790,25 @@ static void test_mdi(void)
     ok(ret == TRUE, "got error %lu\n", GetLastError());
 
     count = GetMenuItemCount(child_menu);
-    todo_wine ok(count == 2, "Got count %d.\n", count);
+    ok(count == 2, "Got count %d.\n", count);
 
     item_info.cbSize = sizeof(item_info);
     item_info.fMask = MIIM_ID | MIIM_FTYPE | MIIM_STATE;
     ret = GetMenuItemInfoA(child_menu, 0, TRUE, &item_info);
-    todo_wine ok(ret == TRUE, "got error %lu\n", GetLastError());
-    if (ret)
-    {
-        ok(item_info.fType == MF_SEPARATOR, "got type %#x\n", item_info.fType);
-        ok(!item_info.wID, "got ID %#x\n", item_info.wID);
-        ok(item_info.fState == MFS_GRAYED, "got state %#x\n", item_info.fState);
-    }
+    ok(ret == TRUE, "got error %lu\n", GetLastError());
+    ok(item_info.fType == MF_SEPARATOR, "got type %#x\n", item_info.fType);
+    ok(!item_info.wID, "got ID %#x\n", item_info.wID);
+    ok(item_info.fState == MFS_GRAYED, "got state %#x\n", item_info.fState);
 
     item_info.fMask = MIIM_ID | MIIM_FTYPE | MIIM_STATE | MIIM_STRING;
     item_info.dwTypeData = item_string;
     item_info.cch = sizeof(item_string);
     ret = GetMenuItemInfoA(child_menu, 1, TRUE, &item_info);
-    todo_wine ok(ret == TRUE, "got error %lu\n", GetLastError());
-    if (ret)
-    {
-        ok(item_info.fType == MF_STRING, "got type %#x\n", item_info.fType);
-        ok(item_info.wID == 1, "got ID %#x\n", item_info.wID);
-        ok(item_info.fState == MFS_CHECKED, "got state %#x\n", item_info.fState);
-        ok(!strcmp(item_string, "&1 MDI child"), "got string %s\n", debugstr_a(item_string));
-    }
+    ok(ret == TRUE, "got error %lu\n", GetLastError());
+    ok(item_info.fType == MF_STRING, "got type %#x\n", item_info.fType);
+    ok(item_info.wID == 1, "got ID %#x\n", item_info.wID);
+    ok(item_info.fState == MFS_CHECKED, "got state %#x\n", item_info.fState);
+    ok(!strcmp(item_string, "&1 MDI child"), "got string %s\n", debugstr_a(item_string));
 
     ret = SetWindowTextA(mdi_child, "new title");
     ok(ret == TRUE, "got %#x\n", ret);
@@ -2823,14 +2817,11 @@ static void test_mdi(void)
     item_info.dwTypeData = item_string;
     item_info.cch = sizeof(item_string);
     ret = GetMenuItemInfoA(child_menu, 1, TRUE, &item_info);
-    todo_wine ok(ret == TRUE, "got error %lu\n", GetLastError());
-    if (ret)
-    {
-        ok(item_info.fType == MF_STRING, "got type %#x\n", item_info.fType);
-        ok(item_info.wID == 1, "got ID %#x\n", item_info.wID);
-        ok(item_info.fState == MFS_CHECKED, "got state %#x\n", item_info.fState);
-        ok(!strcmp(item_string, "&1 new title"), "got string %s\n", debugstr_a(item_string));
-    }
+    ok(ret == TRUE, "got error %lu\n", GetLastError());
+    ok(item_info.fType == MF_STRING, "got type %#x\n", item_info.fType);
+    ok(item_info.wID == 1, "got ID %#x\n", item_info.wID);
+    ok(item_info.fState == MFS_CHECKED, "got state %#x\n", item_info.fState);
+    todo_wine ok(!strcmp(item_string, "&1 new title"), "got string %s\n", debugstr_a(item_string));
 
     ok(GetMenuItemCount(frame_menu) == 5, "Frame menu should have 4 items after WM_MDISETMENU, but has %u\n",
             GetMenuItemCount(frame_menu));
