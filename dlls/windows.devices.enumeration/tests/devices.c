@@ -1005,36 +1005,30 @@ static void test_DeviceInformation( void )
     IVectorView_DeviceInformation_Release( info_collection );
 
     hr = IDeviceInformationStatics_FindAllAsyncAqsFilterAndAdditionalProperties( device_info_statics, NULL, NULL, &info_collection_async );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
 
-    if (SUCCEEDED( hr ))
-    {
-        await_device_information_collection( info_collection_async );
-        check_device_information_collection_async_no_id( info_collection_async, Completed, S_OK, &info_collection );
-        IAsyncOperation_DeviceInformationCollection_Release( info_collection_async );
-        test_DeviceInformationCollection( __LINE__, info_collection, device_iface_exp_props, ARRAY_SIZE( device_iface_exp_props ) - 1 );
-        IVectorView_DeviceInformation_Release( info_collection );
-    }
+    await_device_information_collection( info_collection_async );
+    check_device_information_collection_async_no_id( info_collection_async, Completed, S_OK, &info_collection );
+    IAsyncOperation_DeviceInformationCollection_Release( info_collection_async );
+    test_DeviceInformationCollection( __LINE__, info_collection, device_iface_exp_props, ARRAY_SIZE( device_iface_exp_props ) - 1 );
+    IVectorView_DeviceInformation_Release( info_collection );
 
     additional_props = iterable_hstring_create( device_iface_additional_props, ARRAY_SIZE( device_iface_additional_props ) );
     hr = IDeviceInformationStatics_FindAllAsyncAqsFilterAndAdditionalProperties( device_info_statics, NULL, additional_props, &info_collection_async );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
     IIterable_HSTRING_Release( additional_props );
-    if (SUCCEEDED( hr ))
-    {
-        await_device_information_collection( info_collection_async );
-        check_device_information_collection_async_no_id( info_collection_async, Completed, S_OK, &info_collection );
-        IAsyncOperation_DeviceInformationCollection_Release( info_collection_async );
-        test_DeviceInformationCollection( __LINE__, info_collection, device_iface_exp_props, ARRAY_SIZE( device_iface_exp_props ) );
-        IVectorView_DeviceInformation_Release( info_collection );
-    }
+    await_device_information_collection( info_collection_async );
+    check_device_information_collection_async_no_id( info_collection_async, Completed, S_OK, &info_collection );
+    IAsyncOperation_DeviceInformationCollection_Release( info_collection_async );
+    test_DeviceInformationCollection( __LINE__, info_collection, device_iface_exp_props, ARRAY_SIZE( device_iface_exp_props ) );
+    IVectorView_DeviceInformation_Release( info_collection );
 
     for (i = 0; i < ARRAY_SIZE( device_nonexistent_props ); i++ )
     {
         winetest_push_context( "device_nonexistent_props[%d]", i );
         additional_props = iterable_hstring_create( &device_nonexistent_props[i], 1 );
         hr = IDeviceInformationStatics_FindAllAsyncAqsFilterAndAdditionalProperties( device_info_statics, NULL, additional_props, &info_collection_async );
-        todo_wine ok( hr == TYPE_E_ELEMENTNOTFOUND, "got hr %#lx\n", hr );
+        ok( hr == TYPE_E_ELEMENTNOTFOUND, "got hr %#lx\n", hr );
         IIterable_HSTRING_Release( additional_props );
         winetest_pop_context();
     }
@@ -1044,7 +1038,7 @@ static void test_DeviceInformation( void )
         winetest_push_context( "device_invalid_props[%d]", i );
         additional_props = iterable_hstring_create( &device_invalid_props[i], 1 );
         hr = IDeviceInformationStatics_FindAllAsyncAqsFilterAndAdditionalProperties( device_info_statics, NULL, additional_props, &info_collection_async );
-        todo_wine ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
+        ok( hr == E_INVALIDARG, "got hr %#lx\n", hr );
         IIterable_HSTRING_Release( additional_props );
         winetest_pop_context();
     }
@@ -1371,7 +1365,7 @@ static void test_aqs_filters( void )
     hr = WindowsCreateString( filter_iface_display, wcslen( filter_iface_display ), &str );
     ok( hr == S_OK, "got hr %#lx\n", hr );
     hr = IDeviceInformationStatics_FindAllAsyncAqsFilterAndAdditionalProperties( statics, str, props_iterable, &info_collection_async );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
     WindowsDeleteString( str );
     IIterable_HSTRING_Release( props_iterable );
     if (SUCCEEDED( hr ))

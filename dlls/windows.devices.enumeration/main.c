@@ -35,7 +35,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(enumeration);
 struct devquery_params
 {
     IUnknown IUnknown_iface;
+    DEV_OBJECT_TYPE type;
     struct aqs_expr *expr;
+    DEVPROPCOMPKEY *prop_keys;
+    ULONG prop_keys_len;
     LONG ref;
 };
 
@@ -78,6 +81,7 @@ static ULONG WINAPI devquery_params_Release( IUnknown *iface )
     if (!ref)
     {
         free_aqs_expr( impl->expr );
+        free( impl->prop_keys );
         free( impl );
     }
     return ref;
@@ -91,7 +95,7 @@ static const IUnknownVtbl devquery_params_vtbl =
     devquery_params_Release,
 };
 
-static HRESULT devquery_params_create( struct aqs_expr *expr, IUnknown **out )
+static HRESULT devquery_params_create( DEV_OBJECT_TYPE type, struct aqs_expr *expr, DEVPROPCOMPKEY *prop_keys, ULONG prop_keys_len, IUnknown **out )
 {
     struct devquery_params *impl;
 
@@ -100,7 +104,10 @@ static HRESULT devquery_params_create( struct aqs_expr *expr, IUnknown **out )
 
     impl->IUnknown_iface.lpVtbl = &devquery_params_vtbl;
     impl->ref = 1;
+    impl->type = type;
     impl->expr = expr;
+    impl->prop_keys = prop_keys;
+    impl->prop_keys_len = prop_keys_len;
     *out = &impl->IUnknown_iface;
     return S_OK;
 }
@@ -360,12 +367,6 @@ static void WINAPI device_object_query_callback( HDEVQUERY query, void *data,
     IDeviceWatcher_Release( iface );
 }
 
-static const DEVPROPCOMPKEY device_iface_default_props[] =
-{
-    { DEVPKEY_DeviceInterface_Enabled, DEVPROP_STORE_SYSTEM, NULL },
-    { DEVPKEY_Device_InstanceId, DEVPROP_STORE_SYSTEM, NULL },
-};
-
 static HRESULT WINAPI device_watcher_Start( IDeviceWatcher *iface )
 {
     struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
@@ -399,8 +400,8 @@ static HRESULT WINAPI device_watcher_Start( IDeviceWatcher *iface )
         }
 
         IWeakReferenceSource_GetWeakReference( &impl->weak_reference_source.IWeakReferenceSource_iface, &weak );
-        hr = DevCreateObjectQuery( DevObjectTypeDeviceInterfaceDisplay, DevQueryFlagAsyncClose, ARRAY_SIZE( device_iface_default_props ),
-                                   device_iface_default_props, filters_len, filters, device_object_query_callback, weak, &impl->query );
+        hr = DevCreateObjectQuery( query_params->type, DevQueryFlagAsyncClose, query_params->prop_keys_len, query_params->prop_keys, filters_len, filters,
+                                   device_object_query_callback, weak, &impl->query );
         if (FAILED(hr))
         {
             ERR( "Failed to create device query: %#lx\n", hr );
@@ -468,10 +469,101 @@ static const struct IDeviceWatcherVtbl device_watcher_vtbl =
     device_watcher_Stop,
 };
 
-static HRESULT device_watcher_create( HSTRING filter, IDeviceWatcher **out )
+static BOOL devpropcompkey_buf_find_devpropkey( const DEVPROPCOMPKEY *keys, ULONG keys_len, DEVPROPKEY key )
 {
+    ULONG i;
+
+    for (i = 0; i < keys_len; i++)
+        if (IsEqualDevPropKey(keys[i].Key, key)) return TRUE;
+    return FALSE;
+}
+
+static HRESULT devpropcompkeys_init( DEVPROPCOMPKEY **keys, ULONG *keys_len, const DEVPROPCOMPKEY *values, ULONG len )
+{
+    if (!(*keys = calloc( len, sizeof( **keys ) ))) return E_OUTOFMEMORY;
+    memcpy( *keys, values, len * sizeof( **keys ) );
+    *keys_len = len;
+    return S_OK;
+}
+
+static HRESULT count_iterable( IIterable_HSTRING *iterable, ULONG *count )
+{
+    IIterator_HSTRING *iter;
+    boolean valid;
+    HRESULT hr;
+
+    if (FAILED(hr = IIterable_HSTRING_First( iterable, &iter ))) return hr;
+    for (hr = IIterator_HSTRING_get_HasCurrent( iter, &valid ); SUCCEEDED(hr) && valid; hr = IIterator_HSTRING_MoveNext( iter, &valid ))
+        *count += 1;
+    IIterator_HSTRING_Release( iter );
+
+    return hr;
+}
+
+static HRESULT WINAPI devpropcompkeys_append_names( DEVPROPCOMPKEY **ret_keys, ULONG *ret_keys_len, IIterable_HSTRING *names_iterable )
+{
+    ULONG count = 0, keys_len = *ret_keys_len;
+    IIterator_HSTRING *names;
+    DEVPROPCOMPKEY *keys;
+    boolean valid;
+    HRESULT hr;
+
+    if (FAILED(hr = count_iterable( names_iterable, &count ))) return hr;
+    if (!(keys = realloc( *ret_keys, (keys_len + count) * sizeof( *keys ) ))) return E_OUTOFMEMORY;
+
+    if (FAILED(hr = IIterable_HSTRING_First( names_iterable, &names ))) return hr;
+    for (hr = IIterator_HSTRING_get_HasCurrent( names, &valid ); SUCCEEDED( hr ) && valid; hr = IIterator_HSTRING_MoveNext( names, &valid ))
+    {
+        DEVPROPCOMPKEY key = {0};
+        const WCHAR *buf;
+        HSTRING name;
+
+        if (FAILED(hr = IIterator_HSTRING_get_Current( names, &name ))) break;
+        buf = WindowsGetStringRawBuffer( name, NULL );
+        if (buf[0] == '{')
+            hr = PSPropertyKeyFromString( buf, (PROPERTYKEY *)&key.Key );
+        else
+            hr = PSGetPropertyKeyFromName( buf, (PROPERTYKEY *)&key.Key );
+        WindowsDeleteString( name );
+        if (FAILED(hr)) break;
+        /* DevGetObjects(Ex) will not de-duplicate properties, so we need to do it ourselves. */
+        if (!devpropcompkey_buf_find_devpropkey( *ret_keys, keys_len, key.Key ))
+            keys[keys_len++] = key;
+    }
+
+    IIterator_HSTRING_Release( names );
+    if (SUCCEEDED(hr))
+    {
+        *ret_keys_len = keys_len;
+        *ret_keys = keys;
+    }
+    else
+        free( keys );
+    return hr;
+}
+
+static HRESULT device_watcher_create( HSTRING filter, IIterable_HSTRING *additional_props, DeviceInformationKind kind, IDeviceWatcher **out )
+{
+    static const DEV_OBJECT_TYPE kind_type[] = {
+        DevObjectTypeUnknown,
+        DevObjectTypeDeviceInterfaceDisplay,
+        DevObjectTypeDeviceContainerDisplay,
+        DevObjectTypeDevice,
+        DevObjectTypeDeviceInterfaceClass,
+        DevObjectTypeAEP,
+        DevObjectTypeAEPContainer,
+        DevObjectTypeAEPService,
+        DevObjectTypeDevicePanel,
+    };
+    const DEVPROPCOMPKEY device_iface_default_props[] = {
+        { DEVPKEY_DeviceInterface_Enabled, DEVPROP_STORE_SYSTEM, NULL },
+        { DEVPKEY_Device_InstanceId, DEVPROP_STORE_SYSTEM, NULL },
+    };
+    DEV_OBJECT_TYPE type = DevObjectTypeUnknown;
+    DEVPROPCOMPKEY *prop_keys = NULL;
+    struct aqs_expr *expr = NULL;
     struct device_watcher *impl;
-    struct aqs_expr *expr;
+    ULONG prop_keys_len = 0;
     HRESULT hr;
 
     if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
@@ -483,19 +575,19 @@ static HRESULT device_watcher_create( HSTRING filter, IDeviceWatcher **out )
         return hr;
     }
     /* If the filter string is all whitespaces, we return E_INVALIDARG in IDeviceWatcher_Start, not here. */
-    if (FAILED(hr = aqs_parse_query( WindowsGetStringRawBuffer( filter, NULL ), &expr, &impl->aqs_all_whitespace )) && !impl->aqs_all_whitespace)
+    if (FAILED(hr = aqs_parse_query( WindowsGetStringRawBuffer( filter, NULL ), &expr, &impl->aqs_all_whitespace )) && !impl->aqs_all_whitespace) goto failed;
+
+    if (kind < ARRAY_SIZE( kind_type ))
     {
-        weak_reference_strong_release( &impl->weak_reference_source );
-        free( impl );
-        return hr;
+        type = kind_type[kind];
+        if (kind == DeviceInformationKind_DeviceInterface)
+            if (FAILED(hr = devpropcompkeys_init( &prop_keys, &prop_keys_len, device_iface_default_props, ARRAY_SIZE( device_iface_default_props ) )))
+                goto failed;
     }
-    if (FAILED(hr = devquery_params_create( expr, &impl->query_params )))
-    {
-        free_aqs_expr( expr );
-        weak_reference_strong_release( &impl->weak_reference_source );
-        free( impl );
-        return hr;
-    }
+    else FIXME( "Unknown DeviceInformationKind value: %u\n", kind );
+
+    if (additional_props && FAILED(hr = devpropcompkeys_append_names( &prop_keys, &prop_keys_len, additional_props ))) goto failed;
+    if (FAILED(hr = devquery_params_create( type, expr, prop_keys, prop_keys_len, &impl->query_params ))) goto failed;
 
     list_init( &impl->added_handlers );
     list_init( &impl->enumerated_handlers );
@@ -508,6 +600,13 @@ static HRESULT device_watcher_create( HSTRING filter, IDeviceWatcher **out )
     *out = &impl->IDeviceWatcher_iface;
     TRACE( "created DeviceWatcher %p\n", *out );
     return S_OK;
+
+failed:
+    free( prop_keys );
+    free_aqs_expr( expr );
+    weak_reference_strong_release( &impl->weak_reference_source );
+    free( impl );
+    return hr;
 }
 
 struct device_information_statics
@@ -650,8 +749,7 @@ static HRESULT find_all_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *
         filters_len = params->expr->len;
     }
     if (FAILED(hr = vector_create( &iids, (void *)&vector ))) return hr;
-    hr = DevGetObjects( DevObjectTypeDeviceInterfaceDisplay, DevQueryFlagNone, ARRAY_SIZE( device_iface_default_props ), device_iface_default_props, filters_len, filters,
-                        &len, &objects );
+    hr = DevGetObjects( params->type, DevQueryFlagNone, params->prop_keys_len, params->prop_keys, filters_len, filters, &len, &objects );
     if (FAILED(hr))
     {
         IVector_IInspectable_Release( vector );
@@ -680,7 +778,7 @@ static HRESULT WINAPI device_statics_FindAllAsync( IDeviceInformationStatics *if
                                                    IAsyncOperation_DeviceInformationCollection **op )
 {
     TRACE( "iface %p, op %p\n", iface, op );
-    return IDeviceInformationStatics_FindAllAsyncAqsFilter( iface, NULL, op );
+    return IDeviceInformationStatics_FindAllAsyncAqsFilterAndAdditionalProperties( iface, NULL, NULL, op );
 }
 
 static HRESULT WINAPI device_statics_FindAllAsyncDeviceClass( IDeviceInformationStatics *iface, DeviceClass class,
@@ -693,34 +791,46 @@ static HRESULT WINAPI device_statics_FindAllAsyncDeviceClass( IDeviceInformation
 static HRESULT WINAPI device_statics_FindAllAsyncAqsFilter( IDeviceInformationStatics *iface, HSTRING filter,
                                                             IAsyncOperation_DeviceInformationCollection **op )
 {
-    struct aqs_expr *expr;
-    IUnknown *params;
-    HRESULT hr;
-
     TRACE( "iface %p, aqs %p, op %p\n", iface, debugstr_hstring(filter), op );
-
-    if (FAILED(hr = aqs_parse_query(WindowsGetStringRawBuffer( filter, NULL ), &expr, NULL ))) return hr;
-    if (FAILED(hr = devquery_params_create( expr, &params )))
-    {
-        free_aqs_expr( expr );
-        return hr;
-    }
-    return async_operation_inspectable_create( &IID_IAsyncOperation_DeviceInformationCollection, (IUnknown *)iface, (IUnknown *)params,
-                                               find_all_async, (IAsyncOperation_IInspectable **)op );
+    return IDeviceInformationStatics_FindAllAsyncAqsFilterAndAdditionalProperties( iface, filter, NULL, op );
 }
 
 static HRESULT WINAPI device_statics_FindAllAsyncAqsFilterAndAdditionalProperties( IDeviceInformationStatics *iface, HSTRING filter,
                                                                                    IIterable_HSTRING *additional_properties,
                                                                                    IAsyncOperation_DeviceInformationCollection **op )
 {
-    FIXME( "iface %p, aqs %p, additional_properties %p, op %p stub!\n", iface, debugstr_hstring(filter), additional_properties, op );
-    return E_NOTIMPL;
+    const DEVPROPCOMPKEY device_iface_default_props[] = {
+        { DEVPKEY_DeviceInterface_Enabled, DEVPROP_STORE_SYSTEM, NULL },
+        { DEVPKEY_Device_InstanceId, DEVPROP_STORE_SYSTEM, NULL },
+    };
+    DEVPROPCOMPKEY *prop_keys = NULL;
+    struct aqs_expr *expr = NULL;
+    ULONG prop_keys_len = 0;
+    IUnknown *params;
+    HRESULT hr;
+
+    TRACE( "iface %p, aqs %s, additional_properties %p, op %p\n", iface, debugstr_hstring(filter), additional_properties, op );
+
+    if (FAILED(hr = devpropcompkeys_init( &prop_keys, &prop_keys_len, device_iface_default_props, ARRAY_SIZE( device_iface_default_props ) ))) goto failed;
+    if (additional_properties && FAILED(hr = devpropcompkeys_append_names( &prop_keys, &prop_keys_len, additional_properties ))) goto failed;
+    if (FAILED(hr = aqs_parse_query(WindowsGetStringRawBuffer( filter, NULL ), &expr, NULL ))) goto failed;
+    if (FAILED(hr = devquery_params_create( DevObjectTypeDeviceInterfaceDisplay, expr, prop_keys, prop_keys_len, &params ))) goto failed;
+
+    hr = async_operation_inspectable_create( &IID_IAsyncOperation_DeviceInformationCollection, (IUnknown *)iface, params, find_all_async,
+                                             (IAsyncOperation_IInspectable **)op );
+    IUnknown_Release( params );
+    return hr;
+
+failed:
+    free( prop_keys );
+    free_aqs_expr( expr );
+    return hr;
 }
 
 static HRESULT WINAPI device_statics_CreateWatcher( IDeviceInformationStatics *iface, IDeviceWatcher **watcher )
 {
     TRACE( "iface %p, watcher %p\n", iface, watcher );
-    return device_watcher_create( NULL, watcher );
+    return IDeviceInformationStatics_CreateWatcherAqsFilterAndAdditionalProperties( iface, NULL, NULL, watcher );
 }
 
 static HRESULT WINAPI device_statics_CreateWatcherDeviceClass( IDeviceInformationStatics *iface, DeviceClass class, IDeviceWatcher **watcher )
@@ -732,14 +842,14 @@ static HRESULT WINAPI device_statics_CreateWatcherDeviceClass( IDeviceInformatio
 static HRESULT WINAPI device_statics_CreateWatcherAqsFilter( IDeviceInformationStatics *iface, HSTRING filter, IDeviceWatcher **watcher )
 {
     TRACE( "iface %p, filter %s, watcher %p\n", iface, debugstr_hstring(filter), watcher );
-    return device_watcher_create( filter, watcher );
+    return IDeviceInformationStatics_CreateWatcherAqsFilterAndAdditionalProperties( iface, filter, NULL, watcher );
 }
 
 static HRESULT WINAPI device_statics_CreateWatcherAqsFilterAndAdditionalProperties( IDeviceInformationStatics *iface, HSTRING filter,
                                                                                     IIterable_HSTRING *additional_properties, IDeviceWatcher **watcher )
 {
-    FIXME( "iface %p, aqs %p, additional_properties %p, watcher %p stub!\n", iface, debugstr_hstring(filter), additional_properties, watcher );
-    return E_NOTIMPL;
+    TRACE( "iface %p, aqs %s, additional_properties %p, watcher %p\n", iface, debugstr_hstring(filter), additional_properties, watcher );
+    return device_watcher_create( filter, additional_properties, DeviceInformationKind_DeviceInterface, watcher );
 }
 
 static const struct IDeviceInformationStaticsVtbl device_statics_vtbl =
@@ -791,13 +901,30 @@ static HRESULT WINAPI device_statics2_FindAllAsync( IDeviceInformationStatics2 *
     return E_NOTIMPL;
 }
 
+static const char *debugstr_DeviceInformationKind( DeviceInformationKind kind )
+{
+    static const char *str[] = {
+        "Unknown",
+        "DeviceInterface",
+        "DeviceContainer",
+        "Device",
+        "DeviceInterfaceClass",
+        "AssociationEndpoint",
+        "AssociationEndpointContainer",
+        "AssociationEndpointService",
+        "DevicePanel",
+    };
+    if (kind < ARRAY_SIZE( str )) return wine_dbg_sprintf( "DeviceInformationKind_%s", str[kind] );
+    return wine_dbg_sprintf( "(unknown %u)\n", kind );
+}
+
 static HRESULT WINAPI device_statics2_CreateWatcher( IDeviceInformationStatics2 *iface, HSTRING filter,
                                                      IIterable_HSTRING *additional_properties, DeviceInformationKind kind,
                                                      IDeviceWatcher **watcher )
 {
-    FIXME( "iface %p, filter %s, additional_properties %p, kind %u, watcher %p semi-stub!\n",
-            iface, debugstr_hstring( filter ), additional_properties, kind, watcher );
-    return device_watcher_create( filter, watcher );
+    TRACE( "iface %p, filter %s, additional_properties %p, kind %s, watcher %p\n",
+            iface, debugstr_hstring( filter ), additional_properties, debugstr_DeviceInformationKind( kind ), watcher );
+    return device_watcher_create( filter, additional_properties, kind, watcher );
 }
 
 static const struct IDeviceInformationStatics2Vtbl device_statics2_vtbl =
