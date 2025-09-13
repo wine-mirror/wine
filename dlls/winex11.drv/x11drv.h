@@ -282,6 +282,8 @@ extern BOOL client_side_with_render;
 extern BOOL shape_layered_windows;
 extern const struct gdi_dc_funcs *X11DRV_XRender_Init(void);
 
+extern BOOL visual_from_pixel_format( int format, XVisualInfo *visual );
+
 extern UINT X11DRV_OpenGLInit( UINT, const struct opengl_funcs *, const struct opengl_driver_funcs ** );
 extern UINT X11DRV_VulkanInit( UINT, void *, const struct vulkan_driver_funcs ** );
 
@@ -358,7 +360,7 @@ extern BOOL needs_offscreen_rendering( HWND hwnd );
 extern void set_dc_drawable( HDC hdc, Drawable drawable, const RECT *rect, int mode );
 extern Drawable get_dc_drawable( HDC hdc, RECT *rect );
 extern HRGN get_dc_monitor_region( HWND hwnd, HDC hdc );
-extern Window x11drv_client_surface_create( HWND hwnd, const XVisualInfo *visual, Colormap colormap, struct client_surface **client );
+extern Window x11drv_client_surface_create( HWND hwnd, int format, struct client_surface **client );
 
 /**************************************************************************
  * X11 USER driver

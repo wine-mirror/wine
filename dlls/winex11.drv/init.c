@@ -261,6 +261,7 @@ static const struct client_surface_funcs x11drv_client_surface_funcs;
 struct x11drv_client_surface
 {
     struct client_surface client;
+    Colormap colormap;
     Window window;
     RECT rect;
 
@@ -280,6 +281,7 @@ static void x11drv_client_surface_destroy( struct client_surface *client )
 
     TRACE( "%s\n", debugstr_client_surface( client ) );
 
+    if (surface->colormap != default_colormap) XFreeColormap( gdi_display, surface->colormap );
     if (surface->window) destroy_client_window( hwnd, surface->window );
     if (surface->hdc_dst) NtGdiDeleteObjectApp( surface->hdc_dst );
     if (surface->hdc_src) NtGdiDeleteObjectApp( surface->hdc_src );
@@ -426,25 +428,36 @@ static const struct client_surface_funcs x11drv_client_surface_funcs =
     .present = X11DRV_client_surface_present,
 };
 
-Window x11drv_client_surface_create( HWND hwnd, const XVisualInfo *visual, Colormap colormap, struct client_surface **client )
+static int visual_class_alloc( int class )
+{
+    return class == PseudoColor || class == GrayScale || class == DirectColor ? AllocAll : AllocNone;
+}
+
+Window x11drv_client_surface_create( HWND hwnd, int format, struct client_surface **client )
 {
     struct x11drv_client_surface *surface;
+    XVisualInfo visual = default_visual;
+    Colormap colormap;
 
-    if (!(surface = client_surface_create( sizeof(*surface), &x11drv_client_surface_funcs, hwnd ))) return None;
-    if (!(surface->window = create_client_window( hwnd, visual, colormap )))
-    {
-        client_surface_release( &surface->client );
-        return None;
-    }
-    if (!NtUserGetClientRect( hwnd, &surface->rect, NtUserGetDpiForWindow( hwnd ) ))
-    {
-        client_surface_release( &surface->client );
-        return None;
-    }
+    if (format && !visual_from_pixel_format( format, &visual )) return None;
+
+    if (visual.visualid == default_visual.visualid) colormap = default_colormap;
+    else colormap = XCreateColormap( gdi_display, get_dummy_parent(), visual.visual, visual_class_alloc( visual.class ) );
+    if (!colormap) return None;
+
+    if (!(surface = client_surface_create( sizeof(*surface), &x11drv_client_surface_funcs, hwnd ))) goto failed;
+    if (!(surface->window = create_client_window( hwnd, &visual, colormap ))) goto failed;
+    if (!NtUserGetClientRect( hwnd, &surface->rect, NtUserGetDpiForWindow( hwnd ) )) goto failed;
+    surface->colormap = colormap;
 
     TRACE( "Created %s for client window %lx\n", debugstr_client_surface( &surface->client ), surface->window );
     *client = &surface->client;
     return surface->window;
+
+failed:
+    if (surface) client_surface_release( &surface->client );
+    XFreeColormap( gdi_display, colormap );
+    return None;
 }
 
 /**********************************************************************
