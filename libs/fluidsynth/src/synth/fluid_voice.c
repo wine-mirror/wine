@@ -1398,6 +1398,7 @@ fluid_voice_kill_excl(fluid_voice_t *voice)
     */
     fluid_voice_gen_set(voice, GEN_EXCLUSIVECLASS, 0);
 
+#if 0 /* unused in Wine */
     /* Speed up the volume envelope */
     /* The value was found through listening tests with hi-hat samples. */
     fluid_voice_gen_set(voice, GEN_VOLENVRELEASE, -200);
@@ -1406,6 +1407,12 @@ fluid_voice_kill_excl(fluid_voice_t *voice)
     /* Speed up the modulation envelope */
     fluid_voice_gen_set(voice, GEN_MODENVRELEASE, -200);
     fluid_voice_update_param(voice, GEN_MODENVRELEASE);
+        gen[i].val = fluid_gen_info[i].def;
+#else
+    /* Speed up the volume envelope */
+    fluid_voice_gen_set(voice, GEN_VOLENVRELEASE, -32768);
+    fluid_voice_update_param(voice, GEN_VOLENVRELEASE);
+#endif
 
     at_tick = fluid_channel_get_min_note_length_ticks(voice->channel);
     UPDATE_RVOICE_I1(fluid_rvoice_noteoff, at_tick);

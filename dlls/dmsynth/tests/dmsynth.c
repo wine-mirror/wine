@@ -2254,7 +2254,7 @@ static void test_dls(void)
     download.connection_list.cConnections = 1;
     download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
     download.connections[0].lScale = ABS_TIME_MS(200);
-    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, TRUE);
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, FALSE);
 
     memset(&midi, 0, sizeof(midi));
     midi.messages[0] = default_note_on;
@@ -2266,7 +2266,7 @@ static void test_dls(void)
     download.connections[0].lScale = ABS_TIME_MS(200);
     download.connections[1].usDestination = CONN_DST_EG1_SHUTDOWNTIME;
     download.connections[1].lScale = ABS_TIME_MS(200);
-    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, TRUE);
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, FALSE);
 
     /* velocity -> EG1 attack time */
 
