@@ -574,6 +574,7 @@ static HRESULT instrument_add_soundfont_region(struct instrument *This, struct s
     region->header.RangeKey.usHigh = generators->amount[SF_GEN_KEY_RANGE].range.high;
     region->header.RangeVelocity.usLow = generators->amount[SF_GEN_VEL_RANGE].range.low;
     region->header.RangeVelocity.usHigh = generators->amount[SF_GEN_VEL_RANGE].range.high;
+    region->header.usKeyGroup = generators->amount[SF_GEN_EXCLUSIVE_CLASS].value;
 
     region->wave_link.ulTableIndex = sample_index;
 
