@@ -2232,6 +2232,7 @@ sub load_data()
             my $dst = hex $2;
             if ($1 eq "narrow")
             {
+                next if $src >= 0xffe8 && $src <= 0xffef;  # don't remap arrows
                 $halfwidth_table[$dst] = $src;
                 $fullwidth_table[$src] = $dst;
             }

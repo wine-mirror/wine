@@ -2841,6 +2841,24 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
     ok(!ret, "%s func_ptr should fail with srclen = 0\n", func_name);
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "%s unexpected error code %ld\n", func_name, GetLastError());
+
+    /* test for characters which don't get mapped to their
+       halfwidth counterparts on LCMAP_HALFWIDTH */
+    for (i = 0x2190; i <= 0x21ff; ++i)
+        buf[i - 0x2190] = buf2[i - 0x2190] = i;
+
+    buf[0x70] = buf2[0x70] = 0x25cb;
+    ret = func_ptr(LCMAP_HALFWIDTH, buf, 0x71, buf2, 0x71);
+    ok(ret == 0x71, "%s ret %#x, expected value 0x71\n", func_name, ret);
+    ok(!memcmp(buf, buf2, sizeof(WCHAR) * 0x71), "in- and output must be equal\n");
+
+    /* test the other way around */
+    for (i = 0xffe9; i <= 0xffee; ++i)
+        buf[i - 0xffe9] = buf2[i - 0xffe9] = i;
+
+    ret = func_ptr(LCMAP_FULLWIDTH, buf, 0x6, buf2, 0x6);
+    ok(ret == 0x6, "%s ret %#x, expected value 0x6\n", func_name, ret);
+    ok(!memcmp(buf, buf2, sizeof(WCHAR) * 0x6), "in- and output must be equal\n");
 }
 
 static INT LCMapStringW_wrapper(DWORD flags, LPCWSTR src, INT srclen, LPWSTR dst, INT dstlen)
