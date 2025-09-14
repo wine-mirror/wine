@@ -2409,29 +2409,30 @@ RETURN_CODE WCMD_setshow_default(const WCHAR *args)
 
 RETURN_CODE WCMD_setshow_date(void)
 {
-  RETURN_CODE return_code = NO_ERROR;
-  WCHAR curdate[64], buffer[64];
-  DWORD count;
+    RETURN_CODE return_code = NO_ERROR;
+    WCHAR curdate[64], buffer[64];
 
-  if (!*param1) {
-    if (GetDateFormatW(LOCALE_USER_DEFAULT, 0, NULL, NULL, curdate, ARRAY_SIZE(curdate))) {
-      WCMD_output (WCMD_LoadMessage(WCMD_CURRENTDATE), curdate);
-      if (wcsstr(quals, L"/T") == NULL) {
-        WCMD_output(WCMD_LoadMessage(WCMD_NEWDATE));
-        WCMD_output_flush();
-        if (WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), buffer, ARRAY_SIZE(buffer), &count) &&
-            count > 2) {
-          WCMD_output_stderr (WCMD_LoadMessage(WCMD_NYI));
+    if (!*param1)
+    {
+        if (GetDateFormatW(LOCALE_USER_DEFAULT, 0, NULL, NULL, curdate, ARRAY_SIZE(curdate)))
+        {
+            WCMD_output(WCMD_LoadMessage(WCMD_CURRENTDATE), curdate);
+            if (wcsstr(quals, L"/T") == NULL)
+            {
+                WCMD_output(WCMD_LoadMessage(WCMD_NEWDATE));
+                WCMD_output_flush();
+                if (WCMD_fgets(buffer, ARRAY_SIZE(buffer), GetStdHandle(STD_INPUT_HANDLE)))
+                    WCMD_output_stderr(WCMD_LoadMessage(WCMD_NYI));
+            }
         }
-      }
+        else WCMD_print_error();
     }
-    else WCMD_print_error ();
-  }
-  else {
-    return_code = ERROR_INVALID_FUNCTION;
-    WCMD_output_stderr (WCMD_LoadMessage(WCMD_NYI));
-  }
-  return errorlevel = return_code;
+    else
+    {
+        return_code = ERROR_INVALID_FUNCTION;
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_NYI));
+    }
+    return errorlevel = return_code;
 }
 
 /****************************************************************************
