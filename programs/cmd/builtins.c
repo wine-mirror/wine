@@ -3032,9 +3032,8 @@ RETURN_CODE WCMD_setshow_env(WCHAR *s)
   /* See if /P supplied, and if so echo the prompt, and read in a reply */
   else if (CompareStringW(LOCALE_USER_DEFAULT,
                           NORM_IGNORECASE | SORT_STRINGSORT,
-                          s, 2, L"/P", -1) == CSTR_EQUAL) {
-    DWORD count;
-
+                          s, 2, L"/P", -1) == CSTR_EQUAL)
+  {
     s += 2;
     while (*s && (*s==' ' || *s=='\t')) s++;
     /* set /P "var=value"jim ignores anything after the last quote */
@@ -3064,9 +3063,8 @@ RETURN_CODE WCMD_setshow_env(WCHAR *s)
       }
 
       /* Read the reply */
-      if (WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, ARRAY_SIZE(string), &count) && count > 1) {
-        string[count-1] = '\0'; /* ReadFile output is not null-terminated! */
-        if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
+      if (WCMD_fgets(string, ARRAY_SIZE(string), GetStdHandle(STD_INPUT_HANDLE)) && *string)
+      {
         TRACE("set /p: Setting var '%s' to '%s'\n", wine_dbgstr_w(s),
               wine_dbgstr_w(string));
         if (*string) SetEnvironmentVariableW(s, string);
