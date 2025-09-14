@@ -4461,11 +4461,11 @@ static void WCMD_setup(void)
     /* initialize some env variables */
     if (!GetEnvironmentVariableW(L"COMSPEC", string, ARRAY_SIZE(string)))
     {
-        GetSystemDirectoryW(string, ARRAY_SIZE(string) - ARRAY_SIZE(L"\\cmd.exe"));
-        lstrcatW(string, L"\\cmd.exe");
+        GetModuleFileNameW(NULL, string, ARRAY_SIZE(string));
         SetEnvironmentVariableW(L"COMSPEC", string);
     }
-    SetEnvironmentVariableW(L"PROMPT", L"$P$G");
+    if (!GetEnvironmentVariableW(L"PROMPT", string, ARRAY_SIZE(string)))
+        SetEnvironmentVariableW(L"PROMPT", L"$P$G");
 
     /* Save cwd into appropriate env var (Must be before the /c processing */
     GetCurrentDirectoryW(ARRAY_SIZE(string), string);
