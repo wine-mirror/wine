@@ -197,9 +197,8 @@ DIRECTORY_STACK *WCMD_dir_stack_free(DIRECTORY_STACK *dir)
  *                   set to TRUE
  *
  */
-static BOOL WCMD_ask_confirm (const WCHAR *message, BOOL showSureText,
-                              BOOL *optionAll) {
-
+static BOOL WCMD_ask_confirm(const WCHAR *message, BOOL showSureText, BOOL *optionAll)
+{
     UINT msgid;
     WCHAR confirm[MAXSTRING];
     WCHAR options[MAXSTRING];
@@ -207,11 +206,10 @@ static BOOL WCMD_ask_confirm (const WCHAR *message, BOOL showSureText,
     WCHAR Nbuffer[MAXSTRING];
     WCHAR Abuffer[MAXSTRING];
     WCHAR answer[MAX_PATH] = {'\0'};
-    DWORD count = 0;
 
     /* Load the translated valid answers */
     if (showSureText)
-      LoadStringW(hinst, WCMD_CONFIRM, confirm, ARRAY_SIZE(confirm));
+        LoadStringW(hinst, WCMD_CONFIRM, confirm, ARRAY_SIZE(confirm));
     msgid = optionAll ? WCMD_YESNOALL : WCMD_YESNO;
     LoadStringW(hinst, msgid, options, ARRAY_SIZE(options));
     LoadStringW(hinst, WCMD_YES, Ybuffer, ARRAY_SIZE(Ybuffer));
@@ -223,23 +221,23 @@ static BOOL WCMD_ask_confirm (const WCHAR *message, BOOL showSureText,
         *optionAll = FALSE;
     while (1)
     {
-      WCMD_output_asis (message);
-      if (showSureText)
-        WCMD_output_asis (confirm);
-      WCMD_output_asis (options);
-      WCMD_output_flush();
-      if (!WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, ARRAY_SIZE(answer), &count) || !count)
-          return FALSE;
-      answer[0] = towupper(answer[0]);
-      if (answer[0] == Ybuffer[0])
-        return TRUE;
-      if (answer[0] == Nbuffer[0])
-        return FALSE;
-      if (optionAll && answer[0] == Abuffer[0])
-      {
-        *optionAll = TRUE;
-        return TRUE;
-      }
+        WCMD_output_asis(message);
+        if (showSureText)
+            WCMD_output_asis(confirm);
+        WCMD_output_asis(options);
+        WCMD_output_flush();
+        if (!WCMD_fgets(answer, ARRAY_SIZE(answer), GetStdHandle(STD_INPUT_HANDLE)) || !*answer)
+            return FALSE;
+        answer[0] = towupper(answer[0]);
+        if (answer[0] == Ybuffer[0])
+            return TRUE;
+        if (answer[0] == Nbuffer[0])
+            return FALSE;
+        if (optionAll && answer[0] == Abuffer[0])
+        {
+            *optionAll = TRUE;
+            return TRUE;
+        }
     }
 }
 
