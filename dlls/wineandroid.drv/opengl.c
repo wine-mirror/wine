@@ -71,27 +71,6 @@ static inline EGLConfig egl_config_for_format(int format)
     return egl->configs[format - egl->config_count - 1];
 }
 
-static struct gl_drawable *create_gl_drawable( HWND hwnd, int format, ANativeWindow *window )
-{
-    static const int attribs[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };
-    struct client_surface *client;
-    struct gl_drawable *gl;
-
-    if (!(client = client_surface_create( sizeof(*client), &android_client_surface_funcs, hwnd ))) return NULL;
-    gl = opengl_drawable_create( sizeof(*gl), &android_drawable_funcs, format, client );
-    client_surface_release( client );
-    if (!gl) return NULL;
-
-    if (!window) gl->window = create_ioctl_window( hwnd, TRUE, 1.0f );
-    else gl->window = grab_ioctl_window( window );
-
-    if (!window) gl->base.surface = funcs->p_eglCreatePbufferSurface( egl->display, egl_config_for_format(gl->base.format), attribs );
-    else gl->base.surface = funcs->p_eglCreateWindowSurface( egl->display, egl_config_for_format(gl->base.format), gl->window, NULL );
-
-    TRACE( "Created drawable %s with client window %p\n", debugstr_opengl_drawable( &gl->base ), gl->window );
-    return gl;
-}
-
 static void android_drawable_destroy( struct opengl_drawable *base )
 {
     struct gl_drawable *gl = impl_from_opengl_drawable( base );
@@ -126,10 +105,25 @@ static BOOL android_surface_create( HWND hwnd, int format, struct opengl_drawabl
         TRACE( "Updated drawable %s\n", debugstr_opengl_drawable( *drawable ) );
         return TRUE;
     }
+    else
+    {
+        static const int attribs[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };
+        EGLConfig config = egl_config_for_format( format );
+        struct client_surface *client;
 
-    if (!(gl = create_gl_drawable( hwnd, format, NULL ))) return FALSE;
-    *drawable = &gl->base;
-    return TRUE;
+        if (!(client = client_surface_create( sizeof(*client), &android_client_surface_funcs, hwnd ))) return FALSE;
+        gl = opengl_drawable_create( sizeof(*gl), &android_drawable_funcs, format, client );
+        client_surface_release( client );
+        if (!gl) return FALSE;
+
+        gl->window = get_client_window( client->hwnd );
+        if (!has_client_surface( client->hwnd )) gl->base.surface = funcs->p_eglCreatePbufferSurface( egl->display, config, attribs );
+        else gl->base.surface = funcs->p_eglCreateWindowSurface( egl->display, config, gl->window, NULL );
+
+        TRACE( "Created drawable %s with client window %p\n", debugstr_opengl_drawable( &gl->base ), gl->window );
+        *drawable = &gl->base;
+        return TRUE;
+    }
 }
 
 static void android_init_egl_platform( struct egl_platform *platform )

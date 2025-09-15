@@ -54,6 +54,8 @@ struct android_win_data
     HWND           parent;         /* parent hwnd for child windows */
     struct window_rects rects;     /* window rects in monitor DPI, relative to parent client area */
     ANativeWindow *window;         /* native window wrapper that forwards calls to the desktop process */
+    ANativeWindow *client;         /* native client surface wrapper that forwards calls to the desktop process */
+    BOOL           has_surface;    /* whether the client surface has been created on the Java side */
 };
 
 #define SWP_AGG_NOPOSCHANGE (SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE | SWP_NOZORDER)
@@ -113,6 +115,7 @@ static void free_win_data( struct android_win_data *data )
 {
     win_data_context[context_idx( data->hwnd )] = NULL;
     pthread_mutex_unlock( &win_data_mutex );
+    if (data->client) release_ioctl_window( data->client );
     if (data->window) release_ioctl_window( data->window );
     free( data );
 }
@@ -1181,6 +1184,14 @@ LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
     case WM_ANDROID_REFRESH:
         if (wp)  /* opengl client window */
         {
+            struct android_win_data *data;
+
+            if ((data = get_win_data( hwnd )))
+            {
+                data->has_surface = TRUE;
+                release_win_data( data );
+            }
+
             update_gl_drawable( hwnd );
         }
         else
@@ -1194,6 +1205,30 @@ LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
     }
 }
 
+ANativeWindow *get_client_window( HWND hwnd )
+{
+    struct android_win_data *data;
+    ANativeWindow *client;
+
+    if (!(data = get_win_data( hwnd ))) return NULL;
+    if (!data->client) data->client = create_ioctl_window( hwnd, TRUE, 1.0f );
+    client = grab_ioctl_window( data->client );
+    release_win_data( data );
+
+    return client;
+}
+
+BOOL has_client_surface( HWND hwnd )
+{
+    struct android_win_data *data;
+    BOOL ret;
+
+    if (!(data = get_win_data( hwnd ))) return FALSE;
+    ret = data->has_surface;
+    release_win_data( data );
+
+    return ret;
+}
 
 /***********************************************************************
  *           ANDROID_CreateDesktop
