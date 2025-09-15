@@ -81,6 +81,7 @@ static const struct pixel_format_desc formats[] =
     {D3DX_PIXEL_FORMAT_R16G16B16_UNORM,          { 0, 16, 16, 16}, { 0,  0, 16, 32},  6, 1, 1,  6, CTYPE_EMPTY, CTYPE_UNORM, FMT_FLAG_INTERNAL},
     {D3DX_PIXEL_FORMAT_R16G16B16A16_UNORM,       {16, 16, 16, 16}, {48,  0, 16, 32},  8, 1, 1,  8, CTYPE_UNORM, CTYPE_UNORM, 0           },
     {D3DX_PIXEL_FORMAT_R8_UNORM,                 { 0,  8,  0,  0}, { 0,  0,  0,  0},  1, 1, 1,  1, CTYPE_EMPTY, CTYPE_UNORM, FMT_FLAG_DXGI},
+    {D3DX_PIXEL_FORMAT_R8_SNORM,                 { 0,  8,  0,  0}, { 0,  0,  0,  0},  1, 1, 1,  1, CTYPE_EMPTY, CTYPE_SNORM, FMT_FLAG_DXGI},
     {D3DX_PIXEL_FORMAT_R8G8_UNORM,               { 0,  8,  8,  0}, { 0,  0,  8,  0},  2, 1, 1,  2, CTYPE_EMPTY, CTYPE_UNORM, FMT_FLAG_DXGI},
     {D3DX_PIXEL_FORMAT_R16_UNORM,                { 0, 16,  0,  0}, { 0,  0,  0,  0},  2, 1, 1,  2, CTYPE_EMPTY, CTYPE_UNORM, FMT_FLAG_DXGI},
     {D3DX_PIXEL_FORMAT_R16G16_UNORM,             { 0, 16, 16,  0}, { 0,  0, 16,  0},  4, 1, 1,  4, CTYPE_EMPTY, CTYPE_UNORM, 0           },
@@ -396,6 +397,7 @@ enum d3dx_pixel_format_id d3dx_pixel_format_id_from_dxgi_format(uint32_t format)
         case DXGI_FORMAT_R10G10B10A2_UNORM:        return D3DX_PIXEL_FORMAT_R10G10B10A2_UNORM;
         case DXGI_FORMAT_R16G16B16A16_UNORM:       return D3DX_PIXEL_FORMAT_R16G16B16A16_UNORM;
         case DXGI_FORMAT_R8_UNORM:                 return D3DX_PIXEL_FORMAT_R8_UNORM;
+        case DXGI_FORMAT_R8_SNORM:                 return D3DX_PIXEL_FORMAT_R8_SNORM;
         case DXGI_FORMAT_R8G8_UNORM:               return D3DX_PIXEL_FORMAT_R8G8_UNORM;
         case DXGI_FORMAT_R16_UNORM:                return D3DX_PIXEL_FORMAT_R16_UNORM;
         case DXGI_FORMAT_R16G16_UNORM:             return D3DX_PIXEL_FORMAT_R16G16_UNORM;
@@ -2581,6 +2583,25 @@ static HRESULT d3dx_pixels_decompress(struct d3dx_pixels *pixels, const struct p
             uncompressed_desc = get_d3dx_pixel_format_info(D3DX_PIXEL_FORMAT_R8G8B8A8_UNORM);
             decompress_bcn_block = bcdec_bc3;
             break;
+
+        case D3DX_PIXEL_FORMAT_BC4_UNORM:
+        case D3DX_PIXEL_FORMAT_BC4_SNORM:
+            if (desc->rgb_type == CTYPE_UNORM)
+                uncompressed_desc = get_d3dx_pixel_format_info(D3DX_PIXEL_FORMAT_R8_UNORM);
+            else
+                uncompressed_desc = get_d3dx_pixel_format_info(D3DX_PIXEL_FORMAT_R8_SNORM);
+            decompress_bcn_block = bcdec_bc4;
+            break;
+
+        case D3DX_PIXEL_FORMAT_BC5_UNORM:
+        case D3DX_PIXEL_FORMAT_BC5_SNORM:
+            if (desc->rgb_type == CTYPE_UNORM)
+                uncompressed_desc = get_d3dx_pixel_format_info(D3DX_PIXEL_FORMAT_R8G8_UNORM);
+            else
+                uncompressed_desc = get_d3dx_pixel_format_info(D3DX_PIXEL_FORMAT_R8G8_SNORM);
+            decompress_bcn_block = bcdec_bc5;
+            break;
+
 
         default:
             FIXME("Unexpected compressed texture format %u.\n", desc->format);

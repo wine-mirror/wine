@@ -90,9 +90,9 @@
 BCDECDEF void bcdec_bc1(const void* compressedBlock, void* decompressedBlock, int destinationPitch);
 BCDECDEF void bcdec_bc2(const void* compressedBlock, void* decompressedBlock, int destinationPitch);
 BCDECDEF void bcdec_bc3(const void* compressedBlock, void* decompressedBlock, int destinationPitch);
-#ifdef WINE_UNUSED  /* unused for now in Wine */
 BCDECDEF void bcdec_bc4(const void* compressedBlock, void* decompressedBlock, int destinationPitch);
 BCDECDEF void bcdec_bc5(const void* compressedBlock, void* decompressedBlock, int destinationPitch);
+#ifdef WINE_UNUSED  /* unused for now in Wine */
 BCDECDEF void bcdec_bc6h_float(const void* compressedBlock, void* decompressedBlock, int destinationPitch, int isSigned);
 BCDECDEF void bcdec_bc6h_half(const void* compressedBlock, void* decompressedBlock, int destinationPitch, int isSigned);
 BCDECDEF void bcdec_bc7(const void* compressedBlock, void* decompressedBlock, int destinationPitch);
@@ -275,8 +275,6 @@ BCDECDEF void bcdec_bc3(const void* compressedBlock, void* decompressedBlock, in
     bcdec__smooth_alpha_block(compressedBlock, ((char*)decompressedBlock) + 3, destinationPitch, 4);
 }
 
-#ifdef WINE_UNUSED  /* unused for now in Wine */
-
 BCDECDEF void bcdec_bc4(const void* compressedBlock, void* decompressedBlock, int destinationPitch) {
     bcdec__smooth_alpha_block(compressedBlock, decompressedBlock, destinationPitch, 1);
 }
@@ -285,6 +283,8 @@ BCDECDEF void bcdec_bc5(const void* compressedBlock, void* decompressedBlock, in
     bcdec__smooth_alpha_block(compressedBlock, decompressedBlock, destinationPitch, 2);
     bcdec__smooth_alpha_block(((char*)compressedBlock) + 8, ((char*)decompressedBlock) + 1, destinationPitch, 2);
 }
+
+#ifdef WINE_UNUSED  /* unused for now in Wine */
 
 /* http://graphics.stanford.edu/~seander/bithacks.html#VariableSignExtend */
 static int bcdec__extend_sign(int val, int bits) {
