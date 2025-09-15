@@ -428,11 +428,20 @@ static void test_ProgIDFromCLSID(void)
     }
 }
 
+static LSTATUS set_hkcr_key(const WCHAR *name, const WCHAR *default_value)
+{
+    return RegSetKeyValueW(HKEY_CLASSES_ROOT, name, NULL, REG_SZ, default_value,
+            default_value ? (wcslen(default_value) + 1) * sizeof(WCHAR) : 0);
+}
+
 static void test_CLSIDFromProgID(void)
 {
     ULONG_PTR cookie = 0;
+    WCHAR clsidstr[39];
     HANDLE handle;
+    DWORD ret;
     CLSID clsid;
+
     HRESULT hr = CLSIDFromProgID(stdfont, &clsid);
     ok(hr == S_OK, "CLSIDFromProgID failed with error 0x%08lx\n", hr);
     ok(IsEqualCLSID(&clsid, &CLSID_StdFont), "clsid wasn't equal to CLSID_StdFont\n");
@@ -492,6 +501,91 @@ static void test_CLSIDFromProgID(void)
 
         deactivate_context(handle, cookie);
     }
+
+    /* Test "CurVer" key handling. */
+    StringFromGUID2(&CLSID_non_existent, clsidstr, ARRAYSIZE(clsidstr));
+
+    ret = set_hkcr_key(L"MyApp.DocumentTest\\CurVer", L"MyApp.DocumentTest.1");
+    if (ret == ERROR_ACCESS_DENIED)
+    {
+        skip("Failed to create test key, skipping some CLSIDFromProgID() tests.\n");
+        return;
+    }
+    ok(!ret, "Failed to create a test key.\n");
+    ret = set_hkcr_key(L"MyApp.DocumentTest.1\\CurVer", L"MyApp.DocumentTest.2");
+    ok(!ret, "Failed to create a test key.\n");
+    ret = set_hkcr_key(L"MyApp.DocumentTest.2\\CurVer", L"MyApp.DocumentTest");
+    ok(!ret, "Failed to create a test key.\n");
+    ret = set_hkcr_key(L"MyApp.DocumentTest.2\\CLSID", clsidstr);
+    ok(!ret, "Failed to create a test key.\n");
+    ret = set_hkcr_key(L"MyApp.DocumentTest.3\\CurVer", L"MyApp.DocumentTest.4");
+    ok(!ret, "Failed to create a test key.\n");
+    ret = set_hkcr_key(L"MyApp.DocumentTest.4\\CurVer", L"MyApp.DocumentTest.3");
+    ok(!ret, "Failed to create a test key.\n");
+    ret = set_hkcr_key(L"MyApp.DocumentTest.5\\CurVer", NULL);
+    ok(!ret, "Failed to create a test key.\n");
+
+    hr = CLSIDFromProgID(L"MyApp.DocumentTest", &clsid);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualCLSID(&clsid, &CLSID_non_existent), "Unexpected clsid %s.\n", wine_dbgstr_guid(&clsid));
+
+    hr = CLSIDFromProgID(L"MyApp.DocumentTest.1", &clsid);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualCLSID(&clsid, &CLSID_non_existent), "Unexpected clsid %s.\n", wine_dbgstr_guid(&clsid));
+
+    hr = CLSIDFromProgID(L"MyApp.DocumentTest.2", &clsid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualCLSID(&clsid, &CLSID_non_existent), "Unexpected clsid %s.\n", wine_dbgstr_guid(&clsid));
+
+    memset(&clsid, 0xcc, sizeof(clsid));
+    hr = CLSIDFromProgID(L"MyApp.DocumentTest.3", &clsid);
+    ok(hr == CO_E_CLASSSTRING, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualCLSID(&clsid, &CLSID_NULL), "Unexpected clsid %s.\n", wine_dbgstr_guid(&clsid));
+
+    memset(&clsid, 0xcc, sizeof(clsid));
+    hr = CLSIDFromProgID(L"MyApp.DocumentTest.5", &clsid);
+    ok(hr == CO_E_CLASSSTRING, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualCLSID(&clsid, &CLSID_NULL), "Unexpected clsid %s.\n", wine_dbgstr_guid(&clsid));
+
+    hr = CLSIDFromString(L"MyApp.DocumentTest", &clsid);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualCLSID(&clsid, &CLSID_non_existent), "Unexpected clsid %s.\n", wine_dbgstr_guid(&clsid));
+
+    hr = CLSIDFromString(L"MyApp.DocumentTest.1", &clsid);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualCLSID(&clsid, &CLSID_non_existent), "Unexpected clsid %s.\n", wine_dbgstr_guid(&clsid));
+
+    hr = CLSIDFromString(L"MyApp.DocumentTest.2", &clsid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualCLSID(&clsid, &CLSID_non_existent), "Unexpected clsid %s.\n", wine_dbgstr_guid(&clsid));
+
+    clsid = CLSID_StdFont;
+    hr = CLSIDFromString(L"MyApp.DocumentTest.3", &clsid);
+    todo_wine
+    ok(hr == REGDB_E_INVALIDVALUE, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualCLSID(&clsid, &CLSID_StdFont), "Unexpected clsid %s.\n", wine_dbgstr_guid(&clsid));
+
+    clsid = CLSID_StdFont;
+    hr = CLSIDFromString(L"MyApp.DocumentTest.5", &clsid);
+    ok(hr == CO_E_CLASSSTRING, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualCLSID(&clsid, &CLSID_StdFont), "Unexpected clsid %s.\n", wine_dbgstr_guid(&clsid));
+
+    RegDeleteTreeW(HKEY_CLASSES_ROOT, L"MyApp.DocumentTest");
+    RegDeleteTreeW(HKEY_CLASSES_ROOT, L"MyApp.DocumentTest.1");
+    RegDeleteTreeW(HKEY_CLASSES_ROOT, L"MyApp.DocumentTest.2");
+    RegDeleteTreeW(HKEY_CLASSES_ROOT, L"MyApp.DocumentTest.3");
+    RegDeleteTreeW(HKEY_CLASSES_ROOT, L"MyApp.DocumentTest.4");
+    RegDeleteTreeW(HKEY_CLASSES_ROOT, L"MyApp.DocumentTest.5");
 }
 
 static void test_CLSIDFromString(void)
