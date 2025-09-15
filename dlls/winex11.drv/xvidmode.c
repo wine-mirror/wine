@@ -161,7 +161,6 @@ static void xf86vm_free_modes(DEVMODEW *modes)
     if (modes)
     {
         BYTE *ptr = (BYTE *)modes - sizeof(xf86vm_modes);
-        assert(modes[0].dmDriverExtra == sizeof(XF86VidModeModeInfo *));
         memcpy(&xf86vm_modes, ptr, sizeof(xf86vm_modes));
         XFree(xf86vm_modes);
         free(ptr);
