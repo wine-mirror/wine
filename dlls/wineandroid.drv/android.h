@@ -54,7 +54,6 @@ DECL_FUNCPTR( ANativeWindow_release );
  */
 
 extern pthread_mutex_t drawable_mutex;
-extern void update_gl_drawable( HWND hwnd );
 extern UINT ANDROID_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, const struct opengl_driver_funcs **driver_funcs );
 
 

@@ -1192,7 +1192,7 @@ LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
                 release_win_data( data );
             }
 
-            update_gl_drawable( hwnd );
+            detach_client_surfaces( hwnd );
         }
         else
         {

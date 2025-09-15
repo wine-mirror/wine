@@ -1101,12 +1101,10 @@ static int win32u_wglGetPixelFormat( HDC hdc )
     return format > 0 ? format : 0;
 }
 
-void set_window_opengl_drawable( HWND hwnd, struct opengl_drawable *new_drawable, BOOL current )
+static void set_window_opengl_drawable( HWND hwnd, struct opengl_drawable *new_drawable, BOOL current )
 {
     struct opengl_drawable *old_drawable = NULL;
     WND *win;
-
-    TRACE( "hwnd %p, new_drawable %s\n", hwnd, debugstr_opengl_drawable( new_drawable ) );
 
     if ((win = get_win_ptr( hwnd )) && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
     {

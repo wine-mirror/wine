@@ -251,7 +251,7 @@ void *free_user_handle( HANDLE handle, unsigned short type )
 static pthread_mutex_t surfaces_lock = PTHREAD_MUTEX_INITIALIZER;
 static struct list client_surfaces = LIST_INIT( client_surfaces );
 
-static void detach_client_surfaces( HWND hwnd )
+void detach_client_surfaces( HWND hwnd )
 {
     struct list detached = LIST_INIT( detached );
     struct client_surface *surface, *next;
