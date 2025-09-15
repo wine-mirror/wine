@@ -1533,8 +1533,11 @@ static VkResult win32u_vkCreateWin32SurfaceKHR( VkInstance client_instance, cons
         surface->hwnd = dummy;
     }
 
-    if ((res = driver_funcs->p_vulkan_surface_create( surface->hwnd, instance, &host_surface, &surface->client )))
+    if (!(surface->client = user_driver->pCreateClientSurface( surface->hwnd, 0 ))) res = VK_ERROR_OUT_OF_HOST_MEMORY;
+    else res = driver_funcs->p_vulkan_surface_create( surface->client, instance, &host_surface );
+    if (res)
     {
+        if (surface->client) client_surface_release( surface->client );
         if (dummy) NtUserDestroyWindow( dummy );
         free( surface );
         return res;
@@ -2924,20 +2927,10 @@ static struct vulkan_funcs vulkan_funcs =
     .p_vkUnmapMemory2KHR = win32u_vkUnmapMemory2KHR,
 };
 
-static VkResult nulldrv_vulkan_surface_create( HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *surface,
-                                               struct client_surface **client )
+static VkResult nulldrv_vulkan_surface_create( struct client_surface *client, const struct vulkan_instance *instance, VkSurfaceKHR *surface )
 {
     VkHeadlessSurfaceCreateInfoEXT create_info = {.sType = VK_STRUCTURE_TYPE_HEADLESS_SURFACE_CREATE_INFO_EXT};
-    VkResult res;
-
-    if (!(*client = user_driver->pCreateClientSurface( hwnd, 0 ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
-    if ((res = instance->p_vkCreateHeadlessSurfaceEXT( instance->host.instance, &create_info, NULL, surface )))
-    {
-        client_surface_release(*client);
-        *client = NULL;
-    }
-
-    return res;
+    return instance->p_vkCreateHeadlessSurfaceEXT( instance->host.instance, &create_info, NULL, surface );
 }
 
 static VkBool32 nulldrv_get_physical_device_presentation_support( struct vulkan_physical_device *physical_device, uint32_t queue )
@@ -2989,11 +2982,10 @@ static void vulkan_driver_load(void)
     pthread_once( &init_once, vulkan_driver_init );
 }
 
-static VkResult lazydrv_vulkan_surface_create( HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *surface,
-                                               struct client_surface **client )
+static VkResult lazydrv_vulkan_surface_create( struct client_surface *client, const struct vulkan_instance *instance, VkSurfaceKHR *surface )
 {
     vulkan_driver_load();
-    return driver_funcs->p_vulkan_surface_create( hwnd, instance, surface, client );
+    return driver_funcs->p_vulkan_surface_create( client, instance, surface );
 }
 
 static VkBool32 lazydrv_get_physical_device_presentation_support( struct vulkan_physical_device *physical_device, uint32_t queue )
