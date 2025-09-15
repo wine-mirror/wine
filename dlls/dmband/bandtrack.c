@@ -278,9 +278,7 @@ static HRESULT WINAPI band_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
     }
     else if (IsEqualGUID(type, &GUID_Disable_Auto_Download))
         This->header.bAutoDownload = FALSE;
-    else if (IsEqualGUID(type, &GUID_Download))
-        FIXME("GUID_Download not handled yet\n");
-    else if (IsEqualGUID(type, &GUID_DownloadToAudioPath))
+    else if (IsEqualGUID(type, &GUID_Download) || IsEqualGUID(type, &GUID_DownloadToAudioPath))
     {
         IDirectMusicPerformance *performance;
         IDirectMusicAudioPath *audio_path;
@@ -289,6 +287,7 @@ static HRESULT WINAPI band_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
         HRESULT hr;
 
         if (FAILED(hr = IDirectMusicAudioPath_QueryInterface(object, &IID_IDirectMusicPerformance8, (void **)&performance))
+                && IsEqualGUID(type, &GUID_DownloadToAudioPath)
                 && SUCCEEDED(hr = IDirectMusicAudioPath_QueryInterface(object, &IID_IDirectMusicAudioPath, (void **)&audio_path)))
         {
             hr = IDirectMusicAudioPath_GetObjectInPath(audio_path, DMUS_PCHANNEL_ALL, DMUS_PATH_PERFORMANCE, 0,
@@ -313,7 +312,7 @@ static HRESULT WINAPI band_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
         FIXME("GUID_IDirectMusicBand not handled yet\n");
     else if (IsEqualGUID(type, &GUID_StandardMIDIFile))
         FIXME("GUID_StandardMIDIFile not handled yet\n");
-    else if (IsEqualGUID(type, &GUID_UnloadFromAudioPath))
+    else if (IsEqualGUID(type, &GUID_Unload) || IsEqualGUID(type, &GUID_UnloadFromAudioPath))
     {
         struct band_entry *entry;
         HRESULT hr;
