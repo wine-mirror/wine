@@ -2170,7 +2170,6 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 
 static WORD gdt_fs_sel;
-static pthread_mutex_t ldt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void ldt_set_entry( WORD sel, LDT_ENTRY entry )
 {
@@ -2280,24 +2279,6 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_
 }
 
 
-/******************************************************************************
- *           NtSetLdtEntries   (NTDLL.@)
- *           ZwSetLdtEntries   (NTDLL.@)
- */
-NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 )
-{
-    sigset_t sigset;
-
-    if (sel1 >> 16 || sel2 >> 16) return STATUS_INVALID_LDT_DESCRIPTOR;
-
-    server_enter_uninterrupted_section( &ldt_mutex, &sigset );
-    if (sel1) ldt_update_entry( sel1, entry1 );
-    if (sel2) ldt_update_entry( sel2, entry2 );
-    server_leave_uninterrupted_section( &ldt_mutex, &sigset );
-   return STATUS_SUCCESS;
-}
-
-
 /**********************************************************************
  *             signal_init_threading
  */
@@ -2330,11 +2311,7 @@ NTSTATUS signal_alloc_thread( TEB *teb )
 
     if (!gdt_fs_sel)
     {
-        sigset_t sigset;
-
-        server_enter_uninterrupted_section( &ldt_mutex, &sigset );
         thread_data->fs = ldt_alloc_entry( ldt_make_fs32_entry( teb ));
-        server_leave_uninterrupted_section( &ldt_mutex, &sigset );
         if (!thread_data->fs) return STATUS_TOO_MANY_THREADS;
     }
     else thread_data->fs = gdt_fs_sel;
@@ -2351,13 +2328,8 @@ NTSTATUS signal_alloc_thread( TEB *teb )
 void signal_free_thread( TEB *teb )
 {
     struct x86_thread_data *thread_data = (struct x86_thread_data *)&teb->GdiTebBatch;
-    sigset_t sigset;
 
-    if (gdt_fs_sel) return;
-
-    server_enter_uninterrupted_section( &ldt_mutex, &sigset );
-    ldt_free_entry( thread_data->fs );
-    server_leave_uninterrupted_section( &ldt_mutex, &sigset );
+    if (!gdt_fs_sel) ldt_free_entry( thread_data->fs );
 }
 
 

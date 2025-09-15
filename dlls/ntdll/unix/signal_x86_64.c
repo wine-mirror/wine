@@ -2447,11 +2447,8 @@ static void sigsys_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 
 
 /***********************************************************************
- *           LDT support
+ *           ldt_set_entry
  */
-
-static pthread_mutex_t ldt_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 void ldt_set_entry( WORD sel, LDT_ENTRY entry )
 {
 #if defined(__APPLE__)
@@ -2467,16 +2464,6 @@ void ldt_set_entry( WORD sel, LDT_ENTRY entry )
  *           get_thread_ldt_entry
  */
 NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-
-/******************************************************************************
- *           NtSetLdtEntries   (NTDLL.@)
- *           ZwSetLdtEntries   (NTDLL.@)
- */
-NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 )
 {
     return STATUS_NOT_IMPLEMENTED;
 }
@@ -2504,11 +2491,7 @@ NTSTATUS signal_alloc_thread( TEB *teb )
     {
         if (!fs32_sel)
         {
-            sigset_t sigset;
-
-            server_enter_uninterrupted_section( &ldt_mutex, &sigset );
             thread_data->fs = ldt_alloc_entry( ldt_make_fs32_entry( wow_teb ));
-            server_leave_uninterrupted_section( &ldt_mutex, &sigset );
             if (!thread_data->fs) return STATUS_TOO_MANY_THREADS;
         }
         else thread_data->fs = fs32_sel;
@@ -2524,14 +2507,8 @@ NTSTATUS signal_alloc_thread( TEB *teb )
 void signal_free_thread( TEB *teb )
 {
     struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&teb->GdiTebBatch;
-    sigset_t sigset;
 
-    if (teb->WowTebOffset && !fs32_sel)
-    {
-        server_enter_uninterrupted_section( &ldt_mutex, &sigset );
-        ldt_free_entry( thread_data->fs );
-        server_leave_uninterrupted_section( &ldt_mutex, &sigset );
-    }
+    if (teb->WowTebOffset && !fs32_sel) ldt_free_entry( thread_data->fs );
 }
 
 #ifdef __APPLE__
