@@ -2818,6 +2818,16 @@ static void d3dx_compress_block(enum d3dx_pixel_format_id fmt, uint8_t *block_bu
             stb_compress_dxt_block(dst_buf, block_buf, TRUE, 0);
             break;
 
+        case D3DX_PIXEL_FORMAT_BC4_UNORM:
+        case D3DX_PIXEL_FORMAT_BC4_SNORM:
+            stb_compress_bc4_block(dst_buf, block_buf);
+            break;
+
+        case D3DX_PIXEL_FORMAT_BC5_UNORM:
+        case D3DX_PIXEL_FORMAT_BC5_SNORM:
+            stb_compress_bc5_block(dst_buf, block_buf);
+            break;
+
         default:
             assert(0);
             break;
@@ -2845,6 +2855,22 @@ static HRESULT d3dx_pixels_compress(struct d3dx_pixels *src_pixels,
         case D3DX_PIXEL_FORMAT_DXT4_UNORM:
         case D3DX_PIXEL_FORMAT_DXT5_UNORM:
             assert(src_desc->format == D3DX_PIXEL_FORMAT_R8G8B8A8_UNORM);
+            break;
+
+        case D3DX_PIXEL_FORMAT_BC4_UNORM:
+            assert(src_desc->format == D3DX_PIXEL_FORMAT_R8_UNORM);
+            break;
+
+        case D3DX_PIXEL_FORMAT_BC4_SNORM:
+            assert(src_desc->format == D3DX_PIXEL_FORMAT_R8_SNORM);
+            break;
+
+        case D3DX_PIXEL_FORMAT_BC5_UNORM:
+            assert(src_desc->format == D3DX_PIXEL_FORMAT_R8G8_UNORM);
+            break;
+
+        case D3DX_PIXEL_FORMAT_BC5_SNORM:
+            assert(src_desc->format == D3DX_PIXEL_FORMAT_R8G8_SNORM);
             break;
 
         default:
