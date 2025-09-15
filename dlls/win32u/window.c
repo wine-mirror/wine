@@ -353,6 +353,18 @@ void client_surface_present( struct client_surface *surface )
     pthread_mutex_unlock( &surfaces_lock );
 }
 
+BOOL is_client_surface_window( struct client_surface *surface, HWND hwnd )
+{
+    BOOL ret;
+
+    if (!surface) return FALSE;
+    pthread_mutex_lock( &surfaces_lock );
+    ret = surface->hwnd == hwnd;
+    pthread_mutex_unlock( &surfaces_lock );
+
+    return ret;
+}
+
 /*******************************************************************
  *           get_hwnd_message_parent
  *

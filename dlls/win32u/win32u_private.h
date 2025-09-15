@@ -286,6 +286,7 @@ extern HWND window_from_point( HWND hwnd, POINT pt, INT *hittest );
 extern HWND get_shell_window(void);
 extern HWND get_progman_window(void);
 extern HWND get_taskman_window(void);
+extern BOOL is_client_surface_window( struct client_surface *surface, HWND hwnd );
 
 /* to release pointers retrieved by win_get_ptr */
 static inline void release_win_ptr( struct tagWND *ptr )
