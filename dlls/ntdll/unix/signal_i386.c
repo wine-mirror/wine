@@ -2336,31 +2336,18 @@ NTSTATUS signal_alloc_thread( TEB *teb )
 
     if (!gdt_fs_sel)
     {
-        static int first_thread = 1;
         sigset_t sigset;
         int idx;
-        LDT_ENTRY entry = ldt_make_fs32_entry( teb );
 
-        if (first_thread)  /* no locking for first thread */
+        server_enter_uninterrupted_section( &ldt_mutex, &sigset );
+        for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
         {
-            /* leave some space if libc is using the LDT for %gs */
-            if (!is_gdt_sel( get_gs() )) first_ldt_entry = 512;
-            idx = first_ldt_entry;
-            ldt_set_entry( (idx << 3) | 7, entry );
-            first_thread = 0;
+            if (__wine_ldt_copy.flags[idx]) continue;
+            ldt_set_entry( (idx << 3) | 7, ldt_make_fs32_entry( teb ));
+            break;
         }
-        else
-        {
-            server_enter_uninterrupted_section( &ldt_mutex, &sigset );
-            for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
-            {
-                if (__wine_ldt_copy.flags[idx]) continue;
-                ldt_set_entry( (idx << 3) | 7, entry );
-                break;
-            }
-            server_leave_uninterrupted_section( &ldt_mutex, &sigset );
-            if (idx == LDT_SIZE) return STATUS_TOO_MANY_THREADS;
-        }
+        server_leave_uninterrupted_section( &ldt_mutex, &sigset );
+        if (idx == LDT_SIZE) return STATUS_TOO_MANY_THREADS;
         thread_data->fs = (idx << 3) | 7;
     }
     else thread_data->fs = gdt_fs_sel;
@@ -2400,9 +2387,13 @@ void signal_init_process(void)
     frame_size = offsetof( struct syscall_frame, xstate ) + xstate_size;
 
     thread_data->syscall_frame = (struct syscall_frame *)(((ULONG_PTR)kernel_stack - frame_size) & ~(ULONG_PTR)63);
-    x86_thread_data()->frame_size = frame_size;
 
     xstate_extended_features = user_shared_data->XState.EnabledFeatures & ~(UINT64)3;
+
+    /* leave some space if libc is using the LDT for %gs */
+    if (!gdt_fs_sel && !is_gdt_sel( get_gs() )) first_ldt_entry = 512;
+
+    signal_alloc_thread( NtCurrentTeb() );
 
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;

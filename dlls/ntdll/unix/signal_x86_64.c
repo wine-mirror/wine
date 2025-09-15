@@ -115,6 +115,7 @@ __ASM_GLOBAL_FUNC( alloc_fs_sel,
                    "int $0x80\n\t"
                    /* restore stack */
                    "movl (%rsp),%eax\n\t"     /* entry_number */
+                   "leal 0x3(,%eax,8),%eax\n\t"  /* make GDT selector */
                    "movq %r12,%rsp\n\t"
                    "popq %r12\n\t"
                    "popq %rbx\n\t"
@@ -2578,7 +2579,6 @@ void signal_init_process(void)
     frame_size = offsetof( struct syscall_frame, xstate ) + xstate_size;
 
     thread_data->syscall_frame = (struct syscall_frame *)(((ULONG_PTR)kernel_stack - frame_size) & ~(ULONG_PTR)63);
-    amd64_thread_data()->frame_size = frame_size;
 
     /* sneak in a syscall dispatcher pointer at a fixed address (7ffe1000) */
     ptr = (char *)user_shared_data + page_size;
@@ -2587,41 +2587,18 @@ void signal_init_process(void)
 
     xstate_extended_features = user_shared_data->XState.EnabledFeatures & ~(UINT64)3;
 
+    if (wow_teb)
+    {
 #ifdef __linux__
-    if (wow_teb)
-    {
-        int sel = alloc_fs_sel( -1, wow_teb );
-
         cs32_sel = 0x23;
-        if (sel != -1) amd64_thread_data()->fs = fs32_sel = (sel << 3) | 3;
-        else ERR_(seh)( "failed to allocate %%fs selector\n" );
-    }
+        fs32_sel = alloc_fs_sel( -1, wow_teb );
 #elif defined(__APPLE__)
-    if (wow_teb)
-    {
-        LDT_ENTRY cs32_entry, fs32_entry;
-        int idx;
-
-        cs32_entry = ldt_make_cs32_entry();
-        fs32_entry = ldt_make_fs32_entry( wow_teb );
-
-        for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
-        {
-            if (__wine_ldt_copy.flags[idx]) continue;
-            cs32_sel = (idx << 3) | 7;
-            ldt_set_entry( cs32_sel, cs32_entry );
-            break;
-        }
-
-        for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
-        {
-            if (__wine_ldt_copy.flags[idx]) continue;
-            amd64_thread_data()->fs = (idx << 3) | 7;
-            ldt_set_entry( amd64_thread_data()->fs, fs32_entry );
-            break;
-        }
-    }
+        cs32_sel = (first_ldt_entry << 3) | 7;
+        ldt_set_entry( cs32_sel, ldt_make_cs32_entry() );
 #endif
+    }
+
+    signal_alloc_thread( NtCurrentTeb() );
 
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;

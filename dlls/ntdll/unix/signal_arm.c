@@ -1090,6 +1090,8 @@ void signal_init_process(void)
 
     thread_data->syscall_frame = (struct syscall_frame *)kernel_stack - 1;
 
+    signal_alloc_thread( NtCurrentTeb() );
+
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
 
