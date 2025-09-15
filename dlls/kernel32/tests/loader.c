@@ -3405,10 +3405,9 @@ static void child_process(const char *dll_name, DWORD target_offset)
 
     trace("phase %d: writing %p at %#lx\n", test_dll_phase, dll_entry_point, target_offset);
 
-    if (pFlsAlloc)
+    if (pFlsAlloc && !NtCurrentTeb()->Peb->SparePointers[0] /* was FlsCallback */)
     {
-        fls_list_head = NtCurrentTeb()->Peb->FlsListHead.Flink ? &NtCurrentTeb()->Peb->FlsListHead
-                : NtCurrentTeb()->FlsSlots->fls_list_entry.Flink;
+        fls_list_head = NtCurrentTeb()->FlsSlots->fls_list_entry.Flink;
     }
 
     SetLastError(0xdeadbeef);

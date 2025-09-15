@@ -332,12 +332,9 @@ static void test_FiberLocalStorage(void)
         /* FLS limits are increased since Win10 18312. */
         ok(count && (count <= 127 || (count > 4000 && count < 4096)), "Got unexpected count %u.\n", count);
 
-        if (!peb->FlsCallback)
+        if (!peb->SparePointers[0] /* was FlsCallback */)
         {
             ok(pRtlFlsSetValue && pRtlFlsGetValue, "Missing RtlFlsGetValue / RtlFlsSetValue.\n");
-            ok(!peb->FlsBitmap, "Got unexpected FlsBitmap %p.\n", peb->FlsBitmap);
-            ok(!peb->FlsListHead.Flink && !peb->FlsListHead.Blink, "Got nonzero FlsListHead.\n");
-            ok(!peb->FlsHighIndex, "Got unexpected FlsHighIndex %lu.\n", peb->FlsHighIndex);
 
             fls_list_head = fls_data->fls_list_entry.Flink;
 
@@ -535,7 +532,7 @@ static void test_FiberLocalStorage(void)
             ok(!status, "Got unexpected status %#lx, i %u.\n", status, i);
         }
 
-        if (!peb->FlsCallback)
+        if (g_fls_data)
         {
             ok(g_fls_data->fls_high_index == 0xfef, "Got unexpected fls_high_index %#lx.\n",
                     g_fls_data->fls_high_index);

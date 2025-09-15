@@ -465,17 +465,15 @@ typedef struct _PEB
     PVOID                        SystemDefaultActivationData;       /* 200/308 */
     PVOID                        SystemAssemblyStorageMap;          /* 204/310 */
     SIZE_T                       MinimumStackCommit;                /* 208/318 */
-    PVOID                       *FlsCallback;                       /* 20c/320 */
-    LIST_ENTRY                   FlsListHead;                       /* 210/328 */
-    union
-    {
-        PRTL_BITMAP              FlsBitmap;                         /* 218/338 */
-#ifdef _WIN64
-        CHPEV2_PROCESS_INFO     *ChpeV2ProcessInfo;                 /*    /338 */
-#endif
-    };
-    ULONG                        FlsBitmapBits[4];                  /* 21c/340 */
-    ULONG                        FlsHighIndex;                      /* 22c/350 */
+    PVOID                        SparePointers[2];                  /* 20c/320 */
+    PVOID                        PatchLoaderData;                   /* 214/330 */
+    CHPEV2_PROCESS_INFO         *ChpeV2ProcessInfo;                 /* 218/338 */
+    ULONG                        AppModelFeatureState;              /* 21c/340 */
+    ULONG                        SpareUlongs[2];                    /* 220/344 */
+    USHORT                       ActiveCodePage;                    /* 228/34c */
+    USHORT                       OemCodePage;                       /* 22a/34e */
+    USHORT                       UseCaseMapping;                    /* 22c/350 */
+    USHORT                       UnusedNlsField;                    /* 22e/352 */
     PVOID                        WerRegistrationData;               /* 230/358 */
     PVOID                        WerShipAssertPtr;                  /* 234/360 */
     PVOID                        EcCodeBitMap;                      /* 238/368 */
@@ -933,11 +931,15 @@ typedef struct _PEB32
     ULONG                        SystemDefaultActivationData;       /* 0200 */
     ULONG                        SystemAssemblyStorageMap;          /* 0204 */
     ULONG                        MinimumStackCommit;                /* 0208 */
-    ULONG                        FlsCallback;                       /* 020c */
-    LIST_ENTRY32                 FlsListHead;                       /* 0210 */
-    ULONG                        FlsBitmap;                         /* 0218 */
-    ULONG                        FlsBitmapBits[4];                  /* 021c */
-    ULONG                        FlsHighIndex;                      /* 022c */
+    ULONG                        SparePointers[2];                  /* 020c */
+    ULONG                        PatchLoaderData;                   /* 0214 */
+    ULONG                        ChpeV2ProcessInfo;                 /* 0218 */
+    ULONG                        AppModelFeatureState;              /* 021c */
+    ULONG                        SpareUlongs[2];                    /* 0220 */
+    USHORT                       ActiveCodePage;                    /* 0228 */
+    USHORT                       OemCodePage;                       /* 022a */
+    USHORT                       UseCaseMapping;                    /* 022c */
+    USHORT                       UnusedNlsField;                    /* 022e */
     ULONG                        WerRegistrationData;               /* 0230 */
     ULONG                        WerShipAssertPtr;                  /* 0234 */
     ULONG                        pUnused;                           /* 0238 */
@@ -1043,15 +1045,15 @@ typedef struct _PEB64
     ULONG64                      SystemDefaultActivationData;       /* 0308 */
     ULONG64                      SystemAssemblyStorageMap;          /* 0310 */
     ULONG64                      MinimumStackCommit;                /* 0318 */
-    ULONG64                      FlsCallback;                       /* 0320 */
-    LIST_ENTRY64                 FlsListHead;                       /* 0328 */
-    union
-    {
-        ULONG64                  FlsBitmap;                         /* 0338 */
-        ULONG64                  ChpeV2ProcessInfo;                 /* 0338 */
-    };
-    ULONG                        FlsBitmapBits[4];                  /* 0340 */
-    ULONG                        FlsHighIndex;                      /* 0350 */
+    ULONG64                      SparePointers[2];                  /* 0320 */
+    ULONG64                      PatchLoaderData;                   /* 0330 */
+    ULONG64                      ChpeV2ProcessInfo;                 /* 0338 */
+    ULONG                        AppModelFeatureState;              /* 0340 */
+    ULONG                        SpareUlongs[2];                    /* 0344 */
+    USHORT                       ActiveCodePage;                    /* 034c */
+    USHORT                       OemCodePage;                       /* 034e */
+    USHORT                       UseCaseMapping;                    /* 0350 */
+    USHORT                       UnusedNlsField;                    /* 0352 */
     ULONG64                      WerRegistrationData;               /* 0358 */
     ULONG64                      WerShipAssertPtr;                  /* 0360 */
     ULONG64                      pUnused;                           /* 0368 */
