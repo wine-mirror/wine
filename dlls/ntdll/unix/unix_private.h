@@ -599,7 +599,6 @@ static inline NTSTATUS map_section( HANDLE mapping, void **ptr, SIZE_T *size, UL
 #define LDT_FLAGS_DATA      0x13  /* Data segment */
 #define LDT_FLAGS_CODE      0x1b  /* Code segment */
 #define LDT_FLAGS_32BIT     0x40  /* Segment is 32-bit (code or stack) */
-#define LDT_FLAGS_ALLOCATED 0x80  /* Segment is allocated */
 
 struct ldt_copy
 {
@@ -608,6 +607,10 @@ struct ldt_copy
     unsigned char flags[LDT_SIZE];
 };
 extern struct ldt_copy __wine_ldt_copy;
+extern UINT ldt_bitmap[LDT_SIZE / 32];
+
+extern void ldt_set_entry( WORD sel, LDT_ENTRY entry );
+extern WORD ldt_update_entry( WORD sel, LDT_ENTRY entry );
 
 static const LDT_ENTRY null_entry;
 
@@ -644,15 +647,22 @@ static inline LDT_ENTRY ldt_make_entry( unsigned int base, unsigned int limit, u
     return entry;
 }
 
-static inline void update_ldt_copy( WORD sel, LDT_ENTRY entry )
+static inline WORD ldt_alloc_entry( LDT_ENTRY entry )
+{
+    int idx;
+    for (idx = 0; idx < ARRAY_SIZE(ldt_bitmap); idx++)
+    {
+        if (ldt_bitmap[idx] == ~0u) continue;
+        idx = idx * 32 + ffs( ~ldt_bitmap[idx] ) - 1;
+        return ldt_update_entry( (idx << 3) | 7, entry );
+    }
+    return 0;
+}
+
+static inline void ldt_free_entry( WORD sel )
 {
     unsigned int index = sel >> 3;
-
-    __wine_ldt_copy.base[index]  = ldt_get_base( entry );
-    __wine_ldt_copy.limit[index] = ldt_get_limit( entry );
-    __wine_ldt_copy.flags[index] = (entry.HighWord.Bits.Type |
-                                    (entry.HighWord.Bits.Default_Big ? LDT_FLAGS_32BIT : 0) |
-                                    LDT_FLAGS_ALLOCATED);
+    ldt_bitmap[index / 32] &= ~(1u << (index & 31));
 }
 
 static inline LDT_ENTRY ldt_make_cs32_entry(void)

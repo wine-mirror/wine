@@ -4162,6 +4162,31 @@ void virtual_free_teb( TEB *teb )
 }
 
 
+/* LDT support */
+
+#if defined(__i386__) || defined(__x86_64__)
+
+struct ldt_copy __wine_ldt_copy = { 0 };
+UINT ldt_bitmap[LDT_SIZE / 32] = { ~0u };
+
+/***********************************************************************
+ *           ldt_update_entry
+ */
+WORD ldt_update_entry( WORD sel, LDT_ENTRY entry )
+{
+    unsigned int index = sel >> 3;
+
+    ldt_set_entry( sel, entry );
+    __wine_ldt_copy.base[index]  = ldt_get_base( entry );
+    __wine_ldt_copy.limit[index] = ldt_get_limit( entry );
+    __wine_ldt_copy.flags[index] = (entry.HighWord.Bits.Type |
+                                    (entry.HighWord.Bits.Default_Big ? LDT_FLAGS_32BIT : 0));
+    ldt_bitmap[index / 32] |= 1u << (index & 31);
+    return sel;
+}
+
+#endif /* defined(__i386__) || defined(__x86_64__) */
+
 /***********************************************************************
  *           virtual_clear_tls_index
  */

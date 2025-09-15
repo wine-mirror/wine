@@ -2450,12 +2450,9 @@ static void sigsys_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  *           LDT support
  */
 
-struct ldt_copy __wine_ldt_copy;
-
-static ULONG first_ldt_entry = 32;
 static pthread_mutex_t ldt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static void ldt_set_entry( WORD sel, LDT_ENTRY entry )
+void ldt_set_entry( WORD sel, LDT_ENTRY entry )
 {
 #if defined(__APPLE__)
     if (i386_set_ldt(sel >> 3, (union ldt_entry *)&entry, 1) < 0) perror("i386_set_ldt");
@@ -2463,7 +2460,6 @@ static void ldt_set_entry( WORD sel, LDT_ENTRY entry )
     fprintf( stderr, "No LDT support on this platform\n" );
     exit(1);
 #endif
-    update_ldt_copy( sel, entry );
 }
 
 
@@ -2509,19 +2505,11 @@ NTSTATUS signal_alloc_thread( TEB *teb )
         if (!fs32_sel)
         {
             sigset_t sigset;
-            int idx;
-            LDT_ENTRY entry = ldt_make_fs32_entry( wow_teb );
 
             server_enter_uninterrupted_section( &ldt_mutex, &sigset );
-            for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
-            {
-                if (__wine_ldt_copy.flags[idx]) continue;
-                ldt_set_entry( (idx << 3) | 7, entry );
-                break;
-            }
+            thread_data->fs = ldt_alloc_entry( ldt_make_fs32_entry( wow_teb ));
             server_leave_uninterrupted_section( &ldt_mutex, &sigset );
-            if (idx == LDT_SIZE) return STATUS_TOO_MANY_THREADS;
-            thread_data->fs = (idx << 3) | 7;
+            if (!thread_data->fs) return STATUS_TOO_MANY_THREADS;
         }
         else thread_data->fs = fs32_sel;
     }
@@ -2541,7 +2529,7 @@ void signal_free_thread( TEB *teb )
     if (teb->WowTebOffset && !fs32_sel)
     {
         server_enter_uninterrupted_section( &ldt_mutex, &sigset );
-        __wine_ldt_copy.flags[thread_data->fs >> 3] = 0;
+        ldt_free_entry( thread_data->fs );
         server_leave_uninterrupted_section( &ldt_mutex, &sigset );
     }
 }
@@ -2593,8 +2581,7 @@ void signal_init_process(void)
         cs32_sel = 0x23;
         fs32_sel = alloc_fs_sel( -1, wow_teb );
 #elif defined(__APPLE__)
-        cs32_sel = (first_ldt_entry << 3) | 7;
-        ldt_set_entry( cs32_sel, ldt_make_cs32_entry() );
+        cs32_sel = ldt_alloc_entry( ldt_make_cs32_entry() );
 #endif
     }
 
