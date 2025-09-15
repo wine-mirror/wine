@@ -346,6 +346,12 @@ struct dwrite_fontcollection
     struct dwrite_fontfamily_data **family_data;
     size_t size;
     size_t count;
+
+    struct
+    {
+        struct dwrite_fontset_entry **entries;
+        unsigned int count;
+    } set;
 };
 
 struct dwrite_fontfamily
@@ -509,6 +515,12 @@ struct dwrite_fontset_builder
 
 static HRESULT fontset_create_from_font_data(IDWriteFactory7 *factory, struct dwrite_font_data **fonts,
         unsigned int count, IDWriteFontSet1 **ret);
+
+static struct dwrite_fontset_entry * addref_fontset_entry(struct dwrite_fontset_entry *entry)
+{
+    InterlockedIncrement(&entry->refcount);
+    return entry;
+}
 
 static void dwrite_grab_font_table(void *context, UINT32 table, const BYTE **data, UINT32 *size, void **data_context)
 {
@@ -3264,6 +3276,8 @@ static ULONG WINAPI dwritefontcollection_Release(IDWriteFontCollection3 *iface)
         factory_detach_fontcollection(collection->factory, iface);
         for (i = 0; i < collection->count; ++i)
             release_fontfamily_data(collection->family_data[i]);
+        for (i = 0; i < collection->set.count; ++i)
+            release_fontset_entry(collection->set.entries[i]);
         free(collection->family_data);
         free(collection);
     }
@@ -3397,6 +3411,12 @@ static HRESULT fontset_create_from_font_collection(struct dwrite_fontcollection 
     HRESULT hr;
 
     *fontset = NULL;
+
+    /* TODO: create a set for EUDC collection to have a single path for all collection types */
+
+    if (collection->set.count)
+        return fontset_create_from_set(collection->factory, collection->set.entries,
+                collection->set.count, FALSE, (IDWriteFontSet **)fontset);
 
     for (i = 0; i < collection->count; ++i)
         count += collection->family_data[i]->count;
@@ -4775,13 +4795,22 @@ HRESULT create_font_collection_from_set(IDWriteFactory7 *factory, IDWriteFontSet
     if (!(collection = calloc(1, sizeof(*collection))))
         return E_OUTOFMEMORY;
 
+    if (!(collection->set.entries = calloc(set->count, sizeof(*collection->set.entries))))
+    {
+        free(collection);
+        return E_OUTOFMEMORY;
+    }
+
     init_font_collection(collection, factory, family_model);
 
+    collection->set.count = set->count;
     for (i = 0; i < set->count; ++i)
     {
         const struct dwrite_fontset_entry *entry = set->entries[i];
         IDWriteFontFileStream *stream;
         struct fontface_desc desc;
+
+        collection->set.entries[i] = addref_fontset_entry(set->entries[i]);
 
         if (FAILED(get_filestream_from_file(entry->file, &stream)))
         {
@@ -7385,12 +7414,6 @@ void release_fontset_entry(struct dwrite_fontset_entry *entry)
             IDWriteLocalizedStrings_Release(entry->props[i]);
     }
     free(entry);
-}
-
-static struct dwrite_fontset_entry * addref_fontset_entry(struct dwrite_fontset_entry *entry)
-{
-    InterlockedIncrement(&entry->refcount);
-    return entry;
 }
 
 HRESULT fontset_builder_get_entries(IDWriteFontSetBuilder2 *iface, struct dwrite_fontset_entry ***ret,
