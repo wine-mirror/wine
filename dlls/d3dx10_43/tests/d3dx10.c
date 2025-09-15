@@ -1579,7 +1579,7 @@ static void check_texture2d_data(ID3D10Texture2D *texture, const struct test_ima
         {
             line_match = !memcmp(expected_data + stride * i,
                     (BYTE *)map.pData + map.RowPitch * i, stride);
-            todo_wine_if(is_block_compressed(image->expected_info.Format)
+            todo_wine_if(is_block_compressed(image->expected_info.Format) && image->data != test_dds_dxt5
                     && (image->expected_info.Width % 4 != 0 || image->expected_info.Height % 4 != 0))
                 ok_(__FILE__, line)(line_match, "Data mismatch for line %u, array slice %u.\n", i, array_slice);
             if (!line_match)

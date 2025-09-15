@@ -383,7 +383,7 @@ static HRESULT dds_pixel_format_from_d3dx_pixel_format_id(struct dds_pixel_forma
     return D3D_OK;
 }
 
-static enum d3dx_pixel_format_id d3dx_pixel_format_id_from_dxgi_format(DXGI_FORMAT format)
+enum d3dx_pixel_format_id d3dx_pixel_format_id_from_dxgi_format(uint32_t format)
 {
     switch (format)
     {
@@ -423,7 +423,7 @@ static enum d3dx_pixel_format_id d3dx_pixel_format_id_from_dxgi_format(DXGI_FORM
     }
 }
 
-static void d3dx_get_next_mip_level_size(struct volume *size)
+void d3dx_get_next_mip_level_size(struct volume *size)
 {
     size->width  = max(size->width  / 2, 1);
     size->height = max(size->height / 2, 1);
@@ -437,7 +437,7 @@ static const char *debug_volume(const struct volume *volume)
     return wine_dbg_sprintf("(%ux%ux%u)", volume->width, volume->height, volume->depth);
 }
 
-static HRESULT d3dx_calculate_pixels_size(enum d3dx_pixel_format_id format, uint32_t width, uint32_t height,
+HRESULT d3dx_calculate_pixels_size(enum d3dx_pixel_format_id format, uint32_t width, uint32_t height,
     uint32_t *pitch, uint32_t *size)
 {
     const struct pixel_format_desc *format_desc = get_d3dx_pixel_format_info(format);
@@ -1188,9 +1188,16 @@ static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src
     expected_src_data_size = (image->layer_pitch * image->layer_count) + header_size;
     if (src_data_size < expected_src_data_size)
     {
+        const uint32_t dxt10_info_only_flags = D3DX_IMAGE_INFO_ONLY | D3DX_IMAGE_SUPPORT_DXT10;
+
         WARN("File is too short %u, expected at least %u bytes.\n", src_data_size, expected_src_data_size);
-        /* D3DX10/D3DX11 do not validate the size of the pixels, only the header. */
-        if (!(flags & D3DX_IMAGE_SUPPORT_DXT10))
+        /*
+         * D3DX10/D3DX11 do not validate the size of the pixels, only the header.
+         * This is safe if we're only getting image info, but we should avoid
+         * matching native behavior here when loading image data until we have
+         * a reason to do otherwise.
+         */
+        if ((flags & dxt10_info_only_flags) != dxt10_info_only_flags)
             return D3DXERR_INVALIDDATA;
     }
 

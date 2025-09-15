@@ -399,6 +399,10 @@ void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *sr
         struct d3dx_color *dst);
 void format_from_d3dx_color(const struct pixel_format_desc *format, const struct d3dx_color *src, BYTE *dst);
 
+enum d3dx_pixel_format_id d3dx_pixel_format_id_from_dxgi_format(uint32_t format);
+void d3dx_get_next_mip_level_size(struct volume *size);
+HRESULT d3dx_calculate_pixels_size(enum d3dx_pixel_format_id format, uint32_t width, uint32_t height,
+    uint32_t *pitch, uint32_t *size);
 uint32_t d3dx_calculate_layer_pixels_size(enum d3dx_pixel_format_id format, uint32_t width, uint32_t height,
         uint32_t depth, uint32_t mip_levels);
 HRESULT d3dx_init_dds_header(struct dds_header *header, enum d3dx_resource_type resource_type,
