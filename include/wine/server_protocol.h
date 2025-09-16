@@ -1026,11 +1026,14 @@ typedef volatile struct
 {
     atom_t               atom;
     unsigned int         style;
+    unsigned int         cls_extra;
     unsigned int         win_extra;
     mod_handle_t         instance;
     data_size_t          name_offset;
     data_size_t          name_len;
     WCHAR                name[MAX_ATOM_LEN];
+    unsigned short       __pad;
+    char                 extra[];
 } class_shm_t;
 
 typedef volatile struct
@@ -4490,12 +4493,11 @@ struct create_class_request
     atom_t         atom;
     unsigned int   style;
     mod_handle_t   instance;
-    int            extra;
-    int            win_extra;
     client_ptr_t   client_ptr;
+    short int      cls_extra;
+    short int      win_extra;
     data_size_t    name_offset;
     /* VARARG(name,unicode_str); */
-    char __pad_52[4];
 };
 struct create_class_reply
 {
@@ -7019,6 +7021,6 @@ union generic_reply
     struct d3dkmt_object_open_name_reply d3dkmt_object_open_name_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 918
+#define SERVER_PROTOCOL_VERSION 919
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -554,7 +554,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
         req->local      = class->local;
         req->style      = wc->style;
         req->instance   = wine_server_client_ptr( instance );
-        req->extra      = class->cbClsExtra;
+        req->cls_extra  = class->cbClsExtra;
         req->win_extra  = wc->cbWndExtra;
         req->client_ptr = wine_server_client_ptr( class );
         req->atom       = wine_server_add_atom( req, name );

@@ -2376,9 +2376,9 @@ static void dump_create_class_request( const struct create_class_request *req )
     fprintf( stderr, ", atom=%04x", req->atom );
     fprintf( stderr, ", style=%08x", req->style );
     dump_uint64( ", instance=", &req->instance );
-    fprintf( stderr, ", extra=%d", req->extra );
-    fprintf( stderr, ", win_extra=%d", req->win_extra );
     dump_uint64( ", client_ptr=", &req->client_ptr );
+    fprintf( stderr, ", cls_extra=%d", req->cls_extra );
+    fprintf( stderr, ", win_extra=%d", req->win_extra );
     fprintf( stderr, ", name_offset=%u", req->name_offset );
     dump_varargs_unicode_str( ", name=", cur_size );
 }

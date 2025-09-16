@@ -1042,11 +1042,14 @@ typedef volatile struct
 {
     atom_t               atom;               /* class atom */
     unsigned int         style;              /* class style */
+    unsigned int         cls_extra;          /* number of class extra bytes */
     unsigned int         win_extra;          /* number of window extra bytes */
     mod_handle_t         instance;           /* module instance */
     data_size_t          name_offset;        /* offset in WCHAR of the unversioned class name, constant */
     data_size_t          name_len;           /* len in bytes of the class name, constant */
     WCHAR                name[MAX_ATOM_LEN]; /* class name, constant */
+    unsigned short       __pad;
+    char                 extra[];            /* extra bytes storage */
 } class_shm_t;
 
 typedef volatile struct
@@ -3252,9 +3255,9 @@ enum caret_state
     atom_t         atom;           /* class atom */
     unsigned int   style;          /* class style */
     mod_handle_t   instance;       /* module instance */
-    int            extra;          /* number of extra class bytes */
-    int            win_extra;      /* number of window extra bytes */
     client_ptr_t   client_ptr;     /* pointer to class in client address space */
+    short int      cls_extra;      /* number of extra class bytes */
+    short int      win_extra;      /* number of window extra bytes */
     data_size_t    name_offset;    /* base class name offset for specified atom */
     VARARG(name,unicode_str);      /* class name */
 @REPLY

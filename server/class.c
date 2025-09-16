@@ -49,24 +49,22 @@ struct window_class
     atom_t              atom;            /* class atom for versioned class */
     client_ptr_t        client_ptr;      /* pointer to class in client address space */
     class_shm_t        *shared;          /* class in session shared memory */
-    int                 nb_extra_bytes;  /* number of extra bytes */
-    char                extra_bytes[1];  /* extra bytes storage */
 };
 
-static struct window_class *create_class( struct process *process, int extra_bytes, int local, struct unicode_str *name, unsigned int name_offset,
-                                          atom_t atom, mod_handle_t instance, unsigned int style, int win_extra )
+C_ASSERT( sizeof(class_shm_t) == offsetof(class_shm_t, extra[0]) );
+
+static struct window_class *create_class( struct process *process, int local, struct unicode_str *name, unsigned int name_offset,
+                                          atom_t atom, mod_handle_t instance, unsigned int style, int cls_extra, int win_extra )
 {
     struct window_class *class;
 
-    if (!(class = mem_alloc( sizeof(*class) + extra_bytes - 1 ))) return NULL;
+    if (!(class = mem_alloc( sizeof(*class) ))) return NULL;
 
     class->process = (struct process *)grab_object( process );
     class->count = 0;
     class->local = local;
-    class->nb_extra_bytes = extra_bytes;
-    memset( class->extra_bytes, 0, extra_bytes );
 
-    if (!(class->shared = alloc_shared_object( sizeof(*class->shared) ))) goto failed;
+    if (!(class->shared = alloc_shared_object( offsetof(class_shm_t, extra[cls_extra]) ))) goto failed;
     SHARED_WRITE_BEGIN( class->shared, class_shm_t )
     {
         memcpy( (void *)shared->name, name->str, name->len );
@@ -76,6 +74,8 @@ static struct window_class *create_class( struct process *process, int extra_byt
         shared->instance     = instance;
         shared->style        = style;
         shared->win_extra    = win_extra;
+        shared->cls_extra    = cls_extra;
+        memset( (void *)shared->extra, 0, cls_extra );
     }
     SHARED_WRITE_END;
 
@@ -230,7 +230,7 @@ DECL_HANDLER(create_class)
         release_atom( table, base_atom );
         return;
     }
-    if (req->extra < 0 || req->extra > 4096 || req->win_extra < 0 || req->win_extra > 4096)
+    if (req->cls_extra < 0 || req->cls_extra > 4096 || req->win_extra < 0 || req->win_extra > 4096)
     {
         /* don't allow stupid values here */
         set_error( STATUS_INVALID_PARAMETER );
@@ -239,8 +239,8 @@ DECL_HANDLER(create_class)
         return;
     }
 
-    if (!(class = create_class( current->process, req->extra, req->local, &name, offset,
-                                base_atom, req->instance, req->style, req->win_extra )))
+    if (!(class = create_class( current->process, req->local, &name, offset, base_atom,
+                                req->instance, req->style, req->cls_extra, req->win_extra )))
     {
         release_atom( table, atom );
         release_atom( table, base_atom );
@@ -313,13 +313,13 @@ DECL_HANDLER(set_class_info)
             break;
         default:
             if (req->size > sizeof(req->new_info) || req->offset < 0 ||
-                req->offset > class->nb_extra_bytes - (int)req->size)
+                req->offset > class->shared->cls_extra - (int)req->size)
             {
                 set_win32_error( ERROR_INVALID_INDEX );
                 return;
             }
-            memcpy( &reply->old_info, class->extra_bytes + req->offset, req->size );
-            memcpy( class->extra_bytes + req->offset, &req->new_info, req->size );
+            memcpy( &reply->old_info, (char *)shared->extra + req->offset, req->size );
+            memcpy( (char *)shared->extra + req->offset, &req->new_info, req->size );
             break;
         }
     }
@@ -345,15 +345,15 @@ DECL_HANDLER(get_class_info)
         /* not supported */
         set_win32_error( ERROR_INVALID_HANDLE );
         break;
-    case GCL_CBCLSEXTRA:     reply->info = class->nb_extra_bytes; break;
+    case GCL_CBCLSEXTRA:     reply->info = class->shared->cls_extra; break;
     default:
         if (req->size > sizeof(reply->info) || req->offset < 0 ||
-            req->offset > class->nb_extra_bytes - (int)req->size)
+            req->offset > class->shared->cls_extra - (int)req->size)
         {
             set_win32_error( ERROR_INVALID_INDEX );
             return;
         }
-        memcpy( &reply->info, class->extra_bytes + req->offset, req->size );
+        memcpy( &reply->info, (char *)class->shared->extra + req->offset, req->size );
         break;
     }
 }
