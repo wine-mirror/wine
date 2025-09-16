@@ -3814,6 +3814,8 @@ static void test_custom_lockbytes(void)
     HRESULT hr;
     IStorage* stg;
     IStream* stm;
+    BYTE invalid_data[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A };
+    ULARGE_INTEGER offset = {0};
 
     CreateTestLockBytes(&lockbytes);
 
@@ -3869,6 +3871,52 @@ static void test_custom_lockbytes(void)
     hr = StgCreateDocfileOnILockBytes(&lockbytes->ILockBytes_iface, STGM_CREATE|STGM_READWRITE|STGM_TRANSACTED, 0, &stg);
     ok(hr==STG_E_INVALIDFUNCTION, "StgCreateDocfileOnILockBytes failed %lx\n", hr);
 
+    DeleteTestLockBytes(lockbytes);
+
+    /*test empty lockbytes*/
+    CreateTestLockBytes(&lockbytes);
+
+    hr = StgOpenStorageOnILockBytes(&lockbytes->ILockBytes_iface, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, NULL, 0, &stg);
+    todo_wine ok(hr == STG_E_FILEALREADYEXISTS, "StgOpenStorageOnILockBytes on empty lockbytes failed: %lx\n", hr);
+
+    if (stg)
+        IStorage_Release(stg);
+    DeleteTestLockBytes(lockbytes);
+
+    /*test empty lockbytes with different mode*/
+    CreateTestLockBytes(&lockbytes);
+
+    hr = StgOpenStorageOnILockBytes(&lockbytes->ILockBytes_iface, NULL, STGM_READWRITE | STGM_SHARE_DENY_WRITE | STGM_TRANSACTED, NULL, 0, &stg);
+    todo_wine ok(hr == STG_E_FILEALREADYEXISTS, "StgOpenStorageOnILockBytes on empty lockbytes with different mode failed: %lx\n", hr);
+
+    if (stg)
+        IStorage_Release(stg);
+    DeleteTestLockBytes(lockbytes);
+
+    /*test invalid lockbytes*/
+    CreateTestLockBytes(&lockbytes);
+
+    hr = ILockBytes_WriteAt(&lockbytes->ILockBytes_iface, offset, invalid_data, sizeof(invalid_data), NULL);
+    ok(hr == S_OK, "ILockBytes_WriteAt failed: %lx\n", hr);
+
+    hr = StgOpenStorageOnILockBytes(&lockbytes->ILockBytes_iface, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, NULL, 0, &stg);
+    todo_wine ok(hr == STG_E_FILEALREADYEXISTS, "StgOpenStorageOnILockBytes on invalid lockbytes failed: %lx\n", hr);
+
+    if (stg)
+        IStorage_Release(stg);
+    DeleteTestLockBytes(lockbytes);
+
+    /*test invalid lockbytes with different mode*/
+    CreateTestLockBytes(&lockbytes);
+
+    hr = ILockBytes_WriteAt(&lockbytes->ILockBytes_iface, offset, invalid_data, sizeof(invalid_data), NULL);
+    ok(hr == S_OK, "ILockBytes_WriteAt failed: %lx\n", hr);
+
+    hr = StgOpenStorageOnILockBytes(&lockbytes->ILockBytes_iface, NULL, STGM_READWRITE | STGM_SHARE_DENY_WRITE | STGM_TRANSACTED, NULL, 0, &stg);
+    todo_wine ok(hr == STG_E_FILEALREADYEXISTS, "StgOpenStorageOnILockBytes on invalid lockbytes with different mode failed: %lx\n", hr);
+
+    if (stg)
+        IStorage_Release(stg);
     DeleteTestLockBytes(lockbytes);
 }
 
