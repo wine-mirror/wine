@@ -3762,6 +3762,8 @@ static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout
     unsigned int i;
     HRESULT hr;
 
+    memset(bbox, 0, sizeof(*bbox));
+
     if (run->bbox.top == run->bbox.bottom)
     {
         struct dwrite_glyphbitmap glyph_bitmap;
