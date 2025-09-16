@@ -2260,7 +2260,7 @@ static void test_ECDSA(void)
     BCRYPT_KEY_HANDLE key;
     NTSTATUS status;
     DWORD keylen;
-    ULONG size;
+    ULONG size, strength;
 
     status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDSA_P256_ALGORITHM, NULL, 0);
     ok(!status, "got %#lx\n", status);
@@ -2413,6 +2413,40 @@ static void test_ECDSA(void)
     ok(size == sizeof(*ecckey) + ecckey->cbKey * 3, "got %lu\n", size);
     ok(!memcmp(ecckey + 1, ecc521Privkey, ecckey->cbKey * 3), "Got unexpected key data.\n");
 
+    BCryptDestroyKey(key);
+    BCryptCloseAlgorithmProvider(alg, 0);
+
+    /* generic ECDSA provider */
+    status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDSA_ALGORITHM, NULL, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    status = BCryptGenerateKeyPair(alg, &key, 0, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    status = BCryptFinalizeKeyPair(key, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
+    BCryptDestroyKey(key);
+    BCryptCloseAlgorithmProvider(alg, 0);
+
+    status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDSA_ALGORITHM, NULL, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    status = BCryptSetProperty(alg, BCRYPT_ECC_CURVE_NAME, (UCHAR *)BCRYPT_ECC_CURVE_SECP256R1, sizeof(BCRYPT_ECC_CURVE_SECP256R1), 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    status = BCryptGenerateKeyPair(alg, &key, 255, 0);
+    todo_wine ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
+
+    status = BCryptGenerateKeyPair(alg, &key, 0, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    strength = 0;
+    status = BCryptGetProperty(key, BCRYPT_KEY_STRENGTH, (UCHAR *)&strength, sizeof(strength), &size, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok(strength == 256, "got %lu\n", strength);
+
+    status = BCryptFinalizeKeyPair(key, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
     BCryptDestroyKey(key);
     BCryptCloseAlgorithmProvider(alg, 0);
 }
@@ -3294,6 +3328,11 @@ derive_end:
 
 static void test_ECDH(void)
 {
+    BCRYPT_ALG_HANDLE alg;
+    BCRYPT_KEY_HANDLE key;
+    NTSTATUS status;
+    ULONG strength, size;
+
     static BYTE ecc256privkey[] =
     {
         0x45, 0x43, 0x4b, 0x32, 0x20, 0x00, 0x00, 0x00,
@@ -3428,6 +3467,40 @@ static void test_ECDH(void)
         test_ECDH_alg(&tests[i]);
         winetest_pop_context();
     }
+
+    /* generic ECDH provider */
+    status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDH_ALGORITHM, NULL, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    status = BCryptGenerateKeyPair(alg, &key, 0, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    status = BCryptFinalizeKeyPair(key, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
+    BCryptDestroyKey(key);
+    BCryptCloseAlgorithmProvider(alg, 0);
+
+    status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDH_ALGORITHM, NULL, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    status = BCryptSetProperty(alg, BCRYPT_ECC_CURVE_NAME, (UCHAR *)BCRYPT_ECC_CURVE_SECP256R1, sizeof(BCRYPT_ECC_CURVE_SECP256R1), 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    status = BCryptGenerateKeyPair(alg, &key, 255, 0);
+    todo_wine ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
+
+    status = BCryptGenerateKeyPair(alg, &key, 0, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    strength = 0;
+    status = BCryptGetProperty(key, BCRYPT_KEY_STRENGTH, (UCHAR *)&strength, sizeof(strength), &size, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok(strength == 256, "got %lu\n", strength);
+
+    status = BCryptFinalizeKeyPair(key, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    BCryptDestroyKey(key);
+    BCryptCloseAlgorithmProvider(alg, 0);
 }
 
 static BYTE dh_pubkey[] =
