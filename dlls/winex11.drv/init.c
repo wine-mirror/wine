@@ -320,6 +320,8 @@ static void client_surface_update_offscreen( HWND hwnd, struct x11drv_client_sur
     BOOL offscreen = needs_offscreen_rendering( hwnd );
     struct x11drv_win_data *data;
 
+    TRACE( "%s offscreen %u\n", debugstr_client_surface( &surface->client ), offscreen );
+
     if (InterlockedExchange( &surface->client.offscreen, offscreen ) == offscreen)
     {
         if (!offscreen && (data = get_win_data( hwnd )))
@@ -386,6 +388,8 @@ static void X11DRV_client_surface_present( struct client_surface *client, HDC hd
     Drawable window;
     HRGN region;
 
+    TRACE( "%s\n", debugstr_client_surface( client ) );
+
     client_surface_update_size( hwnd, surface );
     client_surface_update_offscreen( hwnd, surface );
 
@@ -433,6 +437,7 @@ Window x11drv_client_surface_create( HWND hwnd, const XVisualInfo *visual, Color
     }
     NtUserGetClientRect( hwnd, &surface->rect, NtUserGetDpiForWindow( hwnd ) );
 
+    TRACE( "Created %s for client window %lx\n", debugstr_client_surface( &surface->client ), surface->window );
     *client = &surface->client;
     return surface->window;
 }
