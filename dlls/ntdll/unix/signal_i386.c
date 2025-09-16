@@ -2235,42 +2235,76 @@ static void ldt_set_fs( WORD sel, TEB *teb )
  */
 NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len )
 {
+    THREAD_BASIC_INFORMATION tbi;
     THREAD_DESCRIPTOR_INFORMATION *info = data;
     unsigned int status = STATUS_SUCCESS;
+    TEB *teb = NtCurrentTeb();
 
     if (len != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
     if (info->Selector >> 16) return STATUS_UNSUCCESSFUL;
 
-    if (is_gdt_sel( info->Selector ))
+    if (handle == GetCurrentThread())
     {
-        if (!(info->Selector & ~3))
-            info->Entry = null_entry;
-        else if ((info->Selector | 3) == get_cs())
-            info->Entry = ldt_make_cs32_entry();
-        else if ((info->Selector | 3) == get_ds())
-            info->Entry = ldt_make_ds32_entry();
-        else if ((info->Selector | 3) == get_fs())
-            info->Entry = ldt_make_fs32_entry( NtCurrentTeb() );
-        else
-            return STATUS_UNSUCCESSFUL;
+        tbi.TebBaseAddress = teb;
+        tbi.ClientId = teb->ClientId;
     }
     else
     {
-        SERVER_START_REQ( get_selector_entry )
+        if ((status = NtQueryInformationThread( handle, ThreadBasicInformation, &tbi, sizeof(tbi), NULL )))
+            return status;
+    }
+
+    if (is_gdt_sel( info->Selector ))
+    {
+        if (!(info->Selector & ~3)) info->Entry = null_entry;
+        else if ((info->Selector | 3) == get_cs()) info->Entry = ldt_make_cs32_entry();
+        else if ((info->Selector | 3) == get_ds()) info->Entry = ldt_make_ds32_entry();
+        else if ((info->Selector | 3) == get_fs()) info->Entry = ldt_make_fs32_entry( tbi.TebBaseAddress );
+        else return STATUS_UNSUCCESSFUL;
+    }
+    else
+    {
+        HANDLE process;
+        struct ldt_copy *ldt_copy;
+        unsigned int base = 0, limit = 0;
+        unsigned char flags = 0;
+        unsigned int idx = info->Selector >> 3;
+
+        if (tbi.ClientId.UniqueProcess == teb->ClientId.UniqueProcess)
         {
-            req->handle = wine_server_obj_handle( handle );
-            req->entry = info->Selector >> 3;
-            status = wine_server_call( req );
-            if (!status)
+            if ((ldt_copy = (struct ldt_copy *)ULongToPtr( peb->SpareUlongs[0] )))
             {
-                if (reply->flags)
-                    info->Entry = ldt_make_entry( reply->base, reply->limit, reply->flags );
-                else
-                    status = STATUS_UNSUCCESSFUL;
+                base = ldt_copy->base[idx];
+                limit = ldt_copy->limit[idx];
+                flags = ldt_copy->flags[idx];
             }
         }
-        SERVER_END_REQ;
+        else
+        {
+            PROCESS_BASIC_INFORMATION pbi;
+            ULONG ldt_ptr = 0;
+
+            if ((status = NtOpenProcess( &process, PROCESS_ALL_ACCESS, NULL, &tbi.ClientId )))
+                return status;
+            NtQueryInformationProcess( process, ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
+            status = NtReadVirtualMemory( process, &pbi.PebBaseAddress->SpareUlongs[0],
+                                          &ldt_ptr, sizeof(ldt_ptr), NULL );
+            if (!status && ldt_ptr)
+            {
+                ldt_copy = (struct ldt_copy *)ULongToPtr( ldt_ptr );
+                NtReadVirtualMemory( process, &ldt_copy->base[idx], &base, sizeof(base), NULL );
+                NtReadVirtualMemory( process, &ldt_copy->limit[idx], &limit, sizeof(limit), NULL );
+                NtReadVirtualMemory( process, &ldt_copy->flags[idx], &flags, sizeof(flags), NULL );
+            }
+            NtClose( process );
+        }
+
+        if (base || limit || flags)
+            info->Entry = ldt_make_entry( base, limit, flags );
+        else
+            status = STATUS_UNSUCCESSFUL;
     }
+
     if (status == STATUS_SUCCESS && ret_len)
         /* yes, that's a bit strange, but it's the way it is */
         *ret_len = sizeof(info->Entry);
@@ -2353,6 +2387,7 @@ void signal_init_process(void)
     if (!gdt_fs_sel && !is_gdt_sel( get_gs() )) memset( ldt_bitmap, 0xff, 512 / 8 );
 
     signal_alloc_thread( NtCurrentTeb() );
+    peb->SpareUlongs[0] = PtrToUlong( &__wine_ldt_copy );
 
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
