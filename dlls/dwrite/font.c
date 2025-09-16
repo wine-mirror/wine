@@ -133,6 +133,8 @@ static int fontface_get_glyph_advance(struct dwrite_fontface *fontface, float fo
     struct cache_entry *entry;
     unsigned int value;
 
+    *has_contours = FALSE;
+
     if (!(entry = fontface_get_cache_entry(fontface, 0, &key)))
         return 0;
 
