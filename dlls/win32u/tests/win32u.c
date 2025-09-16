@@ -445,6 +445,7 @@ static void test_class(void)
         {
             /* W11 has an extra 0xc017 atom instead of Button, and shifts the predefined classes */
             win_skip( "Skipping user atoms check on W11\n" );
+            winetest_pop_context();
             break;
         }
         ok( ret == wcslen( user_atoms[i].name ), "NtUserGetAtomName returned %lu\n", ret );
