@@ -551,10 +551,9 @@ UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, c
     }
     funcs = opengl_funcs;
 
-    if (use_egl)
+    if (use_egl && opengl_funcs->egl_handle)
     {
-        if (!opengl_funcs->egl_handle) return STATUS_NOT_SUPPORTED;
-        WARN( "Using experimental EGL OpenGL backend\n" );
+        TRACE( "Using EGL OpenGL backend\n" );
         x11drv_driver_funcs = **driver_funcs;
         x11drv_driver_funcs.p_init_egl_platform = x11drv_init_egl_platform;
         x11drv_driver_funcs.p_surface_create = x11drv_egl_surface_create;
