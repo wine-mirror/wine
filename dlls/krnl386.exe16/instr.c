@@ -41,7 +41,7 @@ WINE_DECLARE_DEBUG_CHANNEL(io);
 
 static inline void add_stack( CONTEXT *context, int offset )
 {
-    if (!IS_SELECTOR_32BIT(context->SegSs))
+    if (!ldt_is_32bit(context->SegSs))
         ADD_LOWORD( context->Esp, offset );
     else
         context->Esp += offset;
@@ -430,7 +430,7 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
     int prefix, segprefix, prefixlen, len, repX, long_op, long_addr;
     BYTE *instr;
 
-    long_op = long_addr = IS_SELECTOR_32BIT(context->SegCs);
+    long_op = long_addr = ldt_is_32bit(context->SegCs);
     instr = make_ptr( context, context->SegCs, context->Eip, TRUE );
     if (!instr) return ExceptionContinueSearch;
 

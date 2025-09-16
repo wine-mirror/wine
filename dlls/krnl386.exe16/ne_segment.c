@@ -988,7 +988,7 @@ BOOL NE_CreateSegment( NE_MODULE *pModule, int segnum )
 {
     SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule ) + segnum - 1;
     int minsize;
-    unsigned char selflags;
+    struct ldt_bits bits;
 
     if ( segnum < 1 || segnum > pModule->ne_cseg )
         return FALSE;
@@ -1003,9 +1003,9 @@ BOOL NE_CreateSegment( NE_MODULE *pModule, int segnum )
     if ( segnum == SELECTOROF(pModule->ne_sssp) ) minsize += pModule->ne_stack;
     if ( segnum == pModule->ne_autodata ) minsize += pModule->ne_heap;
 
-    selflags = (pSeg->flags & NE_SEGFLAGS_DATA) ? LDT_FLAGS_DATA : LDT_FLAGS_CODE;
-    if (pSeg->flags & NE_SEGFLAGS_32BIT) selflags |= LDT_FLAGS_32BIT;
-    pSeg->hSeg = GLOBAL_Alloc( NE_Ne2MemFlags(pSeg->flags), minsize, pModule->self, selflags );
+    bits = (pSeg->flags & NE_SEGFLAGS_DATA) ? data_segment : code16_segment;
+    bits.default_big = !!(pSeg->flags & NE_SEGFLAGS_32BIT);
+    pSeg->hSeg = GLOBAL_Alloc( NE_Ne2MemFlags(pSeg->flags), minsize, pModule->self, bits );
     if (!pSeg->hSeg) return FALSE;
 
     pSeg->flags |= NE_SEGFLAGS_ALLOCATED;
