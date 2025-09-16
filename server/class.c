@@ -345,15 +345,8 @@ DECL_HANDLER(get_class_info)
         /* not supported */
         set_win32_error( ERROR_INVALID_HANDLE );
         break;
-    case GCL_CBCLSEXTRA:     reply->info = class->shared->cls_extra; break;
     default:
-        if (req->size > sizeof(reply->info) || req->offset < 0 ||
-            req->offset > class->shared->cls_extra - (int)req->size)
-        {
-            set_win32_error( ERROR_INVALID_INDEX );
-            return;
-        }
-        memcpy( &reply->info, (char *)class->shared->extra + req->offset, req->size );
+        set_win32_error( ERROR_INVALID_INDEX );
         break;
     }
 }
