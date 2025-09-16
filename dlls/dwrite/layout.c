@@ -3767,7 +3767,6 @@ static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout
     if (run->bbox.top == run->bbox.bottom)
     {
         struct dwrite_glyphbitmap glyph_bitmap;
-        RECT *bbox;
 
         glyph_run = regular->run;
         glyph_run.glyphCount = run->glyphcount;
@@ -3778,8 +3777,6 @@ static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout
         memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
         glyph_bitmap.simulations = IDWriteFontFace_GetSimulations(glyph_run.fontFace);
         glyph_bitmap.emsize = glyph_run.fontEmSize;
-
-        bbox = &glyph_bitmap.bbox;
 
         if (!(origins = calloc(glyph_run.glyphCount, sizeof(*origins))))
             return;
@@ -3798,10 +3795,10 @@ static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout
             glyph_bitmap.glyph = glyph_run.glyphIndices[i];
             dwrite_fontface_get_glyph_bbox(glyph_run.fontFace, &glyph_bitmap);
 
-            glyph_bbox.left = bbox->left;
-            glyph_bbox.top = bbox->top;
-            glyph_bbox.right = bbox->right;
-            glyph_bbox.bottom = bbox->bottom;
+            glyph_bbox.left = glyph_bitmap.bbox.left;
+            glyph_bbox.top = glyph_bitmap.bbox.top;
+            glyph_bbox.right = glyph_bitmap.bbox.right;
+            glyph_bbox.bottom = glyph_bitmap.bbox.bottom;
 
             d2d_rect_offset(&glyph_bbox, origins[i].x, origins[i].y);
             d2d_rect_union(&run->bbox, &glyph_bbox);
