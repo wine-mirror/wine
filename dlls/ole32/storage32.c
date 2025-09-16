@@ -2895,7 +2895,7 @@ static HRESULT StorageImpl_LoadFileHeader(
   offset.LowPart = 0;
   hr = StorageImpl_ReadAt(This, offset, headerBigBlock, HEADER_SIZE, &bytes_read);
   if (SUCCEEDED(hr) && bytes_read != HEADER_SIZE)
-    hr = STG_E_FILENOTFOUND;
+    hr = STG_E_FILEALREADYEXISTS;
 
   /*
    * Extract the information from the header.

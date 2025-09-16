@@ -3877,7 +3877,7 @@ static void test_custom_lockbytes(void)
     CreateTestLockBytes(&lockbytes);
 
     hr = StgOpenStorageOnILockBytes(&lockbytes->ILockBytes_iface, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, NULL, 0, &stg);
-    todo_wine ok(hr == STG_E_FILEALREADYEXISTS, "StgOpenStorageOnILockBytes on empty lockbytes failed: %lx\n", hr);
+    ok(hr == STG_E_FILEALREADYEXISTS, "StgOpenStorageOnILockBytes on empty lockbytes failed: %lx\n", hr);
 
     if (stg)
         IStorage_Release(stg);
@@ -3887,7 +3887,7 @@ static void test_custom_lockbytes(void)
     CreateTestLockBytes(&lockbytes);
 
     hr = StgOpenStorageOnILockBytes(&lockbytes->ILockBytes_iface, NULL, STGM_READWRITE | STGM_SHARE_DENY_WRITE | STGM_TRANSACTED, NULL, 0, &stg);
-    todo_wine ok(hr == STG_E_FILEALREADYEXISTS, "StgOpenStorageOnILockBytes on empty lockbytes with different mode failed: %lx\n", hr);
+    ok(hr == STG_E_FILEALREADYEXISTS, "StgOpenStorageOnILockBytes on empty lockbytes with different mode failed: %lx\n", hr);
 
     if (stg)
         IStorage_Release(stg);
@@ -3900,7 +3900,7 @@ static void test_custom_lockbytes(void)
     ok(hr == S_OK, "ILockBytes_WriteAt failed: %lx\n", hr);
 
     hr = StgOpenStorageOnILockBytes(&lockbytes->ILockBytes_iface, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, NULL, 0, &stg);
-    todo_wine ok(hr == STG_E_FILEALREADYEXISTS, "StgOpenStorageOnILockBytes on invalid lockbytes failed: %lx\n", hr);
+    ok(hr == STG_E_FILEALREADYEXISTS, "StgOpenStorageOnILockBytes on invalid lockbytes failed: %lx\n", hr);
 
     if (stg)
         IStorage_Release(stg);
@@ -3913,7 +3913,7 @@ static void test_custom_lockbytes(void)
     ok(hr == S_OK, "ILockBytes_WriteAt failed: %lx\n", hr);
 
     hr = StgOpenStorageOnILockBytes(&lockbytes->ILockBytes_iface, NULL, STGM_READWRITE | STGM_SHARE_DENY_WRITE | STGM_TRANSACTED, NULL, 0, &stg);
-    todo_wine ok(hr == STG_E_FILEALREADYEXISTS, "StgOpenStorageOnILockBytes on invalid lockbytes with different mode failed: %lx\n", hr);
+    ok(hr == STG_E_FILEALREADYEXISTS, "StgOpenStorageOnILockBytes on invalid lockbytes with different mode failed: %lx\n", hr);
 
     if (stg)
         IStorage_Release(stg);
