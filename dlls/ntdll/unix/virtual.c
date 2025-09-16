@@ -4177,8 +4177,9 @@ WORD ldt_update_entry( WORD sel, LDT_ENTRY entry )
     ldt_set_entry( sel, entry );
     __wine_ldt_copy.base[index]  = ldt_get_base( entry );
     __wine_ldt_copy.limit[index] = ldt_get_limit( entry );
-    __wine_ldt_copy.flags[index] = (entry.HighWord.Bits.Type |
-                                    (entry.HighWord.Bits.Default_Big ? LDT_FLAGS_32BIT : 0));
+    __wine_ldt_copy.bits[index].type        = entry.HighWord.Bits.Type;
+    __wine_ldt_copy.bits[index].granularity = entry.HighWord.Bits.Granularity;
+    __wine_ldt_copy.bits[index].default_big = entry.HighWord.Bits.Default_Big;
     ldt_bitmap[index / 32] |= 1u << (index & 31);
     return sel;
 }

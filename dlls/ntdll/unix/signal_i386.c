@@ -2267,7 +2267,7 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_
         HANDLE process;
         struct ldt_copy *ldt_copy;
         unsigned int base = 0, limit = 0;
-        unsigned char flags = 0;
+        struct ldt_bits bits = { 0 };
         unsigned int idx = info->Selector >> 3;
 
         if (tbi.ClientId.UniqueProcess == teb->ClientId.UniqueProcess)
@@ -2276,7 +2276,7 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_
             {
                 base = ldt_copy->base[idx];
                 limit = ldt_copy->limit[idx];
-                flags = ldt_copy->flags[idx];
+                bits = ldt_copy->bits[idx];
             }
         }
         else
@@ -2294,13 +2294,13 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_
                 ldt_copy = (struct ldt_copy *)ULongToPtr( ldt_ptr );
                 NtReadVirtualMemory( process, &ldt_copy->base[idx], &base, sizeof(base), NULL );
                 NtReadVirtualMemory( process, &ldt_copy->limit[idx], &limit, sizeof(limit), NULL );
-                NtReadVirtualMemory( process, &ldt_copy->flags[idx], &flags, sizeof(flags), NULL );
+                NtReadVirtualMemory( process, &ldt_copy->bits[idx], &bits, sizeof(bits), NULL );
             }
             NtClose( process );
         }
 
-        if (base || limit || flags)
-            info->Entry = ldt_make_entry( base, limit, flags );
+        if (base || limit || bits.type)
+            info->Entry = ldt_make_entry( base, limit, bits );
         else
             status = STATUS_UNSUCCESSFUL;
     }
