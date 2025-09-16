@@ -1132,7 +1132,6 @@ struct init_process_done_request
     char __pad_12[4];
     client_ptr_t teb;
     client_ptr_t peb;
-    client_ptr_t ldt_copy;
 };
 struct init_process_done_reply
 {
@@ -2858,24 +2857,6 @@ struct set_thread_context_reply
     struct reply_header __header;
     int          self;
     char __pad_12[4];
-};
-
-
-
-struct get_selector_entry_request
-{
-    struct request_header __header;
-    obj_handle_t  handle;
-    int           entry;
-    char __pad_20[4];
-};
-struct get_selector_entry_reply
-{
-    struct reply_header __header;
-    unsigned int  base;
-    unsigned int  limit;
-    unsigned char flags;
-    char __pad_17[7];
 };
 
 
@@ -6097,7 +6078,6 @@ enum request
     REQ_get_timer_info,
     REQ_get_thread_context,
     REQ_set_thread_context,
-    REQ_get_selector_entry,
     REQ_add_atom,
     REQ_delete_atom,
     REQ_find_atom,
@@ -6402,7 +6382,6 @@ union generic_request
     struct get_timer_info_request get_timer_info_request;
     struct get_thread_context_request get_thread_context_request;
     struct set_thread_context_request set_thread_context_request;
-    struct get_selector_entry_request get_selector_entry_request;
     struct add_atom_request add_atom_request;
     struct delete_atom_request delete_atom_request;
     struct find_atom_request find_atom_request;
@@ -6705,7 +6684,6 @@ union generic_reply
     struct get_timer_info_reply get_timer_info_reply;
     struct get_thread_context_reply get_thread_context_reply;
     struct set_thread_context_reply set_thread_context_reply;
-    struct get_selector_entry_reply get_selector_entry_reply;
     struct add_atom_reply add_atom_reply;
     struct delete_atom_reply delete_atom_reply;
     struct find_atom_reply find_atom_reply;
@@ -6898,6 +6876,6 @@ union generic_reply
     struct get_inproc_sync_fd_reply get_inproc_sync_fd_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 896
+#define SERVER_PROTOCOL_VERSION 897
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -125,7 +125,6 @@ static void dump_init_process_done_request( const struct init_process_done_reque
 {
     dump_uint64( " teb=", &req->teb );
     dump_uint64( ", peb=", &req->peb );
-    dump_uint64( ", ldt_copy=", &req->ldt_copy );
 }
 
 static void dump_init_process_done_reply( const struct init_process_done_reply *req )
@@ -1295,19 +1294,6 @@ static void dump_set_thread_context_request( const struct set_thread_context_req
 static void dump_set_thread_context_reply( const struct set_thread_context_reply *req )
 {
     fprintf( stderr, " self=%d", req->self );
-}
-
-static void dump_get_selector_entry_request( const struct get_selector_entry_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", entry=%d", req->entry );
-}
-
-static void dump_get_selector_entry_reply( const struct get_selector_entry_reply *req )
-{
-    fprintf( stderr, " base=%08x", req->base );
-    fprintf( stderr, ", limit=%08x", req->limit );
-    fprintf( stderr, ", flags=%02x", req->flags );
 }
 
 static void dump_add_atom_request( const struct add_atom_request *req )
@@ -3507,7 +3493,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_get_timer_info_request,
     (dump_func)dump_get_thread_context_request,
     (dump_func)dump_set_thread_context_request,
-    (dump_func)dump_get_selector_entry_request,
     (dump_func)dump_add_atom_request,
     (dump_func)dump_delete_atom_request,
     (dump_func)dump_find_atom_request,
@@ -3809,7 +3794,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_get_timer_info_reply,
     (dump_func)dump_get_thread_context_reply,
     (dump_func)dump_set_thread_context_reply,
-    (dump_func)dump_get_selector_entry_reply,
     (dump_func)dump_add_atom_reply,
     NULL,
     (dump_func)dump_find_atom_reply,
@@ -4111,7 +4095,6 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "get_timer_info",
     "get_thread_context",
     "set_thread_context",
-    "get_selector_entry",
     "add_atom",
     "delete_atom",
     "find_atom",

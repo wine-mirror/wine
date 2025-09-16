@@ -114,7 +114,6 @@ DECL_HANDLER(cancel_timer);
 DECL_HANDLER(get_timer_info);
 DECL_HANDLER(get_thread_context);
 DECL_HANDLER(set_thread_context);
-DECL_HANDLER(get_selector_entry);
 DECL_HANDLER(add_atom);
 DECL_HANDLER(delete_atom);
 DECL_HANDLER(find_atom);
@@ -416,7 +415,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_timer_info,
     (req_handler)req_get_thread_context,
     (req_handler)req_set_thread_context,
-    (req_handler)req_get_selector_entry,
     (req_handler)req_add_atom,
     (req_handler)req_delete_atom,
     (req_handler)req_find_atom,
@@ -695,8 +693,7 @@ C_ASSERT( offsetof(struct get_startup_info_reply, machine) == 12 );
 C_ASSERT( sizeof(struct get_startup_info_reply) == 16 );
 C_ASSERT( offsetof(struct init_process_done_request, teb) == 16 );
 C_ASSERT( offsetof(struct init_process_done_request, peb) == 24 );
-C_ASSERT( offsetof(struct init_process_done_request, ldt_copy) == 32 );
-C_ASSERT( sizeof(struct init_process_done_request) == 40 );
+C_ASSERT( sizeof(struct init_process_done_request) == 32 );
 C_ASSERT( offsetof(struct init_process_done_reply, suspend) == 8 );
 C_ASSERT( sizeof(struct init_process_done_reply) == 16 );
 C_ASSERT( offsetof(struct init_first_thread_request, unix_pid) == 12 );
@@ -1272,13 +1269,6 @@ C_ASSERT( offsetof(struct set_thread_context_request, native_flags) == 16 );
 C_ASSERT( sizeof(struct set_thread_context_request) == 24 );
 C_ASSERT( offsetof(struct set_thread_context_reply, self) == 8 );
 C_ASSERT( sizeof(struct set_thread_context_reply) == 16 );
-C_ASSERT( offsetof(struct get_selector_entry_request, handle) == 12 );
-C_ASSERT( offsetof(struct get_selector_entry_request, entry) == 16 );
-C_ASSERT( sizeof(struct get_selector_entry_request) == 24 );
-C_ASSERT( offsetof(struct get_selector_entry_reply, base) == 8 );
-C_ASSERT( offsetof(struct get_selector_entry_reply, limit) == 12 );
-C_ASSERT( offsetof(struct get_selector_entry_reply, flags) == 16 );
-C_ASSERT( sizeof(struct get_selector_entry_reply) == 24 );
 C_ASSERT( sizeof(struct add_atom_request) == 16 );
 C_ASSERT( offsetof(struct add_atom_reply, atom) == 8 );
 C_ASSERT( sizeof(struct add_atom_reply) == 16 );

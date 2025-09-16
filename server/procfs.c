@@ -172,36 +172,6 @@ int write_process_memory( struct process *process, client_ptr_t ptr, size_t size
     return 0;
 }
 
-/* retrieve an LDT selector entry */
-void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
-                         unsigned int *limit, unsigned char *flags )
-{
-    ssize_t ret;
-    off_t pos = thread->process->ldt_copy;
-    int fd;
-
-    if (!pos)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return;
-    }
-    if ((fd = open_proc_as( thread->process, O_RDONLY )) == -1) return;
-
-    ret = pread( fd, base, sizeof(*base), pos + entry*sizeof(int) );
-    if (ret != sizeof(*base)) goto error;
-    ret = pread( fd, limit, sizeof(*limit), pos + (8192 + entry)*sizeof(int) );
-    if (ret != sizeof(*limit)) goto error;
-    ret = pread( fd, flags, sizeof(*flags), pos + 2*8192*sizeof(int) + entry );
-    if (ret != sizeof(*flags)) goto error;
-    close( fd );
-    return;
-
-error:
-    if (ret == -1) file_set_error();
-    else set_error( STATUS_ACCESS_VIOLATION );
-    close( fd );
-}
-
 /* initialize registers in new thread if necessary */
 void init_thread_context( struct thread *thread )
 {

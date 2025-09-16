@@ -139,8 +139,6 @@ extern void init_thread_context( struct thread *thread );
 extern void get_thread_context( struct thread *thread, struct context_data *context, unsigned int flags );
 extern void set_thread_context( struct thread *thread, const struct context_data *context, unsigned int flags );
 extern int send_thread_signal( struct thread *thread, int sig );
-extern void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
-                                unsigned int *limit, unsigned char *flags );
 
 extern unsigned int global_error;  /* global error code for when no thread is current */
 

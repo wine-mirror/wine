@@ -690,7 +690,6 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
     process->startup_info    = NULL;
     process->idle_event      = NULL;
     process->peb             = 0;
-    process->ldt_copy        = 0;
     process->dir_cache       = NULL;
     process->winstation      = 0;
     process->desktop         = 0;
@@ -1483,9 +1482,8 @@ DECL_HANDLER(init_process_done)
         return;
     }
 
-    current->teb      = req->teb;
-    process->peb      = req->peb;
-    process->ldt_copy = req->ldt_copy;
+    current->teb = req->teb;
+    process->peb = req->peb;
 
     process->start_time = current_time;
 

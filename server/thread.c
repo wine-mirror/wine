@@ -2301,17 +2301,6 @@ DECL_HANDLER(set_thread_context)
     release_object( thread );
 }
 
-/* fetch a selector entry for a thread */
-DECL_HANDLER(get_selector_entry)
-{
-    struct thread *thread;
-    if ((thread = get_thread_from_handle( req->handle, THREAD_QUERY_INFORMATION )))
-    {
-        get_selector_entry( thread, req->entry, &reply->base, &reply->limit, &reply->flags );
-        release_object( thread );
-    }
-}
-
 /* Iterate thread list for process. Use global thread list to also
  * return terminated but not yet destroyed threads. */
 DECL_HANDLER(get_next_thread)

@@ -311,16 +311,6 @@ static int read_thread_long( struct thread *thread, void *addr, unsigned long *d
     return 0;
 }
 
-static int read_thread_int( struct thread *thread, void *addr, unsigned int *data )
-{
-    unsigned long long_data;
-    int ret;
-
-    ret = read_thread_long( thread, addr, &long_data );
-    *data = long_data;
-    return ret;
-}
-
 /* write a long to a thread address space */
 static long write_thread_long( struct thread *thread, void *addr, unsigned long data, unsigned long mask )
 {
@@ -519,35 +509,6 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
         resume_after_ptrace( thread );
     }
     return ret;
-}
-
-/* retrieve an LDT selector entry */
-void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
-                         unsigned int *limit, unsigned char *flags )
-{
-    if (!thread->process->ldt_copy)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return;
-    }
-    if (entry >= 8192)
-    {
-        set_error( STATUS_ACCESS_VIOLATION );
-        return;
-    }
-    if (suspend_for_ptrace( thread ))
-    {
-        unsigned int flags_buf;
-        unsigned long addr = (unsigned long)thread->process->ldt_copy + (entry * 4);
-
-        if (read_thread_int( thread, (void *)addr, base ) == -1) goto done;
-        if (read_thread_int( thread, (void *)(addr + (8192 * 4)), limit ) == -1) goto done;
-        addr = (unsigned long)thread->process->ldt_copy + (2 * 8192 * 4) + (entry & ~3);
-        if (read_thread_int( thread, (void *)addr, &flags_buf ) == -1) goto done;
-        *flags = flags_buf >> (entry & 3) * 8;
-    done:
-        resume_after_ptrace( thread );
-    }
 }
 
 

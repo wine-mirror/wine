@@ -1119,7 +1119,6 @@ typedef volatile struct
 @REQ(init_process_done)
     client_ptr_t teb;          /* TEB of new thread (in process address space) */
     client_ptr_t peb;          /* PEB of new process (in process address space) */
-    client_ptr_t ldt_copy;     /* address of LDT copy (in process address space) */
 @REPLY
     int          suspend;      /* is process suspended? */
 @END
@@ -2210,17 +2209,6 @@ struct process_info
     VARARG(contexts,contexts); /* thread context(s) */
 @REPLY
     int          self;         /* was it a handle to the current thread? */
-@END
-
-
-/* Fetch a selector entry for a thread */
-@REQ(get_selector_entry)
-    obj_handle_t  handle;      /* thread handle */
-    int           entry;       /* LDT entry */
-@REPLY
-    unsigned int  base;        /* selector base */
-    unsigned int  limit;       /* selector limit */
-    unsigned char flags;       /* selector flags */
 @END
 
 
