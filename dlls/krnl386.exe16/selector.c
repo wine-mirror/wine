@@ -49,19 +49,26 @@ static inline int is_gdt_sel( WORD sel )
     return !(sel & 4);
 }
 
-static LDT_ENTRY ldt_make_entry( const void *base, unsigned int limit, struct ldt_bits bits )
+static inline struct ldt_bits ldt_set_limit( struct ldt_bits bits, unsigned int limit )
+{
+    if ((bits.granularity = (limit >= 0x100000))) limit >>= 12;
+    bits.limit = limit;
+    return bits;
+}
+
+static LDT_ENTRY ldt_make_entry( const void *base, struct ldt_bits bits )
 {
     LDT_ENTRY entry;
 
     entry.BaseLow                   = (WORD)(ULONG_PTR)base;
     entry.HighWord.Bits.BaseMid     = (BYTE)((ULONG_PTR)base >> 16);
     entry.HighWord.Bits.BaseHi      = (BYTE)((ULONG_PTR)base >> 24);
-    if ((entry.HighWord.Bits.Granularity = (limit >= 0x100000))) limit >>= 12;
-    entry.LimitLow                  = (WORD)limit;
-    entry.HighWord.Bits.LimitHi     = limit >> 16;
+    entry.LimitLow                  = (WORD)bits.limit;
+    entry.HighWord.Bits.LimitHi     = bits.limit >> 16;
     entry.HighWord.Bits.Dpl         = 3;
     entry.HighWord.Bits.Pres        = 1;
     entry.HighWord.Bits.Type        = bits.type;
+    entry.HighWord.Bits.Granularity = bits.granularity;
     entry.HighWord.Bits.Sys         = 0;
     entry.HighWord.Bits.Reserved_0  = 0;
     entry.HighWord.Bits.Default_Big = bits.default_big;
@@ -123,7 +130,7 @@ BOOL ldt_get_entry( WORD sel, LDT_ENTRY *entry )
         *entry = null_entry;
         return FALSE;
     }
-    *entry = ldt_make_entry( ldt_get_base( sel ), ldt_get_limit( sel ), ldt_get_bits( sel ));
+    *entry = ldt_make_entry( ldt_get_base( sel ), ldt_get_bits( sel ));
     return TRUE;
 }
 
@@ -148,7 +155,8 @@ void *ldt_get_base( WORD sel )
  */
 unsigned int ldt_get_limit( WORD sel )
 {
-    return ldt_copy->limit[sel >> 3];
+    struct ldt_bits bits = ldt_get_bits( sel );
+    return bits.granularity ? bits.limit << 12 | 0xfff : bits.limit;
 }
 
 static ULONG alloc_entries( ULONG count )
@@ -179,7 +187,7 @@ WORD WINAPI AllocSelectorArray16( WORD count )
 
     if (sel)
     {
-        LDT_ENTRY entry = ldt_make_entry( 0, 1, data_segment ); /* avoid 0 base and limit */
+        LDT_ENTRY entry = ldt_make_entry( 0, ldt_set_limit( data_segment, 1 )); /* avoid 0 base and limit */
         for (i = 0; i < count; i++) ldt_set_entry( sel + (i << 3), entry );
     }
     return sel;
@@ -233,7 +241,7 @@ static void SELECTOR_SetEntries( WORD sel, const void *base, DWORD size, struct 
 
     for (i = 0; i < count; i++)
     {
-        ldt_set_entry( sel + (i << 3), ldt_make_entry( base, size - 1, bits ));
+        ldt_set_entry( sel + (i << 3), ldt_make_entry( base, ldt_set_limit( bits, size - 1 )));
         base = (const char *)base + 0x10000;
         size -= 0x10000; /* yep, Windows sets limit like that, not 64K sel units */
     }
@@ -321,7 +329,7 @@ WORD WINAPI PrestoChangoSelector16( WORD selSrc, WORD selDst )
 
     if (!ldt_is_valid( selSrc )) return selDst;
     bits.type ^= 0x08; /* toggle the executable bit */
-    ldt_set_entry( selDst, ldt_make_entry( ldt_get_base( selSrc ), ldt_get_limit( selSrc ), bits ));
+    ldt_set_entry( selDst, ldt_make_entry( ldt_get_base( selSrc ), bits ));
     return selDst;
 }
 
@@ -332,13 +340,15 @@ WORD WINAPI PrestoChangoSelector16( WORD selSrc, WORD selDst )
  */
 WORD WINAPI AllocCStoDSAlias16( WORD sel )
 {
+    struct ldt_bits bits = ldt_get_bits( sel );
     WORD newsel;
 
     if (!ldt_is_valid( sel )) return 0;
     newsel = AllocSelector16( 0 );
     TRACE("(%04x): returning %04x\n", sel, newsel );
     if (!newsel) return 0;
-    ldt_set_entry( newsel, ldt_make_entry( ldt_get_base(sel), ldt_get_limit(sel), data_segment ));
+    bits.type = data_segment.type;
+    ldt_set_entry( newsel, ldt_make_entry( ldt_get_base(sel), bits ));
     return newsel;
 }
 
@@ -348,13 +358,15 @@ WORD WINAPI AllocCStoDSAlias16( WORD sel )
  */
 WORD WINAPI AllocDStoCSAlias16( WORD sel )
 {
+    struct ldt_bits bits = ldt_get_bits( sel );
     WORD newsel;
 
     if (!ldt_is_valid( sel )) return 0;
     newsel = AllocSelector16( 0 );
     TRACE("(%04x): returning %04x\n", sel, newsel );
     if (!newsel) return 0;
-    ldt_set_entry( newsel, ldt_make_entry( ldt_get_base(sel), ldt_get_limit(sel), code16_segment ));
+    bits.type = code16_segment.type;
+    ldt_set_entry( newsel, ldt_make_entry( ldt_get_base(sel), bits ));
     return newsel;
 }
 
@@ -367,8 +379,7 @@ void WINAPI LongPtrAdd16( SEGPTR ptr, DWORD add )
     WORD sel = SELECTOROF( ptr );
 
     if (!ldt_is_valid( sel )) return;
-    ldt_set_entry( sel, ldt_make_entry( (char *)ldt_get_base( sel ) + add,
-                                        ldt_get_limit( sel ), ldt_get_bits( sel )));
+    ldt_set_entry( sel, ldt_make_entry( (char *)ldt_get_base( sel ) + add, ldt_get_bits( sel )));
 }
 
 
@@ -389,8 +400,7 @@ DWORD WINAPI GetSelectorBase( WORD sel )
 WORD WINAPI SetSelectorBase( WORD sel, DWORD base )
 {
     if (!ldt_is_valid( sel )) return 0;
-    ldt_set_entry( sel, ldt_make_entry( DOSMEM_MapDosToLinear(base),
-                                        ldt_get_limit( sel ), ldt_get_bits( sel )));
+    ldt_set_entry( sel, ldt_make_entry( DOSMEM_MapDosToLinear(base), ldt_get_bits( sel )));
     return sel;
 }
 
@@ -410,7 +420,7 @@ DWORD WINAPI GetSelectorLimit16( WORD sel )
 WORD WINAPI SetSelectorLimit16( WORD sel, DWORD limit )
 {
     if (!ldt_is_valid( sel )) return 0;
-    ldt_set_entry( sel, ldt_make_entry( ldt_get_base( sel ), limit, ldt_get_bits( sel )));
+    ldt_set_entry( sel, ldt_make_entry( ldt_get_base( sel ), ldt_set_limit( ldt_get_bits( sel ), limit )));
     return sel;
 }
 

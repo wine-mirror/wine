@@ -151,9 +151,10 @@ typedef struct _THHOOK
 
 struct ldt_bits
 {
-    unsigned char type : 5;
-    unsigned char granularity : 1;
-    unsigned char default_big : 1;
+    unsigned int limit : 24;
+    unsigned int type : 5;
+    unsigned int granularity : 1;
+    unsigned int default_big : 1;
 };
 
 extern LONG __wine_call_from_16(void);
@@ -240,10 +241,9 @@ extern void NE_CallUserSignalProc( HMODULE16 hModule, UINT16 code );
 struct ldt_copy
 {
     void         *base[LDT_SIZE];
-    unsigned int  limit[LDT_SIZE];
     struct ldt_bits bits[LDT_SIZE];
 };
-C_ASSERT( sizeof(struct ldt_copy) == 9 * LDT_SIZE );
+C_ASSERT( sizeof(struct ldt_copy) == 8 * LDT_SIZE );
 extern const struct ldt_copy *ldt_copy;
 
 static const struct ldt_bits data_segment   = { .type = 0x13 };
