@@ -2536,6 +2536,43 @@ static void test_LB_FINDSTRING(void)
     DestroyWindow( listbox );
 }
 
+static void test_integral_resize(void)
+{
+    int scroll_height = GetSystemMetrics(SM_CYHSCROLL);
+    int edge_width = GetSystemMetrics(SM_CXEDGE);
+    int edge_height = GetSystemMetrics(SM_CYEDGE);
+    HWND parent, listbox;
+    RECT rect, expect;
+    int ret;
+
+    parent = create_parent();
+    listbox = CreateWindowExA(WS_EX_CLIENTEDGE, "listbox", NULL,
+            WS_CHILD | WS_HSCROLL, 0, 0, 199, 199, parent, NULL, NULL, NULL);
+    ok(!!listbox, "got error %lu\n", GetLastError());
+
+    ret = SendMessageA(listbox, LB_SETHORIZONTALEXTENT, 300, 0);
+    ok(!ret, "got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_SETITEMHEIGHT, 0, 40);
+    ok(!ret, "got %d\n", ret);
+
+    SetWindowPos(listbox, 0, 0, 0, 199, 199, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE);
+
+    /* The whole point of this functionality is to force an integral number of
+     * items to be onscreen, but native fails to account for the scrollbar. */
+
+    GetWindowRect(listbox, &rect);
+    SetRect(&expect, 100, 100, 299, 260 + (edge_height * 2));
+    todo_wine ok(EqualRect(&rect, &expect), "expected %s, got %s\n", wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
+
+    GetClientRect(listbox, &rect);
+    SetRect(&expect, 0, 0, 199 - (edge_width * 2), 160 - scroll_height);
+    todo_wine ok(EqualRect(&rect, &expect), "expected %s, got %s\n", wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
+
+    DestroyWindow(listbox);
+    DestroyWindow(parent);
+}
+
 START_TEST(listbox)
 {
   const struct listbox_test SS =
@@ -2636,4 +2673,5 @@ START_TEST(listbox)
   test_LB_SETSEL();
   test_LBS_NODATA();
   test_LB_FINDSTRING();
+  test_integral_resize();
 }
