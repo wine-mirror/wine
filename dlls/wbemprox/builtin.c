@@ -1239,7 +1239,8 @@ static const struct record_qualifier data_qualifier[] =
 
 static const struct record_quickfixengineering data_quickfixengineering[] =
 {
-    { L"http://winehq.org", L"Update", L"KB1234567", L"", L"22/2/2022" },
+    { L"http://winehq.org", L"Update", L"KB2670838", L"", L"22/2/2022" },
+    { L"http://winehq.org", L"Update", L"KB3140245", L"", L"22/2/2022" },
 };
 
 static const struct record_softwarelicensingproduct data_softwarelicensingproduct[] =
