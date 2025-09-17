@@ -547,7 +547,7 @@ class EnumValue(object):
 
 
 class VkFunction(object):
-    def __init__(self, _type=None, name=None, params=[], alias=None):
+    def __init__(self, _type, name, params, alias=None):
         self.extensions = set()
         self.name = name
         self.type = _type
@@ -571,10 +571,7 @@ class VkFunction(object):
     @staticmethod
     def from_alias(registry, command, alias):
         func_name = command.attrib.get("name")
-        func_type = alias.type
-        params = alias.params
-
-        return VkFunction(_type=func_type, name=func_name, params=params, alias=alias)
+        return VkFunction(alias.type, func_name, alias.params, alias=alias)
 
     @staticmethod
     def from_xml(registry, command, types):
@@ -582,12 +579,9 @@ class VkFunction(object):
         func_name = proto.find("name").text
         func_type = proto.find("type").text
 
-        params = []
-        for param in filter(is_api_supported, command.findall("param")):
-            vk_param = VkParam.from_xml(registry, param, types)
-            params.append(vk_param)
-
-        return VkFunction(_type=func_type, name=func_name, params=params)
+        params = filter(is_api_supported, command.findall("param"))
+        params = [VkParam.from_xml(registry, param, types) for param in params]
+        return VkFunction(func_type, func_name, params)
 
     def is_alias(self):
         return bool(self.alias)
@@ -1854,12 +1848,9 @@ class VkStruct(Sequence):
         structextends = struct.attrib.get("structextends")
         structextends = structextends.split(",") if structextends else []
 
-        s = VkStruct(registry, name, [], returnedonly, structextends, union=union)
-        for member in filter(is_api_supported, struct.findall("member")):
-            vk_member = VkMember.from_xml(registry, member, returnedonly)
-            s.members.append(vk_member)
-
-        return s
+        members = filter(is_api_supported, struct.findall("member"))
+        members = [VkMember.from_xml(registry, member, returnedonly) for member in members]
+        return VkStruct(registry, name, members, returnedonly, structextends, union=union)
 
     def set_order(self, order, structs):
         if order < self.order:
