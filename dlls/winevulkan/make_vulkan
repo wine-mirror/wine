@@ -584,7 +584,7 @@ class VkFunction(object):
 
         params = []
         for param in filter(is_api_supported, command.findall("param")):
-            vk_param = VkParam.from_xml(registry, param, types, params)
+            vk_param = VkParam.from_xml(registry, param, types)
             params.append(vk_param)
 
         return VkFunction(_type=func_type, name=func_name, params=params)
@@ -777,10 +777,10 @@ class VkFunction(object):
         unwrap = self.name not in MANUAL_UNIX_THUNKS
         for p in self.params:
             if p.needs_conversion(conv, self.unwrap, Direction.INPUT):
-                body += p.copy(Direction.INPUT, conv, self.unwrap, conversions, prefix=params_prefix)
+                body += p.copy(Direction.INPUT, conv, self.unwrap, conversions, self.params, prefix=params_prefix)
             elif p.is_dynamic_array() and p.needs_conversion(conv, self.unwrap, Direction.OUTPUT):
                 body += "    {0}_host = ({2}{0} && {1}) ? conversion_context_alloc(ctx, sizeof(*{0}_host) * {1}) : NULL;\n".format(
-                    p.name, p.get_dyn_array_len(params_prefix, conv), params_prefix)
+                    p.name, p.get_dyn_array_len(self.params, params_prefix, conv), params_prefix)
 
         # Build list of parameters containing converted and non-converted parameters.
         # The param itself knows if conversion is needed and applies it when we set conv=True.
@@ -808,7 +808,7 @@ class VkFunction(object):
         # Call any host_to_win conversion calls.
         for p in self.params:
             if p.needs_conversion(conv, self.unwrap, Direction.OUTPUT):
-                body += p.copy(Direction.OUTPUT, conv, self.unwrap, conversions, prefix=params_prefix)
+                body += p.copy(Direction.OUTPUT, conv, self.unwrap, conversions, self.params, prefix=params_prefix)
 
         if needs_alloc:
             if deferred_op is not None:
@@ -1056,13 +1056,12 @@ class VkHandle(object):
 
 class VkVariable(object):
     def __init__(self, const=False, type_info=None, type=None, name=None, pointer=None, array_lens=[],
-                 dyn_array_len=None, object_type=None, optional=False, returnedonly=False, parent=None,
+                 dyn_array_len=None, object_type=None, optional=False, returnedonly=False,
                  selection=None, selector=None):
         self.const = const
         self.type_info = type_info
         self.type = type
         self.name = name
-        self.parent = parent
         self.object_type = object_type
         self.optional = optional
         self.returnedonly = returnedonly
@@ -1233,10 +1232,10 @@ class VkVariable(object):
 class VkMember(VkVariable):
     def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_lens=[],
                  dyn_array_len=None, optional=False, values=None, object_type=None, bit_width=None,
-                 returnedonly=False, parent=None, selection=None, selector=None):
+                 returnedonly=False, selection=None, selector=None):
         VkVariable.__init__(self, const=const, type=_type, name=name, pointer=pointer, array_lens=array_lens,
                             dyn_array_len=dyn_array_len, object_type=object_type, optional=optional,
-                            returnedonly=returnedonly, parent=parent, selection=selection, selector=selector)
+                            returnedonly=returnedonly, selection=selection, selector=selector)
         self.struct_fwd_decl = struct_fwd_decl
         self.values = values
         self.bit_width = bit_width
@@ -1246,7 +1245,7 @@ class VkMember(VkVariable):
                 self.name, self.array_lens, self.dyn_array_len)
 
     @staticmethod
-    def from_xml(registry, member, returnedonly, parent):
+    def from_xml(registry, member, returnedonly):
         """ Helper function for parsing a member tag within a struct or union. """
         name_elem = member.find("name")
         type_elem = member.find("type")
@@ -1307,14 +1306,12 @@ class VkMember(VkVariable):
         return VkMember(const=const, struct_fwd_decl=struct_fwd_decl, _type=member_type, pointer=pointer,
                         name=name_elem.text, array_lens=array_lens, dyn_array_len=dyn_array_len, optional=optional,
                         values=values, object_type=object_type, bit_width=bit_width, returnedonly=returnedonly,
-                        parent=parent, selection=selection, selector=selector)
+                        selection=selection, selector=selector)
 
-    def get_dyn_array_len(self, prefix, conv):
+    def get_dyn_array_len(self, parent, prefix, conv):
         if isinstance(self.dyn_array_len, int):
             return self.dyn_array_len
-
         length = self.dyn_array_len
-        parent = self.parent
 
         var = parent[parent.index(length)]
         length = var.value(prefix, conv, deref=True)
@@ -1322,7 +1319,7 @@ class VkMember(VkVariable):
         expr = MEMBER_LENGTH_EXPRESSIONS.get((parent.name, self.name), "{length}")
         return expr.format(prefix=prefix, length=length)
 
-    def copy(self, input, output, direction, conv, unwrap, parent_const, conversions):
+    def copy(self, input, output, direction, conv, unwrap, parent_const, conversions, parent):
         """ Helper method for use by conversion logic to generate a C-code statement to copy this member.
             - `conv` indicates whether the statement is in a struct alignment conversion path. """
 
@@ -1333,7 +1330,7 @@ class VkMember(VkVariable):
         if self.needs_conversion(conv, unwrap, direction, False):
             if self.is_dynamic_array():
                 # Array length is either a variable name (string) or an int.
-                count = self.get_dyn_array_len(input, conv)
+                count = self.get_dyn_array_len(parent, input, conv)
                 pointer_part = "pointer_" if self.pointer_array else ""
                 conversions.append(ArrayConversionFunction(self, direction, conv, unwrap))
                 if direction == Direction.OUTPUT:
@@ -1486,11 +1483,11 @@ class VkMember(VkVariable):
 class VkParam(VkVariable):
     """ Helper class which describes a parameter to a function call. """
 
-    def __init__(self, type_info, const=None, pointer=None, name=None, parent=None, array_lens=None,
+    def __init__(self, type_info, const=None, pointer=None, name=None, array_lens=None,
                  dyn_array_len=None, object_type=None, optional=False):
         VkVariable.__init__(self, const=const, type_info=type_info, type=type_info["name"], name=name,
                             pointer=pointer, array_lens=array_lens, dyn_array_len=dyn_array_len,
-                            object_type=object_type, optional=optional, parent=parent)
+                            object_type=object_type, optional=optional)
 
         self._set_format_string()
 
@@ -1498,7 +1495,7 @@ class VkParam(VkVariable):
         return "{0} {1} {2} {3} {4} {5}".format(self.const, self.type, self.pointer, self.name, self.array_lens, self.dyn_array_len)
 
     @staticmethod
-    def from_xml(registry, param, types, parent):
+    def from_xml(registry, param, types):
         # Parameter parsing is slightly tricky. All the data is contained within
         # a param tag, but some data is within subtags while others are text
         # before or after the type tag.
@@ -1531,8 +1528,7 @@ class VkParam(VkVariable):
             LOGGER.error("type info not found for: {0}".format(type_elem.text))
 
         return VkParam(type_info, const=const, pointer=pointer, name=name, array_lens=array_lens,
-                       dyn_array_len=dyn_array_len, object_type=object_type, optional=optional,
-                       parent=parent)
+                       dyn_array_len=dyn_array_len, object_type=object_type, optional=optional)
 
     def _set_format_string(self):
         """ Internal helper function to be used by constructor to set format string. """
@@ -1582,12 +1578,10 @@ class VkParam(VkVariable):
             else:
                 LOGGER.warn("Unhandled type: {0}".format(self.type_info))
 
-    def get_dyn_array_len(self, prefix, conv):
+    def get_dyn_array_len(self, params, prefix, conv):
         if isinstance(self.dyn_array_len, int):
             return self.dyn_array_len
-
         length = self.dyn_array_len
-        params = self.parent
 
         if "->" in length:
             # length is a member of another struct (for example pAllocateInfo->commandBufferCount)
@@ -1601,7 +1595,7 @@ class VkParam(VkVariable):
         var = params[params.index(length)]
         return var.value(prefix, conv, deref=True)
 
-    def copy(self, direction, conv, unwrap, conversions, prefix=""):
+    def copy(self, direction, conv, unwrap, conversions, params, prefix=""):
         win_type = "win32" if conv else "win64"
         suffix = convert_suffix(direction, win_type, unwrap, self.is_wrapped())
         is_const = self.is_const() if self.is_pointer() else False
@@ -1611,7 +1605,7 @@ class VkParam(VkVariable):
             if self.is_dynamic_array():
                 conversions.append(ArrayConversionFunction(self, direction, conv, unwrap))
                 return "    {0}_host = convert_{2}_array_{4}({5}{1}, {3});\n".format(self.name, self.value(prefix, conv),
-                    self.type, self.get_dyn_array_len(prefix, conv), suffix, ctx_param)
+                    self.type, self.get_dyn_array_len(params, prefix, conv), suffix, ctx_param)
             elif self.optional:
                 conversions.append(StructConversionFunction(self.struct, direction, conv, unwrap, is_const))
                 ret  = "    if ({0}{1})\n".format(prefix, self.name)
@@ -1634,7 +1628,7 @@ class VkParam(VkVariable):
                 conversions.append(ArrayConversionFunction(self, direction, conv, unwrap))
                 return "    convert_{0}_array_{1}({2}_host, {3}, {4});\n".format(
                     self.type, suffix, self.name, self.value(prefix, conv).replace('const ', ''),
-                    self.get_dyn_array_len(prefix, conv))
+                    self.get_dyn_array_len(params, prefix, conv))
             elif self.is_struct():
                 ref_part = "" if self.optional else "&"
                 conversions.append(StructConversionFunction(self.struct, direction, conv, unwrap, is_const))
@@ -1862,7 +1856,7 @@ class VkStruct(Sequence):
 
         s = VkStruct(registry, name, [], returnedonly, structextends, union=union)
         for member in filter(is_api_supported, struct.findall("member")):
-            vk_member = VkMember.from_xml(registry, member, returnedonly, s)
+            vk_member = VkMember.from_xml(registry, member, returnedonly)
             s.members.append(vk_member)
 
         return s
@@ -2207,7 +2201,7 @@ class StructConversionFunction(object):
                 body += " || ".join("selector == {}".format(s) for s in m.selection)
                 body += ")\n    "
 
-            body += "    " + m.copy("in->", "out->", self.direction, self.conv, self.unwrap, self.const, conversions)
+            body += "    " + m.copy("in->", "out->", self.direction, self.conv, self.unwrap, self.const, conversions, self.operand)
 
         if needs_extensions:
             if self.conv and self.direction == Direction.INPUT:
@@ -2262,7 +2256,7 @@ class StructConversionFunction(object):
                     if m.name == "pNext":
                         copy_body += ident + "out_ext->pNext = NULL;\n"
                         continue
-                    copy_body += ident + m.copy("in_ext->", "out_ext->", self.direction, self.conv, Unwrap.HOST, self.const, conversions)
+                    copy_body += ident + m.copy("in_ext->", "out_ext->", self.direction, self.conv, Unwrap.HOST, self.const, conversions, ext)
 
                 # Generate the definition of "in_ext" if we need it
                 if "in_ext->" in copy_body:
