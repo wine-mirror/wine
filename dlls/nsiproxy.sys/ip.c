@@ -1818,6 +1818,7 @@ static NTSTATUS ipv6_forward_enumerate_all( void *key_data, UINT key_size, void 
             strtoul( ptr + 1, &ptr, 16 ); /* refcount, skip */
             strtoul( ptr + 1, &ptr, 16 ); /* use, skip */
             rtf_flags = strtoul( ptr + 1, &ptr, 16);
+            if (!(rtf_flags & RTF_UP)) continue;
             entry.protocol = (rtf_flags & RTF_GATEWAY) ? MIB_IPPROTO_NETMGMT : MIB_IPPROTO_LOCAL;
             entry.loopback = entry.protocol == MIB_IPPROTO_LOCAL && entry.prefix_len == 32;
 
