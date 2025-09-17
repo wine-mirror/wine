@@ -3171,8 +3171,7 @@ DECL_HANDLER(set_queue_mask)
         reply->changed_bits = queue_shm->changed_bits;
 
         if (!get_queue_status( queue )) reset_queue_sync( queue );
-        else if (!req->skip_wait) signal_queue_sync( queue );
-        else reset_queue_sync( queue );
+        else signal_queue_sync( queue );
     }
 }
 

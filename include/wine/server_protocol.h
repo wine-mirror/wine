@@ -2994,7 +2994,7 @@ struct set_queue_mask_request
     struct request_header __header;
     unsigned int wake_mask;
     unsigned int changed_mask;
-    int          skip_wait;
+    char __pad_20[4];
 };
 struct set_queue_mask_reply
 {
@@ -6876,6 +6876,6 @@ union generic_reply
     struct get_inproc_sync_fd_reply get_inproc_sync_fd_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 898
+#define SERVER_PROTOCOL_VERSION 899
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

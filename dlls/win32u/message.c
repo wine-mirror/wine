@@ -3219,7 +3219,6 @@ static DWORD wait_objects( DWORD count, const HANDLE *handles, DWORD timeout,
         {
             req->wake_mask    = wake_mask;
             req->changed_mask = changed_mask;
-            req->skip_wait    = 0;
             wine_server_call( req );
         }
         SERVER_END_REQ;
@@ -3540,7 +3539,6 @@ static void wait_message_reply( UINT flags )
         {
             req->wake_mask    = wake_mask;
             req->changed_mask = wake_mask;
-            req->skip_wait    = 1;
             wine_server_call( req );
             wake_bits = reply->wake_bits & wake_mask;
         }
