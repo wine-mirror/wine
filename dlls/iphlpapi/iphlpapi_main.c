@@ -1389,27 +1389,21 @@ DWORD WINAPI GetBestInterface(IPAddr dwDestAddr, PDWORD pdwBestIfIndex)
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
  */
-DWORD WINAPI GetBestInterfaceEx(struct sockaddr *pDestAddr, PDWORD pdwBestIfIndex)
+DWORD WINAPI GetBestInterfaceEx( struct sockaddr *dst, DWORD *best_index )
 {
-  DWORD ret;
+    SOCKADDR_INET best_address;
+    MIB_IPFORWARD_ROW2 row;
+    DWORD ret;
 
-  TRACE("pDestAddr %p, pdwBestIfIndex %p\n", pDestAddr, pdwBestIfIndex);
-  if (!pDestAddr || !pdwBestIfIndex)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    MIB_IPFORWARDROW ipRow;
+    TRACE( "dst %p, best_index %p\n", dst, best_index );
 
-    if (pDestAddr->sa_family == AF_INET) {
-      ret = GetBestRoute(((struct sockaddr_in *)pDestAddr)->sin_addr.S_un.S_addr, 0, &ipRow);
-      if (ret == ERROR_SUCCESS)
-        *pdwBestIfIndex = ipRow.dwForwardIfIndex;
-    } else {
-      FIXME("address family %d not supported\n", pDestAddr->sa_family);
-      ret = ERROR_NOT_SUPPORTED;
-    }
-  }
-  TRACE("returning %ld\n", ret);
-  return ret;
+    if (!dst || !best_index) return ERROR_INVALID_PARAMETER;
+
+    ret = GetBestRoute2( NULL, 0, NULL, (const SOCKADDR_INET *)dst, 0, &row, &best_address );
+    if (!ret) *best_index = row.InterfaceIndex;
+
+    TRACE( "returning %ld\n", ret );
+    return ret;
 }
 
 

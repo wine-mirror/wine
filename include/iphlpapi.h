@@ -100,11 +100,11 @@ IPHLPAPI_DLL_LINKAGE DWORD WINAPI GetBestInterface(IPAddr dwDestAddr, PDWORD pdw
 #ifdef __WINE_WINSOCKAPI_STDLIB_H
 IPHLPAPI_DLL_LINKAGE DWORD WINAPI GetBestInterfaceEx(
 #ifdef USE_WS_PREFIX
-    struct WS_sockaddr *pDestAddr,
+    struct WS_sockaddr *dst,
 #else
-    struct sockaddr *pDestAddr,
+    struct sockaddr *dst,
 #endif
-    PDWORD pdwBestIfIndex);
+    DWORD *best_index);
 #endif
 
 IPHLPAPI_DLL_LINKAGE DWORD WINAPI GetBestRoute(DWORD dwDestAddr, DWORD dwSourceAddr, PMIB_IPFORWARDROW pBestRoute);
