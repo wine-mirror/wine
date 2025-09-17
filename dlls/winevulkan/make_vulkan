@@ -316,21 +316,19 @@ STRUCT_CHAIN_CONVERSIONS = {
 # Some struct members are conditionally ignored and callers are free to leave them uninitialized.
 # We can't deduce that from XML, so we allow expressing it here.
 MEMBER_LENGTH_EXPRESSIONS = {
-    "VkWriteDescriptorSet": {
-        "pImageInfo":
-            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER || " +
-            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER || " +
-            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE || " +
-            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE || " +
-            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT || " +
-            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_SAMPLE_WEIGHT_IMAGE_QCOM || " +
-            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM ? {len} : 0",
-        "pBufferInfo":
-            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || " +
-            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || " +
-            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || " +
-            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC ? {len} : 0",
-    }
+    ("VkWriteDescriptorSet", "pImageInfo"):
+            "{prefix}descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER || " +
+            "{prefix}descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER || " +
+            "{prefix}descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE || " +
+            "{prefix}descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE || " +
+            "{prefix}descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT || " +
+            "{prefix}descriptorType == VK_DESCRIPTOR_TYPE_SAMPLE_WEIGHT_IMAGE_QCOM || " +
+            "{prefix}descriptorType == VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM ? {length} : 0",
+    ("VkWriteDescriptorSet", "pBufferInfo"):
+            "{prefix}descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || " +
+            "{prefix}descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || " +
+            "{prefix}descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || " +
+            "{prefix}descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC ? {length} : 0",
 }
 
 class Direction(Enum):
@@ -1097,37 +1095,6 @@ class VkVariable(object):
         self.handle = type_info["data"] if type_info["category"] == "handle" else None
         self.struct = type_info["data"] if type_info["category"] == "struct" or type_info["category"] == "union" else None
 
-    def get_dyn_array_len(self, prefix, conv):
-        if isinstance(self.dyn_array_len, int):
-            return self.dyn_array_len
-
-        len_str = self.dyn_array_len
-        parent = self.parent
-        len = prefix
-
-        # check if length is a member of another struct (for example pAllocateInfo->commandBufferCount)
-        i = len_str.find("->")
-        if i != -1:
-            var = parent[parent.index(len_str[0:i])]
-            len_str = len_str[i+2:]
-            len = "({0})->".format(var.value(len, conv))
-            parent = var.struct
-
-        if len_str in parent:
-            var = parent[parent.index(len_str)]
-            len = var.value(len, conv);
-            if var.is_pointer():
-                len = "*" + len
-        else:
-            len += len_str
-
-        if isinstance(self.parent, VkStruct) and self.parent.name in MEMBER_LENGTH_EXPRESSIONS:
-            exprs = MEMBER_LENGTH_EXPRESSIONS[self.parent.name]
-            if self.name in exprs:
-                len = exprs[self.name].format(struct=prefix, len=len)
-
-        return len
-
     def is_const(self):
         return self.const
 
@@ -1233,9 +1200,7 @@ class VkVariable(object):
 
         return self.is_pointer() or self.is_pointer_size() or self.is_static_array()
 
-    def value(self, prefix, conv):
-        """ Returns code accessing member value, casting 32-bit pointers when needed. """
-
+    def value(self, prefix, conv, deref=False):
         if not conv or not self.needs_ptr32_type() or (not self.is_pointer() and self.type == "size_t"):
             return prefix + self.name
 
@@ -1255,7 +1220,14 @@ class VkVariable(object):
             elif self.is_static_array():
                 cast_type += " *"
 
-        return "({0})UlongToPtr({1}{2})".format(cast_type, prefix, self.name)
+        if self.is_pointer():
+            ptr = self.pointer if deref else ""
+        elif self.is_static_array():
+            ptr = "*" if deref else ""
+        else:
+            ptr = ""
+
+        return f"{ptr}({cast_type})UlongToPtr({prefix}{self.name})"
 
 
 class VkMember(VkVariable):
@@ -1336,6 +1308,19 @@ class VkMember(VkVariable):
                         name=name_elem.text, array_lens=array_lens, dyn_array_len=dyn_array_len, optional=optional,
                         values=values, object_type=object_type, bit_width=bit_width, returnedonly=returnedonly,
                         parent=parent, selection=selection, selector=selector)
+
+    def get_dyn_array_len(self, prefix, conv):
+        if isinstance(self.dyn_array_len, int):
+            return self.dyn_array_len
+
+        length = self.dyn_array_len
+        parent = self.parent
+
+        var = parent[parent.index(length)]
+        length = var.value(prefix, conv, deref=True)
+
+        expr = MEMBER_LENGTH_EXPRESSIONS.get((parent.name, self.name), "{length}")
+        return expr.format(prefix=prefix, length=length)
 
     def copy(self, input, output, direction, conv, unwrap, parent_const, conversions):
         """ Helper method for use by conversion logic to generate a C-code statement to copy this member.
@@ -1596,6 +1581,25 @@ class VkParam(VkVariable):
                 self.format_str = ""
             else:
                 LOGGER.warn("Unhandled type: {0}".format(self.type_info))
+
+    def get_dyn_array_len(self, prefix, conv):
+        if isinstance(self.dyn_array_len, int):
+            return self.dyn_array_len
+
+        length = self.dyn_array_len
+        params = self.parent
+
+        if "->" in length:
+            # length is a member of another struct (for example pAllocateInfo->commandBufferCount)
+            (param, length) = length.split("->")
+            var = params[params.index(param)]
+            prefix = var.value(prefix, conv)
+
+            var = var.struct[var.struct.index(length)]
+            return var.value(f"({prefix})->", conv, deref=True)
+
+        var = params[params.index(length)]
+        return var.value(prefix, conv, deref=True)
 
     def copy(self, direction, conv, unwrap, conversions, prefix=""):
         win_type = "win32" if conv else "win64"
