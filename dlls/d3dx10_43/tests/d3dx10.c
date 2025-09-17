@@ -20,6 +20,7 @@
 #include "initguid.h"
 #include "d3d10_1.h"
 #include "d3dx10.h"
+#include "wine/wined3d.h"
 #include "wine/test.h"
 #include <stdint.h>
 
@@ -74,6 +75,8 @@ static const D3DX10_IMAGE_LOAD_INFO d3dx10_default_load_info =
 #define DDS_PF_LUMINANCE 0x00020000
 #define DDS_PF_BUMPLUMINANCE 0x00040000
 #define DDS_PF_BUMPDUDV 0x00080000
+
+static bool wined3d_opengl;
 
 struct dds_pixel_format
 {
@@ -1896,13 +1899,8 @@ static void check_test_image_load_info_resource_(uint32_t line, ID3D10Resource *
     HRESULT hr;
 
     ID3D10Resource_GetType(resource, &resource_dimension);
-    todo_wine_if(image_load_info->expected_type == D3D10_RESOURCE_DIMENSION_TEXTURE3D)
-        ok(resource_dimension == image_load_info->expected_type, "Got unexpected ResourceDimension %u, expected %u.\n",
-             resource_dimension, image_load_info->expected_type);
-
-    if (resource_dimension != image_load_info->expected_type)
-        return;
-
+    ok(resource_dimension == image_load_info->expected_type, "Got unexpected ResourceDimension %u, expected %u.\n",
+         resource_dimension, image_load_info->expected_type);
     switch (resource_dimension)
     {
         case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
@@ -1964,10 +1962,9 @@ static void check_resource_info(ID3D10Resource *resource, const struct test_imag
     }
 
     ID3D10Resource_GetType(resource, &resource_dimension);
-    todo_wine_if (image->expected_info.ResourceDimension == D3D10_RESOURCE_DIMENSION_TEXTURE3D)
-        ok(resource_dimension == image->expected_info.ResourceDimension,
-                "Got unexpected ResourceDimension %u, expected %u.\n",
-                 resource_dimension, image->expected_info.ResourceDimension);
+    ok(resource_dimension == image->expected_info.ResourceDimension,
+            "Got unexpected ResourceDimension %u, expected %u.\n",
+             resource_dimension, image->expected_info.ResourceDimension);
 
     switch (resource_dimension)
     {
@@ -2142,7 +2139,10 @@ static void check_resource_data(ID3D10Resource *resource, const struct test_imag
 
     if (SUCCEEDED(ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture3D, (void **)&texture3d)))
     {
-        check_texture3d_data(texture3d, image, line);
+        if (wined3d_opengl && is_block_compressed(image->expected_info.Format))
+            skip("Skipping compressed format 3D texture readback test.\n");
+        else
+            check_texture3d_data(texture3d, image, line);
         ID3D10Texture3D_Release(texture3d);
     }
     else if (SUCCEEDED(ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture2d)))
@@ -6041,6 +6041,17 @@ static void test_preprocess_shader(void)
 
 START_TEST(d3dx10)
 {
+    HMODULE wined3d;
+
+    if ((wined3d = GetModuleHandleA("wined3d.dll")))
+    {
+        enum wined3d_renderer (CDECL *p_wined3d_get_renderer)(void);
+
+        if ((p_wined3d_get_renderer = (void *)GetProcAddress(wined3d, "wined3d_get_renderer"))
+                && p_wined3d_get_renderer() == WINED3D_RENDERER_OPENGL)
+            wined3d_opengl = true;
+    }
+
     test_D3DX10UnsetAllDeviceObjects();
     test_D3DX10CreateAsyncMemoryLoader();
     test_D3DX10CreateAsyncFileLoader();

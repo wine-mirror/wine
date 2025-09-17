@@ -322,6 +322,8 @@ struct texture_processor
 {
     ID3DX10DataProcessor ID3DX10DataProcessor_iface;
     ID3D10Device *device;
+    D3DX10_IMAGE_INFO img_info;
+    D3DX10_IMAGE_INFO *img_info_out;
     D3DX10_IMAGE_LOAD_INFO load_info;
     D3D10_SUBRESOURCE_DATA *resource_data;
 };
@@ -334,6 +336,7 @@ static inline struct texture_processor *texture_processor_from_ID3DX10DataProces
 static HRESULT WINAPI texture_processor_Process(ID3DX10DataProcessor *iface, void *data, SIZE_T size)
 {
     struct texture_processor *processor = texture_processor_from_ID3DX10DataProcessor(iface);
+    HRESULT hr;
 
     TRACE("iface %p, data %p, size %Iu.\n", iface, data, size);
 
@@ -343,7 +346,10 @@ static HRESULT WINAPI texture_processor_Process(ID3DX10DataProcessor *iface, voi
         free(processor->resource_data);
         processor->resource_data = NULL;
     }
-    return load_texture_data(data, size, &processor->load_info, &processor->resource_data);
+    hr = load_texture_data(data, size, &processor->load_info, &processor->resource_data);
+    if (SUCCEEDED(hr) && processor->img_info_out)
+        *processor->img_info_out = processor->img_info;
+    return hr;
 }
 
 static HRESULT WINAPI texture_processor_CreateDeviceObject(ID3DX10DataProcessor *iface, void **object)
@@ -594,7 +600,10 @@ HRESULT WINAPI D3DX10CreateAsyncTextureProcessor(ID3D10Device *device,
     object->ID3DX10DataProcessor_iface.lpVtbl = &texture_processor_vtbl;
     object->device = device;
     ID3D10Device_AddRef(device);
+    if (load_info)
+        object->img_info_out = load_info->pSrcInfo;
     init_load_info(load_info, &object->load_info);
+    object->load_info.pSrcInfo = &object->img_info;
 
     *processor = &object->ID3DX10DataProcessor_iface;
     return S_OK;
