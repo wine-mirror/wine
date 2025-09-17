@@ -35,6 +35,9 @@
 /* fix this if the x86_thread_data structure is changed */
 #define GS_OFFSET  0x1d8  /* FIELD_OFFSET(TEB,SystemReserved2) + FIELD_OFFSET(struct x86_thread_data,gs) */
 
+/* offset of the ldt pointer */
+#define LDT_OFFSET 0x220  /* FIELD_OFFSET(PEB,SpareUlongs[0]) */
+
 
 /*******************************************************************
  *         BuildCallFrom16Core
@@ -146,11 +149,9 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
     output( "\tmovw %%ss, %%dx\n" );
     output( "\tandl $0xfff8, %%edx\n" );
     output( "\tshrl $1, %%edx\n" );
-    if (UsePIC)
-        output( "\taddl .Lwine_ldt_copy_ptr-1b(%%ecx),%%edx\n" );
-    else
-        output( "\taddl .Lwine_ldt_copy_ptr,%%edx\n" );
-    output( "\tmovl (%%edx), %%edx\n" );
+    output( "\tmovl %%fs:(0x30), %%ecx\n" ); /* peb */
+    output( "\tmovl %u(%%ecx), %%ecx\n", LDT_OFFSET );   /* ldt_copy */
+    output( "\tmovl (%%ecx,%%edx), %%edx\n" );
     output( "\tmovzwl %%sp, %%ebp\n" );
     output( "\tleal %d(%%ebp,%%edx), %%edx\n", reg_func ? 0 : -4 );
 

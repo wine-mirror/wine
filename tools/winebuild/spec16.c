@@ -29,6 +29,9 @@
 
 #include "build.h"
 
+/* offset of the ldt pointer */
+#define LDT_OFFSET 0x220  /* FIELD_OFFSET(PEB,SpareUlongs[0]) */
+
 #define NE_FFLAGS_SINGLEDATA 0x0001
 #define NE_FFLAGS_LIBMODULE  0x8000
 
@@ -351,14 +354,8 @@ static void output_call16_function( ORDDEF *odp )
         output( "\tpushl %%esi\n" );
         output_cfi( ".cfi_rel_offset %%esi,-4" );
         stack_words++;
-        if (UsePIC)
-        {
-            output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
-            output( "1:\tmovl .Lwine_ldt_copy_ptr-1b(%%eax),%%esi\n" );
-            needs_get_pc_thunk = 1;
-        }
-        else
-            output( "\tmovl .Lwine_ldt_copy_ptr,%%esi\n" );
+        output( "\tmovl %%fs:(0x30), %%esi\n" ); /* peb */
+        output( "\tmovl %u(%%esi), %%esi\n", LDT_OFFSET );   /* ldt_copy */
     }
 
     /* preserve 16-byte stack alignment */
@@ -563,8 +560,7 @@ static void output_module16( DLLSPEC *spec )
     output( "\t.short 0,0,0,0\n" );                                        /* e_res */
     output( "\t.short 0\n" );                                              /* e_oemid */
     output( "\t.short 0\n" );                                              /* e_oeminfo */
-    output( ".Lwine_ldt_copy_ptr:\n" );                        /* e_res2, used for private data */
-    output( "\t.long .L__wine_spec_ne_header_end-.L__wine_spec_dos_header,0,0,0,0\n" );
+    output( "\t.long .L__wine_spec_ne_header_end-.L__wine_spec_dos_header,0,0,0,0\n" );  /* e_res2, used for private data */
     output( "\t.long .L__wine_spec_ne_header-.L__wine_spec_dos_header\n" );/* e_lfanew */
 
     output( "\t%s \"%s\"\n", get_asm_string_keyword(), fakedll_signature );
