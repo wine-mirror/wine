@@ -2986,11 +2986,11 @@ static void test_integral_resize(void)
 
     GetWindowRect(listbox, &rect);
     SetRect(&expect, 100, 100, 299, 260 + (edge_height * 2));
-    todo_wine ok(EqualRect(&rect, &expect), "expected %s, got %s\n", wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
+    ok(EqualRect(&rect, &expect), "expected %s, got %s\n", wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
 
     GetClientRect(listbox, &rect);
     SetRect(&expect, 0, 0, 199 - (edge_width * 2), 160 - scroll_height);
-    todo_wine ok(EqualRect(&rect, &expect), "expected %s, got %s\n", wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
+    ok(EqualRect(&rect, &expect), "expected %s, got %s\n", wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
 
     DestroyWindow(listbox);
     DestroyWindow(parent);

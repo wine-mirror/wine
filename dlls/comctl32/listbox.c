@@ -460,18 +460,31 @@ static void LISTBOX_UpdateSize( LB_DESCR *descr )
     descr->height = rect.bottom - rect.top;
     if (!(descr->style & LBS_NOINTEGRALHEIGHT) && !(descr->style & LBS_OWNERDRAWVARIABLE))
     {
+        int height = descr->height;
         INT remaining;
         RECT rect;
 
+        /* The whole point of integral height is to ensure that partial items
+         * aren't displayed. Native seems to fail to take the horizontal
+         * scrollbar into account (while successfully taking into account e.g.
+         * WS_EX_CLIENTEDGE), so it ends up obscuring partial items anyway.
+         *
+         * It's not clear if native is trying to work from
+         * the window rect as opposed to the client rect [and badly
+         * reimplementing AdjustWindowRect()] or poorly working around the case
+         * where the horizontal scrollbar is repeatedly toggled (which could
+         * unnecessarily shrink the scrollbar every time it happens). */
+        if (GetWindowLongW( descr->self, GWL_STYLE ) & WS_HSCROLL)
+            height += GetSystemMetrics( SM_CYHSCROLL );
+
         GetWindowRect( descr->self, &rect );
         if(descr->item_height != 0)
-            remaining = descr->height % descr->item_height;
+            remaining = height % descr->item_height;
         else
             remaining = 0;
-        if ((descr->height > descr->item_height) && remaining)
+        if ((height > descr->item_height) && remaining)
         {
-            TRACE("[%p]: changing height %d -> %d\n",
-                  descr->self, descr->height, descr->height - remaining );
+            TRACE( "[%p]: changing height %d -> %d\n", descr->self, height, height - remaining );
             SetWindowPos( descr->self, 0, 0, 0, rect.right - rect.left,
                           rect.bottom - rect.top - remaining,
                           SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE );
