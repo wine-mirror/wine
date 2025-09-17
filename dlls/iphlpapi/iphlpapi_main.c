@@ -4733,6 +4733,13 @@ static MIB_UNICASTIPADDRESS_ROW *find_first_matching_unicast_addr( MIB_UNICASTIP
     return NULL;
 }
 
+static BOOL is_addr_unspecified( const SOCKADDR_INET *addr, BOOL v6 )
+{
+    if (v6 && IN6_IS_ADDR_UNSPECIFIED(&addr->Ipv6.sin6_addr)) return TRUE;
+    if (!v6 && !addr->Ipv4.sin_addr.s_addr) return TRUE;
+    return FALSE;
+}
+
 /******************************************************************
  *    GetBestRoute2 (IPHLPAPI.@)
  */
@@ -4761,9 +4768,8 @@ DWORD WINAPI GetBestRoute2( NET_LUID *luid, NET_IFINDEX index,
     v6 = dst->si_family == AF_INET6;
     if (src)
     {
-        if (src->si_family != dst->si_family)                         src = NULL;
-        else if (v6 && IN6_IS_ADDR_UNSPECIFIED(&src->Ipv6.sin6_addr)) src = NULL;
-        else if (!v6 && !src->Ipv4.sin_addr.s_addr)                   src = NULL;
+        if (src->si_family != dst->si_family)    src = NULL;
+        else if (is_addr_unspecified( src, v6 )) src = NULL;
     }
 
     if (v6 && !IN6_IS_ADDR_LINKLOCAL(&dst->Ipv6.sin6_addr) && dst->Ipv6.sin6_scope_id)
@@ -4824,6 +4830,54 @@ DWORD WINAPI GetBestRoute2( NET_LUID *luid, NET_IFINDEX index,
         }
     }
 
+    uni_row = NULL;
+    if (!src && !(v6 && IN6_IS_ADDR_LINKLOCAL(&dst->Ipv6.sin6_addr)))
+    {
+        static const struct in6_addr ipv6_default_addr = {{{ 0x20, 0x01, 0x0d, 0xb8 }}};
+        SOCKADDR_INET src_addr, dst_addr;
+        WORD ver = MAKEWORD (2, 2);
+        WSADATA data;
+        SOCKET s;
+        int len;
+
+        WSAStartup ( ver, &data );
+        if ((s = socket( dst->si_family, SOCK_DGRAM, IPPROTO_UDP )) == -1) goto skip_system_route;
+        dst_addr = *dst;
+        if (is_addr_unspecified( dst, v6 ))
+        {
+            /* GetBestRoute2() should return default route in this case while connect() while unspecified address for
+             * connect() has different semantics. So use some global IP address instead. */
+            if (v6) dst_addr.Ipv6.sin6_addr    = ipv6_default_addr;
+            else dst_addr.Ipv4.sin_addr.s_addr = 0x01010101;
+        }
+        if (connect( s, (struct sockaddr *)&dst_addr, sizeof(dst_addr) ) == -1)
+        {
+            WARN( "Resolving destination address failed.\n" );
+            goto skip_system_route;
+        }
+        len = sizeof(src_addr);
+        if (getsockname( s, (struct sockaddr *)&src_addr, &len ))
+        {
+            WARN( "getsockname failed, error %d.\n", WSAGetLastError() );
+            goto skip_system_route;
+        }
+        if (!(uni_row = find_first_matching_unicast_addr( uni, v6, &src_addr, &dst_addr, index )))
+        {
+            WARN( "Could not find matching unicast addr for system route.\n" );
+            goto skip_system_route;
+        }
+        if (index && uni_row->InterfaceIndex != index)
+        {
+            WARN( "Specified index %lu doesn't match system %lu.\n", index, uni_row->InterfaceIndex );
+            uni_row = NULL;
+            goto skip_system_route;
+        }
+        index = uni_row->InterfaceIndex;
+skip_system_route:
+        if (s != -1) closesocket(s);
+        WSACleanup();
+    }
+
     max_prefix_len = -1;
     best_idx = 0;
     for (i = 0; i < fwd->NumEntries; ++i)
@@ -4851,7 +4905,7 @@ DWORD WINAPI GetBestRoute2( NET_LUID *luid, NET_IFINDEX index,
         goto done;
     }
 
-    if (!(uni_row = find_first_matching_unicast_addr( uni, v6, src, dst, index )))
+    if (!uni_row && !(uni_row = find_first_matching_unicast_addr( uni, v6, src, dst, index )))
     {
         WARN( "Could not find source address.\n" );
         ret = ERROR_NOT_FOUND;
