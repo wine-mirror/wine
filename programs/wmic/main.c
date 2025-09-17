@@ -55,6 +55,7 @@ alias_map[] =
     { L"nicconfig", L"Win32_NetworkAdapterConfiguration" },
     { L"os", L"Win32_OperatingSystem" },
     { L"process", L"Win32_Process" },
+    { L"qfe", L"Win32_QuickFixEngineering" },
     { L"systemenclosure", L"Win32_SystemEnclosure" },
 };
 
