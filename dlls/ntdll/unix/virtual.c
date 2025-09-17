@@ -4164,7 +4164,8 @@ void virtual_free_teb( TEB *teb )
 
 #if defined(__i386__) || defined(__x86_64__)
 
-struct ldt_copy __wine_ldt_copy = { 0 };
+static struct ldt_copy *ldt_copy;
+
 UINT ldt_bitmap[LDT_SIZE / 32] = { ~0u };
 
 /***********************************************************************
@@ -4174,12 +4175,24 @@ WORD ldt_update_entry( WORD sel, LDT_ENTRY entry )
 {
     unsigned int index = sel >> 3;
 
+    if (!ldt_copy)
+    {
+        struct file_view *view;
+
+        if (map_view( &view, NULL, sizeof(*ldt_copy), MEM_TOP_DOWN,
+                      VPROT_COMMITTED | VPROT_READ | VPROT_WRITE,
+                      is_win64 ? limit_2g : 0, limit_4g, 0 )) return 0;
+        ldt_copy = view->base;
+        if (is_win64) wow_peb->SpareUlongs[0] = PtrToUlong( ldt_copy );
+        else peb->SpareUlongs[0] = PtrToUlong( ldt_copy );
+    }
+
     ldt_set_entry( sel, entry );
-    __wine_ldt_copy.base[index]             = ldt_get_base( entry );
-    __wine_ldt_copy.bits[index].limit       = entry.LimitLow | (entry.HighWord.Bits.LimitHi << 16);
-    __wine_ldt_copy.bits[index].type        = entry.HighWord.Bits.Type;
-    __wine_ldt_copy.bits[index].granularity = entry.HighWord.Bits.Granularity;
-    __wine_ldt_copy.bits[index].default_big = entry.HighWord.Bits.Default_Big;
+    ldt_copy->base[index]             = ldt_get_base( entry );
+    ldt_copy->bits[index].limit       = entry.LimitLow | (entry.HighWord.Bits.LimitHi << 16);
+    ldt_copy->bits[index].type        = entry.HighWord.Bits.Type;
+    ldt_copy->bits[index].granularity = entry.HighWord.Bits.Granularity;
+    ldt_copy->bits[index].default_big = entry.HighWord.Bits.Default_Big;
     ldt_bitmap[index / 32] |= 1u << (index & 31);
     return sel;
 }

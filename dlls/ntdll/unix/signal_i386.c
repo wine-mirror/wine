@@ -2385,7 +2385,6 @@ void signal_init_process(void)
     if (!gdt_fs_sel && !is_gdt_sel( get_gs() )) memset( ldt_bitmap, 0xff, 512 / 8 );
 
     signal_alloc_thread( NtCurrentTeb() );
-    peb->SpareUlongs[0] = PtrToUlong( &__wine_ldt_copy );
 
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;

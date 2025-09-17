@@ -610,7 +610,6 @@ struct ldt_copy
     struct ldt_bits bits[LDT_SIZE];
 };
 C_ASSERT( sizeof(struct ldt_copy) == 8 * LDT_SIZE );
-extern struct ldt_copy __wine_ldt_copy;
 
 extern UINT ldt_bitmap[LDT_SIZE / 32];
 
