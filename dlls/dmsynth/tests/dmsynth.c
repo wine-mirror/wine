@@ -1787,7 +1787,7 @@ static void test_IKsControl(void)
     envelope.gain = 60.;
     envelope.channel_gain[0] = 0.;
     envelope.channel_gain[1] = 0.;
-    check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, TRUE);
+    check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, FALSE);
 
     /* setting volume 0 changes voice gain */
     volume = -600;

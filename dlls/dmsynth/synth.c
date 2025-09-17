@@ -47,6 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 #define CONN_TRANSFORM(src, ctrl, dst) (((src) & 0x3f) << 10) | (((ctrl) & 0x3f) << 4) | ((dst) & 0xf)
 
 #define BASE_GAIN 60.
+#define CENTER_PAN_GAIN -30.10
 
 /* from src/rvoice/fluid_rvoice.h */
 #define FLUID_LOOP_DURING_RELEASE 1
@@ -602,6 +603,8 @@ static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *par
 
     /* native limits the total voice gain to 6 dB */
     gain = BASE_GAIN;
+    /* compensate gain added in synth_preset_noteon */
+    gain -= CENTER_PAN_GAIN;
     fluid_settings_setnum(This->fluid_settings, "synth.gain", pow(10., gain / 200.));
 
     if (!(This->fluid_synth = new_fluid_synth(This->fluid_settings)))
@@ -1939,6 +1942,10 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
         add_voice_connections(fluid_voice, &articulation->list, articulation->connections);
     LIST_FOR_EACH_ENTRY(articulation, &region->articulations, struct articulation, entry)
         add_voice_connections(fluid_voice, &articulation->list, articulation->connections);
+    /* Unlike FluidSynth, native applies the gain limit after the panning. At
+     * least for the center pan we can replicate this by applying a panning
+     * attenuation here. */
+    fluid_voice_gen_incr(voice->fluid_voice, GEN_ATTENUATION, -CENTER_PAN_GAIN);
     fluid_synth_start_voice(synth->fluid_synth, fluid_voice);
 
     LeaveCriticalSection(&synth->cs);
