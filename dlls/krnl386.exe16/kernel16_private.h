@@ -237,14 +237,6 @@ extern void NE_DllProcessAttach( HMODULE16 hModule );
 extern void NE_CallUserSignalProc( HMODULE16 hModule, UINT16 code );
 
 /* selector.c */
-#define LDT_SIZE 8192
-struct ldt_copy
-{
-    void         *base[LDT_SIZE];
-    struct ldt_bits bits[LDT_SIZE];
-};
-C_ASSERT( sizeof(struct ldt_copy) == 8 * LDT_SIZE );
-extern const struct ldt_copy *ldt_copy;
 
 static const struct ldt_bits data_segment   = { .type = 0x13 };
 static const struct ldt_bits code16_segment = { .type = 0x1b, .default_big = 0 };

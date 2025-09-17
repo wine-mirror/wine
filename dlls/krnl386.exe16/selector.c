@@ -26,16 +26,28 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(selector);
 
-const struct ldt_copy *ldt_copy = NULL;
+#define LDT_SIZE 8192
+
+struct ldt_copy
+{
+    void           *base[LDT_SIZE];
+    struct ldt_bits bits[LDT_SIZE];
+};
+C_ASSERT( sizeof(struct ldt_copy) == 8 * LDT_SIZE );
 
 static ULONG bitmap_data[LDT_SIZE / 32];
 static RTL_BITMAP ldt_bitmap = { LDT_SIZE, bitmap_data };
 static const LDT_ENTRY null_entry;
 static WORD first_ldt_entry = 32;
 
+static inline struct ldt_copy *ldt_copy(void)
+{
+    return ULongToPtr( NtCurrentTeb()->Peb->SpareUlongs[0] );
+}
+
 static inline struct ldt_bits ldt_get_bits( WORD sel )
 {
-    return ldt_copy->bits[sel >> 3];
+    return ldt_copy()->bits[sel >> 3];
 }
 
 /* get the number of selectors needed to cover up to the selector limit */
@@ -83,7 +95,6 @@ void init_selectors(void)
     if (!is_gdt_sel( get_gs() )) first_ldt_entry += 512;
     if (!is_gdt_sel( get_fs() )) first_ldt_entry += 512;
     RtlSetBits( &ldt_bitmap, 0, first_ldt_entry );
-    NtQueryInformationProcess( GetCurrentProcess(), ProcessWineLdtCopy, &ldt_copy, sizeof(ldt_copy), NULL );
 }
 
 /***********************************************************************
@@ -147,7 +158,7 @@ void ldt_set_entry( WORD sel, LDT_ENTRY entry )
  */
 void *ldt_get_base( WORD sel )
 {
-    return ldt_copy->base[sel >> 3];
+    return ldt_copy()->base[sel >> 3];
 }
 
 /***********************************************************************

@@ -915,7 +915,7 @@ static HMODULE16 NE_DoLoadBuiltinModule( const IMAGE_DOS_HEADER *mz_header, cons
     }
 
     patch_code_segment( pModule );
-    *(const void **)mz_header->e_res2 = ldt_copy->base;
+    *(ULONG *)mz_header->e_res2 = NtCurrentTeb()->Peb->SpareUlongs[0];
 
     return hInstance;
 }

@@ -1981,8 +1981,7 @@ typedef enum _PROCESSINFOCLASS {
     MaxProcessInfoClass,
 #ifdef __WINESRC__
     ProcessWineMakeProcessSystem = 1000,
-    ProcessWineLdtCopy,
-    ProcessWineGrantAdminToken,
+    ProcessWineGrantAdminToken = 1002,
 #endif
 } PROCESSINFOCLASS;
 
