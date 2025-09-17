@@ -606,7 +606,7 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateAllocation2( UINT *args )
         standard.Flags = standard32->Flags;
 
         desc.pStandardAllocation = &standard;
-        desc.PrivateDriverDataSize = sizeof(standard);
+        desc.PrivateDriverDataSize = desc32->PrivateDriverDataSize;
     }
     desc.NumAllocations = desc32->NumAllocations;
     allocs32 = UlongToPtr( desc32->pAllocationInfo2 );

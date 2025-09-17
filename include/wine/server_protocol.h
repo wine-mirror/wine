@@ -5989,6 +5989,7 @@ struct d3dkmt_object_create_request
 {
     struct request_header __header;
     unsigned int        type;
+    /* VARARG(runtime,bytes); */
 };
 struct d3dkmt_object_create_reply
 {
@@ -6908,6 +6909,6 @@ union generic_reply
     struct d3dkmt_object_create_reply d3dkmt_object_create_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 905
+#define SERVER_PROTOCOL_VERSION 906
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

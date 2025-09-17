@@ -40,6 +40,8 @@ struct d3dkmt_object
     struct object       obj;            /* object header */
     enum d3dkmt_type    type;           /* object type */
     d3dkmt_handle_t     global;         /* object global handle */
+    void               *runtime;        /* client runtime data */
+    data_size_t         runtime_size;   /* size of client runtime data */
 };
 
 static void d3dkmt_object_dump( struct object *obj, int verbose );
@@ -161,17 +163,20 @@ static void d3dkmt_object_destroy( struct object *obj )
     assert( obj->ops == &d3dkmt_object_ops );
 
     if (object->global) free_object_handle( object->global );
+    free( object->runtime );
 }
 
-static struct d3dkmt_object *d3dkmt_object_create( enum d3dkmt_type type )
+static struct d3dkmt_object *d3dkmt_object_create( enum d3dkmt_type type, data_size_t runtime_size, const void *runtime )
 {
     struct d3dkmt_object *object;
 
     if (!(object = alloc_object( &d3dkmt_object_ops ))) return NULL;
-    object->type    = type;
-    object->global  = 0;
+    object->type            = type;
+    object->global          = 0;
+    object->runtime_size    = runtime_size;
 
-    if (!(object->global = alloc_object_handle( object )))
+    if (!(object->runtime = memdup( runtime, runtime_size )) ||
+        !(object->global = alloc_object_handle( object )))
     {
         release_object( object );
         return NULL;
@@ -185,7 +190,7 @@ DECL_HANDLER(d3dkmt_object_create)
 {
     struct d3dkmt_object *object;
 
-    if (!(object = d3dkmt_object_create( req->type ))) return;
+    if (!(object = d3dkmt_object_create( req->type, get_req_data_size(), get_req_data() ))) return;
     reply->handle = alloc_handle( current->process, object, STANDARD_RIGHTS_ALL, OBJ_INHERIT );
     reply->global = object->global;
     release_object( object );

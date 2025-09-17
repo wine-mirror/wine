@@ -175,13 +175,14 @@ static NTSTATUS d3dkmt_object_alloc( UINT size, enum d3dkmt_type type, void **ob
 }
 
 /* create a global D3DKMT object, either with a global handle or later shareable */
-static NTSTATUS d3dkmt_object_create( struct d3dkmt_object *object, BOOL shared )
+static NTSTATUS d3dkmt_object_create( struct d3dkmt_object *object, BOOL shared, const void *runtime, UINT runtime_size )
 {
     NTSTATUS status;
 
     SERVER_START_REQ( d3dkmt_object_create )
     {
         req->type = object->type;
+        if (runtime_size) wine_server_add_data( req, runtime, runtime_size );
         status = wine_server_call( req );
         object->handle = wine_server_ptr_handle( reply->handle );
         object->global = reply->global;
@@ -808,7 +809,8 @@ NTSTATUS WINAPI NtGdiDdDDICreateAllocation2( D3DKMT_CREATEALLOCATION *params )
         if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
 
         if (!params->Flags.CreateShared) status = alloc_object_handle( &resource->obj );
-        else status = d3dkmt_object_create( &resource->obj, params->Flags.NtSecuritySharing );
+        else status = d3dkmt_object_create( &resource->obj, params->Flags.NtSecuritySharing,
+                                            params->pPrivateRuntimeData, params->PrivateRuntimeDataSize );
         if (status) goto failed;
 
         params->hGlobalShare = resource->obj.shared ? 0 : resource->obj.global;
@@ -968,7 +970,9 @@ NTSTATUS WINAPI NtGdiDdDDICreateKeyedMutex2( D3DKMT_CREATEKEYEDMUTEX2 *params )
     if (!params) return STATUS_INVALID_PARAMETER;
 
     if ((status = d3dkmt_object_alloc( sizeof(*mutex), D3DKMT_MUTEX, (void **)&mutex ))) return status;
-    if ((status = d3dkmt_object_create( mutex, params->Flags.NtSecuritySharing ))) goto failed;
+    if ((status = d3dkmt_object_create( mutex, params->Flags.NtSecuritySharing,
+                                        params->pPrivateRuntimeData, params->PrivateRuntimeDataSize )))
+        goto failed;
 
     params->hSharedHandle = mutex->shared ? 0 : mutex->global;
     params->hKeyedMutex = mutex->local;
@@ -1063,7 +1067,7 @@ NTSTATUS WINAPI NtGdiDdDDICreateSynchronizationObject2( D3DKMT_CREATESYNCHRONIZA
 
     if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) return status;
     if (!params->Info.Flags.Shared) status = alloc_object_handle( sync );
-    else status = d3dkmt_object_create( sync, params->Info.Flags.NtSecuritySharing );
+    else status = d3dkmt_object_create( sync, params->Info.Flags.NtSecuritySharing, NULL, 0 );
     if (status) goto failed;
 
     if (params->Info.Flags.Shared) params->Info.SharedHandle = sync->shared ? 0 : sync->global;

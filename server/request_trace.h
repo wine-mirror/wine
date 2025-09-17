@@ -3384,6 +3384,7 @@ static void dump_get_inproc_sync_fd_reply( const struct get_inproc_sync_fd_reply
 static void dump_d3dkmt_object_create_request( const struct d3dkmt_object_create_request *req )
 {
     fprintf( stderr, " type=%08x", req->type );
+    dump_varargs_bytes( ", runtime=", cur_size );
 }
 
 static void dump_d3dkmt_object_create_reply( const struct d3dkmt_object_create_reply *req )
