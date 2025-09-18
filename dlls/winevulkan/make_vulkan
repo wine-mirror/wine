@@ -352,6 +352,8 @@ def is_api_supported(obj):
 def innertext(tag):
     return (tag.text or '') + ''.join(innertext(e) for e in tag) + (tag.tail or '')
 
+def snake_case(value):
+    return re.sub(r'([0-9a-z_])([A-Z0-9])',r'\1_\2', value)
 
 def convert_suffix(direction, win_type, unwrap, is_wrapped):
     if direction == Direction.OUTPUT:
@@ -445,157 +447,105 @@ class VkDefine(object):
         return self.value + '\n'
 
 
-class VkEnum(object):
-    def __init__(self, name, bitwidth, alias=None):
-        if not bitwidth in [32, 64]:
-            LOGGER.error("unknown bitwidth {0} for {1}".format(bitwidth, name))
+class Enum(object):
+    def __init__(self, values, name, bitwidth="32", **kwargs):
         self.name = name
-        self.bitwidth = bitwidth
-        self.values = [] if alias == None else alias.values
+        self.values = values
+        self.bitwidth = int(bitwidth)
+        assert self.bitwidth in (32, 64)
+
+        self.extensions = set()
+        self.typedefs = []
         self.required = False
-        self.alias = alias
-        self.aliased_by = []
 
     @staticmethod
-    def from_alias(registry, enum, alias):
-        name = enum.attrib.get("name")
-        aliasee = VkEnum(name, alias.bitwidth, alias=alias)
+    def from_xml(node):
+        values = filter(is_api_supported, node.findall("enum"))
+        values = [EnumValue(**node.attrib) for node in values]
 
-        alias.add_aliased_by(aliasee)
-        return aliasee
-
-    @staticmethod
-    def from_xml(registry, enum):
-        name = enum.attrib.get("name")
-        bitwidth = int(enum.attrib.get("bitwidth", "32"))
-        result = VkEnum(name, bitwidth)
-
-        for v in enum.findall("enum"):
-            value_name = v.attrib.get("name")
-            # Value is either a value or a bitpos, only one can exist.
-            value = v.attrib.get("value")
-            alias_name = v.attrib.get("alias")
-            if alias_name:
-                result.create_alias(value_name, alias_name)
-            elif value:
-                result.create_value(value_name, value)
-            else:
-                # bitmask
-                result.create_bitpos(value_name, int(v.attrib.get("bitpos")))
-
-        if bitwidth == 32:
+        enum = Enum(values, **node.attrib)
+        if enum.bitwidth == 32 and not any(x.value == 0x7fffffff for x in enum.values):
             # vulkan.h contains a *_MAX_ENUM value set to 32-bit at the time of writing,
             # which is to prepare for extensions as they can add values and hence affect
             # the size definition.
-            max_name = re.sub(r'([0-9a-z_])([A-Z0-9])',r'\1_\2', name).upper() + "_MAX_ENUM"
-            result.create_value(max_name, "0x7fffffff")
+            name = snake_case(enum.name).upper() + "_MAX_ENUM"
+            enum.add(EnumValue(name=name, value="0x7fffffff"))
 
-        return result
-
-    def create_alias(self, name, alias_name):
-        """ Create an aliased value for this enum """
-        self.add(VkEnumValue(name, self.bitwidth, alias=alias_name))
-
-    def create_value(self, name, value):
-        """ Create a new value for this enum """
-        # Some values are in hex form. We want to preserve the hex representation
-        # at least when we convert back to a string. Internally we want to use int.
-        hex = "0x" in value
-        self.add(VkEnumValue(name, self.bitwidth, value=int(value, 0), hex=hex))
-
-    def create_bitpos(self, name, pos):
-        """ Create a new bitmask value for this enum """
-        self.add(VkEnumValue(name, self.bitwidth, value=(1 << pos), hex=True))
+        return enum
 
     def add(self, value):
-        """ Add a value to enum. """
-
         # Extensions can add new enum values. When an extension is promoted to Core
         # the registry defines the value twice once for old extension and once for
         # new Core features. Add the duplicate if it's explicitly marked as an
         # alias, otherwise ignore it.
-        for v in self.values:
-            if not value.is_alias() and v.value == value.value:
-                LOGGER.debug("Adding duplicate enum value {0} to {1}".format(v, self.name))
-                return
+        if any(not value.is_alias() and value.value == prev.value for prev in self.values):
+            return
         # Avoid adding duplicate aliases multiple times
-        if not any(x.name == value.name for x in self.values):
-            self.values.append(value)
+        if any(x.name == value.name for x in self.values):
+            return
+        self.values.append(value)
 
     def fixup_64bit_aliases(self):
-        """ Replace 64bit aliases with literal values """
         # Older GCC versions need a literal to initialize a static const uint64_t
         # which is what we use for 64bit bitmasks.
         if self.bitwidth != 64:
             return
-        for value in self.values:
-            if not value.is_alias():
-                continue
+
+        for value in filter(EnumValue.is_alias, self.values):
             alias = next(x for x in self.values if x.name == value.alias)
             value.hex = alias.hex
             value.value = alias.value
+            value.alias = None
 
     def definition(self):
-        if self.is_alias():
-            return ""
-
-        default_value = 0x7ffffffe if self.bitwidth == 32 else 0xfffffffffffffffe
-
         # Print values sorted, values can have been added in a random order.
-        values = sorted(self.values, key=lambda value: value.value if value.value is not None else default_value)
+        values = sorted(self.values, key=lambda value: value.value)
 
         if self.bitwidth == 32:
-            text = "typedef enum {0}\n{{\n".format(self.name)
+            text  = f"typedef enum {self.name}\n{{\n"
             for value in values:
-                text += "    {0},\n".format(value.definition())
-            text += "}} {0};\n".format(self.name)
-        elif self.bitwidth == 64:
-            text = "typedef VkFlags64 {0};\n\n".format(self.name)
-            for value in values:
-                text += "static const {0} {1};\n".format(self.name, value.definition())
+                text += f"    {value.definition()},\n"
+            text += f"}} {self.name};\n"
 
-        for aliasee in self.aliased_by:
-            text += "typedef {0} {1};\n".format(self.name, aliasee.name)
+        elif self.bitwidth == 64:
+            text  = f"typedef VkFlags64 {self.name};\n\n"
+            for value in values:
+                text += f"static const {self.name} {value.definition(size=8)};\n"
+
+        for name in self.typedefs:
+            text += f"typedef {self.name} {name};\n"
 
         text += "\n"
         return text
 
-    def is_alias(self):
-        return bool(self.alias)
 
-    def add_aliased_by(self, aliasee):
-        self.aliased_by.append(aliasee)
-
-
-class VkEnumValue(object):
-    def __init__(self, name, bitwidth, value=None, hex=False, alias=None):
+class EnumValue(object):
+    def __init__(self, name, value=None, bitpos=None, alias=None, hex=False, **kwargs):
         self.name = name
-        self.bitwidth = bitwidth
-        self.value = value
-        self.hex = hex
         self.alias = alias
 
-    def __repr__(self):
-        postfix = "ull" if self.bitwidth == 64 else ""
-        if self.is_alias() and self.value == None:
-            return "{0}={1}".format(self.name, self.alias)
-        return "{0}={1}{2}".format(self.name, self.value, postfix)
-
-    def definition(self):
-        """ Convert to text definition e.g. VK_FOO = 1 """
-        postfix = "ull" if self.bitwidth == 64 else ""
-        if self.is_alias() and self.value == None:
-            return "{0} = {1}".format(self.name, self.alias)
-
-        # Hex is commonly used for FlagBits and sometimes within
-        # a non-FlagBits enum for a bitmask value as well.
-        if self.hex:
-            return "{0} = 0x{1:08x}{2}".format(self.name, self.value, postfix)
+        if alias:
+            self.hex = False
+            self.value = 0xffffffffffffffff
+        elif bitpos:
+            self.hex = True
+            self.value = (1 << int(bitpos))
         else:
-            return "{0} = {1}{2}".format(self.name, self.value, postfix)
+            self.hex = "0x" in value
+            self.value = int(value, 0)
 
     def is_alias(self):
         return self.alias is not None
+
+    def definition(self, size=4):
+        if self.alias:
+            return f"{self.name} = {self.alias}"
+
+        # Hex is commonly used for FlagBits and sometimes within
+        # a non-FlagBits enum for a bitmask value as well.
+        suffix = "ull" if size == 8 else ""
+        value  = f"0x{self.value:08x}" if self.hex else self.value
+        return f"{self.name} = {value}{suffix}"
 
 
 class VkFunction(object):
@@ -3087,7 +3037,7 @@ class VkRegistry(object):
         for p in func.params:
             type_info = self.types[p.type]
 
-            # Check if we are dealing with a complex type e.g. VkEnum, VkStruct and others.
+            # Check if we are dealing with a complex type e.g. Enum, VkStruct and others.
             if "data" not in type_info:
                 continue
 
@@ -3177,7 +3127,7 @@ class VkRegistry(object):
             _type = enum.attrib.get("type")
 
             if _type in ("enum", "bitmask"):
-                enum_obj = VkEnum.from_xml(self, enum)
+                enum_obj = Enum.from_xml(enum)
                 enums[name] = enum_obj
             else:
                 # If no type is set, we are dealing with API constants.
@@ -3196,9 +3146,9 @@ class VkRegistry(object):
         if "extends" in enum_elem.keys():
             enum = self.types[enum_elem.attrib["extends"]]["data"]
 
-            # Need to define VkEnumValues which were aliased to by another value. This is necessary
+            # Need to define EnumValues which were aliased to by another value. This is necessary
             # from VK spec version 1.2.135 where the provisional VK_KHR_ray_tracing extension was
-            # added which altered VK_NV_ray_tracing's VkEnumValues to alias to the provisional
+            # added which altered VK_NV_ray_tracing's EnumValues to alias to the provisional
             # extension.
             aliased = False
             for _, t in self.types.items():
@@ -3213,12 +3163,7 @@ class VkRegistry(object):
             if only_aliased and not aliased:
                 return
 
-            if "bitpos" in enum_elem.keys():
-                # We need to add an extra value to an existing enum type.
-                # E.g. VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG to VkFormatFeatureFlagBits.
-                enum.create_bitpos(enum_elem.attrib["name"], int(enum_elem.attrib["bitpos"]))
-
-            elif "offset" in enum_elem.keys():
+            if "offset" in enum_elem.keys():
                 # Extensions promoted to Core, have the extension number as part
                 # of the enum value. Else retrieve from the extension tag.
                 if enum_elem.attrib.get("extnumber"):
@@ -3233,12 +3178,9 @@ class VkRegistry(object):
                 if direction is not None:
                     value = -value
 
-                enum.create_value(enum_elem.attrib["name"], str(value))
-
-            elif "value" in enum_elem.keys():
-                enum.create_value(enum_elem.attrib["name"], enum_elem.attrib["value"])
-            elif "alias" in enum_elem.keys():
-                enum.create_alias(enum_elem.attrib["name"], enum_elem.attrib["alias"])
+                enum.add(EnumValue(**enum_elem.attrib, value=str(value)))
+            else:
+                enum.add(EnumValue(**enum_elem.attrib))
 
         elif "value" in enum_elem.keys():
             # Constant with an explicit value
@@ -3255,7 +3197,7 @@ class VkRegistry(object):
 
     @staticmethod
     def _require_type(type_info):
-        if type(type_info) != VkDefine and type_info.is_alias():
+        if type(type_info) not in (VkDefine, Enum) and type_info.is_alias():
             type_info = type_info.alias
         type_info.required = True
         if type(type_info) == VkStruct:
@@ -3306,8 +3248,8 @@ class VkRegistry(object):
                 skipped_exts.append(ext_name)
                 return
 
-            # Extensions can define VkEnumValues which alias to provisional extensions. Pre-process
-            # extensions to define any required VkEnumValues before the platform check below.
+            # Extensions can define EnumValues which alias to provisional extensions. Pre-process
+            # extensions to define any required EnumValues before the platform check below.
             for require in ext.findall("require"):
                 # Extensions can add enum values to Core / extension enums, so add these.
                 for enum_elem in require.findall("enum"):
@@ -3547,9 +3489,8 @@ class VkRegistry(object):
                 type_info["data"] = bitmask
 
             if type_info["category"] == "enum":
-                enum = VkEnum.from_alias(self, t, self.types[alias]["data"])
-                type_info["data"] = enum
-                self.enums[enum.name] = enum
+                type_info["data"] = self.enums[alias]
+                self.enums[alias].typedefs += [type_info["name"]]
 
             if type_info["category"] == "handle":
                 handle = VkHandle.from_alias(self, t, self.types[alias]["data"])
