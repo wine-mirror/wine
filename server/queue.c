@@ -153,7 +153,6 @@ struct hotkey
 
 static void msg_queue_dump( struct object *obj, int verbose );
 static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *entry );
-static void msg_queue_remove_queue( struct object *obj, struct wait_queue_entry *entry );
 static int msg_queue_signaled( struct object *obj, struct wait_queue_entry *entry );
 static void msg_queue_destroy( struct object *obj );
 static void msg_queue_poll_event( struct fd *fd, int event );
@@ -167,7 +166,7 @@ static const struct object_ops msg_queue_ops =
     &no_type,                  /* type */
     msg_queue_dump,            /* dump */
     msg_queue_add_queue,       /* add_queue */
-    msg_queue_remove_queue,    /* remove_queue */
+    remove_queue,              /* remove_queue */
     msg_queue_signaled,        /* signaled */
     no_satisfied,              /* satisfied */
     no_signal,                 /* signal */
@@ -1310,31 +1309,8 @@ static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *ent
         return 0;
     }
 
-    if (queue->fd)
-    {
-        if (check_fd_events( queue->fd, POLLIN ))
-            set_queue_bits( queue, QS_DRIVER );
-        else
-        {
-            clear_queue_bits( queue, QS_DRIVER );
-            set_fd_events( queue->fd, POLLIN );
-        }
-    }
     add_queue( obj, entry );
     return 1;
-}
-
-static void msg_queue_remove_queue(struct object *obj, struct wait_queue_entry *entry )
-{
-    struct msg_queue *queue = (struct msg_queue *)obj;
-
-    remove_queue( obj, entry );
-    if (queue->fd)
-    {
-        /* after waiting, assume that all events will be processed */
-        clear_queue_bits( queue, QS_DRIVER );
-        set_fd_events( queue->fd, 0 );
-    }
 }
 
 static void msg_queue_dump( struct object *obj, int verbose )
@@ -3146,7 +3122,10 @@ DECL_HANDLER(set_queue_fd)
     if ((unix_fd = get_file_unix_fd( file )) != -1)
     {
         if ((unix_fd = dup( unix_fd )) != -1)
+        {
             queue->fd = create_anonymous_fd( &msg_queue_fd_ops, unix_fd, &queue->obj, 0 );
+            set_fd_events( queue->fd, POLLIN );
+        }
         else
             file_set_error();
     }
@@ -3166,8 +3145,8 @@ DECL_HANDLER(set_queue_mask)
     if (req->poll_events)
     {
         if (!queue->fd) return;
-        if (check_fd_events( queue->fd, POLLIN )) set_queue_bits( queue, QS_DRIVER );
-        else clear_queue_bits( queue, QS_DRIVER );
+        clear_queue_bits( queue, QS_DRIVER );
+        set_fd_events( queue->fd, POLLIN );
         return;
     }
 
