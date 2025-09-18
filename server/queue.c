@@ -154,7 +154,6 @@ static void msg_queue_dump( struct object *obj, int verbose );
 static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *entry );
 static void msg_queue_remove_queue( struct object *obj, struct wait_queue_entry *entry );
 static int msg_queue_signaled( struct object *obj, struct wait_queue_entry *entry );
-static void msg_queue_satisfied( struct object *obj, struct wait_queue_entry *entry );
 static void msg_queue_destroy( struct object *obj );
 static void msg_queue_poll_event( struct fd *fd, int event );
 static void thread_input_dump( struct object *obj, int verbose );
@@ -169,7 +168,7 @@ static const struct object_ops msg_queue_ops =
     msg_queue_add_queue,       /* add_queue */
     msg_queue_remove_queue,    /* remove_queue */
     msg_queue_signaled,        /* signaled */
-    msg_queue_satisfied,       /* satisfied */
+    no_satisfied,              /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
     default_get_sync,          /* get_sync */
@@ -734,7 +733,8 @@ static inline int get_queue_status( struct msg_queue *queue )
 {
     queue_shm_t *queue_shm = queue->shared;
     return (queue_shm->wake_bits & queue_shm->wake_mask) ||
-           (queue_shm->changed_bits & queue_shm->changed_mask);
+           (queue_shm->changed_bits & queue_shm->changed_mask) ||
+            queue_shm->internal_bits;
 }
 
 /* set some queue bits */
@@ -1310,10 +1310,7 @@ static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *ent
     if (queue->fd)
     {
         if (check_fd_events( queue->fd, POLLIN ))
-        {
             set_queue_bits( queue, QS_DRIVER );
-            signal_queue_sync( queue );
-        }
         else
         {
             clear_queue_bits( queue, QS_DRIVER );
@@ -1350,12 +1347,6 @@ static int msg_queue_signaled( struct object *obj, struct wait_queue_entry *entr
     struct msg_queue *queue = (struct msg_queue *)obj;
     assert( obj->ops == &msg_queue_ops );
     return queue->signaled;
-}
-
-static void msg_queue_satisfied( struct object *obj, struct wait_queue_entry *entry )
-{
-    struct msg_queue *queue = (struct msg_queue *)obj;
-    reset_queue_sync( queue );
 }
 
 static void msg_queue_destroy( struct object *obj )
@@ -1412,7 +1403,6 @@ static void msg_queue_poll_event( struct fd *fd, int event )
     if (event & (POLLERR | POLLHUP)) set_fd_events( fd, -1 );
     else set_fd_events( queue->fd, 0 );
     set_queue_bits( queue, QS_DRIVER );
-    signal_queue_sync( queue );
 }
 
 static void thread_input_dump( struct object *obj, int verbose )
@@ -3461,7 +3451,8 @@ DECL_HANDLER(get_message)
     }
     SHARED_WRITE_END;
 
-    reset_queue_sync( queue );
+    if (!get_queue_status( queue )) reset_queue_sync( queue );
+    else signal_queue_sync( queue );
     set_error( STATUS_PENDING );  /* FIXME */
 }
 
