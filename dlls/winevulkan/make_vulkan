@@ -630,18 +630,18 @@ class Function(object):
     def is_alias(self):
         return bool(self.alias)
 
-    def is_core_func(self):
+    def is_core(self):
         return not self.extensions or any(ext.is_core for ext in self.extensions)
 
-    def is_device_func(self):
+    def is_device(self):
         # If none of the other, it must be a device function
-        return not self.is_global_func() and not self.is_instance_func()
+        return not self.is_global() and not self.is_instance()
 
     def is_driver_func(self):
         """ Returns if function is part of Wine driver interface. """
         return self.name in USER_DRIVER_FUNCS
 
-    def is_global_func(self):
+    def is_global(self):
         # Treat vkGetInstanceProcAddr as a global function as it
         # can operate with NULL for vkInstance.
         if self.name == "vkGetInstanceProcAddr":
@@ -651,8 +651,8 @@ class Function(object):
             return False
         return True
 
-    def is_instance_func(self):
-        if self.is_global_func():
+    def is_instance(self):
+        if self.is_global():
             return False
         # Instance functions are passed VkInstance.
         if self.params[0].type == "VkInstance":
@@ -660,7 +660,7 @@ class Function(object):
         return self.is_physical_device()
 
     def is_physical_device(self):
-        if self.is_global_func():
+        if self.is_global():
             return False
         # Physical device functions are passed VkPhysicalDevice.
         if self.params[0].type == "VkPhysicalDevice":
@@ -673,16 +673,33 @@ class Function(object):
     def returns_longlong(self):
         return self.type in ["uint64_t", "VkDeviceAddress"]
 
-    def needs_dispatch(self):
-        return self.dispatch
+    def needs_thunk(self):
+        return self.needs_exposing() and self.name not in MANUAL_LOADER_FUNCTIONS
 
     def needs_private_thunk(self):
-        return self.needs_exposing() and self.name not in MANUAL_LOADER_FUNCTIONS and \
-            self.name in MANUAL_UNIX_THUNKS
+        return self.needs_thunk() and self.name in MANUAL_UNIX_THUNKS
+
+    def needs_loader_thunk(self):
+        return self.needs_thunk() and self.name not in MANUAL_LOADER_THUNKS
 
     def needs_exposing(self):
         # The function needs exposed if at-least one extension isn't both UNSUPPORTED and UNEXPOSED
         return self.is_required() and (not self.extensions or any(ext.is_exposed for ext in self.extensions))
+
+    def is_host_instance(self):
+        return self.is_required() and self.dispatch and self.is_instance()
+
+    def is_host_device(self):
+        return self.is_required() and self.dispatch and self.is_device()
+
+    def is_client_instance(self):
+        return self.needs_exposing() and self.is_instance()
+
+    def is_client_physical_device(self):
+        return self.needs_exposing() and self.is_physical_device()
+
+    def is_client_device(self):
+        return self.needs_exposing() and self.is_device()
 
     def is_perf_critical(self):
         # vkCmd* functions are frequently called, do not trace for performance
@@ -830,12 +847,8 @@ class Function(object):
         return body
 
     def spec(self, prefix=None, symbol=None):
-        """ Generate spec file entry for this function.
-
-        Args
-            prefix (str, optional): prefix to prepend to entry point name.
-            symbol (str, optional): allows overriding the name of the function implementing the entry point.
-        """
+        if not self.is_required():
+            return f"@ stub {self.name}\n"
 
         spec = ""
         params = " ".join([p.spec() for p in self.params])
@@ -911,6 +924,10 @@ class Function(object):
         trace += ");\n"
 
         return trace
+
+    def unixlib_entry(self, bitness):
+        cast = "(void *)" if self.is_perf_critical() else ""
+        return f"{cast}thunk{bitness}_{self.name}"
 
 
 class FunctionPointer(object):
@@ -2510,12 +2527,8 @@ class Generator(object):
         # Global functions don't go through the thunks.
         thunks = ""
         conversions = []
-        for vk_func in Context.funcs.values():
-            if not vk_func.needs_exposing():
-                continue
-            if vk_func.name in MANUAL_LOADER_FUNCTIONS:
-                continue
 
+        for vk_func in filter(Function.needs_thunk, Context.funcs.values()):
             thunks += vk_func.thunk(conversions, prefix="thunk64_")
             thunks += vk_func.thunk(conversions, prefix="thunk32_", conv=True)
 
@@ -2579,27 +2592,16 @@ class Generator(object):
         f.write(";\n")
         f.write("}\n\n")
 
-
         f.write("#ifdef _WIN64\n\n")
-
         f.write("const unixlib_entry_t __wine_unix_call_funcs[] =\n")
         f.write("{\n")
         f.write("    init_vulkan,\n")
         f.write("    vk_is_available_instance_function,\n")
         f.write("    vk_is_available_device_function,\n")
-        for vk_func in Context.funcs.values():
-            if not vk_func.needs_exposing():
-                continue
-            if vk_func.name in MANUAL_LOADER_FUNCTIONS:
-                continue
-
-            if vk_func.is_perf_critical():
-                f.write("    (void *){1}{0},\n".format(vk_func.name, "thunk64_"))
-            else:
-                f.write("    {1}{0},\n".format(vk_func.name, "thunk64_"))
+        for func in filter(Function.needs_thunk, Context.funcs.values()):
+            f.write(f"    {func.unixlib_entry(64)},\n")
         f.write("};\n")
         f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n\n")
-
         f.write("#endif /* _WIN64 */\n\n")
 
         f.write("#ifdef _WIN64\n")
@@ -2611,16 +2613,8 @@ class Generator(object):
         f.write("    wow64_init_vulkan,\n")
         f.write("    vk_is_available_instance_function32,\n")
         f.write("    vk_is_available_device_function32,\n")
-        for vk_func in Context.funcs.values():
-            if not vk_func.needs_exposing():
-                continue
-            if vk_func.name in MANUAL_LOADER_FUNCTIONS:
-                continue
-
-            if vk_func.is_perf_critical():
-                f.write("    (void *){1}{0},\n".format(vk_func.name, "thunk32_"))
-            else:
-                f.write("    {1}{0},\n".format(vk_func.name, "thunk32_"))
+        for func in filter(Function.needs_thunk, Context.funcs.values()):
+            f.write(f"    {func.unixlib_entry(32)},\n")
         f.write("};\n")
         f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n")
 
@@ -2635,11 +2629,8 @@ class Generator(object):
 
         # Generate prototypes for device and instance functions requiring a custom implementation.
         f.write("/* Functions for which we have custom implementations outside of the thunks. */\n")
-        for vk_func in Context.funcs.values():
-            if not vk_func.needs_private_thunk():
-                continue
-
-            f.write("{0};\n".format(vk_func.prototype(prefix="wine_", is_thunk=True)))
+        for func in filter(Function.needs_private_thunk, Context.funcs.values()):
+            f.write(func.prototype(prefix="wine_", is_thunk=True, suffix=";\n"))
         f.write("\n")
 
         f.write("#endif /* __WINE_VULKAN_THUNKS_H */\n")
@@ -2651,36 +2642,22 @@ class Generator(object):
 
         f.write("WINE_DEFAULT_DEBUG_CHANNEL(vulkan);\n\n")
 
-        for vk_func in Context.funcs.values():
-            if not vk_func.needs_exposing():
-                continue
-            if vk_func.name in MANUAL_LOADER_THUNKS | MANUAL_LOADER_FUNCTIONS:
-                continue
-
-            f.write(vk_func.loader_thunk())
+        for func in filter(Function.needs_loader_thunk, Context.funcs.values()):
+            f.write(func.loader_thunk())
 
         f.write("static const struct vulkan_func vk_device_dispatch_table[] =\n{\n")
-        for vk_func in self.device_funcs:
-            if not vk_func.needs_exposing():
-                continue
-
-            f.write("    {{\"{0}\", {0}}},\n".format(vk_func.name))
+        for func in filter(Function.is_client_device, Context.funcs.values()):
+            f.write(f"    {{\"{func.name}\", {func.name}}},\n")
         f.write("};\n\n")
 
         f.write("static const struct vulkan_func vk_phys_dev_dispatch_table[] =\n{\n")
-        for vk_func in self.phys_dev_funcs:
-            if not vk_func.needs_exposing():
-                continue
-
-            f.write("    {{\"{0}\", {0}}},\n".format(vk_func.name))
+        for func in filter(Function.is_client_physical_device, Context.funcs.values()):
+            f.write(f"    {{\"{func.name}\", {func.name}}},\n")
         f.write("};\n\n")
 
         f.write("static const struct vulkan_func vk_instance_dispatch_table[] =\n{\n")
-        for vk_func in self.instance_funcs:
-            if not vk_func.needs_exposing():
-                continue
-
-            f.write("    {{\"{0}\", {0}}},\n".format(vk_func.name))
+        for func in filter(Function.is_client_instance, Context.funcs.values()):
+            f.write(f"    {{\"{func.name}\", {func.name}}},\n")
         f.write("};\n\n")
 
         f.write("void *wine_vk_get_device_proc_addr(const char *name)\n")
@@ -2736,30 +2713,23 @@ class Generator(object):
         f.write("    unix_init,\n")
         f.write("    unix_is_available_instance_function,\n")
         f.write("    unix_is_available_device_function,\n")
-        for vk_func in Context.funcs.values():
-            if not vk_func.needs_exposing():
-                continue
-            if vk_func.name in MANUAL_LOADER_FUNCTIONS:
-                continue
-
-            f.write("    unix_{0},\n".format(vk_func.name))
+        for func in filter(Function.needs_thunk, Context.funcs.values()):
+            f.write(f"    unix_{func.name},\n")
         f.write("    unix_count,\n")
         f.write("};\n\n")
 
-        for vk_func in Context.funcs.values():
-            if not vk_func.needs_exposing():
-                continue
-            if vk_func.name in MANUAL_LOADER_FUNCTIONS:
-                continue
+        def function_params(func):
+            ret = f"struct {func.name}_params\n"
+            ret += "{\n"
+            for param in func.params:
+                ret += f"    {param.definition(is_member=True)};\n"
+            if func.type != "void":
+                ret += f"    {func.type} result;\n"
+            ret += "};\n\n"
+            return ret
 
-            f.write("struct {0}_params\n".format(vk_func.name))
-            f.write("{\n");
-            for p in vk_func.params:
-                f.write("    {0};\n".format(p.definition(is_member=True)))
-            if vk_func.type != "void":
-                f.write("    {0} result;\n".format(vk_func.type))
-            f.write("};\n\n");
-
+        for func in filter(Function.needs_thunk, Context.funcs.values()):
+            f.write(function_params(func))
         f.write("#endif /* __WINE_VULKAN_LOADER_THUNKS_H */\n")
 
     def generate_vulkan_h(self, f):
@@ -2852,31 +2822,18 @@ class Generator(object):
                 f.write(struct.definition(align=True))
                 f.write("\n")
 
-        for func in Context.funcs.values():
-            if not func.is_required():
-                LOGGER.debug("Skipping PFN definition for: {0}".format(func.name))
-                continue
-
-            f.write("typedef {0};\n".format(func.pfn(prefix="PFN", call_conv="VKAPI_PTR")))
+        for func in filter(Function.is_required, Context.funcs.values()):
+            f.write(f"typedef {func.pfn(prefix="PFN", call_conv="VKAPI_PTR")};\n")
         f.write("\n")
 
         f.write("#ifndef VK_NO_PROTOTYPES\n")
-        for func in Context.funcs.values():
-            if not func.is_required():
-                LOGGER.debug("Skipping API definition for: {0}".format(func.name))
-                continue
-
-            LOGGER.debug("Generating API definition for: {0}".format(func.name))
-            f.write("{0};\n".format(func.prototype(call_conv="VKAPI_CALL ")))
+        for func in filter(Function.is_required, Context.funcs.values()):
+            f.write(func.prototype(call_conv="VKAPI_CALL ", suffix=";\n"))
         f.write("#endif /* VK_NO_PROTOTYPES */\n\n")
 
         f.write("#define ALL_VK_DEVICE_FUNCS")
-        for vk_func in self.device_funcs:
-            if not vk_func.is_required():
-                continue
-            if not vk_func.needs_dispatch():
-                continue
-            f.write(" \\\n    USE_VK_FUNC({0})".format(vk_func.name))
+        for func in filter(Function.is_host_device, Context.funcs.values()):
+            f.write(f" \\\n    USE_VK_FUNC({func.name})")
         f.write("\n\n")
 
         f.write("#define ALL_VK_CLIENT_DEVICE_EXTS")
@@ -2892,12 +2849,8 @@ class Generator(object):
         f.write("\n\n")
 
         f.write("#define ALL_VK_INSTANCE_FUNCS")
-        for vk_func in self.instance_funcs:
-            if not vk_func.is_required():
-                continue
-            if not vk_func.needs_dispatch():
-                continue
-            f.write(" \\\n    USE_VK_FUNC({0})".format(vk_func.name))
+        for func in filter(Function.is_host_instance, Context.funcs.values()):
+            f.write(f" \\\n    USE_VK_FUNC({func.name})")
         f.write("\n\n")
 
         f.write("#define ALL_VK_CLIENT_INSTANCE_EXTS")
@@ -2916,39 +2869,20 @@ class Generator(object):
 
     def generate_vulkan_spec(self, f):
         self._generate_copyright(f, spec_file=True)
+
         f.write("@ stdcall -private vk_icdGetInstanceProcAddr(ptr str)\n")
         f.write("@ stdcall -private vk_icdGetPhysicalDeviceProcAddr(ptr str)\n")
         f.write("@ stdcall -private vk_icdNegotiateLoaderICDInterfaceVersion(ptr)\n")
-
-        # Export symbols for all Vulkan Core functions.
-        for func in Context.funcs.values():
-            if not func.is_core_func():
-                continue
-
-            # We support all Core functions except for VK_KHR_display* APIs.
-            # Create stubs for unsupported Core functions.
-            if func.is_required():
-                f.write(func.spec())
-            else:
-                f.write("@ stub {0}\n".format(func.name))
-
+        for func in filter(Function.is_core, Context.funcs.values()):
+            f.write(func.spec())
         f.write("@ stdcall -private DllRegisterServer()\n")
         f.write("@ stdcall -private DllUnregisterServer()\n")
 
     def generate_vulkan_loader_spec(self, f):
         self._generate_copyright(f, spec_file=True)
 
-        # Export symbols for all Vulkan Core functions.
-        for func in Context.funcs.values():
-            if not func.is_core_func():
-                continue
-
-            # We support all Core functions except for VK_KHR_display* APIs.
-            # Create stubs for unsupported Core functions.
-            if func.is_required():
-                f.write(func.spec(symbol="winevulkan." + func.name))
-            else:
-                f.write("@ stub {0}\n".format(func.name))
+        for func in filter(Function.is_core, Context.funcs.values()):
+            f.write(func.spec(symbol=f"winevulkan.{func.name}"))
 
     def _mark_command_required(self, command):
         """ Helper function to mark a certain command and the datatypes it needs as required."""
@@ -3035,30 +2969,6 @@ class Generator(object):
             alias = funcs[alias_name]
             func = Function.from_alias(command, alias)
             funcs[func.name] = func
-
-        # To make life easy for the code generation, separate all function
-        # calls out in the 4 types of Vulkan functions:
-        # device, global, physical device and instance.
-        device_funcs = []
-        global_funcs = []
-        phys_dev_funcs = []
-        instance_funcs = []
-        for func in funcs.values():
-            if func.is_device_func():
-                device_funcs.append(func)
-            elif func.is_global_func():
-                global_funcs.append(func)
-            elif func.is_physical_device():
-                phys_dev_funcs.append(func)
-                instance_funcs.append(func)
-            else:
-                instance_funcs.append(func)
-
-        # Sort function lists by name and store them.
-        self.device_funcs = sorted(device_funcs, key=lambda func: func.name)
-        self.global_funcs = sorted(global_funcs, key=lambda func: func.name)
-        self.phys_dev_funcs = sorted(phys_dev_funcs, key=lambda func: func.name)
-        self.instance_funcs = sorted(instance_funcs, key=lambda func: func.name)
 
         # The funcs dictionary is used as a convenient way to lookup function
         # calls when needed e.g. to adjust member variables.
