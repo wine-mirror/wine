@@ -344,6 +344,19 @@ MEMBER_LENGTH_EXPRESSIONS = {
             "{prefix}descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC ? {length} : 0",
 }
 
+
+class Context(object):
+    base_types = []
+    bitmasks = []
+    consts = []
+    defines = []
+    enums = []
+    func_ptrs = []
+    handles = []
+    structs = []
+    funcs = []
+
+
 class Direction(Enum):
     """ Parameter direction: input, output, input_output. """
     INPUT = 1
@@ -463,7 +476,7 @@ class VkDefine(object):
         self.value = value
 
     @staticmethod
-    def from_xml(registry, define):
+    def from_xml(define):
         value = innertext(define)
         value = re.sub(r'\s*//.*$', '', value, flags=re.M)
         value = value.strip()
@@ -601,18 +614,18 @@ class VkFunction(object):
             self.unwrap = Unwrap.HOST
 
     @staticmethod
-    def from_alias(registry, command, alias):
+    def from_alias(command, alias):
         func_name = command.attrib.get("name")
         return VkFunction(alias.type, func_name, alias.params, alias=alias)
 
     @staticmethod
-    def from_xml(registry, command, types):
+    def from_xml(command, types):
         proto = command.find("proto")
         func_name = proto.find("name").text
         func_type = proto.find("type").text
 
         params = filter(is_api_supported, command.findall("param"))
-        params = [VkParam.from_xml(registry, param, types) for param in params]
+        params = [VkParam.from_xml(param, types) for param in params]
         return VkFunction(func_type, func_name, params)
 
     def is_alias(self):
@@ -948,7 +961,7 @@ class VkFunctionPointer(object):
         self.required = False
 
     @staticmethod
-    def from_xml(registry, funcpointer):
+    def from_xml(funcpointer):
         value = innertext(funcpointer).replace('\n', '')
         value = re.sub(r'\s*//.*$', '', value, flags=re.M)
         value = re.sub(r'\s+', ' ', value, flags=re.M)
@@ -974,12 +987,12 @@ class VkHandle(object):
         self.object_type = None
 
     @staticmethod
-    def from_alias(registry, handle, alias):
+    def from_alias(handle, alias):
         name = handle.attrib.get("name")
         return VkHandle(name, alias.type, alias.parent, alias=alias)
 
     @staticmethod
-    def from_xml(registry, handle):
+    def from_xml(handle):
         name = handle.find("name").text
         _type = handle.find("type").text
         parent = handle.attrib.get("parent") # Most objects have a parent e.g. VkQueue has VkDevice.
@@ -1265,7 +1278,7 @@ class VkMember(VkVariable):
                 self.name, self.array_lens, self.dyn_array_len)
 
     @staticmethod
-    def from_xml(registry, member, returnedonly):
+    def from_xml(member, returnedonly):
         """ Helper function for parsing a member tag within a struct or union. """
         name_elem = member.find("name")
         type_elem = member.find("type")
@@ -1515,7 +1528,7 @@ class VkParam(VkVariable):
         return "{0} {1} {2} {3} {4} {5}".format(self.const, self.type, self.pointer, self.name, self.array_lens, self.dyn_array_len)
 
     @staticmethod
-    def from_xml(registry, param, types):
+    def from_xml(param, types):
         # Parameter parsing is slightly tricky. All the data is contained within
         # a param tag, but some data is within subtags while others are text
         # before or after the type tag.
@@ -1822,8 +1835,7 @@ class VkParam(VkVariable):
 class VkStruct(Sequence):
     """ Class which represents the type union and struct. """
 
-    def __init__(self, registry, name, members, returnedonly, structextends, alias=None, union=False):
-        self.registry = registry
+    def __init__(self, name, members, returnedonly, structextends, alias=None, union=False):
         self.extensions = set()
         self.name = name
         self.members = members
@@ -1848,15 +1860,15 @@ class VkStruct(Sequence):
         return len(self.members)
 
     @staticmethod
-    def from_alias(registry, struct, alias):
+    def from_alias(struct, alias):
         name = struct.attrib.get("name")
-        aliasee = VkStruct(registry, name, alias.members, alias.returnedonly, alias.structextends, alias=alias)
+        aliasee = VkStruct(name, alias.members, alias.returnedonly, alias.structextends, alias=alias)
 
         alias.add_aliased_by(aliasee)
         return aliasee
 
     @staticmethod
-    def from_xml(registry, struct):
+    def from_xml(struct):
         # Unions and structs are the same parsing wise, but we need to
         # know which one we are dealing with later on for code generation.
         union = True if struct.attrib["category"] == "union" else False
@@ -1880,8 +1892,8 @@ class VkStruct(Sequence):
         structextends = structextends.split(",") if structextends else []
 
         members = filter(is_api_supported, struct.findall("member"))
-        members = [VkMember.from_xml(registry, member, returnedonly) for member in members]
-        return VkStruct(registry, name, members, returnedonly, structextends, union=union)
+        members = [VkMember.from_xml(member, returnedonly) for member in members]
+        return VkStruct(name, members, returnedonly, structextends, union=union)
 
     def set_order(self, order, structs):
         if order < self.order:
@@ -1907,7 +1919,7 @@ class VkStruct(Sequence):
                     return not struct.alias and self.name in struct.structextends
                 return False
 
-            structs = sorted(self.registry.structs, key=lambda s: s.name)
+            structs = sorted(Context.structs, key=lambda s: s.name)
             for struct in filter(is_struct_extension, structs):
                 self._struct_extensions.append(struct)
 
@@ -2464,23 +2476,53 @@ class ArrayConversionFunction(object):
         return body
 
 
-class VkGenerator(object):
-    def __init__(self, registry):
-        self.registry = registry
+class Generator(object):
+    def __init__(self, vk_xml, video_xml):
+        # We aggregate all types in here for cross-referencing.
+        self.types = {}
+        self.surface_extensions = []
 
-        # Build a list conversion functions for struct conversion.
-        self.conversions = []
-        self.win32_structs = []
+        # Overall strategy for parsing the registry is to first
+        # parse all type / function definitions. Then parse
+        # features and extensions to decide which types / functions
+        # to actually 'pull in' for code generation. For each type or
+        # function call we want we set a member 'required' to True.
+        tree = ET.parse(vk_xml)
+        root = tree.getroot()
+        # The video XML currently only has enums, types, and part of the
+        # extension data in it.
+        # All of the relevant extensions and commands are in vk.xml.
+        video_tree = ET.parse(video_xml)
+        video_root = video_tree.getroot()
+
+        self.copyright = root.find('./comment').text
+        self.video_copyright = video_root.find('./comment').text
+
+        root.extend(video_root)
+        root.extend(ET.parse("winevk.xml").getroot())
+
+        self._parse_enums(root)
+        self._parse_types(root)
+        self._parse_commands(root)
+
+        # Pull in any required types and functions.
+        self._parse_features(root)
+        self._parse_extensions(root)
+
+        for enum in Context.enums.values():
+            enum.fixup_64bit_aliases()
+
+        self._match_object_types()
 
     def _generate_copyright(self, f, spec_file=False):
         f.write("# " if spec_file else "/* ")
         f.write("Automatically generated from Vulkan vk.xml and video.xml; DO NOT EDIT!\n")
         lines = ["", "This file is generated from Vulkan vk.xml file covered",
             "by the following copyright and permission notice:"]
-        lines.extend([l.rstrip(" ") for l in self.registry.copyright.splitlines()])
+        lines.extend([l.rstrip(" ") for l in self.copyright.splitlines()])
         lines.extend(["and from Vulkan video.xml file covered",
             "by the following copyright and permission notice:"])
-        lines.extend([l.rstrip(" ") for l in self.registry.video_copyright.splitlines()])
+        lines.extend([l.rstrip(" ") for l in self.video_copyright.splitlines()])
         for line in lines:
             f.write("{0}{1}".format("# " if spec_file else " * ", line).rstrip(" ") + "\n")
         f.write("\n" if spec_file else " */\n\n")
@@ -2504,7 +2546,7 @@ class VkGenerator(object):
         # Global functions don't go through the thunks.
         thunks = ""
         conversions = []
-        for vk_func in self.registry.funcs.values():
+        for vk_func in Context.funcs.values():
             if not vk_func.needs_exposing():
                 continue
             if vk_func.name in MANUAL_LOADER_FUNCTIONS:
@@ -2544,7 +2586,7 @@ class VkGenerator(object):
         f.write("{\n")
         f.write("    switch(type)\n")
         f.write("    {\n")
-        for handle in self.registry.handles:
+        for handle in Context.handles:
             if not handle.is_required() or not handle.is_wrapped() or handle.is_alias():
                 continue
             f.write("    case {}:\n".format(handle.object_type))
@@ -2566,7 +2608,7 @@ class VkGenerator(object):
         f.write("BOOL wine_vk_is_type_wrapped(VkObjectType type)\n")
         f.write("{\n")
         f.write("    return FALSE")
-        for handle in self.registry.handles:
+        for handle in Context.handles:
             if not handle.is_required() or not handle.is_wrapped() or handle.is_alias():
                 continue
             f.write(" ||\n        type == {}".format(handle.object_type))
@@ -2581,7 +2623,7 @@ class VkGenerator(object):
         f.write("    init_vulkan,\n")
         f.write("    vk_is_available_instance_function,\n")
         f.write("    vk_is_available_device_function,\n")
-        for vk_func in self.registry.funcs.values():
+        for vk_func in Context.funcs.values():
             if not vk_func.needs_exposing():
                 continue
             if vk_func.name in MANUAL_LOADER_FUNCTIONS:
@@ -2605,7 +2647,7 @@ class VkGenerator(object):
         f.write("    wow64_init_vulkan,\n")
         f.write("    vk_is_available_instance_function32,\n")
         f.write("    vk_is_available_device_function32,\n")
-        for vk_func in self.registry.funcs.values():
+        for vk_func in Context.funcs.values():
             if not vk_func.needs_exposing():
                 continue
             if vk_func.name in MANUAL_LOADER_FUNCTIONS:
@@ -2629,7 +2671,7 @@ class VkGenerator(object):
 
         # Generate prototypes for device and instance functions requiring a custom implementation.
         f.write("/* Functions for which we have custom implementations outside of the thunks. */\n")
-        for vk_func in self.registry.funcs.values():
+        for vk_func in Context.funcs.values():
             if not vk_func.needs_private_thunk():
                 continue
 
@@ -2645,7 +2687,7 @@ class VkGenerator(object):
 
         f.write("WINE_DEFAULT_DEBUG_CHANNEL(vulkan);\n\n")
 
-        for vk_func in self.registry.funcs.values():
+        for vk_func in Context.funcs.values():
             if not vk_func.needs_exposing():
                 continue
             if vk_func.name in MANUAL_LOADER_THUNKS | MANUAL_LOADER_FUNCTIONS:
@@ -2654,7 +2696,7 @@ class VkGenerator(object):
             f.write(vk_func.loader_thunk())
 
         f.write("static const struct vulkan_func vk_device_dispatch_table[] =\n{\n")
-        for vk_func in self.registry.device_funcs:
+        for vk_func in self.device_funcs:
             if not vk_func.needs_exposing():
                 continue
 
@@ -2662,7 +2704,7 @@ class VkGenerator(object):
         f.write("};\n\n")
 
         f.write("static const struct vulkan_func vk_phys_dev_dispatch_table[] =\n{\n")
-        for vk_func in self.registry.phys_dev_funcs:
+        for vk_func in self.phys_dev_funcs:
             if not vk_func.needs_exposing():
                 continue
 
@@ -2670,7 +2712,7 @@ class VkGenerator(object):
         f.write("};\n\n")
 
         f.write("static const struct vulkan_func vk_instance_dispatch_table[] =\n{\n")
-        for vk_func in self.registry.instance_funcs:
+        for vk_func in self.instance_funcs:
             if not vk_func.needs_exposing():
                 continue
 
@@ -2730,7 +2772,7 @@ class VkGenerator(object):
         f.write("    unix_init,\n")
         f.write("    unix_is_available_instance_function,\n")
         f.write("    unix_is_available_device_function,\n")
-        for vk_func in self.registry.funcs.values():
+        for vk_func in Context.funcs.values():
             if not vk_func.needs_exposing():
                 continue
             if vk_func.name in MANUAL_LOADER_FUNCTIONS:
@@ -2740,7 +2782,7 @@ class VkGenerator(object):
         f.write("    unix_count,\n")
         f.write("};\n\n")
 
-        for vk_func in self.registry.funcs.values():
+        for vk_func in Context.funcs.values():
             if not vk_func.needs_exposing():
                 continue
             if vk_func.name in MANUAL_LOADER_FUNCTIONS:
@@ -2792,17 +2834,17 @@ class VkGenerator(object):
 
         # The overall strategy is to define independent constants and datatypes,
         # prior to complex structures and function calls to avoid forward declarations.
-        for const in self.registry.consts:
+        for const in Context.consts:
             # For now just generate things we may not need. The amount of parsing needed
             # to get some of the info is tricky as you need to figure out which structure
             # references a certain constant.
             f.write(const.definition())
         f.write("\n")
 
-        for define in self.registry.defines:
+        for define in Context.defines:
             f.write(define.definition())
 
-        for handle in self.registry.handles:
+        for handle in Context.handles:
             # For backward compatibility also create definitions for aliases.
             # These types normally don't get pulled in as we use the new types
             # even in legacy functions if they are aliases.
@@ -2810,12 +2852,12 @@ class VkGenerator(object):
                  f.write(handle.definition())
         f.write("\n")
 
-        for base_type in self.registry.base_types:
+        for base_type in Context.base_types:
             f.write(base_type.definition())
         f.write("\n")
 
         # Reorder bitmasks to handle aliases correctly.
-        remaining_bitmasks = list(self.registry.bitmasks)
+        remaining_bitmasks = list(Context.bitmasks)
         while len(remaining_bitmasks) > 0:
             for bitmask in remaining_bitmasks:
                 if bitmask.is_alias() and bitmask.alias in remaining_bitmasks:
@@ -2826,13 +2868,13 @@ class VkGenerator(object):
         f.write("\n")
 
         # Define enums, this includes values for some of the bitmask types as well.
-        for enum in self.registry.enums.values():
+        for enum in Context.enums.values():
             if enum.required:
                 f.write(enum.definition())
 
         f.write("typedef struct VkDebugUtilsMessengerCallbackDataEXT VkDebugUtilsMessengerCallbackDataEXT;\n")
 
-        for fp in self.registry.funcpointers:
+        for fp in Context.func_ptrs:
             if fp.required:
                 f.write(fp.definition())
         f.write("\n")
@@ -2842,13 +2884,13 @@ class VkGenerator(object):
         # decoupled structs.
         # Note: unions are stored in structs for dependency reasons,
         # see comment in parsing section.
-        for struct in self.registry.structs:
+        for struct in Context.structs:
             if struct.required and struct.name != "SECURITY_ATTRIBUTES":
                 LOGGER.debug("Generating struct: {0}".format(struct.name))
                 f.write(struct.definition(align=True))
                 f.write("\n")
 
-        for func in self.registry.funcs.values():
+        for func in Context.funcs.values():
             if not func.is_required():
                 LOGGER.debug("Skipping PFN definition for: {0}".format(func.name))
                 continue
@@ -2857,7 +2899,7 @@ class VkGenerator(object):
         f.write("\n")
 
         f.write("#ifndef VK_NO_PROTOTYPES\n")
-        for func in self.registry.funcs.values():
+        for func in Context.funcs.values():
             if not func.is_required():
                 LOGGER.debug("Skipping API definition for: {0}".format(func.name))
                 continue
@@ -2867,7 +2909,7 @@ class VkGenerator(object):
         f.write("#endif /* VK_NO_PROTOTYPES */\n\n")
 
         f.write("#define ALL_VK_DEVICE_FUNCS")
-        for vk_func in self.registry.device_funcs:
+        for vk_func in self.device_funcs:
             if not vk_func.is_required():
                 continue
             if not vk_func.needs_dispatch():
@@ -2876,19 +2918,19 @@ class VkGenerator(object):
         f.write("\n\n")
 
         f.write("#define ALL_VK_CLIENT_DEVICE_EXTS")
-        for ext in self.registry.extensions:
+        for ext in self.extensions:
             if ext.type == "device" and ext.is_exposed:
                 f.write(f" \\\n    USE_VK_EXT({ext.name})")
         f.write("\n\n")
 
         f.write("#define ALL_VK_DEVICE_EXTS ALL_VK_CLIENT_DEVICE_EXTS")
-        for ext in self.registry.extensions:
+        for ext in self.extensions:
             if ext.type == "device" and not ext.is_exposed:
                 f.write(f" \\\n    USE_VK_EXT({ext.name})")
         f.write("\n\n")
 
         f.write("#define ALL_VK_INSTANCE_FUNCS")
-        for vk_func in self.registry.instance_funcs + self.registry.phys_dev_funcs:
+        for vk_func in self.instance_funcs + self.phys_dev_funcs:
             if not vk_func.is_required():
                 continue
             if not vk_func.needs_dispatch():
@@ -2897,13 +2939,13 @@ class VkGenerator(object):
         f.write("\n\n")
 
         f.write("#define ALL_VK_CLIENT_INSTANCE_EXTS")
-        for ext in self.registry.extensions:
+        for ext in self.extensions:
             if ext.type == "instance" and ext.is_exposed:
                 f.write(f" \\\n    USE_VK_EXT({ext.name})")
         f.write("\n\n")
 
         f.write("#define ALL_VK_INSTANCE_EXTS ALL_VK_CLIENT_INSTANCE_EXTS")
-        for ext in self.registry.extensions:
+        for ext in self.extensions:
             if ext.type == "instance" and not ext.is_exposed:
                 f.write(f" \\\n    USE_VK_EXT({ext.name})")
         f.write("\n\n")
@@ -2917,7 +2959,7 @@ class VkGenerator(object):
         f.write("@ stdcall -private vk_icdNegotiateLoaderICDInterfaceVersion(ptr)\n")
 
         # Export symbols for all Vulkan Core functions.
-        for func in self.registry.funcs.values():
+        for func in Context.funcs.values():
             if not func.is_core_func():
                 continue
 
@@ -2935,7 +2977,7 @@ class VkGenerator(object):
         self._generate_copyright(f, spec_file=True)
 
         # Export symbols for all Vulkan Core functions.
-        for func in self.registry.funcs.values():
+        for func in Context.funcs.values():
             if not func.is_core_func():
                 continue
 
@@ -2945,55 +2987,6 @@ class VkGenerator(object):
                 f.write(func.spec(symbol="winevulkan." + func.name))
             else:
                 f.write("@ stub {0}\n".format(func.name))
-
-
-class VkRegistry(object):
-    def __init__(self, vk_xml, video_xml):
-        # Used for storage of type information.
-        self.base_types = None
-        self.bitmasks = None
-        self.consts = None
-        self.defines = None
-        self.enums = None
-        self.funcpointers = None
-        self.handles = None
-        self.structs = None
-
-        # We aggregate all types in here for cross-referencing.
-        self.funcs = {}
-        self.types = {}
-
-        # Overall strategy for parsing the registry is to first
-        # parse all type / function definitions. Then parse
-        # features and extensions to decide which types / functions
-        # to actually 'pull in' for code generation. For each type or
-        # function call we want we set a member 'required' to True.
-        tree = ET.parse(vk_xml)
-        root = tree.getroot()
-        # The video XML currently only has enums, types, and part of the
-        # extension data in it.
-        # All of the relevant extensions and commands are in vk.xml.
-        video_tree = ET.parse(video_xml)
-        video_root = video_tree.getroot()
-
-        self.copyright = root.find('./comment').text
-        self.video_copyright = video_root.find('./comment').text
-
-        root.extend(video_root)
-        root.extend(ET.parse("winevk.xml").getroot())
-
-        self._parse_enums(root)
-        self._parse_types(root)
-        self._parse_commands(root)
-
-        # Pull in any required types and functions.
-        self._parse_features(root)
-        self._parse_extensions(root)
-
-        for enum in self.enums.values():
-            enum.fixup_64bit_aliases()
-
-        self._match_object_types()
 
     def _mark_command_required(self, command):
         """ Helper function to mark a certain command and the datatypes it needs as required."""
@@ -3016,7 +3009,7 @@ class VkRegistry(object):
                 elif type_info["category"] == "bitmask":
                     mark_bitmask_dependencies(type_info["data"], types)
 
-        func = self.funcs[command]
+        func = Context.funcs[command]
         func.required = True
 
         # Pull in return type
@@ -3043,11 +3036,11 @@ class VkRegistry(object):
         """ Matches each handle with the correct object type. """
         # Use upper case comparison for simplicity.
         object_types = {}
-        for value in self.enums["VkObjectType"].values:
+        for value in Context.enums["VkObjectType"].values:
             object_name = "VK" + value.name[len("VK_OBJECT_TYPE"):].replace("_", "")
             object_types[object_name] = value.name
 
-        for handle in self.handles:
+        for handle in Context.handles:
             if not handle.is_required():
                 continue
             handle.object_type = object_types.get(handle.name.upper())
@@ -3072,13 +3065,13 @@ class VkRegistry(object):
                 alias_commands.append(command)
                 continue
 
-            func = VkFunction.from_xml(self, command, self.types)
+            func = VkFunction.from_xml(command, self.types)
             funcs[func.name] = func
 
         for command in alias_commands:
             alias_name = command.attrib.get("alias")
             alias = funcs[alias_name]
-            func = VkFunction.from_alias(self, command, alias)
+            func = VkFunction.from_alias(command, alias)
             funcs[func.name] = func
 
         # To make life easy for the code generation, separate all function
@@ -3106,12 +3099,11 @@ class VkRegistry(object):
 
         # The funcs dictionary is used as a convenient way to lookup function
         # calls when needed e.g. to adjust member variables.
-        self.funcs = OrderedDict(sorted(funcs.items()))
+        Context.funcs = OrderedDict(sorted(funcs.items()))
 
     def _parse_enums(self, root):
         """ Parse enums section or better described as constants section. """
         enums = {}
-        self.consts = []
         for enum in filter(is_api_supported, root.findall("./enums")):
             name = enum.attrib.get("name")
             _type = enum.attrib.get("type")
@@ -3126,11 +3118,11 @@ class VkRegistry(object):
                     # E.g. VK_LUID_SIZE_KHR is an alias to VK_LUID_SIZE.
                     alias = value.attrib.get("alias")
                     if alias:
-                        self.consts.append(VkConstant(value.attrib.get("name"), alias))
+                        Context.consts.append(VkConstant(value.attrib.get("name"), alias))
                     else:
-                        self.consts.append(VkConstant(value.attrib.get("name"), value.attrib.get("value")))
+                        Context.consts.append(VkConstant(value.attrib.get("name"), value.attrib.get("value")))
 
-        self.enums = OrderedDict(sorted(enums.items()))
+        Context.enums = OrderedDict(sorted(enums.items()))
 
     def _process_require_enum(self, enum_elem, ext=None, only_aliased=False):
         if "extends" in enum_elem.keys():
@@ -3177,13 +3169,13 @@ class VkRegistry(object):
             if only_aliased:
                 return
 
-            self.consts.append(VkConstant(enum_elem.attrib["name"], enum_elem.attrib["value"]))
+            Context.consts.append(VkConstant(enum_elem.attrib["name"], enum_elem.attrib["value"]))
         elif "alias" in enum_elem.keys():
             # Aliased constant
             if not only_aliased:
                 return
 
-            self.consts.append(VkConstant(enum_elem.attrib["name"], enum_elem.attrib["alias"]))
+            Context.consts.append(VkConstant(enum_elem.attrib["name"], enum_elem.attrib["alias"]))
 
     @staticmethod
     def _require_type(type_info):
@@ -3193,7 +3185,7 @@ class VkRegistry(object):
         if type(type_info) == VkStruct:
             for member in type_info.members:
                 if "data" in member.type_info:
-                  VkRegistry._require_type(member.type_info["data"])
+                  Generator._require_type(member.type_info["data"])
 
     def _parse_extensions(self, root):
         """ Parse extensions section and pull in any types and commands for this extension. """
@@ -3248,7 +3240,7 @@ class VkRegistry(object):
             # Set extension name on any functions calls part of this extension as we
             # were not aware of the name during initial parsing.
             for command in ext.findall("require/command"):
-                self.funcs[command.attrib["name"]].extensions.add(extension)
+                Context.funcs[command.attrib["name"]].extensions.add(extension)
 
             if not extension.is_supported:
                 return
@@ -3365,7 +3357,7 @@ class VkRegistry(object):
 
             if type_info["category"] == "basetype":
                 name = t.find("name").text
-                define = VkDefine.from_xml(self, t)
+                define = VkDefine.from_xml(t)
                 defines.append(define)
                 type_info["data"] = define
 
@@ -3388,7 +3380,7 @@ class VkRegistry(object):
                 type_info["data"] = bitmask
 
             elif type_info["category"] == "define":
-                define = VkDefine.from_xml(self, t)
+                define = VkDefine.from_xml(t)
                 defines.append(define)
                 type_info["data"] = define
 
@@ -3397,7 +3389,7 @@ class VkRegistry(object):
                 # The type section only contains enum names, not the actual definition.
                 # Since we already parsed the enum before, just link it in.
                 try:
-                    type_info["data"] = self.enums[name]
+                    type_info["data"] = Context.enums[name]
                 except KeyError:
                     # Not all enums seem to be defined yet, typically that's for
                     # ones ending in 'FlagBits' where future extensions may add
@@ -3405,12 +3397,12 @@ class VkRegistry(object):
                     type_info["data"] = None
 
             elif type_info["category"] == "funcpointer":
-                funcpointer = VkFunctionPointer.from_xml(self, t)
+                funcpointer = VkFunctionPointer.from_xml(t)
                 funcpointers.append(funcpointer)
                 type_info["data"] = funcpointer
 
             elif type_info["category"] == "handle":
-                handle = VkHandle.from_xml(self, t)
+                handle = VkHandle.from_xml(t)
                 handles.append(handle)
                 type_info["data"] = handle
 
@@ -3419,7 +3411,7 @@ class VkRegistry(object):
                 # on unions. The types are very similar in parsing and
                 # generation anyway. The official Vulkan scripts use
                 # a similar kind of hack.
-                struct = VkStruct.from_xml(self, t)
+                struct = VkStruct.from_xml(t)
                 structs.append(struct)
                 type_info["data"] = struct
 
@@ -3451,16 +3443,16 @@ class VkRegistry(object):
                 type_info["data"] = bitmask
 
             if type_info["category"] == "enum":
-                type_info["data"] = self.enums[alias]
-                self.enums[alias].typedefs += [type_info["name"]]
+                type_info["data"] = Context.enums[alias]
+                Context.enums[alias].typedefs += [type_info["name"]]
 
             if type_info["category"] == "handle":
-                handle = VkHandle.from_alias(self, t, self.types[alias]["data"])
+                handle = VkHandle.from_alias(t, self.types[alias]["data"])
                 handles.append(handle)
                 type_info["data"] = handle
 
             if type_info["category"] == "struct":
-                struct = VkStruct.from_alias(self, t, self.types[alias]["data"])
+                struct = VkStruct.from_alias(t, self.types[alias]["data"])
                 structs.append(struct)
                 type_info["data"] = struct
 
@@ -3480,13 +3472,13 @@ class VkRegistry(object):
 
         # Guarantee everything is sorted, so code generation doesn't have
         # to deal with this.
-        self.base_types = sorted(base_types, key=lambda base_type: base_type.name)
-        self.bitmasks = sorted(bitmasks, key=lambda bitmask: bitmask.name)
-        self.defines = defines
-        self.enums = OrderedDict(sorted(self.enums.items()))
-        self.funcpointers = sorted(funcpointers, key=lambda fp: fp.value)
-        self.handles = sorted(handles, key=lambda handle: handle.name)
-        self.structs = sorted(structs.values(), key=lambda struct: (-struct.order, struct.name))
+        Context.base_types = sorted(base_types, key=lambda base_type: base_type.name)
+        Context.bitmasks = sorted(bitmasks, key=lambda bitmask: bitmask.name)
+        Context.defines = defines
+        Context.enums = OrderedDict(sorted(Context.enums.items()))
+        Context.func_ptrs = sorted(funcpointers, key=lambda fp: fp.value)
+        Context.handles = sorted(handles, key=lambda handle: handle.name)
+        Context.structs = sorted(structs.values(), key=lambda struct: (-struct.order, struct.name))
 
 def generate_vulkan_json(f):
     f.write("{\n")
@@ -3541,8 +3533,7 @@ def main():
         video_xml = os.path.join(cache, "video-{0}.xml".format(VK_XML_VERSION))
         download_vk_xml(video_xml, "video.xml")
 
-    registry = VkRegistry(vk_xml, video_xml)
-    generator = VkGenerator(registry)
+    generator = Generator(vk_xml, video_xml)
 
     with open(WINE_VULKAN_H, "w") as f:
         generator.generate_vulkan_h(f)
