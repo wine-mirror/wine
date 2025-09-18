@@ -53,6 +53,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 #define D3DX_FILTER_SRGB_OUT         0x00400000
 #define D3DX_FILTER_SRGB             0x00600000
 
+#define D3DX_FILTER_INVALID_BITS     0xff80fff8
+HRESULT d3dx_validate_filter(uint32_t filter)
+{
+    if ((filter & D3DX_FILTER_INVALID_BITS) || !(filter & 0x7) || ((filter & 0x7) > D3DX_FILTER_BOX))
+        return D3DERR_INVALIDCALL;
+
+    return D3D_OK;
+}
+
 HRESULT WINAPI WICCreateImagingFactory_Proxy(UINT, IWICImagingFactory**);
 
 /************************************************************

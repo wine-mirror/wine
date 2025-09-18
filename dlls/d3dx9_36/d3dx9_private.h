@@ -35,20 +35,12 @@
 #define FOURCC_TX_1 0x54580100
 
 #define D3DX9_FILTER_INVALID_BITS 0xff80fff8
-static inline HRESULT d3dx9_validate_filter(uint32_t filter)
-{
-    if ((filter & D3DX9_FILTER_INVALID_BITS) || !(filter & 0x7) || ((filter & 0x7) > D3DX_FILTER_BOX))
-        return D3DERR_INVALIDCALL;
-
-    return D3D_OK;
-}
-
 static inline HRESULT d3dx9_handle_load_filter(DWORD *filter)
 {
     if (*filter == D3DX_DEFAULT)
         *filter = D3DX_FILTER_TRIANGLE | D3DX_FILTER_DITHER;
 
-    return d3dx9_validate_filter(*filter);
+    return d3dx_validate_filter(*filter);
 }
 
 BOOL d3dximage_info_from_d3dx_image(D3DXIMAGE_INFO *info, struct d3dx_image *image);

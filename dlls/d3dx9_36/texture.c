@@ -59,7 +59,7 @@ HRESULT WINAPI D3DXFilterTexture(IDirect3DBaseTexture9 *texture,
     if (!texture)
         return D3DERR_INVALIDCALL;
 
-    if (filter != D3DX_DEFAULT && FAILED(hr = d3dx9_validate_filter(filter)))
+    if (filter != D3DX_DEFAULT && FAILED(hr = d3dx_validate_filter(filter)))
         return hr;
 
     if (srclevel == D3DX_DEFAULT)

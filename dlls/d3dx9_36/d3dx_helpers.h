@@ -394,6 +394,8 @@ static inline BOOL is_conversion_to_supported(const struct pixel_format_desc *fo
         && !is_unknown_format(format);
 }
 
+HRESULT d3dx_validate_filter(uint32_t filter);
+
 const struct pixel_format_desc *get_d3dx_pixel_format_info(enum d3dx_pixel_format_id format);
 
 void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *src, const PALETTEENTRY *palette,

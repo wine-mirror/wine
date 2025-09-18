@@ -1096,7 +1096,7 @@ static const struct test_invalid_image_load_info
             D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, (D3D10_USAGE)D3DX10_DEFAULT,
             D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, 7,              D3DX10_DEFAULT
         },
-        D3DERR_INVALIDCALL, D3DERR_INVALIDCALL, .todo_hr = TRUE, .todo_process_hr = TRUE
+        D3DERR_INVALIDCALL, D3DERR_INVALIDCALL
     },
     /* Invalid mipfilter value, only validated if mips are generated. */
     {

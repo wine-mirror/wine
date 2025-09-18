@@ -660,12 +660,18 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
         FIXME("load_info->CpuAccessFlags is ignored.\n");
     if (load_info->MiscFlags != D3DX10_DEFAULT)
         FIXME("load_info->MiscFlags is ignored.\n");
-    if (load_info->Filter != D3DX10_DEFAULT)
-        FIXME("load_info->Filter is ignored.\n");
     if (load_info->MipFilter != D3DX10_DEFAULT)
         FIXME("load_info->MipFilter is ignored.\n");
 
     *resource_data = NULL;
+    if (!load_info->Filter || load_info->Filter == D3DX10_DEFAULT)
+        load_info->Filter = D3DX10_FILTER_LINEAR;
+    if (FAILED(hr = d3dx_validate_filter(load_info->Filter)))
+    {
+        ERR("Invalid filter argument %#x.\n", load_info->Filter);
+        return hr;
+    }
+
     hr = d3dx_image_init(data, size, &image, 0, D3DX_IMAGE_SUPPORT_DXT10);
     if (FAILED(hr))
         return E_FAIL;
@@ -748,7 +754,7 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
             set_d3dx_pixels(&dst_pixels, pixels_buffer, dst_row_pitch, dst_slice_pitch, NULL, dst_size.width,
                     dst_size.height, dst_size.depth, &unaligned_rect);
 
-            hr = d3dx_load_pixels_from_pixels(&dst_pixels, fmt_desc, &src_pixels, src_desc, D3DX10_FILTER_POINT, 0);
+            hr = d3dx_load_pixels_from_pixels(&dst_pixels, fmt_desc, &src_pixels, src_desc, load_info->Filter, 0);
             if (FAILED(hr))
                 break;
 
