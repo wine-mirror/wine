@@ -3161,6 +3161,7 @@ DECL_HANDLER(set_queue_mask)
 
     SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
     {
+        shared->access_time  = monotonic_time;
         shared->wake_mask    = req->wake_mask;
         shared->changed_mask = req->changed_mask;
         reply->wake_bits     = shared->wake_bits;
