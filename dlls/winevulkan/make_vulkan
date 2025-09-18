@@ -345,7 +345,7 @@ class Unwrap(Enum):
     DRIVER = 2
 
 
-def api_is_vulkan(obj):
+def is_api_supported(obj):
     return "vulkan" in obj.get("api", "vulkan").split(",")
 
 
@@ -433,9 +433,6 @@ class VkDefine(object):
 
     @staticmethod
     def from_xml(registry, define):
-        if not api_is_vulkan(define):
-            return None
-
         value = innertext(define)
         value = re.sub(r'\s*//.*$', '', value, flags=re.M)
         value = value.strip()
@@ -469,9 +466,6 @@ class VkEnum(object):
 
     @staticmethod
     def from_xml(registry, enum):
-        if not api_is_vulkan(enum):
-            return None
-
         name = enum.attrib.get("name")
         bitwidth = int(enum.attrib.get("bitwidth", "32"))
         result = VkEnum(name, bitwidth)
@@ -628,18 +622,6 @@ class VkFunction(object):
 
     @staticmethod
     def from_alias(registry, command, alias):
-        """ Create VkFunction from an alias command.
-
-        Args:
-            command: xml data for command
-            alias (VkFunction): function to use as a base for types / parameters.
-
-        Returns:
-            VkFunction
-        """
-        if not api_is_vulkan(command):
-            return None
-
         func_name = command.attrib.get("name")
         func_type = alias.type
         params = alias.params
@@ -648,18 +630,14 @@ class VkFunction(object):
 
     @staticmethod
     def from_xml(registry, command, types):
-        if not api_is_vulkan(command):
-            return None
-
         proto = command.find("proto")
         func_name = proto.find("name").text
         func_type = proto.find("type").text
 
         params = []
-        for param in command.findall("param"):
+        for param in filter(is_api_supported, command.findall("param")):
             vk_param = VkParam.from_xml(registry, param, types, params)
-            if vk_param:
-                params.append(vk_param)
+            params.append(vk_param)
 
         return VkFunction(_type=func_type, name=func_name, params=params)
 
@@ -1004,9 +982,6 @@ class VkFunctionPointer(object):
 
     @staticmethod
     def from_xml(registry, funcpointer):
-        if not api_is_vulkan(funcpointer):
-            return None
-
         value = innertext(funcpointer).replace('\n', '')
         value = re.sub(r'\s*//.*$', '', value, flags=re.M)
         value = re.sub(r'\s+', ' ', value, flags=re.M)
@@ -1037,9 +1012,6 @@ class VkHandle(object):
 
     @staticmethod
     def from_xml(registry, handle):
-        if not api_is_vulkan(handle):
-            return None
-
         name = handle.find("name").text
         _type = handle.find("type").text
         parent = handle.attrib.get("parent") # Most objects have a parent e.g. VkQueue has VkDevice.
@@ -1354,10 +1326,6 @@ class VkMember(VkVariable):
     @staticmethod
     def from_xml(registry, member, returnedonly, parent):
         """ Helper function for parsing a member tag within a struct or union. """
-
-        if not api_is_vulkan(member):
-            return None
-
         name_elem = member.find("name")
         type_elem = member.find("type")
 
@@ -1596,11 +1564,6 @@ class VkParam(VkVariable):
 
     @staticmethod
     def from_xml(registry, param, types, parent):
-        """ Helper function to create VkParam from xml. """
-
-        if not api_is_vulkan(param):
-            return None
-
         # Parameter parsing is slightly tricky. All the data is contained within
         # a param tag, but some data is within subtags while others are text
         # before or after the type tag.
@@ -1921,9 +1884,6 @@ class VkStruct(Sequence):
 
     @staticmethod
     def from_xml(registry, struct):
-        if not api_is_vulkan(struct):
-            return None
-
         # Unions and structs are the same parsing wise, but we need to
         # know which one we are dealing with later on for code generation.
         union = True if struct.attrib["category"] == "union" else False
@@ -1947,10 +1907,9 @@ class VkStruct(Sequence):
         structextends = structextends.split(",") if structextends else []
 
         s = VkStruct(registry, name, [], returnedonly, structextends, union=union)
-        for member in struct.findall("member"):
+        for member in filter(is_api_supported, struct.findall("member")):
             vk_member = VkMember.from_xml(registry, member, returnedonly, s)
-            if vk_member:
-                s.members.append(vk_member)
+            s.members.append(vk_member)
 
         return s
 
@@ -3167,22 +3126,20 @@ class VkRegistry(object):
         # metadata need to be looked up from the Core command.
         # We parse the alias commands in a second pass.
         alias_commands = []
-        for command in commands:
+        for command in filter(is_api_supported, commands):
             alias_name = command.attrib.get("alias")
             if alias_name:
                 alias_commands.append(command)
                 continue
 
             func = VkFunction.from_xml(self, command, self.types)
-            if func:
-                funcs[func.name] = func
+            funcs[func.name] = func
 
         for command in alias_commands:
             alias_name = command.attrib.get("alias")
             alias = funcs[alias_name]
             func = VkFunction.from_alias(self, command, alias)
-            if func:
-                funcs[func.name] = func
+            funcs[func.name] = func
 
         # To make life easy for the code generation, separate all function
         # calls out in the 4 types of Vulkan functions:
@@ -3215,14 +3172,13 @@ class VkRegistry(object):
         """ Parse enums section or better described as constants section. """
         enums = {}
         self.consts = []
-        for enum in root.findall("./enums"):
+        for enum in filter(is_api_supported, root.findall("./enums")):
             name = enum.attrib.get("name")
             _type = enum.attrib.get("type")
 
             if _type in ("enum", "bitmask"):
                 enum_obj = VkEnum.from_xml(self, enum)
-                if enum_obj:
-                    enums[name] = enum_obj
+                enums[name] = enum_obj
             else:
                 # If no type is set, we are dealing with API constants.
                 for value in enum.findall("enum"):
@@ -3445,9 +3401,7 @@ class VkRegistry(object):
     def _parse_features(self, root):
         """ Parse the feature section, which describes Core commands and types needed. """
 
-        for feature in root.findall("./feature"):
-            if not api_is_vulkan(feature):
-                continue
+        for feature in filter(is_api_supported, root.findall("./feature")):
             feature_name = feature.attrib["name"]
             for require in feature.findall("require"):
                 LOGGER.info("Including features for {0}".format(require.attrib.get("comment")))
@@ -3483,7 +3437,7 @@ class VkRegistry(object):
         structs = []
 
         alias_types = []
-        for t in types:
+        for t in filter(is_api_supported, types):
             type_info = {}
             type_info["category"] = t.attrib.get("category", None)
             type_info["requires"] = t.attrib.get("requires", None)
@@ -3530,11 +3484,8 @@ class VkRegistry(object):
 
             elif type_info["category"] == "define":
                 define = VkDefine.from_xml(self, t)
-                if define:
-                    defines.append(define)
-                    type_info["data"] = define
-                else:
-                    continue
+                defines.append(define)
+                type_info["data"] = define
 
             elif type_info["category"] == "enum":
                 name = t.attrib.get("name")
@@ -3550,19 +3501,13 @@ class VkRegistry(object):
 
             elif type_info["category"] == "funcpointer":
                 funcpointer = VkFunctionPointer.from_xml(self, t)
-                if funcpointer:
-                    funcpointers.append(funcpointer)
-                    type_info["data"] = funcpointer
-                else:
-                    continue
+                funcpointers.append(funcpointer)
+                type_info["data"] = funcpointer
 
             elif type_info["category"] == "handle":
                 handle = VkHandle.from_xml(self, t)
-                if handle:
-                    handles.append(handle)
-                    type_info["data"] = handle
-                else:
-                    continue
+                handles.append(handle)
+                type_info["data"] = handle
 
             elif type_info["category"] in ["struct", "union"]:
                 # We store unions among structs as some structs depend
@@ -3570,11 +3515,8 @@ class VkRegistry(object):
                 # generation anyway. The official Vulkan scripts use
                 # a similar kind of hack.
                 struct = VkStruct.from_xml(self, t)
-                if struct:
-                    structs.append(struct)
-                    type_info["data"] = struct
-                else:
-                    continue
+                structs.append(struct)
+                type_info["data"] = struct
 
             # Name is in general within a name tag else it is an optional
             # attribute on the type tag.
