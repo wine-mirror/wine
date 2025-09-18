@@ -21638,6 +21638,7 @@ VkResult VKAPI_CALL vkWriteMicromapsPropertiesEXT(VkDevice device, uint32_t micr
 #define ALL_VK_INSTANCE_FUNCS \
     USE_VK_FUNC(vkCreateDebugReportCallbackEXT) \
     USE_VK_FUNC(vkCreateDebugUtilsMessengerEXT) \
+    USE_VK_FUNC(vkCreateDevice) \
     USE_VK_FUNC(vkCreateHeadlessSurfaceEXT) \
     USE_VK_FUNC(vkCreateMacOSSurfaceMVK) \
     USE_VK_FUNC(vkCreateMetalSurfaceEXT) \
@@ -21649,15 +21650,13 @@ VkResult VKAPI_CALL vkWriteMicromapsPropertiesEXT(VkDevice device, uint32_t micr
     USE_VK_FUNC(vkDestroyDebugUtilsMessengerEXT) \
     USE_VK_FUNC(vkDestroyInstance) \
     USE_VK_FUNC(vkDestroySurfaceKHR) \
-    USE_VK_FUNC(vkEnumeratePhysicalDeviceGroups) \
-    USE_VK_FUNC(vkEnumeratePhysicalDeviceGroupsKHR) \
-    USE_VK_FUNC(vkEnumeratePhysicalDevices) \
-    USE_VK_FUNC(vkSubmitDebugUtilsMessageEXT) \
-    USE_VK_FUNC(vkCreateDevice) \
     USE_VK_FUNC(vkEnumerateDeviceExtensionProperties) \
     USE_VK_FUNC(vkEnumerateDeviceLayerProperties) \
+    USE_VK_FUNC(vkEnumeratePhysicalDeviceGroups) \
+    USE_VK_FUNC(vkEnumeratePhysicalDeviceGroupsKHR) \
     USE_VK_FUNC(vkEnumeratePhysicalDeviceQueueFamilyPerformanceCountersByRegionARM) \
     USE_VK_FUNC(vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR) \
+    USE_VK_FUNC(vkEnumeratePhysicalDevices) \
     USE_VK_FUNC(vkGetPhysicalDeviceCalibrateableTimeDomainsEXT) \
     USE_VK_FUNC(vkGetPhysicalDeviceCalibrateableTimeDomainsKHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV) \
@@ -21713,7 +21712,8 @@ VkResult VKAPI_CALL vkWriteMicromapsPropertiesEXT(VkDevice device, uint32_t micr
     USE_VK_FUNC(vkGetPhysicalDeviceVideoFormatPropertiesKHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceWaylandPresentationSupportKHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceWin32PresentationSupportKHR) \
-    USE_VK_FUNC(vkGetPhysicalDeviceXlibPresentationSupportKHR)
+    USE_VK_FUNC(vkGetPhysicalDeviceXlibPresentationSupportKHR) \
+    USE_VK_FUNC(vkSubmitDebugUtilsMessageEXT)
 
 #define ALL_VK_CLIENT_INSTANCE_EXTS \
     USE_VK_EXT(VK_EXT_debug_report) \

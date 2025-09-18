@@ -636,7 +636,7 @@ class VkFunction(object):
 
     def is_device_func(self):
         # If none of the other, it must be a device function
-        return not self.is_global_func() and not self.is_instance_func() and not self.is_phys_dev_func()
+        return not self.is_global_func() and not self.is_instance_func()
 
     def is_driver_func(self):
         """ Returns if function is part of Wine driver interface. """
@@ -653,12 +653,16 @@ class VkFunction(object):
         return True
 
     def is_instance_func(self):
+        if self.is_global_func():
+            return False
         # Instance functions are passed VkInstance.
         if self.params[0].type == "VkInstance":
             return True
-        return False
+        return self.is_physical_device()
 
-    def is_phys_dev_func(self):
+    def is_physical_device(self):
+        if self.is_global_func():
+            return False
         # Physical device functions are passed VkPhysicalDevice.
         if self.params[0].type == "VkPhysicalDevice":
             return True
@@ -2937,7 +2941,7 @@ class Generator(object):
         f.write("\n\n")
 
         f.write("#define ALL_VK_INSTANCE_FUNCS")
-        for vk_func in self.instance_funcs + self.phys_dev_funcs:
+        for vk_func in self.instance_funcs:
             if not vk_func.is_required():
                 continue
             if not vk_func.needs_dispatch():
@@ -3093,8 +3097,9 @@ class Generator(object):
                 device_funcs.append(func)
             elif func.is_global_func():
                 global_funcs.append(func)
-            elif func.is_phys_dev_func():
+            elif func.is_physical_device():
                 phys_dev_funcs.append(func)
+                instance_funcs.append(func)
             else:
                 instance_funcs.append(func)
 
