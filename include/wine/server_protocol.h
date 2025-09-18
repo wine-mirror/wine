@@ -1001,6 +1001,7 @@ typedef volatile struct
     unsigned int         wake_bits;
     unsigned int         changed_mask;
     unsigned int         changed_bits;
+    unsigned int         internal_bits;
     int                  hooks_count[NB_HOOKS];
 } queue_shm_t;
 
@@ -6994,6 +6995,6 @@ union generic_reply
     struct d3dkmt_object_open_name_reply d3dkmt_object_open_name_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 913
+#define SERVER_PROTOCOL_VERSION 914
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

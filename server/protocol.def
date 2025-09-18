@@ -1017,6 +1017,7 @@ typedef volatile struct
     unsigned int         wake_bits;        /* wakeup bits */
     unsigned int         changed_mask;     /* changed wakeup mask */
     unsigned int         changed_bits;     /* changed wakeup bits */
+    unsigned int         internal_bits;    /* internal queue bits */
     int                  hooks_count[NB_HOOKS];  /* active hooks count */
 } queue_shm_t;
 
