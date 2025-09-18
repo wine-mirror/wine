@@ -1087,7 +1087,7 @@ static const struct test_invalid_image_load_info
             D3DX10_DEFAULT, D3DX10_DEFAULT, 2,              D3DX10_DEFAULT, D3DX10_DEFAULT, (D3D10_USAGE)D3DX10_DEFAULT,
             D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT
         },
-        E_FAIL, E_FAIL, .todo_hr = TRUE, .todo_process_hr = TRUE
+        E_FAIL, E_FAIL
     },
     /* Invalid filter value. */
     {

@@ -648,12 +648,6 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
     if (!data || !size)
         return E_FAIL;
 
-    if (load_info->Width != D3DX10_DEFAULT)
-        FIXME("load_info->Width is ignored.\n");
-    if (load_info->Height != D3DX10_DEFAULT)
-        FIXME("load_info->Height is ignored.\n");
-    if (load_info->Depth != D3DX10_DEFAULT)
-        FIXME("load_info->Depth is ignored.\n");
     if (load_info->FirstMipLevel != D3DX10_DEFAULT)
         FIXME("load_info->FirstMipLevel is ignored.\n");
     if (load_info->MipLevels != D3DX10_DEFAULT)
@@ -704,9 +698,20 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
     }
 
     /* Potentially round up width/height to align with block size. */
-    load_info->Width = (img_info.Width + fmt_desc->block_width - 1) & ~(fmt_desc->block_width - 1);
-    load_info->Height = (img_info.Height + fmt_desc->block_height - 1) & ~(fmt_desc->block_height - 1);
-    load_info->Depth = img_info.Depth;
+    if (!load_info->Width || load_info->Width == D3DX10_FROM_FILE || load_info->Width == D3DX10_DEFAULT)
+        load_info->Width = (img_info.Width + fmt_desc->block_width - 1) & ~(fmt_desc->block_width - 1);
+    if (!load_info->Height || load_info->Height == D3DX10_FROM_FILE || load_info->Height == D3DX10_DEFAULT)
+        load_info->Height = (img_info.Height + fmt_desc->block_height - 1) & ~(fmt_desc->block_height - 1);
+    if (!load_info->Depth || load_info->Depth == D3DX10_FROM_FILE || load_info->Depth == D3DX10_DEFAULT)
+        load_info->Depth = img_info.Depth;
+
+    if ((load_info->Depth > 1) && (img_info.ResourceDimension != D3D10_RESOURCE_DIMENSION_TEXTURE3D))
+    {
+        WARN("Invalid depth value %u for image with dimension %d.\n", load_info->Depth, img_info.ResourceDimension);
+        hr = E_FAIL;
+        goto end;
+    }
+
     load_info->MipLevels = img_info.MipLevels;
 
     pixels_size = d3dx_calculate_layer_pixels_size(fmt_desc->format, load_info->Width, load_info->Height,
