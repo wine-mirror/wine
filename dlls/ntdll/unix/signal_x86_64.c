@@ -121,6 +121,43 @@ __ASM_GLOBAL_FUNC( alloc_fs_sel,
                    "popq %rbx\n\t"
                    "ret" );
 
+struct modify_ldt_s
+{
+    unsigned int  entry_number;
+    unsigned int  base_addr;
+    unsigned int  limit;
+    unsigned int  seg_32bit : 1;
+    unsigned int  contents : 2;
+    unsigned int  read_exec_only : 1;
+    unsigned int  limit_in_pages : 1;
+    unsigned int  seg_not_present : 1;
+    unsigned int  usable : 1;
+    unsigned int  garbage : 25;
+};
+
+extern int modify_ldt( struct modify_ldt_s *ldt );
+__ASM_GLOBAL_FUNC( modify_ldt,
+                   /* switch to 32-bit stack */
+                   "pushq %rbx\n\t"
+                   "pushq %r12\n\t"
+                   "movq %rsp,%r12\n\t"
+                   "movq %gs:0x30,%rax\n\t"
+                   "leal 0x2000(%eax),%esp\n\t"  /* teb32 */
+                   /* copy modify_ldt struct to 32-bit stack */
+                   "pushq 8(%rdi)\n\t"
+                   "pushq 0(%rdi)\n\t"
+                   /* invoke 32-bit syscall */
+                   "movl $0x7b,%eax\n\t"  /* SYS_modify_ldt */
+                   "movl $0x11,%ebx\n\t"  /* func */
+                   "movl %esp,%ecx\n\t"   /* ldt_ptr */
+                   "movl $0x10,%edx\n\t"  /* sizeof(*ldt_ptr) */
+                   "int $0x80\n\t"
+                   /* restore stack */
+                   "movq %r12,%rsp\n\t"
+                   "popq %r12\n\t"
+                   "popq %rbx\n\t"
+                   "ret" );
+
 #ifndef FP_XSTATE_MAGIC1
 #define FP_XSTATE_MAGIC1 0x46505853
 #endif
@@ -2451,7 +2488,20 @@ static void sigsys_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 void ldt_set_entry( WORD sel, LDT_ENTRY entry )
 {
-#if defined(__APPLE__)
+#ifdef linux
+    struct modify_ldt_s ldt_info = { .entry_number = sel >> 3 };
+    int ret;
+
+    ldt_info.base_addr       = ldt_get_base( entry );
+    ldt_info.limit           = entry.LimitLow | (entry.HighWord.Bits.LimitHi << 16);
+    ldt_info.seg_32bit       = entry.HighWord.Bits.Default_Big;
+    ldt_info.contents        = (entry.HighWord.Bits.Type >> 2) & 3;
+    ldt_info.read_exec_only  = !(entry.HighWord.Bits.Type & 2);
+    ldt_info.limit_in_pages  = entry.HighWord.Bits.Granularity;
+    ldt_info.seg_not_present = !entry.HighWord.Bits.Pres;
+    ldt_info.usable          = entry.HighWord.Bits.Sys;
+    if ((ret = modify_ldt( &ldt_info ))) ERR( "modify_ldt failed %d\n", ret );
+#elif defined(__APPLE__)
     if (i386_set_ldt(sel >> 3, (union ldt_entry *)&entry, 1) < 0) perror("i386_set_ldt");
 #else
     fprintf( stderr, "No LDT support on this platform\n" );
