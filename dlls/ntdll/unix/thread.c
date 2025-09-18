@@ -2178,7 +2178,9 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
     }
 
     case ThreadDescriptorTableEntry:
-        return get_thread_ldt_entry( handle, data, length, ret_len );
+        status = get_thread_ldt_entry( handle, data, length );
+        if (status == STATUS_SUCCESS && ret_len) *ret_len = sizeof(LDT_ENTRY);
+        return status;
 
     case ThreadAmILastThread:
     {

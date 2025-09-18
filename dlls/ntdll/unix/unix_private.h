@@ -313,7 +313,7 @@ extern void virtual_fill_image_information( const struct pe_image_info *pe_info,
 extern void *get_builtin_so_handle( void *module );
 extern NTSTATUS load_builtin_unixlib( void *module, const char *name );
 
-extern NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len );
+extern NTSTATUS get_thread_ldt_entry( HANDLE handle, THREAD_DESCRIPTOR_INFORMATION *info, ULONG len );
 extern void *get_native_context( CONTEXT *context );
 extern void *get_wow_context( CONTEXT *context );
 extern BOOL get_thread_times( int unix_pid, int unix_tid, LARGE_INTEGER *kernel_time,

@@ -1352,7 +1352,7 @@ static void usr2_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 /**********************************************************************
  *           get_thread_ldt_entry
  */
-NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len )
+NTSTATUS get_thread_ldt_entry( HANDLE handle, THREAD_DESCRIPTOR_INFORMATION *info, ULONG len )
 {
     return STATUS_NOT_IMPLEMENTED;
 }

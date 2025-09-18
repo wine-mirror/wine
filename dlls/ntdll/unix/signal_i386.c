@@ -2233,11 +2233,10 @@ static void ldt_set_fs( WORD sel, TEB *teb )
 /**********************************************************************
  *           get_thread_ldt_entry
  */
-NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len )
+NTSTATUS get_thread_ldt_entry( HANDLE handle, THREAD_DESCRIPTOR_INFORMATION *info, ULONG len )
 {
     THREAD_BASIC_INFORMATION tbi;
-    THREAD_DESCRIPTOR_INFORMATION *info = data;
-    unsigned int status = STATUS_SUCCESS;
+    NTSTATUS status = STATUS_SUCCESS;
     TEB *teb = NtCurrentTeb();
 
     if (len != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
@@ -2302,11 +2301,6 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_
         else
             status = STATUS_UNSUCCESSFUL;
     }
-
-    if (status == STATUS_SUCCESS && ret_len)
-        /* yes, that's a bit strange, but it's the way it is */
-        *ret_len = sizeof(info->Entry);
-
     return status;
 }
 
