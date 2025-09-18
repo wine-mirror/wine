@@ -45,6 +45,7 @@ static NTSTATUS (WINAPI *pNtReleaseMutant)( HANDLE, LONG * );
 static NTSTATUS (WINAPI *pNtReleaseSemaphore)( HANDLE, ULONG, ULONG * );
 static NTSTATUS (WINAPI *pNtResetEvent)( HANDLE, LONG * );
 static NTSTATUS (WINAPI *pNtSetEvent)( HANDLE, LONG * );
+static NTSTATUS (WINAPI *pNtSetEventBoostPriority)( HANDLE );
 static NTSTATUS (WINAPI *pNtWaitForAlertByThreadId)( void *, const LARGE_INTEGER * );
 static NTSTATUS (WINAPI *pNtWaitForKeyedEvent)( HANDLE, const void *, BOOLEAN, const LARGE_INTEGER * );
 static BOOLEAN  (WINAPI *pRtlAcquireResourceExclusive)( RTL_RWLOCK *, BOOLEAN );
@@ -144,6 +145,20 @@ static void test_event(void)
     status = pNtPulseEvent( event, &prev_state );
     ok( status == STATUS_SUCCESS, "NtPulseEvent failed %08lx\n", status );
     ok( prev_state == 1, "prev_state = %lx\n", prev_state );
+
+    pNtClose(event);
+
+    status = pNtCreateEvent(&event, GENERIC_ALL, &attr, SynchronizationEvent, 0);
+    ok( status == STATUS_SUCCESS, "NtCreateEvent failed %08lx\n", status );
+
+    status = pNtSetEventBoostPriority( event );
+    ok( status == STATUS_SUCCESS, "NtSetEventBoostPriority failed: %08lx\n", status );
+
+    memset(&info, 0xcc, sizeof(info));
+    status = pNtQueryEvent(event, EventBasicInformation, &info, sizeof(info), NULL);
+    ok( status == STATUS_SUCCESS, "NtQueryEvent failed %08lx\n", status );
+    ok( info.EventState == 1,
+        "NtQueryEventBoostPriority failed, expected 1, got %ld\n", info.EventState );
 
     pNtClose(event);
 }
@@ -1148,6 +1163,7 @@ START_TEST(sync)
     pNtReleaseSemaphore             = (void *)GetProcAddress(module, "NtReleaseSemaphore");
     pNtResetEvent                   = (void *)GetProcAddress(module, "NtResetEvent");
     pNtSetEvent                     = (void *)GetProcAddress(module, "NtSetEvent");
+    pNtSetEventBoostPriority        = (void *)GetProcAddress(module, "NtSetEventBoostPriority");
     pNtWaitForAlertByThreadId       = (void *)GetProcAddress(module, "NtWaitForAlertByThreadId");
     pNtWaitForKeyedEvent            = (void *)GetProcAddress(module, "NtWaitForKeyedEvent");
     pRtlAcquireResourceExclusive    = (void *)GetProcAddress(module, "RtlAcquireResourceExclusive");
