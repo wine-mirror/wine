@@ -42,6 +42,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(msg);
 WINE_DECLARE_DEBUG_CHANNEL(key);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
+#define QS_DRIVER       0x80000000
+#define QS_HARDWARE     0x40000000
+#define QS_INTERNAL     (QS_DRIVER | QS_HARDWARE)
+
 static const struct _KUSER_SHARED_DATA *user_shared_data = (struct _KUSER_SHARED_DATA *)0x7ffe0000;
 
 static LONG atomic_load_long( const volatile LONG *ptr )
@@ -3175,9 +3179,24 @@ static HANDLE get_server_queue_handle(void)
     return ret;
 }
 
+static BOOL has_hardware_messages(void)
+{
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const queue_shm_t *queue_shm;
+    BOOL signaled = FALSE;
+    UINT status;
+
+    while ((status = get_shared_queue( &lock, &queue_shm )) == STATUS_PENDING)
+        signaled = queue_shm->internal_bits & QS_HARDWARE;
+    if (status) return FALSE;
+
+    return signaled;
+}
+
 BOOL process_driver_events( UINT mask )
 {
-    return user_driver->pProcessEvents( mask );
+    user_driver->pProcessEvents( mask );
+    return has_hardware_messages();
 }
 
 void check_for_events( UINT flags )
