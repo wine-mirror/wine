@@ -1283,9 +1283,8 @@ static void cleanup_results( struct msg_queue *queue )
 /* check if the thread owning the queue is hung (not checking for messages) */
 static int is_queue_hung( struct msg_queue *queue )
 {
-    if (monotonic_time - queue->shared->access_time <= 5 * TICKS_PER_SEC)
-        return 0;  /* less than 5 seconds since last get message -> not hung */
-    return !queue->waiting;
+    /* queue is hung if it's signaled and thread didn't access it for more than 5 seconds */
+    return queue->signaled && monotonic_time - queue->shared->access_time > 5 * TICKS_PER_SEC;
 }
 
 static int msg_queue_select( struct msg_queue *queue, int events )
