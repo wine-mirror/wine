@@ -464,19 +464,28 @@ static inline BOOL call_event_handler( Display *display, XEvent *event )
     return ret;
 }
 
+static int check_fd_events( int fd, int events )
+{
+    struct pollfd pfd = {.fd = fd, .events = events};
+    if (poll( &pfd, 1, 0 ) <= 0) return 0;
+    return pfd.revents;
+}
 
 /***********************************************************************
- *           process_events
+ *           ProcessEvents   (X11DRV.@)
  */
-static BOOL process_events( Display *display, Bool (*filter)(Display*, XEvent*,XPointer), ULONG_PTR arg )
+BOOL X11DRV_ProcessEvents( DWORD mask )
 {
+    struct x11drv_thread_data *data = x11drv_thread_data();
     XEvent event, prev_event;
     int count = 0;
-    BOOL queued = FALSE;
     enum event_merge_action action = MERGE_DISCARD;
 
+    if (!data) return FALSE;
+    if (data->current_event) mask = 0;  /* don't process nested events */
+
     prev_event.type = 0;
-    while (XCheckIfEvent( display, &event, filter, (char *)arg ))
+    while (XCheckIfEvent( data->display, &event, filter_event, (XPointer)(UINT_PTR)mask ))
     {
         count++;
         if (XFilterEvent( &event, None ))
@@ -517,40 +526,27 @@ static BOOL process_events( Display *display, Bool (*filter)(Display*, XEvent*,X
         switch( action )
         {
         case MERGE_HANDLE:  /* handle prev, keep new */
-            queued |= call_event_handler( display, &prev_event );
+            call_event_handler( data->display, &prev_event );
             /* fall through */
         case MERGE_DISCARD:  /* discard prev, keep new */
             free_event_data( &prev_event );
             prev_event = event;
             break;
         case MERGE_KEEP:  /* handle new, keep prev for future merging */
-            queued |= call_event_handler( display, &event );
+            call_event_handler( data->display, &event );
             /* fall through */
         case MERGE_IGNORE: /* ignore new, keep prev for future merging */
             free_event_data( &event );
             break;
         }
     }
-    if (prev_event.type) queued |= call_event_handler( display, &prev_event );
+    if (prev_event.type) call_event_handler( data->display, &prev_event );
     free_event_data( &prev_event );
     XFlush( gdi_display );
-    if (count) TRACE( "processed %d events, returning %d\n", count, queued );
-    return queued;
+    if (count) TRACE( "processed %d events\n", count );
+    return !check_fd_events( ConnectionNumber( data->display ), POLLIN );
 }
 
-
-/***********************************************************************
- *           ProcessEvents   (X11DRV.@)
- */
-BOOL X11DRV_ProcessEvents( DWORD mask )
-{
-    struct x11drv_thread_data *data = x11drv_thread_data();
-
-    if (!data) return FALSE;
-    if (data->current_event) mask = 0;  /* don't process nested events */
-
-    return process_events( data->display, filter_event, mask );
-}
 
 /***********************************************************************
  *           EVENT_x11_time_to_win32_time
