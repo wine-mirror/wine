@@ -41,6 +41,18 @@
 /* Define to 1 if you have the `getopt' function. */
 /* #undef HAVE_GETOPT */
 
+/* Define to 1 if you have the <GLUT/glut.h> header file. */
+/* #undef HAVE_GLUT_GLUT_H */
+
+/* Define to 1 if you have the <GL/glut.h> header file. */
+/* #undef HAVE_GL_GLUT_H */
+
+/* Define to 1 if you have the <GL/glu.h> header file. */
+/* #undef HAVE_GL_GLU_H */
+
+/* Define to 1 if you have the <GL/gl.h> header file. */
+/* #undef HAVE_GL_GL_H */
+
 /* Define to 1 if you have the <io.h> header file. */
 #define HAVE_IO_H 1
 
@@ -49,6 +61,12 @@
 
 /* Define to 1 if you have the `mmap' function. */
 /* #undef HAVE_MMAP */
+
+/* Define to 1 if you have the <OpenGL/glu.h> header file. */
+/* #undef HAVE_OPENGL_GLU_H */
+
+/* Define to 1 if you have the <OpenGL/gl.h> header file. */
+/* #undef HAVE_OPENGL_GL_H */
 
 /* Define to 1 if you have the `setmode' function. */
 #define HAVE_SETMODE 1
@@ -68,8 +86,14 @@
 /* 8/12 bit libjpeg dual mode enabled */
 /* #undef JPEG_DUAL_MODE_8_12 */
 
+/* 8/12 bit dual mode JPEG built into libjpeg-turbo 3.0+ */
+/* #undef HAVE_JPEGTURBO_DUAL_MODE_8_12 */
+
 /* Support LERC compression */
 /* #undef LERC_SUPPORT */
+
+/* Define to 1 when building a static libtiff with LERC enabled. */
+/* #undef LERC_STATIC */
 
 /* 12bit libjpeg primary include file with path */
 /* #undef LIBJPEG_12_PATH */
