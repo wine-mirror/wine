@@ -590,7 +590,7 @@ class EnumValue(object):
         return f"{self.name} = {value}{suffix}"
 
 
-class VkFunction(object):
+class Function(object):
     def __init__(self, _type, name, params, alias=None):
         self.extensions = set()
         self.platforms = set()
@@ -616,7 +616,7 @@ class VkFunction(object):
     @staticmethod
     def from_alias(command, alias):
         func_name = command.attrib.get("name")
-        return VkFunction(alias.type, func_name, alias.params, alias=alias)
+        return Function(alias.type, func_name, alias.params, alias=alias)
 
     @staticmethod
     def from_xml(command, types):
@@ -626,7 +626,7 @@ class VkFunction(object):
 
         params = filter(is_api_supported, command.findall("param"))
         params = [VkParam.from_xml(param, types) for param in params]
-        return VkFunction(func_type, func_name, params)
+        return Function(func_type, func_name, params)
 
     def is_alias(self):
         return bool(self.alias)
@@ -716,32 +716,12 @@ class VkFunction(object):
         pfn += ")"
         return pfn
 
-    def prototype(self, call_conv=None, prefix=None, is_thunk=False):
-        """ Generate prototype for given function.
+    def prototype(self, call_conv="", prefix="", is_thunk=False, suffix=""):
+        extra = [f"void *{self.extra_param}"] if is_thunk and self.extra_param else []
+        params = [p.definition() for p in self.params]
+        params = ", ".join(params + extra)
 
-        Args:
-            call_conv (str, optional): calling convention e.g. WINAPI
-            prefix (str, optional): prefix to append prior to function name e.g. vkFoo -> wine_vkFoo
-        """
-
-        proto = "{0}".format(self.type)
-
-        if call_conv is not None:
-            proto += " {0}".format(call_conv)
-
-        if prefix is not None:
-            proto += " {0}{1}(".format(prefix, self.name)
-        else:
-            proto += " {0}(".format(self.name)
-
-        # Add all the parameters.
-        proto += ", ".join([p.definition() for p in self.params])
-
-        if is_thunk and self.extra_param:
-            proto += ", void *" + self.extra_param
-
-        proto += ")"
-        return proto
+        return f"{self.type} {call_conv}{prefix}{self.name}({params}){suffix}"
 
     def loader_body(self):
         body = "    struct {0}_params params;\n".format(self.name)
@@ -878,21 +858,6 @@ class VkFunction(object):
         spec += "\n"
         return spec
 
-    def stub(self, call_conv=None, prefix=None):
-        stub = self.prototype(call_conv=call_conv, prefix=prefix)
-        stub += "\n{\n"
-        stub += "    {0}".format(self.trace(message="stub: ", trace_func="FIXME"))
-
-        if self.type == "VkResult":
-            stub += "    return VK_ERROR_OUT_OF_HOST_MEMORY;\n"
-        elif self.type == "VkBool32":
-            stub += "    return VK_FALSE;\n"
-        elif self.type == "PFN_vkVoidFunction":
-            stub += "    return NULL;\n"
-
-        stub += "}\n\n"
-        return stub
-
     def thunk(self, conversions, prefix=None, conv=False):
         thunk = ""
         if not conv:
@@ -921,8 +886,8 @@ class VkFunction(object):
         thunk += "\n"
         return thunk
 
-    def loader_thunk(self, prefix=None):
-        thunk = self.prototype(call_conv="WINAPI", prefix=prefix)
+    def loader_thunk(self):
+        thunk = self.prototype(call_conv="WINAPI ")
         thunk += "\n{\n"
         thunk += self.loader_body()
         thunk += "}\n\n"
@@ -958,20 +923,18 @@ class VkFunction(object):
         return trace
 
 
-class VkFunctionPointer(object):
+class FunctionPointer(object):
     def __init__(self, value):
         self.extensions = set()
         self.value = value
         self.required = False
 
     @staticmethod
-    def from_xml(funcpointer):
-        value = innertext(funcpointer).replace('\n', '')
+    def from_xml(xml):
+        value = innertext(xml).replace('\n', '')
         value = re.sub(r'\s*//.*$', '', value, flags=re.M)
         value = re.sub(r'\s+', ' ', value, flags=re.M)
-        value = value.strip()
-
-        return VkFunctionPointer(value)
+        return FunctionPointer(value.strip())
 
     def definition(self):
         return self.value + '\n'
@@ -2671,7 +2634,7 @@ class Generator(object):
         f.write("};\n")
         f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n")
 
-    def generate_thunks_h(self, f, prefix):
+    def generate_thunks_h(self, f):
         self._generate_copyright(f)
 
         f.write("#ifndef __WINE_VULKAN_THUNKS_H\n")
@@ -2686,7 +2649,7 @@ class Generator(object):
             if not vk_func.needs_private_thunk():
                 continue
 
-            f.write("{0};\n".format(vk_func.prototype(prefix=prefix, is_thunk=True)))
+            f.write("{0};\n".format(vk_func.prototype(prefix="wine_", is_thunk=True)))
         f.write("\n")
 
         f.write("#endif /* __WINE_VULKAN_THUNKS_H */\n")
@@ -2916,7 +2879,7 @@ class Generator(object):
                 continue
 
             LOGGER.debug("Generating API definition for: {0}".format(func.name))
-            f.write("{0};\n".format(func.prototype(call_conv="VKAPI_CALL")))
+            f.write("{0};\n".format(func.prototype(call_conv="VKAPI_CALL ")))
         f.write("#endif /* VK_NO_PROTOTYPES */\n\n")
 
         f.write("#define ALL_VK_DEVICE_FUNCS")
@@ -3076,13 +3039,13 @@ class Generator(object):
                 alias_commands.append(command)
                 continue
 
-            func = VkFunction.from_xml(command, self.types)
+            func = Function.from_xml(command, self.types)
             funcs[func.name] = func
 
         for command in alias_commands:
             alias_name = command.attrib.get("alias")
             alias = funcs[alias_name]
-            func = VkFunction.from_alias(command, alias)
+            func = Function.from_alias(command, alias)
             funcs[func.name] = func
 
         # To make life easy for the code generation, separate all function
@@ -3409,7 +3372,7 @@ class Generator(object):
                     type_info["data"] = None
 
             elif type_info["category"] == "funcpointer":
-                funcpointer = VkFunctionPointer.from_xml(t)
+                funcpointer = FunctionPointer.from_xml(t)
                 funcpointers.append(funcpointer)
                 type_info["data"] = funcpointer
 
@@ -3551,7 +3514,7 @@ def main():
         generator.generate_vulkan_h(f)
 
     with open(WINE_VULKAN_THUNKS_H, "w") as f:
-        generator.generate_thunks_h(f, "wine_")
+        generator.generate_thunks_h(f)
 
     with open(WINE_VULKAN_THUNKS_C, "w") as f:
         generator.generate_thunks_c(f)
