@@ -332,7 +332,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         SHARED_WRITE_BEGIN( queue->shared, queue_shm_t )
         {
             memset( (void *)shared->hooks_count, 0, sizeof(shared->hooks_count) );
-            shared->access_time = current_time;
+            shared->access_time = monotonic_time;
             shared->wake_mask = 0;
             shared->wake_bits = 0;
             shared->changed_mask = 0;
@@ -1283,7 +1283,7 @@ static void cleanup_results( struct msg_queue *queue )
 /* check if the thread owning the queue is hung (not checking for messages) */
 static int is_queue_hung( struct msg_queue *queue )
 {
-    if (current_time - queue->shared->access_time <= 5 * TICKS_PER_SEC)
+    if (monotonic_time - queue->shared->access_time <= 5 * TICKS_PER_SEC)
         return 0;  /* less than 5 seconds since last get message -> not hung */
     return !queue->waiting;
 }
@@ -3362,7 +3362,7 @@ DECL_HANDLER(get_message)
 
     SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
     {
-        shared->access_time = current_time;
+        shared->access_time = monotonic_time;
     }
     SHARED_WRITE_END;
 
