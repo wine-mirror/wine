@@ -276,6 +276,7 @@ struct class_object
     LONG refs;
     WCHAR *name;
     IEnumWbemClassObject *iter;
+    LONG flags;
     UINT index;
     UINT index_method;
     UINT index_property;
@@ -519,9 +520,10 @@ static HRESULT WINAPI class_object_BeginEnumeration(
 
     TRACE( "%p, %#lx\n", iface, lEnumFlags );
 
-    if (lEnumFlags) FIXME( "flags %#lx not supported\n", lEnumFlags );
+    if (lEnumFlags & ~WBEM_FLAG_NONSYSTEM_ONLY) FIXME( "flags %#lx not supported\n", lEnumFlags );
 
     co->index_property = 0;
+    co->flags = lEnumFlags;
     return S_OK;
 }
 
@@ -549,7 +551,9 @@ static HRESULT WINAPI class_object_Next(
         return WBEM_E_INVALID_PARAMETER;
     }
 
-    view_idx_start = obj->record ? 0 : system_prop_count;
+    if (obj->record || (obj->flags & WBEM_FLAG_NONSYSTEM_ONLY)) view_idx_start = 0;
+    else view_idx_start = system_prop_count;
+
     for (i = obj->index_property; i < table->num_cols + view_idx_start; i++)
     {
         if (i < view_idx_start)
