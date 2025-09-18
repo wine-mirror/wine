@@ -1311,6 +1311,7 @@ C_ASSERT( offsetof(struct set_queue_fd_request, handle) == 12 );
 C_ASSERT( sizeof(struct set_queue_fd_request) == 16 );
 C_ASSERT( offsetof(struct set_queue_mask_request, wake_mask) == 12 );
 C_ASSERT( offsetof(struct set_queue_mask_request, changed_mask) == 16 );
+C_ASSERT( offsetof(struct set_queue_mask_request, poll_events) == 20 );
 C_ASSERT( sizeof(struct set_queue_mask_request) == 24 );
 C_ASSERT( offsetof(struct set_queue_mask_reply, wake_bits) == 8 );
 C_ASSERT( offsetof(struct set_queue_mask_reply, changed_bits) == 12 );

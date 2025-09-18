@@ -3195,7 +3195,16 @@ static BOOL has_hardware_messages(void)
 
 BOOL process_driver_events( UINT mask )
 {
-    user_driver->pProcessEvents( mask );
+    if (user_driver->pProcessEvents( mask ))
+    {
+        SERVER_START_REQ( set_queue_mask )
+        {
+            req->poll_events = 1;
+            wine_server_call( req );
+        }
+        SERVER_END_REQ;
+    }
+
     return has_hardware_messages();
 }
 

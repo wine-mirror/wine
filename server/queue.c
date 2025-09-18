@@ -3163,6 +3163,14 @@ DECL_HANDLER(set_queue_mask)
     if (!queue) return;
     queue_shm = queue->shared;
 
+    if (req->poll_events)
+    {
+        if (!queue->fd) return;
+        if (check_fd_events( queue->fd, POLLIN )) set_queue_bits( queue, QS_DRIVER );
+        else clear_queue_bits( queue, QS_DRIVER );
+        return;
+    }
+
     SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
     {
         shared->access_time  = monotonic_time;

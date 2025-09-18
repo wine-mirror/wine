@@ -1382,6 +1382,7 @@ static void dump_set_queue_mask_request( const struct set_queue_mask_request *re
 {
     fprintf( stderr, " wake_mask=%08x", req->wake_mask );
     fprintf( stderr, ", changed_mask=%08x", req->changed_mask );
+    fprintf( stderr, ", poll_events=%d", req->poll_events );
 }
 
 static void dump_set_queue_mask_reply( const struct set_queue_mask_reply *req )
