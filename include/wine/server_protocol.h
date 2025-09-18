@@ -984,6 +984,7 @@ typedef volatile struct
 
 typedef volatile struct
 {
+    timeout_t            access_time;
     unsigned int         wake_mask;
     unsigned int         wake_bits;
     unsigned int         changed_mask;
@@ -6878,6 +6879,6 @@ union generic_reply
     struct get_inproc_sync_fd_reply get_inproc_sync_fd_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 900
+#define SERVER_PROTOCOL_VERSION 901
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

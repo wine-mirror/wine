@@ -1000,6 +1000,7 @@ typedef volatile struct
 
 typedef volatile struct
 {
+    timeout_t            access_time;      /* last time the queue was accessed */
     unsigned int         wake_mask;        /* wakeup mask */
     unsigned int         wake_bits;        /* wakeup bits */
     unsigned int         changed_mask;     /* changed wakeup mask */

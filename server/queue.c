@@ -133,7 +133,6 @@ struct msg_queue
     struct timeout_user   *timeout;         /* timeout for next timer to expire */
     struct thread_input   *input;           /* thread input descriptor */
     struct hook_table     *hooks;           /* hook table */
-    timeout_t              last_get_msg;    /* time of last get message call */
     int                    keystate_lock;   /* owns an input keystate lock */
     int                    waiting;         /* is thread waiting on queue */
     queue_shm_t           *shared;          /* queue in session shared memory */
@@ -319,7 +318,6 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         queue->timeout         = NULL;
         queue->input           = (struct thread_input *)grab_object( input );
         queue->hooks           = NULL;
-        queue->last_get_msg    = current_time;
         queue->keystate_lock   = 0;
         queue->waiting         = 0;
         list_init( &queue->send_result );
@@ -334,6 +332,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         SHARED_WRITE_BEGIN( queue->shared, queue_shm_t )
         {
             memset( (void *)shared->hooks_count, 0, sizeof(shared->hooks_count) );
+            shared->access_time = current_time;
             shared->wake_mask = 0;
             shared->wake_bits = 0;
             shared->changed_mask = 0;
@@ -1284,7 +1283,7 @@ static void cleanup_results( struct msg_queue *queue )
 /* check if the thread owning the queue is hung (not checking for messages) */
 static int is_queue_hung( struct msg_queue *queue )
 {
-    if (current_time - queue->last_get_msg <= 5 * TICKS_PER_SEC)
+    if (current_time - queue->shared->access_time <= 5 * TICKS_PER_SEC)
         return 0;  /* less than 5 seconds since last get message -> not hung */
     return !queue->waiting;
 }
@@ -3361,7 +3360,11 @@ DECL_HANDLER(get_message)
         return;
     }
 
-    queue->last_get_msg = current_time;
+    SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
+    {
+        shared->access_time = current_time;
+    }
+    SHARED_WRITE_END;
 
     /* first check for sent messages */
     if ((ptr = list_head( &queue->msg_list[SEND_MESSAGE] )))
