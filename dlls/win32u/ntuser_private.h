@@ -201,17 +201,8 @@ extern void free_dce( struct dce *dce, HWND hwnd );
 extern void invalidate_dce( WND *win, const RECT *old_rect );
 
 /* message.c */
-struct peek_message_filter
-{
-    HWND hwnd;
-    UINT first;
-    UINT last;
-    UINT mask;
-    UINT flags;
-    BOOL internal;
-};
-
-extern int peek_message( MSG *msg, const struct peek_message_filter *filter );
+extern BOOL process_driver_events( UINT mask );
+extern void check_for_events( UINT flags );
 
 /* systray.c */
 extern LRESULT system_tray_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *data );

@@ -83,6 +83,16 @@ static UINT64 get_tick_count(void)
 
 #define MAX_PACK_COUNT 4
 
+struct peek_message_filter
+{
+    HWND hwnd;
+    UINT first;
+    UINT last;
+    UINT mask;
+    UINT flags;
+    BOOL internal;
+};
+
 /* info about the message currently being received by the current thread */
 struct received_message_info
 {
@@ -2818,7 +2828,7 @@ static BOOL check_queue_bits( UINT wake_mask, UINT changed_mask, UINT signal_bit
  * available; -1 on error.
  * All pending sent messages are processed before returning.
  */
-int peek_message( MSG *msg, const struct peek_message_filter *filter )
+static int peek_message( MSG *msg, const struct peek_message_filter *filter )
 {
     LRESULT result;
     HWND hwnd = filter->hwnd;
@@ -3154,6 +3164,20 @@ static HANDLE get_server_queue_handle(void)
     return ret;
 }
 
+BOOL process_driver_events( UINT mask )
+{
+    return user_driver->pProcessEvents( mask );
+}
+
+void check_for_events( UINT flags )
+{
+    struct peek_message_filter filter = {.internal = TRUE, .flags = PM_REMOVE};
+    MSG msg;
+
+    if (!process_driver_events( flags )) flush_window_surfaces( TRUE );
+    peek_message( &msg, &filter );
+}
+
 /* monotonic timer tick for throttling driver event checks */
 static inline LONGLONG get_driver_check_time(void)
 {
@@ -3168,7 +3192,7 @@ static inline void check_for_driver_events(void)
     if (get_user_thread_info()->last_driver_time != get_driver_check_time())
     {
         flush_window_surfaces( FALSE );
-        user_driver->pProcessEvents( QS_ALLINPUT );
+        process_driver_events( QS_ALLINPUT );
         get_user_thread_info()->last_driver_time = get_driver_check_time();
     }
 }
@@ -3197,12 +3221,12 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
         params.restore = TRUE;
     }
 
-    if (user_driver->pProcessEvents( QS_ALLINPUT )) ret = count - 1;
+    if (process_driver_events( QS_ALLINPUT )) ret = count - 1;
     else
     {
         ret = NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
                                         !!(flags & MWMO_ALERTABLE), get_nt_timeout( &time, timeout ));
-        if (ret == count - 1) user_driver->pProcessEvents( QS_ALLINPUT );
+        if (ret == count - 1) process_driver_events( QS_ALLINPUT );
         else if (HIWORD(ret)) /* is it an error code? */
         {
             RtlSetLastWin32Error( RtlNtStatusToDosError(ret) );

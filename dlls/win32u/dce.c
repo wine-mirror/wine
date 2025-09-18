@@ -1803,7 +1803,7 @@ BOOL WINAPI NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT fla
     }
 
     /* process pending expose events before painting */
-    if (flags & RDW_UPDATENOW) user_driver->pProcessEvents( QS_PAINT );
+    if (flags & RDW_UPDATENOW) process_driver_events( QS_PAINT );
 
     if (rect && !hrgn)
     {
