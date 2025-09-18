@@ -3229,7 +3229,10 @@ static BOOL check_queue_masks( UINT wake_mask, UINT changed_mask )
     UINT status;
 
     while ((status = get_shared_queue( &lock, &queue_shm )) == STATUS_PENDING)
-        skip = queue_shm->wake_mask == wake_mask && queue_shm->changed_mask == changed_mask;
+    {
+        if (queue_shm->wake_mask != wake_mask || queue_shm->changed_mask != changed_mask) skip = FALSE;
+        else skip = get_tick_count() - (UINT64)queue_shm->access_time / 10000 < 3000; /* avoid hung queue */
+    }
 
     if (status) return FALSE;
     return skip;
