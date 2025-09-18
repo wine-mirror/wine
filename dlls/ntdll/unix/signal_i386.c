@@ -2261,46 +2261,8 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, THREAD_DESCRIPTOR_INFORMATION *inf
         else if ((info->Selector | 3) == get_fs()) info->Entry = ldt_make_fs32_entry( tbi.TebBaseAddress );
         else return STATUS_UNSUCCESSFUL;
     }
-    else
-    {
-        HANDLE process;
-        struct ldt_copy *ldt_copy;
-        unsigned int base = 0;
-        struct ldt_bits bits = { 0 };
-        unsigned int idx = info->Selector >> 3;
+    else status = ldt_get_entry( info->Selector, tbi.ClientId, &info->Entry );
 
-        if (tbi.ClientId.UniqueProcess == teb->ClientId.UniqueProcess)
-        {
-            if ((ldt_copy = (struct ldt_copy *)ULongToPtr( peb->SpareUlongs[0] )))
-            {
-                base = ldt_copy->base[idx];
-                bits = ldt_copy->bits[idx];
-            }
-        }
-        else
-        {
-            PROCESS_BASIC_INFORMATION pbi;
-            ULONG ldt_ptr = 0;
-
-            if ((status = NtOpenProcess( &process, PROCESS_ALL_ACCESS, NULL, &tbi.ClientId )))
-                return status;
-            NtQueryInformationProcess( process, ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
-            status = NtReadVirtualMemory( process, &pbi.PebBaseAddress->SpareUlongs[0],
-                                          &ldt_ptr, sizeof(ldt_ptr), NULL );
-            if (!status && ldt_ptr)
-            {
-                ldt_copy = (struct ldt_copy *)ULongToPtr( ldt_ptr );
-                NtReadVirtualMemory( process, &ldt_copy->base[idx], &base, sizeof(base), NULL );
-                NtReadVirtualMemory( process, &ldt_copy->bits[idx], &bits, sizeof(bits), NULL );
-            }
-            NtClose( process );
-        }
-
-        if (base || bits.limit || bits.type)
-            info->Entry = ldt_make_entry( base, bits );
-        else
-            status = STATUS_UNSUCCESSFUL;
-    }
     return status;
 }
 

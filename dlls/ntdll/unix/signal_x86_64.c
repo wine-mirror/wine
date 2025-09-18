@@ -2465,7 +2465,22 @@ void ldt_set_entry( WORD sel, LDT_ENTRY entry )
  */
 NTSTATUS get_thread_ldt_entry( HANDLE handle, THREAD_DESCRIPTOR_INFORMATION *info, ULONG len )
 {
-    return STATUS_NOT_IMPLEMENTED;
+    THREAD_BASIC_INFORMATION tbi;
+    NTSTATUS status;
+    TEB *teb = NtCurrentTeb();
+
+    if (len != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
+    if (info->Selector >> 16) return STATUS_UNSUCCESSFUL;
+    if (is_gdt_sel( info->Selector )) return STATUS_UNSUCCESSFUL;
+
+    if (handle != GetCurrentThread())
+    {
+        status = NtQueryInformationThread( handle, ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
+        if (status) return status;
+    }
+    else tbi.ClientId = teb->ClientId;
+
+    return ldt_get_entry( info->Selector, tbi.ClientId, &info->Entry );
 }
 
 

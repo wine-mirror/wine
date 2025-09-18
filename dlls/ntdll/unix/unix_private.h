@@ -604,17 +604,11 @@ struct ldt_bits
 
 #define LDT_SIZE 8192
 
-struct ldt_copy
-{
-    unsigned int    base[LDT_SIZE];
-    struct ldt_bits bits[LDT_SIZE];
-};
-C_ASSERT( sizeof(struct ldt_copy) == 8 * LDT_SIZE );
-
 extern UINT ldt_bitmap[LDT_SIZE / 32];
 
 extern void ldt_set_entry( WORD sel, LDT_ENTRY entry );
 extern WORD ldt_update_entry( WORD sel, LDT_ENTRY entry );
+extern NTSTATUS ldt_get_entry( WORD sel, CLIENT_ID client_id, LDT_ENTRY *entry );
 
 static const LDT_ENTRY null_entry;
 static const struct ldt_bits data_segment = { .type = 0x13, .default_big = 1 };
