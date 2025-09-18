@@ -182,7 +182,7 @@ static const UINT_PTR host_page_mask = 0xfff;
 #endif
 
 /* Note: these are Windows limits, you cannot change them. */
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 static void *address_space_start = (void *)0x110000; /* keep DOS area clear */
 #else
 static void *address_space_start = (void *)0x10000;
@@ -5024,13 +5024,16 @@ void virtual_set_large_address_space(void)
 {
     if (is_win64)
     {
-        if (is_wow64())
-            user_space_wow_limit = ((main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) ? limit_4g : limit_2g) - 1;
+        if (!is_wow64())
+        {
+            address_space_start = (void *)0x10000;
 #ifndef __APPLE__  /* don't free the zerofill section on macOS */
-        else if ((main_image_info.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA) &&
-                 (main_image_info.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE))
-            free_reserved_memory( 0, (char *)0x7ffe0000 );
+            if ((main_image_info.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA) &&
+                (main_image_info.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE))
+                free_reserved_memory( 0, (char *)0x7ffe0000 );
 #endif
+        }
+        else user_space_wow_limit = ((main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) ? limit_4g : limit_2g) - 1;
     }
     else
     {
