@@ -134,7 +134,6 @@ struct msg_queue
     struct thread_input   *input;           /* thread input descriptor */
     struct hook_table     *hooks;           /* hook table */
     int                    keystate_lock;   /* owns an input keystate lock */
-    int                    waiting;         /* is thread waiting on queue */
     queue_shm_t           *shared;          /* queue in session shared memory */
 };
 
@@ -319,7 +318,6 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         queue->input           = (struct thread_input *)grab_object( input );
         queue->hooks           = NULL;
         queue->keystate_lock   = 0;
-        queue->waiting         = 0;
         list_init( &queue->send_result );
         list_init( &queue->callback_result );
         list_init( &queue->pending_timers );
@@ -1287,23 +1285,6 @@ static int is_queue_hung( struct msg_queue *queue )
     return queue->signaled && monotonic_time - queue->shared->access_time > 5 * TICKS_PER_SEC;
 }
 
-static int msg_queue_select( struct msg_queue *queue, int events )
-{
-    if (queue->waiting == !!events)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return 0;
-    }
-    queue->waiting = !!events;
-
-    if (queue->fd)
-    {
-        if (events && check_fd_events( queue->fd, POLLIN )) signal_queue_sync( queue );
-        else set_fd_events( queue->fd, events );
-    }
-    return 1;
-}
-
 static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
     struct msg_queue *queue = (struct msg_queue *)obj;
@@ -1315,7 +1296,11 @@ static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *ent
         return 0;
     }
 
-    if (!msg_queue_select( queue, POLLIN )) return 0;
+    if (queue->fd)
+    {
+        if (check_fd_events( queue->fd, POLLIN )) signal_queue_sync( queue );
+        else set_fd_events( queue->fd, POLLIN );
+    }
     add_queue( obj, entry );
     return 1;
 }
@@ -1325,7 +1310,7 @@ static void msg_queue_remove_queue(struct object *obj, struct wait_queue_entry *
     struct msg_queue *queue = (struct msg_queue *)obj;
 
     remove_queue( obj, entry );
-    msg_queue_select( queue, 0 );
+    if (queue->fd) set_fd_events( queue->fd, 0 );
 }
 
 static void msg_queue_dump( struct object *obj, int verbose )
