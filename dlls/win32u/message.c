@@ -27,6 +27,8 @@
 #include <assert.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
+#include "winternl.h"
+#include "ddk/wdm.h"
 #include "win32u_private.h"
 #include "ntuser_private.h"
 #include "winnls.h"
@@ -39,6 +41,40 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
 WINE_DECLARE_DEBUG_CHANNEL(key);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
+
+static const struct _KUSER_SHARED_DATA *user_shared_data = (struct _KUSER_SHARED_DATA *)0x7ffe0000;
+
+static LONG atomic_load_long( const volatile LONG *ptr )
+{
+#if defined(__i386__) || defined(__x86_64__)
+    return *ptr;
+#else
+    return __atomic_load_n( ptr, __ATOMIC_SEQ_CST );
+#endif
+}
+
+static ULONG atomic_load_ulong( const volatile ULONG *ptr )
+{
+#if defined(__i386__) || defined(__x86_64__)
+    return *ptr;
+#else
+    return __atomic_load_n( ptr, __ATOMIC_SEQ_CST );
+#endif
+}
+
+static UINT64 get_tick_count(void)
+{
+    ULONG high, low;
+
+    do
+    {
+        high = atomic_load_long( &user_shared_data->TickCount.High1Time );
+        low = atomic_load_ulong( &user_shared_data->TickCount.LowPart );
+    }
+    while (high != atomic_load_long( &user_shared_data->TickCount.High2Time ));
+    /* note: we ignore TickCountMultiplier */
+    return (UINT64)high << 32 | low;
+}
 
 #define MAX_WINPROC_RECURSION  64
 
@@ -2767,7 +2803,7 @@ static BOOL check_queue_bits( UINT wake_mask, UINT changed_mask, UINT signal_bit
         {
             *wake_bits = queue_shm->wake_bits;
             *changed_bits = queue_shm->changed_bits;
-            skip = TRUE;
+            skip = get_tick_count() - (UINT64)queue_shm->access_time / 10000 < 3000; /* avoid hung queue */
         }
     }
 
@@ -2822,8 +2858,7 @@ int peek_message( MSG *msg, const struct peek_message_filter *filter )
         thread_info->client_info.msg_source = prev_source;
         wake_mask = filter->mask & (QS_SENDMESSAGE | QS_SMRESULT);
 
-        if (NtGetTickCount() - thread_info->last_getmsg_time < 3000 && /* avoid hung queue */
-            check_queue_bits( wake_mask, filter->mask, wake_mask | signal_bits, filter->mask | clear_bits,
+        if (check_queue_bits( wake_mask, filter->mask, wake_mask | signal_bits, filter->mask | clear_bits,
                               &wake_bits, &changed_bits ))
             res = STATUS_PENDING;
         else SERVER_START_REQ( get_message )
@@ -2837,7 +2872,6 @@ int peek_message( MSG *msg, const struct peek_message_filter *filter )
             req->wake_mask = wake_mask;
             req->changed_mask = filter->mask;
             wine_server_set_reply( req, buffer, buffer_size );
-            thread_info->last_getmsg_time = NtGetTickCount();
             if (!(res = wine_server_call( req )))
             {
                 size = wine_server_reply_size( reply );
