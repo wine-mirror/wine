@@ -3155,24 +3155,22 @@ DECL_HANDLER(set_queue_fd)
 DECL_HANDLER(set_queue_mask)
 {
     struct msg_queue *queue = get_current_queue();
+    queue_shm_t *queue_shm;
 
-    if (queue)
+    if (!queue) return;
+    queue_shm = queue->shared;
+
+    SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
     {
-        queue_shm_t *queue_shm = queue->shared;
-
-        SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
-        {
-            shared->wake_mask = req->wake_mask;
-            shared->changed_mask = req->changed_mask;
-        }
-        SHARED_WRITE_END;
-
-        reply->wake_bits    = queue_shm->wake_bits;
-        reply->changed_bits = queue_shm->changed_bits;
-
-        if (!get_queue_status( queue )) reset_queue_sync( queue );
-        else signal_queue_sync( queue );
+        shared->wake_mask    = req->wake_mask;
+        shared->changed_mask = req->changed_mask;
+        reply->wake_bits     = shared->wake_bits;
+        reply->changed_bits  = shared->changed_bits;
     }
+    SHARED_WRITE_END;
+
+    if (!get_queue_status( queue )) reset_queue_sync( queue );
+    else signal_queue_sync( queue );
 }
 
 
@@ -3180,22 +3178,20 @@ DECL_HANDLER(set_queue_mask)
 DECL_HANDLER(get_queue_status)
 {
     struct msg_queue *queue = current->queue;
-    if (queue)
+    queue_shm_t *queue_shm;
+
+    if (!queue) return;
+    queue_shm = queue->shared;
+
+    SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
     {
-        queue_shm_t *queue_shm = queue->shared;
-
-        reply->wake_bits    = queue_shm->wake_bits;
-        reply->changed_bits = queue_shm->changed_bits;
-
-        SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
-        {
-            shared->changed_bits &= ~req->clear_bits;
-        }
-        SHARED_WRITE_END;
-
-        if (!get_queue_status( queue )) reset_queue_sync( queue );
+        reply->wake_bits      = shared->wake_bits;
+        reply->changed_bits   = shared->changed_bits;
+        shared->changed_bits &= ~req->clear_bits;
     }
-    else reply->wake_bits = reply->changed_bits = 0;
+    SHARED_WRITE_END;
+
+    if (!get_queue_status( queue )) reset_queue_sync( queue );
 }
 
 
