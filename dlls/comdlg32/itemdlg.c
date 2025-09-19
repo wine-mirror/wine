@@ -1454,7 +1454,7 @@ static void ctrl_container_reparent(FileDialogImpl *This, HWND parent)
         SetWindowLongW(This->cctrls_hwnd, GWL_STYLE, wndstyle);
 
         SetParent(This->cctrls_hwnd, parent);
-        ShowWindow(This->cctrls_hwnd, TRUE);
+        ShowWindow(This->cctrls_hwnd, SW_SHOW);
 
         /* Set the fonts to match the dialog font. */
         font = (HFONT)SendMessageW(parent, WM_GETFONT, 0, 0);
@@ -1469,7 +1469,7 @@ static void ctrl_container_reparent(FileDialogImpl *This, HWND parent)
     }
     else
     {
-        ShowWindow(This->cctrls_hwnd, FALSE);
+        ShowWindow(This->cctrls_hwnd, SW_HIDE);
 
         wndstyle = GetWindowLongW(This->cctrls_hwnd, GWL_STYLE);
         wndstyle &= ~(WS_CHILD);
