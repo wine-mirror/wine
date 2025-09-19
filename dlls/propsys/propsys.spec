@@ -116,7 +116,7 @@
 @ stub PropVariantToDoubleVector
 @ stub PropVariantToDoubleVectorAlloc
 @ stub PropVariantToDoubleWithDefault
-@ stub PropVariantToFileTime
+@ stdcall PropVariantToFileTime(ptr long ptr)
 @ stub PropVariantToFileTimeVector
 @ stub PropVariantToFileTimeVectorAlloc
 @ stdcall PropVariantToGUID(ptr ptr)

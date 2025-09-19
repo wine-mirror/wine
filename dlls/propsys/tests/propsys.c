@@ -3186,6 +3186,21 @@ static void test_PropertySystem(void)
     CoUninitialize();
 }
 
+static void test_PropVariantToFileTime(void)
+{
+    PROPVARIANT propvar;
+    FILETIME timestamp;
+    HRESULT hr;
+
+    PropVariantInit(&propvar);
+    timestamp.dwLowDateTime = 12;
+    timestamp.dwHighDateTime = 34;
+    hr = PropVariantToFileTime(&propvar, PSTF_LOCAL, &timestamp);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(timestamp.dwLowDateTime == 12 && timestamp.dwHighDateTime == 34,
+            "Unexpected timestamp %#lx.%#lx.\n", timestamp.dwHighDateTime, timestamp.dwLowDateTime);
+}
+
 START_TEST(propsys)
 {
     test_InitPropVariantFromGUIDAsString();
@@ -3218,6 +3233,7 @@ START_TEST(propsys)
     test_VariantToPropVariant();
     test_PropVariantToVariant();
     test_PropVariantGetStringElem();
+    test_PropVariantToFileTime();
 
     test_PropertySystem();
 }

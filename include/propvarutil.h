@@ -78,6 +78,14 @@ enum tagPROPVAR_COMPARE_FLAGS
 
 typedef int PROPVAR_COMPARE_FLAGS;
 
+enum tagPSTIME_FLAGS
+{
+    PSTF_UTC   = 0x00000000,
+    PSTF_LOCAL = 0x00000001,
+};
+
+typedef int PSTIME_FLAGS;
+
 PSSTDAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT propvarSrc,
                                      PROPVAR_CHANGE_FLAGS flags, VARTYPE vt);
 PSSTDAPI InitPropVariantFromGUIDAsString(REFGUID guid, PROPVARIANT *ppropvar);
@@ -86,7 +94,6 @@ PSSTDAPI InitVariantFromGUIDAsString(REFGUID guid, VARIANT *pvar);
 PSSTDAPI InitPropVariantFromBuffer(const VOID *pv, UINT cb, PROPVARIANT *ppropvar);
 PSSTDAPI InitPropVariantFromCLSID(REFCLSID clsid, PROPVARIANT *ppropvar);
 PSSTDAPI InitVariantFromBuffer(const VOID *pv, UINT cb, VARIANT *pvar);
-PSSTDAPI PropVariantToGUID(const PROPVARIANT *ppropvar, GUID *guid);
 PSSTDAPI VariantToGUID(const VARIANT *pvar, GUID *guid);
 PSSTDAPI_(INT) PropVariantCompareEx(REFPROPVARIANT propvar1, REFPROPVARIANT propvar2,
                                 PROPVAR_COMPARE_UNIT uint, PROPVAR_COMPARE_FLAGS flags);
@@ -94,6 +101,8 @@ PSSTDAPI InitPropVariantFromFileTime(const FILETIME *pftIn, PROPVARIANT *ppropva
 PSSTDAPI InitPropVariantFromStringVector(PCWSTR *strs, ULONG count, PROPVARIANT *ppropvar);
 
 PSSTDAPI PropVariantToDouble(REFPROPVARIANT propvarIn, double *ret);
+PSSTDAPI PropVariantToFileTime(REFPROPVARIANT propvar, PSTIME_FLAGS flags, FILETIME *out);
+PSSTDAPI PropVariantToGUID(const PROPVARIANT *ppropvar, GUID *guid);
 PSSTDAPI PropVariantToInt16(REFPROPVARIANT propvarIn, SHORT *ret);
 PSSTDAPI PropVariantToInt32(REFPROPVARIANT propvarIn, LONG *ret);
 PSSTDAPI PropVariantToInt64(REFPROPVARIANT propvarIn, LONGLONG *ret);
