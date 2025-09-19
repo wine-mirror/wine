@@ -3201,6 +3201,21 @@ static void test_PropVariantToFileTime(void)
             "Unexpected timestamp %#lx.%#lx.\n", timestamp.dwHighDateTime, timestamp.dwLowDateTime);
 }
 
+static void test_PropVariantToUInt32Vector(void)
+{
+    ULONG buffer[16], count;
+    PROPVARIANT propvar;
+    HRESULT hr;
+
+    PropVariantInit(&propvar);
+    buffer[0] = 1;
+    count = 0xabc;
+    hr = PropVariantToUInt32Vector(&propvar, buffer, ARRAY_SIZE(buffer), &count);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(buffer[0] == 1, "Unexpected contents %#lx.\n", buffer[0]);
+    ok(!count, "Unexpected count %#lx.\n", count);
+}
+
 START_TEST(propsys)
 {
     test_InitPropVariantFromGUIDAsString();
@@ -3234,6 +3249,7 @@ START_TEST(propsys)
     test_PropVariantToVariant();
     test_PropVariantGetStringElem();
     test_PropVariantToFileTime();
+    test_PropVariantToUInt32Vector();
 
     test_PropertySystem();
 }

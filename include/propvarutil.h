@@ -108,6 +108,7 @@ PSSTDAPI PropVariantToInt32(REFPROPVARIANT propvarIn, LONG *ret);
 PSSTDAPI PropVariantToInt64(REFPROPVARIANT propvarIn, LONGLONG *ret);
 PSSTDAPI PropVariantToUInt16(REFPROPVARIANT propvarIn, USHORT *ret);
 PSSTDAPI PropVariantToUInt32(REFPROPVARIANT propvarIn, ULONG *ret);
+PSSTDAPI PropVariantToUInt32Vector(REFPROPVARIANT propvar, ULONG *buffer, ULONG size, ULONG *count);
 PSSTDAPI_(ULONG) PropVariantToUInt32WithDefault(REFPROPVARIANT propvarIn, ULONG uLDefault);
 PSSTDAPI PropVariantToUInt64(REFPROPVARIANT propvarIn, ULONGLONG *ret);
 PSSTDAPI PropVariantToBoolean(REFPROPVARIANT propvarIn, BOOL *ret);
