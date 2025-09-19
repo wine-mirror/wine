@@ -33,8 +33,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);
 
-static BOOL setup_target_console(void)
+static WCHAR *lookup_executable(WCHAR *cmdline)
 {
+    WCHAR path[MAX_PATH];
+    WCHAR *p;
+    BOOL status;
+
+    if (!(cmdline = wcsdup(cmdline))) return NULL;
+    if ((p = wcspbrk(cmdline, L" \t"))) *p = L'\0';
+    status = SearchPathW(NULL, cmdline, L".exe", ARRAY_SIZE(path), path, NULL);
+    free(cmdline);
+    return status ? wcsdup(path) : NULL;
+}
+
+static BOOL setup_target_console(WCHAR *title)
+{
+    BOOL ret;
+
     if (!FreeConsole()) return FALSE;
     /* Zero out std handles so that AllocConsole() sets the newly allocated handles as std,
      * and will be inherited by child process.
@@ -42,7 +57,20 @@ static BOOL setup_target_console(void)
     SetStdHandle(STD_INPUT_HANDLE, NULL);
     SetStdHandle(STD_OUTPUT_HANDLE, NULL);
     SetStdHandle(STD_ERROR_HANDLE, NULL);
-    return AllocConsole();
+    /* HACK: tweak process parameters to set the title to target executable
+     * so that conhost will take config from that target process (and not wineconsole)
+     */
+    if (title)
+    {
+        UNICODE_STRING old = RtlGetCurrentPeb()->ProcessParameters->WindowTitle;
+        RtlInitUnicodeString(&RtlGetCurrentPeb()->ProcessParameters->WindowTitle, title);
+        ret = AllocConsole();
+        RtlGetCurrentPeb()->ProcessParameters->WindowTitle = old;
+        free(title);
+    }
+    else
+        ret = AllocConsole();
+    return ret;
 }
 
 int WINAPI wWinMain( HINSTANCE inst, HINSTANCE prev, WCHAR *cmdline, INT show )
@@ -56,7 +84,7 @@ int WINAPI wWinMain( HINSTANCE inst, HINSTANCE prev, WCHAR *cmdline, INT show )
 
     if (!*cmd) cmd = default_cmd;
 
-    if (!setup_target_console())
+    if (!setup_target_console(lookup_executable(cmdline)))
     {
         ERR( "failed to allocate console: %lu\n", GetLastError() );
         return 1;
