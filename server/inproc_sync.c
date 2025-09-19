@@ -132,7 +132,7 @@ static int inproc_sync_signal( struct object *obj, unsigned int access, int sign
     struct inproc_sync *sync = (struct inproc_sync *)obj;
     assert( obj->ops == &inproc_sync_ops );
 
-    assert( sync->type == INPROC_SYNC_INTERNAL ); /* never called for mutex / semaphore */
+    assert( sync->type == INPROC_SYNC_INTERNAL || sync->type == INPROC_SYNC_EVENT ); /* never called for mutex / semaphore */
     assert( signal == 0 || signal == 1 ); /* never called from signal_object */
 
     if (signal) signal_inproc_sync( sync );

@@ -4144,6 +4144,9 @@ enum inproc_sync_type
 {
     INPROC_SYNC_UNKNOWN   = 0,
     INPROC_SYNC_INTERNAL  = 1,
+    INPROC_SYNC_EVENT     = 2,
+    INPROC_SYNC_MUTEX     = 3,
+    INPROC_SYNC_SEMAPHORE = 4,
 };
 
 /* Get the in-process synchronization fd associated with the waitable handle */

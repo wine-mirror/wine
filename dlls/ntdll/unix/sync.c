@@ -319,15 +319,10 @@ static void release_inproc_sync( struct inproc_sync *sync )
     close( sync->fd );
 }
 
-static NTSTATUS get_inproc_sync( HANDLE handle, ACCESS_MASK desired_access, struct inproc_sync *sync )
+/* fd_cache_mutex must be held to avoid races with other thread receiving fds */
+static NTSTATUS get_server_inproc_sync( HANDLE handle, struct inproc_sync *sync )
 {
-    sigset_t sigset;
     NTSTATUS ret;
-
-    /* We need to use fd_cache_mutex here to protect against races with
-     * other threads trying to receive fds for the fd cache,
-     * and we need to use an uninterrupted section to prevent reentrancy. */
-    server_enter_uninterrupted_section( &fd_cache_mutex, &sigset );
 
     SERVER_START_REQ( get_inproc_sync_fd )
     {
@@ -343,9 +338,28 @@ static NTSTATUS get_inproc_sync( HANDLE handle, ACCESS_MASK desired_access, stru
     }
     SERVER_END_REQ;
 
+    return ret;
+}
+
+static NTSTATUS get_inproc_sync( HANDLE handle, enum inproc_sync_type desired_type, ACCESS_MASK desired_access,
+                                 struct inproc_sync *sync )
+{
+    sigset_t sigset;
+    NTSTATUS ret;
+
+    /* We need to use fd_cache_mutex here to protect against races with
+     * other threads trying to receive fds for the fd cache,
+     * and we need to use an uninterrupted section to prevent reentrancy. */
+    server_enter_uninterrupted_section( &fd_cache_mutex, &sigset );
+    ret = get_server_inproc_sync( handle, sync );
     server_leave_uninterrupted_section( &fd_cache_mutex, &sigset );
 
     if (ret) return ret;
+    if (desired_type != INPROC_SYNC_UNKNOWN && desired_type != sync->type)
+    {
+        release_inproc_sync( sync );
+        return STATUS_OBJECT_TYPE_MISMATCH;
+    }
     if ((sync->access & desired_access) != desired_access)
     {
         release_inproc_sync( sync );
@@ -361,6 +375,15 @@ extern NTSTATUS check_signal_access( struct inproc_sync *sync )
     {
     case INPROC_SYNC_INTERNAL:
         return STATUS_OBJECT_TYPE_MISMATCH;
+    case INPROC_SYNC_EVENT:
+        if (!(sync->access & EVENT_MODIFY_STATE)) return STATUS_ACCESS_DENIED;
+        return STATUS_SUCCESS;
+    case INPROC_SYNC_MUTEX:
+        if (!(sync->access & SYNCHRONIZE)) return STATUS_ACCESS_DENIED;
+        return STATUS_SUCCESS;
+    case INPROC_SYNC_SEMAPHORE:
+        if (!(sync->access & SEMAPHORE_MODIFY_STATE)) return STATUS_ACCESS_DENIED;
+        return STATUS_SUCCESS;
     }
 
     assert( 0 );
@@ -369,50 +392,90 @@ extern NTSTATUS check_signal_access( struct inproc_sync *sync )
 
 static NTSTATUS inproc_release_semaphore( HANDLE handle, ULONG count, ULONG *prev_count )
 {
+    struct inproc_sync stack, *sync = &stack;
+    NTSTATUS ret;
+
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    return STATUS_NOT_IMPLEMENTED;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_SEMAPHORE, SEMAPHORE_MODIFY_STATE, &stack ))) return ret;
+    release_inproc_sync( sync );
+    return ret;
 }
 
 static NTSTATUS inproc_query_semaphore( HANDLE handle, SEMAPHORE_BASIC_INFORMATION *info )
 {
+    struct inproc_sync stack, *sync = &stack;
+    NTSTATUS ret;
+
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    return STATUS_NOT_IMPLEMENTED;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_SEMAPHORE, SEMAPHORE_QUERY_STATE, &stack ))) return ret;
+    release_inproc_sync( sync );
+    return ret;
 }
 
 static NTSTATUS inproc_set_event( HANDLE handle, LONG *prev_state )
 {
+    struct inproc_sync stack, *sync = &stack;
+    NTSTATUS ret;
+
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    return STATUS_NOT_IMPLEMENTED;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_MODIFY_STATE, sync ))) return ret;
+    release_inproc_sync( sync );
+    return ret;
 }
 
 static NTSTATUS inproc_reset_event( HANDLE handle, LONG *prev_state )
 {
+    struct inproc_sync stack, *sync = &stack;
+    NTSTATUS ret;
+
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    return STATUS_NOT_IMPLEMENTED;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_MODIFY_STATE, sync ))) return ret;
+    release_inproc_sync( sync );
+    return ret;
 }
 
 static NTSTATUS inproc_pulse_event( HANDLE handle, LONG *prev_state )
 {
+    struct inproc_sync stack, *sync = &stack;
+    NTSTATUS ret;
+
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    return STATUS_NOT_IMPLEMENTED;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_MODIFY_STATE, sync ))) return ret;
+    release_inproc_sync( sync );
+    return ret;
 }
 
 static NTSTATUS inproc_query_event( HANDLE handle, EVENT_BASIC_INFORMATION *info )
 {
+    struct inproc_sync stack, *sync = &stack;
+    NTSTATUS ret;
+
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    return STATUS_NOT_IMPLEMENTED;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_QUERY_STATE, sync ))) return ret;
+    release_inproc_sync( sync );
+    return ret;
 }
 
 static NTSTATUS inproc_release_mutex( HANDLE handle, LONG *prev_count )
 {
+    struct inproc_sync stack, *sync = &stack;
+    NTSTATUS ret;
+
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    return STATUS_NOT_IMPLEMENTED;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_MUTEX, 0, &stack ))) return ret;
+    release_inproc_sync( sync );
+    return ret;
 }
 
 static NTSTATUS inproc_query_mutex( HANDLE handle, MUTANT_BASIC_INFORMATION *info )
 {
+    struct inproc_sync stack, *sync = &stack;
+    NTSTATUS ret;
+
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    return STATUS_NOT_IMPLEMENTED;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_MUTEX, MUTANT_QUERY_STATE, &stack ))) return ret;
+    release_inproc_sync( sync );
+    return ret;
 }
 
 static NTSTATUS inproc_wait( DWORD count, const HANDLE *handles, BOOLEAN wait_any,
@@ -426,7 +489,7 @@ static NTSTATUS inproc_wait( DWORD count, const HANDLE *handles, BOOLEAN wait_an
     assert( count <= ARRAY_SIZE(syncs) );
     for (int i = 0; i < count; ++i)
     {
-        if ((ret = get_inproc_sync( handles[i], SYNCHRONIZE, stack + i )))
+        if ((ret = get_inproc_sync( handles[i], INPROC_SYNC_UNKNOWN, SYNCHRONIZE, &stack[i] )))
         {
             while (i--) release_inproc_sync( syncs[i] );
             return ret;
@@ -446,22 +509,17 @@ static NTSTATUS inproc_signal_and_wait( HANDLE signal, HANDLE wait,
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
 
-    if ((ret = get_inproc_sync( signal, 0, signal_sync ))) return ret;
-    if ((ret = check_signal_access( signal_sync )))
-    {
-        release_inproc_sync( signal_sync );
-        return ret;
-    }
+    if ((ret = get_inproc_sync( signal, INPROC_SYNC_UNKNOWN, 0, signal_sync ))) return ret;
+    if ((ret = check_signal_access( signal_sync ))) goto done;
 
-    if ((ret = get_inproc_sync( wait, SYNCHRONIZE, wait_sync )))
-    {
-        release_inproc_sync( signal_sync );
-        return ret;
-    }
+    if ((ret = get_inproc_sync( wait, INPROC_SYNC_UNKNOWN, SYNCHRONIZE, wait_sync ))) goto done;
 
-    release_inproc_sync( signal_sync );
+    ret = STATUS_NOT_IMPLEMENTED;
+
     release_inproc_sync( wait_sync );
-    return STATUS_NOT_IMPLEMENTED;
+done:
+    release_inproc_sync( signal_sync );
+    return ret;
 }
 
 

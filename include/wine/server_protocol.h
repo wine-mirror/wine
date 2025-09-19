@@ -5969,6 +5969,9 @@ enum inproc_sync_type
 {
     INPROC_SYNC_UNKNOWN   = 0,
     INPROC_SYNC_INTERNAL  = 1,
+    INPROC_SYNC_EVENT     = 2,
+    INPROC_SYNC_MUTEX     = 3,
+    INPROC_SYNC_SEMAPHORE = 4,
 };
 
 
@@ -6995,6 +6998,6 @@ union generic_reply
     struct d3dkmt_object_open_name_reply d3dkmt_object_open_name_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 915
+#define SERVER_PROTOCOL_VERSION 916
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
