@@ -90,6 +90,33 @@ expr:
 #endif
             (void)yynerrs; /* avoid unused variable warning */
         }
+    | TK_NOT expr expr
+        {
+            struct aqs_expr *expr;
+
+            if (FAILED(get_boolean_not_expr( ctx, $2, &expr )))
+                YYABORT;
+            if (FAILED(join_expr( ctx, expr, $3, &$$ )))
+                YYABORT;
+        }
+    | expr expr TK_OR expr
+        {
+            struct aqs_expr *expr;
+
+            if (FAILED(join_expr( ctx, $1, $2, &expr )))
+                YYABORT;
+            if (FAILED(get_boolean_binary_expr( ctx, DEVPROP_OPERATOR_OR_OPEN, expr, $4, &$$ )))
+                YYABORT;
+        }
+    | expr TK_OR expr expr
+        {
+            struct aqs_expr *expr;
+
+            if (FAILED(get_boolean_binary_expr( ctx, DEVPROP_OPERATOR_OR_OPEN, $1, $3, &expr )))
+                YYABORT;
+            if (FAILED(join_expr( ctx, expr, $4, &$$ )))
+                YYABORT;
+        }
     | expr TK_AND expr
         {
             if (FAILED(get_boolean_binary_expr( ctx, DEVPROP_OPERATOR_AND_OPEN, $1, $3, &$$ )))
