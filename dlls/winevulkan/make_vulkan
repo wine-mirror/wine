@@ -624,7 +624,7 @@ class Function(object):
         func_type = proto.find("type").text
 
         params = filter(is_api_supported, command.findall("param"))
-        params = [VkParam.from_xml(param, types) for param in params]
+        params = [Parameter.from_xml(param, types) for param in params]
         return Function(func_type, func_name, params)
 
     def is_alias(self):
@@ -716,9 +716,7 @@ class Function(object):
             pfn = "{0} (*{1}_{2})(".format(self.type, prefix, self.name)
 
         for i, param in enumerate(self.params):
-            if param.const:
-                pfn += param.const + " "
-
+            pfn += param.const
             pfn += param.type + " "
             if param.is_pointer():
                 pfn += param.pointer
@@ -733,7 +731,7 @@ class Function(object):
         return pfn
 
     def prototype(self, call_conv="", prefix="", is_thunk=False, suffix=""):
-        params = [p.definition() for p in self.params]
+        params = [p.as_param() for p in self.params]
         params = ", ".join(params)
         return f"{self.type} {call_conv}{prefix}{self.name}({params}){suffix}"
 
@@ -876,7 +874,7 @@ class Function(object):
             thunk += "    struct\n"
             thunk += "    {\n"
             for p in self.params:
-                thunk += "        {0};\n".format(p.definition(conv=True, is_member=True))
+                thunk += f"        {p.as_member(wow64=True)};\n"
             if self.type != "void":
                 thunk += "        {0} result;\n".format(self.type)
             thunk += "    } *params = args;\n"
@@ -1102,7 +1100,7 @@ class VkVariable(object):
         self.struct = type_info["data"] if type_info["category"] == "struct" or type_info["category"] == "union" else None
 
     def is_const(self):
-        return self.const
+        return "const" in self.const
 
     def is_pointer(self):
         return self.pointer is not None
@@ -1210,9 +1208,7 @@ class VkVariable(object):
         if not conv or not self.needs_ptr32_type() or (not self.is_pointer() and self.type == "size_t"):
             return prefix + self.name
 
-        cast_type = ""
-        if self.const:
-            cast_type += "const "
+        cast_type = self.const
 
         if self.pointer_array or ((self.is_pointer() or self.is_static_array()) and self.is_pointer_size()):
             cast_type += "PTR32 *"
@@ -1257,7 +1253,7 @@ class VkMember(VkVariable):
         name_elem = member.find("name")
         type_elem = member.find("type")
 
-        const = False
+        const = ""
         struct_fwd_decl = False
         member_type = None
         pointer = None
@@ -1267,7 +1263,7 @@ class VkMember(VkVariable):
 
         if member.text:
             if "const" in member.text:
-                const = True
+                const = "const "
 
             # Some members contain forward declarations:
             # - VkBaseInstructure has a member "const struct VkBaseInStructure *pNext"
@@ -1489,7 +1485,7 @@ class VkMember(VkVariable):
 
         return False
 
-class VkParam(VkVariable):
+class Parameter(VkVariable):
     """ Helper class which describes a parameter to a function call. """
 
     def __init__(self, type_info, const=None, pointer=None, name=None, array_lens=None,
@@ -1520,7 +1516,7 @@ class VkParam(VkVariable):
         # elements pointed to be by this parameter.
         dyn_array_len = param.get("len", None)
 
-        const = param.text.strip() if param.text else None
+        const = param.text.strip() + " " if param.text else ""
         type_elem = param.find("type")
         pointer = type_elem.tail.strip() if type_elem.tail.strip() != "" else None
         assert not pointer or pointer.count('*') <= 2 # only pointers and pointer of pointers are supported
@@ -1536,8 +1532,8 @@ class VkParam(VkVariable):
         if type_info is None:
             LOGGER.error("type info not found for: {0}".format(type_elem.text))
 
-        return VkParam(type_info, const=const, pointer=pointer, name=name, array_lens=array_lens,
-                       dyn_array_len=dyn_array_len, object_type=object_type, optional=optional)
+        return Parameter(type_info, const=const, pointer=pointer, name=name, array_lens=array_lens,
+                         dyn_array_len=dyn_array_len, object_type=object_type, optional=optional)
 
     def _set_format_string(self):
         """ Internal helper function to be used by constructor to set format string. """
@@ -1659,41 +1655,18 @@ class VkParam(VkVariable):
             else:
                 return "    *{0} = {1}_host;\n".format(self.value(prefix, conv), self.name)
 
-    def definition(self, postfix=None, is_member=False, conv=False):
-        """ Return prototype for the parameter. E.g. 'const char *foo' """
+    def as_param(self):
+        ptr = self.pointer if self.is_pointer() else ""
+        array = "".join(f"[{len}]" for len in self.array_lens)
+        return f"{self.const}{self.type} {ptr}{self.name}{array}"
 
-        if is_member and conv and self.needs_ptr32_type():
-            return "PTR32 {0}".format(self.name)
+    def as_member(self, wow64=False):
+        if wow64 and self.needs_ptr32_type():
+            return f"PTR32 {self.name}"
 
-        proto = ""
-        if self.const:
-            proto += self.const + " "
-
-        proto += self.type
-        name = self.name
-        if conv and self.needs_win32_type():
-            proto += "32"
-
-        if is_member and self.needs_alignment():
-            proto += " DECLSPEC_ALIGN(8)"
-
-        if self.is_pointer():
-            proto += " {0}{1}".format(self.pointer, name)
-        elif is_member and self.is_static_array():
-            proto += " *" + name
-        else:
-            proto += " " + name
-
-        # Allows appending something to the variable name useful for
-        # win32 to host conversion.
-        if postfix is not None:
-            proto += postfix
-
-        if not is_member:
-            for l in self.array_lens:
-                proto += "[{0}]".format(l)
-
-        return proto
+        ptr = self.pointer if self.is_pointer() else "*" if self.is_static_array() else ""
+        align = " DECLSPEC_ALIGN(8)" if self.needs_alignment() else ""
+        return f"{self.const}{self.type}{align} {ptr}{self.name}"
 
     def dispatch_table(self, params_prefix, conv):
         """ Return functions dispatch table pointer for dispatchable objects. """
@@ -2722,7 +2695,7 @@ class Generator(object):
             ret = f"struct {func.name}_params\n"
             ret += "{\n"
             for param in func.params:
-                ret += f"    {param.definition(is_member=True)};\n"
+                ret += f"    {param.as_member()};\n"
             if func.type != "void":
                 ret += f"    {func.type} result;\n"
             ret += "};\n\n"
