@@ -3258,14 +3258,18 @@ static void test_resize_target(IUnknown *device, BOOL is_d3d12)
     for (adapter_idx = 0; SUCCEEDED(IDXGIFactory_EnumAdapters(factory, adapter_idx, &adapter));
             ++adapter_idx)
     {
+        winetest_push_context("Adapter %u", adapter_idx);
         for (output_idx = 0; SUCCEEDED(IDXGIAdapter_EnumOutputs(adapter, output_idx, &output));
                 ++output_idx)
         {
+            winetest_push_context("output %u", adapter_idx);
             hr = IDXGIOutput_GetDesc(output, &output_desc);
-            ok(hr == S_OK, "Adapter %u output %u: Got unexpected hr %#lx.\n", adapter_idx, output_idx, hr);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
             for (test_idx = 0; test_idx < ARRAY_SIZE(tests); ++test_idx)
             {
+                winetest_push_context("test %u", test_idx);
+
                 swapchain_desc.Flags = tests[test_idx].flags;
                 swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0,
                         output_desc.DesktopCoordinates.left + tests[test_idx].origin.x,
@@ -3283,8 +3287,7 @@ static void test_resize_target(IUnknown *device, BOOL is_d3d12)
                 capture_fullscreen_state(&initial_state.fullscreen_state, swapchain_desc.OutputWindow);
 
                 hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
-                ok(hr == S_OK, "Adapter %u output %u test %u: Got unexpected hr %#lx.\n",
-                        adapter_idx, output_idx, test_idx, hr);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
                 check_swapchain_fullscreen_state(swapchain, &initial_state);
 
                 expected_state = initial_state;
@@ -3295,36 +3298,33 @@ static void test_resize_target(IUnknown *device, BOOL is_d3d12)
                             &swapchain_desc, &initial_state.fullscreen_state.monitor_rect, 800, 600, NULL);
                     hr = IDXGISwapChain_GetContainingOutput(swapchain, &expected_state.target);
                     ok(hr == S_OK || broken(hr == DXGI_ERROR_UNSUPPORTED) /* Win 7 testbot */,
-                            "Adapter %u output %u test %u: Got unexpected hr %#lx.\n",
-                            adapter_idx, output_idx, test_idx, hr);
+                            "Unexpected hr %#lx.\n", hr);
                     if (hr == DXGI_ERROR_UNSUPPORTED)
                     {
-                        win_skip("Adapter %u output %u test %u: GetContainingOutput() not supported.\n",
-                                adapter_idx, output_idx, test_idx);
+                        win_skip("GetContainingOutput() not supported.\n");
                         IDXGISwapChain_Release(swapchain);
                         DestroyWindow(swapchain_desc.OutputWindow);
+                        winetest_pop_context();
                         continue;
                     }
 
                     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
                     ok(hr == S_OK || hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE,
-                            "Adapter %u output %u test %u: Got unexpected hr %#lx.\n",
-                            adapter_idx, output_idx, test_idx, hr);
+                            "Unexpected hr %#lx.\n", hr);
                     if (hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE)
                     {
-                        skip("Adapter %u output %u test %u: Could not change fullscreen state.\n",
-                                adapter_idx, output_idx, test_idx);
+                        skip("Could not change fullscreen state.\n");
                         IDXGIOutput_Release(expected_state.target);
                         IDXGISwapChain_Release(swapchain);
                         DestroyWindow(swapchain_desc.OutputWindow);
+                        winetest_pop_context();
                         continue;
                     }
                 }
                 check_swapchain_fullscreen_state(swapchain, &expected_state);
 
                 hr = IDXGISwapChain_ResizeTarget(swapchain, NULL);
-                ok(hr == DXGI_ERROR_INVALID_CALL, "Adapter %u output %u test %u: Got unexpected hr %#lx.\n",
-                        adapter_idx, output_idx, test_idx, hr);
+                ok(hr == DXGI_ERROR_INVALID_CALL, "Unexpected hr %#lx.\n", hr);
                 check_swapchain_fullscreen_state(swapchain, &expected_state);
 
                 if (tests[test_idx].fullscreen)
@@ -3332,8 +3332,7 @@ static void test_resize_target(IUnknown *device, BOOL is_d3d12)
                     test_fullscreen_resize_target(swapchain, &expected_state);
 
                     hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
-                    ok(hr == S_OK, "Adapter %u output %u test %u: Got unexpected hr %#lx.\n",
-                            adapter_idx, output_idx, test_idx, hr);
+                    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
                     check_swapchain_fullscreen_state(swapchain, &initial_state);
                     IDXGIOutput_Release(expected_state.target);
                     check_swapchain_fullscreen_state(swapchain, &initial_state);
@@ -3347,14 +3346,16 @@ static void test_resize_target(IUnknown *device, BOOL is_d3d12)
                 }
 
                 refcount = IDXGISwapChain_Release(swapchain);
-                ok(!refcount, "Adapter %u output %u test %u: IDXGISwapChain has %lu references left.\n",
-                        adapter_idx, output_idx, test_idx, refcount);
+                ok(!refcount, "IDXGISwapChain has %lu references left.\n", refcount);
                 check_window_fullscreen_state(swapchain_desc.OutputWindow, &expected_state.fullscreen_state);
                 DestroyWindow(swapchain_desc.OutputWindow);
+                winetest_pop_context();
             }
             IDXGIOutput_Release(output);
+            winetest_pop_context();
         }
         IDXGIAdapter_Release(adapter);
+        winetest_pop_context();
     }
     refcount = IDXGIFactory_Release(factory);
     ok(refcount == !is_d3d12, "Got unexpected refcount %lu.\n", refcount);
