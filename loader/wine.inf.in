@@ -234,6 +234,8 @@ HKCR,.pdf,,2,"pdffile"
 HKCR,.rtf,,2,"rtffile"
 HKCR,.wri,,2,"wrifile"
 HKCR,*\shellex\ContextMenuHandlers,,16
+HKCR,AppID\{B8C54A54-355E-11D3-83EB-00A0C92A2F2D},,2,"Windows Media Player"
+HKCR,Applications\wmplayer.exe,,2,"Windows Media Player"
 HKCR,chm.file,,2,"Compiled HTML Help File"
 HKCR,chm.file\DefaultIcon,,2,"%10%\hh.exe,0"
 HKCR,chm.file\shell\open\command,,2,"""%10%\hh.exe"" ""%1"""
