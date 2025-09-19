@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-08-22 08:50+0200\n"
+"PO-Revision-Date: 2025-09-19 09:51+0200\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -18799,10 +18799,8 @@ msgid "Voice input device:"
 msgstr "Urządzenie wejściowe głosu:"
 
 #: programs/winecfg/winecfg.rc:277
-#, fuzzy
-#| msgid "Output device:"
 msgid "MIDI output device:"
-msgstr "Urządzenie wyjściowe:"
+msgstr "Urządzenie wyjściowe MIDI:"
 
 #: programs/winecfg/winecfg.rc:283 programs/winecfg/winecfg.rc:89
 msgid "Speaker configuration"
