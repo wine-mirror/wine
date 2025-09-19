@@ -477,54 +477,35 @@ static char *get_file_buffer(void)
 }
 
 /*******************************************************************
- * WCMD_output_asis_len - send output to current standard output
+ * WCMD_output_unbuffered - send output to a given handle
  *
- * Output a formatted unicode string. Ideally this will go to the console
- *  and hence required WriteConsoleW to output it, however if file i/o is
- *  redirected, it needs to be WriteFile'd using OEM (not ANSI) format
  */
-static void WCMD_output_asis_len(const WCHAR *message, DWORD len, HANDLE device)
+static void WCMD_output_unbuffered(const WCHAR *message, DWORD len, HANDLE handle)
 {
-    DWORD   nOut= 0;
-    DWORD   res = 0;
+    BOOL usedDefaultChar = FALSE;
+    DWORD convertedChars;
+    char *buffer;
+    DWORD nOut;
 
     /* If nothing to write, return (MORE does this sometimes) */
+    if ((int)len == -1) len = wcslen(message);
     if (!len) return;
 
     /* Try to write as unicode assuming it is to a console */
-    res = WriteConsoleW(device, message, len, &nOut, NULL);
-
-    /* If writing to console fails, assume it's file
-       i/o so convert to OEM codepage and output                  */
-    if (!res) {
-      BOOL usedDefaultChar = FALSE;
-      DWORD convertedChars;
-      char *buffer;
-
-      if (!unicodeOutput) {
-        UINT code_page;
-
+    if (WriteConsoleW(handle, message, len, &nOut, NULL)) return;
+    if (!unicodeOutput)
+    {
         if (!(buffer = get_file_buffer()))
             return;
 
-        /* On Wine, GetConsoleOutputCP function fails
-           if Shell-no-window console is used */
-        code_page = GetConsoleOutputCP();
-        if (!code_page)
-            code_page = GetOEMCP();
-
         /* Convert to OEM, then output */
-        convertedChars = WideCharToMultiByte(code_page, 0, message,
-                            len, buffer, MAX_WRITECONSOLE_SIZE,
-                            "?", &usedDefaultChar);
-        WriteFile(device, buffer, convertedChars,
-                  &nOut, FALSE);
-      } else {
-        WriteFile(device, message, len*sizeof(WCHAR),
-                  &nOut, FALSE);
-      }
+        convertedChars = WideCharToMultiByte(GetOEMCP(), 0, message,
+                                             len, buffer, MAX_WRITECONSOLE_SIZE,
+                                             "?", &usedDefaultChar);
+        WriteFile(handle, buffer, convertedChars, &nOut, FALSE);
     }
-    return;
+    else
+        WriteFile(handle, message, len * sizeof(WCHAR), &nOut, FALSE);
 }
 
 /*******************************************************************
@@ -547,7 +528,7 @@ void WINAPIV WCMD_output (const WCHAR *format, ...) {
     WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
   else
   {
-    WCMD_output_asis_len(string, len, GetStdHandle(STD_OUTPUT_HANDLE));
+    WCMD_output_unbuffered(string, len, GetStdHandle(STD_OUTPUT_HANDLE));
     LocalFree(string);
   }
 }
@@ -557,24 +538,24 @@ void WINAPIV WCMD_output (const WCHAR *format, ...) {
  *
  */
 
-void WINAPIV WCMD_output_stderr (const WCHAR *format, ...) {
+void WINAPIV WCMD_output_stderr(const WCHAR *format, ...)
+{
+    va_list ap;
+    WCHAR* string;
+    DWORD len;
 
-  va_list ap;
-  WCHAR* string;
-  DWORD len;
-
-  va_start(ap,format);
-  string = NULL;
-  len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
-                       format, 0, 0, (LPWSTR)&string, 0, &ap);
-  va_end(ap);
-  if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE)
-    WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
-  else
-  {
-    WCMD_output_asis_len(string, len, GetStdHandle(STD_ERROR_HANDLE));
-    LocalFree(string);
-  }
+    va_start(ap,format);
+    string = NULL;
+    len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         format, 0, 0, (LPWSTR)&string, 0, &ap);
+    va_end(ap);
+    if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE)
+        WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
+    else
+    {
+        WCMD_output_unbuffered(string, len, GetStdHandle(STD_ERROR_HANDLE));
+        LocalFree(string);
+    }
 }
 
 /*******************************************************************
@@ -726,17 +707,17 @@ static RETURN_CODE WCMD_output_asis_handle(DWORD std_handle, const WCHAR *messag
         {
             for (ptr = message; *ptr && *ptr != L'\n'; ptr++) {}
             if (*ptr == L'\n') ptr++;
-            WCMD_output_asis_len(message, ptr - message, handle);
+            WCMD_output_unbuffered(message, ptr - message, handle);
             if (++line_count >= max_height - 1)
             {
                 line_count = 0;
-                WCMD_output_asis_len(pagedMessage, lstrlenW(pagedMessage), handle);
+                WCMD_output_unbuffered(pagedMessage, -1, handle);
                 return_code = WCMD_wait_for_input(GetStdHandle(STD_INPUT_HANDLE));
-                WCMD_output_asis_len(L"\r\n", 2, handle);
+                WCMD_output_unbuffered(L"\r\n", 2, handle);
             }
         } while (*(message = ptr) && !return_code);
     } else
-        WCMD_output_asis_len(message, lstrlenW(message), handle);
+        WCMD_output_unbuffered(message, -1, handle);
 
     return return_code;
 }
@@ -757,8 +738,10 @@ RETURN_CODE WCMD_output_asis (const WCHAR *message) {
  * Send output to current standard error device, without formatting
  * e.g. when message contains '%'
  */
-RETURN_CODE WCMD_output_asis_stderr (const WCHAR *message) {
-    return WCMD_output_asis_handle(STD_ERROR_HANDLE, message);
+RETURN_CODE WCMD_output_asis_stderr(const WCHAR *message)
+{
+    WCMD_output_unbuffered(message, -1, GetStdHandle(STD_ERROR_HANDLE));
+    return NO_ERROR;
 }
 
 /****************************************************************************
@@ -766,26 +749,25 @@ RETURN_CODE WCMD_output_asis_stderr (const WCHAR *message) {
  *
  * Print the message for GetLastError
  */
+void WCMD_print_error(void)
+{
+    LPVOID lpMsgBuf;
+    DWORD error_code;
+    int status;
 
-void WCMD_print_error (void) {
-  LPVOID lpMsgBuf;
-  DWORD error_code;
-  int status;
+    error_code = GetLastError();
+    status = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                            NULL, error_code, 0, (LPWSTR) &lpMsgBuf, 0, NULL);
+    if (!status)
+    {
+        WINE_FIXME("Cannot display message for error %ld, status %ld\n",
+                   error_code, GetLastError());
+        return;
+    }
 
-  error_code = GetLastError ();
-  status = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-			  NULL, error_code, 0, (LPWSTR) &lpMsgBuf, 0, NULL);
-  if (!status) {
-    WINE_FIXME ("Cannot display message for error %ld, status %ld\n",
-			error_code, GetLastError());
-    return;
-  }
-
-  WCMD_output_asis_len(lpMsgBuf, lstrlenW(lpMsgBuf),
-                       GetStdHandle(STD_ERROR_HANDLE));
-  LocalFree (lpMsgBuf);
-  WCMD_output_asis_len(L"\r\n", lstrlenW(L"\r\n"), GetStdHandle(STD_ERROR_HANDLE));
-  return;
+    WCMD_output_unbuffered(lpMsgBuf, -1, GetStdHandle(STD_ERROR_HANDLE));
+    LocalFree(lpMsgBuf);
+    WCMD_output_unbuffered(L"\r\n", 2, GetStdHandle(STD_ERROR_HANDLE));
 }
 
 /******************************************************************************
