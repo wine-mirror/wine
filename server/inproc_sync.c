@@ -88,6 +88,12 @@ static const struct object_ops inproc_sync_ops =
     inproc_sync_destroy,        /* destroy */
 };
 
+int get_inproc_sync_fd( struct inproc_sync *sync )
+{
+    if (!sync) return -1;
+    return sync->fd;
+}
+
 struct inproc_sync *create_inproc_internal_sync( int manual, int signaled )
 {
     struct ntsync_event_args args = {.signaled = signaled, .manual = manual};
@@ -147,7 +153,7 @@ static void inproc_sync_destroy( struct object *obj )
     close( sync->fd );
 }
 
-static int get_inproc_sync_fd( struct object *obj, int *type )
+static int get_obj_inproc_sync( struct object *obj, int *type )
 {
     struct object *sync;
     int fd = -1;
@@ -171,6 +177,11 @@ int get_inproc_device_fd(void)
     return -1;
 }
 
+int get_inproc_sync_fd( struct inproc_sync *sync )
+{
+    return -1;
+}
+
 struct inproc_sync *create_inproc_internal_sync( int manual, int signaled )
 {
     return NULL;
@@ -184,7 +195,7 @@ void reset_inproc_sync( struct inproc_sync *sync )
 {
 }
 
-static int get_inproc_sync_fd( struct object *obj, int *type )
+static int get_obj_inproc_sync( struct object *obj, int *type )
 {
     return -1;
 }
@@ -200,7 +211,7 @@ DECL_HANDLER(get_inproc_sync_fd)
 
     reply->access = get_handle_access( current->process, req->handle );
 
-    if ((fd = get_inproc_sync_fd( obj, &reply->type )) < 0) set_error( STATUS_NOT_IMPLEMENTED );
+    if ((fd = get_obj_inproc_sync( obj, &reply->type )) < 0) set_error( STATUS_NOT_IMPLEMENTED );
     else send_client_fd( current->process, fd, req->handle );
 
     release_object( obj );

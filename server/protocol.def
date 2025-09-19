@@ -4158,6 +4158,13 @@ enum inproc_sync_type
 @END
 
 
+/* Get the in-process synchronization fd for the current thread user APC alerts */
+@REQ(get_inproc_alert_fd)
+@REPLY
+    obj_handle_t handle;        /* alert fd is in flight with this handle */
+@END
+
+
 /* Create a global d3dkmt object */
 @REQ(d3dkmt_object_create)
     unsigned int        type;           /* d3dkmt object type */

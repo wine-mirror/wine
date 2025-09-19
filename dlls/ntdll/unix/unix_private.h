@@ -108,6 +108,7 @@ struct ntdll_thread_data
     int                       request_fd;    /* fd for sending server requests */
     int                       reply_fd;      /* fd for receiving server replies */
     int                       wait_fd[2];    /* fd for sleeping server requests */
+    int                       alert_fd;      /* inproc sync fd for user apc alerts */
     BOOL                      allow_writes;  /* ThreadAllowWrites flags */
     pthread_t                 pthread_id;    /* pthread thread id */
     void                     *kernel_stack;  /* stack for thread startup and kernel syscalls */

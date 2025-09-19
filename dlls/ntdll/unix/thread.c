@@ -1104,6 +1104,7 @@ static void contexts_from_server( CONTEXT *context, struct context_data server_c
  */
 static DECLSPEC_NORETURN void pthread_exit_wrapper( int status )
 {
+    close( ntdll_get_thread_data()->alert_fd );
     close( ntdll_get_thread_data()->wait_fd[0] );
     close( ntdll_get_thread_data()->wait_fd[1] );
     close( ntdll_get_thread_data()->reply_fd );

@@ -478,6 +478,33 @@ static NTSTATUS inproc_query_mutex( HANDLE handle, MUTANT_BASIC_INFORMATION *inf
     return ret;
 }
 
+static int get_inproc_alert_fd(void)
+{
+    struct ntdll_thread_data *data = ntdll_get_thread_data();
+    obj_handle_t token;
+    sigset_t sigset;
+    int fd;
+
+    if ((fd = data->alert_fd) < 0)
+    {
+        server_enter_uninterrupted_section( &fd_cache_mutex, &sigset );
+
+        SERVER_START_REQ( get_inproc_alert_fd )
+        {
+            if (!server_call_unlocked( req ))
+            {
+                data->alert_fd = fd = wine_server_receive_fd( &token );
+                assert( token == reply->handle );
+            }
+        }
+        SERVER_END_REQ;
+
+        server_leave_uninterrupted_section( &fd_cache_mutex, &sigset );
+    }
+
+    return fd;
+}
+
 static NTSTATUS inproc_wait( DWORD count, const HANDLE *handles, BOOLEAN wait_any,
                              BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
@@ -497,6 +524,8 @@ static NTSTATUS inproc_wait( DWORD count, const HANDLE *handles, BOOLEAN wait_an
         syncs[i] = stack + i;
     }
 
+    if (alertable) get_inproc_alert_fd();
+
     while (count--) release_inproc_sync( syncs[count] );
     return STATUS_NOT_IMPLEMENTED;
 }
@@ -514,6 +543,7 @@ static NTSTATUS inproc_signal_and_wait( HANDLE signal, HANDLE wait,
 
     if ((ret = get_inproc_sync( wait, INPROC_SYNC_UNKNOWN, SYNCHRONIZE, wait_sync ))) goto done;
 
+    if (alertable) get_inproc_alert_fd();
     ret = STATUS_NOT_IMPLEMENTED;
 
     release_inproc_sync( wait_sync );
