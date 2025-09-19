@@ -31,6 +31,9 @@
 #ifdef HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
 #endif
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
 
 #include "object.h"
 #include "file.h"
@@ -223,7 +226,17 @@ static void init_limits(void)
     if (!getrlimit( RLIMIT_NOFILE, &rlimit ))
     {
         rlimit.rlim_cur = rlimit.rlim_max;
-        setrlimit( RLIMIT_NOFILE, &rlimit );
+        if (!setrlimit( RLIMIT_NOFILE, &rlimit )) return;
+#ifdef __APPLE__
+        {
+            /* macOS before Big Sur fails if rlim_max is larger than maxfilesperproc */
+            unsigned int nlimit = 0;
+            size_t size = sizeof(nlimit);
+            sysctlbyname("kern.maxfilesperproc", &nlimit, &size, NULL, 0);
+            rlimit.rlim_cur = max( nlimit, OPEN_MAX );
+            setrlimit( RLIMIT_NOFILE, &rlimit );
+        }
+#endif
     }
 #endif
 }

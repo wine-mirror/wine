@@ -55,6 +55,9 @@
 # include <sys/resource.h>
 #endif
 #include <limits.h>
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
 #ifdef __APPLE__
 # include <CoreFoundation/CoreFoundation.h>
 # define LoadResource MacLoadResource
@@ -209,10 +212,18 @@ static void set_max_limit( int limit )
     if (!getrlimit( limit, &rlimit ))
     {
         rlimit.rlim_cur = rlimit.rlim_max;
-
-        if (!setrlimit( limit, &rlimit ))
-            return;
-
+        if (!setrlimit( limit, &rlimit )) return;
+#ifdef __APPLE__
+        if (limit == RLIMIT_NOFILE)
+        {
+            /* macOS before Big Sur fails if rlim_max is larger than maxfilesperproc */
+            unsigned int nlimit = 0;
+            size_t size = sizeof(nlimit);
+            sysctlbyname("kern.maxfilesperproc", &nlimit, &size, NULL, 0);
+            rlimit.rlim_cur = max( nlimit, OPEN_MAX );
+            if (!setrlimit( RLIMIT_NOFILE, &rlimit )) return;
+        }
+#endif
         WARN("Failed to raise limit %d\n", limit);
     }
 }
