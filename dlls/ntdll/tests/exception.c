@@ -5402,6 +5402,7 @@ static void test_KiUserApcDispatcher(void)
 done:
     apc_flags = 0;
 
+    memcpy( pKiUserApcDispatcher, saved_KiUserApcDispatcher, sizeof(saved_KiUserApcDispatcher));
     VirtualProtect( pKiUserApcDispatcher, sizeof(saved_KiUserApcDispatcher), old_protect, &old_protect );
 }
 
