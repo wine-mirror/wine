@@ -91,6 +91,8 @@ static struct object *create_event_sync( int manual, int signaled )
 {
     struct event_sync *event;
 
+    if (get_inproc_device_fd() >= 0) return (struct object *)create_inproc_event_sync( manual, signaled );
+
     if (!(event = alloc_object( &event_sync_ops ))) return NULL;
     event->manual   = manual;
     event->signaled = signaled;
@@ -111,6 +113,7 @@ struct event_sync *create_server_internal_sync( int manual, int signaled )
 
 struct object *create_internal_sync( int manual, int signaled )
 {
+    if (get_inproc_device_fd() >= 0) return (struct object *)create_inproc_internal_sync( manual, signaled );
     return (struct object *)create_server_internal_sync( manual, signaled );
 }
 

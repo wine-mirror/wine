@@ -134,6 +134,8 @@ static struct object *create_semaphore_sync( unsigned int initial, unsigned int 
 {
     struct semaphore_sync *sem;
 
+    if (get_inproc_device_fd() >= 0) return (struct object *)create_inproc_semaphore_sync( initial, max );
+
     if (!(sem = alloc_object( &semaphore_sync_ops ))) return NULL;
     sem->count = initial;
     sem->max   = max;

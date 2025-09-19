@@ -30,9 +30,11 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <signal.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #ifdef HAVE_SYS_SYSCALL_H
 #include <sys/syscall.h>
@@ -48,6 +50,7 @@
 #endif
 #include <string.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -306,6 +309,196 @@ static unsigned int validate_open_object_attributes( const OBJECT_ATTRIBUTES *at
     return STATUS_SUCCESS;
 }
 
+#ifdef NTSYNC_IOC_EVENT_READ
+
+static NTSTATUS linux_release_semaphore_obj( int obj, ULONG count, ULONG *prev_count )
+{
+    if (ioctl( obj, NTSYNC_IOC_SEM_RELEASE, &count ) < 0)
+    {
+        if (errno == EOVERFLOW) return STATUS_SEMAPHORE_LIMIT_EXCEEDED;
+        return errno_to_status( errno );
+    }
+    if (prev_count) *prev_count = count;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS linux_query_semaphore_obj( int obj, SEMAPHORE_BASIC_INFORMATION *info )
+{
+    struct ntsync_sem_args args = {0};
+    if (ioctl( obj, NTSYNC_IOC_SEM_READ, &args ) < 0) return errno_to_status( errno );
+    info->CurrentCount = args.count;
+    info->MaximumCount = args.max;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS linux_set_event_obj( int obj, LONG *prev_state )
+{
+    __u32 prev;
+    if (ioctl( obj, NTSYNC_IOC_EVENT_SET, &prev ) < 0) return errno_to_status( errno );
+    if (prev_state) *prev_state = prev;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS linux_reset_event_obj( int obj, LONG *prev_state )
+{
+    __u32 prev;
+    if (ioctl( obj, NTSYNC_IOC_EVENT_RESET, &prev ) < 0) return errno_to_status( errno );
+    if (prev_state) *prev_state = prev;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS linux_pulse_event_obj( int obj, LONG *prev_state )
+{
+    __u32 prev;
+    if (ioctl( obj, NTSYNC_IOC_EVENT_PULSE, &prev ) < 0) return errno_to_status( errno );
+    if (prev_state) *prev_state = prev;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS linux_query_event_obj( int obj, enum inproc_sync_type type, EVENT_BASIC_INFORMATION *info )
+{
+    struct ntsync_event_args args = {0};
+    if (ioctl( obj, NTSYNC_IOC_EVENT_READ, &args ) < 0) return errno_to_status( errno );
+    info->EventType = args.manual ? NotificationEvent : SynchronizationEvent;
+    info->EventState = args.signaled;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS linux_release_mutex_obj( int obj, LONG *prev_count )
+{
+    struct ntsync_mutex_args args = {.owner = GetCurrentThreadId()};
+    if (ioctl( obj, NTSYNC_IOC_MUTEX_UNLOCK, &args ) < 0)
+    {
+        if (errno == EOVERFLOW) return STATUS_MUTANT_LIMIT_EXCEEDED;
+        if (errno == EPERM) return STATUS_MUTANT_NOT_OWNED;
+        return errno_to_status( errno );
+    }
+    if (prev_count) *prev_count = 1 - args.count;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS linux_query_mutex_obj( int obj, MUTANT_BASIC_INFORMATION *info )
+{
+    struct ntsync_mutex_args args = {0};
+    if (ioctl( obj, NTSYNC_IOC_MUTEX_READ, &args ) < 0)
+    {
+        if (errno == EOWNERDEAD)
+        {
+            info->AbandonedState = TRUE;
+            info->OwnedByCaller = FALSE;
+            info->CurrentCount = 1;
+            return STATUS_SUCCESS;
+        }
+        return errno_to_status( errno );
+    }
+    info->AbandonedState = FALSE;
+    info->OwnedByCaller = (args.owner == GetCurrentThreadId());
+    info->CurrentCount = 1 - args.count;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS linux_wait_objs( int device, const DWORD count, const int *objs,
+                                 BOOLEAN wait_any, int alert_fd, const LARGE_INTEGER *timeout )
+{
+    struct ntsync_wait_args args = {0};
+    unsigned long request;
+    struct timespec now;
+    int ret;
+
+    if (!timeout || timeout->QuadPart == TIMEOUT_INFINITE)
+    {
+        args.timeout = ~(__u64)0;
+    }
+    else if (timeout->QuadPart <= 0)
+    {
+        clock_gettime( CLOCK_MONOTONIC, &now );
+        args.timeout = (now.tv_sec * NSECPERSEC) + now.tv_nsec + (-timeout->QuadPart * 100);
+    }
+    else
+    {
+        args.timeout = (timeout->QuadPart * 100) - (SECS_1601_TO_1970 * NSECPERSEC);
+        args.flags |= NTSYNC_WAIT_REALTIME;
+    }
+
+    args.objs = (uintptr_t)objs;
+    args.count = count;
+    args.owner = GetCurrentThreadId();
+    args.index = ~0u;
+    args.alert = alert_fd;
+
+    if (wait_any || count == 1) request = NTSYNC_IOC_WAIT_ANY;
+    else request = NTSYNC_IOC_WAIT_ALL;
+
+    do { ret = ioctl( device, request, &args ); }
+    while (ret < 0 && errno == EINTR);
+
+    if (!ret)
+    {
+        if (args.index == count)
+        {
+            static const LARGE_INTEGER timeout;
+
+            ret = server_wait( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, &timeout );
+            assert( ret == STATUS_USER_APC );
+            return ret;
+        }
+
+        return wait_any ? args.index : 0;
+    }
+    if (errno == EOWNERDEAD) return STATUS_ABANDONED + (wait_any ? args.index : 0);
+    if (errno == ETIMEDOUT) return STATUS_TIMEOUT;
+    return errno_to_status( errno );
+}
+
+#else /* NTSYNC_IOC_EVENT_READ */
+
+static NTSTATUS linux_release_semaphore_obj( int obj, ULONG count, ULONG *prev_count )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS linux_query_semaphore_obj( int obj, SEMAPHORE_BASIC_INFORMATION *info )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS linux_set_event_obj( int obj, LONG *prev_state )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS linux_reset_event_obj( int obj, LONG *prev_state )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS linux_pulse_event_obj( int obj, LONG *prev_state )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS linux_query_event_obj( int obj, enum inproc_sync_type type, EVENT_BASIC_INFORMATION *info )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS linux_release_mutex_obj( int obj, LONG *prev_count )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS linux_query_mutex_obj( int obj, MUTANT_BASIC_INFORMATION *info )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS linux_wait_objs( int device, const DWORD count, const int *objs,
+                                 BOOLEAN wait_any, int alert_fd, const LARGE_INTEGER *timeout )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+#endif /* NTSYNC_IOC_EVENT_READ */
 
 struct inproc_sync
 {
@@ -397,6 +590,7 @@ static NTSTATUS inproc_release_semaphore( HANDLE handle, ULONG count, ULONG *pre
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
     if ((ret = get_inproc_sync( handle, INPROC_SYNC_SEMAPHORE, SEMAPHORE_MODIFY_STATE, &stack ))) return ret;
+    ret = linux_release_semaphore_obj( sync->fd, count, prev_count );
     release_inproc_sync( sync );
     return ret;
 }
@@ -408,6 +602,7 @@ static NTSTATUS inproc_query_semaphore( HANDLE handle, SEMAPHORE_BASIC_INFORMATI
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
     if ((ret = get_inproc_sync( handle, INPROC_SYNC_SEMAPHORE, SEMAPHORE_QUERY_STATE, &stack ))) return ret;
+    ret = linux_query_semaphore_obj( sync->fd, info );
     release_inproc_sync( sync );
     return ret;
 }
@@ -418,7 +613,8 @@ static NTSTATUS inproc_set_event( HANDLE handle, LONG *prev_state )
     NTSTATUS ret;
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_MODIFY_STATE, sync ))) return ret;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_MODIFY_STATE, &stack ))) return ret;
+    ret = linux_set_event_obj( sync->fd, prev_state );
     release_inproc_sync( sync );
     return ret;
 }
@@ -429,7 +625,8 @@ static NTSTATUS inproc_reset_event( HANDLE handle, LONG *prev_state )
     NTSTATUS ret;
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_MODIFY_STATE, sync ))) return ret;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_MODIFY_STATE, &stack ))) return ret;
+    ret = linux_reset_event_obj( sync->fd, prev_state );
     release_inproc_sync( sync );
     return ret;
 }
@@ -440,7 +637,8 @@ static NTSTATUS inproc_pulse_event( HANDLE handle, LONG *prev_state )
     NTSTATUS ret;
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_MODIFY_STATE, sync ))) return ret;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_MODIFY_STATE, &stack ))) return ret;
+    ret = linux_pulse_event_obj( sync->fd, prev_state );
     release_inproc_sync( sync );
     return ret;
 }
@@ -451,7 +649,8 @@ static NTSTATUS inproc_query_event( HANDLE handle, EVENT_BASIC_INFORMATION *info
     NTSTATUS ret;
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
-    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_QUERY_STATE, sync ))) return ret;
+    if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_QUERY_STATE, &stack ))) return ret;
+    ret = linux_query_event_obj( sync->fd, sync->type, info );
     release_inproc_sync( sync );
     return ret;
 }
@@ -463,6 +662,7 @@ static NTSTATUS inproc_release_mutex( HANDLE handle, LONG *prev_count )
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
     if ((ret = get_inproc_sync( handle, INPROC_SYNC_MUTEX, 0, &stack ))) return ret;
+    ret = linux_release_mutex_obj( sync->fd, prev_count );
     release_inproc_sync( sync );
     return ret;
 }
@@ -474,6 +674,7 @@ static NTSTATUS inproc_query_mutex( HANDLE handle, MUTANT_BASIC_INFORMATION *inf
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
     if ((ret = get_inproc_sync( handle, INPROC_SYNC_MUTEX, MUTANT_QUERY_STATE, &stack ))) return ret;
+    ret = linux_query_mutex_obj( sync->fd, info );
     release_inproc_sync( sync );
     return ret;
 }
@@ -509,6 +710,7 @@ static NTSTATUS inproc_wait( DWORD count, const HANDLE *handles, BOOLEAN wait_an
                              BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
     struct inproc_sync *syncs[64], stack[ARRAY_SIZE(syncs)];
+    int objs[ARRAY_SIZE(syncs)], alert_fd = 0;
     NTSTATUS ret;
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
@@ -521,19 +723,22 @@ static NTSTATUS inproc_wait( DWORD count, const HANDLE *handles, BOOLEAN wait_an
             while (i--) release_inproc_sync( syncs[i] );
             return ret;
         }
-        syncs[i] = stack + i;
+        syncs[i] = &stack[i];
+        objs[i] = syncs[i]->fd;
     }
 
-    if (alertable) get_inproc_alert_fd();
+    if (alertable) alert_fd = get_inproc_alert_fd();
+    ret = linux_wait_objs( inproc_device_fd, count, objs, wait_any, alert_fd, timeout );
 
     while (count--) release_inproc_sync( syncs[count] );
-    return STATUS_NOT_IMPLEMENTED;
+    return ret;
 }
 
 static NTSTATUS inproc_signal_and_wait( HANDLE signal, HANDLE wait,
                                         BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
     struct inproc_sync stack_signal, stack_wait, *signal_sync = &stack_signal, *wait_sync = &stack_wait;
+    int alert_fd = 0;
     NTSTATUS ret;
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
@@ -543,8 +748,19 @@ static NTSTATUS inproc_signal_and_wait( HANDLE signal, HANDLE wait,
 
     if ((ret = get_inproc_sync( wait, INPROC_SYNC_UNKNOWN, SYNCHRONIZE, wait_sync ))) goto done;
 
-    if (alertable) get_inproc_alert_fd();
-    ret = STATUS_NOT_IMPLEMENTED;
+    switch (signal_sync->type)
+    {
+    case INPROC_SYNC_EVENT:     ret = linux_set_event_obj( signal_sync->fd, NULL ); break;
+    case INPROC_SYNC_MUTEX:     ret = linux_release_mutex_obj( signal_sync->fd, NULL ); break;
+    case INPROC_SYNC_SEMAPHORE: ret = linux_release_semaphore_obj( signal_sync->fd, 1, NULL ); break;
+    default: assert( 0 ); break;
+    }
+
+    if (!ret)
+    {
+        if (alertable) alert_fd = get_inproc_alert_fd();
+        ret = linux_wait_objs( inproc_device_fd, 1, &wait_sync->fd, TRUE, alert_fd, timeout );
+    }
 
     release_inproc_sync( wait_sync );
 done:
