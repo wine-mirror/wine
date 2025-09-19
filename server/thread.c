@@ -397,6 +397,7 @@ static inline void init_thread_structure( struct thread *thread )
     int i;
 
     thread->sync            = NULL;
+    thread->alert_sync      = NULL;
     thread->unix_pid        = -1;  /* not known yet */
     thread->unix_tid        = -1;  /* not known yet */
     thread->context         = NULL;
@@ -560,6 +561,7 @@ struct thread *create_thread( int fd, struct process *process, const struct secu
     }
     if (!(thread->request_fd = create_anonymous_fd( &thread_fd_ops, fd, &thread->obj, 0 ))) goto error;
     if (!(thread->sync = create_event_sync( 1, 0 ))) goto error;
+    if (get_inproc_device_fd() >= 0 && !(thread->alert_sync = create_inproc_internal_sync( 1, 0 ))) goto error;
 
     if (process->desktop)
     {
@@ -654,6 +656,7 @@ static void destroy_thread( struct object *obj )
     release_object( thread->process );
     if (thread->id) free_ptid( thread->id );
     if (thread->token) release_object( thread->token );
+    if (thread->alert_sync) release_object( thread->alert_sync );
     if (thread->sync) release_object( thread->sync );
 }
 
@@ -1440,7 +1443,11 @@ static int queue_apc( struct process *process, struct thread *thread, struct thr
     grab_object( apc );
     list_add_tail( queue, &apc->entry );
     if (!list_prev( queue, &apc->entry ))  /* first one */
+    {
+        if (apc->call.type == APC_USER && thread->alert_sync)
+            signal_inproc_sync( thread->alert_sync );
         wake_thread( thread );
+    }
 
     return 1;
 }
@@ -1472,6 +1479,8 @@ void thread_cancel_apc( struct thread *thread, struct object *owner, enum apc_ty
         apc->executed = 1;
         signal_sync( apc->sync );
         release_object( apc );
+        if (list_empty( &thread->user_apc ) && thread->alert_sync)
+            reset_inproc_sync( thread->alert_sync );
         return;
     }
 }
@@ -1486,6 +1495,8 @@ static struct thread_apc *thread_dequeue_apc( struct thread *thread, int system 
     {
         apc = LIST_ENTRY( ptr, struct thread_apc, entry );
         list_remove( ptr );
+        if (list_empty( &thread->user_apc ) && thread->alert_sync)
+            reset_inproc_sync( thread->alert_sync );
     }
     return apc;
 }
