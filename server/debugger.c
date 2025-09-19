@@ -70,7 +70,7 @@ struct type_descr debug_obj_type =
 struct debug_obj
 {
     struct object        obj;         /* object header */
-    struct event_sync   *sync;       /* sync object for wait/signal */
+    struct object       *sync;       /* sync object for wait/signal */
     struct list          event_queue; /* pending events queue */
     unsigned int         flags;       /* debug flags */
 };
@@ -265,7 +265,7 @@ static void link_event( struct debug_obj *debug_obj, struct debug_event *event )
 static void resume_event( struct debug_obj *debug_obj, struct debug_event *event )
 {
     event->state = EVENT_QUEUED;
-    reset_sync( event->sync );
+    reset_sync( (struct object *)event->sync );
     if (!event->sender->process->debug_event)
     {
         grab_object( debug_obj );
@@ -278,7 +278,7 @@ static void resume_event( struct debug_obj *debug_obj, struct debug_event *event
 static void delay_event( struct debug_obj *debug_obj, struct debug_event *event )
 {
     event->state = EVENT_DELAYED;
-    reset_sync( event->sync );
+    reset_sync( (struct object *)event->sync );
     if (event->sender->process->debug_event == event) event->sender->process->debug_event = NULL;
 }
 
@@ -422,7 +422,7 @@ static int continue_debug_event( struct debug_obj *debug_obj, struct process *pr
                 assert( event->sender->process->debug_event == event );
                 event->status = status;
                 event->state  = EVENT_CONTINUED;
-                signal_sync( event->sync );
+                signal_sync( (struct object *)event->sync );
                 unlink_event( debug_obj, event );
                 resume_process( process );
                 return 1;
@@ -543,7 +543,7 @@ void debugger_detach( struct process *process, struct debug_obj *debug_obj )
         assert( event->state != EVENT_CONTINUED );
         event->status = DBG_CONTINUE;
         event->state  = EVENT_CONTINUED;
-        signal_sync( event->sync );
+        signal_sync( (struct object *)event->sync );
         unlink_event( debug_obj, event );
         /* from queued debug event */
         resume_process( process );
@@ -589,7 +589,7 @@ DECL_HANDLER(wait_debug_event)
     if ((event = find_event_to_send( debug_obj )))
     {
         event->state = EVENT_SENT;
-        reset_sync( event->sync );
+        reset_sync( (struct object *)event->sync );
         event->sender->process->debug_event = event;
         reply->pid = get_process_id( event->sender->process );
         reply->tid = get_thread_id( event->sender );

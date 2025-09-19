@@ -53,7 +53,7 @@ struct history_line
 struct console
 {
     struct object                obj;           /* object header */
-    struct event_sync           *sync;          /* sync object for wait/signal */
+    struct object               *sync;          /* sync object for wait/signal */
     struct thread               *renderer;      /* console renderer thread */
     struct screen_buffer        *active;        /* active screen buffer */
     struct console_server       *server;        /* console server object */
@@ -134,7 +134,7 @@ struct console_host_ioctl
 struct console_server
 {
     struct object         obj;            /* object header */
-    struct event_sync    *sync;           /* sync object for wait/signal */
+    struct object        *sync;           /* sync object for wait/signal */
     struct fd            *fd;             /* pseudo-fd for ioctls */
     struct console       *console;        /* attached console */
     struct list           queue;          /* ioctl queue */
@@ -210,7 +210,7 @@ struct font_info
 struct screen_buffer
 {
     struct object         obj;           /* object header */
-    struct event_sync    *sync;          /* sync object for wait/signal */
+    struct object        *sync;          /* sync object for wait/signal */
     struct list           entry;         /* entry in list of all screen buffers */
     struct console       *input;         /* associated console input */
     unsigned int          id;            /* buffer id */
@@ -303,7 +303,7 @@ static const struct object_ops console_device_ops =
 struct console_input
 {
     struct object         obj;         /* object header */
-    struct event_sync    *sync;        /* sync object for wait/signal */
+    struct object        *sync;        /* sync object for wait/signal */
     struct fd            *fd;          /* pseudo-fd */
     struct list           entry;       /* entry in console->inputs */
     struct console       *console;     /* associated console at creation time */
@@ -364,7 +364,7 @@ static const struct fd_ops console_input_fd_ops =
 struct console_output
 {
     struct object         obj;         /* object header */
-    struct event_sync    *sync;        /* sync object for wait/signal */
+    struct object        *sync;        /* sync object for wait/signal */
     struct fd            *fd;          /* pseudo-fd */
     struct list           entry;       /* entry in console->outputs */
     struct console       *console;     /* associated console at creation time */
@@ -646,7 +646,7 @@ static struct object *create_screen_buffer( struct console *console )
     }
 
     if (!(screen_buffer = alloc_object( &screen_buffer_ops ))) return NULL;
-    screen_buffer->sync  = (struct event_sync *)grab_object( console->sync );
+    screen_buffer->sync  = grab_object( console->sync );
     screen_buffer->id    = ++console->last_id;
     screen_buffer->input = console;
     init_async_queue( &screen_buffer->ioctl_q );
@@ -1350,7 +1350,7 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
 
         name->len = 0;
         if (!(console_input = alloc_object( &console_input_ops ))) return NULL;
-        console_input->sync = (struct event_sync *)grab_object( current->process->console->sync );
+        console_input->sync = grab_object( current->process->console->sync );
         console_input->fd = alloc_pseudo_fd( &console_input_fd_ops, &console_input->obj,
                                              FILE_SYNCHRONOUS_IO_NONALERT );
         if (!console_input->fd)
@@ -1375,7 +1375,7 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
 
         name->len = 0;
         if (!(console_output = alloc_object( &console_output_ops ))) return NULL;
-        console_output->sync = (struct event_sync *)grab_object( current->process->console->sync );
+        console_output->sync = grab_object( current->process->console->sync );
         console_output->fd = alloc_pseudo_fd( &console_output_fd_ops, &console_output->obj,
                                              FILE_SYNCHRONOUS_IO_NONALERT );
         if (!console_output->fd)

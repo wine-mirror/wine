@@ -89,7 +89,7 @@ static const struct object_ops irp_call_ops =
 struct device_manager
 {
     struct object          obj;            /* object header */
-    struct event_sync     *sync;           /* sync object for wait/signal */
+    struct object         *sync;           /* sync object for wait/signal */
     struct list            devices;        /* list of devices */
     struct list            requests;       /* list of pending irps across all devices */
     struct irp_call       *current_call;   /* call currently executed on client side */

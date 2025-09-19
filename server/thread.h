@@ -50,7 +50,7 @@ struct inflight_fd
 struct thread
 {
     struct object          obj;           /* object header */
-    struct event_sync     *sync;          /* sync object for wait/signal */
+    struct object         *sync;          /* sync object for wait/signal */
     struct inproc_sync    *alert_sync;    /* inproc sync for user apc alerts */
     struct list            entry;         /* entry in system-wide thread list */
     struct list            proc_entry;    /* entry in per-process thread list */

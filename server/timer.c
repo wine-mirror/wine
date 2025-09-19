@@ -53,7 +53,7 @@ struct type_descr timer_type =
 struct timer
 {
     struct object        obj;       /* object header */
-    struct event_sync   *sync;      /* sync object for wait/signal */
+    struct object       *sync;      /* sync object for wait/signal */
     int                  manual;    /* manual reset */
     int                  signaled;  /* current signaled state */
     unsigned int         period;    /* timer period in ms */

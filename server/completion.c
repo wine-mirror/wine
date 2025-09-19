@@ -73,7 +73,7 @@ struct completion_wait
 struct completion
 {
     struct object       obj;
-    struct event_sync  *sync;
+    struct object      *sync;
     struct list         queue;
     struct list         wait_queue;
     unsigned int        depth;

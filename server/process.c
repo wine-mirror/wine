@@ -140,7 +140,7 @@ static const struct fd_ops process_fd_ops =
 struct startup_info
 {
     struct object               obj;            /* object header */
-    struct event_sync          *sync;           /* sync object for wait/signal */
+    struct object              *sync;           /* sync object for wait/signal */
     struct process             *process;        /* created process */
     data_size_t                 info_size;      /* size of startup info */
     data_size_t                 data_size;      /* size of whole startup data */
@@ -200,7 +200,7 @@ static void job_destroy( struct object *obj );
 struct job
 {
     struct object        obj;               /* object header */
-    struct event_sync   *sync;              /* sync object for wait/signal */
+    struct object       *sync;              /* sync object for wait/signal */
     struct list          process_list;      /* list of processes */
     int                  num_processes;     /* count of running processes */
     int                  total_processes;   /* count of processes which have been assigned */

@@ -87,7 +87,7 @@ static const struct object_ops event_sync_ops =
     no_destroy                 /* destroy */
 };
 
-static struct event_sync *create_event_sync( int manual, int signaled )
+static struct object *create_event_sync( int manual, int signaled )
 {
     struct event_sync *event;
 
@@ -95,7 +95,7 @@ static struct event_sync *create_event_sync( int manual, int signaled )
     event->manual   = manual;
     event->signaled = signaled;
 
-    return event;
+    return &event->obj;
 }
 
 struct event_sync *create_server_internal_sync( int manual, int signaled )
@@ -109,9 +109,9 @@ struct event_sync *create_server_internal_sync( int manual, int signaled )
     return event;
 }
 
-struct event_sync *create_internal_sync( int manual, int signaled )
+struct object *create_internal_sync( int manual, int signaled )
 {
-    return create_event_sync( manual, signaled );
+    return (struct object *)create_server_internal_sync( manual, signaled );
 }
 
 static void event_sync_dump( struct object *obj, int verbose )
@@ -127,16 +127,6 @@ static int event_sync_signaled( struct object *obj, struct wait_queue_entry *ent
     struct event_sync *event = (struct event_sync *)obj;
     assert( obj->ops == &event_sync_ops );
     return event->signaled;
-}
-
-void signal_sync( struct event_sync *sync )
-{
-    sync->obj.ops->signal( &sync->obj, 0, 1 );
-}
-
-void reset_sync( struct event_sync *sync )
-{
-    sync->obj.ops->signal( &sync->obj, 0, 0 );
 }
 
 static void event_sync_satisfied( struct object *obj, struct wait_queue_entry *entry )
@@ -160,7 +150,7 @@ static int event_sync_signal( struct object *obj, unsigned int access, int signa
 struct event
 {
     struct object      obj;             /* object header */
-    struct event_sync *sync;            /* event sync object */
+    struct object     *sync;            /* event sync object */
     struct list        kernel_object;   /* list of kernel object pointers */
 };
 
@@ -287,7 +277,7 @@ static void event_dump( struct object *obj, int verbose )
 {
     struct event *event = (struct event *)obj;
     assert( obj->ops == &event_ops );
-    event->sync->obj.ops->dump( &event->sync->obj, verbose );
+    event->sync->ops->dump( event->sync, verbose );
 }
 
 static struct object *event_get_sync( struct object *obj )
@@ -302,7 +292,7 @@ static int event_signal( struct object *obj, unsigned int access, int signal )
     struct event *event = (struct event *)obj;
     assert( obj->ops == &event_ops );
 
-    assert( event->sync->obj.ops == &event_sync_ops ); /* never called with inproc syncs */
+    assert( event->sync->ops == &event_sync_ops ); /* never called with inproc syncs */
     assert( signal == -1 ); /* always called from signal_object */
 
     if (!(access & EVENT_MODIFY_STATE))
@@ -311,7 +301,7 @@ static int event_signal( struct object *obj, unsigned int access, int signal )
         return 0;
     }
 
-    return event_sync_signal( &event->sync->obj, 0, 1 );
+    return event_sync_signal( event->sync, 0, 1 );
 }
 
 static struct list *event_get_kernel_obj_list( struct object *obj )
@@ -418,11 +408,14 @@ DECL_HANDLER(open_event)
 /* do an event operation */
 DECL_HANDLER(event_op)
 {
+    struct event_sync *sync;
     struct event *event;
 
     if (!(event = get_event_obj( current->process, req->handle, EVENT_MODIFY_STATE ))) return;
+    assert( event->sync->ops == &event_sync_ops ); /* never called with inproc syncs */
+    sync = (struct event_sync *)event->sync;
 
-    reply->state = event->sync->signaled;
+    reply->state = sync->signaled;
     switch(req->op)
     {
     case PULSE_EVENT:
@@ -445,12 +438,15 @@ DECL_HANDLER(event_op)
 /* return details about the event */
 DECL_HANDLER(query_event)
 {
+    struct event_sync *sync;
     struct event *event;
 
     if (!(event = get_event_obj( current->process, req->handle, EVENT_QUERY_STATE ))) return;
+    assert( event->sync->ops == &event_sync_ops ); /* never called with inproc syncs */
+    sync = (struct event_sync *)event->sync;
 
-    reply->manual_reset = event->sync->manual;
-    reply->state = event->sync->signaled;
+    reply->manual_reset = sync->manual;
+    reply->state = sync->signaled;
 
     release_object( event );
 }

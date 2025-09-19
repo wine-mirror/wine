@@ -218,14 +218,14 @@ static inline void *mem_append( void *ptr, const void *src, data_size_t len )
 
 /* event functions */
 
-struct event_sync;
 struct event;
+struct event_sync;
 struct keyed_event;
 
 extern struct event_sync *create_server_internal_sync( int manual, int signaled );
-extern struct event_sync *create_internal_sync( int manual, int signaled );
-extern void signal_sync( struct event_sync *sync );
-extern void reset_sync( struct event_sync *sync );
+extern struct object *create_internal_sync( int manual, int signaled );
+extern void signal_sync( struct object *sync );
+extern void reset_sync( struct object *sync );
 
 extern struct event *create_event( struct object *root, const struct unicode_str *name,
                                    unsigned int attr, int manual_reset, int initial_state,

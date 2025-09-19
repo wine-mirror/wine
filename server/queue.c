@@ -120,7 +120,7 @@ struct msg_queue
 {
     struct object          obj;             /* object header */
     struct fd             *fd;              /* optional file descriptor to poll */
-    struct event_sync     *sync;            /* sync object for wait/signal */
+    struct object         *sync;            /* sync object for wait/signal */
     int                    paint_count;     /* pending paint messages count */
     int                    hotkey_count;    /* pending hotkey messages count */
     int                    quit_message;    /* is there a pending quit message? */

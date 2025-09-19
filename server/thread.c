@@ -85,7 +85,7 @@ struct thread_wait
 struct thread_apc
 {
     struct object       obj;      /* object header */
-    struct event_sync  *sync;     /* sync object for wait/signal */
+    struct object      *sync;     /* sync object for wait/signal */
     struct list         entry;    /* queue linked list */
     struct thread      *caller;   /* thread that queued this apc */
     struct object      *owner;    /* object that queued this apc */
@@ -131,7 +131,7 @@ static const struct object_ops thread_apc_ops =
 struct context
 {
     struct object           obj;        /* object header */
-    struct event_sync      *sync;       /* sync object for wait/signal */
+    struct object          *sync;       /* sync object for wait/signal */
     unsigned int            status;     /* status of the context */
     struct context_data     regs[2];    /* context data */
 };
@@ -1029,6 +1029,16 @@ static int object_sync_signaled( struct object *obj, struct wait_queue_entry *en
     int ret = sync->ops->signaled( sync, entry );
     release_object( sync );
     return ret;
+}
+
+void signal_sync( struct object *obj )
+{
+    obj->ops->signal( obj, 0, 1 );
+}
+
+void reset_sync( struct object *obj )
+{
+    obj->ops->signal( obj, 0, 0 );
 }
 
 /* finish waiting */
