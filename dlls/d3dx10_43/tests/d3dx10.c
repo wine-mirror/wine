@@ -1114,7 +1114,7 @@ static const struct test_invalid_image_load_info
             2,              2,              D3DX10_DEFAULT, D3DX10_DEFAULT, 2,              (D3D10_USAGE)D3DX10_DEFAULT,
             D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, 7
         },
-        D3DERR_INVALIDCALL, D3DERR_INVALIDCALL, .todo_hr = TRUE, .todo_process_hr = TRUE
+        D3DERR_INVALIDCALL, D3DERR_INVALIDCALL
     },
     /*
      * Usage/BindFlags/CpuAccessFlags are validated in the call to
@@ -1978,7 +1978,6 @@ static void check_resource_info(ID3D10Resource *resource, const struct test_imag
             ok_(__FILE__, line)(desc_2d.Height == expected_height,
                     "Got unexpected Height %u, expected %u.\n",
                      desc_2d.Height, expected_height);
-            todo_wine_if(expected_mip_levels != image->expected_info.MipLevels)
             ok_(__FILE__, line)(desc_2d.MipLevels == expected_mip_levels,
                     "Got unexpected MipLevels %u, expected %u.\n",
                      desc_2d.MipLevels, expected_mip_levels);

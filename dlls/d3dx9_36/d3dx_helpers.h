@@ -404,6 +404,8 @@ void format_from_d3dx_color(const struct pixel_format_desc *format, const struct
 
 enum d3dx_pixel_format_id d3dx_pixel_format_id_from_dxgi_format(uint32_t format);
 void d3dx_get_next_mip_level_size(struct volume *size);
+void d3dx_get_mip_level_size(struct volume *size, uint32_t level);
+uint32_t d3dx_get_max_mip_levels_for_size(uint32_t width, uint32_t height, uint32_t depth);
 HRESULT d3dx_calculate_pixels_size(enum d3dx_pixel_format_id format, uint32_t width, uint32_t height,
     uint32_t *pitch, uint32_t *size);
 uint32_t d3dx_calculate_layer_pixels_size(enum d3dx_pixel_format_id format, uint32_t width, uint32_t height,
@@ -437,6 +439,18 @@ struct d3dx_buffer_wrapper
 
 HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct pixel_format_desc *src_fmt_desc,
         enum d3dx_image_file_format file_format, const struct d3dx_buffer_wrapper *wrapper, struct d3dx_buffer *dst_buffer);
+
+/* Compatible with D3D10_SUBRESOURCE_DATA and D3D11_SUBRESOURCE_DATA. */
+struct d3dx_subresource_data
+{
+    const void *data;
+    UINT row_pitch;
+    UINT slice_pitch;
+};
+
+HRESULT d3dx_create_subresource_data_for_texture(uint32_t width, uint32_t height, uint32_t depth,
+        uint32_t mip_levels, uint32_t layer_count, const struct pixel_format_desc *fmt_desc,
+        struct d3dx_subresource_data **out_sub_rsrc_data);
 
 /* debug helpers */
 const char *debug_d3dx_image_file_format(enum d3dx_image_file_format format);
