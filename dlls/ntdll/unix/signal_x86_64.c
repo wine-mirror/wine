@@ -872,11 +872,22 @@ static inline void set_sigcontext( const CONTEXT *context, ucontext_t *sigcontex
 }
 
 
+extern void clear_alignment_flag(void);
+__ASM_GLOBAL_FUNC( clear_alignment_flag,
+                   "pushfq\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+                   "andl $~0x40000,(%rsp)\n\t"
+                   "popfq\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+                   "ret" )
+
+
 /***********************************************************************
  *           init_handler
  */
 static inline ucontext_t *init_handler( void *sigcontext )
 {
+    clear_alignment_flag();
 #ifdef __linux__
     if (fs32_sel)
     {
@@ -884,17 +895,19 @@ static inline ucontext_t *init_handler( void *sigcontext )
         arch_prctl( ARCH_SET_FS, ((struct amd64_thread_data *)thread_data->cpu_data)->pthread_teb );
     }
 #elif defined __APPLE__
-    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&get_current_teb()->GdiTebBatch;
-    _thread_set_tsd_base( (uint64_t)((struct amd64_thread_data *)thread_data->cpu_data)->pthread_teb );
+    {
+        struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&get_current_teb()->GdiTebBatch;
+        _thread_set_tsd_base( (uint64_t)((struct amd64_thread_data *)thread_data->cpu_data)->pthread_teb );
 
-    /* When in a syscall, CS will be the kernel's selector (0x07, SYSCALL_CS in xnu source)
-     * instead of the user selector (cs64_sel: 0x2b, USER64_CS).
-     * Fix up sigcontext so later code can compare it to cs64_sel.
-     *
-     * Only applies on Intel, not under Rosetta.
-     */
-    if (CS_sig((ucontext_t *)sigcontext) == 0x07 /* SYSCALL_CS */)
-        CS_sig((ucontext_t *)sigcontext) = cs64_sel;
+        /* When in a syscall, CS will be the kernel's selector (0x07, SYSCALL_CS in xnu source)
+         * instead of the user selector (cs64_sel: 0x2b, USER64_CS).
+         * Fix up sigcontext so later code can compare it to cs64_sel.
+         *
+         * Only applies on Intel, not under Rosetta.
+         */
+        if (CS_sig((ucontext_t *)sigcontext) == 0x07 /* SYSCALL_CS */)
+            CS_sig((ucontext_t *)sigcontext) = cs64_sel;
+    }
 #endif
     return sigcontext;
 }
