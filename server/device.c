@@ -848,7 +848,7 @@ static struct device_manager *create_device_manager(void)
         list_init( &manager->requests );
         wine_rb_init( &manager->kernel_objects, compare_kernel_object );
 
-        if (!(manager->sync = create_event_sync( 1, 0 )))
+        if (!(manager->sync = create_internal_sync( 1, 0 )))
         {
             release_object( manager );
             return NULL;

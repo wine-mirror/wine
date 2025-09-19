@@ -1441,7 +1441,7 @@ static struct file_lock *add_lock( struct fd *fd, int shared, file_pos_t start, 
     lock->fd      = fd;
     lock->process = current->process;
 
-    if (!(lock->sync = create_event_sync( 1, 0 ))) goto error;
+    if (!(lock->sync = create_internal_sync( 1, 0 ))) goto error;
     /* now try to set a Unix lock */
     if (!set_unix_lock( lock->fd, lock->start, lock->end, lock->shared ? F_RDLCK : F_WRLCK )) goto error;
     list_add_tail( &fd->locks, &lock->fd_entry );
@@ -1724,7 +1724,7 @@ static struct fd *alloc_fd_object(void)
     list_init( &fd->inode_entry );
     list_init( &fd->locks );
 
-    if (!(fd->sync = create_event_sync( 1, 1 ))) goto error;
+    if (!(fd->sync = create_internal_sync( 1, 1 ))) goto error;
     if ((fd->poll_index = add_poll_user( fd )) == -1) goto error;
 
     return fd;
@@ -1767,7 +1767,7 @@ struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *use
     list_init( &fd->inode_entry );
     list_init( &fd->locks );
 
-    if (!(fd->sync = create_event_sync( 1, 1 )))
+    if (!(fd->sync = create_internal_sync( 1, 1 )))
     {
         release_object( fd );
         return NULL;

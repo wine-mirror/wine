@@ -259,7 +259,7 @@ static struct job *create_job_object( struct object *root, const struct unicode_
             job->completion_key = 0;
             job->parent = NULL;
 
-            if (!(job->sync = create_event_sync( 1, 0 )))
+            if (!(job->sync = create_internal_sync( 1, 0 )))
             {
                 release_object( job );
                 return NULL;
@@ -722,7 +722,7 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
         goto error;
     }
     if (!(process->msg_fd = create_anonymous_fd( &process_fd_ops, fd, &process->obj, 0 ))) goto error;
-    if (!(process->sync = create_event_sync( 1, 0 ))) goto error;
+    if (!(process->sync = create_internal_sync( 1, 0 ))) goto error;
 
     /* create the handle table */
     if (!parent)
@@ -1222,7 +1222,7 @@ DECL_HANDLER(new_process)
     info->process  = NULL;
     info->data     = NULL;
 
-    if (!(info->sync = create_event_sync( 1, 0 )))
+    if (!(info->sync = create_internal_sync( 1, 0 )))
     {
         close( socket_fd );
         goto done;

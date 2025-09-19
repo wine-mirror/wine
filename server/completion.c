@@ -279,7 +279,7 @@ static struct completion *create_completion( struct object *root, const struct u
             list_init( &completion->wait_queue );
             completion->depth = 0;
 
-            if (!(completion->sync = create_event_sync( 1, 0 )))
+            if (!(completion->sync = create_internal_sync( 1, 0 )))
             {
                 release_object( completion );
                 return NULL;

@@ -487,7 +487,7 @@ static struct context *create_thread_context( struct thread *thread )
     memset( &context->regs, 0, sizeof(context->regs) );
     context->regs[CTX_NATIVE].machine = native_machine;
 
-    if (!(context->sync = create_event_sync( 1, 0 )))
+    if (!(context->sync = create_internal_sync( 1, 0 )))
     {
         release_object( context );
         return NULL;
@@ -560,7 +560,7 @@ struct thread *create_thread( int fd, struct process *process, const struct secu
         return NULL;
     }
     if (!(thread->request_fd = create_anonymous_fd( &thread_fd_ops, fd, &thread->obj, 0 ))) goto error;
-    if (!(thread->sync = create_event_sync( 1, 0 ))) goto error;
+    if (!(thread->sync = create_internal_sync( 1, 0 ))) goto error;
     if (get_inproc_device_fd() >= 0 && !(thread->alert_sync = create_inproc_internal_sync( 1, 0 ))) goto error;
 
     if (process->desktop)
@@ -734,7 +734,7 @@ static struct thread_apc *create_apc( struct object *owner, const union apc_call
         apc->result.type = APC_NONE;
         if (owner) grab_object( owner );
 
-        if (!(apc->sync = create_event_sync( 1, 0 )))
+        if (!(apc->sync = create_internal_sync( 1, 0 )))
         {
             release_object( apc );
             return NULL;

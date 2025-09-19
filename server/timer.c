@@ -113,7 +113,7 @@ static struct timer *create_timer( struct object *root, const struct unicode_str
             timer->timeout  = NULL;
             timer->thread   = NULL;
 
-            if (!(timer->sync = create_event_sync( manual, 0 )))
+            if (!(timer->sync = create_internal_sync( manual, 0 )))
             {
                 release_object( timer );
                 return NULL;

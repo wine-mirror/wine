@@ -554,7 +554,7 @@ static struct object *create_console(void)
     init_async_queue( &console->ioctl_q );
     init_async_queue( &console->read_q );
 
-    if (!(console->sync = create_event_sync( 1, 0 ))) goto error;
+    if (!(console->sync = create_internal_sync( 1, 0 ))) goto error;
     if (!(console->fd = alloc_pseudo_fd( &console_fd_ops, &console->obj, FILE_SYNCHRONOUS_IO_NONALERT ))) goto error;
     allow_fd_caching( console->fd );
     return &console->obj;
@@ -977,7 +977,7 @@ static struct object *create_console_server( void )
     list_init( &server->queue );
     list_init( &server->read_queue );
 
-    if (!(server->sync = create_event_sync( 1, 1 ))) goto error;
+    if (!(server->sync = create_internal_sync( 1, 1 ))) goto error;
     if (!(server->fd = alloc_pseudo_fd( &console_server_fd_ops, &server->obj, FILE_SYNCHRONOUS_IO_NONALERT ))) goto error;
     allow_fd_caching(server->fd);
     return &server->obj;

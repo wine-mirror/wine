@@ -372,7 +372,7 @@ static struct debug_obj *create_debug_obj( struct object *root, const struct uni
             debug_obj->flags = flags;
             list_init( &debug_obj->event_queue );
 
-            if (!(debug_obj->sync = create_event_sync( 1, 0 )))
+            if (!(debug_obj->sync = create_internal_sync( 1, 0 )))
             {
                 release_object( debug_obj );
                 return NULL;
@@ -451,7 +451,7 @@ static struct debug_event *alloc_debug_event( struct thread *thread, int code, c
     fill_debug_event[code - DbgCreateThreadStateChange]( event, arg );
     event->data.code = code;
 
-    if (!(event->sync = create_event_sync( 1, 0 )))
+    if (!(event->sync = create_internal_sync( 1, 0 )))
     {
         release_object( event );
         return NULL;

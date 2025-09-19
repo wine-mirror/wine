@@ -87,7 +87,7 @@ static const struct object_ops event_sync_ops =
     no_destroy                 /* destroy */
 };
 
-struct event_sync *create_event_sync( int manual, int signaled )
+static struct event_sync *create_event_sync( int manual, int signaled )
 {
     struct event_sync *event;
 
@@ -96,6 +96,11 @@ struct event_sync *create_event_sync( int manual, int signaled )
     event->signaled = signaled;
 
     return event;
+}
+
+struct event_sync *create_internal_sync( int manual, int signaled )
+{
+    return create_event_sync( manual, signaled );
 }
 
 static void event_sync_dump( struct object *obj, int verbose )
