@@ -354,6 +354,12 @@ static int process_args( int argc, WCHAR *argv[] )
     const WCHAR *class;
     int i;
 
+    if (!wcscmp( argv[0], L"/?" ))
+    {
+        output_error( STRING_HELP );
+        return 0;
+    }
+
     for (i = 0; i < argc && argv[i][0] == '/'; i++)
         WINE_FIXME( "switch %s not supported\n", debugstr_w(argv[i]) );
 

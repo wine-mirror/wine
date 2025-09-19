@@ -19768,6 +19768,10 @@ msgstr "Hata: PATH için geçersiz sözdizimi\n"
 msgid "Supply a command\n"
 msgstr "Yanlış komut.\n"
 
+#: programs/wmic/wmic.rc:33
+msgid "Example usage: wmic ALIAS get PROPERTY[,PROPERTY2,...]\n"
+msgstr ""
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Yeni...\tCtrl+N"

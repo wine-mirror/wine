@@ -19578,6 +19578,10 @@ msgstr "エラー: PATH の構文が無効です\n"
 msgid "Supply a command\n"
 msgstr "コマンドを入力してください\n"
 
+#: programs/wmic/wmic.rc:33
+msgid "Example usage: wmic ALIAS get PROPERTY[,PROPERTY2,...]\n"
+msgstr ""
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "新規作成(&N)...\tCtrl+N"

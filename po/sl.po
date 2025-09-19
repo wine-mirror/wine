@@ -20862,6 +20862,10 @@ msgstr "Napaka: neveljavno ime ključa\n"
 msgid "Supply a command\n"
 msgstr "Slab ukaz.\n"
 
+#: programs/wmic/wmic.rc:33
+msgid "Example usage: wmic ALIAS get PROPERTY[,PROPERTY2,...]\n"
+msgstr ""
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nova ...\tCtrl+N"

@@ -20312,6 +20312,10 @@ msgstr "Chyba: Neplatná syntaxe pro PATH\n"
 msgid "Supply a command\n"
 msgstr "Špatný příkaz.\n"
 
+#: programs/wmic/wmic.rc:33
+msgid "Example usage: wmic ALIAS get PROPERTY[,PROPERTY2,...]\n"
+msgstr ""
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nový...\tCtrl+N"

@@ -19568,6 +19568,10 @@ msgstr "Error: Invalid syntax for PATH\n"
 msgid "Supply a command\n"
 msgstr "Supply a command\n"
 
+#: programs/wmic/wmic.rc:33
+msgid "Example usage: wmic ALIAS get PROPERTY[,PROPERTY2,...]\n"
+msgstr "Example usage: wmic ALIAS get PROPERTY[,PROPERTY2,...]\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&New...\tCtrl+N"

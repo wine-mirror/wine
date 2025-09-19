@@ -19576,6 +19576,10 @@ msgstr "오류: 잘못된 구문입니다\n"
 msgid "Supply a command\n"
 msgstr "잘못된 명령.\n"
 
+#: programs/wmic/wmic.rc:33
+msgid "Example usage: wmic ALIAS get PROPERTY[,PROPERTY2,...]\n"
+msgstr ""
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "새 파일(&N)...\tCtrl+N"
