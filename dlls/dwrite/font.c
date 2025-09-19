@@ -5751,11 +5751,14 @@ IDWriteFontFileLoader *get_local_fontfile_loader(void)
 HRESULT get_local_refkey(const WCHAR *path, const FILETIME *writetime, void **key, UINT32 *size)
 {
     struct local_refkey *refkey;
+    size_t len;
 
     if (!path)
         return E_INVALIDARG;
 
-    *size = FIELD_OFFSET(struct local_refkey, name) + (wcslen(path)+1)*sizeof(WCHAR);
+    len = wcslen(path) + 1;
+
+    *size = FIELD_OFFSET(struct local_refkey, name) + len * sizeof(WCHAR);
     *key = NULL;
 
     if (!(refkey = malloc(*size)))
@@ -5771,7 +5774,8 @@ HRESULT get_local_refkey(const WCHAR *path, const FILETIME *writetime, void **ke
         else
             memset(&refkey->writetime, 0, sizeof(refkey->writetime));
     }
-    wcscpy(refkey->name, path);
+    memcpy(refkey->name, path, len * sizeof(WCHAR));
+    wcsupr(refkey->name);
 
     *key = refkey;
 

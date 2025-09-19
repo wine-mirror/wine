@@ -3519,7 +3519,7 @@ static void test_CreateFontFileReference(void)
     ok(hr == S_OK, "Failed to get ref key, hr %#lx.\n", hr);
     ok(key1_size == key2_size, "Unexpected key sizes %u, %u.\n", key1_size, key2_size);
     if (key1_size == key2_size)
-        todo_wine ok(!memcmp(key1, key2, key1_size), "Expected matching keys.\n");
+        ok(!memcmp(key1, key2, key1_size), "Expected matching keys.\n");
 
     hr = IDWriteFontFile_GetLoader(file, &loader);
     ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
