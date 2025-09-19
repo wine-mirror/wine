@@ -152,7 +152,7 @@ static void opengl_drawable_set_context( struct opengl_drawable *drawable, struc
 
 static void opengl_drawable_flush( struct opengl_drawable *drawable, int interval, UINT flags )
 {
-    if (!drawable->client) return;
+    if (!is_client_surface_window( drawable->client, 0 )) return;
 
     if (InterlockedCompareExchange( &drawable->client->updated, 0, 1 )) flags |= GL_FLUSH_UPDATED;
     if (interval != drawable->interval)
@@ -163,6 +163,12 @@ static void opengl_drawable_flush( struct opengl_drawable *drawable, int interva
 
     if (flags || InterlockedCompareExchange( &drawable->client->offscreen, 0, 0 ))
         drawable->funcs->flush( drawable, flags );
+}
+
+static BOOL opengl_drawable_swap( struct opengl_drawable *drawable )
+{
+    if (!is_client_surface_window( drawable->client, 0 )) return FALSE;
+    return drawable->funcs->swap( drawable );
 }
 
 #ifdef SONAME_LIBEGL
@@ -2029,7 +2035,7 @@ static BOOL win32u_wglSwapBuffers( HDC hdc )
     else if (!(draw = get_window_current_drawable( hwnd ))) return FALSE;
 
     opengl_drawable_flush( draw, interval, 0 );
-    ret = draw->funcs->swap( draw );
+    ret = opengl_drawable_swap( draw );
     opengl_drawable_release( draw );
 
     return ret;

@@ -359,7 +359,8 @@ BOOL is_client_surface_window( struct client_surface *surface, HWND hwnd )
 
     if (!surface) return FALSE;
     pthread_mutex_lock( &surfaces_lock );
-    ret = surface->hwnd == hwnd;
+    if (hwnd) ret = surface->hwnd == hwnd;
+    else ret = surface->hwnd != NULL;
     pthread_mutex_unlock( &surfaces_lock );
 
     return ret;
