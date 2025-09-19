@@ -8153,6 +8153,7 @@ static void test_CreateFontFaceReference(void)
     IDWriteFontFile *file, *file1;
     IDWriteFactory3 *factory;
     IDWriteFont3 *font3;
+    FILETIME timestamp;
     ULONG refcount;
     WCHAR *path;
     HRESULT hr;
@@ -8193,6 +8194,11 @@ static void test_CreateFontFaceReference(void)
     /* path however has to be valid */
     hr = IDWriteFactory3_CreateFontFaceReference(factory, L"dummy", NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
     ok(hr == DWRITE_E_FILENOTFOUND, "Unexpected hr %#lx.\n", hr);
+
+    memset(&timestamp, 0, sizeof(timestamp));
+    hr = IDWriteFactory3_CreateFontFaceReference(factory, L"dummy", &timestamp, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IDWriteFontFaceReference_Release(ref);
 
     EXPECT_REF(factory, 1);
     hr = IDWriteFactory3_CreateFontFaceReference(factory, path, NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
