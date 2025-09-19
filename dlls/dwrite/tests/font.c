@@ -3451,44 +3451,88 @@ if (face2) {
 
 static void test_CreateFontFileReference(void)
 {
+    IDWriteFontFile *file, *file2;
+    IDWriteFontFileLoader *loader;
+    IDWriteFontFileStream *stream;
+    UINT32 key1_size, key2_size;
+    const void *key1, *key2;
     HRESULT hr;
-    IDWriteFontFile *ffile = NULL;
     BOOL support;
     DWRITE_FONT_FILE_TYPE type;
     DWRITE_FONT_FACE_TYPE face;
     UINT32 count;
     IDWriteFontFace *fface = NULL;
     IDWriteFactory *factory;
+    FILETIME timestamp;
     WCHAR *path;
     ULONG ref;
 
     path = create_testfontfile(test_fontfile);
     factory = create_factory();
 
-    ffile = (void*)0xdeadbeef;
-    hr = IDWriteFactory_CreateFontFileReference(factory, NULL, NULL, &ffile);
+    file = (void *)0xdeadbeef;
+    hr = IDWriteFactory_CreateFontFileReference(factory, NULL, NULL, &file);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n",hr);
-    ok(ffile == NULL, "got %p\n", ffile);
+    ok(!file, "Unexpected pointer %p.\n", file);
 
-    hr = IDWriteFactory_CreateFontFileReference(factory, path, NULL, &ffile);
+    hr = IDWriteFactory_CreateFontFileReference(factory, path, NULL, &file);
     ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
 
     support = FALSE;
     type = DWRITE_FONT_FILE_TYPE_UNKNOWN;
     face = DWRITE_FONT_FACE_TYPE_CFF;
     count = 0;
-    hr = IDWriteFontFile_Analyze(ffile, &support, &type, &face, &count);
+    hr = IDWriteFontFile_Analyze(file, &support, &type, &face, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(support == TRUE, "got %i\n", support);
     ok(type == DWRITE_FONT_FILE_TYPE_TRUETYPE, "got %i\n", type);
     ok(face == DWRITE_FONT_FACE_TYPE_TRUETYPE, "got %i\n", face);
     ok(count == 1, "got %i\n", count);
 
-    hr = IDWriteFactory_CreateFontFace(factory, face, 1, &ffile, 0, DWRITE_FONT_SIMULATIONS_NONE, &fface);
+    hr = IDWriteFactory_CreateFontFace(factory, face, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fface);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IDWriteFontFace_Release(fface);
-    IDWriteFontFile_Release(ffile);
+    IDWriteFontFile_Release(file);
+
+    /* File does not have to exist, if timestamp is provided. */
+    file = (void *)0xdeadbeef;
+    hr = IDWriteFactory_CreateFontFileReference(factory, L"[hello].ttf", NULL, &file);
+    todo_wine
+    ok(hr == DWRITE_E_FILENOTFOUND, "Unexpected hr %#lx.\n",hr);
+    todo_wine
+    ok(!file, "Unexpected pointer %p.\n", file);
+    if (hr == S_OK)
+        IDWriteFontFile_Release(file);
+
+    memset(&timestamp, 0xab, sizeof(timestamp));
+    hr = IDWriteFactory_CreateFontFileReference(factory, L"[hello].ttf", &timestamp, &file);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
+
+    hr = IDWriteFactory_CreateFontFileReference(factory, L"[Hello].ttf", &timestamp, &file2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
+    ok(file != file2, "Unexpected pointer.\n");
+
+    hr = IDWriteFontFile_GetReferenceKey(file, &key1, &key1_size);
+    ok(hr == S_OK, "Failed to get ref key, hr %#lx.\n", hr);
+    hr = IDWriteFontFile_GetReferenceKey(file2, &key2, &key2_size);
+    ok(hr == S_OK, "Failed to get ref key, hr %#lx.\n", hr);
+    ok(key1_size == key2_size, "Unexpected key sizes %u, %u.\n", key1_size, key2_size);
+    if (key1_size == key2_size)
+        todo_wine ok(!memcmp(key1, key2, key1_size), "Expected matching keys.\n");
+
+    hr = IDWriteFontFile_GetLoader(file, &loader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
+
+    hr = IDWriteFontFileLoader_CreateStreamFromKey(loader, key1, key1_size, &stream);
+    todo_wine
+    ok(hr == DWRITE_E_FILENOTFOUND, "Unexpected hr %#lx.\n",hr);
+
+    IDWriteFontFileLoader_Release(loader);
+
+    IDWriteFontFile_Release(file2);
+    IDWriteFontFile_Release(file);
+
     ref = IDWriteFactory_Release(factory);
     ok(ref == 0, "factory not released, %lu\n", ref);
 
