@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2023 Mohamad Al-Jaf
+ * Copyright (C) 2025 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -859,6 +860,249 @@ static void test_DevGetObjects( void )
             &bool_val,
         }
     };
+    DEVPROP_FILTER_EXPRESSION filter_instance_id_exists = {
+        DEVPROP_OPERATOR_NOT_EQUALS, { { DEVPKEY_Device_InstanceId, DEVPROP_STORE_SYSTEM, NULL }, DEVPROP_TYPE_EMPTY, 0, NULL }
+    };
+    DEVPROP_FILTER_EXPRESSION filter_instance_id_not_exists = {
+        DEVPROP_OPERATOR_EQUALS, { { DEVPKEY_Device_InstanceId, DEVPROP_STORE_SYSTEM, NULL }, DEVPROP_TYPE_EMPTY, 0, NULL }
+    };
+    /* Test cases for filter expressions containing boolean operators. All of these filters are logically equivalent
+     * and should return identical objects */
+    struct {
+        DEVPROP_FILTER_EXPRESSION expr[12];
+        SIZE_T size;
+    } logical_op_test_cases[] = {
+        {
+            /* NOT (System.Devices.InstanceId := []) */
+            { { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_not_exists, { DEVPROP_OPERATOR_NOT_CLOSE } },
+            3
+        },
+        {
+            /* NOT (NOT (System.Device.InstanceId :- [])) */
+            { { DEVPROP_OPERATOR_NOT_OPEN }, { DEVPROP_OPERATOR_NOT_OPEN },
+              filter_instance_id_exists,
+              { DEVPROP_OPERATOR_NOT_CLOSE }, { DEVPROP_OPERATOR_NOT_CLOSE } },
+              5
+        },
+        {
+            /* NOT ((System.Device.InstanceId := []) AND (System.Device.InstanceId :- [])) */
+            { { DEVPROP_OPERATOR_NOT_OPEN },
+              { DEVPROP_OPERATOR_AND_OPEN }, filter_instance_id_not_exists, filter_instance_id_exists,{ DEVPROP_OPERATOR_AND_CLOSE },
+              { DEVPROP_OPERATOR_NOT_CLOSE } },
+              6
+        },
+        {
+            /* NOT ((NOT (System.Device.InstanceId :- [])) AND (System.Device.InstanceId :- [])) */
+            { { DEVPROP_OPERATOR_NOT_OPEN },
+              { DEVPROP_OPERATOR_AND_OPEN },
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              filter_instance_id_exists,
+              { DEVPROP_OPERATOR_AND_CLOSE },
+              { DEVPROP_OPERATOR_NOT_CLOSE } },
+              8
+        },
+        {
+            /* ((System.Device.InstanceId :- []) OR (System.Device.InstanceId := [])) */
+            { { DEVPROP_OPERATOR_OR_OPEN }, filter_instance_id_exists, filter_instance_id_not_exists, { DEVPROP_OPERATOR_OR_CLOSE } },
+            4
+        },
+        {
+            /* ((System.Devices.InstanceId :- [] AND System.Devices.InstanceId :- []) OR System.Device.InstanceId := []) */
+            { { DEVPROP_OPERATOR_OR_OPEN },
+              { DEVPROP_OPERATOR_AND_OPEN }, filter_instance_id_exists, filter_instance_id_exists, { DEVPROP_OPERATOR_AND_CLOSE },
+              filter_instance_id_not_exists,
+              { DEVPROP_OPERATOR_OR_CLOSE } },
+            7
+        },
+        {
+            /* ((System.Devices.InstanceId :- [] AND System.Devices.InstanceId :- []) AND System.Device.InstanceId :- []) */
+            { { DEVPROP_OPERATOR_AND_OPEN },
+              { DEVPROP_OPERATOR_AND_OPEN }, filter_instance_id_exists, filter_instance_id_exists, { DEVPROP_OPERATOR_AND_CLOSE },
+              filter_instance_id_exists,
+              { DEVPROP_OPERATOR_AND_CLOSE } },
+            7
+        },
+        {
+            /* (System.Device.InstanceId :- [] AND (System.Devices.InstanceId :- [] AND System.Devices.InstanceId :- [])) */
+            { { DEVPROP_OPERATOR_AND_OPEN },
+            filter_instance_id_exists,
+            { DEVPROP_OPERATOR_AND_OPEN }, filter_instance_id_exists, filter_instance_id_exists, { DEVPROP_OPERATOR_AND_CLOSE },
+              { DEVPROP_OPERATOR_AND_CLOSE } },
+            7
+        },
+        {
+            /* ((System.Devices.InstanceId := [] OR System.Devices.InstanceId := []) OR System.Device.InstanceId :- []) */
+            { { DEVPROP_OPERATOR_OR_OPEN },
+              { DEVPROP_OPERATOR_OR_OPEN }, filter_instance_id_not_exists, filter_instance_id_not_exists, { DEVPROP_OPERATOR_OR_CLOSE },
+              filter_instance_id_exists,
+              { DEVPROP_OPERATOR_OR_CLOSE } },
+            7
+        },
+        {
+            /* (System.Device.InstanceId := [] OR (System.Devices.InstanceId := [] OR System.Devices.InstanceId :- [])) */
+            { { DEVPROP_OPERATOR_OR_OPEN },
+            filter_instance_id_not_exists,
+            { DEVPROP_OPERATOR_OR_OPEN }, filter_instance_id_not_exists, filter_instance_id_exists, { DEVPROP_OPERATOR_OR_CLOSE },
+              { DEVPROP_OPERATOR_OR_CLOSE } },
+            7
+        },
+        /* Logical operators with implicit AND. */
+        {
+            /* (NOT (System.Device.InstanceId := [])) System.Device.InstanceId :- [] */
+            { { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_not_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              filter_instance_id_exists },
+            4
+        },
+        {
+            /* (NOT (System.Device.InstanceId := [])) (NOT (System.Device.InstanceId := [])) */
+            { { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_not_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_not_exists, { DEVPROP_OPERATOR_NOT_CLOSE } },
+            6
+        },
+        {
+            /* (NOT (System.Device.InstanceId :- [] AND System.Device.InstanceId := [])) System.Device.InstanceId :- [] */
+            { { DEVPROP_OPERATOR_NOT_OPEN },
+              { DEVPROP_OPERATOR_AND_OPEN }, filter_instance_id_exists, filter_instance_id_not_exists, { DEVPROP_OPERATOR_AND_CLOSE },
+              { DEVPROP_OPERATOR_NOT_CLOSE },
+              filter_instance_id_exists },
+            7
+        },
+        {
+            /* (NOT (System.Device.InstanceId := [] OR System.Device.InstanceId := [])) System.Device.InstanceId :- [] */
+            { { DEVPROP_OPERATOR_NOT_OPEN },
+              { DEVPROP_OPERATOR_OR_OPEN }, filter_instance_id_not_exists, filter_instance_id_not_exists, { DEVPROP_OPERATOR_OR_CLOSE },
+              { DEVPROP_OPERATOR_NOT_CLOSE },
+              filter_instance_id_exists },
+            7
+        },
+        {
+            /* (NOT (System.Device.InstanceId := [] OR System.Device.InstanceId := [])) (System.Device.InstanceId := [] OR System.Device.InstanceId :- []) */
+            { { DEVPROP_OPERATOR_NOT_OPEN },
+              { DEVPROP_OPERATOR_OR_OPEN }, filter_instance_id_not_exists, filter_instance_id_not_exists, { DEVPROP_OPERATOR_OR_CLOSE },
+              { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_OR_OPEN }, filter_instance_id_not_exists, filter_instance_id_exists, { DEVPROP_OPERATOR_OR_CLOSE } },
+            10
+        },
+        {
+            /* (NOT (System.Device.InstanceId := [] OR System.Device.InstanceId := [])) (NOT (System.Device.InstanceId :- [] AND System.Device.InstanceId := [])) */
+            { { DEVPROP_OPERATOR_NOT_OPEN },
+              { DEVPROP_OPERATOR_OR_OPEN }, filter_instance_id_not_exists, filter_instance_id_not_exists, { DEVPROP_OPERATOR_OR_CLOSE },
+              { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_NOT_OPEN },
+              { DEVPROP_OPERATOR_AND_OPEN }, filter_instance_id_exists, filter_instance_id_not_exists, { DEVPROP_OPERATOR_AND_CLOSE },
+              { DEVPROP_OPERATOR_NOT_CLOSE } },
+            12
+        },
+        {
+            /* ((System.Device.InstanceId := [] AND System.Device.InstanceId := []) OR (Syste.Device.InstanceId :- [])) */
+            { { DEVPROP_OPERATOR_OR_OPEN },
+              { DEVPROP_OPERATOR_AND_OPEN }, filter_instance_id_not_exists,
+              { DEVPROP_OPERATOR_AND_OPEN }, filter_instance_id_not_exists, { DEVPROP_OPERATOR_AND_CLOSE },
+              { DEVPROP_OPERATOR_AND_CLOSE },
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_not_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_OR_CLOSE },
+            },
+            11
+        }
+    };
+    /* Filters that return empty results */
+    struct {
+        DEVPROP_FILTER_EXPRESSION expr[14];
+        SIZE_T size;
+    } logical_op_empty_test_cases[] = {
+        {
+            /* (NOT (System.Devices.InstanceId :- [])) */
+            { { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE } },
+            3,
+        },
+        {
+            /* (NOT (System.Devices.InstanceId :- [])) System.Devices.InstanceId := [] */
+            { { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              filter_instance_id_not_exists },
+            4,
+        },
+        {
+            /* (NOT (System.Devices.InstanceId :- [])) (NOT (System.Devices.InstanceId :- [])) */
+            { { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE } },
+            6,
+        },
+        {
+            /* (NOT (System.Devices.InstanceId :- [])) (NOT (System.Devices.InstanceId :- [] AND System.Devices.InstanceId :- [])) */
+            { { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_NOT_OPEN },
+              { DEVPROP_OPERATOR_AND_OPEN }, filter_instance_id_exists, filter_instance_id_exists, { DEVPROP_OPERATOR_AND_CLOSE },
+              { DEVPROP_OPERATOR_NOT_CLOSE } },
+            9,
+        },
+        {
+            /* NOT (NOT (System.Devices.InstanceId := [] AND System.Devices.InstanceId :- [])) */
+            { { DEVPROP_OPERATOR_NOT_OPEN }, { DEVPROP_OPERATOR_NOT_OPEN },
+              { DEVPROP_OPERATOR_AND_OPEN }, filter_instance_id_not_exists, filter_instance_id_exists, { DEVPROP_OPERATOR_AND_CLOSE },
+              { DEVPROP_OPERATOR_NOT_CLOSE }, { DEVPROP_OPERATOR_NOT_CLOSE } },
+            8,
+        },
+        {
+            /* (System.Devices.InstanceId := [] OR System.Devices.InstanceId := []) */
+            { { DEVPROP_OPERATOR_OR_OPEN }, filter_instance_id_not_exists, filter_instance_id_not_exists, { DEVPROP_OPERATOR_OR_CLOSE } },
+            4,
+        },
+        {
+            /* (NOT System.Devices.InstanceId :- []) OR (System.Devices.InstanceId := [] OR (NOT System.Devices.InstanceId :- []) OR (NOT System.Devices.InstanceId :- [])) */
+            { { DEVPROP_OPERATOR_OR_OPEN },
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_OR_OPEN }, filter_instance_id_not_exists,
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_OR_CLOSE },
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_OR_CLOSE } },
+            14
+        },
+        {
+            /* (NOT System.Devices.InstanceId :- []) OR (NOT System.Devices.InstanceId :- []) OR (System.Devices.InstanceId := [] OR (NOT System.Devices.InstanceId :- [])) */
+            { { DEVPROP_OPERATOR_OR_OPEN },
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_OR_OPEN }, filter_instance_id_not_exists,
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_OR_CLOSE },
+              { DEVPROP_OPERATOR_OR_CLOSE } },
+            14
+        },
+        {
+            /* (NOT System.Devices.InstanceId :- []) OR (NOT System.Devices.InstanceId :- []) OR (System.Devices.InstanceId :- [] AND (NOT System.Devices.InstanceId :- [])) */
+            { { DEVPROP_OPERATOR_OR_OPEN },
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_AND_OPEN }, filter_instance_id_exists,
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_AND_CLOSE },
+              { DEVPROP_OPERATOR_OR_CLOSE } },
+            14
+        },
+        {
+            /* (NOT System.Devices.InstanceId := []) AND (NOT System.Devices.InstanceId := []) AND (System.Devices.InstanceId :- [] AND (NOT System.Devices.InstanceId :- [])) */
+            { { DEVPROP_OPERATOR_AND_OPEN },
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_not_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_not_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_AND_OPEN }, filter_instance_id_exists,
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_AND_CLOSE },
+              { DEVPROP_OPERATOR_AND_CLOSE } },
+            14
+        },
+        {
+            /* (NOT System.Devices.InstanceId := []) AND (NOT System.Devices.InstanceId := []) AND (System.Devices.InstanceId := [] OR (NOT System.Devices.InstanceId :- [])) */
+            { { DEVPROP_OPERATOR_AND_OPEN },
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_not_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_not_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_OR_OPEN }, filter_instance_id_not_exists,
+              { DEVPROP_OPERATOR_NOT_OPEN }, filter_instance_id_exists, { DEVPROP_OPERATOR_NOT_CLOSE },
+              { DEVPROP_OPERATOR_OR_CLOSE },
+              { DEVPROP_OPERATOR_AND_CLOSE } },
+            14
+        }
+    };
     DEVPROPCOMPKEY prop_iface_class = { DEVPKEY_DeviceInterface_ClassGuid, DEVPROP_STORE_SYSTEM, NULL };
     DEVPROP_FILTER_EXPRESSION filters[4];
     const DEV_OBJECT *objects = NULL;
@@ -1146,6 +1390,60 @@ static void test_DevGetObjects( void )
     }
 
     memset( filters, 0, sizeof( filters ) );
+    for (i = DEVPROP_OPERATOR_GREATER_THAN; i <= DEVPROP_OPERATOR_LESS_THAN_EQUALS; i++)
+    {
+        GUID guid = {0};
+
+        winetest_push_context( "op=%#08lx", i );
+
+        /* Use the less/greater than operators with GUIDs will never result in a match. */
+        filters[0].Operator = i;
+        filters[0].Property.CompKey.Key = DEVPKEY_DeviceInterface_ClassGuid;
+        filters[0].Property.Buffer = &guid;
+        filters[0].Property.BufferSize = sizeof( guid );
+        filters[0].Property.Type = DEVPROP_TYPE_GUID;
+        len = 0xdeadbeef;
+        objects = (DEV_OBJECT *)0xdeadbeef;
+        hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 1, filters, &len, &objects );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        todo_wine_if (len) ok( !len, "got len %lu\n", len );
+        todo_wine_if (len) ok( !objects, "got objects %p\n", objects );
+        if (objects) pDevFreeObjects( len, objects );
+
+        /* Consequently, using the DEVPROP_OPERATOR_MODIFIER_NOT modifier will always match. */
+        filters[0].Operator |= DEVPROP_OPERATOR_MODIFIER_NOT;
+        len = 0;
+        objects = NULL;
+        hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 1, filters, &len, &objects );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        todo_wine_if (!len) ok( len > 0, "got len %lu\n", len );
+        todo_wine_if (!len) ok( !!objects, "got objects %p\n", objects );
+        pDevFreeObjects( len, objects );
+
+        /* Make sure we get the same results with the max GUID value as well. */
+        memset( &guid, 0xff, sizeof( guid ) );
+        filters[0].Operator = i;
+        len = 0xdeadbeef;
+        objects = (DEV_OBJECT *)0xdeadbeef;
+        hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 1, filters, &len, &objects );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        todo_wine_if (len) ok( !len, "got len %lu\n", len );
+        todo_wine_if (len) ok( !objects, "got objects %p\n", objects );
+        if (objects) pDevFreeObjects( len, objects );
+
+        filters[0].Operator |= DEVPROP_OPERATOR_MODIFIER_NOT;
+        len = 0;
+        objects = NULL;
+        hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 1, filters, &len, &objects );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        todo_wine_if (!len) ok( len > 0, "got len %lu\n", len );
+        todo_wine_if (!len) ok( !!objects, "got objects %p\n", objects );
+        pDevFreeObjects( len, objects );
+
+        winetest_pop_context();
+    }
+
+    memset( filters, 0, sizeof( filters ) );
     filters[0] = valid_filter;
     filters[0].Operator = DEVPROP_OPERATOR_NOT_EQUALS;
     bool_val = FALSE;
@@ -1157,6 +1455,48 @@ static void test_DevGetObjects( void )
     ok( !!objects, "got objects %p\n", objects );
     pDevFreeObjects( len, objects );
     bool_val = TRUE;
+
+    /* Get the number of objects that the filters in logical_op_test_cases should return. */
+    filters[0] = filter_instance_id_exists;
+    len = 0;
+    objects = NULL;
+    hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 1, filters, &len, &objects );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( len > 0, "got len %lu\n", len );
+    ok( !!objects, "got objects %p\n", objects );
+    pDevFreeObjects( len, objects );
+
+    for (i = 0; i < ARRAY_SIZE( logical_op_test_cases ); i++ )
+    {
+        ULONG len2 = 0;
+
+        winetest_push_context( "logical_op_test_cases[%lu]", i );
+
+        objects = NULL;
+        hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, logical_op_test_cases[i].size,
+                             logical_op_test_cases[i].expr, &len2, &objects );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        todo_wine_if( !len2 ) ok( len2 == len, "got len2 %lu != %lu\n", len2, len );
+        todo_wine_if( !len2 ) ok( !!objects, "got objects %p\n", objects );
+        pDevFreeObjects( len2, objects );
+
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < ARRAY_SIZE ( logical_op_empty_test_cases ); i++ )
+    {
+        winetest_push_context( "logical_op_empty_test_cases[%lu]", i );
+
+        len = 0xdeadbeef;
+        objects = (DEV_OBJECT *)0xdeadbeef;
+        hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL,
+                             logical_op_empty_test_cases[i].size, logical_op_empty_test_cases[i].expr, &len, &objects );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        todo_wine_if( len ) ok( !len, "got len %lu\n", len );
+        todo_wine_if( len ) ok( !objects, "got objects %p\n", objects );
+
+        winetest_pop_context();
+    }
 
     for (i = 0; i < ARRAY_SIZE( test_cases ); i++)
     {
