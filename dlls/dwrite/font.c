@@ -5750,11 +5750,20 @@ IDWriteFontFileLoader *get_local_fontfile_loader(void)
 
 HRESULT get_local_refkey(const WCHAR *path, const FILETIME *writetime, void **key, UINT32 *size)
 {
+    WIN32_FILE_ATTRIBUTE_DATA info;
     struct local_refkey *refkey;
     size_t len;
 
     if (!path)
         return E_INVALIDARG;
+
+    if (!writetime)
+    {
+        if (!GetFileAttributesExW(path, GetFileExInfoStandard, &info))
+            return DWRITE_E_FILENOTFOUND;
+
+        writetime = &info.ftLastWriteTime;
+    }
 
     len = wcslen(path) + 1;
 
@@ -5764,16 +5773,7 @@ HRESULT get_local_refkey(const WCHAR *path, const FILETIME *writetime, void **ke
     if (!(refkey = malloc(*size)))
         return E_OUTOFMEMORY;
 
-    if (writetime)
-        refkey->writetime = *writetime;
-    else {
-        WIN32_FILE_ATTRIBUTE_DATA info;
-
-        if (GetFileAttributesExW(path, GetFileExInfoStandard, &info))
-            refkey->writetime = info.ftLastWriteTime;
-        else
-            memset(&refkey->writetime, 0, sizeof(refkey->writetime));
-    }
+    refkey->writetime = *writetime;
     memcpy(refkey->name, path, len * sizeof(WCHAR));
     wcsupr(refkey->name);
 

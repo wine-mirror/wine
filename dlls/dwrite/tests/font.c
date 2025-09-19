@@ -3498,12 +3498,8 @@ static void test_CreateFontFileReference(void)
     /* File does not have to exist, if timestamp is provided. */
     file = (void *)0xdeadbeef;
     hr = IDWriteFactory_CreateFontFileReference(factory, L"[hello].ttf", NULL, &file);
-    todo_wine
     ok(hr == DWRITE_E_FILENOTFOUND, "Unexpected hr %#lx.\n",hr);
-    todo_wine
     ok(!file, "Unexpected pointer %p.\n", file);
-    if (hr == S_OK)
-        IDWriteFontFile_Release(file);
 
     memset(&timestamp, 0xab, sizeof(timestamp));
     hr = IDWriteFactory_CreateFontFileReference(factory, L"[hello].ttf", &timestamp, &file);
@@ -8196,10 +8192,7 @@ static void test_CreateFontFaceReference(void)
 
     /* path however has to be valid */
     hr = IDWriteFactory3_CreateFontFaceReference(factory, L"dummy", NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
-    todo_wine
     ok(hr == DWRITE_E_FILENOTFOUND, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-        IDWriteFontFaceReference_Release(ref);
 
     EXPECT_REF(factory, 1);
     hr = IDWriteFactory3_CreateFontFaceReference(factory, path, NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
