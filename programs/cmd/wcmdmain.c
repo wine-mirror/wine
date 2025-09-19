@@ -2073,13 +2073,32 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
     return RETURN_CODE_CANT_LAUNCH;
 }
 
-static BOOL set_std_redirections(CMD_REDIRECTION *redir)
+static DWORD std_index[3] = {STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
+
+static void pop_std_redirections(HANDLE saved[3])
 {
-    static DWORD std_index[3] = {STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
+    unsigned int i;
+
+    /* Restore old handles */
+    for (i = 0; i < 3; i++)
+    {
+        if (saved[i] != GetStdHandle(std_index[i]))
+        {
+            CloseHandle(GetStdHandle(std_index[i]));
+            SetStdHandle(std_index[i], saved[i]);
+        }
+    }
+}
+
+static BOOL push_std_redirections(CMD_REDIRECTION *redir, HANDLE saved[3])
+{
     static SECURITY_ATTRIBUTES sa = {.nLength = sizeof(sa), .lpSecurityDescriptor = NULL, .bInheritHandle = TRUE};
     WCHAR expanded_filename[MAXSTRING];
     HANDLE h;
+    unsigned int i;
 
+    for (i = 0; i < ARRAY_SIZE(std_index); i++)
+        saved[i] = GetStdHandle(std_index[i]);
     for (; redir; redir = redir->next)
     {
         CMD_REDIRECTION *next;
@@ -4101,16 +4120,12 @@ static RETURN_CODE for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node
 
 RETURN_CODE node_execute(CMD_NODE *node)
 {
-    HANDLE old_stdhandles[3] = {GetStdHandle (STD_INPUT_HANDLE),
-                                GetStdHandle (STD_OUTPUT_HANDLE),
-                                GetStdHandle (STD_ERROR_HANDLE)};
-    static DWORD idx_stdhandles[3] = {STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
-
+    HANDLE saved[3];
     RETURN_CODE return_code;
-    int i, test;
+    int test;
 
     if (!node) return NO_ERROR;
-    if (!set_std_redirections(node->redirects))
+    if (!push_std_redirections(node->redirects, saved))
     {
         WCMD_print_error();
         return_code = ERROR_INVALID_FUNCTION;
@@ -4147,7 +4162,7 @@ RETURN_CODE node_execute(CMD_NODE *node)
             WCHAR temp_path[MAX_PATH];
             WCHAR filename[MAX_PATH];
             CMD_REDIRECTION *output;
-            HANDLE saved_output;
+            HANDLE saved[3];
             struct batch_context *saved_context = context;
 
             /* pipe LHS & RHS are run outside of any batch context */
@@ -4165,14 +4180,12 @@ RETURN_CODE node_execute(CMD_NODE *node)
             GetTempFileNameW(temp_path, L"CMD", 0, filename);
             TRACE("Using temporary file of %ls\n", filename);
 
-            saved_output = GetStdHandle(STD_OUTPUT_HANDLE);
             /* set output for left hand side command */
             output = redirection_create_file(REDIR_WRITE_TO, 1, filename);
-            if (set_std_redirections(output))
+            if (push_std_redirections(output, saved))
             {
                 RETURN_CODE return_code_left = node_execute(node->left);
-                CloseHandle(GetStdHandle(STD_OUTPUT_HANDLE));
-                SetStdHandle(STD_OUTPUT_HANDLE, saved_output);
+                pop_std_redirections(saved);
 
                 if (errorlevel == RETURN_CODE_CANT_LAUNCH && saved_context)
                     ExitProcess(255);
@@ -4211,15 +4224,8 @@ RETURN_CODE node_execute(CMD_NODE *node)
         FIXME("Unexpected operator %u\n", node->op);
         return_code = ERROR_INVALID_FUNCTION;
     }
-    /* Restore old handles */
-    for (i = 0; i < 3; i++)
-    {
-        if (old_stdhandles[i] != GetStdHandle(idx_stdhandles[i]))
-        {
-            CloseHandle(GetStdHandle(idx_stdhandles[i]));
-            SetStdHandle(idx_stdhandles[i], old_stdhandles[i]);
-        }
-    }
+    pop_std_redirections(saved);
+
     return return_code;
 }
 
