@@ -509,31 +509,6 @@ static void WCMD_output_unbuffered(const WCHAR *message, DWORD len, HANDLE handl
 }
 
 /*******************************************************************
- * WCMD_output - send output to current standard output device.
- *
- */
-
-void WINAPIV WCMD_output (const WCHAR *format, ...) {
-
-  va_list ap;
-  WCHAR* string;
-  DWORD len;
-
-  va_start(ap,format);
-  string = NULL;
-  len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
-                       format, 0, 0, (LPWSTR)&string, 0, &ap);
-  va_end(ap);
-  if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE)
-    WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
-  else
-  {
-    WCMD_output_unbuffered(string, len, GetStdHandle(STD_OUTPUT_HANDLE));
-    LocalFree(string);
-  }
-}
-
-/*******************************************************************
  * WCMD_output_stderr - send output to current standard error device.
  *
  */
@@ -691,45 +666,54 @@ BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWO
 }
 
 /*******************************************************************
- * WCMD_output_asis_handle
+ * WCMD_output_asis
  *
- * Send output to specified handle without formatting e.g. when message contains '%'
+ * Send output to OUTPUT, buffering the content.
  */
-static RETURN_CODE WCMD_output_asis_handle(DWORD std_handle, const WCHAR *message)
+RETURN_CODE WCMD_output_asis(const WCHAR *message)
 {
+    static WCHAR out_buffer[MAXSTRING];
     RETURN_CODE return_code = NO_ERROR;
     const WCHAR* ptr;
-    HANDLE handle = GetStdHandle(std_handle);
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    if (paged_mode)
+    if (!message) /* Hack for flushing */
     {
-        do
+        WCMD_output_unbuffered(out_buffer, -1, handle);
+        out_buffer[0] = L'\0';
+    }
+    for (ptr = message; ptr && return_code == NO_ERROR; )
+    {
+        WCHAR *next = wcschr(ptr, L'\n');
+        if (next)
         {
-            for (ptr = message; *ptr && *ptr != L'\n'; ptr++) {}
-            if (*ptr == L'\n') ptr++;
-            WCMD_output_unbuffered(message, ptr - message, handle);
-            if (++line_count >= max_height - 1)
+            next++;
+            WCMD_output_unbuffered(out_buffer, -1, handle);
+            out_buffer[0] = L'\0';
+            WCMD_output_unbuffered(ptr, next - ptr, handle);
+            if (paged_mode && ++line_count >= max_height - 1)
             {
                 line_count = 0;
                 WCMD_output_unbuffered(pagedMessage, -1, handle);
                 return_code = WCMD_wait_for_input(GetStdHandle(STD_INPUT_HANDLE));
                 WCMD_output_unbuffered(L"\r\n", 2, handle);
             }
-        } while (*(message = ptr) && !return_code);
-    } else
-        WCMD_output_unbuffered(message, -1, handle);
+        }
+        else
+        {
+            size_t fblen = wcslen(out_buffer), len = wcslen(ptr);
+            if (len && (fblen + len + 1) < ARRAY_SIZE(out_buffer))
+                memcpy(out_buffer + fblen, ptr, (len + 1) * sizeof(WCHAR));
+        }
+        ptr = next;
+    }
 
     return return_code;
 }
 
-/*******************************************************************
- * WCMD_output_asis
- *
- * Send output to current standard output device, without formatting
- * e.g. when message contains '%'
- */
-RETURN_CODE WCMD_output_asis (const WCHAR *message) {
-    return WCMD_output_asis_handle(STD_OUTPUT_HANDLE, message);
+RETURN_CODE WCMD_output_flush(void)
+{
+    return WCMD_output_asis(NULL);
 }
 
 /*******************************************************************
@@ -742,6 +726,30 @@ RETURN_CODE WCMD_output_asis_stderr(const WCHAR *message)
 {
     WCMD_output_unbuffered(message, -1, GetStdHandle(STD_ERROR_HANDLE));
     return NO_ERROR;
+}
+
+/*******************************************************************
+ * WCMD_output - send formated output to current standard output device.
+ *
+ */
+void WINAPIV WCMD_output(const WCHAR *format, ...)
+{
+    va_list ap;
+    WCHAR* string;
+    DWORD len;
+
+    va_start(ap,format);
+    string = NULL;
+    len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         format, 0, 0, (LPWSTR)&string, 0, &ap);
+    va_end(ap);
+    if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE)
+        WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
+    else
+    {
+        WCMD_output_asis(string);
+        LocalFree(string);
+    }
 }
 
 /****************************************************************************
@@ -872,6 +880,7 @@ static void WCMD_show_prompt(void)
     }
   }
   WCMD_output_asis (out_string);
+  WCMD_output_flush();
 }
 
 void *xrealloc(void *ptr, size_t size)
@@ -2084,6 +2093,8 @@ static void pop_std_redirections(HANDLE saved[3])
     {
         if (saved[i] != GetStdHandle(std_index[i]))
         {
+            if (std_index[i] == STD_OUTPUT_HANDLE)
+                WCMD_output_flush();
             CloseHandle(GetStdHandle(std_index[i]));
             SetStdHandle(std_index[i], saved[i]);
         }
@@ -2159,7 +2170,10 @@ static BOOL push_std_redirections(CMD_REDIRECTION *redir, HANDLE saved[3])
         if (redir->fd > 2)
             CloseHandle(h);
         else
+        {
+            if (std_index[redir->fd] == STD_OUTPUT_HANDLE) WCMD_output_flush();
             SetStdHandle(std_index[redir->fd], h);
+        }
     }
     return TRUE;
 }

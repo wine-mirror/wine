@@ -227,6 +227,7 @@ static BOOL WCMD_ask_confirm (const WCHAR *message, BOOL showSureText,
       if (showSureText)
         WCMD_output_asis (confirm);
       WCMD_output_asis (options);
+      WCMD_output_flush();
       if (!WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, ARRAY_SIZE(answer), &count) || !count)
           return FALSE;
       answer[0] = towupper(answer[0]);
@@ -398,6 +399,7 @@ RETURN_CODE WCMD_choice(WCHAR *args)
         WCMD_output_asis(L"]?");
     }
 
+    WCMD_output_flush();
     while (return_code == NO_ERROR)
     {
         if (opt_timeout == 0)
@@ -1940,6 +1942,7 @@ RETURN_CODE WCMD_pause(void)
 {
   RETURN_CODE return_code = NO_ERROR;
   WCMD_output_asis(anykey);
+  WCMD_output_flush();
   return_code = WCMD_wait_for_input(GetStdHandle(STD_INPUT_HANDLE));
   WCMD_output_asis(L"\r\n");
 
@@ -2399,7 +2402,8 @@ RETURN_CODE WCMD_setshow_date(void)
     if (GetDateFormatW(LOCALE_USER_DEFAULT, 0, NULL, NULL, curdate, ARRAY_SIZE(curdate))) {
       WCMD_output (WCMD_LoadMessage(WCMD_CURRENTDATE), curdate);
       if (wcsstr(quals, L"/T") == NULL) {
-        WCMD_output (WCMD_LoadMessage(WCMD_NEWDATE));
+        WCMD_output(WCMD_LoadMessage(WCMD_NEWDATE));
+        WCMD_output_flush();
         if (WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), buffer, ARRAY_SIZE(buffer), &count) &&
             count > 2) {
           WCMD_output_stderr (WCMD_LoadMessage(WCMD_NYI));
@@ -3203,6 +3207,7 @@ RETURN_CODE WCMD_setshow_time(void)
       WCMD_output (WCMD_LoadMessage(WCMD_CURRENTTIME), curtime);
       if (wcsstr(quals, L"/T") == NULL) {
         WCMD_output (WCMD_LoadMessage(WCMD_NEWTIME));
+        WCMD_output_flush();
         if (WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), buffer, ARRAY_SIZE(buffer), &count) &&
             count > 2) {
           WCMD_output_stderr (WCMD_LoadMessage(WCMD_NYI));

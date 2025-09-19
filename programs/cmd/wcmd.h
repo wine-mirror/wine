@@ -182,6 +182,7 @@ WCHAR* WINAPIV WCMD_format_string(const WCHAR *format, ...);
 void WINAPIV WCMD_output(const WCHAR *format, ...);
 void WINAPIV WCMD_output_stderr(const WCHAR *format, ...);
 RETURN_CODE WCMD_output_asis(const WCHAR *message);
+RETURN_CODE WCMD_output_flush(void);
 RETURN_CODE WCMD_output_asis_stderr(const WCHAR *message);
 RETURN_CODE WCMD_pause(void);
 RETURN_CODE WCMD_popd(void);
