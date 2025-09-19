@@ -36,6 +36,8 @@ static NTSTATUS (WINAPI *pNtAllocateReserveObject)( HANDLE *, const OBJECT_ATTRI
 static NTSTATUS (WINAPI *pNtCreateThreadEx)( HANDLE *, ACCESS_MASK, OBJECT_ATTRIBUTES *,
                                              HANDLE, PRTL_THREAD_START_ROUTINE, void *,
                                              ULONG, ULONG_PTR, SIZE_T, SIZE_T, PS_ATTRIBUTE_LIST * );
+static NTSTATUS (WINAPI *pNtAllocateVirtualMemoryEx)(HANDLE, PVOID *, SIZE_T *, ULONG, ULONG,
+                                                     MEM_EXTENDED_PARAMETER *, ULONG);
 static NTSTATUS  (WINAPI *pNtSuspendProcess)(HANDLE process);
 static NTSTATUS  (WINAPI *pNtResumeProcess)(HANDLE process);
 static NTSTATUS  (WINAPI *pNtQueueApcThreadEx)(HANDLE handle, HANDLE reserve_handle, PNTAPCFUNC func,
@@ -55,6 +57,7 @@ static void init_function_pointers(void)
     hdll = GetModuleHandleA( "ntdll.dll" );
     GET_FUNC( NtAllocateReserveObject );
     GET_FUNC( NtCreateThreadEx );
+    GET_FUNC( NtAllocateVirtualMemoryEx );
     GET_FUNC( NtSuspendProcess );
     GET_FUNC( NtQueueApcThreadEx );
     GET_FUNC( NtQueueApcThreadEx2 );
@@ -450,6 +453,67 @@ delete:
     DeleteFileA(path_dll_local);
 }
 
+struct test_arm64_skip_load_init_args
+{
+    USHORT teb_same_teb_flags;
+};
+
+static void test_arm64_skip_loader_init(void)
+{
+    static ULONG native_code[] =
+    {
+        0xd282fdc2, /* mov x2, #0x17ee */
+        0x78626a41, /* ldrh w1, [x18, x2]   (NtCurrentTeb()->SameTebFlags) */
+        0x79000001, /* strh w1, [x0]        (args->teb_same_teb_flags)     */
+        0xd65f03c0, /* ret */
+    };
+
+    struct test_arm64_skip_load_init_args args;
+    HANDLE thread;
+    NTSTATUS status;
+    void *code_mem = NULL;
+#ifdef __x86_64__
+    MEM_EXTENDED_PARAMETER param = { 0 };
+    SIZE_T code_size = 0x10000;
+
+    param.Type = MemExtendedParameterAttributeFlags;
+    param.ULong64 = MEM_EXTENDED_PARAMETER_EC_CODE;
+    if (!pNtAllocateVirtualMemoryEx ||
+        pNtAllocateVirtualMemoryEx( GetCurrentProcess(), &code_mem, &code_size, MEM_RESERVE | MEM_COMMIT,
+                                    PAGE_EXECUTE_READWRITE, &param, 1 ))
+    {
+        trace("NtAllocateVirtualMemoryEx failed\n");
+        return;
+
+    }
+#else
+    code_mem = VirtualAlloc( NULL, 65536, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+    if (!code_mem)
+    {
+        trace("VirtualAlloc failed\n");
+        return;
+    }
+#endif
+    if (!pNtCreateThreadEx)
+    {
+        win_skip( "NtCreateThreadEx is not available.\n" );
+        return;
+    }
+
+    memcpy( code_mem, native_code, sizeof(native_code) );
+
+    status = pNtCreateThreadEx( &thread, THREAD_ALL_ACCESS, NULL, GetCurrentProcess(), (PRTL_THREAD_START_ROUTINE)code_mem,
+                                &args, THREAD_CREATE_FLAGS_SKIP_THREAD_ATTACH | THREAD_CREATE_FLAGS_SKIP_LOADER_INIT, 0, 0, 0, NULL );
+
+    todo_wine ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
+
+    WaitForSingleObject( thread, INFINITE );
+
+    todo_wine ok( (args.teb_same_teb_flags & 0x4008) == 0x4008, "wrong value %x\n", args.teb_same_teb_flags );
+
+    CloseHandle( thread );
+}
+
 START_TEST(thread)
 {
     init_function_pointers();
@@ -471,6 +535,7 @@ START_TEST(thread)
         USHORT current, native;
         is_arm64_native_machine = !pRtlWow64GetProcessMachines( GetCurrentProcess(), &current, &native ) &&
                                   native == IMAGE_FILE_MACHINE_ARM64;
+        if (is_arm64_native_machine) test_arm64_skip_loader_init();
     }
 
     test_dbg_hidden_thread_creation();
