@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-08-22 00:02+0300\n"
+"PO-Revision-Date: 2025-09-20 00:57+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -18745,10 +18745,8 @@ msgid "Voice input device:"
 msgstr "Balso įvedimo įtaisas:"
 
 #: programs/winecfg/winecfg.rc:277
-#, fuzzy
-#| msgid "Output device:"
 msgid "MIDI output device:"
-msgstr "Išvedimo įtaisas:"
+msgstr "MIDI išvedimo įtaisas:"
 
 #: programs/winecfg/winecfg.rc:283 programs/winecfg/winecfg.rc:89
 msgid "Speaker configuration"
@@ -19602,6 +19600,7 @@ msgstr "Pateikite komandą\n"
 #: programs/wmic/wmic.rc:33
 msgid "Example usage: wmic ALIAS get PROPERTY[,PROPERTY2,...]\n"
 msgstr ""
+"Naudojimo pavyzdys: wmic ALTERNATYVUSIS_VARDAS get SAVYBĖ[,SAVYBĖ2,...]\n"
 
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
