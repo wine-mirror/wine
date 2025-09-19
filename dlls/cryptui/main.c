@@ -1504,7 +1504,7 @@ static INT_PTR CALLBACK select_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             SendMessageW(GetDlgItem(hwnd, IDC_STORE_TEXT), WM_SETTEXT, 0,
              (LPARAM)selectInfo->info->pwszText);
         if (!(selectInfo->info->dwFlags & CRYPTUI_ENABLE_SHOW_PHYSICAL_STORE))
-            ShowWindow(GetDlgItem(hwnd, IDC_SHOW_PHYSICAL_STORES), FALSE);
+            ShowWindow(GetDlgItem(hwnd, IDC_SHOW_PHYSICAL_STORES), SW_HIDE);
         enumerate_stores(hwnd, selectInfo->info->pEnumData);
         break;
     }
@@ -2468,7 +2468,7 @@ static INT_PTR CALLBACK general_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         page = (PROPSHEETPAGEW *)lp;
         pCertViewInfo = (PCCRYPTUI_VIEWCERTIFICATE_STRUCTW)page->lParam;
         if (pCertViewInfo->dwFlags & CRYPTUI_DISABLE_ADDTOSTORE)
-            ShowWindow(GetDlgItem(hwnd, IDC_ADDTOSTORE), FALSE);
+            ShowWindow(GetDlgItem(hwnd, IDC_ADDTOSTORE), SW_HIDE);
         EnableWindow(GetDlgItem(hwnd, IDC_ISSUERSTATEMENT), FALSE);
         set_general_info(hwnd, pCertViewInfo);
         break;
@@ -4219,7 +4219,7 @@ static int CALLBACK cert_prop_sheet_proc(HWND hwnd, UINT msg, LPARAM lp)
         GetWindowRect(GetDlgItem(hwnd, IDCANCEL), &rc);
         MapWindowPoints( 0, hwnd, (POINT *)&rc, 2 );
         /* hide the cancel button.. */
-        ShowWindow(GetDlgItem(hwnd, IDCANCEL), FALSE);
+        ShowWindow(GetDlgItem(hwnd, IDCANCEL), SW_HIDE);
         /* and move the OK button to the cancel button's original position. */
         SetWindowPos(GetDlgItem(hwnd, IDOK), 0, rc.left, rc.top, 0, 0,
                      SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
