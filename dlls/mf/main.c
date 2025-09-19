@@ -1071,3 +1071,65 @@ HRESULT WINAPI MFCreateFMPEG4MediaSink(IMFByteStream *stream, IMFMediaType *vide
 
     return create_media_sink(&CLSID_MFFMPEG4SinkClassFactory, stream, video_type, audio_type, sink);
 }
+
+/*******************************************************************************
+ *      MFTranscodeGetAudioOutputAvailableTypes (mf.@)
+ */
+HRESULT WINAPI MFTranscodeGetAudioOutputAvailableTypes(REFGUID subtype, DWORD flags,
+        IMFAttributes *config, IMFCollection **ret)
+{
+    IMFCollection *media_types = NULL;
+    MFT_REGISTER_TYPE_INFO output;
+    IMFTransform *encoder = NULL;
+    IMFMediaType *media_type;
+    IMFActivate **transforms;
+    UINT32 i, count;
+    DWORD index;
+    HRESULT hr;
+
+    TRACE("%s, %#lx, %p, %p.\n", debugstr_guid(subtype), flags, config, ret);
+
+    if (config)
+        FIXME("Ignoring configuration attributes.\n");
+
+    output.guidMajorType = MFMediaType_Audio;
+    output.guidSubtype = *subtype;
+    if (FAILED(hr = MFTEnumEx(MFT_CATEGORY_AUDIO_ENCODER, flags, NULL, &output, &transforms, &count)))
+        return hr;
+
+    if (!count)
+        return MF_E_TRANSCODE_NO_MATCHING_ENCODER;
+
+    hr = MFCreateCollection(&media_types);
+
+    if (SUCCEEDED(hr))
+        hr = IMFActivate_ActivateObject(transforms[0], &IID_IMFTransform, (void **)&encoder);
+
+    if (encoder)
+    {
+        index = 0;
+        while (IMFTransform_GetOutputAvailableType(encoder, 0, index++, &media_type) == S_OK)
+        {
+            hr = IMFCollection_AddElement(media_types, (IUnknown *)media_type);
+            IMFMediaType_Release(media_type);
+            if (FAILED(hr)) break;
+        }
+
+        MFShutdownObject((IUnknown *)encoder);
+        IMFTransform_Release(encoder);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        *ret = media_types;
+        IMFCollection_AddRef(*ret);
+    }
+
+    for (i = 0; i < count; ++i)
+        IMFActivate_Release(transforms[i]);
+    CoTaskMemFree(transforms);
+    if (media_types)
+        IMFCollection_Release(media_types);
+
+    return hr;
+}

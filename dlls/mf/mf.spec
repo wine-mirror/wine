@@ -82,5 +82,5 @@
 @ stub MFReadSequencerSegmentOffset
 @ stdcall MFRequireProtectedEnvironment(ptr)
 @ stdcall MFShutdownObject(ptr)
-@ stub MFTranscodeGetAudioOutputAvailableTypes
+@ stdcall MFTranscodeGetAudioOutputAvailableTypes(ptr long ptr ptr)
 @ stub MergePropertyStore

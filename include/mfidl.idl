@@ -737,6 +737,8 @@ cpp_quote("HRESULT WINAPI MFGetTopoNodeCurrentType(IMFTopologyNode *node, DWORD 
 cpp_quote("HRESULT WINAPI MFShutdownObject(IUnknown *object);")
 cpp_quote("HRESULT WINAPI MFCreateTrackedSample(IMFTrackedSample **sample);")
 cpp_quote("HRESULT WINAPI MFRequireProtectedEnvironment(IMFPresentationDescriptor *pd);")
+cpp_quote("HRESULT WINAPI MFTranscodeGetAudioOutputAvailableTypes(REFGUID subtype, DWORD flags,")
+cpp_quote("        IMFAttributes *config, IMFCollection **types);")
 
 typedef enum _MFMEDIASOURCE_CHARACTERISTICS
 {
