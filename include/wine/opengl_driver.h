@@ -64,7 +64,7 @@ struct wgl_pixel_format
 #include "wine/gdi_driver.h"
 
 /* Wine internal opengl driver version, needs to be bumped upon opengl_funcs changes. */
-#define WINE_OPENGL_DRIVER_VERSION 36
+#define WINE_OPENGL_DRIVER_VERSION 37
 
 struct opengl_drawable;
 struct wgl_context;
@@ -149,14 +149,14 @@ struct opengl_drawable_funcs
     void (*flush)( struct opengl_drawable *iface, UINT flags );
     /* swap and present the drawable buffers, called from render thread */
     BOOL (*swap)( struct opengl_drawable *iface );
+    /* drawable is being unset or made current, called from render thread */
+    void (*set_context)( struct opengl_drawable *iface, void *private );
 };
 
 /* flags for opengl_drawable flush */
 #define GL_FLUSH_FINISHED      0x01
 #define GL_FLUSH_INTERVAL      0x02
 #define GL_FLUSH_UPDATED       0x04
-#define GL_FLUSH_WAS_CURRENT   0x08
-#define GL_FLUSH_SET_CURRENT   0x10
 
 /* a driver opengl drawable, either a client surface of a pbuffer */
 struct opengl_drawable

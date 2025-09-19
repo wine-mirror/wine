@@ -144,6 +144,12 @@ void opengl_drawable_release( struct opengl_drawable *drawable )
     }
 }
 
+static void opengl_drawable_set_context( struct opengl_drawable *drawable, struct wgl_context *context )
+{
+    if (!drawable->funcs->set_context) return;
+    drawable->funcs->set_context( drawable, context->driver_private );
+}
+
 static void opengl_drawable_flush( struct opengl_drawable *drawable, int interval, UINT flags )
 {
     if (!drawable->client) return;
@@ -320,12 +326,10 @@ static void framebuffer_surface_destroy( struct opengl_drawable *drawable )
     TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
 }
 
-static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT flags )
+static void framebuffer_surface_resize( struct opengl_drawable *drawable )
 {
     struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
     RECT rect;
-
-    TRACE( "%s, flags %#x\n", debugstr_opengl_drawable( drawable ), flags );
 
     NtUserGetClientRect( drawable->client->hwnd, &rect, NtUserGetDpiForWindow( drawable->client->hwnd ) );
     if (!rect.right) rect.right = 1;
@@ -333,7 +337,24 @@ static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT fl
 
     read_desc.samples = read_desc.sample_buffers = 0;
 
-    if (flags & GL_FLUSH_WAS_CURRENT)
+    TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->read_fbo, rect.right, rect.bottom );
+    resize_framebuffer( drawable, &read_desc, drawable->read_fbo, rect.right, rect.bottom );
+
+    if (drawable->draw_fbo != drawable->read_fbo)
+    {
+        TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->draw_fbo, rect.right, rect.bottom );
+        resize_framebuffer( drawable, &draw_desc, drawable->draw_fbo, rect.right, rect.bottom );
+    }
+}
+
+static void framebuffer_surface_set_context( struct opengl_drawable *drawable, void *private )
+{
+    struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
+    read_desc.samples = read_desc.sample_buffers = 0;
+
+    TRACE( "%s, private %p\n", debugstr_opengl_drawable( drawable ), private );
+
+    if (!private)
     {
         if (drawable->draw_fbo != drawable->read_fbo)
         {
@@ -343,8 +364,7 @@ static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT fl
         destroy_framebuffer( drawable, &read_desc, drawable->read_fbo );
         drawable->read_fbo = 0;
     }
-
-    if (flags & GL_FLUSH_SET_CURRENT)
+    else
     {
         drawable->read_fbo = create_framebuffer( drawable, &read_desc );
         if (!drawable->read_fbo) ERR( "Failed to create read framebuffer object\n" );
@@ -352,19 +372,15 @@ static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT fl
         if (!draw_desc.sample_buffers) drawable->draw_fbo = drawable->read_fbo;
         else drawable->draw_fbo = create_framebuffer( drawable, &draw_desc );
         if (!drawable->draw_fbo) ERR( "Failed to create draw framebuffer object\n" );
-    }
 
-    if ((flags & (GL_FLUSH_UPDATED | GL_FLUSH_SET_CURRENT)) && drawable->read_fbo)
-    {
-        TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->read_fbo, rect.right, rect.bottom );
-        resize_framebuffer( drawable, &read_desc, drawable->read_fbo, rect.right, rect.bottom );
-
-        if (drawable->draw_fbo != drawable->read_fbo)
-        {
-            TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->draw_fbo, rect.right, rect.bottom );
-            resize_framebuffer( drawable, &draw_desc, drawable->draw_fbo, rect.right, rect.bottom );
-        }
+        framebuffer_surface_resize( drawable );
     }
+}
+
+static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT flags )
+{
+    TRACE( "%s, flags %#x\n", debugstr_opengl_drawable( drawable ), flags );
+    if (flags & GL_FLUSH_UPDATED && drawable->read_fbo) framebuffer_surface_resize( drawable );
 }
 
 static BOOL framebuffer_surface_swap( struct opengl_drawable *drawable )
@@ -378,6 +394,7 @@ static const struct opengl_drawable_funcs framebuffer_surface_funcs =
     .destroy = framebuffer_surface_destroy,
     .flush = framebuffer_surface_flush,
     .swap = framebuffer_surface_swap,
+    .set_context = framebuffer_surface_set_context,
 };
 
 static struct opengl_drawable *framebuffer_surface_create( int format, struct client_surface *client )
@@ -1342,11 +1359,11 @@ static BOOL context_unset_current( struct wgl_context *context )
 
     TRACE( "context %p\n", context );
 
-    opengl_drawable_flush( old_read, old_read->interval, GL_FLUSH_WAS_CURRENT );
-    if (old_read != old_draw) opengl_drawable_flush( old_draw, old_draw->interval, GL_FLUSH_WAS_CURRENT );
+    opengl_drawable_set_context( old_read, NULL );
+    if (old_read != old_draw) opengl_drawable_set_context( old_draw, NULL );
     if (driver_funcs->p_make_current( NULL, NULL, NULL )) return TRUE;
-    opengl_drawable_flush( old_read, old_read->interval, GL_FLUSH_SET_CURRENT );
-    if (old_read != old_draw) opengl_drawable_flush( old_draw, old_draw->interval, GL_FLUSH_SET_CURRENT );
+    opengl_drawable_set_context( old_read, context );
+    if (old_read != old_draw) opengl_drawable_set_context( old_draw, context );
 
     return FALSE;
 }
@@ -1394,8 +1411,8 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
     else if (previous)
     {
         context_exchange_drawables( previous, &old_draw, &old_read ); /* take ownership of the previous context drawables */
-        opengl_drawable_flush( old_read, old_read->interval, GL_FLUSH_WAS_CURRENT );
-        if (old_read != old_draw) opengl_drawable_flush( old_draw, old_draw->interval, GL_FLUSH_WAS_CURRENT );
+        opengl_drawable_set_context( old_read, NULL );
+        if (old_read != old_draw) opengl_drawable_set_context( old_draw, NULL );
     }
 
     if (!ret && (ret = driver_funcs->p_make_current( new_draw, new_read, context->driver_private )))
@@ -1411,8 +1428,8 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
         if (old_draw) opengl_drawable_release( old_draw );
         if (old_read) opengl_drawable_release( old_read );
 
-        opengl_drawable_flush( new_read, new_read->interval, GL_FLUSH_SET_CURRENT );
-        if (new_read != new_draw) opengl_drawable_flush( new_draw, new_draw->interval, GL_FLUSH_SET_CURRENT );
+        opengl_drawable_set_context( new_read, context );
+        if (new_read != new_draw) opengl_drawable_set_context( new_draw, context );
     }
 
     if (ret)
@@ -1425,8 +1442,8 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
     }
     else if (previous)
     {
-        opengl_drawable_flush( old_read, old_read->interval, GL_FLUSH_SET_CURRENT );
-        if (old_read != old_draw) opengl_drawable_flush( old_draw, old_draw->interval, GL_FLUSH_SET_CURRENT );
+        opengl_drawable_set_context( old_read, context );
+        if (old_read != old_draw) opengl_drawable_set_context( old_draw, context );
         context_exchange_drawables( previous, &old_draw, &old_read ); /* give back ownership of the previous drawables */
         assert( !old_draw && !old_read );
     }
