@@ -978,6 +978,8 @@ struct obj_locator
 };
 
 #define MAX_ATOM_LEN     255
+#define WH_WINEVENT      (WH_MAXHOOK + 1)
+#define NB_HOOKS         (WH_WINEVENT - WH_MINHOOK + 1)
 
 struct shared_cursor
 {
@@ -998,11 +1000,11 @@ typedef volatile struct
 
 typedef volatile struct
 {
-    int                  hooks_count[WH_MAX - WH_MIN + 2]; /* active hooks count */
     unsigned int         wake_mask;        /* wakeup mask */
     unsigned int         wake_bits;        /* wakeup bits */
     unsigned int         changed_mask;     /* changed wakeup mask */
     unsigned int         changed_bits;     /* changed wakeup bits */
+    int                  hooks_count[NB_HOOKS];  /* active hooks count */
 } queue_shm_t;
 
 typedef volatile struct

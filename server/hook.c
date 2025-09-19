@@ -58,10 +58,6 @@ struct hook
     data_size_t         module_size;
 };
 
-#define WH_WINEVENT (WH_MAXHOOK+1)
-
-#define NB_HOOKS (WH_WINEVENT-WH_MINHOOK+1)
-
 struct hook_table
 {
     struct object obj;              /* object header */

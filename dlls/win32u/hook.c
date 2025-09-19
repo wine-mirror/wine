@@ -31,9 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(hook);
 
-#define WH_WINEVENT (WH_MAXHOOK+1)
-
-static const char * const hook_names[WH_WINEVENT - WH_MINHOOK + 1] =
+static const char * const hook_names[NB_HOOKS] =
 {
     "WH_MSGFILTER",
     "WH_JOURNALRECORD",

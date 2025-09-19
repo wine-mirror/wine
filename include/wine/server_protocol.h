@@ -962,6 +962,8 @@ struct obj_locator
 };
 
 #define MAX_ATOM_LEN     255
+#define WH_WINEVENT      (WH_MAXHOOK + 1)
+#define NB_HOOKS         (WH_WINEVENT - WH_MINHOOK + 1)
 
 struct shared_cursor
 {
@@ -982,11 +984,11 @@ typedef volatile struct
 
 typedef volatile struct
 {
-    int                  hooks_count[WH_MAX - WH_MIN + 2];
     unsigned int         wake_mask;
     unsigned int         wake_bits;
     unsigned int         changed_mask;
     unsigned int         changed_bits;
+    int                  hooks_count[NB_HOOKS];
 } queue_shm_t;
 
 typedef volatile struct
@@ -6876,6 +6878,6 @@ union generic_reply
     struct get_inproc_sync_fd_reply get_inproc_sync_fd_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 899
+#define SERVER_PROTOCOL_VERSION 900
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
