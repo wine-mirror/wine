@@ -745,24 +745,6 @@ class Function(Type):
     def gen_wrapper(self):
         return f"{self.type} wine_{self.name}({self.gen_params()});\n"
 
-    def loader_body(self):
-        body = "    struct {0}_params params;\n".format(self.name)
-        if not self.is_perf_critical():
-            body += "    NTSTATUS status;\n"
-        for p in self.params:
-            body += "    params.{0} = {0};\n".format(p.name)
-
-        # Call the Unix function.
-        if self.is_perf_critical():
-            body += "    UNIX_CALL({0}, &params);\n".format(self.name)
-        else:
-            body += "    status = UNIX_CALL({0}, &params);\n".format(self.name)
-            body += "    assert(!status && \"{0}\");\n".format(self.name)
-
-        if self.type != "void":
-            body += "    return params.result;\n"
-        return body
-
     def body(self, conv, conversions, params_prefix=""):
         body = ""
         needs_alloc = False
@@ -871,7 +853,7 @@ class Function(Type):
         spec += "\n"
         return spec
 
-    def thunk(self, conversions, prefix=None, conv=False):
+    def gen_unix_thunk(self, conversions, prefix=None, conv=False):
         thunk = ""
         if not conv:
             thunk += "#ifdef _WIN64\n"
@@ -897,11 +879,27 @@ class Function(Type):
         thunk += "\n"
         return thunk
 
-    def loader_thunk(self):
-        thunk = f"{self.type} WINAPI {self.name}({self.gen_params()})\n"
-        thunk += "{\n"
-        thunk += self.loader_body()
-        thunk += "}\n\n"
+    def gen_thunk(self):
+        thunk  = f"{self.type} WINAPI {self.name}({self.gen_params()})\n"
+        thunk += u"{\n"
+        thunk += f"    struct {self.name}_params params;\n"
+
+        if not self.is_perf_critical():
+            thunk += u"    NTSTATUS status;\n"
+        for p in self.params:
+            thunk += f"    params.{p.name} = {p.name};\n"
+
+        # Call the Unix function.
+        if self.is_perf_critical():
+            thunk += f"    UNIX_CALL({self.name}, &params);\n"
+        else:
+            thunk += f"    status = UNIX_CALL({self.name}, &params);\n"
+            thunk += f"    assert(!status && \"{self.name}\");\n"
+
+        if self.type != "void":
+            thunk += u"    return params.result;\n"
+
+        thunk += u"}\n\n"
         return thunk
 
     def trace(self, message=None, trace_func=None, params_prefix="", conv=False):
@@ -2363,8 +2361,8 @@ class Generator(object):
         conversions = []
 
         for func in Type.all(Function, Function.needs_thunk):
-            thunks += func.thunk(conversions, prefix="thunk64_")
-            thunks += func.thunk(conversions, prefix="thunk32_", conv=True)
+            thunks += func.gen_unix_thunk(conversions, prefix="thunk64_")
+            thunks += func.gen_unix_thunk(conversions, prefix="thunk32_", conv=True)
 
         # iterate over each of the conversion function dependencies first
         def enum_conversions(conversions, seen=set()):
@@ -2472,7 +2470,7 @@ class Generator(object):
         f.write("WINE_DEFAULT_DEBUG_CHANNEL(vulkan);\n\n")
 
         for func in Type.all(Function, Function.needs_loader_thunk):
-            f.write(func.loader_thunk())
+            f.write(func.gen_thunk())
 
         f.write("static const struct vulkan_func vk_device_dispatch_table[] =\n{\n")
         for func in Type.all(Function, Function.is_client_device):
