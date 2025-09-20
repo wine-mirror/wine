@@ -385,11 +385,15 @@ msgstr "Vahvista pari"
 #: dlls/bluetoothapis/bluetoothapis.rc:32
 msgid "Pair with '%1!s!' using the following PIN/passkey value: %2!lu!?"
 msgstr ""
+"Muodostetaanko pari laitteen '%1!s!' kanssa PIN-koodilla tai salasanalla %2!"
+"lu!?"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:33
 msgid ""
 "Pair with unnamed device %1!s! using the following PIN/passkey value: %2!lu!?"
 msgstr ""
+"Muodostetaanko pari nimettömän laitteen %1!s! kanssa PIN-koodilla tai "
+"salasanalla %2!lu!?"
 
 #: dlls/browseui/browseui.rc:28
 msgid "Canceling..."
@@ -1369,7 +1373,7 @@ msgstr "&Väri"
 
 #: dlls/compstui/compstui.rc:34
 msgid "Bla&ck && White"
-msgstr ""
+msgstr "&Mustavalkoinen"
 
 #: dlls/compstui/compstui.rc:37
 msgid "&None"
@@ -1377,11 +1381,11 @@ msgstr "&Ei valittu"
 
 #: dlls/compstui/compstui.rc:38 dlls/compstui/compstui.rc:41
 msgid "Flip on Shor&t Edge"
-msgstr ""
+msgstr "Käännä &lyhyeltä sivulta"
 
 #: dlls/compstui/compstui.rc:39 dlls/compstui/compstui.rc:40
 msgid "Flip on Long E&dge"
-msgstr ""
+msgstr "Käännä &pitkältä sivulta"
 
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
@@ -3850,16 +3854,12 @@ msgid "Force Feedback Effect"
 msgstr "Voimapalautteen efekti"
 
 #: dlls/joy.cpl/joy.rc:67
-#, fuzzy
-#| msgid ""
-#| "Press any button in the controller to activate the chosen effect. The "
-#| "effect direction can be changed with the controller axis."
 msgid ""
 "Hold any button in the controller to play the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
-"Aktivoi valittu efekti painamalla mitä tahansa ohjaimen painiketta. Efektin "
-"suuntaa voi muuttaa ohjaimen akselilla."
+"Toista valittu efekti pitämällä painettuna jotain ohjaimen painiketta. "
+"Efektin suuntaa voi muuttaa ohjaimen akselilla."
 
 #: dlls/joy.cpl/joy.rc:73
 msgid "XInput"
@@ -3920,7 +3920,7 @@ msgstr "Tärinä"
 
 #: dlls/joy.cpl/joy.rc:106
 msgid "Windows.Gaming.Input"
-msgstr ""
+msgstr "Windows.Gaming.Input"
 
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
@@ -4055,10 +4055,8 @@ msgid "Function expected"
 msgstr "Odotettiin funktiota"
 
 #: dlls/jscript/jscript.rc:55
-#, fuzzy
-#| msgid "'[object]' is not a date object"
 msgid "'[object]' is not a string object"
-msgstr "'[objekti]' ei ole päivämääräobjekti"
+msgstr "'[objekti]' ei ole merkkijono-objekti"
 
 #: dlls/jscript/jscript.rc:56
 msgid "'[object]' is not a date object"
@@ -4129,10 +4127,8 @@ msgid "Precision is out of range"
 msgstr "Tarkkuus ei kelpaa"
 
 #: dlls/jscript/jscript.rc:74
-#, fuzzy
-#| msgid "Array object expected"
 msgid "Array or arguments object expected"
-msgstr "Odotettiin taulukkoa"
+msgstr "Odotettiin taulukkoa tai arguments-objektia"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Array length must be a finite positive integer"
@@ -14700,10 +14696,8 @@ msgid "End of file"
 msgstr "Tiedoston loppu"
 
 #: programs/cmd/cmd.rc:410
-#, fuzzy
-#| msgid "%1!d! file(s) copied\n"
 msgid "%t%1!u! file(s) copied\n"
-msgstr "%1!d! tiedosto(a) kopioitu\n"
+msgstr "%t%1!u! tiedosto(a) kopioitu\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
@@ -18335,7 +18329,7 @@ msgstr "Tehtävä"
 
 #: programs/timeout/timeout.rc:28
 msgid "Usage: timeout /T <timeout> [</NOBREAK>]\n"
-msgstr ""
+msgstr "Käyttö: timeout /T <aikaraja> [</NOBREAK>]\n"
 
 #: programs/timeout/timeout.rc:29
 msgid "TIMEOUT: Bad command line\n"
@@ -18343,11 +18337,11 @@ msgstr "TIMEOUT: Komentorivi ei kelpaa\n"
 
 #: programs/timeout/timeout.rc:30
 msgid "waiting since %d sec. "
-msgstr ""
+msgstr "odotettu %d sekuntia. "
 
 #: programs/timeout/timeout.rc:31
 msgid "press CTRL+C..."
-msgstr ""
+msgstr "paina CTRL+C..."
 
 #: programs/timeout/timeout.rc:32
 msgid "press a key to continue..."
@@ -18355,13 +18349,13 @@ msgstr "Paina mitä tahansa näppäintä jatkaaksesi..."
 
 #: programs/timeout/timeout.rc:33
 msgid "ERROR: not possible to redirect input\n"
-msgstr ""
+msgstr "VIRHE: syötettä ei voi uudelleenohjata\n"
 
 #: programs/timeout/timeout.rc:34
 msgid ""
 "ERROR: Timeout value out of range or invalid number. Valid range is -1 to "
 "99999.\n"
-msgstr ""
+msgstr "VIRHE: Arvo ei kelpaa. Arvon tulee olla lukujen -1 ja 99999 väliltä.\n"
 
 #: programs/uninstaller/uninstaller.rc:29
 msgid "Wine Application Uninstaller"
@@ -18682,10 +18676,8 @@ msgid "Voice input device:"
 msgstr "Äänen sisääntulolaite:"
 
 #: programs/winecfg/winecfg.rc:277
-#, fuzzy
-#| msgid "Output device:"
 msgid "MIDI output device:"
-msgstr "Ulostulolaite:"
+msgstr "MIDI-ulostulolaite:"
 
 #: programs/winecfg/winecfg.rc:283 programs/winecfg/winecfg.rc:89
 msgid "Speaker configuration"
@@ -19537,7 +19529,7 @@ msgstr "Syötä komento\n"
 
 #: programs/wmic/wmic.rc:33
 msgid "Example usage: wmic ALIAS get PROPERTY[,PROPERTY2,...]\n"
-msgstr ""
+msgstr "Esimerkki: wmic ALIAS get OMINAISUUS[,OMINAISUUS2,...]\n"
 
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
