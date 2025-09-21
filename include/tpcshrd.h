@@ -18,6 +18,8 @@
 #ifndef __WISPSHRD_H
 #define __WISPSHRD_H
 
+#define TABLET_DISABLE_PRESSANDHOLD        0x00000001
+
 #define WM_TABLET_DEFBASE                  0x02c0
 #define WM_TABLET_MAXOFFSET                0x20
 #define WM_TABLET_ADDED                    (WM_TABLET_DEFBASE + 8)
