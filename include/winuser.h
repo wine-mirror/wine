@@ -3489,6 +3489,8 @@ typedef struct tagTOUCHINPUT {
 } TOUCHINPUT, *PTOUCHINPUT;
 typedef TOUCHINPUT const * PCTOUCHINPUT;
 
+#define TOUCH_COORD_TO_PIXEL(l) ((l) / 100)
+
 #define TOUCHEVENTF_MOVE        0x0001
 #define TOUCHEVENTF_DOWN        0x0002
 #define TOUCHEVENTF_UP          0x0004
