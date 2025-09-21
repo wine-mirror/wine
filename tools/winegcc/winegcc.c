@@ -170,7 +170,6 @@ enum file_type { file_na, file_other, file_obj, file_res, file_rc, file_arh, fil
 static bool is_pe;
 static bool is_static;
 static bool is_shared;
-static bool is_gui_app;
 static bool is_unicode_app;
 static bool is_win16_app;
 static bool is_arm64x;
@@ -542,10 +541,9 @@ static struct strarray get_link_args( const char *output_name )
             strarray_add( &flags, "-shared" );
             strarray_add( &flags, "-Wl,--kill-at" );
         }
-        else strarray_add( &flags, is_gui_app ? "-mwindows" : "-mconsole" );
 
         if (is_unicode_app) strarray_add( &flags, "-municode" );
-        if (subsystem) strarray_add( &flags, strmake("-Wl,--subsystem,%s", subsystem ));
+        strarray_add( &flags, strmake( "-Wl,--subsystem,%s", subsystem ) );
 
         strarray_add( &flags, "-Wl,--exclude-all-symbols" );
         strarray_add( &flags, "-Wl,--nxcompat" );
@@ -601,14 +599,9 @@ static struct strarray get_link_args( const char *output_name )
 
         if (entry_point) strarray_add( &flags, strmake( "-Wl,-entry:%s", entry_point ));
 
-        if (subsystem)
-        {
-            if ((version = strchr( subsystem, ':' ))) subsystem = strmake( "%.*s,%s", (int)(version - subsystem), subsystem, version + 1 );
-            strarray_add( &flags, "-Xlinker" );
-            strarray_add( &flags, strmake( "-subsystem:%s", subsystem ) );
-        }
-        else
-            strarray_add( &flags, strmake("-Wl,-subsystem:%s", is_gui_app ? "windows" : "console" ));
+        if ((version = strchr( subsystem, ':' ))) subsystem = strmake( "%.*s,%s", (int)(version - subsystem), subsystem, version + 1 );
+        strarray_add( &flags, "-Xlinker" );
+        strarray_add( &flags, strmake( "-subsystem:%s", subsystem ) );
 
         STRARRAY_FOR_EACH( file, &output_debug_files )
         {
@@ -1142,12 +1135,10 @@ static void build_spec_obj( const char *spec_file, const char *output_file,
         strarray_add(&spec_args, output_name);
     }
 
-    if (!is_shared)
-    {
-        strarray_add(&spec_args, "--subsystem");
-        strarray_add(&spec_args, is_gui_app ? "windows" : "console");
-        if (large_address_aware) strarray_add( &spec_args, "--large-address-aware" );
-    }
+    strarray_add( &spec_args, "--subsystem" );
+    strarray_add( &spec_args, subsystem );
+
+    if (!is_shared && large_address_aware) strarray_add( &spec_args, "--large-address-aware" );
 
     if (target.platform == PLATFORM_WINDOWS && target.cpu == CPU_i386)
         strarray_add(&spec_args, "--safeseh");
@@ -1156,12 +1147,6 @@ static void build_spec_obj( const char *spec_file, const char *output_file,
     {
         strarray_add(&spec_args, "--entry");
         strarray_add(&spec_args, entry_point);
-    }
-
-    if (subsystem)
-    {
-        strarray_add(&spec_args, "--subsystem");
-        strarray_add(&spec_args, subsystem);
     }
 
     if (!is_pe) STRARRAY_FOR_EACH( imp, &delayimports ) strarray_add(&spec_args, strmake("-d%s", imp));
@@ -1323,7 +1308,7 @@ static void build(struct strarray input_files, const char *output)
 
     if (!wine_objdir && !nodefaultlibs)
     {
-        if (is_gui_app)
+        if (!strncmp( subsystem, "windows", 7 ))
 	{
 	    add_library(lib_dirs, &files, "shell32");
 	    add_library(lib_dirs, &files, "comdlg32");
@@ -1353,7 +1338,7 @@ static void build(struct strarray input_files, const char *output)
     /* set default entry point, if needed */
     if (!entry_point)
     {
-        if (subsystem && !strcmp( subsystem, "native" ))
+        if (!strcmp( subsystem, "native" ))
             entry_point = (is_pe && target.cpu == CPU_i386) ? "DriverEntry@8" : "DriverEntry";
         else if (use_msvcrt && !is_shared && !is_win16_app)
             entry_point = is_unicode_app ? "wmainCRTStartup" : "mainCRTStartup";
@@ -1627,6 +1612,7 @@ int main(int argc, char **argv)
     int i, c, next_is_arg = 0;
     int raw_compiler_arg, raw_linker_arg, raw_winebuild_arg;
     struct strarray args = empty_strarray;
+    bool is_gui_app = false;
     const char* option_arg;
     char* str;
 
@@ -2057,6 +2043,8 @@ int main(int argc, char **argv)
     if (!is_pe && target.cpu != CPU_i386 && target.cpu != CPU_x86_64)
         error( "Non-PE builds are not supported on this platform. You need to use something like '--target=%s-windows'.\n",
                target.cpu == CPU_ARM ? "arm" : "aarch64" );
+
+    if (!subsystem) subsystem = is_gui_app ? "windows" : "console";
 
     if (!winebuild)
     {
