@@ -18,6 +18,7 @@
 
 typedef unsigned int obj_handle_t;
 typedef unsigned int user_handle_t;
+typedef unsigned int d3dkmt_handle_t;
 typedef unsigned int atom_t;
 typedef unsigned int process_id_t;
 typedef unsigned int thread_id_t;
@@ -5989,8 +5990,8 @@ struct d3dkmt_object_create_request
 struct d3dkmt_object_create_reply
 {
     struct reply_header __header;
+    d3dkmt_handle_t     global;
     obj_handle_t        handle;
-    char __pad_12[4];
 };
 
 
@@ -6904,6 +6905,6 @@ union generic_reply
     struct d3dkmt_object_create_reply d3dkmt_object_create_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 902
+#define SERVER_PROTOCOL_VERSION 903
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

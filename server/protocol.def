@@ -34,6 +34,7 @@
 
 typedef unsigned int obj_handle_t;
 typedef unsigned int user_handle_t;
+typedef unsigned int d3dkmt_handle_t;
 typedef unsigned int atom_t;
 typedef unsigned int process_id_t;
 typedef unsigned int thread_id_t;
@@ -4153,5 +4154,6 @@ enum inproc_sync_type
 @REQ(d3dkmt_object_create)
     unsigned int        type;           /* d3dkmt object type */
 @REPLY
+    d3dkmt_handle_t     global;         /* global d3dkmt handle */
     obj_handle_t        handle;         /* internal handle of the server object */
 @END

@@ -1513,7 +1513,7 @@ static void test_D3DKMTCreateKeyedMutex( void )
     status = D3DKMTCreateKeyedMutex( &create );
     ok_nt( STATUS_SUCCESS, status );
     check_d3dkmt_local( create.hKeyedMutex, &next_local );
-    todo_wine check_d3dkmt_global( create.hSharedHandle );
+    check_d3dkmt_global( create.hSharedHandle );
 
     status = D3DKMTOpenKeyedMutex( &open );
     todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
@@ -1560,14 +1560,14 @@ static void test_D3DKMTCreateKeyedMutex( void )
     status = D3DKMTCreateKeyedMutex2( &create2 );
     ok_nt( STATUS_SUCCESS, status );
     check_d3dkmt_local( create2.hKeyedMutex, &next_local );
-    todo_wine check_d3dkmt_global( create2.hSharedHandle );
+    check_d3dkmt_global( create2.hSharedHandle );
     destroy.hKeyedMutex = create2.hKeyedMutex;
 
     create2.hKeyedMutex = create2.hSharedHandle = 0x1eadbeed;
     status = D3DKMTCreateKeyedMutex2( &create2 );
     ok_nt( STATUS_SUCCESS, status );
     check_d3dkmt_local( create2.hKeyedMutex, &next_local );
-    todo_wine check_d3dkmt_global( create2.hSharedHandle );
+    check_d3dkmt_global( create2.hSharedHandle );
 
     status = D3DKMTOpenKeyedMutex2( &open2 );
     todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
@@ -1596,7 +1596,7 @@ static void test_D3DKMTCreateKeyedMutex( void )
     status = D3DKMTCreateKeyedMutex2( &create2 );
     ok_nt( STATUS_SUCCESS, status );
     check_d3dkmt_local( create2.hKeyedMutex, &next_local );
-    todo_wine check_d3dkmt_global( create2.hSharedHandle );
+    check_d3dkmt_global( create2.hSharedHandle );
 
     open2.hKeyedMutex = 0x1eadbeed;
     open2.hSharedHandle = create2.hSharedHandle;
@@ -1623,7 +1623,7 @@ static void test_D3DKMTCreateKeyedMutex( void )
     status = D3DKMTCreateKeyedMutex2( &create2 );
     ok_nt( STATUS_SUCCESS, status );
     check_d3dkmt_local( create2.hKeyedMutex, &next_local );
-    todo_wine check_d3dkmt_global( create2.hSharedHandle );
+    check_d3dkmt_global( create2.hSharedHandle );
 
     open2.hKeyedMutex = 0x1eadbeed;
     open2.hSharedHandle = create2.hSharedHandle;

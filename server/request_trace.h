@@ -3388,7 +3388,8 @@ static void dump_d3dkmt_object_create_request( const struct d3dkmt_object_create
 
 static void dump_d3dkmt_object_create_reply( const struct d3dkmt_object_create_reply *req )
 {
-    fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, " global=%08x", req->global );
+    fprintf( stderr, ", handle=%04x", req->handle );
 }
 
 typedef void (*dump_func)( const void *req );

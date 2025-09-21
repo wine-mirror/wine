@@ -34,6 +34,7 @@ my %formats =
     "atom_t"        => [  4,   4,  "%04x" ],
     "process_id_t"  => [  4,   4,  "%04x" ],
     "thread_id_t"   => [  4,   4,  "%04x" ],
+    "d3dkmt_handle_t"=>[  4,   4,  "%08x" ],
     "unsigned __int64" => [ 8, 8,  "&uint64" ],
     "timeout_t"     => [  8,   8 ],
     "abstime_t"     => [  8,   8 ],

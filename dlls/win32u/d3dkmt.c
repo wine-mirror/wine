@@ -37,6 +37,8 @@ struct d3dkmt_object
 {
     enum d3dkmt_type    type;           /* object type */
     D3DKMT_HANDLE       local;          /* object local handle */
+    D3DKMT_HANDLE       global;         /* object global handle */
+    BOOL                shared;         /* object is shared using nt handles */
     HANDLE              handle;         /* internal handle of the server object */
 };
 
@@ -176,19 +178,21 @@ static NTSTATUS d3dkmt_object_create( struct d3dkmt_object *object, BOOL shared 
         req->type = object->type;
         status = wine_server_call( req );
         object->handle = wine_server_ptr_handle( reply->handle );
+        object->global = reply->global;
+        object->shared = shared;
     }
     SERVER_END_REQ;
 
     if (!status) status = alloc_object_handle( object );
 
     if (status) WARN( "Failed to create global object for %p, status %#x\n", object, status );
-    else TRACE( "Created global object for %p/%#x\n", object, object->local );
+    else TRACE( "Created global object %#x for %p/%#x\n", object->global, object, object->local );
     return status;
 }
 
 static void d3dkmt_object_free( struct d3dkmt_object *object )
 {
-    TRACE( "object %p/%#x\n", object, object->local );
+    TRACE( "object %p/%#x, global %#x\n", object, object->local, object->global );
     if (object->local) free_object_handle( object );
     if (object->handle) NtClose( object->handle );
     free( object );
@@ -867,7 +871,7 @@ NTSTATUS WINAPI NtGdiDdDDICreateKeyedMutex2( D3DKMT_CREATEKEYEDMUTEX2 *params )
     if ((status = d3dkmt_object_alloc( sizeof(*mutex), D3DKMT_MUTEX, (void **)&mutex ))) return status;
     if ((status = d3dkmt_object_create( mutex, params->Flags.NtSecuritySharing ))) goto failed;
 
-    params->hSharedHandle = 0;
+    params->hSharedHandle = mutex->shared ? 0 : mutex->global;
     params->hKeyedMutex = mutex->local;
     return STATUS_SUCCESS;
 
