@@ -496,6 +496,7 @@ static struct strarray get_link_args( const char *output_name )
 {
     struct strarray link_args = get_translator();
     struct strarray flags = empty_strarray;
+    char *version;
 
     strarray_addall( &link_args, linker_args );
 
@@ -601,7 +602,11 @@ static struct strarray get_link_args( const char *output_name )
         if (entry_point) strarray_add( &flags, strmake( "-Wl,-entry:%s", entry_point ));
 
         if (subsystem)
-            strarray_add( &flags, strmake("-Wl,-subsystem:%s", subsystem ));
+        {
+            if ((version = strchr( subsystem, ':' ))) subsystem = strmake( "%.*s,%s", (int)(version - subsystem), subsystem, version + 1 );
+            strarray_add( &flags, "-Xlinker" );
+            strarray_add( &flags, strmake( "-subsystem:%s", subsystem ) );
+        }
         else
             strarray_add( &flags, strmake("-Wl,-subsystem:%s", is_gui_app ? "windows" : "console" ));
 
