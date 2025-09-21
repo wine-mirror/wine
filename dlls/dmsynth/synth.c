@@ -1586,6 +1586,7 @@ static BOOL gen_from_connection(const CONNECTION *conn, UINT *gen)
     case CONN_DST_EG1_DECAYTIME: *gen = GEN_VOLENVDECAY; return TRUE;
     case CONN_DST_EG1_SUSTAINLEVEL: *gen = GEN_VOLENVSUSTAIN; return TRUE;
     case CONN_DST_EG1_RELEASETIME: *gen = GEN_VOLENVRELEASE; return TRUE;
+    case CONN_DST_EG1_SHUTDOWNTIME: return FALSE;
     case CONN_DST_GAIN: *gen = GEN_ATTENUATION; return TRUE;
     case CONN_DST_PITCH: *gen = GEN_PITCH; return TRUE;
     default: FIXME("Unsupported connection %s\n", debugstr_connection(conn)); return FALSE;
@@ -1777,7 +1778,7 @@ static void set_default_voice_connections(fluid_voice_t *fluid_voice)
         {.usDestination = CONN_DST_EG1_DECAYTIME, .lScale = ABS_TIME_MS(0)},
         {.usDestination = CONN_DST_EG1_SUSTAINLEVEL, .lScale = 1000 * 65536},
         {.usDestination = CONN_DST_EG1_RELEASETIME, .lScale = ABS_TIME_MS(0)},
-        /* FIXME: {.usDestination = CONN_DST_EG1_SHUTDOWNTIME, .lScale = ABS_TIME_MS(15)}, */
+        {.usDestination = CONN_DST_EG1_SHUTDOWNTIME, .lScale = ABS_TIME_MS(15)},
         {.usSource = CONN_SRC_KEYONVELOCITY, .usDestination = CONN_DST_EG1_ATTACKTIME, .lScale = 0},
         {.usSource = CONN_SRC_KEYNUMBER, .usDestination = CONN_DST_EG1_DECAYTIME, .lScale = 0},
         {.usSource = CONN_SRC_KEYNUMBER, .usDestination = CONN_DST_EG1_HOLDTIME, .lScale = 0},
