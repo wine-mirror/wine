@@ -1124,7 +1124,7 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
                             pbi.InheritedFromUniqueProcessId = reply->ppid;
                             if (is_old_wow64())
                             {
-                                if (reply->machine != native_machine)
+                                if (!is_machine_64bit( reply->machine ))
                                     pbi.PebBaseAddress = (PEB *)((char *)pbi.PebBaseAddress + 0x1000);
                                 else
                                     pbi.PebBaseAddress = NULL;
