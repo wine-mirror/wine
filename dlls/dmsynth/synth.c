@@ -216,9 +216,6 @@ struct wave
     HANDLE user_data;
 
     fluid_sample_t *fluid_sample;
-
-    WAVEFORMATEX format;
-    UINT sample_count;
     short samples[];
 };
 
@@ -825,6 +822,7 @@ static HRESULT synth_download_wave(struct synth *This, DMUS_DOWNLOADINFO *info, 
     UINT sample_count;
     short *samples;
     size_t size;
+    int i;
 
     if (TRACE_ON(dmsynth))
     {
@@ -848,16 +846,14 @@ static HRESULT synth_download_wave(struct synth *This, DMUS_DOWNLOADINFO *info, 
     if (!(wave = calloc(1, size))) return E_OUTOFMEMORY;
     wave->ref = 1;
     wave->id = info->dwDLId;
-    wave->format = wave_info->WaveformatEx;
-    wave->sample_count = sample_count;
 
     samples = wave->samples;
     if (wave_info->WaveformatEx.nBlockAlign == 1)
     {
-        while (sample_count--)
+        for (i = 0; i < sample_count; ++i)
         {
-            short sample = (wave_data->byData[sample_count] - 0x80) << 8;
-            wave->samples[sample_count] = sample;
+            short sample = (wave_data->byData[i] - 0x80) << 8;
+            wave->samples[i] = sample;
         }
     }
     else if (wave_info->WaveformatEx.nBlockAlign == 2)
@@ -866,10 +862,10 @@ static HRESULT synth_download_wave(struct synth *This, DMUS_DOWNLOADINFO *info, 
     }
     else if (wave_info->WaveformatEx.nBlockAlign == 4)
     {
-        while (sample_count--)
+        for (i = 0; i < sample_count; ++i)
         {
-            short sample = ((UINT *)wave_data->byData)[sample_count] >> 16;
-            wave->samples[sample_count] = sample;
+            short sample = ((UINT *)wave_data->byData)[i] >> 16;
+            wave->samples[i] = sample;
         }
     }
 
@@ -882,8 +878,8 @@ static HRESULT synth_download_wave(struct synth *This, DMUS_DOWNLOADINFO *info, 
 
     /* Although the doc says there should be 8-frame padding around the data,
      * FluidSynth doesn't actually require this since version 1.0.8. */
-    fluid_sample_set_sound_data(wave->fluid_sample, samples, NULL, wave->sample_count,
-            wave->format.nSamplesPerSec, FALSE);
+    fluid_sample_set_sound_data(wave->fluid_sample, samples, NULL, sample_count,
+            wave_info->WaveformatEx.nSamplesPerSec, FALSE);
 
     EnterCriticalSection(&This->cs);
     list_add_tail(&This->waves, &wave->entry);
