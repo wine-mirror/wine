@@ -212,6 +212,9 @@ struct wave
     LONG ref;
     UINT id;
 
+    HRESULT (CALLBACK *callback)(HANDLE handle, HANDLE user_data);
+    HANDLE user_data;
+
     fluid_sample_t *fluid_sample;
 
     WAVEFORMATEX format;
@@ -231,6 +234,8 @@ static void wave_release(struct wave *wave)
     ULONG ref = InterlockedDecrement(&wave->ref);
     if (!ref)
     {
+        if (wave->callback)
+            wave->callback(wave, wave->user_data);
         delete_fluid_sample(wave->fluid_sample);
         free(wave);
     }
@@ -942,7 +947,6 @@ static HRESULT WINAPI synth_Unload(IDirectMusicSynth8 *iface, HANDLE handle,
     struct wave *wave;
 
     TRACE("(%p)->(%p, %p, %p)\n", This, handle, callback, user_data);
-    if (callback) FIXME("Unload callbacks not implemented\n");
 
     EnterCriticalSection(&This->cs);
     LIST_FOR_EACH_ENTRY(instrument, &This->instruments, struct instrument, entry)
@@ -961,6 +965,8 @@ static HRESULT WINAPI synth_Unload(IDirectMusicSynth8 *iface, HANDLE handle,
     {
         if (wave == handle)
         {
+            wave->callback = callback;
+            wave->user_data = user_data;
             list_remove(&wave->entry);
             LeaveCriticalSection(&This->cs);
 
