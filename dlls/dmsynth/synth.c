@@ -651,7 +651,8 @@ static HRESULT WINAPI synth_Close(IDirectMusicSynth8 *iface)
     LIST_FOR_EACH_ENTRY_SAFE(voice, next, &This->voices, struct voice, entry)
     {
         list_remove(&voice->entry);
-        wave_release(voice->wave);
+        if (voice->wave)
+            wave_release(voice->wave);
         free(voice);
     }
 
@@ -1128,6 +1129,7 @@ static HRESULT WINAPI synth_Render(IDirectMusicSynth8 *iface, short *buffer,
 {
     struct synth *This = impl_from_IDirectMusicSynth8(iface);
     struct event *event, *next;
+    struct voice *voice;
     int chan;
 
     TRACE("(%p, %p, %ld, %I64d)\n", This, buffer, length, position);
@@ -1181,6 +1183,21 @@ static HRESULT WINAPI synth_Render(IDirectMusicSynth8 *iface, short *buffer,
     LeaveCriticalSection(&This->cs);
 
     if (length) fluid_synth_write_s16(This->fluid_synth, length, buffer, 0, 2, buffer, 1, 2);
+
+    /* fluid_synth_write_s16() does not update the voice status, so we have to
+     * trigger the update manually */
+    fluid_synth_get_active_voice_count(This->fluid_synth);
+
+    LIST_FOR_EACH_ENTRY(voice, &This->voices, struct voice, entry)
+    {
+        if (fluid_voice_is_playing(voice->fluid_voice))
+            continue;
+        if (!voice->wave)
+            continue;
+        wave_release(voice->wave);
+        voice->wave = NULL;
+    }
+
     return S_OK;
 }
 
@@ -1907,7 +1924,11 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
     {
         if (voice->fluid_voice == fluid_voice)
         {
-            wave_release(voice->wave);
+            if (voice->wave)
+            {
+                wave_release(voice->wave);
+                voice->wave = NULL;
+            }
             break;
         }
     }

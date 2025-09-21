@@ -1251,7 +1251,7 @@ static void test_IDirectMusicSynth(void)
     ok(!unload_called, "callback called\n");
     hr = IDirectMusicSynth_Unload(synth, instrument_handle, NULL, NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(unload_called, "callback not called\n");
+    ok(unload_called, "callback not called\n");
 
     hr = IDirectMusicSynth_Close(synth);
     ok(hr == S_OK, "got %#lx\n", hr);
