@@ -513,6 +513,14 @@ static HRESULT write_output_buffer(xmlwriteroutput *output, const WCHAR *data, i
     return S_OK;
 }
 
+static HRESULT write_output(xmlwriter *writer, const WCHAR *data, int len, HRESULT *hr)
+{
+    if (SUCCEEDED(*hr))
+        *hr = write_output_buffer(writer->output, data, len);
+
+    return *hr;
+}
+
 static HRESULT write_output_buffer_char(xmlwriteroutput *output, WCHAR ch)
 {
     return write_output_buffer(output, &ch, 1);
@@ -1098,19 +1106,20 @@ static HRESULT WINAPI xmlwriter_WriteCData(IXmlWriter *iface, LPCWSTR data)
 
 static HRESULT WINAPI xmlwriter_WriteCharEntity(IXmlWriter *iface, WCHAR ch)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    xmlwriter *writer = impl_from_IXmlWriter(iface);
+    HRESULT hr = S_OK;
     WCHAR bufW[16];
 
-    TRACE("%p %#x\n", This, ch);
+    TRACE("%p, %#x.\n", iface, ch);
 
-    switch (This->state)
+    switch (writer->state)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
     case XmlWriterState_ElemStarted:
-        writer_close_starttag(This);
+        hr = writer_close_starttag(writer);
         break;
     case XmlWriterState_DocClosed:
         return WR_E_INVALIDACTION;
@@ -1119,9 +1128,7 @@ static HRESULT WINAPI xmlwriter_WriteCharEntity(IXmlWriter *iface, WCHAR ch)
     }
 
     swprintf(bufW, ARRAY_SIZE(bufW), L"&#x%x;", ch);
-    write_output_buffer(This->output, bufW, -1);
-
-    return S_OK;
+    return write_output(writer, bufW, -1, &hr);
 }
 
 static HRESULT writer_get_next_write_count(const WCHAR *str, unsigned int length, unsigned int *count)
