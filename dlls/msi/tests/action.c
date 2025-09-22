@@ -1800,6 +1800,13 @@ static const char pa_feature_dat[] =
     "Feature\tFeature\n"
     "assembly\t\t\tassembly feature\t1\t2\tMSITESTDIR\t0\n";
 
+static const char pa_feature_with_2nd_feature_dat[] =
+    "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+    "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+    "Feature\tFeature\n"
+    "assembly\t\t\tassembly feature\t1\t2\tMSITESTDIR\t0\n"
+    "2nd_feature\t\tSecond feature\tSpace filler\t1\t2\tMSITESTDIR\t0\n";
+
 static const char pa_feature_comp_dat[] =
     "Feature_\tComponent_\n"
     "s38\ts72\n"
@@ -2326,6 +2333,21 @@ static const msi_table pa_tables[] =
     ADD_TABLE(directory),
     ADD_TABLE(pa_component),
     ADD_TABLE(pa_feature),
+    ADD_TABLE(pa_feature_comp),
+    ADD_TABLE(pa_file),
+    ADD_TABLE(pa_msi_assembly),
+    ADD_TABLE(pa_msi_assembly_name),
+    ADD_TABLE(pa_install_exec_seq),
+    ADD_TABLE(pa_custom_action),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
+static const msi_table pa_tables_with_2nd_feature[] =
+{
+    ADD_TABLE(directory),
+    ADD_TABLE(pa_component),
+    ADD_TABLE(pa_feature_with_2nd_feature),
     ADD_TABLE(pa_feature_comp),
     ADD_TABLE(pa_file),
     ADD_TABLE(pa_msi_assembly),
@@ -6366,6 +6388,75 @@ static void test_publish_assemblies(void)
     res = RegOpenKeyExA(HKEY_CLASSES_ROOT, path, 0, access, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
     CHECK_REG_MULTI(hkey, name_win32_local, "rcHQPHq?CA@Uv-XqMI1e>C)Uvlj*53A)u(QQ9=)X!\0");
+    RegCloseKey(hkey);
+
+    /* No registration is done for a local assembly with no matching file */
+    path = (is_wow64 || is_64bit) ? classes_path_fake_local_wow64 : classes_path_fake_local;
+    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, path, 0, access, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "got %ld\n", res);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL ALLUSERS=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, classes_path_dotnet, &hkey);
+    if (res == ERROR_SUCCESS)
+    {
+        res = RegDeleteValueA(hkey, name_dotnet);
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", res);
+        RegCloseKey(hkey);
+    }
+
+    path = (is_wow64 || is_64bit) ? classes_path_dotnet_local_wow64 : classes_path_dotnet_local;
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, path, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", res);
+
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, classes_path_win32, &hkey);
+    if (res == ERROR_SUCCESS)
+    {
+        res = RegDeleteValueA(hkey, name_win32);
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", res);
+        RegCloseKey(hkey);
+    }
+
+    path = (is_wow64 || is_64bit) ? classes_path_win32_local_wow64 : classes_path_win32_local;
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, path, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", res);
+
+    /* When there are more than 1 feature in MSI package, the feature has to be recorded in
+       the assembly publication entry. */
+    DeleteFileA(msifile);
+    create_database(msifile, pa_tables_with_2nd_feature, ARRAY_SIZE(pa_tables_with_2nd_feature));
+
+    r = MsiInstallProductA(msifile, "ALLUSERS=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    access = KEY_QUERY_VALUE;
+    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, classes_path_dotnet, 0, access, &hkey);
+    if (res == ERROR_FILE_NOT_FOUND && is_wow64) /* Vista WOW64 */
+    {
+        trace("Using 64-bit registry view for HKCR\\Installer\n");
+        access = KEY_QUERY_VALUE | KEY_WOW64_64KEY;
+        res = RegOpenKeyExA(HKEY_CLASSES_ROOT, classes_path_dotnet, 0, access, &hkey);
+    }
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
+    CHECK_REG_MULTI(hkey, name_dotnet, "rcHQPHq?CA@Uv-XqMI1eassembly>Z'q,T*76M@=YEg6My?~]\0");
+    RegCloseKey(hkey);
+
+    path = (is_wow64 || is_64bit) ? classes_path_dotnet_local_wow64 : classes_path_dotnet_local;
+    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, path, 0, access, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
+    CHECK_REG_MULTI(hkey, name_dotnet_local, "rcHQPHq?CA@Uv-XqMI1eassembly>LF,8A?0d.AW@vcZ$Cgox\0");
+    RegCloseKey(hkey);
+
+    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, classes_path_win32, 0, access, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
+    CHECK_REG_MULTI(hkey, name_win32, "rcHQPHq?CA@Uv-XqMI1eassembly>}NJjwR'%D9v1p!v{WV(%\0");
+    RegCloseKey(hkey);
+
+    path = (is_wow64 || is_64bit) ? classes_path_win32_local_wow64 : classes_path_win32_local;
+    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, path, 0, access, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
+    CHECK_REG_MULTI(hkey, name_win32_local, "rcHQPHq?CA@Uv-XqMI1eassembly>C)Uvlj*53A)u(QQ9=)X!\0");
     RegCloseKey(hkey);
 
     /* No registration is done for a local assembly with no matching file */

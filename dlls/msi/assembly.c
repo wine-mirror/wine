@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -569,10 +570,13 @@ UINT ACTION_MsiPublishAssemblies( MSIPACKAGE *package )
         HKEY hkey;
         GUID guid;
         DWORD size;
-        WCHAR buffer[43];
+        DWORD buffer_len;
+        DWORD i;
+        WCHAR * buffer;
         MSIRECORD *uirow;
         MSIASSEMBLY *assembly = comp->assembly;
         BOOL win32;
+        BOOL wants_feature_in_descriptor;
 
         if (!assembly || !comp->ComponentId) continue;
 
@@ -584,12 +588,29 @@ UINT ACTION_MsiPublishAssemblies( MSIPACKAGE *package )
         }
         TRACE("publishing %s\n", debugstr_w(comp->Component));
 
+        wants_feature_in_descriptor =
+            (list_count(&package->features) >= 2 && assembly->feature);
+        buffer_len = 43 + (wants_feature_in_descriptor ? lstrlenW(assembly->feature) : 0);
+        size = buffer_len * sizeof(WCHAR);
+        buffer = malloc(size);
+
+        i = 0;
         CLSIDFromString( package->ProductCode, &guid );
         encode_base85_guid( &guid, buffer );
-        buffer[20] = '>';
+        i += 20;
+
+        if (wants_feature_in_descriptor) {
+            lstrcpyW(buffer + i, assembly->feature);
+            i += lstrlenW(assembly->feature);
+        }
+
+        buffer[i++] = '>';
         CLSIDFromString( comp->ComponentId, &guid );
-        encode_base85_guid( &guid, buffer + 21 );
-        buffer[42] = 0;
+        encode_base85_guid( &guid, buffer + i ); i += 20;
+        buffer[i++] = 0;
+        buffer[i++] = 0; /* REG_MULTI_SZ */
+
+        assert(i == buffer_len);
 
         win32 = assembly->attributes & msidbAssemblyAttributesWin32;
         if (assembly->application)
@@ -598,11 +619,13 @@ UINT ACTION_MsiPublishAssemblies( MSIPACKAGE *package )
             if (!file)
             {
                 WARN("no matching file %s for local assembly\n", debugstr_w(assembly->application));
+                free(buffer);
                 continue;
             }
             if ((res = open_local_assembly_key( package->Context, win32, file->TargetPath, &hkey )))
             {
                 WARN( "failed to open local assembly key %ld\n", res );
+                free(buffer);
                 return ERROR_FUNCTION_FAILED;
             }
         }
@@ -611,15 +634,17 @@ UINT ACTION_MsiPublishAssemblies( MSIPACKAGE *package )
             if ((res = open_global_assembly_key( package->Context, win32, &hkey )))
             {
                 WARN( "failed to open global assembly key %ld\n", res );
+                free(buffer);
                 return ERROR_FUNCTION_FAILED;
             }
         }
-        size = sizeof(buffer);
+
         if ((res = RegSetValueExW( hkey, assembly->display_name, 0, REG_MULTI_SZ, (const BYTE *)buffer, size )))
         {
             WARN( "failed to set assembly value %ld\n", res );
         }
         RegCloseKey( hkey );
+        free(buffer);
 
         uirow = MSI_CreateRecord( 2 );
         MSI_RecordSetStringW( uirow, 2, assembly->display_name );
