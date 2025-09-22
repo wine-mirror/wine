@@ -101,7 +101,7 @@ static inline void g_cond_wait( GCond *cond, GMutex *mutex ) { SleepConditionVar
 
 static inline void g_atomic_int_inc( int *ptr ) { InterlockedIncrement( (LONG *)ptr ); }
 static inline int g_atomic_int_add( int *ptr, int val ) { return InterlockedAdd( (LONG *)ptr, val ) - val; }
-static inline int g_atomic_int_get( int *ptr ) { return ReadAcquire( (LONG *)ptr ); }
+static inline int g_atomic_int_get( int *ptr ) { int value = ReadNoFence( (LONG *)ptr ); MemoryBarrier(); return value; }
 static inline void g_atomic_int_set( int *ptr, int val ) { InterlockedExchange( (LONG *)ptr, val ); }
 static inline int g_atomic_int_dec_and_test( int *ptr, int val ) { return !InterlockedAdd( (LONG *)ptr, -val ); }
 static inline int g_atomic_int_compare_and_exchange( int *ptr, int cmp, int val ) { return InterlockedCompareExchange( (LONG *)ptr, val, cmp ) == cmp; }
