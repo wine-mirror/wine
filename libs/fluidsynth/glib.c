@@ -40,10 +40,9 @@ int g_snprintf( char *buffer, size_t size, const char *format, ... )
 
 double g_get_monotonic_time(void)
 {
-    static LARGE_INTEGER frequency = {0};
-    LARGE_INTEGER counter;
+    LARGE_INTEGER counter, frequency;
 
-    if (!frequency.QuadPart) QueryPerformanceFrequency( &frequency );
+    QueryPerformanceFrequency( &frequency );
     QueryPerformanceCounter( &counter );
 
     return counter.QuadPart * 1000000.0 / frequency.QuadPart; /* time in micros */
