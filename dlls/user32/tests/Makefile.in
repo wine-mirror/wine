@@ -1,5 +1,6 @@
 TESTDLL   = user32.dll
 IMPORTS   = user32 gdi32 advapi32 hid imm32 setupapi
+EXTRADLLFLAGS = -Wl,--subsystem,console:5.2
 
 testdll_IMPORTS = user32
 
