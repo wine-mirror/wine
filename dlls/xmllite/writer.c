@@ -1594,7 +1594,8 @@ static HRESULT WINAPI xmlwriter_WriteName(IXmlWriter *iface, LPCWSTR pwszName)
 static HRESULT WINAPI xmlwriter_WriteNmToken(IXmlWriter *iface, const WCHAR *nmtoken)
 {
     xmlwriter *writer = impl_from_IXmlWriter(iface);
-    unsigned int len;
+    unsigned int len = 0;
+    HRESULT hr = S_OK;
 
     TRACE("%p, %s\n", iface, wine_dbgstr_w(nmtoken));
 
@@ -1612,16 +1613,16 @@ static HRESULT WINAPI xmlwriter_WriteNmToken(IXmlWriter *iface, const WCHAR *nmt
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
     case XmlWriterState_ElemStarted:
-        writer_close_starttag(writer);
+        hr = writer_close_starttag(writer);
         break;
     default:
         ;
     }
 
-    if (!is_valid_nmtoken(nmtoken, &len))
-        return WC_E_NAMECHARACTER;
+    if (SUCCEEDED(hr) && !is_valid_nmtoken(nmtoken, &len))
+        hr = WC_E_NAMECHARACTER;
 
-    return write_output_buffer(writer->output, nmtoken, len);
+    return write_output(writer, nmtoken, len, &hr);
 }
 
 static HRESULT writer_write_node(IXmlWriter *writer, IXmlReader *reader, BOOL shallow, BOOL write_default_attributes)
