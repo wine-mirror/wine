@@ -2038,6 +2038,7 @@ static HRESULT WINAPI xmlwriter_WriteString(IXmlWriter *iface, const WCHAR *stri
 static HRESULT WINAPI xmlwriter_WriteSurrogateCharEntity(IXmlWriter *iface, WCHAR wchLow, WCHAR wchHigh)
 {
     xmlwriter *writer = impl_from_IXmlWriter(iface);
+    HRESULT hr = S_OK;
     int codepoint;
     WCHAR bufW[16];
 
@@ -2053,7 +2054,7 @@ static HRESULT WINAPI xmlwriter_WriteSurrogateCharEntity(IXmlWriter *iface, WCHA
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
     case XmlWriterState_ElemStarted:
-        writer_close_starttag(writer);
+        hr = writer_close_starttag(writer);
         break;
     case XmlWriterState_DocClosed:
         return WR_E_INVALIDACTION;
@@ -2063,9 +2064,7 @@ static HRESULT WINAPI xmlwriter_WriteSurrogateCharEntity(IXmlWriter *iface, WCHA
 
     codepoint = ((wchHigh - 0xd800) * 0x400) + (wchLow - 0xdc00) + 0x10000;
     swprintf(bufW, ARRAY_SIZE(bufW), L"&#x%X;", codepoint);
-    write_output_buffer(writer->output, bufW, -1);
-
-    return S_OK;
+    return write_output(writer, bufW, -1, &hr);
 }
 
 static HRESULT WINAPI xmlwriter_WriteWhitespace(IXmlWriter *iface, LPCWSTR text)
