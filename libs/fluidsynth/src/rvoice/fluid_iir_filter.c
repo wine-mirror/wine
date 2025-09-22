@@ -151,6 +151,7 @@ static fluid_real_t fluid_iir_filter_q_from_dB(fluid_real_t q_dB)
     /* Range: SF2.01 section 8.1.3 # 8 (convert from cB to dB => /10) */
     fluid_clip(q_dB, 0.0f, 96.0f);
 
+#if 0 /* unused in Wine */
     /* Short version: Modify the Q definition in a way, that a Q of 0
      * dB leads to no resonance hump in the freq. response.
      *
@@ -167,6 +168,7 @@ static fluid_real_t fluid_iir_filter_q_from_dB(fluid_real_t q_dB)
      * response of a non-resonant filter.  This idea is implemented as
      * follows: */
     q_dB -= 3.01f;
+#endif /* unused in Wine */
 
     /* The 'sound font' Q is defined in dB. The filter needs a linear
        q. Convert. */

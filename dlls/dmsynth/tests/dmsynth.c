@@ -1798,7 +1798,7 @@ static void test_IKsControl(void)
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     envelope = default_volume_envelope;
     envelope.gain -= 60.;
-    check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, TRUE);
+    check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, FALSE);
 
     /* default value for volume 1 is 600 */
     volume = 600;
@@ -1809,7 +1809,7 @@ static void test_IKsControl(void)
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     envelope = default_volume_envelope;
     envelope.gain -= 60.;
-    check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, TRUE);
+    check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, FALSE);
 
     /* gain from volume 0 and 1 is added together */
     volume = 0;
@@ -1820,7 +1820,7 @@ static void test_IKsControl(void)
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     envelope = default_volume_envelope;
     envelope.gain -= 120.;
-    check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, TRUE);
+    check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, FALSE);
 
     IKsControl_Release(control);
     IDirectMusicSynth_Release(synth);
