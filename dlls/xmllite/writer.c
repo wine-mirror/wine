@@ -718,24 +718,26 @@ static void writer_dec_indent(xmlwriter *writer)
         writer->indent_level--;
 }
 
-static void write_node_indent(xmlwriter *writer)
+static HRESULT write_node_indent(xmlwriter *writer, HRESULT *hr)
 {
     unsigned int indent_level = writer->indent_level;
 
-    if (!writer->indent || writer->textnode)
+    if (FAILED(*hr))
+        return *hr;
+
+    if (writer->indent && !writer->textnode)
     {
-        writer->textnode = 0;
-        return;
+        /* Do state check to prevent newline inserted after BOM. It is assumed that
+           state does not change between writing BOM and inserting indentation. */
+        if (writer->output->written && writer->state != XmlWriterState_Ready)
+            write_output(writer, L"\r\n", 2, hr);
+        while (indent_level--)
+            write_output(writer, L"  ", 2, hr);
     }
 
-    /* Do state check to prevent newline inserted after BOM. It is assumed that
-       state does not change between writing BOM and inserting indentation. */
-    if (writer->output->written && writer->state != XmlWriterState_Ready)
-        write_output_buffer(writer->output, L"\r\n", 2);
-    while (indent_level--)
-        write_output_buffer(writer->output, L"  ", 2);
-
     writer->textnode = 0;
+
+    return *hr;
 }
 
 static HRESULT WINAPI xmlwriter_QueryInterface(IXmlWriter *iface, REFIID riid, void **ppvObject)
@@ -1070,31 +1072,35 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
     return S_OK;
 }
 
-static void write_cdata_section(xmlwriteroutput *output, const WCHAR *data, int len)
+static HRESULT write_cdata_section(xmlwriter *writer, const WCHAR *data, int len)
 {
-    write_output_buffer(output, L"<![CDATA[", 9);
+    HRESULT hr = S_OK;
+
+    write_output(writer, L"<![CDATA[", 9, &hr);
     if (data)
-        write_output_buffer(output, data, len);
-    write_output_buffer(output, L"]]>", 3);
+        write_output(writer, data, len, &hr);
+
+    return write_output(writer, L"]]>", 3, &hr);
 }
 
 static HRESULT WINAPI xmlwriter_WriteCData(IXmlWriter *iface, LPCWSTR data)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    xmlwriter *writer = impl_from_IXmlWriter(iface);
+    HRESULT hr = S_OK;
     int len;
 
-    TRACE("%p %s\n", This, debugstr_w(data));
+    TRACE("%p, %s.\n", iface, debugstr_w(data));
 
-    switch (This->state)
+    switch (writer->state)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
     case XmlWriterState_ElemStarted:
-        writer_close_starttag(This);
+        hr = writer_close_starttag(writer);
         break;
     case XmlWriterState_Ready:
     case XmlWriterState_DocClosed:
-        This->state = XmlWriterState_DocClosed;
+        writer->state = XmlWriterState_DocClosed;
         return WR_E_INVALIDACTION;
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
@@ -1104,28 +1110,34 @@ static HRESULT WINAPI xmlwriter_WriteCData(IXmlWriter *iface, LPCWSTR data)
 
     len = data ? lstrlenW(data) : 0;
 
-    write_node_indent(This);
+    if (FAILED(write_node_indent(writer, &hr)))
+        return hr;
+
     if (!len)
-        write_cdata_section(This->output, NULL, 0);
+    {
+        hr = write_cdata_section(writer, NULL, 0);
+    }
     else
     {
-        while (len)
+        while (hr == S_OK && len)
         {
             const WCHAR *str = wcsstr(data, L"]]>");
-            if (str) {
+            if (str)
+            {
                 str += 2;
-                write_cdata_section(This->output, data, str - data);
+                hr = write_cdata_section(writer, data, str - data);
                 len -= str - data;
                 data = str;
             }
-            else {
-                write_cdata_section(This->output, data, len);
+            else
+            {
+                hr = write_cdata_section(writer, data, len);
                 break;
             }
         }
     }
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI xmlwriter_WriteCharEntity(IXmlWriter *iface, WCHAR ch)
@@ -1262,6 +1274,7 @@ static HRESULT WINAPI xmlwriter_WriteChars(IXmlWriter *iface, const WCHAR *chara
 static HRESULT WINAPI xmlwriter_WriteComment(IXmlWriter *iface, LPCWSTR comment)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
+    HRESULT hr = S_OK;
 
     TRACE("%p %s\n", This, debugstr_w(comment));
 
@@ -1280,7 +1293,7 @@ static HRESULT WINAPI xmlwriter_WriteComment(IXmlWriter *iface, LPCWSTR comment)
         ;
     }
 
-    write_node_indent(This);
+    write_node_indent(This, &hr);
     write_output_buffer(This->output, L"<!--", 4);
     if (comment) {
         int len = lstrlenW(comment), i;
@@ -1417,7 +1430,7 @@ static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR pr
     }
 
     write_encoding_bom(This);
-    write_node_indent(This);
+    write_node_indent(This, &hr);
 
     write_output_buffer_char(This->output, '<');
     if (ns)
@@ -1480,6 +1493,7 @@ static HRESULT WINAPI xmlwriter_WriteEndElement(IXmlWriter *iface)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
     struct element *element;
+    HRESULT hr = S_OK;
 
     TRACE("%p\n", This);
 
@@ -1512,7 +1526,7 @@ static HRESULT WINAPI xmlwriter_WriteEndElement(IXmlWriter *iface)
     else
     {
         /* Write full end tag. */
-        write_node_indent(This);
+        write_node_indent(This, &hr);
         write_output_buffer(This->output, L"</", 2);
         write_output_buffer(This->output, element->qname, element->len);
         write_output_buffer_char(This->output, '>');
@@ -1547,6 +1561,7 @@ static HRESULT WINAPI xmlwriter_WriteFullEndElement(IXmlWriter *iface)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
     struct element *element;
+    HRESULT hr = S_OK;
 
     TRACE("%p\n", This);
 
@@ -1580,7 +1595,7 @@ static HRESULT WINAPI xmlwriter_WriteFullEndElement(IXmlWriter *iface)
         This->textnode = 0;
     }
     else
-        write_node_indent(This);
+        write_node_indent(This, &hr);
 
     /* write full end tag */
     write_output_buffer(This->output, L"</", 2);
@@ -1770,6 +1785,7 @@ static HRESULT WINAPI xmlwriter_WriteProcessingInstruction(IXmlWriter *iface, LP
                                              LPCWSTR text)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
+    HRESULT hr = S_OK;
 
     TRACE("(%p)->(%s %s)\n", This, wine_dbgstr_w(name), wine_dbgstr_w(text));
 
@@ -1793,7 +1809,7 @@ static HRESULT WINAPI xmlwriter_WriteProcessingInstruction(IXmlWriter *iface, LP
     }
 
     write_encoding_bom(This);
-    write_node_indent(This);
+    write_node_indent(This, &hr);
     write_output_buffer(This->output, L"<?", 2);
     write_output_buffer(This->output, name, -1);
     write_output_buffer_char(This->output, ' ');
@@ -1990,7 +2006,7 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
         return E_OUTOFMEMORY;
 
     write_encoding_bom(This);
-    write_node_indent(This);
+    write_node_indent(This, &hr);
 
     This->state = XmlWriterState_ElemStarted;
     This->starttagopen = 1;
