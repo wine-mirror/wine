@@ -101,7 +101,7 @@ static inline void g_cond_broadcast( GCond *cond ) { WakeAllConditionVariable( c
 static inline void g_cond_wait( GCond *cond, GMutex *mutex ) { SleepConditionVariableSRW( cond, mutex, INFINITE, 0 ); }
 
 static inline void g_atomic_int_inc( int *ptr ) { InterlockedIncrement( (LONG *)ptr ); }
-static inline int g_atomic_int_add( int *ptr, int val ) { return InterlockedAdd( (LONG *)ptr, val ) - val; }
+static inline int g_atomic_int_add( int *ptr, int val ) { return InterlockedExchangeAdd( (LONG *)ptr, val ); }
 static inline int g_atomic_int_get( int *ptr ) { int value = ReadNoFence( (LONG *)ptr ); MemoryBarrier(); return value; }
 static inline void g_atomic_int_set( int *ptr, int val ) { InterlockedExchange( (LONG *)ptr, val ); }
 static inline int g_atomic_int_dec_and_test( int *ptr ) { return !InterlockedAdd( (LONG *)ptr, -1 ); }
