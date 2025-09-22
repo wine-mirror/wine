@@ -57,7 +57,7 @@ static DWORD CALLBACK g_thread_wrapper( void *args )
 {
     GThread *thread = args;
     gpointer ret = thread->func( thread->data );
-    if (!InterlockedDecrement( &thread->ref )) free( thread );
+    g_thread_unref( thread );
     return (UINT_PTR)ret;
 }
 
@@ -81,8 +81,11 @@ GThread *g_thread_try_new( const char *name, GThreadFunc func, gpointer data, GE
 
 void g_thread_unref( GThread *thread )
 {
-    CloseHandle( thread->handle );
-    if (!InterlockedDecrement( &thread->ref )) free( thread );
+    if (!InterlockedDecrement( &thread->ref ))
+    {
+        CloseHandle( thread->handle );
+        free( thread );
+    }
 }
 
 void g_thread_join( GThread *thread )
