@@ -386,6 +386,26 @@ static BOOL is_valid_nmtoken(const WCHAR *str, unsigned int *out)
     return TRUE;
 }
 
+static BOOL is_valid_whitespace(const WCHAR *str, unsigned int *out)
+{
+    unsigned int len = 0;
+
+    *out = 0;
+
+    while (is_wchar_space(*str))
+    {
+        str++;
+        len++;
+    }
+
+    if (*str)
+        return FALSE;
+
+    *out = len;
+
+    return TRUE;
+}
+
 static HRESULT is_valid_name(const WCHAR *str, unsigned int *out)
 {
     unsigned int len = 1;
@@ -2051,7 +2071,8 @@ static HRESULT WINAPI xmlwriter_WriteSurrogateCharEntity(IXmlWriter *iface, WCHA
 static HRESULT WINAPI xmlwriter_WriteWhitespace(IXmlWriter *iface, LPCWSTR text)
 {
     xmlwriter *writer = impl_from_IXmlWriter(iface);
-    size_t length = 0;
+    unsigned int length = 0;
+    HRESULT hr = S_OK;
 
     TRACE("%p, %s.\n", iface, wine_dbgstr_w(text));
 
@@ -2060,7 +2081,7 @@ static HRESULT WINAPI xmlwriter_WriteWhitespace(IXmlWriter *iface, LPCWSTR text)
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
     case XmlWriterState_ElemStarted:
-        writer_close_starttag(writer);
+        hr = writer_close_starttag(writer);
         break;
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
@@ -2075,9 +2096,10 @@ static HRESULT WINAPI xmlwriter_WriteWhitespace(IXmlWriter *iface, LPCWSTR text)
         if (!is_wchar_space(text[length])) return WR_E_NONWHITESPACE;
         length++;
     }
+    if (SUCCEEDED(hr) && !is_valid_whitespace(text, &length))
+        hr = WR_E_NONWHITESPACE;
 
-    write_output_buffer(writer->output, text, length);
-    return S_OK;
+    return write_output(writer, text, length, &hr);
 }
 
 static HRESULT WINAPI xmlwriter_Flush(IXmlWriter *iface)
