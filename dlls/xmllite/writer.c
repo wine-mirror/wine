@@ -648,32 +648,36 @@ static const WCHAR *get_output_encoding_name(xmlwriteroutput *output)
     return get_encoding_name(output->encoding);
 }
 
-static HRESULT write_xmldecl(xmlwriter *writer, XmlStandalone standalone)
+static HRESULT write_xmldecl(xmlwriter *writer, XmlStandalone standalone, HRESULT *hr)
 {
+    if (FAILED(*hr))
+        return *hr;
+
     write_encoding_bom(writer);
     writer->state = XmlWriterState_DocStarted;
+
     if (writer->omitxmldecl) return S_OK;
 
     /* version */
-    write_output_buffer(writer->output, L"<?xml version=\"1.0\"", 19);
+    write_output(writer, L"<?xml version=\"1.0\"", 19, hr);
 
     /* encoding */
-    write_output_buffer(writer->output, L" encoding=", 10);
+    write_output(writer, L" encoding=", 10, hr);
     write_output_buffer_quoted(writer->output, get_output_encoding_name(writer->output), -1);
 
     /* standalone */
     if (standalone == XmlStandalone_Omit)
-        write_output_buffer(writer->output, L"?>", 2);
+        write_output(writer, L"?>", 2, hr);
     else
     {
-        write_output_buffer(writer->output, L" standalone=\"", 13);
+        write_output(writer, L" standalone=\"", 13, hr);
         if (standalone == XmlStandalone_Yes)
-            write_output_buffer(writer->output, L"yes\"?>", 6);
+            write_output(writer, L"yes\"?>", 6, hr);
         else
-            write_output_buffer(writer->output, L"no\"?>", 5);
+            write_output(writer, L"no\"?>", 5, hr);
     }
 
-    return S_OK;
+    return *hr;
 }
 
 static void writer_output_ns(xmlwriter *writer, struct element *element)
@@ -1840,7 +1844,7 @@ static HRESULT WINAPI xmlwriter_WriteRaw(IXmlWriter *iface, LPCWSTR data)
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
     case XmlWriterState_Ready:
-        write_xmldecl(This, XmlStandalone_Omit);
+        write_xmldecl(This, XmlStandalone_Omit, &hr);
         /* fallthrough */
     case XmlWriterState_DocStarted:
     case XmlWriterState_PIDocStarted:
@@ -1889,7 +1893,7 @@ static HRESULT WINAPI xmlwriter_WriteRawChars(IXmlWriter *iface,  const WCHAR *c
     case XmlWriterState_DocClosed:
         return WR_E_INVALIDACTION;
     case XmlWriterState_Ready:
-        write_xmldecl(writer, XmlStandalone_Omit);
+        write_xmldecl(writer, XmlStandalone_Omit, &hr);
         break;
     case XmlWriterState_ElemStarted:
         writer_close_starttag(writer);
@@ -1911,27 +1915,28 @@ static HRESULT WINAPI xmlwriter_WriteRawChars(IXmlWriter *iface,  const WCHAR *c
 
 static HRESULT WINAPI xmlwriter_WriteStartDocument(IXmlWriter *iface, XmlStandalone standalone)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    xmlwriter *writer = impl_from_IXmlWriter(iface);
+    HRESULT hr = S_OK;
 
-    TRACE("(%p)->(%d)\n", This, standalone);
+    TRACE("%p, %d.\n", iface, standalone);
 
-    switch (This->state)
+    switch (writer->state)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
     case XmlWriterState_PIDocStarted:
-        This->state = XmlWriterState_DocStarted;
+        writer->state = XmlWriterState_DocStarted;
         return S_OK;
     case XmlWriterState_Ready:
         break;
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
     default:
-        This->state = XmlWriterState_DocClosed;
+        writer->state = XmlWriterState_DocClosed;
         return WR_E_INVALIDACTION;
     }
 
-    return write_xmldecl(This, standalone);
+    return write_xmldecl(writer, standalone, &hr);
 }
 
 static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR prefix, LPCWSTR local_name, LPCWSTR uri)
