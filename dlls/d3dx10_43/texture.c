@@ -884,9 +884,6 @@ static HRESULT d3dx_load_texture_data(struct d3dx_image *image, D3DX10_IMAGE_LOA
     unsigned int i, j;
     HRESULT hr = S_OK;
 
-    if (img_info->ImageFileFormat == D3DX10_IFF_BMP)
-        return E_NOTIMPL;
-
     tmp_load_info.Format = img_info->Format;
     fmt_desc = get_d3dx_pixel_format_info(d3dx_pixel_format_id_from_dxgi_format(tmp_load_info.Format));
     if (fmt_desc->format == D3DX_PIXEL_FORMAT_COUNT)

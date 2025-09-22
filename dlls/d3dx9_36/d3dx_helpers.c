@@ -1500,7 +1500,8 @@ static HRESULT d3dx_initialize_image_from_wic(const void *src_data, uint32_t src
             break;
     }
 
-    if (image_is_argb(bitmap_frame, image))
+    /* D3DX10/D3DX11 ignore alpha channels in X8 bitmaps. */
+    if (!(flags & D3DX_IMAGE_SUPPORT_DXT10) && image_is_argb(bitmap_frame, image))
         image->format = D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM;
 
     if (!(flags & D3DX_IMAGE_INFO_ONLY))
