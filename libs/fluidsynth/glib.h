@@ -81,7 +81,7 @@ extern int g_file_test( const char *path, int test );
 static inline void g_free( void *ptr ) { free( ptr ); }
 
 typedef SRWLOCK GMutex;
-static inline void g_mutex_init( GMutex *mutex ) {}
+static inline void g_mutex_init( GMutex *mutex ) { InitializeSRWLock( mutex ); }
 static inline void g_mutex_clear( GMutex *mutex ) {}
 static inline void g_mutex_lock( GMutex *mutex ) { AcquireSRWLockExclusive( mutex ); }
 static inline void g_mutex_unlock( GMutex *mutex ) { ReleaseSRWLockExclusive( mutex ); }
@@ -93,7 +93,7 @@ static inline void g_rec_mutex_lock( GRecMutex *mutex ) { EnterCriticalSection( 
 static inline void g_rec_mutex_unlock( GRecMutex *mutex ) { LeaveCriticalSection( mutex ); }
 
 typedef CONDITION_VARIABLE GCond;
-static inline void g_cond_init( GCond *cond ) {}
+static inline void g_cond_init( GCond *cond ) { InitializeConditionVariable( cond ); }
 static inline void g_cond_clear( GCond *cond ) {}
 static inline void g_cond_signal( GCond *cond ) { WakeConditionVariable( cond ); }
 static inline void g_cond_broadcast( GCond *cond ) { WakeAllConditionVariable( cond ); }
