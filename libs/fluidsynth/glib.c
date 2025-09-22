@@ -50,7 +50,7 @@ double g_get_monotonic_time(void)
 
 void g_usleep( unsigned int micros )
 {
-    Sleep( micros / 1000 );
+    Sleep( (micros + 999) / 1000 );
 }
 
 static DWORD CALLBACK g_thread_wrapper( void *args )
