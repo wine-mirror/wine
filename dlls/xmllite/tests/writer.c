@@ -670,6 +670,7 @@ static void test_writestartdocument(void)
 
 static void test_flush(void)
 {
+    IStream *stream, *stream2;
     IXmlWriter *writer;
     HRESULT hr;
 
@@ -696,6 +697,66 @@ static void test_flush(void)
     g_write_len = 1;
     IXmlWriter_Release(writer);
     ok(g_write_len == 0, "Unexpected length %lu.\n", g_write_len);
+
+    hr = CreateXmlWriter(&IID_IXmlWriter, (void **)&writer, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteStartElement(writer, L"p", L"a", L"uri");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IXmlWriter_Release(writer);
+
+    CHECK_OUTPUT_TODO(stream, "<p:a xmlns:p=\"uri\" />");
+    IStream_Release(stream);
+
+    /* Resetting output flushes output */
+    hr = CreateXmlWriter(&IID_IXmlWriter, (void **)&writer, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, L"a", NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    CHECK_OUTPUT(stream, "");
+
+    hr = IXmlWriter_SetOutput(writer, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    CHECK_OUTPUT_TODO(stream, "<a />");
+    IStream_Release(stream);
+
+    /* Switching to different output. */
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteStartElement(writer, L"m", L"a", L"uri");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    CHECK_OUTPUT(stream, "");
+
+    stream2 = writer_set_output(writer);
+    CHECK_OUTPUT_TODO(stream, "<m:a xmlns:m=\"uri\" />");
+    IStream_Release(stream2);
+
+    IStream_Release(stream);
+
+    /* Direct flush with open element */
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteStartElement(writer, L"n", L"a", L"uri");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    CHECK_OUTPUT(stream, "");
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    CHECK_OUTPUT(stream, "<n:a");
+
+    IStream_Release(stream);
+    IXmlWriter_Release(writer);
 }
 
 static void test_omitxmldeclaration(void)
