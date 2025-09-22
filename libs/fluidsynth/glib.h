@@ -59,6 +59,7 @@ typedef struct
     HANDLE handle;
     GThreadFunc func;
     gpointer data;
+    gpointer result;
 } GThread;
 
 extern int g_vsnprintf( char *buffer, size_t size, const char *format, va_list args ) __WINE_CRT_PRINTF_ATTR(3, 0);
@@ -69,7 +70,7 @@ extern void g_usleep( unsigned int micros );
 
 extern GThread *g_thread_try_new( const char *name, GThreadFunc func, gpointer data, GError **err );
 extern void g_thread_unref( GThread *thread );
-extern void g_thread_join( GThread *thread );
+extern gpointer g_thread_join( GThread *thread );
 extern void g_clear_error( GError **error );
 
 #define G_FILE_TEST_EXISTS 1

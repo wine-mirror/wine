@@ -56,9 +56,9 @@ void g_usleep( unsigned int micros )
 static DWORD CALLBACK g_thread_wrapper( void *args )
 {
     GThread *thread = args;
-    gpointer ret = thread->func( thread->data );
+    thread->result = thread->func( thread->data );
     g_thread_unref( thread );
-    return (UINT_PTR)ret;
+    return 0;
 }
 
 GThread *g_thread_try_new( const char *name, GThreadFunc func, gpointer data, GError **err )
@@ -88,10 +88,14 @@ void g_thread_unref( GThread *thread )
     }
 }
 
-void g_thread_join( GThread *thread )
+gpointer g_thread_join( GThread *thread )
 {
+    gpointer result;
+
     WaitForSingleObject( thread->handle, INFINITE );
+    result = thread->result;
     g_thread_unref( thread );
+    return result;
 }
 
 void g_clear_error( GError **error )
