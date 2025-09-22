@@ -1,5 +1,5 @@
 MODULE    = wbemprox.dll
-IMPORTS   = winspool version iphlpapi oleaut32 ole32 advapi32 user32 gdi32 ws2_32
+IMPORTS   = winspool version iphlpapi setupapi oleaut32 ole32 advapi32 user32 gdi32 ws2_32
 
 SOURCES = \
 	builtin.c \
