@@ -1273,19 +1273,19 @@ static HRESULT WINAPI xmlwriter_WriteChars(IXmlWriter *iface, const WCHAR *chara
 
 static HRESULT WINAPI xmlwriter_WriteComment(IXmlWriter *iface, LPCWSTR comment)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    xmlwriter *writer = impl_from_IXmlWriter(iface);
     HRESULT hr = S_OK;
 
-    TRACE("%p %s\n", This, debugstr_w(comment));
+    TRACE("%p, %s.\n", iface, debugstr_w(comment));
 
-    switch (This->state)
+    switch (writer->state)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
     case XmlWriterState_ElemStarted:
-        writer_close_starttag(This);
+        hr = writer_close_starttag(writer);
         break;
     case XmlWriterState_DocClosed:
         return WR_E_INVALIDACTION;
@@ -1293,29 +1293,33 @@ static HRESULT WINAPI xmlwriter_WriteComment(IXmlWriter *iface, LPCWSTR comment)
         ;
     }
 
-    write_node_indent(This, &hr);
-    write_output_buffer(This->output, L"<!--", 4);
-    if (comment) {
+    write_node_indent(writer, &hr);
+    write_output(writer, L"<!--", 4, &hr);
+    if (comment)
+    {
         int len = lstrlenW(comment), i;
 
         /* Make sure there's no two hyphen sequences in a string, space is used as a separator to produce compliant
            comment string */
-        if (len > 1) {
-            for (i = 0; i < len; i++) {
-                write_output_buffer(This->output, comment + i, 1);
+        if (len > 1)
+        {
+            for (i = 0; i < len && hr == S_OK; i++)
+            {
+                write_output(writer, comment + i, 1, &hr);
                 if (comment[i] == '-' && (i + 1 < len) && comment[i+1] == '-')
-                    write_output_buffer_char(This->output, ' ');
+                    write_output(writer, L" ", 1, &hr);
             }
         }
         else
-            write_output_buffer(This->output, comment, len);
+        {
+            write_output(writer, comment, len, &hr);
+        }
 
         if (len && comment[len-1] == '-')
-            write_output_buffer_char(This->output, ' ');
+            write_output(writer, L" ", 1, &hr);
     }
-    write_output_buffer(This->output, L"-->", 3);
 
-    return S_OK;
+    return write_output(writer, L"-->", 3, &hr);
 }
 
 static HRESULT WINAPI xmlwriter_WriteDocType(IXmlWriter *iface, LPCWSTR name, LPCWSTR pubid,
