@@ -620,24 +620,24 @@ static HRESULT writeroutput_flush_stream(xmlwriteroutput *output)
     return S_OK;
 }
 
-static HRESULT write_encoding_bom(xmlwriter *writer)
+static void write_encoding_bom(xmlwriter *writer, HRESULT *hr)
 {
-    if (!writer->bom || writer->bomwritten) return S_OK;
+    if (FAILED(*hr)) return;
+    if (!writer->bom || writer->bomwritten) return;
 
     if (writer->output->encoding == XmlEncoding_UTF16) {
         static const char utf16bom[] = {0xff, 0xfe};
         struct output_buffer *buffer = &writer->output->buffer;
         int len = sizeof(utf16bom);
-        HRESULT hr;
 
-        hr = grow_output_buffer(writer->output, len);
-        if (FAILED(hr)) return hr;
+        if (FAILED(*hr = grow_output_buffer(writer->output, len)))
+            return;
+
         memcpy(buffer->data + buffer->written, utf16bom, len);
         buffer->written += len;
     }
 
     writer->bomwritten = TRUE;
-    return S_OK;
 }
 
 static const WCHAR *get_output_encoding_name(xmlwriteroutput *output)
@@ -653,7 +653,7 @@ static HRESULT write_xmldecl(xmlwriter *writer, XmlStandalone standalone, HRESUL
     if (FAILED(*hr))
         return *hr;
 
-    write_encoding_bom(writer);
+    write_encoding_bom(writer, hr);
     writer->state = XmlWriterState_DocStarted;
 
     if (writer->omitxmldecl) return S_OK;
@@ -1433,7 +1433,7 @@ static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR pr
             return WR_E_XMLNSURIDECLARATION;
     }
 
-    write_encoding_bom(This);
+    write_encoding_bom(This, &hr);
     write_node_indent(This, &hr);
 
     write_output_buffer_char(This->output, '<');
@@ -1788,23 +1788,26 @@ static HRESULT WINAPI xmlwriter_WriteNodeShallow(IXmlWriter *iface, IXmlReader *
 static HRESULT WINAPI xmlwriter_WriteProcessingInstruction(IXmlWriter *iface, LPCWSTR name,
                                              LPCWSTR text)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    xmlwriter *writer = impl_from_IXmlWriter(iface);
     HRESULT hr = S_OK;
+    BOOL xmldecl;
 
-    TRACE("(%p)->(%s %s)\n", This, wine_dbgstr_w(name), wine_dbgstr_w(text));
+    TRACE("%p, %s, %s.\n", iface, wine_dbgstr_w(name), wine_dbgstr_w(text));
 
-    switch (This->state)
+    xmldecl = !wcscmp(name, L"xml");
+
+    switch (writer->state)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
     case XmlWriterState_DocStarted:
-        if (!wcscmp(name, L"xml"))
+        if (xmldecl)
             return WR_E_INVALIDACTION;
         break;
     case XmlWriterState_ElemStarted:
-        writer_close_starttag(This);
+        hr = writer_close_starttag(writer);
         break;
     case XmlWriterState_DocClosed:
         return WR_E_INVALIDACTION;
@@ -1812,18 +1815,18 @@ static HRESULT WINAPI xmlwriter_WriteProcessingInstruction(IXmlWriter *iface, LP
         ;
     }
 
-    write_encoding_bom(This);
-    write_node_indent(This, &hr);
-    write_output_buffer(This->output, L"<?", 2);
-    write_output_buffer(This->output, name, -1);
-    write_output_buffer_char(This->output, ' ');
-    write_output_buffer(This->output, text, -1);
-    write_output_buffer(This->output, L"?>", 2);
+    write_encoding_bom(writer, &hr);
+    write_node_indent(writer, &hr);
+    write_output(writer, L"<?", 2, &hr);
+    write_output(writer, name, -1, &hr);
+    write_output(writer, L" ", 1, &hr);
+    write_output(writer, text, -1, &hr);
+    write_output(writer, L"?>", 2, &hr);
 
-    if (!wcscmp(name, L"xml"))
-        This->state = XmlWriterState_PIDocStarted;
+    if (xmldecl)
+        writer->state = XmlWriterState_PIDocStarted;
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI xmlwriter_WriteQualifiedName(IXmlWriter *iface, LPCWSTR pwszLocalName,
@@ -2009,7 +2012,7 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
     if (!element)
         return E_OUTOFMEMORY;
 
-    write_encoding_bom(This);
+    write_encoding_bom(This, &hr);
     write_node_indent(This, &hr);
 
     This->state = XmlWriterState_ElemStarted;
