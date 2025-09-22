@@ -12257,6 +12257,100 @@ done:
     LocalFree( usersid );
 }
 
+static void test_MsiEnumFeatures(void)
+{
+    UINT r;
+    BOOL found1, found2;
+    DWORD index;
+    WCHAR feature[MAX_FEATURE_CHARS+1], feature_parent[MAX_FEATURE_CHARS+1];
+
+    if (!is_process_elevated())
+    {
+        skip("process is limited\n");
+        return;
+    }
+    create_test_files();
+    create_database( msifile, tables, ARRAY_SIZE( tables ));
+
+    r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    found1 = FALSE;
+    found2 = FALSE;
+    index = 0;
+
+    while (!MsiEnumFeaturesW(L"{38847338-1BBC-4104-81AC-2FAAC7ECDDCD}", index, feature, feature_parent))
+    {
+        if (!lstrcmpW(feature, L"One"))
+        {
+            ok(!found1, "Feature 'One' found more than once\n");
+            found1 = TRUE;
+        }
+        else if (!lstrcmpW(feature, L"Two"))
+        {
+            ok(!found2, "Feature 'Two' found more than once\n");
+            found2 = TRUE;
+        }
+        else
+        {
+            ok(FALSE, "Unexpected feature '%ls' found\n", feature);
+        }
+
+        index++;
+    }
+    ok(found1 && found2, "found1 = %c, found2 = %c\n",
+        found1 ? 'T' : 'F', found2 ? 'T' : 'F');
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "ALLUSERS=1");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    found1 = FALSE;
+    found2 = FALSE;
+    index = 0;
+
+    while (!MsiEnumFeaturesW(L"{38847338-1BBC-4104-81AC-2FAAC7ECDDCD}", index, feature, feature_parent))
+    {
+        if (!lstrcmpW(feature, L"One"))
+        {
+            ok(!found1, "Feature 'One' found more than once\n");
+            found1 = TRUE;
+        }
+        else if (!lstrcmpW(feature, L"Two"))
+        {
+            ok(!found2, "Feature 'Two' found more than once\n");
+            found2 = TRUE;
+        }
+        else
+        {
+            ok(FALSE, "Unexpected feature '%ls' found\n", feature);
+        }
+
+        index++;
+    }
+    ok(found1 && found2, "found1 = %c, found2 = %c\n",
+        found1 ? 'T' : 'F', found2 ? 'T' : 'F');
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL ALLUSERS=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+error:
+    delete_test_files();
+    DeleteFileA(msifile);
+}
+
 static void test_MsiEnumComponents(void)
 {
     UINT r;
@@ -13460,6 +13554,7 @@ START_TEST(msi)
     test_MsiGetPatchInfo();
     test_MsiEnumProducts();
     test_MsiEnumProductsEx();
+    test_MsiEnumFeatures();
     test_MsiEnumComponents();
     test_MsiEnumComponentsEx();
     test_MsiGetFileVersion();
