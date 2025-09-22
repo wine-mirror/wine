@@ -102,7 +102,10 @@ void g_clear_error( GError **error )
 int g_file_test( const char *path, int test )
 {
     DWORD attrs = GetFileAttributesA( path );
-    if (test == G_FILE_TEST_EXISTS) return attrs != INVALID_FILE_ATTRIBUTES;
-    if (test == G_FILE_TEST_IS_REGULAR) return attrs == FILE_ATTRIBUTE_NORMAL;
+    if (attrs != INVALID_FILE_ATTRIBUTES)
+    {
+        if (test & G_FILE_TEST_EXISTS) return 1;
+        if ((test & G_FILE_TEST_IS_REGULAR) && !(attrs & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE))) return 1;
+    }
     return 0;
 }
