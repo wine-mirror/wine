@@ -541,6 +541,16 @@ static HRESULT write_output(xmlwriter *writer, const WCHAR *data, int len, HRESU
     return *hr;
 }
 
+static HRESULT write_output_quoted(xmlwriter *writer, const WCHAR *data, int len, HRESULT *hr)
+{
+    write_output(writer, L"\"", 1, hr);
+    if (!is_empty_string(data))
+        write_output(writer, data, len, hr);
+    write_output(writer, L"\"", 1, hr);
+
+    return *hr;
+}
+
 static HRESULT write_output_buffer_char(xmlwriteroutput *output, WCHAR ch)
 {
     return write_output_buffer(output, &ch, 1);
@@ -663,7 +673,7 @@ static HRESULT write_xmldecl(xmlwriter *writer, XmlStandalone standalone, HRESUL
 
     /* encoding */
     write_output(writer, L" encoding=", 10, hr);
-    write_output_buffer_quoted(writer->output, get_output_encoding_name(writer->output), -1);
+    write_output_quoted(writer, get_output_encoding_name(writer->output), -1, hr);
 
     /* standalone */
     if (standalone == XmlStandalone_Omit)
@@ -1325,14 +1335,14 @@ static HRESULT WINAPI xmlwriter_WriteComment(IXmlWriter *iface, LPCWSTR comment)
 static HRESULT WINAPI xmlwriter_WriteDocType(IXmlWriter *iface, LPCWSTR name, LPCWSTR pubid,
         LPCWSTR sysid, LPCWSTR subset)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    xmlwriter *writer = impl_from_IXmlWriter(iface);
     unsigned int name_len, pubid_len;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %s %s %s)\n", This, wine_dbgstr_w(name), wine_dbgstr_w(pubid), wine_dbgstr_w(sysid),
+    TRACE("%p, %s, %s, %s, %s.\n", iface, wine_dbgstr_w(name), wine_dbgstr_w(pubid), wine_dbgstr_w(sysid),
             wine_dbgstr_w(subset));
 
-    switch (This->state)
+    switch (writer->state)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
@@ -1354,34 +1364,33 @@ static HRESULT WINAPI xmlwriter_WriteDocType(IXmlWriter *iface, LPCWSTR name, LP
     if (FAILED(hr = is_valid_pubid(pubid, &pubid_len)))
         return hr;
 
-    write_output_buffer(This->output, L"<!DOCTYPE ", 10);
-    write_output_buffer(This->output, name, name_len);
+    write_output(writer, L"<!DOCTYPE ", 10, &hr);
+    write_output(writer, name, name_len, &hr);
 
     if (pubid)
     {
-        write_output_buffer(This->output, L" PUBLIC ", 8);
-        write_output_buffer_quoted(This->output, pubid, pubid_len);
-        write_output_buffer_char(This->output, ' ');
-        write_output_buffer_quoted(This->output, sysid, -1);
+        write_output(writer, L" PUBLIC ", 8, &hr);
+        write_output_quoted(writer, pubid, pubid_len, &hr);
+        write_output(writer, L" ", 1, &hr);
+        write_output_quoted(writer, sysid, -1, &hr);
     }
     else if (sysid)
     {
-        write_output_buffer(This->output, L" SYSTEM ", 8);
-        write_output_buffer_quoted(This->output, sysid, -1);
+        write_output(writer, L" SYSTEM ", 8, &hr);
+        write_output_quoted(writer, sysid, -1, &hr);
     }
 
     if (subset)
     {
-        write_output_buffer_char(This->output, ' ');
-        write_output_buffer_char(This->output, '[');
-        write_output_buffer(This->output, subset, -1);
-        write_output_buffer_char(This->output, ']');
+        write_output(writer, L" [", 2, &hr);
+        write_output(writer, subset, -1, &hr);
+        write_output(writer, L"]", 1, &hr);
     }
-    write_output_buffer_char(This->output, '>');
+    write_output(writer, L">", 1, &hr);
 
-    This->state = XmlWriterState_Content;
+    writer->state = XmlWriterState_Content;
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR prefix,
