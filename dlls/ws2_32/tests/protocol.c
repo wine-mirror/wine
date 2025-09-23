@@ -3135,6 +3135,36 @@ static void test_startup(void)
     }
 }
 
+static void test_WSAProviderConfigChange(void)
+{
+    SOCKET sock;
+    OVERLAPPED ov = { 0 };
+    int ret;
+    HANDLE port, port2, change;
+    DWORD bytes;
+
+    change = 0;
+    ret = WSAProviderConfigChange(&change, NULL, NULL);
+    todo_wine
+    ok(ret != SOCKET_ERROR, "WSAProviderConfigChange() error %u\n", WSAGetLastError());
+
+    port = CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 0);
+    ok(!!port, "CreateIoCompletionPort() error %lu\n", GetLastError());
+    sock = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+    ok(sock != SOCKET_ERROR, "WSASocketW() error %u\n", WSAGetLastError());
+    port2 = CreateIoCompletionPort((HANDLE)sock, port, 123, 0);
+    ok(port2 == port, "got %p/%p\n", port, port2);
+    port2 = CreateIoCompletionPort(change, port, 456, 0);
+    todo_wine
+    ok(port2 == port, "got %p/%p\n", port, port2);
+    ret = WSAIoctl(sock, SIO_ADDRESS_LIST_CHANGE, NULL, 0, NULL, 0, &bytes, &ov, NULL);
+    ok(ret, "WSAIoctl() error %u\n", WSAGetLastError());
+
+    closesocket(sock);
+    CloseHandle(port);
+    CloseHandle(change);
+}
+
 START_TEST( protocol )
 {
     WSADATA data;
@@ -3184,6 +3214,7 @@ START_TEST( protocol )
     test_WSCGetApplicationCategory();
     test_WSCGetProviderInfo();
     test_WSCGetProviderPath();
+    test_WSAProviderConfigChange();
 
     WSACleanup();
 
