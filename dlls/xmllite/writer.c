@@ -2118,11 +2118,6 @@ static HRESULT WINAPI xmlwriter_WriteWhitespace(IXmlWriter *iface, LPCWSTR text)
         return WR_E_INVALIDACTION;
     }
 
-    while (text[length])
-    {
-        if (!is_wchar_space(text[length])) return WR_E_NONWHITESPACE;
-        length++;
-    }
     if (SUCCEEDED(hr) && !is_valid_whitespace(text, &length))
         hr = WR_E_NONWHITESPACE;
 
