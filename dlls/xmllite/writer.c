@@ -1500,17 +1500,19 @@ static HRESULT write_end_element(xmlwriter *writer, const struct element *elemen
 
 static HRESULT WINAPI xmlwriter_WriteEndDocument(IXmlWriter *iface)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    xmlwriter *writer = impl_from_IXmlWriter(iface);
+    struct element *element;
+    HRESULT hr = S_OK;
 
-    TRACE("%p\n", This);
+    TRACE("%p.\n", iface);
 
-    switch (This->state)
+    switch (writer->state)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
     case XmlWriterState_Ready:
     case XmlWriterState_DocClosed:
-        This->state = XmlWriterState_DocClosed;
+        writer->state = XmlWriterState_DocClosed;
         return WR_E_INVALIDACTION;
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
@@ -1518,12 +1520,15 @@ static HRESULT WINAPI xmlwriter_WriteEndDocument(IXmlWriter *iface)
         ;
     }
 
-    /* empty element stack */
-    while (IXmlWriter_WriteEndElement(iface) == S_OK)
-        ;
+    /* Empty element stack */
+    while (hr == S_OK && (element = pop_element(writer)))
+    {
+        hr = write_end_element(writer, element);
+        writer_free_element(writer, element);
+    }
 
-    This->state = XmlWriterState_DocClosed;
-    return S_OK;
+    writer->state = XmlWriterState_DocClosed;
+    return hr;
 }
 
 static HRESULT WINAPI xmlwriter_WriteEndElement(IXmlWriter *iface)
