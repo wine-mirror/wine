@@ -110,6 +110,15 @@ void winebluetooth_radio_free( winebluetooth_radio_t radio )
     UNIX_BLUETOOTH_CALL( bluetooth_adapter_free, &args );
 }
 
+void winebluetooth_radio_dup( winebluetooth_radio_t radio )
+{
+    struct bluetooth_adapter_dup_params args = {0};
+    TRACE( "(%p)\n", (void *)radio.handle );
+
+    args.adapter = radio.handle;
+    UNIX_BLUETOOTH_CALL( bluetooth_adapter_dup, &args );
+}
+
 void winebluetooth_device_free( winebluetooth_device_t device )
 {
     struct bluetooth_device_free_params args = {0};
@@ -117,6 +126,15 @@ void winebluetooth_device_free( winebluetooth_device_t device )
 
     args.device = device.handle;
     UNIX_BLUETOOTH_CALL( bluetooth_device_free, &args );
+}
+
+void winebluetooth_device_dup( winebluetooth_device_t device )
+{
+    struct bluetooth_device_dup_params args = {0};
+    TRACE( "(%p)\n", (void *)device.handle );
+
+    args.device = device.handle;
+    UNIX_BLUETOOTH_CALL( bluetooth_device_dup, &args );
 }
 
 NTSTATUS winebluetooth_device_disconnect( winebluetooth_device_t device )

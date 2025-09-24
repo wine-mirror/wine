@@ -221,6 +221,7 @@ typedef struct
 NTSTATUS winebluetooth_radio_get_unique_name( winebluetooth_radio_t radio, char *name,
                                               SIZE_T *size );
 void winebluetooth_radio_free( winebluetooth_radio_t radio );
+void winebluetooth_radio_dup( winebluetooth_radio_t radio );
 static inline BOOL winebluetooth_radio_equal( winebluetooth_radio_t r1, winebluetooth_radio_t r2 )
 {
     return r1.handle == r2.handle;
@@ -234,6 +235,7 @@ NTSTATUS winebluetooth_radio_remove_device( winebluetooth_radio_t radio, wineblu
 NTSTATUS winebluetooth_auth_agent_enable_incoming( void );
 
 void winebluetooth_device_free( winebluetooth_device_t device );
+void winebluetooth_device_dup( winebluetooth_device_t device );
 static inline BOOL winebluetooth_device_equal( winebluetooth_device_t d1, winebluetooth_device_t d2 )
 {
     return d1.handle == d2.handle;

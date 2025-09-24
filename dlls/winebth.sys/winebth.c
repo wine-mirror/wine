@@ -406,8 +406,10 @@ static NTSTATUS bluetooth_radio_dispatch( DEVICE_OBJECT *device, struct bluetoot
     case IOCTL_BTH_DISCONNECT_DEVICE:
     {
         const BTH_ADDR *param = irp->AssociatedIrp.SystemBuffer;
-        BTH_ADDR device_addr;
         struct bluetooth_remote_device *device;
+        winebluetooth_device_t device_handle;
+        BTH_ADDR device_addr;
+        BOOL found = FALSE;
 
         if (!param || insize < sizeof( *param ))
         {
@@ -421,19 +423,22 @@ static NTSTATUS bluetooth_radio_dispatch( DEVICE_OBJECT *device, struct bluetoot
         EnterCriticalSection( &device_list_cs );
         LIST_FOR_EACH_ENTRY( device, &ext->remote_devices, struct bluetooth_remote_device, entry )
         {
-            BOOL matches;
-
             EnterCriticalSection( &device->props_cs );
-            matches = device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS &&
-                      device_addr == device->props.address.ullLong;
+            found = device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS &&
+                    device_addr == device->props.address.ullLong;
             LeaveCriticalSection( &device->props_cs );
-            if (matches)
+            if (found)
             {
-                status = winebluetooth_device_disconnect( device->device );
+                winebluetooth_device_dup(( device_handle = device->device ));
                 break;
             }
         }
         LeaveCriticalSection( &device_list_cs );
+        if (found)
+        {
+            status = winebluetooth_device_disconnect( device_handle );
+            winebluetooth_device_free( device_handle );
+        }
         break;
     }
     case IOCTL_WINEBTH_RADIO_SET_FLAG:
@@ -550,6 +555,9 @@ static NTSTATUS bluetooth_radio_dispatch( DEVICE_OBJECT *device, struct bluetoot
     {
         const BTH_ADDR *param = irp->AssociatedIrp.SystemBuffer;
         struct bluetooth_remote_device *device;
+        winebluetooth_device_t device_handle;
+        winebluetooth_radio_t radio_handle;
+        BOOL found = FALSE;
 
         if (!param)
         {
@@ -566,19 +574,25 @@ static NTSTATUS bluetooth_radio_dispatch( DEVICE_OBJECT *device, struct bluetoot
         EnterCriticalSection( &device_list_cs );
         LIST_FOR_EACH_ENTRY( device, &ext->remote_devices, struct bluetooth_remote_device, entry )
         {
-            BOOL matches;
             EnterCriticalSection( &device->props_cs );
-            matches = device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS &&
-                      device->props.address.ullLong == *param && device->props.paired;
+            found = device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS &&
+                    device->props.address.ullLong == *param && device->props.paired;
             LeaveCriticalSection( &device->props_cs );
 
-            if (matches)
+            if (found)
             {
-                status = winebluetooth_radio_remove_device( ext->radio, device->device );
+                winebluetooth_device_dup(( device_handle = device->device ));
+                winebluetooth_radio_dup(( radio_handle = ext->radio ));
                 break;
             }
         }
         LeaveCriticalSection( &device_list_cs );
+        if (found)
+        {
+            status = winebluetooth_radio_remove_device( radio_handle, device_handle );
+            winebluetooth_device_free( device_handle );
+            winebluetooth_radio_free( radio_handle );
+        }
         break;
     }
     default:
