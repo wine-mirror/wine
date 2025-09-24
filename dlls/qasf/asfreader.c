@@ -286,8 +286,54 @@ static inline struct asf_stream *impl_from_IMediaSeeking(IMediaSeeking *iface)
 
 static HRESULT WINAPI media_seeking_ChangeCurrent(IMediaSeeking *iface)
 {
-    FIXME("iface %p stub!\n", iface);
-    return S_OK;
+    struct asf_stream *stream = impl_from_IMediaSeeking(iface);
+    struct asf_reader *filter = asf_reader_from_asf_stream(stream);
+    struct SourceSeeking *seek = &stream->seek;
+    HRESULT hr;
+    UINT i;
+
+    TRACE("iface %p.\n", iface);
+
+    /* Send begin flush commands downstream. */
+    for (i = 0; i < filter->stream_count; ++i)
+    {
+        if (FAILED(IPin_BeginFlush(stream->source.pin.peer)))
+            WARN("Failed to BeginFlush for stream %u.\n", i);
+    }
+
+    /* Stop the reader. */
+    EnterCriticalSection(&filter->status_cs);
+    if (SUCCEEDED(hr = IWMReader_Stop(filter->reader)))
+    {
+        filter->status = -1;
+        while (filter->status != WMT_STOPPED)
+            SleepConditionVariableCS(&filter->status_cv, &filter->status_cs, INFINITE);
+        hr = filter->result;
+    }
+    LeaveCriticalSection(&filter->status_cs);
+
+    /* Send end flush commands downstream. */
+    for (i = 0; i < filter->stream_count; ++i)
+    {
+        if (FAILED(IPin_EndFlush(stream->source.pin.peer)))
+            WARN("Failed to EndFlush for stream %u.\n", i);
+    }
+
+    /* Start the reader. */
+    if (hr == S_OK)
+    {
+        EnterCriticalSection(&filter->status_cs);
+        if (SUCCEEDED(hr = IWMReader_Start(filter->reader, seek->llCurrent, seek->llDuration, seek->dRate, NULL)))
+        {
+            filter->status = -1;
+            while (filter->status != WMT_STARTED)
+                SleepConditionVariableCS(&filter->status_cv, &filter->status_cs, INFINITE);
+            hr = filter->result;
+        }
+        LeaveCriticalSection(&filter->status_cs);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI media_seeking_ChangeStop(IMediaSeeking *iface)
