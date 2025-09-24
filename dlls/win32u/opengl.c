@@ -725,7 +725,7 @@ static BOOL egldrv_context_create( int format, void *share, const int *attribs, 
 {
     const struct opengl_funcs *funcs = &display_funcs;
     const struct egl_platform *egl = &display_egl;
-    EGLint egl_attribs[16], *attribs_end = egl_attribs;
+    EGLint err, egl_attribs[16], *attribs_end = egl_attribs;
 
     TRACE( "format %d, share %p, attribs %p\n", format, share, attribs );
 
@@ -789,6 +789,13 @@ static BOOL egldrv_context_create( int format, void *share, const int *attribs, 
      */
     funcs->p_eglBindAPI( EGL_OPENGL_API );
     *context = funcs->p_eglCreateContext( egl->display, EGL_NO_CONFIG_KHR, share, attribs ? egl_attribs : NULL );
+
+    if ((err = funcs->p_eglGetError()) != EGL_SUCCESS || !*context)
+    {
+        WARN( "Context creation failed (error %#x).\n", err );
+        return FALSE;
+    }
+
     TRACE( "Created context %p\n", *context );
     return TRUE;
 }
