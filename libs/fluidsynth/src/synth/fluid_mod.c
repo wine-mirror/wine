@@ -276,6 +276,8 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
 {
     /* normalized value, i.e. usually in the range [0;1] */
     const fluid_real_t val_norm = val / range;
+    /* inverted value used for negative mapping functions */
+    const fluid_real_t inv_norm = 1.0f - val_norm;
 
     /* we could also only switch case the lower nibble of mod_flags, however
      * this would keep us from adding further mod types in the future
@@ -291,7 +293,7 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
         break;
 
     case FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =1 */
-        val = 1.0f - val_norm;
+        val = inv_norm;
         break;
 
     case FLUID_MOD_LINEAR | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =2 */
@@ -299,7 +301,7 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
         break;
 
     case FLUID_MOD_LINEAR | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =3 */
-        val = 1.0f - 2.0f * val_norm;
+        val = -1.0f + 2.0f * inv_norm;
         break;
 
     case FLUID_MOD_CONCAVE | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =4 */
@@ -307,7 +309,7 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
         break;
 
     case FLUID_MOD_CONCAVE | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =5 */
-        val = fluid_concave(127 * (1.0f - val_norm));
+        val = fluid_concave(127 * (inv_norm));
         break;
 
     case FLUID_MOD_CONCAVE | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =6 */
@@ -316,8 +318,8 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
         break;
 
     case FLUID_MOD_CONCAVE | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =7 */
-        val = (val_norm > 0.5f) ? -fluid_concave(127 * 2 * (val_norm - 0.5f))
-              :  fluid_concave(127 * 2 * (0.5f - val_norm));
+        val = (inv_norm > 0.5f) ?  fluid_concave(127 * 2 * (inv_norm - 0.5f))
+              : -fluid_concave(127 * 2 * (0.5f - inv_norm));
         break;
 
     case FLUID_MOD_CONVEX | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =8 */
@@ -325,7 +327,7 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
         break;
 
     case FLUID_MOD_CONVEX | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =9 */
-        val = fluid_convex(127 * (1.0f - val_norm));
+        val = fluid_convex(127 * (inv_norm));
         break;
 
     case FLUID_MOD_CONVEX | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =10 */
@@ -334,8 +336,8 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
         break;
 
     case FLUID_MOD_CONVEX | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =11 */
-        val = (val_norm > 0.5f) ? -fluid_convex(127 * 2 * (val_norm - 0.5f))
-              :  fluid_convex(127 * 2 * (0.5f - val_norm));
+        val = (inv_norm > 0.5f) ?  fluid_convex(127 * 2 * (inv_norm - 0.5f))
+              : -fluid_convex(127 * 2 * (0.5f - inv_norm));
         break;
 
     case FLUID_MOD_SWITCH | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =12 */
@@ -343,7 +345,7 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
         break;
 
     case FLUID_MOD_SWITCH | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =13 */
-        val = (val_norm >= 0.5f) ? 0.0f : 1.0f;
+        val = (inv_norm >= 0.5f) ? 1.0f : 0.0f;
         break;
 
     case FLUID_MOD_SWITCH | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =14 */
@@ -351,7 +353,7 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
         break;
 
     case FLUID_MOD_SWITCH | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =15 */
-        val = (val_norm >= 0.5f) ? -1.0f : 1.0f;
+        val = (inv_norm >= 0.5f) ? 1.0f : -1.0f;
         break;
 
     /*
@@ -367,7 +369,7 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
         break;
 
     case FLUID_MOD_SIN | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* custom */
-        val = FLUID_SIN((FLUID_M_PI / 2.0f * 0.87f) * (1.0f - val_norm));
+        val = FLUID_SIN((FLUID_M_PI / 2.0f * 0.87f) * (inv_norm));
         break;
 
     case FLUID_MOD_SIN | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* custom */
@@ -376,8 +378,8 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
         break;
 
     case FLUID_MOD_SIN | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* custom */
-        val = (val_norm > 0.5f) ? -FLUID_SIN(FLUID_M_PI * (val_norm - 0.5f))
-              :  FLUID_SIN(FLUID_M_PI * (0.5f - val_norm));
+        val = (inv_norm > 0.5f) ?  FLUID_SIN(FLUID_M_PI * (inv_norm - 0.5f))
+              : -FLUID_SIN(FLUID_M_PI * (0.5f - inv_norm));
         break;
 
     default:
