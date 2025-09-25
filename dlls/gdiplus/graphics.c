@@ -599,12 +599,13 @@ static GpStatus alpha_blend_hdc_pixels(GpGraphics *graphics, INT dst_x, INT dst_
     if(!hbitmap || !temp_bits)
         goto done;
 
-    if ((graphics->hdc &&
+    if (graphics->hdc &&
          GetDeviceCaps(graphics->hdc, TECHNOLOGY) == DT_RASPRINTER &&
-         GetDeviceCaps(graphics->hdc, SHADEBLENDCAPS) == SB_NONE) ||
-            fmt & PixelFormatPAlpha)
+         GetDeviceCaps(graphics->hdc, SHADEBLENDCAPS) == SB_NONE)
         blend_32bppARGB(src_width, src_height, temp_bits,
                         4 * src_width, src, src_stride);
+    else if (fmt & PixelFormatPAlpha)
+        memcpy(temp_bits, src, src_width * src_height * 4);
     else
         convert_32bppARGB_to_32bppPARGB(src_width, src_height, temp_bits,
                                         4 * src_width, src, src_stride);
