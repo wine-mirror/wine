@@ -1766,7 +1766,7 @@ static void test_IKsControl(void)
     ok(hr == DMUS_E_UNKNOWN_PROPERTY, "got hr %#lx.\n", hr);
 
     /* default value for volume 0 is 0 */
-    check_volume_envelope(synth, &default_instrument_download, &default_midi, &default_volume_envelope, TRUE);
+    check_volume_envelope(synth, &default_instrument_download, &default_midi, &default_volume_envelope, FALSE);
 
     volume = 0;
     property.Set = GUID_DMUS_PROP_Volume;
@@ -1774,7 +1774,7 @@ static void test_IKsControl(void)
     property.Flags = KSPROPERTY_TYPE_SET;
     hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
-    check_volume_envelope(synth, &default_instrument_download, &default_midi, &default_volume_envelope, TRUE);
+    check_volume_envelope(synth, &default_instrument_download, &default_midi, &default_volume_envelope, FALSE);
 
     /* total voice gain is limited to 6 dB */
     volume = 600;

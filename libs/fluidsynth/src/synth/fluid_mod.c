@@ -277,7 +277,7 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
     /* normalized value, i.e. usually in the range [0;1] */
     const fluid_real_t val_norm = val / range;
     /* inverted value used for negative mapping functions */
-    const fluid_real_t inv_norm = 1.0f - val_norm;
+    const fluid_real_t inv_norm = 1.0f - 1.0f / range - val_norm;
 
     /* we could also only switch case the lower nibble of mod_flags, however
      * this would keep us from adding further mod types in the future
