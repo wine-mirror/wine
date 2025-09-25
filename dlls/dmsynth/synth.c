@@ -1991,6 +1991,8 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
         add_voice_connections(fluid_voice, &articulation->list, articulation->connections);
     LIST_FOR_EACH_ENTRY(articulation, &region->articulations, struct articulation, entry)
         add_voice_connections(fluid_voice, &articulation->list, articulation->connections);
+    fluid_voice_gen_incr(voice->fluid_voice, GEN_ATTENUATION,
+            region->wave_sample.lAttenuation / -65536.);
     /* Unlike FluidSynth, native applies the gain limit after the panning. At
      * least for the center pan we can replicate this by applying a panning
      * attenuation here. */

@@ -2107,7 +2107,7 @@ static void test_dls(void)
     download.region.WSMP.lAttenuation = -120 * 65536;
     envelope = default_volume_envelope;
     envelope.gain -= 120.;
-    check_volume_envelope(synth, &download, &default_midi, &envelope, TRUE);
+    check_volume_envelope(synth, &download, &default_midi, &envelope, FALSE);
 
     /* lfo frequency */
 
