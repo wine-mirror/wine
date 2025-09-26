@@ -3079,6 +3079,10 @@ echo ---
 dir /B /O:G-NE
 echo ---
 dir /B /O:G-E-N
+echo ---
+set DIRCMD=/O:GN
+dir /B /O:G-N
+set DIRCMD=
 cd .. & rd /s/q foobar
 echo ------------ Testing attrib ------------
 rem FIXME Add tests for archive, hidden and system attributes + mixed attributes modifications

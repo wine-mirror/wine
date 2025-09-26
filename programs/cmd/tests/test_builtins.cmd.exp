@@ -1857,6 +1857,12 @@ a1.ab
 a1.ac
 a2.aa
 a1.aa
+---
+@todo_wine@a2.ac
+@todo_wine@a1.ab
+@todo_wine@a2.aa
+a1.ac
+@todo_wine@a1.aa
 ------------ Testing attrib ------------
 A@spaces@@drive@@path@foobar\foo@or_broken@A       I@spaces@@drive@@path@foobar\foo
 A@spaces@@drive@@path@foobar\foo@or_broken@A       I@spaces@@drive@@path@foobar\foo
