@@ -1882,21 +1882,21 @@ static HRESULT WINAPI xmlwriter_WriteQualifiedName(IXmlWriter *iface, LPCWSTR pw
 
 static HRESULT WINAPI xmlwriter_WriteRaw(IXmlWriter *iface, LPCWSTR data)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    xmlwriter *writer = impl_from_IXmlWriter(iface);
     unsigned int count;
     HRESULT hr = S_OK;
 
-    TRACE("%p %s\n", This, debugstr_w(data));
+    TRACE("%p, %s.\n", iface, debugstr_w(data));
 
     if (!data)
         return S_OK;
 
-    switch (This->state)
+    switch (writer->state)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
     case XmlWriterState_Ready:
-        write_xmldecl(This, XmlStandalone_Omit, &hr);
+        write_xmldecl(writer, XmlStandalone_Omit, &hr);
         /* fallthrough */
     case XmlWriterState_DocStarted:
     case XmlWriterState_PIDocStarted:
@@ -1904,17 +1904,17 @@ static HRESULT WINAPI xmlwriter_WriteRaw(IXmlWriter *iface, LPCWSTR data)
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
     case XmlWriterState_ElemStarted:
-        writer_close_starttag(This);
+        hr = writer_close_starttag(writer);
         break;
     default:
-        This->state = XmlWriterState_DocClosed;
+        writer->state = XmlWriterState_DocClosed;
         return WR_E_INVALIDACTION;
     }
 
-    while (*data)
+    while (SUCCEEDED(hr) && *data)
     {
-        if (FAILED(hr = writer_get_next_write_count(data, ~0u, &count))) return hr;
-        if (FAILED(hr = write_output_buffer(This->output, data, count))) return hr;
+        if (FAILED(hr = writer_get_next_write_count(data, ~0u, &count))) break;
+        if (FAILED(hr = write_output(writer, data, count, &hr))) break;
 
         data += count;
     }
