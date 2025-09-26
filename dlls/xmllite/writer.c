@@ -1592,52 +1592,52 @@ static HRESULT WINAPI xmlwriter_WriteEntityRef(IXmlWriter *iface, LPCWSTR pwszNa
 
 static HRESULT WINAPI xmlwriter_WriteFullEndElement(IXmlWriter *iface)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    xmlwriter *writer = impl_from_IXmlWriter(iface);
     struct element *element;
     HRESULT hr = S_OK;
 
-    TRACE("%p\n", This);
+    TRACE("%p.\n", iface);
 
-    switch (This->state)
+    switch (writer->state)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
     case XmlWriterState_Ready:
     case XmlWriterState_DocClosed:
-        This->state = XmlWriterState_DocClosed;
+        writer->state = XmlWriterState_DocClosed;
         return WR_E_INVALIDACTION;
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
     case XmlWriterState_ElemStarted:
-        writer_close_starttag(This);
+        if (FAILED(hr = writer_close_starttag(writer))) return hr;
         break;
     default:
         ;
     }
 
-    element = pop_element(This);
+    element = pop_element(writer);
     if (!element)
         return WR_E_INVALIDACTION;
 
-    writer_dec_indent(This);
+    writer_dec_indent(writer);
 
     /* don't force full end tag to the next line */
-    if (This->state == XmlWriterState_ElemStarted)
+    if (writer->state == XmlWriterState_ElemStarted)
     {
-        This->state = XmlWriterState_Content;
-        This->textnode = 0;
+        writer->state = XmlWriterState_Content;
+        writer->textnode = 0;
     }
     else
-        write_node_indent(This, &hr);
+        write_node_indent(writer, &hr);
 
     /* write full end tag */
-    write_output_buffer(This->output, L"</", 2);
-    write_output_buffer(This->output, element->qname, element->len);
-    write_output_buffer_char(This->output, '>');
+    write_output(writer, L"</", 2, &hr);
+    write_output(writer, element->qname, element->len, &hr);
+    write_output(writer, L">", 1, &hr);
 
-    writer_free_element(This, element);
+    writer_free_element(writer, element);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI xmlwriter_WriteName(IXmlWriter *iface, LPCWSTR pwszName)
