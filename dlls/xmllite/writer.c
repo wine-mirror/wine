@@ -2064,23 +2064,24 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
 
 static HRESULT WINAPI xmlwriter_WriteString(IXmlWriter *iface, const WCHAR *string)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    xmlwriter *writer = impl_from_IXmlWriter(iface);
+    HRESULT hr = S_OK;
 
-    TRACE("%p %s\n", This, debugstr_w(string));
+    TRACE("%p, %s.\n", iface, debugstr_w(string));
 
     if (!string)
         return S_OK;
 
-    switch (This->state)
+    switch (writer->state)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
     case XmlWriterState_ElemStarted:
-        writer_close_starttag(This);
+        hr = writer_close_starttag(writer);
         break;
     case XmlWriterState_Ready:
     case XmlWriterState_DocClosed:
-        This->state = XmlWriterState_DocClosed;
+        writer->state = XmlWriterState_DocClosed;
         return WR_E_INVALIDACTION;
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
@@ -2088,8 +2089,13 @@ static HRESULT WINAPI xmlwriter_WriteString(IXmlWriter *iface, const WCHAR *stri
         ;
     }
 
-    This->textnode = 1;
-    return write_escaped_string(This, string, ~0u);
+    if (SUCCEEDED(hr))
+    {
+        writer->textnode = 1;
+        hr = write_escaped_string(writer, string, ~0u);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI xmlwriter_WriteSurrogateCharEntity(IXmlWriter *iface, WCHAR wchLow, WCHAR wchHigh)
