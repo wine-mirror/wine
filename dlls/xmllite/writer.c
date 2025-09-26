@@ -1402,22 +1402,22 @@ static HRESULT WINAPI xmlwriter_WriteDocType(IXmlWriter *iface, LPCWSTR name, LP
 static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR prefix,
                                      LPCWSTR local_name, LPCWSTR uri, LPCWSTR value)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    xmlwriter *writer = impl_from_IXmlWriter(iface);
     int prefix_len, local_len;
     struct ns *ns;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %s %s %s)\n", This, wine_dbgstr_w(prefix), wine_dbgstr_w(local_name),
+    TRACE("%p, %s, %s, %s, %s.\n", iface, wine_dbgstr_w(prefix), wine_dbgstr_w(local_name),
                         wine_dbgstr_w(uri), wine_dbgstr_w(value));
 
-    switch (This->state)
+    switch (writer->state)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
     case XmlWriterState_ElemStarted:
-        writer_close_starttag(This);
+        if (FAILED(hr = writer_close_starttag(writer))) return hr;
         break;
     case XmlWriterState_DocClosed:
         return WR_E_INVALIDACTION;
@@ -1435,7 +1435,7 @@ static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR pr
     if (FAILED(hr = is_valid_ncname(local_name, &local_len)))
         return hr;
 
-    ns = writer_find_ns(This, prefix, uri);
+    ns = writer_find_ns(writer, prefix, uri);
     if (!ns && !is_empty_string(prefix) && is_empty_string(uri))
         return WR_E_NSPREFIXWITHEMPTYNSURI;
 
@@ -1448,36 +1448,36 @@ static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR pr
             return WR_E_XMLNSURIDECLARATION;
     }
 
-    write_encoding_bom(This, &hr);
-    write_node_indent(This, &hr);
+    write_encoding_bom(writer, &hr);
+    write_node_indent(writer, &hr);
 
-    write_output_buffer_char(This->output, '<');
+    write_output(writer, L"<", 1, &hr);
     if (ns)
-        write_output_qname(This->output, ns->prefix, ns->prefix_len, local_name, local_len);
+        write_output_qname(writer->output, ns->prefix, ns->prefix_len, local_name, local_len);
     else
-        write_output_qname(This->output, prefix, prefix_len, local_name, local_len);
+        write_output_qname(writer->output, prefix, prefix_len, local_name, local_len);
 
     if (!ns && (prefix_len || !is_empty_string(uri)))
     {
-        write_output_qname(This->output, L" xmlns", 6, prefix, prefix_len);
-        write_output_buffer_char(This->output, '=');
-        write_output_buffer_quoted(This->output, uri, -1);
+        write_output_qname(writer->output, L" xmlns", 6, prefix, prefix_len);
+        write_output(writer, L"=", 1, &hr);
+        write_output_buffer_quoted(writer->output, uri, -1);
     }
 
     if (value)
     {
-        write_output_buffer_char(This->output, '>');
-        write_output_buffer(This->output, value, -1);
-        write_output_buffer(This->output, L"</", 2);
-        write_output_qname(This->output, prefix, prefix_len, local_name, local_len);
-        write_output_buffer_char(This->output, '>');
+        write_output(writer, L">", 1, &hr);
+        write_output(writer, value, -1, &hr);
+        write_output(writer, L"</", 2, &hr);
+        write_output_qname(writer->output, prefix, prefix_len, local_name, local_len);
+        write_output(writer, L">", 1, &hr);
     }
     else
-        write_output_buffer(This->output, L" />", 3);
+        write_output(writer, L" />", 3, &hr);
 
-    This->state = XmlWriterState_Content;
+    writer->state = XmlWriterState_Content;
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT write_end_element(xmlwriter *writer, const struct element *element)
