@@ -1251,6 +1251,7 @@ static HRESULT write_escaped_string(xmlwriter *writer, const WCHAR *string, unsi
 static HRESULT WINAPI xmlwriter_WriteChars(IXmlWriter *iface, const WCHAR *characters, UINT length)
 {
     xmlwriter *writer = impl_from_IXmlWriter(iface);
+    HRESULT hr = S_OK;
 
     TRACE("%p, %s, %d.\n", iface, debugstr_wn(characters, length), length);
 
@@ -1267,7 +1268,7 @@ static HRESULT WINAPI xmlwriter_WriteChars(IXmlWriter *iface, const WCHAR *chara
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
     case XmlWriterState_ElemStarted:
-        writer_close_starttag(writer);
+        hr = writer_close_starttag(writer);
         break;
     case XmlWriterState_Ready:
     case XmlWriterState_DocClosed:
@@ -1277,8 +1278,13 @@ static HRESULT WINAPI xmlwriter_WriteChars(IXmlWriter *iface, const WCHAR *chara
         ;
     }
 
-    writer->textnode = 1;
-    return write_escaped_string(writer, characters, length);
+    if (SUCCEEDED(hr))
+    {
+        writer->textnode = 1;
+        hr = write_escaped_string(writer, characters, length);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI xmlwriter_WriteComment(IXmlWriter *iface, LPCWSTR comment)
