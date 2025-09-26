@@ -2,6 +2,7 @@
  * Skin Info operations specific to D3DX9.
  *
  * Copyright (C) 2011 Dylan Smith
+ * Copyright (C) 2013 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -39,7 +40,7 @@ struct d3dx9_skin_info
 
     DWORD fvf;
     D3DVERTEXELEMENT9 vertex_declaration[MAX_FVF_DECL_SIZE];
-    DWORD num_vertices;
+    DWORD vertex_count;
     DWORD num_bones;
     struct bone *bones;
 };
@@ -301,7 +302,7 @@ static HRESULT WINAPI d3dx9_skin_info_Clone(ID3DXSkinInfo *iface, ID3DXSkinInfo 
 
     TRACE("iface %p, skin_info %p.\n", iface, skin_info);
 
-    if (FAILED(hr = D3DXCreateSkinInfo(skin->num_vertices, skin->vertex_declaration, skin->num_bones, skin_info)))
+    if (FAILED(hr = D3DXCreateSkinInfo(skin->vertex_count, skin->vertex_declaration, skin->num_bones, skin_info)))
         return hr;
 
     for (i = 0; i < skin->num_bones; ++i)
@@ -396,10 +397,102 @@ static HRESULT WINAPI d3dx9_skin_info_GetDeclaration(ID3DXSkinInfo *iface,
 static HRESULT WINAPI d3dx9_skin_info_UpdateSkinnedMesh(ID3DXSkinInfo *iface, const D3DXMATRIX *bone_transforms,
         const D3DXMATRIX *bone_inv_transpose_transforms, const void *src_vertices, void *dst_vertices)
 {
-    FIXME("iface %p, bone_transforms %p, bone_inv_transpose_transforms %p, src_vertices %p, dst_vertices %p stub!\n",
-            iface, bone_transforms, bone_inv_transpose_transforms, src_vertices, dst_vertices);
+    struct d3dx9_skin_info *skin = impl_from_ID3DXSkinInfo(iface);
+    DWORD vertex_size = D3DXGetDeclVertexSize(skin->vertex_declaration, 0);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, bone_transforms %p, bone_inv_transpose_transforms %p, src_vertices %p, dst_vertices %p.\n",
+            skin, bone_transforms, bone_inv_transpose_transforms, src_vertices, dst_vertices);
+
+    if (bone_inv_transpose_transforms)
+    {
+        FIXME("Using inverse transforms is not supported, returning E_NOTIMPL.\n");
+        return E_NOTIMPL;
+    }
+
+    for (unsigned int i = 0; i < skin->vertex_count; ++i)
+    {
+        for (const D3DVERTEXELEMENT9 *element = skin->vertex_declaration; element->Stream != 0xff; ++element)
+        {
+            const void *src_element = (uint8_t *)src_vertices + (i * vertex_size) + element->Offset;
+            void *dst_element = (uint8_t *)dst_vertices + (i * vertex_size) + element->Offset;
+            unsigned int element_size = d3dx_decltype_size[element->Type];
+
+            switch (element->Usage)
+            {
+                case D3DDECLUSAGE_POSITION:
+                case D3DDECLUSAGE_NORMAL:
+                    memset(dst_element, 0, element_size);
+                    break;
+
+                default:
+                    FIXME("Unhandled usage %#x.\n", element->Usage);
+                    /* fall through */
+                case D3DDECLUSAGE_TEXCOORD:
+                    memcpy(dst_element, src_element, element_size);
+                    break;
+            }
+        }
+    }
+
+    for (const D3DVERTEXELEMENT9 *element = skin->vertex_declaration; element->Stream != 0xff; ++element)
+    {
+        if (element->Usage != D3DDECLUSAGE_POSITION && element->Usage != D3DDECLUSAGE_NORMAL)
+            continue;
+
+        for (unsigned int i = 0; i < skin->num_bones; ++i)
+        {
+            const struct bone *bone = &skin->bones[i];
+
+            for (unsigned int j = 0; j < bone->num_influences; ++j)
+            {
+                unsigned int vertex_idx = bone->vertices[j];
+                float weight = bone->weights[j];
+
+                const void *src_element = (uint8_t *)src_vertices + (vertex_idx * vertex_size) + element->Offset;
+                void *dst_element = (uint8_t *)dst_vertices + (vertex_idx * vertex_size) + element->Offset;
+                D3DXVECTOR3 *dst_vec3 = dst_element;
+
+                switch (element->Usage)
+                {
+                    case D3DDECLUSAGE_POSITION:
+                        if (element->Type == D3DDECLTYPE_FLOAT3)
+                        {
+                            D3DXVECTOR3 position;
+
+                            D3DXVec3TransformCoord(&position, src_element, &bone_transforms[i]);
+                            dst_vec3->x += weight * position.x;
+                            dst_vec3->y += weight * position.y;
+                            dst_vec3->z += weight * position.z;
+                        }
+                        else
+                        {
+                            FIXME("Unhandled position type %#x.\n", element->Type);
+                            return E_NOTIMPL;
+                        }
+                        break;
+
+                    case D3DDECLUSAGE_NORMAL:
+                    {
+                        D3DXVECTOR3 normal;
+
+                        if (element->Type != D3DDECLTYPE_FLOAT3)
+                        {
+                            FIXME("Unhandled normal type %#x.\n", element->Type);
+                            return E_NOTIMPL;
+                        }
+
+                        D3DXVec3TransformNormal(&normal, src_element, &bone_transforms[i]);
+                        dst_vec3->x += weight * normal.x;
+                        dst_vec3->y += weight * normal.y;
+                        dst_vec3->z += weight * normal.z;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3dx9_skin_info_ConvertToBlendedMesh(ID3DXSkinInfo *iface, ID3DXMesh *mesh_in,
@@ -479,7 +572,7 @@ HRESULT WINAPI D3DXCreateSkinInfo(DWORD vertex_count, const D3DVERTEXELEMENT9 *d
 
     object->ID3DXSkinInfo_iface.lpVtbl = &d3dx9_skin_info_vtbl;
     object->ref = 1;
-    object->num_vertices = vertex_count;
+    object->vertex_count = vertex_count;
     object->num_bones = bone_count;
     object->vertex_declaration[0] = empty_declaration;
     object->fvf = 0;

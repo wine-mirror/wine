@@ -64,7 +64,7 @@ struct d3dx9_mesh
     D3DXATTRIBUTERANGE *attrib_table;
 };
 
-static const UINT d3dx_decltype_size[] =
+const unsigned int d3dx_decltype_size[] =
 {
    /* D3DDECLTYPE_FLOAT1    */ sizeof(FLOAT),
    /* D3DDECLTYPE_FLOAT2    */ sizeof(D3DXVECTOR2),
