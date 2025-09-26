@@ -769,7 +769,13 @@ RETURN_CODE WCMD_directory(WCHAR *args)
                 goto exit;
               }
               break;
-    case 'O': p = p + 1;
+    case 'O': /* Reset order state for each occurrence of /O, i.e. if DIRCMD contains /O and user
+                 also specified /O on the command line. */
+              dirOrder = Unspecified;
+              orderGroupDirs = FALSE;
+              orderReverse = FALSE;
+              orderGroupDirsReverse = FALSE;
+              p = p + 1;
               if (*p==':') p++;  /* Skip optional : */
               while (*p && *p != '/') {
                 WINE_TRACE("Processing subparm '%c' (in %s)\n", *p, wine_dbgstr_w(quals));
