@@ -1758,6 +1758,8 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "andq $~63,%rsp\n\t"
                    "leaq 0x10(%rbp),%rax\n\t"
                    "movq %rax,0xa8(%rsp)\n\t"  /* frame->syscall_cfa */
+                   "movw %cs,0x78(%rsp)\n\t"   /* frame->cs */
+                   "movw %ss,0x90(%rsp)\n\t"   /* frame->ss */
                    "movq 0x378(%r13),%r14\n\t" /* thread_data->syscall_frame */
                    "movq %r14,0xa0(%rsp)\n\t"  /* frame->prev_frame */
                    "movq %rsp,0x378(%r13)\n\t" /* thread_data->syscall_frame */
