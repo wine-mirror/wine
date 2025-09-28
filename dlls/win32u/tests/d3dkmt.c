@@ -80,7 +80,7 @@ static void run_in_process_( const char *file, int line, const char *args )
     name = file;
     if ((tmp = strrchr( name, '\\' ))) name = tmp;
     if ((tmp = strrchr( name, '/' ))) name = tmp;
-    if ((tmp = strrchr( test, '.' ))) *tmp = 0;
+    if ((tmp = strrchr( name, '.' ))) *tmp = 0;
     strcpy( test, name );
 
     argc = winetest_get_mainargs( &argv );
