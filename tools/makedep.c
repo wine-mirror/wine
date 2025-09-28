@@ -1502,6 +1502,7 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
         if ((file = open_local_generated_file( make, pFile, ".ico", ".svg" ))) return file;
     }
     if ((file = open_local_generated_file( make, pFile, "-client-protocol.h", ".xml" ))) return file;
+    if ((file = open_local_generated_file( make, pFile, ".winmd", ".idl" ))) return file;
 
     /* check for extra targets */
     if (strarray_exists( make->extra_targets, pFile->name ))
