@@ -333,6 +333,42 @@ static BOOL install_device_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVIN
     return TRUE;
 }
 
+static void create_dyn_data_key( DEVICE_OBJECT *device )
+{
+    struct wine_device *wine_device = CONTAINING_RECORD(device, struct wine_device, device_obj);
+    WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
+    static unsigned int counter;
+    WCHAR key_path[29];
+    DWORD disposition;
+    LSTATUS ret;
+    HKEY key;
+
+    if (get_device_instance_id( device, device_instance_id ))
+        return;
+
+    for (;;)
+    {
+        swprintf( key_path, ARRAY_SIZE(key_path), L"Config Manager\\Enum\\%08x", counter++ );
+
+        if ((ret = RegCreateKeyExW( HKEY_DYN_DATA, key_path, 0, NULL,
+                REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &disposition )))
+        {
+            ERR( "Failed to create %s, error %lu.\n", debugstr_w(key_path), GetLastError() );
+            return;
+        }
+
+        if (disposition == REG_CREATED_NEW_KEY)
+        {
+            RegSetValueExW( key, L"HardWareKey", 0, REG_SZ, (BYTE *)device_instance_id,
+                    wcslen( device_instance_id ) * sizeof(WCHAR) );
+            wine_device->dyn_data_key = key;
+            break;
+        }
+
+        RegCloseKey( key );
+    }
+}
+
 /* Load the function driver for a newly created PDO, if one is present, and
  * send IRPs to start the device. */
 static void start_device( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINFO_DATA *sp_device )
@@ -340,6 +376,8 @@ static void start_device( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINFO_DATA *
     load_function_driver( device, set, sp_device );
     if (device->DriverObject)
         send_pnp_irp( device, IRP_MN_START_DEVICE );
+
+    create_dyn_data_key( device );
 }
 
 static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set )
@@ -424,6 +462,15 @@ static void send_remove_device_irp( DEVICE_OBJECT *device, UCHAR code )
 
 static void remove_device( DEVICE_OBJECT *device )
 {
+    struct wine_device *wine_device = CONTAINING_RECORD(device, struct wine_device, device_obj);
+
+    if (wine_device->dyn_data_key)
+    {
+        RegDeleteKeyW( wine_device->dyn_data_key, L"" );
+        RegCloseKey( wine_device->dyn_data_key );
+        wine_device->dyn_data_key = 0;
+    }
+
     send_remove_device_irp( device, IRP_MN_SURPRISE_REMOVAL );
     send_remove_device_irp( device, IRP_MN_REMOVE_DEVICE );
 }

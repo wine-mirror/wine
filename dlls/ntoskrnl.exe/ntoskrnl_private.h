@@ -121,5 +121,6 @@ struct wine_device
 {
     DEVICE_OBJECT device_obj;
     DEVICE_RELATIONS *children;
+    HKEY dyn_data_key;
 };
 #endif
