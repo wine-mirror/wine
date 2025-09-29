@@ -1346,8 +1346,8 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
         wow_frame->Ebp    = context->Ebp;
         wow_frame->Eip    = context->Eip;
         wow_frame->EFlags = context->EFlags;
-        wow_frame->SegCs  = cs32_sel;
-        wow_frame->SegSs  = ds64_sel;
+        wow_frame->SegCs  = context->SegCs;
+        wow_frame->SegSs  = context->SegSs;
         cpu->Flags |= WOW64_CPURESERVED_FLAG_RESET_STATE;
     }
     if (flags & CONTEXT_I386_SEGMENTS)
@@ -1444,8 +1444,8 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
         context->Ebp    = wow_frame->Ebp;
         context->Eip    = wow_frame->Eip;
         context->EFlags = wow_frame->EFlags;
-        context->SegCs  = cs32_sel;
-        context->SegSs  = ds64_sel;
+        context->SegCs  = LOWORD(wow_frame->SegCs);
+        context->SegSs  = LOWORD(wow_frame->SegSs);
         context->ContextFlags |= CONTEXT_I386_CONTROL;
     }
     if (needed_flags & CONTEXT_I386_SEGMENTS)
