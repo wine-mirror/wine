@@ -962,13 +962,18 @@ static HRESULT WINAPI xmlwriter_WriteAttributes(IXmlWriter *iface, IXmlReader *r
     return hr;
 }
 
-static void write_output_attribute(xmlwriter *writer, const WCHAR *prefix, int prefix_len,
-        const WCHAR *local, int local_len, const WCHAR *value)
+static HRESULT write_output_attribute(xmlwriter *writer, const WCHAR *prefix, int prefix_len,
+        const WCHAR *local, int local_len, const WCHAR *value, HRESULT *hr)
 {
-    write_output_buffer_char(writer->output, ' ');
+    if (FAILED(*hr))
+        return *hr;
+
+    write_output(writer, L" ", 1, hr);
     write_output_qname(writer->output, prefix, prefix_len, local, local_len);
-    write_output_buffer_char(writer->output, '=');
-    write_output_buffer_quoted(writer->output, value, -1);
+    write_output(writer, L"=", 1, hr);
+    write_output_quoted(writer, value, -1, hr);
+
+    return *hr;
 }
 
 static BOOL is_valid_xml_space_value(const WCHAR *value)
@@ -1020,10 +1025,7 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
 
     /* Trivial case, no prefix. */
     if (prefix_len == 0 && is_empty_string(uri))
-    {
-        write_output_attribute(writer, prefix, prefix_len, local, local_len, value);
-        return S_OK;
-    }
+        return write_output_attribute(writer, prefix, prefix_len, local, local_len, value, &hr);
 
     /* Predefined "xml" prefix. */
     if (prefix_len && !wcscmp(prefix, L"xml"))
@@ -1036,9 +1038,7 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
         if (!is_empty_string(uri))
             return WR_E_XMLPREFIXDECLARATION;
 
-        write_output_attribute(writer, prefix, prefix_len, local, local_len, value);
-
-        return S_OK;
+        return write_output_attribute(writer, prefix, prefix_len, local, local_len, value, &hr);
     }
 
     if (is_xmlns_prefix || (prefix_len == 0 && uri && !wcscmp(uri, xmlnsuriW)))
@@ -1051,17 +1051,12 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
             ns = writer_push_ns(writer, local, local_len, value);
         ns->emitted = TRUE;
 
-        write_output_attribute(writer, L"xmlns", 5, local, local_len, value);
-
-        return S_OK;
+        return write_output_attribute(writer, L"xmlns", 5, local, local_len, value, &hr);
     }
 
     /* Ignore prefix if URI wasn't specified. */
     if (is_xmlns_local && is_empty_string(uri))
-    {
-        write_output_attribute(writer, NULL, 0, L"xmlns", 5, value);
-        return S_OK;
-    }
+        return write_output_attribute(writer, NULL, 0, L"xmlns", 5, value, &hr);
 
     if (!(ns = writer_find_ns(writer, prefix, uri)))
     {
@@ -1075,11 +1070,11 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
     }
 
     if (ns)
-        write_output_attribute(writer, ns->prefix, ns->prefix_len, local, local_len, value);
+        hr = write_output_attribute(writer, ns->prefix, ns->prefix_len, local, local_len, value, &hr);
     else
-        write_output_attribute(writer, prefix, prefix_len, local, local_len, value);
+        hr = write_output_attribute(writer, prefix, prefix_len, local, local_len, value, &hr);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT write_cdata_section(xmlwriter *writer, const WCHAR *data, int len)
