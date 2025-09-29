@@ -186,6 +186,8 @@ __ASM_GLOBAL_FUNC( syscall_32to64,
                    "movl %ebp,0xb4(%r13)\n\t"   /* context->Ebp */
                    "movl (%r14),%edx\n\t"
                    "movl %edx,0xb8(%r13)\n\t"   /* context->Eip */
+                   "movl cs32_sel(%rip),%edx\n\t"
+                   "movl %edx,0xbc(%r13)\n\t"   /* context->SegCs */
                    "pushfq\n\t"
                    "popq %rdx\n\t"
                    "movl %edx,0xc0(%r13)\n\t"   /* context->EFlags */
