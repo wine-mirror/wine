@@ -111,6 +111,7 @@ typedef struct
 static BOOL test_DestroyWindow_flag;
 static BOOL test_context_menu;
 static BOOL ignore_mouse_messages = TRUE;
+static BOOL ignore_WM_NCHITTEST = TRUE;
 static HWINEVENTHOOK hEvent_hook;
 static HHOOK hKBD_hook;
 static HHOOK hCBT_hook;
@@ -10935,7 +10936,9 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
 
 	/* test_accelerators() depends on this */
 	case WM_NCHITTEST:
-	    return HTCLIENT;
+		if (ignore_WM_NCHITTEST)
+			return HTCLIENT;
+		break;
 
 	case WM_USER+10:
 	{
@@ -14933,6 +14936,12 @@ static const struct message WmMouseLeaveSeq[] =
     { 0 }
 };
 
+static const struct message TrackMouseEventCallSeq[] =
+{
+    { WM_NCHITTEST, sent | wine_only, 0, 0 },
+    { 0 }
+};
+
 static void pump_msg_loop_timeout(DWORD timeout, BOOL inject_mouse_move)
 {
     MSG msg;
@@ -15156,6 +15165,31 @@ static void test_TrackMouseEvent(void)
     track_hover_cancel(hwnd);
 
     DestroyWindow(hwnd);
+
+    /* Test that TrackMouseEvent() tracking doesn't produce WM_NCHITTEST */
+    hwnd2 = CreateWindowA("TestWindowClass", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 640, 480,
+                          0, NULL, NULL, 0);
+    ok(!!hwnd2, "Failed to create window, error %lu.\n", GetLastError());
+
+    GetCursorPos(&old_pt);
+    SetCursorPos(150, 150);
+
+    flush_events();
+    flush_sequence();
+
+    tme.cbSize = sizeof(tme);
+    tme.dwFlags = TME_LEAVE;
+    tme.hwndTrack = hwnd2;
+    tme.dwHoverTime = HOVER_DEFAULT;
+    SetLastError(0xdeadbeef);
+    ignore_WM_NCHITTEST = FALSE;
+    ret = pTrackMouseEvent(&tme);
+    ok(ret, "TrackMouseEvent(TME_LEAVE) failed, error %ld\n", GetLastError());
+    flush_events();
+    ignore_WM_NCHITTEST = TRUE;
+    ok_sequence(TrackMouseEventCallSeq, "TrackMouseEventCallSeq", FALSE);
+    SetCursorPos(old_pt.x, old_pt.y);
+    DestroyWindow(hwnd2);
 
     /* Test that tracking a new window with TME_LEAVE and when the cursor is not in the new window,
      * WM_MOUSELEAVE is immediately posted to the window */
