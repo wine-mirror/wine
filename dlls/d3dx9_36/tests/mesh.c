@@ -5465,6 +5465,34 @@ static void test_create_skin_info(void)
     ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 }
 
+struct vertex_texcoord
+{
+    D3DXVECTOR3 position;
+    D3DXVECTOR3 normal;
+    D3DXVECTOR2 texcoord;
+};
+
+static void test_transformed_mesh(const struct vertex_texcoord vertices[4], const struct vertex_texcoord expected[4])
+{
+    for (unsigned int i = 0; i < 4; ++i)
+    {
+        winetest_push_context("vertex %u", i);
+        ok(compare_vec3(vertices[i].position, expected[i].position),
+                "Expected position (%.8e, %.8e, %.8e), got (%.8e, %.8e, %.8e).\n",
+                expected[i].position.x, expected[i].position.y, expected[i].position.z,
+                vertices[i].position.x, vertices[i].position.y, vertices[i].position.z);
+        ok(compare_vec3(vertices[i].normal, expected[i].normal),
+                "Expected normal (%.8e, %.8e, %.8e), got (%.8e, %.8e, %.8e).\n",
+                expected[i].normal.x, expected[i].normal.y, expected[i].normal.z,
+                vertices[i].normal.x, vertices[i].normal.y, vertices[i].normal.z);
+        ok(compare_vec2(vertices[i].texcoord, expected[i].texcoord),
+                "Expected texcoord (%.8e, %.8e), got (%.8e, %.8e).\n",
+                expected[i].texcoord.x, expected[i].texcoord.y,
+                vertices[i].texcoord.x, vertices[i].texcoord.y);
+        winetest_pop_context();
+    }
+}
+
 static void test_update_skinned_mesh(void)
 {
     static const float bone0_weights[2] = {1.0f, 0.5f}, bone1_weights[2] = {1.0f, 0.5f};
@@ -5500,13 +5528,7 @@ static void test_update_skinned_mesh(void)
         }}},
     };
 
-    static const struct vertex
-    {
-        D3DXVECTOR3 position;
-        D3DXVECTOR3 normal;
-        D3DXVECTOR2 texcoord;
-    }
-    src_vertices[4] =
+    static const struct vertex_texcoord src_vertices[4] =
     {
         {{ 1.0f,  1.0f,  1.0f}, { 1.0f, 0.0f, 0.0f}, { 0.2f, 0.2f}},
         {{ 1.0f,  1.0f, -1.0f}, { 0.0f, 1.0f, 0.0f}, { 0.2f, 0.4f}},
@@ -5519,10 +5541,19 @@ static void test_update_skinned_mesh(void)
         {{ 3.0f,  3.0f,  3.0f}, { 0.0f, 1.0f, 0.0f}, { 0.2f, 0.4f}},
         {{-6.0f, -5.0f,  5.0f}, { 0.0f, 0.0f, 1.0f}, { 0.4f, 0.2f}},
         {{-2.5f, -2.0f,  3.0f}, {-1.5f, 0.0f, 0.0f}, { 0.4f, 0.4f}},
+    },
+    expect_vertices2[4] =
+    {
+        {{ 0.0f,  0.0f,  0.0f}, {  0.0f, 0.0f, 0.0f}, { 0.2f, 0.2f}},
+        {{ 3.0f,  3.0f,  3.0f}, {  0.0f, 1.0f, 0.0f}, { 0.2f, 0.4f}},
+        {{-6.0f, -5.0f,  5.0f}, {  0.0f, 0.0f, 1.0f}, { 0.4f, 0.2f}},
+        {{-2.5f, -2.0f,  3.0f}, {-0.75f, 0.0f, 0.0f}, { 0.4f, 0.4f}},
     };
 
-    struct vertex dst_vertices[4];
+    struct vertex_texcoord dst_vertices[4];
     ID3DXSkinInfo *skin_info;
+    D3DMATRIX inv_transp_mat[2];
+    unsigned int i;
     HRESULT hr;
 
     static const D3DVERTEXELEMENT9 decl_elements[] =
@@ -5546,25 +5577,22 @@ static void test_update_skinned_mesh(void)
     ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
     skin_info->lpVtbl->SetBoneOffsetMatrix(skin_info, 1, &bone_matrices[1]);
     ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
-    skin_info->lpVtbl->UpdateSkinnedMesh(skin_info, update_matrices, NULL, src_vertices, dst_vertices);
-    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
-    for (unsigned int i = 0; i < 4; ++i)
+    for (i = 0; i < ARRAY_SIZE(update_matrices); ++i)
     {
-        winetest_push_context("vertex %u", i);
-        ok(compare_vec3(dst_vertices[i].position, expect_vertices[i].position),
-                "Expected position (%.8e, %.8e, %.8e), got (%.8e, %.8e, %.8e).\n",
-                expect_vertices[i].position.x, expect_vertices[i].position.y, expect_vertices[i].position.z,
-                dst_vertices[i].position.x, dst_vertices[i].position.y, dst_vertices[i].position.z);
-        ok(compare_vec3(dst_vertices[i].normal, expect_vertices[i].normal),
-                "Expected normal (%.8e, %.8e, %.8e), got (%.8e, %.8e, %.8e).\n",
-                expect_vertices[i].normal.x, expect_vertices[i].normal.y, expect_vertices[i].normal.z,
-                dst_vertices[i].normal.x, dst_vertices[i].normal.y, dst_vertices[i].normal.z);
-        ok(compare_vec2(dst_vertices[i].texcoord, expect_vertices[i].texcoord),
-                "Expected texcoord (%.8e, %.8e), got (%.8e, %.8e).\n",
-                expect_vertices[i].texcoord.x, expect_vertices[i].texcoord.y,
-                dst_vertices[i].texcoord.x, dst_vertices[i].texcoord.y);
-        winetest_pop_context();
+        D3DXMatrixTranspose(&inv_transp_mat[i], &update_matrices[i]);
+        D3DXMatrixInverse(&inv_transp_mat[i], NULL, &inv_transp_mat[i]);
     }
+    winetest_push_context("NULL inverse transposed matrix");
+    hr = skin_info->lpVtbl->UpdateSkinnedMesh(skin_info, update_matrices, NULL, src_vertices, dst_vertices);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    test_transformed_mesh(dst_vertices, expect_vertices);
+    winetest_pop_context();
+    winetest_push_context("valid inverse transposed matrix");
+    hr = skin_info->lpVtbl->UpdateSkinnedMesh(skin_info, update_matrices, inv_transp_mat, src_vertices, dst_vertices);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    test_transformed_mesh(dst_vertices, expect_vertices2);
+    winetest_pop_context();
+
     skin_info->lpVtbl->Release(skin_info);
 }
 

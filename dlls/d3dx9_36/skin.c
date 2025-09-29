@@ -403,12 +403,6 @@ static HRESULT WINAPI d3dx9_skin_info_UpdateSkinnedMesh(ID3DXSkinInfo *iface, co
     TRACE("iface %p, bone_transforms %p, bone_inv_transpose_transforms %p, src_vertices %p, dst_vertices %p.\n",
             skin, bone_transforms, bone_inv_transpose_transforms, src_vertices, dst_vertices);
 
-    if (bone_inv_transpose_transforms)
-    {
-        FIXME("Using inverse transforms is not supported, returning E_NOTIMPL.\n");
-        return E_NOTIMPL;
-    }
-
     for (unsigned int i = 0; i < skin->vertex_count; ++i)
     {
         for (const D3DVERTEXELEMENT9 *element = skin->vertex_declaration; element->Stream != 0xff; ++element)
@@ -481,7 +475,8 @@ static HRESULT WINAPI d3dx9_skin_info_UpdateSkinnedMesh(ID3DXSkinInfo *iface, co
                             return E_NOTIMPL;
                         }
 
-                        D3DXVec3TransformNormal(&normal, src_element, &bone_transforms[i]);
+                        D3DXVec3TransformNormal(&normal, src_element, bone_inv_transpose_transforms
+                                ? &bone_inv_transpose_transforms[i] : &bone_transforms[i]);
                         dst_vec3->x += weight * normal.x;
                         dst_vec3->y += weight * normal.y;
                         dst_vec3->z += weight * normal.z;
