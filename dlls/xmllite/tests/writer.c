@@ -1003,6 +1003,9 @@ static void test_WriteStartElement(void)
     hr = IXmlWriter_WriteStartElement(writer, NULL, NULL, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
+    hr = IXmlWriter_WriteStartElement(writer, NULL, L"", NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
     hr = IXmlWriter_WriteProcessingInstruction(writer, L"a", L"a");
     ok(hr == WR_E_INVALIDACTION, "Unexpected hr %#lx.\n", hr);
 

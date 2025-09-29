@@ -2018,7 +2018,7 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
 
     TRACE("%p, %s, %s, %s.\n", iface, wine_dbgstr_w(prefix), wine_dbgstr_w(local_name), wine_dbgstr_w(uri));
 
-    if (!local_name)
+    if (is_empty_string(local_name))
         return E_INVALIDARG;
 
     switch (writer->state)
