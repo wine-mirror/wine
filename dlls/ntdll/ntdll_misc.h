@@ -140,7 +140,7 @@ extern void heap_thread_detach(void);
     TRACE( "rax=%016I64x rbx=%016I64x rcx=%016I64x rdx=%016I64x\n", (c)->Rax, (c)->Rbx, (c)->Rcx, (c)->Rdx ); \
     TRACE( "rsi=%016I64x rdi=%016I64x  r8=%016I64x  r9=%016I64x\n", (c)->Rsi, (c)->Rdi, (c)->R8, (c)->R9 ); \
     TRACE( "r10=%016I64x r11=%016I64x r12=%016I64x r13=%016I64x\n", (c)->R10, (c)->R11, (c)->R12, (c)->R13 ); \
-    TRACE( "r14=%016I64x r15=%016I64x mxcsr=%08lx\n", (c)->R14, (c)->R15, (c)->MxCsr ); \
+    TRACE( "r14=%016I64x r15=%016I64x mxcsr=%08lx cs=%04x ss=%04x\n", (c)->R14, (c)->R15, (c)->MxCsr, (c)->SegCs, (c)->SegSs ); \
     } while(0)
 #elif defined(__arm__)
 # define TRACE_CONTEXT(c) do { \
