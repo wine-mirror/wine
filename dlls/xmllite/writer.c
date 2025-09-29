@@ -2010,18 +2010,18 @@ static HRESULT WINAPI xmlwriter_WriteStartDocument(IXmlWriter *iface, XmlStandal
 
 static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR prefix, LPCWSTR local_name, LPCWSTR uri)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    xmlwriter *writer = impl_from_IXmlWriter(iface);
     int prefix_len, local_len;
     struct element *element;
     struct ns *ns;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %s %s)\n", This, wine_dbgstr_w(prefix), wine_dbgstr_w(local_name), wine_dbgstr_w(uri));
+    TRACE("%p, %s, %s, %s.\n", iface, wine_dbgstr_w(prefix), wine_dbgstr_w(local_name), wine_dbgstr_w(uri));
 
     if (!local_name)
         return E_INVALIDARG;
 
-    switch (This->state)
+    switch (writer->state)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
@@ -2030,7 +2030,7 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
     case XmlWriterState_DocClosed:
         return WR_E_INVALIDACTION;
     case XmlWriterState_ElemStarted:
-        writer_close_starttag(This);
+        if (FAILED(hr = writer_close_starttag(writer))) return hr;
         break;
     default:
         ;
@@ -2052,31 +2052,31 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
             return WR_E_XMLNSURIDECLARATION;
     }
 
-    ns = writer_find_ns(This, prefix, uri);
+    ns = writer_find_ns(writer, prefix, uri);
 
-    element = alloc_element(This, prefix, local_name);
+    element = alloc_element(writer, prefix, local_name);
     if (!element)
         return E_OUTOFMEMORY;
 
-    write_encoding_bom(This, &hr);
-    write_node_indent(This, &hr);
+    write_encoding_bom(writer, &hr);
+    write_node_indent(writer, &hr);
 
-    This->state = XmlWriterState_ElemStarted;
-    This->starttagopen = 1;
+    writer->state = XmlWriterState_ElemStarted;
+    writer->starttagopen = 1;
 
-    writer_push_element(This, element);
+    writer_push_element(writer, element);
 
     if (!ns && !is_empty_string(uri))
-        writer_push_ns(This, prefix, prefix_len, uri);
+        writer_push_ns(writer, prefix, prefix_len, uri);
 
-    write_output_buffer_char(This->output, '<');
+    write_output(writer, L"<", 1, &hr);
     if (ns)
-        write_output_qname(This, ns->prefix, ns->prefix_len, local_name, local_len, &hr);
+        write_output_qname(writer, ns->prefix, ns->prefix_len, local_name, local_len, &hr);
     else
-        write_output_qname(This, prefix, prefix_len, local_name, local_len, &hr);
-    writer_inc_indent(This);
+        write_output_qname(writer, prefix, prefix_len, local_name, local_len, &hr);
+    writer_inc_indent(writer);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI xmlwriter_WriteString(IXmlWriter *iface, const WCHAR *string)
