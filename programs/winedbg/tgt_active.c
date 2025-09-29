@@ -315,20 +315,21 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
 
 static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill);
 
-void fetch_module_name(void* name_addr, void* mod_addr, WCHAR* buffer, size_t bufsz)
+void fetch_module_name(void *name_addr, void* mod_addr, WCHAR* buffer, size_t bufsz)
 {
-    memory_get_string_indirect(dbg_curr_process, name_addr, TRUE, buffer, bufsz);
-    if (!buffer[0] && !GetModuleFileNameExW(dbg_curr_process->handle, mod_addr, buffer, bufsz))
+    DWORD len;
+    if (dbg_curr_process->active_debuggee && (len = GetMappedFileNameW( dbg_curr_process->handle, mod_addr, buffer, bufsz )))
     {
-        if (GetMappedFileNameW( dbg_curr_process->handle, mod_addr, buffer, bufsz ))
-        {
-            /* FIXME: proper NT->Dos conversion */
-            static const WCHAR nt_prefixW[] = {'\\','?','?','\\'};
+        /* FIXME: proper NT->Dos conversion */
+        static const WCHAR nt_prefixW[] = {'\\','?','?','\\'};
 
-            if (!wcsncmp( buffer, nt_prefixW, 4 ))
-                memmove( buffer, buffer + 4, (lstrlenW(buffer + 4) + 1) * sizeof(WCHAR) );
-        }
-        else
+        if (!wcsncmp( buffer, nt_prefixW, 4 ))
+            memmove( buffer, buffer + 4, (len - 4 + 1) * sizeof(WCHAR) );
+    }
+    else
+    {
+        memory_get_string_indirect(dbg_curr_process, name_addr, TRUE, buffer, bufsz);
+        if (!buffer[0])
             swprintf(buffer, bufsz, L"DLL_%08lx", (ULONG_PTR)mod_addr);
     }
 }
