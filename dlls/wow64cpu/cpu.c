@@ -132,12 +132,12 @@ static void copy_context_64to32( I386_CONTEXT *ctx32, DWORD flags, AMD64_CONTEXT
         ctx32->Eip    = ctx64->Rip;
         ctx32->EFlags = ctx64->EFlags;
         ctx32->SegCs  = ctx64->SegCs;
-        ctx32->SegSs  = ds64_sel;
+        ctx32->SegSs  = ctx64->SegSs;
     }
     if (flags & CONTEXT_I386_SEGMENTS)
     {
-        ctx32->SegDs = ds64_sel;
-        ctx32->SegEs = ds64_sel;
+        ctx32->SegDs = ctx64->SegDs;
+        ctx32->SegEs = ctx64->SegEs;
         ctx32->SegFs = fs32_sel;
         ctx32->SegGs = ds64_sel;
     }
@@ -412,6 +412,7 @@ NTSTATUS WINAPI BTCpuResetToConsistentState( EXCEPTION_POINTERS *ptrs )
     context->Rip = (ULONG64)syscall_32to64;
     context->SegCs = cs64_sel;
     context->Rsp = context->R14;
+    context->SegSs = ds64_sel;
     /* fixup machine frame */
     machine_frame = (struct machine_frame *)(((ULONG_PTR)(ptrs->ExceptionRecord + 1) + 15) & ~15);
     machine_frame->rip = context->Rip;
