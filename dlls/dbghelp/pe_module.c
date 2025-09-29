@@ -650,19 +650,18 @@ static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* mod
     if (nth->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED)
     {
         /* Debug info is stripped to .DBG file */
-        const IMAGE_DEBUG_MISC* misc = (const IMAGE_DEBUG_MISC*)
-            ((const char*)mapping + dbg->PointerToRawData);
-
-        if (nDbg != 1 || dbg->Type != IMAGE_DEBUG_TYPE_MISC ||
-            misc->DataType != IMAGE_DEBUG_MISC_EXENAME)
+        const IMAGE_DEBUG_MISC *misc = NULL;
+        if (nDbg == 1 && dbg->Type == IMAGE_DEBUG_TYPE_MISC)
         {
+            misc = (const IMAGE_DEBUG_MISC *)((const char *)mapping + dbg->PointerToRawData);
+            if (misc->DataType == IMAGE_DEBUG_MISC_EXENAME)
+                ret = pe_load_dbg_file(pcs, module, (const char*)misc->Data, nth->FileHeader.TimeDateStamp);
+            else
+                misc = NULL;
+        }
+        if (!misc)
             WARN("-Debug info stripped, but no .DBG file in module %s\n",
                  debugstr_w(module->modulename));
-        }
-        else
-        {
-            ret = pe_load_dbg_file(pcs, module, (const char*)misc->Data, nth->FileHeader.TimeDateStamp);
-        }
     }
     else
     {
