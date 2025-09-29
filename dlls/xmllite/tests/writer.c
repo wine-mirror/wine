@@ -2508,6 +2508,8 @@ static void test_WriteDocType(void)
     doctype_tests[] =
     {
         { L"a", L"", NULL, NULL, "<!DOCTYPE a PUBLIC \"\" \"\">" },
+        { L"a.b", L"", NULL, NULL, "<!DOCTYPE a.b PUBLIC \"\" \"\">" },
+        { L"a-b", L"", NULL, NULL, "<!DOCTYPE a-b PUBLIC \"\" \"\">" },
         { L"a", NULL, NULL, NULL, "<!DOCTYPE a>" },
         { L"a", NULL, L"", NULL, "<!DOCTYPE a SYSTEM \"\">" },
         { L"a", L"", L"", NULL, "<!DOCTYPE a PUBLIC \"\" \"\">" },
