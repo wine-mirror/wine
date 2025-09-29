@@ -49,6 +49,9 @@ struct thunk_opcodes
 
 static BYTE DECLSPEC_ALIGN(4096) code_buffer[0x1000];
 
+UINT cs32_sel = 0;
+UINT ss32_sel = 0;
+
 static USHORT cs64_sel;
 static USHORT ds64_sel;
 static USHORT fs32_sel;
@@ -284,7 +287,11 @@ __ASM_GLOBAL_FUNC( BTCpuSimulate,
                    ".seh_endprologue\n\t"
                    "movq %gs:0x30,%r12\n\t"
                    "movq 0x1488(%r12),%rcx\n\t" /* NtCurrentTeb()->TlsSlots[WOW64_TLS_CPURESERVED] */
-                   "leaq 4(%rcx),%r13\n"        /* cpu->Context */
+                   "leaq 4(%rcx),%r13\n\t"      /* cpu->Context */
+                   "movl cs32_sel(%rip),%eax\n\t"
+                   "movl %eax,0xbc(%r13)\n\t"   /* context->SegCs */
+                   "movl ss32_sel(%rip),%eax\n\t"
+                   "movl %eax,0xc8(%r13)\n\t"   /* context->SegSs */
                    "jmp syscall_32to64_return\n" )
 
 
@@ -297,6 +304,7 @@ NTSTATUS WINAPI BTCpuProcessInit(void)
     SIZE_T size = sizeof(*thunk);
     ULONG old_prot;
     CONTEXT context;
+    I386_CONTEXT context_i386;
     HMODULE module;
     UNICODE_STRING str = RTL_CONSTANT_STRING( L"ntdll.dll" );
     void **p__wine_unix_call_dispatcher;
@@ -318,6 +326,11 @@ NTSTATUS WINAPI BTCpuProcessInit(void)
     cs64_sel = context.SegCs;
     ds64_sel = context.SegDs;
     fs32_sel = context.SegFs;
+
+    context_i386.ContextFlags = CONTEXT_I386_CONTROL;
+    RtlWow64GetThreadContext( GetCurrentThread(), &context_i386 );
+    cs32_sel = context_i386.SegCs;
+    ss32_sel = context_i386.SegSs;
 
     thunk->syscall_thunk.ljmp  = 0xff;
     thunk->syscall_thunk.modrm = 0x2d;
