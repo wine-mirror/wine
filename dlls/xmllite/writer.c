@@ -593,20 +593,6 @@ static HRESULT write_output_quoted(xmlwriter *writer, const WCHAR *data, int len
     return *hr;
 }
 
-static HRESULT write_output_buffer_char(xmlwriteroutput *output, WCHAR ch)
-{
-    return write_output_buffer(output, &ch, 1);
-}
-
-static HRESULT write_output_buffer_quoted(xmlwriteroutput *output, const WCHAR *data, int len)
-{
-    write_output_buffer_char(output, '"');
-    if (!is_empty_string(data))
-        write_output_buffer(output, data, len);
-    write_output_buffer_char(output, '"');
-    return S_OK;
-}
-
 /* TODO: test if we need to validate char range */
 static HRESULT write_output_qname(xmlwriter *writer, const WCHAR *prefix, int prefix_len,
         const WCHAR *local_name, int local_len, HRESULT *hr)
@@ -1498,7 +1484,7 @@ static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR pr
     {
         write_output_qname(writer, L" xmlns", 6, prefix, prefix_len, &hr);
         write_output(writer, L"=", 1, &hr);
-        write_output_buffer_quoted(writer->output, uri, -1);
+        write_output_quoted(writer, uri, -1, &hr);
     }
 
     if (value)
