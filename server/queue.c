@@ -152,7 +152,6 @@ struct hotkey
 };
 
 static void msg_queue_dump( struct object *obj, int verbose );
-static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *entry );
 static int msg_queue_signaled( struct object *obj, struct wait_queue_entry *entry );
 static void msg_queue_destroy( struct object *obj );
 static void msg_queue_poll_event( struct fd *fd, int event );
@@ -165,7 +164,7 @@ static const struct object_ops msg_queue_ops =
     sizeof(struct msg_queue),  /* size */
     &no_type,                  /* type */
     msg_queue_dump,            /* dump */
-    msg_queue_add_queue,       /* add_queue */
+    add_queue,                 /* add_queue */
     remove_queue,              /* remove_queue */
     msg_queue_signaled,        /* signaled */
     no_satisfied,              /* satisfied */
@@ -1296,21 +1295,6 @@ static int is_queue_hung( struct msg_queue *queue )
 {
     /* queue is hung if it's signaled and thread didn't access it for more than 5 seconds */
     return queue->signaled && monotonic_time - queue->shared->access_time > 5 * TICKS_PER_SEC;
-}
-
-static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *entry )
-{
-    struct msg_queue *queue = (struct msg_queue *)obj;
-
-    /* a thread can only wait on its own queue */
-    if (get_wait_queue_thread(entry)->queue != queue)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return 0;
-    }
-
-    add_queue( obj, entry );
-    return 1;
 }
 
 static void msg_queue_dump( struct object *obj, int verbose )
