@@ -859,6 +859,9 @@ static HRESULT WINAPI xmlwriter_SetOutput(IXmlWriter *iface, IUnknown *output)
 
     TRACE("(%p)->(%p)\n", This, output);
 
+    writer_end_elements(This);
+    writeroutput_flush_stream(This->output);
+
     if (This->output) {
         writeroutput_release_stream(This->output);
         IUnknown_Release(&This->output->IXmlWriterOutput_iface);

@@ -725,7 +725,7 @@ static void test_flush(void)
     hr = IXmlWriter_SetOutput(writer, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    CHECK_OUTPUT_TODO(stream, "<a />");
+    CHECK_OUTPUT(stream, "<a />");
     IStream_Release(stream);
 
     /* Switching to different output. */
@@ -737,8 +737,23 @@ static void test_flush(void)
     CHECK_OUTPUT(stream, "");
 
     stream2 = writer_set_output(writer);
-    CHECK_OUTPUT_TODO(stream, "<m:a xmlns:m=\"uri\" />");
+    CHECK_OUTPUT(stream, "<m:a xmlns:m=\"uri\" />");
     IStream_Release(stream2);
+
+    IStream_Release(stream);
+
+    /* Setting same output again */
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteStartElement(writer, L"m", L"a", L"uri");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    CHECK_OUTPUT(stream, "");
+
+    hr = IXmlWriter_SetOutput(writer, (IUnknown *)stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    CHECK_OUTPUT(stream, "<m:a xmlns:m=\"uri\" />");
 
     IStream_Release(stream);
 
