@@ -1640,42 +1640,41 @@ static WORD get_key_state(void)
     return ret;
 }
 
-struct tracking_list
+static struct mouse_tracking_info *get_mouse_tracking_info(void)
 {
-    TRACKMOUSEEVENT info;
-    POINT pos; /* center of hover rectangle */
-};
+    struct user_thread_info *thread_info = get_user_thread_info();
+    if (!thread_info->mouse_tracking_info)
+        thread_info->mouse_tracking_info = calloc(1, sizeof(*thread_info->mouse_tracking_info));
+    return thread_info->mouse_tracking_info;
+}
 
-/* FIXME: move tracking stuff into per-thread data */
-static struct tracking_list tracking_info;
-
-static void check_mouse_leave( HWND hwnd, int hittest )
+static void check_mouse_leave( HWND hwnd, int hittest, struct mouse_tracking_info *tracking )
 {
-    if (tracking_info.info.hwndTrack != hwnd)
+    if (tracking->info.hwndTrack != hwnd)
     {
-        if (tracking_info.info.dwFlags & TME_NONCLIENT)
-            NtUserPostMessage( tracking_info.info.hwndTrack, WM_NCMOUSELEAVE, 0, 0 );
+        if (tracking->info.dwFlags & TME_NONCLIENT)
+            NtUserPostMessage( tracking->info.hwndTrack, WM_NCMOUSELEAVE, 0, 0 );
         else
-            NtUserPostMessage( tracking_info.info.hwndTrack, WM_MOUSELEAVE, 0, 0 );
+            NtUserPostMessage( tracking->info.hwndTrack, WM_MOUSELEAVE, 0, 0 );
 
-        tracking_info.info.dwFlags &= ~TME_LEAVE;
+        tracking->info.dwFlags &= ~TME_LEAVE;
     }
     else
     {
         if (hittest == HTCLIENT)
         {
-            if (tracking_info.info.dwFlags & TME_NONCLIENT)
+            if (tracking->info.dwFlags & TME_NONCLIENT)
             {
-                NtUserPostMessage( tracking_info.info.hwndTrack, WM_NCMOUSELEAVE, 0, 0 );
-                tracking_info.info.dwFlags &= ~TME_LEAVE;
+                NtUserPostMessage( tracking->info.hwndTrack, WM_NCMOUSELEAVE, 0, 0 );
+                tracking->info.dwFlags &= ~TME_LEAVE;
             }
         }
         else
         {
-            if (!(tracking_info.info.dwFlags & TME_NONCLIENT))
+            if (!(tracking->info.dwFlags & TME_NONCLIENT))
             {
-                NtUserPostMessage( tracking_info.info.hwndTrack, WM_MOUSELEAVE, 0, 0 );
-                tracking_info.info.dwFlags &= ~TME_LEAVE;
+                NtUserPostMessage( tracking->info.hwndTrack, WM_MOUSELEAVE, 0, 0 );
+                tracking->info.dwFlags &= ~TME_LEAVE;
             }
         }
     }
@@ -1683,6 +1682,7 @@ static void check_mouse_leave( HWND hwnd, int hittest )
 
 void update_mouse_tracking_info( HWND hwnd )
 {
+    struct mouse_tracking_info *tracking = get_mouse_tracking_info();
     int hover_width = 0, hover_height = 0, hittest;
     POINT pos;
 
@@ -1697,22 +1697,22 @@ void update_mouse_tracking_info( HWND hwnd )
     NtUserSystemParametersInfo( SPI_GETMOUSEHOVERHEIGHT, 0, &hover_height, 0 );
 
     TRACE( "tracked pos %s, current pos %s, hover width %d, hover height %d\n",
-           wine_dbgstr_point(&tracking_info.pos), wine_dbgstr_point(&pos),
+           wine_dbgstr_point(&tracking->pos), wine_dbgstr_point(&pos),
            hover_width, hover_height );
 
-    if (tracking_info.info.dwFlags & TME_LEAVE)
-        check_mouse_leave( hwnd, hittest );
+    if (tracking->info.dwFlags & TME_LEAVE)
+        check_mouse_leave( hwnd, hittest, tracking );
 
-    if (tracking_info.info.hwndTrack != hwnd)
-        tracking_info.info.dwFlags &= ~TME_HOVER;
+    if (tracking->info.hwndTrack != hwnd)
+        tracking->info.dwFlags &= ~TME_HOVER;
 
-    if (tracking_info.info.dwFlags & TME_HOVER)
+    if (tracking->info.dwFlags & TME_HOVER)
     {
         /* has the cursor moved outside the rectangle centered around pos? */
-        if ((abs( pos.x - tracking_info.pos.x ) > (hover_width / 2)) ||
-            (abs( pos.y - tracking_info.pos.y ) > (hover_height / 2)))
+        if ((abs( pos.x - tracking->pos.x ) > (hover_width / 2)) ||
+            (abs( pos.y - tracking->pos.y ) > (hover_height / 2)))
         {
-            tracking_info.pos = pos;
+            tracking->pos = pos;
         }
         else
         {
@@ -1721,28 +1721,28 @@ void update_mouse_tracking_info( HWND hwnd )
                 screen_to_client(hwnd, &pos);
                 TRACE( "client cursor pos %s\n", wine_dbgstr_point(&pos) );
 
-                NtUserPostMessage( tracking_info.info.hwndTrack, WM_MOUSEHOVER,
+                NtUserPostMessage( tracking->info.hwndTrack, WM_MOUSEHOVER,
                                    get_key_state(), MAKELPARAM( pos.x, pos.y ) );
             }
             else
             {
-                if (tracking_info.info.dwFlags & TME_NONCLIENT)
-                    NtUserPostMessage( tracking_info.info.hwndTrack, WM_NCMOUSEHOVER,
+                if (tracking->info.dwFlags & TME_NONCLIENT)
+                    NtUserPostMessage( tracking->info.hwndTrack, WM_NCMOUSEHOVER,
                                        hittest, MAKELPARAM( pos.x, pos.y ) );
             }
 
             /* stop tracking mouse hover */
-            tracking_info.info.dwFlags &= ~TME_HOVER;
+            tracking->info.dwFlags &= ~TME_HOVER;
         }
     }
 
     /* stop the timer if the tracking list is empty */
-    if (!(tracking_info.info.dwFlags & (TME_HOVER | TME_LEAVE)))
+    if (!(tracking->info.dwFlags & (TME_HOVER | TME_LEAVE)))
     {
-        NtUserKillSystemTimer( tracking_info.info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
-        tracking_info.info.hwndTrack = 0;
-        tracking_info.info.dwFlags = 0;
-        tracking_info.info.dwHoverTime = 0;
+        NtUserKillSystemTimer( tracking->info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
+        tracking->info.hwndTrack = 0;
+        tracking->info.dwFlags = 0;
+        tracking->info.dwHoverTime = 0;
     }
 }
 
@@ -1751,6 +1751,7 @@ void update_mouse_tracking_info( HWND hwnd )
  */
 BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
 {
+    struct mouse_tracking_info *tracking = get_mouse_tracking_info();
     DWORD hover_time;
     int hittest;
     HWND hwnd;
@@ -1768,7 +1769,7 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
 
     if (info->dwFlags & TME_QUERY)
     {
-        *info = tracking_info.info;
+        *info = tracking->info;
         info->cbSize = sizeof(TRACKMOUSEEVENT);
         return TRUE;
     }
@@ -1796,17 +1797,17 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
 
     if (info->dwFlags & TME_CANCEL)
     {
-        if (tracking_info.info.hwndTrack == info->hwndTrack)
+        if (tracking->info.hwndTrack == info->hwndTrack)
         {
-            tracking_info.info.dwFlags &= ~(info->dwFlags & ~TME_CANCEL);
+            tracking->info.dwFlags &= ~(info->dwFlags & ~TME_CANCEL);
 
             /* if we aren't tracking on hover or leave remove this entry */
-            if (!(tracking_info.info.dwFlags & (TME_HOVER | TME_LEAVE)))
+            if (!(tracking->info.dwFlags & (TME_HOVER | TME_LEAVE)))
             {
-                NtUserKillSystemTimer( tracking_info.info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
-                tracking_info.info.hwndTrack = 0;
-                tracking_info.info.dwFlags = 0;
-                tracking_info.info.dwHoverTime = 0;
+                NtUserKillSystemTimer( tracking->info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
+                tracking->info.hwndTrack = 0;
+                tracking->info.dwFlags = 0;
+                tracking->info.dwHoverTime = 0;
             }
         }
     }
@@ -1826,24 +1827,24 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
         /* In our implementation, it's possible that another window will receive
          * WM_MOUSEMOVE and call TrackMouseEvent before TrackMouseEventProc is
          * called. In such a situation, post the WM_MOUSELEAVE now. */
-        if ((tracking_info.info.dwFlags & TME_LEAVE) && tracking_info.info.hwndTrack != NULL)
-            check_mouse_leave(hwnd, hittest);
+        if ((tracking->info.dwFlags & TME_LEAVE) && tracking->info.hwndTrack != NULL)
+            check_mouse_leave( hwnd, hittest, tracking );
 
-        NtUserKillSystemTimer( tracking_info.info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
-        tracking_info.info.hwndTrack = 0;
-        tracking_info.info.dwFlags = 0;
-        tracking_info.info.dwHoverTime = 0;
+        NtUserKillSystemTimer( tracking->info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
+        tracking->info.hwndTrack = 0;
+        tracking->info.dwFlags = 0;
+        tracking->info.dwHoverTime = 0;
 
         if (info->hwndTrack == hwnd)
         {
             /* Adding new mouse event to the tracking list */
-            tracking_info.info = *info;
-            tracking_info.info.dwHoverTime = hover_time;
+            tracking->info = *info;
+            tracking->info.dwHoverTime = hover_time;
 
             /* Initialize HoverInfo variables even if not hover tracking */
-            tracking_info.pos = pos;
+            tracking->pos = pos;
 
-            NtUserSetSystemTimer( tracking_info.info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE, hover_time );
+            NtUserSetSystemTimer( tracking->info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE, hover_time );
         }
     }
 

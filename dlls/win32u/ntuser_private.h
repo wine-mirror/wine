@@ -96,6 +96,12 @@ static inline BOOL is_broadcast( HWND hwnd )
     return hwnd == HWND_BROADCAST || hwnd == HWND_TOPMOST;
 }
 
+struct mouse_tracking_info
+{
+    TRACKMOUSEEVENT info;
+    POINT pos; /* center of hover rectangle */
+};
+
 /* this is the structure stored in TEB->Win32ClientInfo */
 /* no attempt is made to keep the layout compatible with the Windows one */
 struct user_thread_info
@@ -115,6 +121,7 @@ struct user_thread_info
     BOOL                          clipping_cursor;        /* thread is currently clipping */
     DWORD                         clipping_reset;         /* time when clipping was last reset */
     struct session_thread_data   *session_data;           /* shared session thread data */
+    struct mouse_tracking_info   *mouse_tracking_info;    /* NtUserTrackMouseEvent handling */
 };
 
 C_ASSERT( sizeof(struct user_thread_info) <= sizeof(((TEB *)0)->Win32ClientInfo) );

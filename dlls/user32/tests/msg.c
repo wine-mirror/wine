@@ -14986,6 +14986,22 @@ static void pump_msg_loop_timeout(DWORD timeout, BOOL inject_mouse_move)
     } while (start_ticks + timeout >= end_ticks);
 }
 
+static DWORD WINAPI track_mouse_event_query_thread( void *context )
+{
+    TRACKMOUSEEVENT tme;
+    BOOL ret;
+
+    memset( &tme, 0xcc, sizeof(tme) );
+    tme.cbSize = sizeof(tme);
+    tme.dwFlags = TME_QUERY;
+    ret = pTrackMouseEvent( &tme );
+    ok( ret, "TrackMouseEvent(TME_QUERY) error %ld\n", GetLastError() );
+    ok( !tme.hwndTrack, "got %p.\n", tme.hwndTrack );
+    ok( !tme.dwHoverTime, "got %lu.\n", tme.dwHoverTime );
+    ok( !tme.dwFlags, "got %#lx.\n", tme.dwFlags );
+    return 0;
+}
+
 static void test_TrackMouseEvent(void)
 {
     TRACKMOUSEEVENT tme;
@@ -14994,6 +15010,7 @@ static void test_TrackMouseEvent(void)
     RECT rc_parent, rc_child;
     UINT default_hover_time, hover_width = 0, hover_height = 0;
     POINT old_pt;
+    HANDLE thread;
 
 #define track_hover(track_hwnd, track_hover_time) \
     tme.cbSize = sizeof(tme); \
@@ -15018,7 +15035,9 @@ static void test_TrackMouseEvent(void)
     ok(tme.hwndTrack == (expected_track_hwnd), \
        "wrong tme.hwndTrack %p, expected %p\n", tme.hwndTrack, (expected_track_hwnd)); \
     ok(tme.dwHoverTime == (expected_hover_time), \
-       "wrong tme.dwHoverTime %lu, expected %u\n", tme.dwHoverTime, (expected_hover_time))
+       "wrong tme.dwHoverTime %lu, expected %u\n", tme.dwHoverTime, (expected_hover_time)); \
+    thread = CreateThread( NULL, 0, track_mouse_event_query_thread, &tme, 0, NULL ); \
+    WaitForSingleObject( thread, INFINITE )
 
 #define track_hover_cancel(track_hwnd) \
     tme.cbSize = sizeof(tme); \
