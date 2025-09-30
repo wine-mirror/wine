@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
+
 #include "wine/debug.h"
 #include "wine/rbtree.h"
 #include "winreg.h"
@@ -414,6 +416,9 @@ static HRESULT devprop_filter_eval_compare( const DEV_OBJECT *obj, const DEVPROP
                 cmp = op & DEVPROP_OPERATOR_MODIFIER_IGNORE_CASE ? wcsicmp( prop->Buffer, cmp_prop->Buffer )
                                                                  : wcscmp( prop->Buffer, cmp_prop->Buffer );
                 break;
+            case DEVPROP_TYPE_GUID:
+                /* Any other comparison operator other than DEVPROP_OPERATOR_EQUALS with GUIDs evaluates to false. */
+                if (!(op & DEVPROP_OPERATOR_EQUALS)) break;
             default:
                 cmp = memcmp( prop->Buffer, cmp_prop->Buffer, prop->BufferSize );
                 break;
@@ -455,14 +460,13 @@ static const DEVPROP_FILTER_EXPRESSION *find_closing_filter( const DEVPROP_FILTE
 }
 
 /* Return S_OK if the specified filter expressions match the object, S_FALSE if it doesn't. */
-static HRESULT devprop_filter_matches_object( const DEV_OBJECT *obj, const DEVPROP_FILTER_EXPRESSION *filters,
+static HRESULT devprop_filter_matches_object( const DEV_OBJECT *obj, DEVPROP_OPERATOR op_outer_logical, const DEVPROP_FILTER_EXPRESSION *filters,
                                               const DEVPROP_FILTER_EXPRESSION *end )
 {
     HRESULT hr = S_OK;
 
-    TRACE( "(%s, %p, %p)\n", debugstr_DEV_OBJECT( obj ), filters, end );
+    TRACE( "(%s, %#x, %p, %p)\n", debugstr_DEV_OBJECT( obj ), op_outer_logical, filters, end );
 
-    /* By default, the evaluation is performed by AND-ing all individual filter expressions. */
     for (const DEVPROP_FILTER_EXPRESSION *filter = filters; filter < end; filter++)
     {
         DEVPROP_OPERATOR op = filter->Operator;
@@ -470,26 +474,48 @@ static HRESULT devprop_filter_matches_object( const DEV_OBJECT *obj, const DEVPR
         if (op == DEVPROP_OPERATOR_NONE)
         {
             hr = S_FALSE;
-            break;
         }
-        if (op & (DEVPROP_OPERATOR_MASK_LIST | DEVPROP_OPERATOR_MASK_ARRAY))
+        else if (op & (DEVPROP_OPERATOR_MASK_LIST | DEVPROP_OPERATOR_MASK_ARRAY))
         {
             FIXME( "Unsupported list/array operator: %s\n", debugstr_DEVPROP_OPERATOR( op ) );
-            continue;
+            hr = S_FALSE;
         }
-        if (op & DEVPROP_OPERATOR_MASK_LOGICAL)
+        else if (op & DEVPROP_OPERATOR_MASK_LOGICAL)
         {
-            FIXME( "Unsupported logical operator: %s\n", debugstr_DEVPROP_OPERATOR( op ) );
-            continue;
+            const DEVPROP_FILTER_EXPRESSION *closing = find_closing_filter( filter, end );
+            hr = devprop_filter_matches_object( obj, op & DEVPROP_OPERATOR_MASK_LOGICAL, filter + 1, closing );
+            filter = closing;
         }
-        if (op & DEVPROP_OPERATOR_MASK_EVAL)
+        else if (op & DEVPROP_OPERATOR_MASK_EVAL)
         {
             hr = devprop_filter_eval_compare( obj, filter );
-            if (FAILED( hr ) || hr == S_FALSE)
-                break;
+        }
+        if (FAILED( hr )) break;
+
+        /* See if we can short-circuit. */
+        switch (op_outer_logical)
+        {
+        /* {NOT_OPEN, ..., NOT_CLOSE} is the same as {NOT_OPEN, AND_OPEN, ..., AND_CLOSE, NOT_CLOSE}, so we can
+         * short circuit here as well. */
+        case DEVPROP_OPERATOR_NOT_OPEN:
+        case DEVPROP_OPERATOR_AND_OPEN:
+            if (hr == S_FALSE) goto done;
+            break;
+        case DEVPROP_OPERATOR_OR_OPEN:
+            if (hr == S_OK) goto done;
+            break;
+        default:
+            assert( 0 );
+            break;
         }
     }
 
+done:
+    if (op_outer_logical == DEVPROP_OPERATOR_NOT_OPEN)
+    {
+        if (hr == S_FALSE) hr = S_OK;
+        else if (hr == S_OK) hr = S_FALSE;
+    }
     return hr;
 }
 
@@ -820,7 +846,8 @@ static HRESULT enum_dev_objects( DEV_OBJECT_TYPE type, ULONG props_len, const DE
                 hr = dev_object_iface_get_props( &obj, set, &iface, props_len, props, all_props, FALSE );
             if (SUCCEEDED( hr ))
             {
-                hr = devprop_filter_matches_object( &obj, filters, filters_end );
+                /* By default, the evaluation is performed by AND-ing all individual filter expressions. */
+                hr = devprop_filter_matches_object( &obj, DEVPROP_OPERATOR_AND_OPEN, filters, filters_end );
                 /* Shrink pProperties to only the desired ones, unless DevQueryFlagAllProperties is set. */
                 if (!all_props)
                     dev_object_remove_unwanted_props( &obj, props_len, props );

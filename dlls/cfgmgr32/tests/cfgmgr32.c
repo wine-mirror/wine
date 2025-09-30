@@ -1406,8 +1406,8 @@ static void test_DevGetObjects( void )
         objects = (DEV_OBJECT *)0xdeadbeef;
         hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 1, filters, &len, &objects );
         ok( hr == S_OK, "got hr %#lx\n", hr );
-        todo_wine_if (len) ok( !len, "got len %lu\n", len );
-        todo_wine_if (len) ok( !objects, "got objects %p\n", objects );
+        ok( !len, "got len %lu\n", len );
+        ok( !objects, "got objects %p\n", objects );
         if (objects) pDevFreeObjects( len, objects );
 
         /* Consequently, using the DEVPROP_OPERATOR_MODIFIER_NOT modifier will always match. */
@@ -1416,8 +1416,8 @@ static void test_DevGetObjects( void )
         objects = NULL;
         hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 1, filters, &len, &objects );
         ok( hr == S_OK, "got hr %#lx\n", hr );
-        todo_wine_if (!len) ok( len > 0, "got len %lu\n", len );
-        todo_wine_if (!len) ok( !!objects, "got objects %p\n", objects );
+        ok( len > 0, "got len %lu\n", len );
+        ok( !!objects, "got objects %p\n", objects );
         pDevFreeObjects( len, objects );
 
         /* Make sure we get the same results with the max GUID value as well. */
@@ -1427,8 +1427,8 @@ static void test_DevGetObjects( void )
         objects = (DEV_OBJECT *)0xdeadbeef;
         hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 1, filters, &len, &objects );
         ok( hr == S_OK, "got hr %#lx\n", hr );
-        todo_wine_if (len) ok( !len, "got len %lu\n", len );
-        todo_wine_if (len) ok( !objects, "got objects %p\n", objects );
+        ok( !len, "got len %lu\n", len );
+        ok( !objects, "got objects %p\n", objects );
         if (objects) pDevFreeObjects( len, objects );
 
         filters[0].Operator |= DEVPROP_OPERATOR_MODIFIER_NOT;
@@ -1436,8 +1436,8 @@ static void test_DevGetObjects( void )
         objects = NULL;
         hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, 1, filters, &len, &objects );
         ok( hr == S_OK, "got hr %#lx\n", hr );
-        todo_wine_if (!len) ok( len > 0, "got len %lu\n", len );
-        todo_wine_if (!len) ok( !!objects, "got objects %p\n", objects );
+        ok( len > 0, "got len %lu\n", len );
+        ok( !!objects, "got objects %p\n", objects );
         pDevFreeObjects( len, objects );
 
         winetest_pop_context();
@@ -1476,8 +1476,8 @@ static void test_DevGetObjects( void )
         hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL, logical_op_test_cases[i].size,
                              logical_op_test_cases[i].expr, &len2, &objects );
         ok( hr == S_OK, "got hr %#lx\n", hr );
-        todo_wine_if( !len2 ) ok( len2 == len, "got len2 %lu != %lu\n", len2, len );
-        todo_wine_if( !len2 ) ok( !!objects, "got objects %p\n", objects );
+        ok( len2 == len, "got len2 %lu != %lu\n", len2, len );
+        ok( !!objects, "got objects %p\n", objects );
         pDevFreeObjects( len2, objects );
 
         winetest_pop_context();
@@ -1492,8 +1492,8 @@ static void test_DevGetObjects( void )
         hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 0, NULL,
                              logical_op_empty_test_cases[i].size, logical_op_empty_test_cases[i].expr, &len, &objects );
         ok( hr == S_OK, "got hr %#lx\n", hr );
-        todo_wine_if( len ) ok( !len, "got len %lu\n", len );
-        todo_wine_if( len ) ok( !objects, "got objects %p\n", objects );
+        ok( !len, "got len %lu\n", len );
+        ok( !objects, "got objects %p\n", objects );
 
         winetest_pop_context();
     }
