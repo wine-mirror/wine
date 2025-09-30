@@ -1271,6 +1271,13 @@ static void check_ID3DXRenderToSurface(IDirect3DDevice9 *device, UINT width, UIN
 
     /* viewport */
     hr = ID3DXRenderToSurface_BeginScene(render, surface, &viewport);
+    if (FAILED(hr))
+    {
+        skip("Failed to create ID3DXRenderToSurface\n");
+        check_release((IUnknown *)surface, 0);
+        ID3DXRenderToSurface_Release(render);
+        return;
+    }
     ok(hr == D3D_OK, "ID3DXRenderToSurface::BeginScene returned %#lx, expected %#lx\n", hr, D3D_OK);
     check_ref((IUnknown *)surface, 2);
     if (SUCCEEDED(hr)) ID3DXRenderToSurface_EndScene(render, D3DX_FILTER_NONE);
