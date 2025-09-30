@@ -3687,8 +3687,8 @@ static void test_D3DXSHEvalDirectionalLight(void)
       11494.852539f, -6293.858398f, -377.377899f, 1283.391479f, -449.749817f, 45.826328f, };
     const struct
     {
-        float *red_in, *green_in, *blue_in;
-        const float *red_out, *green_out, *blue_out;
+        float *red_out, *green_out, *blue_out;
+        const float *red_expected, *green_expected, *blue_expected;
         float roffset, goffset, boffset;
     }
     test[] =
@@ -3704,7 +3704,7 @@ static void test_D3DXSHEvalDirectionalLight(void)
       { rout, NULL, NULL, table, NULL, NULL, 1.01f, 0.0f, 0.0f, },
     };
 
-    dir.x = 1.1f; dir.y= 1.2f; dir.z = 2.76f;
+    dir.x = 1.1f; dir.y = 1.2f; dir.z = 2.76f;
 
     for (l = 0; l < ARRAY_SIZE(test); ++l)
     {
@@ -3712,16 +3712,16 @@ static void test_D3DXSHEvalDirectionalLight(void)
 
         for (order = D3DXSH_MINORDER; order <= D3DXSH_MAXORDER; order++)
         {
-            red_out = test[l].red_in;
-            green_out = test[l].green_in;
-            blue_out = test[l].blue_in;
+            red_out = test[l].red_out;
+            green_out = test[l].green_out;
+            blue_out = test[l].blue_out;
 
             for (j = 0; j < ARRAY_SIZE(rout); ++j)
             {
                 red_out[j] = 1.01f + j;
-                if ( green_out )
+                if (green_out)
                     green_out[j] = 1.02f + j;
-                if ( blue_out )
+                if (blue_out)
                     blue_out[j] = 1.03f + j;
             }
 
@@ -3730,32 +3730,32 @@ static void test_D3DXSHEvalDirectionalLight(void)
 
             for (j = 0; j < ARRAY_SIZE(rout); ++j)
             {
-                if ( j >= order * order )
+                if (j >= order * order)
                     expected = j + test[l].roffset;
                 else
-                    expected = test[l].red_out[startindex + j];
+                    expected = test[l].red_expected[startindex + j];
                 equal = compare_float(expected, red_out[j], 8);
                 ok(equal, "Red: case %u, order %u: expected[%u] = %.8e, received %.8e.\n",
                         l, order, j, expected, red_out[j]);
 
-                if ( green_out )
+                if (green_out)
                 {
-                    if ( j >= order * order )
+                    if (j >= order * order)
                         expected = j + test[l].goffset;
                     else
-                        expected = test[l].green_out[startindex + j];
+                        expected = test[l].green_expected[startindex + j];
                     equal = compare_float(expected, green_out[j], 8);
                     ok(equal, "Green: case %u, order %u: expected[%u] = %.8e, received %.8e.\n",
                             l, order, j, expected, green_out[j]);
                 }
 
-                if ( blue_out )
+                if (blue_out)
                 {
-                    if ( j >= order * order )
+                    if (j >= order * order)
                         expected = j + test[l].boffset;
                     else
-                        expected = test[l].blue_out[startindex + j];
-                    equal = compare_float(expected, blue_out[j], 4);
+                        expected = test[l].blue_expected[startindex + j];
+                    equal = compare_float(expected, blue_out[j], 8);
                     ok(equal, "Blue: case %u, order %u: expected[%u] = %.8e, received %.8e.\n",
                             l, order, j, expected, blue_out[j]);
                 }
