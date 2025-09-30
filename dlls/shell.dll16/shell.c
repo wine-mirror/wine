@@ -234,7 +234,7 @@ BOOL16 WINAPI AboutDlgProc16( HWND16 hWnd, UINT16 msg, WPARAM16 wParam,
  */
 BOOL16 WINAPI ShellAbout16( HWND16 hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON16 icon16 )
 {
-    HICON icon = convert_icon_to_32( icon16 );
+    HICON icon = icon16 ? convert_icon_to_32( icon16 ) : 0;
     BOOL ret = ShellAboutA( HWND_32(hWnd), szApp, szOtherStuff, icon );
     DestroyIcon( icon );
     return ret;
