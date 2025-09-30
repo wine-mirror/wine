@@ -1353,7 +1353,7 @@ const struct wined3d_color_key_conversion * wined3d_format_get_color_key_convers
 }
 
 /* We intentionally don't support WINED3DFMT_D32_UNORM. No hardware driver
- * supports it, and applications get confused when we do.
+ * supports it on d3d9, and applications get confused when we do.
  *
  * The following formats explicitly don't have WINED3D_FORMAT_CAP_TEXTURE set:
  *

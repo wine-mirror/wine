@@ -18318,8 +18318,6 @@ static void test_d32_support(void)
             "Got unexpected dwZBufferBitDepth %lu.\n", surface_desc.ddpfPixelFormat.dwZBufferBitDepth);
     ok(surface_desc.ddpfPixelFormat.dwZBitMask == 0xffffffff,
             "Got unexpected Z mask 0x%08lx.\n", surface_desc.ddpfPixelFormat.dwZBitMask);
-    ok(!(surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY),
-            "Got unexpected surface caps %#lx.\n", surface_desc.ddsCaps.dwCaps);
     IDirectDrawSurface7_Release(surface);
 
     refcount = IDirectDraw7_Release(ddraw);

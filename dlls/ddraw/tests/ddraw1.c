@@ -14425,8 +14425,6 @@ static void test_d32_support(void)
     ok((surface_desc.dwFlags & DDSD_ZBUFFERBITDEPTH), "Got unexpected flags %#lx.\n", surface_desc.dwFlags);
     ok(surface_desc.dwZBufferBitDepth == 32,
             "Got unexpected dwZBufferBitDepth %lu.\n", surface_desc.dwZBufferBitDepth);
-    ok(!(surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY),
-            "Got unexpected surface caps %#lx.\n", surface_desc.ddsCaps.dwCaps);
     IDirectDrawSurface_Release(surface);
 
     refcount = IDirectDraw_Release(ddraw);
