@@ -2628,7 +2628,7 @@ static HWND *list_children_from_point( HWND hwnd, POINT pt, UINT dpi )
  *
  * Find the window and hittest for a given point.
  */
-HWND window_from_point( HWND hwnd, POINT pt, INT *hittest )
+HWND window_from_point( HWND hwnd, POINT pt, INT *hittest, BOOL send_nchittest )
 {
     int i, res;
     HWND ret, *list;
@@ -2655,7 +2655,7 @@ HWND window_from_point( HWND hwnd, POINT pt, INT *hittest )
             break;
         }
         /* Send WM_NCCHITTEST (if same thread) */
-        if (!is_current_thread_window( list[i] ))
+        if (!send_nchittest || !is_current_thread_window( list[i] ))
         {
             *hittest = HTCLIENT;
             break;
@@ -2682,7 +2682,7 @@ HWND WINAPI NtUserWindowFromPoint( LONG x, LONG y )
 {
     POINT pt = { .x = x, .y = y };
     INT hittest;
-    return window_from_point( 0, pt, &hittest );
+    return window_from_point( 0, pt, &hittest, TRUE );
 }
 
 /*******************************************************************

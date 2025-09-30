@@ -100,6 +100,9 @@ struct mouse_tracking_info
 {
     TRACKMOUSEEVENT info;
     POINT pos; /* center of hover rectangle */
+    HWND last_mouse_message_hwnd;
+    int last_mouse_message_hittest;
+    POINT last_mouse_message_pos;
 };
 
 /* this is the structure stored in TEB->Win32ClientInfo */

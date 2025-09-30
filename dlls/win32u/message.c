@@ -2575,14 +2575,14 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
     {
         HWND orig = msg->hwnd;
 
-        msg->hwnd = window_from_point( msg->hwnd, msg->pt, &hittest );
+        msg->hwnd = window_from_point( msg->hwnd, msg->pt, &hittest, TRUE );
         if (!msg->hwnd) /* As a heuristic, try the next window if it's the owner of orig */
         {
             HWND next = get_window_relative( orig, GW_HWNDNEXT );
 
             if (next && get_window_relative( orig, GW_OWNER ) == next &&
                 is_current_thread_window( next ))
-                msg->hwnd = window_from_point( next, msg->pt, &hittest );
+                msg->hwnd = window_from_point( next, msg->pt, &hittest, TRUE );
         }
     }
 
@@ -2591,6 +2591,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
         accept_hardware_message( hw_id );
         return FALSE;
     }
+    update_current_mouse_window( msg->hwnd, hittest, msg->pt );
 
     msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
     set_thread_dpi_awareness_context( get_window_dpi_awareness_context( msg->hwnd ));

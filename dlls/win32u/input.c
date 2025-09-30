@@ -1648,6 +1648,15 @@ static struct mouse_tracking_info *get_mouse_tracking_info(void)
     return thread_info->mouse_tracking_info;
 }
 
+void update_current_mouse_window( HWND hwnd, INT hittest, POINT pos )
+{
+    struct mouse_tracking_info *tracking = get_mouse_tracking_info();
+
+    tracking->last_mouse_message_hwnd = hwnd;
+    tracking->last_mouse_message_hittest = hittest;
+    tracking->last_mouse_message_pos = pos;
+}
+
 static void check_mouse_leave( HWND hwnd, int hittest, struct mouse_tracking_info *tracking )
 {
     if (tracking->info.hwndTrack != hwnd)
@@ -1680,6 +1689,27 @@ static void check_mouse_leave( HWND hwnd, int hittest, struct mouse_tracking_inf
     }
 }
 
+static HWND get_mouse_window( HWND hwnd, INT *hittest, POINT *ret_pos, struct mouse_tracking_info *tracking )
+{
+    POINT pos;
+    HWND ret;
+
+    NtUserGetCursorPos( &pos );
+    ret = window_from_point( hwnd, pos, hittest, FALSE );
+    if (ret && ret == tracking->last_mouse_message_hwnd)
+    {
+        *hittest = tracking->last_mouse_message_hittest;
+        *ret_pos = tracking->last_mouse_message_pos;
+    }
+    else
+    {
+        tracking->last_mouse_message_hwnd = NULL;
+        *ret_pos = pos;
+    }
+    TRACE( "point %s hwnd %p hittest %d\n", wine_dbgstr_point(&pos), ret, *hittest );
+    return ret;
+}
+
 void update_mouse_tracking_info( HWND hwnd )
 {
     struct mouse_tracking_info *tracking = get_mouse_tracking_info();
@@ -1688,10 +1718,7 @@ void update_mouse_tracking_info( HWND hwnd )
 
     TRACE( "hwnd %p\n", hwnd );
 
-    NtUserGetCursorPos( &pos );
-    hwnd = window_from_point( hwnd, pos, &hittest );
-
-    TRACE( "point %s hwnd %p hittest %d\n", wine_dbgstr_point(&pos), hwnd, hittest );
+    hwnd = get_mouse_window( hwnd, &hittest, &pos, tracking );
 
     NtUserSystemParametersInfo( SPI_GETMOUSEHOVERWIDTH, 0, &hover_width, 0 );
     NtUserSystemParametersInfo( SPI_GETMOUSEHOVERHEIGHT, 0, &hover_height, 0 );
@@ -1788,8 +1815,7 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
     if (hover_time == HOVER_DEFAULT || hover_time == 0)
         NtUserSystemParametersInfo( SPI_GETMOUSEHOVERTIME, 0, &hover_time, 0 );
 
-    NtUserGetCursorPos( &pos );
-    hwnd = window_from_point( info->hwndTrack, pos, &hittest );
+    hwnd = get_mouse_window( info->hwndTrack, &hittest, &pos, tracking );
     TRACE( "point %s hwnd %p hittest %d\n", wine_dbgstr_point(&pos), hwnd, hittest );
 
     if (info->dwFlags & ~(TME_CANCEL | TME_HOVER | TME_LEAVE | TME_NONCLIENT))

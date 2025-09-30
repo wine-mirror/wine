@@ -14936,12 +14936,6 @@ static const struct message WmMouseLeaveSeq[] =
     { 0 }
 };
 
-static const struct message TrackMouseEventCallSeq[] =
-{
-    { WM_NCHITTEST, sent | wine_only, 0, 0 },
-    { 0 }
-};
-
 static void pump_msg_loop_timeout(DWORD timeout, BOOL inject_mouse_move)
 {
     MSG msg;
@@ -15206,7 +15200,7 @@ static void test_TrackMouseEvent(void)
     ok(ret, "TrackMouseEvent(TME_LEAVE) failed, error %ld\n", GetLastError());
     flush_events();
     ignore_WM_NCHITTEST = TRUE;
-    ok_sequence(TrackMouseEventCallSeq, "TrackMouseEventCallSeq", FALSE);
+    ok_sequence(WmEmptySeq, "TrackMouseEventCallSeq", FALSE);
     SetCursorPos(old_pt.x, old_pt.y);
     DestroyWindow(hwnd2);
 

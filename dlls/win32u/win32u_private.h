@@ -100,6 +100,7 @@ extern BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus, DW
 extern BOOL set_ime_composition_rect( HWND hwnd, RECT rect );
 extern void toggle_caret( HWND hwnd );
 extern void update_mouse_tracking_info( HWND hwnd );
+extern void update_current_mouse_window( HWND hwnd, INT hittest, POINT pos );
 extern BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset );
 extern BOOL clip_fullscreen_window( HWND hwnd, BOOL reset );
 extern USHORT map_scan_to_kbd_vkey( USHORT scan, HKL layout );
@@ -282,7 +283,7 @@ extern LONG_PTR set_window_long( HWND hwnd, INT offset, UINT size, LONG_PTR newv
 extern BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y );
 extern UINT set_window_style_bits( HWND hwnd, UINT set_bits, UINT clear_bits );
 extern void update_window_state( HWND hwnd );
-extern HWND window_from_point( HWND hwnd, POINT pt, INT *hittest );
+extern HWND window_from_point( HWND hwnd, POINT pt, INT *hittest, BOOL send_nchittest );
 extern HWND get_shell_window(void);
 extern HWND get_progman_window(void);
 extern HWND get_taskman_window(void);
