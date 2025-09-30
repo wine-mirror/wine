@@ -451,7 +451,8 @@ static struct debug_event *alloc_debug_event( struct thread *thread, int code, c
     fill_debug_event[code - DbgCreateThreadStateChange]( event, arg );
     event->data.code = code;
 
-    if (!(event->sync = create_internal_sync( 1, 0 )))
+    /* create a server-side sync here, as send_debug_event still uses server_select to pass contexts around */
+    if (!(event->sync = create_server_internal_sync( 1, 0 )))
     {
         release_object( event );
         return NULL;

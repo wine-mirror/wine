@@ -222,6 +222,7 @@ struct event_sync;
 struct event;
 struct keyed_event;
 
+extern struct event_sync *create_server_internal_sync( int manual, int signaled );
 extern struct event_sync *create_internal_sync( int manual, int signaled );
 extern void signal_sync( struct event_sync *sync );
 extern void reset_sync( struct event_sync *sync );

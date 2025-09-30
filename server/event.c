@@ -98,6 +98,17 @@ static struct event_sync *create_event_sync( int manual, int signaled )
     return event;
 }
 
+struct event_sync *create_server_internal_sync( int manual, int signaled )
+{
+    struct event_sync *event;
+
+    if (!(event = alloc_object( &event_sync_ops ))) return NULL;
+    event->manual   = manual;
+    event->signaled = signaled;
+
+    return event;
+}
+
 struct event_sync *create_internal_sync( int manual, int signaled )
 {
     return create_event_sync( manual, signaled );
