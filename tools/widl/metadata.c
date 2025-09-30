@@ -3438,7 +3438,7 @@ static void build_tables( const statement_list_t *stmt_list )
         case TYPE_INTERFACE:
             if (type->signature && !strncmp( type->signature, "pinterface", 10 ))
             {
-                fprintf( stderr, "Ingoring supported %s parameterized interface.\n", type->name );
+                /* fprintf( stderr, "Ignoring supported %s parameterized interface.\n", type->name ); */
                 break;
             }
             add_interface_type_step1( type );
@@ -3475,7 +3475,7 @@ static void build_tables( const statement_list_t *stmt_list )
         case TYPE_INTERFACE:
             if (type->signature && !strncmp( type->signature, "pinterface", 10 ))
             {
-                fprintf( stderr, "Ingoring supported %s parameterized interface.\n", type->name );
+                /* fprintf( stderr, "Ignoring supported %s parameterized interface.\n", type->name ); */
                 break;
             }
             add_interface_type_step2( type );

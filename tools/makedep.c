@@ -85,23 +85,24 @@ struct incl_file
     struct strarray    importlibdeps; /* importlib dependencies */
 };
 
-#define FLAG_GENERATED      0x000001  /* generated file */
-#define FLAG_INSTALL        0x000002  /* file to install */
-#define FLAG_TESTDLL        0x000004  /* file is part of a TESTDLL resource */
-#define FLAG_IDL_PROXY      0x000100  /* generates a proxy (_p.c) file */
-#define FLAG_IDL_CLIENT     0x000200  /* generates a client (_c.c) file */
-#define FLAG_IDL_SERVER     0x000400  /* generates a server (_s.c) file */
-#define FLAG_IDL_IDENT      0x000800  /* generates an ident (_i.c) file */
-#define FLAG_IDL_REGISTER   0x001000  /* generates a registration (_r.res) file */
-#define FLAG_IDL_TYPELIB    0x002000  /* generates a typelib (_l.res) file */
-#define FLAG_IDL_REGTYPELIB 0x004000  /* generates a registered typelib (_t.res) file */
-#define FLAG_IDL_HEADER     0x008000  /* generates a header (.h) file */
-#define FLAG_RC_PO          0x010000  /* rc file contains translations */
-#define FLAG_RC_HEADER      0x020000  /* rc file is a header */
-#define FLAG_C_IMPLIB       0x040000  /* file is part of an import library */
-#define FLAG_C_UNIX         0x080000  /* file is part of a Unix library */
-#define FLAG_SFD_FONTS      0x100000  /* sfd file generated bitmap fonts */
-#define FLAG_ARM64EC_X64    0x200000  /* use x86_64 object on ARM64EC */
+#define FLAG_GENERATED      0x00000001  /* generated file */
+#define FLAG_INSTALL        0x00000002  /* file to install */
+#define FLAG_TESTDLL        0x00000004  /* file is part of a TESTDLL resource */
+#define FLAG_IDL_PROXY      0x00000100  /* generates a proxy (_p.c) file */
+#define FLAG_IDL_CLIENT     0x00000200  /* generates a client (_c.c) file */
+#define FLAG_IDL_SERVER     0x00000400  /* generates a server (_s.c) file */
+#define FLAG_IDL_IDENT      0x00000800  /* generates an ident (_i.c) file */
+#define FLAG_IDL_REGISTER   0x00001000  /* generates a registration (_r.res) file */
+#define FLAG_IDL_TYPELIB    0x00002000  /* generates a typelib (_l.res) file */
+#define FLAG_IDL_REGTYPELIB 0x00004000  /* generates a registered typelib (_t.res) file */
+#define FLAG_IDL_HEADER     0x00008000  /* generates a header (.h) file */
+#define FLAG_IDL_WINMD      0x00010000  /* generates a metadata (.winmd) file */
+#define FLAG_RC_PO          0x00100000  /* rc file contains translations */
+#define FLAG_RC_HEADER      0x00200000  /* rc file is a header */
+#define FLAG_SFD_FONTS      0x00400000  /* sfd file generated bitmap fonts */
+#define FLAG_C_IMPLIB       0x01000000  /* file is part of an import library */
+#define FLAG_C_UNIX         0x02000000  /* file is part of a Unix library */
+#define FLAG_ARM64EC_X64    0x04000000  /* use x86_64 object on ARM64EC */
 
 static const struct
 {
@@ -1014,6 +1015,7 @@ static void parse_pragma_directive( struct file *source, char *str )
             else if (!strcmp( flag, "typelib" )) source->flags |= FLAG_IDL_TYPELIB;
             else if (!strcmp( flag, "register" )) source->flags |= FLAG_IDL_REGISTER;
             else if (!strcmp( flag, "regtypelib" )) source->flags |= FLAG_IDL_REGTYPELIB;
+            else if (!strcmp( flag, "winmd" )) source->flags |= FLAG_IDL_WINMD;
         }
         else if (strendswith( source->name, ".rc" ))
         {
@@ -1958,6 +1960,10 @@ static void add_generated_sources( struct makefile *make )
         if (source->file->flags & FLAG_IDL_HEADER)
         {
             add_generated_source( make, replace_extension( source->name, ".idl", ".h" ), NULL, 0 );
+        }
+        if (source->file->flags & FLAG_IDL_WINMD)
+        {
+            add_generated_source( make, replace_extension( source->name, ".idl", ".winmd" ), NULL, 0 );
         }
         if (!source->file->flags && strendswith( source->name, ".idl" ))
         {
@@ -2930,6 +2936,12 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
         strarray_add( &headers, dest );
         if (!find_src_file( make, dest )) strarray_add( &make->clean_files, dest );
     }
+    if (source->file->flags & FLAG_IDL_WINMD)
+    {
+        dest = strmake( "%s.winmd", obj );
+        strarray_add( &headers, dest );
+        strarray_add( &make->clean_files, dest );
+    }
 
     for (i = 0; i < ARRAY_SIZE(idl_outputs); i++)
     {
@@ -3248,6 +3260,15 @@ static void output_source_xml( struct makefile *make, struct incl_file *source, 
 
 
 /*******************************************************************
+ *         output_source_winmd
+ */
+static void output_source_winmd( struct makefile *make, struct incl_file *source, const char *obj )
+{
+    if (source->file->flags & FLAG_GENERATED) strarray_add( &make->all_targets[0], source->name );
+}
+
+
+/*******************************************************************
  *         output_source_one_arch
  */
 static void output_source_one_arch( struct makefile *make, struct incl_file *source, const char *obj,
@@ -3458,6 +3479,7 @@ static const struct
     { "x", output_source_x },
     { "spec", output_source_spec },
     { "xml", output_source_xml },
+    { "winmd", output_source_winmd },
     { NULL, output_source_default }
 };
 

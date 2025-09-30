@@ -17,6 +17,7 @@
  */
 
 #ifdef __WIDL__
+#pragma makedep header install winmd
 #pragma winrt ns_prefix
 #endif
 
@@ -240,6 +241,7 @@ namespace Windows.ApplicationModel {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.ApplicationModel.Package),
         uuid(5f738b61-f86a-4917-93d1-f1ee9d3b35d9),
         version(0x0a000000)
