@@ -15276,8 +15276,21 @@ static void test_caps(void)
     DDCAPS hal_caps, hel_caps;
     IDirectDraw2 *ddraw;
     IDirectDraw *ddraw1;
+    HWND window;
     HRESULT hr;
     BOOL no3d;
+
+    static const struct
+    {
+        unsigned int depth;
+        DWORD flag;
+    }
+    depth_caps[] =
+    {
+        {16, DDBD_16},
+        {24, DDBD_24},
+        {32, DDBD_32},
+    };
 
     static const DWORD caps_hel = DDSCAPS_FLIP
             | DDSCAPS_OFFSCREENPLAIN
@@ -15308,8 +15321,11 @@ static void test_caps(void)
             | DDSCAPS_VIDEOMEMORY
             | DDSCAPS_MIPMAP;
 
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
 
     memset(&hal_caps, 0, sizeof(hal_caps));
     memset(&hel_caps, 0, sizeof(hel_caps));
@@ -15336,6 +15352,41 @@ static void test_caps(void)
     ok(!(hal_caps.dwZBufferBitDepths & ~(DDBD_16 | DDBD_24 | DDBD_32)),
             "Got HAL depth caps %#lx.\n", hal_caps.dwZBufferBitDepths);
     todo_wine ok(hel_caps.dwZBufferBitDepths == DDBD_16, "Got HEL depth caps %#lx.\n", hel_caps.dwZBufferBitDepths);
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(depth_caps); ++i)
+    {
+        IDirectDrawSurface *surface;
+        DDSURFACEDESC desc =
+        {
+            .dwSize = sizeof(DDSURFACEDESC),
+            .dwFlags = DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_WIDTH | DDSD_HEIGHT,
+            .ddsCaps.dwCaps = DDSCAPS_ZBUFFER,
+            .dwZBufferBitDepth = depth_caps[i].depth,
+            .dwWidth = 64,
+            .dwHeight = 64,
+        };
+
+        winetest_push_context("depth %u", depth_caps[i].depth);
+
+        /* dwZBufferBitDepths sometimes reports false negatives,
+         * but it has not been known to report false positives. */
+        hr = IDirectDraw2_CreateSurface(ddraw, &desc, &surface, NULL);
+        ok(hr == S_OK || (!(hal_caps.dwZBufferBitDepths & depth_caps[i].flag) && hr == DDERR_INVALIDPIXELFORMAT),
+                "Got hr %#lx.\n", hr);
+
+        if (hr == S_OK)
+        {
+            hr = IDirectDrawSurface_GetSurfaceDesc(surface, &desc);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            todo_wine_if (depth_caps[i].depth == 32)
+                ok(desc.ddsCaps.dwCaps == (DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM | DDSCAPS_ZBUFFER)
+                        || (ddraw_is_warp(ddraw) && desc.ddsCaps.dwCaps == (DDSCAPS_SYSTEMMEMORY | DDSCAPS_ZBUFFER)),
+                        "Got caps %#lx.\n", desc.ddsCaps.dwCaps);
+            IDirectDrawSurface_Release(surface);
+        }
+
+        winetest_pop_context();
+    }
 
     IDirectDraw2_Release(ddraw);
 
@@ -15374,6 +15425,8 @@ static void test_caps(void)
     hr = IDirectDraw_QueryInterface(ddraw1, &IID_IDirectDraw2, (void **)&ddraw);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
     IDirectDraw_Release(ddraw1);
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
 
     memset(&hal_caps, 0, sizeof(hal_caps));
     memset(&hel_caps, 0, sizeof(hel_caps));
@@ -15392,7 +15445,43 @@ static void test_caps(void)
             "Got unexpected caps %#lx.\n", hal_caps.ddsCaps.dwCaps);
     todo_wine ok(hel_caps.ddsCaps.dwCaps == caps_hel, "Got unexpected caps %#lx.\n", hel_caps.ddsCaps.dwCaps);
 
+    for (unsigned int i = 0; i < ARRAY_SIZE(depth_caps); ++i)
+    {
+        IDirectDrawSurface *surface;
+        DDSURFACEDESC desc =
+        {
+            .dwSize = sizeof(DDSURFACEDESC),
+            .dwFlags = DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_WIDTH | DDSD_HEIGHT,
+            .ddsCaps.dwCaps = DDSCAPS_ZBUFFER,
+            .dwZBufferBitDepth = depth_caps[i].depth,
+            .dwWidth = 64,
+            .dwHeight = 64,
+        };
+
+        winetest_push_context("depth %u", depth_caps[i].depth);
+
+        hr = IDirectDraw2_CreateSurface(ddraw, &desc, &surface, NULL);
+        if (depth_caps[i].depth == 16 || depth_caps[i].depth == 32)
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        else
+            todo_wine ok(hr == DDERR_INVALIDPIXELFORMAT, "Got hr %#lx.\n", hr);
+
+        if (hr == S_OK)
+        {
+            hr = IDirectDrawSurface_GetSurfaceDesc(surface, &desc);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            todo_wine_if (depth_caps[i].depth != 32)
+                ok(desc.ddsCaps.dwCaps == (DDSCAPS_SYSTEMMEMORY | DDSCAPS_ZBUFFER),
+                        "Got caps %#lx.\n", desc.ddsCaps.dwCaps);
+            IDirectDrawSurface_Release(surface);
+        }
+
+        winetest_pop_context();
+    }
+
     IDirectDraw2_Release(ddraw);
+
+    DestroyWindow(window);
 }
 
 static void test_d32_support(void)
