@@ -92,6 +92,7 @@ struct user_apc_frame
 SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 
 static WOW64INFO *wow64info;
+static WORD ss32_sel;
 
 /* cpu backend dll functions */
 /* the function prototypes most likely differ from Windows */
@@ -210,7 +211,7 @@ static void __attribute__((used)) call_user_exception_dispatcher( EXCEPTION_RECO
             } *stack;
             I386_CONTEXT ctx = { CONTEXT_I386_ALL };
             CONTEXT_EX *context_ex, *src_ex = NULL;
-            ULONG flags, context_length;
+            ULONG esp, flags, context_length;
 
             C_ASSERT( offsetof(struct exc_stack_layout32, context) == 0x58 );
 
@@ -238,7 +239,8 @@ static void __attribute__((used)) call_user_exception_dispatcher( EXCEPTION_RECO
 
             RtlGetExtendedContextLength( flags, &context_length );
 
-            stack = (struct exc_stack_layout32 *)ULongToPtr( (ctx.Esp - offsetof(struct exc_stack_layout32, context) - context_length) & ~3 );
+            esp = ctx.SegSs != ss32_sel ? NtCurrentTeb32()->SystemReserved1[0] : ctx.Esp;
+            stack = (struct exc_stack_layout32 *)ULongToPtr( (esp - offsetof(struct exc_stack_layout32, context) - context_length) & ~3 );
             stack->rec_ptr     = PtrToUlong( &stack->rec );
             stack->context_ptr = PtrToUlong( &stack->context );
             stack->rec         = *rec;
@@ -879,6 +881,13 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
 
     if (wow64info->CpuFlags & WOW64_CPUFLAGS_SOFTWARE) create_cross_process_work_list( wow64info );
 
+    if (current_machine == IMAGE_FILE_MACHINE_I386)
+    {
+        I386_CONTEXT ctx = { CONTEXT_I386_CONTROL };
+        RtlWow64GetThreadContext( GetCurrentThread(), &ctx );
+        ss32_sel = ctx.SegSs;
+    }
+
     init_file_redirects();
     return TRUE;
 
@@ -1328,7 +1337,7 @@ __ASM_GLOBAL_FUNC( Wow64PrepareForException,
                    "je 1f\n\t"                   /* already in 64-bit mode? */
                    /* copy arguments to 64-bit stack */
                    "mov %rsp,%rsi\n\t"
-                   "mov 0x98(%rdx),%rcx\n\t"     /* context->Rsp */
+                   "leaq 0x5c0(%rdx),%rcx\n\t"   /* cf. KiUserExceptionDispatcher */
                    "sub %rsi,%rcx\n\t"           /* stack size */
                    "sub %rcx,%r14\n\t"           /* reserve same size on 64-bit stack */
                    "and $~0x0f,%r14\n\t"
