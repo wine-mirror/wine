@@ -88,6 +88,11 @@ WINE_DECLARE_DEBUG_CHANNEL(seh);
 
 #include "dwarf.h"
 
+static USHORT cs32_sel;  /* selector for %cs in 32-bit mode */
+static USHORT cs64_sel;  /* selector for %cs in 64-bit mode */
+static USHORT ds64_sel;  /* selector for %ds/%es/%ss in 64-bit mode */
+static USHORT fs32_sel;  /* selector for %fs in 32-bit mode */
+
 /***********************************************************************
  * signal context platform-specific definitions
  */
@@ -180,6 +185,7 @@ __ASM_GLOBAL_FUNC( modify_ldt,
 #define CS_sig(context)      (*((WORD *)&(context)->uc_mcontext.gregs[REG_CSGSFS] + 0))
 #define GS_sig(context)      (*((WORD *)&(context)->uc_mcontext.gregs[REG_CSGSFS] + 1))
 #define FS_sig(context)      (*((WORD *)&(context)->uc_mcontext.gregs[REG_CSGSFS] + 2))
+#define SS_sig(context)      (*((WORD *)&(context)->uc_mcontext.gregs[REG_CSGSFS] + 3))
 #define RSP_sig(context)     ((context)->uc_mcontext.gregs[REG_RSP])
 #define RIP_sig(context)     ((context)->uc_mcontext.gregs[REG_RIP])
 #define EFL_sig(context)     ((context)->uc_mcontext.gregs[REG_EFL])
@@ -335,6 +341,18 @@ static inline XMM_SAVE_AREA32 *FPU_sig( const ucontext_t *context )
     }
     return (XMM_SAVE_AREA32 *)&(context)->uc_mcontext->__fs.__fpu_fcw;
 }
+
+static inline const WORD *SS_sig_ptr( const ucontext_t *context )
+{
+    if (context->uc_mcsize == sizeof(_STRUCT_MCONTEXT64_FULL) ||
+        context->uc_mcsize == sizeof(_STRUCT_MCONTEXT_AVX64_FULL) ||
+        context->uc_mcsize == SIZEOF_STRUCT_MCONTEXT_AVX512_64_FULL)
+    {
+        return (WORD *)&((_STRUCT_MCONTEXT64_FULL *)context->uc_mcontext)->__ss.__ss;
+    }
+    return &ds64_sel;
+}
+#define SS_sig(context) (*SS_sig_ptr(context))
 
 #define XState_sig(context)  NULL
 
@@ -572,11 +590,6 @@ static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
 
     xctx->All.Offset = -(LONG)sizeof(CONTEXT);
 }
-
-static USHORT cs32_sel;  /* selector for %cs in 32-bit mode */
-static USHORT cs64_sel;  /* selector for %cs in 64-bit mode */
-static USHORT ds64_sel;  /* selector for %ds/%es/%ss in 64-bit mode */
-static USHORT fs32_sel;  /* selector for %fs in 32-bit mode */
 
 
 /***********************************************************************
@@ -872,6 +885,12 @@ static inline void set_sigcontext( const CONTEXT *context, ucontext_t *sigcontex
 }
 
 
+static inline BOOL is_16bit( const ucontext_t *sigcontext )
+{
+    return SS_sig(sigcontext) != ds64_sel;
+}
+
+
 extern void clear_alignment_flag(void);
 __ASM_GLOBAL_FUNC( clear_alignment_flag,
                    "pushfq\n\t"
@@ -928,6 +947,7 @@ static inline void leave_handler( ucontext_t *sigcontext )
         !is_inside_syscall( RSP_sig(sigcontext )))
         _thread_set_tsd_base( (uint64_t)NtCurrentTeb() );
 #endif
+    if (is_16bit( sigcontext )) return;
 #ifdef DS_sig
     DS_sig(sigcontext) = ds64_sel;
 #else
@@ -995,6 +1015,20 @@ static void save_context( struct xcontext *xcontext, const ucontext_t *sigcontex
             context_init_xstate( context, xs );
             assert( xcontext->c_ex.XState.Offset == (BYTE *)xs - (BYTE *)&xcontext->c_ex );
         }
+    }
+    if (is_16bit( sigcontext ))  /* get the actual selector values */
+    {
+        context->SegSs = SS_sig(sigcontext);
+#ifdef DS_sig
+        context->SegDs = DS_sig(sigcontext);
+#else
+        __asm__( "movw %%ds,%0" : "=r" (context->SegDs) );
+#endif
+#ifdef ES_sig
+        context->SegEs = ES_sig(sigcontext);
+#else
+        __asm__( "movw %%es,%0" : "=r" (context->SegEs) );
+#endif
     }
 }
 
@@ -1509,7 +1543,7 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
  */
 static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec, struct xcontext *xcontext )
 {
-    void *stack_ptr = (void *)(RSP_sig(sigcontext) & ~15);
+    ULONG_PTR rsp;
     CONTEXT *context = &xcontext->c;
     struct exc_stack_layout *stack;
     size_t stack_size;
@@ -1544,8 +1578,10 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
     /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
     if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Rip--;
 
-    stack_size = (ULONG_PTR)stack_ptr - (((ULONG_PTR)stack_ptr - sizeof(*stack) - xstate_size) & ~(ULONG_PTR)63);
-    stack = virtual_setup_exception( stack_ptr, stack_size, rec );
+    rsp = is_16bit(sigcontext) ? get_wow_teb( NtCurrentTeb() )->SystemReserved1[0] : RSP_sig(sigcontext);
+    rsp &= ~(ULONG_PTR)15;
+    stack_size = rsp - ((rsp - sizeof(*stack) - xstate_size) & ~(ULONG_PTR)63);
+    stack = virtual_setup_exception( (void *)rsp, stack_size, rec );
     stack->rec               = *rec;
     stack->context           = *context;
     stack->machine_frame.rip = context->Rip;
@@ -2220,7 +2256,9 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
             rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
             rec.NumberParameters = 2;
             rec.ExceptionInformation[0] = 0;
-            rec.ExceptionInformation[1] = 0xffffffffffffffff;
+            /* if error contains a LDT selector, use that as fault address */
+            if ((err & 7) == 4) rec.ExceptionInformation[1] = err & ~7;
+            else rec.ExceptionInformation[1] = 0xffffffffffffffff;
         }
         break;
     case TRAP_x86_PAGEFLT:  /* Page fault */
