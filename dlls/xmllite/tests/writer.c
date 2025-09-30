@@ -708,7 +708,7 @@ static void test_flush(void)
 
     IXmlWriter_Release(writer);
 
-    CHECK_OUTPUT_TODO(stream, "<p:a xmlns:p=\"uri\" />");
+    CHECK_OUTPUT(stream, "<p:a xmlns:p=\"uri\" />");
     IStream_Release(stream);
 
     /* Resetting output flushes output */

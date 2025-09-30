@@ -248,6 +248,22 @@ static struct element *pop_element(xmlwriter *writer)
     return element;
 }
 
+static HRESULT write_end_element(xmlwriter *writer, const struct element *element);
+
+static HRESULT writer_end_elements(xmlwriter *writer)
+{
+    struct element *element;
+    HRESULT hr = S_OK;
+
+    while (hr == S_OK && (element = pop_element(writer)))
+    {
+        hr = write_end_element(writer, element);
+        writer_free_element(writer, element);
+    }
+
+    return hr;
+}
+
 static WCHAR *writer_strndupW(const xmlwriter *writer, const WCHAR *str, int len)
 {
     WCHAR *ret;
@@ -820,6 +836,7 @@ static ULONG WINAPI xmlwriter_Release(IXmlWriter *iface)
     {
         IMalloc *imalloc = writer->imalloc;
 
+        writer_end_elements(writer);
         writeroutput_flush_stream(writer->output);
         if (writer->output)
             IUnknown_Release(&writer->output->IXmlWriterOutput_iface);
