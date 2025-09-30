@@ -2246,6 +2246,16 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
     case WM_WINE_UPDATEWINDOWSTATE:
         update_window_state( hwnd );
         return 0;
+    case WM_WINE_TRACKMOUSEEVENT:
+    {
+        TRACKMOUSEEVENT info;
+
+        info.cbSize = sizeof(info);
+        info.hwndTrack = hwnd;
+        info.dwFlags = wparam;
+        info.dwHoverTime = lparam;
+        return NtUserTrackMouseEvent( &info );
+    }
     default:
         if (msg >= WM_WINE_FIRST_DRIVER_MSG && msg <= WM_WINE_LAST_DRIVER_MSG)
             return user_driver->pWindowMessage( hwnd, msg, wparam, lparam );

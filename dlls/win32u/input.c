@@ -1779,6 +1779,9 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
         return FALSE;
     }
 
+    if (!is_current_thread_window( info->hwndTrack ))
+        return send_notify_message( info->hwndTrack, WM_WINE_TRACKMOUSEEVENT, info->dwFlags, info->dwHoverTime, FALSE );
+
     hover_time = (info->dwFlags & TME_HOVER) ? info->dwHoverTime : HOVER_DEFAULT;
 
     if (hover_time == HOVER_DEFAULT || hover_time == 0)
