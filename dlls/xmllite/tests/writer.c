@@ -3140,11 +3140,9 @@ static void test_WriteEntityRef(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteEntityRef(writer, L"");
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteEntityRef(writer, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteEntityRef(writer, L"name");
@@ -3155,7 +3153,6 @@ static void test_WriteEntityRef(void)
     writer_set_property(writer, XmlWriterProperty_OmitXmlDeclaration);
 
     hr = IXmlWriter_WriteEntityRef(writer, L"name");
-    todo_wine
     ok(hr == WR_E_INVALIDACTION, "Unexpected hr %#lx.\n", hr);
 
     IStream_Release(stream);
@@ -3168,7 +3165,6 @@ static void test_WriteEntityRef(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteEntityRef(writer, L"na:me");
-    todo_wine
     ok(hr == WC_E_NAMECHARACTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_Flush(writer);
@@ -3187,11 +3183,9 @@ static void test_WriteEntityRef(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteEntityRef(writer, L"name");
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteEntityRef(writer, L".name");
-    todo_wine
     ok(hr == WC_E_NAMECHARACTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteEndDocument(writer);
@@ -3203,7 +3197,7 @@ static void test_WriteEntityRef(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    CHECK_OUTPUT_TODO(stream,
+    CHECK_OUTPUT(stream,
         "<a>&name;</a>");
 
     IStream_Release(stream);
