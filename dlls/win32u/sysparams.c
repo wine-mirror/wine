@@ -7390,13 +7390,33 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
     case DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME:
     {
         DISPLAYCONFIG_ADAPTER_NAME *adapter_name = (DISPLAYCONFIG_ADAPTER_NAME *)packet;
+        char buffer[MAX_PATH + 4 + sizeof(guid_devinterface_display_adapterA)];
+        struct source *source;
+        unsigned int i;
 
-        FIXME( "DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME stub.\n" );
+        TRACE( "DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME.\n" );
 
         if (packet->size < sizeof(*adapter_name))
             return STATUS_INVALID_PARAMETER;
 
-        return STATUS_NOT_SUPPORTED;
+        if (!lock_display_devices( FALSE )) return STATUS_UNSUCCESSFUL;
+
+        LIST_FOR_EACH_ENTRY(source, &sources, struct source, entry)
+        {
+            if (memcmp( &adapter_name->header.adapterId, &source->gpu->luid, sizeof(source->gpu->luid) )) continue;
+
+            snprintf( buffer, ARRAY_SIZE(buffer), "\\\\?\\%s\\%s", source->gpu->path, guid_devinterface_display_adapterA );
+            for (i = 4; buffer[i]; ++i)
+            {
+                if (buffer[i] == '\\') buffer[i] = '#';
+            }
+            asciiz_to_unicode( adapter_name->adapterDevicePath, buffer );
+            ret = STATUS_SUCCESS;
+            break;
+        }
+
+        unlock_display_devices();
+        return ret;
     }
     case DISPLAYCONFIG_DEVICE_INFO_SET_TARGET_PERSISTENCE:
     case DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_BASE_TYPE:

@@ -2024,15 +2024,14 @@ static void test_QueryDisplayConfig_result(UINT32 flags,
                 preferred_mode.width, preferred_mode.height);
         check_preferred_mode(&preferred_mode, source_name.viewGdiDeviceName);
 
-        todo_wine {
         adapter_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME;
         adapter_name.header.size = sizeof(adapter_name);
         adapter_name.header.adapterId = pi[i].sourceInfo.adapterId;
+        adapter_name.header.id = ~0u;
         adapter_name.adapterDevicePath[0] = '\0';
         ret = pDisplayConfigGetDeviceInfo(&adapter_name.header);
         ok(!ret, "Expected 0, got %ld\n", ret);
         ok(adapter_name.adapterDevicePath[0] != '\0', "Expected adapter device path, got empty string\n");
-        }
 
         /* Check corresponding modes */
         if (flags & QDC_VIRTUAL_MODE_AWARE)
