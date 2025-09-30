@@ -138,10 +138,7 @@ static int get_inproc_sync_fd( struct object *obj, int *type )
     struct object *sync;
     int fd = -1;
 
-    if (obj != (struct object *)current->queue) sync = get_obj_sync( obj );
-    else sync = thread_queue_inproc_sync( current );
-    if (!sync) return -1;
-
+    if (!(sync = get_obj_sync( obj ))) return -1;
     if (sync->ops == &inproc_sync_ops)
     {
         struct inproc_sync *inproc = (struct inproc_sync *)sync;
