@@ -174,7 +174,7 @@ struct mutex
 
 static void mutex_dump( struct object *obj, int verbose );
 static struct object *mutex_get_sync( struct object *obj );
-static int mutex_signal( struct object *obj, unsigned int access );
+static int mutex_signal( struct object *obj, unsigned int access, int signal );
 static void mutex_destroy( struct object *obj );
 
 static const struct object_ops mutex_ops =
@@ -251,10 +251,13 @@ static struct object *mutex_get_sync( struct object *obj )
     return grab_object( mutex->sync );
 }
 
-static int mutex_signal( struct object *obj, unsigned int access )
+static int mutex_signal( struct object *obj, unsigned int access, int signal )
 {
     struct mutex *mutex = (struct mutex *)obj;
     assert( obj->ops == &mutex_ops );
+
+    assert( mutex->sync->obj.ops == &mutex_sync_ops ); /* never called with inproc syncs */
+    assert( signal == -1 ); /* always called from signal_object */
 
     if (!(access & SYNCHRONIZE))
     {

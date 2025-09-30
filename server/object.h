@@ -80,8 +80,8 @@ struct object_ops
     int  (*signaled)(struct object *,struct wait_queue_entry *);
     /* wait satisfied */
     void (*satisfied)(struct object *,struct wait_queue_entry *);
-    /* signal an object */
-    int  (*signal)(struct object *, unsigned int);
+    /* signal/reset an object */
+    int  (*signal)(struct object *,unsigned int,int);
     /* return an fd object that can be used to read/write from the object */
     struct fd *(*get_fd)(struct object *);
     /* return a sync that can be used to wait/signal the object */
@@ -170,7 +170,7 @@ extern struct object *find_object( const struct namespace *namespace, const stru
 extern struct object *find_object_index( const struct namespace *namespace, unsigned int index );
 extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void no_satisfied( struct object *obj, struct wait_queue_entry *entry );
-extern int no_signal( struct object *obj, unsigned int access );
+extern int no_signal( struct object *obj, unsigned int access, int signal );
 extern struct fd *no_get_fd( struct object *obj );
 extern struct object *default_get_sync( struct object *obj );
 static inline struct object *get_obj_sync( struct object *obj ) { return obj->ops->get_sync( obj ); }

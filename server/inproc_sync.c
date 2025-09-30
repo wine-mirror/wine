@@ -60,6 +60,7 @@ struct inproc_sync
 };
 
 static void inproc_sync_dump( struct object *obj, int verbose );
+static int inproc_sync_signal( struct object *obj, unsigned int access, int signal );
 static void inproc_sync_destroy( struct object *obj );
 
 static const struct object_ops inproc_sync_ops =
@@ -71,7 +72,7 @@ static const struct object_ops inproc_sync_ops =
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */
     NULL,                       /* satisfied */
-    no_signal,                  /* signal */
+    inproc_sync_signal,         /* signal */
     no_get_fd,                  /* get_fd */
     default_get_sync,           /* get_sync */
     default_map_access,         /* map_access */
@@ -124,6 +125,19 @@ void reset_inproc_sync( struct inproc_sync *sync )
     __u32 count;
     if (debug_level) fprintf( stderr, "reset_inproc_event %d\n", sync->fd );
     ioctl( sync->fd, NTSYNC_IOC_EVENT_RESET, &count );
+}
+
+static int inproc_sync_signal( struct object *obj, unsigned int access, int signal )
+{
+    struct inproc_sync *sync = (struct inproc_sync *)obj;
+    assert( obj->ops == &inproc_sync_ops );
+
+    assert( sync->type == INPROC_SYNC_INTERNAL ); /* never called for mutex / semaphore */
+    assert( signal == 0 || signal == 1 ); /* never called from signal_object */
+
+    if (signal) signal_inproc_sync( sync );
+    else reset_inproc_sync( sync );
+    return 1;
 }
 
 static void inproc_sync_destroy( struct object *obj )

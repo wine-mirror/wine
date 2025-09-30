@@ -1269,7 +1269,7 @@ static int signal_object( obj_handle_t handle )
     obj = get_handle_obj( current->process, handle, 0, NULL );
     if (obj)
     {
-        ret = obj->ops->signal( obj, get_handle_access( current->process, handle ));
+        ret = obj->ops->signal( obj, get_handle_access( current->process, handle ), -1 );
         release_object( obj );
     }
     return ret;

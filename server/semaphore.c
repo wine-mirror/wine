@@ -148,7 +148,7 @@ struct semaphore
 
 static void semaphore_dump( struct object *obj, int verbose );
 static struct object *semaphore_get_sync( struct object *obj );
-static int semaphore_signal( struct object *obj, unsigned int access );
+static int semaphore_signal( struct object *obj, unsigned int access, int signal );
 static void semaphore_destroy( struct object *obj );
 
 static const struct object_ops semaphore_ops =
@@ -218,10 +218,13 @@ static struct object *semaphore_get_sync( struct object *obj )
     return grab_object( sem->sync );
 }
 
-static int semaphore_signal( struct object *obj, unsigned int access )
+static int semaphore_signal( struct object *obj, unsigned int access, int signal )
 {
     struct semaphore *sem = (struct semaphore *)obj;
     assert( obj->ops == &semaphore_ops );
+
+    assert( sem->sync->obj.ops == &semaphore_sync_ops ); /* never called with inproc syncs */
+    assert( signal == -1 ); /* always called from signal_object */
 
     if (!(access & SEMAPHORE_MODIFY_STATE))
     {

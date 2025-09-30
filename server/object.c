@@ -630,7 +630,7 @@ void no_satisfied( struct object *obj, struct wait_queue_entry *entry )
 {
 }
 
-int no_signal( struct object *obj, unsigned int access )
+int no_signal( struct object *obj, unsigned int access, int signal )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
