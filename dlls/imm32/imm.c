@@ -3073,13 +3073,18 @@ BOOL WINAPI ImmGenerateMessage( HIMC himc )
     while (ctx->dwNumMsgBuf--)
     {
         TRANSMSG *msgs, msg;
-        if (!(msgs = ImmLockIMCC( ctx->hMsgBuf ))) return FALSE;
+        if (!(msgs = ImmLockIMCC( ctx->hMsgBuf )))
+        {
+            ImmUnlockIMC( himc );
+            return FALSE;
+        }
         msg = msgs[0];
         memmove( msgs, msgs + 1, ctx->dwNumMsgBuf * sizeof(*msgs) );
         ImmUnlockIMCC( ctx->hMsgBuf );
         SendMessageW( ctx->hWnd, msg.message, msg.wParam, msg.lParam );
     }
     ctx->dwNumMsgBuf++;
+    ImmUnlockIMC( himc );
 
     return TRUE;
 }
