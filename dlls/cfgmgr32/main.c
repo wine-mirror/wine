@@ -455,21 +455,16 @@ static const DEVPROP_FILTER_EXPRESSION *find_closing_filter( const DEVPROP_FILTE
 }
 
 /* Return S_OK if the specified filter expressions match the object, S_FALSE if it doesn't. */
-static HRESULT devprop_filter_matches_object( const DEV_OBJECT *obj, ULONG filters_len,
-                                              const DEVPROP_FILTER_EXPRESSION *filters )
+static HRESULT devprop_filter_matches_object( const DEV_OBJECT *obj, const DEVPROP_FILTER_EXPRESSION *filters,
+                                              const DEVPROP_FILTER_EXPRESSION *end )
 {
     HRESULT hr = S_OK;
-    ULONG i;
 
-    TRACE( "(%s, %lu, %p)\n", debugstr_DEV_OBJECT( obj ), filters_len, filters );
-
-    if (!filters_len)
-        return S_OK;
+    TRACE( "(%s, %p, %p)\n", debugstr_DEV_OBJECT( obj ), filters, end );
 
     /* By default, the evaluation is performed by AND-ing all individual filter expressions. */
-    for (i = 0; i < filters_len; i++)
+    for (const DEVPROP_FILTER_EXPRESSION *filter = filters; filter < end; filter++)
     {
-        const DEVPROP_FILTER_EXPRESSION *filter = &filters[i];
         DEVPROP_OPERATOR op = filter->Operator;
 
         if (op == DEVPROP_OPERATOR_NONE)
@@ -747,7 +742,7 @@ static void dev_object_remove_unwanted_props( DEV_OBJECT *obj, ULONG keys_len, c
 }
 
 static HRESULT enum_dev_objects( DEV_OBJECT_TYPE type, ULONG props_len, const DEVPROPCOMPKEY *props, BOOL all_props,
-                                 ULONG filters_len, const DEVPROP_FILTER_EXPRESSION *filters,
+                                 const DEVPROP_FILTER_EXPRESSION *filters, const DEVPROP_FILTER_EXPRESSION *filters_end,
                                  enum_device_object_cb callback, void *data )
 {
     HKEY iface_key;
@@ -819,19 +814,16 @@ static HRESULT enum_dev_objects( DEV_OBJECT_TYPE type, ULONG props_len, const DE
             obj.pszObjectId = detail->DevicePath;
             /* If we're also filtering objects, get all properties for this object. Once the filters have been
              * evaluated, free properties that have not been requested, and set cPropertyCount to props_len.  */
-            if (filters_len)
+            if (filters)
                 hr = dev_object_iface_get_props( &obj, set, &iface, 0, NULL, TRUE, TRUE );
             else
                 hr = dev_object_iface_get_props( &obj, set, &iface, props_len, props, all_props, FALSE );
             if (SUCCEEDED( hr ))
             {
-                if (filters_len)
-                {
-                    hr = devprop_filter_matches_object( &obj, filters_len, filters );
-                    /* Shrink pProperties to only the desired ones, unless DevQueryFlagAllProperties is set. */
-                    if (!all_props)
-                        dev_object_remove_unwanted_props( &obj, props_len, props );
-                }
+                hr = devprop_filter_matches_object( &obj, filters, filters_end );
+                /* Shrink pProperties to only the desired ones, unless DevQueryFlagAllProperties is set. */
+                if (!all_props)
+                    dev_object_remove_unwanted_props( &obj, props_len, props );
                 if (hr == S_OK)
                     hr = callback( obj, data );
                 else
@@ -902,7 +894,7 @@ HRESULT WINAPI DevGetObjectsEx( DEV_OBJECT_TYPE type, ULONG flags, ULONG props_l
     *objs = NULL;
     *objs_len = 0;
 
-    hr = enum_dev_objects( type, props_len, props, !!(flags & DevQueryFlagAllProperties), filters_len, filters,
+    hr = enum_dev_objects( type, props_len, props, !!(flags & DevQueryFlagAllProperties), filters, filters + filters_len,
                            dev_objects_append, &objects );
     if (SUCCEEDED( hr ))
     {
