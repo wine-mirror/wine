@@ -225,10 +225,10 @@ FAILURE 2
 FAILURE 1
 --- success/failure for MORE command
 SUCCESS 0
-SUCCESS 0
 foo@space@
 
 SUCCESS 0
---- success/failure for PAUSE command
+@todo_wine@SUCCESS 0
+@todo_wine@--- success/failure for PAUSE command
 FAILURE 1
 ---

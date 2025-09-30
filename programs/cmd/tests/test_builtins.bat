@@ -332,9 +332,12 @@ call :setError 666 & ((echo A | choice /C:BA) >NUL &&echo SUCCESS !errorlevel!||
 call :setError 666 & (choice /C:BA <NUL >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 rem syntax errors in command return INVALID_FUNCTION, need to find a test for returning 255
 echo --- success/failure for MORE command
+echo a> filea
 call :setError 666 & (more NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
-call :setError 666 & (more I\dont\exist.txt > NUL 2>&1 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (echo foo | more &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem native 'MORE file' outputs to CONOUT$, not stdout!
+call :setError 666 & (more filea I\dont\exist.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+erase filea
 echo --- success/failure for PAUSE command
 call :setError 666 & (pause < NUL > NUL 2>&1 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 rem TODO: pause is harder to test when fd 1 is a console handle as we don't control output
