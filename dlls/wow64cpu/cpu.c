@@ -254,6 +254,8 @@ __ASM_GLOBAL_FUNC( unix_call_32to64,
                    "movl %ebp,0xb4(%r13)\n\t"   /* context->Ebp */
                    "movl (%r14),%edx\n\t"
                    "movl %edx,0xb8(%r13)\n\t"   /* context->Eip */
+                   "movl cs32_sel(%rip),%edx\n\t"
+                   "movl %edx,0xbc(%r13)\n\t"   /* context->SegCs */
                    "leaq 20(%r14),%rdx\n\t"
                    "movl %edx,0xc4(%r13)\n\t"   /* context->Esp */
                    "movq 4(%r14),%rcx\n\t"      /* handle */
