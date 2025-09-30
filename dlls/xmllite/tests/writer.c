@@ -3037,11 +3037,9 @@ static void test_WriteName(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteName(writer, L"");
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteName(writer, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteName(writer, L"name");
@@ -3063,7 +3061,12 @@ static void test_WriteName(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteName(writer, L"a:a:a");
-    todo_wine
+    ok(hr == WC_E_NAMECHARACTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_WriteName(writer, L".a");
+    ok(hr == WC_E_NAMECHARACTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_WriteName(writer, L":a");
     ok(hr == WC_E_NAMECHARACTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_Flush(writer);
@@ -3085,7 +3088,6 @@ static void test_WriteName(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteName(writer, L"name");
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteFullEndElement(writer);
@@ -3095,7 +3097,6 @@ static void test_WriteName(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteName(writer, L"ab:name");
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteEndDocument(writer);
@@ -3104,7 +3105,7 @@ static void test_WriteName(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    CHECK_OUTPUT_TODO(stream,
+    CHECK_OUTPUT(stream,
         "<root><a>name</a><b>ab:name</b></root>");
 
     IStream_Release(stream);
@@ -3117,7 +3118,6 @@ static void test_WriteName(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteName(writer, L"");
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_Flush(writer);
