@@ -347,12 +347,15 @@ static struct ns *writer_find_ns(const xmlwriter *writer, const WCHAR *prefix, c
 
 static HRESULT is_valid_ncname(const WCHAR *str, int *out)
 {
-    int len = 0;
+    int len = 1;
 
     *out = 0;
 
     if (!str || !*str)
         return S_OK;
+
+    if (!is_ncnamestartchar(*str++))
+        return WC_E_NAMECHARACTER;
 
     while (*str)
     {

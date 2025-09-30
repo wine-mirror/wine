@@ -987,7 +987,6 @@ static void test_WriteStartElement(void)
     stream = writer_set_output(writer);
 
     hr = IXmlWriter_WriteStartElement(writer, NULL, L".a", NULL);
-    todo_wine
     ok(hr == WC_E_NAMECHARACTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteStartElement(writer, NULL, L":a", NULL);
@@ -997,7 +996,6 @@ static void test_WriteStartElement(void)
     ok(hr == WC_E_NAMECHARACTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteStartElement(writer, L".prefix", L"a", L"uri");
-    todo_wine
     ok(hr == WC_E_NAMECHARACTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteStartElement(writer, L":prefix", L"a", L"uri");
@@ -1015,7 +1013,7 @@ static void test_WriteStartElement(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    CHECK_OUTPUT_TODO(stream, "<a");
+    CHECK_OUTPUT(stream, "<a");
 
     hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
     ok(hr == WR_E_INVALIDACTION, "Unexpected hr %#lx.\n", hr);
@@ -1734,10 +1732,10 @@ static void test_WriteAttributeString(void)
         { NULL, L"xmlns", L"uri", NULL, "<e />", "<e", WR_E_XMLNSPREFIXDECLARATION, 0, 0, 1 },
         { L"xmlns", NULL, L"uri", NULL, "<e />", "<e", WR_E_XMLNSPREFIXDECLARATION, 0, 0, 1 },
         { L"pre:fix", L"local", L"uri", L"b", "<e />", "<e", WC_E_NAMECHARACTER },
-        { L".prefix", L"local", L"uri", L"b", "<e />", "<e", WC_E_NAMECHARACTER, 1, 1, 1 },
+        { L".prefix", L"local", L"uri", L"b", "<e />", "<e", WC_E_NAMECHARACTER },
         { L"pre:fix", NULL, L"uri", L"b", "<e />", "<e", E_INVALIDARG },
         { L"prefix", L"lo:cal", L"uri", L"b", "<e />", "<e", WC_E_NAMECHARACTER },
-        { L"prefix", L".local", L"uri", L"b", "<e />", "<e", WC_E_NAMECHARACTER, 1, 1, 1 },
+        { L"prefix", L".local", L"uri", L"b", "<e />", "<e", WC_E_NAMECHARACTER },
         { L"xmlns", NULL, NULL, L"uri", "<e />", "<e", WR_E_NSPREFIXDECLARED },
         { L"xmlns", NULL, L"", L"uri", "<e />", "<e", WR_E_NSPREFIXDECLARED },
         { L"xmlns", L"", NULL, L"uri", "<e />", "<e", WR_E_NSPREFIXDECLARED },
@@ -3354,7 +3352,6 @@ static void test_WriteQualifiedName(void)
 
     /* Wrong start char */
     hr = IXmlWriter_WriteQualifiedName(writer, L".a", L"cd");
-    todo_wine
     ok(hr == WC_E_NAMECHARACTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteQualifiedName(writer, L":a", L"cd");
@@ -3363,7 +3360,7 @@ static void test_WriteQualifiedName(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    CHECK_OUTPUT_TODO(stream,
+    CHECK_OUTPUT(stream,
         "<ab:a");
 
     IStream_Release(stream);

@@ -83,8 +83,6 @@ typedef enum
     StringValue_Last
 } XmlReaderStringValue;
 
-BOOL is_namestartchar(WCHAR ch);
-
 static const char *debugstr_nodetype(XmlNodeType nodetype)
 {
     static const char * const type_names[] =
@@ -1480,9 +1478,9 @@ BOOL is_pubchar(WCHAR ch)
            (ch == '_') || (ch == '\r') || (ch == '\n');
 }
 
-BOOL is_namestartchar(WCHAR ch)
+BOOL is_ncnamestartchar(WCHAR ch)
 {
-    return (ch == ':') || (ch >= 'A' && ch <= 'Z') ||
+    return (ch >= 'A' && ch <= 'Z') ||
            (ch == '_') || (ch >= 'a' && ch <= 'z') ||
            (ch >= 0xc0   && ch <= 0xd6)   ||
            (ch >= 0xd8   && ch <= 0xf6)   ||
@@ -1497,6 +1495,11 @@ BOOL is_namestartchar(WCHAR ch)
            (ch >= 0xdc00 && ch <= 0xdfff) || /* low surrogate */
            (ch >= 0xf900 && ch <= 0xfdcf) ||
            (ch >= 0xfdf0 && ch <= 0xfffd);
+}
+
+BOOL is_namestartchar(WCHAR ch)
+{
+    return is_ncnamestartchar(ch) || ch == ':';
 }
 
 /* [4 NS] NCName ::= Name - (Char* ':' Char*) */
