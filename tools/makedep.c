@@ -2400,8 +2400,8 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
 /*******************************************************************
  *         add_install_rule
  */
-static void add_install_rule( struct makefile *make, const char *target, unsigned int arch,
-                              const char *file, const char *dest )
+static void add_install_rule( struct makefile *make, const char *target, char cmd, unsigned int arch,
+                              const char *file, const char *dir, const char *dst )
 {
     unsigned int i;
 
@@ -2413,8 +2413,9 @@ static void add_install_rule( struct makefile *make, const char *target, unsigne
             strarray_exists( top_install[i], make->obj_dir ) ||
             strarray_exists( top_install[i], obj_dir_path( make, target )))
         {
+            if (!dst) dst = get_basename( file );
             strarray_add( &make->install_rules[i], file );
-            strarray_add( &make->install_rules[i], dest );
+            strarray_add( &make->install_rules[i], strmake( "%c%s/%s", cmd, dir, dst ));
             break;
         }
     }
@@ -2427,8 +2428,7 @@ static void add_install_rule( struct makefile *make, const char *target, unsigne
 static void install_data_file( struct makefile *make, const char *target,
                                const char *obj, const char *dir, const char *dst )
 {
-    if (!dst) dst = get_basename( obj );
-    add_install_rule( make, target, 0, obj, strmake( "d%s/%s", dir, dst ));
+    add_install_rule( make, target, 'd', 0, obj, dir, dst );
 }
 
 
@@ -2438,7 +2438,7 @@ static void install_data_file( struct makefile *make, const char *target,
 static void install_data_file_src( struct makefile *make, const char *target,
                                    const char *src, const char *dir )
 {
-    add_install_rule( make, target, 0, src, strmake( "D%s/%s", dir, get_basename(src) ));
+    add_install_rule( make, target, 'D', 0, src, dir, NULL );
 }
 
 
@@ -2469,7 +2469,7 @@ static void install_header( struct makefile *make, const char *target, const cha
 static void install_program( struct makefile *make, const char *target,
                              unsigned int arch, const char *obj, const char *dir )
 {
-    add_install_rule( make, target, 0, obj, strmake( "%c%s/%s", '0' + arch, dir, get_basename(obj) ));
+    add_install_rule( make, target, '0' + arch, 0, obj, dir, NULL );
 }
 
 
@@ -2478,7 +2478,7 @@ static void install_program( struct makefile *make, const char *target,
  */
 static void install_script( struct makefile *make, const char *src )
 {
-    add_install_rule( make, src, 0, src, strmake( "S$(bindir)/%s", get_basename(src) ));
+    add_install_rule( make, src, 'S', 0, src, "$(bindir)", NULL );
 }
 
 
@@ -2488,7 +2488,7 @@ static void install_script( struct makefile *make, const char *src )
 static void install_tool( struct makefile *make, const char *target,
                           const char *obj, const char *dir, const char *dst )
 {
-    add_install_rule( make, target, 0, obj, strmake( "t%s/%s", dir, dst ));
+    add_install_rule( make, target, 't', 0, obj, dir, dst );
 }
 
 
@@ -2498,7 +2498,7 @@ static void install_tool( struct makefile *make, const char *target,
 static void install_symlink( struct makefile *make, const char *target,
                              const char *obj, const char *dir, const char *dst )
 {
-    add_install_rule( make, target, 0, obj, strmake( "y%s/%s", dir, dst ));
+    add_install_rule( make, target, 'y', 0, obj, dir, dst );
 }
 
 
