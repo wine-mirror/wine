@@ -1510,6 +1510,28 @@ HRESULT WINAPI D2D1CreateDevice(IDXGIDevice *dxgi_device,
     return hr;
 }
 
+HRESULT WINAPI D2D1CreateDeviceContext(IDXGISurface *dxgi_surface,
+        const D2D1_CREATION_PROPERTIES *properties, ID2D1DeviceContext **context)
+{
+    IDXGIDevice *dxgi_device;
+    ID2D1Device *device;
+    HRESULT hr;
+
+    TRACE("dxgi_surface %p, properties %p, context %p.\n", dxgi_surface, properties, context);
+
+    if (FAILED(hr = IDXGISurface_GetDevice(dxgi_surface, &IID_IDXGIDevice, (void **)&dxgi_device)))
+        return hr;
+
+    if (SUCCEEDED(hr = D2D1CreateDevice(dxgi_device, properties, &device)))
+    {
+        hr = ID2D1Device_CreateDeviceContext(device, properties ? properties->options : D2D1_DEVICE_CONTEXT_OPTIONS_NONE, context);
+        ID2D1Device_Release(device);
+    }
+
+    IDXGIDevice_Release(dxgi_device);
+    return hr;
+}
+
 void WINAPI D2D1SinCos(float angle, float *s, float *c)
 {
     TRACE("angle %.8e, s %p, c %p.\n", angle, s, c);

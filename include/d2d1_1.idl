@@ -976,6 +976,8 @@ interface ID2D1Multithread : IUnknown
 
 [local] HRESULT __stdcall D2D1CreateDevice(IDXGIDevice *dxgi_device,
         const D2D1_CREATION_PROPERTIES *creation_properties, ID2D1Device **device);
+[local] HRESULT __stdcall D2D1CreateDeviceContext(IDXGISurface *dxgi_surface,
+        const D2D1_CREATION_PROPERTIES *creation_properties, ID2D1DeviceContext **context);
 [local] void __stdcall D2D1SinCos(float angle, float *s, float *c);
 [local] float __stdcall D2D1Tan(float angle);
 [local] float __stdcall D2D1Vec3Length(float x, float y, float z);
