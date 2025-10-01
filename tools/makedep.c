@@ -2443,15 +2443,23 @@ static void install_data_file_src( struct makefile *make, const char *target,
 
 
 /*******************************************************************
- *         get_include_install_path
- *
- * Determine the installation path for a given include file.
+ *         install_header
  */
-static const char *get_include_install_path( const char *name )
+static void install_header( struct makefile *make, const char *target, const char *obj )
 {
-    if (!strncmp( name, "wine/", 5 )) return name + 5;
-    if (!strncmp( name, "msvcrt/", 7 )) return name;
-    return strmake( "windows/%s", name );
+    const char *dir, *end;
+    bool is_obj = !!obj;
+
+    if (!obj) obj = target;
+    if (!strncmp( obj, "wine/", 5 )) dir = "$(includedir)";
+    else if (!strncmp( obj, "msvcrt/", 7 )) dir = "$(includedir)/wine";
+    else dir = "$(includedir)/wine/windows";
+    if ((end = strrchr( obj, '/' ))) dir = strmake( "%s/%.*s", dir, (int)(end - obj), obj );
+
+    if (is_obj)
+        install_data_file( make, target, obj, dir, NULL );
+    else
+        install_data_file_src( make, target, obj, dir );
 }
 
 
@@ -2836,8 +2844,7 @@ static void output_source_h( struct makefile *make, struct incl_file *source, co
     if (source->file->flags & FLAG_GENERATED)
         strarray_add( &make->all_targets[0], source->name );
     else if ((source->file->flags & FLAG_INSTALL) || strncmp( source->name, "wine/", 5 ))
-        add_install_rule( make, source->name, 0, source->name,
-                          strmake( "D$(includedir)/wine/%s", get_include_install_path( source->name ) ));
+        install_header( make, source->name, NULL );
 }
 
 
@@ -2945,11 +2952,9 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
     if (source->file->flags & FLAG_IDL_PROXY) strarray_add( &make->dlldata_files, source->name );
     if (source->file->flags & FLAG_INSTALL)
     {
-        add_install_rule( make, source->name, 0, xstrdup( source->name ),
-                          strmake( "D$(includedir)/wine/%s.idl", get_include_install_path( obj ) ));
+        install_header( make, source->name, NULL );
         if (source->file->flags & FLAG_IDL_HEADER)
-            add_install_rule( make, source->name, 0, strmake( "%s.h", obj ),
-                              strmake( "d$(includedir)/wine/%s.h", get_include_install_path( obj ) ));
+            install_header( make, source->name, strmake( "%s.h", obj ));
     }
     if (source->file->flags & FLAG_IDL_HEADER)
     {
@@ -3038,10 +3043,8 @@ static void output_source_x( struct makefile *make, struct incl_file *source, co
     output( "\t%s%s -H -o $@ %s\n", cmd_prefix( "GEN" ), make_xftmpl, source->filename );
     if (source->file->flags & FLAG_INSTALL)
     {
-        add_install_rule( make, source->name, 0, source->name,
-                          strmake( "D$(includedir)/wine/%s", get_include_install_path( source->name ) ));
-        add_install_rule( make, source->name, 0, strmake( "%s.h", obj ),
-                          strmake( "d$(includedir)/wine/%s.h", get_include_install_path( obj ) ));
+        install_header( make, source->name, NULL );
+        install_header( make, source->name, strmake( "%s.h", obj ));
     }
 }
 
