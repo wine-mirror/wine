@@ -294,6 +294,7 @@ static const char test_ps_code[] =
 
 static HRESULT (WINAPI *pD2D1CreateDevice)(IDXGIDevice *dxgi_device,
         const D2D1_CREATION_PROPERTIES *properties, ID2D1Device **device);
+static HRESULT (WINAPI *pD2D1CreateDeviceContext)(IDXGISurface *,const D2D1_CREATION_PROPERTIES *,ID2D1DeviceContext **);
 static void (WINAPI *pD2D1SinCos)(float angle, float *s, float *c);
 static float (WINAPI *pD2D1Tan)(float angle);
 static float (WINAPI *pD2D1Vec3Length)(float x, float y, float z);
@@ -9383,6 +9384,33 @@ static void test_create_device(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_create_device_context(BOOL d3d11)
+{
+    D2D1_CREATION_PROPERTIES properties = {0};
+    struct d2d1_test_context ctx;
+    ID2D1DeviceContext *context;
+    HRESULT hr;
+
+    if (!pD2D1CreateDeviceContext)
+    {
+        win_skip("D2D1CreateDeviceContext() is unavailable.\n");
+        return;
+    }
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    hr = pD2D1CreateDeviceContext(ctx.surface, NULL, &context);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1DeviceContext_Release(context);
+
+    hr = pD2D1CreateDeviceContext(ctx.surface, &properties, &context);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1DeviceContext_Release(context);
+
+    release_test_context(&ctx);
+}
+
 #define check_rt_bitmap_surface(r, s, o) check_rt_bitmap_surface_(__LINE__, r, s, o)
 static void check_rt_bitmap_surface_(unsigned int line, ID2D1RenderTarget *rt, BOOL has_surface, DWORD options)
 {
@@ -16220,6 +16248,7 @@ START_TEST(d2d1)
     char **argv;
 
     pD2D1CreateDevice = (void *)GetProcAddress(d2d1_dll, "D2D1CreateDevice");
+    pD2D1CreateDeviceContext = (void *)GetProcAddress(d2d1_dll, "D2D1CreateDeviceContext");
     pD2D1SinCos = (void *)GetProcAddress(d2d1_dll, "D2D1SinCos");
     pD2D1Tan = (void *)GetProcAddress(d2d1_dll, "D2D1Tan");
     pD2D1Vec3Length = (void *)GetProcAddress(d2d1_dll, "D2D1Vec3Length");
@@ -16275,6 +16304,7 @@ START_TEST(d2d1)
     queue_test(test_layer);
     queue_test(test_bezier_intersect);
     queue_test(test_create_device);
+    queue_test(test_create_device_context);
     queue_test(test_bitmap_surface);
     queue_test(test_device_context);
     queue_d3d10_test(test_invert_matrix);
