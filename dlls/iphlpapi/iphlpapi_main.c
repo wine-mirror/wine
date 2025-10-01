@@ -1392,14 +1392,20 @@ DWORD WINAPI GetBestInterface(IPAddr dwDestAddr, PDWORD pdwBestIfIndex)
 DWORD WINAPI GetBestInterfaceEx( struct sockaddr *dst, DWORD *best_index )
 {
     SOCKADDR_INET best_address;
+    SOCKADDR_INET dst_address;
     MIB_IPFORWARD_ROW2 row;
     DWORD ret;
 
     TRACE( "dst %p, best_index %p\n", dst, best_index );
 
     if (!dst || !best_index) return ERROR_INVALID_PARAMETER;
+    if (dst->sa_family != AF_INET && dst->sa_family != AF_INET6) return ERROR_INVALID_PARAMETER;
 
-    ret = GetBestRoute2( NULL, 0, NULL, (const SOCKADDR_INET *)dst, 0, &row, &best_address );
+    dst_address.si_family = dst->sa_family;
+    if (dst->sa_family == AF_INET6) dst_address.Ipv6 = *(struct sockaddr_in6 *)dst;
+    else dst_address.Ipv4 = *(struct sockaddr_in *)dst;
+
+    ret = GetBestRoute2( NULL, 0, NULL, &dst_address, 0, &row, &best_address );
     if (!ret) *best_index = row.InterfaceIndex;
 
     TRACE( "returning %ld\n", ret );
