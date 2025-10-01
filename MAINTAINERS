@@ -64,6 +64,12 @@ P:	Esme Povirk <esme@codeweavers.com> @madewokherd
 F:	dlls/comdlg32/itemdlg.c
 F:	dlls/comdlg32/tests/itemdlg.c
 
+D3DKMT
+M:	Rémi Bernon <rbernon@codeweavers.com> @rbernon
+F:	dlls/win32u/d3dkmt.c
+F:	dlls/win32u/tests/d3dkmt.c
+F:	server/d3dkmt.c
+
 Direct2D
 M:	Nikolay Sivov <nsivov@codeweavers.com> @nsivov
 P:	Henri Verbeet <hverbeet@codeweavers.com> @hverbeet
@@ -271,6 +277,16 @@ OLE Typelibs
 P:	Huw Davies <huw@codeweavers.com> @huw
 F:	dlls/oleaut32/typelib.c
 
+OpenGL
+M:	Rémi Bernon <rbernon@codeweavers.com> @rbernon
+P:	Jacek Caban <jacek@codeweavers.com> @jacek
+F:	dlls/gdi32/opengl.c
+F:	dlls/opengl32/
+F:	dlls/win32u/opengl.c
+F:	dlls/wine*/opengl.c
+F:	include/wine/opengl_driver.h
+F:	include/wine/wgl.h
+
 Plug and Play
 P:	Elizabeth Figura <zfigura@codeweavers.com> @zfigura
 F:	dlls/newdev/
@@ -323,6 +339,16 @@ F:	dlls/urlmon/
 VBScript
 M:	Jacek Caban <jacek@codeweavers.com> @jacek
 F:	dlls/vbscript/
+
+Vulkan
+M:	Rémi Bernon <rbernon@codeweavers.com> @rbernon
+P:	Jacek Caban <jacek@codeweavers.com> @jacek
+F:	dlls/vulkan-1/
+F:	dlls/win32u/vulkan.c
+F:	dlls/wine*/vulkan.c
+F:	dlls/winevulkan/
+F:	include/wine/vulkan.h
+F:	include/wine/vulkan_driver.h
 
 Web Services
 M:	Hans Leidekker <hans@codeweavers.com> @hans
