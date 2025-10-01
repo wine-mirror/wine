@@ -1313,6 +1313,8 @@ static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 
         bus_options_cleanup();
         return ret;
+    case IRP_MN_QUERY_ID:
+        break;
     default:
         FIXME("Unhandled minor function %#x.\n", irpsp->MinorFunction);
     }
