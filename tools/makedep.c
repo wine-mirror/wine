@@ -2433,6 +2433,16 @@ static void install_data_file( struct makefile *make, const char *target,
 
 
 /*******************************************************************
+ *         install_data_file_src
+ */
+static void install_data_file_src( struct makefile *make, const char *target,
+                                   const char *src, const char *dir )
+{
+    add_install_rule( make, target, 0, src, strmake( "D%s/%s", dir, get_basename(src) ));
+}
+
+
+/*******************************************************************
  *         get_include_install_path
  *
  * Determine the installation path for a given include file.
@@ -3055,7 +3065,7 @@ static void output_source_sfd( struct makefile *make, struct incl_file *source, 
     }
     if (source->file->flags & FLAG_INSTALL)
     {
-        add_install_rule( make, source->name, 0, ttf_obj, strmake( "D$(datadir)/wine/fonts/%s", ttf_obj ));
+        install_data_file_src( make, source->name, ttf_obj, "$(datadir)/wine/fonts" );
         output_srcdir_symlink( make, ttf_obj );
     }
 
@@ -3106,8 +3116,7 @@ static void output_source_svg( struct makefile *make, struct incl_file *source, 
  */
 static void output_source_nls( struct makefile *make, struct incl_file *source, const char *obj )
 {
-    add_install_rule( make, source->name, 0, source->name,
-                      strmake( "D$(datadir)/wine/nls/%s", source->name ));
+    install_data_file_src( make, source->name, source->name, "$(datadir)/wine/nls" );
     output_srcdir_symlink( make, strmake( "%s.nls", obj ));
 }
 
@@ -3117,8 +3126,7 @@ static void output_source_nls( struct makefile *make, struct incl_file *source, 
  */
 static void output_source_desktop( struct makefile *make, struct incl_file *source, const char *obj )
 {
-    add_install_rule( make, source->name, 0, source->name,
-                      strmake( "D$(datadir)/applications/%s", source->name ));
+    install_data_file_src( make, source->name, source->name, "$(datadir)/applications" );
 }
 
 
