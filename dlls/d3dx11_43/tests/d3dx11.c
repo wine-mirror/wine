@@ -1314,19 +1314,22 @@ static void test_dxt10_dds_header_image_info(void)
     }
 
     /*
-     * Image size (e.g, the size of the pixels) isn't validated, but header
-     * size is.
+     * Image size (e.g, the size of the pixels) isn't validated, while header
+     * size is. Even the latter sporadically crashes on native though.
      */
-    dds.magic = MAKEFOURCC('D','D','S',' ');
-    set_dxt10_dds_header(&dds.header, tests[0].append_flags, tests[0].width, tests[0].height,
-            tests[0].depth, tests[0].mip_levels, tests[0].row_pitch, tests[0].caps, tests[0].caps2);
-    dds.dxt10 = tests[0].dxt10;
+    if (0)
+    {
+        dds.magic = MAKEFOURCC('D','D','S',' ');
+        set_dxt10_dds_header(&dds.header, tests[0].append_flags, tests[0].width, tests[0].height,
+                             tests[0].depth, tests[0].mip_levels, tests[0].row_pitch, tests[0].caps, tests[0].caps2);
+        dds.dxt10 = tests[0].dxt10;
 
-    hr = D3DX11GetImageInfoFromMemory(&dds, sizeof(dds) - 1, NULL, &info, NULL);
-    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+        hr = D3DX11GetImageInfoFromMemory(&dds, sizeof(dds) - 1, NULL, &info, NULL);
+        ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 
-    hr = D3DX11GetImageInfoFromMemory(&dds, sizeof(dds), NULL, &info, NULL);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = D3DX11GetImageInfoFromMemory(&dds, sizeof(dds), NULL, &info, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    }
 }
 
 static void test_D3DX11GetImageInfoFromMemory(void)
