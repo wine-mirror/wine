@@ -129,6 +129,7 @@ static UINT get_type( UINT uiProperty )
     case PID_LASTPRINTED:
     case PID_CREATE_DTM:
     case PID_LASTSAVE_DTM:
+    case PID_EDITTIME:
          return VT_FILETIME;
 
     case PID_WORDCOUNT:
