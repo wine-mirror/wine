@@ -2464,6 +2464,16 @@ static void install_header( struct makefile *make, const char *target, const cha
 
 
 /*******************************************************************
+ *         install_program
+ */
+static void install_program( struct makefile *make, const char *target,
+                             unsigned int arch, const char *obj, const char *dir )
+{
+    add_install_rule( make, target, 0, obj, strmake( "%c%s/%s", '0' + arch, dir, get_basename(obj) ));
+}
+
+
+/*******************************************************************
  *         get_source_defines
  */
 static struct strarray get_source_defines( struct makefile *make, struct incl_file *source,
@@ -3581,6 +3591,8 @@ static void output_module( struct makefile *make, unsigned int arch )
                 if (import) strarray_add( &all_libs, strmake( "%s%s", delay_load_flags[arch], import->module ));
             }
         }
+        if (!make->disabled[link_arch]) install_program( make, make->module, arch,
+                                                         module_name, arch_install_dirs[arch] );
     }
     else
     {
@@ -3589,17 +3601,11 @@ static void output_module( struct makefile *make, unsigned int arch )
         link_arch = arch;
 
         module_name = strmake( "%s/%s", arch_pe_dirs[arch], make->module );
+        install_data_file( make, make->module, module_name,
+                           strmake( "$(libdir)/wine/%s", arch_pe_dirs[arch] ), NULL );
     }
 
     strarray_add( &make->all_targets[link_arch], module_name );
-    if (make->data_only)
-        install_data_file( make, make->module, module_name,
-                           strmake( "$(libdir)/wine/%s", arch_pe_dirs[arch] ), NULL );
-    else
-        add_install_rule( make, make->module, link_arch, module_name,
-                          strmake( "%c%s/%s%s", '0' + arch, arch_install_dirs[arch], make->module,
-                                   dll_ext[arch] ));
-
     output( "%s:", obj_dir_path( make, module_name ));
     if (spec_file) output_filename( spec_file );
     output_filenames_obj_dir( make, make->object_files[arch] );
@@ -3677,8 +3683,7 @@ static void output_unix_lib( struct makefile *make )
     if (make->disabled[arch]) return;
 
     strarray_add( &make->all_targets[arch], make->unixlib );
-    add_install_rule( make, make->module, arch, make->unixlib,
-                      strmake( "p%s/%s", arch_install_dirs[arch], make->unixlib ));
+    install_program( make, make->module, arch, make->unixlib, arch_install_dirs[arch] );
     output( "%s:", obj_dir_path( make, make->unixlib ));
     output_filenames_obj_dir( make, make->unixobj_files );
     output_filenames( unix_deps );
@@ -3847,7 +3852,7 @@ static void output_programs( struct makefile *make )
         strarray_addall( &make->all_targets[arch], symlinks );
 
         install_dir = !strcmp( make->obj_dir, "loader" ) ? arch_install_dirs[arch] : "$(bindir)";
-        add_install_rule( make, make->programs.str[i], arch, program, strmake( "p%s/%s", install_dir, program ));
+        install_program( make, make->programs.str[i], arch, program, install_dir );
         for (j = 0; j < symlinks.count; j++)
             add_install_rule( make, symlinks.str[j], arch, program,
                               strmake( "y$(bindir)/%s%s", symlinks.str[j], exe_ext ));
