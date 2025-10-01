@@ -1515,6 +1515,10 @@ static NTSTATUS WINAPI fdo_pnp( DEVICE_OBJECT *device_obj, IRP *irp )
             IoDeleteDevice( bus_fdo );
             return ret;
         }
+
+        case IRP_MN_QUERY_ID:
+            break;
+
         default:
             FIXME( "Unhandled minor function %s.\n", debugstr_minor_function_code( stack->MinorFunction ) );
     }
