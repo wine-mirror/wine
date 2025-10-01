@@ -147,7 +147,7 @@ void opengl_drawable_release( struct opengl_drawable *drawable )
 static void opengl_drawable_set_context( struct opengl_drawable *drawable, struct wgl_context *context )
 {
     if (!drawable->funcs->set_context) return;
-    drawable->funcs->set_context( drawable, context->driver_private );
+    drawable->funcs->set_context( drawable, context ? context->driver_private : NULL );
 }
 
 static void opengl_drawable_flush( struct opengl_drawable *drawable, int interval, UINT flags )
