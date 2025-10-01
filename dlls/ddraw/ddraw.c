@@ -1483,6 +1483,33 @@ HRESULT ddraw_get_d3dcaps(const struct ddraw *ddraw, D3DDEVICEDESC7 *caps)
     return DD_OK;
 }
 
+static DWORD get_z_buffer_caps(struct ddraw *ddraw)
+{
+    struct wined3d_display_mode mode;
+    DWORD ret = 0;
+
+    static const struct
+    {
+        enum wined3d_format_id format;
+        DWORD flag;
+    }
+    formats[] =
+    {
+        {WINED3DFMT_D16_UNORM, DDBD_16},
+        {WINED3DFMT_X8D24_UNORM, DDBD_24},
+        {WINED3DFMT_D32_UNORM, DDBD_32},
+    };
+
+    wined3d_output_get_display_mode(ddraw->wined3d_output, &mode, NULL);
+    for (unsigned int i = 0; i < ARRAY_SIZE(formats); ++i)
+    {
+        if (SUCCEEDED(wined3d_check_device_format(ddraw->wined3d, ddraw->wined3d_adapter, WINED3D_DEVICE_TYPE_HAL,
+                mode.format_id, 0, WINED3D_BIND_DEPTH_STENCIL, WINED3D_RTYPE_TEXTURE_2D, formats[i].format)))
+            ret |= formats[i].flag;
+    }
+    return ret;
+}
+
 /*****************************************************************************
  * IDirectDraw7::GetCaps
  *
@@ -1549,6 +1576,7 @@ static HRESULT WINAPI ddraw7_GetCaps(IDirectDraw7 *iface, DDCAPS *DriverCaps, DD
     caps.dwCKeyCaps = winecaps.ddraw_caps.color_key_caps;
     caps.dwFXCaps = winecaps.ddraw_caps.fx_caps;
     caps.dwPalCaps = DDPCAPS_8BIT | DDPCAPS_PRIMARYSURFACE;
+    caps.dwZBufferBitDepths = get_z_buffer_caps(ddraw);
     caps.ddsCaps.dwCaps = winecaps.ddraw_caps.dds_caps;
     caps.dwSVBCaps = winecaps.ddraw_caps.svb_caps;
     caps.dwSVBCKeyCaps = winecaps.ddraw_caps.svb_color_key_caps;
