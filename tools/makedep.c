@@ -2422,6 +2422,17 @@ static void add_install_rule( struct makefile *make, const char *target, unsigne
 
 
 /*******************************************************************
+ *         install_data_file
+ */
+static void install_data_file( struct makefile *make, const char *target,
+                               const char *obj, const char *dir, const char *dst )
+{
+    if (!dst) dst = get_basename( obj );
+    add_install_rule( make, target, 0, obj, strmake( "d%s/%s", dir, dst ));
+}
+
+
+/*******************************************************************
  *         get_include_install_path
  *
  * Determine the installation path for a given include file.
@@ -3060,7 +3071,7 @@ static void output_source_sfd( struct makefile *make, struct incl_file *source, 
             strarray_add( &make->all_targets[0], xstrdup( font ));
             output( "%s: %s %s\n", obj_dir_path( make, font ), sfnt2fon, ttf_file );
             output( "\t%s%s -q -o $@ %s %s\n", cmd_prefix( "GEN" ), sfnt2fon, ttf_file, args );
-            add_install_rule( make, source->name, 0, xstrdup(font), strmake( "d$(datadir)/wine/fonts/%s", font ));
+            install_data_file( make, source->name, font, "$(datadir)/wine/fonts", NULL );
         }
     }
 }
@@ -3142,7 +3153,7 @@ static void output_source_in( struct makefile *make, struct incl_file *source, c
             dir = strmake( "$(mandir)/%s/man%s", lang, section );
         }
         else dir = strmake( "$(mandir)/man%s", section );
-        add_install_rule( make, dest, 0, obj, strmake( "d%s/%s.%s", dir, dest, section ));
+        install_data_file( make, dest, obj, dir, strmake( "%s.%s", dest, section ));
         symlinks = get_expanded_file_local_var( make, dest, "SYMLINKS" );
         for (i = 0; i < symlinks.count; i++)
             add_install_rule( make, symlinks.str[i], 0, strmake( "%s.%s", dest, section ),
@@ -3157,7 +3168,7 @@ static void output_source_in( struct makefile *make, struct incl_file *source, c
     output( "%s:", obj_dir_path( make, obj ));
     output_filenames( source->dependencies );
     output( "\n" );
-    add_install_rule( make, obj, 0, obj, strmake( "d$(datadir)/wine/%s", obj ));
+    install_data_file( make, obj, obj, "$(datadir)/wine", NULL );
 }
 
 
@@ -3495,7 +3506,7 @@ static void output_fake_module( struct makefile *make, const char *spec_file )
     if (make->disabled[arch]) return;
 
     strarray_add( &make->all_targets[arch], name );
-    add_install_rule( make, make->module, arch, name, strmake( "d$(libdir)/wine/%s", name ));
+    install_data_file( make, make->module, name, strmake( "$(libdir)/wine/%s", arch_pe_dirs[arch] ), NULL );
 
     output( "%s:", obj_dir_path( make, name ));
     if (spec_file) output_filename( spec_file );
@@ -3571,8 +3582,8 @@ static void output_module( struct makefile *make, unsigned int arch )
 
     strarray_add( &make->all_targets[link_arch], module_name );
     if (make->data_only)
-        add_install_rule( make, make->module, link_arch, module_name,
-                          strmake( "d$(libdir)/wine/%s/%s", arch_pe_dirs[arch], make->module ));
+        install_data_file( make, make->module, module_name,
+                           strmake( "$(libdir)/wine/%s", arch_pe_dirs[arch] ), NULL );
     else
         add_install_rule( make, make->module, link_arch, module_name,
                           strmake( "%c%s/%s%s", '0' + arch, arch_install_dirs[arch], make->module,
@@ -3638,8 +3649,8 @@ static void output_import_lib( struct makefile *make, unsigned int arch )
     if (hybrid_arch) output_filenames_obj_dir( make, make->implib_files[hybrid_arch] );
     output( "\n" );
 
-    add_install_rule( make, make->importlib, arch, name,
-                      strmake( "d%s/lib%s.a", arch_install_dirs[arch], make->importlib ));
+    if (make->disabled[arch]) return;
+    install_data_file( make, make->importlib, name, arch_install_dirs[arch], NULL );
 }
 
 
@@ -3694,8 +3705,7 @@ static void output_static_lib( struct makefile *make, unsigned int arch )
     if (hybrid_arch) output_filenames_obj_dir( make, make->object_files[hybrid_arch] );
     if (!arch) output_filenames_obj_dir( make, make->unixobj_files );
     output( "\n" );
-    add_install_rule( make, make->staticlib, arch, name,
-                      strmake( "d%s/%s", arch_install_dirs[arch], make->staticlib ));
+    install_data_file( make, make->staticlib, name, arch_install_dirs[arch], NULL );
 }
 
 
