@@ -2493,6 +2493,16 @@ static void install_tool( struct makefile *make, const char *target,
 
 
 /*******************************************************************
+ *         install_symlink
+ */
+static void install_symlink( struct makefile *make, const char *target,
+                             const char *obj, const char *dir, const char *dst )
+{
+    add_install_rule( make, target, 0, obj, strmake( "y%s/%s", dir, dst ));
+}
+
+
+/*******************************************************************
  *         get_source_defines
  */
 static struct strarray get_source_defines( struct makefile *make, struct incl_file *source,
@@ -3196,10 +3206,8 @@ static void output_source_in( struct makefile *make, struct incl_file *source, c
         install_data_file( make, dest, obj, dir, strmake( "%s.%s", dest, section ));
         symlinks = get_expanded_file_local_var( make, dest, "SYMLINKS" );
         for (i = 0; i < symlinks.count; i++)
-            add_install_rule( make, symlinks.str[i], 0, strmake( "%s.%s", dest, section ),
-                              strmake( "y%s/%s.%s", dir, symlinks.str[i], section ));
-        free( dest );
-        free( dir );
+            install_symlink( make, symlinks.str[i], strmake( "%s.%s", dest, section ), dir,
+                              strmake( "%s.%s", symlinks.str[i], section ));
     }
     strarray_add( &make->in_files, obj );
     strarray_add( &make->all_targets[0], obj );
@@ -3873,8 +3881,8 @@ static void output_programs( struct makefile *make )
         install_dir = !strcmp( make->obj_dir, "loader" ) ? arch_install_dirs[arch] : "$(bindir)";
         install_program( make, make->programs.str[i], arch, program, install_dir );
         for (j = 0; j < symlinks.count; j++)
-            add_install_rule( make, symlinks.str[j], arch, program,
-                              strmake( "y$(bindir)/%s%s", symlinks.str[j], exe_ext ));
+            install_symlink( make, symlinks.str[j], program, "$(bindir)",
+                             strmake( "%s%s", symlinks.str[j], exe_ext ));
     }
 }
 
@@ -4092,7 +4100,7 @@ static void output_sources( struct makefile *make )
         {
             char *binary = replace_extension( make->module, ".exe", "" );
             if (!strcmp( ln_s, "ln -s" ))
-                add_install_rule( make, binary, 0, "wine", strmake( "y$(bindir)/%s", binary ));
+                install_symlink( make, binary, "wine", "$(bindir)", binary );
             else
                 install_tool( make, binary, "wine", "$(bindir)", binary );
         }
