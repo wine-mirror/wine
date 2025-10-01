@@ -2474,6 +2474,15 @@ static void install_program( struct makefile *make, const char *target,
 
 
 /*******************************************************************
+ *         install_script
+ */
+static void install_script( struct makefile *make, const char *src )
+{
+    add_install_rule( make, src, 0, src, strmake( "S$(bindir)/%s", get_basename(src) ));
+}
+
+
+/*******************************************************************
  *         get_source_defines
  */
 static struct strarray get_source_defines( struct makefile *make, struct incl_file *source,
@@ -4084,8 +4093,7 @@ static void output_sources( struct makefile *make )
     else if (make->programs.count) output_programs( make );
 
     for (i = 0; i < make->scripts.count; i++)
-        add_install_rule( make, make->scripts.str[i], 0, make->scripts.str[i],
-                          strmake( "S$(bindir)/%s", make->scripts.str[i] ));
+        install_script( make, make->scripts.str[i] );
 
     for (i = 0; i < make->extra_targets.count; i++)
         if (strarray_exists( make->dependencies, obj_dir_path( make, make->extra_targets.str[i] )))
