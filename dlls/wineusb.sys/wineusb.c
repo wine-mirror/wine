@@ -315,6 +315,9 @@ static NTSTATUS fdo_pnp(IRP *irp)
             return ret;
         }
 
+        case IRP_MN_QUERY_ID:
+            break;
+
         default:
             FIXME("Unhandled minor function %#x.\n", stack->MinorFunction);
     }
