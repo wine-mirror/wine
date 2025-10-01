@@ -2483,6 +2483,16 @@ static void install_script( struct makefile *make, const char *src )
 
 
 /*******************************************************************
+ *         install_tool
+ */
+static void install_tool( struct makefile *make, const char *target,
+                          const char *obj, const char *dir, const char *dst )
+{
+    add_install_rule( make, target, 0, obj, strmake( "t%s/%s", dir, dst ));
+}
+
+
+/*******************************************************************
  *         get_source_defines
  */
 static struct strarray get_source_defines( struct makefile *make, struct incl_file *source,
@@ -4081,8 +4091,10 @@ static void output_sources( struct makefile *make )
         if (make->is_exe && !make->is_win16 && unix_lib_supported && strendswith( make->module, ".exe" ))
         {
             char *binary = replace_extension( make->module, ".exe", "" );
-            add_install_rule( make, binary, 0, "wine",
-                              strmake( "%c$(bindir)/%s", strcmp( ln_s, "ln -s" ) ? 't' : 'y', binary ));
+            if (!strcmp( ln_s, "ln -s" ))
+                add_install_rule( make, binary, 0, "wine", strmake( "y$(bindir)/%s", binary ));
+            else
+                install_tool( make, binary, "wine", "$(bindir)", binary );
         }
     }
     else if (make->testdll)
