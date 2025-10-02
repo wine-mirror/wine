@@ -3878,6 +3878,11 @@ static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBA
     D3DDEVICEDESC7 device_desc7;
     HRESULT hr;
 
+    /* Tomb Raider 3 overwrites the reference device description buffer
+     * with its own custom string. Reserve some extra space in the array
+     * to avoid a buffer overrun. */
+    static CHAR reference_description[64] = "RGB Direct3D emulation";
+
     /* Some games (Motoracer 2 demo) have the bad idea to modify the device
      * name string. Let's put the string in a sufficiently sized array in
      * writable memory. */
@@ -3898,56 +3903,41 @@ static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBA
     }
     ddraw_d3dcaps1_from_7(&device_desc1, &device_desc7);
 
-    /* Do I have to enumerate the reference id? Note from old d3d7:
-     * "It seems that enumerating the reference IID on Direct3D 1 games
-     * (AvP / Motoracer2) breaks them". So do not enumerate this iid in V1
-     *
-     * There's a registry key HKLM\Software\Microsoft\Direct3D\Drivers,
+    /* There's a registry key HKLM\Software\Microsoft\Direct3D\Drivers,
      * EnumReference which enables / disables enumerating the reference
      * rasterizer. It's a DWORD, 0 means disabled, 2 means enabled. The
      * enablerefrast.reg and disablerefrast.reg files in the DirectX 7.0 sdk
      * demo directory suggest this.
      *
-     * Some games(GTA 2) seem to use the second enumerated device, so I have
-     * to enumerate at least 2 devices. So enumerate the reference device to
-     * have 2 devices.
-     *
-     * Other games (Rollcage) tell emulation and hal device apart by certain
-     * flags. Rollcage expects D3DPTEXTURECAPS_POW2 to be set (yeah, it is a
+     * Rollcage tells apart the emulation and HAL device by certain flags.
+     * It expects D3DPTEXTURECAPS_POW2 to be set (yeah, it is a
      * limitation flag), and it refuses all devices that have the perspective
      * flag set. This way it refuses the emulation device, and HAL devices
      * never have POW2 unset in d3d7 on windows. */
-    if (ddraw->d3dversion != 1)
+
+    TRACE("Enumerating RGB Direct3D device.\n");
+    hal_desc = device_desc1;
+    hel_desc = device_desc1;
+    /* The rgb device has the pow2 flag set in the hel caps, but not in the hal caps. */
+    hal_desc.dpcLineCaps.dwTextureCaps &= ~(D3DPTEXTURECAPS_POW2
+            | D3DPTEXTURECAPS_NONPOW2CONDITIONAL | D3DPTEXTURECAPS_PERSPECTIVE);
+    hal_desc.dpcTriCaps.dwTextureCaps &= ~(D3DPTEXTURECAPS_POW2
+            | D3DPTEXTURECAPS_NONPOW2CONDITIONAL | D3DPTEXTURECAPS_PERSPECTIVE);
+    /* RGB, RAMP and MMX devices have a HAL dcmColorModel of 0 */
+    hal_desc.dcmColorModel = 0;
+    /* RGB, RAMP and MMX devices cannot report HAL hardware flags */
+    hal_desc.dwFlags = 0;
+    /* RGB, REF, RAMP and MMX devices don't report hardware transform and lighting capability */
+    hal_desc.dwDevCaps &= ~(D3DDEVCAPS_HWTRANSFORMANDLIGHT | D3DDEVCAPS_DRAWPRIMITIVES2EX | D3DDEVCAPS_HWRASTERIZATION);
+    hel_desc.dwDevCaps &= ~(D3DDEVCAPS_HWTRANSFORMANDLIGHT | D3DDEVCAPS_DRAWPRIMITIVES2EX | D3DDEVCAPS_HWRASTERIZATION);
+
+    hr = callback((GUID *)&IID_IDirect3DRGBDevice, reference_description,
+            device_name, &hal_desc, &hel_desc, context);
+    if (hr != D3DENUMRET_OK)
     {
-        /* Tomb Raider 3 overwrites the reference device description buffer
-         * with its own custom string. Reserve some extra space in the array
-         * to avoid a buffer overrun. */
-        static CHAR reference_description[64] = "RGB Direct3D emulation";
-
-        TRACE("Enumerating WineD3D D3DDevice interface.\n");
-        hal_desc = device_desc1;
-        hel_desc = device_desc1;
-        /* The rgb device has the pow2 flag set in the hel caps, but not in the hal caps. */
-        hal_desc.dpcLineCaps.dwTextureCaps &= ~(D3DPTEXTURECAPS_POW2
-                | D3DPTEXTURECAPS_NONPOW2CONDITIONAL | D3DPTEXTURECAPS_PERSPECTIVE);
-        hal_desc.dpcTriCaps.dwTextureCaps &= ~(D3DPTEXTURECAPS_POW2
-                | D3DPTEXTURECAPS_NONPOW2CONDITIONAL | D3DPTEXTURECAPS_PERSPECTIVE);
-        /* RGB, RAMP and MMX devices have a HAL dcmColorModel of 0 */
-        hal_desc.dcmColorModel = 0;
-        /* RGB, RAMP and MMX devices cannot report HAL hardware flags */
-        hal_desc.dwFlags = 0;
-        /* RGB, REF, RAMP and MMX devices don't report hardware transform and lighting capability */
-        hal_desc.dwDevCaps &= ~(D3DDEVCAPS_HWTRANSFORMANDLIGHT | D3DDEVCAPS_DRAWPRIMITIVES2EX | D3DDEVCAPS_HWRASTERIZATION);
-        hel_desc.dwDevCaps &= ~(D3DDEVCAPS_HWTRANSFORMANDLIGHT | D3DDEVCAPS_DRAWPRIMITIVES2EX | D3DDEVCAPS_HWRASTERIZATION);
-
-        hr = callback((GUID *)&IID_IDirect3DRGBDevice, reference_description,
-                device_name, &hal_desc, &hel_desc, context);
-        if (hr != D3DENUMRET_OK)
-        {
-            TRACE("Application cancelled the enumeration.\n");
-            wined3d_mutex_unlock();
-            return D3D_OK;
-        }
+        TRACE("Application cancelled the enumeration.\n");
+        wined3d_mutex_unlock();
+        return D3D_OK;
     }
 
     strcpy(device_name,"Direct3D HAL");
