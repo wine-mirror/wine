@@ -4316,8 +4316,8 @@ static void test_SendInput_mouse_messages(void)
 
     mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
     wait_messages( 5, FALSE );
-    button_down_hwnd_todo[1].message.hwnd = hwnd;
-    ok_seq( button_down_hwnd_todo );
+    button_down_hwnd[1].message.hwnd = hwnd;
+    ok_seq( button_down_hwnd );
     mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
     wait_messages( 5, FALSE );
     button_up_hwnd[1].message.hwnd = hwnd;
