@@ -15461,164 +15461,178 @@ static void test_filling_convention(void)
     DestroyWindow(window);
 }
 
+static unsigned int enum_devices_index;
+
 static HRESULT WINAPI test_enum_devices_caps_callback(GUID *guid, char *device_desc,
         char *device_name, D3DDEVICEDESC *hal, D3DDEVICEDESC *hel, void *ctx)
 {
+    static const D3DLIGHTINGCAPS empty_lighting_caps = {.dwSize = sizeof(D3DLIGHTINGCAPS)};
+    static const D3DPRIMCAPS empty_primitive_caps = {.dwSize = sizeof(D3DPRIMCAPS)};
+    IDirectDraw *ddraw = ctx;
+
+    todo_wine ok(hal->dwSize == offsetof(D3DDEVICEDESC, dwMinTextureWidth), "Got size %lu.\n", hal->dwSize);
+    todo_wine ok(hel->dwSize == offsetof(D3DDEVICEDESC, dwMinTextureWidth), "Got size %lu.\n", hel->dwSize);
+    ok(hal->dtcTransformCaps.dwSize == sizeof(D3DTRANSFORMCAPS)
+            || (ddraw_is_warp(ddraw) && !hal->dtcTransformCaps.dwSize),
+            "Got transform caps size %lu.\n", hal->dtcTransformCaps.dwSize);
+    ok(hel->dtcTransformCaps.dwSize == sizeof(D3DTRANSFORMCAPS),
+            "Got transform caps size %lu.\n", hel->dtcTransformCaps.dwSize);
+    ok(hal->dlcLightingCaps.dwSize == sizeof(D3DLIGHTINGCAPS)
+            || (ddraw_is_warp(ddraw) && !hal->dlcLightingCaps.dwSize),
+            "Got lighting caps size %lu.\n", hal->dlcLightingCaps.dwSize);
+    ok(hel->dlcLightingCaps.dwSize == sizeof(D3DLIGHTINGCAPS),
+            "Got lighting caps size %lu.\n", hel->dlcLightingCaps.dwSize);
+    ok(hal->dpcLineCaps.dwSize == sizeof(D3DPRIMCAPS),
+            "Got line caps size %lu.\n", hal->dpcLineCaps.dwSize);
+    ok(hel->dpcLineCaps.dwSize == sizeof(D3DPRIMCAPS),
+            "Got line caps size %lu.\n", hel->dpcLineCaps.dwSize);
+    ok(hal->dpcTriCaps.dwSize == sizeof(D3DPRIMCAPS),
+            "Got triangle caps size %lu.\n", hal->dpcTriCaps.dwSize);
+    ok(hel->dpcTriCaps.dwSize == sizeof(D3DPRIMCAPS),
+            "Got triangle caps size %lu.\n", hel->dpcTriCaps.dwSize);
+
+    if (!IsEqualGUID(guid, &IID_IDirect3DHALDevice))
+    {
+        ok(!hal->dwFlags, "Got HAL flags %#lx.\n", hal->dwFlags);
+        ok(!hal->dcmColorModel, "Got color model %#lx.\n", hal->dcmColorModel);
+        todo_wine ok(!hal->dwDevCaps, "Got device caps %#lx.\n", hal->dwDevCaps);
+        todo_wine ok(!hal->dtcTransformCaps.dwCaps, "Got transform caps %#lx.\n", hal->dtcTransformCaps.dwCaps);
+        todo_wine ok(!hal->bClipping, "Got clipping %#x.\n", hal->bClipping);
+        todo_wine ok(!memcmp(&hal->dlcLightingCaps, &empty_lighting_caps, sizeof(D3DLIGHTINGCAPS)),
+                "Lighting caps didn't match.\n");
+        todo_wine ok(!memcmp(&hal->dpcLineCaps, &empty_primitive_caps, sizeof(D3DPRIMCAPS)), "Line caps didn't match.\n");
+        todo_wine ok(!memcmp(&hal->dpcTriCaps, &empty_primitive_caps, sizeof(D3DPRIMCAPS)), "Triangle caps didn't match.\n");
+        todo_wine ok(!hal->dwDeviceRenderBitDepth, "Got colour depth %#lx.\n", hal->dwDeviceRenderBitDepth);
+        todo_wine ok(!hal->dwDeviceZBufferBitDepth, "Got Z depth %#lx.\n", hal->dwDeviceZBufferBitDepth);
+        ok(!hal->dwMaxBufferSize, "Got max buffer size %lu.\n", hal->dwMaxBufferSize);
+        todo_wine ok(!hal->dwMaxVertexCount, "Got max vertex count %lu.\n", hal->dwMaxVertexCount);
+    }
+
     if(IsEqualGUID(&IID_IDirect3DRGBDevice, guid))
     {
-        ok((hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2) == 0,
-           "RGB Device hal line caps has D3DPTEXTURECAPS_POW2 flag set\n");
-        ok((hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2) == 0,
-           "RGB Device hal tri caps has D3DPTEXTURECAPS_POW2 flag set\n");
+        static const DWORD hel_flags = D3DDD_COLORMODEL
+                | D3DDD_DEVCAPS
+                | D3DDD_TRANSFORMCAPS
+                | D3DDD_LIGHTINGCAPS
+                | D3DDD_BCLIPPING
+                | D3DDD_TRICAPS
+                | D3DDD_DEVICERENDERBITDEPTH
+                | D3DDD_DEVICEZBUFFERBITDEPTH
+                | D3DDD_MAXBUFFERSIZE
+                | D3DDD_MAXVERTEXCOUNT;
+
+        static const DWORD device_caps = D3DDEVCAPS_FLOATTLVERTEX
+                | D3DDEVCAPS_SORTINCREASINGZ
+                | D3DDEVCAPS_SORTEXACT
+                | D3DDEVCAPS_EXECUTESYSTEMMEMORY
+                | D3DDEVCAPS_TLVERTEXSYSTEMMEMORY
+                | D3DDEVCAPS_TEXTURESYSTEMMEMORY
+                | D3DDEVCAPS_DRAWPRIMTLVERTEX;
+
+        todo_wine ok(enum_devices_index == 1, "Expected index %u.\n", enum_devices_index);
+        todo_wine ok(!strcmp(device_name, "RGB Emulation"), "Got name %s.\n", debugstr_a(device_name));
+
+        todo_wine ok(hel->dwFlags == hel_flags, "Got HEL flags %#lx.\n", hel->dwFlags);
+        ok(hel->dcmColorModel == D3DCOLOR_RGB, "Got color model %#lx.\n", hel->dcmColorModel);
+        todo_wine ok(hel->dwDevCaps == device_caps, "Got device caps %#lx.\n", hel->dwDevCaps);
+
         ok(hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2,
            "RGB Device hel line caps does not have D3DPTEXTURECAPS_POW2 flag set\n");
         ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2,
            "RGB Device hel tri caps does not have D3DPTEXTURECAPS_POW2 flag set\n");
 
-        ok((hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
-           "RGB Device hal line caps has D3DPTEXTURECAPS_PERSPECTIVE set\n");
-        ok((hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
-           "RGB Device hal tri caps has D3DPTEXTURECAPS_PERSPECTIVE set\n");
         ok(hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
            "RGB Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
         ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
            "RGB Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
 
-        ok(hal->dcmColorModel == 0, "RGB Device hal caps has colormodel %lu\n", hal->dcmColorModel);
-        ok(hel->dcmColorModel == D3DCOLOR_RGB, "RGB Device hel caps has colormodel %lu\n", hel->dcmColorModel);
-
-        ok(hal->dwFlags == 0, "RGB Device hal caps has hardware flags %#lx\n", hal->dwFlags);
-        ok(hel->dwFlags != 0, "RGB Device hel caps has hardware flags %#lx\n", hel->dwFlags);
-
-        ok((hal->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
-           "RGB Device hal device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
         ok((hel->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
            "RGB Device hel device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
-        ok((hal->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
-           "RGB Device hal device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
         ok((hel->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
            "RGB Device hel device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
-        ok((hal->dwDevCaps & D3DDEVCAPS_HWRASTERIZATION) == 0,
-           "RGB Device hal device caps has D3DDEVCAPS_HWRASTERIZATION set\n");
         ok((hel->dwDevCaps & D3DDEVCAPS_HWRASTERIZATION) == 0,
            "RGB Device hel device caps has D3DDEVCAPS_HWRASTERIZATION set\n");
     }
     else if(IsEqualGUID(&IID_IDirect3DHALDevice, guid))
     {
+        static const DWORD hel_flags = D3DDD_COLORMODEL
+                | D3DDD_DEVCAPS
+                | D3DDD_TRANSFORMCAPS
+                | D3DDD_LIGHTINGCAPS
+                | D3DDD_BCLIPPING;
+
+        todo_wine ok(enum_devices_index == 2, "Expected index %u.\n", enum_devices_index);
+        ok(!strcmp(device_name, "Direct3D HAL"), "Got name %s.\n", debugstr_a(device_name));
+
         ok(hal->dcmColorModel == D3DCOLOR_RGB, "HAL Device hal caps has colormodel %lu\n", hel->dcmColorModel);
-        ok(hel->dcmColorModel == 0, "HAL Device hel caps has colormodel %lu\n", hel->dcmColorModel);
 
         ok(hal->dwFlags != 0, "HAL Device hal caps has hardware flags %#lx\n", hal->dwFlags);
-        ok(hel->dwFlags != 0, "HAL Device hel caps has hardware flags %#lx\n", hel->dwFlags);
 
-        ok(hal->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT,
-           "HAL Device hal device caps does not have D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
-        ok((hel->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
-           "RGB Device hel device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
         ok(hal->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX,
            "HAL Device hal device caps does not have D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
-        ok((hel->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
-           "RGB Device hel device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
+
+        todo_wine ok(hel->dwFlags == hel_flags, "Got HEL flags %#lx.\n", hel->dwFlags);
+        ok(!hel->dcmColorModel, "Got color model %#lx.\n", hel->dcmColorModel);
+        todo_wine ok(hel->dwDevCaps == D3DDEVCAPS_FLOATTLVERTEX, "Got device caps %#lx.\n", hel->dwDevCaps);
+        ok(hel->dtcTransformCaps.dwCaps == D3DTRANSFORMCAPS_CLIP,
+                "Got transform caps %#lx.\n", hel->dtcTransformCaps.dwCaps);
+        ok(hel->bClipping == TRUE, "Got clipping %#x.\n", hel->bClipping);
+        ok(hel->dlcLightingCaps.dwCaps == (D3DLIGHTCAPS_POINT | D3DLIGHTCAPS_SPOT
+                | D3DLIGHTCAPS_DIRECTIONAL | D3DLIGHTCAPS_PARALLELPOINT),
+                "Got lighting caps %#lx.\n", hel->dlcLightingCaps.dwCaps);
+        ok(hel->dlcLightingCaps.dwLightingModel == D3DLIGHTINGMODEL_RGB,
+                "Got lighting model %#lx.\n", hel->dlcLightingCaps.dwLightingModel);
+        todo_wine ok(!hel->dlcLightingCaps.dwNumLights,
+                "Got light count %lu.\n", hel->dlcLightingCaps.dwNumLights);
+        todo_wine ok(!memcmp(&hel->dpcLineCaps, &empty_primitive_caps, sizeof(D3DPRIMCAPS)), "Line caps didn't match.\n");
+        todo_wine ok(!memcmp(&hel->dpcTriCaps, &empty_primitive_caps, sizeof(D3DPRIMCAPS)), "Triangle caps didn't match.\n");
+        todo_wine ok(!hel->dwDeviceRenderBitDepth, "Got colour depth %#lx.\n", hel->dwDeviceRenderBitDepth);
+        todo_wine ok(!hel->dwDeviceZBufferBitDepth, "Got Z depth %#lx.\n", hel->dwDeviceZBufferBitDepth);
+        ok(!hel->dwMaxBufferSize, "Got max buffer size %lu.\n", hel->dwMaxBufferSize);
+        ok(hel->dwMaxVertexCount == hal->dwMaxVertexCount, "Got HAL max vertex count %lu, HEL %lu.\n",
+                hal->dwMaxVertexCount, hel->dwMaxVertexCount);
     }
     else if(IsEqualGUID(&IID_IDirect3DRefDevice, guid))
     {
-        ok((hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2) == 0,
-           "REF Device hal line caps has D3DPTEXTURECAPS_POW2 flag set\n");
-        ok((hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2) == 0,
-           "REF Device hal tri caps has D3DPTEXTURECAPS_POW2 flag set\n");
         ok(hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2,
            "REF Device hel line caps does not have D3DPTEXTURECAPS_POW2 flag set\n");
         ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2,
            "REF Device hel tri caps does not have D3DPTEXTURECAPS_POW2 flag set\n");
 
-        ok((hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
-           "REF Device hal line caps has D3DPTEXTURECAPS_PERSPECTIVE set\n");
-        ok((hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
-           "REF Device hal tri caps has D3DPTEXTURECAPS_PERSPECTIVE set\n");
         ok(hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
            "REF Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
         ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
            "REF Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
 
-        ok((hal->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
-           "REF Device hal device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
         ok((hel->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
            "REF Device hel device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
-        ok((hal->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
-           "REF Device hal device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
         ok((hel->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
            "REF Device hel device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
     }
     else if(IsEqualGUID(&IID_IDirect3DRampDevice, guid))
     {
-        ok((hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2) == 0,
-           "Ramp Device hal line caps has D3DPTEXTURECAPS_POW2 flag set\n");
-        ok((hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2) == 0,
-           "Ramp Device hal tri caps has D3DPTEXTURECAPS_POW2 flag set\n");
+        ok(enum_devices_index == 0, "Expected index %u.\n", enum_devices_index);
+        ok(!strcmp(device_name, "Ramp Emulation"), "Got name %s.\n", debugstr_a(device_name));
+
         ok(hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2,
            "Ramp Device hel line caps does not have D3DPTEXTURECAPS_POW2 flag set\n");
         ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2,
            "Ramp Device hel tri caps does not have D3DPTEXTURECAPS_POW2 flag set\n");
 
-        ok((hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
-           "Ramp Device hal line caps has D3DPTEXTURECAPS_PERSPECTIVE set\n");
-        ok((hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
-           "Ramp Device hal tri caps has D3DPTEXTURECAPS_PERSPECTIVE set\n");
         ok(hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
            "Ramp Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
         ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
            "Ramp Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
 
-        ok(hal->dcmColorModel == 0, "Ramp Device hal caps has colormodel %lu\n", hal->dcmColorModel);
         ok(hel->dcmColorModel == D3DCOLOR_MONO, "Ramp Device hel caps has colormodel %lu\n",
            hel->dcmColorModel);
 
-        ok(hal->dwFlags == 0, "Ramp Device hal caps has hardware flags %#lx\n", hal->dwFlags);
         ok(hel->dwFlags != 0, "Ramp Device hel caps has hardware flags %#lx\n", hel->dwFlags);
 
-        ok((hal->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
-           "Ramp Device hal device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
         ok((hel->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
            "Ramp Device hel device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
-        ok((hal->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
-           "Ramp Device hal device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
         ok((hel->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
            "Ramp Device hel device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
-    }
-    else if(IsEqualGUID(&IID_IDirect3DMMXDevice, guid))
-    {
-        ok((hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2) == 0,
-           "MMX Device hal line caps has D3DPTEXTURECAPS_POW2 flag set\n");
-        ok((hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2) == 0,
-           "MMX Device hal tri caps has D3DPTEXTURECAPS_POW2 flag set\n");
-        ok(hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2,
-           "MMX Device hel line caps does not have D3DPTEXTURECAPS_POW2 flag set\n");
-        ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2,
-           "MMX Device hel tri caps does not have D3DPTEXTURECAPS_POW2 flag set\n");
-
-        ok((hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
-           "MMX Device hal line caps has D3DPTEXTURECAPS_PERSPECTIVE set\n");
-        ok((hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
-           "MMX Device hal tri caps has D3DPTEXTURECAPS_PERSPECTIVE set\n");
-        ok(hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
-           "MMX Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
-        ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
-           "MMX Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
-
-        ok(hal->dcmColorModel == 0, "MMX Device hal caps has colormodel %lu\n", hal->dcmColorModel);
-        ok(hel->dcmColorModel == D3DCOLOR_RGB, "MMX Device hel caps has colormodel %lu\n", hel->dcmColorModel);
-
-        ok(hal->dwFlags == 0, "MMX Device hal caps has hardware flags %#lx\n", hal->dwFlags);
-        ok(hel->dwFlags != 0, "MMX Device hel caps has hardware flags %#lx\n", hel->dwFlags);
-
-        ok((hal->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
-           "MMX Device hal device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
-        ok((hel->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
-           "MMX Device hel device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
-        ok((hal->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
-           "MMX Device hal device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
-        ok((hel->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
-           "MMX Device hel device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
     }
     else
     {
@@ -15641,6 +15655,7 @@ static HRESULT WINAPI test_enum_devices_caps_callback(GUID *guid, char *device_d
             trace("hel tri does NOT have pow2 set\n");
     }
 
+    ++enum_devices_index;
     return DDENUMRET_OK;
 }
 
@@ -15665,7 +15680,7 @@ static void test_enum_devices(void)
     hr = IDirect3D_EnumDevices(d3d, NULL, NULL);
     ok(hr == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", hr);
 
-    hr = IDirect3D_EnumDevices(d3d, test_enum_devices_caps_callback, NULL);
+    hr = IDirect3D_EnumDevices(d3d, test_enum_devices_caps_callback, ddraw);
     ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
 
     IDirect3D_Release(d3d);

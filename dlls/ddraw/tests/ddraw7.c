@@ -19890,11 +19890,16 @@ static void test_filling_convention(void)
     DestroyWindow(window);
 }
 
+static unsigned int enum_devices_index;
+
 static HRESULT WINAPI test_enum_devices_caps_callback(char *device_desc, char *device_name,
         D3DDEVICEDESC7 *device_desc7, void *ctx)
 {
     if (IsEqualGUID(&device_desc7->deviceGUID, &IID_IDirect3DTnLHalDevice))
     {
+        todo_wine ok(enum_devices_index == 2, "Expected index %u.\n", enum_devices_index);
+        todo_wine ok(!strcmp(device_name, "Direct3D T&L HAL"), "Got name %s.\n", debugstr_a(device_name));
+
         ok(device_desc7->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT,
            "TnLHal Device device caps does not have D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
         ok(device_desc7->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX,
@@ -19902,6 +19907,9 @@ static HRESULT WINAPI test_enum_devices_caps_callback(char *device_desc, char *d
     }
     else if (IsEqualGUID(&device_desc7->deviceGUID, &IID_IDirect3DHALDevice))
     {
+        ok(enum_devices_index == 1, "Expected index %u.\n", enum_devices_index);
+        ok(!strcmp(device_name, "Direct3D HAL"), "Got name %s.\n", debugstr_a(device_name));
+
         ok((device_desc7->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
            "HAL Device device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
         ok(device_desc7->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX,
@@ -19909,6 +19917,9 @@ static HRESULT WINAPI test_enum_devices_caps_callback(char *device_desc, char *d
     }
     else if (IsEqualGUID(&device_desc7->deviceGUID, &IID_IDirect3DRGBDevice))
     {
+        todo_wine ok(enum_devices_index == 0, "Expected index %u.\n", enum_devices_index);
+        todo_wine ok(!strcmp(device_name, "RGB Emulation"), "Got name %s.\n", debugstr_a(device_name));
+
         ok((device_desc7->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
            "RGB Device device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
         ok((device_desc7->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
@@ -19921,6 +19932,7 @@ static HRESULT WINAPI test_enum_devices_caps_callback(char *device_desc, char *d
         ok(FALSE, "Unexpected device enumerated: \"%s\" \"%s\"\n", device_desc, device_name);
     }
 
+    ++enum_devices_index;
     return DDENUMRET_OK;
 }
 
