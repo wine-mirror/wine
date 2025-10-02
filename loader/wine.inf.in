@@ -54,7 +54,7 @@ AddService=MountMgr,0x800,MountMgrService
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDlls
 UpdateInis=SystemIni
-CopyFiles=ColorFiles,EtcFiles,InfFiles,NlsFiles,SortFiles
+CopyFiles=ColorFiles,EtcFiles,InfFiles,NlsFiles,SortFiles,WinmdFiles
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -111,7 +111,7 @@ AddReg=\
 [BaseWow64Install]
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDllsWow64
-CopyFiles=NlsFiles
+CopyFiles=NlsFiles,WinmdFiles
 AddReg=\
     CurrentVersion,\
     Debugger,\
@@ -1297,9 +1297,22 @@ normnfkd.nls
 [SortFiles]
 sortdefault.nls
 
+[WinmdFiles]
+windows.applicationmodel.winmd
+windows.globalization.winmd
+windows.graphics.winmd
+windows.media.winmd
+windows.networking.winmd
+windows.perception.winmd
+windows.storage.winmd
+windows.system.winmd
+windows.ui.winmd
+windows.ui.xaml.winmd
+
 [WineSourceDirs]
 NlsFiles  = nls
 SortFiles = nls
+WinmdFiles = winmd,include
 
 [DestinationDirs]
 ColorFiles = 23
@@ -1307,3 +1320,4 @@ EtcFiles  = 12,etc
 InfFiles  = 17
 NlsFiles  = 11
 SortFiles = 10,globalization\sorting
+WinmdFiles = 11,winmetadata

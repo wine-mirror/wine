@@ -23,6 +23,7 @@ use strict;
 
 my (@makefiles, %makefiles);
 my @nls_files;
+my @winmd_files;
 my %deleted_files;
 
 sub dirname($)
@@ -82,22 +83,23 @@ sub replace_in_file($$$@)
 }
 
 # replace all source variables in a makefile
-sub replace_makefile_variables($)
+sub replace_makefile_variables($$)
 {
     my $file = shift;
+    my $var = shift;
     my $make = $makefiles{$file};
     my $old;
     my $new;
     my $replaced = 0;
     my $value = "";
 
-    $value = "\\\n\t" . join(" \\\n\t", sort @{${$make}{"=SOURCES"}}) if defined ${$make}{"=SOURCES"};
+    $value = "\\\n\t" . join(" \\\n\t", sort @{${$make}{"=$var"}}) if defined ${$make}{"=$var"};
 
     open OLD_FILE, $file or die "cannot open $file";
     while (<OLD_FILE>)
     {
         $old .= $_;
-        if (/^\s*SOURCES\s*=/)
+        if (/^\s*$var\s*=/)
         {
             my $old_str = $_;
             while (/\\$/)
@@ -107,7 +109,7 @@ sub replace_makefile_variables($)
                 $old .= $_;
                 $old_str .= $_;
             }
-            $new .= "SOURCES = $value\n" if $value;
+            $new .= "$var = $value\n" if $value;
             $replaced = 1;
             next;
         }
@@ -115,7 +117,7 @@ sub replace_makefile_variables($)
     }
     unless ($replaced)
     {
-        $new .= "\nSOURCES = $value\n" if $value;
+        $new .= "\n$var = $value\n" if $value;
     }
     close OLD_FILE;
     update_file($file, $new) if $old ne $new;
@@ -144,7 +146,7 @@ sub parse_makefile($)
             $make{$var} = $2;
             next;
         }
-        if (/^\s*(SOURCES)\s*=\s*(.*)/)
+        if (/^\s*(SOURCES|INSTALL_LIB)\s*=\s*(.*)/)
         {
             my $var = $1;
             my @list = split(/\s+/, $2);
@@ -252,7 +254,13 @@ sub assign_sources_to_makefiles(@)
         }
         elsif ($name =~ /\.idl$/)
         {
-            die "no makedep flags specified in $file" unless $dir eq "include" || get_makedep_flags($file);
+            my %flags = get_makedep_flags($file);
+            die "no makedep flags specified in $file" unless $dir eq "include" || %flags;
+            if (defined $flags{winmd} && $file =~ /^include\/(.*)\.idl$/)
+            {
+                push @winmd_files, "$1.winmd";
+                push @{${$make}{"=INSTALL_LIB"}}, "$1.winmd";
+            }
         }
         elsif ($name =~ /\.spec$/)
         {
@@ -349,7 +357,8 @@ sub update_makefiles(@)
 
     # update the source variables in all the makefiles
 
-    foreach my $file (sort @_) { replace_makefile_variables( $file ); }
+    foreach my $file (sort @_) { replace_makefile_variables( $file, "SOURCES" ); }
+    replace_makefile_variables( "include/Makefile.in", "INSTALL_LIB" );
 
     push @lines, "dnl End of auto-generated output commands\n";
     replace_in_file( "configure.ac", '^WINE_CONFIG_MAKEFILE', '^dnl End of auto-generated output commands\n$', @lines);
@@ -360,6 +369,7 @@ sub update_wine_inf()
     my @lines;
     push @lines, "[NlsFiles]", sort grep(!/^sort/, @nls_files);
     push @lines, "\n[SortFiles]", sort grep(/^sort/, @nls_files);
+    push @lines, "\n[WinmdFiles]", sort @winmd_files;
     push @lines, "\n[WineSourceDirs]\n";
     replace_in_file "loader/wine.inf.in", '^\[NlsFiles\]', '^\[WineSourceDirs\]', join( "\n", @lines );
 }

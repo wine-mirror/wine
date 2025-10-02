@@ -1963,7 +1963,8 @@ static void add_generated_sources( struct makefile *make )
         }
         if (source->file->flags & FLAG_IDL_WINMD)
         {
-            add_generated_source( make, replace_extension( source->name, ".idl", ".winmd" ), NULL, 0 );
+            file = add_generated_source( make, replace_extension( source->name, ".idl", ".winmd" ), NULL, 0 );
+            file->file->flags |= source->file->flags & FLAG_INSTALL;
         }
         if (!source->file->flags && strendswith( source->name, ".idl" ))
         {
@@ -3324,6 +3325,8 @@ static void output_source_xml( struct makefile *make, struct incl_file *source, 
 static void output_source_winmd( struct makefile *make, struct incl_file *source, const char *obj )
 {
     if (source->file->flags & FLAG_GENERATED) strarray_add( &make->all_targets[0], source->name );
+    if (source->file->flags & FLAG_INSTALL) install_data_file( make, source->name, source->name,
+                                                               "$(datadir)/wine/winmd", NULL );
 }
 
 

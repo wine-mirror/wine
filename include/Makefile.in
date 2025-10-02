@@ -1094,3 +1094,15 @@ SOURCES = \
 	xpsobjectmodel.idl \
 	xpsobjectmodel_1.idl \
 	zmouse.h
+
+INSTALL_LIB = \
+	windows.applicationmodel.winmd \
+	windows.globalization.winmd \
+	windows.graphics.winmd \
+	windows.media.winmd \
+	windows.networking.winmd \
+	windows.perception.winmd \
+	windows.storage.winmd \
+	windows.system.winmd \
+	windows.ui.winmd \
+	windows.ui.xaml.winmd
