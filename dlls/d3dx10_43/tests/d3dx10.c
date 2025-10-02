@@ -1060,7 +1060,7 @@ static const struct test_image_load_info
             {
                 8, 8, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE, 0, 0
             }
-        }, .todo_resource_desc = TRUE,
+        }
     },
 };
 

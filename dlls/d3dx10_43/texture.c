@@ -660,8 +660,6 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
         FIXME("load_info->CpuAccessFlags is ignored.\n");
     if (load_info->MiscFlags != D3DX10_DEFAULT)
         FIXME("load_info->MiscFlags is ignored.\n");
-    if (load_info->Format != D3DX10_DEFAULT)
-        FIXME("load_info->Format is ignored.\n");
     if (load_info->Filter != D3DX10_DEFAULT)
         FIXME("load_info->Filter is ignored.\n");
     if (load_info->MipFilter != D3DX10_DEFAULT)
@@ -688,7 +686,8 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
         goto end;
     }
 
-    load_info->Format = img_info.Format;
+    if (load_info->Format == D3DX10_DEFAULT || load_info->Format == DXGI_FORMAT_FROM_FILE)
+        load_info->Format = img_info.Format;
     fmt_desc = get_d3dx_pixel_format_info(d3dx_pixel_format_id_from_dxgi_format(load_info->Format));
     if (fmt_desc->format == D3DX_PIXEL_FORMAT_COUNT)
     {
