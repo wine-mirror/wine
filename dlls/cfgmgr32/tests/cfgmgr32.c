@@ -592,6 +592,13 @@ static const char *debugstr_DEVPROPKEY( const DEVPROPKEY *key )
     return wine_dbg_sprintf( "{%s, %04lx}", debugstr_guid( &key->fmtid ), key->pid );
 }
 
+static const char *debugstr_DEVPROPCOMPKEY( const DEVPROPCOMPKEY *key )
+{
+    if (!key) return "(null)";
+    return wine_dbg_sprintf( "{%s, %d, %s}", debugstr_DEVPROPKEY( &key->Key ), key->Store,
+                             debugstr_w( key->LocaleName ) );
+}
+
 static void test_DevGetObjectProperties( DEV_OBJECT_TYPE type, const WCHAR *id, const DEVPROPERTY *exp_props, ULONG props_len )
 {
     DEVPROPCOMPKEY dummy_propcompkey = { DEVPKEY_dummy, DEVPROP_STORE_SYSTEM, NULL };
@@ -1107,6 +1114,7 @@ static void test_DevGetObjects( void )
     DEVPROP_FILTER_EXPRESSION filters[4];
     const DEV_OBJECT *objects = NULL;
     DEVPROPCOMPKEY prop_key = {0};
+    DEVPROPCOMPKEY props[2];
     HRESULT hr;
     ULONG i, len = 0;
 
@@ -1281,6 +1289,29 @@ static void test_DevGetObjects( void )
         ok (!!prop, "got prop %p\n", prop );
         winetest_pop_context();
     }
+    pDevFreeObjects( len, objects );
+
+    /* DevGetObjects will not de-duplicate properties. */
+    len = 0;
+    objects = NULL;
+    props[0] = prop_iface_class;
+    props[1] = prop_iface_class;
+    hr = pDevGetObjects( DevObjectTypeDeviceInterface, DevQueryFlagNone, 2, props, 0, NULL, &len, &objects );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( len, "got len %lu\n", len );
+    for (i = 0; i < len; i++)
+    {
+        const DEVPROPERTY *props = objects[i].pProperties;
+
+        winetest_push_context( "object %s", debugstr_w( objects[i].pszObjectId ) );
+        ok( objects[i].cPropertyCount == 2, "got cPropertyCount %lu\n", objects[i].cPropertyCount );
+        ok( IsEqualDevPropCompKey( props[0].CompKey, prop_iface_class ), "got props[0].CompKey %s\n",
+            debugstr_DEVPROPCOMPKEY( &props[0].CompKey ) );
+        ok( IsEqualDevPropCompKey( props[1].CompKey, prop_iface_class ), "got props[1].CompKey %s\n",
+            debugstr_DEVPROPCOMPKEY( &props[1].CompKey ) );
+        winetest_pop_context();
+    }
+    pDevFreeObjects( len, objects );
 
     /* AND/OR with a single expression */
     memset( filters, 0, sizeof( filters ) );
