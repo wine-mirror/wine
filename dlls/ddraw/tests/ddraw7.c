@@ -19897,7 +19897,7 @@ static HRESULT WINAPI test_enum_devices_caps_callback(char *device_desc, char *d
 {
     if (IsEqualGUID(&device_desc7->deviceGUID, &IID_IDirect3DTnLHalDevice))
     {
-        todo_wine ok(enum_devices_index == 2, "Expected index %u.\n", enum_devices_index);
+        ok(enum_devices_index == 2, "Expected index %u.\n", enum_devices_index);
         todo_wine ok(!strcmp(device_name, "Direct3D T&L HAL"), "Got name %s.\n", debugstr_a(device_name));
 
         ok(device_desc7->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT,
@@ -19917,7 +19917,7 @@ static HRESULT WINAPI test_enum_devices_caps_callback(char *device_desc, char *d
     }
     else if (IsEqualGUID(&device_desc7->deviceGUID, &IID_IDirect3DRGBDevice))
     {
-        todo_wine ok(enum_devices_index == 0, "Expected index %u.\n", enum_devices_index);
+        ok(enum_devices_index == 0, "Expected index %u.\n", enum_devices_index);
         todo_wine ok(!strcmp(device_name, "RGB Emulation"), "Got name %s.\n", debugstr_a(device_name));
 
         ok((device_desc7->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,

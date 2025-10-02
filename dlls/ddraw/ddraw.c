@@ -52,28 +52,23 @@ static struct enum_device_entry
     DWORD unsupported_caps;
 } device_list7[] =
 {
-    /* T&L HAL device */
     {
-        "WINE Direct3D7 Hardware Transform and Lighting acceleration using WineD3D",
-        "Wine D3D7 T&L HAL",
-        &IID_IDirect3DTnLHalDevice,
-        0,
+        "WINE Direct3D7 RGB Software Emulation using WineD3D",
+        "Wine D3D7 RGB",
+        &IID_IDirect3DRGBDevice,
+        D3DDEVCAPS_HWTRANSFORMANDLIGHT | D3DDEVCAPS_DRAWPRIMITIVES2EX | D3DDEVCAPS_HWRASTERIZATION,
     },
-
-    /* HAL device */
     {
         "WINE Direct3D7 Hardware acceleration using WineD3D",
         "Direct3D HAL",
         &IID_IDirect3DHALDevice,
         D3DDEVCAPS_HWTRANSFORMANDLIGHT,
     },
-
-    /* RGB device */
     {
-        "WINE Direct3D7 RGB Software Emulation using WineD3D",
-        "Wine D3D7 RGB",
-        &IID_IDirect3DRGBDevice,
-        D3DDEVCAPS_HWTRANSFORMANDLIGHT | D3DDEVCAPS_DRAWPRIMITIVES2EX | D3DDEVCAPS_HWRASTERIZATION,
+        "WINE Direct3D7 Hardware Transform and Lighting acceleration using WineD3D",
+        "Wine D3D7 T&L HAL",
+        &IID_IDirect3DTnLHalDevice,
+        0,
     },
 };
 
