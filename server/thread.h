@@ -130,6 +130,7 @@ extern struct token *thread_get_impersonation_token( struct thread *thread );
 extern int get_effective_thread_priority( struct thread *thread );
 extern unsigned int set_thread_priority( struct thread *thread, int priority );
 extern unsigned int set_thread_base_priority( struct thread *thread, int base_priority );
+extern void set_thread_disable_boost( struct thread *thread, int disable_boost );
 extern int set_thread_affinity( struct thread *thread, affinity_t affinity );
 extern int suspend_thread( struct thread *thread );
 extern int resume_thread( struct thread *thread );

@@ -1719,7 +1719,7 @@ static void set_process_disable_boost( struct process *process, int disable_boos
 
     LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
     {
-        thread->disable_boost = disable_boost;
+        set_thread_disable_boost( thread, disable_boost );
     }
 }
 
