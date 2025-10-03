@@ -3179,7 +3179,7 @@ static HANDLE get_server_queue_handle(void)
     return ret;
 }
 
-static BOOL has_hardware_messages(void)
+static BOOL check_internal_bits( UINT mask )
 {
     struct object_lock lock = OBJECT_LOCK_INIT;
     const queue_shm_t *queue_shm;
@@ -3187,7 +3187,7 @@ static BOOL has_hardware_messages(void)
     UINT status;
 
     while ((status = get_shared_queue( &lock, &queue_shm )) == STATUS_PENDING)
-        signaled = queue_shm->internal_bits & QS_HARDWARE;
+        signaled = queue_shm->internal_bits & mask;
     if (status) return FALSE;
 
     return signaled;
@@ -3195,7 +3195,7 @@ static BOOL has_hardware_messages(void)
 
 BOOL process_driver_events( UINT mask )
 {
-    if (user_driver->pProcessEvents( mask ))
+    if (check_internal_bits( QS_DRIVER ) && user_driver->pProcessEvents( mask ))
     {
         SERVER_START_REQ( set_queue_mask )
         {
@@ -3205,7 +3205,7 @@ BOOL process_driver_events( UINT mask )
         SERVER_END_REQ;
     }
 
-    return has_hardware_messages();
+    return check_internal_bits( QS_HARDWARE );
 }
 
 void check_for_events( UINT flags )
