@@ -879,6 +879,35 @@ static BOOL nulldrv_GetWindowStateUpdates( HWND hwnd, UINT *state_cmd, UINT *swp
     return FALSE;
 }
 
+static void nulldrv_surface_destroy( struct client_surface *client )
+{
+}
+
+static void nulldrv_surface_detach( struct client_surface *client )
+{
+}
+
+static void nulldrv_surface_update( struct client_surface *client )
+{
+}
+
+static void nulldrv_surface_present( struct client_surface *client, HDC hdc )
+{
+}
+
+static const struct client_surface_funcs nulldrv_surface_funcs =
+{
+    .destroy = nulldrv_surface_destroy,
+    .detach = nulldrv_surface_detach,
+    .update = nulldrv_surface_update,
+    .present = nulldrv_surface_present,
+};
+
+static struct client_surface *nulldrv_CreateClientSurface( HWND hwnd, int pixel_format )
+{
+    return client_surface_create( sizeof(struct client_surface), &nulldrv_surface_funcs, hwnd );
+}
+
 static BOOL nulldrv_CreateWindowSurface( HWND hwnd, BOOL layered, const RECT *surface_rect, struct window_surface **surface )
 {
     return FALSE;
@@ -1302,6 +1331,7 @@ static const struct user_driver_funcs lazy_load_driver =
     nulldrv_WindowPosChanging,
     nulldrv_GetWindowStyleMasks,
     nulldrv_GetWindowStateUpdates,
+    nulldrv_CreateClientSurface,
     nulldrv_CreateWindowSurface,
     nulldrv_MoveWindowBits,
     nulldrv_WindowPosChanged,
@@ -1401,6 +1431,7 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(WindowPosChanging);
     SET_USER_FUNC(GetWindowStyleMasks);
     SET_USER_FUNC(GetWindowStateUpdates);
+    SET_USER_FUNC(CreateClientSurface);
     SET_USER_FUNC(CreateWindowSurface);
     SET_USER_FUNC(MoveWindowBits);
     SET_USER_FUNC(WindowPosChanged);
@@ -1438,33 +1469,4 @@ INT WINAPI NtGdiExtEscape( HDC hdc, WCHAR *driver, int driver_id, INT escape, IN
     ret = physdev->funcs->pExtEscape( physdev, escape, input_size, input, output_size, output );
     release_dc_ptr( dc );
     return ret;
-}
-
-static void nulldrv_surface_destroy( struct client_surface *client )
-{
-}
-
-static void nulldrv_surface_detach( struct client_surface *client )
-{
-}
-
-static void nulldrv_surface_update( struct client_surface *client )
-{
-}
-
-static void nulldrv_surface_present( struct client_surface *client, HDC hdc )
-{
-}
-
-static const struct client_surface_funcs nulldrv_surface_funcs =
-{
-    .destroy = nulldrv_surface_destroy,
-    .detach = nulldrv_surface_detach,
-    .update = nulldrv_surface_update,
-    .present = nulldrv_surface_present,
-};
-
-struct client_surface *nulldrv_client_surface_create( HWND hwnd )
-{
-    return client_surface_create( sizeof(struct client_surface), &nulldrv_surface_funcs, hwnd );
 }

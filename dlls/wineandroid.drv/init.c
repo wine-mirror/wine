@@ -322,6 +322,7 @@ static const struct user_driver_funcs android_drv_funcs =
     .pShowWindow = ANDROID_ShowWindow,
     .pWindowMessage = ANDROID_WindowMessage,
     .pWindowPosChanging = ANDROID_WindowPosChanging,
+    .pCreateClientSurface = ANDROID_CreateClientSurface,
     .pCreateWindowSurface = ANDROID_CreateWindowSurface,
     .pWindowPosChanged = ANDROID_WindowPosChanged,
     .pOpenGLInit = ANDROID_OpenGLInit,

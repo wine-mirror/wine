@@ -664,7 +664,7 @@ static BOOL egldrv_surface_create( HWND hwnd, int format, struct opengl_drawable
 {
     struct client_surface *client;
 
-    if (!(client = nulldrv_client_surface_create( hwnd ))) return FALSE;
+    if (!(client = user_driver->pCreateClientSurface( hwnd, format ))) return FALSE;
     *drawable = framebuffer_surface_create( format, client );
     client_surface_release( client );
 

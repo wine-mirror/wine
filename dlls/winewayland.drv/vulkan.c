@@ -44,10 +44,13 @@ static VkResult wayland_vulkan_surface_create(HWND hwnd, const struct vulkan_ins
     VkResult res;
     VkWaylandSurfaceCreateInfoKHR create_info_host;
     struct wayland_client_surface *surface;
+    struct client_surface *ptr;
 
     TRACE("%p %p %p %p\n", hwnd, instance, handle, client);
 
-    if (!(surface = wayland_client_surface_create(hwnd))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    if (!(ptr = WAYLAND_CreateClientSurface(hwnd, 0))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    surface = impl_from_client_surface( ptr );
+
     create_info_host.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
     create_info_host.pNext = NULL;
     create_info_host.flags = 0; /* reserved */

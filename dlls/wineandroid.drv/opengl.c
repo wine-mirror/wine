@@ -108,7 +108,7 @@ static BOOL android_surface_create( HWND hwnd, int format, struct opengl_drawabl
         EGLConfig config = egl_config_for_format( format );
         struct client_surface *client;
 
-        if (!(client = client_surface_create( sizeof(*client), &android_client_surface_funcs, hwnd ))) return FALSE;
+        if (!(client = ANDROID_CreateClientSurface( hwnd, format ))) return FALSE;
         gl = opengl_drawable_create( sizeof(*gl), &android_drawable_funcs, format, client );
         client_surface_release( client );
         if (!gl) return FALSE;
@@ -193,6 +193,11 @@ static const struct client_surface_funcs android_client_surface_funcs =
     .update = android_client_surface_update,
     .present = android_client_surface_present,
 };
+
+struct client_surface *ANDROID_CreateClientSurface( HWND hwnd, int pixel_format )
+{
+    return client_surface_create( sizeof(struct client_surface), &android_client_surface_funcs, hwnd );
+}
 
 static const struct opengl_drawable_funcs android_drawable_funcs =
 {

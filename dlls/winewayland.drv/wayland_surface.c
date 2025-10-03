@@ -1149,11 +1149,6 @@ void wayland_surface_coords_to_window(struct wayland_surface *surface,
     *window_y = round(surface_y * surface->window.scale);
 }
 
-static struct wayland_client_surface *impl_from_client_surface(struct client_surface *client)
-{
-    return CONTAINING_RECORD(client, struct wayland_client_surface, client);
-}
-
 static void wayland_client_surface_destroy(struct client_surface *client)
 {
     struct wayland_client_surface *surface = impl_from_client_surface(client);
@@ -1213,7 +1208,13 @@ static const struct client_surface_funcs wayland_client_surface_funcs =
     .present = wayland_client_surface_present,
 };
 
-struct wayland_client_surface *wayland_client_surface_create(HWND hwnd)
+struct wayland_client_surface *impl_from_client_surface(struct client_surface *client)
+{
+    assert(client->funcs == &wayland_client_surface_funcs);
+    return CONTAINING_RECORD(client, struct wayland_client_surface, client);
+}
+
+struct client_surface *WAYLAND_CreateClientSurface(HWND hwnd, int pixel_format)
 {
     struct wayland_client_surface *client;
     struct wl_region *empty_region;
@@ -1248,7 +1249,7 @@ struct wayland_client_surface *wayland_client_surface_create(HWND hwnd)
         goto err;
     }
 
-    return client;
+    return &client->client;
 
 err:
     client_surface_release(&client->client);

@@ -150,6 +150,7 @@ extern void macdrv_UpdateLayeredWindow(HWND hwnd, BYTE alpha, UINT flags);
 extern LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 extern BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const struct window_rects *rects);
 extern BOOL macdrv_GetWindowStyleMasks(HWND hwnd, UINT style, UINT ex_style, UINT *style_mask, UINT *ex_style_mask);
+extern struct client_surface *macdrv_CreateClientSurface(HWND hwnd, int pixel_format);
 extern BOOL macdrv_CreateWindowSurface(HWND hwnd, BOOL layered, const RECT *surface_rect, struct window_surface **surface);
 extern void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags,
                                     const struct window_rects *new_rects, struct window_surface *surface);
@@ -200,12 +201,7 @@ struct macdrv_client_surface
     macdrv_metal_swapchain  metal_swapchain;
 };
 
-static inline struct macdrv_client_surface *impl_from_client_surface(struct client_surface *client)
-{
-    return CONTAINING_RECORD(client, struct macdrv_client_surface, client);
-}
-
-extern struct macdrv_client_surface *macdrv_client_surface_create(HWND hwnd);
+extern struct macdrv_client_surface *impl_from_client_surface(struct client_surface *client);
 extern BOOL macdrv_client_surface_acquire_metal_swapchain(struct macdrv_client_surface *surface);
 
 extern struct macdrv_win_data *get_win_data(HWND hwnd);

@@ -2930,7 +2930,7 @@ static VkResult nulldrv_vulkan_surface_create( HWND hwnd, const struct vulkan_in
     VkHeadlessSurfaceCreateInfoEXT create_info = {.sType = VK_STRUCTURE_TYPE_HEADLESS_SURFACE_CREATE_INFO_EXT};
     VkResult res;
 
-    if (!(*client = nulldrv_client_surface_create( hwnd ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    if (!(*client = user_driver->pCreateClientSurface( hwnd, 0 ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
     if ((res = instance->p_vkCreateHeadlessSurfaceEXT( instance->host.instance, &create_info, NULL, surface )))
     {
         client_surface_release(*client);

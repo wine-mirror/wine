@@ -26,6 +26,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -264,25 +265,6 @@ HRGN get_dc_monitor_region( HWND hwnd, HDC hdc )
     return 0;
 }
 
-static const struct client_surface_funcs x11drv_client_surface_funcs;
-
-struct x11drv_client_surface
-{
-    struct client_surface client;
-    XWindowChanges changes;
-    Colormap colormap;
-    Window window;
-    RECT rect;
-
-    HDC hdc_src;
-    HDC hdc_dst;
-};
-
-static struct x11drv_client_surface *impl_from_client_surface( struct client_surface *client )
-{
-    return CONTAINING_RECORD( client, struct x11drv_client_surface, client );
-}
-
 static void x11drv_client_surface_destroy( struct client_surface *client )
 {
     struct x11drv_client_surface *surface = impl_from_client_surface( client );
@@ -477,17 +459,23 @@ static int visual_class_alloc( int class )
     return class == PseudoColor || class == GrayScale || class == DirectColor ? AllocAll : AllocNone;
 }
 
-Window x11drv_client_surface_create( HWND hwnd, int format, struct client_surface **client )
+struct x11drv_client_surface *impl_from_client_surface( struct client_surface *client )
+{
+    assert( client->funcs == &x11drv_client_surface_funcs );
+    return CONTAINING_RECORD( client, struct x11drv_client_surface, client );
+}
+
+struct client_surface *X11DRV_CreateClientSurface( HWND hwnd, int format )
 {
     struct x11drv_client_surface *surface;
     XVisualInfo visual = default_visual;
     Colormap colormap;
 
-    if (format && !visual_from_pixel_format( format, &visual )) return None;
+    if (format && !visual_from_pixel_format( format, &visual )) return NULL;
 
     if (visual.visualid == default_visual.visualid) colormap = default_colormap;
     else colormap = XCreateColormap( gdi_display, get_dummy_parent(), visual.visual, visual_class_alloc( visual.class ) );
-    if (!colormap) return None;
+    if (!colormap) return NULL;
 
     if (!(surface = client_surface_create( sizeof(*surface), &x11drv_client_surface_funcs, hwnd ))) goto failed;
     surface->colormap = colormap;
@@ -496,13 +484,12 @@ Window x11drv_client_surface_create( HWND hwnd, int format, struct client_surfac
     if (!(surface->window = create_client_window( hwnd, surface->rect, &visual, colormap ))) goto failed;
 
     TRACE( "Created %s for client window %lx\n", debugstr_client_surface( &surface->client ), surface->window );
-    *client = &surface->client;
-    return surface->window;
+    return &surface->client;
 
 failed:
     if (surface) client_surface_release( &surface->client );
     else if (colormap != default_colormap) XFreeColormap( gdi_display, colormap );
-    return None;
+    return NULL;
 }
 
 /**********************************************************************
@@ -711,6 +698,7 @@ static const struct user_driver_funcs x11drv_funcs =
     .pWindowPosChanging = X11DRV_WindowPosChanging,
     .pGetWindowStyleMasks = X11DRV_GetWindowStyleMasks,
     .pGetWindowStateUpdates = X11DRV_GetWindowStateUpdates,
+    .pCreateClientSurface = X11DRV_CreateClientSurface,
     .pCreateWindowSurface = X11DRV_CreateWindowSurface,
     .pMoveWindowBits = X11DRV_MoveWindowBits,
     .pWindowPosChanged = X11DRV_WindowPosChanged,

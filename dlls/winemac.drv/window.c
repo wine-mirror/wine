@@ -1144,7 +1144,13 @@ static const struct client_surface_funcs macdrv_client_surface_funcs =
     .present = macdrv_client_surface_present,
 };
 
-struct macdrv_client_surface *macdrv_client_surface_create(HWND hwnd)
+struct macdrv_client_surface *impl_from_client_surface(struct client_surface *client)
+{
+    assert(client->funcs == &macdrv_client_surface_funcs);
+    return CONTAINING_RECORD(client, struct macdrv_client_surface, client);
+}
+
+struct client_surface *macdrv_CreateClientSurface(HWND hwnd, int pixel_format)
 {
     HWND toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
     struct macdrv_client_surface *surface;
@@ -1163,7 +1169,7 @@ struct macdrv_client_surface *macdrv_client_surface_create(HWND hwnd)
         macdrv_client_surface_present(&surface->client, 0);
     }
 
-    return surface;
+    return &surface->client;
 }
 
 BOOL macdrv_client_surface_acquire_metal_swapchain(struct macdrv_client_surface *surface)

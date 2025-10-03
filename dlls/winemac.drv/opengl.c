@@ -1457,7 +1457,7 @@ static BOOL create_context(struct macdrv_context *context, CGLContextObj share, 
 
 static BOOL macdrv_surface_create(HWND hwnd, int format, struct opengl_drawable **drawable)
 {
-    struct macdrv_client_surface *client;
+    struct client_surface *client;
     struct macdrv_win_data *data;
     struct gl_drawable *gl;
 
@@ -1472,9 +1472,9 @@ static BOOL macdrv_surface_create(HWND hwnd, int format, struct opengl_drawable 
     data->pixel_format = format;
     release_win_data(data);
 
-    if (!(client = macdrv_client_surface_create(hwnd))) return FALSE;
-    gl = opengl_drawable_create(sizeof(*gl), &macdrv_surface_funcs, format, &client->client);
-    client_surface_release(&client->client);
+    if (!(client = macdrv_CreateClientSurface(hwnd, format))) return FALSE;
+    gl = opengl_drawable_create(sizeof(*gl), &macdrv_surface_funcs, format, client);
+    client_surface_release(client);
     if (!gl) return FALSE;
 
     *drawable = &gl->base;

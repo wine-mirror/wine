@@ -54,10 +54,15 @@ static VkResult X11DRV_vulkan_surface_create( HWND hwnd, const struct vulkan_ins
         .sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
         .dpy = gdi_display,
     };
+    struct x11drv_client_surface *surface;
+    struct client_surface *ptr;
 
     TRACE( "%p %p %p %p\n", hwnd, instance, handle, client );
 
-    if (!(info.window = x11drv_client_surface_create( hwnd, 0, client ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    if (!(ptr = X11DRV_CreateClientSurface( hwnd, 0 ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    surface = impl_from_client_surface( ptr );
+
+    info.window = surface->window;
     if (instance->p_vkCreateXlibSurfaceKHR( instance->host.instance, &info, NULL /* allocator */, handle ))
     {
         ERR("Failed to create Xlib surface\n");

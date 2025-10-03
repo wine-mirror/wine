@@ -284,6 +284,7 @@ static const struct user_driver_funcs macdrv_funcs =
     .pWindowPosChanged = macdrv_WindowPosChanged,
     .pWindowPosChanging = macdrv_WindowPosChanging,
     .pGetWindowStyleMasks = macdrv_GetWindowStyleMasks,
+    .pCreateClientSurface = macdrv_CreateClientSurface,
     .pCreateWindowSurface = macdrv_CreateWindowSurface,
     .pVulkanInit = macdrv_VulkanInit,
     .pOpenGLInit = macdrv_OpenGLInit,

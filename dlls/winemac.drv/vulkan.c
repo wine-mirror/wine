@@ -45,10 +45,12 @@ static VkResult macdrv_vulkan_surface_create(HWND hwnd, const struct vulkan_inst
 {
     VkResult res;
     struct macdrv_client_surface *surface;
+    struct client_surface *ptr;
 
     TRACE("%p %p %p %p\n", hwnd, instance, handle, client);
 
-    if (!(surface = macdrv_client_surface_create(hwnd))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    if (!(ptr = macdrv_CreateClientSurface(hwnd, 0))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    surface = impl_from_client_surface( ptr );
 
     if (!macdrv_client_surface_acquire_metal_swapchain(surface)) goto err;
 
