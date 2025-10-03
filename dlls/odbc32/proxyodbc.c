@@ -6016,6 +6016,7 @@ static SQLRETURN error_win32_w( struct environment *env, struct connection *con,
                                 SQLINTEGER *native_err, SQLWCHAR *msg, SQLSMALLINT buflen, SQLSMALLINT *retlen )
 {
     const struct win32_funcs *win32_funcs;
+    SQLRETURN ret;
 
     if (env) win32_funcs = env->hdr.win32_funcs;
     else if (con) win32_funcs = con->hdr.win32_funcs;
@@ -6024,7 +6025,25 @@ static SQLRETURN error_win32_w( struct environment *env, struct connection *con,
     if (win32_funcs->SQLErrorW)
         return win32_funcs->SQLErrorW( env ? env->hdr.win32_handle : NULL, con ? con->hdr.win32_handle : NULL,
                                        stmt ? stmt->hdr.win32_handle : NULL, state, native_err, msg, buflen, retlen );
-    if (win32_funcs->SQLError) FIXME( "Unicode to ANSI conversion not handled\n" );
+    if (win32_funcs->SQLError)
+    {
+        SQLCHAR stateA[6], *msgA;
+        SQLSMALLINT lenA;
+
+        if (!(msgA = malloc( buflen * sizeof(*msgA) ))) return SQL_ERROR;
+        ret = win32_funcs->SQLError( env ? env->hdr.win32_handle : NULL, con ? con->hdr.win32_handle : NULL,
+                stmt ? stmt->hdr.win32_handle : NULL, stateA, native_err, msgA, buflen, &lenA );
+        if (SUCCESS( ret ))
+        {
+            int len = MultiByteToWideChar( CP_ACP, 0, (const char *)msgA, -1, msg, buflen );
+            if (retlen) *retlen = len - 1;
+            MultiByteToWideChar( CP_ACP, 0, (const char *)stateA, -1, state, 6 );
+        }
+        free( msgA );
+
+        return ret;
+    }
+
     return SQL_ERROR;
 }
 
