@@ -7062,6 +7062,7 @@ static SQLRETURN get_info_win32_w( struct connection *con, SQLUSMALLINT type, SQ
         case SQL_ACTIVE_CONNECTIONS:
         case SQL_ACTIVE_STATEMENTS:
         case SQL_ODBC_API_CONFORMANCE:
+        case SQL_TXN_CAPABLE:
             ret = con->hdr.win32_funcs->SQLGetInfo( con->hdr.win32_handle, type, value, buflen, retlen );
             break;
         case SQL_DRIVER_NAME:
