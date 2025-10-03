@@ -7066,6 +7066,7 @@ static SQLRETURN get_info_win32_w( struct connection *con, SQLUSMALLINT type, SQ
             ret = con->hdr.win32_funcs->SQLGetInfo( con->hdr.win32_handle, type, value, buflen, retlen );
             break;
         case SQL_DRIVER_NAME:
+        case SQL_DBMS_NAME:
         {
             SQLSMALLINT lenA;
             SQLCHAR *strA;
