@@ -7064,6 +7064,26 @@ static SQLRETURN get_info_win32_w( struct connection *con, SQLUSMALLINT type, SQ
         case SQL_ODBC_API_CONFORMANCE:
             ret = con->hdr.win32_funcs->SQLGetInfo( con->hdr.win32_handle, type, value, buflen, retlen );
             break;
+        case SQL_DRIVER_NAME:
+        {
+            SQLSMALLINT lenA;
+            SQLCHAR *strA;
+
+            /* For string types sizes are in bytes. */
+
+            buflen /= sizeof(WCHAR);
+            if (!(strA = malloc(buflen))) return SQL_ERROR;
+
+            ret = con->hdr.win32_funcs->SQLGetInfo( con->hdr.win32_handle, type, strA, buflen, &lenA );
+            if (SUCCESS( ret ))
+            {
+                int len = MultiByteToWideChar( CP_ACP, 0, (const char *)strA, -1, (WCHAR *)value, buflen );
+                if (retlen) *retlen = (len - 1) * sizeof(WCHAR);
+            }
+            free( strA );
+
+            break;
+        }
         default:
             FIXME( "Unicode to ANSI conversion not handled, for info type %u.\n", type );
         }
