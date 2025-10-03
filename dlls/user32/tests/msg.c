@@ -15031,7 +15031,8 @@ static void test_TrackMouseEvent(void)
     ok(tme.dwHoverTime == (expected_hover_time), \
        "wrong tme.dwHoverTime %lu, expected %u\n", tme.dwHoverTime, (expected_hover_time)); \
     thread = CreateThread( NULL, 0, track_mouse_event_query_thread, &tme, 0, NULL ); \
-    WaitForSingleObject( thread, INFINITE )
+    WaitForSingleObject( thread, INFINITE ); \
+    CloseHandle( thread )
 
 #define track_hover_cancel(track_hwnd) \
     tme.cbSize = sizeof(tme); \
