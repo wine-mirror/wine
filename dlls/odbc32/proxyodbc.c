@@ -7068,6 +7068,7 @@ static SQLRETURN get_info_win32_w( struct connection *con, SQLUSMALLINT type, SQ
         case SQL_DRIVER_NAME:
         case SQL_DBMS_NAME:
         case SQL_DATA_SOURCE_READ_ONLY:
+        case SQL_IDENTIFIER_QUOTE_CHAR:
         {
             SQLSMALLINT lenA;
             SQLCHAR *strA;
