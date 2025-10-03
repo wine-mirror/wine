@@ -1767,14 +1767,13 @@ static void init_msvcrt_io_block(STARTUPINFOW* st)
 }
 
 /* Attempt to open a file at a known path. */
-static RETURN_CODE run_external_full_path(const WCHAR *file, WCHAR *full_cmdline)
+static RETURN_CODE spawn_external_full_path(const WCHAR *file, WCHAR *full_cmdline, HANDLE *handle, BOOL *cui_subsystem)
 {
     STARTUPINFOW si = {.cb = sizeof(si)};
-    DWORD console, exit_code;
+    DWORD console;
     WCHAR exe_path[MAX_PATH];
     PROCESS_INFORMATION pi;
     SHFILEINFOW psfi;
-    HANDLE handle;
     BOOL ret;
 
     TRACE("%s\n", debugstr_w(file));
@@ -1791,7 +1790,7 @@ static RETURN_CODE run_external_full_path(const WCHAR *file, WCHAR *full_cmdline
     if (ret)
     {
         CloseHandle(pi.hThread);
-        handle = pi.hProcess;
+        *handle = pi.hProcess;
     }
     else
     {
@@ -1813,21 +1812,34 @@ static RETURN_CODE run_external_full_path(const WCHAR *file, WCHAR *full_cmdline
 
         if (ShellExecuteExW(&sei) && (INT_PTR)sei.hInstApp >= 32)
         {
-            handle = sei.hProcess;
+            *handle = sei.hProcess;
         }
         else
         {
             errorlevel = GetLastError();
-            return errorlevel;
+            return ERROR_INVALID_FUNCTION;
         }
     }
 
-    if (context || (console && !HIWORD(console)))
-        WaitForSingleObject(handle, INFINITE);
-    GetExitCodeProcess(handle, &exit_code);
-    errorlevel = (exit_code == STILL_ACTIVE) ? NO_ERROR : exit_code;
+    *cui_subsystem = console && !HIWORD(console);
+    return NO_ERROR;
+}
 
-    CloseHandle(handle);
+static RETURN_CODE run_external_full_path(const WCHAR *file, WCHAR *full_cmdline)
+{
+    HANDLE handle;
+    BOOL waitable;
+    DWORD exit_code;
+
+    if (spawn_external_full_path(file, full_cmdline, &handle, &waitable) == NO_ERROR)
+    {
+        if (context || waitable)
+            WaitForSingleObject(handle, INFINITE);
+        GetExitCodeProcess(handle, &exit_code);
+        errorlevel = (exit_code == STILL_ACTIVE) ? NO_ERROR : exit_code;
+
+        CloseHandle(handle);
+    }
     return errorlevel;
 }
 
