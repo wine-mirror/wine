@@ -1768,6 +1768,10 @@ static SQLRETURN error_win32_a( struct environment *env, struct connection *con,
         }
         free( msgW );
     }
+
+    if (win32_funcs->SQLGetDiagRec) FIXME("Use SQLGetDiagRec\n");
+    else if (win32_funcs->SQLGetDiagRecW) FIXME("Use SQLGetDiagRecW\n");
+
     return ret;
 }
 
@@ -6043,6 +6047,9 @@ static SQLRETURN error_win32_w( struct environment *env, struct connection *con,
 
         return ret;
     }
+
+    if (win32_funcs->SQLGetDiagRecW) FIXME("Use SQLGetDiagRecW\n");
+    else if (win32_funcs->SQLGetDiagRec) FIXME("Use SQLGetDiagRec\n");
 
     return SQL_ERROR;
 }
