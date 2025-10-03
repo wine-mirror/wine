@@ -255,9 +255,10 @@ void init_threading(void)
     if (nice_limit < 0 && debug_level) fprintf(stderr, "wine: Using setpriority to control niceness in the [%d,%d] range\n", nice_limit, -nice_limit );
 }
 
-static void apply_thread_priority( struct thread *thread, int effective_priority )
+static void apply_thread_priority( struct thread *thread )
 {
     int min = -nice_limit, max = nice_limit, range = max - min, niceness;
+    int effective_priority = get_effective_thread_priority( thread );
 
     if (nice_limit >= 0) return;
 
@@ -291,7 +292,7 @@ static int get_mach_importance( int effective_priority )
     return min + (effective_priority - 1) * range / 14;
 }
 
-static void apply_thread_priority( struct thread *thread, int effective_priority )
+static void apply_thread_priority( struct thread *thread )
 {
     kern_return_t kr;
     mach_msg_type_name_t type;
@@ -299,6 +300,7 @@ static void apply_thread_priority( struct thread *thread, int effective_priority
     struct thread_extended_policy thread_extended_policy;
     struct thread_precedence_policy thread_precedence_policy;
     mach_port_t thread_port, process_port = thread->process->trace_data;
+    int effective_priority = get_effective_thread_priority( thread );
 
     if (!process_port) return;
     kr = mach_port_extract_right( process_port, thread->unix_tid,
@@ -385,7 +387,7 @@ void init_threading(void)
 {
 }
 
-static void apply_thread_priority( struct thread *thread, int effective_priority )
+static void apply_thread_priority( struct thread *thread )
 {
 }
 
@@ -823,6 +825,11 @@ affinity_t get_thread_affinity( struct thread *thread )
     return mask;
 }
 
+int get_effective_thread_priority( struct thread *thread )
+{
+    return thread->priority;
+}
+
 unsigned int set_thread_priority( struct thread *thread, int priority )
 {
     int priority_class = thread->process->priority;
@@ -833,7 +840,7 @@ unsigned int set_thread_priority( struct thread *thread, int priority )
     thread->priority = priority;
 
     /* if thread is gone or hasn't started yet, this will be called again from init_thread with a unix_tid */
-    if (thread->state == RUNNING && thread->unix_tid != -1) apply_thread_priority( thread, priority );
+    if (thread->state == RUNNING && thread->unix_tid != -1) apply_thread_priority( thread );
 
     return STATUS_SUCCESS;
 }
@@ -1828,7 +1835,7 @@ DECL_HANDLER(get_thread_info)
         reply->teb            = thread->teb;
         reply->entry_point    = thread->entry_point;
         reply->exit_code      = (thread->state == TERMINATED) ? thread->exit_code : STATUS_PENDING;
-        reply->priority       = thread->priority;
+        reply->priority       = get_effective_thread_priority( thread );
         reply->base_priority  = thread->base_priority;
         reply->affinity       = thread->affinity;
         reply->suspend_count  = thread->suspend;
