@@ -327,8 +327,6 @@ static void ime_ui_update_window( INPUTCONTEXT *ctx, HWND hwnd )
         RedrawWindow( hwnd, NULL, NULL, RDW_ERASENOW | RDW_INVALIDATE );
     }
     free( str );
-
-    ctx->hWnd = GetFocus();
 }
 
 static void ime_ui_composition( HIMC himc, HWND hwnd, LPARAM lparam )
