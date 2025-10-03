@@ -337,7 +337,7 @@ static void apply_thread_priority( struct thread *thread )
         break;
     }
     /* QOS_UNSPECIFIED is assigned the highest tier available, so it does not provide a limit */
-    if (effective_priority >= LOW_REALTIME_PRIORITY)
+    if (effective_priority >= LOW_REALTIME_PRIORITY || effective_priority > thread->priority)
     {
         throughput_qos = THROUGHPUT_QOS_TIER_UNSPECIFIED;
         latency_qos = LATENCY_QOS_TIER_UNSPECIFIED;
@@ -827,7 +827,15 @@ affinity_t get_thread_affinity( struct thread *thread )
 
 int get_effective_thread_priority( struct thread *thread )
 {
-    return thread->priority;
+    int priority = thread->priority;
+
+    if (thread->disable_boost || priority >= LOW_REALTIME_PRIORITY)
+        return priority;
+
+    if (get_process_first_thread( thread->process ) == thread)
+        priority++;
+
+    return min( priority, LOW_REALTIME_PRIORITY - 1 );
 }
 
 unsigned int set_thread_priority( struct thread *thread, int priority )
