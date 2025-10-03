@@ -802,8 +802,7 @@ static inline int get_hardware_msg_bit( unsigned int message )
     if (message == WM_INPUT_DEVICE_CHANGE || message == WM_INPUT) return QS_RAWINPUT;
     if (message == WM_MOUSEMOVE || message == WM_NCMOUSEMOVE) return QS_MOUSEMOVE;
     if (message >= WM_KEYFIRST && message <= WM_KEYLAST) return QS_KEY;
-    if (message == WM_WINE_CLIPCURSOR) return QS_RAWINPUT;
-    if (message == WM_WINE_SETCURSOR) return QS_RAWINPUT;
+    if (message >= WM_WINE_FIRST_DRIVER_MSG && message <= WM_WINE_LAST_DRIVER_MSG) return QS_HARDWARE;
     return QS_MOUSEBUTTON;
 }
 
@@ -2692,12 +2691,6 @@ static int check_hw_message_filter( user_handle_t win, unsigned int msg_code,
     }
 }
 
-/* is this message an internal driver notification message */
-static inline BOOL is_internal_hardware_message( unsigned int message )
-{
-    return (message >= WM_WINE_FIRST_DRIVER_MSG && message <= WM_WINE_LAST_DRIVER_MSG);
-}
-
 /* find a hardware message for the given queue */
 static int get_hardware_message( struct thread *thread, unsigned int hw_id, user_handle_t filter_win,
                                  unsigned int first, unsigned int last, unsigned int flags,
@@ -2802,9 +2795,10 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
 
         data->hw_id = msg->unique_id;
         set_reply_data( msg->data, msg->data_size );
-        if ((get_hardware_msg_bit( msg->msg ) & (QS_RAWINPUT | QS_POINTER) && (flags & PM_REMOVE)) ||
-            is_internal_hardware_message( msg->msg ))
-            release_hardware_message( current->queue, data->hw_id );
+
+        if (msg_bit == QS_HARDWARE) flags |= PM_REMOVE; /* always remove internal hardware messages right away */
+        else if (!(msg_bit & (QS_RAWINPUT | QS_POINTER))) flags &= ~PM_REMOVE; /* wait for accept_hardware_message request */
+        if (flags & PM_REMOVE) release_hardware_message( current->queue, data->hw_id );
         return 1;
     }
     /* nothing found, clear the hardware queue bits */
