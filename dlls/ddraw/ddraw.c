@@ -3847,28 +3847,9 @@ static HRESULT WINAPI d3d7_EnumDevices(IDirect3D7 *iface, LPD3DENUMDEVICESCALLBA
     return D3D_OK;
 }
 
-/*****************************************************************************
- * IDirect3D3::EnumDevices
- *
- * Enumerates all supported Direct3DDevice interfaces. This is the
- * implementation for Direct3D 1 to Direc3D 3, Version 7 has its own.
- *
- * Versions 1, 2 and 3
- *
- * Params:
- *  callback: Application-provided routine to call for each enumerated device
- *  Context: Pointer to pass to the callback
- *
- * Returns:
- *  D3D_OK on success,
- *  The result of IDirect3DImpl_GetCaps if it failed
- *
- *****************************************************************************/
-static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBACK callback, void *context)
+static HRESULT enum_devices_d3d3(struct ddraw *ddraw, LPD3DENUMDEVICESCALLBACK callback, void *context, DWORD desc_size)
 {
     static CHAR wined3d_description[] = "Wine D3DDevice using WineD3D and OpenGL";
-
-    struct ddraw *ddraw = impl_from_IDirect3D3(iface);
     D3DDEVICEDESC device_desc1, hal_desc, hel_desc;
     D3DDEVICEDESC7 device_desc7;
     HRESULT hr;
@@ -3884,8 +3865,6 @@ static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBA
     char device_name[50];
     strcpy(device_name, "RGB Emulation");
 
-    TRACE("iface %p, callback %p, context %p.\n", iface, callback, context);
-
     if (!callback)
         return DDERR_INVALIDPARAMS;
 
@@ -3897,6 +3876,7 @@ static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBA
         return hr;
     }
     ddraw_d3dcaps1_from_7(&device_desc1, &device_desc7);
+    device_desc1.dwSize = desc_size;
 
     /* There's a registry key HKLM\Software\Microsoft\Direct3D\Drivers,
      * EnumReference which enables / disables enumerating the reference
@@ -3967,13 +3947,22 @@ static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBA
     return D3D_OK;
 }
 
+static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBACK callback, void *context)
+{
+    struct ddraw *ddraw = impl_from_IDirect3D3(iface);
+
+    TRACE("iface %p, callback %p, context %p.\n", iface, callback, context);
+
+    return enum_devices_d3d3(ddraw, callback, context, sizeof(D3DDEVICEDESC));
+}
+
 static HRESULT WINAPI d3d2_EnumDevices(IDirect3D2 *iface, LPD3DENUMDEVICESCALLBACK callback, void *context)
 {
     struct ddraw *ddraw = impl_from_IDirect3D2(iface);
 
     TRACE("iface %p, callback %p, context %p.\n", iface, callback, context);
 
-    return d3d3_EnumDevices(&ddraw->IDirect3D3_iface, callback, context);
+    return enum_devices_d3d3(ddraw, callback, context, offsetof(D3DDEVICEDESC, dwMaxTextureRepeat));
 }
 
 static HRESULT WINAPI d3d1_EnumDevices(IDirect3D *iface, LPD3DENUMDEVICESCALLBACK callback, void *context)
@@ -3982,7 +3971,7 @@ static HRESULT WINAPI d3d1_EnumDevices(IDirect3D *iface, LPD3DENUMDEVICESCALLBAC
 
     TRACE("iface %p, callback %p, context %p.\n", iface, callback, context);
 
-    return d3d3_EnumDevices(&ddraw->IDirect3D3_iface, callback, context);
+    return enum_devices_d3d3(ddraw, callback, context, offsetof(D3DDEVICEDESC, dwMinTextureWidth));
 }
 
 /*****************************************************************************

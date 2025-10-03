@@ -16465,8 +16465,8 @@ static HRESULT WINAPI test_enum_devices_caps_callback(GUID *guid, char *device_d
     static const D3DPRIMCAPS empty_primitive_caps = {.dwSize = sizeof(D3DPRIMCAPS)};
     IDirectDraw2 *ddraw = ctx;
 
-    todo_wine ok(hal->dwSize == offsetof(D3DDEVICEDESC, dwMaxTextureRepeat), "Got size %lu.\n", hal->dwSize);
-    todo_wine ok(hel->dwSize == offsetof(D3DDEVICEDESC, dwMaxTextureRepeat), "Got size %lu.\n", hel->dwSize);
+    ok(hal->dwSize == offsetof(D3DDEVICEDESC, dwMaxTextureRepeat), "Got size %lu.\n", hal->dwSize);
+    ok(hel->dwSize == offsetof(D3DDEVICEDESC, dwMaxTextureRepeat), "Got size %lu.\n", hel->dwSize);
     ok(hal->dtcTransformCaps.dwSize == sizeof(D3DTRANSFORMCAPS)
             || (ddraw_is_warp(ddraw) && !hal->dtcTransformCaps.dwSize),
             "Got transform caps size %lu.\n", hal->dtcTransformCaps.dwSize);
