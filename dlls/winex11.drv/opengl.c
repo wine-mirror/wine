@@ -487,7 +487,15 @@ BOOL visual_from_pixel_format( int format, XVisualInfo *visual )
 {
     if (use_egl)
     {
-        *visual = default_visual;
+        EGLConfig config = egl_config_for_format( format );
+        XVisualInfo *visuals;
+        int count;
+
+        memset( visual, 0, sizeof(*visual) );
+        funcs->p_eglGetConfigAttrib( egl->display, config, EGL_NATIVE_VISUAL_ID, (EGLint *)&visual->visualid );
+        if (!(visuals = XGetVisualInfo( gdi_display, VisualIDMask, visual, &count ))) return FALSE;
+        *visual = *visuals;
+        XFree( visuals );
         return TRUE;
     }
     else
@@ -509,7 +517,7 @@ static BOOL x11drv_egl_surface_create( HWND hwnd, int format, struct opengl_draw
     if ((previous = *drawable) && previous->format == format) return TRUE;
     NtUserGetClientRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) );
 
-    if (!(window = x11drv_client_surface_create( hwnd, 0, &client ))) return FALSE;
+    if (!(window = x11drv_client_surface_create( hwnd, format, &client ))) return FALSE;
     gl = opengl_drawable_create( sizeof(*gl), &x11drv_egl_surface_funcs, format, client );
     client_surface_release( client );
     if (!gl) return FALSE;
