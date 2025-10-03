@@ -7050,10 +7050,24 @@ static SQLRETURN get_info_unix_w( struct connection *con, SQLUSMALLINT type, SQL
 static SQLRETURN get_info_win32_w( struct connection *con, SQLUSMALLINT type, SQLPOINTER value, SQLSMALLINT buflen,
                                    SQLSMALLINT *retlen )
 {
+    SQLRETURN ret = SQL_ERROR;
+
     if (con->hdr.win32_funcs->SQLGetInfoW)
         return con->hdr.win32_funcs->SQLGetInfoW( con->hdr.win32_handle, type, value, buflen, retlen );
-    if (con->hdr.win32_funcs->SQLGetInfo) FIXME( "Unicode to ANSI conversion not handled\n" );
-    return SQL_ERROR;
+
+    if (con->hdr.win32_funcs->SQLGetInfo)
+    {
+        switch (type)
+        {
+        case SQL_ODBC_API_CONFORMANCE:
+            ret = con->hdr.win32_funcs->SQLGetInfo( con->hdr.win32_handle, type, value, buflen, retlen );
+            break;
+        default:
+            FIXME( "Unicode to ANSI conversion not handled, for info type %u.\n", type );
+        }
+    }
+
+    return ret;
 }
 
 /*************************************************************************
