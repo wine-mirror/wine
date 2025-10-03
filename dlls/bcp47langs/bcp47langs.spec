@@ -48,7 +48,7 @@
 @ stub GetUserDisplayLanguageOverride
 @ stub GetUserLanguageInputMethods
 @ stub GetUserLanguageInputMethodsForUser
-@ stub GetUserLanguages
+@ stdcall GetUserLanguages(long ptr)
 @ stub GetUserLanguagesForAllUsers
 @ stub GetUserLanguagesForUser
 @ stub GetUserLocaleFromLanguageProfileOptOut

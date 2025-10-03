@@ -17,9 +17,12 @@
  */
 
 #include <stdarg.h>
-#include <windef.h>
-#include <winbase.h>
-#include <winnls.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "winnls.h"
+#include "winstring.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bcp47langs);
@@ -51,5 +54,11 @@ HRESULT WINAPI GetFontFallbackLanguageList(const WCHAR *lang, size_t buffer_leng
         return E_NOT_SUFFICIENT_BUFFER;
 
     memcpy(buffer, lang, lang_length * sizeof(WCHAR));
+    return S_OK;
+}
+
+HRESULT WINAPI GetUserLanguages(WCHAR delim, HSTRING *langs)
+{
+    FIXME("%lc, %p\n", delim, langs);
     return S_OK;
 }

@@ -1,5 +1,5 @@
 TESTDLL = bcp47langs.dll
-IMPORTS = bcp47langs
+IMPORTS = combase bcp47langs
 
 SOURCES = \
 	bcp47langs.c
