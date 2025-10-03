@@ -1098,6 +1098,25 @@ static SQLWCHAR *strnAtoW( const SQLCHAR *str, int len )
     return ret;
 }
 
+static SQLCHAR *strnWtoA( const SQLWCHAR *str, int len )
+{
+    SQLCHAR *ret;
+    int lenA;
+
+    if (!str) return NULL;
+
+    if (len == SQL_NTS) len = -1;
+    lenA = WideCharToMultiByte( CP_ACP, 0, str, len, NULL, 0, NULL, NULL );
+
+    if ((ret = malloc( (lenA + 1) * sizeof(*ret) )))
+    {
+        WideCharToMultiByte( CP_ACP, 0, str, len, (char *)ret, lenA, NULL, NULL );
+        ret[lenA] = 0;
+    }
+
+    return ret;
+}
+
 static SQLRETURN columns_unix_a( struct statement *stmt, SQLCHAR *catalog, SQLSMALLINT len1, SQLCHAR *schema,
                                  SQLSMALLINT len2, SQLCHAR *table, SQLSMALLINT len3, SQLCHAR *column,
                                  SQLSMALLINT len4 )
@@ -6870,14 +6889,35 @@ SQLRETURN WINAPI SQLColumnsW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName, SQ
 }
 
 static SQLRETURN driver_connect_win32_w( struct connection *con, SQLHWND window, SQLWCHAR *in_conn_str,
-                                         SQLSMALLINT len, SQLWCHAR *out_conn_str, SQLSMALLINT buflen, SQLSMALLINT *len2,
+                                         SQLSMALLINT len1, SQLWCHAR *out_conn_str, SQLSMALLINT buflen, SQLSMALLINT *len2,
                                          SQLUSMALLINT completion )
 {
+    SQLRETURN ret = SQL_ERROR;
+
     if (con->hdr.win32_funcs->SQLDriverConnectW)
-        return con->hdr.win32_funcs->SQLDriverConnectW( con->hdr.win32_handle, window, in_conn_str, len, out_conn_str,
+        return con->hdr.win32_funcs->SQLDriverConnectW( con->hdr.win32_handle, window, in_conn_str, len1, out_conn_str,
                                                         buflen, len2, completion );
-    if (con->hdr.win32_funcs->SQLDriverConnect) FIXME( "Unicode to ANSI conversion not handled\n" );
-    return SQL_ERROR;
+    if (con->hdr.win32_funcs->SQLDriverConnect)
+    {
+        SQLCHAR *in_conn_str_a, *out_conn_str_a;
+        SQLSMALLINT out_len;
+
+        if (!(out_conn_str_a = malloc( buflen * sizeof(*out_conn_str_a) ))) return SQL_ERROR;
+        in_conn_str_a = strnWtoA( in_conn_str, len1 );
+
+        ret = con->hdr.win32_funcs->SQLDriverConnect( con->hdr.win32_handle, window, in_conn_str_a, SQL_NTS, out_conn_str_a,
+                buflen, &out_len, completion );
+        if (SUCCESS( ret ))
+        {
+            int len = MultiByteToWideChar( CP_ACP, 0, (const char *)out_conn_str_a, -1, out_conn_str, buflen );
+            if (len2) *len2 = len - 1;
+        }
+
+        free(in_conn_str_a);
+        free(out_conn_str_a);
+    }
+
+    return ret;
 }
 
 static SQLRETURN driver_connect_unix_w( struct connection *con, SQLHWND window, SQLWCHAR *in_conn_str, SQLSMALLINT len,
