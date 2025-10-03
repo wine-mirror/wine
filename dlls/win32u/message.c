@@ -2809,7 +2809,7 @@ static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardwar
  * returns FALSE if we need to make a server request to update the queue masks or bits
  */
 static BOOL check_queue_bits( UINT wake_mask, UINT changed_mask, UINT signal_bits, UINT clear_bits,
-                              UINT *wake_bits, UINT *changed_bits )
+                              UINT *wake_bits, UINT *changed_bits, BOOL internal )
 {
     struct object_lock lock = OBJECT_LOCK_INIT;
     const queue_shm_t *queue_shm;
@@ -2818,8 +2818,9 @@ static BOOL check_queue_bits( UINT wake_mask, UINT changed_mask, UINT signal_bit
 
     while ((status = get_shared_queue( &lock, &queue_shm )) == STATUS_PENDING)
     {
+        if (internal) skip = !(queue_shm->internal_bits & QS_HARDWARE);
         /* if the masks need an update */
-        if (queue_shm->wake_mask != wake_mask) skip = FALSE;
+        else if (queue_shm->wake_mask != wake_mask) skip = FALSE;
         else if (queue_shm->changed_mask != changed_mask) skip = FALSE;
         /* or if some bits need to be cleared, or queue is signaled */
         else if (queue_shm->wake_bits & signal_bits) skip = FALSE;
@@ -2884,7 +2885,7 @@ static int peek_message( MSG *msg, const struct peek_message_filter *filter )
         wake_mask = filter->mask & (QS_SENDMESSAGE | QS_SMRESULT);
 
         if (check_queue_bits( wake_mask, filter->mask, wake_mask | signal_bits, filter->mask | clear_bits,
-                              &wake_bits, &changed_bits ))
+                              &wake_bits, &changed_bits, filter->internal ))
             res = STATUS_PENDING;
         else SERVER_START_REQ( get_message )
         {
@@ -3220,16 +3221,21 @@ BOOL process_driver_events( UINT mask )
         SERVER_END_REQ;
     }
 
+    /* process every pending internal hardware messages */
+    if (check_internal_bits( QS_HARDWARE ))
+    {
+        struct peek_message_filter filter = {.internal = TRUE};
+        MSG msg;
+        peek_message( &msg, &filter );
+    }
+
+    /* check for hardware messages requiring client dispatch */
     return check_internal_bits( QS_HARDWARE );
 }
 
 void check_for_events( UINT flags )
 {
-    struct peek_message_filter filter = {.internal = TRUE, .flags = PM_REMOVE};
-    MSG msg;
-
     if (!process_driver_events( flags )) flush_window_surfaces( TRUE );
-    peek_message( &msg, &filter );
 }
 
 /* monotonic timer tick for throttling driver event checks */
@@ -3653,7 +3659,7 @@ static void wait_message_reply( UINT flags )
         UINT wake_bits, changed_bits;
 
         if (check_queue_bits( wake_mask, wake_mask, wake_mask, wake_mask,
-                              &wake_bits, &changed_bits ))
+                              &wake_bits, &changed_bits, FALSE ))
             wake_bits = wake_bits & wake_mask;
         else SERVER_START_REQ( set_queue_mask )
         {
