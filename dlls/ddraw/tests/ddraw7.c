@@ -19918,7 +19918,7 @@ static HRESULT WINAPI test_enum_devices_caps_callback(char *device_desc, char *d
     else if (IsEqualGUID(&device_desc7->deviceGUID, &IID_IDirect3DRGBDevice))
     {
         ok(enum_devices_index == 0, "Expected index %u.\n", enum_devices_index);
-        todo_wine ok(!strcmp(device_name, "RGB Emulation"), "Got name %s.\n", debugstr_a(device_name));
+        ok(!strcmp(device_name, "RGB Emulation"), "Got name %s.\n", debugstr_a(device_name));
 
         ok((device_desc7->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
            "RGB Device device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");

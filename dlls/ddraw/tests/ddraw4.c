@@ -19638,7 +19638,7 @@ static HRESULT WINAPI test_enum_devices_caps_callback(GUID *guid, char *device_d
                 | D3DDEVCAPS_DRAWPRIMTLVERTEX;
 
         ok(enum_devices_index == 0, "Expected index %u.\n", enum_devices_index);
-        todo_wine ok(!strcmp(device_name, "RGB Emulation"), "Got name %s.\n", debugstr_a(device_name));
+        ok(!strcmp(device_name, "RGB Emulation"), "Got name %s.\n", debugstr_a(device_name));
 
         ok(hel->dwFlags == hel_flags, "Got HEL flags %#lx.\n", hel->dwFlags);
         ok(hel->dcmColorModel == D3DCOLOR_RGB, "Got color model %#lx.\n", hel->dcmColorModel);

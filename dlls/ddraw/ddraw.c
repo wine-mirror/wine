@@ -54,7 +54,7 @@ static struct enum_device_entry
 {
     {
         "WINE Direct3D7 RGB Software Emulation using WineD3D",
-        "Wine D3D7 RGB",
+        "RGB Emulation",
         &IID_IDirect3DRGBDevice,
         D3DDEVCAPS_HWTRANSFORMANDLIGHT | D3DDEVCAPS_DRAWPRIMITIVES2EX | D3DDEVCAPS_HWRASTERIZATION,
     },
@@ -3882,7 +3882,7 @@ static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBA
      * name string. Let's put the string in a sufficiently sized array in
      * writable memory. */
     char device_name[50];
-    strcpy(device_name,"Direct3D HEL");
+    strcpy(device_name, "RGB Emulation");
 
     TRACE("iface %p, callback %p, context %p.\n", iface, callback, context);
 
