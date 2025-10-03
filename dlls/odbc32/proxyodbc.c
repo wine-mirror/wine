@@ -6856,11 +6856,30 @@ static SQLRETURN columns_win32_w( struct statement *stmt, SQLWCHAR *catalog, SQL
                                   SQLSMALLINT len2, SQLWCHAR *table, SQLSMALLINT len3, SQLWCHAR *column,
                                   SQLSMALLINT len4 )
 {
+    SQLRETURN ret = SQL_ERROR;
+
     if (stmt->hdr.win32_funcs->SQLColumnsW)
         return stmt->hdr.win32_funcs->SQLColumnsW( stmt->hdr.win32_handle, catalog, len1, schema, len2, table, len3,
                                                    column, len4 );
-    if (stmt->hdr.win32_funcs->SQLColumns) FIXME( "Unicode to ANSI conversion not handled\n" );
-    return SQL_ERROR;
+    if (stmt->hdr.win32_funcs->SQLColumns)
+    {
+        SQLCHAR *catalogA, *schemaA, *tableA, *columnA;
+
+        catalogA = strnWtoA( catalog, len1 );
+        schemaA = strnWtoA( schema, len2 );
+        tableA = strnWtoA( table, len3 );
+        columnA = strnWtoA( column, len4 );
+
+        ret = stmt->hdr.win32_funcs->SQLColumns( stmt->hdr.win32_handle, catalogA, SQL_NTS, schemaA, SQL_NTS,
+                tableA, SQL_NTS, columnA, SQL_NTS );
+
+        free(catalogA);
+        free(schemaA);
+        free(tableA);
+        free(columnA);
+    }
+
+    return ret;
 }
 
 /*************************************************************************
