@@ -6122,10 +6122,19 @@ static SQLRETURN exec_direct_unix_w( struct statement *stmt, SQLWCHAR *text, SQL
 
 static SQLRETURN exec_direct_win32_w( struct statement *stmt, SQLWCHAR *text, SQLINTEGER len )
 {
+    SQLRETURN ret = SQL_ERROR;
+
     if (stmt->hdr.win32_funcs->SQLExecDirectW)
         return stmt->hdr.win32_funcs->SQLExecDirectW( stmt->hdr.win32_handle, text, len );
-    if (stmt->hdr.win32_funcs->SQLExecDirect) FIXME( "Unicode to ANSI conversion not handled\n" );
-    return SQL_ERROR;
+
+    if (stmt->hdr.win32_funcs->SQLExecDirect)
+    {
+        SQLCHAR *textA = strnWtoA( text, len );
+        ret = stmt->hdr.win32_funcs->SQLExecDirect( stmt->hdr.win32_handle, textA, SQL_NTS );
+        free(textA);
+    }
+
+    return ret;
 }
 
 /*************************************************************************
