@@ -188,6 +188,21 @@ static const struct column col_ip4routetable[] =
     { L"InterfaceIndex", CIM_SINT32|COL_FLAG_KEY },
     { L"NextHop",        CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
 };
+
+static const struct column col_localtime[] =
+{
+    { L"Day",          CIM_UINT32 },
+    { L"DayOfWeek",    CIM_UINT32 },
+    { L"Hour",         CIM_UINT32 },
+    { L"Milliseconds", CIM_UINT32 },
+    { L"Minute",       CIM_UINT32 },
+    { L"Month",        CIM_UINT32 },
+    { L"Quarter",      CIM_UINT32 },
+    { L"Second",       CIM_UINT32 },
+    { L"WeekInMonth",  CIM_UINT32 },
+    { L"Year",         CIM_UINT32 },
+};
+
 static const struct column col_logicaldisk[] =
 {
     { L"Caption",            CIM_STRING|COL_FLAG_DYNAMIC },
@@ -743,6 +758,21 @@ struct record_ip4routetable
     INT32        interfaceindex;
     const WCHAR *nexthop;
 };
+
+struct record_localtime
+{
+    UINT32 day;
+    UINT32 dayofweek;
+    UINT32 hour;
+    UINT32 milliseconds;
+    UINT32 minute;
+    UINT32 month;
+    UINT32 quarter;
+    UINT32 second;
+    UINT32 weekinmonth;
+    UINT32 year;
+};
+
 struct record_logicaldisk
 {
     const WCHAR *caption;
@@ -2887,6 +2917,34 @@ static enum fill_status fill_ip4routetable( struct table *table, const struct ex
     return status;
 }
 
+static enum fill_status fill_localtime( struct table *table, const struct expr *cond )
+{
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+    SYSTEMTIME time;
+    struct record_localtime *rec;
+
+    if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
+    GetLocalTime( &time );
+
+    rec = (struct record_localtime *)table->data;
+    rec->day          = time.wDay;
+    rec->dayofweek    = time.wDayOfWeek;
+    rec->hour         = time.wHour;
+    rec->milliseconds = time.wMilliseconds;
+    rec->minute       = time.wMinute;
+    rec->month        = time.wMonth;
+    rec->quarter      = (time.wMonth - 1) / 3 + 1;
+    rec->second       = time.wSecond;
+    rec->weekinmonth  = (time.wDay - 1) / 7 + 1;
+    rec->year         = time.wYear;
+
+    if (match_row( table, 0, cond, &status )) table->num_rows++;
+
+    TRACE("created %u rows\n", table->num_rows);
+    return status;
+}
+
 static WCHAR *get_volumename( const WCHAR *root )
 {
     WCHAR buf[MAX_PATH + 1] = {0};
@@ -4841,6 +4899,7 @@ static struct table cimv2_builtin_classes[] =
     { L"Win32_DiskPartition", C(col_diskpartition), 0, 0, NULL, fill_diskpartition },
     { L"Win32_DisplayControllerConfiguration", C(col_displaycontrollerconfig), 0, 0, NULL, fill_displaycontrollerconfig },
     { L"Win32_IP4RouteTable", C(col_ip4routetable), 0, 0, NULL, fill_ip4routetable },
+    { L"Win32_LocalTime", C(col_localtime), 0, 0, NULL, fill_localtime },
     { L"Win32_LogicalDisk", C(col_logicaldisk), 0, 0, NULL, fill_logicaldisk },
     { L"Win32_LogicalDiskToPartition", C(col_logicaldisktopartition), 0, 0, NULL, fill_logicaldisktopartition },
     { L"Win32_NetworkAdapter", C(col_networkadapter), 0, 0, NULL, fill_networkadapter },
