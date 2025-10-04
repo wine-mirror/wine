@@ -2572,6 +2572,56 @@ NET_API_STATUS NET_API_FUNCTION NetRemoteTOD(
     return ERROR_NO_BROWSER_SERVERS_FOUND;
 }
 
+
+/************************************************************
+ *                NetValidatePasswordPolicy  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetValidatePasswordPolicy(
+    LPCWSTR servername,
+    LPVOID qualifier,
+    DWORD validation_type,
+    LPVOID input_arg,
+    LPVOID *output_arg)
+{
+    NET_API_STATUS status;
+    NET_VALIDATE_OUTPUT_ARG *out = NULL;
+
+    FIXME("(%s, %p, %lu, %p, %p) stub!\n",
+          debugstr_w(servername), qualifier, validation_type, input_arg, output_arg);
+
+    if (!output_arg)
+        return ERROR_INVALID_PARAMETER;
+
+    *output_arg = NULL;
+
+    status = NetApiBufferAllocate(sizeof(*out), (LPVOID *)&out);
+    if (status != NERR_Success)
+        return status;
+
+    /* Zero all fields; report success so most probes pass */
+    memset(out, 0, sizeof(*out));
+    out->ValidationStatus = NERR_Success;
+
+    *output_arg = out;
+    return NERR_Success;
+}
+
+/************************************************************
+ *          NetValidatePasswordPolicyFree  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetValidatePasswordPolicyFree(LPVOID *output_arg)
+{
+    TRACE("(%p)\n", output_arg);
+
+    if (!output_arg) return ERROR_INVALID_PARAMETER;
+    if (*output_arg)
+    {
+        NetApiBufferFree(*output_arg);
+        *output_arg = NULL;
+    }
+    return NERR_Success;
+}
+
 /************************************************************
  *                DavGetHTTPFromUNCPath (NETAPI32.@)
  */

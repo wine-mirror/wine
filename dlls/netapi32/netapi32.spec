@@ -218,6 +218,8 @@
 @ stub NetUserModalsSet
 @ stub NetUserSetGroups
 @ stub NetUserSetInfo
+@ stdcall NetValidatePasswordPolicy(wstr ptr long ptr ptr)
+@ stdcall NetValidatePasswordPolicyFree(ptr)
 @ stdcall NetWkstaGetInfo(wstr long ptr)
 @ stub NetWkstaSetInfo
 @ stub NetWkstaTransportAdd
