@@ -603,6 +603,10 @@ static struct strarray get_link_args( const char *output_name )
         if (is_unicode_app) strarray_add( &flags, "-municode" );
         if (nostartfiles) strarray_add( &flags, "-nostartfiles" );
         if (image_base) strarray_add( &flags, strmake("-Wl,-base:%s", image_base ));
+
+        if (large_address_aware && target.cpu == CPU_i386)
+            strarray_add( &flags, "-Wl,-largeaddressaware" );
+
         if (entry_point) strarray_add( &flags, strmake( "-Wl,-entry:%s", entry_point ));
 
         if (subsystem)
