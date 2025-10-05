@@ -426,8 +426,6 @@ echo ---
 call :cfail r1||(call :cfail r2||call :cfail r3)
 echo --- chain pipe
 rem Piped commands run at the same time, so the print order varies.
-rem Additionally, they don't run in the batch script context, as shown by
-rem 'call :existing_label|echo read the error message'.
 (echo a 1>&2|echo a 1>&2) 2>&1
 echo ---
 echo b1|echo b2
@@ -527,6 +525,53 @@ if 1==0 (echo o1) else echo o2&&echo o3
 if 1==0 (echo p1) else echo p2||echo p3
 echo ---
 if 1==0 (echo q1) else echo q2&echo q3
+echo ------------- Testing for variables expansion in pipes
+rem * need to use @echo as subprocess doesn't inherit parent's echo on/off status
+rem * .exp file uses @spaces@ (instead of individual @space@) as rebuilding command line
+rem   differs somehow between native & builtin
+rem * need to turn echo off in lots of commands as 1) echo mode isn't inherited in subcmd
+rem   2) builtin handling of @ on blocks is buggy
+@(@for %%i in (a b) do @echo %%i)|more
+echo ---
+@(for %%i in (a b) do @for %%j in (c d) do @echo %%i-%%j)|more
+echo ---
+@(for %%i in (a b) do @for %%j in (a b) do @if %%i==%%j (@echo %%i same %%j) else (@echo %%i diff %%j))|more
+echo ---
+rem Show that builtin commands inside pipes are run in another context.
+rem This can be seen too with 'call :existing_label|echo self' which error message
+rem states call is invoked in non batch context.
+set "WINE_VAR=foo"
+echo a | set "WINE_VAR=bar"
+echo %WINE_VAR%
+set "WINE_VAR=foo"
+set "WINE_VAR=bar" | set "="
+echo %WINE_VAR%
+echo ---
+rem delayed expansion is not inherited in child command, but applied to LHS/RHS
+set "WINE_VAR=foo"
+echo a | echo yy!WINE_VAR!yy
+echo yy!WINE_VAR!yy | more
+setlocal EnableDelayedExpansion
+echo a | echo yy!WINE_VAR!yy
+echo yy!WINE_VAR!yy | more
+(echo a | echo yy!WINE_VAR!yy) | more
+(echo yy!WINE_VAR!yy | more) | more
+endlocal
+echo ---
+rem redirection of top level command is handled in current context
+rem but redirection in subcommands in handled in child cmd process
+mkdir foobarbar && cd foobarbar
+set "WINE_VAR=foo"
+setlocal EnableDelayedExpansion
+echo bar1bar | more > !WINE_VAR!
+type %WINE_VAR%
+erase /q %WINE_VAR%
+echo bar2bar | (more > !WINE_VAR!)
+endlocal
+setlocal DisableDelayedExpansion
+if exist !WINE_VAR! (type !WINE_VAR!) else echo BADBAD
+endlocal
+cd .. && rmdir /s/q foobarbar
 echo ------------- Testing internal commands return codes
 setlocal EnableDelayedExpansion
 

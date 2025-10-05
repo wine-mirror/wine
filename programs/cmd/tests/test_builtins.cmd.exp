@@ -464,6 +464,42 @@ p2
 ---
 q2
 q3
+------------- Testing for variables expansion in pipes
+@todo_wine@a@space@@space@
+@todo_wine@b@space@@space@
+
+---
+@todo_wine@a-c@space@@space@
+@todo_wine@a-d@space@@space@
+@todo_wine@b-c@space@@space@
+@todo_wine@b-d@space@@space@
+
+---
+@todo_wine@a same a@space@
+@todo_wine@a diff b@space@
+@todo_wine@b diff a@space@
+@todo_wine@b same b@space@
+
+---
+@todo_wine@foo
+@todo_wine@foo
+---
+yy!WINE_VAR!yy
+yy!WINE_VAR!yy@space@
+
+yyfooyy
+yyfooyy@space@
+
+@todo_wine@yy!WINE_VAR!yy@space@
+
+@todo_wine@yy!WINE_VAR!yy@space@
+
+
+---
+bar1bar@space@
+
+@todo_wine@bar2bar@space@
+@todo_wine@
 ------------- Testing internal commands return codes
 --- success/failure for basics
 SUCCESS 0
