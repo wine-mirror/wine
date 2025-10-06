@@ -1469,6 +1469,11 @@ static HRESULT WINAPI HTMLDocument_open(IHTMLDocument2 *iface, BSTR url, VARIANT
     if(tmp)
         nsISupports_Release(tmp);
 
+    /* Open resets all document event handlers. Reflect this in the DOM event target and reinitialize
+     * our Gecko listeners. */
+    release_event_target(&This->node.event_target);
+    doc_init_events(This);
+
     *pomWindowResult = (IDispatch*)&This->window->base.outer_window->base.IHTMLWindow2_iface;
     IHTMLWindow2_AddRef(&This->window->base.outer_window->base.IHTMLWindow2_iface);
     return S_OK;

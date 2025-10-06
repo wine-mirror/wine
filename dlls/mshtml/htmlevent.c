@@ -4964,8 +4964,9 @@ HRESULT doc_init_events(HTMLDocumentNode *doc)
     unsigned i;
     HRESULT hres;
 
-    doc->event_vector = calloc(EVENTID_LAST, sizeof(BOOL));
-    if(!doc->event_vector)
+    if(doc->event_vector)
+        memset(doc->event_vector, 0, EVENTID_LAST * sizeof(BOOL));
+    else if(!(doc->event_vector = calloc(EVENTID_LAST, sizeof(BOOL))))
         return E_OUTOFMEMORY;
 
     init_nsevents(doc);

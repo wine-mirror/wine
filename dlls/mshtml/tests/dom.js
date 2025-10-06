@@ -1149,3 +1149,17 @@ sync_test("attributeNode", function() {
         ok(e.message === "NotFoundError", "removeChild threw " + e.message);
     }
 });
+
+sync_test("document.open", function() {
+    document.body.innerHTML = '<iframe id="test"></iframe>';
+    var elem = document.getElementById("test");
+    var doc = elem.contentDocument;
+    var f = function() {};
+    doc.onclick = f;
+    ok(doc.onclick === f, "doc.onclick != f");
+    doc.open();
+    ok(doc.onclick === null, "doc.onclick != null");
+    doc.onclick = f;
+    doc.close();
+    ok(doc.onclick === f, "doc.onclick != f");
+});
