@@ -288,7 +288,6 @@ void end_cplusplus_guard(FILE *fp)
 static void write_dlldata_list( struct strarray filenames, int define_proxy_delegation)
 {
   FILE *dlldata;
-  unsigned int i;
 
   dlldata = fopen(dlldata_name, "w");
   if (!dlldata)
@@ -302,13 +301,11 @@ static void write_dlldata_list( struct strarray filenames, int define_proxy_dele
   fprintf(dlldata, "#include <rpcproxy.h>\n\n");
   start_cplusplus_guard(dlldata);
 
-  for (i = 0; i < filenames.count; i++)
-    fprintf(dlldata, "EXTERN_PROXY_FILE(%s)\n", filenames.str[i]);
+  STRARRAY_FOR_EACH( file, &filenames ) fprintf(dlldata, "EXTERN_PROXY_FILE(%s)\n", file);
 
   fprintf(dlldata, "\nPROXYFILE_LIST_START\n");
   fprintf(dlldata, "/* Start of list */\n");
-  for (i = 0; i < filenames.count; i++)
-    fprintf(dlldata, "  REFERENCE_PROXY_FILE(%s),\n", filenames.str[i]);
+  STRARRAY_FOR_EACH( file, &filenames ) fprintf(dlldata, "  REFERENCE_PROXY_FILE(%s),\n", file);
   fprintf(dlldata, "/* End of list */\n");
   fprintf(dlldata, "PROXYFILE_LIST_END\n\n");
 
@@ -657,19 +654,19 @@ int open_typelib( const char *name )
         if ((fd = open( file, O_RDONLY | O_BINARY )) != -1) return fd; \
         free( file ); } while(0)
 
-    for (i = 0; i < dlldirs.count; i++)
+    STRARRAY_FOR_EACH( dir, &dlldirs )
     {
-        if (strendswith( dlldirs.str[i], "/*" ))  /* special case for wine build tree */
+        if (strendswith( dir, "/*" ))  /* special case for wine build tree */
         {
             int namelen = strlen( name );
             if (strendswith( name, ".dll" )) namelen -= 4;
-            TRYOPEN( strmake( "%.*s/%.*s%s/%s", (int)strlen(dlldirs.str[i]) - 2, dlldirs.str[i],
+            TRYOPEN( strmake( "%.*s/%.*s%s/%s", (int)strlen(dir) - 2, dir,
                               namelen, name, pe_dir, name ));
         }
         else
         {
-            TRYOPEN( strmake( "%s%s/%s", dlldirs.str[i], pe_dir, name ));
-            TRYOPEN( strmake( "%s/%s", dlldirs.str[i], name ));
+            TRYOPEN( strmake( "%s%s/%s", dir, pe_dir, name ));
+            TRYOPEN( strmake( "%s/%s", dir, name ));
         }
     }
 
@@ -775,8 +772,8 @@ int main(int argc,char *argv[])
   if (files.count) {
     if (do_dlldata && !do_everything) {
       struct strarray filenames = empty_strarray;
-      for (i = 0; i < files.count; i++)
-          strarray_add(&filenames, replace_extension( get_basename( files.str[i] ), ".idl", "" ));
+      STRARRAY_FOR_EACH( file, &files )
+          strarray_add(&filenames, replace_extension( get_basename( file ), ".idl", "" ));
 
       write_dlldata_list(filenames, 0 /* FIXME */ );
       return 0;
