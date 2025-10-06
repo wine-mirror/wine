@@ -128,7 +128,7 @@ struct inproc_sync *create_inproc_event_sync( int manual, int signaled )
 
     if (event->fd == -1)
     {
-        set_error( STATUS_NO_MORE_FILES );
+        set_error( STATUS_TOO_MANY_OPENED_FILES );
         release_object( event );
         return NULL;
     }
@@ -147,7 +147,7 @@ struct inproc_sync *create_inproc_mutex_sync( thread_id_t owner, unsigned int co
 
     if (mutex->fd == -1)
     {
-        set_error( STATUS_NO_MORE_FILES );
+        set_error( STATUS_TOO_MANY_OPENED_FILES );
         release_object( mutex );
         return NULL;
     }
@@ -166,7 +166,7 @@ struct inproc_sync *create_inproc_semaphore_sync( unsigned int initial, unsigned
 
     if (sem->fd == -1)
     {
-        set_error( STATUS_NO_MORE_FILES );
+        set_error( STATUS_TOO_MANY_OPENED_FILES );
         release_object( sem );
         return NULL;
     }
