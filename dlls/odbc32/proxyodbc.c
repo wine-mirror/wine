@@ -7367,11 +7367,28 @@ static SQLRETURN statistics_win32_w( struct statement *stmt, SQLWCHAR *catalog, 
                                      SQLSMALLINT len2, SQLWCHAR *table, SQLSMALLINT len3, SQLUSMALLINT unique,
                                      SQLUSMALLINT reserved )
 {
+    SQLRETURN ret = SQL_ERROR;
+
     if (stmt->hdr.win32_funcs->SQLStatisticsW)
         return stmt->hdr.win32_funcs->SQLStatisticsW( stmt->hdr.win32_handle, catalog, len1, schema, len2, table,
                                                       len3, unique, reserved );
-    if (stmt->hdr.win32_funcs->SQLStatistics) FIXME( "Unicode to ANSI conversion not handled\n" );
-    return SQL_ERROR;
+    if (stmt->hdr.win32_funcs->SQLStatistics)
+    {
+        SQLCHAR *catalogA, *schemaA, *tableA;
+
+        catalogA = strnWtoA( catalog, len1 );
+        schemaA = strnWtoA( schema, len2 );
+        tableA = strnWtoA( table, len3 );
+
+        ret = stmt->hdr.win32_funcs->SQLStatistics( stmt->hdr.win32_handle, catalogA, SQL_NTS,
+                schemaA, SQL_NTS, tableA, SQL_NTS, unique, reserved );
+
+        free( catalogA );
+        free( schemaA );
+        free( tableA );
+    }
+
+    return ret;
 }
 
 /*************************************************************************
