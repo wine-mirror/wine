@@ -32,7 +32,6 @@ static void *load_ntdll(void)
     const char *arch_dir = get_arch_dir( get_default_target() );
     struct strarray dllpath;
     void *handle;
-    unsigned int i;
 
     if (bindir && strendswith( bindir, "/tools/wine" ) &&
         ((handle = dlopen( strmake( "%s/../../dlls/ntdll/ntdll.so", bindir ), RTLD_NOW ))))
@@ -42,11 +41,11 @@ static void *load_ntdll(void)
         return handle;
 
     dllpath = strarray_frompath( getenv( "WINEDLLPATH" ));
-    for (i = 0; i < dllpath.count; i++)
+    STRARRAY_FOR_EACH( dir, &dllpath )
     {
-        if ((handle = dlopen( strmake( "%s%s/ntdll.so", dllpath.str[i], arch_dir ), RTLD_NOW )))
+        if ((handle = dlopen( strmake( "%s%s/ntdll.so", dir, arch_dir ), RTLD_NOW )))
             return handle;
-        if ((handle = dlopen( strmake( "%s/ntdll.so", dllpath.str[i] ), RTLD_NOW )))
+        if ((handle = dlopen( strmake( "%s/ntdll.so", dir ), RTLD_NOW )))
             return handle;
     }
     fprintf( stderr, "wine: could not load ntdll.so: %s\n", dlerror() );
