@@ -7119,10 +7119,30 @@ static SQLRETURN get_info_win32_w( struct connection *con, SQLUSMALLINT type, SQ
         case SQL_ACTIVE_STATEMENTS:
         case SQL_ODBC_API_CONFORMANCE:
         case SQL_TXN_CAPABLE:
+        case SQL_CONVERT_FUNCTIONS:
         case SQL_NUMERIC_FUNCTIONS:
         case SQL_STRING_FUNCTIONS:
         case SQL_SYSTEM_FUNCTIONS:
         case SQL_TIMEDATE_FUNCTIONS:
+        case SQL_CONVERT_BIGINT:
+        case SQL_CONVERT_BINARY:
+        case SQL_CONVERT_BIT:
+        case SQL_CONVERT_CHAR:
+        case SQL_CONVERT_DATE:
+        case SQL_CONVERT_DECIMAL:
+        case SQL_CONVERT_DOUBLE:
+        case SQL_CONVERT_FLOAT:
+        case SQL_CONVERT_INTEGER:
+        case SQL_CONVERT_LONGVARCHAR:
+        case SQL_CONVERT_NUMERIC:
+        case SQL_CONVERT_REAL:
+        case SQL_CONVERT_SMALLINT:
+        case SQL_CONVERT_TIME:
+        case SQL_CONVERT_TIMESTAMP:
+        case SQL_CONVERT_TINYINT:
+        case SQL_CONVERT_VARBINARY:
+        case SQL_CONVERT_VARCHAR:
+        case SQL_CONVERT_LONGVARBINARY:
             ret = con->hdr.win32_funcs->SQLGetInfo( con->hdr.win32_handle, type, value, buflen, retlen );
             break;
         case SQL_DRIVER_NAME:
