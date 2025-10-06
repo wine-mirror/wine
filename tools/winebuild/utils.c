@@ -138,18 +138,18 @@ static struct strarray get_tools_path(void)
 static const char *find_binary( const char *prefix, const char *name )
 {
     struct strarray dirs = get_tools_path();
-    unsigned int i, maxlen = 0;
+    unsigned int maxlen = 0;
     struct stat st;
     char *p, *file;
 
     if (strchr( name, '/' )) return name;
     if (!prefix) prefix = "";
-    for (i = 0; i < dirs.count; i++) maxlen = max( maxlen, strlen(dirs.str[i]) + 2 );
+    STRARRAY_FOR_EACH( dir, &dirs ) maxlen = max( maxlen, strlen(dir) + 2 );
     file = xmalloc( maxlen + strlen(prefix) + strlen(name) + sizeof(EXEEXT) + 1 );
 
-    for (i = 0; i < dirs.count; i++)
+    STRARRAY_FOR_EACH( dir, &dirs )
     {
-        strcpy( file, dirs.str[i] );
+        strcpy( file, dir );
         p = file + strlen(file);
         if (p == file) *p++ = '.';
         if (p[-1] != '/') *p++ = '/';
@@ -274,7 +274,6 @@ struct strarray get_as_command(void)
 {
     struct strarray args = empty_strarray;
     const char *file;
-    unsigned int i;
     int using_cc = 0;
 
     if (cc_command.count)
@@ -310,8 +309,7 @@ struct strarray get_as_command(void)
         if (cpu_option) strarray_add( &args, strmake("-mcpu=%s", cpu_option) );
         if (fpu_option) strarray_add( &args, strmake("-mfpu=%s", fpu_option) );
         if (arch_option) strarray_add( &args, strmake("-march=%s", arch_option) );
-        for (i = 0; i < tools_path.count; i++)
-            strarray_add( &args, strmake("-B%s", tools_path.str[i] ));
+        STRARRAY_FOR_EACH( path, &tools_path ) strarray_add( &args, strmake("-B%s", path ));
         return args;
     }
 

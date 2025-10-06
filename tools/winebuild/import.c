@@ -277,12 +277,7 @@ static void free_imports( struct import *imp )
 /* check whether a given dll is imported in delayed mode */
 static int is_delayed_import( const char *name )
 {
-    unsigned int i;
-
-    for (i = 0; i < delayed_imports.count; i++)
-    {
-        if (!strcmp( delayed_imports.str[i], name )) return 1;
-    }
+    STRARRAY_FOR_EACH( imp, &delayed_imports ) if (!strcmp( imp, name )) return 1;
     return 0;
 }
 
@@ -502,7 +497,6 @@ static char *create_undef_symbols_file( DLLSPEC *spec )
 {
     char *as_file, *obj_file;
     int i;
-    unsigned int j;
 
     as_file = open_temp_output_file( ".s" );
     output( "\t.data\n" );
@@ -514,8 +508,8 @@ static char *create_undef_symbols_file( DLLSPEC *spec )
         if (odp->flags & FLAG_FORWARD) continue;
         output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name( get_link_name( odp )));
     }
-    for (j = 0; j < extra_ld_symbols.count; j++)
-        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name(extra_ld_symbols.str[j]) );
+    STRARRAY_FOR_EACH( sym, &extra_ld_symbols )
+        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name(sym) );
 
     output_gnu_stack_note();
     fclose( output_file );
@@ -1019,7 +1013,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
 /* output import stubs for exported entry points that link to external symbols */
 static void output_external_link_imports( DLLSPEC *spec )
 {
-    unsigned int i, pos;
+    unsigned int i, pos = 0;
 
     if (!ext_link_imports.count) return;  /* nothing to do */
 
@@ -1036,16 +1030,16 @@ static void output_external_link_imports( DLLSPEC *spec )
     output( "\t.data\n" );
     output( "\t.balign %u\n", get_ptr_size() );
     output( ".L__wine_spec_external_links:\n" );
-    for (i = 0; i < ext_link_imports.count; i++)
-        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name(ext_link_imports.str[i]) );
+    STRARRAY_FOR_EACH( imp, &ext_link_imports )
+        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name(imp) );
 
     output( "\n\t.text\n" );
     output( "\t.balign %u\n", get_ptr_size() );
     output( "%s:\n", asm_name("__wine_spec_external_link_thunks") );
 
-    for (i = pos = 0; i < ext_link_imports.count; i++)
+    STRARRAY_FOR_EACH( imp, &ext_link_imports )
     {
-        char *buffer = strmake( "__wine_spec_ext_link_%s", ext_link_imports.str[i] );
+        char *buffer = strmake( "__wine_spec_ext_link_%s", imp );
         output_import_thunk( buffer, ".L__wine_spec_external_links", pos );
         free( buffer );
         pos += get_ptr_size();

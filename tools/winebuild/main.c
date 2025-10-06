@@ -527,27 +527,22 @@ static void option_callback( int optc, char *optarg )
 static struct strarray load_resources( struct strarray files, DLLSPEC *spec )
 {
     struct strarray ret = empty_strarray;
-    int i;
 
     switch (spec->type)
     {
     case SPEC_WIN16:
-        for (i = 0; i < res_files.count; i++) load_res16_file( res_files.str[i], spec );
+        STRARRAY_FOR_EACH( file, &res_files ) load_res16_file( file, spec );
         return files;
 
     case SPEC_WIN32:
-        for (i = 0; i < res_files.count; i++)
-        {
-            if (!load_res32_file( res_files.str[i], spec ))
-                fatal_error( "%s is not a valid Win32 resource file\n", res_files.str[i] );
-        }
+        STRARRAY_FOR_EACH( file, &res_files )
+            if (!load_res32_file( file, spec ))
+                fatal_error( "%s is not a valid Win32 resource file\n", file );
 
         /* load any resource file found in the remaining arguments */
-        for (i = 0; i < files.count; i++)
-        {
-            if (!load_res32_file( files.str[i], spec ))
-                strarray_add( &ret, files.str[i] ); /* not a resource file, keep it in the list */
-        }
+        STRARRAY_FOR_EACH( file, &files )
+            if (!load_res32_file( file, spec ))
+                strarray_add( &ret, file ); /* not a resource file, keep it in the list */
         break;
     }
     return ret;

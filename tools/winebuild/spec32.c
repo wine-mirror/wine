@@ -711,7 +711,6 @@ static void output_load_config(void)
 void output_module( DLLSPEC *spec )
 {
     int machine = 0;
-    int i;
     unsigned int page_size = 0x1000;
     const char *data_dirs[16] = { NULL };
 
@@ -777,8 +776,7 @@ void output_module( DLLSPEC *spec )
     output( "\t.long 0\n" );              /* SizeOfInitializedData */
     output( "\t.long 0\n" );              /* SizeOfUninitializedData */
 
-    for (i = 0; i < spec_extra_ld_symbols.count; i++)
-        output( "\t.globl %s\n", asm_name(spec_extra_ld_symbols.str[i]) );
+    STRARRAY_FOR_EACH( sym, &spec_extra_ld_symbols ) output( "\t.globl %s\n", asm_name(sym) );
 
     /* note: we expand the AddressOfEntryPoint field on 64-bit by overwriting the BaseOfCode field */
     output( "\t%s %s\n",                  /* AddressOfEntryPoint */
@@ -1438,7 +1436,7 @@ void output_def_file( DLLSPEC *spec, struct exports *exports, int import_only )
  */
 void make_builtin_files( struct strarray files )
 {
-    int i, fd;
+    int fd;
     struct
     {
         unsigned short e_magic;
@@ -1453,14 +1451,13 @@ void make_builtin_files( struct strarray files )
         spawn( args );
     }
 
-    for (i = 0; i < files.count; i++)
+    STRARRAY_FOR_EACH( file, &files )
     {
-        if ((fd = open( files.str[i], O_RDWR | O_BINARY )) == -1)
-            fatal_perror( "Cannot open %s", files.str[i] );
+        if ((fd = open( file, O_RDWR | O_BINARY )) == -1) fatal_perror( "Cannot open %s", file );
         if (read( fd, &header, sizeof(header) ) == sizeof(header) && !memcmp( &header.e_magic, "MZ", 2 ))
         {
             if (header.e_lfanew < sizeof(header) + sizeof(builtin_signature))
-                fatal_error( "%s: Not enough space (%x) for Wine signature\n", files.str[i], header.e_lfanew );
+                fatal_error( "%s: Not enough space (%x) for Wine signature\n", file, header.e_lfanew );
             write( fd, builtin_signature, sizeof(builtin_signature) );
 
             if (prefer_native)
@@ -1476,7 +1473,7 @@ void make_builtin_files( struct strarray files )
                 }
             }
         }
-        else fatal_error( "%s: Unrecognized file format\n", files.str[i] );
+        else fatal_error( "%s: Unrecognized file format\n", file );
         close( fd );
     }
 }
@@ -1624,18 +1621,17 @@ static void fixup_elf64( const char *name, int fd, void *header, size_t header_s
  */
 void fixup_constructors( struct strarray files )
 {
-    int i, fd, size;
+    int fd, size;
     unsigned int header[64];
 
-    for (i = 0; i < files.count; i++)
+    STRARRAY_FOR_EACH( file, &files )
     {
-        if ((fd = open( files.str[i], O_RDWR | O_BINARY )) == -1)
-            fatal_perror( "Cannot open %s", files.str[i] );
+        if ((fd = open( file, O_RDWR | O_BINARY )) == -1) fatal_perror( "Cannot open %s", file );
         size = read( fd, &header, sizeof(header) );
         if (size > 5)
         {
-            if (!memcmp( header, "\177ELF\001", 5 )) fixup_elf32( files.str[i], fd, header, size );
-            else if (!memcmp( header, "\177ELF\002", 5 )) fixup_elf64( files.str[i], fd, header, size );
+            if (!memcmp( header, "\177ELF\001", 5 )) fixup_elf32( file, fd, header, size );
+            else if (!memcmp( header, "\177ELF\002", 5 )) fixup_elf64( file, fd, header, size );
         }
         close( fd );
     }
