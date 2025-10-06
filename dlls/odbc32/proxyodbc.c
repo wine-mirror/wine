@@ -427,6 +427,11 @@ static void unlock_object( struct object *obj )
     LeaveCriticalSection( &obj->cs );
 }
 
+static BOOL is_ansi_driver( struct object *obj )
+{
+    return obj->win32_handle && !obj->win32_funcs->SQLConnectW;
+}
+
 static struct connection *create_connection( struct environment *env )
 {
     struct connection *ret;
@@ -2517,9 +2522,32 @@ static SQLRETURN get_data_unix( struct statement *stmt, SQLUSMALLINT column, SQL
 static SQLRETURN get_data_win32( struct statement *stmt, SQLUSMALLINT column, SQLSMALLINT type, SQLPOINTER value,
                                  SQLLEN buflen, SQLLEN *retlen )
 {
-    if (stmt->hdr.win32_funcs->SQLGetData)
-        return stmt->hdr.win32_funcs->SQLGetData( stmt->hdr.win32_handle, column, type, value, buflen, retlen );
-    return SQL_ERROR;
+    if (!stmt->hdr.win32_funcs->SQLGetData)
+        return SQL_ERROR;
+
+    if (type == SQL_C_WCHAR && is_ansi_driver( &stmt->hdr ))
+    {
+        SQLLEN data_len = buflen / sizeof(WCHAR) - 1;
+        char *data = malloc( data_len );
+        SQLRETURN ret;
+
+        ret = stmt->hdr.win32_funcs->SQLGetData( stmt->hdr.win32_handle,
+                column, SQL_C_CHAR, data, data_len, &data_len );
+        if (SUCCESS(ret) && data_len == -1)
+        {
+            if (retlen) *retlen = data_len;
+        }
+        else if (SUCCESS(ret))
+        {
+            data_len = MultiByteToWideChar( CP_ACP, 0, data, data_len, value, buflen / sizeof(WCHAR) - 1 );
+            ((WCHAR *)value)[data_len] = 0;
+            if (retlen) *retlen = data_len * sizeof(WCHAR);
+        }
+        free( data );
+        return ret;
+    }
+
+    return stmt->hdr.win32_funcs->SQLGetData( stmt->hdr.win32_handle, column, type, value, buflen, retlen );
 }
 
 /*************************************************************************
