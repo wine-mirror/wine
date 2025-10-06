@@ -207,11 +207,9 @@ static struct strarray delayimports;
 
 static void cleanup_output_files(void)
 {
-    unsigned int i;
     if (output_file_name) unlink( output_file_name );
     if (output_implib) unlink( output_implib );
-    for (i = 0; i < output_debug_files.count; i++)
-        unlink( output_debug_files.str[i] );
+    STRARRAY_FOR_EACH( file, &output_debug_files) unlink( file );
 }
 
 static void clean_temp_files(void)
@@ -343,11 +341,9 @@ static enum file_type guess_lib_type(const char* dir, const char* library, char*
 
 static enum file_type get_lib_type(struct strarray path, const char *library, char** file)
 {
-    unsigned int i;
-
-    for (i = 0; i < path.count; i++)
+    STRARRAY_FOR_EACH( str, &path )
     {
-        enum file_type type = guess_lib_type(path.str[i], library, file);
+        enum file_type type = guess_lib_type(str, library, file);
 	if (type != file_na) return type;
     }
     return file_na;
@@ -357,7 +353,6 @@ static const char *find_binary( const char *name )
 {
     char *file_name, *args;
     struct strarray dirs = empty_strarray;
-    unsigned int i;
 
     if (strchr( name, '/' )) return name;
 
@@ -366,10 +361,10 @@ static const char *find_binary( const char *name )
 
     strarray_addall( &dirs, prefix_dirs );
     strarray_addall( &dirs, path_dirs );
-    for (i = 0; i < dirs.count; i++)
+    STRARRAY_FOR_EACH( dir, &dirs )
     {
         struct stat st;
-        char *prog = strmake( "%s/%s%s", dirs.str[i], file_name, EXEEXT );
+        char *prog = strmake( "%s/%s%s", dir, file_name, EXEEXT );
         if (stat( prog, &st ) == 0 && S_ISREG( st.st_mode ) && (st.st_mode & 0111))
             return args ? strmake( "%s %s", prog, args ) : prog;
         free( prog );
@@ -501,7 +496,6 @@ static struct strarray get_link_args( const char *output_name )
 {
     struct strarray link_args = get_translator();
     struct strarray flags = empty_strarray;
-    unsigned int i;
 
     strarray_addall( &link_args, linker_args );
 
@@ -565,11 +559,8 @@ static struct strarray get_link_args( const char *output_name )
         if (entry_point)
             strarray_add( &flags, strmake( "-Wl,--entry,%s%s", target.cpu == CPU_i386 ? "_" : "", entry_point ));
 
-        for (i = 0; i < output_debug_files.count; i++)
-        {
-            if (!strendswith(output_debug_files.str[i], ".pdb")) continue;
-            strarray_add(&link_args, strmake("-Wl,--pdb=%s", output_debug_files.str[i]));
-        }
+        STRARRAY_FOR_EACH( file, &output_debug_files )
+            if (strendswith(file, ".pdb")) strarray_add(&link_args, strmake("-Wl,--pdb=%s", file));
 
         if (use_build_id)
             strarray_add( &link_args, "-Wl,--build-id");
@@ -614,12 +605,12 @@ static struct strarray get_link_args( const char *output_name )
         else
             strarray_add( &flags, strmake("-Wl,-subsystem:%s", is_gui_app ? "windows" : "console" ));
 
-        for (i = 0; i < output_debug_files.count; i++)
+        STRARRAY_FOR_EACH( file, &output_debug_files )
         {
-            if (strendswith(output_debug_files.str[i], ".pdb"))
+            if (strendswith(file, ".pdb"))
             {
                 strarray_add(&link_args, "-Wl,-debug");
-                strarray_add(&link_args, strmake("-Wl,-pdb:%s", output_debug_files.str[i]));
+                strarray_add(&link_args, strmake("-Wl,-pdb:%s", file));
             }
             else strarray_add( &link_args, "-Wl,-debug:dwarf" );
         }
@@ -870,7 +861,7 @@ static struct strarray get_compat_defines( int gcc_defs )
 static void compile( struct strarray files, const char *output_name, int compile_only )
 {
     struct strarray comp_args = get_translator();
-    unsigned int i, j;
+    unsigned int j;
     int gcc_defs = 0;
     struct strarray gcc;
     struct strarray gpp;
@@ -886,14 +877,14 @@ static void compile( struct strarray files, const char *output_name, int compile
 	case proc_cxx:
             gcc = build_tool_name( target_alias, tool_cc );
             gpp = build_tool_name( target_alias, tool_cxx );
-            for ( j = 0; !gcc_defs && j < comp_args.count; j++ )
+            STRARRAY_FOR_EACH( cc, &comp_args )
             {
-                const char *cc = comp_args.str[j];
-
-                for (i = 0; !gcc_defs && i < gcc.count; i++)
-                    gcc_defs = gcc.str[i][0] != '-' && strendswith(cc, gcc.str[i]);
-                for (i = 0; !gcc_defs && i < gpp.count; i++)
-                    gcc_defs = gpp.str[i][0] != '-' && strendswith(cc, gpp.str[i]);
+                STRARRAY_FOR_EACH( str, &gcc )
+                    if ((gcc_defs = str[0] != '-' && strendswith(cc, str))) break;
+                if (gcc_defs) break;
+                STRARRAY_FOR_EACH( str, &gpp )
+                    if ((gcc_defs = str[0] != '-' && strendswith(cc, str))) break;
+                if (gcc_defs) break;
             }
             break;
     }
@@ -917,14 +908,14 @@ static void compile( struct strarray files, const char *output_name, int compile
     strarray_addall(&comp_args, compiler_args);
 
     /* last, but not least, the files */
-    for ( j = 0; j < files.count; j++ )
+    STRARRAY_FOR_EACH( file, &files )
     {
-        if (files.str[j][0] == '-')
+        if (file[0] == '-')
         {
             /* keep -x and bare '-' (i.e. stdin) options */
-            if (files.str[j][1] && files.str[j][1] != 'x') continue;
+            if (file[1] && file[1] != 'x') continue;
         }
-	strarray_add(&comp_args, files.str[j]);
+	strarray_add(&comp_args, file);
     }
 
     /* standard includes come last in the include search path */
@@ -979,7 +970,6 @@ static struct strarray get_winebuild_args( const char *target )
 {
     const char *binary;
     struct strarray spec_args = empty_strarray;
-    unsigned int i;
 
     if (!(binary = find_binary( winebuild ))) error( "Could not find winebuild\n" );
     strarray_add( &spec_args, binary );
@@ -992,8 +982,8 @@ static struct strarray get_winebuild_args( const char *target )
     }
     if (force_pointer_size)
         strarray_add(&spec_args, strmake("-m%u", 8 * force_pointer_size ));
-    for (i = 0; i < prefix_dirs.count; i++)
-        strarray_add( &spec_args, strmake( "-B%s", prefix_dirs.str[i] ));
+    STRARRAY_FOR_EACH( dir, &prefix_dirs )
+        strarray_add( &spec_args, strmake( "-B%s", dir ));
     strarray_addall( &spec_args, winebuild_args );
     return spec_args;
 }
@@ -1030,15 +1020,14 @@ static const char *find_libgcc(void)
     const char *out = make_temp_file( "find_libgcc", ".out" );
     const char *err = make_temp_file( "find_libgcc", ".err" );
     struct strarray link = get_translator();
-    int sout = -1, serr = -1, i;
+    int sout = -1, serr = -1;
     char *libgcc, *p;
     struct stat st;
     size_t cnt;
     int ret;
 
-    for (i = 0; i < linker_args.count; i++)
-	if (strcmp(linker_args.str[i], "--no-default-config" ))
-            strarray_add( &link, linker_args.str[i] );
+    STRARRAY_FOR_EACH( arg, &linker_args )
+	if (strcmp(arg, "--no-default-config" )) strarray_add( &link, arg );
 
     strarray_add( &link, "-print-libgcc-file-name" );
 
@@ -1103,7 +1092,6 @@ static void build_spec_obj( const char *spec_file, const char *output_file,
                             const char *target_name, struct strarray files,
                             struct strarray resources, struct strarray *spec_objs )
 {
-    unsigned int i;
     struct strarray spec_args = get_winebuild_args( target_name );
     struct strarray tool;
     const char *spec_o_name, *output_name;
@@ -1171,24 +1159,20 @@ static void build_spec_obj( const char *spec_file, const char *output_file,
         strarray_add(&spec_args, subsystem);
     }
 
-    if (!is_pe)
-    {
-        for (i = 0; i < delayimports.count; i++)
-            strarray_add(&spec_args, strmake("-d%s", delayimports.str[i]));
-    }
+    if (!is_pe) STRARRAY_FOR_EACH( imp, &delayimports ) strarray_add(&spec_args, strmake("-d%s", imp));
 
     strarray_addall( &spec_args, resources );
 
     /* add other files */
     strarray_add(&spec_args, "--");
-    for (i = 0; i < files.count; i++)
+    STRARRAY_FOR_EACH( file, &files )
     {
-	switch(files.str[i][1])
+	switch(file[1])
 	{
 	    case 'd':
 	    case 'a':
 	    case 'o':
-		strarray_add(&spec_args, files.str[i] + 2);
+		strarray_add(&spec_args, file + 2);
 		break;
 	}
     }
@@ -1200,7 +1184,6 @@ static void build_spec_obj( const char *spec_file, const char *output_file,
 /* run winebuild to generate a data-only library */
 static void build_data_lib( const char *spec_file, const char *output_file, struct strarray files )
 {
-    unsigned int i;
     struct strarray spec_args = get_winebuild_args( target_alias );
 
     strarray_add(&spec_args, is_shared ? "--dll" : "--exe");
@@ -1213,8 +1196,7 @@ static void build_data_lib( const char *spec_file, const char *output_file, stru
     }
 
     /* add resource files */
-    for (i = 0; i < files.count; i++)
-	if (files.str[i][1] == 'r') strarray_add(&spec_args, files.str[i]);
+    STRARRAY_FOR_EACH( file, &files ) if (file[1] == 'r') strarray_add(&spec_args, file);
 
     spawn(spec_args, 0);
 }
@@ -1231,7 +1213,6 @@ static void build(struct strarray input_files, const char *output)
     const char *libgcc = NULL;
     int generate_app_loader = 1;
     const char *crt_lib = NULL;
-    unsigned int i, j;
 
     /* NOTE: for the files array we'll use the following convention:
      *    -axxx:  xxx is an archive (.a)
@@ -1284,9 +1265,8 @@ static void build(struct strarray input_files, const char *output)
 
     /* mark the files with their appropriate type */
     spec_file = lang = 0;
-    for ( j = 0; j < input_files.count; j++ )
+    STRARRAY_FOR_EACH( file, &input_files )
     {
-	const char* file = input_files.str[j];
 	if (file[0] != '-')
 	{
 	    switch(get_file_type(file))
@@ -1381,8 +1361,7 @@ static void build(struct strarray input_files, const char *output)
         return;
     }
 
-    for (i = 0; i < files.count; i++)
-	if (files.str[i][1] == 'r') strarray_add( &resources, files.str[i] );
+    STRARRAY_FOR_EACH( file, &files ) if (file[1] == 'r') strarray_add( &resources, file );
 
     build_spec_obj( spec_file, output_file, target_alias, files, resources, &spec_objs );
     if (is_arm64x)
@@ -1415,26 +1394,25 @@ static void build(struct strarray input_files, const char *output)
     strarray_add(&link_args, "-o");
     strarray_add(&link_args, output_file_name);
 
-    for ( j = 0; j < lib_dirs.count; j++ )
-	strarray_add(&link_args, strmake("-L%s", lib_dirs.str[j]));
+    STRARRAY_FOR_EACH( dir, &lib_dirs ) strarray_add(&link_args, strmake("-L%s", dir));
 
     strarray_addall( &link_args, spec_objs );
 
     if (is_pe)
     {
-        for (j = 0; j < delayimports.count; j++)
+        STRARRAY_FOR_EACH( imp, &delayimports )
         {
             if (target.platform == PLATFORM_WINDOWS)
-                strarray_add(&link_args, strmake("-Wl,-delayload:%s", delayimports.str[j]));
+                strarray_add(&link_args, strmake("-Wl,-delayload:%s", imp));
             else
-                strarray_add(&link_args, strmake("-Wl,-delayload,%s",delayimports.str[j]));
+                strarray_add(&link_args, strmake("-Wl,-delayload,%s",imp));
         }
     }
 
-    for ( j = 0; j < files.count; j++ )
+    STRARRAY_FOR_EACH( file, &files )
     {
-	const char* name = files.str[j] + 2;
-	switch(files.str[j][1])
+	const char* name = file + 2;
+	switch(file[1])
 	{
 	    case 'l':
 		strarray_add(&link_args, strmake("-l%s", name));
@@ -1456,7 +1434,7 @@ static void build(struct strarray input_files, const char *output)
 		strarray_add(&link_args, name);
 		break;
 	    case 'W':
-		strarray_add(&link_args, files.str[j]);
+		strarray_add(&link_args, file);
 		break;
 	}
     }
@@ -1474,18 +1452,18 @@ static void build(struct strarray input_files, const char *output)
 
     spawn(link_args, 0);
 
-    for (i = 0; i < output_debug_files.count; i++)
+    STRARRAY_FOR_EACH( file, &output_debug_files )
     {
         struct strarray tool, objcopy;
 
-        if (strendswith(output_debug_files.str[i], ".pdb")) continue;
+        if (strendswith(file, ".pdb")) continue;
         objcopy = build_tool_name(target_alias, tool_objcopy);
 
         tool = empty_strarray;
         strarray_addall( &tool, objcopy );
         strarray_add(&tool, "--only-keep-debug");
         strarray_add(&tool, output_file_name);
-        strarray_add(&tool, output_debug_files.str[i]);
+        strarray_add(&tool, file);
         spawn(tool, 1);
 
         tool = empty_strarray;
@@ -1497,7 +1475,7 @@ static void build(struct strarray input_files, const char *output)
         tool = empty_strarray;
         strarray_addall( &tool, objcopy );
         strarray_add(&tool, "--add-gnu-debuglink");
-        strarray_add(&tool, output_debug_files.str[i]);
+        strarray_add(&tool, file);
         strarray_add(&tool, output_file_name);
         spawn(tool, 0);
     }
@@ -1976,13 +1954,12 @@ int main(int argc, char **argv)
                     }
 		    else if (strncmp("-Wb,", args.str[i], 4) == 0)
 		    {
-                        unsigned int j;
                         struct strarray Wb = strarray_fromstring(args.str[i] + 4, ",");
-                        for (j = 0; j < Wb.count; j++)
+                        STRARRAY_FOR_EACH( arg, &Wb )
                         {
-                            if (!strcmp(Wb.str[j], "--data-only")) data_only = true;
-                            if (!strcmp(Wb.str[j], "--fake-module")) fake_module = true;
-                            else strarray_add( &winebuild_args, Wb.str[j] );
+                            if (!strcmp(arg, "--data-only")) data_only = true;
+                            if (!strcmp(arg, "--fake-module")) fake_module = true;
+                            else strarray_add( &winebuild_args, arg );
                         }
                         raw_compiler_arg = raw_linker_arg = 0;
 		    }
