@@ -3009,7 +3009,7 @@ static void test_D3DX10CreateAsyncTextureProcessor(void)
                 "Got unexpected hr %#lx.\n", hr);
         if (hr == S_OK)
         {
-            todo_wine ok(!memcmp(&test_image[i].expected_info, &info, sizeof(info)), "Unexpected image info.\n");
+            ok(!memcmp(&test_image[i].expected_info, &info, sizeof(info)), "Unexpected image info.\n");
             hr = ID3DX10DataProcessor_CreateDeviceObject(dp, (void **)&resource);
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             check_resource_info(resource, test_image + i, __LINE__);
@@ -4197,7 +4197,7 @@ static void test_create_texture(void)
         {
             check_resource_info(resource, test_image + i, __LINE__);
             check_resource_data(resource, test_image + i, __LINE__);
-            todo_wine ok(!memcmp(&test_image[i].expected_info, &img_info, sizeof(img_info)), "Unexpected image info.\n");
+            ok(!memcmp(&test_image[i].expected_info, &img_info, sizeof(img_info)), "Unexpected image info.\n");
             ID3D10Resource_Release(resource);
         }
 
@@ -4280,11 +4280,8 @@ static void test_create_texture(void)
         ID3D10Texture2D_GetDesc(tex_2d, &tex_2d_desc);
         check_texture2d_desc_values(&tex_2d_desc, 8, 8, 4, 1, DXGI_FORMAT_R8G8B8A8_UNORM, 1, 0, D3D10_USAGE_DEFAULT,
                 D3D10_BIND_SHADER_RESOURCE, 0, 0, FALSE);
-        if (img_info.Width)
-        {
-            check_image_info_values(&img_info, 8, 8, 1, 1, 4, 0, DXGI_FORMAT_R8G8B8A8_UNORM,
-                    D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS, TRUE);
-        }
+        check_image_info_values(&img_info, 8, 8, 1, 1, 4, 0, DXGI_FORMAT_R8G8B8A8_UNORM,
+                D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS, FALSE);
 
         /*
          * Image data is loaded starting from the mip level provided by
@@ -4318,11 +4315,8 @@ static void test_create_texture(void)
     hr = D3DX10CreateTextureFromMemory(device, dds_24bit_8_8, sizeof(dds_24bit_8_8), &load_info, NULL, &resource, &hr2);
     ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (img_info.Width)
-    {
-        check_image_info_values(&img_info, 8, 8, 1, 1, 4, 0, DXGI_FORMAT_R8G8B8A8_UNORM,
-                D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS, TRUE);
-    }
+    check_image_info_values(&img_info, 8, 8, 1, 1, 4, 0, DXGI_FORMAT_R8G8B8A8_UNORM,
+            D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS, FALSE);
 
     hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&tex_2d);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);

@@ -668,8 +668,6 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
         FIXME("load_info->Filter is ignored.\n");
     if (load_info->MipFilter != D3DX10_DEFAULT)
         FIXME("load_info->MipFilter is ignored.\n");
-    if (load_info->pSrcInfo)
-        FIXME("load_info->pSrcInfo is ignored.\n");
 
     *resource_data = NULL;
     hr = d3dx_image_init(data, size, &image, 0, D3DX_IMAGE_SUPPORT_DXT10);
@@ -764,6 +762,8 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
     load_info->Usage = D3D10_USAGE_DEFAULT;
     load_info->BindFlags = D3D10_BIND_SHADER_RESOURCE;
     load_info->MiscFlags = img_info.MiscFlags;
+    if (load_info->pSrcInfo)
+        *load_info->pSrcInfo = img_info;
 
     res_data = NULL;
 
