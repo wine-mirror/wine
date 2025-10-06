@@ -231,6 +231,7 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
     struct vulkan_instance *instance = device->physical_device->instance;
     VkImportMemoryHostPointerInfoEXT host_pointer_info, *pointer_info = NULL;
     VkExportMemoryWin32HandleInfoKHR export_win32 = {.dwAccess = GENERIC_ALL};
+    VkImportMemoryWin32HandleInfoKHR *import_win32 = NULL;
     VkExportMemoryAllocateInfo *export_info = NULL;
     VkDeviceMemory host_device_memory;
     struct device_memory *memory;
@@ -263,7 +264,7 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
             pointer_info = (VkImportMemoryHostPointerInfoEXT *)*next;
             break;
         case VK_STRUCTURE_TYPE_IMPORT_MEMORY_WIN32_HANDLE_INFO_KHR:
-            FIXME( "VK_STRUCTURE_TYPE_IMPORT_MEMORY_WIN32_HANDLE_INFO_KHR not implemented!\n" );
+            import_win32 = (VkImportMemoryWin32HandleInfoKHR *)*next;
             *next = (*next)->pNext; next = &prev;
             break;
         case VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO: break;
@@ -282,8 +283,39 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
         return res;
 
     if (!(memory = calloc( 1, sizeof(*memory) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+
+    if (import_win32)
+    {
+        switch (import_win32->handleType)
+        {
+        case VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT:
+        case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT:
+            memory->global = PtrToUlong( import_win32->handle );
+            memory->local = d3dkmt_open_resource( memory->global, NULL );
+            break;
+        case VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT:
+        case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT:
+        case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_HEAP_BIT:
+        case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT:
+            memory->local = d3dkmt_open_resource( 0, import_win32->handle );
+            break;
+        default:
+            FIXME( "Unsupported handle type %#x\n", import_win32->handleType );
+            break;
+        }
+
+        if (!memory->local)
+        {
+            free( memory );
+            return VK_ERROR_INVALID_EXTERNAL_HANDLE;
+        }
+
+        FIXME( "Importing memory handle not yet implemented!\n" );
+    }
+
     if ((res = device->p_vkAllocateMemory( device->host.device, alloc_info, NULL, &host_device_memory )))
     {
+        if (memory->local) d3dkmt_destroy_resource( memory->local );
         free( memory );
         return res;
     }
@@ -292,12 +324,8 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
     {
         FIXME( "Exporting memory handle not yet implemented!\n" );
 
-        if (!(memory->local = d3dkmt_create_resource( nt_shared ? NULL : &memory->global ))) goto failed;
-        if (nt_shared && !(memory->shared = create_shared_handle( memory->local, &export_win32 )))
-        {
-            d3dkmt_destroy_resource( memory->local );
-            goto failed;
-        }
+        if (!memory->local && !(memory->local = d3dkmt_create_resource( nt_shared ? NULL : &memory->global ))) goto failed;
+        if (nt_shared && !(memory->shared = create_shared_handle( memory->local, &export_win32 ))) goto failed;
     }
 
     vulkan_object_init( &memory->obj.obj, host_device_memory );
@@ -310,6 +338,7 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
 
 failed:
     device->p_vkFreeMemory( device->host.device, host_device_memory, NULL );
+    if (memory->local) d3dkmt_destroy_resource( memory->local );
     free( memory );
     return VK_ERROR_OUT_OF_HOST_MEMORY;
 }
@@ -378,14 +407,23 @@ static VkResult win32u_vkGetMemoryWin32HandleKHR( VkDevice client_device, const 
     }
 }
 
+static BOOL is_d3dkmt_global( D3DKMT_HANDLE handle )
+{
+    return (handle & 0xc0000000) && (handle & 0x3f) == 2;
+}
+
 static VkResult win32u_vkGetMemoryWin32HandlePropertiesKHR( VkDevice client_device, VkExternalMemoryHandleTypeFlagBits handle_type, HANDLE handle,
                                                             VkMemoryWin32HandlePropertiesKHR *handle_properties )
 {
+    static const UINT d3dkmt_type_bits = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT | VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT;
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
 
-    FIXME( "device %p, handle_type %#x, handle %p, handle_properties %p stub!\n", device, handle_type, handle, handle_properties );
+    TRACE( "device %p, handle_type %#x, handle %p, handle_properties %p\n", device, handle_type, handle, handle_properties );
 
-    return VK_ERROR_INCOMPATIBLE_DRIVER;
+    if (is_d3dkmt_global( HandleToULong( handle ) )) handle_properties->memoryTypeBits = d3dkmt_type_bits;
+    else handle_properties->memoryTypeBits = EXTERNAL_MEMORY_WIN32_BITS & ~d3dkmt_type_bits;
+
+    return VK_SUCCESS;
 }
 
 static VkResult win32u_vkMapMemory2KHR( VkDevice client_device, const VkMemoryMapInfoKHR *map_info, void **data )
@@ -607,6 +645,7 @@ static void win32u_vkGetPhysicalDeviceExternalBufferProperties( VkPhysicalDevice
 
     instance->p_vkGetPhysicalDeviceExternalBufferProperties( physical_device->host.physical_device, buffer_info, buffer_properties );
     buffer_properties->externalMemoryProperties.compatibleHandleTypes = handle_type;
+    buffer_properties->externalMemoryProperties.exportFromImportedHandleTypes = handle_type;
 }
 
 static VkResult win32u_vkCreateImage( VkDevice client_device, const VkImageCreateInfo *create_info,
@@ -729,6 +768,7 @@ static VkResult win32u_vkGetPhysicalDeviceImageFormatProperties2( VkPhysicalDevi
         {
             VkExternalImageFormatProperties *props = (VkExternalImageFormatProperties *)*next;
             props->externalMemoryProperties.compatibleHandleTypes = handle_type;
+            props->externalMemoryProperties.exportFromImportedHandleTypes = handle_type;
             break;
         }
         case VK_STRUCTURE_TYPE_FILTER_CUBIC_IMAGE_VIEW_IMAGE_FORMAT_PROPERTIES_EXT: break;

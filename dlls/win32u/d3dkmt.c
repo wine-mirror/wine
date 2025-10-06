@@ -1658,6 +1658,32 @@ failed:
     return 0;
 }
 
+/* open a D3DKMT global or shared resource */
+D3DKMT_HANDLE d3dkmt_open_resource( D3DKMT_HANDLE global, HANDLE shared )
+{
+    struct d3dkmt_object *allocation = NULL;
+    struct d3dkmt_resource *resource = NULL;
+    NTSTATUS status;
+    UINT dummy = 0;
+
+    TRACE( "global %#x, shared %p\n", global, shared );
+
+    if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) goto failed;
+    if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
+    if ((status = d3dkmt_object_open( &resource->obj, global, shared, NULL, &dummy ))) goto failed;
+
+    if ((status = alloc_object_handle( allocation ))) goto failed;
+    resource->allocation = allocation->local;
+
+    return resource->obj.local;
+
+failed:
+    WARN( "Failed to open resource, status %#x\n", status );
+    if (allocation) d3dkmt_object_free( allocation );
+    if (resource) d3dkmt_object_free( &resource->obj );
+    return 0;
+}
+
 /* destroy a locally opened D3DKMT resource */
 NTSTATUS d3dkmt_destroy_resource( D3DKMT_HANDLE local )
 {
