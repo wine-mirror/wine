@@ -69,6 +69,10 @@
 # include <mach/vm_map.h>
 #endif
 
+#if defined(HAVE_LIBHWLOC)
+# include <hwloc.h>
+#endif
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -1337,6 +1341,138 @@ static NTSTATUS create_logical_proc_info(void)
     logical_proc_info_add_group( lcpu_no, all_cpus_mask );
 
     return STATUS_SUCCESS;
+}
+
+#elif defined(HAVE_LIBHWLOC)
+
+static NTSTATUS add_hwloc_cache(hwloc_obj_t obj, int level)
+{
+    CACHE_DESCRIPTOR cache;
+
+    memset(&cache, 0, sizeof(cache));
+    cache.Level = level;
+    if (obj->attr)
+    {
+        cache.Associativity = obj->attr->cache.associativity;
+        cache.LineSize = obj->attr->cache.linesize;
+        cache.Size = obj->attr->cache.size;
+        switch (obj->attr->cache.type)
+        {
+        case HWLOC_OBJ_CACHE_UNIFIED:
+            cache.Type = CacheUnified;
+            break;
+        case HWLOC_OBJ_CACHE_DATA:
+            cache.Type = CacheData;
+            break;
+        case HWLOC_OBJ_CACHE_INSTRUCTION:
+            cache.Type = CacheInstruction;
+            break;
+        default:
+            break;
+        }
+    }
+    if (!logical_proc_info_add_cache(hwloc_bitmap_to_ulong(obj->cpuset), &cache))
+        return STATUS_NO_MEMORY;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS add_hwloc_numa_nodes(hwloc_topology_t topology)
+{
+    hwloc_obj_t obj;
+
+    for (obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_NUMANODE, 0); obj != NULL; obj = obj->next_cousin)
+    {
+        if (!logical_proc_info_add_numa_node(obj->logical_index, hwloc_bitmap_to_ulong(obj->cpuset)))
+            return STATUS_NO_MEMORY;
+    }
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS traverse_hwloc_topology(hwloc_obj_t obj)
+{
+    int i;
+    NTSTATUS nt_status = STATUS_SUCCESS;
+
+    switch (obj->type)
+    {
+    case HWLOC_OBJ_PACKAGE:
+        if (!logical_proc_info_add_by_id(RelationProcessorPackage, obj->logical_index, hwloc_bitmap_to_ulong(obj->cpuset)))
+            return STATUS_NO_MEMORY;
+        break;
+    case HWLOC_OBJ_CORE:
+        if (!logical_proc_info_add_by_id(RelationProcessorCore, obj->logical_index, hwloc_bitmap_to_ulong(obj->cpuset)))
+            return STATUS_NO_MEMORY;
+        break;
+    case HWLOC_OBJ_L1CACHE:
+    case HWLOC_OBJ_L1ICACHE:
+        nt_status = add_hwloc_cache(obj, 1);
+        break;
+    case HWLOC_OBJ_L2CACHE:
+    case HWLOC_OBJ_L2ICACHE:
+        nt_status = add_hwloc_cache(obj, 2);
+        break;
+    case HWLOC_OBJ_L3CACHE:
+    case HWLOC_OBJ_L3ICACHE:
+        nt_status = add_hwloc_cache(obj, 3);
+        break;
+    case HWLOC_OBJ_L4CACHE:
+        nt_status = add_hwloc_cache(obj, 4);
+        break;
+    case HWLOC_OBJ_L5CACHE:
+        nt_status = add_hwloc_cache(obj, 5);
+        break;
+    default:
+        break;
+    }
+
+    for (i = 0; i < obj->arity && nt_status == STATUS_SUCCESS; i++)
+        nt_status = traverse_hwloc_topology(obj->children[i]);
+    return nt_status;
+}
+
+static NTSTATUS create_logical_proc_info(void)
+{
+    NTSTATUS nt_status = STATUS_SUCCESS;
+    int ret;
+    hwloc_topology_t topology;
+    hwloc_obj_t root_obj;
+
+    ret = hwloc_topology_init(&topology);
+    if (ret != 0)
+        return STATUS_NO_MEMORY;
+
+    hwloc_topology_set_icache_types_filter(topology, HWLOC_TYPE_FILTER_KEEP_ALL);
+    ret = hwloc_topology_load(topology);
+    if (ret != 0)
+    {
+        nt_status = STATUS_NO_MEMORY;
+        goto end;
+    }
+
+    root_obj = hwloc_get_root_obj(topology);
+    if (root_obj == NULL)
+    {
+        nt_status = STATUS_NO_MEMORY;
+        goto end;
+    }
+
+    nt_status = traverse_hwloc_topology(root_obj);
+    if (nt_status != STATUS_SUCCESS)
+        goto end;
+
+    nt_status = add_hwloc_numa_nodes(topology);
+    if (nt_status != STATUS_SUCCESS)
+        goto end;
+
+    if (!logical_proc_info_add_group(hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU), hwloc_bitmap_to_ulong(root_obj->cpuset)))
+    {
+        nt_status = STATUS_NO_MEMORY;
+        goto end;
+    }
+
+end:
+    hwloc_topology_destroy(topology);
+    return nt_status;
 }
 
 #else

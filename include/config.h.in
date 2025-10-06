@@ -138,6 +138,9 @@
 /* Define to 1 if you have the 'gettextpo' library (-lgettextpo). */
 #undef HAVE_LIBGETTEXTPO
 
+/* Define to 1 if you have the 'hwloc' library (-lhwloc). */
+#undef HAVE_LIBHWLOC
+
 /* Define to 1 if you have the 'procstat' library (-lprocstat). */
 #undef HAVE_LIBPROCSTAT
 

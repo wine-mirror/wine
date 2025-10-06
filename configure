@@ -690,6 +690,8 @@ USB_LIBS
 USB_CFLAGS
 SANE_LIBS
 SANE_CFLAGS
+HWLOC_LIBS
+HWLOC_CFLAGS
 GNUTLS_LIBS
 GNUTLS_CFLAGS
 DBUS_LIBS
@@ -936,6 +938,7 @@ with_gphoto
 with_gnutls
 with_gssapi
 with_gstreamer
+with_hwloc
 with_inotify
 with_krb5
 with_mingw
@@ -1859,6 +1862,8 @@ DBUS_CFLAGS
 DBUS_LIBS
 GNUTLS_CFLAGS
 GNUTLS_LIBS
+HWLOC_CFLAGS
+HWLOC_LIBS
 SANE_CFLAGS
 SANE_LIBS
 USB_CFLAGS
@@ -2554,6 +2559,7 @@ Optional Packages:
   --without-gnutls        do not use GnuTLS (schannel support)
   --without-gssapi        do not use GSSAPI (Kerberos SSP support)
   --without-gstreamer     do not use GStreamer (codecs support)
+  --without-hwloc         do not use hwloc (CPU/cache topology detection)
   --without-inotify       do not use inotify (filesystem change notifications)
   --without-krb5          do not use krb5 (Kerberos)
   --without-mingw         do not use the MinGW cross-compiler
@@ -2712,6 +2718,9 @@ Some influential environment variables:
   GNUTLS_CFLAGS
               C compiler flags for gnutls, overriding pkg-config
   GNUTLS_LIBS Linker flags for gnutls, overriding pkg-config
+  HWLOC_CFLAGS
+              C compiler flags for hwloc, overriding pkg-config
+  HWLOC_LIBS  Linker flags for hwloc, overriding pkg-config
   SANE_CFLAGS C compiler flags for sane-backends, overriding pkg-config
   SANE_LIBS   Linker flags for sane-backends, overriding pkg-config
   USB_CFLAGS  C compiler flags for libusb-1.0, overriding pkg-config
@@ -4450,6 +4459,13 @@ fi
 if test ${with_gstreamer+y}
 then :
   withval=$with_gstreamer;
+fi
+
+
+# Check whether --with-hwloc was given.
+if test ${with_hwloc+y}
+then :
+  withval=$with_hwloc;
 fi
 
 
@@ -17094,6 +17110,110 @@ esac
 
 fi
 
+if test "x$with_hwloc" != "xno" -a `expr "$host_os" : '\(freebsd\).*'` = "freebsd"
+then
+    rm -f conftest.err
+if ${HWLOC_CFLAGS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  HWLOC_CFLAGS=`$PKG_CONFIG --cflags hwloc 2>conftest.err`
+fi
+fi
+
+if ${HWLOC_LIBS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  HWLOC_LIBS=`$PKG_CONFIG --libs hwloc 2>/dev/null`
+fi
+fi
+
+
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: hwloc cflags: $HWLOC_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: hwloc libs: $HWLOC_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: hwloc errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $HWLOC_CFLAGS"
+ac_fn_c_check_header_compile "$LINENO" "hwloc.h" "ac_cv_header_hwloc_h" "$ac_includes_default"
+if test "x$ac_cv_header_hwloc_h" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for hwloc_topology_init in -lhwloc" >&5
+printf %s "checking for hwloc_topology_init in -lhwloc... " >&6; }
+if test ${ac_cv_lib_hwloc_hwloc_topology_init+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lhwloc $HWLOC_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char hwloc_topology_init (void);
+int
+main (void)
+{
+return hwloc_topology_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_hwloc_hwloc_topology_init=yes
+else case e in #(
+  e) ac_cv_lib_hwloc_hwloc_topology_init=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_hwloc_hwloc_topology_init" >&5
+printf "%s\n" "$ac_cv_lib_hwloc_hwloc_topology_init" >&6; }
+if test "x$ac_cv_lib_hwloc_hwloc_topology_init" = xyes
+then :
+
+printf "%s\n" "#define HAVE_LIBHWLOC 1" >>confdefs.h
+
+else case e in #(
+  e) HWLOC_LIBS="" ;;
+esac
+fi
+
+else case e in #(
+  e) HWLOC_LIBS="" ;;
+esac
+fi
+
+CPPFLAGS=$ac_save_CPPFLAGS
+
+    if test "$ac_cv_lib_hwloc_hwloc_topology_init" != "yes"
+then :
+  case "x$with_hwloc" in
+  x)   as_fn_append wine_notices "|hwloc ${notice_platform}development files not found, detailed CPU info on FreeBSD won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "hwloc ${notice_platform}development files not found, detailed CPU info on FreeBSD won't be supported.
+This is an error since --with-hwloc was requested." "$LINENO" 5 ;;
+esac
+
+fi
+fi
+
 if test "x$with_sane" != "xno"
 then
     rm -f conftest.err
@@ -24374,6 +24494,8 @@ DBUS_CFLAGS = $DBUS_CFLAGS
 DBUS_LIBS = $DBUS_LIBS
 GNUTLS_CFLAGS = $GNUTLS_CFLAGS
 GNUTLS_LIBS = $GNUTLS_LIBS
+HWLOC_CFLAGS = $HWLOC_CFLAGS
+HWLOC_LIBS = $HWLOC_LIBS
 SANE_CFLAGS = $SANE_CFLAGS
 SANE_LIBS = $SANE_LIBS
 USB_CFLAGS = $USB_CFLAGS

@@ -40,6 +40,7 @@ AC_ARG_WITH(gphoto,    AS_HELP_STRING([--without-gphoto],[do not use gphoto (Dig
 AC_ARG_WITH(gnutls,    AS_HELP_STRING([--without-gnutls],[do not use GnuTLS (schannel support)]))
 AC_ARG_WITH(gssapi,    AS_HELP_STRING([--without-gssapi],[do not use GSSAPI (Kerberos SSP support)]))
 AC_ARG_WITH(gstreamer, AS_HELP_STRING([--without-gstreamer],[do not use GStreamer (codecs support)]))
+AC_ARG_WITH(hwloc,     AS_HELP_STRING([--without-hwloc],[do not use hwloc (CPU/cache topology detection on FreeBSD)]))
 AC_ARG_WITH(inotify,   AS_HELP_STRING([--without-inotify],[do not use inotify (filesystem change notifications)]))
 AC_ARG_WITH(krb5,      AS_HELP_STRING([--without-krb5],[do not use krb5 (Kerberos)]))
 AC_ARG_WITH(mingw,     AS_HELP_STRING([--without-mingw],[do not use the MinGW cross-compiler]))
@@ -1518,6 +1519,20 @@ then
 fi
 WINE_WARNING_WITH(gnutls,[test "x$ac_cv_lib_soname_gnutls" = "x"],
                  [libgnutls ${notice_platform}development files not found, no schannel support.])
+
+dnl **** Check for hwloc ***
+if test "x$with_hwloc" != "xno" -a `expr "$host_os" : '\(freebsd\).*'` = "freebsd"
+then
+    WINE_PACKAGE_FLAGS(HWLOC,[hwloc],,,,
+        [AC_CHECK_HEADER([hwloc.h],
+            [AC_CHECK_LIB(hwloc,hwloc_topology_init,
+                [AC_DEFINE(HAVE_LIBHWLOC, 1, [Define to 1 if you have the 'hwloc' library (-lhwloc).])],
+                [HWLOC_LIBS=""],
+                [$HWLOC_LIBS])],
+            [HWLOC_LIBS=""])])
+    WINE_NOTICE_WITH(hwloc,[test "$ac_cv_lib_hwloc_hwloc_topology_init" != "yes"],
+                     [hwloc ${notice_platform}development files not found, detailed CPU info on FreeBSD won't be supported.])
+fi
 
 dnl **** Check for SANE ****
 if test "x$with_sane" != "xno"
