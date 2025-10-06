@@ -179,6 +179,10 @@ struct strarray
 
 static const struct strarray empty_strarray;
 
+#define STRARRAY_FOR_EACH(cursor,array) \
+    for (const char **__p = (array)->str, *cursor = NULL; \
+         __p - (array)->str < (array)->count && (cursor = *__p, 1); __p++)
+
 static inline void strarray_add( struct strarray *array, const char *str )
 {
     if (array->count == array->size)
@@ -192,16 +196,12 @@ static inline void strarray_add( struct strarray *array, const char *str )
 
 static inline void strarray_addall( struct strarray *array, struct strarray added )
 {
-    unsigned int i;
-
-    for (i = 0; i < added.count; i++) strarray_add( array, added.str[i] );
+    STRARRAY_FOR_EACH( ptr, &added ) strarray_add( array, ptr );
 }
 
 static inline bool strarray_exists( struct strarray array, const char *str )
 {
-    unsigned int i;
-
-    for (i = 0; i < array.count; i++) if (!strcmp( array.str[i], str )) return true;
+    STRARRAY_FOR_EACH( ptr, &array ) if (!strcmp( ptr, str )) return true;
     return false;
 }
 
@@ -212,9 +212,7 @@ static inline void strarray_add_uniq( struct strarray *array, const char *str )
 
 static inline void strarray_addall_uniq( struct strarray *array, struct strarray added )
 {
-    unsigned int i;
-
-    for (i = 0; i < added.count; i++) strarray_add_uniq( array, added.str[i] );
+    STRARRAY_FOR_EACH( ptr, &added ) strarray_add_uniq( array, ptr );
 }
 
 static inline struct strarray strarray_fromstring( const char *str, const char *delim )
@@ -245,7 +243,7 @@ static inline char *strarray_tostring( struct strarray array, const char *sep )
     unsigned int i, len = 1 + (array.count - 1) * strlen(sep);
 
     if (!array.count) return xstrdup("");
-    for (i = 0; i < array.count; i++) len += strlen( array.str[i] );
+    STRARRAY_FOR_EACH( str, &array ) len += strlen( str );
     str = xmalloc( len );
     strcpy( str, array.str[0] );
     for (i = 1; i < array.count; i++)
@@ -441,9 +439,7 @@ static inline char *make_temp_file( const char *prefix, const char *suffix )
 
 static inline void remove_temp_files(void)
 {
-    unsigned int i;
-
-    for (i = 0; i < temp_files.count; i++) if (temp_files.str[i]) unlink( temp_files.str[i] );
+    STRARRAY_FOR_EACH( file, &temp_files ) if (file) unlink( file );
     if (temp_dir) rmdir( temp_dir );
 }
 
