@@ -62,7 +62,7 @@ static char *wpp_lookup(const char *name, int type, const char *parent_name)
     char *cptr;
     char *path;
     const char *ccptr;
-    int i, fd;
+    int fd;
 
     cpy = xmalloc(strlen(name)+1);
     cptr = cpy;
@@ -96,9 +96,9 @@ static char *wpp_lookup(const char *name, int type, const char *parent_name)
         free( path );
     }
     /* Search -I path */
-    for(i = 0; i < includes.count; i++)
+    STRARRAY_FOR_EACH( incl, &includes )
     {
-        path = strmake("%s/%s", includes.str[i], cpy);
+        path = strmake("%s/%s", incl, cpy);
         fd = open( path, O_RDONLY );
         if (fd != -1)
         {
