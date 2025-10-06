@@ -58,6 +58,9 @@ struct device_memory
     struct vulkan_device_memory obj;
     VkDeviceSize size;
     void *vm_map;
+
+    D3DKMT_HANDLE local;
+    D3DKMT_HANDLE global;
 };
 
 static inline struct device_memory *device_memory_from_handle( VkDeviceMemory handle )
@@ -239,11 +242,18 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
         (res = allocate_external_host_memory( device, alloc_info, mem_flags, &host_pointer_info )))
         return res;
 
-    if (!(memory = malloc( sizeof(*memory) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    if (!(memory = calloc( 1, sizeof(*memory) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
     if ((res = device->p_vkAllocateMemory( device->host.device, alloc_info, NULL, &host_device_memory )))
     {
         free( memory );
         return res;
+    }
+
+    if (export_info)
+    {
+        FIXME( "Exporting memory handle not yet implemented!\n" );
+
+        if (!(memory->local = d3dkmt_create_resource( &memory->global ))) goto failed;
     }
 
     vulkan_object_init( &memory->obj.obj, host_device_memory );
@@ -253,6 +263,11 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
 
     *ret = memory->obj.client.device_memory;
     return VK_SUCCESS;
+
+failed:
+    device->p_vkFreeMemory( device->host.device, host_device_memory, NULL );
+    free( memory );
+    return VK_ERROR_OUT_OF_HOST_MEMORY;
 }
 
 static void win32u_vkFreeMemory( VkDevice client_device, VkDeviceMemory client_memory, const VkAllocationCallbacks *allocator )
@@ -285,16 +300,29 @@ static void win32u_vkFreeMemory( VkDevice client_device, VkDeviceMemory client_m
         NtFreeVirtualMemory( GetCurrentProcess(), &memory->vm_map, &alloc_size, MEM_RELEASE );
     }
 
+    if (memory->local) d3dkmt_destroy_resource( memory->local );
     free( memory );
 }
 
 static VkResult win32u_vkGetMemoryWin32HandleKHR( VkDevice client_device, const VkMemoryGetWin32HandleInfoKHR *handle_info, HANDLE *handle )
 {
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
+    struct device_memory *memory = device_memory_from_handle( handle_info->memory );
 
-    FIXME( "device %p, handle_info %p, handle %p stub!\n", device, handle_info, handle );
+    TRACE( "device %p, handle_info %p, handle %p\n", device, handle_info, handle );
 
-    return VK_ERROR_INCOMPATIBLE_DRIVER;
+    switch (handle_info->handleType)
+    {
+    case VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT:
+    case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT:
+        TRACE( "Returning global D3DKMT handle %#x\n", memory->global );
+        *handle = UlongToPtr( memory->global );
+        return VK_SUCCESS;
+
+    default:
+        FIXME( "Unsupported handle type %#x\n", handle_info->handleType );
+        return VK_ERROR_INCOMPATIBLE_DRIVER;
+    }
 }
 
 static VkResult win32u_vkGetMemoryWin32HandlePropertiesKHR( VkDevice client_device, VkExternalMemoryHandleTypeFlagBits handle_type, HANDLE handle,

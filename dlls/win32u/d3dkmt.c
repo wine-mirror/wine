@@ -1631,3 +1631,44 @@ NTSTATUS WINAPI NtGdiDdDDIDestroySynchronizationObject( const D3DKMT_DESTROYSYNC
 
     return STATUS_SUCCESS;
 }
+
+/* create a D3DKMT global or shared resource */
+D3DKMT_HANDLE d3dkmt_create_resource( D3DKMT_HANDLE *global )
+{
+    struct d3dkmt_resource *resource = NULL;
+    struct d3dkmt_object *allocation = NULL;
+    NTSTATUS status;
+
+    TRACE( "global %p\n", global );
+
+    if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) goto failed;
+    if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
+    if ((status = d3dkmt_object_create( &resource->obj, !global, NULL, 0 ))) goto failed;
+
+    if ((status = alloc_object_handle( allocation ))) goto failed;
+    resource->allocation = allocation->local;
+
+    if (global) *global = resource->obj.global;
+    return resource->obj.local;
+
+failed:
+    WARN( "Failed to create resource, status %#x\n", status );
+    if (allocation) d3dkmt_object_free( allocation );
+    if (resource) d3dkmt_object_free( &resource->obj );
+    return 0;
+}
+
+/* destroy a locally opened D3DKMT resource */
+NTSTATUS d3dkmt_destroy_resource( D3DKMT_HANDLE local )
+{
+    struct d3dkmt_resource *resource;
+    struct d3dkmt_object *allocation;
+
+    TRACE( "local %#x\n", local );
+
+    if (!(resource = get_d3dkmt_object( local, D3DKMT_RESOURCE ))) return STATUS_INVALID_PARAMETER;
+    if ((allocation = get_d3dkmt_object( resource->allocation, D3DKMT_RESOURCE ))) d3dkmt_object_free( allocation );
+    d3dkmt_object_free( &resource->obj );
+
+    return STATUS_SUCCESS;
+}

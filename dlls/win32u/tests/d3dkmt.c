@@ -455,7 +455,7 @@ static void get_d3dkmt_resource_desc( LUID luid, HANDLE handle, BOOL expect_glob
     D3DKMT_HANDLE resource;
     NTSTATUS status;
 
-    todo_wine ok_ptr( handle, !=, NULL );
+    todo_wine_if( !expect_global ) ok_ptr( handle, !=, NULL );
     if (!handle) return;
 
     open_adapter.AdapterLuid = luid;
@@ -480,7 +480,7 @@ static void get_d3dkmt_resource_desc( LUID luid, HANDLE handle, BOOL expect_glob
         status = D3DKMTQueryResourceInfo( &query );
         ok_nt( STATUS_SUCCESS, status );
         if (size) ok_u4( query.PrivateRuntimeDataSize, ==, size );
-        else todo_wine ok( query.PrivateRuntimeDataSize == 0 || query.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", query.PrivateRuntimeDataSize );
+        else ok( query.PrivateRuntimeDataSize == 0 || query.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", query.PrivateRuntimeDataSize );
         ok_u4( query.TotalPrivateDriverDataSize, <, sizeof(driver_data) );
         ok_u4( query.ResourcePrivateDriverDataSize, <, sizeof(driver_data) );
         ok_u4( query.NumAllocations, ==, 1 );
@@ -501,7 +501,7 @@ static void get_d3dkmt_resource_desc( LUID luid, HANDLE handle, BOOL expect_glob
         ok_nt( STATUS_SUCCESS, status );
         check_d3dkmt_local( open.hResource, NULL );
         if (size) ok_u4( open.PrivateRuntimeDataSize, ==, size );
-        else todo_wine ok( open.PrivateRuntimeDataSize == 0 || open.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", open.PrivateRuntimeDataSize );
+        else ok( open.PrivateRuntimeDataSize == 0 || open.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", open.PrivateRuntimeDataSize );
         ok_u4( open.TotalPrivateDriverDataBufferSize, <, sizeof(driver_data) );
         ok_u4( open.ResourcePrivateDriverDataSize, <, sizeof(driver_data) );
         ok_u4( open.NumAllocations, ==, 1 );
@@ -519,7 +519,7 @@ static void get_d3dkmt_resource_desc( LUID luid, HANDLE handle, BOOL expect_glob
         status = D3DKMTQueryResourceInfoFromNtHandle( &query_nt );
         ok_nt( STATUS_SUCCESS, status );
         if (size) ok_u4( query_nt.PrivateRuntimeDataSize, ==, size );
-        else todo_wine ok( query_nt.PrivateRuntimeDataSize == 0 || query_nt.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", query_nt.PrivateRuntimeDataSize );
+        else ok( query_nt.PrivateRuntimeDataSize == 0 || query_nt.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", query_nt.PrivateRuntimeDataSize );
         ok_u4( query_nt.TotalPrivateDriverDataSize, <, sizeof(driver_data) );
         ok_u4( query_nt.ResourcePrivateDriverDataSize, <, sizeof(driver_data) );
         ok_u4( query_nt.NumAllocations, ==, 1 );
@@ -540,7 +540,7 @@ static void get_d3dkmt_resource_desc( LUID luid, HANDLE handle, BOOL expect_glob
         ok_nt( STATUS_SUCCESS, status );
         check_d3dkmt_local( open_nt.hResource, NULL );
         if (size) ok_u4( open_nt.PrivateRuntimeDataSize, ==, size );
-        else todo_wine ok( open_nt.PrivateRuntimeDataSize == 0 || open_nt.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", open_nt.PrivateRuntimeDataSize );
+        else ok( open_nt.PrivateRuntimeDataSize == 0 || open_nt.PrivateRuntimeDataSize == 0x68 /* NVIDIA */, "got %#x\n", open_nt.PrivateRuntimeDataSize );
         ok_u4( open_nt.TotalPrivateDriverDataBufferSize, <, sizeof(driver_data) );
         ok_u4( open_nt.ResourcePrivateDriverDataSize, <, sizeof(driver_data) );
         ok_u4( open_nt.NumAllocations, ==, 1 );
@@ -3488,7 +3488,7 @@ static struct vulkan_buffer *export_vulkan_buffer( struct vulkan_device *dev, UI
     get_handle_info.memory = buf->memory;
     get_handle_info.handleType = handle_type;
     vr = p_vkGetMemoryWin32HandleKHR( dev->device, &get_handle_info, handle );
-    todo_wine ok_vk( VK_SUCCESS, vr );
+    todo_wine_if( handle_type != VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT ) ok_vk( VK_SUCCESS, vr );
 
     return buf;
 }
@@ -3630,7 +3630,7 @@ static struct vulkan_image *export_vulkan_image( struct vulkan_device *dev, UINT
     get_handle_info.memory = img->memory;
     get_handle_info.handleType = handle_type;
     vr = p_vkGetMemoryWin32HandleKHR( dev->device, &get_handle_info, handle );
-    todo_wine ok_vk( VK_SUCCESS, vr );
+    todo_wine_if( handle_type != VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT ) ok_vk( VK_SUCCESS, vr );
 
     return img;
 }

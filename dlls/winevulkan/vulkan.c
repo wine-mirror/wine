@@ -1761,32 +1761,42 @@ void wine_vkDestroyDeferredOperationKHR(VkDevice device_handle,
     free(object);
 }
 
+static NTSTATUS is_available_instance_function(VkInstance handle, const char *name)
+{
+    struct wine_instance *instance = wine_instance_from_handle(handle);
+
+    if (!strcmp(name, "vkCreateWin32SurfaceKHR"))
+        return instance->enable_win32_surface;
+    if (!strcmp(name, "vkGetPhysicalDeviceWin32PresentationSupportKHR"))
+        return instance->enable_win32_surface;
+
+    return !!vk_funcs->p_vkGetInstanceProcAddr(instance->obj.host.instance, name);
+}
+
+static NTSTATUS is_available_device_function(VkDevice handle, const char *name)
+{
+    struct wine_device *device = wine_device_from_handle(handle);
+
+    if (!strcmp(name, "vkGetMemoryWin32HandleKHR"))
+        return device->has_external_memory_win32;
+    if (!strcmp(name, "vkGetMemoryWin32HandlePropertiesKHR"))
+        return device->has_external_memory_win32;
+
+    return !!vk_funcs->p_vkGetDeviceProcAddr(device->obj.host.device, name);
+}
+
 #ifdef _WIN64
 
 NTSTATUS vk_is_available_instance_function(void *arg)
 {
     struct is_available_instance_function_params *params = arg;
-    struct wine_instance *instance = wine_instance_from_handle(params->instance);
-
-    if (!strcmp(params->name, "vkCreateWin32SurfaceKHR"))
-        return instance->enable_win32_surface;
-    if (!strcmp(params->name, "vkGetPhysicalDeviceWin32PresentationSupportKHR"))
-        return instance->enable_win32_surface;
-
-    return !!vk_funcs->p_vkGetInstanceProcAddr(instance->obj.host.instance, params->name);
+    return is_available_instance_function(params->instance, params->name);
 }
 
 NTSTATUS vk_is_available_device_function(void *arg)
 {
     struct is_available_device_function_params *params = arg;
-    struct wine_device *device = wine_device_from_handle(params->device);
-
-    if (!strcmp(params->name, "vkGetMemoryWin32HandleKHR"))
-        return device->has_external_memory_win32;
-    if (!strcmp(params->name, "vkGetMemoryWin32HandlePropertiesKHR"))
-        return device->has_external_memory_win32;
-
-    return !!vk_funcs->p_vkGetDeviceProcAddr(device->obj.host.device, params->name);
+    return is_available_device_function(params->device, params->name);
 }
 
 #endif /* _WIN64 */
@@ -1798,15 +1808,7 @@ NTSTATUS vk_is_available_instance_function32(void *arg)
         UINT32 instance;
         UINT32 name;
     } *params = arg;
-    struct wine_instance *instance = wine_instance_from_handle(UlongToPtr(params->instance));
-    const char *name = UlongToPtr(params->name);
-
-    if (!strcmp(name, "vkCreateWin32SurfaceKHR"))
-        return instance->enable_win32_surface;
-    if (!strcmp(name, "vkGetPhysicalDeviceWin32PresentationSupportKHR"))
-        return instance->enable_win32_surface;
-
-    return !!vk_funcs->p_vkGetInstanceProcAddr(instance->obj.host.instance, name);
+    return is_available_instance_function(UlongToPtr(params->instance), UlongToPtr(params->name));
 }
 
 NTSTATUS vk_is_available_device_function32(void *arg)
@@ -1816,13 +1818,5 @@ NTSTATUS vk_is_available_device_function32(void *arg)
         UINT32 device;
         UINT32 name;
     } *params = arg;
-    struct wine_device *device = wine_device_from_handle(UlongToPtr(params->device));
-    const char *name = UlongToPtr(params->name);
-
-    if (!strcmp(name, "vkGetMemoryWin32HandleKHR"))
-        return device->has_external_memory_win32;
-    if (!strcmp(name, "vkGetMemoryWin32HandlePropertiesKHR"))
-        return device->has_external_memory_win32;
-
-    return !!vk_funcs->p_vkGetDeviceProcAddr(device->obj.host.device, name);
+    return is_available_device_function(UlongToPtr(params->device), UlongToPtr(params->name));
 }
