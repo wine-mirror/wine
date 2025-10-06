@@ -306,6 +306,7 @@ DECL_HANDLER(set_keyboard_repeat);
 DECL_HANDLER(get_inproc_sync_fd);
 DECL_HANDLER(get_inproc_alert_fd);
 DECL_HANDLER(d3dkmt_object_create);
+DECL_HANDLER(d3dkmt_object_update);
 DECL_HANDLER(d3dkmt_object_query);
 DECL_HANDLER(d3dkmt_object_open);
 DECL_HANDLER(d3dkmt_share_objects);
@@ -613,6 +614,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_inproc_sync_fd,
     (req_handler)req_get_inproc_alert_fd,
     (req_handler)req_d3dkmt_object_create,
+    (req_handler)req_d3dkmt_object_update,
     (req_handler)req_d3dkmt_object_query,
     (req_handler)req_d3dkmt_object_open,
     (req_handler)req_d3dkmt_share_objects,
@@ -2312,6 +2314,10 @@ C_ASSERT( sizeof(struct d3dkmt_object_create_request) == 16 );
 C_ASSERT( offsetof(struct d3dkmt_object_create_reply, global) == 8 );
 C_ASSERT( offsetof(struct d3dkmt_object_create_reply, handle) == 12 );
 C_ASSERT( sizeof(struct d3dkmt_object_create_reply) == 16 );
+C_ASSERT( offsetof(struct d3dkmt_object_update_request, type) == 12 );
+C_ASSERT( offsetof(struct d3dkmt_object_update_request, global) == 16 );
+C_ASSERT( offsetof(struct d3dkmt_object_update_request, handle) == 20 );
+C_ASSERT( sizeof(struct d3dkmt_object_update_request) == 24 );
 C_ASSERT( offsetof(struct d3dkmt_object_query_request, type) == 12 );
 C_ASSERT( offsetof(struct d3dkmt_object_query_request, global) == 16 );
 C_ASSERT( offsetof(struct d3dkmt_object_query_request, handle) == 20 );
