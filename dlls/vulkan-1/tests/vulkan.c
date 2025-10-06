@@ -1154,8 +1154,8 @@ static void import_memory(VkDevice vk_device, VkMemoryAllocateInfo alloc_info, V
         import_handle_info.name = L"wine_test_buffer_export_name";
 
         vr = vkAllocateMemory(vk_device, &alloc_info, NULL, &memory);
-        todo_wine ok(vr == VK_SUCCESS, "vkAllocateMemory failed, VkResult %d.\n", vr);
-        if (vr == VK_SUCCESS) vkFreeMemory(vk_device, memory, NULL);
+        ok(vr == VK_SUCCESS, "vkAllocateMemory failed, VkResult %d.\n", vr);
+        vkFreeMemory(vk_device, memory, NULL);
     }
 }
 

@@ -221,6 +221,24 @@ static HANDLE create_shared_handle( D3DKMT_HANDLE local, const VkExportMemoryWin
     return NULL;
 }
 
+static HANDLE open_shared_handle_from_name( const WCHAR *name )
+{
+    D3DKMT_OPENNTHANDLEFROMNAME open_name = {0};
+    WCHAR bufferW[MAX_PATH * 2];
+    UNICODE_STRING name_str = {.Buffer = bufferW};
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
+    init_shared_resource_path( name, &name_str );
+    InitializeObjectAttributes( &attr, &name_str, OBJ_OPENIF, NULL, NULL );
+
+    open_name.dwDesiredAccess = GENERIC_ALL;
+    open_name.pObjAttrib = &attr;
+    status = NtGdiDdDDIOpenNtHandleFromName( &open_name );
+    if (status) WARN( "Failed to open %s, status %#x\n", debugstr_w( name ), status );
+    return open_name.hNtHandle;
+}
+
 static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryAllocateInfo *client_alloc_info,
                                          const VkAllocationCallbacks *allocator, VkDeviceMemory *ret )
 {
@@ -297,8 +315,13 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
         case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT:
         case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_HEAP_BIT:
         case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT:
-            memory->local = d3dkmt_open_resource( 0, import_win32->handle );
+        {
+            HANDLE shared = import_win32->handle;
+            if (import_win32->name && !(shared = open_shared_handle_from_name( import_win32->name ))) break;
+            memory->local = d3dkmt_open_resource( 0, shared );
+            if (shared && shared != import_win32->handle) NtClose( shared );
             break;
+        }
         default:
             FIXME( "Unsupported handle type %#x\n", import_win32->handleType );
             break;
