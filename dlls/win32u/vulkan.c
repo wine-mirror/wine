@@ -61,6 +61,7 @@ struct device_memory
 
     D3DKMT_HANDLE local;
     D3DKMT_HANDLE global;
+    HANDLE shared;
 };
 
 static inline struct device_memory *device_memory_from_handle( VkDeviceMemory handle )
@@ -188,6 +189,38 @@ static VkExternalMemoryHandleTypeFlagBits get_host_external_memory_type(void)
     return 0;
 }
 
+static void init_shared_resource_path( const WCHAR *name, UNICODE_STRING *str )
+{
+    UINT len = wcslen( name );
+    char buffer[MAX_PATH];
+
+    snprintf( buffer, ARRAY_SIZE(buffer), "\\Sessions\\%u\\BaseNamedObjects\\",
+              NtCurrentTeb()->Peb->SessionId );
+    str->MaximumLength = asciiz_to_unicode( str->Buffer, buffer );
+    str->Length = str->MaximumLength - sizeof(WCHAR);
+
+    memcpy( str->Buffer + str->Length / sizeof(WCHAR), name, (len + 1) * sizeof(WCHAR) );
+    str->MaximumLength += len;
+    str->Length += len;
+}
+
+static HANDLE create_shared_handle( D3DKMT_HANDLE local, const VkExportMemoryWin32HandleInfoKHR *info )
+{
+    SECURITY_DESCRIPTOR *security = info->pAttributes ? info->pAttributes->lpSecurityDescriptor : NULL;
+    WCHAR bufferW[MAX_PATH * 2];
+    UNICODE_STRING name = {.Buffer = bufferW};
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+    HANDLE shared;
+
+    if (info->name) init_shared_resource_path( info->name, &name );
+    InitializeObjectAttributes( &attr, info->name ? &name : NULL, OBJ_CASE_INSENSITIVE, security, NULL );
+
+    if (!(status = NtGdiDdDDIShareObjects( 1, &local, &attr, info->dwAccess, &shared ))) return shared;
+    WARN( "Failed to share resource %#x, status %#x\n", local, status );
+    return NULL;
+}
+
 static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryAllocateInfo *client_alloc_info,
                                          const VkAllocationCallbacks *allocator, VkDeviceMemory *ret )
 {
@@ -197,9 +230,11 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
     struct vulkan_physical_device *physical_device = device->physical_device;
     struct vulkan_instance *instance = device->physical_device->instance;
     VkImportMemoryHostPointerInfoEXT host_pointer_info, *pointer_info = NULL;
+    VkExportMemoryWin32HandleInfoKHR export_win32 = {.dwAccess = GENERIC_ALL};
     VkExportMemoryAllocateInfo *export_info = NULL;
     VkDeviceMemory host_device_memory;
     struct device_memory *memory;
+    BOOL nt_shared = FALSE;
     uint32_t mem_flags;
     void *mapping = NULL;
     VkResult res;
@@ -214,10 +249,14 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
             if (!(export_info->handleTypes & EXTERNAL_MEMORY_WIN32_BITS))
                 FIXME( "Unsupported handle types %#x\n", export_info->handleTypes );
             else
+            {
+                nt_shared = !(export_info->handleTypes & (VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT |
+                                                          VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT));
                 export_info->handleTypes = get_host_external_memory_type();
+            }
             break;
         case VK_STRUCTURE_TYPE_EXPORT_MEMORY_WIN32_HANDLE_INFO_KHR:
-            FIXME( "VK_STRUCTURE_TYPE_EXPORT_MEMORY_WIN32_HANDLE_INFO_KHR not implemented!\n" );
+            export_win32 = *(VkExportMemoryWin32HandleInfoKHR *)*next;
             *next = (*next)->pNext; next = &prev;
             break;
         case VK_STRUCTURE_TYPE_IMPORT_MEMORY_HOST_POINTER_INFO_EXT:
@@ -253,7 +292,12 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
     {
         FIXME( "Exporting memory handle not yet implemented!\n" );
 
-        if (!(memory->local = d3dkmt_create_resource( &memory->global ))) goto failed;
+        if (!(memory->local = d3dkmt_create_resource( nt_shared ? NULL : &memory->global ))) goto failed;
+        if (nt_shared && !(memory->shared = create_shared_handle( memory->local, &export_win32 )))
+        {
+            d3dkmt_destroy_resource( memory->local );
+            goto failed;
+        }
     }
 
     vulkan_object_init( &memory->obj.obj, host_device_memory );
@@ -300,6 +344,7 @@ static void win32u_vkFreeMemory( VkDevice client_device, VkDeviceMemory client_m
         NtFreeVirtualMemory( GetCurrentProcess(), &memory->vm_map, &alloc_size, MEM_RELEASE );
     }
 
+    if (memory->shared) NtClose( memory->shared );
     if (memory->local) d3dkmt_destroy_resource( memory->local );
     free( memory );
 }
@@ -317,6 +362,14 @@ static VkResult win32u_vkGetMemoryWin32HandleKHR( VkDevice client_device, const 
     case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT:
         TRACE( "Returning global D3DKMT handle %#x\n", memory->global );
         *handle = UlongToPtr( memory->global );
+        return VK_SUCCESS;
+
+    case VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT:
+    case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT:
+    case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_HEAP_BIT:
+    case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT:
+        NtDuplicateObject( NtCurrentProcess(), memory->shared, NtCurrentProcess(), handle, 0, 0, DUPLICATE_SAME_ATTRIBUTES | DUPLICATE_SAME_ACCESS );
+        TRACE( "Returning NT shared handle %p -> %p\n", memory->shared, *handle );
         return VK_SUCCESS;
 
     default:

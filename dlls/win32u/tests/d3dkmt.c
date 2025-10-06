@@ -455,8 +455,7 @@ static void get_d3dkmt_resource_desc( LUID luid, HANDLE handle, BOOL expect_glob
     D3DKMT_HANDLE resource;
     NTSTATUS status;
 
-    todo_wine_if( !expect_global ) ok_ptr( handle, !=, NULL );
-    if (!handle) return;
+    ok_ptr( handle, !=, NULL );
 
     open_adapter.AdapterLuid = luid;
     status = D3DKMTOpenAdapterFromLuid(&open_adapter);
@@ -3488,7 +3487,7 @@ static struct vulkan_buffer *export_vulkan_buffer( struct vulkan_device *dev, UI
     get_handle_info.memory = buf->memory;
     get_handle_info.handleType = handle_type;
     vr = p_vkGetMemoryWin32HandleKHR( dev->device, &get_handle_info, handle );
-    todo_wine_if( handle_type != VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT ) ok_vk( VK_SUCCESS, vr );
+    ok_vk( VK_SUCCESS, vr );
 
     return buf;
 }
@@ -3630,7 +3629,7 @@ static struct vulkan_image *export_vulkan_image( struct vulkan_device *dev, UINT
     get_handle_info.memory = img->memory;
     get_handle_info.handleType = handle_type;
     vr = p_vkGetMemoryWin32HandleKHR( dev->device, &get_handle_info, handle );
-    todo_wine_if( handle_type != VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT ) ok_vk( VK_SUCCESS, vr );
+    ok_vk( VK_SUCCESS, vr );
 
     return img;
 }

@@ -1363,7 +1363,7 @@ static void test_external_memory(VkInstance vk_instance, VkPhysicalDevice vk_phy
         get_handle_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR;
 
         vr = pfn_vkGetMemoryWin32HandleKHR(vk_device, &get_handle_info, &handle);
-        todo_wine ok(vr == VK_SUCCESS, "vkGetMemoryWin32HandleKHR failed, VkResult %d.\n", vr);
+        ok(vr == VK_SUCCESS, "vkGetMemoryWin32HandleKHR failed, VkResult %d.\n", vr);
 
         alloc_info.pNext = &dedicated_alloc_info;
         import_memory(vk_device, alloc_info, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR, handle);
