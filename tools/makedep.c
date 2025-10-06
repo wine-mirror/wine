@@ -2666,7 +2666,6 @@ static void output_install_commands( struct makefile *make, struct strarray file
             arch = type - '0';
             output( "\tSTRIPPROG=%s %s -m 644 $(INSTALL_PROGRAM_FLAGS) %s %s\n",
                     strip_progs[arch], install_sh, obj_dir_path( make, file ), dest );
-            output( "\t%s --builtin %s\n", winebuild, dest );
             break;
         case 'd':  /* data file */
             output( "\t%s -m 644 $(INSTALL_DATA_FLAGS) %s %s\n",
@@ -4839,7 +4838,8 @@ int main( int argc, char *argv[] )
         strarray_add( &target_flags[arch], target );
         arch_dirs[arch] = strmake( "%s-windows/", archs.str[arch] );
         arch_install_dirs[arch] = strmake( "$(libdir)/wine/%s-windows", archs.str[arch] );
-        strip_progs[arch] = get_expanded_arch_var( top_makefile, "STRIP", arch );
+        strip_progs[arch] = strmake( "\"%s --builtin --strip-cmd=%s\"",
+                                     winebuild, get_expanded_arch_var( top_makefile, "STRIP", arch ));
         dll_ext[arch] = "";
     }
 
