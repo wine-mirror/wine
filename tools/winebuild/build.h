@@ -386,6 +386,7 @@ extern struct strarray as_command;
 extern struct strarray cc_command;
 extern struct strarray ld_command;
 extern struct strarray nm_command;
+extern struct strarray strip_command;
 extern char *cpu_option;
 extern char *fpu_option;
 extern char *arch_option;

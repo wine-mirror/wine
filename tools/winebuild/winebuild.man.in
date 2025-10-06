@@ -229,6 +229,10 @@ Mark object files as SEH compatible.
 .B --save-temps
 Do not delete the various temporary files that \fBwinebuild\fR generates.
 .TP
+.BI \--strip-cmd= strip-command
+Specify the command to use to strip PE modules. Only meaningful in
+\fB--builtin\fR mode.
+.TP
 .BI --subsystem= subsystem\fR[\fB:\fImajor\fR[\fB.\fIminor\fR]]
 Set the subsystem of the executable, which can be one of the following:
 .br

@@ -1446,6 +1446,13 @@ void make_builtin_files( struct strarray files )
         unsigned int   e_lfanew;
     } header;
 
+    if (strip_command.count)  /* strip the files first */
+    {
+        struct strarray args = strip_command;
+        strarray_addall( &args, files );
+        spawn( args );
+    }
+
     for (i = 0; i < files.count; i++)
     {
         if ((fd = open( files.str[i], O_RDWR | O_BINARY )) == -1)
