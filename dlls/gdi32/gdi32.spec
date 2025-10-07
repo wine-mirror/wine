@@ -99,6 +99,8 @@
 # @ stub CreateScaledCompatibleBitmap
 # @ stub CreateSessionMappedDIBSection
 @ stdcall CreateSolidBrush(long)
+@ stdcall D3DKMTAcquireKeyedMutex(ptr) win32u.NtGdiDdDDIAcquireKeyedMutex
+@ stdcall D3DKMTAcquireKeyedMutex2(ptr) win32u.NtGdiDdDDIAcquireKeyedMutex2
 @ stdcall D3DKMTCheckOcclusion(ptr) win32u.NtGdiDdDDICheckOcclusion
 @ stdcall D3DKMTCheckVidPnExclusiveOwnership(ptr) win32u.NtGdiDdDDICheckVidPnExclusiveOwnership
 @ stdcall D3DKMTCloseAdapter(ptr) win32u.NtGdiDdDDICloseAdapter
@@ -139,6 +141,8 @@
 @ stdcall D3DKMTQueryResourceInfoFromNtHandle(ptr) win32u.NtGdiDdDDIQueryResourceInfoFromNtHandle
 @ stdcall D3DKMTQueryStatistics(ptr) win32u.NtGdiDdDDIQueryStatistics
 @ stdcall D3DKMTQueryVideoMemoryInfo(ptr) win32u.NtGdiDdDDIQueryVideoMemoryInfo
+@ stdcall D3DKMTReleaseKeyedMutex(ptr) win32u.NtGdiDdDDIReleaseKeyedMutex
+@ stdcall D3DKMTReleaseKeyedMutex2(ptr) win32u.NtGdiDdDDIReleaseKeyedMutex2
 @ stdcall D3DKMTSetQueuedLimit(ptr) win32u.NtGdiDdDDISetQueuedLimit
 @ stdcall D3DKMTSetVidPnSourceOwner(ptr) win32u.NtGdiDdDDISetVidPnSourceOwner
 @ stdcall D3DKMTShareObjects(long ptr ptr long ptr) win32u.NtGdiDdDDIShareObjects

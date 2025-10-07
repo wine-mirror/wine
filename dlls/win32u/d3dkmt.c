@@ -1489,6 +1489,61 @@ failed:
     return status;
 }
 
+/******************************************************************************
+ *           NtGdiDdDDIAcquireKeyedMutex2    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIAcquireKeyedMutex2( D3DKMT_ACQUIREKEYEDMUTEX2 *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIAcquireKeyedMutex    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIAcquireKeyedMutex( D3DKMT_ACQUIREKEYEDMUTEX *params )
+{
+    D3DKMT_ACQUIREKEYEDMUTEX2 params2 = {0};
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    params2.hKeyedMutex = params->hKeyedMutex;
+    params2.pTimeout = params->pTimeout;
+    params2.Key = params->Key;
+    params2.FenceValue = params->FenceValue;
+    status = NtGdiDdDDIAcquireKeyedMutex2( &params2 );
+    params->FenceValue = params2.FenceValue;
+
+    return status;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIReleaseKeyedMutex2    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIReleaseKeyedMutex2( D3DKMT_RELEASEKEYEDMUTEX2 *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIReleaseKeyedMutex    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIReleaseKeyedMutex( D3DKMT_RELEASEKEYEDMUTEX *params )
+{
+    D3DKMT_RELEASEKEYEDMUTEX2 params2 = {0};
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    params2.hKeyedMutex = params->hKeyedMutex;
+    params2.Key = params->Key;
+    params2.FenceValue = params->FenceValue;
+    return NtGdiDdDDIReleaseKeyedMutex2( &params2 );
+}
+
 
 /******************************************************************************
  *           NtGdiDdDDICreateSynchronizationObject2    (win32u.@)

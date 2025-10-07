@@ -201,8 +201,8 @@
     SYSCALL_ENTRY( 0x10c5, NtGdiDDCCISetVCPFeature, 0 ) \
     SYSCALL_ENTRY( 0x10c6, NtGdiDdCreateFullscreenSprite, 0 ) \
     SYSCALL_ENTRY( 0x10c7, NtGdiDdDDIAbandonSwapChain, 0 ) \
-    SYSCALL_ENTRY( 0x10c8, NtGdiDdDDIAcquireKeyedMutex, 0 ) \
-    SYSCALL_ENTRY( 0x10c9, NtGdiDdDDIAcquireKeyedMutex2, 0 ) \
+    SYSCALL_ENTRY( 0x10c8, NtGdiDdDDIAcquireKeyedMutex, 4 ) \
+    SYSCALL_ENTRY( 0x10c9, NtGdiDdDDIAcquireKeyedMutex2, 4 ) \
     SYSCALL_ENTRY( 0x10ca, NtGdiDdDDIAcquireSwapChain, 0 ) \
     SYSCALL_ENTRY( 0x10cb, NtGdiDdDDIAddSurfaceToSwapChain, 0 ) \
     SYSCALL_ENTRY( 0x10cc, NtGdiDdDDIAdjustFullscreenGamma, 0 ) \
@@ -343,8 +343,8 @@
     SYSCALL_ENTRY( 0x1153, NtGdiDdDDIQueryVideoMemoryInfo, 4 ) \
     SYSCALL_ENTRY( 0x1154, NtGdiDdDDIReclaimAllocations, 0 ) \
     SYSCALL_ENTRY( 0x1155, NtGdiDdDDIReclaimAllocations2, 0 ) \
-    SYSCALL_ENTRY( 0x1156, NtGdiDdDDIReleaseKeyedMutex, 0 ) \
-    SYSCALL_ENTRY( 0x1157, NtGdiDdDDIReleaseKeyedMutex2, 0 ) \
+    SYSCALL_ENTRY( 0x1156, NtGdiDdDDIReleaseKeyedMutex, 4 ) \
+    SYSCALL_ENTRY( 0x1157, NtGdiDdDDIReleaseKeyedMutex2, 4 ) \
     SYSCALL_ENTRY( 0x1158, NtGdiDdDDIReleaseProcessVidPnSourceOwners, 0 ) \
     SYSCALL_ENTRY( 0x1159, NtGdiDdDDIReleaseSwapChain, 0 ) \
     SYSCALL_ENTRY( 0x115a, NtGdiDdDDIRemoveSurfaceFromSwapChain, 0 ) \
@@ -1743,8 +1743,8 @@
     SYSCALL_ENTRY( 0x10c5, NtGdiDDCCISetVCPFeature, 0 ) \
     SYSCALL_ENTRY( 0x10c6, NtGdiDdCreateFullscreenSprite, 0 ) \
     SYSCALL_ENTRY( 0x10c7, NtGdiDdDDIAbandonSwapChain, 0 ) \
-    SYSCALL_ENTRY( 0x10c8, NtGdiDdDDIAcquireKeyedMutex, 0 ) \
-    SYSCALL_ENTRY( 0x10c9, NtGdiDdDDIAcquireKeyedMutex2, 0 ) \
+    SYSCALL_ENTRY( 0x10c8, NtGdiDdDDIAcquireKeyedMutex, 8 ) \
+    SYSCALL_ENTRY( 0x10c9, NtGdiDdDDIAcquireKeyedMutex2, 8 ) \
     SYSCALL_ENTRY( 0x10ca, NtGdiDdDDIAcquireSwapChain, 0 ) \
     SYSCALL_ENTRY( 0x10cb, NtGdiDdDDIAddSurfaceToSwapChain, 0 ) \
     SYSCALL_ENTRY( 0x10cc, NtGdiDdDDIAdjustFullscreenGamma, 0 ) \
@@ -1885,8 +1885,8 @@
     SYSCALL_ENTRY( 0x1153, NtGdiDdDDIQueryVideoMemoryInfo, 8 ) \
     SYSCALL_ENTRY( 0x1154, NtGdiDdDDIReclaimAllocations, 0 ) \
     SYSCALL_ENTRY( 0x1155, NtGdiDdDDIReclaimAllocations2, 0 ) \
-    SYSCALL_ENTRY( 0x1156, NtGdiDdDDIReleaseKeyedMutex, 0 ) \
-    SYSCALL_ENTRY( 0x1157, NtGdiDdDDIReleaseKeyedMutex2, 0 ) \
+    SYSCALL_ENTRY( 0x1156, NtGdiDdDDIReleaseKeyedMutex, 8 ) \
+    SYSCALL_ENTRY( 0x1157, NtGdiDdDDIReleaseKeyedMutex2, 8 ) \
     SYSCALL_ENTRY( 0x1158, NtGdiDdDDIReleaseProcessVidPnSourceOwners, 0 ) \
     SYSCALL_ENTRY( 0x1159, NtGdiDdDDIReleaseSwapChain, 0 ) \
     SYSCALL_ENTRY( 0x115a, NtGdiDdDDIRemoveSurfaceFromSwapChain, 0 ) \
@@ -3257,8 +3257,6 @@
     SYSCALL_STUB( NtGdiDDCCISetVCPFeature ) \
     SYSCALL_STUB( NtGdiDdCreateFullscreenSprite ) \
     SYSCALL_STUB( NtGdiDdDDIAbandonSwapChain ) \
-    SYSCALL_STUB( NtGdiDdDDIAcquireKeyedMutex ) \
-    SYSCALL_STUB( NtGdiDdDDIAcquireKeyedMutex2 ) \
     SYSCALL_STUB( NtGdiDdDDIAcquireSwapChain ) \
     SYSCALL_STUB( NtGdiDdDDIAddSurfaceToSwapChain ) \
     SYSCALL_STUB( NtGdiDdDDIAdjustFullscreenGamma ) \
@@ -3360,8 +3358,6 @@
     SYSCALL_STUB( NtGdiDdDDIQueryVidPnExclusiveOwnership ) \
     SYSCALL_STUB( NtGdiDdDDIReclaimAllocations ) \
     SYSCALL_STUB( NtGdiDdDDIReclaimAllocations2 ) \
-    SYSCALL_STUB( NtGdiDdDDIReleaseKeyedMutex ) \
-    SYSCALL_STUB( NtGdiDdDDIReleaseKeyedMutex2 ) \
     SYSCALL_STUB( NtGdiDdDDIReleaseProcessVidPnSourceOwners ) \
     SYSCALL_STUB( NtGdiDdDDIReleaseSwapChain ) \
     SYSCALL_STUB( NtGdiDdDDIRemoveSurfaceFromSwapChain ) \
