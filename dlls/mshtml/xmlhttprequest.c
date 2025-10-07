@@ -1646,14 +1646,13 @@ static dispex_static_data_t HTMLXMLHttpRequestFactory_dispex = {
     .iface_tids     = HTMLXMLHttpRequestFactory_iface_tids,
 };
 
-static HRESULT HTMLXMLHttpRequestFactory_init(struct constructor *constr)
+static HRESULT init_constructor(struct constructor *constr, dispex_static_data_t *dispex, const void *vtbl)
 {
     struct constructor *create;
     HRESULT hres;
 
-    constr->iface.lpVtbl = (const IUnknownVtbl*)&HTMLXMLHttpRequestFactoryVtbl;
-    init_dispatch(&constr->dispex, &HTMLXMLHttpRequestFactory_dispex, constr->window,
-                  dispex_compat_mode(&constr->window->event_target.dispex));
+    constr->iface.lpVtbl = vtbl;
+    init_dispatch(&constr->dispex, dispex, constr->window, dispex_compat_mode(&constr->window->event_target.dispex));
 
     if(!constr->window->jscript)
         return S_OK;
@@ -1677,6 +1676,11 @@ static HRESULT HTMLXMLHttpRequestFactory_init(struct constructor *constr)
 
     IWineJSDispatchHost_Release(&create->dispex.IWineJSDispatchHost_iface);
     return hres;
+}
+
+static HRESULT HTMLXMLHttpRequestFactory_init(struct constructor *constr)
+{
+    return init_constructor(constr, &HTMLXMLHttpRequestFactory_dispex, &HTMLXMLHttpRequestFactoryVtbl);
 }
 
 static const tid_t HTMLXMLHttpRequest_iface_tids[] = {
