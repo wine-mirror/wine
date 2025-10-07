@@ -4179,6 +4179,7 @@ enum inproc_sync_type
 @REQ(d3dkmt_object_create)
     unsigned int        type;           /* d3dkmt object type */
     int                 fd;             /* host specific fd */
+    unsigned int        value;          /* initial value for keyed mutex */
     VARARG(runtime,bytes);              /* client runtime data */
 @REPLY
     d3dkmt_handle_t     global;         /* global d3dkmt handle */

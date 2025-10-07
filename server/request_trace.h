@@ -3398,6 +3398,7 @@ static void dump_d3dkmt_object_create_request( const struct d3dkmt_object_create
 {
     fprintf( stderr, " type=%08x", req->type );
     fprintf( stderr, ", fd=%d", req->fd );
+    fprintf( stderr, ", value=%08x", req->value );
     dump_varargs_bytes( ", runtime=", cur_size );
 }
 

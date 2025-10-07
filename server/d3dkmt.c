@@ -98,6 +98,7 @@ static const struct fd_ops d3dkmt_fd_ops =
 struct d3dkmt_mutex
 {
     struct d3dkmt_object base;
+    unsigned int         key_value;      /* last released key value */
 };
 
 static void d3dkmt_mutex_dump( struct object *obj, int verbose );
@@ -420,7 +421,7 @@ static void d3dkmt_mutex_destroy( struct object *obj )
     free( mutex->base.runtime );
 }
 
-static struct d3dkmt_object *d3dkmt_mutex_create( data_size_t runtime_size, const void *runtime )
+static struct d3dkmt_object *d3dkmt_mutex_create( unsigned int key_value, data_size_t runtime_size, const void *runtime )
 {
     struct d3dkmt_mutex *object;
 
@@ -429,6 +430,7 @@ static struct d3dkmt_object *d3dkmt_mutex_create( data_size_t runtime_size, cons
     object->base.global          = 0;
     object->base.runtime_size    = runtime_size;
     object->base.fd              = NULL;
+    object->key_value            = key_value;
 
     if (!(object->base.runtime = memdup( runtime, runtime_size )) ||
         !(object->base.global = alloc_object_handle( &object->base )))
@@ -499,7 +501,7 @@ DECL_HANDLER(d3dkmt_object_create)
     switch (req->type)
     {
     case D3DKMT_MUTEX:
-        if (!(object = d3dkmt_mutex_create( get_req_data_size(), get_req_data() ))) goto done;
+        if (!(object = d3dkmt_mutex_create( req->value, get_req_data_size(), get_req_data() ))) goto done;
         break;
     default:
         if (!(object = d3dkmt_object_create( req->type, get_req_data_size(), get_req_data() ))) goto done;
