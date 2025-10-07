@@ -1720,8 +1720,10 @@ static VkResult win32u_vkImportFenceWin32HandleKHR( VkDevice client_device, cons
         if (!(local = d3dkmt_open_sync( global, NULL ))) return VK_ERROR_INVALID_EXTERNAL_HANDLE;
         break;
     case VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_WIN32_BIT:
-        if (!(shared = handle_info->handle) || NtDuplicateObject( NtCurrentProcess(), shared, NtCurrentProcess(), &shared,
-                                                                  0, 0, DUPLICATE_SAME_ATTRIBUTES | DUPLICATE_SAME_ACCESS ))
+        if (handle_info->name && !(shared = open_shared_semaphore_from_name( handle_info->name )))
+            return VK_ERROR_INVALID_EXTERNAL_HANDLE;
+        else if (!(shared = handle_info->handle) || NtDuplicateObject( NtCurrentProcess(), shared, NtCurrentProcess(), &shared,
+                                                                       0, 0, DUPLICATE_SAME_ATTRIBUTES | DUPLICATE_SAME_ACCESS ))
             return VK_ERROR_INVALID_EXTERNAL_HANDLE;
 
         if (!(local = d3dkmt_open_sync( 0, shared )))
