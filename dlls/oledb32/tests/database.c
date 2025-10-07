@@ -587,8 +587,8 @@ static void test_errorinfo(void)
     hr = IErrorRecords_GetErrorInfo(errrecs, 1, 0, &errorinfo2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IErrorInfo_GetGUID(errorinfo2, &guid);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(IsEqualGUID(&guid, &IID_IUnknown), "Unexpected guid %s.\n", wine_dbgstr_guid(&guid));
 
     hr = IErrorInfo_GetGUID(errorinfo, &guid);
@@ -600,8 +600,8 @@ static void test_errorinfo(void)
     hr = IErrorRecords_AddErrorRecord(errrecs, &info, IDENTIFIER_SDK_ERROR, NULL, NULL, 0);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IErrorInfo_GetGUID(errorinfo2, &guid);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(IsEqualGUID(&guid, &IID_IDispatch), "Unexpected guid %s.\n", wine_dbgstr_guid(&guid));
 
     hr = IErrorInfo_GetGUID(errorinfo, &guid);

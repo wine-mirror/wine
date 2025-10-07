@@ -57,6 +57,14 @@ typedef struct errorrecords
     unsigned int count;
 } errorrecords;
 
+struct error_info
+{
+    IErrorInfo IErrorInfo_iface;
+    LONG refcount;
+
+    LCID lcid;
+};
+
 static inline errorrecords *impl_records_from_IErrorInfo( IErrorInfo *iface )
 {
     return CONTAINING_RECORD(iface, errorrecords, IErrorInfo_iface);
@@ -66,6 +74,13 @@ static inline errorrecords *impl_from_IErrorRecords( IErrorRecords *iface )
 {
     return CONTAINING_RECORD(iface, errorrecords, IErrorRecords_iface);
 }
+
+static inline struct error_info *impl_from_IErrorInfo( IErrorInfo *iface )
+{
+    return CONTAINING_RECORD(iface, struct error_info, IErrorInfo_iface);
+}
+
+static HRESULT create_error_info(LCID lcid, IErrorInfo **out);
 
 static HRESULT WINAPI errorrecords_QueryInterface(IErrorInfo* iface, REFIID riid, void **ppvoid)
 {
@@ -369,7 +384,10 @@ static HRESULT WINAPI errorrec_GetErrorInfo(IErrorRecords *iface, ULONG index,
     if (index >= This->count)
         return DB_E_BADRECORDNUM;
 
-    return IErrorInfo_QueryInterface(&This->IErrorInfo_iface, &IID_IErrorInfo, (void **)ppErrorInfo);
+    if (!index)
+        return IErrorInfo_QueryInterface(&This->IErrorInfo_iface, &IID_IErrorInfo, (void **)ppErrorInfo);
+
+    return create_error_info(lcid, ppErrorInfo);
 }
 
 static HRESULT WINAPI errorrec_GetErrorParameters(IErrorRecords *iface, ULONG index, DISPPARAMS *pdispparams)
@@ -440,6 +458,112 @@ HRESULT create_error_object(IUnknown *outer, void **obj)
     This->count = 0;
 
     *obj = &This->IErrorInfo_iface;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI error_info_QueryInterface(IErrorInfo *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IErrorInfo) || IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IErrorInfo_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI error_info_AddRef(IErrorInfo *iface)
+{
+    struct error_info *error_info = impl_from_IErrorInfo(iface);
+    LONG refcount = InterlockedIncrement(&error_info->refcount);
+
+    TRACE("%p, %lu.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI error_info_Release(IErrorInfo *iface)
+{
+    struct error_info *error_info = impl_from_IErrorInfo(iface);
+    LONG refcount = InterlockedDecrement(&error_info->refcount);
+
+    TRACE("%p, %lu.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        free(error_info);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI error_info_GetGUID(IErrorInfo *iface, GUID *guid)
+{
+    FIXME("%p, %p.\n", iface, guid);
+
+    if (!guid)
+        return E_INVALIDARG;
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI error_info_GetSource(IErrorInfo *iface, BSTR *source)
+{
+    FIXME("%p, %p.\n", iface, source);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI error_info_GetDescription(IErrorInfo *iface, BSTR *description)
+{
+    FIXME("%p, %p.\n", iface, description);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI error_info_GetHelpFile(IErrorInfo *iface, BSTR *helpfile)
+{
+    FIXME("%p, %p.\n", iface, helpfile);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI error_info_GetHelpContext(IErrorInfo *iface, DWORD *context)
+{
+    FIXME("%p, %p.\n", iface, context);
+
+    return E_NOTIMPL;
+}
+
+static const IErrorInfoVtbl error_info_vtbl =
+{
+    error_info_QueryInterface,
+    error_info_AddRef,
+    error_info_Release,
+    error_info_GetGUID,
+    error_info_GetSource,
+    error_info_GetDescription,
+    error_info_GetHelpFile,
+    error_info_GetHelpContext,
+};
+
+static HRESULT create_error_info(LCID lcid, IErrorInfo **out)
+{
+    struct error_info *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IErrorInfo_iface.lpVtbl = &error_info_vtbl;
+    object->refcount = 1;
+    object->lcid = lcid;
+
+    *out = &object->IErrorInfo_iface;
 
     return S_OK;
 }
