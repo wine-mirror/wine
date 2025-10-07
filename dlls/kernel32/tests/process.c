@@ -4812,6 +4812,7 @@ static void test_dead_process(void)
 
 static void test_nested_jobs_child(unsigned int index)
 {
+    JOBOBJECT_BASIC_ACCOUNTING_INFORMATION job_info;
     JOBOBJECT_ASSOCIATE_COMPLETION_PORT port_info;
     HANDLE job, job_parent, job_other, port;
     PROCESS_INFORMATION pi;
@@ -4850,6 +4851,15 @@ static void test_nested_jobs_child(unsigned int index)
     }
     ret = pAssignProcessToJobObject(job, pi.hProcess);
     ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
+
+    ret = pQueryInformationJobObject(NULL, JobObjectBasicAccountingInformation, &job_info,
+            sizeof(job_info), NULL);
+    ok(ret, "got error %lu.\n", GetLastError());
+
+    ret = pQueryInformationJobObject(INVALID_HANDLE_VALUE, JobObjectBasicAccountingInformation, &job_info,
+            sizeof(job_info), NULL);
+    ok(!ret, "got ret %d.\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got error %lu.\n", GetLastError());
 
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, NULL, &out);

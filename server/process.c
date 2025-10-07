@@ -1939,11 +1939,16 @@ DECL_HANDLER(process_in_job)
 /* retrieve information about a job */
 DECL_HANDLER(get_job_info)
 {
-    struct job *job = get_job_obj( current->process, req->handle, JOB_OBJECT_QUERY );
+    struct job *job;
     process_id_t *pids;
     data_size_t len;
 
-    if (!job) return;
+    if (!req->handle && current->process->job) job = (struct job *)grab_object( current->process->job );
+    else
+    {
+        job = get_job_obj( current->process, req->handle, JOB_OBJECT_QUERY );
+        if (!job) return;
+    }
 
     reply->total_processes = job->total_processes;
     reply->active_processes = job->num_processes;
