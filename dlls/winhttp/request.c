@@ -1978,7 +1978,7 @@ static BOOL end_of_read_data( struct request *request )
 {
     if (!request->content_length) return TRUE;
     if (request->read_chunked) return request->read_chunked_eof;
-    if (request->content_length == ~0u) return FALSE;
+    if (request->content_length == ~0ull) return FALSE;
     return (request->content_length == request->content_read);
 }
 
@@ -2011,7 +2011,7 @@ static DWORD read_data( struct request *request, void *buffer, DWORD size, DWORD
     if (request->read_chunked && !request->read_chunked_size) ret = refill_buffer( request, async );
 
 done:
-    TRACE( "retrieved %u bytes (%lu/%lu)\n", bytes_read, request->content_read, request->content_length );
+    TRACE( "retrieved %u bytes (%llu/%llu)\n", bytes_read, request->content_read, request->content_length );
     if (end_of_read_data( request )) finished_reading( request );
     if (async)
     {
@@ -2240,8 +2240,9 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
 {
     struct connect *connect = request->connect;
     struct session *session = connect->session;
-    DWORD ret, len, buflen, content_length;
-    WCHAR encoding[20];
+    DWORD ret, len, buflen;
+    UINT64 content_length;
+    WCHAR buf[21];
     char *wire_req;
     int bytes_sent;
     BOOL chunked;
@@ -2272,9 +2273,9 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
     if (request->creds[TARGET_SERVER][SCHEME_BASIC].username)
         do_authorization( request, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC );
 
-    buflen = sizeof(encoding);
+    buflen = sizeof(buf);
     chunked = !query_headers( request, WINHTTP_QUERY_FLAG_REQUEST_HEADERS | WINHTTP_QUERY_TRANSFER_ENCODING,
-                              NULL, encoding, &buflen, NULL ) && !wcsicmp( encoding, L"chunked" );
+                              NULL, buf, &buflen, NULL ) && !wcsicmp( buf, L"chunked" );
     if (!chunked && (total_len || (request->verb && (!wcscmp( request->verb, L"POST" )
                                || !wcscmp( request->verb, L"PUT" )))))
     {
@@ -2337,10 +2338,12 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
     }
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_SENT, &len, sizeof(len) );
 
-    buflen = sizeof(content_length);
-    if (query_headers( request, WINHTTP_QUERY_FLAG_REQUEST_HEADERS | WINHTTP_QUERY_CONTENT_LENGTH
-                       | WINHTTP_QUERY_FLAG_NUMBER, NULL, &content_length, &buflen, NULL ))
+    buflen = sizeof(buf);
+    if (query_headers( request, WINHTTP_QUERY_FLAG_REQUEST_HEADERS | WINHTTP_QUERY_CONTENT_LENGTH,
+                       NULL, buf, &buflen, NULL ))
         content_length = total_len;
+    else
+        content_length = wcstoull( buf, NULL, 10 );
 
     if (!chunked && content_length <= optional_len)
     {
@@ -2549,8 +2552,8 @@ static DWORD handle_authorization( struct request *request, DWORD status )
 /* set the request content length based on the headers */
 static void set_content_length( struct request *request, DWORD status )
 {
-    WCHAR encoding[20];
-    DWORD buflen = sizeof(request->content_length);
+    WCHAR buf[21];
+    DWORD buflen = sizeof(buf);
 
     if (status == HTTP_STATUS_NO_CONTENT || status == HTTP_STATUS_NOT_MODIFIED ||
         status == HTTP_STATUS_SWITCH_PROTOCOLS || !wcscmp( request->verb, L"HEAD" ))
@@ -2559,15 +2562,16 @@ static void set_content_length( struct request *request, DWORD status )
     }
     else
     {
-        if (query_headers( request, WINHTTP_QUERY_CONTENT_LENGTH|WINHTTP_QUERY_FLAG_NUMBER,
-                           NULL, &request->content_length, &buflen, NULL ))
-            request->content_length = ~0u;
+        if (query_headers( request, WINHTTP_QUERY_CONTENT_LENGTH, NULL, buf, &buflen, NULL ))
+            request->content_length = ~0ull;
+        else
+            request->content_length = wcstoull( buf, NULL, 10 );
 
-        buflen = sizeof(encoding);
-        if (!query_headers( request, WINHTTP_QUERY_TRANSFER_ENCODING, NULL, encoding, &buflen, NULL ) &&
-            !wcsicmp( encoding, L"chunked" ))
+        buflen = sizeof(buf);
+        if (!query_headers( request, WINHTTP_QUERY_TRANSFER_ENCODING, NULL, buf, &buflen, NULL ) &&
+            !wcsicmp( buf, L"chunked" ))
         {
-            request->content_length = ~0u;
+            request->content_length = ~0ull;
             request->read_chunked = TRUE;
             request->read_chunked_size = ~0u;
             request->read_chunked_eof = FALSE;

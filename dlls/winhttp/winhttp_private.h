@@ -213,8 +213,8 @@ struct request
     DWORD max_redirects;
     DWORD redirect_count; /* total number of redirects during this request */
     WCHAR *status_text;
-    DWORD content_length; /* total number of bytes to be read */
-    DWORD content_read;   /* bytes read so far */
+    UINT64 content_length; /* total number of bytes to be read */
+    UINT64 content_read;   /* bytes read so far */
     BOOL  read_chunked;   /* are we reading in chunked mode? */
     BOOL  read_chunked_eof;  /* end of stream in chunked mode */
     BOOL  read_chunked_size; /* chunk size remaining */
