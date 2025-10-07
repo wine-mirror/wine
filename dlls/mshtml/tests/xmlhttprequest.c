@@ -1142,6 +1142,7 @@ static void test_xdr(IHTMLDocument2 *doc)
     IHTMLWindow2 *window;
     BSTR bstr, url;
     HRESULT hres;
+    LONG timeout;
     VARIANT v;
 
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
@@ -1199,6 +1200,20 @@ static void test_xdr(IHTMLDocument2 *doc)
     ok(hres == S_OK, "open failed: %08lx\n", hres);
     SysFreeString(bstr);
     SysFreeString(url);
+
+    hres = IHTMLXDomainRequest_get_timeout(xdr, NULL);
+    ok(hres == E_INVALIDARG, "get_timeout returned %08lx\n", hres);
+    hres = IHTMLXDomainRequest_get_timeout(xdr, &timeout);
+    ok(hres == S_OK, "get_timeout returned %08lx\n", hres);
+    ok(timeout == -1, "timeout = %ld\n", timeout);
+
+    hres = IHTMLXDomainRequest_put_timeout(xdr, -1);
+    ok(hres == E_INVALIDARG || broken(hres == E_FAIL), "put_timeout returned %08lx\n", hres);
+    hres = IHTMLXDomainRequest_put_timeout(xdr, 1337);
+    ok(hres == S_OK, "put_timeout returned %08lx\n", hres);
+    hres = IHTMLXDomainRequest_get_timeout(xdr, &timeout);
+    ok(hres == S_OK, "get_timeout returned %08lx\n", hres);
+    ok(timeout == 1337, "timeout = %ld\n", timeout);
 
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = SysAllocString(L"test");
