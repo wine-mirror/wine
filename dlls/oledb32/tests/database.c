@@ -363,8 +363,8 @@ static void test_errorinfo(void)
     IErrorRecords *errrecs;
     IUnknown *unk = NULL, *unk2;
     DISPPARAMS dispparams;
-    DISPID dispid;
     DWORD context;
+    DISPID dispid;
     ULONG cnt = 0;
     VARIANT arg;
     HRESULT hr;
@@ -417,8 +417,6 @@ static void test_errorinfo(void)
     ok(hr == E_FAIL, "got %08lx\n", hr);
     ok(context == 0, "got %ld\n", context);
 
-    IErrorInfo_Release(errorinfo);
-
     hr = IErrorInfo_QueryInterface(errorinfo, &IID_ICreateErrorInfo, (void**)&createerror);
     ok(hr == E_NOINTERFACE, "got %08lx\n", hr);
 
@@ -443,19 +441,52 @@ static void test_errorinfo(void)
 
     memset(&info, 0, sizeof(ERRORINFO));
     info.dwMinor = 1;
+    memcpy(&info.iid, &IID_IUnknown, sizeof(info.iid));
+    memcpy(&info.clsid, &IID_IDispatch, sizeof(info.clsid));
     memset(&info2, 0, sizeof(ERRORINFO));
     info2.dwMinor = 2;
+    memcpy(&info2.iid, &IID_IErrorInfo, sizeof(info2.iid));
     memset(&info3, 0, sizeof(ERRORINFO));
 
-    hr = IErrorRecords_AddErrorRecord(errrecs, NULL, 268435456, NULL, NULL, 0);
+    hr = IErrorRecords_AddErrorRecord(errrecs, NULL, IDENTIFIER_SDK_ERROR, NULL, NULL, 0);
     ok(hr == E_INVALIDARG, "got %08lx\n", hr);
 
-    hr = IErrorRecords_AddErrorRecord(errrecs, &info, 1, NULL, NULL, 0);
+    /* Record that doesn't use lookup service. */
+    hr = IErrorRecords_AddErrorRecord(errrecs, &info, IDENTIFIER_SDK_ERROR, NULL, NULL, 0);
     ok(hr == S_OK, "got %08lx\n", hr);
 
     hr = IErrorRecords_GetRecordCount(errrecs, &cnt);
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(cnt == 1, "expected 1 got %ld\n", cnt);
+
+    memset(&guid, 0xac, sizeof(guid));
+    hr = IErrorInfo_GetGUID(errorinfo, &guid);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&guid, &info.iid), "got wrong guid\n");
+
+    str = (BSTR)0x1;
+    hr = IErrorInfo_GetSource(errorinfo, &str);
+    ok(hr == E_FAIL, "got %08lx\n", hr);
+    ok(str == NULL, "got %s\n", wine_dbgstr_w(str));
+
+    str = NULL;
+    hr = IErrorInfo_GetDescription(errorinfo, &str);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!!str, "Expected error text.\n");
+    SysFreeString(str);
+
+    str = (BSTR)0x1;
+    hr = IErrorInfo_GetHelpFile(errorinfo, &str);
+    ok(hr == E_FAIL, "got %08lx\n", hr);
+    ok(str == NULL, "got %s\n", wine_dbgstr_w(str));
+
+    context = 1;
+    hr = IErrorInfo_GetHelpContext(errorinfo, &context);
+    ok(hr == E_FAIL, "got %08lx\n", hr);
+    ok(context == 0, "got %ld\n", context);
 
     /* Record does not contain custom error object. */
     unk2 = (void*)0xdeadbeef;
@@ -469,6 +500,11 @@ static void test_errorinfo(void)
     hr = IErrorRecords_GetRecordCount(errrecs, &cnt);
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(cnt == 2, "expected 2 got %ld\n", cnt);
+
+    hr = IErrorInfo_GetGUID(errorinfo, &guid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&guid, &IID_IErrorInfo), "Unexpected guid.\n");
 
     hr = IErrorRecords_GetBasicErrorInfo(errrecs, 0, NULL);
     ok(hr == E_INVALIDARG, "got %08lx\n", hr);
@@ -513,19 +549,73 @@ static void test_errorinfo(void)
     ok(dispparams.cArgs == 1, "Got argument count %u\n", dispparams.cArgs);
     ok(dispparams.cNamedArgs == 1, "Got named argument count %u\n", dispparams.cNamedArgs);
 
-    EXPECT_REF(errrecs, 2);
-    EXPECT_REF(errorinfo, 2);
+    EXPECT_REF(errrecs, 3);
+    EXPECT_REF(errorinfo, 3);
     hr = IErrorRecords_GetErrorInfo(errrecs, 0, 0, &errorinfo2);
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(errorinfo == errorinfo2, "different object\n");
-    EXPECT_REF(errorinfo, 3);
+    EXPECT_REF(errorinfo, 4);
+    EXPECT_REF(errrecs, 4);
     IErrorInfo_Release(errorinfo2);
 
     free_dispparams(&dispparams);
     VariantClear(&arg);
 
+    IErrorInfo_Release(errorinfo);
     IErrorRecords_Release(errrecs);
     IUnknown_Release(unk);
+
+    /* Shift in record indexing. Same returned IErrorInfo instance refers to a live record collection,
+       not a copy. */
+    hr = CoCreateInstance(&CSLID_MSDAER, NULL, CLSCTX_INPROC_SERVER, &IID_IErrorRecords, (void **)&errrecs);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    memset(&info, 0, sizeof(info));
+    memcpy(&info.iid, &IID_IUnknown, sizeof(info.iid));
+    hr = IErrorRecords_AddErrorRecord(errrecs, &info, IDENTIFIER_SDK_ERROR, NULL, NULL, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IErrorRecords_GetErrorInfo(errrecs, 0, 0, &errorinfo);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IErrorInfo_GetGUID(errorinfo, &guid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&guid, &IID_IUnknown), "Unexpected guid %s.\n", wine_dbgstr_guid(&guid));
+
+    memset(&info, 0, sizeof(info));
+    memcpy(&info.iid, &IID_IDispatch, sizeof(info.iid));
+    hr = IErrorRecords_AddErrorRecord(errrecs, &info, IDENTIFIER_SDK_ERROR, NULL, NULL, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IErrorRecords_GetErrorInfo(errrecs, 1, 0, &errorinfo2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IErrorInfo_GetGUID(errorinfo2, &guid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&guid, &IID_IUnknown), "Unexpected guid %s.\n", wine_dbgstr_guid(&guid));
+
+    hr = IErrorInfo_GetGUID(errorinfo, &guid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&guid, &IID_IDispatch), "Unexpected guid %s.\n", wine_dbgstr_guid(&guid));
+
+    memset(&info, 0, sizeof(info));
+    memcpy(&info.iid, &IID_IErrorInfo, sizeof(info.iid));
+    hr = IErrorRecords_AddErrorRecord(errrecs, &info, IDENTIFIER_SDK_ERROR, NULL, NULL, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IErrorInfo_GetGUID(errorinfo2, &guid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&guid, &IID_IDispatch), "Unexpected guid %s.\n", wine_dbgstr_guid(&guid));
+
+    hr = IErrorInfo_GetGUID(errorinfo, &guid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&guid, &IID_IErrorInfo), "Unexpected guid %s.\n", wine_dbgstr_guid(&guid));
+
+    IErrorInfo_Release(errorinfo2);
+    IErrorInfo_Release(errorinfo);
+    IErrorRecords_Release(errrecs);
 }
 
 #define expect_initstring(a, b, c) _expect_initstring(__LINE__, a, b, c)
