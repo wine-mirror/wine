@@ -238,6 +238,28 @@ async_test("sync_xhr", function() {
     }, 0);
 });
 
+sync_test("xdr", function() {
+    if(!window.XDomainRequest) return;
+
+    var xdr = new XDomainRequest();
+    xdr.open("POST", "echo.php");
+    // send() on native aborts with custom pluggable protocol handler even with the right
+    // response headers (`XDomainRequestAllowed: 1` and `Access-Control-Allow-Origin: *`).
+
+    // Only http/https schemes are allowed, and it must match with the origin's scheme
+    xdr = new XDomainRequest();
+    xdr.open("GET", "http://www.winehq.org/");
+
+    xdr = new XDomainRequest();
+    try {
+        xdr.open("GET", "https://www.winehq.org/");
+        ok(false, "xdr scheme mismatch did not throw exception");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === 0x80070005, "xdr scheme mismatch threw " + n);
+    }
+});
+
 async_test("content_types", function() {
     var xhr = new XMLHttpRequest(), types, i = 0, override = false;
     var v = document.documentMode;

@@ -63,6 +63,7 @@ DEFINE_EXPECT(xmlhttprequest_onreadystatechange_opened);
 DEFINE_EXPECT(xmlhttprequest_onreadystatechange_headers_received);
 DEFINE_EXPECT(xmlhttprequest_onreadystatechange_loading);
 DEFINE_EXPECT(xmlhttprequest_onreadystatechange_done);
+DEFINE_EXPECT(xdomainrequest_onload);
 
 #define test_disp(u,id) _test_disp(__LINE__,u,id)
 static void _test_disp(unsigned line, IUnknown *unk, const IID *diid, const IID *broken_diid)
@@ -265,6 +266,58 @@ static IDispatchExVtbl xmlhttprequest_onreadystatechangeFuncVtbl = {
     DispatchEx_GetNameSpaceParent
 };
 static IDispatchEx xmlhttprequest_onreadystatechange_obj = { &xmlhttprequest_onreadystatechangeFuncVtbl };
+
+static HRESULT WINAPI xdomainrequest_onload(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    test_event_args(&DIID_DispXDomainRequest, &IID_IHTMLXDomainRequest, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    CHECK_EXPECT(xdomainrequest_onload);
+    return S_OK;
+}
+
+static IDispatchExVtbl xdomainrequest_onloadFuncVtbl = {
+    DispatchEx_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    DispatchEx_GetDispID,
+    xdomainrequest_onload,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+static IDispatchEx xdomainrequest_onload_obj = { &xdomainrequest_onloadFuncVtbl };
+
+static HRESULT WINAPI xdomainrequest_ignore(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    return S_OK;
+}
+
+static IDispatchExVtbl xdomainrequest_ignoreFuncVtbl = {
+    DispatchEx_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    DispatchEx_GetDispID,
+    xdomainrequest_ignore,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+static IDispatchEx xdomainrequest_ignore_obj = { &xdomainrequest_ignoreFuncVtbl };
 
 static BOOL doc_complete;
 static IHTMLDocument2 *notif_doc;
@@ -1081,6 +1134,89 @@ static void test_timeout(IHTMLDocument2 *doc)
     IHTMLXMLHttpRequest2_Release(xhr2);
 }
 
+static void test_xdr(IHTMLDocument2 *doc)
+{
+    IHTMLXDomainRequestFactory *factory;
+    IHTMLXDomainRequest *xdr;
+    IHTMLWindow6 *window6;
+    IHTMLWindow2 *window;
+    BSTR bstr, url;
+    HRESULT hres;
+    VARIANT v;
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
+    ok(window != NULL, "window == NULL\n");
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow6, (void**)&window6);
+    IHTMLWindow2_Release(window);
+    if(FAILED(hres)) {
+        win_skip("IHTMLWindow6 not supported\n");
+        return;
+    }
+
+    VariantInit(&v);
+    hres = IHTMLWindow6_get_XDomainRequest(window6, &v);
+    IHTMLWindow6_Release(window6);
+    ok(hres == S_OK, "get_XDomainRequest failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(&v) is %08x, expected VT_DISPATCH\n", V_VT(&v));
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IHTMLXDomainRequestFactory, (void**)&factory);
+    VariantClear(&v);
+    ok(hres == S_OK, "QueryInterface(IID_IXDomainRequestFactory) failed: %08lx\n", hres);
+    ok(factory != NULL, "factory == NULL\n");
+
+    hres = IHTMLXDomainRequestFactory_create(factory, &xdr);
+    IHTMLXDomainRequestFactory_Release(factory);
+    ok(hres == S_OK, "create failed: %08lx\n", hres);
+    ok(xdr != NULL, "xdr == NULL\n");
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)&xdomainrequest_onload_obj;
+    hres = IHTMLXDomainRequest_put_onload(xdr, v);
+    ok(hres == S_OK, "put_onload failed: %08lx\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLXDomainRequest_get_onload(xdr, &v);
+    ok(hres == S_OK, "get_onload failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(onload) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) == (IDispatch*)&xdomainrequest_onload_obj, "unexpected onload value\n");
+    VariantClear(&v);
+
+    /* Native IE9 sometimes (rarely) aborts if the other handlers are not set */
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)&xdomainrequest_ignore_obj;
+    hres = IHTMLXDomainRequest_put_onerror(xdr, v);
+    ok(hres == S_OK, "put_onerror failed: %08lx\n", hres);
+    hres = IHTMLXDomainRequest_put_onprogress(xdr, v);
+    ok(hres == S_OK, "put_onprogress failed: %08lx\n", hres);
+    hres = IHTMLXDomainRequest_put_ontimeout(xdr, v);
+    ok(hres == S_OK, "put_ontimeout failed: %08lx\n", hres);
+
+    bstr = SysAllocString(L"GET");
+    url = SysAllocString(L"http://test.winehq.org/tests/cors.html");
+    hres = IHTMLXDomainRequest_open(xdr, bstr, url);
+    ok(hres == S_OK, "open failed: %08lx\n", hres);
+    SysFreeString(bstr);
+    SysFreeString(url);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"test");
+    SET_EXPECT(xdomainrequest_onload);
+    hres = IHTMLXDomainRequest_send(xdr, v);
+    ok(hres == S_OK, "send failed: %08lx\n", hres);
+    if(SUCCEEDED(hres))
+        pump_msgs(&called_xdomainrequest_onload);
+    CHECK_CALLED(xdomainrequest_onload);
+
+    hres = IHTMLXDomainRequest_get_responseText(xdr, &bstr);
+    ok(hres == S_OK, "get_responseText returned %08lx\n", hres);
+    ok(!lstrcmpW(bstr, L"<html><body>test</body></html>\n"), "responseText = %s\n", debugstr_w(bstr));
+    SysFreeString(bstr);
+
+    IHTMLXDomainRequest_Release(xdr);
+}
+
 static IHTMLDocument2 *create_doc_from_url(const WCHAR *start_url)
 {
     BSTR url;
@@ -1147,6 +1283,7 @@ START_TEST(xmlhttprequest)
         test_async_xhr_abort(doc, large_page_url);
         test_xhr_post(doc);
         test_timeout(doc);
+        test_xdr(doc);
         IHTMLDocument2_Release(doc);
     }
     SysFreeString(content_type);

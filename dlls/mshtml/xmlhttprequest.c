@@ -29,10 +29,12 @@
 
 #include "mshtml_private.h"
 #include "htmlevent.h"
+#include "binding.h"
 #include "mshtmdid.h"
 #include "initguid.h"
 #include "msxml6.h"
 #include "objsafe.h"
+#include "shlwapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -1871,10 +1873,46 @@ static HRESULT WINAPI HTMLXDomainRequest_abort(IHTMLXDomainRequest *iface)
 static HRESULT WINAPI HTMLXDomainRequest_open(IHTMLXDomainRequest *iface, BSTR bstrMethod, BSTR bstrUrl)
 {
     HTMLXDomainRequest *This = impl_from_IHTMLXDomainRequest(iface);
+    HTMLOuterWindow *outer_window = This->xhr.window->base.outer_window;
+    DWORD scheme, scheme2;
+    nsAString nsstr;
+    HRESULT hres;
+    IUri *uri;
 
-    FIXME("(%p)->(%s %s)\n", This, debugstr_w(bstrMethod), debugstr_w(bstrUrl));
+    TRACE("(%p)->(%s %s)\n", This, debugstr_w(bstrMethod), debugstr_w(bstrUrl));
 
-    return E_NOTIMPL;
+    if(!outer_window || !outer_window->uri)
+        return E_ACCESSDENIED;
+
+    hres = create_relative_uri(outer_window, bstrUrl, &uri);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IUri_GetScheme(uri, &scheme);
+    if(hres == S_OK) {
+        if(scheme != URL_SCHEME_HTTP && scheme != URL_SCHEME_HTTPS)
+            hres = E_ACCESSDENIED;
+        else {
+            hres = IUri_GetScheme(outer_window->uri, &scheme2);
+            if(hres == S_OK && scheme != scheme2)
+                hres = E_ACCESSDENIED;
+        }
+    }
+    IUri_Release(uri);
+    if(hres != S_OK)
+        return E_ACCESSDENIED;
+
+    hres = xhr_open(&This->xhr, bstrMethod, bstrUrl, TRUE, NULL, NULL, 1);
+    if(FAILED(hres))
+        return hres;
+
+    /* Prevent Gecko from parsing responseXML for no reason */
+    nsAString_InitDepend(&nsstr, L"text");
+    nsIXMLHttpRequest_SetResponseType(This->xhr.nsxhr, &nsstr);
+    nsAString_Finish(&nsstr);
+
+    /* IE always adds Origin header, even from same origin, but Gecko doesn't allow us to alter it. */
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLXDomainRequest_send(IHTMLXDomainRequest *iface, VARIANT varBody)
