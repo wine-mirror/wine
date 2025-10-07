@@ -7118,6 +7118,7 @@ static SQLRETURN get_info_win32_w( struct connection *con, SQLUSMALLINT type, SQ
         case SQL_ACTIVE_CONNECTIONS:
         case SQL_ACTIVE_STATEMENTS:
         case SQL_ODBC_API_CONFORMANCE:
+        case SQL_CONCAT_NULL_BEHAVIOR:
         case SQL_TXN_CAPABLE:
         case SQL_CONVERT_FUNCTIONS:
         case SQL_NUMERIC_FUNCTIONS:
