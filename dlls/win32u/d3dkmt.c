@@ -1698,3 +1698,35 @@ NTSTATUS d3dkmt_destroy_resource( D3DKMT_HANDLE local )
 
     return STATUS_SUCCESS;
 }
+
+/* create a D3DKMT global or shared sync */
+D3DKMT_HANDLE d3dkmt_create_sync( D3DKMT_HANDLE *global )
+{
+    struct d3dkmt_object *sync = NULL;
+    NTSTATUS status;
+
+    TRACE( "global %p\n", global );
+
+    if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) goto failed;
+    if ((status = d3dkmt_object_create( sync, !global, NULL, 0 ))) goto failed;
+    if (global) *global = sync->global;
+    return sync->local;
+
+failed:
+    WARN( "Failed to create sync, status %#x\n", status );
+    if (sync) d3dkmt_object_free( sync );
+    return 0;
+}
+
+/* destroy a locally opened D3DKMT sync */
+NTSTATUS d3dkmt_destroy_sync( D3DKMT_HANDLE local )
+{
+    struct d3dkmt_object *sync;
+
+    TRACE( "local %#x\n", local );
+
+    if (!(sync = get_d3dkmt_object( local, D3DKMT_SYNC ))) return STATUS_INVALID_PARAMETER;
+    d3dkmt_object_free( sync );
+
+    return STATUS_SUCCESS;
+}
