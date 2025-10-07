@@ -835,15 +835,12 @@ static HRESULT WINAPI HTMLXMLHttpRequest_open(IHTMLXMLHttpRequest *iface, BSTR b
     return hres;
 }
 
-static HRESULT WINAPI HTMLXMLHttpRequest_send(IHTMLXMLHttpRequest *iface, VARIANT varBody)
+static HRESULT WINAPI xhr_send(struct xhr *xhr, VARIANT *varBody)
 {
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
     nsIWritableVariant *nsbody = NULL;
     nsresult nsres = NS_OK;
 
-    TRACE("(%p)->(%s)\n", This, debugstr_variant(&varBody));
-
-    switch(V_VT(&varBody)) {
+    switch(V_VT(varBody)) {
     case VT_NULL:
     case VT_EMPTY:
     case VT_ERROR:
@@ -855,21 +852,21 @@ static HRESULT WINAPI HTMLXMLHttpRequest_send(IHTMLXMLHttpRequest *iface, VARIAN
         if(!nsbody)
             return E_OUTOFMEMORY;
 
-        nsAString_InitDepend(&nsstr, V_BSTR(&varBody));
+        nsAString_InitDepend(&nsstr, V_BSTR(varBody));
         nsres = nsIWritableVariant_SetAsAString(nsbody, &nsstr);
         nsAString_Finish(&nsstr);
         break;
     }
     default:
-        FIXME("unsupported body type %s\n", debugstr_variant(&varBody));
+        FIXME("unsupported body type %s\n", debugstr_variant(varBody));
         return E_NOTIMPL;
     }
 
     if(NS_SUCCEEDED(nsres)) {
-        if(This->xhr.synchronous)
-            nsres = sync_xhr_send(&This->xhr, (nsIVariant*)nsbody);
+        if(xhr->synchronous)
+            nsres = sync_xhr_send(xhr, (nsIVariant*)nsbody);
         else
-            nsres = nsIXMLHttpRequest_Send(This->xhr.nsxhr, (nsIVariant*)nsbody);
+            nsres = nsIXMLHttpRequest_Send(xhr->nsxhr, (nsIVariant*)nsbody);
     }
 
     if(nsbody)
@@ -880,6 +877,15 @@ static HRESULT WINAPI HTMLXMLHttpRequest_send(IHTMLXMLHttpRequest *iface, VARIAN
     }
 
     return S_OK;
+}
+
+static HRESULT WINAPI HTMLXMLHttpRequest_send(IHTMLXMLHttpRequest *iface, VARIANT varBody)
+{
+    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&varBody));
+
+    return xhr_send(&This->xhr, &varBody);
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_getAllResponseHeaders(IHTMLXMLHttpRequest *iface, BSTR *p)
