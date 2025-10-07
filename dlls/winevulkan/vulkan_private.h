@@ -43,6 +43,7 @@ struct wine_device
     struct vulkan_device obj;
     bool has_external_memory_win32;
     bool has_external_semaphore_win32;
+    bool has_external_fence_win32;
     uint64_t queue_count;
     struct wine_queue queues[];
 };
