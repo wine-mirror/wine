@@ -209,6 +209,9 @@ extern D3DKMT_HANDLE d3dkmt_create_resource( D3DKMT_HANDLE *global );
 extern D3DKMT_HANDLE d3dkmt_open_resource( D3DKMT_HANDLE global, HANDLE shared );
 extern NTSTATUS d3dkmt_destroy_resource( D3DKMT_HANDLE local );
 
+extern D3DKMT_HANDLE d3dkmt_create_sync( D3DKMT_HANDLE *global );
+extern NTSTATUS d3dkmt_destroy_sync( D3DKMT_HANDLE local );
+
 /* winstation.c */
 
 struct object_lock
