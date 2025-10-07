@@ -63,6 +63,8 @@ struct error_info
     LONG refcount;
 
     LCID lcid;
+    unsigned int index;
+    struct errorrecords *records;
 };
 
 static inline errorrecords *impl_records_from_IErrorInfo( IErrorInfo *iface )
@@ -80,7 +82,7 @@ static inline struct error_info *impl_from_IErrorInfo( IErrorInfo *iface )
     return CONTAINING_RECORD(iface, struct error_info, IErrorInfo_iface);
 }
 
-static HRESULT create_error_info(LCID lcid, IErrorInfo **out);
+static HRESULT create_error_info(errorrecords *records, unsigned int index, LCID lcid, IErrorInfo **out);
 
 static HRESULT WINAPI errorrecords_QueryInterface(IErrorInfo* iface, REFIID riid, void **ppvoid)
 {
@@ -374,20 +376,20 @@ static HRESULT WINAPI errorrec_GetCustomErrorObject(IErrorRecords *iface, ULONG 
 static HRESULT WINAPI errorrec_GetErrorInfo(IErrorRecords *iface, ULONG index,
         LCID lcid, IErrorInfo **ppErrorInfo)
 {
-    errorrecords *This = impl_from_IErrorRecords(iface);
+    errorrecords *records = impl_from_IErrorRecords(iface);
 
-    FIXME("(%p)->(%lu %ld, %p)\n", This, index, lcid, ppErrorInfo);
+    TRACE("%p, %lu, %ld, %p.\n", iface, index, lcid, ppErrorInfo);
 
     if (!ppErrorInfo)
         return E_INVALIDARG;
 
-    if (index >= This->count)
+    if (index >= records->count)
         return DB_E_BADRECORDNUM;
 
     if (!index)
-        return IErrorInfo_QueryInterface(&This->IErrorInfo_iface, &IID_IErrorInfo, (void **)ppErrorInfo);
+        return IErrorInfo_QueryInterface(&records->IErrorInfo_iface, &IID_IErrorInfo, (void **)ppErrorInfo);
 
-    return create_error_info(lcid, ppErrorInfo);
+    return create_error_info(records, index, lcid, ppErrorInfo);
 }
 
 static HRESULT WINAPI errorrec_GetErrorParameters(IErrorRecords *iface, ULONG index, DISPPARAMS *pdispparams)
@@ -496,6 +498,7 @@ static ULONG WINAPI error_info_Release(IErrorInfo *iface)
 
     if (!refcount)
     {
+        IErrorRecords_Release(&error_info->records->IErrorRecords_iface);
         free(error_info);
     }
 
@@ -552,7 +555,7 @@ static const IErrorInfoVtbl error_info_vtbl =
     error_info_GetHelpContext,
 };
 
-static HRESULT create_error_info(LCID lcid, IErrorInfo **out)
+static HRESULT create_error_info(errorrecords *records, unsigned int index, LCID lcid, IErrorInfo **out)
 {
     struct error_info *object;
 
@@ -562,6 +565,9 @@ static HRESULT create_error_info(LCID lcid, IErrorInfo **out)
     object->IErrorInfo_iface.lpVtbl = &error_info_vtbl;
     object->refcount = 1;
     object->lcid = lcid;
+    object->records = records;
+    IErrorRecords_AddRef(&records->IErrorRecords_iface);
+    object->index = index;
 
     *out = &object->IErrorInfo_iface;
 
