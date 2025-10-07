@@ -75,6 +75,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
         linux-libc-dev \
         lld \
         llvm \
+        mesa-vulkan-drivers \
         netbase \
         ocl-icd-opencl-dev \
         perl \
@@ -142,6 +143,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
             libxrender-dev:i386 \
             libxxf86vm-dev:i386 \
             linux-libc-dev:i386 \
+            mesa-vulkan-drivers:i386 \
             ocl-icd-opencl-dev:i386 \
             unixodbc-dev:i386 && \
         apt-get download -y libgstreamer-plugins-base1.0-dev:i386 libgstreamer1.0-dev:i386 && \
