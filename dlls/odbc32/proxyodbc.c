@@ -40,6 +40,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(odbc);
 
 #define ODBC_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
 
+#define SQL_OJ_CAPABILITIES_OLD 65003
+
 static BOOL is_wow64, is_old_wow64;
 
 struct win32_funcs
@@ -1360,8 +1362,97 @@ static SQLRETURN set_con_attr( struct connection *con, SQLINTEGER attr, SQLPOINT
     return ret;
 }
 
+static SQLRETURN get_info_win32_w( struct connection *con, SQLUSMALLINT type, SQLPOINTER value, SQLSMALLINT buflen,
+                                   SQLSMALLINT *retlen )
+{
+    SQLRETURN ret = SQL_ERROR;
+
+    if (type == SQL_OJ_CAPABILITIES)
+    {
+        if (con->driver_odbc_ver < 0x300)
+            type = SQL_OJ_CAPABILITIES_OLD;
+    }
+
+    if (con->hdr.win32_funcs->SQLGetInfoW)
+        return con->hdr.win32_funcs->SQLGetInfoW( con->hdr.win32_handle, type, value, buflen, retlen );
+
+    if (con->hdr.win32_funcs->SQLGetInfo)
+    {
+        switch (type)
+        {
+        case SQL_ACTIVE_CONNECTIONS:
+        case SQL_ACTIVE_STATEMENTS:
+        case SQL_ODBC_API_CONFORMANCE:
+        case SQL_CONCAT_NULL_BEHAVIOR:
+        case SQL_TXN_CAPABLE:
+        case SQL_CONVERT_FUNCTIONS:
+        case SQL_NUMERIC_FUNCTIONS:
+        case SQL_STRING_FUNCTIONS:
+        case SQL_SYSTEM_FUNCTIONS:
+        case SQL_TIMEDATE_FUNCTIONS:
+        case SQL_CONVERT_BIGINT:
+        case SQL_CONVERT_BINARY:
+        case SQL_CONVERT_BIT:
+        case SQL_CONVERT_CHAR:
+        case SQL_CONVERT_DATE:
+        case SQL_CONVERT_DECIMAL:
+        case SQL_CONVERT_DOUBLE:
+        case SQL_CONVERT_FLOAT:
+        case SQL_CONVERT_INTEGER:
+        case SQL_CONVERT_LONGVARCHAR:
+        case SQL_CONVERT_NUMERIC:
+        case SQL_CONVERT_REAL:
+        case SQL_CONVERT_SMALLINT:
+        case SQL_CONVERT_TIME:
+        case SQL_CONVERT_TIMESTAMP:
+        case SQL_CONVERT_TINYINT:
+        case SQL_CONVERT_VARBINARY:
+        case SQL_CONVERT_VARCHAR:
+        case SQL_CONVERT_LONGVARBINARY:
+        case SQL_OJ_CAPABILITIES:
+        case SQL_OJ_CAPABILITIES_OLD:
+            ret = con->hdr.win32_funcs->SQLGetInfo( con->hdr.win32_handle, type, value, buflen, retlen );
+            break;
+        case SQL_DRIVER_NAME:
+        case SQL_DBMS_NAME:
+        case SQL_DATA_SOURCE_READ_ONLY:
+        case SQL_IDENTIFIER_QUOTE_CHAR:
+        case SQL_SEARCH_PATTERN_ESCAPE:
+        case SQL_EXPRESSIONS_IN_ORDERBY:
+        case SQL_DRIVER_ODBC_VER:
+        case SQL_ORDER_BY_COLUMNS_IN_SELECT:
+        {
+            SQLSMALLINT lenA;
+            SQLCHAR *strA;
+
+            /* For string types sizes are in bytes. */
+
+            buflen /= sizeof(WCHAR);
+            if (!(strA = malloc(buflen))) return SQL_ERROR;
+
+            ret = con->hdr.win32_funcs->SQLGetInfo( con->hdr.win32_handle, type, strA, buflen, &lenA );
+            if (SUCCESS( ret ))
+            {
+                int len = MultiByteToWideChar( CP_ACP, 0, (const char *)strA, -1, (WCHAR *)value, buflen );
+                if (retlen) *retlen = (len - 1) * sizeof(WCHAR);
+            }
+            free( strA );
+
+            break;
+        }
+        default:
+            FIXME( "Unicode to ANSI conversion not handled, for info type %u.\n", type );
+        }
+    }
+
+    return ret;
+}
+
+
 static SQLRETURN create_con( struct connection *con )
 {
+    WCHAR odbc_ver[6];
+    SQLSMALLINT len;
     SQLRETURN ret;
 
     if ((ret = alloc_handle( SQL_HANDLE_DBC, con->hdr.parent, &con->hdr ))) return ret;
@@ -1371,6 +1462,19 @@ static SQLRETURN create_con( struct connection *con )
     if (set_con_attr( con, SQL_ATTR_LOGIN_TIMEOUT, INT_PTR(con->attr_login_timeout), 0 ))
         WARN( "failed to set login timeout\n" );
 
+    if (con->hdr.win32_handle)
+    {
+        ret = get_info_win32_w( con, SQL_DRIVER_ODBC_VER, odbc_ver, sizeof(odbc_ver), &len );
+        if (SUCCESS(ret))
+        {
+            TRACE( "driver odbc ver: %s\n", debugstr_wn(odbc_ver, len / sizeof(WCHAR)) );
+            if (len == 10 && odbc_ver[2] == '.')
+            {
+                con->driver_odbc_ver = _wtoi( odbc_ver ) << 8;
+                con->driver_odbc_ver += _wtoi( odbc_ver + 3 );
+            }
+        }
+    }
     return SQL_SUCCESS;
 }
 
@@ -3008,6 +3112,12 @@ static SQLRETURN get_info_win32_a( struct connection *con, SQLUSMALLINT type, SQ
     WCHAR *strW = NULL;
     SQLPOINTER buf = value;
     BOOL strvalue = FALSE;
+
+    if (type == SQL_OJ_CAPABILITIES)
+    {
+        if (con->driver_odbc_ver < 0x300)
+            type = SQL_OJ_CAPABILITIES_OLD;
+    }
 
     if (con->hdr.win32_funcs->SQLGetInfo)
         return con->hdr.win32_funcs->SQLGetInfo( con->hdr.win32_handle, type, value, buflen, retlen );
@@ -7099,83 +7209,6 @@ static SQLRETURN get_info_unix_w( struct connection *con, SQLUSMALLINT type, SQL
 {
     struct SQLGetInfoW_params params = { con->hdr.unix_handle, type, value, buflen, retlen };
     return ODBC_CALL( SQLGetInfoW, &params );
-}
-
-static SQLRETURN get_info_win32_w( struct connection *con, SQLUSMALLINT type, SQLPOINTER value, SQLSMALLINT buflen,
-                                   SQLSMALLINT *retlen )
-{
-    SQLRETURN ret = SQL_ERROR;
-
-    if (con->hdr.win32_funcs->SQLGetInfoW)
-        return con->hdr.win32_funcs->SQLGetInfoW( con->hdr.win32_handle, type, value, buflen, retlen );
-
-    if (con->hdr.win32_funcs->SQLGetInfo)
-    {
-        switch (type)
-        {
-        case SQL_ACTIVE_CONNECTIONS:
-        case SQL_ACTIVE_STATEMENTS:
-        case SQL_ODBC_API_CONFORMANCE:
-        case SQL_CONCAT_NULL_BEHAVIOR:
-        case SQL_TXN_CAPABLE:
-        case SQL_CONVERT_FUNCTIONS:
-        case SQL_NUMERIC_FUNCTIONS:
-        case SQL_STRING_FUNCTIONS:
-        case SQL_SYSTEM_FUNCTIONS:
-        case SQL_TIMEDATE_FUNCTIONS:
-        case SQL_CONVERT_BIGINT:
-        case SQL_CONVERT_BINARY:
-        case SQL_CONVERT_BIT:
-        case SQL_CONVERT_CHAR:
-        case SQL_CONVERT_DATE:
-        case SQL_CONVERT_DECIMAL:
-        case SQL_CONVERT_DOUBLE:
-        case SQL_CONVERT_FLOAT:
-        case SQL_CONVERT_INTEGER:
-        case SQL_CONVERT_LONGVARCHAR:
-        case SQL_CONVERT_NUMERIC:
-        case SQL_CONVERT_REAL:
-        case SQL_CONVERT_SMALLINT:
-        case SQL_CONVERT_TIME:
-        case SQL_CONVERT_TIMESTAMP:
-        case SQL_CONVERT_TINYINT:
-        case SQL_CONVERT_VARBINARY:
-        case SQL_CONVERT_VARCHAR:
-        case SQL_CONVERT_LONGVARBINARY:
-            ret = con->hdr.win32_funcs->SQLGetInfo( con->hdr.win32_handle, type, value, buflen, retlen );
-            break;
-        case SQL_DRIVER_NAME:
-        case SQL_DBMS_NAME:
-        case SQL_DATA_SOURCE_READ_ONLY:
-        case SQL_IDENTIFIER_QUOTE_CHAR:
-        case SQL_SEARCH_PATTERN_ESCAPE:
-        case SQL_EXPRESSIONS_IN_ORDERBY:
-        case SQL_ORDER_BY_COLUMNS_IN_SELECT:
-        {
-            SQLSMALLINT lenA;
-            SQLCHAR *strA;
-
-            /* For string types sizes are in bytes. */
-
-            buflen /= sizeof(WCHAR);
-            if (!(strA = malloc(buflen))) return SQL_ERROR;
-
-            ret = con->hdr.win32_funcs->SQLGetInfo( con->hdr.win32_handle, type, strA, buflen, &lenA );
-            if (SUCCESS( ret ))
-            {
-                int len = MultiByteToWideChar( CP_ACP, 0, (const char *)strA, -1, (WCHAR *)value, buflen );
-                if (retlen) *retlen = (len - 1) * sizeof(WCHAR);
-            }
-            free( strA );
-
-            break;
-        }
-        default:
-            FIXME( "Unicode to ANSI conversion not handled, for info type %u.\n", type );
-        }
-    }
-
-    return ret;
 }
 
 /*************************************************************************

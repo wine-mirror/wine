@@ -210,6 +210,7 @@ struct environment
 struct connection
 {
     struct object hdr;
+    UINT32 driver_odbc_ver;
     /* attributes */
     UINT32 attr_con_timeout;
     UINT32 attr_login_timeout;
