@@ -39,10 +39,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 
 struct error_record
 {
+    IErrorLookup   *lookup_service;
     ERRORINFO       info;
     DISPPARAMS      dispparams;
     IUnknown        *custom_error;
-    DWORD           lookupID;
+    DWORD           lookup_id;
     DWORD           dynamic_id;
 };
 
@@ -57,6 +58,11 @@ typedef struct errorrecords
     unsigned int count;
 } errorrecords;
 
+enum error_info_flags
+{
+    ERROR_INFO_HAS_DESCRIPTION = 0x1,
+};
+
 struct error_info
 {
     IErrorInfo IErrorInfo_iface;
@@ -65,6 +71,10 @@ struct error_info
     LCID lcid;
     unsigned int index;
     struct errorrecords *records;
+    unsigned int flags;
+
+    BSTR source;
+    BSTR description;
 };
 
 static inline errorrecords *impl_records_from_IErrorInfo( IErrorInfo *iface )
@@ -83,6 +93,115 @@ static inline struct error_info *impl_from_IErrorInfo( IErrorInfo *iface )
 }
 
 static HRESULT create_error_info(errorrecords *records, unsigned int index, LCID lcid, IErrorInfo **out);
+
+static HRESULT return_bstr(BSTR src, BSTR *dst)
+{
+    *dst = SysAllocStringLen(src, SysStringLen(src));
+    return *dst ? S_OK : E_OUTOFMEMORY;
+}
+
+static HRESULT errorrecords_get_record(errorrecords *records, unsigned int index,
+        struct error_record **record)
+{
+    *record = NULL;
+
+    if (index >= records->count)
+        return DB_E_BADRECORDNUM;
+
+    *record = &records->records[records->count - index - 1];
+
+    return S_OK;
+}
+
+static HRESULT error_record_get_lookup_service(struct error_record *record, IErrorLookup **lookup_service)
+{
+    WCHAR name[64], clsidW[39];
+    CLSID clsid;
+    LSTATUS ret;
+    DWORD size;
+    HRESULT hr;
+    HKEY hkey;
+
+    if (!record->lookup_service)
+    {
+        StringFromGUID2(&record->info.clsid, clsidW, ARRAY_SIZE(clsidW));
+        wcscpy(name, L"CLSID\\");
+        wcscat(name, clsidW);
+        wcscat(name, L"\\ExtendedErrors");
+        if (RegOpenKeyExW(HKEY_CLASSES_ROOT, name, 0, KEY_READ, &hkey))
+            return E_FAIL;
+
+        size = ARRAY_SIZE(clsidW);
+        ret = RegEnumKeyExW(hkey, 0, clsidW, &size, NULL, NULL, NULL, NULL);
+        RegCloseKey(hkey);
+        if (ret)
+            return E_FAIL;
+
+        if (FAILED(CLSIDFromString(clsidW, &clsid)))
+            return E_FAIL;
+
+        if (FAILED(hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IErrorLookup,
+                (void **)&record->lookup_service)))
+        {
+            return hr;
+        }
+    }
+
+    *lookup_service = record->lookup_service;
+    IErrorLookup_AddRef(*lookup_service);
+    return S_OK;
+}
+
+static HRESULT error_info_fetch_description(struct error_info *info)
+{
+    IErrorLookup *lookup_service;
+    struct error_record *record;
+    BSTR source, description;
+    HRESULT hr;
+
+    if (FAILED(hr = errorrecords_get_record(info->records, info->index, &record)))
+        return hr;
+
+    if (FAILED(hr = error_record_get_lookup_service(record, &lookup_service)))
+        return hr;
+
+    hr = IErrorLookup_GetErrorDescription(lookup_service, record->info.hrError, record->lookup_id,
+            &record->dispparams, info->lcid, &source, &description);
+    IErrorLookup_Release(lookup_service);
+    if (FAILED(hr))
+        return hr;
+
+    info->source = source;
+    info->description = description;
+    info->flags |= ERROR_INFO_HAS_DESCRIPTION;
+
+    return S_OK;
+}
+
+static HRESULT error_info_get_source(struct error_info *info, BSTR *source)
+{
+    struct error_record *record;
+    HRESULT hr;
+
+    if (!source)
+        return E_INVALIDARG;
+
+    *source = NULL;
+
+    if (FAILED(hr = errorrecords_get_record(info->records, info->index, &record)))
+        return hr;
+
+    if (record->lookup_id == IDENTIFIER_SDK_ERROR)
+        return E_FAIL;
+
+    if (info->flags & ERROR_INFO_HAS_DESCRIPTION)
+        return return_bstr(info->source, source);
+
+    if (FAILED(hr = error_info_fetch_description(info)))
+        return hr;
+
+    return return_bstr(info->source, source);
+}
 
 static HRESULT WINAPI errorrecords_QueryInterface(IErrorInfo* iface, REFIID riid, void **ppvoid)
 {
@@ -144,24 +263,16 @@ static ULONG WINAPI errorrecords_Release(IErrorInfo* iface)
                 VariantClear(&record->dispparams.rgvarg[j]);
             CoTaskMemFree(record->dispparams.rgvarg);
             CoTaskMemFree(record->dispparams.rgdispidNamedArgs);
+
+            if (record->lookup_service)
+            {
+                IErrorLookup_Release(record->lookup_service);
+            }
         }
         free(records->records);
         free(records);
     }
     return ref;
-}
-
-static HRESULT errorrecords_get_record(errorrecords *records, unsigned int index,
-        struct error_record **record)
-{
-    *record = NULL;
-
-    if (index >= records->count)
-        return DB_E_BADRECORDNUM;
-
-    *record = &records->records[records->count - index - 1];
-
-    return S_OK;
 }
 
 static HRESULT WINAPI errorrecords_GetGUID(IErrorInfo* iface, GUID *guid)
@@ -328,8 +439,9 @@ static HRESULT WINAPI errorrec_AddErrorRecord(IErrorRecords *iface, ERRORINFO *p
     entry->custom_error = punkCustomError;
     if (entry->custom_error)
         IUnknown_AddRef(entry->custom_error);
-    entry->lookupID = dwLookupID;
+    entry->lookup_id = dwLookupID;
     entry->dynamic_id = dwDynamicErrorID;
+    entry->lookup_service = NULL;
 
     This->count++;
 
@@ -499,6 +611,8 @@ static ULONG WINAPI error_info_Release(IErrorInfo *iface)
     if (!refcount)
     {
         IErrorRecords_Release(&error_info->records->IErrorRecords_iface);
+        SysFreeString(error_info->source);
+        SysFreeString(error_info->description);
         free(error_info);
     }
 
@@ -517,9 +631,11 @@ static HRESULT WINAPI error_info_GetGUID(IErrorInfo *iface, GUID *guid)
 
 static HRESULT WINAPI error_info_GetSource(IErrorInfo *iface, BSTR *source)
 {
-    FIXME("%p, %p.\n", iface, source);
+    struct error_info *error_info = impl_from_IErrorInfo(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, source);
+
+    return error_info_get_source(error_info, source);
 }
 
 static HRESULT WINAPI error_info_GetDescription(IErrorInfo *iface, BSTR *description)
