@@ -3110,7 +3110,7 @@ typedef struct VkExportFenceWin32HandleInfoKHR32
     PTR32 pNext;
     PTR32 pAttributes;
     DWORD dwAccess;
-    LPCWSTR name;
+    PTR32 name;
 } VkExportFenceWin32HandleInfoKHR32;
 
 typedef struct VkExportMemoryAllocateInfo32
@@ -3127,7 +3127,7 @@ typedef struct VkExportMemoryWin32HandleInfoKHR32
     PTR32 pNext;
     PTR32 pAttributes;
     DWORD dwAccess;
-    LPCWSTR name;
+    PTR32 name;
 } VkExportMemoryWin32HandleInfoKHR32;
 
 typedef struct VkExportSemaphoreCreateInfo32
@@ -3144,7 +3144,7 @@ typedef struct VkExportSemaphoreWin32HandleInfoKHR32
     PTR32 pNext;
     PTR32 pAttributes;
     DWORD dwAccess;
-    LPCWSTR name;
+    PTR32 name;
 } VkExportSemaphoreWin32HandleInfoKHR32;
 
 typedef struct VkExternalBufferProperties32
@@ -3667,8 +3667,8 @@ typedef struct VkImportFenceWin32HandleInfoKHR32
     VkFence DECLSPEC_ALIGN(8) fence;
     VkFenceImportFlags flags;
     VkExternalFenceHandleTypeFlagBits handleType;
-    HANDLE handle;
-    LPCWSTR name;
+    PTR32 handle;
+    PTR32 name;
 } VkImportFenceWin32HandleInfoKHR32;
 
 typedef struct VkImportMemoryHostPointerInfoEXT32
@@ -3684,8 +3684,8 @@ typedef struct VkImportMemoryWin32HandleInfoKHR32
     VkStructureType sType;
     PTR32 pNext;
     VkExternalMemoryHandleTypeFlagBits handleType;
-    HANDLE handle;
-    LPCWSTR name;
+    PTR32 handle;
+    PTR32 name;
 } VkImportMemoryWin32HandleInfoKHR32;
 
 typedef struct VkImportSemaphoreWin32HandleInfoKHR32
@@ -3695,8 +3695,8 @@ typedef struct VkImportSemaphoreWin32HandleInfoKHR32
     VkSemaphore DECLSPEC_ALIGN(8) semaphore;
     VkSemaphoreImportFlags flags;
     VkExternalSemaphoreHandleTypeFlagBits handleType;
-    HANDLE handle;
-    LPCWSTR name;
+    PTR32 handle;
+    PTR32 name;
 } VkImportSemaphoreWin32HandleInfoKHR32;
 
 typedef struct VkIndirectCommandsLayoutCreateInfoEXT32
@@ -9924,7 +9924,7 @@ static void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_context
             out_ext->pNext = NULL;
             out_ext->pAttributes = UlongToPtr(in_ext->pAttributes);
             out_ext->dwAccess = in_ext->dwAccess;
-            out_ext->name = in_ext->name;
+            out_ext->name = (LPCWSTR)UlongToPtr(in_ext->name);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -9948,8 +9948,8 @@ static void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_context
             out_ext->sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_WIN32_HANDLE_INFO_KHR;
             out_ext->pNext = NULL;
             out_ext->handleType = in_ext->handleType;
-            out_ext->handle = in_ext->handle;
-            out_ext->name = in_ext->name;
+            out_ext->handle = (HANDLE)UlongToPtr(in_ext->handle);
+            out_ext->name = (LPCWSTR)UlongToPtr(in_ext->name);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -22285,7 +22285,7 @@ static void convert_VkFenceCreateInfo_win32_to_host(struct conversion_context *c
             out_ext->pNext = NULL;
             out_ext->pAttributes = UlongToPtr(in_ext->pAttributes);
             out_ext->dwAccess = in_ext->dwAccess;
-            out_ext->name = in_ext->name;
+            out_ext->name = (LPCWSTR)UlongToPtr(in_ext->name);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -26176,7 +26176,7 @@ static void convert_VkSemaphoreCreateInfo_win32_to_host(struct conversion_contex
             out_ext->pNext = NULL;
             out_ext->pAttributes = UlongToPtr(in_ext->pAttributes);
             out_ext->dwAccess = in_ext->dwAccess;
-            out_ext->name = in_ext->name;
+            out_ext->name = (LPCWSTR)UlongToPtr(in_ext->name);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -39074,8 +39074,8 @@ static void convert_VkImportFenceWin32HandleInfoKHR_win32_to_unwrapped_host(cons
     out->fence = in->fence;
     out->flags = in->flags;
     out->handleType = in->handleType;
-    out->handle = in->handle;
-    out->name = in->name;
+    out->handle = (HANDLE)UlongToPtr(in->handle);
+    out->name = (LPCWSTR)UlongToPtr(in->name);
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
@@ -39089,8 +39089,8 @@ static void convert_VkImportSemaphoreWin32HandleInfoKHR_win32_to_unwrapped_host(
     out->semaphore = in->semaphore;
     out->flags = in->flags;
     out->handleType = in->handleType;
-    out->handle = in->handle;
-    out->name = in->name;
+    out->handle = (HANDLE)UlongToPtr(in->handle);
+    out->name = (LPCWSTR)UlongToPtr(in->name);
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
@@ -54753,11 +54753,14 @@ static NTSTATUS thunk32_vkGetFenceWin32HandleKHR(void *args)
         VkResult result;
     } *params = args;
     VkFenceGetWin32HandleInfoKHR pGetWin32HandleInfo_host;
+    HANDLE pHandle_host;
 
     TRACE("%#x, %#x, %#x\n", params->device, params->pGetWin32HandleInfo, params->pHandle);
 
     convert_VkFenceGetWin32HandleInfoKHR_win32_to_unwrapped_host((const VkFenceGetWin32HandleInfoKHR32 *)UlongToPtr(params->pGetWin32HandleInfo), &pGetWin32HandleInfo_host);
-    params->result = vk_funcs->p_vkGetFenceWin32HandleKHR((VkDevice)UlongToPtr(params->device), &pGetWin32HandleInfo_host, (HANDLE *)UlongToPtr(params->pHandle));
+    pHandle_host = UlongToPtr(*(PTR32 *)UlongToPtr(params->pHandle));
+    params->result = vk_funcs->p_vkGetFenceWin32HandleKHR((VkDevice)UlongToPtr(params->device), &pGetWin32HandleInfo_host, &pHandle_host);
+    *(PTR32 *)UlongToPtr(params->pHandle) = PtrToUlong(pHandle_host);
     return STATUS_SUCCESS;
 }
 
@@ -55458,11 +55461,14 @@ static NTSTATUS thunk32_vkGetMemoryWin32HandleKHR(void *args)
         VkResult result;
     } *params = args;
     VkMemoryGetWin32HandleInfoKHR pGetWin32HandleInfo_host;
+    HANDLE pHandle_host;
 
     TRACE("%#x, %#x, %#x\n", params->device, params->pGetWin32HandleInfo, params->pHandle);
 
     convert_VkMemoryGetWin32HandleInfoKHR_win32_to_unwrapped_host((const VkMemoryGetWin32HandleInfoKHR32 *)UlongToPtr(params->pGetWin32HandleInfo), &pGetWin32HandleInfo_host);
-    params->result = vk_funcs->p_vkGetMemoryWin32HandleKHR((VkDevice)UlongToPtr(params->device), &pGetWin32HandleInfo_host, (HANDLE *)UlongToPtr(params->pHandle));
+    pHandle_host = UlongToPtr(*(PTR32 *)UlongToPtr(params->pHandle));
+    params->result = vk_funcs->p_vkGetMemoryWin32HandleKHR((VkDevice)UlongToPtr(params->device), &pGetWin32HandleInfo_host, &pHandle_host);
+    *(PTR32 *)UlongToPtr(params->pHandle) = PtrToUlong(pHandle_host);
     return STATUS_SUCCESS;
 }
 
@@ -55484,16 +55490,16 @@ static NTSTATUS thunk32_vkGetMemoryWin32HandlePropertiesKHR(void *args)
     {
         PTR32 device;
         VkExternalMemoryHandleTypeFlagBits handleType;
-        HANDLE handle;
+        PTR32 handle;
         PTR32 pMemoryWin32HandleProperties;
         VkResult result;
     } *params = args;
     VkMemoryWin32HandlePropertiesKHR pMemoryWin32HandleProperties_host;
 
-    TRACE("%#x, %#x, %p, %#x\n", params->device, params->handleType, params->handle, params->pMemoryWin32HandleProperties);
+    TRACE("%#x, %#x, %#x, %#x\n", params->device, params->handleType, params->handle, params->pMemoryWin32HandleProperties);
 
     convert_VkMemoryWin32HandlePropertiesKHR_win32_to_host((VkMemoryWin32HandlePropertiesKHR32 *)UlongToPtr(params->pMemoryWin32HandleProperties), &pMemoryWin32HandleProperties_host);
-    params->result = vk_funcs->p_vkGetMemoryWin32HandlePropertiesKHR((VkDevice)UlongToPtr(params->device), params->handleType, params->handle, &pMemoryWin32HandleProperties_host);
+    params->result = vk_funcs->p_vkGetMemoryWin32HandlePropertiesKHR((VkDevice)UlongToPtr(params->device), params->handleType, (HANDLE)UlongToPtr(params->handle), &pMemoryWin32HandleProperties_host);
     convert_VkMemoryWin32HandlePropertiesKHR_host_to_win32(&pMemoryWin32HandleProperties_host, (VkMemoryWin32HandlePropertiesKHR32 *)UlongToPtr(params->pMemoryWin32HandleProperties));
     return STATUS_SUCCESS;
 }
@@ -58214,11 +58220,14 @@ static NTSTATUS thunk32_vkGetSemaphoreWin32HandleKHR(void *args)
         VkResult result;
     } *params = args;
     VkSemaphoreGetWin32HandleInfoKHR pGetWin32HandleInfo_host;
+    HANDLE pHandle_host;
 
     TRACE("%#x, %#x, %#x\n", params->device, params->pGetWin32HandleInfo, params->pHandle);
 
     convert_VkSemaphoreGetWin32HandleInfoKHR_win32_to_unwrapped_host((const VkSemaphoreGetWin32HandleInfoKHR32 *)UlongToPtr(params->pGetWin32HandleInfo), &pGetWin32HandleInfo_host);
-    params->result = vk_funcs->p_vkGetSemaphoreWin32HandleKHR((VkDevice)UlongToPtr(params->device), &pGetWin32HandleInfo_host, (HANDLE *)UlongToPtr(params->pHandle));
+    pHandle_host = UlongToPtr(*(PTR32 *)UlongToPtr(params->pHandle));
+    params->result = vk_funcs->p_vkGetSemaphoreWin32HandleKHR((VkDevice)UlongToPtr(params->device), &pGetWin32HandleInfo_host, &pHandle_host);
+    *(PTR32 *)UlongToPtr(params->pHandle) = PtrToUlong(pHandle_host);
     return STATUS_SUCCESS;
 }
 

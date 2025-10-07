@@ -1225,7 +1225,7 @@ class VkVariable(object):
         return self.pointer and self.pointer.count('*') > 1
 
     def is_pointer_size(self):
-        if self.type in ["size_t", "HWND", "HINSTANCE"] or self.type.startswith("PFN"):
+        if self.type in ["size_t", "HWND", "HINSTANCE", "HANDLE", "LPCWSTR"] or self.type.startswith("PFN"):
             return True
         if self.is_handle() and self.handle.is_dispatchable():
             return True
