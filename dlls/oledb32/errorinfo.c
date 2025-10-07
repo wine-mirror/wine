@@ -287,6 +287,31 @@ static HRESULT error_info_get_helpfile(struct error_info *info, BSTR *helpfile)
     return SUCCEEDED(hr) ? return_bstr(info->helpfile, helpfile) : hr;
 }
 
+static HRESULT error_info_get_helpcontext(struct error_info *info, DWORD *helpcontext)
+{
+    struct error_record *record;
+    HRESULT hr;
+
+    if (!helpcontext)
+        return E_INVALIDARG;
+
+    *helpcontext = 0;
+
+    if (FAILED(hr = errorrecords_get_record(info->records, info->index, &record)))
+        return hr;
+
+    if (record->lookup_id == IDENTIFIER_SDK_ERROR)
+        return E_FAIL;
+
+    if (!(info->flags & ERROR_INFO_HAS_HELPINFO))
+        hr = error_info_fetch_helpinfo(info);
+
+    if (SUCCEEDED(hr))
+        *helpcontext = info->helpcontext;
+
+    return hr;
+}
+
 static HRESULT WINAPI errorrecords_QueryInterface(IErrorInfo* iface, REFIID riid, void **ppvoid)
 {
     errorrecords *records = impl_records_from_IErrorInfo(iface);
@@ -745,9 +770,11 @@ static HRESULT WINAPI error_info_GetHelpFile(IErrorInfo *iface, BSTR *helpfile)
 
 static HRESULT WINAPI error_info_GetHelpContext(IErrorInfo *iface, DWORD *context)
 {
-    FIXME("%p, %p.\n", iface, context);
+    struct error_info *error_info = impl_from_IErrorInfo(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, context);
+
+    return error_info_get_helpcontext(error_info, context);
 }
 
 static const IErrorInfoVtbl error_info_vtbl =
