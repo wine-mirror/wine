@@ -37,12 +37,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 
-struct ErrorEntry
+struct error_record
 {
     ERRORINFO       info;
     DISPPARAMS      dispparams;
     IUnknown        *custom_error;
     DWORD           lookupID;
+    DWORD           dynamic_id;
 };
 
 typedef struct errorrecords
@@ -51,7 +52,7 @@ typedef struct errorrecords
     IErrorRecords  IErrorRecords_iface;
     LONG ref;
 
-    struct ErrorEntry *records;
+    struct error_record *records;
     unsigned int allocated;
     unsigned int count;
 } errorrecords;
@@ -264,7 +265,7 @@ static HRESULT WINAPI errorrec_AddErrorRecord(IErrorRecords *iface, ERRORINFO *p
         DWORD dwLookupID, DISPPARAMS *pdispparams, IUnknown *punkCustomError, DWORD dwDynamicErrorID)
 {
     errorrecords *This = impl_from_IErrorRecords(iface);
-    struct ErrorEntry *entry;
+    struct error_record *entry, *new_ptr;
     HRESULT hr;
 
     TRACE("(%p)->(%p %ld %p %p %ld)\n", This, pErrorInfo, dwLookupID, pdispparams, punkCustomError, dwDynamicErrorID);
@@ -282,8 +283,6 @@ static HRESULT WINAPI errorrec_AddErrorRecord(IErrorRecords *iface, ERRORINFO *p
     }
     else if (This->count == This->allocated)
     {
-        struct ErrorEntry *new_ptr;
-
         new_ptr = realloc(This->records, 2 * This->allocated * sizeof(*This->records));
         if (!new_ptr)
             return E_OUTOFMEMORY;
@@ -301,7 +300,8 @@ static HRESULT WINAPI errorrec_AddErrorRecord(IErrorRecords *iface, ERRORINFO *p
     entry->custom_error = punkCustomError;
     if (entry->custom_error)
         IUnknown_AddRef(entry->custom_error);
-    entry->lookupID = dwDynamicErrorID;
+    entry->lookupID = dwLookupID;
+    entry->dynamic_id = dwDynamicErrorID;
 
     This->count++;
 
