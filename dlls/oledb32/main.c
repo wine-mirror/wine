@@ -126,7 +126,7 @@ static const IClassFactoryVtbl CF_Vtbl =
 
 static cf oledb_convert_cf = { { &CF_Vtbl }, create_oledb_convert };
 static cf oledb_datainit_cf = { { &CF_Vtbl }, create_data_init };
-static cf oledb_errorinfo_cf = { { &CF_Vtbl }, create_error_info };
+static cf oledb_errorinfo_cf = { { &CF_Vtbl }, create_error_object };
 static cf oledb_rowpos_cf = { { &CF_Vtbl }, create_oledb_rowpos };
 static cf oledb_dslocator_cf = { { &CF_Vtbl }, create_dslocator };
 

@@ -408,7 +408,7 @@ static const IErrorRecordsVtbl ErrorRecordsVtbl =
     errorrec_GetRecordCount
 };
 
-HRESULT create_error_info(IUnknown *outer, void **obj)
+HRESULT create_error_object(IUnknown *outer, void **obj)
 {
     errorrecords *This;
 
