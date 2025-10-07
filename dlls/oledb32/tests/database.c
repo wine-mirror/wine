@@ -471,9 +471,7 @@ static void test_errorinfo(void)
 
     str = NULL;
     hr = IErrorInfo_GetDescription(errorinfo, &str);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!!str, "Expected error text.\n");
     SysFreeString(str);
 

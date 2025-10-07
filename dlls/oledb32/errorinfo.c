@@ -53,6 +53,7 @@ typedef struct errorrecords
     IErrorRecords  IErrorRecords_iface;
     LONG ref;
 
+    IErrorInfo *error_info;
     struct error_record *records;
     unsigned int allocated;
     unsigned int count;
@@ -62,6 +63,7 @@ enum error_info_flags
 {
     ERROR_INFO_HAS_DESCRIPTION = 0x1,
     ERROR_INFO_HAS_HELPINFO = 0x2,
+    ERROR_INFO_NO_PARENT_REF = 0x4,
 };
 
 struct error_info
@@ -95,7 +97,8 @@ static inline struct error_info *impl_from_IErrorInfo( IErrorInfo *iface )
     return CONTAINING_RECORD(iface, struct error_info, IErrorInfo_iface);
 }
 
-static HRESULT create_error_info(errorrecords *records, unsigned int index, LCID lcid, IErrorInfo **out);
+static HRESULT create_error_info(errorrecords *records, unsigned int index, LCID lcid,
+        unsigned int flags, IErrorInfo **out);
 
 static HRESULT return_bstr(BSTR src, BSTR *dst)
 {
@@ -386,6 +389,30 @@ static ULONG WINAPI errorrecords_Release(IErrorInfo* iface)
     return ref;
 }
 
+static HRESULT errorrecords_get_error_info(errorrecords *records, IErrorInfo **info)
+{
+    HRESULT hr;
+
+    *info = NULL;
+
+    if (!records->count)
+        return E_FAIL;
+
+    if (!records->error_info)
+    {
+        if (FAILED(hr = create_error_info(records, 0, GetUserDefaultLCID(), ERROR_INFO_NO_PARENT_REF, &records->error_info)))
+            return hr;
+    }
+
+    if (records->error_info)
+    {
+        *info = records->error_info;
+        IErrorInfo_AddRef(*info);
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI errorrecords_GetGUID(IErrorInfo* iface, GUID *guid)
 {
     errorrecords *records = impl_records_from_IErrorInfo(iface);
@@ -404,6 +431,10 @@ static HRESULT WINAPI errorrecords_GetGUID(IErrorInfo* iface, GUID *guid)
 
 static HRESULT WINAPI errorrecords_GetSource(IErrorInfo* iface, BSTR *source)
 {
+    errorrecords *records = impl_records_from_IErrorInfo(iface);
+    IErrorInfo *error_info;
+    HRESULT hr;
+
     TRACE("%p, %p.\n", iface, source);
 
     if (!source)
@@ -411,11 +442,22 @@ static HRESULT WINAPI errorrecords_GetSource(IErrorInfo* iface, BSTR *source)
 
     *source = NULL;
 
+    if (SUCCEEDED(errorrecords_get_error_info(records, &error_info)))
+    {
+        hr = IErrorInfo_GetSource(error_info, source);
+        IErrorInfo_Release(error_info);
+        return hr;
+    }
+
     return E_FAIL;
 }
 
 static HRESULT WINAPI errorrecords_GetDescription(IErrorInfo* iface, BSTR *description)
 {
+    errorrecords *records = impl_records_from_IErrorInfo(iface);
+    IErrorInfo *error_info;
+    HRESULT hr;
+
     TRACE("%p, %p.\n", iface, description);
 
     if (!description)
@@ -423,11 +465,22 @@ static HRESULT WINAPI errorrecords_GetDescription(IErrorInfo* iface, BSTR *descr
 
     *description = NULL;
 
+    if (SUCCEEDED(errorrecords_get_error_info(records, &error_info)))
+    {
+        hr = IErrorInfo_GetDescription(error_info, description);
+        IErrorInfo_Release(error_info);
+        return hr;
+    }
+
     return E_FAIL;
 }
 
 static HRESULT WINAPI errorrecords_GetHelpFile(IErrorInfo* iface, BSTR *helpfile)
 {
+    errorrecords *records = impl_records_from_IErrorInfo(iface);
+    IErrorInfo *error_info;
+    HRESULT hr;
+
     TRACE("%p, %p.\n", iface, helpfile);
 
     if (!helpfile)
@@ -435,17 +488,35 @@ static HRESULT WINAPI errorrecords_GetHelpFile(IErrorInfo* iface, BSTR *helpfile
 
     *helpfile = NULL;
 
+    if (SUCCEEDED(errorrecords_get_error_info(records, &error_info)))
+    {
+        hr = IErrorInfo_GetHelpFile(error_info, helpfile);
+        IErrorInfo_Release(error_info);
+        return hr;
+    }
+
     return E_FAIL;
 }
 
 static HRESULT WINAPI errorrecords_GetHelpContext(IErrorInfo* iface, DWORD *context)
 {
+    errorrecords *records = impl_records_from_IErrorInfo(iface);
+    IErrorInfo *error_info;
+    HRESULT hr;
+
     TRACE("%p, %p.\n", iface, context);
 
     if (!context)
         return E_INVALIDARG;
 
     *context = 0;
+
+    if (SUCCEEDED(errorrecords_get_error_info(records, &error_info)))
+    {
+        hr = IErrorInfo_GetHelpContext(error_info, context);
+        IErrorInfo_Release(error_info);
+        return hr;
+    }
 
     return E_FAIL;
 }
@@ -612,7 +683,7 @@ static HRESULT WINAPI errorrec_GetErrorInfo(IErrorRecords *iface, ULONG index,
     if (!index)
         return IErrorInfo_QueryInterface(&records->IErrorInfo_iface, &IID_IErrorInfo, (void **)ppErrorInfo);
 
-    return create_error_info(records, index, lcid, ppErrorInfo);
+    return create_error_info(records, index, lcid, 0, ppErrorInfo);
 }
 
 static HRESULT WINAPI errorrec_GetErrorParameters(IErrorRecords *iface, ULONG index, DISPPARAMS *pdispparams)
@@ -671,16 +742,12 @@ HRESULT create_error_object(IUnknown *outer, void **obj)
 
     if(outer) return CLASS_E_NOAGGREGATION;
 
-    This = malloc(sizeof(*This));
+    This = calloc(1, sizeof(*This));
     if(!This) return E_OUTOFMEMORY;
 
     This->IErrorInfo_iface.lpVtbl = &ErrorInfoVtbl;
     This->IErrorRecords_iface.lpVtbl = &ErrorRecordsVtbl;
     This->ref = 1;
-
-    This->records = NULL;
-    This->allocated = 0;
-    This->count = 0;
 
     *obj = &This->IErrorInfo_iface;
 
@@ -721,7 +788,8 @@ static ULONG WINAPI error_info_Release(IErrorInfo *iface)
 
     if (!refcount)
     {
-        IErrorRecords_Release(&error_info->records->IErrorRecords_iface);
+        if (!(error_info->flags & ERROR_INFO_NO_PARENT_REF))
+            IErrorRecords_Release(&error_info->records->IErrorRecords_iface);
         SysFreeString(error_info->source);
         SysFreeString(error_info->description);
         SysFreeString(error_info->helpfile);
@@ -789,7 +857,8 @@ static const IErrorInfoVtbl error_info_vtbl =
     error_info_GetHelpContext,
 };
 
-static HRESULT create_error_info(errorrecords *records, unsigned int index, LCID lcid, IErrorInfo **out)
+static HRESULT create_error_info(errorrecords *records, unsigned int index, LCID lcid,
+        unsigned int flags, IErrorInfo **out)
 {
     struct error_info *object;
 
@@ -800,8 +869,10 @@ static HRESULT create_error_info(errorrecords *records, unsigned int index, LCID
     object->refcount = 1;
     object->lcid = lcid;
     object->records = records;
-    IErrorRecords_AddRef(&records->IErrorRecords_iface);
+    if (!(flags & ERROR_INFO_NO_PARENT_REF))
+        IErrorRecords_AddRef(&records->IErrorRecords_iface);
     object->index = index;
+    object->flags = flags;
 
     *out = &object->IErrorInfo_iface;
 
