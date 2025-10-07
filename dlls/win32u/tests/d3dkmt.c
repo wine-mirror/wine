@@ -2074,7 +2074,7 @@ static void test_D3DKMTCreateKeyedMutex( void )
 static DWORD WINAPI test_acquire_mutex( void *arg )
 {
     NTSTATUS status = D3DKMTAcquireKeyedMutex( arg );
-    todo_wine ok_nt( STATUS_ABANDONED, status );
+    ok_nt( STATUS_ABANDONED, status );
     return 0;
 }
 
@@ -2104,7 +2104,7 @@ static void test_D3DKMTAcquireKeyedMutex( void )
     acquire.pTimeout = &timeout;
     acquire.FenceValue = 0xdeadbeef;
     status = D3DKMTAcquireKeyedMutex( &acquire );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     ok_x4( acquire.Key, ==, 0xdeadbeef );
     ok_x8( acquire.FenceValue, ==, 0xdeadbeef );
 
@@ -2112,17 +2112,17 @@ static void test_D3DKMTAcquireKeyedMutex( void )
     acquire.Key = 0xdeadbeef;
     acquire.FenceValue = 0xdeadbeef;
     status = D3DKMTAcquireKeyedMutex( &acquire );
-    todo_wine ok_nt( STATUS_TIMEOUT, status );
+    ok_nt( STATUS_TIMEOUT, status );
     ok_x4( acquire.Key, ==, 0xdeadbeef );
-    todo_wine ok_x8( acquire.FenceValue, ==, 0 );
+    ok_x8( acquire.FenceValue, ==, 0 );
 
     acquire.hKeyedMutex = create.hKeyedMutex;
     acquire.Key = 0;
     acquire.FenceValue = 0xdeadbeef;
     status = D3DKMTAcquireKeyedMutex( &acquire );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     ok_x4( acquire.Key, ==, 0 );
-    todo_wine ok_x8( acquire.FenceValue, ==, 0 );
+    ok_x8( acquire.FenceValue, ==, 0 );
 
     status = D3DKMTReleaseKeyedMutex( NULL );
     ok_nt( STATUS_INVALID_PARAMETER, status );
@@ -2130,42 +2130,42 @@ static void test_D3DKMTAcquireKeyedMutex( void )
     release.Key = 0xdeadbeef;
     release.FenceValue = 0xdeadbeef;
     status = D3DKMTReleaseKeyedMutex( &release );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     ok_x4( release.Key, ==, 0xdeadbeef );
     ok_x8( release.FenceValue, ==, 0xdeadbeef );
     release.hKeyedMutex = create.hKeyedMutex;
     release.Key = 1;
     release.FenceValue = 1234;
     status = D3DKMTReleaseKeyedMutex( &release );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     ok_x4( release.Key, ==, 1 );
     ok_x8( release.FenceValue, ==, 1234 );
     release.FenceValue = 0xdeadbeef;
     status = D3DKMTReleaseKeyedMutex( &release );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     ok_x4( release.Key, ==, 1 );
     ok_x8( release.FenceValue, ==, 0xdeadbeef );
 
     acquire.Key = 0;
     acquire.FenceValue = 0xdeadbeef;
     status = D3DKMTAcquireKeyedMutex( &acquire );
-    todo_wine ok_nt( STATUS_TIMEOUT, status );
-    todo_wine ok_x8( acquire.FenceValue, ==, 0 );
+    ok_nt( STATUS_TIMEOUT, status );
+    ok_x8( acquire.FenceValue, ==, 0 );
     acquire.Key = 1;
     acquire.FenceValue = 0xdeadbeef;
     status = D3DKMTAcquireKeyedMutex( &acquire );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine ok_x8( acquire.FenceValue, ==, 1234 );
+    ok_nt( STATUS_SUCCESS, status );
+    ok_x8( acquire.FenceValue, ==, 1234 );
 
     release.Key = 0;
     release.FenceValue = 0;
     status = D3DKMTReleaseKeyedMutex( &release );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ok_nt( STATUS_SUCCESS, status );
     acquire.Key = 0;
     acquire.FenceValue = 0xdeadbeef;
     status = D3DKMTAcquireKeyedMutex( &acquire );
-    todo_wine ok_nt( STATUS_SUCCESS, status );
-    todo_wine ok_x8( acquire.FenceValue, ==, 0 );
+    ok_nt( STATUS_SUCCESS, status );
+    ok_x8( acquire.FenceValue, ==, 0 );
 
     open.hSharedHandle = create.hSharedHandle;
     open.hKeyedMutex = 0xdeadbeef;
@@ -2180,7 +2180,7 @@ static void test_D3DKMTAcquireKeyedMutex( void )
     thread = CreateThread( NULL, 0, test_acquire_mutex, &acquire, 0, NULL );
     ok_ptr( thread, !=, NULL );
     ret = WaitForSingleObject( thread, 100 );
-    todo_wine ok_u4( ret, ==, WAIT_TIMEOUT );
+    ok_u4( ret, ==, WAIT_TIMEOUT );
 
     destroy.hKeyedMutex = create.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy );
@@ -2193,11 +2193,11 @@ static void test_D3DKMTAcquireKeyedMutex( void )
     acquire.FenceValue = 0xdeadbeef;
     timeout.QuadPart = 100 * -10000;
     status = D3DKMTAcquireKeyedMutex( &acquire );
-    todo_wine ok_nt( STATUS_ABANDONED, status );
-    todo_wine ok_x8( acquire.FenceValue, ==, 0 );
+    ok_nt( STATUS_ABANDONED, status );
+    ok_x8( acquire.FenceValue, ==, 0 );
     status = D3DKMTAcquireKeyedMutex( &acquire );
-    todo_wine ok_nt( STATUS_ABANDONED, status );
-    todo_wine ok_x8( acquire.FenceValue, ==, 0 );
+    ok_nt( STATUS_ABANDONED, status );
+    ok_x8( acquire.FenceValue, ==, 0 );
 
     destroy.hKeyedMutex = open.hKeyedMutex;
     status = D3DKMTDestroyKeyedMutex( &destroy );

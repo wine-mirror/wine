@@ -6114,6 +6114,44 @@ struct d3dkmt_object_open_name_reply
 };
 
 
+
+struct d3dkmt_mutex_acquire_request
+{
+    struct request_header __header;
+    d3dkmt_handle_t     mutex;
+    unsigned int        key_value;
+    obj_handle_t        wait_handle;
+    unsigned int        wait_status;
+    char __pad_28[4];
+};
+struct d3dkmt_mutex_acquire_reply
+{
+    struct reply_header __header;
+    unsigned __int64    fence_value;
+    data_size_t         runtime_size;
+    obj_handle_t        wait_handle;
+    /* VARARG(runtime,bytes); */
+};
+
+
+
+struct d3dkmt_mutex_release_request
+{
+    struct request_header __header;
+    d3dkmt_handle_t     mutex;
+    int                 abandon;
+    unsigned int        key_value;
+    unsigned __int64    fence_value;
+    data_size_t         runtime_size;
+    /* VARARG(runtime,bytes); */
+    char __pad_36[4];
+};
+struct d3dkmt_mutex_release_reply
+{
+    struct reply_header __header;
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -6420,6 +6458,8 @@ enum request
     REQ_d3dkmt_object_open,
     REQ_d3dkmt_share_objects,
     REQ_d3dkmt_object_open_name,
+    REQ_d3dkmt_mutex_acquire,
+    REQ_d3dkmt_mutex_release,
     REQ_NB_REQUESTS
 };
 
@@ -6731,6 +6771,8 @@ union generic_request
     struct d3dkmt_object_open_request d3dkmt_object_open_request;
     struct d3dkmt_share_objects_request d3dkmt_share_objects_request;
     struct d3dkmt_object_open_name_request d3dkmt_object_open_name_request;
+    struct d3dkmt_mutex_acquire_request d3dkmt_mutex_acquire_request;
+    struct d3dkmt_mutex_release_request d3dkmt_mutex_release_request;
 };
 union generic_reply
 {
@@ -7040,8 +7082,10 @@ union generic_reply
     struct d3dkmt_object_open_reply d3dkmt_object_open_reply;
     struct d3dkmt_share_objects_reply d3dkmt_share_objects_reply;
     struct d3dkmt_object_open_name_reply d3dkmt_object_open_name_reply;
+    struct d3dkmt_mutex_acquire_reply d3dkmt_mutex_acquire_reply;
+    struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 925
+#define SERVER_PROTOCOL_VERSION 926
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

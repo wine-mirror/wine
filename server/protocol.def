@@ -4240,3 +4240,28 @@ enum inproc_sync_type
 @REPLY
     obj_handle_t        handle;         /* shared object handle */
 @END
+
+
+/* Acquire a global d3dkmt keyed mutex */
+@REQ(d3dkmt_mutex_acquire)
+    d3dkmt_handle_t     mutex;          /* mutex global handle */
+    unsigned int        key_value;      /* the key to acquire/wait for */
+    obj_handle_t        wait_handle;    /* previously returned wait handle */
+    unsigned int        wait_status;    /* status returned from previous wait */
+@REPLY
+    unsigned __int64    fence_value;    /* semaphore fence value */
+    data_size_t         runtime_size;   /* size of client runtime data */
+    obj_handle_t        wait_handle;    /* wait handle for pending acquire */
+    VARARG(runtime,bytes);              /* client runtime data */
+@END
+
+
+/* Release a global d3dkmt keyed mutex */
+@REQ(d3dkmt_mutex_release)
+    d3dkmt_handle_t     mutex;          /* mutex global handle */
+    int                 abandon;        /* mutex is being abandonned */
+    unsigned int        key_value;      /* the key to release */
+    unsigned __int64    fence_value;    /* semaphore fence value */
+    data_size_t         runtime_size;   /* size of client runtime data */
+    VARARG(runtime,bytes);              /* client runtime data */
+@END

@@ -434,6 +434,7 @@ static inline void init_thread_structure( struct thread *thread )
     thread->completion_wait = NULL;
 
     list_init( &thread->mutex_list );
+    list_init( &thread->d3dkmt_mutexes );
     list_init( &thread->system_apc );
     list_init( &thread->user_apc );
     list_init( &thread->kernel_object );

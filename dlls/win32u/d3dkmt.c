@@ -45,6 +45,7 @@ struct d3dkmt_object
 struct d3dkmt_mutex
 {
     struct d3dkmt_object obj;
+    BOOL owned;
 };
 
 struct d3dkmt_resource
@@ -1412,19 +1413,42 @@ NTSTATUS WINAPI NtGdiDdDDICreateKeyedMutex( D3DKMT_CREATEKEYEDMUTEX *params )
     return status;
 }
 
+static NTSTATUS d3dkmt_destroy_mutex( D3DKMT_HANDLE local )
+{
+    struct d3dkmt_mutex *mutex;
+    BOOL owned;
+
+    TRACE( "local %#x\n", local );
+
+    if (!(mutex = get_d3dkmt_object( local, D3DKMT_MUTEX ))) return STATUS_INVALID_PARAMETER;
+
+    pthread_mutex_lock( &d3dkmt_lock );
+    owned = mutex->owned;
+    pthread_mutex_unlock( &d3dkmt_lock );
+
+    if (owned)
+    {
+        SERVER_START_REQ( d3dkmt_mutex_release )
+        {
+            req->mutex = mutex->obj.global;
+            req->abandon = 1;
+            wine_server_call( req );
+        }
+        SERVER_END_REQ;
+    }
+
+    d3dkmt_object_free( &mutex->obj );
+    return STATUS_SUCCESS;
+}
+
 /******************************************************************************
  *           NtGdiDdDDIDestroyKeyedMutex    (win32u.@)
  */
 NTSTATUS WINAPI NtGdiDdDDIDestroyKeyedMutex( const D3DKMT_DESTROYKEYEDMUTEX *params )
 {
-    struct d3dkmt_mutex *mutex;
-
     TRACE( "params %p\n", params );
 
-    if (!(mutex = get_d3dkmt_object( params->hKeyedMutex, D3DKMT_MUTEX ))) return STATUS_INVALID_PARAMETER;
-    d3dkmt_object_free( &mutex->obj );
-
-    return STATUS_SUCCESS;
+    return d3dkmt_destroy_mutex( params->hKeyedMutex );
 }
 
 /******************************************************************************
@@ -1501,8 +1525,46 @@ failed:
  */
 NTSTATUS WINAPI NtGdiDdDDIAcquireKeyedMutex2( D3DKMT_ACQUIREKEYEDMUTEX2 *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+    LARGE_INTEGER now, *timeout;
+    struct d3dkmt_mutex *mutex;
+    HANDLE wait_handle = NULL;
+
+    TRACE( "params %p\n", params );
+
+    if ((timeout = params->pTimeout) && timeout->QuadPart < 0)
+    {
+        NtQuerySystemTime( &now );
+        now.QuadPart -= timeout->QuadPart;
+        timeout = &now;
+    }
+
+    if (!(mutex = get_d3dkmt_object( params->hKeyedMutex, D3DKMT_MUTEX ))) return STATUS_INVALID_PARAMETER;
+
+    do
+    {
+        if (wait_handle) status = NtWaitForSingleObject( wait_handle, FALSE, timeout );
+        SERVER_START_REQ( d3dkmt_mutex_acquire )
+        {
+            req->mutex = mutex->obj.global;
+            req->key_value = params->Key;
+            req->wait_handle = wine_server_obj_handle( wait_handle );
+            req->wait_status = status;
+
+            status = wine_server_call( req );
+            params->FenceValue = reply->fence_value;
+            wait_handle = wine_server_ptr_handle( reply->wait_handle );
+        }
+        SERVER_END_REQ;
+    } while (status == STATUS_PENDING);
+
+    if (!status)
+    {
+        pthread_mutex_lock( &d3dkmt_lock );
+        mutex->owned = TRUE;
+        pthread_mutex_unlock( &d3dkmt_lock );
+    }
+    return status;
 }
 
 /******************************************************************************
@@ -1531,8 +1593,30 @@ NTSTATUS WINAPI NtGdiDdDDIAcquireKeyedMutex( D3DKMT_ACQUIREKEYEDMUTEX *params )
  */
 NTSTATUS WINAPI NtGdiDdDDIReleaseKeyedMutex2( D3DKMT_RELEASEKEYEDMUTEX2 *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_mutex *mutex;
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    if (!(mutex = get_d3dkmt_object( params->hKeyedMutex, D3DKMT_MUTEX ))) return STATUS_INVALID_PARAMETER;
+
+    SERVER_START_REQ( d3dkmt_mutex_release )
+    {
+        req->mutex = mutex->obj.global;
+        req->key_value = params->Key;
+        req->fence_value = params->FenceValue;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    if (!status)
+    {
+        pthread_mutex_lock( &d3dkmt_lock );
+        mutex->owned = FALSE;
+        pthread_mutex_unlock( &d3dkmt_lock );
+    }
+
+    return status;
 }
 
 /******************************************************************************

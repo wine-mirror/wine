@@ -240,6 +240,7 @@ extern void reset_event( struct event *event );
 /* mutex functions */
 
 extern void abandon_mutexes( struct thread *thread );
+extern void abandon_d3dkmt_mutexes( struct thread *thread );
 
 /* in-process synchronization functions */
 
