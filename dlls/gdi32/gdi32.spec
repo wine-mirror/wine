@@ -375,7 +375,7 @@
 @ stdcall GetEnhMetaFileDescriptionW(long long ptr)
 @ stdcall GetEnhMetaFileHeader(long long ptr)
 @ stdcall GetEnhMetaFilePaletteEntries(long long ptr)
-# @ stub GetEnhMetaFilePixelFormat
+@ stdcall GetEnhMetaFilePixelFormat(long long ptr)
 @ stdcall GetEnhMetaFileW(wstr)
 # @ stub GetFontAssocStatus
 @ stdcall GetFontData(long long long ptr long) NtGdiGetFontData
