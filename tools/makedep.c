@@ -272,6 +272,7 @@ static struct list compile_commands = LIST_INIT( compile_commands );
 struct install_command
 {
     const char     *file;    /* source file name */
+    const char     *target;  /* target to build if any */
     const char     *dir;     /* dest directory */
     const char     *dest;    /* dest file name if different from file */
     char            type;    /* type of install */
@@ -2390,7 +2391,8 @@ static void install_data_file( struct makefile *make, const char *target,
     struct install_command *cmd;
 
     if (!(cmd = add_install_command( make, target ))) return;
-    cmd->file   = obj;
+    cmd->file   = obj_dir_path( make, obj );
+    cmd->target = cmd->file;
     cmd->dir    = dir;
     cmd->dest   = dst;
     cmd->type   = 'd';
@@ -2406,7 +2408,7 @@ static void install_data_file_src( struct makefile *make, const char *target,
     struct install_command *cmd;
 
     if (!(cmd = add_install_command( make, target ))) return;
-    cmd->file   = src;
+    cmd->file   = src_dir_path( make, src );
     cmd->dir    = dir;
     cmd->type   = 'D';
 }
@@ -2442,7 +2444,8 @@ static void install_program( struct makefile *make, const char *target,
     struct install_command *cmd;
 
     if (!(cmd = add_install_command( make, target ))) return;
-    cmd->file   = obj;
+    cmd->file   = obj_dir_path( make, obj );
+    cmd->target = cmd->file;
     cmd->dir    = dir;
     cmd->type   = '0' + arch;
 }
@@ -2456,7 +2459,7 @@ static void install_script( struct makefile *make, const char *src )
     struct install_command *cmd;
 
     if (!(cmd = add_install_command( make, src ))) return;
-    cmd->file   = src;
+    cmd->file   = src_dir_path( make, src );
     cmd->dir    = "$(bindir)";
     cmd->type   = 'S';
 }
@@ -2471,7 +2474,8 @@ static void install_tool( struct makefile *make, const char *target,
     struct install_command *cmd;
 
     if (!(cmd = add_install_command( make, target ))) return;
-    cmd->file   = obj;
+    cmd->file   = tools_path( obj );
+    cmd->target = cmd->file;
     cmd->dir    = dir;
     cmd->dest   = dst;
     cmd->type   = 't';
@@ -2641,10 +2645,7 @@ static void output_install_commands( struct makefile *make, enum install_rules r
 
     ARRAY_FOR_EACH( cmd, &make->install_commands[rules], const struct install_command )
     {
-        const char *file, *dest;
-
-        file = cmd->file;
-        dest = strmake( "$(DESTDIR)%s/%s", cmd->dir, cmd->dest ? cmd->dest : get_basename( cmd->file ));
+        const char *dest = strmake( "$(DESTDIR)%s/%s", cmd->dir, cmd->dest ? cmd->dest : get_basename( cmd->file ));
 
         switch (cmd->type)
         {
@@ -2652,35 +2653,26 @@ static void output_install_commands( struct makefile *make, enum install_rules r
         case '6': case '7': case '8': case '9': /* arch-dependent program */
             arch = cmd->type - '0';
             output( "\tSTRIPPROG=%s %s -m 644 $(INSTALL_PROGRAM_FLAGS) %s %s\n",
-                    strip_progs[arch], install_sh, obj_dir_path( make, file ), dest );
+                    strip_progs[arch], install_sh, cmd->file, dest );
             break;
         case 'd':  /* data file */
-            output( "\t%s -m 644 $(INSTALL_DATA_FLAGS) %s %s\n",
-                    install_sh, obj_dir_path( make, file ), dest );
-            break;
         case 'D':  /* data file in source dir */
             output( "\t%s -m 644 $(INSTALL_DATA_FLAGS) %s %s\n",
-                    install_sh, src_dir_path( make, file ), dest );
+                    install_sh, cmd->file, dest );
             break;
         case '0':  /* native arch program file */
         case 'p':  /* program file */
-            output( "\tSTRIPPROG=\"$(STRIP)\" %s $(INSTALL_PROGRAM_FLAGS) %s %s\n",
-                    install_sh, obj_dir_path( make, file ), dest );
-            break;
-        case 's':  /* script */
-            output( "\t%s $(INSTALL_SCRIPT_FLAGS) %s %s\n",
-                    install_sh, obj_dir_path( make, file ), dest );
-            break;
-        case 'S':  /* script in source dir */
-            output( "\t%s $(INSTALL_SCRIPT_FLAGS) %s %s\n",
-                    install_sh, src_dir_path( make, file ), dest );
-            break;
         case 't':  /* tools file */
             output( "\tSTRIPPROG=\"$(STRIP)\" %s $(INSTALL_PROGRAM_FLAGS) %s %s\n",
-                    install_sh, tools_path( file ), dest );
+                    install_sh, cmd->file, dest );
+            break;
+        case 's':  /* script */
+        case 'S':  /* script in source dir */
+            output( "\t%s $(INSTALL_SCRIPT_FLAGS) %s %s\n",
+                    install_sh, cmd->file, dest );
             break;
         case 'y':  /* symlink */
-            output_symlink_rule( file, dest, 1 );
+            output_symlink_rule( cmd->file, dest, 1 );
             break;
         default:
             assert(0);
@@ -2700,21 +2692,7 @@ static void output_install_rules( struct makefile *make, enum install_rules rule
     if (!make->install_commands[rules].count) return;
 
     ARRAY_FOR_EACH( cmd, &make->install_commands[rules], const struct install_command )
-    {
-        switch (cmd->type)
-        {
-        case '0': case '1': case '2': case '3': case '4':
-        case '5': case '6': case '7': case '8': case '9': /* arch-dependent program */
-        case 'd':  /* data file */
-        case 'p':  /* program file */
-        case 's':  /* script */
-            strarray_add_uniq( &targets, obj_dir_path( make, cmd->file ));
-            break;
-        case 't':  /* tools file */
-            strarray_add_uniq( &targets, tools_path( cmd->file ));
-            break;
-        }
-    }
+        if (cmd->target) strarray_add_uniq( &targets, cmd->target );
 
     output( "%s %s::", obj_dir_path( make, "install" ), obj_dir_path( make, install_targets[rules] ));
     output_filenames( targets );
