@@ -159,6 +159,7 @@ struct constructor;
     XDIID(DispHTMLW3CComputedStyle) \
     XDIID(DispHTMLWindow2) \
     XDIID(DispHTMLXMLHttpRequest) \
+    XDIID(DispXDomainRequest) \
     XDIID(DispSVGCircleElement) \
     XDIID(DispSVGSVGElement) \
     XDIID(DispSVGTSpanElement) \
@@ -295,6 +296,8 @@ struct constructor;
     XIID(IHTMLXMLHttpRequest) \
     XIID(IHTMLXMLHttpRequest2) \
     XIID(IHTMLXMLHttpRequestFactory) \
+    XIID(IHTMLXDomainRequest) \
+    XIID(IHTMLXDomainRequestFactory) \
     XIID(IOmHistory) \
     XIID(IOmNavigator) \
     XIID(ISVGCircleElement) \
@@ -511,6 +514,7 @@ typedef struct {
     X(TextRange)                           \
     X(UIEvent)                             \
     X(Window)                              \
+    X(XDomainRequest)                      \
     X(XMLDocument)                         \
     X(XMLHttpRequest)
 

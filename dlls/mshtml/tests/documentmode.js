@@ -329,6 +329,7 @@ sync_test("builtin_toString", function() {
     if(v < 11) {
         test("eventObject", document.createEventObject(), "MSEventObj");
         test("selection", document.selection, "MSSelection");
+        test("XDomainRequest", new XDomainRequest(), "XDomainRequest");
     }
     if(v >= 9) {
         test("computedStyle", window.getComputedStyle(e), "CSSStyleDeclaration");
@@ -986,6 +987,7 @@ sync_test("window_props", function() {
     test_exposed("HTMLDocument", v === 8 || v >= 11, v === 8);
     test_exposed("XMLDocument", v >= 11);
     test_exposed("DOMParser", v >= 9);
+    test_exposed("XDomainRequest", v < 11);
     test_exposed("MutationObserver", v >= 11);
     test_exposed("PageTransitionEvent", v >= 11);
     test_exposed("ProgressEvent", v >= 10);
@@ -1260,6 +1262,7 @@ sync_test("constructor props", function() {
     test_exposed(XMLHttpRequest, "create", true);
     if(v >= 9)  test_exposed(DOMParser, "create", false);
     if(v >= 11) test_exposed(MutationObserver, "create", false);
+    if(v < 11)  test_exposed(XDomainRequest, "create", true);
 });
 
 sync_test("createElement_inline_attr", function() {
@@ -3931,6 +3934,11 @@ sync_test("prototypes", function() {
     check(new XMLHttpRequest(), XMLHttpRequest.prototype, "xhr");
     check(XMLHttpRequest.prototype, Object.prototype, "xhr prototype");
     check(XMLHttpRequest, Function.prototype, "xhr constructor");
+    if(v < 11) {
+        check(new XDomainRequest(), XDomainRequest.prototype, "xdr");
+        check(XDomainRequest.prototype, Object.prototype, "xdr prototype");
+        check(XDomainRequest, Function.prototype, "xdr constructor");
+    }
     check(document.createElement("img"), HTMLImageElement.prototype, "img elem");
     check(HTMLImageElement.prototype, HTMLElement.prototype, "img elem prototype");
     check(Image, Function.prototype, "Image constructor");
@@ -4481,8 +4489,16 @@ sync_test("prototype props", function() {
     check(StyleSheet, [ "disabled", "href", "media", "ownerNode", "parentStyleSheet", "title", "type" ]);
     check(Text, [ "removeNode", "replaceNode", "replaceWholeText", "splitText", "swapNode", "wholeText" ], [ "replaceWholeText", "wholeText" ]);
     check(UIEvent, [ "detail", "initUIEvent", "view" ], null, [ "deviceSessionId" ]);
+    if(v < 11)
+        check(XDomainRequest, [ "abort", "contentType", "onerror", "onload", "onprogress", "ontimeout", "open", "responseText", "send", "timeout" ]);
     if(v >= 11)
         check(XMLDocument, []);
+    check(XMLHttpRequest, [
+        "DONE", "HEADERS_RECEIVED", "LOADING", "OPENED", "UNSENT", "abort", "addEventListener", "dispatchEvent", "getAllResponseHeaders", "getResponseHeader", ["msCaching",11],
+        ["msCachingEnabled",11], ["onabort",10], ["onerror",10], "onload", ["onloadend",10], ["onloadstart",10], ["onprogress",10], "onreadystatechange", "ontimeout", "open",
+        ["overrideMimeType",11], "readyState", "removeEventListener", ["response",10], "responseBody", "responseText", ["responseType",10], "responseXML", "send",
+        "setRequestHeader", "status", "statusText", "timeout", ["upload",10], ["withCredentials",10]
+    ], [ "DONE", "HEADERS_RECEIVED", "LOADING", "OPENED", "UNSENT", ["msCaching",11], ["msCachingEnabled",11] ]);
 });
 
 sync_test("constructors", function() {
@@ -4491,6 +4507,8 @@ sync_test("constructors", function() {
         return;
 
     var ctors = [ "DOMParser", "Image", "Option", "XMLHttpRequest" ];
+    if (v < 11)
+        ctors.push("XDomainRequest");
     if (v >= 11)
         ctors.push("MutationObserver");
     for(i = 0; i < ctors.length; i++) {
@@ -4658,7 +4676,7 @@ async_test("window own props", function() {
             ["Uint8Array",10], ["Uint8ClampedArray",11], ["URL",10], ["ValidityState",10], ["VideoPlaybackQuality",11], ["WebGLActiveInfo",11], ["WebGLBuffer",11], ["WebGLContextEvent",11],
             ["WebGLFramebuffer",11], ["WebGLObject",11], ["WebGLProgram",11], ["WebGLRenderbuffer",11], ["WebGLRenderingContext",11], ["WebGLShader",11], ["WebGLShaderPrecisionFormat",11],
             ["WebGLTexture",11], ["WebGLUniformLocation",11], ["WEBGL_compressed_texture_s3tc",11], ["WEBGL_debug_renderer_info",11], ["WebSocket",10], "WheelEvent", ["Worker",10],
-            ["XDomainRequest",9,10], ["XMLHttpRequestEventTarget",10], "XMLSerializer"
+            ["XMLHttpRequestEventTarget",10], "XMLSerializer"
         ]);
         next_test();
     }

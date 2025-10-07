@@ -1974,8 +1974,26 @@ static HRESULT WINAPI HTMLWindow6_put_XDomainRequest(IHTMLWindow6 *iface, VARIAN
 static HRESULT WINAPI HTMLWindow6_get_XDomainRequest(IHTMLWindow6 *iface, VARIANT *p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow6(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    HTMLInnerWindow *window = This->inner_window;
+    DispatchEx *constr;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->outer_window->readystate == READYSTATE_UNINITIALIZED) {
+        V_VT(p) = VT_EMPTY;
+        return S_OK;
+    }
+
+    hres = get_constructor(window, OBJID_XDomainRequest, &constr);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(p) = VT_DISPATCH;
+    V_DISPATCH(p) = (IDispatch*)&constr->IWineJSDispatchHost_iface;
+    IDispatch_AddRef(V_DISPATCH(p));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow6_get_sessionStorage(IHTMLWindow6 *iface, IHTMLStorage **p)
@@ -4212,10 +4230,14 @@ static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compa
         {DISPID_IHTMLWINDOW4_CREATEPOPUP, NULL},
         {DISPID_UNKNOWN}
     };
-    static const dispex_hook_t window6_hooks[] = {
+    static const dispex_hook_t window6_ie9_hooks[] = {
+        {DISPID_IHTMLWINDOW6_XDOMAINREQUEST},
+
+        /* Common for all modes */
         {DISPID_IHTMLWINDOW6_POSTMESSAGE, IHTMLWindow6_postMessage_hook},
         {DISPID_UNKNOWN}
     };
+    const dispex_hook_t *const window6_hooks = window6_ie9_hooks + 1;
 
     if(compat_mode >= COMPAT_MODE_IE9)
         dispex_info_add_interface(info, IHTMLWindow7_tid, NULL);
@@ -4224,7 +4246,7 @@ static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compa
     if(compat_mode >= COMPAT_MODE_IE10)
         dispex_info_add_interface(info, IWineHTMLWindowPrivate_tid, NULL);
 
-    dispex_info_add_interface(info, IHTMLWindow6_tid, window6_hooks);
+    dispex_info_add_interface(info, IHTMLWindow6_tid, compat_mode >= COMPAT_MODE_IE9  ? window6_ie9_hooks : window6_hooks);
     if(compat_mode < COMPAT_MODE_IE9)
         dispex_info_add_interface(info, IHTMLWindow5_tid, NULL);
     dispex_info_add_interface(info, IHTMLWindow4_tid, compat_mode >= COMPAT_MODE_IE11 ? window4_ie11_hooks : NULL);

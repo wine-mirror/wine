@@ -4149,6 +4149,7 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     IHTMLOptionElementFactory *option, *option2;
     IHTMLImageElementFactory *image, *image2;
     IHTMLXMLHttpRequestFactory *xhr, *xhr2;
+    IHTMLXDomainRequestFactory *xdr, *xdr2;
     IHTMLDocument2 *doc_node, *doc_node2;
     IOmNavigator *navigator, *navigator2;
     IHTMLLocation *location, *location2;
@@ -4307,7 +4308,14 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     ok(hres == S_OK, "Could not get IHTMLWindow6: %08lx\n", hres);
     hres = IHTMLWindow6_get_sessionStorage(window6, &storage);
     ok(hres == S_OK, "get_sessionStorage failed: %08lx\n", hres);
+
+    hres = IHTMLWindow6_get_XDomainRequest(window6, &res);
+    ok(hres == S_OK, "get_XDomainRequest failed: %08lx\n", hres);
+    ok(V_VT(&res) == VT_DISPATCH, "V_VT(XDomainRequest) = %d\n", V_VT(&res));
+    hres = IDispatch_QueryInterface(V_DISPATCH(&res), &IID_IHTMLXDomainRequestFactory, (void**)&xdr);
+    ok(hres == S_OK, "Could not get IHTMLXDomainRequestFactory: %08lx\n", hres);
     IHTMLWindow6_Release(window6);
+    VariantClear(&res);
 
     hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow7, (void**)&window7);
     ok(hres == S_OK, "Could not get IHTMLWindow7: %08lx\n", hres);
@@ -4491,7 +4499,18 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     ok(storage != storage2, "storage == storage2\n");
     IHTMLStorage_Release(storage2);
     IHTMLStorage_Release(storage);
+
+    ok(hres == S_OK, "Could not get IHTMLWindow6: %08lx\n", hres);
+    hres = IHTMLWindow6_get_XDomainRequest(window6, &res);
+    ok(hres == S_OK, "get_XDomainRequest failed: %08lx\n", hres);
+    ok(V_VT(&res) == VT_DISPATCH, "V_VT(XDomainRequest) = %d\n", V_VT(&res));
+    hres = IDispatch_QueryInterface(V_DISPATCH(&res), &IID_IHTMLXDomainRequestFactory, (void**)&xdr2);
+    ok(hres == S_OK, "Could not get IHTMLXDomainRequestFactory: %08lx\n", hres);
+    ok(xdr != xdr2, "xdr == xdr2\n");
+    IHTMLXDomainRequestFactory_Release(xdr2);
+    IHTMLXDomainRequestFactory_Release(xdr);
     IHTMLWindow6_Release(window6);
+    VariantClear(&res);
 
     hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow7, (void**)&window7);
     ok(hres == S_OK, "Could not get IHTMLWindow7: %08lx\n", hres);
