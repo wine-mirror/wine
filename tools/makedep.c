@@ -57,9 +57,7 @@ struct file
     char              *name;          /* full file name relative to cwd */
     void              *args;          /* custom arguments for makefile rule */
     unsigned int       flags;         /* flags (see below) */
-    unsigned int       deps_count;    /* files in use */
-    unsigned int       deps_size;     /* total allocated size */
-    struct dependency *deps;          /* all header dependencies */
+    struct array       deps;          /* array of struct dependency */
 };
 
 struct incl_file
@@ -833,16 +831,11 @@ static struct file *add_file( const char *name )
  */
 static void add_dependency( struct file *file, const char *name, enum incl_type type )
 {
-    if (file->deps_count >= file->deps_size)
-    {
-        file->deps_size *= 2;
-        if (file->deps_size < 16) file->deps_size = 16;
-        file->deps = xrealloc( file->deps, file->deps_size * sizeof(*file->deps) );
-    }
-    file->deps[file->deps_count].line = input_line;
-    file->deps[file->deps_count].type = type;
-    file->deps[file->deps_count].name = xstrdup( name );
-    file->deps_count++;
+    struct dependency *dep = ARRAY_ADD( &file->deps, struct dependency );
+
+    dep->line = input_line;
+    dep->type = type;
+    dep->name = xstrdup( name );
 }
 
 
@@ -1597,21 +1590,19 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
  */
 static void add_all_includes( struct makefile *make, struct incl_file *parent, struct file *file )
 {
-    unsigned int i;
-
-    for (i = 0; i < file->deps_count; i++)
+    ARRAY_FOR_EACH( dep, &file->deps, const struct dependency )
     {
-        switch (file->deps[i].type)
+        switch (dep->type)
         {
         case INCL_NORMAL:
         case INCL_IMPORT:
-            add_include( make, parent, file->deps[i].name, file->deps[i].line, INCL_NORMAL );
+            add_include( make, parent, dep->name, dep->line, INCL_NORMAL );
             break;
         case INCL_IMPORTLIB:
-            add_include( make, parent, file->deps[i].name, file->deps[i].line, INCL_IMPORTLIB );
+            add_include( make, parent, dep->name, dep->line, INCL_IMPORTLIB );
             break;
         case INCL_SYSTEM:
-            add_include( make, parent, file->deps[i].name, file->deps[i].line, INCL_SYSTEM );
+            add_include( make, parent, dep->name, dep->line, INCL_SYSTEM );
             break;
         case INCL_CPP_QUOTE:
         case INCL_CPP_QUOTE_SYSTEM:
@@ -1632,7 +1623,7 @@ static void parse_file( struct makefile *make, struct incl_file *source, int src
 
     source->file = file;
     source->files_count = 0;
-    source->files_size = file->deps_count;
+    source->files_size = file->deps.count;
     source->files = xmalloc( source->files_size * sizeof(*source->files) );
 
     if (strendswith( file->name, ".m" )) file->flags |= FLAG_C_UNIX;
@@ -1643,27 +1634,25 @@ static void parse_file( struct makefile *make, struct incl_file *source, int src
     {
         if (strendswith( source->sourcename, ".idl" ))
         {
-            unsigned int i;
-
             /* generated .h file always includes these */
             add_include( make, source, "rpc.h", 0, INCL_NORMAL );
             add_include( make, source, "rpcndr.h", 0, INCL_NORMAL );
-            for (i = 0; i < file->deps_count; i++)
+            ARRAY_FOR_EACH( dep, &file->deps, const struct dependency )
             {
-                switch (file->deps[i].type)
+                switch (dep->type)
                 {
                 case INCL_IMPORT:
-                    if (strendswith( file->deps[i].name, ".idl" ))
-                        add_include( make, source, replace_extension( file->deps[i].name, ".idl", ".h" ),
-                                     file->deps[i].line, INCL_NORMAL );
+                    if (strendswith( dep->name, ".idl" ))
+                        add_include( make, source, replace_extension( dep->name, ".idl", ".h" ),
+                                     dep->line, INCL_NORMAL );
                     else
-                        add_include( make, source, file->deps[i].name, file->deps[i].line, INCL_NORMAL );
+                        add_include( make, source, dep->name, dep->line, INCL_NORMAL );
                     break;
                 case INCL_CPP_QUOTE:
-                    add_include( make, source, file->deps[i].name, file->deps[i].line, INCL_NORMAL );
+                    add_include( make, source, dep->name, dep->line, INCL_NORMAL );
                     break;
                 case INCL_CPP_QUOTE_SYSTEM:
-                    add_include( make, source, file->deps[i].name, file->deps[i].line, INCL_SYSTEM );
+                    add_include( make, source, dep->name, dep->line, INCL_SYSTEM );
                     break;
                 case INCL_NORMAL:
                 case INCL_SYSTEM:
@@ -2121,11 +2110,9 @@ static void get_dependencies( struct incl_file *file, struct incl_file *source )
         {
             input_file_name = source->filename;
             input_line = 0;
-            for (i = 0; i < source->file->deps_count; i++)
-            {
-                if (!strcmp( source->file->deps[i].name, file->name ))
-                    input_line = source->file->deps[i].line;
-            }
+            ARRAY_FOR_EACH( dep, &source->file->deps, const struct dependency )
+                if (!strcmp( dep->name, file->name )) input_line = dep->line;
+
             fatal_error( "%s must be included before other headers\n", file->name );
         }
     }
