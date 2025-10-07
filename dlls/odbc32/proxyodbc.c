@@ -1360,19 +1360,17 @@ static SQLRETURN set_con_attr( struct connection *con, SQLINTEGER attr, SQLPOINT
     return ret;
 }
 
-static void prepare_con( struct connection *con )
+static SQLRETURN create_con( struct connection *con )
 {
+    SQLRETURN ret;
+
+    if ((ret = alloc_handle( SQL_HANDLE_DBC, con->hdr.parent, &con->hdr ))) return ret;
+
     if (set_con_attr( con, SQL_ATTR_CONNECTION_TIMEOUT, INT_PTR(con->attr_con_timeout), 0 ))
         WARN( "failed to set connection timeout\n" );
     if (set_con_attr( con, SQL_ATTR_LOGIN_TIMEOUT, INT_PTR(con->attr_login_timeout), 0 ))
         WARN( "failed to set login timeout\n" );
-}
 
-static SQLRETURN create_con( struct connection *con )
-{
-    SQLRETURN ret;
-    if ((ret = alloc_handle( SQL_HANDLE_DBC, con->hdr.parent, &con->hdr ))) return ret;
-    prepare_con( con );
     return SQL_SUCCESS;
 }
 
