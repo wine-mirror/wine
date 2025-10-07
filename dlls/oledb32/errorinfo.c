@@ -130,6 +130,19 @@ static ULONG WINAPI errorrecords_Release(IErrorInfo* iface)
     return ref;
 }
 
+static HRESULT errorrecords_get_record(errorrecords *records, unsigned int index,
+        struct error_record **record)
+{
+    *record = NULL;
+
+    if (index >= records->count)
+        return DB_E_BADRECORDNUM;
+
+    *record = &records->records[records->count - index - 1];
+
+    return S_OK;
+}
+
 static HRESULT WINAPI errorrecords_GetGUID(IErrorInfo* iface, GUID *guid)
 {
     errorrecords *This = impl_from_IErrorInfo(iface);
@@ -310,41 +323,39 @@ static HRESULT WINAPI errorrec_AddErrorRecord(IErrorRecords *iface, ERRORINFO *p
 
 static HRESULT WINAPI errorrec_GetBasicErrorInfo(IErrorRecords *iface, ULONG index, ERRORINFO *info)
 {
-    errorrecords *This = impl_from_IErrorRecords(iface);
+    errorrecords *records = impl_from_IErrorRecords(iface);
+    struct error_record *record;
+    HRESULT hr;
 
-    TRACE("(%p)->(%lu %p)\n", This, index, info);
+    TRACE("%p, %lu, %p.\n", iface, index, info);
 
     if (!info)
         return E_INVALIDARG;
 
-    if (index >= This->count)
-        return DB_E_BADRECORDNUM;
+    if (SUCCEEDED(hr = errorrecords_get_record(records, index, &record)))
+        *info = record->info;
 
-    index = This->count - index - 1;
-    *info = This->records[index].info;
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI errorrec_GetCustomErrorObject(IErrorRecords *iface, ULONG index,
         REFIID riid, IUnknown **object)
 {
-    errorrecords *This = impl_from_IErrorRecords(iface);
+    errorrecords *records = impl_from_IErrorRecords(iface);
+    struct error_record *record;
+    HRESULT hr;
 
-    TRACE("(%p)->(%lu %s %p)\n", This, index, debugstr_guid(riid), object);
+    TRACE("%p, %lu, %s, %p.\n", iface, index, debugstr_guid(riid), object);
 
     if (!object)
         return E_INVALIDARG;
 
     *object = NULL;
 
-    if (index >= This->count)
-        return DB_E_BADRECORDNUM;
+    if (SUCCEEDED(hr = errorrecords_get_record(records, index, &record)) && record->custom_error)
+        return IUnknown_QueryInterface(record->custom_error, riid, (void **)object);
 
-    index = This->count - index - 1;
-    if (This->records[index].custom_error)
-        return IUnknown_QueryInterface(This->records[index].custom_error, riid, (void **)object);
-    else
-        return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI errorrec_GetErrorInfo(IErrorRecords *iface, ULONG index,
@@ -365,18 +376,19 @@ static HRESULT WINAPI errorrec_GetErrorInfo(IErrorRecords *iface, ULONG index,
 
 static HRESULT WINAPI errorrec_GetErrorParameters(IErrorRecords *iface, ULONG index, DISPPARAMS *pdispparams)
 {
-    errorrecords *This = impl_from_IErrorRecords(iface);
+    errorrecords *records = impl_from_IErrorRecords(iface);
+    struct error_record *record;
+    HRESULT hr;
 
-    TRACE("(%p)->(%lu %p)\n", This, index, pdispparams);
+    TRACE("%p, %lu, %p.\n", iface, index, pdispparams);
 
     if (!pdispparams)
         return E_INVALIDARG;
 
-    if (index >= This->count)
-        return DB_E_BADRECORDNUM;
+    if (SUCCEEDED(hr = errorrecords_get_record(records, index, &record)))
+        return dup_dispparams(&record->dispparams, pdispparams);
 
-    index = This->count - index - 1;
-    return dup_dispparams(&This->records[index].dispparams, pdispparams);
+    return hr;
 }
 
 static HRESULT WINAPI errorrec_GetRecordCount(IErrorRecords *iface, ULONG *count)
