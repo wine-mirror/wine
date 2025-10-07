@@ -737,6 +737,44 @@ static HRESULT WINAPI HTMLXMLHttpRequest_abort(IHTMLXMLHttpRequest *iface)
     return xhr_abort(&This->xhr);
 }
 
+static HRESULT WINAPI xhr_open(struct xhr *xhr, BSTR bstrMethod, BSTR bstrUrl, BOOL async, nsAString *user, nsAString *password, unsigned opt_argc)
+{
+    BOOLEAN prev_synchronous;
+    nsACString method, url;
+    DWORD prev_magic;
+    nsresult nsres;
+    HRESULT hres;
+
+    hres = bstr_to_nsacstr(bstrMethod, &method);
+    if(FAILED(hres))
+        return hres;
+    hres = bstr_to_nsacstr(bstrUrl, &url);
+    if(FAILED(hres)) {
+        nsACString_Finish(&method);
+        return hres;
+    }
+
+    /* Set this here, Gecko dispatches nested sync XHR readyState changes for OPENED (see HandleEvent) */
+    prev_magic = xhr->magic;
+    prev_synchronous = xhr->synchronous;
+    xhr->synchronous = !async;
+    xhr->magic++;
+
+    nsres = nsIXMLHttpRequest_Open(xhr->nsxhr, &method, &url, async, user, password, opt_argc);
+
+    nsACString_Finish(&method);
+    nsACString_Finish(&url);
+
+    if(NS_FAILED(nsres)) {
+        ERR("nsIXMLHttpRequest_Open failed: %08lx\n", nsres);
+        xhr->magic = prev_magic;
+        xhr->synchronous = prev_synchronous;
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
 static HRESULT HTMLXMLHttpRequest_open_hook(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -762,12 +800,8 @@ static HRESULT HTMLXMLHttpRequest_open_hook(DispatchEx *dispex, WORD flags,
 static HRESULT WINAPI HTMLXMLHttpRequest_open(IHTMLXMLHttpRequest *iface, BSTR bstrMethod, BSTR bstrUrl, VARIANT varAsync, VARIANT varUser, VARIANT varPassword)
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    BOOLEAN prev_synchronous;
     nsAString user, password;
-    nsACString method, url;
     unsigned opt_argc = 1;
-    DWORD prev_magic;
-    nsresult nsres;
     HRESULT hres;
 
     TRACE("(%p)->(%s %s %s %s %s)\n", This, debugstr_w(bstrMethod), debugstr_w(bstrUrl), debugstr_variant(&varAsync), debugstr_variant(&varUser), debugstr_variant(&varPassword));
@@ -790,45 +824,15 @@ static HRESULT WINAPI HTMLXMLHttpRequest_open(IHTMLXMLHttpRequest *iface, BSTR b
         return hres;
     }
 
-    hres = bstr_to_nsacstr(bstrMethod, &method);
-    if(FAILED(hres)) {
-        nsAString_Finish(&user);
-        nsAString_Finish(&password);
-        return hres;
-    }
-    hres = bstr_to_nsacstr(bstrUrl, &url);
-    if(FAILED(hres)) {
-        nsAString_Finish(&user);
-        nsAString_Finish(&password);
-        nsACString_Finish(&method);
-        return hres;
-    }
-
-    /* Set this here, Gecko dispatches nested sync XHR readyState changes for OPENED (see HandleEvent) */
-    prev_magic = This->xhr.magic;
-    prev_synchronous = This->xhr.synchronous;
-    This->xhr.synchronous = !V_BOOL(&varAsync);
-    This->xhr.magic++;
-
     if(V_VT(&varPassword) != VT_EMPTY && V_VT(&varPassword) != VT_ERROR)
         opt_argc += 2;
     else if(V_VT(&varUser) != VT_EMPTY && V_VT(&varUser) != VT_ERROR)
         opt_argc += 1;
-    nsres = nsIXMLHttpRequest_Open(This->xhr.nsxhr, &method, &url, !!V_BOOL(&varAsync), &user, &password, opt_argc);
 
-    nsACString_Finish(&method);
-    nsACString_Finish(&url);
+    hres = xhr_open(&This->xhr, bstrMethod, bstrUrl, !!V_BOOL(&varAsync), &user, &password, opt_argc);
     nsAString_Finish(&user);
     nsAString_Finish(&password);
-
-    if(NS_FAILED(nsres)) {
-        ERR("nsIXMLHttpRequest_Open failed: %08lx\n", nsres);
-        This->xhr.magic = prev_magic;
-        This->xhr.synchronous = prev_synchronous;
-        return E_FAIL;
-    }
-
-    return S_OK;
+    return hres;
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_send(IHTMLXMLHttpRequest *iface, VARIANT varBody)
