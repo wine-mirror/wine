@@ -7152,6 +7152,7 @@ static SQLRETURN get_info_win32_w( struct connection *con, SQLUSMALLINT type, SQ
         case SQL_IDENTIFIER_QUOTE_CHAR:
         case SQL_SEARCH_PATTERN_ESCAPE:
         case SQL_EXPRESSIONS_IN_ORDERBY:
+        case SQL_ORDER_BY_COLUMNS_IN_SELECT:
         {
             SQLSMALLINT lenA;
             SQLCHAR *strA;
