@@ -76,9 +76,7 @@ struct incl_file
     unsigned int       use_msvcrt:1;  /* put msvcrt headers in the search path? */
     unsigned int       is_external:1; /* file from external library? */
     struct incl_file  *owner;
-    unsigned int       files_count;   /* files in use */
-    unsigned int       files_size;    /* total allocated size */
-    struct incl_file **files;
+    struct array       files;         /* array of struct incl_file* */
     struct strarray    dependencies;  /* file dependencies */
     struct strarray    importlibdeps; /* importlib dependencies */
 };
@@ -891,13 +889,6 @@ static struct incl_file *add_include( struct makefile *make, struct incl_file *p
 {
     struct incl_file *include;
 
-    if (parent->files_count >= parent->files_size)
-    {
-        parent->files_size *= 2;
-        if (parent->files_size < 16) parent->files_size = 16;
-        parent->files = xrealloc( parent->files, parent->files_size * sizeof(*parent->files) );
-    }
-
     LIST_FOR_EACH_ENTRY( include, &make->includes, struct incl_file, entry )
         if (!parent->use_msvcrt == !include->use_msvcrt && !strcmp( name, include->name ))
             goto found;
@@ -910,8 +901,8 @@ static struct incl_file *add_include( struct makefile *make, struct incl_file *p
     include->type = type;
     include->use_msvcrt = parent->use_msvcrt;
     list_add_tail( &make->includes, &include->entry );
-found:
-    parent->files[parent->files_count++] = include;
+ found:
+    *ARRAY_ADD( &parent->files, struct incl_file * ) = include;
     return include;
 }
 
@@ -1622,9 +1613,6 @@ static void parse_file( struct makefile *make, struct incl_file *source, int src
     if (!file) return;
 
     source->file = file;
-    source->files_count = 0;
-    source->files_size = file->deps.count;
-    source->files = xmalloc( source->files_size * sizeof(*source->files) );
 
     if (strendswith( file->name, ".m" )) file->flags |= FLAG_C_UNIX;
     if (file->flags & FLAG_C_UNIX) source->use_msvcrt = 0;
@@ -1963,21 +1951,15 @@ static void add_generated_sources( struct makefile *make )
         {
             file = add_generated_source( make, replace_extension( source->name, ".y", ".tab.c" ), NULL, 0 );
             /* steal the includes list from the source file */
-            file->files_count = source->files_count;
-            file->files_size = source->files_size;
             file->files = source->files;
-            source->files_count = source->files_size = 0;
-            source->files = NULL;
+            source->files = empty_array;
         }
         if (strendswith( source->name, ".l" ))
         {
             file = add_generated_source( make, replace_extension( source->name, ".l", ".yy.c" ), NULL, 0 );
             /* steal the includes list from the source file */
-            file->files_count = source->files_count;
-            file->files_size = source->files_size;
             file->files = source->files;
-            source->files_count = source->files_size = 0;
-            source->files = NULL;
+            source->files = empty_array;
         }
         if (strendswith( source->name, ".po" ))
         {
@@ -2088,8 +2070,6 @@ static void output_filenames_obj_dir( const struct makefile *make, struct strarr
  */
 static void get_dependencies( struct incl_file *file, struct incl_file *source )
 {
-    unsigned int i;
-
     if (!file->filename) return;
 
     if (file != source)
@@ -2106,7 +2086,7 @@ static void get_dependencies( struct incl_file *file, struct incl_file *source )
 
         /* sanity checks */
         if (!strcmp( file->filename, "include/config.h" ) &&
-            file != source->files[0] && !source->is_external)
+            file != *ARRAY_ENTRY( &source->files, 0, struct incl_file * ) && !source->is_external)
         {
             input_file_name = source->filename;
             input_line = 0;
@@ -2117,7 +2097,7 @@ static void get_dependencies( struct incl_file *file, struct incl_file *source )
         }
     }
 
-    for (i = 0; i < file->files_count; i++) get_dependencies( file->files[i], source );
+    ARRAY_FOR_EACH( ptr, &file->files, struct incl_file * ) get_dependencies( *ptr, source );
 }
 
 
