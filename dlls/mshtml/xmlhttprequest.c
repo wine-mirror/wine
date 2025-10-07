@@ -542,25 +542,31 @@ static HRESULT WINAPI HTMLXMLHttpRequest_get_responseBody(IHTMLXMLHttpRequest *i
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLXMLHttpRequest_get_responseText(IHTMLXMLHttpRequest *iface, BSTR *p)
+static HRESULT WINAPI get_response_text(struct xhr *xhr, BSTR *p)
 {
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
     nsAString nsstr;
     nsresult nsres;
-
-    TRACE("(%p)->(%p)\n", This, p);
 
     if(!p)
         return E_POINTER;
 
-    if(This->xhr.ready_state < READYSTATE_INTERACTIVE) {
+    if(xhr->ready_state < READYSTATE_INTERACTIVE) {
         *p = NULL;
         return S_OK;
     }
 
     nsAString_Init(&nsstr, NULL);
-    nsres = nsIXMLHttpRequest_GetResponseText(This->xhr.nsxhr, &nsstr);
+    nsres = nsIXMLHttpRequest_GetResponseText(xhr->nsxhr, &nsstr);
     return return_nsstr(nsres, &nsstr, p);
+}
+
+static HRESULT WINAPI HTMLXMLHttpRequest_get_responseText(IHTMLXMLHttpRequest *iface, BSTR *p)
+{
+    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_response_text(&This->xhr, p);
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_get_responseXML(IHTMLXMLHttpRequest *iface, IDispatch **p)
