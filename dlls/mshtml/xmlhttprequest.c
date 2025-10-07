@@ -707,28 +707,34 @@ static HRESULT WINAPI HTMLXMLHttpRequest_get_onreadystatechange(IHTMLXMLHttpRequ
     return get_event_handler(&This->xhr.event_target, EVENTID_READYSTATECHANGE, p);
 }
 
-static HRESULT WINAPI HTMLXMLHttpRequest_abort(IHTMLXMLHttpRequest *iface)
+static HRESULT WINAPI xhr_abort(struct xhr *xhr)
 {
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    DWORD prev_magic = This->xhr.magic;
+    DWORD prev_magic = xhr->magic;
     UINT16 ready_state;
     nsresult nsres;
 
-    TRACE("(%p)->()\n", This);
-
-    This->xhr.magic++;
-    nsres = nsIXMLHttpRequest_SlowAbort(This->xhr.nsxhr);
+    xhr->magic++;
+    nsres = nsIXMLHttpRequest_SlowAbort(xhr->nsxhr);
     if(NS_FAILED(nsres)) {
         ERR("nsIXMLHttpRequest_SlowAbort failed: %08lx\n", nsres);
-        This->xhr.magic = prev_magic;
+        xhr->magic = prev_magic;
         return E_FAIL;
     }
 
     /* Gecko changed to READYSTATE_UNINITIALIZED if it did abort */
-    nsres = nsIXMLHttpRequest_GetReadyState(This->xhr.nsxhr, &ready_state);
+    nsres = nsIXMLHttpRequest_GetReadyState(xhr->nsxhr, &ready_state);
     if(NS_SUCCEEDED(nsres))
-        This->xhr.ready_state = ready_state;
+        xhr->ready_state = ready_state;
     return S_OK;
+}
+
+static HRESULT WINAPI HTMLXMLHttpRequest_abort(IHTMLXMLHttpRequest *iface)
+{
+    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
+
+    TRACE("(%p)->()\n", This);
+
+    return xhr_abort(&This->xhr);
 }
 
 static HRESULT HTMLXMLHttpRequest_open_hook(DispatchEx *dispex, WORD flags,
