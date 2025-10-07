@@ -203,6 +203,38 @@ static HRESULT error_info_get_source(struct error_info *info, BSTR *source)
     return return_bstr(info->source, source);
 }
 
+static HRESULT error_info_get_description(struct error_info *info, BSTR *description)
+{
+    struct error_record *record;
+    WCHAR str[32];
+    HRESULT hr;
+
+    if (!description)
+        return E_INVALIDARG;
+
+    *description = NULL;
+
+    if (FAILED(hr = errorrecords_get_record(info->records, info->index, &record)))
+        return hr;
+
+    if (record->lookup_id == IDENTIFIER_SDK_ERROR)
+    {
+        /* TODO: description should come from resources */
+
+        swprintf(str, ARRAY_SIZE(str), L"Return code %#lx.", record->info.hrError);
+        *description = SysAllocString(str);
+        return S_OK;
+    }
+
+    if (info->flags & ERROR_INFO_HAS_DESCRIPTION)
+        return return_bstr(info->description, description);
+
+    if (FAILED(hr = error_info_fetch_description(info)))
+        return hr;
+
+    return return_bstr(info->description, description);
+}
+
 static HRESULT WINAPI errorrecords_QueryInterface(IErrorInfo* iface, REFIID riid, void **ppvoid)
 {
     errorrecords *records = impl_records_from_IErrorInfo(iface);
@@ -642,9 +674,11 @@ static HRESULT WINAPI error_info_GetSource(IErrorInfo *iface, BSTR *source)
 
 static HRESULT WINAPI error_info_GetDescription(IErrorInfo *iface, BSTR *description)
 {
-    FIXME("%p, %p.\n", iface, description);
+    struct error_info *error_info = impl_from_IErrorInfo(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, description);
+
+    return error_info_get_description(error_info, description);
 }
 
 static HRESULT WINAPI error_info_GetHelpFile(IErrorInfo *iface, BSTR *helpfile)
