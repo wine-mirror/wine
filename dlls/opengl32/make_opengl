@@ -890,7 +890,10 @@ my %supported_wgl_extensions =
    );
 my %supported_egl_extensions =
    (
+    "EGL_EXT_device_base" => 1,
+    "EGL_EXT_device_drm" => 1,
     "EGL_EXT_pixel_format_float" => 1,
+    "EGL_EXT_platform_device" => 1,
     "EGL_EXT_present_opaque" => 1,
     "EGL_KHR_create_context" => 1,
     "EGL_KHR_create_context_no_error" => 1,

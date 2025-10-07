@@ -145,6 +145,7 @@ typedef unsigned int GLhandleARB;
 #define EGL_BAD_CONFIG                                                0x3005
 #define EGL_BAD_CONTEXT                                               0x3006
 #define EGL_BAD_CURRENT_SURFACE                                       0x3007
+#define EGL_BAD_DEVICE_EXT                                            0x322B
 #define EGL_BAD_DISPLAY                                               0x3008
 #define EGL_BAD_MATCH                                                 0x3009
 #define EGL_BAD_NATIVE_PIXMAP                                         0x300A
@@ -196,9 +197,12 @@ typedef unsigned int GLhandleARB;
 #define EGL_CORE_NATIVE_ENGINE                                        0x305B
 #define EGL_DEFAULT_DISPLAY                                           EGL_CAST(EGLNativeDisplayType,0)
 #define EGL_DEPTH_SIZE                                                0x3025
+#define EGL_DEVICE_EXT                                                0x322C
 #define EGL_DISPLAY_SCALING                                           10000
 #define EGL_DONT_CARE                                                 EGL_CAST(EGLint,-1)
 #define EGL_DRAW                                                      0x3059
+#define EGL_DRM_DEVICE_FILE_EXT                                       0x3233
+#define EGL_DRM_MASTER_FD_EXT                                         0x333C
 #define EGL_EXTENSIONS                                                0x3055
 #define EGL_FALSE                                                     0
 #define EGL_FOREVER                                                   0xFFFFFFFFFFFFFFFF
@@ -246,6 +250,7 @@ typedef unsigned int GLhandleARB;
 #define EGL_NOT_INITIALIZED                                           0x3001
 #define EGL_NO_CONFIG_KHR                                             EGL_CAST(EGLConfig,0)
 #define EGL_NO_CONTEXT                                                EGL_CAST(EGLContext,0)
+#define EGL_NO_DEVICE_EXT                                             EGL_CAST(EGLDeviceEXT,0)
 #define EGL_NO_DISPLAY                                                EGL_CAST(EGLDisplay,0)
 #define EGL_NO_IMAGE                                                  EGL_CAST(EGLImage,0)
 #define EGL_NO_RESET_NOTIFICATION                                     0x31BE
@@ -267,6 +272,7 @@ typedef unsigned int GLhandleARB;
 #define EGL_PIXEL_ASPECT_RATIO                                        0x3092
 #define EGL_PIXMAP_BIT                                                0x0002
 #define EGL_PLATFORM_ANDROID_KHR                                      0x3141
+#define EGL_PLATFORM_DEVICE_EXT                                       0x313F
 #define EGL_PLATFORM_SURFACELESS_MESA                                 0x31DD
 #define EGL_PLATFORM_WAYLAND_KHR                                      0x31D8
 #define EGL_PLATFORM_X11_KHR                                          0x31D5
@@ -6233,6 +6239,10 @@ typedef void       (GLAPIENTRY *PFN_glVertex4s)( GLshort x, GLshort y, GLshort z
 typedef void       (GLAPIENTRY *PFN_glVertex4sv)( const GLshort *v );
 typedef void       (GLAPIENTRY *PFN_glVertexPointer)( GLint size, GLenum type, GLsizei stride, const void *pointer );
 typedef void       (GLAPIENTRY *PFN_glViewport)( GLint x, GLint y, GLsizei width, GLsizei height );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryDeviceAttribEXT)( EGLDeviceEXT device, EGLint attribute, EGLAttrib *value );
+typedef const char * (GLAPIENTRY *PFN_eglQueryDeviceStringEXT)( EGLDeviceEXT device, EGLint name );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryDevicesEXT)( EGLint max_devices, EGLDeviceEXT *devices, EGLint *num_devices );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryDisplayAttribEXT)( EGLDisplay dpy, EGLint attribute, EGLAttrib *value );
 typedef void       (GLAPIENTRY *PFN_glAccumxOES)( GLenum op, GLfixed value );
 typedef GLboolean  (GLAPIENTRY *PFN_glAcquireKeyedMutexWin32EXT)( GLuint memory, GLuint64 key, GLuint timeout );
 typedef void       (GLAPIENTRY *PFN_glActiveProgramEXT)( GLuint program );
@@ -9027,7 +9037,11 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(eglWaitNative) \
     USE_GL_FUNC(eglWaitSync)
 
-#define ALL_EGL_EXT_FUNCS
+#define ALL_EGL_EXT_FUNCS \
+    USE_GL_FUNC(eglQueryDeviceAttribEXT) \
+    USE_GL_FUNC(eglQueryDeviceStringEXT) \
+    USE_GL_FUNC(eglQueryDevicesEXT) \
+    USE_GL_FUNC(eglQueryDisplayAttribEXT)
 
 #define ALL_GL_FUNCS \
     USE_GL_FUNC(glAccum) \

@@ -97533,8 +97533,8 @@ struct opengl_funcs null_opengl_funcs =
     .p_wglSwapIntervalEXT = null_wglSwapIntervalEXT,
 };
 
-const int extension_registry_size = 2694;
-const struct registry_entry extension_registry[2694] =
+const int extension_registry_size = 2698;
+const struct registry_entry extension_registry[2698] =
 {
     { "glAccumxOES", "GL_OES_fixed_point", offsetof(struct opengl_funcs, p_glAccumxOES) },
     { "glAcquireKeyedMutexWin32EXT", "GL_EXT_win32_keyed_mutex", offsetof(struct opengl_funcs, p_glAcquireKeyedMutexWin32EXT) },
