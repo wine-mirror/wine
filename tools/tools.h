@@ -168,6 +168,35 @@ static inline char *strmake( const char* fmt, ... )
     }
 }
 
+/* generic array functions */
+
+struct array
+{
+    size_t count;   /* count of array entries */
+    size_t size;    /* size of allocated array */
+    void  *data;
+};
+
+static const struct array empty_array;
+
+static inline void *array_grow( struct array *array, size_t n, size_t elem_size )
+{
+    if (array->count + n > array->size)
+    {
+        array->size = max( array->size * 2, 16 );
+        array->size = max( array->size, array->count + n );
+        array->data = xrealloc( array->data, array->size * elem_size );
+    }
+    array->count += n;
+    return (char *)array->data + (array->count - n) * elem_size;
+}
+
+#define ARRAY_ADD(array,type) ((type *)array_grow( array, 1, sizeof(type) ))
+#define ARRAY_SORT(array,type,cmp) qsort( (array)->data, (array)->count, sizeof(type), cmp )
+#define ARRAY_ENTRY(array,idx,type) ((type *)(array)->data + (idx))
+#define ARRAY_FOR_EACH(cursor,array,type) \
+    for (type *cursor = (array)->data; cursor - (type *)(array)->data < (array)->count; cursor++)
+
 /* string array functions */
 
 struct strarray
