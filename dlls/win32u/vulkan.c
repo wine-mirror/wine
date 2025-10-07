@@ -55,6 +55,8 @@ static const UINT EXTERNAL_MEMORY_WIN32_BITS = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OP
 static const UINT EXTERNAL_SEMAPHORE_WIN32_BITS = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT |
                                                   VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT |
                                                   VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT;
+static const UINT EXTERNAL_FENCE_WIN32_BITS = VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_WIN32_BIT |
+                                              VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT;
 
 struct device_memory
 {
@@ -200,6 +202,14 @@ static VkExternalSemaphoreHandleTypeFlagBits get_host_external_semaphore_type(vo
     const char *host_extension = driver_funcs->p_get_host_extension( "VK_KHR_external_semaphore_win32" );
     if (!strcmp( host_extension, "VK_KHR_external_semaphore_fd" )) return VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT;
     if (!strcmp( host_extension, "VK_KHR_external_semaphore_capabilities" )) return VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT;
+    return 0;
+}
+
+static VkExternalFenceHandleTypeFlagBits get_host_external_fence_type(void)
+{
+    const char *host_extension = driver_funcs->p_get_host_extension( "VK_KHR_external_fence_win32" );
+    if (!strcmp( host_extension, "VK_KHR_external_fence_fd" )) return VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT;
+    if (!strcmp( host_extension, "VK_KHR_external_fence_capabilities" )) return VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT;
     return 0;
 }
 
@@ -1653,15 +1663,22 @@ static VkResult win32u_vkImportFenceWin32HandleKHR( VkDevice client_device, cons
     return VK_ERROR_INCOMPATIBLE_DRIVER;
 }
 
-static void win32u_vkGetPhysicalDeviceExternalFenceProperties( VkPhysicalDevice client_physical_device, const VkPhysicalDeviceExternalFenceInfo *fence_info,
+static void win32u_vkGetPhysicalDeviceExternalFenceProperties( VkPhysicalDevice client_physical_device, const VkPhysicalDeviceExternalFenceInfo *client_fence_info,
                                                                VkExternalFenceProperties *fence_properties )
 {
+    VkPhysicalDeviceExternalFenceInfo *fence_info = (VkPhysicalDeviceExternalFenceInfo *)client_fence_info; /* cast away const, it has been copied in the thunks */
     struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle( client_physical_device );
     struct vulkan_instance *instance = physical_device->instance;
+    VkExternalFenceHandleTypeFlagBits handle_type;
 
     TRACE( "physical_device %p, fence_info %p, fence_properties %p\n", physical_device, fence_info, fence_properties );
 
+    handle_type = fence_info->handleType;
+    if (fence_info->handleType & EXTERNAL_FENCE_WIN32_BITS) fence_info->handleType = get_host_external_fence_type();
+
     instance->p_vkGetPhysicalDeviceExternalFenceProperties( physical_device->host.physical_device, fence_info, fence_properties );
+    fence_properties->compatibleHandleTypes = handle_type;
+    fence_properties->exportFromImportedHandleTypes = handle_type;
 }
 
 static const char *win32u_get_host_extension( const char *name )
