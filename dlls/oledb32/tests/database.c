@@ -462,7 +462,6 @@ static void test_errorinfo(void)
     memset(&guid, 0xac, sizeof(guid));
     hr = IErrorInfo_GetGUID(errorinfo, &guid);
     ok(hr == S_OK, "got %08lx\n", hr);
-    todo_wine
     ok(IsEqualGUID(&guid, &info.iid), "got wrong guid\n");
 
     str = (BSTR)0x1;
@@ -503,7 +502,6 @@ static void test_errorinfo(void)
 
     hr = IErrorInfo_GetGUID(errorinfo, &guid);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(IsEqualGUID(&guid, &IID_IErrorInfo), "Unexpected guid.\n");
 
     hr = IErrorRecords_GetBasicErrorInfo(errrecs, 0, NULL);
@@ -579,7 +577,6 @@ static void test_errorinfo(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IErrorInfo_GetGUID(errorinfo, &guid);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(IsEqualGUID(&guid, &IID_IUnknown), "Unexpected guid %s.\n", wine_dbgstr_guid(&guid));
 
     memset(&info, 0, sizeof(info));
@@ -596,7 +593,6 @@ static void test_errorinfo(void)
 
     hr = IErrorInfo_GetGUID(errorinfo, &guid);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(IsEqualGUID(&guid, &IID_IDispatch), "Unexpected guid %s.\n", wine_dbgstr_guid(&guid));
 
     memset(&info, 0, sizeof(info));
@@ -610,7 +606,6 @@ static void test_errorinfo(void)
 
     hr = IErrorInfo_GetGUID(errorinfo, &guid);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(IsEqualGUID(&guid, &IID_IErrorInfo), "Unexpected guid %s.\n", wine_dbgstr_guid(&guid));
 
     IErrorInfo_Release(errorinfo2);

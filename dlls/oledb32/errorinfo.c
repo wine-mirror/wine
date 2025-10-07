@@ -145,14 +145,16 @@ static HRESULT errorrecords_get_record(errorrecords *records, unsigned int index
 
 static HRESULT WINAPI errorrecords_GetGUID(IErrorInfo* iface, GUID *guid)
 {
-    errorrecords *This = impl_from_IErrorInfo(iface);
+    errorrecords *records = impl_from_IErrorInfo(iface);
+    struct error_record *record;
 
-    TRACE("(%p)->(%p)\n", This, guid);
+    TRACE("%p, %p.\n", iface, guid);
 
     if (!guid)
         return E_INVALIDARG;
 
-    *guid = GUID_NULL;
+    errorrecords_get_record(records, 0, &record);
+    *guid = record ? record->info.iid : GUID_NULL;
 
     return S_OK;
 }
