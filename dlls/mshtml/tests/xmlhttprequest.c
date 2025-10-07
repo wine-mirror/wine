@@ -1194,12 +1194,20 @@ static void test_xdr(IHTMLDocument2 *doc)
     hres = IHTMLXDomainRequest_put_ontimeout(xdr, v);
     ok(hres == S_OK, "put_ontimeout failed: %08lx\n", hres);
 
+    hres = IHTMLXDomainRequest_get_contentType(xdr, &bstr);
+    ok(hres == S_OK, "get_contentType returned %08lx\n", hres);
+    ok(bstr == NULL, "contentType = %s\n", debugstr_w(bstr));
+
     bstr = SysAllocString(L"GET");
     url = SysAllocString(L"http://test.winehq.org/tests/cors.html");
     hres = IHTMLXDomainRequest_open(xdr, bstr, url);
     ok(hres == S_OK, "open failed: %08lx\n", hres);
     SysFreeString(bstr);
     SysFreeString(url);
+
+    hres = IHTMLXDomainRequest_get_contentType(xdr, &bstr);
+    ok(hres == S_OK, "get_contentType returned %08lx\n", hres);
+    ok(bstr == NULL, "contentType = %s\n", debugstr_w(bstr));
 
     hres = IHTMLXDomainRequest_get_timeout(xdr, NULL);
     ok(hres == E_INVALIDARG, "get_timeout returned %08lx\n", hres);
@@ -1227,6 +1235,11 @@ static void test_xdr(IHTMLDocument2 *doc)
     hres = IHTMLXDomainRequest_get_responseText(xdr, &bstr);
     ok(hres == S_OK, "get_responseText returned %08lx\n", hres);
     ok(!lstrcmpW(bstr, L"<html><body>test</body></html>\n"), "responseText = %s\n", debugstr_w(bstr));
+    SysFreeString(bstr);
+
+    hres = IHTMLXDomainRequest_get_contentType(xdr, &bstr);
+    ok(hres == S_OK, "get_contentType returned %08lx\n", hres);
+    ok(!lstrcmpW(bstr, L"text/html"), "contentType = %s\n", debugstr_w(bstr));
     SysFreeString(bstr);
 
     IHTMLXDomainRequest_Release(xdr);

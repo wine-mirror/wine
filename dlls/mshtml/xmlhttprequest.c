@@ -1794,10 +1794,41 @@ static HRESULT WINAPI HTMLXDomainRequest_get_timeout(IHTMLXDomainRequest *iface,
 static HRESULT WINAPI HTMLXDomainRequest_get_contentType(IHTMLXDomainRequest *iface, BSTR *p)
 {
     HTMLXDomainRequest *This = impl_from_IHTMLXDomainRequest(iface);
+    const char *content_type = "text/plain";
+    nsIChannel *nschannel;
+    HRESULT hres = S_OK;
+    nsACString nsstr;
+    nsresult nsres;
+    int len;
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    return E_NOTIMPL;
+    if(!p)
+        return E_POINTER;
+
+    if(This->xhr.ready_state < READYSTATE_LOADED) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    nsACString_Init(&nsstr, NULL);
+
+    nsres = nsIXMLHttpRequest_GetChannel(This->xhr.nsxhr, &nschannel);
+    if(NS_SUCCEEDED(nsres)) {
+        nsres = nsIChannel_GetContentType(nschannel, &nsstr);
+        if(NS_SUCCEEDED(nsres))
+            nsACString_GetData(&nsstr, &content_type);
+        nsIChannel_Release(nschannel);
+    }
+
+    len = MultiByteToWideChar(CP_UTF8, 0, content_type, -1, NULL, 0);
+    if(!(*p = SysAllocStringLen(NULL, len - 1)))
+        hres = E_OUTOFMEMORY;
+    else
+        MultiByteToWideChar(CP_UTF8, 0, content_type, -1, *p, len);
+
+    nsACString_Finish(&nsstr);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLXDomainRequest_put_onprogress(IHTMLXDomainRequest *iface, VARIANT v)
@@ -1883,8 +1914,11 @@ static HRESULT WINAPI HTMLXDomainRequest_open(IHTMLXDomainRequest *iface, BSTR b
 {
     HTMLXDomainRequest *This = impl_from_IHTMLXDomainRequest(iface);
     HTMLOuterWindow *outer_window = This->xhr.window->base.outer_window;
+    nsLoadFlags load_flags;
     DWORD scheme, scheme2;
+    nsIChannel *nschannel;
     nsAString nsstr;
+    nsresult nsres;
     HRESULT hres;
     IUri *uri;
 
@@ -1919,6 +1953,17 @@ static HRESULT WINAPI HTMLXDomainRequest_open(IHTMLXDomainRequest *iface, BSTR b
     nsAString_InitDepend(&nsstr, L"text");
     nsIXMLHttpRequest_SetResponseType(This->xhr.nsxhr, &nsstr);
     nsAString_Finish(&nsstr);
+
+    /* Always sniff the content type even there's a Content-Type response header, to match native */
+    nsres = nsIXMLHttpRequest_GetChannel(This->xhr.nsxhr, &nschannel);
+    if(NS_SUCCEEDED(nsres)) {
+        nsres = nsIChannel_GetLoadFlags(nschannel, &load_flags);
+        if(NS_SUCCEEDED(nsres)) {
+            load_flags |= LOAD_CALL_CONTENT_SNIFFERS;
+            nsIChannel_SetLoadFlags(nschannel, load_flags);
+        }
+        nsIChannel_Release(nschannel);
+    }
 
     /* IE always adds Origin header, even from same origin, but Gecko doesn't allow us to alter it. */
     return S_OK;

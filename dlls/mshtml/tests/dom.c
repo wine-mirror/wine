@@ -8050,6 +8050,7 @@ static void test_xdomainrequest(IHTMLWindow6 *window)
     IHTMLXDomainRequest *xdr;
     HRESULT hres;
     VARIANT var;
+    BSTR bstr;
 
     hres = IHTMLWindow6_get_XDomainRequest(window, &var);
     ok(hres == S_OK, "get_XDomainRequest failed: %08lx\n", hres);
@@ -8073,6 +8074,10 @@ static void test_xdomainrequest(IHTMLWindow6 *window)
     ok(xdr != NULL, "xdr == NULL\n");
     if(is_ie9plus)
         test_disp((IUnknown*)xdr, &DIID_DispXDomainRequest, NULL, L"[object]");
+
+    hres = IHTMLXDomainRequest_get_contentType(xdr, &bstr);
+    ok(hres == S_OK, "get_contentType returned %08lx\n", hres);
+    ok(bstr == NULL, "contentType = %s\n", debugstr_w(bstr));
 
     IHTMLXDomainRequest_Release(xdr);
     IHTMLXDomainRequestFactory_Release(factory);
