@@ -1,17 +1,43 @@
 # CI script for creating releases
 
-create-release:
+release-vars:
   stage: deploy
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  image: registry.gitlab.com/gitlab-org/cli:latest
   rules:
     - if: $CI_COMMIT_TAG && $CI_PROJECT_PATH == "wine/wine"
+  variables:
+    BASE_URL: "https://dl.winehq.org/wine/source/"
+    RELEASE_PATH: "/$CI_COMMIT_TAG.tar.xz"
   script:
-    - VERSION=$(expr "$CI_COMMIT_TAG" ":" 'wine-\(.*\)')
-    - test -n "$VERSION" || exit 1
-    - URL=$(grep -o "https://dl.winehq.org/[^>]*" ANNOUNCE.md)
-    - FILEPATH=$(expr "$URL" ":" '.*\(/.*\)')
-    - release-cli create
-        --name "Wine $VERSION"
-        --tag-name "$CI_COMMIT_TAG"
-        --description ANNOUNCE.md
-        --assets-link "{\"name\":\"Source code\",\"url\":\"$URL\",\"link_type\":\"other\",\"filepath\":\"$FILEPATH\"}"
+    - version=$(expr "$CI_COMMIT_TAG" ':' 'wine-\(.*\)')
+    - test -n "$version" || exit 1
+    - major=$(expr "$version" ':' '\([0-9]\+\.\)')
+    - minor=$(expr "$version" ':' '[0-9]\+\.\([0-9]\+\)')
+    - test "$minor" -eq 0 || minor=x
+    - |
+      cat <<EOF > vars.env
+      RELEASE_VERSION=$version
+      RELEASE_URL=$BASE_URL$major$minor$RELEASE_PATH
+      RELEASE_PATH=$RELEASE_PATH
+      EOF
+  artifacts:
+    reports:
+      dotenv: vars.env
+
+create-release:
+  stage: deploy
+  image: registry.gitlab.com/gitlab-org/cli:latest
+  rules:
+    - if: $CI_COMMIT_TAG && $CI_PROJECT_PATH == "wine/wine"
+  needs: ["release-vars"]
+  script:
+    - echo "Creating release $RELEASE_VERSION"
+  release:
+    tag_name: $CI_COMMIT_TAG
+    name: "Wine $RELEASE_VERSION"
+    description: ANNOUNCE.md
+    assets:
+      links:
+        - name: "Source code"
+          url: $RELEASE_URL
+          direct_asset_path: $RELEASE_PATH
