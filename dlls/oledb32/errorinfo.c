@@ -266,6 +266,8 @@ static ULONG WINAPI errorrecords_Release(IErrorInfo* iface)
 
             if (record->lookup_service)
             {
+                if (record->dynamic_id)
+                    IErrorLookup_ReleaseErrors(record->lookup_service, record->dynamic_id);
                 IErrorLookup_Release(record->lookup_service);
             }
         }
