@@ -2164,6 +2164,10 @@ static BOOL handle_syscall_trap( ucontext_t *sigcontext, siginfo_t *siginfo )
  */
 static inline BOOL check_invalid_gsbase( ucontext_t *ucontext )
 {
+    extern const void *__wine_syscall_dispatcher_gs_load_ptr;
+    extern const void *__wine_unix_call_dispatcher_gs_load_ptr;
+
+    const void *rip = (void *)RIP_sig(ucontext);
     BYTE instr[16];
     unsigned int i, len, prefix_count = 0;
     TEB *teb = NtCurrentTeb();
@@ -2186,48 +2190,51 @@ static inline BOOL check_invalid_gsbase( ucontext_t *ucontext )
 
     if (cur_gsbase == (ULONG_PTR)teb) return FALSE;
 
-    len = virtual_uninterrupted_read_memory( (BYTE *)RIP_sig(ucontext), instr, sizeof(instr) );
-    if (!len) return FALSE;
-
-    for (i = 0; i < len; i++)
+    if (rip != __wine_syscall_dispatcher_gs_load_ptr && rip != __wine_unix_call_dispatcher_gs_load_ptr)
     {
-        switch (instr[i])
+        len = virtual_uninterrupted_read_memory( rip, instr, sizeof(instr) );
+        if (!len) return FALSE;
+
+        for (i = 0; i < len; i++)
         {
-        /* instruction prefixes */
-        case 0x2e:  /* %cs: */
-        case 0x36:  /* %ss: */
-        case 0x3e:  /* %ds: */
-        case 0x26:  /* %es: */
-        case 0x40:  /* rex */
-        case 0x41:  /* rex */
-        case 0x42:  /* rex */
-        case 0x43:  /* rex */
-        case 0x44:  /* rex */
-        case 0x45:  /* rex */
-        case 0x46:  /* rex */
-        case 0x47:  /* rex */
-        case 0x48:  /* rex */
-        case 0x49:  /* rex */
-        case 0x4a:  /* rex */
-        case 0x4b:  /* rex */
-        case 0x4c:  /* rex */
-        case 0x4d:  /* rex */
-        case 0x4e:  /* rex */
-        case 0x4f:  /* rex */
-        case 0x64:  /* %fs: */
-        case 0x66:  /* opcode size */
-        case 0x67:  /* addr size */
-        case 0xf0:  /* lock */
-        case 0xf2:  /* repne */
-        case 0xf3:  /* repe */
-            if (++prefix_count >= 15) return FALSE;
-            continue;
-        case 0x65:  /* %gs: */
+            switch (instr[i])
+            {
+            /* instruction prefixes */
+            case 0x2e:  /* %cs: */
+            case 0x36:  /* %ss: */
+            case 0x3e:  /* %ds: */
+            case 0x26:  /* %es: */
+            case 0x40:  /* rex */
+            case 0x41:  /* rex */
+            case 0x42:  /* rex */
+            case 0x43:  /* rex */
+            case 0x44:  /* rex */
+            case 0x45:  /* rex */
+            case 0x46:  /* rex */
+            case 0x47:  /* rex */
+            case 0x48:  /* rex */
+            case 0x49:  /* rex */
+            case 0x4a:  /* rex */
+            case 0x4b:  /* rex */
+            case 0x4c:  /* rex */
+            case 0x4d:  /* rex */
+            case 0x4e:  /* rex */
+            case 0x4f:  /* rex */
+            case 0x64:  /* %fs: */
+            case 0x66:  /* opcode size */
+            case 0x67:  /* addr size */
+            case 0xf0:  /* lock */
+            case 0xf2:  /* repne */
+            case 0xf3:  /* repe */
+                if (++prefix_count >= 15) return FALSE;
+                continue;
+            case 0x65:  /* %gs: */
+                break;
+            default:
+                return FALSE;
+            }
             break;
-        default:
-            return FALSE;
         }
-        break;
     }
 
     TRACE( "gsbase %016lx teb %p at instr %p, fixing up\n", cur_gsbase, teb, instr );
@@ -2877,6 +2884,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
  *           __wine_syscall_dispatcher
  */
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
+                   __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_gs_load") ":\n\t"
                    "movq %gs:0x378,%rcx\n\t"       /* thread_data->syscall_frame */
                    "popq 0x70(%rcx)\n\t"           /* frame->rip */
                    __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
@@ -3203,6 +3211,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_instrumentation,
  */
 __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movq %rcx,%r10\n\t"
+                   __ASM_LOCAL_LABEL("__wine_unix_call_dispatcher_gs_load") ":\n\t"
                    "movq %gs:0x378,%rcx\n\t"       /* thread_data->syscall_frame */
                    "popq 0x70(%rcx)\n\t"           /* frame->rip */
                    __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
@@ -3316,7 +3325,11 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
 
 __ASM_GLOBAL_POINTER( __ASM_NAME("__wine_syscall_dispatcher_prolog_end_ptr"),
                       __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_prolog_end") )
+__ASM_GLOBAL_POINTER( __ASM_NAME("__wine_syscall_dispatcher_gs_load_ptr"),
+                      __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_gs_load") )
 __ASM_GLOBAL_POINTER( __ASM_NAME("__wine_unix_call_dispatcher_prolog_end_ptr"),
                       __ASM_LOCAL_LABEL("__wine_unix_call_dispatcher_prolog_end") )
+__ASM_GLOBAL_POINTER( __ASM_NAME("__wine_unix_call_dispatcher_gs_load_ptr"),
+                      __ASM_LOCAL_LABEL("__wine_unix_call_dispatcher_gs_load") )
 
 #endif  /* __x86_64__ */
