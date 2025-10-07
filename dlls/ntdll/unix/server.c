@@ -545,7 +545,7 @@ static void invoke_system_apc( const union apc_call *call, union apc_result *res
         if ((ULONG_PTR)addr == call->virtual_flush.addr && size == call->virtual_flush.size)
         {
             result->virtual_flush.status = NtFlushVirtualMemory( NtCurrentProcess(),
-                                                                 (const void **)&addr, &size, 0 );
+                                                                 (const void **)&addr, &size, NULL );
             result->virtual_flush.addr = wine_server_client_ptr( addr );
             result->virtual_flush.size = size;
         }

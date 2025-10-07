@@ -285,14 +285,15 @@ NTSTATUS WINAPI wow64_NtFlushVirtualMemory( UINT *args )
     HANDLE process = get_handle( &args );
     ULONG *addr32 = get_ptr( &args );
     ULONG *size32 = get_ptr( &args );
-    ULONG unknown = get_ulong( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    IO_STATUS_BLOCK io;
 
     void *addr;
     SIZE_T size;
     NTSTATUS status;
 
     status = NtFlushVirtualMemory( process, (const void **)addr_32to64( &addr, addr32 ),
-                                   size_32to64( &size, size32 ), unknown );
+                                   size_32to64( &size, size32 ), iosb_32to64( &io, io32 ) );
     if (!status)
     {
         put_addr( addr32, addr );

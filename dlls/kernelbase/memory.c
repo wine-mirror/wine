@@ -122,7 +122,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH DiscardVirtualMemory( void *addr, SIZE_T size )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH FlushViewOfFile( const void *base, SIZE_T size )
 {
-    NTSTATUS status = NtFlushVirtualMemory( GetCurrentProcess(), &base, &size, 0 );
+    NTSTATUS status = NtFlushVirtualMemory( GetCurrentProcess(), &base, &size, NULL );
 
     if (status == STATUS_NOT_MAPPED_DATA) status = STATUS_SUCCESS;
     return set_ntstatus( status );

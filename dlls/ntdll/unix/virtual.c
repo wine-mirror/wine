@@ -6592,12 +6592,15 @@ NTSTATUS WINAPI NtQuerySection( HANDLE handle, SECTION_INFORMATION_CLASS class, 
  *             ZwFlushVirtualMemory   (NTDLL.@)
  */
 NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
-                                      SIZE_T *size_ptr, ULONG unknown )
+                                      SIZE_T *size_ptr, IO_STATUS_BLOCK *io )
 {
     struct file_view *view;
     unsigned int status = STATUS_SUCCESS;
     sigset_t sigset;
     void *addr = ROUND_ADDR( *addr_ptr, page_mask );
+
+    if (io)
+        FIXME("Currently output io values not set.\n");
 
     if (process != NtCurrentProcess())
     {

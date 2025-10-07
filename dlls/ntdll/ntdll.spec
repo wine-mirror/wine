@@ -230,7 +230,7 @@
 @ stdcall -syscall NtFlushInstructionCache(long ptr long)
 @ stdcall -syscall NtFlushKey(long)
 @ stdcall -syscall NtFlushProcessWriteBuffers()
-@ stdcall -syscall NtFlushVirtualMemory(long ptr ptr long)
+@ stdcall -syscall NtFlushVirtualMemory(long ptr ptr ptr)
 # @ stub NtFlushWriteBuffer
 # @ stub NtFreeUserPhysicalPages
 @ stdcall -syscall=0x001e NtFreeVirtualMemory(long ptr ptr long)
@@ -1303,7 +1303,7 @@
 @ stdcall -private ZwFlushInstructionCache(long ptr long) NtFlushInstructionCache
 @ stdcall -private ZwFlushKey(long) NtFlushKey
 @ stdcall -private ZwFlushProcessWriteBuffers() NtFlushProcessWriteBuffers
-@ stdcall -private ZwFlushVirtualMemory(long ptr ptr long) NtFlushVirtualMemory
+@ stdcall -private ZwFlushVirtualMemory(long ptr ptr ptr) NtFlushVirtualMemory
 # @ stub ZwFlushWriteBuffer
 # @ stub ZwFreeUserPhysicalPages
 @ stdcall -private ZwFreeVirtualMemory(long ptr ptr long) NtFreeVirtualMemory
