@@ -58,14 +58,14 @@ static int keyword_type( const WCHAR *str, unsigned int len )
     return TK_ID;
 }
 
-int get_token( const WCHAR *str, aqs_token_kind_t *token )
+int get_token( const WCHAR *str, enum aqs_tokentype *token )
 {
     int i;
 
     switch (str[0])
     {
     case '\0':
-        *token = AQS_EOF;
+        *token = 0; /* EOF */
         return 0;
     case ' ':
     case '\t':
@@ -155,13 +155,13 @@ int get_token( const WCHAR *str, aqs_token_kind_t *token )
         *token = keyword_type( str, i );
         return i;
     }
-    *token = AQS_UNDEF;
+    *token = 257; /* UNDEF */
     return 0;
 }
 
 UINT aqs_lex( void *p, struct aqs_parser *parser )
 {
-    aqs_token_kind_t token = -1;
+    enum aqs_tokentype token = -1;
     struct string *str = p;
 
     do
@@ -172,7 +172,7 @@ UINT aqs_lex( void *p, struct aqs_parser *parser )
             str->data = &parser->query[parser->idx];
             str->len = parser->len;
         }
-        parser->all_whitespace &= ((token == TK_WHITESPACE) || (token == AQS_EOF));
+        parser->all_whitespace &= ((token == TK_WHITESPACE) || (token == 0 /* EOF */));
     } while (token == TK_WHITESPACE);
     return token;
 }
