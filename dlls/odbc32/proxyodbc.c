@@ -756,15 +756,6 @@ SQLRETURN WINAPI SQLAllocHandleStd(SQLSMALLINT HandleType, SQLHANDLE InputHandle
     return ret;
 }
 
-static const char *debugstr_sqllen( SQLLEN len )
-{
-#ifdef _WIN64
-    return wine_dbg_sprintf( "%Id", len );
-#else
-    return wine_dbg_sprintf( "%d", len );
-#endif
-}
-
 #define MAX_BINDING_PARAMS 1024
 static BOOL alloc_binding( struct param_binding *binding, USHORT type, UINT column, UINT row_count )
 {
@@ -830,8 +821,8 @@ SQLRETURN WINAPI SQLBindCol(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNumber,
     struct statement *stmt = (struct statement *)lock_object( StatementHandle, SQL_HANDLE_STMT );
     SQLRETURN ret = SQL_ERROR;
 
-    TRACE("(StatementHandle %p, ColumnNumber %d, TargetType %d, TargetValue %p, BufferLength %s, StrLen_or_Ind %p)\n",
-          StatementHandle, ColumnNumber, TargetType, TargetValue, debugstr_sqllen(BufferLength), StrLen_or_Ind);
+    TRACE("(StatementHandle %p, ColumnNumber %d, TargetType %d, TargetValue %p, BufferLength %Id, StrLen_or_Ind %p)\n",
+          StatementHandle, ColumnNumber, TargetType, TargetValue, BufferLength, StrLen_or_Ind);
 
     if (!stmt) return SQL_INVALID_HANDLE;
 
@@ -2164,8 +2155,8 @@ SQLRETURN WINAPI SQLFetchScroll(SQLHSTMT StatementHandle, SQLSMALLINT FetchOrien
     struct statement *stmt = (struct statement *)lock_object( StatementHandle, SQL_HANDLE_STMT );
     SQLRETURN ret = SQL_ERROR;
 
-    TRACE("(StatementHandle %p, FetchOrientation %d, FetchOffset %s)\n", StatementHandle, FetchOrientation,
-          debugstr_sqllen(FetchOffset));
+    TRACE("(StatementHandle %p, FetchOrientation %d, FetchOffset %Id)\n", StatementHandle, FetchOrientation,
+          FetchOffset);
 
     if (!stmt) return SQL_INVALID_HANDLE;
 
@@ -2661,8 +2652,8 @@ SQLRETURN WINAPI SQLGetData(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNumber,
     struct statement *stmt = (struct statement *)lock_object( StatementHandle, SQL_HANDLE_STMT );
     SQLRETURN ret = SQL_ERROR;
 
-    TRACE("(StatementHandle %p, ColumnNumber %d, TargetType %d, TargetValue %p, BufferLength %s, StrLen_or_Ind %p)\n",
-          StatementHandle, ColumnNumber, TargetType, TargetValue, debugstr_sqllen(BufferLength), StrLen_or_Ind);
+    TRACE("(StatementHandle %p, ColumnNumber %d, TargetType %d, TargetValue %p, BufferLength %Id, StrLen_or_Ind %p)\n",
+          StatementHandle, ColumnNumber, TargetType, TargetValue, BufferLength, StrLen_or_Ind);
 
     if (!stmt) return SQL_INVALID_HANDLE;
 
@@ -3563,7 +3554,7 @@ SQLRETURN WINAPI SQLPutData(SQLHSTMT StatementHandle, SQLPOINTER Data, SQLLEN St
     struct statement *stmt = (struct statement *)lock_object( StatementHandle, SQL_HANDLE_STMT );
     SQLRETURN ret = SQL_ERROR;
 
-    TRACE("(StatementHandle %p, Data %p, StrLen_or_Ind %s)\n", StatementHandle, Data, debugstr_sqllen(StrLen_or_Ind));
+    TRACE("(StatementHandle %p, Data %p, StrLen_or_Ind %Id)\n", StatementHandle, Data, StrLen_or_Ind);
 
     if (!stmt) return SQL_INVALID_HANDLE;
 
@@ -3619,7 +3610,7 @@ SQLRETURN WINAPI SQLRowCount(SQLHSTMT StatementHandle, SQLLEN *RowCount)
         ret = row_count_win32( stmt, RowCount );
     }
 
-    if (SUCCESS(ret) && RowCount) TRACE(" RowCount %s\n", debugstr_sqllen(*RowCount));
+    if (SUCCESS(ret) && RowCount) TRACE(" RowCount %Id\n", *RowCount);
     TRACE("Returning %d\n", ret);
     unlock_object( &stmt->hdr );
     return ret;
@@ -3914,8 +3905,8 @@ SQLRETURN WINAPI SQLSetDescRec(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumber,
     struct descriptor *desc = (struct descriptor *)lock_object( DescriptorHandle, SQL_HANDLE_DESC );
     SQLRETURN ret = SQL_ERROR;
 
-    TRACE("(DescriptorHandle %p, RecNumber %d, Type %d, SubType %d, Length %s, Precision %d, Scale %d, Data %p,"
-          " StringLength %p, Indicator %p)\n", DescriptorHandle, RecNumber, Type, SubType, debugstr_sqllen(Length),
+    TRACE("(DescriptorHandle %p, RecNumber %d, Type %d, SubType %d, Length %Id, Precision %d, Scale %d, Data %p,"
+          " StringLength %p, Indicator %p)\n", DescriptorHandle, RecNumber, Type, SubType, Length,
           Precision, Scale, Data, StringLength, Indicator);
 
     if (!desc) return SQL_INVALID_HANDLE;
@@ -5020,8 +5011,8 @@ SQLRETURN WINAPI SQLExtendedFetch(SQLHSTMT StatementHandle, SQLUSMALLINT FetchOr
     struct statement *stmt = (struct statement *)lock_object( StatementHandle, SQL_HANDLE_STMT );
     SQLRETURN ret = SQL_ERROR;
 
-    TRACE("(StatementHandle %p, FetchOrientation %d, FetchOffset %s, RowCount %p, RowStatusArray %p)\n",
-          StatementHandle, FetchOrientation, debugstr_sqllen(FetchOffset), RowCount, RowStatusArray);
+    TRACE("(StatementHandle %p, FetchOrientation %d, FetchOffset %Id, RowCount %p, RowStatusArray %p)\n",
+          StatementHandle, FetchOrientation, FetchOffset, RowCount, RowStatusArray);
 
     if (!stmt) return SQL_INVALID_HANDLE;
 
@@ -5755,9 +5746,9 @@ SQLRETURN WINAPI SQLBindParameter(SQLHSTMT StatementHandle, SQLUSMALLINT Paramet
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, ParameterNumber %d, InputOutputType %d, ValueType %d, ParameterType %d, "
-          "ColumnSize %s, DecimalDigits %d, ParameterValue, %p, BufferLength %s, StrLen_or_Ind %p)\n",
+          "ColumnSize %s, DecimalDigits %d, ParameterValue, %p, BufferLength %Id, StrLen_or_Ind %p)\n",
           StatementHandle, ParameterNumber, InputOutputType, ValueType, ParameterType, debugstr_sqlulen(ColumnSize),
-          DecimalDigits, ParameterValue, debugstr_sqllen(BufferLength), StrLen_or_Ind);
+          DecimalDigits, ParameterValue, BufferLength, StrLen_or_Ind);
 
     if (!stmt) return SQL_INVALID_HANDLE;
 
@@ -5915,8 +5906,8 @@ SQLRETURN WINAPI SQLSetScrollOptions(SQLHSTMT StatementHandle, SQLUSMALLINT Conc
     struct statement *stmt = (struct statement *)lock_object( StatementHandle, SQL_HANDLE_STMT );
     SQLRETURN ret = SQL_ERROR;
 
-    TRACE("(StatementHandle %p, Concurrency %d, KeySetSize %s, RowSetSize %d)\n", StatementHandle,
-          Concurrency, debugstr_sqllen(KeySetSize), RowSetSize);
+    TRACE("(StatementHandle %p, Concurrency %d, KeySetSize %Id, RowSetSize %d)\n", StatementHandle,
+          Concurrency, KeySetSize, RowSetSize);
 
     if (!stmt) return SQL_INVALID_HANDLE;
 
@@ -7323,7 +7314,7 @@ SQLRETURN WINAPI SQLSetConnectOptionW(SQLHDBC ConnectionHandle, SQLUSMALLINT Opt
     struct connection *con = (struct connection *)lock_object( ConnectionHandle, SQL_HANDLE_DBC );
     SQLRETURN ret = SQL_ERROR;
 
-    TRACE("(ConnectionHandle %p, Option %d, Value %s)\n", ConnectionHandle, Option, debugstr_sqllen(Value));
+    TRACE("(ConnectionHandle %p, Option %d, Value %Iu)\n", ConnectionHandle, Option, Value);
 
     if (!con) return SQL_INVALID_HANDLE;
 
