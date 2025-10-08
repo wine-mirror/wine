@@ -329,7 +329,7 @@ static VkResult vulkan_physical_device_init(struct vulkan_physical_device *physi
     BOOL have_memory_placed = FALSE, have_map_memory2 = FALSE;
     uint32_t num_host_properties, num_properties = 0;
     VkExtensionProperties *host_properties = NULL;
-    BOOL have_external_memory_host = FALSE;
+    BOOL have_external_memory_host = FALSE, have_external_semaphore = FALSE;
     VkResult res;
     unsigned int i, j;
 
@@ -380,6 +380,8 @@ static VkResult vulkan_physical_device_init(struct vulkan_physical_device *physi
         }
         if (!strcmp(host_properties[i].extensionName, "VK_EXT_external_memory_host"))
             have_external_memory_host = TRUE;
+        else if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_semaphore_win32")))
+            have_external_semaphore = TRUE;
         else if (!strcmp(host_properties[i].extensionName, "VK_EXT_map_memory_placed"))
             have_memory_placed = TRUE;
         else if (!strcmp(host_properties[i].extensionName, "VK_EXT_surface_maintenance1"))
@@ -388,6 +390,8 @@ static VkResult vulkan_physical_device_init(struct vulkan_physical_device *physi
             physical_device->has_swapchain_maintenance1 = true;
         else if (!strcmp(host_properties[i].extensionName, "VK_KHR_map_memory2"))
             have_map_memory2 = TRUE;
+        else if (!strcmp(host_properties[i].extensionName, "VK_KHR_timeline_semaphore"))
+            num_properties++;
     }
 
     TRACE("Host supported extensions %u, Wine supported extensions %u\n", num_host_properties, num_properties);
@@ -449,6 +453,11 @@ static VkResult vulkan_physical_device_init(struct vulkan_physical_device *physi
 
     for (i = 0, j = 0; i < num_host_properties; i++)
     {
+        if (have_external_semaphore && !strcmp(host_properties[i].extensionName, "VK_KHR_timeline_semaphore"))
+        {
+            strcpy(physical_device->extensions[j].extensionName, "VK_KHR_win32_keyed_mutex");
+            physical_device->extensions[j++].specVersion = VK_KHR_WIN32_KEYED_MUTEX_SPEC_VERSION;
+        }
         if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_memory_win32")))
         {
             if (zero_bits && !physical_device->map_placed_align)
@@ -593,6 +602,7 @@ static VkResult wine_vk_device_convert_create_info(struct vulkan_physical_device
         if (!strcmp(*extension, "VK_EXT_swapchain_maintenance1")) has_swapchain_maintenance1 = true;
         if (!strcmp(*extension, "VK_EXT_surface_maintenance1")) has_surface_maintenance1 = true;
         if (!strcmp(*extension, "VK_KHR_swapchain")) has_swapchain = true;
+        if (!strcmp(*extension, "VK_KHR_win32_keyed_mutex")) *extension = "VK_KHR_timeline_semaphore";
         if (!strcmp(*extension, "VK_KHR_external_memory_win32"))
         {
             if (zero_bits && !physical_device->map_placed_align)
