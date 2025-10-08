@@ -33,6 +33,7 @@
 #include "initguid.h"
 #include "mmdeviceapi.h"
 #include "audiosessiontypes.h"
+#include "wincodec.h"
 
 #include "wine/test.h"
 
@@ -1272,9 +1273,11 @@ static void test_TransferVideoFrame(void)
     ID3D11Texture2D *texture = NULL, *rb_texture;
     D3D11_MAPPED_SUBRESOURCE map_desc;
     IMFMediaEngineEx *media_engine = NULL;
+    IWICImagingFactory *factory = NULL;
     IMFDXGIDeviceManager *manager;
     ID3D11DeviceContext *context;
     D3D11_TEXTURE2D_DESC desc;
+    IWICBitmap *bitmap = NULL;
     IMFByteStream *stream;
     ID3D11Device *device;
     RECT dst_rect;
@@ -1315,6 +1318,13 @@ static void test_TransferVideoFrame(void)
     desc.BindFlags = D3D11_BIND_RENDER_TARGET;
     desc.SampleDesc.Count = 1;
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICImagingFactory, (void **)&factory);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IWICImagingFactory_CreateBitmap(factory, desc.Width, desc.Height, &GUID_WICPixelFormat32bppBGR,
+            WICBitmapCacheOnLoad, &bitmap);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     url = SysAllocString(L"i420-64x64.avi");
@@ -1373,6 +1383,10 @@ static void test_TransferVideoFrame(void)
     ID3D11DeviceContext_Release(context);
     ID3D11Texture2D_Release(rb_texture);
 
+    hr = IMFMediaEngineEx_TransferVideoFrame(notify->media_engine, (IUnknown *)bitmap, NULL, &dst_rect, NULL);
+    /* not supported if a DXGI device manager was provided */
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
+
 done:
     if (media_engine)
     {
@@ -1380,10 +1394,108 @@ done:
         IMFMediaEngineEx_Release(media_engine);
     }
 
+    if (bitmap)
+        IWICBitmap_Release(bitmap);
+    if (factory)
+        IWICImagingFactory_Release(factory);
     if (texture)
         ID3D11Texture2D_Release(texture);
     if (device)
         ID3D11Device_Release(device);
+
+    IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
+}
+
+static void test_TransferVideoFrame_wic(void)
+{
+    struct test_transfer_notify *notify;
+    UINT lock_buffer_size, lock_buffer_stride;
+    IMFMediaEngineEx *media_engine = NULL;
+    IWICImagingFactory *factory = NULL;
+    IWICBitmap *bitmap = NULL;
+    IMFByteStream *stream;
+    IWICBitmapLock *lock;
+    WICRect wicrc = {0};
+    BYTE *lock_buffer;
+    RECT dst_rect;
+    LONGLONG pts;
+    HRESULT hr;
+    DWORD res;
+    BSTR url;
+
+    stream = load_resource(L"i420-64x64.avi", L"video/avi");
+
+    notify = create_transfer_notify();
+
+    create_media_engine(&notify->IMFMediaEngineNotify_iface, NULL, DXGI_FORMAT_B8G8R8X8_UNORM,
+            &IID_IMFMediaEngineEx, (void **)&media_engine);
+
+    if (!(notify->media_engine = media_engine))
+        goto done;
+
+    wicrc.Width = 64;
+    wicrc.Height = 64;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICImagingFactory, (void **)&factory);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IWICImagingFactory_CreateBitmap(factory, wicrc.Width, wicrc.Height, &GUID_WICPixelFormat32bppBGR,
+            WICBitmapCacheOnLoad, &bitmap);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    url = SysAllocString(L"i420-64x64.avi");
+    hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine, stream, url);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(url);
+    IMFByteStream_Release(stream);
+
+    res = WaitForSingleObject(notify->frame_ready_event, 5000);
+    ok(!res, "Unexpected res %#lx.\n", res);
+
+    if (FAILED(notify->error))
+    {
+        win_skip("Media engine reported error %#lx, skipping tests.\n", notify->error);
+        goto done;
+    }
+
+    /* FIXME: Wine first video frame is often full of garbage, wait for another update */
+    res = WaitForSingleObject(notify->ready_event, 500);
+    /* It's also missing the MF_MEDIA_ENGINE_EVENT_TIMEUPDATE notifications */
+    todo_wine
+    ok(!res, "Unexpected res %#lx.\n", res);
+
+    SetRect(&dst_rect, 0, 0, wicrc.Width, wicrc.Height);
+    IMFMediaEngineEx_OnVideoStreamTick(notify->media_engine, &pts);
+    hr = IMFMediaEngineEx_TransferVideoFrame(notify->media_engine, (IUnknown *)bitmap, NULL, &dst_rect, NULL);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICBitmap_Lock(bitmap, &wicrc, WICBitmapLockRead, &lock);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IWICBitmapLock_GetStride(lock, &lock_buffer_stride);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IWICBitmapLock_GetDataPointer(lock, &lock_buffer_size, &lock_buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!lock_buffer, "got null lock_buffer\n");
+    ok(lock_buffer_size == 16384, "got lock_buffer_size %u\n", lock_buffer_size);
+    ok(lock_buffer_stride == wicrc.Width * 4, "got lock_buffer_stride %u\n", lock_buffer_stride);
+    res = check_rgb32_data(L"rgb32frame.bmp", lock_buffer, lock_buffer_stride * wicrc.Height, &dst_rect);
+    todo_wine
+    ok(res == 0, "Unexpected %lu%% diff\n", res);
+
+    IWICBitmapLock_Release(lock);
+
+done:
+    if (media_engine)
+    {
+        IMFMediaEngineEx_Shutdown(media_engine);
+        IMFMediaEngineEx_Release(media_engine);
+    }
+
+    if (bitmap)
+        IWICBitmap_Release(bitmap);
+    if (factory)
+        IWICImagingFactory_Release(factory);
 
     IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
@@ -2713,6 +2825,7 @@ START_TEST(mfmediaengine)
     test_SetSourceFromByteStream();
     test_audio_configuration();
     test_TransferVideoFrame();
+    test_TransferVideoFrame_wic();
     test_effect();
     test_GetDuration();
     test_GetSeekable();
