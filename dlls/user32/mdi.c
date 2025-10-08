@@ -1793,31 +1793,6 @@ done:
 
 
 /******************************************************************************
- *		CascadeWindows (USER32.@) Cascades MDI child windows
- *
- * RETURNS
- *    Success: Number of cascaded windows.
- *    Failure: 0
- */
-WORD WINAPI
-CascadeWindows (HWND hwndParent, UINT wFlags, const RECT *lpRect,
-		UINT cKids, const HWND *lpKids)
-{
-    FIXME("(%p,0x%08x,...,%u,...): stub\n", hwndParent, wFlags, cKids);
-    return 0;
-}
-
-
-/***********************************************************************
- *		CascadeChildWindows (USER32.@)
- */
-WORD WINAPI CascadeChildWindows( HWND parent, UINT flags )
-{
-    return CascadeWindows( parent, flags, NULL, 0, NULL );
-}
-
-
-/******************************************************************************
  *		TileWindows (USER32.@) Tiles MDI child windows
  *
  * RETURNS

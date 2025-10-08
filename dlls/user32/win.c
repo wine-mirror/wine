@@ -1640,3 +1640,98 @@ BOOL WINAPI SetProcessLaunchForegroundPolicy(DWORD pid, DWORD flags)
     SetLastError(ERROR_ACCESS_DENIED);
     return FALSE;
 }
+
+static BOOL should_move_window( HWND window, HWND parent, DWORD flags )
+{
+    DWORD style = GetWindowLongW( window, GWL_STYLE );
+
+    if (style & WS_MINIMIZE)
+        return FALSE;
+    if (!(style & WS_VISIBLE))
+        return FALSE;
+    if ((style & WS_CAPTION) != WS_CAPTION)
+        return FALSE;
+    if ((flags & MDITILE_SKIPDISABLED) && (style & WS_DISABLED))
+        return FALSE;
+    if (NtUserGetAncestor( window, GA_PARENT ) != parent)
+        return FALSE;
+    return TRUE;
+}
+
+/**********************************************************************
+ *              CascadeWindows (USER32.@)
+ */
+WORD WINAPI CascadeWindows( HWND parent, UINT flags, const RECT *rect, UINT count, const HWND *windows )
+{
+    unsigned int spacing = GetSystemMetrics( SM_CYCAPTION ) + GetSystemMetrics( SM_CYDLGFRAME );
+    unsigned int x, y, width, height;
+    HWND *children = NULL;
+    WORD ret_count = 0;
+    RECT client;
+
+    TRACE( "parent %p, flags %#x, rect %s, count %u, windows %p\n",
+           parent, flags, wine_dbgstr_rect(rect), count, windows );
+
+    if (flags & ~MDITILE_SKIPDISABLED)
+        FIXME( "ignoring flags %#x\n", flags & ~MDITILE_SKIPDISABLED );
+
+    if (!parent)
+        parent = GetDesktopWindow();
+
+    if (!rect)
+    {
+        GetClientRect( parent, &client );
+        rect = &client;
+    }
+
+    x = rect->left;
+    y = rect->top;
+
+    /* On Windows these match the dimensions triggered by CW_USEDEFAULT. */
+    width = rect->right * 3 / 4;
+    height = rect->bottom * 3 / 4;
+
+    if (!windows)
+    {
+        if (!(children = WIN_ListChildren( parent )))
+            return 0;
+        for (count = 0; children[count]; ++count)
+            ;
+        windows = children;
+    }
+
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        HWND child = windows[count - 1 - i];
+        DWORD style = GetWindowLongW( child, GWL_STYLE );
+        DWORD swp_flags = SWP_NOZORDER | SWP_NOACTIVATE;
+
+        if (!should_move_window( child, parent, flags ))
+            continue;
+
+        if (!(style & WS_THICKFRAME))
+            swp_flags |= SWP_NOSIZE;
+        NtUserSetWindowPos( child, 0, x, y, width, height, swp_flags );
+
+        x += spacing;
+        y += spacing;
+        if (x + width > rect->right)
+            x = rect->left;
+        if (y + height > rect->bottom)
+            y = rect->top;
+
+        ++ret_count;
+    }
+
+    HeapFree( GetProcessHeap(), 0, children );
+
+    return ret_count;
+}
+
+/**********************************************************************
+ *              CascadeChildWindows (USER32.@)
+ */
+WORD WINAPI CascadeChildWindows( HWND parent, UINT flags )
+{
+    return CascadeWindows( parent, flags, NULL, 0, NULL );
+}
