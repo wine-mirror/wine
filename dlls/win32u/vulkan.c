@@ -1492,6 +1492,7 @@ static VkResult win32u_vkImportSemaphoreWin32HandleKHR( VkDevice client_device, 
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
     struct semaphore *semaphore = semaphore_from_handle( handle_info->semaphore );
     D3DKMT_HANDLE local, global = 0;
+    HANDLE shared = NULL;
 
     TRACE( "device %p, handle_info %p\n", device, handle_info );
 
@@ -1500,6 +1501,18 @@ static VkResult win32u_vkImportSemaphoreWin32HandleKHR( VkDevice client_device, 
     case VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT:
         global = PtrToUlong( handle_info->handle );
         if (!(local = d3dkmt_open_sync( global, NULL ))) return VK_ERROR_INVALID_EXTERNAL_HANDLE;
+        break;
+    case VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT:
+    case VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT:
+        if (!(shared = handle_info->handle) || NtDuplicateObject( NtCurrentProcess(), shared, NtCurrentProcess(), &shared,
+                                                                  0, 0, DUPLICATE_SAME_ATTRIBUTES | DUPLICATE_SAME_ACCESS ))
+            return VK_ERROR_INVALID_EXTERNAL_HANDLE;
+
+        if (!(local = d3dkmt_open_sync( 0, shared )))
+        {
+            NtClose( shared );
+            return VK_ERROR_INVALID_EXTERNAL_HANDLE;
+        }
         break;
     default:
         FIXME( "Unsupported handle type %#x\n", handle_info->handleType );
@@ -1511,11 +1524,14 @@ static VkResult win32u_vkImportSemaphoreWin32HandleKHR( VkDevice client_device, 
     if (handle_info->flags & VK_SEMAPHORE_IMPORT_TEMPORARY_BIT)
     {
         /* FIXME: Should we still keep the temporary handles for vkGetSemaphoreWin32HandleKHR? */
+        if (shared) NtClose( shared );
         d3dkmt_destroy_sync( local );
     }
     else
     {
+        if (semaphore->shared) NtClose( semaphore->shared );
         if (semaphore->local) d3dkmt_destroy_sync( semaphore->local );
+        semaphore->shared = shared;
         semaphore->global = global;
         semaphore->local = local;
     }
