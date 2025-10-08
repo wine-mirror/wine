@@ -1373,56 +1373,134 @@ static inline void check_image_info_values_(uint32_t line, const D3DX10_IMAGE_IN
             image_file_format, info->ImageFileFormat);
 }
 
-static ID3D10Texture2D *get_texture2d_readback(ID3D10Texture2D *texture)
+/*
+ * Taken from the d3d10core tests. If there's a missing resource type or
+ * texture format checking function, check to see if it exists there first.
+ */
+struct resource_readback
 {
-    D3D10_TEXTURE2D_DESC desc;
-    ID3D10Texture2D *readback;
+    D3D10_RESOURCE_DIMENSION dimension;
+    ID3D10Resource *resource;
+    D3D10_MAPPED_TEXTURE3D map_desc;
+    unsigned int width, height, depth, sub_resource_idx;
+};
+
+static void get_texture_readback(ID3D10Texture2D *texture, unsigned int sub_resource_idx,
+        struct resource_readback *rb)
+{
+    D3D10_TEXTURE2D_DESC texture_desc;
+    D3D10_MAPPED_TEXTURE2D map_desc;
+    unsigned int miplevel;
     ID3D10Device *device;
     HRESULT hr;
+
+    memset(rb, 0, sizeof(*rb));
+    rb->dimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
 
     ID3D10Texture2D_GetDevice(texture, &device);
 
-    ID3D10Texture2D_GetDesc(texture, &desc);
-    desc.Usage = D3D10_USAGE_STAGING;
-    desc.BindFlags = 0;
-    desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
-
-    hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &readback);
-    if (hr != S_OK)
+    ID3D10Texture2D_GetDesc(texture, &texture_desc);
+    texture_desc.Usage = D3D10_USAGE_STAGING;
+    texture_desc.BindFlags = 0;
+    texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+    texture_desc.MiscFlags = 0;
+    if (FAILED(hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, (ID3D10Texture2D **)&rb->resource)))
     {
+        trace("Failed to create texture, hr %#lx.\n", hr);
         ID3D10Device_Release(device);
-        return NULL;
+        return;
     }
-    ID3D10Device_CopyResource(device, (ID3D10Resource *)readback, (ID3D10Resource *)texture);
+
+    miplevel = sub_resource_idx % texture_desc.MipLevels;
+    rb->width = max(1, texture_desc.Width >> miplevel);
+    rb->height = max(1, texture_desc.Height >> miplevel);
+    rb->depth = 1;
+    rb->sub_resource_idx = sub_resource_idx;
+
+    ID3D10Device_CopyResource(device, rb->resource, (ID3D10Resource *)texture);
+    if (FAILED(hr = ID3D10Texture2D_Map((ID3D10Texture2D *)rb->resource, sub_resource_idx,
+            D3D10_MAP_READ, 0, &map_desc)))
+    {
+        trace("Failed to map sub-resource %u, hr %#lx.\n", sub_resource_idx, hr);
+        ID3D10Resource_Release(rb->resource);
+        rb->resource = NULL;
+    }
+    rb->map_desc.pData = map_desc.pData;
+    rb->map_desc.RowPitch = map_desc.RowPitch;
+    rb->map_desc.DepthPitch = 0;
 
     ID3D10Device_Release(device);
-    return readback;
 }
 
-static ID3D10Texture3D *get_texture3d_readback(ID3D10Texture3D *texture)
+static void get_texture3d_readback(ID3D10Texture3D *texture, unsigned int sub_resource_idx,
+        struct resource_readback *rb)
 {
-    D3D10_TEXTURE3D_DESC desc;
-    ID3D10Texture3D *readback;
+    D3D10_TEXTURE3D_DESC texture_desc;
+    unsigned int miplevel;
     ID3D10Device *device;
     HRESULT hr;
 
+    memset(rb, 0, sizeof(*rb));
+    rb->dimension = D3D10_RESOURCE_DIMENSION_TEXTURE3D;
+
     ID3D10Texture3D_GetDevice(texture, &device);
 
-    ID3D10Texture3D_GetDesc(texture, &desc);
-    desc.Usage = D3D10_USAGE_STAGING;
-    desc.BindFlags = 0;
-    desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
-
-    hr = ID3D10Device_CreateTexture3D(device, &desc, NULL, &readback);
-    if (hr != S_OK)
+    ID3D10Texture3D_GetDesc(texture, &texture_desc);
+    texture_desc.Usage = D3D10_USAGE_STAGING;
+    texture_desc.BindFlags = 0;
+    texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+    texture_desc.MiscFlags = 0;
+    if (FAILED(hr = ID3D10Device_CreateTexture3D(device, &texture_desc, NULL, (ID3D10Texture3D **)&rb->resource)))
     {
+        trace("Failed to create texture, hr %#lx.\n", hr);
         ID3D10Device_Release(device);
-        return NULL;
+        return;
     }
-    ID3D10Device_CopyResource(device, (ID3D10Resource *)readback, (ID3D10Resource *)texture);
+
+    miplevel = sub_resource_idx % texture_desc.MipLevels;
+    rb->width = max(1, texture_desc.Width >> miplevel);
+    rb->height = max(1, texture_desc.Height >> miplevel);
+    rb->depth = max(1, texture_desc.Depth >> miplevel);
+    rb->sub_resource_idx = sub_resource_idx;
+
+    ID3D10Device_CopyResource(device, rb->resource, (ID3D10Resource *)texture);
+    if (FAILED(hr = ID3D10Texture3D_Map((ID3D10Texture3D *)rb->resource, sub_resource_idx,
+            D3D10_MAP_READ, 0, &rb->map_desc)))
+    {
+        trace("Failed to map sub-resource %u, hr %#lx.\n", sub_resource_idx, hr);
+        ID3D10Resource_Release(rb->resource);
+        rb->resource = NULL;
+    }
 
     ID3D10Device_Release(device);
-    return readback;
+}
+
+static void *get_readback_data(struct resource_readback *rb, uint32_t x, uint32_t y, uint32_t z, unsigned byte_width)
+{
+    return (uint8_t *)rb->map_desc.pData + z * rb->map_desc.DepthPitch + y * rb->map_desc.RowPitch + x * byte_width;
+}
+
+static void release_resource_readback(struct resource_readback *rb)
+{
+    switch (rb->dimension)
+    {
+        case D3D10_RESOURCE_DIMENSION_BUFFER:
+            ID3D10Buffer_Unmap((ID3D10Buffer *)rb->resource);
+            break;
+        case D3D10_RESOURCE_DIMENSION_TEXTURE1D:
+            ID3D10Texture1D_Unmap((ID3D10Texture1D *)rb->resource, rb->sub_resource_idx);
+            break;
+        case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
+            ID3D10Texture2D_Unmap((ID3D10Texture2D *)rb->resource, rb->sub_resource_idx);
+            break;
+        case D3D10_RESOURCE_DIMENSION_TEXTURE3D:
+            ID3D10Texture3D_Unmap((ID3D10Texture3D *)rb->resource, rb->sub_resource_idx);
+            break;
+        default:
+            trace("Unhandled resource dimension %#x.\n", rb->dimension);
+            break;
+    }
+    ID3D10Resource_Release(rb->resource);
 }
 
 static void check_resource_info(ID3D10Resource *resource, const struct test_image *image, unsigned int line)
@@ -1541,23 +1619,17 @@ static void check_resource_info(ID3D10Resource *resource, const struct test_imag
 
 static void check_texture2d_data(ID3D10Texture2D *texture, const struct test_image *image, unsigned int line)
 {
-    unsigned int width, height, stride, i, array_slice;
-    D3D10_MAPPED_TEXTURE2D map;
+    unsigned int width, height, stride, i, array_slice, bpp;
+    struct resource_readback rb;
     D3D10_TEXTURE2D_DESC desc;
-    ID3D10Texture2D *readback;
     const BYTE *expected_data;
     BOOL line_match;
-    HRESULT hr;
 
-    readback = get_texture2d_readback(texture);
-    ok_(__FILE__, line)(readback != NULL, "Failed to get texture readback.\n");
-    if (!readback)
-        return;
-
-    ID3D10Texture2D_GetDesc(readback, &desc);
+    ID3D10Texture2D_GetDesc(texture, &desc);
     width = desc.Width;
     height = desc.Height;
-    stride = (width * get_bpp_from_format(desc.Format) + 7) / 8;
+    bpp = get_bpp_from_format(desc.Format);
+    stride = (width * bpp + 7) / 8;
     if (is_block_compressed(desc.Format))
     {
         stride *= 4;
@@ -1567,18 +1639,14 @@ static void check_texture2d_data(ID3D10Texture2D *texture, const struct test_ima
     expected_data = image->expected_data;
     for (array_slice = 0; array_slice < desc.ArraySize; ++array_slice)
     {
-        hr = ID3D10Texture2D_Map(readback, array_slice * desc.MipLevels, D3D10_MAP_READ, 0, &map);
-        ok_(__FILE__, line)(hr == S_OK, "Map failed, hr %#lx.\n", hr);
-        if (hr != S_OK)
-        {
-            ID3D10Texture2D_Release(readback);
+        get_texture_readback(texture, array_slice * desc.MipLevels, &rb);
+        ok_(__FILE__, line)(!!rb.resource, "Failed to create texture readback.\n");
+        if (!rb.resource)
             return;
-        }
 
         for (i = 0; i < height; ++i)
         {
-            line_match = !memcmp(expected_data + stride * i,
-                    (BYTE *)map.pData + map.RowPitch * i, stride);
+            line_match = !memcmp(expected_data + stride * i, get_readback_data(&rb, 0, i, 0, bpp), stride);
             todo_wine_if(is_block_compressed(image->expected_info.Format) && image->data != test_dds_dxt5
                     && (image->expected_info.Width % 4 != 0 || image->expected_info.Height % 4 != 0))
                 ok_(__FILE__, line)(line_match, "Data mismatch for line %u, array slice %u.\n", i, array_slice);
@@ -1587,32 +1655,24 @@ static void check_texture2d_data(ID3D10Texture2D *texture, const struct test_ima
         }
         expected_data += stride * height;
 
-        ID3D10Texture2D_Unmap(readback, 0);
+        release_resource_readback(&rb);
     }
-
-    ID3D10Texture2D_Release(readback);
 }
 
 static void check_texture3d_data(ID3D10Texture3D *texture, const struct test_image *image, unsigned int line)
 {
-    unsigned int width, height, depth, stride, i;
-    D3D10_MAPPED_TEXTURE3D map;
+    unsigned int width, height, depth, stride, i, bpp;
+    struct resource_readback rb;
     D3D10_TEXTURE3D_DESC desc;
-    ID3D10Texture3D *readback;
     const BYTE *expected_data;
     BOOL line_match;
-    HRESULT hr;
 
-    readback = get_texture3d_readback(texture);
-    ok_(__FILE__, line)(readback != NULL, "Failed to get texture readback.\n");
-    if (!readback)
-        return;
-
-    ID3D10Texture3D_GetDesc(readback, &desc);
+    ID3D10Texture3D_GetDesc(texture, &desc);
     width = desc.Width;
     height = desc.Height;
     depth = desc.Depth;
-    stride = (width * get_bpp_from_format(desc.Format) + 7) / 8;
+    bpp = get_bpp_from_format(desc.Format);
+    stride = (width * bpp + 7) / 8;
     if (is_block_compressed(desc.Format))
     {
         stride *= 4;
@@ -1620,24 +1680,24 @@ static void check_texture3d_data(ID3D10Texture3D *texture, const struct test_ima
     }
 
     expected_data = image->expected_data;
-    hr = ID3D10Texture3D_Map(readback, 0, D3D10_MAP_READ, 0, &map);
-    ok_(__FILE__, line)(hr == S_OK, "Map failed, hr %#lx.\n", hr);
+    get_texture3d_readback(texture, 0, &rb);
+    ok_(__FILE__, line)(!!rb.resource, "Failed to create texture readback.\n");
+    if (!rb.resource)
+        return;
 
     for (i = 0; i < height * depth; ++i)
     {
-        line_match = !memcmp(expected_data + stride * i,
-                (BYTE *)map.pData + map.RowPitch * i, stride);
+        line_match = !memcmp(expected_data + stride * i, get_readback_data(&rb, 0, i, 0, bpp), stride);
         ok_(__FILE__, line)(line_match, "Data mismatch for line %u.\n", i);
         if (!line_match)
         {
             for (unsigned int j = 0; j < stride; ++j)
-                trace("%02x\n", *((BYTE *)map.pData + map.RowPitch * i + j));
+                trace("%02x\n", *((BYTE *)get_readback_data(&rb, j, i, 0, 1)));
             break;
         }
     }
 
-    ID3D10Texture3D_Unmap(readback, 0);
-    ID3D10Texture3D_Release(readback);
+    release_resource_readback(&rb);
 }
 
 static void check_resource_data(ID3D10Resource *resource, const struct test_image *image, unsigned int line)
