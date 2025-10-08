@@ -1005,6 +1005,48 @@ static void init_egl_platforms( struct opengl_funcs *funcs, const struct opengl_
 
 #endif /* SONAME_LIBEGL */
 
+static UINT read_drm_device_prop( const char *name, const char *prop )
+{
+    UINT value = -1;
+    char *path;
+    FILE *file;
+
+    if (!(path = malloc( strlen( name ) + strlen( prop ) + 23 ))) return value;
+    sprintf( path, "/sys/class/drm%s/device/%s", name, prop );
+
+    if ((file = fopen( path, "r" )))
+    {
+        fscanf( file, "%x", &value );
+        fclose( file );
+    }
+
+    free( path );
+    return value;
+}
+
+static void init_device_info( struct egl_platform *egl, const struct opengl_funcs *funcs )
+{
+    const char *extensions, *str;
+
+    TRACE( "Initializing device %zu (%p)\n", egl - devices_egl, egl->device);
+
+    extensions = funcs->p_eglQueryDeviceStringEXT( egl->device, EGL_EXTENSIONS );
+    /* Assume that all devices without EGL_MESA_device_software are accelerated. */
+    egl->accelerated = !has_extension( extensions, "EGL_MESA_device_software" );
+    TRACE( "  - accelerated: %u\n", egl->accelerated );
+
+    /* EGL does not provide a convenient way to get device / vendor ID, so we have to do it
+     * manually through DRM. Otherwise fallback to value as for SoC devices in GLX */
+    if (!has_extension( extensions, "EGL_EXT_device_drm" )) egl->vendor_id = egl->device_id = 0xffffffff;
+    else if ((str = funcs->p_eglQueryDeviceStringEXT( egl->device, EGL_DRM_DEVICE_FILE_EXT )) && (str = strrchr( str, '/' )))
+    {
+        egl->vendor_id = read_drm_device_prop( str, "vendor" );
+        egl->device_id = read_drm_device_prop( str, "device" );
+    }
+    TRACE( "  - device_id: %#x\n", egl->device_id );
+    TRACE( "  - vendor_id: %#x\n", egl->vendor_id );
+}
+
 static const struct
 {
     BYTE color_bits;
@@ -2144,7 +2186,21 @@ static int win32u_wglGetSwapIntervalEXT(void)
 
 static BOOL win32u_wglQueryRendererIntegerWINE( HDC hdc, GLint renderer, GLenum attribute, GLuint *value )
 {
-    FIXME( "hdc %p, renderer %u, attribute %#x, value %p stub!\n", hdc, renderer, attribute, value );
+    struct egl_platform *egl = devices_egl + renderer;
+
+    TRACE( "hdc %p, renderer %u, attribute %#x, value %p\n", hdc, renderer, attribute, value );
+
+    if (renderer >= devices_count) return FALSE;
+
+    switch (attribute)
+    {
+    case WGL_RENDERER_ACCELERATED_WINE: *value = egl->accelerated; return TRUE;
+    case WGL_RENDERER_DEVICE_ID_WINE: *value = egl->device_id; return TRUE;
+    case WGL_RENDERER_VENDOR_ID_WINE: *value = egl->vendor_id; return TRUE;
+    case WGL_RENDERER_UNIFIED_MEMORY_ARCHITECTURE_WINE: *value = 0; return TRUE;
+    default: FIXME( "Unsupported attribute %#x\n", attribute ); break;
+    }
+
     return FALSE;
 }
 
@@ -2287,6 +2343,7 @@ static void display_funcs_init(void)
         display_funcs.p_wglQueryCurrentRendererStringWINE = win32u_wglQueryCurrentRendererStringWINE;
         display_funcs.p_wglQueryRendererIntegerWINE = win32u_wglQueryRendererIntegerWINE;
         display_funcs.p_wglQueryRendererStringWINE = win32u_wglQueryRendererStringWINE;
+        for (int i = 0; i < devices_count; i++) init_device_info( devices_egl + i, &display_funcs );
     }
 }
 

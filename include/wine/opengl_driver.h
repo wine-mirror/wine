@@ -142,6 +142,11 @@ struct egl_platform
     EGLConfig           *configs;
     BOOL                 has_EGL_EXT_present_opaque;
     BOOL                 has_EGL_EXT_pixel_format_float;
+
+    /* WGL_WINE_query_renderer info */
+    UINT                 device_id;
+    UINT                 vendor_id;
+    BOOL                 accelerated;
 };
 
 struct opengl_drawable_funcs
