@@ -2559,7 +2559,8 @@ Optional Packages:
   --without-gnutls        do not use GnuTLS (schannel support)
   --without-gssapi        do not use GSSAPI (Kerberos SSP support)
   --without-gstreamer     do not use GStreamer (codecs support)
-  --without-hwloc         do not use hwloc (CPU/cache topology detection)
+  --without-hwloc         do not use hwloc (CPU/cache topology detection on
+                          FreeBSD)
   --without-inotify       do not use inotify (filesystem change notifications)
   --without-krb5          do not use krb5 (Kerberos)
   --without-mingw         do not use the MinGW cross-compiler
@@ -17110,9 +17111,11 @@ esac
 
 fi
 
-if test "x$with_hwloc" != "xno" -a `expr "$host_os" : '\(freebsd\).*'` = "freebsd"
+if test "x$with_hwloc" != "xno"
 then
-    rm -f conftest.err
+    case $host_os in
+      freebsd*)
+        rm -f conftest.err
 if ${HWLOC_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
@@ -17202,7 +17205,7 @@ fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
 
-    if test "$ac_cv_lib_hwloc_hwloc_topology_init" != "yes"
+        if test "$ac_cv_lib_hwloc_hwloc_topology_init" != "yes"
 then :
   case "x$with_hwloc" in
   x)   as_fn_append wine_notices "|hwloc ${notice_platform}development files not found, detailed CPU info on FreeBSD won't be supported." ;;
@@ -17212,6 +17215,8 @@ This is an error since --with-hwloc was requested." "$LINENO" 5 ;;
 esac
 
 fi
+        ;;
+    esac
 fi
 
 if test "x$with_sane" != "xno"
