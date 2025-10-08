@@ -151,6 +151,8 @@ struct egl_platform
     UINT                 core_version;
     UINT                 compat_version;
     UINT                 video_memory;
+    const char          *device_name;
+    const char          *vendor_name;
 };
 
 struct opengl_drawable_funcs

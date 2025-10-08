@@ -1086,6 +1086,11 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
     {
         funcs->p_eglMakeCurrent( egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, context );
 
+        egl->device_name = (const char *)funcs->p_glGetString( GL_RENDERER );
+        egl->vendor_name = (const char *)funcs->p_glGetString( GL_VENDOR );
+        TRACE( "  - device_name: %s\n", egl->device_name );
+        TRACE( "  - vendor_name: %s\n", egl->vendor_name );
+
         if ((str = (const char *)funcs->p_glGetString( GL_VERSION )) && (str = strrchr( str, ' ' )) &&
             (count = sscanf( str, "%u.%u.%u", &values[0], &values[1], &values[2] )) >= 2)
             memcpy( egl->version, values, sizeof(egl->version) );
@@ -2278,7 +2283,19 @@ static BOOL win32u_wglQueryRendererIntegerWINE( HDC hdc, GLint renderer, GLenum 
 
 static const char *win32u_wglQueryRendererStringWINE( HDC hdc, GLint renderer, GLenum attribute )
 {
-    FIXME( "hdc %p, renderer %u, attribute %#x stub!\n", hdc, renderer, attribute );
+    struct egl_platform *egl = devices_egl + renderer;
+
+    TRACE( "hdc %p, renderer %u, attribute %#x\n", hdc, renderer, attribute );
+
+    if (renderer >= devices_count) return NULL;
+
+    switch (attribute)
+    {
+    case WGL_RENDERER_DEVICE_ID_WINE: return egl->device_name;
+    case WGL_RENDERER_VENDOR_ID_WINE: return egl->vendor_name;
+    default: FIXME( "Unsupported attribute %#x\n", attribute );
+    }
+
     return NULL;
 }
 
