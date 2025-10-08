@@ -205,7 +205,7 @@ extern BOOL get_vulkan_gpus( struct list *gpus );
 extern void free_vulkan_gpu( struct vulkan_gpu *gpu );
 extern BOOL get_vulkan_uuid_from_luid( const LUID *luid, GUID *uuid );
 
-extern D3DKMT_HANDLE d3dkmt_create_resource( D3DKMT_HANDLE *global );
+extern D3DKMT_HANDLE d3dkmt_create_resource( int fd, D3DKMT_HANDLE *global );
 extern D3DKMT_HANDLE d3dkmt_open_resource( D3DKMT_HANDLE global, HANDLE shared );
 extern NTSTATUS d3dkmt_destroy_resource( D3DKMT_HANDLE local );
 

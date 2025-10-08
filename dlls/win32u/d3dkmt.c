@@ -180,7 +180,7 @@ static NTSTATUS d3dkmt_object_alloc( UINT size, enum d3dkmt_type type, void **ob
 }
 
 /* create a global D3DKMT object, either with a global handle or later shareable */
-static NTSTATUS d3dkmt_object_create( struct d3dkmt_object *object, BOOL shared, const void *runtime, UINT runtime_size )
+static NTSTATUS d3dkmt_object_create( struct d3dkmt_object *object, int fd, BOOL shared, const void *runtime, UINT runtime_size )
 {
     NTSTATUS status;
 
@@ -1053,7 +1053,7 @@ NTSTATUS WINAPI NtGdiDdDDICreateAllocation2( D3DKMT_CREATEALLOCATION *params )
         if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
 
         if (!params->Flags.CreateShared) status = alloc_object_handle( &resource->obj );
-        else status = d3dkmt_object_create( &resource->obj, params->Flags.NtSecuritySharing,
+        else status = d3dkmt_object_create( &resource->obj, -1, params->Flags.NtSecuritySharing,
                                             params->pPrivateRuntimeData, params->PrivateRuntimeDataSize );
         if (status) goto failed;
 
@@ -1372,7 +1372,7 @@ NTSTATUS WINAPI NtGdiDdDDICreateKeyedMutex2( D3DKMT_CREATEKEYEDMUTEX2 *params )
     if (!params) return STATUS_INVALID_PARAMETER;
 
     if ((status = d3dkmt_object_alloc( sizeof(*mutex), D3DKMT_MUTEX, (void **)&mutex ))) return status;
-    if ((status = d3dkmt_object_create( mutex, params->Flags.NtSecuritySharing,
+    if ((status = d3dkmt_object_create( mutex, -1, params->Flags.NtSecuritySharing,
                                         params->pPrivateRuntimeData, params->PrivateRuntimeDataSize )))
         goto failed;
 
@@ -1511,7 +1511,7 @@ NTSTATUS WINAPI NtGdiDdDDICreateSynchronizationObject2( D3DKMT_CREATESYNCHRONIZA
 
     if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) return status;
     if (!params->Info.Flags.Shared) status = alloc_object_handle( sync );
-    else status = d3dkmt_object_create( sync, params->Info.Flags.NtSecuritySharing, NULL, 0 );
+    else status = d3dkmt_object_create( sync, -1, params->Info.Flags.NtSecuritySharing, NULL, 0 );
     if (status) goto failed;
 
     if (params->Info.Flags.Shared) params->Info.SharedHandle = sync->shared ? 0 : sync->global;
@@ -1668,18 +1668,18 @@ NTSTATUS WINAPI NtGdiDdDDIDestroySynchronizationObject( const D3DKMT_DESTROYSYNC
     return STATUS_SUCCESS;
 }
 
-/* create a D3DKMT global or shared resource */
-D3DKMT_HANDLE d3dkmt_create_resource( D3DKMT_HANDLE *global )
+/* create a D3DKMT global or shared resource from a host-specific fd */
+D3DKMT_HANDLE d3dkmt_create_resource( int fd, D3DKMT_HANDLE *global )
 {
     struct d3dkmt_resource *resource = NULL;
     struct d3dkmt_object *allocation = NULL;
     NTSTATUS status;
 
-    TRACE( "global %p\n", global );
+    TRACE( "fd %d, global %p\n", fd, global );
 
     if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) goto failed;
     if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
-    if ((status = d3dkmt_object_create( &resource->obj, !global, NULL, 0 ))) goto failed;
+    if ((status = d3dkmt_object_create( &resource->obj, fd, !global, NULL, 0 ))) goto failed;
 
     if ((status = alloc_object_handle( allocation ))) goto failed;
     resource->allocation = allocation->local;
@@ -1744,7 +1744,7 @@ D3DKMT_HANDLE d3dkmt_create_sync( D3DKMT_HANDLE *global )
     TRACE( "global %p\n", global );
 
     if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) goto failed;
-    if ((status = d3dkmt_object_create( sync, !global, NULL, 0 ))) goto failed;
+    if ((status = d3dkmt_object_create( sync, -1, !global, NULL, 0 ))) goto failed;
     if (global) *global = sync->global;
     return sync->local;
 
