@@ -1718,6 +1718,25 @@ failed:
     return 0;
 }
 
+/* open a D3DKMT global or shared sync */
+D3DKMT_HANDLE d3dkmt_open_sync( D3DKMT_HANDLE global, HANDLE shared )
+{
+    struct d3dkmt_object *sync = NULL;
+    NTSTATUS status;
+    UINT dummy = 0;
+
+    TRACE( "global %#x, shared %p\n", global, shared );
+
+    if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) goto failed;
+    if ((status = d3dkmt_object_open( sync, global, shared, NULL, &dummy ))) goto failed;
+    return sync->local;
+
+failed:
+    WARN( "Failed to open sync, status %#x\n", status );
+    if (sync) d3dkmt_object_free( sync );
+    return 0;
+}
+
 /* destroy a locally opened D3DKMT sync */
 NTSTATUS d3dkmt_destroy_sync( D3DKMT_HANDLE local )
 {
