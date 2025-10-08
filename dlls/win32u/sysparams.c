@@ -1092,10 +1092,10 @@ static const char* driver_vendor_to_version( UINT16 vendor )
     /* The last seven digits are the driver number. */
     switch (vendor)
     {
-    case 0x8086: /* Intel */    return "32.0.101.6314";
-    case 0x1002: /* AMD */      return "32.0.21025.1024";
-    case 0x10de: /* Nvidia */   return "32.0.15.6094";
-    default:                    return "31.0.10.1000";
+    case 0x8086: /* Intel */    return "35.0.101.6314";
+    case 0x1002: /* AMD */      return "35.0.21025.1024";
+    case 0x10de: /* Nvidia */   return "35.0.15.6094";
+    default:                    return "35.0.10.1000";
     }
 }
 
