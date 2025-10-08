@@ -95,6 +95,39 @@ static const struct fd_ops d3dkmt_fd_ops =
     default_fd_reselect_async     /* reselect_async */
 };
 
+struct d3dkmt_mutex
+{
+    struct d3dkmt_object base;
+};
+
+static void d3dkmt_mutex_dump( struct object *obj, int verbose );
+static void d3dkmt_mutex_destroy( struct object *obj );
+
+static const struct object_ops d3dkmt_mutex_ops =
+{
+    sizeof(struct d3dkmt_mutex),    /* size */
+    &no_type,                       /* type */
+    d3dkmt_mutex_dump,              /* dump */
+    no_add_queue,                   /* add_queue */
+    NULL,                           /* remove_queue */
+    NULL,                           /* signaled */
+    NULL,                           /* satisfied */
+    no_signal,                      /* signal */
+    no_get_fd,                      /* get_fd */
+    default_get_sync,               /* get_sync */
+    default_map_access,             /* map_access */
+    default_get_sd,                 /* get_sd */
+    default_set_sd,                 /* set_sd */
+    no_get_full_name,               /* get_full_name */
+    no_lookup_name,                 /* lookup_name */
+    no_link_name,                   /* link_name */
+    NULL,                           /* unlink_name */
+    no_open_file,                   /* open_file */
+    no_kernel_obj_list,             /* get_kernel_obj_list */
+    no_close_handle,                /* close_handle */
+    d3dkmt_mutex_destroy,           /* destroy */
+};
+
 #define DXGK_SHARED_SYNC_QUERY_STATE  0x0001
 #define DXGK_SHARED_SYNC_MODIFY_STATE 0x0002
 #define DXGK_SHARED_SYNC_ALL_ACCESS   (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x3)
@@ -370,6 +403,43 @@ static struct d3dkmt_object *d3dkmt_object_create( enum d3dkmt_type type, data_s
     return object;
 }
 
+static void d3dkmt_mutex_dump( struct object *obj, int verbose )
+{
+    struct d3dkmt_mutex *mutex = (struct d3dkmt_mutex *)obj;
+    assert( obj->ops == &d3dkmt_mutex_ops );
+
+    fprintf( stderr, "d3dkmt mutex global=%#x\n", mutex->base.global );
+}
+
+static void d3dkmt_mutex_destroy( struct object *obj )
+{
+    struct d3dkmt_mutex *mutex = (struct d3dkmt_mutex *)obj;
+    assert( obj->ops == &d3dkmt_mutex_ops );
+
+    if (mutex->base.global) free_object_handle( mutex->base.global );
+    free( mutex->base.runtime );
+}
+
+static struct d3dkmt_object *d3dkmt_mutex_create( data_size_t runtime_size, const void *runtime )
+{
+    struct d3dkmt_mutex *object;
+
+    if (!(object = alloc_object( &d3dkmt_mutex_ops ))) return NULL;
+    object->base.type            = D3DKMT_MUTEX;
+    object->base.global          = 0;
+    object->base.runtime_size    = runtime_size;
+    object->base.fd              = NULL;
+
+    if (!(object->base.runtime = memdup( runtime, runtime_size )) ||
+        !(object->base.global = alloc_object_handle( &object->base )))
+    {
+        release_object( object );
+        return NULL;
+    }
+
+    return &object->base;
+}
+
 /* return a pointer to a d3dkmt object from its global handle */
 static void *d3dkmt_object_open( d3dkmt_handle_t global, enum d3dkmt_type type )
 {
@@ -426,7 +496,16 @@ DECL_HANDLER(d3dkmt_object_create)
         if (!(fd = create_anonymous_fd( NULL, unix_fd, NULL, 0 ))) return;
     }
 
-    if (!(object = d3dkmt_object_create( req->type, get_req_data_size(), get_req_data() ))) goto done;
+    switch (req->type)
+    {
+    case D3DKMT_MUTEX:
+        if (!(object = d3dkmt_mutex_create( get_req_data_size(), get_req_data() ))) goto done;
+        break;
+    default:
+        if (!(object = d3dkmt_object_create( req->type, get_req_data_size(), get_req_data() ))) goto done;
+        break;
+    }
+
     if (fd)
     {
         set_fd_user( fd, &d3dkmt_fd_ops, &object->obj );
