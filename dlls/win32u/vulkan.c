@@ -104,6 +104,7 @@ struct semaphore
     struct vulkan_semaphore obj;
     D3DKMT_HANDLE local;
     D3DKMT_HANDLE global;
+    HANDLE shared;
 };
 
 static struct semaphore *semaphore_from_handle( VkSemaphore handle )
@@ -217,7 +218,7 @@ static void init_shared_resource_path( const WCHAR *name, UNICODE_STRING *str )
     str->Length += len;
 }
 
-static HANDLE create_shared_handle( D3DKMT_HANDLE local, const VkExportMemoryWin32HandleInfoKHR *info )
+static HANDLE create_shared_resource_handle( D3DKMT_HANDLE local, const VkExportMemoryWin32HandleInfoKHR *info )
 {
     SECURITY_DESCRIPTOR *security = info->pAttributes ? info->pAttributes->lpSecurityDescriptor : NULL;
     WCHAR bufferW[MAX_PATH * 2];
@@ -361,7 +362,7 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
         FIXME( "Exporting memory handle not yet implemented!\n" );
 
         if (!memory->local && !(memory->local = d3dkmt_create_resource( nt_shared ? NULL : &memory->global ))) goto failed;
-        if (nt_shared && !(memory->shared = create_shared_handle( memory->local, &export_win32 ))) goto failed;
+        if (nt_shared && !(memory->shared = create_shared_resource_handle( memory->local, &export_win32 ))) goto failed;
     }
 
     vulkan_object_init( &memory->obj.obj, host_device_memory );
@@ -1355,16 +1356,35 @@ static VkResult win32u_vkQueueSubmit2( VkQueue client_queue, uint32_t count, con
     return device->p_vkQueueSubmit2( queue->host.queue, count, submits, fence ? fence->host.fence : 0 );
 }
 
+static HANDLE create_shared_semaphore_handle( D3DKMT_HANDLE local, const VkExportSemaphoreWin32HandleInfoKHR *info )
+{
+    SECURITY_DESCRIPTOR *security = info->pAttributes ? info->pAttributes->lpSecurityDescriptor : NULL;
+    WCHAR bufferW[MAX_PATH * 2];
+    UNICODE_STRING name = {.Buffer = bufferW};
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+    HANDLE shared;
+
+    if (info->name) init_shared_resource_path( info->name, &name );
+    InitializeObjectAttributes( &attr, info->name ? &name : NULL, OBJ_CASE_INSENSITIVE, security, NULL );
+
+    if (!(status = NtGdiDdDDIShareObjects( 1, &local, &attr, info->dwAccess, &shared ))) return shared;
+    WARN( "Failed to share resource %#x, status %#x\n", local, status );
+    return NULL;
+}
+
 static VkResult win32u_vkCreateSemaphore( VkDevice client_device, const VkSemaphoreCreateInfo *client_create_info,
                                           const VkAllocationCallbacks *allocator, VkSemaphore *ret )
 {
     VkSemaphoreCreateInfo *create_info = (VkSemaphoreCreateInfo *)client_create_info; /* cast away const, chain has been copied in the thunks */
+    VkExportSemaphoreWin32HandleInfoKHR export_win32 = {.dwAccess = GENERIC_ALL};
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
     VkBaseOutStructure **next, *prev = (VkBaseOutStructure *)create_info;
     struct vulkan_instance *instance = device->physical_device->instance;
     VkExportSemaphoreCreateInfoKHR *export_info = NULL;
     struct semaphore *semaphore;
     VkSemaphore host_semaphore;
+    BOOL nt_shared = FALSE;
     VkResult res;
 
     TRACE( "device %p, create_info %p, allocator %p, ret %p\n", device, create_info, allocator, ret );
@@ -1378,11 +1398,14 @@ static VkResult win32u_vkCreateSemaphore( VkDevice client_device, const VkSemaph
             if (!(export_info->handleTypes & EXTERNAL_SEMAPHORE_WIN32_BITS))
                 FIXME( "Unsupported handle types %#x\n", export_info->handleTypes );
             else
+            {
+                nt_shared = !(export_info->handleTypes & VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT);
                 export_info->handleTypes = get_host_external_semaphore_type();
+            }
             *next = (*next)->pNext; next = &prev;
             break;
         case VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR:
-            FIXME( "VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR not implemented!\n" );
+            export_win32 = *(VkExportSemaphoreWin32HandleInfoKHR *)*next;
             *next = (*next)->pNext; next = &prev;
             break;
         case VK_STRUCTURE_TYPE_QUERY_LOW_LATENCY_SUPPORT_NV: break;
@@ -1403,7 +1426,8 @@ static VkResult win32u_vkCreateSemaphore( VkDevice client_device, const VkSemaph
     {
         FIXME( "Exporting semaphore handle not yet implemented!\n" );
 
-        if (!(semaphore->local = d3dkmt_create_sync( &semaphore->global ))) goto failed;
+        if (!(semaphore->local = d3dkmt_create_sync( nt_shared ? NULL : &semaphore->global ))) goto failed;
+        if (nt_shared && !(semaphore->shared = create_shared_semaphore_handle( semaphore->local, &export_win32 ))) goto failed;
     }
 
     vulkan_object_init( &semaphore->obj.obj, host_semaphore );
@@ -1432,6 +1456,7 @@ static void win32u_vkDestroySemaphore( VkDevice client_device, VkSemaphore clien
     device->p_vkDestroySemaphore( device->host.device, semaphore->obj.host.semaphore, NULL /* allocator */ );
     instance->p_remove_object( instance, &semaphore->obj.obj );
 
+    if (semaphore->shared) NtClose( semaphore->shared );
     if (semaphore->local) d3dkmt_destroy_sync( semaphore->local );
     free( semaphore );
 }
@@ -1448,6 +1473,12 @@ static VkResult win32u_vkGetSemaphoreWin32HandleKHR( VkDevice client_device, con
     case VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT:
         TRACE( "Returning global D3DKMT handle %#x\n", semaphore->global );
         *handle = UlongToPtr( semaphore->global );
+        return VK_SUCCESS;
+
+    case VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT:
+    case VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT:
+        NtDuplicateObject( NtCurrentProcess(), semaphore->shared, NtCurrentProcess(), handle, 0, 0, DUPLICATE_SAME_ATTRIBUTES | DUPLICATE_SAME_ACCESS );
+        TRACE( "Returning NT shared handle %p -> %p\n", semaphore->shared, *handle );
         return VK_SUCCESS;
 
     default:
