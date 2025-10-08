@@ -287,37 +287,27 @@ static void test_MetaDataDispenser_OpenScope(void)
     IMetaDataDispenser_Release(dispenser);
 
     hr = IMetaDataTables_GetStringHeapSize(md_tables, &val);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine
     ok(val == 329, "got val %lu\n", val);
 
     val = 0;
     hr = IMetaDataTables_GetBlobHeapSize(md_tables, &val);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine
     ok(val == 156, "got val %lu\n", val);
 
     val = 0;
     hr = IMetaDataTables_GetGuidHeapSize(md_tables, &val);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine
     ok(val == 16, "got val %lu\n", val);
 
     val = 0;
     hr = IMetaDataTables_GetUserStringHeapSize(md_tables, &val);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine
     ok(val == 8, "got val %lu\n", val);
 
     val = 0;
     hr = IMetaDataTables_GetNumTables(md_tables, &val);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine
     ok(val == TABLE_MAX, "got val %lu\n", val);
 
     for (i = 0; i < TABLE_MAX; i++)

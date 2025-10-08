@@ -19,6 +19,21 @@
 #ifndef __WINE_ROMETADATA_PRIVATE__
 #define __WINE_ROMETADATA_PRIVATE__
 
-extern HRESULT IMetaDataTables_create(IMetaDataTables **iface);
+#include <rometadataapi.h>
+
+extern HRESULT IMetaDataTables_create(const WCHAR *path, IMetaDataTables **iface);
+
+typedef struct assembly assembly_t;
+enum heap_type
+{
+    HEAP_STRING      = 0,
+    HEAP_GUID        = 1,
+    HEAP_BLOB        = 2,
+    HEAP_USER_STRING = 3
+};
+
+extern HRESULT assembly_open_from_file(const WCHAR *path, assembly_t **out);
+extern void assembly_free(assembly_t *assembly);
+extern ULONG assembly_get_heap_size(const assembly_t *assembly, enum heap_type heap);
 
 #endif /* __WINE_ROMETADATA_PRIVATE__ */

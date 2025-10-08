@@ -32,6 +32,8 @@ struct metadata_tables
 {
     IMetaDataTables IMetaDataTables_iface;
     LONG ref;
+
+    assembly_t *assembly;
 };
 
 static inline struct metadata_tables *impl_from_IMetaDataTables(IMetaDataTables *iface)
@@ -70,38 +72,53 @@ static ULONG WINAPI tables_Release(IMetaDataTables *iface)
 
     TRACE("(%p)\n", iface);
 
-    if (!ref) free(impl);
+    if (!ref)
+    {
+        assembly_free(impl->assembly);
+        free(impl);
+    }
     return ref;
+}
+
+static HRESULT get_heap_size(IMetaDataTables *iface, enum heap_type type, ULONG *size)
+{
+    struct metadata_tables *impl = impl_from_IMetaDataTables(iface);
+    *size = assembly_get_heap_size(impl->assembly, type);
+    return S_OK;
 }
 
 static HRESULT WINAPI tables_GetStringHeapSize(IMetaDataTables *iface, ULONG *size)
 {
-    FIXME("(%p, %p): stub!\n", iface, size);
-    return E_NOTIMPL;
+    TRACE("(%p, %p)\n", iface, size);
+    return get_heap_size(iface, HEAP_STRING, size);
 }
 
 static HRESULT WINAPI tables_GetBlobHeapSize(IMetaDataTables *iface, ULONG *size)
 {
-    FIXME("(%p, %p): stub!\n", iface, size);
-    return E_NOTIMPL;
+    TRACE("(%p, %p)\n", iface, size);
+    return get_heap_size(iface, HEAP_BLOB, size);
 }
 
 static HRESULT WINAPI tables_GetGuidHeapSize(IMetaDataTables *iface, ULONG *size)
 {
-    FIXME("(%p, %p): stub!\n", iface, size);
-    return E_NOTIMPL;
+    TRACE("(%p, %p)\n", iface, size);
+    return get_heap_size(iface, HEAP_GUID, size);
 }
 
 static HRESULT WINAPI tables_GetUserStringHeapSize(IMetaDataTables *iface, ULONG *size)
 {
-    FIXME("(%p, %p): stub!\n", iface, size);
-    return E_NOTIMPL;
+    TRACE("(%p, %p)\n", iface, size);
+    return get_heap_size(iface, HEAP_USER_STRING, size);
 }
 
 static HRESULT WINAPI tables_GetNumTables(IMetaDataTables *iface, ULONG *size)
 {
-    FIXME("(%p, %p): stub!\n", iface, size);
-    return E_NOTIMPL;
+    TRACE("(%p, %p)\n", iface, size);
+
+    /* This returns the number of tables known to the metadata parser, not the number of tables that exist in this
+     * assembly. */
+    *size = 45;
+    return S_OK;
 }
 
 static HRESULT WINAPI tables_GetTableIndex(IMetaDataTables *iface, ULONG token, ULONG *idx)
@@ -217,11 +234,18 @@ static const struct IMetaDataTablesVtbl tables_vtbl =
     tables_GetNextUserString,
 };
 
-HRESULT IMetaDataTables_create(IMetaDataTables **iface)
+HRESULT IMetaDataTables_create(const WCHAR *path, IMetaDataTables **iface)
 {
     struct metadata_tables *impl;
+    HRESULT hr;
 
     if (!(impl = calloc(1, sizeof(*impl)))) return E_OUTOFMEMORY;
+    if (FAILED(hr = assembly_open_from_file(path, &impl->assembly)))
+    {
+        free( impl );
+        return hr;
+    }
+
     impl->IMetaDataTables_iface.lpVtbl = &tables_vtbl;
     impl->ref = 1;
     *iface = &impl->IMetaDataTables_iface;

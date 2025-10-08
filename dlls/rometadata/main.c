@@ -96,7 +96,7 @@ static HRESULT WINAPI MetaDataDispenser_OpenScope(IMetaDataDispenserEx *iface, c
     FIXME("%p %s %lx %s %p semi-stub!\n", iface, debugstr_w(scope), open_flags, debugstr_guid(riid), obj);
 
     *obj = NULL;
-    hr = IMetaDataTables_create(&tables);
+    hr = IMetaDataTables_create(scope, &tables);
     if (FAILED(hr))
         return hr;
 

@@ -3,5 +3,6 @@ IMPORTLIB = rometadata
 IMPORTS   = combase
 
 SOURCES = \
+	assembly.c \
 	main.c \
 	mdtables.c
