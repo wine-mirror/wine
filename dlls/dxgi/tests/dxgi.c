@@ -424,6 +424,7 @@ struct fullscreen_state
     RECT client_rect;
     HMONITOR monitor;
     RECT monitor_rect;
+    BOOL todo_style;
 };
 
 struct swapchain_fullscreen_state
@@ -457,9 +458,9 @@ static void capture_fullscreen_state_(unsigned int line, struct fullscreen_state
 }
 
 static void check_fullscreen_state_(unsigned int line, const struct fullscreen_state *state,
-        const struct fullscreen_state *expected_state, BOOL windowed)
+        const struct fullscreen_state *expected_state)
 {
-    todo_wine_if(!windowed)
+    todo_wine_if (expected_state->todo_style)
     ok_(__FILE__, line)((state->style & ~WS_VISIBLE) == (expected_state->style & ~WS_VISIBLE),
             "Got style %#lx, expected %#lx.\n",
             state->style & ~(DWORD)WS_VISIBLE, expected_state->style & ~(DWORD)WS_VISIBLE);
@@ -480,13 +481,13 @@ static void check_fullscreen_state_(unsigned int line, const struct fullscreen_s
             wine_dbgstr_rect(&state->monitor_rect), wine_dbgstr_rect(&expected_state->monitor_rect));
 }
 
-#define check_window_fullscreen_state(a, b) check_window_fullscreen_state_(__LINE__, a, b, TRUE)
+#define check_window_fullscreen_state(a, b) check_window_fullscreen_state_(__LINE__, a, b)
 static void check_window_fullscreen_state_(unsigned int line, HWND window,
-        const struct fullscreen_state *expected_state, BOOL windowed)
+        const struct fullscreen_state *expected_state)
 {
     struct fullscreen_state current_state;
     capture_fullscreen_state_(line, &current_state, window);
-    check_fullscreen_state_(line, &current_state, expected_state, windowed);
+    check_fullscreen_state_(line, &current_state, expected_state);
 }
 
 #define check_swapchain_fullscreen_state(a, b) check_swapchain_fullscreen_state_(__LINE__, a, b)
@@ -501,7 +502,7 @@ static void check_swapchain_fullscreen_state_(unsigned int line, IDXGISwapChain 
     hr = IDXGISwapChain_GetDesc(swapchain, &swapchain_desc);
     ok_(__FILE__, line)(hr == S_OK, "Failed to get swapchain desc, hr %#lx.\n", hr);
     check_window_fullscreen_state_(line, swapchain_desc.OutputWindow,
-            &expected_state->fullscreen_state, swapchain_desc.Windowed);
+            &expected_state->fullscreen_state);
 
     ok_(__FILE__, line)(swapchain_desc.Windowed == !expected_state->fullscreen,
             "Got windowed %#x, expected %#x.\n",
@@ -2156,6 +2157,7 @@ static void test_create_swapchain(void)
     creation_desc.Flags = 0;
     compute_expected_swapchain_fullscreen_state_after_fullscreen_change(&expected_state,
             &creation_desc, &initial_state.fullscreen_state.monitor_rect, 0, 0, expected_state.target);
+    expected_state.fullscreen_state.todo_style = TRUE;
     expected_width = expected_client_rect->right - expected_client_rect->left;
     expected_height = expected_client_rect->bottom - expected_client_rect->top;
 
@@ -2588,6 +2590,7 @@ static void test_swapchain_fullscreen_state(IDXGISwapChain *swapchain,
     check_swapchain_fullscreen_state(swapchain, initial_state);
 
     expected_state = *initial_state;
+    expected_state.fullscreen_state.todo_style = TRUE;
     compute_expected_swapchain_fullscreen_state_after_fullscreen_change(&expected_state,
             &swapchain_desc, &initial_state->fullscreen_state.monitor_rect, 800, 600, NULL);
     hr = IDXGISwapChain_GetContainingOutput(swapchain, &expected_state.target);
@@ -2659,6 +2662,7 @@ static void test_swapchain_fullscreen_state(IDXGISwapChain *swapchain,
         expected_state.fullscreen_state.monitor_rect = orig_monitor_rect;
         compute_expected_swapchain_fullscreen_state_after_fullscreen_change(&expected_state,
                 &swapchain_desc, &orig_monitor_rect, 800, 600, NULL);
+        expected_state.fullscreen_state.todo_style = TRUE;
 
         hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, output);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -3294,6 +3298,7 @@ static void test_resize_target(IUnknown *device, BOOL is_d3d12)
                 if (tests[test_idx].fullscreen)
                 {
                     expected_state.fullscreen = TRUE;
+                    expected_state.fullscreen_state.todo_style = TRUE;
                     compute_expected_swapchain_fullscreen_state_after_fullscreen_change(&expected_state,
                             &swapchain_desc, &initial_state.fullscreen_state.monitor_rect, 800, 600, NULL);
                     hr = IDXGISwapChain_GetContainingOutput(swapchain, &expected_state.target);
@@ -3632,6 +3637,7 @@ static void test_inexact_modes(void)
         compute_expected_swapchain_fullscreen_state_after_fullscreen_change(&expected_state,
                 &swapchain_desc, &initial_state.fullscreen_state.monitor_rect,
                 sizes[i].width, sizes[i].height, output);
+        expected_state.fullscreen_state.todo_style = TRUE;
 
         hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
