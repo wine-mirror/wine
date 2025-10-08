@@ -235,7 +235,7 @@ static HANDLE create_shared_resource_handle( D3DKMT_HANDLE local, const VkExport
     return NULL;
 }
 
-static HANDLE open_shared_handle_from_name( const WCHAR *name )
+static HANDLE open_shared_resource_from_name( const WCHAR *name )
 {
     D3DKMT_OPENNTHANDLEFROMNAME open_name = {0};
     WCHAR bufferW[MAX_PATH * 2];
@@ -331,7 +331,7 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
         case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT:
         {
             HANDLE shared = import_win32->handle;
-            if (import_win32->name && !(shared = open_shared_handle_from_name( import_win32->name ))) break;
+            if (import_win32->name && !(shared = open_shared_resource_from_name( import_win32->name ))) break;
             memory->local = d3dkmt_open_resource( 0, shared );
             if (shared && shared != import_win32->handle) NtClose( shared );
             break;
@@ -1373,6 +1373,24 @@ static HANDLE create_shared_semaphore_handle( D3DKMT_HANDLE local, const VkExpor
     return NULL;
 }
 
+static HANDLE open_shared_semaphore_from_name( const WCHAR *name )
+{
+    D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME open_name = {0};
+    WCHAR bufferW[MAX_PATH * 2];
+    UNICODE_STRING name_str = {.Buffer = bufferW};
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
+    init_shared_resource_path( name, &name_str );
+    InitializeObjectAttributes( &attr, &name_str, OBJ_OPENIF, NULL, NULL );
+
+    open_name.dwDesiredAccess = GENERIC_ALL;
+    open_name.pObjAttrib = &attr;
+    status = NtGdiDdDDIOpenSyncObjectNtHandleFromName( &open_name );
+    if (status) WARN( "Failed to open %s, status %#x\n", debugstr_w( name ), status );
+    return open_name.hNtHandle;
+}
+
 static VkResult win32u_vkCreateSemaphore( VkDevice client_device, const VkSemaphoreCreateInfo *client_create_info,
                                           const VkAllocationCallbacks *allocator, VkSemaphore *ret )
 {
@@ -1504,8 +1522,10 @@ static VkResult win32u_vkImportSemaphoreWin32HandleKHR( VkDevice client_device, 
         break;
     case VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT:
     case VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT:
-        if (!(shared = handle_info->handle) || NtDuplicateObject( NtCurrentProcess(), shared, NtCurrentProcess(), &shared,
-                                                                  0, 0, DUPLICATE_SAME_ATTRIBUTES | DUPLICATE_SAME_ACCESS ))
+        if (handle_info->name && !(shared = open_shared_semaphore_from_name( handle_info->name )))
+            return VK_ERROR_INVALID_EXTERNAL_HANDLE;
+        else if (!(shared = handle_info->handle) || NtDuplicateObject( NtCurrentProcess(), shared, NtCurrentProcess(), &shared,
+                                                                       0, 0, DUPLICATE_SAME_ATTRIBUTES | DUPLICATE_SAME_ACCESS ))
             return VK_ERROR_INVALID_EXTERNAL_HANDLE;
 
         if (!(local = d3dkmt_open_sync( 0, shared )))
