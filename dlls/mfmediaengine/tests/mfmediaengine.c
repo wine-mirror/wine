@@ -1467,7 +1467,6 @@ static void test_TransferVideoFrame_wic(void)
     SetRect(&dst_rect, 0, 0, wicrc.Width, wicrc.Height);
     IMFMediaEngineEx_OnVideoStreamTick(notify->media_engine, &pts);
     hr = IMFMediaEngineEx_TransferVideoFrame(notify->media_engine, (IUnknown *)bitmap, NULL, &dst_rect, NULL);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IWICBitmap_Lock(bitmap, &wicrc, WICBitmapLockRead, &lock);
@@ -1480,7 +1479,6 @@ static void test_TransferVideoFrame_wic(void)
     ok(lock_buffer_size == 16384, "got lock_buffer_size %u\n", lock_buffer_size);
     ok(lock_buffer_stride == wicrc.Width * 4, "got lock_buffer_stride %u\n", lock_buffer_stride);
     res = check_rgb32_data(L"rgb32frame.bmp", lock_buffer, lock_buffer_stride * wicrc.Height, &dst_rect);
-    todo_wine
     ok(res == 0, "Unexpected %lu%% diff\n", res);
 
     IWICBitmapLock_Release(lock);

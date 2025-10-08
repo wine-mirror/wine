@@ -28,7 +28,9 @@
 #include "mfmediaengine.h"
 #include "mferror.h"
 #include "dxgi.h"
+#include "initguid.h"
 #include "d3d11.h"
+#include "wincodec.h"
 #include "mmdeviceapi.h"
 #include "audiosessiontypes.h"
 
@@ -2707,12 +2709,127 @@ done:
     return hr;
 }
 
+static HRESULT media_engine_transfer_wic(struct media_engine *engine, IWICBitmap *bitmap,
+        const MFVideoNormalizedRect *src_mf_rect, const RECT *dst_rect, const MFARGB *color)
+{
+    UINT frame_width, frame_height, dst_width, dst_height, dst_size, src_stride, dst_stride, format_size;
+    RECT src_rect = {0}, dst_rect_default = {0};
+    DWORD max_length, current_length;
+    IMFMediaBuffer *media_buffer;
+    IWICBitmapLock *lock = NULL;
+    WICPixelFormatGUID format;
+    IMFSample *sample;
+    WICRect wic_rect;
+    BYTE *dst, *src;
+    HRESULT hr;
+
+    frame_width = engine->video_frame.size.cx;
+    frame_height = engine->video_frame.size.cy;
+
+    if (src_mf_rect)
+    {
+        src_rect.left = src_mf_rect->left * frame_width + 0.5f;
+        src_rect.top = src_mf_rect->top * frame_height + 0.5f;
+        src_rect.right = src_mf_rect->right * frame_width + 0.5f;
+        src_rect.bottom = src_mf_rect->bottom * frame_height + 0.5f;
+    }
+    else
+    {
+        src_rect.right = frame_width;
+        src_rect.bottom = frame_height;
+    }
+
+    if (FAILED(hr = IWICBitmap_GetPixelFormat(bitmap, &format))
+            || FAILED(hr = IWICBitmap_GetSize(bitmap, &dst_width, &dst_height)))
+        return hr;
+
+    if (!dst_rect)
+    {
+        dst_rect = &dst_rect_default;
+        dst_rect_default.right = dst_width;
+        dst_rect_default.bottom = dst_height;
+    }
+
+    if (!video_frame_sink_get_sample(engine->presentation.frame_sink, &sample))
+        return MF_E_UNEXPECTED;
+    hr = IMFSample_ConvertToContiguousBuffer(sample, &media_buffer);
+    IMFSample_Release(sample);
+    if (FAILED(hr))
+        return hr;
+
+    if (dst_rect->left + src_rect.right - src_rect.left > dst_width
+            || dst_rect->top + src_rect.bottom - src_rect.top > dst_height)
+    {
+        hr = MF_E_UNEXPECTED;
+        goto done;
+    }
+    if (dst_rect->right - dst_rect->left != src_rect.right - src_rect.left
+            || dst_rect->bottom - dst_rect->top != src_rect.bottom - src_rect.top)
+    {
+        FIXME("Scaling/letterboxing is not implemented.\n");
+        goto done;
+    }
+
+    if (!IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGR) && !IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGRA))
+    {
+        FIXME("Unsupported format %s.\n", wine_dbgstr_guid(&format));
+        goto done;
+    }
+    if (engine->video_frame.output_format != DXGI_FORMAT_B8G8R8A8_UNORM
+            && engine->video_frame.output_format != DXGI_FORMAT_B8G8R8X8_UNORM)
+    {
+        FIXME("Unsupported format %#x.\n", engine->video_frame.output_format);
+        goto done;
+    }
+    if (engine->video_frame.output_format == DXGI_FORMAT_B8G8R8A8_UNORM
+            && IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGR))
+    {
+        WARN("Dropping alpha channel.\n");
+    }
+    format_size = 4;
+
+    wic_rect.X = dst_rect->left;
+    wic_rect.Y = dst_rect->top;
+    wic_rect.Width = dst_rect->right - dst_rect->left;
+    wic_rect.Height = dst_rect->bottom - dst_rect->top;
+    if (FAILED(hr = IWICBitmap_Lock(bitmap, &wic_rect, WICBitmapLockWrite, &lock)))
+        goto done;
+
+    if (FAILED(hr = IWICBitmapLock_GetStride(lock, &dst_stride))
+            || FAILED(hr = IWICBitmapLock_GetDataPointer(lock, &dst_size, &dst)))
+        goto done;
+
+    if (FAILED(hr = IMFMediaBuffer_Lock(media_buffer, &src, &max_length, &current_length)))
+        goto done;
+
+    if (current_length < frame_width * frame_height * format_size)
+    {
+        WARN("Unexpected source length %lu.\n", current_length);
+        hr = MF_E_UNEXPECTED;
+        goto done;
+    }
+
+    src_stride = frame_width * format_size;
+    src += src_rect.top * src_stride + src_rect.left * format_size;
+    MFCopyImage(dst, dst_stride, src, src_stride, dst_stride, wic_rect.Height);
+
+    IMFMediaBuffer_Unlock(media_buffer);
+
+done:
+    if (lock)
+        IWICBitmapLock_Release(lock);
+    IMFMediaBuffer_Release(media_buffer);
+
+    return hr;
+}
+
 static HRESULT WINAPI media_engine_TransferVideoFrame(IMFMediaEngineEx *iface, IUnknown *surface,
         const MFVideoNormalizedRect *src_rect, const RECT *dst_rect, const MFARGB *color)
 {
     struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
     ID3D11Texture2D *texture;
     HRESULT hr = E_NOINTERFACE;
+    IWICBitmap *bitmap;
 
     TRACE("%p, %p, %s, %s, %p.\n", iface, surface, src_rect ? wine_dbg_sprintf("(%f,%f)-(%f,%f)",
             src_rect->left, src_rect->top, src_rect->right, src_rect->bottom) : "(null)",
@@ -2725,6 +2842,12 @@ static HRESULT WINAPI media_engine_TransferVideoFrame(IMFMediaEngineEx *iface, I
         if (!engine->device_manager || FAILED(hr = media_engine_transfer_d3d11(engine, texture, src_rect, dst_rect, color)))
             hr = media_engine_transfer_to_d3d11_texture(engine, texture, src_rect, dst_rect, color);
         ID3D11Texture2D_Release(texture);
+    }
+    /* Windows does not allow transfer to IWICBitmap if a device manager was set. */
+    else if (!engine->device_manager && SUCCEEDED(IUnknown_QueryInterface(surface, &IID_IWICBitmap, (void **)&bitmap)))
+    {
+        hr = media_engine_transfer_wic(engine, bitmap, src_rect, dst_rect, color);
+        IWICBitmap_Release(bitmap);
     }
     else
     {
