@@ -393,7 +393,7 @@ static inline struct style *impl_from_IPersistStream(IPersistStream *iface)
     return CONTAINING_RECORD(iface, struct style, dmobj.IPersistStream_iface);
 }
 
-static HRESULT load_band(IStream *stream, IDirectMusicBand **band)
+static HRESULT load_band(IStream *stream, IDirectMusicBand **band, struct chunk_entry *chunk)
 {
     IPersistStream *persist;
     HRESULT hr;
@@ -403,7 +403,9 @@ static HRESULT load_band(IStream *stream, IDirectMusicBand **band)
         return hr;
     if (SUCCEEDED(hr = IDirectMusicBand_QueryInterface(*band, &IID_IPersistStream, (void **)&persist)))
     {
-        hr = IPersistStream_Load(persist, stream);
+        /* Can be application provided IStream without Clone method */
+        if (SUCCEEDED(hr = stream_reset_chunk_start(stream, chunk)))
+            hr = IPersistStream_Load(persist, stream);
         IPersistStream_Release(persist);
     }
 
@@ -608,9 +610,7 @@ static HRESULT parse_style_band(struct style *This, IStream *stream, struct chun
     if (!(band = calloc(1, sizeof(*band))))
         return E_OUTOFMEMORY;
 
-    /* Can be application provided IStream without Clone method */
-    if (FAILED(hr = stream_reset_chunk_start(stream, chunk)) ||
-            FAILED(hr = load_band(stream, &band->band)))
+    if (FAILED(hr = load_band(stream, &band->band, chunk)))
     {
         free(band);
         return hr;
