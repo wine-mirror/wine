@@ -1618,9 +1618,11 @@ static VkResult win32u_vkGetSemaphoreWin32HandleKHR( VkDevice client_device, con
 
 static VkResult win32u_vkImportSemaphoreWin32HandleKHR( VkDevice client_device, const VkImportSemaphoreWin32HandleInfoKHR *handle_info )
 {
+    VkImportSemaphoreFdInfoKHR fd_info = {.sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_FD_INFO_KHR};
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
     struct semaphore *semaphore = semaphore_from_handle( handle_info->semaphore );
     D3DKMT_HANDLE local, global = 0;
+    VkResult res = VK_SUCCESS;
     HANDLE shared = NULL;
 
     TRACE( "device %p, handle_info %p\n", device, handle_info );
@@ -1650,9 +1652,16 @@ static VkResult win32u_vkImportSemaphoreWin32HandleKHR( VkDevice client_device, 
         return VK_ERROR_INVALID_EXTERNAL_HANDLE;
     }
 
-    FIXME( "Importing memory handle not yet implemented!\n" );
+    if ((fd_info.fd = d3dkmt_object_get_fd( local )) < 0) res = VK_ERROR_INVALID_EXTERNAL_HANDLE;
+    else
+    {
+        fd_info.handleType = get_host_external_semaphore_type();
+        fd_info.semaphore = semaphore->obj.host.semaphore;
+        fd_info.flags = handle_info->flags;
+        res = device->p_vkImportSemaphoreFdKHR( device->host.device, &fd_info );
+    }
 
-    if (handle_info->flags & VK_SEMAPHORE_IMPORT_TEMPORARY_BIT)
+    if (res || handle_info->flags & VK_SEMAPHORE_IMPORT_TEMPORARY_BIT)
     {
         /* FIXME: Should we still keep the temporary handles for vkGetSemaphoreWin32HandleKHR? */
         if (shared) NtClose( shared );
@@ -1666,7 +1675,7 @@ static VkResult win32u_vkImportSemaphoreWin32HandleKHR( VkDevice client_device, 
         semaphore->global = global;
         semaphore->local = local;
     }
-    return VK_SUCCESS;
+    return res;
 }
 
 static void win32u_vkGetPhysicalDeviceExternalSemaphoreProperties( VkPhysicalDevice client_physical_device, const VkPhysicalDeviceExternalSemaphoreInfo *client_semaphore_info,
