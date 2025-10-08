@@ -393,33 +393,28 @@ static inline struct style *impl_from_IPersistStream(IPersistStream *iface)
     return CONTAINING_RECORD(iface, struct style, dmobj.IPersistStream_iface);
 }
 
-static HRESULT load_band(IStream *pClonedStream, IDirectMusicBand **ppBand)
+static HRESULT load_band(IStream *stream, IDirectMusicBand **band)
 {
-  HRESULT hr = E_FAIL;
-  IPersistStream* pPersistStream = NULL;
-  
-  hr = CoCreateInstance (&CLSID_DirectMusicBand, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicBand, (LPVOID*) ppBand);
-  if (FAILED(hr)) {
-    ERR(": could not create object\n");
-    return hr;
-  }
-  /* acquire PersistStream interface */
-  hr = IDirectMusicBand_QueryInterface (*ppBand, &IID_IPersistStream, (LPVOID*) &pPersistStream);
-  if (FAILED(hr)) {
-    ERR(": could not acquire IPersistStream\n");
-    return hr;
-  }
-  /* load */
-  hr = IPersistStream_Load (pPersistStream, pClonedStream);
-  if (FAILED(hr)) {
-    ERR(": failed to load object\n");
-    return hr;
-  }
-  
-  /* release all loading-related stuff */
-  IPersistStream_Release (pPersistStream);
+    IPersistStream *persist;
+    HRESULT hr;
 
-  return S_OK;
+    hr = CoCreateInstance(&CLSID_DirectMusicBand, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicBand, (void **)band);
+    if (FAILED(hr))
+        return hr;
+    if (SUCCEEDED(hr = IDirectMusicBand_QueryInterface(*band, &IID_IPersistStream, (void **)&persist)))
+    {
+        hr = IPersistStream_Load(persist, stream);
+        IPersistStream_Release(persist);
+    }
+
+    if (FAILED(hr))
+    {
+        ERR("Failed to load the band, hr %#lx.\n", hr);
+        IDirectMusicBand_Release(*band);
+        *band = NULL;
+        return hr;
+    }
+    return S_OK;
 }
 
 static HRESULT parse_pref_list(struct style *This, IStream *stream, struct chunk_entry *parent,
