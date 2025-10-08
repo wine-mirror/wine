@@ -840,15 +840,6 @@ SQLRETURN WINAPI SQLBindCol(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNumber,
     return ret;
 }
 
-static const char *debugstr_sqlulen( SQLULEN len )
-{
-#ifdef _WIN64
-    return wine_dbg_sprintf( "%Iu", len );
-#else
-    return wine_dbg_sprintf( "%u", len );
-#endif
-}
-
 /*************************************************************************
  *				SQLBindParam           [ODBC32.025]
  */
@@ -856,9 +847,9 @@ SQLRETURN WINAPI SQLBindParam(SQLHSTMT StatementHandle, SQLUSMALLINT ParameterNu
                               SQLSMALLINT ParameterType, SQLULEN LengthPrecision, SQLSMALLINT ParameterScale,
                               SQLPOINTER ParameterValue, SQLLEN *StrLen_or_Ind)
 {
-    FIXME("(StatementHandle %p, ParameterNumber %d, ValueType %d, ParameterType %d, LengthPrecision %s,"
+    FIXME("(StatementHandle %p, ParameterNumber %d, ValueType %d, ParameterType %d, LengthPrecision %Iu,"
           " ParameterScale %d, ParameterValue %p, StrLen_or_Ind %p) stub\n", StatementHandle, ParameterNumber, ValueType,
-          ParameterType, debugstr_sqlulen(LengthPrecision), ParameterScale, ParameterValue, StrLen_or_Ind);
+          ParameterType, LengthPrecision, ParameterScale, ParameterValue, StrLen_or_Ind);
     return SQL_ERROR;
 }
 
@@ -3730,7 +3721,7 @@ SQLRETURN WINAPI SQLSetConnectOption(SQLHDBC ConnectionHandle, SQLUSMALLINT Opti
     struct connection *con = (struct connection *)lock_object( ConnectionHandle, SQL_HANDLE_DBC );
     SQLRETURN ret = SQL_ERROR;
 
-    TRACE("(ConnectionHandle %p, Option %d, Value %s)\n", ConnectionHandle, Option, debugstr_sqlulen(Value));
+    TRACE("(ConnectionHandle %p, Option %d, Value %Iu)\n", ConnectionHandle, Option, Value);
 
     if (!con) return SQL_INVALID_HANDLE;
 
@@ -4022,9 +4013,9 @@ SQLRETURN WINAPI SQLSetParam(SQLHSTMT StatementHandle, SQLUSMALLINT ParameterNum
     struct statement *stmt = (struct statement *)lock_object( StatementHandle, SQL_HANDLE_STMT );
     SQLRETURN ret = SQL_ERROR;
 
-    TRACE("(StatementHandle %p, ParameterNumber %d, ValueType %d, ParameterType %d, LengthPrecision %s,"
+    TRACE("(StatementHandle %p, ParameterNumber %d, ValueType %d, ParameterType %d, LengthPrecision %Iu,"
           " ParameterScale %d, ParameterValue %p, StrLen_or_Ind %p)\n", StatementHandle, ParameterNumber, ValueType,
-          ParameterType, debugstr_sqlulen(LengthPrecision), ParameterScale, ParameterValue, StrLen_or_Ind);
+          ParameterType, LengthPrecision, ParameterScale, ParameterValue, StrLen_or_Ind);
 
     if (!stmt) return SQL_INVALID_HANDLE;
 
@@ -4222,7 +4213,7 @@ SQLRETURN WINAPI SQLSetStmtOption(SQLHSTMT StatementHandle, SQLUSMALLINT Option,
     struct statement *stmt = (struct statement *)lock_object( StatementHandle, SQL_HANDLE_STMT );
     SQLRETURN ret = SQL_ERROR;
 
-    TRACE("(StatementHandle %p, Option %d, Value %s)\n", StatementHandle, Option, debugstr_sqlulen(Value));
+    TRACE("(StatementHandle %p, Option %d, Value %Iu)\n", StatementHandle, Option, Value);
 
     if (!stmt) return SQL_INVALID_HANDLE;
 
@@ -5288,7 +5279,7 @@ SQLRETURN WINAPI SQLParamOptions(SQLHSTMT StatementHandle, SQLULEN RowCount, SQL
     struct statement *stmt = (struct statement *)lock_object( StatementHandle, SQL_HANDLE_STMT );
     SQLRETURN ret = SQL_ERROR;
 
-    TRACE("(StatementHandle %p, RowCount %s, RowNumber %p)\n", StatementHandle, debugstr_sqlulen(RowCount),
+    TRACE("(StatementHandle %p, RowCount %Iu, RowNumber %p)\n", StatementHandle, RowCount,
           RowNumber);
 
     if (!stmt) return SQL_INVALID_HANDLE;
@@ -5533,8 +5524,8 @@ SQLRETURN WINAPI SQLSetPos(SQLHSTMT StatementHandle, SQLSETPOSIROW RowNumber, SQ
     struct statement *stmt = (struct statement *)lock_object( StatementHandle, SQL_HANDLE_STMT );
     SQLRETURN ret = SQL_ERROR;
 
-    TRACE("(StatementHandle %p, RowNumber %s, Operation %d, LockType %d)\n", StatementHandle,
-          debugstr_sqlulen(RowNumber), Operation, LockType);
+    TRACE("(StatementHandle %p, RowNumber %Iu, Operation %d, LockType %d)\n", StatementHandle,
+          RowNumber, Operation, LockType);
 
     if (!stmt) return SQL_INVALID_HANDLE;
 
@@ -5746,8 +5737,8 @@ SQLRETURN WINAPI SQLBindParameter(SQLHSTMT StatementHandle, SQLUSMALLINT Paramet
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, ParameterNumber %d, InputOutputType %d, ValueType %d, ParameterType %d, "
-          "ColumnSize %s, DecimalDigits %d, ParameterValue, %p, BufferLength %Id, StrLen_or_Ind %p)\n",
-          StatementHandle, ParameterNumber, InputOutputType, ValueType, ParameterType, debugstr_sqlulen(ColumnSize),
+          "ColumnSize %Iu, DecimalDigits %d, ParameterValue, %p, BufferLength %Id, StrLen_or_Ind %p)\n",
+          StatementHandle, ParameterNumber, InputOutputType, ValueType, ParameterType, ColumnSize,
           DecimalDigits, ParameterValue, BufferLength, StrLen_or_Ind);
 
     if (!stmt) return SQL_INVALID_HANDLE;
