@@ -416,15 +416,22 @@ static HRESULT errorrecords_get_error_info(errorrecords *records, IErrorInfo **i
 static HRESULT WINAPI errorrecords_GetGUID(IErrorInfo* iface, GUID *guid)
 {
     errorrecords *records = impl_records_from_IErrorInfo(iface);
-    struct error_record *record;
+    IErrorInfo *error_info;
+    HRESULT hr;
 
     TRACE("%p, %p.\n", iface, guid);
 
     if (!guid)
         return E_INVALIDARG;
 
-    errorrecords_get_record(records, 0, &record);
-    *guid = record ? record->info.iid : GUID_NULL;
+    if (SUCCEEDED(errorrecords_get_error_info(records, &error_info)))
+    {
+        hr = IErrorInfo_GetGUID(error_info, guid);
+        IErrorInfo_Release(error_info);
+        return hr;
+    }
+
+    memset(guid, 0, sizeof(*guid));
 
     return S_OK;
 }
@@ -801,12 +808,21 @@ static ULONG WINAPI error_info_Release(IErrorInfo *iface)
 
 static HRESULT WINAPI error_info_GetGUID(IErrorInfo *iface, GUID *guid)
 {
-    FIXME("%p, %p.\n", iface, guid);
+    struct error_info *error_info = impl_from_IErrorInfo(iface);
+    struct error_record *record;
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", iface, guid);
 
     if (!guid)
         return E_INVALIDARG;
 
-    return E_NOTIMPL;
+    if (FAILED(hr = errorrecords_get_record(error_info->records, error_info->index, &record)))
+        return hr;
+
+    *guid = record->info.iid;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI error_info_GetSource(IErrorInfo *iface, BSTR *source)
