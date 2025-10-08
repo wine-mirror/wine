@@ -25,7 +25,7 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
 struct style_band {
     struct list entry;
-    IDirectMusicBand *pBand;
+    IDirectMusicBand *band;
 };
 
 struct style_part_ref
@@ -153,8 +153,8 @@ static ULONG WINAPI style_Release(IDirectMusicStyle8 *iface)
 
         LIST_FOR_EACH_ENTRY_SAFE(band, band2, &This->bands, struct style_band, entry) {
             list_remove(&band->entry);
-            if (band->pBand)
-                IDirectMusicBand_Release(band->pBand);
+            if (band->band)
+                IDirectMusicBand_Release(band->band);
             free(band);
         }
 
@@ -191,15 +191,15 @@ static HRESULT WINAPI style_GetBand(IDirectMusicStyle8 *iface, WCHAR *name,
     LIST_FOR_EACH_ENTRY(sband, &This->bands, struct style_band, entry) {
         IDirectMusicObject *obj;
 
-        hr = IDirectMusicBand_QueryInterface(sband->pBand, &IID_IDirectMusicObject, (void**)&obj);
+        hr = IDirectMusicBand_QueryInterface(sband->band, &IID_IDirectMusicObject, (void **)&obj);
         if (SUCCEEDED(hr)) {
             DMUS_OBJECTDESC desc;
 
             if (IDirectMusicObject_GetDescriptor(obj, &desc) == S_OK) {
                 if (desc.dwValidData & DMUS_OBJ_NAME && !lstrcmpW(name, desc.wszName)) {
                     IDirectMusicObject_Release(obj);
-                    IDirectMusicBand_AddRef(sband->pBand);
-                    *band = sband->pBand;
+                    IDirectMusicBand_AddRef(sband->band);
+                    *band = sband->band;
                     return S_OK;
                 }
             }
@@ -615,7 +615,7 @@ static HRESULT parse_style_band(struct style *This, IStream *stream, struct chun
 
     /* Can be application provided IStream without Clone method */
     if (FAILED(hr = stream_reset_chunk_start(stream, chunk)) ||
-            FAILED(hr = load_band(stream, &band->pBand)))
+            FAILED(hr = load_band(stream, &band->band)))
     {
         free(band);
         return hr;
