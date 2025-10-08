@@ -2156,13 +2156,27 @@ static const char *win32u_wglQueryRendererStringWINE( HDC hdc, GLint renderer, G
 
 static BOOL win32u_wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint *value )
 {
-    FIXME( "attribute %#x, value %p stub!\n", attribute, value );
+    int i;
+
+    TRACE( "attribute %#x, value %p\n", attribute, value );
+
+    for (i = 0; i < devices_count; i++) if (devices_egl[i].device == display_egl.device) break;
+    if (i < devices_count) return win32u_wglQueryRendererIntegerWINE( 0, i, attribute, value );
+
+    WARN( "Cannot find current renderer device\n" );
     return FALSE;
 }
 
 static const char *win32u_wglQueryCurrentRendererStringWINE( GLenum attribute )
 {
-    FIXME( "attribute %#x stub!\n", attribute );
+    int i;
+
+    TRACE( "attribute %#x\n", attribute );
+
+    for (i = 0; i < devices_count; i++) if (devices_egl[i].device == display_egl.device) break;
+    if (i < devices_count) return win32u_wglQueryRendererStringWINE( 0, i, attribute );
+
+    WARN( "Cannot find current renderer device\n" );
     return NULL;
 }
 
