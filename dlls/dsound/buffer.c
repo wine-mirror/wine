@@ -317,7 +317,6 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Play(IDirectSoundBuffer8 *iface, DW
 
 	This->playflags = flags;
 	if (This->state == STATE_STOPPED) {
-		This->leadin = TRUE;
 		This->state = STATE_STARTING;
 	}
 
@@ -1073,8 +1072,8 @@ HRESULT secondarybuffer_create(DirectSoundDevice *device, const DSBUFFERDESC *ds
 	}
 
 	if (dsbd->dwBufferBytes % dsbd->lpwfxFormat->nBlockAlign)
-		dsb->buflen = dsbd->dwBufferBytes + 
-			(dsbd->lpwfxFormat->nBlockAlign - 
+		dsb->buflen = dsbd->dwBufferBytes +
+			(dsbd->lpwfxFormat->nBlockAlign -
 			(dsbd->dwBufferBytes % dsbd->lpwfxFormat->nBlockAlign));
 	else
 		dsb->buflen = dsbd->dwBufferBytes;
