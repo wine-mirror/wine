@@ -1825,10 +1825,12 @@ static VkResult win32u_vkGetFenceWin32HandleKHR( VkDevice client_device, const V
 
 static VkResult win32u_vkImportFenceWin32HandleKHR( VkDevice client_device, const VkImportFenceWin32HandleInfoKHR *handle_info )
 {
+    VkImportFenceFdInfoKHR fd_info = {.sType = VK_STRUCTURE_TYPE_IMPORT_FENCE_FD_INFO_KHR};
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
     struct fence *fence = fence_from_handle( handle_info->fence );
     D3DKMT_HANDLE local, global = 0;
     HANDLE shared = NULL;
+    VkResult res;
 
     TRACE( "device %p, handle_info %p\n", device, handle_info );
 
@@ -1856,9 +1858,16 @@ static VkResult win32u_vkImportFenceWin32HandleKHR( VkDevice client_device, cons
         return VK_ERROR_INVALID_EXTERNAL_HANDLE;
     }
 
-    FIXME( "Importing memory handle not yet implemented!\n" );
+    if ((fd_info.fd = d3dkmt_object_get_fd( local )) < 0) res = VK_ERROR_INVALID_EXTERNAL_HANDLE;
+    else
+    {
+        fd_info.handleType = get_host_external_fence_type();
+        fd_info.fence = fence->obj.host.fence;
+        fd_info.flags = handle_info->flags;
+        res = device->p_vkImportFenceFdKHR( device->host.device, &fd_info );
+    }
 
-    if (handle_info->flags & VK_FENCE_IMPORT_TEMPORARY_BIT)
+    if (res || handle_info->flags & VK_FENCE_IMPORT_TEMPORARY_BIT)
     {
         /* FIXME: Should we still keep the temporary handles for vkGetFenceWin32HandleKHR? */
         if (shared) NtClose( shared );
