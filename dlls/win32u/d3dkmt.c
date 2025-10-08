@@ -1671,6 +1671,25 @@ NTSTATUS WINAPI NtGdiDdDDIDestroySynchronizationObject( const D3DKMT_DESTROYSYNC
     return STATUS_SUCCESS;
 }
 
+/* get a locally opened D3DKMT object host-specific fd */
+int d3dkmt_object_get_fd( D3DKMT_HANDLE local )
+{
+    struct d3dkmt_object *object;
+    NTSTATUS status;
+    int fd;
+
+    TRACE( "local %#x\n", local );
+
+    if (!(object = get_d3dkmt_object( local, -1 ))) return -1;
+    if ((status = wine_server_handle_to_fd( object->handle, GENERIC_ALL, &fd, NULL )))
+    {
+        WARN( "Failed to receive object %p/%#x fd, status %#x\n", object, local, status );
+        return -1;
+    }
+
+    return fd;
+}
+
 /* create a D3DKMT global or shared resource from a host-specific fd */
 D3DKMT_HANDLE d3dkmt_create_resource( int fd, D3DKMT_HANDLE *global )
 {

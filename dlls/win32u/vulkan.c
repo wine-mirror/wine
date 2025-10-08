@@ -270,6 +270,7 @@ static HANDLE open_shared_resource_from_name( const WCHAR *name )
 static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryAllocateInfo *client_alloc_info,
                                          const VkAllocationCallbacks *allocator, VkDeviceMemory *ret )
 {
+    VkImportMemoryFdInfoKHR fd_info = {.sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR};
     VkMemoryAllocateInfo *alloc_info = (VkMemoryAllocateInfo *)client_alloc_info; /* cast away const, chain has been copied in the thunks */
     VkBaseOutStructure **next, *prev = (VkBaseOutStructure *)alloc_info;
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
@@ -355,13 +356,15 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
             break;
         }
 
-        if (!memory->local)
+        if ((fd_info.fd = d3dkmt_object_get_fd( memory->local )) < 0)
         {
             free( memory );
             return VK_ERROR_INVALID_EXTERNAL_HANDLE;
         }
 
-        FIXME( "Importing memory handle not yet implemented!\n" );
+        fd_info.handleType = get_host_external_memory_type();
+        fd_info.pNext = alloc_info->pNext;
+        alloc_info->pNext = &fd_info;
     }
 
     if ((res = device->p_vkAllocateMemory( device->host.device, alloc_info, NULL, &host_device_memory )))
