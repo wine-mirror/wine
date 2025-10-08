@@ -31,7 +31,116 @@
 #include "win32u_private.h"
 #include "ntuser_private.h"
 
+#include <d3d9types.h>
+#include <dxgi.h>
+#include <d3d10.h>
+#include <d3d11.h>
+#include <d3d12.h>
+
 WINE_DEFAULT_DEBUG_CHANNEL(d3dkmt);
+
+/* D3DKMT runtime descriptors */
+
+struct d3dkmt_dxgi_desc
+{
+    UINT                        size;
+    UINT                        version;
+    UINT                        width;
+    UINT                        height;
+    DXGI_FORMAT                 format;
+    UINT                        unknown_0;
+    UINT                        unknown_1;
+    UINT                        keyed_mutex;
+    D3DKMT_HANDLE               mutex_handle;
+    D3DKMT_HANDLE               sync_handle;
+    UINT                        nt_shared;
+    UINT                        unknown_2;
+    UINT                        unknown_3;
+    UINT                        unknown_4;
+};
+
+struct d3dkmt_d3d9_desc
+{
+    struct d3dkmt_dxgi_desc     dxgi;
+    D3DFORMAT                   format;
+    D3DRESOURCETYPE             type;
+    UINT                        usage;
+    union
+    {
+        struct
+        {
+            UINT                unknown_0;
+            UINT                width;
+            UINT                height;
+            UINT                levels;
+            UINT                depth;
+        } texture;
+        struct
+        {
+            UINT                unknown_0;
+            UINT                unknown_1;
+            UINT                unknown_2;
+            UINT                width;
+            UINT                height;
+        } surface;
+        struct
+        {
+            UINT                unknown_0;
+            UINT                width;
+            UINT                format;
+            UINT                unknown_1;
+            UINT                unknown_2;
+        } buffer;
+    };
+};
+
+C_ASSERT( sizeof(struct d3dkmt_d3d9_desc) == 0x58 );
+
+struct d3dkmt_d3d11_desc
+{
+    struct d3dkmt_dxgi_desc     dxgi;
+    D3D11_RESOURCE_DIMENSION    dimension;
+    union
+    {
+        D3D10_BUFFER_DESC       d3d10_buf;
+        D3D10_TEXTURE1D_DESC    d3d10_1d;
+        D3D10_TEXTURE2D_DESC    d3d10_2d;
+        D3D10_TEXTURE3D_DESC    d3d10_3d;
+        D3D11_BUFFER_DESC       d3d11_buf;
+        D3D11_TEXTURE1D_DESC    d3d11_1d;
+        D3D11_TEXTURE2D_DESC    d3d11_2d;
+        D3D11_TEXTURE3D_DESC    d3d11_3d;
+    };
+};
+
+C_ASSERT( sizeof(struct d3dkmt_d3d11_desc) == 0x68 );
+
+struct d3dkmt_d3d12_desc
+{
+    struct d3dkmt_d3d11_desc    d3d11;
+    UINT                        unknown_5[4];
+    UINT                        resource_size;
+    UINT                        unknown_6[7];
+    UINT                        resource_align;
+    UINT                        unknown_7[9];
+    union
+    {
+        D3D12_RESOURCE_DESC     desc;
+        D3D12_RESOURCE_DESC1    desc1;
+    };
+    UINT64                      unknown_8[1];
+};
+
+C_ASSERT( sizeof(struct d3dkmt_d3d12_desc) == 0x108 );
+C_ASSERT( offsetof(struct d3dkmt_d3d12_desc, unknown_5) == sizeof(struct d3dkmt_d3d11_desc) );
+
+union d3dkmt_desc
+{
+    struct d3dkmt_dxgi_desc     dxgi;
+    struct d3dkmt_d3d9_desc     d3d9;
+    struct d3dkmt_d3d11_desc    d3d11;
+    struct d3dkmt_d3d12_desc    d3d12;
+};
 
 struct d3dkmt_object
 {
@@ -1858,24 +1967,32 @@ D3DKMT_HANDLE d3dkmt_open_resource( D3DKMT_HANDLE global, HANDLE shared )
 {
     struct d3dkmt_object *allocation = NULL;
     struct d3dkmt_resource *resource = NULL;
+    void *runtime_data = NULL;
+    UINT runtime_size;
     NTSTATUS status;
-    UINT dummy = 0;
 
     TRACE( "global %#x, shared %p\n", global, shared );
 
+    if ((status = d3dkmt_object_query( D3DKMT_RESOURCE, global, shared, &runtime_size ))) goto failed;
+    if (runtime_size && !(runtime_data = malloc( runtime_size ))) goto failed;
+
     if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) goto failed;
     if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
-    if ((status = d3dkmt_object_open( &resource->obj, global, shared, NULL, &dummy ))) goto failed;
+    if ((status = d3dkmt_object_open( &resource->obj, global, shared, runtime_data, &runtime_size ))) goto failed;
 
     if ((status = alloc_object_handle( allocation ))) goto failed;
     resource->allocation = allocation->local;
 
+    if (!runtime_data || runtime_size <= sizeof(struct d3dkmt_dxgi_desc)) WARN( "Unsupported runtime data size %#x\n", runtime_size );
+
+    free( runtime_data );
     return resource->obj.local;
 
 failed:
     WARN( "Failed to open resource, status %#x\n", status );
     if (allocation) d3dkmt_object_free( allocation );
     if (resource) d3dkmt_object_free( &resource->obj );
+    free( runtime_data );
     return 0;
 }
 
