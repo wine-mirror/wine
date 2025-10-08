@@ -184,9 +184,12 @@ static NTSTATUS d3dkmt_object_create( struct d3dkmt_object *object, int fd, BOOL
 {
     NTSTATUS status;
 
+    if (fd >= 0) wine_server_send_fd( fd );
+
     SERVER_START_REQ( d3dkmt_object_create )
     {
         req->type = object->type;
+        req->fd = fd;
         if (runtime_size) wine_server_add_data( req, runtime, runtime_size );
         status = wine_server_call( req );
         object->handle = wine_server_ptr_handle( reply->handle );

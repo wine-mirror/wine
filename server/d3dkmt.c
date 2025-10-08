@@ -42,9 +42,11 @@ struct d3dkmt_object
     d3dkmt_handle_t     global;         /* object global handle */
     void               *runtime;        /* client runtime data */
     data_size_t         runtime_size;   /* size of client runtime data */
+    struct fd          *fd;             /* fd object for unix fds */
 };
 
 static void d3dkmt_object_dump( struct object *obj, int verbose );
+static struct fd *d3dkmt_object_get_fd( struct object *obj );
 static void d3dkmt_object_destroy( struct object *obj );
 
 static const struct object_ops d3dkmt_object_ops =
@@ -57,7 +59,7 @@ static const struct object_ops d3dkmt_object_ops =
     NULL,                           /* signaled */
     NULL,                           /* satisfied */
     no_signal,                      /* signal */
-    no_get_fd,                      /* get_fd */
+    d3dkmt_object_get_fd,           /* get_fd */
     default_get_sync,               /* get_sync */
     default_map_access,             /* map_access */
     default_get_sd,                 /* get_sd */
@@ -70,6 +72,27 @@ static const struct object_ops d3dkmt_object_ops =
     no_kernel_obj_list,             /* get_kernel_obj_list */
     no_close_handle,                /* close_handle */
     d3dkmt_object_destroy,          /* destroy */
+};
+
+static enum server_fd_type d3dkmt_get_fd_type( struct fd *fd )
+{
+    return FD_TYPE_INVALID;
+}
+
+static const struct fd_ops d3dkmt_fd_ops =
+{
+    default_fd_get_poll_events,   /* get_poll_events */
+    default_poll_event,           /* poll_event */
+    d3dkmt_get_fd_type,           /* get_fd_type */
+    no_fd_read,                   /* read */
+    no_fd_write,                  /* write */
+    no_fd_flush,                  /* flush */
+    no_fd_get_file_info,          /* get_file_info */
+    no_fd_get_volume_info,        /* get_volume_info */
+    no_fd_ioctl,                  /* ioctl */
+    default_fd_cancel_async,      /* cancel_async */
+    no_fd_queue_async,            /* queue_async */
+    default_fd_reselect_async     /* reselect_async */
 };
 
 #define DXGK_SHARED_SYNC_QUERY_STATE  0x0001
@@ -306,12 +329,24 @@ static void d3dkmt_object_dump( struct object *obj, int verbose )
     fprintf( stderr, "type=%#x global=%#x\n", object->type, object->global );
 }
 
+static struct fd *d3dkmt_object_get_fd( struct object *obj )
+{
+    struct d3dkmt_object *object = (struct d3dkmt_object *)obj;
+    assert( obj->ops == &d3dkmt_object_ops );
+
+    if (object->fd) return (struct fd *)grab_object( object->fd );
+
+    set_error( STATUS_NO_SUCH_FILE );
+    return NULL;
+}
+
 static void d3dkmt_object_destroy( struct object *obj )
 {
     struct d3dkmt_object *object = (struct d3dkmt_object *)obj;
     assert( obj->ops == &d3dkmt_object_ops );
 
     if (object->global) free_object_handle( object->global );
+    if (object->fd) release_object( object->fd );
     free( object->runtime );
 }
 
@@ -323,6 +358,7 @@ static struct d3dkmt_object *d3dkmt_object_create( enum d3dkmt_type type, data_s
     object->type            = type;
     object->global          = 0;
     object->runtime_size    = runtime_size;
+    object->fd              = NULL;
 
     if (!(object->runtime = memdup( runtime, runtime_size )) ||
         !(object->global = alloc_object_handle( object )))
@@ -381,11 +417,28 @@ static struct d3dkmt_object *d3dkmt_object_open_shared( obj_handle_t handle, enu
 DECL_HANDLER(d3dkmt_object_create)
 {
     struct d3dkmt_object *object;
+    struct fd *fd = NULL;
 
-    if (!(object = d3dkmt_object_create( req->type, get_req_data_size(), get_req_data() ))) return;
+    if (req->fd >= 0)
+    {
+        int unix_fd;
+        if ((unix_fd = thread_get_inflight_fd( current, req->fd )) < 0) return;
+        if (!(fd = create_anonymous_fd( NULL, unix_fd, NULL, 0 ))) return;
+    }
+
+    if (!(object = d3dkmt_object_create( req->type, get_req_data_size(), get_req_data() ))) goto done;
+    if (fd)
+    {
+        set_fd_user( fd, &d3dkmt_fd_ops, &object->obj );
+        object->fd = (struct fd *)grab_object( fd );
+    }
+
     reply->handle = alloc_handle( current->process, object, STANDARD_RIGHTS_ALL, OBJ_INHERIT );
     reply->global = object->global;
     release_object( object );
+
+done:
+    if (fd) release_object( fd );
 }
 
 /* update a global d3dkmt object */
