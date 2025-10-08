@@ -679,7 +679,7 @@ NTSTATUS WINAPI NtGdiDdDDIQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *des
                  !(properties2.memoryProperties.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)))
             {
                 desc->Budget += budget.heapBudget[i];
-                desc->CurrentUsage += budget.heapUsage[i];
+                desc->CurrentUsage += min( budget.heapBudget[i], budget.heapUsage[i] );
             }
         }
         desc->AvailableForReservation = desc->Budget / 2;
