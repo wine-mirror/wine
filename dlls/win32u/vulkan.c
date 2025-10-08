@@ -1709,6 +1709,7 @@ static VkResult win32u_vkImportFenceWin32HandleKHR( VkDevice client_device, cons
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
     struct fence *fence = fence_from_handle( handle_info->fence );
     D3DKMT_HANDLE local, global = 0;
+    HANDLE shared = NULL;
 
     TRACE( "device %p, handle_info %p\n", device, handle_info );
 
@@ -1717,6 +1718,17 @@ static VkResult win32u_vkImportFenceWin32HandleKHR( VkDevice client_device, cons
     case VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT:
         global = PtrToUlong( handle_info->handle );
         if (!(local = d3dkmt_open_sync( global, NULL ))) return VK_ERROR_INVALID_EXTERNAL_HANDLE;
+        break;
+    case VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_WIN32_BIT:
+        if (!(shared = handle_info->handle) || NtDuplicateObject( NtCurrentProcess(), shared, NtCurrentProcess(), &shared,
+                                                                  0, 0, DUPLICATE_SAME_ATTRIBUTES | DUPLICATE_SAME_ACCESS ))
+            return VK_ERROR_INVALID_EXTERNAL_HANDLE;
+
+        if (!(local = d3dkmt_open_sync( 0, shared )))
+        {
+            NtClose( shared );
+            return VK_ERROR_INVALID_EXTERNAL_HANDLE;
+        }
         break;
     default:
         FIXME( "Unsupported handle type %#x\n", handle_info->handleType );
@@ -1728,11 +1740,14 @@ static VkResult win32u_vkImportFenceWin32HandleKHR( VkDevice client_device, cons
     if (handle_info->flags & VK_FENCE_IMPORT_TEMPORARY_BIT)
     {
         /* FIXME: Should we still keep the temporary handles for vkGetFenceWin32HandleKHR? */
+        if (shared) NtClose( shared );
         d3dkmt_destroy_sync( local );
     }
     else
     {
+        if (fence->shared) NtClose( fence->shared );
         if (fence->local) d3dkmt_destroy_sync( fence->local );
+        fence->shared = shared;
         fence->global = global;
         fence->local = local;
     }
