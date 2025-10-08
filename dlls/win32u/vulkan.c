@@ -1402,16 +1402,20 @@ static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, cons
     struct vulkan_queue *queue = vulkan_queue_from_handle( client_queue );
     struct vulkan_device *device = queue->device;
     VkResult res = VK_ERROR_OUT_OF_HOST_MEMORY;
+    VkTimelineSemaphoreSubmitInfo *timelines;
     struct mempool pool = {0};
 
     TRACE( "queue %p, count %u, submits %p, fence %p\n", queue, count, submits, fence );
+
+    if (!(timelines = mem_alloc( &pool, count * sizeof(*timelines) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    memset( timelines, 0, count * sizeof(*timelines) );
 
     for (uint32_t i = 0; i < count; i++)
     {
         VkSubmitInfo *submit = (VkSubmitInfo *)submits + i; /* cast away const, chain has been copied in the thunks */
         VkBaseOutStructure **next, *prev = (VkBaseOutStructure *)submit;
+        VkTimelineSemaphoreSubmitInfo *timeline = timelines + i;
         VkSemaphore *wait_semaphores, *signal_semaphores;
-        VkTimelineSemaphoreSubmitInfo *timeline = NULL;
         VkDeviceGroupSubmitInfo *device_group = NULL;
         UINT wait_count = 0, signal_count = 0;
         VkPipelineStageFlags *wait_stages;
@@ -1456,7 +1460,9 @@ static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, cons
             case VK_STRUCTURE_TYPE_PERFORMANCE_QUERY_SUBMIT_INFO_KHR: break;
             case VK_STRUCTURE_TYPE_PROTECTED_SUBMIT_INFO: break;
             case VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO:
-                timeline = (VkTimelineSemaphoreSubmitInfo *)*next;
+                if (timeline->sType) ERR( "Duplicated timeline semaphore submit info!\n" );
+                *timeline = *(VkTimelineSemaphoreSubmitInfo *)*next;
+                *next = (*next)->pNext; next = &prev; /* remove it from the chain, we'll add it back below */
                 break;
             case VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR:
             {
@@ -1481,13 +1487,10 @@ static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, cons
             memcpy( wait_stages, submit->pWaitDstStageMask, submit->waitSemaphoreCount * sizeof(*wait_stages) );
             submit->pWaitDstStageMask = wait_stages;
 
-            if (timeline)
-            {
-                if (!(values = mem_alloc( &pool, (timeline->waitSemaphoreValueCount + wait_count) * sizeof(*values) ))) goto failed;
-                memcpy( values, timeline->pWaitSemaphoreValues, timeline->waitSemaphoreValueCount * sizeof(*values) );
-                timeline->waitSemaphoreValueCount = submit->waitSemaphoreCount;
-                timeline->pWaitSemaphoreValues = values;
-            }
+            if (!(values = mem_alloc( &pool, (timeline->waitSemaphoreValueCount + wait_count) * sizeof(*values) ))) goto failed;
+            memcpy( values, timeline->pWaitSemaphoreValues, timeline->waitSemaphoreValueCount * sizeof(*values) );
+            timeline->waitSemaphoreValueCount = submit->waitSemaphoreCount;
+            timeline->pWaitSemaphoreValues = values;
 
             if (device_group)
             {
@@ -1504,13 +1507,10 @@ static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, cons
             memcpy( signal_semaphores, submit->pSignalSemaphores, submit->signalSemaphoreCount * sizeof(*signal_semaphores) );
             submit->pSignalSemaphores = signal_semaphores;
 
-            if (timeline)
-            {
-                if (!(values = mem_alloc( &pool, submit->signalSemaphoreCount * sizeof(*values) ))) goto failed;
-                memcpy( values, timeline->pSignalSemaphoreValues, timeline->signalSemaphoreValueCount * sizeof(*values) );
-                timeline->signalSemaphoreValueCount = submit->signalSemaphoreCount;
-                timeline->pSignalSemaphoreValues = values;
-            }
+            if (!(values = mem_alloc( &pool, submit->signalSemaphoreCount * sizeof(*values) ))) goto failed;
+            memcpy( values, timeline->pSignalSemaphoreValues, timeline->signalSemaphoreValueCount * sizeof(*values) );
+            timeline->signalSemaphoreValueCount = submit->signalSemaphoreCount;
+            timeline->pSignalSemaphoreValues = values;
 
             if (device_group)
             {
@@ -1519,6 +1519,14 @@ static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, cons
                 device_group->signalSemaphoreCount = submit->signalSemaphoreCount;
                 device_group->pSignalSemaphoreDeviceIndices = indexes;
             }
+        }
+
+        /* insert the timeline semaphore values in the chain if it was there */
+        if (timeline->sType)
+        {
+            timeline->sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+            timeline->pNext = submit->pNext;
+            submit->pNext = timeline;
         }
     }
 
