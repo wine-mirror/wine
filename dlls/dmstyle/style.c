@@ -565,24 +565,9 @@ static HRESULT parse_pttn_list(struct style *This, IStream *stream, struct chunk
             break;
 
         case MAKE_IDTYPE(FOURCC_RIFF, DMUS_FOURCC_BAND_FORM):
-        {
-            IPersistStream *persist;
-
             if (pattern->band) IDirectMusicBand_Release(pattern->band);
-
-            if (FAILED(hr = CoCreateInstance(&CLSID_DirectMusicBand, NULL, CLSCTX_INPROC_SERVER,
-                    &IID_IDirectMusicBand, (void **)&pattern->band)))
-                break;
-
-            if (SUCCEEDED(hr = IDirectMusicBand_QueryInterface(pattern->band, &IID_IPersistStream, (void **)&persist)))
-            {
-                if (SUCCEEDED(hr = stream_reset_chunk_start(stream, &chunk)))
-                    hr = IPersistStream_Load(persist, stream);
-                IPersistStream_Release(persist);
-            }
-
+            hr = load_band(stream, &pattern->band, &chunk);
             break;
-        }
 
         case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_PARTREF_LIST):
             hr = parse_pref_list(This, stream, &chunk, &pattern->part_refs);
