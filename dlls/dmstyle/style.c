@@ -605,14 +605,32 @@ static HRESULT parse_pttn_list(struct style *This, IStream *stream, struct chunk
     return hr;
 }
 
+static HRESULT parse_style_band(struct style *This, IStream *stream, struct chunk_entry *chunk)
+{
+    struct style_band *band;
+    HRESULT hr;
+
+    if (!(band = calloc(1, sizeof(*band))))
+        return E_OUTOFMEMORY;
+
+    /* Can be application provided IStream without Clone method */
+    if (FAILED(hr = stream_reset_chunk_start(stream, chunk)) ||
+            FAILED(hr = load_band(stream, &band->pBand)))
+    {
+        free(band);
+        return hr;
+    }
+    list_add_tail(&This->bands, &band->entry);
+
+    return S_OK;
+}
+
 static HRESULT parse_style_form(struct style *This, DMUS_PRIVATE_CHUNK *pChunk, IStream *pStm)
 {
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
-
-  IDirectMusicBand* pBand = NULL;
 
   if (pChunk->fccID != DMUS_FOURCC_STYLE_FORM) {
     ERR_(dmfile)(": %s chunk should be a STYLE form\n", debugstr_fourcc (pChunk->fccID));
@@ -649,33 +667,13 @@ static HRESULT parse_style_form(struct style *This, DMUS_PRIVATE_CHUNK *pChunk, 
 	ListCount[0] = 0;
 	switch (Chunk.fccID) {
 	case DMUS_FOURCC_BAND_FORM: { 
-          ULARGE_INTEGER save;
-          struct style_band *pNewBand;
-
+          static const LARGE_INTEGER zero = {0};
+          struct chunk_entry chunk = {FOURCC_LIST, .size = Chunk.dwSize, .type = Chunk.fccID};
 	  TRACE_(dmfile)(": BAND RIFF\n");
-
-          /* Can be application provided IStream without Clone method */
-	  liMove.QuadPart = 0;
-	  liMove.QuadPart -= sizeof(FOURCC) + (sizeof(FOURCC)+sizeof(DWORD));
-          IStream_Seek(pStm, liMove, STREAM_SEEK_CUR, &save);
-
-          hr = load_band(pStm, &pBand);
-	  if (FAILED(hr)) {
-	    ERR(": could not load track\n");
-	    return hr;
-	  }
-
-	  if (!(pNewBand = calloc(1, sizeof(*pNewBand)))) return E_OUTOFMEMORY;
-	  pNewBand->pBand = pBand;
-	  IDirectMusicBand_AddRef(pBand);
-	  list_add_tail(&This->bands, &pNewBand->entry);
-
-	  IDirectMusicTrack_Release(pBand); pBand = NULL;  /* now we can release it as it's inserted */
-	
-	  /** now safely move the cursor */
-          liMove.QuadPart = save.QuadPart - liMove.QuadPart + ListSize[0];
-          IStream_Seek(pStm, liMove, STREAM_SEEK_SET, NULL);
-
+          IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &chunk.offset);
+          chunk.offset.QuadPart -= 12;
+          hr = parse_style_band(This, pStm, &chunk);
+          if (FAILED(hr)) return hr;
 	  break;
 	}
 	default: {
