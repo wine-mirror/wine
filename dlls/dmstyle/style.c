@@ -21,7 +21,6 @@
 #include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmstyle);
-WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
 struct style_band {
     struct list entry;
@@ -605,180 +604,71 @@ static HRESULT parse_style_band(struct style *This, IStream *stream, struct chun
     return S_OK;
 }
 
-static HRESULT parse_style_form(struct style *This, DMUS_PRIVATE_CHUNK *pChunk, IStream *pStm)
+static inline void dump_timesig(DMUS_IO_TIMESIG *timesig)
 {
-  HRESULT hr = E_FAIL;
-  DMUS_PRIVATE_CHUNK Chunk;
-  DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
-  LARGE_INTEGER liMove; /* used when skipping chunks */
-
-  if (pChunk->fccID != DMUS_FOURCC_STYLE_FORM) {
-    ERR_(dmfile)(": %s chunk should be a STYLE form\n", debugstr_fourcc (pChunk->fccID));
-    return E_FAIL;
-  }  
-
-  StreamSize = pChunk->dwSize - sizeof(FOURCC);
-  StreamCount = 0;
-
-  do {
-    IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-    StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-
-    hr = IDirectMusicUtils_IPersistStream_ParseDescGeneric(&Chunk, pStm, &This->dmobj.desc);
-    if (FAILED(hr)) return hr;
-
-    if (hr == S_FALSE) {
-      switch (Chunk.fccID) {
-      case DMUS_FOURCC_STYLE_CHUNK: {
-	TRACE_(dmfile)(": Style chunk\n");
-	IStream_Read (pStm, &This->style, sizeof(DMUS_IO_STYLE), NULL);
-	/** TODO dump DMUS_IO_TIMESIG style.timeSig */
-	TRACE_(dmfile)(" - dblTempo: %g\n", This->style.dblTempo);
-	break;
-      }   
-      case FOURCC_RIFF: {
-	/**
-	 * should be embedded Bands into style
-	 */
-	IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-	TRACE_(dmfile)(": RIFF chunk of type %s", debugstr_fourcc(Chunk.fccID));
-	ListSize[0] = Chunk.dwSize - sizeof(FOURCC);
-	ListCount[0] = 0;
-	switch (Chunk.fccID) {
-	case DMUS_FOURCC_BAND_FORM: { 
-          static const LARGE_INTEGER zero = {0};
-          struct chunk_entry chunk = {FOURCC_LIST, .size = Chunk.dwSize, .type = Chunk.fccID};
-	  TRACE_(dmfile)(": BAND RIFF\n");
-          IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &chunk.offset);
-          chunk.offset.QuadPart -= 12;
-          hr = parse_style_band(This, pStm, &chunk);
-          if (FAILED(hr)) return hr;
-	  break;
-	}
-	default: {
-	  TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-	  liMove.QuadPart = ListSize[0];
-	  IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-	  break;
-	}
-	}
-	break;
-      }
-      case FOURCC_LIST: {
-	IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-	TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(Chunk.fccID));
-	ListSize[0] = Chunk.dwSize - sizeof(FOURCC);
-	ListCount[0] = 0;
-	switch (Chunk.fccID) {
-	case DMUS_FOURCC_UNFO_LIST: { 
-	  TRACE_(dmfile)(": UNFO list\n");
-	  do {
-	    IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-	    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-            TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-
-            hr = IDirectMusicUtils_IPersistStream_ParseUNFOGeneric(&Chunk, pStm, &This->dmobj.desc);
-	    if (FAILED(hr)) return hr;
-	    
-	    if (hr == S_FALSE) {
-	      switch (Chunk.fccID) {
-	      default: {
-		TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-		liMove.QuadPart = Chunk.dwSize;
-		IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-		break;				
-	      }
-	      }
-	    }  
-            TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
-	  } while (ListCount[0] < ListSize[0]);
-	  break;
-	}
-	case DMUS_FOURCC_PART_LIST: {
-          static const LARGE_INTEGER zero = {0};
-          struct chunk_entry chunk = {FOURCC_LIST, .size = Chunk.dwSize, .type = Chunk.fccID};
-	  TRACE_(dmfile)(": PART list\n");
-          IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &chunk.offset);
-          chunk.offset.QuadPart -= 12;
-          hr = parse_part_list(This, pStm, &chunk);
-	  if (FAILED(hr)) return hr;
-	  break;
-	}
-	case  DMUS_FOURCC_PATTERN_LIST: {
-          static const LARGE_INTEGER zero = {0};
-          struct chunk_entry chunk = {FOURCC_LIST, .size = Chunk.dwSize, .type = Chunk.fccID};
-	  TRACE_(dmfile)(": PATTERN list\n");
-          IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &chunk.offset);
-          chunk.offset.QuadPart -= 12;
-          hr = parse_pttn_list(This, pStm, &chunk);
-	  if (FAILED(hr)) return hr;
-	  break;
-	}
-	default: {
-	  TRACE_(dmfile)(": unknown (skipping)\n");
-	  liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
-	  IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-	  break;						
-	}
-	}
-	break;
-      }
-      default: {
-	TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-	liMove.QuadPart = Chunk.dwSize;
-	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-	break;						
-      }
-      }
-    }
-    TRACE_(dmfile)(": StreamCount[0] = %ld < StreamSize[0] = %ld\n", StreamCount, StreamSize);
-  } while (StreamCount < StreamSize);  
-
-  return S_OK;
+    TRACE("Time signature: %d beats/measure, 1/%d note beat, %d grids/beat\n",
+            timesig->bBeatsPerMeasure, timesig->bBeat ? timesig->bBeat : 256, timesig->wGridsPerBeat);
 }
 
-static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pStm)
+static HRESULT WINAPI style_persist_stream_Load(IPersistStream *iface, IStream *stream)
 {
-  struct style *This = impl_from_IPersistStream(iface);
-  DMUS_PRIVATE_CHUNK Chunk;
-  LARGE_INTEGER liMove; /* used when skipping chunks */
-  HRESULT hr;
+    struct style *This = impl_from_IPersistStream(iface);
+    struct chunk_entry style = {0};
+    struct chunk_entry chunk = {.parent = &style};
+    HRESULT hr = E_FAIL;
 
-  FIXME("(%p, %p): Loading\n", This, pStm);
+    TRACE("(%p, %p): Loading\n", This, stream);
 
-  IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-  TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-  switch (Chunk.fccID) {
-  case FOURCC_RIFF: {
-    IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-    switch (Chunk.fccID) {
-    case DMUS_FOURCC_STYLE_FORM: {
-      TRACE_(dmfile)(": Style form\n");
-      hr = parse_style_form(This, &Chunk, pStm);
-      if (FAILED(hr)) return hr;
-      break;
+    if (!stream)
+        return E_POINTER;
+
+    if (stream_get_chunk(stream, &style) != S_OK || style.id != FOURCC_RIFF ||
+            style.type != DMUS_FOURCC_STYLE_FORM)
+    {
+        WARN("Invalid chunk %s\n", debugstr_chunk(&style));
+        return DMUS_E_UNSUPPORTED_STREAM;
     }
-    default: {
-      TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
-      liMove.QuadPart = Chunk.dwSize;
-      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
-      return E_FAIL;
+
+    if (FAILED(hr = dmobj_parsedescriptor(stream, &style, &This->dmobj.desc, DMUS_OBJ_OBJECT))
+                || FAILED(hr = stream_reset_chunk_data(stream, &style)))
+        return hr;
+
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+            case DMUS_FOURCC_GUID_CHUNK:
+            case DMUS_FOURCC_VERSION_CHUNK:
+            case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_UNFO_LIST):
+                /* already parsed/ignored by dmobj_parsedescriptor */
+                break;
+            case DMUS_FOURCC_STYLE_CHUNK:
+                hr = stream_chunk_get_data(stream, &chunk, &This->style, sizeof(This->style));
+                if (SUCCEEDED(hr))
+                {
+                    dump_timesig(&This->style.timeSig);
+                    TRACE("Tempo: %g\n", This->style.dblTempo);
+                }
+                break;
+            case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_PART_LIST):
+                hr = parse_part_list(This, stream, &chunk);
+                break;
+            case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_PATTERN_LIST):
+                hr = parse_pttn_list(This, stream, &chunk);
+                break;
+            case MAKE_IDTYPE(FOURCC_RIFF, DMUS_FOURCC_BAND_FORM):
+                hr = parse_style_band(This, stream, &chunk);
+                break;
+            default:
+                WARN("Ignoring chunk %s\n", debugstr_chunk(&chunk));
+                break;
+        }
+
+        if (FAILED(hr))
+            return hr;
     }
-    }
-    TRACE_(dmfile)(": reading finished\n");
-    break;
-  }
-  default: {
-    TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
-    liMove.QuadPart = Chunk.dwSize;
-    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
-    return E_FAIL;
-  }
-  }
-  
-  return S_OK;
+
+    return S_OK;
 }
 
 static const IPersistStreamVtbl persiststream_vtbl = {
@@ -787,7 +677,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
     dmobj_IPersistStream_Release,
     dmobj_IPersistStream_GetClassID,
     unimpl_IPersistStream_IsDirty,
-    IPersistStreamImpl_Load,
+    style_persist_stream_Load,
     unimpl_IPersistStream_Save,
     unimpl_IPersistStream_GetSizeMax
 };
