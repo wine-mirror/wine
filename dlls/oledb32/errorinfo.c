@@ -61,6 +61,7 @@ typedef struct errorrecords
 enum error_info_flags
 {
     ERROR_INFO_HAS_DESCRIPTION = 0x1,
+    ERROR_INFO_HAS_HELPINFO = 0x2,
 };
 
 struct error_info
@@ -75,6 +76,8 @@ struct error_info
 
     BSTR source;
     BSTR description;
+    BSTR helpfile;
+    DWORD helpcontext;
 };
 
 static inline errorrecords *impl_records_from_IErrorInfo( IErrorInfo *iface )
@@ -178,6 +181,33 @@ static HRESULT error_info_fetch_description(struct error_info *info)
     return S_OK;
 }
 
+static HRESULT error_info_fetch_helpinfo(struct error_info *info)
+{
+    IErrorLookup *lookup_service;
+    struct error_record *record;
+    DWORD helpcontext;
+    BSTR helpfile;
+    HRESULT hr;
+
+    if (FAILED(hr = errorrecords_get_record(info->records, info->index, &record)))
+        return hr;
+
+    if (FAILED(hr = error_record_get_lookup_service(record, &lookup_service)))
+        return hr;
+
+    hr = IErrorLookup_GetHelpInfo(lookup_service, record->info.hrError, record->lookup_id,
+            info->lcid, &helpfile, &helpcontext);
+    IErrorLookup_Release(lookup_service);
+    if (FAILED(hr))
+        return hr;
+
+    info->helpfile = helpfile;
+    info->helpcontext = helpcontext;
+    info->flags |= ERROR_INFO_HAS_HELPINFO;
+
+    return S_OK;
+}
+
 static HRESULT error_info_get_source(struct error_info *info, BSTR *source)
 {
     struct error_record *record;
@@ -233,6 +263,28 @@ static HRESULT error_info_get_description(struct error_info *info, BSTR *descrip
         return hr;
 
     return return_bstr(info->description, description);
+}
+
+static HRESULT error_info_get_helpfile(struct error_info *info, BSTR *helpfile)
+{
+    struct error_record *record;
+    HRESULT hr = S_OK;
+
+    if (!helpfile)
+        return E_INVALIDARG;
+
+    *helpfile = NULL;
+
+    if (FAILED(hr = errorrecords_get_record(info->records, info->index, &record)))
+        return hr;
+
+    if (record->lookup_id == IDENTIFIER_SDK_ERROR)
+        return E_FAIL;
+
+    if (!(info->flags & ERROR_INFO_HAS_HELPINFO))
+        hr = error_info_fetch_helpinfo(info);
+
+    return SUCCEEDED(hr) ? return_bstr(info->helpfile, helpfile) : hr;
 }
 
 static HRESULT WINAPI errorrecords_QueryInterface(IErrorInfo* iface, REFIID riid, void **ppvoid)
@@ -647,6 +699,7 @@ static ULONG WINAPI error_info_Release(IErrorInfo *iface)
         IErrorRecords_Release(&error_info->records->IErrorRecords_iface);
         SysFreeString(error_info->source);
         SysFreeString(error_info->description);
+        SysFreeString(error_info->helpfile);
         free(error_info);
     }
 
@@ -683,9 +736,11 @@ static HRESULT WINAPI error_info_GetDescription(IErrorInfo *iface, BSTR *descrip
 
 static HRESULT WINAPI error_info_GetHelpFile(IErrorInfo *iface, BSTR *helpfile)
 {
-    FIXME("%p, %p.\n", iface, helpfile);
+    struct error_info *error_info = impl_from_IErrorInfo(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, helpfile);
+
+    return error_info_get_helpfile(error_info, helpfile);
 }
 
 static HRESULT WINAPI error_info_GetHelpContext(IErrorInfo *iface, DWORD *context)
