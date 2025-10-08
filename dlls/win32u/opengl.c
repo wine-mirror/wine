@@ -2142,6 +2142,30 @@ static int win32u_wglGetSwapIntervalEXT(void)
     return interval;
 }
 
+static BOOL win32u_wglQueryRendererIntegerWINE( HDC hdc, GLint renderer, GLenum attribute, GLuint *value )
+{
+    FIXME( "hdc %p, renderer %u, attribute %#x, value %p stub!\n", hdc, renderer, attribute, value );
+    return FALSE;
+}
+
+static const char *win32u_wglQueryRendererStringWINE( HDC hdc, GLint renderer, GLenum attribute )
+{
+    FIXME( "hdc %p, renderer %u, attribute %#x stub!\n", hdc, renderer, attribute );
+    return NULL;
+}
+
+static BOOL win32u_wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint *value )
+{
+    FIXME( "attribute %#x, value %p stub!\n", attribute, value );
+    return FALSE;
+}
+
+static const char *win32u_wglQueryCurrentRendererStringWINE( GLenum attribute )
+{
+    FIXME( "attribute %#x stub!\n", attribute );
+    return NULL;
+}
+
 static void display_funcs_init(void)
 {
     UINT status;
@@ -2241,6 +2265,15 @@ static void display_funcs_init(void)
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_swap_control_tear" );
     display_funcs.p_wglSwapIntervalEXT = win32u_wglSwapIntervalEXT;
     display_funcs.p_wglGetSwapIntervalEXT = win32u_wglGetSwapIntervalEXT;
+
+    if (display_egl.device && devices_count)
+    {
+        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_WINE_query_renderer" );
+        display_funcs.p_wglQueryCurrentRendererIntegerWINE = win32u_wglQueryCurrentRendererIntegerWINE;
+        display_funcs.p_wglQueryCurrentRendererStringWINE = win32u_wglQueryCurrentRendererStringWINE;
+        display_funcs.p_wglQueryRendererIntegerWINE = win32u_wglQueryRendererIntegerWINE;
+        display_funcs.p_wglQueryRendererStringWINE = win32u_wglQueryRendererStringWINE;
+    }
 }
 
 /***********************************************************************
