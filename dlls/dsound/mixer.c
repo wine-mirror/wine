@@ -548,8 +548,7 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, float *mix_buffer, 
 	}
 
 	/* check for notification positions */
-	if (dsb->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY &&
-	    dsb->state != STATE_STARTING) {
+	if (dsb->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
 		INT ilen = DSOUND_BufPtrDiff(dsb->buflen, dsb->sec_mixpos, oldpos);
 		DSOUND_CheckEvent(dsb, oldpos, ilen);
 	}
