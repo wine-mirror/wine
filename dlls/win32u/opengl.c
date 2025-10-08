@@ -54,11 +54,11 @@ struct wgl_pbuffer
 
 static const struct opengl_driver_funcs nulldrv_funcs, *driver_funcs = &nulldrv_funcs;
 static const struct opengl_funcs *default_funcs; /* default GL function table from opengl32 */
-static struct egl_platform display_egl;
+static struct egl_platform display_egl, *devices_egl;
 static struct opengl_funcs display_funcs;
 
 static struct wgl_pixel_format *pixel_formats;
-static UINT formats_count, onscreen_count;
+static UINT formats_count, onscreen_count, devices_count;
 static char wgl_extensions[4096];
 
 static BOOL has_extension( const char *list, const char *ext )
@@ -902,36 +902,30 @@ failed:
     return FALSE;
 }
 
-static void init_egl_platform( struct egl_platform *egl, struct opengl_funcs *funcs,
-                               const struct opengl_driver_funcs *driver_funcs )
+static BOOL init_egl_platform( struct egl_platform *egl, const struct opengl_funcs *funcs )
 {
     const char *extensions;
     EGLint major, minor;
 
-    if (!funcs->egl_handle || !driver_funcs->p_init_egl_platform) return;
-
-    driver_funcs->p_init_egl_platform( egl );
-    if (!egl->type) egl->display = funcs->p_eglGetDisplay( EGL_DEFAULT_DISPLAY );
-    else egl->display = funcs->p_eglGetPlatformDisplay( egl->type, egl->native_display, NULL );
-
+    if (!egl->display) egl->display = funcs->p_eglGetPlatformDisplay( egl->type, egl->native_display, NULL );
     if (!egl->display)
     {
-        ERR( "Failed to open EGL display\n" );
-        return;
+        WARN( "Failed to open EGL display for type %#x, native display %p\n", egl->type, egl->native_display );
+        return FALSE;
     }
 
-    if (!funcs->p_eglInitialize( egl->display, &major, &minor )) return;
+    if (!funcs->p_eglInitialize( egl->display, &major, &minor )) return FALSE;
     TRACE( "Initialized EGL display %p, version %d.%d\n", egl->display, major, minor );
 
-    if (!(extensions = funcs->p_eglQueryString( egl->display, EGL_EXTENSIONS ))) return;
+    if (!(extensions = funcs->p_eglQueryString( egl->display, EGL_EXTENSIONS ))) return FALSE;
     TRACE( "EGL display extensions:\n" );
     dump_extensions( extensions );
 
 #define CHECK_EXTENSION( ext )                                                                     \
     if (!has_extension( extensions, #ext ))                                                        \
     {                                                                                              \
-        ERR( "Failed to find required extension %s\n", #ext );                                     \
-        return;                                                                                    \
+        WARN( "Failed to find required extension %s\n", #ext );                                    \
+        return FALSE;                                                                              \
     }
     CHECK_EXTENSION( EGL_KHR_create_context );
     CHECK_EXTENSION( EGL_KHR_create_context_no_error );
@@ -940,6 +934,61 @@ static void init_egl_platform( struct egl_platform *egl, struct opengl_funcs *fu
 
     egl->has_EGL_EXT_present_opaque = has_extension( extensions, "EGL_EXT_present_opaque" );
     egl->has_EGL_EXT_pixel_format_float = has_extension( extensions, "EGL_EXT_pixel_format_float" );
+    return TRUE;
+}
+
+static void init_egl_devices( struct opengl_funcs *funcs )
+{
+    EGLDeviceEXT *devices = NULL;
+    struct egl_platform *egl;
+    const char *extensions;
+    EGLint i, count;
+
+    if (!(extensions = funcs->p_eglQueryString( EGL_NO_DISPLAY, EGL_EXTENSIONS ))) return;
+    if (!has_extension( extensions, "EGL_EXT_device_base" ) || !has_extension( extensions, "EGL_EXT_platform_device" )) return;
+
+#define LOAD_FUNCPTR( func )                                                                    \
+    if (!funcs->p_##func && !(funcs->p_##func = (void *)funcs->p_eglGetProcAddress( #func ))) return
+    LOAD_FUNCPTR( eglQueryDevicesEXT );
+    LOAD_FUNCPTR( eglQueryDeviceStringEXT );
+    LOAD_FUNCPTR( eglQueryDisplayAttribEXT );
+#undef LOAD_FUNCPTR
+
+    if (!funcs->p_eglQueryDisplayAttribEXT( display_egl.display, EGL_DEVICE_EXT, (EGLAttrib *)&display_egl.device ))
+    {
+        WARN( "Failed to query EGL display device (error %#x).\n", funcs->p_eglGetError() );
+        display_egl.device = EGL_NO_DEVICE_EXT;
+    }
+    TRACE( "Found display platform device %p\n", display_egl.device );
+
+    funcs->p_eglQueryDevicesEXT( 0, NULL, &count );
+    if (!count || !(devices = calloc( count, sizeof(EGLDeviceEXT *) )) || !(devices_egl = calloc( count, sizeof(*devices_egl) ))) goto done;
+    funcs->p_eglQueryDevicesEXT( count, devices, &count );
+
+    for (i = 0, egl = devices_egl; i < count; i++)
+    {
+        TRACE( "Initializing EGL device %p\n", devices[i] );
+        egl->type = EGL_PLATFORM_DEVICE_EXT;
+        egl->native_display = devices[i];
+        egl->device = devices[i];
+        if (init_egl_platform( egl, funcs )) egl++;
+    }
+    devices_count = egl - devices_egl;
+
+done:
+    TRACE( "Initialized %u EGL devices\n", devices_count );
+    free( devices );
+}
+
+static void init_egl_platforms( struct opengl_funcs *funcs, const struct opengl_driver_funcs *driver_funcs )
+{
+    if (!funcs->egl_handle || !driver_funcs->p_init_egl_platform) return;
+
+    driver_funcs->p_init_egl_platform( &display_egl );
+    if (!display_egl.type) display_egl.display = funcs->p_eglGetDisplay( EGL_DEFAULT_DISPLAY );
+
+    init_egl_platform( &display_egl, funcs );
+    init_egl_devices( funcs );
 }
 
 #else /* SONAME_LIBEGL */
@@ -950,8 +999,7 @@ static BOOL egl_init( const struct opengl_driver_funcs **driver_funcs )
     return FALSE;
 }
 
-static void init_egl_platform( struct egl_platform *egl, struct opengl_funcs *funcs,
-                               const struct opengl_driver_funcs *driver_funcs )
+static void init_egl_platforms( struct opengl_funcs *funcs, const struct opengl_driver_funcs *driver_funcs )
 {
 }
 
@@ -2102,7 +2150,7 @@ static void display_funcs_init(void)
 
     if ((status = user_driver->pOpenGLInit( WINE_OPENGL_DRIVER_VERSION, &display_funcs, &driver_funcs )))
         WARN( "Failed to initialize the driver OpenGL functions, status %#x\n", status );
-    init_egl_platform( &display_egl, &display_funcs, driver_funcs );
+    init_egl_platforms( &display_funcs, driver_funcs );
 
     formats_count = driver_funcs->p_init_pixel_formats( &onscreen_count );
     if (!(pixel_formats = malloc( formats_count * sizeof(*pixel_formats) ))) ERR( "Failed to allocate memory for pixel formats\n" );
