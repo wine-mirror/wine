@@ -147,8 +147,10 @@ struct egl_platform
     UINT                 device_id;
     UINT                 vendor_id;
     BOOL                 accelerated;
+    UINT                 version[3];
     UINT                 core_version;
     UINT                 compat_version;
+    UINT                 video_memory;
 };
 
 struct opengl_drawable_funcs

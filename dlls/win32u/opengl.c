@@ -1027,10 +1027,10 @@ static UINT read_drm_device_prop( const char *name, const char *prop )
 static void init_device_info( struct egl_platform *egl, const struct opengl_funcs *funcs )
 {
     static const UINT versions[] = {46, 45, 44, 43, 42, 41, 40, 33, 32, 31, 30, 21, 20, 15, 14, 13, 12, 11, 10, 0};
-    EGLContext core_context = EGL_NO_CONTEXT, compat_context = EGL_NO_CONTEXT;
+    EGLContext core_context = EGL_NO_CONTEXT, compat_context = EGL_NO_CONTEXT, context = EGL_NO_CONTEXT;
+    int i, count, values[3] = {0};
     const char *extensions, *str;
     EGLConfig config;
-    int i, count;
 
     TRACE( "Initializing device %zu (%p)\n", egl - devices_egl, egl->device);
 
@@ -1069,16 +1069,38 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
             context_attribs[5] = EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT;
             compat_context = funcs->p_eglCreateContext( egl->display, config, EGL_NO_CONTEXT, context_attribs );
             if (compat_context) egl->compat_version = versions[i];
+            if (!context) context = compat_context;
         }
         if (!egl->core_version)
         {
             context_attribs[5] = EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT;
             core_context = funcs->p_eglCreateContext( egl->display, config, EGL_NO_CONTEXT, context_attribs );
             if (core_context) egl->core_version = versions[i];
+            if (!context) context = core_context;
         }
     }
     TRACE( "  - core_version: %u\n", egl->core_version );
     TRACE( "  - compat_version: %u\n", egl->compat_version );
+
+    if (context)
+    {
+        funcs->p_eglMakeCurrent( egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, context );
+
+        if ((str = (const char *)funcs->p_glGetString( GL_VERSION )) && (str = strrchr( str, ' ' )) &&
+            (count = sscanf( str, "%u.%u.%u", &values[0], &values[1], &values[2] )) >= 2)
+            memcpy( egl->version, values, sizeof(egl->version) );
+        TRACE( "  - version: %u.%u.%u\n", egl->version[0], egl->version[1], egl->version[2] );
+
+        extensions = (const char *)funcs->p_glGetString( GL_EXTENSIONS );
+        if (has_extension( extensions, "GL_NVX_gpu_memory_info" ))
+        {
+            funcs->p_glGetIntegerv( GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, values );
+            egl->video_memory = values[0] / 1024;
+        }
+        TRACE( "  - video_memory: %u MiB\n", egl->video_memory );
+
+        funcs->p_eglMakeCurrent( egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT );
+    }
 
     if (compat_context) funcs->p_eglDestroyContext( egl->display, compat_context );
     if (core_context) funcs->p_eglDestroyContext( egl->display, core_context );
@@ -2235,6 +2257,7 @@ static BOOL win32u_wglQueryRendererIntegerWINE( HDC hdc, GLint renderer, GLenum 
     case WGL_RENDERER_DEVICE_ID_WINE: *value = egl->device_id; return TRUE;
     case WGL_RENDERER_VENDOR_ID_WINE: *value = egl->vendor_id; return TRUE;
     case WGL_RENDERER_UNIFIED_MEMORY_ARCHITECTURE_WINE: *value = 0; return TRUE;
+    case WGL_RENDERER_VERSION_WINE: memcpy( value, egl->version, 3 ); return TRUE;
     case WGL_RENDERER_OPENGL_COMPATIBILITY_PROFILE_VERSION_WINE:
         value[0] = egl->compat_version / 10;
         value[1] = egl->compat_version % 10;
@@ -2246,6 +2269,7 @@ static BOOL win32u_wglQueryRendererIntegerWINE( HDC hdc, GLint renderer, GLenum 
     case WGL_RENDERER_PREFERRED_PROFILE_WINE:
         *value = egl->core_version ? WGL_CONTEXT_CORE_PROFILE_BIT_ARB : WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
         return TRUE;
+    case WGL_RENDERER_VIDEO_MEMORY_WINE: *value = egl->video_memory; return TRUE;
     default: FIXME( "Unsupported attribute %#x\n", attribute ); break;
     }
 
