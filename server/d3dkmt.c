@@ -421,7 +421,7 @@ DECL_HANDLER(d3dkmt_object_open)
         reply->handle = handle;
         reply->global = object->global;
         reply->runtime_size = object->runtime_size;
-        if (runtime_size) set_reply_data( object->runtime, runtime_size );
+        if (runtime_size) set_reply_data( object->runtime, object->runtime_size );
     }
 
     release_object( object );
