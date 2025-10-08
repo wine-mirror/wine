@@ -36,8 +36,6 @@
 
 #include "wine/test.h"
 
-DEFINE_GUID(CSLID_MSDAER, 0xc8b522cf,0x5cf3,0x11ce,0xad,0xe5,0x00,0xaa,0x00,0x44,0x77,0x3d);
-
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
 {
@@ -371,7 +369,7 @@ static void test_errorinfo(void)
     GUID guid;
     BSTR str;
 
-    hr = CoCreateInstance(&CSLID_MSDAER, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&unk);
+    hr = CoCreateInstance(&CLSID_EXTENDEDERRORINFO, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&unk);
     ok(hr == S_OK, "got %08lx\n", hr);
 
     hr = IUnknown_QueryInterface(unk, &IID_IErrorInfo, (void**)&errorinfo);
@@ -563,7 +561,7 @@ static void test_errorinfo(void)
 
     /* Shift in record indexing. Same returned IErrorInfo instance refers to a live record collection,
        not a copy. */
-    hr = CoCreateInstance(&CSLID_MSDAER, NULL, CLSCTX_INPROC_SERVER, &IID_IErrorRecords, (void **)&errrecs);
+    hr = CoCreateInstance(&CLSID_EXTENDEDERRORINFO, NULL, CLSCTX_INPROC_SERVER, &IID_IErrorRecords, (void **)&errrecs);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     memset(&info, 0, sizeof(info));

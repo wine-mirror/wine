@@ -38,8 +38,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 
 HINSTANCE instance;
 
-DEFINE_GUID(CSLID_MSDAER, 0xc8b522cf,0x5cf3,0x11ce,0xad,0xe5,0x00,0xaa,0x00,0x44,0x77,0x3d);
-
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID lpv)
 {
     switch(reason)
@@ -148,7 +146,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **obj)
     {
         factory = &oledb_datainit_cf.IClassFactory_iface;
     }
-    else if ( IsEqualCLSID (rclsid, &CSLID_MSDAER) )
+    else if ( IsEqualCLSID (rclsid, &CLSID_EXTENDEDERRORINFO) )
     {
         factory = &oledb_errorinfo_cf.IClassFactory_iface;
     }
