@@ -2307,7 +2307,7 @@ Window create_client_window( HWND hwnd, const XVisualInfo *visual, Colormap colo
     XSync( gdi_display, False ); /* make sure whole_window is known from gdi_display */
     ret = data->client_window = XCreateWindow( gdi_display,
                                                data->whole_window ? data->whole_window : get_dummy_parent(),
-                                               x, y, cx, cy, 0, default_visual.depth, InputOutput,
+                                               x, y, cx, cy, 0, visual->depth, InputOutput,
                                                visual->visual, CWBitGravity | CWWinGravity |
                                                CWBackingStore | CWColormap | CWBorderPixel, &attr );
     if (data->client_window)
