@@ -23,8 +23,8 @@
 @ stdcall -import D3DX11CreateTextureFromFileA(ptr str ptr ptr ptr ptr)
 @ stdcall -import D3DX11CreateTextureFromFileW(ptr wstr ptr ptr ptr ptr)
 @ stdcall -import D3DX11CreateTextureFromMemory(ptr ptr long ptr ptr ptr ptr)
-@ stub D3DX11CreateTextureFromResourceA
-@ stub D3DX11CreateTextureFromResourceW
+@ stdcall -import D3DX11CreateTextureFromResourceA(ptr long str ptr ptr ptr ptr)
+@ stdcall -import D3DX11CreateTextureFromResourceW(ptr long wstr ptr ptr ptr ptr)
 @ stub D3DX11CreateThreadPump
 @ stdcall -import D3DX11FilterTexture(ptr ptr long long)
 @ stdcall -import D3DX11GetImageInfoFromFileA(str ptr ptr ptr)

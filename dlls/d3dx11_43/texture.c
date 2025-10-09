@@ -278,6 +278,24 @@ HRESULT WINAPI D3DX11CreateTextureFromFileW(ID3D11Device *device, const WCHAR *f
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI D3DX11CreateTextureFromResourceA(ID3D11Device *device, HMODULE module, const char *resource,
+        D3DX11_IMAGE_LOAD_INFO *load_info, ID3DX11ThreadPump *pump, ID3D11Resource **texture, HRESULT *hresult)
+{
+    FIXME("device %p, module %p, resource %s, load_info %p, pump %p, texture %p, hresult %p stub!\n",
+            device, module, debugstr_a(resource), load_info, pump, texture, hresult);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DX11CreateTextureFromResourceW(ID3D11Device *device, HMODULE module, const WCHAR *resource,
+        D3DX11_IMAGE_LOAD_INFO *load_info, ID3DX11ThreadPump *pump, ID3D11Resource **texture, HRESULT *hresult)
+{
+    FIXME("device %p, module %p, resource %s, load_info %p, pump %p, texture %p, hresult %p stub!\n",
+            device, module, debugstr_w(resource), load_info, pump, texture, hresult);
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI D3DX11CreateTextureFromMemory(ID3D11Device *device, const void *data,
         SIZE_T data_size, D3DX11_IMAGE_LOAD_INFO *load_info, ID3DX11ThreadPump *pump,
         ID3D11Resource **texture, HRESULT *hresult)
