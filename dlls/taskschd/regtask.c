@@ -543,7 +543,10 @@ static HRESULT WINAPI regtasks_get_Item(IRegisteredTaskCollection *iface, VARIAN
     VariantClear(&converted_index);
     MIDL_user_free(task_names[0]);
     MIDL_user_free(task_names);
-    ITaskDefinition_Release(definition);
+
+    if (hr != S_OK)
+        ITaskDefinition_Release(definition);
+
     return hr;
 }
 
