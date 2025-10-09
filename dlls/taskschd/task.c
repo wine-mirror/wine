@@ -2373,6 +2373,7 @@ typedef struct
     ITriggerCollection *triggers;
     IPrincipal *principal;
     IActionCollection *actions;
+    BSTR data;
 } TaskDefinition;
 
 static inline TaskDefinition *impl_from_ITaskDefinition(ITaskDefinition *iface)
@@ -2405,6 +2406,8 @@ static ULONG WINAPI TaskDefinition_Release(ITaskDefinition *iface)
             IPrincipal_Release(taskdef->principal);
         if (taskdef->actions)
             IActionCollection_Release(taskdef->actions);
+        if (taskdef->data)
+            SysFreeString(taskdef->data);
 
         free(taskdef);
     }
@@ -2576,14 +2579,41 @@ static HRESULT WINAPI TaskDefinition_put_Settings(ITaskDefinition *iface, ITaskS
 
 static HRESULT WINAPI TaskDefinition_get_Data(ITaskDefinition *iface, BSTR *data)
 {
-    FIXME("%p,%p: stub\n", iface, data);
-    return E_NOTIMPL;
+    TaskDefinition *taskdef = impl_from_ITaskDefinition(iface);
+
+    TRACE("%p,%p\n", iface, data);
+
+    if (!data) return E_POINTER;
+
+    if (!taskdef->data)
+        *data = NULL;
+    else
+    {
+        *data = SysAllocString(taskdef->data);
+        if (!*data) return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskDefinition_put_Data(ITaskDefinition *iface, BSTR data)
 {
-    FIXME("%p,%p: stub\n", iface, data);
-    return E_NOTIMPL;
+    TaskDefinition *taskdef = impl_from_ITaskDefinition(iface);
+    BSTR copy = NULL;
+
+    TRACE("%p,%s\n", iface, debugstr_w(data));
+
+    if (data)
+    {
+        copy = SysAllocString(data);
+        if (!copy) return E_OUTOFMEMORY;
+    }
+
+    if (taskdef->data)
+        SysFreeString(taskdef->data);
+
+    taskdef->data = copy;
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskDefinition_get_Principal(ITaskDefinition *iface, IPrincipal **principal)
@@ -3126,6 +3156,12 @@ static HRESULT WINAPI TaskDefinition_get_XmlText(ITaskDefinition *iface, BSTR *x
 
     hr = write_actions(stream, taskdef->actions);
     if (hr != S_OK) goto failed;
+
+    if (taskdef->data)
+    {
+        hr = write_text_value(stream, L"Data", taskdef->data);
+        if (hr != S_OK) goto failed;
+    }
 
     pop_indent();
 
@@ -3766,6 +3802,13 @@ static HRESULT read_task(IXmlReader *reader, ITaskDefinition *taskdef)
                 hr = read_principals(reader, taskdef);
             else if (!lstrcmpW(name, L"Actions"))
                 hr = read_actions(reader, taskdef);
+            else if (!lstrcmpW(name, L"Data"))
+            {
+                WCHAR *value;
+                hr = read_text_value(reader, &value);
+                if (hr == S_OK)
+                    ITaskDefinition_put_Data(taskdef, value);
+            }
             else
                 FIXME("unhandled Task element %s\n", debugstr_w(name));
 
@@ -3893,6 +3936,11 @@ static HRESULT WINAPI TaskDefinition_put_XmlText(ITaskDefinition *iface, BSTR xm
         {
             IActionCollection_Release(taskdef->actions);
             taskdef->actions = NULL;
+        }
+        if (taskdef->data)
+        {
+            SysFreeString(taskdef->data);
+            taskdef->data = NULL;
         }
 
         hr = read_xml(reader, iface);

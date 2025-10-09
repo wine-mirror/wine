@@ -1845,23 +1845,23 @@ static void test_TaskDefinition(void)
     IRegistrationInfo_Release(reginfo);
 
     hr = ITaskDefinition_get_Data(taskdef, &bstr);
-    todo_wine ok(hr == S_OK, "get_Data error %#lx\n", hr);
-    if (!winetest_platform_is_wine) ok(!lstrcmpW(bstr, L"MyTestData"), "expected \"MyTestData\", got %s\n", wine_dbgstr_w(bstr));
-    if (!winetest_platform_is_wine) SysFreeString(bstr);
+    ok(hr == S_OK, "get_Data error %#lx\n", hr);
+    ok(!lstrcmpW(bstr, L"MyTestData"), "expected \"MyTestData\", got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
 
     hr = ITaskDefinition_put_Data(taskdef, (BSTR) L"NewTest");
-    todo_wine ok(hr == S_OK, "put_Data error %#lx\n", hr);
+    ok(hr == S_OK, "put_Data error %#lx\n", hr);
     bstr = (BSTR)0xdeadbeef;
     hr = ITaskDefinition_get_Data(taskdef, &bstr);
-    if (!winetest_platform_is_wine) ok(!lstrcmpW(bstr, L"NewTest"), "expected \"NewTest\", got %s\n", wine_dbgstr_w(bstr));
-    if (!winetest_platform_is_wine) SysFreeString(bstr);
+    ok(!lstrcmpW(bstr, L"NewTest"), "expected \"NewTest\", got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
 
     hr = ITaskDefinition_put_Data(taskdef, NULL);
-    todo_wine ok(hr == S_OK, "put_Data error %#lx\n", hr);
+    ok(hr == S_OK, "put_Data error %#lx\n", hr);
     bstr = (BSTR)0xdeadbeef;
     hr = ITaskDefinition_get_Data(taskdef, &bstr);
-    todo_wine ok(hr == S_OK, "get_Data error %#lx\n", hr);
-    todo_wine ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
+    ok(hr == S_OK, "get_Data error %#lx\n", hr);
+    ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
 
     hr = ITaskDefinition_put_XmlText(taskdef, xml4);
     ok(hr == S_OK, "put_XmlText error %#lx\n", hr);
