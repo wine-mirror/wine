@@ -1,0 +1,15 @@
+@ stub BrandingFormatString
+@ stub BrandingFormatStringForEdition
+@ stub BrandingLoadBitmap
+@ stub BrandingLoadCursor
+@ stub BrandingLoadIcon
+@ stub BrandingLoadImage
+@ stub BrandingLoadNeutralStringForEdition
+@ stub BrandingLoadString
+@ stub BrandingLoadStringForEdition
+@ stub GetEULAFile
+@ stub GetEULAFileEx
+@ stub GetEULAInCurrentUILanguage
+@ stub GetHinstanceByNamespace
+@ stub GetInstalledEULAPath
+@ stub InstallEULA
