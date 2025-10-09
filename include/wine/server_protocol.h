@@ -2210,10 +2210,11 @@ struct get_mapping_info_reply
     mem_size_t   size;
     unsigned int flags;
     obj_handle_t shared_file;
+    data_size_t  name_len;
     data_size_t  total;
     /* VARARG(image,pe_image_info); */
-    /* VARARG(name,unicode_str); */
-    char __pad_28[4];
+    /* VARARG(name,unicode_str,name_len); */
+    /* VARARG(exp_name,string); */
 };
 
 
@@ -7021,6 +7022,6 @@ union generic_reply
     struct d3dkmt_object_open_name_reply d3dkmt_object_open_name_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 919
+#define SERVER_PROTOCOL_VERSION 920
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

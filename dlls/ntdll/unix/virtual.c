@@ -3284,10 +3284,11 @@ done:
  */
 static unsigned int get_mapping_info( HANDLE handle, ACCESS_MASK access, unsigned int *sec_flags,
                                       mem_size_t *full_size, HANDLE *shared_file,
-                                      struct pe_image_info **info, UNICODE_STRING *nt_name )
+                                      struct pe_image_info **info, UNICODE_STRING *nt_name,
+                                      ANSI_STRING *exp_name )
 {
     struct pe_image_info *image_info;
-    SIZE_T total, size = 1024;
+    SIZE_T namelen, total, size = 1024;
     unsigned int status;
 
     for (;;)
@@ -3302,6 +3303,7 @@ static unsigned int get_mapping_info( HANDLE handle, ACCESS_MASK access, unsigne
             status = wine_server_call( req );
             *sec_flags   = reply->flags;
             *full_size   = reply->size;
+            namelen      = reply->name_len;
             total        = reply->total;
             *shared_file = wine_server_ptr_handle( reply->shared_file );
         }
@@ -3318,7 +3320,9 @@ static unsigned int get_mapping_info( HANDLE handle, ACCESS_MASK access, unsigne
         assert( total >= sizeof(*image_info) );
         total -= sizeof(*image_info);
         nt_name->Buffer = (WCHAR *)(image_info + 1);
-        nt_name->Length = nt_name->MaximumLength = total;
+        nt_name->Length = nt_name->MaximumLength = namelen;
+        exp_name->Buffer = (char *)nt_name->Buffer + namelen;
+        exp_name->Length = exp_name->MaximumLength = total - namelen;
         *info = image_info;
     }
     else free( image_info );
@@ -3479,6 +3483,7 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
     SIZE_T size;
     struct pe_image_info *image_info = NULL;
     UNICODE_STRING nt_name;
+    ANSI_STRING exp_name;
     void *base;
     int unix_handle = -1, needs_close;
     unsigned int vprot, sec_flags;
@@ -3509,7 +3514,8 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
         return STATUS_INVALID_PAGE_PROTECTION;
     }
 
-    res = get_mapping_info( handle, access, &sec_flags, &full_size, &shared_file, &image_info, &nt_name );
+    res = get_mapping_info( handle, access, &sec_flags, &full_size, &shared_file,
+                            &image_info, &nt_name, &exp_name );
     if (res) return res;
 
     if (image_info)
@@ -3779,9 +3785,10 @@ NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size
     struct pe_image_info *image_info = NULL;
     NTSTATUS status;
     UNICODE_STRING nt_name;
+    ANSI_STRING exp_name;
 
     if ((status = get_mapping_info( mapping, SECTION_MAP_READ, &sec_flags, &full_size, &shared_file,
-                                    &image_info, &nt_name )))
+                                    &image_info, &nt_name, &exp_name )))
         return status;
 
     if (!image_info) return STATUS_INVALID_PARAMETER;
@@ -3824,9 +3831,10 @@ NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size, SECTIO
     HANDLE shared_file;
     struct pe_image_info *image_info = NULL;
     UNICODE_STRING nt_name;
+    ANSI_STRING exp_name;
 
     if ((status = get_mapping_info( mapping, SECTION_MAP_READ, &sec_flags, &full_size, &shared_file,
-                                    &image_info, &nt_name )))
+                                    &image_info, &nt_name, &exp_name )))
         return status;
 
     if (!image_info) return STATUS_INVALID_PARAMETER;

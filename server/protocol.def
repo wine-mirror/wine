@@ -1821,9 +1821,11 @@ enum server_fd_type
     mem_size_t   size;          /* mapping size */
     unsigned int flags;         /* SEC_* flags */
     obj_handle_t shared_file;   /* shared mapping file handle */
+    data_size_t  name_len;      /* length of file name  */
     data_size_t  total;         /* total required buffer size in bytes */
     VARARG(image,pe_image_info);/* image info for SEC_IMAGE mappings */
-    VARARG(name,unicode_str);   /* filename for SEC_IMAGE mappings */
+    VARARG(name,unicode_str,name_len);  /* filename for SEC_IMAGE mappings */
+    VARARG(exp_name,string);    /* exported name for SEC_IMAGE mappings */
 @END
 
 

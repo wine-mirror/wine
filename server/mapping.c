@@ -156,13 +156,15 @@ struct type_descr mapping_type =
 
 struct mapping
 {
-    struct object   obj;             /* object header */
-    mem_size_t      size;            /* mapping size */
-    unsigned int    flags;           /* SEC_* flags */
-    struct fd      *fd;              /* fd for mapped file */
+    struct object        obj;        /* object header */
+    mem_size_t           size;       /* mapping size */
+    unsigned int         flags;      /* SEC_* flags */
+    struct fd           *fd;         /* fd for mapped file */
     struct pe_image_info image;      /* image info (for PE image mapping) */
-    struct ranges  *committed;       /* list of committed ranges in this mapping */
-    struct shared_map *shared;       /* temp file for shared PE mapping */
+    struct ranges       *committed;  /* list of committed ranges in this mapping */
+    struct shared_map   *shared;     /* temp file for shared PE mapping */
+    char                *exp_name;   /* export name (for PE image mapping) */
+    data_size_t          exp_len;    /* length of export name (for PE image mapping) */
 };
 
 static void mapping_dump( struct object *obj, int verbose );
@@ -717,6 +719,25 @@ static int load_data_dir( void *dir, size_t dir_size, size_t va, size_t size, si
     return 0;
 }
 
+/* load EXPORT_DIRECTORY.Name from its section */
+static int load_export_name( char **ret_buf, size_t va, size_t size, size_t align_mask,
+                             int unix_fd, IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
+{
+    char *end, buffer[1024];
+    IMAGE_EXPORT_DIRECTORY exp;
+    int ret = load_data_dir( &exp, sizeof(exp), va, size, align_mask, unix_fd, sec, nb_sec );
+
+    if (ret != sizeof(exp)) return 0;
+    if (!exp.Name || exp.Name <= va || exp.Name >= va + size) return 0;
+    size -= exp.Name - va;
+    va = exp.Name;
+    ret = load_data_dir( buffer, sizeof(buffer), va, size, align_mask, unix_fd, sec, nb_sec );
+    if (ret <= 0) return 0;
+    if (!(end = memchr( buffer, 0, ret ))) return 0;
+    if (!(*ret_buf = memdup( buffer, end - buffer ))) return 0;
+    return end - buffer;
+}
+
 /* load the CLR header from its section */
 static int load_clr_header( IMAGE_COR20_HEADER *hdr, size_t va, size_t size, size_t align_mask,
                             int unix_fd, IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
@@ -775,7 +796,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     } cfg;
     off_t pos;
     int size, has_relocs;
-    size_t mz_size, clr_va = 0, clr_size = 0, cfg_va, cfg_size, align_mask;
+    size_t mz_size, clr_va = 0, clr_size = 0, exp_va, exp_size, cfg_va, cfg_size, align_mask;
     unsigned int i, ret;
 
     /* load the headers */
@@ -819,6 +840,8 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
             clr_va = nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress;
             clr_size = nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size;
         }
+        exp_va = nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+        exp_size = nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
         cfg_va = nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].VirtualAddress;
         cfg_size = nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size;
 
@@ -865,6 +888,8 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
             clr_va = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress;
             clr_size = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size;
         }
+        exp_va = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+        exp_size = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
         cfg_va = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].VirtualAddress;
         cfg_size = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size;
 
@@ -939,6 +964,9 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         mapping->image.header_map_size = min( mapping->image.header_map_size, sec[i].VirtualAddress );
         if (sec[i].Characteristics & IMAGE_SCN_MEM_EXECUTE) mapping->image.contains_code = 1;
     }
+
+    mapping->exp_len = load_export_name( &mapping->exp_name, exp_va, exp_size, align_mask,
+                                         unix_fd, sec, nt.FileHeader.NumberOfSections );
 
     if (load_clr_header( &clr, clr_va, clr_size, align_mask,
                          unix_fd, sec, nt.FileHeader.NumberOfSections ) &&
@@ -1028,6 +1056,8 @@ static struct mapping *create_mapping( struct object *root, const struct unicode
     mapping->fd          = NULL;
     mapping->shared      = NULL;
     mapping->committed   = NULL;
+    mapping->exp_name    = NULL;
+    mapping->exp_len     = 0;
 
     if (!(mapping->flags = get_mapping_flags( handle, flags ))) goto error;
 
@@ -1117,6 +1147,8 @@ struct mapping *create_fd_mapping( struct object *root, const struct unicode_str
 
     mapping->shared    = NULL;
     mapping->committed = NULL;
+    mapping->exp_name  = NULL;
+    mapping->exp_len   = 0;
     mapping->flags     = SEC_FILE;
     mapping->fd        = (struct fd *)grab_object( fd );
     set_fd_user( mapping->fd, &mapping_fd_ops, NULL );
@@ -1228,6 +1260,7 @@ static void mapping_destroy( struct object *obj )
     if (mapping->fd) release_object( mapping->fd );
     if (mapping->committed) release_object( mapping->committed );
     if (mapping->shared) release_object( mapping->shared );
+    free( mapping->exp_name );
 }
 
 static enum server_fd_type mapping_get_fd_type( struct fd *fd )
@@ -1521,13 +1554,18 @@ DECL_HANDLER(get_mapping_info)
         void *data;
 
         if (mapping->fd) get_nt_name( mapping->fd, &name );
-        size = min( sizeof(struct pe_image_info) + name.len, get_reply_max_size() );
+        reply->total = sizeof(struct pe_image_info) + name.len + mapping->exp_len;
+        size = min( reply->total, get_reply_max_size() );
         if ((data = set_reply_data_size( size )))
         {
             data = mem_append( data, &mapping->image, min( sizeof(struct pe_image_info), size ));
-            if (size > sizeof(struct pe_image_info)) memcpy( data, name.str, size - sizeof(struct pe_image_info) );
+            if (size >= sizeof(struct pe_image_info) + name.len)
+            {
+                data = mem_append( data, name.str, name.len );
+                reply->name_len = name.len;
+            }
+            if (size == reply->total) mem_append( data, mapping->exp_name, mapping->exp_len );
         }
-        reply->total = sizeof(struct pe_image_info) + name.len;
     }
 
     if (!(req->access & (SECTION_MAP_READ | SECTION_MAP_WRITE)))  /* query only */
