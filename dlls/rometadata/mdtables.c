@@ -130,8 +130,20 @@ static HRESULT WINAPI tables_GetTableIndex(IMetaDataTables *iface, ULONG token, 
 static HRESULT WINAPI tables_GetTableInfo(IMetaDataTables *iface, ULONG idx_tbl, ULONG *row_size, ULONG *num_rows,
                                           ULONG *num_cols, ULONG *idx_key, const char **name)
 {
-    FIXME("(%p, %lu, %p, %p, %p, %p, %p): stub!\n", iface, idx_tbl, row_size, num_rows, num_cols, idx_key, name);
-    return E_NOTIMPL;
+    struct metadata_tables *impl = impl_from_IMetaDataTables(iface);
+    struct metadata_table_info table;
+    HRESULT hr;
+
+    TRACE("(%p, %lu, %p, %p, %p, %p, %p)\n", iface, idx_tbl, row_size, num_rows, num_cols, idx_key, name);
+
+    if (FAILED(hr = assembly_get_table(impl->assembly, idx_tbl, &table))) return hr;
+
+    *row_size = table.row_size;
+    *num_rows = table.num_rows;
+    *num_cols = table.num_columns;
+    *idx_key = table.key_idx;
+    *name = table.name;
+    return S_OK;
 }
 
 static HRESULT WINAPI tables_GetColumnInfo(IMetaDataTables *iface, ULONG idx_tbl, ULONG idx_col, ULONG *offset,

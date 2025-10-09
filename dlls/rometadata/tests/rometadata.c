@@ -319,23 +319,12 @@ static void test_MetaDataDispenser_OpenScope(void)
         winetest_push_context("tables[%lu]", i);
 
         hr = IMetaDataTables_GetTableInfo(md_tables, i, &row_size, &rows, &cols, &key_idx, &name);
-        todo_wine
         ok(hr == S_OK, "got hr %#lx\n", hr);
-        if (FAILED(hr))
-        {
-            winetest_pop_context();
-            continue;
-        }
 
-        todo_wine
         ok(row_size == table->exp_row_size, "got row_size %lu != %lu\n", row_size, table->exp_row_size);
-        todo_wine
         ok(rows == table->exp_rows, "got rows %lu != %lu\n", rows, table->exp_rows);
-        todo_wine
         ok(cols == table->exp_cols, "got cols %lu != %lu\n", cols, table->exp_cols);
-        todo_wine
         ok(key_idx == table->exp_key_idx, "got key_idx %lu != %lu\n", key_idx, table->exp_key_idx);
-        todo_wine
         ok(!strcmp(name, table->exp_name), "got name %s != %s\n", debugstr_a(name), debugstr_a(table->exp_name));
 
         winetest_pop_context();
