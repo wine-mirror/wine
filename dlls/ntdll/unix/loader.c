@@ -1238,13 +1238,12 @@ static NTSTATUS open_builtin_pe_file( const char *name, OBJECT_ATTRIBUTES *attr,
 /***********************************************************************
  *           find_builtin_dll
  */
-static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T *size_ptr,
-                                  SECTION_IMAGE_INFORMATION *image_info, ULONG_PTR limit_low,
-                                  ULONG_PTR limit_high, USHORT search_machine,
+static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, ANSI_STRING *exp_name, void **module,
+                                  SIZE_T *size_ptr, SECTION_IMAGE_INFORMATION *image_info,
+                                  ULONG_PTR limit_low, ULONG_PTR limit_high, USHORT search_machine,
                                   USHORT load_machine, BOOL prefer_native )
 {
-    unsigned int i, pos, namepos, maxlen = 0;
-    unsigned int len = nt_name->Length / sizeof(WCHAR);
+    unsigned int i, pos, len, namepos = 0, maxlen = 0;
     char *ptr = NULL, *file, *ext = NULL;
     const char *pe_dir = get_pe_dir( search_machine );
     const char *so_dir = get_so_dir( current_machine );
@@ -1253,11 +1252,17 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     BOOL found_image = FALSE;
 
-    for (i = namepos = 0; i < len; i++)
-        if (nt_name->Buffer[i] == '/' || nt_name->Buffer[i] == '\\') namepos = i + 1;
-    len -= namepos;
-    if (!len) return STATUS_DLL_NOT_FOUND;
     InitializeObjectAttributes( &attr, nt_name, 0, 0, NULL );
+
+    if (!exp_name || !exp_name->Length)
+    {
+        len = nt_name->Length / sizeof(WCHAR);
+        for (i = 0; i < len; i++)
+            if (nt_name->Buffer[i] == '/' || nt_name->Buffer[i] == '\\') namepos = i + 1;
+        len -= namepos;
+        if (!len) return STATUS_DLL_NOT_FOUND;
+    }
+    else len = exp_name->Length;
 
     if (build_dir)
     {
@@ -1270,16 +1275,26 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
     if (!(file = malloc( maxlen ))) return STATUS_NO_MEMORY;
 
     pos = maxlen - len - sizeof(".so");
-    /* we don't want to depend on the current codepage here */
+    if (!exp_name || !exp_name->Length)
+    {
+        /* we don't want to depend on the current codepage here */
+        for (i = 0; i < len; i++)
+        {
+            if (nt_name->Buffer[namepos + i] > 127) goto done;
+            file[pos + i] = (char)nt_name->Buffer[namepos + i];
+        }
+    }
+    else memcpy( file + pos, exp_name->Buffer, len );
+
     for (i = 0; i < len; i++)
     {
-        if (nt_name->Buffer[namepos + i] > 127) goto done;
-        file[pos + i] = (char)nt_name->Buffer[namepos + i];
         if (file[pos + i] >= 'A' && file[pos + i] <= 'Z') file[pos + i] += 'a' - 'A';
         else if (file[pos + i] == '.') ext = file + pos + i;
     }
     file[pos + len] = 0;
     file[--pos] = '/';
+
+    TRACE( "looking for %s for file %s\n", debugstr_a(file + pos + 1), debugstr_us(nt_name) );
 
     if (build_dir)
     {
@@ -1354,7 +1369,7 @@ done:
  * Return STATUS_IMAGE_ALREADY_LOADED if we should keep the native one that we have found.
  */
 NTSTATUS load_builtin( const struct pe_image_info *image_info, UNICODE_STRING *nt_name,
-                       USHORT machine, SECTION_IMAGE_INFORMATION *info,
+                       ANSI_STRING *exp_name, USHORT machine, SECTION_IMAGE_INFORMATION *info,
                        void **module, SIZE_T *size, ULONG_PTR limit_low, ULONG_PTR limit_high )
 {
     NTSTATUS status;
@@ -1384,10 +1399,10 @@ NTSTATUS load_builtin( const struct pe_image_info *image_info, UNICODE_STRING *n
     case LO_NATIVE_BUILTIN:
         return STATUS_IMAGE_ALREADY_LOADED;
     case LO_BUILTIN:
-        return find_builtin_dll( nt_name, module, size, info, limit_low, limit_high,
+        return find_builtin_dll( nt_name, exp_name, module, size, info, limit_low, limit_high,
                                  search_machine, machine, FALSE );
     default:
-        status = find_builtin_dll( nt_name, module, size, info, limit_low, limit_high,
+        status = find_builtin_dll( nt_name, exp_name, module, size, info, limit_low, limit_high,
                                    search_machine, machine, (loadorder == LO_DEFAULT) );
         if (status == STATUS_DLL_NOT_FOUND || status == STATUS_NOT_SUPPORTED)
             return STATUS_IMAGE_ALREADY_LOADED;
@@ -1503,7 +1518,7 @@ NTSTATUS load_main_exe( UNICODE_STRING *nt_name, USHORT load_machine, void **mod
 
     /* if path is in system dir, we can load the builtin even if the file itself doesn't exist */
     if (loadorder != LO_NATIVE && is_builtin_path( nt_name, &search_machine ))
-        status = find_builtin_dll( nt_name, module, &size, &main_image_info, 0, 0,
+        status = find_builtin_dll( nt_name, NULL, module, &size, &main_image_info, 0, 0,
                                    search_machine, load_machine, FALSE );
     return status;
 }
@@ -1524,7 +1539,7 @@ NTSTATUS load_start_exe( UNICODE_STRING *nt_name, void **module )
     wcscpy( image, get_machine_wow64_dir( current_machine ));
     wcscat( image, startW );
     init_unicode_string( nt_name, image );
-    status = find_builtin_dll( nt_name, module, &size, &main_image_info, 0, 0, current_machine, 0, FALSE );
+    status = find_builtin_dll( nt_name, NULL, module, &size, &main_image_info, 0, 0, current_machine, 0, FALSE );
     if (!NT_SUCCESS(status))
     {
         MESSAGE( "wine: failed to load start.exe: %x\n", status );
@@ -1845,7 +1860,7 @@ static void load_wow64_ntdll( USHORT machine )
     wcscpy( path, wow64_dir );
     wcscat( path, ntdllW );
     init_unicode_string( &nt_name, path );
-    status = find_builtin_dll( &nt_name, &module, &size, &info, 0, 0, machine, 0, FALSE );
+    status = find_builtin_dll( &nt_name, NULL, &module, &size, &info, 0, 0, machine, 0, FALSE );
     if (status == STATUS_IMAGE_NOT_AT_BASE) status = virtual_relocate_module( module );
     if (status) fatal_error( "failed to load %s error %x\n", debugstr_w(path), status );
     load_ntdll_wow64_functions( module );
