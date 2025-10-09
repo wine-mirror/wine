@@ -1685,6 +1685,14 @@ static void test_sink_writer_get_object(void)
         ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
         {0},
     };
+    static const struct attribute_desc video_input_type_nv12_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
+        {0},
+    };
     WCHAR temp_path[MAX_PATH], temp_file[MAX_PATH];
     IMFMediaType *stream_type, *input_type;
     IMFSinkWriterEx *writer_ex = NULL;
@@ -1758,6 +1766,26 @@ static void test_sink_writer_get_object(void)
     hr = IMFSinkWriterEx_GetTransformForStream(writer_ex, 0, 2, &guid, &transform);
     ok(hr == MF_E_INVALIDINDEX, "GetTransformForStream returned %#lx.\n", hr);
     ok(!transform, "Unexpected transform %p.\n", transform);
+
+    /* Get transform for writer without converter. */
+    hr = MFCreateMediaType(&input_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_media_type(input_type, video_input_type_nv12_desc, -1);
+    hr = IMFSinkWriter_SetInputMediaType(writer, 0, input_type, NULL);
+    todo_wine
+    ok(hr == S_OK, "SetInputMediaType returned %#lx.\n", hr);
+    IMFMediaType_Release(input_type);
+
+    hr = IMFSinkWriterEx_GetTransformForStream(writer_ex, 0, 0, &guid, &transform);
+    todo_wine
+    ok(hr == S_OK, "GetTransformForStream returned %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&guid, &MFT_CATEGORY_VIDEO_ENCODER), "Unexpected guid %s.\n", debugstr_guid(&guid));
+    if (hr == S_OK)
+        IMFTransform_Release(transform);
+
+    hr = IMFSinkWriterEx_GetTransformForStream(writer_ex, 0, 1, &guid, &transform);
+    ok(hr == MF_E_INVALIDINDEX, "GetTransformForStream returned %#lx.\n", hr);
 
     /* Get media sink before BeginWriting. */
     sink = (void *)0xdeadbeef;
