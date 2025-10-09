@@ -3038,7 +3038,7 @@ static IMAGE_BASE_RELOCATION *process_relocation_block( char *page, IMAGE_BASE_R
  * Map an executable (PE format) image into an existing view.
  * virtual_mutex must be held by caller.
  */
-static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filename, int fd,
+static NTSTATUS map_image_into_view( struct file_view *view, const UNICODE_STRING *nt_name, int fd,
                                      struct pe_image_info *image_info, USHORT machine,
                                      int shared_fd, BOOL removable )
 {
@@ -3056,7 +3056,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
     SIZE_T align_mask = max( image_info->alignment - 1, page_mask );
     INT_PTR delta;
 
-    TRACE_(module)( "mapping PE file %s at %p-%p\n", debugstr_w(filename), ptr, ptr + total_size );
+    TRACE_(module)( "mapping PE file %s at %p-%p\n", debugstr_us(nt_name), ptr, ptr + total_size );
 
     /* map the header */
 
@@ -3134,7 +3134,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
         if (sec[i].VirtualAddress > total_size || end > total_size || end < sec[i].VirtualAddress)
         {
             WARN_(module)( "%s section %.8s too large (%x+%lx/%lx)\n",
-                           debugstr_w(filename), sec[i].Name, sec[i].VirtualAddress, map_size, total_size );
+                           debugstr_us(nt_name), sec[i].Name, sec[i].VirtualAddress, map_size, total_size );
             goto done;
         }
 
@@ -3142,13 +3142,13 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
             (sec[i].Characteristics & IMAGE_SCN_MEM_WRITE))
         {
             TRACE_(module)( "%s mapping shared section %.8s at %p off %x (%x) size %lx (%lx) flags %x\n",
-                            debugstr_w(filename), sec[i].Name, ptr + sec[i].VirtualAddress,
+                            debugstr_us(nt_name), sec[i].Name, ptr + sec[i].VirtualAddress,
                             sec[i].PointerToRawData, (int)pos, file_size, map_size,
                             sec[i].Characteristics );
             if (map_file_into_view( view, shared_fd, sec[i].VirtualAddress, map_size, pos,
                                     VPROT_COMMITTED | VPROT_READ | VPROT_WRITE, FALSE ) != STATUS_SUCCESS)
             {
-                ERR_(module)( "Could not map %s shared section %.8s\n", debugstr_w(filename), sec[i].Name );
+                ERR_(module)( "Could not map %s shared section %.8s\n", debugstr_us(nt_name), sec[i].Name );
                 goto done;
             }
 
@@ -3169,7 +3169,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
         }
 
         TRACE_(module)( "mapping %s section %.8s at %p off %x size %x virt %x flags %x\n",
-                        debugstr_w(filename), sec[i].Name, ptr + sec[i].VirtualAddress,
+                        debugstr_us(nt_name), sec[i].Name, ptr + sec[i].VirtualAddress,
                         sec[i].PointerToRawData, sec[i].SizeOfRawData,
                         sec[i].Misc.VirtualSize, sec[i].Characteristics );
 
@@ -3187,7 +3187,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
                                 removable ) != STATUS_SUCCESS)
         {
             ERR_(module)( "Could not map %s section %.8s, file probably truncated\n",
-                          debugstr_w(filename), sec[i].Name );
+                          debugstr_us(nt_name), sec[i].Name );
             goto done;
         }
 
@@ -3227,7 +3227,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
 
     if (image_info->map_addr && (delta = image_info->map_addr - image_info->base))
     {
-        TRACE_(module)( "relocating %s dynamic base %lx -> %lx mapped at %p\n", debugstr_w(filename),
+        TRACE_(module)( "relocating %s dynamic base %lx -> %lx mapped at %p\n", debugstr_us(nt_name),
                         (ULONG_PTR)image_info->base, (ULONG_PTR)image_info->map_addr, ptr );
 
         if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
@@ -3265,7 +3265,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
 
         if (!set_vprot( view, ptr + sec[i].VirtualAddress, size, vprot ) && (vprot & VPROT_EXEC))
             ERR( "failed to set %08x protection on %s section %.8s, noexec filesystem?\n",
-                 sec[i].Characteristics, debugstr_w(filename), sec[i].Name );
+                 sec[i].Characteristics, debugstr_us(nt_name), sec[i].Name );
     }
 
 #ifdef VALGRIND_LOAD_PDB_DEBUGINFO
@@ -3283,7 +3283,8 @@ done:
  *             get_mapping_info
  */
 static unsigned int get_mapping_info( HANDLE handle, ACCESS_MASK access, unsigned int *sec_flags,
-                                      mem_size_t *full_size, HANDLE *shared_file, struct pe_image_info **info )
+                                      mem_size_t *full_size, HANDLE *shared_file,
+                                      struct pe_image_info **info, UNICODE_STRING *nt_name )
 {
     struct pe_image_info *image_info;
     SIZE_T total, size = 1024;
@@ -3305,20 +3306,19 @@ static unsigned int get_mapping_info( HANDLE handle, ACCESS_MASK access, unsigne
             *shared_file = wine_server_ptr_handle( reply->shared_file );
         }
         SERVER_END_REQ;
-        if (!status && total <= size - sizeof(WCHAR)) break;
+        if (!status && total <= size) break;
         free( image_info );
         if (status) return status;
         if (*shared_file) NtClose( *shared_file );
-        size = total + sizeof(WCHAR);
+        size = total;
     }
 
     if (total)
     {
-        WCHAR *filename = (WCHAR *)(image_info + 1);
-
         assert( total >= sizeof(*image_info) );
         total -= sizeof(*image_info);
-        filename[total / sizeof(WCHAR)] = 0;
+        nt_name->Buffer = (WCHAR *)(image_info + 1);
+        nt_name->Length = nt_name->MaximumLength = total;
         *info = image_info;
     }
     else free( image_info );
@@ -3395,7 +3395,7 @@ static NTSTATUS map_image_view( struct file_view **view_ret, struct pe_image_inf
 static NTSTATUS virtual_map_image( HANDLE mapping, void **addr_ptr, SIZE_T *size_ptr, HANDLE shared_file,
                                    ULONG_PTR limit_low, ULONG_PTR limit_high, ULONG alloc_type,
                                    USHORT machine, struct pe_image_info *image_info,
-                                   WCHAR *filename, BOOL is_builtin )
+                                   UNICODE_STRING *nt_name, BOOL is_builtin )
 {
     int unix_fd = -1, needs_close;
     int shared_fd = -1, shared_needs_close = 0;
@@ -3431,7 +3431,7 @@ static NTSTATUS virtual_map_image( HANDLE mapping, void **addr_ptr, SIZE_T *size
     status = map_image_view( &view, image_info, size, limit_low, limit_high, alloc_type );
     if (status) goto done;
 
-    status = map_image_into_view( view, filename, unix_fd, image_info, machine, shared_fd, needs_close );
+    status = map_image_into_view( view, nt_name, unix_fd, image_info, machine, shared_fd, needs_close );
     if (status == STATUS_SUCCESS)
     {
         image_info->base = wine_server_client_ptr( view->base );
@@ -3478,7 +3478,7 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
     ACCESS_MASK access;
     SIZE_T size;
     struct pe_image_info *image_info = NULL;
-    WCHAR *filename;
+    UNICODE_STRING nt_name;
     void *base;
     int unix_handle = -1, needs_close;
     unsigned int vprot, sec_flags;
@@ -3509,7 +3509,7 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
         return STATUS_INVALID_PAGE_PROTECTION;
     }
 
-    res = get_mapping_info( handle, access, &sec_flags, &full_size, &shared_file, &image_info );
+    res = get_mapping_info( handle, access, &sec_flags, &full_size, &shared_file, &image_info, &nt_name );
     if (res) return res;
 
     if (image_info)
@@ -3522,13 +3522,12 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
             prev = NtCurrentTeb64()->Tib.ArbitraryUserPointer;
             NtCurrentTeb64()->Tib.ArbitraryUserPointer = PtrToUlong(NtCurrentTeb()->Tib.ArbitraryUserPointer);
         }
-        filename = (WCHAR *)(image_info + 1);
         /* check if we can replace that mapping with the builtin */
-        res = load_builtin( image_info, filename, machine, &info,
+        res = load_builtin( image_info, &nt_name, machine, &info,
                             addr_ptr, size_ptr, limit_low, limit_high );
         if (res == STATUS_IMAGE_ALREADY_LOADED)
             res = virtual_map_image( handle, addr_ptr, size_ptr, shared_file, limit_low, limit_high,
-                                     alloc_type, machine, image_info, filename, FALSE );
+                                     alloc_type, machine, image_info, &nt_name, FALSE );
         if (shared_file) NtClose( shared_file );
         free( image_info );
         if (NtCurrentTeb64()) NtCurrentTeb64()->Tib.ArbitraryUserPointer = prev;
@@ -3779,32 +3778,31 @@ NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size
     HANDLE shared_file;
     struct pe_image_info *image_info = NULL;
     NTSTATUS status;
-    WCHAR *filename;
+    UNICODE_STRING nt_name;
 
-    if ((status = get_mapping_info( mapping, SECTION_MAP_READ,
-                                    &sec_flags, &full_size, &shared_file, &image_info )))
+    if ((status = get_mapping_info( mapping, SECTION_MAP_READ, &sec_flags, &full_size, &shared_file,
+                                    &image_info, &nt_name )))
         return status;
 
     if (!image_info) return STATUS_INVALID_PARAMETER;
 
     *module = NULL;
     *size = 0;
-    filename = (WCHAR *)(image_info + 1);
 
     if (!image_info->wine_builtin) /* ignore non-builtins */
     {
-        WARN_(module)( "%s found in WINEDLLPATH but not a builtin, ignoring\n", debugstr_w(filename) );
+        WARN_(module)( "%s found in WINEDLLPATH but not a builtin, ignoring\n", debugstr_us(&nt_name) );
         status = STATUS_DLL_NOT_FOUND;
     }
     else if (prefer_native && (image_info->dll_charact & IMAGE_DLLCHARACTERISTICS_PREFER_NATIVE))
     {
-        TRACE_(module)( "%s has prefer-native flag, ignoring builtin\n", debugstr_w(filename) );
+        TRACE_(module)( "%s has prefer-native flag, ignoring builtin\n", debugstr_us(&nt_name) );
         status = STATUS_IMAGE_ALREADY_LOADED;
     }
     else
     {
         status = virtual_map_image( mapping, module, size, shared_file, limit_low, limit_high, 0,
-                                    machine, image_info, filename, TRUE );
+                                    machine, image_info, &nt_name, TRUE );
         virtual_fill_image_information( image_info, info );
     }
 
@@ -3825,24 +3823,23 @@ NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size, SECTIO
     unsigned int sec_flags;
     HANDLE shared_file;
     struct pe_image_info *image_info = NULL;
-    WCHAR *filename;
+    UNICODE_STRING nt_name;
 
-    if ((status = get_mapping_info( mapping, SECTION_MAP_READ,
-                                    &sec_flags, &full_size, &shared_file, &image_info )))
+    if ((status = get_mapping_info( mapping, SECTION_MAP_READ, &sec_flags, &full_size, &shared_file,
+                                    &image_info, &nt_name )))
         return status;
 
     if (!image_info) return STATUS_INVALID_PARAMETER;
 
     *module = NULL;
     *size = 0;
-    filename = (WCHAR *)(image_info + 1);
 
     /* check if we can replace that mapping with the builtin */
-    status = load_builtin( image_info, filename, machine, info, module, size, limit_low, limit_high );
+    status = load_builtin( image_info, &nt_name, machine, info, module, size, limit_low, limit_high );
     if (status == STATUS_IMAGE_ALREADY_LOADED)
     {
         status = virtual_map_image( mapping, module, size, shared_file, limit_low, limit_high, 0,
-                                    machine, image_info, filename, FALSE );
+                                    machine, image_info, &nt_name, FALSE );
         virtual_fill_image_information( image_info, info );
     }
     if (shared_file) NtClose( shared_file );
