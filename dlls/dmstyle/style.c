@@ -659,6 +659,9 @@ static HRESULT WINAPI style_persist_stream_Load(IPersistStream *iface, IStream *
             case MAKE_IDTYPE(FOURCC_RIFF, DMUS_FOURCC_BAND_FORM):
                 hr = parse_style_band(This, stream, &chunk);
                 break;
+            case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_STYLE_PERS_REF_LIST):
+                FIXME("Unhandled chordmap reference chunk %s\n", debugstr_chunk(&chunk));
+                break;
             default:
                 WARN("Ignoring chunk %s\n", debugstr_chunk(&chunk));
                 break;
