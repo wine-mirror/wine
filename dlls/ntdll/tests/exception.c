@@ -5482,22 +5482,29 @@ static void test_KiUserCallbackDispatcher(void)
 
 static BOOL got_nested_exception, got_prev_frame_exception;
 static void *nested_exception_initial_frame;
+static void *nested_exception_crash_frame;
 
 static DWORD nested_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
         CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
 {
-    trace("nested_exception_handler Rip %p, Rsp %p, code %#lx, flags %#lx, ExceptionAddress %p.\n",
-            (void *)context->Rip, (void *)context->Rsp, rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress);
+    trace("nested_exception_handler Rip %p, Rsp %p, code %#lx, flags %#lx, ExceptionAddress %p, frame %p.\n",
+            (void *)context->Rip, (void *)context->Rsp, rec->ExceptionCode, rec->ExceptionFlags,
+            rec->ExceptionAddress, frame);
+
+    if (!nested_exception_initial_frame)
+        nested_exception_initial_frame = frame;
+    if (frame == nested_exception_initial_frame)
+        return ExceptionContinueSearch;
 
     if (rec->ExceptionCode == 0x80000003
             && !(rec->ExceptionFlags & EXCEPTION_NESTED_CALL))
     {
         ok(rec->NumberParameters == 1, "Got unexpected rec->NumberParameters %lu.\n", rec->NumberParameters);
-        ok((void *)context->Rsp == frame, "Got unexpected frame %p.\n", frame);
+        ok((char *)context->Rsp + 8 == (char *)frame, "Got unexpected frame %p.\n", frame);
         ok(*(void **)frame == (char *)code_mem + 5, "Got unexpected *frame %p.\n", *(void **)frame);
-        ok(context->Rip == (ULONG_PTR)((char *)code_mem + 7), "Got unexpected Rip %#Ix.\n", context->Rip);
+        ok(context->Rip == (ULONG_PTR)((char *)code_mem + 14), "Got unexpected Rip %#Ix.\n", context->Rip);
 
-        nested_exception_initial_frame = frame;
+        nested_exception_crash_frame = frame;
         RaiseException(0xdeadbeef, 0, 0, 0);
         ++context->Rip;
         return ExceptionContinueExecution;
@@ -5508,16 +5515,44 @@ static DWORD nested_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRAT
     {
         ok(!rec->NumberParameters, "Got unexpected rec->NumberParameters %lu.\n", rec->NumberParameters);
         got_nested_exception = TRUE;
-        ok(frame == nested_exception_initial_frame, "Got unexpected frame %p.\n", frame);
+        ok(frame == nested_exception_crash_frame, "Got unexpected frame %p.\n", frame);
         return ExceptionContinueSearch;
     }
 
     ok(rec->ExceptionCode == 0xdeadbeef && (!rec->ExceptionFlags || rec->ExceptionFlags == EXCEPTION_SOFTWARE_ORIGINATE),
             "Got unexpected exception code %#lx, flags %#lx.\n", rec->ExceptionCode, rec->ExceptionFlags);
     ok(!rec->NumberParameters, "Got unexpected rec->NumberParameters %lu.\n", rec->NumberParameters);
-    ok(frame == (void *)((BYTE *)nested_exception_initial_frame + 8),
+    todo_wine ok(frame == (void *)((BYTE *)nested_exception_crash_frame + 8),
             "Got unexpected frame %p.\n", frame);
     got_prev_frame_exception = TRUE;
+    return ExceptionContinueExecution;
+}
+
+static DWORD nested_exception_handler2(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+        CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
+{
+    trace("nested_exception_handler2 Rip %p, Rsp %p, code %#lx, flags %#lx, ExceptionAddress %p, frame %p.\n",
+            (void *)context->Rip, (void *)context->Rsp, rec->ExceptionCode, rec->ExceptionFlags,
+            rec->ExceptionAddress, frame);
+
+    ok(rec->ExceptionCode == 0x80000003, "got %#lx.\n", rec->ExceptionCode);
+    if (!nested_exception_initial_frame)
+        nested_exception_initial_frame = frame;
+    if (nested_exception_initial_frame == frame)
+    {
+        ((DISPATCHER_CONTEXT *)dispatcher)->EstablisherFrame = (ULONG_PTR)nested_exception_initial_frame + 0x10;
+        ok(!(rec->ExceptionFlags & EXCEPTION_NESTED_CALL), "got %#lx.\n", rec->ExceptionFlags);
+        return ExceptionNestedException;
+    }
+    if ((char *)frame == (char *)nested_exception_initial_frame + 0x8)
+    {
+        ok((rec->ExceptionFlags & EXCEPTION_NESTED_CALL), "got %#lx.\n", rec->ExceptionFlags);
+        return ExceptionContinueSearch;
+    }
+    ok((char *)frame == (char *)nested_exception_initial_frame + 0x10, "got frame %p, nested_exception_initial_frame %p.\n",
+            frame, nested_exception_initial_frame);
+    todo_wine ok((rec->ExceptionFlags & EXCEPTION_NESTED_CALL), "got %#lx.\n", rec->ExceptionFlags);
+    ++context->Rip;
     return ExceptionContinueExecution;
 }
 
@@ -5527,6 +5562,10 @@ static const BYTE nested_except_code[] =
     0x90,                         /* nop */
     0xc3,                         /* ret */
     /* nest: */
+    0xe8, 0x02, 0x00, 0x00, 0x00, /* call nest2 */
+    0x90,                         /* nop */
+    0xc3,                         /* ret */
+    /* nest2: */
     0xcc,                         /* int3 */
     0x90,                         /* nop */
     0xc3,                         /* ret  */
@@ -5535,9 +5574,13 @@ static const BYTE nested_except_code[] =
 static void test_nested_exception(void)
 {
     got_nested_exception = got_prev_frame_exception = FALSE;
+    nested_exception_initial_frame = NULL;
     run_exception_test(nested_exception_handler, NULL, nested_except_code, sizeof(nested_except_code), PAGE_EXECUTE_READ);
-    ok(got_nested_exception, "Did not get nested exception.\n");
+    todo_wine ok(got_nested_exception, "Did not get nested exception.\n");
     ok(got_prev_frame_exception, "Did not get nested exception in the previous frame.\n");
+
+    nested_exception_initial_frame = NULL;
+    run_exception_test(nested_exception_handler2, NULL, nested_except_code, sizeof(nested_except_code), PAGE_EXECUTE_READ);
 }
 
 static unsigned int collided_unwind_exception_count;
@@ -5563,7 +5606,7 @@ static DWORD collided_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
         case 1:
             ok(rec->ExceptionCode == STATUS_UNWIND, "got %#lx.\n", rec->ExceptionCode);
             ok(rec->ExceptionFlags == EXCEPTION_UNWINDING, "got %#lx.\n", rec->ExceptionFlags);
-            ok((char *)context->Rip == (char *)code_mem + 7, "got %p.\n", rec->ExceptionAddress);
+            ok((char *)context->Rip == (char *)code_mem + 14, "got %p, expected %p.\n", (char *)context->Rip, (char *)code_mem + 14);
             /* generate exception in unwind handler. */
             RaiseException(0xdeadbeef, 0, 0, 0);
             ok(0, "shouldn't be reached\n");
