@@ -5522,7 +5522,7 @@ static DWORD nested_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRAT
     ok(rec->ExceptionCode == 0xdeadbeef && (!rec->ExceptionFlags || rec->ExceptionFlags == EXCEPTION_SOFTWARE_ORIGINATE),
             "Got unexpected exception code %#lx, flags %#lx.\n", rec->ExceptionCode, rec->ExceptionFlags);
     ok(!rec->NumberParameters, "Got unexpected rec->NumberParameters %lu.\n", rec->NumberParameters);
-    todo_wine ok(frame == (void *)((BYTE *)nested_exception_crash_frame + 8),
+    ok(frame == (void *)((BYTE *)nested_exception_crash_frame + 8),
             "Got unexpected frame %p.\n", frame);
     got_prev_frame_exception = TRUE;
     return ExceptionContinueExecution;
@@ -5551,7 +5551,7 @@ static DWORD nested_exception_handler2(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRA
     }
     ok((char *)frame == (char *)nested_exception_initial_frame + 0x10, "got frame %p, nested_exception_initial_frame %p.\n",
             frame, nested_exception_initial_frame);
-    todo_wine ok((rec->ExceptionFlags & EXCEPTION_NESTED_CALL), "got %#lx.\n", rec->ExceptionFlags);
+    ok((rec->ExceptionFlags & EXCEPTION_NESTED_CALL), "got %#lx.\n", rec->ExceptionFlags);
     ++context->Rip;
     return ExceptionContinueExecution;
 }
@@ -5576,7 +5576,7 @@ static void test_nested_exception(void)
     got_nested_exception = got_prev_frame_exception = FALSE;
     nested_exception_initial_frame = NULL;
     run_exception_test(nested_exception_handler, NULL, nested_except_code, sizeof(nested_except_code), PAGE_EXECUTE_READ);
-    todo_wine ok(got_nested_exception, "Did not get nested exception.\n");
+    ok(got_nested_exception, "Did not get nested exception.\n");
     ok(got_prev_frame_exception, "Did not get nested exception in the previous frame.\n");
 
     nested_exception_initial_frame = NULL;

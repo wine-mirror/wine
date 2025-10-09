@@ -169,13 +169,27 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
                    "ret" );
 
 
+struct unwind_exception_frame
+{
+    EXCEPTION_REGISTRATION_RECORD frame;
+    char dummy[0x10]; /* Layout 'dispatch' accessed from unwind_exception_handler() so it is above register
+                       * save space when .seh handler is used. */
+    DISPATCHER_CONTEXT *dispatch;
+};
+C_ASSERT( sizeof(struct unwind_exception_frame) == 0x28 );
+C_ASSERT( offsetof(struct unwind_exception_frame, dispatch) == 0x20 );
+
+
 /*******************************************************************
  *         nested_exception_handler
  */
 EXCEPTION_DISPOSITION WINAPI nested_exception_handler( EXCEPTION_RECORD *rec, void *frame,
-                                                       CONTEXT *context, void *dispatch )
+                                                       CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
 {
+    struct unwind_exception_frame *unwind_frame = (struct unwind_exception_frame *)frame;
+
     if (rec->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND)) return ExceptionContinueSearch;
+    dispatch->EstablisherFrame = unwind_frame->dispatch->EstablisherFrame;
     return ExceptionNestedException;
 }
 
@@ -191,6 +205,7 @@ __ASM_GLOBAL_FUNC( call_seh_handler,
                    ".seh_stackalloc 0x28\n\t"
                    ".seh_endprologue\n\t"
                    ".seh_handler nested_exception_handler, @except\n\t"
+                   "movq %r9,0x20(%rsp)\n\t"    /* unwind_exception_frame->dispatch */
                    "callq *0x50(%rsp)\n\t"      /* handler */
                    "nop\n\t"                    /* avoid epilogue so handler is called */
                    "addq $0x28, %rsp\n\t"
@@ -199,13 +214,14 @@ __ASM_GLOBAL_FUNC( call_seh_handler,
 static DWORD call_seh_handler( EXCEPTION_RECORD *rec, ULONG_PTR frame,
                                CONTEXT *context, void *dispatch, PEXCEPTION_ROUTINE handler )
 {
-    EXCEPTION_REGISTRATION_RECORD wrapper_frame;
+    struct unwind_exception_frame wrapper_frame;
     DWORD res;
 
-    wrapper_frame.Handler = (PEXCEPTION_HANDLER)nested_exception_handler;
-    __wine_push_frame( &wrapper_frame );
+    wrapper_frame.frame.Handler = (PEXCEPTION_HANDLER)nested_exception_handler;
+    wrapper_frame.dispatch = dispatch;
+    __wine_push_frame( &wrapper_frame.frame );
     res = handler( rec, (void *)frame, context, dispatch );
-    __wine_pop_frame( &wrapper_frame );
+    __wine_pop_frame( &wrapper_frame.frame );
     return res;
 }
 #endif
@@ -223,7 +239,7 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
     DISPATCHER_CONTEXT dispatch;
     CONTEXT context;
     NTSTATUS status;
-    ULONG_PTR frame;
+    ULONG_PTR frame, nested_frame;
     DWORD res;
 
     context = *orig_context;
@@ -232,6 +248,7 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
     dispatch.TargetIp      = 0;
     dispatch.ContextRecord = &context;
     dispatch.HistoryTable  = &table;
+    nested_frame = 0;
     for (;;)
     {
         status = virtual_unwind( UNW_FLAG_EHANDLER, &dispatch, &context );
@@ -254,7 +271,8 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
                    dispatch.LanguageHandler, rec, dispatch.EstablisherFrame, orig_context, &dispatch );
             res = call_seh_handler( rec, dispatch.EstablisherFrame, orig_context,
                                     &dispatch, dispatch.LanguageHandler );
-            rec->ExceptionFlags &= EXCEPTION_NONCONTINUABLE;
+            if (dispatch.EstablisherFrame == nested_frame)
+                rec->ExceptionFlags &= EXCEPTION_NONCONTINUABLE;
             TRACE( "handler at %p returned %lu\n", dispatch.LanguageHandler, res );
 
             switch (res)
@@ -266,6 +284,7 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
                 break;
             case ExceptionNestedException:
                 rec->ExceptionFlags |= EXCEPTION_NESTED_CALL;
+                nested_frame = dispatch.EstablisherFrame;
                 TRACE( "nested exception\n" );
                 break;
             case ExceptionCollidedUnwind:
@@ -283,6 +302,8 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
                    teb_frame->Handler, rec, teb_frame, orig_context, &dispatch, context.Rsp );
             res = call_seh_handler( rec, (ULONG_PTR)teb_frame, orig_context,
                                     &dispatch, (PEXCEPTION_ROUTINE)teb_frame->Handler );
+            if (dispatch.EstablisherFrame == nested_frame)
+                rec->ExceptionFlags &= EXCEPTION_NONCONTINUABLE;
             TRACE( "TEB handler at %p returned %lu\n", teb_frame->Handler, res );
 
             switch (res)
@@ -294,6 +315,7 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
                 break;
             case ExceptionNestedException:
                 rec->ExceptionFlags |= EXCEPTION_NESTED_CALL;
+                nested_frame = dispatch.EstablisherFrame;
                 TRACE( "nested exception\n" );
                 break;
             case ExceptionCollidedUnwind:
@@ -433,17 +455,6 @@ BOOLEAN WINAPI RtlIsEcCode( ULONG_PTR ptr )
 {
     return FALSE;
 }
-
-
-struct unwind_exception_frame
-{
-    EXCEPTION_REGISTRATION_RECORD frame;
-    char dummy[0x10]; /* Layout 'dispatch' accessed from unwind_exception_handler() so it is above register
-                       * save space when .seh handler is used. */
-    DISPATCHER_CONTEXT *dispatch;
-};
-C_ASSERT( sizeof(struct unwind_exception_frame) == 0x28 );
-C_ASSERT( offsetof(struct unwind_exception_frame, dispatch) == 0x20 );
 
 
 /**********************************************************************
