@@ -9,7 +9,6 @@ SOURCES = \
 	dmobject.c \
 	dmstyle.idl \
 	dmstyle_main.c \
-	dmutils.c \
 	motiftrack.c \
 	mutetrack.c \
 	style.c \
