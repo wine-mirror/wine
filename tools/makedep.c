@@ -169,6 +169,7 @@ static const char *widl;
 static const char *wrc;
 static const char *wmc;
 static int so_dll_supported;
+static int symlinks_supported;
 static int unix_lib_supported;
 /* per-architecture global variables */
 static const char *dll_ext[MAX_ARCHS];
@@ -2488,35 +2489,54 @@ static void install_script( struct makefile *make, const char *src )
 
 
 /*******************************************************************
- *         install_tool
+ *         install_program_symlink
  */
-static void install_tool( struct makefile *make, const char *target,
-                          const char *obj, const char *dir, const char *dst )
+static void install_program_symlink( struct makefile *make, const char *target,
+                                     const char *obj, const char *dst )
 {
     struct install_command *cmd;
 
     if (!(cmd = add_install_command( make, target ))) return;
-    cmd->file   = tools_path( obj );
-    cmd->target = cmd->file;
-    cmd->dir    = dir;
+    cmd->dir    = "$(bindir)";
     cmd->dest   = dst;
-    cmd->type   = 't';
+
+    if (symlinks_supported)
+    {
+        cmd->file = get_basename( obj );
+        cmd->type = 'y';
+    }
+    else
+    {
+        cmd->file   = obj;
+        cmd->target = cmd->file;
+        cmd->type   = 'p';
+    }
 }
 
 
 /*******************************************************************
- *         install_symlink
+ *         install_data_symlink
  */
-static void install_symlink( struct makefile *make, const char *target,
-                             const char *obj, const char *dir, const char *dst )
+static void install_data_symlink( struct makefile *make, const char *target, const char *obj,
+                                  const char *link_name, const char *dir, const char *dst )
 {
     struct install_command *cmd;
 
     if (!(cmd = add_install_command( make, target ))) return;
-    cmd->file   = obj;
     cmd->dir    = dir;
     cmd->dest   = dst;
-    cmd->type   = 'y';
+
+    if (symlinks_supported)
+    {
+        cmd->file = link_name;
+        cmd->type = 'y';
+    }
+    else
+    {
+        cmd->file   = obj_dir_path( make, obj );
+        cmd->target = cmd->file;
+        cmd->type   = 'd';
+    }
 }
 
 
@@ -2609,26 +2629,21 @@ static void output_winegcc_command( struct makefile *make, unsigned int arch )
  *
  * Output a rule to create a symlink.
  */
-static void output_symlink_rule( const char *src_name, const char *link_name, int create_dir )
+static void output_symlink_rule( const char *src_name, const char *link_name )
 {
     const char *name = strrchr( link_name, '/' );
     char *dir = NULL;
 
-    if (name)
+    output( "\t%srm -f %s && ", cmd_prefix( "LN" ), link_name );
+
+    /* dest path with a directory needs special handling if ln -s isn't supported */
+    if (name && !symlinks_supported)
     {
         dir = xstrdup( link_name );
         dir[name - link_name] = 0;
-    }
-
-    output( "\t%s", create_dir ? "" : cmd_prefix( "LN" ));
-    if (create_dir && dir && *dir) output( "%s -d %s && ", install_sh, dir );
-    output( "rm -f %s && ", link_name );
-
-    /* dest path with a directory needs special handling if ln -s isn't supported */
-    if (dir && strcmp( ln_s, "ln -s" ))
         output( "cd %s && %s %s %s\n", *dir ? dir : "/", ln_s, src_name, name + 1 );
-    else
-        output( "%s %s %s\n", ln_s, src_name, link_name );
+    }
+    else output( "%s %s %s\n", ln_s, src_name, link_name );
 
     free( dir );
 }
@@ -2653,7 +2668,7 @@ static void output_srcdir_symlink( struct makefile *make, const char *obj )
     if (src_name[0] != '/' && make->obj_dir)
         src_name = concat_paths( get_root_relative_path( make ), src_name );
 
-    output_symlink_rule( src_name, dst_file, 0 );
+    output_symlink_rule( src_name, dst_file );
     strarray_add( &make->all_targets[0], obj );
 }
 
@@ -2694,7 +2709,8 @@ static void output_install_commands( struct makefile *make, enum install_rules r
                     install_sh, cmd->file, dest );
             break;
         case 'y':  /* symlink */
-            output_symlink_rule( cmd->file, dest, 1 );
+            output( "\t%s -d $(DESTDIR)%s && rm -f %s && %s %s %s\n",
+                    install_sh, cmd->dir, dest, ln_s, cmd->file, dest );
             break;
         default:
             assert(0);
@@ -3176,8 +3192,8 @@ static void output_source_in( struct makefile *make, struct incl_file *source, c
         install_data_file( make, dest, obj, dir, strmake( "%s.%s", dest, section ));
         symlinks = get_expanded_file_local_var( make, dest, "SYMLINKS" );
         STRARRAY_FOR_EACH( link, &symlinks )
-            install_symlink( make, link, strmake( "%s.%s", dest, section ), dir,
-                             strmake( "%s.%s", link, section ));
+            install_data_symlink( make, link, obj, strmake( "%s.%s", dest, section ), dir,
+                                  strmake( "%s.%s", link, section ));
     }
     strarray_add( &make->in_files, obj );
     strarray_add( &make->all_targets[0], obj );
@@ -3845,14 +3861,15 @@ static void output_programs( struct makefile *make )
         STRARRAY_FOR_EACH( link, &symlinks )
         {
             output( "%s: %s\n", obj_dir_path( make, link ), obj_dir_path( make, program ));
-            output_symlink_rule( program, obj_dir_path( make, link ), 0 );
+            output_symlink_rule( program, obj_dir_path( make, link ));
         }
         strarray_addall( &make->all_targets[arch], symlinks );
 
         install_dir = !strcmp( make->obj_dir, "loader" ) ? arch_install_dirs[arch] : "$(bindir)";
         install_program( make, name, arch, program, install_dir );
         STRARRAY_FOR_EACH( link, &symlinks )
-            install_symlink( make, link, program, "$(bindir)", strmake( "%s%s", link, exe_ext ));
+            install_program_symlink( make, link, obj_dir_path( make, program ),
+                                     strmake( "%s%s", link, exe_ext ));
     }
 }
 
@@ -4069,10 +4086,7 @@ static void output_sources( struct makefile *make )
         if (make->is_exe && !make->is_win16 && unix_lib_supported && strendswith( make->module, ".exe" ))
         {
             char *binary = replace_extension( make->module, ".exe", "" );
-            if (!strcmp( ln_s, "ln -s" ))
-                install_symlink( make, binary, "wine", "$(bindir)", binary );
-            else
-                install_tool( make, binary, "wine", "$(bindir)", binary );
+            install_program_symlink( make, binary, tools_path("wine"), binary );
         }
     }
     else if (make->testdll)
@@ -4774,6 +4788,7 @@ int main( int argc, char *argv[] )
     wrc         = tools_path( "wrc" );
     wmc         = tools_path( "wmc" );
 
+    symlinks_supported = !strcmp( ln_s, "ln -s" );
     unix_lib_supported = !!strcmp( exe_ext, ".exe" );
     so_dll_supported = !!dll_ext[0][0];  /* non-empty dll ext means supported */
 
