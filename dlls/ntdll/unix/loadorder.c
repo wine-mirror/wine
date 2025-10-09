@@ -381,28 +381,34 @@ enum loadorder get_load_order( const UNICODE_STRING *nt_name )
     static const WCHAR prefixW[] = {'\\','?','?','\\'};
     enum loadorder ret = LO_INVALID;
     const WCHAR *path = nt_name->Buffer;
-    const WCHAR *p;
+    unsigned int i, len = nt_name->Length / sizeof(WCHAR);
     WCHAR *module, *basename;
-    int len;
 
     if (!init_done) init_load_order();
 
-    if (!wcsncmp( path, prefixW, 4 )) path += 4;
-
-    TRACE("looking for %s\n", debugstr_w(path));
+    if (len > 4 && !wcsncmp( path, prefixW, 4 ))
+    {
+        path += 4;
+        len -= 4;
+    }
 
     /* Strip path information if the module resides in the system directory
      */
-    if (!wcsnicmp( system_dir + 4, path, wcslen(system_dir) - 4 ))
+    if (len > wcslen(system_dir) - 4 && !wcsnicmp( system_dir + 4, path, wcslen(system_dir) - 4 ))
     {
-        p = path + wcslen( system_dir ) - 4;
-        while (*p == '\\' || *p == '/') p++;
-        if (!wcschr( p, '\\' ) && !wcschr( p, '/' )) path = p;
+        unsigned int pos = wcslen( system_dir ) - 4;
+        while (pos < len && (path[pos] == '\\' || path[pos] == '/')) pos++;
+        for (i = pos; i < len; i++) if (path[i] == '\\' || path[i] == '/') break;
+        if (i == len)
+        {
+            path += pos;
+            len -= pos;
+        }
     }
 
-    if (!(len = wcslen(path))) return ret;
     if (!(module = malloc( (len + 2) * sizeof(WCHAR) ))) return ret;
-    wcscpy( module + 1, path );  /* reserve module[0] for the wildcard char */
+    memcpy( module + 1, path, len * sizeof(WCHAR) );  /* reserve module[0] for the wildcard char */
+    module[len + 1] = 0;
     remove_dll_ext( module + 1 );
     basename = get_basename( module + 1 );
 
@@ -423,13 +429,13 @@ enum loadorder get_load_order( const UNICODE_STRING *nt_name )
     if (!main_exe_loaded && basename != module+1)
     {
         ret = LO_NATIVE_BUILTIN;
-        TRACE( "got main exe default %s for %s\n", debugstr_loadorder(ret), debugstr_w(path) );
+        TRACE( "got main exe default %s for %s\n", debugstr_loadorder(ret), debugstr_us(nt_name) );
         goto done;
     }
 
     /* and last the hard-coded default */
     ret = LO_DEFAULT;
-    TRACE( "got hardcoded %s for %s\n", debugstr_loadorder(ret), debugstr_w(path) );
+    TRACE( "got hardcoded %s for %s\n", debugstr_loadorder(ret), debugstr_us(nt_name) );
 
  done:
     free( module );
