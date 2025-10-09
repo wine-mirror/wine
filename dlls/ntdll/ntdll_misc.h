@@ -57,8 +57,6 @@ extern NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *conte
 extern NTSTATUS WINAPI dispatch_user_callback( void *args, ULONG len, ULONG id );
 extern EXCEPTION_DISPOSITION WINAPI user_callback_handler( EXCEPTION_RECORD *record, void *frame,
                                                            CONTEXT *context, void *dispatch );
-extern EXCEPTION_DISPOSITION WINAPI nested_exception_handler( EXCEPTION_RECORD *rec, void *frame,
-                                                              CONTEXT *context, void *dispatch );
 extern void DECLSPEC_NORETURN raise_status( NTSTATUS status, EXCEPTION_RECORD *rec );
 extern LONG WINAPI call_unhandled_exception_filter( PEXCEPTION_POINTERS eptr );
 extern void WINAPI process_breakpoint(void);

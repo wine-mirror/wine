@@ -1099,6 +1099,17 @@ static DWORD __attribute__((naked)) call_unwind_handler( EXCEPTION_RECORD *rec, 
 }
 
 
+/*******************************************************************
+ *         nested_exception_handler
+ */
+EXCEPTION_DISPOSITION WINAPI nested_exception_handler( EXCEPTION_RECORD *rec, void *frame,
+                                                       CONTEXT *context, void *dispatch )
+{
+    if (rec->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND)) return ExceptionContinueSearch;
+    return ExceptionNestedException;
+}
+
+
 /***********************************************************************
  *		call_seh_handler
  */

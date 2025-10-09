@@ -302,16 +302,6 @@ NTSTATUS WINAPI dispatch_user_callback( void *args, ULONG len, ULONG id )
 
 #endif
 
-/*******************************************************************
- *         nested_exception_handler
- */
-EXCEPTION_DISPOSITION WINAPI nested_exception_handler( EXCEPTION_RECORD *rec, void *frame,
-                                                       CONTEXT *context, void *dispatch )
-{
-    if (rec->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND)) return ExceptionContinueSearch;
-    return ExceptionNestedException;
-}
-
 
 /*******************************************************************
  *		raise_status
