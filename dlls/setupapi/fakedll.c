@@ -393,7 +393,7 @@ static void create_directories( const WCHAR *name )
     while (p != NULL)
     {
         *p = 0;
-        if (!CreateDirectoryW(path, NULL))
+        if (!CreateDirectoryW(path, NULL) && GetLastError() != ERROR_ALREADY_EXISTS)
             TRACE("Couldn't create directory %s - error: %ld\n", wine_dbgstr_w(path), GetLastError());
         *p = '\\';
         p = wcschr(p+1, '\\');
@@ -743,21 +743,20 @@ struct delay_copy
     struct list entry;
     WCHAR *src;
     WCHAR *dest;
-    WCHAR data[1];
+    WCHAR  data[];
 };
 
 struct dll_data
 {
     struct list *delay_copy;
-    const WCHAR *src_dir;
-    DWORD src_len;
+    const WCHAR *src;
 };
 
 static BOOL CALLBACK register_manifest( HMODULE module, const WCHAR *type, WCHAR *res_name, LONG_PTR arg )
 {
     const struct dll_data *dll_data = (const struct dll_data*)arg;
     WCHAR *dest = NULL;
-    DWORD dest_len = 0;
+    DWORD src_len = wcslen( dll_data->src ), dest_len = 0, ret;
     xmlbuf_t buffer;
     xmlstr_t elem, attr_name, attr_value;
     xmlstr_t name, version, arch, key, lang;
@@ -792,18 +791,14 @@ static BOOL CALLBACK register_manifest( HMODULE module, const WCHAR *type, WCHAR
 
             if (!error && dest && name.ptr)
             {
-                struct delay_copy *add = malloc( sizeof(*add) +
-                        (dll_data->src_len + name.len + dest_len + name.len + 1) * sizeof(WCHAR) );
+                struct delay_copy *add = malloc( offsetof( struct delay_copy,
+                                                           data[src_len + 1 + dest_len + name.len + 1] ));
                 add->src = add->data;
-                memcpy( add->src, dll_data->src_dir, dll_data->src_len * sizeof(WCHAR) );
-                MultiByteToWideChar( CP_UTF8, 0, name.ptr, name.len,
-                        add->src + dll_data->src_len, name.len );
-                add->src[dll_data->src_len + name.len] = 0;
-                add->dest = add->data + dll_data->src_len + name.len + 1;
+                wcscpy( add->src, dll_data->src );
+                add->dest = add->src + src_len + 1;
                 memcpy( add->dest, dest, dest_len * sizeof(WCHAR) );
-                memcpy( add->dest + dest_len, add->src + dll_data->src_len,
-                        (name.len + 1) * sizeof(WCHAR) );
-                TRACE("schedule copy %s -> %s\n", wine_dbgstr_w(add->src), wine_dbgstr_w(add->dest));
+                ret = MultiByteToWideChar( CP_UTF8, 0, name.ptr, name.len, add->dest + dest_len, name.len );
+                add->dest[dest_len + ret] = 0;
                 list_add_tail( dll_data->delay_copy, &add->entry );
             }
             continue;
@@ -876,13 +871,9 @@ static void register_fake_dll( const WCHAR *name, const void *data, size_t size,
     LDR_RESOURCE_INFO info;
     HRESULT hr = S_OK;
     HMODULE module = (HMODULE)((ULONG_PTR)data | 1);
-    struct dll_data dll_data = { delay_copy, name, 0 };
+    struct dll_data dll_data = { delay_copy, name };
     WCHAR buffer[MAX_PATH];
-    const WCHAR *p;
 
-    if (!(p = wcsrchr( name, '\\' ))) p = name;
-    else p++;
-    dll_data.src_len = p - name;
     EnumResourceNamesW( module, (WCHAR*)RT_MANIFEST, register_manifest, (LONG_PTR)&dll_data );
 
     info.Type = (ULONG_PTR)L"WINE_REGISTRY";
