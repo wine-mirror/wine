@@ -332,22 +332,21 @@ static void test_MetaDataDispenser_OpenScope(void)
 
     /* Read module information */
     hr = IMetaDataTables_GetRow(md_tables, TABLE_MODULE, 1, (BYTE *)&module);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(!!module, "got module=%p\n", module);
+
+    str = NULL;
+    hr = IMetaDataTables_GetString(md_tables, module->Name, &str);
     todo_wine
     ok(hr == S_OK, "got hr %#lx\n", hr);
     todo_wine
-    ok(!!module, "got module=%p\n", module);
+    ok(str &&!strcmp(str, "dlls/rometadata/tests/test-simple.winmd"), "got str %s\n", debugstr_a(str));
 
-    if (SUCCEEDED(hr))
-    {
-        str = NULL;
-        hr = IMetaDataTables_GetString(md_tables, module->Name, &str);
-        ok(hr == S_OK, "got hr %#lx\n", hr);
-        ok(str &&!strcmp(str, "dlls/rometadata/tests/test-simple.winmd"), "got str %s\n", debugstr_a(str));
-
-        hr = IMetaDataTables_GetGuid(md_tables, module->Mvid, &guid);
-        ok(hr == S_OK, "got hr %#lx\n", hr);
-        ok(!!guid, "got guid %p\n", guid);
-    }
+    hr = IMetaDataTables_GetGuid(md_tables, module->Mvid, &guid);
+    todo_wine
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    todo_wine
+    ok(!!guid, "got guid %p\n", guid);
 
     /* Read defined types. */
     for (i = 0; i < ARRAY_SIZE(type_defs); i++)
@@ -358,26 +357,24 @@ static void test_MetaDataDispenser_OpenScope(void)
 
         type_def = NULL;
         hr = IMetaDataTables_GetRow(md_tables, TABLE_TYPEDEF, i + 1, (BYTE *)&type_def);
-        todo_wine
         ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine
         ok(!!type_def, "got type_def=%p\n", type_def);
-        if (FAILED(hr))
-        {
-            winetest_pop_context();
-            continue;
-        }
 
         ok(type_def->Flags == type_info->exp_flags, "got Flags %#lx != %#lx\n", type_def->Flags, type_info->exp_flags);
         str = NULL;
         hr = IMetaDataTables_GetString(md_tables, type_def->Name, &str);
+        todo_wine
         ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine
         ok(str && !strcmp(str, type_info->exp_name), "got str %s != %s\n", debugstr_a(str),
            debugstr_a(type_info->exp_name));
         if (type_info->exp_namespace)
         {
             str = NULL;
             hr = IMetaDataTables_GetString(md_tables, type_def->Namespace, &str);
+            todo_wine
+            ok(hr == S_OK, "got hr %#lx\n", hr);
+            todo_wine
             ok(str && !strcmp(str, type_info->exp_namespace), "got str %s != %s\n", debugstr_a(str),
                debugstr_a(type_info->exp_namespace));
             if (!strcmp(type_info->exp_name, "ITest1") && !strcmp(type_info->exp_namespace, "Wine.Test"))
@@ -395,15 +392,10 @@ static void test_MetaDataDispenser_OpenScope(void)
         winetest_push_context("i=%lu", i);
 
         hr = IMetaDataTables_GetRow(md_tables, TABLE_MEMBERREF, i + 1, (BYTE *)&ref);
-        todo_wine
         ok(hr == S_OK, "got hr %#lx\n", hr);
-        if (FAILED(hr))
-        {
-            winetest_pop_context();
-            continue;
-        }
 
         hr = IMetaDataTables_GetString(md_tables, ref->Name, &str);
+        todo_wine
         ok(hr == S_OK, "got hr %#lx\n", hr);
         if (str && !strcmp(str, ".ctor"))
         {
@@ -442,13 +434,7 @@ static void test_MetaDataDispenser_OpenScope(void)
 
         attr = NULL;
         hr = IMetaDataTables_GetRow(md_tables, TABLE_CUSTOMATTRIBUTE, i + 1, (BYTE *)&attr);
-        todo_wine
         ok(hr == S_OK, "got hr %#lx\n", hr);
-        if (FAILED(hr))
-        {
-            winetest_pop_context();
-            continue;
-        }
 
         if (attr->Type == guid_ctor_idx && attr->Parent == itest1_def_idx)
         {

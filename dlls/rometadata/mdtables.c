@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
+
 #define COBJMACROS
 #include "objbase.h"
 #include "cor.h"
@@ -162,8 +164,19 @@ static HRESULT WINAPI tables_GetCodedTokenInfo(IMetaDataTables *iface, ULONG typ
 
 static HRESULT WINAPI tables_GetRow(IMetaDataTables *iface, ULONG idx_tbl, ULONG idx_row, const BYTE *row)
 {
-    FIXME("(%p, %lu, %lu, %p): stub!\n", iface, idx_tbl, idx_row, row);
-    return E_NOTIMPL;
+    struct metadata_tables *impl = impl_from_IMetaDataTables(iface);
+    struct metadata_table_info table;
+    HRESULT hr;
+
+    TRACE("(%p, %lu, %lu, %p)\n", iface, idx_tbl, idx_row, row);
+
+    if (FAILED(hr = assembly_get_table(impl->assembly, idx_tbl, &table))) return hr;
+
+    assert(table.start);
+    idx_row--; /* Row indices are 1-based. */
+    if (idx_row >= table.num_rows) return E_INVALIDARG;
+    *(const BYTE **)row = table.start + (size_t)(table.row_size * idx_row);
+    return S_OK;
 }
 
 static HRESULT WINAPI tables_GetColumn(IMetaDataTables *iface, ULONG idx_tbl, ULONG idx_col, ULONG idx_row, ULONG *val)
