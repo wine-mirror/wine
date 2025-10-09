@@ -843,3 +843,50 @@ ULONG assembly_get_heap_size(const assembly_t *assembly, enum heap_type heap)
     DEFAULT_UNREACHABLE;
     }
 }
+
+const char *assembly_get_string(const assembly_t *assembly, ULONG idx)
+{
+    return idx < assembly->stream_strings.size ? (const char *)&assembly->stream_strings.start[idx] : NULL;
+}
+
+static HRESULT decode_int(const BYTE *encoded, ULONG *val, ULONG *len)
+{
+    if (!(encoded[0] & 0x80))
+    {
+        *len = 1;
+        *val = encoded[0];
+    }
+    else if (!(encoded[0] & 0x40))
+    {
+        *len = 2;
+        *val = ((encoded[0] & ~0xc0) << 8) + encoded[1];
+    }
+    else if (!(encoded[0] & 0x20))
+    {
+        *len = 4;
+        *val = ((encoded[0] & ~0xe0) << 24) + (encoded[1] << 16) + (encoded[2] << 8) + encoded[3];
+    }
+    else
+        return E_INVALIDARG;
+    return S_OK;
+}
+
+HRESULT assembly_get_blob(const assembly_t *assembly, ULONG idx, const BYTE **blob, ULONG *size)
+{
+    const BYTE *ptr;
+    ULONG size_len;
+    HRESULT hr;
+
+    if (idx >= assembly->stream_blobs.size) return E_INVALIDARG;
+    ptr = assembly->stream_blobs.start + idx;
+    if (FAILED(hr = decode_int(ptr, size, &size_len))) return hr;
+    *blob = ptr + size_len;
+    return S_OK;
+}
+
+const GUID *assembly_get_guid(const assembly_t *assembly, ULONG idx)
+{
+    ULONG offset = (idx - 1) * sizeof(GUID); /* Indices into the GUID heap are 1-based */
+
+    return offset < assembly->stream_guids.size ? (const GUID *)(assembly->stream_guids.start + offset) : NULL;
+}

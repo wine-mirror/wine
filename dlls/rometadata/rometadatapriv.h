@@ -50,5 +50,8 @@ extern HRESULT assembly_open_from_file(const WCHAR *path, assembly_t **out);
 extern void assembly_free(assembly_t *assembly);
 extern HRESULT assembly_get_table(const assembly_t *assembly, ULONG table_idx, struct metadata_table_info *info);
 extern ULONG assembly_get_heap_size(const assembly_t *assembly, enum heap_type heap);
+extern const char *assembly_get_string(const assembly_t *assembly, ULONG idx);
+extern HRESULT assembly_get_blob(const assembly_t *assembly, ULONG idx, const BYTE **blob, ULONG *size);
+extern const GUID *assembly_get_guid(const assembly_t *assembly, ULONG idx);
 
 #endif /* __WINE_ROMETADATA_PRIVATE__ */

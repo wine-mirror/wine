@@ -187,20 +187,23 @@ static HRESULT WINAPI tables_GetColumn(IMetaDataTables *iface, ULONG idx_tbl, UL
 
 static HRESULT WINAPI tables_GetString(IMetaDataTables *iface, ULONG idx, const char **str)
 {
-    FIXME("(%p, %lu, %p): stub!\n", iface, idx, str);
-    return E_NOTIMPL;
+    struct metadata_tables *impl = impl_from_IMetaDataTables(iface);
+    TRACE("(%p, %lu, %p)\n", iface, idx, str);
+    return (*str = assembly_get_string(impl->assembly, idx)) ? S_OK : E_INVALIDARG;
 }
 
 static HRESULT WINAPI tables_GetBlob(IMetaDataTables *iface, ULONG idx, ULONG *size, const BYTE **blob)
 {
-    FIXME("(%p, %lu, %p, %p): stub!\n", iface, idx, size, blob);
-    return E_NOTIMPL;
+    struct metadata_tables *impl = impl_from_IMetaDataTables(iface);
+    TRACE("(%p, %lu, %p, %p)\n", iface, idx, size, blob);
+    return assembly_get_blob(impl->assembly, idx, blob, size);
 }
 
 static HRESULT WINAPI tables_GetGuid(IMetaDataTables *iface, ULONG idx, const GUID **guid)
 {
-    FIXME("(%p, %lu, %p): stub!\n", iface, idx, guid);
-    return E_NOTIMPL;
+    struct metadata_tables *impl = impl_from_IMetaDataTables(iface);
+    TRACE("(%p, %lu, %p)!\n", iface, idx, guid);
+    return (*guid = assembly_get_guid(impl->assembly, idx)) ? S_OK : E_INVALIDARG;
 }
 
 static HRESULT WINAPI tables_GetUserString(IMetaDataTables *iface, ULONG idx, ULONG *size, const BYTE **string)

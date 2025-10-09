@@ -337,15 +337,11 @@ static void test_MetaDataDispenser_OpenScope(void)
 
     str = NULL;
     hr = IMetaDataTables_GetString(md_tables, module->Name, &str);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine
     ok(str &&!strcmp(str, "dlls/rometadata/tests/test-simple.winmd"), "got str %s\n", debugstr_a(str));
 
     hr = IMetaDataTables_GetGuid(md_tables, module->Mvid, &guid);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine
     ok(!!guid, "got guid %p\n", guid);
 
     /* Read defined types. */
@@ -363,18 +359,14 @@ static void test_MetaDataDispenser_OpenScope(void)
         ok(type_def->Flags == type_info->exp_flags, "got Flags %#lx != %#lx\n", type_def->Flags, type_info->exp_flags);
         str = NULL;
         hr = IMetaDataTables_GetString(md_tables, type_def->Name, &str);
-        todo_wine
         ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine
         ok(str && !strcmp(str, type_info->exp_name), "got str %s != %s\n", debugstr_a(str),
            debugstr_a(type_info->exp_name));
         if (type_info->exp_namespace)
         {
             str = NULL;
             hr = IMetaDataTables_GetString(md_tables, type_def->Namespace, &str);
-            todo_wine
             ok(hr == S_OK, "got hr %#lx\n", hr);
-            todo_wine
             ok(str && !strcmp(str, type_info->exp_namespace), "got str %s != %s\n", debugstr_a(str),
                debugstr_a(type_info->exp_namespace));
             if (!strcmp(type_info->exp_name, "ITest1") && !strcmp(type_info->exp_namespace, "Wine.Test"))
@@ -395,7 +387,6 @@ static void test_MetaDataDispenser_OpenScope(void)
         ok(hr == S_OK, "got hr %#lx\n", hr);
 
         hr = IMetaDataTables_GetString(md_tables, ref->Name, &str);
-        todo_wine
         ok(hr == S_OK, "got hr %#lx\n", hr);
         if (str && !strcmp(str, ".ctor"))
         {
@@ -422,7 +413,6 @@ static void test_MetaDataDispenser_OpenScope(void)
         winetest_pop_context();
     }
 
-    todo_wine
     ok(!!guid_ctor_idx, "got guid_ctor_coded_idx %lu\n", guid_ctor_idx);
 
     /* Verify ITest1 has the correct GuidAttribute value. */
