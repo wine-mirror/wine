@@ -342,3 +342,21 @@ HRESULT WINAPI D3DX11GetImageInfoFromMemory(const void *src_data, SIZE_T src_dat
         *hresult = hr;
     return hr;
 }
+
+HRESULT WINAPI D3DX11GetImageInfoFromResourceA(HMODULE module, const char *resource, ID3DX11ThreadPump *pump,
+        D3DX11_IMAGE_INFO *info, HRESULT *result)
+{
+    FIXME("module %p, resource %s, pump %p, info %p, result %p stub!.\n", module, debugstr_a(resource), pump, info,
+            result);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DX11GetImageInfoFromResourceW(HMODULE module, const WCHAR *resource, ID3DX11ThreadPump *pump,
+        D3DX11_IMAGE_INFO *info, HRESULT *result)
+{
+    FIXME("module %p, resource %s, pump %p, info %p, result %p stub!.\n", module, debugstr_w(resource), pump, info,
+            result);
+
+    return E_NOTIMPL;
+}

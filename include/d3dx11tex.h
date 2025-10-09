@@ -153,6 +153,10 @@ HRESULT WINAPI D3DX11GetImageInfoFromFileA(const char *filename, ID3DX11ThreadPu
         HRESULT *hresult);
 HRESULT WINAPI D3DX11GetImageInfoFromFileW(const WCHAR *filename, ID3DX11ThreadPump *pump, D3DX11_IMAGE_INFO *img_info,
         HRESULT *hresult);
+HRESULT WINAPI D3DX11GetImageInfoFromResourceA(HMODULE module, const char *resource, ID3DX11ThreadPump *pump,
+        D3DX11_IMAGE_INFO *info, HRESULT *result);
+HRESULT WINAPI D3DX11GetImageInfoFromResourceW(HMODULE module, const WCHAR *resource, ID3DX11ThreadPump *pump,
+        D3DX11_IMAGE_INFO *info, HRESULT *result);
 HRESULT WINAPI D3DX11GetImageInfoFromMemory(const void *src_data, SIZE_T src_data_size, ID3DX11ThreadPump *pump,
         D3DX11_IMAGE_INFO *img_info, HRESULT *hresult);
 HRESULT WINAPI D3DX11LoadTextureFromTexture(ID3D11DeviceContext *context, ID3D11Resource *src_texture,
