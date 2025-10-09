@@ -1401,6 +1401,27 @@ static struct file *open_local_generated_file( const struct makefile *make, stru
 
 
 /*******************************************************************
+ *         open_local_maintainer_file
+ *
+ * Open a maintainer-generated file in the directory of the makefile.
+ */
+static struct file *open_local_maintainer_file( const struct makefile *make, struct incl_file *file,
+                                                const char *ext, const char *src_ext )
+{
+    struct incl_file *include;
+
+    if (strendswith( file->name, ext ) &&
+        (include = find_src_file( make, replace_extension( file->name, ext, src_ext ) )))
+    {
+        file->sourcename = include->filename;
+        file->filename = replace_extension( include->filename, src_ext, ext );
+        return include->file;
+    }
+    return NULL;
+}
+
+
+/*******************************************************************
  *         open_global_file
  *
  * Open a file in the top-level source directory.
@@ -1497,9 +1518,9 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
     if (fontforge && (file = open_local_generated_file( make, pFile, ".ttf", ".sfd" ))) return file;
     if (convert && rsvg && icotool)
     {
-        if ((file = open_local_generated_file( make, pFile, ".bmp", ".svg" ))) return file;
-        if ((file = open_local_generated_file( make, pFile, ".cur", ".svg" ))) return file;
-        if ((file = open_local_generated_file( make, pFile, ".ico", ".svg" ))) return file;
+        if ((file = open_local_maintainer_file( make, pFile, ".bmp", ".svg" ))) return file;
+        if ((file = open_local_maintainer_file( make, pFile, ".cur", ".svg" ))) return file;
+        if ((file = open_local_maintainer_file( make, pFile, ".ico", ".svg" ))) return file;
     }
     if ((file = open_local_generated_file( make, pFile, "-client-protocol.h", ".xml" ))) return file;
     if ((file = open_local_generated_file( make, pFile, ".winmd", ".idl" ))) return file;
