@@ -7,6 +7,7 @@ EXTRADEFS = \
 	-DLIBVKD3D_UTILS_SOURCE
 
 SOURCES = \
+	config.h \
 	libs/vkd3d-common/blob.c \
 	libs/vkd3d-common/debug.c \
 	libs/vkd3d-common/error.c \

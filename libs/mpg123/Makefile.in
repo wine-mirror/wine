@@ -3,6 +3,7 @@ EXTRAINCL = -I$(srcdir)/src -I$(srcdir)/src/compat $(MPG123_PE_CFLAGS)
 EXTRADEFS = -DOPT_GENERIC_DITHER -DREAL_IS_FLOAT -DNO_CATCHSIGNAL
 
 SOURCES = \
+	config.h \
 	src/compat/compat.c \
 	src/compat/compat_str.c \
 	src/libmpg123/dct64.c \

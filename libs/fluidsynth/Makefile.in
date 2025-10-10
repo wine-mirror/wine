@@ -11,6 +11,7 @@ EXTRAINCL = -I$(srcdir)/src \
             $(FLUIDSYNTH_PE_CFLAGS)
 
 SOURCES = \
+	config.h \
 	glib.c \
 	src/midi/fluid_midi.c \
 	src/rvoice/fluid_adsr_env.c \

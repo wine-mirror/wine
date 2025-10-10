@@ -1509,6 +1509,7 @@ static struct makefile *find_importlib_module( const char *name )
 static struct file *open_include_file( const struct makefile *make, struct incl_file *pFile )
 {
     struct file *file = NULL;
+    struct incl_file *include;
     unsigned int len;
 
     errno = ENOENT;
@@ -1534,8 +1535,12 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
         return NULL;
     }
 
-    /* now try in source dir */
-    if ((file = open_local_file( make, pFile->name, &pFile->filename ))) return file;
+    /* check for header explicitly listed in the makefile */
+    if ((include = find_src_file( make, pFile->name )))
+    {
+        pFile->filename = include->filename;
+        return include->file;
+    }
 
     /* check for global importlib (module dependency) */
     if (pFile->type == INCL_IMPORTLIB && find_importlib_module( pFile->name ))
@@ -1557,6 +1562,9 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
     if (pFile->use_msvcrt &&
         (file = open_global_header( strmake( "msvcrt/%s", pFile->name ), &pFile->filename )))
         return file;
+
+    /* now try in source dir */
+    if ((file = open_local_file( make, pFile->name, &pFile->filename ))) return file;
 
     /* now search in include paths */
     STRARRAY_FOR_EACH( dir, &make->include_paths )

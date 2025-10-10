@@ -232,6 +232,17 @@ sub preserve_shared_source_files($$)
 # assign source files to their respective makefile
 sub assign_sources_to_makefiles(@)
 {
+    my %global_includes;
+
+    my @includes = grep { $_ =~ /^include\// } @_, "include/config.h";
+    foreach (@includes)
+    {
+        s/^include\///;
+        $global_includes{$_} = 1;
+        s/\.idl$/.h/;
+        $global_includes{$_} = 1;
+    }
+
     foreach my $file (@_)
     {
         next if defined $deleted_files{$file};
@@ -250,7 +261,7 @@ sub assign_sources_to_makefiles(@)
 
         if ($name =~ /\.h$/)
         {
-            next if $dir ne "include";
+            next unless defined $global_includes{$name};
         }
         elsif ($name =~ /\.idl$/)
         {
@@ -278,9 +289,9 @@ sub assign_sources_to_makefiles(@)
         {
             next unless $dir eq "dlls/winewayland.drv";
         }
-        elsif ($name !~ /\.(S|c|in|inl|l|m|mc|po|rc|rh|sfd|svg|x|y)$/)
+        elsif ($name !~ /\.(S|c|desktop|in|inl|l|m|mc|po|rc|rh|sfd|svg|x|y)$/)
         {
-            next unless $dir eq "loader";  # loader dir contains misc files
+            next;
         }
         push @{${$make}{"=SOURCES"}}, $name;
     }
