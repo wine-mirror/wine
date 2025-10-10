@@ -279,6 +279,25 @@ static HRESULT asf_stream_query_interface(struct strmbase_pin *iface, REFIID iid
     return S_OK;
 }
 
+static HRESULT asf_reader_stop_stream(struct asf_reader *filter)
+{
+    HRESULT hr;
+
+    EnterCriticalSection(&filter->status_cs);
+
+    if (SUCCEEDED(hr = IWMReader_Stop(filter->reader)))
+    {
+        filter->status = -1;
+        while (filter->status != WMT_STOPPED)
+            SleepConditionVariableCS(&filter->status_cv, &filter->status_cs, INFINITE);
+        hr = filter->result;
+    }
+
+    LeaveCriticalSection(&filter->status_cs);
+
+    return hr;
+}
+
 static inline struct asf_stream *impl_from_IMediaSeeking(IMediaSeeking *iface)
 {
     return CONTAINING_RECORD(iface, struct asf_stream, seek.IMediaSeeking_iface);
@@ -302,15 +321,7 @@ static HRESULT WINAPI media_seeking_ChangeCurrent(IMediaSeeking *iface)
     }
 
     /* Stop the reader. */
-    EnterCriticalSection(&filter->status_cs);
-    if (SUCCEEDED(hr = IWMReader_Stop(filter->reader)))
-    {
-        filter->status = -1;
-        while (filter->status != WMT_STOPPED)
-            SleepConditionVariableCS(&filter->status_cv, &filter->status_cs, INFINITE);
-        hr = filter->result;
-    }
-    LeaveCriticalSection(&filter->status_cs);
+    hr = asf_reader_stop_stream(filter);
 
     /* Send end flush commands downstream. */
     for (i = 0; i < filter->stream_count; ++i)
@@ -553,17 +564,7 @@ static HRESULT asf_reader_cleanup_stream(struct strmbase_filter *iface)
 
     TRACE("iface %p\n", iface);
 
-    EnterCriticalSection(&filter->status_cs);
-    if (SUCCEEDED(hr = IWMReader_Stop(filter->reader)))
-    {
-        filter->status = -1;
-        while (filter->status != WMT_STOPPED)
-            SleepConditionVariableCS(&filter->status_cv, &filter->status_cs, INFINITE);
-        hr = filter->result;
-    }
-    LeaveCriticalSection(&filter->status_cs);
-
-    if (FAILED(hr))
+    if (FAILED(hr = asf_reader_stop_stream(filter)))
         WARN("Failed to stop WMReader %p, hr %#lx\n", filter->reader, hr);
 
     for (i = 0; i < filter->stream_count; ++i)
