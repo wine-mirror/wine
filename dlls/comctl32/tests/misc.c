@@ -394,6 +394,42 @@ static void test_LoadIconWithScaleDown(void)
     FreeLibrary(hinst);
 }
 
+static WNDPROC real_class_wndproc;
+static const char *real_class_str;
+
+static LRESULT WINAPI test_real_class_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    LRESULT lr = 0;
+
+    /*
+     * Passing through WM_GETTEXT to the WC_IPADDRESSA procedure will cause an
+     * access violation on Windows 7 64-bit.
+     */
+    if ((msg == WM_GETTEXT) && !strcmp( real_class_str, WC_IPADDRESSA )) return lr;
+
+    lr = CallWindowProcA( real_class_wndproc, hwnd, msg, wparam, lparam );
+    if (msg == WM_NCCREATE) lr = 1;
+
+    return lr;
+}
+
+#define check_real_class_name( a, b ) check_real_class_name_( __LINE__, a, b )
+static void check_real_class_name_( int line, HWND hwnd, const char *expect )
+{
+    WCHAR expectW[256], nameW[256];
+    char nameA[256];
+    ULONG len;
+
+    len = RealGetWindowClassA( hwnd, nameA, ARRAY_SIZE(nameA) );
+    ok_(__FILE__, line)( !strcmp( nameA, expect ), "got %s\n", nameA );
+    ok_(__FILE__, line)( len == strlen( expect ), "got %ld\n", len );
+
+    MultiByteToWideChar( CP_ACP, 0, expect, -1, expectW, ARRAY_SIZE(expectW));
+    len = RealGetWindowClassW( hwnd, nameW, ARRAY_SIZE(nameW));
+    ok_(__FILE__, line)( !wcscmp( nameW, expectW ), "got %s\n", debugstr_w(nameW));
+    ok_(__FILE__, line)( len == wcslen( expectW ), "got %ld\n", len );
+}
+
 static void check_class( const char *name, int must_exist, UINT style, UINT ignore, BOOL v6, DWORD classnameidx, BOOL classnameidx_todo )
 {
     WNDCLASSA wc;
@@ -431,6 +467,21 @@ static void check_class( const char *name, int must_exist, UINT style, UINT igno
             name, objid, classnameidx);
 
         DestroyWindow(hwnd);
+
+        real_class_wndproc = wc.lpfnWndProc;
+        real_class_str = name;
+        wc.lpfnWndProc = test_real_class_wndproc;
+        wc.hInstance = GetModuleHandleA( NULL );
+        wc.lpszClassName = "WineTest Class";
+        RegisterClassA( &wc );
+
+        hwnd = CreateWindowA( wc.lpszClassName, 0, 0, 0, 0, 0, 0, 0, NULL, GetModuleHandleA( NULL ), 0 );
+        check_real_class_name( hwnd, wc.lpszClassName );
+
+        DestroyWindow( hwnd );
+        UnregisterClassA( wc.lpszClassName, GetModuleHandleA( NULL ) );
+        real_class_wndproc = NULL;
+        real_class_str = NULL;
     }
     else
         ok( !must_exist, "System class %s does not exist\n", name );
