@@ -228,7 +228,7 @@ static HANDLE create_shared_resource_handle( D3DKMT_HANDLE local, const VkExport
     HANDLE shared;
 
     if (info->name) init_shared_resource_path( info->name, &name );
-    InitializeObjectAttributes( &attr, info->name ? &name : NULL, OBJ_CASE_INSENSITIVE, security, NULL );
+    InitializeObjectAttributes( &attr, info->name ? &name : NULL, OBJ_CASE_INSENSITIVE, NULL, security );
 
     if (!(status = NtGdiDdDDIShareObjects( 1, &local, &attr, info->dwAccess, &shared ))) return shared;
     WARN( "Failed to share resource %#x, status %#x\n", local, status );
@@ -1366,7 +1366,7 @@ static HANDLE create_shared_semaphore_handle( D3DKMT_HANDLE local, const VkExpor
     HANDLE shared;
 
     if (info->name) init_shared_resource_path( info->name, &name );
-    InitializeObjectAttributes( &attr, info->name ? &name : NULL, OBJ_CASE_INSENSITIVE, security, NULL );
+    InitializeObjectAttributes( &attr, info->name ? &name : NULL, OBJ_CASE_INSENSITIVE, NULL, security );
 
     if (!(status = NtGdiDdDDIShareObjects( 1, &local, &attr, info->dwAccess, &shared ))) return shared;
     WARN( "Failed to share resource %#x, status %#x\n", local, status );
