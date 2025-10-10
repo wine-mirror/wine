@@ -105,8 +105,10 @@ enum unix_call
     unix_vkCmdCopyImageToBuffer,
     unix_vkCmdCopyImageToBuffer2,
     unix_vkCmdCopyImageToBuffer2KHR,
+    unix_vkCmdCopyMemoryIndirectKHR,
     unix_vkCmdCopyMemoryIndirectNV,
     unix_vkCmdCopyMemoryToAccelerationStructureKHR,
+    unix_vkCmdCopyMemoryToImageIndirectKHR,
     unix_vkCmdCopyMemoryToImageIndirectNV,
     unix_vkCmdCopyMemoryToMicromapEXT,
     unix_vkCmdCopyMicromapEXT,
@@ -1336,6 +1338,12 @@ struct vkCmdCopyImageToBuffer2KHR_params
     const VkCopyImageToBufferInfo2 *pCopyImageToBufferInfo;
 };
 
+struct vkCmdCopyMemoryIndirectKHR_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkCopyMemoryIndirectInfoKHR *pCopyMemoryIndirectInfo;
+};
+
 struct vkCmdCopyMemoryIndirectNV_params
 {
     VkCommandBuffer commandBuffer;
@@ -1348,6 +1356,12 @@ struct vkCmdCopyMemoryToAccelerationStructureKHR_params
 {
     VkCommandBuffer commandBuffer;
     const VkCopyMemoryToAccelerationStructureInfoKHR *pInfo;
+};
+
+struct vkCmdCopyMemoryToImageIndirectKHR_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkCopyMemoryToImageIndirectInfoKHR *pCopyMemoryToImageIndirectInfo;
 };
 
 struct vkCmdCopyMemoryToImageIndirectNV_params
