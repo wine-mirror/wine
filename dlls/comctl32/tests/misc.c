@@ -1330,7 +1330,7 @@ static void test_version(BOOL v6)
         if (v6)
             ok(!!proc, "Get %s failed.\n", v6_only_exports[i]);
         else
-            todo_wine
+            todo_wine_if(!strstr(v6_only_exports[i], "TaskDialog"))
             ok(!proc, "Get %s succeeded.\n", v6_only_exports[i]);
     }
 }
