@@ -258,7 +258,6 @@ static void xembed_request_focus( Display *display, Window window, DWORD timesta
     xev.xclient.data.l[4] = 0;
 
     XSendEvent(display, window, False, NoEventMask, &xev);
-    XFlush( display );
 }
 
 /***********************************************************************

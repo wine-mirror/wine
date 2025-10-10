@@ -1333,8 +1333,6 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
                         SubstructureRedirectMask | SubstructureNotifyMask, &xev );
         }
     }
-
-    XFlush( data->display );
 }
 
 static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL above )
@@ -1582,8 +1580,6 @@ static void window_set_wm_state( struct x11drv_win_data *data, UINT new_state, B
 
     /* override redirect windows won't receive WM_STATE property changes */
     if (!data->managed) data->wm_state_serial = 0;
-
-    XFlush( data->display );
 }
 
 static void window_set_managed( struct x11drv_win_data *data, BOOL new_managed )
@@ -1972,7 +1968,6 @@ void set_net_active_window( HWND hwnd, HWND previous )
     TRACE( "requesting _NET_ACTIVE_WINDOW %p/%lx serial %lu\n", hwnd, window, data->net_active_window_serial );
     XSendEvent( data->display, DefaultRootWindow( data->display ), False,
                 SubstructureRedirectMask | SubstructureNotifyMask, &xev );
-    XFlush( data->display );
 }
 
 BOOL window_is_reparenting( HWND hwnd )
