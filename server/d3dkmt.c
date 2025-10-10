@@ -436,7 +436,7 @@ DECL_HANDLER(d3dkmt_share_objects)
     struct unicode_str name;
     struct object *root;
 
-    objattr = get_req_object_attributes( &sd, &name, &root );
+    if (!(objattr = get_req_object_attributes( &sd, &name, &root ))) return;
 
     if (req->resource)
     {
