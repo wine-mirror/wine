@@ -1509,8 +1509,8 @@ static LRESULT WINAPI test_class_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LP
     if (msg == WM_NCCREATE)
     {
         CREATESTRUCTA *cs = (CREATESTRUCTA *)lparam;
-        if (IS_INTRESOURCE(cs->lpszClass)) todo_wine check_atom_name_a( (UINT_PTR)cs->lpszClass, "WineTestClass" );
-        else todo_wine ok( !strcmp( cs->lpszClass, "WineTestClass" ), "got %s\n", debugstr_a(cs->lpszClass) );
+        if (IS_INTRESOURCE(cs->lpszClass)) check_atom_name_a( (UINT_PTR)cs->lpszClass, "WineTestClass" );
+        else ok( !strcmp( cs->lpszClass, "WineTestClass" ), "got %s\n", debugstr_a(cs->lpszClass) );
         return 1;
     }
 
@@ -1535,8 +1535,8 @@ static LRESULT WINAPI test_class_integral_wndproc( HWND hwnd, UINT msg, WPARAM w
     if (msg == WM_NCCREATE)
     {
         CREATESTRUCTA *cs = (CREATESTRUCTA *)lparam;
-        if (IS_INTRESOURCE(cs->lpszClass)) todo_wine ok( (UINT_PTR)cs->lpszClass == 1234, "got %p\n", cs->lpszClass );
-        else todo_wine ok( !strcmp( cs->lpszClass, "#1234" ), "got %s\n", debugstr_a(cs->lpszClass) );
+        if (IS_INTRESOURCE(cs->lpszClass)) ok( (UINT_PTR)cs->lpszClass == 1234, "got %p\n", cs->lpszClass );
+        else ok( !strcmp( cs->lpszClass, "#1234" ), "got %s\n", debugstr_a(cs->lpszClass) );
         return 1;
     }
 

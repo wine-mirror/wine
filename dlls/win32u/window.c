@@ -5562,6 +5562,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
                                   HWND parent, HMENU menu, HINSTANCE class_instance, void *params,
                                   DWORD flags, HINSTANCE instance, const WCHAR *class, BOOL ansi )
 {
+    WCHAR base_nameW[MAX_ATOM_LEN + 1];
     UINT win_dpi, context;
     struct window_surface *surface;
     struct window_rects new_rects;
@@ -5665,7 +5666,14 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     release_win_ptr( win );
 
     if (class && IS_INTRESOURCE(class)) cs.lpszClass = class;
-    else cs.lpszClass = class_name->Buffer;
+    else
+    {
+        UNICODE_STRING base_name;
+        base_name.Buffer = base_nameW;
+        base_name.MaximumLength = sizeof(base_nameW);
+        NtUserGetClassName( hwnd, FALSE, &base_name );
+        cs.lpszClass = base_name.Buffer;
+    }
 
     cbtc.hwndInsertAfter = HWND_TOP;
     cbtc.lpcs = &cs;
