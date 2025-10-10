@@ -5584,7 +5584,6 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     cs.style      = style;
     cs.dwExStyle  = ex_style;
     cs.lpszName   = window_name ? window_name->Buffer : NULL;
-    cs.lpszClass  = class_name->Buffer;
     cs.x  = x;
     cs.y  = y;
     cs.cx = cx;
@@ -5664,6 +5663,10 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     /* call the WH_CBT hook */
 
     release_win_ptr( win );
+
+    if (class && IS_INTRESOURCE(class)) cs.lpszClass = class;
+    else cs.lpszClass = class_name->Buffer;
+
     cbtc.hwndInsertAfter = HWND_TOP;
     cbtc.lpcs = &cs;
     if (call_hooks( WH_CBT, HCBT_CREATEWND, (WPARAM)hwnd, (LPARAM)&cbtc, sizeof(cbtc) ))
