@@ -3347,7 +3347,7 @@ static BOOL init_popup( HWND owner, HMENU hmenu, UINT flags )
     menu->hWnd = NtUserCreateWindowEx( ex_style, &class_name, NULL, NULL,
                                        WS_POPUP, 0, 0, 0, 0, owner, 0,
                                        (HINSTANCE)get_window_long_ptr( owner, GWLP_HINSTANCE, FALSE ),
-                                       (void *)hmenu, 0, NULL, 0, FALSE );
+                                       (void *)hmenu, 0, NULL, (WCHAR *)POPUPMENU_CLASS_ATOM, FALSE );
     return !!menu->hWnd;
 }
 

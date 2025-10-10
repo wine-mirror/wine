@@ -1960,7 +1960,7 @@ NTSTATUS WINAPI wow64_NtUserCreateWindowEx( UINT *args )
     void *params = get_ptr( &args );
     DWORD flags = get_ulong( &args );
     HINSTANCE client_instance = get_ptr( &args );
-    DWORD unk = get_ulong( &args );
+    const WCHAR *class = get_ptr( &args );
     BOOL ansi = get_ulong( &args );
 
     UNICODE_STRING class_name, version, window_name;
@@ -1971,7 +1971,7 @@ NTSTATUS WINAPI wow64_NtUserCreateWindowEx( UINT *args )
                                 unicode_str_32to64( &version, version32 ),
                                 unicode_str_32to64( &window_name, window_name32 ),
                                 style, x, y, width, height, parent, menu,
-                                instance, params, flags, client_instance, unk, ansi );
+                                instance, params, flags, client_instance, class, ansi );
     return HandleToUlong( ret );
 }
 

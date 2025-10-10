@@ -310,7 +310,7 @@ BOOL register_imm_window( HWND hwnd )
 
         thread_data->default_hwnd = NtUserCreateWindowEx( 0, &class_name, NULL, &name,
                                                           WS_POPUP | WS_DISABLED | WS_CLIPSIBLINGS,
-                                                          0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, FALSE );
+                                                          0, 0, 1, 1, 0, 0, 0, 0, 0, 0, NULL, FALSE );
     }
 
     return TRUE;

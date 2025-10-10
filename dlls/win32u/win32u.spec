@@ -874,7 +874,7 @@
 @ stdcall -syscall NtUserCreatePopupMenu()
 @ stub -syscall NtUserCreateSyntheticPointerDevice2
 @ stub -syscall NtUserCreateSystemThreads
-@ stdcall -syscall NtUserCreateWindowEx(long ptr ptr ptr long long long long long long long long ptr long long long long)
+@ stdcall -syscall NtUserCreateWindowEx(long ptr ptr ptr long long long long long long long long ptr long long ptr long)
 @ stub -syscall NtUserCreateWindowGroup
 @ stdcall -syscall NtUserCreateWindowStation(ptr long long long long long long)
 @ stub -syscall NtUserCsDdeUninitialize

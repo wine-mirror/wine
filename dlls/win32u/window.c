@@ -5560,7 +5560,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
                                   UNICODE_STRING *version, UNICODE_STRING *window_name,
                                   DWORD style, INT x, INT y, INT cx, INT cy,
                                   HWND parent, HMENU menu, HINSTANCE class_instance, void *params,
-                                  DWORD flags, HINSTANCE instance, DWORD unk, BOOL ansi )
+                                  DWORD flags, HINSTANCE instance, const WCHAR *class, BOOL ansi )
 {
     UINT win_dpi, context;
     struct window_surface *surface;
@@ -5573,9 +5573,9 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     WND *win;
 
     TRACE( "ex_style %#x, class_name %s, version %s, window_name %s, style %#x, x %u, y %u, cx %u, cy %u, "
-           "parent %p, menu %p, class_instance %p, params %p, flags %#x, instance %p, unk %u, ansi %u\n",
+           "parent %p, menu %p, class_instance %p, params %p, flags %#x, instance %p, class %s, ansi %u\n",
            ex_style, debugstr_us(class_name), debugstr_us(version), debugstr_us(window_name), style, x, y, cx, cy,
-           parent, menu, class_instance, params, flags, instance, unk, ansi );
+           parent, menu, class_instance, params, flags, instance, debugstr_w(class), ansi );
 
     cs.lpCreateParams = params;
     cs.hInstance  = instance ? instance : class_instance;

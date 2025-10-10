@@ -1310,7 +1310,7 @@ HWND SYSCALL_API NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_nam
                                        UNICODE_STRING *version, UNICODE_STRING *window_name,
                                        DWORD style, INT x, INT y, INT cx, INT cy,
                                        HWND parent, HMENU menu, HINSTANCE instance, void *params,
-                                       DWORD flags, HINSTANCE client_instance, DWORD unk, BOOL ansi )
+                                       DWORD flags, HINSTANCE client_instance, const WCHAR *class, BOOL ansi )
 {
     SYSCALL_FUNC( NtUserCreateWindowEx );
 }

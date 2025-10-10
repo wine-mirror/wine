@@ -412,7 +412,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
 
     hwnd = NtUserCreateWindowEx( cs->dwExStyle, &class, NULL, &window_name, cs->style,
                                  cs->x, cs->y, cs->cx, cs->cy, cs->hwndParent, menu, module,
-                                 cs->lpCreateParams, 0, cs->hInstance, 0, !unicode );
+                                 cs->lpCreateParams, 0, cs->hInstance, className, !unicode );
     if (!hwnd && menu && menu != cs->hMenu) NtUserDestroyMenu( menu );
     if (!unicode && window_name.Buffer != name_buf) RtlFreeUnicodeString( &window_name );
     return hwnd;
