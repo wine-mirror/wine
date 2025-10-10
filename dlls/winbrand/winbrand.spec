@@ -1,4 +1,4 @@
-@ stub BrandingFormatString
+@ stdcall BrandingFormatString(wstr)
 @ stub BrandingFormatStringForEdition
 @ stub BrandingLoadBitmap
 @ stub BrandingLoadCursor

@@ -1,1 +1,4 @@
 MODULE    = winbrand.dll
+
+SOURCES = \
+	main.c
