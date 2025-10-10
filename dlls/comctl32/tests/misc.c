@@ -1295,14 +1295,44 @@ static void test_WM_SETFONT(void)
 
 static void test_version(BOOL v6)
 {
+    static const char *v6_only_exports[] =
+    {
+        "DllInstall",
+        "DrawShadowText",
+        "DPA_GetSize",
+        "DSA_Clone",
+        "DSA_GetSize",
+        "GetWindowSubclass",
+        "HIMAGELIST_QueryInterface",
+        "ImageList_CoCreateInstance",
+        "ImageList_WriteEx",
+        "LoadIconMetric",
+        "LoadIconWithScaleDown",
+        "TaskDialog",
+        "TaskDialogIndirect",
+    };
     DLLVERSIONINFO info;
+    HMODULE module;
+    unsigned int i;
     HRESULT hr;
+    void *proc;
 
     info.cbSize = sizeof(info);
     hr = pDllGetVersion(&info);
     ok(hr == S_OK, "DllGetVersion failed, hr %#lx.\n", hr);
 
     ok(info.dwMajorVersion == (v6 ? 6 : 5), "Got unexpected major version %lu.\n", info.dwMajorVersion);
+
+    module = GetModuleHandleW(L"comctl32.dll");
+    for (i = 0; i < ARRAY_SIZE(v6_only_exports); i++)
+    {
+        proc = GetProcAddress(module, v6_only_exports[i]);
+        if (v6)
+            ok(!!proc, "Get %s failed.\n", v6_only_exports[i]);
+        else
+            todo_wine
+            ok(!proc, "Get %s succeeded.\n", v6_only_exports[i]);
+    }
 }
 
 static void test_RegisterClassNameW(BOOL v6)
