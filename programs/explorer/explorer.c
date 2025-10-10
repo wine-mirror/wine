@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 #define EXPLORER_INFO_INDEX 0
 
 #define NAV_TOOLBAR_HEIGHT 30
-#define PATHBOX_HEIGHT 24
+#define PATHBOX_HEIGHT 240
 static int nav_toolbar_height;
 static int pathbox_height;
 
