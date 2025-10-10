@@ -1578,7 +1578,7 @@ void wined3d_device_context_emit_set_constant_buffers(struct wined3d_device_cont
 static bool texture_binding_might_invalidate_ps(struct wined3d_shader_resource_view *view,
         struct wined3d_shader_resource_view *prev, const struct wined3d_d3d_info *d3d_info)
 {
-    unsigned int old_usage, new_usage, old_caps, new_caps;
+    unsigned int old_usage, new_usage;
     const struct wined3d_format *old_format, *new_format;
 
     if (!prev)
@@ -1593,9 +1593,7 @@ static bool texture_binding_might_invalidate_ps(struct wined3d_shader_resource_v
 
     old_format = prev->resource->format;
     new_format = view->resource->format;
-    old_caps = prev->resource->format_caps;
-    new_caps = view->resource->format_caps;
-    if ((old_caps & WINED3D_FORMAT_CAP_SHADOW) != (new_caps & WINED3D_FORMAT_CAP_SHADOW))
+    if ((old_format->attrs & WINED3D_FORMAT_ATTR_SHADOW) != (new_format->attrs & WINED3D_FORMAT_ATTR_SHADOW))
         return true;
 
     if (is_same_fixup(old_format->color_fixup, new_format->color_fixup))

@@ -4544,6 +4544,7 @@ extern enum wined3d_format_id pixelformat_for_depth(DWORD depth);
 #define WINED3D_FORMAT_ATTR_MAPPABLE                0x00000400
 #define WINED3D_FORMAT_ATTR_CAST_TO_BLOCK           0x00000800
 #define WINED3D_FORMAT_ATTR_PLANAR                  0x00001000
+#define WINED3D_FORMAT_ATTR_SHADOW                  0x00002000
 
 /* Pixel format capabilities */
 #define WINED3D_FORMAT_CAP_POSTPIXELSHADER_BLENDING     0x00000001
@@ -4557,7 +4558,6 @@ extern enum wined3d_format_id pixelformat_for_depth(DWORD depth);
 #define WINED3D_FORMAT_CAP_SRGB_READ                    0x00000100
 #define WINED3D_FORMAT_CAP_SRGB_WRITE                   0x00000200
 #define WINED3D_FORMAT_CAP_VTF                          0x00000400
-#define WINED3D_FORMAT_CAP_SHADOW                       0x00000800
 #define WINED3D_FORMAT_CAP_TEXTURE                      0x00001000
 #define WINED3D_FORMAT_CAP_GEN_MIPMAP                   0x00002000
 #define WINED3D_FORMAT_CAP_VERTEX_ATTRIBUTE             0x00004000
