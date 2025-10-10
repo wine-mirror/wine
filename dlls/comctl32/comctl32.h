@@ -267,8 +267,10 @@ extern void REBAR_Unregister(void);
 extern void STATIC_Register(void);
 extern void STATUS_Register(void);
 extern void STATUS_Unregister(void);
+#if __WINE_COMCTL32_VERSION == 6
 extern void SYSLINK_Register(void);
 extern void SYSLINK_Unregister(void);
+#endif
 extern void TAB_Register(void);
 extern void TAB_Unregister(void);
 extern void TOOLBAR_Register(void);

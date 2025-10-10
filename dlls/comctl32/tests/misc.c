@@ -404,9 +404,7 @@ static void check_class( const char *name, int must_exist, UINT style, UINT igno
         HWND hwnd;
         DWORD objid;
 
-        todo_wine_if(!strcmp(name, "SysLink") && !must_exist && !v6)
         ok( must_exist, "System class %s should %sexist\n", name, must_exist ? "" : "NOT " );
-        if (!must_exist) return;
 
         todo_wine_if(!strcmp(name, "ScrollBar") || (!strcmp(name, "tooltips_class32") && v6))
         ok( !(~wc.style & style & ~ignore), "System class %s is missing bits %x (%08x/%08x)\n",

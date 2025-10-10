@@ -38,7 +38,6 @@ SOURCES = \
 	smoothscroll.c \
 	status.c \
 	string.c \
-	syslink.c \
 	tab.c \
 	toolbar.c \
 	tooltips.c \

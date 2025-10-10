@@ -200,7 +200,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             PROGRESS_Register ();
             REBAR_Register ();
             STATUS_Register ();
+#if __WINE_COMCTL32_VERSION == 6
             SYSLINK_Register ();
+#endif
             TAB_Register ();
             TOOLBAR_Register ();
             TOOLTIPS_Register ();
@@ -227,7 +229,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             PROGRESS_Unregister ();
             REBAR_Unregister ();
             STATUS_Unregister ();
-            SYSLINK_Unregister ();
             TAB_Unregister ();
             TOOLBAR_Unregister ();
             TOOLTIPS_Unregister ();
@@ -236,6 +237,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             UPDOWN_Unregister ();
 
 #if __WINE_COMCTL32_VERSION == 6
+            SYSLINK_Unregister ();
+
             unregister_versioned_classes ();
 #endif /* __WINE_COMCTL32_VERSION == 6 */
 

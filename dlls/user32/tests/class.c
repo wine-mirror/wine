@@ -1368,7 +1368,6 @@ static void test_comctl32_classes(void)
         PROGRESS_CLASSA,
         REBARCLASSNAMEA,
         STATUSCLASSNAMEA,
-        "SysLink",
         WC_TABCONTROLA,
         TOOLBARCLASSNAMEA,
         TOOLTIPS_CLASSA,
