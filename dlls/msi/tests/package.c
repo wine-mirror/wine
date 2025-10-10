@@ -893,6 +893,9 @@ static BOOL create_file_with_version(const CHAR *name, LONG ms, LONG ls)
     VS_FIXEDFILEINFO *pFixedInfo;
     LPBYTE buffer, ofs;
     CHAR path[MAX_PATH];
+    HANDLE file;
+    BYTE filedata[4096];
+    IMAGE_NT_HEADERS *nt;
     DWORD handle, size;
     HANDLE resource;
     BOOL ret = FALSE;
@@ -927,6 +930,16 @@ static BOOL create_file_with_version(const CHAR *name, LONG ms, LONG ls)
 
     if (!EndUpdateResourceA(resource, FALSE))
         goto done;
+
+    /* clear export directory to make sure we don't try to load the builtin */
+    file = CreateFileA( name, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ReadFile( file, filedata, sizeof(filedata), NULL, NULL );
+    nt = (IMAGE_NT_HEADERS *)(filedata + ((IMAGE_DOS_HEADER *)filedata)->e_lfanew);
+    nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress = 0;
+    nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size = 0;
+    SetFilePointer( file, 0, NULL, FILE_BEGIN );
+    WriteFile( file, filedata, sizeof(filedata), NULL, NULL );
+    CloseHandle( file );
 
     ret = TRUE;
 
