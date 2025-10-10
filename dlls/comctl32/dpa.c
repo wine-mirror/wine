@@ -1005,6 +1005,7 @@ void WINAPI DPA_DestroyCallback (HDPA hdpa, PFNDPAENUMCALLBACK enumProc,
     DPA_Destroy (hdpa);
 }
 
+#if __WINE_COMCTL32_VERSION == 6
 /**************************************************************************
  * DPA_GetSize [COMCTL32.@]
  *
@@ -1024,3 +1025,4 @@ ULONGLONG WINAPI DPA_GetSize(HDPA hdpa)
 
     return sizeof(DPA) + hdpa->nMaxCount*sizeof(PVOID);
 }
+#endif /* __WINE_COMCTL32_VERSION == 6 */

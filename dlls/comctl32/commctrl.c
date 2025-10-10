@@ -951,6 +951,7 @@ CreateToolbar (HWND hwnd, DWORD style, UINT wID, INT nBitmaps,
 }
 
 
+#if __WINE_COMCTL32_VERSION == 6
 /***********************************************************************
  *		DllInstall (COMCTL32.@)
  *
@@ -965,6 +966,7 @@ HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
     TRACE("(%u, %s): stub\n", bInstall, debugstr_w(cmdline));
     return S_OK;
 }
+#endif /* __WINE_COMCTL32_VERSION == 6 */
 
 /***********************************************************************
  * _TrackMouseEvent [COMCTL32.@]
@@ -1624,6 +1626,7 @@ LRESULT WINAPI SetPathWordBreakProc(HWND hwnd, BOOL bSet)
         (LPARAM)(bSet ? PathWordBreakProc : NULL));
 }
 
+#if __WINE_COMCTL32_VERSION == 6
 /***********************************************************************
  * DrawShadowText [COMCTL32.@]
  *
@@ -1705,6 +1708,7 @@ HRESULT WINAPI LoadIconMetric(HINSTANCE hinst, const WCHAR *name, int size, HICO
 
     return LoadIconWithScaleDown(hinst, name, cx, cy, icon);
 }
+#endif /* __WINE_COMCTL32_VERSION == 6 */
 
 static const WCHAR strMRUList[] = L"MRUList";
 

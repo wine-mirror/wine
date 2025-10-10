@@ -1328,7 +1328,7 @@ static void test_version(BOOL v6)
         if (v6)
             ok(!!proc, "Get %s failed.\n", v6_only_exports[i]);
         else
-            todo_wine_if(!strstr(v6_only_exports[i], "TaskDialog"))
+            todo_wine_if(!strcmp(v6_only_exports[i], "HIMAGELIST_QueryInterface"))
             ok(!proc, "Get %s succeeded.\n", v6_only_exports[i]);
     }
 }

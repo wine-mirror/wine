@@ -2970,6 +2970,7 @@ failed:
     return result;
 }
 
+#if __WINE_COMCTL32_VERSION == 6
 /*************************************************************************
  * ImageList_WriteEx [COMCTL32.@]
  */
@@ -2978,6 +2979,7 @@ HRESULT WINAPI ImageList_WriteEx(HIMAGELIST himl, DWORD flags, IStream *pstm)
     FIXME("%p %#lx %p: semi-stub\n", himl, flags, pstm);
     return ImageList_Write(himl, pstm) ? S_OK : E_FAIL;
 }
+#endif /* __WINE_COMCTL32_VERSION == 6 */
 
 /*************************************************************************
  * ImageList_Write [COMCTL32.@]
@@ -3123,6 +3125,7 @@ ImageList_SetColorTable(HIMAGELIST himl, UINT uStartIndex, UINT cEntries, const 
     return SetDIBColorTable(himl->hdcImage, uStartIndex, cEntries, prgb);
 }
 
+#if __WINE_COMCTL32_VERSION == 6
 /*************************************************************************
  * ImageList_CoCreateInstance [COMCTL32.@]
  *
@@ -3148,6 +3151,7 @@ ImageList_CoCreateInstance (REFCLSID rclsid, const IUnknown *punkOuter, REFIID r
 
     return ImageListImpl_CreateInstance(punkOuter, riid, ppv);
 }
+#endif /* __WINE_COMCTL32_VERSION == 6 */
 
 
 /*************************************************************************
