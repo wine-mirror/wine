@@ -27,7 +27,6 @@ int mcy_error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int xyyerror(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int mcy_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void internal_error(const char *file, int line, const char *s, ...) __attribute__((format (printf, 3, 4)));
-void fatal_perror( const char *msg, ... ) __attribute__((format (printf, 1, 2), noreturn));
 void error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 

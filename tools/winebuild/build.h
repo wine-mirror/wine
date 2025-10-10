@@ -253,8 +253,6 @@ static inline int is_pe(void)
 extern char *strupper(char *s);
 extern DECLSPEC_NORETURN void fatal_error( const char *msg, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
-extern DECLSPEC_NORETURN void fatal_perror( const char *msg, ... )
-   __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void error( const char *msg, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void warning( const char *msg, ... )

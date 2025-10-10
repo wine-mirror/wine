@@ -112,6 +112,20 @@ struct target
     } platform;
 };
 
+static void fatal_perror( const char *msg, ... ) __attribute__ ((__format__ (__printf__, 1, 2), noreturn));
+static inline void fatal_perror( const char *msg, ... )
+{
+    va_list valist;
+
+    va_start( valist, msg );
+    fprintf( stderr, "error: " );
+    vfprintf( stderr, msg, valist );
+    perror( " " );
+    va_end( valist );
+    exit(1);
+}
+
+
 static inline void *xmalloc( size_t size )
 {
     void *res = malloc( size ? size : 1 );

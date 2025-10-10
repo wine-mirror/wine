@@ -57,23 +57,6 @@ void fatal_error( const char *msg, ... )
     exit(1);
 }
 
-void fatal_perror( const char *msg, ... )
-{
-    va_list valist;
-    va_start( valist, msg );
-    if (input_file_name)
-    {
-        fprintf( stderr, "%s:", input_file_name );
-        if (current_line)
-            fprintf( stderr, "%d:", current_line );
-        fputc( ' ', stderr );
-    }
-    vfprintf( stderr, msg, valist );
-    perror( " " );
-    va_end( valist );
-    exit(1);
-}
-
 void error( const char *msg, ... )
 {
     va_list valist;

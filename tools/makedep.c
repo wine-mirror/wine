@@ -288,9 +288,7 @@ static const char Usage[] =
 
 
 static void fatal_error( const char *msg, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
-static void fatal_perror( const char *msg, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
 static void output( const char *format, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
-static char *strmake( const char* fmt, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
 
 /*******************************************************************
  *         fatal_error
@@ -307,27 +305,6 @@ static void fatal_error( const char *msg, ... )
     }
     else fprintf( stderr, "makedep: error: " );
     vfprintf( stderr, msg, valist );
-    va_end( valist );
-    exit(1);
-}
-
-
-/*******************************************************************
- *         fatal_perror
- */
-static void fatal_perror( const char *msg, ... )
-{
-    va_list valist;
-    va_start( valist, msg );
-    if (input_file_name)
-    {
-        fprintf( stderr, "%s:", input_file_name );
-        if (input_line) fprintf( stderr, "%d:", input_line );
-        fprintf( stderr, " error: " );
-    }
-    else fprintf( stderr, "makedep: error: " );
-    vfprintf( stderr, msg, valist );
-    perror( " " );
     va_end( valist );
     exit(1);
 }

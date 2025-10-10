@@ -86,17 +86,6 @@ int parser_warning(const char *s, ...)
 	return 0;
 }
 
-void fatal_perror( const char *msg, ... )
-{
-        va_list valist;
-        va_start( valist, msg );
-	fprintf(stderr, "Error: ");
-        vfprintf( stderr, msg, valist );
-        perror( " " );
-        va_end( valist );
-        exit(2);
-}
-
 void error(const char *s, ...)
 {
 	va_list ap;
