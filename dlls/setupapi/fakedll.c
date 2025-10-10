@@ -755,8 +755,8 @@ struct dll_data
 static BOOL CALLBACK register_manifest( HMODULE module, const WCHAR *type, WCHAR *res_name, LONG_PTR arg )
 {
     const struct dll_data *dll_data = (const struct dll_data*)arg;
-    WCHAR *dest = NULL;
-    DWORD src_len = wcslen( dll_data->src ), dest_len = 0, ret;
+    WCHAR *p, *dest = NULL;
+    DWORD src_len = wcslen( dll_data->src ), dest_len = 0, file_count = 0;
     xmlbuf_t buffer;
     xmlstr_t elem, attr_name, attr_value;
     xmlstr_t name, version, arch, key, lang;
@@ -791,14 +791,25 @@ static BOOL CALLBACK register_manifest( HMODULE module, const WCHAR *type, WCHAR
 
             if (!error && dest && name.ptr)
             {
+                int namelen = MultiByteToWideChar( CP_UTF8, 0, name.ptr, name.len, NULL, 0 );
                 struct delay_copy *add = malloc( offsetof( struct delay_copy,
-                                                           data[src_len + 1 + dest_len + name.len + 1] ));
+                                                           data[src_len + 1 + dest_len + 2 * namelen + 1] ));
                 add->src = add->data;
-                wcscpy( add->src, dll_data->src );
-                add->dest = add->src + src_len + 1;
+                memcpy( add->src, dll_data->src, src_len * sizeof(WCHAR) );
+                if (!file_count++)
+                {
+                    add->src[src_len] = 0;
+                    if ((p = wcsrchr( dll_data->src, '\\' ))) src_len = p + 1 - dll_data->src;
+                }
+                else
+                {
+                    MultiByteToWideChar( CP_UTF8, 0, name.ptr, name.len, add->src + src_len, namelen );
+                    add->src[src_len + namelen] = 0;
+                }
+                add->dest = add->src + wcslen(add->src) + 1;
                 memcpy( add->dest, dest, dest_len * sizeof(WCHAR) );
-                ret = MultiByteToWideChar( CP_UTF8, 0, name.ptr, name.len, add->dest + dest_len, name.len );
-                add->dest[dest_len + ret] = 0;
+                MultiByteToWideChar( CP_UTF8, 0, name.ptr, name.len, add->dest + dest_len, namelen );
+                add->dest[dest_len + namelen] = 0;
                 list_add_tail( dll_data->delay_copy, &add->entry );
             }
             continue;
