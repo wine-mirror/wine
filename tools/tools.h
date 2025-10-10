@@ -52,6 +52,9 @@
 # ifndef S_ISREG
 #  define S_ISREG(mod) (((mod) & _S_IFMT) == _S_IFREG)
 # endif
+# ifndef S_ISDIR
+#  define S_ISDIR(mod) (((mod) & _S_IFMT) == _S_IFDIR)
+# endif
 # ifdef _MSC_VER
 #  define popen _popen
 #  define pclose _pclose
@@ -494,6 +497,29 @@ static inline void init_signals( void (*cleanup)(int) )
 #ifdef SIGHUP
     signal( SIGHUP, cleanup );
 #endif
+}
+
+
+static inline void mkdir_p( const char *dir )
+{
+    char *p, *path;
+
+    if (!dir[0]) return;
+
+    path = xstrdup( dir );
+    for (p = path + 1; (p = strchr( p, '/' )); p++)
+    {
+        *p = 0;
+        if (mkdir( path, 0755 ) == -1 && errno != EEXIST) fatal_perror( "mkdir %s", path );
+        *p = '/';
+    }
+    if (mkdir( path, 0755 ) == -1)
+    {
+        struct stat st;
+        if (errno != EEXIST || stat( path, &st ) || !S_ISDIR( st.st_mode ))
+            fatal_perror( "cannot create %s", path );
+    }
+    free( path );
 }
 
 
