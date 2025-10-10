@@ -39,6 +39,7 @@ static INT (WINAPI * pStr_GetPtrW)(LPCWSTR, LPWSTR, INT);
 static BOOL (WINAPI * pStr_SetPtrW)(LPWSTR, LPCWSTR);
 
 static HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO *);
+static BOOL (WINAPI *pRegisterClassNameW)(const WCHAR *class_name);
 static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
 static BOOL (WINAPI *pRemoveWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR);
 static LRESULT (WINAPI *pDefSubclassProc)(HWND, UINT, WPARAM, LPARAM);
@@ -95,6 +96,7 @@ static BOOL InitFunctionPtrs(void)
     COMCTL32_GET_PROC(236, Str_SetPtrW)
 
     pDllGetVersion = (void *)GetProcAddress(hComctl32, "DllGetVersion");
+    pRegisterClassNameW = (void *)GetProcAddress(hComctl32, "RegisterClassNameW");
 
     return TRUE;
 }
@@ -113,6 +115,7 @@ static BOOL init_functions_v6(void)
     COMCTL32_GET_PROC(413, DefSubclassProc)
 
     pDllGetVersion = (void *)GetProcAddress(hComctl32, "DllGetVersion");
+    pRegisterClassNameW = (void *)GetProcAddress(hComctl32, "RegisterClassNameW");
 
     return TRUE;
 }
@@ -1302,6 +1305,35 @@ static void test_version(BOOL v6)
     ok(info.dwMajorVersion == (v6 ? 6 : 5), "Got unexpected major version %lu.\n", info.dwMajorVersion);
 }
 
+static void test_RegisterClassNameW(BOOL v6)
+{
+    static const WCHAR *class_names[] =
+    {
+        L"Button",
+        L"ComboBox",
+        L"ComboLBox",
+        L"Edit",
+        L"ListBox",
+        L"Static",
+    };
+    unsigned int i;
+    BOOL ret;
+
+    winetest_push_context("v%d", v6 ? 6 : 5);
+
+    for (i = 0; i < ARRAY_SIZE(class_names); i++)
+    {
+        ret = pRegisterClassNameW(class_names[i]);
+        if (v6)
+            ok(ret, "RegisterClassNameW %s failed, error %lu.\n", wine_dbgstr_w(class_names[i]), GetLastError());
+        else
+            todo_wine
+            ok(!ret, "RegisterClassNameW %s succeeded.\n", wine_dbgstr_w(class_names[i]));
+    }
+
+    winetest_pop_context();
+}
+
 START_TEST(misc)
 {
     ULONG_PTR ctx_cookie;
@@ -1317,6 +1349,7 @@ START_TEST(misc)
     test_WM_STYLECHANGED();
     test_WM_SETFONT();
     test_version(FALSE);
+    test_RegisterClassNameW(FALSE);
 
     FreeLibrary(hComctl32);
 
@@ -1334,6 +1367,7 @@ START_TEST(misc)
     test_WM_STYLECHANGED();
     test_WM_SETFONT();
     test_version(TRUE);
+    test_RegisterClassNameW(TRUE);
 
     unload_v6_module(ctx_cookie, hCtx);
     FreeLibrary(hComctl32);
