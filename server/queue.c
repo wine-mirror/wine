@@ -4070,7 +4070,7 @@ DECL_HANDLER(get_rawinput_buffer)
 {
     const size_t align = is_machine_64bit( current->process->machine ) ? 7 : 3;
     data_size_t buffer_size = get_reply_max_size() & ~align;
-    struct thread_input *input = current->queue->input;
+    struct msg_queue *queue = current->queue;
     struct message *msg, *next_msg;
     int count = 0;
     char *buffer;
@@ -4083,7 +4083,7 @@ DECL_HANDLER(get_rawinput_buffer)
 
     if (!req->read_data)
     {
-        LIST_FOR_EACH_ENTRY( msg, &input->msg_list, struct message, entry )
+        LIST_FOR_EACH_ENTRY( msg, &queue->input->msg_list, struct message, entry )
         {
             if (msg->msg == WM_INPUT)
             {
@@ -4101,7 +4101,7 @@ DECL_HANDLER(get_rawinput_buffer)
 
         reply->next_size = get_reply_max_size();
 
-        LIST_FOR_EACH_ENTRY_SAFE( msg, next_msg, &input->msg_list, struct message, entry )
+        LIST_FOR_EACH_ENTRY_SAFE( msg, next_msg, &queue->input->msg_list, struct message, entry )
         {
             if (msg->msg == WM_INPUT)
             {
@@ -4131,6 +4131,7 @@ DECL_HANDLER(get_rawinput_buffer)
 
         if (!next_size)
         {
+            clear_queue_bits( queue, QS_RAWINPUT | (list_empty( &queue->input->msg_list ) ? QS_HARDWARE : 0) );
             if (count) next_size = sizeof(RAWINPUT);
             else reply->next_size = 0;
         }
