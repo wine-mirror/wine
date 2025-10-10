@@ -6,8 +6,6 @@ DELAYIMPORTS = oleacc winmm uxtheme
 
 SOURCES = \
 	animate.c \
-	button.c \
-	combo.c \
 	comboex.c \
 	comctl32.rc \
 	commctrl.c \
@@ -15,7 +13,6 @@ SOURCES = \
 	dpa.c \
 	draglist.c \
 	dsa.c \
-	edit.c \
 	flatsb.c \
 	header.c \
 	hotkey.c \
@@ -31,7 +28,6 @@ SOURCES = \
 	idc_movebutton.svg \
 	imagelist.c \
 	ipaddress.c \
-	listbox.c \
 	listview.c \
 	monthcal.c \
 	nativefont.c \
@@ -40,7 +36,6 @@ SOURCES = \
 	propsheet.c \
 	rebar.c \
 	smoothscroll.c \
-	static.c \
 	status.c \
 	string.c \
 	syslink.c \

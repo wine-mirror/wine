@@ -1327,7 +1327,6 @@ static void test_RegisterClassNameW(BOOL v6)
         if (v6)
             ok(ret, "RegisterClassNameW %s failed, error %lu.\n", wine_dbgstr_w(class_names[i]), GetLastError());
         else
-            todo_wine
             ok(!ret, "RegisterClassNameW %s succeeded.\n", wine_dbgstr_w(class_names[i]));
     }
 

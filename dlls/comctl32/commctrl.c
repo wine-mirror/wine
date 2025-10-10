@@ -68,7 +68,6 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "comctl32.h"
-#include "uxtheme.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commctrl);
@@ -92,6 +91,7 @@ static const WORD wPattern55AA[] =
 
 static const WCHAR strCC32SubclassInfo[] = L"CC32SubclassInfo";
 
+#if __WINE_COMCTL32_VERSION == 6
 static void unregister_versioned_classes(void)
 {
 #define VERSION "6.0.2600.2982!"
@@ -111,9 +111,11 @@ static void unregister_versioned_classes(void)
 
 #undef VERSION
 }
+#endif /* __WINE_COMCTL32_VERSION == 6 */
 
 BOOL WINAPI RegisterClassNameW(const WCHAR *class)
 {
+#if __WINE_COMCTL32_VERSION == 6
     static const struct
     {
         const WCHAR nameW[16];
@@ -142,6 +144,7 @@ BOOL WINAPI RegisterClassNameW(const WCHAR *class)
         if (res < 0) max = pos - 1;
         else min = pos + 1;
     }
+#endif /* __WINE_COMCTL32_VERSION == 6 */
 
     return FALSE;
 }
@@ -232,7 +235,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             TREEVIEW_Unregister ();
             UPDOWN_Unregister ();
 
+#if __WINE_COMCTL32_VERSION == 6
             unregister_versioned_classes ();
+#endif /* __WINE_COMCTL32_VERSION == 6 */
 
             /* delete local pattern brush */
             DeleteObject (COMCTL32_hPattern55AABrush);
