@@ -3118,7 +3118,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
                               const struct window_rects *new_rects, struct window_surface *surface )
 {
     struct x11drv_win_data *data;
-    UINT ex_style = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ), new_style = NtUserGetWindowLongW( hwnd, GWL_STYLE ), old_style;
+    UINT ex_style = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ), new_style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
     struct window_rects old_rects;
     BOOL is_managed, was_fullscreen, activate = !(swp_flags & SWP_NOACTIVATE);
 
@@ -3126,11 +3126,6 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
 
     if (!(data = get_win_data( hwnd ))) return;
     if (is_managed) window_set_managed( data, TRUE );
-
-    old_style = new_style & ~(WS_VISIBLE | WS_MINIMIZE | WS_MAXIMIZE);
-    if (data->desired_state.wm_state != WithdrawnState) old_style |= WS_VISIBLE;
-    if (data->desired_state.wm_state == IconicState) old_style |= WS_MINIMIZE;
-    if (data->desired_state.net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)) old_style |= WS_MAXIMIZE;
 
     old_rects = data->rects;
     was_fullscreen = data->is_fullscreen;
@@ -3151,15 +3146,6 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     {
         release_win_data( data );
         return;
-    }
-
-    if (old_style & WS_VISIBLE)
-    {
-        if (((swp_flags & SWP_HIDEWINDOW) && !(new_style & WS_VISIBLE)) ||
-            (!(new_style & WS_MINIMIZE) && !is_window_rect_mapped( &new_rects->window ) && is_window_rect_mapped( &old_rects.window )))
-        {
-            window_set_wm_state( data, WithdrawnState, FALSE );
-        }
     }
 
     /* don't change position if we are about to minimize or maximize a managed window */
