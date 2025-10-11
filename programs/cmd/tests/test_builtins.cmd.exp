@@ -438,7 +438,7 @@ h1 else echo h2
 ---
 i1 else echo i2
 i3
-@todo_wine@j2@space@
+j2@space@
 ---
 k1
 k2
@@ -465,20 +465,20 @@ p2
 q2
 q3
 ------------- Testing for variables expansion in pipes
-@todo_wine@a@space@@space@
-@todo_wine@b@space@@space@
+a@space@@space@
+b@space@@space@
 
 ---
-@todo_wine@a-c@space@@space@
-@todo_wine@a-d@space@@space@
-@todo_wine@b-c@space@@space@
-@todo_wine@b-d@space@@space@
+a-c@space@@space@
+a-d@space@@space@
+b-c@space@@space@
+b-d@space@@space@
 
 ---
-@todo_wine@a same a@space@
-@todo_wine@a diff b@space@
-@todo_wine@b diff a@space@
-@todo_wine@b same b@space@
+a same a@space@
+a diff b@space@
+b diff a@space@
+b same b@space@
 
 ---
 foo
@@ -490,16 +490,16 @@ yy!WINE_VAR!yy@space@
 yyfooyy
 yyfooyy@space@
 
-@todo_wine@yy!WINE_VAR!yy@space@
+yy!WINE_VAR!yy@space@
 
-@todo_wine@yy!WINE_VAR!yy@space@
+yy!WINE_VAR!yy@space@
 
 
 ---
 bar1bar@space@
 
-@todo_wine@bar2bar@space@
-@todo_wine@
+bar2bar@space@
+
 ------------- Testing internal commands return codes
 --- success/failure for basics
 SUCCESS 0

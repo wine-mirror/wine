@@ -3538,6 +3538,14 @@ static BOOL rebuild_append_command(struct command_rebuild *rb, const CMD_NODE *n
     case CMD_FOR:
         ret = rebuild_command_for(rb, node, rbflags);
         break;
+    case CMD_BLOCK:
+        {
+            struct rebuild_flags new_rbflags = {.precedence = 0, .depth = rbflags.depth = 1};
+            ret = rebuild_append(rb, L"( ") &&
+                rebuild_append_command(rb, node->block, new_rbflags) &&
+                rebuild_append(rb, L" ) ");
+        }
+        break;
     default:
         FIXME("Shouldn't happen\n");
         ret = FALSE;
@@ -4521,6 +4529,8 @@ static BOOL can_run_new_pipe(CMD_NODE *node)
             (!node->else_block || can_run_new_pipe(node->else_block));
     case CMD_FOR:
         return can_run_new_pipe(node->do_block);
+    case CMD_BLOCK:
+        return can_run_new_pipe(node->block);
     default:
         return FALSE;
     }
@@ -4572,6 +4582,7 @@ static RETURN_CODE spawn_pipe_sub_command(CMD_NODE *node, HANDLE *child)
     case CMD_ONSUCCESS:
     case CMD_IF:
     case CMD_FOR:
+    case CMD_BLOCK:
         if (!rebuild_append_command(&rb, node, rbflags))
             return ERROR_INVALID_FUNCTION;
         break;
