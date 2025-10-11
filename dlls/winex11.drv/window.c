@@ -3100,6 +3100,17 @@ BOOL X11DRV_GetWindowStyleMasks( HWND hwnd, UINT style, UINT ex_style, UINT *sty
 }
 
 
+static BOOL get_desired_wm_state( DWORD style, const struct window_rects *rects )
+{
+    if (style & WS_VISIBLE)
+    {
+        if (style & WS_MINIMIZE) return IconicState;
+        if (is_window_rect_mapped( &rects->window )) return NormalState;
+    }
+    return WithdrawnState;
+}
+
+
 /***********************************************************************
  *		WindowPosChanged   (X11DRV.@)
  */
@@ -3174,23 +3185,11 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
 #endif
     }
 
-    if ((new_style & WS_VISIBLE) &&
-        ((new_style & WS_MINIMIZE) || is_window_rect_mapped( &new_rects->window )))
+    window_set_wm_state( data, get_desired_wm_state( new_style, new_rects ), activate );
+    if (!data->wm_state_serial && data->pending_state.wm_state != WithdrawnState)
     {
-        if (!(old_style & WS_VISIBLE))
-        {
-            window_set_wm_state( data, (new_style & WS_MINIMIZE) ? IconicState : NormalState, activate );
-        }
-        else if ((swp_flags & SWP_STATECHANGED) && ((old_style ^ new_style) & WS_MINIMIZE))
-        {
-            window_set_wm_state( data, (new_style & WS_MINIMIZE) ? IconicState : NormalState, activate );
-            update_net_wm_states( data );
-        }
-        else
-        {
-            if (swp_flags & (SWP_FRAMECHANGED|SWP_STATECHANGED)) set_wm_hints( data );
-            update_net_wm_states( data );
-        }
+        if (swp_flags & (SWP_FRAMECHANGED | SWP_STATECHANGED)) set_wm_hints( data );
+        update_net_wm_states( data );
     }
 
     XFlush( data->display );  /* make sure changes are done before we start painting again */
