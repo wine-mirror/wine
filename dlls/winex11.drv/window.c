@@ -1102,7 +1102,6 @@ static void make_owner_managed( HWND hwnd )
 
     if (!(owner = NtUserGetWindowRelative( hwnd, GW_OWNER ))) return;
     if (is_managed( owner )) return;
-    if (!is_managed( hwnd )) return;
 
     NtUserSetWindowPos( owner, 0, 0, 0, 0, 0, flags );
 }
@@ -1566,21 +1565,6 @@ static void window_set_managed( struct x11drv_win_data *data, BOOL new_managed )
     window_set_wm_state( data, wm_state, activate ); /* queue another WM_STATE request with the desired state */
 }
 
-
-/***********************************************************************
- *     map_window
- */
-static void map_window( HWND hwnd, DWORD new_style, BOOL activate )
-{
-    struct x11drv_win_data *data;
-
-    make_owner_managed( hwnd );
-
-    if (!(data = get_win_data( hwnd ))) return;
-    TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
-    window_set_wm_state( data, (new_style & WS_MINIMIZE) ? IconicState : NormalState, activate );
-    release_win_data( data );
-}
 
 static UINT window_update_client_state( struct x11drv_win_data *data )
 {
@@ -3111,10 +3095,12 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     struct x11drv_win_data *data;
     UINT ex_style = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ), new_style = NtUserGetWindowLongW( hwnd, GWL_STYLE ), old_style;
     struct window_rects old_rects;
-    BOOL was_fullscreen, activate = !(swp_flags & SWP_NOACTIVATE);
+    BOOL is_managed, was_fullscreen, activate = !(swp_flags & SWP_NOACTIVATE);
+
+    if ((is_managed = is_window_managed( hwnd, swp_flags, fullscreen ))) make_owner_managed( hwnd );
 
     if (!(data = get_win_data( hwnd ))) return;
-    if (is_window_managed( hwnd, swp_flags, fullscreen )) window_set_managed( data, TRUE );
+    if (is_managed) window_set_managed( data, TRUE );
 
     old_style = new_style & ~(WS_VISIBLE | WS_MINIMIZE | WS_MAXIMIZE);
     if (data->desired_state.wm_state != WithdrawnState) old_style |= WS_VISIBLE;
@@ -3179,9 +3165,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     {
         if (!(old_style & WS_VISIBLE))
         {
-            release_win_data( data );
-            map_window( hwnd, new_style, activate );
-            return;
+            window_set_wm_state( data, (new_style & WS_MINIMIZE) ? IconicState : NormalState, activate );
         }
         else if ((swp_flags & SWP_STATECHANGED) && ((old_style ^ new_style) & WS_MINIMIZE))
         {
