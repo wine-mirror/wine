@@ -1792,31 +1792,6 @@ done:
 }
 
 
-/******************************************************************************
- *		TileWindows (USER32.@) Tiles MDI child windows
- *
- * RETURNS
- *    Success: Number of tiled windows.
- *    Failure: 0
- */
-WORD WINAPI
-TileWindows (HWND hwndParent, UINT wFlags, const RECT *lpRect,
-	     UINT cKids, const HWND *lpKids)
-{
-    FIXME("(%p,0x%08x,...,%u,...): stub\n", hwndParent, wFlags, cKids);
-    return 0;
-}
-
-
-/***********************************************************************
- *		TileChildWindows (USER32.@)
- */
-WORD WINAPI TileChildWindows( HWND parent, UINT flags )
-{
-    return TileWindows( parent, flags, NULL, 0, NULL );
-}
-
-
 /************************************************************************
  *              "More Windows..." functionality
  */

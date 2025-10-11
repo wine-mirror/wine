@@ -1735,3 +1735,105 @@ WORD WINAPI CascadeChildWindows( HWND parent, UINT flags )
 {
     return CascadeWindows( parent, flags, NULL, 0, NULL );
 }
+
+/**********************************************************************
+ *              TileWindows (USER32.@)
+ */
+WORD WINAPI TileWindows( HWND parent, UINT flags, const RECT *rect, UINT count, const HWND *windows )
+{
+    unsigned int tile_count = 0, column = 0, row = 0;
+    unsigned int root, columns, rows, light_columns;
+    HWND *children = NULL;
+    RECT client;
+
+    TRACE( "parent %p, flags %#x, rect %s, count %u, windows %p\n",
+           parent, flags, wine_dbgstr_rect(rect), count, windows );
+
+    if (flags & ~(MDITILE_SKIPDISABLED | MDITILE_HORIZONTAL))
+        FIXME( "ignoring flags %#x\n", flags & ~(MDITILE_SKIPDISABLED | MDITILE_HORIZONTAL) );
+
+    if (!parent)
+        parent = GetDesktopWindow();
+
+    if (!rect)
+    {
+        GetClientRect( parent, &client );
+        rect = &client;
+    }
+
+    if (!windows)
+    {
+        if (!(children = WIN_ListChildren( parent )))
+            return 0;
+        for (count = 0; children[count]; ++count)
+            ;
+        windows = children;
+    }
+
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        if (should_move_window( windows[i], parent, flags ))
+            ++tile_count;
+    }
+
+    /* Determine root = ⌊√tile_count⌋. This is how many columns (if horizontal)
+     * or rows (if vertical) we have. */
+    for (root = 0; root * root <= tile_count; ++root)
+        ;
+    --root;
+
+    /* Because the number of windows might not evenly divide the number of
+     * columns, Windows might give one extra window to some columns,
+     * starting from the right. These are referred to as "heavy" columns here.
+     * "rows" describes the number of rows in "light" columns,
+     * and light_columns is the number of columns which are light. */
+
+    if (flags & MDITILE_HORIZONTAL)
+    {
+        columns = root;
+        rows = tile_count / columns;
+        light_columns = columns - (tile_count % columns);
+    }
+    else
+    {
+        rows = root;
+        columns = tile_count / rows;
+        light_columns = columns - (tile_count % rows);
+    }
+
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        unsigned int current_rows = (column < light_columns ? rows : rows + 1);
+        unsigned int width = (rect->right - rect->left) / columns;
+        unsigned int height = (rect->bottom - rect->top) / current_rows;
+        HWND child = windows[i];
+        DWORD style = GetWindowLongW( child, GWL_STYLE );
+        DWORD swp_flags = SWP_NOZORDER | SWP_NOACTIVATE;
+
+        if (!should_move_window( child, parent, flags ))
+            continue;
+
+        if (!(style & WS_THICKFRAME))
+            swp_flags |= SWP_NOSIZE;
+        NtUserSetWindowPos( child, 0, rect->left + column * width, rect->top + row * height, width, height, swp_flags );
+
+        ++row;
+        if ((row == rows && column < light_columns) || row == rows + 1)
+        {
+            row = 0;
+            ++column;
+        }
+    }
+
+    HeapFree( GetProcessHeap(), 0, children );
+
+    return tile_count;
+}
+
+/**********************************************************************
+ *              TileChildWindows (USER32.@)
+ */
+WORD WINAPI TileChildWindows( HWND parent, UINT flags )
+{
+    return TileWindows( parent, flags, NULL, 0, NULL );
+}
