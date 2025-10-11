@@ -3109,7 +3109,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
                               const struct window_rects *new_rects, struct window_surface *surface )
 {
     struct x11drv_win_data *data;
-    UINT new_style = NtUserGetWindowLongW( hwnd, GWL_STYLE ), old_style;
+    UINT ex_style = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ), new_style = NtUserGetWindowLongW( hwnd, GWL_STYLE ), old_style;
     struct window_rects old_rects;
     BOOL was_fullscreen, activate = !(swp_flags & SWP_NOACTIVATE);
 
@@ -3128,6 +3128,9 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
 
     TRACE( "win %p/%lx new_rects %s style %08x flags %08x\n", hwnd, data->whole_window,
            debugstr_window_rects(new_rects), new_style, swp_flags );
+
+    /* layered windows are mapped only once their attributes are set */
+    if (ex_style & WS_EX_LAYERED && !data->layered && !IsRectEmpty( &new_rects->window )) new_style &= ~WS_VISIBLE;
 
     XFlush( gdi_display );  /* make sure painting is done before we move the window */
 
@@ -3176,13 +3179,8 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     {
         if (!(old_style & WS_VISIBLE))
         {
-            BOOL needs_map = TRUE;
-
-            /* layered windows are mapped only once their attributes are set */
-            if (NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED)
-                needs_map = data->layered || IsRectEmpty( &new_rects->window );
             release_win_data( data );
-            if (needs_map) map_window( hwnd, new_style, activate );
+            map_window( hwnd, new_style, activate );
             return;
         }
         else if ((swp_flags & SWP_STATECHANGED) && ((old_style ^ new_style) & WS_MINIMIZE))
