@@ -778,55 +778,25 @@ failed:
 }
 
 
-static HICON get_icon_info( HICON icon, ICONINFO *ii )
-{
-    return icon && NtUserGetIconInfo( icon, ii, NULL, NULL, NULL, 0 ) ? icon : NULL;
-}
-
 /***********************************************************************
- *              fetch_icon_data
+ *              set_window_icon_data
  */
-static void fetch_icon_data( HWND hwnd, HICON icon_big, HICON icon_small )
+static void set_window_icon_data( struct x11drv_win_data *data, HICON icon, const ICONINFO *ii,
+                                  HICON icon_small, const ICONINFO *ii_small )
 {
-    struct x11drv_win_data *data;
-    ICONINFO ii, ii_small;
     HDC hDC;
     unsigned int size;
     unsigned long *bits;
     Pixmap icon_pixmap, mask_pixmap;
 
-    icon_big = get_icon_info( icon_big, &ii );
-    if (!icon_big)
-    {
-        icon_big = get_icon_info( (HICON)send_message( hwnd, WM_GETICON, ICON_BIG, 0 ), &ii );
-        if (!icon_big)
-            icon_big = get_icon_info( (HICON)NtUserGetClassLongPtrW( hwnd, GCLP_HICON ), &ii );
-        if (!icon_big)
-        {
-            icon_big = LoadImageW( 0, (const WCHAR *)IDI_WINLOGO, IMAGE_ICON, 0, 0,
-                                   LR_SHARED | LR_DEFAULTSIZE );
-            icon_big = get_icon_info( icon_big, &ii );
-        }
-    }
-
-    icon_small = get_icon_info( icon_small, &ii_small );
-    if (!icon_small)
-    {
-        icon_small = get_icon_info( (HICON)send_message( hwnd, WM_GETICON, ICON_SMALL, 0 ), &ii_small );
-        if (!icon_small)
-            icon_small = get_icon_info( (HICON)NtUserGetClassLongPtrW( hwnd, GCLP_HICONSM ), &ii_small );
-    }
-
-    if (!icon_big) return;
-
     hDC = NtGdiCreateCompatibleDC(0);
-    bits = get_bitmap_argb( hDC, ii.hbmColor, ii.hbmMask, &size );
+    bits = get_bitmap_argb( hDC, ii->hbmColor, ii->hbmMask, &size );
     if (bits && icon_small)
     {
         unsigned int size_small;
         unsigned long *bits_small, *new;
 
-        if ((bits_small = get_bitmap_argb( hDC, ii_small.hbmColor, ii_small.hbmMask, &size_small )) &&
+        if ((bits_small = get_bitmap_argb( hDC, ii_small->hbmColor, ii_small->hbmMask, &size_small )) &&
             (bits_small[0] != bits[0] || bits_small[1] != bits[1]))  /* size must be different */
         {
             if ((new = realloc( bits, (size + size_small) * sizeof(unsigned long) )))
@@ -837,33 +807,23 @@ static void fetch_icon_data( HWND hwnd, HICON icon_big, HICON icon_small )
             }
         }
         free( bits_small );
-        NtGdiDeleteObjectApp( ii_small.hbmColor );
-        NtGdiDeleteObjectApp( ii_small.hbmMask );
+        NtGdiDeleteObjectApp( ii_small->hbmColor );
+        NtGdiDeleteObjectApp( ii_small->hbmMask );
     }
 
-    if (!create_icon_pixmaps( hDC, &ii, &icon_pixmap, &mask_pixmap )) icon_pixmap = mask_pixmap = 0;
+    if (!create_icon_pixmaps( hDC, ii, &icon_pixmap, &mask_pixmap )) icon_pixmap = mask_pixmap = 0;
 
-    NtGdiDeleteObjectApp( ii.hbmColor );
-    NtGdiDeleteObjectApp( ii.hbmMask );
+    NtGdiDeleteObjectApp( ii->hbmColor );
+    NtGdiDeleteObjectApp( ii->hbmMask );
     NtGdiDeleteObjectApp( hDC );
 
-    if ((data = get_win_data( hwnd )))
-    {
-        if (data->icon_pixmap) XFreePixmap( gdi_display, data->icon_pixmap );
-        if (data->icon_mask) XFreePixmap( gdi_display, data->icon_mask );
-        free( data->icon_bits );
-        data->icon_pixmap = icon_pixmap;
-        data->icon_mask = mask_pixmap;
-        data->icon_bits = bits;
-        data->icon_size = size;
-        release_win_data( data );
-    }
-    else
-    {
-        if (icon_pixmap) XFreePixmap( gdi_display, icon_pixmap );
-        if (mask_pixmap) XFreePixmap( gdi_display, mask_pixmap );
-        free( bits );
-    }
+    if (data->icon_pixmap) XFreePixmap( gdi_display, data->icon_pixmap );
+    if (data->icon_mask) XFreePixmap( gdi_display, data->icon_mask );
+    free( data->icon_bits );
+    data->icon_pixmap = icon_pixmap;
+    data->icon_mask = mask_pixmap;
+    data->icon_bits = bits;
+    data->icon_size = size;
 }
 
 
@@ -3068,8 +3028,6 @@ void X11DRV_SetParent( HWND hwnd, HWND parent, HWND old_parent )
     }
 done:
     release_win_data( data );
-
-    fetch_icon_data( hwnd, 0, 0 );
 }
 
 
@@ -3218,14 +3176,12 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     {
         if (!(old_style & WS_VISIBLE))
         {
-            BOOL needs_icon = !data->icon_pixmap;
             BOOL needs_map = TRUE;
 
             /* layered windows are mapped only once their attributes are set */
             if (NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED)
                 needs_map = data->layered || IsRectEmpty( &new_rects->window );
             release_win_data( data );
-            if (needs_icon) fetch_icon_data( hwnd, 0, 0 );
             if (needs_map) map_window( hwnd, new_style, activate );
             return;
         }
@@ -3309,26 +3265,17 @@ done:
 
 
 /**********************************************************************
- *		SetWindowIcon (X11DRV.@)
- *
- * hIcon or hIconSm has changed (or is being initialised for the
- * first time). Complete the X11 driver-specific initialisation
- * and set the window hints.
+ *		SetWindowIcons (X11DRV.@)
  */
-void X11DRV_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
+void X11DRV_SetWindowIcons( HWND hwnd, HICON icon, const ICONINFO *ii, HICON icon_small, const ICONINFO *ii_small )
 {
     struct x11drv_win_data *data;
 
-    if (!(data = get_win_data( hwnd ))) return;
-    if (!data->whole_window) goto done;
-    release_win_data( data );  /* release the lock, fetching the icon requires sending messages */
-
-    if (type == ICON_BIG) fetch_icon_data( hwnd, icon, 0 );
-    else fetch_icon_data( hwnd, 0, icon );
+    TRACE( "hwnd %p, icon %p, ii %p, icon_small %p, ii_small %p\n", hwnd, icon, ii, icon_small, ii_small );
 
     if (!(data = get_win_data( hwnd ))) return;
+    set_window_icon_data( data, icon, ii, icon_small, ii_small );
     set_wm_hints( data );
-done:
     release_win_data( data );
 }
 

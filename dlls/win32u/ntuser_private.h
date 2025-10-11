@@ -64,6 +64,7 @@ typedef struct tagWND
     HICON              hIcon;         /* window's icon */
     HICON              hIconSmall;    /* window's small icon */
     HICON              hIconSmall2;   /* window's secondary small icon, derived from hIcon */
+    BOOL               has_icons;     /* window's icons have been initialized */
     HIMC               imc;           /* window's input context */
     struct window_surface *surface;   /* Window surface if any */
     struct opengl_drawable *current_drawable; /* current GL client surface for this window */

@@ -296,6 +296,7 @@ extern HWND get_shell_window(void);
 extern HWND get_progman_window(void);
 extern HWND get_taskman_window(void);
 extern BOOL is_client_surface_window( struct client_surface *surface, HWND hwnd );
+extern HICON get_window_icon_info( HWND hwnd, UINT type, HICON icon, ICONINFO *ret );
 
 /* to release pointers retrieved by win_get_ptr */
 static inline void release_win_ptr( struct tagWND *ptr )

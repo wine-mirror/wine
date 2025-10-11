@@ -1221,7 +1221,7 @@ void wayland_surface_set_title(struct wayland_surface *surface, LPCWSTR text)
 /**********************************************************************
  *          wayland_surface_set_icon
  */
-void wayland_surface_set_icon(struct wayland_surface *surface, UINT type, ICONINFO *ii)
+void wayland_surface_set_icon(struct wayland_surface *surface, UINT type, const ICONINFO *ii)
 {
     HDC hDC;
     struct wayland_shm_buffer *icon_buf;
