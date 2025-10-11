@@ -3316,18 +3316,6 @@ void X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
             sync_window_opacity( data->display, data->whole_window, alpha, flags );
 
         data->layered = TRUE;
-        if (data->desired_state.wm_state == WithdrawnState)  /* mapping is delayed until attributes are set */
-        {
-            DWORD style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
-
-            if ((style & WS_VISIBLE) &&
-                ((style & WS_MINIMIZE) || is_window_rect_mapped( &data->rects.window )))
-            {
-                release_win_data( data );
-                map_window( hwnd, style, TRUE );
-                return;
-            }
-        }
         release_win_data( data );
     }
     else
@@ -3349,24 +3337,13 @@ void X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
 void X11DRV_UpdateLayeredWindow( HWND hwnd, BYTE alpha, UINT flags )
 {
     struct x11drv_win_data *data;
-    BOOL mapped;
 
     if (!(data = get_win_data( hwnd ))) return;
 
     if (data->whole_window)
         sync_window_opacity( data->display, data->whole_window, alpha, flags );
 
-    mapped = data->desired_state.wm_state != WithdrawnState;
     release_win_data( data );
-
-    /* layered windows are mapped only once their attributes are set */
-    if (!mapped)
-    {
-        DWORD style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
-
-        if ((style & WS_VISIBLE) && ((style & WS_MINIMIZE) || is_window_rect_mapped( &data->rects.window )))
-            map_window( hwnd, style, TRUE );
-    }
 }
 
 
