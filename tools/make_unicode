@@ -3020,6 +3020,14 @@ my %scripts =
     "Tangsa"                 => 161,
     "Toto"                   => 162,
     "Vithkuqi"               => 163,
+    # Win11 25H2
+    "Garay"                  => 164,
+    "Gurung_Khema"           => 165,
+    "Kirat_Rai"              => 166,
+    "Ol_Onal"                => 167,
+    "Sunuwar"                => 168,
+    "Todhri"                 => 169,
+    "Tulu_Tigalari"          => 170,
 );
 
 ################################################################
