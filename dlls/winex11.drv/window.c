@@ -3159,9 +3159,6 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
             (!(new_style & WS_MINIMIZE) && !is_window_rect_mapped( &new_rects->window ) && is_window_rect_mapped( &old_rects.window )))
         {
             window_set_wm_state( data, WithdrawnState, FALSE );
-            release_win_data( data );
-            if (was_fullscreen) NtUserClipCursor( NULL );
-            if (!(data = get_win_data( hwnd ))) return;
         }
     }
 
@@ -3192,8 +3189,13 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
         update_net_wm_states( data );
     }
 
+    /* if window was fullscreen and is being hidden, release cursor clipping */
+    was_fullscreen &= data->desired_state.wm_state != NormalState;
+
     XFlush( data->display );  /* make sure changes are done before we start painting again */
     release_win_data( data );
+
+    if (was_fullscreen) NtUserClipCursor( NULL );
 }
 
 /* check if the window icon should be hidden (i.e. moved off-screen) */
