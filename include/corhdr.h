@@ -98,6 +98,8 @@ typedef enum CorElementType
 #define TypeFromToken(tk) ((ULONG32)((tk) & 0xff000000))
 #define IsNilToken(tk) ((RidFromToken(tk)) == 0)
 
+typedef ULONG RID;
+
 typedef LPVOID  mdScope;
 typedef ULONG32 mdToken;
 

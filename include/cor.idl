@@ -106,3 +106,29 @@ cpp_quote("VOID        WINAPI _CorImageUnloading(PVOID);")
 cpp_quote("HRESULT     WINAPI _CorValidateImage(PVOID*,LPCWSTR);")
 cpp_quote("HRESULT     WINAPI CoInitializeCor(DWORD);")
 cpp_quote("void        WINAPI CoUninitializeCor(void);")
+
+cpp_quote("#if defined(_DEFINE_META_DATA_META_CONSTANTS) && !defined(_META_DATA_META_CONSTANTS_DEFINED)")
+cpp_quote("#define _META_DATA_META_CONSTANTS_DEFINED")
+
+cpp_quote("const UINT iRidMax = 63;")
+
+cpp_quote("const UINT iCodedToken    = 64;")
+cpp_quote("const UINT iCodedTokenMax = 95;")
+
+cpp_quote("const UINT iSHORT  = 96;")
+cpp_quote("const UINT iUSHORT = 97;")
+cpp_quote("const UINT iLONG   = 98;")
+cpp_quote("const UINT iULONG  = 99;")
+cpp_quote("const UINT iBYTE   = 100;")
+
+cpp_quote("const UINT iSTRING = 101;")
+cpp_quote("const UINT iGUID   = 102;")
+cpp_quote("const UINT iBLOB   = 103;")
+
+cpp_quote("inline int IsRidType(ULONG t) { return t <= iRidMax; }")
+cpp_quote("inline int IsCodedTokenType(ULONG t) { return t >= iCodedToken && t <= iCodedTokenMax; }")
+cpp_quote("inline int IsRidOrToken(ULONG t) { return t <= iCodedTokenMax; }")
+cpp_quote("inline int IsHeapType(ULONG t) { return t >= iSTRING; }")
+cpp_quote("inline int IsFixedType(ULONG t) { return t >= iSHORT && t <= iBYTE; }")
+
+cpp_quote("#endif /* defined(_DEFINE_META_DATA_META_CONSTANTS) && !defined(_META_DATA_META_CONSTANTS_DEFINED) */ ")
