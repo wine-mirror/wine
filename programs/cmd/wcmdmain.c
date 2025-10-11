@@ -1648,6 +1648,9 @@ void node_dispose_tree(CMD_NODE *node)
         for_control_dispose(&node->for_ctrl);
         node_dispose_tree(node->do_block);
         break;
+    case CMD_BLOCK:
+        node_dispose_tree(node->block);
+        break;
     }
     redirection_dispose_list(node->redirects);
     free(node);
@@ -1696,6 +1699,17 @@ static CMD_NODE *node_create_for(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *do_block)
     new->op = CMD_FOR;
     new->for_ctrl = *for_ctrl;
     new->do_block = do_block;
+    new->redirects = NULL;
+
+    return new;
+}
+
+static CMD_NODE *node_create_block(CMD_NODE *block)
+{
+    CMD_NODE *new = xalloc(sizeof(CMD_NODE));
+
+    new->op = CMD_BLOCK;
+    new->block = block;
     new->redirects = NULL;
 
     return new;
@@ -2810,6 +2824,7 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                     left = node_create_binary(CMD_CONCAT, left, right);
             }
             node_builder_consume(builder);
+            left = node_create_block(left);
             /* if we had redirection before '(', add them up front */
             if (redir)
             {
@@ -4230,6 +4245,9 @@ RETURN_CODE node_execute(CMD_NODE *node)
         break;
     case CMD_FOR:
         return_code = for_control_execute(&node->for_ctrl, node->do_block);
+        break;
+    case CMD_BLOCK:
+        return_code = node_execute(node->block);
         break;
     default:
         FIXME("Unexpected operator %u\n", node->op);

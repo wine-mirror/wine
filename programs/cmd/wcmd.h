@@ -56,6 +56,7 @@ typedef enum _CMD_OPERATOR
     CMD_ONFAILURE,   /* ||                      */
     CMD_ONSUCCESS,   /* &&                      */
     CMD_PIPE,        /* Single |                */
+    CMD_BLOCK,       /* ( block )               */
     CMD_IF,          /* IF command              */
     CMD_FOR,         /* FOR command             */
 } CMD_OPERATOR;
@@ -130,6 +131,10 @@ typedef struct _CMD_NODE
         {
             CMD_FOR_CONTROL   for_ctrl;
             struct _CMD_NODE *do_block;
+        };
+        struct                       /* CMD_BLOCK */
+        {
+            struct _CMD_NODE *block;
         };
     };
 } CMD_NODE;
