@@ -128,6 +128,14 @@ static HRESULT register_ocxs_callback(HINF hinf, PCWSTR field, const void *arg)
         if (!SetupGetStringFieldW(&context, 1, buffer, ARRAY_SIZE(buffer), NULL))
             continue;
 
+        /* RegisterOCXs and UnRegisterOCXs sections can include lines that start with an at sign and
+         * do not have any discernable or documented effect */
+        if (buffer[0] == '@')
+        {
+            FIXME("Ignoring inf line %s\n", debugstr_w(buffer));
+            continue;
+        }
+
         hm = LoadLibraryExW(buffer, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
         if (hm)
         {
