@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define _DEFINE_META_DATA_META_CONSTANTS
 #include "rometadatapriv.h"
 
 #include <assert.h>
@@ -119,8 +120,26 @@ enum table
     TABLE_MAX                    = 0x2d
 };
 
+enum coded_idx_type
+{
+    CT_TypeDefOrRef        = 64,
+    CT_HasConstant         = 65,
+    CT_HasCustomAttribute  = 66,
+    CT_HasFieldMarshal     = 67,
+    CT_HasDeclSecurity     = 68,
+    CT_MemberRefParent     = 69,
+    CT_HasSemantics        = 70,
+    CT_MethodDefOrRef      = 71,
+    CT_MemberForwarded     = 72,
+    CT_Implementation      = 73,
+    CT_CustomAttributeType = 74,
+    CT_ResolutionScope     = 75,
+    CT_TypeOrMethodDef     = 76
+};
+
 struct table_coded_idx
 {
+    enum coded_idx_type type;
     UINT8 len;
     const enum table *tables;
 };
@@ -139,7 +158,11 @@ enum table_column_type
 
 union table_column_size
 {
-    UINT8 basic;
+    struct {
+        UINT8 type;
+        UINT8 size;
+        UINT8 size_padded;
+    } basic;
     enum heap_type heap;
     enum table table;
     struct table_coded_idx coded;
@@ -205,12 +228,13 @@ struct table_schema
     static const struct table_column name##_columns[] = {__VA_ARGS__}; \
     static const struct table_schema name##_schema = { ARRAY_SIZE(name##_columns), name##_columns, #name }
 
-#define BASIC(n, t) { COLUMN_BASIC, { .basic = sizeof(t) }, n }
+#define BASIC_PADDED(n, t, p) { COLUMN_BASIC, { .basic = {i##t, sizeof(t), sizeof(p) } }, n }
+#define BASIC(n, t) BASIC_PADDED(n, t, t)
 #define HEAP(n, h) { COLUMN_HEAP_IDX, { .heap = (HEAP_##h) }, n }
 #define TABLE(n, t) { COLUMN_TABLE_IDX, { .table = TABLE_##t }, n }
 #define TABLE_PRIMARY(n, t) { COLUMN_TABLE_IDX, { .table= TABLE_##t }, n, TRUE }
-#define CODED(n, c) { COLUMN_CODED_IDX, { .coded = { ARRAY_SIZE(c##_tables), c##_tables } }, n }
-#define CODED_PRIMARY(n, c) { COLUMN_CODED_IDX, { .coded = { ARRAY_SIZE(c##_tables), c##_tables } }, n, TRUE }
+#define CODED(n, c) { COLUMN_CODED_IDX, { .coded = { CT_##c, ARRAY_SIZE(c##_tables), c##_tables } }, n }
+#define CODED_PRIMARY(n, c) { COLUMN_CODED_IDX, { .coded = { CT_##c, ARRAY_SIZE(c##_tables), c##_tables } }, n, TRUE }
 
 /* Partition II.22.2, "Assembly" */
 DEFINE_TABLE_SCHEMA(Assembly,
@@ -262,7 +286,7 @@ DEFINE_TABLE_SCHEMA(ClassLayout,
                     TABLE_PRIMARY("Parent", TYPEDEF));
 
 /* Partition II.22.9, "Constant" */
-DEFINE_TABLE_SCHEMA(Constant, BASIC("Type", USHORT), CODED_PRIMARY("Parent", HasConstant), HEAP("Value", BLOB));
+DEFINE_TABLE_SCHEMA(Constant, BASIC_PADDED("Type", BYTE, USHORT), CODED_PRIMARY("Parent", HasConstant), HEAP("Value", BLOB));
 
 /* Partition II.2.10, "CustomAttribute" */
 DEFINE_TABLE_SCHEMA(CustomAttribute,
@@ -563,6 +587,23 @@ static ULONG assembly_get_coded_index_size(const assembly_t *assembly, const str
     return max_row_idx < (1 << (16 - tag_bits)) ? 2 : 4;
 }
 
+#define TokenFromTable(idx) ((idx) << 24)
+
+/* Encode a coded index value as a token. The table and column *must* point to a coded index type. */
+ULONG metadata_coded_value_as_token(ULONG table_idx, ULONG column_idx, ULONG value)
+{
+    const struct table_column *column;
+    ULONG table_mask, tag_bits;
+
+    assert(table_idx < TABLE_MAX && column_idx < table_schemas[table_idx]->columns_len);
+    column = &table_schemas[table_idx]->columns[column_idx];
+    assert(column->type == COLUMN_CODED_IDX);
+
+    tag_bits = bit_width(column->size.coded.len - 1);
+    table_mask = ((1UL << tag_bits) - 1);
+    return TokenFromRid((value & ~table_mask) >> tag_bits, TokenFromTable(column->size.coded.tables[value & table_mask]));
+}
+
 static HRESULT assembly_calculate_table_sizes(assembly_t *assembly, enum table table)
 {
     const struct table_schema *schema;
@@ -583,7 +624,7 @@ static HRESULT assembly_calculate_table_sizes(assembly_t *assembly, enum table t
         switch (column->type)
         {
         case COLUMN_BASIC:
-            column_size = column->size.basic;
+            column_size = column->size.basic.size_padded;
             break;
         case COLUMN_HEAP_IDX:
             column_size = assembly_heap_idx_size(assembly, column->size.heap);
@@ -825,6 +866,51 @@ HRESULT assembly_get_table(const assembly_t *assembly, ULONG table_idx, struct m
     info->column_sizes = table->columns_size;
     info->name = schema->name;
     info->start = table->start;
+    return S_OK;
+}
+
+HRESULT assembly_get_column(const assembly_t *assembly, ULONG table_idx, ULONG column_idx, struct metadata_column_info *info)
+{
+    const struct table_schema *schema;
+    const struct table_column *column;
+    struct metadata_table_info table;
+    ULONG i, offset = 0;
+    HRESULT hr;
+
+    if (FAILED(hr = assembly_get_table(assembly, table_idx, &table))) return hr;
+    if (column_idx >= table.num_columns) return E_INVALIDARG;
+
+    schema = table_schemas[table_idx];
+    column = &schema->columns[column_idx];
+    if (column->type == COLUMN_BASIC)
+        info->size = column->size.basic.size;
+    else
+        info->size = table.column_sizes[column_idx];
+    switch (column->type)
+    {
+    case COLUMN_BASIC:
+        info->type = column->size.basic.type;
+        break;
+    case COLUMN_HEAP_IDX:
+        info->type = iSTRING + column->size.heap;
+        break;
+    case COLUMN_TABLE_IDX:
+        info->type = column->size.table;
+        break;
+    case COLUMN_CODED_IDX:
+        info->type = column->size.coded.type;
+        break;
+    DEFAULT_UNREACHABLE;
+    }
+    for (i = 0; i < column_idx; i++)
+    {
+        if (schema->columns[i].type == COLUMN_BASIC)
+            offset += schema->columns[i].size.basic.size_padded;
+        else
+            offset += table.column_sizes[i];
+    }
+    info->offset = offset;
+    info->name = column->name;
     return S_OK;
 }
 

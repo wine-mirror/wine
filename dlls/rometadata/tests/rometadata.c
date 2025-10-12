@@ -602,13 +602,7 @@ static void test_MetaDataDispenser_OpenScope(void)
             winetest_push_context("column=%lu", j);
 
             hr = IMetaDataTables_GetColumnInfo(md_tables, i, j, &offset, &col_size, &type, &name);
-            todo_wine
             ok(hr == S_OK, "got hr %#lx\n", hr);
-            if (FAILED(hr))
-            {
-                winetest_pop_context();
-                continue;
-            }
 
             ok(offset == column->exp_offset, "got offset %lu != %lu\n", offset, column->exp_offset);
             ok(col_size == column->exp_col_size, "got col_size %lu != %lu\n", col_size, column->exp_col_size);
@@ -636,15 +630,11 @@ static void test_MetaDataDispenser_OpenScope(void)
     ok(!!guid, "got guid %p\n", guid);
 
     hr = IMetaDataTables_GetColumn(md_tables, TABLE_MODULE, 1, 1, &val);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine
     ok(val == module->Name, "got val %#lx != %#x\n", val, module->Name);
 
     hr = IMetaDataTables_GetColumn(md_tables, TABLE_MODULE, 2, 1, &val);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine
     ok(val == module->Mvid, "got val %#lx != %#x\n", val, module->Mvid);
 
     /* Read defined types. */
@@ -677,21 +667,15 @@ static void test_MetaDataDispenser_OpenScope(void)
         }
 
         hr = IMetaDataTables_GetColumn(md_tables, TABLE_TYPEDEF, 0, i + 1, &val);
-        todo_wine
         ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine
         ok(val == type_def->Flags, "got val %#lx != %#lx\n", val, type_def->Flags);
 
         hr = IMetaDataTables_GetColumn(md_tables, TABLE_TYPEDEF, 1, i + 1, &val);
-        todo_wine
         ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine
         ok(val == type_def->Name, "got val %#lx != %#x\n", val, type_def->Name);
 
         hr = IMetaDataTables_GetColumn(md_tables, TABLE_TYPEDEF, 2, i + 1, &val);
-        todo_wine
         ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine
         ok(val == type_def->Namespace, "got val %#lx != %#x\n", val, type_def->Namespace);
 
         winetest_pop_context();
@@ -732,32 +716,23 @@ static void test_MetaDataDispenser_OpenScope(void)
             }
 
             hr = IMetaDataTables_GetColumn(md_tables, TABLE_TYPEREF, 1, typeref_row, &val);
-            todo_wine
             ok(hr == S_OK, "got hr %#lx\n", hr);
-            todo_wine
             ok(val == typeref->Name, "got val %#lx != %#x\n", val, typeref->Name);
 
             hr = IMetaDataTables_GetColumn(md_tables, TABLE_TYPEREF, 2, typeref_row, &val);
-            todo_wine
             ok(hr == S_OK, "got hr %#lx\n", hr);
-            todo_wine
             ok(val == typeref->Namespace, "got val %#lx != %#x\n", val, typeref->Namespace);
 
             hr = IMetaDataTables_GetColumn(md_tables, TABLE_MEMBERREF, 0, i + 1, &val);
-            todo_wine
             ok(hr == S_OK, "got hr %#lx\n", hr);
             rid = RidFromToken(val);
             type = TypeFromToken(val);
-            todo_wine
             ok(rid == typeref_row, "got rid %#lx != %#lx\n", rid, typeref_row);
-            todo_wine
             ok(type == mdtTypeRef, "got type %#lx != %#x\n", type, mdtTypeRef);
         }
 
         hr  = IMetaDataTables_GetColumn(md_tables, TABLE_MEMBERREF, 1, i + 1, &val);
-        todo_wine
         ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine
         ok(val == ref->Name, "got val %#lx != %#x\n", val, ref->Name);
 
         winetest_pop_context();
@@ -790,9 +765,7 @@ static void test_MetaDataDispenser_OpenScope(void)
         }
 
         hr = IMetaDataTables_GetColumn(md_tables, TABLE_CUSTOMATTRIBUTE, 2, i + 1, &val);
-        todo_wine
         ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine
         ok(val == attr->Value, "got val %#lx != %#x\n", val, attr->Value);
 
         winetest_pop_context();

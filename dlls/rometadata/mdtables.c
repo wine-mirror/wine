@@ -151,8 +151,19 @@ static HRESULT WINAPI tables_GetTableInfo(IMetaDataTables *iface, ULONG idx_tbl,
 static HRESULT WINAPI tables_GetColumnInfo(IMetaDataTables *iface, ULONG idx_tbl, ULONG idx_col, ULONG *offset,
                                            ULONG *col_size, ULONG *type, const char **name)
 {
-    FIXME("(%p, %lu, %lu, %p, %p, %p, %p) stub!\n", iface, idx_tbl, idx_col, offset, col_size, type, name);
-    return E_NOTIMPL;
+    struct metadata_tables *impl = impl_from_IMetaDataTables(iface);
+    struct metadata_column_info column;
+    HRESULT hr;
+
+    TRACE("(%p, %lu, %lu, %p, %p, %p, %p)\n", iface, idx_tbl, idx_col, offset, col_size, type, name);
+
+    if (FAILED(hr = assembly_get_column(impl->assembly, idx_tbl, idx_col, &column))) return hr;
+
+    *offset = column.offset;
+    *col_size = column.size;
+    *type = column.type;
+    *name = column.name;
+    return S_OK;
 }
 
 static HRESULT WINAPI tables_GetCodedTokenInfo(IMetaDataTables *iface, ULONG type, ULONG *tokens_len,
@@ -181,8 +192,21 @@ static HRESULT WINAPI tables_GetRow(IMetaDataTables *iface, ULONG idx_tbl, ULONG
 
 static HRESULT WINAPI tables_GetColumn(IMetaDataTables *iface, ULONG idx_tbl, ULONG idx_col, ULONG idx_row, ULONG *val)
 {
-    FIXME("(%p, %lu, %lu, %lu, %p): stub!\n", iface, idx_tbl, idx_col, idx_row, val);
-    return E_NOTIMPL;
+    ULONG raw_val = 0, offset, size, type;
+    const BYTE *row = NULL;
+    const char *name;
+    HRESULT hr;
+
+    TRACE("(%p, %lu, %lu, %lu, %p)\n", iface, idx_tbl, idx_col, idx_row, val);
+
+    if (FAILED(hr = IMetaDataTables_GetRow(iface, idx_tbl, idx_row, (BYTE *)&row))) return hr;
+    if (FAILED(hr = IMetaDataTables_GetColumnInfo(iface, idx_tbl, idx_col, &offset, &size, &type, &name))) return hr;
+
+    memcpy(&raw_val, row + offset, size);
+    if (type >= 64 && type <= 95) /* IsCodedTokenType */
+        raw_val = metadata_coded_value_as_token(idx_tbl, idx_col, raw_val);
+    *val = raw_val;
+    return S_OK;
 }
 
 static HRESULT WINAPI tables_GetString(IMetaDataTables *iface, ULONG idx, const char **str)
