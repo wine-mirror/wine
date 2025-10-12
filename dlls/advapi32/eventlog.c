@@ -727,3 +727,15 @@ ULONG WINAPI EnumerateTraceGuids(PTRACE_GUID_PROPERTIES *propertiesarray,
     FIXME("%p %ld %p: stub\n", propertiesarray, arraycount, guidcount);
     return ERROR_INVALID_PARAMETER;
 }
+
+/******************************************************************************
+ * EnumerateTraceGuidsEx [ADVAPI32.@]
+ */
+ULONG WINAPI EnumerateTraceGuidsEx(TRACE_QUERY_INFO_CLASS class, void *in, ULONG in_size, void *out, ULONG out_size,
+                                   ULONG *ret_len)
+{
+    FIXME("%d %p %ld %p %ld %p: stub\n", class, in, in_size, out, out_size, ret_len);
+
+    *ret_len = 0;
+    return ERROR_INVALID_PARAMETER;
+}

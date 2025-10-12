@@ -89,7 +89,7 @@
 @ stdcall EnumDependentServicesW(long long ptr long ptr ptr)
 @ stdcall EnumServicesStatusExW(long long long long ptr long ptr ptr ptr wstr)
 @ stub EnumerateIdentityProviders
-@ stub EnumerateTraceGuidsEx
+@ stdcall EnumerateTraceGuidsEx(long ptr long ptr long ptr) advapi32.EnumerateTraceGuidsEx
 @ stub EtwQueryRealtimeConsumer
 @ stub EventAccessControl
 @ stub EventAccessQuery
