@@ -398,31 +398,6 @@ static VkResult vulkan_physical_device_init(struct vulkan_physical_device *physi
         goto err;
     }
 
-    for (i = 0, j = 0; i < num_host_properties; i++)
-    {
-        if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_memory_win32")))
-        {
-            strcpy(physical_device->extensions[j].extensionName, "VK_KHR_external_memory_win32");
-            physical_device->extensions[j++].specVersion = VK_KHR_EXTERNAL_MEMORY_WIN32_SPEC_VERSION;
-        }
-        else if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_semaphore_win32")))
-        {
-            strcpy(physical_device->extensions[j].extensionName, "VK_KHR_external_semaphore_win32");
-            physical_device->extensions[j++].specVersion = VK_KHR_EXTERNAL_SEMAPHORE_WIN32_SPEC_VERSION;
-        }
-        else if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_fence_win32")))
-        {
-            strcpy(physical_device->extensions[j].extensionName, "VK_KHR_external_fence_win32");
-            physical_device->extensions[j++].specVersion = VK_KHR_EXTERNAL_FENCE_WIN32_SPEC_VERSION;
-        }
-        else if (wine_vk_device_extension_supported(host_properties[i].extensionName))
-        {
-            physical_device->extensions[j] = host_properties[i];
-            j++;
-        }
-    }
-    physical_device->extension_count = num_properties;
-
     if (zero_bits && have_memory_placed && have_map_memory2)
     {
         VkPhysicalDeviceMapMemoryPlacedFeaturesEXT map_placed_feature =
@@ -471,6 +446,31 @@ static VkResult vulkan_physical_device_init(struct vulkan_physical_device *physi
             TRACE("Using VK_EXT_external_memory_host for memory mapping with alignment: %u\n",
                   physical_device->external_memory_align);
     }
+
+    for (i = 0, j = 0; i < num_host_properties; i++)
+    {
+        if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_memory_win32")))
+        {
+            strcpy(physical_device->extensions[j].extensionName, "VK_KHR_external_memory_win32");
+            physical_device->extensions[j++].specVersion = VK_KHR_EXTERNAL_MEMORY_WIN32_SPEC_VERSION;
+        }
+        else if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_semaphore_win32")))
+        {
+            strcpy(physical_device->extensions[j].extensionName, "VK_KHR_external_semaphore_win32");
+            physical_device->extensions[j++].specVersion = VK_KHR_EXTERNAL_SEMAPHORE_WIN32_SPEC_VERSION;
+        }
+        else if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_fence_win32")))
+        {
+            strcpy(physical_device->extensions[j].extensionName, "VK_KHR_external_fence_win32");
+            physical_device->extensions[j++].specVersion = VK_KHR_EXTERNAL_FENCE_WIN32_SPEC_VERSION;
+        }
+        else if (wine_vk_device_extension_supported(host_properties[i].extensionName))
+        {
+            physical_device->extensions[j] = host_properties[i];
+            j++;
+        }
+    }
+    physical_device->extension_count = num_properties;
 
     free(host_properties);
     return VK_SUCCESS;
