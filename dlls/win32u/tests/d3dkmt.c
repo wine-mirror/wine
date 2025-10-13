@@ -3330,6 +3330,7 @@ static struct vulkan_device *create_vulkan_device( LUID *luid )
     struct vulkan_device *dev;
     float priority = 0.0f;
     uint32_t count;
+    BOOL is_wow64;
     VkResult vr;
 
     dev = calloc( 1, sizeof(*dev) );
@@ -3395,7 +3396,17 @@ static struct vulkan_device *create_vulkan_device( LUID *luid )
 
     p_vkCreateDevice = (void *)p_vkGetInstanceProcAddr( dev->instance, "vkCreateDevice" );
     vr = p_vkCreateDevice( dev->physical_device, &create_info, NULL, &dev->device );
+    /* currently fails on llvmpipe on WOW64 without placed memory */
+    todo_wine_if(IsWow64Process(GetCurrentProcess(), &is_wow64) && is_wow64 && vr == VK_ERROR_EXTENSION_NOT_PRESENT)
     ok_vk( VK_SUCCESS, vr );
+    if (vr != VK_SUCCESS)
+    {
+        PFN_vkDestroyInstance p_vkDestroyInstance;
+        p_vkDestroyInstance = (void *)p_vkGetInstanceProcAddr( dev->instance, "vkDestroyInstance" );
+        p_vkDestroyInstance( dev->instance, NULL );
+        free( dev );
+        return NULL;
+    }
     ok_ptr( dev->device, !=, VK_NULL_HANDLE );
 
     return dev;
@@ -4637,36 +4648,42 @@ static void test_shared_resources(void)
 
         case MAKETEST(4, 0, 0):
         {
+            if (!vulkan_exp) break;
             buf = export_vulkan_buffer( vulkan_exp, resource_size, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &handle );
             get_d3dkmt_resource_desc( luid, handle, FALSE, 0, runtime_desc );
             break;
         }
         case MAKETEST(4, 0, 1):
         {
+            if (!vulkan_exp) break;
             buf = export_vulkan_buffer( vulkan_exp, resource_size, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT, &handle );
             get_d3dkmt_resource_desc( luid, handle, TRUE, 0, runtime_desc );
             break;
         }
         case MAKETEST(4, 1, 0):
         {
+            if (!vulkan_exp) break;
             img = export_vulkan_image( vulkan_exp, width_1d, 1, array_1d, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &handle );
             get_d3dkmt_resource_desc( luid, handle, FALSE, 0, runtime_desc );
             break;
         }
         case MAKETEST(4, 2, 0):
         {
+            if (!vulkan_exp) break;
             img = export_vulkan_image( vulkan_exp, width_2d, height_2d, 1, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &handle );
             get_d3dkmt_resource_desc( luid, handle, FALSE, 0, runtime_desc );
             break;
         }
         case MAKETEST(4, 2, 1):
         {
+            if (!vulkan_exp) break;
             img = export_vulkan_image( vulkan_exp, width_2d, height_2d, 1, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT, &handle );
             get_d3dkmt_resource_desc( luid, handle, TRUE, 0, runtime_desc );
             break;
         }
         case MAKETEST(4, 3, 0):
         {
+            if (!vulkan_exp) break;
             img = export_vulkan_image( vulkan_exp, width_3d, height_3d, depth_3d, NULL, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &handle );
             get_d3dkmt_resource_desc( luid, handle, FALSE, 0, runtime_desc );
             break;
