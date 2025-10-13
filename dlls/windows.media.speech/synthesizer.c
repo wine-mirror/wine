@@ -404,6 +404,171 @@ static const struct IRandomAccessStreamVtbl synthesis_stream_random_access_vtbl 
 };
 
 
+struct synthesis_stream_async_operation
+{
+    IAsyncOperationWithProgress_IBuffer_UINT32 ISynthesisSteamBufferAsync_iface;
+    IBuffer *buffer;
+    IInputStream *inp_stream;
+
+    LONG ref;
+};
+
+static inline struct synthesis_stream_async_operation *impl_from_ISynthesisSteamBufferAsync( IAsyncOperationWithProgress_IBuffer_UINT32 *iface )
+{
+    return CONTAINING_RECORD( iface, struct synthesis_stream_async_operation, ISynthesisSteamBufferAsync_iface );
+}
+
+static HRESULT WINAPI async_with_progress_uint32_QueryInterface( IAsyncOperationWithProgress_IBuffer_UINT32 *iface, REFIID iid, void **out )
+{
+    struct synthesis_stream_async_operation *impl = impl_from_ISynthesisSteamBufferAsync( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_IAsyncOperationWithProgress_IBuffer_UINT32 ))
+    {
+        *out = &impl->ISynthesisSteamBufferAsync_iface;
+        IAsyncOperationWithProgress_IBuffer_UINT32_AddRef( &impl->ISynthesisSteamBufferAsync_iface );
+        return S_OK;
+    }
+
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid) );
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI async_with_progress_uint32_AddRef( IAsyncOperationWithProgress_IBuffer_UINT32 *iface )
+{
+    struct synthesis_stream_async_operation *impl = impl_from_ISynthesisSteamBufferAsync( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p, ref %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI async_with_progress_uint32_Release( IAsyncOperationWithProgress_IBuffer_UINT32 *iface )
+{
+    struct synthesis_stream_async_operation *impl = impl_from_ISynthesisSteamBufferAsync( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+    TRACE( "iface %p, ref %lu.\n", iface, ref );
+
+    if (!ref)
+    {
+        /* guard against re-entry if inner releases an outer iface */
+        IBuffer_Release( impl->buffer );
+        IInputStream_Release( impl->inp_stream );
+        free( impl );
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI async_with_progress_uint32_GetIids( IAsyncOperationWithProgress_IBuffer_UINT32 *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI async_with_progress_uint32_GetRuntimeClassName( IAsyncOperationWithProgress_IBuffer_UINT32 *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub.\n", iface, class_name );
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI async_with_progress_uint32_GetTrustLevel( IAsyncOperationWithProgress_IBuffer_UINT32 *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI async_with_progress_uint32_put_Progress( IAsyncOperationWithProgress_IBuffer_UINT32 *iface,
+        IAsyncOperationProgressHandler_IBuffer_UINT32 *handler )
+{
+    FIXME( "iface %p, handler %p stub.\n", iface, handler );
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI async_with_progress_uint32_get_Progress( IAsyncOperationWithProgress_IBuffer_UINT32 *iface,
+        IAsyncOperationProgressHandler_IBuffer_UINT32 **handler )
+{
+    FIXME( "iface %p, handler %p stub.\n", iface, handler );
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI async_with_progress_uint32_put_Completed( IAsyncOperationWithProgress_IBuffer_UINT32 *iface,
+        IAsyncOperationWithProgressCompletedHandler_IBuffer_UINT32 *handler )
+{
+    FIXME( "iface %p, handler %p stub.\n", iface, handler );
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI async_with_progress_uint32_get_Completed( IAsyncOperationWithProgress_IBuffer_UINT32 *iface,
+        IAsyncOperationWithProgressCompletedHandler_IBuffer_UINT32 **handler )
+{
+    FIXME( "iface %p, handler %p stub.\n", iface, handler );
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI async_with_progress_uint32_GetResults( IAsyncOperationWithProgress_IBuffer_UINT32 *iface,
+        IBuffer **results )
+{
+    struct synthesis_stream_async_operation *impl = impl_from_ISynthesisSteamBufferAsync( iface );
+
+    TRACE( "iface %p, results %p.\n", iface, results );
+
+    IBuffer_AddRef( impl->buffer );
+    *results = impl->buffer;
+    return S_OK;
+}
+
+IAsyncOperationWithProgress_IBuffer_UINT32Vtbl async_with_progress_uint32_vtbl =
+{
+    /* IUnknown methods */
+    async_with_progress_uint32_QueryInterface,
+    async_with_progress_uint32_AddRef,
+    async_with_progress_uint32_Release,
+    /* IInspectable methods */
+    async_with_progress_uint32_GetIids,
+    async_with_progress_uint32_GetRuntimeClassName,
+    async_with_progress_uint32_GetTrustLevel,
+    /* IAsyncOperationWithProgress<Windows.Storage.Streams.IBuffer *,UINT32> */
+    async_with_progress_uint32_put_Progress,
+    async_with_progress_uint32_get_Progress,
+    async_with_progress_uint32_put_Completed,
+    async_with_progress_uint32_get_Completed,
+    async_with_progress_uint32_GetResults,
+};
+
+static HRESULT async_operation_with_progress_buffer_uint32_create( IInputStream *inp_stream,
+        IBuffer *buffer,
+        IAsyncOperationWithProgress_IBuffer_UINT32 **out)
+{
+    struct synthesis_stream_async_operation *impl;
+
+    if (!inp_stream || !buffer || !out) return E_POINTER;
+
+    *out = NULL;
+    if (!(impl = calloc(1, sizeof(*impl))))
+        return E_OUTOFMEMORY;
+
+    impl->ref = 1;
+    IBuffer_AddRef( buffer );
+    impl->buffer = buffer;
+    IInputStream_AddRef( inp_stream );
+    impl->inp_stream = inp_stream;
+    impl->ISynthesisSteamBufferAsync_iface.lpVtbl = &async_with_progress_uint32_vtbl;
+    *out = &impl->ISynthesisSteamBufferAsync_iface;
+    return S_OK;
+}
+
+
 static inline struct synthesis_stream *impl_from_IInputStream( IInputStream *iface )
 {
     return CONTAINING_RECORD(iface, struct synthesis_stream, IInputStream_iface);
@@ -456,7 +621,7 @@ static HRESULT WINAPI synthesis_stream_input_ReadAsync( IInputStream *iface, IBu
         InputStreamOptions options, IAsyncOperationWithProgress_IBuffer_UINT32 **operation)
 {
     FIXME( "iface %p, buffer %p, count %u, options %d, operation %p stub.\n", iface, buffer, count, options, operation );
-    return E_NOTIMPL;
+    return async_operation_with_progress_buffer_uint32_create( iface, buffer, operation );
 }
 
 static const struct IInputStreamVtbl synthesis_stream_input_vtbl =
