@@ -1541,9 +1541,20 @@ static VkResult win32u_vkCreateSemaphore( VkDevice client_device, const VkSemaph
 
     if (export_info)
     {
-        FIXME( "Exporting semaphore handle not yet implemented!\n" );
+        VkSemaphoreGetFdInfoKHR fd_info = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_GET_FD_INFO_KHR, .semaphore = host_semaphore};
+        int fd = -1;
 
-        if (!(semaphore->local = d3dkmt_create_sync( nt_shared ? NULL : &semaphore->global ))) goto failed;
+        switch ((fd_info.handleType = get_host_external_semaphore_type()))
+        {
+        case VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT:
+            if ((res = device->p_vkGetSemaphoreFdKHR( device->host.device, &fd_info, &fd ))) goto failed;
+            break;
+        default:
+            FIXME( "Unsupported handle type %#x\n", fd_info.handleType );
+            break;
+        }
+
+        if (!(semaphore->local = d3dkmt_create_sync( fd, nt_shared ? NULL : &semaphore->global ))) goto failed;
         if (nt_shared && !(semaphore->shared = create_shared_semaphore_handle( semaphore->local, &export_win32 ))) goto failed;
     }
 
@@ -1554,6 +1565,7 @@ static VkResult win32u_vkCreateSemaphore( VkDevice client_device, const VkSemaph
     return res;
 
 failed:
+    WARN( "Failed to create semaphore, res %d\n", res );
     device->p_vkDestroySemaphore( device->host.device, host_semaphore, NULL );
     if (semaphore->local) d3dkmt_destroy_sync( semaphore->local );
     free( semaphore );
@@ -1730,7 +1742,7 @@ static VkResult win32u_vkCreateFence( VkDevice client_device, const VkFenceCreat
     {
         FIXME( "Exporting fence handle not yet implemented!\n" );
 
-        if (!(fence->local = d3dkmt_create_sync( nt_shared ? NULL : &fence->global ))) goto failed;
+        if (!(fence->local = d3dkmt_create_sync( -1, nt_shared ? NULL : &fence->global ))) goto failed;
         if (nt_shared && !(fence->shared = create_shared_semaphore_handle( fence->local, &export_win32 ))) goto failed;
     }
 

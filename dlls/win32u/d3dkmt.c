@@ -1755,7 +1755,7 @@ NTSTATUS d3dkmt_destroy_resource( D3DKMT_HANDLE local )
 }
 
 /* create a D3DKMT global or shared sync */
-D3DKMT_HANDLE d3dkmt_create_sync( D3DKMT_HANDLE *global )
+D3DKMT_HANDLE d3dkmt_create_sync( int fd, D3DKMT_HANDLE *global )
 {
     struct d3dkmt_object *sync = NULL;
     NTSTATUS status;
@@ -1763,7 +1763,7 @@ D3DKMT_HANDLE d3dkmt_create_sync( D3DKMT_HANDLE *global )
     TRACE( "global %p\n", global );
 
     if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) goto failed;
-    if ((status = d3dkmt_object_create( sync, -1, !global, NULL, 0 ))) goto failed;
+    if ((status = d3dkmt_object_create( sync, fd, !global, NULL, 0 ))) goto failed;
     if (global) *global = sync->global;
     return sync->local;
 
