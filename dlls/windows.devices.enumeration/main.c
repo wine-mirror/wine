@@ -510,6 +510,8 @@ static HRESULT WINAPI devpropcompkeys_append_names( DEVPROPCOMPKEY **ret_keys, U
 
     if (FAILED(hr = count_iterable( names_iterable, &count ))) return hr;
     if (!(keys = realloc( *ret_keys, (keys_len + count) * sizeof( *keys ) ))) return E_OUTOFMEMORY;
+    *ret_keys = NULL;
+    *ret_keys_len = 0;
 
     if (FAILED(hr = IIterable_HSTRING_First( names_iterable, &names ))) return hr;
     for (hr = IIterator_HSTRING_get_HasCurrent( names, &valid ); SUCCEEDED( hr ) && valid; hr = IIterator_HSTRING_MoveNext( names, &valid ))
