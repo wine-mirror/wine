@@ -29,6 +29,7 @@
 
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
+#define WIDL_using_Windows_Storage_Streams
 #include "windows.foundation.h"
 #define WIDL_using_Windows_Globalization
 #include "windows.globalization.h"
@@ -36,7 +37,6 @@
 #include "windows.media.speechrecognition.h"
 #define WIDL_using_Windows_Media_SpeechSynthesis
 #include "windows.media.speechsynthesis.h"
-
 #include "wine/test.h"
 
 #define AsyncStatus_Closed 4
@@ -788,6 +788,7 @@ static void test_SpeechSynthesizer(void)
     IVectorView_VoiceInformation *voices = NULL;
     IInstalledVoicesStatic *voices_static = NULL;
     ISpeechSynthesisStream *ss_stream = NULL, *tmp;
+    IRandomAccessStream *ra_stream;
     IVoiceInformation *voice;
     IInspectable *inspectable = NULL, *tmp_inspectable = NULL;
     IAgileObject *agile_object = NULL, *tmp_agile_object = NULL;
@@ -942,6 +943,10 @@ static void test_SpeechSynthesizer(void)
 
     hr = IAsyncOperation_SpeechSynthesisStream_GetResults(operation_ss_stream, &ss_stream);
     ok(hr == S_OK, "IAsyncOperation_SpeechSynthesisStream_GetResults failed, hr %#lx\n", hr);
+
+    hr = ISpeechSynthesisStream_QueryInterface(ss_stream, &IID_IRandomAccessStream, (void **)&ra_stream);
+    ok(hr == S_OK, "QueryInteface(&IID_IRandomAccessStream) failed, hr %#lx\n", hr);
+    IRandomAccessStream_Release(ra_stream);
 
     tmp = (void *)0xdeadbeef;
     hr = IAsyncOperation_SpeechSynthesisStream_GetResults(operation_ss_stream, &tmp);
