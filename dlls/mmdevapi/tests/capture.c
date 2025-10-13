@@ -305,7 +305,7 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     /* GetBufferSize is not a multiple of the period size! */
     hr = IAudioClient_GetBufferSize(ac, &buffer_size);
     ok(hr == S_OK, "GetBufferSize failed: %08lx\n", hr);
-    trace("GetBufferSize %u period size %llu\n", buffer_size, period);
+    trace("GetBufferSize %u period size %I64u\n", buffer_size, period);
 
     hr = IAudioClient_Start(ac);
     ok(hr == S_OK, "Start on a stopped stream returns %08lx\n", hr);
@@ -320,7 +320,7 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
      * packets to arrive concurrently. */
     hr = IAudioClient_GetCurrentPadding(ac, &padding);
     ok(hr == S_OK, "GetCurrentPadding returns %08lx\n", hr);
-    ok(padding <= 2 * period, "GetCurrentPadding %u is larger then twice the period %llu\n",
+    ok(padding <= 2 * period, "GetCurrentPadding %u is larger then twice the period %I64u\n",
             padding, period);
 
     todo_wine
@@ -337,7 +337,7 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
 
     hr = IAudioClient_GetCurrentPadding(ac, &padding);
     ok(hr == S_OK, "GetCurrentPadding returns %08lx\n", hr);
-    ok(padding <= 2 * period, "GetCurrentPadding %u is larger then twice the period %llu\n",
+    ok(padding <= 2 * period, "GetCurrentPadding %u is larger then twice the period %I64u\n",
             padding, period);
 
     ok(!packets_data.discontinuity_at_0, "Discontinuity at first packet\n");
