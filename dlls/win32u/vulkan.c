@@ -1749,9 +1749,20 @@ static VkResult win32u_vkCreateFence( VkDevice client_device, const VkFenceCreat
 
     if (export_info)
     {
-        FIXME( "Exporting fence handle not yet implemented!\n" );
+        VkFenceGetFdInfoKHR fd_info = {.sType = VK_STRUCTURE_TYPE_FENCE_GET_FD_INFO_KHR, .fence = host_fence};
+        int fd = -1;
 
-        if (!(fence->local = d3dkmt_create_sync( -1, nt_shared ? NULL : &fence->global ))) goto failed;
+        switch ((fd_info.handleType = get_host_external_fence_type()))
+        {
+        case VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT:
+            if ((res = device->p_vkGetFenceFdKHR( device->host.device, &fd_info, &fd ))) goto failed;
+            break;
+        default:
+            FIXME( "Unsupported handle type %#x\n", fd_info.handleType );
+            break;
+        }
+
+        if (!(fence->local = d3dkmt_create_sync( fd, nt_shared ? NULL : &fence->global ))) goto failed;
         if (nt_shared && !(fence->shared = create_shared_semaphore_handle( fence->local, &export_win32 ))) goto failed;
     }
 
@@ -1762,6 +1773,7 @@ static VkResult win32u_vkCreateFence( VkDevice client_device, const VkFenceCreat
     return res;
 
 failed:
+    WARN( "Failed to create fence, res %d\n", res );
     device->p_vkDestroyFence( device->host.device, host_fence, NULL );
     if (fence->local) d3dkmt_destroy_sync( fence->local );
     free( fence );
