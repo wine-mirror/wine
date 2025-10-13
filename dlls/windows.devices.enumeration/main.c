@@ -527,7 +527,7 @@ static HRESULT WINAPI devpropcompkeys_append_names( DEVPROPCOMPKEY **ret_keys, U
         WindowsDeleteString( name );
         if (FAILED(hr)) break;
         /* DevGetObjects(Ex) will not de-duplicate properties, so we need to do it ourselves. */
-        if (!devpropcompkey_buf_find_devpropkey( *ret_keys, keys_len, key.Key ))
+        if (!devpropcompkey_buf_find_devpropkey( keys, keys_len, key.Key ))
             keys[keys_len++] = key;
     }
 
