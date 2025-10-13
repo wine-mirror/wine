@@ -417,7 +417,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(IDirectSoundBuff
 
 	ReleaseSRWLockShared(&This->lock);
 
-	TRACE("playpos = %ld, writepos = %ld, buflen=%ld (%p, time=%ld)\n",
+	TRACE("playpos = %ld, writepos = %ld, buflen=%ld (%p, time=%lu)\n",
 		playpos?*playpos:-1, writepos?*writepos:-1, This->buflen, This, GetTickCount());
 
 	return DS_OK;
@@ -491,7 +491,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(IDirectSoundBuffer8 *iface, DW
         IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface);
 	HRESULT hres = DS_OK;
 
-        TRACE("(%p,%ld,%ld,%p,%p,%p,%p,0x%08lx) at %ld\n", This, writecursor, writebytes, lplpaudioptr1,
+        TRACE("(%p,%ld,%ld,%p,%p,%p,%p,0x%08lx) at %lu\n", This, writecursor, writebytes, lplpaudioptr1,
                 audiobytes1, lplpaudioptr2, audiobytes2, flags, GetTickCount());
 
         if (!audiobytes1 || !lplpaudioptr1)

@@ -725,7 +725,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetCurrentPosition(IDirectSoundBuffer8 *
 	LeaveCriticalSection(&(device->mixlock));
 	/* **** */
 
-	TRACE("playpos = %ld, writepos = %ld (%p, time=%ld)\n", playpos?*playpos:0, writepos?*writepos:0, device, GetTickCount());
+	TRACE("playpos = %ld, writepos = %ld (%p, time=%lu)\n", playpos?*playpos:0, writepos?*writepos:0, device, GetTickCount());
 	return DS_OK;
 }
 
@@ -789,7 +789,7 @@ static HRESULT WINAPI PrimaryBufferImpl_Lock(IDirectSoundBuffer8 *iface, DWORD w
 	HRESULT hres;
         IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface);
         DirectSoundDevice *device = This->device;
-	TRACE("(%p,%ld,%ld,%p,%p,%p,%p,0x%08lx) at %ld\n",
+	TRACE("(%p,%ld,%ld,%p,%p,%p,%p,0x%08lx) at %lu\n",
 		iface,
 		writecursor,
 		writebytes,

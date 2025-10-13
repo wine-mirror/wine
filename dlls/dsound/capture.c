@@ -429,7 +429,7 @@ static HRESULT WINAPI IDirectSoundCaptureBufferImpl_Lock(IDirectSoundCaptureBuff
     IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
     HRESULT hres = DS_OK;
 
-    TRACE( "(%p,%08lu,%08lu,%p,%p,%p,%p,0x%08lx) at %ld\n", This, dwReadCusor,
+    TRACE( "(%p,%08lu,%08lu,%p,%p,%p,%p,0x%08lx) at %lu\n", This, dwReadCusor,
         dwReadBytes, lplpvAudioPtr1, lpdwAudioBytes1, lplpvAudioPtr2,
         lpdwAudioBytes2, dwFlags, GetTickCount() );
 
