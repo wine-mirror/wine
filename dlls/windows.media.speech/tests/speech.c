@@ -789,6 +789,7 @@ static void test_SpeechSynthesizer(void)
     IInstalledVoicesStatic *voices_static = NULL;
     ISpeechSynthesisStream *ss_stream = NULL, *tmp;
     IRandomAccessStream *ra_stream;
+    IInputStream *inp_stream;
     IVoiceInformation *voice;
     IInspectable *inspectable = NULL, *tmp_inspectable = NULL;
     IAgileObject *agile_object = NULL, *tmp_agile_object = NULL;
@@ -798,6 +799,7 @@ static void test_SpeechSynthesizer(void)
     struct async_inspectable_handler async_inspectable_handler;
     HMODULE hdll;
     HSTRING str, str2;
+    UINT64 value;
     HRESULT hr;
     UINT32 size;
     ULONG ref;
@@ -946,7 +948,14 @@ static void test_SpeechSynthesizer(void)
 
     hr = ISpeechSynthesisStream_QueryInterface(ss_stream, &IID_IRandomAccessStream, (void **)&ra_stream);
     ok(hr == S_OK, "QueryInteface(&IID_IRandomAccessStream) failed, hr %#lx\n", hr);
+    hr = IRandomAccessStream_get_Size(ra_stream, &value);
+    ok(hr == S_OK, "_get_Size failed, hr %#lx\n", hr);
+    todo_wine ok(value, "got 0.\n");
     IRandomAccessStream_Release(ra_stream);
+
+    hr = ISpeechSynthesisStream_QueryInterface(ss_stream, &IID_IInputStream, (void **)&inp_stream);
+    ok(hr == S_OK, "QueryInteface(&IID_IRandomAccessStream) failed, hr %#lx\n", hr);
+    IInputStream_Release(inp_stream);
 
     tmp = (void *)0xdeadbeef;
     hr = IAsyncOperation_SpeechSynthesisStream_GetResults(operation_ss_stream, &tmp);
