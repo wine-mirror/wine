@@ -2989,7 +2989,7 @@ class VkGenerator(object):
         # Note: unions are stored in structs for dependency reasons,
         # see comment in parsing section.
         for struct in self.registry.structs:
-            if struct.required:
+            if struct.required and struct.name != "SECURITY_ATTRIBUTES":
                 LOGGER.debug("Generating struct: {0}".format(struct.name))
                 f.write(struct.definition(align=True))
                 f.write("\n")
@@ -3128,6 +3128,7 @@ class VkRegistry(object):
         self.video_copyright = video_root.find('./comment').text
 
         root.extend(video_root)
+        root.extend(ET.parse("winevk.xml").getroot())
 
         self._parse_enums(root)
         self._parse_types(root)

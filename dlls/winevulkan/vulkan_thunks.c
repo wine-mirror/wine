@@ -578,6 +578,13 @@ typedef struct VkVideoPictureResourceInfoKHR32
     VkImageView DECLSPEC_ALIGN(8) imageViewBinding;
 } VkVideoPictureResourceInfoKHR32;
 
+typedef struct SECURITY_ATTRIBUTES32
+{
+    DWORD nLength;
+    PTR32 lpSecurityDescriptor;
+    BOOL bInheritHandle;
+} SECURITY_ATTRIBUTES32;
+
 typedef struct StdVideoAV1SequenceHeader32
 {
     StdVideoAV1SequenceHeaderFlags flags;
@@ -9958,6 +9965,31 @@ static void convert_VkMemoryAllocateInfo_win64_to_host(struct conversion_context
 }
 #endif /* _WIN64 */
 
+static void convert_SECURITY_ATTRIBUTES_win32_to_host(const SECURITY_ATTRIBUTES32 *in, SECURITY_ATTRIBUTES *out)
+{
+    if (!in) return;
+
+    out->nLength = in->nLength;
+    out->lpSecurityDescriptor = UlongToPtr(in->lpSecurityDescriptor);
+    out->bInheritHandle = in->bInheritHandle;
+}
+
+static const SECURITY_ATTRIBUTES *convert_SECURITY_ATTRIBUTES_array_win32_to_host(struct conversion_context *ctx, const SECURITY_ATTRIBUTES32 *in, uint32_t count)
+{
+    SECURITY_ATTRIBUTES *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_SECURITY_ATTRIBUTES_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
 static void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_context *ctx, const VkMemoryAllocateInfo32 *in, VkMemoryAllocateInfo *out)
 {
     const VkBaseInStructure32 *in_header;
@@ -10003,7 +10035,7 @@ static void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_context
             const VkExportMemoryWin32HandleInfoKHR32 *in_ext = (const VkExportMemoryWin32HandleInfoKHR32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_WIN32_HANDLE_INFO_KHR;
             out_ext->pNext = NULL;
-            out_ext->pAttributes = UlongToPtr(in_ext->pAttributes);
+            out_ext->pAttributes = convert_SECURITY_ATTRIBUTES_array_win32_to_host(ctx, (const SECURITY_ATTRIBUTES32 *)UlongToPtr(in_ext->pAttributes), 1);
             out_ext->dwAccess = in_ext->dwAccess;
             out_ext->name = (LPCWSTR)UlongToPtr(in_ext->name);
             out_header->pNext = (void *)out_ext;
@@ -22499,7 +22531,7 @@ static void convert_VkFenceCreateInfo_win32_to_host(struct conversion_context *c
             const VkExportFenceWin32HandleInfoKHR32 *in_ext = (const VkExportFenceWin32HandleInfoKHR32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_EXPORT_FENCE_WIN32_HANDLE_INFO_KHR;
             out_ext->pNext = NULL;
-            out_ext->pAttributes = UlongToPtr(in_ext->pAttributes);
+            out_ext->pAttributes = convert_SECURITY_ATTRIBUTES_array_win32_to_host(ctx, (const SECURITY_ATTRIBUTES32 *)UlongToPtr(in_ext->pAttributes), 1);
             out_ext->dwAccess = in_ext->dwAccess;
             out_ext->name = (LPCWSTR)UlongToPtr(in_ext->name);
             out_header->pNext = (void *)out_ext;
@@ -26390,7 +26422,7 @@ static void convert_VkSemaphoreCreateInfo_win32_to_host(struct conversion_contex
             const VkExportSemaphoreWin32HandleInfoKHR32 *in_ext = (const VkExportSemaphoreWin32HandleInfoKHR32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR;
             out_ext->pNext = NULL;
-            out_ext->pAttributes = UlongToPtr(in_ext->pAttributes);
+            out_ext->pAttributes = convert_SECURITY_ATTRIBUTES_array_win32_to_host(ctx, (const SECURITY_ATTRIBUTES32 *)UlongToPtr(in_ext->pAttributes), 1);
             out_ext->dwAccess = in_ext->dwAccess;
             out_ext->name = (LPCWSTR)UlongToPtr(in_ext->name);
             out_header->pNext = (void *)out_ext;

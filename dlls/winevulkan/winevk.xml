@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<registry>
+    <types>
+        <type requires="windows.h" name="BOOL"/>
+        <type category="struct" name="SECURITY_ATTRIBUTES">
+            <member><type>DWORD</type> <name>nLength</name></member>
+            <member><type>void</type>* <name>lpSecurityDescriptor</name></member>
+            <member><type>BOOL</type> <name>bInheritHandle</name></member>
+        </type>
+    </types>
+</registry>
