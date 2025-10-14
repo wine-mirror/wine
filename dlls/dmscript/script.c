@@ -247,14 +247,37 @@ static inline IDirectMusicScriptImpl *impl_from_IPersistStream(IPersistStream *i
     return CONTAINING_RECORD(iface, IDirectMusicScriptImpl, dmobj.IPersistStream_iface);
 }
 
+static HRESULT load_container(IStream *stream, struct chunk_entry *riff)
+{
+    DMUS_OBJECTDESC desc = {.dwSize = sizeof(DMUS_OBJECTDESC), .dwValidData = DMUS_OBJ_STREAM | DMUS_OBJ_CLASS,
+                            .guidClass = CLSID_DirectMusicContainer};
+    IDirectMusicObject *dmobj;
+    HRESULT hr;
+
+    if (FAILED(hr = IStream_Clone(stream, &desc.pStream)))
+    {
+        ERR("Failed to clone IStream (%p): hr %#lx.\n", stream, hr);
+        return hr;
+    }
+    if (SUCCEEDED(hr = stream_reset_chunk_start(desc.pStream, riff)))
+    {
+        if (SUCCEEDED(hr = stream_get_object(desc.pStream, &desc, &IID_IDirectMusicObject, (void **)&dmobj)))
+            IDirectMusicObject_Release(dmobj);
+        else
+            ERR("Failed to load container: hr %#lx.\n", hr);
+    }
+
+    IStream_Release(desc.pStream);
+
+    return hr;
+}
+
 static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pStm)
 {
         IDirectMusicScriptImpl *This = impl_from_IPersistStream(iface);
 	DMUS_PRIVATE_CHUNK Chunk;
 	DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
 	LARGE_INTEGER liMove; /* used when skipping chunks */
-	LPDIRECTMUSICGETLOADER pGetLoader = NULL;
-	LPDIRECTMUSICLOADER pLoader = NULL;
 
 	FIXME("(%p, %p): Loading not implemented yet\n", This, pStm);
 	IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
@@ -327,50 +350,12 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 								break;
 							}
 						        case FOURCC_RIFF: {
-								IDirectMusicObject* pObject = NULL;
-								DMUS_OBJECTDESC desc;
+                                                                static const LARGE_INTEGER zero = {0};
+                                                                struct chunk_entry chunk = {FOURCC_LIST, .size = Chunk.dwSize, .type = Chunk.fccID};
 
-								ZeroMemory (&desc, sizeof(DMUS_OBJECTDESC));
-								desc.dwSize = sizeof(DMUS_OBJECTDESC);
-								desc.dwValidData = DMUS_OBJ_STREAM | DMUS_OBJ_CLASS;
-								desc.guidClass = CLSID_DirectMusicContainer;
-								desc.pStream = NULL;
-								IStream_Clone (pStm, &desc.pStream);
-
-								liMove.QuadPart = 0;
-								liMove.QuadPart -= (sizeof(FOURCC) + sizeof(DWORD));
-								IStream_Seek (desc.pStream, liMove, STREAM_SEEK_CUR, NULL);
-
-								IStream_QueryInterface (pStm, &IID_IDirectMusicGetLoader, (LPVOID*)&pGetLoader);
-								IDirectMusicGetLoader_GetLoader (pGetLoader, &pLoader);
-								IDirectMusicGetLoader_Release (pGetLoader);
-
-								if (SUCCEEDED(IDirectMusicLoader_GetObject (pLoader, &desc, &IID_IDirectMusicObject, (LPVOID*) &pObject))) {
-								  IDirectMusicObject_Release (pObject);
-								} else {
-								  ERR_(dmfile)("Error on GetObject while trying to load Scrip SubContainer\n");
-								}
-
-								IDirectMusicLoader_Release (pLoader); pLoader = NULL; /* release loader */
-								IStream_Release(desc.pStream); desc.pStream = NULL; /* release cloned stream */
-
-								liMove.QuadPart = Chunk.dwSize;
-								IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-								/*
-							        IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);				
-								TRACE_(dmfile)(": RIFF chunk of type %s", debugstr_fourcc(Chunk.fccID));
-								ListSize[0] = Chunk.dwSize - sizeof(FOURCC);
-								ListCount[0] = 0;
-
-								switch (Chunk.fccID) {
-								        default: {
-										TRACE_(dmfile)(": unknown (skipping)\n");
-										liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
-										IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-										break;						
-									}
-								}
-								*/
+                                                                IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &chunk.offset);
+                                                                chunk.offset.QuadPart -= 12;
+                                                                load_container(pStm, &chunk);
 								break;
 							}
 							case FOURCC_LIST: {
