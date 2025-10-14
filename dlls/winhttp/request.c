@@ -2011,7 +2011,7 @@ static DWORD read_data( struct request *request, void *buffer, DWORD size, DWORD
     if (request->read_chunked && !request->read_chunked_size) ret = refill_buffer( request, async );
 
 done:
-    TRACE( "retrieved %u bytes (%llu/%llu)\n", bytes_read, request->content_read, request->content_length );
+    TRACE( "retrieved %u bytes (%I64u/%I64u)\n", bytes_read, request->content_read, request->content_length );
     if (end_of_read_data( request )) finished_reading( request );
     if (async)
     {
