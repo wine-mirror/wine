@@ -1240,6 +1240,67 @@ done:
 }
 
 /******************************************************************************
+ *              CoTreatAsClass        (combase.@)
+ */
+HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
+{
+    WCHAR clsidW[CHARS_IN_GUID];
+    HKEY hkey = NULL;
+    HRESULT hr;
+    LONG size;
+    CLSID id;
+
+    if (FAILED(hr = open_key_for_clsid(clsidOld, NULL, KEY_READ | KEY_WRITE, &hkey)))
+        return hr;
+
+    if (IsEqualGUID( clsidOld, clsidNew ))
+    {
+       size = sizeof(clsidW);
+       if (!RegQueryValueW(hkey, L"AutoTreatAs", clsidW, &size) && CLSIDFromString(clsidW, &id) == S_OK)
+       {
+           if (RegSetValueW(hkey, L"TreatAs", REG_SZ, clsidW, sizeof(clsidW)))
+           {
+               hr = REGDB_E_WRITEREGDB;
+               goto done;
+           }
+       }
+       else
+       {
+           if (RegDeleteKeyW(hkey, L"TreatAs"))
+               hr = REGDB_E_WRITEREGDB;
+           goto done;
+       }
+    }
+    else
+    {
+        if (IsEqualGUID(clsidNew, &CLSID_NULL))
+        {
+           RegDeleteKeyW(hkey, L"TreatAs");
+        }
+        else
+        {
+            if (!StringFromGUID2(clsidNew, clsidW, ARRAY_SIZE(clsidW)))
+            {
+                WARN("StringFromGUID2 failed\n");
+                hr = E_FAIL;
+                goto done;
+            }
+
+            if (RegSetValueW(hkey, L"TreatAs", REG_SZ, clsidW, sizeof(clsidW)) != ERROR_SUCCESS)
+            {
+                WARN("RegSetValue failed\n");
+                hr = REGDB_E_WRITEREGDB;
+                goto done;
+            }
+        }
+    }
+
+done:
+    if (hkey) RegCloseKey(hkey);
+    return hr;
+}
+
+/******************************************************************************
  *               ProgIDFromCLSID        (combase.@)
  */
 HRESULT WINAPI DECLSPEC_HOTPATCH ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *progid)
