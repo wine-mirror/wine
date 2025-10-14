@@ -407,6 +407,7 @@ static const struct IRandomAccessStreamVtbl synthesis_stream_random_access_vtbl 
 struct synthesis_stream_async_operation
 {
     IAsyncOperationWithProgress_IBuffer_UINT32 ISynthesisSteamBufferAsync_iface;
+    IAsyncInfo IAsyncInfo_iface;
     IBuffer *buffer;
     IInputStream *inp_stream;
 
@@ -431,6 +432,13 @@ static HRESULT WINAPI async_with_progress_uint32_QueryInterface( IAsyncOperation
     {
         *out = &impl->ISynthesisSteamBufferAsync_iface;
         IAsyncOperationWithProgress_IBuffer_UINT32_AddRef( &impl->ISynthesisSteamBufferAsync_iface );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IAsyncInfo ))
+    {
+        *out = &impl->IAsyncInfo_iface;
+        IAsyncInfo_AddRef( &impl->IAsyncInfo_iface );
         return S_OK;
     }
 
@@ -546,6 +554,65 @@ IAsyncOperationWithProgress_IBuffer_UINT32Vtbl async_with_progress_uint32_vtbl =
     async_with_progress_uint32_GetResults,
 };
 
+DEFINE_IINSPECTABLE(async_info, IAsyncInfo, struct synthesis_stream_async_operation, ISynthesisSteamBufferAsync_iface)
+
+static HRESULT WINAPI async_info_get_Id( IAsyncInfo *iface, UINT32 *id )
+{
+    TRACE( "iface %p, id %p.\n", iface, id );
+
+    *id = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI async_info_get_Status( IAsyncInfo *iface, AsyncStatus *status )
+{
+    TRACE( "iface %p, status %p.\n", iface, status );
+
+    *status = Completed;
+    return S_OK;
+}
+
+static HRESULT WINAPI async_info_get_ErrorCode( IAsyncInfo *iface, HRESULT *error_code )
+{
+    FIXME( "iface %p, error_code %p.\n", iface, error_code );
+
+    *error_code = S_OK;
+    return S_OK;
+}
+
+static HRESULT WINAPI async_info_Cancel( IAsyncInfo *iface )
+{
+    FIXME( "iface %p.\n", iface );
+
+    return S_OK;
+}
+
+static HRESULT WINAPI async_info_Close( IAsyncInfo *iface )
+{
+    FIXME( "iface %p.\n", iface );
+
+    return S_OK;
+}
+
+
+static const struct IAsyncInfoVtbl async_info_vtbl =
+{
+    /* IUnknown methods */
+    async_info_QueryInterface,
+    async_info_AddRef,
+    async_info_Release,
+    /* IInspectable methods */
+    async_info_GetIids,
+    async_info_GetRuntimeClassName,
+    async_info_GetTrustLevel,
+    /* IAsyncInfo */
+    async_info_get_Id,
+    async_info_get_Status,
+    async_info_get_ErrorCode,
+    async_info_Cancel,
+    async_info_Close,
+};
+
 static HRESULT async_operation_with_progress_buffer_uint32_create( IInputStream *inp_stream,
         IBuffer *buffer,
         IAsyncOperationWithProgress_IBuffer_UINT32 **out)
@@ -564,6 +631,7 @@ static HRESULT async_operation_with_progress_buffer_uint32_create( IInputStream 
     IInputStream_AddRef( inp_stream );
     impl->inp_stream = inp_stream;
     impl->ISynthesisSteamBufferAsync_iface.lpVtbl = &async_with_progress_uint32_vtbl;
+    impl->IAsyncInfo_iface.lpVtbl = &async_info_vtbl;
     *out = &impl->ISynthesisSteamBufferAsync_iface;
     return S_OK;
 }

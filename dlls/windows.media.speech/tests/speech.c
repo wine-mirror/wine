@@ -975,6 +975,7 @@ static void test_SpeechSynthesizer(void)
     hr = IInputStream_ReadAsync(inp_stream, buffer, value, InputStreamOptions_ReadAhead, &operation_read_async);
     ok(hr == S_OK, "_ReadAsync failed, hr %#lx\n", hr);
     IInputStream_Release(inp_stream);
+    check_async_info((IInspectable *)operation_read_async, 1, Completed, S_OK);
     IAsyncOperationWithProgress_IBuffer_UINT32_GetResults(operation_read_async, &buffer2);
     ok(hr == S_OK, "_GetResults failed, hr %#lx\n", hr);
     ok(buffer2 == buffer, "got %p, %p.\n", buffer, buffer2);
