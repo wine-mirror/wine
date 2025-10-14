@@ -2277,7 +2277,7 @@ static void test_TreatAsClass(void)
 {
     HRESULT hr;
     CLSID out;
-    static GUID deadbeef = {0xdeadbeef,0xdead,0xbeef,{0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef}};
+    static const GUID deadbeef = {0xdeadbeef,0xdead,0xbeef,{0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef}};
     static const char deadbeefA[] = "{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF}";
     IInternetProtocol *pIP = NULL;
     HKEY clsidkey, deadbeefkey;
@@ -2296,6 +2296,15 @@ static void test_TreatAsClass(void)
 
     lr = RegOpenKeyExA(HKEY_CLASSES_ROOT, "CLSID", 0, KEY_READ, &clsidkey);
     ok(!lr, "Couldn't open CLSID key, error %ld\n", lr);
+
+    hr = CoTreatAsClass(NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = CoTreatAsClass(&deadbeef, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = CoTreatAsClass(NULL, &deadbeef);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     lr = RegCreateKeyExA(clsidkey, deadbeefA, 0, NULL, 0, KEY_WRITE, NULL, &deadbeefkey, NULL);
     if (lr) {

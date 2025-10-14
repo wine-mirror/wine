@@ -1250,6 +1250,9 @@ HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
     LONG size;
     CLSID id;
 
+    if (!clsidOld || !clsidNew)
+        return E_INVALIDARG;
+
     if (FAILED(hr = open_key_for_clsid(clsidOld, NULL, KEY_READ | KEY_WRITE, &hkey)))
         return hr;
 
