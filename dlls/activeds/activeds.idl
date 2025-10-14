@@ -29,3 +29,27 @@ coclass Pathname
 {
     interface IADsPathname;
 }
+
+[
+    threading(both),
+    helpstring("ADs DN With String Object"),
+    uuid(334857cc-f934-11d2-ba96-00c04fb6d0d1),
+    progid("DNWithString"),
+    version(1.0)
+]
+coclass DNWithString
+{
+    interface IADsDNWithString;
+}
+
+[
+    threading(both),
+    helpstring("ADs DN With Binary Object"),
+    uuid(7e99c0a3-f935-11d2-ba96-00c04fb6d0d1),
+    progid("DNWithBinary"),
+    version(1.0)
+]
+coclass DNWithBinary
+{
+    interface IADsDNWithBinary;
+}
