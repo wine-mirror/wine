@@ -3418,6 +3418,15 @@ HRESULT WINAPI CoRegisterSurrogateEx(REFGUID guid, void *reserved)
 }
 
 /***********************************************************************
+ *           CoIsOle1Class  (combase.@)
+ */
+BOOL WINAPI CoIsOle1Class(REFCLSID clsid)
+{
+    FIXME("%s\n", debugstr_guid(clsid));
+    return FALSE;
+}
+
+/***********************************************************************
  *            DllMain     (combase.@)
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)

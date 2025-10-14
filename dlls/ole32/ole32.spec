@@ -55,7 +55,7 @@
 @ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr) combase.CoInitializeSecurity
 @ stdcall CoInitializeWOW(long long) combase.CoInitializeWOW
 @ stdcall CoIsHandlerConnected(ptr) combase.CoIsHandlerConnected
-@ stdcall CoIsOle1Class (ptr)
+@ stdcall CoIsOle1Class(ptr) combase.CoIsOle1Class
 @ stdcall CoLoadLibrary(wstr long)
 @ stdcall CoLockObjectExternal(ptr long long) combase.CoLockObjectExternal
 @ stdcall CoMarshalHresult(ptr long) combase.CoMarshalHresult

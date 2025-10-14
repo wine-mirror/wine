@@ -679,23 +679,6 @@ HRESULT WINAPI CoSetState(IUnknown * pv)
 }
 
 /***********************************************************************
- *           CoIsOle1Class [OLE32.@]
- *
- * Determines whether the specified class an OLE v1 class.
- *
- * PARAMS
- *  clsid [I] Class to test.
- *
- * RETURNS
- *  TRUE if the class is an OLE v1 class, or FALSE otherwise.
- */
-BOOL WINAPI CoIsOle1Class(REFCLSID clsid)
-{
-  FIXME("%s\n", debugstr_guid(clsid));
-  return FALSE;
-}
-
-/***********************************************************************
  *           IsEqualGUID [OLE32.@]
  *
  * Compares two Unique Identifiers.
