@@ -48,13 +48,4 @@ extern HRESULT DMUSIC_CreateDirectMusicScriptImpl(REFIID riid, void **ppobj, IUn
 
 extern HRESULT DMUSIC_CreateDirectMusicScriptTrack(REFIID riid, void **ppobj, IUnknown *pUnkOuter);
 
-/*****************************************************************************
- * Misc.
- */
-/* for simpler reading */
-typedef struct _DMUS_PRIVATE_CHUNK {
-	FOURCC fccID; /* FOURCC ID of the chunk */
-	DWORD dwSize; /* size of the chunk */
-} DMUS_PRIVATE_CHUNK, *LPDMUS_PRIVATE_CHUNK;
-
 #endif	/* __WINE_DMSCRIPT_PRIVATE_H */
