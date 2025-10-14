@@ -575,6 +575,79 @@ static LSTATUS open_device_key( HKEY root, const struct device *dev, REGSAM acce
     return open_enum_key( root, path, access, open, hkey );
 }
 
+static const struct property_desc device_properties[] =
+{
+    /* ansi-compatible CM_DRP properties */
+    { &DEVPKEY_Device_DeviceDesc,                   DEVPROP_TYPE_STRING,                        L"DeviceDesc" },
+    { &DEVPKEY_Device_HardwareIds,                  DEVPROP_TYPE_STRING_LIST,                   L"HardwareId" },
+    { &DEVPKEY_Device_CompatibleIds,                DEVPROP_TYPE_STRING_LIST,                   L"CompatibleIDs" },
+    { &DEVPKEY_Device_Service,                      DEVPROP_TYPE_STRING,                        L"Service" },
+    { &DEVPKEY_Device_Class,                        DEVPROP_TYPE_STRING,                        L"Class" },
+    { &DEVPKEY_Device_ClassGuid,                    DEVPROP_TYPE_GUID,                          L"ClassGuid" },
+    { &DEVPKEY_Device_Driver,                       DEVPROP_TYPE_STRING,                        L"Driver" },
+    { &DEVPKEY_Device_ConfigFlags,                  DEVPROP_TYPE_UINT32,                        L"ConfigFlags" },
+    { &DEVPKEY_Device_Manufacturer,                 DEVPROP_TYPE_STRING,                        L"Mfg" },
+    { &DEVPKEY_Device_FriendlyName,                 DEVPROP_TYPE_STRING,                        L"FriendlyName" },
+    { &DEVPKEY_Device_LocationInfo,                 DEVPROP_TYPE_STRING,                        L"LocationInformation" },
+    { &DEVPKEY_Device_PDOName,                      DEVPROP_TYPE_STRING,                        L"PDOName" },
+    { &DEVPKEY_Device_Capabilities,                 DEVPROP_TYPE_UINT32,                        L"Capabilities" },
+    { &DEVPKEY_Device_UINumber,                     DEVPROP_TYPE_UINT32,                        L"UINumber" },
+    { &DEVPKEY_Device_UpperFilters,                 DEVPROP_TYPE_STRING_LIST,                   L"UpperFilters" },
+    { &DEVPKEY_Device_LowerFilters,                 DEVPROP_TYPE_STRING_LIST,                   L"LowerFilters" },
+    { &DEVPKEY_Device_BusTypeGuid,                  DEVPROP_TYPE_GUID,                          L"BusTypeGuid" },
+    { &DEVPKEY_Device_LegacyBusType,                DEVPROP_TYPE_UINT32,                        L"LegacyBusType" },
+    { &DEVPKEY_Device_BusNumber,                    DEVPROP_TYPE_UINT32,                        L"BusNumber" },
+    { &DEVPKEY_Device_EnumeratorName,               DEVPROP_TYPE_STRING,                        L"EnumeratorName" },
+    { &DEVPKEY_Device_Security,                     DEVPROP_TYPE_SECURITY_DESCRIPTOR,           L"Security" },
+    { &DEVPKEY_Device_SecuritySDS,                  DEVPROP_TYPE_SECURITY_DESCRIPTOR_STRING,    L"SecuritySDS" },
+    { &DEVPKEY_Device_DevType,                      DEVPROP_TYPE_UINT32,                        L"DevType" },
+    { &DEVPKEY_Device_Exclusive,                    DEVPROP_TYPE_BOOLEAN,                       L"Exclusive" },
+    { &DEVPKEY_Device_Characteristics,              DEVPROP_TYPE_UINT32,                        L"Characteristics" },
+    { &DEVPKEY_Device_Address,                      DEVPROP_TYPE_UINT32,                        L"Address" },
+    { &DEVPKEY_Device_UINumberDescFormat,           DEVPROP_TYPE_STRING,                        L"UINumberDescFormat" },
+    { &DEVPKEY_Device_PowerData,                    DEVPROP_TYPE_BINARY,                        L"PowerData" },
+    { &DEVPKEY_Device_RemovalPolicy,                DEVPROP_TYPE_UINT32,                        L"RemovalPolicy" },
+    { &DEVPKEY_Device_RemovalPolicyDefault,         DEVPROP_TYPE_UINT32,                        L"RemovalPolicyDefault" },
+    { &DEVPKEY_Device_RemovalPolicyOverride,        DEVPROP_TYPE_UINT32,                        L"RemovalPolicyOverride" },
+    { &DEVPKEY_Device_InstallState,                 DEVPROP_TYPE_UINT32,                        L"InstallState" },
+    { &DEVPKEY_Device_LocationPaths,                DEVPROP_TYPE_STRING_LIST,                   L"LocationPaths" },
+    { &DEVPKEY_Device_BaseContainerId,              DEVPROP_TYPE_GUID,                          L"BaseContainerId" },
+};
+
+static LSTATUS query_device_property( HKEY hkey, struct property *prop )
+{
+    for (UINT i = 0; i < ARRAY_SIZE(device_properties); i++)
+    {
+        const struct property_desc *desc = device_properties + i;
+        if (memcmp( desc->key, &prop->key, sizeof(prop->key) )) continue;
+        if (!desc->name) return query_property( hkey, L"Properties\\", desc->type, prop );
+        return query_named_property( hkey, desc->name, desc->type, prop );
+    }
+
+    if (!memcmp( &DEVPKEY_Device_DeviceDesc, &prop->key, sizeof(prop->key.fmtid) ))
+    {
+        FIXME( "property %#lx not implemented\n", prop->key.pid - 1 );
+        return ERROR_UNKNOWN_PROPERTY;
+    }
+
+    return query_property( hkey, L"Properties\\", DEVPROP_TYPE_EMPTY, prop );
+}
+
+static LSTATUS get_device_property( HKEY root, const struct device *dev, struct property *prop )
+{
+    LSTATUS err;
+    HKEY hkey;
+
+    if (!(err = open_device_key( root, dev, KEY_QUERY_VALUE, TRUE, &hkey )))
+    {
+        err = query_device_property( hkey, prop );
+        RegCloseKey( hkey );
+    }
+
+    if (err && err != ERROR_MORE_DATA) *prop->size = 0;
+    return err;
+}
+
 static CRITICAL_SECTION devnode_cs;
 static CRITICAL_SECTION_DEBUG devnode_cs_debug = {
     0, 0, &devnode_cs,
@@ -1396,4 +1469,58 @@ CONFIGRET WINAPI CM_Open_DevNode_Key_Ex( DEVINST node, REGSAM access, ULONG prof
 CONFIGRET WINAPI CM_Open_DevNode_Key( DEVINST node, REGSAM access, ULONG profile, REGDISPOSITION disposition, HKEY *hkey, ULONG flags )
 {
     return CM_Open_DevNode_Key_Ex( node, access, profile, disposition, hkey, flags, NULL );
+}
+
+/***********************************************************************
+ *           CM_Get_DevNode_Registry_Property_ExW (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_DevNode_Registry_Property_ExW( DEVINST node, ULONG property, ULONG *type, void *buffer, ULONG *len, ULONG flags, HMACHINE machine )
+{
+    struct property prop;
+    struct device dev;
+    LSTATUS err;
+
+    TRACE( "node %#lx, property %#lx, type %p, buffer %p, len %p, flags %#lx, machine %p\n", node, property, type, buffer, len, flags, machine );
+    if (machine) FIXME( "machine %p not implemented!\n", machine );
+    if (flags) FIXME( "flags %#lx not implemented!\n", flags );
+
+    if (devnode_get_device( node, &dev )) return CR_INVALID_DEVNODE;
+    if ((err = init_registry_property( &prop, &DEVPKEY_Device_DeviceDesc, property, type, buffer, len, FALSE ))) return map_error( err );
+
+    return map_error( get_device_property( HKEY_LOCAL_MACHINE, &dev, &prop ) );
+}
+
+/***********************************************************************
+ *           CM_Get_DevNode_Registry_Property_ExA (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_DevNode_Registry_Property_ExA( DEVINST node, ULONG property, ULONG *type, void *buffer, ULONG *len, ULONG flags, HMACHINE machine )
+{
+    struct property prop;
+    struct device dev;
+    LSTATUS err;
+
+    TRACE( "node %#lx, property %#lx, type %p, buffer %p, len %p, flags %#lx, machine %p\n", node, property, type, buffer, len, flags, machine );
+    if (machine) FIXME( "machine %p not implemented!\n", machine );
+    if (flags) FIXME( "flags %#lx not implemented!\n", flags );
+
+    if (devnode_get_device( node, &dev )) return CR_INVALID_DEVNODE;
+    if ((err = init_registry_property( &prop, &DEVPKEY_Device_DeviceDesc, property, type, buffer, len, TRUE ))) return map_error( err );
+
+    return map_error( get_device_property( HKEY_LOCAL_MACHINE, &dev, &prop ) );
+}
+
+/***********************************************************************
+ *           CM_Get_DevNode_Registry_PropertyW (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_DevNode_Registry_PropertyW( DEVINST node, ULONG property, ULONG *type, void *buffer, ULONG *len, ULONG flags )
+{
+    return CM_Get_DevNode_Registry_Property_ExW( node, property, type, buffer, len, flags, NULL );
+}
+
+/***********************************************************************
+ *           CM_Get_DevNode_Registry_PropertyA (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_DevNode_Registry_PropertyA( DEVINST node, ULONG property, ULONG *type, void *buffer, ULONG *len, ULONG flags )
+{
+    return CM_Get_DevNode_Registry_Property_ExA( node, property, type, buffer, len, flags, NULL );
 }
