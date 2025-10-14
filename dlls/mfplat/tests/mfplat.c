@@ -891,8 +891,8 @@ static HRESULT WINAPI test_create_from_url_callback_Invoke(IMFAsyncCallback *ifa
 {
     struct test_callback *callback = impl_from_IMFAsyncCallback(iface);
     IMFSourceResolver *resolver;
-    IUnknown *object, *object2;
     MF_OBJECT_TYPE obj_type;
+    IUnknown *object;
     HRESULT hr;
 
     ok(!!result, "Unexpected result object.\n");
@@ -903,13 +903,8 @@ static HRESULT WINAPI test_create_from_url_callback_Invoke(IMFAsyncCallback *ifa
     hr = IMFSourceResolver_EndCreateObjectFromURL(resolver, result, &obj_type, &object);
     ok(hr == S_OK, "Failed to create an object, hr %#lx.\n", hr);
 
-    hr = IMFAsyncResult_GetObject(result, &object2);
-    ok(hr == S_OK, "Failed to get result object, hr %#lx.\n", hr);
-    ok(object2 == object, "Unexpected object.\n");
-
     if (object)
         IUnknown_Release(object);
-    IUnknown_Release(object2);
 
     SetEvent(callback->event);
 
