@@ -508,6 +508,7 @@ extern void macdrv_window_set_shape_image(macdrv_window w, CGImageRef image);
 extern void macdrv_set_window_shape(macdrv_window w, const CGRect *rects, int count);
 extern void macdrv_set_window_alpha(macdrv_window w, CGFloat alpha);
 extern void macdrv_window_use_per_pixel_alpha(macdrv_window w, int use_per_pixel_alpha);
+extern void macdrv_set_window_mask(macdrv_window w, CGRect rect);
 extern void macdrv_give_cocoa_window_focus(macdrv_window w, int activate);
 extern void macdrv_set_window_min_max_sizes(macdrv_window w, CGSize min_size, CGSize max_size);
 extern macdrv_view macdrv_create_view(CGRect rect);

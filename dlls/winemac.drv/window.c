@@ -1604,8 +1604,8 @@ void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT
     old_rects = data->rects;
     data->rects = *new_rects;
 
-    TRACE("win %p/%p new_rects %s style %08x flags %08x surface %p\n", hwnd, data->cocoa_window,
-          debugstr_window_rects(new_rects), new_style, swp_flags, surface);
+    TRACE("win %p/%p new_rects %s style %08x flags %08x fullscreen %u surface %p\n", hwnd, data->cocoa_window,
+          debugstr_window_rects(new_rects), new_style, swp_flags, fullscreen, surface);
 
     if (!data->cocoa_window) goto done;
 
@@ -1638,6 +1638,13 @@ void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT
                 (data->layered || !(NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED)))
                 show_window(data);
         }
+    }
+
+    if (fullscreen || fullscreen != data->fullscreen)
+    {
+        CGRect rect = (fullscreen && !EqualRect(&data->rects.window, &data->rects.visible)) ? cgrect_from_rect(data->rects.window) : CGRectZero;
+        macdrv_set_window_mask(data->cocoa_window, rect);
+        data->fullscreen = fullscreen;
     }
 
 done:
