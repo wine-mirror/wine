@@ -1282,13 +1282,7 @@ HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
         }
         else
         {
-            if (!StringFromGUID2(clsidNew, clsidW, ARRAY_SIZE(clsidW)))
-            {
-                WARN("StringFromGUID2 failed\n");
-                hr = E_FAIL;
-                goto done;
-            }
-
+            StringFromGUID2(clsidNew, clsidW, ARRAY_SIZE(clsidW));
             if (RegSetValueW(hkey, L"TreatAs", REG_SZ, clsidW, sizeof(clsidW)) != ERROR_SUCCESS)
             {
                 WARN("RegSetValue failed\n");
