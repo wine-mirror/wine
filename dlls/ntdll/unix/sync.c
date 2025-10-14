@@ -412,7 +412,7 @@ static NTSTATUS linux_wait_objs( int device, const DWORD count, const int *objs,
     else if (timeout->QuadPart <= 0)
     {
         clock_gettime( CLOCK_MONOTONIC, &now );
-        args.timeout = (now.tv_sec * NSECPERSEC) + now.tv_nsec + (-timeout->QuadPart * 100);
+        args.timeout = ((ULONGLONG)now.tv_sec * NSECPERSEC) + now.tv_nsec + (-timeout->QuadPart * 100);
     }
     else
     {
