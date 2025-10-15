@@ -205,23 +205,21 @@ static NTSTATUS d3dkmt_object_create( struct d3dkmt_object *object, int fd, BOOL
     return status;
 }
 
-static NTSTATUS d3dkmt_object_update( enum d3dkmt_type type, D3DKMT_HANDLE global, HANDLE handle,
-                                      const void *runtime, UINT runtime_size )
+static NTSTATUS d3dkmt_object_update( struct d3dkmt_object *object, const void *runtime, UINT runtime_size )
 {
     NTSTATUS status;
 
     SERVER_START_REQ( d3dkmt_object_update )
     {
-        req->type = type;
-        req->global = global;
-        req->handle = wine_server_obj_handle( handle );
+        req->type = object->type;
+        req->global = object->global;
         if (runtime_size) wine_server_add_data( req, runtime, runtime_size );
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
 
-    if (status) WARN( "Failed to update global object %#x/%p, status %#x\n", global, handle, status );
-    else TRACE( "Updated global object %#x/%p\n", global, handle );
+    if (status) WARN( "Failed to update object %#x/%p global %#x, status %#x\n", object->local, object, object->global, status );
+    else TRACE( "Updated object %#x/%p global %#x\n", object->local, object, object->global );
     return status;
 }
 
@@ -458,19 +456,18 @@ NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromHdc( D3DKMT_OPENADAPTERFROMHDC *desc )
  */
 NTSTATUS WINAPI NtGdiDdDDIEscape( const D3DKMT_ESCAPE *desc )
 {
-    HANDLE shared;
-
     switch (desc->Type)
     {
     case D3DKMT_ESCAPE_UPDATE_RESOURCE_WINE:
+    {
+        struct d3dkmt_resource *resource;
+
         TRACE( "D3DKMT_ESCAPE_UPDATE_RESOURCE_WINE hContext %#x, pPrivateDriverData %p, PrivateDriverDataSize %#x\n",
                desc->hContext, desc->pPrivateDriverData, desc->PrivateDriverDataSize );
 
-        if (is_d3dkmt_global( desc->hContext )) shared = NULL;
-        else shared = UlongToHandle( desc->hContext );
-
-        return d3dkmt_object_update( D3DKMT_RESOURCE, shared ? 0 : desc->hContext, shared,
-                                     desc->pPrivateDriverData, desc->PrivateDriverDataSize );
+        if (!(resource = get_d3dkmt_object( desc->hContext, D3DKMT_RESOURCE ))) return STATUS_INVALID_PARAMETER;
+        return d3dkmt_object_update( &resource->obj, desc->pPrivateDriverData, desc->PrivateDriverDataSize );
+    }
 
     default:
         FIXME( "(%p): stub\n", desc );

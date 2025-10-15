@@ -4189,7 +4189,6 @@ enum inproc_sync_type
 @REQ(d3dkmt_object_update)
     unsigned int        type;           /* d3dkmt object type */
     d3dkmt_handle_t     global;         /* global d3dkmt handle */
-    obj_handle_t        handle;         /* shared object handle */
     VARARG(runtime,bytes);              /* client runtime data */
 @END
 

@@ -451,10 +451,7 @@ DECL_HANDLER(d3dkmt_object_update)
     if (!(size = get_req_data_size())) runtime = NULL;
     else if (!(runtime = memdup( get_req_data(), size ))) return;
 
-    if (req->global) object = d3dkmt_object_open( req->global, req->type );
-    else object = d3dkmt_object_open_shared( req->handle, req->type );
-    if (!object) goto done;
-
+    if (!(object = d3dkmt_object_open( req->global, req->type ))) goto done;
     tmp = object->runtime;
     object->runtime = runtime;
     object->runtime_size = size;

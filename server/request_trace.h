@@ -3410,7 +3410,6 @@ static void dump_d3dkmt_object_update_request( const struct d3dkmt_object_update
 {
     fprintf( stderr, " type=%08x", req->type );
     fprintf( stderr, ", global=%08x", req->global );
-    fprintf( stderr, ", handle=%04x", req->handle );
     dump_varargs_bytes( ", runtime=", cur_size );
 }
 

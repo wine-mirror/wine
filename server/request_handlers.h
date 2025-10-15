@@ -2317,7 +2317,6 @@ C_ASSERT( offsetof(struct d3dkmt_object_create_reply, handle) == 12 );
 C_ASSERT( sizeof(struct d3dkmt_object_create_reply) == 16 );
 C_ASSERT( offsetof(struct d3dkmt_object_update_request, type) == 12 );
 C_ASSERT( offsetof(struct d3dkmt_object_update_request, global) == 16 );
-C_ASSERT( offsetof(struct d3dkmt_object_update_request, handle) == 20 );
 C_ASSERT( sizeof(struct d3dkmt_object_update_request) == 24 );
 C_ASSERT( offsetof(struct d3dkmt_object_query_request, type) == 12 );
 C_ASSERT( offsetof(struct d3dkmt_object_query_request, global) == 16 );
