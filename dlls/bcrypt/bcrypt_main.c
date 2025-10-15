@@ -1780,6 +1780,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
     {
         BCRYPT_ECCKEY_BLOB *ecc_blob = (BCRYPT_ECCKEY_BLOB *)input;
         DWORD bitlen, magic;
+        enum ecc_curve_id curve;
 
         if (input_len < sizeof(*ecc_blob)) return STATUS_INVALID_PARAMETER;
 
@@ -1787,31 +1788,37 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         {
         case ALG_ID_ECDH_P256:
             bitlen = 256;
+            curve = ECC_CURVE_P256R1;
             magic = BCRYPT_ECDH_PUBLIC_P256_MAGIC;
             break;
 
         case ALG_ID_ECDH_P384:
             bitlen = 384;
+            curve = ECC_CURVE_P384R1;
             magic = BCRYPT_ECDH_PUBLIC_P384_MAGIC;
             break;
 
         case ALG_ID_ECDH_P521:
             bitlen = 521;
+            curve = ECC_CURVE_P521R1;
             magic = BCRYPT_ECDH_PUBLIC_P521_MAGIC;
             break;
 
         case ALG_ID_ECDSA_P256:
             bitlen = 256;
+            curve = ECC_CURVE_P256R1;
             magic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
             break;
 
         case ALG_ID_ECDSA_P384:
             bitlen = 384;
+            curve = ECC_CURVE_P384R1;
             magic = BCRYPT_ECDSA_PUBLIC_P384_MAGIC;
             break;
 
         case ALG_ID_ECDSA_P521:
             bitlen = 521;
+            curve = ECC_CURVE_P521R1;
             magic = BCRYPT_ECDSA_PUBLIC_P521_MAGIC;
             break;
 
@@ -1824,7 +1831,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         if (ecc_blob->cbKey != len_from_bitlen( bitlen ) || input_len < sizeof(*ecc_blob) + ecc_blob->cbKey * 2)
             return STATUS_INVALID_PARAMETER;
 
-        if ((status = key_asymmetric_create( alg->id, 0, bitlen, &key ))) return status;
+        if ((status = key_asymmetric_create( alg->id, curve, bitlen, &key ))) return status;
         params.key   = key;
         params.flags = KEY_IMPORT_FLAG_PUBLIC;
         params.buf   = input;
@@ -1839,6 +1846,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
     {
         BCRYPT_ECCKEY_BLOB *ecc_blob = (BCRYPT_ECCKEY_BLOB *)input;
         DWORD bitlen, magic;
+        enum ecc_curve_id curve;
 
         if (input_len < sizeof(*ecc_blob)) return STATUS_INVALID_PARAMETER;
 
@@ -1846,31 +1854,37 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         {
         case ALG_ID_ECDH_P256:
             bitlen = 256;
+            curve = ECC_CURVE_P256R1;
             magic = BCRYPT_ECDH_PRIVATE_P256_MAGIC;
             break;
 
         case ALG_ID_ECDH_P384:
             bitlen = 384;
+            curve = ECC_CURVE_P384R1;
             magic = BCRYPT_ECDH_PRIVATE_P384_MAGIC;
             break;
 
         case ALG_ID_ECDH_P521:
             bitlen = 521;
+            curve = ECC_CURVE_P521R1;
             magic = BCRYPT_ECDH_PRIVATE_P521_MAGIC;
             break;
 
         case ALG_ID_ECDSA_P256:
             bitlen = 256;
+            curve = ECC_CURVE_P256R1;
             magic = BCRYPT_ECDSA_PRIVATE_P256_MAGIC;
             break;
 
         case ALG_ID_ECDSA_P384:
             bitlen = 384;
+            curve = ECC_CURVE_P384R1;
             magic = BCRYPT_ECDSA_PRIVATE_P384_MAGIC;
             break;
 
         case ALG_ID_ECDSA_P521:
             bitlen = 521;
+            curve = ECC_CURVE_P521R1;
             magic = BCRYPT_ECDSA_PRIVATE_P521_MAGIC;
             break;
 
@@ -1883,7 +1897,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         if (ecc_blob->cbKey != len_from_bitlen( bitlen ) || input_len < sizeof(*ecc_blob) + ecc_blob->cbKey * 3)
             return STATUS_INVALID_PARAMETER;
 
-        if ((status = key_asymmetric_create( alg->id, 0, bitlen, &key ))) return status;
+        if ((status = key_asymmetric_create( alg->id, curve, bitlen, &key ))) return status;
         params.key   = key;
         params.flags = 0;
         params.buf   = input;

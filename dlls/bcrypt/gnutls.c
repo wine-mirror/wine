@@ -825,6 +825,26 @@ static NTSTATUS key_export_ecc_public( struct key *key, UCHAR *buf, ULONG len, U
 
     switch (key->alg_id)
     {
+    case ALG_ID_ECDH:
+        switch (key->u.a.curve_id)
+        {
+        case ECC_CURVE_P256R1:
+            magic = BCRYPT_ECDH_PUBLIC_P256_MAGIC;
+            size = 32;
+            break;
+        case ECC_CURVE_P384R1:
+            magic = BCRYPT_ECDH_PUBLIC_P384_MAGIC;
+            size = 48;
+            break;
+        case ECC_CURVE_P521R1:
+            magic = BCRYPT_ECDH_PUBLIC_P521_MAGIC;
+            size = 66;
+            break;
+        default:
+            FIXME( "unsupported curve %u\n", key->u.a.curve_id );
+            return STATUS_NOT_IMPLEMENTED;
+        }
+
     case ALG_ID_ECDH_P256:
         magic = BCRYPT_ECDH_PUBLIC_P256_MAGIC;
         size = 32;
@@ -839,6 +859,26 @@ static NTSTATUS key_export_ecc_public( struct key *key, UCHAR *buf, ULONG len, U
         magic = BCRYPT_ECDH_PUBLIC_P521_MAGIC;
         size = 66;
         break;
+
+    case ALG_ID_ECDSA:
+        switch (key->u.a.curve_id)
+        {
+        case ECC_CURVE_P256R1:
+            magic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
+            size = 32;
+            break;
+        case ECC_CURVE_P384R1:
+            magic = BCRYPT_ECDSA_PUBLIC_P384_MAGIC;
+            size = 48;
+            break;
+        case ECC_CURVE_P521R1:
+            magic = BCRYPT_ECDSA_PUBLIC_P521_MAGIC;
+            size = 66;
+            break;
+        default:
+            FIXME( "unsupported curve %u\n", key->u.a.curve_id );
+            return STATUS_NOT_IMPLEMENTED;
+        }
 
     case ALG_ID_ECDSA_P256:
         magic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
@@ -1212,6 +1252,26 @@ static NTSTATUS key_export_ecc( struct key *key, UCHAR *buf, ULONG len, ULONG *r
 
     switch (key->alg_id)
     {
+    case ALG_ID_ECDH:
+        switch (key->u.a.curve_id)
+        {
+        case ECC_CURVE_P256R1:
+            magic = BCRYPT_ECDH_PRIVATE_P256_MAGIC;
+            size = 32;
+            break;
+        case ECC_CURVE_P384R1:
+            magic = BCRYPT_ECDH_PRIVATE_P384_MAGIC;
+            size = 48;
+            break;
+        case ECC_CURVE_P521R1:
+            magic = BCRYPT_ECDH_PRIVATE_P521_MAGIC;
+            size = 66;
+            break;
+        default:
+            FIXME( "unsupported curve %u\n", key->u.a.curve_id );
+            return STATUS_NOT_IMPLEMENTED;
+        }
+
     case ALG_ID_ECDH_P256:
         magic = BCRYPT_ECDH_PRIVATE_P256_MAGIC;
         size = 32;
@@ -1226,6 +1286,26 @@ static NTSTATUS key_export_ecc( struct key *key, UCHAR *buf, ULONG len, ULONG *r
         magic = BCRYPT_ECDH_PRIVATE_P521_MAGIC;
         size = 66;
         break;
+
+    case ALG_ID_ECDSA:
+        switch (key->u.a.curve_id)
+        {
+        case ECC_CURVE_P256R1:
+            magic = BCRYPT_ECDSA_PRIVATE_P256_MAGIC;
+            size = 32;
+            break;
+        case ECC_CURVE_P384R1:
+            magic = BCRYPT_ECDSA_PRIVATE_P384_MAGIC;
+            size = 48;
+            break;
+        case ECC_CURVE_P521R1:
+            magic = BCRYPT_ECDSA_PRIVATE_P521_MAGIC;
+            size = 66;
+            break;
+        default:
+            FIXME( "unsupported curve %u\n", key->u.a.curve_id );
+            return STATUS_NOT_IMPLEMENTED;
+        }
 
     case ALG_ID_ECDSA_P256:
         magic = BCRYPT_ECDSA_PRIVATE_P256_MAGIC;
@@ -1860,9 +1940,11 @@ static NTSTATUS key_asymmetric_export( void *args )
 
     switch (key->alg_id)
     {
+    case ALG_ID_ECDH:
     case ALG_ID_ECDH_P256:
     case ALG_ID_ECDH_P384:
     case ALG_ID_ECDH_P521:
+    case ALG_ID_ECDSA:
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
     case ALG_ID_ECDSA_P521:
@@ -2048,9 +2130,11 @@ static NTSTATUS key_asymmetric_import( void *args )
 
     switch (key->alg_id)
     {
+    case ALG_ID_ECDH:
     case ALG_ID_ECDH_P256:
     case ALG_ID_ECDH_P384:
     case ALG_ID_ECDH_P521:
+    case ALG_ID_ECDSA:
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
     case ALG_ID_ECDSA_P521:
@@ -2558,9 +2642,11 @@ static NTSTATUS dup_privkey( struct key *key_orig, struct key *key_copy )
         if (!ret) key_copy->u.a.dss_seed = key_orig->u.a.dss_seed;
         break;
     }
+    case ALG_ID_ECDH:
     case ALG_ID_ECDH_P256:
     case ALG_ID_ECDH_P384:
     case ALG_ID_ECDH_P521:
+    case ALG_ID_ECDSA:
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
     case ALG_ID_ECDSA_P521:
@@ -2639,9 +2725,11 @@ static NTSTATUS dup_pubkey( struct key *key_orig, struct key *key_copy )
         if (!ret) key_copy->u.a.dss_seed = key_orig->u.a.dss_seed;
         break;
     }
+    case ALG_ID_ECDH:
     case ALG_ID_ECDH_P256:
     case ALG_ID_ECDH_P384:
     case ALG_ID_ECDH_P521:
+    case ALG_ID_ECDSA:
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
     case ALG_ID_ECDSA_P521:
