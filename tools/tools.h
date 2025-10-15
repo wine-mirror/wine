@@ -419,12 +419,11 @@ static inline char *build_relative_path( const char *base, const char *from, con
 extern const char *temp_dir;
 extern struct strarray temp_files;
 
-static inline char *make_temp_dir(void)
+static inline char *make_temp_dir( const char *tmpdir )
 {
     unsigned int value = time(NULL) + getpid();
     int count;
     char *name;
-    const char *tmpdir = NULL;
 
     for (count = 0; count < 0x8000; count++)
     {
@@ -438,6 +437,7 @@ static inline char *make_temp_dir(void)
         {
             if (!(tmpdir = getenv("TMPDIR"))) tmpdir = "/tmp";
         }
+        else if (errno != EEXIST) fatal_perror( "cannot create directory in %s", tmpdir ? tmpdir : "." );
         free( name );
     }
     fprintf( stderr, "failed to create directory for temp files\n" );
@@ -450,7 +450,7 @@ static inline char *make_temp_file( const char *prefix, const char *suffix )
     int fd, count;
     char *name;
 
-    if (!temp_dir) temp_dir = make_temp_dir();
+    if (!temp_dir) temp_dir = make_temp_dir( NULL );
     if (!suffix) suffix = "";
     if (!prefix) prefix = "tmp";
     else prefix = get_basename_noext( prefix );

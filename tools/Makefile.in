@@ -1,10 +1,13 @@
 PROGRAMS = \
+	install \
 	makedep \
 	make_xftmpl
 
 SOURCES = \
+	install.c \
 	make_xftmpl.c \
 	makedep.c
 
+install_OBJS = install.o
 makedep_OBJS = makedep.o
 make_xftmpl_OBJS = make_xftmpl.o
