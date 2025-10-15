@@ -27,9 +27,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmscript);
 
 /*****************************************************************************
- * IDirectMusicScriptImpl implementation
+ * IDirectMusicScript implementation
  */
-typedef struct IDirectMusicScriptImpl {
+struct script {
     IDirectMusicScript IDirectMusicScript_iface;
     struct dmobject dmobj;
     LONG ref;
@@ -38,17 +38,17 @@ typedef struct IDirectMusicScriptImpl {
     DMUS_IO_VERSION version;
     WCHAR *lang;
     WCHAR *source;
-} IDirectMusicScriptImpl;
+};
 
-static inline IDirectMusicScriptImpl *impl_from_IDirectMusicScript(IDirectMusicScript *iface)
+static inline struct script *impl_from_IDirectMusicScript(IDirectMusicScript *iface)
 {
-  return CONTAINING_RECORD(iface, IDirectMusicScriptImpl, IDirectMusicScript_iface);
+  return CONTAINING_RECORD(iface, struct script, IDirectMusicScript_iface);
 }
 
 static HRESULT WINAPI IDirectMusicScriptImpl_QueryInterface(IDirectMusicScript *iface, REFIID riid,
         void **ret_iface)
 {
-    IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+    struct script *This = impl_from_IDirectMusicScript(iface);
 
     TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ret_iface);
 
@@ -71,7 +71,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_QueryInterface(IDirectMusicScript *
 
 static ULONG WINAPI IDirectMusicScriptImpl_AddRef(IDirectMusicScript *iface)
 {
-    IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+    struct script *This = impl_from_IDirectMusicScript(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%ld\n", This, ref);
@@ -81,7 +81,7 @@ static ULONG WINAPI IDirectMusicScriptImpl_AddRef(IDirectMusicScript *iface)
 
 static ULONG WINAPI IDirectMusicScriptImpl_Release(IDirectMusicScript *iface)
 {
-    IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+    struct script *This = impl_from_IDirectMusicScript(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%ld\n", This, ref);
@@ -98,7 +98,7 @@ static ULONG WINAPI IDirectMusicScriptImpl_Release(IDirectMusicScript *iface)
 static HRESULT WINAPI IDirectMusicScriptImpl_Init(IDirectMusicScript *iface,
         IDirectMusicPerformance *pPerformance, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %p, %p): stub\n", This, pPerformance, pErrorInfo);
   This->pPerformance = pPerformance;
   return S_OK;
@@ -107,7 +107,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_Init(IDirectMusicScript *iface,
 static HRESULT WINAPI IDirectMusicScriptImpl_CallRoutine(IDirectMusicScript *iface,
         WCHAR *pwszRoutineName, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %p): stub\n", This, debugstr_w(pwszRoutineName), pErrorInfo);
   /*return E_NOTIMPL;*/
   return S_OK;
@@ -117,7 +117,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_CallRoutine(IDirectMusicScript *ifa
 static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableVariant(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, VARIANT varValue, BOOL fSetRef, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, FIXME, %d, %p): stub\n", This, debugstr_w(pwszVariableName),/* varValue,*/ fSetRef, pErrorInfo);
   return S_OK;
 }
@@ -125,7 +125,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableVariant(IDirectMusicScri
 static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableVariant(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, VARIANT *pvarValue, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %p, %p): stub\n", This, debugstr_w(pwszVariableName), pvarValue, pErrorInfo);
   return S_OK;
 }
@@ -133,7 +133,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableVariant(IDirectMusicScri
 static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableNumber(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, LONG lValue, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %li, %p): stub\n", This, debugstr_w(pwszVariableName), lValue, pErrorInfo);
   return S_OK;
 }
@@ -141,7 +141,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableNumber(IDirectMusicScrip
 static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableNumber(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, LONG *plValue, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %p, %p): stub\n", This, debugstr_w(pwszVariableName), plValue, pErrorInfo);
   return S_OK;
 }
@@ -149,7 +149,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableNumber(IDirectMusicScrip
 static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableObject(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, IUnknown *punkValue, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %p, %p): stub\n", This, debugstr_w(pwszVariableName), punkValue, pErrorInfo);
   return S_OK;
 }
@@ -157,7 +157,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableObject(IDirectMusicScrip
 static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableObject(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, REFIID riid, void **ppv, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %s, %p, %p): stub\n", This, debugstr_w(pwszVariableName), debugstr_dmguid(riid), ppv, pErrorInfo);
   return S_OK;
 }
@@ -165,7 +165,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableObject(IDirectMusicScrip
 static HRESULT WINAPI IDirectMusicScriptImpl_EnumRoutine(IDirectMusicScript *iface, DWORD dwIndex,
         WCHAR *pwszName)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %ld, %p): stub\n", This, dwIndex, pwszName);
   return S_OK;
 }
@@ -173,7 +173,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_EnumRoutine(IDirectMusicScript *ifa
 static HRESULT WINAPI IDirectMusicScriptImpl_EnumVariable(IDirectMusicScript *iface, DWORD dwIndex,
         WCHAR *pwszName)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %ld, %p): stub\n", This, dwIndex, pwszName);
   return S_OK;
 }
@@ -237,10 +237,9 @@ static const IDirectMusicObjectVtbl dmobject_vtbl = {
     script_IDirectMusicObject_ParseDescriptor
 };
 
-/* IDirectMusicScriptImpl IPersistStream part: */
-static inline IDirectMusicScriptImpl *impl_from_IPersistStream(IPersistStream *iface)
+static inline struct script *impl_from_IPersistStream(IPersistStream *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectMusicScriptImpl, dmobj.IPersistStream_iface);
+    return CONTAINING_RECORD(iface, struct script, dmobj.IPersistStream_iface);
 }
 
 static HRESULT load_container(IStream *stream, struct chunk_entry *riff)
@@ -270,7 +269,7 @@ static HRESULT load_container(IStream *stream, struct chunk_entry *riff)
 
 static HRESULT WINAPI script_persist_stream_Load(IPersistStream *iface, IStream *stream)
 {
-    IDirectMusicScriptImpl *This = impl_from_IPersistStream(iface);
+    struct script *This = impl_from_IPersistStream(iface);
     struct chunk_entry script = {0};
     struct chunk_entry chunk = {.parent = &script};
     HRESULT hr;
@@ -357,7 +356,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 /* for ClassFactory */
 HRESULT DMUSIC_CreateDirectMusicScriptImpl(REFIID lpcGUID, void **ppobj, IUnknown *pUnkOuter)
 {
-  IDirectMusicScriptImpl *obj;
+  struct script *obj;
   HRESULT hr;
 
   *ppobj = NULL;
