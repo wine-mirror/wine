@@ -2552,6 +2552,32 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
     return TRUE;
 }
 
+static WORD pointer_buttons_from_mouse_buttons( WORD mouse_flags )
+{
+    static const struct
+    {
+        WORD mouse_flag;
+        WORD pointer_flag;
+    }
+    flags[] =
+    {
+        { MK_LBUTTON, POINTER_MESSAGE_FLAG_FIRSTBUTTON },
+        { MK_RBUTTON, POINTER_MESSAGE_FLAG_SECONDBUTTON },
+        { MK_MBUTTON, POINTER_MESSAGE_FLAG_THIRDBUTTON },
+        { MK_XBUTTON1, POINTER_MESSAGE_FLAG_FOURTHBUTTON },
+        { MK_XBUTTON2, POINTER_MESSAGE_FLAG_FIFTHBUTTON },
+    };
+
+    WORD pointer_flags = 0;
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(flags); ++i)
+    {
+        if (mouse_flags & flags[i].mouse_flag) pointer_flags |= flags[i].pointer_flag;
+    }
+    return pointer_flags;
+}
+
 /***********************************************************************
  *          process_mouse_message
  *
@@ -2607,35 +2633,40 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
 
     if ((extra_info & 0xffffff00) != 0xff515700 && is_mouse_in_pointer_enabled( msg->hwnd ))
     {
-        WORD flags = POINTER_MESSAGE_FLAG_INRANGE;
+        WORD flags = POINTER_MESSAGE_FLAG_INRANGE, pointer_button_flags;
         DWORD message = 0;
+
+        pointer_button_flags = pointer_buttons_from_mouse_buttons( LOWORD( msg->wParam ));
+        if (pointer_button_flags) flags |= pointer_button_flags | POINTER_MESSAGE_FLAG_INCONTACT;
 
         switch (msg->message)
         {
         case WM_MOUSEMOVE:
             message = WM_POINTERUPDATE;
-            flags |= POINTER_MESSAGE_FLAG_PRIMARY;
+            if (!pointer_button_flags) flags |= POINTER_MESSAGE_FLAG_PRIMARY;
             break;
         case WM_LBUTTONDOWN:
         case WM_RBUTTONDOWN:
         case WM_MBUTTONDOWN:
         case WM_XBUTTONDOWN:
-            message = WM_POINTERDOWN;
-            flags |= POINTER_MESSAGE_FLAG_PRIMARY|POINTER_MESSAGE_FLAG_INCONTACT;
-            if (msg->message == WM_LBUTTONDOWN) flags |= POINTER_MESSAGE_FLAG_FIRSTBUTTON;
-            if (msg->message == WM_RBUTTONDOWN) flags |= POINTER_MESSAGE_FLAG_SECONDBUTTON;
-            if (msg->message == WM_MBUTTONDOWN) flags |= POINTER_MESSAGE_FLAG_THIRDBUTTON;
-            if (msg->message == WM_XBUTTONDOWN && LOWORD( msg->wParam ) == MK_LBUTTON) flags |= POINTER_MESSAGE_FLAG_FIRSTBUTTON;
-            if (msg->message == WM_XBUTTONDOWN && LOWORD( msg->wParam ) == MK_RBUTTON) flags |= POINTER_MESSAGE_FLAG_SECONDBUTTON;
-            if (msg->message == WM_XBUTTONDOWN && LOWORD( msg->wParam ) == MK_MBUTTON) flags |= POINTER_MESSAGE_FLAG_THIRDBUTTON;
-            if (msg->message == WM_XBUTTONDOWN && LOWORD( msg->wParam ) == MK_XBUTTON1) flags |= POINTER_MESSAGE_FLAG_FOURTHBUTTON;
-            if (msg->message == WM_XBUTTONDOWN && LOWORD( msg->wParam ) == MK_XBUTTON2) flags |= POINTER_MESSAGE_FLAG_FIFTHBUTTON;
+            if (pointer_button_flags & (pointer_button_flags - 1))
+            {
+                /* More than one flag in pointer_button_flags, some buttons were already pressed.
+                 * WM_POINTERDOWN is only sent on the first button press. */
+                message = WM_POINTERUPDATE;
+            }
+            else
+            {
+                message = WM_POINTERDOWN;
+                flags |= POINTER_MESSAGE_FLAG_PRIMARY;
+            }
             break;
         case WM_LBUTTONUP:
         case WM_RBUTTONUP:
         case WM_MBUTTONUP:
         case WM_XBUTTONUP:
-            message = WM_POINTERUP;
+            /* WM_POINTERUP is only sent once all the buttons are up. */
+            message = pointer_button_flags ? WM_POINTERUPDATE : WM_POINTERUP;
             break;
         case WM_MOUSEWHEEL:
             message = WM_POINTERWHEEL;
