@@ -159,7 +159,7 @@ static const char *sarif_converter;
 static const char *compiler_rt;
 static const char *buildimage;
 static const char *runtest;
-static const char *install_sh;
+static const char *install;
 static const char *makedep;
 static const char *make_xftmpl;
 static const char *sfnt2fon;
@@ -2654,32 +2654,29 @@ static void output_install_commands( struct makefile *make, enum install_rules r
         case '1': case '2': case '3': case '4': case '5':
         case '6': case '7': case '8': case '9': /* arch-dependent program */
             arch = cmd->type - '0';
-            output( "\tSTRIPPROG=%s %s -m 644 $(INSTALL_PROGRAM_FLAGS) %s %s\n",
-                    strip_progs[arch], install_sh, cmd->file, dest );
+            output( "\t%s --strip-program=%s -m 644 $(INSTALL_PROGRAM_FLAGS)", install, strip_progs[arch] );
             break;
         case 'd':  /* data file */
         case 'D':  /* data file in source dir */
-            output( "\t%s -m 644 $(INSTALL_DATA_FLAGS) %s %s\n",
-                    install_sh, cmd->file, dest );
+            output( "\t%s -m 644 $(INSTALL_DATA_FLAGS)", install );
             break;
         case '0':  /* native arch program file */
         case 'p':  /* program file */
         case 't':  /* tools file */
-            output( "\tSTRIPPROG=\"$(STRIP)\" %s $(INSTALL_PROGRAM_FLAGS) %s %s\n",
-                    install_sh, cmd->file, dest );
+            output( "\t%s --strip-program=\"$(STRIP)\" $(INSTALL_PROGRAM_FLAGS)", install );
             break;
         case 's':  /* script */
         case 'S':  /* script in source dir */
-            output( "\t%s $(INSTALL_SCRIPT_FLAGS) %s %s\n",
-                    install_sh, cmd->file, dest );
+            output( "\t%s $(INSTALL_SCRIPT_FLAGS)", install );
             break;
         case 'y':  /* symlink */
-            output( "\t%s -d $(DESTDIR)%s && rm -f %s && %s %s %s\n",
-                    install_sh, cmd->dir, dest, ln_s, cmd->file, dest );
+            output( "\t%s -L", install );
             break;
         default:
             assert(0);
         }
+        if (cmd->dest) output( " %s $(DESTDIR)%s/%s\n", cmd->file, cmd->dir, cmd->dest );
+        else output( " -t $(DESTDIR)%s %s\n", cmd->dir, cmd->file );
         strarray_add( &make->uninstall_files, dest );
     }
 }
@@ -2699,6 +2696,7 @@ static void output_install_rules( struct makefile *make, enum install_rules rule
 
     output( "%s %s::", obj_dir_path( make, "install" ), obj_dir_path( make, install_targets[rules] ));
     output_filenames( targets );
+    output_filename( install );
     output( "\n" );
     output_install_commands( make, rules );
     strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "install" ));
@@ -4743,7 +4741,7 @@ int main( int argc, char *argv[] )
 
     buildimage  = root_src_dir_path( "tools/buildimage" );
     runtest     = root_src_dir_path( "tools/runtest" );
-    install_sh  = root_src_dir_path( "tools/install-sh" );
+    install     = tools_base_path( "install" );
     makedep     = tools_base_path( "makedep" );
     make_xftmpl = tools_base_path( "make_xftmpl" );
     sfnt2fon    = tools_path( "sfnt2fon" );
