@@ -2368,6 +2368,11 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
 #endif
     }
 
+    /* macOS since 10.15 fails to map files with PROT_EXEC
+     * (and will show the user an annoying warning if the file has a quarantine xattr set).
+     * But it works to map without PROT_EXEC and then use mprotect().
+     */
+#ifndef __APPLE__
     if ((vprot & VPROT_EXEC) || force_exec_prot)
     {
         if (!(vprot & VPROT_EXEC))
@@ -2375,6 +2380,7 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
                    (char *)view->base + start, (char *)view->base + start + size - 1 );
         prot |= PROT_EXEC;
     }
+#endif
 
     map_size = ROUND_SIZE( start, size, page_mask );
     map_addr = ROUND_ADDR( (char *)view->base + start, page_mask );
