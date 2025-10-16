@@ -1,9 +1,6 @@
 /*
  * Copyright 2023 Dmitry Timoshkov
  *
- * This file contains only stubs to get the printui.dll up and running
- * activeds.dll is much much more than this
- *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
