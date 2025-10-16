@@ -4835,17 +4835,18 @@ static void test_shared_resources(void)
         {
             hr = ID3D12Device_OpenSharedHandle( d3d12_imp, handle, &IID_ID3D12Resource, (void **)&import );
             ok_hr( S_OK, hr );
+            ok_ptr( import, !=, NULL );
             if (import) ok_ref( 0, IUnknown_Release( import ) );
 
             if (name)
             {
-                HANDLE other;
+                HANDLE other = 0;
 
                 hr = ID3D12Device_OpenSharedHandleByName( d3d12_imp, name, GENERIC_ALL, &other );
                 ok_hr( S_OK, hr );
                 hr = ID3D12Device_OpenSharedHandle( d3d12_imp, other, &IID_ID3D12Resource, (void **)&import );
                 ok_hr( S_OK, hr );
-                CloseHandle( other );
+                if (other) CloseHandle( other );
 
                 if (import) ok_ref( 0, IUnknown_Release( import ) );
             }
