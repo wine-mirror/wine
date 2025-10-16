@@ -1361,6 +1361,66 @@ static void test_RegisterClassNameW(BOOL v6)
     winetest_pop_context();
 }
 
+static void test_CCM_SETVERSION(BOOL v6)
+{
+    unsigned int i, j;
+    LRESULT lr;
+    HWND hwnd;
+
+    static const char *class_names[] =
+    {
+        WC_LISTVIEWA,
+        REBARCLASSNAMEA,
+        TOOLBARCLASSNAMEA,
+    };
+
+    for (i = 0; i < ARRAY_SIZE(class_names); ++i)
+    {
+        winetest_push_context("v%d %s", v6 ? 6 : 5, class_names[i]);
+
+        hwnd = CreateWindowA(class_names[i], "test", WS_POPUP | WS_VISIBLE, 0, 0, 50, 50,
+                             NULL, 0, 0, 0);
+        ok(hwnd != NULL, "CreateWindowA failed, error %lu.\n", GetLastError());
+
+        lr = SendMessageA(hwnd, CCM_GETVERSION, 0, 0);
+        todo_wine_if(lr != (v6 ? 6 : 0))
+        ok(lr == (v6 ? 6 : 0), "Got unexpected %Id.\n", lr);
+
+        for (j = 0; j <= 7; j++)
+        {
+            winetest_push_context("%d", j);
+
+            lr = SendMessageA(hwnd, CCM_SETVERSION, j, 0);
+            if (v6)
+            {
+                todo_wine_if(lr != 6)
+                ok(lr == 6, "Got unexpected %Id.\n", lr);
+            }
+            else
+            {
+                if (j >= 6)
+                    todo_wine_if(lr != -1)
+                    ok(lr == -1, "Got unexpected %Id.\n", lr);
+                else
+                    todo_wine_if(lr != (j == 0 ? 0 : (j - 1)))
+                    ok(lr == (j == 0 ? 0 : (j - 1)), "Got unexpected %Id.\n", lr);
+            }
+
+            if (!strcmp(class_names[i], TOOLBARCLASSNAMEA))
+            {
+                lr = SendMessageA(hwnd, TB_GETUNICODEFORMAT, 0, 0);
+                todo_wine_if(j >= 5)
+                ok(lr == 0, "Got unexpected %Id.\n", lr);
+            }
+
+            winetest_pop_context();
+        }
+
+        DestroyWindow(hwnd);
+        winetest_pop_context();
+    }
+}
+
 START_TEST(misc)
 {
     ULONG_PTR ctx_cookie;
@@ -1377,6 +1437,7 @@ START_TEST(misc)
     test_WM_SETFONT();
     test_version(FALSE);
     test_RegisterClassNameW(FALSE);
+    test_CCM_SETVERSION(FALSE);
 
     FreeLibrary(hComctl32);
 
@@ -1395,6 +1456,7 @@ START_TEST(misc)
     test_WM_SETFONT();
     test_version(TRUE);
     test_RegisterClassNameW(TRUE);
+    test_CCM_SETVERSION(TRUE);
 
     unload_v6_module(ctx_cookie, hCtx);
     FreeLibrary(hComctl32);
