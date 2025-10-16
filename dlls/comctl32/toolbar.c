@@ -5117,10 +5117,17 @@ TOOLBAR_SetColorScheme (TOOLBAR_INFO *infoPtr, const COLORSCHEME *lParam)
 static LRESULT
 TOOLBAR_SetVersion (TOOLBAR_INFO *infoPtr, INT iVersion)
 {
+#if __WINE_COMCTL32_VERSION == 6
+    return infoPtr->iVersion;
+#else
     INT iOldVersion = infoPtr->iVersion;
+
+    if (iVersion > 5)
+        return -1;
 
     infoPtr->iVersion = iVersion;
     return iOldVersion;
+#endif
 }
 
 
@@ -6056,7 +6063,11 @@ TOOLBAR_NCCreate (HWND hwnd, WPARAM wParam, const CREATESTRUCTW *lpcs)
     infoPtr->dwDTFlags = (lpcs->style & TBSTYLE_LIST) ? DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS: DT_CENTER | DT_END_ELLIPSIS;
     infoPtr->bAnchor = FALSE; /* no anchor highlighting */
     infoPtr->bDragOutSent = FALSE;
+#if __WINE_COMCTL32_VERSION == 6
+    infoPtr->iVersion = 6;
+#else
     infoPtr->iVersion = 0;
+#endif
     infoPtr->hwndSelf = hwnd;
     infoPtr->bDoRedraw = TRUE;
     infoPtr->clrBtnHighlight = CLR_DEFAULT;

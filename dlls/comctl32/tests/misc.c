@@ -1383,7 +1383,6 @@ static void test_CCM_SETVERSION(BOOL v6)
         ok(hwnd != NULL, "CreateWindowA failed, error %lu.\n", GetLastError());
 
         lr = SendMessageA(hwnd, CCM_GETVERSION, 0, 0);
-        todo_wine_if(lr != (v6 ? 6 : 0))
         ok(lr == (v6 ? 6 : 0), "Got unexpected %Id.\n", lr);
 
         for (j = 0; j <= 7; j++)
@@ -1393,16 +1392,13 @@ static void test_CCM_SETVERSION(BOOL v6)
             lr = SendMessageA(hwnd, CCM_SETVERSION, j, 0);
             if (v6)
             {
-                todo_wine_if(lr != 6)
                 ok(lr == 6, "Got unexpected %Id.\n", lr);
             }
             else
             {
                 if (j >= 6)
-                    todo_wine_if(lr != -1)
                     ok(lr == -1, "Got unexpected %Id.\n", lr);
                 else
-                    todo_wine_if(lr != (j == 0 ? 0 : (j - 1)))
                     ok(lr == (j == 0 ? 0 : (j - 1)), "Got unexpected %Id.\n", lr);
             }
 
