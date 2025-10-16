@@ -247,27 +247,6 @@ static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
     return ref;
 }
 
-BOOL DSOUND_check_supported(IAudioClient *client, DWORD rate,
-        DWORD depth, WORD channels)
-{
-    WAVEFORMATEX fmt, *junk;
-    HRESULT hr;
-
-    fmt.wFormatTag = WAVE_FORMAT_PCM;
-    fmt.nChannels = channels;
-    fmt.nSamplesPerSec = rate;
-    fmt.wBitsPerSample = depth;
-    fmt.nBlockAlign = (channels * depth) / 8;
-    fmt.nAvgBytesPerSec = rate * fmt.nBlockAlign;
-    fmt.cbSize = 0;
-
-    hr = IAudioClient_IsFormatSupported(client, AUDCLNT_SHAREMODE_SHARED, &fmt, &junk);
-    if(SUCCEEDED(hr))
-        CoTaskMemFree(junk);
-
-    return hr == S_OK;
-}
-
 static HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcGUID)
 {
     HRESULT hr = DS_OK;
@@ -338,33 +317,9 @@ static HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGU
 
     ZeroMemory(&device->drvcaps, sizeof(device->drvcaps));
 
-    if(DSOUND_check_supported(device->client, 11025, 8, 1) ||
-            DSOUND_check_supported(device->client, 22050, 8, 1) ||
-            DSOUND_check_supported(device->client, 44100, 8, 1) ||
-            DSOUND_check_supported(device->client, 48000, 8, 1) ||
-            DSOUND_check_supported(device->client, 96000, 8, 1))
-        device->drvcaps.dwFlags |= DSCAPS_PRIMARY8BIT | DSCAPS_PRIMARYMONO;
-
-    if(DSOUND_check_supported(device->client, 11025, 16, 1) ||
-            DSOUND_check_supported(device->client, 22050, 16, 1) ||
-            DSOUND_check_supported(device->client, 44100, 16, 1) ||
-            DSOUND_check_supported(device->client, 48000, 16, 1) ||
-            DSOUND_check_supported(device->client, 96000, 16, 1))
-        device->drvcaps.dwFlags |= DSCAPS_PRIMARY16BIT | DSCAPS_PRIMARYMONO;
-
-    if(DSOUND_check_supported(device->client, 11025, 8, 2) ||
-            DSOUND_check_supported(device->client, 22050, 8, 2) ||
-            DSOUND_check_supported(device->client, 44100, 8, 2) ||
-            DSOUND_check_supported(device->client, 48000, 8, 2) ||
-            DSOUND_check_supported(device->client, 96000, 8, 2))
-        device->drvcaps.dwFlags |= DSCAPS_PRIMARY8BIT | DSCAPS_PRIMARYSTEREO;
-
-    if(DSOUND_check_supported(device->client, 11025, 16, 2) ||
-            DSOUND_check_supported(device->client, 22050, 16, 2) ||
-            DSOUND_check_supported(device->client, 44100, 16, 2) ||
-            DSOUND_check_supported(device->client, 48000, 16, 2) ||
-            DSOUND_check_supported(device->client, 96000, 16, 2))
-        device->drvcaps.dwFlags |= DSCAPS_PRIMARY16BIT | DSCAPS_PRIMARYSTEREO;
+    /* We use AUTOCONVERTPCM, so everything is supported. */
+    device->drvcaps.dwFlags |= DSCAPS_PRIMARY8BIT | DSCAPS_PRIMARY16BIT;
+    device->drvcaps.dwFlags |= DSCAPS_PRIMARYMONO | DSCAPS_PRIMARYSTEREO;
 
     /* the dsound mixer supports all of the following */
     device->drvcaps.dwFlags |= DSCAPS_SECONDARY8BIT | DSCAPS_SECONDARY16BIT;

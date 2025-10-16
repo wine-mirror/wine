@@ -265,7 +265,5 @@ void setup_dsound_options(void);
 
 HRESULT get_mmdevice(EDataFlow flow, const GUID *tgt, IMMDevice **device);
 
-BOOL DSOUND_check_supported(IAudioClient *client, DWORD rate,
-        DWORD depth, WORD channels);
 HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
         LPDSENUMCALLBACKW cb, void *user);
