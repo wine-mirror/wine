@@ -3460,10 +3460,13 @@ done:
  *
  * Helper for nt_to_unix_file_name
  */
-static NTSTATUS lookup_unix_name( int root_fd, const WCHAR *name, int name_len, char **buffer, int unix_len,
+static NTSTATUS lookup_unix_name( int root_fd, OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name,
+                                  unsigned int nt_pos, char **buffer, int unix_len,
                                   int pos, UINT disposition, BOOL is_unix )
 {
     static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, '/', 0 };
+    const WCHAR *name = attr->ObjectName->Buffer + nt_pos;
+    unsigned int name_len = (attr->ObjectName->Length / sizeof(WCHAR)) - nt_pos;
     NTSTATUS status;
     int ret;
     struct stat st;
@@ -3579,13 +3582,14 @@ static NTSTATUS lookup_unix_name( int root_fd, const WCHAR *name, int name_len, 
 /******************************************************************************
  *           nt_to_unix_file_name_no_root
  */
-static NTSTATUS nt_to_unix_file_name_no_root( const UNICODE_STRING *nameW, char **unix_name_ret,
-                                              UINT disposition )
+static NTSTATUS nt_to_unix_file_name_no_root( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name,
+                                              char **unix_name_ret, UINT disposition )
 {
     static const WCHAR unixW[] = {'u','n','i','x'};
     static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, 0 };
 
     NTSTATUS status = STATUS_SUCCESS;
+    unsigned int nt_pos;
     const WCHAR *name;
     struct stat st;
     char *unix_name;
@@ -3593,16 +3597,16 @@ static NTSTATUS nt_to_unix_file_name_no_root( const UNICODE_STRING *nameW, char 
     WCHAR prefix[MAX_DIR_ENTRY_LEN + 1];
     BOOLEAN is_unix = FALSE;
 
-    name     = nameW->Buffer;
-    name_len = nameW->Length / sizeof(WCHAR);
+    name     = attr->ObjectName->Buffer;
+    name_len = attr->ObjectName->Length / sizeof(WCHAR);
 
     if (!name_len || name[0] != '\\') return STATUS_OBJECT_PATH_SYNTAX_BAD;
 
-    if (!(pos = get_dos_prefix_len( nameW )))
+    if (!(nt_pos = get_dos_prefix_len( attr->ObjectName )))
         return STATUS_BAD_DEVICE_TYPE;  /* no DOS prefix, assume NT native name */
 
-    name += pos;
-    name_len -= pos;
+    name += nt_pos;
+    name_len -= nt_pos;
 
     if (!name_len) return STATUS_OBJECT_NAME_INVALID;
 
@@ -3671,18 +3675,16 @@ static NTSTATUS nt_to_unix_file_name_no_root( const UNICODE_STRING *nameW, char 
 
     prefix_len++;  /* skip initial backslash */
     if (name_len > prefix_len && name[prefix_len] == '\\') prefix_len++;  /* allow a second backslash */
-    name += prefix_len;
-    name_len -= prefix_len;
+    nt_pos += prefix_len;
 
-    status = lookup_unix_name( AT_FDCWD, name, name_len, &unix_name, unix_len, pos, disposition, is_unix );
+    status = lookup_unix_name( AT_FDCWD, attr, nt_name, nt_pos,
+                               &unix_name, unix_len, pos, disposition, is_unix );
     if (status == STATUS_SUCCESS || status == STATUS_NO_SUCH_FILE)
     {
-        TRACE( "%s -> %s\n", debugstr_us(nameW), debugstr_a(unix_name) );
         *unix_name_ret = unix_name;
     }
     else
     {
-        TRACE( "%s not found in %s\n", debugstr_w(name), debugstr_an(unix_name, pos) );
         free( unix_name );
     }
     return status;
@@ -3698,7 +3700,8 @@ static NTSTATUS nt_to_unix_file_name_no_root( const UNICODE_STRING *nameW, char 
  * element doesn't have to exist; in that case STATUS_NO_SUCH_FILE is
  * returned, but the unix name is still filled in properly.
  */
-static NTSTATUS nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char **name_ret, UINT disposition )
+static NTSTATUS nt_to_unix_file_name( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name,
+                                      char **name_ret, UINT disposition )
 {
     enum server_fd_type type;
     int root_fd, needs_close;
@@ -3708,7 +3711,7 @@ static NTSTATUS nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char **name
     NTSTATUS status;
 
     if (!attr->RootDirectory)  /* without root dir fall back to normal lookup */
-        return nt_to_unix_file_name_no_root( attr->ObjectName, name_ret, disposition );
+        return nt_to_unix_file_name_no_root( attr, nt_name, name_ret, disposition );
 
     name     = attr->ObjectName->Buffer;
     name_len = attr->ObjectName->Length / sizeof(WCHAR);
@@ -3728,7 +3731,7 @@ static NTSTATUS nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char **name
         }
         else
         {
-            status = lookup_unix_name( root_fd, name, name_len, &unix_name, unix_len, 1, disposition, FALSE );
+            status = lookup_unix_name( root_fd, attr, nt_name, 0, &unix_name, unix_len, 1, disposition, FALSE );
             if (needs_close) close( root_fd );
         }
     }
@@ -4004,7 +4007,7 @@ NTSTATUS get_nt_and_unix_names( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name
 #ifndef _WIN64
         get_redirect( attr, nt_name );
 #endif
-        status = nt_to_unix_file_name( attr, unix_name_ret, disposition );
+        status = nt_to_unix_file_name( attr, nt_name, unix_name_ret, disposition );
     }
 
     if (!status || status == STATUS_NO_SUCH_FILE)
