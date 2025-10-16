@@ -3768,15 +3768,27 @@ static HRESULT transform_node_handle_format_change(struct media_session *session
 static HRESULT session_handle_format_change(struct media_session *session, struct topo_node *topo_node,
         UINT input, IMFMediaType *media_type)
 {
+    IMFMediaTypeHandler *handler;
     HRESULT hr;
 
     switch (topo_node->type)
     {
         case MF_TOPOLOGY_OUTPUT_NODE:
-            if (!topo_node->u.sink.allocator)
-                return S_OK;
-            if (SUCCEEDED(hr = IMFVideoSampleAllocator_UninitializeSampleAllocator(topo_node->u.sink.allocator)))
-                hr = IMFVideoSampleAllocator_InitializeSampleAllocator(topo_node->u.sink.allocator, 4, media_type);
+            /* For H.264, the sink's input media type must be set to the aligned frame size
+             * before MESessionStarted is sent. The decoder sends MF_E_TRANSFORM_STREAM_CHANGE
+             * to trigger a refresh of its output type once the aligned frame size is known.
+             * This occurs before any call to ProcessOutput() can succeed on the transform.
+             * Satisfactory is known to use the sink frame size. */
+            if (FAILED(hr = topology_node_get_type_handler(topo_node->node, 0, FALSE, &handler)))
+                WARN("Failed to get type handler, hr %#lx.\n", hr);
+            else if (FAILED(hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, media_type)))
+                WARN("Failed to set type, hr %#lx.\n", hr);
+
+            if (SUCCEEDED(hr) && topo_node->u.sink.allocator)
+            {
+                if (SUCCEEDED(hr = IMFVideoSampleAllocator_UninitializeSampleAllocator(topo_node->u.sink.allocator)))
+                    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(topo_node->u.sink.allocator, 4, media_type);
+            }
             return hr;
 
         case MF_TOPOLOGY_TRANSFORM_NODE:
