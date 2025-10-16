@@ -198,6 +198,7 @@ static HRESULT DSPROPERTY_DescriptionW(
     IPropertyStore *ps;
     PROPVARIANT pv;
     HRESULT hr;
+    WCHAR *id;
 
     TRACE("pPropData=%p,cbPropData=%ld,pcbReturned=%p)\n",
           pPropData,cbPropData,pcbReturned);
@@ -248,9 +249,11 @@ static HRESULT DSPROPERTY_DescriptionW(
     }
 
     ppd->Description = wcsdup(pv.pwszVal);
-    ppd->Module = wcsdup(wine_vxd_drv);
+    hr = IMMDevice_GetId(mmdevice, &id);
+    ppd->Module = wcsdup(id);
+    CoTaskMemFree(id);
     ppd->Interface = wcsdup(wInterface);
-    ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
+    ppd->Type = DIRECTSOUNDDEVICE_TYPE_WDM;
 
     PropVariantClear(&pv);
     IPropertyStore_Release(ps);
