@@ -296,7 +296,7 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
                                     TW_MEMREF pData)
 {
     TW_UINT16 twRC = TWRC_SUCCESS;
-    pTW_UINT32 pHandle = (pTW_UINT32) pData;
+    TW_HANDLE *pHandle = (TW_HANDLE *) pData;
     HANDLE hDIB;
     BITMAPINFOHEADER *header = NULL;
     int dib_bytes;
@@ -458,7 +458,7 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
         }
 
         SANE_CALL( cancel_device, NULL );
-        *pHandle = (UINT_PTR)hDIB;
+        *pHandle = (TW_HANDLE)hDIB;
         twRC = TWRC_XFERDONE;
         activeDS.twCC = TWCC_SUCCESS;
         activeDS.currentState = 7;
