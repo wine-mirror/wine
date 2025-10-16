@@ -3983,18 +3983,10 @@ DWORD WINAPI GetUIVersion(void)
 }
 
 /***********************************************************************
- *              ShellMessageBoxWrapW [SHLWAPI.388]
- *
- * See shell32.ShellMessageBoxW
- *
- * NOTE:
- * shlwapi.ShellMessageBoxWrapW is a duplicate of shell32.ShellMessageBoxW
- * because we can't forward to it in the .spec file since it's exported by
- * ordinal. If you change the implementation here please update the code in
- * shell32 as well.
+ *              ShellMessageBoxW [SHLWAPI.388]
  */
-INT WINAPIV ShellMessageBoxWrapW(HINSTANCE hInstance, HWND hWnd, LPCWSTR lpText,
-                                 LPCWSTR lpCaption, UINT uType, ...)
+INT WINAPIV ShellMessageBoxW( HINSTANCE hInstance, HWND hWnd, LPCWSTR lpText,
+	                      LPCWSTR lpCaption, UINT uType, ...)
 {
     WCHAR *szText = NULL, szTitle[100];
     LPCWSTR pszText, pszTitle = szTitle;
@@ -4039,6 +4031,43 @@ INT WINAPIV ShellMessageBoxWrapW(HINSTANCE hInstance, HWND hWnd, LPCWSTR lpText,
     ret = MessageBoxW(hWnd, pszTemp, pszTitle, uType);
 
     free(szText);
+    LocalFree(pszTemp);
+    return ret;
+}
+
+/*************************************************************************
+ *              ShellMessageBoxA [SHLWAPI.@]
+ */
+int WINAPIV ShellMessageBoxA( HINSTANCE hInstance, HWND hWnd, LPCSTR lpText,
+	                      LPCSTR lpCaption, UINT uType, ...)
+{
+    char szText[100],szTitle[100];
+    LPCSTR pszText = szText, pszTitle = szTitle;
+    LPSTR pszTemp;
+    va_list args;
+    int	ret;
+
+    va_start(args, uType);
+
+    TRACE("(%p,%p,%p,%p,%08x)\n",
+	   hInstance,hWnd,lpText,lpCaption,uType);
+
+    if (IS_INTRESOURCE(lpCaption))
+        LoadStringA(hInstance, LOWORD(lpCaption), szTitle, sizeof(szTitle));
+    else
+        pszTitle = lpCaption;
+
+    if (IS_INTRESOURCE(lpText))
+        LoadStringA(hInstance, LOWORD(lpText), szText, sizeof(szText));
+    else
+        pszText = lpText;
+
+    FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_STRING,
+                    pszText, 0, 0, (LPSTR)&pszTemp, 0, &args);
+
+    va_end(args);
+
+    ret = MessageBoxA(hWnd,pszTemp,pszTitle,uType);
     LocalFree(pszTemp);
     return ret;
 }
