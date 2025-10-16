@@ -9624,7 +9624,11 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, WPARAM wParam, const CREATESTRUCTW *
   infoPtr->nMeasureItemHeight = 0;
   infoPtr->xTrackLine = -1;  /* no track line */
   infoPtr->itemEdit.fEnabled = FALSE;
-  infoPtr->iVersion = COMCTL32_VERSION;
+#if __WINE_COMCTL32_VERSION == 6
+  infoPtr->iVersion = 6;
+#else
+  infoPtr->iVersion = 0;
+#endif
   infoPtr->colRectsDirty = FALSE;
   infoPtr->selected_column = -1;
   infoPtr->hHotCursor = LoadCursorW(NULL, (LPWSTR)IDC_HAND);
@@ -11439,9 +11443,12 @@ static inline LRESULT LISTVIEW_GetVersion(const LISTVIEW_INFO *infoPtr)
  */
 static LRESULT LISTVIEW_SetVersion(LISTVIEW_INFO *infoPtr, DWORD iVersion)
 {
+#if __WINE_COMCTL32_VERSION == 6
+  return infoPtr->iVersion;
+#else
   INT iOldVersion = infoPtr->iVersion;
 
-  if (iVersion > COMCTL32_VERSION)
+  if (iVersion > 5)
     return -1;
 
   infoPtr->iVersion = iVersion;
@@ -11449,6 +11456,7 @@ static LRESULT LISTVIEW_SetVersion(LISTVIEW_INFO *infoPtr, DWORD iVersion)
   TRACE("new version %ld\n", iVersion);
 
   return iOldVersion;
+#endif
 }
 
 /***
