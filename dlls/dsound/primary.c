@@ -110,7 +110,6 @@ static DWORD DSOUND_FindSpeakerConfig(IMMDevice *mmdevice, int channels)
 static HRESULT DSOUND_WaveFormat(DirectSoundDevice *device, IAudioClient *client,
 				 BOOL forcewave, WAVEFORMATEX **wfx)
 {
-    WAVEFORMATEXTENSIBLE *retwfe = NULL;
     WAVEFORMATEX *w;
     HRESULT hr;
 
@@ -170,16 +169,6 @@ static HRESULT DSOUND_WaveFormat(DirectSoundDevice *device, IAudioClient *client
     if (!w)
         return DSERR_OUTOFMEMORY;
 
-    hr = IAudioClient_IsFormatSupported(client, AUDCLNT_SHAREMODE_SHARED, w, (WAVEFORMATEX**)&retwfe);
-    if (retwfe) {
-        memcpy(w, retwfe, sizeof(WAVEFORMATEX) + retwfe->Format.cbSize);
-        CoTaskMemFree(retwfe);
-    }
-    if (FAILED(hr)) {
-        WARN("IsFormatSupported failed: %08lx\n", hr);
-        free(w);
-        return hr;
-    }
     *wfx = w;
     return S_OK;
 }
