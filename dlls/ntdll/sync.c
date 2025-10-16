@@ -116,7 +116,7 @@ DWORD WINAPI RtlRunOnceComplete( RTL_RUN_ONCE *once, ULONG flags, void *context 
 
     for (;;)
     {
-        ULONG_PTR val = (ULONG_PTR)once->Ptr;
+        ULONG_PTR val = (ULONG_PTR)ReadPointerAcquire( &once->Ptr );
 
         switch (val & 3)
         {
