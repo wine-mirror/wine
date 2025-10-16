@@ -228,8 +228,8 @@ static void init_shared_resource_path( const WCHAR *name, UNICODE_STRING *str )
     str->Length = str->MaximumLength - sizeof(WCHAR);
 
     memcpy( str->Buffer + str->Length / sizeof(WCHAR), name, (len + 1) * sizeof(WCHAR) );
-    str->MaximumLength += len;
-    str->Length += len;
+    str->MaximumLength += len * sizeof(WCHAR);
+    str->Length += len * sizeof(WCHAR);
 }
 
 static HANDLE create_shared_resource_handle( D3DKMT_HANDLE local, const VkExportMemoryWin32HandleInfoKHR *info )
