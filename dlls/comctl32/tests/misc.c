@@ -1409,7 +1409,6 @@ static void test_CCM_SETVERSION(BOOL v6)
             if (!strcmp(class_names[i], TOOLBARCLASSNAMEA))
             {
                 lr = SendMessageA(hwnd, TB_GETUNICODEFORMAT, 0, 0);
-                todo_wine_if(j >= 5)
                 ok(lr == 0, "Got unexpected %Id.\n", lr);
             }
 

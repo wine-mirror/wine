@@ -5120,10 +5120,6 @@ TOOLBAR_SetVersion (TOOLBAR_INFO *infoPtr, INT iVersion)
     INT iOldVersion = infoPtr->iVersion;
 
     infoPtr->iVersion = iVersion;
-
-    if (infoPtr->iVersion >= 5)
-        TOOLBAR_SetUnicodeFormat(infoPtr, TRUE);
-
     return iOldVersion;
 }
 
