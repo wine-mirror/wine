@@ -7065,6 +7065,7 @@ static void thread_detach(void)
 
     cleanup_imm_thread();
     NtClose( thread_info->server_queue );
+    if (thread_info->idle_event) NtClose( thread_info->idle_event );
     free( thread_info->session_data );
     free( thread_info->mouse_tracking_info );
 

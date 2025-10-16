@@ -1308,6 +1308,7 @@ C_ASSERT( offsetof(struct get_user_atom_name_reply, total) == 8 );
 C_ASSERT( sizeof(struct get_user_atom_name_reply) == 16 );
 C_ASSERT( sizeof(struct get_msg_queue_handle_request) == 16 );
 C_ASSERT( offsetof(struct get_msg_queue_handle_reply, handle) == 8 );
+C_ASSERT( offsetof(struct get_msg_queue_handle_reply, idle_event) == 12 );
 C_ASSERT( sizeof(struct get_msg_queue_handle_reply) == 16 );
 C_ASSERT( sizeof(struct get_msg_queue_request) == 16 );
 C_ASSERT( offsetof(struct get_msg_queue_reply, locator) == 8 );

@@ -2851,6 +2851,7 @@ static int peek_message( MSG *msg, const struct peek_message_filter *filter )
     UINT first = filter->first, last = filter->last, flags = filter->flags;
     struct user_thread_info *thread_info = get_user_thread_info();
     INPUT_MESSAGE_SOURCE prev_source = thread_info->client_info.msg_source;
+    HANDLE idle_event = thread_info->idle_event;
     struct received_message_info info;
     unsigned int hw_id = 0;  /* id of previous hardware message */
     unsigned char buffer_init[1024];
@@ -2918,7 +2919,11 @@ static int peek_message( MSG *msg, const struct peek_message_filter *filter )
         if (res)
         {
             if (buffer != buffer_init) free( buffer );
-            if (res == STATUS_PENDING) return 0;
+            if (res == STATUS_PENDING)
+            {
+                if (hwnd == (HWND)-1 && idle_event) NtSetEvent( idle_event, NULL );
+                return 0;
+            }
             if (res != STATUS_BUFFER_OVERFLOW)
             {
                 RtlSetLastWin32Error( RtlNtStatusToDosError(res) );
@@ -3116,6 +3121,10 @@ static int peek_message( MSG *msg, const struct peek_message_filter *filter )
                     info.msg.lParam = result->lparam;
                 }
             }
+            if (info.msg.message == WM_TIMER || info.msg.message == WM_SYSTIMER)
+            {
+                if (!(flags & PM_NOYIELD) && idle_event) NtSetEvent( idle_event, NULL );
+            }
             *msg = info.msg;
             msg->pt = point_phys_to_win_dpi( info.msg.hwnd, info.msg.pt );
             thread_info->client_info.message_pos   = MAKELONG( msg->pt.x, msg->pt.y );
@@ -3171,11 +3180,11 @@ static HANDLE get_server_queue_handle(void)
         SERVER_START_REQ( get_msg_queue_handle )
         {
             wine_server_call( req );
-            ret = wine_server_ptr_handle( reply->handle );
+            thread_info->server_queue = wine_server_ptr_handle( reply->handle );
+            thread_info->idle_event = wine_server_ptr_handle( reply->idle_event );
         }
         SERVER_END_REQ;
-        thread_info->server_queue = ret;
-        if (!ret) ERR( "Cannot get server thread queue\n" );
+        if (!(ret = thread_info->server_queue)) ERR( "Cannot get server thread queue\n" );
     }
     return ret;
 }
@@ -3294,6 +3303,7 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
     LARGE_INTEGER time, now, *abs;
     void *ret_ptr;
     ULONG ret_len;
+    HANDLE event;
     DWORD ret;
 
     if ((abs = get_nt_timeout( &time, timeout )))
@@ -3310,8 +3320,11 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
     }
 
     process_driver_events( QS_ALLINPUT, wake_mask, changed_mask );
+    if (!(changed_mask & QS_SMRESULT) && (event = get_user_thread_info()->idle_event)) NtSetEvent( event, NULL );
+
     do ret = NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL), !!(flags & MWMO_ALERTABLE), abs );
     while (ret == count - 1 && !process_driver_events( QS_ALLINPUT, wake_mask, changed_mask ));
+
     if (HIWORD(ret)) /* is it an error code? */
     {
         RtlSetLastWin32Error( RtlNtStatusToDosError(ret) );

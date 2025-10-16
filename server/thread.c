@@ -1105,7 +1105,7 @@ static int wait_on( const union select_op *select_op, unsigned int count, struct
 {
     struct thread_wait *wait;
     struct wait_queue_entry *entry;
-    unsigned int i, idle = 0;
+    unsigned int i;
 
     if (!(wait = mem_alloc( FIELD_OFFSET(struct thread_wait, queues[count]) ))) return 0;
     wait->next    = current->wait;
@@ -1131,10 +1131,8 @@ static int wait_on( const union select_op *select_op, unsigned int count, struct
         }
 
         entry->obj = grab_object( obj );
-        if (obj == (struct object *)current->queue) idle = 1;
     }
 
-    if (idle) check_thread_queue_idle( current );
     return current->wait ? 1 : 0;
 }
 

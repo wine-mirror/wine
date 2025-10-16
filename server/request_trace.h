@@ -1364,6 +1364,7 @@ static void dump_get_msg_queue_handle_request( const struct get_msg_queue_handle
 static void dump_get_msg_queue_handle_reply( const struct get_msg_queue_handle_reply *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, ", idle_event=%04x", req->idle_event );
 }
 
 static void dump_get_msg_queue_request( const struct get_msg_queue_request *req )

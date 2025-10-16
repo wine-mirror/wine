@@ -1415,16 +1415,6 @@ static int check_queue_input_window( struct msg_queue *queue, user_handle_t wind
     return ret;
 }
 
-/* check if the thread queue is idle and set the process idle event if so */
-void check_thread_queue_idle( struct thread *thread )
-{
-    struct msg_queue *queue = thread->queue;
-    queue_shm_t *queue_shm = queue->shared;
-
-    if ((queue_shm->wake_mask & QS_SMRESULT)) return;
-    if (thread->process->idle_event) set_event( thread->process->idle_event );
-}
-
 /* make sure the specified thread has a queue */
 int init_thread_queue( struct thread *thread )
 {
@@ -3051,9 +3041,12 @@ DECL_HANDLER(is_window_hung)
 DECL_HANDLER(get_msg_queue_handle)
 {
     struct msg_queue *queue = get_current_queue();
+    struct process *process = current->process;
+    struct event *event;
 
     reply->handle = 0;
-    if (queue) reply->handle = alloc_handle( current->process, queue, SYNCHRONIZE, 0 );
+    if (queue) reply->handle = alloc_handle( process, queue, SYNCHRONIZE, 0 );
+    if ((event = process->idle_event)) reply->idle_event = alloc_handle( process, event, GENERIC_ALL, 0 );
 }
 
 
@@ -3388,12 +3381,8 @@ DECL_HANDLER(get_message)
         reply->wparam = timer->id;
         reply->lparam = timer->lparam;
         get_message_defaults( queue, &reply->x, &reply->y, &reply->time );
-        if (!(req->flags & PM_NOYIELD) && current->process->idle_event)
-            set_event( current->process->idle_event );
         return;
     }
-
-    if (get_win == -1 && current->process->idle_event) set_event( current->process->idle_event );
 
     SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
     {

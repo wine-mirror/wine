@@ -2291,6 +2291,7 @@ struct process_info
 @REQ(get_msg_queue_handle)
 @REPLY
     obj_handle_t handle;       /* handle to the queue */
+    obj_handle_t idle_event;   /* handle to the process idle event */
 @END
 
 
