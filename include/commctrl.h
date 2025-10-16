@@ -59,7 +59,7 @@ enum _LI_METRIC
 WINCOMMCTRLAPI HRESULT WINAPI LoadIconWithScaleDown(HINSTANCE, const WCHAR *, int, int, HICON *);
 WINCOMMCTRLAPI HRESULT WINAPI LoadIconMetric(HINSTANCE, const WCHAR *, int, HICON *);
 
-#define COMCTL32_VERSION                5  /* dll version */
+#define COMCTL32_VERSION                6  /* dll version */
 
 #define ICC_LISTVIEW_CLASSES   0x00000001  /* listview, header */
 #define ICC_TREEVIEW_CLASSES   0x00000002  /* treeview, tooltips */
