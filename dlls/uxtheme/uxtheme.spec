@@ -79,6 +79,7 @@
 @ stdcall GetThemeBackgroundContentRect(ptr ptr long long ptr ptr)
 @ stdcall GetThemeBackgroundExtent(ptr ptr long long ptr ptr)
 @ stdcall GetThemeBackgroundRegion(ptr ptr long long ptr ptr)
+@ stdcall GetThemeBitmap(ptr long long long long ptr)
 @ stdcall GetThemeBool(ptr long long long ptr)
 @ stdcall GetThemeColor(ptr long long long ptr)
 @ stdcall GetThemeDocumentationProperty(wstr wstr wstr long)

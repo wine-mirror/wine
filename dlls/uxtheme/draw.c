@@ -2078,6 +2078,17 @@ HRESULT WINAPI GetThemeBackgroundRegion(HTHEME hTheme, HDC hdc, int iPartId,
     return hr;
 }
 
+/***********************************************************************
+ *      GetThemeBitmap                                      (UXTHEME.@)
+ */
+HRESULT WINAPI GetThemeBitmap(HTHEME hTheme, int iPartId, int iStateId,
+                              int iPropId, ULONG dwFlags, HBITMAP *phBitmap)
+{
+    FIXME("(%p,%d,%d,%d,0x%08lx,%p) stub\n", hTheme, iPartId, iStateId, iPropId, dwFlags, phBitmap);
+
+    return E_NOTIMPL;
+}
+
 /* compute part size for "borderfill" backgrounds */
 static HRESULT get_border_background_size (HTHEME hTheme, int iPartId,
                                            int iStateId, THEMESIZE eSize, POINT* psz)
