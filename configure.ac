@@ -1415,11 +1415,9 @@ then
                             [`test -n "$PKG_CONFIG" && $PKG_CONFIG --variable=wayland_scanner wayland-scanner 2>/dev/null`])],
               [WAYLAND_CLIENT_LIBS=""],[$WAYLAND_CLIENT_LIBS])])])
     WINE_PACKAGE_FLAGS(XKBCOMMON,[xkbcommon],,,,
-        [AC_CHECK_HEADERS([xkbcommon/xkbcommon.h])
-         AC_CHECK_LIB(xkbcommon,xkb_context_new,[:],[XKBCOMMON_LIBS=""],[$XKBCOMMON_LIBS])])
+        [AC_CHECK_LIB(xkbcommon,xkb_context_new,[:],[XKBCOMMON_LIBS=""],[$XKBCOMMON_LIBS])])
     WINE_PACKAGE_FLAGS(XKBREGISTRY,[xkbregistry],,,,
-        [AC_CHECK_HEADERS([xkbcommon/xkbregistry.h])
-         AC_CHECK_LIB(xkbregistry,rxkb_context_new,[:],[XKBREGISTRY_LIBS=""],[$XKBREGISTRY_LIBS])])
+        [AC_CHECK_LIB(xkbregistry,rxkb_context_new,[:],[XKBREGISTRY_LIBS=""],[$XKBREGISTRY_LIBS])])
     if test "x$with_opengl" != "xno"
     then
         WINE_PACKAGE_FLAGS(WAYLAND_EGL,[wayland-egl],,,,
@@ -2359,8 +2357,6 @@ AC_CHECK_MEMBERS([struct sysinfo.totalram, struct sysinfo.mem_unit],,,
 [#ifdef HAVE_SYS_SYSINFO_H
 # include <sys/sysinfo.h>
 #endif])
-
-LIBS="$ac_save_LIBS"
 
 dnl Check for __builtin_popcount
 AC_CACHE_CHECK([for __builtin_popcount], ac_cv_have___builtin_popcount,

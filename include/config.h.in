@@ -699,12 +699,6 @@
 /* Define to 1 if 'callback' is a member of 'XICCallback'. */
 #undef HAVE_XICCALLBACK_CALLBACK
 
-/* Define to 1 if you have the <xkbcommon/xkbcommon.h> header file. */
-#undef HAVE_XKBCOMMON_XKBCOMMON_H
-
-/* Define to 1 if you have the <xkbcommon/xkbregistry.h> header file. */
-#undef HAVE_XKBCOMMON_XKBREGISTRY_H
-
 /* Define if Xrender has the XRenderCreateLinearGradient function */
 #undef HAVE_XRENDERCREATELINEARGRADIENT
 

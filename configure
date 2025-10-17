@@ -16265,14 +16265,7 @@ fi
 rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $XKBCOMMON_CFLAGS"
-ac_fn_c_check_header_compile "$LINENO" "xkbcommon/xkbcommon.h" "ac_cv_header_xkbcommon_xkbcommon_h" "$ac_includes_default"
-if test "x$ac_cv_header_xkbcommon_xkbcommon_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_XKBCOMMON_XKBCOMMON_H 1" >>confdefs.h
-
-fi
-
-         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for xkb_context_new in -lxkbcommon" >&5
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for xkb_context_new in -lxkbcommon" >&5
 printf %s "checking for xkb_context_new in -lxkbcommon... " >&6; }
 if test ${ac_cv_lib_xkbcommon_xkb_context_new+y}
 then :
@@ -16352,14 +16345,7 @@ fi
 rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $XKBREGISTRY_CFLAGS"
-ac_fn_c_check_header_compile "$LINENO" "xkbcommon/xkbregistry.h" "ac_cv_header_xkbcommon_xkbregistry_h" "$ac_includes_default"
-if test "x$ac_cv_header_xkbcommon_xkbregistry_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_XKBCOMMON_XKBREGISTRY_H 1" >>confdefs.h
-
-fi
-
-         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for rxkb_context_new in -lxkbregistry" >&5
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for rxkb_context_new in -lxkbregistry" >&5
 printf %s "checking for rxkb_context_new in -lxkbregistry... " >&6; }
 if test ${ac_cv_lib_xkbregistry_rxkb_context_new+y}
 then :
@@ -21972,8 +21958,6 @@ printf "%s\n" "#define HAVE_STRUCT_SYSINFO_MEM_UNIT 1" >>confdefs.h
 
 fi
 
-
-LIBS="$ac_save_LIBS"
 
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for __builtin_popcount" >&5
 printf %s "checking for __builtin_popcount... " >&6; }
