@@ -193,12 +193,13 @@ static BOOL wayland_win_data_create_wayland_surface(struct wayland_win_data *dat
     struct wayland_surface *surface;
     enum wayland_surface_role role;
     BOOL visible;
+    DWORD exstyle = NtUserGetWindowLongW(data->hwnd, GWL_EXSTYLE);
+    struct wl_region *input_region;
 
     TRACE("hwnd=%p\n", data->hwnd);
 
     visible = ((NtUserGetWindowLongW(data->hwnd, GWL_STYLE) & WS_VISIBLE) == WS_VISIBLE) &&
-               (!(NtUserGetWindowLongW(data->hwnd, GWL_EXSTYLE) & WS_EX_LAYERED) ||
-                data->layered_attribs_set);
+               (!(exstyle & WS_EX_LAYERED) || data->layered_attribs_set);
 
     if (!visible) role = WAYLAND_SURFACE_ROLE_NONE;
     else if (toplevel_surface) role = WAYLAND_SURFACE_ROLE_SUBSURFACE;
@@ -213,6 +214,14 @@ static BOOL wayland_win_data_create_wayland_surface(struct wayland_win_data *dat
     }
 
     if (!(surface = data->wayland_surface) && !(surface = wayland_surface_create(data->hwnd))) return FALSE;
+
+    /* Pass through mouse events for layered, transparent windows, to match
+     * Windows behavior. */
+    input_region = ((exstyle & WS_EX_TRANSPARENT) && (exstyle & WS_EX_LAYERED)) ?
+                   wl_compositor_create_region(process_wayland.wl_compositor) :
+                   NULL;
+    wl_surface_set_input_region(surface->wl_surface, input_region);
+    if (input_region) wl_region_destroy(input_region);
 
     /* If the window is a visible toplevel make it a wayland
      * xdg_toplevel. Otherwise keep it role-less to avoid polluting the
