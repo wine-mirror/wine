@@ -2069,128 +2069,12 @@ static NTSTATUS pulse_release_capture_buffer(void *args)
 static NTSTATUS pulse_is_format_supported(void *args)
 {
     struct is_format_supported_params *params = args;
-    WAVEFORMATEXTENSIBLE in;
-    WAVEFORMATEXTENSIBLE *out;
-    const WAVEFORMATEX *fmt = &in.Format;
-    const BOOLEAN exclusive = params->share == AUDCLNT_SHAREMODE_EXCLUSIVE;
 
-    params->result = S_OK;
-
-    memcpy(&in, params->fmt_in, params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
-                                sizeof(in) : sizeof(in.Format));
-
-    if (exclusive)
-        out = &in;
-    else {
-        out = params->fmt_out;
-        memcpy(out, fmt, fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
-                         sizeof(*out) : sizeof((*out).Format));
-    }
-
-    switch (fmt->wFormatTag) {
-    case WAVE_FORMAT_EXTENSIBLE: {
-        if ((fmt->cbSize != sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX) &&
-             fmt->cbSize != sizeof(WAVEFORMATEXTENSIBLE)) ||
-             fmt->nBlockAlign != fmt->wBitsPerSample / 8 * fmt->nChannels ||
-             in.Samples.wValidBitsPerSample > fmt->wBitsPerSample ||
-             fmt->nAvgBytesPerSec != fmt->nBlockAlign * fmt->nSamplesPerSec) {
-            params->result = E_INVALIDARG;
-            break;
-        }
-
-        if (exclusive) {
-            UINT32 mask = 0, i, channels = 0;
-
-            if (!(in.dwChannelMask & (SPEAKER_ALL | SPEAKER_RESERVED))) {
-                for (i = 1; !(i & SPEAKER_RESERVED); i <<= 1) {
-                    if (i & in.dwChannelMask) {
-                        mask |= i;
-                        ++channels;
-                    }
-                }
-
-                if (channels != fmt->nChannels || (in.dwChannelMask & ~mask)) {
-                    params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
-                    break;
-                }
-            } else {
-                params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
-                break;
-            }
-        }
-
-        if (IsEqualGUID(&in.SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)) {
-            if (fmt->wBitsPerSample != 32) {
-                params->result = E_INVALIDARG;
-                break;
-            }
-
-            if (in.Samples.wValidBitsPerSample != fmt->wBitsPerSample) {
-                params->result = S_FALSE;
-                out->Samples.wValidBitsPerSample = fmt->wBitsPerSample;
-            }
-        } else if (IsEqualGUID(&in.SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)) {
-            if (!fmt->wBitsPerSample || fmt->wBitsPerSample > 32 || fmt->wBitsPerSample % 8) {
-                params->result = E_INVALIDARG;
-                break;
-            }
-
-            if (in.Samples.wValidBitsPerSample != fmt->wBitsPerSample &&
-               !(fmt->wBitsPerSample == 32 &&
-                in.Samples.wValidBitsPerSample == 24)) {
-                params->result = S_FALSE;
-                out->Samples.wValidBitsPerSample = fmt->wBitsPerSample;
-                break;
-            }
-        } else {
-            params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
-            break;
-        }
-
-        break;
-    }
-    case WAVE_FORMAT_ALAW:
-    case WAVE_FORMAT_MULAW:
-        if (fmt->wBitsPerSample != 8) {
-            params->result = E_INVALIDARG;
-            break;
-        }
-    /* Fall-through */
-    case WAVE_FORMAT_IEEE_FLOAT:
-        if (fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT && fmt->wBitsPerSample != 32) {
-            params->result = E_INVALIDARG;
-            break;
-        }
-    /* Fall-through */
-    case WAVE_FORMAT_PCM: {
-        if (fmt->wFormatTag == WAVE_FORMAT_PCM &&
-           (!fmt->wBitsPerSample || fmt->wBitsPerSample > 32 || fmt->wBitsPerSample % 8)) {
-            params->result = E_INVALIDARG;
-            break;
-        }
-
-        if (fmt->nChannels > 2) {
-            params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
-            break;
-        }
-
-        /* fmt->cbSize, fmt->nBlockAlign and fmt->nAvgBytesPerSec seem to be
-         * ignored, invalid values are happily accepted. */
-        break;
-    }
-    default:
-        params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
-        break;
-    }
-
-    if (exclusive) { /* This driver does not support exclusive mode. */
-        if (params->result == S_OK)
-            params->result = params->flow == eCapture ?
-                                             AUDCLNT_E_UNSUPPORTED_FORMAT :
-                                             AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED;
-        else if (params->result == S_FALSE)
-            params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
-    }
+    /* This driver does not support exclusive mode. */
+    if (params->share == AUDCLNT_SHAREMODE_EXCLUSIVE)
+        params->result = AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED;
+    else
+        params->result = S_OK;
 
     return STATUS_SUCCESS;
 }
@@ -2838,7 +2722,6 @@ static NTSTATUS pulse_wow64_is_format_supported(void *args)
         .flow = params32->flow,
         .share = params32->share,
         .fmt_in = ULongToPtr(params32->fmt_in),
-        .fmt_out = ULongToPtr(params32->fmt_out)
     };
     pulse_is_format_supported(&params);
     params32->result = params.result;

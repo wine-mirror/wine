@@ -136,7 +136,6 @@ struct is_format_supported_params
     EDataFlow flow;
     AUDCLNT_SHAREMODE share;
     const WAVEFORMATEX *fmt_in;
-    WAVEFORMATEXTENSIBLE *fmt_out;
     HRESULT result;
 };
 
