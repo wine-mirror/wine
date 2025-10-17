@@ -57021,7 +57021,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceProperties2(void *args)
 
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
 
-    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceProperties2(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pProperties);
+    vk_funcs->p_vkGetPhysicalDeviceProperties2(params->physicalDevice, params->pProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -57041,7 +57041,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceProperties2(void *args)
 
     init_conversion_context(ctx);
     convert_VkPhysicalDeviceProperties2_win32_to_host(ctx, (VkPhysicalDeviceProperties232 *)UlongToPtr(params->pProperties), &pProperties_host);
-    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceProperties2(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pProperties_host);
+    vk_funcs->p_vkGetPhysicalDeviceProperties2((VkPhysicalDevice)UlongToPtr(params->physicalDevice), &pProperties_host);
     convert_VkPhysicalDeviceProperties2_host_to_win32(&pProperties_host, (VkPhysicalDeviceProperties232 *)UlongToPtr(params->pProperties));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -57054,7 +57054,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceProperties2KHR(void *args)
 
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
 
-    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceProperties2KHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pProperties);
+    vk_funcs->p_vkGetPhysicalDeviceProperties2KHR(params->physicalDevice, params->pProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -57074,7 +57074,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceProperties2KHR(void *args)
 
     init_conversion_context(ctx);
     convert_VkPhysicalDeviceProperties2_win32_to_host(ctx, (VkPhysicalDeviceProperties232 *)UlongToPtr(params->pProperties), &pProperties_host);
-    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceProperties2KHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pProperties_host);
+    vk_funcs->p_vkGetPhysicalDeviceProperties2KHR((VkPhysicalDevice)UlongToPtr(params->physicalDevice), &pProperties_host);
     convert_VkPhysicalDeviceProperties2_host_to_win32(&pProperties_host, (VkPhysicalDeviceProperties232 *)UlongToPtr(params->pProperties));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
