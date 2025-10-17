@@ -841,8 +841,18 @@ static HRESULT STDMETHODCALLTYPE property_value_GetBooleanArray(IPropertyValue *
 
 static HRESULT STDMETHODCALLTYPE property_value_GetStringArray(IPropertyValue *iface, UINT32 *value_size, HSTRING **value)
 {
+    unsigned int i;
+    HRESULT hr;
+
     TRACE("iface %p, value_size %p, value %p.\n", iface, value_size, value);
-    return property_value_get_primitive_array(PropertyType_StringArray);
+
+    hr = property_value_get_primitive_array(PropertyType_StringArray);
+    if (SUCCEEDED(hr))
+    {
+        for (i = 0; i < *value_size; i++)
+            WindowsDuplicateString((*value)[i], &(*value)[i]);
+    }
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_GetInspectableArray(IPropertyValue *iface, UINT32 *value_size, IInspectable ***value)
