@@ -721,6 +721,12 @@ static BOOL get_class(struct parsed_symbol* sym)
                     !str_array_push(sym, name, -1, &sym->names))
                     return FALSE;
                 break;
+            case 'A':
+                while(sym->current && *sym->current != '@') sym->current++;
+                if (!sym->current) return FALSE;
+                name = "`anonymous namespace'";
+                sym->current++;
+                break;
             case '?':
                 {
                     struct array stack = sym->stack;

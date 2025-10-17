@@ -222,6 +222,10 @@ static void test___unDName(void)
            UNDNAME_NO_ARGUMENTS},
 /*   8 */ {"??$foo@J_W$$T@bar@@YAJQB_W$$THQAUgod@@@Z",
            "long __cdecl bar::foo<long,wchar_t,std::nullptr_t>(wchar_t const * const,std::nullptr_t,int,struct god * const)"},
+/*   9 */ {"?AU?$DeprecatedRAIIContextManager@UEnablePythonDispatcher@?A0x1272d024@@$$V@impl@torch@@",
+           "struct torch::impl::DeprecatedRAIIContextManager<struct `anonymous namespace'::EnablePythonDispatcher>",
+           NULL,
+           UNDNAME_NO_ARGUMENTS},
 
     };
     unsigned i;
