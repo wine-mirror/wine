@@ -1873,27 +1873,6 @@ static NTSTATUS alsa_is_format_supported(void *args)
     int err;
     int alsa_channels, alsa_channel_map[32];
 
-    params->result = S_OK;
-
-    if(!params->fmt_in || (params->share == AUDCLNT_SHAREMODE_SHARED && !params->fmt_out))
-        params->result = E_POINTER;
-    else if(params->share != AUDCLNT_SHAREMODE_SHARED && params->share != AUDCLNT_SHAREMODE_EXCLUSIVE)
-        params->result = E_INVALIDARG;
-    else if(params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
-        if(params->fmt_in->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
-            params->result = E_INVALIDARG;
-        else if(params->fmt_in->nAvgBytesPerSec == 0 || params->fmt_in->nBlockAlign == 0 ||
-                (fmtex->Samples.wValidBitsPerSample > params->fmt_in->wBitsPerSample))
-            params->result = E_INVALIDARG;
-    }
-    if(FAILED(params->result))
-        return STATUS_SUCCESS;
-
-    if(params->fmt_in->nChannels == 0){
-        params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
-        return STATUS_SUCCESS;
-    }
-
     params->result = alsa_open_device(params->device, params->flow, &pcm_handle, &hw_params);
     if(FAILED(params->result))
         return STATUS_SUCCESS;

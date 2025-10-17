@@ -366,6 +366,123 @@ skip:
     return wcsdup(name);
 }
 
+static HRESULT validate_wfx(const WAVEFORMATEX *fmt, AUDCLNT_SHAREMODE share_mode)
+{
+    BOOL exclusive = (share_mode == AUDCLNT_SHAREMODE_EXCLUSIVE);
+    const WAVEFORMATEXTENSIBLE *fmtx = (const void *)fmt;
+    HRESULT ret = S_OK;
+
+    if (share_mode != AUDCLNT_SHAREMODE_SHARED && share_mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
+        return E_INVALIDARG;
+
+    if (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
+        if (fmt->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
+            ret = E_INVALIDARG;
+        else if (fmt->nAvgBytesPerSec == 0 || fmt->nBlockAlign == 0 ||
+                (fmtx->Samples.wValidBitsPerSample > fmt->wBitsPerSample))
+            ret = E_INVALIDARG;
+        else if (fmt->nChannels == 0)
+            ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+    }
+
+    if (FAILED(ret))
+        return ret;
+
+    switch (fmt->wFormatTag) {
+        case WAVE_FORMAT_EXTENSIBLE:
+            if ((fmt->cbSize != sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX) &&
+                fmt->cbSize != sizeof(WAVEFORMATEXTENSIBLE)) ||
+                fmt->nBlockAlign != fmt->wBitsPerSample / 8 * fmt->nChannels ||
+                fmtx->Samples.wValidBitsPerSample > fmt->wBitsPerSample ||
+                fmt->nAvgBytesPerSec != fmt->nBlockAlign * fmt->nSamplesPerSec) {
+                ret = E_INVALIDARG;
+            }
+
+            if (exclusive) {
+                UINT32 mask = 0, i, channels = 0;
+
+                if (!(fmtx->dwChannelMask & (SPEAKER_ALL | SPEAKER_RESERVED))) {
+                    for (i = 1; !(i & SPEAKER_RESERVED); i <<= 1) {
+                        if (i & fmtx->dwChannelMask) {
+                            mask |= i;
+                            ++channels;
+                        }
+                    }
+
+                    if (channels != fmt->nChannels || (fmtx->dwChannelMask & ~mask)) {
+                        ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+                        break;
+                    }
+                } else {
+                    ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+                    break;
+                }
+            }
+
+            if (IsEqualGUID(&fmtx->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)) {
+                if (fmt->wBitsPerSample != 32) {
+                    ret = E_INVALIDARG;
+                    break;
+                }
+
+                if (fmtx->Samples.wValidBitsPerSample != fmt->wBitsPerSample) {
+                    ret = S_FALSE;
+                }
+            } else if (IsEqualGUID(&fmtx->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)) {
+                if (!fmt->wBitsPerSample || fmt->wBitsPerSample > 32 || fmt->wBitsPerSample % 8) {
+                    ret = E_INVALIDARG;
+                    break;
+                }
+
+                if (fmtx->Samples.wValidBitsPerSample != fmt->wBitsPerSample &&
+                !(fmt->wBitsPerSample == 32 &&
+                    fmtx->Samples.wValidBitsPerSample == 24)) {
+                    ret = S_FALSE;
+                    break;
+                }
+            } else {
+                ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+                break;
+            }
+            break;
+
+        case WAVE_FORMAT_ALAW:
+        case WAVE_FORMAT_MULAW:
+            if (fmt->wBitsPerSample != 8) {
+                ret = E_INVALIDARG;
+                break;
+            }
+        /* Fall-through */
+        case WAVE_FORMAT_IEEE_FLOAT:
+            if (fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT && fmt->wBitsPerSample != 32) {
+                ret = E_INVALIDARG;
+                break;
+            }
+        /* Fall-through */
+        case WAVE_FORMAT_PCM:
+            if (fmt->wFormatTag == WAVE_FORMAT_PCM &&
+                    (!fmt->wBitsPerSample || fmt->wBitsPerSample > 32 || fmt->wBitsPerSample % 8)) {
+                ret = E_INVALIDARG;
+                break;
+            }
+
+            if (fmt->nChannels > 2) {
+                ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+                break;
+            }
+
+            /* fmt->cbSize, fmt->nBlockAlign and fmt->nAvgBytesPerSec seem to be
+            * ignored, invalid values are happily accepted. */
+            break;
+
+        default:
+            ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+            break;
+    }
+
+    return ret;
+}
+
 static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_period,
                            const AUDCLNT_SHAREMODE mode, const DWORD flags,
                            REFERENCE_TIME duration, REFERENCE_TIME period,
@@ -375,6 +492,7 @@ static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_
     UINT32 i, channel_count;
     stream_handle stream;
     WCHAR *name;
+    HRESULT hr;
 
     if (!fmt)
         return E_POINTER;
@@ -397,6 +515,13 @@ static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_
         FIXME("Unknown flags: %08lx\n", flags);
         return E_INVALIDARG;
     }
+
+    hr = validate_wfx(fmt, mode);
+
+    if (hr == S_FALSE)
+        hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
+    if (hr != S_OK)
+        return hr;
 
     sessions_lock();
 
@@ -757,11 +882,20 @@ static HRESULT WINAPI client_IsFormatSupported(IAudioClient3 *iface, AUDCLNT_SHA
 {
     struct audio_client *This = impl_from_IAudioClient3(iface);
     struct is_format_supported_params params;
+    HRESULT hr;
 
     TRACE("(%p)->(%x, %p, %p)\n", This, mode, fmt, out);
 
-    if (fmt)
-        dump_fmt(fmt);
+    if (out)
+        *out = NULL;
+
+    if (!fmt || (mode == AUDCLNT_SHAREMODE_SHARED && !out))
+        return E_POINTER;
+
+    dump_fmt(fmt);
+
+    if (FAILED(hr = validate_wfx(fmt, mode)))
+        return hr;
 
     params.device  = This->device_name;
     params.flow    = This->dataflow;
@@ -769,11 +903,8 @@ static HRESULT WINAPI client_IsFormatSupported(IAudioClient3 *iface, AUDCLNT_SHA
     params.fmt_in  = fmt;
     params.fmt_out = NULL;
 
-    if (out) {
-        *out = NULL;
-        if (mode == AUDCLNT_SHAREMODE_SHARED)
-            params.fmt_out = CoTaskMemAlloc(sizeof(*params.fmt_out));
-    }
+    if (out && mode == AUDCLNT_SHAREMODE_SHARED)
+        params.fmt_out = CoTaskMemAlloc(sizeof(*params.fmt_out));
 
     wine_unix_call(is_format_supported, &params);
 

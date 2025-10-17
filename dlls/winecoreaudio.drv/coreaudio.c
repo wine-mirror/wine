@@ -1100,29 +1100,19 @@ static NTSTATUS unix_is_format_supported(void *args)
     AudioComponentInstance unit;
     const AudioDeviceID dev_id = dev_id_from_device(params->device);
 
-    params->result = S_OK;
-
-    if(!params->fmt_in || (params->share == AUDCLNT_SHAREMODE_SHARED && !params->fmt_out))
-        params->result = E_POINTER;
-    else if(params->share != AUDCLNT_SHAREMODE_SHARED && params->share != AUDCLNT_SHAREMODE_EXCLUSIVE)
-        params->result = E_INVALIDARG;
-    else if(params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
-        if(params->fmt_in->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
-            params->result = E_INVALIDARG;
-        else if(params->fmt_in->nAvgBytesPerSec == 0 || params->fmt_in->nBlockAlign == 0 ||
-                fmtex->Samples.wValidBitsPerSample > params->fmt_in->wBitsPerSample)
-            params->result = E_INVALIDARG;
-        else if(fmtex->Samples.wValidBitsPerSample < params->fmt_in->wBitsPerSample)
+    if(params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
+        if (fmtex->Samples.wValidBitsPerSample < params->fmt_in->wBitsPerSample)
             goto unsupported;
         else if(params->share == AUDCLNT_SHAREMODE_EXCLUSIVE &&
                 (fmtex->dwChannelMask == 0 || fmtex->dwChannelMask & SPEAKER_RESERVED))
             goto unsupported;
     }
-    if(FAILED(params->result)) return STATUS_SUCCESS;
 
     if(params->fmt_in->nBlockAlign != params->fmt_in->nChannels * params->fmt_in->wBitsPerSample / 8 ||
        params->fmt_in->nAvgBytesPerSec != params->fmt_in->nBlockAlign * params->fmt_in->nSamplesPerSec)
         goto unsupported;
+
+    params->result = S_OK;
 
     if(params->fmt_in->nChannels == 0){
         params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;

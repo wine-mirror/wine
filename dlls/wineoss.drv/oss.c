@@ -1141,18 +1141,6 @@ static NTSTATUS oss_is_format_supported(void *args)
     struct is_format_supported_params *params = args;
     int fd;
 
-    params->result = S_OK;
-
-    if(!params->fmt_in || (params->share == AUDCLNT_SHAREMODE_SHARED && !params->fmt_out))
-        params->result = E_POINTER;
-    else if(params->share != AUDCLNT_SHAREMODE_SHARED && params->share != AUDCLNT_SHAREMODE_EXCLUSIVE)
-        params->result = E_INVALIDARG;
-    else if(params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-            params->fmt_in->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
-        params->result = E_INVALIDARG;
-    if(FAILED(params->result))
-        return STATUS_SUCCESS;
-
     fd = open_device(params->device, params->flow);
     if(fd < 0){
         WARN("Unable to open device %s: %d (%s)\n", params->device, errno, strerror(errno));

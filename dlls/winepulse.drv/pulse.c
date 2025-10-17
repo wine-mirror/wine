@@ -2076,27 +2076,8 @@ static NTSTATUS pulse_is_format_supported(void *args)
 
     params->result = S_OK;
 
-    if (!params->fmt_in || (params->share == AUDCLNT_SHAREMODE_SHARED && !params->fmt_out))
-        params->result = E_POINTER;
-    else if (params->share != AUDCLNT_SHAREMODE_SHARED && params->share != AUDCLNT_SHAREMODE_EXCLUSIVE)
-        params->result = E_INVALIDARG;
-    else {
-        memcpy(&in, params->fmt_in, params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
-                                    sizeof(in) : sizeof(in.Format));
-
-        if (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
-            if (fmt->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
-                params->result = E_INVALIDARG;
-            else if (fmt->nAvgBytesPerSec == 0 || fmt->nBlockAlign == 0 ||
-                    (in.Samples.wValidBitsPerSample > fmt->wBitsPerSample))
-                params->result = E_INVALIDARG;
-            else if (fmt->nChannels == 0)
-                params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
-        }
-    }
-
-    if (FAILED(params->result))
-        return STATUS_SUCCESS;
+    memcpy(&in, params->fmt_in, params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
+                                sizeof(in) : sizeof(in.Format));
 
     if (exclusive)
         out = &in;
