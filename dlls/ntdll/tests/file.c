@@ -6375,14 +6375,11 @@ static void test_reparse_points(void)
 
     swprintf( path, ARRAY_SIZE(path), L"%s/testreparse_dirlink", temp_path );
     find_handle = FindFirstFileW( path, &find_data );
-    todo_wine ok( find_handle != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
-    if (find_handle != INVALID_HANDLE_VALUE)
-    {
-        todo_wine ok( find_data.dwFileAttributes == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT),
-            "got attributes %#lx\n", find_data.dwFileAttributes );
-        todo_wine ok( find_data.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT, "got tag %#lx\n", find_data.dwReserved0 );
-        FindClose( find_handle );
-    }
+    ok( find_handle != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
+    todo_wine ok( find_data.dwFileAttributes == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT),
+        "got attributes %#lx\n", find_data.dwFileAttributes );
+    todo_wine ok( find_data.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT, "got tag %#lx\n", find_data.dwReserved0 );
+    FindClose( find_handle );
 
     /* Test using the reparse point as a parent.
      * On some machines this returns STATUS_REPARSE_POINT_NOT_RESOLVED (which

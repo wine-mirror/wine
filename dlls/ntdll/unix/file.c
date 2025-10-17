@@ -1591,6 +1591,7 @@ static BOOL append_entry( struct dir_data *data, const char *long_name,
 
     long_len = ntdll_umbstowcs( long_name, strlen(long_name), long_nameW, ARRAY_SIZE(long_nameW) );
     if (long_len == ARRAY_SIZE(long_nameW)) return TRUE;
+    if (long_nameW[long_len - 1] == '?') --long_len;
     long_nameW[long_len] = 0;
 
     if (short_name)
