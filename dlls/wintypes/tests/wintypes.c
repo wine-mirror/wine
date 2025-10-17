@@ -834,6 +834,9 @@ static void test_IPropertyValueStatics(void)
     hr = IPropertyValue_GetBoolean(value, &ret);
     ok(hr == TYPE_E_TYPEMISMATCH, "Got unexpected hr %#lx.\n", hr);
 
+    hr = IPropertyValueStatics_CreateString(statics, (HSTRING)-1, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
     IPropertyValue_Release(value);
 
     /* Parameter checks for array types */

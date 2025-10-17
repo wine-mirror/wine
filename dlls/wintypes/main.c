@@ -1466,6 +1466,9 @@ static HRESULT STDMETHODCALLTYPE property_value_statics_CreateString(IPropertyVa
 
     TRACE("iface %p, value %s, property_value %p.\n", iface, debugstr_hstring(value_str), property_value);
 
+    if (!property_value)
+        return E_POINTER;
+
     if (FAILED(hr = WindowsDuplicateString(value_str, &value)))
     {
         *property_value = NULL;
