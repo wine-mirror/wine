@@ -548,6 +548,13 @@ static void test_var_call2( int line, HRESULT (WINAPI *func)(LPVARIANT,LPVARIANT
     VariantClear( &result );
 }
 
+static void test_var_call2_commutative( int line, HRESULT (WINAPI *func)(LPVARIANT,LPVARIANT,LPVARIANT),
+                            VARIANT *left, VARIANT *right, VARIANT *expected )
+{
+    test_var_call2( line, func, left, right, expected );
+    test_var_call2( line, func, right, left, expected );
+}
+
 #define test_bstr_var(a,b) _test_bstr_var(__LINE__,a,b)
 static void _test_bstr_var(unsigned line, const VARIANT *v, const WCHAR *str)
 {
@@ -6023,7 +6030,7 @@ static HRESULT (WINAPI *pVarMul)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarMul, &left, &right, &exp )
+        test_var_call2_commutative( __LINE__, pVarMul, &left, &right, &exp )
 
 static void test_VarMul(void)
 {
