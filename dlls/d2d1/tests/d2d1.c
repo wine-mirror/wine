@@ -15599,6 +15599,50 @@ static void test_compute_geometry_area(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static D2D1_PIXEL_FORMAT get_wic_target_format(const D2D1_PIXEL_FORMAT *target_format,
+        const GUID *bitmap_format)
+{
+    D2D1_PIXEL_FORMAT format;
+
+    format = *target_format;
+    if (target_format->format == DXGI_FORMAT_UNKNOWN)
+    {
+        if (IsEqualGUID(bitmap_format, &GUID_WICPixelFormat32bppPBGRA)
+                || IsEqualGUID(bitmap_format, &GUID_WICPixelFormat32bppBGR))
+        {
+            format.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        }
+        else if (IsEqualGUID(bitmap_format, &GUID_WICPixelFormat32bppPRGBA)
+                || IsEqualGUID(bitmap_format, &GUID_WICPixelFormat32bppRGB))
+        {
+            format.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        }
+        else
+        {
+            ok(0, "Unexpected format %s.\n", debugstr_guid(bitmap_format));
+        }
+    }
+    if (target_format->alphaMode == D2D1_ALPHA_MODE_UNKNOWN)
+    {
+        if (IsEqualGUID(bitmap_format, &GUID_WICPixelFormat32bppPBGRA)
+                || IsEqualGUID(bitmap_format, &GUID_WICPixelFormat32bppPRGBA))
+        {
+            format.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+        }
+        else if (IsEqualGUID(bitmap_format, &GUID_WICPixelFormat32bppBGR)
+                || IsEqualGUID(bitmap_format, &GUID_WICPixelFormat32bppRGB))
+        {
+            format.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+        }
+        else
+        {
+            ok(0, "Unexpected format %s.\n", debugstr_guid(bitmap_format));
+        }
+    }
+
+    return format;
+}
+
 static void test_wic_target_format(BOOL d3d11)
 {
     static const struct
@@ -15659,11 +15703,16 @@ static void test_wic_target_format(BOOL d3d11)
         { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE },
                 &GUID_WICPixelFormat32bppPBGRA, E_INVALIDARG },
     };
+    D2D1_PIXEL_FORMAT pixel_format, expected_pixel_format;
     D2D1_RENDER_TARGET_PROPERTIES rt_desc;
+    ID2D1DeviceContext *device_context;
     IWICImagingFactory *wic_factory;
     struct d2d1_test_context ctx;
     IWICBitmap *wic_bitmap;
     ID2D1RenderTarget *rt;
+    ID2D1Bitmap *bitmap;
+    ID2D1Image *image;
+    D2D1_SIZE_U size;
     unsigned int i;
     HRESULT hr;
 
@@ -15679,7 +15728,7 @@ static void test_wic_target_format(BOOL d3d11)
     {
         winetest_push_context("Test %u", i);
 
-        hr = IWICImagingFactory_CreateBitmap(wic_factory, 16, 16,
+        hr = IWICImagingFactory_CreateBitmap(wic_factory, 24, 16,
                 wic_target_formats[i].wic_format, WICBitmapCacheOnDemand, &wic_bitmap);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -15692,6 +15741,35 @@ static void test_wic_target_format(BOOL d3d11)
         hr = ID2D1Factory_CreateWicBitmapRenderTarget(ctx.factory, wic_bitmap, &rt_desc, &rt);
         todo_wine_if(FAILED(wic_target_formats[i].hr))
         ok(hr == wic_target_formats[i].hr, "Got unexpected hr %#lx.\n", hr);
+
+        if (hr == S_OK && hr == wic_target_formats[i].hr && ctx.context)
+        {
+            hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&device_context);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            ID2D1DeviceContext_GetTarget(device_context, &image);
+            hr = ID2D1Image_QueryInterface(image, &IID_ID2D1Bitmap, (void **)&bitmap);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            size = ID2D1Bitmap_GetPixelSize(bitmap);
+            ok(size.width == 24 && size.height == 16, "Unexpected target size %ux%u.\n",
+                    size.width, size.height);
+
+            expected_pixel_format = get_wic_target_format(&wic_target_formats[i].pixel_format,
+                    wic_target_formats[i].wic_format);
+
+            pixel_format = ID2D1Bitmap_GetPixelFormat(bitmap);
+            ok(pixel_format.format == expected_pixel_format.format, "Unexpected pixel format %#x.\n",
+                    pixel_format.format);
+            todo_wine_if(wic_target_formats[i].pixel_format.alphaMode == D2D1_ALPHA_MODE_UNKNOWN)
+            ok(pixel_format.alphaMode == expected_pixel_format.alphaMode, "Unexpected alpha mode %d.\n",
+                    pixel_format.alphaMode);
+
+            ID2D1Bitmap_Release(bitmap);
+            ID2D1Image_Release(image);
+
+            ID2D1DeviceContext_Release(device_context);
+        }
 
         IWICBitmap_Release(wic_bitmap);
 
