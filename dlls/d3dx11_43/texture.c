@@ -16,9 +16,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+
 #include "d3dx11.h"
 #include "d3dcompiler.h"
 #include "dxhelpers.h"
+#include "assert.h"
 
 #include "wine/debug.h"
 
@@ -248,6 +251,279 @@ HRESULT get_image_info(const void *data, SIZE_T size, D3DX11_IMAGE_INFO *img_inf
     return S_OK;
 }
 
+static void init_load_info(const D3DX11_IMAGE_LOAD_INFO *load_info, D3DX11_IMAGE_LOAD_INFO *out)
+{
+    if (load_info)
+    {
+        *out = *load_info;
+        return;
+    }
+
+    out->Width = D3DX11_DEFAULT;
+    out->Height = D3DX11_DEFAULT;
+    out->Depth = D3DX11_DEFAULT;
+    out->FirstMipLevel = D3DX11_DEFAULT;
+    out->MipLevels = D3DX11_DEFAULT;
+    out->Usage = D3DX11_DEFAULT;
+    out->BindFlags = D3DX11_DEFAULT;
+    out->CpuAccessFlags = D3DX11_DEFAULT;
+    out->MiscFlags = D3DX11_DEFAULT;
+    out->Format = D3DX11_DEFAULT;
+    out->Filter = D3DX11_DEFAULT;
+    out->MipFilter = D3DX11_DEFAULT;
+    out->pSrcInfo = NULL;
+}
+
+HRESULT load_texture_data(const void *data, SIZE_T size, D3DX11_IMAGE_LOAD_INFO *load_info,
+        D3D11_SUBRESOURCE_DATA **resource_data)
+{
+    uint32_t loaded_mip_level_count, max_mip_level_count;
+    const struct pixel_format_desc *fmt_desc, *src_desc;
+    struct d3dx_subresource_data *sub_rsrcs = NULL;
+    D3DX11_IMAGE_INFO img_info;
+    struct d3dx_image image;
+    unsigned int i, j;
+    HRESULT hr = S_OK;
+
+    if (!data || !size)
+        return E_FAIL;
+
+    *resource_data = NULL;
+    if (!load_info->Filter || load_info->Filter == D3DX11_DEFAULT)
+        load_info->Filter = D3DX11_FILTER_LINEAR;
+    if (FAILED(hr = d3dx_validate_filter(load_info->Filter)))
+    {
+        WARN("Invalid filter argument %#x.\n", load_info->Filter);
+        return hr;
+    }
+
+    hr = d3dx_image_init(data, size, &image, 0, D3DX_IMAGE_SUPPORT_DXT10);
+    if (FAILED(hr))
+        return E_FAIL;
+
+    hr = d3dx11_image_info_from_d3dx_image(&img_info, &image);
+    if (FAILED(hr))
+    {
+        WARN("Invalid or unsupported image file, hr %#lx.\n", hr);
+        hr = E_FAIL;
+        goto end;
+    }
+
+    if ((!(img_info.MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE) || img_info.ArraySize != 6)
+            && img_info.ArraySize != 1)
+    {
+        FIXME("img_info.ArraySize = %u not supported.\n", img_info.ArraySize);
+        hr = E_NOTIMPL;
+        goto end;
+    }
+
+    if (load_info->FirstMipLevel == D3DX11_DEFAULT || load_info->FirstMipLevel >= img_info.MipLevels)
+        load_info->FirstMipLevel = 0;
+
+    if (load_info->Format == D3DX11_DEFAULT || load_info->Format == DXGI_FORMAT_FROM_FILE)
+        load_info->Format = img_info.Format;
+    fmt_desc = get_d3dx_pixel_format_info(d3dx_pixel_format_id_from_dxgi_format(load_info->Format));
+    if (fmt_desc->format == D3DX_PIXEL_FORMAT_COUNT)
+    {
+        FIXME("Unknown DXGI format supplied, %#x.\n", load_info->Format);
+        hr = E_NOTIMPL;
+        goto end;
+    }
+
+    /* Potentially round up width/height to align with block size. */
+    if (!load_info->Width || load_info->Width == D3DX11_FROM_FILE || load_info->Width == D3DX11_DEFAULT)
+        load_info->Width = (img_info.Width + fmt_desc->block_width - 1) & ~(fmt_desc->block_width - 1);
+    if (!load_info->Height || load_info->Height == D3DX11_FROM_FILE || load_info->Height == D3DX11_DEFAULT)
+        load_info->Height = (img_info.Height + fmt_desc->block_height - 1) & ~(fmt_desc->block_height - 1);
+    if (!load_info->Depth || load_info->Depth == D3DX11_FROM_FILE || load_info->Depth == D3DX11_DEFAULT)
+        load_info->Depth = img_info.Depth;
+
+    if ((load_info->Depth > 1) && (img_info.ResourceDimension != D3D11_RESOURCE_DIMENSION_TEXTURE3D))
+    {
+        WARN("Invalid depth value %u for image with dimension %d.\n", load_info->Depth, img_info.ResourceDimension);
+        hr = E_FAIL;
+        goto end;
+    }
+
+    max_mip_level_count = d3dx_get_max_mip_levels_for_size(load_info->Width, load_info->Height, load_info->Depth);
+    if (!load_info->MipLevels || load_info->MipLevels == D3DX11_DEFAULT || load_info->MipLevels == D3DX11_FROM_FILE)
+        load_info->MipLevels = (load_info->MipLevels == D3DX11_FROM_FILE) ? img_info.MipLevels : max_mip_level_count;
+    load_info->MipLevels = min(max_mip_level_count, load_info->MipLevels);
+
+    hr = d3dx_create_subresource_data_for_texture(load_info->Width, load_info->Height, load_info->Depth,
+            load_info->MipLevels, img_info.ArraySize, fmt_desc, &sub_rsrcs);
+    if (FAILED(hr))
+        goto end;
+
+    src_desc = get_d3dx_pixel_format_info(image.format);
+    loaded_mip_level_count = min(img_info.MipLevels - load_info->FirstMipLevel, load_info->MipLevels);
+    for (i = 0; i < img_info.ArraySize; ++i)
+    {
+        struct volume dst_size = { load_info->Width, load_info->Height, load_info->Depth };
+
+        for (j = 0; j < loaded_mip_level_count; ++j)
+        {
+            struct d3dx_subresource_data *sub_rsrc = &sub_rsrcs[i * load_info->MipLevels + j];
+            const RECT unaligned_rect = { 0, 0, dst_size.width, dst_size.height };
+            struct d3dx_pixels src_pixels, dst_pixels;
+
+            hr = d3dx_image_get_pixels(&image, i, j + load_info->FirstMipLevel, &src_pixels);
+            if (FAILED(hr))
+                goto end;
+
+            set_d3dx_pixels(&dst_pixels, sub_rsrc->data, sub_rsrc->row_pitch, sub_rsrc->slice_pitch, NULL, dst_size.width,
+                    dst_size.height, dst_size.depth, &unaligned_rect);
+
+            hr = d3dx_load_pixels_from_pixels(&dst_pixels, fmt_desc, &src_pixels, src_desc, load_info->Filter, 0);
+            if (FAILED(hr))
+                goto end;
+
+            d3dx_get_next_mip_level_size(&dst_size);
+        }
+    }
+
+    if (loaded_mip_level_count < load_info->MipLevels)
+    {
+        struct volume base_level_size = { load_info->Width, load_info->Height, load_info->Depth };
+        const uint32_t base_level = loaded_mip_level_count - 1;
+
+        if (!load_info->MipFilter || load_info->MipFilter == D3DX11_DEFAULT)
+            load_info->MipFilter = D3DX11_FILTER_LINEAR;
+        if (FAILED(hr = d3dx_validate_filter(load_info->MipFilter)))
+        {
+            WARN("Invalid mip filter argument %#x.\n", load_info->MipFilter);
+            goto end;
+        }
+
+        d3dx_get_mip_level_size(&base_level_size, base_level);
+        for (i = 0; i < img_info.ArraySize; ++i)
+        {
+            struct volume src_size, dst_size;
+
+            src_size = dst_size = base_level_size;
+            for (j = base_level; j < (load_info->MipLevels - 1); ++j)
+            {
+                struct d3dx_subresource_data *dst_data = &sub_rsrcs[i * load_info->MipLevels + j + 1];
+                struct d3dx_subresource_data *src_data = &sub_rsrcs[i * load_info->MipLevels + j];
+                const RECT src_unaligned_rect = { 0, 0, src_size.width, src_size.height };
+                struct d3dx_pixels src_pixels, dst_pixels;
+                RECT dst_unaligned_rect;
+
+                d3dx_get_next_mip_level_size(&dst_size);
+                SetRect(&dst_unaligned_rect, 0, 0, dst_size.width, dst_size.height);
+                set_d3dx_pixels(&dst_pixels, dst_data->data, dst_data->row_pitch, dst_data->slice_pitch, NULL,
+                        dst_size.width, dst_size.height, dst_size.depth, &dst_unaligned_rect);
+                set_d3dx_pixels(&src_pixels, src_data->data, src_data->row_pitch, src_data->slice_pitch, NULL,
+                        src_size.width, src_size.height, src_size.depth, &src_unaligned_rect);
+
+                hr = d3dx_load_pixels_from_pixels(&dst_pixels, fmt_desc, &src_pixels, fmt_desc, load_info->MipFilter, 0);
+                if (FAILED(hr))
+                    goto end;
+
+                src_size = dst_size;
+            }
+        }
+    }
+
+    *resource_data = (D3D11_SUBRESOURCE_DATA *)sub_rsrcs;
+    sub_rsrcs = NULL;
+
+    load_info->Usage = (load_info->Usage == D3DX11_DEFAULT) ? D3D11_USAGE_DEFAULT : load_info->Usage;
+    load_info->BindFlags = (load_info->BindFlags == D3DX11_DEFAULT) ? D3D11_BIND_SHADER_RESOURCE : load_info->BindFlags;
+    load_info->CpuAccessFlags = (load_info->CpuAccessFlags == D3DX11_DEFAULT) ? 0 : load_info->CpuAccessFlags;
+    load_info->MiscFlags = (load_info->MiscFlags == D3DX11_DEFAULT) ? 0 : load_info->MiscFlags;
+    load_info->MiscFlags |= img_info.MiscFlags;
+    /*
+     * Must be present in order to get resource dimension for texture
+     * creation.
+     */
+    assert(load_info->pSrcInfo);
+    *load_info->pSrcInfo = img_info;
+
+end:
+    d3dx_image_cleanup(&image);
+    free(sub_rsrcs);
+    return hr;
+}
+
+HRESULT create_d3d_texture(ID3D11Device *device, D3DX11_IMAGE_LOAD_INFO *load_info,
+        D3D11_SUBRESOURCE_DATA *resource_data, ID3D11Resource **texture)
+{
+    HRESULT hr;
+
+    *texture = NULL;
+    switch (load_info->pSrcInfo->ResourceDimension)
+    {
+        case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
+        {
+            D3D11_TEXTURE2D_DESC texture_2d_desc = { 0 };
+            ID3D11Texture2D *texture_2d;
+
+            texture_2d_desc.Width = load_info->Width;
+            texture_2d_desc.Height = load_info->Height;
+            texture_2d_desc.MipLevels = load_info->MipLevels;
+            texture_2d_desc.ArraySize = load_info->pSrcInfo->ArraySize;
+            texture_2d_desc.Format = load_info->Format;
+            texture_2d_desc.SampleDesc.Count = 1;
+            texture_2d_desc.Usage = load_info->Usage;
+            texture_2d_desc.BindFlags = load_info->BindFlags;
+            texture_2d_desc.CPUAccessFlags = load_info->CpuAccessFlags;
+            texture_2d_desc.MiscFlags = load_info->MiscFlags;
+
+            if (FAILED(hr = ID3D11Device_CreateTexture2D(device, &texture_2d_desc, resource_data, &texture_2d)))
+                return hr;
+            *texture = (ID3D11Resource *)texture_2d;
+            break;
+        }
+
+        case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
+        {
+            D3D11_TEXTURE3D_DESC texture_3d_desc = { 0 };
+            ID3D11Texture3D *texture_3d;
+
+            texture_3d_desc.Width = load_info->Width;
+            texture_3d_desc.Height = load_info->Height;
+            texture_3d_desc.Depth = load_info->Depth;
+            texture_3d_desc.MipLevels = load_info->MipLevels;
+            texture_3d_desc.Format = load_info->Format;
+            texture_3d_desc.Usage = load_info->Usage;
+            texture_3d_desc.BindFlags = load_info->BindFlags;
+            texture_3d_desc.CPUAccessFlags = load_info->CpuAccessFlags;
+            texture_3d_desc.MiscFlags = load_info->MiscFlags;
+
+            if (FAILED(hr = ID3D11Device_CreateTexture3D(device, &texture_3d_desc, resource_data, &texture_3d)))
+                return hr;
+            *texture = (ID3D11Resource *)texture_3d;
+            break;
+        }
+
+        default:
+            FIXME("Unhandled resource dimension %d.\n", load_info->pSrcInfo->ResourceDimension);
+            return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+static HRESULT create_texture(ID3D11Device *device, const void *data, SIZE_T size,
+        D3DX11_IMAGE_LOAD_INFO *load_info, ID3D11Resource **texture)
+{
+    D3D11_SUBRESOURCE_DATA *resource_data;
+    D3DX11_IMAGE_LOAD_INFO load_info_copy;
+    D3DX11_IMAGE_INFO img_info;
+    HRESULT hr;
+
+    init_load_info(load_info, &load_info_copy);
+    if (!load_info_copy.pSrcInfo)
+        load_info_copy.pSrcInfo = &img_info;
+
+    if (FAILED((hr = load_texture_data(data, size, &load_info_copy, &resource_data))))
+        return hr;
+    hr = create_d3d_texture(device, &load_info_copy, resource_data, texture);
+    free(resource_data);
+    return hr;
+}
+
 HRESULT WINAPI D3DX11CreateShaderResourceViewFromMemory(ID3D11Device *device, const void *data,
         SIZE_T data_size, D3DX11_IMAGE_LOAD_INFO *load_info, ID3DX11ThreadPump *pump,
         ID3D11ShaderResourceView **view, HRESULT *hresult)
@@ -300,10 +576,23 @@ HRESULT WINAPI D3DX11CreateTextureFromMemory(ID3D11Device *device, const void *d
         SIZE_T data_size, D3DX11_IMAGE_LOAD_INFO *load_info, ID3DX11ThreadPump *pump,
         ID3D11Resource **texture, HRESULT *hresult)
 {
-    FIXME("device %p, data %p, data_size %Iu, load_info %p, pump %p, texture %p, hresult %p stub.\n",
+    HRESULT hr;
+
+    TRACE("device %p, data %p, data_size %Iu, load_info %p, pump %p, texture %p, hresult %p.\n",
             device, data, data_size, load_info, pump, texture, hresult);
 
-    return E_NOTIMPL;
+    if (!device)
+        return E_INVALIDARG;
+    if (!data)
+        return E_FAIL;
+
+    if (pump)
+        FIXME("D3DX11 thread pump is currently unimplemented.\n");
+
+    hr = create_texture(device, data, data_size, load_info, texture);
+    if (hresult)
+        *hresult = hr;
+    return hr;
 }
 
 HRESULT WINAPI D3DX11SaveTextureToFileW(ID3D11DeviceContext *context, ID3D11Resource *texture,

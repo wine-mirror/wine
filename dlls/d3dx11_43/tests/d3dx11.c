@@ -2921,12 +2921,6 @@ static void test_create_texture(void)
     WCHAR path[MAX_PATH];
     HRESULT hr, hr2;
 
-    if (!strcmp(winetest_platform, "wine"))
-    {
-        skip("Skipping texture creation tests.\n");
-        return;
-    }
-
     device = create_device();
     if (!device)
     {
@@ -3152,12 +3146,20 @@ static void test_create_texture(void)
     add_work_item_count = 0;
     hr = D3DX11CreateTextureFromMemory(device, test_image[0].data, test_image[0].size,
             NULL, &thread_pump, &resource, &hr2);
-    ok(add_work_item_count == 1, "Got unexpected add_work_item_count %u.\n", add_work_item_count);
+    todo_wine ok(add_work_item_count == 1, "Got unexpected add_work_item_count %u.\n", add_work_item_count);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
     check_resource_info(resource, test_image, __LINE__);
     check_resource_data(resource, test_image, __LINE__);
     ID3D11Resource_Release(resource);
+
+    if (!strcmp(winetest_platform, "wine"))
+    {
+        skip("Skipping D3DX11CreateTextureFrom{File,Resource} tests.\n");
+        CoUninitialize();
+        ok(!ID3D11Device_Release(device), "Unexpected refcount.\n");
+        return;
+    }
 
     /* D3DX11CreateTextureFromFile tests */
 
