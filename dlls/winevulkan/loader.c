@@ -417,34 +417,6 @@ VkResult WINAPI vkEnumerateInstanceVersion(uint32_t *version)
     return params.result;
 }
 
-void WINAPI vkGetPhysicalDeviceProperties2(VkPhysicalDevice phys_dev,
-        VkPhysicalDeviceProperties2 *properties2)
-{
-    struct vkGetPhysicalDeviceProperties2_params params;
-    NTSTATUS status;
-
-    TRACE("%p, %p\n", phys_dev, properties2);
-
-    params.physicalDevice = phys_dev;
-    params.pProperties = properties2;
-    status = UNIX_CALL(vkGetPhysicalDeviceProperties2, &params);
-    assert(!status);
-}
-
-void WINAPI vkGetPhysicalDeviceProperties2KHR(VkPhysicalDevice phys_dev,
-        VkPhysicalDeviceProperties2 *properties2)
-{
-    struct vkGetPhysicalDeviceProperties2KHR_params params;
-    NTSTATUS status;
-
-    TRACE("%p, %p\n", phys_dev, properties2);
-
-    params.physicalDevice = phys_dev;
-    params.pProperties = properties2;
-    status = UNIX_CALL(vkGetPhysicalDeviceProperties2KHR, &params);
-    assert(!status);
-}
-
 VkResult WINAPI vkCreateDevice(VkPhysicalDevice phys_dev, const VkDeviceCreateInfo *create_info,
                                const VkAllocationCallbacks *allocator, VkDevice *ret)
 {

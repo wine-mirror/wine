@@ -5662,6 +5662,26 @@ void WINAPI vkGetPhysicalDeviceProperties(VkPhysicalDevice physicalDevice, VkPhy
     assert(!status && "vkGetPhysicalDeviceProperties");
 }
 
+void WINAPI vkGetPhysicalDeviceProperties2(VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties2 *pProperties)
+{
+    struct vkGetPhysicalDeviceProperties2_params params;
+    NTSTATUS status;
+    params.physicalDevice = physicalDevice;
+    params.pProperties = pProperties;
+    status = UNIX_CALL(vkGetPhysicalDeviceProperties2, &params);
+    assert(!status && "vkGetPhysicalDeviceProperties2");
+}
+
+void WINAPI vkGetPhysicalDeviceProperties2KHR(VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties2 *pProperties)
+{
+    struct vkGetPhysicalDeviceProperties2KHR_params params;
+    NTSTATUS status;
+    params.physicalDevice = physicalDevice;
+    params.pProperties = pProperties;
+    status = UNIX_CALL(vkGetPhysicalDeviceProperties2KHR, &params);
+    assert(!status && "vkGetPhysicalDeviceProperties2KHR");
+}
+
 void WINAPI vkGetPhysicalDeviceQueueFamilyDataGraphProcessingEnginePropertiesARM(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceQueueFamilyDataGraphProcessingEngineInfoARM *pQueueFamilyDataGraphProcessingEngineInfo, VkQueueFamilyDataGraphProcessingEnginePropertiesARM *pQueueFamilyDataGraphProcessingEngineProperties)
 {
     struct vkGetPhysicalDeviceQueueFamilyDataGraphProcessingEnginePropertiesARM_params params;

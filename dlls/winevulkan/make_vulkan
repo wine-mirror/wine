@@ -301,8 +301,6 @@ MANUAL_LOADER_THUNKS = {
     "vkEnumerateInstanceExtensionProperties",
     "vkEnumerateInstanceVersion",
     "vkFreeCommandBuffers",
-    "vkGetPhysicalDeviceProperties2",
-    "vkGetPhysicalDeviceProperties2KHR",
 }
 
 STRUCT_CHAIN_CONVERSIONS = {
