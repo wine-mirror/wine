@@ -18,17 +18,21 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "macdrv_dll.h"
+#include "windef.h"
+#include "winbase.h"
+#include "ntgdi.h"
 #include "macdrv_res.h"
 #include "shellapi.h"
+#include "unixlib.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 
 
-HMODULE macdrv_module = 0;
+static HMODULE macdrv_module = 0;
 
 struct quit_info {
     HWND               *wins;
