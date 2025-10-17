@@ -114,6 +114,7 @@
 #include "winternl.h"
 #include "ddk/ntddk.h"
 #include "ddk/ntddser.h"
+#include "ddk/ntifs.h"
 #include "ddk/wdm.h"
 #define WINE_MOUNTMGR_EXTENSIONS
 #include "ddk/mountmgr.h"
@@ -180,6 +181,8 @@ typedef struct
 
 #define SAMBA_XATTR_DOS_ATTRIB  XATTR_USER_PREFIX "DOSATTRIB"
 #define XATTR_ATTRIBS_MASK      (FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM)
+
+#define XATTR_REPARSE XATTR_USER_PREFIX "WINEREPARSE"
 
 struct file_identity
 {
@@ -3455,14 +3458,19 @@ done:
 }
 
 
+static NTSTATUS resolve_reparse_point( int fd, int root_fd, OBJECT_ATTRIBUTES *attr,
+        UNICODE_STRING *nt_name, unsigned int nt_pos, unsigned int reparse_len, char **unix_name,
+        int unix_len, int pos, UINT disposition, BOOL is_unix, unsigned int reparse_count );
+
+
 /******************************************************************************
  *           lookup_unix_name
  *
  * Helper for nt_to_unix_file_name
  */
 static NTSTATUS lookup_unix_name( int root_fd, OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name,
-                                  unsigned int nt_pos, char **buffer, int unix_len,
-                                  int pos, UINT disposition, BOOL is_unix )
+                                  unsigned int nt_pos, char **buffer, int unix_len, int pos,
+                                  UINT disposition, BOOL is_unix, unsigned int reparse_count )
 {
     static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, '/', 0 };
     const WCHAR *name = attr->ObjectName->Buffer + nt_pos;
@@ -3523,6 +3531,7 @@ static NTSTATUS lookup_unix_name( int root_fd, OBJECT_ATTRIBUTES *attr, UNICODE_
     while (name_len)
     {
         const WCHAR *end, *next;
+        WCHAR *reparse_name;
 
         end = name;
         while (end < name + name_len && *end != '\\') end++;
@@ -3541,6 +3550,25 @@ static NTSTATUS lookup_unix_name( int root_fd, OBJECT_ATTRIBUTES *attr, UNICODE_
         }
 
         status = find_file_in_dir( root_fd, unix_name, pos, name, end - name, is_unix );
+
+        /* try to resolve it as a reparse point */
+        if (status == STATUS_OBJECT_NAME_NOT_FOUND && (reparse_name = malloc( (end - name + 1) * sizeof(WCHAR) )))
+        {
+            int reparse_fd;
+
+            memcpy( reparse_name, name, (end - name) * sizeof(WCHAR) );
+            reparse_name[end - name] = '?';
+
+            if (!find_file_in_dir( root_fd, unix_name, pos, reparse_name, end - name + 1, is_unix )
+                && (reparse_fd = openat( root_fd, unix_name, O_RDONLY )) >= 0)
+            {
+                status = resolve_reparse_point( reparse_fd, root_fd, attr, nt_name, nt_pos, next - name, buffer,
+                                                unix_len, pos, disposition, is_unix, reparse_count );
+                close( reparse_fd );
+                free( reparse_name );
+                return status;
+            }
+        }
 
         /* if this is the last element, not finding it is not necessarily fatal */
         if (!name_len)
@@ -3572,6 +3600,7 @@ static NTSTATUS lookup_unix_name( int root_fd, OBJECT_ATTRIBUTES *attr, UNICODE_
         if (status != STATUS_SUCCESS) break;
 
         pos += strlen( unix_name + pos );
+        nt_pos += next - name;
         name = next;
     }
 
@@ -3583,7 +3612,7 @@ static NTSTATUS lookup_unix_name( int root_fd, OBJECT_ATTRIBUTES *attr, UNICODE_
  *           nt_to_unix_file_name_no_root
  */
 static NTSTATUS nt_to_unix_file_name_no_root( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name,
-                                              char **unix_name_ret, UINT disposition )
+                                              char **unix_name_ret, UINT disposition, unsigned int reparse_count )
 {
     static const WCHAR unixW[] = {'u','n','i','x'};
     static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, 0 };
@@ -3677,8 +3706,8 @@ static NTSTATUS nt_to_unix_file_name_no_root( OBJECT_ATTRIBUTES *attr, UNICODE_S
     if (name_len > prefix_len && name[prefix_len] == '\\') prefix_len++;  /* allow a second backslash */
     nt_pos += prefix_len;
 
-    status = lookup_unix_name( AT_FDCWD, attr, nt_name, nt_pos,
-                               &unix_name, unix_len, pos, disposition, is_unix );
+    status = lookup_unix_name( AT_FDCWD, attr, nt_name, nt_pos, &unix_name, unix_len,
+                               pos, disposition, is_unix, reparse_count );
     if (status == STATUS_SUCCESS || status == STATUS_NO_SUCH_FILE)
     {
         *unix_name_ret = unix_name;
@@ -3711,7 +3740,7 @@ static NTSTATUS nt_to_unix_file_name( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *n
     NTSTATUS status;
 
     if (!attr->RootDirectory)  /* without root dir fall back to normal lookup */
-        return nt_to_unix_file_name_no_root( attr, nt_name, name_ret, disposition );
+        return nt_to_unix_file_name_no_root( attr, nt_name, name_ret, disposition, 0 );
 
     name     = attr->ObjectName->Buffer;
     name_len = attr->ObjectName->Length / sizeof(WCHAR);
@@ -3731,7 +3760,8 @@ static NTSTATUS nt_to_unix_file_name( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *n
         }
         else
         {
-            status = lookup_unix_name( root_fd, attr, nt_name, 0, &unix_name, unix_len, 1, disposition, FALSE );
+            status = lookup_unix_name( root_fd, attr, nt_name, 0, &unix_name, unix_len,
+                                       1, disposition, FALSE, 0 );
             if (needs_close) close( root_fd );
         }
     }
@@ -3827,6 +3857,116 @@ static WCHAR *collapse_path( WCHAR *path )
     while (p > start && (p[-1] == ' ' || p[-1] == '.')) p--;
     *p = 0;
     return path;
+}
+
+
+/* from MSDN */
+#define MAXIMUM_REPARSE_COUNT 63
+
+
+static NTSTATUS resolve_absolute_reparse_point( const WCHAR *target, unsigned int target_len,
+        OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name, const WCHAR *remainder, unsigned int remainder_len,
+        char **unix_name, UINT disposition, unsigned int reparse_count )
+{
+    WCHAR *new_nt_name;
+    char *new_unix_name;
+    NTSTATUS status;
+
+    TRACE( "target %s\n", debugstr_wn(target, target_len) );
+
+    /* glue together the target with the remainder of the path */
+
+    if (!(new_nt_name = malloc( (target_len + 1 + remainder_len + 1) * sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
+    memcpy( new_nt_name, target, target_len * sizeof(WCHAR) );
+    if (remainder_len)
+    {
+        if (new_nt_name[target_len - 1] != '\\')
+            new_nt_name[target_len++] = '\\';
+        memcpy( new_nt_name + target_len, remainder, remainder_len * sizeof(WCHAR) );
+    }
+    new_nt_name[target_len + remainder_len] = 0;
+
+    free( nt_name->Buffer );
+    nt_name->Buffer = new_nt_name;
+    nt_name->Length = (target_len + remainder_len) * sizeof(WCHAR);
+    nt_name->MaximumLength = nt_name->Length + sizeof(WCHAR);
+    attr->RootDirectory = 0;
+    attr->ObjectName = nt_name;
+
+    status = nt_to_unix_file_name_no_root( attr, nt_name, &new_unix_name, disposition, reparse_count );
+    if (!status || status == STATUS_NO_SUCH_FILE)
+    {
+        free( *unix_name );
+        *unix_name = new_unix_name;
+    }
+    return status;
+}
+
+
+static NTSTATUS resolve_reparse_point( int fd, int root_fd, OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name,
+        unsigned int nt_pos, unsigned int reparse_len, char **unix_name, int unix_len, int pos,
+        UINT disposition, BOOL is_unix, unsigned int reparse_count )
+{
+    const WCHAR *name = attr->ObjectName->Buffer;
+    unsigned int name_len = attr->ObjectName->Length / sizeof(WCHAR);
+    const WCHAR *remainder = name + nt_pos + reparse_len;
+    unsigned int remainder_len = name_len - (nt_pos + reparse_len);
+    REPARSE_DATA_BUFFER *data;
+    NTSTATUS status;
+    int size;
+
+    if (reparse_count++ >= MAXIMUM_REPARSE_COUNT)
+    {
+        WARN( "too many reparse points\n" );
+        return STATUS_REPARSE_POINT_NOT_RESOLVED;
+    }
+
+    if (!(data = malloc( MAXIMUM_REPARSE_DATA_BUFFER_SIZE ))) return STATUS_NO_MEMORY;
+
+    if ((size = xattr_fget( fd, XATTR_REPARSE, data, MAXIMUM_REPARSE_DATA_BUFFER_SIZE )) < 0)
+    {
+        ERR( "failed to read: %s\n", strerror(errno) );
+        free( data );
+        return errno_to_status( errno );
+    }
+
+    TRACE( "size %d tag %#x\n", size, data->ReparseTag );
+
+    if (size < sizeof(*data))
+    {
+        free( data );
+        return STATUS_IO_REPARSE_DATA_INVALID;
+    }
+
+    switch (data->ReparseTag)
+    {
+    case IO_REPARSE_TAG_MOUNT_POINT:
+    {
+        const WCHAR *target = data->MountPointReparseBuffer.PathBuffer
+                        + data->MountPointReparseBuffer.SubstituteNameOffset / sizeof(WCHAR);
+        USHORT target_len = data->MountPointReparseBuffer.SubstituteNameLength / sizeof(WCHAR);
+
+        status = resolve_absolute_reparse_point( target, target_len, attr, nt_name, remainder, remainder_len,
+                                                 unix_name, disposition, reparse_count );
+        break;
+    }
+
+    default:
+        if (!IsReparseTagDirectory(data->ReparseTag))
+        {
+            status = STATUS_IO_REPARSE_TAG_NOT_HANDLED;
+            break;
+        }
+
+        /* Directory reparse tags can be opened as normal directories.
+         * This is doable, but tricky, and unlikely to be needed. */
+        FIXME( "directory reparse tag %#x\n", data->ReparseTag );
+        status = STATUS_NOT_IMPLEMENTED;
+        break;
+    }
+
+    free( data );
+    return status;
 }
 
 
