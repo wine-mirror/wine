@@ -6220,22 +6220,22 @@ static void test_reparse_points(void)
     memset( data2, 0xcc, data_size + 1 );
     io.Information = 1;
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, data2, sizeof(REPARSE_GUID_DATA_BUFFER) - 1 );
-    todo_wine ok( status == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", status );
+    ok( status == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", status );
     ok( io.Information == 1, "got size %#Ix\n", io.Information );
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, data2, sizeof(REPARSE_GUID_DATA_BUFFER) );
-    todo_wine ok( status == STATUS_BUFFER_OVERFLOW, "got %#lx\n", status );
-    todo_wine ok( io.Information == sizeof(REPARSE_GUID_DATA_BUFFER), "expected size %#Ix, got %#Ix\n", data_size, io.Information );
-    todo_wine ok( !memcmp( data, data2, sizeof(REPARSE_GUID_DATA_BUFFER) ), "buffers didn't match\n" );
+    ok( status == STATUS_BUFFER_OVERFLOW, "got %#lx\n", status );
+    ok( io.Information == sizeof(REPARSE_GUID_DATA_BUFFER), "expected size %#Ix, got %#Ix\n", data_size, io.Information );
+    ok( !memcmp( data, data2, sizeof(REPARSE_GUID_DATA_BUFFER) ), "buffers didn't match\n" );
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, data2, data_size - 1);
-    todo_wine ok( status == STATUS_BUFFER_OVERFLOW, "got %#lx\n", status );
-    todo_wine ok( io.Information == data_size - 1, "expected size %#Ix, got %#Ix\n", data_size, io.Information );
-    todo_wine ok( !memcmp( data, data2, data_size - 1 ), "buffers didn't match\n" );
+    ok( status == STATUS_BUFFER_OVERFLOW, "got %#lx\n", status );
+    ok( io.Information == data_size - 1, "expected size %#Ix, got %#Ix\n", data_size, io.Information );
+    ok( !memcmp( data, data2, data_size - 1 ), "buffers didn't match\n" );
 
     io.Information = 1;
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, data2, data_size + 1);
-    todo_wine ok( !status, "got %#lx\n", status );
-    todo_wine ok( io.Information == data_size, "expected size %#Ix, got %#Ix\n", data_size, io.Information );
-    todo_wine ok( !memcmp( data, data2, data_size ), "buffers didn't match\n" );
+    ok( !status, "got %#lx\n", status );
+    ok( io.Information == data_size, "expected size %#Ix, got %#Ix\n", data_size, io.Information );
+    ok( !memcmp( data, data2, data_size ), "buffers didn't match\n" );
 
     status = NtQueryInformationFile( handle, &io, &tag_info, sizeof(tag_info), FileAttributeTagInformation );
     ok( !status, "got %#lx\n", status );
@@ -6629,9 +6629,9 @@ static void test_reparse_points(void)
 
     io.Information = 1;
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, guid_data2, data_size + 1);
-    todo_wine ok( !status, "got %#lx\n", status );
-    todo_wine ok( io.Information == data_size, "expected size %#Ix, got %#Ix\n", data_size, io.Information );
-    todo_wine ok( !memcmp( guid_data, guid_data2, data_size ), "buffers didn't match\n" );
+    ok( !status, "got %#lx\n", status );
+    ok( io.Information == data_size, "expected size %#Ix, got %#Ix\n", data_size, io.Information );
+    ok( !memcmp( guid_data, guid_data2, data_size ), "buffers didn't match\n" );
 
     RtlInitUnicodeString( &nameW, L"testreparse_customdir\\file" );
     status = NtCreateFile( &handle2, GENERIC_ALL, &attr, &io, NULL, 0, 0, FILE_OPEN, 0, NULL, 0 );
@@ -6664,9 +6664,9 @@ static void test_reparse_points(void)
     {
         io.Information = 1;
         status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, guid_data2, data_size + 1);
-        todo_wine ok( !status, "got %#lx\n", status );
-        todo_wine ok( io.Information == data_size, "expected size %#Ix, got %#Ix\n", data_size, io.Information );
-        todo_wine ok( !memcmp( guid_data, guid_data2, data_size ), "buffers didn't match\n" );
+        ok( !status, "got %#lx\n", status );
+        ok( io.Information == data_size, "expected size %#Ix, got %#Ix\n", data_size, io.Information );
+        ok( !memcmp( guid_data, guid_data2, data_size ), "buffers didn't match\n" );
 
         RtlInitUnicodeString( &nameW, L"testreparse_customdir" );
         status = NtOpenFile( &handle2, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0 );

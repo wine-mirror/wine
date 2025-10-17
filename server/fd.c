@@ -2431,6 +2431,23 @@ static int xattr_fset( int filedes, const char *name, const void *value, size_t 
 #endif
 }
 
+static int xattr_fget( int filedes, const char *name, void *value, size_t size )
+{
+#ifdef HAVE_SYS_XATTR_H
+# ifdef XATTR_ADDITIONAL_OPTIONS
+    return fgetxattr( filedes, name, value, size, 0, 0 );
+# else
+    return fgetxattr( filedes, name, value, size );
+# endif
+#elif defined(HAVE_SYS_EXTATTR_H)
+    return extattr_get_fd( filedes, EXTATTR_NAMESPACE_USER, &name[XATTR_USER_PREFIX_LEN],
+                           value, size );
+#else
+    errno = ENOSYS;
+    return -1;
+#endif
+}
+
 static int xattr_fremove( int filedes, const char *name )
 {
 #ifdef HAVE_SYS_XATTR_H
@@ -2495,6 +2512,50 @@ static void set_reparse_point( struct fd *fd, struct async *async )
         free( fd->unix_name );
         fd->closed->unix_name = fd->unix_name = reparse_name;
     }
+}
+
+static void get_reparse_point( struct fd *fd, struct async *async )
+{
+    /* we can't just allocate get_reply_max_size() here;
+     * Linux won't return any data if the size is too small */
+    char buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+    int ret;
+
+    if (!fd->unix_name)
+    {
+        set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        return;
+    }
+
+    if (!get_reply_max_size())
+    {
+        set_error( STATUS_INVALID_USER_BUFFER );
+        return;
+    }
+
+    if (fd->unix_name[strlen( fd->unix_name ) - 1] != '?')
+    {
+        set_error( STATUS_NOT_A_REPARSE_POINT );
+        return;
+    }
+
+    if (get_reply_max_size() < sizeof(REPARSE_GUID_DATA_BUFFER))
+    {
+        set_error( STATUS_BUFFER_TOO_SMALL );
+        return;
+    }
+
+    ret = xattr_fget( fd->unix_fd, XATTR_REPARSE, buffer, sizeof(buffer) );
+    if (ret >= 0)
+    {
+        if (ret > get_reply_max_size())
+        {
+            set_error( STATUS_BUFFER_OVERFLOW );
+            ret = get_reply_max_size();
+        }
+        set_reply_data( buffer, ret );
+    }
+    else file_set_error();
 }
 
 static void delete_reparse_point( struct fd *fd, struct async *async )
@@ -2672,6 +2733,10 @@ void default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
     case FSCTL_SET_REPARSE_POINT:
         set_reparse_point( fd, async );
+        break;
+
+    case FSCTL_GET_REPARSE_POINT:
+        get_reparse_point( fd, async );
         break;
 
     case FSCTL_DELETE_REPARSE_POINT:
