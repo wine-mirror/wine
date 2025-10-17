@@ -2940,6 +2940,25 @@ static void test_WM_NOTIFY(void)
     DestroyWindow(toolbar);
 }
 
+static void test_unicode_format(void)
+{
+    HWND hwnd = NULL;
+    LRESULT lr;
+
+    rebuild_toolbar(&hwnd);
+
+    /* Test that CCM_SETVERSION shouldn't change the Unicode character format flag for the control */
+    SendMessageA(hwnd, CCM_SETVERSION, 5, 0);
+    lr = SendMessageA(hwnd, TB_GETUNICODEFORMAT, 0, 0);
+    ok(lr == 0, "Got unexpected %Id.\n", lr);
+
+    SendMessageA(hwnd, CCM_SETVERSION, 6, 0);
+    lr = SendMessageA(hwnd, TB_GETUNICODEFORMAT, 0, 0);
+    ok(lr == 0, "Got unexpected %Id.\n", lr);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(toolbar)
 {
     ULONG_PTR ctx_cookie;
@@ -2992,6 +3011,7 @@ START_TEST(toolbar)
     test_imagelist();
     test_BTNS_SEP();
     test_WM_NOTIFY();
+    test_unicode_format();
 
     if (!load_v6_module(&ctx_cookie, &ctx))
         return;
@@ -2999,6 +3019,7 @@ START_TEST(toolbar)
     test_create(TRUE);
     test_visual();
     test_BTNS_SEP();
+    test_unicode_format();
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
