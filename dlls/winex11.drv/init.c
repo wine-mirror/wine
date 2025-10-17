@@ -456,7 +456,7 @@ Window x11drv_client_surface_create( HWND hwnd, int format, struct client_surfac
 
 failed:
     if (surface) client_surface_release( &surface->client );
-    XFreeColormap( gdi_display, colormap );
+    if (colormap != default_colormap) XFreeColormap( gdi_display, colormap );
     return None;
 }
 
