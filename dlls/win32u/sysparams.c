@@ -2131,7 +2131,7 @@ static BOOL update_display_cache_from_registry( UINT64 serial )
     HKEY hkey;
     BOOL ret;
 
-    /* If user driver did initialize the registry, then exit */
+    /* If user driver didn't initialize the registry, then exit */
     if (!enum_key && !(enum_key = reg_open_ascii_key( NULL, enum_keyA )))
         return FALSE;
     if (!video_key && !(video_key = reg_open_ascii_key( NULL, devicemap_video_keyA )))
