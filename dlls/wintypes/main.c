@@ -598,7 +598,11 @@ static ULONG STDMETHODCALLTYPE property_value_Release(IPropertyValue *iface)
     if (!refcount)
     {
         if (impl->value)
+        {
+            if (impl->type == PropertyType_String)
+                WindowsDeleteString(*(HSTRING *)impl->value);
             free(impl->value);
+        }
         free(impl);
     }
 
