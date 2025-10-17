@@ -1827,6 +1827,7 @@ static user_handle_t find_hardware_message_window( struct desktop *desktop, stru
     {
     case QS_POINTER:
     case QS_RAWINPUT:
+    case QS_HARDWARE:
         if (!(win = msg->win) && input) win = input_shm->focus;
         break;
     case QS_KEY:
