@@ -69,14 +69,18 @@ static void test_GetFontFallbackLanguageList(void)
 
 static void test_GetUserLanguages(void)
 {
-    HSTRING usrlangs;
+    HSTRING usrlangs = NULL;
     const WCHAR *langs;
     int count = 0;
     HRESULT hr;
 
     hr = GetUserLanguages(';', &usrlangs);
-    langs = WindowsGetStringRawBuffer(usrlangs, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!!usrlangs, "Unexpected pointer.\n");
+    if (!usrlangs) return;
+
+    langs = WindowsGetStringRawBuffer(usrlangs, NULL);
 
     for (WCHAR *p = wcstok(wcsdup(langs), L";"); p; p = wcstok(NULL, L";")) count++;
     todo_wine ok(count > 0, "Got count=%d.\n", count);
