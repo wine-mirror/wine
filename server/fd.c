@@ -86,6 +86,13 @@
 #ifdef HAVE_SYS_SYSCALL_H
 #include <sys/syscall.h>
 #endif
+#ifdef HAVE_SYS_XATTR_H
+#include <sys/xattr.h>
+#endif
+#ifdef HAVE_SYS_EXTATTR_H
+#undef XATTR_ADDITIONAL_OPTIONS
+#include <sys/extattr.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -97,6 +104,7 @@
 
 #include "winternl.h"
 #include "winioctl.h"
+#include "ddk/ntifs.h"
 #include "ddk/wdm.h"
 
 #if defined(HAVE_SYS_EPOLL_H) && defined(HAVE_EPOLL_CREATE)
@@ -2325,6 +2333,31 @@ void default_fd_reselect_async( struct fd *fd, struct async_queue *queue )
     }
 }
 
+static int is_dir_empty( int fd )
+{
+    DIR *dir;
+    int empty;
+    struct dirent *de;
+
+    if ((fd = dup( fd )) == -1)
+        return -1;
+
+    if (!(dir = fdopendir( fd )))
+    {
+        close( fd );
+        return -1;
+    }
+
+    empty = 1;
+    while (empty && (de = readdir( dir )))
+    {
+        if (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." )) continue;
+        empty = 0;
+    }
+    closedir( dir );
+    return empty;
+}
+
 static inline int is_valid_mounted_device( struct stat *st )
 {
 #if defined(linux) || defined(__sun__)
@@ -2370,6 +2403,82 @@ static void unmount_device( struct fd *device_fd )
     list_remove( &device->entry );
     list_init( &device->entry );
     release_object( device );
+}
+
+#ifndef XATTR_USER_PREFIX
+# define XATTR_USER_PREFIX "user."
+#endif
+#ifndef XATTR_USER_PREFIX_LEN
+# define XATTR_USER_PREFIX_LEN (sizeof(XATTR_USER_PREFIX) - 1)
+#endif
+
+#define XATTR_REPARSE XATTR_USER_PREFIX "WINEREPARSE"
+
+static int xattr_fset( int filedes, const char *name, const void *value, size_t size )
+{
+#ifdef HAVE_SYS_XATTR_H
+# ifdef XATTR_ADDITIONAL_OPTIONS
+    return fsetxattr( filedes, name, value, size, 0, 0 );
+# else
+    return fsetxattr( filedes, name, value, size, 0 );
+# endif
+#elif defined(HAVE_SYS_EXTATTR_H)
+    return extattr_set_fd( filedes, EXTATTR_NAMESPACE_USER, &name[XATTR_USER_PREFIX_LEN],
+                           value, size );
+#else
+    errno = ENOSYS;
+    return -1;
+#endif
+}
+
+static void set_reparse_point( struct fd *fd, struct async *async )
+{
+    char *reparse_name;
+    struct stat st;
+    size_t len;
+
+    if (!fd->unix_name)
+    {
+        set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        return;
+    }
+
+    if (fstat( fd->unix_fd, &st ) == -1)
+    {
+        file_set_error();
+        return;
+    }
+
+    if (S_ISDIR(st.st_mode) && !is_dir_empty( fd->unix_fd ))
+    {
+        set_error( STATUS_DIRECTORY_NOT_EMPTY );
+        return;
+    }
+
+    if (xattr_fset( fd->unix_fd, XATTR_REPARSE, get_req_data(), get_req_data_size() ) < 0)
+    {
+        file_set_error();
+        return;
+    }
+
+    len = strlen( fd->unix_name );
+    if (fd->unix_name[len - 1] != '?')
+    {
+        /* we are adding a reparse point where there previously was not one;
+         * move the file out of the way so open attempts will fail */
+
+        if (!(reparse_name = mem_alloc( len + 2 ))) return;
+        memcpy( reparse_name, fd->unix_name, len );
+        strcpy( reparse_name + len, "?" );
+
+        if (rename( fd->unix_name, reparse_name ))
+        {
+            free( reparse_name );
+            return;
+        }
+        free( fd->unix_name );
+        fd->closed->unix_name = fd->unix_name = reparse_name;
+    }
 }
 
 /* default read() routine */
@@ -2490,6 +2599,10 @@ void default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         unmount_device( fd );
         break;
 
+    case FSCTL_SET_REPARSE_POINT:
+        set_reparse_point( fd, async );
+        break;
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
     }
@@ -2508,31 +2621,6 @@ static struct fd *get_handle_fd_obj( struct process *process, obj_handle_t handl
         release_object( obj );
     }
     return fd;
-}
-
-static int is_dir_empty( int fd )
-{
-    DIR *dir;
-    int empty;
-    struct dirent *de;
-
-    if ((fd = dup( fd )) == -1)
-        return -1;
-
-    if (!(dir = fdopendir( fd )))
-    {
-        close( fd );
-        return -1;
-    }
-
-    empty = 1;
-    while (empty && (de = readdir( dir )))
-    {
-        if (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." )) continue;
-        empty = 0;
-    }
-    closedir( dir );
-    return empty;
 }
 
 /* set disposition for the fd */
