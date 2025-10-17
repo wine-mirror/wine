@@ -47,6 +47,8 @@ static void test_DrawTextCalcRect(void)
     static WCHAR wordbreak_textW[] = {'l','i','n','e','1',' ','l','i','n','e','2',0};
     static WCHAR wordbreak_text_colonW[] = {'l','i','n','e','1',' ','l','i','n','e','2',' ',':',0};
     static WCHAR wordbreak_text_csbW[] = {'l','i','n','e','1',' ','l','i','n','e','2',' ',']',0};
+    static WCHAR complex_format_textW[] = {'H','e','l','l','o',' ','&','W','o','r','l','d','!',
+        '\t','T','h','i','s',' ','i','s',' ','a',' ','t','e','s','t','.','\r','\n','L','i','n','e',' ','2',0};
     static char tabstring[] = "one\ttwo";
     INT textlen, textheight, heightcheck;
     RECT rect = { 0, 0, 100, 0 }, rect2;
@@ -655,6 +657,39 @@ static void test_DrawTextCalcRect(void)
     ok(rect.right == rect2.right || broken(rect.right > rect2.right), "unexpected value %ld, got %ld\n",rect.right, rect2.right);
     ok(rect.top == rect2.top, "unexpected value %ld, got %ld\n", rect.top, rect2.top);
     ok(rect.bottom == rect2.bottom , "unexpected value %ld, got %ld\n", rect.bottom, rect2.bottom);
+
+
+    /* Test uiLengthDrawn calculation */
+    SetRect(&rect, 0, 0, 100, 25);
+    memset(&dtp, 0, sizeof(dtp));
+    dtp.cbSize = sizeof(dtp);
+    textheight = DrawTextExW(hdc, textW, -1, &rect, DT_EDITCONTROL | DT_NOPREFIX | DT_WORDBREAK, &dtp);
+    todo_wine ok(dtp.uiLengthDrawn == 16, "Unexpected uiLengthDrawn %d\n", dtp.uiLengthDrawn );
+
+    memset(&dtp, 0, sizeof(dtp));
+    dtp.cbSize = sizeof(dtp);
+    textheight = DrawTextExW(hdc, textW, -1, &rect, DT_EDITCONTROL | DT_NOPREFIX | DT_WORDBREAK | DT_CALCRECT, &dtp);
+    ok(dtp.uiLengthDrawn == 16, "Unexpected uiLengthDrawn %d\n", dtp.uiLengthDrawn );
+
+    memset(&dtp, 0, sizeof(dtp));
+    dtp.cbSize = sizeof(dtp);
+    textheight = DrawTextExW(hdc, textW, -1, &rect, DT_EXPANDTABS, &dtp);
+    todo_wine ok(dtp.uiLengthDrawn == 16, "Unexpected uiLengthDrawn %d\n", dtp.uiLengthDrawn );
+
+    memset(&dtp, 0, sizeof(dtp));
+    dtp.cbSize = sizeof(dtp);
+    textheight = DrawTextExW(hdc, complex_format_textW, -1, &rect, DT_EDITCONTROL | DT_NOPREFIX | DT_WORDBREAK, &dtp);
+    todo_wine ok(dtp.uiLengthDrawn == 14, "Unexpected uiLengthDrawn %d\n", dtp.uiLengthDrawn );
+
+    memset(&dtp, 0, sizeof(dtp));
+    dtp.cbSize = sizeof(dtp);
+    textheight = DrawTextExW(hdc, complex_format_textW, -1, &rect, DT_EDITCONTROL | DT_NOPREFIX | DT_WORDBREAK | DT_CALCRECT, &dtp);
+    todo_wine ok(dtp.uiLengthDrawn == 37, "Unexpected uiLengthDrawn %d\n", dtp.uiLengthDrawn );
+
+    memset(&dtp, 0, sizeof(dtp));
+    dtp.cbSize = sizeof(dtp);
+    textheight = DrawTextExW(hdc, complex_format_textW, -1, &rect, DT_EXPANDTABS, &dtp);
+    todo_wine ok(dtp.uiLengthDrawn == 37, "Unexpected uiLengthDrawn %d\n", dtp.uiLengthDrawn );
 
 
     SelectObject(hdc, hOldFont);
