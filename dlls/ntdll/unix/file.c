@@ -1665,9 +1665,14 @@ static BOOL fd_is_mount_point( int fd, const struct stat *st )
 }
 
 
+static unsigned int server_get_unix_name( HANDLE handle, char **unix_name );
+
+
 /* get the stat info and file attributes for a file (by file descriptor) */
-static int fd_get_file_info( int fd, unsigned int options, struct stat *st, ULONG *attr )
+static int fd_get_file_info( HANDLE handle, int fd, unsigned int options,
+                             struct stat *st, ULONG *attr, ULONG *reparse_tag )
 {
+    char buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
     char attr_data[65];
     int attr_len, ret;
 
@@ -1675,9 +1680,23 @@ static int fd_get_file_info( int fd, unsigned int options, struct stat *st, ULON
     ret = fstat( fd, st );
     if (ret == -1) return ret;
     *attr |= get_file_attributes( st );
+    if (reparse_tag) *reparse_tag = 0;
     /* consider mount points to be reparse points (IO_REPARSE_TAG_MOUNT_POINT) */
-    if ((options & FILE_OPEN_REPARSE_POINT) && fd_is_mount_point( fd, st ))
+    if (options & FILE_OPEN_REPARSE_POINT)
+    {
+        if (fd_is_mount_point( fd, st ))
+        {
+            *attr |= FILE_ATTRIBUTE_REPARSE_POINT;
+            if (reparse_tag) *reparse_tag = IO_REPARSE_TAG_MOUNT_POINT;
+        }
+    }
+
+    attr_len = xattr_fget( fd, XATTR_REPARSE, buffer, sizeof(buffer) );
+    if (attr_len >= 0 && attr_len >= sizeof(ULONG))
+    {
         *attr |= FILE_ATTRIBUTE_REPARSE_POINT;
+        if (reparse_tag) memcpy( reparse_tag, buffer, sizeof(ULONG) );
+    }
 
     attr_len = xattr_fget( fd, SAMBA_XATTR_DOS_ATTRIB, attr_data, sizeof(attr_data)-1 );
     if (attr_len != -1)
@@ -4769,6 +4788,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
     struct stat st;
     int fd, needs_close = FALSE;
     ULONG attr;
+    unsigned int reparse_tag;
     unsigned int options;
     unsigned int status;
 
@@ -4794,7 +4814,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
     switch (class)
     {
     case FileBasicInformation:
-        if (fd_get_file_info( fd, options, &st, &attr ) == -1)
+        if (fd_get_file_info( handle, fd, options, &st, &attr, NULL ) == -1)
             status = errno_to_status( errno );
         else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
             status = STATUS_INVALID_INFO_CLASS;
@@ -4805,7 +4825,8 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         {
             FILE_STANDARD_INFORMATION *info = ptr;
 
-            if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
+            if (fd_get_file_info( handle, fd, options, &st, &attr, NULL ) == -1)
+                status = errno_to_status( errno );
             else
             {
                 fill_file_info( &st, attr, info, class );
@@ -4822,8 +4843,10 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         }
         break;
     case FileInternalInformation:
-        if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
-        else fill_file_info( &st, attr, ptr, class );
+        if (fd_get_file_info( handle, fd, options, &st, &attr, NULL ) == -1)
+            status = errno_to_status( errno );
+        else
+            fill_file_info( &st, attr, ptr, class );
         break;
     case FileEaInformation:
         {
@@ -4832,14 +4855,17 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         }
         break;
     case FileEndOfFileInformation:
-        if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
-        else fill_file_info( &st, attr, ptr, class );
+        if (fd_get_file_info( handle, fd, options, &st, &attr, NULL ) == -1)
+            status = errno_to_status( errno );
+        else
+            fill_file_info( &st, attr, ptr, class );
         break;
     case FileAllInformation:
         {
             FILE_ALL_INFORMATION *info = ptr;
 
-            if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
+            if (fd_get_file_info( handle, fd, options, &st, &attr, NULL ) == -1)
+                status = errno_to_status( errno );
             else
             {
                 LONG name_len = len - FIELD_OFFSET(FILE_ALL_INFORMATION, NameInformation.FileName);
@@ -4864,11 +4890,14 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         }
         break;
     case FileNetworkOpenInformation:
-        if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
-        else fill_file_info( &st, attr, ptr, FileNetworkOpenInformation );
+        if (fd_get_file_info( handle, fd, options, &st, &attr, NULL ) == -1)
+            status = errno_to_status( errno );
+        else
+            fill_file_info( &st, attr, ptr, FileNetworkOpenInformation );
         break;
     case FileIdInformation:
-        if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
+        if (fd_get_file_info( handle, fd, options, &st, &attr, NULL ) == -1)
+            status = errno_to_status( errno );
         else
         {
             struct mountmgr_unix_drive drive;
@@ -4882,18 +4911,18 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         }
         break;
     case FileAttributeTagInformation:
-        if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
+        if (fd_get_file_info( handle, fd, options, &st, &attr, &reparse_tag ) == -1)
+            status = errno_to_status( errno );
         else
         {
             FILE_ATTRIBUTE_TAG_INFORMATION *info = ptr;
             info->FileAttributes = attr;
-            info->ReparseTag = 0; /* FIXME */
-            if ((options & FILE_OPEN_REPARSE_POINT) && fd_is_mount_point( fd, &st ))
-                info->ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
+            info->ReparseTag = reparse_tag;
         }
         break;
     case FileStatInformation:
-        if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
+        if (fd_get_file_info( handle, fd, options, &st, &attr, &reparse_tag ) == -1)
+            status = errno_to_status( errno );
         else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
             status = STATUS_INVALID_INFO_CLASS;
         else
@@ -4913,9 +4942,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             info->AllocationSize = std.AllocationSize;
             info->EndOfFile      = std.EndOfFile;
             info->FileAttributes = attr;
-            info->ReparseTag     = 0; /* FIXME */
-            if ((options & FILE_OPEN_REPARSE_POINT) && fd_is_mount_point( fd, &st ))
-                info->ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
+            info->ReparseTag     = reparse_tag;
             info->NumberOfLinks  = std.NumberOfLinks;
             info->EffectiveAccess = FILE_ALL_ACCESS; /* FIXME */
         }

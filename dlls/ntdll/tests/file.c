@@ -6239,9 +6239,9 @@ static void test_reparse_points(void)
 
     status = NtQueryInformationFile( handle, &io, &tag_info, sizeof(tag_info), FileAttributeTagInformation );
     ok( !status, "got %#lx\n", status );
-    todo_wine ok( tag_info.FileAttributes == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT),
+    ok( tag_info.FileAttributes == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT),
         "got attributes %#lx\n", tag_info.FileAttributes );
-    todo_wine ok( tag_info.ReparseTag == IO_REPARSE_TAG_MOUNT_POINT, "got tag %#lx\n", tag_info.ReparseTag );
+    ok( tag_info.ReparseTag == IO_REPARSE_TAG_MOUNT_POINT, "got tag %#lx\n", tag_info.ReparseTag );
     status = NtQueryInformationFile( handle, &io, &std_info, sizeof(std_info), FileStandardInformation );
     ok( !status, "got %#lx\n", status );
     ok( !std_info.AllocationSize.QuadPart, "got size %#I64x\n", std_info.AllocationSize.QuadPart );
@@ -6251,9 +6251,9 @@ static void test_reparse_points(void)
 
     status = NtQueryInformationFile( handle2, &io, &tag_info, sizeof(tag_info), FileAttributeTagInformation );
     ok( !status, "got %#lx\n", status );
-    todo_wine ok( tag_info.FileAttributes == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT),
+    ok( tag_info.FileAttributes == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT),
         "got attributes %#lx\n", tag_info.FileAttributes );
-    todo_wine ok( tag_info.ReparseTag == IO_REPARSE_TAG_MOUNT_POINT, "got tag %#lx\n", tag_info.ReparseTag );
+    ok( tag_info.ReparseTag == IO_REPARSE_TAG_MOUNT_POINT, "got tag %#lx\n", tag_info.ReparseTag );
     status = NtQueryInformationFile( handle2, &io, &std_info, sizeof(std_info), FileStandardInformation );
     ok( !status, "got %#lx\n", status );
     ok( !std_info.AllocationSize.QuadPart, "got size %#I64x\n", std_info.AllocationSize.QuadPart );
@@ -6276,9 +6276,9 @@ static void test_reparse_points(void)
     ok( !status, "got %#lx\n", status );
     status = NtQueryInformationFile( handle2, &io, &tag_info, sizeof(tag_info), FileAttributeTagInformation );
     ok( !status, "got %#lx\n", status );
-    todo_wine ok( tag_info.FileAttributes == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT),
+    ok( tag_info.FileAttributes == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT),
         "got attributes %#lx\n", tag_info.FileAttributes );
-    todo_wine ok( tag_info.ReparseTag == IO_REPARSE_TAG_MOUNT_POINT, "got tag %#lx\n", tag_info.ReparseTag );
+    ok( tag_info.ReparseTag == IO_REPARSE_TAG_MOUNT_POINT, "got tag %#lx\n", tag_info.ReparseTag );
     status = NtQueryInformationFile( handle2, &io, &std_info, sizeof(std_info), FileStandardInformation );
     ok( !status, "got %#lx\n", status );
     ok( !std_info.AllocationSize.QuadPart, "got size %#I64x\n", std_info.AllocationSize.QuadPart );
