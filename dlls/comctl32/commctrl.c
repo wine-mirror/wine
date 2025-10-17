@@ -3104,3 +3104,20 @@ LRESULT COMCTL32_forward_notify_to_ansi_window(HWND hwnd_notify, NMHDR *hdr, WCH
     /* Other notifications, no need to convert */
     return SendMessageW(hwnd_notify, WM_NOTIFY, hdr->idFrom, (LPARAM)hdr);
 }
+
+/* A helper to handle CCM_SETVERSION messages */
+LRESULT COMCTL32_SetVersion(INT *current_version, INT new_version)
+{
+#if __WINE_COMCTL32_VERSION == 6
+    return *current_version;
+#else
+    INT old_version;
+
+    if (new_version > 5)
+        return -1;
+
+    old_version = *current_version;
+    *current_version = new_version;
+    return old_version;
+#endif
+}

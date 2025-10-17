@@ -327,7 +327,7 @@ typedef struct tagLISTVIEW_INFO
   BOOL redraw;             /* WM_SETREDRAW switch */
 
   /* misc */
-  DWORD iVersion;          /* CCM_[G,S]ETVERSION */
+  INT iVersion;            /* CCM_[G,S]ETVERSION */
 } LISTVIEW_INFO;
 
 /*
@@ -11441,22 +11441,9 @@ static inline LRESULT LISTVIEW_GetVersion(const LISTVIEW_INFO *infoPtr)
  * -1 when requested version is greater than DLL version;
  * previous version otherwise
  */
-static LRESULT LISTVIEW_SetVersion(LISTVIEW_INFO *infoPtr, DWORD iVersion)
+static LRESULT LISTVIEW_SetVersion(LISTVIEW_INFO *infoPtr, INT iVersion)
 {
-#if __WINE_COMCTL32_VERSION == 6
-  return infoPtr->iVersion;
-#else
-  INT iOldVersion = infoPtr->iVersion;
-
-  if (iVersion > 5)
-    return -1;
-
-  infoPtr->iVersion = iVersion;
-
-  TRACE("new version %ld\n", iVersion);
-
-  return iOldVersion;
-#endif
+    return COMCTL32_SetVersion(&infoPtr->iVersion, iVersion);
 }
 
 /***
