@@ -3799,17 +3799,17 @@ static void output_programs( struct makefile *make )
         const char *install_dir;
         char *program = strmake( "%s%s", name, exe_ext );
         struct strarray deps = get_local_dependencies( make, name, make->in_files );
-        struct strarray all_libs = get_expanded_file_local_var( make, name, "LDFLAGS" );
+        struct strarray ldflags  = get_expanded_file_local_var( make, name, "LDFLAGS" );
         struct strarray objs     = get_expanded_file_local_var( make, name, "OBJS" );
         struct strarray symlinks = get_expanded_file_local_var( make, name, "SYMLINKS" );
+        struct strarray all_libs = get_expanded_make_var_array( make, "UNIX_LIBS" );
 
         if (!objs.count) objs = make->object_files[arch];
-        if (!strarray_exists( all_libs, "-nodefaultlibs" ))
+        if (!strarray_exists( ldflags, "-nodefaultlibs" ))
         {
-            strarray_addall( &all_libs, get_expanded_make_var_array( make, "UNIX_LIBS" ));
+            strarray_add( &ldflags, "$(LDFLAGS)" );
             strarray_addall( &all_libs, libs );
         }
-
         output( "%s:", obj_dir_path( make, program ) );
         output_filenames_obj_dir( make, objs );
         output_filenames( deps );
@@ -3817,7 +3817,7 @@ static void output_programs( struct makefile *make )
         output( "\t%s$(CC) -o $@", cmd_prefix( "CCLD" ));
         output_filenames_obj_dir( make, objs );
         output_filenames( all_libs );
-        output_filename( "$(LDFLAGS)" );
+        output_filenames( ldflags );
         output( "\n" );
         strarray_add( &make->all_targets[arch], program );
 
