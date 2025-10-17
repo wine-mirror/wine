@@ -1290,7 +1290,7 @@ static void test_comctl32_class( const char *name )
 
         /* Some systems load modules during context activation. In this case skip the rest of the test. */
         module = GetModuleHandleA( "comctl32" );
-        ok( !module || broken(module != NULL) /* Vista/Win7 */, "comctl32 already loaded\n" );
+        ok( !module, "comctl32 already loaded\n" );
         if (module)
         {
             win_skip("Module loaded during context activation. Skipping tests.\n");
@@ -1298,7 +1298,7 @@ static void test_comctl32_class( const char *name )
         }
 
         ret = GetClassInfoA( 0, name, &wcA );
-        ok( ret || broken(!ret) /* WinXP */, "GetClassInfoA failed for %s\n", name );
+        ok( ret, "GetClassInfoA failed for %s\n", name );
         if (!ret)
             goto skiptest;
 
@@ -1309,7 +1309,7 @@ static void test_comctl32_class( const char *name )
         ok( module != 0, "comctl32 not loaded\n" );
         FreeLibrary( module );
         module = GetModuleHandleA( "comctl32" );
-        ok( !module || broken(module != NULL) /* Vista */, "comctl32 still loaded\n" );
+        ok( !module, "comctl32 still loaded\n" );
         hwnd = CreateWindowA( name, "test", WS_OVERLAPPEDWINDOW, 0, 0, 10, 10, NULL, NULL, NULL, 0 );
         ok( hwnd != 0, "failed to create window for %s\n", name );
         module = GetModuleHandleA( "comctl32" );
@@ -1326,7 +1326,7 @@ static void test_comctl32_class( const char *name )
         module = GetModuleHandleA( "comctl32" );
         ok( !module, "comctl32 already loaded\n" );
         ret = GetClassInfoA( 0, name, &wcA );
-        ok( ret || broken(!ret) /* <= winxp */, "GetClassInfoA failed for %s\n", name );
+        ok( ret, "GetClassInfoA failed for %s\n", name );
         if (!ret) return;
         MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, ARRAY_SIZE(nameW));
         ret = GetClassInfoW( 0, nameW, &wcW );
