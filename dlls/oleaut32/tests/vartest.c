@@ -55,6 +55,8 @@ static WCHAR sz12_true[32];
 /* Has I8/UI8 data type? */
 static BOOL has_i8;
 
+static BOOL is_win;
+
 /* When comparing floating point values we cannot expect an exact match
  * because the rounding errors depend on the exact algorithm.
  */
@@ -431,6 +433,8 @@ static void init(void)
 {
     BSTR bstr;
     HRESULT res;
+
+    is_win = !strcmp(winetest_platform, "windows");
 
     res = VarBstrFromBool(VARIANT_TRUE, LANG_USER_DEFAULT, VAR_LOCALBOOL, &bstr);
     ok(res == S_OK && bstr[0], "Expected localized string for 'True'\n");
@@ -6794,7 +6798,16 @@ static HRESULT (WINAPI *pVarAnd)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarAnd, &left, &right, &exp )
+        test_var_call2_commutative( __LINE__, pVarAnd, &left, &right, &exp )
+
+#define VARAND_TODOCOMM(vt1,val1,vt2,val2,rvt,rval)               \
+        V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
+        V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
+        V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
+        if (is_win) \
+        test_var_call2_commutative( __LINE__, pVarAnd, &left, &right, &exp ); \
+        else \
+        test_var_call2( __LINE__, pVarAnd, &left, &right, &exp ); \
 
 #define VARANDCY(vt1,val1,val2,rvt,rval)                 \
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
@@ -6977,35 +6990,35 @@ static void test_VarAnd(void)
     VARAND(NULL,0,NULL,0,NULL,0);
     VARAND(NULL,1,NULL,0,NULL,0);
     VARAND(NULL,0,I1,0,I4,0);
-    VARAND(NULL,0,I1,1,NULL,0);
+    VARAND_TODOCOMM(NULL,0,I1,1,NULL,0);
     VARAND(NULL,0,UI1,0,UI1,0);
-    VARAND(NULL,0,UI1,1,NULL,0);
+    VARAND_TODOCOMM(NULL,0,UI1,1,NULL,0);
     VARAND(NULL,0,I2,0,I2,0);
-    VARAND(NULL,0,I2,1,NULL,0);
+    VARAND_TODOCOMM(NULL,0,I2,1,NULL,0);
     VARAND(NULL,0,UI2,0,I4,0);
-    VARAND(NULL,0,UI2,1,NULL,0);
+    VARAND_TODOCOMM(NULL,0,UI2,1,NULL,0);
     VARAND(NULL,0,I4,0,I4,0);
-    VARAND(NULL,0,I4,1,NULL,0);
+    VARAND_TODOCOMM(NULL,0,I4,1,NULL,0);
     VARAND(NULL,0,UI4,0,I4,0);
-    VARAND(NULL,0,UI4,1,NULL,0);
+    VARAND_TODOCOMM(NULL,0,UI4,1,NULL,0);
     if (has_i8)
     {
         VARAND(NULL,0,I8,0,I8,0);
-        VARAND(NULL,0,I8,1,NULL,0);
+        VARAND_TODOCOMM(NULL,0,I8,1,NULL,0);
         VARAND(NULL,0,UI8,0,I4,0);
-        VARAND(NULL,0,UI8,1,NULL,0);
+        VARAND_TODOCOMM(NULL,0,UI8,1,NULL,0);
     }
     VARAND(NULL,0,INT,0,I4,0);
-    VARAND(NULL,0,INT,1,NULL,0);
+    VARAND_TODOCOMM(NULL,0,INT,1,NULL,0);
     VARAND(NULL,0,UINT,0,I4,0);
-    VARAND(NULL,0,UINT,1,NULL,0);
-    VARAND(NULL,0,BOOL,0,BOOL,0);
-    VARAND(NULL,0,BOOL,1,NULL,0);
+    VARAND_TODOCOMM(NULL,0,UINT,1,NULL,0);
+    VARAND_TODOCOMM(NULL,0,BOOL,0,BOOL,0);
+    VARAND_TODOCOMM(NULL,0,BOOL,1,NULL,0);
     VARAND(NULL,0,R4,0,I4,0);
-    VARAND(NULL,0,R4,1,NULL,0);
+    VARAND_TODOCOMM(NULL,0,R4,1,NULL,0);
     VARAND(NULL,0,R8,0,I4,0);
-    VARAND(NULL,0,R8,1,NULL,0);
-    VARAND(NULL,0,BSTR,false_str,BOOL,0);
+    VARAND_TODOCOMM(NULL,0,R8,1,NULL,0);
+    VARAND_TODOCOMM(NULL,0,BSTR,false_str,BOOL,0);
     VARAND(NULL,0,BSTR,true_str,NULL,VARIANT_FALSE);
     VARANDCY(NULL,0,10000,NULL,0);
     VARANDCY(NULL,0,0,I4,0);
