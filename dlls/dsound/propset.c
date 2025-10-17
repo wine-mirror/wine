@@ -202,6 +202,9 @@ static HRESULT DSPROPERTY_DescriptionW(
     TRACE("pPropData=%p,cbPropData=%ld,pcbReturned=%p)\n",
           pPropData,cbPropData,pcbReturned);
 
+    if (cbPropData < sizeof(*ppd))
+        return E_INVALIDARG;
+
     TRACE("DeviceId=%s\n",debugstr_guid(&ppd->DeviceId));
     if ( IsEqualGUID( &ppd->DeviceId , &GUID_NULL) ) {
         /* default device of type specified by ppd->DataFlow */
@@ -315,6 +318,9 @@ static HRESULT DSPROPERTY_EnumerateW(
         WARN("Invalid ppd %p\n", ppd);
         return E_PROP_ID_UNSUPPORTED;
     }
+
+    if (cbPropData < sizeof(*ppd))
+        return E_INVALIDARG;
 
     hr = enumerate_mmdevices(eRender, DSOUND_renderer_guids,
             enum_callback, ppd);

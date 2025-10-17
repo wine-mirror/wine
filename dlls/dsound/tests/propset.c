@@ -429,9 +429,14 @@ static void propset_private_tests(void)
         data.Context = 0;
 
         rc = IKsPropertySet_Get(pps, &DSPROPSETID_DirectSoundDevice,
-                              DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE,
-                              NULL, 0, &data, sizeof(data), &bytes);
-        ok(rc==DS_OK, "Couldn't enumerate: 0x%lx\n",rc);
+                                DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE,
+                                NULL, 0, &data, 1, &bytes);
+        ok(rc == E_INVALIDARG, "Unexpected rc 0x%lx\n", rc);
+
+        rc = IKsPropertySet_Get(pps, &DSPROPSETID_DirectSoundDevice,
+                                DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE,
+                                NULL, 0, &data, sizeof(data), &bytes);
+        ok(rc == DS_OK, "Couldn't enumerate: 0x%lx\n", rc);
     }
 
     /* test DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1 */
