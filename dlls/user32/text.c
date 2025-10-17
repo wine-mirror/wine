@@ -871,7 +871,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
     WCHAR *retstr;
     size_t size_retstr;
     WCHAR line[MAX_BUFFER];
-    int len, lh, count=i_count;
+    int len, lh, old_count, count = i_count;
     TEXTMETRICW tm;
     int lmargin = 0, rmargin = 0;
     int x, y, width;
@@ -978,7 +978,11 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
             last_line = !(flags & DT_NOCLIP) && y - ((flags & DT_EDITCONTROL) ? 2*lh-1 : lh) < rect->bottom;
 	else
             last_line = !(flags & DT_NOCLIP) && y + ((flags & DT_EDITCONTROL) ? 2*lh-1 : lh) > rect->bottom;
+
+        old_count = count;
 	strPtr = TEXT_NextLineW(hdc, strPtr, &count, line, &len, width, flags, &size, last_line, retstr, tabwidth, &prefix_offset, &ellip);
+        if (dtp)
+            dtp->uiLengthDrawn += old_count - count;
 
         if (flags & DT_CENTER)
             x = (rect->left + lmargin + rect->right - rmargin - size.cx) / 2;
@@ -1051,8 +1055,6 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 	    y -= lh;
         else
 	    y += lh;
-        if (dtp)
-            dtp->uiLengthDrawn += len;
     }
     while (strPtr && !last_line);
 

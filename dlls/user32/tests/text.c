@@ -664,7 +664,7 @@ static void test_DrawTextCalcRect(void)
     memset(&dtp, 0, sizeof(dtp));
     dtp.cbSize = sizeof(dtp);
     textheight = DrawTextExW(hdc, textW, -1, &rect, DT_EDITCONTROL | DT_NOPREFIX | DT_WORDBREAK, &dtp);
-    todo_wine ok(dtp.uiLengthDrawn == 16, "Unexpected uiLengthDrawn %d\n", dtp.uiLengthDrawn );
+    ok(dtp.uiLengthDrawn == 16, "Unexpected uiLengthDrawn %d\n", dtp.uiLengthDrawn );
 
     memset(&dtp, 0, sizeof(dtp));
     dtp.cbSize = sizeof(dtp);
@@ -674,22 +674,22 @@ static void test_DrawTextCalcRect(void)
     memset(&dtp, 0, sizeof(dtp));
     dtp.cbSize = sizeof(dtp);
     textheight = DrawTextExW(hdc, textW, -1, &rect, DT_EXPANDTABS, &dtp);
-    todo_wine ok(dtp.uiLengthDrawn == 16, "Unexpected uiLengthDrawn %d\n", dtp.uiLengthDrawn );
+    ok(dtp.uiLengthDrawn == 16, "Unexpected uiLengthDrawn %d\n", dtp.uiLengthDrawn );
 
     memset(&dtp, 0, sizeof(dtp));
     dtp.cbSize = sizeof(dtp);
     textheight = DrawTextExW(hdc, complex_format_textW, -1, &rect, DT_EDITCONTROL | DT_NOPREFIX | DT_WORDBREAK, &dtp);
-    todo_wine ok(dtp.uiLengthDrawn == 14, "Unexpected uiLengthDrawn %d\n", dtp.uiLengthDrawn );
+    ok(dtp.uiLengthDrawn == 14, "Unexpected uiLengthDrawn %d\n", dtp.uiLengthDrawn );
 
     memset(&dtp, 0, sizeof(dtp));
     dtp.cbSize = sizeof(dtp);
     textheight = DrawTextExW(hdc, complex_format_textW, -1, &rect, DT_EDITCONTROL | DT_NOPREFIX | DT_WORDBREAK | DT_CALCRECT, &dtp);
-    todo_wine ok(dtp.uiLengthDrawn == 37, "Unexpected uiLengthDrawn %d\n", dtp.uiLengthDrawn );
+    ok(dtp.uiLengthDrawn == 37, "Unexpected uiLengthDrawn %d\n", dtp.uiLengthDrawn );
 
     memset(&dtp, 0, sizeof(dtp));
     dtp.cbSize = sizeof(dtp);
     textheight = DrawTextExW(hdc, complex_format_textW, -1, &rect, DT_EXPANDTABS, &dtp);
-    todo_wine ok(dtp.uiLengthDrawn == 37, "Unexpected uiLengthDrawn %d\n", dtp.uiLengthDrawn );
+    ok(dtp.uiLengthDrawn == 37, "Unexpected uiLengthDrawn %d\n", dtp.uiLengthDrawn );
 
 
     SelectObject(hdc, hOldFont);
