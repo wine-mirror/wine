@@ -716,8 +716,14 @@ static HRESULT STDMETHODCALLTYPE property_value_GetBoolean(IPropertyValue *iface
 
 static HRESULT STDMETHODCALLTYPE property_value_GetString(IPropertyValue *iface, HSTRING *value)
 {
+    HRESULT hr;
+
     TRACE("iface %p, value %p.\n", iface, value);
-    return property_value_get_primitive(PropertyType_String);
+
+    hr = property_value_get_primitive(PropertyType_String);
+    if (SUCCEEDED(hr))
+        WindowsDuplicateString(*value, value);
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_GetGuid(IPropertyValue *iface, GUID *value)
