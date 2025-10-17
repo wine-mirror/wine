@@ -1638,8 +1638,10 @@ static void test_file_rename_information(FILE_INFORMATION_CLASS class)
     /* oldpath is a file, newpath doesn't exist */
     res = GetTempFileNameW( tmp_path, fooW, 0, oldpath );
     ok( res != 0, "failed to create temp file\n" );
-    handle = CreateFileW( oldpath, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    handle = CreateFileW( oldpath, GENERIC_WRITE | DELETE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, CREATE_ALWAYS, 0, 0 );
     ok( handle != INVALID_HANDLE_VALUE, "CreateFileW failed\n" );
+    handle2 = CreateFileW( oldpath, GENERIC_ALL, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, 0 );
+    ok( handle2 != INVALID_HANDLE_VALUE, "CreateFileW failed\n" );
 
     res = GetTempFileNameW( tmp_path, fooW, 0, newpath );
     ok( res != 0, "failed to create temp file\n" );
@@ -1677,8 +1679,14 @@ static void test_file_rename_information(FILE_INFORMATION_CLASS class)
     fni->FileName[ fni->FileNameLength / sizeof(WCHAR) ] = 0;
     ok( !lstrcmpiW(fni->FileName, newpath + 2), "FileName expected %s, got %s\n",
         wine_dbgstr_w(newpath + 2), wine_dbgstr_w(fni->FileName) );
+    res = pNtQueryInformationFile( handle2, &io, fni, sizeof(FILE_NAME_INFORMATION) + MAX_PATH * sizeof(WCHAR), FileNameInformation );
+    ok( res == STATUS_SUCCESS, "res expected STATUS_SUCCESS, got %lx\n", res );
+    fni->FileName[ fni->FileNameLength / sizeof(WCHAR) ] = 0;
+    todo_wine ok( !lstrcmpiW(fni->FileName, newpath + 2), "FileName expected %s, got %s\n",
+        wine_dbgstr_w(newpath + 2), wine_dbgstr_w(fni->FileName) );
     HeapFree( GetProcessHeap(), 0, fni );
 
+    CloseHandle( handle2 );
     CloseHandle( handle );
     HeapFree( GetProcessHeap(), 0, fri );
     delete_object( oldpath );
@@ -6019,6 +6027,25 @@ static void test_mailslot_name(void)
     CloseHandle( device );
 }
 
+/* Custom reparse data points must use REPARSE_DATA_GUID_BUFFER.
+ * In practice the two structs are nearly identical, and the GUID and tag can
+ * contain anything, but this does mean that the ReparseDataLength has to match
+ * the input size minus the header size, which is different. */
+static size_t init_reparse_custom( REPARSE_GUID_DATA_BUFFER **ret_buffer, ULONG tag )
+{
+    size_t size = offsetof( REPARSE_GUID_DATA_BUFFER, GenericReparseBuffer.DataBuffer[5] );
+    REPARSE_GUID_DATA_BUFFER *buffer;
+
+    buffer = malloc( size );
+    buffer->ReparseTag = tag;
+    buffer->ReparseDataLength = size - offsetof( REPARSE_GUID_DATA_BUFFER, GenericReparseBuffer );
+    buffer->Reserved = 0;
+    memset( &buffer->ReparseGuid, 0xcc, sizeof(GUID) );
+    memcpy( buffer->GenericReparseBuffer.DataBuffer, "bogus", 5 );
+    *ret_buffer = buffer;
+    return size;
+}
+
 static size_t init_reparse_mount_point( REPARSE_DATA_BUFFER **ret_buffer, const WCHAR *target )
 {
     size_t len = (wcslen( target ) + 1) + (5 + 1);
@@ -6070,6 +6097,7 @@ static void test_reparse_points(void)
     WCHAR temp_path[MAX_PATH], path[MAX_PATH], path2[MAX_PATH], ret_path[MAX_PATH];
     HANDLE temp_dir, handle, handle2, subdir, token, find_handle;
     FILE_DISPOSITION_INFORMATION fdi = {.DoDeleteFile = TRUE};
+    REPARSE_GUID_DATA_BUFFER *guid_data, *guid_data2;
     FILE_STAT_INFORMATION stat_info, stat_info2;
     FILE_DIRECTORY_INFORMATION *dir_info;
     FILE_BASIC_INFORMATION basic_info;
@@ -6164,7 +6192,7 @@ static void test_reparse_points(void)
 
     /* create a file under the directory before turning it into a reparse point */
     swprintf( path, ARRAY_SIZE(path), L"%s/testreparse_dirlink/file", temp_path );
-    handle2 = CreateFileW( path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    handle2 = CreateFileW( path, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, 0 );
     ok( handle2 != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
     CloseHandle( handle2 );
 
@@ -6173,6 +6201,9 @@ static void test_reparse_points(void)
 
     ret = DeleteFileW( path );
     ok( ret == TRUE, "got error %lu\n", GetLastError() );
+
+    status = NtOpenFile( &handle2, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0 );
+    ok( !status, "got %#lx\n", status );
 
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
     todo_wine ok( !status, "got %#lx\n", status );
@@ -6187,9 +6218,13 @@ static void test_reparse_points(void)
     data2 = malloc( data_size + 1 );
     memset( data2, 0xcc, data_size + 1 );
     io.Information = 1;
-    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, data2, sizeof(REPARSE_DATA_BUFFER) - 1 );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, data2, sizeof(REPARSE_GUID_DATA_BUFFER) - 1 );
     ok( status == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", status );
     ok( io.Information == 1, "got size %#Ix\n", io.Information );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, data2, sizeof(REPARSE_GUID_DATA_BUFFER) );
+    ok( status == STATUS_BUFFER_OVERFLOW, "got %#lx\n", status );
+    ok( io.Information == sizeof(REPARSE_GUID_DATA_BUFFER), "expected size %#Ix, got %#Ix\n", data_size, io.Information );
+    ok( !memcmp( data, data2, sizeof(REPARSE_GUID_DATA_BUFFER) ), "buffers didn't match\n" );
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, data2, data_size - 1);
     ok( status == STATUS_BUFFER_OVERFLOW, "got %#lx\n", status );
     ok( io.Information == data_size - 1, "expected size %#Ix, got %#Ix\n", data_size, io.Information );
@@ -6209,14 +6244,27 @@ static void test_reparse_points(void)
     ok( !stat_info.AllocationSize.QuadPart, "got size %#I64x\n", stat_info.AllocationSize.QuadPart );
     ok( !stat_info.EndOfFile.QuadPart, "got eof %#I64x\n", stat_info.EndOfFile.QuadPart );
 
+    status = NtQueryInformationFile( handle2, &io, &stat_info, sizeof(stat_info), FileStatInformation );
+    ok( !status, "got %#lx\n", status );
+    ok( stat_info.FileAttributes == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT),
+        "got attributes %#lx\n", stat_info.FileAttributes );
+    ok( stat_info.ReparseTag == IO_REPARSE_TAG_MOUNT_POINT, "got tag %#lx\n", stat_info.ReparseTag );
+    ok( !stat_info.AllocationSize.QuadPart, "got size %#I64x\n", stat_info.AllocationSize.QuadPart );
+    ok( !stat_info.EndOfFile.QuadPart, "got eof %#I64x\n", stat_info.EndOfFile.QuadPart );
+
+    NtClose( handle2 );
+
     status = NtCreateFile( &handle2, GENERIC_ALL, &attr, &io, NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            FILE_OPEN_IF, FILE_DIRECTORY_FILE, NULL, 0 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "got %#lx\n", status );
 
     status = NtCreateFile( &handle2, GENERIC_ALL, &attr, &io, NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           FILE_OPEN_IF, FILE_NON_DIRECTORY_FILE | FILE_OPEN_REPARSE_POINT, NULL, 0 );
+    ok( status == STATUS_FILE_IS_A_DIRECTORY, "got %#lx\n", status );
+    status = NtCreateFile( &handle2, GENERIC_ALL, &attr, &io, NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            FILE_OPEN_IF, FILE_DIRECTORY_FILE | FILE_OPEN_REPARSE_POINT, NULL, 0 );
     ok( !status, "got %#lx\n", status );
-    status = NtQueryInformationFile( handle, &io, &stat_info, sizeof(stat_info), FileStatInformation );
+    status = NtQueryInformationFile( handle2, &io, &stat_info, sizeof(stat_info), FileStatInformation );
     ok( !status, "got %#lx\n", status );
     ok( stat_info.FileAttributes == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT),
         "got attributes %#lx\n", stat_info.FileAttributes );
@@ -6341,7 +6389,7 @@ static void test_reparse_points(void)
                            FILE_OPEN_IF, 0, NULL, 0 );
     ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
     status = NtCreateFile( &subdir, GENERIC_ALL, &attr2, &io, NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                           FILE_OPEN_IF, FILE_OPEN_REPARSE_POINT, NULL, 0 );
+                           FILE_OPEN, FILE_OPEN_REPARSE_POINT, NULL, 0 );
     ok( !status, "got %#lx\n", status );
     NtClose( subdir );
     NtClose( handle2 );
@@ -6377,21 +6425,28 @@ static void test_reparse_points(void)
 
     swprintf( path, ARRAY_SIZE(path), L"%s/testreparse_dirlink/testreparse_dirlink", temp_path );
     handle2 = CreateFileW( path, GENERIC_ALL, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                           NULL, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT, 0 );
+                           NULL, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0 );
     ok( handle2 != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
     ret = GetFinalPathNameByHandleW( handle2, ret_path, ARRAY_SIZE( ret_path ), VOLUME_NAME_DOS );
     ok( ret > 0, "got error %lu\n", GetLastError() );
-    swprintf( path, ARRAY_SIZE(path), L"%stestreparse_dirlink", temp_path );
+    swprintf( path, ARRAY_SIZE(path), L"\\\\?\\%stestreparse_dirlink", temp_path );
     ok( !wcscmp( ret_path, path ), "expected path %s, got %s\n", debugstr_w( path ), debugstr_w( ret_path ));
     CloseHandle( handle2 );
 
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, NULL, 0, NULL, 0 );
     ok( status == STATUS_INVALID_BUFFER_SIZE, "got %#lx\n", status );
-
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, data, 1, NULL, 0 );
+    ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, data, data_size, NULL, 0 );
     ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
-
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, data, sizeof(REPARSE_DATA_BUFFER), NULL, 0 );
+    ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
     data->ReparseDataLength = 0;
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, data, sizeof(REPARSE_GUID_DATA_BUFFER), NULL, 0 );
+    ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
+
     data->ReparseTag = 0;
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, data, sizeof(REPARSE_DATA_BUFFER), NULL, 0 );
     ok( status == STATUS_IO_REPARSE_TAG_INVALID, "got %#lx\n", status );
@@ -6450,6 +6505,136 @@ static void test_reparse_points(void)
     ok( handle == INVALID_HANDLE_VALUE, "expected failure\n" );
     ok( GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError() );
 
+    /* Test a custom reparse tag. */
+
+    swprintf( path, ARRAY_SIZE(path), L"%s/testreparse_customfile", temp_path );
+    handle = CreateFileW( path, GENERIC_ALL, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( handle != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
+    ret = WriteFile( handle, "data", 4, &size, NULL );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+
+    data_size = init_reparse_custom( &guid_data, 0xbeef );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, guid_data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    RtlInitUnicodeString( &nameW, L"testreparse_customfile" );
+    status = NtOpenFile( &handle2, GENERIC_READ | SYNCHRONIZE, &attr, &io,
+                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                         FILE_OPEN_REPARSE_POINT | FILE_SYNCHRONOUS_IO_NONALERT );
+    ok( !status, "got %#lx\n", status );
+
+    guid_data2 = malloc( data_size + 1 );
+    memset( guid_data2, 0xcc, data_size + 1 );
+    io.Information = 1;
+    status = NtFsControlFile( handle2, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, guid_data2, sizeof(REPARSE_GUID_DATA_BUFFER) - 1 );
+    ok( status == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", status );
+    ok( io.Information == 1, "got size %#Ix\n", io.Information );
+    status = NtFsControlFile( handle2, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, guid_data2, data_size - 1);
+    ok( status == STATUS_BUFFER_OVERFLOW, "got %#lx\n", status );
+    ok( io.Information == data_size - 1, "expected size %#Ix, got %#Ix\n", data_size, io.Information );
+    ok( !memcmp( guid_data, guid_data2, data_size - 1 ), "buffers didn't match\n" );
+
+    io.Information = 1;
+    status = NtFsControlFile( handle2, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, guid_data2, data_size + 1);
+    ok( !status, "got %#lx\n", status );
+    ok( io.Information == data_size, "expected size %#Ix, got %#Ix\n", data_size, io.Information );
+    ok( !memcmp( guid_data, guid_data2, data_size ), "buffers didn't match\n" );
+
+    ret = ReadFile( handle2, buffer, sizeof(buffer), &size, NULL );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+    ok( size == 4, "got size %lu\n", size );
+    ok( !memcmp( buffer, "data", size ), "got data %s\n", debugstr_an( buffer, size ));
+
+    CloseHandle( handle2 );
+
+    status = NtOpenFile( &handle2, GENERIC_READ, &attr, &io,
+                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0 );
+    ok( status == STATUS_IO_REPARSE_TAG_NOT_HANDLED, "got %#lx\n", status );
+
+    status = NtSetInformationFile( handle, &io, &fdi, sizeof(fdi), FileDispositionInformation );
+    ok( !status, "got %#lx\n", status );
+    CloseHandle( handle );
+
+    RtlInitUnicodeString( &nameW, L"testreparse_customdir" );
+    status = NtCreateFile( &handle, GENERIC_ALL, &attr, &io, NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           FILE_OPEN_IF, FILE_DIRECTORY_FILE, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    swprintf( path, ARRAY_SIZE(path), L"%s/testreparse_customdir/file", temp_path );
+    handle2 = CreateFileW( path, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( handle2 != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
+    CloseHandle( handle2 );
+
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, guid_data, data_size, NULL, 0 );
+    ok( status == STATUS_DIRECTORY_NOT_EMPTY, "got %#lx\n", status );
+
+    ret = DeleteFileW( path );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, guid_data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    io.Information = 1;
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, guid_data2, data_size + 1);
+    ok( !status, "got %#lx\n", status );
+    ok( io.Information == data_size, "expected size %#Ix, got %#Ix\n", data_size, io.Information );
+    ok( !memcmp( guid_data, guid_data2, data_size ), "buffers didn't match\n" );
+
+    RtlInitUnicodeString( &nameW, L"testreparse_customdir\\file" );
+    status = NtCreateFile( &handle2, GENERIC_ALL, &attr, &io, NULL, 0, 0, FILE_OPEN, 0, NULL, 0 );
+    ok( status == STATUS_IO_REPARSE_TAG_NOT_HANDLED, "got %#lx\n", status );
+
+    status = NtCreateFile( &handle2, GENERIC_ALL, &attr, &io, NULL, 0, 0, FILE_OPEN, FILE_OPEN_REPARSE_POINT, NULL, 0 );
+    ok( status == STATUS_IO_REPARSE_TAG_NOT_HANDLED, "got %#lx\n", status );
+
+    guid_data->ReparseDataLength = 0;
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, guid_data, data_size, NULL, 0 );
+    ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, guid_data, sizeof(REPARSE_GUID_DATA_BUFFER), NULL, 0 );
+    ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, guid_data, sizeof(REPARSE_DATA_BUFFER), NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    swprintf( path, ARRAY_SIZE(path), L"%s/testreparse_customdir/file", temp_path );
+    handle2 = CreateFileW( path, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( handle2 != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
+    CloseHandle( handle2 );
+
+    /* Set the "directory" bit on our custom tag. */
+
+    data_size = init_reparse_custom( &guid_data, 0x1000beef );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, guid_data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    io.Information = 1;
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, guid_data2, data_size + 1);
+    ok( !status, "got %#lx\n", status );
+    ok( io.Information == data_size, "expected size %#Ix, got %#Ix\n", data_size, io.Information );
+    ok( !memcmp( guid_data, guid_data2, data_size ), "buffers didn't match\n" );
+
+    RtlInitUnicodeString( &nameW, L"testreparse_customdir" );
+    status = NtOpenFile( &handle2, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    io.Information = 1;
+    status = NtFsControlFile( handle2, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, guid_data2, data_size + 1);
+    ok( !status, "got %#lx\n", status );
+    ok( io.Information == data_size, "expected size %#Ix, got %#Ix\n", data_size, io.Information );
+    ok( !memcmp( guid_data, guid_data2, data_size ), "buffers didn't match\n" );
+    NtClose( handle2 );
+
+    RtlInitUnicodeString( &nameW, L"testreparse_customdir\\file" );
+    status = NtOpenFile( &handle2, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0 );
+    ok( !status, "got %#lx\n", status );
+    NtClose( handle2 );
+
+    ret = DeleteFileW( path );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+
+    status = NtSetInformationFile( handle, &io, &fdi, sizeof(fdi), FileDispositionInformation );
+    ok( !status, "got %#lx\n", status );
+    CloseHandle( handle );
+
     /* Test IO_REPARSE_TAG_SYMLINK.
      * Symlinks require administrator access, but we *also* need to
      * raise the specific privilege. */
@@ -6457,7 +6642,7 @@ static void test_reparse_points(void)
     ret = OpenProcessToken( GetCurrentProcess(), TOKEN_ALL_ACCESS, &token );
     ok( ret == TRUE, "got error %lu\n", GetLastError() );
     ret = LookupPrivilegeValueA( NULL, "SeCreateSymbolicLinkPrivilege", &luid );
-    todo_wine ok( ret == TRUE, "got error %lu\n", GetLastError() );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
 
     privs.PrivilegeCount = 1;
     privs.Privileges[0].Luid = luid;
@@ -6492,6 +6677,23 @@ static void test_reparse_points(void)
     status = NtCreateFile( &handle2, GENERIC_READ, &attr, &io, NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            FILE_OPEN, 0, NULL, 0 );
     ok( status == STATUS_FILE_IS_A_DIRECTORY, "got %#lx\n", status );
+
+    data_size = init_reparse_symlink( &data, L"testreparse_file\\", SYMLINK_FLAG_RELATIVE );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    status = NtCreateFile( &handle2, GENERIC_READ, &attr, &io, NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           FILE_OPEN, 0, NULL, 0 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "got %#lx\n", status );
+
+    data_size = init_reparse_symlink( &data, L"\\Device\\NamedPipe\\", 0 );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    status = NtCreateFile( &handle2, GENERIC_READ, &attr, &io, NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           FILE_OPEN, 0, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+    NtClose( handle2 );
 
     data_size = init_reparse_symlink( &data, L"testreparse_file", SYMLINK_FLAG_RELATIVE );
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
@@ -6598,6 +6800,9 @@ static void test_reparse_points(void)
     ok( !memcmp( buffer, "file2", size ), "got data %s\n", debugstr_an( buffer, size ));
     CloseHandle( handle2 );
 
+    ret = DeleteFileW( path2 );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+
     /* Hard links. */
 
     swprintf( path, ARRAY_SIZE(path), L"%stestreparse_filelink", temp_path );
@@ -6605,7 +6810,7 @@ static void test_reparse_points(void)
     ret = CreateHardLinkW( path2, path, NULL );
     ok( ret == TRUE, "got error %lu\n", GetLastError() );
 
-    handle2 = CreateFileW( path, GENERIC_ALL, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+    handle2 = CreateFileW( path2, GENERIC_ALL, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            NULL, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT, 0 );
     ok( handle2 != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
     status = NtQueryInformationFile( handle, &io, &stat_info, sizeof(stat_info), FileStatInformation );
@@ -6621,7 +6826,7 @@ static void test_reparse_points(void)
         stat_info.FileId.QuadPart, stat_info2.FileId.QuadPart );
     CloseHandle( handle2 );
 
-    handle2 = CreateFileW( path, GENERIC_ALL, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+    handle2 = CreateFileW( path2, GENERIC_ALL, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            NULL, OPEN_EXISTING, 0, 0 );
     ok( handle2 != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
     status = NtQueryInformationFile( handle2, &io, &stat_info2, sizeof(stat_info2), FileStatInformation );
@@ -6641,6 +6846,17 @@ static void test_reparse_points(void)
     ok( handle2 == INVALID_HANDLE_VALUE, "expected failure\n" );
     ok( GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError() );
 
+    handle2 = CreateFileW( path2, GENERIC_ALL, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( handle2 != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
+    CloseHandle( handle2 );
+
+    ret = CreateHardLinkW( path, path2, NULL );
+    ok( ret == FALSE, "got error %lu\n", GetLastError() );
+    ok( GetLastError() == ERROR_ALREADY_EXISTS, "got error %lu\n", GetLastError() );
+
+    ret = DeleteFileW( path2 );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+
     /* MoveFile(). */
 
     ret = MoveFileW( path, path2 );
@@ -6652,6 +6868,17 @@ static void test_reparse_points(void)
     ok( GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError() );
 
     ret = MoveFileW( path2, path );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+
+    handle2 = CreateFileW( path2, GENERIC_ALL, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( handle2 != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
+    CloseHandle( handle2 );
+
+    ret = MoveFileW( path2, path );
+    ok( ret == FALSE, "got error %lu\n", GetLastError() );
+    ok( GetLastError() == ERROR_ALREADY_EXISTS, "got error %lu\n", GetLastError() );
+
+    ret = DeleteFileW( path2 );
     ok( ret == TRUE, "got error %lu\n", GetLastError() );
 
     /* Attributes. */
@@ -6690,6 +6917,8 @@ static void test_reparse_points(void)
     ok( handle2 != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
     CloseHandle( handle2 );
 
+    NtClose( handle );
+
     ret = DeleteFileW( path );
     ok( ret == TRUE, "got error %lu\n", GetLastError() );
 
@@ -6725,10 +6954,6 @@ static void test_reparse_points(void)
 
     NtClose( handle );
 
-    swprintf( path, ARRAY_SIZE(path), L"%s/testreparse_dir/file", temp_path );
-    ret = DeleteFileW( path );
-    ok( ret == TRUE, "got error %lu\n", GetLastError() );
-
     /* RemoveDirectory() also deletes the link rather than the target. */
     swprintf( path, ARRAY_SIZE(path), L"%s/testreparse_dirlink", temp_path );
     ret = RemoveDirectoryW( path );
@@ -6737,14 +6962,94 @@ static void test_reparse_points(void)
     status = NtOpenFile( &handle, READ_CONTROL, &attr, &io, 0, FILE_OPEN_REPARSE_POINT );
     ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx\n", status );
 
-    /* Create an absolute symlink. */
+    /* Test link syntax. */
 
     RtlInitUnicodeString( &nameW, L"testreparse_dirlink" );
     status = NtCreateFile( &handle, GENERIC_ALL, &attr, &io, NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            FILE_OPEN_IF, FILE_DIRECTORY_FILE, NULL, 0 );
     ok( !status, "got %#lx\n", status );
 
-    swprintf( path, ARRAY_SIZE(path), L"\\??\\%stestreparse_dir", temp_path );
+    data_size = init_reparse_symlink( &data, L".\\testreparse_dir\\..\\.\\testreparse_dir\\", SYMLINK_FLAG_RELATIVE );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, data2, data_size + 1);
+    ok( !status, "got %#lx\n", status );
+    ok( io.Information == data_size, "expected size %#Ix, got %#Ix\n", data_size, io.Information );
+    ok( !memcmp( data, data2, data_size ), "buffers didn't match\n" );
+
+    RtlInitUnicodeString( &nameW, L"testreparse_dirlink\\file" );
+    status = NtOpenFile( &handle2, READ_CONTROL, &attr, &io, 0, 0 );
+    ok( !status, "got %#lx\n", status );
+    NtClose( handle2 );
+
+    data_size = init_reparse_symlink( &data, L".\\testreparse_dir\\..\\.\\testreparse_dir2\\.", SYMLINK_FLAG_RELATIVE );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    RtlInitUnicodeString( &nameW, L"testreparse_dirlink" );
+    status = NtCreateFile( &handle2, GENERIC_ALL, &attr, &io, NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           FILE_OPEN, FILE_DIRECTORY_FILE, NULL, 0 );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx\n", status );
+
+    status = NtCreateFile( &handle2, GENERIC_ALL, &attr, &io, NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           FILE_OPEN_IF, FILE_DIRECTORY_FILE, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+    status = NtSetInformationFile( handle2, &io, &fdi, sizeof(fdi), FileDispositionInformation );
+    ok( !status, "got %#lx\n", status );
+    NtClose( handle2 );
+
+    data_size = init_reparse_symlink( &data, L"./testreparse_dir", SYMLINK_FLAG_RELATIVE );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    status = NtOpenFile( &handle2, READ_CONTROL, &attr, &io, 0, 0 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "got %#lx\n", status );
+
+    data_size = init_reparse_symlink( &data, L".\\\\testreparse_dir", SYMLINK_FLAG_RELATIVE );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    status = NtOpenFile( &handle2, READ_CONTROL, &attr, &io, 0, 0 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "got %#lx\n", status );
+
+    data_size = init_reparse_symlink( &data, L".\\testreparse_dir.", SYMLINK_FLAG_RELATIVE );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    status = NtOpenFile( &handle2, READ_CONTROL, &attr, &io, 0, 0 );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx\n", status );
+
+    data_size = init_reparse_symlink( &data, L"", SYMLINK_FLAG_RELATIVE );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
+
+    data_size = init_reparse_symlink( &data, L"..", SYMLINK_FLAG_RELATIVE );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    RtlInitUnicodeString( &nameW, L"testreparse_dirlink\\" );
+    status = NtOpenFile( &handle2, READ_CONTROL, &attr, &io, 0, 0 );
+    ok( !status, "got %#lx\n", status );
+    NtClose( handle2 );
+
+    /* Try to unwind past the drive root. */
+    data_size = init_reparse_symlink( &data, L"..\\..\\..\\..\\..\\..\\..\\..\\..\\..", SYMLINK_FLAG_RELATIVE );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    RtlInitUnicodeString( &nameW, L"testreparse_dirlink\\" );
+    status = NtOpenFile( &handle2, READ_CONTROL, &attr, &io, 0, 0 );
+    ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
+
+    /* Create an absolute symlink. */
+
+    RtlInitUnicodeString( &nameW, L"testreparse_dirlink" );
+    status = NtCreateFile( &handle, GENERIC_ALL, &attr, &io, NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           FILE_OPEN_IF, FILE_DIRECTORY_FILE | FILE_OPEN_REPARSE_POINT, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    swprintf( path, ARRAY_SIZE(path), L"\\??\\%stestreparse_dir2\\", temp_path );
     data_size = init_reparse_symlink( &data, path, SYMLINK_FLAG_RELATIVE );
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
     ok( !status, "got %#lx\n", status );
@@ -6756,11 +7061,80 @@ static void test_reparse_points(void)
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
     ok( !status, "got %#lx\n", status );
 
+    swprintf( path, ARRAY_SIZE(path), L"%s/testreparse_dir2", temp_path );
+    ret = CreateDirectoryW( path, NULL );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, data2, data_size + 1);
+    ok( !status, "got %#lx\n", status );
+    ok( io.Information == data_size, "expected size %#Ix, got %#Ix\n", data_size, io.Information );
+    ok( !memcmp( data, data2, data_size ), "buffers didn't match\n" );
+
     status = NtOpenFile( &handle2, READ_CONTROL, &attr, &io, 0, 0 );
     ok( !status, "got %#lx\n", status );
     NtClose( handle2 );
 
+    /* Test link syntax again. */
+
+    swprintf( path, ARRAY_SIZE(path), L"\\\\?\\%stestreparse_dir2", temp_path );
+    data_size = init_reparse_symlink( &data, path, 0 );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    status = NtOpenFile( &handle2, READ_CONTROL, &attr, &io, 0, 0 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "got %#lx\n", status );
+
+    swprintf( path, ARRAY_SIZE(path), L"%stestreparse_dir2", temp_path );
+    data_size = init_reparse_symlink( &data, path, 0 );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    status = NtOpenFile( &handle2, READ_CONTROL, &attr, &io, 0, 0 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "got %#lx\n", status );
+
+    swprintf( path, ARRAY_SIZE(path), L".\\testreparse_dir2", temp_path );
+    data_size = init_reparse_symlink( &data, path, 0 );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    status = NtOpenFile( &handle2, READ_CONTROL, &attr, &io, 0, 0 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "got %#lx\n", status );
+
+    swprintf( path, ARRAY_SIZE(path), L"\\??\\%s.\\testreparse_dir2", temp_path );
+    data_size = init_reparse_symlink( &data, path, 0 );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    status = NtOpenFile( &handle2, READ_CONTROL, &attr, &io, 0, 0 );
+    ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "got %#lx\n", status );
+
+    swprintf( path, ARRAY_SIZE(path), L"\\??\\%stestreparse_dir2\\..\\testreparse_dir2", temp_path );
+    data_size = init_reparse_symlink( &data, path, 0 );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    status = NtOpenFile( &handle2, READ_CONTROL, &attr, &io, 0, 0 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "got %#lx\n", status );
+
+    swprintf( path, ARRAY_SIZE(path), L"%s/testreparse_dir/file", temp_path );
+    ret = DeleteFileW( path );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+
+    /* NtDeleteFile, surprisingly, deletes the target. */
+
+    swprintf( path, ARRAY_SIZE(path), L"\\??\\%stestreparse_dir2", temp_path );
+    data_size = init_reparse_symlink( &data, path, 0 );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
     NtClose( handle );
+
+    status = NtDeleteFile( &attr );
+    ok( !status, "got %#lx\n", status );
+
+    ret = RemoveDirectoryW( path );
+    ok( ret == FALSE, "got error %lu\n", GetLastError() );
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError() );
 
     swprintf( path, ARRAY_SIZE(path), L"%s/testreparse_dirlink", temp_path );
     ret = RemoveDirectoryW( path );
