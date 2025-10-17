@@ -6363,7 +6363,7 @@ static void test_reparse_points(void)
     ret = GetFileAttributesW( L"file" );
     ok( ret == FILE_ATTRIBUTE_ARCHIVE, "got %#x\n", ret );
     ret = GetFileAttributesW( L"." );
-    todo_wine ok( ret == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT), "got %#x\n", ret );
+    ok( ret == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT), "got %#x\n", ret );
 
     SetCurrentDirectoryW( path2 );
 
@@ -6376,7 +6376,7 @@ static void test_reparse_points(void)
     swprintf( path, ARRAY_SIZE(path), L"%s/testreparse_dirlink", temp_path );
     find_handle = FindFirstFileW( path, &find_data );
     ok( find_handle != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
-    todo_wine ok( find_data.dwFileAttributes == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT),
+    ok( find_data.dwFileAttributes == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT),
         "got attributes %#lx\n", find_data.dwFileAttributes );
     todo_wine ok( find_data.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT, "got tag %#lx\n", find_data.dwReserved0 );
     FindClose( find_handle );
