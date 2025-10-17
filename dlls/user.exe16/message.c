@@ -34,6 +34,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
 WINE_DECLARE_DEBUG_CHANNEL(message);
 
+#define MAX_ATOM_LEN 255
+
 DWORD USER16_AlertableWait = 0;
 
 struct wow_handlers32 wow_handlers32;
@@ -881,9 +883,9 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
             UINT_PTR lo = LOWORD(lParam);
             UINT_PTR hi = HIWORD(lParam);
             int flag = 0;
-            char buf[2];
+            char buf[MAX_ATOM_LEN + 1];
 
-            if (GlobalGetAtomNameA(hi, buf, 2) > 0) flag |= 1;
+            if (GlobalGetAtomNameA(hi, buf, sizeof(buf)) > 0) flag |= 1;
             if (GlobalSize16(hi) != 0) flag |= 2;
             switch (flag)
             {
@@ -1262,7 +1264,7 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
         {
             UINT_PTR lo, hi;
             int flag = 0;
-            char buf[2];
+            char buf[MAX_ATOM_LEN + 1];
 
             UnpackDDElParam( msg, lParam, &lo, &hi );
 
