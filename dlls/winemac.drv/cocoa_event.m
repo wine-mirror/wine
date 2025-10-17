@@ -22,7 +22,6 @@
 #include <sys/event.h>
 #include <sys/time.h>
 #include <libkern/OSAtomic.h>
-#import <Carbon/Carbon.h>
 
 #include "macdrv_cocoa.h"
 #import "cocoa_event.h"

@@ -21,7 +21,6 @@
 #include "config.h"
 
 #define GL_SILENCE_DEPRECATION
-#import <Carbon/Carbon.h>
 #import <CoreVideo/CoreVideo.h>
 #import <Metal/Metal.h>
 #import <QuartzCore/QuartzCore.h>
