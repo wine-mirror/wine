@@ -2369,7 +2369,7 @@ static void test_session_creation(void)
     hr = IAudioSessionManager2_GetSessionEnumerator((void *)sesm2, &sess_enum);
     ok(hr == S_OK, "got %#lx.\n", hr);
 
-    /* create another session after getting the first enumerarot. */
+    /* create another session after getting the first enumerator. */
     CoCreateGuid(&session_guid2);
     hr = IAudioSessionManager_GetAudioSessionControl(sesm, &session_guid2, 0, &ctl);
     ok(hr == S_OK, "got %#lx.\n", hr);
@@ -2392,7 +2392,10 @@ static void test_session_creation(void)
         hr = IAudioSessionControl_GetDisplayName(ctl, &name);
         ok(hr == S_OK, "got %#lx.\n", hr);
         if (!wcscmp(name, L"test_session1"))
+        {
             found_first = TRUE;
+            check_session_ids(dev, &session_guid, ctl);
+        }
         if (!wcscmp(name, L"test_session2"))
             found_second = TRUE;
         CoTaskMemFree(name);
@@ -2431,9 +2434,29 @@ static void test_session_creation(void)
     ok(found_first && found_second, "got %d, %d.\n", found_first, found_second);
     IAudioSessionEnumerator_Release(sess_enum);
     IAudioSessionEnumerator_Release(sess_enum2);
+    ISimpleAudioVolume_Release(sav);
+
+    /* NULL and GUID_NULL both refer to the default session. There is nothing
+     * special about it */
+    hr = IAudioSessionManager_GetSimpleAudioVolume(sesm, NULL, FALSE, &sav);
+    ok(hr == S_OK, "GetSimpleAudioVolume failed: %08lx\n", hr);
+    hr = ISimpleAudioVolume_GetMasterVolume(sav, &vol);
+    ok(hr == S_OK, "GetMasterVolume failed: %08lx\n", hr);
+    ok(vol == 1.0f, "Unexpected vol %.8e\n", vol);
+    hr = ISimpleAudioVolume_SetMasterVolume(sav, 0.5f, NULL);
+    ok(hr == S_OK, "SetMasterVolume failed: %08lx\n", hr);
+    ISimpleAudioVolume_Release(sav);
+
+    hr = IAudioSessionManager_GetSimpleAudioVolume(sesm, &GUID_NULL, FALSE, &sav);
+    ok(hr == S_OK, "GetSimpleAudioVolume failed: %08lx\n", hr);
+    hr = ISimpleAudioVolume_GetMasterVolume(sav, &vol);
+    ok(hr == S_OK, "GetMasterVolume failed: %08lx\n", hr);
+    ok(vol == 0.5f, "Unexpected vol %.8e\n", vol);
+    hr = ISimpleAudioVolume_SetMasterVolume(sav, 1.0f, NULL);
+    ok(hr == S_OK, "SetMasterVolume failed: %08lx\n", hr);
+    ISimpleAudioVolume_Release(sav);
 
     /* Release completely to show session persistence */
-    ISimpleAudioVolume_Release(sav);
     IAudioSessionManager_Release(sesm);
     IAudioSessionManager2_Release(sesm2);
 

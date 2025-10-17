@@ -515,6 +515,8 @@ static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_
         FIXME("Unknown flags: %08lx\n", flags);
         return E_INVALIDARG;
     }
+    if (flags & AUDCLNT_STREAMFLAGS_CROSSPROCESS)
+        FIXME("Cross-process sessions not supported\n");
 
     hr = validate_wfx(fmt, mode);
 
