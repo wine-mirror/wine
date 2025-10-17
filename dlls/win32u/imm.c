@@ -683,7 +683,7 @@ LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPAR
             res = TRUE;
         }
 
-        TRACE( "processing scan %#x, vkey %#x -> %lu\n", LOWORD(wparam), HIWORD(lparam), res );
+        TRACE( "processing vkey %#x, scan %#x -> %lu\n", LOWORD(wparam), HIWORD(lparam), res );
         return res;
     }
     case WINE_IME_TO_ASCII_EX:
