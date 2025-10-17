@@ -6474,22 +6474,22 @@ static void test_reparse_points(void)
     CloseHandle( handle2 );
 
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, NULL, 0, NULL, 0 );
-    todo_wine ok( status == STATUS_INVALID_BUFFER_SIZE, "got %#lx\n", status );
+    ok( status == STATUS_INVALID_BUFFER_SIZE, "got %#lx\n", status );
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, data, 1, NULL, 0 );
-    todo_wine ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
+    ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, data, data_size, NULL, 0 );
-    todo_wine ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
+    ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, data, sizeof(REPARSE_DATA_BUFFER), NULL, 0 );
-    todo_wine ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
+    ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
     data->ReparseDataLength = 0;
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, data, data_size, NULL, 0 );
-    todo_wine ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
+    ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, data, sizeof(REPARSE_GUID_DATA_BUFFER), NULL, 0 );
-    todo_wine ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
+    ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
 
     data->ReparseTag = 0;
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, data, sizeof(REPARSE_DATA_BUFFER), NULL, 0 );
-    todo_wine ok( status == STATUS_IO_REPARSE_TAG_INVALID, "got %#lx\n", status );
+    ok( status == STATUS_IO_REPARSE_TAG_INVALID, "got %#lx\n", status );
 
     data->ReparseTag = 3;
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, data, sizeof(REPARSE_DATA_BUFFER), NULL, 0 );
@@ -6500,7 +6500,7 @@ static void test_reparse_points(void)
     todo_wine ok( !status, "got %#lx\n", status );
 
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, data, sizeof(REPARSE_DATA_BUFFER), NULL, 0 );
-    todo_wine ok( status == STATUS_NOT_A_REPARSE_POINT, "got %#lx\n", status );
+    ok( status == STATUS_NOT_A_REPARSE_POINT, "got %#lx\n", status );
 
     /* Create a dangling symlink, and then open it without
      * FILE_OPEN_REPARSE_POINT but with FILE_OPEN_IF. This creates the target.
@@ -6642,15 +6642,15 @@ static void test_reparse_points(void)
 
     guid_data->ReparseDataLength = 0;
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, guid_data, data_size, NULL, 0 );
-    todo_wine ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
+    ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, guid_data, sizeof(REPARSE_GUID_DATA_BUFFER), NULL, 0 );
-    todo_wine ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
+    ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, guid_data, sizeof(REPARSE_DATA_BUFFER), NULL, 0 );
-    todo_wine ok( !status, "got %#lx\n", status );
+    ok( !status, "got %#lx\n", status );
 
     swprintf( path, ARRAY_SIZE(path), L"%s/testreparse_customdir/file", temp_path );
     handle2 = CreateFileW( path, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, 0 );
-    todo_wine ok( handle2 != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
+    ok( handle2 != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
     CloseHandle( handle2 );
 
     /* Set the "directory" bit on our custom tag.
@@ -6690,6 +6690,14 @@ static void test_reparse_points(void)
 
     ret = DeleteFileW( path );
     todo_wine ok( ret == TRUE, "got error %lu\n", GetLastError() );
+    if (!ret)
+    {
+        guid_data->ReparseDataLength = 0;
+        status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_DELETE_REPARSE_POINT, guid_data, sizeof(REPARSE_DATA_BUFFER), NULL, 0 );
+        ok( !status, "got %#lx\n", status );
+        ret = DeleteFileW( path );
+        ok( ret == TRUE, "got error %lu\n", GetLastError() );
+    }
 
     status = NtSetInformationFile( handle, &io, &fdi, sizeof(fdi), FileDispositionInformation );
     ok( !status, "got %#lx\n", status );

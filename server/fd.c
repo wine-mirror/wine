@@ -2431,6 +2431,22 @@ static int xattr_fset( int filedes, const char *name, const void *value, size_t 
 #endif
 }
 
+static int xattr_fremove( int filedes, const char *name )
+{
+#ifdef HAVE_SYS_XATTR_H
+# ifdef XATTR_ADDITIONAL_OPTIONS
+    return fremovexattr( filedes, name, 0 );
+# else
+    return fremovexattr( filedes, name );
+# endif
+#elif defined(HAVE_SYS_EXTATTR_H)
+    return extattr_delete_fd( filedes, EXTATTR_NAMESPACE_USER, &name[XATTR_USER_PREFIX_LEN] );
+#else
+    errno = ENOSYS;
+    return -1;
+#endif
+}
+
 static void set_reparse_point( struct fd *fd, struct async *async )
 {
     char *reparse_name;
@@ -2479,6 +2495,61 @@ static void set_reparse_point( struct fd *fd, struct async *async )
         free( fd->unix_name );
         fd->closed->unix_name = fd->unix_name = reparse_name;
     }
+}
+
+static void delete_reparse_point( struct fd *fd, struct async *async )
+{
+    const REPARSE_DATA_BUFFER *data = get_req_data();
+    char *base_name;
+    size_t len;
+
+    if (!fd->unix_name)
+    {
+        set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        return;
+    }
+
+    if (!get_req_data_size())
+    {
+        set_error( STATUS_INVALID_BUFFER_SIZE );
+        return;
+    }
+
+    len = strlen( fd->unix_name );
+    if (fd->unix_name[len - 1] != '?')
+    {
+        set_error( STATUS_NOT_A_REPARSE_POINT );
+        return;
+    }
+
+    if (get_req_data_size() != sizeof(REPARSE_DATA_BUFFER) || data->ReparseDataLength)
+    {
+        set_error( STATUS_IO_REPARSE_DATA_INVALID );
+        return;
+    }
+
+    if (!data->ReparseTag)
+    {
+        set_error( STATUS_IO_REPARSE_TAG_INVALID );
+        return;
+    }
+
+    if (!(base_name = mem_alloc( len )))
+        return;
+    memcpy( base_name, fd->unix_name, len - 1 );
+    base_name[len - 1] = 0;
+
+    if (rename( fd->unix_name, base_name ) < 0)
+    {
+        file_set_error();
+        free( base_name );
+        return;
+    }
+
+    free( fd->unix_name );
+    fd->closed->unix_name = fd->unix_name = base_name;
+
+    xattr_fremove( fd->unix_fd, XATTR_REPARSE );
 }
 
 /* default read() routine */
@@ -2601,6 +2672,10 @@ void default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
     case FSCTL_SET_REPARSE_POINT:
         set_reparse_point( fd, async );
+        break;
+
+    case FSCTL_DELETE_REPARSE_POINT:
+        delete_reparse_point( fd, async );
         break;
 
     default:
