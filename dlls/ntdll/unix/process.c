@@ -256,7 +256,7 @@ static unsigned int get_pe_file_info( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *n
 
     *handle = 0;
     memset( info, 0, sizeof(*info) );
-    if (!(status = get_nt_and_unix_names( attr, nt_name, unix_name, FILE_OPEN )))
+    if (!(status = get_nt_and_unix_names( attr, nt_name, unix_name, FILE_OPEN, FALSE )))
     {
         status = open_unix_file( handle, *unix_name, GENERIC_READ, attr, 0,
                                  FILE_SHARE_READ | FILE_SHARE_DELETE,
@@ -340,7 +340,7 @@ static int get_unix_curdir( const RTL_USER_PROCESS_PARAMETERS *params )
     nt_name.Length = wcslen( nt_name.Buffer ) * sizeof(WCHAR);
 
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
-    status = get_nt_and_unix_names( &attr, &true_nt_name, &unix_name, FILE_OPEN );
+    status = get_nt_and_unix_names( &attr, &true_nt_name, &unix_name, FILE_OPEN, FALSE );
     if (status) goto done;
     status = open_unix_file( &handle, unix_name, FILE_TRAVERSE | SYNCHRONIZE, &attr, 0,
                              FILE_SHARE_READ | FILE_SHARE_DELETE,

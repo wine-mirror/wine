@@ -3460,7 +3460,7 @@ done:
 
 static NTSTATUS resolve_reparse_point( int fd, int root_fd, OBJECT_ATTRIBUTES *attr,
         UNICODE_STRING *nt_name, unsigned int nt_pos, unsigned int reparse_len, char **unix_name,
-        int unix_len, int pos, UINT disposition, BOOL is_unix, unsigned int reparse_count );
+        int unix_len, int pos, UINT disposition, BOOL open_reparse, BOOL is_unix, unsigned int reparse_count );
 
 
 /******************************************************************************
@@ -3470,7 +3470,7 @@ static NTSTATUS resolve_reparse_point( int fd, int root_fd, OBJECT_ATTRIBUTES *a
  */
 static NTSTATUS lookup_unix_name( int root_fd, OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name,
                                   unsigned int nt_pos, char **buffer, int unix_len, int pos,
-                                  UINT disposition, BOOL is_unix, unsigned int reparse_count )
+                                  UINT disposition, BOOL open_reparse, BOOL is_unix, unsigned int reparse_count )
 {
     static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, '/', 0 };
     const WCHAR *name = attr->ObjectName->Buffer + nt_pos;
@@ -3559,14 +3559,21 @@ static NTSTATUS lookup_unix_name( int root_fd, OBJECT_ATTRIBUTES *attr, UNICODE_
             memcpy( reparse_name, name, (end - name) * sizeof(WCHAR) );
             reparse_name[end - name] = '?';
 
-            if (!find_file_in_dir( root_fd, unix_name, pos, reparse_name, end - name + 1, is_unix )
-                && (reparse_fd = openat( root_fd, unix_name, O_RDONLY )) >= 0)
+            if (!name_len && open_reparse)
             {
-                status = resolve_reparse_point( reparse_fd, root_fd, attr, nt_name, nt_pos, next - name, buffer,
-                                                unix_len, pos, disposition, is_unix, reparse_count );
-                close( reparse_fd );
-                free( reparse_name );
-                return status;
+                status = find_file_in_dir( root_fd, unix_name, pos, reparse_name, end - name + 1, is_unix );
+            }
+            else
+            {
+                if (!find_file_in_dir( root_fd, unix_name, pos, reparse_name, end - name + 1, is_unix )
+                    && (reparse_fd = openat( root_fd, unix_name, O_RDONLY )) >= 0)
+                {
+                    status = resolve_reparse_point( reparse_fd, root_fd, attr, nt_name, nt_pos, next - name, buffer,
+                                                    unix_len, pos, disposition, open_reparse, is_unix, reparse_count );
+                    close( reparse_fd );
+                    free( reparse_name );
+                    return status;
+                }
             }
         }
 
@@ -3612,7 +3619,8 @@ static NTSTATUS lookup_unix_name( int root_fd, OBJECT_ATTRIBUTES *attr, UNICODE_
  *           nt_to_unix_file_name_no_root
  */
 static NTSTATUS nt_to_unix_file_name_no_root( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name,
-                                              char **unix_name_ret, UINT disposition, unsigned int reparse_count )
+                                              char **unix_name_ret, UINT disposition,
+                                              BOOL open_reparse, unsigned int reparse_count )
 {
     static const WCHAR unixW[] = {'u','n','i','x'};
     static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, 0 };
@@ -3707,7 +3715,7 @@ static NTSTATUS nt_to_unix_file_name_no_root( OBJECT_ATTRIBUTES *attr, UNICODE_S
     nt_pos += prefix_len;
 
     status = lookup_unix_name( AT_FDCWD, attr, nt_name, nt_pos, &unix_name, unix_len,
-                               pos, disposition, is_unix, reparse_count );
+                               pos, disposition, open_reparse, is_unix, reparse_count );
     if (status == STATUS_SUCCESS || status == STATUS_NO_SUCH_FILE)
     {
         *unix_name_ret = unix_name;
@@ -3730,7 +3738,7 @@ static NTSTATUS nt_to_unix_file_name_no_root( OBJECT_ATTRIBUTES *attr, UNICODE_S
  * returned, but the unix name is still filled in properly.
  */
 static NTSTATUS nt_to_unix_file_name( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name,
-                                      char **name_ret, UINT disposition )
+                                      char **name_ret, UINT disposition, BOOL open_reparse )
 {
     enum server_fd_type type;
     int root_fd, needs_close;
@@ -3740,7 +3748,7 @@ static NTSTATUS nt_to_unix_file_name( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *n
     NTSTATUS status;
 
     if (!attr->RootDirectory)  /* without root dir fall back to normal lookup */
-        return nt_to_unix_file_name_no_root( attr, nt_name, name_ret, disposition, 0 );
+        return nt_to_unix_file_name_no_root( attr, nt_name, name_ret, disposition, open_reparse, 0 );
 
     name     = attr->ObjectName->Buffer;
     name_len = attr->ObjectName->Length / sizeof(WCHAR);
@@ -3761,7 +3769,7 @@ static NTSTATUS nt_to_unix_file_name( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *n
         else
         {
             status = lookup_unix_name( root_fd, attr, nt_name, 0, &unix_name, unix_len,
-                                       1, disposition, FALSE, 0 );
+                                       1, disposition, open_reparse, FALSE, 0 );
             if (needs_close) close( root_fd );
         }
     }
@@ -3866,7 +3874,7 @@ static WCHAR *collapse_path( WCHAR *path )
 
 static NTSTATUS resolve_absolute_reparse_point( const WCHAR *target, unsigned int target_len,
         OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name, const WCHAR *remainder, unsigned int remainder_len,
-        char **unix_name, UINT disposition, unsigned int reparse_count )
+        char **unix_name, UINT disposition, BOOL open_reparse, unsigned int reparse_count )
 {
     WCHAR *new_nt_name;
     char *new_unix_name;
@@ -3893,7 +3901,7 @@ static NTSTATUS resolve_absolute_reparse_point( const WCHAR *target, unsigned in
     attr->RootDirectory = 0;
     attr->ObjectName = nt_name;
 
-    status = nt_to_unix_file_name_no_root( attr, nt_name, &new_unix_name, disposition, reparse_count );
+    status = nt_to_unix_file_name_no_root( attr, nt_name, &new_unix_name, disposition, open_reparse, reparse_count );
     if (!status || status == STATUS_NO_SUCH_FILE)
     {
         free( *unix_name );
@@ -3905,7 +3913,7 @@ static NTSTATUS resolve_absolute_reparse_point( const WCHAR *target, unsigned in
 
 static NTSTATUS resolve_reparse_point( int fd, int root_fd, OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name,
         unsigned int nt_pos, unsigned int reparse_len, char **unix_name, int unix_len, int pos,
-        UINT disposition, BOOL is_unix, unsigned int reparse_count )
+        UINT disposition, BOOL open_reparse, BOOL is_unix, unsigned int reparse_count )
 {
     const WCHAR *name = attr->ObjectName->Buffer;
     unsigned int name_len = attr->ObjectName->Length / sizeof(WCHAR);
@@ -3947,7 +3955,7 @@ static NTSTATUS resolve_reparse_point( int fd, int root_fd, OBJECT_ATTRIBUTES *a
         USHORT target_len = data->MountPointReparseBuffer.SubstituteNameLength / sizeof(WCHAR);
 
         status = resolve_absolute_reparse_point( target, target_len, attr, nt_name, remainder, remainder_len,
-                                                 unix_name, disposition, reparse_count );
+                                                 unix_name, disposition, open_reparse, reparse_count );
         break;
     }
 
@@ -4113,7 +4121,7 @@ static void remove_trailing_backslash( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *
  * nt_name.Buffer and unix_name must be freed by caller in all cases.
  */
 NTSTATUS get_nt_and_unix_names( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name,
-                                char **unix_name_ret, UINT disposition )
+                                char **unix_name_ret, UINT disposition, BOOL open_reparse )
 {
     ULONG lenA, lenW = attr->ObjectName->Length / sizeof(WCHAR);
     UNICODE_STRING *orig = attr->ObjectName;
@@ -4147,7 +4155,7 @@ NTSTATUS get_nt_and_unix_names( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name
 #ifndef _WIN64
         get_redirect( attr, nt_name );
 #endif
-        status = nt_to_unix_file_name( attr, nt_name, unix_name_ret, disposition );
+        status = nt_to_unix_file_name( attr, nt_name, unix_name_ret, disposition, open_reparse );
     }
 
     if (!status || status == STATUS_NO_SUCH_FILE)
@@ -4274,7 +4282,7 @@ NTSTATUS ntdll_get_unix_file_name( const WCHAR *dos, char **unix_name, UINT disp
 
     if (status) return status;
     InitializeObjectAttributes( &attr, &nt_name, 0, 0, NULL );
-    status = get_nt_and_unix_names( &attr, &true_nt_name, &buffer, disposition );
+    status = get_nt_and_unix_names( &attr, &true_nt_name, &buffer, disposition, FALSE );
     free( nt_name.Buffer );
     free( true_nt_name.Buffer );
 
@@ -4412,7 +4420,8 @@ NTSTATUS WINAPI NtCreateFile( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBU
         status = file_id_to_unix_file_name( &new_attr, &unix_name, &nt_name );
         if (!status) new_attr.ObjectName = &nt_name;
     }
-    else status = get_nt_and_unix_names( &new_attr, &nt_name, &unix_name, disposition );
+    else status = get_nt_and_unix_names( &new_attr, &nt_name, &unix_name, disposition,
+                                         options & FILE_OPEN_REPARSE_POINT );
 
     if (status == STATUS_BAD_DEVICE_TYPE)
     {
@@ -4593,7 +4602,7 @@ NTSTATUS WINAPI NtDeleteFile( OBJECT_ATTRIBUTES *attr )
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES new_attr = *attr;
 
-    if (!(status = get_nt_and_unix_names( &new_attr, &nt_name, &unix_name, FILE_OPEN )))
+    if (!(status = get_nt_and_unix_names( &new_attr, &nt_name, &unix_name, FILE_OPEN, FALSE )))
     {
         if (!(status = open_unix_file( &handle, unix_name, GENERIC_READ | GENERIC_WRITE | DELETE, &new_attr,
                                        0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN,
@@ -4617,7 +4626,7 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES new_attr = *attr;
 
-    if (!(status = get_nt_and_unix_names( &new_attr, &nt_name, &unix_name, FILE_OPEN )))
+    if (!(status = get_nt_and_unix_names( &new_attr, &nt_name, &unix_name, FILE_OPEN, TRUE )))
     {
         ULONG attributes;
         struct stat st;
@@ -4646,7 +4655,7 @@ NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES new_attr = *attr;
 
-    if (!(status = get_nt_and_unix_names( &new_attr, &nt_name, &unix_name, FILE_OPEN )))
+    if (!(status = get_nt_and_unix_names( &new_attr, &nt_name, &unix_name, FILE_OPEN, TRUE )))
     {
         ULONG attributes;
         struct stat st;
@@ -5167,7 +5176,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             name_str.Length = info->FileNameLength;
             name_str.MaximumLength = info->FileNameLength + sizeof(WCHAR);
             InitializeObjectAttributes( &attr, &name_str, OBJ_CASE_INSENSITIVE, info->RootDirectory, NULL );
-            status = get_nt_and_unix_names( &attr, &nt_name, &unix_name, FILE_OPEN_IF );
+            status = get_nt_and_unix_names( &attr, &nt_name, &unix_name, FILE_OPEN_IF, TRUE );
             if (status == STATUS_SUCCESS || status == STATUS_NO_SUCH_FILE)
             {
                 SERVER_START_REQ( set_fd_name_info )
@@ -5212,7 +5221,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             name_str.Length = info->FileNameLength;
             name_str.MaximumLength = info->FileNameLength + sizeof(WCHAR);
             InitializeObjectAttributes( &attr, &name_str, OBJ_CASE_INSENSITIVE, info->RootDirectory, NULL );
-            status = get_nt_and_unix_names( &attr, &nt_name, &unix_name, FILE_OPEN_IF );
+            status = get_nt_and_unix_names( &attr, &nt_name, &unix_name, FILE_OPEN_IF, TRUE );
             if (status == STATUS_SUCCESS || status == STATUS_NO_SUCH_FILE)
             {
                 SERVER_START_REQ( set_fd_name_info )
