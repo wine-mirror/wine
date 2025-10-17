@@ -1002,11 +1002,59 @@ static VkResult win32u_vkGetPhysicalDevicePresentRectanglesKHR( VkPhysicalDevice
                                                                    surface->obj.host.surface, rect_count, rects );
 }
 
+static void *find_vk_struct( void *s, VkStructureType t )
+{
+    VkBaseOutStructure *header;
+
+    for (header = s; header; header = header->pNext)
+    {
+        if (header->sType == t) return header;
+    }
+
+    return NULL;
+}
+
+static void fill_luid_property( VkPhysicalDeviceProperties2 *properties2 )
+{
+    VkPhysicalDeviceVulkan11Properties *vk11;
+    VkPhysicalDeviceIDProperties *id;
+    VkBool32 device_luid_valid;
+    UINT32 node_mask = 0;
+    const GUID *uuid;
+    LUID luid;
+
+    vk11 = find_vk_struct( properties2, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES );
+    id = find_vk_struct( properties2, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES );
+
+    if (!vk11 && !id) return;
+    uuid = (const GUID *)(id ? id->deviceUUID : vk11->deviceUUID);
+    device_luid_valid = get_luid_from_vulkan_uuid( uuid, &luid, &node_mask );
+    if (!device_luid_valid) WARN( "luid for %s not found\n", debugstr_guid(uuid) );
+
+    if (id)
+    {
+        if (device_luid_valid) memcpy( &id->deviceLUID, &luid, sizeof(id->deviceLUID) );
+        id->deviceLUIDValid = device_luid_valid;
+        id->deviceNodeMask = node_mask;
+    }
+
+    if (vk11)
+    {
+        if (device_luid_valid) memcpy( &vk11->deviceLUID, &luid, sizeof(vk11->deviceLUID) );
+        vk11->deviceLUIDValid = device_luid_valid;
+        vk11->deviceNodeMask = node_mask;
+    }
+
+    TRACE( "deviceName:%s deviceLUIDValid:%d LUID:%08x:%08x.\n",
+           properties2->properties.deviceName, device_luid_valid, luid.HighPart, luid.LowPart );
+}
+
 static void win32u_vkGetPhysicalDeviceProperties2( VkPhysicalDevice client_physical_device, VkPhysicalDeviceProperties2 *properties2 )
 {
     struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle( client_physical_device );
 
     physical_device->instance->p_vkGetPhysicalDeviceProperties2( physical_device->host.physical_device, properties2 );
+    fill_luid_property( properties2 );
 }
 
 static void win32u_vkGetPhysicalDeviceProperties2KHR( VkPhysicalDevice client_physical_device, VkPhysicalDeviceProperties2 *properties2 )
@@ -1014,6 +1062,7 @@ static void win32u_vkGetPhysicalDeviceProperties2KHR( VkPhysicalDevice client_ph
     struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle( client_physical_device );
 
     physical_device->instance->p_vkGetPhysicalDeviceProperties2KHR( physical_device->host.physical_device, properties2 );
+    fill_luid_property( properties2 );
 }
 
 static VkResult win32u_vkGetPhysicalDeviceSurfaceFormatsKHR( VkPhysicalDevice client_physical_device, VkSurfaceKHR client_surface,

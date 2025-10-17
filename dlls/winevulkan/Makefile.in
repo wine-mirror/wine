@@ -1,7 +1,7 @@
 MODULE    = winevulkan.dll
 UNIXLIB   = winevulkan.so
 IMPORTLIB = winevulkan
-IMPORTS   = user32 gdi32 advapi32 setupapi win32u
+IMPORTS   = advapi32
 UNIX_LIBS = -lwin32u $(PTHREAD_LIBS)
 
 SOURCES = \

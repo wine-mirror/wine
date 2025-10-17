@@ -7617,3 +7617,24 @@ BOOL get_vulkan_uuid_from_luid( const LUID *luid, GUID *uuid )
     unlock_display_devices();
     return found;
 }
+
+/* Find the Vulkan LUID corresponding to a device UUID */
+BOOL get_luid_from_vulkan_uuid( const GUID *uuid, LUID *luid, UINT32 *node_mask )
+{
+    BOOL found = FALSE;
+    struct gpu *gpu;
+
+    if (!lock_display_devices( FALSE )) return FALSE;
+
+    LIST_FOR_EACH_ENTRY( gpu, &gpus, struct gpu, entry )
+    {
+        if (!IsEqualGUID( uuid, &gpu->vulkan_uuid )) continue;
+        *luid = gpu->luid;
+        *node_mask = 1;
+        found = TRUE;
+        break;
+    }
+
+    unlock_display_devices();
+    return found;
+}

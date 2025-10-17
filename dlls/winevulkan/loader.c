@@ -20,10 +20,6 @@
 #include <stdlib.h>
 #include "vulkan_loader.h"
 #include "winreg.h"
-#include "ntuser.h"
-#include "initguid.h"
-#include "devguid.h"
-#include "setupapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
@@ -32,26 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
  */
 #define WINE_VULKAN_ICD_VERSION 4
 
-DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
-DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_GPU_VULKAN_UUID, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5c, 2);
-
 static HINSTANCE hinstance;
-
-static void *wine_vk_get_global_proc_addr(const char *name);
-
-#define wine_vk_find_struct(s, t) wine_vk_find_struct_((void *)s, VK_STRUCTURE_TYPE_##t)
-static void *wine_vk_find_struct_(void *s, VkStructureType t)
-{
-    VkBaseOutStructure *header;
-
-    for (header = s; header; header = header->pNext)
-    {
-        if (header->sType == t)
-            return header;
-    }
-
-    return NULL;
-}
 
 VkResult WINAPI vkEnumerateInstanceLayerProperties(uint32_t *count, VkLayerProperties *properties)
 {
@@ -440,97 +417,6 @@ VkResult WINAPI vkEnumerateInstanceVersion(uint32_t *version)
     return params.result;
 }
 
-static HANDLE get_display_device_init_mutex(void)
-{
-    HANDLE mutex = CreateMutexW(NULL, FALSE, L"display_device_init");
-
-    WaitForSingleObject(mutex, INFINITE);
-    return mutex;
-}
-
-static void release_display_device_init_mutex(HANDLE mutex)
-{
-    ReleaseMutex(mutex);
-    CloseHandle(mutex);
-}
-
-/* Wait until graphics driver is loaded by explorer */
-static void wait_graphics_driver_ready(void)
-{
-    static BOOL ready = FALSE;
-
-    if (!ready)
-    {
-        SendMessageW(GetDesktopWindow(), WM_NULL, 0, 0);
-        ready = TRUE;
-    }
-}
-
-static void fill_luid_property(VkPhysicalDeviceProperties2 *properties2)
-{
-    VkPhysicalDeviceVulkan11Properties *vk11;
-    VkBool32 device_luid_valid = VK_FALSE;
-    VkPhysicalDeviceIDProperties *id;
-    uint32_t device_node_mask = 0;
-    SP_DEVINFO_DATA device_data;
-    const uint8_t* device_uuid;
-    DWORD type, device_idx = 0;
-    HDEVINFO devinfo;
-    HANDLE mutex;
-    GUID uuid;
-    LUID luid;
-
-    vk11 = wine_vk_find_struct(properties2, PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES);
-    id = wine_vk_find_struct(properties2, PHYSICAL_DEVICE_ID_PROPERTIES);
-
-    if (!vk11 && !id)
-        return;
-
-    wait_graphics_driver_ready();
-    mutex = get_display_device_init_mutex();
-    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_DISPLAY, L"PCI", NULL, 0);
-    device_data.cbSize = sizeof(device_data);
-    while (SetupDiEnumDeviceInfo(devinfo, device_idx++, &device_data))
-    {
-        if (!SetupDiGetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_GPU_VULKAN_UUID,
-                &type, (BYTE *)&uuid, sizeof(uuid), NULL, 0))
-            continue;
-
-        device_uuid = id ? id->deviceUUID : vk11->deviceUUID;
-
-        if (!IsEqualGUID(&uuid, device_uuid))
-            continue;
-
-        if (SetupDiGetDevicePropertyW(devinfo, &device_data, &DEVPROPKEY_GPU_LUID, &type,
-                (BYTE *)&luid, sizeof(luid), NULL, 0))
-        {
-            device_luid_valid = VK_TRUE;
-            device_node_mask = 1;
-            break;
-        }
-    }
-    SetupDiDestroyDeviceInfoList(devinfo);
-    release_display_device_init_mutex(mutex);
-
-    if (id)
-    {
-        if (device_luid_valid) memcpy(&id->deviceLUID, &luid, sizeof(id->deviceLUID));
-        id->deviceLUIDValid = device_luid_valid;
-        id->deviceNodeMask = device_node_mask;
-    }
-
-    if (vk11)
-    {
-        if (device_luid_valid) memcpy(&vk11->deviceLUID, &luid, sizeof(vk11->deviceLUID));
-        vk11->deviceLUIDValid = device_luid_valid;
-        vk11->deviceNodeMask = device_node_mask;
-    }
-
-    TRACE("deviceName:%s deviceLUIDValid:%d LUID:%08lx:%08lx deviceNodeMask:%#x.\n",
-            properties2->properties.deviceName, device_luid_valid, luid.HighPart, luid.LowPart,
-            device_node_mask);
-}
-
 void WINAPI vkGetPhysicalDeviceProperties2(VkPhysicalDevice phys_dev,
         VkPhysicalDeviceProperties2 *properties2)
 {
@@ -543,7 +429,6 @@ void WINAPI vkGetPhysicalDeviceProperties2(VkPhysicalDevice phys_dev,
     params.pProperties = properties2;
     status = UNIX_CALL(vkGetPhysicalDeviceProperties2, &params);
     assert(!status);
-    fill_luid_property(properties2);
 }
 
 void WINAPI vkGetPhysicalDeviceProperties2KHR(VkPhysicalDevice phys_dev,
@@ -558,7 +443,6 @@ void WINAPI vkGetPhysicalDeviceProperties2KHR(VkPhysicalDevice phys_dev,
     params.pProperties = properties2;
     status = UNIX_CALL(vkGetPhysicalDeviceProperties2KHR, &params);
     assert(!status);
-    fill_luid_property(properties2);
 }
 
 VkResult WINAPI vkCreateDevice(VkPhysicalDevice phys_dev, const VkDeviceCreateInfo *create_info,

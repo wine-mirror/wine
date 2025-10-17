@@ -204,6 +204,7 @@ struct vulkan_gpu
 extern BOOL get_vulkan_gpus( struct list *gpus );
 extern void free_vulkan_gpu( struct vulkan_gpu *gpu );
 extern BOOL get_vulkan_uuid_from_luid( const LUID *luid, GUID *uuid );
+extern BOOL get_luid_from_vulkan_uuid( const GUID *uuid, LUID *luid, UINT32 *node_mask );
 
 extern int d3dkmt_object_get_fd( D3DKMT_HANDLE local );
 
