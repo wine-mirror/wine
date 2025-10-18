@@ -15761,7 +15761,6 @@ static void test_wic_target_format(BOOL d3d11)
             pixel_format = ID2D1Bitmap_GetPixelFormat(bitmap);
             ok(pixel_format.format == expected_pixel_format.format, "Unexpected pixel format %#x.\n",
                     pixel_format.format);
-            todo_wine_if(wic_target_formats[i].pixel_format.alphaMode == D2D1_ALPHA_MODE_UNKNOWN)
             ok(pixel_format.alphaMode == expected_pixel_format.alphaMode, "Unexpected alpha mode %d.\n",
                     pixel_format.alphaMode);
 
