@@ -879,6 +879,7 @@ system.ini, drivers32,,"; vidc.IV31=ir32_32.dll"
 system.ini, drivers32,,"; vidc.IV32=ir32_32.dll"
 
 win.ini, mail,,"mapi=1"
+win.ini, fonts,,"dummy=0"
 
 [BITSService]
 AddReg=BITSServiceKeys
