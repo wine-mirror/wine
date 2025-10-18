@@ -5154,13 +5154,13 @@ static HRESULT (WINAPI *pVarOr)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarOr, &left, &right, &exp )
+        test_var_call2_commutative( __LINE__, pVarOr, &left, &right, &exp )
 
 #define VARORCY(vt1,val1,val2,rvt,rval)                  \
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_CY; V_CY(&right).int64 = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarOr, &left, &right, &exp )
+        test_var_call2_commutative( __LINE__, pVarOr, &left, &right, &exp )
 
 static void test_VarOr(void)
 {
