@@ -3229,8 +3229,7 @@ BOOL process_driver_events( UINT mask )
         peek_message( &msg, &filter );
     }
 
-    /* check for hardware messages requiring client dispatch */
-    return check_internal_bits( QS_HARDWARE );
+    return is_queue_signaled();
 }
 
 void check_for_events( UINT flags )
@@ -3287,12 +3286,9 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
         params.restore = TRUE;
     }
 
-    if (process_driver_events( QS_ALLINPUT )) ret = count - 1;
-    else
-    {
-        do ret = NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL), !!(flags & MWMO_ALERTABLE), abs );
-        while (ret == count - 1 && !process_driver_events( QS_ALLINPUT ) && !is_queue_signaled());
-    }
+    process_driver_events( QS_ALLINPUT );
+    do ret = NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL), !!(flags & MWMO_ALERTABLE), abs );
+    while (ret == count - 1 && !process_driver_events( QS_ALLINPUT ));
     if (HIWORD(ret)) /* is it an error code? */
     {
         RtlSetLastWin32Error( RtlNtStatusToDosError(ret) );
