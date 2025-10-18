@@ -6205,7 +6205,7 @@ static HRESULT (WINAPI *pVarAdd)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarAdd, &left, &right, &exp )
+        test_var_call2_commutative( __LINE__, pVarAdd, &left, &right, &exp )
 
 static void test_VarAdd(void)
 {
