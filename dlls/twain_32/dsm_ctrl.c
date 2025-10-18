@@ -118,6 +118,62 @@ twain_autodetect(void) {
 #endif
 }
 
+/**
+ * Callback function used in TW_ENTRYPOINT as defined by the TWAIN Group
+ * @param _size   Size for the newly allocated global memory block
+ * @return new GlobalAlloc memory handle
+ */
+static TW_HANDLE PASCAL _DSM_MemAllocate(TW_UINT32 _size)
+{
+  return GlobalAlloc(GMEM_MOVEABLE, _size);
+}
+
+
+/**
+ * Callback function used in TW_ENTRYPOINT as defined by the TWAIN Group
+ * @param _handle   Handle created by DSM_MemAllocate that shall now be freed
+ */
+static void PASCAL _DSM_MemFree(TW_HANDLE _handle)
+{
+  GlobalFree(_handle);
+}
+
+
+/**
+ * Callback function used in TW_ENTRYPOINT as defined by the TWAIN Group
+ * @param _handle   Handle created by DSM_MemAllocate that shall now be
+ *                  locked at a certain address
+ * @return The current address to the data contained in this handle
+ */
+static TW_MEMREF PASCAL _DSM_MemLock(TW_HANDLE _handle)
+{
+  return GlobalLock(_handle);
+}
+
+
+/**
+ * Callback function used in TW_ENTRYPOINT as defined by the TWAIN Group
+ * @param _handle   Handle created by DSM_MemAllocate that shall now be
+ *                  unlocked to allow the memory handler to move it to
+ *                  different addresses,
+ */
+static void PASCAL _DSM_MemUnlock(TW_HANDLE _handle)
+{
+  GlobalUnlock(_handle);
+}
+
+/* Structure with pointers being transfered in
+ * DG_CONTROL / DAT_ENTRYPOINT / MSG_SET to the data source
+ */
+static const TW_ENTRYPOINT _entrypoints = {
+ .Size = sizeof(TW_ENTRYPOINT),
+ .DSM_Entry = DSM_Entry,
+ .DSM_MemAllocate = _DSM_MemAllocate,
+ .DSM_MemFree = _DSM_MemFree,
+ .DSM_MemLock = _DSM_MemLock,
+ .DSM_MemUnlock = _DSM_MemUnlock
+};
+
 /* DG_CONTROL/DAT_NULL/MSG_CLOSEDSREQ|MSG_DEVICEEVENT|MSG_XFERREADY */
 TW_UINT16 TWAIN_ControlNull (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest, activeDS *pSource, TW_UINT16 MSG, TW_MEMREF pData)
 {
@@ -342,6 +398,16 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
         newSource->event_window = NULL;
 	activeSources = newSource;
 	DSM_twCC = TWCC_SUCCESS;
+
+	/* Tell the source our entry points */
+	if (pIdentity->SupportedGroups & DF_DS2) {
+		/* This makes sure that the DS knows the current address of our DSM_Entry
+		 * function so there is no risk that it is using a stale copy.
+		 * The other entry points are also set for formal reasons,
+		 * but are currently not used.
+		 */
+		newSource->dsEntry (pOrigin, DG_CONTROL, DAT_ENTRYPOINT, MSG_SET, (TW_ENTRYPOINT *) &_entrypoints);
+	}
 	return TWRC_SUCCESS;
 }
 
