@@ -273,6 +273,7 @@ static TW_UINT16 GPHOTO2_PendingXfersEndXfer (pTW_IDENTITY pOrigin,
         activeDS.twCC = TWCC_SEQERROR;
         return TWRC_FAILURE;
     }
+    activeDS.download_count--;
     TRACE("count = %d\n", activeDS.download_count);
     pPendingXfers->Count = activeDS.download_count;
     if (pPendingXfers->Count != 0) {
