@@ -7485,7 +7485,19 @@ static void test_cmp( int line, LCID lcid, UINT flags, VARIANT *left, VARIANT *r
     hres = VarCmp(left,right,lcid,flags);
     ok_(__FILE__,line)(hres == result, "VarCmp(%s,%s): expected 0x%lx, got hres=0x%lx\n",
                        wine_dbgstr_variant(left), wine_dbgstr_variant(right), result, hres );
+
+    /* Invert and run once more. */
+    if (result == VARCMP_LT) result = VARCMP_GT;
+    else if (result == VARCMP_GT) result = VARCMP_LT;
+
+    /* Unfortunately VT_INT is special and is only accepted for the left operand. */
+    if ((V_VT(left) & VT_TYPEMASK) == VT_INT) return;
+
+    hres = VarCmp(right, left, lcid, flags);
+    ok_(__FILE__,line)(hres == result, "VarCmp(%s,%s): expected 0x%lx, got hres=0x%lx\n",
+                       wine_dbgstr_variant(right), wine_dbgstr_variant(left), result, hres );
 }
+
 static void test_cmpex( int line, LCID lcid, VARIANT *left, VARIANT *right,
                         HRESULT res1, HRESULT res2, HRESULT res3, HRESULT res4 )
 {
