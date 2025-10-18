@@ -212,7 +212,6 @@ extern void free_dce( struct dce *dce, HWND hwnd );
 extern void invalidate_dce( WND *win, const RECT *old_rect );
 
 /* message.c */
-extern BOOL process_driver_events( UINT mask );
 extern void check_for_events( UINT flags );
 
 /* systray.c */

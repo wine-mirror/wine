@@ -3195,6 +3195,23 @@ static BOOL is_queue_signaled(void)
     return signaled;
 }
 
+static BOOL check_queue_masks( UINT wake_mask, UINT changed_mask )
+{
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const queue_shm_t *queue_shm;
+    BOOL skip = FALSE;
+    UINT status;
+
+    while ((status = get_shared_queue( &lock, &queue_shm )) == STATUS_PENDING)
+    {
+        if (queue_shm->wake_mask != wake_mask || queue_shm->changed_mask != changed_mask) skip = FALSE;
+        else skip = get_tick_count() - (UINT64)queue_shm->access_time / 10000 < 3000; /* avoid hung queue */
+    }
+
+    if (status) return FALSE;
+    return skip;
+}
+
 static BOOL check_internal_bits( UINT mask )
 {
     struct object_lock lock = OBJECT_LOCK_INIT;
@@ -3209,13 +3226,19 @@ static BOOL check_internal_bits( UINT mask )
     return signaled;
 }
 
-BOOL process_driver_events( UINT mask )
+static BOOL process_driver_events( UINT events_mask, UINT wake_mask, UINT changed_mask )
 {
-    if (check_internal_bits( QS_DRIVER ) && user_driver->pProcessEvents( mask ))
+    BOOL drained = FALSE;
+
+    if (check_internal_bits( QS_DRIVER )) drained = user_driver->pProcessEvents( events_mask );
+
+    if (drained || !check_queue_masks( wake_mask, changed_mask ))
     {
         SERVER_START_REQ( set_queue_mask )
         {
-            req->poll_events = 1;
+            req->poll_events = drained;
+            req->wake_mask = wake_mask;
+            req->changed_mask = changed_mask;
             wine_server_call( req );
         }
         SERVER_END_REQ;
@@ -3234,7 +3257,7 @@ BOOL process_driver_events( UINT mask )
 
 void check_for_events( UINT flags )
 {
-    if (!process_driver_events( flags )) flush_window_surfaces( TRUE );
+    if (!process_driver_events( flags, 0, 0 ) && !(flags & QS_PAINT)) flush_window_surfaces( TRUE );
 }
 
 /* monotonic timer tick for throttling driver event checks */
@@ -3251,7 +3274,7 @@ static inline void check_for_driver_events(void)
     if (get_user_thread_info()->last_driver_time != get_driver_check_time())
     {
         flush_window_surfaces( FALSE );
-        process_driver_events( QS_ALLINPUT );
+        process_driver_events( QS_ALLINPUT, 0, 0 );
         get_user_thread_info()->last_driver_time = get_driver_check_time();
     }
 }
@@ -3265,7 +3288,7 @@ static inline LARGE_INTEGER *get_nt_timeout( LARGE_INTEGER *time, DWORD timeout 
 }
 
 /* wait for message or signaled handle */
-static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DWORD mask, DWORD flags )
+static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DWORD wake_mask, DWORD changed_mask, DWORD flags )
 {
     struct thunk_lock_params params = {.dispatch.callback = thunk_lock_callback};
     LARGE_INTEGER time, now, *abs;
@@ -3286,9 +3309,9 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
         params.restore = TRUE;
     }
 
-    process_driver_events( QS_ALLINPUT );
+    process_driver_events( QS_ALLINPUT, wake_mask, changed_mask );
     do ret = NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL), !!(flags & MWMO_ALERTABLE), abs );
-    while (ret == count - 1 && !process_driver_events( QS_ALLINPUT ));
+    while (ret == count - 1 && !process_driver_events( QS_ALLINPUT, wake_mask, changed_mask ));
     if (HIWORD(ret)) /* is it an error code? */
     {
         RtlSetLastWin32Error( RtlNtStatusToDosError(ret) );
@@ -3304,26 +3327,6 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
 }
 
 /***********************************************************************
- *           check_queue_masks
- */
-static BOOL check_queue_masks( UINT wake_mask, UINT changed_mask )
-{
-    struct object_lock lock = OBJECT_LOCK_INIT;
-    const queue_shm_t *queue_shm;
-    BOOL skip = FALSE;
-    UINT status;
-
-    while ((status = get_shared_queue( &lock, &queue_shm )) == STATUS_PENDING)
-    {
-        if (queue_shm->wake_mask != wake_mask || queue_shm->changed_mask != changed_mask) skip = FALSE;
-        else skip = get_tick_count() - (UINT64)queue_shm->access_time / 10000 < 3000; /* avoid hung queue */
-    }
-
-    if (status) return FALSE;
-    return skip;
-}
-
-/***********************************************************************
  *           wait_objects
  *
  * Wait for multiple objects including the server queue, with specific queue masks.
@@ -3335,18 +3338,7 @@ static DWORD wait_objects( DWORD count, const HANDLE *handles, DWORD timeout,
 
     flush_window_surfaces( TRUE );
 
-    if (!check_queue_masks( wake_mask, changed_mask ))
-    {
-        SERVER_START_REQ( set_queue_mask )
-        {
-            req->wake_mask    = wake_mask;
-            req->changed_mask = changed_mask;
-            wine_server_call( req );
-        }
-        SERVER_END_REQ;
-    }
-
-    return wait_message( count, handles, timeout, changed_mask, flags );
+    return wait_message( count, handles, timeout, wake_mask, changed_mask, flags );
 }
 
 static HANDLE normalize_std_handle( HANDLE handle )
@@ -3674,7 +3666,7 @@ static void wait_message_reply( UINT flags )
             continue;
         }
 
-        wait_message( 1, &server_queue, INFINITE, wake_mask, 0 );
+        wait_message( 1, &server_queue, INFINITE, wake_mask, wake_mask, 0 );
     }
 }
 

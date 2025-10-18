@@ -3107,7 +3107,6 @@ DECL_HANDLER(set_queue_mask)
         if (!queue->fd) return;
         clear_queue_bits( queue, QS_DRIVER );
         set_fd_events( queue->fd, POLLIN );
-        return;
     }
 
     SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
