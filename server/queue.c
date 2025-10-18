@@ -1768,7 +1768,6 @@ static void release_hardware_message( struct msg_queue *queue, unsigned int hw_i
         }
     }
     if (clr_bit) clear_queue_bits( queue, clr_bit );
-    if (list_empty( &input->msg_list )) clear_queue_bits( queue, QS_HARDWARE );
 
     update_thread_input_key_state( input, msg->msg, msg->wparam );
     list_remove( &msg->entry );
@@ -1954,7 +1953,7 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     {
         msg->unique_id = 0;  /* will be set once we return it to the app */
         list_add_tail( &input->msg_list, &msg->entry );
-        set_queue_bits( thread->queue, QS_HARDWARE | msg_bit );
+        set_queue_bits( thread->queue, msg_bit );
     }
     release_object( thread );
 }
@@ -2722,7 +2721,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
     }
 
     if (ptr == list_head( &input->msg_list ))
-        clear_bits = QS_INPUT;
+        clear_bits = QS_INPUT | QS_HARDWARE;
     else
         clear_bits = 0;  /* don't clear bits if we don't go through the whole list */
 
@@ -2753,7 +2752,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
             if (win_thread->queue->input == input)
             {
                 /* wake the other thread */
-                set_queue_bits( win_thread->queue, QS_HARDWARE | msg_bit );
+                set_queue_bits( win_thread->queue, msg_bit );
                 got_one = 1;
             }
             else
@@ -2803,7 +2802,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
         return 1;
     }
     /* nothing found, clear the hardware queue bits */
-    clear_queue_bits( thread->queue, QS_HARDWARE | clear_bits );
+    if (clear_bits) clear_queue_bits( thread->queue, clear_bits );
     return 0;
 }
 
@@ -4126,7 +4125,7 @@ DECL_HANDLER(get_rawinput_buffer)
 
         if (!next_size)
         {
-            clear_queue_bits( queue, QS_RAWINPUT | (list_empty( &queue->input->msg_list ) ? QS_HARDWARE : 0) );
+            clear_queue_bits( queue, QS_RAWINPUT );
             if (count) next_size = sizeof(RAWINPUT);
             else reply->next_size = 0;
         }
