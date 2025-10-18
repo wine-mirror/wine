@@ -3905,7 +3905,7 @@ loopback_ipv6:
 
     memset( &fwd_row, 0xcc, sizeof(fwd_row) );
     memset( &best4, 0xcc, sizeof(best4) );
-    ret = GetBestRoute2( NULL, default_route_index, NULL, &dst4, 0, &fwd_row, (SOCKADDR_INET *)&best4 );
+    ret = GetBestRoute2( NULL, default_route_index, NULL, &dst4, 0, &fwd_row, &best4 );
     ok( !ret, "got error %lu.\n", ret );
     ok( fwd_row.InterfaceIndex == default_route_index, "got %lu, expected %lu.\n", fwd_row.InterfaceIndex,
         default_route_index );
@@ -3926,14 +3926,14 @@ loopback_ipv6:
     ret = inet_pton( AF_INET, "127.0.0.1", &src4.sin_addr );
     ok(ret, "got error %u.\n", WSAGetLastError());
     memset( &best4, 0xcc, sizeof(best4) );
-    ret = GetBestRoute2( NULL, 0, (SOCKADDR_INET *)&src4, &dst4, 0, &fwd_row, (SOCKADDR_INET *)&best4 );
+    ret = GetBestRoute2( NULL, 0, (SOCKADDR_INET *)&src4, &dst4, 0, &fwd_row, &best4 );
     ok( ret == ERROR_NETWORK_UNREACHABLE, "got error %lu.\n", ret );
     ok( !best4.Ipv4.sin_family, "got %u.\n", best4.Ipv4.sin_family );
     ok( !best4.Ipv6.sin6_addr.u.Word[7], "got %#x.\n", best4.Ipv6.sin6_addr.u.Word[7] );
 
     src4 = global_addr4;
     ret = GetBestRoute2( NULL, loopback_index, (SOCKADDR_INET *)&src4, &dst4, 0, &fwd_row,
-                         (SOCKADDR_INET *)&best4 );
+                         &best4 );
     ok( !ret, "got error %lu.\n", ret );
     ok( fwd_row.InterfaceIndex == default_route_index, "got %lu, expected %lu.\n", fwd_row.InterfaceIndex,
         link_local_index );
@@ -3943,28 +3943,28 @@ loopback_ipv6:
     memset( &src4, 0xcc, sizeof(src4) );
     memset( &fwd_row, 0xcc, sizeof(fwd_row) );
     ret = GetBestRoute2( NULL, default_route_index, (SOCKADDR_INET *)&src4, &dst4, 0, &fwd_row,
-                         (SOCKADDR_INET *)&best4 );
+                         &best4 );
     ok( !ret, "got error %lu.\n", ret );
     ok( fwd_row.InterfaceIndex == default_route_index, "got %lu, expected %lu.\n", fwd_row.InterfaceIndex,
         link_local_index );
 
     src4 = best4.Ipv4;
     ret = GetBestRoute2( NULL, default_route_index, (SOCKADDR_INET *)&src4, &dst4, 0, &fwd_row,
-                         (SOCKADDR_INET *)&best4 );
+                         &best4 );
     ok( !ret, "got error %lu.\n", ret );
     ok( fwd_row.InterfaceIndex == default_route_index, "got %lu, expected %lu.\n", fwd_row.InterfaceIndex,
         link_local_index );
     ok( fwd_row.NextHop.Ipv4.sin_addr.s_addr, "expected specified next hop.\n" );
 
-    ret = GetBestRoute2( NULL, loopback_index, NULL, &dst4, 0, &fwd_row, (SOCKADDR_INET *)&best4 );
+    ret = GetBestRoute2( NULL, loopback_index, NULL, &dst4, 0, &fwd_row, &best4 );
     ok( ret == ERROR_NETWORK_UNREACHABLE, "got error %lu.\n", ret );
 
     ret = inet_pton( AF_INET, "127.0.0.1", &dst4.Ipv4.sin_addr);
     ok(ret, "got error %u.\n", WSAGetLastError());
-    ret = GetBestRoute2( NULL, default_route_index, NULL, &dst4, 0, &fwd_row, (SOCKADDR_INET *)&best4 );
+    ret = GetBestRoute2( NULL, default_route_index, NULL, &dst4, 0, &fwd_row, &best4 );
     ok( ret == ERROR_INVALID_PARAMETER, "got error %lu.\n", ret );
 
-    ret = GetBestRoute2( NULL, 0, NULL, &dst4, 0, &fwd_row, (SOCKADDR_INET *)&best4 );
+    ret = GetBestRoute2( NULL, 0, NULL, &dst4, 0, &fwd_row, &best4 );
     ok( !ret, "got error %lu.\n", ret );
     ok( !fwd_row.NextHop.Ipv4.sin_addr.s_addr, "expected unspecified next hop.\n" );
 
