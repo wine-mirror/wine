@@ -3964,7 +3964,7 @@ RETURN_CODE WCMD_mklink(WCHAR *args)
     WCHAR file1[MAX_PATH];
     WCHAR file2[MAX_PATH];
 
-    file1[0] = 0;
+    file1[0] = file2[0] = L'\0';
 
     while (argN) {
         WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE, FALSE);
