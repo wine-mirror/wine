@@ -1117,6 +1117,19 @@ BOOL wrap_wglCopyContext( TEB *teb, HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
     return ret;
 }
 
+static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HDC draw_hdc, HDC read_hdc,
+                                  HGLRC hglrc, struct context *ctx )
+{
+    DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
+
+    ctx->tid = tid;
+    teb->glReserved1[0] = draw_hdc;
+    teb->glReserved1[1] = read_hdc;
+    teb->glCurrentRC = hglrc;
+    teb->glTable = (void *)funcs;
+    pop_default_fbo( teb );
+}
+
 BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
 {
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
@@ -1134,12 +1147,7 @@ BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
 
         if (!funcs->p_wglMakeCurrent( hdc, &ctx->base )) return FALSE;
         if (prev) prev->tid = 0;
-        ctx->tid = tid;
-        teb->glReserved1[0] = hdc;
-        teb->glReserved1[1] = hdc;
-        teb->glCurrentRC = hglrc;
-        teb->glTable = (void *)funcs;
-        pop_default_fbo( teb );
+        make_context_current( teb, funcs, hdc, hdc, hglrc, ctx );
     }
     else if (prev)
     {
@@ -1450,12 +1458,7 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
         if (!funcs->p_wglMakeContextCurrentARB) return FALSE;
         if (!funcs->p_wglMakeContextCurrentARB( draw_hdc, read_hdc, &ctx->base )) return FALSE;
         if (prev) prev->tid = 0;
-        ctx->tid = tid;
-        teb->glReserved1[0] = draw_hdc;
-        teb->glReserved1[1] = read_hdc;
-        teb->glCurrentRC = hglrc;
-        teb->glTable = (void *)funcs;
-        pop_default_fbo( teb );
+        make_context_current( teb, funcs, draw_hdc, read_hdc, hglrc, ctx );
     }
     else if (prev)
     {
