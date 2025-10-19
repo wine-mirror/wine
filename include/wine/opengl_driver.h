@@ -83,7 +83,7 @@ struct wgl_context
 struct opengl_funcs
 {
     BOOL       (*p_wgl_context_reset)( struct wgl_context *context, HDC hdc, struct wgl_context *share, const int *attribs );
-    BOOL       (*p_wgl_context_flush)( struct wgl_context *context, void (*flush)(void) );
+    BOOL       (*p_wgl_context_flush)( struct wgl_context *context, void (*flush)(void), BOOL force_swap );
     BOOL       (*p_wglCopyContext)( struct wgl_context * hglrcSrc, struct wgl_context * hglrcDst, UINT mask );
     struct wgl_context * (*p_wglCreateContext)( HDC hDc );
     BOOL       (*p_wglDeleteContext)( struct wgl_context * oldContext );

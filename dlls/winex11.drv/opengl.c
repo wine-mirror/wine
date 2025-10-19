@@ -521,6 +521,10 @@ static BOOL x11drv_egl_surface_create( HWND hwnd, int format, struct opengl_draw
     gl = opengl_drawable_create( sizeof(*gl), &x11drv_egl_surface_funcs, format, client );
     client_surface_release( client );
     if (!gl) return FALSE;
+    gl->base.buffer_map[0] = GL_BACK_LEFT;
+    gl->base.buffer_map[1] = GL_BACK_RIGHT;
+    gl->base.buffer_map[GL_FRONT - GL_FRONT_LEFT] = GL_BACK;
+    gl->base.buffer_map[GL_FRONT_AND_BACK - GL_FRONT_LEFT] = GL_BACK;
 
     if (!(gl->base.surface = funcs->p_eglCreateWindowSurface( egl->display, egl_config_for_format( format ),
                                                               (void *)window, NULL )))

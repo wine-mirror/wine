@@ -2174,7 +2174,7 @@ static BOOL flush_memory_pbuffer( void (*flush)(void) )
     return flush_memory_dc( context, draw_hdc, FALSE, flush );
 }
 
-static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)(void) )
+static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)(void), BOOL force_swap )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     struct opengl_drawable *draw = context->draw;
@@ -2190,7 +2190,8 @@ static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)
 
     if (flush) flush();
     if (flush == funcs->p_glFinish) flags |= GL_FLUSH_FINISHED;
-    opengl_drawable_flush( context->draw, interval, flags );
+    opengl_drawable_flush( draw, interval, flags );
+    if (force_swap) opengl_drawable_swap( draw );
 
     return TRUE;
 }

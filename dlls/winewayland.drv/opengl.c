@@ -113,6 +113,10 @@ static BOOL wayland_opengl_surface_create(HWND hwnd, int format, struct opengl_d
     gl = opengl_drawable_create(sizeof(*gl), &wayland_drawable_funcs, format, &client->client);
     client_surface_release(&client->client);
     if (!gl) return FALSE;
+    gl->base.buffer_map[0] = GL_BACK_LEFT;
+    gl->base.buffer_map[1] = GL_BACK_RIGHT;
+    gl->base.buffer_map[GL_FRONT - GL_FRONT_LEFT] = GL_BACK;
+    gl->base.buffer_map[GL_FRONT_AND_BACK - GL_FRONT_LEFT] = GL_BACK;
 
     if (!(gl->wl_egl_window = wl_egl_window_create(client->wl_surface, rect.right, rect.bottom))) goto err;
     if (!(gl->base.surface = funcs->p_eglCreateWindowSurface(egl->display, config, gl->wl_egl_window, attribs))) goto err;

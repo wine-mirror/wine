@@ -1193,15 +1193,71 @@ static GLenum drawable_buffer_from_buffer( struct opengl_drawable *drawable, GLe
     return drawable->buffer_map[buffer - GL_FRONT_LEFT];
 }
 
+static BOOL context_draws_back( struct context *ctx )
+{
+    for (int i = 0; i < ARRAY_SIZE(ctx->color_buffer.draw_buffers); i++)
+    {
+        switch (ctx->color_buffer.draw_buffers[i])
+        {
+        case GL_LEFT:
+        case GL_RIGHT:
+        case GL_BACK:
+        case GL_FRONT_AND_BACK:
+        case GL_BACK_LEFT:
+        case GL_BACK_RIGHT:
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+static BOOL context_draws_front( struct context *ctx )
+{
+    for (int i = 0; i < ARRAY_SIZE(ctx->color_buffer.draw_buffers); i++)
+    {
+        switch (ctx->color_buffer.draw_buffers[i])
+        {
+        case GL_LEFT:
+        case GL_RIGHT:
+        case GL_FRONT:
+        case GL_FRONT_AND_BACK:
+        case GL_FRONT_LEFT:
+        case GL_FRONT_RIGHT:
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 static void flush_context( TEB *teb, void (*flush)(void) )
 {
-    struct context *ctx = get_current_context( teb, NULL, NULL );
+    struct opengl_drawable *read, *draw;
+    struct context *ctx = get_current_context( teb, &read, &draw );
     const struct opengl_funcs *funcs = teb->glTable;
+    BOOL force_swap = flush && !ctx->draw_fbo && context_draws_front( ctx ) &&
+                      draw->buffer_map[0] == GL_BACK_LEFT && draw->client;
 
-    if (!ctx || !funcs->p_wgl_context_flush( &ctx->base, flush ))
+    if (!ctx || !funcs->p_wgl_context_flush( &ctx->base, flush, force_swap ))
     {
         /* default implementation: call the functions directly */
         if (flush) flush();
+    }
+
+    if (force_swap)
+    {
+        GLenum mask = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
+        RECT rect;
+
+        WARN( "Front buffer rendering emulation, copying front buffer back\n" );
+
+        NtUserGetClientRect( draw->client->hwnd, &rect, NtUserGetDpiForWindow( draw->client->hwnd ) );
+        if (ctx->read_fbo) funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 );
+        funcs->p_glReadBuffer( GL_FRONT_LEFT );
+        funcs->p_glBlitFramebuffer( 0, 0, 0, 0, rect.right, rect.bottom, rect.right, rect.bottom, mask, GL_NEAREST );
+        if (ctx->read_fbo) funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, ctx->read_fbo );
+        else funcs->p_glReadBuffer( drawable_buffer_from_buffer( read, ctx->pixel_mode.read_buffer ) );
     }
 }
 
@@ -1565,44 +1621,6 @@ void pop_default_fbo( TEB *teb )
         funcs->p_glViewport( 0, 0, rect.right, rect.bottom );
         ctx->has_viewport = GL_TRUE;
     }
-}
-
-static BOOL context_draws_back( struct context *ctx )
-{
-    for (int i = 0; i < ARRAY_SIZE(ctx->color_buffer.draw_buffers); i++)
-    {
-        switch (ctx->color_buffer.draw_buffers[i])
-        {
-        case GL_LEFT:
-        case GL_RIGHT:
-        case GL_BACK:
-        case GL_FRONT_AND_BACK:
-        case GL_BACK_LEFT:
-        case GL_BACK_RIGHT:
-            return TRUE;
-        }
-    }
-
-    return FALSE;
-}
-
-static BOOL context_draws_front( struct context *ctx )
-{
-    for (int i = 0; i < ARRAY_SIZE(ctx->color_buffer.draw_buffers); i++)
-    {
-        switch (ctx->color_buffer.draw_buffers[i])
-        {
-        case GL_LEFT:
-        case GL_RIGHT:
-        case GL_FRONT:
-        case GL_FRONT_AND_BACK:
-        case GL_FRONT_LEFT:
-        case GL_FRONT_RIGHT:
-            return TRUE;
-        }
-    }
-
-    return FALSE;
 }
 
 void resolve_default_fbo( TEB *teb, BOOL read )
